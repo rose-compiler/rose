@@ -196,12 +196,8 @@ class JavaParser  implements Callable<Boolean> {
     public static native void cactionQualifiedAllocationExpressionEnd(String nameOfType, boolean contains_enclosing_instance, int numberArguments, boolean isAnonymous, JavaToken jToken);
     public static native void cactionQualifiedSuperReference(JavaToken jToken);
     public static native void cactionQualifiedSuperReferenceEnd(JavaToken jToken);
-    public static native void cactionQualifiedSuperReferenceClassScope(JavaToken jToken);
-    public static native void cactionQualifiedSuperReferenceClassScopeEnd(JavaToken jToken);
     public static native void cactionQualifiedThisReference(JavaToken jToken);
     public static native void cactionQualifiedThisReferenceEnd(JavaToken jToken);
-    public static native void cactionQualifiedThisReferenceClassScope(JavaToken jToken);
-    public static native void cactionQualifiedThisReferenceClassScopeEnd(JavaToken jToken);
 
     public static native void cactionReturnStatement(JavaToken jToken);
     public static native void cactionReturnStatementEnd(boolean hasExpression, JavaToken jToken);
@@ -217,7 +213,6 @@ class JavaParser  implements Callable<Boolean> {
     public static native void cactionSynchronizedStatementEnd(JavaToken jToken);
 
     public static native void cactionThisReference(JavaToken jToken);
-    public static native void cactionThisReferenceClassScope(JavaToken jToken);
 
     public static native void cactionThrowStatement(JavaToken jToken);
     public static native void cactionThrowStatementEnd(JavaToken jToken);
@@ -236,7 +231,6 @@ class JavaParser  implements Callable<Boolean> {
     public static native void cactionWhileStatement(JavaToken jToken);
     public static native void cactionWhileStatementEnd(JavaToken jToken);
     public static native void cactionWildcard(JavaToken jToken);
-    public static native void cactionWildcardClassScope(JavaToken jToken);
 
     public static native void cactionInsertClassStart(String className, JavaToken jToken);
     public static native void cactionInsertClassEnd(String className, JavaToken jToken);

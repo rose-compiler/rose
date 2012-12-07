@@ -1507,7 +1507,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         else {
             String canonical_name = cls.getCanonicalName(),
                    simple_name = cls.getSimpleName();
-            package_name = javaParserSupport.getMainPackageName(cls, 0);
+            package_name = javaParserSupport.getMainPackageName(cls);
             type_name = canonical_name.substring(package_name.length() == 0 ? 0 : package_name.length() + 1);
         }
 
@@ -2248,20 +2248,17 @@ class ecjASTVisitor extends ExtendedASTVisitor {
     // Push the types of the parameters of a method that was matched for a call so that the
     // translator can retrieve the exact method in question.
     //
-	private void pushRawMethodParameterTypes(MethodBinding binding, JavaToken location) {
+    private void pushRawMethodParameterTypes(MethodBinding binding, JavaToken location) {
         if (binding instanceof ParameterizedMethodBinding) {
             ParameterizedMethodBinding parameterized_method_binding = (ParameterizedMethodBinding) binding;
             Class parameter_types[] = null;
             if (binding.isConstructor()) {
-            	Constructor constructor = javaParserSupport.getRawConstructor(parameterized_method_binding);
+                Constructor constructor = javaParserSupport.getRawConstructor(parameterized_method_binding);
                 assert(constructor != null);
                 parameter_types = constructor.getParameterTypes();
             }
             else {
                 Method method = javaParserSupport.getRawMethod(parameterized_method_binding);
-if (method == null) {
-System.out.println("Could not find method " + new String(binding.selector));	
-}
                 assert(method != null);
                 parameter_types = method.getParameterTypes();
             }
@@ -2278,7 +2275,7 @@ System.out.println("Could not find method " + new String(binding.selector));
                 javaParserSupport.generateAndPushType(parameter_types[i], location);
             }
         }
-	}
+    }
 
 
     public boolean enter(MethodDeclaration node, ClassScope scope) {
@@ -2485,11 +2482,17 @@ System.out.println("Could not find method " + new String(binding.selector));
         // PC:  I have no idea why the number of type arguments is not precise here!!!
         // What is the purpose of these null elements in this array !!!???
         //
+        // NOTE: Do not change this SLOPPY code!!!   It was copied AS IS from the "traverse(...)" method
+        // in ParameterizedQualifiedTypeReference.
+        //
         int num_type_arguments = 0;
-        for (int i = 0; i < (node.typeArguments == null ? 0 : node.typeArguments.length); i++) {
-            if (node.typeArguments[i] != null) 
-                num_type_arguments++;
-        }
+		for (int i = 0, max = node.typeArguments.length; i < max; i++) {
+			if (node.typeArguments[i] != null) {
+				for (int j = 0, max2 = node.typeArguments[i].length; j < max2; j++) {
+					num_type_arguments++;
+				}
+			}
+		}
 
         JavaParser.cactionParameterizedTypeReferenceEnd(package_name,
                                                         type_name,
@@ -2533,11 +2536,17 @@ System.out.println("Could not find method " + new String(binding.selector));
         // PC:  I have no idea why the number of type arguments is not precise here!!!
         // What is the purpose of these null elements in this array !!!???
         //
+        // NOTE: Do not change this SLOPPY code!!!   It was copied AS IS from the "traverse(...)" method
+        // in ParameterizedQualifiedTypeReference.
+        //
         int num_type_arguments = 0;
-        for (int i = 0; i < (node.typeArguments == null ? 0 : node.typeArguments.length); i++) {
-            if (node.typeArguments[i] != null) 
-                num_type_arguments++;
-        }
+		for (int i = 0, max = node.typeArguments.length; i < max; i++) {
+			if (node.typeArguments[i] != null) {
+				for (int j = 0, max2 = node.typeArguments[i].length; j < max2; j++) {
+					num_type_arguments++;
+				}
+			}
+		}
 
         JavaParser.cactionParameterizedTypeReferenceEnd(package_name,
                                                         type_name,
@@ -2593,22 +2602,10 @@ System.out.println("Could not find method " + new String(binding.selector));
 
         String package_name = javaParserSupport.getPackageName(node.resolvedType);
         String  type_name = javaParserSupport.getTypeName(node.resolvedType);
-        
-        //
-        // TODO: Do this right !!!  This is a temporary patch !!!
-        //
-        // PC:  I have no idea why the number of type arguments is not precise here!!!
-        // What is the purpose of these null elements in this array !!!???
-        //
-        int num_type_arguments = 0;
-        for (int i = 0; i < (node.typeArguments == null ? 0 : node.typeArguments.length); i++) {
-            if (node.typeArguments[i] != null) 
-                num_type_arguments++;
-        }
 
         JavaParser.cactionParameterizedTypeReferenceEnd(package_name,
                                                         type_name,
-                                                        num_type_arguments,
+                                                        node.typeArguments.length,
                                                         node.dimensions(),
                                                         javaParserSupport.createJavaToken(node));
 
@@ -2643,21 +2640,9 @@ System.out.println("Could not find method " + new String(binding.selector));
         String package_name = javaParserSupport.getPackageName(node.resolvedType);
         String  type_name = javaParserSupport.getTypeName(node.resolvedType);
         
-        //
-        // TODO: Do this right !!!  This is a temporary patch !!!
-        //
-        // PC:  I have no idea why the number of type arguments is not precise here!!!
-        // What is the purpose of these null elements in this array !!!???
-        //
-        int num_type_arguments = 0;
-        for (int i = 0; i < (node.typeArguments == null ? 0 : node.typeArguments.length); i++) {
-            if (node.typeArguments[i] != null) 
-                num_type_arguments++;
-        }
-
         JavaParser.cactionParameterizedTypeReferenceEnd(package_name,
                                                         type_name,
-                                                        num_type_arguments,
+                                                        node.typeArguments.length,
                                                         node.dimensions(),
                                                         javaParserSupport.createJavaToken(node));
 
@@ -2813,7 +2798,7 @@ System.out.println("Could not find method " + new String(binding.selector));
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (QualifiedSuperReference,ClassScope)");
 
-        JavaParser.cactionQualifiedSuperReferenceClassScope(javaParserSupport.createJavaToken(node));
+        JavaParser.cactionQualifiedSuperReference(javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (QualifiedSuperReference,ClassScope)");
@@ -2825,7 +2810,7 @@ System.out.println("Could not find method " + new String(binding.selector));
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of exit(QualifiedSuperReference,ClassScope)");
 
-        JavaParser.cactionQualifiedSuperReferenceClassScopeEnd(javaParserSupport.createJavaToken(node));
+        JavaParser.cactionQualifiedSuperReferenceEnd(javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (QualifiedSuperReference,ClassScope)");
@@ -2859,7 +2844,7 @@ System.out.println("Could not find method " + new String(binding.selector));
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (QualifiedThisReference,ClassScope)");
 
-        JavaParser.cactionQualifiedThisReferenceClassScope(javaParserSupport.createJavaToken(node));
+        JavaParser.cactionQualifiedThisReference(javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (QualifiedThisReference,ClassScope)");
@@ -2871,7 +2856,7 @@ System.out.println("Could not find method " + new String(binding.selector));
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of exit(QualifiedThisReference,ClassScope)");
 
-        JavaParser.cactionQualifiedThisReferenceClassScopeEnd(javaParserSupport.createJavaToken(node));
+        JavaParser.cactionQualifiedThisReferenceEnd(javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (QualifiedThisReference,ClassScope)");
@@ -3183,7 +3168,7 @@ System.out.println("Could not find method " + new String(binding.selector));
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (ThisReference,ClassScope)");
 
-        JavaParser.cactionThisReferenceClassScope(javaParserSupport.createJavaToken(node));
+        JavaParser.cactionThisReference(javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (ThisReference,ClassScope)");
@@ -3465,6 +3450,10 @@ System.out.println("Could not find method " + new String(binding.selector));
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (Wildcard,BlockScope)");
 
+System.out.println();
+System.out.println("*** No support yet for wildcards");
+System.exit(1);
+
         JavaParser.cactionWildcard(javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
@@ -3483,7 +3472,11 @@ System.out.println("Could not find method " + new String(binding.selector));
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (Wildcard,ClassScope)");
 
-        JavaParser.cactionWildcardClassScope(javaParserSupport.createJavaToken(node));
+System.out.println();
+System.out.println("*** No support yet for wildcard ");
+System.exit(1);
+
+        JavaParser.cactionWildcard(javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (Wildcard,ClassScope)");

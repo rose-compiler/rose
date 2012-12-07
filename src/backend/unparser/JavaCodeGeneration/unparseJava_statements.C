@@ -994,7 +994,7 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
              */
 
-             AstSgNodeListAttribute *attribute = ( AstSgNodeListAttribute *) parameter_class_declaration -> getAttribute("parameter_type_bounds");
+             AstSgNodeListAttribute *attribute = ( AstSgNodeListAttribute *) parameter_class_definition -> getAttribute("parameter_type_bounds");
              std::vector<SgNode *> &parm_list = attribute -> getNodeList();
              ROSE_ASSERT(parm_list.size() == bases.size());
              SgBaseClass *super_class = (parm_list.size() > 0 ? bases[0] : NULL);
@@ -1018,7 +1018,14 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      SgClassDefinition* class_def = classdecl_stmt->get_definition();
      ROSE_ASSERT(class_def != NULL);
+
      SgBaseClassPtrList& bases = class_def->get_inheritances();
+
+     //
+     // TODO: This can't work for type parameters as an SgJavaParameterizedType is not mapped one-to-one and onto
+     //  with its associated SgClassDeclaration.  See alternate attributed ("parameter_type_bounds") code below.
+     //
+     /*
      int first_index = 0;
      if (bases.size() > 0) {
          SgBaseClass *super_class = isSgBaseClass(bases[0]);
@@ -1039,6 +1046,40 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              if (i + 1 < bases.size()) {
                  curprint(", ");
              }
+         }
+     }
+     */
+
+     AstSgNodeListAttribute *attribute = ( AstSgNodeListAttribute *) class_def -> getAttribute("extensions");
+     std::vector<SgNode *> &parm_list = attribute -> getNodeList();
+     ROSE_ASSERT(parm_list.size() == bases.size());
+     SgBaseClass *super_class = (parm_list.size() > 0 ? bases[0] : NULL);
+     for (int k = 0; k < parm_list.size(); k++) {
+         SgType *type = isSgType(parm_list[k]);
+         if (k == 0) {
+             if (classdecl_stmt -> get_explicit_interface()) {
+                  curprint(" extends "); // We are processing an interface.
+                  unparseParameterType(type, info);
+                  if (k + 1 < parm_list.size())
+                      curprint(", ");
+             }
+             else if (super_class -> get_base_class() -> get_explicit_interface()) {
+                 curprint(" implements ");
+                 unparseParameterType(type, info);
+                 if (k + 1 < parm_list.size())
+                     curprint(", ");
+             }
+             else {
+                 curprint(" extends ");
+                 unparseParameterType(type, info);
+                 if (k + 1 < parm_list.size())
+                     curprint(" implements ");
+             }
+         }
+         else {
+             unparseParameterType(type, info);
+             if (k + 1 < parm_list.size())
+                 curprint(", ");
          }
      }
 
@@ -1346,10 +1387,12 @@ void
 Unparse_Java::unparseBaseClass(SgBaseClass* base, SgUnparse_Info& info) {
     ROSE_ASSERT(base != NULL);
 
+    //
+    // TODO: What about a SgJavaParameterizedType? See comments in unparseClassDeclStmt(...)
+    //
     SgClassDeclaration* base_class = base -> get_base_class();
     SgClassType *class_type = base_class -> get_type();
     ROSE_ASSERT(class_type);
-    //unparseName(base_class->get_name(), info);
     unparseClassType(class_type, info);
 }
 
@@ -1363,6 +1406,6 @@ Unparse_Java::unparseParameterType(SgType *bound_type, SgUnparse_Info& info) {
     ROSE_ASSERT(class_type || parameterized_type);
 
     if (class_type)
-        unparseClassType(class_type, info);
+         unparseClassType(class_type, info);
     else unparseJavaParameterizedType(parameterized_type, info);
 }
