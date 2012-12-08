@@ -13,7 +13,8 @@ using namespace CodeThorn;
 
 #define CHECK_LABEL 0
 
-Labeler::Labeler(SgNode* start) {
+Labeler::Labeler(SgNode* start, VariableIdMapping* variableIdMapping) {
+  _variableIdMapping=variableIdMapping;
   createLabels(start);
 }
 
@@ -72,26 +73,26 @@ void Labeler::createLabels(SgNode* root) {
 	  if(SgNodeHelper::Pattern::matchFunctionCall(*i)) {
 		if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(*i)) {
 		  assert(num==3);
-		  labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALL));
-		  labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALLRETURN));
-		  labelNodeMapping.push_back(LabelProperty(*i)); // return-stmt-label
+		  labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALL,_variableIdMapping));
+		  labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALLRETURN,_variableIdMapping));
+		  labelNodeMapping.push_back(LabelProperty(*i,_variableIdMapping)); // return-stmt-label
 		} else {
 		  assert(num==2);
-		  labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALL));
-		  labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALLRETURN));
+		  labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALL,_variableIdMapping));
+		  labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALLRETURN,_variableIdMapping));
 		}
 	  } else if(isSgFunctionDefinition(*i)) {
 		assert(num==2);
-		labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONENTRY));
-		labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONEXIT));
+		labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONENTRY,_variableIdMapping));
+		labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONEXIT,_variableIdMapping));
 	  } else if(isSgBasicBlock(*i)) {
 		assert(num==2);
-		labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_BLOCKBEGIN));
-		labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_BLOCKEND));
+		labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_BLOCKBEGIN,_variableIdMapping));
+		labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_BLOCKEND,_variableIdMapping));
 	  } else {
 		// all other cases
 		for(int j=0;j<num;j++) {
-		  labelNodeMapping.push_back(LabelProperty(*i));
+		  labelNodeMapping.push_back(LabelProperty(*i,_variableIdMapping));
 		}
 	  }
 	}

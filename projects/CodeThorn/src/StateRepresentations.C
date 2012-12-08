@@ -35,9 +35,27 @@ string InputOutput::toString() const {
   string str;
   switch(op) {
   case NONE: str="none";break;
-  case STDIN_VAR: str="stdin:"+var.variableName();break;
-  case STDOUT_VAR: str="stdout:"+var.variableName();break;
-  case STDERR_VAR: str="stderr:"+var.variableName();break;
+  case STDIN_VAR: str="stdin:"+var.toString();break;
+  case STDOUT_VAR: str="stdout:"+var.toString();break;
+  case STDERR_VAR: str="stderr:"+var.toString();break;
+  case STDOUT_CONST: str="out:"+val.toString();break;
+  case STDERR_CONST: str="out:"+val.toString();break;
+  case FAILED_ASSERT: str="failedassert";break;
+  default:
+	cerr<<"FATAL ERROR: unknown IO operation abstraction.";
+	exit(1);
+  }
+  return str;
+}
+
+string InputOutput::toString(VariableIdMapping* variableIdMapping) const {
+  string str;
+  string varName=variableIdMapping->uniqueLongVariableName(var);
+  switch(op) {
+  case NONE: str="none";break;
+  case STDIN_VAR: str="stdin:"+varName;break;
+  case STDOUT_VAR: str="stdout:"+varName;break;
+  case STDERR_VAR: str="stderr:"+varName;break;
   case STDOUT_CONST: str="out:"+val.toString();break;
   case STDERR_CONST: str="out:"+val.toString();break;
   case FAILED_ASSERT: str="failedassert";break;
@@ -98,7 +116,26 @@ string PState::toString() const {
   for(PState::const_iterator j=begin();j!=end();++j) {
 	if(j!=begin()) ss<<", ";
 	ss<<"(";
-    ss <<(*j).first.longVariableName();
+    ss <<(*j).first.toString();
+#if 0
+	ss<<"->";
+#else
+	ss<<",";
+#endif
+	ss<<varValueToString((*j).first);
+	ss<<")";
+  }
+  ss<<"}";
+  return ss.str();
+}
+
+string PState::toString(VariableIdMapping* variableIdMapping) const {
+  stringstream ss;
+  ss << "PState="<< "{";
+  for(PState::const_iterator j=begin();j!=end();++j) {
+	if(j!=begin()) ss<<", ";
+	ss<<"(";
+    ss <<variableIdMapping->uniqueLongVariableName((*j).first);
 #if 0
 	ss<<"->";
 #else

@@ -47,17 +47,17 @@ typedef size_t Label;
    bool isBlockBeginLabel() { assert(_isValid); return _labelType==LABEL_BLOCKBEGIN; }
    bool isBlockEndLabel() { assert(_isValid); return _labelType==LABEL_BLOCKEND; }
    VariableId getIOVarId() { assert(_ioType!=LABELIO_NONE); return _variableId; }
- LabelProperty():_isValid(false),_node(0),_labelType(LABEL_UNDEF),_ioType(LABELIO_NONE),_variableId(0),_isTerminationRelevant(false),_isLTLRelevant(false) {
+ LabelProperty():_isValid(false),_node(0),_labelType(LABEL_UNDEF),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false) {
    }
- LabelProperty(SgNode* node):_isValid(false),_node(node),_labelType(LABEL_UNDEF),_ioType(LABELIO_NONE),_variableId(0),_isTerminationRelevant(false),_isLTLRelevant(false) {
-	 initialize();
+ LabelProperty(SgNode* node, VariableIdMapping* variableIdMapping):_isValid(false),_node(node),_labelType(LABEL_UNDEF),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false) {
+	 initialize(variableIdMapping);
 	 assert(_isValid);
    }
- LabelProperty(SgNode* node, LabelType labelType):_isValid(false),_node(node),_labelType(labelType),_ioType(LABELIO_NONE),_variableId(0),_isTerminationRelevant(false),_isLTLRelevant(false) {
-	 initialize(); 
+ LabelProperty(SgNode* node, LabelType labelType, VariableIdMapping* variableIdMapping):_isValid(false),_node(node),_labelType(labelType),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false) {
+	 initialize(variableIdMapping); 
 	 assert(_isValid);
    }
-   void initialize() {
+   void initialize(VariableIdMapping* variableIdMapping) {
 	 _isValid=true; // to be able to use access functions in initialization
 	 SgVarRefExp* varRefExp=0;
 	 _ioType=LABELIO_NONE;
@@ -71,7 +71,7 @@ typedef size_t Label;
 	 if(varRefExp) {
 	   SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
 	   assert(sym);
-	   _variableId=VariableId(sym);
+	   _variableId=variableIdMapping->variableId(sym);
 	 }
 	 _isTerminationRelevant=SgNodeHelper::isLoopCond(_node);
 	 _isLTLRelevant=(isIOLabel()||isTerminationRelevant());
@@ -131,7 +131,7 @@ class Labeler {
  public:
   static const Label NO_LABEL=-1;
 
-  Labeler(SgNode* start);
+  Labeler(SgNode* start, VariableIdMapping* variableIdMapping);
   static string labelToString(Label lab);
   int isLabelRelevantNode(SgNode* node);
   void createLabels(SgNode* node);
@@ -167,6 +167,7 @@ class Labeler {
  private:
   //vector<SgNode*> labelNodeMapping;
   vector<LabelProperty> labelNodeMapping;
+  VariableIdMapping* _variableIdMapping;
 };
 
 } // end of namespace CodeThorn

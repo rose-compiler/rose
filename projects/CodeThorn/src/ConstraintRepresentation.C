@@ -137,10 +137,25 @@ string Constraint::toString() const {
   if(isDisequation())
 	return "0##0";
   if(isVarVarOp())
-	ss<<lhsVar().longVariableName()<<(*this).opToString()<<rhsVar().longVariableName();
+	ss<<lhsVar().toString()<<(*this).opToString()<<rhsVar().toString();
   else {
 	if(isVarValOp())
-	  ss<<lhsVar().longVariableName()<<(*this).opToString()<<rhsVal().toString();
+	  ss<<lhsVar().toString()<<(*this).opToString()<<rhsVal().toString();
+	else
+	  throw "Error: Constraint::toString: unknown operator.";
+  }
+  return ss.str();
+}
+
+string Constraint::toString(VariableIdMapping* variableIdMapping) const {
+  stringstream ss;
+  if(isDisequation())
+	return "0##0";
+  if(isVarVarOp())
+	ss<<variableIdMapping->uniqueLongVariableName(lhsVar())<<(*this).opToString()<<variableIdMapping->uniqueLongVariableName(rhsVar());
+  else {
+	if(isVarValOp())
+	  ss<<variableIdMapping->uniqueLongVariableName(lhsVar())<<(*this).opToString()<<rhsVal().toString();
 	else
 	  throw "Error: Constraint::toString: unknown operator.";
   }

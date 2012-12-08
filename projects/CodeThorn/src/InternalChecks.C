@@ -453,7 +453,47 @@ void checkTypes() {
 	  cout << "es1==es2: "<<testres<< "(as expected: PASS)"<<endl;
   }
 #endif
+  // check stream operators
+  {
+	cout << "-- STREAM TESTING START-";
+	PState ps;
+	string s;
+	stringstream ss0;
+	ss0<<"{(1,5),(2,top),(3,bot)}";
+	ps.fromStream(ss0);
+	stringstream ss1;
+	ss1<<"{}";
+	ps.fromStream(ss1);
 
+	stringstream ss2;
+	ss2<<"test1";
+	cout << "Testing test2 on test1: "<<CodeThorn::Parse::checkWord("test2",ss2)<<endl;
+	cout << "Remaing stream: "<<ss2.str()<<endl;
+	stringstream ss3;
+	ss3<<"test1";
+	cout << "Testing test1 on test1: "<<CodeThorn::Parse::checkWord("test1",ss3)<<endl;
+	cout << "Remaing stream: "<<ss3.str()<<endl;
+
+	CodeThorn::AType::ConstIntLattice x;
+	stringstream ss4;
+	ss4<<"top";
+	cout << "before: x:"<<x<<endl;
+	x.fromStream(ss4);
+	cout << "after : x:"<<x<<endl;	
+	stringstream ss5;
+	ss5<<"12";
+	x.fromStream(ss5);
+	cout << "after : x:"<<x<<endl;	
+	stringstream ss6;
+	ss6<<"15top16";
+	ss6>>x;
+	cout << "after : x:"<<x<<endl;	
+	ss6>>x;
+	cout << "after : x:"<<x<<endl;	
+	ss6>>x;
+	cout << "after : x:"<<x<<endl;	
+	cout << "-- STREAM TESTING DONE--";
+  }
 }
 
 void checkLanguageRestrictor(int argc, char *argv[]) {

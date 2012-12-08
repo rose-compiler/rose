@@ -20,7 +20,7 @@ Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOf
 set<string> Analyzer::variableIdsToVariableNames(set<VariableId> s) {
   set<string> res;
   for(set<VariableId>::iterator i=s.begin();i!=s.end();++i) {
-	res.insert((*i).variableName());
+	res.insert(variableIdMapping.uniqueLongVariableName(*i));
   }
   return res;
 }
@@ -294,7 +294,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
   if(initName0) {
 	if(SgInitializedName* initName=isSgInitializedName(initName0)) {
 	  SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
-	  VariableId initDeclVarId=VariableId(initDeclVar);
+	  VariableId initDeclVarId=getVariableIdMapping()->variableId(initDeclVar);
 	  SgName initDeclVarName=initDeclVar->get_name();
 	  string initDeclVarNameString=initDeclVarName.getString();
 	  //cout << "INIT-DECLARATION: var:"<<initDeclVarNameString<<"=";
@@ -326,7 +326,7 @@ set<VariableId> Analyzer::determineVariableIdsOfVariableDeclarations(set<SgVaria
   for(set<SgVariableDeclaration*>::iterator i=varDecls.begin();i!=varDecls.end();++i) {
 	SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(*i);
 	if(sym) {
-	  resultSet.insert(VariableId(sym));
+	  resultSet.insert(variableIdMapping.variableId(sym));
 	}
   }
   return resultSet;
@@ -337,7 +337,7 @@ set<VariableId> Analyzer::determineVariableIdsOfSgInitializedNames(SgInitialized
   for(SgInitializedNamePtrList::iterator i=namePtrList.begin();i!=namePtrList.end();++i) {
 	SgSymbol* sym=SgNodeHelper::getSymbolOfInitializedName(*i);
 	if(sym) {
-	  resultSet.insert(VariableId(sym));
+	  resultSet.insert(variableIdMapping.variableId(sym));
 	}
   }
   return resultSet;
@@ -553,7 +553,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  // pattern: call: f(x), callee: f(int y) => constraints of x are propagated to y
 	  VariableId actualParameterVarId;
 	  assert(actualParameterExpr);
-	  if(ExprAnalyzer::variable(actualParameterExpr,actualParameterVarId)) {
+	  if(exprAnalyzer.variable(actualParameterExpr,actualParameterVarId)) {
 		// propagate constraint from actualParamterVarId to formalParameterVarId
 		cset.addAssignEqVarVar(formalParameterVarId,actualParameterVarId);
 	  }
@@ -632,7 +632,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	if(SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(nextNodeToAnalyze1)) {
 	  SgNode* lhs=SgNodeHelper::getLhs(SgNodeHelper::getExprStmtChild(nextNodeToAnalyze1));
 	  VariableId lhsVarId;
-	  bool isLhsVar=ExprAnalyzer::variable(lhs,lhsVarId);
+	  bool isLhsVar=exprAnalyzer.variable(lhs,lhsVarId);
 	  assert(isLhsVar); // must hold
 	  PState newPState=*currentEState.pstate();
 	  // we only create this variable here to be able to find an existing $return variable!
@@ -789,7 +789,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	   || SgNodeHelper::isPostfixIncDecOp(nextNodeToAnalyze2)) {
 	  SgNode* nextNodeToAnalyze3=SgNodeHelper::getUnaryOpChild(nextNodeToAnalyze2);
 	  VariableId var;
-	  if(ExprAnalyzer::variable(nextNodeToAnalyze3,var)) {
+	  if(exprAnalyzer.variable(nextNodeToAnalyze3,var)) {
 
 		list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(nextNodeToAnalyze3,currentEState,true,true);
 		assert(res.size()==1); // must hold for currently supported limited form of ++,--
@@ -833,7 +833,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  list<EState> estateList;
 	  for(list<SingleEvalResultConstInt>::iterator i=res.begin();i!=res.end();++i) {
 		VariableId lhsVar;
-		bool isLhsVar=ExprAnalyzer::variable(lhs,lhsVar);
+		bool isLhsVar=exprAnalyzer.variable(lhs,lhsVar);
 		if(isLhsVar) {
 		  EState estate=(*i).estate;
 		  PState newPState=*estate.pstate();
@@ -868,7 +868,9 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
   initAstNodeInfo(root);
 
   cout << "INIT: Creating Labeler."<<endl;
-  Labeler* labeler= new Labeler(root);
+  Labeler* labeler= new Labeler(root,getVariableIdMapping());
+  cout << "INIT: Initializing ExprAnalyzer."<<endl;
+  exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   cout << "INIT: Creating CFAnalyzer."<<endl;
   cfanalyzer=new CFAnalyzer(labeler);
   cout << "INIT: Building CFGs."<<endl;
@@ -964,7 +966,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
   // allow single var on rhs
   if(SgVarRefExp* varRefExp=isSgVarRefExp(rhs)) {
 	VariableId rhsVarId;
-	isRhsVar=ExprAnalyzer::variable(varRefExp,rhsVarId);
+	isRhsVar=exprAnalyzer.variable(varRefExp,rhsVarId);
 	assert(isRhsVar);
 	// x=y: constraint propagation for var1=var2 assignments
 	// we do not perform this operation on assignments yet, as the constraint set could become inconsistent.
@@ -973,7 +975,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
 	if(currentPState.varExists(rhsVarId)) {
 	  rhsIntVal=currentPState[rhsVarId].getValue();
 	} else {
-	  cerr << "WARNING: access to variable "<<rhsVarId.longVariableName()<< "on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
+	  cerr << "WARNING: access to variable "<<variableIdMapping.uniqueLongVariableName(rhsVarId)<< "on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
 	  rhsIntVal=AType::Top();
 	  isRhsIntVal=true;
 	}

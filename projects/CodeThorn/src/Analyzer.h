@@ -121,6 +121,7 @@ class Analyzer {
   CFAnalyzer* getCFAnalyzer() const { return cfanalyzer; }
 
   // access  functions for computed information
+  VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
   Labeler* getLabeler() const { return cfanalyzer->getLabeler(); }
   Flow* getFlow() { return &flow; }
   PStateSet* getPStateSet() { return &pstateSet; }

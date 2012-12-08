@@ -66,7 +66,6 @@ string CodeThorn::color(string name) {
 bool
 CodeThorn::Parse::checkWord(string w,istream& is) {
   size_t i;
-  char c;
   for(i=0;i<w.size();i++) {
 	cout << "at i:"<<i<< " peek=="<<is.peek()<<" w[i]:"<<w[i]<<endl;
 	if(is.peek()==w[i]) {

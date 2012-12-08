@@ -45,6 +45,7 @@ class Constraint {
   AValue rhsVal() const;
   CppCapsuleAValue rhsValCppCapsule() const;
   string toString() const;
+  string toString(VariableIdMapping*) const;
   bool isVarVarOp() const;
   bool isVarValOp() const;
   bool isEquation() const;
@@ -66,7 +67,7 @@ bool operator==(const Constraint& c1, const Constraint& c2);
 bool operator!=(const Constraint& c1, const Constraint& c2);
 
 // we use only one disequality constraint to mark constraint set representing non-reachable states
-#define DISEQUALITYCONSTRAINT Constraint(Constraint::DEQ,0,AType::CppCapsuleConstIntLattice(AType::ConstIntLattice(0)))
+#define DISEQUALITYCONSTRAINT Constraint(Constraint::DEQ,VariableId(),AType::CppCapsuleConstIntLattice(AType::ConstIntLattice(0)))
 
 class ConstraintSet : public set<Constraint> {
  public:
@@ -140,7 +141,7 @@ class ConstraintSetHashFun {
 		if((*i).isVarValOp())
 		  hash=((hash<<8)+((long)(*i).rhsValCppCapsule().getValue().hash()))^hash;
 		else if((*i).isVarVarOp()) {
-		  hash=((hash<<8)+((long)((*i).rhsVar().getSymbol())))^hash;
+		  hash=((hash<<8)+((long)((*i).rhsVar().getIdCode())))^hash;
 		} else {
 		  hash=0; // DEQ
 		}

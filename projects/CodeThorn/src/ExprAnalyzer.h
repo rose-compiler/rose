@@ -53,11 +53,12 @@ class ExprAnalyzer {
   //! returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
   static bool variable(SgNode* node,VariableName& varName);
   //! returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
-  static bool variable(SgNode* node,VariableId& varId);
-
+  bool variable(SgNode* node,VariableId& varId);
+  void setVariableIdMapping(VariableIdMapping* variableIdMapping) { _variableIdMapping=variableIdMapping; }
  private:
   //! evaluates an expression (whithout maintaining state information)
   AValue pureEvalConstInt(SgNode* node,EState& estate);
+  VariableIdMapping* _variableIdMapping;
 };
 
 } // end of namespace CodeThorn

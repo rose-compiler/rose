@@ -50,6 +50,7 @@ class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
   void fromStream(istream& is);
   void toStream(ostream& os);
   string toString() const;
+  string toString(VariableIdMapping* variableIdMapping) const;
 };
 
 typedef set<const PState*> PStatePtrSet;
@@ -85,12 +86,13 @@ class PStateSet : public HSetMaintainer<PState,PStateHashFun> {
  */
 class InputOutput {
  public:
- InputOutput():op(NONE),var(VariableId(0)){ val=CodeThorn::AType::Bot();}
+ InputOutput():op(NONE),var(VariableId()){ val=CodeThorn::AType::Bot();}
   enum OpType {NONE,STDIN_VAR,STDOUT_VAR,STDOUT_CONST,STDERR_VAR,STDERR_CONST, FAILED_ASSERT};
   OpType op;
   VariableId var;
   CodeThorn::AType::ConstIntLattice val;
   string toString() const;
+  string toString(VariableIdMapping* variableIdMapping) const;
   void recordVariable(OpType op, VariableId varId);
   void recordConst(OpType op, CodeThorn::AType::ConstIntLattice val);
   void recordFailedAssert();

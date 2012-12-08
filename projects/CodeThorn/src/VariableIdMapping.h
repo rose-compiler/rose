@@ -54,26 +54,26 @@ class VariableIdMapping {
 	string _tmpName;
   };
 
+  typedef size_t VarId;
   VariableId variableId(SgVariableDeclaration* decl);
   VariableId variableId(SgVarRefExp* varRefExp);
   VariableId variableId(SgInitializedName* initName);
-  bool isTemporaryVariableId(VariableId varId);
+  VariableId variableId(SgSymbol* sym);
   SgSymbol* getSymbol(VariableId varId);
+  bool isTemporaryVariableId(VariableId varId);
   string variableName(VariableId varId);
   string uniqueLongVariableName(VariableId varId);
 
+  void registerNewSymbol(SgSymbol* sym);
   void toStream(ostream& os);
 
-  typedef size_t VarId;
-  VarId getVarId(SgSymbol* sym);
-  SgSymbol* getSymbol(VarId varid);
  private:
   typedef pair<string,SgSymbol*> MapPair;
   set<MapPair> checkSet;
   typedef pair<VariableId,VariableName> PairOfVarIdAndVarName;
   typedef set<PairOfVarIdAndVarName> TemporaryVariableIdMapping;
   TemporaryVariableIdMapping temporaryVariableIdMapping;
-
+  VariableId addNewSymbol(SgSymbol* sym);
   // used for mapping in both directions
   vector<SgSymbol*> mappingVarIdToSym;
   map<SgSymbol*,size_t> mappingSymToVarId;
@@ -87,13 +87,15 @@ class VariableId {
  public:
   VariableId();
   string toString() const;
-  string variableName() const;
-  string longVariableName() const;
-  VariableId(SgSymbol* sym);
+  int getIdCode() const { return _id; }
+  //string variableName() const;
+  //string longVariableName() const;
+  //VariableId(SgSymbol* sym);
  public:
-  SgSymbol* getSymbol() const; // only public because of ContraintSetHashFun
+  //SgSymbol* getSymbol() const; // only public because of ContraintSetHashFun
  private: 
-  SgSymbol* sym;
+  //SgSymbol* sym;
+  int _id;
 };
 
 

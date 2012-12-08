@@ -15,14 +15,20 @@ void VariableIdMapping::toStream(ostream& os) {
   }
 }
 
-VariableIdMapping::VarId VariableIdMapping::getVarId(SgSymbol* sym) {
+VariableId VariableIdMapping::variableId(SgSymbol* sym) {
   assert(sym);
-  return mappingSymToVarId[sym];
+  VariableId newId;
+  // intentionally a friend action to avoid that users can create VariableIds from int.
+  newId._id=mappingSymToVarId[sym]; 
+  return newId;
 }
 
-SgSymbol* VariableIdMapping::getSymbol(VarId varid) {
-  return mappingVarIdToSym[varid];
+SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
+  return mappingVarIdToSym[varid._id];
 }
+//SgSymbol* VariableIdMapping::getSymbol(VariableId varId) {
+//  return varId.getSymbol();
+//}
 
 void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
   set<SgSymbol*> symbolSet;
@@ -52,8 +58,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
 		checkSet.insert(pair);
 		if(symbolSet.find(sym)==symbolSet.end()) {
 		  assert(sym);
-		  mappingSymToVarId[sym]=mappingVarIdToSym.size();
-		  mappingVarIdToSym.push_back(sym);
+		  registerNewSymbol(sym);
 		  symbolSet.insert(sym);
 		}
 	  }
@@ -116,23 +121,19 @@ string VariableIdMapping::uniqueLongVariableName(VariableId varId) {
 }
 
 VariableId VariableIdMapping::variableId(SgVariableDeclaration* decl) {
-  return VariableId(SgNodeHelper::getSymbolOfVariableDeclaration(decl));
+  return variableId(SgNodeHelper::getSymbolOfVariableDeclaration(decl));
 }
 
 VariableId VariableIdMapping::variableId(SgVarRefExp* varRefExp) {
-  return VariableId(SgNodeHelper::getSymbolOfVariable(varRefExp));
+  return variableId(SgNodeHelper::getSymbolOfVariable(varRefExp));
 }
 
 VariableId VariableIdMapping::variableId(SgInitializedName* initName) {
-  return VariableId(SgNodeHelper::getSymbolOfInitializedName(initName));
+  return variableId(SgNodeHelper::getSymbolOfInitializedName(initName));
 }
 
 bool VariableIdMapping::isTemporaryVariableId(VariableId varId) {
-  return dynamic_cast<UniqueTemporaryVariableSymbol*>(varId.getSymbol());
-}
-
-SgSymbol* VariableIdMapping::getSymbol(VariableId varId) {
-  return varId.getSymbol();
+  return dynamic_cast<UniqueTemporaryVariableSymbol*>(getSymbol(varId));
 }
 
 VariableId
@@ -147,15 +148,27 @@ VariableIdMapping::createUniqueTemporaryVariableId(string name) {
 	}
   }
   // temporary variable with name 'name' does not exist yet, create, register, and return
-  VariableId newVarId=VariableId(new UniqueTemporaryVariableSymbol(name));
+  SgSymbol* sym=new UniqueTemporaryVariableSymbol(name);
+  registerNewSymbol(sym);
+  VariableId newVarId=variableId(sym);
   temporaryVariableIdMapping.insert(make_pair(newVarId,name));
   return newVarId;
 }
 
+void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
+  if(mappingSymToVarId.find(sym)==mappingSymToVarId.end()) {
+	mappingSymToVarId[sym]=mappingVarIdToSym.size();
+	mappingVarIdToSym.push_back(sym);
+  } else {
+	cerr<< "Error: attempt to register existing symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym)<<endl;
+	exit(1);
+  }
+}
+
 // we use a function as a destructor may delete it multiple times
 void VariableIdMapping::deleteUniqueTemporaryVariableId(VariableId varId) {
-  if(isTemporaryVariableId(varId.getSymbol()))
-	delete varId.getSymbol();
+  if(isTemporaryVariableId(varId))
+	delete getSymbol(varId);
   else
 	throw "VariableIdMapping::deleteUniqueTemporaryVariableSymbol: improper id operation.";
 }
@@ -168,8 +181,19 @@ SgName VariableIdMapping::UniqueTemporaryVariableSymbol::get_name() const {
   return SgName(_tmpName);
 }
 
-VariableId::VariableId():sym(0){
+VariableId::VariableId():_id(-1){
 }
+//VariableId::VariableId(int id):_id(id){
+//}
+
+string
+VariableId::toString() const {
+  stringstream ss;
+  ss<<"V"<<_id;
+  return ss.str();
+}
+
+#if 0
 VariableId::VariableId(SgSymbol* sym):sym(sym){
 }
 SgSymbol* VariableId::getSymbol() const {
@@ -187,25 +211,19 @@ VariableId::variableName() const {
 }
 
 string
-VariableId::toString() const {
-  stringstream ss;
-  ss<<getSymbol();
-  return ss.str();
-}
-
-string
 VariableId::longVariableName() const {
   SgSymbol* sym=getSymbol();
   if(sym==0) return "id-no-var";
   // TODO: MS: long names do not work with SgNodehelper from SgSymbol. We can only support this with precomputed VariableIdMappings (we do not want to use mangled names)
   return variableName();
 }
+#endif
 
 bool CodeThorn::operator<(VariableId id1, VariableId id2) {
-  return id1.getSymbol()<id2.getSymbol();
+  return id1._id<id2._id;
 }
 bool CodeThorn::operator==(VariableId id1, VariableId id2) {
-  return id1.getSymbol()==id2.getSymbol();
+  return id1._id==id2._id;
 }
 bool CodeThorn::operator!=(VariableId id1, VariableId id2) {
   return !(id1==id2);

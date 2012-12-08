@@ -554,14 +554,17 @@ int main( int argc, char * argv[] ) {
   timer.start();
 
   cout << "INIT: Running variable<->symbol mapping check."<<endl;
-
-  VariableIdMapping varIdMap;
-  varIdMap.computeVariableSymbolMapping(sageProject);
+  //VariableIdMapping varIdMap;
+  analyzer.getVariableIdMapping()->computeVariableSymbolMapping(sageProject);
   cout << "STATUS: Variable<->Symbol mapping created."<<endl;
-  if(!varIdMap.isUniqueVariableSymbolMapping()) {
+  if(!analyzer.getVariableIdMapping()->isUniqueVariableSymbolMapping()) {
 	cerr << "WARNING: Variable<->Symbol mapping not bijective."<<endl;
 	//varIdMap.reportUniqueVariableSymbolMappingViolations();
   }
+#if 0
+  analyzer.getVariableIdMapping()->toStream(cout);
+#endif
+
   cout << "INIT: creating solver."<<endl;
   analyzer.initializeSolver1("main",root);
   analyzer.initLabeledAssertNodes(sageProject);
