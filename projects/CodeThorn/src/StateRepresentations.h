@@ -45,9 +45,11 @@ class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
   bool varExists(VariableId varname) const;
   bool varIsConst(VariableId varname) const;
   string varValueToString(VariableId varname) const;
-  string toString() const;
   void deleteVar(VariableId varname);
   long memorySize() const;
+  void fromStream(istream& is);
+  void toStream(ostream& os);
+  string toString() const;
 };
 
 typedef set<const PState*> PStatePtrSet;

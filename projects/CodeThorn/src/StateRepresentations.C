@@ -64,6 +64,34 @@ bool CodeThorn::operator!=(const InputOutput& c1, const InputOutput& c2) {
   return !(c1==c2);
 }
 
+// read '{' ( '('varId','varValue')' )* '}'
+void PState::fromStream(istream& is) {
+  char c;
+  string s;
+  int __varId; // will become type VariableId
+  AValue __varAValue; // will become type AValue
+  is>>c;
+  if(c!='{') throw "Error: Syntax error PState. Expected '{'.";
+  is>>c;
+  // read pairs (varname,varvalue)
+  while(c!='}') {
+	if(c!='(') throw "Error: Syntax error PState. Expected '('.";
+	is>>__varId;
+	is>>c;
+	if(c!=',') throw "Error: Syntax error PState. Expected ','.";
+	is>>__varAValue; // value: TODO: not handled yet
+	is>>c;	
+	if(c!=')' && c!=',') throw "Error: Syntax error PState. Expected ')'.";
+	is>>c;
+	cout << "DEBUG: Read from istream: ("<<__varId<<","<<__varAValue<<")"<<endl;
+	if(c==',') is>>c;
+  }
+  if(c!='}') throw "Error: Syntax error PState. Expected '}'.";
+}
+
+void PState::toStream(ostream& os) {
+  os<<toString();
+}
 string PState::toString() const {
   stringstream ss;
   ss << "PState="<< "{";

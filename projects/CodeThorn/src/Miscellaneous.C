@@ -6,6 +6,7 @@
 
 #include "Miscellaneous.h"
 #include "CommandLineOptions.h"
+#include <cctype>
 
 void CodeThorn::write_file(std::string filename, std::string data) {
   std::ofstream myfile;
@@ -56,3 +57,66 @@ string CodeThorn::color(string name) {
 	throw "Error: unknown color code.";
 }
 
+
+/* returns true if the string w can be parsed on stream is.
+   otherwise false.
+   returns true for an empty string w.
+   istream remains unmodified if string s cannot be parsed.
+ */
+bool
+CodeThorn::Parse::checkWord(string w,istream& is) {
+  size_t i;
+  char c;
+  for(i=0;i<w.size();i++) {
+	cout << "at i:"<<i<< " peek=="<<is.peek()<<" w[i]:"<<w[i]<<endl;
+	if(is.peek()==w[i]) {
+	  is.get();
+	} else {
+	  break;
+	}
+  }
+  // ensure that the word is followed either by anychar or some char not in [a-zA-Z]
+  if(i==w.size() && !std::isalpha(is.peek())) {
+	cout << "parse: successful."<<endl;
+	return true;
+  }
+  if(i==0) return false;
+  --i; // was peeked
+  // putback all chars that were read
+  while(i>0) {
+	cout << "putback at i:"<<i<< " peek=="<<is.peek()<<endl;
+	is.putback(w[i--]);
+  }
+  is.putback(w[0]); // note: i is unsigned
+  return false;
+}
+
+bool
+CodeThorn::Parse::integer(istream& is, int& num) {
+  if(std::isdigit(is.peek())) {
+	is>>num;
+	return true;
+  } else {
+	return false;
+  }
+}
+
+int
+CodeThorn::Parse::spaces(istream& is) {
+  int num=0;
+  while(is.peek()==' ') {
+	is.get();
+	num++;
+  }
+  return num;
+}
+
+int
+CodeThorn::Parse::whitespaces(istream& is) {
+  int num=0;
+  while(std::isspace(is.peek())) {
+	is.get();
+	num++;
+  }
+  return num;
+}

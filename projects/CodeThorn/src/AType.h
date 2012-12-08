@@ -72,12 +72,12 @@ class BoolLattice {
   bool operator<(BoolLattice other) const;
   string toString() const;
   inline ValueType val() const { return value; }
-  friend ostream& operator<<(ostream& os, const BoolLattice& toStream);
+  friend ostream& operator<<(ostream& os, const BoolLattice& value);
  private:
   ValueType value;
 };
 
- ostream& operator<<(ostream& os, const BoolLattice& toStream);
+ ostream& operator<<(ostream& os, const BoolLattice& value);
 
  class ConstIntLattice;
 
@@ -119,7 +119,9 @@ class ConstIntLattice {
   ConstIntLattice operator>=(ConstIntLattice other) const;
   ConstIntLattice operator>(ConstIntLattice other) const;
   string toString() const;
-  friend ostream& operator<<(ostream& os, const ConstIntLattice& toStream);
+  friend ostream& operator<<(ostream& os, const ConstIntLattice& value);
+  friend istream& operator>>(istream& os, ConstIntLattice& value);
+  void fromStream(istream& is);
   ValueType getValueType() const;
   int getIntValue() const;
   long hash() const;
@@ -134,8 +136,8 @@ class ConstIntLattice {
  AType::ConstIntLattice operator/(AType::ConstIntLattice& a,AType::ConstIntLattice& b);
  AType::ConstIntLattice operator%(AType::ConstIntLattice& a,AType::ConstIntLattice& b);
 
-
- ostream& operator<<(ostream& os, const ConstIntLattice& toStream);
+ ostream& operator<<(ostream& os, const ConstIntLattice& value);
+ istream& operator>>(istream& is, ConstIntLattice& value);
 
   /*! \brief Comparison class, allowing to use ConstIntLattice in ordered containers (e.g. set)
 	\date 2012

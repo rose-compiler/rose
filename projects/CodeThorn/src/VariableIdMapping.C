@@ -8,8 +8,24 @@
 
 using namespace CodeThorn;
 
-void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
+void VariableIdMapping::toStream(ostream& os) {
+  for(size_t i=0;i<mappingVarIdToSym.size();++i) {
+	os<<"("<<i<<","<<mappingVarIdToSym[i]<<","<<SgNodeHelper::symbolToString(mappingVarIdToSym[i])<<")"<<endl;
+	assert(mappingSymToVarId[mappingVarIdToSym[i]]==i);
+  }
+}
 
+VariableIdMapping::VarId VariableIdMapping::getVarId(SgSymbol* sym) {
+  assert(sym);
+  return mappingSymToVarId[sym];
+}
+
+SgSymbol* VariableIdMapping::getSymbol(VarId varid) {
+  return mappingVarIdToSym[varid];
+}
+
+void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
+  set<SgSymbol*> symbolSet;
   list<SgGlobal*> globList=SgNodeHelper::listOfSgGlobal(project);
   for(list<SgGlobal*>::iterator k=globList.begin();k!=globList.end();++k) {
 	RoseAst ast(*k);
@@ -34,6 +50,12 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
 		string longName=SgNodeHelper::uniqueLongVariableName(*i);
 		MapPair pair=make_pair(longName,sym);
 		checkSet.insert(pair);
+		if(symbolSet.find(sym)==symbolSet.end()) {
+		  assert(sym);
+		  mappingSymToVarId[sym]=mappingVarIdToSym.size();
+		  mappingVarIdToSym.push_back(sym);
+		  symbolSet.insert(sym);
+		}
 	  }
 	}
   }

@@ -10,19 +10,25 @@
 #include "CommandLineOptions.h"
 #include <iostream>
 #include <climits>
+#include "Miscellaneous.h"
 
 using namespace std;
 
 using namespace CodeThorn;
 
-ostream& AType::operator<<(ostream& os, const BoolLattice& toStream) {
-  os << toStream.toString();
+ostream& AType::operator<<(ostream& os, const BoolLattice& value) {
+  os << value.toString();
   return os;
 }
 
-ostream& AType::operator<<(ostream& os, const ConstIntLattice& toStream) {
-  os << toStream.toString();
+ostream& AType::operator<<(ostream& os, const ConstIntLattice& value) {
+  os << value.toString();
   return os;
+}
+
+istream& AType::operator>>(istream& is, ConstIntLattice& value) {
+  value.fromStream(is);
+  return is;
 }
 
 AType::BoolLattice::BoolLattice():value(AType::BoolLattice::BOT) {}
@@ -153,7 +159,7 @@ AType::BoolLattice AType::BoolLattice::glb(AType::BoolLattice other) {
   if(isTrue()  && other.isFalse()) return Bot();
   if(isFalse() && other.isTrue())  return Bot();
   if(isFalse() && other.isFalse()) return false;
-  throw "Error: BoolLattice lub failed.";
+  throw "Error: BoolLattice glb failed.";
 }
 
 // operator= : C++ default used
@@ -395,6 +401,20 @@ string AType::ConstIntLattice::toString() const {
   }
 }
 
+void AType::ConstIntLattice::fromStream(istream& is) {
+  if(CodeThorn::Parse::checkWord("top",is)) {
+	valueType=TOP;
+	intValue=0;
+  } else if(CodeThorn::Parse::checkWord("bot",is)) {
+	valueType=BOT;
+	intValue=0;
+  } else if(CodeThorn::Parse::integer(is,intValue)) {
+	valueType=CONSTINT;
+  } else {
+	throw "Error: ConstIntLattic::fromStream failed.";
+  }
+}
+
 AType::ConstIntLattice::ValueType AType::ConstIntLattice::getValueType() const {
   return valueType;
 }
@@ -489,4 +509,3 @@ AType::ConstIntLattice AType::operator%(AType::ConstIntLattice& a,AType::ConstIn
   else
 	return a.getIntValue()%b.getIntValue();
 }
-

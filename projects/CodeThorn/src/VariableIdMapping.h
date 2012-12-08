@@ -11,6 +11,8 @@
 #include <string>
 #include "SgNodeHelper.h"
 #include "RoseAst.h"
+#include <map>
+#include <vector>
 
 using namespace std;
 
@@ -60,12 +62,21 @@ class VariableIdMapping {
   string variableName(VariableId varId);
   string uniqueLongVariableName(VariableId varId);
 
+  void toStream(ostream& os);
+
+  typedef size_t VarId;
+  VarId getVarId(SgSymbol* sym);
+  SgSymbol* getSymbol(VarId varid);
  private:
   typedef pair<string,SgSymbol*> MapPair;
   set<MapPair> checkSet;
   typedef pair<VariableId,VariableName> PairOfVarIdAndVarName;
   typedef set<PairOfVarIdAndVarName> TemporaryVariableIdMapping;
   TemporaryVariableIdMapping temporaryVariableIdMapping;
+
+  // used for mapping in both directions
+  vector<SgSymbol*> mappingVarIdToSym;
+  map<SgSymbol*,size_t> mappingSymToVarId;
 }; // end of class VariableIdMapping
 
 class VariableId {
