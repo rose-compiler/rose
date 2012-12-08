@@ -3820,19 +3820,24 @@ SgName SgMemberFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTy
   // to both be more clear and fix the handling of SgFunctionParameterTypeList which appears to be a problem for 
   // the AST File I/O and the graphs that we generate of the AST in the new EDG 4.x branch.
 
-     if (mfunc_specifier && SgMemberFunctionType::e_const)
+#if 0
+     printf ("mfunc_specifier = %u SgMemberFunctionType::e_const = %d SgMemberFunctionType::e_volatile = %d SgMemberFunctionType::e_restrict = %d \n",
+          mfunc_specifier,SgMemberFunctionType::e_const,SgMemberFunctionType::e_volatile,SgMemberFunctionType::e_restrict);
+#endif
+
+     if (mfunc_specifier & SgMemberFunctionType::e_const)
         {
        // Mark as const
           mangled_cls_tag << "_cf";
         }
-     
-     if (mfunc_specifier && SgMemberFunctionType::e_volatile)
+
+     if (mfunc_specifier & SgMemberFunctionType::e_volatile)
         {
        // Mark as volatile
           mangled_cls_tag << "_vf";
         }
-     
-     if (mfunc_specifier && SgMemberFunctionType::e_restrict)
+
+     if (mfunc_specifier & SgMemberFunctionType::e_restrict)
         {
        // Mark as restrict
           mangled_cls_tag << "_rf";
