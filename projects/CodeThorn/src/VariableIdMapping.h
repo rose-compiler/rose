@@ -59,6 +59,7 @@ class VariableIdMapping {
   VariableId variableId(SgVarRefExp* varRefExp);
   VariableId variableId(SgInitializedName* initName);
   VariableId variableId(SgSymbol* sym);
+  VariableId variableIdFromCode(int);
   SgSymbol* getSymbol(VariableId varId);
   bool isTemporaryVariableId(VariableId varId);
   string variableName(VariableId varId);
@@ -88,6 +89,10 @@ class VariableId {
   VariableId();
   string toString() const;
   int getIdCode() const { return _id; }
+  // we intentionally do not provide a constructor for int because this would clash 
+  // with overloaded functions that are using ConstIntLattice (which has an implicit 
+  // type conversion for int)
+  void setIdCode(int id) {_id=id;}
   //string variableName() const;
   //string longVariableName() const;
   //VariableId(SgSymbol* sym);

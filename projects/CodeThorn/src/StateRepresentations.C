@@ -82,39 +82,47 @@ bool CodeThorn::operator!=(const InputOutput& c1, const InputOutput& c2) {
   return !(c1==c2);
 }
 
-// read '{' ( '('varId','varValue')' )* '}'
+// read: regexp: '{' ( '('<varId>','<varValue>')' )* '}'
 void PState::fromStream(istream& is) {
   char c;
   string s;
-  int __varId; // will become type VariableId
-  AValue __varAValue; // will become type AValue
+  int __varIdCode=-1; 
+  VariableId __varId; 
+  AValue __varAValue; 
   is>>c;
   if(c!='{') throw "Error: Syntax error PState. Expected '{'.";
   is>>c;
   // read pairs (varname,varvalue)
   while(c!='}') {
 	if(c!='(') throw "Error: Syntax error PState. Expected '('.";
-	is>>__varId;
 	is>>c;
-	if(c!=',') throw "Error: Syntax error PState. Expected ','.";
-	is>>__varAValue; // value: TODO: not handled yet
+	if(c!='V') throw "Error: Syntax error PState. Expected VariableId.";
+	is>>__varIdCode;
+	assert(__varIdCode>=0);
+	VariableId __varId;
+	__varId.setIdCode(__varIdCode);
+	is>>c;
+	if(c!=',') { cout << "Error: found "<<c<<"__varIdCode="<<__varIdCode<<endl; throw "Error: Syntax error PState. Expected ','.";}
+	is>>__varAValue;
 	is>>c;	
-	if(c!=')' && c!=',') throw "Error: Syntax error PState. Expected ')'.";
+	if(c!=')' && c!=',') throw "Error: Syntax error PState. Expected ')' or ','.";
 	is>>c;
-	cout << "DEBUG: Read from istream: ("<<__varId<<","<<__varAValue<<")"<<endl;
+	//cout << "DEBUG: Read from istream: ("<<__varId.toString()<<","<<__varAValue.toString()<<")"<<endl;
+	(*this)[__varId]=__varAValue;
 	if(c==',') is>>c;
   }
   if(c!='}') throw "Error: Syntax error PState. Expected '}'.";
 }
 
-void PState::toStream(ostream& os) {
+void PState::toStream(ostream& os) const {
   os<<toString();
 }
 string PState::toString() const {
   stringstream ss;
-  ss << "PState="<< "{";
+  //ss << "PState=";
+  ss<< "{";
   for(PState::const_iterator j=begin();j!=end();++j) {
-	if(j!=begin()) ss<<", ";
+	if(j!=begin()) ss<<",";
 	ss<<"(";
     ss <<(*j).first.toString();
 #if 0
@@ -131,7 +139,8 @@ string PState::toString() const {
 
 string PState::toString(VariableIdMapping* variableIdMapping) const {
   stringstream ss;
-  ss << "PState="<< "{";
+  //ss << "PState=";
+  ss<< "{";
   for(PState::const_iterator j=begin();j!=end();++j) {
 	if(j!=begin()) ss<<", ";
 	ss<<"(";
@@ -223,6 +232,16 @@ string PStateSet::toString() {
   }
   ss << "}";
   return ss.str();
+}
+
+ostream& CodeThorn::operator<<(ostream& os, const PState& pState) {
+  pState.toStream(os);
+  return os;
+}
+
+istream& CodeThorn::operator>>(istream& is, PState& pState) {
+  pState.fromStream(is);
+  return is;
 }
 
 // define order for EState elements (necessary for EStateSet)

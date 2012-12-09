@@ -67,7 +67,6 @@ bool
 CodeThorn::Parse::checkWord(string w,istream& is) {
   size_t i;
   for(i=0;i<w.size();i++) {
-	cout << "at i:"<<i<< " peek=="<<is.peek()<<" w[i]:"<<w[i]<<endl;
 	if(is.peek()==w[i]) {
 	  is.get();
 	} else {
@@ -76,14 +75,12 @@ CodeThorn::Parse::checkWord(string w,istream& is) {
   }
   // ensure that the word is followed either by anychar or some char not in [a-zA-Z]
   if(i==w.size() && !std::isalpha(is.peek())) {
-	cout << "parse: successful."<<endl;
 	return true;
   }
   if(i==0) return false;
   --i; // was peeked
   // putback all chars that were read
   while(i>0) {
-	cout << "putback at i:"<<i<< " peek=="<<is.peek()<<endl;
 	is.putback(w[i--]);
   }
   is.putback(w[0]); // note: i is unsigned

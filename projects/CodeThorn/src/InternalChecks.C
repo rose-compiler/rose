@@ -453,47 +453,67 @@ void checkTypes() {
 	  cout << "es1==es2: "<<testres<< "(as expected: PASS)"<<endl;
   }
 #endif
+
   // check stream operators
   {
-	cout << "-- STREAM TESTING START-";
-	PState ps;
-	string s;
-	stringstream ss0;
-	ss0<<"{(1,5),(2,top),(3,bot)}";
-	ps.fromStream(ss0);
-	stringstream ss1;
-	ss1<<"{}";
-	ps.fromStream(ss1);
+	cout << "------------------------------------------"<<endl;
+	cout << "RUNNING CHECKS FOR INPUT/OUTPUT STREAM OPs"<<endl;
 
 	stringstream ss2;
 	ss2<<"test1";
-	cout << "Testing test2 on test1: "<<CodeThorn::Parse::checkWord("test2",ss2)<<endl;
-	cout << "Remaing stream: "<<ss2.str()<<endl;
+	check("Parse: Testing test2 on test1.",!CodeThorn::Parse::checkWord("test2",ss2));
+	//cout << "Remaing stream: "<<ss2.str()<<endl;
 	stringstream ss3;
 	ss3<<"test1";
-	cout << "Testing test1 on test1: "<<CodeThorn::Parse::checkWord("test1",ss3)<<endl;
-	cout << "Remaing stream: "<<ss3.str()<<endl;
+	check("Parse: Testing test1 on test1.",CodeThorn::Parse::checkWord("test1",ss3));
+	//cout << "Remaing stream: "<<ss3.str()<<endl;
 
 	CodeThorn::AType::ConstIntLattice x;
 	stringstream ss4;
 	ss4<<"top";
-	cout << "before: x:"<<x<<endl;
 	x.fromStream(ss4);
-	cout << "after : x:"<<x<<endl;	
+	check("ConstIntLattice: streaminput: top",x.toString()=="top");
 	stringstream ss5;
 	ss5<<"12";
 	x.fromStream(ss5);
-	cout << "after : x:"<<x<<endl;	
+	check("ConstIntLattice: streaminput: 12",x.toString()=="12");
 	stringstream ss6;
 	ss6<<"15top16";
 	ss6>>x;
-	cout << "after : x:"<<x<<endl;	
+	check("ConstIntLattice: streaminput: 15",x.toString()=="15");
 	ss6>>x;
-	cout << "after : x:"<<x<<endl;	
+	check("ConstIntLattice: streaminput: top",x.toString()=="top");
 	ss6>>x;
-	cout << "after : x:"<<x<<endl;	
-	cout << "-- STREAM TESTING DONE--";
-  }
+	check("ConstIntLattice: streaminput: 16",x.toString()=="16");
+
+	{
+	  PState ps;
+	  stringstream ss1;
+	  string pstateString="{}";
+	  ss1<<pstateString;
+	  ps.fromStream(ss1);
+	  string checkString=(string("stream input PState: ")+pstateString);
+	  bool checkresult=(ps.toString()==pstateString);
+	  check(checkString,checkresult);
+	  if(checkresult==false) {
+		cout << "Error: input stream result: "<<ps.toString()<<endl;
+	  }
+	}
+	{
+	  PState ps;
+	  stringstream ss0;
+	  string pstateString="{(V0,5),(V1,top),(V2,bot)}";
+	  ss0<<pstateString;
+	  ss0>>ps;
+	  string checkString=(string("stream input PState: ")+pstateString);
+	  bool checkresult=(ps.toString()==pstateString);
+	  check(checkString,checkresult);
+	  if(checkresult==false) {
+		cout << "pstateString :"<<pstateString<<":"<<endl;
+		cout << "ps.toString():"<<ps.toString()<<":"<<endl;
+	  }
+	}
+  } // end of stream operator checks
 }
 
 void checkLanguageRestrictor(int argc, char *argv[]) {

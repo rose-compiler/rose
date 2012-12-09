@@ -42,16 +42,21 @@ class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
  public:
 	PState() {
 	}
+  friend ostream& operator<<(ostream& os, const PState& value);
+  friend istream& operator>>(istream& os, PState& value);
   bool varExists(VariableId varname) const;
   bool varIsConst(VariableId varname) const;
   string varValueToString(VariableId varname) const;
   void deleteVar(VariableId varname);
   long memorySize() const;
   void fromStream(istream& is);
-  void toStream(ostream& os);
+  void toStream(ostream& os) const;
   string toString() const;
   string toString(VariableIdMapping* variableIdMapping) const;
 };
+
+  ostream& operator<<(ostream& os, const PState& value);
+  istream& operator>>(istream& os, PState& value);
 
 typedef set<const PState*> PStatePtrSet;
 
