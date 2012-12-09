@@ -129,6 +129,7 @@ VariableId VariableIdMapping::variableId(SgVarRefExp* varRefExp) {
 }
 
 VariableId VariableIdMapping::variableId(SgInitializedName* initName) {
+  assert(initName);
   return variableId(SgNodeHelper::getSymbolOfInitializedName(initName));
 }
 

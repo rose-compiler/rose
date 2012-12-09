@@ -294,15 +294,20 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
   if(initName0) {
 	if(SgInitializedName* initName=isSgInitializedName(initName0)) {
 	  SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
+	  assert(initDeclVar);
 	  VariableId initDeclVarId=getVariableIdMapping()->variableId(initDeclVar);
 	  SgName initDeclVarName=initDeclVar->get_name();
 	  string initDeclVarNameString=initDeclVarName.getString();
-	  //cout << "INIT-DECLARATION: var:"<<initDeclVarNameString<<"=";
+	  //cout << "INIT-DECLARATION: var:"<<initDeclVarNameString<<endl;
+	  //cout << "DECLARATION: var:"<<SgNodeHelper::nodeToString(decl)<<endl;
 	  SgInitializer* initializer=initName->get_initializer();
+	  //assert(initializer);
 	  ConstraintSet cset=*currentEState.constraints();
-	  if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
-		//cout << "initalizer found:"<<endl;
+	  SgAssignInitializer* assignInitializer=0;
+	  if(initializer && (assignInitializer=isSgAssignInitializer(initializer))) {
+		//cout << "initializer found:"<<endl;
 		SgExpression* rhs=assignInitializer->get_operand_i();
+		assert(rhs);
 		PState newPState=analyzeAssignRhs(*currentEState.pstate(),initDeclVarId,rhs,cset);
 		return createEState(targetLabel,newPState,cset);
 	  } else {
@@ -335,6 +340,7 @@ set<VariableId> Analyzer::determineVariableIdsOfVariableDeclarations(set<SgVaria
 set<VariableId> Analyzer::determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList) {
   set<VariableId> resultSet;
   for(SgInitializedNamePtrList::iterator i=namePtrList.begin();i!=namePtrList.end();++i) {
+	assert(*i);
 	SgSymbol* sym=SgNodeHelper::getSymbolOfInitializedName(*i);
 	if(sym) {
 	  resultSet.insert(variableIdMapping.variableId(sym));
@@ -580,6 +586,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
   }
   // "return x;": add $return=eval() [but not for "return f();"]
   if(isSgReturnStmt(nextNodeToAnalyze1) && !SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
+
 	SgNode* expr=SgNodeHelper::getFirstChild(nextNodeToAnalyze1);
 	ConstraintSet cset=*currentEState.constraints();
 	PState newPState=analyzeAssignRhs(*(currentEState.pstate()),

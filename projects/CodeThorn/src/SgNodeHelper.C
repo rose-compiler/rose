@@ -204,6 +204,10 @@ SgSymbol*
 SgNodeHelper::getSymbolOfVariable(SgVarRefExp* varRefExp) {
   SgVariableSymbol* varSym=varRefExp->get_symbol();
   SgInitializedName* varInitName=varSym->get_declaration();
+  if(varInitName==0) {
+	//cout << "DEBUG: *only* varSym available."<<endl;
+	return varSym;
+  }
   SgSymbol* symbol=getSymbolOfInitializedName(varInitName);
   if(symbol==0) {
 	// MS: Fall back solution: try to find a symbol using the declaration 

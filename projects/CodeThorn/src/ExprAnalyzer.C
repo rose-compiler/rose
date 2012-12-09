@@ -24,7 +24,15 @@ bool ExprAnalyzer::variable(SgNode* node, VariableId& varId) {
   if(SgVarRefExp* varref=isSgVarRefExp(node)) {
 	// found variable
 	assert(_variableIdMapping);
+#if 1
+	SgSymbol* sym=varref->get_symbol();
+	assert(sym);
+	varId=_variableIdMapping->variableId(sym);
+#else
+	// MS: to investigate: even with the new var-sym-only case this does not work
+	// MS: investigage getSymbolOfVariable
 	varId=_variableIdMapping->variableId(varref);
+#endif
 	return true;
   } else {
 	VariableId defaultVarId;
