@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
 """
-Filter a GrpahViz dot graph to contain only nodes that are at most N
+Filter a GraphViz dot graph to contain only nodes that are at most N
 hops away from one or more specified central node(s).
 
 Uses pydot: http://code.google.com/p/pydot/

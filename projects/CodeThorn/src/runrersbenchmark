@@ -1,3 +1,4 @@
+#!/bin/bash
 if [[ ("$#" = 0) || ("$1" = "--help") ]]; then 
   echo "Usage: <ProblemNr> [<number-of-threads>]";
   exit;

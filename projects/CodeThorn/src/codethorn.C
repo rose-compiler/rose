@@ -195,10 +195,21 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
   assert(analyzer.getEStateSet());
   assert(analyzer.getTransitionGraph());
   if (ltl_file.size()) {
-    CodeThorn::FixpointLTL::Checker checker1(*analyzer.getEStateSet(),
-					     *analyzer.getTransitionGraph());
-    CodeThorn::UnifiedLTL::UChecker checker2(*analyzer.getEStateSet(),
-					     *analyzer.getTransitionGraph());
+    CodeThorn::FixpointLTL::Checker* checker1 = 0; 
+    CodeThorn::UnifiedLTL::UChecker* checker2 = 0; 
+    switch(analyzer.getLTLVerifier()) {
+    case 1: 
+      checker1 = new CodeThorn::FixpointLTL::Checker(*analyzer.getEStateSet(), 
+						     *analyzer.getTransitionGraph());
+      break;
+    case 2:
+      checker2 = new CodeThorn::UnifiedLTL::UChecker(*analyzer.getEStateSet(),
+						     *analyzer.getTransitionGraph());
+      break;
+    default: 
+      cerr << "Error: unknown ltl-verifier specified with ltl-verifier option."<<endl;
+      exit(1);
+    }
     ltl_input = fopen(ltl_file.c_str(), "r");
 
     ofstream* csv = NULL;
@@ -240,15 +251,12 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
       string formula = *ltl_val;
       cout<<endl<<"Verifying formula "<<color("white")<<formula<<color("normal")<<"."<<endl;
       //if (csv) *csv << n <<";\"" <<formula<<"\";";
-	  if (csv) *csv << n+60 <<",";
+      if (csv) *csv << n+60 <<",";
       try {
-		AType::BoolLattice result;
-		switch(analyzer.getLTLVerifier()) {
-		case 1: result = checker1.verify(*ltl_val);break;
-		case 2: result = checker2.verify(*ltl_val);break;
-		default: cerr << "Error: unknown ltl-verifier specified with ltl-verifier option."<<endl;
-		  exit(1);
-		}
+	AType::BoolLattice result;
+	if (checker1) result = checker1->verify(*ltl_val);
+	if (checker2) result = checker2->verify(*ltl_val);
+
 	if (result.isTrue()) {
 	  ++n_yes;
 	  cout<<color("green")<<"YES"<<color("normal")<<endl;
@@ -278,8 +286,10 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
 	if (csv) *csv << "error,0\r\n";
       }  
     }
-    if (csv) delete csv;
     fclose(ltl_input);
+    if (csv) delete csv;
+    if (checker1) delete checker1;
+    if (checker2) delete checker2;
     assert(n_yes+n_no+n_undecided+n_failed == n);
     cout<<"\nStatistics "<<endl
         <<"========== "<<endl

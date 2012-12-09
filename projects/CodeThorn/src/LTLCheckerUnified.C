@@ -19,6 +19,10 @@ using namespace CodeThorn;
 using namespace LTL;
 using namespace UnifiedLTL;
 
+// really expensive debug option -- prints a dot file at every iteration
+//#define ANIM_OUTPUT
+
+
 ////////////////////////////////////////////////////////////////////////
 // Convenience loop macros for dealing with boost graphs
 // Hopefully, they increase the readability of the algorithms
@@ -63,8 +67,8 @@ using namespace UnifiedLTL;
 /**
  * is there an edge v->v?
  */
-static
-bool selfcycle(LTLVertex v, LTLTransitionGraph& g) {
+template<class Vertex, class Graph>
+bool selfcycle(Vertex v, Graph& g) {
   LTLGraphTraits::out_edge_iterator out_i, out_end;
   for (tie(out_i, out_end) = out_edges(v, g); out_i != out_end; ++out_i) {
       LTLVertex succ = target(*out_i, g);
@@ -72,6 +76,15 @@ bool selfcycle(LTLVertex v, LTLTransitionGraph& g) {
 	return true;
   }
   return false;
+}
+
+/**
+ * \return true if out_degree is 0 or the only outgoing edge is a loop.
+ */
+template<class Vertex, class Graph>
+bool is_leaf(Vertex v, Graph& g) {
+  int outd = out_degree(v, g);
+  return outd==0 || (outd==1 && selfcycle(v, g));
 }
 
 
@@ -285,11 +298,13 @@ string visualize(const LTLStateTransitionGraph& stg, const Expr& e) {
     UVisualizer viz(state, l);
     s<<"subgraph ltl_"<<l<<" {\n";
     s<<"  node[shape=rectangle, style=filled];\n  ";
+#ifndef ANIM_OUTPUT
     if (show_derivation) {
       assert(state.debug.size() == ltl_label);
       const_cast<Expr&>(e).accept(viz, UVisualizer::newAttr(l));
       s<<viz.s.str();
     }
+#endif
     s<<"}\n";
 
   } END_FOR;
@@ -321,6 +336,9 @@ class UVerifier: public BottomUpVisitor {
   deque<const EState*> endpoints;
   Label start;
   unsigned short progress;
+  
+  /// To avoid recomputing I/O LTL-leafs, we keep track of common subexpressions
+  vector< pair<LTL::NodeType, char> > stack_contents;
 
 public:
   LTLStateTransitionGraph stg;
@@ -440,6 +458,7 @@ public:
     LTLWorklist worklist;
     unordered_set<LTLVertex> endpoints;
 
+    //cerr<<"\n-------------------------------------------"<<endl;
     //cerr<<"analyze() initializing..."<<endl;
     stg.vertex.clear();
     FOR_EACH_VERTEX(v, stg.g) {
@@ -468,25 +487,27 @@ public:
     if (worklist.empty()) {
       cerr<<"** WARNING: empty worklist!"<<endl;
     }
-
+    //cerr<<endl;
     while (!worklist.empty()) {
+      //cerr<<worklist.size()<<"\r";
       LTLVertex succ = worklist.front(); worklist.pop();
       bool verbose = false;
 
       // Endpoint handling
-      int outd = out_degree(succ, stg.g);
-      if (outd==0 || (outd==1 && selfcycle(succ, stg.g))) {
+      if (is_leaf(succ, stg.g)) {
 	if (endpoints.count(succ) == 0) {
-	  // did it become an orphan because it was replaced by a new node?
-	  FOR_EACH_PREDECESSOR(pred, succ, stg.g)
+	  //cerr<<"orphan: "<<succ<<","<<stg.g[succ]<<endl;
+	  // Orphan: did it become an orphan because it was replaced by a new node?
+	  FOR_EACH_PREDECESSOR(pred, succ, stg.g) {
 	    FOR_EACH_SUCCESSOR(s, pred, stg.g)
 	      worklist.push(s);
-  	    END_FOR;
-	  END_FOR;
+	    END_FOR;
+	    worklist.push(pred);
+	  } END_FOR;
 	  // Cut it off.
 	  clear_vertex(succ, stg.g);
 	} else {
-	  // Real endpoint
+	  // Real endpoint (ie. exit/assert)
 	  // Endpoints always receive a strong update, because there is no ambiguity
 	  LTLState old_state = stg.g[succ];
 	  LTLState new_state = transfer(old_state, Bot(), verbose, true);	
@@ -503,10 +524,14 @@ public:
       while (!vs.empty()) {
 	LTLVertex v = vs.front(); vs.pop();
 
-	//if (nargs<1 && (stg.g[v].estate->label() == 634))
-	//  verbose = true;
+	//if (nargs<3 && (stg.g[v].estate->label() == 634))
+	//   verbose = true;
 
-	if (verbose) cerr<<"\n** Visiting state "<<v<<","<<stg.g[v]<<endl;
+	if (verbose) {
+            cerr<<"\n** Visiting state "<<v<<","<<stg.g[v]<<endl;
+	    cerr<<"  in_degree = "<< in_degree(v, stg.g)<<endl;
+	    cerr<<" out_degree = "<<out_degree(v, stg.g)<<endl;
+        }
 
 	// Always make a new state v', so we can calculate precise
 	// results for both paths.  If a v' and v'' should later turn
@@ -522,9 +547,9 @@ public:
 
 	} else if (old_state.val.isBot()) {
 
-	  // performance shortcut: perform a strong update
-	  // this is legal because we ignore old_val in the transfer function
-	  // and it reduces the total number of nodes
+	  // Performance shortcut: perform a strong update.
+	  // This is legal because we ignore old_val in the transfer function anyway.
+	  // Benefit: it reduces the total number of nodes
 	  stg.vertex[new_state] = v;
 	  stg.g[v] = new_state;
 	  worklist.push(v);
@@ -532,17 +557,20 @@ public:
 	} else {
 
 	  // create a new state in lieu of the old state, and cut off the old state
+	  // if a new v' is created, it is put into the worklist automatically
 	  LTLVertex v_prime = add_state_if_new(new_state, stg, worklist);
-	  if (verbose && v != v_prime) cerr<<"  OLD: "<<old_state<< "\n  NEW: "<<new_state<<endl;
+	  if (verbose && v != v_prime) {
+	    cerr<<"  OLD: "<<old_state<< "\n  NEW: "<<new_state<<endl;
+	    cerr<<"  v: "<<v<<","<<stg.g[v]<<" = "<<stg.g[v].val<<endl;
+	  }
 	  //assert (v_prime != v || (new_state.val != old_state.val));
-	  if (verbose) cerr<<"  v: "<<v<<","<<stg.g[v]<<" = "<<stg.g[v].val<<endl;
 
 	  // Add edge from new state to successor
 	  if (succ == v) {
 	    // self-cycle
 	    add_edge(v_prime, v_prime, stg.g);
 	    //cerr<<v_prime<<" -> "<<v_prime<<endl;
-	  } else if (v_prime != v) {
+	  } else if (!(edge(v_prime, succ, stg.g).second)) {
 	    add_edge(v_prime, succ, stg.g);
 	    //cerr<<v_prime<<" -> "<<succ<<endl;
 	    
@@ -550,19 +578,30 @@ public:
 	    remove_edge(v, succ, stg.g);
 
 	    // Add edge from predecessor to new state
-	    LTLWorklist preds = predecessors(v, stg.g);
-	    while(!preds.empty()) {
-	      LTLVertex pred = preds.front(); preds.pop();	      
-	      add_edge(pred, v_prime, stg.g);
-	      remove_edge(pred, v, stg.g);
-	      // add the v's predecessor to the worklist because v's premise changed
-	      worklist.push(pred);
-	    }
+	    FOR_EACH_PREDECESSOR(pred, v, stg.g) {
+	      if (pred == v) add_edge(v_prime, v_prime, stg.g);
+	      else           add_edge(pred,    v_prime, stg.g);
+		//  if (is_leaf(v, stg.g)) 
+		//    remove_edge(pred, v, stg.g);
+		//  // add the predecessor of v to the worklist, because v's premise changed
+		//  worklist.push(pred);
+	    } END_FOR;
+
+	    // add all remaining successors of the old v to the
+	    // worklist to force v to be recomputed
+	    FOR_EACH_SUCCESSOR(v_succ, v, stg.g)
+	      worklist.push(v_succ);
+	    END_FOR;
+	    worklist.push(v);
 	  }
+#ifdef REDUCE_DEBUG
+          static int iteration=0;
+          if (++iteration == 100000) exit(2);
+#endif
 
 #ifdef ANIM_OUTPUT
 	  static int wait=0;
-	  if (++wait > 101000) {
+	  if (++wait > 0) {
 	    ofstream animfile;
 	    stringstream fname;
 	    static int n = 1;
@@ -584,6 +623,7 @@ public:
       // Pop arguments
       for (int i = 0; i<nargs; ++i)
 	state.valstack.pop_back(); 
+
       // Push result
       state.push(state.val);
       state.debug.push_back(state.val);
@@ -629,6 +669,32 @@ public:
   ///tell if a state is an exit node
   bool isEndpoint(const EState* es) const {
     return find(endpoints.begin(), endpoints.end(), es) != endpoints.end();
+  }
+
+  void pick(size_t nth) {
+    FOR_EACH_VERTEX(v, stg.g) {
+      LTLState state = stg.g[v];
+      // Copy cached result
+      BoolLattice val = state.valstack[nth];
+      state.push(val);
+      state.debug.push_back(val);
+      stg.g[v] = state;
+      stg.vertex[state] = v;
+    } END_FOR
+  }
+
+  /// figure out if we already calculated a certain IO operation and
+  /// copy the result over, if so
+  bool cached_io(pair<NodeType, char> io_op) {
+    stack_contents.push_back(io_op);
+    for (size_t i=0; i<stack_contents.size()-1; ++i) {
+      if (stack_contents[i] == io_op) {
+	pick(i);
+	cerr<<"(cached at "<<i<<")"<<endl;
+	return true;
+      }
+    }
+    return false;
   }
 
   /// verify that two constraints are consistent, ie. not true and false
@@ -723,7 +789,8 @@ public:
   }; 
   void visit(const InputSymbol* expr) {
     show_progress(*expr);
-    analyze(stg, *expr, TransferI(expr, stg), 0);
+    if (!cached_io(make_pair(e_InputSymbol, expr->c)))
+      analyze(stg, *expr, TransferI(expr, stg), 0);
   }
 
   /// return True iff that state is an !Ic operation
@@ -780,7 +847,8 @@ public:
   }; 
   void visit(const NegInputSymbol* expr) {
     show_progress(*expr);
-    analyze(stg, *expr, TransferNI(expr, stg), 0);
+    if (!cached_io(make_pair(e_NegInputSymbol, expr->c)))
+      analyze(stg, *expr, TransferNI(expr, stg), 0);
   }
 
   /// return True iff that state is an Oc operation
@@ -839,7 +907,8 @@ public:
   }; 
   void visit(const OutputSymbol* expr) {
     show_progress(*expr);
-    analyze(stg, *expr, TransferO(expr), 0);
+    if (!cached_io(make_pair(e_OutputSymbol, expr->c)))
+      analyze(stg, *expr, TransferO(expr), 0);
   }
  
 
@@ -899,7 +968,8 @@ public:
   }; 
   void visit(const NegOutputSymbol* expr) {
     show_progress(*expr);
-    analyze(stg, *expr, TransferNO(expr), 0);
+    if (!cached_io(make_pair(e_NegOutputSymbol, expr->c)))
+      analyze(stg, *expr, TransferNO(expr), 0);
   }
 
   /**
@@ -922,6 +992,9 @@ public:
   void visit(const Not* expr) {
     show_progress(*expr);
     analyze(stg, *expr, TransferNot(), 1);
+
+    stack_contents.pop_back();
+    stack_contents.push_back(make_pair(e_Not, 0));
   }
 
   /**
@@ -952,6 +1025,9 @@ public:
   void visit(const Next* expr) {
     show_progress(*expr);
     analyze(stg, *expr, TransferX(), 1);
+
+    stack_contents.pop_back();
+    stack_contents.push_back(make_pair(e_Next, 0));
   }
 
   /**
@@ -984,6 +1060,9 @@ public:
   void visit(const Eventually* expr) {
     show_progress(*expr);
     analyze(stg, *expr, TransferF(), 1);
+
+    stack_contents.pop_back();
+    stack_contents.push_back(make_pair(e_Eventually, 0));
   }
 
   /**
@@ -1014,6 +1093,9 @@ public:
   void visit(const Globally* expr) {
     show_progress(*expr);
     analyze(stg, *expr, TransferG(), 1);
+
+    stack_contents.pop_back();
+    stack_contents.push_back(make_pair(e_Globally, 0));
   }
 
   // Implementation status: DONE
@@ -1035,6 +1117,10 @@ public:
   void visit(const And* expr) {
     show_progress(*expr);
     analyze(stg, *expr, TransferAnd(), 2);
+
+    stack_contents.pop_back();
+    stack_contents.pop_back();
+    stack_contents.push_back(make_pair(e_And, 0));
   }
 
   // Implementation status: DONE
@@ -1056,6 +1142,10 @@ public:
   void visit(const Or* expr) {
     show_progress(*expr);
     analyze(stg, *expr, TransferOr(), 2);
+
+    stack_contents.pop_back();
+    stack_contents.pop_back();
+    stack_contents.push_back(make_pair(e_Or, 0));
   }
 
   /**
@@ -1093,6 +1183,10 @@ public:
   void visit(const Until* expr) {
     show_progress(*expr);
     analyze(stg, *expr, TransferU(), 2);
+
+    stack_contents.pop_back();
+    stack_contents.pop_back();
+    stack_contents.push_back(make_pair(e_Until, 0));
   }
 
   /**
@@ -1141,6 +1235,10 @@ public:
   void visit(const Release* expr) {
     show_progress(*expr);
     analyze(stg, *expr, TransferR(), 2);
+
+    stack_contents.pop_back();
+    stack_contents.pop_back();
+    stack_contents.push_back(make_pair(e_Release, 0));
   }
 };
 
@@ -1150,11 +1248,15 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
     eStateSet(ess)
 {
   // Build our own customized Transition graph
+
+  cerr<<"Building boost state transition graph... "<<flush;
   int i = 0;
-  map<const EState*, Label> estate_label;
+  boost::unordered_map<const EState*, Label> estate_label;
   FOR_EACH_ESTATE(state, l1) {
     estate_label[&(*state)] = i++;
   }
+  //cerr<<" finished labeling "<<flush;
+
   BoostTransitionGraph full_graph(ess.size());
   FOR_EACH_TRANSITION(t) {
     Label src = estate_label[((*t).source)];
@@ -1166,10 +1268,12 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
     assert(full_graph[src]);
     assert(full_graph[tgt]);
   }
+  cerr<<"done"<<endl;
   //start = estate_label[transitionGraph.begin()->source];
   Transition st = transitionGraph.getStartTransition();
   start = estate_label[st.source];
 
+  // Optimization
   if(option_debug_mode==200) {
     cout << "DEBUG: START"<<(*transitionGraph.begin()).source
 	 <<", news: "<<transitionGraph.getStartTransition().source
@@ -1180,6 +1284,7 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
   if(boolOptions["post-collapse-stg"]) {
     // Optimization
     start = collapse_transition_graph(full_graph, g);
+
   } else {
     g = full_graph;
   }
@@ -1200,8 +1305,7 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
 Label UChecker::collapse_transition_graph(BoostTransitionGraph& g, 
 					  BoostTransitionGraph& reduced) const {
   Label n = 0;
-  //Label renumbered[num_vertices(g)]; // MS: variable length arrays crash on some system configurations
-  Label* renumbered=new Label[num_vertices(g)];
+  vector<Label> renumbered(num_vertices(g));
 
   FOR_EACH_STATE(state, label) {
     //cerr<<label<<endl;
@@ -1253,9 +1357,7 @@ Label UChecker::collapse_transition_graph(BoostTransitionGraph& g,
   cerr<<"Number of EStates: "<<num_vertices(g)<<endl;
   cerr<<"Number of LTLStates: "<<num_vertices(reduced)<<endl;
 
-  Label res=renumbered[start];
-  delete[] renumbered;
-  return res;
+  return renumbered[start];
 }
 
 

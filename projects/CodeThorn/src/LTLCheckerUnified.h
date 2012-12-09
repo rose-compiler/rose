@@ -26,7 +26,7 @@ namespace UnifiedLTL {
   using namespace std;
   using namespace AType;
 
-  typedef adjacency_list<hash_setS, vecS, bidirectionalS, const EState*> BoostTransitionGraph;
+  typedef adjacency_list<vecS, vecS, bidirectionalS, const EState*> BoostTransitionGraph;
   typedef graph_traits<BoostTransitionGraph> GraphTraits;
   typedef GraphTraits::vertex_descriptor Vertex;
 
