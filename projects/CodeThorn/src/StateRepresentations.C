@@ -89,8 +89,7 @@ void PState::fromStream(istream& is) {
   int __varIdCode=-1; 
   VariableId __varId; 
   AValue __varAValue; 
-  is>>c;
-  if(c!='{') throw "Error: Syntax error PState. Expected '{'.";
+  if(!CodeThorn::Parse::checkWord("{",is)) throw "Error: Syntax error PState. Expected '{'.";
   is>>c;
   // read pairs (varname,varvalue)
   while(c!='}') {
