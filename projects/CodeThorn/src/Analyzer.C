@@ -698,9 +698,18 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 		// update state (remove all existing constraint on that variable and set it to top)
 		PState newPState=*currentEState.pstate();
 		ConstraintSet newCSet=*currentEState.constraints();
-		if(boolOptions["update-input-var"]) {
+		if(boolOptions["interpreter"]) {
+		  cout<<"CodeThorn-interperter(stdin)> ";
+		  AValue aval;
+		  CodeThorn::Parse::whitespaces(cin);
+		  cin >> aval;
 		  newCSet.removeAllConstraintsOfVar(varId);
-		  newPState[varId]=AType::Top();
+		  newPState[varId]=aval;
+		} else {
+		  if(boolOptions["update-input-var"]) {
+			newCSet.removeAllConstraintsOfVar(varId);
+			newPState[varId]=AType::Top();
+		  }
 		}
 		newio.recordVariable(InputOutput::STDIN_VAR,varId);
 		return elistify(createEState(edge.target,newPState,newCSet,newio));
@@ -712,10 +721,24 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  if(boolOptions["report-stdout"]) {
 		cout << "REPORT: stdout:"<<varId.toString()<<":"<<estate->toString()<<endl;
 	  }
+	  if(boolOptions["interpreter"]) {
+		PState* pstate=const_cast<PState*>(estate->pstate());
+		AType::ConstIntLattice aint=(*pstate)[varId].getValue();
+		// TODO: to make this more specific we must parse the printf string
+		cout<<"CodeThorn-interperter(stdout)> ";
+		cout<<aint.toString()<<endl;
+	  }
 	}
 	if(getLabeler()->isStdErrLabel(lab,&varId)) {
 	  newio.recordVariable(InputOutput::STDERR_VAR,varId);
 	  assert(newio.var==varId);
+	  if(boolOptions["interpreter"]) {
+		PState* pstate=const_cast<PState*>(estate->pstate());
+		AType::ConstIntLattice aint=(*pstate)[varId].getValue();
+		// TODO: to make this more specific we must parse the printf string
+		cerr<<"CodeThorn-interperter(stderr)> ";
+		cerr<<aint.toString()<<endl;
+	  }
 	  if(boolOptions["report-stderr"]) {
 		cout << "REPORT: stderr:"<<varId.toString()<<":"<<estate->toString()<<endl;
 	  }
@@ -727,8 +750,6 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	newEState.setLabel(edge.target);
 	return elistify(newEState);
   }
-
-
 
   // special case external call
   if(SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1) 
@@ -1209,6 +1230,12 @@ void Analyzer::runSolver2() {
 				{
 				  cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
 				}
+			  }
+			  if(boolOptions["interpreter"]) {
+				cerr<<"CodeThorn-interperter> failed assert";
+				string name=labelNameOfAssertLabel(currentEStatePtr->label());
+				if(name!="") { cout << " @ Label: "<<name;}
+				cout <<endl;
 			  }
 			  if(_csv_assert_live_file.size()>0) {
 				string name=labelNameOfAssertLabel(currentEStatePtr->label());
