@@ -163,6 +163,7 @@ class CGFunction : public Function
                         //printf("getTarget finished=%d\n", finished);
                         SgGraphNode* target = (dir == fw ? (*ite)->get_to() : (*ite)->get_from());
                         ROSE_ASSERT(isSgFunctionDeclaration(target->get_SgNode()));
+                        assert(!isSgTemplateFunctionDeclaration(target->get_SgNode()));
                         
                         // Compiler-generated functions do not appear as nodes in the call graph
                         if(isSgFunctionDeclaration(target->get_SgNode())->get_file_info()->isCompilerGenerated()) return NULL;
@@ -188,6 +189,7 @@ class CGFunction : public Function
                 {
                         SgGraphNode* target = (dir == fw ? (*ite)->get_to() : (*ite)->get_from());
                         ROSE_ASSERT(isSgFunctionDeclaration(target->get_SgNode()));
+                        assert(!isSgTemplateFunctionDeclaration(target->get_SgNode()));
                         Function result(isSgFunctionDeclaration(target->get_SgNode()));
                         return result;
                 }

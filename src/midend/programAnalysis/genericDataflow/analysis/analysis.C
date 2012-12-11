@@ -6,6 +6,7 @@
 #include "analysis.h"
 #include "dataflow.h"
 #include "latticeFull.h"
+#include "stringify.h"
 #include <vector>
 #include <set>
 #include <map>
@@ -579,6 +580,7 @@ void MergeAllReturnStates::visit(const Function& func, const DataflowNode& n, No
         }
         // If this is the end of a function, which is an implicit return that has no return value
         else if(isSgFunctionDefinition(sgn)) {
+                assert(!isSgTemplateFunctionDefinition(sgn));
                 if(analysisDebugLevel>=1)
                         Dbg::dbg << "MergeAllReturnStates::visit() isSgFunctionDefinition\n";
                 
@@ -726,7 +728,9 @@ bool ContextInsensitiveInterProceduralDataflow::transfer(
         ROSE_ASSERT(call);
         
         if(analysisDebugLevel > 0)
-                Dbg::dbg << "ContextInsensitiveInterProceduralDataflow::transfer "<<func.get_name().getString()<<"()=>"<<callee.get_name().getString()<<"()\n";
+            Dbg::dbg << "ContextInsensitiveInterProceduralDataflow::transfer "
+                     <<func.get_name().getString()<<"()=>"<<callee.get_name().getString()<<"()\n";
+
         if(callee.get_definition())
         {
                 FunctionState* funcS = FunctionState::getDefinedFuncState(callee);
@@ -736,7 +740,8 @@ bool ContextInsensitiveInterProceduralDataflow::transfer(
                 else   funcLatticesBefore = &(funcS->state.getLatticeBelow((Analysis*)intraAnalysis));
                         
                 //if(analysisDebugLevel > 0)
-                //      printf("        dfInfo.size()=%d, funcLatticesBefore->size()=%d, this=%p\n", dfInfo.size(), funcLatticesBefore->size(), this);
+                //      printf("        dfInfo.size()=%d, funcLatticesBefore->size()=%d, this=%p\n",
+                //             dfInfo.size(), funcLatticesBefore->size(), this);
                 
                 // Update the function's entry/exit state       with the caller's state at the call site
                 vector<Lattice*>::const_iterator itCalleeBefore, itCallerBefore;
@@ -766,7 +771,8 @@ bool ContextInsensitiveInterProceduralDataflow::transfer(
                         modified = calleeL->meetUpdate(remappedL) || modified;
                         
                         if(analysisDebugLevel>=1)
-                                Dbg::dbg << "      After modified = "<<modified << "calleeL=["<<calleeL<<"] "<<calleeL->str("        ")<<endl;
+                                Dbg::dbg << "      After modified = "<<modified
+                                         << "calleeL=["<<calleeL<<"] "<<calleeL->str("        ")<<endl;
                                         
 //!!!           delete remappedL;
                 }
@@ -802,7 +808,8 @@ bool ContextInsensitiveInterProceduralDataflow::transfer(
                         // Create a copy of the current lattice, remapped for the callee function's variables
                         Lattice* remappedL = calleeL->copy();
                         if(analysisDebugLevel>=1)
-                                Dbg::dbg << "      remappedL-after=["<<remappedL<<"] "<<calleeL->str("        ")<<endl << remappedL->str(" ")<<endl;
+                                Dbg::dbg << "      remappedL-after=["<<remappedL<<"] "
+                                         <<calleeL->str("        ")<<endl << remappedL->str(" ")<<endl;
                         map<varID, varID> paramArgByRefMap;
                         FunctionState::setParamArgByRefMap(call, paramArgByRefMap);
                         /*Dbg::dbg << "#paramArgByRefMap="<<paramArgByRefMap.size()<<endl;
@@ -852,15 +859,15 @@ void ContextInsensitiveInterProceduralDataflow::visit(const CGFunction* funcCG)
         if(func.get_definition())
         {
                 FunctionState* fState = FunctionState::getDefinedFuncState(func);
+                assert(fState!=NULL);
                 
                 IntraProceduralDataflow *intraDataflow = dynamic_cast<IntraProceduralDataflow *>(intraAnalysis);
+                assert(intraDataflow!=NULL);
                 if (intraDataflow->visited.find(func) == intraDataflow->visited.end()) {
                         vector<Lattice*>  initLats;
                         vector<NodeFact*> initFacts;
                         intraDataflow->genInitState(func, cfgUtils::getFuncStartCFG(func.get_definition(), filter),
                                                     fState->state, initLats, initFacts);
-                        //                        intraAnalysis->genInitState(func, cfgUtils::getFuncEndCFG(func.get_definition()),
-                        //                            fState->state, initLats, initFacts);
                         fState->state.setLattices(intraAnalysis, initLats);
                         fState->state.setFacts(intraAnalysis, initFacts);
                 }
@@ -883,7 +890,8 @@ void ContextInsensitiveInterProceduralDataflow::visit(const CGFunction* funcCG)
                                                     remainingDueToCallers.find(func)!=remainingDueToCallers.end(),
                                                     remainingDueToCalls[func]);
                 
-                // Merge the dataflow states above all the return statements in the function, storing the results in Fact 0 of the function
+                // Merge the dataflow states above all the return statements in the function, storing the results in Fact 0 of
+                // the function
                 DFStateAtReturns* dfsar = dynamic_cast<DFStateAtReturns*>(fState->state.getFact(this, 0));
                 bool modified = dfsar->mergeReturnStates(func, fState, dynamic_cast<IntraProceduralDataflow*>(intraAnalysis));  
                 
@@ -930,7 +938,8 @@ void ContextInsensitiveInterProceduralDataflow::visit(const CGFunction* funcCG)
                         {
                                 const CGFunction* caller = it.getTarget(functions);
                                 
-                                //Dbg::dbg << "Caller of "<<funcCG->get_name().getString()<<": "<<caller->get_name().getString()<<endl;
+                                //Dbg::dbg << "Caller of "<<funcCG->get_name().getString()<<": "
+                                //         <<caller->get_name().getString()<<endl;
                                 addToRemaining(caller);
                                 remainingDueToCalls[caller].insert(func);
                         }
