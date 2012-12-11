@@ -214,17 +214,20 @@ SgFunctionDeclaration * is_function_exists(SgClassDefinition *cls, SgMemberFunct
           }
         }
       }
+    assert(!isSgTemplateFunctionDeclaration(resultDecl));
     return resultDecl;
 }
 
 bool 
 dummyFilter::operator() (SgFunctionDeclaration* node) const{
+  assert(!isSgTemplateFunctionDeclaration(node));
   return true;
 };
 
 bool
 builtinFilter::operator() (SgFunctionDeclaration* funcDecl) const
 {
+  assert(!isSgTemplateFunctionDeclaration(funcDecl));
   bool returnValue = true;
   ROSE_ASSERT(funcDecl != NULL);
   string filename = funcDecl->get_file_info()->get_filename();
@@ -312,6 +315,7 @@ CallTargetSet::solveFunctionPointerCallsFunctional(SgNode* node, SgFunctionType*
 
   SgFunctionDeclaration* fctDecl = isSgFunctionDeclaration(node);
   ROSE_ASSERT( fctDecl != NULL );
+  assert(!isSgTemplateFunctionDeclaration(fctDecl));
   //if ( functionType == fctDecl->get_type() )
   //Find all function declarations which is both first non-defining declaration and
   //has a mangled name which is equal to the mangled name of 'functionType'
@@ -321,6 +325,7 @@ CallTargetSet::solveFunctionPointerCallsFunctional(SgNode* node, SgFunctionType*
 
     SgFunctionDeclaration *nonDefDecl =
       isSgFunctionDeclaration( fctDecl->get_firstNondefiningDeclaration() );
+    assert(!isSgTemplateFunctionDeclaration(nonDefDecl));
 
     //The ROSE AST normalizes functions so that there should be a nondef function decl for
     //every function
@@ -337,7 +342,7 @@ CallTargetSet::solveFunctionPointerCallsFunctional(SgNode* node, SgFunctionType*
 
 
 
-  std::vector<SgFunctionDeclaration*>
+std::vector<SgFunctionDeclaration*>
 CallTargetSet::solveFunctionPointerCall( SgPointerDerefExp *pointerDerefExp, SgProject *project )
 {
   SgFunctionDeclarationPtrList functionList;
@@ -608,6 +613,7 @@ Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(S
 
   SgFunctionDeclaration* fctDecl = isSgFunctionDeclaration(node);
   ROSE_ASSERT( fctDecl != NULL );
+  assert(!isSgTemplateFunctionDeclaration(fctDecl));
   //if ( functionType == fctDecl->get_type() )
   //Find all function declarations which is both first non-defining declaration and
   //has a mangled name which is equal to the mangled name of 'functionType'
@@ -621,6 +627,7 @@ Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(S
     //The ROSE AST normalizes functions so that there should be a nondef function decl for
     //every function
     ROSE_ASSERT( nonDefDecl != NULL );
+    assert(!isSgTemplateFunctionDeclaration(nonDefDecl));
     if( fctDecl == nonDefDecl )
       functionList.push_back( nonDefDecl );
   }//else
@@ -836,11 +843,14 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
                     : isSgFunctionDeclaration(isSgMemberFunctionRefExp(functionExp)->get_symbol()->get_declaration())
                     ;
             ROSE_ASSERT(fctDecl);
+            assert(!isSgTemplateFunctionDeclaration(fctDecl));
             SgFunctionDeclaration *nonDefDecl = isSgFunctionDeclaration(fctDecl->get_firstNondefiningDeclaration());
 
             //Construction Function Props
-            if (nonDefDecl)
+            if (nonDefDecl) {
+                assert(!isSgTemplateFunctionDeclaration(nonDefDecl));
                 fctDecl = nonDefDecl;
+            }
 
             functionList.push_back(fctDecl);
             break;
@@ -892,6 +902,7 @@ void CallTargetSet::getDeclarationsForExpression(SgExpression* exp,
         foreach(SgFunctionDeclaration* candidateDecl, props)
         {
                 ROSE_ASSERT(candidateDecl);
+                assert(!isSgTemplateFunctionDeclaration(candidateDecl));
                 defList.push_back(candidateDecl);
         }
 }
@@ -907,6 +918,7 @@ CallTargetSet::getDefinitionsForExpression(SgExpression* sgexp,
     foreach(SgFunctionDeclaration* candidateDecl, props)
     {
         ROSE_ASSERT(candidateDecl);
+        assert(!isSgTemplateFunctionDeclaration(candidateDecl));
         candidateDecl = isSgFunctionDeclaration(candidateDecl->get_definingDeclaration());
         if (candidateDecl != NULL)
         {
@@ -957,6 +969,7 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
     hasDefinition = false;
 
     functionDeclaration = inputFunctionDeclaration;
+    assert(!isSgTemplateFunctionDeclaration(functionDeclaration));
 
     SgFunctionDeclaration *defDecl =
             (
@@ -1064,7 +1077,7 @@ GetOneFuncDeclarationPerFunction::operator()(SgNode* node )
 {
   result_type returnType;
   SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(node);
-  if(funcDecl != NULL)
+  if(funcDecl != NULL && !isSgTemplateFunctionDeclaration(funcDecl))
   {
     if( funcDecl->get_definingDeclaration () != NULL && node == funcDecl->get_definingDeclaration ())
       returnType.push_back(node);
