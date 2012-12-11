@@ -1232,6 +1232,7 @@ string cfgUtils::genUniqueName()
   {
     SgFunctionDeclaration *curDecl;
     ROSE_ASSERT(curDecl = isSgFunctionDeclaration(*it));
+    assert(!isSgTemplateFunctionDeclaration(curDecl));
     // while our chosen "unique" name conflicts with the current SgFunctionDeclaration
     // keep adding random numbers to the end of the the "unique" name until it becomes unique
     //          printf("SgFunctionDeclaration: name<%s> == curDecl->get_name().getString()<%s> = %d\n", name.c_str(), curDecl->get_name().getString().c_str(), name == curDecl->get_name().getString());
@@ -1254,7 +1255,7 @@ SgFunctionDeclaration* cfgUtils::getFuncDecl(string name)
     SgFunctionDeclaration *curDecl;
     ROSE_ASSERT(curDecl = isSgFunctionDeclaration(*it));
     // if we've found our function
-    while(name == curDecl->get_name().getString())
+    if (!isSgTemplateFunctionDeclaration(*it) && name == curDecl->get_name().getString())
     {
       return curDecl;
     }
