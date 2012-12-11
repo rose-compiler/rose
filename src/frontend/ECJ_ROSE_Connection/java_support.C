@@ -79,6 +79,67 @@ SgJavaParameterizedType *getUniqueParameterizedType(SgClassType *raw_type, SgTem
 
 
 //
+// Generate the unbound wildcard if it does not yet exist and return it.  Once the unbound Wildcard
+// is generated, it is attached to the Object type so that it can be retrieved later. 
+//
+SgJavaWildcardType *getUniqueWildcardUnbound() {
+    ROSE_ASSERT(::ObjectClassType);
+    AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) ::ObjectClassType -> getAttribute("unbound");
+    if (! attribute) {
+        SgJavaWildcardType *wildcard = new SgJavaWildcardType();
+        wildcard -> set_is_unbound(true);
+        wildcard -> set_has_extends(false);
+        wildcard -> set_has_super(false);
+
+        attribute = new AstSgNodeAttribute(wildcard);
+        ::ObjectClassType -> setAttribute("unbound", attribute);
+    }
+
+    return isSgJavaWildcardType(attribute -> getNode());
+}
+
+
+//
+// If it does not exist yet, generate wildcard type that extends this type.  Return the wildcard in question. 
+//
+SgJavaWildcardType *getUniqueWildcardExtends(SgType *type) {
+    ROSE_ASSERT(type);
+    AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) type -> getAttribute("extends");
+    if (! attribute) {
+        SgJavaWildcardType *wildcard = new SgJavaWildcardType(type);
+        wildcard -> set_is_unbound(false);
+        wildcard -> set_has_extends(true);
+        wildcard -> set_has_super(false);
+
+        attribute = new AstSgNodeAttribute(wildcard);
+        type -> setAttribute("extends", attribute);
+    }
+
+    return isSgJavaWildcardType(attribute -> getNode());
+}
+
+
+//
+// If it does not exist yet, generate a super wildcard for this type.  Return the wildcard in question. 
+//
+SgJavaWildcardType *getUniqueWildcardSuper(SgType *type) {
+    ROSE_ASSERT(type);
+    AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) type -> getAttribute("super");
+    if (! attribute) {
+        SgJavaWildcardType *wildcard = new SgJavaWildcardType(type);
+        wildcard -> set_is_unbound(false);
+        wildcard -> set_has_extends(false);
+        wildcard -> set_has_super(true);
+
+        attribute = new AstSgNodeAttribute(wildcard);
+        type -> setAttribute("super", attribute);
+    }
+
+    return isSgJavaWildcardType(attribute -> getNode());
+}
+
+
+//
 // Always map the Rose SgTypeString into java.lang.String before making comparison. This is required
 // because Rose assigns the the type SgTypeString by default to a string constant (an SgStringVal).
 //

@@ -52,6 +52,7 @@ Grammar::setUpTypes ()
 
   // DQ (8/18/2011): Java specific support for generics.
      NEW_TERMINAL_MACRO ( JavaParameterizedType , "JavaParameterizedType", "T_JAVA_PARAM" );
+     NEW_TERMINAL_MACRO ( JavaWildcardType, "JavaWildcardType", "T_JAVA_WILD" );
 
      //
      // [DT] 5/11/2000 -- Added TemplateType.  Should it be called TemplateInstantiationType
@@ -145,7 +146,7 @@ Grammar::setUpTypes ()
           ReferenceType    | NamedType         | ModifierType      | FunctionType         |
           ArrayType        | TypeEllipse       | TemplateType      | QualifiedNameType    |
           TypeComplex      | TypeImaginary     | TypeDefault       | TypeCAFTeam          |
-          TypeCrayPointer  | TypeLabel, "Type","TypeTag", false);
+          TypeCrayPointer  | TypeLabel         | JavaWildcardType, "Type","TypeTag", false);
 
 #if 1
   // ***********************************************************************
@@ -423,6 +424,12 @@ Grammar::setUpTypes ()
   // CUSTOM_CREATE_TYPE_MACRO(TemplateType,"SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE","SgTemplateInstantiationDecl* decl = NULL");
      CUSTOM_CREATE_TYPE_MACRO(TemplateType,"SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE","SgTemplateDeclaration* decl = NULL");
 
+     CUSTOM_CREATE_TYPE_MACRO(JavaWildcardType,
+            "SOURCE_CREATE_TYPE_FOR_JAVA_WILDCARD_TYPE",
+            "SgType *bound_type = NULL");
+     CUSTOM_CREATE_TYPE_MACRO(TemplateType,
+            "SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE",
+            "SgTemplateInstantiationDecl* decl = NULL");
      CUSTOM_CREATE_TYPE_MACRO(EnumType,
             "SOURCE_CREATE_TYPE_FOR_ENUM_TYPE",
             "SgEnumDeclaration* decl = NULL");
@@ -513,6 +520,17 @@ Grammar::setUpTypes ()
      JavaParameterizedType.setDataPrototype     ("SgType*","raw_type","= NULL",
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      JavaParameterizedType.setDataPrototype     ("SgTemplateParameterList*","type_list","= NULL",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     JavaWildcardType.setFunctionPrototype ("HEADER_JAVA_WILDCARD_TYPE", "../Grammar/Type.code" );
+     JavaWildcardType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
+     JavaWildcardType.setDataPrototype     ("SgType*","bound_type","= NULL",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     JavaWildcardType.setDataPrototype     ("bool","is_unbound","= true",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     JavaWildcardType.setDataPrototype     ("bool","has_extends","= false",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     JavaWildcardType.setDataPrototype     ("bool","has_super","= false",
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // TemplateInstantiationType.setFunctionPrototype ("HEADER_TEMPLATE_INSTANTIATION_TYPE", "../Grammar/Type.code" );
@@ -754,6 +772,8 @@ Grammar::setUpTypes ()
 
      JavaParameterizedType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
+     JavaWildcardType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+
   // TemplateInstantiationType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      EnumType.excludeFunctionSource     ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
@@ -800,6 +820,7 @@ Grammar::setUpTypes ()
 
   // ArrayType.editSubstitute( "MANGLED_ID_STRING", "A_" );
      TypeEllipse.editSubstitute( "MANGLED_ID_STRING", "e" );
+  // JavaWildcardType.editSubstitute( "MANGLED_ID_STRING", "?" );
 
   // DQ (8/25/2012): Avoid the default generated get_mangled_name() function for this IR node.
   // DQ (5/11/2012): We need to define this.
@@ -820,6 +841,7 @@ Grammar::setUpTypes ()
 
      ClassType.setFunctionSource             ( "SOURCE_CLASS_TYPE", "../Grammar/Type.code");
      JavaParameterizedType.setFunctionSource ( "SOURCE_JAVA_PARAMETERIZED_TYPE", "../Grammar/Type.code");
+     JavaWildcardType.setFunctionSource      ( "SOURCE_JAVA_WILDCARD_TYPE", "../Grammar/Type.code");
 
      TemplateType.setFunctionSource        ( "SOURCE_TEMPLATE_TYPE", "../Grammar/Type.code");
 

@@ -53,8 +53,8 @@ ecjASTVisitor.class:  ${srcdir}/ExtendedASTVisitor.java ${srcdir}/ecjASTVisitor.
 # These are the commands to generate the files we need (in the build tree).
 # JavaTraversal.class JavaTraversal.h: ${srcdir}/JavaTraversal.java
 JavaTraversal.h: ${srcdir}/JavaTraversal.java
-	javac -cp ${srcdir}/ecjROSE.jar ${srcdir}/JavaTraversal.java
-	javah -jni JavaTraversal
+	$(JAVAC) -cp ${srcdir}/ecjROSE.jar ${srcdir}/JavaTraversal.java
+	$(JAVAH) -jni JavaTraversal
 
 # DQ (4/16/2011): Added support for Java specific tokens (to support source position information in ROSE).
 JavaToken.class: ${srcdir}/JavaToken.java
@@ -67,7 +67,6 @@ JavaSourcePositionInformation.class: ${srcdir}/JavaSourcePositionInformation.jav
 # charles4: (2/23/2012): 
 JavaSourcePositionInformationFactory.class: ${srcdir}/JavaSourcePositionInformationFactory.java
 	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. ${srcdir}/JavaSourcePositionInformationFactory.java
-
 
 EXTRA_DIST = CMakeLists.txt ecjROSE.jar JavaTraversal.java JavaParser.java JavaParserSupport.java ExtendedASTVisitor.java ecjASTVisitor.java JavaToken.java JavaSourcePositionInformation.java JavaSourcePositionInformationFactory.java
 

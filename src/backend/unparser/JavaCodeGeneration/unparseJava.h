@@ -241,6 +241,7 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseModifierType(SgModifierType* type, SgUnparse_Info& info);
 
           virtual void unparseJavaParameterizedType(SgJavaParameterizedType* type, SgUnparse_Info& info);
+          virtual void unparseJavaWildcardType(SgJavaWildcardType* type, SgUnparse_Info& info);
 
           virtual bool requiresParentheses(SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseExpression(SgExpression* expr, SgUnparse_Info& info);
