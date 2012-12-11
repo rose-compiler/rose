@@ -3,6 +3,7 @@
 
 #include "CallGraphTraverse.h"
 #include "cfgUtils.h"
+#include "stringify.h"
 
 #include <set>
 using namespace std;
@@ -406,10 +407,18 @@ TraverseCallGraph::TraverseCallGraph(SgIncidenceDirectedGraph* graph)
                 assert(!isSgTemplateFunctionDeclaration(n));
                 CGFunction func(isSgFunctionDeclaration(n), graph);
                 
-                // if this function is not compiler-generated
-                if(!func.get_file_info()->isCompilerGenerated())
-                {
-                        // add the mapping to decl2CFNode
+                // Skip functions that are compiler generated. Beware that under edg4x, an instantiated function template or
+                // member function template is compiler generated even when the template from whence it came is not compiler
+                // generated.
+                if (!n->get_file_info()->isCompilerGenerated()) {
+                    functions.insert(func);
+                } else if (isSgTemplateInstantiationFunctionDecl(n)) {
+                    SgTemplateInstantiationFunctionDecl *tpl = isSgTemplateInstantiationFunctionDecl(n);
+                    if (!tpl->get_templateDeclaration()->get_file_info()->isCompilerGenerated())
+                        functions.insert(func);
+                } else if (isSgTemplateInstantiationMemberFunctionDecl(n)) {
+                    SgTemplateInstantiationMemberFunctionDecl *tpl = isSgTemplateInstantiationMemberFunctionDecl(n);
+                    if (!tpl->get_templateDeclaration()->get_file_info()->isCompilerGenerated())
                         functions.insert(func);
                 }
         }
