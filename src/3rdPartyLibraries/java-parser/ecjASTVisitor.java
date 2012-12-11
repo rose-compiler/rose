@@ -1676,7 +1676,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
 
     public boolean enter(JavadocArgumentExpression node, BlockScope scope) {
         if (javaParserSupport.verboseLevel > 0)
-            System.out.println("Inside of enter JavadocArgumentExpression(,BlockScope)");
+            System.out.println("Inside of enter JavadocArgumentExpression(JavadocArgumentExpression,BlockScope)");
 
         JavaParser.cactionJavadocArgumentExpression(javaParserSupport.createJavaToken(node));
 
@@ -2249,7 +2249,18 @@ class ecjASTVisitor extends ExtendedASTVisitor {
     // translator can retrieve the exact method in question.
     //
     private void pushRawMethodParameterTypes(MethodBinding binding, JavaToken location) {
-        if (binding instanceof ParameterizedMethodBinding) {
+        ReferenceBinding type_binding = binding.declaringClass;
+        String package_name = javaParserSupport.getPackageName(type_binding),
+        type_name = javaParserSupport.getTypeName(type_binding);
+        Class<?> cls = javaParserSupport.findClass(package_name, type_name);
+        assert(cls != null);
+
+        //
+        // If the constructor or method being invoked belongs to a parameterized type from a library (class file),
+        // then we need to pass its "raw" parameter types.  Otherwise, we are dealing with a user-specified function,
+        // in which case we pass the types of the parameters in the method binding.
+        //
+        if (javaParserSupport.userTypeTable.get(cls) == null && binding instanceof ParameterizedMethodBinding) {
             ParameterizedMethodBinding parameterized_method_binding = (ParameterizedMethodBinding) binding;
             Class parameter_types[] = null;
             if (binding.isConstructor()) {
@@ -3430,7 +3441,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         JavaParser.cactionWhileStatement(javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
-            System.out.println("Leaving enter (,BlockScope)");
+            System.out.println("Leaving enter (WhileStatement,BlockScope)");
 
         return true; // do nothing by node, keep traversing
     }
@@ -3442,18 +3453,18 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         JavaParser.cactionWhileStatementEnd(javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
-            System.out.println("Leaving exit (,BlockScope)");
+            System.out.println("Leaving exit (WhileStatement,BlockScope)");
     }
 
 
     public boolean enter(Wildcard node, BlockScope scope) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (Wildcard,BlockScope)");
-
+/*
 System.out.println();
 System.out.println("*** No support yet for wildcards");
 System.exit(1);
-
+*/
         JavaParser.cactionWildcard(javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
@@ -3465,17 +3476,22 @@ System.exit(1);
     public void exit(Wildcard node, BlockScope scope) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of exit (Wildcard,BlockScope)");
+
+        JavaParser.cactionWildcardEnd(node.kind == Wildcard.UNBOUND, node.kind == Wildcard.EXTENDS, node.kind == Wildcard.SUPER, javaParserSupport.createJavaToken(node));
+
+        if (javaParserSupport.verboseLevel > 0)
+            System.out.println("Leaving exit (Wildcard ,BlockScope)");
     }
 
 
     public boolean enter(Wildcard node, ClassScope scope) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (Wildcard,ClassScope)");
-
+/*
 System.out.println();
 System.out.println("*** No support yet for wildcard ");
 System.exit(1);
-
+*/
         JavaParser.cactionWildcard(javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
@@ -3487,5 +3503,10 @@ System.exit(1);
     public void exit(Wildcard node, ClassScope scope) {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of exit (Wildcard,ClassScope)");
+
+        JavaParser.cactionWildcardEnd(node.kind == Wildcard.UNBOUND, node.kind == Wildcard.EXTENDS, node.kind == Wildcard.SUPER, javaParserSupport.createJavaToken(node));
+
+        if (javaParserSupport.verboseLevel > 0)
+            System.out.println("Leaving exit (Wildcard,ClassScope)");
     }
 }

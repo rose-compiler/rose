@@ -231,6 +231,7 @@ class JavaParser  implements Callable<Boolean> {
     public static native void cactionWhileStatement(JavaToken jToken);
     public static native void cactionWhileStatementEnd(JavaToken jToken);
     public static native void cactionWildcard(JavaToken jToken);
+    public static native void cactionWildcardEnd(boolean is_unbound, boolean has_extends_bound, boolean has_super_bound, JavaToken jToken);
 
     public static native void cactionInsertClassStart(String className, JavaToken jToken);
     public static native void cactionInsertClassEnd(String className, JavaToken jToken);

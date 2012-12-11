@@ -46,7 +46,8 @@ Unparse_Java::unparseType(SgType* type, SgUnparse_Info& info)
           case V_SgModifierType:   unparseModifierType( isSgModifierType(type), info); break;
 
        // DQ (9/5/2011): Added support for Java generics.
-          case V_SgJavaParameterizedType:  unparseJavaParameterizedType(isSgJavaParameterizedType(type),info); break;
+          case V_SgJavaParameterizedType:  unparseJavaParameterizedType(isSgJavaParameterizedType(type), info); break;
+          case V_SgJavaWildcardType:  unparseJavaWildcardType(isSgJavaWildcardType(type), info); break;
 
           default:
                cout << "Unparse_Java::unparseType(" << type->class_name() << "*,info) is unimplemented." << endl;
@@ -142,6 +143,17 @@ Unparse_Java::unparseJavaParameterizedType(SgJavaParameterizedType* type, SgUnpa
 
      curprint(">");
    }
+
+
+void 
+Unparse_Java::unparseJavaWildcardType(SgJavaWildcardType* type, SgUnparse_Info& info) {
+     curprint("?");
+
+     if (! type -> get_is_unbound()) {
+         curprint(type -> get_has_extends() ? " extends " : " super ");
+         unparseType(type -> get_bound_type(), info);
+     }
+}
 
 
 void

@@ -24,6 +24,9 @@ extern SgSourceFile *OpenFortranParser_globalFilePointer;
 extern SgArrayType *getUniqueArrayType(SgType *, int);
 extern SgPointerType *getUniquePointerType(SgType *, int);
 extern SgJavaParameterizedType *getUniqueParameterizedType(SgClassType *, SgTemplateParameterPtrList &);
+extern SgJavaWildcardType *getUniqueWildcardUnbound();
+extern SgJavaWildcardType *getUniqueWildcardExtends(SgType *);
+extern SgJavaWildcardType *getUniqueWildcardSuper(SgType *);
 
 using namespace std;
 

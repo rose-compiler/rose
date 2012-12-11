@@ -1483,9 +1483,15 @@ System.out.println(") in class " + cls.getCanonicalName());
             JavaParser.cactionTypeReference(package_name, type_name, type_binding instanceof TypeVariableBinding, location);
         }
         else if (type_binding instanceof WildcardBinding) {
-            System.out.println();
-            System.out.println("*** No support yet for " + type_binding.getClass().getCanonicalName() + ": " + type_binding.debugName());
-            System.exit(1);
+            WildcardBinding wildcard_binding = (WildcardBinding) type_binding;
+            
+            JavaParser.cactionWildcard(location);
+            
+            if (! wildcard_binding.isUnboundWildcard()) { // there is a bound!
+                generateAndPushType(wildcard_binding.bound, location);
+            }
+
+            JavaParser.cactionWildcardEnd(wildcard_binding.boundKind == Wildcard.UNBOUND, wildcard_binding.boundKind == Wildcard.EXTENDS,  wildcard_binding.boundKind == Wildcard.SUPER, location);
         }
         else {
             System.out.println();

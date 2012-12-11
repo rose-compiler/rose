@@ -1047,24 +1047,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCallEnd(JNIEnv 
         parameter_types.push_front(type);
     }
 
-// TODO: Remove this !!!
-/*
-cout << "Looking for function " 
-<< name
-<< " in type "
-<< class_definition -> get_qualified_name()
-<< " with parameter types: (";
-std::list<SgType*>::iterator i = parameter_types.begin();
-if (i != parameter_types.end()) {
-cout << getTypeName(*i);
-for (i++; i != parameter_types.end(); i++) {
-cout << ", " << getTypeName(*i);
-}
-}
-cout << ")"
-<< endl;
-cout.flush();
-*/
     SgMemberFunctionSymbol *function_symbol = findFunctionSymbolInClass(class_definition, name, parameter_types);
     ROSE_ASSERT(function_symbol);
 
@@ -1280,14 +1262,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd(JNIEnv *env, 
            no_package = "",
            type_name = convertJavaStringToCxxString(env, java_type_name);
     bool is_type_parameter = java_is_type_parameter;
-// TODO: Remove this !!!
-/*
-cout << "Looking for type " 
-     << (is_type_parameter ? "parameter " : "")
-     << type_name
-     << endl;
-cout.flush();
-*/
     SgType *type = (is_type_parameter ? lookupTypeByName(no_package, type_name, 0 /* not an array - number of dimensions is 0 */)
                                       : lookupTypeByName(package_name, type_name, 0 /* not an array - number of dimensions is 0 */));
 
@@ -3554,37 +3528,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedThisReferenceEnd(JNIEnv *
 }
 
 
-// TODO: Remove this !!!
-/*
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedThisReferenceClassScope(JNIEnv *env, jclass, jobject jToken) {
-    // Build a member function call...
-    if (SgProject::get_verbose() > 0)
-        printf ("Build a Qualified This Reference\n");
-
-    // Do Nothing on the way down!
-}
-
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedThisReferenceClassScopeEnd(JNIEnv *env, jclass, jobject jToken) {
-    SgClassType *type = isSgClassType(astJavaComponentStack.popType());
-    ROSE_ASSERT(type);
-    SgClassDeclaration *class_declaration = isSgClassDeclaration(type -> getAssociatedDeclaration() -> get_definingDeclaration());
-    ROSE_ASSERT(class_declaration);
-    SgClassDefinition *classDefinition = class_declaration -> get_definition();
-    ROSE_ASSERT(classDefinition != NULL && (! classDefinition -> attributeExists("namespace")));
-    SgClassSymbol *classSymbol = isSgClassSymbol(classDefinition -> get_declaration() -> search_for_symbol_from_symbol_table());
-    ROSE_ASSERT(classSymbol != NULL);
-
-    SgThisExp *thisExp = SageBuilder::buildThisExp(classSymbol);
-    ROSE_ASSERT(thisExp != NULL);
-
-    thisExp -> setAttribute("prefix", new AstRegExAttribute(getFullyQualifiedTypeName(type))); // TODO: Figure out how to extend the Sage representation to process this feature better.
-
-    astJavaComponentStack.push(thisExp);
-}
-*/
-
-
 JNIEXPORT void JNICALL Java_JavaParser_cactionReturnStatement(JNIEnv *env, jclass, jobject jToken) {
     // Nothing to do !!!
 }
@@ -3899,19 +3842,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameter(JNIEnv *env, jclass,
     if (SgProject::get_verbose() > 2)
         printf ("Inside cactionTypeParameter \n");
 
-    SgName name = convertJavaStringToCxxString(env, java_name);
-    ROSE_ASSERT(! astJavaScopeStack.empty());
-    SgClassDefinition *outer_scope = isSgClassDefinition(astJavaScopeStack.top());
-// TODO: Remove this !!!
-/*
-cout << "Working at beginning of Type Parameter "
-<< name
-<< " in type "
-<< outer_scope -> get_qualified_name()
-<< endl;
-cout.flush();
-*/
-    ROSE_ASSERT(outer_scope && (! outer_scope -> attributeExists("namespace")));
+    // Do Nothing!
 
     if (SgProject::get_verbose() > 2)
         printf ("Exiting cactionTypeParameter \n");
@@ -3927,15 +3858,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameterEnd(JNIEnv *env, jcla
 
     ROSE_ASSERT(! astJavaScopeStack.empty());
     SgClassDefinition *outer_scope = isSgClassDefinition(astJavaScopeStack.top());
-// TODO: Remove this !!!
-/*
-cout << "Working at end of Type Parameter "
-<< name
-<< " in type "
-<< outer_scope -> get_qualified_name()
-<< endl;
-cout.flush();
-*/
 
     ROSE_ASSERT(outer_scope && (! outer_scope -> attributeExists("namespace")));
     SgClassSymbol *class_symbol = outer_scope -> lookup_class_symbol(name);
@@ -3944,18 +3866,6 @@ cout.flush();
     ROSE_ASSERT(parameter_declaration);
     SgClassDefinition *class_definition = parameter_declaration -> get_definition();
     ROSE_ASSERT(class_definition && (! class_definition -> attributeExists("namespace")));
-// TODO: Remove this !!!
-/*
-cout << "Found Type Parameter "
-<< class_definition -> get_qualified_name()
-<< " in type "
-<< outer_scope -> get_qualified_name()
-<< ". It has "
-<< num_bounds
-<< " bounds."
-<< endl;
-cout.flush();
-*/
 
     //
     //
@@ -3965,17 +3875,6 @@ cout.flush();
         SgType *bound_type = astJavaComponentStack.popType();
         ROSE_ASSERT(bound_type);
         parameter_type_list.push_back(bound_type);
-// TODO: Remove this !!!
-/*
-cout << "Found bound "
-<< (isSgClassType(bound_type)
-        ? isSgClassType(bound_type) -> get_qualified_name()
-        : isSgJavaParameterizedType(bound_type) 
-              ? isSgJavaParameterizedType(bound_type)  -> get_qualified_name()
-              : "???")
-<< endl;
-cout.flush();
-*/
         if (SgProject::get_verbose() > 0) {
             string name = (isSgClassType(bound_type)
                                ? getFullyQualifiedTypeName(isSgClassType(bound_type))
@@ -3997,44 +3896,12 @@ cout.flush();
         base -> set_parent(class_definition);
         class_definition -> prepend_inheritance(base);
     }
-// TODO: Remove this !!!
-/*
-SgBaseClassPtrList& bases = class_definition -> get_inheritances();
-if (bases.size() > 0){
-cout << "This bound 0 added to "
-<< class_definition -> get_qualified_name()
-<< " is a "
-<< (bases[0] -> get_base_class() -> get_explicit_interface() ? "interface" : "class")
-<< endl;
-cout.flush();
-}
-if (bases.size() > 1){
-cout << "This bound 1 added to "
-<< class_definition -> get_qualified_name()
-<< " is a "
-<< (bases[1] -> get_base_class() -> get_explicit_interface() ? "interface" : "class")
-<< endl;
-cout.flush();
-}
-*/
+
     AstSgNodeListAttribute *attribute = new AstSgNodeListAttribute();
     for (int i = parameter_type_list.size() - 1;  i >= 0; i--) { // We need to reverse the content of the vector  to place the parameter types in the correct order.
         attribute -> addNode(parameter_type_list[i]);
     }
     class_definition -> setAttribute("parameter_type_bounds", attribute); // TODO: Since declarations are not mapped one-to-one with parameterized types, we need this attribute.
-
-// TODO: Remove this !!!
-/*
-SgClassType *parameter_type = parameter_declaration -> get_type();
-cout << "I have created an artificial type for "
-     << parameter_type -> get_qualified_name()
-     << " with simple name "
-     << parameter_declaration -> get_definition() -> get_declaration() -> get_name()
-     << endl;
-cout.flush();
-SgTypedefType *typedef_type = (SgTypedefType *) SageBuilder::buildOpaqueType(name, class_definition);
-astJavaComponentStack.push(typedef_type);
-*/
 
     if (SgProject::get_verbose() > 2)
         printf ("Exiting cactionTypeParameterEnd \n");
@@ -4130,11 +3997,29 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionWhileStatementEnd(JNIEnv *env, jcl
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionWildcard(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented Wildcard");
+    if (SgProject::get_verbose() > 2)
+        printf ("Inside cactionWildcard \n");
+
+    // Do Nothing!
+
+    if (SgProject::get_verbose() > 2)
+        printf ("Exiting cactionWildcard \n");
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionWildcardClassScope(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented Wildcard");
+JNIEXPORT void JNICALL Java_JavaParser_cactionWildcardEnd(JNIEnv *env, jclass, jboolean is_unbound, jboolean has_extends_bound, jboolean has_super_bound, jobject jToken) {
+    if (SgProject::get_verbose() > 2)
+        printf ("Inside cactionWildcardEnd \n");
 
+    SgType *bound_type = (is_unbound ? NULL : astJavaComponentStack.popType());
+
+    SgJavaWildcardType *wildcard = (is_unbound ? getUniqueWildcardUnbound()
+                                               : (has_extends_bound ? getUniqueWildcardExtends(bound_type)
+                                                                    : getUniqueWildcardSuper(bound_type)));
+    ROSE_ASSERT(wildcard);
+
+    astJavaComponentStack.push(wildcard);
+
+    if (SgProject::get_verbose() > 2)
+        printf ("Exiting cactionWildcardEnd \n");
 }
