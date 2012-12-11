@@ -395,72 +395,41 @@ bool CGFunction::operator >= (const CGFunction &that) const
  ********* TraverseCallGraph *********
  *************************************/
  
-  #include <sys/time.h>
- 
 TraverseCallGraph::TraverseCallGraph(SgIncidenceDirectedGraph* graph)
 {
         this->graph = graph;
         
-/*      struct timeval itv;
-        struct timezone itz;
-        struct timeval stv;
-        struct timezone stz;
-        struct timeval ntv;
-        struct timezone ntz;
-        
-        gettimeofday(&itv, &itz);
-        gettimeofday(&stv, &stz);*/
-        
-//printf("TraverseCallGraph::TraverseCallGraph\n");
         set<SgGraphNode *> nodes = graph->computeNodeSet();
         for(set<SgGraphNode*>::iterator itn = nodes.begin(); itn != nodes.end(); itn++) {
                 SgNode* n = (*itn)->get_SgNode();
                 ROSE_ASSERT(isSgFunctionDeclaration(n));
-                
-                //gettimeofday(&ntv, &ntz); printf("0 time = %lf secs, elapsed = %lf secs\n", (ntv.tv_sec + 1000000*ntv.tv_usec) - (stv.tv_sec + 1000000*stv.tv_usec), (ntv.tv_sec + 1000000*ntv.tv_usec) - (itv.tv_sec + 1000000*itv.tv_usec)); stv.tv_sec = ntv.tv_sec; stv.tv_usec = ntv.tv_usec; 
                 assert(!isSgTemplateFunctionDeclaration(n));
                 CGFunction func(isSgFunctionDeclaration(n), graph);
-                //gettimeofday(&ntv, &ntz); printf("1 time = %lf secs, elapsed = %lf secs\n", (ntv.tv_sec + 1000000*ntv.tv_usec) - (stv.tv_sec + 1000000*stv.tv_usec), (ntv.tv_sec + 1000000*ntv.tv_usec) - (itv.tv_sec + 1000000*itv.tv_usec)); stv.tv_sec = ntv.tv_sec; stv.tv_usec = ntv.tv_usec; 
-                
-                //printf("curFunction = %s\n", (*itn)->functionDeclaration->get_name().str());
                 
                 // if this function is not compiler-generated
                 if(!func.get_file_info()->isCompilerGenerated())
                 {
                         // add the mapping to decl2CFNode
-                        //decl2CFNode[func].insert(*itn);
-                        /*printf("TraverseCallGraph::TraverseCallGraph inserting %s\n", func.get_name().str());
-                        printf("TraverseCallGraph::TraverseCallGraph functions.find(func) == functions.end() = %d\n", functions.find(func) == functions.end());*/
-                        
                         functions.insert(func);
                 }
-                //gettimeofday(&ntv, &ntz); printf("2 time = %lf secs, elapsed = %lf secs\n", (ntv.tv_sec + 1000000*ntv.tv_usec) - (stv.tv_sec + 1000000*stv.tv_usec), (ntv.tv_sec + 1000000*ntv.tv_usec) - (itv.tv_sec + 1000000*itv.tv_usec)); stv.tv_sec = ntv.tv_sec; stv.tv_usec = ntv.tv_usec; 
         }
-        //gettimeofday(&ntv, &ntz); printf("A time = %lf secs, elapsed = %lf secs\n", (ntv.tv_sec + 1000000*ntv.tv_usec) - (stv.tv_sec + 1000000*stv.tv_usec), (ntv.tv_sec + 1000000*ntv.tv_usec) - (itv.tv_sec + 1000000*itv.tv_usec)); stv.tv_sec = ntv.tv_sec; stv.tv_usec = ntv.tv_usec; 
+
         
         // initially, put all the nodes into noPred
         // initialized numCallers
-        /*for(map<SgFunctionDefinition*, set<SgGraphNode*> >::iterator it = decl2CFNode.begin(); 
-            it!=decl2CFNode.end(); it++)*/
         for(set<CGFunction>::iterator it = functions.begin(); it != functions.end(); it++)
         {
                 noPred.insert((&*it));
-                //numCallers[it->first] = 0;
                 numCallers[(&*it)] = 0;
-                //printf("noPred: %s\n", it->first->get_declaration()->get_name().str());
         }
         
-        //gettimeofday(&ntv, &ntz); printf("B time = %lf secs, elapsed = %lf secs\n", (ntv.tv_sec + 1000000*ntv.tv_usec) - (stv.tv_sec + 1000000*stv.tv_usec), (ntv.tv_sec + 1000000*ntv.tv_usec) - (itv.tv_sec + 1000000*itv.tv_usec)); stv.tv_sec = ntv.tv_sec; stv.tv_usec = ntv.tv_usec; 
         // next, toss out all the nodes that have predecessor nodes
         // and compute the correct numCallers mapping
         
         // set of edges that have been visited by the traversal
         set<pair<const CGFunction*, const CGFunction*> > touchedEdges;
-        /*for(map<SgFunctionDefinition*, set<SgGraphNode*> >::iterator it = decl2CFNode.begin(); 
-            it!=decl2CFNode.end(); it++)*/
         for(set<CGFunction>::iterator func = functions.begin(); func != functions.end(); func++)
         {
-                //printf("curFunction = %s\n", (*func).get_name().str());
                 for(CGFunction::iterator it = (*func).successors(); it != (*func).end(); it++)
                 {
                         const CGFunction* target = it.getTarget(functions);
@@ -474,22 +443,17 @@ TraverseCallGraph::TraverseCallGraph(SgIncidenceDirectedGraph* graph)
                         {
                                 // increment the target function's number of callers
                                 numCallers[target]++;
-                                //printf("       numCallers[%s]=%d\n", tgtDecl->get_name().str(), numCallers[tgtDecl]);
                                 
                                 // if the given callee is currently in noPred
                                 set<const CGFunction*>::iterator pred_it = noPred.find(target);
-                                //printf("    pred_it == noPred.end() = %d\n", pred_it == noPred.end());
                                 if(pred_it != noPred.end())
-                                        // remove it
                                         noPred.erase(target);
                         }
                         
                         // add this edge to touchedEdges
                         touchedEdges.insert(edge);
                 }
-                //gettimeofday(&ntv, &ntz); printf("C time = %lf secs, elapsed = %lf secs\n", (ntv.tv_sec + 1000000*ntv.tv_usec) - (stv.tv_sec + 1000000*stv.tv_usec), (ntv.tv_sec + 1000000*ntv.tv_usec) - (itv.tv_sec + 1000000*itv.tv_usec)); stv.tv_sec = ntv.tv_sec; stv.tv_usec = ntv.tv_usec; 
         }
-        //gettimeofday(&ntv, &ntz); printf("D time = %lf secs, elapsed = %lf secs\n", (ntv.tv_sec + 1000000*ntv.tv_usec) - (stv.tv_sec + 1000000*stv.tv_usec), (ntv.tv_sec + 1000000*ntv.tv_usec) - (itv.tv_sec + 1000000*itv.tv_usec)); stv.tv_sec = ntv.tv_sec; stv.tv_usec = ntv.tv_usec; 
 }
 
 // returns a pointer to a CGFunction that matches the given declaration or NULL if no objects do
