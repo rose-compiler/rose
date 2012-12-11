@@ -581,10 +581,6 @@ public:
 	    FOR_EACH_PREDECESSOR(pred, v, stg.g) {
 	      if (pred == v) add_edge(v_prime, v_prime, stg.g);
 	      else           add_edge(pred,    v_prime, stg.g);
-		//  if (is_leaf(v, stg.g)) 
-		//    remove_edge(pred, v, stg.g);
-		//  // add the predecessor of v to the worklist, because v's premise changed
-		//  worklist.push(pred);
 	    } END_FOR;
 
 	    // add all remaining successors of the old v to the

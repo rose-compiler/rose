@@ -70,6 +70,64 @@
 \newcommand{\ffalse}{\ensuremath{\mathit{false}}}
 \newcommand{\ttrue}{\ensuremath{\mathit{true}}}
 
+
+
+
+\begin{frame}{Linear Time Logic Formul\ae\ Verification}
+
+  \begin{block}{Unified approach}
+    \begin{itemize}
+    \item[+] precise (explores all states, no merging)
+    \item[-] Slower than fixpoint, more memory
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Linear Time Logic Formul\ae\ Verification}
+  \begin{block}{Algorithm}
+    \scriptsize
+    \begin{algorithm}[H]
+      \SetLine
+      \KwIn{State Transition Graph (collapsed)}
+      \KwOut{Formulae true, false, or unknown.}
+      \lForEach{S $\in$ STG}{ 
+        \{ val$_S$ = $\bot$; worklist = worklist $\cup$ S \} } \;
+      \While{worklist $\neq$ $\emptyset$}{
+         succ := worklist.pop() \;
+         %remove\_if\_orphan(succ)\;
+         \ForEach{S $\in$ pred(succ)}{
+            val' := transfer(S, val$_S$); 
+            \Comment{compute the transfer function for S}\\
+            \lIf{val$_S$ == val'}{
+               continue; \Comment{Reached fixpoint}\;
+            }
+            \Else{
+               S' := add\_state\_if\_new(S, val')\;
+               add\_edge(S', succ); \Comment{self-cycles not shown}\\
+               remove\_edge(S, succ); \Comment{patch up the new state}\\
+               
+               \lForEach{pred $\in$ pred(S)}{
+                  add\_edge(pred, S')\;
+               }
+               \lForEach{succ $\in$ succ(S)}{
+                  W := W $\cup$ succ; \Comment{add other succs of old S}\\
+               }
+               W := W $\cup$ S\;
+            }
+         }
+      }
+      \ForEach{S $\in$ STG}{
+        \lFor{i := 0 .. nargs}{
+          valstack.pop(); \Comment{consume args on valstack}\\
+        }
+      }
+    \end{algorithm}
+  \end{block}
+\end{frame}
+
+
+
+
 \begin{frame}{Backup slide: Operators}
   \begin{block}{Boolean lattice the LTL formul\ae\ are reduced to}
     \begin{columns}
