@@ -566,7 +566,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                             }
                            else
                             {
-                              printf ("WARNING: For templateInstantiationMemberFunctionDeclaration = %p templateInstantiationMemberFunctionDeclaration->get_templateDeclaration() == NULL \n");
+                              printf ("WARNING: For templateInstantiationMemberFunctionDeclaration = %p templateInstantiationMemberFunctionDeclaration->get_templateDeclaration() == NULL \n", templateInstantiationMemberFunctionDeclaration);
                             }
 #endif
                        }
