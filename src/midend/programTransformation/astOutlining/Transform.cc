@@ -505,12 +505,15 @@ std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::V
   {
     SgExpression * lhs = NULL;
     SgExpression * rhs = NULL;
+    SgStatement * assignment = NULL;
     if (useStructureWrapper)
     {
       // if use a struct to wrap parameters
       // two kinds of field: original type v.s. pointer type to the original type
       //  __out_argv1__1527__.i = i;
       //  __out_argv1__1527__.sum_p = &sum;
+      // Sara Royuela, Dec 12, 2012: There is a third type
+      // When LHS is an array, we must copy each position.
       SgInitializedName* i_name = (*i)->get_declaration();
       SgVariableSymbol * i_symbol = const_cast<SgVariableSymbol *>(*i);
       //SgType* i_type = i_symbol->get_type();
@@ -526,7 +529,37 @@ std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::V
       }
       SgClassDefinition* class_def = isSgClassDefinition (isSgClassDeclaration(struct_decl->get_definingDeclaration())->get_definition()) ; 
       ROSE_ASSERT (class_def != NULL);
-      lhs = buildDotExp ( buildVarRefExp(out_argv), buildVarRefExp (member_name, class_def));  
+      lhs = buildDotExp ( buildVarRefExp(out_argv), buildVarRefExp (member_name, class_def));
+      
+      if(isSgArrayType(lhs->get_type()))
+      {// Copy each position of the array
+          // Loop initializer
+          std::string loop_index_name = SageInterface::generateUniqueVariableName(target->get_scope(), "i");
+          SgVariableDeclaration* loop_index = buildVariableDeclaration(loop_index_name, buildIntType(), 
+                  NULL /*no initializer here*/, target->get_scope());
+          SageInterface::insertStatementBefore(target, loop_index);
+                // Loop test
+          SgStatement* loop_test = buildExprStatement(
+                  buildLessThanOp(buildVarRefExp(SgName(loop_index_name), target->get_scope()), 
+                                  isSgArrayType(lhs->get_type())->get_index()));
+          // Loop increment
+          SgExpression* loop_increment = buildPlusPlusOp(buildVarRefExp(loop_index_name, 
+                  target->get_scope()), SgUnaryOp::postfix);
+          // Loop body
+          SgExpression* assign_lhs = buildPointerDerefExp( buildAddOp( lhs,
+                  buildVarRefExp( SgName(loop_index_name), target->get_scope() ) ) );
+          SgExpression* assign_rhs = buildPointerDerefExp( buildAddOp( buildVarRefExp(i_symbol),
+                  buildVarRefExp( SgName(loop_index_name), target->get_scope() ) ) );
+          SgStatement* loop_body = buildAssignStatement(assign_lhs, assign_rhs);
+                      
+          // Loop satement
+          assignment = buildForStatement(buildAssignStatement(buildVarRefExp(loop_index_name, 
+                  target->get_scope()), buildIntVal(0)), loop_test, loop_increment, loop_body);
+      }
+      else
+      {
+          assignment = buildAssignStatement(lhs,rhs);
+      }
     }
     else
     // Default case: array of pointers, e.g.,  *(__out_argv +0)=(void*)(&var1);
@@ -534,11 +567,11 @@ std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::V
       lhs = buildPntrArrRefExp(buildVarRefExp(wrapper_symbol),buildIntVal(counter));
       SgVarRefExp* rhsvar = buildVarRefExp((*i)->get_declaration(),cur_scope);
       rhs = buildCastExp( buildAddressOfOp(rhsvar), buildPointerType(buildVoidType()), SgCastExp::e_C_style_cast);
+      
+      assignment = buildAssignStatement(lhs,rhs);
     }
-
-    // build wrapping statement for either cases
-    SgExprStatement * expstmti= buildAssignStatement(lhs,rhs);
-    SageInterface::insertStatementBefore(target, expstmti);
+    
+    SageInterface::insertStatementBefore(target, assignment);
     counter ++;
   }
   return wrapper_name; 
