@@ -2631,7 +2631,9 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           SgType *rtype = funcdecl_stmt->get_orig_return_type();
           if (!rtype)
+             {
                rtype = funcdecl_stmt->get_type()->get_return_type();
+             }
           ninfo.set_isTypeFirstPart();
 
           SgUnparse_Info ninfo_for_type(ninfo);
@@ -3346,6 +3348,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                unp->u_type->unparseType(rtype, ninfo3);
              }
 
+          bool outputRestrictKeyword = false;
           SgMemberFunctionType *mftype = isSgMemberFunctionType(mfuncdecl_stmt->get_type());
           if (!info.SkipFunctionQualifier() && mftype )
              {
@@ -3357,12 +3360,46 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                   {
                     curprint ( string(" volatile"));
                   }
+
+            // DQ (12/11/2012): Added support for restrict (in EDG 4.x we want this to be more uniform with "const" and "volatile" modifier handling.
+               if (mftype->isRestrictFunc())
+                  {
+#if 0
+                    printf ("In unparseMFuncDeclStmt: unparse restrict keyword from specification in SgMemberFunctionType \n");
+#endif
+                    outputRestrictKeyword = true;
+
+                 // DQ (12/11/2012): Make sure that this way of specifing the restrict keyword is set.
+                    ROSE_ASSERT (mfuncdecl_stmt->get_declarationModifier().get_typeModifier().isRestrict() == true);
+
+                 // curprint ( string(" restrict"));
+                  }
              }
 
+       // DQ (12/11/2012): Avoid redundant output of the restrict keyword.
        // DQ (4/28/2004): Added support for restrict modifier
-          if (mfuncdecl_stmt->get_declarationModifier().get_typeModifier().isRestrict())
+       // if (mfuncdecl_stmt->get_declarationModifier().get_typeModifier().isRestrict())
+          if (mfuncdecl_stmt->get_declarationModifier().get_typeModifier().isRestrict() && (outputRestrictKeyword == false))
              {
-               curprint ( string(" restrict"));
+               outputRestrictKeyword = true;
+#if 0
+               printf ("In unparseMFuncDeclStmt: unparse restrict keyword from specification in mfuncdecl_stmt->get_declarationModifier().get_typeModifier() \n");
+#endif
+            // DQ (12/11/2012): Error checking.
+               if (mftype != NULL) 
+                  {
+                    ROSE_ASSERT (mftype->isRestrictFunc() == true);
+                  }
+
+            // curprint ( string(" restrict"));
+             }
+
+       // DQ (12/11/2012): We have two ways of setting the specification of the restrict keyword, but we only want to output the keyword once.
+       // This make this code less sensative to which way it is specified and enforces that both ways are set.
+          if (outputRestrictKeyword == true)
+             {
+            // Unparse_Type::unparseRestrictKeyword();
+               curprint(Unparse_Type::unparseRestrictKeyword());
              }
 
        // DQ (4/28/2004): Added support for throw modifier

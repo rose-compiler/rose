@@ -559,4 +559,20 @@ class TestForSourcePosition: public AstSimpleProcessing
    };
 
 
+class TestForMultipleWaysToSpecifyRestrictKeyword: public AstSimpleProcessing
+   {
+  // DQ (12/11/2012): This tests for the two different ways in which const-volitile-restrict 
+  // modifiers can be specified.  It is a consiquence of the CV-modifier (SgTypeModifier) being 
+  // a part of the type declaration modifier and also the SgModifierType and the SgDeclarationModifier.
+  // Both are required and as a result it can be confusing that there are two locations to set
+  // these.  Historically in the EDG 3.3 version we used the SgModifierType for C-V, but the 
+  // SgDeclarationModifier for the restrict keyword.  In the edg 4.x version of ROSE, we now want 
+  // to make this more uniform and use the SgModifierType everywhere. To address the inconsistancy, 
+  // we want to check that both are always set consistanly.
+
+     public:
+          void visit ( SgNode* node );
+   };
+
+
 #endif
