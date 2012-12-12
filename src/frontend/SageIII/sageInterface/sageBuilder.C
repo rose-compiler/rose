@@ -3991,6 +3991,12 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
           setTemplateArgumentsInDeclaration(defining_func,templateArgumentsList);
         }
 
+  // DQ (12/12/2012): Force the two different ways that this can be set to match (we want consistancy).
+     if (functionConstVolatileFlags & SgMemberFunctionType::e_restrict)
+        {
+          defining_func->get_declarationModifier().get_typeModifier().setRestrict();
+        }
+
      return defining_func;
    }
 

@@ -1749,18 +1749,21 @@ Unparse_Type::unparseRestrictKeyword()
   // regardless types of the backend compiler
      if (SageInterface::is_UPC_language() == true )
         {
-          returnString = " restrict";
+       // DQ (12/12/2012): We need the white space before and after the keyword (fails for cherokee-util.c).
+          returnString = " restrict ";
         }
        else
         {
           if ( (compilerName == "g++") || (compilerName == "gcc")  || compilerName == "mpicc" || compilerName == "mpicxx")
              {
             // GNU uses a string variation on the C99 spelling of the "restrict" keyword
-               returnString = " __restrict__";
+            // DQ (12/12/2012): We need the white space before and after the keyword.
+               returnString = " __restrict__ ";
              }
             else
              {
-               returnString = " restrict";
+            // DQ (12/12/2012): We need the white space before and after the keyword.
+               returnString = " restrict ";
              }
         }
 
