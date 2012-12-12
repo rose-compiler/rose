@@ -211,19 +211,26 @@ void InitDataflowState::visit(const Function& func, const DataflowNode& n, NodeS
  *** FindAllFunctionCalls ***
  ****************************/
  
-void FindAllFunctionCalls::visit(const Function& func, const DataflowNode& n, NodeState& state)
+void FindAllFunctionCalls::visit(const Function&, const DataflowNode& n, NodeState& state)
 {
         SgNode* sgn = n.getNode();
-        if(analysisDebugLevel>=2){
-                Dbg::dbg << "FindAllFunctionCalls::visit() sgn="<<sgn<<"["<<sgn->class_name()<<" | "<<Dbg::escape(sgn->unparseToString())<<"]"<<endl;
+        if (analysisDebugLevel>=2){
+                Dbg::dbg << "FindAllFunctionCalls::visit() sgn="<<sgn<<"["<<sgn->class_name()
+                         <<" | "<<Dbg::escape(sgn->unparseToString())<<"]"<<endl;
         }
         
-        // If this is a function call, find the function that is being called and if it is 
-        // in funcsToFind, record the call in funcCalls
-        if(isSgFunctionCallExp(sgn)) {
-                for(set<Function>::const_iterator func=funcsToFind.begin(); func!=funcsToFind.end(); func++) {
-                        if((*func).get_declaration() == isSgFunctionCallExp(sgn)->getAssociatedFunctionDeclaration()) {
-                                funcCalls[*func].insert(n);
+        // If this is a function call, find the function that is being called and if it is in funcsToFind, record the call in
+        // funcCalls
+        if (SgFunctionCallExp *fcall = isSgFunctionCallExp(sgn)) {
+                // We can't compare SgFunctionDeclaration pointers willy nilly since a single function might have multiple
+                // IR nodes (declaration, first declaration, defining declaration, etc.). Therefore, we need to convert the
+                // callee to a unique node the same as we did for the set of Function objects in the funcsToFind data member.
+                SgFunctionDeclaration *callee = Function::getCanonicalDecl(fcall->getAssociatedFunctionDeclaration());
+                assert(callee!=NULL);
+
+                for (set<Function>::const_iterator fi=funcsToFind.begin(); fi!=funcsToFind.end(); ++fi) {
+                        if (fi->get_declaration() == callee) {
+                                funcCalls[*fi].insert(n);
                                 break;
                         }
                 }
