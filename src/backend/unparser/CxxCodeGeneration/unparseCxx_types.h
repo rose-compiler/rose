@@ -55,6 +55,9 @@ class Unparse_Type
 
        // DQ (6/6/2007): Test for if types should be elaborated
           bool generateElaboratedType(SgDeclarationStatement* declarationStatement, const SgUnparse_Info & info );
+
+       // DQ (12/11/2012): Refactored function to control output of "restrict" keyword (different for several backend compilers).
+          static std::string unparseRestrictKeyword();
    };
 
 #endif

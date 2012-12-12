@@ -2875,8 +2875,14 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 #endif
 
   // DQ (5/1/2012): Make sure that we don't have IR nodes marked as transformations.
-  if (SourcePositionClassificationMode !=e_sourcePositionTransformation) 
-     detectTransformations_local(func);
+     if (SourcePositionClassificationMode !=e_sourcePositionTransformation) 
+          detectTransformations_local(func);
+
+  // DQ (12/11/2012): Force the two different ways that this can be set to match (we want consistancy).
+     if (functionConstVolatileFlags & SgMemberFunctionType::e_restrict)
+        {
+          func->get_declarationModifier().get_typeModifier().setRestrict();
+        }
 
      return func;  
    }

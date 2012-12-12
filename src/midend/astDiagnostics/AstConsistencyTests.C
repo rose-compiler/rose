@@ -746,7 +746,7 @@ AstTests::runAllTests(SgProject* sageProject)
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
           cout << "Test source position information started." << endl;
         {
-          TimingPerformance timer ("Test expressions for properly set l-values:");
+          TimingPerformance timer ("Test source position information:");
 
           TestForSourcePosition sourcePositionTest;
           sourcePositionTest.traverse(sageProject,preorder);
@@ -754,6 +754,17 @@ AstTests::runAllTests(SgProject* sageProject)
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
           cout << "Test source position information finished." << endl;
 
+  // DQ (12/11/2012): Test source position information.
+     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+          cout << "Test restrict keyword information started." << endl;
+        {
+          TimingPerformance timer ("Test restrict keyword:");
+
+          TestForMultipleWaysToSpecifyRestrictKeyword restrictKeywordTest;
+          restrictKeywordTest.traverse(sageProject,preorder);
+        }
+     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+          cout << "Test restrict keyword information finished." << endl;
    }
 
 
@@ -5906,6 +5917,53 @@ TestForSourcePosition::visit ( SgNode* node )
                if (operatorPosition != NULL)
                   {
                     testFileInfo(operatorPosition);
+                  }
+             }
+        }
+   }
+
+
+
+void
+TestForMultipleWaysToSpecifyRestrictKeyword::visit ( SgNode* node )
+   {
+     SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(node);
+     if (declarationStatement != NULL)
+        {
+#if 0
+          printf ("In TestForMultipleWaysToSpecifyRestrictKeyword::visit(): Found a declaration = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
+#endif
+          SgDeclarationModifier & declarationModifier = declarationStatement->get_declarationModifier();
+          SgTypeModifier & typeModifierFromDeclarationModifier = declarationModifier.get_typeModifier();
+
+          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(declarationStatement);
+          if (functionDeclaration != NULL)
+             {
+               SgType* type = functionDeclaration->get_type();
+               ROSE_ASSERT(type != NULL);
+#if 0
+               printf ("In TestForMultipleWaysToSpecifyRestrictKeyword::visit(): Found a function type = %p = %s \n",type,type->class_name().c_str());
+#endif
+            // DQ (12/11/2012): This should never be a SgModifierType.
+               SgModifierType* modifierType = isSgModifierType(type);
+               ROSE_ASSERT(modifierType == NULL);
+
+            // SgFunctionType* functionType       = isSgFunctionType(type);
+               SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(type);
+               if (memberFunctionType != NULL)
+                  {
+                    if (memberFunctionType->isRestrictFunc() != typeModifierFromDeclarationModifier.isRestrict())
+                       {
+                         printf ("Error: restrict is not consistantly set in the two SgTypeModifier IR nodes memberFunctionType->isRestrict() = %s typeModifierFromDeclarationModifier.isRestrict() = %s \n",
+                              memberFunctionType->isRestrictFunc() ? "true" : "false",typeModifierFromDeclarationModifier.isRestrict() ? "true" : "false");
+                         ROSE_ASSERT(false);
+                       }
+                  }
+                 else
+                  {
+#if 0
+                    printf ("Not a SgMemberFunctionType! \n");
+#endif
                   }
              }
         }

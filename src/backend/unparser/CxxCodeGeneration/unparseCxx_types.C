@@ -1736,6 +1736,38 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
    }
 
 
+string
+Unparse_Type::unparseRestrictKeyword()
+   {
+  // DQ (12/11/2012): This isolates the logic for the output of the "restrict" keyword for different backend compilers.
+     string returnString;
+
+  // DQ (8/29/2005): Added support for classification of back-end compilers (independent of the name invoked to execute them)
+  // if ( (string(CXX_COMPILER_NAME) == "g++") || (string(CXX_COMPILER_NAME) == "gcc") )
+     string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+  // Liao 6/11/2008, Preserve the original "restrict" for UPC
+  // regardless types of the backend compiler
+     if (SageInterface::is_UPC_language() == true )
+        {
+          returnString = " restrict";
+        }
+       else
+        {
+          if ( (compilerName == "g++") || (compilerName == "gcc")  || compilerName == "mpicc" || compilerName == "mpicxx")
+             {
+            // GNU uses a string variation on the C99 spelling of the "restrict" keyword
+               returnString = " __restrict__";
+             }
+            else
+             {
+               returnString = " restrict";
+             }
+        }
+
+     return returnString;
+   }
+
+
 void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
    {
      SgModifierType* mod_type = isSgModifierType(type);
@@ -1746,7 +1778,7 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
 
 #if 0
   // mod_type->get_typeModifier().display("called from Unparse_Type::unparseModifierType()");
-     printf ("modifier values (at %p): %s \n",mod_type,mod_type->get_typeModifier().displayString().c_str());
+     printf ("In Unparse_Type::unparseModifierType(): modifier values (at %p): %s \n",mod_type,mod_type->get_typeModifier().displayString().c_str());
 #endif
 
   // Determine if we have to print the base type first (before printing the modifier).
@@ -1755,7 +1787,10 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
      if ( isSgReferenceType(mod_type->get_base_type()) || isSgPointerType(mod_type->get_base_type()) )
           btype_first = true;
 
-  // printf ("info.isTypeFirstPart() = %s \n",info.isTypeFirstPart() ? "true" : "false");
+#if 0
+     printf ("info.isTypeFirstPart() = %s \n",info.isTypeFirstPart() ? "true" : "false");
+#endif
+
      if (info.isTypeFirstPart())
         {
        // Print the base type if this has to come first
@@ -1778,29 +1813,37 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
              { curprint ( "const "); }
           if (mod_type->get_typeModifier().get_constVolatileModifier().isVolatile())
              { curprint ( "volatile "); }
-
-
+#if 0
+          printf ("mod_type->get_typeModifier().isRestrict() = %s \n",mod_type->get_typeModifier().isRestrict() ? "true" : "false");
+#endif
           if (mod_type->get_typeModifier().isRestrict())
              {
+#if 1
+            // DQ (12/11/2012): Newer version of the code refactored.
+               curprint(unparseRestrictKeyword());
+#else
             // DQ (8/29/2005): Added support for classification of back-end compilers (independent of the name invoked to execute them)
             // if ( (string(CXX_COMPILER_NAME) == "g++") || (string(CXX_COMPILER_NAME) == "gcc") )
                string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
                // Liao 6/11/2008, Preserve the original "restrict" for UPC
                // regardless types of the backend compiler
                if (SageInterface::is_UPC_language() == true )
-                  curprint ( "restrict ");
-               else
-               {
-               if ( (compilerName == "g++") || (compilerName == "gcc")  || compilerName == "mpicc" || compilerName == "mpicxx")
-                  {
-                 // GNU uses a string variation on the C99 spelling of the "restrict" keyword
-                    curprint ( "__restrict__ ");
-                  }
-                 else
                   {
                     curprint ( "restrict ");
                   }
-               }
+                 else
+                  {
+                    if ( (compilerName == "g++") || (compilerName == "gcc")  || compilerName == "mpicc" || compilerName == "mpicxx")
+                       {
+                      // GNU uses a string variation on the C99 spelling of the "restrict" keyword
+                         curprint ( "__restrict__ ");
+                       }
+                      else
+                       {
+                         curprint ( "restrict ");
+                       }
+                  }
+#endif
              }
 
        // Microsoft extension
