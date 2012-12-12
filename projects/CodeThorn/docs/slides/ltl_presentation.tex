@@ -83,6 +83,36 @@
   \end{block}
 \end{frame}
 
+\begin{frame}{Order of evaluation}{}
+{\bf Input:} $ \neg o(U)\ WU\ (o(Z) \wedge \neg o(U)) $\\
+\begin{block}{de-sugar}
+de-sugar $WU$: $ x\ WU\ y \rightarrow G x \vee (x\ U\ y)$\\
+\end{block}
+\begin{block}{resulting LTL expression DAG}
+\begin{tikzpicture}[->,n/.style={font=\scriptsize},level
+    distance=.75cm,sibling distance=5cm] 
+\node[n] {or}
+    child{ node[n] {globally} 
+      child{ node[n] {neg\_output(U)} }
+    }
+    child{ node[n] {until}
+      child{ node[n] (nu) {neg\_output(U)} }
+      child{ node[n] (and) {and}
+        child{ node[n] {output(Z)} }
+      }
+    }
+;
+\draw (and) -> (nu);
+\end{tikzpicture}
+\end{block}
+
+\begin{block}{LTL value-stack operations (in postfix notation)}
+\texttt{\footnotesize neg\_output(U) G neg\_output(U) dup output(Z) and until or}
+\end{block}
+\end{frame}
+
+
+
 \begin{frame}{Linear Time Logic Formul\ae\ Verification}
   \begin{block}{Algorithm}
     \scriptsize
@@ -125,53 +155,50 @@
   \end{block}
 \end{frame}
 
-\begin{frame}{Order of evaluation}{}
-{\bf Input:} $ \neg o(U)\ WU\ (o(Z) \wedge \neg o(U)) $\\
-\begin{block}{de-sugar}
-de-sugar $WU$: $ x\ WU\ y \rightarrow G x \vee (x\ U\ y)$\\
-\end{block}
-\begin{block}{resulting LTL expression DAG}
-\begin{tikzpicture}[->,n/.style={font=\scriptsize},level
-    distance=.75cm,sibling distance=5cm] 
-\node[n] {or}
-    child{ node[n] {globally} 
-      child{ node[n] {neg\_output(U)} }
-    }
-    child{ node[n] {until}
-      child{ node[n] (nu) {neg\_output(U)} }
-      child{ node[n] (and) {and}
-        child{ node[n] {output(Z)} }
-      }
-    }
-;
-\draw (and) -> (nu);
-\end{tikzpicture}
-\end{block}
-
-\begin{block}{LTL value-stack operations (in postfix notation)}
-\texttt{\footnotesize neg\_output(U) G neg\_output(U) dup output(Z) and until or}
-\end{block}
-\end{frame}
-
 \newcommand{\minibox}[2]{\begin{minipage}{#1}#2\end{minipage}}
-\begin{frame}{Algorithm}{}
-UNFINISHED: Example: F
-\begin{tikzpicture}[->,n/.style={draw,font=\scriptsize},level
-    distance=1.5cm,sibling distance=5cm] 
-\node[n] (a) {$a$: [ 0 ] $\bot$}
-      child[draw=white] { node[] (ghost) {} }
-      child{ node[n]  (s) {$S$:  [ 0 ] 0 } 
-        child{ node[n] (b) {$b$: [ 1 ] 1 } }
-        child{ node[n] (c) {$c$: [ 0 ] $\bot$} }
-      }
-;
-\node[below of=c, node distance=1em]{\tiny not yet visited};
-\pause
-\draw[below left of=a, node distance=6cm, dashed]{ node[n] (s1)  {$S'$: [ 0 ] 1 } };
-\draw[dashed] (a) -> (s1);
-\draw[dashed] (s1) -> (b);
-\end{tikzpicture}
+\begin{frame}{Unified algorithm visualized}{}
+\begin{block}{Example: computing $F\ x$, $\mathit{worklist} = \{\dots,b\}$}
+  \begin{tikzpicture}[->,
+      n/.style={draw,font=\scriptsize},
+      new/.style={green,thick},
+      cut/.style={dashed,red,thick},
+      level distance=1.5cm,sibling distance=4cm] 
+  \node[n] (a) {$a$: [ 0 ] $\bot$}
+        child[draw=bg] { node[] (ghost) {\large\usebeamercolor[bg]{[$'$]}} }
+        child{ node[n]  (s) {$S$:  [ 0 ] 0 } 
+          child{ node[n,red] (b) {$b$: [ 1 ] 1 } }
+          child{ node[n] (c) {$c$: [ 0 ] $\bot$} }
+        }
+  ;
+  \node[below of=c, node distance=1em]{\tiny not yet visited};
+  \node[below of=b, node distance=1em]{\tiny top of worklist};
+  \pause
+  \node[n,left of=ghost, node distance=0cm,new] (s1) {$S'$: [ 0 ] 1 };
+  \node[below of=s1, node distance=1em]{\tiny recomputed S'};
+  \pause
+  \draw[new] (a) -> (s1);
+  \draw[new] (s1) -> (b);
+  \draw[new] (s1) -> (c);
+  \pause
+  \draw[cut] (s) -> (b);
+  \node[below left of=s, node distance=1.5cm,red]{\tiny$\quad$ cut off};
+  \end{tikzpicture}
+\end{block}
+\footnotesize
+\begin{enumerate}
+\item<1->{Take $b$ from worklist\\}
+\item<2->{ 
+  Create $S' \neq S$
+  \scriptsize
+  ($\mathit{transfer\_F}(\mathit{succ}, \mathit{val}) = \mathit{succ} \vee \mathit{val}$,
+  $\mathit{transfer\_F}(1, 0) = 1$)\\
+}
+\item<3->{patch up S'\\}
+\item<4->{cut off the part of $S$ that is now represented by $S'$\\}
+\item<5->{$\mathit{worklist} = \mathit{worklist} \cup \{S', c\}$}
+\end{enumerate}
 \end{frame}
+
 
 
 \begin{frame}{Backup slide: Operators}
