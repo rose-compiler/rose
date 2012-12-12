@@ -3396,9 +3396,19 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
        // DQ (12/11/2012): We have two ways of setting the specification of the restrict keyword, but we only want to output the keyword once.
        // This make this code less sensative to which way it is specified and enforces that both ways are set.
+       // At the moment there are two ways that a member function is marked as restrict:
+       //    1) Via it's function type modifier (const-volatile modifier)
+       //    2) The declaration modifier's const-volatile modifier.
+       // It does not appear that the "restrict" keyword modifies the type of the function (g++ does not allow overloading on restrict, for example).
+       // Thus if it is not a part of the type then it should be a part of the declaration modifier and not in the SgMemberFunctionType.
+       // So maybe we should remove it from the SgMemberFunctionType?  I am not clear on this design point at present, so we have forced both
+       // to be set consistantly (and this is handled in the SageBuilder interface), plus a consistancy test in the AST consistancy tests.
+       // The reason it is in the type modifier held by the declaration modifier is because it is not a prat of the function type (formally).
+       // But the reason it is a part of the type modifier is because it is used for function parameter types.  This design point is
+       // less than elegant and I'm not clear on what would make this simpler.  For the moment we have focused on making it consistant
+       // across the two ways it can be represented (and fixing the SageBuilder Interface to set it consistantly).
           if (outputRestrictKeyword == true)
              {
-            // Unparse_Type::unparseRestrictKeyword();
                curprint(Unparse_Type::unparseRestrictKeyword());
              }
 

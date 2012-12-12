@@ -5927,6 +5927,12 @@ TestForSourcePosition::visit ( SgNode* node )
 void
 TestForMultipleWaysToSpecifyRestrictKeyword::visit ( SgNode* node )
    {
+  // DQ (12/11/2012): Added new consistancy test.
+  // This consistancy test only tests for consistant setting of the restrict keyword.  But it might be useful
+  // to enforce consistant setting of both "const" and volatile" keywords as well.  I'm not clear on this
+  // design point.  There are notes about this in the Unparse_ExprStmt::unparseMFuncDeclStmt() hnadling of
+  // the "restrict" keywork (in the unparser).
+
      SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(node);
      if (declarationStatement != NULL)
         {
