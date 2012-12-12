@@ -64,6 +64,7 @@ codethorn_SOURCES = \
   VariableIdMapping.h              \
   Visualizer.C                     \
   Visualizer.h                     \
+  RERS_empty_specialization.C      \
   codethorn.C                      \
   codethorn.h
 

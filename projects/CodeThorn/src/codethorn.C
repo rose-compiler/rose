@@ -398,7 +398,8 @@ int main( int argc, char * argv[] ) {
 	("input-var-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
     ("input-var-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
     ("arith-top",po::value< string >(),"Arithmetic operations +,-,*,/,% always evaluate to top [=yes|no]")
-    ("interpreter",po::value< string >(),"Run analyzer in interpreter mode. Use [=yes|no]")
+    ("abstract-interpreter",po::value< string >(),"Run analyzer in abstract interpreter mode. Use [=yes|no]")
+    ("rers-binary",po::value< string >(),"Call rers binary functions in analysis. Use [=yes|no]")
 	("print-all-options",po::value< string >(),"print all yes/no command line options.")
     ;
 
@@ -453,7 +454,8 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("input-var-values-as-constraints",false);
 
   boolOptions.registerOption("arith-top",false);
-  boolOptions.registerOption("interpreter",false);
+  boolOptions.registerOption("abstract-interpreter",false);
+  boolOptions.registerOption("rers-binary",false);
   boolOptions.registerOption("relop-constraints",false); // not accessible on command line yet
 
   boolOptions.processOptions();
