@@ -172,6 +172,11 @@ class Analyzer {
   int numberOfInputVarValues() { return _inputVarValues.size(); }
   list<pair<SgLabelStatement*,SgNode*> > _assertNodes;
   string _csv_assert_live_file; // to become private
+  VariableId globalVarIdByName(string varName) { return globalVarName2VarIdMapping[varName]; }
+
+ public:
+  // only used temporarily for binary-binding prototype
+  map<string,VariableId> globalVarName2VarIdMapping;
 
  private:
   set<int> _inputVarValues;
@@ -190,5 +195,23 @@ class Analyzer {
 };
 
 } // end of namespace CodeThorn
+
+#define RERS_SPECIALIZATION
+#ifdef RERS_SPECIALIZATION
+// RERS-binary-binding-specific declarations
+#define STR_VALUE(arg) #arg
+#define COPY_PSTATEVAR_TO_GLOBALVAR(VARNAME) VARNAME = pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getValue().getIntValue();
+
+//cout<<"PSTATEVAR:"<<pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].toString()<<"="<<pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getValue().toString()<<endl;
+
+#define COPY_GLOBALVAR_TO_PSTATEVAR(VARNAME) pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))]=CodeThorn::AType::CppCapsuleConstIntLattice(VARNAME);
+
+namespace RERS_Problem {
+  void rersGlobalVarsCallInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate);
+  void rersGlobalVarsCallReturnInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate);
+  int calculate_output(int);
+}
+// END OF RERS-binary-binding-specific declarations
+#endif
 
 #endif

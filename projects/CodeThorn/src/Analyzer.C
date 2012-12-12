@@ -517,6 +517,59 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
   assert(edge.source==estate->label());
   // we do not pass information on the local edge
   if(edge.isType(EDGE_LOCAL)) {
+#ifdef RERS_SPECIALIZATION
+	if(boolOptions["rers-binary"]) {
+	  SgNode* nodeToAnalyze=getLabeler()->getNode(edge.source);
+	  if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nodeToAnalyze)) {
+		assert(funCall);
+		string funName=SgNodeHelper::getFunctionName(funCall);
+		if(funName=="calculate_output") {
+		  SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+		  SgExpressionPtrList::iterator j=actualParameters.begin();
+		  SgExpression* actualParameterExpr=*j;
+		  assert(actualParameterExpr);
+		  VariableId actualParameterVarId;
+		  if(exprAnalyzer.variable(actualParameterExpr,actualParameterVarId)) {
+			PState _pstate=*estate->pstate();
+			AType::CppCapsuleConstIntLattice aval_capsule=_pstate[actualParameterVarId];
+			AValue aval=aval_capsule.getValue();
+			int argument=aval.getIntValue();
+			//cout << "DEBUG: argument:"<<argument<<endl;
+			// RERS global vars binary handling
+			RERS_Problem::rersGlobalVarsCallInit(this,_pstate);
+			//cout << "DEBUG: global vars initialized before call"<<endl;
+			int rers_result=RERS_Problem::calculate_output(argument); 
+			//cout << "DEBUG: Called calculate_output("<<argument<<")"<<" :: result="<<rers_result<<endl;
+			if(rers_result<=-100) {
+			  // we found an assert
+			  // = -1000 : rers globalError
+			  // = rers_result*(-1)-100 : rers error-number
+			  return elistify();
+			}
+			RERS_Problem::rersGlobalVarsCallReturnInit(this,_pstate);
+			// TODO: _pstate[VariableId(output)]=rers_result;
+			if(SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(nodeToAnalyze)) {
+			  SgNode* lhs=SgNodeHelper::getLhs(SgNodeHelper::getExprStmtChild(nodeToAnalyze));
+			  VariableId lhsVarId;
+			  bool isLhsVar=exprAnalyzer.variable(lhs,lhsVarId);
+			  assert(isLhsVar); // must hold
+			  //cout << "DEBUG: lhsvar:rers-result:"<<lhsVarId.toString()<<"="<<rers_result<<endl;
+			  _pstate[lhsVarId]=AType::CppCapsuleConstIntLattice(rers_result);
+			  ConstraintSet _cset=*estate->constraints();
+			  _cset.removeAllConstraintsOfVar(lhsVarId);
+			  EState _eState=createEState(edge.target,_pstate,_cset);
+			  return elistify(_eState);
+			}
+			cout <<"PState:"<< _pstate<<endl;
+			cerr<<"RERS-MODE: call of unknown function."<<endl;
+			exit(1);
+			// _pstate now contains the current state obtained from the binary
+		  }
+		}
+		//cout << "DEBUG: @LOCAL_EDGE: function call:"<<SgNodeHelper::nodeToString(funCall)<<endl;
+	  }
+	}
+#endif
 	return elistify();
   }
   EState currentEState=*estate;
@@ -539,6 +592,18 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	// ad 1)
 	SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(getLabeler()->getNode(edge.source));
 	assert(funCall);
+
+#ifdef RERS_SPECIALIZATION
+	if(boolOptions["rers-binary"]) {
+	  // if rers-binary function call is selected then we skip the static analysis for this function (specific to rers)
+	  string funName=SgNodeHelper::getFunctionName(funCall);
+	  if(funName=="calculate_output") {
+		//cout << "DEBUG: rers-binary mode: skipped static-analysis call."<<endl;
+		return elistify();
+	  }
+	}
+#endif
+
 	SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
 	// ad 2)
 	SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.target));
@@ -637,6 +702,18 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	}
 	// case 2: x=f(); bind variable x to value of $return
 	if(SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(nextNodeToAnalyze1)) {
+#ifdef RERS_SPECIALIZATION
+	  if(boolOptions["rers-binary"]) {
+		if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
+		  string funName=SgNodeHelper::getFunctionName(funCall);
+		  if(funName=="calculate_output") {
+			EState newEState=currentEState;
+			newEState.setLabel(edge.target);
+			return elistify(newEState);
+		  }
+		}
+	  }
+#endif
 	  SgNode* lhs=SgNodeHelper::getLhs(SgNodeHelper::getExprStmtChild(nextNodeToAnalyze1));
 	  VariableId lhsVarId;
 	  bool isLhsVar=exprAnalyzer.variable(lhs,lhsVarId);
@@ -698,8 +775,8 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 		// update state (remove all existing constraint on that variable and set it to top)
 		PState newPState=*currentEState.pstate();
 		ConstraintSet newCSet=*currentEState.constraints();
-		if(boolOptions["interpreter"]) {
-		  cout<<"CodeThorn-interperter(stdin)> ";
+		if(boolOptions["abstract-interpreter"]) {
+		  cout<<"CodeThorn-abstract-interpreter(stdin)> ";
 		  AValue aval;
 		  CodeThorn::Parse::whitespaces(cin);
 		  cin >> aval;
@@ -721,22 +798,22 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  if(boolOptions["report-stdout"]) {
 		cout << "REPORT: stdout:"<<varId.toString()<<":"<<estate->toString()<<endl;
 	  }
-	  if(boolOptions["interpreter"]) {
+	  if(boolOptions["abstract-interpreter"]) {
 		PState* pstate=const_cast<PState*>(estate->pstate());
 		AType::ConstIntLattice aint=(*pstate)[varId].getValue();
 		// TODO: to make this more specific we must parse the printf string
-		cout<<"CodeThorn-interperter(stdout)> ";
+		cout<<"CodeThorn-abstract-interpreter(stdout)> ";
 		cout<<aint.toString()<<endl;
 	  }
 	}
 	if(getLabeler()->isStdErrLabel(lab,&varId)) {
 	  newio.recordVariable(InputOutput::STDERR_VAR,varId);
 	  assert(newio.var==varId);
-	  if(boolOptions["interpreter"]) {
+	  if(boolOptions["abstract-interpreter"]) {
 		PState* pstate=const_cast<PState*>(estate->pstate());
 		AType::ConstIntLattice aint=(*pstate)[varId].getValue();
 		// TODO: to make this more specific we must parse the printf string
-		cerr<<"CodeThorn-interperter(stderr)> ";
+		cerr<<"CodeThorn-abstract-interpreter(stderr)> ";
 		cerr<<aint.toString()<<endl;
 	  }
 	  if(boolOptions["report-stderr"]) {
@@ -940,8 +1017,10 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
 
 	int filteredVars=0;
 	for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
-	  if(setOfUsedVars.find(variableIdMapping.variableId(*i))!=setOfUsedVars.end())
+	  if(setOfUsedVars.find(variableIdMapping.variableId(*i))!=setOfUsedVars.end()) {
+		globalVarName2VarIdMapping[variableIdMapping.variableName(variableIdMapping.variableId(*i))]=variableIdMapping.variableId(*i);
 		estate=analyzeVariableDeclaration(*i,estate,estate.label());
+	  }
 	  else
 		filteredVars++;
 	}
@@ -1231,8 +1310,8 @@ void Analyzer::runSolver2() {
 				  cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
 				}
 			  }
-			  if(boolOptions["interpreter"]) {
-				cerr<<"CodeThorn-interperter> failed assert";
+			  if(boolOptions["abstract-interpreter"]) {
+				cerr<<"CodeThorn-abstract-interpreter> failed assert";
 				string name=labelNameOfAssertLabel(currentEStatePtr->label());
 				if(name!="") { cout << " @ Label: "<<name;}
 				cout <<endl;
