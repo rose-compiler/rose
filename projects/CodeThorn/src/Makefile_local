@@ -90,6 +90,9 @@ $(TOOLNAME3): $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS
 $(TOOLNAME3)_rers1: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem1_specialization.o
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers1 RERS_Problem1_specialization.o
 
+$(TOOLNAME3)_rers7: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem7_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers7 RERS_Problem7_specialization.o
+
 $(TOOLNAME2): $(TOOLNAME2).C $(OBJECT_FILES)
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME2).C -o$(TOOLNAME2)
 
@@ -252,8 +255,3 @@ projectsize:
 %.o: %.C
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $< -c 
 
-#%.o: %.CCC
-#	$(CXX) -I$(ROSE_INCLUDE_DIR) $< -c 
-
-#RERS_Problem1.o: RERS_Problem1_mod.C RERS_Problem1_specialization.C
-#	g++ RERS_Problem1_specialization.o RERS_Problem1_specialization.C -

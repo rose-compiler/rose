@@ -6,7 +6,6 @@
 
 namespace RERS_Problem {
   void rersGlobalVarsCallInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate) {
-	cout << "DEBUG: Problem1 init called."<<endl;
 	COPY_PSTATEVAR_TO_GLOBALVAR(a17);
 	COPY_PSTATEVAR_TO_GLOBALVAR(a7);
 	COPY_PSTATEVAR_TO_GLOBALVAR(a20);
