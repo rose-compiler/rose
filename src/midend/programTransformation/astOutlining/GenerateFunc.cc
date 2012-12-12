@@ -365,7 +365,8 @@ createUnpackDecl (SgInitializedName* param, // the function parameter
     // We have to make it explicit to get the right type
     // Liao, 4/24/2009  TODO we should only adjust this for the case 1
     if (isSgArrayType(orig_var_type)) 
-      if (isSgFunctionDefinition(i_name->get_scope()))
+        // Sara Royuela, Dec 12, 2012: The scope of these variables can be a BasicBlock besides a FunctionDefinition
+        if (isSgFunctionDefinition(i_name->get_scope()) || isSgBasicBlock(i_name->get_scope()))
         orig_var_type = SageBuilder::buildPointerType(isSgArrayType(orig_var_type)->get_base_type());
   }
 
