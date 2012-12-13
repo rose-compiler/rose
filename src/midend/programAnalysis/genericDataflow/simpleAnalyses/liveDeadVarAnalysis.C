@@ -422,12 +422,16 @@ void LiveDeadVarsTransfer::visit(SgIfStmt *sgn) {
   used(isSgExprStatement(sgn->get_conditional())->get_expression());
 }
 void LiveDeadVarsTransfer::visit(SgForStatement *sgn) {
-  //Dbg::dbg << "test="<<Dbg::escape(sgn->get_test()->unparseToString()) << " | " << sgn->get_test()->class_name()<<endl;
-  //Dbg::dbg << "increment="<<Dbg::escape(sgn->get_increment()->unparseToString()) << " | " << sgn->get_increment()->class_name()<<endl;
-                        
-  ROSE_ASSERT(isSgExprStatement(sgn->get_test()));
-  used(isSgExprStatement(sgn->get_test())->get_expression());
-  used(sgn->get_increment());
+    if (isSgExprStatement(sgn->get_test())) {
+        used(isSgExprStatement(sgn->get_test())->get_expression());
+        used(sgn->get_increment());
+    } else if (isSgNullStatement(sgn->get_test())) {
+        // void: no def or use
+    } else {
+        std::cerr <<"LiveDeadVarsTransfer::visit() \"for\" test statement type is not handled yet: "
+                  <<sgn->get_test()->class_name() <<"\n";
+        ROSE_ASSERT(!"statement type not handled");
+    }
 }
 void LiveDeadVarsTransfer::visit(SgWhileStmt *sgn) {
   ROSE_ASSERT(isSgExprStatement(sgn->get_condition()));
