@@ -3263,6 +3263,9 @@ SgFunctionType::SgFunctionType(SgPartialFunctionType *ft)
      p_return_type      = ft->p_return_type;
      p_has_ellipses     = ft->p_has_ellipses;
 
+  // DQ (12/13/2012): We have to set this to NULL since it is checked in the call to post_construction_initialization().
+     p_argument_list = NULL;
+
 #if 0
      p_orig_return_type = ft->p_return_type;
 

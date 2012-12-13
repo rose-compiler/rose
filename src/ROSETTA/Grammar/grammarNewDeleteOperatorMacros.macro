@@ -200,25 +200,31 @@ void *$CLASSNAME::operator new ( size_t Size )
             ROSE_ASSERT($CLASSNAME_Current_Link != NULL);
         }
 
-        // DQ (6/24/2006): Added test to make sure that Current_Link is valid
+     // DQ (6/24/2006): Added test to make sure that Current_Link is valid
         ROSE_ASSERT($CLASSNAME_Current_Link != NULL);
 
-        // Save the start of the list and remove the first link and return that first link as the new object!
+     // Save the start of the list and remove the first link and return that first link as the new object!
         $CLASSNAME* Forward_Link = $CLASSNAME_Current_Link;
 
-        // DQ (10/21/2005): I would have liked to have used a dynamic_cast<>() here!
-        // Current_Link = dynamic_cast<$CLASSNAME*>(Current_Link->p_freepointer);
+     // DQ (12/13/2012): Added assertion.
+        ROSE_ASSERT($CLASSNAME_Current_Link != NULL);
+
+     // DQ (10/21/2005): I would have liked to have used a dynamic_cast<>() here!
+     // Current_Link = dynamic_cast<$CLASSNAME*>(Current_Link->p_freepointer);
 #       if ROSE_USE_VALGRIND
-        // VALGRIND_MALLOCLIKE_BLOCK(Forward_Link, sizeof($CLASSNAME), 0, 0);
-        // VALGRIND_MAKE_WRITABLE(Forward_Link, sizeof($CLASSNAME));
-        // VALGRIND_MAKE_READABLE(&Current_Link->p_freepointer, sizeof(Current_Link->p_freepointer));
-        // VALGRIND_PRINTF_BACKTRACE("Allocating block at %p size %u for $CLASSNAME\n", Forward_Link, sizeof($CLASSNAME));
+     // VALGRIND_MALLOCLIKE_BLOCK(Forward_Link, sizeof($CLASSNAME), 0, 0);
+     // VALGRIND_MAKE_WRITABLE(Forward_Link, sizeof($CLASSNAME));
+     // VALGRIND_MAKE_READABLE(&Current_Link->p_freepointer, sizeof(Current_Link->p_freepointer));
+     // VALGRIND_PRINTF_BACKTRACE("Allocating block at %p size %u for $CLASSNAME\n", Forward_Link, sizeof($CLASSNAME));
 #       endif
         $CLASSNAME_Current_Link = ($CLASSNAME*)($CLASSNAME_Current_Link->p_freepointer);
 
-        // DQ (10/21/2005): It seems that p_freepointer's value serves no purpose once the
-        // Current_Link has been reset. Set the free pointer of the currently allocated 
-        // object to NULL (only significant in delete operator).
+     // DQ (12/13/2012): Added assertion.
+        ROSE_ASSERT(Forward_Link != NULL);
+
+     // DQ (10/21/2005): It seems that p_freepointer's value serves no purpose once the
+     // Current_Link has been reset. Set the free pointer of the currently allocated 
+     // object to NULL (only significant in delete operator).
         Forward_Link->p_freepointer = NULL;
 
 #       if COMPILE_DEBUG_STATEMENTS
