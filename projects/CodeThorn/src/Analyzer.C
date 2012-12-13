@@ -15,6 +15,9 @@ using namespace CodeThorn;
 #include "CollectionOperators.h"
 
 Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOfThreadsToUse(1),_ltlVerifier(2),_semanticFoldThreshold(5000) {
+  for(int i=0;i<62;i++) {
+	binaryBindingAssert.push_back(false);
+  }
 }
 
 set<string> Analyzer::variableIdsToVariableNames(set<VariableId> s) {
@@ -544,6 +547,12 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 			  // we found an assert
 			  // = -1000 : rers globalError
 			  // = rers_result*(-1)-100 : rers error-number
+			  if(rers_result==-1000) {
+				binaryBindingAssert[61]=true;
+			  } else {
+				assert((rers_result+100)*(-1));
+				binaryBindingAssert[(rers_result+100)*(-1)]=true;
+			  }
 			  return elistify();
 			}
 			RERS_Problem::rersGlobalVarsCallReturnInit(this,_pstate);

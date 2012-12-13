@@ -118,28 +118,50 @@ void generateAssertsCsvFile(Analyzer& analyzer, SgProject* sageProject, string f
   
   LabelSet lset=analyzer.getTransitionGraph()->labelSetOfIoOperations(InputOutput::FAILED_ASSERT);
   list<pair<SgLabelStatement*,SgNode*> > assertNodes=analyzer.listOfLabeledAssertNodes(sageProject);
-  int cnt=1;
-  for(list<pair<SgLabelStatement*,SgNode*> >::iterator i=assertNodes.begin();i!=assertNodes.end();++i) {
-	string name=SgNodeHelper::getLabelName((*i).first);
-	if(name=="globalError")
-	  name="error_60";
-	name=name.substr(6,name.size()-6);
-	*csv << name
-		 <<","
-	  ;
-	Label lab=analyzer.getLabeler()->getLabel((*i).second);
-	if(lset.find(lab)!=lset.end()) {
-	  *csv << "yes,9";
-	} else {
-	  *csv << "no,9";
+  if(boolOptions["rers-binary"]) {
+	for(int i=0;i<62;i++) {
+	  *csv << i<<",";
+	  if(analyzer.binaryBindingAssert[i]) {
+		*csv << "yes,9";
+	  } else {
+		*csv << "no,9";
+	  }
+	  *csv << "\n";
 	}
-	*csv << "\r\n";
-	cnt++;
+  } else {
+	for(list<pair<SgLabelStatement*,SgNode*> >::iterator i=assertNodes.begin();i!=assertNodes.end();++i) {
+	  string name=SgNodeHelper::getLabelName((*i).first);
+	  if(name=="globalError")
+		name="error_60";
+	  name=name.substr(6,name.size()-6);
+	  *csv << name
+		   <<","
+		;
+	  Label lab=analyzer.getLabeler()->getLabel((*i).second);
+	  if(lset.find(lab)!=lset.end()) {
+		*csv << "yes,9";
+	  } else {
+		*csv << "no,9";
+	  }
+	  *csv << "\n";
+	}
   }
   if (csv) delete csv;
 }
 
 void printAsserts(Analyzer& analyzer, SgProject* sageProject) {
+  if(boolOptions["rers-binary"]) {
+	for(int i=0;i<62;i++) {
+	  cout << "assert: error_"<<i<<": ";
+	  if(analyzer.binaryBindingAssert[i]) {
+		cout << color("green")<<"YES (REACHABLE)"<<color("normal");
+	  } else {
+		cout << color("cyan")<<"NO (UNREACHABLE)"<<color("normal");
+	  }
+	  cout << endl;
+	}
+	return;
+  }
   LabelSet lset=analyzer.getTransitionGraph()->labelSetOfIoOperations(InputOutput::FAILED_ASSERT);
   list<pair<SgLabelStatement*,SgNode*> > assertNodes=analyzer.listOfLabeledAssertNodes(sageProject);
   for(list<pair<SgLabelStatement*,SgNode*> >::iterator i=assertNodes.begin();i!=assertNodes.end();++i) {
@@ -173,6 +195,17 @@ void printAssertStatistics(Analyzer& analyzer, SgProject* sageProject) {
   }
   int n=assertNodes.size();
   assert(reachable+unreachable == n);
+
+  if(boolOptions["rers-binary"]) {
+	reachable=0;
+	unreachable=0;
+	for(int i=0;i<62;i++) {
+	  if(analyzer.binaryBindingAssert[i])
+		reachable++;
+	  else
+		unreachable++;
+	}
+  }
   cout<<"Assert reachability statistics: "
 	  <<color("normal")<<"YES: "<<color("green")<<reachable
 	  <<color("normal")<<", NO: " <<color("cyan")<<unreachable

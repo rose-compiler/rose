@@ -177,6 +177,7 @@ class Analyzer {
  public:
   // only used temporarily for binary-binding prototype
   map<string,VariableId> globalVarName2VarIdMapping;
+  vector<bool> binaryBindingAssert;
 
  private:
   set<int> _inputVarValues;
