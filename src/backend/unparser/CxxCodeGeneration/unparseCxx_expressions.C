@@ -844,6 +844,22 @@ Unparse_ExprStmt::unparse_register_name (SgInitializedName::asm_register_name_en
 
      string returnString = asm_register_names[register_name];
 
+#if (__x86_64 == 1 || __x86_64__ == 1 || __x86_32 == 1 || __x86_32__ == 1)
+  // DQ (12/12/2012): Fixup the name of the register so that we are refering to EAX instead of AX (on both 32 bit and 64 bit systems).
+     if (register_name >= SgInitializedName::e_register_a && register_name <= SgInitializedName::e_register_sp)
+        {
+       // Use the extended register name.
+          returnString = "e" + returnString;
+        }
+#endif
+
+  // DQ (12/12/2012): If this is an unrecognized register at least specify a simple register name.
+     if (register_name == SgInitializedName::e_unrecognized_register)
+        {
+          printf ("Error: register names not recognized on non-x86 architectures (putting out reference name: 'ax' \n");
+          returnString = "ax";
+        }
+
      return returnString;
    }
 
