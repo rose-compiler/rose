@@ -40,22 +40,23 @@
   \begin{block}{LTL evaluation function}
 
     \scriptsize
+    \newcommand{\ALLS}{\quad\forall\state\in\States\colon}
   \begin{algorithm}[H]
     \SetLine
     \KwIn{LTL expression, State Transition Graph}
     \KwOut{$\state\in\States\rightarrow$ BoolLattice}
-    \textbf{function} eval(LTL, G)\\
+    \textbf{function} eval(e, g)\\
     \Begin{
-        \Switch{LTL}{
-          \lCase{a \& b}{$\colon\quad\forall\state\in\States\colon$ eval(a) $\cap$ eval(b)}\\
-          \lCase{a $|$ b}{$\colon\quad\forall\state\in\States\colon$ eval(a) $\cup$ eval(b)}\\
-          \lCase{!a}{$\colon\quad\forall\state\in\States\colon \neg$ eval(a)}\\
-          \lCase{\X a}{$\colon\quad\forall\state\in\States\colon\Lub_{\state\prime\in succ(\state)}$eval(a)}\\
-          \lCase{\G a}{$\colon\quad$fix($\bot$, \lub, eval(a) $\cap$ \comb)}\\
-          \lCase{\F a}{$\colon\quad$fix($\bot$, \lub, eval(a) $\cup$ \comb)}\\
-          \lCase{a \R b}{$\colon\quad $fix($\bot$, \lub, eval(b)$\cap$(eval(a)$\cup\comb$))}\\
-          \lCase{a \U b}{$\colon\quad $fix($\bot$, \lub, eval(b)$\cup$(eval(a)$\cap\comb$))}\\
-          \lCase{a \WU\ b}{eval(G a $|$ (a \U b))}\\
+        \Switch{e}{
+          \lCase{$a\ \&\ b$}{$\!\colon\quad eval(a, G); eval(b, G);\ALLS s_e = s_a \cap s_b$}\\
+          \lCase{$a\ |\  b\:$}{$\colon\quad eval(a, G); eval(b, G);\ALLS s_e = s_a \cup s_b$}\\
+          \lCase{$!a\quad\;\,$}{$\colon\quad eval(a, G);\ALLS s_e = \neg s_a$}\\
+          \lCase{$\X a\quad$}{$\colon\quad eval(a, G);\ALLS s_e=\Lub_{\state\prime\in succ(\state)}s'_a$}\\
+          \lCase{$\G a\quad$}{$\colon\quad$fix($\bot, \lub, \lambda s\colon s_a\cap\comb$)}\\
+          \lCase{$\F a\quad\:$}{$\colon\quad$fix($\bot, \lub, \lambda s\colon s_a\cup\comb)$}\\
+          \lCase{a \R b}{$\colon\quad$fix($\bot, \lub, \lambda s\colon s_b\cap(s_a\cup\comb))$}\\
+          \lCase{a \U b}{$\colon\quad$fix($\bot, \lub, \lambda s\colon s_b\cup(s_a\cap\comb))$}\\
+          \lCase{a \WU\ b}{: eval(G a $|$ (a \U b), g)}\\
         }
       }
       
