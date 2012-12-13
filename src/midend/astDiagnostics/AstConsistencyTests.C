@@ -765,6 +765,9 @@ AstTests::runAllTests(SgProject* sageProject)
         }
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
           cout << "Test restrict keyword information finished." << endl;
+
+  // DQ (12/13/2012): Verify that their are no SgPartialFunctionType IR nodes in the memory pool.
+     ROSE_ASSERT(SgPartialFunctionType::numberOfNodes() == 0);
    }
 
 

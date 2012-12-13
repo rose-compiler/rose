@@ -1739,6 +1739,9 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
   // DQ (12/6/2012): Added assertion.
      ROSE_ASSERT(classType != NULL);
 
+  // DQ (12/13/2012): Added assertion.
+     ROSE_ASSERT(typeList != NULL);
+
   // DQ (12/6/2012): Newer simpler code (using static function SgMemberFunctionType::get_mangled()).
      SgName                typeName    = SgMemberFunctionType::get_mangled(return_type,typeList,classType,mfunc_specifier);
      SgType*               typeInTable = fTable->lookup_function_type(typeName);
@@ -1749,7 +1752,9 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
           bool has_ellipses = false;
           SgPartialFunctionType* partialFunctionType = new SgPartialFunctionType(return_type, has_ellipses, classType, mfunc_specifier);
           ROSE_ASSERT(partialFunctionType != NULL);
-
+#if 0
+          printf ("Building a SgPartialFunctionType: partialFunctionType = %p \n",partialFunctionType);
+#endif
        // DQ (12/5/2012): We want to avoid overwriting an existing SgFunctionParameterTypeList. Could be related to failing tests for AST File I/O.
           if (partialFunctionType->get_argument_list() != NULL)
              {
@@ -1770,6 +1775,15 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
        // The optional_fortran_type_kind is only required for Fortran support.
           SgExpression* optional_fortran_type_kind = NULL;
           funcType = SgMemberFunctionType::createType(partialFunctionType, optional_fortran_type_kind);
+
+       // DQ (12/13/2012): Remove the SgPartialFunctionType after it has been used to build the SgMemberFunctionType.
+       // I would rather modify the SgMemberFunctionType::createType() API so that we didn't use the SgPartialFunctionType IR nodes.
+       // First we have to reset the pointer to the type argument list to NULL since it is shared with the SgMemberFunctionType.
+          partialFunctionType->set_argument_list(NULL);
+
+       // Then we can delete the SgPartialFunctionType.
+          delete partialFunctionType;
+          partialFunctionType = NULL;
 
        // This is perhaps redundant since it was set to a derived class (but might be an important distiction).
           typeList->set_parent(funcType);
