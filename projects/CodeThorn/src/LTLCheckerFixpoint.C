@@ -845,15 +845,16 @@ Checker::Checker(EStateSet& ess, TransitionGraph& _tg)
 Label Checker::collapse_transition_graph(BoostTransitionGraph& g, 
 					 BoostTransitionGraph& reduced) const {
   Label n = 0;
-  //Label renumbered[num_vertices(g)]; // MS: variable length arrays crash on some system configurations
-  Label* renumbered=new Label[num_vertices(g)];
+  vector<Label> renumbered(num_vertices(g));
 
   FOR_EACH_STATE(state, label) {
+    //cerr<<label<<endl;
     assert(g[label]);
     if (( in_degree(label, g) >= 1) && // keep start
 	(out_degree(label, g) >= 0) && // DO NOT keep exits
-	(g[label]->io.op == InputOutput::NONE)) {
-      //cout<<"DEBUG: -- removing "<<label <<endl;//g[label]->toString()<<endl;
+	(g[label]->io.op == InputOutput::NONE ||
+	 g[label]->io.op == InputOutput::FAILED_ASSERT)) {
+      //cerr<<"-- removing "<<label <<endl;//g[label]->toString()<<endl;
 
       // patch pred <--> succ
       GraphTraits::in_edge_iterator in_i, in_end;			
@@ -864,7 +865,7 @@ Label Checker::collapse_transition_graph(BoostTransitionGraph& g,
 	for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) {
 	  Label succ = target(*out_i, g);
 	
-	  //cout<<"DEBUG: -- connecting "<<pred<<" and "<<succ<<endl;
+	  //cerr<<"-- connecting "<<pred<<" and "<<succ<<endl;
 	  add_edge(pred, succ, g);
 	}
       }
@@ -873,11 +874,13 @@ Label Checker::collapse_transition_graph(BoostTransitionGraph& g,
       // but don't remove_vertex(label, g), since we don't want the
       // boost graph to reassign numerical labels!
     } else {
-      //cout<<"DEBUG: -- keeping "<<label<<": "<<g[label]->toString()<<endl;
+      //cerr<<"-- keeping "<<label<<": "<<g[label]->toString()<<endl;
       renumbered[label] = n++;
+      add_vertex(reduced);
     }
     //cerr<<"-- done "<<endl<<endl;
   }
+
   // Build a copy of the graph without the orphaned states
   //cerr<<"digraph g {"<<endl;
   GraphTraits::edge_iterator ei, ei_end;
@@ -890,10 +893,12 @@ Label Checker::collapse_transition_graph(BoostTransitionGraph& g,
     reduced[renumbered[tgt]] = g[tgt];
   }
   //cerr<<"}"<<endl;
+
   //cerr<<"## done "<<endl<<endl;
-  Label res=renumbered[start];
-  delete[] renumbered;
-  return res;
+  cerr<<"Number of EStates: "<<num_vertices(g)<<endl;
+  cerr<<"Number of LTLStates: "<<num_vertices(reduced)<<endl;
+
+  return renumbered[start];
 }
 
 

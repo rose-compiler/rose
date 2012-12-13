@@ -1308,7 +1308,8 @@ Label UChecker::collapse_transition_graph(BoostTransitionGraph& g,
     assert(g[label]);
     if (( in_degree(label, g) >= 1) && // keep start
 	(out_degree(label, g) >= 0) && // DO NOT keep exits
-	(g[label]->io.op == InputOutput::NONE)) {
+	(g[label]->io.op == InputOutput::NONE ||
+	 g[label]->io.op == InputOutput::FAILED_ASSERT)) {
       //cerr<<"-- removing "<<label <<endl;//g[label]->toString()<<endl;
 
       // patch pred <--> succ
