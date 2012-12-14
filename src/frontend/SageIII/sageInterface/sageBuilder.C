@@ -1589,14 +1589,13 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
      printf ("Inside of SageBuilder::buildFunctionType(SgType,SgFunctionParameterTypeList) \n");
      printf ("Inside of SageBuilder::buildFunctionType() return_type = %s \n",return_type->get_mangled().str());
      printf ("Inside of SageBuilder::buildFunctionType() typeList->get_arguments().size() = %zu \n",typeList->get_arguments().size());
-#endif
 
      if (isSgFunctionType(return_type) != NULL)
-        {
+        { // Liao 12/14/2012. This is not true for some functions (e.g. findFunctionUsingDlopen() on top of dlopen()) returning a function type
           printf ("ERROR: Inside of SageBuilder::buildFunctionType(): function type can't be return type of function type (at least for debugging) \n");
           ROSE_ASSERT(false);
         }
-
+#endif
      SgFunctionTypeTable * fTable = SgNode::get_globalFunctionTypeTable();
      ROSE_ASSERT(fTable);
 
