@@ -550,8 +550,9 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 			  if(rers_result==-1000) {
 				binaryBindingAssert[61]=true;
 			  } else {
-				assert((rers_result+100)*(-1));
-				binaryBindingAssert[(rers_result+100)*(-1)]=true;
+				int index=((rers_result+100)*(-1));
+				assert(index>=0 && index <=60);
+				binaryBindingAssert[index]=true;
 			  }
 			  return elistify();
 			}

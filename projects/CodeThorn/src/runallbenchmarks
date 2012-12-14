@@ -44,7 +44,8 @@ done
 mkdir results/staticbinanalysis1
 mv CodeThorn* results/staticbinanalysis1
 
-for i in 1 2 3 4 5 6 7 8 9; do
+# ltl-verify=2 is too slow for P6-9.
+for i in 1 2 3 4 5 6; do
 #for i in 1 ; do
 ./runrersbenchmark_inputvalues_bin2 $i
 done
