@@ -90,6 +90,21 @@ $(TOOLNAME3): $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS
 $(TOOLNAME3)_rers1: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem1_specialization.o
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers1 RERS_Problem1_specialization.o
 
+$(TOOLNAME3)_rers2: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem2_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers2 RERS_Problem2_specialization.o
+
+$(TOOLNAME3)_rers3: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem3_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers3 RERS_Problem3_specialization.o
+
+$(TOOLNAME3)_rers4: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem4_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers4 RERS_Problem4_specialization.o
+
+$(TOOLNAME3)_rers5: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem5_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers5 RERS_Problem5_specialization.o
+
+$(TOOLNAME3)_rers6: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem6_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers6 RERS_Problem6_specialization.o
+
 $(TOOLNAME3)_rers7: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem7_specialization.o
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers7 RERS_Problem7_specialization.o
 
@@ -171,6 +186,8 @@ clean:
 	rm -f rose_testCode.C
 	rm -f *.o
 	rm -f $(TOOLNAME3)
+	rm -f $(TOOLNAME3)_rers*
+	rm -f RERS_Problem*_mod.C
 	rm -f *.dot
 	rm -f *.ps
 	rm -f viz/*
@@ -264,3 +281,18 @@ projectsize:
 %.o: %.C
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $< -c 
 
+RERS_BINARY: transform_rers_problems codethorn_rers1 codethorn_rers2 codethorn_rers3 codethorn_rers4 codethorn_rers5 codethorn_rers6 codethorn_rers7 codethorn_rers8 codethorn_rers9 codethorn_rers10
+		
+		
+
+transform_rers_problems:
+		./transform_rers_problem Problem1
+		./transform_rers_problem Problem2
+		./transform_rers_problem Problem3
+		./transform_rers_problem Problem4
+		./transform_rers_problem Problem5
+		./transform_rers_problem Problem6
+		./transform_rers_problem Problem7
+		./transform_rers_problem Problem8
+		./transform_rers_problem Problem9
+		./transform_rers_problem Problem10
