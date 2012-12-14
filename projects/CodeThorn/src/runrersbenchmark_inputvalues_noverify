@@ -37,6 +37,5 @@ echo "Analyzing RERS benchmark Problem$1.c with $NUMTHREADS thread$NUMS."
 
 sort -u CodeThorn_Problem$1_assert_live_csv.txt > CodeThorn_Problem$1_results_additional.txt
 sort -g CodeThorn_Problem$1_assert_csv.txt > CodeThorn_Problem$1_results.txt
-cat CodeThorn_Problem$1_ltl_csv.txt >> CodeThorn_Problem$1_results.txt
 echo "Generated CodeThorn_Problem$1_results.txt"
 echo "Generated CodeThorn_Problem$1_results_additional.txt"
