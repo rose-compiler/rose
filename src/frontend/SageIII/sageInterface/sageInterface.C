@@ -12513,7 +12513,9 @@ CollectDependentDeclarationsTraversal::visit(SgNode *astNode)
            ROSE_ASSERT(declaration != NULL);
            addDeclaration(declaration);
            ROSE_ASSERT(enum_decl->hasAssociatedSymbol() == true);
-           SgSymbol* esymbol = enum_decl->get_symbol_from_symbol_table();
+           // Liao 12/14/2012. use search_for_symbol_from_symbol_table() instead to avoid the defining/nondefing decl issue
+           //SgSymbol* esymbol = enum_decl->get_symbol_from_symbol_table();
+           SgSymbol* esymbol = enum_decl->search_for_symbol_from_symbol_table();
            ROSE_ASSERT(esymbol!= NULL);
            symbolList.push_back(esymbol);
          }

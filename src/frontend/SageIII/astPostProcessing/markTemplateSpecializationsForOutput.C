@@ -116,13 +116,13 @@ MarkTemplateSpecializationsForOutput::evaluateInheritedAttribute (
        // If this is marked for output then record this in the inherited attribute to be returned
           if ( fileInfo->isOutputInCodeGeneration() == true )
              {
-               printf ("Skipping nodes already marked to be unparsed = %p = %s \n",node,node->class_name().c_str());
+//               printf ("Skipping nodes already marked to be unparsed = %p = %s \n",node,node->class_name().c_str());
             // returnAttribute.insideDeclarationToOutput = true;
             // printf ("Found compiler generated IR node to be unparsed = %s \n",node->sage_class_name());
              }
             else
              {
-               printf ("Evaluate nodes for if then need be marked to be unparsed = %p = %s \n",node,node->class_name().c_str());
+//               printf ("Evaluate nodes for if then need be marked to be unparsed = %p = %s \n",node,node->class_name().c_str());
 
             // Maybe SgGlobal should return false for hasPositionInSource()?
                if (fileInfo->hasPositionInSource() == true)
@@ -150,7 +150,7 @@ MarkTemplateSpecializationsForOutput::evaluateInheritedAttribute (
                   }
                  else
                   {
-                    printf ("In MarkTemplateSpecializationsForOutput evaluation fileInfo->hasPositionInSource() == false \n");
+//                    printf ("In MarkTemplateSpecializationsForOutput evaluation fileInfo->hasPositionInSource() == false \n");
                   }
              }
         }
