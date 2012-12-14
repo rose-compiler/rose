@@ -96,6 +96,9 @@ check-local:
 	@echo CHECK: all of the following formulae should evaluate to "YES"!
 	@echo ================================================================
 	./codethorn --edg:no_warnings $(srcdir)/tests/rers_mini1.c    --verify $(srcdir)/tests/rers_mini1.ltl
+	rm -f *.consistent
+	$(MAKE) $(CONSISTENCY_CHECKS)
+	rm -f *.consistent
 
 checkdemos: 
 	./matcher_demo $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
@@ -107,12 +110,36 @@ test:
 	               --csv-assert Problem1-assert.csv \
 	               --csv-ltl Problem1-ltl.csv
 
+# Consistency checks
+# make sure that all permutations of analyzer options yield consistent results
+CONSISTENCY_CHECKS=$(patsubst %,Problem%.consistent, $(shell seq 1))
+%.consistent: $(srcdir)/tests/rers/%.c codethorn Makefile
+	./codethorn --edg:no_warnings --colors=no $< \
+         --ltl-verifier=1 --semantic-fold=no \
+         --verify $(patsubst $(srcdir)/tests/rers/Problem%.c,$(srcdir)/tests/rers/properties%.txt,$<) \
+         --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.0.csv,$<) >$@
+	./codethorn --edg:no_warnings --colors=no $< \
+         --ltl-verifier=1 --semantic-fold=yes \
+         --verify $(patsubst $(srcdir)/tests/rers/Problem%.c,$(srcdir)/tests/rers/properties%.txt,$<) \
+         --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.1.csv,$<) >$@
+	./codethorn --edg:no_warnings --colors=no $< \
+         --ltl-verifier=2 --semantic-fold=no \
+         --verify $(patsubst $(srcdir)/tests/rers/Problem%.c,$(srcdir)/tests/rers/properties%.txt,$<) \
+         --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.2.csv,$<) >$@
+	./codethorn --edg:no_warnings --colors=no $< \
+         --ltl-verifier=2 --semantic-fold=yes \
+         --verify $(patsubst $(srcdir)/tests/rers/Problem%.c,$(srcdir)/tests/rers/properties%.txt,$<) \
+         --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.3.csv,$<) >$@
+        # paste all csv's line-by-line
+	paste -d "," $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.[0-9].csv,$<) >$@
+	if grep '(yes.*no)|(no.*yes)|(unk)' $@; then rm -f $@ false; fi
+
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
 rers: $(RERS)
 
 # parallel tests with make -j<N> test
-%.log: $(srcdir)/tests/rers/%.c $(TOOLNAME3) Makefile
+%.log: $(srcdir)/tests/rers/%.c codethorn Makefile
 	./codethorn --edg:no_warnings --colors=no $< \
 	     --verify $(patsubst $(srcdir)/tests/rers/Problem%.c,$(srcdir)/tests/rers/properties%.txt,$<) \
 	     --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%-ltl.csv,$<) \
@@ -146,7 +173,7 @@ distclean-local: clean
 	rm -f *.tgz
 	rm -f *~
 	rm -rf ../docs/doxygen
-	rm -f $(TOOLNAME3)ref
+	rm -f codethornref
 
 bsps: codethorn
 	./codethorn $(srcdir)/tests/basictest10f.C && make viz && make vizjpg
@@ -179,10 +206,10 @@ codethorn-dist:
 	tar cvzf codethorn_$(MYDATE).tgz *.C *cpp *.h *.lxx *.yxx tests/*.C tests/*.c Makefile*
 
 
-asserttest: $(TOOLNAME3)
+asserttest: codethorn
 	./codethorn --edg:no_warnings $(srcdir)/tests/asserttest2.c --csv-assert assert_csv.txt
 
-regressiontest: $(TOOLNAME3)
+regressiontest: codethorn
 	@./codethorn --csv-assert tmp_rers_mini1_assert_csv.txt --csv-ltl tmp_rers_mini1_ltl_csv.txt --verify $(srcdir)/tests/rers_mini1.ltl --viz=yes $(srcdir)/tests/rers_mini1.c
 	@echo "-----------------------"
 	@sort -u tmp_rers_mini1_assert_csv.txt > tmp2_rers_mini1_assert_csv.txt 
