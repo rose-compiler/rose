@@ -1,0 +1,70 @@
+#total run-time:
+#ProblemNr : ?
+
+ORDER="staticanalysis_1thread staticanalysis_12threads staticanalysis_inputvalues_1thread staticanalysis_inputvalues_12threads staticanalysis_inputvalues_semanticfold"
+
+ORDER2="staticbinanalysis1 staticbinanalysis2"
+
+ORDER3="staticanalysis_12threads staticanalysis_inputvalues_12threads staticanalysis_inputvalues_semanticfold staticbinanalysis1"
+
+rm -f runtimes123.dat
+echo "Title     ArbSeq ArbPar ValSeq ValPar ValFold" > runtimes123.dat
+for i in 1 2 3; do
+  echo -n "Problem$i " >> runtimes123.dat
+  for j in $ORDER; do
+    grep "Runtime(m" $j/CodeThorn_Problem${i}_stats_csv.txt | cut -f6 --delimiter="," | tr "\n" " " | sed s/secs//g >>runtimes123.dat
+  done
+  echo >> runtimes123.dat
+done
+gnuplot < runtimes123.gp
+
+rm -f runtimes456.dat
+echo "Title     ArbSeq ArbPar ValSeq ValPar ValFold" > runtimes456.dat
+for i in 4 5 6; do
+  echo -n "Problem$i " >> runtimes456.dat
+  for j in $ORDER; do
+    grep "Runtime(m" $j/CodeThorn_Problem${i}_stats_csv.txt | cut -f6 --delimiter="," | tr "\n" " " | sed s/secs//g >>runtimes456.dat
+  done
+  echo >> runtimes456.dat
+done
+gnuplot < runtimes456.gp
+
+rm -f runtimes789.dat
+echo "Title     FrontEnd ASTT_ICFG_Maps StatBin LTL1 LTL2 " > runtimes789.dat
+for i in 7 8 9; do
+  echo -n "Problem$i " >> runtimes789.dat
+    #frontend+AST
+    grep "Runtime(m" staticbinanalysis1/CodeThorn_Problem${i}_stats_csv.txt | cut -f2 --delimiter="," | tr "\n" " " | sed s/secs//g >>runtimes789.dat
+    #AST Test+Setup
+    grep "Runtime(m" staticbinanalysis1/CodeThorn_Problem${i}_stats_csv.txt | cut -f3 --delimiter="," | tr "\n" " " | sed s/secs//g >>runtimes789.dat
+    #static analysis
+    grep "Runtime(m" staticbinanalysis1/CodeThorn_Problem${i}_stats_csv.txt | cut -f4 --delimiter="," | tr "\n" " " | sed s/secs//g >>runtimes789.dat
+    #LTL1
+    grep "Runtime(m" staticbinanalysis1/CodeThorn_Problem${i}_stats_csv.txt | cut -f5 --delimiter="," | tr "\n" " " | sed s/secs//g >>runtimes789.dat
+    #LTL2
+    #grep "Runtime(m" staticbinanalysis2/CodeThorn_Problem${i}_stats_csv.txt | cut -f5 --delimiter="," | tr "\n" " " | sed s/secs//g >>runtimes789.dat
+	echo -n "0" >> runtimes789.dat
+  echo >> runtimes789.dat
+done
+gnuplot < runtimes789.gp
+
+rm -f estates456.dat
+echo "Title     EStates ValEStates ValEStatesReduced SpecialAnaEStates" > estates456.dat
+for i in 4 5 6; do
+  echo -n "Problem$i " >> estates456.dat
+  for j in $ORDER3; do
+    grep "Sizes" $j/CodeThorn_Problem${i}_stats_csv.txt | cut -f3 --delimiter="," | tr "\n" " " >>estates456.dat
+  done
+  echo >> estates456.dat
+done
+gnuplot < estates456.gp
+
+rm -f stg789.dat
+echo "Title     SpecialAnaEStates STG" > stg789.dat
+for i in 7 8 9; do
+  echo -n "Problem$i " >> stg789.dat
+    grep "Sizes" staticbinanalysis1/CodeThorn_Problem${i}_stats_csv.txt | cut -f3 --delimiter="," | tr "\n" " " >>stg789.dat
+    grep "Sizes" staticbinanalysis1/CodeThorn_Problem${i}_stats_csv.txt | cut -f4 --delimiter="," | tr "\n" " " >>stg789.dat
+  echo >> stg789.dat
+done
+gnuplot < stg789.gp
