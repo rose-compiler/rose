@@ -11,7 +11,7 @@
 \newcommand{\R}{\ensuremath{\mathrm{R}}\xspace}
 \newcommand{\U}{\ensuremath{\mathrm{U}}\xspace}
 \newcommand{\WU}{\ensuremath{\mathrm{WU}\xspace}}
-\newcommand{\comb}{\ensuremath{\mathit{succs}}\xspace}
+\newcommand{\comb}{\ensuremath{\mathit{joined\_succs}}\xspace}
 
 
 \begin{frame}{Linear Time Logic Formul\ae\ Verification}
@@ -52,10 +52,10 @@
           \lCase{$a\ |\  b\:$}{$\colon\quad eval(a, G); eval(b, G);\ALLS s_e = s_a \cup s_b$}\\
           \lCase{$!a\quad\;\,$}{$\colon\quad eval(a, G);\ALLS s_e = \neg s_a$}\\
           \lCase{$\X a\quad$}{$\colon\quad eval(a, G);\ALLS s_e=\Lub_{\state\prime\in succ(\state)}s'_a$}\\
-          \lCase{$\G a\quad$}{$\colon\quad$fix($\bot, \lub, \lambda s\colon s_a\cap\comb$)}\\
-          \lCase{$\F a\quad\:$}{$\colon\quad$fix($\bot, \lub, \lambda s\colon s_a\cup\comb)$}\\
-          \lCase{a \R b}{$\colon\quad$fix($\bot, \lub, \lambda s\colon s_b\cap(s_a\cup\comb))$}\\
-          \lCase{a \U b}{$\colon\quad$fix($\bot, \lub, \lambda s\colon s_b\cup(s_a\cap\comb))$}\\
+          \lCase{$\G a\quad$}{$\colon\quad$fix($\bot, \lub, \lambda s,\comb\colon s_a\cap\comb$)}\\
+          \lCase{$\F a\quad\:$}{$\colon\quad$fix($\bot, \lub, \lambda s,\comb\colon s_a\cup\comb)$}\\
+          \lCase{a \R b}{$\colon\quad$fix($\bot, \lub, \lambda s,\comb\colon s_b\cap(s_a\cup\comb))$}\\
+          \lCase{a \U b}{$\colon\quad$fix($\bot, \lub, \lambda s,\comb\colon s_b\cup(s_a\cap\comb))$}\\
           \lCase{a \WU\ b}{: eval(G a $|$ (a \U b), g)}\\
         }
       }
@@ -65,7 +65,8 @@
 
     \medskip
 
-    worklist/fixpoint:  fix(\emph{init}, \emph{join}, \emph{transfer})
+    worklist/fixpoint:  fix(\emph{init}, \emph{join}, \emph{transfer})\\
+    \comb: $\Lub_{\state\prime\in succ(\state)}s'_e$ (joined result of successors of s)\\
   \end{block}
 \end{frame}
 \newcommand{\ffalse}{\ensuremath{\mathit{false}}}
@@ -122,18 +123,18 @@ de-sugar $WU$: $ x\ WU\ y \rightarrow G x \vee (x\ U\ y)$\\
       \KwIn{State Transition Graph (collapsed)}
       \KwOut{Formulae true, false, or unknown.}
       \lForEach{S $\in$ STG}{ 
-        \{ val$_S$ = $\bot$; worklist = worklist $\cup$ S \} } \;
-      \While{worklist $\neq$ $\emptyset$}{
-         succ := worklist.pop() \;
+        \{ val$_S$ = $\bot$; W = W $\cup$ S \} } \;
+      \While{W $\neq$ $\emptyset$}{
+         W = W $\setminus$ succ; \Comment{take succ from worklist}\\
          %remove\_if\_orphan(succ)\;
          \ForEach{S $\in$ pred(succ)}{
-            val' := transfer(S, val$_S$); 
+            val' := transfer(S, val$_\mathit{succ}$); 
             \Comment{compute the transfer function for S}\\
             \lIf{val$_S$ == val'}{
                continue; \Comment{Reached fixpoint}\;
             }
             \Else{
-               S' := add\_state\_if\_new(S, val')\;
+               S' := add\_state\_if\_new(S, val'), val$_{S'}$ = val' \;
                add\_edge(S', succ); \Comment{self-cycles not shown}\\
                remove\_edge(S, succ); \Comment{patch up the new state}\\
                
@@ -149,7 +150,8 @@ de-sugar $WU$: $ x\ WU\ y \rightarrow G x \vee (x\ U\ y)$\\
       }
       \ForEach{S $\in$ STG}{
         \lFor{i := 0 .. nargs}{
-          valstack.pop(); \Comment{consume args on valstack}\\
+          valstack$_S$.pop(); \Comment{consume args on valstack}\\
+          valstack$_S$.push(val$_S$)\;
         }
       }
     \end{algorithm}
