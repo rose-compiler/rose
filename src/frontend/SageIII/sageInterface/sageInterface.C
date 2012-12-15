@@ -11989,7 +11989,7 @@ class CollectDependentDeclarationsCopyType : public SgCopyHelp
             // This defines a more complex concept of mostly "deep" copy, except for defining function declarations
             // which are converted to non-defining declarations.  However, this level of complexity is difficult to
             // support and debug, so we are switching to a simpler approach of just using the "deep" copy as a building
-            // block and then using a second pass to transformat defining declarations to be non-defining declarations
+            // block and then using a second pass to transform defining declarations to be non-defining declarations
             // were required.  This should be easier to test and debug, I hope.
                SgNode* copy = NULL;
                const SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(n);
@@ -12004,7 +12004,7 @@ class CollectDependentDeclarationsCopyType : public SgCopyHelp
                     printf ("In CollectDependentDeclarationsCopyType: Copy mechanism appied to SgFunctionDeclaration functionDeclaration->get_firstNondefiningDeclaration() = %p \n",functionDeclaration->get_firstNondefiningDeclaration());
                     if (functionDeclaration->get_firstNondefiningDeclaration() != NULL)
                        {
-                         printf ("Exiting before gettint here \n");
+                         printf ("Exiting before getting here \n");
                          ROSE_ASSERT(false);
 
                       // Make a copy
@@ -12659,13 +12659,33 @@ SageInterface::sortSgNodeListBasedOnAppearanceOrderInSource(const vector<SgDecla
   for (Rose_STL_Container<SgNode*>::const_iterator iter = queryResult.begin();
       iter!= queryResult.end(); iter++)
   {
-//    cerr<<"Trying to match:"<<(*iter)<<(*iter)->class_name() <<" "<<(*iter)->unparseToString()<<endl;
+    //    cerr<<"Trying to match:"<<(*iter)<<" "<<(*iter)->class_name() <<" "<<(*iter)->unparseToString()<<endl;
     SgNode* cur_node = *iter;
     SgDeclarationStatement* cur_stmt =  isSgDeclarationStatement(cur_node);
     ROSE_ASSERT(cur_stmt!=NULL);
+    // Liao 12/14/2012. It is possible nodevec contains a first non-defining function declaration since the function is called in the outlined function
+    // This is true even if the AST only has a defining function declaration.
+    //
+    // But that first non-defining function declaration is not traversable in AST due to it is hidden.
+    // The solution here is to for each defining function decl traversed, convert it to the first nondefining one to do the match.
+    SgFunctionDeclaration * func_decl = isSgFunctionDeclaration (cur_stmt);
+    if (func_decl)
+    {
+      if (func_decl->get_definingDeclaration() == func_decl )
+      {
+        cur_stmt = func_decl->get_firstNondefiningDeclaration();
+        ROSE_ASSERT (cur_stmt != func_decl);
+      }
+    }
     vector<SgDeclarationStatement*>::const_iterator i = find (nodevec.begin(), nodevec.end(), cur_stmt);
-   if (i!=nodevec.end())
-      sortedNode.push_back(*i);
+    if (i!=nodevec.end())
+    {
+      // It is possible we already visited a real prototype func decl before, now we see a prototype converted from a defining declaration. 
+      // We have to make sure only one copy is inserted.
+      vector<SgDeclarationStatement*>::const_iterator j = find (sortedNode.begin(), sortedNode.end(), *i); 
+      if (j == sortedNode.end())
+        sortedNode.push_back(*i);
+    }
   }
 
   if (nodevec.size() != sortedNode.size())
@@ -12674,12 +12694,12 @@ SageInterface::sortSgNodeListBasedOnAppearanceOrderInSource(const vector<SgDecla
     cerr<<"nodevec() have "<< nodevec.size()<<" elements. They are:"<<endl;
     for (vector<SgDeclarationStatement*>::const_iterator iter = nodevec.begin(); iter != nodevec.end(); iter++)
     {
-      cerr<<(*iter)<<(*iter)->class_name() <<" "<<(*iter)->unparseToString()<<endl;
+      cerr<<(*iter)<<" "<<(*iter)->class_name() <<" "<<(*iter)->unparseToString()<<endl;
     }
     cerr<<"sortedNode() have " << sortedNode.size() <<" elements. They are:"<<endl;
     for (vector<SgDeclarationStatement*>::const_iterator iter = sortedNode.begin(); iter != sortedNode.end(); iter++)
     {
-      cerr<<(*iter)<<(*iter)->class_name() <<" "<<(*iter)->unparseToString()<<endl;
+      cerr<<(*iter)<<" "<<(*iter)->class_name() <<" "<<(*iter)->unparseToString()<<endl;
     }
 
     ROSE_ASSERT(nodevec.size() == sortedNode.size());
@@ -12814,7 +12834,7 @@ generateCopiesOfDependentDeclarations (const  vector<SgDeclarationStatement*>& d
 
                     SgFunctionDeclaration* copy_nondefiningDeclaration = isSgFunctionDeclaration(copy_node);
                     copy_nondefiningDeclaration->set_firstNondefiningDeclaration(copy_nondefiningDeclaration);
-                    ROSE_ASSERT(copy_nondefiningDeclaration->get_definingDeclaration() == NULL);
+                    //ROSE_ASSERT(copy_nondefiningDeclaration->get_definingDeclaration() == NULL); // TODO: Liao 12/14/2012. this needs more investigation. It fails on tests/roseTests/astOutliningTests/moreTest2.cpp. We need a special version of AST copy (collectDependentDeclarationsCopyType) to do just shallow copy of function prototypes
 
                  // DQ (2/25/2009): Added assertion.
                     ROSE_ASSERT(copy_nondefiningDeclaration->get_scope() == functionDeclaration->get_scope());
@@ -12919,6 +12939,8 @@ generateCopiesOfDependentDeclarations (const  vector<SgDeclarationStatement*>& d
                      cout<<"Copying a non-defining typedef declaration:"<<tdecl->unparseToString()<<endl;
 #endif
                    copy_node = SageInterface::deepCopy(tdecl->get_firstNondefiningDeclaration());
+                   SgTypedefDeclaration* tdecl_copy = isSgTypedefDeclaration(copy_node);
+                   tdecl_copy->set_typedefBaseTypeContainsDefiningDeclaration (false); // explicit indicate this does not contain defining base type, Liao 12/14/2012
                  }
                   else
 #endif
@@ -15065,7 +15087,7 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
   // Actual side effect analysis
   if (!AnalyzeStmtRefs(fa, s1, cwRef1, crRef1))
   {
-    cerr<<"error in side effect analysis!"<<endl;
+//    cerr<<"error in side effect analysis!"<<endl;
     return false;
   }
 

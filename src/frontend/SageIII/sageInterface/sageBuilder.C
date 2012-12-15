@@ -2917,15 +2917,15 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* f
   // DQ (2/19/2009): Fixed to handle extern "C" state in input "funcdecl"
   // return buildNondefiningFunctionDeclaration(name,return_type,paralist,scope);
   SgFunctionDeclaration* returnFunction = buildNondefiningFunctionDeclaration(name,return_type,paralist,scope,decoratorList);
+#endif
+  // buildNondefiningFunctionDeclaration() will check if a same function is created before by looking up function symbols.
+  SgFunctionDeclaration* returnFunction  = buildNondefiningFunctionDeclaration (name, return_type, paralist, scope, decoratorList, false, NULL);
 
   returnFunction->set_linkage(funcdecl->get_linkage());
   if (funcdecl->get_declarationModifier().get_storageModifier().isExtern() == true)
   {
     returnFunction->get_declarationModifier().get_storageModifier().setExtern();
   }
-#endif
-  // buildNondefiningFunctionDeclaration() will check if a same function is created before by looking up function symbols.
-  SgFunctionDeclaration* returnFunction  = buildNondefiningFunctionDeclaration (name, return_type, paralist, scope, decoratorList, false, NULL);
 
   ROSE_ASSERT (returnFunction->get_linkage() == funcdecl->get_linkage());
   ROSE_ASSERT (returnFunction->get_declarationModifier().get_storageModifier().isExtern() ==
@@ -4162,6 +4162,7 @@ SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return
 
   // DQ (11/12/2012): Building a defining declaration from scratch now requires a non-defining declaration to exist.
      SgFunctionDeclaration* nondefininfDeclaration = buildNondefiningFunctionDeclaration(name,return_type,parameter_list,scope,NULL);
+//     appendStatement (nondefininfDeclaration, scope);
 
   // return buildDefiningFunctionDeclaration (name,return_type,parameter_list,scope,NULL,false,NULL,NULL);
      return buildDefiningFunctionDeclaration (name,return_type,parameter_list,scope,NULL,false,nondefininfDeclaration,NULL);
