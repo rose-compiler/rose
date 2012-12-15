@@ -121,6 +121,7 @@ PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_PASS:.cpp=.o)
 EXTERNAL_PASSING_CXX_TEST_Objects = $(TESTCODES_REQUIRED_TO_PASS:.C=.o)
 
 # This rule tests the use of outlining in the original file and to a separate file.
+c-test:$(PASSING_C_TEST_Objects) 
 $(PASSING_C_TEST_Objects): %.o: $(srcdir)/%.c outline 
 	@echo "***************** Testing C specific outlining...(a classic scheme) *****************"
 	./outline$(EXEEXT) -rose:outline:enable_classic -c $<
@@ -132,6 +133,8 @@ $(PASSING_C_TEST_Objects): %.o: $(srcdir)/%.c outline
 	./outline$(EXEEXT) $(OUTLINE_FLAG) -rose:outline:use_dlopen -rose:outline:temp_variable -I$(top_srcdir)/projects/autoTuning -rose:outline:exclude_headers -rose:outline:output_path `pwd` -c $<
 
 # This rule tests the use of outlining in the original file and to a separate file.
+cxx-test:$(PASSING_CXX_TEST_Objects)
+
 $(PASSING_CXX_TEST_Objects): %.o: $(srcdir)/%.cpp outline
 	@echo "***************** Testing C++ specific outlining...(in the same file) *****************"
 	./outline$(EXEEXT) ${OUTLINE_FLAG} -c $<
@@ -167,10 +170,10 @@ if !OS_VENDOR_DEBIAN
 check-local: outline$(EXEEXT) injectOutlinePragmas outlineRandom outlineSelection
 	@echo "Test for ROSE outliner."
 	@echo "***************** Testing C specific outlining *******************"
-	$(MAKE) $(PASSING_C_TEST_Objects)
+	$(MAKE) c-test
 	$(MAKE) rose_complexStruct.c
 	@echo "***************** Testing C++ specific outlining ******************"
-	$(MAKE) $(PASSING_CXX_TEST_Objects)
+	$(MAKE) cxx-test
 	$(MAKE) $(EXTERNAL_PASSING_CXX_TEST_Objects)
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/tests/roseTests/astOutliningTests: make check rule complete (terminated normally) ******"

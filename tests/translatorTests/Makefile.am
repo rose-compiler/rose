@@ -24,7 +24,8 @@ noinst_PROGRAMS = \
 	testFortranProtected \
 	label_stmt_file_info_translator \
 	testConstDeclarations \
-	testPragmaInBody
+	testPragmaInBody \
+	querySubTree
 #
 # a better alternative to identityTranslator
 # Liao 1/29/2009
@@ -50,6 +51,7 @@ label_stmt_file_info_translator_SOURCES = label_stmt_file_info_translator.C
 # DQ (8/25/2011): Added test code to demonstrate where const is set in the AST.
 testConstDeclarations_SOURCES = testConstDeclarations.C
 testPragmaInBody_SOURCES = testPragmaInBody.C
+querySubTree_SOURCES = querySubTree.C
 
 # LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
@@ -82,6 +84,9 @@ TESTS = $(check_PROGRAMS) #test_testDataMemberOfConst test_testFortranParameter
 input_testPragmaInBody.o:testPragmaInBody
 	./testPragmaInBody -c $(srcdir)/input_testPragmaInBody.c  && touch $@
 
+input_querySubTree.o:querySubTree
+	./querySubTree -c $(srcdir)/input_querySubTree.C  && touch $@
+
 input_testTranslator2010_2.o: testTranslator2010_02 
 	./testTranslator2010_02 -rose:verbose 0 $(srcdir)/input_testTranslator2010_2.C && touch $@
 
@@ -113,7 +118,8 @@ EXTRA_DIST = \
    input_label_stmt_file_info_translator.C \
    input_testTranslator2012_01a.C \
    input_testTranslator2012_01a.C \
-   input_testPragmaInBody.c
+   input_testPragmaInBody.c \
+   input_querySubTree.C
 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 check-cxx: \
@@ -124,7 +130,8 @@ check-cxx: \
 	input_testConstDeclarations.o \
 	input_testTranslator2010_2.o \
 	input_testTranslator2010_3.o \
-	input_label_stmt_file_info_translator.o
+	input_label_stmt_file_info_translator.o \
+	input_querySubTree.o
 # TODO: FIX the following tests
 #Currently_Failing_Cxx_tests =
 #	dataMemberOfConst.o 
