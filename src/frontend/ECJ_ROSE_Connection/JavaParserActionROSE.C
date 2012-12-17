@@ -98,11 +98,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionInsertClassEnd(JNIEnv *env, jclass
 /**
  *
  */
-JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassSupportStart(JNIEnv *env, jclass xxx, jstring java_name, jstring java_external_name, jboolean java_is_interface, jboolean java_is_anonymous, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassSupportStart(JNIEnv *env, jclass xxx, jstring java_name, jstring java_external_name, jboolean java_is_interface, jboolean java_is_enum, jboolean java_is_anonymous, jobject jToken) {
     SgName name = convertJavaStringToCxxString(env, java_name);
     SgName external_name = convertJavaStringToCxxString(env, java_external_name);
 
     bool is_interface = java_is_interface;
+    bool is_enum = java_is_enum;
     bool is_anonymous = java_is_anonymous;
 
     if (SgProject::get_verbose() > 0)
@@ -119,7 +120,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassSupportStart(JNIEnv *env
     ROSE_ASSERT(classDefinition && (! classDefinition -> attributeExists("namespace")));
     astJavaScopeStack.push(classDefinition); // to contain the class members...
 
-    declaration -> set_explicit_interface(is_interface); // Identify whether or not this is an interface
+    declaration -> set_explicit_interface(is_interface); // Identify whether or not this is an interface.
+    declaration -> set_explicit_enum(is_enum);           // Identify whether or not this is an enum.
 
     if (external_name.getString().size() > 0) {
         SgClassType *class_type = declaration -> get_type();
@@ -318,12 +320,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassSupportEnd(JNIEnv *env, 
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionBuildArgumentSupport(JNIEnv *env, jclass, jstring java_argument_name, jboolean java_is_final, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildArgumentSupport(JNIEnv *env, jclass, jstring java_argument_name, jboolean java_is_var_args, jboolean java_is_final, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Build argument support\n");
 
     SgName argument_name = convertJavaStringToCxxString(env, java_argument_name);
     bool is_final = java_is_final;
+    bool is_var_args = java_is_var_args;
 
     if (SgProject::get_verbose() > 0)
         printf ("argument argument_name = %s \n", argument_name.str());
@@ -348,6 +351,17 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildArgumentSupport(JNIEnv *env, 
     //
     if (is_final) {
         initializedName -> setAttribute("final", new AstRegExAttribute(""));
+    }
+
+    //
+    // Identify Arguments with var arguments.
+    //
+    if (is_var_args) {
+        SgPointerType *array_type = isSgPointerType(argument_type);
+        ROSE_ASSERT(array_type);
+        SgType *element_type = array_type -> get_base_type();
+
+        initializedName -> setAttribute("var_args", new AstSgNodeAttribute(element_type));
     }
 
     setJavaSourcePosition(initializedName, env, jToken);
@@ -699,6 +713,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration(JNIEnv *env, jclas
                                                               jstring java_package_name,
                                                               jstring java_type_name,
                                                               jboolean java_is_interface,
+                                                              jboolean java_is_enum,
                                                               jboolean java_is_abstract,
                                                               jboolean java_is_final,
                                                               jboolean java_is_private,
@@ -718,6 +733,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration(JNIEnv *env, jclas
     SgType *type = lookupTypeByName(package_name, type_name, 0 /* not an array - number of dimensions is 0 */);
 
     bool is_interface = java_is_interface;
+    bool is_enum = java_is_enum;
 
     bool is_abstract = java_is_abstract;
     bool is_final = java_is_final;
@@ -738,12 +754,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration(JNIEnv *env, jclas
     ROSE_ASSERT(classDefinition && (! classDefinition -> attributeExists("namespace")));
 
     classDeclaration -> setAttribute("user-defined-type", new AstRegExAttribute(type_name));
-    classDeclaration -> set_explicit_interface(is_interface); // Identify whether or not this is an interface
+    classDeclaration -> set_explicit_interface(is_interface); // Identify whether or not this is an interface.
+    classDeclaration -> set_explicit_enum(is_enum);           // Identify whether or not this is an enum.
 
     if (is_abstract)
          classDeclaration -> get_declarationModifier().setJavaAbstract();
     else classDeclaration -> get_declarationModifier().unsetJavaAbstract();
-    if (is_final)
+    if (is_final && (! is_enum)) // Enum should not be marked as final
          classDeclaration -> get_declarationModifier().setFinal();
     else classDeclaration -> get_declarationModifier().unsetFinal();
     if (is_strictfp)
@@ -1511,11 +1528,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAllocationExpression(JNIEnv *env, 
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionAllocationExpressionEnd(JNIEnv *env, jclass, jstring java_string, jint java_num_arguments, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionAllocationExpressionEnd(JNIEnv *env, jclass, jboolean has_type, jint java_num_arguments, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionAllocationExpressionEnd() \n");
 
-    SgName name = convertJavaStringToCxxString(env, java_string);
     int num_arguments = java_num_arguments;
 
     list<SgExpression*> argument_list;
@@ -1529,7 +1545,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAllocationExpressionEnd(JNIEnv *en
         argument_list.pop_front();
     }
 
-    SgType *type = astJavaComponentStack.popType();
+//
+// TODO: What todo!? Type is null for Enum field initializer
+//
+if (! has_type) {
+  // ???
+}
+
+    SgType *type = (has_type ? astJavaComponentStack.popType() : ::ObjectClassType);
     SgConstructorInitializer *constInit = SageBuilder::buildConstructorInitializer(NULL,
                                                                                    SageBuilder::buildExprListExp(arguments),
                                                                                    type,
@@ -2274,7 +2297,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFalseLiteral(JNIEnv *env, jclass, 
 // DQ (9/5/2011): This was changed to be processed bottom up (so there is no Java_JavaParser_cactionFieldDeclaration() function now.
 JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, jclass,
                                                                   jstring variableName,
-                                                                  jboolean hasInitializer,
+                                                                  jboolean is_enum_field,
+                                                                  jboolean has_initializer,
                                                                   jboolean java_is_final,
                                                                   jboolean java_is_private,
                                                                   jboolean java_is_protected,
@@ -2304,9 +2328,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, j
     if (SgProject::get_verbose() > 2)
         printf ("Building a variable declaration for name = %s \n", name.str());
 
-    SgExpression *initializer_expression = (hasInitializer ? astJavaComponentStack.popExpression() : NULL);
+    SgExpression *initializer_expression = (((! is_enum_field) && has_initializer) ? astJavaComponentStack.popExpression() : NULL);
 
-    SgType *type = astJavaComponentStack.popType();
+    if (! is_enum_field) { // if this is not an ENUM field then it has a type on the stack.
+        SgType *type = astJavaComponentStack.popType();
+    }
 
     SgScopeStatement *outer_scope = astJavaScopeStack.top();
     ROSE_ASSERT(outer_scope);
@@ -2372,7 +2398,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, j
         variableDeclaration -> get_file_info() -> display("source position in Java_JavaParser_cactionFieldDeclarationEnd(): debug");
 
     // DQ (9/5/2011): Added from previous Java_JavaParser_cactionFieldDeclarationEnd() function.
-    if (hasInitializer) {
+    if (has_initializer) {
         SgInitializer *initializer = SageBuilder::buildAssignInitializer(initializer_expression);
         ROSE_ASSERT(initializer != NULL);
 
@@ -3360,11 +3386,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedAllocationExpression(JNIE
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedAllocationExpressionEnd(JNIEnv *env, jclass, jstring java_string, jboolean java_contains_enclosing_instance, jint java_num_arguments, jboolean java_is_anonymous, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedAllocationExpressionEnd(JNIEnv *env, jclass, jboolean has_type, jboolean java_contains_enclosing_instance, jint java_num_arguments, jboolean java_is_anonymous, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionQualifiedAllocationExpressionEnd() \n");
 
-    SgName name = convertJavaStringToCxxString(env, java_string);
     bool contains_enclosing_instance = java_contains_enclosing_instance;
     int num_arguments = java_num_arguments;
     bool is_anonymous = java_is_anonymous;
@@ -3381,7 +3406,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedAllocationExpressionEnd(J
         argument_list.pop_front();
     }
 
-    SgType *type = astJavaComponentStack.popType();
+//
+// TODO: What todo!? 
+//
+if (! has_type) {
+  // ???
+}
+
+ SgType *type = (has_type ? astJavaComponentStack.popType() : ::ObjectClassType);
     SgExpression *expression_prefix = (contains_enclosing_instance ? astJavaComponentStack.popExpression() :  NULL);
 
     SgConstructorInitializer *constInit = SageBuilder::buildConstructorInitializer(NULL,

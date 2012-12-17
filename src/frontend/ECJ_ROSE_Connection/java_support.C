@@ -705,7 +705,7 @@ SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClass
     for (int i = 0; i < declarations.size(); i++, function_declaration = NULL) {
         SgDeclarationStatement *declaration = declarations[i];
         function_declaration = isSgMemberFunctionDeclaration(declaration);
-        if (function_declaration && function_declaration -> get_name() == function_name) {
+        if (function_declaration && function_declaration -> get_name().getString().compare(function_name) == 0) {
             vector<SgInitializedName *> args = function_declaration -> get_args();
             if (args.size() == num_arguments) {
                 list<SgType *>::const_iterator j = types.begin();
@@ -997,31 +997,31 @@ SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimens
     list<SgName>::iterator name = qualifiedTypeName.begin();
 
     if (package_name.getString().size() == 0) {
-         if (type_name == "boolean") {
+         if (type_name.getString().compare("boolean") == 0) {
              type = SgTypeBool::createType();
          }
-         else if (type_name == "byte") {
+         else if (type_name.getString().compare("byte") == 0) {
              type = SgTypeSignedChar::createType();
          }
-         else if (type_name == "char") {
+         else if (type_name.getString().compare("char") == 0) {
              type = SgTypeWchar::createType();
          }
-         else if (type_name == "int") {
+         else if (type_name.getString().compare("int") == 0) {
              type = SgTypeInt::createType();
          }
-         else if (type_name == "short") {
+         else if (type_name.getString().compare("short") == 0) {
              type = SgTypeShort::createType();
          }
-         else if (type_name == "float") {
+         else if (type_name.getString().compare("float") == 0) {
              type = SgTypeFloat::createType();
          }
-         else if (type_name == "long") {
+         else if (type_name.getString().compare("long") == 0) {
              type = SgTypeLong::createType();
          }
-         else if (type_name == "double") {
+         else if (type_name.getString().compare("double") == 0) {
              type = SgTypeDouble::createType();
          }
-         else if (type_name == "void") {
+         else if (type_name.getString().compare("void") == 0) {
              type = SgTypeVoid::createType();
         }
         else {

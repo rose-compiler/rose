@@ -247,6 +247,8 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseExpression(SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseUnaryExpr(SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseBinaryExpr(SgExpression* expr, SgUnparse_Info& info);
+
+          void unparseEnumBody(SgClassDefinition *, SgUnparse_Info& info);
    };
 
 #endif
