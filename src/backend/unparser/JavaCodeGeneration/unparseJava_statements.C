@@ -615,8 +615,17 @@ Unparse_Java::unparseInitializedName(SgInitializedName* init_name, SgUnparse_Inf
         curprint("final ");
     }
 
-    unparseType(init_name->get_type(), info);
-    curprint(" ");
+    AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) init_name -> getAttribute("var_args");
+    if (attribute) {
+        SgType *element_type = isSgType(attribute -> getNode());
+        unparseType(element_type, info);
+        curprint("... ");
+    }
+    else {
+        unparseType(init_name->get_type(), info);
+        curprint(" ");
+    }
+
     unparseName(init_name->get_name(), info);
 
     if (init_name->get_initializer() != NULL) {
@@ -946,7 +955,11 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      unparseDeclarationModifier(classdecl_stmt->get_declarationModifier(), info);
 
-     curprint(classdecl_stmt -> get_explicit_interface() ? "interface " : "class ");
+     curprint(classdecl_stmt -> get_explicit_enum()
+                              ? "enum "
+                              : classdecl_stmt -> get_explicit_interface()
+                                                ? "interface "
+                                                : "class ");
 
      unparseName(classdecl_stmt->get_name(), info);
 
@@ -1058,10 +1071,10 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          SgType *type = isSgType(parm_list[k]);
          if (k == 0) {
              if (classdecl_stmt -> get_explicit_interface()) {
-                  curprint(" extends "); // We are processing an interface.
-                  unparseParameterType(type, info);
-                  if (k + 1 < parm_list.size())
-                      curprint(", ");
+                 curprint(" extends "); // We are processing an interface.
+                 unparseParameterType(type, info);
+                 if (k + 1 < parm_list.size())
+                     curprint(", ");
              }
              else if (super_class -> get_base_class() -> get_explicit_interface()) {
                  curprint(" implements ");
@@ -1070,8 +1083,10 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                      curprint(", ");
              }
              else {
-                 curprint(" extends ");
-                 unparseParameterType(type, info);
+                 if (! classdecl_stmt -> get_explicit_enum()) { // Don't process super class for enumeration.
+                     curprint(" extends ");
+                     unparseParameterType(type, info);
+                 }
                  if (k + 1 < parm_list.size())
                      curprint(" implements ");
              }
@@ -1083,7 +1098,12 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          }
      }
 
-     unparseStatement(classdecl_stmt->get_definition(), info);
+     if (classdecl_stmt -> get_explicit_enum()) { // An enumeration?
+         unparseEnumBody(classdecl_stmt->get_definition(), info);
+     }
+     else {
+         unparseStatement(classdecl_stmt->get_definition(), info);
+     }
    }
 
 void
@@ -1408,4 +1428,33 @@ Unparse_Java::unparseParameterType(SgType *bound_type, SgUnparse_Info& info) {
     if (class_type)
          unparseClassType(class_type, info);
     else unparseJavaParameterizedType(parameterized_type, info);
+}
+
+
+void
+Unparse_Java::unparseEnumBody(SgClassDefinition *class_definition, SgUnparse_Info& info) {
+     curprint(" {");
+     unp->cur.insert_newline();
+     std::vector<SgVariableDeclaration *> fields;
+     foreach (SgDeclarationStatement *child, class_definition -> get_members()) {
+         SgVariableDeclaration *field = isSgVariableDeclaration(child);
+         if (field) { // only process fields ... skip constructor.
+             fields.push_back(field);
+         }
+     }
+
+     for (int i = 0; i < fields.size(); i++) {
+         SgVariableDeclaration *field = fields[i];
+         // TODO: For now we only process the name... We'll need to process the Arguments and ClassBody later ...
+         // Note that there
+         vector<SgInitializedName *> &vars = field -> get_variables();
+         assert(vars.size() == 1);
+         info.inc_nestingLevel();
+         curprint_indented(vars[0] -> get_name().getString(), info);
+         curprint(i + 1 < fields.size() ? "," : ";");
+         unp->cur.insert_newline();
+         info.dec_nestingLevel();
+     }
+
+     curprint_indented("}", info);
 }

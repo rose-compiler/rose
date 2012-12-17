@@ -388,6 +388,15 @@ private String getTypeName(Type in_type) {
                 System.err.println(e);
                 e.printStackTrace();   
             }
+
+            //
+            // Perhaps the class was not loaded at all.  So, try once more ... with feeling.
+            //
+            try {
+                cls = pathLoader.loadClass(typename);
+            } catch (Throwable ee) {
+                // Did not find the class ... It's ok! 
+            }
         }
 
         return cls;
@@ -491,7 +500,6 @@ private String getTypeName(Type in_type) {
 
             identifyUserDefinedTypes(cls, node);
         }
-        /*
         catch (ClassNotFoundException e) {
             e.printStackTrace();
             System.out.println("(2) Caught error in JavaParserSupport (Parser failed) - " + typename);
@@ -499,14 +507,6 @@ private String getTypeName(Type in_type) {
 
             System.exit(1);
         }
-        */
-catch (Throwable e) {
-    e.printStackTrace();
-    System.out.println("(2) Caught error (" + e.getClass().getCanonicalName() + ") in JavaParserSupport (Parser failed) - " + typename);
-    System.err.println(e);
-
-    System.exit(1);
-}
     }
 
     /**
@@ -818,24 +818,45 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
         return package_name;
     }
 
+    public Class lookupClass(String typename) {
+        Class cls = getClassForName(typename);
+        return cls;    
+    }
+
+
     public Class preprocessClass(TypeBinding binding) {
+        if (binding.isArrayType()) {
+            ArrayBinding array_binding = (ArrayBinding) binding;
+            binding = array_binding.leafComponentType;
+        }
+    
         while (binding.enclosingType() != null) {
             binding = binding.enclosingType();
         }
-        return preprocessClass(getFullyQualifiedTypeName(binding));
-    }
-    
-    /**
-     * 
-     */
-    public Class preprocessClass(String typename) {
-        Class cls = getClassForName(typename);
-        if (cls != null) {
-            preprocessClass(cls);
+
+        Class cls = null;
+        if (! (binding instanceof TypeVariableBinding || binding.isBaseType())) {
+            cls = preprocessClass(getFullyQualifiedTypeName(binding));
         }
+
         return cls;
     }
 
+    private Class preprocessClass(String typename) {
+        Class cls = lookupClass(typename);
+        if (cls == null) {
+            try {
+                throw new ClassNotFoundException("*** Fatal Error: Could not load class " + typename);
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+                System.exit(1);
+            }
+        }
+        preprocessClass(cls);
+
+        return cls;
+    }
+    
     /**
      * 
      * @param cls
@@ -957,6 +978,7 @@ else System.out.println("NO type parameters!!!");
         JavaParser.cactionBuildClassSupportStart(class_name,
                                                  (special_type == null ? "" : special_type.simplename), 
                                                  cls.isInterface(),
+                                                 cls.isEnum(),
                                                  special_type != null && special_type.isAnonymous(), // Anonymous class?
                                                  location);
 
@@ -1150,8 +1172,9 @@ System.out.println(") in class " + cls.getCanonicalName());
         //
         for (int i = 0; i < methlist.length; i++) {
             Method m = methlist[i];
-            if (m.isSynthetic()) // skip synthetic methods
+            if (m.isSynthetic()) {// skip synthetic methods
                 continue;
+            }
 
             Class pvec[] = m.getParameterTypes();
 
@@ -1203,18 +1226,19 @@ System.out.println(") in class " + cls.getCanonicalName());
                     Argument args[] = method.arguments;
                     if (method.isClinit() || (method.isConstructor() && ((ConstructorDeclaration) method).isDefaultConstructor() && special_type != null && special_type.isAnonymous())) // (args == null || args.length == 0)))
                         continue;
+
+                    //
+                    // TODO: Remove this when the feature is implemented
+                    //
+                    if (method.typeParameters() != null) {
+                        System.out.println();
+                        System.out.println("*** No support yet for method/constructor type parameters");
+                        System.exit(1);
+                    }
+
                     JavaToken method_location = createJavaToken(method);
 
                     MethodBinding method_binding = method.binding;
-
-                    //
-                    // TODO: Do something !!!
-                    //
-                    //if (method_binding.typeVariables != null) {
-                    //    System.out.println();
-                    //    System.out.println("*** No support yet for method/constructor type parameters");
-                    //    System.exit(1);
-                    //}
 
                     if (method.isConstructor()) {
                         JavaParser.cactionTypeReference("", "void", false /* not a TypeVariableBinding */, method_location);
@@ -1234,6 +1258,7 @@ System.out.println(") in class " + cls.getCanonicalName());
                             JavaToken arg_location = createJavaToken(arg);
                             generateAndPushType(arg.type.resolvedType, arg_location);
                             JavaParser.cactionBuildArgumentSupport(new String(args[j].name),
+                                                                   arg.isVarArgs(),
                                                                    arg.binding.isFinal(),
                                                                    arg_location);
                         }
@@ -1300,6 +1325,7 @@ System.out.println(") in class " + cls.getCanonicalName());
                 for (int j = 0; j < pvec.length; j++) {
                     generateAndPushType(pvec[j]);
                     JavaParser.cactionBuildArgumentSupport(ct.getName() + j,
+                                                           false, /* mark as not having var args */ 
                                                            true, /* mark as final */ 
                                                            location);
                 }
@@ -1339,7 +1365,8 @@ System.out.println(") in class " + cls.getCanonicalName());
                 for (int j = 0; j < pvec.length; j++) {
                     generateAndPushType(pvec[j]);
                     JavaParser.cactionBuildArgumentSupport(m.getName() + j,
-                                                           true, /* mark as final */ 
+                                                           false, /* mark as not having var args */
+                                                           true,  /* mark as final */ 
                                                            location);
                 }
 
@@ -1360,26 +1387,6 @@ System.out.println(") in class " + cls.getCanonicalName());
 
         // This wraps up the details of processing all of the child classes (such as forming SgAliasSymbols for them in the global scope).
         JavaParser.cactionBuildClassSupportEnd(class_name, location);
-    }
-
-    public boolean isPrimitiveType(TypeBinding typeBinding) {
-        switch (typeBinding.id) {
-            case TypeIds.T_void:
-            case TypeIds.T_boolean:
-            case TypeIds.T_byte:
-            case TypeIds.T_char:
-            case TypeIds.T_short:
-            case TypeIds.T_double:
-            case TypeIds.T_float:
-            case TypeIds.T_int:
-            case TypeIds.T_long:
-            //    case TypeIds.T_JavaLangObject:
-            //    case TypeIds.T_JavaLangString:
-                return true;
-
-            default:
-                return false;
-        }
     }
 
 
