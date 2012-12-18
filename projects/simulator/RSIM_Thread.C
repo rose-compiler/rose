@@ -788,7 +788,7 @@ RSIM_Thread::main()
             tracing(TRACE_MISC)->mesg("dumping core...\n");
             process->dump_core(SIGSEGV);
             report_stack_frames(tracing(TRACE_MISC));
-            abort();
+            throw;
         } catch (const RSIM_Semantics::Dispatcher::Exception &e) {
             /* Thrown for instructions whose semantics are not implemented yet. */
             if (!insn_semaphore_posted) {
