@@ -112,6 +112,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	staticChunk.c \
 	subteam2.c \
 	subteam.c \
+	task_array.c \
 	task_largenumber.c \
 	task_orphaned.c \
 	task_untied.c \
