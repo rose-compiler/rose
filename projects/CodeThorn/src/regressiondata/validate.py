@@ -74,4 +74,6 @@ if __name__ == '__main__':
     print "=========="
     print "%d/%d Consistent, %s%d/%d Inconsistent%s, %d/%d Unverified, %d/%d Unknown" % (
         correct, n, red, inconsistent, n, reset, unverified, n, unknown, n)
-        
+    
+    if inconsistent > 0:
+        exit(1)
