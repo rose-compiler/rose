@@ -1794,29 +1794,35 @@ RSIM_Process::signal_dispatch()
 }
 
 SgAsmBlock *
-RSIM_Process::disassemble(bool fast)
+RSIM_Process::disassemble(bool fast, MemoryMap *map/*=null*/)
 {
     SgAsmBlock *block = NULL;
 
     RTS_WRITE(rwlock()) { /* while using the memory map */
-        /* Disassemble instructions */
         Disassembler::InstructionMap insns;
+        MemoryMap *allocated_map = NULL;
         if (fast) {
-            MemoryMap emap(get_memory(), MemoryMap::COPY_SHALLOW);
-            emap.prune(MemoryMap::MM_PROT_EXEC);
-
+            if (!map) {
+                map = allocated_map = new MemoryMap(get_memory(), MemoryMap::COPY_SHALLOW);
+                map->prune(MemoryMap::MM_PROT_EXEC); // keep only executable memory
+            }
             rose_addr_t start_va = 0; // arbitrary since we set the disassembler's SEARCH_UNUSED bit
             unsigned search = disassembler->get_search();
             disassembler->set_search(search | Disassembler::SEARCH_UNUSED);
             Disassembler::AddressSet successors;
             Disassembler::BadMap bad;
-            insns = disassembler->disassembleBuffer(&emap, start_va, &successors, &bad);
+            insns = disassembler->disassembleBuffer(map, start_va, &successors, &bad);
             disassembler->set_search(search);
         } else {
+            if (!map) {
+                map = allocated_map = new MemoryMap(get_memory(), MemoryMap::COPY_SHALLOW);
+                map->prune(MemoryMap::MM_PROT_READ); // keep only readable memory; probably includes all executable too
+            }
             Partitioner partitioner;
-            block = partitioner.partition(interpretation, disassembler, &get_memory());
+            block = partitioner.partition(interpretation, disassembler, map);
             insns = partitioner.get_instructions();
         }
+        delete allocated_map; allocated_map=NULL;
 
         /* Add new instructions to cache */
         icache.insert(insns.begin(), insns.end());
