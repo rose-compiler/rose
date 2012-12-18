@@ -5,4 +5,5 @@
 // things.
 #include "MultiDomainDemo.h"
 #include "RiscTracingPolicy.h"
+#include "CloneDetection.h"
 

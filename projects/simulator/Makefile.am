@@ -251,6 +251,19 @@ MultiWithConversion_SOURCES = demos/MultiWithConversion.C
 MultiWithConversion_CPPFLAGS = $(ROSE_INCLUDES)
 MultiWithConversion_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+#------------------------------------------------------------------------------------------------------------------------------
+# Binary clone detection.  Finds semantically similar functions based on fuzz testing. See Andreas and Earl for details.
+noinst_PROGRAMS += CloneDetection
+EXTRA_DIST +=						\
+	clone_detection/CloneDetection.h		\
+	clone_detection/CloneDetectionSemantics.h	\
+	clone_detection/CloneDetectionTpl.h		\
+	clone_detection/CloneDetection.patch
+CloneDetection_SOURCES = clone_detection/CloneDetection.C
+CloneDetection_CPPFLAGS = $(ROSE_INCLUDES)
+CloneDetection_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+
 ###############################################################################################################################
 #  SUPPORT PROGRAMS FOR PAPERS
 ###############################################################################################################################
