@@ -20,8 +20,18 @@ using namespace LTL;
 using namespace UnifiedLTL;
 
 // really expensive debug option -- prints a dot file at every iteration
-//#define ANIM_OUTPUT
+// use the following BASH code to join everything into one PDF:
+/* $ for f in $(ls -1 -v --color=never ltl_anim_*.dot); do	\
+       dot -Tpdf $f >$f.pdf; \
+     done; \
+     pdfjoin $(ls -1 -v --color=never ltl_anim_*.pdf) --outfile ltl_anim-joined.pdf \
+     && xpdf ltl_anim-joined.pdf
+*/
 
+//#define ANIM_OUTPUT
+#ifdef ANIM_OUTPUT
+static int anim_i = 1;
+#endif
 
 ////////////////////////////////////////////////////////////////////////
 // Convenience loop macros for dealing with boost graphs
@@ -137,29 +147,29 @@ public:
   IAttr visit(InputSymbol* expr, IAttr a)  {
     short e = expr->label;
     int node = newNode(a);
-    s<<node<<" ["<<color(state.debug[e])<<",label=\"Input "<<string(1, expr->c)
-     <<" = "<<state.debug[e]<<"\"];\n  ";
+    s<<node<<" ["<<color(state.get_debug(e))<<",label=\"Input "<<string(1, expr->c)
+     <<" = "<<state.get_debug(e)<<"\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(OutputSymbol* expr, IAttr a) {
     short e = expr->label;
     int node = newNode(a);
-    s<<node<<" ["<<color(state.debug[e])<<",label=\"Output "<<string(1, expr->c)
-     <<" = "<<state.debug[e]<<"\"];\n  ";
+    s<<node<<" ["<<color(state.get_debug(e))<<",label=\"Output "<<string(1, expr->c)
+     <<" = "<<state.get_debug(e)<<"\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(NegInputSymbol* expr, IAttr a)  {
     short e = expr->label;
     int node = newNode(a);
-    s<<node<<" ["<<color(state.debug[e])<<",label=\"¬Input "<<string(1, expr->c)
-     <<" = "<<state.debug[e]<<"\"];\n  ";
+    s<<node<<" ["<<color(state.get_debug(e))<<",label=\"¬Input "<<string(1, expr->c)
+     <<" = "<<state.get_debug(e)<<"\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(NegOutputSymbol* expr, IAttr a) {
     short e = expr->label;
     int node = newNode(a);
-    s<<node<<" ["<<color(state.debug[e])<<",label=\"¬Output "<<string(1, expr->c)
-     <<" = "<<state.debug[e]<<"\"];\n  ";
+    s<<node<<" ["<<color(state.get_debug(e))<<",label=\"¬Output "<<string(1, expr->c)
+     <<" = "<<state.get_debug(e)<<"\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(Not* expr, IAttr a) {
@@ -167,35 +177,35 @@ public:
     short e1 = expr->expr1->label;
     //cerr<<"e="<<e<<endl;
     //cerr<<"e1="<<e1<<endl;
-    //cerr<<"state.debug[e]="<<state.debug[e]<<endl;
-    //cerr<<"state.debug[e1]="<<state.debug[e1]<<endl;
+    //cerr<<"state.get_debug(e)="<<state.get_debug(e)<<endl;
+    //cerr<<"state.get_debug(e1)="<<state.get_debug(e1)<<endl;
     int node = newNode(a);
-    s<<node<<" ["<<color(state.debug[e])<<",label=\""<<state.debug[e]
-     <<" = "<<"!"<<state.debug[e1]<<"\"];\n  ";
+    s<<node<<" ["<<color(state.get_debug(e))<<",label=\""<<state.get_debug(e)
+     <<" = "<<"!"<<state.get_debug(e1)<<"\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(Next* expr, IAttr a) {
     short e = expr->label;
     short e1 = expr->expr1->label;
     int node = newNode(a);
-    s<<node<<" [shape=circle,"<<color(state.debug[e])<<",label=\""<<"("<<state.debug[e]
-     <<" = "<<"X "<<state.debug[e1]<<")\"];\n  ";
+    s<<node<<" [shape=circle,"<<color(state.get_debug(e))<<",label=\""<<"("<<state.get_debug(e)
+     <<" = "<<"X "<<state.get_debug(e1)<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(Eventually* expr, IAttr a) {
     short e = expr->label;
     short e1 = expr->expr1->label;
     int node = newNode(a);
-    s<<node<<" [shape=diamond,"<<color(state.debug[e])<<",label=\""<<"("<<state.debug[e]
-     <<" = "<<"F "<<state.debug[e1]<<")\"];\n  ";
+    s<<node<<" [shape=diamond,"<<color(state.get_debug(e))<<",label=\""<<"("<<state.get_debug(e)
+     <<" = "<<"F "<<state.get_debug(e1)<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(Globally* expr, IAttr a) {
     short e = expr->label;
     short e1 = expr->expr1->label;
     int node = newNode(a);
-    s<<node<<" [shape=box,"<<color(state.debug[e])<<",label=\""<<"("<<state.debug[e]
-     <<" = "<<"G "<<state.debug[e1]<<")\"];\n  ";
+    s<<node<<" [shape=box,"<<color(state.get_debug(e))<<",label=\""<<"("<<state.get_debug(e)
+     <<" = "<<"G "<<state.get_debug(e1)<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(And* expr, IAttr a) {
@@ -203,8 +213,8 @@ public:
     short e1 = expr->expr1->label;
     short e2 = expr->expr2->label;
     int node = newNode(a);
-    s<<node<<" ["<<color(state.debug[e])<<",label=\""<<"("<<state.debug[e]
-     <<" = "<<state.debug[e1]<<" & "<<state.debug[e2]<<")\"];\n  ";
+    s<<node<<" ["<<color(state.get_debug(e))<<",label=\""<<"("<<state.get_debug(e)
+     <<" = "<<state.get_debug(e1)<<" & "<<state.get_debug(e2)<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(Or* expr, IAttr a) {
@@ -212,8 +222,8 @@ public:
     short e1 = expr->expr1->label;
     short e2 = expr->expr2->label;
     int node = newNode(a);
-    s<<node<<" ["<<color(state.debug[e])<<",label=\""<<"("<<state.debug[e]
-     <<" = "<<state.debug[e1]<<" | "<<state.debug[e2]<<")\"];\n  ";
+    s<<node<<" ["<<color(state.get_debug(e))<<",label=\""<<"("<<state.get_debug(e)
+     <<" = "<<state.get_debug(e1)<<" | "<<state.get_debug(e2)<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(Until* expr, IAttr a)	{
@@ -221,8 +231,8 @@ public:
     short e1 = expr->expr1->label;
     short e2 = expr->expr2->label;
     int node = newNode(a);
-    s<<node<<" ["<<color(state.debug[e])<<",label=\""<<"("<<state.debug[e]
-     <<" = "<<state.debug[e1]<<" U "<<state.debug[e2]<<")\"];\n  ";
+    s<<node<<" ["<<color(state.get_debug(e))<<",label=\""<<"("<<state.get_debug(e)
+     <<" = "<<state.get_debug(e1)<<" U "<<state.get_debug(e2)<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(WeakUntil* expr, IAttr a) {
@@ -230,8 +240,8 @@ public:
     short e1 = expr->expr1->label;
     short e2 = expr->expr2->label;
     int node = newNode(a);
-    s<<node<<" ["<<color(state.debug[e])<<",label=\""<<"("<<state.debug[e]
-     <<" = "<<state.debug[e1]<<" WU "<<state.debug[e2]<<")\"];\n  ";
+    s<<node<<" ["<<color(state.get_debug(e))<<",label=\""<<"("<<state.get_debug(e)
+     <<" = "<<state.get_debug(e1)<<" WU "<<state.get_debug(e2)<<")\"];\n  ";
     return newAttr(node);
   }
   IAttr visit(Release* expr, IAttr a) {
@@ -239,8 +249,8 @@ public:
     short e1 = expr->expr1->label;
     short e2 = expr->expr2->label;
     int node = newNode(a);
-    s<<node<<" ["<<color(state.debug[e])<<",label=\""<<"("<<state.debug[e]
-     <<" = "<<state.debug[e1]<<" R "<<state.debug[e2]<<")\"];\n  ";
+    s<<node<<" ["<<color(state.get_debug(e))<<",label=\""<<"("<<state.get_debug(e)
+     <<" = "<<state.get_debug(e1)<<" R "<<state.get_debug(e2)<<")\"];\n  ";
     return newAttr(node);
   }
 };
@@ -270,7 +280,7 @@ string UnifiedLTL::LTLState::toHTML() const {
 }
 
 
-string visualize(const LTLStateTransitionGraph& stg, const Expr& e) {
+string visualize(const LTLStateTransitionGraph& stg, const Expr& e, LTLVertex focus=NULL) {
   bool show_derivation = boolOptions["ltl-show-derivation"];
   stringstream s;
   s<<"digraph G {\n";
@@ -282,6 +292,9 @@ string visualize(const LTLStateTransitionGraph& stg, const Expr& e) {
     LTLState state = stg.g[vi];
     label[vi] = ++l;
     s<<l<<" [label=<\n"<<state.toHTML()<<"\n>, ";
+    if (focus && focus == vi)
+      s<<"shape=rectangle, color=pink, style=filled";
+    else
     switch (state.estate->io.op) {
     case InputOutput::STDIN_VAR:
       s<<"shape=rectangle, color=gold, style=filled";
@@ -298,13 +311,13 @@ string visualize(const LTLStateTransitionGraph& stg, const Expr& e) {
     UVisualizer viz(state, l);
     s<<"subgraph ltl_"<<l<<" {\n";
     s<<"  node[shape=rectangle, style=filled];\n  ";
-#ifndef ANIM_OUTPUT
     if (show_derivation) {
+#ifndef ANIM_OUTPUT
       assert(state.debug.size() == ltl_label);
+#endif
       const_cast<Expr&>(e).accept(viz, UVisualizer::newAttr(l));
       s<<viz.s.str();
     }
-#endif
     s<<"}\n";
 
   } END_FOR;
@@ -524,8 +537,8 @@ public:
       while (!vs.empty()) {
 	LTLVertex v = vs.front(); vs.pop();
 
-	//if (nargs<3 && (stg.g[v].estate->label() == 634))
-	//   verbose = true;
+	if (nargs==2 && (stg.g[v].estate->label() == 612))
+	   verbose = true;
 
 	if (verbose) {
             cerr<<"\n** Visiting state "<<v<<","<<stg.g[v]<<endl;
@@ -595,20 +608,18 @@ public:
           if (++iteration == 100000) exit(2);
 #endif
 
-#ifdef ANIM_OUTPUT
-	  static int wait=0;
-	  if (++wait > 0) {
-	    ofstream animfile;
-	    stringstream fname;
-	    static int n = 1;
-	    fname << "ltl_anim_" << n++ << ".dot";
-	    animfile.open(fname.str().c_str(), ios::out);
-	    animfile << visualize(stg, e);
-	    animfile.close(); 
-	    cout<<"generated "<<fname.str()<<"."<<endl;
-	  }
-#endif
 	}
+
+#ifdef ANIM_OUTPUT
+	ofstream animfile;
+	stringstream fname;
+	fname << "ltl_anim_" << setw(3) << setfill('0') << anim_i++ << ".dot";
+	animfile.open(fname.str().c_str(), ios::out);
+	animfile << visualize(stg, e, succ);
+	animfile.close(); 
+	cout<<"generated "<<fname.str()<<"."<<endl;
+#endif
+
       }
     }
 
@@ -635,6 +646,7 @@ public:
 	  add_edge((*i).second, succ, stg.g);
 	END_FOR;
 	clear_vertex(v, stg.g);
+	const_cast<LTLState&>((*i).first).merge_debug_info(state);
 	//cerr<<"STORE: merged "<<state<<"; "<<v<<" and "<<(*i).second<<endl;
       } else {
 	stg.g[v] = state;
@@ -653,6 +665,7 @@ public:
       remove_vertex(v, stg.g);
     }
 
+    // print progress to console
     ++progress;
     cout<<setw(16)<<num_vertices(stg.g)<<" ("
 	<<(100*progress)/ltl_label<<"%)"<<endl;
@@ -686,7 +699,7 @@ public:
     for (size_t i=0; i<stack_contents.size()-1; ++i) {
       if (stack_contents[i] == io_op) {
 	pick(i);
-	cerr<<"(cached at "<<i<<")"<<endl;
+	cout<<"(cached at "<<i<<")"<<endl;
 	return true;
       }
     }
@@ -873,6 +886,7 @@ public:
       if (endpoint)
 	return false;
 
+      return Bot();
       return succ_val;
     }
   }
@@ -940,6 +954,7 @@ public:
       if (endpoint)
 	return true;
 
+      return Bot();
       return succ_val;
     }
   }

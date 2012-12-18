@@ -73,6 +73,18 @@ namespace UnifiedLTL {
     friend ostream& operator<<(ostream& os, const LTLState& s);
 
     string toHTML() const;
+
+    /// call this if you are merging two LTLStates that are equal in the operator==() sense
+    void merge_debug_info(LTLState& other) {
+      for (size_t i = 0; i < debug.size(); ++i) {
+	debug[i] = debug[i].lub(other.debug[i]);
+      }
+    }
+    /// return the ith debug info
+    BoolLattice get_debug(size_t i) {
+      if (i == debug.size()) return val;
+      return debug[i];
+    }
   };
 
   /// Hash function for LTL States
