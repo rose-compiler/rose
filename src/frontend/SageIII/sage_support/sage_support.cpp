@@ -5245,7 +5245,7 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
 #if (__GNUC__ < 4 || \
     (__GNUC__ == 4 && (__GNUC_MINOR__ < 4)))
 #warning "GNU version lower than expected"    
-        printf("GCC version must be 4.4.0 or later when linking with GOMP OpenMP Runtime Library\n");
+        printf("GCC version must be 4.4.0 or later when linking with GOMP OpenMP Runtime Library \n(OpenMP tasking calls are not implemented in previous versions)\n");
         ROSE_ASSERT(false);
 #endif
 
