@@ -714,6 +714,8 @@ MemoryMap::read1(void *dst_buf/*=NULL*/, rose_addr_t start_va, size_t desired, u
     const Extent &range = found->first;
     assert(range.contains(Extent(start_va)));
 
+    desired = std::min(desired, (range.last()-start_va)+1);
+
     const Segment &segment = found->second;
     if ((segment.get_mapperms() & req_perms) != req_perms || !segment.check(range))
         return 0;
