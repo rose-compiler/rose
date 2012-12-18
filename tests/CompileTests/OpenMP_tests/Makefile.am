@@ -78,6 +78,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	ompfor-decremental.c \
 	ompfor-static.c \
 	ompGetNumThreads.c \
+	omp_sections.c \
 	ordered2.c \
 	ordered.c \
 	orphaned-directives.c \
