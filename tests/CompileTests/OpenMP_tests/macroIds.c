@@ -11,6 +11,7 @@ int tmp()
 
 void tmp2()
 {
+    int i = 0;
 #pragma omp parallel num_threads( THREADS_1 )
     {
         i++;
