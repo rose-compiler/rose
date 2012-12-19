@@ -40,10 +40,15 @@ Policy<State, ValueType>::trace()
 
 CLONE_DETECTION_TEMPLATE
 void
-Policy<State, ValueType>::trigger(rose_addr_t target_va)
+Policy<State, ValueType>::trigger(rose_addr_t target_va, InputValues *inputs)
 {
     this->set_active_policies(CONCRETE.mask | INTERVAL.mask | SYMBOLIC.mask);
     triggered = true;
+
+    // Reset analysis state (mem stored by MultiSemantics and the register read/written state)
+    inputs->reset();
+    this->inputs = inputs;
+    state.reset_for_analysis();
 
     // Initialize some registers.  Obviously, the EIP register needs to be set, but we also set the ESP and EBP to known (but
     // arbitrary) values so we can detect when the function returns.
@@ -126,7 +131,7 @@ Policy<State, ValueType>::finishInstruction(SgAsmInstruction *insn)
             RSIM_SEMANTICS_VTYPE<32> call_fallthrough_va = this->add(this->template number<32>(insn->get_address()),
                                                                      this->template number<32>(insn->get_size()));
             this->writeRegister("eip", call_fallthrough_va);
-            this->writeRegister("eax", HighLevel::next_input_value<32>(this));
+            this->writeRegister("eax", HighLevel::next_input_value<32>(this->inputs, trace()));
         }
 
         // Give Andreas a chance to do his thing.
@@ -268,7 +273,7 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
                 bool never_accessed = 0 == state.register_rw_state.flag[reg.get_offset()].state;
                 state.register_rw_state.flag[reg.get_offset()].state |= HAS_BEEN_READ;
                 if (never_accessed) {
-                    retval = HighLevel::next_input_value<nBits>(this);
+                    retval = HighLevel::next_input_value<nBits>(this->inputs, trace());
                 } else {
                     retval = this->template unsignedExtend<1, nBits>(state.registers.flag[reg.get_offset()]);
                 }
@@ -286,7 +291,7 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
                 bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                 state.register_rw_state.gpr[reg.get_minor()].state |= HAS_BEEN_READ;
                 if (never_accessed) {
-                    retval = HighLevel::next_input_value<nBits>(this);
+                    retval = HighLevel::next_input_value<nBits>(this->inputs, trace());
                 } else {
                     switch (reg.get_offset()) {
                         case 0:
@@ -314,7 +319,7 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
                         bool never_accessed = 0==state.register_rw_state.segreg[reg.get_minor()].state;
                         state.register_rw_state.segreg[reg.get_minor()].state |= HAS_BEEN_READ;
                         if (never_accessed) {
-                            retval = HighLevel::next_input_value<nBits>(this);
+                            retval = HighLevel::next_input_value<nBits>(this->inputs, trace());
                         } else {
                             retval = this->template unsignedExtend<16, nBits>(state.registers.segreg[reg.get_minor()]);
                         }
@@ -326,7 +331,7 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
                         bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                         state.register_rw_state.segreg[reg.get_minor()].state |= HAS_BEEN_READ;
                         if (never_accessed) {
-                            retval = HighLevel::next_input_value<nBits>(this);
+                            retval = HighLevel::next_input_value<nBits>(this->inputs, trace());
                         } else {
                             retval = this->template extract<0, nBits>(state.registers.gpr[reg.get_minor()]);
                         }
@@ -373,7 +378,7 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
                         bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                         state.register_rw_state.gpr[reg.get_minor()].state |= HAS_BEEN_READ;
                         if (never_accessed) {
-                            retval = HighLevel::next_input_value<nBits>(this);
+                            retval = HighLevel::next_input_value<nBits>(this->inputs, trace());
                         } else {
                             retval = this->template unsignedExtend<32, nBits>(state.registers.gpr[reg.get_minor()]);
                         }
@@ -385,7 +390,7 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
                         bool never_accessed = 0==state.register_rw_state.ip.state;
                         state.register_rw_state.ip.state |= HAS_BEEN_READ;
                         if (never_accessed) {
-                            retval = HighLevel::next_input_value<nBits>(this);
+                            retval = HighLevel::next_input_value<nBits>(this->inputs, trace());
                         } else {
                             retval = this->template unsignedExtend<32, nBits>(state.registers.ip);
                         }
@@ -397,7 +402,7 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
                         bool never_accessed = 0==state.register_rw_state.segreg[reg.get_minor()].state;
                         state.register_rw_state.segreg[reg.get_minor()].state |= HAS_BEEN_READ;
                         if (never_accessed) {
-                            retval = HighLevel::next_input_value<nBits>(this);
+                            retval = HighLevel::next_input_value<nBits>(this->inputs, trace());
                         } else {
                             retval = this->template unsignedExtend<16, nBits>(state.registers.segreg[reg.get_minor()]);
                         }

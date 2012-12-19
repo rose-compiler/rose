@@ -51,19 +51,28 @@ public:
         std::vector<SgAsmFunction*> functions = SageInterface::querySubTree<SgAsmFunction>(gblk);
         m->mesg("%s: fuzz testing %zu function%s", name, functions.size(), 1==functions.size()?"":"s");
 
+        // Choose some input values. (FIXME: eventually we need to make these random)
+        CloneDetection::InputValues inputs;
+        inputs.add_integer(1);
+        inputs.add_integer(50);
+        inputs.add_integer(100);
+        inputs.add_pointer(true); // non-null pointer
+        inputs.add_pointer(false); // null pointer
+        inputs.add_pointer(true); // another (different) non-null pointer
+
         // Fuzz test each function
         for (std::vector<SgAsmFunction*>::iterator fi=functions.begin(); fi!=functions.end(); ++fi)
-            fuzz_test(*fi);
+            fuzz_test(*fi, &inputs);
     }
 
-    void fuzz_test(SgAsmFunction *function) {
+    void fuzz_test(SgAsmFunction *function, CloneDetection::InputValues *inputs) {
         RSIM_Process *proc = thread->get_process();
         RTS_Message *m = thread->tracing(TRACE_MISC);
         m->mesg("%s", std::string(100, '=').c_str());
         m->mesg("%s: fuzz testing function \"%s\" at 0x%08"PRIx64, name, function->get_name().c_str(), function->get_entry_va());
         m->mesg("%s", std::string(100, '=').c_str());
         proc->mem_transaction_start(name);
-        thread->policy.trigger(function->get_entry_va());
+        thread->policy.trigger(function->get_entry_va(), inputs);
         try {
             thread->main();
         } catch (const Disassembler::Exception &e) {

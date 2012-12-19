@@ -50,15 +50,16 @@ convert_to_symbolic(const ValueType<nBits> &value)
 }
 
 /** Return the next input value from the queue of possible inputs. */
-template <size_t nBits, class Policy>
+template <size_t nBits>
 RSIM_SEMANTICS_VTYPE<nBits>
-next_input_value(Policy *policy)
+next_input_value(InputValues *inputs, RTS_Message *m)
 {
-    // FIXME: for now we're just using a random concrete value between 0 and 127, inclusive
-    RSIM_SEMANTICS_VTYPE<nBits> retval(rand() % 128);
-    std::ostringstream ss;
-    ss <<retval;
-    policy->trace()->mesg("CloneDetection::HighLevel: using input value %s", ss.str().c_str());
+    RSIM_SEMANTICS_VTYPE<nBits> retval(inputs->next_integer());
+    if (m) {
+        std::ostringstream ss;
+        ss <<retval;
+        m->mesg("CloneDetection::HighLevel: using integer input #%zu: %s", inputs->integers_consumed(), ss.str().c_str());
+    }
     return retval;
 }
 

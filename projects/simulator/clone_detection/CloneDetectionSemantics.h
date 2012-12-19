@@ -71,23 +71,75 @@ INTERVAL_VALUE<nBits> convert_to_interval(const ValueType<nBits> &value);
 template <template <size_t> class ValueType, size_t nBits>
 SYMBOLIC_VALUE<nBits> convert_to_symbolic(const ValueType<nBits> &value);
 
+/** Initial values to supply for inputs.  These are defined in terms of integers which are then cast to the appropriate size
+ *  when needed.  During fuzz testing, whenever the specimen reads from a register or memory location which has never been
+ *  written, we consume the next value from this input object. */
+class InputValues {
+public:
+    InputValues(): next_integer_(0), next_pointer_(0) {}
+    void add_integer(uint64_t i) { integers_.push_back(i); }
+    void add_pointer(bool is_non_null) { pointers_.push_back(is_non_null?1:0); }
+    uint64_t next_integer() {
+        uint64_t retval = next_integer_ < integers_.size() ? integers_[next_integer_] : 0;
+        ++next_integer_; // increment even past the end so we know how many inputs were consumed
+        return retval;
+    }
+    bool next_pointer() {
+        bool retval = 0 != (next_pointer_ < pointers_.size() ? pointers_[next_pointer_] : 0);
+        ++next_pointer_; // increment even past the end so we know how many inputs were consumed
+        return retval;
+    }
+    size_t integers_consumed() const { return next_integer_; }
+    size_t pointers_consumed() const { return next_pointer_; }
+    size_t num_inputs() const { return integers_consumed() + pointers_consumed(); }
+    void reset() { next_integer_ = next_pointer_ = 0; }
+    void clear() {
+        reset();
+        integers_.clear();
+        pointers_.clear();
+    }
+    void shuffle() {
+        for (size_t i=0; i<integers_.size(); ++i) {
+            size_t j = rand() % integers_.size();
+            std::swap(integers_[i], integers_[j]);
+        }
+        for (size_t i=0; i<pointers_.size(); ++i) {
+            size_t j = rand() % pointers_.size();
+            std::swap(pointers_[i], pointers_[j]);
+        }
+    }
+protected:
+    std::vector<uint64_t> integers_;
+    std::vector<int> pointers_;                 // Boolean: non-zero means non-null (actual pointer is allocated later)
+    size_t next_integer_, next_pointer_;        // May increment past the end of its array
+};
+
+/** Exception thrown by this semantics domain. */
 class Exception {
 public:
     Exception(const std::string &mesg): mesg(mesg) {}
     std::string mesg;
 };
 
-enum { NO_ACCESS=0, HAS_BEEN_READ=1, HAS_BEEN_WRITTEN=2 };
+/** Bits to track variable access. */
+enum {
+    NO_ACCESS=0,                        /**< Variable has been neither read nor written. */
+    HAS_BEEN_READ=1,                    /**< Variable has been read. */
+    HAS_BEEN_WRITTEN=2                  /**< Variable has been written. */ 
+};
 
+/** Semantic value to track read/write state of registers. The basic idea is that we have a separate register state object
+ *  whose values are instances of this ReadWriteState type. We can use the same RegisterStateX86 template for the read/write
+ *  state as we do for the real register state. */
 template<size_t nBits>
 struct ReadWriteState {
-    unsigned state;
+    unsigned state;                     /**< Bit vector containing HAS_BEEN_READ and/or HAS_BEEN_WRITTEN, or zero. */
     ReadWriteState(): state(NO_ACCESS) {}
 };
 
-// Mixed-interpretation memory.  Addresses are symbolic expressions and values are multi-domain.  We'll override the
-// multi-domain policy's memory access functions to use this state rather than chaining to the memory states associated with
-// the sub-policies.
+/** Mixed-interpretation memory.  Addresses are symbolic expressions and values are multi-domain.  We'll override the
+ * multi-domain policy's memory access functions to use this state rather than chaining to the memory states associated with
+ * the sub-policies. */
 template <template <size_t> class ValueType>
 class State: public RSIM_Semantics::OuterState<ValueType> {
 public:
@@ -97,6 +149,7 @@ public:
     MemoryCells data_cells;                                     // memory state for anything that non-stack (e.g., DS register)
     BinaryAnalysis::InstructionSemantics::BaseSemantics::RegisterStateX86<RSIM_SEMANTICS_VTYPE> registers;
     BinaryAnalysis::InstructionSemantics::BaseSemantics::RegisterStateX86<ReadWriteState> register_rw_state;
+    InputValues *input_values;                                  // user-supplied input values
 
     // Write a single byte to memory
     void mem_write_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> &addr, const ValueType<8> &value);
@@ -111,6 +164,15 @@ public:
 
     // Returns true if two memory address are equivalent.
     static bool must_alias(const SYMBOLIC_VALUE<32> &addr1, const SYMBOLIC_VALUE<32> &addr2, SMTSolver *solver);
+
+    // Reset the analysis state by clearing all memory (sub-policy memory such as simulator concrete is not cleared, only the
+    // memory state stored in the MultiSemantics class) and by resetting the read/written status of all registers.
+    void reset_for_analysis() {
+        stack_cells.clear();
+        data_cells.clear();
+        registers.clear();
+        register_rw_state.clear();
+    }
 
     // Printing
     template<size_t nBits>
@@ -141,6 +203,7 @@ public:
     State<ValueType> state;                             // the mixed-semantic state (symbolic address, multi-value)
     unsigned active_policies;                           // Policies that should be active *during* an instruction
     static const rose_addr_t INITIAL_STACK = 0x80000000;// Initial value for the EIP and EBP registers
+    InputValues *inputs;                                // Input values to use when reading a never-before-written variable
 
     // "Inherit" super class' constructors (assuming no c++11)
     Policy(RSIM_Thread *thread)
@@ -159,8 +222,7 @@ public:
 
     // Calling this method will cause all our subdomains to be activated and the simulator will branch
     // to the specified target_va.
-
-    void trigger(rose_addr_t target_va);
+    void trigger(rose_addr_t target_va, InputValues *inputs);
 
     // We can get control at the beginning of every instruction.  This allows us to do things like enabling/disabling
     // sub-domains based on the kind of instruction.  We could also examine the entire multi-domain state at this point and do
