@@ -28,7 +28,7 @@ using namespace UnifiedLTL;
      && xpdf ltl_anim-joined.pdf
 */
 
-//#define ANIM_OUTPUT
+#define ANIM_OUTPUT
 #ifdef ANIM_OUTPUT
 static int anim_i = 1;
 #endif
@@ -515,7 +515,7 @@ public:
 	    FOR_EACH_SUCCESSOR(s, pred, stg.g)
 	      worklist.push(s);
 	    END_FOR;
-	    worklist.push(pred);
+	    // should be redundant: worklist.push(pred);
 	  } END_FOR;
 	  // Cut it off.
 	  clear_vertex(succ, stg.g);
@@ -583,7 +583,7 @@ public:
 	    // self-cycle
 	    add_edge(v_prime, v_prime, stg.g);
 	    //cerr<<v_prime<<" -> "<<v_prime<<endl;
-	  } else if (!(edge(v_prime, succ, stg.g).second)) {
+	  } else {
 	    add_edge(v_prime, succ, stg.g);
 	    //cerr<<v_prime<<" -> "<<succ<<endl;
 	    
@@ -599,9 +599,10 @@ public:
 	    // add all remaining successors of the old v to the
 	    // worklist to force v to be recomputed
 	    FOR_EACH_SUCCESSOR(v_succ, v, stg.g)
+	      //if (v_succ != v) add_edge(v_prime, v_succ, stg.g);
 	      worklist.push(v_succ);
 	    END_FOR;
-	    worklist.push(v);
+	    // should be redundant: worklist.push(v);
 	  }
 #ifdef REDUCE_DEBUG
           static int iteration=0;
@@ -892,15 +893,6 @@ public:
   }
 
   /**
-   * Caveat: Although the LTL semantics say so, we can't start on
-   * the start node. Maybe at the first I/O node?
-   *
-   * Think about ``oA U oB''.
-   *
-   * PLEASE NOTE: We therefore define oX to be true until oY occurs
-   *   * if there is no output, we return false
-   *
-   * Implementation status: DONE
    */
   struct TransferO {
     TransferO(const OutputSymbol* e) : expr(e) {}
@@ -962,7 +954,6 @@ public:
   /**
    * Negated version of OutputSymbol
    *
-   * Implementation status: DONE
    */
   struct TransferNO {
     TransferNO(const OutputSymbol* e) : expr(e) {}
@@ -985,8 +976,6 @@ public:
 
   /**
    * NOT
-   *
-   * Implementation status: DONE
    */
   struct TransferNot {
     LTLState operator() (const LTLState& s, BoolLattice succ_val, bool verbose, bool endpoint ) const { 
@@ -1011,15 +1000,6 @@ public:
   /**
    * X φ (next): φ has to hold after the next step
    *
-   * I'm interpreting Next as follows
-   *
-   *  a     N A is true at a.
-   *  |\
-   * Ab Ac
-   *
-   * We simply join the information (A) from all successors.
-   *
-   * Implementation status: DONE
    */
   struct TransferX {
     LTLState operator() (const LTLState& s, BoolLattice succ_val, bool verbose, bool endpoint ) const { 
@@ -1044,16 +1024,6 @@ public:
   /**
    * F φ (eventually): φ has to hold at some point in the future (or now)
    *
-   *
-   * I'm interpreting Eventually to be a backward problem
-   *
-   *  a     if p(b) then F p(a) and F p(b) but not F p(c)
-   *  |\
-   *  b c
-   *
-   * propagate the information that the event occured up each path
-   *
-   * Implementation status: DONE
    */
   struct TransferF {
     LTLState operator() (const LTLState& s, BoolLattice succ_val, bool verbose, bool endpoint ) const { 
@@ -1066,7 +1036,7 @@ public:
       newstate.val = new_val;
       if (verbose) cerr<<"  F(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       return newstate;
-    } 
+    }
   };
   void visit(const Eventually* expr) {
     show_progress(*expr);
@@ -1083,7 +1053,6 @@ public:
    * ignoring the past.
    *
    * True, iff for each state we have TRUE
-   * Implementation status: DONE
    */
 
   struct TransferG {
@@ -1226,7 +1195,6 @@ public:
    * If !B occurs, A happens before it.
    *
    * According to the unwinding property, R seems to be the dual operator of U.
-   * Implementation status: DONE
    */
  struct TransferR {
     LTLState operator() (const LTLState& s, BoolLattice succ_val, bool verbose, bool endpoint ) const { 
