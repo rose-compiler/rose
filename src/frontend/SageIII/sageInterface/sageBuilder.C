@@ -137,7 +137,7 @@ SageBuilder::setSourcePositionClassificationMode(SageBuilder::SourcePositionClas
 string
 SageBuilder::display(SourcePositionClassification & scp)
    {
-  // DQ (11/19/2012): This function is build to support debugging the value of the staticlly defined mode.
+  // DQ (11/19/2012): This function is build to support debugging the value of the statically defined mode.
 
      string s;
      switch(scp)
@@ -5523,7 +5523,7 @@ SgExprListExp * SageBuilder::buildExprListExp(SgExpression * expr1, SgExpression
   SgExprListExp* expList = new SgExprListExp();
   ROSE_ASSERT(expList);
 
-  printf ("In SageBuilder::buildExprListExp(SgExpression * expr1, SgExpression* expr2, ...): SgExprListExp* expList = %p \n",expList);
+//  printf ("In SageBuilder::buildExprListExp(SgExpression * expr1, SgExpression* expr2, ...): SgExprListExp* expList = %p \n",expList);
 
   setOneSourcePositionForTransformation(expList);
   if (expr1) appendExpression(expList, expr1);
@@ -5893,6 +5893,7 @@ SageBuilder::buildFunctionRefExp(const SgFunctionDeclaration* func_decl)
   {
     ROSE_ASSERT(nondef_func!= NULL);
     symbol = nondef_func->get_symbol_from_symbol_table();
+    ROSE_ASSERT( symbol != NULL);
   }
   // Liao 12/1/2010. It is possible that there is no prototype declarations at all
   else if (def_func != NULL)
@@ -6076,7 +6077,7 @@ SageBuilder::buildFunctionCallExp(const SgName& name, SgType* return_type, SgExp
      if (parameters == NULL)
           parameters = buildExprListExp();
 
-#if 1
+#if 0
      printf ("In SageBuilder::buildFunctionCallExp(): calling buildFunctionParameterTypeList() \n");
 #endif
 

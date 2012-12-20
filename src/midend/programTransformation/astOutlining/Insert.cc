@@ -243,7 +243,18 @@ public:
 #endif
 
     if (!Outliner::useNewFile)
-      def_decl->set_firstNondefiningDeclaration (proto);
+    {
+      // Liao, 12/20/2012. A hidden first non-defining declaration is built when the defining one is created
+      // So the newly generated prototype function declaration is no longer the first non-defining declaration.
+      SgFunctionDeclaration* first_non_def = isSgFunctionDeclaration(proto->get_firstNondefiningDeclaration ());
+      ROSE_ASSERT (first_non_def != NULL);
+      ROSE_ASSERT (first_non_def->get_symbol_from_symbol_table()!= NULL);
+      def_decl->set_firstNondefiningDeclaration (first_non_def);
+      // Liao, we have to set it here otherwise it is difficult to find this prototype later. Using static to avoid name collision
+      SageInterface::setStatic (proto);
+      SageInterface::setStatic (def_decl);
+      SageInterface::setStatic (first_non_def);
+    }
 
     return proto;
   }
