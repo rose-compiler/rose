@@ -753,14 +753,14 @@ State<ValueType>::mem_read_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> 
     // Find all values that could be returned.  I.e., those stored at addresses that might be equal to 'addr'
     std::vector<ValueType<8> > found;
     for (typename MemoryCells::iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
-        if (may_alias(addr, ci->first, solver)) {
-            found.push_back(ci->second);
-            if (must_alias(addr, ci->first, solver))
+        if (may_alias(addr, ci->addr, solver)) {
+            found.push_back(ci->val);
+            if (must_alias(addr, ci->addr, solver))
                 break;
         }
     }
 
-    // If we're in the concrete domain, return a random found value (or a random value if none found)
+    // If we're in the concrete domain, return a random found value
     if (0 != (active_policies & CONCRETE.mask)) {
         if (found.empty()) {
             retval.set_subvalue(CONCRETE, CONCRETE_VALUE<8>(rand()%256));
@@ -888,8 +888,8 @@ State<ValueType>::print(std::ostream &o, unsigned domains) const
                 o <<"    skipping " <<cells.size()-(ncells-1) <<" more memory cells for brevity's sake...\n";
                 break;
             }
-            o <<"    address symbolic: " <<ci->first <<"\n";
-            show_value(o, "      value ", ci->second, domains);
+            o <<"    address symbolic: " <<ci->addr <<"\n";
+            show_value(o, "      value ", ci->val, domains);
         }
     }
 }

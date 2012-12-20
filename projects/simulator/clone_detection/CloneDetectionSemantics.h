@@ -167,13 +167,23 @@ public:
 
 /**************************************************************************************************************************/
 
+/** One cell of memory.  A cell contains an address and a byte value. Cells are organized into a reverse chronological list to
+ *  form a memory state. */
+struct MemoryCell {
+    MemoryCell(const SYMBOLIC_VALUE<32> &addr, const RSIM_SEMANTICS_VTYPE<8> &val): addr(addr), val(val), state(NO_ACCESS) {}
+    SYMBOLIC_VALUE<32> addr;                                    // Memory addresses are always symbolic
+    RSIM_SEMANTICS_VTYPE<8> val;                                // Byte stored at that address
+    unsigned state;                                             // NO_ACCESS or HAS_BEEN_READ and/or HAS_BEEN_WRITTEN bits
+};
+
+/**************************************************************************************************************************/
+
 /** Mixed-interpretation memory.  Addresses are symbolic expressions and values are multi-domain.  We'll override the
  * multi-domain policy's memory access functions to use this state rather than chaining to the memory states associated with
  * the sub-policies. */
 template <template <size_t> class ValueType>
 class State: public RSIM_Semantics::OuterState<ValueType> {
 public:
-    typedef std::pair<SYMBOLIC_VALUE<32>, ValueType<8> > MemoryCell;
     typedef std::list<MemoryCell> MemoryCells;                  // list of memory cells in reverse chronological order
     MemoryCells stack_cells;                                    // memory state for stack memory (accessed via SS register)
     MemoryCells data_cells;                                     // memory state for anything that non-stack (e.g., DS register)
