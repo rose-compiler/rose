@@ -9,7 +9,7 @@ int tmp()
     return 0;
 }
 
-void tmp2()
+int main(int argc, char ** argv)
 {
     int i = 0;
 #pragma omp parallel num_threads( THREADS_1 )
@@ -21,4 +21,5 @@ void tmp2()
         i++;
     }
 
+    return !(i==0);
 }
