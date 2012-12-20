@@ -456,7 +456,7 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
     if (this->is_active(SYMBOLIC) && !retval.is_valid(SYMBOLIC))
         retval.set_subvalue(SYMBOLIC, convert_to_symbolic(retval));
 
-    this->writeRegister(reg, retval);
+    this->writeRegister(reg, retval, HAS_BEEN_READ);
     return retval;
 }
 
@@ -472,7 +472,7 @@ Policy<State, ValueType>::writeRegister(const char *regname, const ValueType<nBi
 CLONE_DETECTION_TEMPLATE
 template<size_t nBits>
 void
-Policy<State, ValueType>::writeRegister(const RegisterDescriptor &reg, const ValueType<nBits> &value) {
+Policy<State, ValueType>::writeRegister(const RegisterDescriptor &reg, const ValueType<nBits> &value, unsigned update_access) {
     if (!triggered)
         return Super::template writeRegister<nBits>(reg, value);
 
@@ -490,7 +490,7 @@ Policy<State, ValueType>::writeRegister(const RegisterDescriptor &reg, const Val
                 if (reg.get_nbits()!=1)
                     throw Exception("semantic policy supports only single-bit flags");
                 state.registers.flag[reg.get_offset()] = this->template unsignedExtend<nBits, 1>(value);
-                state.register_rw_state.flag[reg.get_offset()].state |= HAS_BEEN_WRITTEN;
+                state.register_rw_state.flag[reg.get_offset()].state |= update_access;
                 break;
             }
 
@@ -516,7 +516,7 @@ Policy<State, ValueType>::writeRegister(const RegisterDescriptor &reg, const Val
                     default:
                         throw Exception("invalid byte access offset");
                 }
-                state.register_rw_state.gpr[reg.get_minor()].state |= HAS_BEEN_WRITTEN;
+                state.register_rw_state.gpr[reg.get_minor()].state |= update_access;
                 break;
             }
 
@@ -530,7 +530,7 @@ Policy<State, ValueType>::writeRegister(const RegisterDescriptor &reg, const Val
                         if (reg.get_minor()>=state.registers.n_segregs)
                             throw Exception("register not implemented in semantic policy");
                         state.registers.segreg[reg.get_minor()] = this->template unsignedExtend<nBits, 16>(value);
-                        state.register_rw_state.segreg[reg.get_minor()].state |= HAS_BEEN_WRITTEN;
+                        state.register_rw_state.segreg[reg.get_minor()].state |= update_access;
                         break;
                     }
                     case x86_regclass_gpr: {
@@ -539,7 +539,7 @@ Policy<State, ValueType>::writeRegister(const RegisterDescriptor &reg, const Val
                         state.registers.gpr[reg.get_minor()] =
                             concat(this->template unsignedExtend<nBits, 16>(value),
                                    this->template extract<16, 32>(state.registers.gpr[reg.get_minor()]));
-                        state.register_rw_state.gpr[reg.get_minor()].state |= HAS_BEEN_WRITTEN;
+                        state.register_rw_state.gpr[reg.get_minor()].state |= update_access;
                         break;
                     }
                     case x86_regclass_flags: {
@@ -562,7 +562,7 @@ Policy<State, ValueType>::writeRegister(const RegisterDescriptor &reg, const Val
                         state.registers.flag[14] = this->template extract<14, 15>(value);
                         state.registers.flag[15] = this->template extract<15, 16>(value);
                         for (size_t i=0; i<state.register_rw_state.n_flags; ++i)
-                            state.register_rw_state.flag[i].state |= HAS_BEEN_WRITTEN;
+                            state.register_rw_state.flag[i].state |= update_access;
                         break;
                     }
                     default:
@@ -579,14 +579,14 @@ Policy<State, ValueType>::writeRegister(const RegisterDescriptor &reg, const Val
                         if (reg.get_minor()>=state.registers.n_gprs)
                             throw Exception("register not implemented in semantic policy");
                         state.registers.gpr[reg.get_minor()] = this->template signExtend<nBits, 32>(value);
-                        state.register_rw_state.gpr[reg.get_minor()].state |= HAS_BEEN_WRITTEN;
+                        state.register_rw_state.gpr[reg.get_minor()].state |= update_access;
                         break;
                     }
                     case x86_regclass_ip: {
                         if (reg.get_minor()!=0)
                             throw Exception("register not implemented in semantic policy");
                         state.registers.ip = this->template unsignedExtend<nBits, 32>(value);
-                        state.register_rw_state.ip.state |= HAS_BEEN_WRITTEN;
+                        state.register_rw_state.ip.state |= update_access;
                         break;
                     }
                     case x86_regclass_flags: {
@@ -612,7 +612,7 @@ Policy<State, ValueType>::writeRegister(const RegisterDescriptor &reg, const Val
                         state.registers.flag[30] = this->template extract<30, 31>(value);
                         state.registers.flag[31] = this->template extract<31, 32>(value);
                         for (size_t i=0; i<state.register_rw_state.n_flags; ++i)
-                            state.register_rw_state.flag[i].state |= HAS_BEEN_WRITTEN;
+                            state.register_rw_state.flag[i].state |= update_access;
                         break;
                     }
                     default:
@@ -819,6 +819,23 @@ State<ValueType>::mem_read_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> 
 }
 
 template <template <size_t> class ValueType>
+Outputs<ValueType> *
+State<ValueType>::get_outputs() const
+{
+    Outputs<ValueType> *outputs = new Outputs<ValueType>;
+    for (size_t i=0; i<registers.n_gprs; ++i) {
+        if (0 != (register_rw_state.gpr[i].state & HAS_BEEN_WRITTEN) && x86_gpr_sp!=i && x86_gpr_bp!=i) {
+#if 1 /*DEBUGGING [Robb Matzke 2012-12-20]*/
+            std::cerr <<"ROBB: output for " <<gprToString((X86GeneralPurposeRegister)i) <<" = " <<registers.gpr[i] <<"\n";
+#endif
+            outputs->values.push_back(registers.gpr[i]);
+        }
+    }
+    // FIXME: Need to do the same for memory
+    return outputs;
+}
+
+template <template <size_t> class ValueType>
 template <size_t nBits>
 void
 State<ValueType>::show_value(std::ostream &o, const std::string &prefix, const ValueType<nBits> &v, unsigned domains) const
@@ -874,6 +891,27 @@ State<ValueType>::print(std::ostream &o, unsigned domains) const
             o <<"    address symbolic: " <<ci->first <<"\n";
             show_value(o, "      value ", ci->second, domains);
         }
+    }
+}
+
+template <template <size_t> class ValueType>
+void
+Outputs<ValueType>::print(std::ostream &o, const std::string &title, const std::string &prefix) const
+{
+    if (!title.empty())
+        o <<title <<"\n";
+    for (typename std::list<ValueType<32> >::const_iterator vi=values.begin(); vi!=values.end(); ++vi)
+        o <<prefix <<*vi <<"\n";
+}
+
+template <template <size_t> class ValueType>
+void
+Outputs<ValueType>::print(RTS_Message *m, const std::string &title, const std::string &prefix) const
+{
+    if (m && m->get_file()) {
+        std::ostringstream ss;
+        print(ss, title, prefix);
+        m->mesg("%s", ss.str().c_str());
     }
 }
 

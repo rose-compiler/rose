@@ -71,6 +71,8 @@ INTERVAL_VALUE<nBits> convert_to_interval(const ValueType<nBits> &value);
 template <template <size_t> class ValueType, size_t nBits>
 SYMBOLIC_VALUE<nBits> convert_to_symbolic(const ValueType<nBits> &value);
 
+/**************************************************************************************************************************/
+
 /** Initial values to supply for inputs.  These are defined in terms of integers which are then cast to the appropriate size
  *  when needed.  During fuzz testing, whenever the specimen reads from a register or memory location which has never been
  *  written, we consume the next value from this input object. */
@@ -114,12 +116,16 @@ protected:
     size_t next_integer_, next_pointer_;        // May increment past the end of its array
 };
 
+/**************************************************************************************************************************/
+
 /** Exception thrown by this semantics domain. */
 class Exception {
 public:
     Exception(const std::string &mesg): mesg(mesg) {}
     std::string mesg;
 };
+
+/**************************************************************************************************************************/
 
 /** Bits to track variable access. */
 enum {
@@ -136,6 +142,30 @@ struct ReadWriteState {
     unsigned state;                     /**< Bit vector containing HAS_BEEN_READ and/or HAS_BEEN_WRITTEN, or zero. */
     ReadWriteState(): state(NO_ACCESS) {}
 };
+
+/**************************************************************************************************************************/
+
+/** Collection of output values. The output values are gathered from the instruction semantics state after a specimen function
+ *  is analyzed.  The outputs consist of those interesting registers that are marked as having been written to by the specimen
+ *  function, and the memory values whose memory cells are marked as having been written to.  We omit status flags since they
+ *  are not typically treated as function call results, and we omit the instruction pointer (EIP).
+ *
+ *  The orders of outputs does not matter for clone detection, but we must use a list rather than a set because we don't define
+ *  an operator< for the value types. There's nothing stopping a user from sorting the values, but it might incur the overhead
+ *  of calling an SMT solver for the symbolic values, and even then a less-than relation might not be strict. */ 
+template <template <size_t> class ValueType>
+class Outputs {
+public:
+    std::list<ValueType<32> > values;
+    void print(std::ostream&, const std::string &title="", const std::string &prefix="") const;
+    void print(RTS_Message*, const std::string &title="", const std::string &prefix="") const;
+    friend std::ostream& operator<<(std::ostream &o, const Outputs &outputs) {
+        outputs.print(o);
+        return o;
+    }
+};
+
+/**************************************************************************************************************************/
 
 /** Mixed-interpretation memory.  Addresses are symbolic expressions and values are multi-domain.  We'll override the
  * multi-domain policy's memory access functions to use this state rather than chaining to the memory states associated with
@@ -174,6 +204,11 @@ public:
         register_rw_state.clear();
     }
 
+    // Return output values.  These are the interesting general-purpose registers to which a value has been written, and the
+    // memory locations to which a value has been written.  The returned object can be deleted when no longer needed.  The EIP,
+    // ESP, and EBP registers are not considered to be interesting.
+    Outputs<ValueType> *get_outputs() const;
+
     // Printing
     template<size_t nBits>
     void show_value(std::ostream&, const std::string &hdg, const ValueType<nBits>&, unsigned domains) const;
@@ -183,6 +218,8 @@ public:
         return o;
     }
 };
+
+/**************************************************************************************************************************/
 
 // Define the template portion of the CloneDetection::Policy so we don't have to repeat it over and over in the method
 // defintions found in CloneDetectionTpl.h.  This also helps Emac's c++-mode auto indentation engine since it seems to
@@ -213,6 +250,10 @@ public:
 
     // Initializer used by constructors.  This is where the SMT solver gets attached to the policy.
     void init();
+
+    // Return output values.  These are the general-purpose registers to which a value has been written, and the memory
+    // locations to which a value has been written.  The returned object can be deleted when no longer needed.
+    Outputs<ValueType> *get_outputs() const { return state.get_outputs(); }
 
     // Returns the message stream for the calling threads miscellaneous diagnostics.  We try to always use this for output so
     // that we can turn it on/off via simulator's "--debug" switch, so that output from multiple threads is still readable, and
@@ -276,7 +317,7 @@ public:
     template<size_t nBits>
     void writeRegister(const char *regname, const ValueType<nBits> &val);
     template<size_t nBits>
-    void writeRegister(const RegisterDescriptor &reg, const ValueType<nBits> &val);
+    void writeRegister(const RegisterDescriptor &reg, const ValueType<nBits> &val, unsigned update_access=HAS_BEEN_WRITTEN);
 
     // Print the states for each sub-domain and our own state containing the mixed semantics memory.
     void print(std::ostream&, bool abbreviated=false) const;
@@ -284,9 +325,8 @@ public:
         p.print(o);
         return o;
     }
-
 };
-    
+
 } // namespace
 
 #endif

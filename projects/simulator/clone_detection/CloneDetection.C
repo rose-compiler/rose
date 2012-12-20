@@ -31,7 +31,7 @@ public:
         struct Pruner: MemoryMap::Visitor {
             std::string exename;
             Pruner(const std::string &exename): exename(exename) {}
-            virtual bool operator()(const MemoryMap *map, const Extent &extent, const MemoryMap::Segment &segment_) {
+            virtual bool operator()(const MemoryMap*, const Extent&, const MemoryMap::Segment &segment_) {
                 MemoryMap::Segment *segment = const_cast<MemoryMap::Segment*>(&segment_);
                 if (segment->get_name().find(exename)==std::string::npos) {
                     unsigned p = segment->get_mapperms();
@@ -50,6 +50,9 @@ public:
         SgAsmBlock *gblk = proc->disassemble(false/*take no shortcuts*/, &map);
         std::vector<SgAsmFunction*> functions = SageInterface::querySubTree<SgAsmFunction>(gblk);
         m->mesg("%s: fuzz testing %zu function%s", name, functions.size(), 1==functions.size()?"":"s");
+
+        // Perform data type analysis on each function in order to find which things are pointers and which are non-pointers
+        // (FIXME: See demos/types_1.C)
 
         // Choose some input values. (FIXME: eventually we need to make these random)
         CloneDetection::InputValues inputs;
@@ -72,6 +75,7 @@ public:
         m->mesg("%s: fuzz testing function \"%s\" at 0x%08"PRIx64, name, function->get_name().c_str(), function->get_entry_va());
         m->mesg("%s", std::string(100, '=').c_str());
         proc->mem_transaction_start(name);
+        pt_regs_32 saved_regs = thread->get_regs();
         thread->policy.trigger(function->get_entry_va(), inputs);
         try {
             thread->main();
@@ -79,6 +83,9 @@ public:
             std::ostringstream ss;
             m->mesg("%s: function disassembly failed at 0x%08"PRIx64": %s", name, e.ip, e.mesg.c_str());
         }
+        CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *outputs = thread->policy.get_outputs();
+        outputs->print(m, "Function outputs:", "  ");
+        thread->init_regs(saved_regs);
         proc->mem_transaction_rollback(name);
     }
 };
