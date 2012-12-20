@@ -642,27 +642,36 @@ Policy<State, ValueType>::readMemory(X86SegmentRegister sr, ValueType<32> addr, 
     unsigned active_policies = this->get_active_policies();
     SMTSolver *solver = this->get_policy(SYMBOLIC).get_solver();
     SYMBOLIC_VALUE<32> a0 = convert_to_symbolic(addr);
+    bool uninitialized_read = false; // set to true by any mem_read_byte() that has no data
         
     // Read a multi-byte value from memory in little-endian order.
     assert(8==nBits || 16==nBits || 32==nBits);
-    ValueType<32> dword = this->concat(state.mem_read_byte(sr, a0, active_policies, solver), ValueType<24>(0));
+    ValueType<32> dword = this->concat(state.mem_read_byte(sr, a0, active_policies, solver, &uninitialized_read),
+                                       ValueType<24>(0));
     if (nBits>=16) {
         SYMBOLIC_VALUE<32> a1 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(1));
         dword = this->or_(dword, this->concat(ValueType<8>(0),
-                                              this->concat(state.mem_read_byte(sr, a1, active_policies, solver),
+                                              this->concat(state.mem_read_byte(sr, a1, active_policies, solver,
+                                                                               &uninitialized_read),
                                                            ValueType<16>(0))));
     }
     if (nBits>=24) {
         SYMBOLIC_VALUE<32> a2 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(2));
         dword = this->or_(dword, this->concat(ValueType<16>(0),
-                                              this->concat(state.mem_read_byte(sr, a2, active_policies, solver),
+                                              this->concat(state.mem_read_byte(sr, a2, active_policies, solver,
+                                                                               &uninitialized_read),
                                                            ValueType<8>(0))));
     }
     if (nBits>=32) {
         SYMBOLIC_VALUE<32> a3 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(3));
-        dword = this->or_(dword, this->concat(ValueType<24>(0), state.mem_read_byte(sr, a3, active_policies, solver)));
+        dword = this->or_(dword, this->concat(ValueType<24>(0), state.mem_read_byte(sr, a3, active_policies, solver,
+                                                                                    &uninitialized_read)));
     }
+
     ValueType<nBits> retval = this->template extract<0, nBits>(dword);
+    if (uninitialized_read)
+        retval = this->template number<nBits>(inputs->next_integer());
+
     if (this->get_policy(CONCRETE).tracing(TRACE_MEM)->get_file()) {
         std::ostringstream ss;
         ss <<"  readMemory<" <<nBits <<">(" <<segregToString(sr) <<", " <<addr <<") -> " <<retval;
@@ -675,7 +684,7 @@ CLONE_DETECTION_TEMPLATE
 template<size_t nBits>
 void
 Policy<State, ValueType>::writeMemory(X86SegmentRegister sr, ValueType<32> addr,
-                                      const ValueType<nBits> &data, const ValueType<1> &cond)
+                                      const ValueType<nBits> &data, const ValueType<1> &cond, unsigned rw_state)
 {
     if (!triggered)
         return Super::template writeMemory<nBits>(sr, addr, data, cond);
@@ -690,21 +699,21 @@ Policy<State, ValueType>::writeMemory(X86SegmentRegister sr, ValueType<32> addr,
     // Add the address/value pair to the mixed-semantics memory state, one byte at a time in little-endian order.
     assert(8==nBits || 16==nBits || 32==nBits);
     ValueType<8> b0 = this->template extract<0, 8>(data);
-    state.mem_write_byte(sr, a0, b0);
+    state.mem_write_byte(sr, a0, b0, rw_state);
     if (nBits>=16) {
         SYMBOLIC_VALUE<32> a1 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(1));
         ValueType<8> b1 = this->template extract<8, 16>(data);
-        state.mem_write_byte(sr, a1, b1);
+        state.mem_write_byte(sr, a1, b1, rw_state);
     }
     if (nBits>=24) {
         SYMBOLIC_VALUE<32> a2 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(2));
         ValueType<8> b2 = this->template extract<16, 24>(data);
-        state.mem_write_byte(sr, a2, b2);
+        state.mem_write_byte(sr, a2, b2, rw_state);
     }
     if (nBits>=32) {
         SYMBOLIC_VALUE<32> a3 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(3));
         ValueType<8> b3 = this->template extract<24, 32>(data);
-        state.mem_write_byte(sr, a3, b3);
+        state.mem_write_byte(sr, a3, b3, rw_state);
     }
 }
 
@@ -736,16 +745,17 @@ State<ValueType>::may_alias(const SYMBOLIC_VALUE<32> &addr1, const SYMBOLIC_VALU
 
 template <template <size_t> class ValueType>
 void
-State<ValueType>::mem_write_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> &addr, const ValueType<8> &value)
+State<ValueType>::mem_write_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> &addr, const ValueType<8> &value,
+                                 unsigned rw_state)
 {
     MemoryCells &cells = x86_segreg_ss==sr ? stack_cells : data_cells;
-    cells.push_front(MemoryCell(addr, value));
+    cells.push_front(MemoryCell(addr, value, rw_state));
 }
 
 template <template <size_t> class ValueType>
 ValueType<8>
 State<ValueType>::mem_read_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> &addr, unsigned active_policies,
-                                SMTSolver *solver/*=NULL*/)
+                                SMTSolver *solver/*=NULL*/, bool *uninitialized_read/*out*/)
 {
     ValueType<8> retval;
     MemoryCells &cells = x86_segreg_ss==sr ? stack_cells : data_cells;
@@ -754,6 +764,7 @@ State<ValueType>::mem_read_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> 
     std::vector<ValueType<8> > found;
     for (typename MemoryCells::iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
         if (may_alias(addr, ci->addr, solver)) {
+            ci->rw_state |= HAS_BEEN_READ;
             found.push_back(ci->val);
             if (must_alias(addr, ci->addr, solver))
                 break;
@@ -764,6 +775,7 @@ State<ValueType>::mem_read_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> 
     if (0 != (active_policies & CONCRETE.mask)) {
         if (found.empty()) {
             retval.set_subvalue(CONCRETE, CONCRETE_VALUE<8>(rand()%256));
+            *uninitialized_read = true;
         } else {
             retval.set_subvalue(CONCRETE, convert_to_concrete(found[rand()%found.size()]));
         }
@@ -774,6 +786,7 @@ State<ValueType>::mem_read_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> 
     if (0 != (active_policies & INTERVAL.mask)) {
         if (found.empty()) {
             retval.set_subvalue(INTERVAL, INTERVAL_VALUE<8>()); // any 8-bit value
+            *uninitialized_read = true;
         } else {
             BinaryAnalysis::InstructionSemantics::Intervals intervals;
             for (size_t i=0; i<found.size(); ++i) {
@@ -791,6 +804,7 @@ State<ValueType>::mem_read_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> 
     if (0 != (active_policies & SYMBOLIC.mask)) {
         if (found.empty()) {
             retval.set_subvalue(SYMBOLIC, SYMBOLIC_VALUE<8>());
+            *uninitialized_read = true;
         } else if (1==found.size()) {
             retval.set_subvalue(SYMBOLIC, found[0].get_subvalue(SYMBOLIC));
         } else {
@@ -814,7 +828,7 @@ State<ValueType>::mem_read_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> 
     }
 
     // Write the value back to memory so the next read returns the same thing (and returns faster)
-    cells.push_front(MemoryCell(addr, retval));
+    cells.push_front(MemoryCell(addr, retval, HAS_BEEN_READ));
     return retval;
 }
 
@@ -828,10 +842,28 @@ State<ValueType>::get_outputs() const
 #if 1 /*DEBUGGING [Robb Matzke 2012-12-20]*/
             std::cerr <<"ROBB: output for " <<gprToString((X86GeneralPurposeRegister)i) <<" = " <<registers.gpr[i] <<"\n";
 #endif
-            outputs->values.push_back(registers.gpr[i]);
+            outputs->values32.push_back(registers.gpr[i]);
         }
     }
-    // FIXME: Need to do the same for memory
+
+    for (MemoryCells::const_iterator ci=stack_cells.begin(); ci!=stack_cells.end(); ++ci) {
+        if (0 != (ci->rw_state & HAS_BEEN_WRITTEN)) {
+#if 1 /*DEBUGGING [Robb Matzke 2012-12-20]*/
+            std::cerr <<"ROBB: output for stack address " <<ci->addr <<"\n";
+#endif
+            outputs->values8.push_back(ci->val);
+        }
+    }
+
+    for (MemoryCells::const_iterator ci=data_cells.begin(); ci!=data_cells.end(); ++ci) {
+        if (0 != (ci->rw_state & HAS_BEEN_WRITTEN)) {
+#if 1 /*DEBUGGING [Robb Matzke 2012-12-20]*/
+            std::cerr <<"ROBB: output for data address " <<ci->addr <<"\n";
+#endif
+            outputs->values8.push_back(ci->val);
+        }
+    }
+
     return outputs;
 }
 
@@ -888,7 +920,12 @@ State<ValueType>::print(std::ostream &o, unsigned domains) const
                 o <<"    skipping " <<cells.size()-(ncells-1) <<" more memory cells for brevity's sake...\n";
                 break;
             }
-            o <<"    address symbolic: " <<ci->addr <<"\n";
+            o <<"         cell access:"
+              <<(0==(ci->rw_state & HAS_BEEN_READ)?"":" read")
+              <<(0==(ci->rw_state & HAS_BEEN_WRITTEN)?"":" written")
+              <<(0==(ci->rw_state & (HAS_BEEN_READ|HAS_BEEN_WRITTEN))?" none":"")
+              <<"\n"
+              <<"    address symbolic: " <<ci->addr <<"\n";
             show_value(o, "      value ", ci->val, domains);
         }
     }
@@ -900,7 +937,9 @@ Outputs<ValueType>::print(std::ostream &o, const std::string &title, const std::
 {
     if (!title.empty())
         o <<title <<"\n";
-    for (typename std::list<ValueType<32> >::const_iterator vi=values.begin(); vi!=values.end(); ++vi)
+    for (typename std::list<ValueType<8> >::const_iterator vi=values8.begin(); vi!=values8.end(); ++vi)
+        o <<prefix <<*vi <<"\n";
+    for (typename std::list<ValueType<32> >::const_iterator vi=values32.begin(); vi!=values32.end(); ++vi)
         o <<prefix <<*vi <<"\n";
 }
 

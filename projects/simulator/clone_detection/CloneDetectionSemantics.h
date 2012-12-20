@@ -156,7 +156,8 @@ struct ReadWriteState {
 template <template <size_t> class ValueType>
 class Outputs {
 public:
-    std::list<ValueType<32> > values;
+    std::list<ValueType<32> > values32;
+    std::list<ValueType<8> > values8;
     void print(std::ostream&, const std::string &title="", const std::string &prefix="") const;
     void print(RTS_Message*, const std::string &title="", const std::string &prefix="") const;
     friend std::ostream& operator<<(std::ostream &o, const Outputs &outputs) {
@@ -170,10 +171,11 @@ public:
 /** One cell of memory.  A cell contains an address and a byte value. Cells are organized into a reverse chronological list to
  *  form a memory state. */
 struct MemoryCell {
-    MemoryCell(const SYMBOLIC_VALUE<32> &addr, const RSIM_SEMANTICS_VTYPE<8> &val): addr(addr), val(val), state(NO_ACCESS) {}
+    MemoryCell(const SYMBOLIC_VALUE<32> &addr, const RSIM_SEMANTICS_VTYPE<8> &val, unsigned rw_state)
+        : addr(addr), val(val), rw_state(rw_state) {}
     SYMBOLIC_VALUE<32> addr;                                    // Memory addresses are always symbolic
     RSIM_SEMANTICS_VTYPE<8> val;                                // Byte stored at that address
-    unsigned state;                                             // NO_ACCESS or HAS_BEEN_READ and/or HAS_BEEN_WRITTEN bits
+    unsigned rw_state;                                          // NO_ACCESS or HAS_BEEN_READ and/or HAS_BEEN_WRITTEN bits
 };
 
 /**************************************************************************************************************************/
@@ -191,13 +193,16 @@ public:
     BinaryAnalysis::InstructionSemantics::BaseSemantics::RegisterStateX86<ReadWriteState> register_rw_state;
     InputValues *input_values;                                  // user-supplied input values
 
-    // Write a single byte to memory
-    void mem_write_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> &addr, const ValueType<8> &value);
+    // Write a single byte to memory. The rw_state are the HAS_BEEN_READ and/or HAS_BEEN_WRITTEN bits.
+    void mem_write_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> &addr, const ValueType<8> &value,
+                        unsigned rw_state=HAS_BEEN_WRITTEN);
 
     // Read a single byte from memory.  The active_policies is the bit mask of sub-policies that are currently active. The
-    // optional SMT solver is used to prove hypotheses about symbolic expressions (like memory addresses).
+    // optional SMT solver is used to prove hypotheses about symbolic expressions (like memory addresses).  If the read
+    // operation cannot find an appropriate memory cell, then @p uninitialized_read is set (it is not cleared in the counter
+    // case).
     ValueType<8> mem_read_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> &addr, unsigned active_policies,
-                               SMTSolver *solver);
+                               SMTSolver *solver, bool *uninitialized_read/*out*/);
 
     // Returns true if two memory addresses can be equal.
     static bool may_alias(const SYMBOLIC_VALUE<32> &addr1, const SYMBOLIC_VALUE<32> &addr2, SMTSolver *solver);
@@ -317,9 +322,12 @@ public:
     template<size_t nBits>
     ValueType<nBits> readMemory(X86SegmentRegister sr, ValueType<32> addr, const ValueType<1> &cond);
     template<size_t nBits>
-    void writeMemory(X86SegmentRegister sr, ValueType<32> addr, const ValueType<nBits> &data, const ValueType<1> &cond);
+    void writeMemory(X86SegmentRegister sr, ValueType<32> addr, const ValueType<nBits> &data, const ValueType<1> &cond,
+                     unsigned rw_access=HAS_BEEN_WRITTEN);
 
-    // We need to hook into register access because we might need to convert values from one domain to another.
+    // We need to hook into register access because we might need to convert values from one domain to another.  The
+    // writeRegister() method takes an extra optional argument that indicates which bits should be added to the read/written
+    // state for that register.
     template<size_t nBits>
     ValueType<nBits> readRegister(const char *regname);
     template<size_t nBits>
