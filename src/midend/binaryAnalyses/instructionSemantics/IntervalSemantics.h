@@ -336,8 +336,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                 ValueType<ToLen> unsignedExtend(const ValueType<FromLen> &a) const {
                     Intervals retval = a.get_intervals();
                     if (ToLen<FromLen) {
-                        uint64_t lo = IntegerOps::SHL1<uint64_t, FromLen>::value;
-                        uint64_t hi = IntegerOps::GenMask<uint64_t, ToLen>::value;
+                        uint64_t lo = IntegerOps::SHL1<uint64_t, ToLen>::value;
+                        uint64_t hi = IntegerOps::GenMask<uint64_t, FromLen>::value;
                         retval.erase(Interval::inin(lo, hi));
                     }
                     return ValueType<ToLen>(retval);
