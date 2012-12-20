@@ -68,7 +68,7 @@ Outliner::Preprocess::transformPreprocIfs (SgBasicBlock* b)
 
   if (!top && !bottom) // Not guarded by any '#if'.
     return b;
-
+  // move the source block b to be a nested block inside a shell block b_new
   SgBasicBlock* b_new = ASTtools::transformToBlockShell (b);
   ROSE_ASSERT (b_new);
 
