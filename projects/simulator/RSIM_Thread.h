@@ -119,6 +119,12 @@ public:
      *  into the RSIM_Threads tls_array, depending on the value of @p idx. */
     user_desc_32 *gdt_entry(int idx);
 
+    /** Obtain current register values. */
+    pt_regs_32 get_regs() const;
+
+    /** Initialize registers */
+    void init_regs(const pt_regs_32 &regs);
+
     /** Traverse the robust futex list and handle futex death for each item on the list. See the Linux version of this function
      *  for details. */
     int exit_robust_list();
@@ -560,7 +566,7 @@ public:
 
 
     /**************************************************************************************************************************
-     *                                  Miscellaneous methods
+     *                                  Dynamic Linking
      **************************************************************************************************************************/
 public:
 
@@ -579,12 +585,6 @@ public:
      *
      *  We use the first approach. */
     SgAsmGenericHeader* load(const char *name);
-
-    /** Obtain current register values. */
-    pt_regs_32 get_regs() const;
-
-    /** Initialize registers */
-    void init_regs(const pt_regs_32 &regs);
 
 
     /**************************************************************************************************************************
