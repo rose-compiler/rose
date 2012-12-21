@@ -349,11 +349,11 @@ namespace LTL {
 
     operator std::string () const { return std::string(e); }
     operator const Expr& () const { return e; }
-    short size() const { return expr_size; }
+    size_t size() const { return expr_size; }
 
   protected:
     Expr& e;
-    short expr_size;
+    size_t expr_size;
   };
 
 } // namespace LTL

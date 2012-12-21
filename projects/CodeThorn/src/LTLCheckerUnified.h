@@ -38,12 +38,10 @@ namespace UnifiedLTL {
   struct LTLState {
     const EState* estate;
     vector<BoolLattice> valstack;
-    BoolLattice val;     /// result of the current iteration, will become the next top of stack
-    vector<BoolLattice> debug; /// stores all intermediate results for the dot output
 
-    LTLState() : estate(NULL), val(Bot()) { valstack.push_back(Bot()); }
-    //LTLState(const EState* s, vector<BoolLattice> v) : estate(s), valstack(v) {}
-    LTLState(const EState* s, BoolLattice top) : estate(s), val(top) { }
+    LTLState() : estate(NULL) { }
+    LTLState(const EState* s, size_t stacksize) 
+      : estate(s), valstack(stacksize, Bot()) {}
     
     inline BoolLattice top()  const { return valstack.back(); }
     inline BoolLattice over() const { return valstack[valstack.size()-2]; }
@@ -59,38 +57,23 @@ namespace UnifiedLTL {
       // 	  << (estate == other.estate)<<" && "
       // 	  <<(valstack == other.valstack)<<" && "
       // 	  <<(val == other.val)<<endl;
-      return (estate == other.estate) && (val == other.val) && (valstack == other.valstack);
+      return (estate == other.estate) && (valstack == other.valstack);
     }
     bool operator<(const LTLState& other) const {
-      if (val  < other.val) return true;
-      if (val != other.val) return false;
-      if (valstack  < other.valstack) return true;
-      if (valstack != other.valstack) return false;
       if (estate  < other.estate) return true;
-      //if (estate != other.estate) return false;
+      if (estate == other.estate)
+	return (valstack  < other.valstack);
       return false;
     }
     friend ostream& operator<<(ostream& os, const LTLState& s);
 
     string toHTML() const;
-
-    /// call this if you are merging two LTLStates that are equal in the operator==() sense
-    void merge_debug_info(LTLState& other) {
-      for (size_t i = 0; i < debug.size(); ++i) {
-	debug[i] = debug[i].lub(other.debug[i]);
-      }
-    }
-    /// return the ith debug info
-    BoolLattice get_debug(size_t i) {
-      if (i == debug.size()) return val;
-      return debug[i];
-    }
   };
 
   /// Hash function for LTL States
   inline std::size_t hash_value(CodeThorn::UnifiedLTL::LTLState const& s) {
     // the idea is that there will be rarely more than 4 LTLStates with the same estate
-    return (size_t)s.estate+(size_t)s.val.val();
+    return (size_t)s.estate+(size_t)s.valstack.back().val();
   }
 
   ostream& operator<<(ostream& os, const LTLState& s);
@@ -111,7 +94,10 @@ namespace UnifiedLTL {
     LTLTransitionGraph g;
   };
 
-  typedef queue<LTLVertex> LTLWorklist;
+  struct LTLWorklist: public vector<LTLVertex> {
+    inline void push(LTLVertex v) { push_back(v); }
+    inline LTLVertex pop() { LTLVertex result = back(); pop_back(); return result; }
+  };
 
   /**
    * A dataflow-based checker for LTL formulae.

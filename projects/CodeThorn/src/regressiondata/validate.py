@@ -24,7 +24,6 @@ if __name__ == '__main__':
 
     filename = args.log.name
 
-    status = 0
     next_counterexample = -1
     correct      = 0
     inconsistent = 0
@@ -37,11 +36,13 @@ if __name__ == '__main__':
         boundscheck(n)
 
         if next_counterexample < n:
-            # skip to next coutnerexample
+            # skip to next counterexample
             while 1:
                 qc_line = args.log.readline()
                 if qc_line == "": # EOF
-                    exit(status)
+                    # no more counterexamples in the log file
+                    next_counterexample = -1
+                    break
                 if qc_line.find("FALSE, found counterexample") <> -1:
                     next_counterexample = int(qc_line.split(' ')[0])
                     boundscheck(next_counterexample)
