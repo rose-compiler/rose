@@ -21,7 +21,7 @@ using this memory map for disassembly:
     va 0x080496a4 + 0x00000030 = 0x080496d4 rw-- at buffer aby   + 0x000006a4 i686-test1.O0.bin(.data+.got+.got.plt)
     va 0x080496d4 + 0x00000008 = 0x080496dc rw-p at anon aca     + 0x00000000 i686-test1.O0.bin(.bss)
     va 0x080496dc + 0x00000924 = 0x0804a000 rw-p at anon aaj     + 0x00000008 i686-test1.O0.bin(LOAD#3)
-disassembled 3199 instructions and 18 failures (use --show-bad to see errors)
+disassembled 3195 instructions and 22 failures (use --show-bad to see errors)
 
 
 0x080482c8: ================================== Function (function call, symbol) <_init>
