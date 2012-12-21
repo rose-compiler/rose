@@ -100,21 +100,20 @@ namespace BinaryAnalysis {              // documented elsewhere
                  *  into this value and returns a reference to this value.  This is a convenience function used internally by
                  *  the policy's X86InstructionSemantics callback methods. See also add_defining_instructions().
                  * @{ */
-                ValueType& defined_by(SgAsmInstruction *insn, const InsnSet &set1, const InsnSet &set2, const InsnSet &set3) {
+                void defined_by(SgAsmInstruction *insn, const InsnSet &set1, const InsnSet &set2, const InsnSet &set3) {
                     add_defining_instructions(set3);
-                    return defined_by(insn, set1, set2);
+                    defined_by(insn, set1, set2);
                 }
-                ValueType& defined_by(SgAsmInstruction *insn, const InsnSet &set1, const InsnSet &set2) {
+                void defined_by(SgAsmInstruction *insn, const InsnSet &set1, const InsnSet &set2) {
                     add_defining_instructions(set2);
-                    return defined_by(insn, set1);
+                    defined_by(insn, set1);
                 }
-                ValueType& defined_by(SgAsmInstruction *insn, const InsnSet &set1) {
+                void defined_by(SgAsmInstruction *insn, const InsnSet &set1) {
                     add_defining_instructions(set1);
-                    return defined_by(insn);
+                    defined_by(insn);
                 }
-                ValueType& defined_by(SgAsmInstruction *insn) {
+                void defined_by(SgAsmInstruction *insn) {
                     add_defining_instructions(insn);
-                    return *this;
                 }
                 /** @} */
 
@@ -687,43 +686,50 @@ namespace BinaryAnalysis {              // documented elsewhere
                  *  input. Added bits are always zeros. */
                 template <size_t FromLen, size_t ToLen>
                 ValueType<ToLen> unsignedExtend(const ValueType<FromLen> &a) const {
-                    if (a.is_known())
-                        return ValueType<ToLen>(IntegerOps::GenMask<uint64_t,ToLen>::value & a.known_value())
-                            .defined_by(cur_insn, a.get_defining_instructions());
-                    if (FromLen==ToLen) {
+                    ValueType<ToLen> retval;
+                    if (a.is_known()) {
+                        retval = ValueType<ToLen>(IntegerOps::GenMask<uint64_t,ToLen>::value & a.known_value());
+                    } else if (FromLen==ToLen) {
                         // no-op, so not defined by current insn
-                        return ValueType<ToLen>(a.get_expression()).defined_by(NULL, a.get_defining_instructions());
+                        retval = ValueType<ToLen>(a.get_expression());
+                    } else if (FromLen>ToLen) {
+                        retval = ValueType<ToLen>(InternalNode::create(ToLen, InsnSemanticsExpr::OP_EXTRACT,
+                                                                       LeafNode::create_integer(32, 0),
+                                                                       LeafNode::create_integer(32, ToLen),
+                                                                       a.get_expression()));
+                    } else {
+                        retval = ValueType<ToLen>(InternalNode::create(ToLen, InsnSemanticsExpr::OP_UEXTEND,
+                                                                       LeafNode::create_integer(32, ToLen),
+                                                                       a.get_expression()));
                     }
-                    if (FromLen>ToLen)
-                        return ValueType<ToLen>(InternalNode::create(ToLen, InsnSemanticsExpr::OP_EXTRACT,
-                                                                     LeafNode::create_integer(32, 0),
-                                                                     LeafNode::create_integer(32, ToLen),
-                                                                     a.get_expression()))
-                            .defined_by(cur_insn, a.get_defining_instructions());
-                    return ValueType<ToLen>(InternalNode::create(ToLen, InsnSemanticsExpr::OP_UEXTEND,
-                                                                 LeafNode::create_integer(32, ToLen), a.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions());
+                    retval.defined_by(cur_insn, a.get_defining_instructions());
+                    return retval;
                 }
 
                 /** Sign extend from @p FromLen bits to @p ToLen bits. */
                 template <size_t FromLen, size_t ToLen>
                 ValueType<ToLen> signedExtend(const ValueType<FromLen> &a) const {
-                    if (a.is_known())
-                        return ValueType<ToLen>(IntegerOps::signExtend<FromLen, ToLen>(a.known_value())).
-                            defined_by(cur_insn, a.get_defining_instructions());
-                    if (FromLen==ToLen) {
+                    ValueType<ToLen> retval;
+                    if (a.is_known()) {
+                        retval = ValueType<ToLen>(IntegerOps::signExtend<FromLen, ToLen>(a.known_value()));
+                        retval.defined_by(cur_insn, a.get_defining_instructions());
+                    } else if (FromLen==ToLen) {
                         // no-op, so not defined by current insns
-                        return ValueType<ToLen>(a.get_expression()).defined_by(NULL, a.get_defining_instructions());
+                        retval = ValueType<ToLen>(a.get_expression());
+                        retval.defined_by(NULL, a.get_defining_instructions());
+                    } else if (FromLen > ToLen) {
+                        retval = ValueType<ToLen>(InternalNode::create(ToLen, InsnSemanticsExpr::OP_EXTRACT,
+                                                                       LeafNode::create_integer(32, 0),
+                                                                       LeafNode::create_integer(32, ToLen),
+                                                                       a.get_expression()));
+                        retval.defined_by(cur_insn, a.get_defining_instructions());
+                    } else {
+                        retval = ValueType<ToLen>(InternalNode::create(ToLen, InsnSemanticsExpr::OP_SEXTEND,
+                                                                       LeafNode::create_integer(32, ToLen),
+                                                                       a.get_expression()));
+                        retval.defined_by(cur_insn, a.get_defining_instructions());
                     }
-                    if (FromLen > ToLen)
-                        return ValueType<ToLen>(InternalNode::create(ToLen, InsnSemanticsExpr::OP_EXTRACT,
-                                                                     LeafNode::create_integer(32, 0),
-                                                                     LeafNode::create_integer(32, ToLen),
-                                                                     a.get_expression()))
-                            .defined_by(cur_insn, a.get_defining_instructions());
-                    return ValueType<ToLen>(InternalNode::create(ToLen, InsnSemanticsExpr::OP_SEXTEND,
-                                                                 LeafNode::create_integer(32, ToLen), a.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions());
+                    return retval;
                 }
 
                 /** Extracts certain bits from the specified value and shifts them to the low-order positions in the result.
@@ -731,16 +737,21 @@ namespace BinaryAnalysis {              // documented elsewhere
                  *  numbered zero. */
                 template <size_t BeginAt, size_t EndAt, size_t Len>
                 ValueType<EndAt-BeginAt> extract(const ValueType<Len> &a) const {
-                    if (0==BeginAt)
-                        return unsignedExtend<Len,EndAt-BeginAt>(a);
-                    if (a.is_known())
-                        return ValueType<EndAt-BeginAt>((a.known_value()>>BeginAt) & IntegerOps::genMask<uint64_t>(EndAt-BeginAt))
-                            .defined_by(cur_insn, a.get_defining_instructions());
-                    return ValueType<EndAt-BeginAt>(InternalNode::create(EndAt-BeginAt, InsnSemanticsExpr::OP_EXTRACT,
-                                                                         LeafNode::create_integer(32, BeginAt),
-                                                                         LeafNode::create_integer(32, EndAt),
-                                                                         a.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions());
+                    ValueType<EndAt-BeginAt> retval;
+                    if (0==BeginAt) {
+                        retval = unsignedExtend<Len,EndAt-BeginAt>(a);
+                    } else if (a.is_known()) {
+                        retval = ValueType<EndAt-BeginAt>((a.known_value()>>BeginAt) &
+                                                          IntegerOps::genMask<uint64_t>(EndAt-BeginAt));
+                        retval.defined_by(cur_insn, a.get_defining_instructions());
+                    } else {
+                        retval = ValueType<EndAt-BeginAt>(InternalNode::create(EndAt-BeginAt, InsnSemanticsExpr::OP_EXTRACT,
+                                                                               LeafNode::create_integer(32, BeginAt),
+                                                                               LeafNode::create_integer(32, EndAt),
+                                                                               a.get_expression()));
+                        retval.defined_by(cur_insn, a.get_defining_instructions());
+                    }
+                    return retval;
                 }
 
                 /** Reads a single-byte value from memory.
@@ -930,24 +941,32 @@ namespace BinaryAnalysis {              // documented elsewhere
 
                 /** See NullSemantics::Policy::true_() */
                 ValueType<1> true_() const {
-                    return ValueType<1>(1).defined_by(cur_insn);
+                    ValueType<1> retval(1);
+                    retval.defined_by(cur_insn);
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::false_() */
                 ValueType<1> false_() const {
-                    return ValueType<1>((uint64_t)0).defined_by(cur_insn);
+                    ValueType<1> retval((uint64_t)0);
+                    retval.defined_by(cur_insn);
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::undefined_() */
                 template <size_t Len>
                 ValueType<Len> undefined_() const {
-                    return ValueType<Len>().defined_by(cur_insn);
+                    ValueType<Len> retval;
+                    retval.defined_by(cur_insn);
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::number() */
                 template <size_t Len>
                 ValueType<Len> number(uint64_t n) const {
-                    return ValueType<Len>(n).defined_by(cur_insn);
+                    ValueType<Len> retval(n);
+                    retval.defined_by(cur_insn);
+                    return retval;
                 }
 
 
@@ -1001,20 +1020,23 @@ namespace BinaryAnalysis {              // documented elsewhere
                 /** See NullSemantics::Policy::add() */
                 template <size_t Len>
                 ValueType<Len> add(const ValueType<Len> &a, const ValueType<Len> &b) const {
+                    ValueType<Len> retval;
                     if (a.is_known()) {
                         if (b.is_known()) {
-                            return ValueType<Len>(LeafNode::create_integer(Len, a.known_value()+b.known_value()))
-                                .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                            retval = ValueType<Len>(LeafNode::create_integer(Len, a.known_value()+b.known_value()));
+                            retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                            return retval;
                         } else if (0==a.known_value()) {
                             return b;
                         }
                     } else if (b.is_known() && 0==b.known_value()) {
                         return a;
                     }
-                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ADD,
-                                                               a.get_expression(),
-                                                               b.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ADD,
+                                                                 a.get_expression(),
+                                                                 b.get_expression()));
+                    retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::addWithCarries() */
@@ -1032,52 +1054,65 @@ namespace BinaryAnalysis {              // documented elsewhere
                 /** See NullSemantics::Policy::and_() */
                 template <size_t Len>
                 ValueType<Len> and_(const ValueType<Len> &a, const ValueType<Len> &b) const {
-                    if (a.is_known() && b.is_known())
-                        return ValueType<Len>(a.known_value() & b.known_value())
-                            .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_BV_AND,
-                                                               a.get_expression(), b.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    ValueType<Len> retval;
+                    if (a.is_known() && b.is_known()) {
+                        retval = ValueType<Len>(a.known_value() & b.known_value());
+                    } else {
+                        retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_BV_AND,
+                                                                     a.get_expression(), b.get_expression()));
+                    }
+                    retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::equalToZero() */
                 template <size_t Len>
                 ValueType<1> equalToZero(const ValueType<Len> &a) const {
+                    ValueType<1> retval;
                     if (a.is_known()) {
-                        ValueType<1> retval = a.known_value() ? false_() : true_();
-                        return retval.defined_by(cur_insn, a.get_defining_instructions());
+                        retval = a.known_value() ? false_() : true_();
+                    } else {
+                        retval = ValueType<1>(InternalNode::create(1, InsnSemanticsExpr::OP_ZEROP, a.get_expression()));
                     }
-                    return ValueType<1>(InternalNode::create(1, InsnSemanticsExpr::OP_ZEROP, a.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions());
+                    retval.defined_by(cur_insn, a.get_defining_instructions());
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::invert() */
                 template <size_t Len>
                 ValueType<Len> invert(const ValueType<Len> &a) const {
-                    if (a.is_known())
-                        return ValueType<Len>(LeafNode::create_integer(Len, ~a.known_value()))
-                            .defined_by(cur_insn, a.get_defining_instructions());
-                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_INVERT, a.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions());
+                    ValueType<Len> retval;
+                    if (a.is_known()) {
+                        retval = ValueType<Len>(LeafNode::create_integer(Len, ~a.known_value()));
+                    } else {
+                        retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_INVERT, a.get_expression()));
+                    }
+                    retval.defined_by(cur_insn, a.get_defining_instructions());
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::concat() */
                 template<size_t Len1, size_t Len2>
                 ValueType<Len1+Len2> concat(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-                    if (a.is_known() && b.is_known())
-                        return ValueType<Len1+Len2>(a.known_value() | (b.known_value() << Len1))
-                            .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-                    return ValueType<Len1+Len2>(InternalNode::create(Len1+Len2, InsnSemanticsExpr::OP_CONCAT,
-                                                                     b.get_expression(), a.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    ValueType<Len1+Len2> retval;
+                    if (a.is_known() && b.is_known()) {
+                        retval = ValueType<Len1+Len2>(a.known_value() | (b.known_value() << Len1));
+                    } else {
+                        retval = ValueType<Len1+Len2>(InternalNode::create(Len1+Len2, InsnSemanticsExpr::OP_CONCAT,
+                                                                           b.get_expression(), a.get_expression()));
+                    }
+                    retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::ite() */
                 template <size_t Len>
                 ValueType<Len> ite(const ValueType<1> &sel, const ValueType<Len> &ifTrue, const ValueType<Len> &ifFalse) const {
+                    ValueType<Len> retval;
                     if (sel.is_known()) {
-                        ValueType<Len> retval = sel.known_value() ? ifTrue : ifFalse;
-                        return retval.defined_by(cur_insn, sel.get_defining_instructions());
+                        retval = sel.known_value() ? ifTrue : ifFalse;
+                        retval.defined_by(cur_insn, sel.get_defining_instructions());
+                        return retval;
                     }
                     if (solver) {
                         /* If the selection expression cannot be true, then return ifFalse */
@@ -1087,7 +1122,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                         bool can_be_true = SMTSolver::SAT_NO != solver->satisfiable(assertion);
                         if (!can_be_true) {
                             ValueType<Len> retval = ifFalse;
-                            return retval.defined_by(cur_insn, sel.get_defining_instructions());
+                            retval.defined_by(cur_insn, sel.get_defining_instructions());
+                            return retval;
                         }
 
                         /* If the selection expression cannot be false, then return ifTrue */
@@ -1096,118 +1132,156 @@ namespace BinaryAnalysis {              // documented elsewhere
                         bool can_be_false = SMTSolver::SAT_NO != solver->satisfiable(assertion);
                         if (!can_be_false) {
                             ValueType<Len> retval = ifTrue;
-                            return retval.defined_by(cur_insn, sel.get_defining_instructions());
+                            retval.defined_by(cur_insn, sel.get_defining_instructions());
+                            return retval;
                         }
                     }
-                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ITE, sel.get_expression(),
-                                                               ifTrue.get_expression(), ifFalse.get_expression()))
-                        .defined_by(cur_insn, sel.get_defining_instructions(),
-                                    ifTrue.get_defining_instructions(), ifFalse.get_defining_instructions());
+                    retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ITE, sel.get_expression(),
+                                                                 ifTrue.get_expression(), ifFalse.get_expression()));
+                    retval.defined_by(cur_insn, sel.get_defining_instructions(),
+                                      ifTrue.get_defining_instructions(), ifFalse.get_defining_instructions());
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::leastSignificantSetBit() */
                 template <size_t Len>
                 ValueType<Len> leastSignificantSetBit(const ValueType<Len> &a) const {
+                    ValueType<Len> retval;
                     if (a.is_known()) {
                         uint64_t n = a.known_value();
                         for (size_t i=0; i<Len; ++i) {
-                            if (n & ((uint64_t)1 << i))
-                                return number<Len>(i).defined_by(cur_insn, a.get_defining_instructions());
+                            if (n & ((uint64_t)1 << i)) {
+                                retval = number<Len>(i);
+                                retval.defined_by(cur_insn, a.get_defining_instructions());
+                                return retval;
+                            }
                         }
-                        return number<Len>(0).defined_by(cur_insn, a.get_defining_instructions());
+                        retval = number<Len>(0);
+                        retval.defined_by(cur_insn, a.get_defining_instructions());
+                        return retval;
                     }
-                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_LSSB, a.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions());
+                    retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_LSSB, a.get_expression()));
+                    retval.defined_by(cur_insn, a.get_defining_instructions());
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::mostSignificantSetBit() */
                 template <size_t Len>
                 ValueType<Len> mostSignificantSetBit(const ValueType<Len> &a) const {
+                    ValueType<Len> retval;
                     if (a.is_known()) {
                         uint64_t n = a.known_value();
                         for (size_t i=Len; i>0; --i) {
-                            if (n & ((uint64_t)1 << (i-1)))
-                                return number<Len>(i-1).defined_by(cur_insn, a.get_defining_instructions());
+                            if (n & ((uint64_t)1 << (i-1))) {
+                                retval = number<Len>(i-1);
+                                retval.defined_by(cur_insn, a.get_defining_instructions());
+                                return retval;
+                            }
                         }
-                        return number<Len>(0);
+                        retval = number<Len>(0);
+                        retval.defined_by(cur_insn, a.get_defining_instructions());
+                        return retval;
                     }
-                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_MSSB, a.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions());
+                    retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_MSSB, a.get_expression()));
+                    retval.defined_by(cur_insn, a.get_defining_instructions());
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::negate() */
                 template <size_t Len>
                 ValueType<Len> negate(const ValueType<Len> &a) const {
-                    if (a.is_known())
-                        return ValueType<Len>(-a.known_value()).defined_by(cur_insn, a.get_defining_instructions());
-                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_NEGATE, a.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions());
+                    ValueType<Len> retval;
+                    if (a.is_known()) {
+                        retval = ValueType<Len>(-a.known_value());
+                    } else {
+                        retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_NEGATE, a.get_expression()));
+                    }
+                    retval.defined_by(cur_insn, a.get_defining_instructions());
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::or_() */
                 template <size_t Len>
                 ValueType<Len> or_(const ValueType<Len> &a, const ValueType<Len> &b) const {
-                    if (a.is_known() && b.is_known())
-                        return ValueType<Len>(a.known_value() | b.known_value())
-                            .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_BV_OR,
-                                                               a.get_expression(), b.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    ValueType<Len> retval;
+                    if (a.is_known() && b.is_known()) {
+                        retval = ValueType<Len>(a.known_value() | b.known_value());
+                    } else {
+                        retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_BV_OR,
+                                                                     a.get_expression(), b.get_expression()));
+                    }
+                    retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::rotateLeft() */
                 template <size_t Len, size_t SALen>
                 ValueType<Len> rotateLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-                    if (a.is_known() && sa.is_known())
-                        return ValueType<Len>(IntegerOps::rotateLeft<Len>(a.known_value(), sa.known_value()))
-                            .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
-                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ROL,
-                                                               sa.get_expression(), a.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
+                    ValueType<Len> retval;
+                    if (a.is_known() && sa.is_known()) {
+                        retval = ValueType<Len>(IntegerOps::rotateLeft<Len>(a.known_value(), sa.known_value()));
+                    } else {
+                        retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ROL,
+                                                                     sa.get_expression(), a.get_expression()));
+                    }
+                    retval.defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::rotateRight() */
                 template <size_t Len, size_t SALen>
                 ValueType<Len> rotateRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-                    if (a.is_known() && sa.is_known())
-                        return ValueType<Len>(IntegerOps::rotateRight<Len>(a.known_value(), sa.known_value()))
-                            .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
-                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ROR,
-                                                               sa.get_expression(), a.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
+                    ValueType<Len> retval;
+                    if (a.is_known() && sa.is_known()) {
+                        retval = ValueType<Len>(IntegerOps::rotateRight<Len>(a.known_value(), sa.known_value()));
+                    } else {
+                        retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ROR,
+                                                                     sa.get_expression(), a.get_expression()));
+                    }
+                    retval.defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::shiftLeft() */
                 template <size_t Len, size_t SALen>
                 ValueType<Len> shiftLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-                    if (a.is_known() && sa.is_known())
-                        return ValueType<Len>(IntegerOps::shiftLeft<Len>(a.known_value(), sa.known_value()))
-                            .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
-                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_SHL0,
-                                                               sa.get_expression(), a.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
+                    ValueType<Len> retval;
+                    if (a.is_known() && sa.is_known()) {
+                        retval = ValueType<Len>(IntegerOps::shiftLeft<Len>(a.known_value(), sa.known_value()));
+                    } else {
+                        retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_SHL0,
+                                                                     sa.get_expression(), a.get_expression()));
+                    }
+                    retval.defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::shiftRight() */
                 template <size_t Len, size_t SALen>
                 ValueType<Len> shiftRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-                    if (a.is_known() && sa.is_known())
-                        return ValueType<Len>(IntegerOps::shiftRightLogical<Len>(a.known_value(), sa.known_value()))
-                            .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
-                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_SHR0,
-                                                               sa.get_expression(), a.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
+                    ValueType<Len> retval;
+                    if (a.is_known() && sa.is_known()) {
+                        retval = ValueType<Len>(IntegerOps::shiftRightLogical<Len>(a.known_value(), sa.known_value()));
+                    } else {
+                        retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_SHR0,
+                                                                     sa.get_expression(), a.get_expression()));
+                    }
+                    retval.defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::shiftRightArithmetic() */
                 template <size_t Len, size_t SALen>
                 ValueType<Len> shiftRightArithmetic(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
-                    if (a.is_known() && sa.is_known())
-                        return ValueType<Len>(IntegerOps::shiftRightArithmetic<Len>(a.known_value(), sa.known_value()))
-                            .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
-                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ASR,
-                                                               sa.get_expression(), a.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
+                    ValueType<Len> retval;
+                    if (a.is_known() && sa.is_known()) {
+                        retval = ValueType<Len>(IntegerOps::shiftRightArithmetic<Len>(a.known_value(), sa.known_value()));
+                    } else {
+                        retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ASR,
+                                                                     sa.get_expression(), a.get_expression()));
+                    }
+                    retval.defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::signExtend() */
@@ -1219,83 +1293,104 @@ namespace BinaryAnalysis {              // documented elsewhere
                 /** See NullSemantics::Policy::signedDivide() */
                 template <size_t Len1, size_t Len2>
                 ValueType<Len1> signedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-                    if (a.is_known() && b.is_known() && 0!=b.known_value())
-                        return ValueType<Len1>(IntegerOps::signExtend<Len1, 64>(a.known_value()) /
-                                               IntegerOps::signExtend<Len2, 64>(b.known_value()))
-                            .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-                    return ValueType<Len1>(InternalNode::create(Len1, InsnSemanticsExpr::OP_SDIV,
-                                                                a.get_expression(), b.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    ValueType<Len1> retval;
+                    if (a.is_known() && b.is_known() && 0!=b.known_value()) {
+                        retval = ValueType<Len1>(IntegerOps::signExtend<Len1, 64>(a.known_value()) /
+                                                 IntegerOps::signExtend<Len2, 64>(b.known_value()));
+                    } else {
+                        retval = ValueType<Len1>(InternalNode::create(Len1, InsnSemanticsExpr::OP_SDIV,
+                                                                      a.get_expression(), b.get_expression()));
+                    }
+                    retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::signedModulo() */
                 template <size_t Len1, size_t Len2>
                 ValueType<Len2> signedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-                    if (a.is_known() && b.is_known() && 0!=b.known_value())
-                        return ValueType<Len2>(IntegerOps::signExtend<Len1, 64>(a.known_value()) %
-                                               IntegerOps::signExtend<Len2, 64>(b.known_value()))
-                            .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-                    return ValueType<Len2>(InternalNode::create(Len2, InsnSemanticsExpr::OP_SMOD,
-                                                                a.get_expression(), b.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    ValueType<Len2> retval;
+                    if (a.is_known() && b.is_known() && 0!=b.known_value()) {
+                        retval = ValueType<Len2>(IntegerOps::signExtend<Len1, 64>(a.known_value()) %
+                                                 IntegerOps::signExtend<Len2, 64>(b.known_value()));
+                    } else {
+                        retval = ValueType<Len2>(InternalNode::create(Len2, InsnSemanticsExpr::OP_SMOD,
+                                                                      a.get_expression(), b.get_expression()));
+                    }
+                    retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::signedMultiply() */
                 template <size_t Len1, size_t Len2>
                 ValueType<Len1+Len2> signedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-                    if (a.is_known() && b.is_known())
-                        return ValueType<Len1+Len2>(IntegerOps::signExtend<Len1, 64>(a.known_value()) *
-                                                    IntegerOps::signExtend<Len2, 64>(b.known_value()))
-                            .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-                    return ValueType<Len1+Len2>(InternalNode::create(Len1+Len2, InsnSemanticsExpr::OP_SMUL,
-                                                                     a.get_expression(), b.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    ValueType<Len1+Len2> retval;
+                    if (a.is_known() && b.is_known()) {
+                        retval = ValueType<Len1+Len2>(IntegerOps::signExtend<Len1, 64>(a.known_value()) *
+                                                      IntegerOps::signExtend<Len2, 64>(b.known_value()));
+                    } else {
+                        retval = ValueType<Len1+Len2>(InternalNode::create(Len1+Len2, InsnSemanticsExpr::OP_SMUL,
+                                                                           a.get_expression(), b.get_expression()));
+                    }
+                    retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::unsignedDivide() */
                 template <size_t Len1, size_t Len2>
                 ValueType<Len1> unsignedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-                    if (a.is_known() && b.is_known() && 0!=b.known_value())
-                        return ValueType<Len1>(a.known_value() / b.known_value())
-                            .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-                    return ValueType<Len1>(InternalNode::create(Len1, InsnSemanticsExpr::OP_UDIV,
-                                                                a.get_expression(), b.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    ValueType<Len1> retval;
+                    if (a.is_known() && b.is_known() && 0!=b.known_value()) {
+                        retval = ValueType<Len1>(a.known_value() / b.known_value());
+                    } else {
+                        retval = ValueType<Len1>(InternalNode::create(Len1, InsnSemanticsExpr::OP_UDIV,
+                                                                      a.get_expression(), b.get_expression()));
+                    }
+                    retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::unsignedModulo() */
                 template <size_t Len1, size_t Len2>
                 ValueType<Len2> unsignedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-                    if (a.is_known() && b.is_known() && 0!=b.known_value())
-                        return ValueType<Len2>(a.known_value() % b.known_value())
-                            .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-                    return ValueType<Len2>(InternalNode::create(Len2, InsnSemanticsExpr::OP_UMOD,
-                                                                a.get_expression(), b.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    ValueType<Len2> retval;
+                    if (a.is_known() && b.is_known() && 0!=b.known_value()) {
+                        retval = ValueType<Len2>(a.known_value() % b.known_value());
+                    } else {
+                        retval = ValueType<Len2>(InternalNode::create(Len2, InsnSemanticsExpr::OP_UMOD,
+                                                                      a.get_expression(), b.get_expression()));
+                    }
+                    retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::unsignedMultiply() */
                 template <size_t Len1, size_t Len2>
                 ValueType<Len1+Len2> unsignedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-                    if (a.is_known() && b.is_known())
-                        return ValueType<Len1+Len2>(a.known_value()*b.known_value())
-                            .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-                    return ValueType<Len1+Len2>(InternalNode::create(Len1+Len2, InsnSemanticsExpr::OP_UMUL,
-                                                                     a.get_expression(), b.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    ValueType<Len1+Len2> retval;
+                    if (a.is_known() && b.is_known()) {
+                        retval = ValueType<Len1+Len2>(a.known_value()*b.known_value());
+                    } else {
+                        retval = ValueType<Len1+Len2>(InternalNode::create(Len1+Len2, InsnSemanticsExpr::OP_UMUL,
+                                                                           a.get_expression(), b.get_expression()));
+                    }
+                    retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    return retval;
                 }
 
                 /** See NullSemantics::Policy::xor_() */
                 template <size_t Len>
                 ValueType<Len> xor_(const ValueType<Len> &a, const ValueType<Len> &b) const {
-                    if (a.is_known() && b.is_known())
-                        return ValueType<Len>(a.known_value() ^ b.known_value())
-                            .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-                    if (a.get_expression()->equal_to(b.get_expression(), solver))
-                        return number<Len>(0).defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-                    return ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_BV_XOR,
-                                                               a.get_expression(), b.get_expression()))
-                        .defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    ValueType<Len> retval;
+                    if (a.is_known() && b.is_known()) {
+                        retval = ValueType<Len>(a.known_value() ^ b.known_value());
+                    } else if (a.get_expression()->equal_to(b.get_expression(), solver)) {
+                        retval = number<Len>(0);
+                    } else {
+                        retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_BV_XOR,
+                                                                     a.get_expression(), b.get_expression()));
+                    }
+                    retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+                    return retval;
                 }
 
 
