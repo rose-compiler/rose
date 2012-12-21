@@ -98,7 +98,6 @@ check-local:
 	./codethorn --edg:no_warnings $(srcdir)/tests/rers_mini1.c    --verify $(srcdir)/tests/rers_mini1.ltl
 	rm -f *.consistent
 	$(MAKE) $(CONSISTENCY_CHECKS)
-	rm -f *.consistent
 
 checkdemos: 
 	./matcher_demo $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
@@ -114,25 +113,41 @@ test:
 # make sure that all permutations of analyzer options yield consistent results
 CONSISTENCY_CHECKS=$(patsubst %,Problem%.consistent, $(shell seq 1))
 %.consistent: $(srcdir)/tests/rers/%.c codethorn Makefile
-	./codethorn --edg:no_warnings --colors=no $< \
+	./codethorn --edg:no_warnings --colors=no $< --threads=8 \
          --ltl-verifier=1 --semantic-fold=no \
          --verify $(patsubst $(srcdir)/tests/rers/Problem%.c,$(srcdir)/tests/rers/properties%.txt,$<) \
-         --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.0.csv,$<) >$@
-	./codethorn --edg:no_warnings --colors=no $< \
+         --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.0.csv,$<)
+	./codethorn --edg:no_warnings --colors=no $< --threads=8 \
          --ltl-verifier=1 --semantic-fold=yes \
          --verify $(patsubst $(srcdir)/tests/rers/Problem%.c,$(srcdir)/tests/rers/properties%.txt,$<) \
-         --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.1.csv,$<) >$@
-	./codethorn --edg:no_warnings --colors=no $< \
+         --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.1.csv,$<)
+	./codethorn --edg:no_warnings --colors=no $< --threads=8 \
          --ltl-verifier=2 --semantic-fold=no \
          --verify $(patsubst $(srcdir)/tests/rers/Problem%.c,$(srcdir)/tests/rers/properties%.txt,$<) \
-         --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.2.csv,$<) >$@
-	./codethorn --edg:no_warnings --colors=no $< \
+         --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.2.csv,$<)
+	./codethorn --edg:no_warnings --colors=no $< --threads=8 \
          --ltl-verifier=2 --semantic-fold=yes \
          --verify $(patsubst $(srcdir)/tests/rers/Problem%.c,$(srcdir)/tests/rers/properties%.txt,$<) \
-         --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.3.csv,$<) >$@
+         --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.3.csv,$<)
+        # DOS2UNIX
+	perl -pe 's/\r?\n|\r/\n/g' -i $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.[0-9].csv,$<)
         # paste all csv's line-by-line
 	paste -d "," $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.[0-9].csv,$<) >$@
-	if grep '(yes.*no)|(no.*yes)|(unk)' $@; then rm -f $@ false; fi
+        # ensure that all variants are consistent
+	if egrep '(yes,.*no,)|(no,.*yes,)' $@; then false; fi
+        # now also compare with counterexamples
+	python $(srcdir)/regressiondata/validate.py \
+	  --csv $(patsubst $(srcdir)/tests/rers/%.c,%.0.csv,$<) \
+	  --log $(patsubst $(srcdir)/tests/rers/%.c,$(srcdir)/regressiondata/%.log,$<)
+	python $(srcdir)/regressiondata/validate.py \
+	  --csv $(patsubst $(srcdir)/tests/rers/%.c,%.1.csv,$<) \
+	  --log $(patsubst $(srcdir)/tests/rers/%.c,$(srcdir)/regressiondata/%.log,$<)
+	python $(srcdir)/regressiondata/validate.py \
+	  --csv $(patsubst $(srcdir)/tests/rers/%.c,%.2.csv,$<) \
+	  --log $(patsubst $(srcdir)/tests/rers/%.c,$(srcdir)/regressiondata/%.log,$<)
+	python $(srcdir)/regressiondata/validate.py \
+	  --csv $(patsubst $(srcdir)/tests/rers/%.c,%.3.csv,$<) \
+	  --log $(patsubst $(srcdir)/tests/rers/%.c,$(srcdir)/regressiondata/%.log,$<)
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
@@ -168,6 +183,7 @@ clean-local:
 	rm -f *.ps
 	rm -f viz/*
 	rm -f bsps/*
+	rm -f *.consistent Problem*.[0-9].csv
 
 distclean-local: clean
 	rm -f *.tgz

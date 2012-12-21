@@ -244,6 +244,9 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
       exit(1);
     }
     ltl_input = fopen(ltl_file.c_str(), "r");
+    if (ltl_input == NULL)
+      cerr<<"Error: could not open file "<<ltl_file.c_str()<<endl;
+    assert(ltl_input);
 
     ofstream* csv = NULL;
     if (args.count("csv-ltl")) {
