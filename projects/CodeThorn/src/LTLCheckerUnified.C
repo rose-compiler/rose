@@ -900,7 +900,7 @@ public:
         return c == rersChar(aval.getIntValue());
       }
       default:
-        //return Bot();
+	return false;
         // Make sure that dead ends with no I/O show up as false
         if (endpoint)
 	  return false;
@@ -950,7 +950,7 @@ public:
         return c != rersChar(aval.getIntValue());
       }
       default:
-        //return Bot();
+        return true;
         if (endpoint)
 	  return true;
    
