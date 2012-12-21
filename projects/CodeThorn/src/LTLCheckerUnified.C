@@ -965,7 +965,7 @@ public:
     void visit(const NegOutputSymbol* expr) {
       BoolLattice succ_val = succ.valstack[expr->label];
       BoolLattice old_val  = result.valstack[expr->label];
-      BoolLattice new_val  = isOutputState(s.estate, expr->c, endpoint, succ_val);
+      BoolLattice new_val  = isNegOutputState(s.estate, expr->c, endpoint, succ_val);
       if (verbose) cerr<<"  ¬O(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
