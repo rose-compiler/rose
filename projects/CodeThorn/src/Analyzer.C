@@ -1111,7 +1111,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
 	} else {
 	  // update of existing variable with new value
 	  newPState[lhsVar]=rhsIntVal;
-	  if(!rhsIntVal.isTop() && !isRhsVar)
+	  if((!rhsIntVal.isTop() && !isRhsVar) || boolOptions["arith-top"])
 		cset.removeAllConstraintsOfVar(lhsVar);
 	  return newPState;
 	}

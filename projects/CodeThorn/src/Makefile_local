@@ -275,7 +275,7 @@ generateregressiondata:
 
 projectsize:
 	@echo -n "Number of lines: "
-	@wc -l `ls *.h *.C -1 | grep -v parser | grep -v scanner | tr '\n' ' '` *.l?? *.y?? | grep total | cut -f2 -d" "
+	@wc -l `ls *.h *.C -1 | grep -v parser |  grep -v scanner | grep -v RERS | tr '\n' ' '` *.l?? *.y?? RERS_Problem*_specialization*.C | grep total 
 
 
 %.o: %.C
