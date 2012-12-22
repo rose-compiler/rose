@@ -32,63 +32,27 @@ typedef size_t Label;
    enum IOType { LABELIO_NONE, LABELIO_STDIN, LABELIO_STDOUT, LABELIO_STDERR
    };
 
-   void makeTerminationIrrelevant(bool t) {assert(_isTerminationRelevant); _isTerminationRelevant=false;}
-   bool isTerminationRelevant() {assert(_isValid); return _isTerminationRelevant;}
-   bool isLTLRelevant() {assert(_isValid); return _isLTLRelevant;}
-   SgNode* getNode() { assert(_isValid); return _node;}
-   bool isStdOutLabel() { assert(_isValid); return _ioType==LABELIO_STDOUT; }
-   bool isStdInLabel() { assert(_isValid); return _ioType==LABELIO_STDIN; }
-   bool isStdErrLabel() { assert(_isValid); return _ioType==LABELIO_STDERR; }
-   bool isIOLabel() { assert(_isValid); return isStdOutLabel()||isStdInLabel()||isStdErrLabel(); }
-   bool isFunctionCallLabel() { assert(_isValid); return _labelType==LABEL_FUNCTIONCALL; }
-   bool isFunctionCallReturnLabel() { assert(_isValid); return _labelType==LABEL_FUNCTIONCALLRETURN; }
-   bool isFunctionEntryLabel() { assert(_isValid); return _labelType==LABEL_FUNCTIONENTRY; }
-   bool isFunctionExitLabel() { assert(_isValid); return _labelType==LABEL_FUNCTIONEXIT; }
-   bool isBlockBeginLabel() { assert(_isValid); return _labelType==LABEL_BLOCKBEGIN; }
-   bool isBlockEndLabel() { assert(_isValid); return _labelType==LABEL_BLOCKEND; }
-   VariableId getIOVarId() { assert(_ioType!=LABELIO_NONE); return _variableId; }
- LabelProperty():_isValid(false),_node(0),_labelType(LABEL_UNDEF),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false) {
-   }
- LabelProperty(SgNode* node, VariableIdMapping* variableIdMapping):_isValid(false),_node(node),_labelType(LABEL_UNDEF),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false) {
-	 initialize(variableIdMapping);
-	 assert(_isValid);
-   }
- LabelProperty(SgNode* node, LabelType labelType, VariableIdMapping* variableIdMapping):_isValid(false),_node(node),_labelType(labelType),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false) {
-	 initialize(variableIdMapping); 
-	 assert(_isValid);
-   }
-   void initialize(VariableIdMapping* variableIdMapping) {
-	 _isValid=true; // to be able to use access functions in initialization
-	 SgVarRefExp* varRefExp=0;
-	 _ioType=LABELIO_NONE;
-	 if((varRefExp=SgNodeHelper::Pattern::matchSingleVarPrintf(_node))) {
-	   _ioType=LABELIO_STDOUT;
-	 } else if((varRefExp=SgNodeHelper::Pattern::matchSingleVarScanf(_node))) {
-	   _ioType=LABELIO_STDIN;
-	 } else if((varRefExp=SgNodeHelper::Pattern::matchSingleVarFPrintf(_node))) {
-	   _ioType=LABELIO_STDERR;
-	 }
-	 if(varRefExp) {
-	   SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
-	   assert(sym);
-	   _variableId=variableIdMapping->variableId(sym);
-	 }
-	 _isTerminationRelevant=SgNodeHelper::isLoopCond(_node);
-	 _isLTLRelevant=(isIOLabel()||isTerminationRelevant());
-	 assert(varRefExp==0 ||_ioType!=LABELIO_NONE);
-   }
+   LabelProperty();
+   LabelProperty(SgNode* node, VariableIdMapping* variableIdMapping);
+   LabelProperty(SgNode* node, LabelType labelType, VariableIdMapping* variableIdMapping);
+   void initialize(VariableIdMapping* variableIdMapping);
+   string toString();
 
-   string toString() {
-	 assert(_isValid);
-	 stringstream ss;
-	 ss<<_node<<":"<<SgNodeHelper::nodeToString(_node)<<", ";
-	 ss<<"var:"<<_variableId.toString()<<", ";
-	 ss<<"labelType:"<<_labelType<<", ";
-	 ss<<"ioType:"<<_ioType<<", ";
-	 ss<<"ltl:"<<isLTLRelevant()<<", ";
-	 ss<<"termination:"<<isTerminationRelevant();
-	 return ss.str();
-   }
+   void makeTerminationIrrelevant(bool t);
+   bool isTerminationRelevant();
+   bool isLTLRelevant();
+   SgNode* getNode();
+   bool isStdOutLabel();
+   bool isStdInLabel();
+   bool isStdErrLabel();
+   bool isIOLabel();
+   bool isFunctionCallLabel();
+   bool isFunctionCallReturnLabel();
+   bool isFunctionEntryLabel();
+   bool isFunctionExitLabel();
+   bool isBlockBeginLabel();
+   bool isBlockEndLabel();
+   VariableId getIOVarId();
  private:
    bool _isValid;
    SgNode* _node;
@@ -165,9 +129,12 @@ class Labeler {
   bool isStdErrLabel(Label label, VariableId* id=0);
 
  private:
-  //vector<SgNode*> labelNodeMapping;
-  vector<LabelProperty> labelNodeMapping;
+  void computeNodeToLabelMapping();
+  void registerLabel(LabelProperty);
+  vector<LabelProperty> mappingLabelToNode;
+  map<SgNode*,Label> mappingNodeToLabel;
   VariableIdMapping* _variableIdMapping;
+  bool _isValidMappingNodeToLabel;
 };
 
 } // end of namespace CodeThorn

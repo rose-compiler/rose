@@ -988,8 +988,10 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   cout << "INIT: Creating CFAnalyzer."<<endl;
   cfanalyzer=new CFAnalyzer(labeler);
+  //cout<< "DEBUG: mappingLabelToNode: "<<endl<<getLabeler()->toString()<<endl;
   cout << "INIT: Building CFGs."<<endl;
   flow=cfanalyzer->flow(root);
+  cout << "STATUS: Building CFGs finished."<<endl;
   if(boolOptions["reduce-cfg"]) {
 	int cnt=cfanalyzer->reduceBlockBeginNodes(flow);
 	cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;

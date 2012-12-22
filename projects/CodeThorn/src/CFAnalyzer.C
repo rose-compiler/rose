@@ -330,10 +330,11 @@ LabelSet CFAnalyzer::finalLabels(SgNode* node) {
 
   // special case of function call
   if(SgNodeHelper::Pattern::matchFunctionCall(node)) {
-	if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(node))
+	if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(node)) {
 	  finalSet.insert(labeler->functionCallReturnLabel(node)+1); // special case of function call in return-stmt
-	else
+	} else {
 	  finalSet.insert(labeler->functionCallReturnLabel(node));
+	}
 	return finalSet;
   }
 
@@ -383,6 +384,7 @@ LabelSet CFAnalyzer::finalLabels(SgNode* node) {
     set<SgNode*> breakNodes=SgNodeHelper::LoopRelevantBreakStmtNodes(node);
 	LabelSet lset=labeler->getLabelSet(breakNodes);
 	finalSet+=lset;
+	cout << finalSet.toString() << endl;
 	return finalSet;
   }
   case V_SgBasicBlock: {

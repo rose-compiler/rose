@@ -11,11 +11,75 @@
 
 using namespace CodeThorn;
 
-#define CHECK_LABEL 0
+
+
+LabelProperty::LabelProperty():_isValid(false),_node(0),_labelType(LABEL_UNDEF),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false) {
+}
+LabelProperty::LabelProperty(SgNode* node, VariableIdMapping* variableIdMapping):_isValid(false),_node(node),_labelType(LABEL_UNDEF),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false) {
+  initialize(variableIdMapping);
+  assert(_isValid);
+}
+LabelProperty::LabelProperty(SgNode* node, LabelType labelType, VariableIdMapping* variableIdMapping):_isValid(false),_node(node),_labelType(labelType),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false) {
+  initialize(variableIdMapping); 
+  assert(_isValid);
+}
+void LabelProperty::initialize(VariableIdMapping* variableIdMapping) {
+  _isValid=true; // to be able to use access functions in initialization
+  SgVarRefExp* varRefExp=0;
+  _ioType=LABELIO_NONE;
+  if((varRefExp=SgNodeHelper::Pattern::matchSingleVarPrintf(_node))) {
+	_ioType=LABELIO_STDOUT;
+  } else if((varRefExp=SgNodeHelper::Pattern::matchSingleVarScanf(_node))) {
+	_ioType=LABELIO_STDIN;
+  } else if((varRefExp=SgNodeHelper::Pattern::matchSingleVarFPrintf(_node))) {
+	_ioType=LABELIO_STDERR;
+  }
+  if(varRefExp) {
+	SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
+	assert(sym);
+	_variableId=variableIdMapping->variableId(sym);
+  }
+  _isTerminationRelevant=SgNodeHelper::isLoopCond(_node);
+  _isLTLRelevant=(isIOLabel()||isTerminationRelevant());
+  assert(varRefExp==0 ||_ioType!=LABELIO_NONE);
+}
+
+string LabelProperty::toString() {
+  //assert(_isValid);
+  stringstream ss;
+  ss<<_node<<":";
+  if(_node)
+	ss<<SgNodeHelper::nodeToString(_node)<<", ";
+  else
+	ss<<"null, ";
+  ss<<"var:"<<_variableId.toString()<<", ";
+  ss<<"labelType:"<<_labelType<<", ";
+  ss<<"ioType:"<<_ioType<<", ";
+  ss<<"ltl:"<<isLTLRelevant()<<", ";
+  ss<<"termination:"<<isTerminationRelevant();
+  return ss.str();
+}
+
+void LabelProperty::makeTerminationIrrelevant(bool t) {assert(_isTerminationRelevant); _isTerminationRelevant=false;}
+bool LabelProperty::isTerminationRelevant() {assert(_isValid); return _isTerminationRelevant;}
+bool LabelProperty::isLTLRelevant() {assert(_isValid); return _isLTLRelevant;}
+SgNode* LabelProperty::getNode() { if(!_isValid) cout<<"ERROR:"<<toString()<<endl; assert(_isValid); return _node;}
+bool LabelProperty::isStdOutLabel() { assert(_isValid); return _ioType==LABELIO_STDOUT; }
+bool LabelProperty::isStdInLabel() { assert(_isValid); return _ioType==LABELIO_STDIN; }
+bool LabelProperty::isStdErrLabel() { assert(_isValid); return _ioType==LABELIO_STDERR; }
+bool LabelProperty::isIOLabel() { assert(_isValid); return isStdOutLabel()||isStdInLabel()||isStdErrLabel(); }
+bool LabelProperty::isFunctionCallLabel() { assert(_isValid); return _labelType==LABEL_FUNCTIONCALL; }
+bool LabelProperty::isFunctionCallReturnLabel() { assert(_isValid); return _labelType==LABEL_FUNCTIONCALLRETURN; }
+bool LabelProperty::isFunctionEntryLabel() { assert(_isValid); return _labelType==LABEL_FUNCTIONENTRY; }
+bool LabelProperty::isFunctionExitLabel() { assert(_isValid); return _labelType==LABEL_FUNCTIONEXIT; }
+bool LabelProperty::isBlockBeginLabel() { assert(_isValid); return _labelType==LABEL_BLOCKBEGIN; }
+bool LabelProperty::isBlockEndLabel() { assert(_isValid); return _labelType==LABEL_BLOCKEND; }
+VariableId LabelProperty::getIOVarId() { assert(_ioType!=LABELIO_NONE); return _variableId; }
 
 Labeler::Labeler(SgNode* start, VariableIdMapping* variableIdMapping) {
   _variableIdMapping=variableIdMapping;
   createLabels(start);
+  computeNodeToLabelMapping();
 }
 
 // returns number of labels to be associated with node
@@ -66,6 +130,11 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   }
 }
 
+void Labeler::registerLabel(LabelProperty lp) {
+  mappingLabelToNode.push_back(lp);
+  _isValidMappingNodeToLabel=false;
+}
+
 void Labeler::createLabels(SgNode* root) {
   RoseAst ast(root);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
@@ -73,34 +142,34 @@ void Labeler::createLabels(SgNode* root) {
 	  if(SgNodeHelper::Pattern::matchFunctionCall(*i)) {
 		if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(*i)) {
 		  assert(num==3);
-		  labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALL,_variableIdMapping));
-		  labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALLRETURN,_variableIdMapping));
-		  labelNodeMapping.push_back(LabelProperty(*i,_variableIdMapping)); // return-stmt-label
+		  registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALL,_variableIdMapping));
+		  registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALLRETURN,_variableIdMapping));
+		  registerLabel(LabelProperty(*i,_variableIdMapping)); // return-stmt-label
 		} else {
 		  assert(num==2);
-		  labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALL,_variableIdMapping));
-		  labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALLRETURN,_variableIdMapping));
+		  registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALL,_variableIdMapping));
+		  registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALLRETURN,_variableIdMapping));
 		}
 	  } else if(isSgFunctionDefinition(*i)) {
 		assert(num==2);
-		labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONENTRY,_variableIdMapping));
-		labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONEXIT,_variableIdMapping));
+		registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONENTRY,_variableIdMapping));
+		registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONEXIT,_variableIdMapping));
 	  } else if(isSgBasicBlock(*i)) {
 		assert(num==2);
-		labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_BLOCKBEGIN,_variableIdMapping));
-		labelNodeMapping.push_back(LabelProperty(*i,LabelProperty::LABEL_BLOCKEND,_variableIdMapping));
+		registerLabel(LabelProperty(*i,LabelProperty::LABEL_BLOCKBEGIN,_variableIdMapping));
+		registerLabel(LabelProperty(*i,LabelProperty::LABEL_BLOCKEND,_variableIdMapping));
 	  } else {
 		// all other cases
 		for(int j=0;j<num;j++) {
-		  labelNodeMapping.push_back(LabelProperty(*i,_variableIdMapping));
+		  registerLabel(LabelProperty(*i,_variableIdMapping));
 		}
 	  }
 	}
    	if(isSgExprStatement(*i)||isSgReturnStmt(*i)||isSgVariableDeclaration(*i))
 	  i.skipChildrenOnForward();
   }
-  std::cout << "STATUS: Assigned "<<labelNodeMapping.size()<< " labels."<<std::endl;
-  //std::cout << "DEBUG: labelNodeMapping:\n"<<this->toString()<<std::endl;
+  std::cout << "STATUS: Assigned "<<mappingLabelToNode.size()<< " labels."<<std::endl;
+  //std::cout << "DEBUG: mappingLabelToNode:\n"<<this->toString()<<std::endl;
 }
 
 string Labeler::labelToString(Label lab) {
@@ -109,24 +178,57 @@ string Labeler::labelToString(Label lab) {
   return ss.str();
 }
 
+SgNode*	Labeler::getNode(Label label) {
+  if(label>=mappingLabelToNode.size() || label==Labeler::NO_LABEL) {
+	cerr << "Error: mapping size: "<<mappingLabelToNode.size();
+	cerr << " getNode: label"<<label<<" => 0."<<endl;
+	exit(1);
+  }
+  return mappingLabelToNode[label].getNode();
+}
+
 /* this access function has O(n). This is OK as this function should only be used rarely, whereas
    the function getNode is used frequently (and has O(1)).
 */
-Label Labeler::getLabel(SgNode* node) {
-  //std::cout << "MappingSize:"<<labelNodeMapping.size()<<std::endl;
-  static long labnum=0;
-  //cout << "INFO: getLabel ("<<labnum<<")"<<endl;
-  labnum++;
-  for(Label i=0;i<labelNodeMapping.size();++i) {
-	if(labelNodeMapping[i].getNode()==node) {
-	  return i;
-	}
+void Labeler::computeNodeToLabelMapping() {
+  mappingNodeToLabel.clear();
+  std::cout << "INFO: computing node<->label with map size: "<<mappingLabelToNode.size()<<std::endl;
+  for(Label i=0;i<mappingLabelToNode.size();++i) {
+	SgNode* node=mappingLabelToNode[i].getNode();
+	assert(node);
+	// There exist nodes with multiple associated labels (1-3 labels). The labels are guaranteed
+	// to be in consecutive increasing order. We only store the very first associated label for each
+	// node and the access functions adjust the label as necessary.
+	// This allows to provide an API where the user does not need to operate on sets but on
+	// distinct labels only.
+	if(mappingNodeToLabel.find(node)!=mappingNodeToLabel.end())
+	  continue;
+	else
+	  mappingNodeToLabel[node]=i;
+	//cout << "Mapping: "<<i<<" : "<<node<<SgNodeHelper::nodeToString(node)<<endl;
   }
-  return Labeler::NO_LABEL;
+  _isValidMappingNodeToLabel=true;
+}
+
+Label Labeler::getLabel(SgNode* node) {
+  assert(node);
+  if(!node) 
+	return Labeler::NO_LABEL;
+  if(_isValidMappingNodeToLabel) {
+	if(mappingNodeToLabel.count(node)==0) {
+	  //cerr<<"WARNING: getLabel: no label associated with node: "<<node<<endl;
+	  return Labeler::NO_LABEL;
+	}
+	return mappingNodeToLabel[node];
+  } else {
+	computeNodeToLabelMapping(); // sets _isValidMappingNodeToLabel to true.
+	return mappingNodeToLabel[node];
+  }
+  throw "Error: internal error getLabel.";
 }
 
 long Labeler::numberOfLabels() {
-  return labelNodeMapping.size();
+  return mappingLabelToNode.size();
 }
 Label Labeler::functionCallLabel(SgNode* node) {
   assert(SgNodeHelper::Pattern::matchFunctionCall(node));
@@ -135,7 +237,7 @@ Label Labeler::functionCallLabel(SgNode* node) {
 
 Label Labeler::functionCallReturnLabel(SgNode* node) {
   assert(SgNodeHelper::Pattern::matchFunctionCall(node));
-  // it its current implementation it is guaranteed that labels associated with the same node
+  // in its current implementation it is guaranteed that labels associated with the same node
   // are associated as an increasing sequence of labels
   Label lab=getLabel(node);
   if(lab==NO_LABEL) 
@@ -168,88 +270,26 @@ Label Labeler::functionExitLabel(SgNode* node) {
 	return lab+1; 
 }
 bool Labeler::isFunctionEntryLabel(Label lab) {
-#if CHECK_LABEL
-  bool res=false;
-  SgNode* node=getNode(lab);
-  if(isSgFunctionDefinition(node))
-	res=(functionEntryLabel(node)==lab);
-  else
-	res=false;
-  assert(res==labelNodeMapping[lab].isFunctionEntryLabel());  
-#endif
-  return labelNodeMapping[lab].isFunctionEntryLabel();
+  return mappingLabelToNode[lab].isFunctionEntryLabel();
 }
 
 bool Labeler::isFunctionExitLabel(Label lab) {
-#if CHECK_LABEL
-  bool res=false;
-  SgNode* node=getNode(lab);
-  if(isSgFunctionDefinition(node))
-	res=(functionExitLabel(node)==lab);
-  else
-	res=false;
-  assert(res==labelNodeMapping[lab].isFunctionExitLabel());  
-#endif
-  return labelNodeMapping[lab].isFunctionExitLabel();
+  return mappingLabelToNode[lab].isFunctionExitLabel();
 }
 bool Labeler::isBlockBeginLabel(Label lab) {
-#if CHECK_LABEL
-  bool res=false;
-  SgNode* node=getNode(lab);
-  if(isSgBasicBlock(node))
-	res=(blockBeginLabel(node)==lab);
-  else
-	res=false;
-  assert(res==labelNodeMapping[lab].isBlockBeginLabel());    
-#endif
-  return labelNodeMapping[lab].isBlockBeginLabel();
+  return mappingLabelToNode[lab].isBlockBeginLabel();
 }
 
 bool Labeler::isBlockEndLabel(Label lab) {
-#if CHECK_LABEL
-  bool res=false;
-  SgNode* node=getNode(lab);
-  if(isSgBasicBlock(node))
-	res=(blockEndLabel(node)==lab);
-  else
-	res=false;
-  assert(res==labelNodeMapping[lab].isBlockEndLabel());    
-#endif
-  return labelNodeMapping[lab].isBlockEndLabel();
+  return mappingLabelToNode[lab].isBlockEndLabel();
 }
 
 bool Labeler::isFunctionCallLabel(Label lab) {
-#if CHECK_LABEL
-  //cout << "ISFCLAB("<<lab<<"): @";
-  bool res=false;
-  SgNode* node=getNode(lab);
-  if(SgNodeHelper::Pattern::matchFunctionCall(node)) {
-	//cout << "FCL="<<functionCallLabel(node) << " =?= " << lab<<endl;
-	res=(functionCallLabel(node)==lab);
-  } else {
-	//cout << "NOT A FSgCallExpression. ("<<node->class_name()<<")"<<endl;
-	res=false;
-  }
-  if(res!=labelNodeMapping[lab].isFunctionCallLabel()) {
-	cerr << "Error: label:"<<lab<<",res:"<<res<<"lnm:"<<labelNodeMapping[lab].isFunctionCallLabel()<<endl;
-	exit(1);
-  }
-  assert(res==labelNodeMapping[lab].isFunctionCallLabel());
-#endif
-  return labelNodeMapping[lab].isFunctionCallLabel();
+  return mappingLabelToNode[lab].isFunctionCallLabel();
 }
 
 bool Labeler::isFunctionCallReturnLabel(Label lab) {
-#if CHECK_LABEL
-  bool res=false;
-  SgNode* node=getNode(lab);
-  if(SgNodeHelper::Pattern::matchFunctionCall(node))
-	res=(functionCallReturnLabel(node)==lab);
-  else
-	res=false;
-  assert(res==labelNodeMapping[lab].isFunctionCallReturnLabel());
-#endif
-  return labelNodeMapping[lab].isFunctionCallReturnLabel();
+  return mappingLabelToNode[lab].isFunctionCallReturnLabel();
 }
 
 LabelSet Labeler::getLabelSet(set<SgNode*>& nodeSet) {
@@ -260,76 +300,35 @@ LabelSet Labeler::getLabelSet(set<SgNode*>& nodeSet) {
   return lset;
 }
 
-SgNode*	Labeler::getNode(Label label) {
-  if(label>=labelNodeMapping.size() || label==Labeler::NO_LABEL)
-	return 0; // we might want to replace this with throwing an exeception in future
-  return labelNodeMapping[label].getNode();
-}
-
 std::string Labeler::toString() {
   std::stringstream ss;
-  for(Label i=0;i<labelNodeMapping.size();++i) {
-	ss << i<< ":"<<labelNodeMapping[i].toString()<<endl;
+  for(Label i=0;i<mappingLabelToNode.size();++i) {
+	LabelProperty lp=mappingLabelToNode[i];
+	ss << i<< ":"<<lp.toString()<<" : "<<mappingLabelToNode[i].toString()<<endl;
   }
   return ss.str();
 }
 
 bool Labeler::isStdOutLabel(Label label, VariableId* id) {
   bool res=false;
-#if CHECK_LABEL
-  if(SgVarRefExp* varRefExp=SgNodeHelper::Pattern::matchSingleVarPrintf(getNode(label))) {
-	SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
-	assert(sym);
-	if(id) {
-	  *id=VariableId(sym);
-	  assert(*id==labelNodeMapping[label].getIOVarId());
-	}
-	res=true;
-  }
-  assert(res==labelNodeMapping[label].isStdOutLabel());
-#endif
-  res=labelNodeMapping[label].isStdOutLabel();
+  res=mappingLabelToNode[label].isStdOutLabel();
   if(res&&id)
-	*id=labelNodeMapping[label].getIOVarId();
+	*id=mappingLabelToNode[label].getIOVarId();
   return res;
 }
 
 bool Labeler::isStdInLabel(Label label, VariableId* id) {
   bool res=false;
-#if CHECK_LABEL
-  if(SgVarRefExp* varRefExp=SgNodeHelper::Pattern::matchSingleVarScanf(getNode(label))) {
-	SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
-	assert(sym);
-	if(id) {
-	  *id=VariableId(sym);
-	  assert(*id==labelNodeMapping[label].getIOVarId());
-	}
-	res=true;
-  }
-  assert(res==labelNodeMapping[label].isStdInLabel());
-#endif
-  res=labelNodeMapping[label].isStdInLabel();
+  res=mappingLabelToNode[label].isStdInLabel();
   if(res&&id)
-	*id=labelNodeMapping[label].getIOVarId();
+	*id=mappingLabelToNode[label].getIOVarId();
   return res;
 }
 
 bool Labeler::isStdErrLabel(Label label, VariableId* id) {
   bool res=false;
-#if CHECK_LABEL
-  if(SgVarRefExp* varRefExp=SgNodeHelper::Pattern::matchSingleVarFPrintf(getNode(label))) {
-	SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);
-	assert(sym);
-	if(id) {
-	  *id=VariableId(sym);
-	  assert(*id==labelNodeMapping[label].getIOVarId());
-	}
-	res=true;
-  }
-  assert(res==labelNodeMapping[label].isStdErrLabel());
-#endif
-  res=labelNodeMapping[label].isStdErrLabel();
+  res=mappingLabelToNode[label].isStdErrLabel();
   if(res&&id)
-	*id=labelNodeMapping[label].getIOVarId();
+	*id=mappingLabelToNode[label].getIOVarId();
   return res;
 }

@@ -618,7 +618,6 @@ int main( int argc, char * argv[] ) {
   cout << "INIT: creating solver."<<endl;
   analyzer.initializeSolver1("main",root);
   analyzer.initLabeledAssertNodes(sageProject);
-  //cout<< "DEBUG: labelNodeMapping: "<<endl<<analyzer.getLabeler()->toString();
   double initRunTime=timer.getElapsedTimeInMilliSec();
 
   timer.start();
@@ -764,6 +763,7 @@ int main( int argc, char * argv[] ) {
     //analyzer.generateAstNodeInfo(analyzer.startFunRoot);
     //dotFile=astTermWithNullValuesToDot(analyzer.startFunRoot);
     analyzer.generateAstNodeInfo(sageProject);
+	cout << "generated node info."<<endl;
     dotFile=functionAstTermsWithNullValuesToDot(sageProject);
     write_file("ast.dot", dotFile);
     cout << "generated ast.dot."<<endl;

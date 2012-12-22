@@ -110,7 +110,7 @@ std::string astTermWithNullValuesToDotFragment(SgNode* root) {
 	if(*i && (*i)->attributeExists("info")) {
 	  AstAttribute* attr=(*i)->getAttribute("info");
 	  ss<<attr->toString();
-	  ss << "\""<<" style=filled color=blue ";
+	  ss << "\""<<" style=filled color=lightblue ";
 	} else {
 	  ss << "\"";
 	}
