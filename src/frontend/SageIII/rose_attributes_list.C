@@ -2096,6 +2096,131 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
    }
 
 
+void
+ROSEAttributesList::generateFileIdListFromLineDirectives()
+   {
+  // This function generates a list of fileId numbers associated with each of the different names specified in #line directives.
+
+#if 0
+     printf ("In ROSEAttributesList::generateFileIdListFromLineDirectives() \n");
+#endif
+#if 0
+     Sg_File_Info::display_static_data("At TOP of ROSEAttributesList::generateFileIdListFromLineDirectives()");
+#endif
+
+#if 0
+     printf ("In ROSEAttributesList::generateFileIdListFromLineDirectives(): Sg_File_Info::get_nametofileid_map().size() = %zu Sg_File_Info::get_fileidtoname_map().size() = %zu \n",Sg_File_Info::get_nametofileid_map().size(),Sg_File_Info::get_fileidtoname_map().size());
+#endif
+
+  // DQ (12/17/2012): Added assertion.
+     ROSE_ASSERT(Sg_File_Info::get_nametofileid_map().size() == Sg_File_Info::get_fileidtoname_map().size());
+
+  // DQ (12/17/2012): Added assertion.
+     ROSE_ASSERT(Sg_File_Info::get_nametofileid_map().find("") == Sg_File_Info::get_nametofileid_map().end());
+
+     vector<PreprocessingInfo*>::iterator i = attributeList.begin();
+     for (i = attributeList.begin(); i != attributeList.end(); i++)
+        {
+#if 0
+          printf("-----------------------\n"); 
+          if (*i != NULL)
+               printf("Directive Type: %s; Relative position: %s; \nLine:%5d; Column:%5d; String: %s\n",
+               PreprocessingInfo::directiveTypeName ((*i)->getTypeOfDirective ()).c_str (),
+               PreprocessingInfo::relativePositionName((*i)->getRelativePosition()).c_str (),
+               (*i)->getLineNumber(), (*i)->getColumnNumber(), (*i)->getString().c_str());
+            else
+               printf ("Warning: PreprocessingInfo *i == NULL \n");
+#endif
+
+          if ( (*i)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorLineDeclaration )
+             {
+            // This is a CPP line directive
+               string directiveString = (*i)->getString();
+#if 0
+               printf ("directiveString = %s \n",directiveString.c_str());
+#endif
+            // Remove leading white space.
+               size_t p = directiveString.find_first_not_of("# \t");
+               directiveString.erase(0,p);
+#if 0
+               printf ("directiveString (trimmed) = %s \n",directiveString.c_str());
+#endif
+            // string directiveStringWithoutHash = directiveString;
+               size_t lengthOfLineKeyword = string("line").length();
+
+               string directiveStringWithoutHashAndKeyword = directiveString.substr(lengthOfLineKeyword,directiveString.length()-(lengthOfLineKeyword+1));
+#if 0
+               printf ("directiveStringWithoutHashAndKeyword = %s \n",directiveStringWithoutHashAndKeyword.c_str());
+#endif
+            // Remove white space between "#" and "line" keyword.
+               p = directiveStringWithoutHashAndKeyword.find_first_not_of(" \t");
+               directiveStringWithoutHashAndKeyword.erase(0, p);
+#if 0
+               printf ("directiveStringWithoutHashLineAndKeyword (trimmed) = %s \n",directiveStringWithoutHashAndKeyword.c_str());
+#endif
+            // At this point we have just '2 "toke.l"', and we can strip off the number.
+               p = directiveStringWithoutHashAndKeyword.find_first_not_of("0123456789");
+
+               string lineNumberString = directiveStringWithoutHashAndKeyword.substr(0,p);
+#if 0
+               printf ("lineNumberString = %s \n",lineNumberString.c_str());
+#endif
+               int line = atoi(lineNumberString.c_str());
+
+            // string directiveStringWithoutHashAndKeywordAndLineNumber = directiveStringWithoutHashAndKeyword.substr(p,directiveStringWithoutHashAndKeyword.length()-(p+1));
+               string directiveStringWithoutHashAndKeywordAndLineNumber = directiveStringWithoutHashAndKeyword.substr(p,directiveStringWithoutHashAndKeyword.length());
+#if 0
+               printf ("directiveStringWithoutHashAndKeywordAndLineNumber = %s \n",directiveStringWithoutHashAndKeywordAndLineNumber.c_str());
+#endif
+            // Remove white space between the line number and the filename.
+               p = directiveStringWithoutHashAndKeywordAndLineNumber.find_first_not_of(" \t");
+               directiveStringWithoutHashAndKeywordAndLineNumber.erase(0,p);
+#if 0
+               printf ("directiveStringWithoutHashAndKeywordAndLineNumber (trimmed) = %s \n",directiveStringWithoutHashAndKeywordAndLineNumber.c_str());
+#endif
+               string quotedFilename = directiveStringWithoutHashAndKeywordAndLineNumber;
+#if 0
+               printf ("quotedFilename = %s \n",quotedFilename.c_str());
+#endif
+               ROSE_ASSERT(quotedFilename[0] == '\"');
+               ROSE_ASSERT(quotedFilename[quotedFilename.length()-1] == '\"');
+               std::string filename = quotedFilename.substr(1,quotedFilename.length()-2);
+#if 0
+               printf ("filename = %s \n",filename.c_str());
+#endif
+            // Add the new filename to the static map stored in the Sg_File_Info (no action if filename is already in the map).
+               Sg_File_Info::addFilenameToMap(filename);
+
+               int fileId = Sg_File_Info::getIDFromFilename(filename);
+
+               if (SgProject::get_verbose() > 1)
+                    printf ("In ROSEAttributesList::generateFileIdListFromLineDirectives(): line = %d fileId = %d quotedFilename = %s filename = %s \n",line,fileId,quotedFilename.c_str(),filename.c_str());
+
+               if (filenameIdSet.find(fileId) == filenameIdSet.end())
+                  {
+                    filenameIdSet.insert(fileId);
+                  }
+             }
+        }
+
+#if 0
+     Sg_File_Info::display_static_data("Output from ROSEAttributesList::generateFileIdListFromLineDirectives()");
+#endif
+
+#if 0
+     printf ("Leaving ROSEAttributesList::generateFileIdListFromLineDirectives() \n");
+#endif
+   }
+
+
+// DQ (12/15/2012): Added access function.
+std::set<int> & 
+ROSEAttributesList::get_filenameIdSet()
+   {
+     return filenameIdSet;
+   }
+
+
 
 //##############################################################################
 //
@@ -2113,7 +2238,7 @@ ROSEAttributesListContainer::~ROSEAttributesListContainer()
   // Nothing to do here?
    }
 
-  void
+void
 ROSEAttributesListContainer::addList ( std::string fileName, ROSEAttributesList* listPointer )
    {
   // attributeListList.push_back ( listPointer );
@@ -2121,14 +2246,14 @@ ROSEAttributesListContainer::addList ( std::string fileName, ROSEAttributesList*
    }
 
 #if 0
-  ROSEAttributesList*
+ROSEAttributesList*
 ROSEAttributesListContainer::operator[](int i)
    {
      return attributeListMap[i];
    }
 #endif
 
-  ROSEAttributesList &
+ROSEAttributesList &
 ROSEAttributesListContainer::operator[] ( const string & fName )
    {
   // return *(findList (fName.c_str()) );
@@ -2136,7 +2261,7 @@ ROSEAttributesListContainer::operator[] ( const string & fName )
      return *( attributeListMap[fName] );
    }
 
-  bool
+bool
 ROSEAttributesListContainer::isInList ( const string & fName )
    {
      bool returnValue = false;
@@ -2173,7 +2298,7 @@ ROSEAttributesListContainer::isInList ( const string & fName )
    }
 
 #if 0
-  ROSEAttributesList *
+ROSEAttributesList *
 ROSEAttributesListContainer::findList ( const string & fName )
    {
   //
@@ -2222,7 +2347,7 @@ ROSEAttributesListContainer::findList ( const string & fName )
 #endif
 
 #if 0
-  int
+int
 ROSEAttributesListContainer::getLength(void)
    {
      return attributeListMap.size();
@@ -2230,14 +2355,14 @@ ROSEAttributesListContainer::getLength(void)
 #endif
 
 #if 0
-  int
+int
 ROSEAttributesListContainer::size(void)
    {
      return attributeListMap.size();
    }
 #endif
 
-  void
+void
 ROSEAttributesListContainer::dumpContents(void)
    {
      FILE *outFile               = NULL;
@@ -2265,7 +2390,7 @@ ROSEAttributesListContainer::dumpContents(void)
      fclose(outFile);
    }
 
-  void
+void
 ROSEAttributesListContainer::display ( const string & label )
    {
      printf ("ROSEAttributesListContainer::display (label = %s) \n",label.c_str());
@@ -2302,7 +2427,7 @@ ROSEAttributesListContainer::display ( const string & label )
 #endif
    }
 
-  void
+void
 ROSEAttributesListContainer::deepClean(void)
    {
   //
@@ -2312,7 +2437,7 @@ ROSEAttributesListContainer::deepClean(void)
   // Nothing to do?
    }
 
-  void
+void
 ROSEAttributesListContainer::clean(void)
    {
   //
@@ -2321,5 +2446,6 @@ ROSEAttributesListContainer::clean(void)
 
   // Nothing to do?
    }
+
 
 // EOF

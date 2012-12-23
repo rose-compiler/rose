@@ -5883,6 +5883,25 @@ TestForSourcePosition::testFileInfo( Sg_File_Info* fileInfo )
                printf ("Error: detected a source position with empty filename: node = %p = %s \n",node,node->class_name().c_str());
                ROSE_ASSERT(false);
              }
+
+#if 0
+       // Debugging code for special case.
+          if (fileInfo->get_parent() != NULL && fileInfo->get_parent()->variantT() == V_SgFunctionDefinition)
+             {
+               fileInfo->display("In TestForSourcePosition::visit(): case of SgFunctionDefinition: debug");
+             }
+#endif
+
+          if (fileInfo->get_physical_file_id() < 0)
+             {
+               fileInfo->display("In TestForSourcePosition::visit(): debug");
+
+               SgNode* node = fileInfo->get_parent();
+               ROSE_ASSERT(node != NULL);
+
+               printf ("Error: detected a source position with inconsistant physical file id: node = %p = %s \n",node,node->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
         }
    }
 

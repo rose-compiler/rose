@@ -143,6 +143,13 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
      printf ("sourceFilename = %s \n",sourceFilename.c_str());
 #endif
 
+#if 1
+  // DQ (12/23/2012): This special handling of the "conftest.c" file is no linger required.
+  // It is used to map filenames generated from a specific #line directives used in autoconf 
+  // generated files to the physical filename.  However, now that we internally keep references 
+  // to both the logical source position AND the physical source position, this should not 
+  // be required.
+
   // DQ (10/8/2012): We want to allow ROSE to work with autoconf tests.  The nature
   // of these tests are that they have a #line directive "#line 1227 "configure"" 
   // and are in a file called: "conftest.c" and in some cases have a include file 
@@ -164,6 +171,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                return true;
              }
         }
+#endif
 
      if (unp->opt.get_unparse_includes_opt() == true)
         {
