@@ -2834,7 +2834,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
      ROSE_ASSERT(func->get_file_info() != NULL);
 
   // DQ (5/1/2012): Make sure that we don't have IR nodes marked as transformations.
-     if (SourcePositionClassificationMode !=e_sourcePositionTransformation)
+     if (SourcePositionClassificationMode != e_sourcePositionTransformation)
        detectTransformations_local(func);
 
   // printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): generated function func = %p \n",func);

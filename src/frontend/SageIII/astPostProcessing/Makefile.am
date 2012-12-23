@@ -39,7 +39,8 @@ libastPostProcessing_la_SOURCES      = \
      fixupConstantFoldedValues.C \
      detectTransformations.C \
      fixupTypeReferences.C \
-     fixupSelfReferentialMacros.C
+     fixupSelfReferentialMacros.C \
+     checkPhysicalSourcePosition.C
 
 libastPostProcessing_la_LIBADD       = 
 libastPostProcessing_la_DEPENDENCIES = 
@@ -78,7 +79,8 @@ include_HEADERS = \
      fixupConstantFoldedValues.h \
      detectTransformations.h \
      fixupTypeReferences.h \
-     fixupSelfReferentialMacros.h
+     fixupSelfReferentialMacros.h \
+     checkPhysicalSourcePosition.h
 
 EXTRA_DIST = CMakeLists.txt
 

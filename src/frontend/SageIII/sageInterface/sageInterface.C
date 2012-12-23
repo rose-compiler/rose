@@ -4967,6 +4967,9 @@ SageInterface::setSourcePositionToDefault( T* node )
   // We have to support this being called where the Sg_File_Info have previously been set.
      if (node->get_endOfConstruct() == NULL && node->get_startOfConstruct() == NULL)
         {
+#if 0
+          printf ("Both startOfConstruct and endOfConstruct are NOT yet initialized with pointers to Sg_File_Info objects (node = %p = %s) \n",node,node->class_name().c_str());
+#endif
        // Check the endOfConstruct first since it is most likely NULL (helpful in debugging)
           ROSE_ASSERT(node->get_endOfConstruct()   == NULL);
           ROSE_ASSERT(node->get_startOfConstruct() == NULL);
@@ -4999,7 +5002,9 @@ SageInterface::setSourcePositionToDefault( T* node )
         {
        // If both the starting  and ending Sg_File_Info pointers are not NULL then both must be valid.
        // We don't want to support partially completed source code position information.
-
+#if 0
+          printf ("Both startOfConstruct and endOfConstruct are ALREADY initialized with pointers to Sg_File_Info objects (node = %p = %s) \n",node,node->class_name().c_str());
+#endif
           if (node->get_startOfConstruct() == NULL)
              {
                printf ("ERROR: startOfConstruct not set for locatedNode = %p = %s \n",node,node->class_name().c_str());
@@ -5283,8 +5288,8 @@ SageInterface::setSourcePositionAtRootAndAllChildrenAsDefault(SgNode *root)
 void
 SageInterface::setSourcePositionAtRootAndAllChildren(SgNode *root)
    {
-     Rose_STL_Container <SgNode*> nodeList= NodeQuery::querySubTree(root,V_SgNode);
-     for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i!=nodeList.end(); i++ )
+     Rose_STL_Container <SgNode*> nodeList = NodeQuery::querySubTree(root,V_SgNode);
+     for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
         {
 #if 0
           printf ("In setSourcePositionAtRootAndAllChildren(): *i = %p = %s \n",*i,(*i)->class_name().c_str());
@@ -5361,9 +5366,10 @@ SageInterface::setSourcePosition(SgNode* node)
 
           case e_sourcePositionFrontendConstruction: // Specify as source position to be filled in as part of AST construction in the front-end.
              {
-            // This function builds an empty Sg_File_Info entry (valid object but filled with defailt values; must be reset in front-end processing).
-            // printf ("e_sourcePositionFrontendConstruction in SageInterface::setSourcePosition() \n");
-
+            // This function builds an empty Sg_File_Info entry (valid object but filled with default values; must be reset in front-end processing).
+#if 0
+               printf ("e_sourcePositionFrontendConstruction in SageInterface::setSourcePosition() \n");
+#endif
                SgLocatedNode* locatedNode = isSgLocatedNode(node);
                if (locatedNode != NULL)
                   {

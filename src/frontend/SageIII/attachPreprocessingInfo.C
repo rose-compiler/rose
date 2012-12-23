@@ -645,10 +645,9 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
 
   // When using Wave get all the preprocessing dirctives for all the files.
      if ( sageFilePtr->get_wave() == true )
-     {
-       attachPreprocessingInfoUsingWave(sageFilePtr, tt.get_attributeMapForAllFiles() );
-
-     }
+        {
+          attachPreprocessingInfoUsingWave(sageFilePtr, tt.get_attributeMapForAllFiles() );
+        }
 
   // DQ (12/19/2008): Added support for Fortran CPP files.
   // If this is a Fortran file requiring CPP processing then we want to call traverse, instead of 
@@ -659,10 +658,16 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
 
      if (processAllFiles == true || requiresCPP == true)
         {
+#if 0
+          printf ("Calling AttachPreprocessingInfoTreeTrav::traverse() (not traverseWithinFile) \n");
+#endif
           tt.traverse(sageFilePtr, inh);
         }
        else
         {
+#if 0
+          printf ("Calling AttachPreprocessingInfoTreeTrav::traverseWithinFile() (not traverse) \n");
+#endif
           tt.traverseWithinFile(sageFilePtr,inh);
         }
 
