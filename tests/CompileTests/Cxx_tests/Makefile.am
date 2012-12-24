@@ -1108,6 +1108,7 @@ test2012_267.C \
 test2012_268.C \
 test2012_269.C \
 test2012_270.C \
+test2012_271.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
