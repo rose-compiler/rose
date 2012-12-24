@@ -5047,6 +5047,10 @@ void Unparse_ExprStmt::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
   // SgStatementPtrList & statementList = scope->getStatementList();
      SgStatementPtrList* statementList = NULL;
 
+#if 0
+     printf ("In unparseLabelStmt(): scope = %p \n",scope);
+#endif
+
      bool allocatedStatementList = false;
      if (scope != NULL)
         {
@@ -5119,7 +5123,9 @@ void Unparse_ExprStmt::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           while ( ( positionOfLabel != statementList->end() ) && ( (*positionOfLabel)->variantT() == V_SgNullStatement ) )
              {
-            // printf ("Found a SgNullStatement (skipping over it) *positionOfLabel = %p = %s \n",*positionOfLabel,(*positionOfLabel)->class_name().c_str());
+#if 0
+               printf ("Found a SgNullStatement (skipping over it) *positionOfLabel = %p = %s \n",*positionOfLabel,(*positionOfLabel)->class_name().c_str());
+#endif
                positionOfLabel++;
              }
 
@@ -5149,6 +5155,9 @@ void Unparse_ExprStmt::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
   // Note that in the edg33 version of ROSE this was always a SgNullStatement, this is corrected in the design with the edg4x work.
      if (label_stmt->get_statement() != NULL)
         {
+#if 0
+          printf ("Calling unparseStatement() stmt = %p = %s \n",label_stmt->get_statement(),label_stmt->get_statement()->class_name().c_str());
+#endif
           unparseStatement(label_stmt->get_statement(), info);
         }
 

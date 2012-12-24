@@ -1193,18 +1193,30 @@ UnparseLanguageIndependentConstructs::unparseNullStatement (SgStatement* stmt, S
      SgNullStatement* nullStatement = isSgNullStatement(stmt);
      ROSE_ASSERT(nullStatement != NULL);
 
+#if 0
+     printf ("In unparseNullStatement() stmt = %p \n",stmt);
+#endif
+
   // Not much to do here except output a ";", not really required however.
      if (!info.inConditional() && !info.SkipSemiColon())
-       {
-         curprint ( string(";"));
-       }
-
+        {
+          curprint ( string(";"));
+        }
+       else
+        {
+#if 0
+          printf ("In unparseNullStatement() stmt = %p (skipped output of semi-colon) info.inConditional() = %s info.SkipSemiColon() = %s \n",stmt,info.inConditional() ? "true" : "false",info.SkipSemiColon() ? "true" : "false");
+#endif
+        }
    }
 
 void
 UnparseLanguageIndependentConstructs::unparseNullExpression (SgExpression* expr, SgUnparse_Info& info)
    {
   // Nothing to do here! (unless we need a ";" or something)
+#if 0
+     printf ("In unparseNullExpression() expr = %p \n",expr);
+#endif
    }
 
 
@@ -1225,6 +1237,9 @@ UnparseLanguageIndependentConstructs::isTransformed(SgStatement* stmt)
 #if 1
      return false;
 #else
+
+#error "DEAD CODE!"
+
      return true;
 #endif
    }
