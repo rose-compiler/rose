@@ -1522,6 +1522,31 @@ StringUtility::isLineTerminated(const std::string &s)
 }
 
 std::string
+StringUtility::fixLineTermination(const std::string &input) 
+{
+    std::string output;
+    size_t nchars = input.size();
+    for (size_t i=0; i<nchars; ++i) {
+        if ('\r'==input[i] && i+1<nchars && '\n'==input[i+1]) {
+            // CR+LF: Microsoft Windows, DEC TOPS-10, RT-11 and most other early non-Unix and non-IBM OSes, CP/M, MP/M, DOS
+            // (MS-DOS, PC-DOS, etc.), Atari TOS, OS/2, Symbian OS, Palm OS.
+            output += '\n';
+            ++i;
+        } else if ('\n'==input[i] && i+1<nchars && '\r'==input[i+1]) {
+            // LF+CR: Acorn BBC and RISC OS spooled text output.
+            output += '\n';
+            ++i;
+        } else if ('\r'==input[i]) {
+            // CR (only): Commodore 8-bit machines, Acorn BBC, TRS-80, Apple II family, Mac OS up to version 9 and OS-9
+            output += '\n';
+        } else {
+            output += input[i];
+        }
+    }
+    return output;
+}
+
+std::string
 StringUtility::makeOneLine(const std::string &s, std::string replacement)
 {
     std::string result, spaces;
