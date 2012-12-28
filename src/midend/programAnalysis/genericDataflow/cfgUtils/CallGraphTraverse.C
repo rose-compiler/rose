@@ -70,8 +70,14 @@ Function::Function(SgFunctionDefinition* sample)
 
 Function::Function(SgFunctionCallExp* funcCall)
 {
-        ROSE_ASSERT(isSgFunctionRefExp(funcCall->get_function()));
-        init(isSgFunctionRefExp(funcCall->get_function())->get_symbol()->get_declaration());
+    // EDG3 removes all SgPointerDerefExp nodes from an expression like this:
+    //    void f() { (****f)(); }
+    // but EDG4 leaves them in the AST.  Therefore we need to handle the case when the thing ultimately pointed to by the
+    // SgPointerDerefExp nodes is a SgFunctionRefExp. The SgFunctionCallExp::getAssociatedFunctionSymbol() will take care of
+    // this case and some others. [Robb Matzke 2012-12-28]
+    SgFunctionSymbol *fsym = funcCall->getAssociatedFunctionSymbol();
+    assert(fsym!=NULL);
+    init(fsym->get_declaration());
 }
 
 void Function::init(SgFunctionDeclaration* sample)
