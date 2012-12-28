@@ -171,11 +171,10 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
     allFunctions.erase(std::remove(allFunctions.begin(), allFunctions.end(), (SgNode*)NULL), allFunctions.end());
 
     ClassHierarchyWrapper classHierarchy(project);
-    Rose_STL_Container<SgNode *>::iterator i = allFunctions.begin();
     graphNodes.clear();
     
     //Iterate through all the functions found and resolve all the call expressions in each function with a body
-    while (i != allFunctions.end())
+    for (Rose_STL_Container<SgNode *>::iterator i = allFunctions.begin(); i != allFunctions.end(); ++i)
     {
         SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(*i);
         ROSE_ASSERT(functionDeclaration != NULL);
@@ -208,7 +207,6 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
 
             callGraphData.push_back(functionData);
         }
-        i++;
     }
 
     // Build the graph
