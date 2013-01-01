@@ -10,6 +10,7 @@ void outputMap ( SgCopyHelp & help );
 // DQ (10/16/2007): This is a macro to simplify the code associated with fixing up data member in the AST copy.
 #if DEBUG_FIXUP_COPY
 #define FixupCopyDataMemberMacro(IR_node_copy,IR_node_type,get_accessFunctionName,set_accessFunctionName)                \
+     ROSE_ASSERT(this != NULL);                                                                                          \
      if (IR_node_copy->get_accessFunctionName() == this->get_accessFunctionName())                                       \
         {                                                                                                                \
           SgCopyHelp::copiedNodeMapTypeIterator i = help.get_copiedNodeMap().find(this->get_accessFunctionName());       \
@@ -23,6 +24,9 @@ void outputMap ( SgCopyHelp & help );
                printf ("Resetting using %s->%s(local_copy) = %p = %s \n",#IR_node_copy,#set_accessFunctionName,local_copy,local_copy->class_name().c_str()); \
                IR_node_copy->set_accessFunctionName(local_copy);                                                         \
              }                                                                                                           \
+          ROSE_ASSERT(IR_node_copy != NULL);                                                                             \
+          ROSE_ASSERT(IR_node_copy->get_accessFunctionName() != NULL);                                                   \
+          ROSE_ASSERT(this->get_accessFunctionName() != NULL);                                                           \
           ROSE_ASSERT(IR_node_copy->get_accessFunctionName()->variantT() == this->get_accessFunctionName()->variantT()); \
         }                                                                                                                \
        else                                                                                                              \

@@ -10041,7 +10041,7 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
      ROSE_ASSERT(scope != NULL);
 
 #if 0
-     printf ("SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(): name = %s scope = %p = %s \n",name.str(),scope,scope->class_name().c_str());
+     printf ("SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(): XXX_name = %s scope = %p = %s \n",XXX_name.str(),scope,scope->class_name().c_str());
 #endif
 
   // DQ (9/12/2012): We want to add the template arguments of any specialization to the template name and keep track of the name with and without template specialization arguments.
@@ -10418,6 +10418,11 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
   // SgTemplateClassDeclaration* defdecl = new SgTemplateClassDeclaration (name,templateString,template_kind,templateParameters,template_class_kind,classType,classDef);
   // SgTemplateClassDeclaration* defdecl = new SgTemplateClassDeclaration (name,templateString,template_kind,templateParameters,template_class_kind,classDef);
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
+
+#if 0
+     printf ("In buildTemplateClassDeclaration_nfi(): calling new SgTemplateClassDeclaration() name = %s \n",nameWithTemplateSpecializationArguments.str());
+#endif
+
   // DQ (9/12/2012): We want to include the template specialization into the name where it is required (this handling 
   // is similar to normal template arguments for non-template declaration, but different than template parameters).
   // This copy of SgName is required to support passing it to the SgTemplateClassDeclaration constructor.

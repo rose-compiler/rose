@@ -6885,7 +6885,7 @@ SgSymbolTable::find( const SgStatement* statement)
                  else
                   {
 #if 0
-                    printf ("returnSymbol->get_symbol_basis() != statement \n");
+                    printf ("returnSymbol->get_symbol_basis() != statement (returnSymbol->get_symbol_basis() = %p statement = %p) \n",returnSymbol->get_symbol_basis(),statement);
 #endif
                   }
              }
@@ -16136,10 +16136,20 @@ SgTemplateArgument::get_mangled_name (void) const
                SgTemplateInstantiationDecl* templateClassInstantiationDeclaration = isSgTemplateInstantiationDecl(this->get_parent());
                if (templateClassInstantiationDeclaration != NULL)
                   {
+                 // DQ (12/26/2012): I think that to generate a unique mangled name we need to alwasy reference the same declaration, so set this and enforce that it is a valid pointer.
+                    templateClassInstantiationDeclaration = isSgTemplateInstantiationDecl(templateClassInstantiationDeclaration->get_firstNondefiningDeclaration());
+                    ROSE_ASSERT(templateClassInstantiationDeclaration != NULL);
 #if 0
                     printf ("In SgTemplateArgument::get_mangled_name(): case SgTemplateArgument::type_argument: templateClassInstantiationDeclaration = %p name = %s \n",templateClassInstantiationDeclaration,templateClassInstantiationDeclaration->get_name().str());
 #endif
                     mangled_type += StringUtility::numberToString(templateClassInstantiationDeclaration);
+
+                 // DQ (12/26/2012): This assert fails for copyAST_tests/copytest2007_40.C, but I think it is unreasonable 
+                 // to expect it to always be true.  So I have made it a warning for now.
+                    if (templateClassInstantiationDeclaration != templateClassInstantiationDeclaration->get_firstNondefiningDeclaration())
+                       {
+                         printf ("Warning: In SgTemplateArgument::get_mangled_name(): templateClassInstantiationDeclaration used for mangled name was not the firstNondefiningDeclaration \n");
+                       }
                     ROSE_ASSERT(templateClassInstantiationDeclaration == templateClassInstantiationDeclaration->get_firstNondefiningDeclaration());
                   }
                  else

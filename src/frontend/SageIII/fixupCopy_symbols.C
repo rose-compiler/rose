@@ -71,9 +71,16 @@ SgScopeStatement::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
 #if DEBUG_FIXUP_COPY
      printf ("Inside of SgScopeStatement::fixupCopy_symbols() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
 #endif
+#if 0
+     printf ("Inside of SgScopeStatement::fixupCopy_symbols() for %p = %s copy = %p (calling SgStatement::fixupCopy_symbols()) \n",this,this->class_name().c_str(),copy);
+#endif
 
   // Call the base class fixupCopy member function
      SgStatement::fixupCopy_symbols(copy,help);
+
+#if 0
+     printf ("DONE: Inside of SgScopeStatement::fixupCopy_symbols() for %p = %s copy = %p (calling SgStatement::fixupCopy_symbols()) \n",this,this->class_name().c_str(),copy);
+#endif
 
      SgScopeStatement* copyScopeStatement = isSgScopeStatement(copy);
      ROSE_ASSERT(copyScopeStatement != NULL);
@@ -81,11 +88,24 @@ SgScopeStatement::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
   // The symbol table should not have been setup yet!
      ROSE_ASSERT(copyScopeStatement->get_symbol_table()->size() == 0);
 
+#if 0
+     printf ("Inside of SgScopeStatement::fixupCopy_symbols() for %p = %s copy = %p (calling SageInterface::rebuildSymbolTable()) \n",this,this->class_name().c_str(),copy);
+#endif
+
      SageInterface::rebuildSymbolTable(copyScopeStatement);
+
+#if 0
+     printf ("DONE: Inside of SgScopeStatement::fixupCopy_symbols() for %p = %s copy = %p (calling SageInterface::rebuildSymbolTable()) \n",this,this->class_name().c_str(),copy);
+     printf ("Inside of SgScopeStatement::fixupCopy_symbols() for %p = %s copy = %p (calling SageInterface::fixupReferencesToSymbols()) \n",this,this->class_name().c_str(),copy);
+#endif
 
   // DQ (3/1/2009): After rebuilding the symbol table, we have to reset references 
   // to old symbols (from the original symbol table) to the new symbols just built.
      SageInterface::fixupReferencesToSymbols(this,copyScopeStatement,help);
+
+#if 0
+     printf ("DONE: Inside of SgScopeStatement::fixupCopy_symbols() for %p = %s copy = %p (calling SageInterface::fixupReferencesToSymbols()) \n",this,this->class_name().c_str(),copy);
+#endif
 
   // printf ("\nLeaving SgScopeStatement::fixupCopy_symbols() for %p = %s copy = %p \n\n",this,this->class_name().c_str(),copy);
    }
@@ -608,6 +628,8 @@ SgTypedefDeclaration::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
      printf ("Inside of SgTypedefDeclaration::fixupCopy_symbols() for typedef name = %s = %p = %s copy = %p \n",this->get_name().str(),this,this->class_name().c_str(),copy);
 #endif
 
+     printf ("Inside of SgTypedefDeclaration::fixupCopy_symbols() for typedef name = %s = %p = %s copy = %p \n",this->get_name().str(),this,this->class_name().c_str(),copy);
+
   // Call the base class fixupCopy member function
      SgDeclarationStatement::fixupCopy_symbols(copy,help);
 
@@ -623,8 +645,14 @@ SgTypedefDeclaration::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
           ROSE_ASSERT(baseTypeDeclaration_original != NULL);
           ROSE_ASSERT(baseTypeDeclaration_copy != NULL);
 
+          printf ("In SgTypedefDeclaration::fixupCopy_symbols(): calling baseTypeDeclaration_original->fixupCopy_symbols(baseTypeDeclaration_copy = %p) \n",baseTypeDeclaration_copy);
+
           baseTypeDeclaration_original->fixupCopy_symbols(baseTypeDeclaration_copy,help);
+
+          printf ("DONE: In SgTypedefDeclaration::fixupCopy_symbols(): calling baseTypeDeclaration_original->fixupCopy_symbols(baseTypeDeclaration_copy = %p) \n",baseTypeDeclaration_copy);
         }
+
+     printf ("Leaving SgTypedefDeclaration::fixupCopy_symbols() for typedef name = %s = %p = %s copy = %p \n",this->get_name().str(),this,this->class_name().c_str(),copy);
    }
 
 
@@ -674,6 +702,8 @@ SgNamespaceDeclarationStatement::fixupCopy_symbols(SgNode* copy, SgCopyHelp & he
      printf ("Inside of SgNamespaceDeclarationStatement::fixupCopy_symbols() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
 #endif
 
+     printf ("Inside of SgNamespaceDeclarationStatement::fixupCopy_symbols() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
+
   // Call the base class fixupCopy member function
      SgDeclarationStatement::fixupCopy_symbols(copy,help);
 
@@ -687,6 +717,8 @@ SgNamespaceDeclarationStatement::fixupCopy_symbols(SgNode* copy, SgCopyHelp & he
      ROSE_ASSERT(namespaceDefinition_copy != NULL);
 
      namespaceDefinition_original->fixupCopy_symbols(namespaceDefinition_copy,help);
+
+     printf ("Leaving SgNamespaceDeclarationStatement::fixupCopy_symbols() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
    }
 
 
@@ -696,6 +728,8 @@ SgNamespaceDefinitionStatement::fixupCopy_symbols(SgNode* copy, SgCopyHelp & hel
 #if DEBUG_FIXUP_COPY
      printf ("Inside of SgNamespaceDefinitionStatement::fixupCopy_symbols() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
 #endif
+
+     printf ("Inside of SgNamespaceDefinitionStatement::fixupCopy_symbols() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
 
      SgNamespaceDefinitionStatement* namespaceDefinition_copy = isSgNamespaceDefinitionStatement(copy);
      ROSE_ASSERT(namespaceDefinition_copy != NULL);
@@ -709,14 +743,20 @@ SgNamespaceDefinitionStatement::fixupCopy_symbols(SgNode* copy, SgCopyHelp & hel
   // Iterate over both lists to match up the correct pairs of SgStatement objects
      while ( (i_original != statementList_original.end()) && (i_copy != statementList_copy.end()) )
         {
+          printf ("Inside of SgNamespaceDefinitionStatement::fixupCopy_symbols() for %p = %s copy = %p (in loop over statements) \n",this,this->class_name().c_str(),copy);
+
           (*i_original)->fixupCopy_symbols(*i_copy,help);
 
           i_original++;
           i_copy++;
         }
 
+     printf ("Leaving SgNamespaceDefinitionStatement::fixupCopy_symbols() for %p = %s copy = %p (call SgScopeStatement::fixupCopy_symbols()) \n",this,this->class_name().c_str(),copy);
+
   // Call the base class fixupCopy member function
      SgScopeStatement::fixupCopy_symbols(copy,help);
+
+     printf ("Leaving SgNamespaceDefinitionStatement::fixupCopy_symbols() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
    }
 
 

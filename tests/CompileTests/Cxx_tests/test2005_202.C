@@ -12,6 +12,9 @@ void foo()
        // Error in generation of GNU case range (only unparses the first constant in the range: "1 ... 5")
           case 1 ... 5: {}
 
+       // This is an C/C++ error caught in the EDG front-end.
+       // case 3: {}
+
           case 6: {}
           default: {}
         }

@@ -2830,7 +2830,7 @@ TestAstSymbolTables::visit ( SgNode* node )
                if (declarationStatement != NULL && isSgLabelSymbol(symbol) == NULL)
                   {
                     SgSymbol* local_symbol = declarationStatement->get_symbol_from_symbol_table();
-#if 0
+#if 1
                     if (local_symbol == NULL)
                        {
                          printf ("The declarationStatement = %p = %s = %s in symbol = %p = %s = %s can't locate it's symbol in scope = %p = %s = %s \n",
