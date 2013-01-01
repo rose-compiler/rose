@@ -411,7 +411,8 @@ void LiveDeadVarsTransfer::visit(SgExprStatement *sgn) {
 }
 void LiveDeadVarsTransfer::visit(SgCaseOptionStmt *sgn) {
   used(sgn->get_key());
-  used(sgn->get_key_range_end());
+  if (sgn->get_key_range_end())
+      used(sgn->get_key_range_end());
 }
 void LiveDeadVarsTransfer::visit(SgIfStmt *sgn) {
   //Dbg::dbg << "SgIfStmt"<<endl;
