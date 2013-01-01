@@ -865,6 +865,10 @@ SgNamespaceDefinitionStatement::fixupCopy_references(SgNode* copy, SgCopyHelp & 
 
   // Call the base class fixupCopy member function
      SgScopeStatement::fixupCopy_references(copy,help);
+
+#if 0
+     printf ("Leaving SgNamespaceDefinitionStatement::fixupCopy_references() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
+#endif
    }
 
 
