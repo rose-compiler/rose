@@ -31,6 +31,7 @@ extern SgJavaWildcardType *getUniqueWildcardSuper(SgType *);
 using namespace std;
 
 string getPrimitiveTypeName(SgType *);
+string getWildcardTypeName(SgJavaWildcardType *);
 string getArrayTypeName(SgPointerType *);
 string getFullyQualifiedName(SgClassDefinition *);
 string getFullyQualifiedTypeName(SgClassType *);

@@ -191,12 +191,28 @@ string getPrimitiveTypeName(SgType *type) {
         type_name = "void";
     }
     else {
-cout << "Don't recognize type " << type -> class_name() << endl;
+cout << "***I don't recognize the type " << type -> class_name() << endl;
         ROSE_ASSERT(false);
     }
 
     return type_name;
 }
+
+
+//
+//
+//
+string getWildcardTypeName(SgJavaWildcardType *wild_type) {
+    string name = "?";
+
+    if (! wild_type -> get_is_unbound()) {
+        name += (wild_type -> get_has_extends() ? " extends " : " super ");
+        name += getTypeName(wild_type -> get_bound_type());
+    }
+
+    return name;
+}
+
 
 //
 //
@@ -210,7 +226,10 @@ string getArrayTypeName(SgPointerType *pointer_type) {
     }
     else {
         SgClassType *class_type = isSgClassType(base_type);
-        name = (class_type ? getFullyQualifiedTypeName(class_type) : getPrimitiveTypeName(base_type));
+        SgJavaParameterizedType *parm_type = isSgJavaParameterizedType(base_type); 
+        name = (parm_type ? getFullyQualifiedTypeName(parm_type)
+                          : class_type ? getFullyQualifiedTypeName(class_type)
+                                       : getPrimitiveTypeName(base_type));
     }
     return name  + "[]";
 }
@@ -279,15 +298,21 @@ string getTypeName(SgType *type) {
     SgJavaParameterizedType *parm_type = isSgJavaParameterizedType(type); 
     SgClassType *class_type = isSgClassType(type);
     SgPointerType *pointer_type = isSgPointerType(type);
+    SgJavaWildcardType *wild_type = isSgJavaWildcardType(type);
     string result;
 
     if (parm_type) {
          result = getFullyQualifiedTypeName(parm_type);
     }
-    else if (class_type)
-         result = getFullyQualifiedTypeName(class_type);
-    else if (pointer_type)
+    else if (class_type) {
+        result = (class_type -> attributeExists("is_parameter_type") ? class_type -> get_name().getString() : getFullyQualifiedTypeName(class_type));
+    }
+    else if (pointer_type) {
          result = getArrayTypeName(pointer_type);
+    }
+    else if (wild_type) {
+         result = getWildcardTypeName(wild_type);
+    }
     else result = getPrimitiveTypeName(type);
 
     return result;
@@ -689,6 +714,15 @@ SgMemberFunctionDeclaration *findMemberFunctionDeclarationInClass(SgClassDefinit
         const SgBaseClassPtrList &inheritance = class_definition->get_inheritances();
         for (SgBaseClassPtrList::const_iterator it = inheritance.begin(); function_declaration == NULL && it != inheritance.end(); it++) { // Iterate over super class, if any, then the interfaces, if any.
             SgClassDeclaration *decl = (*it) -> get_base_class();
+// TODO: Remove this !
+/*
+cout << "Looking for method "
+     << function_name.getString()
+     << " in class "
+     << decl -> get_definition() -> get_qualified_name()
+     << endl;
+cout.flush();
+*/
             function_declaration = findMemberFunctionDeclarationInClass(decl -> get_definition(), function_name, formal_types);
         }
     }
@@ -743,7 +777,21 @@ SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClass
 
     SgMemberFunctionDeclaration *function_declaration = NULL;
     function_declaration = lookupMemberFunctionDeclarationInClassScope(class_definition, function_name, types);
-
+// TODO: REMOVE THIS !
+if (!function_declaration){
+cout << "Could not find function " << function_name.getString() << "(";
+std::list<SgType*>::iterator i = types.begin();
+if (i != types.end()) {
+cout << getTypeName(*i);
+for (i++; i != types.end(); i++) {
+cout << ", " << getTypeName(*i);
+}
+}
+cout << ") in class " 
+<< class_definition -> get_qualified_name()
+<< endl;
+cout.flush();
+}
     ROSE_ASSERT(function_declaration != NULL);
 
     return function_declaration;
