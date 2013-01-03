@@ -159,7 +159,7 @@ CXX_CONSTPROP_SPECIMENS =													 \
 	test2008_04.C test2008_05.C test2008_06.C test2008_09.C test2008_10.C test2008_11.C test2008_12.C test2008_13.C		 \
 	test2008_14.C test2009_01.C test2009_02.C test2009_03.C test2009_04.C test2009_05.C test2009_06.C test2009_08.C		 \
 	test2009_09.C test2009_10.C test2009_12.C test2009_14.C test2009_15.C test2009_18.C test2009_19.C test2009_20.C		 \
-	test2009_21.C test2009_24.C test2009_27.C test2009_28.C test2009_30.C test2009_31.C test2009_39.C test2010_18.C		 \
+	test2009_21.C test2009_24.C test2009_27.C test2009_28.C test2009_30.C test2009_39.C test2010_18.C			 \
 	test2010_25.C test2011_01.C test2011_02.C test2011_05.C test2011_07.C test2011_100.C test2011_111.C test2011_115.C	 \
 	test2011_117.C test2011_118.C test2011_119.C test2011_120.C test2011_19.C test2011_20.C test2011_21.C test2011_22.C	 \
 	test2011_23.C test2011_24.C test2011_25.C test2011_26.C test2011_27.C test2011_28.C test2011_29.C test2011_30.C		 \
@@ -195,9 +195,10 @@ CXX_CONSTPROP_SPECIMENS_FAILING =											\
 	test2006_50.C test2006_54.C test2006_58.C test2006_78.C test2006_79.C test2006_84.C test2006_85.C test2006_89.C	\
 	test2006_90.C test2006_92.C test2007_11.C test2007_135.C test2007_141.C test2007_155.C test2007_158.C		\
 	test2007_159.C test2007_164.C test2007_166.C test2007_170.C test2007_171.C test2007_26.C test2007_40.C		\
-	test2007_44.C test2007_94.C test2008_08.C test2008_16.C test2009_11.C test2009_37.C test2009_40.C test2009_41.C	\
-	test2009_42.C test2010_03.C test2010_04.C test2010_05.C test2010_06.C test2010_19.C test2010_24.C test2011_06.C	\
-	test2011_101.C test2011_110.C test2011_121.C test2011_133.C test2011_39.C test2011_72.C test2011_99.C
+	test2007_44.C test2007_94.C test2008_08.C test2008_16.C test2009_11.C test2009_31.C test2009_37.C test2009_40.C \
+	test2009_41.C test2009_42.C test2010_03.C test2010_04.C test2010_05.C test2010_06.C test2010_19.C test2010_24.C \
+	test2011_06.C test2011_101.C test2011_110.C test2011_121.C test2011_133.C test2011_39.C test2011_72.C		\
+	test2011_99.C
 CXX_CONSTPROP_SPECIMENS_HANGING = \
 	test2005_114.C
 
