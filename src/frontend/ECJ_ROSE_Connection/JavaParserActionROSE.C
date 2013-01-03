@@ -1271,17 +1271,47 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd(JNIEnv *env, 
 
 
 
- JNIEXPORT void JNICALL Java_JavaParser_cactionTypeReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jboolean java_is_type_parameter, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameterReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jstring java_type_parameter_name, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside cactionTypeReference\n");
 
     SgName package_name = convertJavaPackageNameToCxxString(env, java_package_name),
-           no_package = "",
-           type_name = convertJavaStringToCxxString(env, java_type_name);
-    bool is_type_parameter = java_is_type_parameter;
-    SgType *type = (is_type_parameter ? lookupTypeByName(no_package, type_name, 0 /* not an array - number of dimensions is 0 */)
-                                      : lookupTypeByName(package_name, type_name, 0 /* not an array - number of dimensions is 0 */));
+           type_name = convertJavaStringToCxxString(env, java_type_name),
+           type_parameter_name = convertJavaStringToCxxString(env, java_type_parameter_name);
+    SgType *enclosing_type = lookupTypeByName(package_name, type_name, 0 /* not an array - number of dimensions is 0 */);
+    ROSE_ASSERT(enclosing_type);
+// TODO: Remove this !!!
+/*
+cout << "Looking for type "
+<< type_parameter_name.getString()
+<< " in "
+<< getTypeName(enclosing_type)
+<< endl;
+cout.flush();
+*/
+    SgClassDeclaration *class_declaration = isSgClassDeclaration(enclosing_type -> getAssociatedDeclaration() -> get_definingDeclaration());
+    ROSE_ASSERT(class_declaration);
+    SgClassDefinition *class_definition = class_declaration -> get_definition();
+    ROSE_ASSERT(class_definition);
+    SgClassSymbol *class_symbol = lookupSimpleNameTypeInClass(type_parameter_name, class_definition);
+    ROSE_ASSERT(class_symbol);
+    SgType *type = class_symbol -> get_type();
+    ROSE_ASSERT(type && type -> attributeExists("is_parameter_type"));
 
+    astJavaComponentStack.push(type);
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Exiting cactionTypeReference\n");
+}
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionTypeReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jobject jToken) {
+    if (SgProject::get_verbose() > 0)
+        printf ("Inside cactionTypeReference\n");
+
+    SgName package_name = convertJavaPackageNameToCxxString(env, java_package_name),
+           type_name = convertJavaStringToCxxString(env, java_type_name);
+    SgType *type = lookupTypeByName(package_name, type_name, 0 /* not an array - number of dimensions is 0 */);
     ROSE_ASSERT(type != NULL);
 
     astJavaComponentStack.push(type);
@@ -1348,6 +1378,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArgumentEnd(JNIEnv *env, jclass, j
 }
 
 
+/*
 JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jint java_number_of_dimensions, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Build a array type \n");
@@ -1361,6 +1392,23 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReference(JNIEnv *env, jc
 
     astJavaComponentStack.push(array_type);
 }
+*/
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReference(JNIEnv *env, jclass, jint java_num_dimensions, jobject jToken) {
+    if (SgProject::get_verbose() > 0)
+        printf ("Build a array type \n");
+
+    int num_dimensions = java_num_dimensions;
+    ROSE_ASSERT(num_dimensions > 0);
+    SgType *base_type = astJavaComponentStack.popType();
+    ROSE_ASSERT(base_type);
+    SgType *array_type = getUniquePointerType(base_type, num_dimensions);
+    ROSE_ASSERT(array_type);
+
+    astJavaComponentStack.push(array_type);
+}
+
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReferenceEnd(JNIEnv *env, jclass, jstring java_name, jobject jToken) {
     if (SgProject::get_verbose() > 0)
@@ -1379,9 +1427,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend(JNIEnv *env, jclass, j
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd(JNIEnv *env, jclass, 
                                                              jboolean java_is_static,
-                                                             jstring java_package_name,
-                                                             jstring java_type_name,
-                                                             jint java_num_dimensions,
                                                              jstring java_function_name,
                                                              jint java_number_of_parameters,
                                                              jint numTypeArguments,
@@ -1392,10 +1437,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd(JNIEnv *env, jclass
 
     bool is_static = java_is_static;
 
-    SgName package_name  = convertJavaPackageNameToCxxString(env, java_package_name),
-           type_name  = convertJavaStringToCxxString(env, java_type_name),
-           function_name  = convertJavaStringToCxxString(env, java_function_name);
-    int num_dimensions = java_num_dimensions;
+    SgName function_name  = convertJavaStringToCxxString(env, java_function_name);
     int num_parameters = java_number_of_parameters;
 
     //
@@ -1404,7 +1446,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd(JNIEnv *env, jclass
     // array type in question as the Object type is its (only) super type and contains all the method
     // that is invokable from an array.
     //
-    SgType *containing_type = (num_dimensions > 0 ? ::ObjectClassType : lookupTypeByName(package_name, type_name, num_dimensions));
+    SgType *containing_type = astJavaComponentStack.popType();
+    if (isSgPointerType(containing_type)) { // is this type an array type?
+        containing_type = ::ObjectClassType;
+    }
     SgClassDeclaration *class_declaration = isSgClassDeclaration(containing_type -> getAssociatedDeclaration() -> get_definingDeclaration());
     ROSE_ASSERT(class_declaration);
     SgClassDefinition *targetClassScope = class_declaration -> get_definition();
@@ -1474,7 +1519,8 @@ cout.flush();
             string class_name = (full_name.size() == type_name.size() ? type_name : full_name.substr(0, full_name.size() - type_name.size()) + type_name);
             exprForFunction -> setAttribute("prefix", new AstRegExAttribute(class_name));
         }
-        else { // this can't happen!
+        else { // this can't happen!?
+            // TODO: What if the class is a parameterized type?
             ROSE_ASSERT(false); 
         }
     }
@@ -1485,9 +1531,24 @@ cout.flush();
         exprForFunction = SageBuilder::buildBinaryExpression<SgDotExp>((SgExpression *) receiver, exprForFunction);
 
         SgClassDefinition *current_class_definition = getCurrentTypeDefinition();
-        SgClassType *enclosing_type = current_class_definition -> get_declaration() -> get_type();
-        if (isSgThisExp(receiver) && (! receiver -> attributeExists("class")) && (! receiver -> attributeExists("prefix")) && containing_type != enclosing_type) {
-            receiver -> setAttribute("prefix", new AstRegExAttribute(getFullyQualifiedTypeName(isSgClassType(containing_type))));
+        SgType *enclosing_type = current_class_definition -> get_declaration() -> get_type();
+        if (isSgThisExp(receiver) && (! receiver -> attributeExists("class")) && (! receiver -> attributeExists("prefix")) && (! isCompatibleTypes(containing_type, enclosing_type))) {
+// TODO: Remove this !!!
+/*
+cout << "The containing type is " 
+     << getTypeName(containing_type)
+     << ";  The enclosing type is " 
+     << getTypeName(enclosing_type)
+     << endl;
+cout.flush();
+*/
+            string prefix_name = (isSgClassType(containing_type)
+                                      ? getFullyQualifiedTypeName(isSgClassType(containing_type))
+                                      : isSgJavaParameterizedType(containing_type)
+                                            ? getFullyQualifiedTypeName(isSgJavaParameterizedType(containing_type))
+                                            : "");
+            ROSE_ASSERT(prefix_name.size() != 0);
+            receiver -> setAttribute("prefix", new AstRegExAttribute(prefix_name));
         }
     }
 
@@ -2496,6 +2557,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReferenceEnd(JNIEnv *env, jcl
         ROSE_ASSERT(declaration);
         ROSE_ASSERT(declaration -> get_definition());
         SgVariableSymbol *variable_symbol = lookupSimpleNameVariableInClass(field_name, declaration -> get_definition());
+if (! variable_symbol) {
+  cout << "Could not find variable " << field_name.getString()
+       << " in type " << getTypeName(class_type)
+       << endl;
+  cout.flush();
+}
         ROSE_ASSERT(variable_symbol);
         SgVarRefExp *field = SageBuilder::buildVarRefExp(variable_symbol);
         ROSE_ASSERT(field != NULL);
