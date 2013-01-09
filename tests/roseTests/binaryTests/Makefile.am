@@ -455,6 +455,24 @@ STATIC_TEST_TARGETS += testWorkList.passed
 testWorkList.passed: $(top_srcdir)/scripts/test_exit_status testWorkList
 	@$(RTH_RUN) CMD=./testWorkList $< $@
 
+# Test pointer detection
+noinst_PROGRAMS += testPointerDetection
+testPointerDetection_SOURCES = testPointerDetection.C
+testPointerDetection_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+PointerDetectionSpecimenFunctions = \
+	simple01 simple02 simple03 simple04 simple05 simple06 simple07 simple08 simple09 simple10 simple11 simple12 \
+	simple13 simple14 simple15 simple16 simple17 simple18 simple19 simple20 simple21 simple22 simple23 simple24 \
+	simple25 flow01 flow02 flow03 flow04 flow05 flow06 flow07
+PointerDetectionTestTargets = $(addprefix tpd_, $(addsuffix .passed, $(PointerDetectionSpecimenFunctions)))
+STATIC_TEST_TARGETS += $(PointerDetectionTestTargets)
+EXTRA_DIST += testPointerDetection.conf $(addprefix tpd_, $(addsuffix .ans, $(PointerDetectionSpecimenFunctions)))
+$(PointerDetectionTestTargets): tpd_%.passed: testPointerDetection.conf testPointerDetection $(BINARY_SAMPLES)/i386-pointers
+	@$(RTH_RUN) FUNC="$$(echo "$@" |sed 's/^tpd_//;s/\.passed$$//')" INPUT=$(BINARY_SAMPLES)/i386-pointers $< $@
+.PHONY: testPointerDetection.passed
+testPointerDetection.passed: $(PointerDetectionTestTargets)
+
+
+
 ###############################################################################################################################
 # DEMOS
 #

@@ -40,3 +40,7 @@ EXTRA_DIST = CMakeLists.txt                     \
     x86-64-nologin                              \
     x86-64-pivot_root                           \
     x86-64-poweroff
+
+# The i386-pointers was generated from projects/simulator/local_tests/types.c using GCC and
+# the -O0 optimization level.  It is used by tests/roseTests/binaryTests/testPointerDetection
+EXTRA_DIST += i386-pointers

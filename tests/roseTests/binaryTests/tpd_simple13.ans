@@ -1,0 +1,12 @@
+Anlyzing pointers in this function:
+0x0804842e: ================================== Function (symbol, pattern) <simple13>
+
+0x0804842e: Basic block reasons: entry point, graph-1
+0x0804842e: 55                      |U       |   push   ebp
+0x0804842f: 89 e5                   |..      |   mov    ebp, esp
+0x08048431: a1 f4 97 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x080497f4<.data+0x14>]
+0x08048436: 5d                      |]       |   pop    ebp
+0x08048437: c3                      |.       |   ret    
+0x08048437: Successor blocks: unknown
+
+Not using Yices SMT solver

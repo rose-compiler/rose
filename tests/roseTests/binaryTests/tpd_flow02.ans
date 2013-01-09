@@ -1,0 +1,29 @@
+Anlyzing pointers in this function:
+0x08048506: ================================== Function (symbol, pattern) <flow02>
+
+0x08048506: Basic block reasons: entry point, graph-1
+0x08048506: 55                      |U       |   push   ebp
+0x08048507: 89 e5                   |..      |   mov    ebp, esp
+0x08048509: 83 7d 08 00             |.}..    |   cmp    DWORD PTR ss:[ebp + 0x08], 0x00
+0x0804850d: 74 07                   |t.      |   je     0x08048516<<Insn>>
+0x0804850d: Successor blocks: 0x0804850f, 0x08048516
+
+0x0804850f: Basic block reasons: graph-1
+0x0804850f: 8b 45 0c                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x0c]
+0x08048512: 8b 00                   |..      |   mov    eax, DWORD PTR ds:[eax]
+0x08048514: eb 05                   |..      |   jmp    0x0804851b<<Insn>>
+0x08048514: Successor blocks: 0x0804851b
+
+0x08048516: Basic block reasons: graph-1
+0x08048516: 8b 45 10                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x10]
+0x08048519: 8b 00                   |..      |   mov    eax, DWORD PTR ds:[eax]
+0x08048519: Successor blocks: 0x0804851b
+
+0x0804851b: Basic block reasons: graph-1
+0x0804851b: 5d                      |]       |   pop    ebp
+0x0804851c: c3                      |.       |   ret    
+0x0804851c: Successor blocks: unknown
+
+Not using Yices SMT solver
+data pointer at defs={0x08048506,0x08048507,0x08048516} expr=(add[32] (add[32] v482[32] -4[32]) 16[32])
+data pointer at defs={0x08048506,0x08048507,0x0804850f} expr=(add[32] (add[32] v482[32] -4[32]) 12[32])
