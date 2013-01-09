@@ -479,7 +479,7 @@ int main( int argc, char * argv[] ) {
 
   boolOptions.registerOption("viz",false);
   boolOptions.registerOption("update-input-var",true);
-  boolOptions.registerOption("run-rose-tests",true);
+  boolOptions.registerOption("run-rose-tests",false);
   boolOptions.registerOption("reduce-cfg",true);
   boolOptions.registerOption("print-all-options",false);
 
