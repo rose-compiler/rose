@@ -34,7 +34,7 @@ public:
     virtual std::string get_command(const std::string &config_name);
 
     /** Returns a bit vector indicating what calling modes are available.  The bits are defined by the LinkMode enum. */
-    unsigned available_linkage() const;
+    static unsigned available_linkage();
 
     /** Returns the style of linkage currently enabled. */
     LinkMode get_linkage() const {
