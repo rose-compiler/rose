@@ -46,6 +46,8 @@ class Constraint {
   CppCapsuleAValue rhsValCppCapsule() const;
   string toString() const;
   string toString(VariableIdMapping*) const;
+  void fromStream(istream& is);
+  void toStream(ostream& os);
   bool isVarVarOp() const;
   bool isVarValOp() const;
   bool isEquation() const;

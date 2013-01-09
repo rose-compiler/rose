@@ -162,6 +162,49 @@ string Constraint::toString(VariableIdMapping* variableIdMapping) const {
   return ss.str();
 }
 
+void Constraint::toStream(ostream& os) {
+  os<<"(";
+  os<<_op;
+  os<<",";
+  switch(_op) {
+  case EQ_VAR_VAR:
+  case NEQ_VAR_VAR:
+	os<<_lhsVar.toString();
+	os<<",";
+	os<<_rhsVar.toString();;
+	break;
+  case EQ_VAR_CONST:
+  case NEQ_VAR_CONST:
+	os<<_lhsVar.toString();
+	os<<",";
+	os<<(_intVal.getValue().getIntValue());
+	break;
+  case DEQ:
+	os<<"##";
+	break;
+  default:
+	throw "Constraint::toStream: unknown operator.";
+  }
+  os<<")";
+}
+
+void Constraint::fromStream(istream& is) {
+  // not finished yet
+#if 0
+  char c;
+  string s;
+  int __varIdCode=-1; 
+  VariableId __varId; 
+  AValue __varAValue; 
+  if(!CodeThorn::Parse::checkWord("(",is)) throw "Error: Syntax error PState. Expected '{'.";
+  is>>c;
+  int enumCode;
+  is>>enumCode;
+  //switch(enumCode) { TODO
+#endif
+  assert(0);
+}
+
 string Constraint::opToString() const {
   switch(op()) {
   case EQ_VAR_VAR:
