@@ -496,6 +496,10 @@ public:
      *  constructors. */
     MemoryMap& init(const MemoryMap &source, CopyLevel copy_level=COPY_SHALLOW);
 
+    /** Determines if a memory map is empty.  Returns true if this memory map contains no mappings. Returns false if at least
+     *  one address is mapped. */
+    bool empty() const { return p_segments.empty(); }
+
     /** Clear the entire memory map by erasing all addresses that are defined. */
     void clear();
 
