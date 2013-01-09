@@ -34,7 +34,7 @@ else
    libroseBinaryFormats_la_DEPENDENCIES += dummyFunctions.C
 endif
 
-include_HEADERS = DataConversion.h IntelPinSupport.h MemoryMap.h
+include_HEADERS = DataConversion.h IntelPinSupport.h MemoryMap.h WorkList.h
 
 # Make sure that this is distributed even if ROSE was not configured using: -with-IntelPin=<path>
 EXTRA_DIST = CMakeLists.txt IntelPinSupport.C

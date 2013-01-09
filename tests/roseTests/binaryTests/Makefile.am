@@ -447,6 +447,14 @@ EXTRA_DIST += testSymReadWrite.conf testSymReadWrite.ans
 testSymReadWrite.passed: testSymReadWrite.conf testSymReadWrite.ans testSymReadWrite
 	@$(RTH_RUN) INPUT=memreadwrite $< $@
 
+# Test the WorkList class
+noinst_PROGRAMS += testWorkList
+testWorkList_SOURCES = testWorkList.C
+testWorkList_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+STATIC_TEST_TARGETS += testWorkList.passed
+testWorkList.passed: $(top_srcdir)/scripts/test_exit_status testWorkList
+	@$(RTH_RUN) CMD=./testWorkList $< $@
+
 ###############################################################################################################################
 # DEMOS
 #
