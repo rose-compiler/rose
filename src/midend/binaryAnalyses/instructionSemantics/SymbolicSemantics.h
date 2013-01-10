@@ -245,11 +245,17 @@ namespace BinaryAnalysis {              // documented elsewhere
                     value_.add_defining_instructions(insn);
                 }
 
-                /** Memory cell address expression. */
+                /** Memory cell address expression.
+                 * @{ */
                 ValueType<32> address() const { return address_; }
+                void address(const ValueType<32> &a) { address_ = a; }
+                /** @} */
 
-                /** Memory cell value expression. */
+                /** Memory cell value expression.
+                 * @{ */
                 ValueType<8> value() const { return value_; }
+                void value(const ValueType<8> &v) { value_ = v; }
+                /** @} */
 
                 /** Accessor for whether a cell has been written.  A cell that is written to with writeMemory() should be
                  *  marked as such.  This is to make a distinction between cells that have sprung insto existence by virtue of
@@ -404,12 +410,17 @@ namespace BinaryAnalysis {              // documented elsewhere
                 /** Extract one byte from a 16 or 32 bit value. Byte zero is the little-endian byte. */
                 template<size_t nBits>
                 ValueType<8> extract_byte(const ValueType<nBits> &a, size_t bytenum) {
-                    if (a.is_known())
-                        return ValueType<8>((a.known_value()>>(bytenum*8)) & IntegerOps::GenMask<uint64_t, 8>::value);
-                    return ValueType<8>(InternalNode::create(8, InsnSemanticsExpr::OP_EXTRACT,
-                                                             LeafNode::create_integer(32, 8*bytenum),
-                                                             LeafNode::create_integer(32, 8*bytenum+8),
-                                                             a.get_expression()));
+                    ValueType<8> retval;
+                    if (a.is_known()) {
+                        retval = ValueType<8>((a.known_value()>>(bytenum*8)) & IntegerOps::GenMask<uint64_t, 8>::value);
+                    } else {
+                        retval = ValueType<8>(InternalNode::create(8, InsnSemanticsExpr::OP_EXTRACT,
+                                                                   LeafNode::create_integer(32, 8*bytenum),
+                                                                   LeafNode::create_integer(32, 8*bytenum+8),
+                                                                   a.get_expression()));
+                    }
+                    retval.defined_by(NULL, a.get_defining_instructions());
+                    return retval;
                 }
 
                 /** Add a constant to an address. */
