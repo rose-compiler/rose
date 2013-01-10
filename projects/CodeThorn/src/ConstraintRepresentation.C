@@ -99,6 +99,8 @@ bool CodeThorn::operator!=(const Constraint& c1, const Constraint& c2) {
   return !(c1==c2);
 }
 
+Constraint::Constraint():_op(Constraint::UNDEFINED) {}
+
 Constraint::Constraint(ConstraintOp op0,VariableId lhs, AValue rhs):_op(op0),_lhsVar(lhs),_rhsVar(VariableId()),_intVal(CppCapsuleAValue(rhs)) {
   switch(op0) {
   case EQ_VAR_CONST:
@@ -135,7 +137,7 @@ Constraint::Constraint(ConstraintOp op0,VariableId lhs, VariableId rhs):_op(op0)
 string Constraint::toString() const {
   stringstream ss;
   if(isDisequation())
-	return "0##0";
+	return "V0##V0";
   if(isVarVarOp())
 	ss<<lhsVar().toString()<<(*this).opToString()<<rhsVar().toString();
   else {
@@ -150,7 +152,7 @@ string Constraint::toString() const {
 string Constraint::toString(VariableIdMapping* variableIdMapping) const {
   stringstream ss;
   if(isDisequation())
-	return "0##0";
+	return "__##__";
   if(isVarVarOp())
 	ss<<variableIdMapping->uniqueLongVariableName(lhsVar())<<(*this).opToString()<<variableIdMapping->uniqueLongVariableName(rhsVar());
   else {
@@ -162,13 +164,14 @@ string Constraint::toString(VariableIdMapping* variableIdMapping) const {
   return ss.str();
 }
 
-void Constraint::toStream(ostream& os) {
+void Constraint::toStreamAsTuple(ostream& os) {
   os<<"(";
   os<<_op;
   os<<",";
   switch(_op) {
   case EQ_VAR_VAR:
   case NEQ_VAR_VAR:
+  case DEQ:
 	os<<_lhsVar.toString();
 	os<<",";
 	os<<_rhsVar.toString();;
@@ -179,36 +182,77 @@ void Constraint::toStream(ostream& os) {
 	os<<",";
 	os<<(_intVal.getValue().getIntValue());
 	break;
-  case DEQ:
-	os<<"##";
-	break;
   default:
 	throw "Constraint::toStream: unknown operator.";
   }
   os<<")";
 }
 
+void Constraint::toStream(ostream& os) {
+  os<<toString();
+}
+
+string Constraint::operatorStringFromStream(istream& is) {
+  stringstream opss;
+  string op;
+  char c;
+  while(is.peek()=='!'||is.peek()=='='||is.peek()=='#') {
+	is>>c;
+	opss<<c;
+  }
+  op=opss.str();
+  if(op=="!="||op=="=="||op=="##")
+	return op;
+  else {
+	throw "Error: unknown operator in parsing constraint.";
+  }
+}
+
+void Constraint::initialize() {
+  _op=Constraint::UNDEFINED;
+  VariableId varId;
+  _lhsVar=varId;
+  _rhsVar=varId;
+  _intVal=CppCapsuleAValue(0);
+}
+
 void Constraint::fromStream(istream& is) {
-  // not finished yet
-#if 0
   char c;
   string s;
   int __varIdCode=-1; 
   VariableId __varId; 
   AValue __varAValue; 
-  if(!CodeThorn::Parse::checkWord("(",is)) throw "Error: Syntax error PState. Expected '{'.";
   is>>c;
-  int enumCode;
-  is>>enumCode;
-  //switch(enumCode) { TODO
-#endif
-  assert(0);
+  if(c!='V') throw "Error: Syntax error Constraint. Expected VariableId.";
+  is>>__varIdCode;
+  assert(__varIdCode>=0);
+  __varId.setIdCode(__varIdCode);
+  _lhsVar=__varId;
+  string op=operatorStringFromStream(is);
+  if(is.peek()=='V') {
+	// case: varop var
+	is>>c; // consume 'V'
+	is>>__varIdCode;
+	assert(__varIdCode>=0);
+	__varId.setIdCode(__varIdCode);
+	_rhsVar=__varId;
+	if(op=="==") _op=EQ_VAR_VAR;
+	if(op=="!=") _op=NEQ_VAR_VAR;
+	if(op=="##") _op=DEQ; // special case
+  } else {
+	// case: var op const
+	is>>__varAValue;
+	_intVal=CppCapsuleAValue(__varAValue);
+	if(op=="==") _op=EQ_VAR_CONST;
+	if(op=="!=") _op=NEQ_VAR_CONST;
+  }
 }
 
 string Constraint::opToString() const {
   switch(op()) {
   case EQ_VAR_VAR:
   case EQ_VAR_CONST: return "==";
+  case NEQ_VAR_VAR:
   case NEQ_VAR_CONST: return "!=";
   case DEQ: return "##";
   default:

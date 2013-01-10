@@ -87,6 +87,33 @@ CodeThorn::Parse::checkWord(string w,istream& is) {
   return false;
 }
 
+/* Consumes input from istream if the string w can be parsed
+   otherwise generates an error message and throws exception.
+   Returns without performing any action for an empty string w.
+*/
+void
+CodeThorn::Parse::parseString(string w,istream& is) {
+  size_t i;
+  char c;
+  for(i=0;i<w.size();i++) {
+	if(is.peek()==w[i]) {
+	  is >> c;
+	} else {
+	  break;
+	}
+  }
+  // check that string was sucessfully parsed
+  if(i==w.size()) {
+	return;
+  } else {
+	cerr<< "Error: parsing of \""<<w<<"\" failed."<<endl;
+	string s;
+	is>>s;
+	cerr<< "Parsed "<<i<<"characters. Remaining input: "<<s<<"..."<<endl;
+	throw "Parser Error.";
+  }
+}
+
 bool
 CodeThorn::Parse::integer(istream& is, int& num) {
   if(std::isdigit(is.peek())) {

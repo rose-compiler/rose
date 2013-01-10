@@ -35,7 +35,8 @@ typedef set<VariableId> SetOfVariableId;
 */
 class Constraint {
  public:
-  enum ConstraintOp {EQ_VAR_CONST,NEQ_VAR_CONST, EQ_VAR_VAR, NEQ_VAR_VAR, DEQ};
+  enum ConstraintOp {UNDEFINED,EQ_VAR_CONST,NEQ_VAR_CONST, EQ_VAR_VAR, NEQ_VAR_VAR, DEQ};
+  Constraint();
   Constraint(ConstraintOp op0,VariableId lhs, AValue rhs);
   Constraint(ConstraintOp op0,VariableId lhs, CppCapsuleAValue rhs);
   Constraint(ConstraintOp op0,VariableId lhs, VariableId rhs);
@@ -46,8 +47,10 @@ class Constraint {
   CppCapsuleAValue rhsValCppCapsule() const;
   string toString() const;
   string toString(VariableIdMapping*) const;
+  string operatorStringFromStream(istream& is);
   void fromStream(istream& is);
   void toStream(ostream& os);
+  void toStreamAsTuple(ostream& os);
   bool isVarVarOp() const;
   bool isVarValOp() const;
   bool isEquation() const;
@@ -57,6 +60,7 @@ class Constraint {
   void swapVars();
   void setLhsVar(VariableId lhs) { _lhsVar=lhs; } 
  private:
+  void initialize();
   string opToString() const;
   ConstraintOp _op;
   VariableId _lhsVar;

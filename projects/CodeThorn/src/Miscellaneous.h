@@ -23,6 +23,7 @@ namespace CodeThorn {
 
  namespace Parse {
    bool checkWord(string w,istream& is);
+   void parseString(string w,istream& is);
    bool integer(istream& is, int& num);
    int spaces(istream& is);
    int whitespaces(istream& is);

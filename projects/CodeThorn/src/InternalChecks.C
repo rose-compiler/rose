@@ -513,6 +513,48 @@ void checkTypes() {
 		cout << "ps.toString():"<<ps.toString()<<":"<<endl;
 	  }
 	}
+	{
+	  stringstream ss;
+	  string s="aaabbb";
+	  ss<<s;
+	  string parseString="aaa";
+	  CodeThorn::Parse::parseString(parseString,ss); // throws exception if it fails
+	  char next;
+	  ss>>next;
+	  check(string("Parsing: ")+parseString+" from:"+s+" Next:"+next,true);	  
+	}
+	{
+	  Constraint cs;
+	  stringstream ss;
+	  stringstream ssout;
+	  string cstring="V1==V2";
+	  ss<<cstring;
+	  cs.fromStream(ss);
+	  cs.toStream(ssout);
+	  check("Stream I/O constraint: "+cstring,ssout.str()==cstring);
+	}
+	{
+	  Constraint cs;
+	  stringstream ss;
+	  stringstream ssout;
+	  string cstring="V3!=4";
+	  ss<<cstring;
+	  cs.fromStream(ss);
+	  cs.toStream(ssout);
+	  check("Stream I/O constraint: "+cstring,ssout.str()==cstring);
+	}
+	{
+	  Constraint cs;
+	  cs=DISEQUALITYCONSTRAINT;
+	  stringstream ss;
+	  stringstream ssout;
+	  string cstring=cs.toString();
+	  ss<<cstring;
+	  cs.fromStream(ss);
+	  cs.toStream(ssout);
+	  check("Stream I/O DEQ constraint: "+cstring,ssout.str()==cstring);
+	}
+
   } // end of stream operator checks
 }
 
