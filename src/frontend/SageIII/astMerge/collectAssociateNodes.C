@@ -1681,6 +1681,18 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 
+         // Liao 2013/1/9 placeholders for OpenMP specific nodes
+         // Somehow ./dotGeneratorWholeASTGraph calls into this function. I need this to generate the dot graph
+          case V_SgOmpParallelStatement:
+          case V_SgOmpSingleStatement:
+          case V_SgOmpTaskStatement:
+          case V_SgOmpNowaitClause:
+          case V_SgOmpUntiedClause:
+            {
+              //TODO real code to support AST merge
+              nodeList.insert(node);
+              break;
+            }
           case V_SgPointerType:
              {
             // printf ("addAssociatedNodes(): ignoring this case of node = %p = %s = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
