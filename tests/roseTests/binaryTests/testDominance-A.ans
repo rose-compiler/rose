@@ -1,16 +1,16 @@
-test A in function <_init> at 0x08048278
-test A in function <malloc@plt> at 0x080482a0
-test A in function <__libc_start_main@plt> at 0x080482b0
-test A in function <_start> at 0x080482c0
-test A in function <call_gmon_start> at 0x080482e4
-test A in function <__do_global_dtors_aux> at 0x08048310
-test A in function <frame_dummy> at 0x08048340
-test A in function <main> at 0x08048364
-test A in function <> at 0x0804836e
-test A in function <__libc_csu_init> at 0x080483c0
-test A in function <__libc_csu_fini> at 0x08048414
-test A in function <__do_global_ctors_aux> at 0x08048460
-test A in function <_fini> at 0x08048494
+test testDominance-A1.dot in function <_init> at 0x08048278
+test testDominance-A2.dot in function <malloc@plt> at 0x080482a0
+test testDominance-A3.dot in function <__libc_start_main@plt> at 0x080482b0
+test testDominance-A4.dot in function <_start> at 0x080482c0
+test testDominance-A5.dot in function <call_gmon_start> at 0x080482e4
+test testDominance-A6.dot in function <__do_global_dtors_aux> at 0x08048310
+test testDominance-A7.dot in function <frame_dummy> at 0x08048340
+test testDominance-A8.dot in function <main> at 0x08048364
+test testDominance-A9.dot in function <> at 0x0804836e
+test testDominance-A10.dot in function <__libc_csu_init> at 0x080483c0
+test testDominance-A11.dot in function <__libc_csu_fini> at 0x08048414
+test testDominance-A12.dot in function <__do_global_ctors_aux> at 0x08048460
+test testDominance-A13.dot in function <_fini> at 0x08048494
 
 === testDominance-A1.dot ===
 digraph G {
