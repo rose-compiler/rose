@@ -145,6 +145,8 @@ ASTtools::replaceStatement (SgStatement* s_cur, SgStatement* s_new)
 void  // move statements from src block to dest block // same semantics to SageInterface::moveStatementsBetweenBlocks(), which is a better implementation
 ASTtools::moveStatements (SgBasicBlock* src, SgBasicBlock* dest)
 {
+  cerr<<"ASTtools::moveStatements(SgBasicBlock*src, SgBasicBlock* dest) is used. Please use SageInterface::moveStatementsBetweenBlocks(SgBasicBlock* src, SgBasicBlock* dest) instead."<<endl;
+  ROSE_ASSERT (false);
   if (!src) return; // no work to do
   ROSE_ASSERT (src && dest);
 
@@ -197,7 +199,8 @@ ASTtools::transformToBlockShell (SgBasicBlock* b_orig)
   // Create new block to store 'T', and move statements to it.
   SgBasicBlock* b_shell = SageBuilder::buildBasicBlock ();
   ROSE_ASSERT (b_shell);
-  ASTtools::moveStatements (b_orig, b_shell);// move statements to the inner block
+  //ASTtools::moveStatements (b_orig, b_shell);// move statements to the inner block
+  SageInterface::moveStatementsBetweenBlocks ( b_orig, b_shell) ; // better implementation by this interface function
   b_orig->append_statement (b_shell);
   b_shell->set_parent (b_orig);
   return b_shell;

@@ -243,7 +243,18 @@ public:
 #endif
 
     if (!Outliner::useNewFile)
-      def_decl->set_firstNondefiningDeclaration (proto);
+    {
+      // Liao, 12/20/2012. A hidden first non-defining declaration is built when the defining one is created
+      // So the newly generated prototype function declaration is no longer the first non-defining declaration.
+      SgFunctionDeclaration* first_non_def = isSgFunctionDeclaration(proto->get_firstNondefiningDeclaration ());
+      ROSE_ASSERT (first_non_def != NULL);
+      ROSE_ASSERT (first_non_def->get_symbol_from_symbol_table()!= NULL);
+      def_decl->set_firstNondefiningDeclaration (first_non_def);
+      // Liao, we have to set it here otherwise it is difficult to find this prototype later. Using static to avoid name collision
+      SageInterface::setStatic (proto);
+      SageInterface::setStatic (def_decl);
+      SageInterface::setStatic (first_non_def);
+    }
 
     return proto;
   }
@@ -684,7 +695,8 @@ Outliner::insert (SgFunctionDeclaration* func,
      // The newly transformation generated function prototype is now actually the 2nd prototype not directly associated with the func symbol
      ROSE_ASSERT(sourceFileFunctionPrototypeSymbol->get_declaration() == sourceFileFunctionPrototype->get_firstNondefiningDeclaration());
      //ROSE_ASSERT(sourceFileFunctionPrototype->get_firstNondefiningDeclaration() == sourceFileFunctionPrototype);
-     ROSE_ASSERT(sourceFileFunctionPrototype->get_firstNondefiningDeclaration() != sourceFileFunctionPrototype);
+     if (Outliner::useNewFile != true)
+       ROSE_ASSERT(sourceFileFunctionPrototype->get_firstNondefiningDeclaration() != sourceFileFunctionPrototype);
      // Liao 12/6/2010, this assertion is not right. SageInterface function is smart enough 
      // to automatically set the defining declaration for the prototype
      // DQ (2/27/2009): Assert this as a test!
@@ -717,7 +729,8 @@ Outliner::insert (SgFunctionDeclaration* func,
        // The build function should have build symbol for the symbol table.
           SgFunctionSymbol* outlinedFileFunctionPrototypeSymbol = isSgFunctionSymbol(scope->lookup_symbol(func->get_name()));
           ROSE_ASSERT(outlinedFileFunctionPrototypeSymbol != NULL);
-          ROSE_ASSERT(outlinedFileFunctionPrototypeSymbol->get_declaration() == outlinedFileFunctionPrototype);
+          // This is no longer true when a prototype is created when a defining one is created.
+          //ROSE_ASSERT(outlinedFileFunctionPrototypeSymbol->get_declaration() == outlinedFileFunctionPrototype);
 
        // DQ (2/27/2009): Assert this as a test!
        // TV (04/18/2011): replace '== NULL' by '== func' as this is enforced by the builder (also comment the next statement)
@@ -730,7 +743,10 @@ Outliner::insert (SgFunctionDeclaration* func,
           outlinedFileFunctionPrototype->set_scope(scope);
 
        // Set the func_prototype as the first non-defining declaration.
-          func->set_firstNondefiningDeclaration(outlinedFileFunctionPrototype);
+       // Liao 12/14/2012. the prototype is no longer the first non-defining one. We have to explicit grab it.
+          SgDeclarationStatement * first_non_def_decl = outlinedFileFunctionPrototype->get_firstNondefiningDeclaration();
+          ROSE_ASSERT (first_non_def_decl != NULL);
+          func->set_firstNondefiningDeclaration(first_non_def_decl);
 
           ROSE_ASSERT(outlinedFileFunctionPrototype->get_parent() != NULL);
           ROSE_ASSERT(outlinedFileFunctionPrototype->get_firstNondefiningDeclaration() != NULL);

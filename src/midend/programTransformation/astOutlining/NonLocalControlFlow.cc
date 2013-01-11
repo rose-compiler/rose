@@ -260,9 +260,13 @@ Outliner::Preprocess::transformNonLocalControlFlow (SgBasicBlock* b_orig)
 
   // Create a non-local exit label.
   SgName label_exit_name ("NON_LOCAL_EXIT__");
+  SgStatement* null_stmt = SageBuilder::buildNullStatement(); // Liao 12/18/2012, needed to unparse ; 
   SgLabelStatement* label_exit =
-    SageBuilder::buildLabelStatement (label_exit_name, NULL,b_gotos);
+    SageBuilder::buildLabelStatement (label_exit_name, null_stmt,b_gotos);
   ROSE_ASSERT (label_exit);
+  b_gotos->append_statement (null_stmt);
+  null_stmt->set_parent(b_gotos);
+
   b_gotos->append_statement (label_exit);
   label_exit->set_parent (b_gotos);
   label_exit->set_scope (b_gotos); // seg fault if missing, Liao

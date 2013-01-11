@@ -1190,12 +1190,15 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
   result = Outliner::generateFunction(body_block, func_name, syms, pdSyms3, pSyms, struct_decl, g_scope);
   Outliner::insert(result, g_scope, body_block);
 
+#if 0 //Liao 12/20/2012 this logic is moved into outliner since using static function is generally a good idea.
+   // astOutlining/Insert.cc  GlobalProtoInserter::insertManually() has the code now.
+   //
   // A fix from Tristan Ravitch travitch@cs.wisc.edu to make outlined functions static to avoid name conflicts
   if (result->get_definingDeclaration() != NULL)
     SageInterface::setStatic(result->get_definingDeclaration());
   if (result->get_firstNondefiningDeclaration() != NULL)
     SageInterface::setStatic(result->get_firstNondefiningDeclaration());
-
+#endif
   // Generate packing statements
   // must pass target , not body_block to get the right scope in which the declarations are inserted
   if (!SageInterface::is_Fortran_language()) 

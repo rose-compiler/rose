@@ -133,6 +133,12 @@ getVarSym_const (const SgNode* n)
         n->unparseToString()<<endl;
         //ROSE_ASSERT(v_sym != NULL);
         //GCC macros __FUNCTION__ and __PRETTY_FUNCTION__ have no symbols in ROSE for some reason
+      } 
+      else 
+      { // Liao, 12/18/2012. We should ignore built in variables since they should not be passed (by value/ref) into the outlined functions
+        string name = v_sym->get_name().getString();
+        if  (name =="__PRETTY_FUNCTION__" || name =="__FUNCTION__" ||name == "__func__") 
+          v_sym = NULL;
       }
       break;
     }
