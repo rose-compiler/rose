@@ -137,7 +137,7 @@ SageBuilder::setSourcePositionClassificationMode(SageBuilder::SourcePositionClas
 string
 SageBuilder::display(SourcePositionClassification & scp)
    {
-  // DQ (11/19/2012): This function is build to support debugging the value of the staticlly defined mode.
+  // DQ (11/19/2012): This function is build to support debugging the value of the statically defined mode.
 
      string s;
      switch(scp)
@@ -1589,14 +1589,13 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
      printf ("Inside of SageBuilder::buildFunctionType(SgType,SgFunctionParameterTypeList) \n");
      printf ("Inside of SageBuilder::buildFunctionType() return_type = %s \n",return_type->get_mangled().str());
      printf ("Inside of SageBuilder::buildFunctionType() typeList->get_arguments().size() = %zu \n",typeList->get_arguments().size());
-#endif
 
      if (isSgFunctionType(return_type) != NULL)
-        {
+        { // Liao 12/14/2012. This is not true for some functions (e.g. findFunctionUsingDlopen() on top of dlopen()) returning a function type
           printf ("ERROR: Inside of SageBuilder::buildFunctionType(): function type can't be return type of function type (at least for debugging) \n");
           ROSE_ASSERT(false);
         }
-
+#endif
      SgFunctionTypeTable * fTable = SgNode::get_globalFunctionTypeTable();
      ROSE_ASSERT(fTable);
 
@@ -2918,15 +2917,15 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* f
   // DQ (2/19/2009): Fixed to handle extern "C" state in input "funcdecl"
   // return buildNondefiningFunctionDeclaration(name,return_type,paralist,scope);
   SgFunctionDeclaration* returnFunction = buildNondefiningFunctionDeclaration(name,return_type,paralist,scope,decoratorList);
+#endif
+  // buildNondefiningFunctionDeclaration() will check if a same function is created before by looking up function symbols.
+  SgFunctionDeclaration* returnFunction  = buildNondefiningFunctionDeclaration (name, return_type, paralist, scope, decoratorList, false, NULL);
 
   returnFunction->set_linkage(funcdecl->get_linkage());
   if (funcdecl->get_declarationModifier().get_storageModifier().isExtern() == true)
   {
     returnFunction->get_declarationModifier().get_storageModifier().setExtern();
   }
-#endif
-  // buildNondefiningFunctionDeclaration() will check if a same function is created before by looking up function symbols.
-  SgFunctionDeclaration* returnFunction  = buildNondefiningFunctionDeclaration (name, return_type, paralist, scope, decoratorList, false, NULL);
 
   ROSE_ASSERT (returnFunction->get_linkage() == funcdecl->get_linkage());
   ROSE_ASSERT (returnFunction->get_declarationModifier().get_storageModifier().isExtern() ==
@@ -4163,6 +4162,7 @@ SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return
 
   // DQ (11/12/2012): Building a defining declaration from scratch now requires a non-defining declaration to exist.
      SgFunctionDeclaration* nondefininfDeclaration = buildNondefiningFunctionDeclaration(name,return_type,parameter_list,scope,NULL);
+//     appendStatement (nondefininfDeclaration, scope);
 
   // return buildDefiningFunctionDeclaration (name,return_type,parameter_list,scope,NULL,false,NULL,NULL);
      return buildDefiningFunctionDeclaration (name,return_type,parameter_list,scope,NULL,false,nondefininfDeclaration,NULL);
@@ -5523,7 +5523,7 @@ SgExprListExp * SageBuilder::buildExprListExp(SgExpression * expr1, SgExpression
   SgExprListExp* expList = new SgExprListExp();
   ROSE_ASSERT(expList);
 
-  printf ("In SageBuilder::buildExprListExp(SgExpression * expr1, SgExpression* expr2, ...): SgExprListExp* expList = %p \n",expList);
+//  printf ("In SageBuilder::buildExprListExp(SgExpression * expr1, SgExpression* expr2, ...): SgExprListExp* expList = %p \n",expList);
 
   setOneSourcePositionForTransformation(expList);
   if (expr1) appendExpression(expList, expr1);
@@ -5893,6 +5893,7 @@ SageBuilder::buildFunctionRefExp(const SgFunctionDeclaration* func_decl)
   {
     ROSE_ASSERT(nondef_func!= NULL);
     symbol = nondef_func->get_symbol_from_symbol_table();
+    ROSE_ASSERT( symbol != NULL);
   }
   // Liao 12/1/2010. It is possible that there is no prototype declarations at all
   else if (def_func != NULL)
@@ -6076,7 +6077,7 @@ SageBuilder::buildFunctionCallExp(const SgName& name, SgType* return_type, SgExp
      if (parameters == NULL)
           parameters = buildExprListExp();
 
-#if 1
+#if 0
      printf ("In SageBuilder::buildFunctionCallExp(): calling buildFunctionParameterTypeList() \n");
 #endif
 

@@ -64,6 +64,9 @@ Outliner::Preprocess::preprocessOutlineTarget (SgStatement* s)
     case V_SgVariableDeclaration:
       s_post = normalizeVarDecl (isSgVariableDeclaration (s));
       break;
+    case V_SgBasicBlock: // already a block, nothing to do
+      s_post = isSgBasicBlock(s);
+      break;
     default:
       s_post = createBlock (s);
       break;
