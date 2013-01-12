@@ -3693,10 +3693,19 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
          }
 
      // This is to specify where ecj should output the .class it is temporarily generating.
-     // Check if -decj has already been provided, if not default to ecj-classes.
+     // Check if -decj has already been provided, if not default to a unique name consisting
+     // of the prefix "ecj-classes" with the suffix "-" + source_file_name,  where source_file_name
+     // is the simple name of the input source file without the ".java" suffix.
      string ecjDestDir;
          if (!CommandlineProcessing::isOptionWithParameter(javaRoseOptionList, "", "decj", ecjDestDir, false)) {
-                 ecjDestDir = "ecj-classes/";
+             string full_file_name = get_sourceFileNameWithPath();
+             int last_slash = full_file_name.find_last_of("/\\");
+             string file_name = full_file_name.substr(last_slash + 1);
+             int dot = file_name.find_last_of(".");
+             if (dot != -1) {
+                 file_name = file_name.substr(0, dot);
+             }
+             ecjDestDir = "ecj-classes-" + file_name + "/";
          }
          frontEndCommandLine.push_back("-d");
          frontEndCommandLine.push_back(ecjDestDir);
