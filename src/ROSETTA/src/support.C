@@ -578,11 +578,18 @@ Grammar::setUpSupport ()
   //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
   // Pragma.setDataPrototype  ( "Sg_File_Info*", "file_info", "= NULL",
   //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+
+  // DQ (1/11/13): The astCopy and astDelete are inconsistant if we share the pointer (we need to copy using CLONE_PTR 
+  // so that we will build a new Sg_File_Info object).
+  // Pragma.setDataPrototype  ( "Sg_File_Info*", "startOfConstruct", "= NULL",
+  //                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
      Pragma.setDataPrototype  ( "Sg_File_Info*", "startOfConstruct", "= NULL",
-                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
   // DQ (5/3/2012): Added endOfConstruct to be uniform and prepare SgPragma API to movement of SgPragma to be derived from SgLocatedNode in the future.
+  // Pragma.setDataPrototype  ( "Sg_File_Info*", "endOfConstruct", "= NULL",
+  //             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
      Pragma.setDataPrototype  ( "Sg_File_Info*", "endOfConstruct", "= NULL",
-                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
      Pragma.setDataPrototype ( "short" , "printed", "= 0",
                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -668,8 +675,13 @@ Grammar::setUpSupport ()
   // access function to support previous interface for a while.
   // File.setDataPrototype         ( "Sg_File_Info*" , "file_info", "= NULL",
   //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+
+  // DQ (1/11/13): The astCopy and astDelete are inconsistant if we share the pointer (we need to copy using CLONE_PTR 
+  // so that we will build a new Sg_File_Info object).
+  // File.setDataPrototype         ( "Sg_File_Info*" , "startOfConstruct", "= NULL",
+  //                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
      File.setDataPrototype         ( "Sg_File_Info*" , "startOfConstruct", "= NULL",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
 
 
   // DQ (9/2/2008): We want to move this to be in the SgSourceFile

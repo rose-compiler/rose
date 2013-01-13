@@ -337,10 +337,16 @@ mangleQualifiersToString (const SgScopeStatement* scope)
             // DQ (3/14/2012): I think that defaults should be resurced for errors, and not proper handling of unexpected cases.
                default: // Embed the class name for subsequent debugging.
                   {
-                    printf ("WARNING: In mangleQualifiersToString(const SgScopeStatement*): case of scope = %s not handled (default reached) \n",scope->class_name().c_str());
+                    printf ("WARNING: In mangleQualifiersToString(const SgScopeStatement*): case of scope = %p = %s not handled (default reached) \n",scope,scope->class_name().c_str());
+
+                 // DQ (1/12/13): Assert that this is not a previously deleted IR node (which will have the name = "SgNode").
+                    ROSE_ASSERT(scope->class_name() != "SgNode");
+
+                 // DQ (1/12/13): Added assertion.
+                    ROSE_ASSERT(scope->get_scope() != NULL);
 
                  // Surrounding scope name
-                    string par_scope_name = mangleQualifiersToString (scope->get_scope ());
+                    string par_scope_name = mangleQualifiersToString (scope->get_scope());
 
                  // Compute a local scope name
                  //! \todo Compute local scope names correctly (consistently).
@@ -380,6 +386,12 @@ mangleQualifiers( const SgScopeStatement* scope )
   // DQ (3/19/2011): I think that we want a valid scope else there is no proper pointer to the generated string.
   // ROSE_ASSERT(scope != NULL);
      ROSE_ASSERT(scope != NULL);
+
+  // DQ (1/12/13): Assert that this is not a previously deleted IR node (which will have the name = "SgNode").
+     ROSE_ASSERT(scope->class_name() != "SgNode");
+
+  // DQ (1/12/13): Added assertion.
+     ROSE_ASSERT(scope->get_scope() != NULL);
 
      string s = mangleQualifiersToString(scope);
 

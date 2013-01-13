@@ -3514,6 +3514,10 @@ SgStatement::replace_statement_from_basicBlock(SgStatement* target, SgStatement*
 void
 SgStatement::post_construction_initialization()
    {
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgStatement::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 // DQ (12/5/2004): Support for setting scopes (only meaningful on IR statements that store the scope explicitly)
@@ -4127,6 +4131,10 @@ SgScopeStatement::SgScopeStatement ( Sg_File_Info* file_info )
 void
 SgScopeStatement::post_construction_initialization()
    {
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgScopeStatement::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 // DQ (9/8/2004): Added to support qualified name generation
@@ -5988,6 +5996,10 @@ SgFunctionTypeTable::SgFunctionTypeTable()
 void
 SgFunctionTypeTable::post_construction_initialization()
    {
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgFunctionTypeTable::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 void
@@ -6119,6 +6131,10 @@ SgGlobal::get_mangled_name(void) const
 void
 SgGlobal::post_construction_initialization()
    {
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgGlobal::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 void
@@ -6360,7 +6376,12 @@ SgDeclarationStatement::get_qualified_name_prefix() const
 
 void
 SgDeclarationStatement::post_construction_initialization()
-   {}
+   {
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgDeclarationStatement::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+   }
 
 // DQ (11/28/2009): Changed return type from "int" to "bool"
 bool
@@ -8067,6 +8088,11 @@ SgBasicBlock::post_construction_initialization()
    {
    // Call the base class post_construction_initialization() member function
    // SgScopeStatement::post_construction_initialization();
+
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgBasicBlock::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 void
@@ -8178,6 +8204,11 @@ SgIfStmt::post_construction_initialization()
      if (get_true_body()   != NULL) get_true_body  ()->set_parent(this);
      if (get_false_body()  != NULL) get_false_body ()->set_parent(this);
 // #endif
+
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgIfStatement::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 bool
@@ -8221,6 +8252,10 @@ SOURCE_FOR_INIT_STATEMENT_START
 void
 SgForInitStatement::post_construction_initialization()
    {
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgForInitStatement::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 void
@@ -8329,6 +8364,11 @@ SgForStatement::post_construction_initialization()
         {
           p_loop_body->set_parent(this);
         }
+
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgForStatement::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 // MS: moved StatementPtrList to ForInitStatement. Therefore the call is simply forwarded and the same interface
@@ -8482,6 +8522,10 @@ SOURCE_FORALL_STATEMENT_START
 void
 SgForAllStatement::post_construction_initialization()
    {
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgForAllStatement::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 SOURCE_FORALL_STATEMENT_END
@@ -9471,6 +9515,11 @@ SgFunctionParameterList::post_construction_initialization()
 
           set_endOfConstruct(endingPosition);
         }
+
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgFunctionParameterList::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 #if 0
@@ -9690,7 +9739,12 @@ SOURCE_FUNCTION_DEFINTION_STATEMENT_START
 
 void
 SgFunctionDefinition::post_construction_initialization()
-   { }
+   {
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgFunctionDefinition::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+   }
 
 SgFunctionDefinition::SgFunctionDefinition(Sg_File_Info* f, SgFunctionDeclaration* d, SgBasicBlock* body)
    : SgScopeStatement(f), p_body(body)
@@ -10002,6 +10056,11 @@ SgMemberFunctionDeclaration::post_construction_initialization()
   // DQ (9/21/2005): set the parent so that the scope will be computed correctly
   // (scope is not stored explicitly on the SgCtorInitializerList IR node).
      p_CtorInitializerList->set_parent(this);
+
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgMemberFunctionDeclaration::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 void
@@ -10270,6 +10329,11 @@ SgCtorInitializerList::post_construction_initialization()
 
           set_endOfConstruct(endingPosition);
         }
+
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgCtorInitializerList::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 /* SgInitializedName tuple: (SgName, type, Initializer) */
@@ -10466,6 +10530,11 @@ SgVariableDeclaration::post_construction_initialization()
    {
   // DQ (11/18/2007): Added support for Fortran declaration attributes
   // p_fortran_attribute_spec = SgBitVector(SgAttributeSpecificationStatement::e_last_attribute_spec,false);
+
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgVariableDeclaration::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 
@@ -11090,6 +11159,10 @@ SOURCE_VARIABLE_DEFINITION_STATEMENT_START
 void
 SgVariableDefinition::post_construction_initialization()
    {
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgVariableDefinition::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 SgVariableDeclaration*
@@ -11228,6 +11301,11 @@ SgClassDeclaration::post_construction_initialization()
         }
 #endif        
      
+#endif
+
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgClassDeclaration::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
 #endif
    }
 
@@ -11533,6 +11611,11 @@ SgTemplateInstantiationDecl::post_construction_initialization()
           set_type(SgClassType::createType(this));
         }
 #endif
+
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgTemplateInstantiationDecl::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 SgName
@@ -11782,6 +11865,11 @@ SgTemplateInstantiationFunctionDecl::post_construction_initialization()
           printf ("Warning (post_construction_initialization): p_templateArguments == NULL in SgTemplateInstantiationFunctionDecl = %p \n",this);
         }
 #endif
+
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgTemplateInstantiationFunctionDecl::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 void
@@ -11908,6 +11996,11 @@ SgTemplateInstantiationMemberFunctionDecl::post_construction_initialization()
           printf ("Warning (post_construction_initialization): p_templateArguments == NULL in SgTemplateInstantiationMemberFunctionDecl = %p \n",this);
         }
 #endif
+
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgTemplateInstantiationMemberFunctionDecl::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 void
@@ -12009,6 +12102,10 @@ SOURCE_TEMPLATE_INSTANTIATION_DEFINITION_STATEMENT_START
 void
 SgTemplateInstantiationDefn::post_construction_initialization()
    {
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgTemplateInstantiationDefn::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 
@@ -12086,6 +12183,11 @@ SgClassDefinition::post_construction_initialization()
    {
   // DQ (9/5/2006): I don't think that this is called, but if it is then packingAlignment initialization is required.
      p_packingAlignment = 0;
+
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgClassDefinition::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 void
@@ -12250,6 +12352,11 @@ SgEnumDeclaration::post_construction_initialization()
 #endif
           set_type(SgEnumType::createType(this));
         }
+
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgEnumDeclaration::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 void
@@ -12434,6 +12541,15 @@ SgEnumDeclaration::get_mangled_name (void) const
                   }
                  else
                   {
+                 // DQ (1/12/13): Assert that this is not a previously deleted IR node (which will have the name = "SgNode").
+                    ROSE_ASSERT(get_scope()->class_name() != "SgNode");
+
+                 // DQ (1/12/13): Added assertion (only makes sense for non SgGlobal scopes).
+                    if (isSgGlobal(get_scope()) == NULL)
+                       {
+                         ROSE_ASSERT(get_scope()->get_scope() != NULL);
+                       }
+
                     mangleQualifiersString = mangleQualifiers(get_scope());
                   }
              }
@@ -12514,6 +12630,11 @@ SgExprStatement::post_construction_initialization()
   // structural change to the AST, thus it is free to set the parent of the new expression.
      if (get_expression() != NULL)
           get_expression()->set_parent(this);
+
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgExprStatement::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 // DQ (12/6/2006): We need this sort of function now that we have removed the expression root node!
@@ -12557,6 +12678,10 @@ SgLabelStatement::hasExplicitScope() const
 void
 SgLabelStatement::post_construction_initialization()
    {
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In SgLabelStatement::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
+#endif
    }
 
 SgName
