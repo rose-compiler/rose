@@ -18,6 +18,7 @@
 #include <cstring>
 #include <boost/program_options.hpp>
 #include <map>
+#include "RDLattice.h"
 #include "InternalChecks.h"
 
 using namespace CodeThorn;
@@ -553,6 +554,21 @@ void checkTypes() {
 	  cs.fromStream(ss);
 	  cs.toStream(ssout);
 	  check("Stream I/O DEQ constraint: "+cstring,ssout.str()==cstring);
+	}
+	{
+	  RDLattice a;
+	  VariableId var1;
+	  var1.setIdCode(1);
+	  VariableId var2;
+	  var2.setIdCode(2);
+	  a.insertPair(1,var1);
+	  RDLattice b;
+	  b.insertPair(1,var1);
+	  b.insertPair(2,var2);
+	  //a.toStream(cout);cout<<endl;
+	  //b.toStream(cout);cout<<endl;
+	  check("a ApproximatedBy b",a.approximatedBy(b)==true);
+	  check("not (b ApproximatedBy a)",b.approximatedBy(a)==false);
 	}
 
   } // end of stream operator checks

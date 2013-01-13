@@ -73,20 +73,25 @@ class Analyzer {
   PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
   EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
   list<EState> transferFunction(Edge edge, const EState* estate);
+
   void addToWorkList(const EState* estate);
   const EState* addToWorkListIfNew(EState estate);
+  const EState* takeFromWorkList();
+  bool isInWorkList(const EState* estate);
+  bool isEmptyWorkList();
+  const EState* topWorkList();
+  const EState* popWorkList();
+
   void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
   void printStatusMessage(bool);
   bool isLTLRelevantLabel(Label label);
   set<const EState*> nonLTLRelevantEStates();
   bool isTerminationRelevantLabel(Label label);
-  const EState* takeFromWorkList();
 
   // 5 experimental functions
   void semanticFoldingOfTransitionGraph();
   bool checkEStateSet();
   bool isConsistentEStatePtrSet(set<const EState*> estatePtrSet);
-  bool isInWorkList(const EState* estate);
   bool checkTransitionGraph();
 
  private:
@@ -106,9 +111,6 @@ class Analyzer {
   EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
 
  public:
-  bool isEmptyWorkList();
-  const EState* topWorkList();
-  const EState* popWorkList();
   SgNode* getCond(SgNode* node);
   void generateAstNodeInfo(SgNode* node);
 

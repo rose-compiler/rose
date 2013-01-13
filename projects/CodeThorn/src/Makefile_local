@@ -4,6 +4,7 @@
 
 TOOLNAME3 = codethorn
 TOOLNAME2 = ast_demo
+TOOLNAME4 = rdmain
 
 MYDATE = `date +%Y_%m_%d`
 
@@ -35,7 +36,7 @@ CXXFLAGS              = -Wno-deprecated -Wall
 LDFLAGS               = 
 YACC                  = bison
 
-OBJECT_FILES=RoseAst.o AstTerm.o Labeler.o SgNodeHelper.o VariableIdMapping.o CFAnalyzer.o AType.o ExprAnalyzer.o ConstraintRepresentation.o StateRepresentations.o Analyzer.o Visualizer.o Timer.o LanguageRestrictor.o LTLParser.o LTLCheckerFixpoint.o LTLCheckerUnified.o CommandLineOptions.o InternalChecks.o Miscellaneous.o MatchOperation.o AstMatching.o matcherparser.o matcherlexer.o 
+OBJECT_FILES=RoseAst.o AstTerm.o Labeler.o SgNodeHelper.o VariableIdMapping.o CFAnalyzer.o AType.o ExprAnalyzer.o ConstraintRepresentation.o StateRepresentations.o Analyzer.o Visualizer.o Timer.o LanguageRestrictor.o LTLParser.o LTLCheckerFixpoint.o LTLCheckerUnified.o CommandLineOptions.o InternalChecks.o Miscellaneous.o MatchOperation.o AstMatching.o matcherparser.o matcherlexer.o RDLattice.o
 
 REGRESSION_DATA_DIR=regressiondata
 
@@ -119,6 +120,9 @@ $(TOOLNAME3)_rers10: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3)
 
 $(TOOLNAME2): $(TOOLNAME2).C $(OBJECT_FILES)
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME2).C -o$(TOOLNAME2)
+
+$(TOOLNAME4): $(TOOLNAME4).C $(OBJECT_FILES) RERS_empty_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME4).C -o$(TOOLNAME4) RERS_empty_specialization.o
 
 xxtest: xxtest.C $(OBJECT_FILES)
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) xxtest.C -oxxtest
