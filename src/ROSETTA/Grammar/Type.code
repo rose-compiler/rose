@@ -2884,7 +2884,24 @@ SgEnumType::get_mangled (void) const
      ROSE_ASSERT(this != NULL);
 
      const SgEnumDeclaration* decl = isSgEnumDeclaration (get_declaration());
-     ROSE_ASSERT (decl);
+     ROSE_ASSERT (decl != NULL);
+
+  // DQ (1/12/13): Assert that this is not a previously deleted IR node (which will have the name = "SgNode").
+  // ROSE_ASSERT(decl->get_scope() != NULL);
+#if 0
+     printf ("SgEnumType::get_mangled(): decl->get_scope() = %p \n",decl->get_scope());
+#endif
+     if (decl->get_scope() != NULL)
+        {
+          ROSE_ASSERT(decl->get_scope()->class_name() != "SgNode");
+        }
+
+  // DQ (1/12/13): Added assertion (only makes sense for non SgGlobal scopes).
+     if (isSgGlobal(decl->get_scope()) == NULL)
+        {
+       // ROSE_ASSERT(decl->get_scope()->get_scope() != NULL);
+        }
+
      return decl->get_mangled_name ();
    }
 
