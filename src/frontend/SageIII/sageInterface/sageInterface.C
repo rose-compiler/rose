@@ -69,15 +69,6 @@ using namespace std;
 using namespace SageBuilder;
 
 int SageInterface::gensym_counter = 0;
-#if 0 // use StringUtility::numberToString() instead
-template <typename T>
-static std::string numToString(T x)
-{
-  std::ostringstream os;
-  os <<x;
-  return os.str();
-}
-#endif
 // DQ: 09/23/03
 // We require a global function for getting the string associated
 // with the definition of a variant (which is a global enum).
