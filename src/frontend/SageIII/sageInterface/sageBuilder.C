@@ -10381,6 +10381,11 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
 
 #if 0
      printf ("In buildTemplateClassDeclaration_nfi(): nonDefiningDecl = %p \n",nonDefiningDecl);
+     if (nonDefiningDecl != NULL)
+        {
+          printf ("--- nonDefiningDecl->get_firstNondefiningDeclaration() = %p \n",nonDefiningDecl->get_firstNondefiningDeclaration());
+          printf ("--- nonDefiningDecl->get_definingDeclaration()         = %p \n",nonDefiningDecl->get_definingDeclaration());
+        }
 #endif
 
   // DQ (11/20/2011): This is for initial debugging only.
@@ -10430,7 +10435,38 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
   // SgName localName = name;
   // SgTemplateClassDeclaration* defdecl = new SgTemplateClassDeclaration (name,template_class_kind,classDef);
   // SgTemplateClassDeclaration* defdecl = new SgTemplateClassDeclaration (name,kind,NULL,classDef);
-     SgTemplateClassDeclaration* defdecl = new SgTemplateClassDeclaration (nameWithTemplateSpecializationArguments,kind,NULL,classDef);
+
+  // DQ (1/13/2013): This is causing two defining declarations to be built for test2012_278.C (and the parent for the second defining 
+  // declaration is not being set, though the larger issue is that we have two defining declarations, however this might be acceptable 
+  // if this is a specialization).
+  // SgTemplateClassDeclaration* defdecl = new SgTemplateClassDeclaration (nameWithTemplateSpecializationArguments,kind,NULL,classDef);
+     SgTemplateClassDeclaration* defdecl = NULL;
+     if (nonDefiningDecl != NULL)
+        {
+       // If we have a non-defining declaration specified, try to use any existing defining declaration withouth building a 2nd one 
+       // (which would be an error, unless maybe if this is a specialization).
+          if (nonDefiningDecl->get_definingDeclaration() != NULL)
+             {
+            // This must be a valid SgTemplateClassDefinition.
+               defdecl = isSgTemplateClassDeclaration(nonDefiningDecl->get_definingDeclaration());
+               ROSE_ASSERT(defdecl != NULL);
+             }
+            else
+             {
+#if 0
+               printf ("No defining declaration found, so we have to build one. \n");
+#endif
+             }
+        }
+
+     if (defdecl == NULL)
+        {
+#if 0
+          printf ("Building a defining declaration \n");
+#endif
+          defdecl = new SgTemplateClassDeclaration (nameWithTemplateSpecializationArguments,kind,NULL,classDef);
+        }
+
 #else
      SgTemplateClassDeclaration* defdecl = NULL;
 
@@ -10439,6 +10475,10 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
 #endif
 
      ROSE_ASSERT(defdecl != NULL);
+
+#if 0
+     printf ("In buildTemplateClassDeclaration_nfi(): defdecl = %p = %s \n",defdecl,defdecl->class_name().c_str());
+#endif
 
   // DQ (9/10/2012): Initialize the template parameter list.
      ROSE_ASSERT(templateParameterList != NULL);
@@ -10691,7 +10731,7 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
   // This is not desired when building a defining declaration and an inefficience in the constructor
   // Ideally, only the first nondefining class declaration should have a dedicated SgClassType and 
   // the defining class declaration (and other nondefining declaration) just shared that SgClassType.
-     if (defdecl->get_type () != NULL) 
+     if (defdecl->get_type() != NULL) 
         {
        // if a defining class declaration's type is associated with a defining class.
        // This is a wrong SgClassType and has to be reset
@@ -10702,7 +10742,11 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
                delete defdecl->get_type();
              }
 #else
-          ROSE_ASSERT(defdecl->get_type() == NULL);
+       // DQ (1/13/2013): I am not clear what this means... if (defdecl->get_type() != NULL) then it makes 
+       // no sense to assert that (defdecl->get_type() == NULL).  This is related to the reuse of the defining 
+       // declaration when it is available (instead of building a new one, which still might be required for a 
+       // template specialization (or template partial specialization)).
+       // ROSE_ASSERT(defdecl->get_type() == NULL);
 #endif
         }
 
@@ -10742,7 +10786,11 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
      ROSE_ASSERT(nondefdecl->get_definition() == NULL);
 
   // DQ (7/15/2012): We want to inforce this.
-     ROSE_ASSERT(defdecl->get_parent() == NULL);
+  // ROSE_ASSERT(defdecl->get_parent() == NULL);
+     if (defdecl->get_parent() != NULL)
+        {
+          printf ("WARNING: the parent will have been set if the defining declaration was found and reused! defdecl = %p = %s \n",defdecl,defdecl->class_name().c_str());
+        }
 
   // DQ (9/12/2012): Test that the templateName is set (name without template specialization parameters).
      ROSE_ASSERT(defdecl->get_templateName().is_null() == false);

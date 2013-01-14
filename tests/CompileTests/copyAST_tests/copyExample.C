@@ -26,11 +26,11 @@ copyAST ( SgNode* node )
                virtual SgNode *copyAst(const SgNode *n)
                   {
                  // This is the simpliest possible version of a deep copy SgCopyHelp::copyAst() member function.
-#if 1
+#if 0
                     printf ("In copyAst(n = %p = %s): calling n->copy(*this) \n",n,n->class_name().c_str());
 #endif
                     SgNode *returnValue = n->copy(*this);
-#if 1
+#if 0
                     printf ("In copyAst(n = %p = %s): returnValue = %p = %s) \n",n,n->class_name().c_str(),returnValue,returnValue->class_name().c_str());
 #endif
                     return returnValue;
