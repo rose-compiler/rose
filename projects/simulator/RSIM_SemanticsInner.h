@@ -71,6 +71,13 @@ namespace RSIM_Semantics {
         RegisterDescriptor reg_cs, reg_ds, reg_es, reg_fs, reg_gs, reg_ss;
         RegisterDescriptor reg_eflags, reg_df, reg_tf;
 
+        /** Exception thrown by HLT instructions. In an x86 CPU, the HLT instruction pauses the CPU until an interrupt
+         *  arrives. The simulator handles this instruction by throwing a Halt exception. */
+        struct Halt {
+            rose_addr_t ip; // address of HLT instruction
+            Halt(rose_addr_t ip): ip(ip) {}
+        };
+
         InnerPolicy()
             : thread(NULL), regdict(NULL) {
             // must call ctor() before using this object
@@ -139,8 +146,7 @@ namespace RSIM_Semantics {
 
         /* Called by X86InstructionSemantics for the HLT instruction. See ROSE's NullSemantics. */
         void hlt() {
-            fprintf(stderr, "hlt\n");
-            abort();
+            throw Halt(this->get_insn()->get_address());
         }
 
         /* Called by RDTSC to return time stamp counter.  The simulator doesn't really have a time stamp counter, so we'll just

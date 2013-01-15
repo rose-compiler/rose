@@ -51,6 +51,9 @@ public:
      *  part of RSIM_Thread because each simulator thread must have its own copy. */
     bool insn_semaphore_posted;
 
+    /** Post the instruction semaphore if not already posted. */
+    void post_insn_semaphore();
+
     /**************************************************************************************************************************
      *                                  Thread simulation (specimen threads)
      **************************************************************************************************************************/
