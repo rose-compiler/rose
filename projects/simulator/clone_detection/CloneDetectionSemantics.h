@@ -45,7 +45,11 @@
 #include "CloneDetectionTpl.h"
 #endif
 
+#include "BinaryPointerDetection.h"
+
 namespace CloneDetection {
+
+typedef BinaryAnalysis::PointerAnalysis::PointerDetection<RSIM_Process> PointerDetector;
 
 // Make names for the sub policies.
 static const RSIM_SEMANTICS_OUTER_BASE::SP0 CONCRETE = RSIM_SEMANTICS_OUTER_BASE::SP0();
@@ -75,19 +79,21 @@ SYMBOLIC_VALUE<nBits> convert_to_symbolic(const ValueType<nBits> &value);
 
 /** Initial values to supply for inputs.  These are defined in terms of integers which are then cast to the appropriate size
  *  when needed.  During fuzz testing, whenever the specimen reads from a register or memory location which has never been
- *  written, we consume the next value from this input object. */
+ *  written, we consume the next value from this input object. When all values are consumed, this object begins to return only
+ *  zero values. */
 class InputValues {
 public:
+    enum Type { POINTER, NONPOINTER, UNKNOWN_TYPE };
     InputValues(): next_integer_(0), next_pointer_(0) {}
     void add_integer(uint64_t i) { integers_.push_back(i); }
-    void add_pointer(bool is_non_null) { pointers_.push_back(is_non_null?1:0); }
+    void add_pointer(uint64_t p) { pointers_.push_back(p); }
     uint64_t next_integer() {
         uint64_t retval = next_integer_ < integers_.size() ? integers_[next_integer_] : 0;
         ++next_integer_; // increment even past the end so we know how many inputs were consumed
         return retval;
     }
-    bool next_pointer() {
-        bool retval = 0 != (next_pointer_ < pointers_.size() ? pointers_[next_pointer_] : 0);
+    uint64_t next_pointer() {
+        uint64_t retval = next_pointer_ < pointers_.size() ? pointers_[next_pointer_] : 0;
         ++next_pointer_; // increment even past the end so we know how many inputs were consumed
         return retval;
     }
@@ -112,7 +118,7 @@ public:
     }
 protected:
     std::vector<uint64_t> integers_;
-    std::vector<int> pointers_;                 // Boolean: non-zero means non-null (actual pointer is allocated later)
+    std::vector<uint64_t> pointers_;
     size_t next_integer_, next_pointer_;        // May increment past the end of its array
 };
 
@@ -123,6 +129,13 @@ class Exception {
 public:
     Exception(const std::string &mesg): mesg(mesg) {}
     std::string mesg;
+};
+
+/** Exception thrown when we've processed too many instructions. This is used by the Policy<>::startInstruction to prevent
+ *  infinite loops in the specimen functions. */
+class InsnLimitException: public Exception {
+public:
+    InsnLimitException(const std::string &mesg): Exception(mesg) {}
 };
 
 /**************************************************************************************************************************/
@@ -158,6 +171,7 @@ class Outputs {
 public:
     std::list<ValueType<32> > values32;
     std::list<ValueType<8> > values8;
+    std::set<uint32_t> get_values() const;
     void print(std::ostream&, const std::string &title="", const std::string &prefix="") const;
     void print(RTS_Message*, const std::string &title="", const std::string &prefix="") const;
     friend std::ostream& operator<<(std::ostream &o, const Outputs &outputs) {
@@ -222,7 +236,7 @@ public:
     // Return output values.  These are the interesting general-purpose registers to which a value has been written, and the
     // memory locations to which a value has been written.  The returned object can be deleted when no longer needed.  The EIP,
     // ESP, and EBP registers are not considered to be interesting.
-    Outputs<ValueType> *get_outputs() const;
+    Outputs<ValueType> *get_outputs(bool verbose=false) const;
 
     // Printing
     template<size_t nBits>
@@ -256,10 +270,14 @@ public:
     unsigned active_policies;                           // Policies that should be active *during* an instruction
     static const rose_addr_t INITIAL_STACK = 0x80000000;// Initial value for the EIP and EBP registers
     InputValues *inputs;                                // Input values to use when reading a never-before-written variable
+    const PointerDetector *pointers;                    // Addresses of pointer variables
+    size_t ninsns;                                      // Number of instructions processed since last trigger() call
+    size_t max_ninsns;                                  // Maximum number of instructions to process after trigger()
 
     // "Inherit" super class' constructors (assuming no c++11)
     Policy(RSIM_Thread *thread)
-        : Super(thread), name(NULL), triggered(false), active_policies(0x07) {
+        : Super(thread), name(NULL), triggered(false), active_policies(0x07), inputs(NULL), pointers(NULL),
+          ninsns(0), max_ninsns(255) {
         init();
     }
 
@@ -278,7 +296,7 @@ public:
 
     // Calling this method will cause all our subdomains to be activated and the simulator will branch
     // to the specified target_va.
-    void trigger(rose_addr_t target_va, InputValues *inputs);
+    void trigger(rose_addr_t target_va, InputValues *inputs, const PointerDetector *pointers);
 
     // We can get control at the beginning of every instruction.  This allows us to do things like enabling/disabling
     // sub-domains based on the kind of instruction.  We could also examine the entire multi-domain state at this point and do

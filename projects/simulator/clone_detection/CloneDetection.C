@@ -7,6 +7,8 @@
 #if defined(ROSE_ENABLE_SIMULATOR) && defined(RSIM_CloneDetectionSemantics_H)
 
 #include "RSIM_Linux32.h"
+#include "BinaryPointerDetection.h"
+#include "YicesSolver.h"
 
 /******************************************************************************************************************************/
 
@@ -15,9 +17,19 @@ class CloneDetector {
 protected:
     static const char *name;            /**< For --debug output. */
     RSIM_Thread *thread;                /**< Thread where analysis is running. */
+
 public:
     CloneDetector(RSIM_Thread *thread): thread(thread) {}
 
+    // Allocate a page of memory in the process address space.
+    rose_addr_t allocate_page(rose_addr_t hint=0) {
+        RSIM_Process *proc = thread->get_process();
+        rose_addr_t addr = proc->mem_map(hint, 4096, MemoryMap::MM_PROT_RW, MAP_ANONYMOUS, 0, -1);
+        assert((int64_t)addr>=0 || (int64_t)addr<-256); // disallow error numbers
+        return addr;
+    }
+
+    // Detect functions that are semantically similar
     void analyze() {
         RSIM_Process *proc = thread->get_process();
         RTS_Message *m = thread->tracing(TRACE_MISC);
@@ -51,42 +63,112 @@ public:
         std::vector<SgAsmFunction*> functions = SageInterface::querySubTree<SgAsmFunction>(gblk);
         m->mesg("%s: fuzz testing %zu function%s", name, functions.size(), 1==functions.size()?"":"s");
 
+        // Choose an SMT solver. This is completely optional.  Pointer detection still seems to work fairly well (and much,
+        // much faster) without an SMT solver.
+        SMTSolver *solver = NULL;
+#if 0   // optional code
+        if (YicesSolver::available_linkage())
+            solver = new YicesSolver;
+#endif
+
         // Perform data type analysis on each function in order to find which things are pointers and which are non-pointers
-        // (FIXME: See demos/types_1.C)
+        // The RSIM_Process is used as the instruction providor, and therefore must have a get_instruction() method that takes
+        // a single rose_addr_t argument.  We create one pointer detector per function, and we remember it since it contains
+        // the list of pointer addresses that we'll need later.
+        typedef std::map<SgAsmFunction*, CloneDetection::PointerDetector> PointerDetectors;
+        PointerDetectors pointers;
+        for (std::vector<SgAsmFunction*>::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+            m->mesg("%s: performing pointer detection analysis for \"%s\" at 0x%08"PRIx64,
+                    name, (*fi)->get_name().c_str(), (*fi)->get_entry_va());
+            CloneDetection::PointerDetector pd(thread->get_process(), solver);
+            pd.initial_state().registers.gpr[x86_gpr_sp] = SYMBOLIC_VALUE<32>(thread->policy.INITIAL_STACK);
+            pd.initial_state().registers.gpr[x86_gpr_bp] = SYMBOLIC_VALUE<32>(thread->policy.INITIAL_STACK);
+#if 0 /*DEBUGGING [Robb Matzke 2013-01-11]*/
+            pd.set_debug(stderr);
+#endif
+            pd.analyze(*fi);
+            pointers.insert(std::make_pair(*fi, pd));
+            if (m->get_file()) {
+                const CloneDetection::PointerDetector::Pointers plist = pd.get_pointers();
+                for (CloneDetection::PointerDetector::Pointers::const_iterator pi=plist.begin(); pi!=plist.end(); ++pi) {
+                    std::ostringstream ss;
+                    if (pi->type & BinaryAnalysis::PointerAnalysis::DATA_PTR)
+                        ss <<"data ";
+                    if (pi->type & BinaryAnalysis::PointerAnalysis::CODE_PTR)
+                        ss <<"code ";
+                    ss <<"pointer at " <<pi->address;
+                    m->mesg("   %s", ss.str().c_str());
+                }
+            }
+        }
 
         // Choose some input values. (FIXME: eventually we need to make these random)
         CloneDetection::InputValues inputs;
         inputs.add_integer(1);
         inputs.add_integer(50);
         inputs.add_integer(100);
-        inputs.add_pointer(true); // non-null pointer
-        inputs.add_pointer(false); // null pointer
-        inputs.add_pointer(true); // another (different) non-null pointer
+        inputs.add_pointer(allocate_page());
+        inputs.add_pointer(0);
+        inputs.add_pointer(allocate_page());
 
         // Fuzz test each function
-        for (std::vector<SgAsmFunction*>::iterator fi=functions.begin(); fi!=functions.end(); ++fi)
-            fuzz_test(*fi, &inputs);
+        for (std::vector<SgAsmFunction*>::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+            PointerDetectors::iterator ip = pointers.find(*fi);
+            assert(ip!=pointers.end());
+            CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *outputs = fuzz_test(*fi, &inputs, &ip->second);
+#if 1 /*DEBUGGING [Robb Matzke 2013-01-14]*/
+            std::ostringstream output_values_str;
+            std::set<uint32_t> output_values = outputs->get_values();
+            for (std::set<uint32_t>::iterator ovi=output_values.begin(); ovi!=output_values.end(); ++ovi)
+                output_values_str <<" " <<*ovi;
+            m->mesg("%s: function output values are {%s }", name, output_values_str.str().c_str());
+#endif
+        
+        }
     }
 
-    void fuzz_test(SgAsmFunction *function, CloneDetection::InputValues *inputs) {
+    // Analyze a single function by running it with the specified inputs and collecting its outputs. */
+    CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *fuzz_test(SgAsmFunction *function, CloneDetection::InputValues *inputs,
+                                                             const CloneDetection::PointerDetector *pointers) {
         RSIM_Process *proc = thread->get_process();
         RTS_Message *m = thread->tracing(TRACE_MISC);
         m->mesg("%s", std::string(100, '=').c_str());
         m->mesg("%s: fuzz testing function \"%s\" at 0x%08"PRIx64, name, function->get_name().c_str(), function->get_entry_va());
         m->mesg("%s", std::string(100, '=').c_str());
+
+        // Not sure if saving/restoring memory state is necessary. I don't thing machine memory is adjusted by the semantic
+        // policy's writeMemory() or readMemory() operations after the policy is triggered to enable our analysis.  But it
+        // shouldn't hurt to save/restore anyway, and it's fast. [Robb Matzke 2013-01-14]
         proc->mem_transaction_start(name);
         pt_regs_32 saved_regs = thread->get_regs();
-        thread->policy.trigger(function->get_entry_va(), inputs);
+
+        // Trigger the analysis, resetting it to start executing the specified function using the input values and pointer
+        // variable addresses we selected previously.
+        thread->policy.trigger(function->get_entry_va(), inputs, pointers);
+
+        // "Run" the function using our semantic policy.  The function will not "run" in the normal sense since: since our
+        // policy has been triggered, memory access, function calls, system calls, etc. will all operate differently.  See
+        // CloneDetectionSemantics.h and CloneDetectionTpl.h for details.
         try {
             thread->main();
         } catch (const Disassembler::Exception &e) {
-            std::ostringstream ss;
+            // Probably due to the analyzed function's RET instruction, but could be from other things as well. In any case, we
+            // stop analyzing the function when this happens.
             m->mesg("%s: function disassembly failed at 0x%08"PRIx64": %s", name, e.ip, e.mesg.c_str());
+        } catch (const CloneDetection::InsnLimitException &e) {
+            // The analysis might be in an infinite loop, such as when analyzing "void f() { while(1); }"
+            m->mesg("%s: %s", name, e.mesg.c_str());
+        } catch (const RSIM_Semantics::InnerPolicy<>::Halt &e) {
+            // The x86 HLT instruction appears in some functions (like _start) as a failsafe to terminate a process.  We need
+            // to intercept it and terminate only the function analysis.
+            m->mesg("%s: function executed HLT instruction at 0x%08"PRIx64, name, e.ip);
         }
+
+        // Gather the function's outputs before restoring machine state.
         CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *outputs = thread->policy.get_outputs();
-        outputs->print(m, "Function outputs:", "  ");
         thread->init_regs(saved_regs);
         proc->mem_transaction_rollback(name);
+        return outputs;
     }
 };
 

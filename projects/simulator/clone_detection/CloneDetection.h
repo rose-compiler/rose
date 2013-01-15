@@ -52,13 +52,30 @@ convert_to_symbolic(const ValueType<nBits> &value)
 /** Return the next input value from the queue of possible inputs. */
 template <size_t nBits>
 RSIM_SEMANTICS_VTYPE<nBits>
-next_input_value(InputValues *inputs, RTS_Message *m)
+next_input_value(InputValues *inputs, InputValues::Type type, RTS_Message *m)
 {
-    RSIM_SEMANTICS_VTYPE<nBits> retval(inputs->next_integer());
+    uint64_t value = 0;
+    size_t nvalues = 0;
+    const char *type_name = NULL;
+    switch (type) {
+        case InputValues::POINTER:
+            value = inputs->next_pointer();
+            nvalues = inputs->pointers_consumed();
+            type_name = "pointer";
+            break;
+        case InputValues::UNKNOWN_TYPE:
+        case InputValues::NONPOINTER:
+            value = inputs->next_integer();
+            nvalues = inputs->integers_consumed();
+            type_name = "non-pointer";
+            break;
+    }
+    
+    RSIM_SEMANTICS_VTYPE<nBits> retval(value);
     if (m) {
         std::ostringstream ss;
         ss <<retval;
-        m->mesg("CloneDetection::HighLevel: using integer input #%zu: %s", inputs->integers_consumed(), ss.str().c_str());
+        m->mesg("CloneDetection::HighLevel: using %s input #%zu: %s", type_name, nvalues, ss.str().c_str());
     }
     return retval;
 }
@@ -86,8 +103,7 @@ domains_for_instruction(Policy *policy, SgAsmx86Instruction *insn)
     unsigned retval = 0;
 
     if (true) {
-        /* DEBUGGING, but still compile the real stuff [RPM 2012-10-12] */
-        return SYMBOLIC.mask;
+        return CONCRETE.mask;
 
     } else if (true) {
         // Use a file to determine when to switch from one mode to another.  Each line of the file is an instruction address
@@ -222,6 +238,7 @@ template<class Policy>
 void
 after_instruction(Policy *policy, SgAsmx86Instruction *insn)
 {
+#if 0 /*DEBUGGING [Robb Matzke 2013-01-14]*/
     // Print the machine state
     std::ostringstream ss;
     bool abbreviated = false; // if true, then show only the active domains
@@ -229,6 +246,8 @@ after_instruction(Policy *policy, SgAsmx86Instruction *insn)
     policy->trace()->mesg("%s: complete state after %s\n%s",
                           policy->name, unparseInstruction(insn).c_str(),
                           StringUtility::prefixLines(ss.str(), "    ").c_str());
+    
+#endif
 }
 
 } // namespace

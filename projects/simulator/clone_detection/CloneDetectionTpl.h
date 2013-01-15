@@ -40,7 +40,7 @@ Policy<State, ValueType>::trace()
 
 CLONE_DETECTION_TEMPLATE
 void
-Policy<State, ValueType>::trigger(rose_addr_t target_va, InputValues *inputs)
+Policy<State, ValueType>::trigger(rose_addr_t target_va, InputValues *inputs, const PointerDetector *pointers)
 {
     this->set_active_policies(CONCRETE.mask | INTERVAL.mask | SYMBOLIC.mask);
     triggered = true;
@@ -48,10 +48,13 @@ Policy<State, ValueType>::trigger(rose_addr_t target_va, InputValues *inputs)
     // Reset analysis state (mem stored by MultiSemantics and the register read/written state)
     inputs->reset();
     this->inputs = inputs;
+    this->pointers = pointers;
+    this->ninsns = 0;
     state.reset_for_analysis();
 
     // Initialize some registers.  Obviously, the EIP register needs to be set, but we also set the ESP and EBP to known (but
-    // arbitrary) values so we can detect when the function returns.
+    // arbitrary) values so we can detect when the function returns.  Be sure to use these same values in related analyses
+    // (like pointer variable detection).
     this->writeRegister("eip", RSIM_SEMANTICS_VTYPE<32>(target_va));
     RSIM_SEMANTICS_VTYPE<32> esp(INITIAL_STACK); // stack grows down
     this->writeRegister("esp", esp);
@@ -67,6 +70,11 @@ void
 Policy<State, ValueType>::startInstruction(SgAsmInstruction *insn_)
 {
     if (triggered) {
+        if (++ninsns >= max_ninsns) {
+            std::string mesg = "instruction limit reached: " + StringUtility::numberToString(max_ninsns);
+            throw InsnLimitException(mesg);
+        }
+
         SgAsmx86Instruction *insn = isSgAsmx86Instruction(insn_);
         assert(insn!=NULL);
         trace()->mesg("%s\n", std::string(80, '-').c_str());
@@ -84,6 +92,7 @@ Policy<State, ValueType>::startInstruction(SgAsmInstruction *insn_)
         unsigned activated = HighLevel::domains_for_instruction(this, insn);
         assert(activated!=0); // perhaps this should be how we finish an analysis
         this->set_active_policies(activated);
+#if 0 /*DEBUGGING [Robb Matzke 2013-01-14]*/
         std::string domains;
         if (0 != (activated & CONCRETE.mask))
             domains += " concrete";
@@ -92,6 +101,7 @@ Policy<State, ValueType>::startInstruction(SgAsmInstruction *insn_)
         if (0 != (activated & SYMBOLIC.mask))
             domains += " symbolic";
         trace()->mesg("%s: executing in:%s\n", name, domains.c_str());
+#endif
 
         // Warn about no concrete state
         if (!this->is_active(CONCRETE)) {
@@ -126,12 +136,13 @@ Policy<State, ValueType>::finishInstruction(SgAsmInstruction *insn)
         //    * The called function always returns
         //    * The called function's return value is in the EAX register
         //    * The caller cleans up any arguments that were passed via stack
+        //    * The function's return value is a non-pointer type
         if (x86_call==insn_x86->get_kind()) {
             trace()->mesg("%s: special handling for function call (fall through and return via EAX)", name);
             RSIM_SEMANTICS_VTYPE<32> call_fallthrough_va = this->add(this->template number<32>(insn->get_address()),
                                                                      this->template number<32>(insn->get_size()));
             this->writeRegister("eip", call_fallthrough_va);
-            this->writeRegister("eax", HighLevel::next_input_value<32>(this->inputs, trace()));
+            this->writeRegister("eax", HighLevel::next_input_value<32>(this->inputs, InputValues::NONPOINTER, trace()));
         }
 
         // Give Andreas a chance to do his thing.
@@ -273,7 +284,7 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
                 bool never_accessed = 0 == state.register_rw_state.flag[reg.get_offset()].state;
                 state.register_rw_state.flag[reg.get_offset()].state |= HAS_BEEN_READ;
                 if (never_accessed) {
-                    retval = HighLevel::next_input_value<nBits>(this->inputs, trace());
+                    retval = HighLevel::next_input_value<nBits>(this->inputs, InputValues::NONPOINTER, trace());
                 } else {
                     retval = this->template unsignedExtend<1, nBits>(state.registers.flag[reg.get_offset()]);
                 }
@@ -291,7 +302,7 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
                 bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                 state.register_rw_state.gpr[reg.get_minor()].state |= HAS_BEEN_READ;
                 if (never_accessed) {
-                    retval = HighLevel::next_input_value<nBits>(this->inputs, trace());
+                    retval = HighLevel::next_input_value<nBits>(this->inputs, InputValues::NONPOINTER, trace());
                 } else {
                     switch (reg.get_offset()) {
                         case 0:
@@ -319,7 +330,7 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
                         bool never_accessed = 0==state.register_rw_state.segreg[reg.get_minor()].state;
                         state.register_rw_state.segreg[reg.get_minor()].state |= HAS_BEEN_READ;
                         if (never_accessed) {
-                            retval = HighLevel::next_input_value<nBits>(this->inputs, trace());
+                            retval = HighLevel::next_input_value<nBits>(this->inputs, InputValues::NONPOINTER, trace());
                         } else {
                             retval = this->template unsignedExtend<16, nBits>(state.registers.segreg[reg.get_minor()]);
                         }
@@ -331,7 +342,7 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
                         bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                         state.register_rw_state.segreg[reg.get_minor()].state |= HAS_BEEN_READ;
                         if (never_accessed) {
-                            retval = HighLevel::next_input_value<nBits>(this->inputs, trace());
+                            retval = HighLevel::next_input_value<nBits>(this->inputs, InputValues::NONPOINTER, trace());
                         } else {
                             retval = this->template extract<0, nBits>(state.registers.gpr[reg.get_minor()]);
                         }
@@ -378,7 +389,7 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
                         bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                         state.register_rw_state.gpr[reg.get_minor()].state |= HAS_BEEN_READ;
                         if (never_accessed) {
-                            retval = HighLevel::next_input_value<nBits>(this->inputs, trace());
+                            retval = HighLevel::next_input_value<nBits>(this->inputs, InputValues::UNKNOWN_TYPE, trace());
                         } else {
                             retval = this->template unsignedExtend<32, nBits>(state.registers.gpr[reg.get_minor()]);
                         }
@@ -390,7 +401,7 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
                         bool never_accessed = 0==state.register_rw_state.ip.state;
                         state.register_rw_state.ip.state |= HAS_BEEN_READ;
                         if (never_accessed) {
-                            retval = HighLevel::next_input_value<nBits>(this->inputs, trace());
+                            retval = HighLevel::next_input_value<nBits>(this->inputs, InputValues::POINTER, trace());
                         } else {
                             retval = this->template unsignedExtend<32, nBits>(state.registers.ip);
                         }
@@ -402,7 +413,7 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
                         bool never_accessed = 0==state.register_rw_state.segreg[reg.get_minor()].state;
                         state.register_rw_state.segreg[reg.get_minor()].state |= HAS_BEEN_READ;
                         if (never_accessed) {
-                            retval = HighLevel::next_input_value<nBits>(this->inputs, trace());
+                            retval = HighLevel::next_input_value<nBits>(this->inputs, InputValues::UNKNOWN_TYPE, trace());
                         } else {
                             retval = this->template unsignedExtend<16, nBits>(state.registers.segreg[reg.get_minor()]);
                         }
@@ -669,8 +680,12 @@ Policy<State, ValueType>::readMemory(X86SegmentRegister sr, ValueType<32> addr, 
     }
 
     ValueType<nBits> retval = this->template extract<0, nBits>(dword);
-    if (uninitialized_read)
-        retval = this->template number<nBits>(inputs->next_integer());
+    if (uninitialized_read) {
+        // At least one of the bytes read did not previously exist.  Return either a pointer or non-pointer value depending on
+        // whether the memory address is known to be a pointer.
+        InputValues::Type type = this->pointers->is_pointer(a0) ? InputValues::POINTER : InputValues::NONPOINTER;
+        retval = HighLevel::next_input_value<nBits>(this->inputs, type, trace());
+    }
 
     if (this->get_policy(CONCRETE).tracing(TRACE_MEM)->get_file()) {
         std::ostringstream ss;
@@ -834,32 +849,29 @@ State<ValueType>::mem_read_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> 
 
 template <template <size_t> class ValueType>
 Outputs<ValueType> *
-State<ValueType>::get_outputs() const
+State<ValueType>::get_outputs(bool verbose) const
 {
     Outputs<ValueType> *outputs = new Outputs<ValueType>;
     for (size_t i=0; i<registers.n_gprs; ++i) {
         if (0 != (register_rw_state.gpr[i].state & HAS_BEEN_WRITTEN) && x86_gpr_sp!=i && x86_gpr_bp!=i) {
-#if 1 /*DEBUGGING [Robb Matzke 2012-12-20]*/
-            std::cerr <<"ROBB: output for " <<gprToString((X86GeneralPurposeRegister)i) <<" = " <<registers.gpr[i] <<"\n";
-#endif
+            if (verbose)
+                std::cerr <<"output for " <<gprToString((X86GeneralPurposeRegister)i) <<" = " <<registers.gpr[i] <<"\n";
             outputs->values32.push_back(registers.gpr[i]);
         }
     }
 
     for (MemoryCells::const_iterator ci=stack_cells.begin(); ci!=stack_cells.end(); ++ci) {
         if (0 != (ci->rw_state & HAS_BEEN_WRITTEN)) {
-#if 1 /*DEBUGGING [Robb Matzke 2012-12-20]*/
-            std::cerr <<"ROBB: output for stack address " <<ci->addr <<"\n";
-#endif
+            if (verbose)
+                std::cerr <<"output for stack address " <<ci->addr <<"\n";
             outputs->values8.push_back(ci->val);
         }
     }
 
     for (MemoryCells::const_iterator ci=data_cells.begin(); ci!=data_cells.end(); ++ci) {
         if (0 != (ci->rw_state & HAS_BEEN_WRITTEN)) {
-#if 1 /*DEBUGGING [Robb Matzke 2012-12-20]*/
-            std::cerr <<"ROBB: output for data address " <<ci->addr <<"\n";
-#endif
+            if (verbose)
+                std::cerr <<"ROBB: output for data address " <<ci->addr <<"\n";
             outputs->values8.push_back(ci->val);
         }
     }
@@ -929,6 +941,22 @@ State<ValueType>::print(std::ostream &o, unsigned domains) const
             show_value(o, "      value ", ci->val, domains);
         }
     }
+}
+
+template <template <size_t> class ValueType>
+std::set<uint32_t>
+Outputs<ValueType>::get_values() const
+{
+    std::set<uint32_t> retval;
+    for (typename std::list<ValueType<32> >::const_iterator vi=values32.begin(); vi!=values32.end(); ++vi) {
+        CONCRETE_VALUE<32> cval = convert_to_concrete(*vi);
+        retval.insert(cval.known_value());
+    }
+    for (typename std::list<ValueType<8> >::const_iterator vi=values8.begin(); vi!=values8.end(); ++vi) {
+        CONCRETE_VALUE<8> cval = convert_to_concrete(*vi);
+        retval.insert(cval.known_value());
+    }
+    return retval;
 }
 
 template <template <size_t> class ValueType>
