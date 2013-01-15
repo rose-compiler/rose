@@ -165,8 +165,7 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
     // We don't want to see SgTemplateMemberFunctionDeclaration or SgTemplateFunctionDeclaration objects since it doesn't make
     // sense to do control flow analysis over templates, but rather only over template instantiations. [RPM 2012-12-06]
     for (Rose_STL_Container<SgNode*>::iterator fi=allFunctions.begin(); fi!=allFunctions.end(); ++fi)
-        if (isSgTemplateMemberFunctionDeclaration(*fi) ||
-            isSgTemplateFunctionDeclaration(*fi) || isSgTemplateFunctionDefinition(*fi))
+        if (isSgTemplateMemberFunctionDeclaration(*fi) || isSgTemplateFunctionDeclaration(*fi))
             *fi = NULL;
     allFunctions.erase(std::remove(allFunctions.begin(), allFunctions.end(), (SgNode*)NULL), allFunctions.end());
 
