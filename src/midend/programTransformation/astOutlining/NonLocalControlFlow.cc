@@ -263,9 +263,7 @@ Outliner::Preprocess::transformNonLocalControlFlow (SgBasicBlock* b_orig)
   SgStatement* null_stmt = SageBuilder::buildNullStatement(); // Liao 12/18/2012, needed to unparse ; 
   SgLabelStatement* label_exit =
     SageBuilder::buildLabelStatement (label_exit_name, null_stmt,b_gotos);
-  ROSE_ASSERT (label_exit);
-  b_gotos->append_statement (null_stmt);
-  null_stmt->set_parent(b_gotos);
+  ROSE_ASSERT (label_exit);  
 
   b_gotos->append_statement (label_exit);
   label_exit->set_parent (b_gotos);
@@ -273,6 +271,10 @@ Outliner::Preprocess::transformNonLocalControlFlow (SgBasicBlock* b_orig)
   // add SgLabelSymbol,liao, 10/30,2007
 //  SgLabelSymbol *lsymbol= new SgLabelSymbol(label_exit);
 //  b_gotos->insert_symbol(label_exit_name,lsymbol);
+
+  b_gotos->append_statement (null_stmt);
+  null_stmt->set_parent(b_gotos);
+// null_stmt->set_scope(b_gotos);
 
   // Convert all non-local jumps to local gotos to 'label_exit'
   convertJumpsToGotos (jump_var, jumps, label_exit);
