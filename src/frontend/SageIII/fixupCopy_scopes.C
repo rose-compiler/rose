@@ -89,6 +89,10 @@ resetVariableDefinitionSupport ( const SgInitializedName* originalInitializedNam
                break;
              }
 
+       // DQ (12/23/2012): Added support for templates.
+          case V_SgTemplateFunctionDeclaration:
+          case V_SgTemplateMemberFunctionDeclaration:
+
           case V_SgFunctionDeclaration:
           case V_SgMemberFunctionDeclaration:
           case V_SgTemplateInstantiationFunctionDecl:
@@ -162,6 +166,9 @@ SgInitializedName::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 
                switch(parent->variantT())
                   {
+                 // DQ (12/28/2012): Adding support for templates.
+                    case V_SgTemplateVariableDeclaration:
+
                     case V_SgVariableDeclaration:
                        {
                          resetVariableDefinitionSupport(this,initializedName_copy,NULL);
@@ -603,6 +610,11 @@ SgDeclarationStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
                          copyOfDefiningDeclarationNode->set_parent(NULL);
 
                          ROSE_ASSERT(copyOfDefiningDeclarationNode->get_parent() == NULL);
+
+                         if (this->get_definingDeclaration()->get_parent() == NULL)
+                            {
+                              printf ("ERROR: this = %p = %s = %s this->get_definingDeclaration() = %p \n",this,this->class_name().c_str(),SageInterface::get_name(this).c_str(),this->get_definingDeclaration());
+                            }
 
                       // Must reset the parent (semantics of AST copy), but this will be done by reset
                          ROSE_ASSERT(this->get_definingDeclaration()->get_parent() != NULL);
@@ -1092,11 +1104,21 @@ SgTemplateInstantiationFunctionDecl::fixupCopy_scopes(SgNode* copy, SgCopyHelp &
      printf ("\nIn SgTemplateInstantiationFunctionDecl::fixupCopy_scopes(): for function = %s = %p = %s copy = %p \n",this->get_name().str(),this,this->class_name().c_str(),copy);
 #endif
 
+  // DQ (12/28/2012): Added asseretion.
+     ROSE_ASSERT(this != NULL);
+
+#if 0
+     printf ("\nIn SgTemplateInstantiationFunctionDecl::fixupCopy_scopes(): for function = %s = %p = %s copy = %p \n",this->get_name().str(),this,this->class_name().c_str(),copy);
+#endif
+
      SgTemplateInstantiationFunctionDecl* templateFunctionDeclaration_copy = isSgTemplateInstantiationFunctionDecl(copy);
      ROSE_ASSERT(templateFunctionDeclaration_copy != NULL);
 
   // Also call the base class version of the fixupCopycopy() member function
      SgFunctionDeclaration::fixupCopy_scopes(copy,help);
+
+     ROSE_ASSERT(this->get_templateDeclaration() != NULL);
+     ROSE_ASSERT(templateFunctionDeclaration_copy->get_templateDeclaration() != NULL);
 
   // FixupCopyDataMemberMacro(templateFunctionDeclaration_copy,SgTemplateDeclaration,get_templateDeclaration,set_templateDeclaration)
      FixupCopyDataMemberMacro(templateFunctionDeclaration_copy,SgTemplateFunctionDeclaration,get_templateDeclaration,set_templateDeclaration)
@@ -1224,6 +1246,10 @@ SgClassDeclaration::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 
      if (isForward() == false)
         {
+       // DQ (12/24/2012): Added assertion (debugging template support).
+          ROSE_ASSERT(classDefinition_original != NULL);
+          ROSE_ASSERT(classDefinition_copy != NULL);
+
           classDefinition_original->fixupCopy_scopes(classDefinition_copy,help);
         }
    }

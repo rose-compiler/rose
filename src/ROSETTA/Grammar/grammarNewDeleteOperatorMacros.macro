@@ -233,6 +233,12 @@ void *$CLASSNAME::operator new ( size_t Size )
 #       endif
 
         ALLOC_MUTEX($CLASSNAME, unlock);
+
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In $CLASSNAME::new(): this = %p \n",Forward_Link);
+#endif
+
         return Forward_Link;
     }
 #endif /* USE_CPP_NEW_DELETE_OPERATORS */
@@ -257,6 +263,11 @@ void $CLASSNAME::operator delete(void *Pointer, size_t sizeOfObject)
     /* Entire function is protected by a mutex. To prevent deadlock, be sure to unlock this mutex before returning
      * or throwing an exception. */
     ALLOC_MUTEX($CLASSNAME, lock);
+
+#if 0
+  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+     printf ("In $CLASSNAME::delete(): this = %p \n",Pointer);
+#endif
 
 #   if COMPILE_DEBUG_STATEMENTS
     if (ROSE_DEBUG > 1)
