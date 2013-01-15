@@ -25,7 +25,9 @@ noinst_PROGRAMS = \
 	label_stmt_file_info_translator \
 	testConstDeclarations \
 	testPragmaInBody \
-	querySubTree
+	querySubTree \
+	testCopyAndDelete \
+   testTraversalOfTemplateInstantiations
 #
 # a better alternative to identityTranslator
 # Liao 1/29/2009
@@ -51,7 +53,12 @@ label_stmt_file_info_translator_SOURCES = label_stmt_file_info_translator.C
 # DQ (8/25/2011): Added test code to demonstrate where const is set in the AST.
 testConstDeclarations_SOURCES = testConstDeclarations.C
 testPragmaInBody_SOURCES = testPragmaInBody.C
+
 querySubTree_SOURCES = querySubTree.C
+
+testCopyAndDelete_SOURCES = testCopyAndDelete.C
+
+testTraversalOfTemplateInstantiations_SOURCES = testTraversalOfTemplateInstantiations.C
 
 # LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
@@ -108,6 +115,17 @@ parameter.o: testFortranParameter
 protected.o: testFortranProtected
 	gfortran -c $(srcdir)/../CompileTests/Fortran_tests/protected_mod.f03
 	gdb --args .libs/testFortranProtected $(srcdir)/../CompileTests/Fortran_tests/protected.f03 -o /dev/null && touch $@
+
+input_testCopyAndDelete.o:
+	./testCopyAndDelete -c $(srcdir)/input_testCopyAndDelete.c  && touch $@
+
+input_testCopyAndDelete_2.o:
+	./testCopyAndDelete -c $(srcdir)/input_testCopyAndDelete_2.C  && touch $@
+
+input_testTraversalOfTemplateInstantiations.o:
+	./testTraversalOfTemplateInstantiations -c $(srcdir)/input_testTraversalOfTemplateInstantiations.C  && touch $@
+
+
 
 EXTRA_DIST = \
    CMakeLists.txt \

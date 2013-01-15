@@ -876,3 +876,5 @@ New smgit commands for any branch (including edg4x):
    Commit:
       smgit commit -am "[EDG 4.4 and C11] Fixed more bugs..."
 
+   Push:
+      smgit push origin HEAD:refs/heads/dquinlan/dq-edg4x-rc

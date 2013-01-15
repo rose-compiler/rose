@@ -2830,7 +2830,7 @@ TestAstSymbolTables::visit ( SgNode* node )
                if (declarationStatement != NULL && isSgLabelSymbol(symbol) == NULL)
                   {
                     SgSymbol* local_symbol = declarationStatement->get_symbol_from_symbol_table();
-#if 0
+#if 1
                     if (local_symbol == NULL)
                        {
                          printf ("The declarationStatement = %p = %s = %s in symbol = %p = %s = %s can't locate it's symbol in scope = %p = %s = %s \n",
@@ -4025,6 +4025,9 @@ TestMangledNames::visit ( SgNode* node )
      ROSE_ASSERT(node != NULL);
   // printf ("node = %p = %s \n",node,node->class_name().c_str());
 
+  // DQ (1/12/13): Added to support detection of scopes that have been deleted.
+     bool isDeletedNode = false;
+
      string mangledName;
 #if 0
      SgGlobal* global = isSgGlobal(node);
@@ -4040,14 +4043,50 @@ TestMangledNames::visit ( SgNode* node )
      SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(node);
      if (declarationStatement != NULL)
         {
-          mangledName = declarationStatement->get_mangled_name().getString();
+       // DQ (1/12/13): Added fix for scopes that may have been deleted (happens where astDelete mechanism is used)
+       // mangledName = declarationStatement->get_mangled_name().getString();
+          ROSE_ASSERT(declarationStatement->get_scope() != NULL);
+#if 0
+          printf ("TestMangledNames::visit(): declarationStatement->get_scope() = %p = %s \n",declarationStatement->get_scope(),declarationStatement->get_scope()->class_name().c_str());
+#endif
+          if (declarationStatement->get_scope()->class_name() == "SgNode")
+             {
+               isDeletedNode = true;
+             }
+
+          if (isDeletedNode == false)
+             {
+               mangledName = declarationStatement->get_mangled_name().getString();
+             }
+            else
+             {
+               printf ("WARNING: evaluation of the mangled name for a declaration in a scope = %p that has been deleted is being skipped! \n",declarationStatement->get_scope());
+             }
+
        // printf ("Test generated mangledName for node = %p = %s = %s \n",node,node->class_name().c_str(),mangledName.c_str());
         }
 
      SgInitializedName* initializedName = isSgInitializedName(node);
      if (initializedName != NULL)
         {
-          mangledName = initializedName->get_mangled_name().getString();
+       // mangledName = initializedName->get_mangled_name().getString();
+#if 0
+          printf ("TestMangledNames::visit(): initializedName->get_scope() = %p = %s \n",initializedName->get_scope(),initializedName->get_scope()->class_name().c_str());
+#endif
+          if (initializedName->get_scope()->class_name() == "SgNode")
+             {
+               isDeletedNode = true;
+             }
+
+          if (isDeletedNode == false)
+             {
+               mangledName = initializedName->get_mangled_name().getString();
+             }
+            else
+             {
+               printf ("WARNING: evaluation of the mangled name for a SgInitializedName in a scope = %p that has been deleted is being skipped! \n",initializedName->get_scope());
+             }
+
        // printf ("Test generated mangledName for node = %p = %s = %s \n",node,node->class_name().c_str(),mangledName.c_str());
         }
 #if 1
@@ -4095,8 +4134,50 @@ TestMangledNames::visit ( SgNode* node )
      SgType* type = isSgType(node);
      if (type != NULL)
         {
+       // DQ (1/12/13): Need to test for declarations in scopes that might have been deleted (part of astCopy and astDelete support).
+       // If there is a declaration, then the scope of that declaration might have been deleted (we need to detect this).
+       // If this is a type in a scope that has been deleted then we should remove the scope (bug in the astDelete support, I think).
+          SgDeclarationStatement* decl = type->getAssociatedDeclaration();
+       // ROSE_ASSERT(decl != NULL);
+#if 0
+          printf ("TestMangledNames::visit(): decl = %p = %s \n",decl,decl != NULL ? decl->class_name().c_str() : "null");
+#endif
+          if (decl != NULL)
+             {
+               ROSE_ASSERT(decl->get_scope() != NULL);
+#if 0
+               printf ("TestMangledNames::visit(): decl->get_scope() = %p = %s \n",decl->get_scope(),decl->get_scope()->class_name().c_str());
+#endif
+            // ROSE_ASSERT(decl->get_scope()->class_name() != "SgNode");
+               if (decl->get_scope()->class_name() == "SgNode")
+                  {
+                    isDeletedNode = true;
+                  }
+             }
+
+       // SgScopeStatement* scope = type->getCurrentScope();
+       // printf ("TestMangledNames::visit(): scope = %p \n",scope);
+       // if (scope != NULL)
+       //    {
+       //      ROSE_ASSERT(scope->class_name() != "SgNode");
+       //    }
+
        // Notice that this has a different name get_mangled() instead of get_mangled_name()
-          mangledName = type->get_mangled().getString();
+
+       // DQ (1/12/13): For now, we want to ignore tests on IR nodes for types that are associated with declarations in scopes that have been deleted as part of the astDelete mechanism.
+       // mangledName = type->get_mangled().getString();
+#if 0
+          printf ("TestMangledNames::visit(): isDeletedNode = %s \n",isDeletedNode ? "true" : "false");
+#endif
+          if (isDeletedNode == false)
+             {
+               mangledName = type->get_mangled().getString();
+             }
+            else
+             {
+               ROSE_ASSERT(decl != NULL);
+               printf ("WARNING: evaluation of the mangled name for a declaration in a scope = %p that has been deleted is being skipped! \n",decl->get_scope());
+             }
        // printf ("Test generated mangledName for node = %p = %s = %s \n",node,node->class_name().c_str(),mangledName.c_str());
         }
 
@@ -5881,6 +5962,25 @@ TestForSourcePosition::testFileInfo( Sg_File_Info* fileInfo )
                ROSE_ASSERT(node != NULL);
 
                printf ("Error: detected a source position with empty filename: node = %p = %s \n",node,node->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
+
+#if 0
+       // Debugging code for special case.
+          if (fileInfo->get_parent() != NULL && fileInfo->get_parent()->variantT() == V_SgFunctionDefinition)
+             {
+               fileInfo->display("In TestForSourcePosition::visit(): case of SgFunctionDefinition: debug");
+             }
+#endif
+
+          if (fileInfo->get_physical_file_id() < 0)
+             {
+               fileInfo->display("In TestForSourcePosition::visit(): debug");
+
+               SgNode* node = fileInfo->get_parent();
+               ROSE_ASSERT(node != NULL);
+
+               printf ("Error: detected a source position with inconsistant physical file id: node = %p = %s \n",node,node->class_name().c_str());
                ROSE_ASSERT(false);
              }
         }

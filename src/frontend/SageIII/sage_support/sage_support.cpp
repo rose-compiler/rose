@@ -1657,23 +1657,26 @@ SgProject::parse()
         }
 #endif
 
-     // negara1 (06/23/2011): Collect information about the included files to support unparsing of those that are modified.
-     //In the first step, get the include search paths, which will be used while attaching include preprocessing infos.
-     //Proceed only if there are input files and they require header files unparsing.
-     if (!get_fileList().empty() && (*get_fileList().begin()) -> get_unparseHeaderFiles()) { 
-         if (SgProject::get_verbose() >= 1){
-             cout << endl << "***HEADER FILES ANALYSIS***" << endl << endl;
-         }
-         CompilerOutputParser compilerOutputParser(this);
-         const pair<list<string>, list<string> >& includedFilesSearchPaths = compilerOutputParser.collectIncludedFilesSearchPaths();  
-         set_quotedIncludesSearchPaths(includedFilesSearchPaths.first);
-         set_bracketedIncludesSearchPaths(includedFilesSearchPaths.second);
+  // negara1 (06/23/2011): Collect information about the included files to support unparsing of those that are modified.
+  // In the first step, get the include search paths, which will be used while attaching include preprocessing infos.
+  // Proceed only if there are input files and they require header files unparsing.
+     if (!get_fileList().empty() && (*get_fileList().begin())->get_unparseHeaderFiles())
+        {
+          if (SgProject::get_verbose() >= 1)
+             {
+               cout << endl << "***HEADER FILES ANALYSIS***" << endl << endl;
+             }
+          CompilerOutputParser compilerOutputParser(this);
+          const pair<list<string>, list<string> >& includedFilesSearchPaths = compilerOutputParser.collectIncludedFilesSearchPaths();  
+          set_quotedIncludesSearchPaths(includedFilesSearchPaths.first);
+          set_bracketedIncludesSearchPaths(includedFilesSearchPaths.second);
 
-         if (SgProject::get_verbose() >= 1) {
-             CollectionHelper::printList(get_quotedIncludesSearchPaths(), "\nQuoted includes search paths:", "Path:");
-             CollectionHelper::printList(get_bracketedIncludesSearchPaths(), "\nBracketed includes search paths:", "Path:");
-         }
-     }     
+          if (SgProject::get_verbose() >= 1)
+             {
+               CollectionHelper::printList(get_quotedIncludesSearchPaths(), "\nQuoted includes search paths:", "Path:");
+               CollectionHelper::printList(get_bracketedIncludesSearchPaths(), "\nBracketed includes search paths:", "Path:");
+             }
+        }
 
   // GB (9/4/2009): Moved the secondary pass over source files (which
   // attaches the preprocessing information) to this point. This way, the
@@ -1691,23 +1694,25 @@ SgProject::parse()
 //#endif
         }
 
-     // negara1 (06/23/2011): Collect information about the included files to support unparsing of those that are modified.
-     //In the second step (after preprocessing infos are already attached), collect the including files map.
-     //Proceed only if there are input files and they require header files unparsing.
-     if (!get_fileList().empty() && (*get_fileList().begin()) -> get_unparseHeaderFiles()) { 
-         CompilerOutputParser compilerOutputParser(this);
-         const map<string, set<string> >& includedFilesMap = compilerOutputParser.collectIncludedFilesMap();
+  // negara1 (06/23/2011): Collect information about the included files to support unparsing of those that are modified.
+  // In the second step (after preprocessing infos are already attached), collect the including files map.
+  // Proceed only if there are input files and they require header files unparsing.
+     if (!get_fileList().empty() && (*get_fileList().begin())->get_unparseHeaderFiles())
+        {
+          CompilerOutputParser compilerOutputParser(this);
+          const map<string, set<string> >& includedFilesMap = compilerOutputParser.collectIncludedFilesMap();
 
-         IncludingPreprocessingInfosCollector includingPreprocessingInfosCollector(this, includedFilesMap);
-         const map<string, set<PreprocessingInfo*> >& includingPreprocessingInfosMap = includingPreprocessingInfosCollector.collect();
+          IncludingPreprocessingInfosCollector includingPreprocessingInfosCollector(this, includedFilesMap);
+          const map<string, set<PreprocessingInfo*> >& includingPreprocessingInfosMap = includingPreprocessingInfosCollector.collect();
 
-         set_includingPreprocessingInfosMap(includingPreprocessingInfosMap);
+          set_includingPreprocessingInfosMap(includingPreprocessingInfosMap);
          
-         if (SgProject::get_verbose() >= 1) {
-             CollectionHelper::printMapOfSets(includedFilesMap, "\nIncluded files map:", "File:", "Included file:");
-             CollectionHelper::printMapOfSets(get_includingPreprocessingInfosMap(), "\nIncluding files map:", "File:", "Including file:");
-         }
-     }
+          if (SgProject::get_verbose() >= 1)
+             {
+               CollectionHelper::printMapOfSets(includedFilesMap, "\nIncluded files map:", "File:", "Included file:");
+               CollectionHelper::printMapOfSets(get_includingPreprocessingInfosMap(), "\nIncluding files map:", "File:", "Including file:");
+             }
+        }
      
      if ( get_verbose() > 0 )
         {
@@ -2353,6 +2358,19 @@ SgFile::secondaryPassOverSourceFile()
                   {
                     printf ("In SgFile::callFrontEnd(): Done with attachAllPreprocessingInfo() \n");
                   }
+
+            // DQ (12/13/2012): Insert pass over AST to detect "#line" directives within only the input source file and 
+            // accoumulate a list of filenames that will have statements incorrectly marked as being from another file.
+            // This might be something we want to control via a command line option.  This sort fo processing can be
+            // important for generated files (e.g. the sudo application has four generated C language files from lex
+            // that are generated into a file toke.c but with #line N "toke.l" CPP directives and this fools ROSE into
+            // not unparsing all of the code from the token.c file (because some of it is assigned to the filename "toke.l".
+            // For the case of the sudo application code this prevents the generated code from linking properly (undefined symbols).
+            // Since many application include generated code (including ROSE itself) we would like to support this better.
+               ROSE_ASSERT(sourceFile != NULL);
+            // sourceFile->gatherASTSourcePositionsBasedOnDetectedLineDirectives();
+            // sourceFile->fixupASTSourcePositionsBasedOnDetectedLineDirectives();
+
              } //end if get_skip_commentsAndDirectives() is false
         }
 
@@ -2379,11 +2397,317 @@ SgFile::secondaryPassOverSourceFile()
    }
 
 
+#if 0
+namespace SgSourceFile_processCppLinemarkers
+   {
+  // This class (AST traversal) supports the traversal of the AST required
+  // to translate the source position using the CPP linemarkers.
+
+     class GatherASTSourcePositionsBasedOnDetectedLineDirectives : public AstSimpleProcessing
+        {
+          public:
+              set<int> filenameIdList;
+
+              GatherASTSourcePositionsBasedOnDetectedLineDirectives( const string & sourceFilename );
+
+              void visit ( SgNode* astNode );
+        };
+   }
+
+SgSourceFile_processCppLinemarkers::GatherASTSourcePositionsBasedOnDetectedLineDirectives::GatherASTSourcePositionsBasedOnDetectedLineDirectives( const string & sourceFilename )
+   {
+  // Build an initial element on the stack so that the original source file name will be used to
+  // set the global scope (which will be traversed before we visit any statements that might have
+  // CPP directives attached (or which are CPP direcitve IR nodes).
+
+  // Get the fileId of the assocated filename
+     int fileId = Sg_File_Info::getIDFromFilename(sourceFilename);
+
+     if ( SgProject::get_verbose() > 1 )
+          printf ("In GatherASTSourcePositionsBasedOnDetectedLineDirectives::GatherASTSourcePositionsBasedOnDetectedLineDirectives(): source file: fileId = %d sourceFilename = %s \n",fileId,sourceFilename.c_str());
+
+  // Push an entry onto the stack before doing the traversal over the whole AST.
+  // filenameIdList.insert(fileId);
+   }
+
+
+void
+SgSourceFile_processCppLinemarkers::GatherASTSourcePositionsBasedOnDetectedLineDirectives::visit ( SgNode* astNode )
+   {
+  // DQ (12/14/2012): This functionality is being added to support applications like sudo which have generated code from tools like lex.
+  // This traversal is defined to detect the use of "#line" directived and then accumulate the list of filenames used in the #line directives.
+  // When #line directives are used in the input source file then we consider all statements associated with those filenames to be from the
+  // input source file and direct them to be unparsed.  The actual way we trigger them to be unparsed is to make the source position to 
+  // be unparsed in the Sg_File_Info object, this is enough to force the unparsed to output those statements.
+  // TODO: It might be that this should operate on SgLocatedNode IR nodes instead of SgStatement IR nodes.
+
+     SgStatement* statement = isSgStatement(astNode);
+
+     printf ("GatherASTSourcePositionsBasedOnDetectedLineDirectives::visit(): statement = %p = %s \n",statement,(statement != NULL) ? statement->class_name().c_str() : "NULL");
+
+     if (statement != NULL)
+        {
+          if ( SgProject::get_verbose() > 1)
+               printf ("GatherASTSourcePositionsBasedOnDetectedLineDirectives::visit(): statement = %p = %s \n",statement,statement->class_name().c_str());
+
+          AttachedPreprocessingInfoType *commentOrDirectiveList = statement->getAttachedPreprocessingInfo();
+
+          if (SgProject::get_verbose() > 1)
+               printf ("GatherASTSourcePositionsBasedOnDetectedLineDirectives::visit(): commentOrDirectiveList = %p (size = %zu) \n",commentOrDirectiveList,(commentOrDirectiveList != NULL) ? commentOrDirectiveList->size() : 0);
+
+          if (commentOrDirectiveList != NULL)
+             {
+               AttachedPreprocessingInfoType::iterator i = commentOrDirectiveList->begin();
+               while(i != commentOrDirectiveList->end())
+                  {
+#if 0
+                    printf ("Directve type = %d = %s = %s \n",(*i)->getTypeOfDirective(),PreprocessingInfo::directiveTypeName((*i)->getTypeOfDirective()).c_str(),(*i)->getString().c_str());
+#endif
+                 // if ( (*i)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorCompilerGeneratedLinemarker )
+                    if ( (*i)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorLineDeclaration )
+                       {
+                      // This is a CPP line directive
+                         string directiveString = (*i)->getString();
+#if 0
+                         printf ("directiveString = %s \n",directiveString.c_str());
+#endif
+                      // Remove leading white space.
+                         size_t p = directiveString.find_first_not_of("# \t");
+                         directiveString.erase(0,p);
+#if 0
+                         printf ("directiveString (trimmed) = %s \n",directiveString.c_str());
+#endif
+                      // string directiveStringWithoutHash = directiveString;
+                         size_t lengthOfLineKeyword = string("line").length();
+
+                         string directiveStringWithoutHashAndKeyword = directiveString.substr(lengthOfLineKeyword,directiveString.length()-(lengthOfLineKeyword+1));
+#if 0
+                         printf ("directiveStringWithoutHashAndKeyword = %s \n",directiveStringWithoutHashAndKeyword.c_str());
+#endif
+                      // Remove white space between "#" and "line" keyword.
+                         p = directiveStringWithoutHashAndKeyword.find_first_not_of(" \t");
+                         directiveStringWithoutHashAndKeyword.erase(0, p);
+#if 0
+                         printf ("directiveStringWithoutHashLineAndKeyword (trimmed) = %s \n",directiveStringWithoutHashAndKeyword.c_str());
+#endif
+                      // At this point we have just '2 "toke.l"', and we can strip off the number.
+                         p = directiveStringWithoutHashAndKeyword.find_first_not_of("0123456789");
+
+                         string lineNumberString = directiveStringWithoutHashAndKeyword.substr(0,p);
+#if 0
+                         printf ("lineNumberString = %s \n",lineNumberString.c_str());
+#endif
+                         int line = atoi(lineNumberString.c_str());
+
+                      // string directiveStringWithoutHashAndKeywordAndLineNumber = directiveStringWithoutHashAndKeyword.substr(p,directiveStringWithoutHashAndKeyword.length()-(p+1));
+                         string directiveStringWithoutHashAndKeywordAndLineNumber = directiveStringWithoutHashAndKeyword.substr(p,directiveStringWithoutHashAndKeyword.length());
+#if 0
+                         printf ("directiveStringWithoutHashAndKeywordAndLineNumber = %s \n",directiveStringWithoutHashAndKeywordAndLineNumber.c_str());
+#endif
+                      // Remove white space between the line number and the filename.
+                         p = directiveStringWithoutHashAndKeywordAndLineNumber.find_first_not_of(" \t");
+                         directiveStringWithoutHashAndKeywordAndLineNumber.erase(0,p);
+#if 0
+                         printf ("directiveStringWithoutHashAndKeywordAndLineNumber (trimmed) = %s \n",directiveStringWithoutHashAndKeywordAndLineNumber.c_str());
+#endif
+                         string quotedFilename = directiveStringWithoutHashAndKeywordAndLineNumber;
+#if 0                         
+                         printf ("quotedFilename = %s \n",quotedFilename.c_str());
+#endif
+                         ROSE_ASSERT(quotedFilename[0] == '\"');
+                         ROSE_ASSERT(quotedFilename[quotedFilename.length()-1] == '\"');
+                         std::string filename = quotedFilename.substr(1,quotedFilename.length()-2);
+#if 0
+                         printf ("filename = %s \n",filename.c_str());
+#endif
+                      // Add the new filename to the static map stored in the Sg_File_Info (no action if filename is already in the map).
+                         Sg_File_Info::addFilenameToMap(filename);
+
+                         int fileId = Sg_File_Info::getIDFromFilename(filename);
+
+                         if (SgProject::get_verbose() >= 0)
+                              printf ("In SgSourceFile_processCppLinemarkers::GatherASTSourcePositionsBasedOnDetectedLineDirectives::visit(): line = %d fileId = %d quotedFilename = %s filename = %s \n",line,fileId,quotedFilename.c_str(),filename.c_str());
+
+                         if (filenameIdList.find(fileId) == filenameIdList.end())
+                            {
+                              filenameIdList.insert(fileId);
+                            }
+                       }
+
+                    i++;
+                  }
+             }
+        }
+   }
+#endif
+
+#if 0
+void
+SgSourceFile::gatherASTSourcePositionsBasedOnDetectedLineDirectives()
+   {
+  // DQ (12/18/2012): This is not inlined into the fixupASTSourcePositionsBasedOnDetectedLineDirectives() function to simplify the code.
+
+     printf ("Error: This function should not be called \n");
+     ROSE_ASSERT(false);
+
+#if 0
+     SgSourceFile* sourceFile = const_cast<SgSourceFile*>(this);
+
+     SgSourceFile_processCppLinemarkers::GatherASTSourcePositionsBasedOnDetectedLineDirectives linemarkerTraversal(sourceFile->get_sourceFileNameWithPath());
+
+     linemarkerTraversal.traverse(sourceFile,preorder);
+
+#if 0
+     set<int>::iterator i = linemarkerTraversal.filenameIdList.begin();
+     int counter = 0;
+     while (i != linemarkerTraversal.filenameIdList.end())
+        {
+          printf ("filenameIdList entry #%d = %d \n",counter,*i);
+          counter++;
+
+          i++;
+        }
+#endif
+#else
+     printf ("NOTE: SgSourceFile::gatherASTSourcePositionsBasedOnDetectedLineDirectives(): empty function \n");
+#endif
+#if 0
+     printf ("Exiting as a test ... (processing gatherASTSourcePositionsBasedOnDetectedLineDirectives) \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+#endif
+
+
+#if 1
+namespace SgSourceFile_processCppLinemarkers
+   {
+     class FixupASTSourcePositionsBasedOnDetectedLineDirectives : public AstSimpleProcessing
+        {
+          public:
+              set<int> filenameIdList;
+
+              FixupASTSourcePositionsBasedOnDetectedLineDirectives( const string & sourceFilename, set<int> & filenameSet );
+
+              void visit ( SgNode* astNode );
+        };
+   }
+
+
+SgSourceFile_processCppLinemarkers::FixupASTSourcePositionsBasedOnDetectedLineDirectives::FixupASTSourcePositionsBasedOnDetectedLineDirectives( const string & sourceFilename, set<int> & filenameSet )
+   : filenameIdList(filenameSet)
+   {
+     if (SgProject::get_verbose() > 1)
+          printf ("In FixupASTSourcePositionsBasedOnDetectedLineDirectives::FixupASTSourcePositionsBasedOnDetectedLineDirectives(): filenameIdList.size() = %zu \n",filenameIdList.size());
+   }
+
+
+void
+SgSourceFile_processCppLinemarkers::FixupASTSourcePositionsBasedOnDetectedLineDirectives::visit ( SgNode* astNode )
+   {
+  // DQ (12/14/2012): This functionality is being added to support applications like sudo which have generated code from tools like lex.
+  // This traversal is defined to detect the use of "#line" directived and then accumulate the list of filenames used in the #line directives.
+  // When #line directives are used in the input source file then we consider all statements associated with those filenames to be from the
+  // input source file and direct them to be unparsed.  The actual way we trigger them to be unparsed is to make the source position to 
+  // be unparsed in the Sg_File_Info object, this is enough to force the unparsed to output those statements.
+  // TODO: It might be that this should operate on SgLocatedNode IR nodes instead of SgStatement IR nodes.
+
+     SgStatement* statement = isSgStatement(astNode);
+
+#if 0
+     printf ("FixupASTSourcePositionsBasedOnDetectedLineDirectives::visit(): statement = %p = %s \n",statement,(statement != NULL) ? statement->class_name().c_str() : "NULL");
+#endif
+
+     if (statement != NULL)
+        {
+          if ( SgProject::get_verbose() > 1)
+               printf ("FixupASTSourcePositionsBasedOnDetectedLineDirectives::visit(): statement = %p = %s \n",statement,statement->class_name().c_str());
+
+          ROSE_ASSERT(statement->get_file_info() != NULL);
+          int fileId = statement->get_file_info()->get_file_id();
+
+       // Check if this fileId is associated with set of fileId that we would like to output.
+          if (filenameIdList.find(fileId) != filenameIdList.end())
+             {
+#if 0
+               printf ("FixupASTSourcePositionsBasedOnDetectedLineDirectives::visit(): statement = %p = %s \n",statement,(statement != NULL) ? statement->class_name().c_str() : "NULL");
+               printf ("Fixup the fileInfo for this statement to force it to be output fileId = %d \n",fileId);
+               Sg_File_Info::display_static_data("FixupASTSourcePositionsBasedOnDetectedLineDirectives::visit()");
+#endif
+#if 0
+               statement->get_startOfConstruct()->set_file_id(0);
+               statement->get_endOfConstruct()->set_file_id(0);
+#else
+            // statement->get_fileInfo()->setOutputInCodeGeneration();
+               statement->get_startOfConstruct()->setOutputInCodeGeneration();
+               statement->get_endOfConstruct()  ->setOutputInCodeGeneration();
+#endif
+             }
+        }
+   }
+#endif
+
+#if 1
+void
+SgSourceFile::fixupASTSourcePositionsBasedOnDetectedLineDirectives(set<int> equivalentFilenames)
+   {
+#if 0
+  // DQ (12/23/2012): This function is called from: AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute().
+  // It is used to map filenames generated from #line directives into thoses associated with the
+  // physical filename.  However, now that we internally keep references to both the logical 
+  // source position AND the physical source position, this should not be required.
+
+     printf ("ERROR: Now that we strore both logical and physical source position information, this function shuld not be used \n");
+     ROSE_ASSERT(false);
+#endif
+
+#if 0
+  // DQ (12/18/2012): This function is not called, since processing the #line directives after they have been added to the AST is TOO LATE!
+  // We instead have to process the list of collected directives from the lexer more directly before they are added to the AST so that we
+  // can build the list of equivalent filenames (to the input file) and thus get the all of the directives into the correct places using
+  // the mapping of the input filename to the list of equivalent filenames (from the #line directives).  Then we get both the comments/CPP
+  // directives into the correct locaions AND we can then process the statement's source positions to force the output in the unparser.
+
+     SgSourceFile* sourceFile = const_cast<SgSourceFile*>(this);
+
+     SgSourceFile_processCppLinemarkers::GatherASTSourcePositionsBasedOnDetectedLineDirectives linemarkerTraversal_1(sourceFile->get_sourceFileNameWithPath());
+
+     linemarkerTraversal_1.traverse(sourceFile,preorder);
+#endif
+#if 0
+     set<int>::iterator i = linemarkerTraversal_1.filenameIdList.begin();
+     int counter = 0;
+     while (i != linemarkerTraversal_1.filenameIdList.end())
+        {
+          printf ("filenameIdList entry #%d = %d \n",counter,*i);
+          counter++;
+
+          i++;
+        }
+#endif
+#if 0
+     printf ("Exiting as a test ... (processing gatherASTSourcePositionsBasedOnDetectedLineDirectives) \n");
+     ROSE_ASSERT(false);
+#endif
+
+  // SgSourceFile_processCppLinemarkers::FixupASTSourcePositionsBasedOnDetectedLineDirectives linemarkerTraversal(sourceFile->get_sourceFileNameWithPath(),linemarkerTraversal_1.filenameIdList);
+     SgSourceFile_processCppLinemarkers::FixupASTSourcePositionsBasedOnDetectedLineDirectives linemarkerTraversal(this->get_sourceFileNameWithPath(),equivalentFilenames);
+
+     linemarkerTraversal.traverse(this,preorder);
+
+#if 0
+     printf ("Exiting as a test ... (processing fixupASTSourcePositionsBasedOnDetectedLineDirectives) \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+#endif
+
+
 // DQ (9/30/2008): Refactored the setup of the class path for Java and OFP.
 string
 global_build_classpath()
    {
-  // This function builds the class path for use with Java and the cal to the OFP.
+  // This function builds the class path for use with Java and the call to the OFP library.
      string classpath = "-Djava.class.path=";
   // DQ (3/11/2010): Updating to new Fortran OFP version 0.7.2 with Craig.
   // classpath += findRoseSupportPathFromBuild("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser.jar", "lib/OpenFortranParser.jar") + ":";
@@ -3571,13 +3895,13 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode
     // TODO: revise SgInterfaceBody::get_traversalSuccessorByIndex(int ) to return p_functionDeclaration
     // Such changes will require some re-write of the code to build SgInterfaceBody.
     // With such changes, the patch below to treat the case of SgInterfaceBody will no longer be necessary.
-    SgInterfaceBody* interfaceBody = isSgInterfaceBody(astNode);
-    if (interfaceBody)
-       {
-        AstSimpleProcessing::traverse(interfaceBody->get_functionDeclaration(), preorder);
-       }
+     SgInterfaceBody* interfaceBody = isSgInterfaceBody(astNode);
+     if (interfaceBody)
+        {
+          AstSimpleProcessing::traverse(interfaceBody->get_functionDeclaration(), preorder);
+        }
 
-    SgStatement* statement = isSgStatement(astNode);
+     SgStatement* statement = isSgStatement(astNode);
   // printf ("LinemarkerTraversal::visit(): statement = %p = %s \n",statement,(statement != NULL) ? statement->class_name().c_str() : "NULL");
      if (statement != NULL)
         {
@@ -3635,7 +3959,7 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode
                if ( SgProject::get_verbose() > 1 )
                     printf ("Setting the source position of statement = %p = %s to line = %d fileId = %d \n",statement,statement->class_name().c_str(),line,fileId);
 
-          // DXN (02/18/2011): only reset the file id for the node whose file id corresponds to the "_postprocessed" file.
+            // DXN (02/18/2011): only reset the file id for the node whose file id corresponds to the "_postprocessed" file.
                string sourceFilename              = Sg_File_Info::getFilenameFromID(fileId) ;
                string sourceFileNameOutputFromCpp = OpenFortranParser_globalFilePointer->generate_C_preprocessor_intermediate_filename(sourceFilename);
                int cppFileId = Sg_File_Info::getIDFromFilename(sourceFileNameOutputFromCpp);

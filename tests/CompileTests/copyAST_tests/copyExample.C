@@ -26,8 +26,13 @@ copyAST ( SgNode* node )
                virtual SgNode *copyAst(const SgNode *n)
                   {
                  // This is the simpliest possible version of a deep copy SgCopyHelp::copyAst() member function.
+#if 0
+                    printf ("In copyAst(n = %p = %s): calling n->copy(*this) \n",n,n->class_name().c_str());
+#endif
                     SgNode *returnValue = n->copy(*this);
-
+#if 0
+                    printf ("In copyAst(n = %p = %s): returnValue = %p = %s) \n",n,n->class_name().c_str(),returnValue,returnValue->class_name().c_str());
+#endif
                     return returnValue;
                   }
         } restrictedCopyType;
@@ -172,6 +177,10 @@ main ( int argc, char* argv[] )
      printf ("Generate the dot output of the SAGE III AST \n");
      generateDOT ( *project );
 #endif
+     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 4000;
+#if 1
+     generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
+#endif
 
 #if 1
   // DQ (2/6/2004): These tests fail in Coco for test2004_14.C
@@ -208,7 +217,7 @@ main ( int argc, char* argv[] )
      if (project->get_verbose() > 0)
           printf ("\n\nOutput a graph of the whole AST \n");
 #if 1
-     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 4000;
+  // const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 4000;
      generateAstGraph(newProject,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
 #else
      set<SgNode*> emptyNodeSet;

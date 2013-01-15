@@ -266,8 +266,16 @@ void postProcessingSupport (SgNode* node)
        // DQ (5/2/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
        // Liao 11/21/2012. AstPostProcessing() is called within both Frontend and Midend
        // so we have to detect the mode first before asserting no transformation generated file info objects
-       if (SageBuilder::SourcePositionClassificationMode !=SageBuilder::e_sourcePositionTransformation)
-          detectTransformations(node);
+          if (SageBuilder::SourcePositionClassificationMode !=SageBuilder::e_sourcePositionTransformation)
+               detectTransformations(node);
+
+       // DQ (12/20/2012): We now store the logical and physical source position information.
+       // Although they are frequently the same, the use of #line directives causes them to be different.
+       // This is part of debugging the physical source position information which is used in the weaving
+       // of the comments and CPP directives into the AST.  For this the consistancy check is more helpful
+       // if done befor it is used (here), instead of after the comment and CPP directive insertion in the
+       // AST Consistancy tests.
+          checkPhysicalSourcePosition(node);
 
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("DONE: Postprocessing AST build using new EDG/Sage Translation Interface. \n");

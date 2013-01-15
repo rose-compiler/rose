@@ -4640,6 +4640,15 @@ HEADER_FILE_INFORMATION_START
           int  get_raw_line() const;
           int  get_raw_col() const;
 
+       // DQ (12/18/2012): Added support for physical filename and line number data.
+          void set_physical_filename ( const std::string & filename );
+          std::string get_physical_filename() const;
+          void set_physical_file_id ( int physical_file_id );
+          int  get_physical_file_id () const;
+          void set_physical_line (int line);
+          int  get_physical_line() const;
+          void set_physical_source_position_to_match_logical_source_position();
+
        // DQ (12/22/2006): This copies the line number and column number information and verifies that 
        // the file name is the same (it does not reset any fo the classification flags).  This is more
        // useful than the assignment operator for updating information and is used in the file:
@@ -5099,8 +5108,12 @@ HEADER_APPLICATION_SOURCE_FILE_START
           int build_Python_AST();
           virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
 
-       // DQ (12/19/2008): Added support for translation source position information using CPP linemarkers.
+       // DQ (12/19/2008): Added support for translation source position information using CPP linemarkers (this is specific to Fortran).
           void processCppLinemarkers();
+
+       // DQ (12/13/2012): Added support for more translation source position information using CPP linemarkers (this is not specific to Fortran).
+       // void gatherASTSourcePositionsBasedOnDetectedLineDirectives();
+          void fixupASTSourcePositionsBasedOnDetectedLineDirectives(std::set<int> equivalentFilenames);
 
        // DQ (9/5/2008): Support for older name of the SgGlobal in SgSourceFile
        // SgGlobal* get_root() const;
@@ -6872,7 +6885,7 @@ SgSymbolTable::find( const SgStatement* statement)
                  else
                   {
 #if 0
-                    printf ("returnSymbol->get_symbol_basis() != statement \n");
+                    printf ("returnSymbol->get_symbol_basis() != statement (returnSymbol->get_symbol_basis() = %p statement = %p) \n",returnSymbol->get_symbol_basis(),statement);
 #endif
                   }
              }
@@ -10880,6 +10893,13 @@ Sg_File_Info::ok() const
   // A node introduced as part of a transformation has no defined association with a file, line number, or column number.
      bool transformation  = isTransformation();
 
+     bool physicalFileOK = (p_physical_file_id >= 0);
+
+     if (physicalFileOK == false)
+        {
+          printf ("Note: In Sg_File_Info::ok(): p_physical_file_id = %d \n",p_physical_file_id);
+        }
+
   // return  compilerGenerated || (lineNumberOK && filenameOK);
   // return  sourcePositionUnavailableInFrontend || compilerGenerated || (lineNumberOK && filenameOK);
   // return  transformation || sourcePositionUnavailableInFrontend || compilerGenerated || (lineNumberOK && columnNumberOK && filenameOK);
@@ -10902,6 +10922,10 @@ Sg_File_Info::updateSourcePosition ( Sg_File_Info* update )
   // Update only the line number and column number after verifying that the filenames are the same.
      p_line = update->p_line;
      p_col  = update->p_col;
+
+  // DQ (12/20/2012): Added support for physical source position (existing file_id and line data represents logical position data).
+     ROSE_ASSERT(p_physical_file_id == update->p_physical_file_id);
+     p_physical_line = update->p_physical_line;
    }
 
 
@@ -11010,6 +11034,10 @@ Sg_File_Info::operator= ( const Sg_File_Info & X )
      p_col                    = X.p_col;
      p_classificationBitField = X.p_classificationBitField;
      p_fileIDsToUnparse       = X.p_fileIDsToUnparse;
+
+  // DQ (12/20/2012): Added support for physical source position (existing file_id and line data represents logical position data).
+     p_physical_file_id = X.p_physical_file_id;
+     p_physical_line    = X.p_physical_line;
 
   // Record that this source position information was updated.
      set_isModified(true);
@@ -11206,13 +11234,13 @@ Sg_File_Info::display( const std::string label ) const
           printf ("     filename = %s \n",get_filename());
           printf ("     line     = %d  column = %d \n",get_line(),get_col());
         }
-      else // Liao, 11/12/2012, more information for debugging
-      {
-        printf("filename and line, column info should be invalid for transformation or compiler generated objects\n");
-        printf("we print their values anyway for your reference\n");
-        printf ("     filename = %s \n",get_filename());
-        printf ("     line     = %d  column = %d \n",get_line(),get_col());
-      }
+       else // Liao, 11/12/2012, more information for debugging
+        {
+          printf("filename and line, column info should be invalid for transformation or compiler generated objects\n");
+          printf("we print their values anyway for your reference\n");
+          printf ("     filename = %s \n",get_filename());
+          printf ("     line     = %d  column = %d \n",get_line(),get_col());
+        }
 
   // DQ (6/17/2005): Way to get extra debugging information, if the
   // substring "debug" is found then extra information is output
@@ -11223,6 +11251,9 @@ Sg_File_Info::display( const std::string label ) const
           printf ("     filename = %s \n",get_raw_filename().c_str());
           printf ("     line     = %d  column   = %d \n",p_line,p_col);
         }
+
+     printf ("     physical_file_id  = %d = %s \n",get_physical_file_id(),get_physical_filename().c_str());
+     printf ("     physical_line     = %d \n",p_physical_line);
 
   // DQ (5/16/2005): output these values, but I think they might be removed 
   // later since I don't see the point of storing this information!
@@ -11256,10 +11287,10 @@ Sg_File_Info::display_static_data( const std::string label )
 
      printf ("Inside of Sg_File_Info::display_static_data(%s) \n",label.c_str());
 
-     // printf ("p_cur_line = %d \n",p_cur_line);
-     // printf ("p_cur_file = %s \n",p_cur_file.c_str());
+  // printf ("p_cur_line = %d \n",p_cur_line);
+  // printf ("p_cur_file = %s \n",p_cur_file.c_str());
 
-     // printf ("p_max_file_id = %d \n",p_max_file_id);
+  // printf ("p_max_file_id = %d \n",p_max_file_id);
 
      printf ("p_nametofileid_map: \n");
      for (std::map<std::string,int>::iterator i = p_nametofileid_map.begin(); i != p_nametofileid_map.end(); i++)
@@ -11278,7 +11309,7 @@ Sg_File_Info::display_static_data( const std::string label )
 // have default values this constructor is redundant/ambiguous
 // Sg_File_Info::Sg_File_Info() {}
 
-Sg_File_Info::Sg_File_Info ()
+Sg_File_Info::Sg_File_Info()
    {
      assert(this != NULL);
 
@@ -11294,6 +11325,10 @@ Sg_File_Info::Sg_File_Info ()
   // MK (7/22/05) : Initialize p_file_id to inidicate a copy
      p_file_id = COPY_FILE_ID;
 
+  // DQ (12/18/2012): Added support for physical source position (existing file_id and line data represents logical position data).
+     p_physical_file_id = NULL_FILE_ID;
+     p_physical_line    = 0;
+
 #if 0
      printf ("Sg_File_Info default constructor = %p \n",this);
   // display("In constructor");
@@ -11306,7 +11341,9 @@ Sg_File_Info::Sg_File_Info ()
 // DQ (4/19/2006): Added constructor to take std::string as part of move
 // away from C style strings to C++ style strings.
 Sg_File_Info::Sg_File_Info ( const std::string & filename, int line, int col )
-   : p_line(line), p_col(col)
+   : p_line(line), p_col(col),
+     p_physical_file_id(NULL_FILE_ID),
+     p_physical_line(0)
    {
      assert(this != NULL);
 
@@ -11330,7 +11367,15 @@ Sg_File_Info::Sg_File_Info ( const std::string & filename, int line, int col )
 
      p_classificationBitField = 0;
 
+  // DQ (12/20/2012): Initialize the physical file/line information to be that of the input file/line information.
+  // p_physical_file_id = p_file_id,
+  // p_physical_line    = p_line;
+
      assert (p_col >= 0);
+
+  // DQ (12/18/2012): When the source position is set explicitly with a filename then initialize 
+  // the physical position to be the saem (it might be changed after construction).
+     set_physical_source_position_to_match_logical_source_position();
 
 #if 0
      printf ("Sg_File_Info constructor(const std::string,int,int) = %p \n",this);
@@ -11349,6 +11394,8 @@ Sg_File_Info::Sg_File_Info(const Sg_File_Info & X)
   // DQ (7/29/2005): Preserve IR node classification within copy constructor
   // p_classificationBitField(0)
      p_classificationBitField(X.p_classificationBitField),
+     p_physical_file_id(X.p_physical_file_id),
+     p_physical_line(X.p_physical_line),
      p_fileIDsToUnparse(X.p_fileIDsToUnparse)
    {
      assert(this != NULL);
@@ -11365,6 +11412,7 @@ Sg_File_Info::Sg_File_Info(const Sg_File_Info & X)
    }
 
 #if 0
+// This is at least older than 12/18/2012: so remove at some point later.
 // This is now removed but saved becuase it might be that it should be depricated for a while
 Sg_File_Info::Sg_File_Info ( const char* filename, int line, int col )
    : p_line(line), p_col(col) // , p_isPartOfTransformation(false)
@@ -11399,7 +11447,9 @@ Sg_File_Info::Sg_File_Info( int file_id, int line, int column )
    : p_file_id(file_id),
      p_line(line),
      p_col(column),
-     p_classificationBitField(0)
+     p_classificationBitField(0),
+     p_physical_file_id(NULL_FILE_ID),
+     p_physical_line(0)
    {
      assert(this != NULL);
 
@@ -11475,17 +11525,82 @@ Sg_File_Info::get_file_id () const
 #endif
         }
 
+  // DQ (12/18/2012): Added assertion.
+     ROSE_ASSERT(returnValue != -99);
+
      return returnValue;
    }
 
 void
-Sg_File_Info::set_file_id ( int file_id )
+Sg_File_Info::set_file_id( int file_id )
    {
      assert (this != NULL);
      set_isModified(true);
-     
+
+#if 0
+     printf ("In Sg_File_Info::set_file_id(file_id = %d) this = %p \n",file_id,this);
+#endif
+
      p_file_id = file_id;
    }
+
+
+int 
+Sg_File_Info::get_physical_file_id() const
+   {
+  // DQ (12/18/2012): Added support for physical file position information.
+     assert (this != NULL);
+
+  // Initialize to error value.
+     int return_physical_file_id = NULL_FILE_ID;
+
+  // Match the behavior (transformation, compiler generated, etc.) of the p_file_id.
+     int file_id = get_file_id();
+     if (file_id < 0)
+          return_physical_file_id = file_id;
+       else
+          return_physical_file_id = p_physical_file_id;
+
+     return return_physical_file_id;
+   }
+
+
+void
+Sg_File_Info::set_physical_file_id( int physical_file_id )
+   {
+     assert (this != NULL);
+     set_isModified(true);
+
+#if 0
+     printf ("In Sg_File_Info::set_physical_file_id(physical_file_id = %d) this = %p \n",physical_file_id,this);
+#endif
+
+     p_physical_file_id = physical_file_id;
+
+  // Make sure this is a previously handled file.
+     if (p_physical_file_id >= 0)
+        {
+          ROSE_ASSERT(p_fileidtoname_map.find(p_physical_file_id) != p_fileidtoname_map.end());
+        }
+   }
+
+
+void
+Sg_File_Info::set_physical_source_position_to_match_logical_source_position()
+   {
+     assert (this != NULL);
+     set_isModified(true);
+
+     p_physical_file_id = p_file_id;
+     p_physical_line    = p_line;
+
+  // Make sure this is a previously handled file.
+     if (p_physical_file_id >= 0)
+        {
+          ROSE_ASSERT(p_fileidtoname_map.find(p_physical_file_id) != p_fileidtoname_map.end());
+        }
+   }
+
 
 int
 Sg_File_Info::numberOfSourceFiles()
@@ -11523,6 +11638,10 @@ Sg_File_Info::set_filenameString ( const std::string & filename )
    {
      assert (this != NULL);
 
+#if 0
+     printf ("In Sg_File_Info::set_filenameString(filename = %s) this = %p \n",filename.c_str(),this);
+#endif
+
      if (p_nametofileid_map.count(filename) == 0)
         {
           p_file_id = p_nametofileid_map.size();
@@ -11545,6 +11664,27 @@ Sg_File_Info::set_filenameString ( const std::string & filename )
   // Detect use of AST Rewrite intermediate files (need to make sure they get absolute paths)
   // string targetSubstring2 = "rose_";
   // assert(filenameString.substr(0,targetSubstring2.size()) != targetSubstring2);
+   }
+
+void
+Sg_File_Info::set_physical_filename ( const std::string & filename )
+   {
+     assert (this != NULL);
+
+#if 0
+     printf ("In Sg_File_Info::set_physical_filename(filename = %s) this = %p p_nametofileid_map.count(filename) = %zu \n",filename.c_str(),this,p_nametofileid_map.count(filename));
+#endif
+
+     if (p_nametofileid_map.count(filename) == 0)
+        {
+          p_physical_file_id = p_nametofileid_map.size();
+          p_nametofileid_map[filename]  = p_physical_file_id;
+          p_fileidtoname_map[p_physical_file_id] = filename;
+        }
+       else
+        {
+          p_physical_file_id = p_nametofileid_map[filename];
+        }
    }
 
 void
@@ -11635,14 +11775,27 @@ Sg_File_Info::get_raw_filename() const
      return getFilenameFromID(p_file_id);
    }
 
+string
+Sg_File_Info::get_physical_filename() const
+   {
+     assert (this != NULL);
+
+  // return whatever name is in the map
+     return getFilenameFromID(p_physical_file_id);
+   }
+
 void
 Sg_File_Info::set_line(int line)
    {
      assert (this != NULL);
      p_line = line;
      if (isTransformation() || isCompilerGenerated())
-       if (line !=0) // Liao, 11/12/2012. get_line() won't return the value being set!!
-         printf ("warning: Sg_File_Info::set_line() tried to set non-zero line number to a transformation or compiler generated file info obj.");
+        {
+          if (line !=0) // Liao, 11/12/2012. get_line() won't return the value being set!!
+             {
+               printf ("warning: Sg_File_Info::set_line() tried to set non-zero line number to a transformation or compiler generated file info obj.");
+             }
+        }
    }
 
 int
@@ -11683,9 +11836,23 @@ Sg_File_Info::get_line() const
 
 int
 Sg_File_Info::get_raw_line() const
-   { 
+   {
      assert (this != NULL);
      return p_line;
+   }
+
+void
+Sg_File_Info::set_physical_line(int line)
+   {
+     assert (this != NULL);
+     p_physical_line = line;
+   }
+
+int
+Sg_File_Info::get_physical_line() const
+   {
+     assert (this != NULL);
+     return p_physical_line;
    }
 
 int
@@ -11777,7 +11944,9 @@ Sg_File_Info::getCurrentLine () const
      printf ("This is a depricated function: char* Sg_File_Info::getCurrentLine() const \n");
      return p_cur_line;
    }
+#endif
 
+#if 0
 std::string
 Sg_File_Info::getCurrentFilename () const
    {
@@ -12202,7 +12371,7 @@ Sg_File_Info::getFilenameFromID(int id)
                  // std::cout << p_fileidtoname_map[id] << std::endl;
                  // printf ("Error: bad id number for file id (id = %d) \n",id);
                   }
-               assert(failure == false);
+               ROSE_ASSERT(failure == false);
 
             // get the filename from the map using the valid id
                name = &p_fileidtoname_map[id];
@@ -12265,8 +12434,9 @@ SOURCE_APPLICATION_FILE_START
 int SgFile::buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine )
    {
      printf ("Base class of virtual function, SgFile::buildAST(), called by mistake! \n");
-     assert(false);
-     // tps (12/11/2009): Windows error : needs a return value
+     ROSE_ASSERT(false);
+
+  // tps (12/11/2009): Windows error : needs a return value
      return 0;
    }
 
@@ -12353,7 +12523,7 @@ SgFile::SgFile ( vector<string> & argv ,  SgProject* project )
 SgFile::SgFile ( const SgFile & X )
    {
      printf ("Error: calling private copy constructor! \n");
-     assert(false);
+     ROSE_ASSERT(false);
    }
 
 #include "Disassembler.h"
@@ -15966,10 +16136,20 @@ SgTemplateArgument::get_mangled_name (void) const
                SgTemplateInstantiationDecl* templateClassInstantiationDeclaration = isSgTemplateInstantiationDecl(this->get_parent());
                if (templateClassInstantiationDeclaration != NULL)
                   {
+                 // DQ (12/26/2012): I think that to generate a unique mangled name we need to alwasy reference the same declaration, so set this and enforce that it is a valid pointer.
+                    templateClassInstantiationDeclaration = isSgTemplateInstantiationDecl(templateClassInstantiationDeclaration->get_firstNondefiningDeclaration());
+                    ROSE_ASSERT(templateClassInstantiationDeclaration != NULL);
 #if 0
                     printf ("In SgTemplateArgument::get_mangled_name(): case SgTemplateArgument::type_argument: templateClassInstantiationDeclaration = %p name = %s \n",templateClassInstantiationDeclaration,templateClassInstantiationDeclaration->get_name().str());
 #endif
                     mangled_type += StringUtility::numberToString(templateClassInstantiationDeclaration);
+
+                 // DQ (12/26/2012): This assert fails for copyAST_tests/copytest2007_40.C, but I think it is unreasonable 
+                 // to expect it to always be true.  So I have made it a warning for now.
+                    if (templateClassInstantiationDeclaration != templateClassInstantiationDeclaration->get_firstNondefiningDeclaration())
+                       {
+                         printf ("Warning: In SgTemplateArgument::get_mangled_name(): templateClassInstantiationDeclaration used for mangled name was not the firstNondefiningDeclaration \n");
+                       }
                     ROSE_ASSERT(templateClassInstantiationDeclaration == templateClassInstantiationDeclaration->get_firstNondefiningDeclaration());
                   }
                  else

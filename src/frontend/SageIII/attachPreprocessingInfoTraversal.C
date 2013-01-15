@@ -195,9 +195,13 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
   // if ( isSgLocatedNode(locatedNode) != NULL )
      if ( locatedNode != NULL )
         {
-          printf ("starting line number = %d \n",locatedNode->get_startOfConstruct()->get_line());
+       // printf ("starting line number = %d \n",locatedNode->get_startOfConstruct()->get_line());
+          printf ("starting line number = %d \n",locatedNode->get_startOfConstruct()->get_physical_line());
           if (locatedNode->get_endOfConstruct() != NULL)
-               printf ("ending line number   = %d \n",locatedNode->get_endOfConstruct()->get_line());
+             {
+            // printf ("ending line number   = %d \n",locatedNode->get_endOfConstruct()->get_line());
+               printf ("ending line number   = %d \n",locatedNode->get_endOfConstruct()->get_physical_line());
+             }
         }
        else
         {
@@ -211,9 +215,11 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #if DEBUG_ATTACH_PREPROCESSING_INFO
   // Debugging information...
         {
-          int line = locatedNode->get_startOfConstruct()->get_line();
-          int col  = locatedNode->get_startOfConstruct()->get_col();
-          int ending_line = locatedNode->get_endOfConstruct()->get_line();
+       // int line        = locatedNode->get_startOfConstruct()->get_line();
+          int line        = locatedNode->get_startOfConstruct()->get_physical_line();
+          int col         = locatedNode->get_startOfConstruct()->get_col();
+       // int ending_line = locatedNode->get_endOfConstruct()->get_line();
+          int ending_line = locatedNode->get_endOfConstruct()->get_physical_line();
           int ending_col  = locatedNode->get_endOfConstruct()->get_col();
 
        // DQ (8/6/2012): Added support for endOfConstruct().
@@ -241,17 +247,58 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
   // static int start_index = 0;
   // int currentFileId = locatedNode->get_startOfConstruct()->get_file_id();
      Sg_File_Info* locatedFileInfo = locatedNode->get_file_info();
+
+#if 0
+     printf ("In iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): locatedNode = %p = %s locatedFileInfo = %p \n",locatedNode,locatedNode->class_name().c_str(),locatedFileInfo);
+     printf ("In iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): sourceFile->get_requires_C_preprocessor() = %s \n",sourceFile->get_requires_C_preprocessor() ? "true" : "false");
+#endif
+
+#if 0
      int currentFileId = (sourceFile->get_requires_C_preprocessor() == true) ? 
                          Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
                          locatedFileInfo->get_file_id();
+#else
+  // DQ (12/18/2012): Switch to using the physical file id now that we support this feature.
+     int currentFileId = (sourceFile->get_requires_C_preprocessor() == true) ? 
+                         Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+                         locatedFileInfo->get_physical_file_id();
+#endif
 
-  // printf ("In iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): currentFileId = %d \n",currentFileId);
+#if 0
+     printf ("In iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): currentFileId = %d currentListOfAttributes->get_filenameIdSet().size() = %zu \n",currentFileId,currentListOfAttributes->get_filenameIdSet().size());
+
+     set<int>::iterator i = currentListOfAttributes->get_filenameIdSet().begin();
+     while (i != currentListOfAttributes->get_filenameIdSet().end())
+        {
+          printf ("equivalent file = %d = %s \n",*i,Sg_File_Info::getFilenameFromID(*i).c_str());
+          i++;
+        }
+#endif
+#if 0
+     printf ("Initial value of currentFileId = %d = %s \n",currentFileId,Sg_File_Info::getFilenameFromID(currentFileId).c_str());
+#endif
+
+  // DQ (12/15/2012): Allow equivalent files to be mapped back to the source file.
+     if (currentListOfAttributes->get_filenameIdSet().find(currentFileId) != currentListOfAttributes->get_filenameIdSet().end())
+        {
+       // File name that we want all equivalent files to map to...
+       // string filename = sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename());
+          string filename = sourceFile->get_file_info()->get_filename();
+
+          currentFileId = Sg_File_Info::getIDFromFilename(filename);
+#if 0
+          printf ("Reset the currentFileId to currentFileId = %d = %s filename = %s \n",currentFileId,Sg_File_Info::getFilenameFromID(currentFileId).c_str(),filename.c_str());
+#endif
+       // DQ (12/19/2012): This should map to an existing file.
+          ROSE_ASSERT(currentFileId >= 0);
+        }
 
      int start_index = startIndexMap[currentFileId];
 
      if (attributeMapForAllFiles.find(currentFileId) == attributeMapForAllFiles.end())
         {
           printf ("Error: locatedNode = %p = %s currentFileId = %d file = %s \n",locatedNode,locatedNode->class_name().c_str(),currentFileId,Sg_File_Info::getFilenameFromID(currentFileId).c_str());
+          locatedFileInfo->display("In AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber()");
         }
      ROSE_ASSERT(attributeMapForAllFiles.find(currentFileId) != attributeMapForAllFiles.end());
      int sizeOfCurrentListOfAttributes = attributeMapForAllFiles[currentFileId]->size();
@@ -270,19 +317,20 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
    // ! comment here
    //  end do
    //
-   bool isFortranBlockAndBeforePoisition = false; // should we skip a Fortran basic block when the position is before?
-   if (SageInterface::is_Fortran_language() )
-   {
-     if (isSgBasicBlock (locatedNode) && (location == PreprocessingInfo::before || location == PreprocessingInfo::after))
-       isFortranBlockAndBeforePoisition = true; 
-   }
+     bool isFortranBlockAndBeforePoisition = false; // should we skip a Fortran basic block when the position is before?
+     if (SageInterface::is_Fortran_language() )
+        {
+          if (isSgBasicBlock (locatedNode) && (location == PreprocessingInfo::before || location == PreprocessingInfo::after))
+               isFortranBlockAndBeforePoisition = true; 
+        }
 
-  // DQ (12/23/2008): Note: I think that this should be turned into a while loop (starting at start_index, 
+  // DQ (12/23/2008): Note: I think that this should be turned into a while loop (starting at start_index,
   // to lineNumber when location == PreprocessingInfo::before, and to the sizeOfCurrentListOfAttributes 
   // when location == PreprocessingInfo::after).
-   if (!isFortranBlockAndBeforePoisition) {
-     list<pair<SgIncludeDirectiveStatement*, SgStatement*> > localStatementsToInsertAfter;
-     for ( int i = start_index; i < sizeOfCurrentListOfAttributes; i++ )
+     if (!isFortranBlockAndBeforePoisition)
+        {
+          list<pair<SgIncludeDirectiveStatement*, SgStatement*> > localStatementsToInsertAfter;
+          for ( int i = start_index; i < sizeOfCurrentListOfAttributes; i++ )
 #if 0
   // DQ (12/23/2008): This is tighter control over the number of iterations required.
      int i = start_index;
@@ -295,150 +343,165 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
   // while (currentPreprocessingInfoPtr->getLineNumber() < bound && i < sizeOfCurrentListOfAttributes)
      while ( (i < sizeOfCurrentListOfAttributes) && (currentPreprocessingInfoPtr->getLineNumber() < bound) )
 #endif
-        {
-          PreprocessingInfo *currentPreprocessingInfoPtr = (*currentListOfAttributes)[i];
+             {
+               PreprocessingInfo *currentPreprocessingInfoPtr = (*currentListOfAttributes)[i];
 #if 0
-          if ( currentPreprocessingInfoPtr != NULL )
-               printf ("currentPreprocessingInfoPtr->getLineNumber() = %d lineNumber = %d \n",currentPreprocessingInfoPtr->getLineNumber(),lineNumber);
+               if ( currentPreprocessingInfoPtr != NULL )
+                    printf ("currentPreprocessingInfoPtr->getLineNumber() = %d lineNumber = %d \n",currentPreprocessingInfoPtr->getLineNumber(),lineNumber);
 #endif
 #if 0
-          printf ("currentPreprocessingInfoPtr->getLineNumber() = %d lineNumber = %d internalString = %s \n",currentPreprocessingInfoPtr->getLineNumber(),lineNumber,currentPreprocessingInfoPtr->getString().c_str());
+               printf ("currentPreprocessingInfoPtr->getLineNumber() = %d lineNumber = %d internalString = %s \n",currentPreprocessingInfoPtr->getLineNumber(),lineNumber,currentPreprocessingInfoPtr->getString().c_str());
 #endif
 
-          ROSE_ASSERT(currentPreprocessingInfoPtr != NULL);
-          int currentPreprocessingInfoLineNumber = currentPreprocessingInfoPtr->getLineNumber();
+               ROSE_ASSERT(currentPreprocessingInfoPtr != NULL);
+               int currentPreprocessingInfoLineNumber = currentPreprocessingInfoPtr->getLineNumber();
 #if 1
-       // DQ (12/23/2008): So far this is the most reliable way to break out of the loop.
-          ROSE_ASSERT(currentPreprocessingInfoPtr != NULL);
-          if ( (currentPreprocessingInfoLineNumber > lineNumber) && (location == PreprocessingInfo::before) )
-             {
-            // DQ (12/23/2008): I think that under this constraint we could exit this loop!
-            // printf ("Warning: Why are we searching this list of PreprocessingInfo beyond the line number of the current statement (using break) \n");
+            // DQ (12/23/2008): So far this is the most reliable way to break out of the loop.
+               ROSE_ASSERT(currentPreprocessingInfoPtr != NULL);
+               if ( (currentPreprocessingInfoLineNumber > lineNumber) && (location == PreprocessingInfo::before) )
+                  {
+                 // DQ (12/23/2008): I think that under this constraint we could exit this loop!
+                 // printf ("Warning: Why are we searching this list of PreprocessingInfo beyond the line number of the current statement (using break) \n");
 
-            // DQ (12/23/2008): I don't like the design which forces an exit from the loop here, but this is the most robust implementation so far.
-               break;
-             }
+                 // DQ (12/23/2008): I don't like the design which forces an exit from the loop here, but this is the most robust implementation so far.
+                    break;
+                  }
 #endif
-       // bool attachCommentOrDirective = (currentPreprocessingInfoPtr != NULL) && (currentPreprocessingInfoPtr->getLineNumber() <= lineNumber);
-          bool attachCommentOrDirective = (currentPreprocessingInfoLineNumber <= lineNumber);
+            // bool attachCommentOrDirective = (currentPreprocessingInfoPtr != NULL) && (currentPreprocessingInfoPtr->getLineNumber() <= lineNumber);
+               bool attachCommentOrDirective = (currentPreprocessingInfoLineNumber <= lineNumber);
 
-          if ( attachCommentOrDirective == true )
-             {
+               if ( attachCommentOrDirective == true )
+                  {
 #if DEBUG_ATTACH_PREPROCESSING_INFO
-               printf ("Attaching \"%s\" (from line# %d) to %s locatedNode = %p = %s = %s at line %d \n",
-                   currentPreprocessingInfoPtr->getString().c_str(),
-                   currentPreprocessingInfoPtr->getLineNumber(),
-                   (locatedNode->get_file_info()->isCompilerGenerated() == true) ? "compiler-generated" : "non-compiler-generated",
-                   locatedNode,
-                   locatedNode->class_name().c_str(),SageInterface::get_name(locatedNode).c_str(),
-                   (locatedNode->get_file_info()->isCompilerGenerated() == true) ? -1 : locatedNode->get_file_info()->get_line());
-            // printf ("locatedNode->unparseToString() = %s \n",locatedNode->unparseToString().c_str());
+                    printf ("Attaching \"%s\" (from line# %d) to %s locatedNode = %p = %s = %s at line %d \n",
+                         currentPreprocessingInfoPtr->getString().c_str(),
+                         currentPreprocessingInfoPtr->getLineNumber(),
+                         (locatedNode->get_file_info()->isCompilerGenerated() == true) ? "compiler-generated" : "non-compiler-generated",
+                         locatedNode,
+                         locatedNode->class_name().c_str(),SageInterface::get_name(locatedNode).c_str(),
+                      // (locatedNode->get_file_info()->isCompilerGenerated() == true) ? -1 : locatedNode->get_file_info()->get_line());
+                         (locatedNode->get_file_info()->isCompilerGenerated() == true) ? -1 : locatedNode->get_file_info()->get_physical_line());
+                 // printf ("locatedNode->unparseToString() = %s \n",locatedNode->unparseToString().c_str());
 #endif
+                 // Mark this PreprocessingInfo object as having been placed into the AST
+                 // It might make more sense to remove it from the list so it doesn't have 
+                 // to be traversed next time.
+                 // currentPreprocessingInfoPtr->setHasBeenCopied();
 
-            // Mark this PreprocessingInfo object as having been placed into the AST
-            // It might make more sense to remove it from the list so it doesn't have 
-            // to be traversed next time.
-            // currentPreprocessingInfoPtr->setHasBeenCopied();
-               
-            // negara1 (08/05/2011): Do not set to NULL such that we can reuse it for multiple inclusions of the same header file.
-            // currentListOfAttributes->getList()[i] = NULL;
+                 // negara1 (08/05/2011): Do not set to NULL such that we can reuse it for multiple inclusions of the same header file.
+                 // currentListOfAttributes->getList()[i] = NULL;
 
-            // DQ (4/13/2007): If we are going to invalidate the list of accumulated attributes then we can start 
-            // next time at the next index (at least).  This removes the order n^2 complexity of traversing over the whole loop.
-            // start_index = i+1;
-               ROSE_ASSERT(startIndexMap.find(currentFileId) != startIndexMap.end());
-               startIndexMap[currentFileId] = i+1;
-            // printf ("Incremented start_index to be %d \n",startIndexMap[currentFileId]);
+                 // DQ (4/13/2007): If we are going to invalidate the list of accumulated attributes then we can start 
+                 // next time at the next index (at least).  This removes the order n^2 complexity of traversing over the whole loop.
+                 // start_index = i+1;
+                    ROSE_ASSERT(startIndexMap.find(currentFileId) != startIndexMap.end());
+                    startIndexMap[currentFileId] = i+1;
+                 // printf ("Incremented start_index to be %d \n",startIndexMap[currentFileId]);
 
-            // Mark the location relative to the current node where the PreprocessingInfo 
-            // object should be unparsed (before or after) relative to the current locatedNode
-               currentPreprocessingInfoPtr->setRelativePosition(location);
-
+                 // Mark the location relative to the current node where the PreprocessingInfo 
+                 // object should be unparsed (before or after) relative to the current locatedNode
+                    currentPreprocessingInfoPtr->setRelativePosition(location);
 #if 1
-            // This uses the old code to attach comments and CPP directives to the AST as attributes.
-            // printf ("Attaching CPP directives %s to IR nodes as attributes. \n",PreprocessingInfo::directiveTypeName(currentPreprocessingInfoPtr->getTypeOfDirective()).c_str());
-               locatedNode->addToAttachedPreprocessingInfo(currentPreprocessingInfoPtr);
-               
-            // negara1 (08/05/2011): If currentPreprocessingInfoPtr is an include directive, get the included file.
-            // If the included file exists, append all its trailing preprocessor directives to its last node and reset its 
-            // start index to the first preprocessor directive.
-            // Proceed only if header files unparsing is enabled.
-               if (sourceFile -> get_unparseHeaderFiles()) {
-                   if (currentPreprocessingInfoPtr -> getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration) {
-                       string includedFileName = sourceFile -> get_project() -> findIncludedFile(currentPreprocessingInfoPtr);
-                       if (includedFileName.length() > 0) { //found the included file
-                            const int OneBillion = 1000000000;
-                            int fileNameId = Sg_File_Info::getIDFromFilename(includedFileName);
-                            //A header file might not be present in the map at this point if it contains only preprocessor directives and comments.
-                            if (fileNameId < 0) { 
-                                fileNameId = Sg_File_Info::addFilenameToMap(includedFileName);
+                 // This uses the old code to attach comments and CPP directives to the AST as attributes.
+                 // printf ("Attaching CPP directives %s to IR nodes as attributes. \n",PreprocessingInfo::directiveTypeName(currentPreprocessingInfoPtr->getTypeOfDirective()).c_str());
+                    locatedNode->addToAttachedPreprocessingInfo(currentPreprocessingInfoPtr);
+
+                 // negara1 (08/05/2011): If currentPreprocessingInfoPtr is an include directive, get the included file.
+                 // If the included file exists, append all its trailing preprocessor directives to its last node and reset its 
+                 // start index to the first preprocessor directive.
+                 // Proceed only if header files unparsing is enabled.
+                    if (sourceFile->get_unparseHeaderFiles())
+                       {
+                         if (currentPreprocessingInfoPtr->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration)
+                            {
+                              string includedFileName = sourceFile->get_project()->findIncludedFile(currentPreprocessingInfoPtr);
+                              if (includedFileName.length() > 0)
+                                 {
+                                // found the included file
+                                   const int OneBillion = 1000000000;
+                                   int fileNameId = Sg_File_Info::getIDFromFilename(includedFileName);
+
+                                // A header file might not be present in the map at this point if it contains only preprocessor directives and comments.
+                                   if (fileNameId < 0)
+                                      {
+                                        fileNameId = Sg_File_Info::addFilenameToMap(includedFileName);
+                                      }
+                                // Currently, ROSE supports unparsing of header files only when #include directives do not appear inside expressions.
+                                // The only exception is SgHeaderFileBody, whose parent SgIncludeDirectiveStatement is used instead.
+                                   SgStatement* locatedStatement;
+                                   if (isSgHeaderFileBody(locatedNode) != NULL)
+                                      {
+                                        locatedStatement = isSgStatement(locatedNode->get_parent());
+                                      }
+                                     else
+                                      {
+                                        locatedStatement = isSgStatement(locatedNode);
+                                      }
+
+                                   if (locatedStatement == NULL)
+                                      {
+                                        cout << "Can not handle #include directives inside expressions for header files unpasing:" << locatedNode -> class_name() << endl;
+                                        ROSE_ASSERT(false);
+                                      }
+
+                                   SgIncludeDirectiveStatement* includeDirectiveStatement = new SgIncludeDirectiveStatement();
+                                   includeDirectiveStatement -> set_file_info(locatedNode -> get_file_info());
+                                   includeDirectiveStatement -> set_directiveString(currentPreprocessingInfoPtr -> getString()); //Set, but not used in the current implementation.
+                                   SgHeaderFileBody* headerFileBody = new SgHeaderFileBody();
+                                   headerFileBody -> set_file_info(new Sg_File_Info(includedFileName));
+                                   headerFileBody -> set_parent(includeDirectiveStatement);
+                                   includeDirectiveStatement -> set_headerFileBody(headerFileBody);
+                                   if (location == PreprocessingInfo::before)
+                                      {
+                                        statementsToInsertBefore.push_back(pair<SgIncludeDirectiveStatement*, SgStatement*>(includeDirectiveStatement, locatedStatement));
+                                      }
+                                     else 
+                                      {
+                                     // push_front in order to preserve the order when these include statements are inserted in the AST.
+                                        localStatementsToInsertAfter.push_front(pair<SgIncludeDirectiveStatement*, SgStatement*>(includeDirectiveStatement, locatedStatement));
+                                      }
+                                   SgLocatedNode* targetNode = NULL;
+                                   if (previousLocatedNodeMap.find(fileNameId) != previousLocatedNodeMap.end())
+                                      {
+                                        targetNode = previousLocatedNodeMap[fileNameId];
+                                      }
+                                   if (targetNode == NULL)
+                                      {
+                                     // Can be NULL either because it is not found or because it was previously reset.
+                                        targetNode = headerFileBody;
+                                      }
+                                   bool reset_start_index = false;
+                                   iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber (targetNode, OneBillion, PreprocessingInfo::after, reset_start_index, getListOfAttributes(fileNameId));
+                                // Reset the pointer to the previous located node and reset the start index.
+                                   previousLocatedNodeMap[fileNameId] = NULL;
+                                   startIndexMap[fileNameId] = 0;
+                                 }
                             }
-                            //Currently, ROSE supports unparsing of header files only when #include directives do not appear inside expressions.
-                            //The only exception is SgHeaderFileBody, whose parent SgIncludeDirectiveStatement is used instead.
-                            SgStatement* locatedStatement;
-                            if (isSgHeaderFileBody(locatedNode) != NULL) {
-                                locatedStatement = isSgStatement(locatedNode -> get_parent());
-                            } else {
-                                locatedStatement = isSgStatement(locatedNode);
-                            }
-                            if (locatedStatement == NULL) {
-                                cout << "Can not handle #include directives inside expressions for header files unpasing:" << locatedNode -> class_name() << endl;
-                                ROSE_ASSERT(false);
-                            }
-                            SgIncludeDirectiveStatement* includeDirectiveStatement = new SgIncludeDirectiveStatement();
-                            includeDirectiveStatement -> set_file_info(locatedNode -> get_file_info());
-                            includeDirectiveStatement -> set_directiveString(currentPreprocessingInfoPtr -> getString()); //Set, but not used in the current implementation.
-                            SgHeaderFileBody* headerFileBody = new SgHeaderFileBody();
-                            headerFileBody -> set_file_info(new Sg_File_Info(includedFileName));
-                            headerFileBody -> set_parent(includeDirectiveStatement);
-                            includeDirectiveStatement -> set_headerFileBody(headerFileBody);
-                            if (location == PreprocessingInfo::before) {
-                                statementsToInsertBefore.push_back(pair<SgIncludeDirectiveStatement*, SgStatement*>(includeDirectiveStatement, locatedStatement));
-                            } else {
-                                //push_front in order to preserve the order when these include statements are inserted in the AST.
-                                localStatementsToInsertAfter.push_front(pair<SgIncludeDirectiveStatement*, SgStatement*>(includeDirectiveStatement, locatedStatement));
-                            }
-                            SgLocatedNode* targetNode = NULL;
-                            if (previousLocatedNodeMap.find(fileNameId) != previousLocatedNodeMap.end()) {
-                                targetNode = previousLocatedNodeMap[fileNameId];
-                            }
-                            if (targetNode == NULL) { //Can be NULL either because it is not found or because it was previously reset.
-                                targetNode = headerFileBody;
-                            }
-                            bool reset_start_index = false;
-                            iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
-                               ( targetNode, OneBillion, PreprocessingInfo::after, reset_start_index, getListOfAttributes(fileNameId));
-                            //Reset the pointer to the previous located node and reset the start index.
-                            previousLocatedNodeMap[fileNameId] = NULL;
-                            startIndexMap[fileNameId] = 0;
-                        }
-                   }
-               }
-               
+                       }
 #else
-            // Removed older equivalent code!
+                 // Removed older equivalent code!
 #endif
 
-            // For now leave the lists unmodified so that we can support debugging.
-            // delete currentPreprocessingInfoPtr;
-            // currentPreprocessingInfoPtr = NULL;
+                 // For now leave the lists unmodified so that we can support debugging.
+                 // delete currentPreprocessingInfoPtr;
+                 // currentPreprocessingInfoPtr = NULL;
 
-            // debugging info
-            // printOutComments(locatedNode);
-             }
+                 // debugging info
+                 // printOutComments(locatedNode);
+                  }
 #if 0
-       // Increment the loop index
-          i++;
+            // Increment the loop index
+               i++;
 
-       // Reset the PreprocessingInfo pointer using the incremented value of "i"
-          currentPreprocessingInfoPtr = (*currentListOfAttributes)[i];
+            // Reset the PreprocessingInfo pointer using the incremented value of "i"
+               currentPreprocessingInfoPtr = (*currentListOfAttributes)[i];
 #endif
-        }
+             }
      
-     // negara1 (08/15/2011): After the iteration is over, add local list of statements to "insert after" to the global list. Two lists are used in order to
-     //insert in front of the local list and then, insert the local list in front of the global list such that we preserve the relative order of inserted nodes. 
-     statementsToInsertAfter.insert(statementsToInsertAfter.begin(), localStatementsToInsertAfter.begin(), localStatementsToInsertAfter.end());
-    }
+       // negara1 (08/15/2011): After the iteration is over, add local list of statements to "insert after" to the global list. Two lists are used in order to
+       // insert in front of the local list and then, insert the local list in front of the global list such that we preserve the relative order of inserted nodes. 
+          statementsToInsertAfter.insert(statementsToInsertAfter.begin(), localStatementsToInsertAfter.begin(), localStatementsToInsertAfter.end());
+        }
 
   // DQ (12/12/2008): We should not need this state, so why support resetting it, unless the traversal needs to be called multiple times.
   // DQ (4/13/2007): The evaluation of the synthesized attribute for a SgFile will trigger the reset of the start index to 0.
@@ -467,9 +530,15 @@ AttachPreprocessingInfoTreeTrav::setupPointerToPreviousNode (SgLocatedNode* curr
   // DQ (12/12/2008): Newer implementation to support multiple files.
   // int currentFileId = currentLocNodePtr->get_startOfConstruct()->get_file_id();
      Sg_File_Info* locatedFileInfo = currentLocNodePtr->get_file_info();
+#if 0
      int currentFileId = (sourceFile->get_requires_C_preprocessor() == true) ? 
                          Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
                          locatedFileInfo->get_file_id();
+#else
+     int currentFileId = (sourceFile->get_requires_C_preprocessor() == true) ? 
+                         Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+                         locatedFileInfo->get_physical_file_id();
+#endif
 
 #if 0
      printf ("setupPointerToPreviousNode: currentFileId = %d currentLocNodePtr = %s \n",currentFileId,currentLocNodePtr->class_name().c_str());
@@ -541,7 +610,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
      extern std::list <stream_element*>* getFortranFixedFormatPreprocessorDirectives( std::string fileName );
      extern std::list <stream_element*>* getFortranFreeFormatPreprocessorDirectives ( std::string fileName );
 // #endif
-#endif 
+#endif
      ROSEAttributesList* returnListOfAttributes = new ROSEAttributesList();
 
   // Build an empty list while we skip the translation of tokens
@@ -565,9 +634,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 
      if (use_Wave == false)
         {
-
-
-          //std::cerr << "Not using wave" << std::endl;
+       // std::cerr << "Not using wave" << std::endl;
        // DQ (4/12/2007): Introduce tracking of performance of ROSE.
           TimingPerformance timer ("AST evaluateInheritedAttribute (use_Wave == false):");
 
@@ -583,14 +650,12 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 
           if (sourceFile->get_Fortran_only() == true)
              {
-
-
-               //For Fortran CPP code you need to preprocess the code into an intermediate file in order to pass it through
-               //the Fortran frontend. This is because for Fortan everything is ONE file. 
+            // For Fortran CPP code you need to preprocess the code into an intermediate file in order to pass it through
+            // the Fortran frontend. This is because for Fortan everything is ONE file. 
                if (sourceFile->get_requires_C_preprocessor() == true)
-               {
-                 fileNameForDirectivesAndComments = sourceFile->generate_C_preprocessor_intermediate_filename(fileNameForDirectivesAndComments);
-               }
+                  {
+                    fileNameForDirectivesAndComments = sourceFile->generate_C_preprocessor_intermediate_filename(fileNameForDirectivesAndComments);
+                  }
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
 // #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -727,17 +792,17 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 
                ROSEAttributesList* existingReturnListOfAttributes = currentFileItr->second;
 
-               for (std::vector<PreprocessingInfo*>::iterator it_1 =
-                   existingReturnListOfAttributes->getList().begin(); it_1 != existingReturnListOfAttributes->getList().end();
-                   ++it_1)
-               {
-                 returnListOfAttributes->addElement(**it_1);
-               }
-
+               for (std::vector<PreprocessingInfo*>::iterator it_1 = existingReturnListOfAttributes->getList().begin(); it_1 != existingReturnListOfAttributes->getList().end(); ++it_1)
+                  {
+                    returnListOfAttributes->addElement(**it_1);
+                  }
              }
         }
 
      ROSE_ASSERT(returnListOfAttributes != NULL);
+
+  // DQ (12/15/2012): Generate the list of file ids to be considered equivalent to the input source file's filename.
+     returnListOfAttributes->generateFileIdListFromLineDirectives();
 
      return returnListOfAttributes;
    }
@@ -771,9 +836,15 @@ AttachPreprocessingInfoTreeTrav::getListOfAttributes ( int currentFileNameId )
             // We always want to process the source file, but not always all the include files.
             // int sourceFileNameId = sourceFile->get_file_info()->get_file_id();
                Sg_File_Info* sourceFileInfo = sourceFile->get_file_info();
+#if 0
                int sourceFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ? 
                                   Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFileInfo->get_filename())) : 
                                   sourceFileInfo->get_file_id();
+#else
+               int sourceFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ? 
+                                  Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFileInfo->get_filename())) : 
+                                  sourceFileInfo->get_physical_file_id();
+#endif
 
                bool skipProcessFile = (processAllIncludeFiles == false) && (currentFileNameId != sourceFileNameId);
 #if 0
@@ -781,7 +852,6 @@ AttachPreprocessingInfoTreeTrav::getListOfAttributes ( int currentFileNameId )
 #endif
                if (skipProcessFile == false)
                   {
-
                     attributeMapForAllFiles[currentFileNameId] = buildCommentAndCppDirectiveList(use_Wave, Sg_File_Info::getFilenameFromID(currentFileNameId) );
 
                     ROSE_ASSERT(attributeMapForAllFiles.find(currentFileNameId) != attributeMapForAllFiles.end());
@@ -791,7 +861,6 @@ AttachPreprocessingInfoTreeTrav::getListOfAttributes ( int currentFileNameId )
              }
             else
              {
-
                currentListOfAttributes = attributeMapForAllFiles[currentFileNameId];
                ROSE_ASSERT(currentListOfAttributes != NULL);
              }
@@ -832,22 +901,22 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
      if (templateDeclaration == NULL) templateDeclaration = isSgTemplateClassDeclaration(n);
      if (templateDeclaration == NULL) templateDeclaration = isSgTemplateVariableDeclaration(n);
      if (templateDeclaration != NULL)
+        {
+       // Set the flag in the inherited attribute.
+       // printf ("Set the flag for this to be in a template declaration n = %p = %s \n",n,n->class_name().c_str());
+          inheritedAttribute.isPartOfTemplateDeclaration = true;
+        }
+       else
+        {
+          if (inheritedAttribute.isPartOfTemplateDeclaration == true)
              {
-            // Set the flag in the inherited attribute.
-            // printf ("Set the flag for this to be in a template declaration n = %p = %s \n",n,n->class_name().c_str());
-               inheritedAttribute.isPartOfTemplateDeclaration = true;
+            // printf ("This is a part of a template declaration (suppress attachment of comments and CPP directves to template declarations, since they are unparsed as strings for the moment) n = %p = %s \n",n,n->class_name().c_str());
              }
             else
              {
-               if (inheritedAttribute.isPartOfTemplateDeclaration == true)
-                  {
-                 // printf ("This is a part of a template declaration (suppress attachment of comments and CPP directves to template declarations, since they are unparsed as strings for the moment) n = %p = %s \n",n,n->class_name().c_str());
-                  }
-                 else
-                  {
-                 // printf ("This is not part of a template declaration n = %p = %s \n",n,n->class_name().c_str());
-                  }
+            // printf ("This is not part of a template declaration n = %p = %s \n",n,n->class_name().c_str());
              }
+        }
 
   // DQ (8/6/2012): Allow those associated with the declaration and non inside of the template declaration.
      if (inheritedAttribute.isPartOfTemplateDeclaration == true && templateDeclaration == NULL)
@@ -881,9 +950,15 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 #if 0
           printf ("(SgSourceFile) currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename()) = %s \n",currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename()).c_str());
 #endif
+#if 0
           int currentFileNameId = (currentFilePtr->get_requires_C_preprocessor() == true) ? 
                                   Sg_File_Info::getIDFromFilename(currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
                                   currentFileInfo->get_file_id();
+#else
+          int currentFileNameId = (currentFilePtr->get_requires_C_preprocessor() == true) ? 
+                                  Sg_File_Info::getIDFromFilename(currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+                                  currentFileInfo->get_physical_file_id();
+#endif
 #if 0
           printf ("(SgSourceFile) currentFileNameId = %d \n",currentFileNameId);
           printf ("(SgSourceFile) currentFileName for currentFileNameId = %s \n",Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
@@ -899,114 +974,163 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                return inheritedAttribute;
              }
 #endif
-            //std::cerr << "The filename " << sourceFile->get_file_info()->get_filename() << std::endl;
-//          ROSE_ASSERT(attributeMapForAllFiles.find(currentFileNameId) == attributeMapForAllFiles.end());
+       // std::cerr << "The filename " << sourceFile->get_file_info()->get_filename() << std::endl;
+       // ROSE_ASSERT(attributeMapForAllFiles.find(currentFileNameId) == attributeMapForAllFiles.end());
 
        // This will cause the CPP directives and comments list to be generated for the source file.
           ROSEAttributesList* currentListOfAttributes = getListOfAttributes(currentFileNameId);
           ROSE_ASSERT(currentListOfAttributes != NULL);
-         }
 
-        // Move attributes from the list of attributes into the collection of the current AST nodes,
-       // we only consider statements for the moment, but this needs to be refined further on.
-       // Probably we will have to consider each SgLocatedNode IR node within the AST.
-       // if (dynamic_cast<SgStatement*>(n) != NULL)
-          SgStatement* statement = isSgStatement(n);
-       // Liao 11/2/2010, Ideally we should put all SgLocatedNode here,
-       // But we start with statements and initialized names first
-          SgInitializedName * i_name = isSgInitializedName (n); 
-          SgAggregateInitializer * a_initor = isSgAggregateInitializer (n);
-          if (statement != NULL || i_name != NULL || a_initor != NULL)
-          {
+       // DQ (12/18/2012): Generate list of source position equivalent filenames to use as part of 
+       // mapping comments and CPP directives to the AST.  these are generated from any possible
+       // #line directives in the original input source code.
+          std::set<int> equivalentFilenames = currentListOfAttributes->get_filenameIdSet();
+          if (equivalentFilenames.size() > 0)
+             {
+#if 0
+               printf ("Map of equivalent filenames to input source file: \n");
+               for (std::set<int>::iterator i = equivalentFilenames.begin(); i != equivalentFilenames.end(); i++)
+                  {
+                    int fileId = *i;
+                    string sourceFilename = Sg_File_Info::getFilenameFromID(fileId) ;
+                    printf (" --- equivalent filenames: fileId = %d sourceFilename = %s \n",fileId,sourceFilename.c_str());
+                  }
+               printf ("Map of equivalent filenames to input source file: END \n\n");
+#endif
+#if 1
+            // DQ (12/23/2012): This function is called from: AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute().
+            // It is used to map filenames generated from #line directives into thoses associated with the
+            // physical filename.  However, now that we internally keep references to both the logical 
+            // source position AND the physical source position, this should not be required.
 
-           SgLocatedNode* currentLocNodePtr = NULL;
-           int line = 0;
-           int col  = 0;
+            // DQ (12/18/2012): Now do a nested traversal over the AST to fixup the source positions 
+            // to force the output of IR nodes that match the equivalent filenames.
+               SgSourceFile* sourceFile = isSgSourceFile(currentFilePtr);
+               ROSE_ASSERT(sourceFile != NULL);
+               sourceFile->fixupASTSourcePositionsBasedOnDetectedLineDirectives(equivalentFilenames);
+#endif
+             }
+        }
 
-           //The following should always work since each statement is a located node
-           currentLocNodePtr = dynamic_cast<SgLocatedNode*>(n);
-           ROSE_ASSERT(currentLocNodePtr != NULL);
+  // Move attributes from the list of attributes into the collection of the current AST nodes,
+  // we only consider statements for the moment, but this needs to be refined further on.
+  // Probably we will have to consider each SgLocatedNode IR node within the AST.
+  // if (dynamic_cast<SgStatement*>(n) != NULL)
+     SgStatement* statement = isSgStatement(n);
 
-           //Attach the comments only to nodes from the same file
-           ROSE_ASSERT(currentLocNodePtr->get_file_info() != NULL);
-           //int currentFileNameId = currentLocNodePtr->get_file_info()->get_file_id();
-           Sg_File_Info* currentFileInfo = currentLocNodePtr->get_file_info();
-           ROSE_ASSERT(currentFileInfo != NULL);
-           int currentFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ? 
+  // Liao 11/2/2010, Ideally we should put all SgLocatedNode here,
+  // But we start with statements and initialized names first
+     SgInitializedName*      i_name   = isSgInitializedName(n); 
+     SgAggregateInitializer* a_initor = isSgAggregateInitializer(n);
+
+     if (statement != NULL || i_name != NULL || a_initor != NULL)
+        {
+          SgLocatedNode* currentLocNodePtr = NULL;
+          int line = 0;
+          int col  = 0;
+
+       // The following should always work since each statement is a located node
+          currentLocNodePtr = dynamic_cast<SgLocatedNode*>(n);
+          ROSE_ASSERT(currentLocNodePtr != NULL);
+
+       // Attach the comments only to nodes from the same file
+          ROSE_ASSERT(currentLocNodePtr->get_file_info() != NULL);
+       // int currentFileNameId = currentLocNodePtr->get_file_info()->get_file_id();
+          Sg_File_Info* currentFileInfo = currentLocNodePtr->get_file_info();
+          ROSE_ASSERT(currentFileInfo != NULL);
+#if 0
+          int currentFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ? 
                                    Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
                                    currentFileInfo->get_file_id();
-#if 0
-           printf ("(SgStatement) currentFileNameId = %d \n",currentFileNameId);
-           printf ("(SgStatement) currentFileName for currentFileNameId = %s \n",Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
+#else
+          int currentFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ? 
+                                   Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+                                   currentFileInfo->get_physical_file_id();
 #endif
-           ROSEAttributesList* currentListOfAttributes = getListOfAttributes(currentFileNameId);
 
-           //printf ("currentListOfAttributes = %p \n",currentListOfAttributes);
+#if 0
+          printf ("(SgStatement) currentFileNameId = %d \n",currentFileNameId);
+          printf ("(SgStatement) currentFileName for currentFileNameId = %s \n",Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
+#endif
+#if 0
+          printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): currentLocNodePtr->get_file_info()->get_physical_file_id() = %d physical_line = %d \n",
+               currentLocNodePtr->get_file_info()->get_physical_file_id(),currentLocNodePtr->get_file_info()->get_physical_line());
+#endif
+          ROSEAttributesList* currentListOfAttributes = getListOfAttributes(currentFileNameId);
 
-           //If currentListOfAttributes == NULL then this was not an IR node from a file where we wanted 
-           //to include CPP directives and comments.
-           if (currentListOfAttributes != NULL)
-              {
-             // DQ (6/20/2005): Compiler generated is not enough, it must be marked for output explicitly
-             // bool isCompilerGenerated = currentLocNodePtr->get_file_info()->isCompilerGenerated();
-                bool isCompilerGenerated = currentLocNodePtr->get_file_info()->isCompilerGeneratedNodeToBeUnparsed();
+       // printf ("currentListOfAttributes = %p \n",currentListOfAttributes);
 
-             // JJW (6/25/2008): These are always flagged as "to be unparsed", even if they are not 
-             // unparsed because their corresponding declarations aren't unparsed
-                if (isSgClassDefinition(currentLocNodePtr) || isSgFunctionDefinition(currentLocNodePtr))
-                   {
-                     SgLocatedNode* ln = isSgLocatedNode(currentLocNodePtr->get_parent());
-                     Sg_File_Info* parentFi = ln ? ln->get_file_info() : NULL;
-                     if (parentFi && parentFi->isCompilerGenerated() && !parentFi->isCompilerGeneratedNodeToBeUnparsed())
-                        {
-                          isCompilerGenerated = false;
-                        }
-                   }
-                bool isTransformation = currentLocNodePtr->get_file_info()->isTransformation();
+       // If currentListOfAttributes == NULL then this was not an IR node from a file where we wanted 
+       // to include CPP directives and comments.
+          if (currentListOfAttributes != NULL)
+             {
+            // DQ (6/20/2005): Compiler generated is not enough, it must be marked for output explicitly
+            // bool isCompilerGenerated = currentLocNodePtr->get_file_info()->isCompilerGenerated();
+               bool isCompilerGenerated = currentLocNodePtr->get_file_info()->isCompilerGeneratedNodeToBeUnparsed();
 
-             // Try to not call get_filename() if it would be inappropriate (either when isCompilerGenerated || isTransformation)
+            // JJW (6/25/2008): These are always flagged as "to be unparsed", even if they are not 
+            // unparsed because their corresponding declarations aren't unparsed
+               if (isSgClassDefinition(currentLocNodePtr) || isSgFunctionDefinition(currentLocNodePtr))
+                  {
+                    SgLocatedNode* ln = isSgLocatedNode(currentLocNodePtr->get_parent());
+                    Sg_File_Info* parentFi = ln ? ln->get_file_info() : NULL;
+                    if (parentFi && parentFi->isCompilerGenerated() && !parentFi->isCompilerGeneratedNodeToBeUnparsed())
+                       {
+                         isCompilerGenerated = false;
+                       }
+                  }
+               bool isTransformation = currentLocNodePtr->get_file_info()->isTransformation();
 
-             // DQ (10/27/2007): Initialized to -1 upon suggestion by Andreas.
-                int fileIdForOriginOfCurrentLocatedNode = -1;
-                if ( !isCompilerGenerated && !isTransformation )
-                   {
-                  // fileIdForOriginOfCurrentLocatedNode = currentLocNodePtr->get_file_info()->get_file_id();
-                     Sg_File_Info* currentFileInfo = currentLocNodePtr->get_file_info();
-                     ROSE_ASSERT(currentFileInfo != NULL);
-                     fileIdForOriginOfCurrentLocatedNode = (sourceFile->get_requires_C_preprocessor() == true) ? 
+            // Try to not call get_filename() if it would be inappropriate (either when isCompilerGenerated || isTransformation)
+
+            // DQ (10/27/2007): Initialized to -1 upon suggestion by Andreas.
+               int fileIdForOriginOfCurrentLocatedNode = -1;
+               if ( !isCompilerGenerated && !isTransformation )
+                  {
+                 // fileIdForOriginOfCurrentLocatedNode = currentLocNodePtr->get_file_info()->get_file_id();
+                    Sg_File_Info* currentFileInfo = currentLocNodePtr->get_file_info();
+                    ROSE_ASSERT(currentFileInfo != NULL);
+#if 0
+                    fileIdForOriginOfCurrentLocatedNode = (sourceFile->get_requires_C_preprocessor() == true) ? 
                                              Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
                                              currentFileInfo->get_file_id();
-                   }
+#else
+                    fileIdForOriginOfCurrentLocatedNode = (sourceFile->get_requires_C_preprocessor() == true) ? 
+                                             Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+                                             currentFileInfo->get_physical_file_id();
+#endif
+                  }
                 
 #if 0
-                printf ("evaluateInheritedAttribute: isCompilerGenerated = %s isTransformation = %s fileIdForOriginOfCurrentLocatedNode = %d \n",
-                     isCompilerGenerated ? "true" : "false",isTransformation ? "true" : "false",fileIdForOriginOfCurrentLocatedNode);
+               printf ("evaluateInheritedAttribute: isCompilerGenerated = %s isTransformation = %s fileIdForOriginOfCurrentLocatedNode = %d \n",
+                    isCompilerGenerated ? "true" : "false",isTransformation ? "true" : "false",fileIdForOriginOfCurrentLocatedNode);
 #endif
-             // DQ (5/24/2005): Relaxed to handle compiler generated and transformed IR nodes
-                if ( isCompilerGenerated || isTransformation || currentFileNameId == fileIdForOriginOfCurrentLocatedNode )
+            // DQ (5/24/2005): Relaxed to handle compiler generated and transformed IR nodes
+               if ( isCompilerGenerated || isTransformation || currentFileNameId == fileIdForOriginOfCurrentLocatedNode )
                   {
-                  // Current node belongs to the file the name of which has been specified
-                  // on the command line
-                     line = currentLocNodePtr->get_file_info()->get_line();
-                     col  = currentLocNodePtr->get_file_info()->get_col();
+                 // Current node belongs to the file the name of which has been specified
+                 // on the command line
+                 // line = currentLocNodePtr->get_file_info()->get_line();
+                    line = currentLocNodePtr->get_file_info()->get_physical_line();
+                    col  = currentLocNodePtr->get_file_info()->get_col();
 #if 0
-                     printf ("Insert any comment before %p = %s = %s (compilerGenerate=%s) at line = %d col = %d \n",
+                    printf ("Insert any comment before %p = %s = %s (compilerGenerate=%s) at line = %d col = %d \n",
                           currentLocNodePtr,currentLocNodePtr->class_name().c_str(),SageInterface::get_name(currentLocNodePtr).c_str(),
                           isCompilerGenerated ? "true" : "false", line, col);
 #endif
 #if 0
-                     printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute() calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): n->class_name() = %s \n",n->class_name().c_str());
+                    printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute() calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): n->class_name() = %s \n",n->class_name().c_str());
 #endif
 
-                  // Iterate over the list of comments and directives and add them to the AST
-                     bool reset_start_index = false;
-                     iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(
+                 // Iterate over the list of comments and directives and add them to the AST
+                    bool reset_start_index = false;
+                    iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(
                           currentLocNodePtr,line,PreprocessingInfo::before, reset_start_index, 
                           currentListOfAttributes );
 
-                  // save the previous node (in an accumulator attribute), but handle some nodes differently
-                  // to avoid having comments attached to them since they are not unparsed directly.
-                  // printf ("currentLocNodePtr = %p = %s \n",currentLocNodePtr,currentLocNodePtr->class_name().c_str());
+                 // save the previous node (in an accumulator attribute), but handle some nodes differently
+                 // to avoid having comments attached to them since they are not unparsed directly.
+                 // printf ("currentLocNodePtr = %p = %s \n",currentLocNodePtr,currentLocNodePtr->class_name().c_str());
                     setupPointerToPreviousNode(currentLocNodePtr);
                   }
 #if 0
@@ -1085,7 +1209,12 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
           if (locatedNode != NULL)
              {
                ROSE_ASSERT(locatedNode->get_file_info() != NULL);
-               currentFileNameId = locatedNode->get_file_info()->get_file_id();
+#if 0
+               printf ("locatedNode->get_file_info() = %p \n",locatedNode->get_file_info());
+               locatedNode->get_file_info()->display("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): debug");
+#endif
+            // currentFileNameId = locatedNode->get_file_info()->get_file_id();
+               currentFileNameId = locatedNode->get_file_info()->get_physical_file_id();
              }
             else
              {
@@ -1093,14 +1222,38 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
             // currentFileNameId = fileNode->get_file_info()->get_file_id();
                Sg_File_Info* currentFileInfo = sourceFile->get_file_info();
                ROSE_ASSERT(currentFileInfo != NULL);
+#if 0
                currentFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ? 
                                    Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
                                    currentFileInfo->get_file_id();
+#else
+               currentFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ? 
+                                   Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+                                   currentFileInfo->get_physical_file_id();
+#endif
              }
 #else
        // DQ (12/17/2008): this should be simpler code.
           currentFileNameId = n->get_file_info()->get_file_id();
+#error "DEAD CODE!"
 #endif
+#if 0
+       // DQ (12/21/2012): This is failing...
+          ROSE_ASSERT(locatedNode != NULL);
+          printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): currentFileNameId = %d = %s locatedNode->get_file_info()->get_physical_file_id() = %d = %s physical_line = %d \n",
+                  currentFileNameId,
+                  Sg_File_Info::getFilenameFromID(currentFileNameId).c_str(),
+                  locatedNode->get_file_info()->get_physical_file_id(),
+                  Sg_File_Info::getFilenameFromID(locatedNode->get_file_info()->get_physical_file_id()).c_str(),locatedNode->get_file_info()->get_physical_line());
+#endif
+#if 0
+          printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): currentFileNameId = %d = %s \n",currentFileNameId,Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
+#endif
+       // DQ (12/20/2012): Adding support for physical source position.
+          if (locatedNode != NULL)
+             {
+               ROSE_ASSERT(locatedNode->get_file_info()->get_physical_file_id() == currentFileNameId);
+             }
 
 #if 0
           printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): n = %p = %s currentFileNameId = %d \n",n,n->class_name().c_str(),currentFileNameId);
@@ -1128,12 +1281,16 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
             // DQ (6/20/2005): Notice that we use the new hasPositionInSource() member function
             // if ( isCompilerGeneratedOrTransformation == false )
                if ( locatedNode->get_file_info()->hasPositionInSource() == true )
-                    fileIdForOriginOfCurrentLocatedNode = locatedNode->get_file_info()->get_file_id();
+                  {
+                 // fileIdForOriginOfCurrentLocatedNode = locatedNode->get_file_info()->get_file_id();
+                    fileIdForOriginOfCurrentLocatedNode = locatedNode->get_file_info()->get_physical_file_id();
+                  }
 
                if (locatedNode->get_endOfConstruct() != NULL)
                   {
                     ROSE_ASSERT (locatedNode->get_endOfConstruct() != NULL);
-                    lineOfClosingBrace = locatedNode->get_endOfConstruct()->get_line();
+                 // lineOfClosingBrace = locatedNode->get_endOfConstruct()->get_line();
+                    lineOfClosingBrace = locatedNode->get_endOfConstruct()->get_physical_line();
                   }
              }
             else
@@ -1144,9 +1301,15 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                Sg_File_Info* currentFileInfo = sourceFile->get_file_info();
                ROSE_ASSERT(currentFileInfo != NULL);
+#if 0
                fileIdForOriginOfCurrentLocatedNode = (sourceFile->get_requires_C_preprocessor() == true) ? 
                                    Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
                                    currentFileInfo->get_file_id();
+#else
+               fileIdForOriginOfCurrentLocatedNode = (sourceFile->get_requires_C_preprocessor() == true) ? 
+                                   Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+                                   currentFileInfo->get_physical_file_id();
+#endif
 
             // Use one billion as the max number of lines in a file
                const int OneBillion = 1000000000;
@@ -1246,9 +1409,11 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                          // This case appears for test2008_08.f90: the SgProgramHeaderStatement is not present in the source code
                          // so we can't attach a comment to it.
-                            if (targetNode->get_file_info()->get_file_id() < 0)
+                         // if (targetNode->get_file_info()->get_file_id() < 0)
+                            if (targetNode->get_file_info()->get_physical_file_id() < 0)
                                {
-                                 printf ("Error: we should not be calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() using targetNode->get_file_info()->get_file_id() = %d \n",targetNode->get_file_info()->get_file_id());
+                                 printf ("Error: we should not be calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() using targetNode->get_file_info()->get_file_id()          = %d \n",targetNode->get_file_info()->get_file_id());
+                                 printf ("Error: we should not be calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() using targetNode->get_file_info()->get_physical_file_id() = %d \n",targetNode->get_file_info()->get_physical_file_id());
                                  printf ("In SgFile: targetNode = %s \n",targetNode->class_name().c_str());
                                  printf ("currentFileName for currentFileNameId = %d = %s \n",currentFileNameId,Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
                                  printf ("sourceFile = %s \n",sourceFile->get_sourceFileNameWithPath().c_str());

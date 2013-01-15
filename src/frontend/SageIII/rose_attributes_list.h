@@ -431,6 +431,10 @@ class ROSEAttributesList
        // been stored in a static structure (I think) rather than in this list.
           int index;
 
+       // DQ (12/15/2012): Save file ids that are from filenames referenced in #line 
+       // directives, these will be considered equivalent to the input source filename.
+          std::set<int> filenameIdSet;
+
      public:
        // DQ (11/19/2008): Added language selection support for handling comments
           enum languageTypeEnum
@@ -500,6 +504,14 @@ class ROSEAttributesList
           bool isFortran77Comment( const std::string & line );
           bool isFortran90Comment( const std::string & line );
           bool isCppDirective( const std::string & line, PreprocessingInfo::DirectiveType & cppDeclarationKind, std::string & restOfTheLine );
+
+       // DQ (12/15/2012): traverse the attributeList and process all of the #line directives to generate a
+       // list of file ids that should be considered equivalent to that of the input source file's filename.
+       // std::set<int> generateFileIdListFromLineDirectives();
+          void generateFileIdListFromLineDirectives();
+
+       // DQ (12/15/2012): Added access function.
+          std::set<int> & get_filenameIdSet();
    };
 
 //

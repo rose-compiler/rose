@@ -1,7 +1,7 @@
 dnl DQ (1/11/2010): Consider handing configure options as specified at:
 dnl    https://projects.coin-or.org/BuildTools/wiki/user-configure
 
-AC_INIT([ROSE], [0.9.5a])
+AC_INIT([ROSE], [0.9.6a])
 AC_PREREQ([2.59])
 
 dnl +--------------------------------------------------------------------------+
@@ -28,7 +28,7 @@ dnl +--------------------------------------------------------------------------+
 dnl | ROSE versioning
 dnl +--------------------------------------------------------------------------+
 ROSE_SUPPORT_GIT_VERSIONING
-ROSE_CONFIGURE_SECTION([Configuring ${T_BM}ROSE${T_NM}, version ${T_BM}0.9.5a ($GIT_HEAD_HASH)${T_NM}])
+ROSE_CONFIGURE_SECTION([Configuring ${T_BM}ROSE${T_NM}, version ${T_BM}0.9.6a ($GIT_HEAD_HASH)${T_NM}])
 
 dnl +--------------------------------------------------------------------------+
 dnl | Autotools setup
