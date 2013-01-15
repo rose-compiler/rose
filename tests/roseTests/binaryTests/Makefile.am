@@ -189,6 +189,11 @@ noinst_PROGRAMS += subSemantics
 subSemantics_SOURCES = subSemantics.C
 subSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
+# Check whether the dominance classes can be specialized.
+noinst_PROGRAMS += subDominance
+subDominance_SOURCES = subDominance.C
+subDominance_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
+
 # Finds constant values and propagates them across instructions
 noinst_PROGRAMS += findConstants
 findConstants_SOURCES = semantics.C
