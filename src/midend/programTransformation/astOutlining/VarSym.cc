@@ -178,7 +178,12 @@ getVarSyms (SgNode* n, ASTtools::VarSymSet_t* p_syms)
       {
         SgVariableSymbol* v_sym = isSgVariableSymbol (n);
         ROSE_ASSERT (v_sym);
-        syms.insert (v_sym);
+        string name = v_sym->get_name().getString();
+        if  (name !="__PRETTY_FUNCTION__" && name !="__FUNCTION__" && name != "__func__")
+        {
+          // cout<<"debug: L181 inserting "<<v_sym->get_name() <<endl;
+          syms.insert (v_sym);
+        }
       }
       break;
     case V_SgVariableDeclaration:
@@ -204,7 +209,14 @@ getVarSyms (SgNode* n, ASTtools::VarSymSet_t* p_syms)
          }
 
          if (v_sym)
+         {
+          string name = v_sym->get_name().getString();
+          if  (name !="__PRETTY_FUNCTION__" && name !="__FUNCTION__" && name != "__func__")
+          {
+           //cout<<"debug: L209 inserting "<<v_sym->get_name() <<endl;
            syms.insert (v_sym);
+          }
+         }
        }
       }
       break;

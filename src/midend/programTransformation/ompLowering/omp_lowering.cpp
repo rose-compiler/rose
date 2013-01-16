@@ -1520,18 +1520,17 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
     SgAssignInitializer* initializer = buildAssignInitializer (
                          buildFunctionCallExp("XOMP_sections_init_next", buildIntType(),buildExprListExp(buildIntVal(section_count)), scope), 
                                         buildIntType());
-    SgVariableDeclaration* sec_var_decl = buildVariableDeclaration(sec_var_name, buildIntType(), initializer, scope);
-//    insertStatementAfter(target, sec_var_decl);
     replaceStatement(target, bb1, true);
     //Declare a variable to store the current section id
     //Only used to support lastprivate
     SgVariableDeclaration* sec_var_decl_save = NULL;
     if (hasClause(target, V_SgOmpLastprivateClause))
     {
-      sec_var_decl_save = buildVariableDeclaration(sec_var_name+"_save", buildIntType(), NULL, scope);
+      sec_var_decl_save = buildVariableDeclaration(sec_var_name+"_save", buildIntType(), NULL, bb1);
       appendStatement(sec_var_decl_save, bb1);
     }
 
+    SgVariableDeclaration* sec_var_decl = buildVariableDeclaration(sec_var_name, buildIntType(), initializer, bb1);
     appendStatement(sec_var_decl, bb1);
 
     // while (_section_1 >=0) {}
