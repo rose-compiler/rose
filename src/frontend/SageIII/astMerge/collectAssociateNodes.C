@@ -566,7 +566,8 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                             }
                            else
                             {
-                              printf ("WARNING: For templateInstantiationMemberFunctionDeclaration = %p templateInstantiationMemberFunctionDeclaration->get_templateDeclaration() == NULL \n");
+                           // DQ (1/16/13): fixed compiler warning: too few arguments for format (added templateInstantiationMemberFunctionDeclaration argument).
+                              printf ("WARNING: For templateInstantiationMemberFunctionDeclaration = %p templateInstantiationMemberFunctionDeclaration->get_templateDeclaration() == NULL \n",templateInstantiationMemberFunctionDeclaration);
                             }
 #endif
                        }
