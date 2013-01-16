@@ -693,8 +693,7 @@ $(FAILING_TESTS)
 
 
 # DQ (1/13/2013): These fail copyExample translator (exclude for the moment to evaluate current status).
-FAILING_TESTS = \
-test2005_35.C 
+FAILING_TESTS = 
 
 # DQ (1/13/2013): These demonstrate about three different types of failures that must be fixed.
 # test2005_35.C 
