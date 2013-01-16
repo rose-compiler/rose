@@ -90,6 +90,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	parallelfor2.c \
 	parallelsections.c \
 	preprocessingInfo.c \
+	prettyfunc.c \
 	private.c \
 	privatej.c \
 	private-duplicate.c \
