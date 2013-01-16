@@ -673,6 +673,10 @@ test2007_142.C \
 test2007_147.C \
 test2007_150.C \
 test2007_158.C \
+test2013_01.C \
+test2013_02.C \
+test2013_03.C \
+test2013_04.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -682,6 +686,10 @@ math.C \
 inputForLoopLocator.C \
 X.C \
 $(FAILING_TESTS)
+
+# New failing test codes (related to the most recent fixes or merge)
+# test2005_06.C 
+
 
 # DQ (1/13/2013): These fail copyExample translator (exclude for the moment to evaluate current status).
 FAILING_TESTS = \
