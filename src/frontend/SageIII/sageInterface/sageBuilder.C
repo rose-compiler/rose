@@ -10450,11 +10450,14 @@ SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDe
             // This must be a valid SgTemplateClassDefinition.
                defdecl = isSgTemplateClassDeclaration(nonDefiningDecl->get_definingDeclaration());
                ROSE_ASSERT(defdecl != NULL);
+#if 1
+               printf ("In buildTemplateClassDeclaration_nfi(): Reusing the defining declaration previously build: defdecl = %p = %s \n",defdecl,defdecl->get_name().str());
+#endif
              }
             else
              {
 #if 0
-               printf ("No defining declaration found, so we have to build one. \n");
+               printf ("In buildTemplateClassDeclaration_nfi(): No defining declaration found, so we have to build one. \n");
 #endif
              }
         }
