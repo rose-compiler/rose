@@ -42,6 +42,14 @@ namespace OmpSupport
     e_atomic,
     e_flush,
 
+    // Liao, 1/15/2013, experimental implementation for the draft OpenMP Accelerator Model technical report 
+    e_target, 
+    e_target_declare,
+    e_target_data,
+    e_target_update, 
+    e_map, // map clauses
+    e_device,
+
     e_threadprivate,
     e_parallel_for,
     e_parallel_do,
@@ -130,6 +138,13 @@ namespace OmpSupport
     e_schedule_guided,
     e_schedule_auto,
     e_schedule_runtime,
+
+    // 4 device map variants
+    //----------------------
+    e_map_alloc,
+    e_map_in,
+    e_map_out,
+    e_map_inout,
 
     // not an OpenMP construct
     e_not_omp
@@ -228,6 +243,7 @@ namespace OmpSupport
       ~OmpAttributeList();
   };                      
 
+  // One attribute object stores all information within an OpenMP pragma (directive and clauses)
   class OmpAttribute
   {
     public:
@@ -286,6 +302,18 @@ namespace OmpSupport
       std::vector<omp_construct_enum> getReductionOperators();
       //! Check if a reduction operation exists
       bool hasReductionOperator(omp_construct_enum operatorx);
+
+      // map clause is similar to reduction clause, 
+      //
+      // Add a new map clauses with the specified variant type
+      void setMapVariant(omp_construct_enum operatorx);
+      //! Get map clauses for each variant,  map(variant:var_list)
+      std::vector<omp_construct_enum> getMapVariants();
+      //! Check if a map variant exists
+      bool hasMapVariant(omp_construct_enum operatorx);
+
+      //! Check if the input parameter is a map variant enum type
+      bool isMapVariant(omp_construct_enum omp_type);
 
       // default () value
       void setDefaultValue(omp_construct_enum valuex);
@@ -367,6 +395,10 @@ namespace OmpSupport
       std::vector<omp_construct_enum> reduction_operators;
       //omp_construct_enum reduction_operator;
 
+      // Liao, 1/15/2013, map variant:
+      // there could be multiple map clause with the same variant type: alloc, in, out , and inout.
+      std::vector<omp_construct_enum> map_variants; 
+      //enum omp_construct_enum map_variant; 
       //variable lists------------------- 
       //appeared within some directives and clauses
       //The clauses/directive are: flush, threadprivate, private, firstprivate, 

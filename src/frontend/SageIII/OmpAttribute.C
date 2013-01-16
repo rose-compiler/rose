@@ -248,7 +248,7 @@ namespace OmpSupport
     if (isClause(clause_type))
     {
       //We only store a clause type once
-      //Logically, the content will be merged into the first occurence.
+      //Logically, the content will be merged into the first occurrence.
       if (!hasClause(clause_type))
       { 
         clause_map[clause_type]=true;
@@ -406,6 +406,27 @@ namespace OmpSupport
   {
     return (find(reduction_operators.begin(), reduction_operators.end(),operatorx) != reduction_operators.end());
   }
+  // Map clause's variant, alloc, in, out, inout 
+  // we store map clauses of the same variants into a single entity
+  void OmpAttribute::setMapVariant(omp_construct_enum operatorx)
+  {
+    assert(isMapVariant(operatorx));
+    std::vector<omp_construct_enum>::iterator hit = 
+      find(map_variants.begin(),map_variants.end(), operatorx); 
+    if (hit == map_variants.end())   
+      map_variants.push_back(operatorx);
+  }
+  // 
+  std::vector<omp_construct_enum> OmpAttribute::getMapVariants()
+  {
+    return map_variants;
+  }
+
+  bool OmpAttribute::hasMapVariant(omp_construct_enum operatorx)
+  {
+    return (find(map_variants.begin(), map_variants.end(),operatorx) != map_variants.end());
+  }
+
 
   //! Find the relevant clauses for a variable 
   std::vector<enum omp_construct_enum> 
@@ -475,6 +496,11 @@ namespace OmpSupport
       case e_taskwait: result = "taskwait"; break;
       case e_ordered_directive: result = "ordered"; break;
 
+      case e_target: result = "target"; break;
+      case e_target_declare : result = "target declare"; break;
+      case e_target_data: result = "target data"; break;
+      case e_target_update: result = "target update"; break;
+
                                 // Fortran only end directives
       case e_end_critical: result = "end critical"; break;
       case e_end_do: result = "end do"; break;
@@ -507,6 +533,9 @@ namespace OmpSupport
       case e_schedule: result = "schedule"; break;
       case e_collapse: result = "collapse"; break;
       case e_untied: result = "untied"; break;
+
+      case e_map: result = "map"; break;
+      case e_device: result = "device"; break;
 
                      // values
       case e_default_none: result = "none"; break;
@@ -544,6 +573,11 @@ namespace OmpSupport
       case e_schedule_guided: result = "guided"; break;
       case e_schedule_auto: result = "auto"; break;
       case e_schedule_runtime: result = "runtime"; break;
+
+      case e_map_alloc: result = "alloc"; break;
+      case e_map_in: result = "in"; break;
+      case e_map_out: result = "out"; break;
+      case e_map_inout: result = "inout"; break;
 
       case e_not_omp: result = "not_omp"; break;
     }
@@ -596,6 +630,12 @@ namespace OmpSupport
       case e_end_single:
       case e_end_task:
       case e_end_workshare:
+
+      // Experimental OpenMP Accelerator directives
+      case e_target:
+      case e_target_declare:
+      case e_target_data:
+      case e_target_update: //TODO more later
 
         result = true;
         break;
@@ -847,6 +887,11 @@ namespace OmpSupport
       case e_schedule:
       case e_collapse:
       case e_untied:
+
+     // experimental accelerator clauses 
+      case e_map:
+      case e_device:
+
         result = true; 
         break;
       default:
@@ -882,6 +927,25 @@ namespace OmpSupport
     }
     return result;
   }
+
+  bool  OmpAttribute::isMapVariant(omp_construct_enum omp_type)
+  {
+    bool result = false;
+    switch (omp_type)
+    {
+     case e_map_alloc: 
+     case e_map_in:
+     case e_map_out:
+     case e_map_inout:
+        result = true;
+        break;
+      default:
+        result = false;
+        break;
+    }
+    return result;
+  }
+
 
   bool OmpAttribute::hasClause(omp_construct_enum omp_type)
   {
@@ -965,6 +1029,7 @@ namespace OmpSupport
       // optional expressions
       if((omp_type == e_if)||
           (omp_type ==e_num_threads)||
+          (omp_type ==e_device)||
           (omp_type == e_collapse)
         )
       {
@@ -996,7 +1061,8 @@ namespace OmpSupport
       {
         result += OmpSupport::toString(omp_type);
         result+=" ("+ OmpSupport::toString(getDefaultValue())+")";
-      } // reduction (op:var-list)
+      } 
+      // reduction (op:var-list)
       // could have multiple reduction clauses 
       else if (omp_type == e_reduction)
       {
@@ -1013,7 +1079,8 @@ namespace OmpSupport
           string varListString = toOpenMPString(getVariableList(optype));
           result += varListString + ")";
         }  
-      } // schedule(kind, exp)
+      } 
+      // schedule(kind, exp)
       else if (omp_type == e_schedule)
       { 
         result += OmpSupport::toString(omp_type);
@@ -1030,6 +1097,26 @@ namespace OmpSupport
           result += "," + expString;
         result += ")";
       }
+      // map ([alloc|in|out|input:]var-list)
+      // e.g.  map (alloc:a,b,c)
+      // could have multiple map clauses 
+      else if (omp_type == e_map) // a single e_map will bring all map clauses
+      {
+        std::vector<omp_construct_enum> map_kinds = getMapVariants();
+        std::vector<omp_construct_enum>::iterator iter = map_kinds.begin();
+        for (; iter!=map_kinds.end();iter++)
+        {
+          if (iter!=map_kinds.begin())
+            result+=" "; // a ' ' between each clause
+          result += OmpSupport::toString(omp_type); // map
+          omp_construct_enum map_kind = *iter;
+          result +=" ("+ OmpSupport::toString(map_kind)+":";
+          // variable list is associated to each map variant
+          string varListString = toOpenMPString(getVariableList(map_kind)); // variables are indexed by map kind, not map clause
+          result += varListString + ")";
+        }
+      } 
+ 
       else // catch all cases
       {
         result += OmpSupport::toString(omp_type);
