@@ -1109,6 +1109,10 @@ test2012_268.C \
 test2012_269.C \
 test2012_270.C \
 test2012_271.C \
+test2013_01.C \
+test2013_02.C \
+test2013_03.C \
+test2013_04.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1577,7 +1581,7 @@ SKIP_UNPARSE_C_ASM_STATEMENTS = -rose:skip_unparse_asm_commands
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENTS)
 # ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 -rose:skipfinalCompileStep $(SKIP_UNPARSE_C_ASM_STATEMENTS)
 
-# Some of these test codes reference A++ header fiels as part of their tests
+# Some of these test codes reference A++ header files as part of their tests
 # Include the path to A++ and the transformation specification
 TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 
