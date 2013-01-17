@@ -173,7 +173,7 @@ main ( int argc, char* argv[] )
      generatePDF ( *project );
 #endif
 
-#if 0
+#if 1
      printf ("Generate the dot output of the SAGE III AST \n");
      generateDOT ( *project );
 #endif
@@ -183,6 +183,9 @@ main ( int argc, char* argv[] )
 #endif
 
 #if 1
+     if (project->get_verbose() >= 0)
+          printf ("\n\nRunning tests on the original AST (before copying) \n");
+
   // DQ (2/6/2004): These tests fail in Coco for test2004_14.C
   // AstTests::runAllTests(const_cast<SgProject*>(project));
      AstTests::runAllTests(project);
@@ -235,7 +238,7 @@ main ( int argc, char* argv[] )
      AstTests::runAllTests(project);
 #if 1
   // DQ (10/19/2007): Turning this off allows for a lot of things to work great, but it is cheating :-).
-     if (project->get_verbose() > 0)
+     if (project->get_verbose() >= 0)
           printf ("\n\nRunning tests on the copy of the AST \n");
 
      AstTests::runAllTests(newProject);

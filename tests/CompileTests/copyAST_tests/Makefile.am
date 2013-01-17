@@ -313,6 +313,7 @@ test2005_08.C \
 test2005_09.C \
 test2005_10.C \
 test2005_11.C \
+test2005_12.C \
 test2005_13.C \
 test2005_14.C \
 test2005_15.C \
@@ -673,6 +674,10 @@ test2007_142.C \
 test2007_147.C \
 test2007_150.C \
 test2007_158.C \
+test2013_01.C \
+test2013_02.C \
+test2013_03.C \
+test2013_04.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -683,9 +688,12 @@ inputForLoopLocator.C \
 X.C \
 $(FAILING_TESTS)
 
+# New failing test codes (related to the most recent fixes or merge)
+# test2005_06.C 
+
+
 # DQ (1/13/2013): These fail copyExample translator (exclude for the moment to evaluate current status).
-FAILING_TESTS = \
-test2005_12.C 
+FAILING_TESTS = 
 
 # DQ (1/13/2013): These demonstrate about three different types of failures that must be fixed.
 # test2005_35.C 

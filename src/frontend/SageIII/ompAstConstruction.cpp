@@ -770,6 +770,10 @@ namespace OmpSupport
     // add clauses for those SgOmpClauseBodyStatement
     if (isSgOmpClauseBodyStatement(result))
       appendOmpClauses(isSgOmpClauseBodyStatement(result), att);
+   
+   // Liao 1/9/2013, ensure the body is a basic block for some OpenMP constructs
+   if (isSgOmpSingleStatement(result)) 
+    ensureBasicBlockAsBodyOfOmpBodyStmt (result); 
 //    result->get_file_info()->display("debug after building ..");
     return result;
   }

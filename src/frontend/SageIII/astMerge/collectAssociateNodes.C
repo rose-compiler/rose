@@ -1681,6 +1681,49 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 
+         // Liao 2013/1/9 placeholders for OpenMP specific nodes
+         // Somehow ./dotGeneratorWholeASTGraph calls into this function. I need this to generate the dot graph
+          case V_SgOmpAtomicStatement: 
+          case V_SgOmpBarrierStatement: 
+          case V_SgOmpBodyStatement: 
+          case V_SgOmpClause: 
+          case V_SgOmpClauseBodyStatement     :   
+          case V_SgOmpCollapseClause    : 
+          case V_SgOmpCopyinClause      : 
+          case V_SgOmpCopyprivateClause : 
+          case V_SgOmpCriticalStatement : 
+          case V_SgOmpDefaultClause     : 
+          case V_SgOmpDoStatement       : 
+          case V_SgOmpExpressionClause  : 
+          case V_SgOmpFirstprivateClause: 
+          case V_SgOmpFlushStatement    : 
+          case V_SgOmpForStatement      : 
+          case V_SgOmpIfClause  : 
+          case V_SgOmpLastprivateClause:  
+          case V_SgOmpMasterStatement  :  
+          case V_SgOmpNowaitClause     :  
+          case V_SgOmpNumThreadsClause :  
+          case V_SgOmpOrderedClause    :  
+          case V_SgOmpOrderedStatement :  
+          case V_SgOmpParallelStatement:  
+          case V_SgOmpPrivateClause    :  
+          case V_SgOmpReductionClause  :  
+          case V_SgOmpScheduleClause   :  
+          case V_SgOmpSectionsStatement:  
+          case V_SgOmpSectionStatement :  
+          case V_SgOmpSharedClause     :  
+          case V_SgOmpSingleStatement  :  
+          case V_SgOmpTaskStatement    :  
+          case V_SgOmpTaskwaitStatement : 
+          case V_SgOmpThreadprivateStatement :    
+          case V_SgOmpUntiedClause      : 
+          case V_SgOmpVariablesClause   : 
+          case V_SgOmpWorkshareStatement:
+            {
+              //TODO real code to support AST merge
+              nodeList.insert(node);
+              break;
+            }
           case V_SgPointerType:
              {
             // printf ("addAssociatedNodes(): ignoring this case of node = %p = %s = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
