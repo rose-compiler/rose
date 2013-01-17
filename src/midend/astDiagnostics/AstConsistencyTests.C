@@ -2767,6 +2767,10 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 void
 TestAstSymbolTables::visit ( SgNode* node )
    {
+#if 0
+     printf ("At TOP of TestAstSymbolTables::visit(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+
      SgScopeStatement* scope = isSgScopeStatement(node);
      if (scope != NULL)
         {
@@ -2830,7 +2834,7 @@ TestAstSymbolTables::visit ( SgNode* node )
                if (declarationStatement != NULL && isSgLabelSymbol(symbol) == NULL)
                   {
                     SgSymbol* local_symbol = declarationStatement->get_symbol_from_symbol_table();
-#if 1
+#if 0
                     if (local_symbol == NULL)
                        {
                          printf ("The declarationStatement = %p = %s = %s in symbol = %p = %s = %s can't locate it's symbol in scope = %p = %s = %s \n",
@@ -2884,12 +2888,18 @@ TestAstSymbolTables::visit ( SgNode* node )
                     SgInitializedName* initializedName = isSgInitializedName(declarationNode);
                     if (initializedName != NULL)
                        {
+#if 0
+                         printf ("In TestAstSymbolTables::visit(): initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
+#endif
                          SgSymbol* local_symbol = initializedName->get_symbol_from_symbol_table();
                          if (local_symbol == NULL)
                             {
                               printf ("Error: initializedName->get_symbol_from_symbol_table() == NULL initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
                               initializedName->get_startOfConstruct()->display("Error: initializedName->get_symbol_from_symbol_table() == NULL");
                             }
+#if 0
+                         printf ("In TestAstSymbolTables::visit(): local_symbol = %p = %s \n",local_symbol,local_symbol != NULL ? local_symbol->class_name().c_str() : "null");
+#endif
                          ROSE_ASSERT(local_symbol != NULL);
                        }
                       else
