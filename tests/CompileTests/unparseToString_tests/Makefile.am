@@ -19,19 +19,16 @@ unparseToString_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 # These specimens either have compile errors (at least when using the compiler switches specified below) or they cause
 # ROSE to abort before the frontend() call returns.  You can easily see the failures by commenting out this line and
 # re-running "make -k check".
-EXCLUDE_SPECIMENS =													\
-	test2005_201.C test2005_56.C test2006_11.C test2006_130.C test2006_131.C test2006_49.C test2006_60.C		\
-	test2007_105.C test2007_106.C test2007_108.C test2007_109.C test2007_112.C test2007_113.C test2007_114.C	\
-	test2007_123.C test2007_125.C test2007_153.C test2007_19.C test2007_20.C test2007_30.C test2007_35.C		\
-	test2007_69.C test2007_86.C test2007_95.C test2009_16.C test2009_23.C test2009_26.C test2009_36.C test2009_38.C	\
-	test2010_01.C test2010_02.C test2010_07.C test2010_08.C test2010_09.C test2010_13.C test2010_14.C test2010_16.C	\
-	test2010_27.C test2011_112.C test2011_130.C test2011_134.C test2011_16.C test_CplusplusMacro_C.C test_gnu.C	\
-	test2005_201.C test2005_56.C test2006_11.C test2006_130.C test2006_131.C test2006_49.C test2006_60.C		\
-	test2007_105.C test2007_106.C test2007_108.C test2007_109.C test2007_112.C test2007_113.C test2007_114.C	\
-	test2007_123.C test2007_125.C test2007_153.C test2007_19.C test2007_20.C test2007_30.C test2007_35.C		\
-	test2007_69.C test2007_86.C test2007_95.C test2009_16.C test2009_23.C test2009_26.C test2009_36.C test2009_38.C	\
-	test2010_01.C test2010_02.C test2010_07.C test2010_08.C test2010_09.C test2010_13.C test2010_14.C test2010_16.C	\
-	test2010_27.C test2011_112.C test2011_130.C test2011_134.C test2011_16.C test_CplusplusMacro_C.C test_gnu.C
+EXCLUDE_SPECIMENS =														\
+	test2005_201.C test2005_56.C test2005_85.C test2006_11.C test2006_130.C test2006_131.C test2006_184.C			\
+	test2006_35.C test2006_49.C test2006_60.C test2007_105.C test2007_106.C test2007_108.C test2007_109.C			\
+	test2007_112.C test2007_113.C test2007_114.C test2007_115.C test2007_123.C test2007_125.C test2007_139.C		\
+	test2007_153.C test2007_156.C test2007_19.C test2007_20.C test2007_30.C test2007_35.C test2007_54.C			\
+	test2007_69.C test2007_71.C test2007_86.C test2007_95.C test2009_16.C test2009_17.C test2009_23.C 			\
+	test2009_26.C test2009_36.C test2009_38.C test2010_01.C test2010_02.C test2010_07.C test2010_08.C test2010_09.C 	\
+	test2010_12.C test2010_13.C test2010_14.C test2010_16.C test2010_27.C test2011_112.C test2011_125.C 			\
+	test2011_130.C test2011_132.C test2011_134.C test2011_16.C test2011_197.C  test2012_133.C test2012_135.C		\
+	test2012_139.C test_CplusplusMacro_C.C test_gnu.C
 
 # The list of specimens (which must all be from one directory so as to not be ambiguous)
 SPECIMEN_DIR = $(top_srcdir)/tests/CompileTests/Cxx_tests
