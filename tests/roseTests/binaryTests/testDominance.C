@@ -76,8 +76,14 @@ main(int argc, char *argv[])
     for (std::vector<SgAsmFunction*>::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
         SgAsmFunction *func = *fi;
         std::string fname = nameprefix + StringUtility::numberToString(++counter) + ".dot";
-        std::cout <<"test " <<fname <<" in function <" <<func->get_name() <<">"
+        std::cout <<std::string(80, '=') <<"\n"
+                  <<"test " <<fname <<" in function <" <<func->get_name() <<">"
                   <<" at " <<StringUtility::addrToString(func->get_entry_va()) <<"\n";
+#if 0 // This doesn't work well for automated testing
+        std::ofstream out(fname.c_str());
+#else
+        std::ostream &out = std::cout;
+#endif
 
         if (algorithm=="A") {
             // Calculate immediate dominator graph from the control flow graph. Do this for each function.
@@ -87,7 +93,6 @@ main(int argc, char *argv[])
             assert(get(boost::vertex_name, cfg, start)==func->get_entry_block());
             BinaryAnalysis::Dominance analyzer;
             DG dg = analyzer.build_idom_graph_from_cfg<DG>(cfg, start);
-            std::ofstream out(fname.c_str());
             boost::write_graphviz(out, dg, GraphvizVertexWriter<DG>(dg));
 
         } else if (algorithm=="B") {
@@ -100,7 +105,6 @@ main(int argc, char *argv[])
             BinaryAnalysis::Dominance analyzer;
             RelMap rmap = analyzer.build_idom_relation_from_cfg(cfg, start);
             DG dg = analyzer.build_graph_from_relation<DG>(cfg, rmap);
-            std::ofstream out(fname.c_str());
             boost::write_graphviz(out, dg, GraphvizVertexWriter<DG>(dg));
 
         } else if (algorithm=="C") {
@@ -111,7 +115,6 @@ main(int argc, char *argv[])
             assert(get(boost::vertex_name, cfg, start)==func->get_entry_block());
             BinaryAnalysis::Dominance analyzer;
             DG dg = analyzer.build_postdom_graph_from_cfg<DG>(cfg, start);
-            std::ofstream out(fname.c_str());
             boost::write_graphviz(out, dg, GraphvizVertexWriter<DG>(dg));
 
         } else if (algorithm=="D") {
@@ -124,7 +127,6 @@ main(int argc, char *argv[])
             BinaryAnalysis::Dominance analyzer;
             RelMap rmap = analyzer.build_postdom_relation_from_cfg(cfg, start);
             DG dg = analyzer.build_graph_from_relation<DG>(cfg, rmap);
-            std::ofstream out(fname.c_str());
             boost::write_graphviz(out, dg, GraphvizVertexWriter<DG>(dg));
 
         } else {
