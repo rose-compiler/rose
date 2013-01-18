@@ -129,7 +129,6 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
             // printf ("WARNING: Note that qualified types in typedef types are not yet supported... \n");
                break;
              }
-
 #if 0
           case V_:
              {
@@ -140,7 +139,7 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
 #endif
           default:
              {
-               printf ("In unparseClassType: Sorry not implemented case of name qualification for info.get_reference_node_for_qualification() = %s \n",referencedNode->class_name().c_str());
+               printf ("Warning: In unparseClassType: Sorry not implemented case of name qualification for info.get_reference_node_for_qualification() = %s \n",referencedNode->class_name().c_str());
                ROSE_ASSERT(false);
              }
         }
