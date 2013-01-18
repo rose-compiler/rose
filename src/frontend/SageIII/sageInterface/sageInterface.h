@@ -1119,7 +1119,7 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
    {
      if (isDefining)
      {
-       ROSE_ASSERT (decl->get_definingDeclaration() != NULL));
+       ROSE_ASSERT (decl->get_definingDeclaration() != NULL);
        return decl->get_definingDeclaration(); 
      }
      else 
