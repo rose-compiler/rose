@@ -1020,7 +1020,7 @@ SgVariableSymbol *lookupVariableByName(const SgName &name) {
     // Note that in the case of a class, we recursively search the class as well as its
     // super class and interfaces.
     //
-    for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); symbol == NULL && i != astJavaScopeStack.end(); i++)  {
+    for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); (symbol == NULL || (! isSgVariableSymbol(symbol))) && i != astJavaScopeStack.end(); i++)  {
         symbol = (isSgClassDefinition(*i)
                       ? lookupSimpleNameVariableInClass(name, (SgClassDefinition *) (*i))
                       : (*i) -> lookup_symbol(name));
@@ -1028,8 +1028,34 @@ SgVariableSymbol *lookupVariableByName(const SgName &name) {
             break;
     }
 
-    return isSgVariableSymbol(symbol); // It's up to the caller of this function to check if the symbol is a variable symbol.
+    return isSgVariableSymbol(symbol);
 }
+
+
+//
+// Search the scope stack for a variable declaration for the name in question.
+//
+SgJavaLabelSymbol *lookupLabelByName(const SgName &name) {
+    ROSE_ASSERT(! astJavaScopeStack.empty());
+
+    SgSymbol *symbol = NULL;
+
+    //
+    // Iterate over the scope stack... At each point, look to see if the variable is there.
+    // Note that in the case of a class, we recursively search the class as well as its
+    // super class and interfaces.
+    //
+    for (std::list<SgScopeStatement*>::iterator i = astJavaScopeStack.begin(); (symbol == NULL || (! isSgJavaLabelSymbol(symbol))) && i != astJavaScopeStack.end(); i++)  {
+        if (isSgClassDefinition(*i))
+            break;
+        symbol = (*i) -> lookup_symbol(name);
+        if ((*i) == ::globalScope)
+            break;
+    }
+
+    return isSgJavaLabelSymbol(symbol);
+}
+
 
 
 SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimensions) {
@@ -1045,32 +1071,32 @@ SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimens
     list<SgName>::iterator name = qualifiedTypeName.begin();
 
     if (package_name.getString().size() == 0) {
-         if (type_name.getString().compare("boolean") == 0) {
-             type = SgTypeBool::createType();
-         }
-         else if (type_name.getString().compare("byte") == 0) {
-             type = SgTypeSignedChar::createType();
-         }
-         else if (type_name.getString().compare("char") == 0) {
-             type = SgTypeWchar::createType();
-         }
-         else if (type_name.getString().compare("int") == 0) {
-             type = SgTypeInt::createType();
-         }
-         else if (type_name.getString().compare("short") == 0) {
-             type = SgTypeShort::createType();
-         }
-         else if (type_name.getString().compare("float") == 0) {
-             type = SgTypeFloat::createType();
-         }
-         else if (type_name.getString().compare("long") == 0) {
-             type = SgTypeLong::createType();
-         }
-         else if (type_name.getString().compare("double") == 0) {
-             type = SgTypeDouble::createType();
-         }
-         else if (type_name.getString().compare("void") == 0) {
-             type = SgTypeVoid::createType();
+        if (type_name.getString().compare("boolean") == 0) {
+            type = SgTypeBool::createType();
+        }
+        else if (type_name.getString().compare("byte") == 0) {
+            type = SgTypeSignedChar::createType();
+        }
+        else if (type_name.getString().compare("char") == 0) {
+            type = SgTypeWchar::createType();
+        }
+        else if (type_name.getString().compare("int") == 0) {
+            type = SgTypeInt::createType();
+        }
+        else if (type_name.getString().compare("short") == 0) {
+            type = SgTypeShort::createType();
+        }
+        else if (type_name.getString().compare("float") == 0) {
+            type = SgTypeFloat::createType();
+        }
+        else if (type_name.getString().compare("long") == 0) {
+            type = SgTypeLong::createType();
+        }
+        else if (type_name.getString().compare("double") == 0) {
+            type = SgTypeDouble::createType();
+        }
+        else if (type_name.getString().compare("void") == 0) {
+            type = SgTypeVoid::createType();
         }
         else {
             //
@@ -1108,6 +1134,13 @@ SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimens
         SgClassDefinition *package = declaration -> get_definition();
         ROSE_ASSERT(package);
         class_symbol = package -> lookup_class_symbol(*name);
+// TODO: Remove this!!!
+if (! class_symbol){
+cout << "The name is: " << *name << "; "
+     << "The package symbol is: " << package -> get_qualified_name() << "; "
+     << "No symbol found for " << package_name.str() << (package_name.getString().size() ? "." : "") << type_name.str() << endl;
+cout.flush();
+}
     }
 
     //

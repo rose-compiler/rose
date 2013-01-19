@@ -516,6 +516,21 @@ Unparse_Java::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 
+void
+Unparse_Java::unparseCaseOrDefaultBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgBasicBlock* basic_stmt = isSgBasicBlock(stmt);
+     ROSE_ASSERT(basic_stmt != NULL);
+
+     // curprint ("{");
+     foreach (SgStatement* stmt, basic_stmt->get_statements()) {
+         unp->cur.insert_newline();
+         unparseNestedStatement(stmt, info);
+     }
+     // curprint_indented ("}", info);
+   }
+
+
 // Determine how many "else {}"'s an outer if that has an else clause needs to
 // prevent dangling if problems
 static size_t countElsesNeededToPreventDangling(SgStatement* s) {
@@ -598,10 +613,8 @@ void Unparse_Java::unparseForEachStmt(SgStatement* stmt, SgUnparse_Info& info) {
 
     curprint("for (");
 
- // DQ (9/3/2011): Change to API for this IR node.
- // unparseInitializedName(foreach_stmt -> get_element(), info);
     ROSE_ASSERT(foreach_stmt -> get_element()->get_variables().size() == 1);
-    unparseInitializedName(foreach_stmt -> get_element()->get_variables()[0], info);
+    unparseVarDeclStmt(foreach_stmt -> get_element(), info);
 
     curprint(" : ");
     unparseExpression(foreach_stmt -> get_collection(), info);
@@ -1007,13 +1020,16 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
              */
 
-             AstSgNodeListAttribute *attribute = ( AstSgNodeListAttribute *) parameter_class_definition -> getAttribute("parameter_type_bounds");
+             bool has_extends = parameter_class_definition -> attributeExists("parameter_type_bounds_with_extends");
+             AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *)
+                                                 (has_extends ? parameter_class_definition -> getAttribute("parameter_type_bounds_with_extends")
+                                                              : parameter_class_definition -> getAttribute("parameter_type_bounds"));
              std::vector<SgNode *> &parm_list = attribute -> getNodeList();
              ROSE_ASSERT(parm_list.size() == bases.size());
              SgBaseClass *super_class = (parm_list.size() > 0 ? bases[0] : NULL);
              for (int k = 0; k < parm_list.size(); k++) {
                  SgType *type = isSgType(parm_list[k]);
-                 if (k == 0 && (! super_class -> get_base_class() -> get_explicit_interface())) {
+                 if (k == 0 && has_extends) {
                      curprint(" extends ");
                  }
                  else {
@@ -1213,9 +1229,9 @@ Unparse_Java::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
      unparseExpression(case_stmt->get_key(), info);
      curprint ( string(":"));
 
-  // if(case_stmt->get_body())
-     if ( (case_stmt->get_body() != NULL) && !info.SkipBasicBlock())
-          unparseStatement(case_stmt->get_body(), info);
+     if ((case_stmt->get_body() != NULL) && !info.SkipBasicBlock()) {
+         unparseCaseOrDefaultBasicBlockStmt(case_stmt->get_body(), info);
+     }
    }
 
 void
@@ -1277,9 +1293,10 @@ Unparse_Java::unparseDefaultStmt(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(default_stmt != NULL);
 
      curprint ( string("default:"));
-  // if(default_stmt->get_body()) 
-     if ( (default_stmt->get_body() != NULL) && !info.SkipBasicBlock())
-          unparseStatement(default_stmt->get_body(), info);
+
+     if ((default_stmt->get_body() != NULL) && !info.SkipBasicBlock()) {
+         unparseCaseOrDefaultBasicBlockStmt(default_stmt->get_body(), info);
+     }
    }
 
 void
@@ -1436,10 +1453,17 @@ Unparse_Java::unparseEnumBody(SgClassDefinition *class_definition, SgUnparse_Inf
      curprint(" {");
      unp->cur.insert_newline();
      std::vector<SgVariableDeclaration *> fields;
+     std::vector<SgMemberFunctionDeclaration *> methods;
      foreach (SgDeclarationStatement *child, class_definition -> get_members()) {
          SgVariableDeclaration *field = isSgVariableDeclaration(child);
-         if (field) { // only process fields ... skip constructor.
+         if (field) { // only process fields ...
              fields.push_back(field);
+         }
+         else { // ... and methods ...  skip constructor.
+             SgMemberFunctionDeclaration *mfuncdecl_stmt = isSgMemberFunctionDeclaration(child);
+             if (mfuncdecl_stmt && (! mfuncdecl_stmt -> get_specialFunctionModifier().isConstructor())) {
+                 methods.push_back(mfuncdecl_stmt);
+             }
          }
      }
 
@@ -1453,6 +1477,15 @@ Unparse_Java::unparseEnumBody(SgClassDefinition *class_definition, SgUnparse_Inf
          curprint_indented(vars[0] -> get_name().getString(), info);
          curprint(i + 1 < fields.size() ? "," : ";");
          unp->cur.insert_newline();
+         info.dec_nestingLevel();
+     }
+
+     unp->cur.insert_newline();
+
+     for (int i = 0; i < methods.size(); i++) {
+         SgMemberFunctionDeclaration *mfuncdecl_stmt = methods[i];
+         info.inc_nestingLevel();
+         unparseMFuncDeclStmt(mfuncdecl_stmt, info);
          info.dec_nestingLevel();
      }
 

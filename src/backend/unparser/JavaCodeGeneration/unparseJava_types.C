@@ -78,15 +78,15 @@ Unparse_Java::unparseClassType(SgClassType *type, SgUnparse_Info& info)
      //unparseName(decl->get_name(), info);
      //todo templates and qualified names
 
-     //
-     // Note that we use this attribute to store the qualified name of the type instead of
-     // "type -> get_qualified_name()" because the qualified name has been altered to remap
-     // any use of the character '.' which is not a valid character for a variable name in ROSE.
-     //
      if (type -> attributeExists("is_parameter_type")) {
          curprint(type -> get_name().getString());
      }
      else {
+         //
+         // Note that we use this attribute to store the qualified name of the type instead of
+         // "type -> get_qualified_name()" because the qualified name has been altered to remap
+         // any use of the character '.' which is not a valid character for a variable name in ROSE.
+         //
          AstRegExAttribute *attribute = (AstRegExAttribute *) type -> getAttribute("name");
          ROSE_ASSERT(attribute);
          curprint(attribute -> expression);
@@ -127,7 +127,7 @@ Unparse_Java::unparseJavaParameterizedType(SgJavaParameterizedType* type, SgUnpa
             // There are a number of way in which the argumentType can be set (but maybe a restricted set of ways for Java).
                if (argumentType != NULL)
                   {
-                    unparseType(argumentType,info);
+                    unparseType(argumentType, info);
                   }
                  else
                   {

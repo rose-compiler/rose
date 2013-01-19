@@ -484,8 +484,11 @@ SgFunctionDefinition *getCurrentMethodDefinition();
 SgClassSymbol *lookupSimpleNameTypeInClass(const SgName &name, SgClassDefinition *classDefinition);
 SgVariableSymbol *lookupSimpleNameVariableInClass(const SgName &name, SgClassDefinition *classDefinition);
 
-//! Support for identification of symbols using simple names.
+//! Support for identification of variable symbols using simple names.
 SgVariableSymbol *lookupVariableByName(const SgName &name);
+
+//! Support for identification of label symbols using simple names.
+SgJavaLabelSymbol *lookupLabelByName(const SgName &name);
 
 //! Refactored support to extraction of associated scope from symbol (where possible, i.e. SgClassSymbol, etc.).
 SgScopeStatement *get_scope_from_symbol(SgSymbol *returnSymbol);
