@@ -288,8 +288,15 @@ class JavaParserSupport {
                 if (! type_arg.isArray()) {
                     return false;
                 }
+                
+                Class base_type = type_arg;
+                int num_dimensions = 0;
+                do { // get the leaf type of the array parameter and count how many dimensions it has.
+                    num_dimensions++;
+                    base_type = base_type.getComponentType();
+                } while (base_type.isArray());
                 ArrayBinding array_binding = (ArrayBinding) argument;
-                return typeMatch(type_arg.getComponentType(), array_binding.leafComponentType());
+                return (num_dimensions ==  array_binding.dimensions() && typeMatch(base_type, array_binding.leafComponentType()));
             }
             else {
                 if (type_arg == findClass(argument)) {
@@ -416,6 +423,7 @@ private String getTypeName(Type in_type) {
 
 
 Method getRawMethod(MethodBinding method_binding) {
+try{
     TypeBinding type_binding = method_binding.declaringClass;
     TypeBinding arguments[] = method_binding.parameters;
     Class cls = findClass(type_binding);
@@ -437,6 +445,12 @@ Method getRawMethod(MethodBinding method_binding) {
             }
         }
     }
+}
+catch(NoClassDefFoundError e){
+	System.out.println("Could not find method " + new String(method_binding.readableName()));
+	e.printStackTrace();
+	System.exit(1);
+}
 
     return null;
 }
@@ -646,7 +660,7 @@ Constructor getRawConstructor(MethodBinding constructor_binding) {
         //
         //
         //
-        if (unit.types == null) { // No units!?  ... then at least process the package.
+        if (unit.types == null || unit.isPackageInfo()) { // No units!?  ... then at least process the package.
             JavaParser.cactionPushPackage(unitPackageName, createJavaToken(unit));
             JavaParser.cactionPopPackage();
         }
@@ -664,17 +678,19 @@ Constructor getRawConstructor(MethodBinding constructor_binding) {
                         String // pool_name = new String(local_types[i].constantPoolName()),
                         source_name = new String(local_types[i].sourceName());
 
-                        System.out.println();
-                        System.out.println("    unique key           " + ": " + new String(local_types[i].computeUniqueKey()));
-                        if (local_types[i].constantPoolName() != null)
-                        System.out.println("    constant pool name   " + ": " + new String(local_types[i].constantPoolName()));
-                        System.out.println("    genericTypeSignature " + ": " + new String(local_types[i].genericTypeSignature()));
-                        System.out.println("    readable name        " + ": " + new String(local_types[i].readableName())); 
-                        System.out.println("    short readable name  " + ": " + new String(local_types[i].readableName())); 
-                        System.out.println("    signature            " + ": " + new String(local_types[i].signature())); 
-                        System.out.println("    source name          " + ": " + new String(local_types[i].sourceName())); 
-                        System.out.println("    debug name           " + ": " + local_types[i].debugName()); 
-                        System.out.println("    declaration          " + ": " + new String(declaration.name)); 
+                        if (verboseLevel > 0) {
+                            System.out.println();
+                            System.out.println("    unique key           " + ": " + new String(local_types[i].computeUniqueKey()));
+                            if (local_types[i].constantPoolName() != null)
+                                System.out.println("    constant pool name   " + ": " + new String(local_types[i].constantPoolName()));
+                            System.out.println("    genericTypeSignature " + ": " + new String(local_types[i].genericTypeSignature()));
+                            System.out.println("    readable name        " + ": " + new String(local_types[i].readableName())); 
+                            System.out.println("    short readable name  " + ": " + new String(local_types[i].readableName())); 
+                            System.out.println("    signature            " + ": " + new String(local_types[i].signature())); 
+                            System.out.println("    source name          " + ": " + new String(local_types[i].sourceName())); 
+                            System.out.println("    debug name           " + ": " + local_types[i].debugName()); 
+                            System.out.println("    declaration          " + ": " + new String(declaration.name));
+                        }
 
                         if (local_types[i].constantPoolName() != null) {
                             String pool_name = new String(local_types[i].constantPoolName());
@@ -685,12 +701,14 @@ Constructor getRawConstructor(MethodBinding constructor_binding) {
                                                       ? source_name.substring(4, source_name.indexOf('('))
                                                       : source_name);
                             Class cls = getClassForName(pool_name.replace('/', '.'));
-                            System.out.println("    Local or Anonymous Type " + i + " nested in type " + 
-                                               new String(local_types[i].enclosingType.readableName()) + ": " +
-                                               (local_types[i].isAnonymousType() ? " (Anonymous)" : " (Local)"));
-                            System.out.println("    prefix               " + ": " + package_name);
-                            System.out.println("    typename             " + ": " + typename);
-                            System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" : cls.getCanonicalName()));
+                            if (verboseLevel > 0) {
+                                System.out.println("    Local or Anonymous Type " + i + " nested in type " + 
+                                                   new String(local_types[i].enclosingType.readableName()) + ": " +
+                                                   (local_types[i].isAnonymousType() ? " (Anonymous)" : " (Local)"));
+                                System.out.println("    prefix               " + ": " + package_name);
+                                System.out.println("    typename             " + ": " + typename);
+                                System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" : cls.getCanonicalName()));
+                            }
                         }
 /**/
                         processLocalOrAnonymousType(local_types[i]);
@@ -702,7 +720,9 @@ Constructor getRawConstructor(MethodBinding constructor_binding) {
 
             for (int i = 0; i < unit.types.length; i++) {
                 TypeDeclaration node = unit.types[i];
-                identifyUserDefinedTypes(unitPackageName, node);
+                if (node.name != TypeConstants.PACKAGE_INFO_NAME) { // ignore package-info declarations
+                    identifyUserDefinedTypes(unitPackageName, node);
+                }
             }
             
             for (Class cls : userTypeTable.keySet()) {
@@ -718,17 +738,36 @@ Constructor getRawConstructor(MethodBinding constructor_binding) {
      * @param local_type
      */
     public void processLocalOrAnonymousType(LocalTypeBinding local_type) {
-//System.out.println("Looking at binding for type " + local_type.debugName());
+// System.out.println("Looking at binding for type " + local_type.debugName());
           SourceTypeBinding enclosing_type_binding = (SourceTypeBinding)
                                                      (local_type.enclosingMethod != null
                                                            ? local_type.enclosingMethod.declaringClass
                                                            : local_type.enclosingType);
           TypeDeclaration enclosing_declaration = enclosing_type_binding.scope.referenceContext,
                           declaration = local_type.scope.referenceContext;
-if (local_type == null)
-System.out.println("Aha");
-if (local_type.constantPoolName() == null)
-System.out.println("AHA");
+// TODO: Remove this !
+if (local_type.constantPoolName() == null) {
+System.out.println("Type " + local_type.debugName() + " has null constantPoolName");
+System.out.println("The ReferenceBinding constantPoolName of " + local_type.debugName() + " is: " + new String(CharOperation.concatWith(local_type.compoundName, '/')));
+
+
+System.out.println("Local or Anonymous Type nested in type " + 
+            new String(local_type.enclosingType.readableName()) + ": " +
+            (local_type.isAnonymousType() ? " (Anonymous)" : " (Local)")); 
+System.out.println("    unique key           " + ": " + new String(local_type.computeUniqueKey()));
+if (local_type.genericTypeSignature() != null)
+System.out.println("    genericTypeSignature " + ": " + new String(local_type.genericTypeSignature()));
+if (local_type.readableName() != null)
+System.out.println("    readable name        " + ": " + new String(local_type.readableName()));
+if (local_type.shortReadableName() != null)
+System.out.println("    short readable name  " + ": " + new String(local_type.shortReadableName()));
+if (local_type.signature() != null)
+System.out.println("    signature            " + ": " + new String(local_type.signature()));
+if (local_type.sourceName() != null)
+System.out.println("    source name          " + ": " + new String(local_type.sourceName()));
+System.out.println("    debug name           " + ": " + local_type.debugName()); 
+System.out.println("    declaration          " + ": " + new String(declaration.name));
+}
 
           String pool_name = new String(local_type.constantPoolName()),
                  source_name = new String(local_type.sourceName());
@@ -1755,6 +1794,7 @@ System.out.println(") in class " + cls.getCanonicalName());
             JavaParser.cactionWildcard(location);
             
             if (! wildcard_binding.isUnboundWildcard()) { // there is a bound!
+                preprocessClass(wildcard_binding.bound);
                 generateAndPushType(wildcard_binding.bound, location);
             }
 

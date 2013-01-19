@@ -74,7 +74,7 @@ class JavaParser  implements Callable<Boolean> {
     public static native void cactionArrayTypeReferenceEnd(String filename, int numberOfDimensions, JavaToken jToken);
     public static native void cactionMessageSend(String packageName, String typeName, String functionName, JavaToken jToken);
 //    public static native void cactionMessageSendEnd(boolean java_is_static, String packageName, String typeName, int num_dimensions, String functionName, int num_parameters, int numTypeArguments, int numArguments, JavaToken jToken);
-    public static native void cactionMessageSendEnd(boolean java_is_static, String functionName, int num_parameters, int numTypeArguments, int numArguments, JavaToken jToken);
+    public static native void cactionMessageSendEnd(boolean java_is_static, boolean has_receiver, String functionName, int num_parameters, int numTypeArguments, int numArguments, JavaToken jToken);
 
     public static native void cactionStringLiteral(String value, JavaToken jToken);
 
@@ -228,7 +228,7 @@ class JavaParser  implements Callable<Boolean> {
     public static native void cactionCatchBlockEnd(JavaToken jToken);
 
     public static native void cactionTypeParameter(String name, JavaToken jToken);
-    public static native void cactionTypeParameterEnd(String name, int num_bounds, JavaToken jToken);
+    public static native void cactionTypeParameterEnd(String name, boolean has_extends, int num_bounds, JavaToken jToken);
     public static native void cactionUnaryExpression(JavaToken jToken);
     public static native void cactionUnaryExpressionEnd(int java_operator_kind, JavaToken jToken);
     public static native void cactionWhileStatement(JavaToken jToken);

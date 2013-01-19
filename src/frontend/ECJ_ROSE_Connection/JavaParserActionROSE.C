@@ -239,16 +239,23 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassExtendsAndImplementsSupp
     }
 
     if (number_of_type_parameters > 0) {
-        SgTemplateParameterPtrList list;
-        for (int i = 0; i < number_of_type_parameters; i++) {
+        list<SgTemplateParameter *> parameter_list;
+        for (int i = 0; i < number_of_type_parameters; i++) { // Reverse the content of the stack.
             SgClassDeclaration *parameter_decl = isSgClassDeclaration(astJavaComponentStack.pop());
             ROSE_ASSERT(parameter_decl);
             SgTemplateParameter *parameter = new SgTemplateParameter(parameter_decl -> get_type(), NULL);
-            list.push_back(parameter);
+            parameter_list.push_front(parameter);
+        }
+
+        SgTemplateParameterPtrList final_list;
+        while (! parameter_list.empty()) { // Now that we have the parameters in the right order, create the final list.
+            SgTemplateParameter *parameter = parameter_list.front();
+            parameter_list.pop_front();
+            final_list.push_back(parameter);
         }
 
         SgTemplateParameterList *template_parameter_list = new SgTemplateParameterList();
-        template_parameter_list -> set_args(list);
+        template_parameter_list -> set_args(final_list);
         class_definition -> get_declaration() -> setAttribute("type_parameters", new AstSgNodeAttribute(template_parameter_list));
     }
 
@@ -757,7 +764,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration(JNIEnv *env, jclas
     classDeclaration -> set_explicit_interface(is_interface); // Identify whether or not this is an interface.
     classDeclaration -> set_explicit_enum(is_enum);           // Identify whether or not this is an enum.
 
-    if (is_abstract)
+    if (is_abstract && (! is_enum)) // Enum should not be marked as abstract
          classDeclaration -> get_declarationModifier().setJavaAbstract();
     else classDeclaration -> get_declarationModifier().unsetJavaAbstract();
     if (is_final && (! is_enum)) // Enum should not be marked as final
@@ -1282,7 +1289,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameterReference(JNIEnv *env
     ROSE_ASSERT(enclosing_type);
 // TODO: Remove this !!!
 /*
-cout << "Looking for type "
+cout << "Looking for type parameter "
 << type_parameter_name.getString()
 << " in "
 << getTypeName(enclosing_type)
@@ -1427,6 +1434,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend(JNIEnv *env, jclass, j
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd(JNIEnv *env, jclass, 
                                                              jboolean java_is_static,
+                                                             jboolean java_has_receiver,
                                                              jstring java_function_name,
                                                              jint java_number_of_parameters,
                                                              jint numTypeArguments,
@@ -1435,7 +1443,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd(JNIEnv *env, jclass
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionMessageSendEnd() \n");
 
-    bool is_static = java_is_static;
+    bool is_static = java_is_static,
+         has_receiver = java_has_receiver;
 
     SgName function_name  = convertJavaStringToCxxString(env, java_function_name);
     int num_parameters = java_number_of_parameters;
@@ -1450,10 +1459,25 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd(JNIEnv *env, jclass
     if (isSgPointerType(containing_type)) { // is this type an array type?
         containing_type = ::ObjectClassType;
     }
+    else if (isSgJavaWildcardType(containing_type)) { // is this type a wildcard type?
+        SgJavaWildcardType *wildcard_type = isSgJavaWildcardType(containing_type);
+        if (wildcard_type -> get_is_unbound()) {
+            containing_type = ::ObjectClassType;
+        }
+        else if (wildcard_type -> get_has_extends()) {
+            containing_type = wildcard_type -> get_bound_type();
+        }
+        else {
+            ROSE_ASSERT(false && "! yet support wildcard with super bound");
+        }
+    }
+
     SgClassDeclaration *class_declaration = isSgClassDeclaration(containing_type -> getAssociatedDeclaration() -> get_definingDeclaration());
     ROSE_ASSERT(class_declaration);
     SgClassDefinition *targetClassScope = class_declaration -> get_definition();
     ROSE_ASSERT(targetClassScope != NULL && (! targetClassScope -> attributeExists("namespace")));
+
+    SgType *return_type = astJavaComponentStack.popType(); // The return type of the function
 
     //
     // The astJavaComponentStack has all of the types of the parameters of the function being called. Note that
@@ -1465,6 +1489,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd(JNIEnv *env, jclass
         SgType *type = astJavaComponentStack.popType();
         function_parameter_types.push_front(type);
     }
+
+// TODO: Remove this !!!
 /*
 cout << "Looking for function " 
 << function_name
@@ -1482,8 +1508,34 @@ cout << ")"
 << endl;
 cout.flush();
 */
+
     SgMemberFunctionSymbol *function_symbol = findFunctionSymbolInClass(targetClassScope, function_name, function_parameter_types);
     ROSE_ASSERT(function_symbol);
+    SgMemberFunctionType *function_type = isSgMemberFunctionType(function_symbol -> get_type());
+    ROSE_ASSERT(function_type);
+
+    //
+    // If we have an accurate return type for this function, set it !!!
+    // This occurs when the method being invoked belongs to a parameterized type.
+    //
+    if (function_type -> get_return_type() == ::ObjectClassType) {
+        if (return_type != function_type -> get_return_type()) {
+            function_type -> set_return_type(return_type);
+        }
+    }
+// TODO: Remove this !!!
+else if (function_type -> get_return_type() != return_type && getTypeName(function_type -> get_return_type()) == getTypeName(return_type)) {
+cout << "Original return type for function " 
+<< function_name
+<< " in type "
+<< targetClassScope -> get_qualified_name()
+<< ": "
+<< getTypeName(function_type -> get_return_type())
+<< " does not match: "
+<< getTypeName(return_type)
+<< endl;
+cout.flush();
+}
 
     // The astJavaComponentStack has all of the arguments to the function call.
     SgExprListExp *arguments = new SgExprListExp();
@@ -1494,61 +1546,55 @@ cout.flush();
     setJavaSourcePosition(arguments, env, jToken);
 
     //
-    // charles4: 11/08/2011 - Note that ECJ always adds a "receiver" as the first argument
-    // in a function call.  This receiver is an expression (or type ?) that indicates the instance that
-    // is associated with the function to be invoked. 
+    // This receiver, if present, is an expression or type that indicates the enclosing type of
+    // the function being invoked. 
     //
-    SgNode *receiver = astJavaComponentStack.pop();
+    SgNode *receiver = (has_receiver ? astJavaComponentStack.pop() : NULL);
 
     SgFunctionCallExp *function_call_exp = SageBuilder::buildFunctionCallExp(function_symbol, arguments);
 
     setJavaSourcePosition(function_call_exp, env, jToken);
 
-    //
-    // Finalize the function by adding its "receiver" prefix.  Note that it is illegal to add a "this."
-    // prefix in front of a static method call - Hence the guard statement below. (ECJ always adds a "this."
-    // prefix in front of every function whose receiver was not specified by the user.)
-    //
     SgExpression *exprForFunction = function_call_exp;
-    if (isSgNamedType(receiver)) { // Note that if this is true then the function must be static... See unparseJava_expression.C: unparseFucnCall
-        if (isSgClassType(receiver)) { // Note that if this is true then the function must be static... See unparseJava_expression.C: unparseFucnCall
-            SgClassType *type = isSgClassType(receiver);
-            string type_name = isSgNamedType(receiver) -> get_name();
-            string full_name = getFullyQualifiedTypeName(type);
 
-            string class_name = (full_name.size() == type_name.size() ? type_name : full_name.substr(0, full_name.size() - type_name.size()) + type_name);
-            exprForFunction -> setAttribute("prefix", new AstRegExAttribute(class_name));
-        }
-        else { // this can't happen!?
-            // TODO: What if the class is a parameterized type?
-            ROSE_ASSERT(false); 
-        }
-    }
-    else if (is_static && isSgThisExp(receiver) && (! receiver -> attributeExists("class"))) { // A sgThisExp receiver in front of a static function?
-        delete receiver; // Ignore the receiver!
-    }
-    else {
-        exprForFunction = SageBuilder::buildBinaryExpression<SgDotExp>((SgExpression *) receiver, exprForFunction);
+    //
+    // If this function call has a receiver, finalize its invocation by adding the "receiver" prefix.  Note
+    // that it is illegal to add a "this." prefix in front of a static method call - Hence the guard statement
+    // below. (ECJ always adds a "this." prefix in front of every function whose receiver was not specified by
+    // the user.)
+    //
+    if (receiver != NULL) {
+        if (isSgNamedType(receiver)) { // Note that if this is true then the function must be static... See unparseJava_expression.C: unparseFucnCall
+            if (isSgClassType(receiver)) { // Note that if this is true then the function must be static... See unparseJava_expression.C: unparseFucnCall
+                SgClassType *type = isSgClassType(receiver);
+                string type_name = isSgNamedType(receiver) -> get_name();
+                string full_name = getFullyQualifiedTypeName(type);
 
-        SgClassDefinition *current_class_definition = getCurrentTypeDefinition();
-        SgType *enclosing_type = current_class_definition -> get_declaration() -> get_type();
-        if (isSgThisExp(receiver) && (! receiver -> attributeExists("class")) && (! receiver -> attributeExists("prefix")) && (! isCompatibleTypes(containing_type, enclosing_type))) {
-// TODO: Remove this !!!
-/*
-cout << "The containing type is " 
-     << getTypeName(containing_type)
-     << ";  The enclosing type is " 
-     << getTypeName(enclosing_type)
-     << endl;
-cout.flush();
-*/
-            string prefix_name = (isSgClassType(containing_type)
-                                      ? getFullyQualifiedTypeName(isSgClassType(containing_type))
-                                      : isSgJavaParameterizedType(containing_type)
-                                            ? getFullyQualifiedTypeName(isSgJavaParameterizedType(containing_type))
-                                            : "");
-            ROSE_ASSERT(prefix_name.size() != 0);
-            receiver -> setAttribute("prefix", new AstRegExAttribute(prefix_name));
+                string class_name = (full_name.size() == type_name.size() ? type_name : full_name.substr(0, full_name.size() - type_name.size()) + type_name);
+                exprForFunction -> setAttribute("prefix", new AstRegExAttribute(class_name));
+            }
+            else { // this can't happen!?
+                // TODO: What if the class is a parameterized type?
+                ROSE_ASSERT(false); 
+            }
+        }
+        else if (is_static && isSgThisExp(receiver) && (! receiver -> attributeExists("class"))) { // A sgThisExp receiver in front of a static function?
+            delete receiver; // Ignore the receiver!
+        }
+        else {
+            exprForFunction = SageBuilder::buildBinaryExpression<SgDotExp>((SgExpression *) receiver, exprForFunction);
+
+            SgClassDefinition *current_class_definition = getCurrentTypeDefinition();
+            SgType *enclosing_type = current_class_definition -> get_declaration() -> get_type();
+            if (isSgThisExp(receiver) && (! receiver -> attributeExists("class")) && (! receiver -> attributeExists("prefix")) && (! isCompatibleTypes(containing_type, enclosing_type))) {
+                string prefix_name = (isSgClassType(containing_type)
+                                          ? getFullyQualifiedTypeName(isSgClassType(containing_type))
+                                          : isSgJavaParameterizedType(containing_type)
+                                                ? getFullyQualifiedTypeName(isSgJavaParameterizedType(containing_type))
+                                                : "");
+                ROSE_ASSERT(prefix_name.size() != 0);
+                receiver -> setAttribute("prefix", new AstRegExAttribute(prefix_name));
+            }
         }
     }
 
@@ -1990,6 +2036,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBreakStatement(JNIEnv *env, jclass
 
     string label_name = convertJavaStringToCxxString(env, java_string);
     if (label_name.length() > 0) {
+        assert(lookupLabelByName(label_name) != NULL);
         stmt -> set_do_string_label(label_name);
     }
 
@@ -2140,6 +2187,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionContinueStatement(JNIEnv *env, jcl
 
     string label_name = convertJavaStringToCxxString(env, java_string);
     if (label_name.length() > 0) {
+        assert(lookupLabelByName(label_name) != NULL);
         stmt -> set_do_string_label(label_name);
     }
 
@@ -2557,6 +2605,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReferenceEnd(JNIEnv *env, jcl
         ROSE_ASSERT(declaration);
         ROSE_ASSERT(declaration -> get_definition());
         SgVariableSymbol *variable_symbol = lookupSimpleNameVariableInClass(field_name, declaration -> get_definition());
+// TODO: Remove this !
 if (! variable_symbol) {
   cout << "Could not find variable " << field_name.getString()
        << " in type " << getTypeName(class_type)
@@ -3197,7 +3246,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclarationEnd(JNIEnv *env, j
         printf ("Inside of Java_JavaParser_cactionLocalDeclarationEnd() \n");
 
     SgName name = convertJavaStringToCxxString(env, variableName);
-    bool isFinal = java_is_final;
+    bool is_final = java_is_final;
 
     if (SgProject::get_verbose() > 2)
         printf ("Building a variable declaration for name = %s \n", name.str());
@@ -3239,7 +3288,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclarationEnd(JNIEnv *env, j
 
     // We don't want to add the statement to the current scope until it is finished being built.
     // Set the modifiers (shared between PHP and Java)
-    if (isFinal) {
+    if (is_final) {
         variableDeclaration -> get_declarationModifier().setFinal();
     }
 
@@ -3284,7 +3333,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMarkerAnnotation(JNIEnv *env, jcla
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionMemberValuePair(JNIEnv *env, jclass, jobject jToken) {
-    cerr << "*** Ignoring a Member Value Pair" << endl;
+    cerr << "*** Ignoring a Member Value Pair" << endl; // This is a component of a NormalAnnotation
   //    ROSE_ASSERT(! "yet implemented Member Value Pair");
 }
 
@@ -3948,12 +3997,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameter(JNIEnv *env, jclass,
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameterEnd(JNIEnv *env, jclass, jstring java_name, jint java_num_bounds, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameterEnd(JNIEnv *env, jclass, jstring java_name, jboolean java_has_extends, jint java_num_bounds, jobject jToken) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside cactionTypeParameterEnd \n");
 
     SgName name = convertJavaStringToCxxString(env, java_name);
     int num_bounds = java_num_bounds;
+    bool has_extends = java_has_extends;
 
     ROSE_ASSERT(! astJavaScopeStack.empty());
     SgClassDefinition *outer_scope = isSgClassDefinition(astJavaScopeStack.top());
@@ -4000,7 +4050,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameterEnd(JNIEnv *env, jcla
     for (int i = parameter_type_list.size() - 1;  i >= 0; i--) { // We need to reverse the content of the vector  to place the parameter types in the correct order.
         attribute -> addNode(parameter_type_list[i]);
     }
-    class_definition -> setAttribute("parameter_type_bounds", attribute); // TODO: Since declarations are not mapped one-to-one with parameterized types, we need this attribute.
+    class_definition -> setAttribute(has_extends ? "parameter_type_bounds_with_extends" : "parameter_type_bounds", attribute); // TODO: Since declarations are not mapped one-to-one with parameterized types, we need this attribute.
 
     if (SgProject::get_verbose() > 2)
         printf ("Exiting cactionTypeParameterEnd \n");
