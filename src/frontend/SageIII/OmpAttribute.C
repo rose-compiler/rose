@@ -302,8 +302,9 @@ namespace OmpSupport
 
 
   //! Insert a variable into a variable list for clause "targetConstruct", maintain the reversed variable-clause mapping also.
-  void OmpAttribute::addVariable(omp_construct_enum targetConstruct, const std::string& varString, SgInitializedName* sgvar/*=NULL*/)
+  SgVariableSymbol* OmpAttribute::addVariable(omp_construct_enum targetConstruct, const std::string& varString, SgInitializedName* sgvar/*=NULL*/)
   {
+    SgVariableSymbol* symbol = NULL;
     //Special handling for reduction clauses
     if (targetConstruct == e_reduction)
     {
@@ -321,7 +322,7 @@ namespace OmpSupport
       SgScopeStatement* scope = SageInterface::getScope(mNode);
       ROSE_ASSERT(scope!=NULL);
       //resolve the variable here
-      SgVariableSymbol* symbol = lookupVariableSymbolInParentScopes (varString, scope);
+      symbol = lookupVariableSymbolInParentScopes (varString, scope);
       if (symbol == NULL)          
       {
         cerr<<"Error: OmpAttribute::addVariable() cannot find symbol for variable:"<<varString<<endl;
@@ -329,7 +330,11 @@ namespace OmpSupport
       }
       else 
         sgvar = symbol->get_declaration();
-    }  
+    } 
+
+    if (sgvar != NULL)
+      symbol = isSgVariableSymbol(sgvar->search_for_symbol_from_symbol_table ());
+
     //debug clause var_list
     // if (targetConstruct== e_copyin) cout<<"debug: adding variable to copyin()"<<endl;
     variable_lists[targetConstruct].push_back(make_pair(varString, sgvar));
@@ -338,6 +343,7 @@ namespace OmpSupport
     // Don't forget this! But directive like threadprivate could have variable list also
     if (isClause(targetConstruct)) 
       addClause(targetConstruct);
+    return symbol;   
   }
 
   //! Set name for named critical section
@@ -1135,6 +1141,23 @@ namespace OmpSupport
       if (iter != var_list.begin())
         result +=",";
       result+=(*iter).first;
+      // For map (a[0:n], b[0:m],c), a variable may have optional list of dimension information
+      SgInitializedName* initname = isSgInitializedName((*iter).second);
+      if (initname != NULL)
+      {
+       SgVariableSymbol * sym = isSgVariableSymbol(initname->search_for_symbol_from_symbol_table ());
+       ROSE_ASSERT (sym != NULL);
+       std::vector < std::pair <SgExpression*, SgExpression*> > dims = array_dimensions[sym];
+       for ( std::vector < std::pair <SgExpression*, SgExpression*> >::const_iterator citer = dims.begin(); citer!= dims.end(); citer ++)
+       {
+         result+="[";
+         std::pair <SgExpression*, SgExpression*> c_pair = (*citer);
+         result += c_pair.first->unparseToString();
+         result += ":"; 
+         result += c_pair.second->unparseToString();
+         result+="]";
+       } 
+      }
     }
     return result;
   }
