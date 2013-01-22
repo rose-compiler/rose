@@ -272,14 +272,18 @@ namespace OmpSupport
       std::vector<omp_construct_enum> getClauses();
 
       //!--------var list --------------
-      //! Add a variable into a variable list of a construct
-      void addVariable(omp_construct_enum targetConstruct, const std::string& varString,SgInitializedName* sgvar=NULL);
+      //! Add a variable into a variable list of an OpenMP construct ,return the symbol of the variable added, if possible
+      SgVariableSymbol* addVariable(omp_construct_enum targetConstruct, const std::string& varString, SgInitializedName* sgvar=NULL);
       //! Check if a variable list is associated with a construct
       bool hasVariableList(omp_construct_enum);
       //! Get the variable list associated with a construct
       std::vector<std::pair<std::string,SgNode* > > 
         getVariableList(omp_construct_enum);
 
+      //! Dimension information for array variables, used by map clause, such as map (inout:array[0:n][0:m])
+      // We store a list (vector) of dimension bounds for each array variable
+      std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >  array_dimensions;  
+      
       //! Find the relevant clauses for a variable 
       std::vector<enum omp_construct_enum> get_clauses(const std::string& variable);
 

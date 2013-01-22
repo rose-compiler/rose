@@ -120,6 +120,8 @@ inout           {return cond_return ( INOUT ); }
 "="             { return('='); }
 "("             { return ('('); }
 ")"             { return (')'); }
+"["             { return ('['); }
+"]"             { return (']'); }
 ","             { return (','); }
 ":"             { return (':'); }
 "+"             { return ('+'); }
