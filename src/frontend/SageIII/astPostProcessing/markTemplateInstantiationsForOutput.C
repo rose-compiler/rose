@@ -185,7 +185,15 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
 #else
                SgTemplateDeclaration* templateDeclaration = memberFunctionInstantiation->get_templateDeclaration();
 #endif
-               ROSE_ASSERT(templateDeclaration != NULL);
+
+            // DQ (1/21/2013): This is a problem for specialized templates containing declarations (e.g. member functions) 
+            // that are not in the associated template class.  These member function instantiations, don't always have an 
+            // associated member function template declaration.  So we can't inforce this.
+            // ROSE_ASSERT(templateDeclaration != NULL);
+               if (templateDeclaration != NULL)
+                  {
+                 // BEGIN: Indentation issue in this source code.
+
 #if 0
             // printf ("templateDeclaration = %p = %s \n",templateDeclaration,templateDeclaration->get_name().str());
                printf ("templateDeclaration = %p = %s \n",templateDeclaration,templateDeclaration->class_name().c_str());
@@ -657,6 +665,15 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                          memberFunctionInstantiation,memberFunctionInstantiation->class_name().c_str());
 #endif
                   }
+
+                 // END: Indentation issue in this source code.
+                  }
+                 else
+                  {
+                 // DQ (1/21/2013): This case is part of supporting template instnations than don't have an associated template declaration.
+                    printf ("In ProcessMemberFunctionTemplateDeclarations(): Note that some template instantiations might not have an associated template declaration (see test2013_08.C, and BoxLib test2013_15.C) \n");
+                  }
+               
 #if 0
                printf ("*************************************** \n");
 #endif

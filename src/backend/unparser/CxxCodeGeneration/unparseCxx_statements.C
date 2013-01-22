@@ -1691,9 +1691,13 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
 #endif
 
        // Now output the function declaration
+#if 0
           curprint ("\n/* Now output the function declaration (unparseFuncDeclStmt) */\n ");
+#endif
           unparseFuncDeclStmt(functionDeclaration,info);
+#if 0
           curprint ("\n/* DONE: Now output the function declaration (unparseFuncDeclStmt) */\n ");
+#endif
         }
    }
 
