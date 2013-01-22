@@ -5022,31 +5022,44 @@ SOURCE_COMPOUND_INITIALIZER_EXPRESSION_END
 
 SOURCE_CONSTRUCTOR_INITIALIZER_EXPRESSION_START
 
+/** Obtain the class declaration for a constructor initializer if possible.
+ *
+ * If this is a constructor initializer for a class type then the first non-defining declaration of the constructor's class is
+ * returned; the null pointer is returned for constructor initializers of primitive types.
+ *
+ * The SgConstructorInitializer::p_declaration points to a SgMemberFunctionDeclaration when the constructor is declared, but is
+ * the null pointer when the constructor is not declared or when the constructor is for a non-class type.
+ *
+ * When the p_declaration is the null pointer then the SgConstructorInitializer::p_expression_type can be used to determine
+ * whether the constructor initializer is for a class type without a declared constructor, or for a non-class type.  In the
+ * former case, the p_expression_type points to a SgClassType.  In the latter case it points to either a SgFunctionType (EDG4)
+ * or null (EDG3). */
 SgClassDeclaration*
 SgConstructorInitializer::get_class_decl () const
-   {
-  // This function replaces access function for a data member that is 
-  // now removed to permit the class to be more general as required to
-  // handle constructors of primative types (e.g. "double* x = new double();")
-  // Note that in this case the member function pointer "p_declaration" is NULL.
+{
+    SgClassDeclaration *cdecl = NULL;
 
-     SgClassDeclaration* returnType = NULL;
+    if (SgMemberFunctionDeclaration *fdecl = get_declaration()) {
+        // The constructor is declared (and is a member of a class type)
+        SgClassDefinition *cdef = isSgClassDefinition(fdecl->get_scope());
+        assert(cdef!=NULL);
+        cdecl = isSgClassDeclaration(cdef->get_parent());
+        assert(cdecl!=NULL);
+    } else if (SgClassType *expr_type = isSgClassType(get_expression_type())) {
+        // Constructor initializer is for a class type with a non-declared default constructor.  We can follow the
+        // p_expression_type's declaration.
+        cdecl = isSgClassDeclaration(expr_type->get_declaration());
+        assert(cdecl!=NULL);
+    } else {
+        // Constructor is for a primitive type.  There is no class declaration to return.
+    }
 
-     ROSE_ASSERT(p_expression_type != NULL);
-     SgClassType* classType = isSgClassType(p_expression_type);
-     if (classType != NULL)
-        {
-          returnType = isSgClassDeclaration(classType->get_declaration());
-          ROSE_ASSERT(returnType != NULL);
-        }
-       else
-        {
-       // verify that "p_declaration" is NULL in this case.
-          ROSE_ASSERT(p_declaration == NULL);
-        }
-
-     return returnType;
-   }
+    if (cdecl) {
+        cdecl = isSgClassDeclaration(cdecl->get_firstNondefiningDeclaration());
+        assert(cdecl!=NULL);
+    }
+    return cdecl;
+}
 
 void
 SgConstructorInitializer::post_construction_initialization()

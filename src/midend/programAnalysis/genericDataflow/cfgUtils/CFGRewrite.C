@@ -409,6 +409,7 @@ void createTmpVarInit(SgType* varType, string newName, bool byReference,
 // creates and returns a statement contains a call to the given function with no arguments
 SgStatement* createFuncCallStmt(SgFunctionDeclaration* funcDecl)
 {
+        assert(!isSgTemplateFunctionDeclaration(funcDecl));
         SgExprListExp* argList = new SgExprListExp(SgDefaultFile);
         
         // create the function call expression

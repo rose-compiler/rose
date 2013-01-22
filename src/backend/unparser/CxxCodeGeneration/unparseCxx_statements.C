@@ -706,6 +706,7 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 
           case V_SgForStatement:           unparseForStmt(stmt, info);          break; 
           case V_SgFunctionDeclaration:    unparseFuncDeclStmt(stmt, info);     break;
+          case V_SgTemplateFunctionDefinition: unparseTemplateFunctionDefnStmt(stmt, info); break;
           case V_SgFunctionDefinition:     unparseFuncDefnStmt(stmt, info);     break;
           case V_SgMemberFunctionDeclaration: unparseMFuncDeclStmt(stmt, info); break;
        // case VAR_DECL_STMT:      unparseVarDeclStmt(stmt, info);      break;
@@ -739,6 +740,7 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 
        // DQ (12/26/2011): New design for template declarations (no longer derived from StTemplateDeclaration).
           case V_SgTemplateClassDeclaration:                unparseTemplateClassDeclStmt(stmt, info);          break;
+          case V_SgTemplateClassDefinition:                 unparseTemplateClassDefnStmt(stmt, info);          break;
           case V_SgTemplateFunctionDeclaration:             unparseTemplateFunctionDeclStmt(stmt, info);       break;
           case V_SgTemplateMemberFunctionDeclaration:       unparseTemplateMemberFunctionDeclStmt(stmt, info); break;
           case V_SgTemplateVariableDeclaration:             unparseTemplateVariableDeclStmt(stmt, info);       break;
@@ -2863,6 +2865,15 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
    }
 
+void
+Unparse_ExprStmt::unparseTemplateFunctionDefnStmt(SgStatement *stmt_, SgUnparse_Info& info)
+{
+    SgTemplateFunctionDefinition *stmt = isSgTemplateFunctionDefinition(stmt_);
+    assert(stmt!=NULL);
+    SgStatement *declstmt = isSgTemplateFunctionDeclaration(stmt->get_declaration());
+    assert(declstmt!=NULL);
+    unparseTemplateFunctionDeclStmt(declstmt, info);
+}
 
 // NOTE: Bug in Sage: No file information provided for FuncDeclStmt. 
 void
@@ -2926,15 +2937,11 @@ Unparse_ExprStmt::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
      info.set_declstatement_ptr(NULL);
      info.set_declstatement_ptr(funcdefn_stmt->get_declaration());
 
-     if ( isSgMemberFunctionDeclaration(declstmt) != NULL )
-        {
-          unparseMFuncDeclStmt( declstmt, info);
-        }
-       else
-        {
-       // curprint ("/* Inside of Unparse_ExprStmt::unparseFuncDefnStmt: calling unparseMFuncDeclStmt or unparseFuncDeclStmt */ ");
-          unparseFuncDeclStmt( declstmt, info);
-        }
+     if (isSgMemberFunctionDeclaration(declstmt)) {
+         unparseMFuncDeclStmt( declstmt, info);
+     } else {
+         unparseFuncDeclStmt( declstmt, info);
+     }
 
   // curprint ("/* Inside of Unparse_ExprStmt::unparseFuncDefnStmt: DONE calling unparseMFuncDeclStmt or unparseFuncDeclStmt */ ");
 
@@ -6124,6 +6131,14 @@ Unparse_ExprStmt::unparseTemplateDeclStmt(SgStatement* stmt, SgUnparse_Info& inf
         }
    }
 
+
+void
+Unparse_ExprStmt::unparseTemplateClassDefnStmt(SgStatement* stmt_, SgUnparse_Info& info)
+{
+    SgTemplateClassDefinition *stmt = isSgTemplateClassDefinition(stmt_);
+    assert(stmt!=NULL);
+    unparseTemplateClassDeclStmt(stmt->get_declaration(), info);
+}
 
 void
 Unparse_ExprStmt::unparseTemplateClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
