@@ -99,7 +99,9 @@ bool CodeThorn::operator!=(const Constraint& c1, const Constraint& c2) {
   return !(c1==c2);
 }
 
-Constraint::Constraint():_op(Constraint::UNDEFINED) {}
+Constraint::Constraint() {
+  initialize();
+}
 
 Constraint::Constraint(ConstraintOp op0,VariableId lhs, AValue rhs):_op(op0),_lhsVar(lhs),_rhsVar(VariableId()),_intVal(CppCapsuleAValue(rhs)) {
   switch(op0) {
@@ -108,7 +110,7 @@ Constraint::Constraint(ConstraintOp op0,VariableId lhs, AValue rhs):_op(op0),_lh
   case DEQ:
 	return;
   default:
-	cerr<<"Error: Constraint constructor for wrong operator."<<endl;
+	cerr<<"Error: Constraint constructor var-val operator: "<<op0<<". Wrong operator."<<endl;
 	exit(1);
   }
 } 
@@ -119,7 +121,7 @@ Constraint::Constraint(ConstraintOp op0,VariableId lhs, CppCapsuleAValue rhs):_o
   case DEQ:
 	return;
   default:
-	cerr<<"Error: Constraint constructor for wrong operator."<<endl;
+	cerr<<"Error: Constraint constructor var-caps(val) operator: "<<op0<<". Wrong operator."<<endl;
 	exit(1);
   } 
 } 
@@ -127,9 +129,10 @@ Constraint::Constraint(ConstraintOp op0,VariableId lhs, VariableId rhs):_op(op0)
   switch(op0) {
   case EQ_VAR_VAR:
   case NEQ_VAR_VAR:
+  case DEQ:
 	return;
   default:
-	cerr<<"Error: Constraint constructor for wrong operator."<<endl;
+	cerr<<"Error: Constraint constructor var-var operator: "<<op0<<". Wrong operator."<<endl;
 	exit(1);
   }
 } 
