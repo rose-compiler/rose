@@ -6,13 +6,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 
 # Shorten the list of code to compile to simplify checks using "make distcheck"
-TESTCODES_REQUIRED_TO_PASS = 
+TESTCODES_REQUIRED_TO_PASS = \
+     testRoseHeaders_01.C
 
 EXTRA_TESTCODES_REQUIRED_TO_PASS = \
      test2003_33.C \
      test2003_34.C \
      test2004_46.C \
-     test2006_43.C
+     test2006_43.C 
 
 TESTCODE_CURRENTLY_FAILING = \
      $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C

@@ -1113,6 +1113,14 @@ test2013_01.C \
 test2013_02.C \
 test2013_03.C \
 test2013_04.C \
+test2013_05.C \
+test2013_06.C \
+test2013_07.C \
+test2013_08.C \
+test2013_18.C \
+test2013_20.C \
+test2013_21.C \
+test2013_22.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1137,6 +1145,20 @@ NEW_PASSING_FILES =
 TESTCODE_CURRENTLY_FAILING_ON_OSX = \
 test2011_06.C \
 test2004_35.C 
+
+
+# DQ (1/21/2013): Failing test codes:
+# test2013_09.C 
+# test2013_10.C 
+# test2013_11.C 
+# test2013_12.C 
+# test2013_13.C 
+# test2013_14.C 
+# test2013_15.C 
+# test2013_16.C 
+# test2013_17.C 
+# test2013_19.C 
+
 
 # Variation of regression test that fails.
 # test2012_252.C 
