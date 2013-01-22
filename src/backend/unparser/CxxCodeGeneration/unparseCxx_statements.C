@@ -6221,6 +6221,12 @@ template<class T>
 void
 Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, SgUnparse_Info& info)
    {
+     ROSE_ASSERT(stmt != NULL);
+
+#if 0
+      printf ("In unparseTemplateDeclarationStatment_support(stmt = %p = %s) \n",stmt,stmt->class_name().c_str());
+#endif
+
      T* template_stmt = dynamic_cast<T*>(stmt);
      ROSE_ASSERT(template_stmt != NULL);
 
