@@ -5427,6 +5427,30 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
         SgExpression* functionExp = this->get_function();
         switch (functionExp->variantT())
         {
+                // EDG3 removes all SgPointerDerefExp nodes from an expression like this
+                //    void f() { (***f)(); }
+                // EDG4 does not.  Therefore, if the thing to which the pointers ultimately point is a SgFunctionRefExp then we
+                // know the function, otherwise Liao's comment below applies. [Robb Matzke 2012-12-28]
+                // 
+                // Liao, 5/19/2009
+                // A pointer to function can be associated to any functions with a matching function type
+                // There is no single function declaration which is associated with it.
+                // In this case return NULL should be allowed and the caller has to handle it accordingly
+                //
+                case V_SgPointerDerefExp:
+                {
+                    SgPointerDerefExp *exp = isSgPointerDerefExp(functionExp);
+                    SgFunctionRefExp *fref = NULL;
+                    while (exp && !fref) {
+                        fref = isSgFunctionRefExp(exp->get_operand_i());
+                        exp = isSgPointerDerefExp(exp->get_operand_i());
+                    }
+                    if (!fref)
+                        break;
+                    functionExp = fref;
+                }
+                // fall through
+
                 case V_SgFunctionRefExp:
                 {
                         SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionExp);
@@ -5484,15 +5508,6 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                         //called on reference types.
                         isAlwaysResolvedStatically = !isSgReferenceType(dotExp->get_lhs_operand());
 
-                        break;
-                }
-
-                // Liao, 5/19/2009
-                // A pointer to function can be associated to any functions with a matching function type
-                // There is no single function declaration which is associated with it.
-                // In this case return NULL should be allowed and the caller has to handle it accordingly
-                case V_SgPointerDerefExp:
-                {
                         break;
                 }
 

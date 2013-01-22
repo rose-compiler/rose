@@ -1603,7 +1603,7 @@ SKIP_UNPARSE_C_ASM_STATEMENTS = -rose:skip_unparse_asm_commands
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENTS)
 # ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 -rose:skipfinalCompileStep $(SKIP_UNPARSE_C_ASM_STATEMENTS)
 
-# Some of these test codes reference A++ header fiels as part of their tests
+# Some of these test codes reference A++ header files as part of their tests
 # Include the path to A++ and the transformation specification
 TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 

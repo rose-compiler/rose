@@ -339,9 +339,11 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
 
        // DQ (12/26/2011): New unparse functions for new template declaration IR nodes (new design for template declarations).
           virtual void unparseTemplateClassDeclStmt          (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseTemplateClassDefnStmt          (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseTemplateFunctionDeclStmt       (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseTemplateMemberFunctionDeclStmt (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseTemplateVariableDeclStmt       (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseTemplateFunctionDefnStmt       (SgStatement* stmt, SgUnparse_Info& info);
 
        // DQ (12/26/2011): Supporting function for all template declarations (initially at least).
           template<class T> void unparseTemplateDeclarationStatment_support(SgStatement* stmt, SgUnparse_Info& info);

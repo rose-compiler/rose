@@ -4,7 +4,7 @@
 // to unparse the code with all header files included at the top of the unparsed code.
 
 // Note that only under this condition do we get a comment with a closing brace "}". 
-// It is possible that a hack is possible to interpret this and do the write thing later, 
+// It is possible that a hack is possible to interpret this and do the right thing later, 
 // this is not clear presently.  I would hate to implement such a hack!
 
 extern "C"

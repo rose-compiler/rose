@@ -63,6 +63,7 @@ found in the directory ROSE/TESTS/KnownBugs/AttachPreprocessingInfo.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 #include "rose_config.h"
 
+#include "stringify.h"
 #include "attachPreprocessingInfo.h"
 #include "attachPreprocessingInfoTraversal.h"
 
@@ -1347,6 +1348,13 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
             // (e.g. compiler generated, unknown, etc.).
                if ( !(processAllIncludeFiles == false || ((currentFileNameId < 0) || (attributeMapForAllFiles.find(currentFileNameId) != attributeMapForAllFiles.end()))) )
                   {
+                    std::cerr <<"node = (" <<stringifyVariantT(n->variantT(), "V_") <<"*)" <<n;
+                    assert(isSgLocatedNode(n));
+                    Sg_File_Info *info = isSgLocatedNode(n)->get_startOfConstruct();
+                    assert(info);
+                    std::cerr <<" at " <<info->get_filenameString() <<"[fileId=" <<currentFileNameId <<"]:" <<info->get_line() <<"." <<info->get_col() <<"\n";
+                      
+                    display("about to abort...");
                     printf ("processAllIncludeFiles = %s \n",processAllIncludeFiles ? "true" : "false");
                     printf ("currentFileNameId = %d \n",currentFileNameId);
                     printf ("attributeMapForAllFiles.find(currentFileNameId) != attributeMapForAllFiles.end() = %s \n",attributeMapForAllFiles.find(currentFileNameId) != attributeMapForAllFiles.end() ? "true" : "false");

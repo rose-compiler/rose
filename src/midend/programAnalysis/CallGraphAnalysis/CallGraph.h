@@ -162,23 +162,22 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
     GetOneFuncDeclarationPerFunction defFunc;
     Rose_STL_Container<SgNode *> allFunctions = NodeQuery::queryMemoryPool(defFunc, &vv);
 
-    // We don't want to see SgTemplateMemberFunctionDeclaration objects since it doesn't make sense to do control flow analysis
-    // over templates, but rather only over template instantiations. [RPM 2012-10-26]
+    // We don't want to see SgTemplateMemberFunctionDeclaration or SgTemplateFunctionDeclaration objects since it doesn't make
+    // sense to do control flow analysis over templates, but rather only over template instantiations. [RPM 2012-12-06]
     for (Rose_STL_Container<SgNode*>::iterator fi=allFunctions.begin(); fi!=allFunctions.end(); ++fi)
-        if (isSgTemplateMemberFunctionDeclaration(*fi))
+        if (isSgTemplateMemberFunctionDeclaration(*fi) || isSgTemplateFunctionDeclaration(*fi))
             *fi = NULL;
     allFunctions.erase(std::remove(allFunctions.begin(), allFunctions.end(), (SgNode*)NULL), allFunctions.end());
 
     ClassHierarchyWrapper classHierarchy(project);
-    Rose_STL_Container<SgNode *>::iterator i = allFunctions.begin();
-
     graphNodes.clear();
     
     //Iterate through all the functions found and resolve all the call expressions in each function with a body
-    while (i != allFunctions.end())
+    for (Rose_STL_Container<SgNode *>::iterator i = allFunctions.begin(); i != allFunctions.end(); ++i)
     {
         SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(*i);
         ROSE_ASSERT(functionDeclaration != NULL);
+        assert(!isSgTemplateFunctionDeclaration(functionDeclaration));
 
         // determining the in-class declaration
         if (isSgMemberFunctionDeclaration(functionDeclaration))
@@ -194,6 +193,7 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
         {
             // we need to have only one declaration for regular functions as well
             SgFunctionDeclaration *nonDefDecl = isSgFunctionDeclaration(functionDeclaration->get_firstNondefiningDeclaration());
+            assert(!isSgTemplateFunctionDeclaration(nonDefDecl));
             if (nonDefDecl)
                 functionDeclaration = nonDefDecl;
         }
@@ -206,7 +206,6 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
 
             callGraphData.push_back(functionData);
         }
-        i++;
     }
 
     // Build the graph
@@ -223,6 +222,7 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
 
         // Generate a unique name to test against later
         SgFunctionDeclaration* id = currentFunction.functionDeclaration;
+        assert(!isSgTemplateFunctionDeclaration(id));
         SgDeclarationStatement *nonDefDeclInClass = isSgMemberFunctionDeclaration(id->get_firstNondefiningDeclaration());
         if (nonDefDeclInClass)
             ROSE_ASSERT(id == nonDefDeclInClass);
@@ -261,6 +261,7 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
         BOOST_FOREACH(SgFunctionDeclaration* calleeDeclaration, functionCallees)
         {
                         ROSE_ASSERT(calleeDeclaration != NULL);
+                        assert(!isSgTemplateFunctionDeclaration(calleeDeclaration));
 
                         //This function has been filtered out
                         if (pred(calleeDeclaration) == false)

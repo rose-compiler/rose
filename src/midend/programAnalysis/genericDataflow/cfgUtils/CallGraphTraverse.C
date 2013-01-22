@@ -3,6 +3,7 @@
 
 #include "CallGraphTraverse.h"
 #include "cfgUtils.h"
+#include "stringify.h"
 
 #include <set>
 using namespace std;
@@ -27,7 +28,7 @@ Function::Function(string name)
         {
                 ROSE_ASSERT(isSgFunctionDeclaration(*it));
                 
-                if(isSgFunctionDeclaration(*it)->get_name().getString() == name)
+                if(!isSgTemplateFunctionDeclaration(*it) && isSgFunctionDeclaration(*it)->get_name().getString() == name)
                 {
                         // decl will be initialized to the defining declaration of this function or 
                         // the first non-defining declaratio,n if there is no definition
@@ -53,6 +54,7 @@ Function::Function(string name)
 
 Function::Function(SgFunctionDeclaration* sample)
 {
+        assert(!isSgTemplateFunctionDeclaration(sample));
         //printf("Function::Function(SgFunctionDeclaration* sample) this=0x%x\n", this);
         init(sample);
 }
@@ -68,12 +70,19 @@ Function::Function(SgFunctionDefinition* sample)
 
 Function::Function(SgFunctionCallExp* funcCall)
 {
-        ROSE_ASSERT(isSgFunctionRefExp(funcCall->get_function()));
-        init(isSgFunctionRefExp(funcCall->get_function())->get_symbol()->get_declaration());
+    // EDG3 removes all SgPointerDerefExp nodes from an expression like this:
+    //    void f() { (****f)(); }
+    // but EDG4 leaves them in the AST.  Therefore we need to handle the case when the thing ultimately pointed to by the
+    // SgPointerDerefExp nodes is a SgFunctionRefExp. The SgFunctionCallExp::getAssociatedFunctionSymbol() will take care of
+    // this case and some others. [Robb Matzke 2012-12-28]
+    SgFunctionSymbol *fsym = funcCall->getAssociatedFunctionSymbol();
+    assert(fsym!=NULL);
+    init(fsym->get_declaration());
 }
 
 void Function::init(SgFunctionDeclaration* sample)
 {
+        assert(!isSgTemplateFunctionDeclaration(sample));
         //SgName mangledName = sample->get_mangled_name();
         //def = NULL;
         
@@ -139,6 +148,7 @@ Function::Function(const Function *that)
 
 SgFunctionDeclaration* Function::getCanonicalDecl(SgFunctionDeclaration* sampleDecl)
 {
+        assert(!isSgTemplateFunctionDeclaration(sampleDecl));
         SgFunctionDeclaration* canonicalDecl = NULL;
         
         if(sampleDecl->get_definingDeclaration())
@@ -248,6 +258,7 @@ SgFunctionDefinition* Function::get_definition() const
 SgFunctionDeclaration* Function::get_declaration() const
 {
         //return *(decls.begin());
+        assert(!isSgTemplateFunctionDeclaration(decl));
         return decl;
 }
 
@@ -304,6 +315,7 @@ CGFunction::CGFunction(string name, SgIncidenceDirectedGraph* graph) : Function(
 
 CGFunction::CGFunction(SgFunctionDeclaration* sample, SgIncidenceDirectedGraph* graph) : Function(sample)
 {
+        assert(!isSgTemplateFunctionDeclaration(sample));
         this->graph = graph;
         initCGNodes();
 }
@@ -311,6 +323,7 @@ CGFunction::CGFunction(SgFunctionDeclaration* sample, SgIncidenceDirectedGraph* 
 CGFunction::CGFunction(SgGraphNode* sample, SgIncidenceDirectedGraph* graph) : Function(isSgFunctionDeclaration(sample->get_SgNode()))
 {
         ROSE_ASSERT(isSgFunctionDeclaration(sample->get_SgNode()));
+        assert(!isSgTemplateFunctionDeclaration(sample->get_SgNode()));
         
         this->graph = graph;
         initCGNodes();
@@ -341,8 +354,10 @@ void CGFunction::initCGNodes()
         for(set<SgGraphNode*>::iterator itn = nodes.begin(); itn != nodes.end(); itn++) {
                 SgNode* n = (*itn)->get_SgNode();
                 ROSE_ASSERT(isSgFunctionDeclaration(n));
+                assert(!isSgTemplateFunctionDeclaration(n));
                 
                 SgFunctionDeclaration* cfgDecl = getCanonicalDecl(isSgFunctionDeclaration(n));
+                assert(!isSgTemplateFunctionDeclaration(cfgDecl));
 
                 /*// if this declaration is in the list of known declarations for this function
                 if(decls.find(decl) != decls.end())*/
@@ -387,71 +402,49 @@ bool CGFunction::operator >= (const CGFunction &that) const
  ********* TraverseCallGraph *********
  *************************************/
  
-  #include <sys/time.h>
- 
 TraverseCallGraph::TraverseCallGraph(SgIncidenceDirectedGraph* graph)
 {
         this->graph = graph;
         
-/*      struct timeval itv;
-        struct timezone itz;
-        struct timeval stv;
-        struct timezone stz;
-        struct timeval ntv;
-        struct timezone ntz;
-        
-        gettimeofday(&itv, &itz);
-        gettimeofday(&stv, &stz);*/
-        
-//printf("TraverseCallGraph::TraverseCallGraph\n");
         set<SgGraphNode *> nodes = graph->computeNodeSet();
         for(set<SgGraphNode*>::iterator itn = nodes.begin(); itn != nodes.end(); itn++) {
                 SgNode* n = (*itn)->get_SgNode();
                 ROSE_ASSERT(isSgFunctionDeclaration(n));
-                
-                //gettimeofday(&ntv, &ntz); printf("0 time = %lf secs, elapsed = %lf secs\n", (ntv.tv_sec + 1000000*ntv.tv_usec) - (stv.tv_sec + 1000000*stv.tv_usec), (ntv.tv_sec + 1000000*ntv.tv_usec) - (itv.tv_sec + 1000000*itv.tv_usec)); stv.tv_sec = ntv.tv_sec; stv.tv_usec = ntv.tv_usec; 
+                assert(!isSgTemplateFunctionDeclaration(n));
                 CGFunction func(isSgFunctionDeclaration(n), graph);
-                //gettimeofday(&ntv, &ntz); printf("1 time = %lf secs, elapsed = %lf secs\n", (ntv.tv_sec + 1000000*ntv.tv_usec) - (stv.tv_sec + 1000000*stv.tv_usec), (ntv.tv_sec + 1000000*ntv.tv_usec) - (itv.tv_sec + 1000000*itv.tv_usec)); stv.tv_sec = ntv.tv_sec; stv.tv_usec = ntv.tv_usec; 
                 
-                //printf("curFunction = %s\n", (*itn)->functionDeclaration->get_name().str());
-                
-                // if this function is not compiler-generated
-                if(!func.get_file_info()->isCompilerGenerated())
-                {
-                        // add the mapping to decl2CFNode
-                        //decl2CFNode[func].insert(*itn);
-                        /*printf("TraverseCallGraph::TraverseCallGraph inserting %s\n", func.get_name().str());
-                        printf("TraverseCallGraph::TraverseCallGraph functions.find(func) == functions.end() = %d\n", functions.find(func) == functions.end());*/
-                        
+                // Skip functions that are compiler generated. Beware that under edg4x, an instantiated function template or
+                // member function template is compiler generated even when the template from whence it came is not compiler
+                // generated.
+                if (!n->get_file_info()->isCompilerGenerated()) {
+                    functions.insert(func);
+                } else if (isSgTemplateInstantiationFunctionDecl(n)) {
+                    SgTemplateInstantiationFunctionDecl *tpl = isSgTemplateInstantiationFunctionDecl(n);
+                    if (!tpl->get_templateDeclaration()->get_file_info()->isCompilerGenerated())
+                        functions.insert(func);
+                } else if (isSgTemplateInstantiationMemberFunctionDecl(n)) {
+                    SgTemplateInstantiationMemberFunctionDecl *tpl = isSgTemplateInstantiationMemberFunctionDecl(n);
+                    if (!tpl->get_templateDeclaration()->get_file_info()->isCompilerGenerated())
                         functions.insert(func);
                 }
-                //gettimeofday(&ntv, &ntz); printf("2 time = %lf secs, elapsed = %lf secs\n", (ntv.tv_sec + 1000000*ntv.tv_usec) - (stv.tv_sec + 1000000*stv.tv_usec), (ntv.tv_sec + 1000000*ntv.tv_usec) - (itv.tv_sec + 1000000*itv.tv_usec)); stv.tv_sec = ntv.tv_sec; stv.tv_usec = ntv.tv_usec; 
         }
-        //gettimeofday(&ntv, &ntz); printf("A time = %lf secs, elapsed = %lf secs\n", (ntv.tv_sec + 1000000*ntv.tv_usec) - (stv.tv_sec + 1000000*stv.tv_usec), (ntv.tv_sec + 1000000*ntv.tv_usec) - (itv.tv_sec + 1000000*itv.tv_usec)); stv.tv_sec = ntv.tv_sec; stv.tv_usec = ntv.tv_usec; 
+
         
         // initially, put all the nodes into noPred
         // initialized numCallers
-        /*for(map<SgFunctionDefinition*, set<SgGraphNode*> >::iterator it = decl2CFNode.begin(); 
-            it!=decl2CFNode.end(); it++)*/
         for(set<CGFunction>::iterator it = functions.begin(); it != functions.end(); it++)
         {
                 noPred.insert((&*it));
-                //numCallers[it->first] = 0;
                 numCallers[(&*it)] = 0;
-                //printf("noPred: %s\n", it->first->get_declaration()->get_name().str());
         }
         
-        //gettimeofday(&ntv, &ntz); printf("B time = %lf secs, elapsed = %lf secs\n", (ntv.tv_sec + 1000000*ntv.tv_usec) - (stv.tv_sec + 1000000*stv.tv_usec), (ntv.tv_sec + 1000000*ntv.tv_usec) - (itv.tv_sec + 1000000*itv.tv_usec)); stv.tv_sec = ntv.tv_sec; stv.tv_usec = ntv.tv_usec; 
         // next, toss out all the nodes that have predecessor nodes
         // and compute the correct numCallers mapping
         
         // set of edges that have been visited by the traversal
         set<pair<const CGFunction*, const CGFunction*> > touchedEdges;
-        /*for(map<SgFunctionDefinition*, set<SgGraphNode*> >::iterator it = decl2CFNode.begin(); 
-            it!=decl2CFNode.end(); it++)*/
         for(set<CGFunction>::iterator func = functions.begin(); func != functions.end(); func++)
         {
-                //printf("curFunction = %s\n", (*func).get_name().str());
                 for(CGFunction::iterator it = (*func).successors(); it != (*func).end(); it++)
                 {
                         const CGFunction* target = it.getTarget(functions);
@@ -465,28 +458,24 @@ TraverseCallGraph::TraverseCallGraph(SgIncidenceDirectedGraph* graph)
                         {
                                 // increment the target function's number of callers
                                 numCallers[target]++;
-                                //printf("       numCallers[%s]=%d\n", tgtDecl->get_name().str(), numCallers[tgtDecl]);
                                 
                                 // if the given callee is currently in noPred
                                 set<const CGFunction*>::iterator pred_it = noPred.find(target);
-                                //printf("    pred_it == noPred.end() = %d\n", pred_it == noPred.end());
                                 if(pred_it != noPred.end())
-                                        // remove it
                                         noPred.erase(target);
                         }
                         
                         // add this edge to touchedEdges
                         touchedEdges.insert(edge);
                 }
-                //gettimeofday(&ntv, &ntz); printf("C time = %lf secs, elapsed = %lf secs\n", (ntv.tv_sec + 1000000*ntv.tv_usec) - (stv.tv_sec + 1000000*stv.tv_usec), (ntv.tv_sec + 1000000*ntv.tv_usec) - (itv.tv_sec + 1000000*itv.tv_usec)); stv.tv_sec = ntv.tv_sec; stv.tv_usec = ntv.tv_usec; 
         }
-        //gettimeofday(&ntv, &ntz); printf("D time = %lf secs, elapsed = %lf secs\n", (ntv.tv_sec + 1000000*ntv.tv_usec) - (stv.tv_sec + 1000000*stv.tv_usec), (ntv.tv_sec + 1000000*ntv.tv_usec) - (itv.tv_sec + 1000000*itv.tv_usec)); stv.tv_sec = ntv.tv_sec; stv.tv_usec = ntv.tv_usec; 
 }
 
 // returns a pointer to a CGFunction that matches the given declaration or NULL if no objects do
 // the memory of the object persists for the entire lifetime of this TraverseCallGraph object
 const CGFunction* TraverseCallGraph::getFunc(SgFunctionDeclaration* decl)
 {
+        assert(!isSgTemplateFunctionDeclaration(decl));
         CGFunction func(decl, graph);
         
         set<CGFunction>::iterator findLoc = functions.find(func);
@@ -705,14 +694,21 @@ TraverseCallGraphDataflow::TraverseCallGraphDataflow(SgIncidenceDirectedGraph* g
 void TraverseCallGraphDataflow::traverse()
 {
         // start the traversal from the nodes that are called from no other node
-        for(set<CGFunction>::iterator it = functions.begin(); it!=functions.end(); it++)
-          remaining.push_back(&(*it));
+        for(set<CGFunction>::iterator it = functions.begin(); it!=functions.end(); it++) {
+                assert(!isSgTemplateFunctionDeclaration(it->get_declaration()));
+                assert(!isSgTemplateFunctionDefinition(it->get_declaration()));
+                assert(!isSgTemplateMemberFunctionDeclaration(it->get_declaration()));
+                remaining.push_back(&(*it));
+        }
         
         // traverse functions for as long as visit keeps adding them to remaining
         while(remaining.size()>0)
         {
                 const CGFunction* func = remaining.front();
                 remaining.pop_front();
+                assert(!isSgTemplateFunctionDeclaration(func->get_declaration()));
+                assert(!isSgTemplateFunctionDefinition(func->get_declaration()));
+                assert(!isSgTemplateMemberFunctionDeclaration(func->get_declaration()));
                 visit(func);
         }
 }
