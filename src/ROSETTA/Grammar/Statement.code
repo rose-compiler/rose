@@ -15841,6 +15841,13 @@ SgOmpSectionsStatement::post_construction_initialization()
    {}
 SOURCE_OMP_SECTIONS_STATEMENT_END
 
+SOURCE_OMP_TARGET_STATEMENT_START
+void
+SgOmpTargetStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_TARGET_STATEMENT_END
+
+
 
 SOURCE_OMP_TASKWAIT_STATEMENT_START
 void

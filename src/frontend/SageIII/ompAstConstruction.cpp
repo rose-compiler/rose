@@ -385,7 +385,7 @@ namespace OmpSupport
   //TODO move to sageInterface?
   static   SgOmpClause::omp_reduction_operator_enum toSgOmpClauseReductionOperator(omp_construct_enum at_op)
   {
-    SgOmpClause::omp_reduction_operator_enum result = SgOmpClause::e_omp_reduction_unkown;
+    SgOmpClause::omp_reduction_operator_enum result = SgOmpClause::e_omp_reduction_unknown;
     switch (at_op)
     {
       case e_reduction_plus: //+
@@ -484,7 +484,7 @@ namespace OmpSupport
           break;
         }
     }
-    ROSE_ASSERT(result != SgOmpClause::e_omp_reduction_unkown);
+    ROSE_ASSERT(result != SgOmpClause::e_omp_reduction_unknown);
     return result;
   }
   //A helper function to set SgVarRefExpPtrList  from OmpAttribute's construct-varlist map
