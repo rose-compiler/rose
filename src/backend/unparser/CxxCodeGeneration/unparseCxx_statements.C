@@ -1693,9 +1693,13 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
 #endif
 
        // Now output the function declaration
+#if 0
           curprint ("\n/* Now output the function declaration (unparseFuncDeclStmt) */\n ");
+#endif
           unparseFuncDeclStmt(functionDeclaration,info);
+#if 0
           curprint ("\n/* DONE: Now output the function declaration (unparseFuncDeclStmt) */\n ");
+#endif
         }
    }
 
@@ -3433,7 +3437,12 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // if (mfuncdecl_stmt->isPure())
           if (mfuncdecl_stmt->get_functionModifier().isPureVirtual())
              {
-               curprint ( string(" = 0"));
+            // DQ (1/22/2013): Supress the output of the pure virtual syntax if this is the defining declaration (see test2013_26.C).
+            // curprint ( string(" = 0"));
+               if (mfuncdecl_stmt != mfuncdecl_stmt->get_definingDeclaration())
+                  {
+                    curprint (string(" = 0"));
+                  }
              }
 
           if (mfuncdecl_stmt->isForward() && !info.SkipSemiColon())
@@ -3540,8 +3549,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(vardecl_stmt != NULL);
 
 #if 0
-     printf ("In unparseVarDeclStmt(): vardecl_stmt->get_declarationModifier().get_storageModifier().isStatic() = %s \n",vardecl_stmt->get_declarationModifier().get_storageModifier().isStatic() ? "true" : "false");
-     printf ("In unparseVarDeclStmt(): vardecl_stmt->get_declarationModifier().get_storageModifier().isExtern() = %s \n",vardecl_stmt->get_declarationModifier().get_storageModifier().isExtern() ? "true" : "false");
+     printf ("In unparseVarDeclStmt(): vardecl_stmt->get_declarationModifier().get_storageModifier().isStatic()  = %s \n",vardecl_stmt->get_declarationModifier().get_storageModifier().isStatic() ? "true" : "false");
+     printf ("In unparseVarDeclStmt(): vardecl_stmt->get_declarationModifier().get_storageModifier().isExtern()  = %s \n",vardecl_stmt->get_declarationModifier().get_storageModifier().isExtern() ? "true" : "false");
+     printf ("In unparseVarDeclStmt(): vardecl_stmt->get_declarationModifier().get_storageModifier().isMutable() = %s \n",vardecl_stmt->get_declarationModifier().get_storageModifier().isMutable() ? "true" : "false");
 #endif
 
 #if 0
@@ -6217,6 +6227,12 @@ template<class T>
 void
 Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, SgUnparse_Info& info)
    {
+     ROSE_ASSERT(stmt != NULL);
+
+#if 0
+      printf ("In unparseTemplateDeclarationStatment_support(stmt = %p = %s) \n",stmt,stmt->class_name().c_str());
+#endif
+
      T* template_stmt = dynamic_cast<T*>(stmt);
      ROSE_ASSERT(template_stmt != NULL);
 

@@ -2589,11 +2589,55 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // required name qualification length is zero.
                if (currentScope != classDeclaration->get_scope())
                   {
-                    int amountOfNameQualificationRequired = nameQualificationDepth(classDeclaration,currentScope,classDeclaration);
+                 // DQ (1/21/2013): We should be able to assert this.
+                    ROSE_ASSERT(classDeclaration->get_scope() != NULL);
+#if 1
+                 // DQ (1/21/2013): Added new static function to support testing for equivalent when the scopes are namespaces.
+                    bool isSameNamespace = SgScopeStatement::isEquivalentScope(currentScope,classDeclaration->get_scope());
+#else
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    printf ("SgClassDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+                    printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+                    printf ("classDeclaration->get_scope() = %p = %s \n",classDeclaration->get_scope(),classDeclaration->get_scope()->class_name().c_str());
 #endif
-                    setNameQualification(classDeclaration,amountOfNameQualificationRequired);
+                 // DQ (1/21/2013): If these are both namespace scopes then do a more sophisticated test for equivalent namespace.
+                 // Note that over qualification of generated code can be an error.
+                    SgNamespaceDefinitionStatement* currentNamespaceDefinition = isSgNamespaceDefinitionStatement(currentScope);
+                    SgNamespaceDefinitionStatement* classDeclarationNamespaceDefinition = isSgNamespaceDefinitionStatement(classDeclaration->get_scope());
+                    bool isSameNamespace = false;
+                    if (currentNamespaceDefinition != NULL && classDeclarationNamespaceDefinition != NULL)
+                       {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         printf ("These are both in namespaces and we need to check if it is the same namespace (instead of just matching scope pointers) \n");
+#endif
+                         SgNamespaceDeclarationStatement* currentNamespaceDeclaration = isSgNamespaceDeclarationStatement(currentNamespaceDefinition->get_namespaceDeclaration());
+                         SgNamespaceDeclarationStatement* classDeclarationNamespaceDeclaration = isSgNamespaceDeclarationStatement(classDeclarationNamespaceDefinition->get_namespaceDeclaration());
+
+                      // Test for equivalent namespaces.
+                         if (currentNamespaceDeclaration->get_firstNondefiningDeclaration() == classDeclarationNamespaceDeclaration->get_firstNondefiningDeclaration())
+                            {
+                              isSameNamespace = true;
+                            }
+                           else
+                            {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              printf ("These namespaces are different \n");
+#endif
+                            }
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         printf ("SgClassDeclaration: (detected equivalent namespaces) isSameNamespace = %s \n",isSameNamespace ? "true" : "false");
+#endif
+                       }
+#endif
+                 // DQ (1/21/2013): Added code to support when equivalent namespaces are detected.
+                    if (isSameNamespace == false)
+                       {
+                         int amountOfNameQualificationRequired = nameQualificationDepth(classDeclaration,currentScope,classDeclaration);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         printf ("SgClassDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+                         setNameQualification(classDeclaration,amountOfNameQualificationRequired);
+                       }
                   }
                  else
                   {
@@ -3066,21 +3110,27 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                       // Case of non-member functions (more logical name qualification rules).
                          if (currentScope != functionDeclaration->get_scope())
                             {
-                              int amountOfNameQualificationRequired = nameQualificationDepth(functionDeclaration,currentScope,functionDeclaration);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                              printf ("SgFunctionDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
-#endif
-                           // DQ (21/2011): test2011_89.C demonstrates a case where name qualification of a functionRef expression is required.
-                           // DQ (6/9/2011): Support for test2011_78.C (we only qualify function call references where the function has been declared in 
-                           // a scope where it could be expected to be defined (e.g. not using a forward declaration in a SgBasicBlock, since the function
-                           // definition could not live in the SgBasicBlock.
-                              bool skipNameQualification = skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(functionDeclaration);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                              printf ("Test of functionDeclaration: skipNameQualification = %s \n",skipNameQualification ? "true" : "false");
-#endif
-                              if (skipNameQualification == false)
+                           // DQ (1/21/2013): Added support for testing the more general equivalence of scopes (where the pointers are not equal, applies only to namespaces, I think).
+                              bool isSameNamespace = SgScopeStatement::isEquivalentScope(currentScope,functionDeclaration->get_scope());
+
+                              if (isSameNamespace == false)
                                  {
-                                   setNameQualification(functionDeclaration,amountOfNameQualificationRequired);
+                                   int amountOfNameQualificationRequired = nameQualificationDepth(functionDeclaration,currentScope,functionDeclaration);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                   printf ("SgFunctionDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+                                // DQ (21/2011): test2011_89.C demonstrates a case where name qualification of a functionRef expression is required.
+                                // DQ (6/9/2011): Support for test2011_78.C (we only qualify function call references where the function has been declared in 
+                                // a scope where it could be expected to be defined (e.g. not using a forward declaration in a SgBasicBlock, since the function
+                                // definition could not live in the SgBasicBlock.
+                                   bool skipNameQualification = skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(functionDeclaration);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                   printf ("Test of functionDeclaration: skipNameQualification = %s \n",skipNameQualification ? "true" : "false");
+#endif
+                                   if (skipNameQualification == false)
+                                      {
+                                        setNameQualification(functionDeclaration,amountOfNameQualificationRequired);
+                                      }
                                  }
                             }
                        }
@@ -3144,6 +3194,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
                if (currentScope != memberFunctionDeclaration->get_scope())
                   {
+                 // DQ (1/21/2013): Note that the concept of equivalent scope is fine here if it only tests the equivalence of the pointers.  
+                 // We can't have member functions in namespaces so we don't require that more general test for scope equivalence.
+
                     int amountOfNameQualificationRequired = nameQualificationDepth(memberFunctionDeclaration,currentScope,memberFunctionDeclaration);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("SgMemberFunctionDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
