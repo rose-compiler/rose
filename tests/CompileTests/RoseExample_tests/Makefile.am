@@ -5,14 +5,24 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 ####################################################################################
 
 
+if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+   TESTCODES_REQUIRED_TO_PASS = \
+testRoseHeaders_01.C
+
+# Test code that I am working one still (tests ROSE compiling ROSE header files).
+# This test can't be required to pass yet.
+# testRoseHeaders_01.C
+
+else
 # Shorten the list of code to compile to simplify checks using "make distcheck"
 TESTCODES_REQUIRED_TO_PASS = 
+endif
 
 EXTRA_TESTCODES_REQUIRED_TO_PASS = \
      test2003_33.C \
      test2003_34.C \
      test2004_46.C \
-     test2006_43.C
+     test2006_43.C 
 
 TESTCODE_CURRENTLY_FAILING = \
      $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C

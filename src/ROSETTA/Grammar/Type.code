@@ -5260,7 +5260,10 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
           ROSE_ASSERT(cd->get_firstNondefiningDeclaration() != NULL);
           printf ("In SgClassType::createType(): returnType->get_declaration()->get_firstNondefiningDeclaration() = %p = %s cd->get_firstNondefiningDeclaration() = %p = %s \n",returnType->get_declaration()->get_firstNondefiningDeclaration(),returnType->get_declaration()->get_firstNondefiningDeclaration()->class_name().c_str(),cd->get_firstNondefiningDeclaration(),cd->get_firstNondefiningDeclaration()->class_name().c_str());
         }
-#if 1
+#if 0
+  // DQ (1/22/2013): We can't assert this when we have complex template handling as in Boost.
+  // This case is demonstrated in Boost as part of ROSE compiling ROSE in testRoseHeaders_01.C
+
   // DQ (8/23/2012): Restoring the original code...
      ROSE_ASSERT(returnType->get_declaration() == cd);
 #else

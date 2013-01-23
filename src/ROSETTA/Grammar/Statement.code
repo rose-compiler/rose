@@ -464,7 +464,8 @@ HEADER_SCOPE_STATEMENT_START
       //! Some scopes have associated names for purposed of name qualification. This generates the associated name.
           SgName associatedScopeName();
 
-
+       // DQ (1/21/2013): Added test for equivalents (e.g. namespace definitions that might be different IR nodes, but for an equivalent namespace).
+          static bool isEquivalentScope( SgScopeStatement* scope1, SgScopeStatement* scope2);
 
      public:
 
@@ -5934,6 +5935,55 @@ SgScopeStatement::associatedScopeName()
      return name;
    }
 
+
+bool
+SgScopeStatement::isEquivalentScope( SgScopeStatement* scope1, SgScopeStatement* scope2)
+   {
+  // DQ (1/21/2013): Test for equivcalant scopes.  The only example I can think of for equivalent scopes 
+  // when the pointers are not equal is a SgNamespaceDefinition.  Since namespaces can be reintrant, a 
+  // declaration can be in two more more scope that would have different pointers, yet still be considered 
+  // to be in the same namespace.  This test is used in the name qualification generation.
+
+#if 0
+     printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+     printf ("classDeclaration->get_scope() = %p = %s \n",classDeclaration->get_scope(),classDeclaration->get_scope()->class_name().c_str());
+#endif
+  // DQ (1/21/2013): If these are both namespace scopes then do a more sophisticated test for equivalent namespace.
+  // Note that over qualification of generated code can be an error.
+     SgNamespaceDefinitionStatement* scope1_NamespaceDefinition = isSgNamespaceDefinitionStatement(scope1);
+     SgNamespaceDefinitionStatement* scope2_NamespaceDefinition = isSgNamespaceDefinitionStatement(scope2);
+     bool isSameNamespace = false;
+     if (scope1_NamespaceDefinition != NULL && scope2_NamespaceDefinition != NULL)
+        {
+#if 0
+          printf ("These are both in namespaces and we need to check if it is the same namespace (instead of just matching scope pointers) \n");
+#endif
+          SgNamespaceDeclarationStatement* scope1_NamespaceDeclaration = isSgNamespaceDeclarationStatement(scope1_NamespaceDefinition->get_namespaceDeclaration());
+          SgNamespaceDeclarationStatement* scope2_NamespaceDeclaration = isSgNamespaceDeclarationStatement(scope2_NamespaceDefinition->get_namespaceDeclaration());
+
+          ROSE_ASSERT(scope1_NamespaceDeclaration != NULL);
+          ROSE_ASSERT(scope2_NamespaceDeclaration != NULL);
+
+       // Test for equivalent namespaces.
+          if (scope1_NamespaceDeclaration->get_firstNondefiningDeclaration() == scope2_NamespaceDeclaration->get_firstNondefiningDeclaration())
+             {
+               isSameNamespace = true;
+             }
+            else
+             {
+#if 0
+               printf ("These namespaces are different \n");
+#endif
+             }
+
+#if 0
+          printf ("SgClassDeclaration: (detected equivalent namespaces) isSameNamespace = %s \n",isSameNamespace ? "true" : "false");
+#endif
+        }
+
+     return isSameNamespace;
+   }
+
 SOURCE_SCOPE_STATEMENT_END
 
 
@@ -7998,6 +8048,14 @@ SgDeclarationStatement::get_template_name() const
                ROSE_ASSERT(templateVariableDeclaration->get_variables().empty() == false);
                SgInitializedName* initializedName = templateVariableDeclaration->get_variables()[0];
                templateDeclarationName = initializedName->get_name();
+               break;
+             }
+
+       // DQ (1/21/2013): This is a rarely used IR node in the new template support (but needs to be included).
+       // See testRoseHeaders_01_combined.C for an example of where this is generated.
+          case V_SgTemplateDeclaration:
+             {
+               templateDeclarationName = isSgTemplateDeclaration(this)->get_name();
                break;
              }
 

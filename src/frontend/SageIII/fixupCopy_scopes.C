@@ -1033,6 +1033,9 @@ SgTemplateInstantiationDecl::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) c
   // Also call the base class version of the fixupCopycopy() member function
      SgClassDeclaration::fixupCopy_scopes(copy,help);
 
+     ROSE_ASSERT(this->get_templateDeclaration() != NULL);
+     ROSE_ASSERT(templateClassDeclaration_copy->get_templateDeclaration() != NULL);
+
   // FixupCopyDataMemberMacro(templateClassDeclaration_copy,SgTemplateDeclaration,get_templateDeclaration,set_templateDeclaration)
      FixupCopyDataMemberMacro(templateClassDeclaration_copy,SgTemplateClassDeclaration,get_templateDeclaration,set_templateDeclaration)
 
@@ -1062,11 +1065,21 @@ SgTemplateInstantiationMemberFunctionDecl::fixupCopy_scopes(SgNode* copy, SgCopy
      printf ("\nIn SgTemplateInstantiationMemberFunctionDecl::fixupCopy_scopes(): for function = %s = %p = %s copy = %p \n",this->get_name().str(),this,this->class_name().c_str(),copy);
 #endif
 
+     ROSE_ASSERT(this != NULL);
+     printf ("\nIn SgTemplateInstantiationMemberFunctionDecl::fixupCopy_scopes(): for function = %s = %p = %s copy = %p \n",this->get_name().str(),this,this->class_name().c_str(),copy);
+
      SgTemplateInstantiationMemberFunctionDecl* templateMemberFunctionDeclaration_copy = isSgTemplateInstantiationMemberFunctionDecl(copy);
      ROSE_ASSERT(templateMemberFunctionDeclaration_copy != NULL);
 
   // Also call the base class version of the fixupCopycopy() member function
      SgMemberFunctionDeclaration::fixupCopy_scopes(copy,help);
+
+     if (this->get_templateDeclaration() == NULL)
+        {
+          printf ("this = %p templateMemberFunctionDeclaration_copy = %p name = %s \n",this,templateMemberFunctionDeclaration_copy,this->get_name().str());
+        }
+     ROSE_ASSERT(this->get_templateDeclaration() != NULL);
+     ROSE_ASSERT(templateMemberFunctionDeclaration_copy->get_templateDeclaration() != NULL);
 
   // FixupCopyDataMemberMacro(templateMemberFunctionDeclaration_copy,SgTemplateDeclaration,get_templateDeclaration,set_templateDeclaration)
      FixupCopyDataMemberMacro(templateMemberFunctionDeclaration_copy,SgTemplateMemberFunctionDeclaration,get_templateDeclaration,set_templateDeclaration)
