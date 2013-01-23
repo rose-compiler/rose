@@ -774,6 +774,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                case V_SgOmpOrderedStatement:
                case V_SgOmpSectionsStatement:
                case V_SgOmpParallelStatement:
+               case V_SgOmpTargetStatement:
                case V_SgOmpWorkshareStatement:
                case V_SgOmpSingleStatement:
                case V_SgOmpTaskStatement:
@@ -3511,12 +3512,47 @@ static std::string reductionOperatorToString(SgOmpClause::omp_reduction_operator
       }
     default:
       {
-        cerr<<"Error: unhandled operator type ReductionOperatorToString():"<< ro <<endl;
+        cerr<<"Error: unhandled operator type reductionOperatorToString():"<< ro <<endl;
         ROSE_ASSERT(false);
       }
   }
   return result;
 }
+
+static std::string mapOperatorToString(SgOmpClause::omp_map_operator_enum ro)
+{
+  string result;
+  switch (ro)
+  {
+    case SgOmpClause::e_omp_map_inout: 
+      {
+        result = "inout";
+        break;
+      }
+    case SgOmpClause::e_omp_map_in: 
+      {
+        result = "in";
+        break;
+      }
+    case SgOmpClause::e_omp_map_out:   
+      {
+        result = "out";
+        break;
+      }
+    case SgOmpClause::e_omp_map_alloc:  
+      {
+        result = "alloc";
+        break;
+      }
+   default:
+      {
+        cerr<<"Error: unhandled operator type MapOperatorToString():"<< ro <<endl;
+        ROSE_ASSERT(false);
+      }
+  }
+  return result;
+}
+
 #endif
 
 //! Unparse an OpenMP clause with a variable list
@@ -3525,6 +3561,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
   ROSE_ASSERT(clause != NULL);
   SgOmpVariablesClause* c= isSgOmpVariablesClause (clause);  
   ROSE_ASSERT(c!= NULL);
+  bool is_map = false;
   // unparse the  clause name first
   switch (c->variantT())
   {
@@ -3551,6 +3588,15 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
         curprint(string(" : "));
       break;
       }
+    case V_SgOmpMapClause:
+      {
+        is_map = true;
+        curprint(string(" map("));
+        curprint(mapOperatorToString(isSgOmpMapClause(c)->get_operation()));
+        curprint(string(" : "));
+      break;
+      }
+ 
     case V_SgOmpSharedClause:
       curprint(string(" shared("));
       break;
@@ -3560,6 +3606,16 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
       break;
   }
 
+  // prepare array dimension info for map variables
+  std::map<SgSymbol*, std::vector<std::pair<SgExpression*, SgExpression*> > > dims;
+  if (is_map)
+  {
+    SgOmpMapClause * m_clause = isSgOmpMapClause (clause);
+    ROSE_ASSERT (m_clause != NULL);
+    dims = m_clause->get_array_dimensions();
+  }  
+
+
   //unparse variable list then
   SgVarRefExpPtrList::iterator p = c->get_variables().begin();
   while ( p != c->get_variables().end() )
@@ -3567,7 +3623,35 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
     SgInitializedName* init_name = (*p)->get_symbol()->get_declaration();           
     SgName tmp_name  = init_name->get_name();
     curprint( tmp_name.str());
+    SgVariableSymbol * sym  = (*p)->get_symbol();
+    ROSE_ASSERT (sym != NULL);
+    if (is_map)
+    {
+      std::vector<std::pair<SgExpression*, SgExpression*> > bounds = dims[sym];
+      if (bounds.size() >0)
+      {
+        std::vector<std::pair<SgExpression*, SgExpression*> >:: const_iterator iter;
+        for (iter = bounds.begin(); iter != bounds.end(); iter ++)
+        {
+          SgUnparse_Info ninfo(info);
+          std::pair<SgExpression*, SgExpression*> bound  = (*iter);
+          SgExpression* lower = bound.first;
+          SgExpression* upper = bound.second;
+          ROSE_ASSERT (lower != NULL);
+          ROSE_ASSERT (upper != NULL);
 
+          curprint(string("["));
+//          curprint(lower->unparseToString());
+          unparseExpression(lower, ninfo);
+          curprint(string(":"));
+//          curprint(upper->unparseToString());
+          unparseExpression(upper, ninfo);
+          curprint(string("]"));
+        } // end for
+      } // end if has bounds
+    } // end if map 
+
+    // output the optional dimension info for map() variable 
     // Move to the next argument
     p++;
 
@@ -3594,6 +3678,8 @@ void UnparseLanguageIndependentConstructs::unparseOmpExpressionClause(SgOmpClaus
     curprint(string(" if("));
   else if (isSgOmpNumThreadsClause(c))
     curprint(string(" num_threads("));
+  else if (isSgOmpDeviceClause(c))
+    curprint(string(" device("));
   else {
     cerr<<"Error: unacceptable clause type within unparseOmpExpressionClause():"<< clause->class_name()<<endl;
     ROSE_ASSERT(false);
@@ -3643,6 +3729,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
         unparseOmpScheduleClause(isSgOmpScheduleClause(clause), info);
         break;
       }
+    case V_SgOmpDeviceClause:
     case V_SgOmpCollapseClause:
     case V_SgOmpIfClause:  
     case V_SgOmpNumThreadsClause:  
@@ -3657,6 +3744,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
     case V_SgOmpLastprivateClause:
     case V_SgOmpPrivateClause:
     case V_SgOmpReductionClause:
+    case V_SgOmpMapClause:
     case V_SgOmpSharedClause:
       {     
         unparseOmpVariablesClause(isSgOmpVariablesClause(clause), info);
@@ -3816,6 +3904,12 @@ void UnparseLanguageIndependentConstructs::unparseOmpDirectivePrefixAndName (SgS
       {
         unparseOmpPrefix(info);
         curprint(string ("parallel "));
+        break;
+      }
+    case V_SgOmpTargetStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("target "));
         break;
       }
      case V_SgOmpCriticalStatement:
