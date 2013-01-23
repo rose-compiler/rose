@@ -268,12 +268,16 @@ Grammar::setUpStatements ()
     NEW_TERMINAL_MACRO (OmpForStatement,       "OmpForStatement",        "OMP_FOR_STMT" );
     NEW_TERMINAL_MACRO (OmpDoStatement,        "OmpDoStatement",         "OMP_DO_STMT" );
     NEW_TERMINAL_MACRO (OmpSectionsStatement,  "OmpSectionsStatement",   "OMP_SECTIONS_STMT" );
+ 
+     // experimental omp target directive, Liao 1/22/2012
+     // use for testing OpenMP accelerator model
+    NEW_TERMINAL_MACRO (OmpTargetStatement,  "OmpTargetStatement",   "OMP_TARGET_STMT" );
 
     // A base class for the most commonly formed directives with both clauses and a structured body
     // We treat OmpSectionsStatement separatedly by move the body to a list of SgOmpSectionStatement
     // sensitive to 
     NEW_NONTERMINAL_MACRO (OmpClauseBodyStatement,  OmpParallelStatement | OmpSingleStatement |
-              OmpTaskStatement| OmpForStatement| OmpDoStatement | OmpSectionsStatement ,
+              OmpTaskStatement| OmpForStatement| OmpDoStatement | OmpSectionsStatement |OmpTargetStatement ,
         "OmpClauseBodyStatement",   "OMP_CLAUSEBODY_STMT", false );
 
     // + a statement / block 
@@ -3728,6 +3732,7 @@ Grammar::setUpStatements ()
     OmpOrderedStatement.setFunctionSource            ("SOURCE_OMP_ORDERED_STATEMENT", "../Grammar/Statement.code" );
     OmpTaskwaitStatement.setFunctionSource            ("SOURCE_OMP_TASKWAIT_STATEMENT", "../Grammar/Statement.code" );
 
+    OmpTargetStatement.setFunctionSource            ("SOURCE_OMP_TARGET_STATEMENT", "../Grammar/Statement.code" );
    // sections {section, section} // `containerSuccessors >1 is not allowed in ROSETTA's traversal
    // We hack the code to handle this special case
 //    OmpSectionsStatement.setDataPrototype("SgOmpSectionStatementPtrList", "sections", "",
