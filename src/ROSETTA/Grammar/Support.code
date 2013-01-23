@@ -4649,6 +4649,11 @@ HEADER_FILE_INFORMATION_START
           int  get_physical_line() const;
           void set_physical_source_position_to_match_logical_source_position();
 
+       // DQ (1/23/2013): Added source position sequence information. This work supports the handling of default arguments and addresses
+       // new future capabilities to ROSE.
+          void set_source_sequence_number (unsigned int n);
+          unsigned int get_source_sequence_number() const;
+
        // DQ (12/22/2006): This copies the line number and column number information and verifies that 
        // the file name is the same (it does not reset any fo the classification flags).  This is more
        // useful than the assignment operator for updating information and is used in the file:
@@ -10926,6 +10931,9 @@ Sg_File_Info::updateSourcePosition ( Sg_File_Info* update )
   // DQ (12/20/2012): Added support for physical source position (existing file_id and line data represents logical position data).
      ROSE_ASSERT(p_physical_file_id == update->p_physical_file_id);
      p_physical_line = update->p_physical_line;
+
+  // DQ (1/23/2013): Added support for source sequence numbering information.
+     p_source_sequence_number = update->p_source_sequence_number;
    }
 
 
@@ -11038,6 +11046,9 @@ Sg_File_Info::operator= ( const Sg_File_Info & X )
   // DQ (12/20/2012): Added support for physical source position (existing file_id and line data represents logical position data).
      p_physical_file_id = X.p_physical_file_id;
      p_physical_line    = X.p_physical_line;
+
+  // DQ (1/23/2013): Added support for source sequence numbering information.
+     p_source_sequence_number = X.p_source_sequence_number;
 
   // Record that this source position information was updated.
      set_isModified(true);
@@ -11252,8 +11263,11 @@ Sg_File_Info::display( const std::string label ) const
           printf ("     line     = %d  column   = %d \n",p_line,p_col);
         }
 
-     printf ("     physical_file_id  = %d = %s \n",get_physical_file_id(),get_physical_filename().c_str());
-     printf ("     physical_line     = %d \n",p_physical_line);
+     printf ("     physical_file_id       = %d = %s \n",get_physical_file_id(),get_physical_filename().c_str());
+     printf ("     physical_line          = %d \n",p_physical_line);
+
+  // DQ (1/23/2013): Added support for source sequence numbering information.
+     printf ("     source_sequence_number = %d \n",p_source_sequence_number);
 
   // DQ (5/16/2005): output these values, but I think they might be removed 
   // later since I don't see the point of storing this information!
@@ -11329,6 +11343,9 @@ Sg_File_Info::Sg_File_Info()
      p_physical_file_id = NULL_FILE_ID;
      p_physical_line    = 0;
 
+  // DQ (1/23/2013): Added source sequence information.
+     p_source_sequence_number = 0;
+
 #if 0
      printf ("Sg_File_Info default constructor = %p \n",this);
   // display("In constructor");
@@ -11343,7 +11360,8 @@ Sg_File_Info::Sg_File_Info()
 Sg_File_Info::Sg_File_Info ( const std::string & filename, int line, int col )
    : p_line(line), p_col(col),
      p_physical_file_id(NULL_FILE_ID),
-     p_physical_line(0)
+     p_physical_line(0),
+     p_source_sequence_number(0)
    {
      assert(this != NULL);
 
@@ -11396,6 +11414,7 @@ Sg_File_Info::Sg_File_Info(const Sg_File_Info & X)
      p_classificationBitField(X.p_classificationBitField),
      p_physical_file_id(X.p_physical_file_id),
      p_physical_line(X.p_physical_line),
+     p_source_sequence_number(X.p_source_sequence_number),
      p_fileIDsToUnparse(X.p_fileIDsToUnparse)
    {
      assert(this != NULL);
@@ -11449,7 +11468,8 @@ Sg_File_Info::Sg_File_Info( int file_id, int line, int column )
      p_col(column),
      p_classificationBitField(0),
      p_physical_file_id(NULL_FILE_ID),
-     p_physical_line(0)
+     p_physical_line(0),
+     p_source_sequence_number(0)
    {
      assert(this != NULL);
 
@@ -11853,6 +11873,23 @@ Sg_File_Info::get_physical_line() const
    {
      assert (this != NULL);
      return p_physical_line;
+   }
+
+// DQ (1/23/2013): Added source position sequence information.
+// This work supports the handling of default arguments and addes
+// new future capabilities to ROSE.
+void
+Sg_File_Info::set_source_sequence_number (unsigned int n)
+   {
+     assert (this != NULL);
+     p_source_sequence_number = n;
+   }
+
+unsigned int
+Sg_File_Info::get_source_sequence_number() const
+   {
+     assert (this != NULL);
+     return p_source_sequence_number;
    }
 
 int

@@ -16055,3 +16055,42 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
   {
     return get_C_array_dimensions_aux(arrtype, varrefCreator(initname));
   }
+
+
+// DQ (1/23/2013): Added support for generated a set of source sequence entries.
+class CollectSourceSequenceNumbers : public AstSimpleProcessing
+   {
+     public:
+          set<unsigned int> sourceSequenceSet;
+
+          void visit ( SgNode* astNode );
+   };
+
+// DQ (1/23/2013): Added support for generated a set of source sequence entries.
+void
+CollectSourceSequenceNumbers::visit ( SgNode* astNode )
+   {
+     Sg_File_Info* fileInfo = astNode->get_file_info();
+     if (fileInfo != NULL)
+        {
+          unsigned int source_sequence_number = fileInfo->get_source_sequence_number();
+#if 0
+          printf ("In CollectSourceSequenceNumbers::visit(): source_sequence_number = %zu \n",source_sequence_number);
+#endif
+          sourceSequenceSet.insert(source_sequence_number);
+        }
+   }
+
+// DQ (1/23/2013): Added support for generated a set of source sequence entries.
+set<unsigned int>
+SageInterface::collectSourceSequenceNumbers( SgNode* astNode )
+  {
+    CollectSourceSequenceNumbers traversal;
+
+    traversal.traverse(astNode,preorder);
+
+    return traversal.sourceSequenceSet;
+    
+  }
+
+
