@@ -857,10 +857,10 @@ BEGIN NORMAL;
 
         /*Actions while in a MACRO.*/
 <MACRO>\\\r\n   {   // Escaped DOS line termination
-		    macroString += yytext;
-		    ++preproc_line_num;
-		    preproc_column_num = 1;
-		}
+                    macroString += yytext;
+                    ++preproc_line_num;
+                    preproc_column_num = 1;
+                }
 
 <MACRO>\\\n     {   // Escape line termination
                     macroString += yytext;
@@ -873,16 +873,16 @@ BEGIN NORMAL;
                     preproc_line_num++; 
                     preproc_column_num=1; 
                     preprocessorList.addElement(macrotype, macroString, globalFileName,
-		    			        preproc_start_line_num, preproc_start_column_num,
-						preproc_line_num-preproc_start_line_num);
+                                                preproc_start_line_num, preproc_start_column_num,
+                                                preproc_line_num-preproc_start_line_num);
                     BEGIN NORMAL; 
                 }
 
 <MACRO><<EOF>>  {   // End of macro
                     macroString = StringUtility::fixLineTermination(macroString + yytext);
                     preprocessorList.addElement(macrotype, macroString, globalFileName,
-		    			        preproc_start_line_num, preproc_start_column_num,
-						preproc_line_num-preproc_start_line_num);
+                                                preproc_start_line_num, preproc_start_column_num,
+                                                preproc_line_num-preproc_start_line_num);
                     yyterminate();
                 }
 
