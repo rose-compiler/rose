@@ -20056,7 +20056,10 @@ namespace std __attribute__ ((__visibility__ ("default"))) {
   private:
     inline void
     _M_add_reference() const throw()
-    { __gnu_cxx::__atomic_add_dispatch(&_M_refcount, 1); }
+    { 
+   // __gnu_cxx::__atomic_add_dispatch(&_M_refcount, 1); 
+      __gnu_cxx::__atomic_add_dispatch(&(this) -> _M_refcount,1);
+    }
 
     inline void
     _M_remove_reference() const throw()

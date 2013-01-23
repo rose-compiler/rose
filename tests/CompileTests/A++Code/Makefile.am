@@ -15,17 +15,20 @@ EXAMPLE_TESTCODES = \
    comm_man.C \
    descriptor_notemplates.C \
    lazy_taskset.C \
-   where.C 
+   where.C \
+   abstract_op.C \
+   index_operator_notemplates.C \
+   index.C \
+   lazy_operand.C \
+   domain.C \
+   partitioning.C \
+   lazy_expression.C \
+   lazyarray.C \
+   array_notemplates.C
 
 # DQ (1/18/2012): Failing test codes:
-#   abstract_op.C 
-#   index_operator_notemplates.C 
 #   lazy_expression.C 
-#   index.C 
-#   lazy_operand.C 
 #   lazyarray.C 
-#   partitioning.C 
-#   domain.C 
 #   array_notemplates.C
 
 

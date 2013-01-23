@@ -1,3 +1,11 @@
+// DQ (1/22/2013): Test code generated from test2013_15.C (as I recall).
+
+// This test code is part of one generated from "g++ -E" and it 
+// contins references to __builtin_va_start() and __builtin_va_end()
+// which are a problem for ROSE.  These are converted va_start()
+// and va_end() which is a problem for the backend compiler.
+// Not clear why this is a problem for g++.
+
 struct __locale_t
    {
    };
