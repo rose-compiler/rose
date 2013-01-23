@@ -830,6 +830,8 @@ namespace OmpSupport
       case e_section:
       case e_single:
 
+      case e_target:
+
       case e_master: 
       case e_critical:
       case e_barrier:
