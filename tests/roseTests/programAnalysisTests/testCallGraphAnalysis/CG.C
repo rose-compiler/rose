@@ -122,6 +122,7 @@ void sortedCallGraphDump(string fileName, SgIncidenceDirectedGraph* cg)
 
 struct OnlyCurrentDirectory : public std::unary_function<bool, SgFunctionDeclaration*>
 {
+    static size_t nselected;
 
     bool operator() (SgFunctionDeclaration * node) const
     {
@@ -159,16 +160,28 @@ struct OnlyCurrentDirectory : public std::unary_function<bool, SgFunctionDeclara
             retval = true;
         }
 
-        if (retval)
-            std::cerr <<"OnlyCurrentDirectory is selecting node" <<node <<"\"" <<node->get_qualified_name().getString() <<"\"\n";
+        if (retval) {
+            std::cerr <<"OnlyCurrentDirectory is selecting node " <<node
+                      <<" \"" <<node->get_qualified_name().getString() <<"\"\n";
+            ++nselected;
+        }
 
         return retval;
     }
 };
 
+size_t OnlyCurrentDirectory::nselected = 0;
+
 
 int main(int argc, char **argv)
 {
+    std::cerr <<"*******************************************************************************************************\n"
+              <<"*** BIG FAT WARNING:  This test, " <<argv[0] <<",\n"
+              <<"*** only works if the input files are in the right place in the ROSE source tree!  If they are not\n"
+              <<"*** in the correct location the test will pass without doing anything.  Look for output lines that\n"
+              <<"*** begin with \"OnlyCurrentDirectory is selecting node\" (there should be at least one).\n"
+              <<"*******************************************************************************************************\n";
+
     std::vector<std::string> argvList(argv, argv + argc);
 
     //Read the comparison file
@@ -182,8 +195,12 @@ int main(int argc, char **argv)
 
     // Build the callgraph 
     CallGraphBuilder cgb(project);
-    cgb.buildCallGraph(OnlyCurrentDirectory());
-
+    OnlyCurrentDirectory selector;
+    cgb.buildCallGraph(selector);
+    if (0==selector.nselected) {
+        std::cerr <<"You didn't heed the BIG FAT WARNING from above!\n";
+        exit(1);
+    }
 
      if (graphCompareOutput == "")
         graphCompareOutput = ((project->get_outputFileName()) + ".cg.dmp");
