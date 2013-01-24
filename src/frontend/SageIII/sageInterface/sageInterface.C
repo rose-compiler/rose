@@ -10328,7 +10328,7 @@ void SageInterface::clearUnusedVariableSymbols()
         ROSE_ASSERT(symbolToDelete);
         if (symbolToDelete->get_declaration()->get_type() != SgTypeUnknown::createType())
             continue;
-
+        // symbol with a declaration of SgTypeUnknown will be deleted
         bool toDelete = true;
 
 #if 0

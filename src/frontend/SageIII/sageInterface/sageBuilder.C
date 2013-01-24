@@ -5769,6 +5769,7 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
           SgInitializedName * name1 = buildInitializedName(name,SgTypeUnknown::createType());
           name1->set_scope(scope);  // buildInitializedName() does not set scope for various reasons
           varSymbol = new SgVariableSymbol(name1);
+          varSymbol->set_parent(scope);
 
        // DQ (4/2/2012): Output a warning:
 #if 0
@@ -7190,7 +7191,6 @@ SageBuilder::buildComprehension_nfi(SgExpression *target, SgExpression *iter, Sg
     target->set_parent(result);
     iter->set_parent(result);
     if (ifs != NULL) ifs->set_parent(result);
-
     setOneSourcePositionNull(result);
     return result;
 }
