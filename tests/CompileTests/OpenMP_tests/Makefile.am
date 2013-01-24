@@ -126,7 +126,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	threadprivate.c \
 	threadProcessor.c \
 	upperCase.c \
-	variables.c
+	variables.c 
 
 #axpy_ompacc.c
 
@@ -177,17 +177,20 @@ $(TESTCODE_CURRENTLY_FAILING)
 bonds-2.o: $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c parseOmp
 	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c
 
+#matrixmultiply-ompacc.c 
 # test parsing experimental OpenMP accelerator directives, Liao 1/16/2013
 axpy_ompacc.o:$(srcdir)/axpy_ompacc.c parseOmp
 	./parseOmp -rose:openmp:ast_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/axpy_ompacc.c 
 #	./parseOmp -rose:openmp:parse_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/axpy_ompacc.c 
+matrixmultiply-ompacc.o:$(srcdir)/matrixmultiply-ompacc.c parseOmp
+	./parseOmp -rose:openmp:ast_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/matrixmultiply-ompacc.c 
 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 check-local:
 	@echo "Test for ROSE OpenMP Parser."
 	@$(MAKE) $(PASSING_C_TEST_Objects) 
 	@$(MAKE) $(PASSING_CXX_TEST_Objects)
-	@$(MAKE) bonds-2.o axpy_ompacc.o
+	@$(MAKE) bonds-2.o axpy_ompacc.o matrixmultiply-ompacc.o
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/OpenMP_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
