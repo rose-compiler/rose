@@ -440,9 +440,16 @@ namespace StringUtility
        std::string prefixLines(const std::string &lines, const std::string &prefix,
                                bool prefixAtFront=true, bool prefixAtBack=false);
 
-       /** Returns true if the string ends with line termination. */
+       /** Returns true if the string ends with line termination. Only common ASCII-based line terminations are recognized:
+        *  CR+LF, LF+CR, CR (only), or LF (only). */
        bool isLineTerminated(const std::string &s);
 
+       /** Normalizes line termination.  Changes ASCII-based line termination conventions used by various operating systems
+        *  into the LF (line-feed) termination used by Multics, Unix and Unix-like systems (GNU/Linux, Mac OS X, FreeBSD, AIX,
+        *  Xenix, etc.), BeOS, Amiga, RISC OS and others.  Any occurrance of CR+LF, LF+CR, or CR by itself (in that order of
+        *  left-to-right matching) is replaced by a single LF character. */
+       std::string fixLineTermination(const std::string &input);
+   
        /** Converts a multi-line string to a single line.  This function converts a multi-line string to a single line by
         *  replacing line-feeds and carriage-returns (and their surrounding white space) with a user-supplied replacement
         *  string (that defaults to a single space). Line termination (and it's surrounding white space) that appears at the
