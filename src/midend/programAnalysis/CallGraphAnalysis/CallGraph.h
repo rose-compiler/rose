@@ -192,6 +192,7 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
         else
         {
             // we need to have only one declaration for regular functions as well
+            // first nondefining declaration has precedence compared to defining declaration
             SgFunctionDeclaration *nonDefDecl = isSgFunctionDeclaration(functionDeclaration->get_firstNondefiningDeclaration());
             assert(!isSgTemplateFunctionDeclaration(nonDefDecl));
             if (nonDefDecl)
