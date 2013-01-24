@@ -432,6 +432,12 @@ nodeColor( SgExpression* expression )
                     returnString = "brown";
                     break;
 
+            // DQ (1/23/2013): Added support for newer IR nodes in edg4x work.
+               case V_SgTemplateMemberFunctionRefExp:
+               case V_SgTemplateFunctionRefExp:
+                    returnString = "brown";
+                    break;
+
                default:
                     returnString = "ERROR DEFAULT REACHED";
                     printf ("Default reached in nodeColor() exiting ... (%s) \n",expression->class_name().c_str());

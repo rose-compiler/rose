@@ -1843,6 +1843,9 @@ Specifiers that can have only one value (implemented with a protected enum varia
      File_Info.setDataPrototype("int","physical_line","= 0",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     File_Info.setDataPrototype("unsigned int","source_sequence_number","= 0",
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // MK (8/2/05) : This set contains a list of file ids. During unparsing, if we encounter
   //               a node with this Sg_File_Info object, we only want to unparse this file
   //               if the file we are currently unparsing is in this list.

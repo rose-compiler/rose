@@ -2135,6 +2135,10 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
   void setPrivate()
 
 #endif
+
+// DQ (1/23/2013): Added support for generated a set of source sequence entries.
+   std::set<unsigned int> collectSourceSequenceNumbers( SgNode* astNode );
+
 }// end of namespace
 
 #endif

@@ -1127,6 +1127,10 @@ test2013_21.C \
 test2013_22.C \
 test2013_23.C \
 test2013_25.C \
+test2013_26.C \
+test2013_27.C \
+test2013_28.C \
+test2013_29.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
