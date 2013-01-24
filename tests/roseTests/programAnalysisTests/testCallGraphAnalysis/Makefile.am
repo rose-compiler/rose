@@ -29,22 +29,29 @@ testCallGraph_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 testCG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 test01: testCG
+	@echo "  TEST    $@"
 	./testCG --edg:no_warnings -I. -I$(srcdir) $(srcdir)/main.C $(srcdir)/f1.C $(srcdir)/f2.C -o Callgraph
 	rm -f Callgraph.cg.dmp Callgraph.dot 
 
 
 # Test that the call graph generates all the edges it should
-test02: testCG stressTestFactory
-	echo " $(srcdir)/stressTestFactory 10"
+# The "stressTestFactory #" command produces two outputs: st#.C and sT#.cmp.dmp; the latter of which is a listing of the
+# expected call graph. The ./testCG command produces a listing of the callgraph in the file whose name is the argument for
+# the -compare:graph switch.
+test02-10: testCG stressTestFactory
+	@echo "  TEST    $@"
 	$(srcdir)/stressTestFactory 10
 	rm -f ./sT10.db
 	./testCG --edg:no_warnings sT10.C -o sT10 -compare:graph sT10.cg.dmp
 	diff -U5 sT10.cmp.dmp sT10.cg.dmp
 	rm -f ./sT10.db ./sT10.cg.dmp ./sT10.cmp.dmp ./sT10.dot ./sT10.C
+test02-100: testCG stressTestFactory
+	@echo "  TEST    $@ 100"
 	$(srcdir)/stressTestFactory 100
 	./testCG --edg:no_warnings sT100.C -o sT100 -compare:graph sT100.cg.dmp
 	diff -U5 sT100.cmp.dmp sT100.cg.dmp
 	rm -f ./sT100.cg.dmp ./sT100.cmp.dmp ./sT100.dot ./sT100.C
+test02: test02-10 test02-100
 
 
 testMultipleFiles: testCG stressTestFactoryMultipleFiles.pl
@@ -109,14 +116,10 @@ $(EXTRA_TEST_Objects): testCG
 EXTRA_DIST = $(TESTCODES) functions.h main.C f1.C f2.C stressTestFactory $(srcdir)/tests input_simpleMultipleFileTest_01.C input_simpleMultipleFileTest_02.C
 
 
-check-local:
+check-local: test01 test02
 	@$(MAKE) $(TEST_Objects)
-	@$(MAKE) test01 test02
 	@$(MAKE) $(EXTRA_TEST_Objects)
 
-	@echo "***********************************************************************************************************************"
-	@echo "*** ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis: make check rule complete (terminated normally) ***"
-	@echo "***********************************************************************************************************************"
 
 clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) test0? testCG testCallGraph *.o rose_*.C *.dot Templates.DB ii_files ti_files DATABASE DATABASE.dot *.dmp sT*.C

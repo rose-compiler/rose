@@ -134,20 +134,35 @@ struct OnlyCurrentDirectory : public std::unary_function<bool, SgFunctionDeclara
         // Hard code this for initial testing on target exercise.
         std::string secondaryTestSrcDir = ROSE_AUTOMAKE_TOP_SRCDIR + std::string("/developersScratchSpace");
 
+        // Not all SgFunctionDeclaration's come from a file.  If ROSE only ever encountered a defining declaration in the input
+        // then it will create a compiler-generated non-defining declaration that is not associated with any file.  The call
+        // graph layer always uses the first non-defining declaration, thus we won't always see a valid file, in which case we
+        // need to get the file name from the defining declaration.
         string sourceFilename = node->get_file_info()->get_filename();
+        if (sourceFilename.empty() || 0==sourceFilename.compare("NULL_FILE")) {
+            SgFunctionDeclaration *defdecl = isSgFunctionDeclaration(node->get_definingDeclaration());
+            if (defdecl)
+                sourceFilename = defdecl->get_file_info()->get_filename();
+        }
+
         string sourceFilenameSubstring = sourceFilename.substr(0, stringToFilter.size()); // if the file is from the build tree?
         string sourceFilenameSrcdirSubstring = sourceFilename.substr(0, srcDir.size());  // or from the ROSE source tree?
-        string sourceFilenameSecondaryTestSrcdirSubstring = sourceFilename.substr(0, secondaryTestSrcDir.size()); // or from the developer scratch space?
+        // or from the developer scratch space?
+        string sourceFilenameSecondaryTestSrcdirSubstring = sourceFilename.substr(0, secondaryTestSrcDir.size());
 
-        if (sourceFilenameSubstring == stringToFilter)
-            return true;
-        else if (sourceFilenameSrcdirSubstring == srcDir)
-            return true;
-        else
-            if (sourceFilenameSecondaryTestSrcdirSubstring == secondaryTestSrcDir)
-            return true;
-        else
-            return false;
+        bool retval = false;
+        if (sourceFilenameSubstring == stringToFilter) {
+            retval = true;
+        } else if (sourceFilenameSrcdirSubstring == srcDir) {
+            retval = true;
+        } else if (sourceFilenameSecondaryTestSrcdirSubstring == secondaryTestSrcDir) {
+            retval = true;
+        }
+
+        if (retval)
+            std::cerr <<"OnlyCurrentDirectory is selecting node" <<node <<"\"" <<node->get_qualified_name().getString() <<"\"\n";
+
+        return retval;
     }
 };
 
