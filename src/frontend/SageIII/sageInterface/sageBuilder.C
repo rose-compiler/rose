@@ -4997,9 +4997,7 @@ SgDeleteExp* SageBuilder::buildDeleteExp(SgExpression* variable,
   return result;
 }
 
-SgCastExp * SageBuilder::buildCastExp_nfi(SgExpression *  operand_i,
-                SgType * expression_type,
-                SgCastExp::cast_type_enum cast_type)
+SgCastExp * SageBuilder::buildCastExp_nfi(SgExpression *  operand_i, SgType * expression_type, SgCastExp::cast_type_enum cast_type)
 {
   SgCastExp* result = new SgCastExp(operand_i, expression_type, cast_type);
   ROSE_ASSERT(result);
