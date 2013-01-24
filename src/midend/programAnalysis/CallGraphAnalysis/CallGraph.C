@@ -861,6 +861,31 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
             break;
         }
 
+        case V_SgVarRefExp: {
+            // This is an indirect function call, as in:
+            //    |void f() {
+            //    |    void (*g)();
+            //    |    g();              <------------
+            //    |}
+            // We don't know what is being called, only its type.  So assume that all functions whose type matches could be
+            // called. [Robb P. Matzke 2013-01-24]
+            VariantVector vv;
+            vv.push_back(V_SgFunctionDeclaration);
+            vv.push_back(V_SgTemplateInstantiationFunctionDecl);
+            SgType *type = isSgVarRefExp(functionExp)->get_type();
+            while (isSgTypedefType(type))
+                type = isSgTypedefType(type)->get_base_type();
+            SgPointerType *functionPointerType = isSgPointerType(type);
+            assert(functionPointerType!=NULL);
+            SgFunctionType *fctType = isSgFunctionType(functionPointerType->findBaseType());
+            assert(fctType!=NULL);
+            SgFunctionDeclarationPtrList matches =
+                AstQueryNamespace::queryMemoryPool(std::bind2nd(std::ptr_fun(solveFunctionPointerCallsFunctional), fctType),
+                                                   &vv);
+            functionList.insert(functionList.end(), matches.begin(), matches.end());
+            break;
+        }
+
         default: {
             cout << "Error, unexpected type of functionRefExp: " << functionExp->sage_class_name() << "!!!\n";
             ROSE_ASSERT(false);
