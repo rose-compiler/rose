@@ -89,6 +89,9 @@ SimpleInstrumentation::visit ( SgNode* astNode )
        // Sg_File_Info* parameterListFileInfo = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
           SgFunctionParameterList* parameterList = new SgFunctionParameterList(TRANSFORMATION_FILE_INFO);
           ROSE_ASSERT(parameterList != NULL);
+          parameterList->set_definingDeclaration (NULL);
+          parameterList->set_firstNondefiningDeclaration (parameterList);
+
           func->set_parameterList(parameterList);
           ROSE_ASSERT(func->get_parameterList() != NULL);
           func->get_parameterList()->append_arg(var1_init_name);
@@ -107,6 +110,7 @@ SimpleInstrumentation::visit ( SgNode* astNode )
           SgPlusPlusOp *pp_expression = new SgPlusPlusOp(TRANSFORMATION_FILE_INFO,var_ref,0);
           pp_expression->set_endOfConstruct(TRANSFORMATION_FILE_INFO);
           pp_expression->get_endOfConstruct()->set_parent(pp_expression);
+          markLhsValues (pp_expression);
 
        // create an expression statement
           SgExprStatement* new_stmt = new SgExprStatement(TRANSFORMATION_FILE_INFO,pp_expression);
