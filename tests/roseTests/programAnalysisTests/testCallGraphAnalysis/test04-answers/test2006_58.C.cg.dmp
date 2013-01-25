@@ -1,2 +1,3 @@
+Bar::Bar ->
 Foo::Foo ->
-main -> Foo::Foo
+main -> Bar::Bar Foo::Foo
