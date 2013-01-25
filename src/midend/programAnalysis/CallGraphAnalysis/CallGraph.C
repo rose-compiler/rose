@@ -148,7 +148,7 @@ bool is_functions_types_equal(SgFunctionType* f1, SgFunctionType* f2)
     return true;
 
   //See if the function types match
-  if(  is_types_equal( f1->get_return_type(), f1->get_return_type() ) == true )
+  if(  is_types_equal( f1->get_return_type(), f2->get_return_type() ) )
   {
     SgTypePtrList& args_f1 = f1->get_arguments();
     SgTypePtrList& args_f2 = f2->get_arguments();
