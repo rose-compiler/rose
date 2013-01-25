@@ -1,127 +1,109 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+MOSTLYCLEANFILES =
+EXTRA_DIST =
+TEST_TARGETS =
+noinst_PROGRAMS =
 
-# To keep compile commands tidy, please ONLY put required include flags here.
-INCLUDES = $(ROSE_INCLUDES)
+#########################################################################################################################
+## Programs
+#########################################################################################################################
 
-bin_PROGRAMS  = \
-   testCallGraph \
-   testCG \
-   classHierarchyTestGen\
-   virtualFctsTester
-
-testCallGraph_SOURCES = testCallGraph.C
-
+noinst_PROGRAMS += testCG
 testCG_SOURCES = CG.C
-
-classHierarchyTestGen_SOURCES = ClassHierarchyTestGen.cpp
-classHierarchyTestGen_LDADD = $(ROSE_LIBS)
-
-# DQ (2/10/2010): ROSE currently fails to generate code for this file (it does however compile for analysis only).
-# virtualFctsTester_SOURCES = VirtualFctsTester.cpp
-virtualFctsTester_SOURCES =
-if !ROSE_USING_ROSE_CODE_GENERATION
-   virtualFctsTester_SOURCES += VirtualFctsTester.cpp
-endif
-
-virtualFctsTester_LDADD   = $(ROSE_LIBS)
-
-testCallGraph_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testCG_CPPFLAGS = $(ROSE_INCLUDES)
 testCG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
-test01: testCG
-	@echo "  TEST    $@"
-	./testCG --edg:no_warnings -I. -I$(srcdir) $(srcdir)/main.C $(srcdir)/f1.C $(srcdir)/f2.C -o Callgraph
-	rm -f Callgraph.cg.dmp Callgraph.dot 
+# This is compiled, but never used
+noinst_PROGRAMS += testCallGraph
+testCallGraph_SOURCES = testCallGraph.C
+testCallGraph_CPPFLAGS = $(ROSE_INCLUDES)
+testCallGraph_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
+# This is compiled, but never used
+noinst_PROGRAMS += classHierarchyTestGen
+classHierarchyTestGen_SOURCES = ClassHierarchyTestGen.cpp
+classHierarchyTestGen_CPPFLAGS = $(ROSE_INCLUDES)
+classHierarchyTestGen_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
+# This is compiled, but never used
+noinst_PROGRAMS += virtualFctsTester
+virtualFctsTester_SOURCES = VirtualFctsTester.cpp
+virtualFctsTester_CPPFLAGS = $(ROSE_INCLUDES)
+virtualFctsTester_LDADD = $(ROSE_LIBS)
+
+#########################################################################################################################
+## Tests
+#########################################################################################################################
+
+Test01SpecimenDir = $(srcdir)/test01-specimens
+Test01SpecimenSource = $(addprefix $(Test01SpecimenDir)/, main.C f1.C f2.C)
+Test01SpecimenHeaders = $(Test01SpecimenDir)/functions.h
+TEST_TARGETS += test01.passed
+
+test01 test01.passed: testCG $(Test01SpecimenSource) $(Test01SpecimenHeaders)
+	@$(RTH_RUN) \
+	    CMD="./testCG --edg:no_warnings -I. -I$(Test01SpecimenDir) $(Test01SpecimenSource) -o Callgraph" \
+	    $(top_srcdir)/scripts/test_exit_status $@
+
+EXTRA_DIST += test01.conf $(Test01SpecimenDir)
+MOSTLYCLEANFILES += Callgraph.cg.dmp Callgraph.dot main.ti
+
+#------------------------------------------------------------------------------------------------------------------------
 # Test that the call graph generates all the edges it should
-# The "stressTestFactory #" command produces two outputs: st#.C and sT#.cmp.dmp; the latter of which is a listing of the
-# expected call graph. The ./testCG command produces a listing of the callgraph in the file whose name is the argument for
-# the -compare:graph switch.
-test02-10: testCG stressTestFactory
-	@echo "  TEST    $@"
-	$(srcdir)/stressTestFactory 10
-	rm -f ./sT10.db
-	./testCG --edg:no_warnings sT10.C -o sT10 -compare:graph sT10.cg.dmp
-	diff -U5 sT10.cmp.dmp sT10.cg.dmp
-	rm -f ./sT10.db ./sT10.cg.dmp ./sT10.cmp.dmp ./sT10.dot ./sT10.C
-test02-100: testCG stressTestFactory
-	@echo "  TEST    $@ 100"
-	$(srcdir)/stressTestFactory 100
-	./testCG --edg:no_warnings sT100.C -o sT100 -compare:graph sT100.cg.dmp
-	diff -U5 sT100.cmp.dmp sT100.cg.dmp
-	rm -f ./sT100.cg.dmp ./sT100.cmp.dmp ./sT100.dot ./sT100.C
-test02: test02-10 test02-100
 
+EXTRA_DIST += test02.conf stressTestFactory
 
-testMultipleFiles: testCG stressTestFactoryMultipleFiles.pl
-	$(srcdir)/testMultipleFiles.sh $(srcdir) . 20 4
+TEST_TARGETS += test02-10.passed
+MOSTLYCLEANFILES += sT10.db sT10.cg.dmp sT10.cmp.dmp sT10.dot sT10.C
+test02-10.passed: testCG stressTestFactory test02.conf
+	@$(RTH_RUN) N=10 $(srcdir)/test02.conf $@
 
-# DQ (8/15/2009): Added simple case of multiple file test...
-testSimpleMultipleFiles: testCG $(srcdir)/input_simpleMultipleFileTest_01.C $(srcdir)/input_simpleMultipleFileTest_02.C 
-	echo "Testing simple case of multiple file call graph generation..."
-	./testCG $(srcdir)/input_simpleMultipleFileTest_01.C -o input_simpleMultipleFileTest_01
-	./testCG $(srcdir)/input_simpleMultipleFileTest_02.C -o input_simpleMultipleFileTest_02
-	echo "The final call graph is in input_simpleMultipleFileTest_02.dot (latest file called)"
+TEST_TARGETS += test02-100.passed
+MOSTLYCLEANFILES += sT100.db sT100.cg.dmp sT100.cmp.dmp sT100.dot sT100.C
+test02-100.passed: testCG stressTestFactory test02.conf
+	@$(RTH_RUN) N=100 $(srcdir)/test02.conf $@
 
-# DQ (8/15/2009): Added simple case of multiple file test for files in separate directories...
-testSimpleMultipleFilesInSeperateDirectories: testCG $(srcdir)/input_simpleMultipleFileTest_01.C $(srcdir)/input_simpleMultipleFileTest_02.C
-	echo "Testing simple case of multiple file call graph generation..."
-	rm -f simpleMultipleFileTestInSeperateDirectories.db
-	rm -rf seperateDirectory_1 seperateDirectory_2
-	mkdir seperateDirectory_1; cp $(srcdir)/input_simpleMultipleFileTest_01.C seperateDirectory_1/input_simpleMultipleFileTestInSeperateDirectories_01.C
-	cd seperateDirectory_1; ../testCG -I$(srcdir) -c input_simpleMultipleFileTestInSeperateDirectories_01.C -o input_simpleMultipleFileTestInSeperateDirectories_01
-	mkdir seperateDirectory_2; cp $(srcdir)/input_simpleMultipleFileTest_02.C seperateDirectory_2/input_simpleMultipleFileTestInSeperateDirectories_02.C
-	cd seperateDirectory_2; ../testCG -I$(srcdir) -c input_simpleMultipleFileTestInSeperateDirectories_02.C -o input_simpleMultipleFileTestInSeperateDirectories_02
-	echo "The final call graph is in input_simpleMultipleFileTestInSeperateDirectories_02.dot (latest file called)"
+test02: test02-10.passed test02-100.passed
 
+#------------------------------------------------------------------------------------------------------------------------
+# Test a short list of local specimens from our source directory
 
-# Import list of C++ test cases that should pass:
-#   EXAMPLE_TESTCODES_REQUIRED_TO_PASS
-#   EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT
-#
-include $(srcdir)/Makefile-pass.inc
+Test03SpecimenDir = $(srcdir)/test03-specimens
+Test03AnswerDir = $(srcdir)/test03-answers
+Test03Specimens = test1.C test2.C  test3.C  test4.C  test5.C test7.C test6.C
+Test03Targets = $(addprefix t3_, $(addsuffix .passed, $(Test03Specimens)))
+TEST_TARGETS += $(Test03Targets)
 
-# Import list of C++ test cases that are known to fail:
-#   TESTCODE_CURRENTLY_FAILING
-#
-include $(top_srcdir)/tests/CompileTests/Cxx_tests/Makefile-fail.inc
+test03: $(Test03Targets)
+$(Test03Targets): t3_%.passed: $(Test03SpecimenDir)/% $(Test03AnswerDir)/%.cg.dmp testCG test03.conf
+	@$(RTH_RUN) INPUT=$(notdir $<) OUTPUT=$$(basename $< .C).o ANSWERS=$(Test03AnswerDir) $(srcdir)/test03.conf $@
 
+EXTRA_DIST += test03.conf $(Test03SpecimenDir) $(Test03AnswerDir)
+MOSTLYCLEANFILES += $(patsubst %.C, %.o.cg.dmp, $(Test03Specimens))
 
-EXTRA_TEST_Objects = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTS_STILL_TOO_HARD)
+#------------------------------------------------------------------------------------------------------------------------
+# Test the specimens in the CompileTests/Cxx_tests for which we have answers in the $(Test04AnswersDir) directory.
+Test04SpecimenDir = $(top_srcdir)/tests/CompileTests/Cxx_tests
+Test04AnswerDir = $(srcdir)/test04-answers
+Test04Specimens = $(notdir $(patsubst %.cg.dmp, %, $(wildcard $(Test04AnswerDir)/*.C.cg.dmp)))
+Test04Targets = $(addprefix t4_, $(addsuffix .passed, $(Test04Specimens)))
+TEST_TARGETS += $(Test04Targets)
 
-## Include the path to A++ and the transformation specification
-TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+test04: $(Test04Targets)
+$(Test04Targets): t4_%.passed: $(Test04SpecimenDir)/% $(Test04AnswerDir)/%.cg.dmp testCG test04.conf
+	@$(RTH_RUN) INPUT=$(notdir $<) OUTPUT=$$(basename $< .C).o ANSWERS=$(Test04AnswerDir) $(srcdir)/test04.conf $@
 
-TESTCODES = test1.C test2.C  test3.C  test4.C  test5.C test7.C test6.C 
-# TESTCODES = test3.C  test4.C  test5.C test7.C test6.C 
+EXTRA_DIST += test04.conf $(Test04AnswerDir)
+MOSTLYCLEANFILES += $(patsubst %.C, %.o.cg.dmp, $(Test04Specimens))
 
-# Build the list of object files
-TEST_Objects = ${TESTCODES:.C=.o}
+#########################################################################################################################
+## Stuff for automake
+#########################################################################################################################
 
-TEST_TRANSLATOR = ./testCG $(ROSE_FLAGS) -rose:verbose 0 --edg:no_warnings
-
-# This target compiles the ROSE test files with the testCG Translator. Then, it compares the output of the translator to previous dumps.
-$(TEST_Objects): testCG $(TESTCODES) 
-	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
-	$(TEST_TRANSLATOR) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
-	@if diff -U5 $(srcdir)/tests/$(@:.o=.C.cg.dmp) $(@:.o=.cg.dmp); then :; else echo "Files differ; byte order test failed"; exit 1; fi
-	rm -f  $(@:.o=.cg.dmp)  $(@:.o=.cmp.dmp) $(@:.o=.dot)
-
-$(EXTRA_TEST_Objects): testCG
-	$(VALGRIND) $(TEST_TRANSLATOR) -I$(top_srcdir)/tests/CompileTests/Cxx_tests $(TESTCODE_INCLUDES) -c $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@) -o $(@:.C=.C) -DTEST_STRING_MACRO="\"test\""
-#	@if diff -U5 $(srcdir)/tests/$(@:.C=.C.cg.dmp) $(@:.C=.o.cg.dmp); then :; else echo "Files differ; byte order test failed"; exit 1; fi
-#	rm -f  $(@:.C=.o.cg.dmp)
-
-EXTRA_DIST = $(TESTCODES) functions.h main.C f1.C f2.C stressTestFactory $(srcdir)/tests input_simpleMultipleFileTest_01.C input_simpleMultipleFileTest_02.C
-
-
-check-local: test01 test02
-	@$(MAKE) $(TEST_Objects)
-	@$(MAKE) $(EXTRA_TEST_Objects)
-
+check-local: $(TEST_TARGETS)
 
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) test0? testCG testCallGraph *.o rose_*.C *.dot Templates.DB ii_files ti_files DATABASE DATABASE.dot *.dmp sT*.C
-	rm -rf seperateDirectory_1 seperateDirectory_2 Callgraph.cg.dmp Callgraph.dot
-
+	rm -f $(TEST_TARGETS)
+	rm -f $(TEST_TARGETS:.passed=.failed)
+	rm -f $(TEST_TARGETS:.passed=.out)
+	rm -f $(TEST_TARGETS:.passed=.err)

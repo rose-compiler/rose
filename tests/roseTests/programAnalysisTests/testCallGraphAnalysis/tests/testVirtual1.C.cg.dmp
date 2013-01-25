@@ -1,4 +1,0 @@
-foo2 -> A::foo B::foo
-main -> A::foo B::foo
-A::foo ->
-B::foo ->
