@@ -1131,6 +1131,12 @@ test2013_26.C \
 test2013_27.C \
 test2013_28.C \
 test2013_29.C \
+test2013_31.C \
+test2013_32.C \
+test2013_33.C \
+test2013_34.C \
+test2013_36.C \
+test2013_37.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1164,6 +1170,8 @@ test2004_35.C
 # test2013_16.C 
 # test2013_17.C 
 # test2013_19.C 
+# test2013_30.C 
+# test2013_35.C 
 
 
 # Variation of regression test that fails.
