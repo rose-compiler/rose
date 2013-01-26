@@ -20,7 +20,7 @@ class MFAnalyzer {
   void initialize();
   void run();
   virtual LatticeType transfer(Edge edge, LatticeType element);
- private:,
+ private:
   Labeler* _labeler;
   CFAnalyzer* _cfanalyzer;
   Label _extremalLabels;

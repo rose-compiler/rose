@@ -11,7 +11,7 @@ using namespace CodeThorn;
 class RDAnalyzer : public MFAnalyzer<RDLattice> {
 public:
   RDAnalyzer(CFAnalyzer* cfanalyzer):MFAnalyzer<RDLattice>(cfanalyzer){}
-  RDLattice transfer(RDLattice element) {
+  RDLattice transfer(Edge e, RDLattice element) {
 	cout << "RDAnalyzer: called transfer function."<<endl;
 	return element;
   }

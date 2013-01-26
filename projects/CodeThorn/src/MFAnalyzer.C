@@ -28,12 +28,15 @@ MFAnalyzer<LatticeType>::initialize() {
   cout << "STATUS: initialized monotone data flow analysis framework for "<<_analyzerData.size()<< " labels."<<endl;
 }
 
+// runs until worklist is empty
 template<typename LatticeType>
 void
 MFAnalyzer<LatticeType>::run() {
-  // runs until worklist is empty
+  assert(0);
+  // not finished yet, only testing implementation
+  Edge e;
   for(long i=0;i<_numberOfLabels;++i) {
-	_analyzerData[i]=transfer(_analyzerData[i]);
+	_analyzerData[i]=transfer(e,_analyzerData[i]);
   }
 }
 
