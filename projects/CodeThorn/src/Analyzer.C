@@ -63,6 +63,13 @@ void Analyzer::printStatusMessage(bool forceDisplay) {
   }
 }
 
+bool Analyzer::isInWorkList(const EState* estate) {
+  for(EStateWorkList::iterator i=estateWorkList.begin();i!=estateWorkList.end();++i) {
+	if(*i==estate) return true;
+  }
+  return false;
+}
+
 void Analyzer::addToWorkList(const EState* estate) { 
 #pragma omp critical
   {
@@ -1195,12 +1202,6 @@ bool Analyzer::isConsistentEStatePtrSet(set<const EState*> estatePtrSet)  {
   }
   cout << "INFO: estatePtrSet of size "<<estatePtrSet.size()<<" consistent."<<endl;
   return true;
-}
-bool Analyzer::isInWorkList(const EState* estate) {
-  for(EStateWorkList::iterator i=estateWorkList.begin();i!=estateWorkList.end();++i) {
-	if(*i==estate) return true;
-  }
-  return false;
 }
 
 void Analyzer::semanticFoldingOfTransitionGraph() {

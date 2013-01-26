@@ -9,6 +9,7 @@
 
 #include "Labeler.h"
 #include "CFAnalyzer.h"
+#include "WorkList.h"
 
 namespace CodeThorn {
 
@@ -19,8 +20,9 @@ class MFAnalyzer {
   MFAnalyzer(CFAnalyzer* cfanalyzer);
   void initialize();
   void run();
+ protected:
   virtual LatticeType transfer(Edge edge, LatticeType element);
- private:
+  virtual void solve();
   Labeler* _labeler;
   CFAnalyzer* _cfanalyzer;
   Label _extremalLabels;
@@ -28,6 +30,7 @@ class MFAnalyzer {
   // following members are initialized by function initialize()
   long _numberOfLabels; 
   vector<LatticeType> _analyzerData;
+  WorkList<Edge> workList;
 };
 
 #include "MFAnalyzer.C"

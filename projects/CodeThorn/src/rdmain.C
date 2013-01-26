@@ -4,6 +4,7 @@
 #include <iostream>
 #include "RDLattice.h"
 #include "MFAnalyzer.h"
+#include "WorkList.h"
 
 using namespace std;
 using namespace CodeThorn;
