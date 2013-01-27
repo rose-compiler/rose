@@ -737,7 +737,10 @@ Grammar::setUpExpressions ()
      UpcBlocksizeofExpression.editSubstitute ( "PRECEDENCE_VALUE", "16" );
      UpcElemsizeofExpression.editSubstitute  ( "PRECEDENCE_VALUE", "16" );
 
+  // DQ (1/26/2013): I think that this is an error (see test2013_42.C).
+  // TypeIdOp.editSubstitute        ( "PRECEDENCE_VALUE", "16" );
      TypeIdOp.editSubstitute        ( "PRECEDENCE_VALUE", "16" );
+
      ArrowExp.editSubstitute        ( "PRECEDENCE_VALUE", "16" );
      DotExp.editSubstitute          ( "PRECEDENCE_VALUE", "16" );
      DotStarOp.editSubstitute       ( "PRECEDENCE_VALUE", "14" );
@@ -762,8 +765,15 @@ Grammar::setUpExpressions ()
      BitAndOp.editSubstitute        ( "PRECEDENCE_VALUE", " 8" );
      BitOrOp.editSubstitute         ( "PRECEDENCE_VALUE", " 6" );
      CommaOpExp.editSubstitute      ( "PRECEDENCE_VALUE", " 1" ); // lowest precedence
+
+  // DQ (1/26/2013): I think this is wrong, "<<" and ">>" have value 7 (lower than "==") (see test2013_42.C).
+  // I think this value of 7 is incorrect since it is from a table that lists values in reverse order from how 
+  // we list then here.  Here we are following the apendix of the C++ language book.
+  // LshiftOp.editSubstitute        ( "PRECEDENCE_VALUE", "11" );
+  // RshiftOp.editSubstitute        ( "PRECEDENCE_VALUE", "11" );
      LshiftOp.editSubstitute        ( "PRECEDENCE_VALUE", "11" );
      RshiftOp.editSubstitute        ( "PRECEDENCE_VALUE", "11" );
+
      JavaUnsignedRshiftOp.editSubstitute        ( "PRECEDENCE_VALUE", "11" );
      MinusOp.editSubstitute         ( "PRECEDENCE_VALUE", "15" );
      UnaryAddOp.editSubstitute      ( "PRECEDENCE_VALUE", "15" );

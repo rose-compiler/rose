@@ -1422,8 +1422,10 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
      SgMemberFunctionDeclaration* mfd  = mfunc_ref->get_symbol()->get_declaration();
      ROSE_ASSERT (mfd != NULL);
 
-  // printf ("mfunc_ref->get_symbol()->get_name() = %s \n",mfunc_ref->get_symbol()->get_name().str());
-  // printf ("mfunc_ref->get_symbol()->get_declaration()->get_name() = %s \n",mfunc_ref->get_symbol()->get_declaration()->get_name().str());
+#if 0
+     printf ("mfunc_ref->get_symbol()->get_name() = %s \n",mfunc_ref->get_symbol()->get_name().str());
+     printf ("mfunc_ref->get_symbol()->get_declaration()->get_name() = %s \n",mfunc_ref->get_symbol()->get_declaration()->get_name().str());
+#endif
 
   // DQ (11/17/2004): Interface modified, use get_class_scope() if we want a
   // SgClassDefinition, else use get_scope() if we want a SgScopeStatement.

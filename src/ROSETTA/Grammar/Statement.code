@@ -738,6 +738,12 @@ HEADER_DECLARATION_STATEMENT_START
       //! This function returns the template name (taken from the template declaration for the class, function, member function, or variable template declaration).
           SgName get_template_name() const;
 
+       // DQ (1/26/2013): Added non-automatically generated version so that additional testing could be added.
+          SgDeclarationStatement* get_definingDeclaration() const;
+          void set_definingDeclaration(SgDeclarationStatement* definingDeclaration);
+          SgDeclarationStatement* get_firstNondefiningDeclaration() const;
+          void set_firstNondefiningDeclaration(SgDeclarationStatement* firstNondefiningDeclaration);
+
 HEADER_DECLARATION_STATEMENT_END
 
 HEADER_TEMPLATE_SPECIALIZATION_SUPPORT_START
@@ -8068,6 +8074,80 @@ SgDeclarationStatement::get_template_name() const
 
      return templateDeclarationName;
    }
+
+
+SgDeclarationStatement* 
+SgDeclarationStatement::get_definingDeclaration () const
+   {
+  // DQ (1/26/2013): Added non-automatically generated versions of this function so that we could implement more testing.
+     ROSE_ASSERT (this != NULL);
+     return p_definingDeclaration;
+   }
+
+void
+SgDeclarationStatement::set_definingDeclaration ( SgDeclarationStatement* definingDeclaration )
+   {
+  // DQ (1/26/2013): Added non-automatically generated versions of this function so that we could implement more testing.
+
+     ROSE_ASSERT (this != NULL);
+     set_isModified(true);
+     
+#if DEBUG_SAGE_ACCESS_FUNCTIONS
+     if (p_definingDeclaration != NULL && definingDeclaration != NULL && p_definingDeclaration != definingDeclaration)
+        {
+          printf ("Warning: definingDeclaration = %p overwriting valid pointer p_definingDeclaration = %p \n",definingDeclaration,p_definingDeclaration);
+#if DEBUG_SAGE_ACCESS_FUNCTIONS_ASSERTION
+          printf ("Error fails assertion (p_definingDeclaration != NULL && definingDeclaration != NULL && p_definingDeclaration != definingDeclaration) is false\n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+     p_definingDeclaration = definingDeclaration;
+
+  // DQ (1/24/2013): Added test to make sure that we always set defining declaration to be the same type or IR node.
+     ROSE_ASSERT(definingDeclaration == NULL || this->variantT() == definingDeclaration->variantT());
+   }
+
+// *** DATA ACCESS FUNCTION SECTION ENDS HERE ***
+
+
+// End of memberFunctionString
+// Start of memberFunctionString
+/* #line 1 "/home/dquinlan/ROSE/git-dq-edg4x-rc/src/ROSETTA/Grammar/dataMemberAccessFunctions.macro" */
+
+// *** DATA ACCESS FUNCTION SECTION BEGINS HERE ***
+
+SgDeclarationStatement* 
+SgDeclarationStatement::get_firstNondefiningDeclaration () const
+   {
+  // DQ (1/26/2013): Added non-automatically generated versions of this function so that we could implement more testing.
+     ROSE_ASSERT (this != NULL);
+     return p_firstNondefiningDeclaration;
+   }
+
+void
+SgDeclarationStatement::set_firstNondefiningDeclaration ( SgDeclarationStatement* firstNondefiningDeclaration )
+   {
+  // DQ (1/26/2013): Added non-automatically generated versions of this function so that we could implement more testing.
+     ROSE_ASSERT (this != NULL);
+     set_isModified(true);
+     
+#if DEBUG_SAGE_ACCESS_FUNCTIONS
+     if (p_firstNondefiningDeclaration != NULL && firstNondefiningDeclaration != NULL && p_firstNondefiningDeclaration != firstNondefiningDeclaration)
+        {
+          printf ("Warning: firstNondefiningDeclaration = %p overwriting valid pointer p_firstNondefiningDeclaration = %p \n",firstNondefiningDeclaration,p_firstNondefiningDeclaration);
+#if DEBUG_SAGE_ACCESS_FUNCTIONS_ASSERTION
+          printf ("Error fails assertion (p_firstNondefiningDeclaration != NULL && firstNondefiningDeclaration != NULL && p_firstNondefiningDeclaration != firstNondefiningDeclaration) is false\n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+     p_firstNondefiningDeclaration = firstNondefiningDeclaration;
+
+  // DQ (1/24/2013): Added test to make sure that we always set defining declaration to be the same type or IR node.
+     ROSE_ASSERT(firstNondefiningDeclaration == NULL || this->variantT() == firstNondefiningDeclaration->variantT());
+   }
+
 
 SOURCE_DECLARATION_STATEMENT_END
 

@@ -429,6 +429,9 @@ SgDeleteExp* buildDeleteExp(SgExpression* variable,
                             short need_global_specifier,
                             SgFunctionDeclaration* deleteOperatorDeclaration);
  
+// DQ (1/25/2013): Added support for typeId operators.
+SgTypeIdOp* buildTypeIdOp(SgExpression *operand_expr, SgType *operand_type, SgType *expression_type);
+
 
 #undef BUILD_UNARY_PROTO
 

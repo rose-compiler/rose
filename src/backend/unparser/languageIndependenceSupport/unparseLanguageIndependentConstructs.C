@@ -1057,7 +1057,39 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
        // DQ (8/21/2005): Suppress comments when unparsing to build type names
           if ( !info.SkipComments() || !info.SkipCPPDirectives() )
              {
-               curprint("\n /* In unparseExpression paren " + expr->class_name() + " paren printParen = " + (printParen ? "true" : "false") + " */ \n");
+               string name = SageInterface::get_name(expr);
+               SgFunctionCallExp* functionCall = isSgFunctionCallExp(expr);
+               if (functionCall != NULL)
+                  {
+                    SgExpression* expression = functionCall->get_function();
+                    SgDotExp* dotExp = isSgDotExp(expression);
+                    if (dotExp != NULL)
+                       {
+                         SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(dotExp->get_lhs_operand());
+                      // ROSE_ASSERT(memberFunctionRefExp != NULL);
+                         if (memberFunctionRefExp != NULL)
+                            {
+                              SgMemberFunctionSymbol* memberFunctionSymbol = memberFunctionRefExp->get_symbol();
+                              ROSE_ASSERT(memberFunctionSymbol != NULL);
+                              name = memberFunctionSymbol->get_declaration()->get_name().str();
+                            }
+                           else
+                            {
+                              printf ("*** dotExp->get_lhs_operand() not processed: dotExp->get_lhs_operand() = %s \n",dotExp->get_lhs_operand()->class_name().c_str());
+                            }
+                       }
+                      else
+                       {
+                         printf ("*** functionCall->get_function() not processed: functionCall->get_function() = %s \n",functionCall->get_function()->class_name().c_str());
+                       }
+                  }
+                 else
+                  {
+                    printf ("*** expr not processed: expr = %s \n",expr->class_name().c_str());
+                  }
+
+            // curprint("\n /* In unparseExpression paren " + expr->class_name() + " paren printParen = " + (printParen ? "true" : "false") + " */ \n");
+               curprint("\n /* In unparseExpression paren " + expr->class_name() + " name = " + name + " paren printParen = " + (printParen ? "true" : "false") + " */ \n");
              }
 #endif
 
@@ -1070,7 +1102,7 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
                ROSE_ASSERT (isSgExprListExp(expr) == NULL);
 
             // Output the left paren
-               curprint ( "(");
+               curprint ("(");
              }
 
        // DQ (10/7/2004): Definitions should never be unparsed within code generation for expressions
@@ -3917,8 +3949,13 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgGreaterThanOp:    return 10;
           case V_SgLessOrEqualOp:    return 10;
           case V_SgGreaterOrEqualOp: return 10;
+
+       // DQ (1/26/2013): I think this is wrong, "<<" and ">>" have value 7 (lower than "==") (see test2013_42.C).
+       // case V_SgLshiftOp:         return 11;
+       // case V_SgRshiftOp:         return 11;
           case V_SgLshiftOp:         return 11;
           case V_SgRshiftOp:         return 11;
+
           case V_SgJavaUnsignedRshiftOp: return 11;
           case V_SgAddOp:            return 12;
 
@@ -4005,6 +4042,9 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
        // DQ (10/17/2012): Added support for SgDesignatedInitializer.
           case V_SgDesignatedInitializer: return 0;
 
+       // DQ (1/26/2013): This case needs to be supported (see test2013_42.C).
+          case V_SgTypeIdOp:         return 16;
+
           default:
              {
 #if PRINT_DEVELOPER_WARNINGS | 1
@@ -4086,10 +4126,12 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
    {
      ROSE_ASSERT(expr != NULL);
 
+#if 0
      if (isSgSubscriptExpression(expr) != NULL || isSgDotExp(expr) || isSgCAFCoExpression(expr) || isSgPntrArrRefExp(expr) )
         {
           return false;
         }
+#endif
 
      SgExpression* parentExpr = isSgExpression(expr->get_parent());
 
@@ -4113,6 +4155,15 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
         }
 #endif
 
+  // DQ (1/26/2013): Moved to be located after the debugging information.
+     if (isSgSubscriptExpression(expr) != NULL || isSgDotExp(expr) || isSgCAFCoExpression(expr) || isSgPntrArrRefExp(expr) )
+        {
+#if DEBUG_PARENTHESIS_PLACEMENT
+          printf ("In requiresParentheses(): Output false \n");
+#endif
+          return false;
+        }
+
      if ( (isSgBinaryOp(expr) != NULL) && (expr->get_need_paren() == true) )
         {
 #if DEBUG_PARENTHESIS_PLACEMENT
@@ -4135,21 +4186,31 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 #if 1
     // Liao, 8/27/2008, bug 229
     // A nasty workaround since set_need_paren() has no definite effect
-    //SgExprListExp-> SgAssignInitializer -> SgFunctionCallExp:
+    // SgExprListExp-> SgAssignInitializer -> SgFunctionCallExp:
     // no () is needed for SgAssignInitializer
     // e.g:  int array[] = {func1()}; // int func1();
      SgAssignInitializer* assign_init = isSgAssignInitializer(expr);
-     if ((assign_init!=NULL) &&(isSgExprListExp(parentExpr)))
-     {
-       SgExpression* operand = assign_init->get_operand();
-       if (isSgFunctionCallExp(operand))
-         return false;
-     }
+     if ((assign_init != NULL) && (isSgExprListExp(parentExpr)))
+        {
+          SgExpression* operand = assign_init->get_operand();
+          if (isSgFunctionCallExp(operand))
+             {
+#if DEBUG_PARENTHESIS_PLACEMENT
+               printf ("In requiresParentheses(): Output false \n");
+#endif
+               return false;
+             }
+        }
 #endif
 
-     // TV (04/24/11): As compiler generated cast are not unparsed they don't need additional parenthesis.
+  // TV (04/24/11): As compiler generated cast are not unparsed they don't need additional parenthesis.
      if (isSgCastExp(expr) && expr->get_startOfConstruct()->isCompilerGenerated())
-       return false;     
+        {
+#if DEBUG_PARENTHESIS_PLACEMENT
+          printf ("In requiresParentheses(): Output false \n");
+#endif
+          return false;     
+        }
 
   // DQ (8/6/2005): Never output "()" where the parent is a SgAssignInitializer
      if (parentExpr != NULL && parentExpr->variantT() == V_SgAssignInitializer)
@@ -4272,6 +4333,9 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
                        }
                       else
                        {
+#if DEBUG_PARENTHESIS_PLACEMENT
+                         printf ("     exprPrecedence != parentPrecedence return true \n");
+#endif
                        }
                   }
              }

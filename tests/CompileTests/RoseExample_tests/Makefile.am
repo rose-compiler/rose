@@ -63,6 +63,10 @@ $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.qmt: ../../testTranslator
 # Include makefile rules specific to QMTest
 include $(top_srcdir)/config/QMTest_makefile.inc
 
+test: $(srcdir)/testRoseHeaders_01.C
+	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_01.C
+
+
 # Exclude the Cxx_Grammar.C file from being part of the distribution
 EXTRA_DIST = $(TESTCODES)
 

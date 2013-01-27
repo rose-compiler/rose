@@ -1137,6 +1137,7 @@ test2013_33.C \
 test2013_34.C \
 test2013_36.C \
 test2013_37.C \
+test2013_38.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
