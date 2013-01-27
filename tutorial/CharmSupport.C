@@ -129,6 +129,7 @@ buildClassDeclarationAndDefinition (string name, SgScopeStatement* scope)
   // Set the non defining declaration in the defining declaration (both are required)
      SgClassDeclaration* nondefiningClassDeclaration = new SgClassDeclaration(fileInfo,name.c_str(),SgClassDeclaration::e_struct,NULL,NULL);
      assert(classDeclaration != NULL);
+     nondefiningClassDeclaration->set_scope(scope);
      nondefiningClassDeclaration->set_type(SgClassType::createType(nondefiningClassDeclaration));
 
   // Set the internal reference to the non-defining declaration
@@ -147,7 +148,6 @@ buildClassDeclarationAndDefinition (string name, SgScopeStatement* scope)
 
   // set the scope explicitly (name qualification tricks can imply it is not always the parent IR node!)
      classDeclaration->set_scope(scope);
-     nondefiningClassDeclaration->set_scope(scope);
 
   // some error checking
      assert(classDeclaration->get_definingDeclaration() != NULL);
