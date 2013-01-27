@@ -678,13 +678,17 @@ Grammar::setUpStatements ()
   // which is a function return type), but not a defining declaration either!
   // Having a concept of a "defining declaration" allows us to simplify the unparser and more accurately know when to output
   // a definition.  The idea is not specific to class declarations and perhaps should be in the SgDeclaration object.
+  // DeclarationStatement.setDataPrototype ("SgDeclarationStatement*", "definingDeclaration", "= NULL",
+  //                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DeclarationStatement.setDataPrototype ("SgDeclarationStatement*", "definingDeclaration", "= NULL",
-                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (9/23/2004): Keep track of the first non-defining declaration (so it can be reused to avoid redundant 
   // declarations (explicitly or implicitly forward declarations).
+  // DeclarationStatement.setDataPrototype ("SgDeclarationStatement*", "firstNondefiningDeclaration", "= NULL",
+  //                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DeclarationStatement.setDataPrototype ("SgDeclarationStatement*", "firstNondefiningDeclaration", "= NULL",
-                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (10/10/2006): Not all declarations make sense with qualified names, but enough do that I have placed 
   // this here for now! I have removed these lists from the SgNamedType IR nodes since SgTypes are shared and 

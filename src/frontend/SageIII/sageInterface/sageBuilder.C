@@ -3746,13 +3746,18 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
 
           printf ("In buildDefiningFunctionDeclaration_T(): nameWithTemplateArguments = %s \n",nameWithTemplateArguments.str());
           printf ("In buildDefiningFunctionDeclaration_T(): scope                    = %p = %s \n",scope,scope->class_name().c_str());
+          printf ("In buildDefiningFunctionDeclaration_T(): first_nondefining_declaration->get_scope() = %p = %s \n",
+               first_nondefining_declaration->get_scope(),first_nondefining_declaration->get_scope()->class_name().c_str());
           printf ("In buildDefiningFunctionDeclaration_T(): func_type                = %p = %s \n",func_type,func_type->class_name().c_str());
           printf ("In buildDefiningFunctionDeclaration_T(): func_type->get_mangled() = %s \n",func_type->get_mangled().str());
           printf ("In buildDefiningFunctionDeclaration_T(): Looking for function in symbol table with name = %s \n",nameWithTemplateArguments.str());
+
 #if 0
           scope->get_symbol_table()->print("In SageBuilder::buildDefiningFunctionDeclaration_T()");
 #endif
         }
+
+  // DQ (1/26/2013): This fails for ROSE compiling ROSE.
      ROSE_ASSERT(func_symbol != NULL);
 #endif
 
@@ -4994,6 +4999,16 @@ SgDeleteExp* SageBuilder::buildDeleteExp(SgExpression* variable,
   setOneSourcePositionForTransformation(result);
   return result;
 }
+
+SgTypeIdOp*
+SageBuilder::buildTypeIdOp(SgExpression *operand_expr, SgType *operand_type, SgType *expression_type)
+   {
+  // DQ (1/25/2013): Added support for typeId operators.
+     SgTypeIdOp* result = new SgTypeIdOp(operand_expr,operand_type,expression_type);
+     ROSE_ASSERT(result != NULL);
+     setOneSourcePositionForTransformation(result);
+     return result;
+   }
 
 SgCastExp * SageBuilder::buildCastExp_nfi(SgExpression *  operand_i, SgType * expression_type, SgCastExp::cast_type_enum cast_type)
 {

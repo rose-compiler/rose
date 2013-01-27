@@ -3869,8 +3869,24 @@ SgTypeIdOp::get_type() const
   // SgClassType with reference to the class declaration that should have been seen or we can perhaps assume to be
   // simply: "std::type_info"
 
+  // DQ (1/26/2013): Since the operand can be either an expression or a type, the return type has to be either from the expression, or from the operand.
   // DQ (8/8/2006): The C++ standard requires that this return a "std::type_info" classType
-     SgType* returnType = p_expression_type;
+  // SgType* returnType = p_expression_type;
+     SgType* returnType = NULL;
+     if (p_operand_expr != NULL)
+        {
+       // Could we alternatively just call get_type on the expression directly?
+       // Note that EDG provised us with the type on the expression explicitly so
+       // this has influenced the design here with saves the expression type explicitly.
+          returnType = p_expression_type;
+          ROSE_ASSERT(returnType != NULL);
+        }
+       else
+        {
+          returnType = p_operand_type;
+          ROSE_ASSERT(returnType != NULL);
+        }
+
      ROSE_ASSERT(returnType != NULL);
 
      return returnType;
