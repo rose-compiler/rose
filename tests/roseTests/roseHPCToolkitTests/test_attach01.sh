@@ -28,7 +28,7 @@ else
   echo "******* HPCTOOLKIT test_attach01 FAILED *********"
 fi
 
-rm -f test_attach01-out.txt
+#rm -f test_attach01-out.txt
 
 exit $rc
 

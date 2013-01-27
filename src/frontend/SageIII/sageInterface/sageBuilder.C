@@ -1160,6 +1160,8 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
   // in the scope (since that applies to the variable (SgInitializedName) not the SgVariableDeclaration).
   // DQ (7/9/2012): Added test (parent should not be set yet; set in parse_statement).
   // ROSE_ASSERT(varDecl->get_parent() == NULL);
+  // Liao, 1/23/2013, quick fix for now, this condition is a mirror to the code setting parent in SageInterface::fixVariableDeclaration()
+   if (topScopeStack() != NULL)
      ROSE_ASSERT(varDecl->get_parent() != NULL);
 
   // ROSE_ASSERT (varDecl->get_declarationModifier().get_accessModifier().isPublic() == false);
