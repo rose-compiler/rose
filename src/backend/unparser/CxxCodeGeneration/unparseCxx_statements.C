@@ -5329,8 +5329,9 @@ Unparse_ExprStmt::unparseCatchStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint ( string("/* START: variable declaration */ "));
           printf ("In unparseCatchStmt(): catch_statement->get_condition() = %p = %s \n",catch_statement->get_condition(),catch_statement->get_condition()->class_name().c_str());
 #endif
+#if 0
           catch_statement->get_condition()->get_file_info()->display("catch condition in unparseCatchStmt(): debug");
-
+#endif
        // DQ (5/6/2004): this does not unparse correctly if the ";" is included
           ninfo.set_SkipSemiColon();
           ninfo.set_SkipClassSpecifier();
@@ -6240,6 +6241,9 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
      printf ("Note: Using the saved template declaration as a string to output the template declaration (AST for the template declaration is also now available in the AST) \n");
 #endif
 
+  // DQ (1/28/2013): This helps handle cases such as "#if 1 void foo () #endif { }"
+     unparseAttachedPreprocessingInfo(template_stmt, info, PreprocessingInfo::inside);
+
   // Check to see if this is an object defined within a class
      ROSE_ASSERT (template_stmt->get_parent() != NULL);
      SgClassDefinition *cdefn = isSgClassDefinition(template_stmt->get_parent());
@@ -6267,6 +6271,7 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
 
   // printf ("template_stmt->get_template_kind() = %d \n",template_stmt->get_template_kind());
      curprint ( string("\n" ) + templateString);
+
    }
 
  

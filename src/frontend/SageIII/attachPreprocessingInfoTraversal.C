@@ -1755,10 +1755,10 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                     case V_SgTemplateFunctionDeclaration:
                     case V_SgTemplateMemberFunctionDeclaration:
 
-                    // DQ (4/21/2005): this can be the last statement and if it is we have to 
-                    // record it as such so that directives/comments can be attached after it.
+                 // DQ (4/21/2005): this can be the last statement and if it is we have to 
+                 // record it as such so that directives/comments can be attached after it.
                     case V_SgTemplateInstantiationDirectiveStatement:
-//                    case V_SgFunctionParameterList:
+                 // case V_SgFunctionParameterList:
                     case V_SgFunctionDeclaration:   // Liao 11/8/2010, this is necessary since SgInitializedName might be a previous located node.
                                   //  we don't want to attach anything after an ending initialized name,
                                   //  So we give a chance to the init name's ancestor a chance. 

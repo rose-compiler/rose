@@ -3554,6 +3554,26 @@ SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType
           SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(first_nondefining_declaration);
           ROSE_ASSERT(templateInstantiationMemberFunctionDecl != NULL);
 
+#if 1
+       // DQ (1/26/2013): Added test failing in buildDefiningFunctionDeclaration_T().
+             {
+               ROSE_ASSERT(templateArgumentsList != NULL);
+               string nameWithoutTemplateArguments = name;
+               string nameWithTemplateArguments = appendTemplateArgumentsToName(nameWithoutTemplateArguments,*templateArgumentsList);
+               SgMemberFunctionType* func_type = isSgMemberFunctionType(first_nondefining_declaration->get_type());
+               ROSE_ASSERT(func_type != NULL);
+
+               SgSymbol* func_symbol = scope->get_symbol_table()->find_symbol_by_type_of_function<SgTemplateInstantiationMemberFunctionDecl>(nameWithTemplateArguments,func_type);
+               if (func_symbol == NULL)
+                  {
+                    printf ("ERROR caught in SageBuilder::buildDefiningMemberFunctionDeclaration(): nameWithTemplateArguments = %s buildTemplateInstantiation = %s \n",nameWithTemplateArguments.c_str(),buildTemplateInstantiation ? "true:" : "false");
+                    printf ("ERROR caught in SageBuilder::buildDefiningMemberFunctionDeclaration(): func_symbol == NULL for first_nondefining_declaration = %p = %s and func_type = %p = %s \n",
+                         templateInstantiationMemberFunctionDecl,templateInstantiationMemberFunctionDecl->class_name().c_str(),func_type,func_type->class_name().c_str());
+                  }
+            // ROSE_ASSERT(func_symbol != NULL);
+             }
+#endif
+
        // result = buildDefiningFunctionDeclaration_T <SgTemplateInstantiationMemberFunctionDecl> (name,return_type,paralist,/* isMemberFunction = */ true,scope,decoratorList,functionConstVolatileFlags,templateInstantiationMemberFunctionDecl);
           result = buildDefiningFunctionDeclaration_T <SgTemplateInstantiationMemberFunctionDecl> (name, return_type, paralist, /* isMemberFunction = */ true, scope, decoratorList, functionConstVolatileFlags, templateInstantiationMemberFunctionDecl, templateArgumentsList);
 #if 0
@@ -3587,6 +3607,7 @@ SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType
      printf ("Looking up name = %s in scope = %p = %s \n",name.str(),scope,scope->class_name().c_str());
      ROSE_ASSERT(scope->lookup_template_symbol(name) != NULL);
 #endif
+
      return result;
    }
 
@@ -3745,14 +3766,21 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
           printf ("In buildDefiningFunctionDeclaration_T(): func_symbol == NULL We can't assume that the symbol already exists. \n");
 
           printf ("In buildDefiningFunctionDeclaration_T(): nameWithTemplateArguments = %s \n",nameWithTemplateArguments.str());
+          printf ("In buildDefiningFunctionDeclaration_T(): first_nondefining_declaration = %p = %s \n",
+               first_nondefining_declaration,first_nondefining_declaration->class_name().c_str());
+
           printf ("In buildDefiningFunctionDeclaration_T(): scope                    = %p = %s \n",scope,scope->class_name().c_str());
           printf ("In buildDefiningFunctionDeclaration_T(): first_nondefining_declaration->get_scope() = %p = %s \n",
                first_nondefining_declaration->get_scope(),first_nondefining_declaration->get_scope()->class_name().c_str());
+
           printf ("In buildDefiningFunctionDeclaration_T(): func_type                = %p = %s \n",func_type,func_type->class_name().c_str());
+          printf ("In buildDefiningFunctionDeclaration_T(): first_nondefining_declaration->get_type() = %p = %s \n",
+               first_nondefining_declaration->get_type(),first_nondefining_declaration->get_type()->class_name().c_str());
+
           printf ("In buildDefiningFunctionDeclaration_T(): func_type->get_mangled() = %s \n",func_type->get_mangled().str());
           printf ("In buildDefiningFunctionDeclaration_T(): Looking for function in symbol table with name = %s \n",nameWithTemplateArguments.str());
 
-#if 0
+#if 1
           scope->get_symbol_table()->print("In SageBuilder::buildDefiningFunctionDeclaration_T()");
 #endif
         }

@@ -1536,8 +1536,10 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                        (*i)->getRelativePosition() == PreprocessingInfo::inside);
 
 #if 0
+       // DQ (1/28/2013): Fixed to use output of PreprocessingInfo::relativePositionName() and thus provide more accurate debug information.
           printf ("Stored comment: (*i)->getRelativePosition() = %s (*i)->getString() = %s \n",
-               ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
+            // ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
+               PreprocessingInfo::relativePositionName((*i)->getRelativePosition()).c_str(),
                (*i)->getString().c_str());
 #endif
 
@@ -1603,139 +1605,142 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                   }
                  else
                   {
-               switch ( (*i)->getTypeOfDirective() )
-                  {
-                 // All #include directives are unparsed so that we can make the 
-                 // output codes as similar as possible to the input codes. This also
-                 // simplifies the debugging. On the down side it sets up a chain of 
-                 // problems that force us to unparse most of the other directives 
-                 // which makes the unparsing a bit more complex.
-                    case PreprocessingInfo::CpreprocessorIncludeDeclaration:
-                    case PreprocessingInfo::CpreprocessorIncludeNextDeclaration:
-                         if ( !info.SkipComments() )
-                            {
-                              if (unp->opt.get_unparse_includes_opt() == true)
-                                   curprint ( string("// " ) + (*i)->getString());
-                                else
-                                   curprint ( (*i)->getString());
-                            }
-                         break;
-
-                 // Comments don't have to be further commented
-                    case PreprocessingInfo::FortranStyleComment:
-                    case PreprocessingInfo::F90StyleComment:
-                    case PreprocessingInfo::C_StyleComment:
-                    case PreprocessingInfo::CplusplusStyleComment:
-                         if ( !info.SkipComments() )
-                            {
-                              curprint ( (*i)->getString());
-                            }
-                         break;
-
-                 // extern declarations must be handled as comments since 
-                 // the EDG frontend strips them away
-                    case PreprocessingInfo::ClinkageSpecificationStart:
-                    case PreprocessingInfo::ClinkageSpecificationEnd:
-                         if ( !info.SkipComments() )
-                            {
-                              if (unp->opt.get_unparse_includes_opt() == true)
-                                   curprint (  string("// ") + (*i)->getString());
-                                else
-                                   curprint ( (*i)->getString());
-                            }
-                         break;
-
-                 // Must unparse these because they could hide a #define 
-                 // directive which would then be seen e.g.
-                 //      #if 0
-                 //      #define printf parallelPrintf
-                 //      #endif
-                 // So because we unparse the #define we must unparse 
-                 // the #if, #ifdef, #else, and #endif directives.
-                 // line declarations should also appear in the output 
-                 // to permit the debugger to see the original code
-                    case PreprocessingInfo::CpreprocessorIfdefDeclaration:
-                    case PreprocessingInfo::CpreprocessorIfndefDeclaration:
-                    case PreprocessingInfo::CpreprocessorIfDeclaration:
-                 // Rama (08/17/07): Adding support so that pseudo-comments can be attached properly.
-                    case PreprocessingInfo::CpreprocessorDeadIfDeclaration:
-                    case PreprocessingInfo::CpreprocessorElseDeclaration:
-                    case PreprocessingInfo::CpreprocessorElifDeclaration:
-                    case PreprocessingInfo::CpreprocessorEndifDeclaration:
-                    case PreprocessingInfo::CpreprocessorLineDeclaration:
-                 // AS(120506) Added support for skipped tokens for Wave
-                    case PreprocessingInfo::CSkippedToken: 
-                         if ( !info.SkipComments() )
-                            {
-                              if (unp->opt.get_unparse_includes_opt() == true)
+                 // DQ (1/28/2013): Fixed indentation of code block.
+                    switch ( (*i)->getTypeOfDirective() )
+                       {
+                      // All #include directives are unparsed so that we can make the 
+                      // output codes as similar as possible to the input codes. This also
+                      // simplifies the debugging. On the down side it sets up a chain of 
+                      // problems that force us to unparse most of the other directives 
+                      // which makes the unparsing a bit more complex.
+                         case PreprocessingInfo::CpreprocessorIncludeDeclaration:
+                         case PreprocessingInfo::CpreprocessorIncludeNextDeclaration:
+                              if ( !info.SkipComments() )
                                  {
-                                   curprint ( string("// (previously processed: ignored) " ) + (*i)->getString());
+                                   if (unp->opt.get_unparse_includes_opt() == true)
+                                        curprint ( string("// " ) + (*i)->getString());
+                                     else
+                                        curprint ( (*i)->getString());
+                                 }
+                              break;
+
+                      // Comments don't have to be further commented
+                         case PreprocessingInfo::FortranStyleComment:
+                         case PreprocessingInfo::F90StyleComment:
+                         case PreprocessingInfo::C_StyleComment:
+                         case PreprocessingInfo::CplusplusStyleComment:
+                              if ( !info.SkipComments() )
+                                 {
+                                   curprint ( (*i)->getString());
+                                 }
+                              break;
+
+                      // extern declarations must be handled as comments since the EDG frontend strips them away
+                         case PreprocessingInfo::ClinkageSpecificationStart:
+                         case PreprocessingInfo::ClinkageSpecificationEnd:
+                              if ( !info.SkipComments() )
+                                 {
+                                   if (unp->opt.get_unparse_includes_opt() == true)
+                                        curprint (  string("// ") + (*i)->getString());
+                                     else
+                                        curprint ( (*i)->getString());
+                                 }
+                              break;
+
+                      // Must unparse these because they could hide a #define 
+                      // directive which would then be seen e.g.
+                      //      #if 0
+                      //      #define printf parallelPrintf
+                      //      #endif
+                      // So because we unparse the #define we must unparse 
+                      // the #if, #ifdef, #else, and #endif directives.
+                      // line declarations should also appear in the output 
+                      // to permit the debugger to see the original code
+                         case PreprocessingInfo::CpreprocessorIfdefDeclaration:
+                         case PreprocessingInfo::CpreprocessorIfndefDeclaration:
+                         case PreprocessingInfo::CpreprocessorIfDeclaration:
+                      // Rama (08/17/07): Adding support so that pseudo-comments can be attached properly.
+                         case PreprocessingInfo::CpreprocessorDeadIfDeclaration:
+                         case PreprocessingInfo::CpreprocessorElseDeclaration:
+                         case PreprocessingInfo::CpreprocessorElifDeclaration:
+                         case PreprocessingInfo::CpreprocessorEndifDeclaration:
+                         case PreprocessingInfo::CpreprocessorLineDeclaration:
+                      // AS(120506) Added support for skipped tokens for Wave
+                         case PreprocessingInfo::CSkippedToken: 
+                              if ( !info.SkipComments() )
+                                 {
+                                   if (unp->opt.get_unparse_includes_opt() == true)
+                                      {
+                                        curprint ( string("// (previously processed: ignored) " ) + (*i)->getString());
+                                      }
+                                     else
+                                      {
+                                        curprint ( (*i)->getString());
+                                      }
                                  }
                                 else
+                                 {
                                    curprint ( (*i)->getString());
-                            }
-                                                else
-                                                   curprint ( (*i)->getString());
-                         break;
+                                 }
+                              break;
 
-                 // Comment out these declarations where they occur because we don't need
-                 // them (they have already been evaluated by the front-end and would be
-                 // redundent).
-                    case PreprocessingInfo::CpreprocessorWarningDeclaration:
-                    case PreprocessingInfo::CpreprocessorErrorDeclaration:
-                    case PreprocessingInfo::CpreprocessorEmptyDeclaration:
-                         if ( !info.SkipCPPDirectives() )
-                            {
-                           // DQ (11/29/2006): Let's try to generate code which handles these better.
-                           // curprint ( string("// (previously processed: ignored) " + (*i)->getString() ;
+                      // Comment out these declarations where they occur because we don't need
+                      // them (they have already been evaluated by the front-end and would be
+                      // redundent).
+                         case PreprocessingInfo::CpreprocessorWarningDeclaration:
+                         case PreprocessingInfo::CpreprocessorErrorDeclaration:
+                         case PreprocessingInfo::CpreprocessorEmptyDeclaration:
+                              if ( !info.SkipCPPDirectives() )
+                                 {
+                                // DQ (11/29/2006): Let's try to generate code which handles these better.
+                                // curprint ( string("// (previously processed: ignored) " + (*i)->getString() ;
+                                   curprint ( (*i)->getString());
+                                 }
+                              break;
+
+                      // We skip commenting out these cases for the moment
+                      // We must unparse these since they could control the path 
+                      // taken in header files included separately e.g.
+                      //      #define OPTIMIZE_ME
+                      //      // optimization.h could include two paths dependent on the value of OPTIMIZE_ME
+                      //      #include "optimization.h"
+                         case PreprocessingInfo::CpreprocessorDefineDeclaration:
+                         case PreprocessingInfo::CpreprocessorUndefDeclaration:
+                              if ( !info.SkipCPPDirectives() )
+                                 {
+                                   if (unp->opt.get_unparse_includes_opt() == true)
+                                        curprint ( string("// (previously processed: ignored) " ) + (*i)->getString());
+                                     else
+                                        curprint ( (*i)->getString());
+                                 }
+                              break;
+
+                         case PreprocessingInfo::CpreprocessorUnknownDeclaration:
+                              printf ("Error: CpreprocessorUnknownDeclaration found \n");
+                              ROSE_ABORT();
+                              break;
+                         case PreprocessingInfo::CMacroCall:
+                           // AS(1/04/07) Macro rewrapping is currently not supported
+                              break;
+                         case PreprocessingInfo::CMacroCallStatement:
                               curprint ( (*i)->getString());
-                            }
-                         break;
+                              break;
 
-                 // We skip commenting out these cases for the moment
-                 // We must unparse these since they could control the path 
-                 // taken in header files included separately e.g.
-                 //      #define OPTIMIZE_ME
-                 //      // optimization.h could include two paths dependent on the value of OPTIMIZE_ME
-                 //      #include "optimization.h"
-                    case PreprocessingInfo::CpreprocessorDefineDeclaration:
-                    case PreprocessingInfo::CpreprocessorUndefDeclaration:
-                         if ( !info.SkipCPPDirectives() )
-                            {
-                              if (unp->opt.get_unparse_includes_opt() == true)
-                                   curprint ( string("// (previously processed: ignored) " ) + (*i)->getString());
-                                else
-                                   curprint ( (*i)->getString());
-                            }
-                         break;
+                         case PreprocessingInfo::LineReplacement:
+                              break;
 
-                    case PreprocessingInfo::CpreprocessorUnknownDeclaration:
-                         printf ("Error: CpreprocessorUnknownDeclaration found \n");
-                         ROSE_ABORT();
-                         break;
-                    case PreprocessingInfo::CMacroCall:
-                         //AS(1/04/07) Macro rewrapping is currently not supported
-                         break;
-                    case PreprocessingInfo::CMacroCallStatement:
-                         curprint ( (*i)->getString());
-                         break;
+                         case PreprocessingInfo::CpreprocessorIdentDeclaration:
+                              curprint ( (*i)->getString());
+                              break;
 
-                    case PreprocessingInfo::LineReplacement:
-                         break;
+                         case PreprocessingInfo::CpreprocessorCompilerGeneratedLinemarker:
+                              curprint ( (*i)->getString());
+                              break;
 
-                    case PreprocessingInfo::CpreprocessorIdentDeclaration:
-                         curprint ( (*i)->getString());
-                         break;
-
-                    case PreprocessingInfo::CpreprocessorCompilerGeneratedLinemarker:
-                         curprint ( (*i)->getString());
-                         break;
-
-
-                    default:
-                         printf ("Error: default reached in switch in Unparse_ExprStmt::unparseAttachedPreprocessingInfo()\n");
-                         ROSE_ABORT();
-                  }
+                         default:
+                              printf ("Error: default reached in switch in Unparse_ExprStmt::unparseAttachedPreprocessingInfo()\n");
+                              ROSE_ABORT();
+                       }
                   }
 
             // DQ (7/19/2008): Moved from outer nested scope level (below)
