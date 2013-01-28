@@ -116,6 +116,24 @@ public:
             std::swap(pointers_[i], pointers_[j]);
         }
     }
+    std::string toString() const {
+        std::ostringstream ss;
+        print(ss);
+        return ss.str();
+    }
+    void print(std::ostream &o) const {
+        o <<"non-pointer inputs (" <<integers_.size() <<" total):\n";
+        for (size_t i=0; i<integers_.size(); ++i)
+            o <<"  " <<integers_[i] <<(i==next_integer_?"\t<-- next input":"") <<"\n";
+        if (next_integer_>=integers_.size())
+            o <<"  all non-pointers have been consumed; returning zero\n";
+        o <<"pointer inputs (" <<pointers_.size() <<" total):\n";
+        for (size_t i=0; i<pointers_.size(); ++i)
+            o <<"  " <<pointers_[i] <<(i==next_pointer_?"\t<-- next input":"") <<"\n";
+        if (next_pointer_>=pointers_.size())
+            o <<"  all pointers have been consumed; returning null\n";
+    }
+        
 protected:
     std::vector<uint64_t> integers_;
     std::vector<uint64_t> pointers_;

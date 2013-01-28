@@ -10,13 +10,171 @@
 #include "BinaryPointerDetection.h"
 #include "YicesSolver.h"
 
-/******************************************************************************************************************************/
+/*******************************************************************************************************************************
+ *                                      Partition Forest
+ *******************************************************************************************************************************/
 
-// Runs clone detection over specimen functions.
+typedef std::set<SgAsmFunction*> Functions;
+typedef CloneDetection::InputValues InputValues;
+typedef std::set<uint32_t> OutputValues;
+
+/** A forest that partitions functions into similarity classes. Each vertex contains a set of similar functions and the output
+ *  values produced by that set of functions (they all produced the same output).  Each level of the tree provides a set of
+ *  input values that were used when running the functions at that level of the tree.  Each vertex (except those at the top)
+ *  has a pointer to a vertex at the next higher level of the tree; by following the upward pointers one can determine all the
+ *  sets of input values that have been used to partition the whole set of functions. */
+class PartitionForest {
+public:
+    /** Tree vertex.  A vertex contains a set of functions that are semantically similar because they all produced the same
+     *  output for a given input. The output values are stored in the vertex while the input values are stored across the entire
+     *  level of the tree. Each vertex not at the top of the tree has a pointer to its parent; the children of a parent
+     *  partition the parent. */
+    struct Vertex {
+        Vertex *parent;                         // parent pointer
+        Functions functions;                    // functions that are similar
+        OutputValues outputs;                   // outputs for the level's given input
+        std::set<Vertex*> children;
+        Vertex(Vertex *parent, SgAsmFunction *func, const OutputValues &outputs): parent(parent), outputs(outputs) {
+            functions.insert(func);
+            if (parent) {
+                assert(parent->functions.find(func)!=parent->functions.end());
+                parent->children.insert(this);
+            }
+        }
+        size_t get_level() const {
+            size_t n = 0;
+            for (Vertex *v=parent; v; v=v->parent) ++n;
+            return n;
+        }
+        const Functions& get_functions() { return functions; }
+    };
+    typedef std::set<Vertex*> Vertices;
+
+    /** One level of a tree.  A level is a list of sibling vertices that represent a partitioning of all tested functions into
+     *  semantically similar groups.  Levels are numbered so that zero is the top level. A new level is created by partitioning
+     *  each vertex from the next higher level according to a set of input values chosen for the new level.  If level L has V
+     *  vertices, then level L+1 will have at least V vertices also. */
+    struct Level {
+        InputValues inputs;
+        Vertices vertices;
+        Level(const InputValues &inputs): inputs(inputs) {}
+    };
+
+    typedef std::vector<Level> Levels;
+    Levels levels;
+
+    /** Returns the number of levels in the partition forest.  Levels are numbered starting at zero. The return value is one
+     * more than the maximum level that contains a vertex. */
+    size_t nlevels() const { return levels.size(); }
+
+    /** Create a new (empty) level.  This is the level into which the next higher level's vertices will be partitioned. The
+     * return value is the new level number. */
+    size_t new_level(const InputValues &inputs) {
+        levels.push_back(Level(inputs));
+        return levels.size()-1;
+    }
+
+    /** Return the list of vertices at a given level of the forest. */
+    const Vertices& vertices_at_level(size_t level) const {
+        assert(level<levels.size());
+        return levels[level].vertices;
+    }
+
+    /** Returns the vertex from the specified set that contains the specified function. */
+    Vertex* contains(const Vertices &vertices, SgAsmFunction *func) const {
+        for (Vertices::const_iterator vi=vertices.begin(); vi!=vertices.end(); ++vi) {
+            if ((*vi)->functions.find(func)!=(*vi)->functions.end())
+                return *vi;
+        }
+        return NULL;
+    }
+
+    /** Returns the set of all leaf nodes in the forest. */
+    Vertices get_leaves() const {
+        Vertices retval;
+        for (size_t i=0; i<levels.size(); ++i) {
+            const Vertices &vertices = vertices_at_level(i);
+            for (Vertices::const_iterator vi=vertices.begin(); vi!=vertices.end(); ++vi) {
+                if ((*vi)->children.empty())
+                    retval.insert(*vi);
+            }
+        }
+        return retval;
+    }
+    
+    /** Insert a function into a vertex of the forest, or create a new vertex. The (new) vertex into which the function was
+     * inserted is either a child of @p parent or a root node. The @p outputs are used to select the vertex into which the
+     * function is inserted (all functions of a particular vertex produced the same output when run with the same input). */
+    void insert(SgAsmFunction *func, OutputValues outputs, PartitionForest::Vertex *parent) {
+        Vertices candidates = parent ? parent->children : vertices_at_level(0);
+        assert(!contains(candidates, func));
+        for (Vertices::iterator vi=candidates.begin(); vi!=candidates.end(); ++vi) {
+            Vertex *vertex = *vi;
+            if (outputs.size()==vertex->outputs.size() && std::equal(outputs.begin(), outputs.end(), vertex->outputs.begin())) {
+                vertex->functions.insert(func);
+                return;
+            }
+        }
+        size_t lno = parent ? parent->get_level() + 1 : 0;
+        assert(lno<levels.size());
+        levels[lno].vertices.insert(new Vertex(parent, func, outputs));
+    }
+
+    /** Print the entire forest for debugging output. */
+    void print(std::ostream &o) const {
+        for (size_t i=0; i<levels.size(); ++i) {
+            if (levels[i].vertices.empty()) {
+                o <<"partition forest level " <<i <<" is empty.\n";
+            } else {
+                size_t nsets = levels[i].vertices.size();
+                size_t nfuncs = 0;
+                for (Vertices::const_iterator vi=levels[i].vertices.begin(); vi!=levels[i].vertices.end(); ++vi)
+                    nfuncs += (*vi)->functions.size();
+                o <<"partition forest level " <<i
+                  <<" contains " <<nfuncs <<" function" <<(1==nfuncs?"":"s")
+                  <<" in " <<nsets <<" set" <<(1==nsets?"":"s") <<"\n";
+                o <<"  the following input was used to generate " <<(1==nsets?"this set":"these sets") <<":\n";
+                o <<StringUtility::prefixLines(levels[i].inputs.toString(), "    ");
+                int setno = 1;
+                for (Vertices::const_iterator vi=levels[i].vertices.begin(); vi!=levels[i].vertices.end(); ++vi, ++setno) {
+                    Vertex *vertex = *vi;
+                    const Functions &functions = vertex->functions;
+                    o <<"  set #" <<setno
+                      <<" contains " <<vertex->functions.size() <<" function" <<(1==vertex->functions.size()?"":"s") <<":\n";
+                    for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+                        SgAsmFunction *func = *fi;
+                        o <<"    " <<StringUtility::addrToString(func->get_entry_va()) <<" <" <<func->get_name() <<">\n";
+                    }
+                    o <<"    whose output was: {";
+                    for (OutputValues::const_iterator oi=vertex->outputs.begin(); oi!=vertex->outputs.end(); ++oi)
+                        o <<" " <<*oi;
+                    o <<" }\n";
+                }
+            }
+        }
+    }
+
+    std::string toString() const {
+        std::ostringstream ss;
+        print(ss);
+        return ss.str();
+    }
+};
+        
+/*******************************************************************************************************************************
+ *                                      Clone Detector
+ *******************************************************************************************************************************/
+
+/** Main driving function for clone detection.  This is the class that chooses inputs, runs each function, and looks at the
+ *  outputs to decide how to partition the functions.  It does this repeatedly in order to build a PartitionForest. The
+ *  analyze() method is the main entry point. */
 class CloneDetector {
 protected:
     static const char *name;            /**< For --debug output. */
     RSIM_Thread *thread;                /**< Thread where analysis is running. */
+    PartitionForest partition;          /**< Partitioning of functions into similarity sets. */
+    enum { MAX_ITERATIONS = 10 };       /**< Maximum number of times we run the functions; max number of input sets. */
+    enum { MAX_SIMSET_SIZE = 3 };       /**< Any similarity set containing more than this many functions will be partitioned. */
 
 public:
     CloneDetector(RSIM_Thread *thread): thread(thread) {}
@@ -29,13 +187,10 @@ public:
         return addr;
     }
 
-    // Detect functions that are semantically similar
-    void analyze() {
-        RSIM_Process *proc = thread->get_process();
-        RTS_Message *m = thread->tracing(TRACE_MISC);
-        m->mesg("%s triggered; disassembling entire specimen image...\n", name);
-        MemoryMap map(proc->get_memory(), MemoryMap::COPY_SHALLOW);
-        map.prune(MemoryMap::MM_PROT_READ); // don't let the disassembler read unreadable memory, else it will segfault
+    // Obtain a memory map for disassembly
+    MemoryMap *disassembly_map(RSIM_Process *proc) {
+        MemoryMap *map = new MemoryMap(proc->get_memory(), MemoryMap::COPY_SHALLOW);
+        map->prune(MemoryMap::MM_PROT_READ); // don't let the disassembler read unreadable memory, else it will segfault
 
         // Removes execute permission for any segment whose debug name does not contain the name of the executable. When
         // comparing two different executables for clones, we probably don't need to compare code that came from dynamically
@@ -53,16 +208,29 @@ public:
                 return true;
             }
         } pruner(proc->get_exename());
-        map.traverse(pruner);
+        map->traverse(pruner);
+        return map;
+    }
 
-        // Disassemble the process image and organize it into functions
+    // Get all the functions defined for this process image.  We do this by disassembling the entire process executable memory
+    // and using CFG analysis to figure out where the functions are located.
+    
+    Functions find_functions(RTS_Message *m, RSIM_Process *proc) {
+        m->mesg("%s triggered; disassembling entire specimen image...\n", name);
+        MemoryMap *map = disassembly_map(proc);
         std::ostringstream ss;
-        map.dump(ss, "  ");
+        map->dump(ss, "  ");
         m->mesg("%s: using this memory map for disassembly:\n%s", name, ss.str().c_str());
-        SgAsmBlock *gblk = proc->disassemble(false/*take no shortcuts*/, &map);
+        SgAsmBlock *gblk = proc->disassemble(false/*take no shortcuts*/, map);
+        delete map; map=NULL;
         std::vector<SgAsmFunction*> functions = SageInterface::querySubTree<SgAsmFunction>(gblk);
-        m->mesg("%s: fuzz testing %zu function%s", name, functions.size(), 1==functions.size()?"":"s");
+        return Functions(functions.begin(), functions.end());
+    }
 
+    // Perform a pointer-detection analysis on each function. We'll need the results in order to determine whether a function
+    // input should consume a pointer or a non-pointer from the input value set.
+    typedef std::map<SgAsmFunction*, CloneDetection::PointerDetector> PointerDetectors;
+    PointerDetectors detect_pointers(RTS_Message *m, RSIM_Thread *thread, const Functions &functions) {
         // Choose an SMT solver. This is completely optional.  Pointer detection still seems to work fairly well (and much,
         // much faster) without an SMT solver.
         SMTSolver *solver = NULL;
@@ -70,24 +238,17 @@ public:
         if (YicesSolver::available_linkage())
             solver = new YicesSolver;
 #endif
-
-        // Perform data type analysis on each function in order to find which things are pointers and which are non-pointers
-        // The RSIM_Process is used as the instruction providor, and therefore must have a get_instruction() method that takes
-        // a single rose_addr_t argument.  We create one pointer detector per function, and we remember it since it contains
-        // the list of pointer addresses that we'll need later.
-        typedef std::map<SgAsmFunction*, CloneDetection::PointerDetector> PointerDetectors;
-        PointerDetectors pointers;
-        for (std::vector<SgAsmFunction*>::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+        PointerDetectors retval;
+        for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
             m->mesg("%s: performing pointer detection analysis for \"%s\" at 0x%08"PRIx64,
                     name, (*fi)->get_name().c_str(), (*fi)->get_entry_va());
             CloneDetection::PointerDetector pd(thread->get_process(), solver);
             pd.initial_state().registers.gpr[x86_gpr_sp] = SYMBOLIC_VALUE<32>(thread->policy.INITIAL_STACK);
             pd.initial_state().registers.gpr[x86_gpr_bp] = SYMBOLIC_VALUE<32>(thread->policy.INITIAL_STACK);
-#if 0 /*DEBUGGING [Robb Matzke 2013-01-11]*/
-            pd.set_debug(stderr);
-#endif
+            //pd.set_debug(stderr);
             pd.analyze(*fi);
-            pointers.insert(std::make_pair(*fi, pd));
+            retval.insert(std::make_pair(*fi, pd));
+#if 1 /*DEBUGGING [Robb P. Matzke 2013-01-24]*/
             if (m->get_file()) {
                 const CloneDetection::PointerDetector::Pointers plist = pd.get_pointers();
                 for (CloneDetection::PointerDetector::Pointers::const_iterator pi=plist.begin(); pi!=plist.end(); ++pi) {
@@ -100,41 +261,41 @@ public:
                     m->mesg("   %s", ss.str().c_str());
                 }
             }
-        }
-
-        // Choose some input values. (FIXME: eventually we need to make these random)
-        CloneDetection::InputValues inputs;
-        inputs.add_integer(1);
-        inputs.add_integer(50);
-        inputs.add_integer(100);
-        inputs.add_pointer(allocate_page());
-        inputs.add_pointer(0);
-        inputs.add_pointer(allocate_page());
-
-        // Fuzz test each function
-        for (std::vector<SgAsmFunction*>::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
-            PointerDetectors::iterator ip = pointers.find(*fi);
-            assert(ip!=pointers.end());
-            CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *outputs = fuzz_test(*fi, &inputs, &ip->second);
-#if 1 /*DEBUGGING [Robb Matzke 2013-01-14]*/
-            std::ostringstream output_values_str;
-            std::set<uint32_t> output_values = outputs->get_values();
-            for (std::set<uint32_t>::iterator ovi=output_values.begin(); ovi!=output_values.end(); ++ovi)
-                output_values_str <<" " <<*ovi;
-            m->mesg("%s: function output values are {%s }", name, output_values_str.str().c_str());
 #endif
-        
         }
+        return retval;
+    }
+
+    // Randomly choose a set of input values. The set will consist of the specified number of non-pointers and pointers. The
+    // non-pointer values are chosen randomly, but limited to a certain range.  The pointers are chosen randomly to be null or
+    // non-null and the non-null values each have one page allocated via simulated mmap() (i.e., the non-null values themselves
+    // are not actually random).
+    InputValues choose_inputs(size_t nintegers, size_t npointers) {
+        static unsigned integer_modulus = 256;  // arbitrary;
+        static unsigned nonnull_denom = 3;      // probability of a non-null pointer is 1/N
+        CloneDetection::InputValues inputs;
+        for (size_t i=0; i<nintegers; ++i)
+            inputs.add_integer(rand() % integer_modulus);
+        for (size_t i=0; i<npointers; ++i)
+            inputs.add_pointer(rand()%nonnull_denom ? 0 : allocate_page());
+        return inputs;
+    }
+
+    // Run a single function, look at its outputs, and insert it into the correct place in the PartitionForest
+    void insert_function(SgAsmFunction *func, InputValues &inputs, CloneDetection::PointerDetector &pointers,
+                         PartitionForest &partition, PartitionForest::Vertex *parent) {
+        CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *outputs = fuzz_test(func, inputs, pointers);
+        OutputValues concrete_outputs = outputs->get_values();
+        partition.insert(func, concrete_outputs, parent);
     }
 
     // Analyze a single function by running it with the specified inputs and collecting its outputs. */
-    CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *fuzz_test(SgAsmFunction *function, CloneDetection::InputValues *inputs,
-                                                             const CloneDetection::PointerDetector *pointers) {
+    CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *fuzz_test(SgAsmFunction *function, CloneDetection::InputValues &inputs,
+                                                             const CloneDetection::PointerDetector &pointers) {
         RSIM_Process *proc = thread->get_process();
         RTS_Message *m = thread->tracing(TRACE_MISC);
-        m->mesg("%s", std::string(100, '=').c_str());
+        m->mesg("==========================================================================================");
         m->mesg("%s: fuzz testing function \"%s\" at 0x%08"PRIx64, name, function->get_name().c_str(), function->get_entry_va());
-        m->mesg("%s", std::string(100, '=').c_str());
 
         // Not sure if saving/restoring memory state is necessary. I don't thing machine memory is adjusted by the semantic
         // policy's writeMemory() or readMemory() operations after the policy is triggered to enable our analysis.  But it
@@ -144,7 +305,7 @@ public:
 
         // Trigger the analysis, resetting it to start executing the specified function using the input values and pointer
         // variable addresses we selected previously.
-        thread->policy.trigger(function->get_entry_va(), inputs, pointers);
+        thread->policy.trigger(function->get_entry_va(), &inputs, &pointers);
 
         // "Run" the function using our semantic policy.  The function will not "run" in the normal sense since: since our
         // policy has been triggered, memory access, function calls, system calls, etc. will all operate differently.  See
@@ -169,6 +330,74 @@ public:
         thread->init_regs(saved_regs);
         proc->mem_transaction_rollback(name);
         return outputs;
+    }
+
+    // Run each function from the specified set of functions in order to produce an output set for each function.  Then insert
+    // the functions into the bottom of the specified PartitionForest.  This runs one iteration of partitioning.
+    void partition_functions(RTS_Message *m, PartitionForest &partition,
+                             const Functions &functions, PointerDetectors &pointers,
+                             InputValues &inputs, PartitionForest::Vertex *parent) {
+        for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+            PointerDetectors::iterator ip = pointers.find(*fi);
+            assert(ip!=pointers.end());
+            CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *outputs = fuzz_test(*fi, inputs, ip->second);
+#if 1 /*DEBUGGING [Robb Matzke 2013-01-14]*/
+            std::ostringstream output_values_str;
+            OutputValues output_values = outputs->get_values();
+            for (OutputValues::iterator ovi=output_values.begin(); ovi!=output_values.end(); ++ovi)
+                output_values_str <<" " <<*ovi;
+            m->mesg("%s: function output values are {%s }", name, output_values_str.str().c_str());
+#endif
+            partition.insert(*fi, output_values, parent);
+        }
+    }
+
+    // Detect functions that are semantically similar by running multiple iterations of partition_functions().
+    void analyze() {
+        RTS_Message *m = thread->tracing(TRACE_MISC);
+        Functions functions = find_functions(m, thread->get_process());
+        PointerDetectors pointers = detect_pointers(m, thread, functions);
+        PartitionForest partition;
+        while (partition.nlevels()<MAX_ITERATIONS) {
+            InputValues inputs = choose_inputs(3, 3);
+            size_t level = partition.new_level(inputs);
+            m->mesg("####################################################################################################");
+            m->mesg("%s: fuzz testing %zu function%s at level %zu", name, functions.size(), 1==functions.size()?"":"s", level);
+            m->mesg("%s: using these input values:\n%s", name, inputs.toString().c_str());
+
+            if (0==level) {
+                partition_functions(m, partition, functions, pointers, inputs, NULL);
+            } else {
+                const PartitionForest::Vertices &parent_vertices = partition.vertices_at_level(level-1);
+                for (PartitionForest::Vertices::const_iterator pvi=parent_vertices.begin(); pvi!=parent_vertices.end(); ++pvi) {
+                    PartitionForest::Vertex *parent_vertex = *pvi;
+                    if (parent_vertex->functions.size()>MAX_SIMSET_SIZE)
+                        partition_functions(m, partition, parent_vertex->functions, pointers, inputs, parent_vertex);
+                }
+            }
+
+            // If the new level doesn't contain any vertices then we must not have needed to repartition anything and we're all
+            // done.
+            if (partition.vertices_at_level(level).empty())
+                break;
+        }
+
+        m->mesg("==========================================================================================");
+        m->mesg("%s: The entire partition forest follows...", name);
+        m->mesg("%s", StringUtility::prefixLines(partition.toString(), std::string(name)+": ").c_str());
+
+        m->mesg("==========================================================================================");
+        m->mesg("%s: Final function similarity sets are:", name);
+        PartitionForest::Vertices leaves = partition.get_leaves();
+        size_t setno=0;
+        for (PartitionForest::Vertices::iterator vi=leaves.begin(); vi!=leaves.end(); ++vi, ++setno) {
+            PartitionForest::Vertex *leaf = *vi;
+            const Functions &functions = leaf->get_functions();
+            m->mesg("%s:   set #%zu at level %zu has %zu function%s:",
+                    name, setno, leaf->get_level(), functions.size(), 1==functions.size()?"":"s");
+            for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi)
+                m->mesg("%s:     0x%08"PRIx64" <%s>", name, (*fi)->get_entry_va(), (*fi)->get_name().c_str());
+        }
     }
 };
 
