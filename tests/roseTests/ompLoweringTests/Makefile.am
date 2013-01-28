@@ -42,7 +42,8 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
         task_wait.c \
         task_wait2.c \
 	task_untied4.c \
-	twoRegions.c 
+	twoRegions.c  \
+	axpy_ompacc.c
 
 # Put test codes which can run (with main() ) here
 # They will be compiled and executed when the gomp library path is set

@@ -66,6 +66,9 @@ namespace OmpSupport
   //! Translate omp for or omp do loops
   void transOmpLoop(SgNode* node);
 
+  //! Translate omp for or omp do loops affected by the "omp target" directive, Liao 1/28/2013
+  void transOmpTargetLoop(SgNode* node);
+
   //! Translate Fortran omp do
   //void transOmpDo(SgNode* node);
 
