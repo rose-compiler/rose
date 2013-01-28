@@ -1138,6 +1138,9 @@ test2013_34.C \
 test2013_36.C \
 test2013_37.C \
 test2013_38.C \
+test2013_39.C \
+test2013_44.C \
+test2013_46.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1173,6 +1176,10 @@ test2004_35.C
 # test2013_19.C 
 # test2013_30.C 
 # test2013_35.C 
+# test2013_40.C  // Demonstrates expression precedence problem.
+# test2013_41.C  // Demonstrates expression precedence problem.
+# test2013_42.C  // Demonstrates expression precedence problem.
+# test2013_43.C  // Demonstrates expression precedence problem.
 
 
 # Variation of regression test that fails.

@@ -1,6 +1,7 @@
 #define DEFINE_AS_FRIEND_FUNCTION 1
 
 namespace std
+// namespace X___std
    {
      class X
         {

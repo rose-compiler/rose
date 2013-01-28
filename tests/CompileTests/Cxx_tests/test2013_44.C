@@ -1,30 +1,16 @@
-// This is trying to represent the use of covariant return types, but I'm not tetecting them.
+// This is test code demonstrates the use of covariant return types.
+// The test code works, but nothing is ROSE is currently identifying 
+// the function with the covariant return type as being special (i.e. 
+// having a covariant return type).
 
-class A
+struct Base 
    {
-   };
- 
-class B : A 
-   {
-   };
- 
-// "Class B is more narrow than class A"
-// Classes demonstrating method overriding: 
-class C
-   {
-     A getFoo()
-        {
-//         return new A();
-        }
+     virtual Base* foobar();
    };
 
-class D : C
+struct Derived : public Base 
    {
-     B getFoo()
-        {
-//       return new B();
-        }
+     Derived* foobar();
    };
-
 
 
