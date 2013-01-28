@@ -903,89 +903,7 @@ static void insert_libxompf_h(SgNode* startNode)
     }
     else 
     {
-#if 0 // Liao 1/4/2010, use a call to XOMP_loop_default() instead of generating statements to calculate loop bounds      
-      // ---------------------------------------------------------------
-      // calculate chunksize for static scheduling , if the chunk size is not specified.
-      if (!hasSpecifiedSize) // This portion is always on since hasSpecifiedSize will turn on transOmpLoop_others()
-      {
-        SgVariableDeclaration* chunk_decl=  buildVariableDeclaration("_p_chunk_size", buildIntType(), NULL,bb1);
-        appendStatement(chunk_decl, bb1); 
-        // for C-style for (i=lower; i< upper; i+=stride) 
-        // int _p_iter_count = (stride + -1 + upper - lower )/stride; // if stride is positive (incremental iteration space)
-        //or int _p_iter_count = (stride + 1 + upper - lower )/stride; // if stride is negative
-        // we use inclusive upper bound (<= or >=) after loop normalization, so -1 or +1 is not needed.
-        SgExpression * count_exp = buildDivideOp( buildAddOp(createAdjustedStride(orig_stride,isIncremental),
-              buildSubtractOp(copyExpression(orig_upper), copyExpression(orig_lower) )) , 
-            createAdjustedStride(orig_stride,isIncremental));
-        SgVariableDeclaration* count_decl = buildVariableDeclaration("_p_iter_count",buildIntType(), buildAssignInitializer(count_exp), bb1);
-        appendStatement(count_decl, bb1);
-        // constant folding 
-        constantFolding(count_decl->get_parent()); 
-        //int _p_num_threads = omp_get_num_threads ();
-        SgVariableDeclaration* num_threads_decl = buildVariableDeclaration("_p_num_threads", buildIntType(), 
-            buildAssignInitializer(buildFunctionCallExp("omp_get_num_threads", buildVoidType(), NULL, bb1)),
-            bb1);
-        appendStatement(num_threads_decl, bb1);
-        //  _p_chunk_size = _p_iter_count / _p_num_threads;
-        SgExprStatement * assign1 = buildAssignStatement(buildVarRefExp(chunk_decl), 
-            buildDivideOp(buildVarRefExp(count_decl), buildVarRefExp(num_threads_decl)) );  
-        appendStatement(assign1, bb1);
-        //  int _p_ck_temp = (_p_chunk_size * _p_num_threads) != _p_iter_count;
-        SgVariableDeclaration* temp_decl = buildVariableDeclaration("_p_ck_temp", buildIntType(), 
-            buildAssignInitializer( buildNotEqualOp(buildMultiplyOp(buildVarRefExp(chunk_decl), buildVarRefExp(num_threads_decl)) ,
-                buildVarRefExp(count_decl)) ), 
-            bb1);  
-        appendStatement(temp_decl, bb1);
-        // _p_chunk_size = _p_ck_temp + _p_chunk_size;
-        SgExpression* temp_chunk = buildVarRefExp(chunk_decl);
-        SgExprStatement * assign2 = buildAssignStatement(buildVarRefExp(chunk_decl), 
-            buildAddOp(buildVarRefExp(temp_decl), temp_chunk)); 
-        // buildAddOp(buildVarRefExp(temp_decl), buildVarRefExp(chunk_decl)));  // use temp_chunk once to avoid dangling expression
-        appendStatement(assign2, bb1);
-        my_chunk_size = temp_chunk; // now my_chunk_size has to be copied before reusing it!!
-      }
-      ROSE_ASSERT(my_chunk_size != NULL);
-      ROSE_ASSERT(my_chunk_size->get_parent() != NULL);
-
-      // adjust start and end iterations for the current thread for static scheduling
-      // ---------------------------------------------------------------
-      // int _p_thread_id = omp_get_thread_num ();
-      SgVariableDeclaration* thread_id_decl = buildVariableDeclaration("_p_thread_id", buildIntType(), 
-          buildAssignInitializer(buildFunctionCallExp("omp_get_thread_num", buildVoidType(), NULL, bb1)),
-          bb1);
-      appendStatement(thread_id_decl, bb1);
-      // _p_lower = lower + _p_chunk_size * _p_thread_id * stride;
-      SgExprStatement * assign_lower = buildAssignStatement(buildVarRefExp(lower_decl),
-          buildAddOp(copyExpression(orig_lower), 
-            buildMultiplyOp( buildMultiplyOp( copyExpression(my_chunk_size), buildVarRefExp(thread_id_decl)) , 
-              createAdjustedStride(orig_stride,isIncremental) )) ); 
-      appendStatement(assign_lower, bb1);
-      // _p_upper = _p_lower + _p_chunk_size * stride;
-      // _p_upper = _p_lower + (_p_chunk_size) * stride -1; // we normalized loop to have inclusive upper bound, so -1 is needed
-      // _p_upper = _p_lower + (_p_chunk_size) * stride +1; // +1 if decremental
-      int upperAdjust;  
-      if (isIncremental) 
-        upperAdjust = -1;
-      else 
-        upperAdjust = 1;
-      SgExprStatement * assign_upper = buildAssignStatement(buildVarRefExp(upper_decl), buildAddOp(
-            buildAddOp(buildVarRefExp(lower_decl), buildMultiplyOp(copyExpression(my_chunk_size), createAdjustedStride(orig_stride,isIncremental))), 
-            buildIntVal(upperAdjust)));
-
-      appendStatement(assign_upper, bb1);
-      // _p_upper = _p_upper<upper? _p_upper: upper; 
-      //or  _p_upper = _p_upper>upper? _p_upper: upper;  if decremental
-      SgExpression* cond_exp = NULL;
-      if (isIncremental)
-        cond_exp = buildLessThanOp(buildVarRefExp(upper_decl), copyExpression(orig_upper));
-      else
-        cond_exp = buildGreaterThanOp(buildVarRefExp(upper_decl), copyExpression(orig_upper));
-      assign_upper = buildAssignStatement(buildVarRefExp(upper_decl),
-          buildConditionalExp(cond_exp, buildVarRefExp(upper_decl), copyExpression(orig_upper) ));
-      appendStatement(assign_upper, bb1);
-
-#else
-      //void XOMP_loop_default(int lower, int upper, int stride, long *n_lower, long * n_upper)
+     //void XOMP_loop_default(int lower, int upper, int stride, long *n_lower, long * n_upper)
       // XOMP_loop_default (lower, upper, stride, &_p_lower, &_p_upper );
       // lower:  copyExpression(orig_lower)
       // upper: copyExpression(orig_upper)
@@ -1009,7 +927,6 @@ static void insert_libxompf_h(SgNode* startNode)
                   e4, e5);
       SgStatement * call_stmt =  buildFunctionCallStmt ("XOMP_loop_default", buildVoidType(), call_parameters, bb1);
       appendStatement(call_stmt, bb1);
-#endif
 
       // add loop here
       appendStatement(loop, bb1); 
@@ -1036,6 +953,144 @@ static void insert_libxompf_h(SgNode* startNode)
     // handle variables 
     // transOmpVariables(target, bb1); // This should happen before the barrier is inserted.
   } // end trans omp for
+
+
+  //! Translate omp for or omp do loops affected by the "omp target" directive, Liao 1/28/2013
+  /*
+  
+  Example: 
+  // for (i = 0; i < N; i++)
+  { // top level block, prepare to be outlined.
+     int i ; // = blockDim.x * blockIdx.x + threadIdx.x; // this CUDA declaration can be inserted later
+  // TODO: i = blockDim.x * blockIdx.x + threadIdx.x;
+  
+     if (i<SIZE)  // boundary checking to avoid invalid memory accesses
+   {
+     for (j = 0; j < M; j++)
+      for (k = 0; k < K; k++)
+      c[i][j]= c[i][j]+a[i][k]*b[k][j];
+   }
+  } // end of top level block
+ 
+  Algorithm:
+    * check if it is a OmpTargetLoop
+    * loop normalization
+    * replace OmpForStatement with a block: bb1
+    * declare int _dev_i within bb1;  replace for loop body’s loop index with _dev_i;
+    * build if stmt with correct condition
+    * move loop body to if-stmt’s true body
+    * remove for_loop
+  */
+  void transOmpTargetLoop(SgNode* node)
+{
+  //step 0: Sanity check
+  ROSE_ASSERT(node != NULL);
+  SgOmpForStatement* target1 = isSgOmpForStatement(node);
+  SgOmpDoStatement* target2 = isSgOmpDoStatement(node);
+
+  SgOmpClauseBodyStatement* target = (target1!=NULL?(SgOmpClauseBodyStatement*)target1:(SgOmpClauseBodyStatement*)target2);
+  ROSE_ASSERT (target != NULL);
+
+  SgScopeStatement* p_scope = target->get_scope();
+  ROSE_ASSERT (p_scope != NULL);
+
+  SgStatement * body =  target->get_body();
+  ROSE_ASSERT(body != NULL);
+  // The OpenMP syntax requires that the omp for pragma is immediately followed by the for loop.
+  SgForStatement * for_loop = isSgForStatement(body);
+  SgFortranDo * do_loop = isSgFortranDo(body);
+  SgStatement* loop = (for_loop!=NULL?(SgStatement*)for_loop:(SgStatement*)do_loop);
+  ROSE_ASSERT (loop != NULL);
+
+  // make sure this is really a loop affected by "omp target"
+  bool is_target_loop = false;
+  SgNode* parent = node->get_parent();
+  ROSE_ASSERT (parent != NULL);
+  SgNode* grand_parent = parent->get_parent();
+  ROSE_ASSERT (grand_parent != NULL);
+  SgOmpParallelStatement* parent_parallel = isSgOmpParallelStatement (parent) ;
+  SgOmpTargetStatement* grand_target = isSgOmpTargetStatement(grand_parent);
+  ROSE_ASSERT (parent_parallel !=NULL); 
+  ROSE_ASSERT (grand_target !=NULL); 
+
+
+  // Step 1. Loop normalization
+  // For the init statement: for (int i=0;... ) becomes int i; for (i=0;..) 
+  // For test expression: i<x is normalized to i<= (x-1) and i>x is normalized to i>= (x+1) 
+  // For increment expression: i++ is normalized to i+=1 and i-- is normalized to i+=-1 i-=s is normalized to i+= -s 
+  if (for_loop)
+    SageInterface::forLoopNormalization(for_loop);
+  else if (do_loop)
+    SageInterface::doLoopNormalization(do_loop);
+  else
+  {
+    cerr<<"error! transOmpLoop(). loop is neither for_loop nor do_loop. Aborting.."<<endl;
+    ROSE_ASSERT (false);
+  }
+
+  SgInitializedName * orig_index = NULL;
+  SgExpression* orig_lower = NULL;
+  SgExpression* orig_upper= NULL;
+  SgExpression* orig_stride= NULL;
+  bool isIncremental = true; // if the loop iteration space is incremental
+  // grab the original loop 's controlling information
+  bool is_canonical = false;
+  if (for_loop)
+    is_canonical = isCanonicalForLoop (for_loop, &orig_index, & orig_lower, &orig_upper, &orig_stride, NULL, &isIncremental);
+  else if (do_loop)
+    is_canonical = isCanonicalDoLoop (do_loop, &orig_index, & orig_lower, &orig_upper, &orig_stride, NULL, &isIncremental, NULL);
+  ROSE_ASSERT(is_canonical == true);
+
+  // also make sure the loop body is a block
+  // TODO: we consider peeling off 1 level loop control only, need to be conditional on what the spec. can provide at pragma level
+  // TODO: Fortran support later on
+  ROSE_ASSERT (for_loop != NULL);
+  SgBasicBlock* loop_body = ensureBasicBlockAsBodyOfFor (for_loop);
+
+
+  //Step 2. Insert a basic block to replace SgOmpForStatement
+  // This newly introduced scope is used to hold loop variables ,etc
+  SgBasicBlock * bb1 = SageBuilder::buildBasicBlock();
+  replaceStatement(target, bb1, true);
+
+ //Step 3. Using device thread id and replace reference of original loop index with the thread index
+  // Declare device thread id variable
+  SgVariableDeclaration* dev_i_decl = buildVariableDeclaration("_dev_i", buildIntType(), NULL, bb1); 
+  prependStatement (dev_i_decl, bb1);
+  SgVariableSymbol* dev_i_symbol = getFirstVarSym (dev_i_decl);
+  ROSE_ASSERT (dev_i_symbol != NULL);
+
+  // replace reference to loop index with reference to device i variable
+  ROSE_ASSERT (orig_index != NULL);
+  SgSymbol * orig_symbol = orig_index ->get_symbol_from_symbol_table () ;
+  ROSE_ASSERT (orig_symbol != NULL);
+
+  Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(loop_body, V_SgVarRefExp);
+  for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+  {
+    SgVarRefExp *vRef = isSgVarRefExp((*i));
+    if (vRef->get_symbol() == orig_symbol)
+      vRef->set_symbol(dev_i_symbol);
+  }
+
+  // Step 4. build the if () condition statement, move the loop body into the true body
+  SgBasicBlock* true_body = buildBasicBlock();
+  SgExprStatement* cond_stmt = NULL;
+  if (isIncremental)
+    cond_stmt = buildExprStatement(buildLessOrEqualOp (buildVarRefExp(dev_i_symbol), deepCopy(orig_upper)));
+  else
+  {
+    cerr<<"error. transOmpTargetLoop(): decremental case is not yet handled !"<<endl;
+    ROSE_ASSERT (false);
+  }
+  SgIfStmt * if_stmt = buildIfStmt(cond_stmt, true_body, NULL);
+  appendStatement(if_stmt, bb1);
+  moveStatementsBetweenBlocks (loop_body, true_body);  
+  // Peel off the original loop
+  removeStatement (for_loop);
+
+  //TODO transOmpVariables!   
+}
 
   //! Check if an OpenMP statement has a clause of type vt
   Rose_STL_Container<SgOmpClause*> getClause(SgOmpClauseBodyStatement* clause_stmt, const VariantT & vt)
@@ -3374,8 +3429,20 @@ void lower_omp(SgSourceFile* file)
       case V_SgOmpForStatement:
       case V_SgOmpDoStatement:
         {
-          //transOmpFor(node);
-          transOmpLoop(node);
+          // check if the loop is part of the combined "omp parallel for" under the "omp target" directive
+          bool is_target_loop = false;
+          SgNode* parent = node->get_parent();
+          ROSE_ASSERT (parent != NULL);
+          SgNode* grand_parent = parent->get_parent();
+          ROSE_ASSERT (grand_parent != NULL);
+
+          if (isSgOmpParallelStatement (parent) && isSgOmpTargetStatement(grand_parent) ) 
+            is_target_loop = true;
+            
+          if (is_target_loop)
+            transOmpTargetLoop (node);
+          else  
+            transOmpLoop(node);
           break;
         }
         //          {
