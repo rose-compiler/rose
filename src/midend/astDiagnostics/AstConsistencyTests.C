@@ -1141,6 +1141,17 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          break;
                        }
 #endif
+#ifdef ROSE_USE_EDG_VERSION_4
+                 // DQ (10/30/2012): This case is required for postfix/src/global/valid_mailhost_addr.c (and test2012_133.c, and simplified in test2012_139.c).
+                    case V_SgTemplateParameterVal:
+                       {
+                      // Unclear what should be checked here, for now allow this as an acceptable case.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgTemplateParameterVal returned from SgFunctionCallExp::get_type() member function \n");
+#endif
+                         break;
+                       }
+#endif
 
                     default:
                        {
