@@ -24,11 +24,11 @@ diff test_attach01a-out.txt ${PROFILE_DIR}/test_attach01a-answer.txt
 rc=$?
 if [ $rc -eq $PASS ]; then
   echo "******* HPCTOOLKIT test_attach01a PASSED *********"
+#  rm -f test_attach01a-out.txt
 else
   echo "******* HPCTOOLKIT test_attach01a FAILED *********"
 fi
 
-rm -f test_attach01a-out.txt
 
 exit $rc
 

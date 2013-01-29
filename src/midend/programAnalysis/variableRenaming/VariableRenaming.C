@@ -418,13 +418,19 @@ void VariableRenaming::insertDefsForExternalVariables(SgFunctionDeclaration* fun
         {
             //Handle the case of declaring "extern int x" inside the function
             //Then, x has global scope but it actually has a definition inside the function so we don't need to insert one
-            if (SageInterface::isAncestor(function->get_definition(), rootName[0]))
-            {
+            if (SageInterface::isAncestor(function->get_definition(), rootName[0])) {
                 //When else could a var be declared inside a function and be global?
-                SgVariableDeclaration* varDecl = isSgVariableDeclaration(rootName[0]->get_parent());
-                ROSE_ASSERT(varDecl != NULL);
-                ROSE_ASSERT(varDecl->get_declarationModifier().get_storageModifier().isExtern());
-                continue;
+                if(SgVariableDeclaration* varDecl = isSgVariableDeclaration(rootName[0]->get_parent())){
+                    ROSE_ASSERT(varDecl->get_declarationModifier().get_storageModifier().isExtern());
+                    continue;
+                } else if (SgFunctionParameterList *params = isSgFunctionParameterList(rootName[0]->get_parent())) {
+                    // x can also have global scope when it appears as a formal parameter in an extern function declaration,
+                    // as in:  void f() { void g(int x); ... }
+                    SgFunctionDeclaration *fdecl = isSgFunctionDeclaration(params->get_parent());
+                    assert(fdecl!=NULL);
+                    assert(fdecl!=function);
+                    continue;
+                }
             }
         }
 

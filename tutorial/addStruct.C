@@ -29,6 +29,7 @@ buildClassDeclarationAndDefinition (string name, SgScopeStatement* scope)
      SgClassDeclaration* nondefiningClassDeclaration = new SgClassDeclaration(SOURCE_POSITION,name.c_str(),SgClassDeclaration::e_struct,NULL,NULL);
      assert(classDeclaration != NULL);
      nondefiningClassDeclaration->set_endOfConstruct(SOURCE_POSITION);
+     nondefiningClassDeclaration->set_scope(scope); // scope is needed for createType()
      nondefiningClassDeclaration->set_type(SgClassType::createType(nondefiningClassDeclaration));
 
   // Set the internal reference to the non-defining declaration
@@ -51,7 +52,6 @@ buildClassDeclarationAndDefinition (string name, SgScopeStatement* scope)
 
   // set the scope explicitly (name qualification tricks can imply it is not always the parent IR node!)
      classDeclaration->set_scope(scope);
-     nondefiningClassDeclaration->set_scope(scope);
 
   //set parent
      classDeclaration->set_parent(scope);
@@ -87,6 +87,7 @@ buildStructVariable ( SgScopeStatement* scope,
           memberDeclaration->set_parent(classDeclaration->get_definition());
         // Liao (2/13/2008) scope and symbols for member variables
           SgInitializedName* initializedName = *(memberDeclaration->get_variables().begin());
+          initializedName->set_file_info(SOURCE_POSITION);
           initializedName->set_scope(classDeclaration->get_definition());
 
         // set nondefning declaration pointer
@@ -105,6 +106,7 @@ buildStructVariable ( SgScopeStatement* scope,
 
    //Liao (2/13/2008) scope and symbols for struct variable
      SgInitializedName* initializedName = *(variableDeclaration->get_variables().begin());
+     initializedName->set_file_info(SOURCE_POSITION);
      initializedName->set_scope(scope);
 
      SgVariableSymbol* variableSymbol = new SgVariableSymbol(initializedName);

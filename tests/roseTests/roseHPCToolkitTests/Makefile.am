@@ -125,7 +125,7 @@ endif
 endif
 
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files *.bin
+	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files *.bin test_attach01a-out.txt test_attach01-out.txt test_prop01-out.txt
 	rm -f *.pdf
 
 distclean-local:
