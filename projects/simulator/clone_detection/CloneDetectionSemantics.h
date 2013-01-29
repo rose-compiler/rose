@@ -99,6 +99,8 @@ public:
     }
     size_t integers_consumed() const { return next_integer_; }
     size_t pointers_consumed() const { return next_pointer_; }
+    const std::vector<uint64_t> get_integers() const { return integers_; }
+    const std::vector<uint64_t> get_pointers() const { return pointers_; }
     size_t num_inputs() const { return integers_consumed() + pointers_consumed(); }
     void reset() { next_integer_ = next_pointer_ = 0; }
     void clear() {

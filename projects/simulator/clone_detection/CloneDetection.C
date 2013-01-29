@@ -33,8 +33,9 @@ public:
         Vertex *parent;                         // parent pointer
         Functions functions;                    // functions that are similar
         OutputValues outputs;                   // outputs for the level's given input
-        std::set<Vertex*> children;
-        Vertex(Vertex *parent, SgAsmFunction *func, const OutputValues &outputs): parent(parent), outputs(outputs) {
+        std::set<Vertex*> children;             // all children of this vertex
+        size_t id;                              // ID used when dumping to a DBMS
+        Vertex(Vertex *parent, SgAsmFunction *func, const OutputValues &outputs): parent(parent), outputs(outputs), id(0) {
             functions.insert(func);
             if (parent) {
                 assert(parent->functions.find(func)!=parent->functions.end());
@@ -154,6 +155,70 @@ public:
         }
     }
 
+    /** Number the vertices of the forest. */
+    void renumber_vertices() {
+        size_t id=0;
+        for (size_t i=0; i<levels.size(); ++i) {
+            for (Vertices::const_iterator vi=levels[i].vertices.begin(); vi!=levels[i].vertices.end(); ++vi)
+                (*vi)->id = id++;
+        }
+    }
+
+    /** Dump the output sets to the DBMS. (FIXME: dumping SQL to a file instead; see dump())*/
+    void dump_outputsets(std::ostream &dbc) const {
+        for (size_t i=0; i<levels.size(); ++i) {
+            for (Vertices::const_iterator vi=levels[i].vertices.begin(); vi!=levels[i].vertices.end(); ++vi) {
+                dbc <<"insert into outputsets (id) values (" <<(*vi)->id <<");\n";
+                for (OutputValues::const_iterator ni=(*vi)->outputs.begin(); ni!=(*vi)->outputs.end(); ++ni)
+                    dbc <<"insert into outputvalues (outputset_id, val) values (" <<(*vi)->id <<", " <<*ni <<");\n";
+            }
+        }
+    }
+
+    /** Dump inputsets to the DBMS. (FIXME: dumping SQL to a file instead; see dump()) */
+    void dump_inputsets(std::ostream &dbc) const {
+        for (size_t i=0; i<levels.size(); ++i) {
+            dbc <<"insert into inputsets (id) values(" <<i <<");\n";
+            const std::vector<uint64_t> &pointers = levels[i].inputs.get_pointers();
+            for (size_t j=0; j<pointers.size(); ++j)
+                dbc <<"insert into inputvalues (inputset_id, vtype, pos, val)"
+                    <<" values (" <<i <<", 'P', " <<j <<", " <<pointers[j] <<");\n";
+            const std::vector<uint64_t> &integers = levels[i].inputs.get_integers();
+            for (size_t j=0; j<integers.size(); ++j)
+                dbc <<"insert into inputvalues (inputset_id, vtype, pos, val)"
+                    <<" values (" <<i <<", 'N', " <<j <<", " <<integers[j] <<");\n";
+        }
+    }
+
+    /** Dump an entire forest to a DBMS.
+     *
+     *  FIXME: This should really be using something like ODBC, but ROSE is only configured to use specific DBMS like SQLite3
+     *  or MySQL. Therefore, since we don't need to do any queries, we'll just generate straight SQL as text (the sqlite3x API
+     *  converts all numeric values to text anyway, so there's not really any additional slowdown or loss of precision).
+     *  Therefore, the @p user_name and @p password arguments are unused, and @p server_name is the name of the file to which
+     *  the SQL statements are written. */
+    void dump(const std::string &server_name, const std::string &user_name, const std::string &password) {
+        std::ofstream dbc(server_name.c_str());
+        renumber_vertices();
+        dump_outputsets(dbc);
+        dump_inputsets(dbc);
+
+        Vertices leaves = get_leaves();
+        size_t leafnum = 0;
+
+        for (Vertices::const_iterator vi=leaves.begin(); vi!=leaves.end(); ++vi, ++leafnum) {
+            Vertex *vertex = *vi;
+            const Functions &functions = vertex->get_functions();
+            dbc <<"insert into simsets (id) values (" <<leafnum <<");\n";
+
+            for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi)
+                dbc <<"insert into functions (entry_va, simset_id) values (" <<(*fi)->get_entry_va() <<", " <<leafnum <<");\n";
+            for (Vertex *v=vertex; v; v=v->parent)
+                dbc <<"insert into inoutpairs (simset_id, inputset_id, outputset_id) values ("
+                    <<leafnum <<", " <<v->get_level() <<", " <<v->id <<");\n";
+        }
+    }
+        
     std::string toString() const {
         std::ostringstream ss;
         print(ss);
@@ -214,7 +279,6 @@ public:
 
     // Get all the functions defined for this process image.  We do this by disassembling the entire process executable memory
     // and using CFG analysis to figure out where the functions are located.
-    
     Functions find_functions(RTS_Message *m, RSIM_Process *proc) {
         m->mesg("%s triggered; disassembling entire specimen image...\n", name);
         MemoryMap *map = disassembly_map(proc);
@@ -398,6 +462,9 @@ public:
             for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi)
                 m->mesg("%s:     0x%08"PRIx64" <%s>", name, (*fi)->get_entry_va(), (*fi)->get_name().c_str());
         }
+
+        m->mesg("%s: dumping final similarity sets to clones.sql", name);
+        partition.dump("clones.sql", "NO_USER", "NO_PASSWD");
     }
 };
 
