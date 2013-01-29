@@ -7152,10 +7152,11 @@ SageBuilder::buildPragmaDeclaration(const string& name, SgScopeStatement* scope)
      result->set_firstNondefiningDeclaration(result);
      pragma->set_parent(result);
 
-  // DQ (7/14/2012): Set the parent so that we can be consistant where possible (class declarations and 
+  // DQ (7/14/2012): Set the parent so that we can be consistent where possible (class declarations and 
   // enum declaration can't have there parent set since they could be non-autonomous declarations).
      result->set_parent(topScopeStack());
 
+    if (topScopeStack())
      ROSE_ASSERT(result->get_parent() != NULL);
 
      return result;
