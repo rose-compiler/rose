@@ -34,18 +34,26 @@ class SgPragmaDeclaration;
 namespace Outliner
 {
   //! A set of flags to control the internal behavior of the outliner
-  //classic outlining behavior: 
-  //side effect analysis for pass-by-value and pass-by-ref, reuse parameters
+  //
+  // How variables are handled:
+  // Method 1: classic outlining behavior: each parameter represents a single variable being passed in/out the outlined function
+  //  side effect analysis for pass-by-value and pass-by-ref, 
+  //  reuse parameters of the outlined function (no wrapper parameter is used, no parameter packing/unpacking is needed)
   extern bool enable_classic; 
+  // Method 2: using a wrapper (array of pointers vs. structure of flexible typed members)
   // use a wrapper for all variables or one parameter for a variable or a wrapper for all variables
   extern bool useParameterWrapper;  // use an array of pointers wrapper for parameters of the outlined function
-  extern bool useStructureWrapper;  // use a structure-type wrapper for parameters of the outlined function, this is a sub option for useParameterWrapper. false means using array, true means using structure
+  extern bool useStructureWrapper;  // use a structure-type wrapper for parameters of the outlined function, this is a sub option for useParameterWrapper. false means using array, true means using structure (the same as useParameterWrapper)
                    // turned on by command line option:   -rose:outline:parameter_wrapper
+                   
+  // Using variable cloning(temp variable) to reduce the uses of pointer dereferencing in computation kernels.
+  // Details are in the paper: Chunhua Liao, Daniel J. Quinlan, Richard Vuduc, and Thomas Panas. 2009. Effective source-to-source outlining to support whole program empirical optimization. In Proceedings of the 22nd international conference on Languages and Compilers for Parallel Computing (LCPC'09).
+  extern bool temp_variable; // Use temporary variables to reduce the uses of pointer dereferencing. Activated by -rose:outline:temp_variable
+
   extern bool preproc_only_;  // preprocessing only, -rose:outline:preproc-only
   extern bool useNewFile; // Generate the outlined function into a separated new source file
                           // -rose:outline:new_file
   extern std::vector<std::string> handles;   // abstract handles of outlining targets, given by command line option -rose:outline:abstract_handle for each
-  extern bool temp_variable; // Use temporary variables to reduce the uses of pointer dereferencing. Activated by -rose:outline:temp_variable
   extern bool enable_debug; // output debug information for outliner
   extern bool exclude_headers; // exclude headers from the new file containing outlined functions
   extern bool enable_liveness; // enable liveness analysis to reduce restoring statements when temp variables are used
@@ -164,12 +172,17 @@ namespace Outliner
 
     /*!
      *  \brief Computes the set of variables in 's' that need to be
-     *  passed to the outlined routine == shared variables in OpenMP: syms
-     *  and private variables (in OpenMP): psyms
-     *  Note: private, firsprivate, reduction variables are handled by OmpSupport::transOmpVariables() now
-     *  They are not in actual use anymore.
+     *  passed to the outlined routine (semantically equivalent to shared variables in OpenMP) 
+     *
+     *  Note: user codes should handle non-generic variable handling on their own.
+     *  Outliner only handles generic operations.
+     *  For example, in OpenMP translation calling outliner: OpenMP specific variables 
+     *  such as private, firstprivate, reduction variables are handled by OmpSupport::transOmpVariables() 
+     *  before it calls outliner. So the outliner can focus on generic operations while the caller should
+     *  handle their special variables in advance. 
      */
-    void collectVars (const SgStatement* s, ASTtools::VarSymSet_t& syms, ASTtools::VarSymSet_t& private_syms);
+    void collectVars (const SgStatement* s, ASTtools::VarSymSet_t& syms);
+    //void collectVars (const SgStatement* s, ASTtools::VarSymSet_t& syms, ASTtools::VarSymSet_t& private_syms);
 
     /*!\brief Generate a new source file under the same SgProject as
      * target, the file's base name is file_name_str. Suffix is automatically
@@ -178,6 +191,7 @@ namespace Outliner
     SgSourceFile* generateNewSourceFile(SgBasicBlock* target, const std::string& file_name);
 
     /*!\brief Generate a struct declaration to wrap all variables to be passed to the outlined function
+     * There are two ways to wrap a variable: Using its value vs. Using its address (pointer type)
      *
      * This function will also insert the declaration inside the global scope point right before the outlining target
      * If the scope of the outlined function is different, a declaration will also be inserted there. 
@@ -186,7 +200,7 @@ namespace Outliner
         SgBasicBlock* s, // the outlining target
         const std::string& func_name_str, // the name for the outlined function, we generate the name of struct based on this.
         const ASTtools::VarSymSet_t& syms, // variables to be passed as parameters
-        ASTtools::VarSymSet_t& pdSyms, // variables must use pointer types
+        ASTtools::VarSymSet_t& pdSyms, // variables must use pointer types (pointer dereferencing: pdf). The rest variables use pass-by-value
         SgScopeStatement* func_scope ); // the scope of the outlined function, could be in another file
 
 
@@ -211,7 +225,7 @@ namespace Outliner
      *  their corresponding pointer dereferencing if replaced during 
      *  outlining. Used to support -rose:outline:temp_variable
      *
-     *  pSyms are OpenMP private variables, or dead variables (neither livein nor liveout)
+     * // pSyms are OpenMP private variables, or dead variables (neither livein nor liveout)
      *
      *  Note: private, firsprivate, reduction variables are handled by OmpSupport::transOmpVariables()
      *  They are not in actual use anymore.
@@ -225,7 +239,7 @@ namespace Outliner
                       const std::string& func_name_str,
                       const ASTtools::VarSymSet_t& syms,
                       const ASTtools::VarSymSet_t& pdSyms,
-                      const ASTtools::VarSymSet_t& pSyms,
+//                      const ASTtools::VarSymSet_t& pSyms, //TODO: remove this parameter since non-generic handling should be done before calling the outliner
                       SgClassDeclaration* struct_decl, /*optional struct type to wrap parameters*/
                       SgScopeStatement* scope);
 
@@ -254,7 +268,7 @@ namespace Outliner
      */
     SgStatement* generateCall (SgFunctionDeclaration* out_func,
                               const ASTtools::VarSymSet_t& syms,
-                              std::set<SgInitializedName*> readOnlyVars,
+                              const std::set<SgInitializedName*> readOnlyVars,
                               std::string wrapper_arg_name,
                               SgScopeStatement* scope);
   

@@ -124,7 +124,8 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   // Determine variables to be passed to outlined routine.
   // Also collect symbols which must use pointer dereferencing if replaced during outlining
   ASTtools::VarSymSet_t syms, psyms, pdSyms;
-  collectVars (s, syms, psyms);
+  collectVars (s, syms);
+  //collectVars (s, syms, psyms);
 
   std::set<SgInitializedName*> readOnlyVars;
 
@@ -164,7 +165,7 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
   // generate the function and its prototypes if necessary
   //  printf ("In Outliner::Transform::outlineBlock() function name to build: func_name_str = %s \n",func_name_str.c_str());
-  SgFunctionDeclaration* func = generateFunction (s, func_name_str, syms, pdSyms, psyms, struct_decl, glob_scope);
+  SgFunctionDeclaration* func = generateFunction (s, func_name_str, syms, pdSyms, struct_decl, glob_scope);
   ROSE_ASSERT (func != NULL);
   ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
 

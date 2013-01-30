@@ -1089,7 +1089,7 @@ static void insert_libxompf_h(SgNode* startNode)
   // Peel off the original loop
   removeStatement (for_loop);
 
-  //TODO transOmpVariables!   
+  //TODO transOmpVariables!   for reduction etc.
 }
 
   //! Check if an OpenMP statement has a clause of type vt
@@ -1111,8 +1111,17 @@ static void insert_libxompf_h(SgNode* startNode)
   }
 
 //! A helper function to generate implicit or explicit task for either omp parallel or omp task
+//  Parameters:  SgNode* node: the OMP Parallel or OMP Parallel
+//               std::string& wrapper_name: for C/C++, structure wrapper is used to wrap all parameters. This is to return the struct name
+//               ASTtools::VarSymSet_t& syms :  all variables to be passed in/out the outlined function
+//               ASTtools::VarSymSet_t&pdSyms3 : variables which must be passed by references, used to guide the creation of struct wrapper: member using base type vs. using pointer type.  The algorithm to generate this set is already very conservative: after transOmpVariables() , the only exclude firstprivate. In the context of OpenMP, it is equivalent to say this is a set of variables which are to be passed by references. 
+// Algorithms:
+//    Set flags of the outliner to indicate desired behaviors: parameter wrapping or not?
+//    translate OpenMP variables (first private, private, reduction, etc) so the code to be outlined is already as simple as possible (without OpenMP-specific semantics)
+//
 // It calls the ROSE AST outliner internally. 
-SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_name, ASTtools::VarSymSet_t& syms, std::set<SgInitializedName*>& readOnlyVars, ASTtools::VarSymSet_t&pdSyms3)
+SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_name, ASTtools::VarSymSet_t& syms, ASTtools::VarSymSet_t&pdSyms3)
+//SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_name, ASTtools::VarSymSet_t& syms, std::set<SgInitializedName*>& readOnlyVars, ASTtools::VarSymSet_t&pdSyms3)
 {
   ROSE_ASSERT(node != NULL);
   SgOmpClauseBodyStatement* target = isSgOmpClauseBodyStatement(node);  
@@ -1142,25 +1151,31 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
 
   //TODO there should be some semantics check for the regions to be outlined
   //for example, multiple entries or exists are not allowed for OpenMP
-  //This is however of low priority since most vendor compilers have this already
+  //This is however of low priority since most vendor compilers have this already.
   SgBasicBlock* body_block = Outliner::preprocess(body);
 
+  //---------------------------------------------------------------
+  //  Key step: handling special variables BEFORE actual outlining is done!!
   // Variable handling is done after Outliner::preprocess() to ensure a basic block for the body,
   // but before calling the actual outlining 
   // This simplifies the outlining since firstprivate, private variables are replaced 
   //with their local copies before outliner is used 
-  transOmpVariables (target, body_block);
+  transOmpVariables (target, body_block); 
 
+  // variable sets for private, firstprivate, reduction, and pointer dereferencing (pd)
   ASTtools::VarSymSet_t pSyms, fpSyms,reductionSyms, pdSyms;
 
   string func_name = Outliner::generateFuncName(target);
   SgGlobal* g_scope = SageInterface::getGlobalScope(body_block);
   ROSE_ASSERT(g_scope != NULL);
 
-  // This step is less useful for private, firstprivate, and reduction variables
-  // since they are already handled by transOmpVariables(). 
-  Outliner::collectVars(body_block, syms, pSyms);
+   //-----------------------------------------------------------------
+  // Generic collection of variables to be passed as parameters of the outlined functions
+  // semantically equivalent to shared variables in OpenMP
+  Outliner::collectVars(body_block, syms);
 
+   // Now decide on the parameter convention for all the parameters: pass-by-value vs. pass-by-reference (pointer dereferencing)
+   
   //     SageInterface::collectReadOnlyVariables(body_block,readOnlyVars);
   // We choose to be conservative about the variables needing pointer dereferencing first
   // AllParameters - readOnlyVars  - private -firstprivate 
@@ -1177,16 +1192,23 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
   set_difference (pdSyms.begin(), pdSyms.end(),
       fp_syms.begin(), fp_syms.end(),
       std::inserter(pdSyms2, pdSyms2.begin()));
-
+ //  ROSE_ASSERT (pdSyms.size() == pdSyms2.size());  this means the previous set_difference is neccesary !
+ 
+#if 0
   // Similarly , exclude private variable, also read only
- SgInitializedNamePtrList p_vars = collectClauseVariables (target, V_SgOmpPrivateClause);
- ASTtools::VarSymSet_t p_syms; //, pdSyms3;
- convertAndFilter (p_vars, p_syms);
+  // TODO: is this necessary? private variables should  be handled already in transOmpVariables(). So Outliner::collectVars() will not collect them at all!
+  SgInitializedNamePtrList p_vars = collectClauseVariables (target, V_SgOmpPrivateClause);
+  ASTtools::VarSymSet_t p_syms; //, pdSyms3;
+  convertAndFilter (p_vars, p_syms);
   //TODO keep class typed variables!!!  even if they are firstprivate or private!! 
   set_difference (pdSyms2.begin(), pdSyms2.end(),
       p_syms.begin(), p_syms.end(),
       std::inserter(pdSyms3, pdSyms3.begin()));
- 
+
+  ROSE_ASSERT (pdSyms2.size() == pdSyms3.size());
+#endif
+  pdSyms3 = pdSyms2;
+
   // lastprivate and reduction variables cannot be excluded  since write access to their shared copies
 
   // Sara Royuela 24/04/2012
@@ -1214,7 +1236,7 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
       ASTtools::VarSymSet_t a_syms, a_pSyms;
       SgExprStatement* index_stmt = buildExprStatement(index);
       appendStatement(index_stmt, body_block);
-      Outliner::collectVars(index_stmt, a_syms, a_pSyms);
+      Outliner::collectVars(index_stmt, a_syms);
       SageInterface::removeStatement(index_stmt);
       for(ASTtools::VarSymSet_t::iterator j = a_syms.begin(); j != a_syms.end(); ++j)
       {
@@ -1226,6 +1248,7 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
       i_type = ((SgArrayType*) i_type)->get_base_type();
     }
   }
+
   for (ASTtools::VarSymSet_t::const_iterator i = new_syms.begin (); i != new_syms.end (); ++i)
   {
     const SgVariableSymbol* s = *i;
@@ -1242,7 +1265,62 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
   // ROSE_ASSERT (struct_decl != NULL); // can be NULL if no parameters to be passed
 
   //Generate the outlined function
-  result = Outliner::generateFunction(body_block, func_name, syms, pdSyms3, pSyms, struct_decl, g_scope);
+  /* Parameter list
+       SgBasicBlock* s,  // block to be outlined
+       const string& func_name_str, // function name
+       const ASTtools::VarSymSet_t& syms, // parameter list for all variables to be passed around
+       const ASTtools::VarSymSet_t& pdSyms, // variables must use pointer dereferencing (pass-by-reference)
+       const ASTtools::VarSymSet_t& psyms, // private or dead variables (not live-in, not live-out)
+       SgClassDeclaration* struct_decl,  // an optional wrapper structure for parameters
+    Depending on the internal flag, unpacking/unwrapping statements are generated inside the outlined function to use wrapper parameters.
+  */
+  result = Outliner::generateFunction(body_block, func_name, syms, pdSyms3, struct_decl, g_scope);
+  
+#if 0
+  // special handling for empty variables to be passed: test case helloNested.cpp
+  // TODO: move this portion from GenerateFunc.cc variableHandling()
+  //For OpenMP lowering, we have to have a void * parameter even if there is no need to pass any parameters 
+  //in order to match the gomp runtime lib 's function prototype for function pointers
+  SgFile* cur_file = getEnclosingFileNode(result);
+  ROSE_ASSERT (cur_file != NULL);
+  //if (cur_file->get_openmp_lowering () && ! SageInterface::is_Fortran_language())
+  if (cur_file->get_openmp_lowering ())
+  {
+    if (syms.size() ==0)
+    {
+      SgFunctionParameterList* params = result->get_parameterList ();
+      ROSE_ASSERT (params);
+      SgFunctionDefinition* def = result->get_definition ();
+      ROSE_ASSERT (def);
+      SgBasicBlock* body = def->get_body ();
+      ROSE_ASSERT (body);
+
+      SgName var1_name = "__out_argv";
+      SgType* ptype= NULL; 
+      // A dummy integer parameter for Fortran outlined function
+      if (SageInterface::is_Fortran_language() )
+      {
+        var1_name = "out_argv";
+        ptype = buildIntType();
+        SgVariableDeclaration *var_decl = buildVariableDeclaration(var1_name,ptype, NULL, body);
+        prependStatement(var_decl, body);
+      }
+      else
+      {
+        ptype = buildPointerType (buildVoidType());
+        ROSE_ASSERT (Outliner::useStructureWrapper);
+      }
+      SgInitializedName* parameter1=NULL;
+      parameter1 = buildInitializedName(var1_name,ptype);
+      appendArg(params,parameter1);
+    }
+  }
+  else 
+  {
+   ROSE_ASSERT (false);
+  }
+#endif
+
   Outliner::insert(result, g_scope, body_block);
 
 #if 0 //Liao 12/20/2012 this logic is moved into outliner since using static function is generally a good idea.
@@ -1372,12 +1450,14 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
 
     // 1/15/2009, Liao, also handle the last #endif, which is attached inside of the target
     cutPreprocessingInfo(target, PreprocessingInfo::inside, save_buf_inside) ;
-     // generated an outlined function as the task
+
+    //-----------------------------------------------------------------
+    // step 1: generated an outlined function as the task
     std::string wrapper_name;
     ASTtools::VarSymSet_t syms; // store all variables in the outlined task ???
-    ASTtools::VarSymSet_t pdSyms3; // store all variables which should be passed by references
-    std::set<SgInitializedName*> readOnlyVars;
-    SgFunctionDeclaration* outlined_func = generateOutlinedTask (node, wrapper_name, syms, readOnlyVars, pdSyms3);
+    ASTtools::VarSymSet_t pdSyms3; // store all variables which should be passed by references (pd means pointer dereferencing)
+    std::set<SgInitializedName*> readOnlyVars; // not used since OpenMP provides all variable controlling details already. side effect analysis is essentially not being used. 
+    SgFunctionDeclaration* outlined_func = generateOutlinedTask (node, wrapper_name, syms, pdSyms3);
 
     if (SageInterface::is_Fortran_language() )
     { // EXTERNAL outlined_function , otherwise the function name will be interpreted as a integer/real variable
@@ -1399,6 +1479,8 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
     SgScopeStatement * p_scope = target->get_scope();
     ROSE_ASSERT(p_scope != NULL);
 
+    //-----------------------------------------------------------------
+    // step 2: generate call to the outlined function
 #ifndef ENABLE_XOMP  // direct use of gomp needs an explicit call to the task in the original sequential process
     // generate a function call to it
     SgStatement* func_call = Outliner::generateCall (outlined_func, syms, readOnlyVars, wrapper_name,p_scope);
@@ -1524,11 +1606,170 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
    movePreprocessingInfo(body,s2,PreprocessingInfo::before, PreprocessingInfo::after); 
 
    // SageInterface::deepDelete(target);
-    // Postprocessing  to ensure the AST is legal 
-    // Should not rely on this usually.
-    //   SgSourceFile* originalSourceFile = TransformationSupport::getSourceFile(g_scope);
-    //   AstPostProcessing(originalSourceFile);
   }
+  
+  // Translate a parallel region under "omp target"
+  void transOmpTargetParallel (SgNode* node)
+  {
+    // Sanity check first
+    ROSE_ASSERT(node != NULL);
+    SgOmpParallelStatement* target = isSgOmpParallelStatement(node);
+    ROSE_ASSERT (target != NULL);
+
+    // must be a parallel region directly under "omp target"
+    SgNode* parent = node->get_parent();
+    ROSE_ASSERT (parent != NULL);
+    SgOmpTargetStatement* target_directive_stmt = isSgOmpTargetStatement(parent);
+    ROSE_ASSERT (target_directive_stmt != NULL);
+
+    SgFunctionDefinition * func_def = NULL;
+
+    // For Fortran code, we have to insert EXTERNAL OUTLINED_FUNC into 
+    // the function body containing the parallel region
+    if (SageInterface::is_Fortran_language() )
+    {
+      cerr<<"Error. transOmpTargetParallel() does not support Fortran yet. "<<endl; 
+      ROSE_ASSERT (false);
+      func_def = getEnclosingFunctionDefinition(target);
+      ROSE_ASSERT (func_def != NULL);
+    }
+
+    SgStatement * body =  target->get_body();
+    ROSE_ASSERT(body != NULL);
+    // Save preprocessing info as early as possible, avoiding mess up from the outliner
+    AttachedPreprocessingInfoType save_buf1, save_buf2, save_buf_inside;
+    cutPreprocessingInfo(target, PreprocessingInfo::before, save_buf1) ;
+    cutPreprocessingInfo(target, PreprocessingInfo::after, save_buf2) ;
+
+    // 1/15/2009, Liao, also handle the last #endif, which is attached inside of the target
+    cutPreprocessingInfo(target, PreprocessingInfo::inside, save_buf_inside) ;
+
+    //-----------------------------------------------------------------
+    // step 1: generated an outlined function as the task
+    std::string wrapper_name; // wrapper parameter name, if parameter wrapping is used at all (either using array of pointers or using structure)
+    ASTtools::VarSymSet_t syms; // store all variables passed into the outlined task/function 
+    ASTtools::VarSymSet_t pdSyms3; // store all variables which must be passed by references, used for Fortran regardless variable cloning flag?
+    std::set<SgInitializedName*> readOnlyVars; 
+    SgFunctionDeclaration* outlined_func = generateOutlinedTask (node, wrapper_name, syms, pdSyms3);
+
+    //insert EXTERNAL outlined_function , otherwise the function name will be interpreted as a integer/real variable
+    if (SageInterface::is_Fortran_language() )
+    { 
+      cerr<<"Error. transOmpTargetParallel() does not support Fortran yet. "<<endl; 
+      ROSE_ASSERT (false);
+
+      ROSE_ASSERT (func_def != NULL);
+      SgBasicBlock * func_body = func_def->get_body();
+      ROSE_ASSERT (func_body != NULL);
+      SgAttributeSpecificationStatement* external_stmt1 = buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::e_externalStatement); 
+      SgFunctionRefExp *func_ref1 = buildFunctionRefExp (outlined_func); 
+      external_stmt1->get_parameter_list()->prepend_expression(func_ref1);
+      func_ref1->set_parent(external_stmt1->get_parameter_list());
+      // must put it into the declaration statement part, after possible implicit/include statements, if any
+      SgStatement* l_stmt = findLastDeclarationStatement (func_body); 
+      if (l_stmt)
+        insertStatementAfter(l_stmt,external_stmt1);
+      else  
+        prependStatement(external_stmt1, func_body);
+    }
+
+    SgScopeStatement * p_scope = target->get_scope();
+    ROSE_ASSERT(p_scope != NULL);
+
+    //-----------------------------------------------------------------
+    // step 2: generate call to the outlined function
+    // Generate the parameter list for the call to the XOMP runtime function
+    SgExprListExp* parameters  = NULL;
+    // pass ifClauseValue: set to the expression of if-clause, otherwise set to 1
+    SgExpression* ifClauseValue = NULL; 
+    if (hasClause(target, V_SgOmpIfClause))
+    {
+      Rose_STL_Container<SgOmpClause*> clauses = getClause(target, V_SgOmpIfClause);
+      ROSE_ASSERT (clauses.size() ==1); // should only have one if ()
+      SgOmpIfClause * if_clause = isSgOmpIfClause (clauses[0]);
+      ROSE_ASSERT (if_clause->get_expression() != NULL);
+      ifClauseValue = copyExpression(if_clause->get_expression());
+    }
+    else
+      ifClauseValue = buildIntVal(1);  
+
+    // pass num_threads_specified: 0 if not, otherwise set to the expression of num_threads clause  
+    SgExpression* numThreadsSpecified = NULL;
+    if (hasClause(target, V_SgOmpNumThreadsClause))
+    {
+      Rose_STL_Container<SgOmpClause*> clauses = getClause(target, V_SgOmpNumThreadsClause);
+      ROSE_ASSERT (clauses.size() ==1); // should only have one if ()
+      SgOmpNumThreadsClause * numThreads_clause = isSgOmpNumThreadsClause (clauses[0]);
+      ROSE_ASSERT (numThreads_clause->get_expression() != NULL);
+      numThreadsSpecified = copyExpression(numThreads_clause->get_expression());
+    }
+    else
+      numThreadsSpecified = buildIntVal(0);  
+
+   // Generate parameter lists of the function call: two cases Fortran vs. C/C++
+    if (SageInterface::is_Fortran_language())
+    { // The parameter list for Fortran is little bit different from C/C++'s XOMP interface 
+      // since we are forced to pass variables one by one in the parameter list to support Fortran 77
+       // void xomp_parallel_start (void (*func) (void *), unsigned * ifClauseValue, unsigned* numThread, int * argcount, ...)
+      //  e.g. xomp_parallel_start(OUT__1__1527__,1,0,2,S,K)
+      SgExpression * parameter4 = buildIntVal (pdSyms3.size()); //TODO double check if pdSyms3 is the right set of variables to be passed
+      parameters = buildExprListExp(buildFunctionRefExp(outlined_func), ifClauseValue, numThreadsSpecified, parameter4);
+
+      ASTtools::VarSymSet_t::iterator iter = pdSyms3.begin();
+      for (; iter!=pdSyms3.end(); iter++)
+      {
+        const SgVariableSymbol * sb = *iter;
+        appendExpression (parameters, buildVarRefExp(const_cast<SgVariableSymbol *>(sb)));
+      }
+    }
+    else 
+    { 
+      // C/C++ case: 
+      //add GOMP_parallel_start (OUT_func_xxx, &__out_argv1__5876__, 1, 0);
+      // or GOMP_parallel_start (OUT_func_xxx, 0, 0); // if no variables need to be passed
+      SgExpression * parameter2 = NULL;
+      if (syms.size()==0)
+        parameter2 = buildIntVal(0);
+      else
+        parameter2 =  buildAddressOfOp(buildVarRefExp(wrapper_name, p_scope));
+     parameters = buildExprListExp(buildFunctionRefExp(outlined_func), parameter2, ifClauseValue, numThreadsSpecified); 
+    }
+
+    ROSE_ASSERT (parameters != NULL);
+
+  // extern void XOMP_parallel_start (void (*func) (void *), void *data, unsigned ifClauseValue, unsigned numThreadsSpecified);
+  // * func: pointer to a function which will be run in parallel
+  // * data: pointer to a data segment which will be used as the arguments of func
+  // * ifClauseValue: set to if-clause-expression if if-clause exists, or default is 1.
+  // * numThreadsSpecified: set to the expression of num_threads clause if the clause exists, or default is 0
+
+    SgExprStatement * s1 = buildFunctionCallStmt("XOMP_parallel_start", buildVoidType(), parameters, p_scope); 
+    SageInterface::replaceStatement(target, s1 , true);
+   // Keep preprocessing information
+    // I have to use cut-paste instead of direct move since 
+    // the preprocessing information may be moved to a wrong place during outlining
+    // while the destination node is unknown until the outlining is done.
+   // SageInterface::moveUpPreprocessingInfo(s1, target, PreprocessingInfo::before); 
+   pastePreprocessingInfo(s1, PreprocessingInfo::before, save_buf1); 
+
+    // add GOMP_parallel_end ();
+    SgExprStatement * s2 = buildFunctionCallStmt("XOMP_parallel_end", buildVoidType(), NULL, p_scope); 
+    SageInterface::insertStatementAfter(s1, s2);  // insert s2 after s1
+
+  // SageInterface::moveUpPreprocessingInfo(s2, target, PreprocessingInfo::after); 
+   pastePreprocessingInfo(s2, PreprocessingInfo::after, save_buf2); 
+
+   // paste the preprocessing info with inside position to the outlined function's body
+   pastePreprocessingInfo(outlined_func->get_definition()->get_body(), PreprocessingInfo::inside, save_buf_inside); 
+
+    // some #endif may be attached to the body, we should not move it with the body into
+    // the outlined funcion!!
+   // move dangling #endif etc from the body to the end of s2
+   movePreprocessingInfo(body,s2,PreprocessingInfo::before, PreprocessingInfo::after); 
+
+   // SageInterface::deepDelete(target);
+  }
+
 
   /*
    * Expected AST layout: 
@@ -1742,12 +1983,12 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
     cutPreprocessingInfo(target, PreprocessingInfo::before, save_buf1) ;
     cutPreprocessingInfo(target, PreprocessingInfo::after, save_buf2) ;
 
-    // generated an outlined function as a task
+    // generate and insert an outlined function as a task
     std::string wrapper_name;
     ASTtools::VarSymSet_t syms;
     ASTtools::VarSymSet_t pdSyms3; // store all variables which should be passed by reference
     std::set<SgInitializedName*> readOnlyVars;
-    SgFunctionDeclaration* outlined_func = generateOutlinedTask (node, wrapper_name, syms, readOnlyVars, pdSyms3);
+    SgFunctionDeclaration* outlined_func = generateOutlinedTask (node, wrapper_name, syms, pdSyms3);
 
     if (SageInterface::is_Fortran_language() )
     { // EXTERNAL outlined_function , otherwise the function name will be interpreted as a integer/real variable
@@ -3412,7 +3653,13 @@ void lower_omp(SgSourceFile* file)
     {
       case V_SgOmpParallelStatement:
         {
-          transOmpParallel(node);
+          // check if this parallel region is under "omp target"
+          SgNode* parent = node->get_parent();
+          ROSE_ASSERT (parent != NULL);
+          if (isSgOmpTargetStatement(parent))
+            transOmpTargetParallel(node);
+          else  
+            transOmpParallel(node);
           break;
         }
       case V_SgOmpSectionsStatement:

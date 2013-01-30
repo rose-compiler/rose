@@ -39,10 +39,8 @@ dump (const ASTtools::VarSymSet_t& V, const std::string& tag)
 //  should be passed as parameters to the outlined function
 void
 Outliner::collectVars (const SgStatement* s, 
-                       ASTtools::VarSymSet_t& syms,  
-                       ASTtools::VarSymSet_t& psyms)
-          //             ASTtools::VarSymSet_t& fpsyms) // firstprivate and reduction are handled by OmpSupport::transOmpVaraibles() now
-                       //ASTtools::VarSymSet_t& reductionSyms)
+                       ASTtools::VarSymSet_t& syms) // return the symbols(variables) that need to be passed into the outlined function 
+                       //ASTtools::VarSymSet_t& psyms) // stale parameter, not in use
 {
   // Determine the function definition surrounding 's'. The enclosing function of 's'
   const SgFunctionDefinition* outer_func_s = ASTtools::findFirstFuncDef (s);
