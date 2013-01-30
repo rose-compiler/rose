@@ -78,7 +78,7 @@ appendArgs (const ASTtools::VarSymSet_t& syms,  std::set<SgInitializedName*> rea
         e_list->append_expression(v_ref);
       else 
       {
-        // Construct actual function argument.
+        // Construct actual function argument. //TODO: consider array types, they can only be passed by reference, no further addressing/de-referencing is needed
         SgExpression* i_arg=NULL;
         if (Outliner::enable_classic && readOnly)
         { // classic translation, read only variable, pass by value directly
@@ -104,7 +104,7 @@ appendArgs (const ASTtools::VarSymSet_t& syms,  std::set<SgInitializedName*> rea
 SgStatement *
 Outliner::generateCall (SgFunctionDeclaration* out_func,
                                       const ASTtools::VarSymSet_t& syms, 
-                                       std::set<SgInitializedName*>  readOnlyVars, 
+                                      const std::set<SgInitializedName*>  readOnlyVars,  // this is used to guide the classic outlining without wrapper: pass-by-value if a variable is read only
                                       std::string wrapper_name, 
                                       SgScopeStatement* scope)
 {

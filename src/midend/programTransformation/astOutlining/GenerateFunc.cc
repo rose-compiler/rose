@@ -183,7 +183,6 @@ isBaseTypePrimitive (const SgType* type)
 static
 OutlinedFuncParam_t
 createParam (const SgInitializedName* i_name, bool readOnly=false)
-//createParam (const string& init_name, const SgType* init_type, bool readOnly=false)
 {
   ROSE_ASSERT (i_name);
   SgType* init_type = i_name->get_type();
@@ -643,18 +642,23 @@ createPackExpr (SgInitializedName* local_unpack_def)
 }
 
 /*!
- *  \brief Creates a pack statement 
+ *  \brief Creates a pack (write-back) statement , used to support variable cloning in outlining.
  *
+ *  
  *  This routine creates an SgExprStatement wrapper around the return
  *  of createPackExpr.
  *  
  *  void OUT__1__4305__(int *ip__,int *sump__)
  * {
+ *   // variable clones for pointer types
  *   int i =  *((int *)ip__);
  *   int sum =  *((int *)sump__);
+ *
+ *  // clones participate computation
  *   for (i = 0; i < 100; i++) {
  *     sum += i;
  *   }
+ *  // write back the values from clones to their original pointers 
  *  //The following are called (re)pack statements
  *    *((int *)sump__) = sum;
  *    *((int *)ip__) = i;
@@ -732,10 +736,16 @@ recordSymRemap (const SgVariableSymbol* orig_sym,
     }
 }
 
-// handle OpenMP private variables
-// pSyms: private variable set
-// scope: the scope of a private variable's local declaration
-// private_remap: a map between the original variables and their private copies
+// Handle OpenMP private variables: variables to be declared and used within the outlined function
+// Input: 
+//     pSyms: private variable set provided by caller functions
+//     scope: the scope of a private variable's local declaration
+// Output:    
+//    private_remap: a map between the original variables and their private copies
+// 
+// Internal: for each private variable, 
+//    create a local declaration of the same name, 
+//    record variable mapping to be used for replacement later on
 static void handlePrivateVariables( const ASTtools::VarSymSet_t& pSyms,
                                     SgScopeStatement* scope, 
                                     VarSymRemap_t& private_remap)
@@ -755,6 +765,8 @@ static void handlePrivateVariables( const ASTtools::VarSymSet_t& pSyms,
 }
 
 // Create one parameter for an outlined function
+// readOnly flag is used to decide the parameter type: 
+//   A simplest case: readonly -> pass-by-value -> same type v.s. written -> pass-by-reference -> pointer type
 // return the created parameter
 SgInitializedName* createOneFunctionParameter(const SgInitializedName* i_name, 
                               bool readOnly, 
@@ -787,7 +799,7 @@ SgInitializedName* createOneFunctionParameter(const SgInitializedName* i_name,
 // Also called variable substitution. 
 static void
 remapVarSyms (const VarSymRemap_t& vsym_remap,  // regular shared variables
-              const ASTtools::VarSymSet_t& pdSyms, // special shared variables
+              const ASTtools::VarSymSet_t& pdSyms, // special shared variables using variable cloning (temp_variable)
               const VarSymRemap_t& private_remap,  // variables using private copies
               SgBasicBlock* b)
 {
@@ -861,31 +873,32 @@ remapVarSyms (const VarSymRemap_t& vsym_remap,  // regular shared variables
  *  We have several options for the organization of function parameters:
  *
  *  1. default: each variable to be passed has a function parameter
- *           To support C programs, this routine assumes parameters passed
- *           using pointers (rather than references).  
+ *           To support both C and C++ programs, this routine assumes parameters passed
+ *           using pointers (rather than the C++ -specific reference types).  
  *  2, useParameterWrapper: use an array as the function parameter, each
  *              pointer stores the address of the variable to be passed
  *  3. useStructureWrapper: use a structure, each field stores a variable's
  *              value or address according to use-by-address or not semantics
  *
- *  Moreover, it inserts "unpacking/unwrapping" and "repacking" statements at the 
- *  beginning and end of the function body, respectively, when necessary
+ *  It inserts "unpacking/unwrapping" and "repacking" statements at the 
+ *  beginning and end of the function body, respectively, when necessary.
  *
- *  Finally this routine records the mapping between the given variable symbols and the new
- *  symbols corresponding to the new parameters. This is used later on for variable replacement
+ *  This routine records the mapping between the given variable symbols and the new
+ *  symbols corresponding to the new parameters. 
+ *
+ *  Finally, it performs variable replacement in the end.
  *
  */
 static
 void
-variableHandling(const ASTtools::VarSymSet_t& syms, // regular (shared) parameters
-              const ASTtools::VarSymSet_t& pdSyms, // those must use pointer dereference
-              const ASTtools::VarSymSet_t& pSyms,  // private variables , this is kept to handle dead variables (neither livein nor liveout: TODO) 
-              std::set<SgInitializedName*> & readOnlyVars,
-              std::set<SgInitializedName*> & liveOutVars,
-              SgClassDeclaration* struct_decl,
+variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to the outlined function: //regular (shared) parameters?
+              const ASTtools::VarSymSet_t& pdSyms, // those must use pointer dereference: use pass-by-reference
+              std::set<SgInitializedName*> & readOnlyVars, // those which can use pass-by-value, used for classic outlining without parameter wrapping
+              std::set<SgInitializedName*> & liveOutVars, // used to control if a write-back is needed when variable cloning is used.
+              SgClassDeclaration* struct_decl, // an optional struct wrapper for all variables
               SgFunctionDeclaration* func) // the outlined function
 {
-  VarSymRemap_t sym_remap; // variable remapping for regular(shared) variables
+  VarSymRemap_t sym_remap; // variable remapping for regular(shared) variables: all passed by reference using pointer types?
   VarSymRemap_t private_remap; // variable remapping for private/firstprivate/reduction variables
   ROSE_ASSERT (func);
   SgFunctionParameterList* params = func->get_parameterList ();
@@ -906,12 +919,14 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // regular (shared) paramete
   SgVariableDeclaration*  local_var_decl  =  NULL;
 
   // handle OpenMP private variables/ or those which are neither live-in or live-out
-  handlePrivateVariables(pSyms, body, private_remap);
+//  handlePrivateVariables(pSyms, body, private_remap);
+//  This is done before calling the outliner now, by transOmpVariables()
 
   // --------------------------------------------------
   // for each parameters passed to the outlined function
-  // They include parameters for regular shared variables and 
-  // also the shared copies for firstprivate and reduction variables
+  // They include parameters for 
+  // *  regular shared variables and also 
+  // *  shared copies for firstprivate and reduction variables
   for (ASTtools::VarSymSet_t::const_reverse_iterator i = syms.rbegin ();
       i != syms.rend (); ++i)
   {
@@ -952,14 +967,15 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // regular (shared) paramete
           #endif  
             ptype = buildPointerType (buildVoidType());
         }
-        else
+        else // use array of pointers
           ptype= buildPointerType(buildPointerType(buildVoidType()));
+
         parameter1 = buildInitializedName(var1_name,ptype);
         appendArg(params,parameter1);
       }
       p_init_name = parameter1; // set the source parameter to the wrapper
     }
-    else // case 3: use a parameter for each variable
+    else // case 3: use a parameter for each variable, the default, classic case
        p_init_name = createOneFunctionParameter(i_name, readOnly, func); 
 
     // step 2. Create unpacking/unwrapping statements, also record variables to be replaced
@@ -996,14 +1012,13 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // regular (shared) paramete
         createUnpackDecl (p_init_name, counter, isPointerDeref, i_name , struct_decl, body);
       ROSE_ASSERT (local_var_decl);
       prependStatement (local_var_decl,body);
-       // regular and shared variables used the first local declaration
-        recordSymRemap (*i, local_var_decl, args_scope, sym_remap);
+      // regular and shared variables used the first local declaration
+      recordSymRemap (*i, local_var_decl, args_scope, sym_remap);
       // transfer the value for firstprivate variables. 
       // TODO
     }
 
     // step 3. Create and insert companion re-pack statement in the end of the function body
-    // If necessary
     // ----------------------------------------
     SgInitializedName* local_var_init = NULL;
     if (local_var_decl != NULL )
@@ -1058,6 +1073,9 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // regular (shared) paramete
 
   SgBasicBlock* func_body = func->get_definition()->get_body();
 
+#if 1
+  //TODO: move this outside of outliner since it is OpenMP-specific. omp_lowering.cpp generateOutlinedTask()
+  // A caveat is the moving this also means we have to patch up prototype later
   //For OpenMP lowering, we have to have a void * parameter even if there is no need to pass any parameters 
   //in order to match the gomp runtime lib 's function prototype for function pointers
   SgFile* cur_file = getEnclosingFileNode(func);
@@ -1087,7 +1105,7 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // regular (shared) paramete
       appendArg(params,parameter1);
     }
   }
-
+#endif
   // variable substitution 
   remapVarSyms (sym_remap, pdSyms, private_remap , func_body);
 }
@@ -1096,17 +1114,13 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // regular (shared) paramete
 
 // DQ (2/25/2009): Modified function interface to pass "SgBasicBlock*" as not const parameter.
 //! Create a function named 'func_name_str', with a parameter list from 'syms'
-// pdSyms specifies symbols which must use pointer dereferencing if replaced during outlining, 
-// only used when -rose:outline:temp_variable is used
-// psyms are the symbols for OpenMP private variables, or dead variables (not live-in, not live-out)
 SgFunctionDeclaration *
-Outliner::generateFunction ( SgBasicBlock* s,
-                                          const string& func_name_str,
-                                          const ASTtools::VarSymSet_t& syms,
-                                          const ASTtools::VarSymSet_t& pdSyms,
-                                          const ASTtools::VarSymSet_t& psyms,
-                                          SgClassDeclaration* struct_decl, 
-                                          SgScopeStatement* scope)
+Outliner::generateFunction ( SgBasicBlock* s,  // block to be outlined
+                            const string& func_name_str, // function name provided
+                            const ASTtools::VarSymSet_t& syms, // variables to be passed in/out the outlined function
+                            const ASTtools::VarSymSet_t& pdSyms, // variables must use pointer dereferencing (pass-by-reference)
+                            SgClassDeclaration* struct_decl,  // an optional wrapper structure for parameters
+                            SgScopeStatement* scope)
 {
   ROSE_ASSERT (s&&scope);
   ROSE_ASSERT(isSgGlobal(scope));
@@ -1115,6 +1129,7 @@ Outliner::generateFunction ( SgBasicBlock* s,
   std::set< SgInitializedName *> liveIns, liveOuts;
   // Collect read-only variables of the outlining target
   std::set<SgInitializedName*> readOnlyVars;
+
   if (Outliner::temp_variable||Outliner::enable_classic)
   {
     SgStatement* firstStmt = (s->get_statements())[0];
@@ -1171,13 +1186,7 @@ Outliner::generateFunction ( SgBasicBlock* s,
 
   // This does a copy of the statements in "s" to the function body of the outlined function.
   ROSE_ASSERT(func_body->get_statements().empty() == true);
-#if 0
-  // This calls AST copy on each statement in the SgBasicBlock, but not on the block, so the 
-  // symbol table is not setup by AST copy mechanism and not setup properly by the outliner.
-  ASTtools::appendStmtsCopy (s, func_body);
-#else
   SageInterface::moveStatementsBetweenBlocks (s, func_body);
-#endif
 
   if (Outliner::useNewFile)
     ASTtools::setSourcePositionAtRootAndAllChildrenAsTransformation(func_body);
@@ -1224,10 +1233,10 @@ Outliner::generateFunction ( SgBasicBlock* s,
   //step 4: variable handling, including: 
   // -----------------------------------------
   //   create parameters of the outlined functions
-  //   add statements to unwrap the parameters
+  //   add statements to unwrap the parameters if necessary
   //   add repacking statements if necessary
   //   replace variables to access to parameters, directly or indirectly
-  variableHandling(syms, pdSyms, psyms, readOnlyVars, liveOuts, struct_decl, func);
+  variableHandling(syms, pdSyms, readOnlyVars, liveOuts, struct_decl, func);
   ROSE_ASSERT (func != NULL);
 
   //     std::cout << func->get_type()->unparseToString() << std::endl;
