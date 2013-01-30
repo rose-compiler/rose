@@ -22,11 +22,16 @@ using namespace std;
 using namespace SageBuilder;
 using namespace SageInterface;
 // =====================================================================
+// ! create a struct to contain data members for variables to be passed as parameters
+// A wrapper struct for variables passed to the outlined function
+// Each variable (e.g a) has two choices
+//   1. store the value of a:  the same type representation in the struct
+//   2. store the address of a:  pointer type of a
 SgClassDeclaration* Outliner::generateParameterStructureDeclaration(
                                SgBasicBlock* s, // the outlining target
                                const std::string& func_name_str, // the name for the outlined function, we generate the name of struct based on this.
                                const ASTtools::VarSymSet_t& syms, // variables to be passed as parameters
-                               ASTtools::VarSymSet_t& pdSyms, // variables must use pointer types
+                               ASTtools::VarSymSet_t& symsUsingAddress, // variables whose addresses are stored into the struct 
                                SgScopeStatement* func_scope ) // the scope of the outlined function, could be different from s's global scope
 {
   SgClassDeclaration* result = NULL;
@@ -61,7 +66,7 @@ SgClassDeclaration* Outliner::generateParameterStructureDeclaration(
     string member_name= i_name->get_name ().str ();
     SgType* member_type = i_name->get_type() ;
     // use pointer type or its original type?
-    if (pdSyms.find(i_symbol) != pdSyms.end())
+    if (symsUsingAddress.find(i_symbol) != symsUsingAddress.end())
     {
        member_name = member_name+"_p";
        // member_type = buildPointerType(member_type);
@@ -122,24 +127,22 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   ASTtools::cutPreprocInfo (s, PreprocessingInfo::after, ppi_after);
 
   // Determine variables to be passed to outlined routine.
+  // ----------------------------------------------------------
   // Also collect symbols which must use pointer dereferencing if replaced during outlining
-  ASTtools::VarSymSet_t syms, psyms, pdSyms;
+  ASTtools::VarSymSet_t syms, pdSyms;
   collectVars (s, syms);
-  //collectVars (s, syms, psyms);
 
+  // prepare necessary analysis to optimize the outlining 
+  //-----------------------------------------------------------------
   std::set<SgInitializedName*> readOnlyVars;
 
   //Determine variables to be replaced by temp copy or pointer dereferencing.
   if (Outliner::temp_variable|| Outliner::enable_classic || Outliner::useStructureWrapper)
   {
     SageInterface::collectReadOnlyVariables(s,readOnlyVars);
-#if 0    
-    std::set<SgVarRefExp* > varRefSetB;
-    ASTtools::collectVarRefsUsingAddress(s,varRefSetB);
-    ASTtools::collectVarRefsOfTypeWithoutAssignmentSupport(s,varRefSetB);
-#endif
     // Collect use by address plus non-assignable variables
     // They must be passed by reference if they need to be passed as parameters
+    // TODO: this is not accurate: array variables are not assignable , but they should not using pointer dereferencing 
     ASTtools::collectPointerDereferencingVarSyms(s,pdSyms);
   }
 

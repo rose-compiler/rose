@@ -112,8 +112,6 @@ createInitName (const string& name, SgType* type,
   return new_name;
 }
 
-//! Stores a new outlined-function parameter.
-typedef std::pair<string, SgType *> OutlinedFuncParam_t;
 
 //! Returns 'true' if the base type is a primitive type.
 static
@@ -151,11 +149,16 @@ isBaseTypePrimitive (const SgType* type)
   return false;
 }
 
+//! Stores a new outlined-function parameter.
+typedef std::pair<string, SgType *> OutlinedFuncParam_t;
+
 /*!
  *  \brief Creates a new outlined-function parameter for a given
  *  variable. The requirement is to preserve data read/write semantics.
  *
  *  For C/C++: we use pointer dereferencing to implement pass-by-reference
+ *    So the parameter needs to be &a, which is a pointer type of a's base type
+ *
  *    In a recent implementation, side effect analysis is used to find out
  *    variables which are not modified so pointer types are not used.
  *
@@ -182,7 +185,8 @@ isBaseTypePrimitive (const SgType* type)
  */
 static
 OutlinedFuncParam_t
-createParam (const SgInitializedName* i_name, bool readOnly=false)
+createParam (const SgInitializedName* i_name,  // the variable to be passed into the outlined function
+             bool classic_original_type=false) // flag to decide if the variable's adjusted type is used directly, only applicable when -rose:outline:enable_classic  is turned on
 {
   ROSE_ASSERT (i_name);
   SgType* init_type = i_name->get_type();
@@ -230,13 +234,7 @@ createParam (const SgInitializedName* i_name, bool readOnly=false)
     //Take advantage of the const modifier
     if (ASTtools::isConstObj (init_type))
     {
-#if 0      // Liao, 8/13/2010, change to use new interfaces on top of the type table.
-      SgModifierType* mod = SageBuilder::buildModifierType (param_base_type);
-      ROSE_ASSERT (mod);
-      mod->get_typeModifier ().get_constVolatileModifier ().setConst ();
-#else
       SgModifierType* mod = SageBuilder::buildConstType(param_base_type);
-#endif      
       param_base_type = mod;
     }
   }
@@ -253,7 +251,7 @@ createParam (const SgInitializedName* i_name, bool readOnly=false)
   if (Outliner::enable_classic) 
   { 
     // read only parameter: pass-by-value, the same type and name
-    if (readOnly)
+    if (classic_original_type )
     {
       new_param_type = param_base_type;
     }
@@ -261,11 +259,13 @@ createParam (const SgInitializedName* i_name, bool readOnly=false)
     {
       new_param_name+= "p__";
       new_param_type = SgPointerType::createType (param_base_type);
-
     }
   }
-  else // very conservative one, assume the worst side effects (all are written) 
-  {
+  else // The big assumption of this function is within the context of no wrapper parameter is used 
+    // very conservative one, assume the worst side effects (all are written) 
+      //TODO, why not use  classic_original_type to control this!!??
+  { 
+    ROSE_ASSERT (Outliner::useParameterWrapper == false && Outliner::useStructureWrapper == false);
     if (!SageInterface::is_Fortran_language())
     {
       new_param_type = SgPointerType::createType (param_base_type);
@@ -298,14 +298,13 @@ createParam (const SgInitializedName* i_name, bool readOnly=false)
 }
 
 /*!
- *  \brief Creates a local variable declaration to "unpack" an
- *  outlined-function's parameter 
+ *  \brief Creates a local variable declaration to "unpack" an outlined-function's parameter
  *  int index is optionally used as an offset inside a wrapper parameter for multiple variables
  *
  *  The key is to set local_name, local_type, and local_val for all cases
  *
  *  There are three choices:
- *  Case 1: unpack one variable from one  parameter
+ *  Case 1: unpack one variable from one parameter
  *  -----------------------------------------------
  *  OUT_XXX(int *ip__)
  *  {
@@ -565,15 +564,24 @@ isReadOnlyType (const SgType* type)
  *  \brief Creates an assignment to "pack" a local variable back into
  *  an outlined-function parameter that has been passed as a pointer
  *  value.
+ *  Only applicable when variable cloning is turned on.
+ *
+ *  The concept of pack/unpack is associated with parameter wrapping
+ *  In the outlined function, we first
+ *    unpack the wrapper parameter to get individual parameters
+ *  then
+ *    pack individual parameter into the wrapper. 
+ *  
+ *  It is also write-back or transfer-back the values of clones to their original pointer variables
  *
  *  This routine takes the original "unpack" definition, of the form
  *
- *    TYPE local_unpack_var = *outlined_func_arg;
+ *    TYPE local_unpack_var = *outlined_func_arg; // no parameter wrapping
  *    int i = *(int *)(__out_argv[1]); // parameter wrapping case
  *
  *  and creates the "re-pack" assignment expression,
  *
- *    *outlined_func_arg = local_unpack_var
+ *    *outlined_func_arg = local_unpack_var // no-parameter wrapping case
  *    *(int *)(__out_argv[1]) =i; // parameter wrapping case
  *
  *  C++ variables of reference types do not need this step.
@@ -619,7 +627,7 @@ createPackExpr (SgInitializedName* local_unpack_def)
       if (param_deref_unpack == NULL)  
       {
         cout<<"packing statement is:"<<local_unpack_def->get_declaration()->unparseToString()<<endl;
-        cout<<"local unpacking stmt's initializer's operand has non-pointer deferencing type:"<<local_var_init->get_operand_i ()->class_name()<<endl;
+        cout<<"local unpacking stmt's initializer's operand has non-pointer dereferencing type:"<<local_var_init->get_operand_i ()->class_name()<<endl;
         ROSE_ASSERT (param_deref_unpack);
       }
 
@@ -746,6 +754,7 @@ recordSymRemap (const SgVariableSymbol* orig_sym,
 // Internal: for each private variable, 
 //    create a local declaration of the same name, 
 //    record variable mapping to be used for replacement later on
+#if 0    
 static void handlePrivateVariables( const ASTtools::VarSymSet_t& pSyms,
                                     SgScopeStatement* scope, 
                                     VarSymRemap_t& private_remap)
@@ -764,12 +773,14 @@ static void handlePrivateVariables( const ASTtools::VarSymSet_t& pSyms,
   }
 }
 
+#endif
+
 // Create one parameter for an outlined function
-// readOnly flag is used to decide the parameter type: 
+// classic_original_type flag is used to decide the parameter type: 
 //   A simplest case: readonly -> pass-by-value -> same type v.s. written -> pass-by-reference -> pointer type
 // return the created parameter
 SgInitializedName* createOneFunctionParameter(const SgInitializedName* i_name, 
-                              bool readOnly, 
+                              bool classic_original_type, // control if the original type should be used, instead of a pointer type, only used with enable_classic flag for now
                              SgFunctionDeclaration* func)
 {
   ROSE_ASSERT (i_name);
@@ -783,7 +794,7 @@ SgInitializedName* createOneFunctionParameter(const SgInitializedName* i_name,
   // It handles language-specific details internally, like pass-by-value, pass-by-reference
   // name and type is not enough, need the SgInitializedName also for tell 
   // if an array comes from a parameter list
-  OutlinedFuncParam_t param = createParam (i_name,readOnly);
+  OutlinedFuncParam_t param = createParam (i_name,classic_original_type);
   SgName p_sg_name (param.first.c_str ());
   // name, type, declaration, scope, 
   // TODO function definition's declaration should not be passed to createInitName()
@@ -796,10 +807,10 @@ SgInitializedName* createOneFunctionParameter(const SgInitializedName* i_name,
 // ===========================================================
 //! Fixes up references in a block to point to alternative symbols.
 // based on an existing symbol-to-symbol map
-// Also called variable substitution. 
+// Also called variable substitution or variable replacement
 static void
 remapVarSyms (const VarSymRemap_t& vsym_remap,  // regular shared variables
-              const ASTtools::VarSymSet_t& pdSyms, // special shared variables using variable cloning (temp_variable)
+              const ASTtools::VarSymSet_t& pdSyms, // variables which must use pointer dereferencing somehow. //special shared variables using variable cloning (temp_variable)
               const VarSymRemap_t& private_remap,  // variables using private copies
               SgBasicBlock* b)
 {
@@ -893,8 +904,8 @@ static
 void
 variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to the outlined function: //regular (shared) parameters?
               const ASTtools::VarSymSet_t& pdSyms, // those must use pointer dereference: use pass-by-reference
-              std::set<SgInitializedName*> & readOnlyVars, // those which can use pass-by-value, used for classic outlining without parameter wrapping
-              std::set<SgInitializedName*> & liveOutVars, // used to control if a write-back is needed when variable cloning is used.
+              std::set<SgInitializedName*> & readOnlyVars, // optional analysis: those which can use pass-by-value, used for classic outlining without parameter wrapping
+              std::set<SgInitializedName*> & liveOutVars, // optional analysis: used to control if a write-back is needed when variable cloning is used.
               SgClassDeclaration* struct_decl, // an optional struct wrapper for all variables
               SgFunctionDeclaration* func) // the outlined function
 {
@@ -967,7 +978,7 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
           #endif  
             ptype = buildPointerType (buildVoidType());
         }
-        else // use array of pointers
+        else // use array of pointers, regardless of the pass-by-value vs. pass-by-reference difference
           ptype= buildPointerType(buildPointerType(buildVoidType()));
 
         parameter1 = buildInitializedName(var1_name,ptype);
@@ -1007,7 +1018,10 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
     { // create unwrapping statements from parameters/ or the array parameter for pointers
       //if (SageInterface::is_Fortran_language())
       //  args_scope = NULL; // not sure about Fortran scope
-
+      
+       // Not true: even without parameter wrapping, we still need to transfer the function parameter to a local declaration, which is also called unpacking
+      // must be a case of using parameter wrapping
+      // ROSE_ASSERT (Outliner::useStructureWrapper || Outliner::useParameterWrapper);
       local_var_decl  = 
         createUnpackDecl (p_init_name, counter, isPointerDeref, i_name , struct_decl, body);
       ROSE_ASSERT (local_var_decl);
@@ -1063,10 +1077,15 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
       }
     }
     else
-    {
+    { 
+      // TODO: why do we have this packing statement at all if no variable cloning is used??
       SgExprStatement* pack_stmt = createPackStmt (local_var_init);
       if (pack_stmt)
+      {
         appendStatement (pack_stmt,body);
+        cerr<<"Error: createPackStmt() is called while Outliner::temp_variable is false!"<<endl;
+        ROSE_ASSERT (false); 
+      }
     }
     counter ++;
   } //end for
