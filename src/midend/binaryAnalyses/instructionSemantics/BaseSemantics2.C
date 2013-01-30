@@ -10,8 +10,8 @@ namespace BaseSemantics {
  *                                      Printing operator<<
  *******************************************************************************************************************************/
 
-std::ostream& operator<<(std::ostream &o, const RiscOperators::Exception &x) {
-    o <<"semantics exception: " <<x.mesg;
+std::ostream& operator<<(std::ostream &o, const Exception &x) {
+    x.print(o);
     return o;
 }
 
@@ -45,9 +45,17 @@ std::ostream& operator<<(std::ostream &o, const RiscOperators &x) {
     return o;
 }
 
-std::ostream& operator<<(std::ostream &o, const Dispatcher::Exception &x) {
-    x.print(o);
-    return o;
+/*******************************************************************************************************************************
+ *                                      Exceptions
+ *******************************************************************************************************************************/
+
+void
+Exception::print(std::ostream &o) const
+{
+    o <<"BinaryAnalysis::InstructionSemantics::BaseSemantics::Exception: " <<mesg;
+    if (insn)
+        o <<": " <<unparseInstructionWithAddress(insn);
+    o <<"\n";
 }
 
 /*******************************************************************************************************************************
@@ -169,15 +177,6 @@ MemoryCellList::print(std::ostream &o, const std::string prefix, PrintHelper *he
  *******************************************************************************************************************************/
 
 void
-Dispatcher::Exception::print(std::ostream &o) const
-{
-    o <<"Dispatcher::Exception: " <<mesg;
-    if (insn)
-        o <<": " <<unparseInstructionWithAddress(insn);
-    o <<"\n";
-}
-
-void
 Dispatcher::processInstruction(SgAsmInstruction *insn)
 {
     const RegisterDescriptor &REG_EIP = findRegister("eip");
@@ -189,7 +188,7 @@ Dispatcher::processInstruction(SgAsmInstruction *insn)
         throw Exception("no dispatch ability for instruction", insn);
     try {
         iproc->process(shared_from_this(), insn);
-    } catch (Exception e) {
+    } catch (Exception &e) {
         if (!e.insn)
             e.insn = insn;
         throw e;

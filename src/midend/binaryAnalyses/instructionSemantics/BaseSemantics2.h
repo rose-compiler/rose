@@ -197,6 +197,20 @@ public:
 };
 
 /*******************************************************************************************************************************
+ *                                      Exceptions
+ *******************************************************************************************************************************/
+
+/** Base class for exceptions thrown by instruction semantics. */
+class Exception {
+public:
+    std::string mesg;
+    SgAsmInstruction *insn;
+    Exception(const std::string &mesg, SgAsmInstruction *insn): mesg(mesg), insn(insn) {}
+    virtual ~Exception() {}
+    virtual void print(std::ostream&) const;
+};
+
+/*******************************************************************************************************************************
  *                                      Semantic Values
  *******************************************************************************************************************************/
 
@@ -659,13 +673,6 @@ protected:
 public:
     virtual ~RiscOperators() {}
 
-    /** Instruction semantic policy exception. */
-    struct Exception {
-        Exception(const std::string &mesg): mesg(mesg) {}
-        std::string mesg;
-    };
-
-public:
     /** Virtual constructor.  The @p protoval is a prototypical semantic value that is used as a factory to create additional
      *  values as necessary via its virtual constructors.  The state upon which the RISC operations operate must be provided by
      *  a separate call to the set_state() method. */
@@ -983,19 +990,6 @@ public:
     virtual ~Dispatcher() {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Exceptions
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-    /** Base class for exceptions thrown by dispatchers. */
-    class Exception {
-    public:
-        std::string mesg;
-        SgAsmInstruction *insn;
-        Exception(const std::string &mesg, SgAsmInstruction *insn): mesg(mesg), insn(insn) {}
-        void print(std::ostream&) const;
-    };
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
@@ -1091,14 +1085,13 @@ public:
  *                                      Printing
  *******************************************************************************************************************************/
 
-std::ostream& operator<<(std::ostream&, const RiscOperators::Exception&);
+std::ostream& operator<<(std::ostream&, const Exception&);
 std::ostream& operator<<(std::ostream&, const SValue&);
 std::ostream& operator<<(std::ostream&, const MemoryCell&);
 std::ostream& operator<<(std::ostream&, const MemoryState&);
 std::ostream& operator<<(std::ostream&, const RegisterState&);
 std::ostream& operator<<(std::ostream&, const State&);
 std::ostream& operator<<(std::ostream&, const RiscOperators&);
-std::ostream& operator<<(std::ostream&, const Dispatcher::Exception&);
 
 } /*namespace*/
 } /*namespace*/
