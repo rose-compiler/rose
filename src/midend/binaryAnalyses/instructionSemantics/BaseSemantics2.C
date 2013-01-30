@@ -163,28 +163,6 @@ MemoryCellList::print(std::ostream &o, const std::string prefix, PrintHelper *he
  *                                      RiscOperators
  *******************************************************************************************************************************/
 
-const RegisterDescriptor &
-RiscOperators::findRegister(const std::string &regname, size_t nbits/*=0*/)
-{
-    const RegisterDictionary *regdict = get_register_dictionary();
-    if (!regdict)
-        throw Exception("no register dictionary");
-
-    const RegisterDescriptor *reg = regdict->lookup(regname);
-    if (!reg) {
-        std::ostringstream ss;
-        ss <<"Invalid register: \"" <<regname <<"\"";
-        throw Exception(ss.str());
-    }
-
-    if (nbits>0 && reg->get_nbits()!=nbits) {
-        std::ostringstream ss;
-        ss <<"Invalid " <<nbits <<"-bit register: \"" <<regname <<"\" is "
-           <<reg->get_nbits() <<" " <<(1==reg->get_nbits()?"byte":"bytes");
-        throw Exception(ss.str());
-    }
-    return *reg;
-}
 
 /*******************************************************************************************************************************
  *                                      Dispatcher
@@ -202,7 +180,7 @@ Dispatcher::Exception::print(std::ostream &o) const
 void
 Dispatcher::processInstruction(SgAsmInstruction *insn)
 {
-    const RegisterDescriptor &REG_EIP = operators->findRegister("eip");
+    const RegisterDescriptor &REG_EIP = findRegister("eip");
     operators->writeRegister(REG_EIP, operators->add(operators->number_(32, insn->get_address()),
                                                      operators->number_(32, insn->get_size())));
     operators->startInstruction(insn);
@@ -248,6 +226,29 @@ Dispatcher::iproc_get(int key)
     if (key<0 || (size_t)key>=iproc_table.size())
         return NULL;
     return iproc_table[key];
+}
+
+const RegisterDescriptor &
+Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/)
+{
+    const RegisterDictionary *regdict = get_register_dictionary();
+    if (!regdict)
+        throw Exception("no register dictionary", get_insn());
+
+    const RegisterDescriptor *reg = regdict->lookup(regname);
+    if (!reg) {
+        std::ostringstream ss;
+        ss <<"Invalid register: \"" <<regname <<"\"";
+        throw Exception(ss.str(), get_insn());
+    }
+
+    if (nbits>0 && reg->get_nbits()!=nbits) {
+        std::ostringstream ss;
+        ss <<"Invalid " <<nbits <<"-bit register: \"" <<regname <<"\" is "
+           <<reg->get_nbits() <<" " <<(1==reg->get_nbits()?"byte":"bytes");
+        throw Exception(ss.str(), get_insn());
+    }
+    return *reg;
 }
 
 } // namespace

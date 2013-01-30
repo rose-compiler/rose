@@ -131,7 +131,7 @@ namespace BinaryAnalysis {
  *  triplets (value type, state type, RISC operators) that are designed to work together to implement a particular semantic
  *  domain, but users are free to subclass any of those components to build customized semantic domains.  For example, the x86
  *  simulator (in "projects/simulator") subclasses the PartialSymbolicSemantics state in order to use memory mapped via ROSE's
- *  MemoryMap class, and its policy in order to handle system calls (among other things).
+ *  MemoryMap class, and its RISC operators in order to handle system calls (among other things).
  *
  *  @section IS5 Future work
  *
@@ -148,8 +148,8 @@ namespace BinaryAnalysis {
  *  none of the semantic states actually define space for them, and we haven't defined any floating-point RISC operations for
  *  policies to implement.  As for existing machine instructions, the dispatchers will translate machine floating point
  *  instructions to RISC operations, and the specifics of those operations will be defined by the various semantic policies.
- *  For instance, the policy for a concrete semantic domain might use the host machine's native IEEE floating point to emulate
- *  the target machine's floating-point operations.
+ *  For instance, the RISC operators for a concrete semantic domain might use the host machine's native IEEE floating point to
+ *  emulate the target machine's floating-point operations.
  *
  *  @section IS6 Example
  *
@@ -159,21 +159,24 @@ namespace BinaryAnalysis {
  *
  *  @code
  *   using namespace BinaryAnalysis::InstructionSemantics;
- *   SymbolicSemantics::State state(SymbolicSemantics::SValuePtr::proto_value());
- *   SymbolicSemantics::RiscOperators operators(SymbolicSemantics::SValuePtr::proto_value());
- *   DispatcherX86 dispatcher(state, policy);
+ *   BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValuePtr::instance();
+ *   BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateX86::instance(protoval);
+ *   BaseSemantics::MemoryStatePtr memory = BaseSemantics::MemoryCellList::instance(protoval);
+ *   BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
+ *   BaseSemantics::RiscOperatorsPtr operators = SymbolicSemantics::RiscOperators::instance(state);
+ *   BaseSemantics::DispatcherPtr semantics = DispatcherX86::instance(operators);
  *  @endcode
  *
- *  In order to analyze a sequence of instructions, one calls the dispatcher's processInstruction() method one instruction
- *  at a time.  The dispatcher breaks the instruction down into a sequence of RISC-like operations and invokes those
- *  operations in the policy.  The policy's operations produce domain-specific result values and/or update the state
- *  (registers, memory, etc) associated with the policy.  Each policy provides methods by which the user can inspect and/or
- *  modify the state.  In fact, in order to follow flow-of-control from one instruction to another, it is customary to read
- *  the x86 EIP (instruction pointer register) value to get the address for the next instruction fetch.
+ *  In order to analyze a sequence of instructions, one calls the dispatcher's processInstruction() method one instruction at a
+ *  time.  The dispatcher breaks the instruction down into a sequence of RISC-like operations and invokes those operations in
+ *  the chosen semantic domain.  The RISC operations produce domain-specific result values and/or update the machine state
+ *  (registers, memory, etc).  Each RISC operator domain provides methods by which the user can inspect and/or modify the
+ *  state.  In fact, in order to follow flow-of-control from one instruction to another, it is customary to read the x86 EIP
+ *  (instruction pointer register) value to get the address for the next instruction fetch.
  *
- *  One can find actual uses of instruction semantics in ROSE by searching for X86InstructionSemantics.  Also, the
- *  simulator project (in projects/simulator) has many examples how to use instruction semantics--in fact, the simulator
- *  defines its own concrete domain by subclassing PartialSymbolicSemantics in order to execute specimen programs.
+ *  One can find actual uses of instruction semantics in ROSE by searching for DispatcherX86.  Also, the simulator project (in
+ *  projects/simulator) has many examples how to use instruction semantics--in fact, the simulator defines its own concrete
+ *  domain by subclassing PartialSymbolicSemantics in order to execute specimen programs.
  */
 namespace InstructionSemantics {
 
@@ -638,19 +641,16 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  together. */
 class RiscOperators {
 protected:
-    const RegisterDictionary *regdict;          /**< See set_register_dictionary(). */
     SValuePtr protoval;                         /**< Prototypical value used for its virtual constructors. */
     StatePtr state;                             /**< State upon which RISC operators operate. */
     SgAsmInstruction *cur_insn;                 /**< Current instruction, as set by latest startInstruction() call. */
     size_t ninsns;                              /**< Number of instructions processed. */
 
 protected:
-    explicit RiscOperators(const SValuePtr &protoval)
-        : regdict(NULL), protoval(protoval), cur_insn(NULL), ninsns(0) {
+    explicit RiscOperators(const SValuePtr &protoval): protoval(protoval), cur_insn(NULL), ninsns(0) {
         assert(protoval!=NULL);
     }
-    explicit RiscOperators(const StatePtr &state)
-        : regdict(NULL), state(state), cur_insn(NULL), ninsns(0) {
+    explicit RiscOperators(const StatePtr &state): state(state), cur_insn(NULL), ninsns(0) {
         assert(state!=NULL);
         protoval = state->get_protoval();
     }
@@ -709,30 +709,6 @@ public:
     virtual SgAsmInstruction *get_insn() const {
         return cur_insn;
     }
-
-    /** Access the register dictionary.  The register dictionary defines the (superset) of registers stored in the policy's
-     *  state(s).  This dictionary is used by the semantic translation class to translate register names to register
-     *  descriptors.  For instance, to read from the "eax" register, the semantics will look up "eax" in the policy's register
-     *  dictionary and then pass that descriptor to the policy's readRegister() method.  Register descriptors are also stored
-     *  in instructions when the instruction is disassembled, so the disassembler and policy should probably be using the same
-     *  dictionary.
-     *
-     *  The register dictionary should not be changed after a translation object is instantiated because the translation
-     *  object's constructor may query the dictionary and cache the resultant register descriptors.
-     *
-     * @{ */
-    virtual const RegisterDictionary *get_register_dictionary() {
-        return regdict;
-    }
-    virtual void set_register_dictionary(const RegisterDictionary *regdict) {
-        this->regdict = regdict;
-    }
-    /** @} */
-
-    /** Lookup a register by name.  This policy's register dictionary is consulted and the specified register is located by
-     *  name.  If a bit width is specified (@p nbits) then it must match the size of register that was found.  If a valid
-     *  register cannot be found then an exception is thrown. */
-    virtual const RegisterDescriptor& findRegister(const std::string &regname, size_t nbits=0);
 
     /** Called at the beginning of every instruction.  This method is invoked every time the translation object begins
      *  processing an instruction.  Some policies use this to update a pointer to the current instruction. */
@@ -990,9 +966,11 @@ public:
  *  together. */
 class Dispatcher: public boost::enable_shared_from_this<Dispatcher> {
 protected:
+    const RegisterDictionary *regdict;          /**< See set_register_dictionary(). */
     RiscOperatorsPtr operators;
 
     explicit Dispatcher(const RiscOperatorsPtr &ops): operators(ops) {
+        regdict = RegisterDictionary::dictionary_i386();
         assert(operators!=NULL);
     }
 
@@ -1078,6 +1056,35 @@ public:
 
     /** Return a semantic value representing a number. */
     virtual SValuePtr number_(size_t nbits, uint64_t number) const { return operators->number_(nbits, number); }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Methods related to registers
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /** Access the register dictionary.  The register dictionary defines the set of registers over which the RISC operators may
+     *  operate. This should be same registers (or superset) of registers whose values are stored in the machine state(s).
+     *  This dictionary is used by the Dispatcher class to translate register names to register descriptors.  For instance, to
+     *  read from the "eax" register, the dispatcher will look up "eax" in its register dictionary and then pass that
+     *  descriptor to the readRegister() RISC operation.  Register descriptors are also stored in instructions when the
+     *  instruction is disassembled, so the dispatcher should probably be using the same registers as the disassembler, or a
+     *  superset thereof.
+     *
+     *  The register dictionary should not be changed after a dispatcher is instantiated because the dispatcher's constructor
+     *  may query the dictionary and cache the resultant register descriptors.
+     * @{ */
+    virtual const RegisterDictionary *get_register_dictionary() {
+        return regdict;
+    }
+    virtual void set_register_dictionary(const RegisterDictionary *regdict) {
+        this->regdict = regdict;
+    }
+    /** @} */
+
+    /** Lookup a register by name.  This dispatcher's register dictionary is consulted and the specified register is located by
+     *  name.  If a bit width is specified (@p nbits) then it must match the size of register that was found.  If a valid
+     *  register cannot be found then an exception is thrown. */
+    virtual const RegisterDescriptor& findRegister(const std::string &regname, size_t nbits=0);
+
 };
 
 /*******************************************************************************************************************************
