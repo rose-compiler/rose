@@ -1,3 +1,6 @@
+#ifndef ROSE_FormatRestorer_H
+#define ROSE_FormatRestorer_H
+
 #include <iostream>
 
 /** Restores output stream flags to original values.
@@ -60,5 +63,5 @@ public:
         stream.flags(fmt);
     }
 };
-
     
+#endif
