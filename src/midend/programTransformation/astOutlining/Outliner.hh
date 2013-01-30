@@ -36,6 +36,7 @@ namespace Outliner
   //! A set of flags to control the internal behavior of the outliner
   //
   // How variables are handled:
+  // -----------------------------------
   // Method 1: classic outlining behavior: each parameter represents a single variable being passed in/out the outlined function
   //  side effect analysis for pass-by-value and pass-by-ref, 
   //  reuse parameters of the outlined function (no wrapper parameter is used, no parameter packing/unpacking is needed)
@@ -50,6 +51,11 @@ namespace Outliner
   // Details are in the paper: Chunhua Liao, Daniel J. Quinlan, Richard Vuduc, and Thomas Panas. 2009. Effective source-to-source outlining to support whole program empirical optimization. In Proceedings of the 22nd international conference on Languages and Compilers for Parallel Computing (LCPC'09).
   extern bool temp_variable; // Use temporary variables to reduce the uses of pointer dereferencing. Activated by -rose:outline:temp_variable
 
+  // if none of the previous flags are set to true, the default behavior is:
+  // * all variables are passed by references by default (pointer types, and pointer dereferencing)
+  // * function parameter packing is needed to transfer the value of parameter to a local declaration
+  
+  //---------------------------------others ---------------------
   extern bool preproc_only_;  // preprocessing only, -rose:outline:preproc-only
   extern bool useNewFile; // Generate the outlined function into a separated new source file
                           // -rose:outline:new_file

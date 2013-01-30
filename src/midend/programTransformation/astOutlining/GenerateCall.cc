@@ -171,12 +171,20 @@ appendArgs (const ASTtools::VarSymSet_t& syms,  std::set<SgInitializedName*> var
 #endif
 // =====================================================================
 
+//! Generate a call to the outlined function
+//  We have two ways to generate the corresponding parameter lists
+//  Choice 1: each variable is converted to a function parameter. 
+//      varsUsingOriginalForm: is used to decide if  original form (a) should be used, the rest should use addressOf form (&a)
+//      wrapper_name: is irrelevant in this case
+//  Choice 2: all variables are wrapped into a single parameter
+//     wrapper_name: is the name of the wrapper parameter
+//     varsUsingOriginalForm: is irrelevant in this choice
 SgStatement *
-Outliner::generateCall (SgFunctionDeclaration* out_func,
-                                      const ASTtools::VarSymSet_t& syms, 
-                                      const std::set<SgInitializedName*>  readOnlyVars,  // this is used to guide the classic outlining without wrapper: pass-by-value if a variable is read only
-                                      std::string wrapper_name, 
-                                      SgScopeStatement* scope)
+Outliner::generateCall (SgFunctionDeclaration* out_func, // the outlined function we want to call
+                        const ASTtools::VarSymSet_t& syms, // variables for generating function arguments
+                        const std::set<SgInitializedName*>  varsUsingOriginalForm,  // used to the classic outlining without wrapper: using a (originalForm) vs. &a
+                        std::string wrapper_name,  // when parameter wrapping is used, provide wrapper argument's name
+                        SgScopeStatement* scope) // the scope in which we insert the function call
 {
   // Create a reference to the function.
   SgGlobal* glob_scope = TransformationSupport::getGlobalScope(scope);
@@ -188,30 +196,21 @@ Outliner::generateCall (SgFunctionDeclaration* out_func,
     ROSE_ASSERT(func_symbol != NULL);
   }
   ROSE_ASSERT (func_symbol);
-//  SgFunctionRefExp* func_ref_exp = SageBuilder::buildFunctionRefExp(func_symbol);
-//    new SgFunctionRefExp (ASTtools::newFileInfo (),
-//        func_symbol, out_func->get_type ());
-//  ROSE_ASSERT (func_ref_exp);
 
   // Create an argument list.
   SgExprListExp* exp_list_exp = SageBuilder::buildExprListExp();
   ROSE_ASSERT (exp_list_exp);
-//  appendArgs (syms, readOnlyVars, wrapper_name, exp_list_exp,scope);
+//appendArgs (syms, readOnlyVars, wrapper_name, exp_list_exp,scope);
   if (Outliner::useParameterWrapper|| Outliner::useStructureWrapper)
     appendSingleWrapperArgument (syms, wrapper_name,exp_list_exp,scope);
   else
-    appendIndividualFunctionCallArgs (syms, readOnlyVars,exp_list_exp);
+    appendIndividualFunctionCallArgs (syms, varsUsingOriginalForm, exp_list_exp);
 
   // Generate the actual call.
   SgFunctionCallExp* func_call_expr = SageBuilder::buildFunctionCallExp(func_symbol,exp_list_exp);
-//    new SgFunctionCallExp (ASTtools::newFileInfo (),
-//        func_ref_exp,
-//        exp_list_exp,
-//        out_func->get_type ());
   ROSE_ASSERT (func_call_expr);
 
   SgExprStatement *func_call_stmt = SageBuilder::buildExprStatement (func_call_expr);
-
   ROSE_ASSERT (func_call_stmt);
 
   return func_call_stmt;
