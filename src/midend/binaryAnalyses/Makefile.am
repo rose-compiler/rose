@@ -16,6 +16,10 @@ libbinaryMidend_la_SOURCES = \
      dataflowanalyses/InterruptAnalysis.cpp \
      dataflowanalyses/RoseBin_Emulate.cpp \
      dataflowanalyses/RoseBin_DataFlowAbstract.cpp \
+     instructionSemantics/BaseSemantics2.C \
+     instructionSemantics/DispatcherX86.C \
+     instructionSemantics/NullSemantics2.C \
+     instructionSemantics/PartialSymbolicSemantics2.C \
      instructionSemantics/findConstants.C \
      instructionSemantics/FindRegisterDefs.C \
      instructionSemantics/InsnSemanticsExpr.C \
@@ -59,10 +63,14 @@ include_HEADERS = \
    instructionSemantics/FindRegisterDefs.h \
    instructionSemantics/InsnSemanticsExpr.h \
    instructionSemantics/BaseSemantics.h \
+   instructionSemantics/BaseSemantics2.h \
+   instructionSemantics/DispatcherX86.h \
    instructionSemantics/IntervalSemantics.h \
    instructionSemantics/NullSemantics.h \
+   instructionSemantics/NullSemantics2.h \
    instructionSemantics/MultiSemantics.h \
    instructionSemantics/PartialSymbolicSemantics.h \
+   instructionSemantics/PartialSymbolicSemantics2.h \
    instructionSemantics/SMTSolver.h \
    instructionSemantics/SymbolicSemantics.h \
    instructionSemantics/YicesSolver.h \
