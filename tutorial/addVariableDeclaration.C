@@ -31,6 +31,7 @@ SimpleInstrumentation::visit ( SgNode* astNode )
           ROSE_ASSERT(variableDeclaration != NULL);
 
           SgInitializedName* initializedName = *(variableDeclaration->get_variables().begin());
+          initializedName->set_file_info(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
 
        // DQ (6/18/2007): The unparser requires that the scope be set (for name qualification to work).
           initializedName->set_scope(block);
