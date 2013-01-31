@@ -1139,8 +1139,13 @@ test2013_36.C \
 test2013_37.C \
 test2013_38.C \
 test2013_39.C \
+test2013_40.C \
 test2013_44.C \
 test2013_46.C \
+test2013_47.C \
+test2013_48.C \
+test2013_50.C \
+test2013_51.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1275,6 +1280,20 @@ test2012_139.C \
 test2012_140.C \
 test2012_178.h \
 test2012_189.C \
+test2013_13.C \
+test2013_14.C \
+test2013_15.C \
+test2013_16.C \
+test2013_17.C \
+test2013_19.C \
+test2013_24.C \
+test2013_30.C \
+test2013_35.C \
+test2013_41.C \
+test2013_42.C \
+test2013_43.C \
+test2013_45.C \
+test2013_49.C \
 test_gnu.C 
 
 
