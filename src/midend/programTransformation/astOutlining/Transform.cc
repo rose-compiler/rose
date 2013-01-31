@@ -104,6 +104,54 @@ SgClassDeclaration* Outliner::generateParameterStructureDeclaration(
   return result;
 }
 
+//!  A helper function to decide if some variables need to be restored from their clones in the end of the outlined function
+// This is needed to support variable cloning 
+// Input are:
+//      All the variables
+//      read-only variables
+//      live-out variables
+//
+// The output is restoreVars, which is isWritten && isLiveOut --> !isRead && isLiveOut 
+static void calculateVariableRestorationSet(const ASTtools::VarSymSet_t& syms, 
+                                     const std::set<SgInitializedName*> & readOnlyVars, 
+                                     const std::set<SgInitializedName*> & liveOutVars,
+                                     std::set<SgInitializedName*>& restoreVars)
+{
+  for (ASTtools::VarSymSet_t::const_reverse_iterator i = syms.rbegin ();
+      i != syms.rend (); ++i)
+  {
+    SgInitializedName* i_name = (*i)->get_declaration ();
+    //conservatively consider them as all live out if no liveness analysis is enabled,
+    bool isLiveOut = true;
+    if (Outliner::enable_liveness)
+      if (liveOutVars.find(i_name)==liveOutVars.end())
+        isLiveOut = false;
+
+    // generate restoring statements for written and liveOut variables:
+    //  isWritten && isLiveOut --> !isRead && isLiveOut --> (findRead==NULL && findLiveOut!=NULL)
+    // must compare to the original init name (i_name), not the local copy (local_var_init)
+    if (readOnlyVars.find(i_name)==readOnlyVars.end() && isLiveOut)   // variables not in read-only set have to be restored
+      restoreVars.insert(i_name);
+  }
+}
+ 
+//! A helper function to decide for the classic outlining, if a variable should be passed using its original type (a) or its pointer type (&a)
+// For simplicity, we assuming Pass-by-reference (using AddressOf()) = all_variables - read_only_variables 
+// So all variables which are written will use addressOf operation to be passed to the outlined function
+// TODO: add more sophisticated logic, C++ reference, C array, Fortran variable etc. 
+static void calculateVariableUsingAddressOf(const ASTtools::VarSymSet_t& syms, const std::set<SgInitializedName*> readOnlyVars,  ASTtools::VarSymSet_t& addressOfVarSyms)
+{
+  for (ASTtools::VarSymSet_t::const_reverse_iterator i = syms.rbegin ();
+      i != syms.rend (); ++i)
+  {
+    // Basic information about the variable to be passed into the outlined function
+    // Variable symbol name
+    SgInitializedName* i_name = (*i)->get_declaration ();
+    if (readOnlyVars.find(i_name)==readOnlyVars.end()) // not readonly ==> being written ==> use addressOf to be passed to the outlined function
+      addressOfVarSyms.insert (*i);
+  } // end for
+}
+
 /**
  * Major work of outlining is done here
  *  Preparations: variable collection
@@ -135,6 +183,8 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   // prepare necessary analysis to optimize the outlining 
   //-----------------------------------------------------------------
   std::set<SgInitializedName*> readOnlyVars;
+  std::set< SgInitializedName *> liveIns, liveOuts;
+  // Collect read-only variables of the outlining target
 
   //Determine variables to be replaced by temp copy or pointer dereferencing.
   if (Outliner::temp_variable|| Outliner::enable_classic || Outliner::useStructureWrapper)
@@ -144,6 +194,28 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
     // They must be passed by reference if they need to be passed as parameters
     // TODO: this is not accurate: array variables are not assignable , but they should not using pointer dereferencing 
     ASTtools::collectPointerDereferencingVarSyms(s,pdSyms);
+
+    // liveness analysis
+    SgStatement* firstStmt = (s->get_statements())[0];
+    if (isSgForStatement(firstStmt)&& enable_liveness)
+    {
+      LivenessAnalysis * liv = SageInterface::call_liveness_analysis (SageInterface::getProject());
+      SageInterface::getLiveVariables(liv, isSgForStatement(firstStmt), liveIns, liveOuts);
+    }
+
+    if (Outliner::enable_debug)
+    {
+      cout<<"Outliner::Transform::generateFunction() -----Found "<<readOnlyVars.size()<<" read only variables..:";
+      for (std::set<SgInitializedName*>::const_iterator iter = readOnlyVars.begin();
+          iter!=readOnlyVars.end(); iter++)
+        cout<<" "<<(*iter)->get_name().getString()<<" ";
+      cout<<endl;
+      cout<<"Outliner::Transform::generateFunction() -----Found "<<liveOuts.size()<<" live out variables..:";
+      for (std::set<SgInitializedName*>::const_iterator iter = liveOuts.begin();
+          iter!=liveOuts.end(); iter++)
+        cout<<" "<<(*iter)->get_name().getString()<<" ";
+      cout<<endl; 
+    }
   }
 
   // Insert outlined function.
@@ -168,7 +240,19 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
   // generate the function and its prototypes if necessary
   //  printf ("In Outliner::Transform::outlineBlock() function name to build: func_name_str = %s \n",func_name_str.c_str());
-  SgFunctionDeclaration* func = generateFunction (s, func_name_str, syms, pdSyms, struct_decl, glob_scope);
+   
+  std::set<SgInitializedName*> restoreVars;
+  calculateVariableRestorationSet (syms, readOnlyVars,liveOuts,restoreVars);
+
+  if (Outliner::enable_classic) // merge readOnlyVars and pdSyms into pdSyms, only when no wrapper parameter is used && enable_classic is on
+  { // Liao 1/30/2013. I have to use this dirty trick to consolidate pdSyms and readOnlyVars
+   // This is necessary to separate analysis from transformation so the outliner's API functions can be more predictable.
+   // TODO better handling later on for default case (no flags are turned on at all)
+    pdSyms.clear();
+    calculateVariableUsingAddressOf (syms, readOnlyVars, pdSyms);
+  }
+
+  SgFunctionDeclaration* func = generateFunction (s, func_name_str, syms, pdSyms, restoreVars, struct_decl, glob_scope);
   ROSE_ASSERT (func != NULL);
   ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
 

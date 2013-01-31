@@ -1274,7 +1274,8 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
        SgClassDeclaration* struct_decl,  // an optional wrapper structure for parameters
     Depending on the internal flag, unpacking/unwrapping statements are generated inside the outlined function to use wrapper parameters.
   */
-  result = Outliner::generateFunction(body_block, func_name, syms, pdSyms3, struct_decl, g_scope);
+  std::set< SgInitializedName *> restoreVars;
+  result = Outliner::generateFunction(body_block, func_name, syms, pdSyms3, restoreVars, struct_decl, g_scope);
   
 #if 0
   // special handling for empty variables to be passed: test case helloNested.cpp
