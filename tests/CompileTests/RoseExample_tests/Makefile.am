@@ -5,18 +5,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 ####################################################################################
 
 
-if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-   TESTCODES_REQUIRED_TO_PASS = \
-testRoseHeaders_01.C
-
-# Test code that I am working one still (tests ROSE compiling ROSE header files).
-# This test can't be required to pass yet.
-# testRoseHeaders_01.C
-
-else
-# Shorten the list of code to compile to simplify checks using "make distcheck"
-TESTCODES_REQUIRED_TO_PASS = 
-endif
+# Files that represent header files from ROSE that we can now compilie with ROSE.
+TESTCODES_REQUIRED_TO_PASS = \
+testRoseHeaders_00.C \
+testRoseHeaders_01.C \
+testRoseHeaders_02.C
 
 EXTRA_TESTCODES_REQUIRED_TO_PASS = \
      test2003_33.C \
@@ -63,8 +56,32 @@ $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.qmt: ../../testTranslator
 # Include makefile rules specific to QMTest
 include $(top_srcdir)/config/QMTest_makefile.inc
 
-test: $(srcdir)/testRoseHeaders_01.C
-	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_01.C
+
+# ****************************************************************************************************
+#     Test codes or selected ROSE code that can compile using ROSE or is the subject of current work 
+# ****************************************************************************************************
+
+# This tests the long ROSE command line of ROSE compiling ROSE (the file is empty).
+test0: $(srcdir)/testRoseHeaders_00.C
+	../../testTranslator $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_00.C
+
+# This tests compiling: sage3basic.h (note that the command line generated for the backend compile step is currupted.
+test1: $(srcdir)/testRoseHeaders_01.C
+	../../testTranslator $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_01.C
+
+# This tests compiling: sage3basic.h and sage3.h
+test2: $(srcdir)/testRoseHeaders_02.C
+	../../testTranslator $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_02.C
+
+# This tests compiling: rose.h
+# Fails in: a_special_function_kind case sfk_conversion not handled! special = 3 in edgRose.C:24648
+test3: $(srcdir)/testRoseHeaders_03.C
+	../../testTranslator $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C
+
+# This tests compiling: Cxx_Grammar.C: fails "ROSE_ASSERT (kind == iek_statement);" in edgRose.C:20798
+test4: $(srcdir)/testRoseHeaders_04.C
+	../../testTranslator $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_04.C
+
 
 
 # Exclude the Cxx_Grammar.C file from being part of the distribution

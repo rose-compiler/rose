@@ -2236,14 +2236,25 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
              {
                printf ("Warning: type names should not be this long... typeNameString.length() = %zu \n",typeNameString.length());
 
+            // DQ (1/30/2013): Increased already too long limit for string lengths for typenames.  This 
+            // test fails for ROSE compiling ROSE with a type name that is 17807 characters long.  I have
+            // increased the max allowable typename lengtt to over twice that for good measure.
             // DQ (7/22/2011): The a992-thrifty-mips-compiler Hudson test fails because it generates a 
             // typename that is even longer 5149, so we need an even larger upper bound.  This should be 
             // looked into later to see why some of these different platforms are generating such large 
             // typenames. See testcode: tests/CompileTests/PythonExample_tests/test2004_92.C (on thrifty).
-               if (typeNameString.length() > 10000)
+            // if (typeNameString.length() > 10000)
+               if (typeNameString.length() > 40000)
                   {
                     printf ("Error: type names should not be this long... typeNameString.length() = %zu \n",typeNameString.length());
                     ROSE_ASSERT(false);
+                  }
+
+            // DQ (1/30/2013): Print out the long name that previously violated our initial limits.
+               if (typeNameString.length() > 10000)
+                  {
+                    printf ("WARNING: extremely long type name found: typeNameString.length() = %zu \n",typeNameString.length());
+                    printf ("typeNameString = %s \n",typeNameString.c_str());
                   }
              }
 

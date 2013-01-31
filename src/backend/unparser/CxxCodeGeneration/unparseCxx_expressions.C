@@ -632,7 +632,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
             // This will unparse the type will any required name qualification.
 #if 0
-               printf ("In unparseTemplateArgument(): Calling unparseType(templateArgument->get_type(),newInfo); \n");
+               printf ("In unparseTemplateArgument(): Calling unparseType(templateArgument->get_type(),newInfo); templateArgument->get_type() = %p = %s \n",templateArgument->get_type(),templateArgument->get_type()->class_name().c_str());
 #endif
                unp->u_type->unparseType(templateArgument->get_type(),newInfo);
 #if 0

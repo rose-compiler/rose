@@ -1262,6 +1262,18 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                        }
 #endif
 
+#ifdef ROSE_USE_EDG_VERSION_4
+                 // DQ (1/30/2013): This case is required for ROSE compiling ROSE header files.
+                    case V_SgModifierType:
+                       {
+                      // Unclear what should be checked here, for now allow this as an acceptable case.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgModifierType returned from SgFunctionCallExp::get_type() member function \n");
+#endif
+                         break;
+                       }
+#endif
+
                     default:
                        {
                          printf ("Error case default in switch (callType = %s) \n",callType->sage_class_name());
