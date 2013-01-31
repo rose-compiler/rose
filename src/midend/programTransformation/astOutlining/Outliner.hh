@@ -35,26 +35,31 @@ namespace Outliner
 {
   //! A set of flags to control the internal behavior of the outliner
   //
-  // How variables are handled:
-  // -----------------------------------
-  // Method 1: classic outlining behavior: each parameter represents a single variable being passed in/out the outlined function
-  //  side effect analysis for pass-by-value and pass-by-ref, 
-  //  reuse parameters of the outlined function (no wrapper parameter is used, no parameter packing/unpacking is needed)
-  extern bool enable_classic; 
-  // Method 2: using a wrapper (array of pointers vs. structure of flexible typed members)
-  // use a wrapper for all variables or one parameter for a variable or a wrapper for all variables
-  extern bool useParameterWrapper;  // use an array of pointers wrapper for parameters of the outlined function
-  extern bool useStructureWrapper;  // use a structure-type wrapper for parameters of the outlined function, this is a sub option for useParameterWrapper. false means using array, true means using structure (the same as useParameterWrapper)
-                   // turned on by command line option:   -rose:outline:parameter_wrapper
-                   
-  // Using variable cloning(temp variable) to reduce the uses of pointer dereferencing in computation kernels.
+  // Default behavior
+  // ----------------------------------
+  // if none of the flags are set to true, the default behavior is:
+  // * all variables are passed by references whenever possible by default (pointer types, and pointer dereferencing)
+  // * function parameter packing is needed to transfer the value of parameter to a local declaration
+  
+  // default behavior + variable cloning 
+   // Using variable cloning(temp variable) to reduce the uses of pointer dereferencing in computation kernels.
   // Details are in the paper: Chunhua Liao, Daniel J. Quinlan, Richard Vuduc, and Thomas Panas. 2009. Effective source-to-source outlining to support whole program empirical optimization. In Proceedings of the 22nd international conference on Languages and Compilers for Parallel Computing (LCPC'09).
   extern bool temp_variable; // Use temporary variables to reduce the uses of pointer dereferencing. Activated by -rose:outline:temp_variable
 
-  // if none of the previous flags are set to true, the default behavior is:
-  // * all variables are passed by references by default (pointer types, and pointer dereferencing)
-  // * function parameter packing is needed to transfer the value of parameter to a local declaration
-  
+  // -----------------------------------
+  // Method 1: classic outlining behavior: 
+  // Each parameter represents a single variable being passed in/out the outlined function. No parameter wrapping
+  // Use parameters of the outlined function directly in the function,  no local declaration/copying of parameter is needed .
+  // Side effect analysis is used for deciding on pass-by-value (readOnly) and pass-by-ref, 
+  extern bool enable_classic; 
+  // -----------------------------------
+  // Method 2: using a wrapper (array of pointers vs. structure of flexible typed members)
+  // use a wrapper for all variables or one parameter for a variable or a wrapper for all variables
+  extern bool useParameterWrapper;  // use an array of pointers wrapper for parameters of the outlined function. all things are passed by pointers (addressOf) by default
+  extern bool useStructureWrapper;  // use a structure-type wrapper for parameters of the outlined function, this is a sub option for useParameterWrapper. false means using array, true means using structure (the same as useParameterWrapper).  
+  // turned on by command line option:   -rose:outline:parameter_wrapper
+                   
+ 
   //---------------------------------others ---------------------
   extern bool preproc_only_;  // preprocessing only, -rose:outline:preproc-only
   extern bool useNewFile; // Generate the outlined function into a separated new source file
@@ -230,10 +235,12 @@ namespace Outliner
      *  pdSyms is used to store symbols which must be replaced with 
      *  their corresponding pointer dereferencing if replaced during 
      *  outlining. Used to support -rose:outline:temp_variable
+     *       It is also used to support struct wrapper parameter to indicate
+     *       if a variable is stored by its address (not value) in the wrapper. 
      *
      * // pSyms are OpenMP private variables, or dead variables (neither livein nor liveout)
      *
-     *  Note: private, firsprivate, reduction variables are handled by OmpSupport::transOmpVariables()
+     *  Note: private, firstprivate, reduction variables are handled by OmpSupport::transOmpVariables()
      *  They are not in actual use anymore.
      *
      *  \pre The statement does not contain non-local control flow.
@@ -244,8 +251,10 @@ namespace Outliner
     generateFunction (SgBasicBlock* s,
                       const std::string& func_name_str,
                       const ASTtools::VarSymSet_t& syms,
-                      const ASTtools::VarSymSet_t& pdSyms,
-//                      const ASTtools::VarSymSet_t& pSyms, //TODO: remove this parameter since non-generic handling should be done before calling the outliner
+                      const ASTtools::VarSymSet_t& pdSyms, // variables using their addresses as parameters of the outlined functions, compared to use their values (pass-by-value) 
+                      //const std::set<SgInitializedName*>& readOnlyVars, // optional readOnlyVariables to optimize type of parameter when no wrapper is used.
+                      //const std::set< SgInitializedName *>& liveOuts, // optional live out variables to optimize away the copy-back statements in variable cloning
+                      const std::set< SgInitializedName *>& restoreVars, // variables need to be restored after their clones finish computation
                       SgClassDeclaration* struct_decl, /*optional struct type to wrap parameters*/
                       SgScopeStatement* scope);
 

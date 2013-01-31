@@ -55,12 +55,12 @@ static void appendIndividualFunctionCallArgs (const ASTtools::VarSymSet_t& syms,
     {
       // Construct actual function argument. //TODO: consider array types, they can only be passed by reference, no further addressing/de-referencing is needed
       SgExpression* i_arg=NULL;
-//      if (Outliner::enable_classic && using_orig_type )
-      if (using_orig_type ) // using a
+      if (Outliner::enable_classic && using_orig_type ) // TODO expand to the default case also: using local declaration for transfer parameters
+//      if (using_orig_type ) // using a 
       { // classic translation, read only variable, pass by value directly
         i_arg = v_ref;
       }
-      else // using &a
+      else // conservatively always use &a for the default case (no wrapper, none classic)
       {
         i_arg =  SageBuilder::buildAddressOfOp (v_ref);
       }

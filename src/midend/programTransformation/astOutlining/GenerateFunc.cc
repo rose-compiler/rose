@@ -155,6 +155,9 @@ typedef std::pair<string, SgType *> OutlinedFuncParam_t;
 /*!
  *  \brief Creates a new outlined-function parameter for a given
  *  variable. The requirement is to preserve data read/write semantics.
+ *  
+ *  This function is only used when wrapper parameter is not used
+ *  so individual parameter needs to be created for each variable passed to the outlined function.
  *
  *  For C/C++: we use pointer dereferencing to implement pass-by-reference
  *    So the parameter needs to be &a, which is a pointer type of a's base type
@@ -904,8 +907,9 @@ static
 void
 variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to the outlined function: //regular (shared) parameters?
               const ASTtools::VarSymSet_t& pdSyms, // those must use pointer dereference: use pass-by-reference
-              std::set<SgInitializedName*> & readOnlyVars, // optional analysis: those which can use pass-by-value, used for classic outlining without parameter wrapping
-              std::set<SgInitializedName*> & liveOutVars, // optional analysis: used to control if a write-back is needed when variable cloning is used.
+//              const std::set<SgInitializedName*> & readOnlyVars, // optional analysis: those which can use pass-by-value, used for classic outlining without parameter wrapping, and also for variable clone to decide on if write-back is needed
+//              const std::set<SgInitializedName*> & liveOutVars, // optional analysis: used to control if a write-back is needed when variable cloning is used.
+              const std::set<SgInitializedName*> & restoreVars, // variables to be restored after variable cloning
               SgClassDeclaration* struct_decl, // an optional struct wrapper for all variables
               SgFunctionDeclaration* func) // the outlined function
 {
@@ -947,12 +951,16 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
     ROSE_ASSERT (i_name);
     string name_str = i_name->get_name ().str ();
     SgName p_sg_name (name_str);
-    //SgType* i_type = i_name->get_type ();
-    bool readOnly = false;
-    if (readOnlyVars.find(const_cast<SgInitializedName*> (i_name)) != readOnlyVars.end())
-      readOnly = true;
+    const SgVariableSymbol * sym = isSgVariableSymbol(*i);
 
-    // step 1. Create parameters and insert it into the parameter list.
+    //SgType* i_type = i_name->get_type ();
+//    bool readOnly = false;
+    bool use_orig_type = false;
+//    if (readOnlyVars.find(const_cast<SgInitializedName*> (i_name)) != readOnlyVars.end())
+//      readOnly = true;
+    if (pdSyms.find(sym) == pdSyms.end()) // not a variable to use AddressOf, then it should be a variable using its original type
+       use_orig_type = true;
+    // step 1. Create parameters and insert it into the parameter list of the outlined function.
     // ----------------------------------------
     SgInitializedName* p_init_name = NULL;
     // Case 1: using a wrapper for all variables 
@@ -986,13 +994,13 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
       }
       p_init_name = parameter1; // set the source parameter to the wrapper
     }
-    else // case 3: use a parameter for each variable, the default, classic case
-       p_init_name = createOneFunctionParameter(i_name, readOnly, func); 
+    else // case 3: use a parameter for each variable, the default case and the classic case
+       p_init_name = createOneFunctionParameter(i_name, use_orig_type , func); 
 
     // step 2. Create unpacking/unwrapping statements, also record variables to be replaced
     // ----------------------------------------
     bool isPointerDeref = false; 
-    if (Outliner::temp_variable || Outliner::useStructureWrapper) 
+    if (Outliner::temp_variable || Outliner::useStructureWrapper)  //TODO add enable_classic flag here? no since there is no need to unpack parameter in the classic behavior, for default outlining, all variables are passed by references anyway, so no use neither
     { // Check if the current variable belongs to the symbol set 
       //suitable for using pointer dereferencing
       const SgVariableSymbol* i_sym = isSgVariableSymbol(i_name->get_symbol_from_symbol_table ());
@@ -1004,9 +1012,10 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
     if (Outliner::enable_classic) 
     // classic methods use parameters directly, no unpacking is needed
     {
-      if (!readOnly) 
+      if (!use_orig_type) 
       //read only variable should not have local variable declaration, using parameter directly
       // taking advantage of the same parameter names for readOnly variables
+      //
       // Let postprocessing to patch up symbols for them
       {
         // non-readonly variables need to be mapped to their parameters with different names (p__)
@@ -1047,6 +1056,7 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
     {
       if(!isPointerDeref)
       {
+#if 0        
         //conservatively consider them as all live out if no liveness analysis is enabled,
         bool isLiveOut = true;
         if (Outliner::enable_liveness)
@@ -1057,6 +1067,8 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
         //  isWritten && isLiveOut --> !isRead && isLiveOut --> (findRead==NULL && findLiveOut!=NULL)
         // must compare to the original init name (i_name), not the local copy (local_var_init)
         if (readOnlyVars.find(const_cast<SgInitializedName*> (i_name))==readOnlyVars.end() && isLiveOut)   // variables not in read-only set have to be restored
+#endif          
+        if (restoreVars.find(const_cast<SgInitializedName*> (i_name))!=restoreVars.end())
         {
           if (Outliner::enable_debug && local_var_init != NULL)
             cout<<"Generating restoring statement for non-read-only variable:"<<local_var_init->unparseToString()<<endl;
@@ -1137,13 +1149,19 @@ SgFunctionDeclaration *
 Outliner::generateFunction ( SgBasicBlock* s,  // block to be outlined
                             const string& func_name_str, // function name provided
                             const ASTtools::VarSymSet_t& syms, // variables to be passed in/out the outlined function
-                            const ASTtools::VarSymSet_t& pdSyms, // variables must use pointer dereferencing (pass-by-reference)
+                            const ASTtools::VarSymSet_t& pdSyms, // variables to be passed using its address. using pointer dereferencing (AddressOf() for pass-by-reference), most use for struct wrapper
+//                          const std::set<SgInitializedName*>& readOnlyVars, // optional readOnly variables to guide classic outlining's parameter handling and variable cloning's write-back generation
+//                          const std::set< SgInitializedName *>& liveOuts, // optional live out variables, used to optimize variable cloning
+                            const std::set< SgInitializedName *>& restoreVars, // optional information about variables to be restored after variable clones finish computation
                             SgClassDeclaration* struct_decl,  // an optional wrapper structure for parameters
                             SgScopeStatement* scope)
 {
   ROSE_ASSERT (s&&scope);
   ROSE_ASSERT(isSgGlobal(scope));
+#if 0  
   // step 1: perform necessary liveness and side effect analysis, if requested.
+  // This is moved out to the callers, who has freedom to decide if additional analysis is needed in the first place
+  // For OpenMP implementation, directives with clauses have sufficient information to guide variable handling, no other analysis is needed at all. 
   // ---------------------------------------------------------
   std::set< SgInitializedName *> liveIns, liveOuts;
   // Collect read-only variables of the outlining target
@@ -1172,7 +1190,7 @@ Outliner::generateFunction ( SgBasicBlock* s,  // block to be outlined
       cout<<endl;
     }
   }
-
+#endif
   //step 2. Create function skeleton, 'func'.
   // -----------------------------------------
   SgName func_name (func_name_str);
@@ -1255,7 +1273,8 @@ Outliner::generateFunction ( SgBasicBlock* s,  // block to be outlined
   //   add statements to unwrap the parameters if necessary
   //   add repacking statements if necessary
   //   replace variables to access to parameters, directly or indirectly
-  variableHandling(syms, pdSyms, readOnlyVars, liveOuts, struct_decl, func);
+  //variableHandling(syms, pdSyms, readOnlyVars, liveOuts, struct_decl, func);
+  variableHandling(syms, pdSyms, restoreVars, struct_decl, func);
   ROSE_ASSERT (func != NULL);
 
   //     std::cout << func->get_type()->unparseToString() << std::endl;
