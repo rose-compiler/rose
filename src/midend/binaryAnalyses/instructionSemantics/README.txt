@@ -310,3 +310,12 @@ nullSemantics2                no       7.826      4.924        na
 partialSymbolicSemantics1    yes      15.479      5.943 2,295,040
 partialSymbolicSemantics2     no       7.623      4.864   234,989
 
+After changing DispatcherX86 to cache register descriptors
+
+                         Using      Compile  Executable Run speed
+Program                  templates? time (s) size (MB)  (insn/s)
+------------------------ ---------- -------- ---------- ---------
+nullSemantics1               yes     
+nullSemantics2                no     
+partialSymbolicSemantics1    yes     
+partialSymbolicSemantics2     no     

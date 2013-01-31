@@ -12,12 +12,24 @@ class DispatcherX86: public BaseSemantics::Dispatcher {
 protected:
     explicit DispatcherX86(const BaseSemantics::RiscOperatorsPtr &ops): BaseSemantics::Dispatcher(ops) {
         iproc_init();
+        regcache_init();
     }
 
     /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */
     void iproc_init();
 
+    /** Load the cached register descriptors.  This happens at construction and on set_register_dictionary() calls. */
+    void regcache_init();
+
 public:
+    /** Cached register. This register is cached so that there are not so many calls to Dispatcher::findRegister(). The
+     *  register descriptor is updated only when the register dictionary is changed (see set_register_dictionary()).
+     * @{ */
+    RegisterDescriptor REG_EAX, REG_EBX, REG_ECX, REG_EDX, REG_EDI, REG_EIP, REG_ESI, REG_ESP, REG_EBP;
+    RegisterDescriptor REG_AX, REG_CX, REG_DX, REG_AL, REG_AH;
+    RegisterDescriptor REG_EFLAGS, REG_AF, REG_CF, REG_DF, REG_OF, REG_PF, REG_SF, REG_ZF;
+    /** @}*/
+
     /** Constructor. */
     static DispatcherX86Ptr instance(const BaseSemantics::RiscOperatorsPtr &ops) {
         return DispatcherX86Ptr(new DispatcherX86(ops));
@@ -34,6 +46,8 @@ public:
         assert(retval!=NULL);
         return retval;
     }
+
+    virtual void set_register_dictionary(const RegisterDictionary *regdict) /*override*/;
 
     virtual int iproc_key(SgAsmInstruction *insn_) const /*override*/ {
         SgAsmx86Instruction *insn = isSgAsmx86Instruction(insn_);

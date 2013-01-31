@@ -1004,8 +1004,8 @@ protected:
     RiscOperatorsPtr operators;
 
     explicit Dispatcher(const RiscOperatorsPtr &ops): operators(ops) {
-        regdict = RegisterDictionary::dictionary_i386();
         assert(operators!=NULL);
+        regdict = RegisterDictionary::dictionary_i386();
     }
 
     // Dispatchers keep a table of all the kinds of instructions they can handle.  The lookup key is typically some sort of
