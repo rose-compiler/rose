@@ -34,6 +34,10 @@ ROSE_FLAGS = --edg:no_warnings -w --edg:restrict
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
+TEST_TRANSLATOR = ../../testTranslator
+$(TEST_TRANSLATOR):
+	cd ../..; $(MAKE) testTranslator
+
 $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.C)
 	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/$(@:.o=.C)
 
