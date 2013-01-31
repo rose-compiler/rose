@@ -140,10 +140,6 @@ public:
 };
 
 
-std::ostream& operator<<(std::ostream &o, const SValue &e) {
-    e.print(o);
-    return o;
-}
 
 /*******************************************************************************************************************************
  *                                      Memory
@@ -835,6 +831,8 @@ protected:
                 return digest_str;
             }
 #endif
+
+std::ostream& operator<<(std::ostream &o, const SValue &e);
     
         } /*namespace*/
     } /*namespace*/

@@ -296,3 +296,17 @@ and furthermore, any base class that calls unsignedMultiply() will
 actually call MyOperators::unsignedMultiply() since it's a virtual
 member function in BaseSemantics::Operators (which doesn't work in the
 template-based design).
+
+== Experimental Results for Compile and Run Times ==
+Using semanticSpeed2.C without distcc or ccache; best of three times;
+with optimizations
+$ rg-make clean && time env DISTCC_HOSTS= CCACHE_DISABLE=yes make ...
+
+                         Using      Compile  Executable Run speed
+Program                  templates? time (s) size (MB)  (insn/s)
+------------------------ ---------- -------- ---------- ---------
+nullSemantics1               yes       9.312      4.961        na
+nullSemantics2                no       7.826      4.924        na
+partialSymbolicSemantics1    yes      15.479      5.943 2,295,040
+partialSymbolicSemantics2     no       7.623      4.864   234,989
+

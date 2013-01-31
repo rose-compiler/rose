@@ -5,6 +5,12 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics {
 namespace PartialSymbolicSemantics {
 
+std::ostream&
+operator<<(std::ostream &o, const SValue &e) {
+    e.print(o);
+    return o;
+}
+
 uint64_t
 RenameMap::rename(uint64_t orig_name)
 {
@@ -67,6 +73,33 @@ SValue::print(std::ostream &output, BaseSemantics::PrintHelper *helper_) const
             output <<" (-0x" <<std::hex <<negative <<")";
     }
 }
+
+
+/*******************************************************************************************************************************
+ *                                      State
+ *******************************************************************************************************************************/
+
+void
+State::print_diff_registers(std::ostream &o, const StatePtr &other_state, RenameMap *rmap) const
+{
+    assert(!"FIXME");
+    abort();
+}
+
+bool
+State::equal_registers(const StatePtr &other) const
+{
+    assert(!"FIXME");
+    abort();
+}
+
+void
+State::discard_popped_memory()
+{
+    assert(!"FIXME");
+    abort();
+}
+
 
 /*******************************************************************************************************************************
  *                                      RISC Operators
@@ -363,7 +396,7 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemant
     SValuePtr b = SValue::promote(b_);
     if (!b->name) {
         if (0==b->offset)
-            throw Exception("division by zero");
+            throw BaseSemantics::Exception("division by zero", get_insn());
         if (!a->name)
             return number_(a->get_width(),
                            (IntegerOps::signExtend2(a->offset, a->get_width(), 64) /
@@ -385,7 +418,7 @@ RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemant
     if (a->name || b->name)
         return undefined_(b->get_width());
     if (0==b->offset)
-        throw Exception("division by zero");
+        throw BaseSemantics::Exception("division by zero", get_insn());
     return number_(b->get_width(),
                    (IntegerOps::signExtend2(a->offset, a->get_width(), 64) %
                     IntegerOps::signExtend2(b->offset, b->get_width(), 64)));
@@ -428,7 +461,7 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr b = SValue::promote(b_);
     if (!b->name) {
         if (0==b->offset)
-            throw Exception("division by zero");
+            throw BaseSemantics::Exception("division by zero", get_insn());
         if (!a->name)
             return number_(a->get_width(), a->offset / b->offset);
         if (1==b->offset)
@@ -445,7 +478,7 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr b = SValue::promote(b_);
     if (!b->name) {
         if (0==b->offset)
-            throw Exception("division by zero");
+            throw BaseSemantics::Exception("division by zero", get_insn());
         if (!a->name)
             return number_(b->get_width(), a->offset % b->offset);
         /* FIXME: More folding possibilities... if 'b' is a power of two then we can return 'a' with the

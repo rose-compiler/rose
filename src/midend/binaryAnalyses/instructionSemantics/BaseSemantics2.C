@@ -99,17 +99,189 @@ RegisterStateX86::zero()
 }
 
 SValuePtr
-RegisterStateX86::readRegister(const RegisterDescriptor &reg)
+RegisterStateX86::readRegister(const RegisterDescriptor &reg, RiscOperators *ops)
 {
-    assert(!"FIXME");
-    abort(); 
+    switch (reg.get_major()) {
+        case x86_regclass_gpr:
+            return readRegisterGpr(reg, ops);
+        case x86_regclass_flags:
+            return readRegisterFlag(reg, ops);
+        case x86_regclass_segment:
+            return readRegisterSeg(reg, ops);
+        case x86_regclass_ip:
+            return readRegisterIp(reg, ops);
+        default:
+            throw Exception("invalid register major number: "+StringUtility::numberToString(reg.get_major())+
+                            " (wrong RegisterDictionary?)", ops->get_insn());
+    }
+}
+
+SValuePtr
+RegisterStateX86::readRegisterGpr(const RegisterDescriptor &reg, RiscOperators *ops)
+{
+    using namespace StringUtility;
+    assert(ops!=NULL);
+    assert(reg.get_major()==x86_regclass_gpr);
+    if (reg.get_minor()>=n_gprs)
+        throw Exception("invalid general purpose register minor number: "+numberToString(reg.get_minor()), ops->get_insn());
+    if (reg.get_nbits()!=8 && reg.get_nbits()!=16 && reg.get_nbits()!=32)
+        throw Exception("invalid general purpose register width: "+numberToString(reg.get_nbits()), ops->get_insn());
+    if ((reg.get_offset()!=0 && (reg.get_offset()!=8 || reg.get_nbits()!=8)) ||
+        (reg.get_offset() + reg.get_nbits() > 32))
+        throw Exception("invalid general purpose sub-register: offset="+numberToString(reg.get_offset())+
+                        " width="+numberToString(reg.get_nbits()), ops->get_insn());
+    SValuePtr result = gpr[reg.get_minor()];
+    if (reg.get_offset()!=0 || reg.get_nbits()!=32)
+        result = ops->extract(result, reg.get_offset(), reg.get_offset()+reg.get_nbits());
+    assert(result->get_width()==reg.get_nbits());
+    return result;
+}
+
+SValuePtr
+RegisterStateX86::readRegisterFlag(const RegisterDescriptor &reg, RiscOperators *ops)
+{
+    using namespace StringUtility;
+    assert(ops!=NULL);
+    assert(reg.get_major()==x86_regclass_flags);
+    if (reg.get_minor()!=0)
+        throw Exception("invalid flags register minor numbr: "+numberToString(reg.get_minor()), ops->get_insn());
+    if (reg.get_nbits()!=1 && reg.get_nbits()!=16 && reg.get_nbits()!=32)
+        throw Exception("invalid flag register width: "+numberToString(reg.get_nbits()), ops->get_insn());
+    if ((reg.get_nbits()>1 && reg.get_offset()!=0) ||
+        (reg.get_offset() + reg.get_nbits() > 32))
+        throw Exception("invalid flag subregister: offset="+numberToString(reg.get_offset())+
+                        " width="+numberToString(reg.get_nbits()), ops->get_insn());
+    SValuePtr result = flag[reg.get_offset()];
+    for (size_t i=1; i<reg.get_nbits(); ++i)
+        result = ops->concat(result, flag[reg.get_offset()+i]);
+    assert(result->get_width()==reg.get_nbits());
+    return result;
+}
+
+SValuePtr
+RegisterStateX86::readRegisterSeg(const RegisterDescriptor &reg, RiscOperators *ops)
+{
+    using namespace StringUtility;
+    assert(ops!=NULL);
+    assert(reg.get_major()==x86_regclass_segment);
+    if (reg.get_minor()>=n_segregs)
+        throw Exception("invalid segment register minor number: "+numberToString(reg.get_minor()), ops->get_insn());
+    if (reg.get_offset()!=0 || reg.get_nbits()!=16)
+        throw Exception("invalid segment subregister: offset="+numberToString(reg.get_offset())+
+                        " width="+numberToString(reg.get_nbits()), ops->get_insn());
+    SValuePtr result = segreg[reg.get_minor()];
+    assert(result->get_width()==reg.get_nbits());
+    return result;
+}
+
+SValuePtr
+RegisterStateX86::readRegisterIp(const RegisterDescriptor &reg, RiscOperators *ops)
+{
+    using namespace StringUtility;
+    assert(ops!=NULL);
+    assert(reg.get_major()==x86_regclass_ip);
+    if (reg.get_minor()!=0)
+        throw Exception("invalid instruction pointer register minor number: "+numberToString(reg.get_minor()), ops->get_insn());
+    if (reg.get_offset()!=0 || reg.get_nbits()!=32)
+        throw Exception("invalid instruction pointer subregister: offset="+numberToString(reg.get_offset())+
+                        " width="+numberToString(reg.get_nbits()), ops->get_insn());
+    assert(ip->get_width()==reg.get_nbits());
+    return ip;
 }
 
 void
-RegisterStateX86::writeRegister(const RegisterDescriptor &reg, const SValuePtr &value)
+RegisterStateX86::writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
 {
-    assert(!"FIXME");
-    abort();
+    switch (reg.get_major()) {
+        case x86_regclass_gpr:
+            return writeRegisterGpr(reg, value, ops);
+        case x86_regclass_flags:
+            return writeRegisterFlag(reg, value, ops);
+        case x86_regclass_segment:
+            return writeRegisterSeg(reg, value, ops);
+        case x86_regclass_ip:
+            return writeRegisterIp(reg, value, ops);
+        default:
+            throw Exception("invalid register major number: "+StringUtility::numberToString(reg.get_major())+
+                            " (wrong RegisterDictionary?)", ops->get_insn());
+    }
+}
+
+void
+RegisterStateX86::writeRegisterGpr(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
+{
+    using namespace StringUtility;
+    assert(reg.get_major()==x86_regclass_gpr);
+    assert(value!=NULL && value->get_width()==reg.get_nbits());
+    assert(ops!=NULL);
+    if (reg.get_minor()>=n_gprs)
+        throw Exception("invalid general purpose register minor number: "+numberToString(reg.get_minor()), ops->get_insn());
+    if (reg.get_nbits()!=8 && reg.get_nbits()!=16 && reg.get_nbits()!=32)
+        throw Exception("invalid general purpose register width: "+numberToString(reg.get_nbits()), ops->get_insn());
+    if ((reg.get_offset()!=0 && (reg.get_offset()!=8 || reg.get_nbits()!=8)) ||
+        (reg.get_offset() + reg.get_nbits() > 32))
+        throw Exception("invalid general purpose sub-register: offset="+numberToString(reg.get_offset())+
+                        " width="+numberToString(reg.get_nbits()), ops->get_insn());
+    SValuePtr towrite = value;
+    if (reg.get_offset()!=0)
+        towrite = ops->concat(ops->extract(gpr[reg.get_minor()], 0, reg.get_offset()), towrite);
+    if (reg.get_offset() + reg.get_nbits()<32)
+        towrite = ops->concat(towrite, ops->extract(gpr[reg.get_minor()], reg.get_offset()+reg.get_nbits(), 32));
+    assert(towrite->get_width()==reg.get_nbits());
+    gpr[reg.get_minor()] = towrite;
+}
+
+void
+RegisterStateX86::writeRegisterFlag(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
+{
+    using namespace StringUtility;
+    assert(reg.get_major()==x86_regclass_flags);
+    assert(value!=NULL && value->get_width()==reg.get_nbits());
+    assert(ops!=NULL);
+    if (reg.get_minor()!=0)
+        throw Exception("invalid flags register minor numbr: "+numberToString(reg.get_minor()), ops->get_insn());
+    if (reg.get_nbits()!=1 && reg.get_nbits()!=16 && reg.get_nbits()!=32)
+        throw Exception("invalid flag register width: "+numberToString(reg.get_nbits()), ops->get_insn());
+    if ((reg.get_nbits()>1 && reg.get_offset()!=0) ||
+        (reg.get_offset() + reg.get_nbits() > 32))
+        throw Exception("invalid flag subregister: offset="+numberToString(reg.get_offset())+
+                        " width="+numberToString(reg.get_nbits()), ops->get_insn());
+    if (reg.get_nbits()==1) {
+        flag[reg.get_offset()] = value;
+    } else {
+        for (size_t i=0; i<reg.get_nbits(); ++i)
+            flag[reg.get_offset()+i] = ops->extract(value, i, 1);
+    }
+}
+
+void
+RegisterStateX86::writeRegisterSeg(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
+{
+    using namespace StringUtility;
+    assert(reg.get_major()==x86_regclass_segment);
+    assert(value!=NULL && value->get_width()==reg.get_nbits());
+    assert(ops!=NULL);
+    if (reg.get_minor()>=n_segregs)
+        throw Exception("invalid segment register minor number: "+numberToString(reg.get_minor()), ops->get_insn());
+    if (reg.get_offset()!=0 || reg.get_nbits()!=16)
+        throw Exception("invalid segment subregister: offset="+numberToString(reg.get_offset())+
+                        " width="+numberToString(reg.get_nbits()), ops->get_insn());
+    segreg[reg.get_minor()] = value;
+}
+
+void
+RegisterStateX86::writeRegisterIp(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
+{
+    using namespace StringUtility;
+    assert(reg.get_major()==x86_regclass_ip);
+    assert(value!=NULL && value->get_width()==reg.get_nbits());
+    assert(ops!=NULL);
+    if (reg.get_minor()!=0)
+        throw Exception("invalid instruction pointer register minor number: "+numberToString(reg.get_minor()), ops->get_insn());
+    if (reg.get_offset()!=0 || reg.get_nbits()!=32)
+        throw Exception("invalid instruction pointer subregister: offset="+numberToString(reg.get_offset())+
+                        " width="+numberToString(reg.get_nbits()), ops->get_insn());
+    ip = value;
 }
 
 void

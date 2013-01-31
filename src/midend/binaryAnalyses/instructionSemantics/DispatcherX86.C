@@ -61,7 +61,7 @@ public:
     void assert_args(I insn, A args, size_t nargs) {
         if (args.size()!=nargs) {
             std::string mesg = "instruction must have " + StringUtility::numberToString(nargs) + "argument" + (1==nargs?"":"s");
-            throw DispatcherX86::Exception(mesg, insn);
+            throw BaseSemantics::Exception(mesg, insn);
         }
     }
 };
@@ -286,7 +286,7 @@ struct IP_call: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
-            throw DispatcherX86::Exception("size not implemented", insn);
+            throw BaseSemantics::Exception("size not implemented", insn);
         const RegisterDescriptor &REG_ESP = d->findRegister("esp");
         const RegisterDescriptor &REG_EIP = d->findRegister("eip");
         BaseSemantics::SValuePtr oldSp = ops->readRegister(REG_ESP);
@@ -380,7 +380,7 @@ struct IP_cmpstrings: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (insn->get_addressSize() != x86_insnsize_32)
-            throw DispatcherX86::Exception("size not implemented", insn);
+            throw BaseSemantics::Exception("size not implemented", insn);
         const RegisterDescriptor &REG_EDI = d->findRegister("edi");
         const RegisterDescriptor &REG_ESI = d->findRegister("esi");
         const RegisterDescriptor &REG_DF  = d->findRegister("df");
@@ -547,7 +547,7 @@ struct IP_imul: P {
             ops->writeRegister(d->findRegister("ax"), result);
         } else {
             if (args.size()<1 || args.size()>3)
-                throw DispatcherX86::Exception("instruction must have 1, 2, or 3 arguments", insn);
+                throw BaseSemantics::Exception("instruction must have 1, 2, or 3 arguments", insn);
             BaseSemantics::SValuePtr op0 = 1==args.size() ? ops->readRegister(reg0) : d->read(args[args.size()-2], nbits);
             BaseSemantics::SValuePtr op1 = d->read(args[args.size()-1], nbits);
             result = ops->signedMultiply(op0, op1);
@@ -587,7 +587,7 @@ struct IP_int: P {
         assert_args(insn, args, 1);
         SgAsmByteValueExpression *bv = isSgAsmByteValueExpression(args[0]);
         if (!bv)
-            throw DispatcherX86::Exception("operand must be a byte value expression", insn);
+            throw BaseSemantics::Exception("operand must be a byte value expression", insn);
         ops->interrupt(bv->get_value());
     }
 };
@@ -630,7 +630,7 @@ struct IP_leave: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
-            throw DispatcherX86::Exception("size not implemented", insn);
+            throw BaseSemantics::Exception("size not implemented", insn);
         const RegisterDescriptor &REG_ESP = d->findRegister("esp");
         const RegisterDescriptor &REG_EBP = d->findRegister("ebp");
         ops->writeRegister(REG_ESP, ops->readRegister(REG_EBP));
@@ -662,7 +662,7 @@ struct IP_loadstring: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (insn->get_addressSize() != x86_insnsize_32)
-            throw DispatcherX86::Exception("size not implemented", insn);
+            throw BaseSemantics::Exception("size not implemented", insn);
         RegisterDescriptor regA = d->findRegister("eax"); regA.set_nbits(nbits);
         const RegisterDescriptor &REG_ESI = d->findRegister("esi");
         const RegisterDescriptor &REG_DF = d->findRegister("df");
@@ -684,7 +684,7 @@ struct IP_loop: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
-            throw DispatcherX86::Exception("size not implemented", insn);
+            throw BaseSemantics::Exception("size not implemented", insn);
         const RegisterDescriptor &REG_ECX = d->findRegister("ecx");
         const RegisterDescriptor &REG_EIP = d->findRegister("eip");
         const RegisterDescriptor &REG_ZF = d->findRegister("zf");
@@ -732,7 +732,7 @@ struct IP_movestring: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (insn->get_addressSize() != x86_insnsize_32)
-            throw DispatcherX86::Exception("size not implemented", insn);
+            throw BaseSemantics::Exception("size not implemented", insn);
         BaseSemantics::SValuePtr in_loop = d->repEnter(repeat);
         const RegisterDescriptor &REG_EDI = d->findRegister("edi");
         const RegisterDescriptor &REG_ESI = d->findRegister("esi");
@@ -773,12 +773,12 @@ struct IP_movsx: P {
                         break;
                     }
                     default:
-                        throw DispatcherX86::Exception("size not implemented", insn);
+                        throw BaseSemantics::Exception("size not implemented", insn);
                 }
                 break;
             }
             default: {
-                throw DispatcherX86::Exception("size not implemented", insn);
+                throw BaseSemantics::Exception("size not implemented", insn);
                 break;
             }
         }
@@ -798,12 +798,12 @@ struct IP_movzx: P {
                 switch (asm_type_width(args[1]->get_type())) {
                     case 8: d->write(args[0], ops->concat(d->read(args[1], 8), ops->number_(24, 0))); break;
                     case 16: d->write(args[0], ops->concat(d->read(args[1], 16), ops->number_(16, 0))); break;
-                    default: throw DispatcherX86::Exception("size not implemented", insn);
+                    default: throw BaseSemantics::Exception("size not implemented", insn);
                 }
                 break;
             }
             default:
-                throw DispatcherX86::Exception("size not implemented", insn);
+                throw BaseSemantics::Exception("size not implemented", insn);
                 break;
         }
     }
@@ -880,7 +880,7 @@ struct IP_pop: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
-            throw DispatcherX86::Exception("size not implemented", insn);
+            throw BaseSemantics::Exception("size not implemented", insn);
         BaseSemantics::SValuePtr oldSp = ops->readRegister(d->findRegister("esp"));
         BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(32, 4));
         ops->writeRegister(d->findRegister("esp"), newSp);
@@ -893,7 +893,7 @@ struct IP_popad: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (insn->get_addressSize() != x86_insnsize_32)
-            throw DispatcherX86::Exception("size not implemented", insn);
+            throw BaseSemantics::Exception("size not implemented", insn);
         const RegisterDescriptor &REG_ESP = d->findRegister("esp");
         BaseSemantics::SValuePtr oldSp = ops->readRegister(REG_ESP);
         BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(32, 32));
@@ -921,7 +921,7 @@ struct IP_push: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
-            throw DispatcherX86::Exception("size not implemented", insn);
+            throw BaseSemantics::Exception("size not implemented", insn);
         const RegisterDescriptor &REG_ESP = d->findRegister("esp");
         BaseSemantics::SValuePtr oldSp = ops->readRegister(REG_ESP);
         BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(32, -4));
@@ -935,7 +935,7 @@ struct IP_pushad: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (insn->get_addressSize() != x86_insnsize_32)
-            throw DispatcherX86::Exception("size not implemented", insn);
+            throw BaseSemantics::Exception("size not implemented", insn);
         const RegisterDescriptor &REG_ESP = d->findRegister("esp");
         BaseSemantics::SValuePtr oldSp = ops->readRegister(REG_ESP);
         BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(32, -32));
@@ -964,7 +964,7 @@ struct IP_pushfd: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (insn->get_addressSize() != x86_insnsize_32)
-            throw DispatcherX86::Exception("size not implemented", insn);
+            throw BaseSemantics::Exception("size not implemented", insn);
         BaseSemantics::SValuePtr oldSp = ops->readRegister(d->findRegister("esp"));
         BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(32, -4));
         d->writeMemory(x86_segreg_ss, newSp, ops->readRegister(d->findRegister("eflags")), ops->true_());
@@ -976,9 +976,9 @@ struct IP_pushfd: P {
 struct IP_ret: P {
     void p(D d, Ops ops, I insn, A args) {
         if (args.size()>1)
-            throw DispatcherX86::Exception("instruction must have zero or one operand", insn);
+            throw BaseSemantics::Exception("instruction must have zero or one operand", insn);
         if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
-            throw DispatcherX86::Exception("size not implemented", insn);
+            throw BaseSemantics::Exception("size not implemented", insn);
         const RegisterDescriptor &REG_ESP = d->findRegister("esp");
         const RegisterDescriptor &REG_EIP = d->findRegister("eip");
         BaseSemantics::SValuePtr extraBytes = (args.size()==1 ? d->read(args[0], 32) : ops->number_(32, 0));
@@ -1049,7 +1049,7 @@ struct IP_scanstring: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (insn->get_addressSize() != x86_insnsize_32)
-            throw DispatcherX86::Exception("size not implemented", insn);
+            throw BaseSemantics::Exception("size not implemented", insn);
         BaseSemantics::SValuePtr in_loop = d->repEnter(repeat);
         RegisterDescriptor regA = d->findRegister("eax"); regA.set_nbits(nbits);
         const RegisterDescriptor &REG_EDI = d->findRegister("edi");
@@ -1127,7 +1127,7 @@ struct IP_storestring: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (insn->get_addressSize()!=x86_insnsize_32)
-            throw DispatcherX86::Exception("address size must be 32 bits", insn);
+            throw BaseSemantics::Exception("address size must be 32 bits", insn);
         BaseSemantics::SValuePtr in_loop = d->repEnter(repeat);
         RegisterDescriptor regA = d->findRegister("eax"); regA.set_nbits(nbits);
         const RegisterDescriptor &REG_EDI = d->findRegister("edi");
@@ -1419,7 +1419,7 @@ DispatcherX86::read(SgAsmExpression *e, size_t nbits)
         case V_SgAsmBinaryMultiply: {
             SgAsmByteValueExpression* rhs = isSgAsmByteValueExpression(isSgAsmBinaryMultiply(e)->get_rhs());
             if (!rhs)
-                throw Exception("byte value expression expected", get_insn());
+                throw BaseSemantics::Exception("byte value expression expected", get_insn());
             SgAsmExpression* lhs = isSgAsmBinaryMultiply(e)->get_lhs();
             retval = operators->extract(operators->unsignedMultiply(read(lhs, nbits), read(rhs, nbits)), 0, nbits);
             break;

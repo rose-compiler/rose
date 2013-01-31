@@ -184,6 +184,8 @@ namespace InstructionSemantics {
  *  domains will be factored out and placed in this name space. */
 namespace BaseSemantics {
 
+class RiscOperators;
+
 /** Smart pointer to an SValue object. SValue objects are reference counted through boost::shared_ptr smart pointers. The
  *  underlying object should never be explicitly deleted. */ 
 typedef boost::shared_ptr<class SValue> SValuePtr;
@@ -336,11 +338,17 @@ public:
     /** Set all registers to the zero. */
     virtual void zero() = 0;
 
-    /** Read a value from a register. */
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg) = 0;
+    /** Read a value from a register. The register descriptor, @p reg, not only describes which register, but also which bits
+     * of that register (e.g., "al", "ah", "ax", "eax", and "rax" are all the same hardware register on an amd64, but refer to
+     * different parts of that register). The RISC operations are provided so that they can be used to extract the correct bits
+     * from a wider hardware register if necessary. */
+    virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) = 0;
 
-    /** Write a value to a register. */
-    virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value) = 0;
+    /** Write a value to a register.  The register descriptor, @p reg, not only describes which register, but also which bits
+     * of that register (e.g., "al", "ah", "ax", "eax", and "rax" are all the same hardware register on an amd64, but refer to
+     * different parts of that register). The RISC operations are provided so that they can be used to insert the @p value bits
+     * into a wider the hardware register if necessary. */
+    virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) = 0;
 
     /** Print the register contents. This emits one line per register and contains the register name and its value.
      *  The @p ph argument is an optional PrintHelper that is simply passed as the second argument of the
@@ -348,7 +356,9 @@ public:
     virtual void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const = 0;
 };
 
-/** The set of all registers and their values for an x86 architecture. */
+/** The set of all registers and their values for an x86 architecture. The 1-bit flags from the FLAGS/EFLAGS register are
+ *  stored individually since that's how they're typically accessed; access to the FLAGS/EFLAGS register as a whole will
+ *  require calls to the RISC operators. */
 class RegisterStateX86: public RegisterState {
 public:
     static const size_t n_gprs = 8;             /**< Number of general-purpose registers in this state. */
@@ -361,7 +371,9 @@ public:
     SValuePtr flag[n_flags];                    /**< Control/status flags (i.e., FLAG register). */
 
 protected:
-    explicit RegisterStateX86(const SValuePtr &protoval): RegisterState(protoval) {}
+    explicit RegisterStateX86(const SValuePtr &protoval): RegisterState(protoval) {
+        clear();
+    }
 
 public:
     /** Constructor. The @p protoval argument must be a non-null pointer to a semantic value which will be used only to create
@@ -376,9 +388,22 @@ public:
 
     virtual void clear() /*override*/;
     virtual void zero() /* override*/;
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg) /*override*/;
-    virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value) /*override*/;
+    virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) /*override*/;
+    virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) /*override*/;
     virtual void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const /*override*/;
+
+protected:
+    // helpers for readRegister()
+    virtual SValuePtr readRegisterGpr(const RegisterDescriptor &reg, RiscOperators *ops);
+    virtual SValuePtr readRegisterFlag(const RegisterDescriptor &reg, RiscOperators *ops);
+    virtual SValuePtr readRegisterSeg(const RegisterDescriptor &reg, RiscOperators *ops);
+    virtual SValuePtr readRegisterIp(const RegisterDescriptor &reg, RiscOperators *ops);
+
+    // helpers for writeRegister()
+    virtual void writeRegisterGpr(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegisterFlag(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegisterSeg(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegisterIp(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
 };
 
 
@@ -596,14 +621,16 @@ public:
         memory->clear();
     }
 
-    /** Read a value from a register. */
-    virtual SValuePtr readRegister(const RegisterDescriptor &desc) {
-        return registers->readRegister(desc);
+    /** Read a value from a register. A pointer to the RISC operations is required because the state may need to extract
+     *  certain bits from a wider hardware register in order to satisfy the query. */
+    virtual SValuePtr readRegister(const RegisterDescriptor &desc, RiscOperators *ops) {
+        return registers->readRegister(desc, ops);
     }
 
-    /** Write a value to a register. */
-    virtual void writeRegister(const RegisterDescriptor &desc, const SValuePtr &value) {
-        registers->writeRegister(desc, value);
+    /** Write a value to a register. A pointer to the RISC operations is required because the state may need to insert
+     *  the @p value bits into a wider hardware register. */
+    virtual void writeRegister(const RegisterDescriptor &desc, const SValuePtr &value, RiscOperators *ops) {
+        registers->writeRegister(desc, value, ops);
     }
 
     /** Read a value from memory. */
@@ -930,13 +957,13 @@ public:
     /** Reads a value from a register. */
     virtual SValuePtr readRegister(const RegisterDescriptor &reg) {
         assert(state!=NULL);
-        return state->readRegister(reg);
+        return state->readRegister(reg, this);
     }
 
     /** Writes a value to a register. */
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &a) {
         assert(state!=NULL);
-        state->writeRegister(reg, a);
+        state->writeRegister(reg, a, this);
     }
 
     /** Reads a value from memory. The @p cond argument is a Boolean value that indicates whether this is a true read
