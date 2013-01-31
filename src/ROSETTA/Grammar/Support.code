@@ -7382,6 +7382,9 @@ SgSymbolTable::find_class(const SgName & nm)
 bool
 SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgumentPtrList* templateArgumentsList, SgClassSymbol* classSymbol)
    {
+  // DQ (1/30/2013): Note that this function only supports the evaluation of template arguments for classes (and structs, and unions),
+  // but not for any types of functions.  Not clear if this is a problem for the future or not, but usually there is more symmetry required.
+
   // DQ (8/22/2012): We need more information to disambiguate where template argument name qualification would be important. See test2012_195.C.
      bool returnValue = false;
 
@@ -8189,7 +8192,9 @@ SgSymbolTable::find_nontemplate_class (const SgName & nm, SgTemplateArgumentPtrL
      s = find_symbol_support<SgTemplateClassSymbol>(nm);
 #endif
 
-  // printf ("In SgSymbolTable::find_nontemplate_class(): returning symbol = %p = %s \n",s,(s != NULL) ? s->class_name().c_str() : "null");
+#if 0
+     printf ("In SgSymbolTable::find_nontemplate_class(): returning symbol = %p = %s \n",s,(s != NULL) ? s->class_name().c_str() : "null");
+#endif
 
 #if 0
      printf ("ERROR: SgSymbolTable::find_nontemplate_class(nm = %s) is not implemented yet! \n",nm.str());

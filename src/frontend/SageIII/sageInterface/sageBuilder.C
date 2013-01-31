@@ -404,9 +404,8 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
        // returnName += (*i)->unparseToString();
           returnName += (*i)->unparseToString(info);
 
-
 #if 0
-          printf ("In SageBuilder::appendTemplateArgumentsToName(): (after appending template name) returnName = %s \n",returnName.str());
+          printf ("In SageBuilder::appendTemplateArgumentsToName(): (after appending template name) *i = %p returnName = %s \n",*i,returnName.str());
 #endif
           i++;
 
@@ -749,7 +748,11 @@ SageBuilder::testTemplateArgumentParents( SgDeclarationStatement* decl )
                     printf ("  --- decl                                    = %p = %s \n",decl,decl->class_name().c_str());
                     printf ("  --- decl->get_firstNondefiningDeclaration() = %p = %s \n",decl->get_firstNondefiningDeclaration(),decl->get_firstNondefiningDeclaration()->class_name().c_str());
                   }
-               ROSE_ASSERT(parent == decl->get_firstNondefiningDeclaration());
+
+            // DQ (1/30/2013): Commented this test out so that we could reuse SgTemplateArguments and
+            // assure that the mapping from EDG a_template_arg_ptr's to SgTemplateArgument's was 1-to-1.
+            // It is not clear if we can relax this constraint in the future.
+            // ROSE_ASSERT(parent == decl->get_firstNondefiningDeclaration());
 
                i++;
              }
@@ -2137,9 +2140,17 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
           ROSE_ASSERT(templateArgumentsList != NULL);
           nameWithTemplateArguments = appendTemplateArgumentsToName(nameWithoutTemplateArguments,*templateArgumentsList);
 #if 0
-          printf ("Building a SgClassDeclaration: buildNondefiningClassDeclaration_T() nameWithTemplateArguments = %s buildTemplateInstantiation = %s \n",nameWithTemplateArguments.str(),buildTemplateInstantiation ? "true:" : "false");
+          printf ("Building a non-defining function: buildNondefiningFunctionDeclaration_T() nameWithTemplateArguments = %s buildTemplateInstantiation = %s \n",nameWithTemplateArguments.str(),buildTemplateInstantiation ? "true:" : "false");
 #endif
+          if (nameWithTemplateArguments == "insert < __normal_iterator< SgInitializedName ** , __type  >  > ")
+             {
+               printf ("In buildNondefiningFunctionDeclaration_T(): Found function nameWithTemplateArguments = %s \n",nameWithTemplateArguments.str());
+             }
         }
+
+#if 0
+     printf ("In buildNondefiningFunctionDeclaration_T(): nameWithTemplateArguments = |%s| \n",nameWithTemplateArguments.str());
+#endif
 
   // printf ("Building non-defining function for scope = %p in file = %s \n",scope,TransformationSupport::getSourceFile(scope)->getFileName().c_str());
 
@@ -3653,9 +3664,18 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
           ROSE_ASSERT(templateArgumentsList != NULL);
           nameWithTemplateArguments = appendTemplateArgumentsToName(nameWithoutTemplateArguments,*templateArgumentsList);
 #if 0
-          printf ("Building a SgClassDeclaration: buildDefiningClassDeclaration_nfi() nameWithTemplateArguments = %s buildTemplateInstantiation = %s \n",nameWithTemplateArguments.str(),buildTemplateInstantiation ? "true:" : "false");
+          printf ("Building a defining function: buildDefiningFunctionDeclaration_nfi() nameWithTemplateArguments = %s buildTemplateInstantiation = %s \n",nameWithTemplateArguments.str(),buildTemplateInstantiation ? "true:" : "false");
 #endif
+
+          if (nameWithTemplateArguments == "insert < __normal_iterator< SgInitializedName ** , __type  >  > ")
+             {
+               printf ("In buildDefiningFunctionDeclaration_T(): Found function nameWithTemplateArguments = %s \n",nameWithTemplateArguments.str());
+             }
         }
+
+#if 0
+     printf ("In buildDefiningFunctionDeclaration_T(): nameWithTemplateArguments = %s \n",nameWithTemplateArguments.str());
+#endif
 
      ROSE_ASSERT(nameWithoutTemplateArguments.is_null() == false);
      ROSE_ASSERT(nameWithTemplateArguments.is_null() == false);
@@ -3782,6 +3802,23 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
 
 #if 1
           scope->get_symbol_table()->print("In SageBuilder::buildDefiningFunctionDeclaration_T()");
+#endif
+
+       // DQ (1/29/2013): Retry using the name from the non-definging function declaration.
+          SgFunctionDeclaration* nondefiningFunctionDeclaration = isSgFunctionDeclaration(first_nondefining_declaration);
+          ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+
+          nameWithTemplateArguments = nondefiningFunctionDeclaration->get_name();
+          func_symbol = scope->get_symbol_table()->find_symbol_by_type_of_function<actualFunction>(nameWithTemplateArguments,func_type);
+
+          printf ("In buildDefiningFunctionDeclaration_T(): func_symbol = %p reset using lookup with reset nameWithTemplateArguments = %s \n",func_symbol,nameWithTemplateArguments.str());
+
+          ROSE_ASSERT(func_symbol != NULL);
+
+          printf ("In buildDefiningFunctionDeclaration_T(): func_symbol = %p = %s reset using lookup with reset nameWithTemplateArguments = %s \n",func_symbol,func_symbol->class_name().c_str(),nameWithTemplateArguments.str());
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
 #endif
         }
 
