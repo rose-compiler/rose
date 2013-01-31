@@ -29,7 +29,7 @@ else
   echo "******* HPCTOOLKIT test_prop01 FAILED *********"
 fi
 
-rm -f test_prop01-out.txt
+#rm -f test_prop01-out.txt
 
 exit $rc
 
