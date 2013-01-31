@@ -731,6 +731,10 @@ SgProject::processCommandLine(const vector<string>& input_argv)
          set_Java_destdir(javaTmpParameter);
      }
 
+     // Java destination source dir option support
+     if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, javaRosePrefix,"(ds)", javaTmpParameter, true) == true) {
+         set_Java_source_destdir(javaTmpParameter);
+     }
      // Enable remoteDebug of the spawned JVM
      // This is defined in jserver.C, had to rely on that because there's no way
      // to access the command line arguments from there.
@@ -1196,6 +1200,8 @@ SgFile::usage ( int status )
 "                             Sourcepath to look for java sources\n"
 "     -rose:java:d\n"
 "                             Specifies generated classes destination dir\n"
+"     -rose:java:ds\n"
+"                             Specifies translated sources destination dir\n"
 "     -rose:java:source\n"
 "                             Specifies java sources version\n"
 "     -rose:java:target\n"
@@ -2986,7 +2992,12 @@ SgFile::stripJavaCommandLineOptions ( vector<string> & argv )
                  CommandlineProcessing::generateOptionWithNameParameterList(argv, javaRosePrefix, "-");
      for (Rose_STL_Container<string>::iterator i = rose_java_options.begin(); i != rose_java_options.end(); ++i)
        {
-         argv.push_back(*i);
+         if (*i == "-ds") {
+           // Removes -ds as javac wouldn't know what to do with it.
+           i++;
+         } else {
+           argv.push_back(*i);
+         }
        }
    }
 

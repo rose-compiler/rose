@@ -1478,6 +1478,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd(JNIEnv *env, jclass
     ROSE_ASSERT(targetClassScope != NULL && (! targetClassScope -> attributeExists("namespace")));
 
     SgType *return_type = astJavaComponentStack.popType(); // The return type of the function
+    ROSE_ASSERT(return_type);
 
     //
     // The astJavaComponentStack has all of the types of the parameters of the function being called. Note that
@@ -1517,25 +1518,12 @@ cout.flush();
     //
     // If we have an accurate return type for this function, set it !!!
     // This occurs when the method being invoked belongs to a parameterized type.
+    // We need this temporary "zapping" so that the result of this expression will have
+    // the correct type in case it is used for further dereferencing.
     //
-    if (function_type -> get_return_type() == ::ObjectClassType) {
-        if (return_type != function_type -> get_return_type()) {
-            function_type -> set_return_type(return_type);
-        }
+    if (function_type -> get_return_type() != return_type) {
+        function_type -> set_return_type(return_type);
     }
-// TODO: Remove this !!!
-else if (function_type -> get_return_type() != return_type && getTypeName(function_type -> get_return_type()) == getTypeName(return_type)) {
-cout << "Original return type for function " 
-<< function_name
-<< " in type "
-<< targetClassScope -> get_qualified_name()
-<< ": "
-<< getTypeName(function_type -> get_return_type())
-<< " does not match: "
-<< getTypeName(return_type)
-<< endl;
-cout.flush();
-}
 
     // The astJavaComponentStack has all of the arguments to the function call.
     SgExprListExp *arguments = new SgExprListExp();

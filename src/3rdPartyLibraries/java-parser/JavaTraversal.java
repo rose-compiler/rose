@@ -390,6 +390,16 @@ class JavaTraversal implements Callable<Boolean> {
 
                 batchCompiler.process(unit, i);
 
+                if (unit.compilationResult.hasErrors()) {
+            		System.out.flush();
+            		System.err.flush();
+
+            		System.err.println();
+            		System.err.println();
+            		System.err.println("ECJ front-end errors detected in input java program");
+            		System.exit(1);
+            	}
+
                 java_parser_support.preprocess(unit);
             }
 

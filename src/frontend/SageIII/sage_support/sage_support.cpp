@@ -30,7 +30,6 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace OmpSupport;
 
-
 const string FileHelper::pathDelimiter = "/";
 
 // DQ (9/17/2009): This appears to only be required for the GNU 4.1.x compiler (not for any earlier or later versions).
@@ -3705,6 +3704,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
              if (dot != -1) {
                  file_name = file_name.substr(0, dot);
              }
+
              ecjDestDir = "ecj-classes-" + file_name + "/";
          }
          frontEndCommandLine.push_back("-d");

@@ -68,8 +68,7 @@ public:
 
 
 //
-// Attribute used to construct pointer types.  These are not valid Java types. However,
-// they are required for multi-dimensional arrays in the Rose representation.
+// Attribute used to construct parameterized types.
 //
 class AstParameterizedTypeAttribute : public AstAttribute {
 private:
