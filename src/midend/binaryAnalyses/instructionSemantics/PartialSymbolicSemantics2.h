@@ -61,7 +61,7 @@ public:
  *                                      Value Type
  *******************************************************************************************************************************/
 
-typedef boost::shared_ptr<class SValue> SValuePtr;
+typedef BaseSemantics::Pointer<class SValue> SValuePtr;
 
 /** A value is either known or unknown. Unknown values have a base name (unique ID number), offset, and sign. */
 class SValue: public BaseSemantics::SValue {
@@ -94,17 +94,17 @@ public:
     /** Promote a base value to a PartialSymbolicSemantics value. The value @p v must have a
      *  PartialSymbolicSemantics::SValue dynamic type. */
     static SValuePtr promote(const BaseSemantics::SValuePtr &v) {
-        SValuePtr retval = boost::dynamic_pointer_cast<SValue>(v);
+        SValuePtr retval = BaseSemantics::dynamic_pointer_cast<SValue>(v);
         assert(retval!=NULL);
         return retval;
     }
 
     // Virtual constructors inherited from base class
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const /*override*/ {
-        return SValuePtr(new SValue(nbits));
+        return BaseSemantics::SValuePtr(new SValue(nbits));
     }
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const /*override*/ {
-        return SValuePtr(new SValue(nbits, value));
+        return BaseSemantics::SValuePtr(new SValue(nbits, value));
     }
     virtual BaseSemantics::SValuePtr copy_(size_t new_width=0) const /*override*/ {
         SValuePtr retval(new SValue(*this));

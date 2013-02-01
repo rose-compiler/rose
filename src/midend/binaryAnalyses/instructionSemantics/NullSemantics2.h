@@ -20,7 +20,7 @@ namespace NullSemantics {
 
 /** Smart pointer to a SValue.  SValue objects are reference counted through boost::shared_ptr smart pointers. The
  *  underlying object should never be explicitly deleted. */
-typedef boost::shared_ptr<class SValue> SValuePtr;
+typedef BaseSemantics::Pointer<class SValue> SValuePtr;
 
 /** Values in the NullSemantics domain.  Values are essentially void. */
 class SValue: public BaseSemantics::SValue {
@@ -36,17 +36,17 @@ public:
 
     /** Promote a base value to a NullSemantics value.  The value @p v must have a NullSemantics::SValue dynamic type. */
     static SValuePtr promote(const BaseSemantics::SValuePtr &v) {
-        SValuePtr retval = boost::dynamic_pointer_cast<SValue>(v);
+        SValuePtr retval = BaseSemantics::dynamic_pointer_cast<SValue>(v);
         assert(retval!=NULL);
         return retval;
     }
 
     // Virtual constructors inherited from base class
     virtual BaseSemantics::SValuePtr undefined_(size_t nBits) const /*override*/ {
-        return SValuePtr(new SValue(nBits));
+        return BaseSemantics::SValuePtr(new SValue(nBits));
     }
     virtual BaseSemantics::SValuePtr number_(size_t nBits, uint64_t number) const /*override*/ {
-        return SValuePtr(new SValue(nBits)); // the number is not important in this semantic domain
+        return BaseSemantics::SValuePtr(new SValue(nBits)); // the number is not important in this semantic domain
     }
     virtual BaseSemantics::SValuePtr copy_(size_t new_width=0) const /*override*/ {
         SValuePtr retval(new SValue(*this));

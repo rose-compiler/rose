@@ -5,6 +5,7 @@
 #include "FormatRestorer.h"
 #include "SMTSolver.h"
 
+#include <cassert>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
@@ -186,10 +187,6 @@ namespace BaseSemantics {
 
 class RiscOperators;
 
-/** Smart pointer to an SValue object. SValue objects are reference counted through boost::shared_ptr smart pointers. The
- *  underlying object should never be explicitly deleted. */ 
-typedef boost::shared_ptr<class SValue> SValuePtr;
-
 /** Helper class for printing. Some semantic domains may need to pass some additional information to print methods on a
  *  per-call basis.  This base class provides something they can subclass to do that. A (optional) pointer to an instance of
  *  this class is passed to all semantic print() methods. */
@@ -213,24 +210,134 @@ public:
 };
 
 /*******************************************************************************************************************************
+ *                                      Reference-counting pointers
+ *******************************************************************************************************************************/
+
+template<class T>
+class Pointer {
+private:
+    T *obj;
+public:
+    typedef T element_type;
+
+    /** Constructs an empty shared pointer. */
+    Pointer(): obj(NULL) {}
+
+    /** Constructs a shared pointer for an object.  If @p obj is non-null then its reference count is incremented. It is
+     *  possible to create any number of shared pointers to the same object using this constructor. The expression "delete obj"
+     *  must be well formed and must not invoke undefined behavior. */
+    template<class Y>
+    explicit Pointer(Y *obj): obj(obj) {
+        if (obj!=NULL)
+            ++obj->nrefs__;
+    }
+
+    /** Constructs a new pointer that shares ownership of the pointed-to object with the @p other pointer. The pointed-to
+     *  object will only be deleted after both pointers are deleted.
+     * @{ */
+    Pointer(const Pointer &other): obj(other.obj) {
+        assert(obj==NULL || obj->nrefs__>0);
+        if (obj!=NULL)
+            ++obj->nrefs__;
+    }
+    template<class Y>
+    Pointer(const Pointer<Y> &other): obj(other.get()) {
+        if (obj!=NULL)
+            ++obj->nrefs__;
+    }
+    /** @} */
+    
+    /** Conditionally deletes the pointed-to object.  The object is deleted when its reference count reaches zero. */
+    ~Pointer() {
+        assert(obj==NULL || obj->nrefs__>0);
+        if (obj!=NULL && 0==--obj->nrefs__)
+            delete obj;
+    }
+
+    /** Assignment. This pointer is caused to point to the same object as @p other, decrementing the reference count for the
+     * object originally pointed to by this pointer and incrementing the reference count for the object pointed by @p other.
+     * @{ */
+    Pointer& operator=(const Pointer &other) {
+        assert(obj==NULL || obj->nrefs__>0);
+        if (obj!=NULL && 0==--obj->nrefs__)
+            delete obj;
+        obj = other.obj;
+        assert(obj==NULL || obj->nrefs__>0);
+        if (obj!=NULL)
+            ++obj->nrefs__;
+        return *this;
+    }
+    template<class Y>
+    Pointer& operator=(const Pointer<Y> &other) {
+        assert(obj==NULL || obj->nrefs__>0);
+        if (obj!=NULL && 0==--obj->nrefs__)
+            delete obj;
+        obj = other.get();
+        assert(obj==NULL || obj->nrefs__>0);
+        if (obj!=NULL)
+            ++obj->nrefs__;
+        return *this;
+    }
+    /** @} */
+
+    T& operator*() const {
+        assert(obj!=NULL && obj->nrefs__>0);
+        return *obj;
+    }
+
+    T* operator->() const {
+        assert(!obj || obj->nrefs__>0);
+        return obj; // may be null
+    }
+
+    T* get() const {
+        assert(obj==NULL || obj->nrefs__>0);
+        return obj; // may be null
+    }
+
+    long use_count() const {
+        assert(obj==NULL || obj->nrefs__>0);
+        return obj==NULL ? 0 : obj->nrefs__;
+    }
+
+    bool operator!=(const T *ptr) const {
+        return obj != ptr;
+    }
+};
+
+template<class T, class U>
+Pointer<T> dynamic_pointer_cast(const Pointer<U> &other)
+{
+    T* obj = dynamic_cast<T*>(other.get());
+    return Pointer<T>(obj);
+}
+
+
+/*******************************************************************************************************************************
  *                                      Semantic Values
  *******************************************************************************************************************************/
+
+/** Smart pointer to an SValue object. SValue objects are reference counted through boost::shared_ptr smart pointers. The
+ *  underlying object should never be explicitly deleted. */ 
+typedef Pointer<class SValue> SValuePtr;
 
 /** Base class for semantic values. Semantics value objects are allocated on the heap and reference counted.  The
  *  BaseSemantics::SValue is an abstract class that defines the interface.  See the BinaryAnalysis::InstructionSemantics
  *  namespace for an overview of how the parts fit together.*/
 class SValue {
+public:
+    long nrefs__; // shouldn't really be public, but need efficient reference from various Pointer<> classes
 protected:
     size_t width;                               /** Width of the value in bits. Typically (not always) a power of two. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Normal, protected, C++ constructors
-    explicit SValue(size_t nbits): width(nbits) {}
+    explicit SValue(size_t nbits): nrefs__(0), width(nbits) {}
 
 public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Class-based constructors.  None are needed--this class is abstract.
-    virtual ~SValue() {}
+    virtual ~SValue() { assert(0==nrefs__); }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors.  false_(), true_(), and undefined_() need underscores, so we do so consistently for all c'tors.

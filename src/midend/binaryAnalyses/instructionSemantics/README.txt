@@ -299,7 +299,9 @@ template-based design).
 
 == Experimental Results for Compile and Run Times ==
 Using semanticSpeed2.C without distcc or ccache; best of three times;
-with optimizations
+with optimizations; tests run on passerina
+
+Compiler timings were from (optimization, no-debug, no-profile)
 $ rg-make clean && time env DISTCC_HOSTS= CCACHE_DISABLE=yes make ...
 
                          Using      Compile  Executable Run speed
@@ -310,12 +312,14 @@ nullSemantics2                no       7.826      4.924        na
 partialSymbolicSemantics1    yes      15.479      5.943 2,295,040
 partialSymbolicSemantics2     no       7.623      4.864   234,989
 
-After changing DispatcherX86 to cache register descriptors
+Progress made for increasing performance of the non-template design by
+running partialSymbolicSemantics for 60 seconds, measured in x86
+instructions per second.  The specimen is the infinite loop:
+	     _start: mov eax, 0
+             loop:   add eax, 1
+                     jmp loop
 
-                         Using      Compile  Executable Run speed
-Program                  templates? time (s) size (MB)  (insn/s)
------------------------- ---------- -------- ---------- ---------
-nullSemantics1               yes     
-nullSemantics2                no     
-partialSymbolicSemantics1    yes     
-partialSymbolicSemantics2     no     
+							Insn/s	 1M insns %chg
+Baseline (initial implementation)			234,989	 4.256s
+Caching of register descriptors				278,741  3.588s   15.7%
+Custom implementation of boost::shared_ptr for SValue	450,311  2.221s   38.1%

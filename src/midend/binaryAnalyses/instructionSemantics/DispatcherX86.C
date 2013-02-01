@@ -1690,7 +1690,7 @@ DispatcherX86::doAddOperation(const BaseSemantics::SValuePtr &a, const BaseSeman
 {
     assert(a->get_width()==b->get_width());
     assert(1==carryIn->get_width());
-    assert(cond && cond->get_width()==1);
+    assert(cond!=NULL && cond->get_width()==1);
     size_t nbits = a->get_width();
     BaseSemantics::SValuePtr carries;
     BaseSemantics::SValuePtr result = operators->addWithCarries(a, b, invertMaybe(carryIn, invertCarries), carries/*out*/);
