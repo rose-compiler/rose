@@ -347,18 +347,11 @@ private:
     enum { N_FREE_LISTS = 16 };         // number of lists. list[N] has objects of size <= (N+1)*SIZE_DIVISOR
     FreeItem *freelist[N_FREE_LISTS];
 
-    // Figures out which freelist is appropriate for the given object size. Returns -1 if not are right. */
-    int which_freelist(size_t object_size) { // hot
-        assert(object_size>0);
-        int listn = (object_size-1) / SIZE_DIVISOR;
-        return listn >= N_FREE_LISTS ? -1 : listn;
-    }
-
     // Fills the specified freelist by adding another Bucket-worth of objects.
-    void fill_freelist(int listn) { // hot
+    void fill_freelist(const int listn) { // hot
         //std::cerr <<"Allocator::fill_freelist(" <<listn <<")\n";
         assert(listn>=0 && listn<N_FREE_LISTS);
-        size_t object_size = (listn+1) * SIZE_DIVISOR;
+        const size_t object_size = (listn+1) * SIZE_DIVISOR;
         assert(object_size >= sizeof(FreeItem));
         Bucket *b = new Bucket;
         for (size_t offset=0; offset+object_size<Bucket::SIZE; offset+=object_size) {
@@ -374,8 +367,9 @@ public:
      *  class manages, then it will call the global operator new to satisfy the request (a warning is printed the first time
      *  this happens). */
     void *allocate(size_t size) { // hot
-        int listn = which_freelist(size);
-        if (listn<0) {
+        assert(size>0);
+        const int listn = (size-1) / SIZE_DIVISOR;
+        if (listn>=N_FREE_LISTS) {
             static bool warned = false;
             if (!warned) {
                 std::cerr <<"BinaryAnalysis::InstructionSemantics::BaseSemantics::Allocator::allocate(): warning:"
@@ -394,11 +388,12 @@ public:
 
     /** Free one object of specified size.  The @p size must be the same size that was used when the object was allocated. This
      *  is a no-op if @p ptr is null. */
-    void deallocate(void *ptr, size_t size) { // hot
+    void deallocate(void *ptr, const size_t size) { // hot
         //std::cerr <<"Allocator::deallocate(" <<ptr <<", " <<size <<")\n";
         if (ptr) {
-            int listn = which_freelist(size);
-            if (listn<0)
+            assert(size>0);
+            const int listn = (size-1) / SIZE_DIVISOR;
+            if (listn>=N_FREE_LISTS)
                 return ::operator delete(ptr);
             FreeItem *item = (FreeItem*)ptr;
             item->next = freelist[listn];

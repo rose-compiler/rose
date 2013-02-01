@@ -39,8 +39,8 @@ static inline X86SegmentRegister getSegregFromMemoryReference(SgAsmMemoryReferen
  *                                      Functors that handle individual x86 instructions kinds
  *******************************************************************************************************************************/
 
-// An intermediate class that reduces the amount of typing in all that follows.  It's process() method does some up-front
-// checking, dynamic casting, and pointer dereferencing and then calls the p() virtual method that does the real work.
+// An intermediate class that reduces the amount of typing in all that follows.  Its process() method does some up-front
+// checking, dynamic casting, and pointer dereferencing and then calls the p() method that does the real work.
 class P: public BaseSemantics::InsnProcessor {
 public:
     typedef DispatcherX86 *D;
