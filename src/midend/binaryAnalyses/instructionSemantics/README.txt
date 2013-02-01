@@ -327,5 +327,6 @@ Caching of register descriptors				278,741  3.588s   15.7%
 Custom implementation of boost::shared_ptr for SValue	450,311  2.221s   38.1% (max expected 42%)
 Custom allocators for SValue classes	       		657,144  1.522s   31.5% 
 Hand-inlined Allocator::which_freelist()		665,945  1.502s    3.2% (max expected 3.2%)
+Moved EIP increment to DispatcherX86			837,837  1.194s   20.5% (max expected 4.4%) !!!
 
 Original implementation (ultimate goal)		      2,295,040  0.4357

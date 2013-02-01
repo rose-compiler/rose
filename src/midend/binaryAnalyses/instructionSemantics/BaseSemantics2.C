@@ -357,9 +357,6 @@ MemoryCellList::print(std::ostream &o, const std::string prefix, PrintHelper *he
 void
 Dispatcher::processInstruction(SgAsmInstruction *insn)
 {
-    const RegisterDescriptor &REG_EIP = findRegister("eip");
-    operators->writeRegister(REG_EIP, operators->add(operators->number_(32, insn->get_address()),
-                                                     operators->number_(32, insn->get_size())));
     operators->startInstruction(insn);
     InsnProcessor *iproc = iproc_lookup(insn);
     if (!iproc)

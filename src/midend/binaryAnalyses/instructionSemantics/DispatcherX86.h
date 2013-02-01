@@ -49,6 +49,8 @@ public:
 
     virtual void set_register_dictionary(const RegisterDictionary *regdict) /*override*/;
 
+    virtual void processInstruction(SgAsmInstruction*) /* override*/;
+
     virtual int iproc_key(SgAsmInstruction *insn_) const /*override*/ {
         SgAsmx86Instruction *insn = isSgAsmx86Instruction(insn_);
         assert(insn!=NULL);

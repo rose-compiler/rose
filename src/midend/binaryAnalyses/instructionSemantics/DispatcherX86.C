@@ -1391,6 +1391,15 @@ DispatcherX86::set_register_dictionary(const RegisterDictionary *regdict)
 }
 
 void
+DispatcherX86::processInstruction(SgAsmInstruction *insn)
+{
+    operators->writeRegister(REG_EIP, operators->add(operators->number_(32, insn->get_address()),
+                                                     operators->number_(32, insn->get_size())));
+    Dispatcher::processInstruction(insn);
+}
+
+
+void
 DispatcherX86::write(SgAsmExpression *e, const BaseSemantics::SValuePtr &value)
 {
     assert(e!=NULL && value!=NULL);
