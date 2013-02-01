@@ -88,14 +88,15 @@ bool doLinesOverlap(const SgLocatedNode* node, const RoseHPCT::Located * plnode)
    // Liao 1/25/2013, Adjust SgFunctionDefinition to be its enclosing defining function declaration, which will 
    // have the right start end end file locations to match profiling data
    // SgFunctionDefinition starts from the "{" in ROSE using EDG 4.4, instead of starting from its function declaration line.
+   const SgLocatedNode* node_copy = node; // we don't want to accidentally modify node!! const A* node means what is pointed is const, not guarantee that the pointer itself is const. very tricky !!
    if (const SgFunctionDefinition* f_def = isSgFunctionDefinition(node))
    {
-     node = f_def->get_declaration();
-     const SgFunctionDeclaration* fdecl = isSgFunctionDeclaration(node);
+     node_copy = f_def->get_declaration();
+     const SgFunctionDeclaration* fdecl = isSgFunctionDeclaration(node_copy);
      ROSE_ASSERT (fdecl != NULL);
      ROSE_ASSERT (fdecl->get_definingDeclaration() == fdecl);
    }
-    Sg_File_Info* info_start = node->get_startOfConstruct();
+    Sg_File_Info* info_start = node_copy->get_startOfConstruct();
     ROSE_ASSERT (info_start != NULL);
     // check file name first if possible
     // DXN: see DXN's comment in doFilenamesMatch.
@@ -115,7 +116,7 @@ bool doLinesOverlap(const SgLocatedNode* node, const RoseHPCT::Located * plnode)
     }
     // Then check for line numbers
     size_t a_start = (size_t) info_start->get_line();
-    Sg_File_Info* info_end = node->get_endOfConstruct();
+    Sg_File_Info* info_end = node_copy->get_endOfConstruct();
     size_t a_end = (info_end == NULL) ? a_start : info_end->get_line();
     // adjust for wrong line information, See Bugs-Internal 311
     // some non-scope statement's end line numbers are not correct from ROSE
@@ -305,7 +306,25 @@ MetricFinder::MetricFinder(const SgLocatedNode* target, std::map<const RoseHPCT:
     else
 #endif    
     if (!dynamic_cast<const SgScopeStatement *>(target_))
+    {
         nonscope_stmt_target_ = dynamic_cast<const SgStatement *>(target_);
+        // Liao 1/31/2013. In ROSE using EDG 4.4, defining SgFunctionDeclaration has accurate start and end line so 
+        // SgFunctionDeclaration will match lots of profiling IR nodes for non-scope statements.
+        // This can be problematic since it will trigger isShadowNode() to return true when statements within function body are being matched.
+        // i.e. Matching defining SgFunctionDeclaration will shadow all statements within its body.
+        //
+        // So we have to exclude SgFunctionDeclaration and treat it as scoped statement. 
+        // Besides, SgFunctionDefinition is used to represent procedure level matching. So excluding SgFunctionDeclaration is reasonable.
+        //
+        //
+        //TODO: a possible improvement is to use defining SgFunctionDeclaration instead of SgFunctionDefinition to do the match
+        // and in isShadowNode(), excluding defining SgFunctionDeclaration to be the shadow parent.
+        if (nonscope_stmt_target_ != NULL)
+        {
+          if (isSgFunctionDeclaration(nonscope_stmt_target_))
+            nonscope_stmt_target_ = NULL;
+        }
+    }
 }
 
 void MetricFinder::setVerbose(bool enable)
@@ -546,14 +565,16 @@ MetricFinder::visit (const Loop* l)
 #if 1
 void MetricFinder::visit(Statement* s)
 #else
-MetricFinder::visit (const Statement* s)
+MetricFinder::visit (const Statement* s) // try to match target_ AST node with s profile node
 #endif
 {
 #if 0    
-        //cout<<"found a statement prof IR node:"<<s->toString()<<endl;
-        //  take advantage of this traversal to accumulate statement nodes
-        //  This traversal can abort once a match is found so one execution will not collect all stmt nodes.
-        RoseHPCT::profStmtNodes_.insert(s);
+  if ((target_->get_file_info()->get_line()==15) && (isSgExprStatement(target_)) && s->getFirstLine()==15)
+    cout<<endl;
+  //cout<<"found a statement prof IR node:"<<s->toString()<<endl;
+  //  take advantage of this traversal to accumulate statement nodes
+  //  This traversal can abort once a match is found so one execution will not collect all stmt nodes.
+  RoseHPCT::profStmtNodes_.insert(s);
 #endif    
             if (doLinesOverlap(s))
             //if (doLinesOverlap (s->getFirstLine (), s->getLastLine ()))
@@ -738,11 +759,6 @@ MetricAttachTraversal::getProfStmtNodes(void)
 void MetricAttachTraversal::visit(SgNode* n)
 {
     static int exe_counter = 0; // used to collect file nodes of profir only once
-    if (isSgFunctionDeclaration(n))
-    {
-//      cout<<"Debug: MetricAttachTraversal::visit() visiting "<<n<<" "<<n->class_name() <<endl;  
-//      cout<<n->unparseToString() <<endl;  
-    }
     SgLocatedNode* n_loc = isSgLocatedNode(n);
     if (n_loc)
     {
