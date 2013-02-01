@@ -10308,6 +10308,8 @@ int SageInterface::fixVariableReferences(SgNode* root)
       }
     }
   } // end for
+  // Liao 2/1/2013: delete unused initname and symbol
+  clearUnusedVariableSymbols();
   return counter;
 }
 
