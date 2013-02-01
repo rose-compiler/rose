@@ -1073,18 +1073,17 @@ class EasyStorageMapEntry <SgSymbol*, std::vector <std::pair <SgExpression*, SgE
           EasyStorage < std::string > nameString; // this is the mangled name
     public: 
           EasyStorageMapEntry () { global_id = 0; }
-          void storeDataInEasyStorageClass(const std::pair<SgNode*, const int >& iter) {  ROSE_ASSERT (false); };
+          void storeDataInEasyStorageClass(const std::pair<SgNode*, const int >& iter) {  };
           std::pair<SgSymbol*, std::vector <std::pair <SgExpression*, SgExpression*> > >  rebuildDataStoredInEasyStorageClass() const {
-            ROSE_ASSERT (false);
             std::vector <std::pair <SgExpression*, SgExpression*> > vec;
             SgSymbol* s = NULL; 
             return std::make_pair (s, vec);
             };
-          static void arrangeMemoryPoolInOneBlock(){ ROSE_ASSERT (false); } ;
+          static void arrangeMemoryPoolInOneBlock(){} ;
           static void deleteMemoryPool(){} ;
 
-          static void writeToFile(std::ostream& out) { ROSE_ASSERT (false);  };
-          static void readFromFile (std::istream& in) { ROSE_ASSERT (false); };
+          static void writeToFile(std::ostream& out) {};
+          static void readFromFile (std::istream& in) {};
    };
 
 template <>
@@ -1094,18 +1093,17 @@ class EasyStorage < std::map< SgSymbol*,  std::vector < std::pair <SgExpression*
      typedef StorageClassMemoryManagement< EasyStorageMapEntry<SgSymbol*, std::vector <std::pair <SgExpression*, SgExpression*> > > > Base;
     public:
      void storeDataInEasyStorageClass(const std::map<SgSymbol*, std::vector <std::pair <SgExpression*, SgExpression*> > >& data_) 
-     {  ROSE_ASSERT (false); };
+     {  };
      std::map< SgSymbol*, std::vector <std::pair <SgExpression*, SgExpression*> > > rebuildDataStoredInEasyStorageClass() const
      {
-       ROSE_ASSERT (false);
        std::map< SgSymbol*, std::vector <std::pair <SgExpression*, SgExpression*> > > rt;
        return rt;
      };
-     static void arrangeMemoryPoolInOneBlock() {ROSE_ASSERT (false); };
-     static void deleteMemoryPool(){ ROSE_ASSERT (false); };
+     static void arrangeMemoryPoolInOneBlock() {};
+     static void deleteMemoryPool(){ };
 
-     static void writeToFile(std::ostream& out) { ROSE_ASSERT (false); };
-     static void readFromFile (std::istream& in) {ROSE_ASSERT (false); };
+     static void writeToFile(std::ostream& out) { };
+     static void readFromFile (std::istream& in) {};
    };
 
 
