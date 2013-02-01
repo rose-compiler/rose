@@ -213,10 +213,14 @@ public:
  *                                      Reference-counting pointers
  *******************************************************************************************************************************/
 
+/** Referenc-counting pointer.  These pointers reference count the object to which they point and have an API similar to
+ *  boost::shared_ptr<>.  However, this implementation is much faster (about 90% faster in tests) because it doesn't need to be
+ *  as general-purpose as the Boost implementation.  This implementation doesn't support weak pointers or multi-threading, and
+ *  it requires public access to an nrefs__ data member in the objects to which it points. */
 template<class T>
 class Pointer {
 private:
-    T *obj;
+    T *obj;     // object to which this pointer points; null for an empty pointer
 public:
     typedef T element_type;
 
@@ -280,31 +284,38 @@ public:
     }
     /** @} */
 
+    /** Reference to the pointed-to object.  An assertion will fail if assertions are enabled and this method is invoked on an
+     *  empty pointer. */
     T& operator*() const {
         assert(obj!=NULL && obj->nrefs__>0);
         return *obj;
     }
 
+    /** Dereference pointed-to object. The pointed-to object is returned. Returns null for empty pointers. */
     T* operator->() const {
         assert(!obj || obj->nrefs__>0);
         return obj; // may be null
     }
 
+    /** Obtain the pointed-to object.  The pointed-to object is returned. Returns null for empty pointers. */
     T* get() const {
         assert(obj==NULL || obj->nrefs__>0);
         return obj; // may be null
     }
 
+    /** Returns the pointed-to object's reference count. Returns zero for empty pointers. */
     long use_count() const {
         assert(obj==NULL || obj->nrefs__>0);
         return obj==NULL ? 0 : obj->nrefs__;
     }
 
-    bool operator!=(const T *ptr) const {
-        return obj != ptr;
-    }
+    bool operator==(T *ptr) const { return obj==ptr; }
+    bool operator!=(T *ptr) const { return obj!=ptr; }
+    bool operator<(T *ptr) const { return obj<ptr; }
 };
 
+/** Cast one pointer type to another. This behaves the same as dynamic_cast<> except it updates the pointed-to object's
+ *  reference count. */
 template<class T, class U>
 Pointer<T> dynamic_pointer_cast(const Pointer<U> &other)
 {
@@ -312,6 +323,89 @@ Pointer<T> dynamic_pointer_cast(const Pointer<U> &other)
     return Pointer<T>(obj);
 }
 
+/*******************************************************************************************************************************
+ *                                      Memory Allocators
+ *******************************************************************************************************************************/
+
+/** Fast memory allocator for small objects.  This memory allocator is used for semantic values and works by requesting large
+ *  blocks of objects from the global operator new and maintaining a free list thereof.  User requests for objects return
+ *  objects from the free list, and user deallocations return them to the free list.  The allocator will also be used for
+ *  subclasses (unless the user overrides the operator new and operator delete in the subclass) and can handle a variety
+ *  of object sizes. */
+class Allocator {
+private:
+    struct Bucket {
+        enum { SIZE = 81920 };          // FIXME: tune this
+        char buffer[SIZE];
+    };
+
+    struct FreeItem {
+        FreeItem *next;
+    };
+
+    enum { SIZE_DIVISOR = 8 };          // must be >= sizeof(FreeItem)
+    enum { N_FREE_LISTS = 16 };         // number of lists. list[N] has objects of size <= (N+1)*SIZE_DIVISOR
+    FreeItem *freelist[N_FREE_LISTS];
+
+    // Figures out which freelist is appropriate for the given object size. Returns -1 if not are right. */
+    int which_freelist(size_t object_size) { // hot
+        assert(object_size>0);
+        int listn = (object_size-1) / SIZE_DIVISOR;
+        return listn >= N_FREE_LISTS ? -1 : listn;
+    }
+
+    // Fills the specified freelist by adding another Bucket-worth of objects.
+    void fill_freelist(int listn) { // hot
+        //std::cerr <<"Allocator::fill_freelist(" <<listn <<")\n";
+        assert(listn>=0 && listn<N_FREE_LISTS);
+        size_t object_size = (listn+1) * SIZE_DIVISOR;
+        assert(object_size >= sizeof(FreeItem));
+        Bucket *b = new Bucket;
+        for (size_t offset=0; offset+object_size<Bucket::SIZE; offset+=object_size) {
+            FreeItem *item = (FreeItem*)(b->buffer+offset);
+            item->next = freelist[listn];
+            freelist[listn] = item;
+        }
+        assert(freelist[listn]!=NULL);
+    }
+
+public:
+    /** Allocate one object of specified size. The size must be non-zero. If the size is greater than the largest objects this
+     *  class manages, then it will call the global operator new to satisfy the request (a warning is printed the first time
+     *  this happens). */
+    void *allocate(size_t size) { // hot
+        int listn = which_freelist(size);
+        if (listn<0) {
+            static bool warned = false;
+            if (!warned) {
+                std::cerr <<"BinaryAnalysis::InstructionSemantics::BaseSemantics::Allocator::allocate(): warning:"
+                          <<" object is too large for allocator (" <<size <<" bytes); falling back to global allocator\n";
+                warned = true;
+            }
+            return ::operator new(size);
+        }
+        if (NULL==freelist[listn])
+            fill_freelist(listn);
+        void *retval = freelist[listn];
+        freelist[listn] = freelist[listn]->next;
+        //std::cerr <<"Allocator::allocate(" <<size <<") = " <<retval <<"\n";
+        return retval;
+    }
+
+    /** Free one object of specified size.  The @p size must be the same size that was used when the object was allocated. This
+     *  is a no-op if @p ptr is null. */
+    void deallocate(void *ptr, size_t size) { // hot
+        //std::cerr <<"Allocator::deallocate(" <<ptr <<", " <<size <<")\n";
+        if (ptr) {
+            int listn = which_freelist(size);
+            if (listn<0)
+                return ::operator delete(ptr);
+            FreeItem *item = (FreeItem*)ptr;
+            item->next = freelist[listn];
+            freelist[listn] = item;
+        }
+    }
+};
 
 /*******************************************************************************************************************************
  *                                      Semantic Values
@@ -332,24 +426,24 @@ protected:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Normal, protected, C++ constructors
-    explicit SValue(size_t nbits): nrefs__(0), width(nbits) {}
+    explicit SValue(size_t nbits): nrefs__(0), width(nbits) {}  // hot
 
 public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Class-based constructors.  None are needed--this class is abstract.
-    virtual ~SValue() { assert(0==nrefs__); }
+    virtual ~SValue() { assert(0==nrefs__); } // hot
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors.  false_(), true_(), and undefined_() need underscores, so we do so consistently for all c'tors.
 
     /** Create a new undefined semantic value.  The new semantic value will have the same dynamic type as the value
      *  on which this virtual method is called.  This is the most common way that a new value is created. */
-    virtual SValuePtr undefined_(size_t nbits) const = 0;
+    virtual SValuePtr undefined_(size_t nbits) const = 0; // hot
 
     /** Create a new concrete semantic value. The new value will represent the specified concrete value and have the same
      *  dynamic type as the value on which this virtual method is called. This is the most common way that a new constant is
      *  created. */
-    virtual SValuePtr number_(size_t nbits, uint64_t number) const = 0;
+    virtual SValuePtr number_(size_t nbits, uint64_t number) const = 0; // hot
 
     /** Create a new, false Boolean value. The new semantic value will have the same dynamic type as the value on
      *  which this virtual method is called. This is how 1-bit flag register values (among others) are created. The base
@@ -365,6 +459,13 @@ public:
      *  logically adds zero bits to the most significant side of the value; decreasing the width logically removes bits from the
      *  most significant side of the value. */
     virtual SValuePtr copy_(size_t new_width=0) const = 0;
+
+public:
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Custom allocation.
+    static Allocator allocator;
+    static void *operator new(size_t size) { return allocator.allocate(size); } // hot
+    static void operator delete(void *ptr, size_t size) { allocator.deallocate(ptr, size); } // hot
 
 public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -297,7 +297,9 @@ actually call MyOperators::unsignedMultiply() since it's a virtual
 member function in BaseSemantics::Operators (which doesn't work in the
 template-based design).
 
+
 == Experimental Results for Compile and Run Times ==
+
 Using semanticSpeed2.C without distcc or ccache; best of three times;
 with optimizations; tests run on passerina
 
@@ -323,3 +325,6 @@ instructions per second.  The specimen is the infinite loop:
 Baseline (initial implementation)			234,989	 4.256s
 Caching of register descriptors				278,741  3.588s   15.7%
 Custom implementation of boost::shared_ptr for SValue	450,311  2.221s   38.1%
+Custom allocators for SValue classes	       		657,144  1.522s   31.5%
+
+Original implementation (ultimate goal)		      2,295,040  0.4357
