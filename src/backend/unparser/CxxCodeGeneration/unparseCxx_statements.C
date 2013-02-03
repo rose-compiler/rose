@@ -5275,7 +5275,9 @@ Unparse_ExprStmt::unparseSwitchStmt(SgStatement* stmt, SgUnparse_Info& info)
   //                 prefix generation for AST Rewrite Mechanism
   // if(switch_stmt->get_body())
      if ( (switch_stmt->get_body() != NULL) && !info.SkipBasicBlock())
+        {
           unparseStatement(switch_stmt->get_body(), info);
+        }
    }
 
 void
@@ -5290,7 +5292,9 @@ Unparse_ExprStmt::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // if(case_stmt->get_body())
      if ( (case_stmt->get_body() != NULL) && !info.SkipBasicBlock())
+        {
           unparseStatement(case_stmt->get_body(), info);
+        }
    }
 
 void
