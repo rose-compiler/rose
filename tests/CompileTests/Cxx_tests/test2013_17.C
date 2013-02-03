@@ -10,12 +10,14 @@ void
 duff_foobar()
    {
      int a;
+
+  // ERROR: This is unparsed as: "switch(a){ case 0: while(a){ a = 7; } case 1: { } }"
      switch (a)
         {
           case 0:
                while (a)
                   {
-            case 1: a = 7;
+                    case 1: a = 7;
                   }
         }
    }

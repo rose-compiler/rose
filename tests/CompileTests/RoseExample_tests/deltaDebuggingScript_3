@@ -1,0 +1,13 @@
+#!/bin/bash
+#set -x
+
+  TESTCASE=${1:-testcase.i}
+# gcc -c -O -Wfatal-errors -w $TESTCASE 2>&1 | grep -q 'internal compiler error: in typeck.c:2534'
+# ../../testTranslator -c $TESTCASE 2>&1 | grep -q "edgRose.C:10499: SgClassDeclaration* EDG_ROSE_Translation::convert_struct_primary(a_type*, SgClassDeclaration::class_types, SgClassDeclaration*): Assertion"
+  ../../testTranslator -c $TESTCASE 2>&1 | grep -q "edgRose.C:10499:"
+#  ../../testTranslator -c $TESTCASE 
+  if ! test $? = 0; then
+   exit 1
+  fi
+  exit 0
+

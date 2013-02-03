@@ -1,0 +1,9 @@
+#!/bin/bash
+  TESTCASE=${1:-testcase.i}
+#  gcc -c -O -Wfatal-errors -w $TESTCASE 2>&1 | grep -q 'internal compiler error: in typeck.c:2534'
+  ../../testTranslator -c $TESTCASE 2>&1 | grep -q "ERROR: In parse_function_body(): (this should have been a function body)"
+  if ! test $? = 0; then
+   exit 1
+  fi
+  exit 0
+

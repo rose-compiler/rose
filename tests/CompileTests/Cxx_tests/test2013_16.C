@@ -4,6 +4,11 @@
 
 // This is a variation of Duff's device.
 
+// NOTE: that because this is in a template and we are unparsing 
+// the template as a string, we get this case perfect.  However,
+// it is not correctly represented in the AST, and a non template
+// example is required to see this (in the unparsed code).
+
 template <class Pod, class T>
 inline void pod_fill(Pod* b, Pod* e, T c)
    {

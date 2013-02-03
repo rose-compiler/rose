@@ -7,7 +7,7 @@ class map
      class private_struct;
 
      public:
-      // This case fails because map::iterator is translated to the private typedef base type.
+      // This case fails in the unparsed code because map::iterator is translated to the private typedef base type.
          typedef private_struct* iterator;
    };
 

@@ -1121,6 +1121,8 @@ test2013_09.C \
 test2013_10.C \
 test2013_11.C \
 test2013_12.C \
+test2013_16.C \
+test2013_17.C \
 test2013_18.C \
 test2013_20.C \
 test2013_21.C \
@@ -1146,6 +1148,8 @@ test2013_47.C \
 test2013_48.C \
 test2013_50.C \
 test2013_51.C \
+test2013_52.C \
+test2013_53.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1172,12 +1176,13 @@ test2011_06.C \
 test2004_35.C 
 
 
+# DQ (2/2/2013): Failing test codes as a result of unifing :
+
+
 # DQ (1/21/2013): Failing test codes:
 # test2013_13.C 
 # test2013_14.C 
 # test2013_15.C 
-# test2013_16.C 
-# test2013_17.C 
 # test2013_19.C 
 # test2013_30.C 
 # test2013_35.C 
