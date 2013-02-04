@@ -72,7 +72,7 @@ main(int argc, char *argv[])
 
     // Run the algorithm over each selected function
     static const std::string nameprefix = "testDominance-" + algorithm;
-    int counter;
+    int counter=0;
     for (std::vector<SgAsmFunction*>::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
         SgAsmFunction *func = *fi;
         std::string fname = nameprefix + StringUtility::numberToString(++counter) + ".dot";
