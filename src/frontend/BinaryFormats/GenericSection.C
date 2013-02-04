@@ -314,22 +314,19 @@ SgAsmGenericSection::read_content(rose_addr_t start_offset, void *dst_buf, rose_
     return file->read_content(start_offset, dst_buf, size, strict);
 }
 
-/** Reads data from a file. Reads up to @p size bytes of data beginning at byte @p start_rva in the mapped address space and
- *  placing the results in @p dst_buf and returning the number of bytes read. The return value could be smaller than @p size
- *  if the reading encounters virtual addresses that are not mapped.  When an unmapped virtual address is encountered the
- *  reading stops (even if subsequent virtual addresses are defined) and one of two things happen: if @p strict is set (the
- *  default) then an MemoryMap::NotMapped exception is thrown, otherwise the @p dst_buf is padded with zeros so that all @p
- *  size bytes are initialized. The @p map is used to map virtual addresses to file offsets; if @p map is NULL then the map
- *  defined in the underlying file is used. */
+/** Reads data from a file. Reads up to @p size bytes of data beginning at byte @p start_va (absolute virtual address) in the
+ *  mapped address space and placing the results in @p dst_buf and returning the number of bytes read. The return value could
+ *  be smaller than @p size if the reading encounters virtual addresses that are not mapped.  When an unmapped virtual address
+ *  is encountered the reading stops (even if subsequent virtual addresses are defined) and one of two things happen: if @p
+ *  strict is set (the default) then an MemoryMap::NotMapped exception is thrown, otherwise the @p dst_buf is padded with zeros
+ *  so that all @p size bytes are initialized. The @p map is used to map virtual addresses to file offsets; if @p map is NULL
+ *  then the map defined in the underlying file is used. */
 size_t
-SgAsmGenericSection::read_content(const MemoryMap *map, rose_addr_t start_rva, void *dst_buf, rose_addr_t size, bool strict)
+SgAsmGenericSection::read_content(const MemoryMap *map, rose_addr_t start_va, void *dst_buf, rose_addr_t size, bool strict)
 {
     SgAsmGenericFile *file = get_file();
     ROSE_ASSERT(file!=NULL);
-    SgAsmGenericHeader *hdr = get_header();
-    ROSE_ASSERT(hdr!=NULL);
-    rose_addr_t va = hdr->get_base_va() + start_rva;
-    return file->read_content(map, va, dst_buf, size, strict);
+    return file->read_content(map, start_va, dst_buf, size, strict);
 }
 
 /** Reads data from a file. This behaves the same as read_content() except the @p start_offset is relative to the beginning of
@@ -378,14 +375,11 @@ SgAsmGenericSection::read_content_local_ucl(rose_addr_t rel_offset, rose_addr_t 
  *  then an MemoryMap::NotMapped exception is thrown. The @p map defines the mapping from virtual addresses to file offsets;
  *  if @p map is NULL then the map defined in the underlying file is used. */
 std::string
-SgAsmGenericSection::read_content_str(const MemoryMap *map, rose_addr_t start_rva, bool strict)
+SgAsmGenericSection::read_content_str(const MemoryMap *map, rose_addr_t start_va, bool strict)
 {
     SgAsmGenericFile *file = get_file();
     ROSE_ASSERT(file!=NULL);
-    SgAsmGenericHeader *hdr = get_header();
-    ROSE_ASSERT(hdr!=NULL);
-    rose_addr_t va = hdr->get_base_va() + start_rva;
-    return file->read_content_str(map, va, strict);
+    return file->read_content_str(map, start_va, strict);
 }
 
 /** Reads a string from the file. The string begins at the specified absolute file offset and continues until the first NUL
