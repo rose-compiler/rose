@@ -527,11 +527,12 @@ CallTargetSet::solveMemberFunctionCall(SgClassType *crtClass, ClassHierarchyWrap
         }
 
         // For virtual functions, we need to search down in the hierarchy of classes and retrieve all declarations of member
-        // functions with the same type and name.
+        // functions with the same name and type.  Names are not important for destructors.
         const ClassHierarchyWrapper::ClassDefSet& subclasses = classHierarchy->getSubclasses(crtClsDef);
         functionDeclarationInClass = NULL;
         string f1 = memberFunctionDeclaration->get_mangled_name().str();
-        string f2;
+        assert(!memberFunctionDeclaration->get_name().getString().empty());
+        bool isDestructor1 = '~' == memberFunctionDeclaration->get_name().getString()[0];
         for (ClassHierarchyWrapper::ClassDefSet::const_iterator sci=subclasses.begin(); sci!=subclasses.end(); ++sci) {
             SgClassDefinition *cls = isSgClassDefinition(*sci);
             SgDeclarationStatementPtrList &clsMembers = cls->get_members();
@@ -539,26 +540,28 @@ CallTargetSet::solveMemberFunctionCall(SgClassType *crtClass, ClassHierarchyWrap
                 SgMemberFunctionDeclaration *cls_mb_decl = isSgMemberFunctionDeclaration(*cmi);
                 if (cls_mb_decl == NULL)
                     continue;
-                if (cls_mb_decl->get_name()!=memberFunctionDeclaration->get_name())
-                    continue;
-                ROSE_ASSERT(cls_mb_decl != NULL);
-                SgMemberFunctionType* funcType1 = isSgMemberFunctionType(memberFunctionDeclaration->get_type());
-                SgMemberFunctionType* funcType2 = isSgMemberFunctionType(cls_mb_decl->get_type());
-                if (funcType1 == NULL || funcType2 == NULL)
-                    continue;
-                if (is_functions_types_equal(funcType1, funcType2)) {
-                    SgMemberFunctionDeclaration *nonDefDecl =
-                        isSgMemberFunctionDeclaration( cls_mb_decl->get_firstNondefiningDeclaration() );
-                    SgMemberFunctionDeclaration *defDecl =
-                        isSgMemberFunctionDeclaration( cls_mb_decl->get_definingDeclaration() );
 
+                assert(!cls_mb_decl->get_name().getString().empty());
+                bool isDestructor2 = '~' == cls_mb_decl->get_name().getString()[0];
+                bool keep = false;
+                if (isDestructor1 && isDestructor2) {
+                    keep = true;
+                } else if (memberFunctionDeclaration->get_name()==cls_mb_decl->get_name()) {
+                    SgMemberFunctionType* funcType1 = isSgMemberFunctionType(memberFunctionDeclaration->get_type());
+                    SgMemberFunctionType* funcType2 = isSgMemberFunctionType(cls_mb_decl->get_type());
+                    keep = funcType1 && funcType2 && is_functions_types_equal(funcType1, funcType2);
+                }
+                if (keep) {
+                    SgMemberFunctionDeclaration *nonDefDecl =
+                        isSgMemberFunctionDeclaration(cls_mb_decl->get_firstNondefiningDeclaration());
+                    SgMemberFunctionDeclaration *defDecl =
+                        isSgMemberFunctionDeclaration(cls_mb_decl->get_definingDeclaration());
                     // MD 2010/07/08 defDecl might be NULL
                     // ROSE_ASSERT ( (!nonDefDecl && defDecl == cls_mb_decl) || (nonDefDecl == cls_mb_decl && nonDefDecl) );
-
                     functionDeclarationInClass = nonDefDecl ? nonDefDecl : defDecl;
                     ROSE_ASSERT(functionDeclarationInClass);
-                    if (includePureVirtualFunc || !( functionDeclarationInClass->get_functionModifier().isPureVirtual()))
-                        functionList.push_back( functionDeclarationInClass );
+                    if (includePureVirtualFunc || !(functionDeclarationInClass->get_functionModifier().isPureVirtual()))
+                        functionList.push_back(functionDeclarationInClass);
                 }
             }
         }
