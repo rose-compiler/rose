@@ -942,14 +942,15 @@ HEADER_GENERIC_SECTION_START
 
                 /* Functions for accessing content */
                 size_t read_content(rose_addr_t abs_offset, void *dst_buf, rose_addr_t size, bool strict=true);
-                size_t read_content(const MemoryMap*, rose_addr_t rva, void *dst_buf, rose_addr_t size, bool strict=true);
-                size_t read_content(const MemoryMap *map, rose_rva_t rva, void *dst_buf, rose_addr_t size, bool strict=true) {
-                        return read_content(map, rva.get_rva(), dst_buf, size, strict);
+                size_t read_content(const MemoryMap*, rose_addr_t va, void *dst_buf, rose_addr_t size, bool strict=true);
+                size_t read_content(const MemoryMap *map, const rose_rva_t &rva, void *dst_buf, rose_addr_t size,
+                                    bool strict=true) {
+                        return read_content(map, rva.get_va(), dst_buf, size, strict);
                 }
                 size_t read_content_local(rose_addr_t rel_offset, void *dst_buf, rose_addr_t size, bool strict=true);
-                std::string read_content_str(const MemoryMap*, rose_addr_t rva, bool strict=true);
+                std::string read_content_str(const MemoryMap*, rose_addr_t va, bool strict=true);
                 std::string read_content_str(const MemoryMap *map, rose_rva_t rva, bool strict=true) {
-                        return read_content_str(map, rva.get_rva(), strict);
+                        return read_content_str(map, rva.get_va(), strict);
                 }
                 std::string read_content_str(rose_addr_t abs_offset, bool strict=true);
                 std::string read_content_local_str(rose_addr_t rel_offset, bool strict=true);
