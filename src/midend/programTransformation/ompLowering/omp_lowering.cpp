@@ -1609,7 +1609,172 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
    // SageInterface::deepDelete(target);
   }
   
+//! A helper function to categorize variables collected from map clauses
+static   
+void categorizeMapClauseVariables( const SgInitializedNamePtrList & all_vars, // all variables collected from map clauses
+          std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >&  array_dimensions, // array bounds  info
+                                    std::set<SgSymbol*>& array_syms, // variable symbols which are array types (explicit or as a pointer)
+                                    std::set<SgSymbol*>& atom_syms) // variable symbols which are non-aggregate types: scalar, pointer, etc
+  {
+   // categorize the variables:
+    for (SgInitializedNamePtrList::const_iterator iter = all_vars.begin(); iter != all_vars.end(); iter ++)
+    {
+      SgInitializedName* i_name = *iter;
+      ROSE_ASSERT (i_name != NULL);
+
+      // In C/C++, an array can have a pointer type or SgArrayType. 
+      // We collect SgArrayType for sure. But for pointer type, we consult the array_dimension to decide.
+      SgSymbol* sym = i_name ->get_symbol_from_symbol_table ();
+      ROSE_ASSERT (sym != NULL);
+      SgType * type = sym->get_type ();
+      // TODO handle complex types like structure, typedef, cast, etc. here
+      if (isSgArrayType(type))
+        array_syms.insert (sym);
+      else if (isSgPointerType(type))
+      {
+        if (array_dimensions[sym].size()!=0) // if we have bound information for the pointer type, it represents an array
+          array_syms.insert (sym);
+        else // otherwise a pointer pointing to non-array types
+          atom_syms.insert (sym);
+      }
+      else if (isScalarType(type))
+      {
+        atom_syms.insert (sym);
+      }
+      else
+      {
+        cerr<<"Error. transOmpMapVariables() of omp_lowering.cpp: unhandled map clause variable type:"<<type->class_name()<<endl;
+      }
+    }
+   // make sure the categorization is complete
+    ROSE_ASSERT (all_vars.size() == (array_syms.size() + atom_syms.size()) );
+  }
+
+  // Liao, 2/4/2013
+  // Translate the map clause variables associated with "omp target"
+  // TODO: move to the header
+  // Input: 
+  //
+  //  map(alloc|in|out|inout:var_list)
+  //  array variable in var_list should have dimension bounds information like [0:N-1][0:K-1]
+  //  
+  //  Essentially, we have to decide if we need to do the following steps for each variable
+  //    1. declared a pointer type to the device copy : pass by pointer type vs. pass by value
+  //    2. allocate device copy using the dimension bound info: for array types (pointers used for linearized arrays)
+  //    3. copy the data from CPU to the device (GPU) copy: 
+  //       
+  //    4. replace references to the CPU copies with references to the GPU copy
+  //    5. replace original multidimensional element indexing with linearized address indexing (for 2-D and more dimension arrays) 
+  //
+  //    6. copy GPU_copy back to CPU variables
+  //    7. de-allocate the GPU variables
+  //
+  //   Step 1,2,3 and 6, 7 should generate statements before or after the SgOmpTargetStatement
+  //   Step 4 and 5 should change the body of the affected SgOmpParallelStatement
+  //
+  //  Algorithm: 
+  //   collect all variables in map clauses: they should be either scalar or arrays with bound info.
+  //   in malloc: 
+  //   
+  void transOmpMapVariables(SgOmpTargetStatement* target_directive_stmt, //the "omp target"
+                         SgOmpParallelStatement* target_parallel_stmt, //the affected "omp parallel"
+                         SgBasicBlock* body_block) // the body of the affected "omp parallel"
+  {
+
+    ROSE_ASSERT (target_directive_stmt != NULL);
+    ROSE_ASSERT (target_parallel_stmt!= NULL);
+    ROSE_ASSERT (body_block!= NULL);
+    SgScopeStatement* top_scope = target_directive_stmt->get_scope(); // the scope of the target directive statement
+    ROSE_ASSERT (top_scope!= NULL);
+
+    // collect map clauses and their variables 
+    // ----------------------------------------------------------
+    // Some notes for the relevant AST input: 
+    // we store a map clause for each variant/operator (alloc, in, out, and inout), so there should be up to 4 SgOmpMapClause.
+    //    SgOmpClause::omp_map_operator_enum
+    // each map clause has 
+    //   a variable list (SgVarRefExp), accessible through get_variables()
+    //   a pointer to array_dimensions, accessible through get_array_dimensions(). the array_dimensions is identical among all map clause of a same "omp target"
+    //     std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >  array_dimensions
+    
+    Rose_STL_Container<SgOmpClause*> map_clauses = getClause(target_directive_stmt, V_SgOmpMapClause);
+    if ( map_clauses.size() == 0) return; // stop if no map clauses at all
+
+    // store each time of map clause explicitly
+    SgOmpMapClause* map_alloc_clause = NULL;
+    SgOmpMapClause* map_in_clause = NULL;
+    SgOmpMapClause* map_out_clause = NULL;
+    SgOmpMapClause* map_inout_clause = NULL;
+    // dimension map is the same for all the map clauses under the same omp target directive
+    std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >  array_dimensions; 
+
+   
+    // store all variables showing up in any of the map clauses
+    SgInitializedNamePtrList all_vars = collectClauseVariables (target_directive_stmt, VariantVector(V_SgOmpMapClause)); 
+
+    for (Rose_STL_Container<SgOmpClause*>::const_iterator iter = map_clauses.begin(); iter != map_clauses.end(); iter++)
+     {
+       SgOmpMapClause* m_cls = isSgOmpMapClause (*iter);
+       ROSE_ASSERT (m_cls != NULL);
+       if (iter == map_clauses.begin()) // retrieve once is enough
+         array_dimensions = m_cls->get_array_dimensions();
+
+       SgOmpClause::omp_map_operator_enum map_operator = m_cls->get_operation();
+       if (map_operator == SgOmpClause::e_omp_map_alloc)
+         map_alloc_clause = m_cls;
+       else if (map_operator == SgOmpClause::e_omp_map_in)  
+         map_in_clause = m_cls;
+       else if (map_operator == SgOmpClause::e_omp_map_out)  
+         map_out_clause = m_cls;
+       else if (map_operator == SgOmpClause::e_omp_map_inout)  
+         map_inout_clause = m_cls;
+       else 
+       {
+         cerr<<"Error. transOmpMapVariables() from omp_lowering.cpp: found unacceptable map operator type:"<< map_operator <<endl;
+         ROSE_ASSERT (false);
+       }
+       
+     }  // end for
+
+    
+    std::set<SgSymbol*> array_syms; // store clause variable symbols which are array types (explicit or as a pointer)
+    std::set<SgSymbol*> atom_syms; // store clause variable symbols which are non-aggregate types: scalar, pointer, etc
+
+   // categorize the variables:
+   categorizeMapClauseVariables (all_vars, array_dimensions, array_syms,atom_syms);
+  
+    // Step 1: declare a pointer type to array variables in map clauses, we linearize all arrays to be a 1-D pointer
+    //   Element_type * _dev_var; 
+    //   e.g.: double* _dev_array; 
+    //-------------------------------------------------------------------------------
+    // I believe that all array variables need allocations on GPUs, regardless their map operations (alloc, in, out, or inout)
+   for (std::set<SgSymbol*>::const_iterator iter = array_syms.begin(); iter != array_syms.end(); iter ++)
+   {
+     SgSymbol* sym = *iter; 
+     ROSE_ASSERT (sym != NULL);
+     SgType* orig_type = sym->get_type();
+     // TODO: is this a safe assumption here??
+     SgType* element_type = orig_type->findBaseType(); // recursively strip away non-base type to get the bottom type
+     string orig_name = (sym->get_name()).getString();
+     string dev_var_name = "_dev_"+ orig_name; 
+     
+     SgVariableDeclaration* dev_var_decl = buildVariableDeclaration(dev_var_name, element_type, NULL, top_scope);
+     insertStatementBefore (target_directive_stmt, dev_var_decl); 
+   } 
+    
+
+  } // end transOmpMapVariables()
+
+
   // Translate a parallel region under "omp target"
+  /*
+    
+   call customized outlining, the generateTask() for omp task or regular omp parallel is not compatible
+   since we want to use the classic outlining support: each variable is passed as a separate parameter.
+
+   We also use the revised generateFunc() to explicitly specify pass by original type vs. pass using pointer type
+
+   */
   void transOmpTargetParallel (SgNode* node)
   {
     // Sanity check first
@@ -1627,6 +1792,7 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
 
     // For Fortran code, we have to insert EXTERNAL OUTLINED_FUNC into 
     // the function body containing the parallel region
+#if 0
     if (SageInterface::is_Fortran_language() )
     {
       cerr<<"Error. transOmpTargetParallel() does not support Fortran yet. "<<endl; 
@@ -1634,7 +1800,7 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
       func_def = getEnclosingFunctionDefinition(target);
       ROSE_ASSERT (func_def != NULL);
     }
-
+#endif
     SgStatement * body =  target->get_body();
     ROSE_ASSERT(body != NULL);
     // Save preprocessing info as early as possible, avoiding mess up from the outliner
@@ -1646,13 +1812,25 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
     cutPreprocessingInfo(target, PreprocessingInfo::inside, save_buf_inside) ;
 
     //-----------------------------------------------------------------
-    // step 1: generated an outlined function as the task
+    // step 1: generated an outlined function and make it a CUDA function
     std::string wrapper_name; // wrapper parameter name, if parameter wrapping is used at all (either using array of pointers or using structure)
     ASTtools::VarSymSet_t syms; // store all variables passed into the outlined task/function 
     ASTtools::VarSymSet_t pdSyms3; // store all variables which must be passed by references, used for Fortran regardless variable cloning flag?
     std::set<SgInitializedName*> readOnlyVars; 
-    SgFunctionDeclaration* outlined_func = generateOutlinedTask (node, wrapper_name, syms, pdSyms3);
+    //SgFunctionDeclaration* outlined_func = generateOutlinedTask (node, wrapper_name, syms, pdSyms3);
+    SgOmpClauseBodyStatement * target_parallel_stmt = isSgOmpClauseBodyStatement(node);
+    ROSE_ASSERT (target_parallel_stmt);
 
+    // Prepare the outliner
+    Outliner::enable_classic = true;
+    SgBasicBlock* body_block = Outliner::preprocess(body);
+    // translator OpenMP 3.0 and earlier variables.
+    transOmpVariables (target, body_block);
+
+    transOmpMapVariables (target_directive_stmt, target, body_block);
+    
+
+#if 0
     //insert EXTERNAL outlined_function , otherwise the function name will be interpreted as a integer/real variable
     if (SageInterface::is_Fortran_language() )
     { 
@@ -1769,6 +1947,8 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
    movePreprocessingInfo(body,s2,PreprocessingInfo::before, PreprocessingInfo::after); 
 
    // SageInterface::deepDelete(target);
+#endif
+
   }
 
 
