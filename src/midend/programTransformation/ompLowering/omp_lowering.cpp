@@ -1650,6 +1650,68 @@ void categorizeMapClauseVariables( const SgInitializedNamePtrList & all_vars, //
     ROSE_ASSERT (all_vars.size() == (array_syms.size() + atom_syms.size()) );
   }
 
+ //! generate expression calculating the size of a linearized array
+ // e.g. row_size * sizeof(double)* column_size
+ static
+ SgExpression * generateSizeCalculationExpression(SgType* element_type,  // element's type, used to generate sizeof(type)
+                     const std::vector < std::pair <SgExpression*, SgExpression*> >& dimensions) // dimensions of an array
+ {
+   SgExpression* result =NULL;
+   ROSE_ASSERT (element_type != NULL);
+   ROSE_ASSERT (dimensions.size()>0);
+
+   result = buildSizeOfOp(element_type);
+   for (std::vector < std::pair <SgExpression*, SgExpression*> >::const_iterator iter = dimensions.begin(); iter != dimensions.end(); iter++)
+   {
+     std::pair <SgExpression*, SgExpression*> bound_pair = *iter; 
+     SgExpression* lower_bound = bound_pair.first;
+     SgExpression* upper_bound = bound_pair.second;
+    // * ( (upper - lower) + 1): assuming inclusive lower bound and non-inclusive upper bound
+     //result = buildMultiplyOp(result, buildAddOp( buildSubtractOp (deepCopy(upper_bound), deepCopy(lower_bound)), buildIntVal(1) ));
+     result = buildMultiplyOp(result,  buildSubtractOp (deepCopy(upper_bound), deepCopy(lower_bound)));
+   }
+   return result; 
+ }                    
+
+  // Check if a variable is in the clause's variable list
+// TODO: move to header
+ static bool isInClauseVariableList(SgOmpClause* cls, SgSymbol* var)
+{
+  ROSE_ASSERT (cls && var); 
+  SgOmpVariablesClause* var_cls = isSgOmpVariablesClause(cls);
+  ROSE_ASSERT (var_cls); 
+  SgVarRefExpPtrList refs = isSgOmpVariablesClause(var_cls)->get_variables();
+
+  std::vector<SgSymbol*> var_list;
+  for (size_t j =0; j< refs.size(); j++)
+    var_list.push_back(refs[j]->get_symbol());
+
+  if (find(var_list.begin(), var_list.end(), var) != var_list.end() )
+    return true;
+  else
+    return false;
+}
+
+ // ! Replace all references to original symbol with references to new symbol
+// return the number of references being replaced. 
+ // TODO: move to SageInterface
+//static int replaceVariableReferences(SgNode* subtree, const SgVariableSymbol* origin_sym, SgVariableSymbol* new_sym )
+static int replaceVariableReferences(SgNode* subtree, std::map <SgVariableSymbol*, SgVariableSymbol*> symbol_map)
+{
+  int result = 0;
+  Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(subtree, V_SgVarRefExp);
+  for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+  {
+    SgVarRefExp *vRef = isSgVarRefExp((*i));
+    SgVariableSymbol * orig_sym = vRef->get_symbol();
+    if (symbol_map[orig_sym] != NULL)
+    {
+     result ++;
+     vRef->set_symbol(symbol_map[orig_sym]);
+    }
+  }
+  return result;
+}
   // Liao, 2/4/2013
   // Translate the map clause variables associated with "omp target"
   // TODO: move to the header
@@ -1708,7 +1770,9 @@ void categorizeMapClauseVariables( const SgInitializedNamePtrList & all_vars, //
     // dimension map is the same for all the map clauses under the same omp target directive
     std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >  array_dimensions; 
 
-   
+   // a map between original symbol and its device version (replacement) 
+   std::map <SgVariableSymbol*, SgVariableSymbol*>  cpu_gpu_var_map; 
+    
     // store all variables showing up in any of the map clauses
     SgInitializedNamePtrList all_vars = collectClauseVariables (target_directive_stmt, VariantVector(V_SgOmpMapClause)); 
 
@@ -1743,24 +1807,102 @@ void categorizeMapClauseVariables( const SgInitializedNamePtrList & all_vars, //
    // categorize the variables:
    categorizeMapClauseVariables (all_vars, array_dimensions, array_syms,atom_syms);
   
-    // Step 1: declare a pointer type to array variables in map clauses, we linearize all arrays to be a 1-D pointer
-    //   Element_type * _dev_var; 
-    //   e.g.: double* _dev_array; 
-    //-------------------------------------------------------------------------------
-    // I believe that all array variables need allocations on GPUs, regardless their map operations (alloc, in, out, or inout)
-   for (std::set<SgSymbol*>::const_iterator iter = array_syms.begin(); iter != array_syms.end(); iter ++)
+  for (std::set<SgSymbol*>::const_iterator iter = array_syms.begin(); iter != array_syms.end(); iter ++)
    {
      SgSymbol* sym = *iter; 
      ROSE_ASSERT (sym != NULL);
      SgType* orig_type = sym->get_type();
+    // Step 1: declare a pointer type to array variables in map clauses, we linearize all arrays to be a 1-D pointer
+    //   Element_type * _dev_var; 
+    //   e.g.: double* _dev_array; 
+    // I believe that all array variables need allocations on GPUs, regardless their map operations (alloc, in, out, or inout)
+ 
      // TODO: is this a safe assumption here??
      SgType* element_type = orig_type->findBaseType(); // recursively strip away non-base type to get the bottom type
      string orig_name = (sym->get_name()).getString();
      string dev_var_name = "_dev_"+ orig_name; 
      
-     SgVariableDeclaration* dev_var_decl = buildVariableDeclaration(dev_var_name, element_type, NULL, top_scope);
+     SgVariableDeclaration* dev_var_decl = buildVariableDeclaration(dev_var_name, buildPointerType(element_type), NULL, top_scope);
      insertStatementBefore (target_directive_stmt, dev_var_decl); 
-   } 
+     SgVariableSymbol* orig_sym = isSgVariableSymbol(sym);
+     ROSE_ASSERT (orig_sym != NULL);
+     cpu_gpu_var_map[orig_sym]= getFirstVarSym(dev_var_decl); // store the mapping
+ 
+     // Step 2.1  generate linear size calculation based on array dimension info
+     // int dev_array_size = sizeof (double) *dim_size1 * dim_size2;
+     string dev_var_size_name = "_dev_" + orig_name + "_size";  
+     SgExpression* initializer = generateSizeCalculationExpression (element_type, array_dimensions[sym]);
+     SgVariableDeclaration* dev_var_size_decl = buildVariableDeclaration (dev_var_size_name, buildIntType(), buildAssignInitializer(initializer), top_scope); 
+     insertStatementBefore (target_directive_stmt, dev_var_size_decl); 
+
+
+     // Step 2.5 generate memory allocation on GPUs
+     // e.g.:  _dev_m1 = (double *)xomp_deviceMalloc (_dev_m1_size);
+     SgExprStatement* mem_alloc_stmt = buildAssignStatement(buildVarRefExp(dev_var_name, top_scope), 
+              buildCastExp ( buildFunctionCallExp(SgName("xomp_deviceMalloc"), 
+                                                  buildPointerType(buildVoidType()), 
+                                                  buildExprListExp(buildVarRefExp( dev_var_size_name, top_scope)),
+                                                  top_scope), 
+                             buildPointerType(element_type))); 
+     insertStatementBefore (target_directive_stmt, mem_alloc_stmt); 
+
+     // Step 3. copy the data from CPU to GPU
+     // Only for variable in map(in:), or map(inout:) 
+     // e.g. xomp_memcpyHostToDevice ((void*)dev_m1, (const void*)a, array_size);
+     if ( (map_in_clause) && (isInClauseVariableList (map_in_clause,sym)) || 
+          (map_inout_clause) && (isInClauseVariableList (map_inout_clause,sym)) )
+     {
+       SgExprListExp * parameters = buildExprListExp (
+                                      buildCastExp(buildVarRefExp(dev_var_name, top_scope), buildPointerType(buildVoidType())),
+                                      buildCastExp(buildVarRefExp(orig_name, top_scope), buildPointerType(buildConstType(buildVoidType())) ),
+                                      buildVarRefExp(dev_var_size_name, top_scope)
+                                        );
+       SgExprStatement* mem_copy_to_stmt = buildFunctionCallStmt (SgName("xomp_memcpyHostToDevice"), 
+                                                        buildPointerType(buildVoidType()),
+                                                        parameters,
+                                                        top_scope);
+       insertStatementBefore (target_directive_stmt, mem_copy_to_stmt); 
+     }
+
+     // Step 6. copy back data from GPU to CPU, only for variable in map(out:var_list)
+     // e.g. xomp_memcpyDeviceToHost ((void*)c, (const void*)dev_m3, array_size);
+     // Note: insert this AFTER the target directive stmt
+     SgStatement* prev_stmt = target_directive_stmt;
+      if (( (map_out_clause) && (isInClauseVariableList (map_out_clause,sym))) ||
+       ( (map_inout_clause) && (isInClauseVariableList (map_inout_clause,sym))))
+     {
+       SgExprListExp * parameters = buildExprListExp (
+                                      buildCastExp(buildVarRefExp(orig_name, top_scope), buildPointerType(buildVoidType()) ),
+                                      buildCastExp(buildVarRefExp(dev_var_name, top_scope), buildPointerType(buildConstType(buildVoidType()))),
+                                      buildVarRefExp( dev_var_size_name, top_scope)
+                                        );
+       SgExprStatement* mem_copy_back_stmt = buildFunctionCallStmt (SgName("xomp_memcpyDeviceToHost"), 
+                                                        buildPointerType(buildVoidType()),
+                                                        parameters, 
+                                                        top_scope);
+       insertStatementAfter(target_directive_stmt, mem_copy_back_stmt); 
+       prev_stmt = mem_copy_back_stmt;
+     }
+
+    
+     // Step 7, de-allocate GPU memory
+     // e.g. xomp_freeDevice(dev_m1);
+     // Note: insert this AFTER the target directive stmt or the copy back stmt
+     SgExprStatement* mem_dealloc_stmt = 
+               buildFunctionCallStmt(SgName("xomp_freeDevice"),
+                                     buildBoolType(),
+                                     buildExprListExp(buildVarRefExp( dev_var_name,top_scope)),
+                                     top_scope);
+     insertStatementAfter (prev_stmt, mem_dealloc_stmt);
+     
+
+   }  // end for
+
+   // Step 4. replace references to old with new variables, 
+   replaceVariableReferences (body_block, cpu_gpu_var_map);
+   // Step 5. TODO  replace indexing element access with address calculation (optional for 2 /3 -D)
+
+   // TODO handle scalar, separate or merged into previous loop ?
     
 
   } // end transOmpMapVariables()
