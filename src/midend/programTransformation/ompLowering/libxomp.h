@@ -14,6 +14,8 @@ extern "C" {
 
 #include <stdbool.h>
 #include <stdlib.h> // for abort()
+#include <assert.h>
+#include <sys/time.h>
 
 // return the current time stamp in a double floating point number
 extern double xomp_time_stamp(void);
@@ -130,6 +132,89 @@ extern void XOMP_flush_one (char * startAddress, int nbyte);
 // omp ordered directive
 extern void XOMP_ordered_start (void);
 extern void XOMP_ordered_end (void);
+
+//--------------------- extensions to support OpenMP accelerator model experimental implementation------
+// We only include 
+//--------------------- kernel launch ------------------
+
+// the max number of threads per thread block of the first available device
+size_t xomp_get_maxThreadsPerBlock();
+
+//get the max number of 1D blocks for a given input length
+size_t xomp_get_max1DBlock(size_t ss);
+
+// Get the max number threads for one dimension (x or y) of a 2D block
+// Two factors are considered: the total number of threads within the 2D block must<= total threads per block
+//  x * y <= maxThreadsPerBlock 512 or 1024
+// each dimension: the number of threads must <= maximum x/y-dimension
+//    x <= maxThreadsDim[0],  1024
+//    y <= maxThreadsDim[1], 1024 
+//  maxThreadsDim[0] happens to be equal to  maxThreadsDim[1] so we use a single function to calculate max segments for both dimensions
+size_t xomp_get_max_threads_per_dimesion_2D ();
+
+// return the max number of segments for a dimension (either x or y) of a 2D block
+size_t xomp_get_maxSegmentsPerDimensionOf2DBlock(size_t dimension_size);
+
+//------------------memory allocation/copy/free----------------------------------
+//Allocate device memory and return the pointer
+// This should be a better interface than cudaMalloc()
+// since it mimics malloc() closely
+/*
+return a pointer to the allocated space 
+   * upon successful completion with size not equal to 0
+return a null pointer if
+  * size is 0 
+  * failure due to any reason
+*/
+void* xomp_deviceMalloc(size_t size);
+
+// A host version
+void* xomp_hostMalloc(size_t size);
+
+//get the time stamp for now, up to microsecond resolution: 1e-6 , but maybe 1e-4 in practice
+double xomp_time_stamp();
+
+
+// memory copy from src to dest, return the pointer to dest. NULL pointer if anything is wrong 
+void * xomp_memcpyHostToDevice (void *dest, const void * src, size_t n);
+void * xomp_memcpyDeviceToHost (void *dest, const void * src, size_t n);
+// copy a dynamically allocated host source array to linear dest address on a GPU device. the dimension information of the source array
+// is given by: int dimensions[dimension_size], with known element size. 
+// bytes_copied reports the total bytes copied by this function.  
+// Note: It cannot be used copy static arrays declared like type array[N][M] !!
+void * xomp_memcpyDynamicHostToDevice (void *dest, const void * src, int * dimensions, size_t dimension_size, size_t element_size, size_t *bytes_copied);
+
+// copy linear src memory to dynamically allocated destination, with dimension information given by
+// int dimensions[dimension_size]
+// the source memory has total n continuous memory, with known size for each element
+// the total bytes copied by this function is reported by bytes_copied
+void * xomp_memcpyDynamicDeviceToHost (void *dest, int * dimensions, size_t dimension_size, const void * src, size_t element_size, size_t *bytes_copied);
+
+void * xomp_memcpyDeviceToDevice (void *dest, const void * src, size_t n);
+void * xomp_memcpyHostToHost (void *dest, const void * src, size_t n); // same as memcpy??
+
+
+// free the device memory pointed by a pointer, return false in case of failure, otherwise return true
+bool xomp_freeDevice(void* devPtr);
+// free the host memory pointed by a pointer, return false in case of failure, otherwise return true
+bool xomp_freeHost(void* hostPtr);
+
+/* Allocation/Free functions for Host */
+/* Allocate a multi-dimensional array
+ *
+ * Input parameters:
+ *  int *dimensions:  an integer array storing the size of each dimension
+ *  size_t dimension_num: the number of dimensions
+ *  size_t esize: the size of an array element
+ *
+ * return:
+ *  the pointer to the allocated array
+ * */
+void * xomp_mallocArray(int * dimensions, size_t dimension_num, size_t esize);
+
+void xomp_freeArrayPointer (void* array, int * dimensions, size_t dimension_num);
+
+
 
 #ifdef __cplusplus
  }
