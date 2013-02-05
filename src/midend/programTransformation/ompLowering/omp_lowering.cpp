@@ -1740,9 +1740,11 @@ static int replaceVariableReferences(SgNode* subtree, std::map <SgVariableSymbol
   //   
   void transOmpMapVariables(SgOmpTargetStatement* target_directive_stmt, //the "omp target"
                          SgOmpParallelStatement* target_parallel_stmt, //the affected "omp parallel"
-                         SgBasicBlock* body_block) // the body of the affected "omp parallel"
+                         SgBasicBlock* body_block, // the body of the affected "omp parallel"
+                         ASTtools::VarSymSet_t & all_syms, // all generated or remaining variables to be passed to the outliner
+                         ASTtools::VarSymSet_t & addressOf_syms // generated or remaining variables should be passed by using their addresses
+                         )
   {
-
     ROSE_ASSERT (target_directive_stmt != NULL);
     ROSE_ASSERT (target_parallel_stmt!= NULL);
     ROSE_ASSERT (body_block!= NULL);
@@ -1805,7 +1807,7 @@ static int replaceVariableReferences(SgNode* subtree, std::map <SgVariableSymbol
     std::set<SgSymbol*> atom_syms; // store clause variable symbols which are non-aggregate types: scalar, pointer, etc
 
    // categorize the variables:
-   categorizeMapClauseVariables (all_vars, array_dimensions, array_syms,atom_syms);
+   categorizeMapClauseVariables (all_vars, array_dimensions, array_syms, atom_syms);
   
   for (std::set<SgSymbol*>::const_iterator iter = array_syms.begin(); iter != array_syms.end(); iter ++)
    {
@@ -1826,7 +1828,11 @@ static int replaceVariableReferences(SgNode* subtree, std::map <SgVariableSymbol
      insertStatementBefore (target_directive_stmt, dev_var_decl); 
      SgVariableSymbol* orig_sym = isSgVariableSymbol(sym);
      ROSE_ASSERT (orig_sym != NULL);
-     cpu_gpu_var_map[orig_sym]= getFirstVarSym(dev_var_decl); // store the mapping
+     SgVariableSymbol* new_sym = getFirstVarSym(dev_var_decl);
+     cpu_gpu_var_map[orig_sym]= new_sym; // store the mapping
+   
+     // linearized array pointers should be directly passed to the outliner later on, without adding & operator in front of them
+     all_syms.insert(new_sym);
  
      // Step 2.1  generate linear size calculation based on array dimension info
      // int dev_array_size = sizeof (double) *dim_size1 * dim_size2;
@@ -1900,10 +1906,27 @@ static int replaceVariableReferences(SgNode* subtree, std::map <SgVariableSymbol
 
    // Step 4. replace references to old with new variables, 
    replaceVariableReferences (body_block, cpu_gpu_var_map);
-   // Step 5. TODO  replace indexing element access with address calculation (optional for 2 /3 -D)
+
+   // Step 5. TODO  replace indexing element access with address calculation (only needed for 2/3 -D)
 
    // TODO handle scalar, separate or merged into previous loop ?
     
+  // store remaining variables so outliner can readily use this information
+   // for pointers to linearized arrays, they should passed by their original form, not using & operator, regardless the map operator types (in|out|alloc|inout)
+   // for a scalar, two cases: in vs. out |inout
+   // if in only, pass by value is good
+   // if either out or inout:  
+   // two possible solutions:
+   // 1) we need to treat it as an array of size 1 or any other choices. TODO!!
+   //  we also have to replace the reference to scalar to the array element access: be cautious about using by value (a) vs. using by address  (&a)
+   // 2) try to still pass by value, but copy the final value back to the CPU version 
+   // right now we assume they are not on out|inout , until we face a real input applications with map(out:scalar_a)
+   // For all scalars, we directly copy them into all_syms for now
+   for (std::set<SgSymbol*> ::iterator iter = atom_syms.begin(); iter != atom_syms.end(); iter ++)
+   {
+     SgVariableSymbol * var_sym = isSgVariableSymbol(*iter);
+     all_syms.insert (var_sym);
+   }
 
   } // end transOmpMapVariables()
 
@@ -1969,8 +1992,21 @@ static int replaceVariableReferences(SgNode* subtree, std::map <SgVariableSymbol
     // translator OpenMP 3.0 and earlier variables.
     transOmpVariables (target, body_block);
 
-    transOmpMapVariables (target_directive_stmt, target, body_block);
+    ASTtools::VarSymSet_t all_syms; // all generated or remaining variables to be passed to the outliner
+    ASTtools::VarSymSet_t addressOf_syms; // generated or remaining variables should be passed by using their addresses
+    transOmpMapVariables (target_directive_stmt, target, body_block, all_syms, addressOf_syms);
     
+    string func_name = Outliner::generateFuncName(target);
+    SgGlobal* g_scope = SageInterface::getGlobalScope(body_block);
+    ROSE_ASSERT(g_scope != NULL);
+
+    std::set< SgInitializedName *> restoreVars;
+    SgFunctionDeclaration* result = Outliner::generateFunction(body_block, func_name, all_syms, addressOf_syms, restoreVars, NULL, g_scope);
+    Outliner::insert(result, g_scope, body_block);
+    if (result->get_definingDeclaration() != NULL)
+      SageInterface::setStatic(result->get_definingDeclaration());
+    if (result->get_firstNondefiningDeclaration() != NULL)
+      SageInterface::setStatic(result->get_firstNondefiningDeclaration());
 
 #if 0
     //insert EXTERNAL outlined_function , otherwise the function name will be interpreted as a integer/real variable
