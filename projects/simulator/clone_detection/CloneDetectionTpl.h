@@ -651,30 +651,35 @@ Policy<State, ValueType>::readMemory(X86SegmentRegister sr, ValueType<32> addr, 
         return  Super::template readMemory<nBits>(sr, addr, cond);
 
     unsigned active_policies = this->get_active_policies();
+#ifdef USE_SYMBOLIC_MEMORY
     SMTSolver *solver = this->get_policy(SYMBOLIC).get_solver();
-    SYMBOLIC_VALUE<32> a0 = convert_to_symbolic(addr);
-    bool uninitialized_read = false; // set to true by any mem_read_byte() that has no data
+    MEMORY_ADDRESS_TYPE a0 = convert_to_symbolic(addr);
+#else // concrete
+    SMTSolver *solver = NULL;
+    MEMORY_ADDRESS_TYPE a0 = convert_to_concrete(addr);
+#endif
         
     // Read a multi-byte value from memory in little-endian order.
+    bool uninitialized_read = false; // set to true by any mem_read_byte() that has no data
     assert(8==nBits || 16==nBits || 32==nBits);
     ValueType<32> dword = this->concat(state.mem_read_byte(sr, a0, active_policies, solver, &uninitialized_read),
                                        ValueType<24>(0));
     if (nBits>=16) {
-        SYMBOLIC_VALUE<32> a1 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(1));
+        MEMORY_ADDRESS_TYPE a1 = this->get_policy(MEMORY_ADDRESS_DOMAIN).add(a0, MEMORY_ADDRESS_TYPE(1));
         dword = this->or_(dword, this->concat(ValueType<8>(0),
                                               this->concat(state.mem_read_byte(sr, a1, active_policies, solver,
                                                                                &uninitialized_read),
                                                            ValueType<16>(0))));
     }
     if (nBits>=24) {
-        SYMBOLIC_VALUE<32> a2 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(2));
+        MEMORY_ADDRESS_TYPE a2 = this->get_policy(MEMORY_ADDRESS_DOMAIN).add(a0, MEMORY_ADDRESS_TYPE(2));
         dword = this->or_(dword, this->concat(ValueType<16>(0),
                                               this->concat(state.mem_read_byte(sr, a2, active_policies, solver,
                                                                                &uninitialized_read),
                                                            ValueType<8>(0))));
     }
     if (nBits>=32) {
-        SYMBOLIC_VALUE<32> a3 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(3));
+        MEMORY_ADDRESS_TYPE a3 = this->get_policy(MEMORY_ADDRESS_DOMAIN).add(a0, MEMORY_ADDRESS_TYPE(3));
         dword = this->or_(dword, this->concat(ValueType<24>(0), state.mem_read_byte(sr, a3, active_policies, solver,
                                                                                     &uninitialized_read)));
     }
@@ -683,7 +688,8 @@ Policy<State, ValueType>::readMemory(X86SegmentRegister sr, ValueType<32> addr, 
     if (uninitialized_read) {
         // At least one of the bytes read did not previously exist.  Return either a pointer or non-pointer value depending on
         // whether the memory address is known to be a pointer.
-        InputValues::Type type = this->pointers->is_pointer(a0) ? InputValues::POINTER : InputValues::NONPOINTER;
+        SYMBOLIC_VALUE<32> a0_sym = convert_to_symbolic(addr);
+        InputValues::Type type = this->pointers->is_pointer(a0_sym) ? InputValues::POINTER : InputValues::NONPOINTER;
         retval = HighLevel::next_input_value<nBits>(this->inputs, type, trace());
     }
 
@@ -709,24 +715,28 @@ Policy<State, ValueType>::writeMemory(X86SegmentRegister sr, ValueType<32> addr,
         ss <<"  writeMemory<" <<nBits <<">(" <<segregToString(sr) <<", " <<addr <<") <- " <<data;
         this->get_policy(CONCRETE).tracing(TRACE_MEM)->mesg("%s", ss.str().c_str());
     }
-    SYMBOLIC_VALUE<32> a0 = convert_to_symbolic(addr);
+#ifdef USE_SYMBOLIC_MEMORY
+    MEMORY_ADDRESS_TYPE a0 = convert_to_symbolic(addr);
+#else // concrete
+    MEMORY_ADDRESS_TYPE a0 = convert_to_concrete(addr);
+#endif
 
     // Add the address/value pair to the mixed-semantics memory state, one byte at a time in little-endian order.
     assert(8==nBits || 16==nBits || 32==nBits);
     ValueType<8> b0 = this->template extract<0, 8>(data);
     state.mem_write_byte(sr, a0, b0, rw_state);
     if (nBits>=16) {
-        SYMBOLIC_VALUE<32> a1 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(1));
+        MEMORY_ADDRESS_TYPE a1 = this->get_policy(MEMORY_ADDRESS_DOMAIN).add(a0, MEMORY_ADDRESS_TYPE(1));
         ValueType<8> b1 = this->template extract<8, 16>(data);
         state.mem_write_byte(sr, a1, b1, rw_state);
     }
     if (nBits>=24) {
-        SYMBOLIC_VALUE<32> a2 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(2));
+        MEMORY_ADDRESS_TYPE a2 = this->get_policy(MEMORY_ADDRESS_DOMAIN).add(a0, MEMORY_ADDRESS_TYPE(2));
         ValueType<8> b2 = this->template extract<16, 24>(data);
         state.mem_write_byte(sr, a2, b2, rw_state);
     }
     if (nBits>=32) {
-        SYMBOLIC_VALUE<32> a3 = this->get_policy(SYMBOLIC).add(a0, SYMBOLIC_VALUE<32>(3));
+        MEMORY_ADDRESS_TYPE a3 = this->get_policy(MEMORY_ADDRESS_DOMAIN).add(a0, MEMORY_ADDRESS_TYPE(3));
         ValueType<8> b3 = this->template extract<24, 32>(data);
         state.mem_write_byte(sr, a3, b3, rw_state);
     }
@@ -741,40 +751,53 @@ Policy<State, ValueType>::print(std::ostream &o, bool abbreviated) const
 
 template <template <size_t> class ValueType>
 bool
-State<ValueType>::must_alias(const SYMBOLIC_VALUE<32> &addr1, const SYMBOLIC_VALUE<32> &addr2, SMTSolver *solver)
+State<ValueType>::must_alias(const MEMORY_ADDRESS_TYPE &addr1, const MEMORY_ADDRESS_TYPE &addr2, SMTSolver *solver)
 {
+#ifdef USE_SYMBOLIC_MEMORY
     assert(solver);
     return addr1.get_expression()->equal_to(addr2.get_expression(), solver);
+#else // concrete
+    return addr1.known_value()==addr2.known_value();
+#endif
 }
 
 template <template <size_t> class ValueType>
 bool
-State<ValueType>::may_alias(const SYMBOLIC_VALUE<32> &addr1, const SYMBOLIC_VALUE<32> &addr2, SMTSolver *solver)
+State<ValueType>::may_alias(const MEMORY_ADDRESS_TYPE &addr1, const MEMORY_ADDRESS_TYPE &addr2, SMTSolver *solver)
 {
+#ifdef USE_SYMBOLIC_MEMORY
     using namespace InsnSemanticsExpr;
     if (must_alias(addr1, addr2, solver))
         return true;
     TreeNodePtr assertion = InternalNode::create(1, OP_EQ, addr1.get_expression(), addr2.get_expression());
     return SMTSolver::SAT_NO != solver->satisfiable(assertion);
+#else // concrete
+    return addr1.known_value()==addr2.known_value();
+#endif
 }
 
 template <template <size_t> class ValueType>
 void
-State<ValueType>::mem_write_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> &addr, const ValueType<8> &value,
+State<ValueType>::mem_write_byte(X86SegmentRegister sr, const MEMORY_ADDRESS_TYPE &addr, const ValueType<8> &value,
                                  unsigned rw_state)
 {
     MemoryCells &cells = x86_segreg_ss==sr ? stack_cells : data_cells;
+#ifdef USE_SYMBOLIC_MEMORY
     cells.push_front(MemoryCell(addr, value, rw_state));
+#else // concrete
+    cells[addr.known_value()] = MemoryCell(addr, value, rw_state);
+#endif
 }
 
 template <template <size_t> class ValueType>
 ValueType<8>
-State<ValueType>::mem_read_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> &addr, unsigned active_policies,
+State<ValueType>::mem_read_byte(X86SegmentRegister sr, const MEMORY_ADDRESS_TYPE &addr, unsigned active_policies,
                                 SMTSolver *solver/*=NULL*/, bool *uninitialized_read/*out*/)
 {
     ValueType<8> retval;
     MemoryCells &cells = x86_segreg_ss==sr ? stack_cells : data_cells;
 
+#ifdef USE_SYMBOLIC_MEMORY
     // Find all values that could be returned.  I.e., those stored at addresses that might be equal to 'addr'
     std::vector<ValueType<8> > found;
     for (typename MemoryCells::iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
@@ -785,6 +808,14 @@ State<ValueType>::mem_read_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> 
                 break;
         }
     }
+#else // concrete
+    std::vector<ValueType<8> > found;
+    typename MemoryCells::iterator ci = cells.find(addr.known_value());
+    if (ci!=cells.end()) {
+        assert(must_alias(addr, ci->second.addr, solver));
+        found.push_back(ci->second.val);
+    }
+#endif
 
     // If we're in the concrete domain, return a random found value
     if (0 != (active_policies & CONCRETE.mask)) {
@@ -843,7 +874,11 @@ State<ValueType>::mem_read_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> 
     }
 
     // Write the value back to memory so the next read returns the same thing (and returns faster)
+#ifdef USE_SYMBOLIC_MEMORY
     cells.push_front(MemoryCell(addr, retval, HAS_BEEN_READ));
+#else // concrete
+    cells[addr.known_value()] = MemoryCell(addr, retval, HAS_BEEN_READ);
+#endif
     return retval;
 }
 
@@ -861,18 +896,28 @@ State<ValueType>::get_outputs(bool verbose) const
     }
 
     for (MemoryCells::const_iterator ci=stack_cells.begin(); ci!=stack_cells.end(); ++ci) {
-        if (0 != (ci->rw_state & HAS_BEEN_WRITTEN)) {
+#ifdef USE_SYMBOLIC_MEMORY
+        const MemoryCell &cell = *ci;
+#else // concrete
+        const MemoryCell &cell = ci->second;
+#endif
+        if (0 != (cell.rw_state & HAS_BEEN_WRITTEN)) {
             if (verbose)
-                std::cerr <<"output for stack address " <<ci->addr <<"\n";
-            outputs->values8.push_back(ci->val);
+                std::cerr <<"output for stack address " <<cell.addr <<"\n";
+            outputs->values8.push_back(cell.val);
         }
     }
 
     for (MemoryCells::const_iterator ci=data_cells.begin(); ci!=data_cells.end(); ++ci) {
-        if (0 != (ci->rw_state & HAS_BEEN_WRITTEN)) {
+#ifdef USE_SYMBOLIC_MEMORY
+        const MemoryCell &cell = *ci;
+#else // concrete
+        const MemoryCell &cell = ci->second;
+#endif
+        if (0 != (cell.rw_state & HAS_BEEN_WRITTEN)) {
             if (verbose)
-                std::cerr <<"ROBB: output for data address " <<ci->addr <<"\n";
-            outputs->values8.push_back(ci->val);
+                std::cerr <<"ROBB: output for data address " <<cell.addr <<"\n";
+            outputs->values8.push_back(cell.val);
         }
     }
 
@@ -928,17 +973,22 @@ State<ValueType>::print(std::ostream &o, unsigned domains) const
         const MemoryCells &cells = 0==i ? stack_cells : data_cells;
         o <<"== Multi Memory (" <<(0==i?"stack":"data") <<" segment) ==\n";
         for (typename MemoryCells::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
+#ifdef USE_SYMBOLIC_MEMORY
+            const MemoryCell &cell = *ci;
+#else // concrete
+            const MemoryCell &cell = ci->second;
+#endif
             if (++ncells>max_ncells) {
                 o <<"    skipping " <<cells.size()-(ncells-1) <<" more memory cells for brevity's sake...\n";
                 break;
             }
             o <<"         cell access:"
-              <<(0==(ci->rw_state & HAS_BEEN_READ)?"":" read")
-              <<(0==(ci->rw_state & HAS_BEEN_WRITTEN)?"":" written")
-              <<(0==(ci->rw_state & (HAS_BEEN_READ|HAS_BEEN_WRITTEN))?" none":"")
+              <<(0==(cell.rw_state & HAS_BEEN_READ)?"":" read")
+              <<(0==(cell.rw_state & HAS_BEEN_WRITTEN)?"":" written")
+              <<(0==(cell.rw_state & (HAS_BEEN_READ|HAS_BEEN_WRITTEN))?" none":"")
               <<"\n"
-              <<"    address symbolic: " <<ci->addr <<"\n";
-            show_value(o, "      value ", ci->val, domains);
+              <<"    address symbolic: " <<cell.addr <<"\n";
+            show_value(o, "      value ", cell.val, domains);
         }
     }
 }

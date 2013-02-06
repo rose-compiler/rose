@@ -202,16 +202,27 @@ public:
 
 /**************************************************************************************************************************/
 
-/** One cell of memory.  A cell contains an address and a byte value. Cells are organized into a reverse chronological list to
- *  form a memory state. */
+// If USE_SYMBOLIC_MEMORY is defined then all memory address operations are done in the symbolic domain, otherwise they are
+// performed in the concrete domain.  The concrete domain is MUCH faster since alias determination is a simple comparison of
+// two integers rather than an expensive call to an SMT solver.  (You can define it right here, or in the makefile).
+
+#ifdef USE_SYMBOLIC_MEMORY
+#define MEMORY_ADDRESS_TYPE SYMBOLIC_VALUE<32>
+#define MEMORY_ADDRESS_DOMAIN SYMBOLIC
+#else // concrete
+#define MEMORY_ADDRESS_TYPE CONCRETE_VALUE<32>
+#define MEMORY_ADDRESS_DOMAIN CONCRETE
+#endif
+
+/** One cell of memory.  A cell contains an address and a byte value and an indicatation of how the cell has been accessed. */
 struct MemoryCell {
-    MemoryCell(const SYMBOLIC_VALUE<32> &addr, const RSIM_SEMANTICS_VTYPE<8> &val, unsigned rw_state)
+    MemoryCell(): addr(MEMORY_ADDRESS_TYPE(0)), val(RSIM_SEMANTICS_VTYPE<8>(0)), rw_state(NO_ACCESS) {}
+    MemoryCell(const MEMORY_ADDRESS_TYPE &addr, const RSIM_SEMANTICS_VTYPE<8> &val, unsigned rw_state)
         : addr(addr), val(val), rw_state(rw_state) {}
-    SYMBOLIC_VALUE<32> addr;                                    // Memory addresses are always symbolic
+    MEMORY_ADDRESS_TYPE addr;                                   // Virtual address of memory cell
     RSIM_SEMANTICS_VTYPE<8> val;                                // Byte stored at that address
     unsigned rw_state;                                          // NO_ACCESS or HAS_BEEN_READ and/or HAS_BEEN_WRITTEN bits
 };
-
 /**************************************************************************************************************************/
 
 /** Mixed-interpretation memory.  Addresses are symbolic expressions and values are multi-domain.  We'll override the
@@ -220,7 +231,11 @@ struct MemoryCell {
 template <template <size_t> class ValueType>
 class State: public RSIM_Semantics::OuterState<ValueType> {
 public:
+#ifdef USE_SYMBOLIC_MEMORY
     typedef std::list<MemoryCell> MemoryCells;                  // list of memory cells in reverse chronological order
+#else // concrete
+    typedef std::map<uint32_t, MemoryCell> MemoryCells;         // memory cells indexed by address
+#endif
     MemoryCells stack_cells;                                    // memory state for stack memory (accessed via SS register)
     MemoryCells data_cells;                                     // memory state for anything that non-stack (e.g., DS register)
     BinaryAnalysis::InstructionSemantics::BaseSemantics::RegisterStateX86<RSIM_SEMANTICS_VTYPE> registers;
@@ -228,21 +243,21 @@ public:
     InputValues *input_values;                                  // user-supplied input values
 
     // Write a single byte to memory. The rw_state are the HAS_BEEN_READ and/or HAS_BEEN_WRITTEN bits.
-    void mem_write_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> &addr, const ValueType<8> &value,
+    void mem_write_byte(X86SegmentRegister sr, const MEMORY_ADDRESS_TYPE &addr, const ValueType<8> &value,
                         unsigned rw_state=HAS_BEEN_WRITTEN);
 
     // Read a single byte from memory.  The active_policies is the bit mask of sub-policies that are currently active. The
     // optional SMT solver is used to prove hypotheses about symbolic expressions (like memory addresses).  If the read
     // operation cannot find an appropriate memory cell, then @p uninitialized_read is set (it is not cleared in the counter
     // case).
-    ValueType<8> mem_read_byte(X86SegmentRegister sr, const SYMBOLIC_VALUE<32> &addr, unsigned active_policies,
+    ValueType<8> mem_read_byte(X86SegmentRegister sr, const MEMORY_ADDRESS_TYPE &addr, unsigned active_policies,
                                SMTSolver *solver, bool *uninitialized_read/*out*/);
 
     // Returns true if two memory addresses can be equal.
-    static bool may_alias(const SYMBOLIC_VALUE<32> &addr1, const SYMBOLIC_VALUE<32> &addr2, SMTSolver *solver);
+    static bool may_alias(const MEMORY_ADDRESS_TYPE &addr1, const MEMORY_ADDRESS_TYPE &addr2, SMTSolver *solver);
 
     // Returns true if two memory address are equivalent.
-    static bool must_alias(const SYMBOLIC_VALUE<32> &addr1, const SYMBOLIC_VALUE<32> &addr2, SMTSolver *solver);
+    static bool must_alias(const MEMORY_ADDRESS_TYPE &addr1, const MEMORY_ADDRESS_TYPE &addr2, SMTSolver *solver);
 
     // Reset the analysis state by clearing all memory (sub-policy memory such as simulator concrete is not cleared, only the
     // memory state stored in the MultiSemantics class) and by resetting the read/written status of all registers.
