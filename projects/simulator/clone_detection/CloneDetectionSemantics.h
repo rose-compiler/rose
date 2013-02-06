@@ -49,8 +49,6 @@
 
 namespace CloneDetection {
 
-typedef BinaryAnalysis::PointerAnalysis::PointerDetection<RSIM_Process> PointerDetector;
-
 // Make names for the sub policies.
 static const RSIM_SEMANTICS_OUTER_BASE::SP0 CONCRETE = RSIM_SEMANTICS_OUTER_BASE::SP0();
 static const RSIM_SEMANTICS_OUTER_BASE::SP1 INTERVAL = RSIM_SEMANTICS_OUTER_BASE::SP1();
@@ -74,6 +72,24 @@ template <template <size_t> class ValueType, size_t nBits>
 INTERVAL_VALUE<nBits> convert_to_interval(const ValueType<nBits> &value);
 template <template <size_t> class ValueType, size_t nBits>
 SYMBOLIC_VALUE<nBits> convert_to_symbolic(const ValueType<nBits> &value);
+
+/** Instruction providor for pointer detection analysis. */
+class InstructionProvidor {
+public:
+    RSIM_Process *process;
+    InstructionProvidor(RSIM_Process *process): process(process) { assert(process!=NULL); }
+    SgAsmInstruction *get_instruction(rose_addr_t va) {
+        SgAsmInstruction *insn = NULL;
+        try {
+            insn = process->get_instruction(va);
+        } catch (const DisassemblerX86::Exception&) {
+        }
+        return insn;
+    }
+};
+
+typedef BinaryAnalysis::PointerAnalysis::PointerDetection<InstructionProvidor> PointerDetector;
+
 
 /**************************************************************************************************************************/
 

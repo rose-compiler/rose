@@ -303,10 +303,11 @@ public:
             solver = new YicesSolver;
 #endif
         PointerDetectors retval;
+        CloneDetection::InstructionProvidor *insn_providor = new CloneDetection::InstructionProvidor(thread->get_process());
         for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
             m->mesg("%s: performing pointer detection analysis for \"%s\" at 0x%08"PRIx64,
                     name, (*fi)->get_name().c_str(), (*fi)->get_entry_va());
-            CloneDetection::PointerDetector pd(thread->get_process(), solver);
+            CloneDetection::PointerDetector pd(insn_providor, solver);
             pd.initial_state().registers.gpr[x86_gpr_sp] = SYMBOLIC_VALUE<32>(thread->policy.INITIAL_STACK);
             pd.initial_state().registers.gpr[x86_gpr_bp] = SYMBOLIC_VALUE<32>(thread->policy.INITIAL_STACK);
             //pd.set_debug(stderr);
