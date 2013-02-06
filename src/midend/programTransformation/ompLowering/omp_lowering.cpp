@@ -1055,7 +1055,13 @@ static void insert_libxompf_h(SgNode* startNode)
 
  //Step 3. Using device thread id and replace reference of original loop index with the thread index
   // Declare device thread id variable
-  SgVariableDeclaration* dev_i_decl = buildVariableDeclaration("_dev_i", buildIntType(), NULL, bb1); 
+   //int i = blockDim.x * blockIdx.x + threadIdx.x;
+   //TODO: better build of CUDA variables later !!
+  SgAssignInitializer* init_idx =  buildAssignInitializer( 
+                                       buildAddOp( buildMultiplyOp (buildVarRefExp("blockDim.x"), buildVarRefExp("blockIdx.x")) , 
+                                        buildVarRefExp("threadIdx.x", bb1)));
+
+  SgVariableDeclaration* dev_i_decl = buildVariableDeclaration("_dev_i", buildIntType(), init_idx, bb1); 
   prependStatement (dev_i_decl, bb1);
   SgVariableSymbol* dev_i_symbol = getFirstVarSym (dev_i_decl);
   ROSE_ASSERT (dev_i_symbol != NULL);
@@ -2002,11 +2008,21 @@ static int replaceVariableReferences(SgNode* subtree, std::map <SgVariableSymbol
 
     std::set< SgInitializedName *> restoreVars;
     SgFunctionDeclaration* result = Outliner::generateFunction(body_block, func_name, all_syms, addressOf_syms, restoreVars, NULL, g_scope);
-    Outliner::insert(result, g_scope, body_block);
+    result->get_functionModifier().setCudaKernel(); // add __global__ modifier
+     // This one is not desired. It inserts the function to the end and prepend a prototype
+    // Outliner::insert(result, g_scope, body_block);
+    //Custom insertion:  insert right before the enclosing function of "omp target"
+    SgFunctionDeclaration* target_func = const_cast<SgFunctionDeclaration *>
+       (SageInterface::getEnclosingFunctionDeclaration (target));
+     ROSE_ASSERT(target_func!= NULL);
+    insertStatementBefore (target_func, result);
+
+#if 0 // it turns out we don't need satic keyword for CUDA kernel
     if (result->get_definingDeclaration() != NULL)
       SageInterface::setStatic(result->get_definingDeclaration());
     if (result->get_firstNondefiningDeclaration() != NULL)
       SageInterface::setStatic(result->get_firstNondefiningDeclaration());
+#endif 
 
 #if 0
     //insert EXTERNAL outlined_function , otherwise the function name will be interpreted as a integer/real variable

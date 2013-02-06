@@ -8,6 +8,7 @@ endif
 # Default header file search path
 INCLUDES = $(ROSE_INCLUDES)
 roseomp_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+roseompacc_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 GOMP_PATH = @gomp_omp_runtime_library_path@
 OMNI_PATH = @omni_omp_runtime_support_path@
@@ -42,8 +43,8 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
         task_wait.c \
         task_wait2.c \
 	task_untied4.c \
-	twoRegions.c  \
-	axpy_ompacc.c
+	twoRegions.c
+#	axpy_ompacc.c
 
 # Put test codes which can run (with main() ) here
 # They will be compiled and executed when the gomp library path is set
@@ -180,8 +181,9 @@ TEST_DIR = $(top_srcdir)/tests/CompileTests/OpenMP_tests
 # the place to find omp.h, libgomp_g.h etc
 TEST_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII -I$(top_srcdir)/src/midend/programTransformation/ompLowering
 
-noinst_PROGRAMS = roseomp
+noinst_PROGRAMS = roseomp roseompacc
 roseomp_SOURCES = roseomp.C
+roseompacc_SOURCES = roseompacc.C # a relaxed version without consistency checking for fast prototyping
 
 # this flag is used for the long list of CXX test files
 TEST_FLAGS = $(TEST_INCLUDES) -rose:openmp:lowering -g --edg:no_warnings #-rose:verbose 2 #--edg:restrict #-rose:wave 
@@ -208,6 +210,9 @@ $(PASSING_CXX_TEST_Objects): %.o: $(TEST_DIR)/%.cpp roseomp
 $(CXX_TEST_OBJECT_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.cpp roseomp
 	./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
 
+# no final compilation for now, which requires CUDA compiler for the generated code
+axpy_ompacc.o:roseompacc
+	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $(TEST_DIR)/axpy_ompacc.c && touch axpy_ompacc.o
 
 if WITH_GOMP_OPENMP_LIB
 #-------------compile and run using GCC's runtime library--------------------------------	

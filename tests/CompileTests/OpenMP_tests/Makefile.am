@@ -180,10 +180,10 @@ bonds-2.o: $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c parseOmp
 #matrixmultiply-ompacc.c 
 # test parsing experimental OpenMP accelerator directives, Liao 1/16/2013
 axpy_ompacc.o:$(srcdir)/axpy_ompacc.c parseOmp
-	./parseOmp -rose:openmp:ast_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/axpy_ompacc.c 
+	./parseOmp -rose:openmp:ast_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/axpy_ompacc.c 
 #	./parseOmp -rose:openmp:parse_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/axpy_ompacc.c 
 matrixmultiply-ompacc.o:$(srcdir)/matrixmultiply-ompacc.c parseOmp
-	./parseOmp -rose:openmp:ast_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/matrixmultiply-ompacc.c 
+	./parseOmp -rose:openmp:ast_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/matrixmultiply-ompacc.c 
 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 check-local:
