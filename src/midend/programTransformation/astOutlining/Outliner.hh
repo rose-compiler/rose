@@ -279,6 +279,12 @@ namespace Outliner
                  SgBasicBlock* outlining_target );
 
     /*!
+     *  \brief Generates a function call parameter list using a set of symbols
+     */
+    void appendIndividualFunctionCallArgs (const ASTtools::VarSymSet_t& syms, // all symbols for parameters 
+                                           const std::set<SgInitializedName*> varUsingOriginalType, // symbols which should be passed using their original types
+                                           SgExprListExp* e_list); // the result expression list
+    /*!
      *  \brief Generates a call to an outlined function.
      */
     SgStatement* generateCall (SgFunctionDeclaration* out_func,

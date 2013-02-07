@@ -34,7 +34,7 @@ using namespace std;
 //std::set<SgInitializedName*> varUsingOriginalType: 
 //            indicate if some of the syms should using original types:  passed by value (original type) for scalar, in C/C++;  arrays for 
 //            syms - varUsingOriginalType==> the rest will be variables using address of (&A): passed-by-reference: original type for arrays  or address of for others
-static void appendIndividualFunctionCallArgs (const ASTtools::VarSymSet_t& syms,  const std::set<SgInitializedName*> varUsingOriginalType, SgExprListExp* e_list)
+void Outliner::appendIndividualFunctionCallArgs (const ASTtools::VarSymSet_t& syms,  const std::set<SgInitializedName*> varUsingOriginalType, SgExprListExp* e_list)
 {
   for (ASTtools::VarSymSet_t::const_iterator i = syms.begin ();
       i != syms.end (); ++i)

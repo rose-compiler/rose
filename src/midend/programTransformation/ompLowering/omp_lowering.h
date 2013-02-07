@@ -74,7 +74,9 @@ namespace OmpSupport
 
   //! Translate Fortran omp do
   //void transOmpDo(SgNode* node);
-
+  
+  //! Translate "omp target"
+  void transOmpTarget(SgNode* node);
 
   //! Translate omp barrier
   void transOmpBarrier(SgNode* node);
