@@ -9,6 +9,14 @@ using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 
+// This is a hack to pass the number of CUDA loop iteration count around
+// When translating "omp target" , we need to calculate the number of thread blocks needed.
+// To do that, we need to know how many CUDA threads are needed.
+// We think the number of CUDA threads is the iteration count of the parallelized CUDA loop (peeled off), assuming increment is always 1
+//TODO  Also, the incremental value should be irrevelvant?
+// The loop will be transformed away when we call transOmpTargtLoop since we use bottom-up translation
+// So the loop iteration count needs to be stored globally before transOmpTarget() is called. 
+static SgExpression* cuda_loop_iter_count_1 = NULL;
 #define ENABLE_XOMP 1  // Enable the middle layer (XOMP) of OpenMP runtime libraries
   //! Generate a symbol set from an initialized name list, 
   //filter out struct/class typed names
@@ -1041,6 +1049,9 @@ static void insert_libxompf_h(SgNode* startNode)
     is_canonical = isCanonicalDoLoop (do_loop, &orig_index, & orig_lower, &orig_upper, &orig_stride, NULL, &isIncremental, NULL);
   ROSE_ASSERT(is_canonical == true);
 
+  // loop iteration space: upper - lower + 1
+  // This expression will be later used to help generate xomp_get_max1DBlock(VEC_LEN), which needs iteration count to calculate max thread block numbers
+  cuda_loop_iter_count_1 = buildAddOp(buildSubtractOp(deepCopy(orig_upper), deepCopy(orig_lower)), buildIntVal(1));
   // also make sure the loop body is a block
   // TODO: we consider peeling off 1 level loop control only, need to be conditional on what the spec. can provide at pragma level
   // TODO: Fortran support later on
@@ -1984,11 +1995,6 @@ static int replaceVariableReferences(SgNode* subtree, std::map <SgVariableSymbol
 
     //-----------------------------------------------------------------
     // step 1: generated an outlined function and make it a CUDA function
-    std::string wrapper_name; // wrapper parameter name, if parameter wrapping is used at all (either using array of pointers or using structure)
-    ASTtools::VarSymSet_t syms; // store all variables passed into the outlined task/function 
-    ASTtools::VarSymSet_t pdSyms3; // store all variables which must be passed by references, used for Fortran regardless variable cloning flag?
-    std::set<SgInitializedName*> readOnlyVars; 
-    //SgFunctionDeclaration* outlined_func = generateOutlinedTask (node, wrapper_name, syms, pdSyms3);
     SgOmpClauseBodyStatement * target_parallel_stmt = isSgOmpClauseBodyStatement(node);
     ROSE_ASSERT (target_parallel_stmt);
 
@@ -2010,12 +2016,24 @@ static int replaceVariableReferences(SgNode* subtree, std::map <SgVariableSymbol
     SgFunctionDeclaration* result = Outliner::generateFunction(body_block, func_name, all_syms, addressOf_syms, restoreVars, NULL, g_scope);
     result->get_functionModifier().setCudaKernel(); // add __global__ modifier
      // This one is not desired. It inserts the function to the end and prepend a prototype
-    // Outliner::insert(result, g_scope, body_block);
+    // Outliner::insert(result, g_scope, body_block); 
+    // TODO: better interface to specify where exactly to insert the function!
     //Custom insertion:  insert right before the enclosing function of "omp target"
     SgFunctionDeclaration* target_func = const_cast<SgFunctionDeclaration *>
        (SageInterface::getEnclosingFunctionDeclaration (target));
      ROSE_ASSERT(target_func!= NULL);
     insertStatementBefore (target_func, result);
+    // TODO: this really should be done within Outliner::generateFunction()
+    // TODO: we have to patch up first nondefining function declaration since custom insertion is used
+    SgGlobal* glob_scope = getGlobalScope(target);
+    ROSE_ASSERT (glob_scope!= NULL);
+    SgFunctionSymbol * func_symbol = glob_scope->lookup_function_symbol(result->get_name());
+    ROSE_ASSERT (func_symbol != NULL);
+    //SgFunctionDeclaration * proto_decl = func_symbol->get_declaration();
+    //ROSE_ASSERT (proto_decl != NULL);
+    //ROSE_ASSERT (proto_decl != result );
+    //result->set_firstNondefiningDeclaration(proto_decl);
+
 
 #if 0 // it turns out we don't need satic keyword for CUDA kernel
     if (result->get_definingDeclaration() != NULL)
@@ -2024,31 +2042,53 @@ static int replaceVariableReferences(SgNode* subtree, std::map <SgVariableSymbol
       SageInterface::setStatic(result->get_firstNondefiningDeclaration());
 #endif 
 
-#if 0
-    //insert EXTERNAL outlined_function , otherwise the function name will be interpreted as a integer/real variable
-    if (SageInterface::is_Fortran_language() )
-    { 
-      cerr<<"Error. transOmpTargetParallel() does not support Fortran yet. "<<endl; 
-      ROSE_ASSERT (false);
-
-      ROSE_ASSERT (func_def != NULL);
-      SgBasicBlock * func_body = func_def->get_body();
-      ROSE_ASSERT (func_body != NULL);
-      SgAttributeSpecificationStatement* external_stmt1 = buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::e_externalStatement); 
-      SgFunctionRefExp *func_ref1 = buildFunctionRefExp (outlined_func); 
-      external_stmt1->get_parameter_list()->prepend_expression(func_ref1);
-      func_ref1->set_parent(external_stmt1->get_parameter_list());
-      // must put it into the declaration statement part, after possible implicit/include statements, if any
-      SgStatement* l_stmt = findLastDeclarationStatement (func_body); 
-      if (l_stmt)
-        insertStatementAfter(l_stmt,external_stmt1);
-      else  
-        prependStatement(external_stmt1, func_body);
-    }
-
-    SgScopeStatement * p_scope = target->get_scope();
+    SgScopeStatement * p_scope = target_directive_stmt ->get_scope(); // the scope of "omp parallel" will be destroyed later, so we use scope of "omp target"
     ROSE_ASSERT(p_scope != NULL);
+   // insert dim3 threadsPerBlock(xomp_get_maxThreadsPerBlock()); 
+   // TODO: for 1-D mapping, int type is enough,  //TODO: a better interface accepting expression as initializer!!
+    SgVariableDeclaration* threads_per_block_decl = buildVariableDeclaration ("_threads_per_block_", buildIntType(), 
+                  buildAssignInitializer(buildFunctionCallExp("xomp_get_maxThreadsPerBlock",buildIntType(), NULL, p_scope)), 
+                  p_scope);
+    insertStatementBefore (target_directive_stmt, threads_per_block_decl);
+    attachComment(threads_per_block_decl, string("Launch CUDA kernel ..."));
 
+    // dim3 numBlocks (xomp_get_max1DBlock(VEC_LEN));
+    // TODO: handle 2-D or 3-D using dim type
+    ROSE_ASSERT (cuda_loop_iter_count_1 != NULL);
+    SgVariableDeclaration* num_blocks_decl = buildVariableDeclaration ("_num_blocks_", buildIntType(), 
+                  buildAssignInitializer(buildFunctionCallExp("xomp_get_max1DBlock",buildIntType(), buildExprListExp(cuda_loop_iter_count_1), p_scope)),
+                  p_scope);
+    insertStatementBefore (target_directive_stmt, num_blocks_decl);
+
+    // generate the cuda kernel launch statement
+    //e.g.  axpy_ompacc_cuda <<<numBlocks, threadsPerBlock>>>(dev_x,  dev_y, VEC_LEN, a);
+   
+    //func_symbol = isSgFunctionSymbol(result->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table ());
+    ROSE_ASSERT (func_symbol != NULL);
+    SgExprListExp* exp_list_exp = SageBuilder::buildExprListExp();
+
+    std::set<SgInitializedName*>  varsUsingOriginalForm; 
+    for (ASTtools::VarSymSet_t::const_iterator iter = all_syms.begin(); iter != all_syms.end(); iter ++)
+    {
+      const SgVariableSymbol * current_symbol = *iter;
+      if (addressOf_syms.find(current_symbol) == addressOf_syms.end()) // not found in Address Of variable set
+        varsUsingOriginalForm.insert (current_symbol->get_declaration());
+    }
+    // TODO: alternative mirror form using varUsingAddress as parameter
+    Outliner::appendIndividualFunctionCallArgs (all_syms, varsUsingOriginalForm, exp_list_exp);
+    // TODO: builder interface without _nfi, and match function call exp builder interface convention: 
+    SgCudaKernelExecConfig * cuda_exe_conf = buildCudaKernelExecConfig_nfi (buildVarRefExp(num_blocks_decl), buildVarRefExp(threads_per_block_decl), NULL, NULL);
+    setOneSourcePositionForTransformation (cuda_exe_conf);
+    // SgExpression* is not clear, change to SgFunctionRefExp at least!!
+    SgExprStatement* cuda_call_stmt = buildExprStatement(buildCudaKernelCallExp_nfi (buildFunctionRefExp(result), exp_list_exp, cuda_exe_conf) );
+    setSourcePositionForTransformation (cuda_call_stmt);
+    insertStatementBefore (target_directive_stmt, cuda_call_stmt);
+
+
+    //------------now remove omp parallel since everything within it has been outlined to a function
+    removeStatement (target);
+
+#if 0
     //-----------------------------------------------------------------
     // step 2: generate call to the outlined function
     // Generate the parameter list for the call to the XOMP runtime function
@@ -2079,53 +2119,9 @@ static int replaceVariableReferences(SgNode* subtree, std::map <SgVariableSymbol
     else
       numThreadsSpecified = buildIntVal(0);  
 
-   // Generate parameter lists of the function call: two cases Fortran vs. C/C++
-    if (SageInterface::is_Fortran_language())
-    { // The parameter list for Fortran is little bit different from C/C++'s XOMP interface 
-      // since we are forced to pass variables one by one in the parameter list to support Fortran 77
-       // void xomp_parallel_start (void (*func) (void *), unsigned * ifClauseValue, unsigned* numThread, int * argcount, ...)
-      //  e.g. xomp_parallel_start(OUT__1__1527__,1,0,2,S,K)
-      SgExpression * parameter4 = buildIntVal (pdSyms3.size()); //TODO double check if pdSyms3 is the right set of variables to be passed
-      parameters = buildExprListExp(buildFunctionRefExp(outlined_func), ifClauseValue, numThreadsSpecified, parameter4);
-
-      ASTtools::VarSymSet_t::iterator iter = pdSyms3.begin();
-      for (; iter!=pdSyms3.end(); iter++)
-      {
-        const SgVariableSymbol * sb = *iter;
-        appendExpression (parameters, buildVarRefExp(const_cast<SgVariableSymbol *>(sb)));
-      }
-    }
-    else 
-    { 
-      // C/C++ case: 
-      //add GOMP_parallel_start (OUT_func_xxx, &__out_argv1__5876__, 1, 0);
-      // or GOMP_parallel_start (OUT_func_xxx, 0, 0); // if no variables need to be passed
-      SgExpression * parameter2 = NULL;
-      if (syms.size()==0)
-        parameter2 = buildIntVal(0);
-      else
-        parameter2 =  buildAddressOfOp(buildVarRefExp(wrapper_name, p_scope));
-     parameters = buildExprListExp(buildFunctionRefExp(outlined_func), parameter2, ifClauseValue, numThreadsSpecified); 
-    }
-
     ROSE_ASSERT (parameters != NULL);
-
-  // extern void XOMP_parallel_start (void (*func) (void *), void *data, unsigned ifClauseValue, unsigned numThreadsSpecified);
-  // * func: pointer to a function which will be run in parallel
-  // * data: pointer to a data segment which will be used as the arguments of func
-  // * ifClauseValue: set to if-clause-expression if if-clause exists, or default is 1.
-  // * numThreadsSpecified: set to the expression of num_threads clause if the clause exists, or default is 0
-
-    SgExprStatement * s1 = buildFunctionCallStmt("XOMP_parallel_start", buildVoidType(), parameters, p_scope); 
-    SageInterface::replaceStatement(target, s1 , true);
-   // Keep preprocessing information
-    // I have to use cut-paste instead of direct move since 
-    // the preprocessing information may be moved to a wrong place during outlining
-    // while the destination node is unknown until the outlining is done.
-   // SageInterface::moveUpPreprocessingInfo(s1, target, PreprocessingInfo::before); 
-   pastePreprocessingInfo(s1, PreprocessingInfo::before, save_buf1); 
-
-    // add GOMP_parallel_end ();
+    ...
+   // add GOMP_parallel_end ();
     SgExprStatement * s2 = buildFunctionCallStmt("XOMP_parallel_end", buildVoidType(), NULL, p_scope); 
     SageInterface::insertStatementAfter(s1, s2);  // insert s2 after s1
 
@@ -2702,6 +2698,17 @@ static int replaceVariableReferences(SgNode* subtree, std::map <SgVariableSymbol
 #endif
     replaceStatement(target, func_call_stmt, true);
   }
+  //! Simply remove omp target directive since nothing to be done at this level
+  void transOmpTarget(SgNode * node)
+  {
+    ROSE_ASSERT(node != NULL );
+    SgOmpTargetStatement* target = isSgOmpTargetStatement(node);
+    ROSE_ASSERT(target != NULL );
+    SgScopeStatement * scope = target->get_scope();
+    ROSE_ASSERT(scope != NULL );
+    removeStatement(target);
+  }
+
 
   //! Add __thread for each threadprivate variable's declaration statement and remove the #pragma omp threadprivate(...) 
   void transOmpThreadprivate(SgNode * node)
@@ -4117,6 +4124,12 @@ void lower_omp(SgSourceFile* file)
           transOmpCritical(node);
           break;
         }
+      case V_SgOmpTargetStatement:
+        {
+          transOmpTarget(node);
+          break;
+        }
+
 
       default:
         {
