@@ -91,11 +91,16 @@ struct OnlyNonCompilerGenerated : public std::unary_function<bool, SgFunctionDec
  
  void PtrAliasAnalysis::getFunctionDeclarations(std::vector<SgFunctionDeclaration*> &processingOrder) {
 
-     // Get the main funciton declaration
+     // Get the main function declaration
         SgFunctionDeclaration *mainDecl = SageInterface::findMain(project);
-
-        computeCallGraphNodes(mainDecl, callGraph, processingOrder, order);
-            //SortCallGraphNodes(mainDef, callGraph, graphNodeToFunction, processingOrder, order);
+        ROSE_ASSERT (mainDecl->get_definingDeclaration () == mainDecl);
+     // Liao 1/23/2013
+     // Call graph generation will get the first nondefining declaration func as the function node by default, see CallGraph.h line 198.
+     // In ROSE using EDG 4.4, main() function has a hidden prototype, which will be stored in call graph.
+     // We have to use the prototype or it complains the defining main() does not exist in the call graph.
+        SgFunctionDeclaration * nondef_main = isSgFunctionDeclaration(mainDecl->get_firstNondefiningDeclaration());
+        ROSE_ASSERT (nondef_main);
+        computeCallGraphNodes(nondef_main, callGraph, processingOrder, order);
             
         // Order the graph nodes in alternate fashion
         order =  (order == TOPOLOGICAL) ? REVERSE_TOPOLOGICAL : TOPOLOGICAL;
@@ -114,7 +119,14 @@ void PtrAliasAnalysis:: SortCallGraphRecursive(SgFunctionDeclaration* targetFunc
         if (graphNodeToFunction.count(targetFunction) == 0)
         {
           printf("The function %s has no vertex in the call graph!\n", targetFunction->get_name().str());
-                ROSE_ASSERT(false);
+          printf("graphNodeToFunction contains:\n");
+          unordered_map<SgFunctionDeclaration*, SgGraphNode*>::const_iterator iter;
+          for (iter= graphNodeToFunction.begin(); iter != graphNodeToFunction.end(); iter ++)
+          {
+            SgFunctionDeclaration* func = (*iter).first;
+            cout<<func<<"\n\t"<<func->unparseToString()<<endl;
+          }
+          ROSE_ASSERT(false);
         }
 
         SgGraphNode* graphNode = graphNodeToFunction.at(targetFunction);
