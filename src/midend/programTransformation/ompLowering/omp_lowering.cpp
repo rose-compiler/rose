@@ -35,6 +35,7 @@ static void convertAndFilter (const SgInitializedNamePtrList input, ASTtools::Va
 namespace OmpSupport
 { 
   omp_rtl_enum rtl_type = e_gomp; /* default to  generate code targetting gcc's gomp */
+  bool enable_accelerator = false; /* default is to not recognize and lowering OpenMP accelerator directives */
 
   unsigned int nCounter = 0;
   //------------------------------------
@@ -4017,7 +4018,8 @@ void lower_omp(SgSourceFile* file)
   // Liao 12/2/2010, Fortran does not require function prototypes
   if (!SageInterface::is_Fortran_language() )
     insertRTLHeaders(file);
-  insertRTLinitAndCleanCode(file);
+  if (!enable_accelerator)
+   insertRTLinitAndCleanCode(file);
   //    translationDriver driver;
   // SgOmpXXXStatment is compiler-generated and has no file info
   //driver.traverseWithinFile(file,postorder);

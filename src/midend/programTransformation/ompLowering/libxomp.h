@@ -12,6 +12,7 @@
 extern "C" {
 #endif
 
+#include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h> // for abort()
 #include <assert.h>
