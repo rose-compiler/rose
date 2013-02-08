@@ -72,6 +72,8 @@ bool doFilenamesMatch(const SgLocatedNode* node, const std::string& filename)
 
 //! Check if the code portions specified by Sage Node and PROF ir'S located node [b-start, b_end]
 // have any kind of overlap 
+// Note: Profiling results only contain a single line source information. 
+//      ROSE AST has both start and end line information.
 static
 bool doLinesOverlap(const SgLocatedNode* node, const RoseHPCT::Located * plnode)
 //                size_t b_start, size_t b_end)
@@ -83,7 +85,18 @@ bool doLinesOverlap(const SgLocatedNode* node, const RoseHPCT::Located * plnode)
     size_t b_start = plnode->getFirstLine();
     size_t b_end = plnode->getLastLine();
 
-    Sg_File_Info* info_start = node->get_startOfConstruct();
+   // Liao 1/25/2013, Adjust SgFunctionDefinition to be its enclosing defining function declaration, which will 
+   // have the right start end end file locations to match profiling data
+   // SgFunctionDefinition starts from the "{" in ROSE using EDG 4.4, instead of starting from its function declaration line.
+   const SgLocatedNode* node_copy = node; // we don't want to accidentally modify node!! const A* node means what is pointed is const, not guarantee that the pointer itself is const. very tricky !!
+   if (const SgFunctionDefinition* f_def = isSgFunctionDefinition(node))
+   {
+     node_copy = f_def->get_declaration();
+     const SgFunctionDeclaration* fdecl = isSgFunctionDeclaration(node_copy);
+     ROSE_ASSERT (fdecl != NULL);
+     ROSE_ASSERT (fdecl->get_definingDeclaration() == fdecl);
+   }
+    Sg_File_Info* info_start = node_copy->get_startOfConstruct();
     ROSE_ASSERT (info_start != NULL);
     // check file name first if possible
     // DXN: see DXN's comment in doFilenamesMatch.
@@ -103,7 +116,7 @@ bool doLinesOverlap(const SgLocatedNode* node, const RoseHPCT::Located * plnode)
     }
     // Then check for line numbers
     size_t a_start = (size_t) info_start->get_line();
-    Sg_File_Info* info_end = node->get_endOfConstruct();
+    Sg_File_Info* info_end = node_copy->get_endOfConstruct();
     size_t a_end = (info_end == NULL) ? a_start : info_end->get_line();
     // adjust for wrong line information, See Bugs-Internal 311
     // some non-scope statement's end line numbers are not correct from ROSE
@@ -112,17 +125,20 @@ bool doLinesOverlap(const SgLocatedNode* node, const RoseHPCT::Located * plnode)
     // This is generally risky for ROSE, but should work for ROSE-HPCT
     // since the HPCToolkit generates metrics specified with beginning line only
     // Liao, 2/2/2009
-    if ((a_end < a_start) || (isSgStatement(node) && !(isSgScopeStatement(node))))
+#if 1    //
+    //if ((a_end < a_start) || (isSgStatement(node) && !(isSgScopeStatement(node))))
+    //Liao 1/25/2013: we have better file info now, supposlly
+    if (a_end < a_start) 
     {
         a_end = a_start;
-        //ROSE_ASSERT(false); // should not happen for ROSE, but live with it for now
+        ROSE_ASSERT(false); // should not happen for ROSE using EDG 4.4
     }
     if (b_end < b_start)
     {
         b_end = b_start;
         //ROSE_ASSERT(false); // Some metrics location information from HPCToolkit are buggy
     }
-
+#endif
     return (b_start <= a_start && a_end <= b_end) // SgNode's file portion is a subset of Profile's information
     || (a_start <= b_start && b_end <= a_end); // Profile's info is a subset of SgNode's portion
 //    || (a_start <= b_start && b_end <= a_end)  // redundant condition? TODO should be partial overlap
@@ -290,7 +306,25 @@ MetricFinder::MetricFinder(const SgLocatedNode* target, std::map<const RoseHPCT:
     else
 #endif    
     if (!dynamic_cast<const SgScopeStatement *>(target_))
+    {
         nonscope_stmt_target_ = dynamic_cast<const SgStatement *>(target_);
+        // Liao 1/31/2013. In ROSE using EDG 4.4, defining SgFunctionDeclaration has accurate start and end line so 
+        // SgFunctionDeclaration will match lots of profiling IR nodes for non-scope statements.
+        // This can be problematic since it will trigger isShadowNode() to return true when statements within function body are being matched.
+        // i.e. Matching defining SgFunctionDeclaration will shadow all statements within its body.
+        //
+        // So we have to exclude SgFunctionDeclaration and treat it as scoped statement. 
+        // Besides, SgFunctionDefinition is used to represent procedure level matching. So excluding SgFunctionDeclaration is reasonable.
+        //
+        //
+        //TODO: a possible improvement is to use defining SgFunctionDeclaration instead of SgFunctionDefinition to do the match
+        // and in isShadowNode(), excluding defining SgFunctionDeclaration to be the shadow parent.
+        if (nonscope_stmt_target_ != NULL)
+        {
+          if (isSgFunctionDeclaration(nonscope_stmt_target_))
+            nonscope_stmt_target_ = NULL;
+        }
+    }
 }
 
 void MetricFinder::setVerbose(bool enable)
@@ -355,7 +389,28 @@ bool MetricFinder::isTargetSgGlobal(void) const
 
 bool MetricFinder::isTargetSgProcedure(void) const
 {
-    return target_ ? (target_->variantT() == V_SgFunctionDefinition) : false;
+     return target_ ? (target_->variantT() == V_SgFunctionDefinition) : false;
+#if 0    //
+    // Liao 1/25/2013
+    // In ROSE using EDG 4.4, SgFunctionDefinition has more accurate file location info, which matches the locations of  { }
+    // But the profiling info has file locations for functions which match the first line of the function declaration.
+    // So we have to use SgFunctionDeclaration now.
+    bool rt = false; 
+    //rt = target_ ? (target_->variantT() == V_SgFunctionDeclaration) : false;
+    if (target_ == NULL)
+      rt = false;
+    else
+    {
+      const SgFunctionDeclaration* fdecl = isSgFunctionDeclaration (target_);
+      if (fdecl != NULL)
+      {
+        // Only try to match defining declaration, not prototypes
+        if (fdecl->get_definingDeclaration() == fdecl)
+          rt = true;
+      }
+    }
+    return rt; 
+#endif    
 }
 
 bool MetricFinder::isTargetSgLoop(void) const
@@ -510,14 +565,16 @@ MetricFinder::visit (const Loop* l)
 #if 1
 void MetricFinder::visit(Statement* s)
 #else
-MetricFinder::visit (const Statement* s)
+MetricFinder::visit (const Statement* s) // try to match target_ AST node with s profile node
 #endif
 {
 #if 0    
-        //cout<<"found a statement prof IR node:"<<s->toString()<<endl;
-        //  take advantage of this traversal to accumulate statement nodes
-        //  This traversal can abort once a match is found so one execution will not collect all stmt nodes.
-        RoseHPCT::profStmtNodes_.insert(s);
+  if ((target_->get_file_info()->get_line()==15) && (isSgExprStatement(target_)) && s->getFirstLine()==15)
+    cout<<endl;
+  //cout<<"found a statement prof IR node:"<<s->toString()<<endl;
+  //  take advantage of this traversal to accumulate statement nodes
+  //  This traversal can abort once a match is found so one execution will not collect all stmt nodes.
+  RoseHPCT::profStmtNodes_.insert(s);
 #endif    
             if (doLinesOverlap(s))
             //if (doLinesOverlap (s->getFirstLine (), s->getLastLine ()))
@@ -588,6 +645,7 @@ typedef std::map<size_t, size_t> DepthMap_t;
  */
 static size_t getTreeDepthAttr(const SgNode* node)
 {
+    ROSE_ASSERT (node != NULL);
     if (node == NULL
         ) return 0;
 
@@ -796,6 +854,9 @@ void MetricAttachTraversal::annotateSourceCode(void)
  *  The MetricAttachTraversal will assign 100 to each of the
  *  statements. This pass will assign each statement the value of 25,
  *  so the total sums to the original metric value of 100.
+ *
+ *  SgProject* sage_root: the top node of input AST
+ *  MetricAttachTraversal::AttachedNodes_t& attached : the map between profile IR nodes and their matching set of AST nodes
  */
 static
 void normalizeMetrics(SgProject* sage_root, MetricAttachTraversal::AttachedNodes_t& attached, bool verbose = false)
@@ -806,7 +867,7 @@ void normalizeMetrics(SgProject* sage_root, MetricAttachTraversal::AttachedNodes
     // Compute the depth of each node
     TreeDepthCalculator dcalc(sage_root);
 
-    // Normalize
+    // Normalize the metrics : for each profile IR node which has matched AST nodes
     MetricAttachTraversal::AttachedNodes_t::iterator ir_node;
     for (ir_node = attached.begin(); ir_node != attached.end(); ++ir_node)
     {
@@ -814,19 +875,29 @@ void normalizeMetrics(SgProject* sage_root, MetricAttachTraversal::AttachedNodes
         const IRNode* i = ir_node->first;
         SgLocNodeSet_t& sg_nodes = ir_node->second;
 
+//        cout<<"==============================================="<<endl;
+//        cout<<"Debug:                    profile IR node:     "<<endl;
+//        cout<<i->toString()<<endl;
+//        cout<<"==============================================="<<endl;
         // Build a map, depth_map[k] == # of nodes at depth k
         using std::map;
-        map<size_t, size_t> depth_map;
+        map<size_t, size_t> depth_map; //typedef std::set<SgLocatedNode *> SgLocNodeSet_t;
+//        cout<<"Debug:                     matched AST nodes:  "<<endl;
         for (SgLocNodeSet_t::iterator np = sg_nodes.begin(); np != sg_nodes.end(); ++np)
         {
-            size_t depth = getTreeDepthAttr(*np);
-            depth_map[depth]++;
+          size_t depth = getTreeDepthAttr(*np);
+          depth_map[depth]++;
+//          cout<<"-----------------------------------------------"<<endl;
+//          cout<<(*np)<<" "<<(*np)->class_name()<<" depth="<<depth<<endl;
+//          cout<<(*np)->unparseToString()<<endl;
+//          cout<<"-----------------------------------------------"<<endl;
         }
 
-        // Normalize attributes
+        // Normalize attributes stored in the profiling IR node: for each metric attached to the profiling IR
         for (Observable::ConstMetricIterator m = i->beginMetric(); m != i->endMetric(); ++m)
         {
             string attr_name = m->getName();
+            // average the metric among nodes at the same depth level
             for (SgLocNodeSet_t::iterator np = sg_nodes.begin(); np != sg_nodes.end(); ++np)
             {
                 MetricAttr* attr_sage = getMetric(attr_name, *np);
@@ -834,7 +905,7 @@ void normalizeMetrics(SgProject* sage_root, MetricAttachTraversal::AttachedNodes
 
                 size_t depth = getTreeDepthAttr(*np);
                 size_t n_matches = depth_map[depth];
-                if (n_matches > 1)
+                if (n_matches > 1) // if more than one AST nodes are at the same depth
                 {
                     double old_val = attr_sage->getValue();
                     double new_val = old_val / n_matches;

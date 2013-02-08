@@ -784,18 +784,22 @@ BEGIN NORMAL;
 
                         /* Actions for character literals. Since the part between single quote can be more than one
                          * character of input (e.g., '\\', '\'', '\n', '\012', etc) we parse them sort of like strings. */
+<CHAR_LIT>\\\r\n                {/*eat escaped DOS line-term*/  preproc_line_num++; preproc_column_num=1; }
 <CHAR_LIT>\\\n                  {/*eat escaped linefeed*/       preproc_line_num++; preproc_column_num=1; }
 <CHAR_LIT>\\.                   {/*eat escaped something*/      preproc_column_num+=strlen(yytext); }
-<CHAR_LIT>[^'\n\\]              {/*eat non-special characters*/ preproc_column_num+=strlen(yytext); }
+<CHAR_LIT>[^'\r\n\\]            {/*eat non-special characters*/ preproc_column_num+=strlen(yytext); }
+<CHAR_LIT>\r\n                  {/*eat DOS line-term*/          preproc_line_num++; preproc_column_num=1; }
 <CHAR_LIT>\n                    {/*eat linefeed*/               preproc_line_num++; preproc_column_num=1; }
 <CHAR_LIT>"'"                   {/*end of character literal*/   preproc_column_num+=strlen(yytext); BEGIN NORMAL; }
 
 
 
                         /* Actions for string literals. */
+<STRING_LIT>\\\r\n              {/*eat escaped DOS line-term*/  preproc_line_num++; preproc_column_num=1; }
 <STRING_LIT>\\\n                {/*eat escaped linefeed*/       preproc_line_num++; preproc_column_num=1; }
 <STRING_LIT>\\.                 {/*eat escaped something*/      preproc_column_num+=strlen(yytext); }
-<STRING_LIT>[^\"\n\\]           {/*eat non-special characters*/ preproc_column_num+=strlen(yytext); }
+<STRING_LIT>\r\n                {/*eat DOS line-term*/          preproc_line_num++; preproc_column_num=1; }
+<STRING_LIT>[^\"\r\n\\]         {/*eat non-special characters*/ preproc_column_num+=strlen(yytext); }
 <STRING_LIT>\n                  {/*eat linefeed*/               preproc_line_num++; preproc_column_num=1; }
 <STRING_LIT>"\""                {/*end of string literal*/      preproc_column_num+=strlen(yytext); BEGIN NORMAL; }
 
@@ -852,26 +856,36 @@ BEGIN NORMAL;
                 }
 
         /*Actions while in a MACRO.*/
-<MACRO>\\\n     { 
+<MACRO>\\\r\n   {   // Escaped DOS line termination
                     macroString += yytext;
-                    preproc_line_num++; 
-                    preproc_column_num=1;
+                    ++preproc_line_num;
+                    preproc_column_num = 1;
                 }
-<MACRO>\n       {
+
+<MACRO>\\\n     {   // Escape line termination
                     macroString += yytext;
+                    ++preproc_line_num;
+                    preproc_column_num = 1;
+                }
+
+<MACRO>\n       {   // End of macro
+                    macroString = StringUtility::fixLineTermination(macroString + yytext);
                     preproc_line_num++; 
                     preproc_column_num=1; 
-                    
-                    preprocessorList.addElement(macrotype,macroString,globalFileName,preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num); 
+                    preprocessorList.addElement(macrotype, macroString, globalFileName,
+                                                preproc_start_line_num, preproc_start_column_num,
+                                                preproc_line_num-preproc_start_line_num);
                     BEGIN NORMAL; 
                 }
-    /* negara1 (07/25/2011): Added handling of preprocessor directives that end at the last line of a file. */
-<MACRO><<EOF>>  {
-                    macroString += yytext;
-                    
-                    preprocessorList.addElement(macrotype,macroString,globalFileName,preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num); 
+
+<MACRO><<EOF>>  {   // End of macro
+                    macroString = StringUtility::fixLineTermination(macroString + yytext);
+                    preprocessorList.addElement(macrotype, macroString, globalFileName,
+                                                preproc_start_line_num, preproc_start_column_num,
+                                                preproc_line_num-preproc_start_line_num);
                     yyterminate();
                 }
+
 <MACRO>"\/*"    {
                     //does this cover all cases?????????
                     preproc_column_num+=2; 
@@ -883,10 +897,12 @@ BEGIN NORMAL;
                     */
                     BEGIN C_COMMENT_INMACRO;
                 }
-<MACRO>.        { 
+
+<MACRO>.        {   // Add character to macro string; we'll fix up line termination issues at the end of the <MACRO> state.
                     macroString += yytext;
                     preproc_column_num++; 
                 }
+
 <C_COMMENT_INMACRO>"*/"   { 
                                 //??????????????????????????????????????????????????????????????
                                 //This code copies the comment into the macrobuffer.

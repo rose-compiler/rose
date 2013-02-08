@@ -47,6 +47,21 @@ TreeDepthCalculator::evaluateInheritedAttribute (SgNode* node,
     }
   else
     node->setAttribute (ATTR_NAME, new DepthAttr (d));
+  
+  // Liao, add assertion here
+  // numbers start from 0 (SgProject) -> 1 (SgFileList) -> 2 (SgSourceFile) -> 3 (SgGlobal)
+  if (isSgSourceFile(node))
+  {
+    ROSE_ASSERT (d==2);
+  }
+
+  if (isSgGlobal(node))
+  {
+    ROSE_ASSERT (d==3);
+  }
+//  cout<<"-----------------------------------------------"<<endl;
+//  cout<<"Node:"<<node<<" "<<node->class_name()<<" depth="<<d<<endl;
+//  cout<<node->unparseToString()<<endl;
   return d;
 }
 
