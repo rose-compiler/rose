@@ -15,19 +15,27 @@ original aim was to copy values serially into a magic IO register.
 [For maximal obscurity, the outermost pair of braces above could actually be removed -- GLS] 
 
 */
-
-   register n = (count + 7) / 8;      /* count > 0 assumed */
-
-   switch (count % 8)
+void duff( int count )
    {
-   case 0:        do {  *to = *from++;
-   case 7:              *to = *from++;
-   case 6:              *to = *from++;
-   case 5:              *to = *from++;
-   case 4:              *to = *from++;
-   case 3:              *to = *from++;
-   case 2:              *to = *from++;
-   case 1:              *to = *from++;
-                      } while (--n > 0);
+     int* to;
+     int* from;
+     register int n = (count + 7) / 8;      /* count > 0 assumed */
+
+     switch (count % 8)
+        {
+//        case 0: do { *to = *from++;
+                  do { *to = *from++;
+          case 7:      *to = *from++;
+          case 6:      *to = *from++;
+          case 5:      *to = *from++;
+          case 4:      *to = *from++;
+          case 3:      *to = *from++;
+          case 2:      *to = *from++;
+          case 1:      *to = *from++;
+                     } while (--n > 0);
+//                count++;
+//                count++;
+//                count++;
+        }
    }
 

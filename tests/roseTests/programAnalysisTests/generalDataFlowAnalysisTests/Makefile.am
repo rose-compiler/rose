@@ -467,6 +467,7 @@ clean-cxx-liveness:
 
 # DQ (3/2/2013): Note that test_ptr1.C fails for the new switch statement handling.
 CXX_POINTER_ALIAS_SPECIMENS = test_ptr1.C test_ptr2.C	test_ptr3.C test_ptr4.C test_ptr5.C
+# CXX_POINTER_ALIAS_SPECIMENS = test_ptr2.C	test_ptr3.C test_ptr4.C test_ptr5.C
 
 EXTRA_DIST += $(CXX_POINTER_ALIAS_SPECIMENS)
 
