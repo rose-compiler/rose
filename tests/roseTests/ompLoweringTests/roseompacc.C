@@ -7,7 +7,9 @@
 
 int main(int argc, char * argv[])
 {
+  OmpSupport::enable_accelerator = true;
   SgProject *project = frontend (argc, argv);
+
 
 //TODO: turn this back on once blockDim.x * blockIdx.x + threadIdx.x is built properly in omp_lowering.cpp
 //  AstTests::runAllTests(project);
