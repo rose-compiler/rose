@@ -177,7 +177,7 @@ $(TESTCODE_CURRENTLY_FAILING)
 bonds-2.o: $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c parseOmp
 	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c
 
-#matrixmultiply-ompacc.c 
+#matrixmultiply_ompacc.c 
 # test parsing experimental OpenMP accelerator directives, Liao 1/16/2013
 axpy_ompacc.o:$(srcdir)/axpy_ompacc.c parseOmp
 	./parseOmp -rose:openmp:ast_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/axpy_ompacc.c 
