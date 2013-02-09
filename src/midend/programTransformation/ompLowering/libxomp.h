@@ -177,8 +177,8 @@ double xomp_time_stamp();
 
 
 // memory copy from src to dest, return the pointer to dest. NULL pointer if anything is wrong 
-void * xomp_memcpyHostToDevice (void *dest, const void * src, size_t n);
-void * xomp_memcpyDeviceToHost (void *dest, const void * src, size_t n);
+void * xomp_memcpyHostToDevice (void *dest, const void * src, size_t n_n);
+void * xomp_memcpyDeviceToHost (void *dest, const void * src, size_t n_n);
 // copy a dynamically allocated host source array to linear dest address on a GPU device. the dimension information of the source array
 // is given by: int dimensions[dimension_size], with known element size. 
 // bytes_copied reports the total bytes copied by this function.  
@@ -191,8 +191,8 @@ void * xomp_memcpyDynamicHostToDevice (void *dest, const void * src, int * dimen
 // the total bytes copied by this function is reported by bytes_copied
 void * xomp_memcpyDynamicDeviceToHost (void *dest, int * dimensions, size_t dimension_size, const void * src, size_t element_size, size_t *bytes_copied);
 
-void * xomp_memcpyDeviceToDevice (void *dest, const void * src, size_t n);
-void * xomp_memcpyHostToHost (void *dest, const void * src, size_t n); // same as memcpy??
+void * xomp_memcpyDeviceToDevice (void *dest, const void * src, size_t n_n);
+void * xomp_memcpyHostToHost (void *dest, const void * src, size_t n_n); // same as memcpy??
 
 
 // free the device memory pointed by a pointer, return false in case of failure, otherwise return true
