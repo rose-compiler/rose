@@ -167,7 +167,7 @@ void * xomp_memcpyDeviceToHost (void *dest, const void * src, size_t n)
 // The dimension information of the source array is given by: int dimensions[dimension_size], with known element size. 
 // bytes_copied reports the total bytes copied by this function.  
 // Liao 4/25/2012
-void * xomp_memcpyHostToDevice (void *dest, const void * src, int * dimensions, size_t dimension_size, size_t element_size, size_t *bytes_copied)
+void * xomp_memcpyDynamicHostToDevice (void *dest, const void * src, int * dimensions, size_t dimension_size, size_t element_size, size_t *bytes_copied)
 {
   assert (dest != NULL);
   assert (src != NULL);
@@ -196,7 +196,7 @@ void * xomp_memcpyHostToDevice (void *dest, const void * src, int * dimensions, 
       void* sub_array_src = (void*) (array2[i]);  // get start address for each sub-array
       assert (sub_array_src != NULL);
       // recursively call to copy each sub-array
-      xomp_memcpyHostToDevice (new_dest, (void*)sub_array_src, dimensions, dimension_size, 
+      xomp_memcpyDynamicHostToDevice (new_dest, (void*)sub_array_src, dimensions, dimension_size, 
           element_size, &subarray_bytes_copied);
 
       total_subarray_bytes_copied += subarray_bytes_copied; // recursively accumulate the bytes copied, instead of calculating directly.
@@ -213,7 +213,7 @@ void * xomp_memcpyHostToDevice (void *dest, const void * src, int * dimensions, 
 // the source memory has total n continuous memory, with known size for each element
 // the total bytes copied by this function is reported by bytes_copied
 // test code: mallocArray-xomp.cu
-void * xomp_memcpyDeviceToHost (void *dest, int * dimensions, size_t dimension_size, const void * src, size_t element_size, size_t *bytes_copied)
+void * xomp_memcpyDynamicDeviceToHost (void *dest, int * dimensions, size_t dimension_size, const void * src, size_t element_size, size_t *bytes_copied)
 {
   // int dimensions[1] = {10}; dimension_size =1; 
   // a[10]: 
@@ -241,7 +241,7 @@ void * xomp_memcpyDeviceToHost (void *dest, int * dimensions, size_t dimension_s
       size_t subarray_bytes_copied =0; 
       void* sub_array_dest = (void*) (array2[i]);  // get start address for each sub-array
 
-      xomp_memcpyDeviceToHost ((void*)sub_array_dest,  dimensions, dimension_size, 
+      xomp_memcpyDynamicDeviceToHost ((void*)sub_array_dest,  dimensions, dimension_size, 
           new_src, element_size, &subarray_bytes_copied);
 
       total_subarray_bytes_copied += subarray_bytes_copied; // recursively accumulate the bytes copied, instead of calculating directly.
