@@ -1151,6 +1151,13 @@ test2013_51.C \
 test2013_52.C \
 test2013_53.C \
 test2013_54.C \
+test2013_55.C \
+test2013_56.C \
+test2013_57.C \
+test2013_58.C \
+test2013_59.C \
+test2013_60.C \
+test2013_61.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
