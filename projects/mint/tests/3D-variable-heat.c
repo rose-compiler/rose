@@ -137,10 +137,10 @@ int main (int nargs, char** args)
   double Gflops =0.0; 
 
 
-#pragma mint copy( u_old,  toDevice, (n+2), n+2, (n+2))
-#pragma mint copy( u_new,  toDevice, (n+2), n+2, (n+2))
-#pragma mint copy( rhs, toDevice, (n+2), n+2, (n+2))
-#pragma mint copy( kappa, toDevice, (n+2), n+2, (n+2))
+#pragma mint copy ( u_old,  toDevice, ( n+2 ), n+2, ( n+2 ))
+#pragma mint copy ( u_new,  toDevice, ( n+2 ), n+2, ( n+2 ))
+#pragma mint copy ( rhs, toDevice, ( n+2 ), n+2, ( n+2 ))
+#pragma mint copy ( kappa, toDevice, ( n+2 ), n+2, ( n+2 ))
 
 #pragma mint parallel default(shared)
   {
@@ -154,7 +154,7 @@ int main (int nargs, char** args)
     ++iters;
 
     /* update each interior point */
-#pragma mint for  nest(all) tile(16,16,1)
+#pragma mint for  nest(all)  tile ( 16, 16, 1 )
     for (k=1; k<= n; k++){
       for (j=1; j<= n; j++){
 	for (i=1; i<= n; i++)
@@ -177,7 +177,7 @@ int main (int nargs, char** args)
   }
   }
 
-#pragma mint copy(u_old, fromDevice, (n+2), (n+2), (n+2))
+#pragma mint copy ( u_old, fromDevice, ( n+2 ), ( n+2 ), ( n+2 ))
 
   time_elapsed = getTime() - time_elapsed;
 
