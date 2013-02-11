@@ -35,26 +35,28 @@ PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
 TEST_TRANSLATOR = ../../testTranslator
-$(TEST_TRANSLATOR):
-	cd ../..; $(MAKE) testTranslator
 
-$(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.C)
+# DQ (2/10/2013): Make all of the tests codes
+$(TEST_TRANSLATOR):
+	cd ../..; $(MAKE) test
+
+$(TEST_Objects): $(TEST_TRANSLATOR) $(srcdir)/$(@:.o=.C)
 	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/$(@:.o=.C)
 
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
 # Make rule to build the QMTest database files
 CURRENT_DIRECTORY = `pwd`
-$(QMTEST_Objects): ../../testTranslator $(srcdir)/$(@:.qmt=.C)
+$(QMTEST_Objects): $(TEST_TRANSLATOR) $(srcdir)/$(@:.qmt=.C)
 	@echo "Calling QMTEST_Objects rule: "
 	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/$(@:.qmt=.C)
 
 # DQ (9/13/2005): Test the compilation of ROSE using ROSE!
 # This is just a test of compiling the Sage III IR (the largest file; most but not all of Sage III)
-$(top_builddir)/src/frontend/SageIII/Cxx_Grammar.o: ../../testTranslator
+$(top_builddir)/src/frontend/SageIII/Cxx_Grammar.o: $(TEST_TRANSLATOR)
 	../../testTranslator -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) -c $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
 
-$(top_builddir)/src/frontend/SageIII/Cxx_Grammar.qmt: ../../testTranslator
+$(top_builddir)/src/frontend/SageIII/Cxx_Grammar.qmt: $(TEST_TRANSLATOR)
 	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
 
 # Include makefile rules specific to QMTest
@@ -67,30 +69,30 @@ include $(top_srcdir)/config/QMTest_makefile.inc
 
 # This tests the long ROSE command line of ROSE compiling ROSE (the file is empty).
 test0: $(srcdir)/testRoseHeaders_00.C
-	../../testTranslator $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_00.C
+	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_00.C
 
 # This tests compiling: sage3basic.h (note that the command line generated for the backend compile step is currupted.
 test1: $(srcdir)/testRoseHeaders_01.C
-	../../testTranslator $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_01.C
+	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_01.C
 
 # This tests compiling: sage3basic.h and sage3.h
 test2: $(srcdir)/testRoseHeaders_02.C
-	../../testTranslator $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_02.C
+	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_02.C
 
 # This tests compiling: rose.h
 # Fails in: a_special_function_kind case sfk_conversion not handled! special = 3 in edgRose.C:24648
 test3: $(srcdir)/testRoseHeaders_03.C
-	../../testTranslator $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C
+	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C
 
 # This tests compiling: Cxx_Grammar.C: fails "ROSE_ASSERT (kind == iek_statement);" in edgRose.C:20798
 test4: $(srcdir)/testRoseHeaders_04.C
-	../../testTranslator $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_04.C
+	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_04.C
 
 test5: $(srcdir)/testRoseHeaders_05.C
-	../../testTranslator $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_05.C
+	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_05.C
 
 test6: $(srcdir)/testRoseHeaders_06.C
-	../../testTranslator $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_06.C
+	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_06.C
 
 buildCompiledFile_3:
 	g++ -E -DUSE_ROSE -D_GLIBCXX__PTHREADS=1 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C > $(srcdir)/testRoseHeaders_03_combined.C

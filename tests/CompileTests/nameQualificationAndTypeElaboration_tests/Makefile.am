@@ -5,7 +5,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # and C++ that can be compiled using a C++ compiler  #
 ######################################################
 
-TEST_TRANSLATOR = $(top_builddir)/tests/testTranslator 
+# DQ (2/10/2013): Fixed makefile to build required testTranslator before running tests.
+# TEST_TRANSLATOR = $(top_builddir)/tests/testTranslator 
+TEST_TRANSLATOR = ../../testTranslator
+$(TEST_TRANSLATOR):
+	cd ../..; $(MAKE) testTranslator
 
 TESTCODES_REQUIRED_TO_PASS = \
 testNameQalTypeElab_01.C \
