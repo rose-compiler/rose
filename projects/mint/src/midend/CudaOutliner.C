@@ -919,8 +919,16 @@ SgFunctionDeclaration * CudaOutliner::generateFunction ( SgBasicBlock* s,
   functionParameterHandling(syms, hostToDevVars, pdSyms, psyms, readOnlyVars, liveOuts, func);
   ROSE_ASSERT (func != NULL);
   
-  // Retest this...                                                                                                       
+  // Retest this...  // Copied the similar fix from the rose outliner                        
+  //     Liao 2/6/2013. It is essential to rebuild function type after the parameter list is finalized.
+  //     The original function type was build using empty parameter list.
+  SgType* stale_func_type = func->get_type();
   func->set_type(buildFunctionType(func->get_type()->get_return_type(), buildFunctionParameterTypeList(func->get_parameterList())));
+  SgFunctionDeclaration* non_def_func = isSgFunctionDeclaration(func->get_firstNondefiningDeclaration ()) ;
+  ROSE_ASSERT (non_def_func != NULL);
+  ROSE_ASSERT (stale_func_type == non_def_func->get_type());
+  non_def_func->set_type(func->get_type());
+
   ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
 
   ROSE_ASSERT(scope->lookup_function_symbol(func->get_name()));

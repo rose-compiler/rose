@@ -176,8 +176,8 @@ rs=%d)\n", n,n, T);
   double time_elapsed ; 
   double Gflops=0.0;
 
-#pragma mint copy(Uold, toDevice, (n+2), (m+2), (k+2))
-#pragma mint copy(Unew, toDevice, (n+2), m+2, (k+2))
+#pragma mint copy ( Uold, toDevice, ( n+2 ), ( m+2 ), ( k+2 ) )
+#pragma mint copy ( Unew, toDevice, ( n+2 ), m+2, ( k+2 ) )
  
 #pragma mint parallel 
   {
