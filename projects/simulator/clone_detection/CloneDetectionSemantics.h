@@ -286,8 +286,11 @@ public:
 
     // Return output values.  These are the interesting general-purpose registers to which a value has been written, and the
     // memory locations to which a value has been written.  The returned object can be deleted when no longer needed.  The EIP,
-    // ESP, and EBP registers are not considered to be interesting.
-    Outputs<ValueType> *get_outputs(bool verbose=false) const;
+    // ESP, and EBP registers are not considered to be interesting.  Memory addresses that are less than or equal to the @p
+    // stack_frame_top but larger than @p stack_frame_top - @p frame_size are not considered to be outputs (they are the
+    // function's local variables). The @p stack_frame_top is usually the address of the function's return EIP, the address
+    // that was pushed onto the stack by the CALL instruction.
+    Outputs<ValueType> *get_outputs(const MEMORY_ADDRESS_TYPE &stack_frame_top, size_t frame_size, bool verbose=false) const;
 
     // Printing
     template<size_t nBits>
@@ -337,7 +340,7 @@ public:
 
     // Return output values.  These are the general-purpose registers to which a value has been written, and the memory
     // locations to which a value has been written.  The returned object can be deleted when no longer needed.
-    Outputs<ValueType> *get_outputs() const { return state.get_outputs(); }
+    Outputs<ValueType> *get_outputs(bool verbose=false) const;
 
     // Returns the message stream for the calling threads miscellaneous diagnostics.  We try to always use this for output so
     // that we can turn it on/off via simulator's "--debug" switch, so that output from multiple threads is still readable, and

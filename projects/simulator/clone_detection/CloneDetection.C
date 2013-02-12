@@ -288,6 +288,14 @@ public:
         SgAsmBlock *gblk = proc->disassemble(false/*take no shortcuts*/, map);
         delete map; map=NULL;
         std::vector<SgAsmFunction*> functions = SageInterface::querySubTree<SgAsmFunction>(gblk);
+#if 0 /*DEBUGGING [Robb P. Matzke 2013-02-12]*/
+        // Prune the function list to contain only what we want.
+        for (std::vector<SgAsmFunction*>::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+            if ((*fi)->get_name().compare("_Z1fRi")!=0)
+                *fi = NULL;
+        }
+        functions.erase(std::remove(functions.begin(), functions.end(), (SgAsmFunction*)NULL), functions.end());
+#endif
         return Functions(functions.begin(), functions.end());
     }
 
@@ -391,7 +399,8 @@ public:
         }
 
         // Gather the function's outputs before restoring machine state.
-        CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *outputs = thread->policy.get_outputs();
+        bool verbose = true;
+        CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *outputs = thread->policy.get_outputs(verbose);
         thread->init_regs(saved_regs);
         proc->mem_transaction_rollback(name);
         return outputs;

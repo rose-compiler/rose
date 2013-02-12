@@ -66,6 +66,14 @@ Policy<State, ValueType>::trigger(rose_addr_t target_va, InputValues *inputs, co
 }
 
 CLONE_DETECTION_TEMPLATE
+Outputs<ValueType> *
+Policy<State, ValueType>::get_outputs(bool verbose) const
+{
+    MEMORY_ADDRESS_TYPE stack_frame_top(INITIAL_STACK);
+    return state.get_outputs(stack_frame_top, 8192, verbose);
+}
+
+CLONE_DETECTION_TEMPLATE
 void
 Policy<State, ValueType>::startInstruction(SgAsmInstruction *insn_)
 {
@@ -687,10 +695,12 @@ Policy<State, ValueType>::readMemory(X86SegmentRegister sr, ValueType<32> addr, 
     ValueType<nBits> retval = this->template extract<0, nBits>(dword);
     if (uninitialized_read) {
         // At least one of the bytes read did not previously exist.  Return either a pointer or non-pointer value depending on
-        // whether the memory address is known to be a pointer.
+        // whether the memory address is known to be a pointer, and then write the value back to memory so the same value is
+        // read next time.
         SYMBOLIC_VALUE<32> a0_sym = convert_to_symbolic(addr);
         InputValues::Type type = this->pointers->is_pointer(a0_sym) ? InputValues::POINTER : InputValues::NONPOINTER;
         retval = HighLevel::next_input_value<nBits>(this->inputs, type, trace());
+        this->writeMemory<nBits>(sr, addr, retval, this->true_(), HAS_BEEN_READ);
     }
 
     if (this->get_policy(CONCRETE).tracing(TRACE_MEM)->get_file()) {
@@ -873,20 +883,24 @@ State<ValueType>::mem_read_byte(X86SegmentRegister sr, const MEMORY_ADDRESS_TYPE
         }
     }
 
-    // Write the value back to memory so the next read returns the same thing (and returns faster)
-#ifdef USE_SYMBOLIC_MEMORY
-    cells.push_front(MemoryCell(addr, retval, HAS_BEEN_READ));
-#else // concrete
-    cells[addr.known_value()] = MemoryCell(addr, retval, HAS_BEEN_READ);
-#endif
     return retval;
 }
 
 template <template <size_t> class ValueType>
 Outputs<ValueType> *
-State<ValueType>::get_outputs(bool verbose) const
+State<ValueType>::get_outputs(const MEMORY_ADDRESS_TYPE &stack_frame_top, size_t frame_size, bool verbose) const
 {
     Outputs<ValueType> *outputs = new Outputs<ValueType>;
+
+#if 1
+    // Consider only EAX to be an output (if it has been written to)
+    if (0 != (register_rw_state.gpr[x86_gpr_ax].state & HAS_BEEN_WRITTEN)) {
+        if (verbose)
+            std::cerr <<"output for ax = " <<registers.gpr[x86_gpr_ax] <<"\n";
+        outputs->values32.push_back(registers.gpr[x86_gpr_ax]);
+    }
+#else
+    // Consider all general purpose registers other than ESP and EBP to be outputs if they have been written
     for (size_t i=0; i<registers.n_gprs; ++i) {
         if (0 != (register_rw_state.gpr[i].state & HAS_BEEN_WRITTEN) && x86_gpr_sp!=i && x86_gpr_bp!=i) {
             if (verbose)
@@ -894,17 +908,23 @@ State<ValueType>::get_outputs(bool verbose) const
             outputs->values32.push_back(registers.gpr[i]);
         }
     }
+#endif
 
+    // Do not consider memory cells at or below the return address as outputs (unless they're way below)
     for (MemoryCells::const_iterator ci=stack_cells.begin(); ci!=stack_cells.end(); ++ci) {
 #ifdef USE_SYMBOLIC_MEMORY
         const MemoryCell &cell = *ci;
+        bool cell_in_frame = FIXME;
 #else // concrete
         const MemoryCell &cell = ci->second;
+        bool cell_in_frame = (cell.addr.known_value() <= stack_frame_top.known_value() &&
+                              cell.addr.known_value() > stack_frame_top.known_value() - frame_size);
 #endif
         if (0 != (cell.rw_state & HAS_BEEN_WRITTEN)) {
             if (verbose)
-                std::cerr <<"output for stack address " <<cell.addr <<"\n";
-            outputs->values8.push_back(cell.val);
+                std::cerr <<"output for stack address " <<cell.addr <<": " <<cell.val <<(cell_in_frame?" (IGNORED)":"") <<"\n";
+            if (!cell_in_frame)
+                outputs->values8.push_back(cell.val);
         }
     }
 
@@ -916,7 +936,7 @@ State<ValueType>::get_outputs(bool verbose) const
 #endif
         if (0 != (cell.rw_state & HAS_BEEN_WRITTEN)) {
             if (verbose)
-                std::cerr <<"ROBB: output for data address " <<cell.addr <<"\n";
+                std::cerr <<"ROBB: output for data address " <<cell.addr <<": " <<cell.val <<"\n";
             outputs->values8.push_back(cell.val);
         }
     }
