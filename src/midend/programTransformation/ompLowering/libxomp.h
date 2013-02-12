@@ -216,6 +216,49 @@ void * xomp_mallocArray(int * dimensions, size_t dimension_num, size_t esize);
 void xomp_freeArrayPointer (void* array, int * dimensions, size_t dimension_num);
 
 
+/* CUDA reduction support */
+//------------ types for CUDA reduction support---------
+// Reduction for regular OpenMP is supported by compiler translation. No runtime support is needed.
+// For the accelerator model experimental implementation, we use a two-level reduction method:
+// thread-block level within GPU + beyond-block level on CPU
+
+/* 
+   We don't really want to expose this to the compiler to simplify the compiler translation.
+*/
+// We try to limit the numbers of runtime data types exposed to a compiler.
+// A set of integers to represent reduction operations
+#define XOMP_REDUCTION_PLUS 6
+#define XOMP_REDUCTION_MINUS 7
+#define XOMP_REDUCTION_MUL 8
+#define XOMP_REDUCTION_BITAND 9 // &
+#define XOMP_REDUCTION_BITOR 10 // |
+#define XOMP_REDUCTION_BITXOR  11 // ^
+#define XOMP_REDUCTION_LOGAND 12 // &&
+#define XOMP_REDUCTION_LOGOR 13  // ||
+
+#if 0
+// No linker support for device code. We have to put implementation of these device functions into the header
+// TODO: wait until nvcc supports linker for device code.
+//#define XOMP_INNER_BLOCK_REDUCTION_DECL(dtype) \
+//__device__ void xomp_inner_block_reduction_##dtype(dtype local_value, dtype * grid_level_results, int reduction_op);
+//
+///*TODO declare more prototypes */
+//XOMP_INNER_BLOCK_REDUCTION_DECL(int)
+//XOMP_INNER_BLOCK_REDUCTION_DECL(float)
+//XOMP_INNER_BLOCK_REDUCTION_DECL(double)
+//
+//#undef XOMP_INNER_BLOCK_REDUCTION_DECL
+
+#endif
+
+#define XOMP_BEYOND_BLOCK_REDUCTION_DECL(dtype) \
+  dtype xomp_beyond_block_reduction_##dtype(dtype * per_block_results, int numBlocks, int reduction_op);
+
+XOMP_BEYOND_BLOCK_REDUCTION_DECL(int)
+XOMP_BEYOND_BLOCK_REDUCTION_DECL(float)
+XOMP_BEYOND_BLOCK_REDUCTION_DECL(double)
+
+#undef XOMP_BEYOND_BLOCK_REDUCTION_DECL
 
 #ifdef __cplusplus
  }
