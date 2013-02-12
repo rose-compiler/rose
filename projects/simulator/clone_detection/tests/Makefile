@@ -7,11 +7,11 @@ OPT_LEVELS = 0 1 2 3 s
 MOSTLYCLEANFILES =
 CLEANFILES =
 
-all: simple001 sorting
+all: simple001 simple002 sorting
 
 
 #------------------------------------------------------------------------------------------------------------------------
-# Relatively simple specimens to help learn the basic capabilities of binary clone detection
+# Relatively simple specimens to help learn the basic capabilities of binary clone detection from Andreas
 simple001_OBJ = $(addprefix simple001-, $(addsuffix .o, $(OPT_LEVELS)))
 $(simple001_OBJ): simple001-%.o: simple001.C
 	$(CXX) $(CXXFLAGS) -O$* -DNAMESPACE=optimize_$* -o $@ -c $<
@@ -19,6 +19,16 @@ simple001: $(simple001_OBJ) main.o
 	$(CXX) $(CXXFLAGS) -o $@ $^
 MOSTLYCLEANFILES += $(simple001_OBJ) main.o
 CLEANFILES += simple001
+
+#------------------------------------------------------------------------------------------------------------------------
+# More simple specimens to help learn the basic capabilities of binary clone detection from Robb
+simple002_OBJ = $(addprefix simple002-, $(addsuffix .o, $(OPT_LEVELS)))
+$(simple002_OBJ): simple002-%.o: simple002.C
+	$(CXX) $(CXXFLAGS) -O$* -DNAMESPACE=optimize_$* -o $@ -c $<
+simple002: $(simple002_OBJ) main.o
+	$(CXX) $(CXXFLAGS) -o $@ $^
+MOSTLYCLEANFILES += $(simple002_OBJ) main.o
+CLEANFILES += simple002
 
 #------------------------------------------------------------------------------------------------------------------------
 # Some complex examples of sorting algorithms
