@@ -17,6 +17,14 @@ using namespace SageBuilder;
 // The loop will be transformed away when we call transOmpTargtLoop since we use bottom-up translation
 // So the loop iteration count needs to be stored globally before transOmpTarget() is called. 
 static SgExpression* cuda_loop_iter_count_1 = NULL;
+
+// this is another hack to pass the reduction variables for accelerator model directives
+// We use bottom-up translation for AST with both omp parallel and omp for.
+// reduction is implemented using a two level reduction method: inner thread block level + beyond block level
+// We save the per-block variable and its reduction type integer into a map when generating inner block level reduction.
+// We use the map to help generate beyond block level reduction
+static std::map<SgVariableSymbol* , int> per_block_reduction_map;
+
 #define ENABLE_XOMP 1  // Enable the middle layer (XOMP) of OpenMP runtime libraries
   //! Generate a symbol set from an initialized name list, 
   //filter out struct/class typed names
@@ -258,6 +266,8 @@ void gatherReferences( const Rose_STL_Container< SgNode* >& expr, Rose_STL_Conta
     ROSE_ASSERT (globalscope != NULL);
 #ifdef ENABLE_XOMP
       SageInterface::insertHeader("libxomp.h",PreprocessingInfo::after,false,globalscope);
+    if (enable_accelerator)  // include inlined CUDA device codes
+      SageInterface::insertHeader("xomp_cuda_lib_inlined.cu",PreprocessingInfo::after,false,globalscope);
 #else    
     if (rtl_type == e_omni)
       SageInterface::insertHeader("ompcLib.h",PreprocessingInfo::after,false,globalscope);
@@ -1221,6 +1231,8 @@ static void insert_libxompf_h(SgNode* startNode)
   //bool is_target_loop = false;
   SgNode* parent = node->get_parent();
   ROSE_ASSERT (parent != NULL);
+  if (isSgBasicBlock(parent)) // skip one possible BB between omp parallel and omp for.
+    parent = parent->get_parent();
   SgNode* grand_parent = parent->get_parent();
   ROSE_ASSERT (grand_parent != NULL);
   SgOmpParallelStatement* parent_parallel = isSgOmpParallelStatement (parent) ;
@@ -1297,6 +1309,7 @@ static void insert_libxompf_h(SgNode* startNode)
       vRef->set_symbol(dev_i_symbol);
   }
 
+  
   // Step 4. build the if () condition statement, move the loop body into the true body
   SgBasicBlock* true_body = buildBasicBlock();
   SgExprStatement* cond_stmt = NULL;
@@ -1313,7 +1326,11 @@ static void insert_libxompf_h(SgNode* startNode)
   // Peel off the original loop
   removeStatement (for_loop);
 
+  // handle private variables at this loop level, mostly loop index variables.
+  // TODO: this is not very elegant since the outer most loop's loop variable is still translated.
+  transOmpVariables(target, bb1,NULL, true);
   //TODO transOmpVariables!   for reduction etc.
+
 }
 
   //! Check if an OpenMP statement has a clause of type vt
@@ -1978,7 +1995,18 @@ static void linearizeArrayAccess(SgPntrArrRefExp* top_array_ref)
   ROSE_ASSERT (is_array_ref);
   SgInitializedName * i_name = convertRefToInitializedName(arrayNameExp);
   ROSE_ASSERT (i_name != NULL);
-  SgArrayType * array_type = isSgArrayType(i_name->get_type());
+  SgType* var_type = i_name->get_type();
+  SgArrayType * array_type = isSgArrayType(var_type);
+  SgPointerType * pointer_type = isSgPointerType(var_type);
+  // pointer type can also be used as pointer[i], which is represented as SgPntrArrRefExp.
+  // In this case, we don't need to linearized it any more
+  if (pointer_type != NULL)
+     return; 
+  if (array_type == NULL)
+  {
+    cerr<<"Error. linearizeArrayAccess() found unhandled variable type:"<<var_type->class_name()<<endl;
+  }
+
   ROSE_ASSERT (array_type!= NULL);
 
   std::vector <SgExpression*> dimensions ; 
@@ -2329,7 +2357,24 @@ static void rewriteArraySubscripts(SgBasicBlock* body_block, const std::set<SgSy
     ASTtools::VarSymSet_t all_syms; // all generated or remaining variables to be passed to the outliner
     ASTtools::VarSymSet_t addressOf_syms; // generated or remaining variables should be passed by using their addresses
     transOmpMapVariables (target_directive_stmt, target, body_block, all_syms, addressOf_syms);
-    
+    ASTtools::VarSymSet_t per_block_reduction_syms; // translation generated per block reduction symbols with name like _dev_per_block within the enclosed for loop
+
+    // collect possible per block reduction variables introduced by transOmpTargetLoop()
+    // we rely on the pattern of such variables: _dev_per_block_*     
+    // these variables are arrays already, we pass them by their original types, not addressOf types
+    Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(body_block,V_SgVarRefExp);
+    for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+    {
+      SgVarRefExp *vRef = isSgVarRefExp((*i));
+      SgName var_name = vRef-> get_symbol()->get_name();
+      string var_name_str = var_name.getString();
+      if (var_name_str.find("_dev_per_block_",0) == 0)
+      {
+        all_syms.insert( vRef-> get_symbol());
+        per_block_reduction_syms.insert (vRef-> get_symbol());
+      }
+    }
+
     string func_name = Outliner::generateFuncName(target);
     SgGlobal* g_scope = SageInterface::getGlobalScope(body_block);
     ROSE_ASSERT(g_scope != NULL);
@@ -2405,6 +2450,33 @@ static void rewriteArraySubscripts(SgBasicBlock* body_block, const std::set<SgSy
     SgExprStatement* cuda_call_stmt = buildExprStatement(buildCudaKernelCallExp_nfi (buildFunctionRefExp(result), exp_list_exp, cuda_exe_conf) );
     setSourcePositionForTransformation (cuda_call_stmt);
     insertStatementBefore (target_directive_stmt, cuda_call_stmt);
+
+   // insert the beyond block level reduction statement
+   // error = xomp_beyond_block_reduction_float (per_block_results, numBlocks.x, XOMP_REDUCTION_PLUS);
+    for (ASTtools::VarSymSet_t::const_iterator iter = per_block_reduction_syms.begin(); iter != per_block_reduction_syms.end(); iter ++)
+    {
+      const SgVariableSymbol * current_symbol = *iter;
+      SgPointerType* pointer_type = isSgPointerType(current_symbol->get_type());// must be a pointer to simple type
+      ROSE_ASSERT (pointer_type != NULL);
+      SgType * orig_type = pointer_type->get_base_type();
+      ROSE_ASSERT (orig_type != NULL);
+
+      string per_block_var_name = (current_symbol->get_name()).getString();
+      // get the original var name by stripping of the leading "_dev_per_block_"
+      string leading_pattern = string("_dev_per_block_");
+      string orig_var_name = per_block_var_name.substr(leading_pattern.length(), per_block_var_name.length() - leading_pattern.length());
+//      cout<<"debug: "<<per_block_var_name <<" after "<< orig_var_name <<endl;
+      SgExprListExp * parameter_list = buildExprListExp (buildVarRefExp(const_cast<SgVariableSymbol*>(current_symbol)), buildVarRefExp("_num_blocks_",target_directive_stmt->get_scope()), buildIntVal(per_block_reduction_map[const_cast<SgVariableSymbol*>(current_symbol)]) );
+      SgFunctionCallExp* func_call_exp = buildFunctionCallExp ("xomp_beyond_block_reduction_"+ orig_type->unparseToString(), buildVoidType(), parameter_list, target_directive_stmt->get_scope()); 
+     insertStatementBefore (target_directive_stmt, buildExprStatement(func_call_exp));
+
+     // insert memory free for the _dev_per_block_variables
+     // TODO: need runtime support to automatically free memory 
+      SgFunctionCallExp* func_call_exp2 = buildFunctionCallExp ("xomp_freeDevice", buildVoidType(), buildExprListExp(buildVarRefExp(const_cast<SgVariableSymbol*>(current_symbol))),  target_directive_stmt->get_scope());
+     insertStatementBefore (target_directive_stmt, buildExprStatement(func_call_exp2));
+
+    }
+
 
 
     //------------now remove omp parallel since everything within it has been outlined to a function
@@ -3388,6 +3460,69 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
     end_stmt_list.push_back(atomic_end_stmt);   
   }
 
+//! Liao 2/12/2013. Insert the thread-block inner level reduction statement into the end of the end_stmt_list
+// e.g.  xomp_inner_block_reduction_float (local_error, per_block_error, XOMP_REDUCTION_PLUS);
+static void insertInnerThreadBlockReduction(SgOmpClause::omp_reduction_operator_enum r_operator, vector <SgStatement* >& end_stmt_list,  SgBasicBlock* bb1
+, SgInitializedName* orig_var, SgVariableDeclaration* local_decl, SgVariableDeclaration* per_block_decl)
+{
+   ROSE_ASSERT (bb1 && orig_var && local_decl && per_block_decl);  
+   // the integer value representing different reduction operations, defined within libxomp.h for accelerator model
+   // TODO refactor the code to have a function converting operand types to integers
+  int op_value = -1;
+  switch (r_operator)
+  {
+    case SgOmpClause::e_omp_reduction_plus:
+      op_value = 6;
+      break;
+    case SgOmpClause::e_omp_reduction_minus:
+      op_value = 7;
+      break;
+    case SgOmpClause::e_omp_reduction_mul:
+      op_value = 8;
+      break;
+    case SgOmpClause::e_omp_reduction_bitand:
+      op_value = 9;
+      break;
+    case SgOmpClause::e_omp_reduction_bitor:
+      op_value = 10;
+      break;
+    case SgOmpClause::e_omp_reduction_bitxor:
+      op_value = 11;
+      break;
+    case SgOmpClause::e_omp_reduction_logand:
+      op_value = 12;
+      break;
+    case SgOmpClause::e_omp_reduction_logor:
+      op_value = 13;
+      break;
+      //TODO: more operation types
+    case SgOmpClause::e_omp_reduction_and: // Fortran .and.
+    case SgOmpClause::e_omp_reduction_or: // Fortran .or.
+    case SgOmpClause::e_omp_reduction_eqv:
+    case SgOmpClause::e_omp_reduction_neqv:
+    case SgOmpClause::e_omp_reduction_max:
+    case SgOmpClause::e_omp_reduction_min:
+    case SgOmpClause::e_omp_reduction_iand:
+    case SgOmpClause::e_omp_reduction_ior:
+    case SgOmpClause::e_omp_reduction_ieor:
+    case SgOmpClause::e_omp_reduction_unknown:
+    case SgOmpClause::e_omp_reduction_last:
+    default:
+      cerr<<"Error. insertThreadBlockReduction() in omp_lowering.cpp: Illegal or unhandled reduction operator type:"<< r_operator<<endl;
+  }
+
+  SgVariableSymbol* var_sym = getFirstVarSym(per_block_decl);
+  ROSE_ASSERT (var_sym != NULL);
+  SgPointerType* var_type = isSgPointerType(var_sym->get_type());
+  ROSE_ASSERT (var_type != NULL);
+  //TODO: this could be risky. It is better to have our own conversion function to have full control over it.
+  string type_str = var_type->get_base_type()->unparseToString();
+  per_block_reduction_map[var_sym] = op_value; // save the per block symbol and its corresponding reduction integer value defined in the libxomp.h 
+  SgIntVal* reduction_op = buildIntVal (op_value);
+  SgExprListExp * parameter_list = buildExprListExp (buildVarRefExp(local_decl), buildVarRefExp(per_block_decl), reduction_op);
+  SgStatement* func_call_stmt = buildFunctionCallStmt("xomp_inner_block_reduction_"+type_str, buildVoidType(),parameter_list ,bb1);
+  end_stmt_list.push_back(func_call_stmt);
+}
    //TODO move to sageInterface advanced transformation ???
    //! Generate element-by-element assignment from a right-hand array to left_hand array variable. 
    //
@@ -3600,7 +3735,7 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
     //     orig_loop_upper: 
     //       if ompStmt is loop construct, pass the original loop upper bound
     //       if ompStmt is omp sections, pass the section count - 1
-    void transOmpVariables(SgStatement* ompStmt, SgBasicBlock* bb1, SgExpression * orig_loop_upper/*= NULL*/)
+    void transOmpVariables(SgStatement* ompStmt, SgBasicBlock* bb1, SgExpression * orig_loop_upper/*= NULL*/, bool isAcceleratorModel /*= false*/)
     {
       ROSE_ASSERT( ompStmt != NULL);
       ROSE_ASSERT( bb1 != NULL);
@@ -3627,9 +3762,14 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
        ROSE_ASSERT(orig_symbol!= NULL);
 
        VariantVector vvt (V_SgOmpPrivateClause);
-       vvt.push_back(V_SgOmpFirstprivateClause);
-       vvt.push_back(V_SgOmpLastprivateClause);
        vvt.push_back(V_SgOmpReductionClause);
+
+      //TODO: No such concept of firstprivate and lastprivate in accelerator model??
+       if (!isAcceleratorModel) // we actually already has enable_accelerator, but it is too global for handling both CPU and GPU translation
+       {
+         vvt.push_back(V_SgOmpFirstprivateClause);
+         vvt.push_back(V_SgOmpLastprivateClause);
+       }
    
       // a local private copy
       SgVariableDeclaration* local_decl = NULL;
@@ -3685,7 +3825,7 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
        front_stmt_list.push_back(arrayAssign);   
       } 
 #endif    
-      if (isReductionVar)
+      if (isReductionVar) // create initial value assignment for the local reduction variable
       {
         r_operator = getReductionOperationType(orig_var, clause_stmt);
         SgExprStatement* init_stmt = buildAssignStatement(buildVarRefExp(local_decl), createInitialValueExp(r_operator));
@@ -3699,6 +3839,29 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
         {
           front_stmt_list.push_back(init_stmt);   
         }
+     }
+
+      // Liao, 2/12/2013. For an omp for loop within "omp target". We translate its reduction variable by using 
+      // a two-level reduction method: thread-block level (within kernel) and beyond-block level (done on CPU side).
+      // So we have to insert a pointer to the array of per-block reduction results right before its enclosing "omp target" directive
+      // The insertion point is decided so that the outliner invoked by transOmpTargetParallel() can later catch this newly introduced variable
+      // and handle it in the parameter list properly. 
+      //
+      // e.g. REAL* per_block_results = (REAL *)xomp_deviceMalloc (numBlocks.x* sizeof(REAL));
+       SgVariableDeclaration* per_block_decl = NULL; 
+      if (isReductionVar && isAcceleratorModel)
+      {
+        SgOmpTargetStatement* enclosing_omp_target = getEnclosingNode<SgOmpTargetStatement> (ompStmt);
+        ROSE_ASSERT (enclosing_omp_target != NULL);
+        SgScopeStatement* scope_for_insertion = enclosing_omp_target->get_scope();
+        ROSE_ASSERT (scope_for_insertion != NULL);
+        SgExprListExp* parameter_list = buildExprListExp(buildMultiplyOp( buildVarRefExp("_num_blocks_", scope_for_insertion), buildSizeOfOp(orig_type) ));
+        SgExpression* init_exp = buildCastExp(buildFunctionCallExp(SgName("xomp_deviceMalloc"), buildPointerType(buildVoidType()), parameter_list, scope_for_insertion),  
+                                              buildPointerType(orig_type));
+       // the prefix of "_dev_per_block_" is important for later handling when calling outliner: add them into the parameter list
+        per_block_decl = buildVariableDeclaration ("_dev_per_block_"+orig_name, buildPointerType(orig_type), buildAssignInitializer(init_exp), scope_for_insertion);
+        insertStatementBefore (enclosing_omp_target, per_block_decl);
+        // store all reduction variables at the loop level, they will be used later when translating the enclosing "omp target" to help decide on the variables being passed
       }
 
       // step 3. Save the value back for lastprivate and reduction
@@ -3706,8 +3869,12 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
       {
         insertOmpLastprivateCopyBackStmts (ompStmt, end_stmt_list, bb1, orig_var, local_decl, orig_loop_upper);
       } else if (isReductionVar)
-      { 
-        insertOmpReductionCopyBackStmts(r_operator, end_stmt_list, bb1, orig_var, local_decl);
+      {
+        // two-level reduction is used for accelerator model 
+        if (isAcceleratorModel)
+          insertInnerThreadBlockReduction (r_operator, end_stmt_list, bb1, orig_var, local_decl, per_block_decl); 
+        else 
+          insertOmpReductionCopyBackStmts(r_operator, end_stmt_list, bb1, orig_var, local_decl);
       }
 
      } // end for (each variable)
@@ -4354,6 +4521,8 @@ void lower_omp(SgSourceFile* file)
   {
     SgStatement* node = isSgStatement(*nodeListIterator);
     ROSE_ASSERT(node != NULL);
+    //debug the order of the statements
+//    cout<<"Debug lower_omp(). stmt:"<<node<<" "<<node->class_name() <<" "<< node->get_file_info()->get_line()<<endl;
     switch (node->variantT())
     {
       case V_SgOmpParallelStatement:
@@ -4382,9 +4551,13 @@ void lower_omp(SgSourceFile* file)
       case V_SgOmpDoStatement:
         {
           // check if the loop is part of the combined "omp parallel for" under the "omp target" directive
+          // TODO: more robust handling of this logic, not just fixed AST form
           bool is_target_loop = false;
           SgNode* parent = node->get_parent();
           ROSE_ASSERT (parent != NULL);
+          // skip a possible BB between omp parallel and omp for, especially when the omp parallel has multiple omp for loops 
+          if (isSgBasicBlock(parent))
+            parent = parent->get_parent();
           SgNode* grand_parent = parent->get_parent();
           ROSE_ASSERT (grand_parent != NULL);
 
