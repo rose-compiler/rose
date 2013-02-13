@@ -1,5 +1,9 @@
 #include <stdio.h>
 
+// Required for linking:
+// This is set in cmdline.cpp when the program's arguments are handled
+bool roseJavaRemoteDebug;
+
 /* extern "C" int openJavaParser_main(int argc, char **argv); */
 int openJavaParser_main(int argc, char **argv);
 

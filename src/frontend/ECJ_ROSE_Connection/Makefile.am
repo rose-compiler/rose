@@ -7,13 +7,12 @@ ECJ_DIR = $(top_builddir)/src/3rdPartyLibraries/java-parser
 EXTRA_DIST = CMakeLists.txt
 DISTCLEANFILES = 
 
+noinst_LTLIBRARIES = libroseJava.la
+
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 # To build a similar library using libtool we indicate that we want an installed 
 # library (which will then be made into a dynamic shared library).
-  lib_LTLIBRARIES = libJavaTraversal.la
-endif
-
-noinst_LTLIBRARIES = libroseJava.la
+lib_LTLIBRARIES = libJavaTraversal.la
 
 JavaTraversal.C: JavaTraversal.h
 
@@ -26,25 +25,20 @@ JavaParserActionROSE.C: JavaTraversal.h
 JavaTraversal.h:
 	cd ${top_builddir}/src/3rdPartyLibraries/java-parser; $(MAKE) extract_rose_required_ecj_source_files
 
-if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-   libroseJava_la_SOURCES = openJavaParser_main.C ecj.C
+libroseJava_la_SOURCES = openJavaParser_main.C ecj.C
 
 if !ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
  # Handle case of Java language support specified and Fortran language support NOT specified.
    libroseJava_la_SOURCES += $(srcdir)/../OpenFortranParser_SAGE_Connection/jserver.C
 endif
 
+libJavaTraversal_la_SOURCES = JavaParserActionROSE.C JavaTraversal.C token.C jni_token.C JavaSourceCodePosition.C jni_JavaSourceCodePosition.C VisitorContext.C jni_utils.C java_support.C
+
+include_HEADERS = ecj.h java_support.h token.h jni_token.h JavaSourceCodePosition.h jni_JavaSourceCodePosition.h jni_utils.h VisitorContext.h
+
+extract_rose_required_ecj_source_files:
+	cd ${top_builddir}/src/3rdPartyLibraries/java-parser; $(MAKE) extract_rose_required_ecj_source_files
 else
  # Compile using a function that represents the API of the Open Fortran Parser
    libroseJava_la_SOURCES = dummy_openJavaParser_main.C
 endif
-
-if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-   libJavaTraversal_la_SOURCES = JavaParserActionROSE.C JavaTraversal.C token.C jni_token.C JavaSourceCodePosition.C jni_JavaSourceCodePosition.C VisitorContext.C jni_utils.C java_support.C
-
-   include_HEADERS = ecj.h java_support.h token.h jni_token.h JavaSourceCodePosition.h jni_JavaSourceCodePosition.h jni_utils.h VisitorContext.h
-
-extract_rose_required_ecj_source_files:
-	cd ${top_builddir}/src/3rdPartyLibraries/java-parser; $(MAKE) extract_rose_required_ecj_source_files
-endif
-

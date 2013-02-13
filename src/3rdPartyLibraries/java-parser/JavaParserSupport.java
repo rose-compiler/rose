@@ -427,14 +427,30 @@ try{
     TypeBinding type_binding = method_binding.declaringClass;
     TypeBinding arguments[] = method_binding.parameters;
     Class cls = findClass(type_binding);
+// TODO: Remove this!        
+//System.out.println("Looking into class " + cls.getCanonicalName());
     assert(cls != null);
     String method_name = new String(method_binding.selector);
+// TODO: Remove this!        
+//System.out.println("Looking for method " + method_name + " in class " + cls.getCanonicalName());
     Method methods[] = cls.getDeclaredMethods();
+// TODO: Remove this!        
+//System.out.println("Looking for method " + new String(method_binding.readableName()) + " declared in " + method_binding.declaringClass.debugName() + " containing " + methods.length + " methopds.");
     for (int i = 0; i < methods.length; i++) {
         Method method = methods[i];
         Type[] types = method.getGenericParameterTypes();
         assert(types != null);
         if (types.length == arguments.length && method_name.equals(method.getName())) {
+// TODO: Remove this!
+/*
+System.out.println("    Looking at method " + new String(method_binding.readableName()) + "(");
+for (int j = 0; j < types.length; j++) {
+System.out.println(types[i].getClass().getCanonicalName());
+if (j + 1 < types.length)
+System.out.println(", ");
+}
+System.out.println(")");
+*/
             int j = 0;
             for (; j < types.length; j++) {
                 if (! typeMatch(types[j], arguments[j]))
@@ -447,9 +463,9 @@ try{
     }
 }
 catch(NoClassDefFoundError e){
-	System.out.println("Could not find method " + new String(method_binding.readableName()));
-	e.printStackTrace();
-	System.exit(1);
+    System.out.println("Could not find method " + new String(method_binding.readableName()) + " declared in " + method_binding.declaringClass.debugName());
+    e.printStackTrace();
+    System.exit(1);
 }
 
     return null;
@@ -906,16 +922,19 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
         }
 
         String type_prefix = new String(strbuf);
-
+// TODO: Remove this !!!
+//System.out.println("Number of field bindings is " + (node.otherBindings == null ? 0 : node.otherBindings.length));
         if (type_prefix.length() > 0) {
             Class cls = preprocessClass(type_binding);
             assert(cls != null);
 
             JavaParser.cactionTypeReference(getPackageName(type_binding), getTypeName(type_binding), jToken);
-
+// TODO: Remove this !!!
+//System.out.println("(1) Number of tokens traversed " + (node.tokens.length - type_prefix_length));
+//System.out.println("(1) The actual receiver type is " + node.actualReceiverType.debugName());
             for (int i = type_prefix_length; i < node.tokens.length; i++) {
                 String field = new String(node.tokens[i]);
-                JavaParser.cactionFieldReferenceEnd(field, jToken);
+                JavaParser.cactionFieldReferenceEnd(false /* explicit type not passed */, field, jToken);
             }
         }
         else {
@@ -926,10 +945,13 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
             JavaParser.cactionSingleNameReference("", "", first_field, jToken);
 
             strbuf = new StringBuffer();
+// TODO: Remove this !!!
+//System.out.println("(2) Number of tokens traversed " + (node.tokens.length - field_index));            
+//System.out.println("(1) The actual receiver type is " + node.actualReceiverType.debugName());
             for (int i = field_index; i < node.tokens.length; i++) {
                 String field = new String(node.tokens[i]);
 
-                JavaParser.cactionFieldReferenceEnd(field, jToken);
+                JavaParser.cactionFieldReferenceEnd(false /* explicit type not passed */, field, jToken);
             
                 strbuf.append(field);
                 if (i + 1 < node.tokens.length)
@@ -1152,6 +1174,7 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
         assert(cls != null);
 // TODO: Remove this !!!
 /*        
+System.out.println("Traversing class " + cls.getCanonicalName());        
 System.out.println();
 System.out.println("Processing class " + cls.getCanonicalName() + " with type parameters:");        
 TypeVariable<Class<?>>[] type_parameters = cls.getTypeParameters();

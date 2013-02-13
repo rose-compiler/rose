@@ -1477,8 +1477,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd(JNIEnv *env, jclass
     SgClassDefinition *targetClassScope = class_declaration -> get_definition();
     ROSE_ASSERT(targetClassScope != NULL && (! targetClassScope -> attributeExists("namespace")));
 
+// TODO: Remove this !!!
+/*
     SgType *return_type = astJavaComponentStack.popType(); // The return type of the function
     ROSE_ASSERT(return_type);
+*/
 
     //
     // The astJavaComponentStack has all of the types of the parameters of the function being called. Note that
@@ -1515,6 +1518,8 @@ cout.flush();
     SgMemberFunctionType *function_type = isSgMemberFunctionType(function_symbol -> get_type());
     ROSE_ASSERT(function_type);
 
+// TODO: Remove this !!!
+/*
     //
     // If we have an accurate return type for this function, set it !!!
     // This occurs when the method being invoked belongs to a parameterized type.
@@ -1524,6 +1529,7 @@ cout.flush();
     if (function_type -> get_return_type() != return_type) {
         function_type -> set_return_type(return_type);
     }
+*/
 
     // The astJavaComponentStack has all of the arguments to the function call.
     SgExprListExp *arguments = new SgExprListExp();
@@ -2423,7 +2429,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, j
     bool isTransient = java_is_transient;
 
     if (SgProject::get_verbose() > 2)
-        printf ("Building a variable declaration for name = %s \n", name.str());
+        printf ("Building a Field declaration for name = %s \n", name.str());
 
     SgExpression *initializer_expression = (((! is_enum_field) && has_initializer) ? astJavaComponentStack.popExpression() : NULL);
 
@@ -2522,17 +2528,35 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReference(JNIEnv *env, jclass
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReferenceEnd(JNIEnv *env, jclass, jstring java_field, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReferenceEnd(JNIEnv *env, jclass, jboolean explicit_type, jstring java_field, jobject jToken) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionFieldReference() \n");
 
     SgName field_name = convertJavaStringToCxxString(env, java_field);
 
     if (SgProject::get_verbose() > 0)
-        printf ("Building a variable reference for name = %s \n", field_name.str());
+        printf ("Building a Field reference for name = %s \n", field_name.str());
 
+    SgType *receiver_type = (explicit_type ? astJavaComponentStack.popType() : NULL);
     SgNode *prefix = astJavaComponentStack.pop();
     SgExpression *receiver = isSgExpression(prefix);
+    ROSE_ASSERT(receiver || isSgType(prefix));
+    if (! explicit_type) {
+        receiver_type = (receiver ? receiver -> get_type() : isSgType(prefix));
+    }
+// TODO: Remove this !!!
+/*
+cout <<  "The receiver type is "
+     << getTypeName(receiver_type)
+     << endl
+     << " The prefix type is "
+     << prefix -> class_name()
+     << endl
+     << " The field name "
+     << field_name
+     << endl;
+cout.flush();
+
     SgType *type = isSgType(prefix);
     ROSE_ASSERT(receiver || type);
     if (type == NULL) {
@@ -2543,9 +2567,15 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReferenceEnd(JNIEnv *env, jcl
     }
     ROSE_ASSERT(type);
 
+ROSE_ASSERT(! isSgMemberFunctionType(receiver_type));
+*/
+
     SgExpression *result;
+
+// TODO: Remove this !!!
+/*
     if (isSgThisExp(receiver) || isSgSuperExp(receiver)) { // First, take care of these special pointer types:  "this" and "super"
-        SgClassType *class_type = isSgClassType(isSgPointerType(type) -> get_base_type());
+        SgClassType *class_type = isSgClassType(isSgPointerType(receiver_type) -> get_base_type());
         ROSE_ASSERT(class_type);
         SgClassDeclaration *declaration = isSgClassDeclaration(class_type -> get_declaration() -> get_definingDeclaration());
         ROSE_ASSERT(declaration);
@@ -2557,6 +2587,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReferenceEnd(JNIEnv *env, jcl
         setJavaSourcePosition(field, env, jToken);
         result = SageBuilder::buildBinaryExpression<SgDotExp>(receiver, field);
     }
+    else 
+*/
+
     //
     // TODO: Note that the use of attributes is not a valid substitute for supporting these features!
     // In particular, this approach is not robust enough to fully support parenthesized expressions
@@ -2564,7 +2597,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReferenceEnd(JNIEnv *env, jcl
     // parenthesized - In other words, we can't add a "java-parenthesis-info" attribute to a "length"
     // attribute.
     //
-    else if (isSgPointerType(type) && field_name.getString().compare("length") == 0) { // In fact, this is a Java array which is a type !!!
+    if (isSgPointerType(receiver_type) && field_name.getString().compare("length") == 0) { // In fact, this is a Java array which is a type !!!
         receiver -> setAttribute("suffix", new AstRegExAttribute("length")); // TODO: The field "length" does not exist since we don't have a real type!
         result = receiver;
     }
@@ -2572,34 +2605,42 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReferenceEnd(JNIEnv *env, jcl
         //
         // TODO: (PC) This is very sloppy and imprecise because we do not yet have an array type !!!
         //
-        if (isSgPointerType(type)) { // In fact, this is a Java array which is a type!!!
-            SgType *base_type = isSgPointerType(type) -> get_base_type();
+        if (isSgPointerType(receiver_type)) { // In fact, this is a Java array which is a type!!!
+            SgType *base_type = isSgPointerType(receiver_type) -> get_base_type();
             if (! isSgClassType(base_type)) {
-                type = ::ObjectClassType;
+                receiver_type = ::ObjectClassType;
             }
-            else type = base_type;
+            else receiver_type = base_type;
         }
 
         //
         // TODO: Parameterized types should be class types... Need to review this!
         //
-        if (isSgJavaParameterizedType(type)) {
-            type = isSgJavaParameterizedType(type) -> get_raw_type();
+        if (isSgJavaParameterizedType(receiver_type)) {
+            receiver_type = isSgJavaParameterizedType(receiver_type) -> get_raw_type();
         }
 
-        SgClassType *class_type = isSgClassType(type);
+        SgClassType *class_type = isSgClassType(receiver_type);
         ROSE_ASSERT(class_type);
         SgClassDeclaration *declaration = isSgClassDeclaration(class_type -> get_declaration() -> get_definingDeclaration());
         ROSE_ASSERT(declaration);
         ROSE_ASSERT(declaration -> get_definition());
         SgVariableSymbol *variable_symbol = lookupSimpleNameVariableInClass(field_name, declaration -> get_definition());
 // TODO: Remove this !
+/*
 if (! variable_symbol) {
   cout << "Could not find variable " << field_name.getString()
        << " in type " << getTypeName(class_type)
        << endl;
   cout.flush();
 }
+else {
+  cout << "Found variable " << field_name.getString()
+       << " in type " << getTypeName(class_type)
+       << endl;
+  cout.flush();
+}
+*/
         ROSE_ASSERT(variable_symbol);
         SgVarRefExp *field = SageBuilder::buildVarRefExp(variable_symbol);
         ROSE_ASSERT(field != NULL);
@@ -2607,12 +2648,24 @@ if (! variable_symbol) {
 
         if (receiver) {
             result = SageBuilder::buildBinaryExpression<SgDotExp>(receiver, field);
+// TODO: Remove this !
+/*
+  cout << "Emitted a SgDotExp"
+       << endl;
+  cout.flush();
+*/
         }
         else {
             string class_name = getFullyQualifiedTypeName(class_type);
 
             field -> setAttribute("prefix", new AstRegExAttribute(class_name));
             result = field;
+// TODO: Remove this !
+/*
+  cout << "Decorating a field name"
+       << endl;
+  cout.flush();
+*/
         }
     }
 
@@ -3237,10 +3290,19 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclarationEnd(JNIEnv *env, j
     bool is_final = java_is_final;
 
     if (SgProject::get_verbose() > 2)
-        printf ("Building a variable declaration for name = %s \n", name.str());
+        printf ("Building a local variable declaration for name = %s \n", name.str());
 
     SgExpression *initializer_expression = (hasInitializer ? astJavaComponentStack.popExpression() : NULL);
-
+// TODO: Remove this !
+/*
+cout << "The expression is a "
+<< initializer_expression -> class_name()
+<< endl
+<< "; The top of the stack is a "
+     << (isSgClassDefinition(astJavaComponentStack.top()) ? isSgClassDefinition(astJavaComponentStack.top()) -> get_qualified_name().getString() : astJavaComponentStack.top() -> class_name())
+<< endl;
+cout.flush();
+*/
     SgType *type = astJavaComponentStack.popType();
 
     // Note that the type should have already been built and should be on the astJavaComponentStack.
@@ -3696,7 +3758,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSingleNameReference(JNIEnv *env, j
     SgVariableSymbol *variable_symbol = NULL;
     if (! type_name.getString().empty()) { // an instance variable?
         if (SgProject::get_verbose() > 0)
-            printf ("Building a variable reference for name = %s%s%s \n", (package_name.getString().empty() ? "" : (package_name.getString() + ".")).c_str(), (type_name.getString() + ".").c_str(), name.str());
+            printf ("Building a Single Name reference for name = %s%s%s \n", (package_name.getString().empty() ? "" : (package_name.getString() + ".")).c_str(), (type_name.getString() + ".").c_str(), name.str());
 
         SgType *type = lookupTypeByName(package_name, type_name, 0 /* not an array - number of dimensions is 0 */);
         ROSE_ASSERT(type);
@@ -3709,7 +3771,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSingleNameReference(JNIEnv *env, j
     }
     else { // a local variable!
         if (SgProject::get_verbose() > 0)
-            printf ("Building a variable reference for name = %s \n", name.str());
+            printf ("Building a Single Name reference for name = %s \n", name.str());
         variable_symbol = lookupVariableByName(name);
     }
 
