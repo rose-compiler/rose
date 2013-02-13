@@ -51,9 +51,10 @@ void error_check(void);
 
 #define MSIZE 512
 int n,m,mits; 
-double tol,relax=1.0,alpha=0.0543; 
-double u[MSIZE][MSIZE],f[MSIZE][MSIZE],uold[MSIZE][MSIZE];
-double dx,dy;
+#define REAL float // flexible between float and double
+REAL tol,relax=1.0,alpha=0.0543; 
+REAL u[MSIZE][MSIZE],f[MSIZE][MSIZE],uold[MSIZE][MSIZE];
+REAL dx,dy;
 
 int main (void) 
 {
@@ -163,9 +164,9 @@ void initialize( )
 
 void jacobi( )
 {
-  double omega;
+  REAL omega;
   int i,j,k;
-  double  error,resid,ax,ay,b;
+  REAL error,resid,ax,ay,b;
   //      double  error_local;
 
   //      float ta,tb,tc,td,te,ta1,ta2,tb1,tb2,tc1,tc2,td1,td2;
@@ -237,7 +238,7 @@ void jacobi( )
 void error_check ( )
 { 
   int i,j;
-  double xx,yy,temp,error; 
+  REAL xx,yy,temp,error; 
 
   dx = 2.0 / (n-1);
   dy = 2.0 / (m-1);

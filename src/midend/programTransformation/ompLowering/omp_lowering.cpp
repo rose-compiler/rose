@@ -2458,10 +2458,22 @@ static void rewriteArraySubscripts(SgBasicBlock* body_block, const std::set<SgSy
     insertStatementBefore (target, num_blocks_decl);
 
     // Now we have num_block declaration, we can insert the per block declaration used for reduction variables
+    SgExpression* shared_data = NULL; // shared data size expression for CUDA kernel execution configuration
     for (std::vector<SgVariableDeclaration*>::iterator iter = per_block_declarations.begin(); iter != per_block_declarations.end(); iter++)
     {
        SgVariableDeclaration* decl = *iter;
        insertStatementAfter (num_blocks_decl, decl);
+       SgVariableSymbol* sym = getFirstVarSym (decl);
+       SgPointerType * pointer_type = isSgPointerType(sym->get_type());
+       ROSE_ASSERT (pointer_type != NULL);
+       SgType* base_type = pointer_type->get_base_type();
+       if (per_block_declarations.size()>1)
+       {
+        cerr<<"Error. multiple reduction variables are not yet handled."<<endl;
+         ROSE_ASSERT (false);
+         // threadsPerBlock.x*sizeof(REAL)  //TODO: how to handle multiple shared data blocks, each for a reduction variable??   
+       }
+       shared_data = buildMultiplyOp (buildVarRefExp(threads_per_block_decl), buildSizeOfOp (base_type) );
     }
     // generate the cuda kernel launch statement
     //e.g.  axpy_ompacc_cuda <<<numBlocks, threadsPerBlock>>>(dev_x,  dev_y, VEC_LEN, a);
@@ -2480,7 +2492,8 @@ static void rewriteArraySubscripts(SgBasicBlock* body_block, const std::set<SgSy
     // TODO: alternative mirror form using varUsingAddress as parameter
     Outliner::appendIndividualFunctionCallArgs (all_syms, varsUsingOriginalForm, exp_list_exp);
     // TODO: builder interface without _nfi, and match function call exp builder interface convention: 
-    SgCudaKernelExecConfig * cuda_exe_conf = buildCudaKernelExecConfig_nfi (buildVarRefExp(num_blocks_decl), buildVarRefExp(threads_per_block_decl), NULL, NULL);
+
+    SgCudaKernelExecConfig * cuda_exe_conf = buildCudaKernelExecConfig_nfi (buildVarRefExp(num_blocks_decl), buildVarRefExp(threads_per_block_decl), shared_data, NULL);
     setOneSourcePositionForTransformation (cuda_exe_conf);
     // SgExpression* is not clear, change to SgFunctionRefExp at least!!
     SgExprStatement* cuda_call_stmt = buildExprStatement(buildCudaKernelCallExp_nfi (buildFunctionRefExp(result), exp_list_exp, cuda_exe_conf) );
@@ -2506,14 +2519,17 @@ static void rewriteArraySubscripts(SgBasicBlock* body_block, const std::set<SgSy
       SgExprListExp * parameter_list = buildExprListExp (buildVarRefExp(const_cast<SgVariableSymbol*>(current_symbol)), buildVarRefExp("_num_blocks_",target_directive_stmt->get_scope()), buildIntVal(per_block_reduction_map[const_cast<SgVariableSymbol*>(current_symbol)]) );
       SgFunctionCallExp* func_call_exp = buildFunctionCallExp ("xomp_beyond_block_reduction_"+ orig_type->unparseToString(), buildVoidType(), parameter_list, target_directive_stmt->get_scope()); 
      //insertStatementBefore (target_directive_stmt, buildExprStatement(func_call_exp));
-     insertStatementBefore (target, buildExprStatement(func_call_exp));
+      SgStatement* assign_stmt = buildAssignStatement (buildVarRefExp(orig_var_name, omp_target_stmt_body_block )  ,func_call_exp);
+     ROSE_ASSERT (target->get_scope () == target_directive_stmt->get_body()); // there is a block in between 
+     ROSE_ASSERT (omp_target_stmt_body_block  == target_directive_stmt->get_body()); // just to make sure
+     //insertStatementBefore (target_directive_stmt, buildExprStatement(func_call_exp2));
+     insertStatementBefore (target, assign_stmt );
 
      // insert memory free for the _dev_per_block_variables
      // TODO: need runtime support to automatically free memory 
-      SgFunctionCallExp* func_call_exp2 = buildFunctionCallExp ("xomp_freeDevice", buildVoidType(), buildExprListExp(buildVarRefExp(const_cast<SgVariableSymbol*>(current_symbol))),  target_directive_stmt->get_scope());
+      SgFunctionCallExp* func_call_exp2 = buildFunctionCallExp ("xomp_freeDevice", buildVoidType(), buildExprListExp(buildVarRefExp(const_cast<SgVariableSymbol*>(current_symbol))),  omp_target_stmt_body_block);
      //insertStatementBefore (target_directive_stmt, buildExprStatement(func_call_exp2));
      insertStatementBefore (target, buildExprStatement(func_call_exp2));
-
     }
 
 
