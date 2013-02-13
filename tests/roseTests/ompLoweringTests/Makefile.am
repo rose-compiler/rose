@@ -210,9 +210,23 @@ $(PASSING_CXX_TEST_Objects): %.o: $(TEST_DIR)/%.cpp roseomp
 $(CXX_TEST_OBJECT_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.cpp roseomp
 	./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
 
+# Experimental translation for OpenMP accelerator model directives
 # no final compilation for now, which requires CUDA compiler for the generated code
-axpy_ompacc.o:roseompacc
-	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $(TEST_DIR)/axpy_ompacc.c && touch axpy_ompacc.o
+test_omp_acc:axpy_ompacc.o matrixmultiply-ompacc.o jacobi-ompacc.o
+rose_axpy_ompacc.cu:roseompacc
+	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $(TEST_DIR)/axpy_ompacc.c 
+rose_matrixmultiply-ompacc.cu:roseompacc
+	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $(TEST_DIR)/matrixmultiply-ompacc.c 
+rose_jacobi-ompacc.cu:roseompacc
+	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $(TEST_DIR)/jacobi-ompacc.c 
+
+# build executables using nvcc
+axpy_ompacc.out:rose_axpy_ompacc.cu
+	nvcc $<  $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
+matrixmultiply-ompacc.out:rose_matrixmultiply-ompacc.cu
+	nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
+jacobi-ompacc.out:rose_jacobi-ompacc.cu
+	nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
 
 if WITH_GOMP_OPENMP_LIB
 #-------------compile and run using GCC's runtime library--------------------------------	
@@ -324,7 +338,7 @@ endif # ROSE_USE_OMNI_OPENMP
 endif # 
 
 clean-local:
-	rm -f *.o test*.C rose_*.c rose_*.cpp rose_*.C *.pdf OUT_* *.dot *.out 
+	rm -f *.o test*.C rose_*.c rose_*.cpp rose_*.C *.pdf OUT_* *.dot *.out  rose_*.cu
 
 EXTRA_DIST = 
 

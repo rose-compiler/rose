@@ -56,7 +56,7 @@ c d  x  g h  = c*e+ d*g,  c*f+ d*h
 
 int mmm()
 {
-#pragma omp target map(inout:c[0:N][0:M]), map(in:a[0:N][0:M],b[0:M][0:K],j,k)
+#pragma omp target map(inout:c[0:N][0:M]), map(in:a[0:N][0:M],b[0:M][0:K])
 #pragma omp parallel for private(i,j,k)
   for (i = 0; i < N; i++)
     for (j = 0; j < M; j++)

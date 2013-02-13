@@ -184,13 +184,15 @@ axpy_ompacc.o:$(srcdir)/axpy_ompacc.c parseOmp
 #	./parseOmp -rose:openmp:parse_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/axpy_ompacc.c 
 matrixmultiply-ompacc.o:$(srcdir)/matrixmultiply-ompacc.c parseOmp
 	./parseOmp -rose:openmp:ast_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/matrixmultiply-ompacc.c 
+jacobi-ompacc.o:$(srcdir)/jacobi-ompacc.c parseOmp
+	./parseOmp -rose:openmp:ast_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/jacobi-ompacc.c
 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 check-local:
 	@echo "Test for ROSE OpenMP Parser."
 	@$(MAKE) $(PASSING_C_TEST_Objects) 
 	@$(MAKE) $(PASSING_CXX_TEST_Objects)
-	@$(MAKE) bonds-2.o axpy_ompacc.o matrixmultiply-ompacc.o
+	@$(MAKE) bonds-2.o axpy_ompacc.o matrixmultiply-ompacc.o jacobi-ompacc.o
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/OpenMP_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
