@@ -27,6 +27,12 @@ TESTCODES_REQUIRED_TO_PASS = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT)
 
 endif # ROSE_USE_LONG_MAKE_CHECK_RULE
 
+TEST_TRANSLATOR = ../../testTranslator
+
+# DQ (2/10/2013): Make all of the tests codes
+$(TEST_TRANSLATOR):
+	cd ../..; $(MAKE) test
+
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
 TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) 
