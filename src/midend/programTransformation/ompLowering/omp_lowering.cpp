@@ -25,6 +25,10 @@ static SgExpression* cuda_loop_iter_count_1 = NULL;
 // We use the map to help generate beyond block level reduction
 static std::map<SgVariableSymbol* , int> per_block_reduction_map;
 
+// we don't know where to insert the declarations when they are generated as part of transOmpTargetLoop
+// we have to save them and insert them later when kernel launch statement is generated as part of transOmpTargetParallel
+static std::vector<SgVariableDeclaration*> per_block_declarations;
+
 #define ENABLE_XOMP 1  // Enable the middle layer (XOMP) of OpenMP runtime libraries
   //! Generate a symbol set from an initialized name list, 
   //filter out struct/class typed names
@@ -1328,9 +1332,9 @@ static void insert_libxompf_h(SgNode* startNode)
 
   // handle private variables at this loop level, mostly loop index variables.
   // TODO: this is not very elegant since the outer most loop's loop variable is still translated.
+  //for reduction
+  per_block_declarations.clear(); // must reset to empty or wrong reference to stale content generated previously
   transOmpVariables(target, bb1,NULL, true);
-  //TODO transOmpVariables!   for reduction etc.
-
 }
 
   //! Check if an OpenMP statement has a clause of type vt
@@ -2113,7 +2117,10 @@ static void rewriteArraySubscripts(SgBasicBlock* body_block, const std::set<SgSy
     ROSE_ASSERT (target_directive_stmt != NULL);
     ROSE_ASSERT (target_parallel_stmt!= NULL);
     ROSE_ASSERT (body_block!= NULL);
-    SgScopeStatement* top_scope = target_directive_stmt->get_scope(); // the scope of the target directive statement
+    //SgScopeStatement* top_scope = target_directive_stmt->get_scope(); // the scope of the target directive statement
+// we should use inner scope , instead of the scope of target-directive-stmt.
+// this will avoid name collisions when there are multiple "omp target" within one big scope
+    SgScopeStatement* top_scope = isSgScopeStatement(target_directive_stmt->get_body()); 
     ROSE_ASSERT (top_scope!= NULL);
 
     // collect map clauses and their variables 
@@ -2189,23 +2196,29 @@ static void rewriteArraySubscripts(SgBasicBlock* body_block, const std::set<SgSy
      string orig_name = (sym->get_name()).getString();
      string dev_var_name = "_dev_"+ orig_name; 
      
-     SgVariableDeclaration* dev_var_decl = buildVariableDeclaration(dev_var_name, buildPointerType(element_type), NULL, top_scope);
-     insertStatementBefore (target_directive_stmt, dev_var_decl); 
+     // It is possible that there are two consecutive "omp target map()" regions.
+     // So we have to check the existence of a declaration before creating a brand new one
+     SgVariableDeclaration* dev_var_decl = NULL; 
+     dev_var_decl = buildVariableDeclaration(dev_var_name, buildPointerType(element_type), NULL, top_scope);
+     //insertStatementBefore (target_directive_stmt, dev_var_decl); 
+     insertStatementBefore (target_parallel_stmt, dev_var_decl); 
      SgVariableSymbol* orig_sym = isSgVariableSymbol(sym);
      ROSE_ASSERT (orig_sym != NULL);
      SgVariableSymbol* new_sym = getFirstVarSym(dev_var_decl);
      cpu_gpu_var_map[orig_sym]= new_sym; // store the mapping
-   
+
      // linearized array pointers should be directly passed to the outliner later on, without adding & operator in front of them
      all_syms.insert(new_sym);
- 
+
      // Step 2.1  generate linear size calculation based on array dimension info
      // int dev_array_size = sizeof (double) *dim_size1 * dim_size2;
      string dev_var_size_name = "_dev_" + orig_name + "_size";  
+     SgVariableDeclaration* dev_var_size_decl = NULL; 
+     
      SgExpression* initializer = generateSizeCalculationExpression (element_type, array_dimensions[sym]);
-     SgVariableDeclaration* dev_var_size_decl = buildVariableDeclaration (dev_var_size_name, buildIntType(), buildAssignInitializer(initializer), top_scope); 
-     insertStatementBefore (target_directive_stmt, dev_var_size_decl); 
-
+     dev_var_size_decl = buildVariableDeclaration (dev_var_size_name, buildIntType(), buildAssignInitializer(initializer), top_scope); 
+     //insertStatementBefore (target_directive_stmt, dev_var_size_decl); 
+     insertStatementBefore (target_parallel_stmt, dev_var_size_decl); 
 
      // Step 2.5 generate memory allocation on GPUs
      // e.g.:  _dev_m1 = (double *)xomp_deviceMalloc (_dev_m1_size);
@@ -2215,7 +2228,8 @@ static void rewriteArraySubscripts(SgBasicBlock* body_block, const std::set<SgSy
                                                   buildExprListExp(buildVarRefExp( dev_var_size_name, top_scope)),
                                                   top_scope), 
                              buildPointerType(element_type))); 
-     insertStatementBefore (target_directive_stmt, mem_alloc_stmt); 
+     //insertStatementBefore (target_directive_stmt, mem_alloc_stmt); 
+     insertStatementBefore (target_parallel_stmt, mem_alloc_stmt); 
 
      // Step 3. copy the data from CPU to GPU
      // Only for variable in map(in:), or map(inout:) 
@@ -2232,13 +2246,14 @@ static void rewriteArraySubscripts(SgBasicBlock* body_block, const std::set<SgSy
                                                         buildPointerType(buildVoidType()),
                                                         parameters,
                                                         top_scope);
-       insertStatementBefore (target_directive_stmt, mem_copy_to_stmt); 
+       //insertStatementBefore (target_directive_stmt, mem_copy_to_stmt); 
+       insertStatementBefore (target_parallel_stmt, mem_copy_to_stmt); 
      }
 
      // Step 6. copy back data from GPU to CPU, only for variable in map(out:var_list)
      // e.g. xomp_memcpyDeviceToHost ((void*)c, (const void*)dev_m3, array_size);
      // Note: insert this AFTER the target directive stmt
-     SgStatement* prev_stmt = target_directive_stmt;
+     SgStatement* prev_stmt = target_parallel_stmt;
       if (( (map_out_clause) && (isInClauseVariableList (map_out_clause,sym))) ||
        ( (map_inout_clause) && (isInClauseVariableList (map_inout_clause,sym))))
      {
@@ -2251,7 +2266,9 @@ static void rewriteArraySubscripts(SgBasicBlock* body_block, const std::set<SgSy
                                                         buildPointerType(buildVoidType()),
                                                         parameters, 
                                                         top_scope);
-       insertStatementAfter(target_directive_stmt, mem_copy_back_stmt); 
+       //insertStatementAfter(target_directive_stmt, mem_copy_back_stmt); 
+       //insertStatementAfter(target_parallel_stmt, mem_copy_back_stmt); 
+       appendStatement(mem_copy_back_stmt, target_parallel_stmt->get_scope()); 
        prev_stmt = mem_copy_back_stmt;
      }
 
@@ -2264,8 +2281,8 @@ static void rewriteArraySubscripts(SgBasicBlock* body_block, const std::set<SgSy
                                      buildBoolType(),
                                      buildExprListExp(buildVarRefExp( dev_var_name,top_scope)),
                                      top_scope);
-     insertStatementAfter (prev_stmt, mem_dealloc_stmt);
-     
+     //insertStatementAfter (prev_stmt, mem_dealloc_stmt);
+     appendStatement(mem_dealloc_stmt, target_parallel_stmt->get_scope()); 
 
    }  // end for
 
@@ -2317,8 +2334,18 @@ static void rewriteArraySubscripts(SgBasicBlock* body_block, const std::set<SgSy
     // must be a parallel region directly under "omp target"
     SgNode* parent = node->get_parent();
     ROSE_ASSERT (parent != NULL);
+   if (isSgBasicBlock(parent)) //skip the block in between
+      parent = parent->get_parent();
     SgOmpTargetStatement* target_directive_stmt = isSgOmpTargetStatement(parent);
     ROSE_ASSERT (target_directive_stmt != NULL);
+
+    // Now we need to ensure that "omp target " has a basic block as its body
+   // so we can insert declarations into an inner block, instead of colliding declarations within the scope of "omp target"
+   // This is important since we often have consecutive "omp target" regions within one big scope
+   // We cannot just insert things into that big scope.
+    SgBasicBlock* omp_target_stmt_body_block = ensureBasicBlockAsBodyOfOmpBodyStmt (target_directive_stmt);
+    ROSE_ASSERT (isSgBasicBlock(target_directive_stmt->get_body()));
+    ROSE_ASSERT (node->get_parent() == target_directive_stmt->get_body()); // OMP PARALLEL should be within the body block now
 
 //    SgFunctionDefinition * func_def = NULL;
 
@@ -2409,14 +2436,16 @@ static void rewriteArraySubscripts(SgBasicBlock* body_block, const std::set<SgSy
       SageInterface::setStatic(result->get_firstNondefiningDeclaration());
 #endif 
 
-    SgScopeStatement * p_scope = target_directive_stmt ->get_scope(); // the scope of "omp parallel" will be destroyed later, so we use scope of "omp target"
+    //SgScopeStatement * p_scope = target_directive_stmt ->get_scope(); // the scope of "omp parallel" will be destroyed later, so we use scope of "omp target"
+    SgScopeStatement * p_scope = omp_target_stmt_body_block ; // the scope of "omp parallel" will be destroyed later, so we use scope of "omp target"
     ROSE_ASSERT(p_scope != NULL);
    // insert dim3 threadsPerBlock(xomp_get_maxThreadsPerBlock()); 
    // TODO: for 1-D mapping, int type is enough,  //TODO: a better interface accepting expression as initializer!!
     SgVariableDeclaration* threads_per_block_decl = buildVariableDeclaration ("_threads_per_block_", buildIntType(), 
                   buildAssignInitializer(buildFunctionCallExp("xomp_get_maxThreadsPerBlock",buildIntType(), NULL, p_scope)), 
                   p_scope);
-    insertStatementBefore (target_directive_stmt, threads_per_block_decl);
+    //insertStatementBefore (target_directive_stmt, threads_per_block_decl);
+    insertStatementBefore (target, threads_per_block_decl);
     attachComment(threads_per_block_decl, string("Launch CUDA kernel ..."));
 
     // dim3 numBlocks (xomp_get_max1DBlock(VEC_LEN));
@@ -2425,8 +2454,15 @@ static void rewriteArraySubscripts(SgBasicBlock* body_block, const std::set<SgSy
     SgVariableDeclaration* num_blocks_decl = buildVariableDeclaration ("_num_blocks_", buildIntType(), 
                   buildAssignInitializer(buildFunctionCallExp("xomp_get_max1DBlock",buildIntType(), buildExprListExp(cuda_loop_iter_count_1), p_scope)),
                   p_scope);
-    insertStatementBefore (target_directive_stmt, num_blocks_decl);
+    //insertStatementBefore (target_directive_stmt, num_blocks_decl);
+    insertStatementBefore (target, num_blocks_decl);
 
+    // Now we have num_block declaration, we can insert the per block declaration used for reduction variables
+    for (std::vector<SgVariableDeclaration*>::iterator iter = per_block_declarations.begin(); iter != per_block_declarations.end(); iter++)
+    {
+       SgVariableDeclaration* decl = *iter;
+       insertStatementAfter (num_blocks_decl, decl);
+    }
     // generate the cuda kernel launch statement
     //e.g.  axpy_ompacc_cuda <<<numBlocks, threadsPerBlock>>>(dev_x,  dev_y, VEC_LEN, a);
    
@@ -2449,7 +2485,8 @@ static void rewriteArraySubscripts(SgBasicBlock* body_block, const std::set<SgSy
     // SgExpression* is not clear, change to SgFunctionRefExp at least!!
     SgExprStatement* cuda_call_stmt = buildExprStatement(buildCudaKernelCallExp_nfi (buildFunctionRefExp(result), exp_list_exp, cuda_exe_conf) );
     setSourcePositionForTransformation (cuda_call_stmt);
-    insertStatementBefore (target_directive_stmt, cuda_call_stmt);
+    //insertStatementBefore (target_directive_stmt, cuda_call_stmt);
+    insertStatementBefore (target, cuda_call_stmt);
 
    // insert the beyond block level reduction statement
    // error = xomp_beyond_block_reduction_float (per_block_results, numBlocks.x, XOMP_REDUCTION_PLUS);
@@ -2468,12 +2505,14 @@ static void rewriteArraySubscripts(SgBasicBlock* body_block, const std::set<SgSy
 //      cout<<"debug: "<<per_block_var_name <<" after "<< orig_var_name <<endl;
       SgExprListExp * parameter_list = buildExprListExp (buildVarRefExp(const_cast<SgVariableSymbol*>(current_symbol)), buildVarRefExp("_num_blocks_",target_directive_stmt->get_scope()), buildIntVal(per_block_reduction_map[const_cast<SgVariableSymbol*>(current_symbol)]) );
       SgFunctionCallExp* func_call_exp = buildFunctionCallExp ("xomp_beyond_block_reduction_"+ orig_type->unparseToString(), buildVoidType(), parameter_list, target_directive_stmt->get_scope()); 
-     insertStatementBefore (target_directive_stmt, buildExprStatement(func_call_exp));
+     //insertStatementBefore (target_directive_stmt, buildExprStatement(func_call_exp));
+     insertStatementBefore (target, buildExprStatement(func_call_exp));
 
      // insert memory free for the _dev_per_block_variables
      // TODO: need runtime support to automatically free memory 
       SgFunctionCallExp* func_call_exp2 = buildFunctionCallExp ("xomp_freeDevice", buildVoidType(), buildExprListExp(buildVarRefExp(const_cast<SgVariableSymbol*>(current_symbol))),  target_directive_stmt->get_scope());
-     insertStatementBefore (target_directive_stmt, buildExprStatement(func_call_exp2));
+     //insertStatementBefore (target_directive_stmt, buildExprStatement(func_call_exp2));
+     insertStatementBefore (target, buildExprStatement(func_call_exp2));
 
     }
 
@@ -3092,15 +3131,23 @@ static void rewriteArraySubscripts(SgBasicBlock* body_block, const std::set<SgSy
 #endif
     replaceStatement(target, func_call_stmt, true);
   }
-  //! Simply remove omp target directive since nothing to be done at this level
+  //! Simply move the body up and remove omp target directive since nothing to be done at this level
   void transOmpTarget(SgNode * node)
   {
     ROSE_ASSERT(node != NULL );
     SgOmpTargetStatement* target = isSgOmpTargetStatement(node);
     ROSE_ASSERT(target != NULL );
+
     SgScopeStatement * scope = target->get_scope();
     ROSE_ASSERT(scope != NULL );
-    removeStatement(target);
+
+    SgBasicBlock* body = isSgBasicBlock(target->get_body());
+    ROSE_ASSERT(body != NULL );
+    body->set_parent(NULL);
+    target->set_body(NULL);
+
+    replaceStatement (target, body, true); 
+   // removeStatement(target);
   }
 
 
@@ -3752,6 +3799,8 @@ static void insertInnerThreadBlockReduction(SgOmpClause::omp_reduction_operator_
 
      vector <SgStatement* > front_stmt_list, end_stmt_list, front_init_list;  
     
+// this is call by both transOmpTargetParallel and transOmpTargetLoop, we should move this to the correct caller place 
+//      per_block_declarations.clear(); // must reset to empty or wrong reference to stale content generated previously
      for (size_t i=0; i< var_list.size(); i++)
      {
        SgInitializedName* orig_var = var_list[i];
@@ -3851,16 +3900,20 @@ static void insertInnerThreadBlockReduction(SgOmpClause::omp_reduction_operator_
        SgVariableDeclaration* per_block_decl = NULL; 
       if (isReductionVar && isAcceleratorModel)
       {
-        SgOmpTargetStatement* enclosing_omp_target = getEnclosingNode<SgOmpTargetStatement> (ompStmt);
-        ROSE_ASSERT (enclosing_omp_target != NULL);
-        SgScopeStatement* scope_for_insertion = enclosing_omp_target->get_scope();
+        SgOmpParallelStatement* enclosing_omp_parallel = getEnclosingNode<SgOmpParallelStatement> (ompStmt);
+        ROSE_ASSERT (enclosing_omp_parallel!= NULL);
+        //SgScopeStatement* scope_for_insertion = enclosing_omp_target->get_scope();
+        SgScopeStatement* scope_for_insertion = isSgScopeStatement(enclosing_omp_parallel->get_scope());
         ROSE_ASSERT (scope_for_insertion != NULL);
         SgExprListExp* parameter_list = buildExprListExp(buildMultiplyOp( buildVarRefExp("_num_blocks_", scope_for_insertion), buildSizeOfOp(orig_type) ));
         SgExpression* init_exp = buildCastExp(buildFunctionCallExp(SgName("xomp_deviceMalloc"), buildPointerType(buildVoidType()), parameter_list, scope_for_insertion),  
                                               buildPointerType(orig_type));
        // the prefix of "_dev_per_block_" is important for later handling when calling outliner: add them into the parameter list
         per_block_decl = buildVariableDeclaration ("_dev_per_block_"+orig_name, buildPointerType(orig_type), buildAssignInitializer(init_exp), scope_for_insertion);
-        insertStatementBefore (enclosing_omp_target, per_block_decl);
+        // this statement refers to _num_blocks_, which will be declared later on when translating "omp parallel" enclosed in "omp target"
+        // so we insert it  later when the kernel launch statement is inserted. 
+        // insertStatementAfter(enclosing_omp_parallel, per_block_decl);
+        per_block_declarations.push_back(per_block_decl);
         // store all reduction variables at the loop level, they will be used later when translating the enclosing "omp target" to help decide on the variables being passed
       }
 
@@ -4530,6 +4583,8 @@ void lower_omp(SgSourceFile* file)
           // check if this parallel region is under "omp target"
           SgNode* parent = node->get_parent();
           ROSE_ASSERT (parent != NULL);
+          if (isSgBasicBlock(parent)) // skip the padding block in between.
+            parent= parent->get_parent();
           if (isSgOmpTargetStatement(parent))
             transOmpTargetParallel(node);
           else  
