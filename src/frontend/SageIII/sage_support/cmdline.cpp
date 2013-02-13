@@ -130,7 +130,6 @@ CommandlineProcessing::isExecutableFilename ( string name )
             // printf ("passed test (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0): opening file to double check \n");
 
             // Open file for reading
-               cout << "first call " << endl;
                bool firstBase = isValidFileWithExecutableFileSuffixes(name);
                if (firstBase == true)
                   {
@@ -2999,6 +2998,28 @@ SgFile::stripJavaCommandLineOptions ( vector<string> & argv )
            argv.push_back(*i);
          }
        }
+   }
+
+Rose_STL_Container<string>
+CommandlineProcessing::generateOptionListWithDeclaredParameters (const Rose_STL_Container<string> & argList, string inputPrefix )
+   {
+  // This function returns a list of options using the inputPrefix (with the inputPrefix stripped off).
+     Rose_STL_Container<string> optionList;
+     unsigned int prefixLength = inputPrefix.length();
+     for (Rose_STL_Container<string>::const_iterator     i = argList.begin(); i != argList.end(); i++)
+        {
+          if ( (*i).substr(0,prefixLength) == inputPrefix )
+             {
+            // get the rest of the string as the option
+               string option = (*i).substr(prefixLength);
+               optionList.push_back(option);
+               if (isOptionTakingSecondParameter(*i)) {
+                   i++;
+                   optionList.push_back(*i);
+               }
+             }
+        }
+     return optionList;
    }
 
 void

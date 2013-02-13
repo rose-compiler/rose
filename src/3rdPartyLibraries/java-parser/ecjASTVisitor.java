@@ -1345,9 +1345,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (FieldReference,BlockScope)");
 
-        String fieldRefName = new String(node.token);
-               
-        JavaParser.cactionFieldReference(fieldRefName, javaParserSupport.createJavaToken(node));
+        JavaParser.cactionFieldReference(new String(node.token), javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (FieldReference,BlockScope)");
@@ -1360,9 +1358,10 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (FieldReference,BlockScope)");
 
-        String fieldRefName = new String(node.token);
-          
-        JavaParser.cactionFieldReferenceEnd(fieldRefName, javaParserSupport.createJavaToken(node));
+// TODO: Remove this !!!
+//System.out.println("I am looking at receiver type " + node.actualReceiverType.debugName());
+        javaParserSupport.generateAndPushType(node.actualReceiverType, javaParserSupport.createJavaToken(node)); // push the receiver type
+        JavaParser.cactionFieldReferenceEnd(true /* explicit type passed */, new String(node.token), javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (FieldReference,BlockScope)");
@@ -1374,10 +1373,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Inside of enter (FieldReference,ClassScope)");
 
-
-        String fieldRefName = new String(node.token);
-
-        JavaParser.cactionFieldReference(fieldRefName, javaParserSupport.createJavaToken(node));
+        JavaParser.cactionFieldReference(new String(node.token), javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving enter (FieldReference,ClassScope)");
@@ -1390,9 +1386,10 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (FieldReference,ClassScope)");
 
-        String fieldRefName = new String(node.token);
-          
-        JavaParser.cactionFieldReferenceEnd(fieldRefName, javaParserSupport.createJavaToken(node));
+// TODO: Remove this !!!
+//System.out.println("I am looking at receiver type " + node.actualReceiverType.debugName());
+        javaParserSupport.generateAndPushType(node.actualReceiverType, javaParserSupport.createJavaToken(node)); // push the receiver type
+        JavaParser.cactionFieldReferenceEnd(true /* explicit type passed */, new String(node.token), javaParserSupport.createJavaToken(node));
 
         if (javaParserSupport.verboseLevel > 0)
             System.out.println("Leaving exit (FieldReference,BlockScope)");
@@ -2284,7 +2281,8 @@ class ecjASTVisitor extends ExtendedASTVisitor {
 
         pushRawMethodParameterTypes(node.binding, javaParserSupport.createJavaToken(node));
 
-        javaParserSupport.generateAndPushType(node.binding.returnType, javaParserSupport.createJavaToken(node)); // push the return type
+// TODO: Remove this !
+// javaParserSupport.generateAndPushType(node.binding.returnType, javaParserSupport.createJavaToken(node)); // push the return type
         javaParserSupport.generateAndPushType(node.actualReceiverType, javaParserSupport.createJavaToken(node)); // push the receiver type
 
         JavaParser.cactionMessageSendEnd(node.binding.isStatic(),
@@ -2408,6 +2406,12 @@ System.out.println("The original method is " + new String(method_binding.origina
 
     public void processRawParameters(MethodBinding method_binding) {
         Class parameter_types[] = null;
+
+// TODO: Remove this!        
+//System.out.println("Preprocessing class " + method_binding.declaringClass.debugName());
+//javaParserSupport.preprocessClass(method_binding.declaringClass);
+//System.out.println("Done preprocessing class " + method_binding.declaringClass.debugName());
+
         if (method_binding.isConstructor()) {
             Constructor constructor = javaParserSupport.getRawConstructor(method_binding);
             assert(constructor != null);

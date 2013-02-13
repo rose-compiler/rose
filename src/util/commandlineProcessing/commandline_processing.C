@@ -320,29 +320,6 @@ CommandlineProcessing::generateOptionList (const Rose_STL_Container<string> & ar
    }
 
 Rose_STL_Container<string>
-CommandlineProcessing::generateOptionListWithDeclaredParameters (const Rose_STL_Container<string> & argList, string inputPrefix )
-   {
-  // This function returns a list of options using the inputPrefix (with the inputPrefix stripped off).
-     Rose_STL_Container<string> optionList;
-     unsigned int prefixLength = inputPrefix.length();
-     for (Rose_STL_Container<string>::const_iterator     i = argList.begin(); i != argList.end(); i++)
-        {
-          if ( (*i).substr(0,prefixLength) == inputPrefix )
-             {
-            // get the rest of the string as the option
-               string option = (*i).substr(prefixLength);
-               optionList.push_back(option);
-               if (isOptionTakingSecondParameter(*i)) {
-                   i++;
-                   optionList.push_back(*i);
-               }
-             }
-        }
-     return optionList;
-   }
-
-
-Rose_STL_Container<string>
 CommandlineProcessing::generateOptionWithNameParameterList ( Rose_STL_Container<string> & argList, string inputPrefix , string newPrefix )
    {
   // This function returns a list of options using the inputPrefix (with the 
