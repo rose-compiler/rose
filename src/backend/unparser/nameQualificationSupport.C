@@ -496,6 +496,8 @@ NameQualificationTraversal::requiresTypeElaboration(SgSymbol* symbol)
        // DQ (2/12/2012): Added support for SgTemplateMemberFunctionSymbol.
           case V_SgTemplateMemberFunctionSymbol:
 
+       // DQ (2/12/2013): Added support for SgTemplateFunctionSymbol.
+          case V_SgTemplateFunctionSymbol:
 
        // DQ (6/21/2011): Added case for SgFunctionSymbol (triggers type elaboration).
           case V_SgFunctionSymbol:
