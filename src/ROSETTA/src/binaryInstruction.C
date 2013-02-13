@@ -78,8 +78,17 @@ Grammar::setUpBinaryInstructions()
 
 
 
+    NEW_TERMINAL_MACRO(AsmMipsInstruction, "AsmMipsInstruction", "AsmMipsInstructionTag");
+    AsmMipsInstruction.setFunctionPrototype("HEADER_BINARY_MIPS_INSTRUCTION", "../Grammar/BinaryInstruction.code");
+    AsmMipsInstruction.setDataPrototype("MipsInstructionKind", "kind", "= mips_unknown_instruction",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+    AsmMipsInstruction.setPredeclarationString("HEADER_BINARY_MIPS_INSTRUCTION_PREDECLARATION",
+                                               "../Grammar/BinaryInstruction.code");
+
+
+
     NEW_NONTERMINAL_MACRO(AsmInstruction,
-                          Asmx86Instruction | AsmArmInstruction | AsmPowerpcInstruction,
+                          Asmx86Instruction | AsmArmInstruction | AsmPowerpcInstruction | AsmMipsInstruction,
                           "AsmInstruction", "AsmInstructionTag", true);
     AsmInstruction.setPredeclarationString("HEADER_BINARY_INSTRUCTION_PREDECLARATION", "../Grammar/BinaryInstruction.code");
     AsmInstruction.setFunctionPrototype("HEADER_BINARY_INSTRUCTION", "../Grammar/BinaryInstruction.code");
@@ -163,8 +172,6 @@ Grammar::setUpBinaryInstructions()
                        "AsmArmRegisterReferenceExpression", "AsmArmRegisterReferenceExpressionTag");
     AsmArmRegisterReferenceExpression.setFunctionPrototype("HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION",
                                                            "../Grammar/BinaryInstruction.code");
-    AsmArmRegisterReferenceExpression.setFunctionSource("SOURCE_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION",
-                                                        "../Grammar/BinaryInstruction.code");
     AsmArmRegisterReferenceExpression.setDataPrototype("unsigned", "psr_mask", "=0",
                                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -172,25 +179,24 @@ Grammar::setUpBinaryInstructions()
 
     NEW_TERMINAL_MACRO(AsmPowerpcRegisterReferenceExpression,
                        "AsmPowerpcRegisterReferenceExpression", "AsmPowerpcRegisterReferenceExpressionTag");
-    AsmPowerpcRegisterReferenceExpression.setFunctionPrototype("HEADER_BINARY_POWERPC_REGISTER_REFERENCE_EXPRESSION",
-                                                               "../Grammar/BinaryInstruction.code");
-    AsmPowerpcRegisterReferenceExpression.setFunctionSource("SOURCE_BINARY_POWERPC_REGISTER_REFERENCE_EXPRESSION",
-                                                            "../Grammar/BinaryInstruction.code");
+
+
+
+
+    NEW_TERMINAL_MACRO(AsmMipsRegisterReferenceExpression,
+                       "AsmMipsRegisterReferenceExpression", "AsmMipsRegisterReferenceExpressionTag");
+
 
 
 
     NEW_NONTERMINAL_MACRO(AsmRegisterReferenceExpression ,
                           Asmx86RegisterReferenceExpression | AsmArmRegisterReferenceExpression |
-                          AsmPowerpcRegisterReferenceExpression,
+                          AsmPowerpcRegisterReferenceExpression | AsmMipsRegisterReferenceExpression,
                           "AsmRegisterReferenceExpression", "AsmRegisterReferenceExpressionTag" , false);
-    AsmRegisterReferenceExpression.setFunctionPrototype("HEADER_BINARY_REGISTER_REFERENCE_EXPRESSION",
-                                                        "../Grammar/BinaryInstruction.code");
-    AsmRegisterReferenceExpression.setFunctionSource("SOURCE_BINARY_REGISTER_REFERENCE_EXPRESSION",
-                                                     "../Grammar/BinaryInstruction.code");
     AsmRegisterReferenceExpression.setDataPrototype("SgAsmType*", "type", "= NULL",
                                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmRegisterReferenceExpression.setDataPrototype("RegisterDescriptor", "descriptor", "",
-                                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 

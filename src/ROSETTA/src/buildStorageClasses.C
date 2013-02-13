@@ -857,6 +857,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "PowerpcConditionRegisterAccessGranularity" ) ||
                  ( varTypeString == "PowerpcSpecialPurposeRegister" ) ||
                  ( varTypeString == "PowerpcTimeBaseRegister" ) ||
+                 ( varTypeString == "MipsInstructionKind") ||
               // Note that these enum names do not conform to the naming scheme used in ROSE.
                  ( varTypeString == "SgAsmGenericSection::SectionPurpose" ) ||
                  ( varTypeString == "SgAsmGenericFormat::InsSetArchitecture" ) ||

@@ -4,7 +4,7 @@
 #include "sage3basic.h"
 #include "Disassembler.h"
 
-/** Return control flow successors. See base class for full documentation. */
+// Return control flow successors. See base class for full documentation.
 Disassembler::AddressSet
 SgAsmPowerpcInstruction::get_successors(bool *complete) {
     Disassembler::AddressSet retval;
@@ -68,9 +68,9 @@ SgAsmPowerpcInstruction::get_successors(bool *complete) {
     return retval;
 }
 
-/** Does instruction terminate basic block? See base class for full documentation. */
+// Does instruction terminate basic block? See base class for full documentation.
 bool
-SgAsmPowerpcInstruction::terminatesBasicBlock() {
+SgAsmPowerpcInstruction::terminates_basic_block() {
     switch (get_kind()) {
         case powerpc_unknown_instruction:
         case powerpc_b:         /* branch instructions... */
@@ -96,7 +96,7 @@ SgAsmPowerpcInstruction::terminatesBasicBlock() {
     }
 }
 
-/** Determines whether this is the special PowerPC "unknown" instruction. */
+// Determines whether this is the special PowerPC "unknown" instruction.
 bool
 SgAsmPowerpcInstruction::is_unknown() const
 {

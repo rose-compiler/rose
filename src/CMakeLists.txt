@@ -239,6 +239,7 @@ set(rose_support_src
 
 
 set(roseDisassemblers_SRC
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/InstructionEnumsMips.h
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/InstructionEnumsX86.h
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Assembler.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/AssemblerX86.C 
@@ -254,6 +255,7 @@ set(roseDisassemblers_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/AssemblerX86Init.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerArm.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Disassembler.C 
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerMips.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerPowerpc.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/DisassemblerX86.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Expressions.C
@@ -266,6 +268,7 @@ set(roseDisassemblers_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmBlock.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmFunction.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmInstruction.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmMipsInstruction.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmPowerpcInstruction.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmX86Instruction.C
    )
@@ -360,6 +363,7 @@ set( roseAsmUnparser_SRC
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/unparseX86Asm.C 
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/unparseArmAsm.C 
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/unparsePowerpcAsm.C 
+     ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/unparseMipsAsm.C
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/AsmUnparser.C
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/AsmUnparser_compat.C
      ${CMAKE_SOURCE_DIR}/src/backend/asmUnparser/AsmFunctionIndex.C

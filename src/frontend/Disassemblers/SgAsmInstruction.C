@@ -38,10 +38,36 @@ SgAsmInstruction::get_successors(const std::vector<SgAsmInstruction*>& basic_blo
  *  even if its condition is constant.  The base class implementation always aborts; architecture-specific subclasses should
  *  override this to do something useful (pure virtual is not possible due to ROSETTA). */
 bool
-SgAsmInstruction::terminatesBasicBlock()
+SgAsmInstruction::terminates_basic_block()
 {
     abort();
     // tps (12/9/2009) : MSC requires a return value
+    return false;
+}
+
+/** Returns true if the specified basic block looks like a function call.  This instruction object is only used to select the
+ *  appropriate virtual is_function_call(); the basic block to be analyzed is the first argument to the function.  If the basic
+ *  block looks like a function call then is_function_call() returns true.  If (and only if) the target address is known (i.e.,
+ *  the address of the called function) then @p target is set to this address (otherwise @p target is unmodified). */
+bool
+SgAsmInstruction::is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target)
+{
+    return false;
+}
+
+/** Returns true if the specified basic block looks like a function return. This instruction object is only used to select the
+ *  appropriate virtual is_function_return(); the basic block to be analyzed is the first argument to the function. */
+bool
+SgAsmInstruction::is_function_return(const std::vector<SgAsmInstruction*>&)
+{
+    return false;
+}
+
+
+/** Obtains the virtual address for a branching instruction.  Returns true if this instruction is a branching instruction and
+  *  the target address is known; otherwise, returns false and @p target is not modified. */
+bool
+SgAsmInstruction::get_branch_target(rose_addr_t *target/*out*/) {
     return false;
 }
 
@@ -74,4 +100,22 @@ SgAsmInstruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>& i
 {
     std::vector<std::pair<size_t, size_t> > retval;
     return retval;
+}
+
+/** Returns the size of an instruction in bytes.  This is only a convenience function that returns the size of the
+ *  instruction's raw byte vector.  If an instruction or its arguments are modified, then the size returned by this function
+ *  might not reflect the true size of the modified instruction if it were to be reassembled. */
+size_t
+SgAsmInstruction::get_size() const
+{
+    return p_raw_bytes.size();
+}
+
+/** Returns true if this instruction is the special "unknown" instruction. Each instruction architecture in ROSE defines an
+ *  "unknown" instruction to be used when the disassembler is unable to create a real instruction.  This can happen, for
+ *  instance, if the bit pattern does not represent a valid instruction for the architecture. */
+bool
+SgAsmInstruction::is_unknown() const
+{
+    abort(); // too bad ROSETTA doesn't allow virtual base classes
 }
