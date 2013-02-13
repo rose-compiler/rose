@@ -141,15 +141,15 @@ SgAsmArmInstruction::get_successors(bool *complete) {
     return retval;
 }
 
-/** Does instruction terminate basic block? See base class for full documentation. */
+// Does instruction terminate basic block? See base class for full documentation.
 bool
-SgAsmArmInstruction::terminatesBasicBlock() {
+SgAsmArmInstruction::terminates_basic_block() {
     if (get_kind()==arm_unknown_instruction)
         return true;
     return modifies_ip(this);
 }
 
-/** Determines whether this is the special ARM "unkown" instruction. */
+// Determines whether this is the special ARM "unkown" instruction. See base class for documentation.
 bool
 SgAsmArmInstruction::is_unknown() const
 {

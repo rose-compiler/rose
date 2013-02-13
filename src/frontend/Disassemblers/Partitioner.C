@@ -296,10 +296,10 @@ Partitioner::update_analyses(BasicBlock *bb)
         }
     }
 
-    /* Call target analysis. For x86, a function call is any CALL instruction except when the call target is the fall-through
-     * address and the instruction at the fall-through address pops the top of the stack (this is how position independent
-     * code loads EIP into a general-purpose register). FIXME: For now we'll assume that any call to the fall-through address
-     * is not a function call. */
+    /* Call target analysis. A function call is any CALL-like instruction except when the call target is the fall-through
+     * address and the instruction at the fall-through address pops the top of the stack (this is one way position independent
+     * code loads the instruction pointer register into a general-purpose register). FIXME: For now we'll assume that any call
+     * to the fall-through address is not a function call. */
     rose_addr_t fallthrough_va = bb->last_insn()->get_address() + bb->last_insn()->get_size();
     rose_addr_t target_va = NO_TARGET;
     bool looks_like_call = bb->insns.front()->node->is_function_call(inodes, &target_va);
@@ -919,7 +919,7 @@ Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
 
         /* Find address of next instruction, or whether this insn is the end of the block */
         va += insn->get_size();
-        if (insn->terminatesBasicBlock()) { /*naively terminates?*/
+        if (insn->terminates_basic_block()) { /*naively terminates?*/
             bool complete;
             const Disassembler::AddressSet& sucs = successors(bb, &complete);
             if ((func_heuristics & SgAsmFunction::FUNC_CALL_TARGET) && is_function_call(bb, NULL)) {
@@ -3971,7 +3971,7 @@ Partitioner::detectBasicBlocks(const Disassembler::InstructionMap &insns) const
          * acting more like a "PUSH EIP" (we should probably just look at the CALL instruction itself rather than also looking
          * for the following POP, but since ROSE doesn't currently apply the relocation tables before disassembling, the CALL
          * with a zero offset is quite common. [RPM 2009-08-24] */
-        if (insn->terminatesBasicBlock()) {
+        if (insn->terminates_basic_block()) {
             Disassembler::InstructionMap::const_iterator found = insns.find(next_va);
             if (found!=insns.end()) {
                 SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
@@ -3979,7 +3979,7 @@ Partitioner::detectBasicBlocks(const Disassembler::InstructionMap &insns) const
                 rose_addr_t branch_target_va;
                 if (insn_x86 &&
                     (insn_x86->get_kind()==x86_call || insn_x86->get_kind()==x86_farcall) &&
-                    x86GetKnownBranchTarget(insn_x86, branch_target_va) &&
+                    insn->get_branch_target(&branch_target_va) &&
                     branch_target_va==next_va && insn2_x86->get_kind()==x86_pop) {
                     /* The CALL is acting more like a "PUSH EIP" and should not end the basic block. */
                 } else if (bb_starts.find(next_va)==bb_starts.end()) {

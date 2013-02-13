@@ -185,6 +185,8 @@ SgAsmLESection
 SgAsmLESectionTable
 SgAsmLESectionTableEntry
 SgAsmMemoryReferenceExpression
+SgAsmMipsInstruction
+SgAsmMipsRegisterReferenceExpression
 SgAsmNEEntryPoint
 SgAsmNEEntryTable
 SgAsmNEFileHeader

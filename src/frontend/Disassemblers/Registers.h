@@ -37,6 +37,7 @@ public:
     static const RegisterDictionary *dictionary_amd64();
     static const RegisterDictionary *dictionary_arm7();
     static const RegisterDictionary *dictionary_powerpc();
+    static const RegisterDictionary *dictionary_mips32();
 
     RegisterDictionary(const std::string &name)
         :name(name) {}
@@ -77,7 +78,7 @@ public:
     void resize(const std::string &name, unsigned new_nbits);
 
     /** Returns a descriptor for a given register name. Returns the null pointer if the name is not found. It is not possible
-     *  to modify a descriptor in the dictionary because doing so would interfere with the dictionaries data structures for
+     *  to modify a descriptor in the dictionary because doing so would interfere with the dictionary's data structures for
      *  reverse lookups. */
     const RegisterDescriptor *lookup(const std::string &name) const;
 

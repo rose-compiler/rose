@@ -52,4 +52,11 @@ std::string unparseArmExpression(SgAsmExpression*, const AsmUnparser::LabelMap*)
 std::string unparsePowerpcMnemonic(SgAsmPowerpcInstruction*);
 std::string unparsePowerpcExpression(SgAsmExpression*, const AsmUnparser::LabelMap*);
 
+/*-------------------------------------------------------------------------------------------------------------------------------
+ * MIPS
+ *-------------------------------------------------------------------------------------------------------------------------------*/
+
+std::string unparseMipsMnemonic(SgAsmMipsInstruction*);
+std::string unparseMipsExpression(SgAsmExpression*, const AsmUnparser::LabelMap*);
+
 #endif

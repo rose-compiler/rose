@@ -7,16 +7,15 @@
 #include "YicesSolver.h"
 #include "Disassembler.h"
 
-/** Determines whether this instruction can terminate a basic block. See base class for full documentation. */
+// see base class
 bool
-SgAsmx86Instruction::terminatesBasicBlock() {
+SgAsmx86Instruction::terminates_basic_block() {
     if (get_kind()==x86_unknown_instruction)
         return true;
     return x86InstructionIsControlTransfer(this);
 }
 
-/** Determines whether a basic block is a function call.  The @p insns vector represents a basic block entered at only the
- *  first instruction and exited only at the last instruction. */
+// see base class
 bool
 SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target)
 {
@@ -27,9 +26,7 @@ SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insn
         return false;
     if (last->get_kind()!=x86_call && last->get_kind()!=x86_farcall)
         return false;
-    rose_addr_t tmp;
-    if (x86GetKnownBranchTarget(last, tmp))
-        *target = tmp; /* "target" must not be modified if we don't know the target address. */
+    last->get_branch_target(target);
     return true;
 }
 
@@ -67,7 +64,7 @@ SgAsmx86Instruction::get_successors(bool *complete) {
             /* Unconditional branch to operand-specified address. We cannot assume that a CALL instruction returns to the
              * fall-through address. */
             rose_addr_t va;
-            if (x86GetKnownBranchTarget(this, va/*out*/)) {
+            if (get_branch_target(&va)) {
                 retval.insert(va);
             } else {
                 *complete = false;
@@ -99,7 +96,7 @@ SgAsmx86Instruction::get_successors(bool *complete) {
         case x86_loopz: {
             /* Conditional branches to operand-specified address */
             rose_addr_t va;
-            if (x86GetKnownBranchTarget(this, va/*out*/)) {
+            if (get_branch_target(&va)) {
                 retval.insert(va);
             } else {
                 *complete = false;
@@ -138,6 +135,50 @@ SgAsmx86Instruction::get_successors(bool *complete) {
         }
     }
     return retval;
+}
+
+bool
+SgAsmx86Instruction::get_branch_target(rose_addr_t *target) {
+    // Treats far destinations as "unknown"
+    switch (get_kind()) {
+        case x86_call:
+        case x86_farcall:
+        case x86_jmp:
+        case x86_ja:
+        case x86_jae:
+        case x86_jb:
+        case x86_jbe:
+        case x86_jcxz:
+        case x86_jecxz:
+        case x86_jrcxz:
+        case x86_je:
+        case x86_jg:
+        case x86_jge:
+        case x86_jl:
+        case x86_jle:
+        case x86_jne:
+        case x86_jno:
+        case x86_jns:
+        case x86_jo:
+        case x86_jpe:
+        case x86_jpo:
+        case x86_js:
+        case x86_loop:
+        case x86_loopnz:
+        case x86_loopz: {
+            const SgAsmExpressionPtrList &args = get_operandList()->get_operands();
+            if (args.size()!=1)
+                return false;
+            SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(args[0]);
+            if (!ival)
+                return false;
+            if (target)
+                *target = ival->get_absolute_value();
+            return true;
+        }
+        default:
+            return false; // do not modify *target
+    }
 }
 
 /** Return control flow successors. See base class for full documentation. */

@@ -18,6 +18,10 @@ HEADER_BINARY_POWERPC_INSTRUCTION_PREDECLARATION_START
 #include "powerpcInstructionEnum.h"
 HEADER_BINARY_POWERPC_INSTRUCTION_PREDECLARATION_END
 
+HEADER_BINARY_MIPS_INSTRUCTION_PREDECLARATION_START
+#include "InstructionEnumsMips.h"
+HEADER_BINARY_MIPS_INSTRUCTION_PREDECLARATION_END
+
 HEADER_GENERIC_SECTION_PREDECLARATION_START
 #include "MemoryMap.h"
 HEADER_GENERIC_SECTION_PREDECLARATION_END
@@ -105,9 +109,12 @@ HEADER_BINARY_INSTRUCTION_START
                 std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info);
                 std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info);
                 void append_sources( SgAsmInstruction* instruction );
-                virtual bool terminatesBasicBlock(); /*subclasses must redefine*/
-                virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target) {return false;}
-                virtual bool is_function_return(const std::vector<SgAsmInstruction*>&) { return false; }
+
+		// These are documented in SgAsmInstruction.C
+                virtual bool terminates_basic_block(); /*subclasses must redefine*/
+                virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target);
+                virtual bool is_function_return(const std::vector<SgAsmInstruction*>&);
+		virtual bool get_branch_target(rose_addr_t *target/*out*/);
                 virtual bool has_effect();
                 virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
                                         bool relax_stack_semantics=false);
@@ -118,8 +125,8 @@ HEADER_BINARY_INSTRUCTION_START
                 virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&,
                                                              bool *complete,
                                                              MemoryMap *initial_memory=NULL);
-                virtual size_t get_size() const { return p_raw_bytes.size(); } //faster than obj->get_raw_bytes().size()
-                virtual bool is_unknown() const { abort(); } // too bad ROSETTA doesn't allow virtual base classes
+                virtual size_t get_size() const;
+                virtual bool is_unknown() const;
 HEADER_BINARY_INSTRUCTION_END
 
 
@@ -4021,20 +4028,20 @@ SOURCE_BINARY_FILE_PROGRAM_HEADER_LIST_END
 
 HEADER_BINARY_X86_INSTRUCTION_START
         public:
-                /* These virtual functions are implemented in DisassemblerX86.C */
-                virtual bool terminatesBasicBlock();
-                virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target);
-                virtual bool is_function_return(const std::vector<SgAsmInstruction*>&);
-                virtual bool has_effect();
+                virtual bool terminates_basic_block() /*override*/;
+                virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target) /*override*/;
+                virtual bool is_function_return(const std::vector<SgAsmInstruction*>&) /*override*/;
+		virtual bool get_branch_target(rose_addr_t *target/*out*/) /*override*/;
+                virtual bool has_effect() /*override*/;
                 virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
-                                        bool relax_stack_semantics=false);
+                                        bool relax_stack_semantics=false) /*override*/;
                 virtual std::vector<std::pair<size_t,size_t> >
                     find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
-                                           bool relax_stack_semantics=false);
-                virtual std::set<rose_addr_t> get_successors(bool* complete);
+                                           bool relax_stack_semantics=false) /*override*/;
+                virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
                 virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&,
                                                              bool* complete,
-                                                             MemoryMap *initial_memory=NULL);
+                                                             MemoryMap *initial_memory=NULL) /*override*/;
                 virtual bool is_unknown() const;
 HEADER_BINARY_X86_INSTRUCTION_END
 
@@ -4042,21 +4049,32 @@ HEADER_BINARY_X86_INSTRUCTION_END
 
 HEADER_BINARY_POWERPC_INSTRUCTION_START
         public:
-                /* These virtual functions are implemented in DisassemblerPowerpc.C */
-                virtual bool terminatesBasicBlock();
-                virtual std::set<rose_addr_t> get_successors(bool* complete);
-                virtual bool is_unknown() const;
+                virtual bool terminates_basic_block() /*override*/;
+                virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
+                virtual bool is_unknown() const /*override*/;
 HEADER_BINARY_POWERPC_INSTRUCTION_END
 
 
 
 HEADER_BINARY_ARM_INSTRUCTION_START
         public:
-                /* These virtual functions are implemented in DisassemblerArm.C */
-                virtual bool terminatesBasicBlock();
-                virtual std::set<rose_addr_t> get_successors(bool* complete);
-                virtual bool is_unknown() const;
+                virtual bool terminates_basic_block() /*override*/;
+                virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
+                virtual bool is_unknown() const /*override*/;
 HEADER_BINARY_ARM_INSTRUCTION_END
+
+
+
+HEADER_BINARY_MIPS_INSTRUCTION_START
+	public:
+                virtual bool terminates_basic_block() /*override*/;
+		virtual bool is_function_call(const std::vector<SgAsmInstruction*> &insns,
+			     		      rose_addr_t *target/*out*/) /*override*/;
+		virtual bool is_function_return(const std::vector<SgAsmInstruction*> &insns) /*override*/;
+                virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
+                virtual bool is_unknown() const /*override*/;
+		virtual bool get_branch_target(rose_addr_t *target) /*override*/;
+HEADER_BINARY_MIPS_INSTRUCTION_END
 
 
 
@@ -4338,13 +4356,6 @@ HEADER_BINARY_TYPE_128bit_FLOAT_END
 
 
 
-HEADER_BINARY_REGISTER_REFERENCE_EXPRESSION_START
-        // Note that the auto-generated version of this is const
-        virtual SgAsmType* get_type();
-HEADER_BINARY_REGISTER_REFERENCE_EXPRESSION_END
-
-
-
 HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_START
 
        // DQ (10/28/2009): Added enum values to replace magin number vlues where will confusing in the source code.
@@ -4505,12 +4516,6 @@ HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_START
        *  \deprecated Use RegisterDictionary::lookup() instead.
        */
           std::string get_segregnames(segregnames_enum n);
-
-       // Note that the auto-generated version of this is const
-          virtual SgAsmType* get_type();
-
-        SgAsmx86RegisterReferenceExpression(const RegisterDescriptor&);
-
 HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_END
 
 
@@ -4524,25 +4529,7 @@ HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_START
                 f = 8, // flags field mask bit
                 last_position_in_suffix
         };
-
-        SgAsmArmRegisterReferenceExpression(const RegisterDescriptor &rdesc) {
-                p_descriptor = rdesc;
-        }
-
-        // Note that the auto-generated version of this is const
-        virtual SgAsmType* get_type();
 HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_END
-
-
-
-HEADER_BINARY_POWERPC_REGISTER_REFERENCE_EXPRESSION_START
-        SgAsmPowerpcRegisterReferenceExpression(const RegisterDescriptor &rdesc) {
-                p_descriptor = rdesc;
-        }
-
-        // Note that the auto-generated version of this is const
-        virtual SgAsmType* get_type();
-HEADER_BINARY_POWERPC_REGISTER_REFERENCE_EXPRESSION_END
 
 
 
@@ -4940,7 +4927,7 @@ SgAsmInstruction::cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info
         {
        // cout << "Found branch" << endl;
           uint64_t addr = 0;
-          bool knownTarget = getAsmKnownBranchTarget(this, addr);
+          bool knownTarget = get_branch_target(&addr);
           if (knownTarget)
              {
             // cout << "Has known target " << std::hex << addr << endl;
@@ -5228,24 +5215,8 @@ SOURCE_BINARY_VECTOR_VALUE_EXPRESSION_START
         }
 SOURCE_BINARY_VECTOR_VALUE_EXPRESSION_END
 
-SOURCE_BINARY_REGISTER_REFERENCE_EXPRESSION_START
-
-// Note that the auto-generated version of this is const
-SgAsmType* SgAsmRegisterReferenceExpression::get_type() {
-  ROSE_ASSERT (false);
-        // tps (12/9/2009) : MSC requires a return value
-     return NULL;
-  
-}
-
-SOURCE_BINARY_REGISTER_REFERENCE_EXPRESSION_END
 
 SOURCE_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_START
-
-SgAsmx86RegisterReferenceExpression::SgAsmx86RegisterReferenceExpression(const RegisterDescriptor &rdesc) {
-        p_descriptor = rdesc;
-}
-
 std::string
 SgAsmx86RegisterReferenceExpression::get_regnames8l(regnames8l_enum n)
    {
@@ -5299,33 +5270,9 @@ SgAsmx86RegisterReferenceExpression::get_segregnames(segregnames_enum n)
      ROSE_ASSERT(n < e_segregnames_last_value);
      return segregnames[n]; // offset to account for error value in enum
    }
-
-// Note that the auto-generated version of this is const
-SgAsmType* SgAsmx86RegisterReferenceExpression::get_type() {
-  return p_type;
-}
-
 SOURCE_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_END
 
-SOURCE_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_START
 
-// Note that the auto-generated version of this is const
-SgAsmType* SgAsmArmRegisterReferenceExpression::get_type() {
-  return p_type;
-}
-
-SOURCE_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_END
-
-SOURCE_BINARY_POWERPC_REGISTER_REFERENCE_EXPRESSION_START
-
-// Note that the auto-generated version of this is const
-SgAsmType*
-SgAsmPowerpcRegisterReferenceExpression::get_type()
-   {
-     return p_type;
-   }
-
-SOURCE_BINARY_POWERPC_REGISTER_REFERENCE_EXPRESSION_END
 
 SOURCE_BINARY_MEMORY_REFERENCE_EXPRESSION_START
 

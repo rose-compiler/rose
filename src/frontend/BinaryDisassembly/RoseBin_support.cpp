@@ -207,10 +207,3 @@ bool isAsmBranch(SgAsmInstruction* insn) {
   }
 }
 
-bool getAsmKnownBranchTarget(SgAsmInstruction* insn, uint64_t& addr) {
-  switch (insn->variantT()) {
-    case V_SgAsmx86Instruction: return x86GetKnownBranchTarget(isSgAsmx86Instruction(insn), addr);
-    // case V_SgAsmArmInstruction: return armGetKnownBranchTarget(isSgAsmArmInstruction(insn), addr);
-        default: { ROSE_ASSERT (!"Bad instruction type"); /* Avoid MSVC warning. */ return false; }
-  }
-}

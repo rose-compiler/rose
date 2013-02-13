@@ -142,7 +142,7 @@ protected:
         Disassembler::AddressSet get_successors(bool *complete) const { return node->get_successors(complete); }
         rose_addr_t get_address() const { return node->get_address(); }
         size_t get_size() const { return node->get_size(); }
-        bool terminatesBasicBlock() const { return node->terminatesBasicBlock(); }
+        bool terminates_basic_block() const { return node->terminates_basic_block(); }
         SgUnsignedCharList get_raw_bytes() const { return node->get_raw_bytes(); } // FIXME: should return const ref?
     };
 

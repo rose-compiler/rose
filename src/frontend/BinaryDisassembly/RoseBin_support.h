@@ -365,7 +365,6 @@ void normalizeArmMnemonic(std::string& mnemonic);
 // From RoseBin_support.cpp:
 bool isAsmUnconditionalBranch(SgAsmInstruction*);
 bool isAsmBranch(SgAsmInstruction*);
-bool getAsmKnownBranchTarget(SgAsmInstruction*, uint64_t& addr);
 
 #endif
 

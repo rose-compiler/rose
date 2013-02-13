@@ -703,46 +703,6 @@ bool x86InstructionIsFloatingPoint(SgAsmx86Instruction *insn)
     return false;               // outside of switch to shut up warnings
 }
 
-bool x86GetKnownBranchTarget(SgAsmx86Instruction* insn, uint64_t& addr) {
-  // Treats far destinations as "unknown"
-  switch (insn->get_kind()) {
-    case x86_call:
-    case x86_farcall:
-    case x86_jmp:
-    case x86_ja:
-    case x86_jae:
-    case x86_jb:
-    case x86_jbe:
-    case x86_jcxz:
-    case x86_jecxz:
-    case x86_jrcxz:
-    case x86_je:
-    case x86_jg:
-    case x86_jge:
-    case x86_jl:
-    case x86_jle:
-    case x86_jne:
-    case x86_jno:
-    case x86_jns:
-    case x86_jo:
-    case x86_jpe:
-    case x86_jpo:
-    case x86_js:
-    case x86_loop:
-    case x86_loopnz:
-    case x86_loopz: {
-      SgAsmOperandList* ls = insn->get_operandList();
-      const std::vector<SgAsmExpression*>& exprs = ls->get_operands();
-      if (exprs.size() != 1) return false;
-      SgAsmExpression* dest = exprs[0];
-      if (!isSgAsmValueExpression(dest)) return false;
-      addr = SageInterface::getAsmConstant(isSgAsmValueExpression(dest));
-      return true;
-    }
-    default: return false;
-  }
-}
-
 // DEPRECATED. Use stringifyX86RegisterClass(n, "x86_regclass_").c_str() instead. [RPM 2010-10-13]
 const char* regclassToString(X86RegisterClass n) {
   static const char* names[] = {"unknown", "gpr", "segment", "cr", "dr", "st", "mm", "xmm", "ip", "st_top", "flags"};
