@@ -107,10 +107,12 @@ namespace ELF{
 // Required to be run before PRE!
 #include "constantFolding.h"
 
+// DQ (2/12/2013): This should be removed since it is now supported by the new name qualification.
+// It is also an error for ROSE compiling ROSE which perhaps shuld be invistigated further.
 // DQ (5/8/2007): Added Robert Preissl's support for hidden type and declartion lists.
-#include "HiddenList.h"
-#include "HiddenList_Output.h"
-#include "HiddenList_Intersection.h"
+// #include "HiddenList.h"
+// #include "HiddenList_Output.h"
+// #include "HiddenList_Intersection.h"
 
 // DQ (1/25/2008): Added cfgToDot.h as suggested by Jeremiah
 #include "cfgToDot.h"

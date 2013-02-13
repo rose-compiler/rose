@@ -9051,7 +9051,7 @@ SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednames
           printf ("Warning: In SageBuilder::buildNamespaceDeclaration_nfi(): scope == NULL \n");
         }
 
-     printf ("In SageBuilder::buildNamespaceDeclaration_nfi(): mysymbol = %p \n",mysymbol);
+  // printf ("In SageBuilder::buildNamespaceDeclaration_nfi(): mysymbol = %p \n",mysymbol);
      if (mysymbol != NULL)
         {
           nondefdecl = isSgNamespaceDeclarationStatement(mysymbol->get_declaration());
@@ -9070,7 +9070,7 @@ SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednames
           nondefdecl = new SgNamespaceDeclarationStatement(name,NULL, unnamednamespace);
           ROSE_ASSERT(nondefdecl != NULL);
 
-          printf ("SageBuilder::buildNamespaceDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
+       // printf ("SageBuilder::buildNamespaceDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
 
        // The nondefining declaration will not appear in the source code, but is compiler
        // generated (so we have something about the class that we can reference; e.g in
@@ -9107,7 +9107,7 @@ SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednames
         }
 
 
-     printf ("SageBuilder::buildNamespaceDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
+  // printf ("SageBuilder::buildNamespaceDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
 
   // setOneSourcePositionForTransformation(nondefdecl);
      setOneSourcePositionNull(nondefdecl);
@@ -10959,6 +10959,9 @@ SgFile*
 SageBuilder::buildFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project/*=NULL*/)
    {
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+
+     printf ("In SageBuilder::buildFile(inputFileName = %s, outputFileName = %s, project = %p \n",inputFileName.c_str(),outputFileName.c_str(),project);
+
      ROSE_ASSERT(inputFileName.size()!=0);// empty file name is not allowed.
      string sourceFilename = inputFileName, fullname;
      Rose_STL_Container<std::string> arglist;
@@ -11083,6 +11086,38 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #endif
    }// end SgFile* buildFile()
 
+
+//! Build a SgFile node
+SgSourceFile*
+SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* project)
+   {
+  // DQ (2/9/2013): Adding support to build a SgSourceFile with an empty global scope.
+
+     printf ("In SageBuilder::buildSourceFile(outputFileName = %s, project = %p \n",outputFileName.c_str(),project);
+
+     SgSourceFile* newFile = new SgSourceFile();
+     ROSE_ASSERT(newFile != NULL);
+
+  // Mark as a C file for now.
+     newFile->set_C_only(true);
+
+  // Specify the name of the file (and line and column numbers), using a Sg_File_Info object.
+     Sg_File_Info* fileInfo = new Sg_File_Info(outputFileName,0,0);
+     ROSE_ASSERT(fileInfo != NULL);
+
+     newFile->set_startOfConstruct(fileInfo);
+     fileInfo->set_parent(newFile);
+
+     SgGlobal* globalScope = new SgGlobal();
+     ROSE_ASSERT(globalScope != NULL);
+
+     newFile->set_globalScope(globalScope);
+     globalScope->set_parent(newFile);
+
+     ROSE_ASSERT(newFile->get_globalScope() != NULL);
+
+     return newFile;
+   }
 
 PreprocessingInfo* SageBuilder::buildComment(SgLocatedNode* target, const std::string & content,PreprocessingInfo::RelativePositionType position/*=PreprocessingInfo::before*/,PreprocessingInfo::DirectiveType dtype/* = PreprocessingInfo::CpreprocessorUnknownDeclaration*/)
    {
