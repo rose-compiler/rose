@@ -137,7 +137,7 @@ RegisterDictionary::dictionary_for_isa(SgAsmExecutableFileFormat::InsSetArchitec
             return dictionary_amd64();
 
         case EFF::ISA_MIPS_Family:
-            return dictionary_mips32();
+            return dictionary_mips32_altnames(); // disassembler assumes only dictionary_mips32()
 
         case EFF::ISA_ARM_Family:
             return dictionary_arm7();
@@ -692,6 +692,58 @@ RegisterDictionary::dictionary_mips32()
         // Additional implementation-specific coprocessor 2 registers are not part of the dictionary. Coprocessor 2 may have up
         // to 32 general purpose registers and up to 32 control registers.  They use the major numbers mips_regclass_cp2gpr and
         // mips_regclass_cp2spr.
+    }
+    return regs;
+}
+
+/** MIPS32 Release 1 with special register names.
+ *
+ * This is the same dictionary as dictionary_mips32(), except additional names are supplied for the general purpose registers
+ * (e.g., "zero" for r0, "at" for r1, "gp" for r28, "sp" for r29, "fp" for r30, "ra" for r31, etc.).  This is intended mostly
+ * for the AsmUnparser; any layer that looks up registers by name should probably use the standard names rather than relying on
+ * these alternate names.  */ 
+const RegisterDictionary *
+RegisterDictionary::dictionary_mips32_altnames()
+{
+    static RegisterDictionary *regs = NULL;
+    if (!regs) {
+        regs = new RegisterDictionary("mips32");
+        regs->insert(dictionary_mips32());
+
+        // Alternate names for the general purpose registers
+        regs->insert("zero", mips_regclass_gpr, 0,  0, 32);                     // always equal to zero
+        regs->insert("at",   mips_regclass_gpr, 1,  0, 32);                     // assembler temporary
+        regs->insert("v0",   mips_regclass_gpr, 2,  0, 32);                     // return value from a function call
+        regs->insert("v1",   mips_regclass_gpr, 3,  0, 32);
+        regs->insert("a0",   mips_regclass_gpr, 4,  0, 32);                     // first four function arguments
+        regs->insert("a1",   mips_regclass_gpr, 5,  0, 32);
+        regs->insert("a2",   mips_regclass_gpr, 6,  0, 32);
+        regs->insert("a3",   mips_regclass_gpr, 7,  0, 32);
+        regs->insert("t0",   mips_regclass_gpr, 8,  0, 32);                     // temporary variables; need not be preserved
+        regs->insert("t1",   mips_regclass_gpr, 9,  0, 32);
+        regs->insert("t2",   mips_regclass_gpr, 10, 0, 32);
+        regs->insert("t3",   mips_regclass_gpr, 11, 0, 32);
+        regs->insert("t4",   mips_regclass_gpr, 12, 0, 32);
+        regs->insert("t5",   mips_regclass_gpr, 13, 0, 32);
+        regs->insert("t6",   mips_regclass_gpr, 14, 0, 32);
+        regs->insert("t7",   mips_regclass_gpr, 15, 0, 32);
+        regs->insert("s0",   mips_regclass_gpr, 16, 0, 32);                     // temporary variables; must be preserved
+        regs->insert("s1",   mips_regclass_gpr, 17, 0, 32);
+        regs->insert("s2",   mips_regclass_gpr, 18, 0, 32);
+        regs->insert("s3",   mips_regclass_gpr, 19, 0, 32);
+        regs->insert("s4",   mips_regclass_gpr, 20, 0, 32);
+        regs->insert("s5",   mips_regclass_gpr, 21, 0, 32);
+        regs->insert("s6",   mips_regclass_gpr, 22, 0, 32);
+        regs->insert("s7",   mips_regclass_gpr, 23, 0, 32);
+        regs->insert("t8",   mips_regclass_gpr, 24, 0, 32);                     // two more temporaries; need not be preserved
+        regs->insert("t9",   mips_regclass_gpr, 25, 0, 32);
+        regs->insert("k0",   mips_regclass_gpr, 26, 0, 32);                     // kernel use; may change unexpectedly
+        regs->insert("k1",   mips_regclass_gpr, 27, 0, 32);
+        regs->insert("gp",   mips_regclass_gpr, 28, 0, 32);                     // global pointer
+        regs->insert("sp",   mips_regclass_gpr, 29, 0, 32);                     // stack pointer
+        regs->insert("s8",   mips_regclass_gpr, 30, 0, 32);                     // temp; must be preserved (or "fp")
+        regs->insert("fp",   mips_regclass_gpr, 30, 0, 32);                     // stack frame pointer (or "s8")
+        regs->insert("ra",   mips_regclass_gpr, 31, 0, 32);                     // return address (link register)
     }
     return regs;
 }

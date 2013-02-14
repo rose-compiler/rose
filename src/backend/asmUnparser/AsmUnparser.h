@@ -159,8 +159,27 @@ class SgAsmInterpretation;
  *
  *  @section AsmUnparser_Examples Examples
  *
- *  This example shows how to escape entire instructions for HTML output, and surround each instruction with an HTML table row.
- *  We could have just as easily combined all three parts into a single functor, but doing it this way makes the example
+ *  @subsection Ex1 Changing register names
+ *
+ *  This example shows how one can replace a register name with something else.  Let's say that MIPS32 Release 1 instructions
+ *  are being unparsed and you'd rather see "lr" (for "link register") rather than "r31" or "ra".  This can be accomplished by
+ *  creating a new register dictionary, adding the definition for "lr", and using that dictionary for unparsing:
+ *
+ *  @code
+ *  RegisterDictionary myRegisters("My Mips32 Release 1");
+ *  myRegisters.insert(RegisterDictionary::dictionary_mips32()); // incorporate MIPS32 defns
+ *  RegisterDescriptor *r31 = myRegisters.lookup("r31"); // definition for r31
+ *  myRegisters.insert("lr", *r31); // new name, same old definition
+ *  AsmUnparser unparser;
+ *  unparser.set_registers(&myRegisters);
+ *  SgAsmInterpretation interp = ...; // the stuff to unparse
+ *  unparser.unparse(std::cout, interp);
+ *  @endcode
+ *
+ *  @subsection Ex2 Unparsing to HTML
+ *
+ *  This next example shows how to escape entire instructions for HTML output, and surround each instruction with an HTML table
+ *  row.  We could have just as easily combined all three parts into a single functor, but doing it this way makes the example
  *  a bit more interesting.
  *
  *  @code

@@ -38,6 +38,7 @@ public:
     static const RegisterDictionary *dictionary_arm7();
     static const RegisterDictionary *dictionary_powerpc();
     static const RegisterDictionary *dictionary_mips32();
+    static const RegisterDictionary *dictionary_mips32_altnames();
 
     RegisterDictionary(const std::string &name)
         :name(name) {}
