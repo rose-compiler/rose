@@ -72,7 +72,7 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
         if (genericExpression != NULL)
         {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-          string name = unparseExpression(genericExpression);
+          string name = unparseExpression(genericExpression, NULL, NULL);
           ROSE_ASSERT(name.empty() == false);
           nodelabel += string("\\n") + name;
 #else

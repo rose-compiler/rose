@@ -116,6 +116,41 @@ RegisterDictionary::print(std::ostream &o) const {
     }
 }
 
+// class method
+const RegisterDictionary *
+RegisterDictionary::dictionary_for_isa(SgAsmExecutableFileFormat::InsSetArchitecture isa)
+{
+    typedef SgAsmExecutableFileFormat EFF;
+    switch (isa & EFF::ISA_FAMILY_MASK) {
+        case EFF::ISA_IA32_Family:
+            switch (isa) {
+                case EFF::ISA_IA32_286:         return dictionary_i286();
+                case EFF::ISA_IA32_386:         return dictionary_i386();
+                case EFF::ISA_IA32_486:         return dictionary_i486();
+                case EFF::ISA_IA32_Pentium:     return dictionary_pentium();
+                case EFF::ISA_IA32_Pentium4:    return dictionary_pentium4();
+                default:                        return dictionary_pentium4();
+            }
+            break;
+
+        case EFF::ISA_X8664_Family:
+            return dictionary_amd64();
+
+        case EFF::ISA_MIPS_Family:
+            return dictionary_mips32();
+
+        case EFF::ISA_ARM_Family:
+            return dictionary_arm7();
+
+        case EFF::ISA_PowerPC:
+        case EFF::ISA_PowerPC_64bit:
+            return dictionary_powerpc();
+
+        default:
+            return NULL;
+    }
+}
+
 /** Intel 8086 registers.
  *
  *  The Intel 8086 has fourteen 16-bit registers. Four of them (AX, BX, CX, DX) are general registers (although each may have

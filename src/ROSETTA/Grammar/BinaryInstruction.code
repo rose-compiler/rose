@@ -32,7 +32,8 @@ HEADER_GENERIC_FILE_PREDECLARATION_START
 HEADER_GENERIC_FILE_PREDECLARATION_END
 
 HEADER_INTERPRETATION_PREDECLARATION_START
-#include "MemoryMap.h"
+class MemoryMap;
+class RegisterDictionary;
 HEADER_INTERPRETATION_PREDECLARATION_END
 
 HEADER_BINARY_INSTRUCTION_PREDECLARATION_START
@@ -57,48 +58,30 @@ HEADER_BINARY_END
 
 
 HEADER_INTERPRETATION_START
-     public:
-       // DQ (10/20/2010): This section does not have a source code block for ROSETTA to put the function definition.
-          SgAsmInterpretation()
-             : p_map(NULL), coverageComputed(false), percentageCoverage(0.0), p_dwarf_info(NULL), p_headers(NULL), p_global_block(NULL) 
-             {
-               ctor();
-             }
-          SgAsmGenericFilePtrList get_files() const; /*files referenced by interpretation*/
-          MemoryMap *get_map() const {return p_map;}
-          void set_map(MemoryMap* m) {p_map=m;}
+	// NOTE: definitions are in src/frontend/Disassemblers/SgAsmInterpretation.C
+	public:
+		SgAsmInterpretation()
+			: p_map(NULL), p_registers(NULL), coverageComputed(false), percentageCoverage(0.0), p_dwarf_info(NULL),
+			  p_headers(NULL), p_global_block(NULL) {
+			ctor();
+             	}
+          	SgAsmGenericFilePtrList get_files() const; /*files referenced by interpretation*/
+          	MemoryMap *get_map() const {return p_map;}
+          	void set_map(MemoryMap* m) {p_map=m;}
+		const RegisterDictionary *get_registers() const;
+		void set_registers(const RegisterDictionary*);
+		void set_coverageComputed(bool x) { coverageComputed = x; }
+		void set_percentageCoverage(double x) { percentageCoverage = x; }
 
-      //! Compute the percentage of coverage based on the length of disassembled functions (in bytes) compared 
-      //! to the size of the section which are disassembled (in bytes) (uses coverageComputed and percentageCoverage data members).
-          // PC (05/16/2010): Commented out as no definition exists
-          // int get_disassembledInstructionCoverageMetricForDisassembledSections() const;
+	private:
+		void ctor();
+          	MemoryMap *p_map;
+		const RegisterDictionary *p_registers;
+          	bool coverageComputed; // true iff percentageCoverage has been computed
 
-      //! Compute the percentage of coverage based on the length of disassembled functions (in bytes) compared 
-      //! to the size of the address range of the top of the first block in memory to the end of the last block in memory.
-          // PC (05/16/2010): Commented out as no definition exists
-          // double get_disassembledInstructionCoverageMetricForAddressRangeOfFunctionBlocks() const;
-
-          void set_coverageComputed( bool x )
-             {
-               coverageComputed = x;
-             }
-
-          void set_percentageCoverage( double x )
-             {
-               percentageCoverage = x;
-             }
-
-     private:
-          void ctor();
-          MemoryMap *p_map;
-
-       // DQ (4/29/2010): Added support for computing the percentage of coverage of the disassembled functions relative to the section size.
-      //! Save as state if the coverage was computed (so that we can know when the value in percentageCoverage makes sense).
-          bool coverageComputed;
-
-      //! The percentage of an interpretation where each section is marked as executable and identified for disassembly into instructions.
-          double percentageCoverage;
-
+	        //! The percentage of an interpretation where each section is marked as executable and identified for
+		//  disassembly into instructions.
+		double percentageCoverage;
 HEADER_INTERPRETATION_END
 
 
@@ -138,294 +121,12 @@ HEADER_STATIC_DATA_END
 
 
 HEADER_BINARY_FILE_START
-
-#if 0
-       // enums for ELF header information
-
-#error "DEAD CODE!"
-
-       // unsigned char e_ident[EI_NIDENT]
-       // typedef unsigned char magic_number_vector_type[EI_NIDENT];
-
-       // Executable and Linking Format class kind
-          enum elf_class_kind_enum
-             {
-               e_class_error   = 0,
-               e_class_unknown = 1,
-               e_class_none    = 2, // value maps to ELFCLASSNONE
-               e_class_32      = 3, // value maps to ELFCLASS32
-               e_class_64      = 4, // value maps to ELFCLASS64
-               e_class_last
-             };
-
-#error "DEAD CODE!"
-
-          enum elf_data_encoding_enum
-             {
-               e_data_encoding_error                  = 0,
-               e_data_encoding_unknown                = 1,
-               e_data_encoding_none                   = 2, // value maps to ELFDATANONE
-               e_data_encoding_least_significant_byte = 3, // value maps to ELFDATA2LSB
-               e_data_encoding_most_significant_byte  = 4, // value maps to ELFDATA2MSB
-               e_data_encoding_last
-             };
-
-          enum elf_version_enum
-             {
-               e_version_error   = 0,
-               e_version_unknown = 1,
-               e_version_none    = 2, // value maps to EV_NONE
-               e_version_current = 3, // value maps to EV_CURRENT
-               e_version_last
-             };
-
-
-#error "DEAD CODE!"
-
-          enum elf_OS_ABI_identification_enum
-             {
-               e_OS_ABI_error      = 0,
-               e_OS_ABI_unknown    = 1,
-               e_OS_ABI_none       = 2,
-               e_OS_ABI_SYSV       = 3, // Note that ELFOSABI_SYSV == ELFOSABI_NONE (the two are alised)
-               e_OS_ABI_HPUX       = 4,
-               e_OS_ABI_NETBSD     = 5,
-               e_OS_ABI_LINUX      = 6,
-               e_OS_ABI_SOLARIS    = 7,
-               e_OS_ABI_AIX        = 8,
-               e_OS_ABI_IRIX       = 9,
-               e_OS_ABI_FREEBSD    = 10,
-               e_OS_ABI_TRU64      = 11,
-               e_OS_ABI_MODESTO    = 12,
-               e_OS_ABI_OPENBSD    = 13,
-               e_OS_ABI_ARM        = 14,
-               e_OS_ABI_STANDALONE = 15,
-               e_OS_ABI_last
-             };
-
-#error "DEAD CODE!"
-
-          enum elf_object_file_type_enum
-             {
-               e_file_type_error       = 0,
-               e_file_type_unknown     = 1,
-               e_file_type_none        = 2,
-               e_file_type_relocatable = 3,
-               e_file_type_executable  = 4,
-               e_file_type_shared      = 5,
-               e_file_type_core        = 6,
-               e_file_type_last
-             };
-
-
-#error "DEAD CODE!"
-
-       // DQ (1/8/2008): For a collection of interesting binaries go to: http://www.distributed.net/source/
-          enum elf_machine_architecture_enum
-             {
-               e_machine_architecture_error                    = 0,
-               e_machine_architecture_unknown                  = 1,
-               e_machine_architecture_none                     = 2, // Maps to EM_NONE
-               e_machine_architecture_ATT_WE_32100             = 3,
-               e_machine_architecture_Sun_Sparc                = 4,
-               e_machine_architecture_Intel_80386              = 5,
-               e_machine_architecture_Motorola_m68k_family     = 6,
-               e_machine_architecture_Motorola_m88k_family     = 7,
-               e_machine_architecture_Intel_80860              = 8,
-               e_machine_architecture_MIPS_R3000_big_endian    = 9,
-               e_machine_architecture_IBM_System_370           = 10,
-               e_machine_architecture_MIPS_R3000_little_endian = 11,
-               e_machine_architecture_HPPA                     = 12,
-               e_machine_architecture_Fujitsu_VPP500           = 13,
-               e_machine_architecture_Sun_v8plus               = 14,
-               e_machine_architecture_Intel_80960              = 15,
-               e_machine_architecture_PowerPC                  = 16,
-               e_machine_architecture_PowerPC_64bit            = 17,
-               e_machine_architecture_IBM_S390                 = 18,
-               e_machine_architecture_NEC_V800_series          = 19,
-               e_machine_architecture_Fujitsu_FR20             = 20,
-               e_machine_architecture_TRW_RH_32                = 21,
-               e_machine_architecture_Motorola_RCE             = 22,
-               e_machine_architecture_ARM                      = 23,
-               e_machine_architecture_Digital_Alpha_fake       = 24,
-               e_machine_architecture_Hitachi_SH               = 25,
-               e_machine_architecture_SPARC_v9_64bit           = 26,
-               e_machine_architecture_Siemens_Tricore          = 27,
-               e_machine_architecture_Argonaut_RISC_Core       = 28,
-               e_machine_architecture_Hitachi_H8_300           = 29,
-               e_machine_architecture_Hitachi_H8_300H          = 30,
-               e_machine_architecture_Hitachi_H8S              = 31,
-               e_machine_architecture_Hitachi_H8_500           = 32,
-               e_machine_architecture_Intel_Merced             = 33,
-               e_machine_architecture_Stanford_MIPS_X          = 34,
-               e_machine_architecture_Motorola_Coldfire        = 35,
-               e_machine_architecture_Motorola_M68HC12         = 36,
-               e_machine_architecture_Fujitsu_MMA_Multimedia_Accelerator                  = 37,
-               e_machine_architecture_Siemens_PCP                                         = 38,
-               e_machine_architecture_Sony_nCPU_embeeded_RISC                             = 39,
-               e_machine_architecture_Denso_NDR1_microprocessor                           = 40,
-               e_machine_architecture_Motorola_Start_Core_processor                       = 41,
-               e_machine_architecture_Toyota_ME16_processor                               = 42,
-               e_machine_architecture_STMicroelectronic_ST100_processor                   = 43,
-               e_machine_architecture_Advanced_Logic_Corp_Tinyj_emb_family                = 44,
-               e_machine_architecture_AMD_x86_64_architecture                             = 45,
-               e_machine_architecture_Sony_DSP_Processor                                  = 46,
-               e_machine_architecture_Siemens_FX66_microcontroller                        = 47,
-               e_machine_architecture_STMicroelectronics_ST9_plus_8_16_microcontroller    = 48,
-               e_machine_architecture_STMicroelectronics_ST7_8bit_microcontroller         = 49,
-               e_machine_architecture_Motorola_MC68HC16_microcontroller                   = 50,
-               e_machine_architecture_Motorola_MC68HC11_microcontroller                   = 51,
-               e_machine_architecture_Motorola_MC68HC08_microcontroller                   = 52,
-               e_machine_architecture_Motorola_MC68HC05_microcontroller                   = 53,
-               e_machine_architecture_Silicon_Graphics_SVx                                = 54,
-               e_machine_architecture_STMicroelectronics_ST19_8bit_microcontroller        = 55,
-               e_machine_architecture_Digital_VAX                                         = 56,
-               e_machine_architecture_Axis_Communications_32bit_embedded_processor        = 57,
-               e_machine_architecture_Infineon_Technologies_32bit_embedded_processor      = 58,
-               e_machine_architecture_Element_14_64bit_DSP_Processor                      = 59,
-               e_machine_architecture_LSI_Logic_16bit_DSP_Processor                       = 60,
-               e_machine_architecture_Donald_Knuths_educational_64bit_processor           = 61,
-               e_machine_architecture_Harvard_University_machine_independent_object_files = 62,
-               e_machine_architecture_SiTera_Prism                                        = 63,
-               e_machine_architecture_Atmel_AVR_8bit_microcontroller                      = 64,
-               e_machine_architecture_Fujitsu_FR30                                        = 65,
-               e_machine_architecture_Mitsubishi_D10V                                     = 66,
-               e_machine_architecture_Mitsubishi_D30V                                     = 67,
-               e_machine_architecture_NEC_v850                                            = 68,
-               e_machine_architecture_Mitsubishi_M32R                                     = 69,
-               e_machine_architecture_Matsushita_MN10300                                  = 70,
-               e_machine_architecture_Matsushita_MN10200                                  = 71,
-               e_machine_architecture_picoJava                                            = 72,
-               e_machine_architecture_OpenRISC_32bit_embedded_processor                   = 73,
-               e_machine_architecture_ARC_Cores_Tangent_A5                                = 74,
-               e_machine_architecture_Tensilica_Xtensa_Architecture                       = 75,
-               e_machine_architecture_Digital_Alpha                                       = 76,
-               e_machine_architecture_last
-             };
-
-#error "DEAD CODE!"
-
-       // DQ (2/11/2008): Added support for Windows binaries
-          enum pe_processor_architecture_enum
-             {
-               e_processor_architecture_error   = 0,
-               e_processor_architecture_unknown = 1,
-               e_processor_architecture_none    = 2,
-               e_processor_architecture_INTEL   = 3,
-               e_processor_architecture_MIPS    = 4,
-               e_processor_architecture_ALPHA   = 5,
-               e_processor_architecture_PPC     = 6,
-               e_processor_architecture_SHX     = 7,
-               e_processor_architecture_ARM     = 8,
-               e_processor_architecture_IA64    = 9,
-               e_processor_architecture_ALPHA64 = 10,
-               e_processor_architecture_MSIL    = 11,
-               e_processor_architecture_AMD64   = 12,
-               e_processor_architecture_UNKNOWN = 13,
-               e_processor_architecture_last
-             };
-
-#error "DEAD CODE!"
-
-       // DQ (2/11/2008): Added support for Windows binaries
-          enum pe_processor_type_enum
-             {
-               e_processor_type_error         = 0,
-               e_processor_type_unknown       = 1,
-               e_processor_type_none          = 2,
-               e_processor_type_INTEL_386     = 3,
-               e_processor_type_INTEL_486     = 4,
-               e_processor_type_INTEL_PENTIUM = 5,
-               e_processor_type_INTEL_860     = 6,
-               e_processor_type_INTEL_IA64    = 7,
-               e_processor_type_AMD_X8664     = 8,
-               e_processor_type_MIPS_R2000    = 9,
-               e_processor_type_MIPS_R3000    = 10,
-               e_processor_type_MIPS_R4000    = 11,
-               e_processor_type_ALPHA_21064   = 12,
-               e_processor_type_PPC_601       = 13,
-               e_processor_type_PPC_603       = 14,
-               e_processor_type_PPC_604       = 15,
-               e_processor_type_PPC_620       = 16,
-               e_processor_type_HITACHI_SH3   = 17,
-               e_processor_type_HITACHI_SH3E  = 18,
-               e_processor_type_HITACHI_SH4   = 19,
-               e_processor_type_MOTOROLA_821  = 20,
-               e_processor_type_SHx_SH3       = 21,
-               e_processor_type_SHx_SH4       = 22,
-               e_processor_type_STRONGARM     = 23,
-               e_processor_type_ARM720        = 24,
-               e_processor_type_ARM820        = 25,
-               e_processor_type_ARM920        = 26,
-               e_processor_type_ARM_7TDMI     = 27,
-               e_processor_type_last
-             };
-
-       // DQ (6/15/2008): Adding interface to simplify migration to newer executable formate IR nodes.
-       // JJW (6/18/2008): Commenting out because this function doesn't have a definition
-       // SgAsmGenericSectionPtrList & get_sectionList();
-#endif
-
           void post_construction_initialization();
-
 HEADER_BINARY_FILE_END
 
 
-HEADER_BINARY_FILE_SECTION_HEADER_START
-
-#if 0
-          enum elf_version_enum
-             {
-               e_version_error   = 0,
-               e_version_unknown = 1,
-               e_version_none    = 2, // value maps to EV_NONE
-               e_version_current = 3, // value maps to EV_CURRENT
-               e_version_last
-             };
-#endif
-
-HEADER_BINARY_FILE_SECTION_HEADER_END
 
 
-HEADER_BINARY_FILE_PROGRAM_HEADER_START
-
-#if 0
-          enum elf_type_enum
-             {
-               e_type_error                = 0,
-               e_type_unknown              = 1,
-               e_type_null                 = 2,
-               e_type_loadable_segment     = 3,
-               e_type_dynamic_linking_info = 4,
-               e_type_interpreter          = 5,
-               e_type_note                 = 6,
-               e_type_shlib_reserved       = 7,
-               e_type_program_header_table = 8,
-               e_type_processor_specific   = 9,
-               e_type_last
-             };
-#endif
-
-HEADER_BINARY_FILE_PROGRAM_HEADER_END
-
-
-HEADER_BINARY_FILE_SECTION_HEADER_LIST_START
-       // const SgAsmSectionHeaderPtrList & get_section_headers() const;
-       // SgAsmSectionHeaderPtrList & get_section_headers();
-
-HEADER_BINARY_FILE_SECTION_HEADER_LIST_END
-
-
-HEADER_BINARY_FILE_PROGRAM_HEADER_LIST_START
-       // const SgAsmProgramHeaderPtrList & get_program_headers() const;
-       // SgAsmProgramHeaderPtrList & get_program_headers();
-HEADER_BINARY_FILE_PROGRAM_HEADER_LIST_END
-
-
-
-HEADER_BINARY_VALUE_EXPRESSION_START
-
-HEADER_BINARY_VALUE_EXPRESSION_END
 
 HEADER_INTEGER_VALUE_EXPRESSION_START
         public:
@@ -440,52 +141,156 @@ HEADER_INTEGER_VALUE_EXPRESSION_START
                 uint64_t get_absolute_value(size_t nbits=0) const;
                 int64_t get_absolute_signed_value() const;
                 void set_absolute_value(uint64_t);
-                virtual SgAsmType *get_type();
 HEADER_INTEGER_VALUE_EXPRESSION_END
+
+
+
 
 HEADER_BYTE_VALUE_EXPRESSION_START
         public:
-                explicit SgAsmByteValueExpression(uint8_t n) { set_significant_bits(8); set_value(n); }
+		SgAsmByteValueExpression() { ctor(); }
+                explicit SgAsmByteValueExpression(uint8_t n) { ctor(n); }
                 void set_value(uint8_t);
                 uint8_t get_value() const;
-                virtual SgAsmType* get_type();
+	protected:
+		void ctor();
+		void ctor(uint8_t);
 HEADER_BYTE_VALUE_EXPRESSION_END
+SOURCE_BYTE_VALUE_EXPRESSION_START
+		void SgAsmByteValueExpression::ctor() {
+			set_significant_bits(8);
+			set_value(0);
+			set_type(SgAsmTypeByte::createType());
+		}
+		void SgAsmByteValueExpression::ctor(uint8_t n) {
+			set_significant_bits(8);
+			set_value(n);
+			set_type(SgAsmTypeByte::createType());
+		}
+SOURCE_BYTE_VALUE_EXPRESSION_END
+
+
+
+
 
 HEADER_WORD_VALUE_EXPRESSION_START
         public:
-                explicit SgAsmWordValueExpression(uint16_t n) { set_significant_bits(16); set_value(n); }
+		SgAsmWordValueExpression() { ctor(); }
+                explicit SgAsmWordValueExpression(uint16_t n) { ctor(n); }
                 void set_value(uint16_t);
                 uint16_t get_value() const;
-                virtual SgAsmType* get_type();
+	protected:
+		void ctor();
+		void ctor(uint16_t);
 HEADER_WORD_VALUE_EXPRESSION_END
+SOURCE_WORD_VALUE_EXPRESSION_START
+		void SgAsmWordValueExpression::ctor() {
+			set_significant_bits(16);
+			set_value(0);
+			set_type(SgAsmTypeWord::createType());
+		}
+		void SgAsmWordValueExpression::ctor(uint16_t n) {
+			set_significant_bits(16);
+			set_value(n);
+			set_type(SgAsmTypeWord::createType());
+		}
+SOURCE_WORD_VALUE_EXPRESSION_END
+
+
+
 
 HEADER_DOUBLE_WORD_VALUE_EXPRESSION_START
         public:
-                explicit SgAsmDoubleWordValueExpression(uint32_t n) { set_significant_bits(32); set_value(n); }
+		SgAsmDoubleWordValueExpression() { ctor(); }
+                explicit SgAsmDoubleWordValueExpression(uint32_t n) { ctor(n); }
                 void set_value(uint32_t);
                 uint32_t get_value() const;
-                virtual SgAsmType* get_type();
+	protected:
+		void ctor();
+		void ctor(uint32_t);
 HEADER_DOUBLE_WORD_VALUE_EXPRESSION_END
+SOURCE_DOUBLE_WORD_VALUE_EXPRESSION_START
+		void SgAsmDoubleWordValueExpression::ctor() {
+			set_significant_bits(32);
+			set_value(0);
+			set_type(SgAsmTypeDoubleWord::createType());
+		}
+		void SgAsmDoubleWordValueExpression::ctor(uint32_t n) {
+			set_significant_bits(32);
+			set_value(n);
+			set_type(SgAsmTypeDoubleWord::createType());
+		}
+SOURCE_DOUBLE_WORD_VALUE_EXPRESSION_END
+
+
+
 
 HEADER_QUAD_WORD_VALUE_EXPRESSION_START
         public:
-                explicit SgAsmQuadWordValueExpression(uint64_t n) { set_significant_bits(64); set_value(n); }
+		SgAsmQuadWordValueExpression() { ctor(); }
+                explicit SgAsmQuadWordValueExpression(uint64_t n) { ctor(n); }
                 void set_value(uint64_t);
                 uint64_t get_value() const;
-                virtual SgAsmType* get_type();
+	protected:
+		void ctor();
+		void ctor(uint64_t);
 HEADER_QUAD_WORD_VALUE_EXPRESSION_END
+SOURCE_QUAD_WORD_VALUE_EXPRESSION_START
+		void SgAsmQuadWordValueExpression::ctor() {
+			set_significant_bits(64);
+			set_value(0);
+			set_type(SgAsmTypeQuadWord::createType());
+		}
+		void SgAsmQuadWordValueExpression::ctor(uint64_t n) {
+			set_significant_bits(64);
+			set_value(n);
+			set_type(SgAsmTypeQuadWord::createType());
+		}
+SOURCE_QUAD_WORD_VALUE_EXPRESSION_END
 
-HEADER_BINARY_SINGLE_FLOAT_VALUE_EXPRESSION_START
-          virtual SgAsmType* get_type();
-HEADER_BINARY_SINGLE_FLOAT_VALUE_EXPRESSION_END
 
-HEADER_BINARY_DOUBLE_FLOAT_VALUE_EXPRESSION_START
-          virtual SgAsmType* get_type();
-HEADER_BINARY_DOUBLE_FLOAT_VALUE_EXPRESSION_END
 
-HEADER_BINARY_VECTOR_VALUE_EXPRESSION_START
-          virtual SgAsmType* get_type();
-HEADER_BINARY_VECTOR_VALUE_EXPRESSION_END
+
+HEADER_SINGLE_FLOAT_VALUE_EXPRESSION_START
+	public:
+		SgAsmSingleFloatValueExpression() { ctor(); }
+		explicit SgAsmSingleFloatValueExpression(double v) { ctor(v); }
+	protected:
+		void ctor();
+		void ctor(double);
+HEADER_SINGLE_FLOAT_VALUE_EXPRESSION_END
+SOURCE_SINGLE_FLOAT_VALUE_EXPRESSION_START
+		void SgAsmSingleFloatValueExpression::ctor() {
+			set_value(0.0);
+			set_type(SgAsmTypeSingleFloat::createType());
+		}
+		void SgAsmSingleFloatValueExpression::ctor(double v) {
+			set_value(v);
+			set_type(SgAsmTypeSingleFloat::createType());
+		}
+SOURCE_SINGLE_FLOAT_VALUE_EXPRESSION_END
+
+
+
+
+HEADER_DOUBLE_FLOAT_VALUE_EXPRESSION_START
+	public:
+		SgAsmDoubleFloatValueExpression() { ctor(); }
+		explicit SgAsmDoubleFloatValueExpression(double v) { ctor(v); }
+	protected:
+		void ctor();
+		void ctor(double);
+HEADER_DOUBLE_FLOAT_VALUE_EXPRESSION_END
+SOURCE_DOUBLE_FLOAT_VALUE_EXPRESSION_START
+		void SgAsmDoubleFloatValueExpression::ctor() {
+			set_value(0.0);
+			set_type(SgAsmTypeDoubleFloat::createType());
+		}
+		void SgAsmDoubleFloatValueExpression::ctor(double v) {
+			set_value(v);
+			set_type(SgAsmTypeDoubleFloat::createType());
+		}
+SOURCE_DOUBLE_FLOAT_VALUE_EXPRESSION_END
 
 
 
@@ -1190,9 +995,6 @@ HEADER_GENERIC_DLL_END
 
 
 
-HEADER_GENERIC_DLL_LIST_START
-HEADER_GENERIC_DLL_LIST_END
-
 
 
 HEADER_GENERIC_SYMBOL_START
@@ -1240,9 +1042,6 @@ HEADER_GENERIC_SYMBOL_START
 HEADER_GENERIC_SYMBOL_END
 
 
-
-HEADER_GENERIC_SYMBOL_LIST_START
-HEADER_GENERIC_SYMBOL_LIST_END
 
 
 
@@ -2407,9 +2206,6 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_END
 
 
 
-HEADER_ELF_SEGMENT_TABLE_ENTRY_LIST_START
-HEADER_ELF_SEGMENT_TABLE_ENTRY_LIST_END
-
 
 
 HEADER_ELF_SYMBOL_SECTION_START
@@ -2430,9 +2226,6 @@ HEADER_ELF_SYMBOL_SECTION_START
 HEADER_ELF_SYMBOL_SECTION_END
 
 
-
-HEADER_ELF_SYMBOL_LIST_START
-HEADER_ELF_SYMBOL_LIST_END
 
 HEADER_ELF_SYMBOL_START
         public:
@@ -3057,8 +2850,6 @@ HEADER_PE_SECTION_TABLE_ENTRY_END
 
 
 
-HEADER_PE_COFF_SYMBOL_LIST_START
-HEADER_PE_COFF_SYMBOL_LIST_END
 
 HEADER_PE_COFF_SYMBOL_START
      public:
@@ -3988,41 +3779,6 @@ HEADER_DOS_EXTENDED_HEADER_END
 
 
 
-SOURCE_BINARY_FILE_SECTION_HEADER_LIST_START
-
-#if 0
-const SgAsmSectionHeaderPtrList &
-SgAsmSectionHeaderList::get_section_headers() const
-   {
-     return p_section_headers;
-   }
-
-SgAsmSectionHeaderPtrList &
-SgAsmSectionHeaderList::get_section_headers()
-   {
-     return p_section_headers;
-   }
-#endif
-
-SOURCE_BINARY_FILE_SECTION_HEADER_LIST_END
-
-SOURCE_BINARY_FILE_PROGRAM_HEADER_LIST_START
-
-#if 0
-const SgAsmProgramHeaderPtrList &
-SgAsmProgramHeaderList::get_program_headers() const
-   {
-     return p_program_headers;
-   }
-
-SgAsmProgramHeaderPtrList &
-SgAsmProgramHeaderList::get_program_headers()
-   {
-     return p_program_headers;
-   }
-#endif
-
-SOURCE_BINARY_FILE_PROGRAM_HEADER_LIST_END
 
 
 
@@ -4083,8 +3839,6 @@ HEADER_BINARY_RET_START
 HEADER_BINARY_RET_END
 
 
-HEADER_BINARY_FUNCTION_CALL_START
-HEADER_BINARY_FUNCTION_CALL_END
 
 HEADER_BINARY_BLOCK_START
         // Please update SgAsmBlock::reason_str() if you change this enum!
@@ -4296,23 +4050,9 @@ HEADER_BINARY_FUNCTION_DECLARATION_END
 
 
 
-HEADER_BINARY_EXPRESSION_START
-        /* NOTE: This is for SgAsmExpression, not SgAsmBinaryExpression */
-
-        //! Generate the type for the expression
-        virtual SgAsmType* get_type();
-
-        //! Return the precedence of the operator (see C and C++ examples for details)
-        //  virtual int get_precedence();
-HEADER_BINARY_EXPRESSION_END
 
 
 
-HEADER_BINARY_TYPE_START
-
-       // static SgAsmType* createType();
-
-HEADER_BINARY_TYPE_END
 
 HEADER_BINARY_TYPE_BYTE_START
           static SgAsmTypeByte* createType();
@@ -4533,12 +4273,6 @@ HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_END
 
 
 
-HEADER_BINARY_MEMORY_REFERENCE_EXPRESSION_START
-
-             // Note that the auto-generated version of this is const
-             virtual SgAsmType* get_type();
-
-HEADER_BINARY_MEMORY_REFERENCE_EXPRESSION_END
 
 
 
@@ -4546,8 +4280,6 @@ HEADER_BINARY_MEMORY_REFERENCE_EXPRESSION_END
 //           DWARF SUPPORT
 // ************************************
 
-HEADER_DWARF_INFORMATION_START
-HEADER_DWARF_INFORMATION_END
 
 HEADER_DWARF_COMPILATION_UNIT_START
 
@@ -4556,20 +4288,9 @@ HEADER_DWARF_COMPILATION_UNIT_START
 
 HEADER_DWARF_COMPILATION_UNIT_END
 
-HEADER_DWARF_COMPILATION_UNIT_LIST_START
-HEADER_DWARF_COMPILATION_UNIT_LIST_END
 
-HEADER_DWARF_MACRO_START
-HEADER_DWARF_MACRO_END
-
-HEADER_DWARF_LINE_START
-HEADER_DWARF_LINE_END
-
-HEADER_DWARF_MACRO_LIST_START
-HEADER_DWARF_MACRO_LIST_END
 
 HEADER_DWARF_LINE_LIST_START
-
        // Once the maps are setup using a valid SgAsmDwarfCompilationUnit, NULL is an acceptable value.
       //! Support for building maps to and from instruction addresses to source positions (files, line numbers, column numbers).
           static DwarfInstructionSourceMapReturnType buildInstructionAddressSourcePositionMaps( SgAsmDwarfCompilationUnit* dwarf_cu = NULL );
@@ -4582,98 +4303,69 @@ HEADER_DWARF_LINE_LIST_START
 
           static uint64_t sourceCodeToAddress ( FileIdLineColumnFilePosition sourcePosition );
           static FileIdLineColumnFilePosition addressToSourceCode ( uint64_t address );
-
 HEADER_DWARF_LINE_LIST_END
 
 HEADER_DWARF_CONSTRUCT_START
-
      public:
       //! Factory pattern to build IR nodes based on the tag
           static SgAsmDwarfConstruct* createDwarfConstruct( int tag, int nesting_level, uint64_t offset, uint64_t overall_offset );
 
           virtual SgAsmDwarfConstructList* get_children();
-
 HEADER_DWARF_CONSTRUCT_END
 
-HEADER_DWARF_CONSTRUCT_LIST_START
-HEADER_DWARF_CONSTRUCT_LIST_END
-
 HEADER_DWARF_SUBPROGRAM_START
-
      public:
           SgAsmDwarfConstructList* get_children();
-
 HEADER_DWARF_SUBPROGRAM_END
 
 HEADER_DWARF_STRUCTURE_TYPE_START
-
      public:
           SgAsmDwarfConstructList* get_children();
-
 HEADER_DWARF_STRUCTURE_TYPE_END
 
 HEADER_DWARF_ARRAY_TYPE_START
-
      public:
           SgAsmDwarfConstructList* get_children();
-
 HEADER_DWARF_ARRAY_TYPE_END
 
 HEADER_DWARF_LEXICAL_BLOCK_START
-
      public:
           SgAsmDwarfConstructList* get_children();
-
 HEADER_DWARF_LEXICAL_BLOCK_END
 
-
 HEADER_DWARF_INLINED_SUBROUTINE_START
-
      public:
           SgAsmDwarfConstructList* get_children();
-
 HEADER_DWARF_INLINED_SUBROUTINE_END
 
 HEADER_DWARF_ENUMERATION_TYPE_START
-
      public:
           SgAsmDwarfConstructList* get_children();
-
 HEADER_DWARF_ENUMERATION_TYPE_END
 
 HEADER_DWARF_SUBROUTINE_TYPE_START
-
      public:
           SgAsmDwarfConstructList* get_children();
-
 HEADER_DWARF_SUBROUTINE_TYPE_END
 
 HEADER_DWARF_UNION_TYPE_START
-
      public:
           SgAsmDwarfConstructList* get_children();
-
 HEADER_DWARF_UNION_TYPE_END
 
 HEADER_DWARF_NAMESPACE_START
-
      public:
           SgAsmDwarfConstructList* get_children();
-
 HEADER_DWARF_NAMESPACE_END
 
 HEADER_DWARF_CLASS_TYPE_START
-
      public:
           SgAsmDwarfConstructList* get_children();
-
 HEADER_DWARF_CLASS_TYPE_END
 
 HEADER_DWARF_COMMON_BLOCK_START
-
      public:
           SgAsmDwarfConstructList* get_children();
-
 HEADER_DWARF_COMMON_BLOCK_END
 
 
@@ -4684,8 +4376,6 @@ HEADER_DWARF_COMMON_BLOCK_END
 /* --------------------------------------------------------------------------------- */
 
 
-SOURCE_BINARY_FILE_START
-SOURCE_BINARY_FILE_END
 
 SOURCE_BINARY_START
 
@@ -5005,23 +4695,6 @@ SgAsmInstruction::cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info)
 
 SOURCE_BINARY_INSTRUCTION_END
 
-SOURCE_BINARY_X86_INSTRUCTION_START
-
-SOURCE_BINARY_X86_INSTRUCTION_END
-
-
-SOURCE_BINARY_EXPRESSION_START
-
-SgAsmType* SgAsmExpression::get_type() {
-  ROSE_ASSERT (!"Cannot get the type of this SgAsmExpression");
-        // tps (12/9/2009) : MSC requires a return value
-     return NULL;
-}
-
-SOURCE_BINARY_EXPRESSION_END
-
-SOURCE_BINARY_TYPE_START
-SOURCE_BINARY_TYPE_END
 
 SOURCE_BINARY_TYPE_BYTE_START
 
@@ -5191,29 +4864,9 @@ $CLASSNAME::createType(int elementCount, SgAsmType* elementType)
 SOURCE_BINARY_TYPE_VECTOR_END
 
 
-SOURCE_BINARY_NODE_START
-
-SOURCE_BINARY_NODE_END
 
 
-SOURCE_BINARY_DOUBLE_FLOAT_VALUE_EXPRESSION_START
-        SgAsmType* $CLASSNAME::get_type() {
-          return SgAsmTypeDoubleFloat::createType();
-        }
-SOURCE_BINARY_DOUBLE_FLOAT_VALUE_EXPRESSION_END
 
-SOURCE_BINARY_SINGLE_FLOAT_VALUE_EXPRESSION_START
-        SgAsmType* $CLASSNAME::get_type() {
-          return SgAsmTypeSingleFloat::createType();
-        }
-SOURCE_BINARY_SINGLE_FLOAT_VALUE_EXPRESSION_END
-
-SOURCE_BINARY_VECTOR_VALUE_EXPRESSION_START
-        // Note that the auto-generated version of this is const
-        SgAsmType* SgAsmVectorValueExpression::get_type() {
-          return p_type;
-        }
-SOURCE_BINARY_VECTOR_VALUE_EXPRESSION_END
 
 
 SOURCE_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_START
@@ -5274,14 +4927,6 @@ SOURCE_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_END
 
 
 
-SOURCE_BINARY_MEMORY_REFERENCE_EXPRESSION_START
-
-// Note that the auto-generated version of this is const
-SgAsmType* SgAsmMemoryReferenceExpression::get_type() {
-  return p_type;
-}
-
-SOURCE_BINARY_MEMORY_REFERENCE_EXPRESSION_END
 
 
 
@@ -5295,9 +4940,6 @@ SOURCE_BINARY_MEMORY_REFERENCE_EXPRESSION_END
 // *************************************
 //      Binary File Format Support
 // *************************************
-
-SOURCE_EXECUTABLE_FILE_FORMAT_START
-SOURCE_EXECUTABLE_FILE_FORMAT_END
 
 
 
@@ -5361,11 +5003,6 @@ SgAsmGenericHeader::get_word_size() const
 
 SOURCE_GENERIC_HEADER_END
 
-SOURCE_GENERIC_FORMAT_START
-SOURCE_GENERIC_FORMAT_END
-
-SOURCE_GENERIC_ARCHITECTURE_START
-SOURCE_GENERIC_ARCHITECTURE_END
 
 SOURCE_GENERIC_SYMBOL_START
 SgAsmGenericSymbol::SgAsmGenericSymbol()
@@ -5381,33 +5018,15 @@ SgAsmGenericSymbol::SgAsmGenericSymbol()
    }
 SOURCE_GENERIC_SYMBOL_END
 
-SOURCE_GENERIC_SYMBOL_LIST_START
-SOURCE_GENERIC_SYMBOL_LIST_END
 
 SOURCE_GENERIC_DLL_START
-
 SgAsmGenericDLL::SgAsmGenericDLL(SgAsmGenericString *s)
    : p_name(s)
    {
      s->set_parent(this);
    }
-
 SOURCE_GENERIC_DLL_END
 
-SOURCE_GENERIC_DLL_LIST_START
-SOURCE_GENERIC_DLL_LIST_END
-
-SOURCE_BASIC_STRING_START
-SOURCE_BASIC_STRING_END
-
-SOURCE_GENERIC_STRING_START
-SOURCE_GENERIC_STRING_END
-
-SOURCE_STRING_STORAGE_START
-SOURCE_STRING_STORAGE_END
-
-SOURCE_STORED_STRING_START
-SOURCE_STORED_STRING_END
 
 SOURCE_ELF_HEADER_START
 
@@ -5420,8 +5039,6 @@ SgAsmElfFileHeader::format_name() const
 
 SOURCE_ELF_HEADER_END
 
-SOURCE_ELF_SECTION_TABLE_START
-SOURCE_ELF_SECTION_TABLE_END
 
 
 
@@ -5464,8 +5081,6 @@ SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::
 
 SOURCE_ELF_SECTION_TABLE_ENTRY_END
 
-SOURCE_ELF_SEGMENT_TABLE_ENTRY_LIST_START
-SOURCE_ELF_SEGMENT_TABLE_ENTRY_LIST_END
 
 SOURCE_ELF_SECTION_START
 // DQ (10/20/2010): Moved this function's definition to the source file.
@@ -5510,17 +5125,6 @@ SgAsmElfSection::set_linked_section ( SgAsmElfSection* linked_section )
 
 SOURCE_ELF_SECTION_END
 
-SOURCE_ELF_STRING_TABLE_START
-SOURCE_ELF_STRING_TABLE_END
-
-SOURCE_ELF_DYNAMIC_SECTION_START
-SOURCE_ELF_DYNAMIC_SECTION_END
-
-SOURCE_ELF_DYNAMIC_ENTRY_START
-SOURCE_ELF_DYNAMIC_ENTRY_END
-
-SOURCE_ELF_SEGMENT_TABLE_START
-SOURCE_ELF_SEGMENT_TABLE_END
 
 SOURCE_ELF_SEGMENT_TABLE_ENTRY_START
 SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk)
@@ -5545,47 +5149,9 @@ SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::
 
 SOURCE_ELF_SEGMENT_TABLE_ENTRY_END
 
-SOURCE_ELF_SEGMENT_ENTRY_START
-SOURCE_ELF_SEGMENT_ENTRY_END
-
-SOURCE_ELF_SEGMENT_ENTRY_LIST_START
-SOURCE_ELF_SEGMENT_ENTRY_LIST_END
-
-SOURCE_ELF_SYMBOL_SECTION_START
-SOURCE_ELF_SYMBOL_SECTION_END
-
-SOURCE_ELF_SYMBOL_LIST_START
-SOURCE_ELF_SYMBOL_LIST_END
-
-SOURCE_ELF_SYMBOL_START
-SOURCE_ELF_SYMBOL_END
 
 
-SOURCE_PE_RVA_SIZE_PAIR_START
-SOURCE_PE_RVA_SIZE_PAIR_END
 
-
-SOURCE_PE_RVA_SIZE_PAIR_LIST_START
-SOURCE_PE_RVA_SIZE_PAIR_LIST_END
-
-
-SOURCE_PE_FILE_HEADER_START
-SOURCE_PE_FILE_HEADER_END
-
-SOURCE_PE_SECTION_START
-SOURCE_PE_SECTION_END
-
-SOURCE_PE_SECTION_TABLE_START
-SOURCE_PE_SECTION_TABLE_END
-
-SOURCE_PE_COFF_SYMBOL_TABLE_START
-SOURCE_PE_COFF_SYMBOL_TABLE_END
-
-SOURCE_PE_IMPORT_HINT_NAME_START
-SOURCE_PE_IMPORT_HINT_NAME_END
-
-SOURCE_PE_IMPORT_DIRECTORY_START
-SOURCE_PE_IMPORT_DIRECTORY_END
 
 SOURCE_PE_SECTION_TABLE_ENTRY_START
 SgAsmPESectionTableEntry::SgAsmPESectionTableEntry(const SgAsmPESectionTableEntry::PESectionTableEntry_disk *disk)
@@ -5614,32 +5180,7 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
 
 SOURCE_PE_COFF_SYMBOL_END
 
-SOURCE_COFF_STRING_TABLE_START
-SOURCE_COFF_STRING_TABLE_END
 
-SOURCE_NE_FILE_HEADER_START
-SOURCE_NE_FILE_HEADER_END
-
-SOURCE_NE_SECTION_START
-SOURCE_NE_SECTION_END
-
-SOURCE_NE_SECTION_TABLE_START
-SOURCE_NE_SECTION_TABLE_END
-
-SOURCE_NE_NAME_TABLE_START
-SOURCE_NE_NAME_TABLE_END
-
-SOURCE_NE_MODULE_TABLE_START
-SOURCE_NE_MODULE_TABLE_END
-
-SOURCE_NE_STRING_TABLE_START
-SOURCE_NE_STRING_TABLE_END
-
-SOURCE_NE_ENTRY_TABLE_START
-SOURCE_NE_ENTRY_TABLE_END
-
-SOURCE_NE_RELOC_TABLE_START
-SOURCE_NE_RELOC_TABLE_END
 
 
 
@@ -5684,26 +5225,7 @@ SOURCE_NE_SECTION_TABLE_ENTRY_END
 
 
 
-SOURCE_LE_FILE_HEADER_START
-SOURCE_LE_FILE_HEADER_END
 
-SOURCE_LE_SECTION_START
-SOURCE_LE_SECTION_END
-
-SOURCE_LE_SECTION_TABLE_START
-SOURCE_LE_SECTION_TABLE_END
-
-SOURCE_LE_NAME_TABLE_START
-SOURCE_LE_NAME_TABLE_END
-
-SOURCE_LE_PAGE_TABLE_START
-SOURCE_LE_PAGE_TABLE_END
-
-SOURCE_LE_ENTRY_TABLE_START
-SOURCE_LE_ENTRY_TABLE_END
-
-SOURCE_LE_RELOC_TABLE_START
-SOURCE_LE_RELOC_TABLE_END
 
 SOURCE_LE_PAGE_TABLE_ENTRY_START
 SgAsmLEPageTableEntry::SgAsmLEPageTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk)
@@ -5753,13 +5275,6 @@ SOURCE_LE_SECTION_TABLE_ENTRY_END
 
 
 
-SOURCE_DOS_HEADER_START
-SOURCE_DOS_HEADER_END
-
-
-
-SOURCE_DWARF_INFORMATION_START
-SOURCE_DWARF_INFORMATION_END
 
 SOURCE_DWARF_COMPILATION_UNIT_START
 
@@ -5775,18 +5290,6 @@ SgAsmDwarfCompilationUnit::get_children()
    }
 
 SOURCE_DWARF_COMPILATION_UNIT_END
-
-SOURCE_DWARF_COMPILATION_UNIT_LIST_START
-SOURCE_DWARF_COMPILATION_UNIT_LIST_END
-
-SOURCE_DWARF_MACRO_START
-SOURCE_DWARF_MACRO_END
-
-SOURCE_DWARF_LINE_START
-SOURCE_DWARF_LINE_END
-
-SOURCE_DWARF_MACRO_LIST_START
-SOURCE_DWARF_MACRO_LIST_END
 
 SOURCE_DWARF_LINE_LIST_START
 
@@ -5876,8 +5379,6 @@ SgAsmDwarfConstruct::get_children()
 
 SOURCE_DWARF_CONSTRUCT_END
 
-SOURCE_DWARF_CONSTRUCT_LIST_START
-SOURCE_DWARF_CONSTRUCT_LIST_END
 
 SOURCE_DWARF_SUBPROGRAM_START
 

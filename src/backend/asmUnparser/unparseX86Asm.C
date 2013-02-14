@@ -22,12 +22,13 @@ std::string unparseX86Mnemonic(SgAsmx86Instruction *insn) {
 
 /** Returns the name of an X86 register.
  *
- *  We use the amd64 architecture because, since it's backward compatible with the 8086, it contains definitions for all the
- *  registers from older architectures. */
-std::string unparseX86Register(const RegisterDescriptor &reg) {
+ *  We use the amd64 architecture if no register dictionary is specified because, since it's backward compatible with the 8086,
+ *  it contains definitions for all the registers from older architectures. */
+std::string unparseX86Register(const RegisterDescriptor &reg, const RegisterDictionary *registers) {
     using namespace StringUtility;
-    const RegisterDictionary *dict = RegisterDictionary::dictionary_amd64();
-    std::string name = dict->lookup(reg);
+    if (!registers)
+        registers = RegisterDictionary::dictionary_amd64();
+    std::string name = registers->lookup(reg);
     if (name.empty()) {
         static bool dumped_dict = false;
         std::cerr <<"unparseX86Register(" <<reg <<"): register descriptor not found in dictionary.\n";
@@ -85,39 +86,40 @@ static std::string x86TypeToPtrName(SgAsmType* ty) {
 }
 
 
-std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels, bool leaMode) {
+std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels,
+                                 const RegisterDictionary *registers, bool leaMode) {
     std::string result = "";
     if (expr == NULL) return "BOGUS:NULL";
 
     switch (expr->variantT()) {
         case V_SgAsmBinaryAdd:
-            result = unparseX86Expression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, false) + " + " +
-                     unparseX86Expression(isSgAsmBinaryExpression(expr)->get_rhs(), labels, false);
+            result = unparseX86Expression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, registers, false) + " + " +
+                     unparseX86Expression(isSgAsmBinaryExpression(expr)->get_rhs(), labels, registers, false);
             break;
 
         case V_SgAsmBinarySubtract:
-            result = unparseX86Expression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, false) + " - " +
-                     unparseX86Expression(isSgAsmBinaryExpression(expr)->get_rhs(), labels, false);
+            result = unparseX86Expression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, registers, false) + " - " +
+                     unparseX86Expression(isSgAsmBinaryExpression(expr)->get_rhs(), labels, registers, false);
             break;
 
         case V_SgAsmBinaryMultiply:
-            result = unparseX86Expression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, false) + "*" +
-                     unparseX86Expression(isSgAsmBinaryExpression(expr)->get_rhs(), labels, false);
+            result = unparseX86Expression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, registers, false) + "*" +
+                     unparseX86Expression(isSgAsmBinaryExpression(expr)->get_rhs(), labels, registers, false);
             break;
 
         case V_SgAsmMemoryReferenceExpression: {
             SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(expr);
             if (!leaMode) {
                 result += x86TypeToPtrName(mr->get_type()) + " PTR " +
-                          (mr->get_segment() ? unparseX86Expression(mr->get_segment(), labels, false) + ":" : "");
+                          (mr->get_segment() ? unparseX86Expression(mr->get_segment(), labels, registers, false) + ":" : "");
             }
-            result += "[" + unparseX86Expression(mr->get_address(), labels, false) + "]";
+            result += "[" + unparseX86Expression(mr->get_address(), labels, registers, false) + "]";
             break;
         }
 
         case V_SgAsmx86RegisterReferenceExpression: {
             SgAsmx86RegisterReferenceExpression* rr = isSgAsmx86RegisterReferenceExpression(expr);
-            result = unparseX86Register(rr->get_descriptor());
+            result = unparseX86Register(rr->get_descriptor(), registers);
             break;
         }
 
@@ -162,12 +164,13 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
 }
 
 /** Returns a string containing the specified operand. */
-std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels) {
+std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels,
+                                 const RegisterDictionary *registers) {
     /* Find the instruction with which this expression is associated. */
     SgAsmx86Instruction *insn = NULL;
     for (SgNode *node=expr; !insn && node; node=node->get_parent()) {
         insn = isSgAsmx86Instruction(node);
     }
     ROSE_ASSERT(insn!=NULL);
-    return unparseX86Expression(expr, labels, insn->get_kind()==x86_lea);
+    return unparseX86Expression(expr, labels, registers, insn->get_kind()==x86_lea);
 }

@@ -311,13 +311,6 @@ SgAsmIntegerValueExpression::set_absolute_value(uint64_t v)
     set_relative_value(new_offset);
 }
 
-/** The base class does not associate any data type with the value.  All values in the base class are 64-bit, unsigned
- *  integers. */
-SgAsmType *
-SgAsmIntegerValueExpression::get_type() 
-{
-    abort();
-}
 
 
 
@@ -390,34 +383,5 @@ SgAsmQuadWordValueExpression::set_value(uint64_t n_)
 {
     set_significant_bits(64);
     SgAsmIntegerValueExpression::set_absolute_value(n_);
-}
-    
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Subclass Data Types
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-SgAsmType *
-SgAsmByteValueExpression::get_type()
-{
-    return SgAsmTypeByte::createType();
-}
-
-SgAsmType *
-SgAsmWordValueExpression::get_type()
-{
-    return SgAsmTypeWord::createType();
-}
-
-SgAsmType *
-SgAsmDoubleWordValueExpression::get_type()
-{
-    return SgAsmTypeDoubleWord::createType();
-}
-
-SgAsmType *
-SgAsmQuadWordValueExpression::get_type()
-{
-    return SgAsmTypeQuadWord::createType();
 }
 

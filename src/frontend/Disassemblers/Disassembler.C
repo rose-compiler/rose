@@ -752,6 +752,10 @@ Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *success
     const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
     AddressSet worklist;
 
+    /* Use the register dictionary attached to the interpretation, if any. */
+    if (interp->get_registers())
+        set_registers(interp->get_registers());
+
     /* Use the memory map attached to the interpretation, or build a new one and attach it. */
     MemoryMap *map = interp->get_map();
     if (!map) {

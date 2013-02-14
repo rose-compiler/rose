@@ -18,10 +18,11 @@
 /****************************************************
  * resolve expression
  ****************************************************/
-static std::string unparsePowerpcRegister(const RegisterDescriptor &rdesc)
+static std::string unparsePowerpcRegister(const RegisterDescriptor &rdesc, const RegisterDictionary *registers)
 {
-    const RegisterDictionary *rdict = RegisterDictionary::dictionary_powerpc();
-    std::string name = rdict->lookup(rdesc);
+    if (!registers)
+        registers = RegisterDictionary::dictionary_powerpc();
+    std::string name = registers->lookup(rdesc);
     if (name.empty()) {
         std::cerr <<"unparsePowerpcRegister(" <<rdesc <<"): register descriptor not found in dictionary.\n";
         //std::cerr <<rdict;
@@ -31,13 +32,14 @@ static std::string unparsePowerpcRegister(const RegisterDescriptor &rdesc)
 }
 
 /* Helper for unparsePowerpcExpression(SgAsmExpression*) */
-static std::string unparsePowerpcExpression(SgAsmExpression* expr, const AsmUnparser::LabelMap *labels, bool useHex) {
+static std::string unparsePowerpcExpression(SgAsmExpression* expr, const AsmUnparser::LabelMap *labels,
+                                            const RegisterDictionary *registers, bool useHex) {
     std::string result = "";
     if (expr == NULL) return "BOGUS:NULL";
     switch (expr->variantT()) {
         case V_SgAsmBinaryAdd:
-            result = unparsePowerpcExpression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, false) + " + " +
-                     unparsePowerpcExpression(isSgAsmBinaryExpression(expr)->get_rhs(), labels, false);
+            result = unparsePowerpcExpression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, registers, false) + " + " +
+                     unparsePowerpcExpression(isSgAsmBinaryExpression(expr)->get_rhs(), labels, registers, false);
             break;
         case V_SgAsmMemoryReferenceExpression: {
             SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(expr);
@@ -45,7 +47,7 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, const AsmUnpa
             switch (addr->variantT()) {
                 case V_SgAsmBinaryAdd: {
                     SgAsmBinaryAdd* a = isSgAsmBinaryAdd(addr);
-                    std::string lhs = unparsePowerpcExpression(a->get_lhs(), labels, false);
+                    std::string lhs = unparsePowerpcExpression(a->get_lhs(), labels, registers, false);
                     if (isSgAsmValueExpression(a->get_rhs())) {
                         // Sign-extend from 16 bits
                         SgAsmValueExpression *ve = isSgAsmValueExpression(a->get_rhs());
@@ -54,19 +56,19 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, const AsmUnpa
                                    (int64_t)IntegerOps::signExtend<16, 64>(SageInterface::getAsmConstant(ve)));
                         result += "(" + lhs + ")";
                     } else {
-                        result = lhs + ", " + unparsePowerpcExpression(a->get_rhs(), labels, false);
+                        result = lhs + ", " + unparsePowerpcExpression(a->get_rhs(), labels, registers, false);
                     }
                     break;
                 }
                 default:
-                    result = "(" + unparsePowerpcExpression(addr, labels, false) + ")";
+                    result = "(" + unparsePowerpcExpression(addr, labels, registers, false) + ")";
                     break;
             }
             break;
         }
         case V_SgAsmPowerpcRegisterReferenceExpression: {
             SgAsmPowerpcRegisterReferenceExpression* rr = isSgAsmPowerpcRegisterReferenceExpression(expr);
-            result = unparsePowerpcRegister(rr->get_descriptor());
+            result = unparsePowerpcRegister(rr->get_descriptor(), registers);
             break;
         }
         case V_SgAsmByteValueExpression:
@@ -104,7 +106,8 @@ std::string unparsePowerpcMnemonic(SgAsmPowerpcInstruction *insn) {
 }
 
 /** Returns the string representation of an instruction operand. */
-std::string unparsePowerpcExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels) {
+std::string unparsePowerpcExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels,
+                                     const RegisterDictionary *registers) {
     /* Find the instruction with which this expression is associated. */
     SgAsmPowerpcInstruction *insn = NULL;
     for (SgNode *node=expr; !insn && node; node=node->get_parent()) {
@@ -124,5 +127,5 @@ std::string unparsePowerpcExpression(SgAsmExpression *expr, const AsmUnparser::L
                              kind == powerpc_bcla) &&
                             insn->get_operandList()->get_operands().size()>=3 &&
                             expr==insn->get_operandList()->get_operands()[2]));
-    return unparsePowerpcExpression(expr, labels, isBranchTarget);
+    return unparsePowerpcExpression(expr, labels, registers, isBranchTarget);
 }

@@ -445,7 +445,7 @@ RoseBin_DataFlowAbstract::printDefTableToFile(
       for (;itm!=type.end();++itm) {
         std::pair<X86RegisterClass, int>  code = itm->first;
         SgGraphNode* nodeDef = itm->second;
-        string registerName = unparseX86Register(RegisterDescriptor(code.first, code.second, 0, 64));
+        string registerName = unparseX86Register(RegisterDescriptor(code.first, code.second, 0, 64), NULL);
 
         string def = registerName+" - "+nodeDef->get_name();
         line+="   "+def+"\n";

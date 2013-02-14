@@ -20,7 +20,7 @@
  *
  *  Users should not assume that RegisterDescriptor entries from two separate dictionaries are compatible. Looking up the "eax"
  *  register in one dictionary may return a different descriptor than "eax" looked up in a different dictionary.  Components of
- *  the ROSE binary support that generate RegisterDescriptors will provide a mechanism for obtaining (and possibly setting) the
+ *  the ROSE binary support that generate RegisterDescriptors provide a mechanism for obtaining (and possibly setting) the
  *  register dictionary.  For instance, the Disassembler class has get_registers() and set_registers() methods. */
 class RegisterDictionary {
 public:
@@ -44,6 +44,10 @@ public:
     RegisterDictionary(const RegisterDictionary& other) {
         *this = other;
     }
+
+    /** Class method to choose an appropriate register dictionary for an instruction set architecture. Returns the best
+     *  available register dictionary for any architecture. Returns the null pointer if no dictionary is appropriate. */
+    static const RegisterDictionary *dictionary_for_isa(SgAsmExecutableFileFormat::InsSetArchitecture);
 
     /** Obtain the name of the dictionary. */
     const std::string &get_architecture_name() const {

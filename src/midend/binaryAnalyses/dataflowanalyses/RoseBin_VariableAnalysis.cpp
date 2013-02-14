@@ -38,8 +38,8 @@ RoseBin_VariableAnalysis::getValueForDefinition(std::vector<uint64_t>& vec,
       check_isRegister(defNode, inst, true, memRef, regRef);
 
     if (RoseBin_support::DEBUG_MODE()) {
-      string regName = unparseX86Register(RegisterDescriptor(reg.first, reg.second, 0, 64));
-      string regNameRight = unparseX86Register(RegisterDescriptor(regRight.first, regRight.second, 0, 64));
+      string regName = unparseX86Register(RegisterDescriptor(reg.first, reg.second, 0, 64), NULL);
+      string regNameRight = unparseX86Register(RegisterDescriptor(regRight.first, regRight.second, 0, 64), NULL);
       cout << " VarAnalysis: getValueForDef . " << regName << "  right hand : " << regNameRight <<endl;
     }
     if (!regRef) {
@@ -516,7 +516,7 @@ RoseBin_VariableAnalysis::run(string& name, SgGraphNode* node,
         if (ptrList.size()!=0) {
         SgAsmExpression* expr = *(ptrList.begin());
         string replace = expr->get_replacement();
-        string op = unparseExpression(expr);
+        string op = unparseExpression(expr, NULL, NULL);
 
         // we can detect malloc with the help of ida.
         if (replace=="_malloc" || replace=="malloc@plt") {
@@ -537,7 +537,7 @@ RoseBin_VariableAnalysis::run(string& name, SgGraphNode* node,
                 bool memRef = false, regRef;
                 std::pair<X86RegisterClass, int>  code;
                 code = check_isRegister(pre, asmPre, false, memRef, regRef);
-                string codeStr = unparseX86Register(RegisterDescriptor(code.first, code.second, 0, 64));
+                string codeStr = unparseX86Register(RegisterDescriptor(code.first, code.second, 0, 64), NULL);
                 if (codeStr=="rsp")
                   value = getValueOfInstr(asmPre, true);
                 else

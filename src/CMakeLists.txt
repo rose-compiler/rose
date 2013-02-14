@@ -268,6 +268,7 @@ set(roseDisassemblers_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmBlock.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmFunction.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmInstruction.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmInterpretation.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmMipsInstruction.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmPowerpcInstruction.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/SgAsmX86Instruction.C
@@ -309,7 +310,6 @@ set(roseBinaryFormats_fileList_part0
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/ExecGeneric.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/ExtentMap.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/Hexdump.C
-   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/Interpretation.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/MemoryMap.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/Rva.C 
 

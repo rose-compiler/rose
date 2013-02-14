@@ -316,7 +316,8 @@ public:
 public:
     /** Specifies the registers available on this architecture.  Rather than using hard-coded class, number, and position
      *  constants, the disassembler should perform a name lookup in this supplied register dictionary and use the values found
-     *  therein. There's usually no need for the user to specify a value because the subclass will initialize this.
+     *  therein. There's usually no need for the user to specify a value because either it will be obtained from an
+     *  SgAsmInterpretation or the subclass will initialize it.
      *
      *  Thread safety: It is not safe to change the register dictionary while another thread is using this same Disassembler
      *  object. */
@@ -574,9 +575,10 @@ public:
                                       AddressSet *successors=NULL, BadMap *bad=NULL);
 
     /** Disassembles instructions in a particular binary interpretation. If the interpretation has a memory map
-     *  (SgAsmInterpretation::get_map()) then that map will be used for disassembly. Otherwise a new map is created to
-     *  describe all code-containing sections of the header, and that map is stored in the interpretation.  The aggressiveness
-     *  when searching for addresses to disassemble is controlled by the disassembler's set_search() method. All other aspects
+     *  (SgAsmInterpretation::get_map()) then that map will be used for disassembly. Otherwise a new map is created to describe
+     *  all code-containing sections of the header, and that map is stored in the interpretation.  The aggressiveness when
+     *  searching for addresses to disassemble is controlled by the disassembler's set_search() method. If the interpretation
+     *  has a register dictionary, then the disassembler's register dictionary will be set to the same value. All other aspects
      *  of this method are similar to the disassembleBuffer() method.
      *
      *  Thread safety:  Not thread safe. */

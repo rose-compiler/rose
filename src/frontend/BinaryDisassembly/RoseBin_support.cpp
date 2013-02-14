@@ -171,11 +171,6 @@ std::string RoseBin_support::resolveValue(SgAsmValueExpression* expr,
             //res = "(qword)" + RoseBin_support::ToString(val);
           } else
 
-            if (isSgAsmVectorValueExpression(expr)) {
-              //SgAsmVectorValueExpression* valExp = isSgAsmVectorValueExpression(expr);
-    
-              res = "(vector)";
-            } else
 
               if (isSgAsmWordValueExpression(expr)) {
                 SgAsmWordValueExpression* valExp = isSgAsmWordValueExpression(expr);

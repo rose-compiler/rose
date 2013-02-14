@@ -129,6 +129,11 @@ AsmUnparser::init()
         .append(&interpBody);
 }
 
+const RegisterDictionary *
+AsmUnparser::get_registers() const
+{
+    return user_registers ? user_registers : interp_registers;
+}
 
 void
 AsmUnparser::add_function_labels(SgNode *node)
@@ -423,17 +428,25 @@ AsmUnparser::unparse_function(bool enabled, std::ostream &output, SgAsmFunction 
 bool
 AsmUnparser::unparse_interpretation(bool enabled, std::ostream &output, SgAsmInterpretation *interp)
 {
-    const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
-    if (!hdrs.empty()) {
-        set_prefix_address(hdrs[0]->get_entry_rva() + hdrs[0]->get_base_va());
-    } else {
-        set_prefix_address(0);
-    }
+    const RegisterDictionary *old_interp_registers = interp_registers;
+    interp_registers = interp->get_registers();
+    try {
+        const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
+        if (!hdrs.empty()) {
+            set_prefix_address(hdrs[0]->get_entry_rva() + hdrs[0]->get_base_va());
+        } else {
+            set_prefix_address(0);
+        }
 
-    UnparserCallback::InterpretationArgs args(this, output, interp);
-    enabled = interp_callbacks.pre    .apply(enabled, args);
-    enabled = interp_callbacks.unparse.apply(enabled, args);
-    enabled = interp_callbacks.post   .apply(enabled, args);
+        UnparserCallback::InterpretationArgs args(this, output, interp);
+        enabled = interp_callbacks.pre    .apply(enabled, args);
+        enabled = interp_callbacks.unparse.apply(enabled, args);
+        enabled = interp_callbacks.post   .apply(enabled, args);
+    } catch (...) {
+        interp_registers = old_interp_registers;
+        throw;
+    }
+    interp_registers = old_interp_registers;
     return enabled;
 }
 
@@ -532,7 +545,7 @@ bool
 AsmUnparser::InsnBody::operator()(bool enabled, const InsnArgs &args)
 {
     if (enabled)
-        args.output <<"   " <<unparseInstruction(args.insn, &args.unparser->labels);
+        args.output <<"   " <<unparseInstruction(args.insn, &args.unparser->labels, args.unparser->get_registers());
     return enabled;
 }
 

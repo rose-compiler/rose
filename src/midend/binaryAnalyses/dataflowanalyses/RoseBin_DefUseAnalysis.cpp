@@ -104,7 +104,7 @@ void RoseBin_DefUseAnalysis::printMultiMap(const multitype* multi) {
     std::pair<X86RegisterClass, int> sgInitMM = (*j).first;
     SgGraphNode* sgNodeMM = (*j).second;
 
-    string registerName = unparseX86Register(RegisterDescriptor(sgInitMM.first, sgInitMM.second, 0, 64));
+    string registerName = unparseX86Register(RegisterDescriptor(sgInitMM.first, sgInitMM.second, 0, 64), NULL);
 
     ROSE_ASSERT(sgNodeMM);
     cout << "  ..  initName:" << registerName << " ( " <<
@@ -295,7 +295,7 @@ RoseBin_DefUseAnalysis::getElementsAsStringForNode(bool def,SgGraphNode* node) {
     mm = getUseMultiMapFor(node);
   multitype::iterator it;
   for (it=mm.begin(); it!=mm.end();++it) {
-      string registerName = unparseX86Register(RegisterDescriptor(it->first.first, it->first.second, 0, 64));
+    string registerName = unparseX86Register(RegisterDescriptor(it->first.first, it->first.second, 0, 64), NULL);
     SgGraphNode* n = it->second;
     ROSE_ASSERT(n);
     SgAsmInstruction* inst = isSgAsmInstruction(n->get_SgNode());
@@ -461,7 +461,7 @@ RoseBin_DefUseAnalysis::run(string& name, SgGraphNode* node,
         if (isRegisterReference) {
           // we have found a write to a register
           // find out the registerName
-          string registerName = unparseX86Register(RegisterDescriptor(code.first, code.second, 0, 64));
+          string registerName = unparseX86Register(RegisterDescriptor(code.first, code.second, 0, 64), NULL);
           // for visualization add property that this
           // node is accessing and changing a register
           if (RoseBin_support::DEBUG_MODE())
@@ -512,7 +512,7 @@ RoseBin_DefUseAnalysis::run(string& name, SgGraphNode* node,
           // otherwise default : replace that element
           if (condInst) {
             if (RoseBin_support::DEBUG_MODE()) {
-              string regName = unparseX86Register(RegisterDescriptor(code.first, code.second, 0, 64));
+              string regName = unparseX86Register(RegisterDescriptor(code.first, code.second, 0, 64), NULL);
               cout << " conditional isn't : " << unparseInstruction(asmNode)<<
                 "   regName " << regName << "   exact node contained : " << RoseBin_support::resBool(isExactNodeContained) << endl;
             }
@@ -532,7 +532,7 @@ RoseBin_DefUseAnalysis::run(string& name, SgGraphNode* node,
 
     if (use) {
       // we have a usage of a register
-      string registerNameR = unparseX86Register(RegisterDescriptor(codeR.first, codeR.second, 0, 64));
+      string registerNameR = unparseX86Register(RegisterDescriptor(codeR.first, codeR.second, 0, 64), NULL);
       if (RoseBin_support::DEBUG_MODE())
         cout << ",,,Found usage of register: " << registerNameR << endl;
 

@@ -3621,7 +3621,7 @@ static struct Mips32_xori: Mips32 {
 void
 DisassemblerMips::init()
 {
-    set_registers(RegisterDictionary::dictionary_mips32());
+    set_registers(RegisterDictionary::dictionary_mips32());     // only a default
     set_wordsize(4);
     set_alignment(4);
     set_sex(SgAsmExecutableFileFormat::ORDER_MSB);

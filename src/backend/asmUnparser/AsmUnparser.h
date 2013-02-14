@@ -759,7 +759,7 @@ public:
      **************************************************************************************************************************/
 
     /** Constructor that intializes the "unparser" callback lists with some useful functors. */
-    AsmUnparser() {
+    AsmUnparser(): user_registers(NULL), interp_registers(NULL) {
         init();
     }
 
@@ -793,6 +793,20 @@ public:
      *  Traverses the specified AST to find nodes that can be unparsed, and returns a vector of such nodes.  Once a node is
      *  discovered, the subtree rooted at that node is not searched. */
     virtual std::vector<SgNode*> find_unparsable_nodes(SgNode *ast);
+
+    /** Register dictionaries.
+     *
+     *  A register dictionary is used to convert register descriptors stored within instructions (via RegisterDescriptor) into
+     *  names. The unparser keeps two register dictionaries: the user-specified register dictionary, and a dictionary obtained
+     *  from a SgAsmInterpretation.  The user-specified dictionary is used in preference to the SgAsmInterpretation dictionary
+     *  when both are specified.  The SgAsmInterpretation dictionary is set (internally) whenever an SgAsmInterpretation node
+     *  is encountered during unparsing, and reset after the entire node is unparsed.  The user-specified dictionary is set via
+     *  the set_registers() method.  The get_registers() returns either the user-specified or SgAsmInterpretation dictionary.
+     *
+     * @{ */
+    virtual const RegisterDictionary *get_registers() const;
+    virtual void set_registers(const RegisterDictionary *registers) { user_registers = registers; }
+    /** @}*/
     
     /** Optional information about no-op sequences.
      *
@@ -885,10 +899,6 @@ public:
     virtual std::string blank_prefix() const { return std::string(line_prefix().size(), ' '); }
     /** @} */
 
-
-    
-
-
 protected:
     struct CallbackLists {
         ROSE_Callbacks::List<UnparserCallback> unparse;                 /**< The main unparsing callbacks. */
@@ -933,6 +943,10 @@ protected:
 
     /** How output will be organized. */
     Organization organization;
+
+    /** Dictionaries used to convert register descriptors to register names. */
+    const RegisterDictionary *user_registers;           // registers set by set_registers()
+    const RegisterDictionary *interp_registers;         // registers obtained from the SgAsmInterpretation
 
     /** Initializes the callback lists.  This is invoked by the default constructor. */
     virtual void init();

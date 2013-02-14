@@ -22,7 +22,7 @@ DisassemblerArm::init()
     set_wordsize(4);
     set_alignment(4);
     set_sex(SgAsmExecutableFileFormat::ORDER_LSB);
-    set_registers(RegisterDictionary::dictionary_arm7());
+    set_registers(RegisterDictionary::dictionary_arm7()); // only a default
 }
 
 /* This is a bit of a kludge for now because we're trying to use an unmodified version of the ArmDisassembler name space. */

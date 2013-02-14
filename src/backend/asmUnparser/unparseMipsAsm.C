@@ -13,10 +13,11 @@ std::string unparseMipsMnemonic(SgAsmMipsInstruction *insn) {
 /** Returns the name of a MIPS register.
  *
  * FIXME: This assumes MIPS32 */
-std::string unparseMipsRegister(const RegisterDescriptor &reg) {
+std::string unparseMipsRegister(const RegisterDescriptor &reg, const RegisterDictionary *registers) {
     using namespace StringUtility;
-    const RegisterDictionary *dict = RegisterDictionary::dictionary_mips32();
-    std::string name = dict->lookup(reg);
+    if (!registers)
+        registers = RegisterDictionary::dictionary_mips32();
+    std::string name = registers->lookup(reg);
     if (name.empty()) {
         std::cerr <<"unparseMipsRegister(" <<reg <<"): register descriptor not found in dictionary.\n";
         return (std::string("BAD_REGISTER(") +
@@ -60,25 +61,27 @@ static std::string mipsTypeToPtrName(SgAsmType* ty) {
 }
 
 
-std::string unparseMipsExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels) {
+std::string unparseMipsExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels,
+                                  const RegisterDictionary *registers) {
     std::string result = "";
     if (expr == NULL) return "BOGUS:NULL";
 
     switch (expr->variantT()) {
         case V_SgAsmBinaryAdd:
-            result = unparseMipsExpression(isSgAsmBinaryExpression(expr)->get_lhs(), labels) + " + " +
-                     unparseMipsExpression(isSgAsmBinaryExpression(expr)->get_rhs(), labels);
+            result = unparseMipsExpression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, registers) + " + " +
+                     unparseMipsExpression(isSgAsmBinaryExpression(expr)->get_rhs(), labels, registers);
             break;
 
         case V_SgAsmMemoryReferenceExpression: {
             SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(expr);
-            result = mipsTypeToPtrName(mr->get_type()) + " PTR [" + unparseMipsExpression(mr->get_address(), labels) + "]";
+            result = mipsTypeToPtrName(mr->get_type()) + " PTR [" +
+                     unparseMipsExpression(mr->get_address(), labels, registers) + "]";
             break;
         }
 
         case V_SgAsmMipsRegisterReferenceExpression: {
             SgAsmMipsRegisterReferenceExpression* rr = isSgAsmMipsRegisterReferenceExpression(expr);
-            result = unparseMipsRegister(rr->get_descriptor());
+            result = unparseMipsRegister(rr->get_descriptor(), registers);
             break;
         }
 
