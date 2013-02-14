@@ -11,6 +11,7 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    libroseDisassemblers_la_SOURCES =											\
 	SgAsmBlock.C SgAsmFunction.C											\
 	SgAsmInstruction.C SgAsmArmInstruction.C SgAsmPowerpcInstruction.C SgAsmX86Instruction.C SgAsmMipsInstruction.C	\
+	SgAsmInterpretation.C												\
 	Expressions.C Partitioner.C PStatistics.C IPDParser.C IPDUnparser.C Registers.C					\
         Disassembler.C DisassemblerArm.C DisassemblerMips.C DisassemblerPowerpc.C DisassemblerX86.C			\
 	Assembler.C AssemblerX86.C AssemblerX86Init.C									\

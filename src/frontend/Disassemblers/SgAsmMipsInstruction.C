@@ -1,4 +1,4 @@
-/* SgAsmMipsInstruction member definitions.  Do not move them to src/ROSETTA/Grammar/BinaryInstruction.code (or any *.code)
+/* SgAsmMipsInstruction member definitions.  Do not move them to src/ROSETTA/Grammar/BinaryInstruction.code (or any *.code
  * file) because then they won't get indexed/formatted/etc. by C-aware tools. */
 
 #include "sage3basic.h"
