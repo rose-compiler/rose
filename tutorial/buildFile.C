@@ -14,21 +14,29 @@ int main (int argc, char *argv[])
 
      printf ("Calling buildFile function() \n");
 
-  // Calling: SgFile* buildFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project=NULL);
-     SgSourceFile* sourceFile = buildSourceFile("my_header_out.h",project);
+  // If the input file is not present in the current directory then the input file is ignored.
+  // It is a bit strange that a filename is required (empty string is not allowed), it also
+  // appears that the language specification for the file is taken from the suffix of the 
+  // input file. This can be fixed later.
+     SgFile* file = buildFile("my_header_in.c","my_header_out.C",project);
+     ROSE_ASSERT(file != NULL);
+
+     SgSourceFile* sourceFile = isSgSourceFile(file);
+     ROSE_ASSERT(sourceFile != NULL);
 
      printf ("DONE: Calling buildFile function() \n");
 
      SgGlobal* globalScope = sourceFile->get_globalScope();
      ROSE_ASSERT(globalScope != NULL);
 
+#if 0
   // SgFunctionDeclaration* buildDefiningFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgScopeStatement* scope = NULL);
      string functionName = "foobar";
      SgType* return_type = buildVoidType();
      SgFunctionParameterList* parameter_list = NULL;
      SgFunctionDeclaration* functionDeclaration = buildDefiningFunctionDeclaration(functionName,return_type,parameter_list,globalScope);
      ROSE_ASSERT(functionDeclaration != NULL);
-
+#endif
 
 #if 0
   // Find all function definitions we want to instrument

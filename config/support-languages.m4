@@ -29,6 +29,7 @@ echo ""
 #	--enable-php
 #	--enable-python
 #	--enable-opencl
+#	--enable-x10
 #
 #	TODO:
 #	-Issue warning if user specifies conflicting language options, e.g.
@@ -40,7 +41,8 @@ echo ""
 #
 ##
   #ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php python opencl"
-   ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php        opencl"
+  #ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php        opencl"
+   ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php        opencl x10"
 ##
 #
 #########################################################################################
@@ -63,7 +65,7 @@ if test "x$USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION" = "xno" ; then
 #########################################################################################
 AC_ARG_ENABLE([languages],
 #########################################################################################
-               AS_HELP_STRING([--enable-languages=LIST],[Build specific languages: all,none,binaries,c,c++,cuda,fortran,java,opencl,php,python (default=all)]),,
+               AS_HELP_STRING([--enable-languages=LIST],[Build specific languages: all,none,binaries,c,c++,cuda,fortran,java,opencl,php,python,x10 (default=all)]),,
                [enableval=all])
 
 	       # Default support for all languages
@@ -361,6 +363,32 @@ AC_ARG_ENABLE([opencl],
                 esac
                ##########################################################################
                ,)
+#########################################################################################
+AC_ARG_ENABLE([x10],
+#########################################################################################
+               AS_HELP_STRING([--enable-x10],[Enable X10 language support in ROSE (default=yes)]),
+               ##########################################################################
+                echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "x10"
+                if test $? = 0 ; then 
+                  list_has_x10=yes
+                fi
+                case "$enableval" in
+                  [yes)]
+                  	if test "x$list_has_x10" != "xyes" ; then
+                          # --enable-languages does not include X10, but --enable-x10=yes
+                  	  LANGUAGES_TO_SUPPORT+=" x10"
+                        fi
+                  	;;
+                  [no)]
+                        # remove 'X10' from support languages list
+                  	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/x10//g'`"
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-x10='$enableval' is not supported. Use 'yes' or 'no'])]
+                 	;;
+                esac
+               ##########################################################################
+               ,)
 else
   echo "[[enable-only-$LANGUAGES_TO_SUPPORT support:warning]] ignoring any other language-support configuration options."
 fi #end-if test "x$USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION" = "xno" ;
@@ -408,6 +436,7 @@ none|no)
 	support_php_language=no
 	support_python_language=no
 	support_opencl_language=no
+	support_x10_language=no
 	AC_MSG_WARN([you did not enable any language support])
 	;;
 binaries)
@@ -462,6 +491,10 @@ python)
 opencl)
 	support_opencl_language=yes
 	AC_DEFINE([ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT], [], [Build ROSE to support the OpenCL langauge])
+	;;
+x10)
+	support_x10_language=yes
+	AC_DEFINE([ROSE_BUILD_X10_LANGUAGE_SUPPORT], [], [Build ROSE to support the X10 langauge])
 	;;
 *)
 	AC_MSG_FAILURE([unrecognized language '$a_language'])
@@ -704,6 +737,7 @@ AM_CONDITIONAL(ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT, [test "x$support_python_langu
 AM_CONDITIONAL(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT, [test "x$support_binaries" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_CUDA_LANGUAGE_SUPPORT, [test "x$support_cuda_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT, [test "x$support_opencl_language" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_X10_LANGUAGE_SUPPORT, [test "x$support_x10_language" = xyes])
 echo "done"
 
 echo ""
@@ -716,6 +750,7 @@ print_isLanguageSupported "Java" "$support_java_language"
 print_isLanguageSupported "PHP" "$support_php_language"
 print_isLanguageSupported "Python" "$support_python_language"
 print_isLanguageSupported "OpenCL" "$support_opencl_language"
+print_isLanguageSupported "X10" "$support_x10_language"
 echo ""
 echo "(+)enabled (-)disabled"
 #AC_MSG_RESULT($LANGUAGES_TO_SUPPORT)
@@ -938,6 +973,27 @@ AC_ARG_ENABLE([only-opencl],
                   	;;
                   [*)]
                   	[AC_MSG_FAILURE([--enable-only-opencl='$enableval' is not supported. Use '--enable-only-opencl(=yes)' (see ./configure --help)])]
+                 	;;
+                esac
+               ##########################################################################
+               ,)
+
+#########################################################################################
+AC_ARG_ENABLE([only-x10],
+#########################################################################################
+              AS_HELP_STRING([--enable-only-x10(=yes)],
+                             [Enable ONLY X10 support in ROSE (Warning: '--enable-only-x10=no' and '--disable-only-x10' are no longer supported)]),
+               ##########################################################################
+                case "$enableval" in
+                  [yes)]
+                  	LANGUAGES_TO_SUPPORT="x10"
+                        USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
+                  	;;
+                  [no)]
+                  	[AC_MSG_FAILURE([--enable-only-x10='$enableval' and --disable-only-x10 are no longer supported. Use '--disable-x10' (see ./configure --help)])]
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-only-x10='$enableval' is not supported. Use '--enable-only-x10(=yes)' (see ./configure --help)])]
                  	;;
                 esac
                ##########################################################################

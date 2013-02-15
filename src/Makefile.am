@@ -68,6 +68,14 @@ else
 	$(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la
 endif
 
+if ROSE_BUILD_X10_LANGUAGE_SUPPORT
+ # DQ (2/14/2013): Adding X10 language support to ROSE.
+ # libroseX10Libraries = frontend/X10_ROSE_Connection/libroseX10.la
+   libroseX10Libraries = frontend/X10_ROSE_Connection/libroseX10.la
+else
+   libroseX10Libraries =
+endif
+
 if ROSE_USE_MYSQL
   OPT_MYSQL_LDFLAGS = $(MYSQL_LDFLAGS)
 else
@@ -116,6 +124,7 @@ libroseLibraries = \
    $(librosePHPlibraries) \
    $(librosePythonlibraries) \
    $(libroseBinaryLibraries) \
+   $(libroseX10Libraries) \
    $(top_builddir)/src/midend/programAnalysis/libprogramAnalysis.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/libLoopProcessing.la \
    $(top_builddir)/src/midend/programTransformation/extractFunctionArgumentsNormalization/libExtractFunctionArgumentsNormalization.la \
