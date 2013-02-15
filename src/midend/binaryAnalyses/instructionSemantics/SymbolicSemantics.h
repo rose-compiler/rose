@@ -207,7 +207,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                 }
                 /** @} */
 
-                /** Set definint instructions.  This discards the old set of defining instructions and replaces it with the
+                /** Set defining instructions.  This discards the old set of defining instructions and replaces it with the
                  *  specified set.
                  * @{ */
                 virtual void set_defining_instructions(const InsnSet &new_defs) {
@@ -807,15 +807,16 @@ namespace BinaryAnalysis {              // documented elsewhere
                  *  to save to the original state when appropriate. */
                 template <size_t nBits>
                 ValueType<nBits> mem_read(State<ValueType> &state, const ValueType<32> &addr,
-                                          const ValueType<nBits> *dflt=NULL) const {
+                                          const ValueType<nBits> *dflt_ptr=NULL) const {
                     assert(8==nBits || 16==nBits || 32==nBits);
                     typedef typename State<ValueType>::Memory::CellList CellList;
+                    ValueType<nBits> dflt = dflt_ptr ? *dflt_ptr : ValueType<nBits>();
 
                     // Read bytes in little endian order.
                     ValueType<nBits> retval, defs;
                     std::vector<ValueType<8> > bytes; // little endian order
                     for (size_t bytenum=0; bytenum<nBits/8; ++bytenum) {
-                        ValueType<8> dflt_byte = dflt ? state.memory.extract_byte(*dflt, bytenum) : ValueType<8>();
+                        ValueType<8> dflt_byte = state.memory.extract_byte(dflt, bytenum);
                         ValueType<8> byte = mem_read_byte(state, state.memory.add(addr, bytenum), dflt_byte);
                         defs.defined_by(NULL, byte.get_defining_instructions());
                         bytes.push_back(byte);
@@ -911,7 +912,9 @@ namespace BinaryAnalysis {              // documented elsewhere
                 void mem_write(State<ValueType> &state, const ValueType<32> &addr, const ValueType<Len> &data) {
                     ROSE_ASSERT(&state!=&orig_state);
                     typedef typename State<ValueType>::Memory::CellList CellList;
-                    state.memory.write(addr, data, solver);
+                    ValueType<Len> data_with_def(data);
+                    data_with_def.defined_by(cur_insn);
+                    state.memory.write(addr, data_with_def, solver);
                 }
 
 
