@@ -22,9 +22,3 @@ void SgAsmByteValueExpression::set_value(uint8_t) { abort(); }
 void SgAsmWordValueExpression::set_value(uint16_t) { abort(); }
 void SgAsmDoubleWordValueExpression::set_value(uint32_t) { abort(); }
 void SgAsmQuadWordValueExpression::set_value(uint64_t) { abort(); }
-    
-SgAsmType *SgAsmIntegerValueExpression::get_type() { abort(); }
-SgAsmType *SgAsmByteValueExpression::get_type() { abort(); }
-SgAsmType *SgAsmWordValueExpression::get_type() { abort(); }
-SgAsmType *SgAsmDoubleWordValueExpression::get_type() { abort(); }
-SgAsmType *SgAsmQuadWordValueExpression::get_type() { abort(); }

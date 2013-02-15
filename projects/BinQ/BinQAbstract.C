@@ -181,7 +181,7 @@ void BinQAbstract::createItem(SgNode* file, std::vector<Item*>& itemsFile,std::v
 	  std::string addrDest="";
 	  SgAsmExpressionPtrList::iterator itOP = opsList.begin();
 	  for (;itOP!=opsList.end();++itOP) {
-	    addrDest += unparseExpression(*itOP) ;
+	    addrDest += unparseExpression(*itOP, NULL, NULL) ;
 	  }
 	  string s="<...>";
 	  s+=inst->get_comment();

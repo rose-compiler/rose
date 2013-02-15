@@ -974,7 +974,7 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
       SgAsmExpressionPtrList::iterator it = opsList.begin();
       string opsName="";
       for (;it!=opsList.end();++it) {
-	opsName += boost::lexical_cast<std::string>(unparseExpression(*it) )+", ";
+	opsName += boost::lexical_cast<std::string>(unparseExpression(*it, NULL, NULL) )+", ";
       }
       currentWidget->setText(boost::lexical_cast<std::string>(opsName), 3, i);	
       currentWidget->setText(boost::lexical_cast<std::string>((isSgAsmx86Instruction(stmts))->get_comment() ), 4, i);

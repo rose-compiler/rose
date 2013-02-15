@@ -53,7 +53,7 @@ BufferOverflow::run(string& name, SgGraphNode* node,
 		bool memRef = false, regRef = false;
 		std::pair<X86RegisterClass, int> code;
 		code = check_isRegister(pre, asmPre, false, memRef, regRef);
-		string codeStr = unparseX86Register(RegisterDescriptor(code.first, code.second, 0, 64));
+		string codeStr = unparseX86Register(RegisterDescriptor(code.first, code.second, 0, 64), NULL);
 		if (codeStr=="rsp")
 		  value = getValueOfInstr(asmPre, true);
 		else 
