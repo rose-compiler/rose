@@ -13,4 +13,4 @@ Anlyzing pointers in this function:
 
 Not using Yices SMT solver
 data pointer at defs={0x080483d5} expr=0x080497f0[32]
-data pointer at defs={0x080483d5,0x080483da} expr=(bv-or[32] (bv-or[32] (bv-or[32] (uextend[32] 32[32] v414[8]) (shr0[32] 8[32] (uextend[32] 32[32] v415[8]))) (shr0[32] 16[32] (uextend[32] 32[32] v416[8]))) (shr0[32] 24[32] (uextend[32] 32[32] v417[8])))
+data pointer at defs={0x080483d5} expr=v170[32]
