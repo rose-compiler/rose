@@ -13,6 +13,12 @@ function usage() {
   echo "Usage: $0 <path-to-library:string>"
 }
 
+function how_to_fix() {
+    echo "  If this is an issue with only the Boost libraries (and not the Boost include files) and"
+    echo "  you're using dynamic linking, then you should be able to fix this simply by adjusting"
+    echo "  environment variables; otherwise you may need to reconfigure, \"make clean\" and re-make ROSE."
+}
+
 #-------------------------------------------------------------------------------
 #  Main
 #-------------------------------------------------------------------------------
@@ -49,6 +55,10 @@ if test -n "$boostlibdirs"; then
     echo "[INFO] [${0}] Boost is being linked from '$(echo "$boostlibdirs" | xargs)' in '$LIBRARY'"
 else
     echo "[ERROR] [${0}] Boost link dependencies not found in '${LIBRARY}'."
+    echo "  It looks like the directory you specified during ROSE's configure step for Boost libraries"
+    echo "  is not being used in the ROSE test executable we just compiled.  Perhaps some other Boost"
+    echo "  is being picked up instead?"
+    how_to_fix
     echo
     echo "  \$ $cmd"
     echo
@@ -56,7 +66,11 @@ else
 fi
 
 if test $(echo "$boostlibdirs" | wc -l) -gt 1; then
-    echo "[ERROR] [${0}] Boost libraries are being linked from multiple directories in '${LIBRARY}'. This is probably an error:";
+    echo "[ERROR] [${0}] Boost libraries are being linked from multiple directories in '${LIBRARY}'."
+    echo "  This is probably an error; it's not likely that you would have libraries from one version"
+    echo "  of Boost spread into multiple directories.  Perhaps one of the installed Boost versions is"
+    echo "  not complete?"
+    how_to_fix
     echo
     echo "  \$ $cmd"
     if $OS_MACOSX; then
