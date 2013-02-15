@@ -96,30 +96,32 @@ namespace BinaryAnalysis {              // documented elsewhere
                     expr = node;
                 }
 
+                virtual ~ValueType() {}
+
                 /** Adds instructions to the list of defining instructions.  Adds the specified instruction and defining sets
                  *  into this value and returns a reference to this value.  This is a convenience function used internally by
                  *  the policy's X86InstructionSemantics callback methods. See also add_defining_instructions().
                  * @{ */
-                void defined_by(SgAsmInstruction *insn, const InsnSet &set1, const InsnSet &set2, const InsnSet &set3) {
+                virtual void defined_by(SgAsmInstruction *insn, const InsnSet &set1, const InsnSet &set2, const InsnSet &set3) {
                     add_defining_instructions(set3);
                     defined_by(insn, set1, set2);
                 }
-                void defined_by(SgAsmInstruction *insn, const InsnSet &set1, const InsnSet &set2) {
+                virtual void defined_by(SgAsmInstruction *insn, const InsnSet &set1, const InsnSet &set2) {
                     add_defining_instructions(set2);
                     defined_by(insn, set1);
                 }
-                void defined_by(SgAsmInstruction *insn, const InsnSet &set1) {
+                virtual void defined_by(SgAsmInstruction *insn, const InsnSet &set1) {
                     add_defining_instructions(set1);
                     defined_by(insn);
                 }
-                void defined_by(SgAsmInstruction *insn) {
+                virtual void defined_by(SgAsmInstruction *insn) {
                     add_defining_instructions(insn);
                 }
                 /** @} */
 
                 /** Print the value. If a rename map is specified a named value will be renamed to have a shorter name.  See
                  *  the rename() method for details. */
-                void print(std::ostream &o, RenameMap *rmap=NULL) const {
+                virtual void print(std::ostream &o, RenameMap *rmap=NULL) const {
                     o <<"defs={";
                     size_t ndefs=0;
                     for (InsnSet::const_iterator di=defs.begin(); di!=defs.end(); ++di, ++ndefs) {
@@ -130,7 +132,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                     o <<"} expr=";
                     expr->print(o, rmap);
                 }
-                void print(std::ostream &o, BaseSemantics::SEMANTIC_NO_PRINT_HELPER *unused=NULL) const {
+                virtual void print(std::ostream &o, BaseSemantics::SEMANTIC_NO_PRINT_HELPER *unused=NULL) const {
                     print(o, (RenameMap*)0);
                 }
                 friend std::ostream& operator<<(std::ostream &o, const ValueType &e) {
@@ -139,12 +141,12 @@ namespace BinaryAnalysis {              // documented elsewhere
                 }
 
                 /** Returns true if the value is a known constant. */
-                bool is_known() const {
+                virtual bool is_known() const {
                     return expr->is_known();
                 }
 
                 /** Returns the value of a known constant. Assumes this value is a known constant. */
-                uint64_t known_value() const {
+                virtual uint64_t known_value() const {
                     LeafNodePtr leaf = expr->isLeafNode();
                     assert(leaf!=NULL);
                     return leaf->get_value();
@@ -152,16 +154,16 @@ namespace BinaryAnalysis {              // documented elsewhere
 
                 /** Returns the expression stored in this value.  Expressions are reference counted; the reference count of the
                  *  returned expression is not incremented. */
-                const TreeNodePtr& get_expression() const {
+                virtual const TreeNodePtr& get_expression() const {
                     return expr;
                 }
 
                 /** Changes the expression stored in the value.
                  * @{ */
-                void set_expression(const TreeNodePtr &new_expr) {
+                virtual void set_expression(const TreeNodePtr &new_expr) {
                     expr = new_expr;
                 }
-                void set_expression(const ValueType &source) {
+                virtual void set_expression(const ValueType &source) {
                     set_expression(source.get_expression());
                 }
                 /** @} */
@@ -178,14 +180,14 @@ namespace BinaryAnalysis {              // documented elsewhere
                  *
                  *  the defining set for EAX will be instructions {1, 2} and the defining set for EBX will be {4}.  Defining
                  *  sets for other registers are the empty set. */
-                const InsnSet& get_defining_instructions() const {
+                virtual const InsnSet& get_defining_instructions() const {
                     return defs;
                 }
 
                 /** Adds definitions to the list of defining instructions. Returns the number of items added that weren't
                  *  already in the list of defining instructions.
                  * @{ */
-                size_t add_defining_instructions(const InsnSet &to_add) {
+                virtual size_t add_defining_instructions(const InsnSet &to_add) {
                     size_t nadded = 0;
                     for (InsnSet::const_iterator i=to_add.begin(); i!=to_add.end(); ++i) {
                         std::pair<InsnSet::iterator, bool> inserted = defs.insert(*i);
@@ -194,10 +196,10 @@ namespace BinaryAnalysis {              // documented elsewhere
                     }
                     return nadded;
                 }
-                size_t add_defining_instructions(const ValueType &source) {
+                virtual size_t add_defining_instructions(const ValueType &source) {
                     return add_defining_instructions(source.get_defining_instructions());
                 }
-                size_t add_defining_instructions(SgAsmInstruction *insn) {
+                virtual size_t add_defining_instructions(SgAsmInstruction *insn) {
                     InsnSet tmp;
                     if (insn)
                         tmp.insert(insn);
@@ -208,13 +210,13 @@ namespace BinaryAnalysis {              // documented elsewhere
                 /** Set definint instructions.  This discards the old set of defining instructions and replaces it with the
                  *  specified set.
                  * @{ */
-                void set_defining_instructions(const InsnSet &new_defs) {
+                virtual void set_defining_instructions(const InsnSet &new_defs) {
                     defs = new_defs;
                 }
-                void set_defining_instructions(const ValueType &source) {
+                virtual void set_defining_instructions(const ValueType &source) {
                     set_defining_instructions(source.get_defining_instructions());
                 }
-                void set_defining_instructions(SgAsmInstruction *insn) {
+                virtual void set_defining_instructions(SgAsmInstruction *insn) {
                     InsnSet tmp;
                     if (insn)
                         tmp.insert(insn);
@@ -425,12 +427,17 @@ namespace BinaryAnalysis {              // documented elsewhere
 
                 /** Add a constant to an address. */
                 ValueType<32> add(const ValueType<32> &a, uint64_t n) {
+                    ValueType<32> retval;
                     if (0==n)
-                        return a;
-                    if (a.is_known())
-                        return ValueType<32>(a.known_value()+n);
-                    return ValueType<32>(InternalNode::create(32, InsnSemanticsExpr::OP_ADD,
-                                                              a.get_expression(), LeafNode::create_integer(32, n)));
+                        return a; // current instruction doesn't contribute anything to the value
+                    if (a.is_known()) {
+                        retval = ValueType<32>(a.known_value()+n);
+                    } else {
+                        retval = ValueType<32>(InternalNode::create(32, InsnSemanticsExpr::OP_ADD,
+                                                                    a.get_expression(), LeafNode::create_integer(32, n)));
+                    }
+                    retval.set_defining_instructions(a.get_defining_instructions());
+                    return retval;
                 }
 
                 /** Returns the first memory cell that must be aliased by @p addr. */
@@ -700,20 +707,23 @@ namespace BinaryAnalysis {              // documented elsewhere
                     ValueType<ToLen> retval;
                     if (a.is_known()) {
                         retval = ValueType<ToLen>(IntegerOps::GenMask<uint64_t,ToLen>::value & a.known_value());
+                        retval.defined_by(FromLen==ToLen?NULL:cur_insn, a.get_defining_instructions());
                     } else if (FromLen==ToLen) {
                         // no-op, so not defined by current insn
                         retval = ValueType<ToLen>(a.get_expression());
+                        retval.defined_by(NULL, a.get_defining_instructions());
                     } else if (FromLen>ToLen) {
                         retval = ValueType<ToLen>(InternalNode::create(ToLen, InsnSemanticsExpr::OP_EXTRACT,
                                                                        LeafNode::create_integer(32, 0),
                                                                        LeafNode::create_integer(32, ToLen),
                                                                        a.get_expression()));
+                        retval.defined_by(cur_insn, a.get_defining_instructions());
                     } else {
                         retval = ValueType<ToLen>(InternalNode::create(ToLen, InsnSemanticsExpr::OP_UEXTEND,
                                                                        LeafNode::create_integer(32, ToLen),
                                                                        a.get_expression()));
+                        retval.defined_by(cur_insn, a.get_defining_instructions());
                     }
-                    retval.defined_by(cur_insn, a.get_defining_instructions());
                     return retval;
                 }
 
@@ -723,7 +733,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                     ValueType<ToLen> retval;
                     if (a.is_known()) {
                         retval = ValueType<ToLen>(IntegerOps::signExtend<FromLen, ToLen>(a.known_value()));
-                        retval.defined_by(cur_insn, a.get_defining_instructions());
+                        retval.defined_by(FromLen==ToLen?NULL:cur_insn, a.get_defining_instructions());
                     } else if (FromLen==ToLen) {
                         // no-op, so not defined by current insns
                         retval = ValueType<ToLen>(a.get_expression());
