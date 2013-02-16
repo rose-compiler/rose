@@ -1,12 +1,12 @@
 #include <string>
 #include <assert.h>
-#include "jni_JavaSourceCodePosition.h"
-#include "jni_utils.h"
+#include "jni_x10SourceCodePosition.h"
+#include "jni_x10_utils.h"
 
-JavaSourceCodePosition *convert_Java_SourcePosition(JNIEnv *env, jobject sourcePosition) {
+X10SourceCodePosition *convert_X10_SourcePosition(JNIEnv *env, jobject sourcePosition) {
     jclass cls;
     jmethodID method_id;
-    JavaSourceCodePosition *pos_info = NULL;
+    X10SourceCodePosition *pos_info = NULL;
 
     int line_start = -1;
     int line_end   = -1;
@@ -37,7 +37,7 @@ JavaSourceCodePosition *convert_Java_SourcePosition(JNIEnv *env, jobject sourceP
     col_end = (int) env->CallIntMethod(sourcePosition, method_id);
 
     // build a Token of our own.
-    pos_info = new JavaSourceCodePosition(line_start,line_end,col_start,col_end);
+    pos_info = new X10SourceCodePosition(line_start,line_end,col_start,col_end);
 
     return pos_info;
 }

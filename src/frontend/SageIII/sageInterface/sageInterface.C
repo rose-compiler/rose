@@ -5364,6 +5364,11 @@ SageInterface::setSourcePosition(SgNode* node)
    {
   // Check the mode and build the correct type of source code position.
      SourcePositionClassification scp = getSourcePositionClassificationMode();
+
+#if 0
+     printf ("In SageInterface::setSourcePosition(): SourcePositionClassification scp = %s \n",display(scp).c_str());
+#endif
+
      switch(scp)
         {
           case e_sourcePositionError: // Error value for enum.
@@ -5375,7 +5380,7 @@ SageInterface::setSourcePosition(SgNode* node)
 
           case e_sourcePositionDefault: // Default source position.
              {
-#if 0
+#if 1
                printf ("e_sourcePositionDefault in SageInterface::setSourcePosition() \n");
 #endif
                SgLocatedNode* locatedNode = isSgLocatedNode(node);
@@ -5487,6 +5492,13 @@ SageInterface::setSourcePosition(SgNode* node)
                break;
              }
         }
+
+#if 0
+     if (node->get_file_info() != NULL)
+        {
+          node->get_file_info()->display("Leaving SageInterface::setSourcePosition()");
+        }
+#endif
    }
 
 

@@ -41,8 +41,8 @@ echo ""
 #
 ##
   #ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php python opencl"
-  ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php        opencl"
-  #ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php        opencl x10"
+  #ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php        opencl"
+  ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php        opencl x10"
 ##
 #
 #########################################################################################
