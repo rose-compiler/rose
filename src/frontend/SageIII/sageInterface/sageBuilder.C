@@ -10958,9 +10958,15 @@ SgEnumDeclaration * SageBuilder::buildEnumDeclaration_nfi(const SgName& name, Sg
 SgFile*
 SageBuilder::buildFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project/*=NULL*/)
    {
+// Note that ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT defines a reduced set of ROSE to support front-end specific development.
+// It is mostly used by quinlan to support laptop development where the smaller set of files permits one to do limited
+// development work on a Mac (even with OSX's poor performance with large numbers of debug symbols).  This is an 
+// infrequently used option.
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 
+#if 0
      printf ("In SageBuilder::buildFile(inputFileName = %s, outputFileName = %s, project = %p \n",inputFileName.c_str(),outputFileName.c_str(),project);
+#endif
 
      ROSE_ASSERT(inputFileName.size()!=0);// empty file name is not allowed.
      string sourceFilename = inputFileName, fullname;
@@ -11084,17 +11090,39 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #else
      return NULL;
 #endif
-   }// end SgFile* buildFile()
-
+   }
 
 //! Build a SgFile node
 SgSourceFile*
 SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* project)
    {
   // DQ (2/9/2013): Adding support to build a SgSourceFile with an empty global scope.
+  // This function calls the buildFile(string,string,SgProject*) function and provides
+  // a simple API where one wants to create a new SgSourceFile that will then have 
+  // statements added to it and then unparsed.
 
+  // This function needs a way to specify the associated language for the generated file.
+  // Currently this is taken from the input file (generated from a prefix on the output filename.
+
+#if 0
      printf ("In SageBuilder::buildSourceFile(outputFileName = %s, project = %p \n",outputFileName.c_str(),project);
+#endif
 
+  // Call the supporting function to build a file.
+     string inputFilePrefix = "temp_dummy_file_";
+
+     SgFile* file = buildFile(inputFilePrefix+outputFileName,outputFileName,project);
+     ROSE_ASSERT(file != NULL);
+
+     SgSourceFile* sourceFile = isSgSourceFile(file);
+     ROSE_ASSERT(sourceFile != NULL);
+
+     ROSE_ASSERT(sourceFile->get_globalScope() != NULL);
+
+     return sourceFile;
+
+#if 0
+  // This is a more direct, alternative implementation (not sure if it is better).
      SgSourceFile* newFile = new SgSourceFile();
      ROSE_ASSERT(newFile != NULL);
 
@@ -11117,7 +11145,9 @@ SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* proje
      ROSE_ASSERT(newFile->get_globalScope() != NULL);
 
      return newFile;
+#endif
    }
+
 
 PreprocessingInfo* SageBuilder::buildComment(SgLocatedNode* target, const std::string & content,PreprocessingInfo::RelativePositionType position/*=PreprocessingInfo::before*/,PreprocessingInfo::DirectiveType dtype/* = PreprocessingInfo::CpreprocessorUnknownDeclaration*/)
    {

@@ -4,7 +4,7 @@ AC_DEFUN([ROSE_SUPPORT_X10],[
     dnl We need to know where to find the X10 compiler.
     AC_ARG_WITH([X10path],
                 [AC_HELP_STRING([[[[--with-X10path[=PREFIX]]]]], dnl yes, we really need 4 quotes (autoconf 2.6.1)!
-                                [Specify the X10 path. The default is the empty prefix.])], [ac_cv_use_X10path=$withval], [ac_cv_use_X10_path=no])
+                                [Specify the X10 path. The default is the empty prefix.])], [ac_cv_use_X10path=$withval], [ac_cv_use_X10path=no])
     AC_CACHE_CHECK([whether to use X10], [ac_cv_use_X10path], [ac_cv_use_X10path=no])
 
     dnl Find the X10 executable and/or library.

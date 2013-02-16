@@ -506,6 +506,18 @@ testVFA: vfa.pdf vfa_orig.pdf
 
 testBuildFile: buildFile
 	./buildFile -rose:verbose 0 -c $(srcdir)/inputCode_buildFile.C
+	@echo "***** new_source_file.h *****"
+	@cat new_source_file.h
+	@rm new_source_file.h
+	@echo ""
+	@echo "***** temp_dummy_file_new_source_file.C *****"
+	@cat temp_dummy_file_new_source_file.C
+	@rm temp_dummy_file_new_source_file.C
+	@echo ""
+	@echo "***** new_source_file.C *****"
+	@cat new_source_file.C
+	@rm new_source_file.C
+	@echo ""
 
 testClassHierarchyGraph: classHierarchyGraph
 	./classHierarchyGraph $(srcdir)/inputCode_ClassHierarchyGraph.C
