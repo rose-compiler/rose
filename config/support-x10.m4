@@ -1,37 +1,212 @@
-# Inclusion of X10 compiler path.
-AC_DEFUN([ROSE_SUPPORT_X10],[
+##### http://www.rosecompiler.org
+#
+# SYNOPSIS
+#
+#   ROSE_SUPPORT_X10([])
+#
+# DESCRIPTION
+#
+#   Determine if X10 compiler installation is provided.
+#
+#     --with-x10
+#     --with-x10-lib
+#     --with-x10-bin
+#
+#   This macro calls:
+#
+#     AC_SUBST(X10_INSTALL_PATH)
+#     AC_SUBST(X10_BIN_PATH)
+#     AC_SUBST(X10_LIBRARY_PATH)
+#     AC_SUBST(X10_VERSION)
+#
+#   And sets:
+#
+#     Automake conditionals:
+#     AM_CONDITIONAL(ROSE_WITH_X10)
+#     AM_CONDITIONAL(ROSE_WITH_X10_BIN)
+#     AM_CONDITIONAL(ROSE_WITH_X10_LIB)
+#
+#     CPP #defines:
+#     AC_DEFINE_UNQUOTED(X10_INSTALL_PATH)
+#     AC_DEFINE_UNQUOTED(X10_BIN_PATH)
+#     AC_DEFINE_UNQUOTED(X10_LIBRARY_PATH)
+#     AC_DEFINE_UNQUOTED(X10_VERSION)
+#
+# EXAMPLE
+#
+#   if test "x$X10_BIN_PATH" = "x"; then
+#       AC_MSG_ERROR([No X10/bin])
+#   elif test "x$X10_LIBRARY_PATH" = "x"; then
+#       AC_MSG_ERROR([No X10/lib])
+#   fi
+#
+# LAST MODIFICATION
+#
+#   2013-02-20
+#
+# COPYLEFT
+#
+#   Copyright (c) 2013 Justin Too <too1@llnl.gov>
+#
+#   Copying and distribution of this file, with or without
+#   modification, are permitted in any medium without royalty provided
+#   the copyright notice and this notice are preserved.
 
-    dnl We need to know where to find the X10 compiler.
-    AC_ARG_WITH([X10path],
-                [AC_HELP_STRING([[[[--with-X10path[=PREFIX]]]]], dnl yes, we really need 4 quotes (autoconf 2.6.1)!
-                                [Specify the X10 path. The default is the empty prefix.])], [ac_cv_use_X10path=$withval], [ac_cv_use_X10path=no])
-    AC_CACHE_CHECK([whether to use X10], [ac_cv_use_X10path], [ac_cv_use_X10path=no])
+AC_DEFUN([ROSE_SUPPORT_X10],
+[
+  AC_BEFORE([$0], [ROSE_SUPPORT_X10_FRONTEND])
 
-    dnl Find the X10 executable and/or library.
-    HAVE_LIBX10=
-    if test $ac_cv_use_X10path = yes; then
-        AC_ERROR([Invalid option: $ac_cv_use_X10path.  Please specify the path to the X10 compiler.])
-    elif test -n "$ac_cv_use_X10path" -a "$ac_cv_use_X10path" != no; then
-        ROSE_X10_PREFIX="$ac_cv_use_X10path"
-      #  AC_PATH_PROG(ROSE_X10, x10path, [], [$ROSE_X10_PREFIX/bin])
-      #  AC_CHECK_FILE(["$ROSE_X10_PREFIX/lib/libX10.a"], [AC_DEFINE(ROSE_HAVE_LIBX10, [], [Defined when the X10 library is present and should be used.]) 
-      #  ROSE_HAVE_LIBX10=yes])
-    fi
+  ROSE_CONFIGURE_SECTION([X10 Compiler])
 
-    dnl Sanity check... If the user told us to use X10, then we must find either an executable or the library.
-    if test "$ac_cv_use_X10path" != no -a -z "$ROSE_X10path" -a -z "$ROSE_HAVE_LIBX10"; then
-        AC_MSG_ERROR([found neither X10 executable nor libX10.a for --with-x10path])
-    fi
+  #============================================================================
+  # --with-x10=/path/to/x10-trunk/x10.dist/
+  #============================================================================
+  ROSE_ARG_WITH(
+    [x10],
+    [for an installation of the X10 compiler],
+    [support the X10 compiler],
+    []
+  )
+  if test "x$CONFIG_HAS_ROSE_WITH_X10" != "xno"; then
+    X10_INSTALL_PATH="$ROSE_WITH_X10"
+    X10_BIN_PATH="${ROSE_WITH_X10}/bin"
+    X10_LIBRARY_PATH="${ROSE_WITH_X10}/lib"
+  else
+    X10_INSTALL_PATH=
+    X10_BIN_PATH=
+    X10_LIBRARY_PATH=
+  fi
 
-    dnl Results
-    dnl   ROSE_X10         -- defined as the name of the "X10" executable if available
-    dnl   ROSE_X10_PREFIX  -- the name of the directory where X10 software is installed if no on search paths
-    dnl   ROSE_HAVE_LIBX10 -- defined if the X10 library and include files are available
-    if test -n "$ROSE_X10"; then
-        AC_DEFINE_UNQUOTED(ROSE_X10, ["$ROSE_X10"], [Absolute name of X10 executable, or the empty string.])
-    fi
-    AC_SUBST(ROSE_X10)
-    AC_SUBST(ROSE_X10_PREFIX)
-    AM_CONDITIONAL(ROSE_HAVE_LIBX10, [test -n "$ROSE_HAVE_LIBX10"])
-    AM_CONDITIONAL(ROSE_HAVE_X10,    [test -n "$ROSE_X10"])
+  #============================================================================
+  # --with-x10-bin=/path/to/x10-trunk/x10.dist/bin/
+  #============================================================================
+  ROSE_ARG_WITH(
+    [x10-bin],
+    [if the X10 compiler bin directory was specified],
+    [use this X10 bin directory],
+    []
+  )
+  if test "x$CONFIG_HAS_ROSE_WITH_X10_BIN" != "xno"; then
+      X10_BIN_PATH="$ROSE_WITH_X10_BIN"
+  fi
+
+  #============================================================================
+  # --with-x10-lib=/path/to/x10-trunk/x10.dist/lib/
+  #============================================================================
+  ROSE_ARG_WITH(
+    [x10-lib],
+    [if the X10 compiler library directory was specified],
+    [use this X10 library directory],
+    []
+  )
+  if test "x$CONFIG_HAS_ROSE_WITH_X10_LIB" != "xno"; then
+      X10_LIBRARY_PATH="$ROSE_WITH_X10_LIB"
+  fi
+
+  #============================================================================
+  # Validate installation (if provided)
+  #============================================================================
+  if test "x$X10_BIN_PATH" != "x"; then
+      #======================================
+      # x10c - Check for the X10 compiler
+      #======================================
+      AC_CHECK_FILE(
+          [${X10_BIN_PATH}/x10c],
+          [],
+          [ROSE_MSG_ERROR([x10c is missing, can't use this X10 installation])])
+
+      #======================================
+      # x10c - Check version of X10 compiler
+      #======================================
+      AC_MSG_CHECKING([for the x10c compiler version])
+      X10_VERSION="`${X10_BIN_PATH}/x10c -version | grep 'x10c version' | awk '{print [$][3]}'`"
+      exit_status=$?
+      pipe_status=[${PIPESTATUS[0]}]
+      if test ${exit_status} -ne 0 || test ${pipe_status} -ne 0; then
+          ROSE_MSG_ERROR([Could not determine your X10 compiler version])
+      else
+          AC_MSG_RESULT([$X10_VERSION])
+      fi
+  fi
+
+  #============================================================================
+  # Validate X10 Jar files exist in X10 lib path
+  #============================================================================
+  if test "x$X10_LIBRARY_PATH" != "x"; then
+      AC_CHECK_FILE(
+          [${X10_LIBRARY_PATH}/x10c.jar],
+          [],
+          [ROSE_MSG_ERROR([x10c.jar is missing, can't use this X10 installation])])
+      AC_CHECK_FILE(
+          [${X10_LIBRARY_PATH}/lpg.jar],
+          [],
+          [ROSE_MSG_ERROR([lpg.jar is missing, can't use this X10 installation])])
+      AC_CHECK_FILE(
+          [${X10_LIBRARY_PATH}/com.ibm.wala.cast_1.0.0.201101071300.jar],
+          [],
+          [ROSE_MSG_ERROR([com.ibm.wala.cast_1.0.0.201101071300.jar is missing, can't use this X10 installation])])
+      AC_CHECK_FILE(
+          [${X10_LIBRARY_PATH}/com.ibm.wala.cast.java_1.0.0.201101071300.jar],
+          [],
+          [ROSE_MSG_ERROR([com.ibm.wala.cast.java_1.0.0.201101071300.jar is missing, can't use this X10 installation])])
+      AC_CHECK_FILE(
+          [${X10_LIBRARY_PATH}/com.ibm.wala.core_1.1.3.201101071300.jar],
+          [],
+          [ROSE_MSG_ERROR([com.ibm.wala.core_1.1.3.201101071300.jar is missing, can't use this X10 installation])])
+      AC_CHECK_FILE(
+          [${X10_LIBRARY_PATH}/com.ibm.wala.shrike_1.3.1.201101071300.jar],
+          [],
+          [ROSE_MSG_ERROR([com.ibm.wala.shrike_1.3.1.201101071300.jar is missing, can't use this X10 installation])])
+      AC_CHECK_FILE(
+          [${X10_LIBRARY_PATH}/x10wala.jar],
+          [],
+          [ROSE_MSG_ERROR([x10wala.jar is missing, can't use this X10 installation])])
+      AC_CHECK_FILE(
+          [${X10_LIBRARY_PATH}/commons-math3-3.0.jar],
+          [],
+          [ROSE_MSG_ERROR([commons-math3-3.0.jar is missing, can't use this X10 installation])])
+      AC_CHECK_FILE(
+          [${X10_LIBRARY_PATH}/ecj.jar],
+          [],
+          [ROSE_MSG_ERROR([ecj.jar is missing, can't use this X10 installation])])
+      AC_CHECK_FILE(
+          [${X10_LIBRARY_PATH}/org.eclipse.equinox.common_3.6.0.v20100503.jar],
+          [],
+          [ROSE_MSG_ERROR([org.eclipse.equinox.common_3.6.0.v20100503.jar is missing, can't use this X10 installation])])
+  fi
+
+  #============================================================================
+  # Set Automake Conditionals and Substitutions
+  #============================================================================
+  AM_CONDITIONAL(ROSE_WITH_X10, [test "x$X10_BIN_PATH" != "x" && test "x$X10_LIBRARY_PATH" != "x"])
+  AM_CONDITIONAL(ROSE_WITH_X10_BIN, [test "x$X10_BIN_PATH" != "x"])
+  AM_CONDITIONAL(ROSE_WITH_X10_LIB, [test "x$X10_LIBRARY_PATH" != "x"])
+
+  AC_SUBST(X10_INSTALL_PATH)
+  AC_SUBST(X10_BIN_PATH)
+  AC_SUBST(X10_LIBRARY_PATH)
+  AC_SUBST(X10_VERSION)
+
+  #============================================================================
+  # Set CPP #defines
+  #============================================================================
+  AC_DEFINE_UNQUOTED(
+    X10_INSTALL_PATH,
+    ["$X10_INSTALL_PATH"],
+    [Absolute path of the X10 installation])
+  AC_DEFINE_UNQUOTED(
+    X10_BIN_PATH,
+    ["$X10_BIN_PATH"],
+    [Absolute path of the X10 installation bin directory])
+  AC_DEFINE_UNQUOTED(
+    X10_LIBRARY_PATH,
+    ["$X10_LIBRARY_PATH"],
+    [Absolute path of the X10 installation lib directory])
+  AC_DEFINE_UNQUOTED(
+    X10_VERSION,
+    ["$X10_VERSION"],
+    [Version number of the user-specified X10 compiler])
+
+# End macro ROSE_SUPPORT_X10.
 ])
+
