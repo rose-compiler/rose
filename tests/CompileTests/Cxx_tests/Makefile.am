@@ -1158,6 +1158,11 @@ test2013_58.C \
 test2013_59.C \
 test2013_60.C \
 test2013_61.C \
+test2013_63.C \
+test2013_64.C \
+test2013_65.C \
+test2013_66.C \
+test2013_67.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1184,7 +1189,8 @@ test2011_06.C \
 test2004_35.C 
 
 
-# DQ (2/2/2013): Failing test codes as a result of unifing :
+# DQ (2/16/2013): Failing test codes as a result of name qualification on friend class declaration
+# test2013_62.C 
 
 
 # DQ (1/21/2013): Failing test codes:

@@ -4728,6 +4728,9 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           while ( pp != classdefn_stmt->get_members().end() )
              {
+#if 0
+               printf ("In unparseClassDefnStmt(): (*pp)->get_declarationModifier().get_accessModifier().isProtected() = %s \n",(*pp)->get_declarationModifier().get_accessModifier().isProtected() ? "true" : "false");
+#endif
                unparseStatement((*pp), ninfo);
                pp++;
              }

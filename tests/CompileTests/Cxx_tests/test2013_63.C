@@ -6,7 +6,7 @@ using namespace boost;
 
 int main(int argc, char*argv[]) 
    {
-     string str = "helloworld!"; 
+     string str = "hello world!"; 
      to_upper(str); 
      cout << str << endl;
 
