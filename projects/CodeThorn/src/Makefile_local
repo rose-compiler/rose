@@ -118,8 +118,8 @@ $(TOOLNAME3)_rers9: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).
 $(TOOLNAME3)_rers10: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem10_specialization.o
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers10 RERS_Problem10_specialization.o
 
-$(TOOLNAME2): $(TOOLNAME2).C $(OBJECT_FILES)
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME2).C -o$(TOOLNAME2)
+$(TOOLNAME2): $(TOOLNAME2).C $(OBJECT_FILES) RERS_empty_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME2).C RERS_empty_specialization.o -o$(TOOLNAME2) 
 
 $(TOOLNAME4): $(TOOLNAME4).C $(OBJECT_FILES) RERS_empty_specialization.o
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME4).C -o$(TOOLNAME4) RERS_empty_specialization.o
@@ -128,8 +128,8 @@ xxtest: xxtest.C $(OBJECT_FILES)
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) xxtest.C -oxxtest
 
 #MS: not finished yet
-matcher_demo: matcher_demo.C $(OBJECT_FILES) matcherparser.o matcherlexer.o
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) matcher_demo.C -omatcher_demo
+matcher_demo: matcher_demo.C $(OBJECT_FILES) matcherparser.o matcherlexer.o RERS_empty_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) matcher_demo.C RERS_empty_specialization.o -omatcher_demo
 
 check: $(TOOLNAME3)
 	./$(TOOLNAME3) --internal-checks
