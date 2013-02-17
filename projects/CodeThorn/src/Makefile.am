@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-bin_PROGRAMS = codethorn ast_demo matcher_demo iterator_test
+bin_PROGRAMS = codethorn 
+#ast_demo matcher_demo iterator_test
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 BUILT_SOURCES = 
 CLEANFILES = 
@@ -67,6 +68,28 @@ codethorn_SOURCES = \
   RERS_empty_specialization.C      \
   codethorn.C                      \
   codethorn.h
+
+# used only in specialized analyzer
+faketarget:
+	RERS_Problem10_specialization.C
+	RERS_Problem1_specialization.C
+	RERS_Problem2_specialization.C
+	RERS_Problem3_specialization.C
+	RERS_Problem4_specialization.C
+	RERS_Problem5_specialization.C
+	RERS_Problem6_specialization.C
+	RERS_Problem7_specialization.C
+	RERS_Problem8_specialization.C
+	RERS_Problem9_specialization.C
+	rers_cpp_forward_decls.C
+	rdmain.C
+	MFAnalyzer.h
+	MFAnalyzer.C
+	RDLattice.h
+	RDLattice.C
+	WorkList.h
+	WorkList.C
+	SetAlgo.h
 
 ast_demo_SOURCES = ast_demo.C Timer.cpp Timer.h  RoseAst.C RoseAst.h AstTerm.C AstTerm.h
 ast_demo_LDADD = -lrose libmatcher.la
