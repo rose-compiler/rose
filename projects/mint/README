@@ -3,6 +3,12 @@ Mint
 This project is only tested under Linux boxes.
 Mac OS X support is not yet available. 
 
+Known bugs:  Liao, 2/6/2013
+* You have to be very careful when writing mint pragmas (following the examples is the best way)
+* The pragma parser is very sensitive to the spacing in pragmas!!
+   midend/mintPragmas/MintPragmas.C needs to be fixed to handle pragmas with no space between keywords and "("/")"
+
+
 Compile Mint
 ------------
 The source directory is under src.

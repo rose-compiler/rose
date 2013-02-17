@@ -1820,18 +1820,19 @@ int OmpMidend::addLastprivateStmts(SgPragmaDeclaration *decl, OmpAttributeOld *o
         i!=ompattribute->var_list.end();i++ )
   {
       SgInitializedName *initname = isSgInitializedName((*i)->origVar);
-      SgType * mytype= initname->get_type();
+      //SgType * mytype= initname->get_type();
       SgName myname = initname->get_name();
       SgScopeStatement* varscope=isSgScopeStatement(\
                 ASTtools::get_scope(isSgNode((*i)->origVar)));
-      SgVariableDeclaration* privatevar;
+//      SgVariableDeclaration* privatevar;
 //      privatevar = new SgVariableDeclaration(TRANS_FILE,SgName( "_p_"+myname.getString()),
 //                mytype,NULL);
      SgName privateName = SgName( "_p_"+myname.getString());
-     privatevar = buildVariableDeclaration(privateName, mytype, NULL, varscope);
+//     privatevar = buildVariableDeclaration(privateName, mytype, NULL, varscope);
      
-    SgInitializedName * name1 = privatevar->get_decl_item (privateName); 
-    ROSE_ASSERT(name1);
+     string name1 =  "_p_"+myname.getString();
+ //   SgInitializedName * name1 = privatevar->get_decl_item (privateName); 
+//    ROSE_ASSERT(name1);
   //TODO handle e_firstlastprivate
     if ((*i)->ompType==e_lastprivate)
     {
@@ -2304,10 +2305,15 @@ int OmpMidend::addPrivateVarDeclarations(SgPragmaDeclaration *decl, \
 
       SgName privateName( "_p_"+myname.getString());
 //cout<<"debugging .........omptranslator: 2775: "<< privateName << endl; //danglling symbol ?
-      privatevar = buildVariableDeclaration(privateName, mytype,init2,bBlock1);
-
-     // privatevar->set_firstNondefiningDeclaration(privatevar);
+      SgVariableSymbol* private_sym =  isSgScopeStatement(bBlock1)->lookup_variable_symbol(privateName);
+      if (private_sym == NULL)
+        privatevar = buildVariableDeclaration(privateName, mytype,init2,bBlock1);
+      else
+        privatevar = isSgVariableDeclaration(private_sym->get_declaration()->get_declaration());
+      ROSE_ASSERT (privatevar);
       name1 = privatevar->get_decl_item(privateName);
+      //privatevar->set_firstNondefiningDeclaration(privatevar);
+      //string name_str = "_p_"+myname.getString();
       ROSE_ASSERT(name1);
    // add declaration for the local copy, only if not declared previously
       if(find(decl_list.begin(),decl_list.end(),(*i)->origVar)==decl_list.end())
