@@ -9,7 +9,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 TESTCODES_REQUIRED_TO_PASS = \
 testRoseHeaders_00.C \
 testRoseHeaders_01.C \
-testRoseHeaders_02.C
+testRoseHeaders_02.C \
+testRoseHeaders_03.C
 
 EXTRA_TESTCODES_REQUIRED_TO_PASS = \
      test2003_33.C \

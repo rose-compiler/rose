@@ -184,6 +184,13 @@ AstTests::runAllTests(SgProject* sageProject)
   // ROSE_Performance::TimingPerformance("AST Consistency Tests");
      TimingPerformance timer ("AST Consistency Tests:");
 
+  // DQ (2/17/2013): Added support to skip AST consistancy tests for performance testing.
+  // The skipAstConsistancyTests variable is on the SgFile, not the SgProject.
+     if (sageProject->get_fileList().empty() == false && sageProject->get_fileList()[0]->get_skipAstConsistancyTests() == true)
+        {
+          printf ("Note: In AstTests::runAllTests(): command line option used to skip AST consistancy tests \n");
+          return;
+        }
 
   // CH (2010/7/26):   
   // Before running tests, first clear all variable symbols which are not referenced in the memory pool.

@@ -331,6 +331,11 @@ public:
         return p_registers;
     }
 
+#ifndef USE_ROSE
+  // DQ (2/11/2013): I think it is a problem to use this function (currently being evaluated using delta debug case).
+  // This fails for ROSE compilign "rose.h" header file (ROSE compiling ROSE).
+  // Generates error: ERROR: In parse_function_body(): (this should have been a function body) entry_kind = 0x3a4d47e8 = src-seq-sublist 
+
     /** Specifies the instruction partitioner to use when partitioning instructions into functions.  If none is specified then
      *  a default partitioner will be constructed when necessary.
      *
@@ -338,6 +343,13 @@ public:
     void set_partitioner(class Partitioner *p) {
         p_partitioner = p;
     }
+#else
+    void set_partitioner(class Partitioner *p);
+#endif
+
+#ifndef USE_ROSE
+  // DQ (2/11/2013): I think it is a problem to use this function (currently being evaluated using delta debug case).
+  // This fails for ROSE compilign "rose.h" header file (ROSE compiling ROSE).
 
     /** Returns the partitioner object set by set_partitioner().
      *
@@ -345,6 +357,9 @@ public:
     class Partitioner *get_partitioner() const {
         return p_partitioner;
     }
+#else
+    class Partitioner *get_partitioner() const;
+#endif
 
     /** Specifies the heuristics used when searching for instructions. The @p bits argument should be a bit mask of
      *  SearchHeuristic bits.

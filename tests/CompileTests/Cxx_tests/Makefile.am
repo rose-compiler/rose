@@ -1158,6 +1158,11 @@ test2013_58.C \
 test2013_59.C \
 test2013_60.C \
 test2013_61.C \
+test2013_63.C \
+test2013_64.C \
+test2013_65.C \
+test2013_66.C \
+test2013_67.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1184,7 +1189,8 @@ test2011_06.C \
 test2004_35.C 
 
 
-# DQ (2/2/2013): Failing test codes as a result of unifing :
+# DQ (2/16/2013): Failing test codes as a result of name qualification on friend class declaration
+# test2013_62.C 
 
 
 # DQ (1/21/2013): Failing test codes:
@@ -1807,11 +1813,15 @@ failingAST_IO_tests: test2011_113.o test2011_114.o test2011_116.o
 print_testcodes:
 	echo $(TESTCODES)
 
+# Added performance test for ROSE evaluation:
+performance_timing:
+	../../testGraphGeneration --edg:no_warnings -w -rose:verbose 3 -rose:skip_unparse_asm_commands -rose:skipAstConsistancyTests -rose:skip_commentsAndDirectives -rose:skip_unparse -I$(srcdir) -c $(srcdir)/testPerformance.C
 
 # DQ (11/19/2012): HPCToolKit use.  This makes some significant assumptions on how we have setup HPCToolKit.
 hpctoolkit:
-	hpcrun -e WALLCLOCK -- ../../testTranslator --edg:no_warnings -w -rose:verbose 0 -rose:skip_unparse_asm_commands -I/home/dquinlan/ROSE/git-dq-edg4x-rc/tests/CompileTests/Cxx_tests -c /home/dquinlan/ROSE/git-dq-edg4x-rc/tests/CompileTests/Cxx_tests/testPerformance.C
-	hpcprof hpctoolkit-lt-testTranslator-measurements/lt-testTranslator-000000-000-0f802c45-7612-0.hpcrun
+	hpcrun -e WALLCLOCK -- ../../testTranslator --edg:no_warnings -w -rose:verbose 0 -rose:skip_unparse_asm_commands -rose:skipAstConsistancyTests -rose:skip_commentsAndDirectives -rose:skip_unparse -I/home/dquinlan/ROSE/git-dq-edg4x-rc/tests/CompileTests/Cxx_tests -c /home/dquinlan/ROSE/git-dq-edg4x-rc/tests/CompileTests/Cxx_tests/testPerformance.C
+#	hpcprof hpctoolkit-lt-testTranslator-measurements/lt-testTranslator-000000-000-0f802c45-7612-0.hpcrun
+	hpcprof hpctoolkit-lt-testTranslator-measurements/lt-testTranslator-000000-000-0f802c45-3676-0.hpcrun
 #	hpcviewer /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.2.4-dq-edg4x-rc-debug_mode_off/tests/CompileTests/Cxx_tests/hpctoolkit-lt-testTranslator-database-11205 &
 
 

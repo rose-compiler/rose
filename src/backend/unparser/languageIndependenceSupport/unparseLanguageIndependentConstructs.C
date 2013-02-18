@@ -139,11 +139,14 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
        // If we are to unparse a module into the .rmod file this this is ALWAYS true
           return true;
         }
+
 #if 0
-     printf ("sourceFilename = %s \n",sourceFilename.c_str());
+     printf ("In UnparseLanguageIndependentConstructs::statementFromFile(): sourceFilename = %s \n",sourceFilename.c_str());
 #endif
 
 #if 1
+  // DQ (2/15/2013): This might not be required now that we support physical filenames (and physical line numbers).
+
   // DQ (12/23/2012): This special handling of the "conftest.c" file is no linger required.
   // It is used to map filenames generated from a specific #line directives used in autoconf 
   // generated files to the physical filename.  However, now that we internally keep references 
@@ -204,11 +207,11 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 
        // DQ (5/19/2011): Output generated code... (allows unparseToString() to be used with template instantations to support name qualification).
           bool forceOutputOfGeneratedCode = info.outputCompilerGeneratedStatements();
-
-       // printf ("Inside of statementFromFile(): stmt = %p = %s isOutputInCodeGeneration   = %s \n",stmt,stmt->class_name().c_str(),isOutputInCodeGeneration   ? "true" : "false");
-       // printf ("Inside of statementFromFile(): stmt = %p = %s forceOutputOfGeneratedCode = %s \n",stmt,stmt->class_name().c_str(),forceOutputOfGeneratedCode ? "true" : "false");
-       // info.display("Inside of statementFromFile()");
-
+#if 0
+          printf ("Inside of statementFromFile(): stmt = %p = %s isOutputInCodeGeneration   = %s \n",stmt,stmt->class_name().c_str(),isOutputInCodeGeneration   ? "true" : "false");
+          printf ("Inside of statementFromFile(): stmt = %p = %s forceOutputOfGeneratedCode = %s \n",stmt,stmt->class_name().c_str(),forceOutputOfGeneratedCode ? "true" : "false");
+          info.display("Inside of statementFromFile()");
+#endif
        // DQ (1/11/2006): OutputCodeGeneration is not set to be true where transformations 
        // require it.  Transformation to include header files don't set the OutputCodeGeneration flag.
        // if (isOutputInCodeGeneration || isTransformation)
@@ -231,20 +234,21 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
             // DQ (10/22/2007): Allow empty name strings (to support #line n "")
             // ROSE_ASSERT (statementfilename.empty() == false);
 
-            // if ( strcmp(statementfilename, sourceFilename) == 0 )
                if ( statementfilename == sourceFilename )
                   {
                     statementInFile = true;
                   }
-               
-               //negara1 (08/15/2011): Make a special consideration for header file bodies in include directive statements.
-               //TODO: Change when SgIncludeDirectiveStatement is used instead of attached PreprocessingInfo.
+
+            // negara1 (08/15/2011): Make a special consideration for header file bodies in include directive statements.
+            // TODO: Change when SgIncludeDirectiveStatement is used instead of attached PreprocessingInfo.
                SgIncludeDirectiveStatement* includeDirectiveStatement = isSgIncludeDirectiveStatement(stmt);
-               if (includeDirectiveStatement != NULL) {
-                   if (includeDirectiveStatement -> get_headerFileBody() -> get_file_info() -> get_filenameString() == sourceFilename) {
-                       statementInFile = true;
-                   }
-               }
+               if (includeDirectiveStatement != NULL) 
+                  {
+                    if (includeDirectiveStatement -> get_headerFileBody() -> get_file_info() -> get_filenameString() == sourceFilename)
+                       {
+                         statementInFile = true;
+                       }
+                  }
              }
 #if 0
           printf ("In Unparser::statementFromFile (statementInFile = %s output = %s stmt = %p = %s = %s in file = %s sourceFilename = %s ) \n",
@@ -258,6 +262,8 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 
 #if 0
      printf ("\nstatementInFile = %p = %s = %s = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false");
+#endif
+#if 0
   // stmt->get_file_info()->display("debug why false");
   // if (statementInFile == false)
         {
@@ -731,27 +737,27 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #endif
           switch (stmt->variantT())
              {
-               case V_SgGlobal:            unparseGlobalStmt   (stmt, info); break;
-               case V_SgFunctionTypeTable: unparseFuncTblStmt  (stmt, info); break;
-               case V_SgNullStatement:     unparseNullStatement(stmt, info); break;
+               case V_SgGlobal:                        unparseGlobalStmt                    (stmt, info); break;
+               case V_SgFunctionTypeTable:             unparseFuncTblStmt                   (stmt, info); break;
+               case V_SgNullStatement:                 unparseNullStatement                 (stmt, info); break;
 
             // DQ (11/29/2008): Added support for unparsing CPP directives now supported as IR nodes.
-               case V_SgIncludeDirectiveStatement: unparseIncludeDirectiveStatement (stmt, info); break;
-               case V_SgDefineDirectiveStatement:  unparseDefineDirectiveStatement  (stmt, info); break;
-               case V_SgUndefDirectiveStatement:   unparseUndefDirectiveStatement  (stmt, info); break;
-               case V_SgIfdefDirectiveStatement:   unparseIfdefDirectiveStatement  (stmt, info); break;
-               case V_SgIfndefDirectiveStatement:  unparseIfndefDirectiveStatement  (stmt, info); break;
-               case V_SgDeadIfDirectiveStatement:  unparseDeadIfDirectiveStatement  (stmt, info); break;
-               case V_SgIfDirectiveStatement:      unparseIfDirectiveStatement  (stmt, info); break;
-               case V_SgElseDirectiveStatement:    unparseElseDirectiveStatement  (stmt, info); break;
-               case V_SgElseifDirectiveStatement:  unparseElseifDirectiveStatement  (stmt, info); break;
-               case V_SgEndifDirectiveStatement:   unparseEndifDirectiveStatement  (stmt, info); break;
-               case V_SgLineDirectiveStatement:    unparseLineDirectiveStatement  (stmt, info); break;
-               case V_SgWarningDirectiveStatement: unparseWarningDirectiveStatement  (stmt, info); break;
-               case V_SgErrorDirectiveStatement:   unparseErrorDirectiveStatement  (stmt, info); break;
-               case V_SgEmptyDirectiveStatement:   unparseEmptyDirectiveStatement  (stmt, info); break;
-               case V_SgIdentDirectiveStatement:   unparseIdentDirectiveStatement  (stmt, info); break;
-               case V_SgIncludeNextDirectiveStatement: unparseIncludeNextDirectiveStatement  (stmt, info); break;
+               case V_SgIncludeDirectiveStatement:     unparseIncludeDirectiveStatement     (stmt, info); break;
+               case V_SgDefineDirectiveStatement:      unparseDefineDirectiveStatement      (stmt, info); break;
+               case V_SgUndefDirectiveStatement:       unparseUndefDirectiveStatement       (stmt, info); break;
+               case V_SgIfdefDirectiveStatement:       unparseIfdefDirectiveStatement       (stmt, info); break;
+               case V_SgIfndefDirectiveStatement:      unparseIfndefDirectiveStatement      (stmt, info); break;
+               case V_SgDeadIfDirectiveStatement:      unparseDeadIfDirectiveStatement      (stmt, info); break;
+               case V_SgIfDirectiveStatement:          unparseIfDirectiveStatement          (stmt, info); break;
+               case V_SgElseDirectiveStatement:        unparseElseDirectiveStatement        (stmt, info); break;
+               case V_SgElseifDirectiveStatement:      unparseElseifDirectiveStatement      (stmt, info); break;
+               case V_SgEndifDirectiveStatement:       unparseEndifDirectiveStatement       (stmt, info); break;
+               case V_SgLineDirectiveStatement:        unparseLineDirectiveStatement        (stmt, info); break;
+               case V_SgWarningDirectiveStatement:     unparseWarningDirectiveStatement     (stmt, info); break;
+               case V_SgErrorDirectiveStatement:       unparseErrorDirectiveStatement       (stmt, info); break;
+               case V_SgEmptyDirectiveStatement:       unparseEmptyDirectiveStatement       (stmt, info); break;
+               case V_SgIdentDirectiveStatement:       unparseIdentDirectiveStatement       (stmt, info); break;
+               case V_SgIncludeNextDirectiveStatement: unparseIncludeNextDirectiveStatement (stmt, info); break;
                case V_SgLinemarkerDirectiveStatement:  unparseLinemarkerDirectiveStatement  (stmt, info); break;
 
             // Liao 10/21/2010. Handle generic OpenMP directive unparsing here.
@@ -770,7 +776,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                case V_SgOmpParallelStatement:
                case V_SgOmpWorkshareStatement:
                case V_SgOmpSingleStatement:
-               case V_SgOmpTaskStatement:  unparseOmpGenericStatement (stmt, info); break;
+               case V_SgOmpTaskStatement:
+                    unparseOmpGenericStatement (stmt, info); 
+                    break;
 
                default:
                  // DQ (11/4/2008): This is a bug for the case of a SgFortranDo statement, unclear what to do about this.
@@ -1282,8 +1290,11 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
      SgGlobal* globalScope = isSgGlobal(stmt);
      ROSE_ASSERT(globalScope != NULL);
 
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+#if 0
      printf ("\n ***** Unparsing the global Scope ***** \n\n");
+#endif
+
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
      printf ("global scope file = %s \n",TransformationSupport::getSourceFile(globalScope)->getFileName().c_str());
      printf ("global scope size = %ld \n",globalScope->get_declarations().size());
 #endif
@@ -1341,6 +1352,10 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
   // DQ (5/27/2005): Added support for compiler-generated statements that might appear at the end of the applications
   // printf ("At end of unparseGlobalStmt \n");
   // outputCompilerGeneratedStatements(info);
+
+#if 0
+     printf ("Leaving UnparseLanguageIndependentConstructs::unparseGlobalStmt() \n\n");
+#endif
 
   // DQ (4/21/2005): Output a new line at the end of the file (some compilers complain if this is not present)
      unp->cur.insert_newline(1);
