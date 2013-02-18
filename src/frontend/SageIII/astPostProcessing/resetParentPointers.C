@@ -1380,7 +1380,7 @@ ResetParentPointers::evaluateInheritedAttribute (
        // Since we don't traverse types this branch is never executed!
           printf ("Found a type or symbol while resetting parents \n");
           printf ("$$$$$ In evaluateInheritedAttribute() \n");
-          printf ("     astNode->sage_class_name() = %s \n",node->sage_class_name());
+          printf ("     astNode->class_name() = %s \n",node->class_name().c_str());
           ROSE_ASSERT(false);
         }
 
@@ -1396,11 +1396,10 @@ ResetParentPointers::evaluateInheritedAttribute (
                if ( inheritedAttribute.parentNode != parentNode )
                   {
                  // Interesting node 
-                    string currentNodeString  = node->sage_class_name();
-                    string expectedNodeString = (suggestedNode) ? suggestedNode->sage_class_name() : "NULL POINTER";
-                    string recordedNodeString = (parentNode)    ? parentNode->sage_class_name()    : "NULL POINTER";
-                    printf ("Note: On %s node expected parent (%s) didn't match recorded parent (%s) \n",
-                         currentNodeString.c_str(),expectedNodeString.c_str(),recordedNodeString.c_str());
+                    string currentNodeString  = node->class_name();
+                    string expectedNodeString = (suggestedNode) ? suggestedNode->class_name() : "NULL POINTER";
+                    string recordedNodeString = (parentNode)    ? parentNode->class_name()    : "NULL POINTER";
+                    printf ("Note: On %s node expected parent (%s) didn't match recorded parent (%s) \n",currentNodeString.c_str(),expectedNodeString.c_str(),recordedNodeString.c_str());
                   }
              }
         }

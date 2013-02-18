@@ -5013,6 +5013,13 @@ SageInterface::setSourcePositionToDefault( T* node )
    {
   // This is a templated function because SgPragma is not yet derived from SgLocatedNode.
 
+  // DQ (2/17/2013): This function is called a lot, so it might be a performance issue.
+  // All IR nodes built by the Build Interface are assighed source position information
+  // using this function and then reset afterward as we use information within EDG to 
+  // reset the source position information.  Ideally, the EDG/ROSE connection would
+  // use NULL pointers as the behavior for the front-end mode.  We can move to that 
+  // later to maek the source position handling more efficient.
+
   // DQ (1/24/2009): It might be that this function is only called from the Fortran support.
 
   // This function sets the source position to be marked as not
@@ -5223,7 +5230,6 @@ SageInterface::setOneSourcePositionNull(SgNode *node)
      printf ("+++++ Depricated name setOneSourcePositionNull() (use setSourcePositionPointersToNull() instead) (no using internal source position mode) \n");
 #endif
 
-  // setSourcePositionPointersToNull(node);
      setSourcePosition(node);
    }
 
@@ -5309,7 +5315,7 @@ SageInterface::setSourcePositionForTransformation(SgNode *root)
      ROSE_ASSERT(SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionTransformation);
      setSourcePositionAtRootAndAllChildren(root);
 #else
-     Rose_STL_Container <SgNode*> nodeList= NodeQuery::querySubTree(root,V_SgNode);
+     Rose_STL_Container <SgNode*> nodeList = NodeQuery::querySubTree(root,V_SgNode);
      for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i!=nodeList.end(); i++ )
         {
           setOneSourcePositionForTransformation(*i);
@@ -5346,7 +5352,14 @@ SageInterface::setSourcePositionAtRootAndAllChildrenAsDefault(SgNode *root)
 void
 SageInterface::setSourcePositionAtRootAndAllChildren(SgNode *root)
    {
+  // DQ (2/17/2013): This is a relatively expensive operation so we might look into this.
+
      Rose_STL_Container <SgNode*> nodeList = NodeQuery::querySubTree(root,V_SgNode);
+
+#if 0
+     printf ("In setSourcePositionAtRootAndAllChildren(): nodeList.size() = %zu \n",nodeList.size());
+#endif
+
      for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
         {
 #if 0
@@ -5364,6 +5377,14 @@ SageInterface::setSourcePosition(SgNode* node)
    {
   // Check the mode and build the correct type of source code position.
      SourcePositionClassification scp = getSourcePositionClassificationMode();
+
+  // DQ (2/17/2013): Note that the SourcePositionClassification will be e_sourcePositionFrontendConstruction
+  // during construction of the AST from the EDG frontend.
+
+#if 0
+     printf ("In SageInterface::setSourcePosition(): SourcePositionClassification scp = %s \n",display(scp).c_str());
+#endif
+
      switch(scp)
         {
           case e_sourcePositionError: // Error value for enum.
@@ -5382,7 +5403,6 @@ SageInterface::setSourcePosition(SgNode* node)
                if (locatedNode != NULL)
                   {
                     setSourcePositionToDefault(locatedNode);
-                 // setSourcePositionAtRootAndAllChildrenAsDefault(locatedNode);
                   }
                  else
                   {
@@ -5415,6 +5435,8 @@ SageInterface::setSourcePosition(SgNode* node)
 
           case e_sourcePositionNullPointers:         // Set pointers to Sg_File_Info objects to NULL.
              {
+            // DQ (2/17/2013): We want to move to this mode as the one used for EDG/ROSE connection so that we can 
+            // avoid building and rebuilding source position information.
 #if 0
                printf ("e_sourcePositionNullPointers in SageInterface::setSourcePosition() \n");
 #endif
@@ -5424,6 +5446,13 @@ SageInterface::setSourcePosition(SgNode* node)
 
           case e_sourcePositionFrontendConstruction: // Specify as source position to be filled in as part of AST construction in the front-end.
              {
+            // DQ (2/17/2013): The setSourcePositionToDefault() function is called a lot, so it might be a performance issue.
+            // All IR nodes built by the Build Interface are assighed source position information
+            // using this function and then reset afterward as we use information within EDG to 
+            // reset the source position information.  Ideally, the EDG/ROSE connection would
+            // use NULL pointers as the behavior for the front-end mode.  We can move to that 
+            // later to make the source position handling more efficient.
+
             // This function builds an empty Sg_File_Info entry (valid object but filled with default values; must be reset in front-end processing).
 #if 0
                printf ("e_sourcePositionFrontendConstruction in SageInterface::setSourcePosition() \n");
@@ -5466,10 +5495,7 @@ SageInterface::setSourcePosition(SgNode* node)
                             }
                        }
                   }
-#if 0
-               printf ("Sorry, not implemented \n");
-               ROSE_ASSERT(false);
-#endif
+
                break;
              }
 
@@ -5487,6 +5513,13 @@ SageInterface::setSourcePosition(SgNode* node)
                break;
              }
         }
+
+#if 0
+     if (node->get_file_info() != NULL)
+        {
+          node->get_file_info()->display("Leaving SageInterface::setSourcePosition()");
+        }
+#endif
    }
 
 
@@ -5537,104 +5570,136 @@ SgGlobal * SageInterface::getFirstGlobalScope(SgProject *project)
 //      SgScopeStatement::getDeclarationList
 //      SgScopeStatement::getStatementList()
 SgStatement* SageInterface::getLastStatement(SgScopeStatement *scope)
-{
-  ROSE_ASSERT(scope);
-  SgStatement* stmt=NULL;
+   {
+     ROSE_ASSERT(scope);
+     SgStatement* stmt = NULL;
 
-  if (scope->containsOnlyDeclarations())
-  {
-    SgDeclarationStatementPtrList declList = scope->getDeclarationList();
-    if (declList.size()>0)
-       stmt = isSgStatement(declList.back());
-  }
-  else
-  {
-    SgStatementPtrList stmtList = scope->getStatementList();
-    if (stmtList.size()>0)
-      stmt = stmtList.back();
-  }
-  return stmt;
-}
+     if (scope->containsOnlyDeclarations())
+        {
+       // DQ (2/17/2013): Fixed declList to be a reference instead of a copy.
+       // SgDeclarationStatementPtrList declList = scope->getDeclarationList();
+          SgDeclarationStatementPtrList & declList = scope->getDeclarationList();
+
+       // DQ (2/17/2013): Fixed evaluation of empty list use SgDeclarationStatementPtrList::empty() member function for faster performance.
+       // if (declList.size()>0)
+          if (declList.empty() == false)
+             {
+               stmt = isSgStatement(declList.back());
+             }
+        }
+       else
+        {
+       // DQ (2/17/2013): Fixed stmtList to be a reference instead of a copy.
+          SgStatementPtrList & stmtList = scope->getStatementList();
+
+       // DQ (2/17/2013): Fixed evaluation of empty list use SgDeclarationStatementPtrList::empty() member function for faster performance.
+       // if (stmtList.size()>0)
+          if (stmtList.empty() == false)
+             {
+               stmt = stmtList.back();
+             }
+        }
+
+     return stmt;
+   }
+
 
 SgStatement* SageInterface::getFirstStatement(SgScopeStatement *scope, bool includingCompilerGenerated/*=false*/)
-{
-  ROSE_ASSERT(scope);
-  SgStatement* stmt=NULL;
+   {
+  // DQ (2/17/2013): This function appears to be a performance problem (so a pass was made to 
+  // use lower complexity operations that are equivalent in funcionality for this context).
 
-  if (scope->containsOnlyDeclarations())
-    {
-   // DQ Note: Do we really need to make a copy of the list just to return a pointer to the first entry?
-      SgDeclarationStatementPtrList declList = scope->getDeclarationList();
-      if (includingCompilerGenerated)
-      {
-       // DQ Note: (declList.empty() == false) is a much faster test  O(1) than (declList.size() > 0), which is O(n).
-          if (declList.size()>0)
-             stmt = isSgStatement(declList.front());
-      } else
-      { //skip compiler-generated declarations
-        SgDeclarationStatementPtrList::iterator i=declList.begin();
-        while (i!=declList.end())
-        {  //isCompilerGenerated(),isOutputInCodeGeneration(),etc. are not good enough,
-           //some content from headers included are not marked as compiler-generated
-           //
-           // cout<<(*i)->unparseToString()<<endl;
-           // ((*i)->get_file_info())->display("debug.......");
-           Sg_File_Info * fileInfo = (*i)->get_file_info();
-          // include transformation-generated  statements, but not the hidden ones
-        // Note: isOutputInCodeGeneration is not default to true for original statements from user code
-         if ((fileInfo->isSameFile(scope->get_file_info()))||
-              (fileInfo->isTransformation()&& fileInfo->isOutputInCodeGeneration())
-            )
-            {
-              stmt=*i;
-              break;
-            } else
-            {
-              i++;
-              continue;
-            }
+     ROSE_ASSERT(scope);
+     SgStatement* stmt = NULL;
+
+     if (scope->containsOnlyDeclarations())
+        {
+       // DQ (2/17/2013): Fixed declList to be a reference instead of a copy.
+       // DQ Note: Do we really need to make a copy of the list just to return a pointer to the first entry?
+       // SgDeclarationStatementPtrList declList = scope->getDeclarationList();
+          SgDeclarationStatementPtrList & declList = scope->getDeclarationList();
+          if (includingCompilerGenerated)
+             {
+            // DQ (2/17/2013): Fixed evaluation of empty list use SgDeclarationStatementPtrList::empty() member function for faster performance.
+            // DQ Note: (declList.empty() == false) is a much faster test  O(1) than (declList.size() > 0), which is O(n).
+            // if (declList.size()>0)
+               if (declList.empty() == false)
+                  {
+                    stmt = isSgStatement(declList.front());
+                  }
+             }
+            else
+             {
+            // skip compiler-generated declarations
+               SgDeclarationStatementPtrList::iterator i=declList.begin();
+               while (i != declList.end())
+                  {
+                 // isCompilerGenerated(),isOutputInCodeGeneration(),etc. are not good enough,
+                 // some content from headers included are not marked as compiler-generated
+                 //
+                 // cout<<(*i)->unparseToString()<<endl;
+                 // ((*i)->get_file_info())->display("debug.......");
+                    Sg_File_Info * fileInfo = (*i)->get_file_info();
+                 // include transformation-generated  statements, but not the hidden ones
+                 // Note: isOutputInCodeGeneration is not default to true for original statements from user code
+                    if ((fileInfo->isSameFile(scope->get_file_info())) || (fileInfo->isTransformation() && fileInfo->isOutputInCodeGeneration()))
+                       {
+                         stmt = *i;
+                         break;
+                       }
+                      else
+                       {
+                         i++;
+                         continue;
+                       }
+                  }
+             }
         }
-      }
-    }
-  else
-  {
- // DQ Note: Do we really need to make a copy of the list just to return a pointer to the first entry?
-    SgStatementPtrList& stmtList = scope->getStatementList();
-   if (includingCompilerGenerated)
-    {
-   // DQ Note: (stmtList.empty() == false) is a much faster test  O(1) than (stmtList.size() > 0), which is O(n).
-      if (stmtList.size()>0)
-      stmt = stmtList.front();
-    } else
-    { //skip compiler-generated declarations
-      SgStatementPtrList::iterator i=stmtList.begin();
-      while (i!=stmtList.end())
-      {  //isCompilerGenerated(),isOutputInCodeGeneration(),etc. are not good enough,
-         //some content from headers included are not marked as compiler-generated
-         //
-         // cout<<(*i)->unparseToString()<<endl;
-         // ((*i)->get_file_info())->display("debug.......");
-         Sg_File_Info * fileInfo = (*i)->get_file_info();
-        // include transformation-generated  statements, but not the hidden ones
-        // Note: isOutputInCodeGeneration is not default to true for original statements from user code
-         if ( (fileInfo->isSameFile(scope->get_file_info()))||
-              (fileInfo->isTransformation()&& fileInfo->isOutputInCodeGeneration())
-            )
-          {
-            stmt=*i;
-            break;
-          } else
-          {
-            i++;
-            continue;
-          }
-      }
-    }
+       else
+        {
+       // DQ Note: Do we really need to make a copy of the list just to return a pointer to the first entry?
+          SgStatementPtrList & stmtList = scope->getStatementList();
+          if (includingCompilerGenerated)
+             {
+            // DQ (2/17/2013): Fixed evaluation of empty list use SgStatementPtrList::empty() member function for faster performance.
+            // DQ Note: (stmtList.empty() == false) is a much faster test  O(1) than (stmtList.size() > 0), which is O(n).
+            // if (stmtList.size()>0)
+               if (stmtList.empty() == false)
+                  {
+                    stmt = stmtList.front();
+                  }
+             }
+            else
+             {
+            // skip compiler-generated declarations
+               SgStatementPtrList::iterator i = stmtList.begin();
+               while (i!=stmtList.end())
+                  {
+                 // isCompilerGenerated(),isOutputInCodeGeneration(),etc. are not good enough,
+                 // some content from headers included are not marked as compiler-generated
+                 //
+                 // cout<<(*i)->unparseToString()<<endl;
+                 // ((*i)->get_file_info())->display("debug.......");
+                    Sg_File_Info * fileInfo = (*i)->get_file_info();
+                 // include transformation-generated  statements, but not the hidden ones
+                 // Note: isOutputInCodeGeneration is not default to true for original statements from user code
+                    if ( (fileInfo->isSameFile(scope->get_file_info())) || (fileInfo->isTransformation()&& fileInfo->isOutputInCodeGeneration()))
+                       {
+                         stmt=*i;
+                         break;
+                       }
+                      else
+                       {
+                         i++;
+                         continue;
+                       }
+                  }
+             }
+        }
 
-  }
-  return stmt;
+     return stmt;
+   }
 
-}
 
   SgFunctionDeclaration* SageInterface::findFirstDefiningFunctionDecl(SgScopeStatement* scope)
   {

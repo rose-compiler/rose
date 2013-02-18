@@ -10,7 +10,7 @@ void
 fixupDeclarations( SgNode* node )
    {
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
-     TimingPerformance timer ("Testing declarations (no side-effects to AST):");
+     TimingPerformance timer ("fixupDeclarations(): Testing declarations (no side-effects to AST):");
 
 #if 1
   // DQ (10/20/2007): This clears all the pointers to SgClassDefinition object from non-defining SgClassDeclaration objects.

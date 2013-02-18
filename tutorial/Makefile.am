@@ -65,6 +65,7 @@ NOINST_TUTORIAL_EXAMPLES = \
    binaryFileRead \
    binaryFileWrite \
    sb_callgraphAnalysis \
+   buildFile \
    buildCFG \
    buildVFA \
    changeFunction \
@@ -237,6 +238,8 @@ loopOptimization_SOURCES = loopOptimization.C
 loopProcessor_SOURCES = LoopProcessor.C
 
 buildCFG_SOURCES = buildCFG.C
+
+buildFile_SOURCES = buildFile.C
 
 defuseAnalysis_SOURCES = defuseAnalysis.C
 
@@ -500,6 +503,21 @@ testVirtualCFG: vcfg_testIf_debug.pdf
 testBuildCG: callGraph.pdf
 
 testVFA: vfa.pdf vfa_orig.pdf
+
+testBuildFile: buildFile
+	./buildFile -rose:verbose 0 -c $(srcdir)/inputCode_buildFile.C
+	@echo "***** new_source_file.h *****"
+	@cat new_source_file.h
+	@rm new_source_file.h
+	@echo ""
+	@echo "***** temp_dummy_file_new_source_file.C *****"
+	@cat temp_dummy_file_new_source_file.C
+	@rm temp_dummy_file_new_source_file.C
+	@echo ""
+	@echo "***** new_source_file.C *****"
+	@cat new_source_file.C
+	@rm new_source_file.C
+	@echo ""
 
 testClassHierarchyGraph: classHierarchyGraph
 	./classHierarchyGraph $(srcdir)/inputCode_ClassHierarchyGraph.C
@@ -855,7 +873,8 @@ generatedCodeExamples = \
    rose_inputCode_seedBugsExample_arrayIndexing.C \
    rose_inputCode_VolatileTypeModifier.C \
    inputCode_dwarfAnalysis.pdf \
-   inputCode_dwarfAnalysis.out
+   inputCode_dwarfAnalysis.out \
+   rose_inputCode_buildFile.C
 
 # TOO (2/17/11): Errors with Tensilica's Xtensa compilers. 
 if !USING_XTENSA_BACKEND_COMPILER
@@ -1088,6 +1107,11 @@ rose_inputCode_InstrumentationTranslator.C: instrumentationExample
 rose_inputCode_instrumentEndOfFunction.C: instrumentEndOfFunction
 	@echo "Generate executable from compilation of input code ..."
 	./instrumentEndOfFunction $(ROSE_FLAGS) -c $(srcdir)/inputCode_instrumentEndOfFunction.C
+
+rose_inputCode_buildFile.C: buildFile
+	@echo "Generate executable from compilation of input code ..."
+	./buildFile $(ROSE_FLAGS) -c $(srcdir)/inputCode_buildFile.C
+
 reductionRecognition.out: reductionRecognition
 	@echo "Generate executable from compilation of input code ..."
 	./reductionRecognition $(ROSE_FLAGS) -c $(srcdir)/inputCode_reductionRecognition.C >reductionRecognition.out
@@ -1441,6 +1465,7 @@ EXTRA_DIST = \
    inputCode_BuildCFG.C \
    inputCode_InstrumentationTranslator.C \
    inputCode_instrumentEndOfFunction.C \
+   inputCode_buildFile.C \
    inputCode_wholeAST_1.C \
    inputCode_wholeAST_2.C \
    inputCode_QueryLibrary.C \

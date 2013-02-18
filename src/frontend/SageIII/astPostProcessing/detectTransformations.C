@@ -10,7 +10,7 @@ void
 detectTransformations( SgNode* node )
    {
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
-     TimingPerformance timer ("Testing declarations (no side-effects to AST):");
+     TimingPerformance timer ("detectTransformations(): Testing declarations (no side-effects to AST):");
 
      class DetectTransformationsOnMemoryPool : public ROSE_VisitTraversal
         {
