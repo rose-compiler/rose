@@ -81,7 +81,6 @@ test2: $(srcdir)/testRoseHeaders_02.C
 	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_02.C
 
 # This tests compiling: rose.h
-# Fails in: a_special_function_kind case sfk_conversion not handled! special = 3 in edgRose.C:24648
 test3: $(srcdir)/testRoseHeaders_03.C
 	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C
 

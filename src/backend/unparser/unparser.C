@@ -1182,6 +1182,12 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
   // Information that is passed down through the tree (inherited attribute)
   // Use the input SgUnparse_Info object if it is available.
      SgUnparse_Info* inheritedAttributeInfoPointer = NULL;
+
+  // DQ (2/18/2013): Keep track of local allocation of the SgUnparse_Info object in this function
+  // This is design to fix what appears to be a leak in ROSE (abby-normal growth of the SgUnparse_Info
+  // memory pool for compiling large files.
+     bool allocatedSgUnparseInfoObjectLocally = false;
+
      if (inputUnparseInfoPointer != NULL)
         {
        // printf ("Using the input inputUnparseInfoPointer object \n");
@@ -1199,6 +1205,9 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
        // inheritedAttributeInfoPointer = new SgUnparse_Info (NO_UNPARSE_INFO);
           inheritedAttributeInfoPointer = new SgUnparse_Info();
           ROSE_ASSERT (inheritedAttributeInfoPointer != NULL);
+
+       // DQ (2/18/2013): Keep track of local allocation of the SgUnparse_Info object in this function
+          allocatedSgUnparseInfoObjectLocally = true;
 
        // MS: 09/30/2003: comments de-activated in unparsing
           ROSE_ASSERT (inheritedAttributeInfoPointer->SkipComments() == false);
@@ -1573,12 +1582,21 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
 
        // delete the allocated SgUnparse_Info object
           if (inputUnparseInfoPointer == NULL)
+             {
                delete inheritedAttributeInfoPointer;
+               inheritedAttributeInfoPointer = NULL;
+             }
         }
 
 #if 0
      printf ("In globalUnparseToString_OpenMPSafe(): returnString = %s \n",returnString.c_str());
 #endif
+
+  // DQ (2/18/2013): Keep track of local allocation of the SgUnparse_Info object in this function
+     if (allocatedSgUnparseInfoObjectLocally == true)
+        {
+          ROSE_ASSERT(inheritedAttributeInfoPointer == NULL);
+        }
 
      return returnString;
    }
@@ -1619,7 +1637,11 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
      ROSE_ASSERT(file != NULL);
 
   // FMZ (12/21/2009) the imported files by "use" statements should not be unparsed 
-     if (file->get_skip_unparse()==true) return;
+     if (file->get_skip_unparse() == true)
+        {
+       // We need to be careful about this premature return.
+          return;
+        }
 
 #if 0
   // DQ (5/31/2006): It is a message that I think we can ignore (was a problem for Yarden)
