@@ -2720,11 +2720,16 @@ $CLASSNAME::unparseToString() const
 std::string
 $CLASSNAME::unparseToCompleteString()
    {
-     // Generate the string (pass a SgUnparse_Info object)
+  // Generate the string (pass a SgUnparse_Info object)
      SgUnparse_Info* inputUnparseInfoPointer = new SgUnparse_Info();
      inputUnparseInfoPointer->unset_SkipComments();    // generate comments
      inputUnparseInfoPointer->unset_SkipWhitespaces(); // generate all whitespaces to format the code
      std::string outputString = globalUnparseToString(this,inputUnparseInfoPointer);
+
+  // DQ (2/18/2013): Added fix to delete SgUnparse_Info built to support unparseToCompleteString().
+     delete inputUnparseInfoPointer;
+     inputUnparseInfoPointer = NULL;
+
      return outputString;
    }
 

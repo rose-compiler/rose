@@ -2227,6 +2227,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
           unparseInfoPointer->set_reference_node_for_qualification(nodeReferenceToType);
 
           string typeNameString = globalUnparseToString(type,unparseInfoPointer);
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("++++++++++++++++ typeNameString (globalUnparseToString()) = %s \n",typeNameString.c_str());
 #endif
@@ -2251,6 +2252,14 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
                     printf ("Error: type names should not be this long... typeNameString.length() = %zu \n",typeNameString.length());
                     ROSE_ASSERT(false);
                   }
+#if 0
+            // DQ (2/18/2013): I think that the output if such long strings in a problem for the Jenkins tests, 
+            // outside of Jenkins this branch executes fine.  This branch is executed only for ROSE compiling
+            // ROSE (so far) and is executed for the typename generated from the enum in Cxx_Grammar.h which 
+            // is converted to a unique typename (and the string function for this contatinates all of the names
+            // of the 700+ enum fields to generate the typename, hence a long name exceeding 10K characters).
+            // ROSE compiling the ROSE Cxx_Grammar.h file is not a problem outside of Jenkins so I suspect that
+            // Jenkins is having problems with the processing of long strings generated as part of the tests.
 
             // DQ (1/30/2013): Print out the long name that previously violated our initial limits.
                if (typeNameString.length() > 10000)
@@ -2258,6 +2267,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
                     printf ("WARNING: extremely long type name found: typeNameString.length() = %zu \n",typeNameString.length());
                     printf ("typeNameString = %s \n",typeNameString.c_str());
                   }
+#endif
              }
 
        // DQ (6/21/2011): Refactored this code for use in traverseTemplatedFunction()
