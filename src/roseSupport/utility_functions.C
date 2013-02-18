@@ -655,12 +655,12 @@ generateDOT_withIncludes ( const SgProject & project, std::string filenamePostfi
 void
 generateDOTforMultipleFile ( const SgProject & project, std::string filenamePostfix )
    {
-     TimingPerformance timer ("ROSE generateDOT():");
+     TimingPerformance timer ("ROSE generateDOTforMultipleFile():");
 
   // This is the best way to handle generation of DOT files where multiple files
   // are specified on the command line.  Later we may be able to filter out the
   // include files (but this is a bit difficult until generateInputFiles() can be
-  // implemetned to call the evaluation of inherited and synchizied attributes.
+  // implemetned to call the evaluation of inherited and synthesized attributes.
      generateDOT_withIncludes(project,filenamePostfix);
    }
 

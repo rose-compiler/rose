@@ -46,6 +46,9 @@ int main( int argc, char * argv[] )
 
           printf ("Calling AstNodeStatistics::IRnodeUsageStatistics \n");
           std::cout << AstNodeStatistics::IRnodeUsageStatistics();
+
+       // DQ (2/17/2013): Added performance report (reports performance timings and memory usage for many different parts of ROSE).
+          timer.generateReportFromObject();
         }
 #endif
 

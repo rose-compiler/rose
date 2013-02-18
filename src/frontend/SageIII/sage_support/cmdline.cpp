@@ -1246,6 +1246,8 @@ SgFile::usage ( int status )
 "     -rose:read_executable_file_format_only\n"
 "                             ignore disassemble of instructions (helps debug binary \n"
 "                             file format for binaries)\n"
+"     -rose:skipAstConsistancyTests\n"
+"                             skip AST consitancy testing (for better performance)\n"
 "\n"
 "GNU g++ options recognized:\n"
 "     -ansi                   equivalent to -rose:strict\n"
@@ -2498,6 +2500,18 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 
   //
+  // skipAstConsistancyTests option (added 2/17/2013).
+  //
+  // DQ (2/17/2013): This option allows performance evaluations using HPCToolKit (using binary instrumentation) 
+  // to be focusd on the AST construction phase and not the AST consistancy test phase (which can be about 30% 
+  // of the performance of ROSE for large files).
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(skipAstConsistancyTests)",true) == true )
+        {
+       // printf ("option -rose:skipAstConsistancyTests found \n");
+          set_skipAstConsistancyTests(true);
+        }
+
+  //
   // internal testing option (for internal use only, these may disappear at some point)
   //
      int integerOption = 0;
@@ -2840,6 +2854,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(typeFilter)",&integerOption,1);
      optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(variableDeclarationFilter)",&integerOption,1);
      optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(noFilter)",&integerOption,1);
+
+  // DQ (2/17/2013): Added support for skipping AST consistancy testing (for performance evaluation).
+     optionCount = sla(argv, "-rose:", "($)", "(skipAstConsistancyTests)",1);
 
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))

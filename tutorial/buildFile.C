@@ -89,7 +89,7 @@ int main (int argc, char *argv[])
 
 #if 1
   // Output an optional graph of the AST (just the tree, when active)
-     generateDOT ( *project );
+     generateDOT(*project);
 
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
