@@ -2272,6 +2272,9 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
 
        // DQ (6/21/2011): Refactored this code for use in traverseTemplatedFunction()
           addToNameMap(nodeReferenceToType,typeNameString);
+
+       // DQ (2/18/2013): Fixing generation of too many SgUnparse_Info object.
+          delete unparseInfoPointer;
         }
        else
         {
@@ -2346,6 +2349,9 @@ NameQualificationTraversal::traverseTemplatedFunction(SgFunctionRefExp* function
 
        // DQ (6/21/2011): Refactored this code for use in traverseTemplatedFunction()
           addToNameMap(nodeReferenceToType,functionNameString);
+
+       // DQ (2/18/2013): Fixing generation of too many SgUnparse_Info object.
+          delete unparseInfoPointer;
         }
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -5419,6 +5425,9 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("NAME OF SCOPE: scope name -- template_name = %s \n",template_name.c_str());
 #endif
+
+            // DQ (2/18/2013): Fixing generation of too many SgUnparse_Info object.
+               delete unparseInfoPointer;
              }
             else
              {
