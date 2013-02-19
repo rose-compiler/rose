@@ -94,15 +94,16 @@ void SgAsmPEImportItem::dump(FILE*f, char const *prefix, ssize_t idx) const {}
 // These are not required, except that they are defined as virtual function and so
 // we need to have definitions available so that the class can be used (even though
 // these functions are not called.
-bool SgAsmx86Instruction::terminatesBasicBlock()     { return false; }
-bool SgAsmArmInstruction::terminatesBasicBlock()     { return false; }
-bool SgAsmPowerpcInstruction::terminatesBasicBlock() { return false; }
-bool SgAsmInstruction::terminatesBasicBlock()        { return false; }
+bool SgAsmx86Instruction::terminates_basic_block()     { return false; }
+bool SgAsmArmInstruction::terminates_basic_block()     { return false; }
+bool SgAsmPowerpcInstruction::terminates_basic_block() { return false; }
+bool SgAsmMipsInstruction::terminates_basic_block()    { return false; }
+bool SgAsmInstruction::terminates_basic_block()        { return false; }
 
 bool SgAsmx86Instruction::is_unknown() const         { return false; }
 bool SgAsmArmInstruction::is_unknown() const         { return false; }
 bool SgAsmPowerpcInstruction::is_unknown() const     { return false; } 
-
+bool SgAsmMipsInstruction::is_unknown() const        { return false; }
 
 // These are needed because they are virtual functions and need to be defined
 // so that the associated classes can be used.
