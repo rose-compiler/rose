@@ -125,9 +125,9 @@ int main (int nargs, char** args)
   double time_elapsed= getTime();
   double Gflops =0.0; 
 
-#pragma mint copy( u_old,  toDevice, (n+2), n+2, (n+2))
-#pragma mint copy( u_new,  toDevice, (n+2), n+2, (n+2))
-#pragma mint copy( rhs, toDevice, (n+2), n+2, (n+2))
+#pragma mint copy ( u_old,  toDevice, ( n+2 ), n+2, ( n+2 ) )
+#pragma mint copy ( u_new,  toDevice, ( n+2 ), n+2, ( n+2 ) )
+#pragma mint copy ( rhs, toDevice, ( n+2 ), n+2, ( n+2 ) )
 
 #pragma mint parallel 
   {
@@ -164,7 +164,7 @@ int main (int nargs, char** args)
 
   }
   }
-#pragma mint copy(u_old,  fromDevice, (n+2), (n+2), (n+2))
+#pragma mint copy ( u_old,  fromDevice, ( n+2 ), ( n+2 ), ( n+2 ) )
   time_elapsed = getTime() - time_elapsed;
 
   Gflops = (double)(nIters * (n) * (n) * (n) * 1.0e-9 * FLOPS) / time_elapsed ;
