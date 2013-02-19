@@ -4,15 +4,16 @@
  * Date : 3Apr07
  * Decription : Example code on how to use RoseBin
  ****************************************************/
-#include "rose.h"
+
 #include <stdio.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <iostream>
+#include "rose.h"
 
 #include "sqlite3x.h"
 
-#include "createSignatureVectors.h"
+#include "createCloneDetectionVectorsBinary.h"
 
 #include <boost/program_options.hpp>
 
@@ -74,15 +75,15 @@ exit(1);
   try {
 	options_description desc("Allowed options");
 	desc.add_options()
-          ("help", "produce a help message")
-          ("ignoreBoundaries,i", "ignore function boundaries")
-          ("database", value< string >()->composing(), 
-           "the sqlite database that we are to use")
-          ("tsv-directory", value< string >()->composing(), 
-           "the input tsv directory or binary file")
-          ("stride", value< size_t>()->composing(), "stride to use" )
-          ("windowSize", value< size_t >()->composing(), "sliding window size" )
-          ;
+	  ("help", "produce a help message")
+	  ("ignoreBoundaries,i", "ignore function boundaries")
+	  ("database", value< string >()->composing(), 
+	   "the sqlite database that we are to use")
+	  ("tsv-directory", value< string >()->composing(), 
+	   "the input tsv directory or binary file")
+	  ("stride", value< size_t>()->composing(), "stride to use" )
+	  ("windowSize", value< size_t >()->composing(), "sliding window size" )
+	  ;
 
 	variables_map vm;
 	store(command_line_parser(argc, argv).options(desc)

@@ -1,0 +1,9 @@
+[database]
+--deckard-dir /home/andreas/REPOSITORY-SRC/Deckard/
+--tmp /home/andreas/tmp/
+--inVectorOptional /home/andreas/REPOSITORY-SRC-git/REPOSITORY-SRC/Deckard/tools/binary-clone/inVectorOptionalEmpty.txt
+--inVectorRequired /home/andreas/REPOSITORY-SRC-git/REPOSITORY-SRC/Deckard/tools/binary-clone/inVector.txt
+--toFile /home/andreas/REPOSITORY-SRC-git/REPOSITORY-SRC/Deckard/tools/binary-clone/toFile.txt
+--stride 10
+--windowSize 120
+--minTokens 120
