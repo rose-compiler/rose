@@ -1579,13 +1579,13 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
              {
                returnString = roseUnparser.removeUnwantedWhiteSpace ( returnString );
              }
+        }
 
-       // delete the allocated SgUnparse_Info object
-          if (inputUnparseInfoPointer == NULL)
-             {
-               delete inheritedAttributeInfoPointer;
-               inheritedAttributeInfoPointer = NULL;
-             }
+  // delete the allocated SgUnparse_Info object
+     if (inputUnparseInfoPointer == NULL)
+        {
+          delete inheritedAttributeInfoPointer;
+          inheritedAttributeInfoPointer = NULL;
         }
 
 #if 0
