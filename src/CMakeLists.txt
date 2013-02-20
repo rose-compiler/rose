@@ -188,11 +188,12 @@ set(POET_SRC
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_lex.l
    )
 
-
-set(EDG_SAGE_Connection_SRC
+if(have_EDG_source)
+  set(EDG_SAGE_Connection_SRC
     ${CMAKE_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/sage_gen_be.C
     ${CMAKE_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/wrapperFunctionsForEDG.C
-   )
+     )
+endif()
 
 set(virtualCFG_SRC
     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/virtualCFG.C 

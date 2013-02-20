@@ -304,6 +304,19 @@ set(ROSE_TOP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 #Generate our configure file
 
 # --------- please do all system, platform, software tests here --------------
+
+# Check if we need to download the EDG binary tarball
+set(EDG_VERSION "3.3" CACHE STRING
+  "major.minor version number for EDG (e.g. 3.3, 3.10, 4.0, 4.1).")
+if(EXISTS "${PROJECT_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/CMakeLists.txt")
+  set(have_EDG_source TRUE)
+else()
+  set(have_EDG_source FALSE)
+  if(NOT EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs")
+    include(${PROJECT_SOURCE_DIR}/cmake/DownloadEDG.cmake)
+  endif()
+endif()
+
 # a set of common features: including endian, stdio.h, printf, size of long int ,etc
 #taken from LyX
 include(ConfigureChecks)
