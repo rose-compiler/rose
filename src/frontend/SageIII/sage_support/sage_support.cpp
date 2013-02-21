@@ -1039,6 +1039,32 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                                 // file->display("Marked as java file based on file suffix");
                                  }
+                                else if (CommandlineProcessing::isX10FileNameSuffix(filenameExtension) == true)
+                                {
+                                   SgSourceFile* sourceFile = new SgSourceFile (argv,  project);
+                                   file = sourceFile;
+
+                                  // This a not a C++ file so don't define the __cplusplus macro, just like GNU gcc would
+                                   file->set_sourceFileUsesCppFileExtension(false);
+
+                                // Note that we can use the C++ unparser to provide output that will support inspection of
+                                // code from the AST, but this is a temporary solution.  The only correct setting is to use
+                                // the ongoing support within the Java specific unparser.
+                                // file->set_outputLanguage(SgFile::e_C_output_language);
+                                   file->set_outputLanguage(SgFile::e_X10_output_language);
+
+                                   file->set_X10_only(true);
+
+                                // TOO1 (2/20/2013): X10 code is only compiled, not linked as is C/C++ and Fortran.
+                                   file->set_compileOnly(true);
+
+                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+                                // Note that file->get_requires_C_preprocessor() should be false.
+                                   ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+                                   sourceFile->initializeGlobalScope();
+
+                                // file->display("Marked as X10 file based on file suffix");
+                                }
                               else if (CommandlineProcessing::isPythonFileNameSuffix(filenameExtension) == true)
                               {
                                   // file = new SgSourceFile ( argv,  project );
