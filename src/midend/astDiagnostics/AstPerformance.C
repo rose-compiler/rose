@@ -247,6 +247,9 @@ AstPerformance::~AstPerformance()
   // DQ (9/1/2006): Need to stop the timer and record the elapsed time.
   // localData->stopTiming(timer);
 
+#if 0
+  // DQ (2/20/2013): I don't think that commenting this out was previously required.
+  // Not clear why outputReportInDestructor is always true.
      if (outputReportInDestructor == true)
         {
        // DQ (9/1/2006): Only output the performance report if verbose is set (greater than zero)
@@ -257,6 +260,7 @@ AstPerformance::~AstPerformance()
                generateReport();
              }
         }
+#endif
 
      if (project != NULL)
         {
@@ -311,11 +315,31 @@ ProcessingPhase::~ProcessingPhase()
   // internalMemoryUsageData = memoryUsage.getMemoryUsageMegabytes();
    }
 
+// static 
+double time_stamp()
+   {
+  // DQ (2/20/2013): This is the suggested best portable way to compute elapsed wall clock time (from Liao).
+     struct timeval t;
+     double time;
+
+     gettimeofday(&t, NULL);
+
+     time = (double)(t.tv_sec + (1.0e-6*t.tv_usec));
+
+  // printf ("In AstPerformance: time_stamp(): time = %f \n",time);
+
+     return time;
+   }
+
 double
 ProcessingPhase::getCurrentDelta(const RoseTimeType& timer)
    {
 #if 1
-     return double(clock() - timer) / CLOCKS_PER_SEC;
+  // DQ (2/20/2013): Change method for getting time, since clock() only is reporting CPU time 
+  // and this did not correctly compute the time required in the backend compilation step of 
+  // the system() call.
+  // return double(clock() - timer) / CLOCKS_PER_SEC;
+     return (time_stamp() - timer);
 #else
      double returnValue = double(clock() - timer) / CLOCKS_PER_SEC;
   // internalMemoryUsageData = memoryUsage.getMemoryUsageMegabytes();
@@ -443,9 +467,10 @@ ProcessingPhase::outputReport ( int n )
         }
    }
 
-void AstPerformance::generateReport() {
-  AstPerformance("", false).generateReportFromObject();
-}
+void AstPerformance::generateReport() 
+   {
+     AstPerformance("", false).generateReportFromObject();
+   }
 
 void
 AstPerformance::generateReportFromObject() const
@@ -754,8 +779,13 @@ TimingPerformance::TimingPerformance ( std::string s , bool outputReport )
 // Save the label explaining what the performance number means
    : AstPerformance(s,outputReport)
    {
+#if 0
       timer = clock(); // Liao, 2/18/2009, fixing bug 2009. This has to be turned on 
-                      //since timer is used as the start time for calculating performance 
+                       //since timer is used as the start time for calculating performance 
+#else
+   // DQ (2/20/2013): We want to uniformally used the new mechanism to compute the elapsed time.
+      timer = time_stamp();
+#endif
    }
 
 TimingPerformance::~TimingPerformance()
@@ -764,7 +794,7 @@ TimingPerformance::~TimingPerformance()
   // destructor and the report generation (both trigger the stopping of all timers).
      assert(localData != NULL);
      double p = ProcessingPhase::getCurrentDelta(timer);
-     if (p<0.0) // Liao, 2/18/2009, avoid future bug 
+     if (p < 0.0) // Liao, 2/18/2009, avoid future bug 
         {
 #ifdef ROSE_UBUNTU_OS_VENDOR
        // DQ (4/24/2011): This failed only on Ubuntu (but only once) so not clear if there is a real problem here or not.
@@ -813,7 +843,12 @@ AstPerformance::reportAccumulatedTime ( const string & s, const double & accumul
 void
 AstPerformance::startTimer ( RoseTimeType & time )
    {
+#if 0
      time = clock();
+#else
+   // DQ (2/20/2013): We want to uniformally used the new mechanism to compute the elapsed time.
+      time = time_stamp();
+#endif
    }
 
 void

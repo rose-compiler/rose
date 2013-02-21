@@ -42,7 +42,10 @@
 
 // using namespace std;
 
-typedef clock_t RoseTimeType;
+// DQ (2/20/2013): Change the type to support better timer from Liao.
+// typedef clock_t RoseTimeType;
+typedef double RoseTimeType;
+
 
 class ROSE_MemoryUsage
    {
