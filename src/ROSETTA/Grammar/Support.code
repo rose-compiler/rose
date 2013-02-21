@@ -4898,6 +4898,7 @@ HEADER_APPLICATION_FILE_START
                e_Cxx_output_language,     /*!< value used to specify output of C++ (for testing C++ unparser) */
                e_Fortran_output_language, /*!< value used to specify output of Fortran (for testing the Fortran unparser from C) */
                e_Java_output_language,    /*!< value used to specify output of Java (for testing Java unparser) */
+               e_X10_output_language,     /*!< value used to specify output of X10 (for testing X10 unparser) */
                e_Promela_output_language, /*!< value used to specify output of Promela for uses with SPIN (unsupported option) */
                e_PHP_output_language,     /*!< value used to specify output of PHP */
                e_Python_output_language,  /*!< value used to specify output of Python */
@@ -13477,6 +13478,7 @@ SgFile::display ( const std::string & label ) const
           case SgFile::e_Cxx_output_language:     outputLanguageName = "C++";     break;
           case SgFile::e_Fortran_output_language: outputLanguageName = "Fortran"; break;
           case SgFile::e_Java_output_language:    outputLanguageName = "Java";    break;
+          case SgFile::e_X10_output_language:     outputLanguageName = "X10";     break;
           case SgFile::e_PHP_output_language:     outputLanguageName = "PHP";     break;
           case SgFile::e_Python_output_language:  outputLanguageName = "Python";  break;
           case SgFile::e_Promela_output_language: outputLanguageName = "Promela"; break;
