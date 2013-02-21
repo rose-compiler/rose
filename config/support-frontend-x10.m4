@@ -48,9 +48,10 @@ AC_DEFUN([ROSE_SUPPORT_X10_FRONTEND],
           ROSE_MSG_ERROR([The ROSE X10 Frontend requires the X10 compiler, see --help for --with-x10.])
       elif test "x$X10_LIBRARY_PATH" = "x"; then
           ROSE_MSG_ERROR([The ROSE X10 Frontend requires the X10 compiler libraries, see --help for --with-x10.])
-      else
-          AM_CONDITIONAL(ROSE_BUILD_X10_LANGUAGE_SUPPORT, [true])
       fi
+
+      AM_CONDITIONAL(ROSE_BUILD_X10_LANGUAGE_SUPPORT, [true])
+      AC_DEFINE([ROSE_BUILD_X10_LANGUAGE_SUPPORT], [], [Build ROSE with the X10 frontend])
   fi
 
 # End macro ROSE_SUPPORT_X10_FRONTEND.
