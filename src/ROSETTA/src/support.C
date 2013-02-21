@@ -1638,6 +1638,9 @@ Grammar::setUpSupport ()
      Project.setDataPrototype ( "bool", "Java_only", "= false",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     Project.setDataPrototype ( "bool", "X10_only", "= false",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // Liao 6/29/2012: support using rose translator to act like a linker wrapper if -rose:openmp:lowering is specified
   // Add a flag to indicate if this is a linking involved in the lowered OpenMP input program.
   // The openmp_lowering flag at SgFile level won't exist when there are no input source files at the linking stage

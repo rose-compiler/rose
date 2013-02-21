@@ -1,9 +1,9 @@
 #include <stdio.h>
 
 /* extern "C" int openJavaParser_main(int argc, char **argv); */
-int openJavaParser_main(int argc, char **argv);
+int x10_main(int argc, char **argv);
 
-int openJavaParser_main(int argc, char **argv) {
+int x10_main(int argc, char **argv) {
     // Fortran use in ROSE is dependent upon the availablity of Jave to run the Open Fortran Parser (OFP).
     fprintf (stderr, "ROSE has not be configured to run with Java, use: \"--with-java\" at configure time to enable this feature (compilation of input file is ignored)\n");
 

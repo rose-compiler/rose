@@ -1949,6 +1949,9 @@ int openFortranParser_main(int argc, char **argv );
 int openJavaParser_main(int argc, char **argv );
 #endif
 
+// See $ROSE/src/frontend/X10_ROSE_Connection
+extern int x10_main(int argc, char** argv);
+
 int
 SgFile::callFrontEnd()
    {
@@ -3865,8 +3868,27 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
 #endif
    }
 
+int
+SgSourceFile::build_X10_AST(const vector<string>& p_argv)
+{
+  #ifndef ROSE_BUILD_X10_LANGUAGE_SUPPORT
+      ROSE_ASSERT (!
+          "[FATAL] [ROSE] [frontend] [X10] "
+          "ROSE was not configured to support the X10 frontend, see --help.");
+  #else
+      if (SgProject::get_verbose() >= 1)
+          std::cout << "[INFO] Building the X10 AST" << std::endl;
+  #endif
 
+  int argc = p_argv.size();
+  char** argv = NULL;
 
+  CommandlineProcessing::
+      generateArgcArgvFromList(p_argv, argc, argv);
+
+  int status = x10_main(argc, argv);
+  return status;
+}
 
 namespace SgSourceFile_processCppLinemarkers
    {
@@ -4318,7 +4340,19 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
 
                          }
                       else
-                         {
+                      {
+                          if (get_X10_only() == true)
+                          {
+                              #ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
+                                   frontendErrorLevel = build_X10_AST(argv);
+                                   frontend_failed = (frontendErrorLevel > 0);
+                              #else
+                                   ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [X10] "
+                                                  "ROSE was not configured to support the X10 frontend.");
+                              #endif
+                          }
+                          else
+                          {
                              frontendErrorLevel = build_C_and_Cxx_AST(argv,inputCommandLine);
 
                              // DQ (12/29/2008): The newer version of EDG (version 3.10 and 4.0) use different return codes for indicating an error.
@@ -4329,7 +4363,8 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                              // non-zero error code can mean warnings were produced, values greater than 3 indicate errors.
                              frontend_failed = (frontendErrorLevel > 3);
 #endif
-                         }
+                          }
+                      }
                   }
              }
         }

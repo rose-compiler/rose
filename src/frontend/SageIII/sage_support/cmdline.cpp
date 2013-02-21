@@ -742,6 +742,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        set_openmp_linking(true);
      }
 
+      SageSupport::Cmdline::X10::
+          Process(this, local_commandLineArgumentList);
+
 
 #if 1
   // DQ (10/3/2010): Adding support for CPP directives to be optionally a part of the AST as declarations
@@ -1104,6 +1107,42 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 #endif
    }
 
+//------------------------------------------------------------------------------
+//                                  Java
+//------------------------------------------------------------------------------
+
+void
+SageSupport::Cmdline::X10::
+Process (SgProject* project, std::vector<std::string>& argv)
+{
+  if (SgProject::get_verbose() >= 1)
+      std::cout << "[INFO] Processing X10 commandline options" << std::endl;
+
+  ProcessX10Only(project, argv);
+}
+
+void
+SageSupport::Cmdline::X10::
+ProcessX10Only (SgProject* project, std::vector<std::string>& argv)
+{
+  bool is_x10_only =
+      CommandlineProcessing::isOption(
+          argv,
+          X10::option_prefix,
+          "",
+          true);
+
+  if (is_x10_only)
+  {
+      if (SgProject::get_verbose() >= 1)
+          std::cout << "[INFO] Turning on X10 only mode" << std::endl;
+
+      // X10 code is only compiled, not linked as is C/C++ and Fortran.
+      project->set_compileOnly(true);
+      project->set_X10_only(true);
+  }
+}
+
 /*-----------------------------------------------------------------------------
  *  namespace SgFile {
  *---------------------------------------------------------------------------*/
@@ -1188,6 +1227,8 @@ SgFile::usage ( int status )
 "                             compile Fortran II code (not implemented yet)\n"
 "     -rose:FortranI, -rose:FI, -rose:fI\n"
 "                             compile Fortran I code (not implemented yet)\n"
+"     -rose:x10\n"
+"                             compile X10 code (work in progress)\n"
 "     -rose:strict            strict enforcement of ANSI/ISO standards\n"
 "     -rose:binary, -rose:binary_only\n"
 "                             assume input file is for binary analysis (this avoids\n"
