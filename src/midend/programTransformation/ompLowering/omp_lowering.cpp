@@ -1315,10 +1315,18 @@ static void insert_libxompf_h(SgNode* startNode)
 
   
   // Step 4. build the if () condition statement, move the loop body into the true body
+  // Liao, 2/21/2013. We must be accurate about the range of iterations or the computation may result in WRONG results!!
+  // A classic example is the Jacobi iteration: in which the first and last iterations are not executed to make sure elements have boundaries.
+  // After normalization, we have inclusive lower and upper bounds of the input loop
+  // the condition of if() should look like something: if (_dev_i >=0+1 &&_dev_i <= (n - 1) - 1)  {...}
   SgBasicBlock* true_body = buildBasicBlock();
   SgExprStatement* cond_stmt = NULL;
   if (isIncremental)
-    cond_stmt = buildExprStatement(buildLessOrEqualOp (buildVarRefExp(dev_i_symbol), deepCopy(orig_upper)));
+  {
+    SgExpression* lhs = buildGreaterOrEqualOp (buildVarRefExp(dev_i_symbol), deepCopy(orig_lower));
+    SgExpression* rhs = buildLessOrEqualOp (buildVarRefExp(dev_i_symbol), deepCopy(orig_upper));
+    cond_stmt = buildExprStatement (buildAndOp(lhs, rhs));
+  }
   else
   {
     cerr<<"error. transOmpTargetLoop(): decremental case is not yet handled !"<<endl;
