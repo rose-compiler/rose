@@ -8,6 +8,9 @@
 // DQ (5/8/2007): This header file is included in the HiddenList.h header file
  #include "HiddenList.h"
 
+#ifndef USE_ROSE
+  // DQ (2/11/2013): This fails for ROSE compilign "rose.h" header file (ROSE compiling ROSE).
+
 namespace Hidden_List_Computation {
 
 void VectorOutput(Vector_Of_SymbolInformation X);
@@ -39,5 +42,7 @@ void UsingDeclarationStatement_SetSgDeclarationStatements_HashMap__Output(UsingD
 void StackOfSymbolTableOutput(std::vector<ScopeStackEntry>& VectorScopeStack, int depth);
 
 } // end of namespace: Hidden_List_Computation
+
+#endif
 
 #endif /*DEBUG_HIDDENLIST_OUTPUT_H_*/

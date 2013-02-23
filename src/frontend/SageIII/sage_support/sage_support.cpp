@@ -4493,6 +4493,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
               returnValueForCompiler = systemFromVector (compilerNameString);
           }
 #else
+       // DQ (2/20/2013): The timer used in TimingPerformance is now fixed to properly record elapsed wall clock time.
           returnValueForCompiler = systemFromVector (compilerNameString);
 #endif
         }

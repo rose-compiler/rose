@@ -28,13 +28,12 @@ int main( int argc, char * argv[] )
   // compiler, only backend error code is reported.
   // return backend(project);
      int exit_status = backend(project);
-
+     
   // Output any saved performance data (see ROSE/src/astDiagnostics/AstPerformance.h)
   // AstPerformance::generateReportToFile(project->get_file(0).get_sourceFileNameWithPath(),project->get_compilationPerformanceFile());
   // AstPerformance::generateReportToFile(project);
      timer.generateReportToFile(project);
 
-#if 1
   // DQ (12/12/2009): Allow output only when run in verbose mode to limit spew in testing.
      if (SgProject::get_verbose() > 0)
         {
@@ -46,8 +45,10 @@ int main( int argc, char * argv[] )
 
           printf ("Calling AstNodeStatistics::IRnodeUsageStatistics \n");
           std::cout << AstNodeStatistics::IRnodeUsageStatistics();
+
+       // DQ (2/17/2013): Added performance report (reports performance timings and memory usage for many different parts of ROSE).
+          timer.generateReportFromObject();
         }
-#endif
 
      return exit_status;
    }

@@ -614,18 +614,35 @@ generateDOT ( const SgProject & project, std::string filenamePostfix )
      AstDOTGeneration astdotgen;
      SgProject & nonconstProject = (SgProject &) project;
 
-  // Note that the use of generateInputFiles causes the graph to be generated 
-  // for only the input source file and not any included header files. The 
-  // result is a much smaller file (and generally a more useful one).
+  // DQ (2/18/2013): Generating a DOT file of over a million IR nodes is too much.
+     int maxSize = 1000000;
+
+     int numberOfASTnodes = numberOfNodes();
+
+     if ( SgProject::get_verbose() >= 1 )
+          printf ("In generateDOT(): numberOfASTnodes = %d maxSize = %d \n",numberOfASTnodes,maxSize);
+
+  // DQ (2/18/2013): Compute the number of IR nodes for the AST and limit the size of these graphs (take too long to generate and the graphs are not useful).
+     if (numberOfASTnodes < maxSize)
+        {
+       // Note that the use of generateInputFiles causes the graph to be generated 
+       // for only the input source file and not any included header files. The 
+       // result is a much smaller file (and generally a more useful one).
 #if 0
-  // This used to be the default, but it would output too much data (from include files).
-     astdotgen.generate(&nonconstProject);
+       // This used to be the default, but it would output too much data (from include files).
+          astdotgen.generate(&nonconstProject);
 #else
-  // DQ (9/1/2008): This is the default for the last long while, but the SgProject IR nodes 
-  // is not being processed (which appears to be a bug). This is because in the implementation
-  // of the generateInputFiles the function traverseInputFiles is called.
-     astdotgen.generateInputFiles(&nonconstProject,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,filenamePostfix);
+       // DQ (9/1/2008): This is the default for the last long while, but the SgProject IR nodes 
+       // is not being processed (which appears to be a bug). This is because in the implementation
+       // of the generateInputFiles the function traverseInputFiles is called.
+          astdotgen.generateInputFiles(&nonconstProject,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,filenamePostfix);
 #endif
+        }
+       else
+        {
+          if ( SgProject::get_verbose() >= 0 )
+               printf ("In generateDOT(): AST graph too large to generate. (numberOfASTnodes=%d) > (maxSize=%d) \n",numberOfASTnodes,maxSize);
+        }
    }
 
 void
@@ -655,12 +672,12 @@ generateDOT_withIncludes ( const SgProject & project, std::string filenamePostfi
 void
 generateDOTforMultipleFile ( const SgProject & project, std::string filenamePostfix )
    {
-     TimingPerformance timer ("ROSE generateDOT():");
+     TimingPerformance timer ("ROSE generateDOTforMultipleFile():");
 
   // This is the best way to handle generation of DOT files where multiple files
   // are specified on the command line.  Later we may be able to filter out the
   // include files (but this is a bit difficult until generateInputFiles() can be
-  // implemetned to call the evaluation of inherited and synchizied attributes.
+  // implemetned to call the evaluation of inherited and synthesized attributes.
      generateDOT_withIncludes(project,filenamePostfix);
    }
 

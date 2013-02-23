@@ -12948,6 +12948,10 @@ X aggressive
   // detect dangling pointers to IR nodes as part of the AST Consistancy tests. At 
   // some point this will default to always being on as an AST consistancy test.
      p_detect_dangling_pointers = 0;
+
+  // DQ (2/17/2013): This permits skipping the AST consistancy test if the AstTests::runAllTests() 
+  // function is called as part of the user's translator.
+     p_skipAstConsistancyTests = false;
    }
 
 #if 0
@@ -13518,6 +13522,8 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_output_tokens                        = %s \n",(p_output_tokens == true) ? "true" : "false");
 
      printf ("     p_detect_dangling_pointers             = %d \n",p_detect_dangling_pointers);
+
+     printf ("     p_skipAstConsistancyTests              = %s \n",(p_skipAstConsistancyTests == true) ? "true" : "false");
 
 #if 0
 // Order of data member entries in support.C, matched against the 

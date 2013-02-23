@@ -1221,6 +1221,11 @@ SgAsmStmt* buildMultibyteNopStatement( int n );
  */
 SgFile* buildFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project=NULL);
 
+//! Build a SgFile node and attach it to SgProject 
+/*! The file will be build with an empty global scope to support declarations being added.
+ */
+SgSourceFile* buildSourceFile(const std::string& outputFileName, SgProject* project=NULL);
+
 //! Build and attach a comment, comment style is inferred from the language type of the target node if not provided. It is indeed a wrapper of SageInterface::attachComment().
 PreprocessingInfo* buildComment(SgLocatedNode* target, const std::string & content,
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before,
