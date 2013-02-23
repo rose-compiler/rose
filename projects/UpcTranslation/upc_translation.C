@@ -360,7 +360,7 @@ namespace upcTranslation{
      ROSE_ASSERT(global_scope);
      SgFunctionSymbol * symbol = global_scope->lookup_function_symbol
             (SgName("main"),sg_func->get_type());
-     ROSE_ASSERT(symbol == sg_func->get_symbol_from_symbol_table());
+     ROSE_ASSERT(symbol == sg_func->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table());
      global_scope->remove_symbol(symbol);
      delete (symbol); // avoid dangling symbol!!
 
