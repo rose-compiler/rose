@@ -307,10 +307,10 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      ROSE_ASSERT(currentFile != NULL);
 
 #if 0
-     printf ("SageInterface::is_Cxx_language()     = %s \n",SageInterface::is_Cxx_language() ? "true" : "false");
-     printf ("SageInterface::is_Fortran_language() = %s \n",SageInterface::is_Fortran_language() ? "true" : "false");
-     printf ("SageInterface::is_Java_language()    = %s \n",SageInterface::is_Java_language() ? "true" : "false");
-     printf ("file->get_outputLanguage()           = %s \n",file->get_outputLanguage() == SgFile::e_C_output_language ? "C" : 
+     printf ("In Unparser::unparseFile(): SageInterface::is_Cxx_language()     = %s \n",SageInterface::is_Cxx_language() ? "true" : "false");
+     printf ("In Unparser::unparseFile(): SageInterface::is_Fortran_language() = %s \n",SageInterface::is_Fortran_language() ? "true" : "false");
+     printf ("In Unparser::unparseFile(): SageInterface::is_Java_language()    = %s \n",SageInterface::is_Java_language() ? "true" : "false");
+     printf ("In Unparser::unparseFile(): file->get_outputLanguage()           = %s \n",file->get_outputLanguage() == SgFile::e_C_output_language ? "C" : 
                                   file->get_outputLanguage() == SgFile::e_Fortran_output_language ? "Fortran" : 
                                   file->get_outputLanguage() == SgFile::e_Java_output_language ? "Java" : "unknown");
 
@@ -381,33 +381,47 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
         }
        else
         {
+#if 0
+          printf ("This is not a Fortran file! \n");
+#endif
           if ( ( ( (file->get_C_only() == true) || (file->get_Cxx_only() == true) || (file->get_Cuda_only() == true) || (file->get_OpenCL_only() == true) ) && (file->get_outputLanguage() == SgFile::e_default_output_language) ) || 
                ( (file->get_outputLanguage() == SgFile::e_C_output_language) || (file->get_outputLanguage() == SgFile::e_Cxx_output_language) ) )
              {
             // Unparse using C/C++ unparser by default
-               // negara1 (06/29/2011): If unparseScope is provided, unparse it. Otherwise, unparse the global scope (the default behavior).
-               if (unparseScope != NULL) {
-                   if (isSgGlobal(unparseScope) != NULL || isSgClassDefinition(unparseScope) != NULL) {
-                       info.set_current_scope(unparseScope);
-                       const SgDeclarationStatementPtrList& declarations = unparseScope -> getDeclarationList();
-                       for (SgDeclarationStatementPtrList::const_iterator declaration = declarations.begin(); declaration != declarations.end(); declaration++) {
-                           u_exprStmt -> unparseStatement(*declaration, info);
+#if 0
+               printf ("Unparse using C/C++ unparser by default: unparseScope = %p \n",unparseScope);
+#endif
+            // negara1 (06/29/2011): If unparseScope is provided, unparse it. Otherwise, unparse the global scope (the default behavior).
+               if (unparseScope != NULL) 
+                  {
+                    if (isSgGlobal(unparseScope) != NULL || isSgClassDefinition(unparseScope) != NULL)
+                       {
+                         info.set_current_scope(unparseScope);
+                         const SgDeclarationStatementPtrList& declarations = unparseScope -> getDeclarationList();
+                         for (SgDeclarationStatementPtrList::const_iterator declaration = declarations.begin(); declaration != declarations.end(); declaration++) 
+                            {
+                              u_exprStmt -> unparseStatement(*declaration, info);
+                            }
                        }
-                   } else {
-                       //Simulate that the unparsed scope is global in order to unparse an included file.
-                       SgGlobal* fakeGlobal = new SgGlobal();
-                       fakeGlobal -> set_file_info(unparseScope -> get_file_info());
-                       info.set_current_scope(fakeGlobal);
+                      else 
+                       {
+                      // Simulate that the unparsed scope is global in order to unparse an included file.
+                         SgGlobal* fakeGlobal = new SgGlobal();
+                         fakeGlobal -> set_file_info(unparseScope -> get_file_info());
+                         info.set_current_scope(fakeGlobal);
 
-                       const SgStatementPtrList& statements = unparseScope -> getStatementList();
-                       for (SgStatementPtrList::const_iterator statement = statements.begin(); statement != statements.end(); statement++) {
-                           u_exprStmt -> unparseStatement(*statement, info);
+                         const SgStatementPtrList& statements = unparseScope -> getStatementList();
+                         for (SgStatementPtrList::const_iterator statement = statements.begin(); statement != statements.end(); statement++)
+                            {
+                              u_exprStmt -> unparseStatement(*statement, info);
+                            }
                        }
-                   }
-                   info.set_current_scope(NULL);
-               } else {
-                   u_exprStmt->unparseStatement(globalScope, info);
-               }
+                    info.set_current_scope(NULL);
+                  }
+                 else
+                  {
+                    u_exprStmt->unparseStatement(globalScope, info);
+                  }
              }
             else
              {
@@ -460,6 +474,11 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
   // DQ: This does not force a new line either!
   // cur << "\n\n\n";
      cur.flush();
+
+#if 0
+     printf ("Leaving Unparser::unparseFile(): file = %s = %s \n",file->get_sourceFileNameWithPath().c_str(),file->get_sourceFileNameWithoutPath().c_str());
+     printf ("Leaving Unparser::unparseFile(): SageInterface::is_Cxx_language()     = %s \n",SageInterface::is_Cxx_language() ? "true" : "false");
+#endif
 
   // Turn OFF the error checking which triggers an if the default SgUnparse_Info constructor is called
      SgUnparse_Info::set_forceDefaultConstructorToTriggerError(false);
@@ -1163,6 +1182,12 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
   // Information that is passed down through the tree (inherited attribute)
   // Use the input SgUnparse_Info object if it is available.
      SgUnparse_Info* inheritedAttributeInfoPointer = NULL;
+
+  // DQ (2/18/2013): Keep track of local allocation of the SgUnparse_Info object in this function
+  // This is design to fix what appears to be a leak in ROSE (abby-normal growth of the SgUnparse_Info
+  // memory pool for compiling large files.
+     bool allocatedSgUnparseInfoObjectLocally = false;
+
      if (inputUnparseInfoPointer != NULL)
         {
        // printf ("Using the input inputUnparseInfoPointer object \n");
@@ -1180,6 +1205,9 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
        // inheritedAttributeInfoPointer = new SgUnparse_Info (NO_UNPARSE_INFO);
           inheritedAttributeInfoPointer = new SgUnparse_Info();
           ROSE_ASSERT (inheritedAttributeInfoPointer != NULL);
+
+       // DQ (2/18/2013): Keep track of local allocation of the SgUnparse_Info object in this function
+          allocatedSgUnparseInfoObjectLocally = true;
 
        // MS: 09/30/2003: comments de-activated in unparsing
           ROSE_ASSERT (inheritedAttributeInfoPointer->SkipComments() == false);
@@ -1551,15 +1579,24 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
              {
                returnString = roseUnparser.removeUnwantedWhiteSpace ( returnString );
              }
+        }
 
-       // delete the allocated SgUnparse_Info object
-          if (inputUnparseInfoPointer == NULL)
-               delete inheritedAttributeInfoPointer;
+  // delete the allocated SgUnparse_Info object
+     if (inputUnparseInfoPointer == NULL)
+        {
+          delete inheritedAttributeInfoPointer;
+          inheritedAttributeInfoPointer = NULL;
         }
 
 #if 0
      printf ("In globalUnparseToString_OpenMPSafe(): returnString = %s \n",returnString.c_str());
 #endif
+
+  // DQ (2/18/2013): Keep track of local allocation of the SgUnparse_Info object in this function
+     if (allocatedSgUnparseInfoObjectLocally == true)
+        {
+          ROSE_ASSERT(inheritedAttributeInfoPointer == NULL);
+        }
 
      return returnString;
    }
@@ -1588,7 +1625,9 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
   // Call the unparser mechanism
 
-  // printf ("Inside of unparseFile ( SgFile* file ) (using filename = %s) \n",file->get_unparse_output_filename().c_str());
+#if 0
+     printf ("Inside of unparseFile ( SgFile* file ) (using filename = %s) \n",file->get_unparse_output_filename().c_str());
+#endif
 
   // debugging assertions
   // ROSE_ASSERT ( file.get_verbose() == true );
@@ -1598,7 +1637,11 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
      ROSE_ASSERT(file != NULL);
 
   // FMZ (12/21/2009) the imported files by "use" statements should not be unparsed 
-     if (file->get_skip_unparse()==true) return;
+     if (file->get_skip_unparse() == true)
+        {
+       // We need to be careful about this premature return.
+          return;
+        }
 
 #if 0
   // DQ (5/31/2006): It is a message that I think we can ignore (was a problem for Yarden)
@@ -1643,11 +1686,16 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                   }
              }
 
-
           file->set_unparse_output_filename(outputFilename);
           ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
-       // printf ("Inside of SgFile::unparse(UnparseFormatHelp*,UnparseDelegate*) outputFilename = %s \n",outputFilename.c_str());
+#if 0
+          printf ("Inside of SgFile::unparse(UnparseFormatHelp*,UnparseDelegate*) setting the empty filename: outputFilename = %s \n",outputFilename.c_str());
+#endif
         }
+
+#if 0
+     printf ("Inside of unparseFile ( SgFile* file ) file->get_skip_unparse() = %s \n",file->get_skip_unparse() ? "true" : "false");
+#endif
 
      if (file->get_skip_unparse() == true)
         {
@@ -1790,6 +1838,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
         }
    }
 
+
 void prependIncludeOptionsToCommandLine(SgProject* project, const list<string>& includeCompilerOptions) {
     SgStringList argumentList = project -> get_originalCommandLineArgumentList();
     //Note: Insert -I options starting from the second argument, because the first argument is the name of the executable.
@@ -1802,6 +1851,7 @@ void prependIncludeOptionsToCommandLine(SgProject* project, const list<string>& 
         (*sgFilePtr) -> set_originalCommandLineArgumentList(argumentList);
     }
 }
+
 
 void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate) { 
     ROSE_ASSERT(project != NULL);
@@ -1849,6 +1899,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
     }    
 }
 
+
 // DQ (10/11/2007): I think this is redundant with the Unparser::unparseProject() member function
 // But it is allowed to call it directly from the user's translator if compilation using the backend 
 // is not required!  So we have to allow it to be here.
@@ -1887,6 +1938,7 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
         }
 #endif
    }
+
 
 // DQ (1/19/2010): Added support for handling directories of files.
 void unparseDirectory ( SgDirectory* directory, UnparseFormatHelp* unparseFormatHelp, UnparseDelegate *unparseDelegate )
@@ -1956,6 +2008,7 @@ void unparseDirectory ( SgDirectory* directory, UnparseFormatHelp* unparseFormat
 #endif
    }
 
+
 // DQ (1/19/2010): Added support for refactored handling directories of files.
 void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate)
    {
@@ -1965,7 +2018,7 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
         {
           SgFile* file = fileList->get_listOfFiles()[i];
 
-          if ( SgProject::get_verbose() > 0 )
+          if ( SgProject::get_verbose() > 1 )
                printf ("Unparsing each file... file = %p = %s \n",file,file->class_name().c_str());
 
           unparseFile(file,unparseFormatHelp,unparseDelegate);

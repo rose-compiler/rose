@@ -92,6 +92,13 @@ SageBuilder::generateTemplateNameFromTemplateNameWithTemplateArguments(SgName in
 // DQ (3/31/2012): Is this going to be an issue for C++11 use with ROSE?
 #define foreach BOOST_FOREACH
 
+// DQ (2/17/2013): This is a operation on the global AST that we don't need to do too often
+// depending on the grainularity sought for the debugging information.  It is done on the
+// whole AST once after construction (in edgRose.C), but is not needed more than that
+// since it is a performance issue.
+#define BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS 0
+#define BUILDER_MAKE_REDUNDANT_CALLS_TO_SYMBOL_TABLE_LOOKUP 0
+
 using namespace std;
 using namespace SageInterface;
 //---------------------------------------------
@@ -2508,12 +2515,15 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
             // ROSE_ASSERT(scope->lookup_function_symbol(name) != NULL); // Did not pass for member function? Should we have used the mangled name?
             // ROSE_ASSERT(scope->lookup_function_symbol(name) != NULL || scope->lookup_template_symbol(name) != NULL); // Did not pass for member function? Should we have used the mangled name?
                ROSE_ASSERT(scope->lookup_function_symbol(nameWithTemplateArguments) != NULL || scope->lookup_template_symbol(nameWithTemplateArguments) != NULL); // Did not pass for member function? Should we have used the mangled name?
+
+#if BUILDER_MAKE_REDUNDANT_CALLS_TO_SYMBOL_TABLE_LOOKUP
             // if (scope->lookup_function_symbol(name) == NULL || scope->lookup_template_symbol(name) != NULL)
                if (scope->lookup_function_symbol(nameWithTemplateArguments) == NULL || scope->lookup_template_symbol(nameWithTemplateArguments) != NULL)
                   {
                  // Make sure this is a template function declaration...
                     printf ("Need to make sure this is a template function declaration... \n");
                   }
+#endif
              }
 
        // DQ (12/14/2011): Added test.
@@ -2607,9 +2617,11 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
           func = new actualFunction(nameWithTemplateArguments,func_type,NULL);
           ROSE_ASSERT(func != NULL);
 
+#if BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS
        // DQ (5/1/2012): Make sure that we don't have IR nodes marked as translformations.
        // This is too early a point to test since the source position has not been set for func yet.
        // detectTransformations_local(func);
+#endif
 #if 0
           printf ("In buildNondefiningFunctionDeclaration_T() (part 2): constructor called to build func = %p = %s \n",func,func->class_name().c_str());
           if (isSgMemberFunctionDeclaration(func) != NULL)
@@ -2791,9 +2803,14 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 
   // DQ (5/2/2012): Test this to make sure we have SgInitializedNames set properly.
      SageInterface::setSourcePosition(paralist);
-   // Liao 11/21/2012: we should assert no transformation only when the current model is NOT transformation    
-     if (SourcePositionClassificationMode !=e_sourcePositionTransformation)
-       detectTransformations_local(paralist);
+
+#if BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS
+  // Liao 11/21/2012: we should assert no transformation only when the current model is NOT transformation
+     if (SourcePositionClassificationMode != e_sourcePositionTransformation)
+        {
+          detectTransformations_local(paralist);
+        }
+#endif
 
   // DQ (12/14/2011): Moved this closer to top of function.
   // TODO double check if there are exceptions
@@ -2845,9 +2862,13 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 
      ROSE_ASSERT(func->get_file_info() != NULL);
 
+#if BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS
   // DQ (5/1/2012): Make sure that we don't have IR nodes marked as transformations.
      if (SourcePositionClassificationMode != e_sourcePositionTransformation)
-       detectTransformations_local(func);
+        {
+          detectTransformations_local(func);
+        }
+#endif
 
   // printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): generated function func = %p \n",func);
 
@@ -2900,9 +2921,13 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
           nameWithTemplateArguments.str(),scope,scope->class_name().c_str(),func,func->get_firstNondefiningDeclaration());
 #endif
 
+#if BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS
   // DQ (5/1/2012): Make sure that we don't have IR nodes marked as transformations.
      if (SourcePositionClassificationMode !=e_sourcePositionTransformation) 
+        {
           detectTransformations_local(func);
+        }
+#endif
 
   // DQ (12/11/2012): Force the two different ways that this can be set to match (we want consistancy).
      if (functionConstVolatileFlags & SgMemberFunctionType::e_restrict)
@@ -3185,9 +3210,13 @@ SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & n
   // set definingdecl for SgCtorInitializerList
      ROSE_ASSERT(result != NULL);
 
+#if BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS
   // DQ (5/1/2012): Make sure that we don't have IR nodes marked as translformations.
-   if (SourcePositionClassificationMode !=e_sourcePositionTransformation) 
-     detectTransformations_local(result);
+     if (SourcePositionClassificationMode !=e_sourcePositionTransformation) 
+        {
+          detectTransformations_local(result);
+        }
+#endif
 
 #if 0
      printf ("After calling buildNondefiningFunctionDeclaration_T <SgTemplateMemberFunctionDeclaration>: result = %p = %s \n",result,result->class_name().c_str());
@@ -3255,6 +3284,7 @@ SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & n
      printf ("In buildNondefiningTemplateMemberFunctionDeclaration(): Looking up name = %s in scope = %p = %s \n",name.str(),scope,scope->class_name().c_str());
 #endif
 
+#if BUILDER_MAKE_REDUNDANT_CALLS_TO_SYMBOL_TABLE_LOOKUP
   // ROSE_ASSERT(scope->lookup_template_symbol(name) != NULL);
      if (scope->lookup_template_member_function_symbol(name,result->get_type()) == NULL)
         {
@@ -3262,11 +3292,16 @@ SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & n
           printf ("--- function name = %s in scope = %p = %s result->get_type() = %p = %s \n",name.str(),scope,scope->class_name().c_str(),result->get_type(),result->get_type()->class_name().c_str());
           scope->get_symbol_table()->print("Error: scope->lookup_template_member_function_symbol(name,result->get_type()) == NULL (investigate this)");
         }
+#endif
      ROSE_ASSERT(scope->lookup_template_member_function_symbol(name,result->get_type()) != NULL);
 
+#if BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS
   // DQ (5/1/2012): Make sure that we don't have IR nodes marked as transformations.
-    if (SourcePositionClassificationMode !=e_sourcePositionTransformation)  
-      detectTransformations_local(result);
+     if (SourcePositionClassificationMode !=e_sourcePositionTransformation)
+        {
+          detectTransformations_local(result);
+        }
+#endif
 
      return result;
    }
@@ -3458,7 +3493,7 @@ SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemb
 
  //  symbol table and non-defining 
   SgMemberFunctionSymbol *func_symbol = isSgMemberFunctionSymbol(scope->lookup_function_symbol(name,func_type));
-  if (func_symbol ==NULL)
+  if (func_symbol == NULL)
   {
     // new defining declaration
 //    func = new SgFunctionDeclaration(name,func_type,NULL);
@@ -3802,7 +3837,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
           printf ("In buildDefiningFunctionDeclaration_T(): func_type->get_mangled() = %s \n",func_type->get_mangled().str());
           printf ("In buildDefiningFunctionDeclaration_T(): Looking for function in symbol table with name = %s \n",nameWithTemplateArguments.str());
 
-#if 1
+#if 0
           scope->get_symbol_table()->print("In SageBuilder::buildDefiningFunctionDeclaration_T()");
 #endif
 
@@ -5739,6 +5774,7 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
 #if 1
           symbol = lookupSymbolInParentScopes(name,scope);
 #else
+#error "DAED CODE!"
           symbol = scope->lookup_variable_symbol(name);
 #endif
 #if 0
@@ -5921,7 +5957,7 @@ SageBuilder::buildFunctionRefExp(const SgName& name,const SgType* funcType, SgSc
     scope = SageBuilder::topScopeStack();
   ROSE_ASSERT(scope != NULL);
   SgFunctionSymbol* symbol = lookupFunctionSymbolInParentScopes(name,func_type,scope);
-  if (symbol==NULL) 
+  if (symbol == NULL) 
     // in rare cases when function calls are inserted before any prototypes exist
   {
     SgType* return_type = func_type->get_return_type();
@@ -5933,7 +5969,7 @@ SageBuilder::buildFunctionRefExp(const SgName& name,const SgType* funcType, SgSc
     ROSE_ASSERT (isMemberFunc == false);  // Liao, 11/21/2012. We assume only regular functions can go into this if-body so we can insert them into global scope by default
     //TODO: consider C++ template functions and Fortran functions
     //SgFunctionDeclaration * funcDecl= buildNondefiningFunctionDeclaration(name,return_type,parList,globalscope);
-    SgFunctionDeclaration * funcDecl= buildNondefiningFunctionDeclaration_T <SgFunctionDeclaration>(name,return_type,parList,false,globalscope,NULL, false, NULL);
+    SgFunctionDeclaration * funcDecl = buildNondefiningFunctionDeclaration_T <SgFunctionDeclaration>(name,return_type,parList,false,globalscope,NULL, false, NULL);
 
     funcDecl->get_declarationModifier().get_storageModifier().setExtern();
 
@@ -6081,7 +6117,6 @@ SageBuilder::buildFunctionRefExp(const SgName& name, SgScopeStatement* scope /*=
      scope = SageBuilder::topScopeStack();
   ROSE_ASSERT(scope != NULL);
   SgFunctionSymbol* symbol = lookupFunctionSymbolInParentScopes(name,scope);
-
 
   if (symbol==NULL) 
 // in rare cases when function calls are inserted before any prototypes exist
@@ -9054,7 +9089,7 @@ SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednames
           printf ("Warning: In SageBuilder::buildNamespaceDeclaration_nfi(): scope == NULL \n");
         }
 
-     printf ("In SageBuilder::buildNamespaceDeclaration_nfi(): mysymbol = %p \n",mysymbol);
+  // printf ("In SageBuilder::buildNamespaceDeclaration_nfi(): mysymbol = %p \n",mysymbol);
      if (mysymbol != NULL)
         {
           nondefdecl = isSgNamespaceDeclarationStatement(mysymbol->get_declaration());
@@ -9073,7 +9108,7 @@ SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednames
           nondefdecl = new SgNamespaceDeclarationStatement(name,NULL, unnamednamespace);
           ROSE_ASSERT(nondefdecl != NULL);
 
-          printf ("SageBuilder::buildNamespaceDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
+       // printf ("SageBuilder::buildNamespaceDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
 
        // The nondefining declaration will not appear in the source code, but is compiler
        // generated (so we have something about the class that we can reference; e.g in
@@ -9110,7 +9145,7 @@ SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednames
         }
 
 
-     printf ("SageBuilder::buildNamespaceDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
+  // printf ("SageBuilder::buildNamespaceDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
 
   // setOneSourcePositionForTransformation(nondefdecl);
      setOneSourcePositionNull(nondefdecl);
@@ -9510,8 +9545,10 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
        // DQ (9/16/2012): The declaration was build previously, but test it to make sure the template arguments were setup properly.
           testTemplateArgumentParents(nondefdecl);
 
+#if BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS
        // DQ (5/2/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
           detectTransformations(nondefdecl);
+#endif
 
        // DQ (3/22/2012): I think we can assert this.
           ROSE_ASSERT(nondefdecl->get_type() != NULL);
@@ -9575,9 +9612,10 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
                nondefdecl = new SgTemplateInstantiationDecl (nameWithTemplateArguments,kind,NULL,NULL,NULL,emptyList);
                ROSE_ASSERT(nondefdecl != NULL);
 
+#if BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS
             // DQ (5/2/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
             // detectTransformations(nondefdecl);
-
+#endif
             // DQ (6/6/2012): Set the first non-defining declaration to be itself.
             // nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
 
@@ -9630,8 +9668,10 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
                   }
             // ROSE_ASSERT(isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().getString().find('>') != string::npos);
 
+#if BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS
             // DQ (5/2/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
             // detectTransformations(nondefdecl);
+#endif
              }
             else
              {
@@ -9646,9 +9686,10 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 
                ROSE_ASSERT(nameWithoutTemplateArguments == nameWithTemplateArguments);
 
+#if BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS
             // DQ (5/2/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
             // detectTransformations(nondefdecl);
-
+#endif
             // DQ (9/16/2012): Set the firstNondefiningDeclaration because this is the one branch left were it 
             // was not set (required in the true branch so that we could set the template parameters).
                nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
@@ -9708,10 +9749,13 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
           setOneSourcePositionForTransformation(nondefdecl);
           ROSE_ASSERT (nondefdecl->get_startOfConstruct() != __null);
 
+#if BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS
        // DQ (5/2/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
-       if (SourcePositionClassificationMode != e_sourcePositionTransformation) 
-          detectTransformations(nondefdecl);
-
+          if (SourcePositionClassificationMode != e_sourcePositionTransformation) 
+             {
+               detectTransformations(nondefdecl);
+             }
+#endif
        // DQ (6/6/2012): This has to be set before we generate the type.
        // nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
 
@@ -10961,7 +11005,16 @@ SgEnumDeclaration * SageBuilder::buildEnumDeclaration_nfi(const SgName& name, Sg
 SgFile*
 SageBuilder::buildFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project/*=NULL*/)
    {
+// Note that ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT defines a reduced set of ROSE to support front-end specific development.
+// It is mostly used by quinlan to support laptop development where the smaller set of files permits one to do limited
+// development work on a Mac (even with OSX's poor performance with large numbers of debug symbols).  This is an 
+// infrequently used option.
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+
+#if 0
+     printf ("In SageBuilder::buildFile(inputFileName = %s, outputFileName = %s, project = %p \n",inputFileName.c_str(),outputFileName.c_str(),project);
+#endif
+
      ROSE_ASSERT(inputFileName.size()!=0);// empty file name is not allowed.
      string sourceFilename = inputFileName, fullname;
      Rose_STL_Container<std::string> arglist;
@@ -11084,7 +11137,63 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #else
      return NULL;
 #endif
-   }// end SgFile* buildFile()
+   }
+
+//! Build a SgFile node
+SgSourceFile*
+SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* project)
+   {
+  // DQ (2/9/2013): Adding support to build a SgSourceFile with an empty global scope.
+  // This function calls the buildFile(string,string,SgProject*) function and provides
+  // a simple API where one wants to create a new SgSourceFile that will then have 
+  // statements added to it and then unparsed.
+
+  // This function needs a way to specify the associated language for the generated file.
+  // Currently this is taken from the input file (generated from a prefix on the output filename.
+
+#if 0
+     printf ("In SageBuilder::buildSourceFile(outputFileName = %s, project = %p \n",outputFileName.c_str(),project);
+#endif
+
+  // Call the supporting function to build a file.
+     string inputFilePrefix = "temp_dummy_file_";
+
+     SgFile* file = buildFile(inputFilePrefix+outputFileName,outputFileName,project);
+     ROSE_ASSERT(file != NULL);
+
+     SgSourceFile* sourceFile = isSgSourceFile(file);
+     ROSE_ASSERT(sourceFile != NULL);
+
+     ROSE_ASSERT(sourceFile->get_globalScope() != NULL);
+
+     return sourceFile;
+
+#if 0
+  // This is a more direct, alternative implementation (not sure if it is better).
+     SgSourceFile* newFile = new SgSourceFile();
+     ROSE_ASSERT(newFile != NULL);
+
+  // Mark as a C file for now.
+     newFile->set_C_only(true);
+
+  // Specify the name of the file (and line and column numbers), using a Sg_File_Info object.
+     Sg_File_Info* fileInfo = new Sg_File_Info(outputFileName,0,0);
+     ROSE_ASSERT(fileInfo != NULL);
+
+     newFile->set_startOfConstruct(fileInfo);
+     fileInfo->set_parent(newFile);
+
+     SgGlobal* globalScope = new SgGlobal();
+     ROSE_ASSERT(globalScope != NULL);
+
+     newFile->set_globalScope(globalScope);
+     globalScope->set_parent(newFile);
+
+     ROSE_ASSERT(newFile->get_globalScope() != NULL);
+
+     return newFile;
+#endif
+   }
 
 
 PreprocessingInfo* SageBuilder::buildComment(SgLocatedNode* target, const std::string & content,PreprocessingInfo::RelativePositionType position/*=PreprocessingInfo::before*/,PreprocessingInfo::DirectiveType dtype/* = PreprocessingInfo::CpreprocessorUnknownDeclaration*/)

@@ -496,6 +496,8 @@ NameQualificationTraversal::requiresTypeElaboration(SgSymbol* symbol)
        // DQ (2/12/2012): Added support for SgTemplateMemberFunctionSymbol.
           case V_SgTemplateMemberFunctionSymbol:
 
+       // DQ (2/12/2013): Added support for SgTemplateFunctionSymbol.
+          case V_SgTemplateFunctionSymbol:
 
        // DQ (6/21/2011): Added case for SgFunctionSymbol (triggers type elaboration).
           case V_SgFunctionSymbol:
@@ -2225,6 +2227,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
           unparseInfoPointer->set_reference_node_for_qualification(nodeReferenceToType);
 
           string typeNameString = globalUnparseToString(type,unparseInfoPointer);
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("++++++++++++++++ typeNameString (globalUnparseToString()) = %s \n",typeNameString.c_str());
 #endif
@@ -2249,6 +2252,14 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
                     printf ("Error: type names should not be this long... typeNameString.length() = %zu \n",typeNameString.length());
                     ROSE_ASSERT(false);
                   }
+#if 0
+            // DQ (2/18/2013): I think that the output if such long strings in a problem for the Jenkins tests, 
+            // outside of Jenkins this branch executes fine.  This branch is executed only for ROSE compiling
+            // ROSE (so far) and is executed for the typename generated from the enum in Cxx_Grammar.h which 
+            // is converted to a unique typename (and the string function for this contatinates all of the names
+            // of the 700+ enum fields to generate the typename, hence a long name exceeding 10K characters).
+            // ROSE compiling the ROSE Cxx_Grammar.h file is not a problem outside of Jenkins so I suspect that
+            // Jenkins is having problems with the processing of long strings generated as part of the tests.
 
             // DQ (1/30/2013): Print out the long name that previously violated our initial limits.
                if (typeNameString.length() > 10000)
@@ -2256,10 +2267,14 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
                     printf ("WARNING: extremely long type name found: typeNameString.length() = %zu \n",typeNameString.length());
                     printf ("typeNameString = %s \n",typeNameString.c_str());
                   }
+#endif
              }
 
        // DQ (6/21/2011): Refactored this code for use in traverseTemplatedFunction()
           addToNameMap(nodeReferenceToType,typeNameString);
+
+       // DQ (2/18/2013): Fixing generation of too many SgUnparse_Info object.
+          delete unparseInfoPointer;
         }
        else
         {
@@ -2334,6 +2349,9 @@ NameQualificationTraversal::traverseTemplatedFunction(SgFunctionRefExp* function
 
        // DQ (6/21/2011): Refactored this code for use in traverseTemplatedFunction()
           addToNameMap(nodeReferenceToType,functionNameString);
+
+       // DQ (2/18/2013): Fixing generation of too many SgUnparse_Info object.
+          delete unparseInfoPointer;
         }
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -3103,7 +3121,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                  {
                                    amountOfNameQualificationRequired = 1;
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                                   printf ("Force global qualification for friend function \n");
+                                   printf ("Force global qualification for friend function: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
                                  }
 #else
@@ -4561,14 +4579,16 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
      printf ("In NameQualificationTraversal::setNameQualification(): outputGlobalQualification                                 = %s \n",outputGlobalQualification ? "true" : "false");
 #endif
 
+  // DQ (2/16/2013): Note that test2013_67.C is a case where name qualification of the friend function is required.
+  // I think it is because it is a non defining declaration instead of a defining declaration.
   // DQ (3/31/2012): I don't think that global qualification is allowed for friend functions (so test for this).
   // test2012_57.C is an example of this issue.
-     if (outputGlobalQualification == true && functionDeclaration->get_declarationModifier().isFriend() == true)
+  // if (outputGlobalQualification == true && functionDeclaration->get_declarationModifier().isFriend() == true)
+     if ( (outputGlobalQualification == true) && (functionDeclaration->get_declarationModifier().isFriend() == true) && (functionDeclaration == functionDeclaration->get_definingDeclaration()))
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("WARNING: We can't specify global qualification of friend function (qualifier reset to be empty string) \n");
 #endif
-
        // Note that I think this might only be an issue where outputNameQualificationLength == 0.
           ROSE_ASSERT (outputNameQualificationLength == 0);
 
@@ -5405,6 +5425,9 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("NAME OF SCOPE: scope name -- template_name = %s \n",template_name.c_str());
 #endif
+
+            // DQ (2/18/2013): Fixing generation of too many SgUnparse_Info object.
+               delete unparseInfoPointer;
              }
             else
              {

@@ -131,6 +131,10 @@ if test "x$GFORTRAN_PATH" != "x"; then
    AC_DEFINE([USE_GFORTRAN_IN_ROSE], [1], [Mark that GFORTRAN is available])
 fi
 
+# Call supporting macro for X10 language compiler path
+ROSE_SUPPORT_X10
+
+
 #########################################################################################
 ##
 
@@ -1964,6 +1968,7 @@ src/frontend/CxxFrontend/Makefile
 src/frontend/CxxFrontend/Clang/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/ECJ_ROSE_Connection/Makefile
+src/frontend/X10_ROSE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
 src/frontend/PythonFrontend/Makefile
 src/frontend/BinaryDisassembly/Makefile

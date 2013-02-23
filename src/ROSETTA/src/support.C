@@ -1166,11 +1166,19 @@ Grammar::setUpSupport ()
   // DQ (11/20/2010): This should maybe have an initializer of "= \"\"" instead of just "" so that 
   // it will be properly reset to an empty string in the generated destructor.
      File.setDataPrototype("std::string", "partitionerConfigurationFileName", "",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (11/20/2010): Process only tokens.
      File.setDataPrototype ("bool", "output_tokens", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#if 1
+  // DQ (2/17/2013): Added support to skip AST consistancy testing AstTests::runAllTests(SgProject*)
+  // This testing is useful but interferes with performance testing using HPCToolKit.
+  // Note that the AstTests::runAllTests() function must be called explicitly in the user's translator.
+     File.setDataPrototype("bool", "skipAstConsistancyTests", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
 
   // ******************************************************************************
@@ -1649,14 +1657,14 @@ Grammar::setUpSupport ()
 
   // negara1 (06/23/2011): This field tracks for each included file its including preprocessing infos.
      Project.setDataPrototype("std::map<std::string, std::set<PreprocessingInfo*> >", "includingPreprocessingInfosMap", "",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);    
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // negara1 (07/29/2011): The following two fields track include paths that compiler searches for quoted and bracketed includes correspondingly.
      Project.setDataPrototype("std::list<std::string>", "quotedIncludesSearchPaths", "",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      Project.setDataPrototype("std::list<std::string>", "bracketedIncludesSearchPaths", "",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);          
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // negara1 (08/17/2011): Added to permit specifying an optional root folder for header files unparsing.
      Project.setDataPrototype("std::string", "unparseHeaderFilesRootFolder", "= \"\"",
@@ -1664,8 +1672,15 @@ Grammar::setUpSupport ()
 
   // DQ (9/18/2011): Added support for specification of frontend constant folding (only supported in C/C++ using EDG).
      Project.setDataPrototype("bool", "frontendConstantFolding", "= false",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);          
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+#if 0
+  // DQ (2/17/2013): Added support to skip AST consistancy testing AstTests::runAllTests(SgProject*)
+  // This testing is useful but interferes with performance testing using HPCToolKit.
+  // Note that the AstTests::runAllTests() function must be called explicitly in the user's translator.
+     Project.setDataPrototype("bool", "skipAstConsistancyTests", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
      
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

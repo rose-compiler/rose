@@ -8,6 +8,9 @@
 // DQ (5/8/2007): This header file is included in the HiddenList.h header file
 #include "HiddenList.h"
 
+#ifndef USE_ROSE
+  // DQ (2/11/2013): This fails for ROSE compilign "rose.h" header file (ROSE compiling ROSE).
+
 namespace Hidden_List_Computation {
 
 // Robert Preissl, June 1 2007, call Vector_Of_SymbolInformation per reference
@@ -47,5 +50,6 @@ void Intersection_with_FunctionDeclaration(
 
 } // end of namespace: Hidden_List_Computation
 
+#endif
 
 #endif /*DEBUG_HIDDENLIST_INTERSECTION_H_*/

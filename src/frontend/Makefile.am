@@ -23,6 +23,10 @@ if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
    SUBDIRS += ECJ_ROSE_Connection
 endif
 
+if ROSE_BUILD_X10_LANGUAGE_SUPPORT
+   SUBDIRS += X10_ROSE_Connection
+endif
+
 SUBDIRS += BinaryDisassembly Disassemblers BinaryFormats BinaryLoader
 
 #if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
