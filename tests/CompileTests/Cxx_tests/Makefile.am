@@ -1163,6 +1163,7 @@ test2013_64.C \
 test2013_65.C \
 test2013_66.C \
 test2013_67.C \
+test2013_68.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
