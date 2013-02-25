@@ -975,6 +975,19 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          break;
                        }
 
+                 // DQ (2/23/2013): Added support for SgTemplateFunctionRefExp (required as part of fix for test2013_69.C).
+                    case V_SgTemplateFunctionRefExp:
+                       {
+                         SgTemplateFunctionRefExp* functionRefExp = isSgTemplateFunctionRefExp(functionExpression);
+                         ROSE_ASSERT(functionRefExp != NULL);
+                         SgFunctionSymbol* functionSymbol = functionRefExp->get_symbol();
+                         ROSE_ASSERT(functionSymbol != NULL);
+
+                      // Make sure that the function has a valid declaration
+                         ROSE_ASSERT(functionSymbol->get_declaration() != NULL);
+                         break;
+                       }
+
                     case V_SgMemberFunctionRefExp:
                        {
                          SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(functionExpression);
