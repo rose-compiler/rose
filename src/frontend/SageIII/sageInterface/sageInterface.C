@@ -4574,7 +4574,9 @@ SageInterface::lookupFunctionSymbolInParentScopes(const SgName & functionName, S
      while ((functionSymbol == NULL) && (tempScope != NULL))
         {
           functionSymbol = tempScope->lookup_function_symbol(functionName);
-
+#if 0
+          printf ("In lookupFunctionSymbolInParentScopes(): Searching scope = %p = %s functionName = %s functionSymbol = %p \n",tempScope,tempScope->class_name().c_str(),functionName.str(),functionSymbol);
+#endif
           if (tempScope->get_parent()!=NULL) // avoid calling get_scope when parent is not set in middle of translation
                tempScope = isSgGlobal(tempScope) ? NULL : tempScope->get_scope();
             else
@@ -4874,7 +4876,9 @@ SageInterface::lookupTemplateSymbolInParentScopes (const SgName &  name, SgScope
         {
        // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
           symbol = cscope->lookup_template_symbol(name);
-
+#if 0
+          printf ("In lookupTemplateSymbolInParentScopes(): Searching scope = %p = %s name = %s symbol = %p \n",cscope,cscope->class_name().c_str(),name.str(),symbol);
+#endif
           if (cscope->get_parent() != NULL) // avoid calling get_scope when parent is not set
                cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
             else
