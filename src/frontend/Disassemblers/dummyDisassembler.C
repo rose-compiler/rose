@@ -43,7 +43,7 @@ void SgAsmQuadWordValueExpression::set_value(uint64_t) { abort(); }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmInstruction
 
-bool SgAsmInstruction::get_size();
+size_t SgAsmInstruction::get_size() const { return 0; }
 bool SgAsmInstruction::terminates_basic_block() { return false; }
 bool SgAsmInstruction::is_unknown() const { return false; }
 bool SgAsmInstruction::has_effect() { return false; }
@@ -68,20 +68,7 @@ SgAsmInstruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>&, 
 
 bool SgAsmArmInstruction::terminates_basic_block() { return false; }
 bool SgAsmArmInstruction::is_unknown() const { return false; }
-bool SgAsmArmInstruction::is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t*) { return false; }
-bool SgAsmArmInstruction::is_function_return(const std::vector<SgAsmInstruction*>&) { return false; }
-bool SgAsmArmInstruction::get_branch_target(rose_addr_t*) { return false; }
-std::set<rose_addr_t> SgAsmArmInstruction::get_successors(bool*) { return std::set<rose_addr_t>();}
-
-std::set<rose_addr_t>
-SgAsmArmInstruction::get_successors(const std::vector<SgAsmInstruction*>&, bool*, MemoryMap*) {
-    return std::set<rose_addr_t>();
-}
-
-std::vector<std::pair<size_t,size_t> >
-SgAsmArmInstruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>&, bool, bool) {
-    return std::vector<std::pair<size_t,size_t> >();
-}
+std::set<rose_addr_t> SgAsmArmInstruction::get_successors(bool* complete) { return std::set<rose_addr_t>(); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmMipsInstruction
@@ -93,35 +80,12 @@ bool SgAsmMipsInstruction::is_function_return(const std::vector<SgAsmInstruction
 bool SgAsmMipsInstruction::get_branch_target(rose_addr_t*) { return false; }
 std::set<rose_addr_t> SgAsmMipsInstruction::get_successors(bool*) { return std::set<rose_addr_t>();}
 
-std::set<rose_addr_t>
-SgAsmMipsInstruction::get_successors(const std::vector<SgAsmInstruction*>&, bool*, MemoryMap*) {
-    return std::set<rose_addr_t>();
-}
-
-std::vector<std::pair<size_t,size_t> >
-SgAsmMipsInstruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>&, bool, bool) {
-    return std::vector<std::pair<size_t,size_t> >();
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmPowerpcInstruction
 
 bool SgAsmPowerpcInstruction::terminates_basic_block() { return false; }
 bool SgAsmPowerpcInstruction::is_unknown() const { return false; } 
-bool SgAsmPowerpcInstruction::is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t*) { return false; }
-bool SgAsmPowerpcInstruction::is_function_return(const std::vector<SgAsmInstruction*>&) { return false; }
-bool SgAsmPowerpcInstruction::get_branch_target(rose_addr_t*) { return false; }
 std::set<rose_addr_t> SgAsmPowerpcInstruction::get_successors(bool*) { return std::set<rose_addr_t>();}
-
-std::set<rose_addr_t>
-SgAsmPowerpcInstruction::get_successors(const std::vector<SgAsmInstruction*>&, bool*, MemoryMap*) {
-    return std::set<rose_addr_t>();
-}
-
-std::vector<std::pair<size_t,size_t> >
-SgAsmPowerpcInstruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>&, bool, bool) {
-    return std::vector<std::pair<size_t,size_t> >();
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmx86Instruction
