@@ -4,7 +4,10 @@ set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ddisc_union=union" )
 
 
 #include_directories( ${ROSE_INCLUDES} )
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${Boost_INCLUDE_DIRS} ${CMAKE_BINARY_DIR}/src/roseSupport)
+include_directories(
+  ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${Boost_INCLUDE_DIRS}
+  ${CMAKE_BINARY_DIR}/src/roseSupport
+  ${CMAKE_BINARY_DIR}/src/3rdPartyLibraries/fortran-parser)
 
 #set(  CMAKE_VERBOSE_MAKEFILE  true )
 
@@ -911,7 +914,17 @@ set(LINK_FILES
    edg33
 #   PHP_FRONTEND_LIB 
    libhpdf
+#   libdl
+   ${CMAKE_DL_LIBS}
 )
+
+if(enable-fortran)
+  list(APPEND LINK_FILES roseFortran)
+endif()
+
+if(enable-java)
+  list(APPEND LINK_FILES roseJava)
+endif()
 
 if ( enable-smaller-generated-files )
 set(ROSE_TARGET_LINK 
