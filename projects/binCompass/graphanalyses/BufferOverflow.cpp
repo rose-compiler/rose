@@ -32,7 +32,7 @@ BufferOverflow::run(string& name, SgGraphNode* node,
 	if (ptrList.size()!=0) {
 	SgAsmExpression* expr = *(ptrList.begin());
 	string replace = expr->get_replacement();
-	string op = unparseX86Expression(expr, NULL);
+	string op = unparseX86Expression(expr, NULL, NULL);
 
 	// we can detect malloc with the help of ida.
 	if (replace=="_malloc" || replace=="malloc@plt") {
