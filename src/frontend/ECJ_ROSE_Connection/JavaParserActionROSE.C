@@ -603,7 +603,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitListEnd(JNIEnv *env
 
     ROSE_ASSERT(! astJavaScopeStack.empty());
 
-    astJavaScopeStack.popGlobal(); // remove the global scope
+    SgGlobal *global = astJavaScopeStack.popGlobal(); // remove the global scope
+    ROSE_ASSERT(global == ::globalScope);
+    if (global -> attributeExists("contains_wide_characters")) {
+      AstRegExAttribute *attribute = (AstRegExAttribute *) global -> getAttribute("contains_wide_characters");
+        cout << endl << "Java-ROSE error: At least one non-ASCII character with value " << attribute -> expression << " encountered in a string literal." << endl << endl;
+        ROSE_ASSERT(! "yet implemented Wide Characters");
+    }
 
     ROSE_ASSERT(astJavaScopeStack.empty());
 
@@ -1280,7 +1286,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd(JNIEnv *env, 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameterReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jstring java_type_parameter_name, jobject jToken) {
     if (SgProject::get_verbose() > 0)
-        printf ("Inside cactionTypeReference\n");
+        printf ("Inside cactionTypeParameterReference\n");
 
     SgName package_name = convertJavaPackageNameToCxxString(env, java_package_name),
            type_name = convertJavaStringToCxxString(env, java_type_name),
@@ -1308,7 +1314,7 @@ cout.flush();
     astJavaComponentStack.push(type);
 
     if (SgProject::get_verbose() > 0)
-        printf ("Exiting cactionTypeReference\n");
+        printf ("Exiting cactionTypeParameterReference\n");
 }
 
 
@@ -1318,6 +1324,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeReference(JNIEnv *env, jclass,
 
     SgName package_name = convertJavaPackageNameToCxxString(env, java_package_name),
            type_name = convertJavaStringToCxxString(env, java_type_name);
+
     SgType *type = lookupTypeByName(package_name, type_name, 0 /* not an array - number of dimensions is 0 */);
     ROSE_ASSERT(type != NULL);
 
@@ -1606,11 +1613,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral(JNIEnv *env, jclass,
     ROSE_ASSERT(! astJavaScopeStack.empty());
 
     // string stringLiteral = "stringLiteral_abc";
-    SgName stringLiteral = convertJavaStringToCxxString(env, java_string);
+    SgName stringLiteral = convertJavaStringValToWString(env, java_string); // convertJavaStringToCxxString(env, java_string);
 
     // printf ("Building a string value expression = %s \n", stringLiteral.str());
 
-    SgStringVal *stringValue = SageBuilder::buildStringVal(stringLiteral); // new SgStringVal(stringLiteral);
+    SgStringVal *stringValue = SageBuilder::buildStringVal(stringLiteral); // new SgStringVal(stringLiteral); 
     ROSE_ASSERT(stringValue != NULL);
 
     // Set the source code position (default values for now).
@@ -2378,7 +2385,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExtendedStringLiteral(JNIEnv *env,
 
     ROSE_ASSERT(! astJavaScopeStack.empty());
 
-    SgName stringLiteral = convertJavaStringToCxxString(env, java_string);
+    SgName stringLiteral = convertJavaStringValToWString(env, java_string); // convertJavaStringToCxxString(env, java_string);
 
     // printf ("Building a string value expression = %s \n", stringLiteral.str());
 
@@ -3754,7 +3761,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSingleNameReference(JNIEnv *env, j
     SgName package_name = convertJavaPackageNameToCxxString(env, java_package_name),
            type_name = convertJavaStringToCxxString(env, java_type_name),
            name = convertJavaStringToCxxString(env, java_name);
-
     SgVariableSymbol *variable_symbol = NULL;
     if (! type_name.getString().empty()) { // an instance variable?
         if (SgProject::get_verbose() > 0)

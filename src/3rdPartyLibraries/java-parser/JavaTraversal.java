@@ -18,6 +18,8 @@ import org.eclipse.jdt.internal.compiler.parser.*;
 import org.eclipse.jdt.internal.compiler.problem.*;
 import org.eclipse.jdt.internal.compiler.util.*;
 
+import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
+
 // import JavaParser.*;
 
 // DQ (10/12/2010): Make more like the OFP implementation (using Callable<Boolean> abstract base class). 
@@ -30,7 +32,7 @@ class JavaTraversal implements Callable<Boolean> {
     // This class generates a DOT file of the ECJ AST.  It is not used for any ROSE specific translation
     // of the AST.  As a result it should be renamed.
 
-// TODO: remove this !!!	
+// TODO: remove this !!!
 // Not clear what this means!
 // static Main main;
     static BufferedWriter out;
@@ -128,7 +130,7 @@ class JavaTraversal implements Callable<Boolean> {
 
         }
         catch (Exception e) {
-        	e.printStackTrace();
+            e.printStackTrace();
             System.err.println("Error: " + e.getMessage());
         }
     }
@@ -203,7 +205,7 @@ class JavaTraversal implements Callable<Boolean> {
                         System.out.println("integer value = " + verboseLevel);
                 }
                 catch (NumberFormatException nfe) {
-                	nfe.printStackTrace();
+                    nfe.printStackTrace();
                     System.out.println("NumberFormatException: " + nfe.getMessage());
 
                     // It might be better to rethrow the exception
@@ -240,7 +242,7 @@ class JavaTraversal implements Callable<Boolean> {
      *  
      * @param args
      */
-    static void compile(String args[]) {
+    static boolean compile(String args[]) {
         if (verboseLevel > 0)
             System.out.println("Compiling ...");
 
@@ -252,14 +254,16 @@ class JavaTraversal implements Callable<Boolean> {
             main.configure(args);
         }
         catch (Exception e) {
-        	e.printStackTrace();
+            e.printStackTrace();
             System.err.println("Error in main.configure(args): " + e.getMessage()); 
             System.exit(1);
         }
         main.compilerOptions = new CompilerOptions(main.options);
         main.compilerOptions.performMethodsFullRecovery = false;
         main.compilerOptions.performStatementsRecovery = false;
-     // main.compilerOptions.verbose = true;
+        // main.compilerOptions.verbose = true;
+        main.compilerOptions.sourceLevel = ClassFileConstants.JDK1_7;
+        main.compilerOptions.generateClassFiles = true;
 
         main.batchCompiler =  new Compiler(main.getLibraryAccess(),
                                            main.getHandlingPolicy(),
@@ -271,14 +275,12 @@ class JavaTraversal implements Callable<Boolean> {
                                           );
 
         ICompilationUnit[] sourceUnits = main.getCompilationUnits();
-        int maxUnits = sourceUnits.length;
         if (verboseLevel > 2)
-            System.out.println("We got " + maxUnits + " compilation units");
-        main.batchCompiler.totalUnits = 0;
-        main.batchCompiler.unitsToProcess = new CompilationUnitDeclaration[maxUnits];
+            System.out.println("We got " + sourceUnits.length + " compilation units");
 
         main.batchCompiler.compile(sourceUnits); // generate all class files that are needed for these source units.
-        return;
+
+        return main.globalErrorsCount == 0; // return whether or not the compilation was successful.
     }
 
     /**
@@ -301,7 +303,7 @@ class JavaTraversal implements Callable<Boolean> {
             main.configure(args);
         }
         catch (Exception e) {
-        	e.printStackTrace();
+            e.printStackTrace();
             System.err.println("(2) Error in main.configure(args): " + e.getMessage()); 
             System.exit(1);
         }
@@ -310,6 +312,7 @@ class JavaTraversal implements Callable<Boolean> {
         main.compilerOptions.performMethodsFullRecovery = false;
         main.compilerOptions.performStatementsRecovery = false;
      // main.compilerOptions.verbose = true;
+        main.compilerOptions.sourceLevel = ClassFileConstants.JDK1_7;
 
         main.batchCompiler =  new Compiler(main.getLibraryAccess(),
                                            main.getHandlingPolicy(),
@@ -335,13 +338,14 @@ class JavaTraversal implements Callable<Boolean> {
             out.write("Digraph G {\n");
         }
         catch (Exception e) {
-        	e.printStackTrace();
+            e.printStackTrace();
             System.err.println("Error: " + e.getMessage()); 
         }
 
         return main;
     }
-    
+
+
     // This is the "main" function called from the outside (via the JVM from ROSE).
     public static void main(String args[]) {
         /* tps : set up and configure ---------------------------------------------- */
@@ -349,7 +353,19 @@ class JavaTraversal implements Callable<Boolean> {
         // Filter out ROSE specific options.
         args = filterCommandline(args);
 
-        compile(args); // generate all necessary classfiles
+        //
+        // Generate all necessary classfiles if no errors are detected
+        //
+        if (! compile(args)) { // errors are detected?
+            System.out.flush();
+            System.err.flush();
+
+            System.err.println();
+            System.err.println();
+            System.err.println("ECJ front-end errors detected in input java program");
+            System.exit(1);
+        }
+        
         Main main = generateAst(args); // get compiler to generate AST.
         Compiler batchCompiler = main.batchCompiler; // get compiler to generate AST.
         int maxUnits = main.getCompilationUnits().length;
@@ -388,17 +404,17 @@ class JavaTraversal implements Callable<Boolean> {
                 if (verboseLevel > 2)
                     System.out.println("calling batchCompiler.process(unit, i) ..." + new String(unit.getFileName()));
 
-                batchCompiler.process(unit, i);
+                    batchCompiler.process(unit, i);
 
-                if (unit.compilationResult.hasErrors()) {
-            		System.out.flush();
-            		System.err.flush();
+                if (unit.compilationResult.hasSyntaxError || unit.compilationResult.hasErrors()) {
+                    System.out.flush();
+                    System.err.flush();
 
-            		System.err.println();
-            		System.err.println();
-            		System.err.println("ECJ front-end errors detected in input java program");
-            		System.exit(1);
-            	}
+                    System.err.println();
+                    System.err.println();
+                    System.err.println("ECJ front-end errors detected in input java program");
+                    System.exit(1);
+                }
 
                 java_parser_support.preprocess(unit);
             }
@@ -420,7 +436,7 @@ class JavaTraversal implements Callable<Boolean> {
                         System.out.println("test 10 ...");
                 }
                 catch (Exception e) {
-                	e.printStackTrace();
+                    e.printStackTrace();
                     System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e.getMessage());
 
                     // This should output the call stack.
@@ -437,7 +453,7 @@ class JavaTraversal implements Callable<Boolean> {
         }
         catch (Exception e) {
             // DQ (11/1/2010): Added more aggressive termination of program...
-        	e.printStackTrace();
+            e.printStackTrace();
             System.err.println("Error in JavaTraversal::main(): " + e.getMessage());
             // System.exit(1);
 
@@ -455,7 +471,7 @@ class JavaTraversal implements Callable<Boolean> {
             out.close();
         } 
         catch (Exception e) {
-        	e.printStackTrace();
+            e.printStackTrace();
             System.err.println("Error: " + e.getMessage());
         }
 

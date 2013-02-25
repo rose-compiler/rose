@@ -452,6 +452,7 @@ void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode);
 // *********************************************
 
 string convertJavaPackageNameToCxxString(JNIEnv *env, const jstring &java_string);
+string convertJavaStringValToWString(JNIEnv *env, const jstring &java_string);
 string convertJavaStringToCxxString(JNIEnv *env, const jstring &java_string);
 
 SgMemberFunctionDeclaration *buildDefiningMemberFunction(const SgName &inputName, SgClassDefinition *classDefinition, int num_arguments, JNIEnv *env, jobject methodLoc, jobject argsLoc);

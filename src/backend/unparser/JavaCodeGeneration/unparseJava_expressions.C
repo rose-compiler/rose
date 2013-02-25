@@ -409,26 +409,51 @@ void Unparse_Java::unparseWCharVal(SgExpression* expr, SgUnparse_Info& info) {
 
     if (wchar_val->get_valueString() == "") {
         int value = wchar_val->get_value();
-        switch(value) { // value kept as an integer for special characters.
-            case '\n': curprint("\'\\n\'"); break;
-            case '\t': curprint("\'\\t\'"); break;
-            case '\v': curprint("\'\\v\'"); break;
-            case '\b': curprint("\'\\b\'"); break;
-            case '\r': curprint("\'\\r\'"); break;
-            case '\f': curprint("\'\\f\'"); break;
-            case '\a': curprint("\'\\a\'"); break;
-            case '\'': curprint("\'\\'\'"); break;
-            case '\"': curprint("\'\"\'"); break;
-            case '\\': curprint("\'\\\\'"); break;
-
-            default: {
-                ostringstream unicode; // stream used for the conversion
-                unicode.fill('0');
-                unicode.width(4);
-                unicode << hex << value; // insert the textual representation of num_dimensions in the characters in the stream
-                curprint("\'\\u" + unicode.str() + "\'");
-                break;
+        if (value < 256) {
+            if (value == '\b') {
+                curprint("\'\\b\'");
             }
+            else if (value == '\t') {
+                curprint("\'\\t\'");
+            }
+            else if (value == '\n') {
+                curprint("\'\\n\'");
+            }
+            else if (value == '\f') {
+                curprint("\'\\f\'");
+            }
+            else if (value == '\r') {
+                curprint("\'\\r\'");
+            }
+            else if (value == '\"') {
+                curprint("\'\\\"\'");
+            }
+            else if (value == '\'') {
+                curprint("\'\\\'\'");
+            }
+            else if (value == '\\') {
+                curprint("\'\\\\\'");
+            }
+            else if (isprint(value)) {
+                string str = "\'";
+                str += (char) value;
+                str += "\'";
+                curprint(str.c_str());
+            }
+            else {
+                ostringstream octal; // stream used for the conversion
+                octal.fill('0');
+                octal.width(3);
+                octal << oct << value; // compute the octal character representation of the value
+                curprint("\'\\" + octal.str() + "\'");
+            }
+        }
+        else {
+            ostringstream unicode; // stream used for the conversion
+            unicode.fill('0');
+            unicode.width(4);
+            unicode << hex << value; // compute the Unicode character representation of the value
+            curprint("\'\\u" + unicode.str() + "\'");
         }
     }
     else {

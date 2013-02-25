@@ -328,6 +328,9 @@ string normalize(string source) {
     string target = "";
     for (string::iterator it = source.begin(); it < source.end(); it++) {
         switch(*it) {
+            case '\0':
+                target += "\\0";
+                break;
             case '\n':
                 target += "\\n";
                 break;
@@ -527,10 +530,44 @@ void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode) {
 
 
 //
+// TODO: DO this right at some point !!!  In particular, this should produce a wstring ...
 //
-//
+string convertJavaStringValToWString(JNIEnv *env, const jstring &java_string) {
+    std::string value;
+
+    const jchar *raw = env -> GetStringChars(java_string, NULL);
+    if (raw != NULL) {
+        jsize len = env -> GetStringLength(java_string);
+        for (const jchar *temp = raw; len > 0; len--,temp++) {
+            if (*temp > 127) {
+                // TODO: Do the right thing!
+                if (! ::globalScope -> attributeExists("contains_wide_characters")) {
+                    ostringstream convert;     // stream used for the conversion
+                    convert << ((int) *temp); // insert the textual representation of num_dimensions in the characters in the stream
+                    ::globalScope -> setAttribute("contains_wide_characters", new AstRegExAttribute(convert.str()));
+                }
+                value += ' ';
+            }
+            else value += *temp;
+        }
+        env -> ReleaseStringChars(java_string, raw);
+    }
+
+// TODO: Remove this !!!
+/*
+    const char *str = env -> GetStringUTFChars(java_string, NULL);
+    value =  str;
+cout << "The converted string is: \"";
+for (int i = 0; i < value.size(); i++)
+cout << str[i];
+cout << "\"" << endl;
+*/
+    return normalize(value);
+}
+
+
 string convertJavaStringToCxxString(JNIEnv *env, const jstring &java_string) {
-    // Note that "env" can't be passed into this function as "const".
+     // Note that "env" can't be passed into this function as "const".
     const char *str = env -> GetStringUTFChars(java_string, NULL);
     ROSE_ASSERT(str != NULL);
 
@@ -540,7 +577,6 @@ string convertJavaStringToCxxString(JNIEnv *env, const jstring &java_string) {
 
     // Note that str is not set to NULL.
     env -> ReleaseStringUTFChars(java_string, str);
-    ROSE_ASSERT(str != NULL);
 
     return normalize(returnString);
 }
@@ -1129,6 +1165,12 @@ SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimens
     }
     else {
         SgClassSymbol *namespace_symbol = ::globalScope -> lookup_class_symbol(package_name);
+// TODO: Remove this!!!
+if (! namespace_symbol){
+cout << "The namespace : " << package_name << " does not exist in the global scope."
+     << endl;
+cout.flush();
+}
         ROSE_ASSERT(namespace_symbol);
         SgClassDeclaration *declaration = (SgClassDeclaration *) namespace_symbol -> get_declaration() -> get_definingDeclaration();
         SgClassDefinition *package = declaration -> get_definition();
