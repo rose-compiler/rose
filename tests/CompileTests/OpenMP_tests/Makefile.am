@@ -187,6 +187,9 @@ matrixmultiply-ompacc.o:$(srcdir)/matrixmultiply-ompacc.c parseOmp
 jacobi-ompacc.o:$(srcdir)/jacobi-ompacc.c parseOmp
 	./parseOmp -rose:openmp:ast_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/jacobi-ompacc.c
 
+jacobi-ompacc-opt1.o:$(srcdir)/jacobi-ompacc-opt1.c parseOmp
+	./parseOmp -rose:openmp:parse_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/jacobi-ompacc-opt1.c
+
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 check-local:
 	@echo "Test for ROSE OpenMP Parser."

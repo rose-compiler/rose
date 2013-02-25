@@ -105,7 +105,7 @@ corresponding C type is union name defaults to YYSTYPE.
               equality_expr relational_expr
               shift_expr additive_expr multiplicative_expr 
               primary_expr incr_expr unary_expr
-              unique_target_clause if_clause num_threads_clause
+              device_clause if_clause num_threads_clause
 
 %type <itype> schedule_kind
 
@@ -136,6 +136,7 @@ openmp_directive : parallel_directive
                  | threadprivate_directive
                  | section_directive
                  | target_directive
+                 | target_data_directive
                  ;
 
 parallel_directive
@@ -604,6 +605,23 @@ reduction_operator
                                  }
                 ;
 
+target_data_directive: /* pragma */ OMP TARGET DATA {
+                       ompattribute = buildOmpAttribute(e_target_data, gNode,true);
+                       omptype = e_target_data;
+                     }
+                      target_data_clause_seq
+                    ;
+
+target_data_clause_seq : target_data_clause
+                    | target_data_clause_seq target_data_clause
+                    | target_data_clause_seq ',' target_data_clause
+                    ;
+
+target_data_clause : device_clause 
+                | map_clause
+                | if_clause
+                ;
+
 target_directive: /* #pragma */ OMP TARGET {
                        ompattribute = buildOmpAttribute(e_target,gNode,true);
                        omptype = e_target;
@@ -620,13 +638,13 @@ target_clause_seq : target_clause
                     | target_clause_seq ',' target_clause
                     ;
 
-target_clause : unique_target_clause 
+target_clause : device_clause 
                 | map_clause
                 | if_clause
                 | num_threads_clause
                 ;
 
-unique_target_clause : DEVICE {
+device_clause : DEVICE {
                            ompattribute->addClause(e_device);
                            omptype = e_device;
                          } '(' expression ')' {
