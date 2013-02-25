@@ -305,17 +305,33 @@ set(ROSE_TOP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 # --------- please do all system, platform, software tests here --------------
 
-# Check if we need to download the EDG binary tarball
+# Setup EDG version
 set(EDG_VERSION "3.3" CACHE STRING
   "major.minor version number for EDG (e.g. 3.3, 3.10, 4.0, 4.1).")
+string(SUBSTRING ${EDG_VERSION} 0 1 EDG_MAJOR_VERSION)
+string(SUBSTRING ${EDG_VERSION} 2 1 EDG_MINOR_VERSION)
+add_definitions(-DROSE_EDG_MAJOR_VERSION_NUMBER=${EDG_MAJOR_VERSION})
+add_definitions(-DROSE_EDG_MINOR_VERSION_NUMBER=${EDG_MINOR_VERSION})
+
+# Check if we need to download the EDG binary tarball
 if(EXISTS "${PROJECT_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/CMakeLists.txt")
   set(have_EDG_source TRUE)
 else()
   set(have_EDG_source FALSE)
+  # no need to display this message after the file has been downloaded
   if(NOT EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs")
-    include(${PROJECT_SOURCE_DIR}/cmake/DownloadEDG.cmake)
+    message(WARNING
+      "At build time, CMake will attempt to download a required library "
+      "tarball.\n"
+      "Please note that this EDG binary tarball is currently only available "
+      "for the GCC compiler.\n" )
   endif()
+  include(${PROJECT_SOURCE_DIR}/cmake/DownloadEDG.cmake)
 endif()
+
+# Set ROSE_SHLIBPATH_VAR.  For now, it just has the same value as
+# LD_LIBRARY_PATH.
+set(ROSE_SHLIBPATH_VAR $ENV{LD_LIBRARY_PATH})
 
 # a set of common features: including endian, stdio.h, printf, size of long int ,etc
 #taken from LyX
@@ -326,6 +342,49 @@ include(MacroLibrary)
 # Try to find MySQL / MySQL Embedded library
 # MYSQL_FOUND,MYSQL_INCLUDE_DIR,MYSQL_LIBRARIES, etc
 include(FindMySQL)
+
+#configuration options
+option(enable-c "Enable C/C++ language support in ROSE." ON)
+if (enable-c)
+  add_definitions(-DROSE_BUILD_CXX_LANGUAGE_SUPPORT)
+  add_definitions(-DROSE_BUILD_C_LANGUAGE_SUPPORT)
+endif()
+
+option(enable-fortran "Enable Fortran support in ROSE." ON)
+if (enable-fortran)
+  add_definitions(-DROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT)
+endif()
+
+option(enable-java "Enable Java support in ROSE." ON)
+if (enable-java)
+  find_package(JNI)
+  add_definitions(-DROSE_BUILD_JAVA_LANGUAGE_SUPPORT)
+endif()
+
+option(enable-php "Enable PHP support in ROSE." ON)
+if (enable-php)
+  add_definitions(-DROSE_BUILD_PHP_LANGUAGE_SUPPORT)
+endif()
+
+option(enable-python "Enable Python support in ROSE." OFF)
+if (enable-python)
+  add_definitions(-DROSE_BUILD_PYTHON_LANGUAGE_SUPPORT)
+endif()
+
+option(enable-binary-analysis "Enable binary analysis support in ROSE." ON)
+if (enable-binary-analysis)
+  add_definitions(-DROSE_BUILD_BINARY_ANALYSIS_SUPPORT)
+endif()
+
+option(enable-cuda "Enable cuda support in ROSE." ON)
+if (enable-cuda)
+  add_definitions(-DROSE_BUILD_CUDA_LANGUAGE_SUPPORT)
+endif()
+
+option(enable-opencl "Enable OpenCL support in ROSE." ON)
+if (enable-opencl)
+  add_definitions(-DROSE_BUILD_OPENCL_LANGUAGE_SUPPORT)
+endif()
 
 # tps (01/04/2010) : added verbose output 
 # ------------------------- Begin Generic CMake Variable Logging ------------------
@@ -493,7 +552,7 @@ message(Status "Looking for JAVA ...")
 include(FindJava)
 
 message(Status "Looking for flex ...")
-include(FindFlex)
+find_package(FLEX)
 if(NOT FLEX_FOUND)
     message(FATAL_ERROR "Could not find flex command")
 endif(NOT FLEX_FOUND)
@@ -533,7 +592,6 @@ message(Status "Running tests ...")
 if (HAVE_DLFCN_H)
   if (HAVE_DLADDR)
     set (use_rose_in_build_tree_var TRUE)
-    set (CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS} -ldl)
 # this following line won't work since it only set the environment variable for cmake's session
 # not for ctest session. Still no good way to set it within cmake
 # fortunately,   

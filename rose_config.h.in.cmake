@@ -464,7 +464,7 @@
 #undef IDA_PRO_PATH
 
 /* Path to JVM executable */
-#define JAVA_JVM_PATH ${JAVA_RUNTIME}
+#define JAVA_JVM_PATH "${JAVA_RUNTIME}"
 
 /* Define if the OS needs help to load dependent libraries for dlopen(). */
 //AS Don't know what to do with this
@@ -532,7 +532,8 @@
 
 /* Variable like LD_LIBRARY_PATH */
 //AS Don't know what to do with this
-#undef ROSE_SHLIBPATH_VAR
+//ZG Setting to LD_LIBRARY_PATH for now.
+#define ROSE_SHLIBPATH_VAR "${ROSE_SHLIBPATH_VAR}"
 
 /* Whether to use the new EDG version 4.x */
 //AS Don't know what to do with this
@@ -747,4 +748,4 @@
  */
 #define ROSE_OFP_MAJOR_VERSION_NUMBER 0
 #define ROSE_OFP_MINOR_VERSION_NUMBER 8
-#define ROSE_OFP_PATCH_VERSION_NUMBER 2
+#define ROSE_OFP_PATCH_VERSION_NUMBER 3

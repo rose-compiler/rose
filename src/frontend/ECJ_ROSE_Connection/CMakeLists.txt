@@ -1,27 +1,48 @@
 
-include_directories(${CMAKE_SOURCE_DIR}/src/frontend/ECJ_ROSE_Connection ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
+include_directories(
+  ${CMAKE_SOURCE_DIR}/src/frontend/ECJ_ROSE_Connection
+  ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES}
+  ${JAVA_AWT_INCLUDE_PATH})
 
 
 ########### next target ###############
 
-set(libJavaTraversal_LIB_SRCS
-    openJavaParser_main.C 
-    ecj.C)
+if(enable-java)
+  set(libJavaTraversal_LIB_SRCS
+      openJavaParser_main.C 
+      ecj.C)
 
-add_library(libJavaTraversal SHARED ${libJavaTraversal_LIB_SRCS})
+  add_library(libJavaTraversal SHARED ${libJavaTraversal_LIB_SRCS})
 
-target_link_libraries(libJavaTraversal ${KDE4_KDECORE_LIBS})
+  target_link_libraries(libJavaTraversal ${KDE4_KDECORE_LIBS})
 
-set_target_properties(libJavaTraversal PROPERTIES VERSION 1.0.0 SOVERSION 1)
-install(TARGETS libJavaTraversal ${INSTALL_TARGETS_DEFAULT_ARGS})
+  set_target_properties(libJavaTraversal PROPERTIES VERSION 1.0.0 SOVERSION 1)
+  install(TARGETS libJavaTraversal ${INSTALL_TARGETS_DEFAULT_ARGS})
+endif()
 
 
 ########### next target ###############
+
+if(enable-java)
+  set(libroseJava_SOURCES openJavaParser_main.C ecj.C)
+
+  # Handle case of Java language support specified and
+  # Fortran language support NOT specified.
+  if(NOT enable-fortran)
+    list(APPEND libroseJava_SOURCES
+      ${CMAKE_CURRENT_SOURCE_DIR}/../OpenFortranParser_SAGE_Connection/jserver.C)
+  endif()
+else()
+  # Compile using a function that represents the API of the Open Fortran Parser
+  set(libroseJava_SOURCES dummy_openJavaParser_main.C)
+endif()
+
+add_library(roseJava ${libroseJava_SOURCES})
 
 
 ########### install files ###############
 
-install(FILES  DESTINATION ${INCLUDE_INSTALL_DIR})
+#install(FILES  DESTINATION ${INCLUDE_INSTALL_DIR})
 
 
 

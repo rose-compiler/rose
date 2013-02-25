@@ -1,6 +1,5 @@
 %option noyywrap
 %option prefix="Rose_Fortran_fixed_format_"
-%option outfile="lex.yy.c"
 %{
 /* 
 Version 0.2.1 of FORTRAN scanner.

@@ -18,51 +18,42 @@ if(platform STREQUAL "")
     "Unable to detect platform when attempting to download EDG binary tarball")
 endif()
 
-# Detect compiler
+# Detect compiler by asking GCC what version it is
 set(compiler "")
-if(APPLE)
+set(min_supported "4.0")
+set(max_supported "4.4")
+execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
+                OUTPUT_VARIABLE GCC_version)
+# strip patch version; we only care about major & minor
+string(REGEX MATCH "([0-9]\\.[0-9])" GCC_version ${GCC_version})
+
+if(GCC_version VERSION_GREATER max_supported OR
+   GCC_version VERSION_LESS min_supported)
+  message(FATAL_ERROR
+    "ROSE only supports GCC versions ${min_supported} to ${max_supported}.\n"
+    "<gcc -dumpversion> reported ${GCC_version}")
+endif()
+if(GCC_version VERSION_EQUAL 4.4)
+  set(compiler "GNU-4.4")
+elseif(GCC_version VERSION_EQUAL 4.3)
+  set(compiler "GNU-4.3")
+elseif(GCC_version VERSION_EQUAL 4.2)
+  set(compiler "GNU-4.2")
+elseif(GCC_version VERSION_EQUAL 4.1)
+  set(compiler "GNU-4.1")
+elseif(GCC_version VERSION_EQUAL 4.0)
   set(compiler "GNU-4.0")
-elseif(UNIX)
-  if (NOT CMAKE_COMPILER_IS_GNUCC)
-    message(FATAL_ERROR "For Linux systems, ROSE only provides EDG binaries compatible with GCC")
-  endif()
-
-  # ask GCC what version it is
-  set(min_supported "4.0")
-  set(max_supported "4.4")
-  execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
-                  OUTPUT_VARIABLE GCC_version)
-  # strip patch version; we only care about major & minor
-  string(REGEX MATCH "([0-9]\\.[0-9])" GCC_version ${GCC_version})
-
-  if(GCC_version VERSION_GREATER max_supported OR
-     GCC_version VERSION_LESS min_supported)
-    message(FATAL_ERROR
-      "ROSE only supports GCC versions ${min_supported} to ${max_supported}.\n"
-      "You are using GCC ${GCC_version}")
-  endif()
-  if(GCC_version VERSION_EQUAL 4.4)
-    set(compiler "GNU-4.4")
-  elseif(GCC_version VERSION_EQUAL 4.3)
-    set(compiler "GNU-4.3")
-  elseif(GCC_version VERSION_EQUAL 4.2)
-    set(compiler "GNU-4.2")
-  elseif(GCC_version VERSION_EQUAL 4.1)
-    set(compiler "GNU-4.1")
-  elseif(GCC_version VERSION_EQUAL 4.0)
-    set(compiler "GNU-4.0")
-  endif()
 endif()
 if(compiler STREQUAL "")
   message(FATAL_ERROR
-    "Unable to detect compiler when attempting to download EDG binary tarball")
+    "Unable to detect a supported compiler when attempting to download EDG binary tarball")
 endif()
 
 # Get binary compatibility signature
 execute_process(
   COMMAND "${PROJECT_SOURCE_DIR}/scripts/bincompat-sig"
   OUTPUT_VARIABLE signature)
-string(STRIP  ${signature} signature)
+string(STRIP ${signature} signature)
 
 set(tarball_site "http://www.rosecompiler.org/edg_binaries")
 set(tarball_filename "roseBinaryEDG-${Local_EDG_Version}-${platform}-${compiler}-${signature}.tar.gz")
@@ -77,4 +68,4 @@ ExternalProject_Add("EDG_tarball"
 
 add_library(edg33 STATIC IMPORTED)
 set_property(TARGET edg33 PROPERTY IMPORTED_LOCATION
-  ${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend/EDG/libroseEDG.la)
+  ${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs/libroseEDG.a)
