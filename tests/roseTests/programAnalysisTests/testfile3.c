@@ -13,7 +13,8 @@ int main(){
 
  for(j=i; j<a; j++){
    b--;     c--;
-   for(int k=2; k<j; k++){
+   int k;
+   for(k=2; k<j; k++){
 #pragma start
      x+=x*i;
 #pragma end
