@@ -15847,6 +15847,11 @@ SgOmpTargetStatement::post_construction_initialization()
    {}
 SOURCE_OMP_TARGET_STATEMENT_END
 
+SOURCE_OMP_TARGET_DATA_STATEMENT_START
+void
+SgOmpTargetDataStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_TARGET_DATA_STATEMENT_END
 
 
 SOURCE_OMP_TASKWAIT_STATEMENT_START

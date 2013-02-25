@@ -831,6 +831,7 @@ namespace OmpSupport
       case e_single:
 
       case e_target:
+      case e_target_data:
 
       case e_master: 
       case e_critical:

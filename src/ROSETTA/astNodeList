@@ -507,6 +507,7 @@ SgOmpTaskwaitStatement
 SgOmpThreadprivateStatement
 SgOmpWorkshareStatement
 SgOmpTargetStatement
+SgOmpTargetDataStatement
 SgOmpClause
 SgOmpCollapseClause
 SgOmpCopyinClause

@@ -775,6 +775,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                case V_SgOmpSectionsStatement:
                case V_SgOmpParallelStatement:
                case V_SgOmpTargetStatement:
+               case V_SgOmpTargetDataStatement:
                case V_SgOmpWorkshareStatement:
                case V_SgOmpSingleStatement:
                case V_SgOmpTaskStatement:
@@ -3910,6 +3911,12 @@ void UnparseLanguageIndependentConstructs::unparseOmpDirectivePrefixAndName (SgS
       {
         unparseOmpPrefix(info);
         curprint(string ("target "));
+        break;
+      }
+    case V_SgOmpTargetDataStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("target data "));
         break;
       }
      case V_SgOmpCriticalStatement:
