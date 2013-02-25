@@ -59,6 +59,15 @@ class TestDUWrap_Text : public TestDUWrap
   }
 };
 
+class TestDUWrap_Stdout: public TestDUWrap {
+public:
+    TestDUWrap_Stdout(AliasAnalysisInterface &a): TestDUWrap(a) {}
+    void operator()(AstInterface &fa, SgNode *head) {
+        TestDUWrap::operator()(fa, head);
+        write_graph(graph, std::cout, "edge");
+    }
+};
+
 class TestDUWrap_DOT : public TestDUWrap
 {
  public:
@@ -114,7 +123,11 @@ main ( int argc,  char * argv[] )
           }
           else {
              string name = string(strrchr(sageFile->getFileName().c_str(),'/')+1) + ".outx";
+#if 0   // Test harness uses stdout now rather than a temporary file [Robb P. Matzke 2013-02-25]
              TestDUWrap_Text op(alias,name);
+#else
+             TestDUWrap_Stdout op(alias);
+#endif
              op(fa, defn);
           }
      }
