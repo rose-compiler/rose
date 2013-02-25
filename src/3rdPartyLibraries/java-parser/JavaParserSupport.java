@@ -139,13 +139,13 @@ class JavaParserSupport {
         //
         try {
             // Convert File to a URL
-            URL[] urls = new URL[files.size() + 1];
+            URL[] urls = new URL[files.size()];
             for (int i = 0; i < files.size(); i++) {
                 urls[i] = files.get(i).toURI().toURL();
             }
 
             // Create a new class loader with the directories
-            this.pathLoader = new URLClassLoader(urls, ClassLoader.getSystemClassLoader());
+            this.pathLoader = new URLClassLoader(urls);
         } catch (MalformedURLException e) {
             System.err.println("(3) Error in processClasspath: " + e.getMessage()); 
             System.exit(1);
@@ -239,31 +239,41 @@ class JavaParserSupport {
 
     // TODO: See error statements below! 
     public Class findClass(TypeBinding binding) {
+        Class cls = null;
         if (binding instanceof BaseTypeBinding) {
-            return findPrimitiveClass((BaseTypeBinding) binding);
+            cls = findPrimitiveClass((BaseTypeBinding) binding);
+        }
+        else if (binding instanceof TypeVariableBinding) {
+            TypeVariableBinding var_binding = (TypeVariableBinding) binding;
+            cls = findClass(var_binding.erasure());
+        }
+        else if (binding instanceof ArrayBinding) {
+            ArrayBinding array_binding = (ArrayBinding) binding;
+            String array_name = new String(array_binding.signature());
+            cls = getClassForName(array_name.replace('/', '.'));
         }
         else if (binding instanceof LocalTypeBinding) {
             LocalTypeBinding local_binding = (LocalTypeBinding) binding;
             String pool_name = new String(local_binding.constantPoolName());
-            Class cls = getClassForName(pool_name.replace('/', '.'));
-            return cls;
+            cls = getClassForName(pool_name.replace('/', '.'));
         }
         else if (binding.isMemberType()) {
             ReferenceBinding ref_binding = (ReferenceBinding) binding;
-            Class cls = findClass(ref_binding.enclosingType());
+            cls = findClass(ref_binding.enclosingType());
+            assert(cls != null);
             Class members[] = cls.getDeclaredClasses();
             assert(members != null);
+            cls = null;
             for (int k = 0; k < members.length; k++) {
                 if (members[k].getSimpleName().equals(new String(ref_binding.sourceName()))) {
-                    return members[k];
+                    cls = members[k];
+                    break;
                 }
             }
-            return null;
         }
         else if (binding instanceof ParameterizedTypeBinding) {
             ParameterizedTypeBinding parm_binding = (ParameterizedTypeBinding) binding;
-            Class cls = findClass(parm_binding.erasure());
-            return cls;
+            cls = findClass(parm_binding.erasure());
         }
         else if (binding instanceof WildcardBinding) {
             System.out.println();
@@ -271,10 +281,15 @@ class JavaParserSupport {
             System.exit(1);
         }
 
-        return getClassForName(getFullyQualifiedTypeName(binding));
-    }
-    
+// TODO: Remove this!
+//if ((! (binding instanceof BaseTypeBinding)) && (! (binding instanceof TypeVariableBinding))) System.out.println("Found a binding type " + binding.getClass().getCanonicalName() + " for " + binding.debugName() + " and its signature " + new String(binding.signature()) + (cls == getClassForName(new String(binding.signature()).replace('/', '.')) ? " matches " : " does not match"));
 
+        return (cls == null ? getClassForName(getFullyQualifiedTypeName(binding)) : cls);
+    }
+
+
+// TODO: Remove this
+/*
     private boolean typeMatch(Type in_type, TypeBinding argument) { 
         if (in_type instanceof TypeVariable){
             TypeVariable<?> type = (TypeVariable<?>) in_type;
@@ -329,9 +344,11 @@ class JavaParserSupport {
 
         return false;
     }
+*/
 
 
-
+// TODO: REMOVE THIS !!!
+/*
 private String getTypeName(Type in_type) { 
     if (in_type instanceof TypeVariable){
         TypeVariable<?> type = (TypeVariable<?>) in_type;
@@ -352,8 +369,10 @@ private String getTypeName(Type in_type) {
 
     return in_type.getClass().getCanonicalName() + "*";
 }
+*/
+    
 
-// TODO: REMOVE THIS !!!
+//TODO: REMOVE THIS !!!
 /*
     Method getRawMethod(ParameterizedMethodBinding parameterized_method_binding) {
         TypeBinding type_binding = parameterized_method_binding.declaringClass;
@@ -422,6 +441,52 @@ private String getTypeName(Type in_type) {
  */
 
 
+    Method getRawMethod(MethodBinding method_binding) {
+        String method_name = new String(method_binding.selector);
+        TypeBinding type_binding = method_binding.declaringClass;
+        TypeBinding arguments[] = method_binding.parameters;
+        Class cls = findClass(type_binding);
+        Class<?> parameterTypes[] = new Class<?>[arguments.length];
+        for (int i = 0; i < arguments.length; i++) {
+            parameterTypes[i] = findClass(arguments[i]);
+        }
+
+        Method method = null;
+        try {
+            method = cls.getDeclaredMethod(method_name, parameterTypes);
+        }
+        catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        catch (NoClassDefFoundError e) {
+            try {
+                //
+                // This second attempt is useful in retrieving methods that depend on restricted classes.
+                //
+                // See http://stackoverflow.com/questions/8869912/what-library-i-need-so-i-can-acces-this-com-sun-image-codec-jpeg-in-java
+                //
+                // See http://stackoverflow.com/questions/10391271/itext-bouncycastle-classnotfound-org-bouncycastle-asn1-derencodable-and-org-boun
+                //
+                method = cls.getMethod(method_name, parameterTypes);
+            }
+            catch (NoSuchMethodException ee) {
+                ee.printStackTrace();
+            }
+            catch (NoClassDefFoundError eee) {
+                eee.printStackTrace();
+            }
+        }
+
+        if (method == null) {
+            System.out.println("Could not find method " + new String(method_binding.readableName()) + " declared in " + method_binding.declaringClass.debugName());
+            System.exit(1);
+        }
+
+        return method;
+    }
+    
+// TODO: Remove this!
+/*
 Method getRawMethod(MethodBinding method_binding) {
 try{
     TypeBinding type_binding = method_binding.declaringClass;
@@ -451,6 +516,7 @@ System.out.println(", ");
 }
 System.out.println(")");
 */
+/*
             int j = 0;
             for (; j < types.length; j++) {
                 if (! typeMatch(types[j], arguments[j]))
@@ -463,15 +529,77 @@ System.out.println(")");
     }
 }
 catch(NoClassDefFoundError e){
-    System.out.println("Could not find method " + new String(method_binding.readableName()) + " declared in " + method_binding.declaringClass.debugName());
-    e.printStackTrace();
+    if (e.getLocalizedMessage().startsWith("com/sun/")) {
+        //
+        // See http://stackoverflow.com/questions/8869912/what-library-i-need-so-i-can-acces-this-com-sun-image-codec-jpeg-in-java
+        //
+        System.out.println();
+        System.out.println("*** No support yet for classes that depend on the resctricted class " + e.getLocalizedMessage());
+        //
+        // There are also lots of isses with apache-james-***
+        //
+        // See http://stackoverflow.com/questions/10391271/itext-bouncycastle-classnotfound-org-bouncycastle-asn1-derencodable-and-org-boun
+        //
+    }
+    else {
+        System.out.println("Could not find method " + new String(method_binding.readableName()) + " declared in " + method_binding.declaringClass.debugName());
+        e.printStackTrace();
+    }
     System.exit(1);
 }
 
     return null;
 }
+*/
 
 
+    Constructor getRawConstructor(MethodBinding constructor_binding) {
+        TypeBinding type_binding = constructor_binding.declaringClass;
+        TypeBinding arguments[] = constructor_binding.parameters;
+        Class cls = findClass(type_binding);
+
+        Class<?> parameterTypes[] = new Class<?>[arguments.length];
+        for (int i = 0; i < arguments.length; i++) {
+            parameterTypes[i] = findClass(arguments[i]);
+        }
+
+        Constructor constructor = null;
+        try {
+            constructor = cls.getDeclaredConstructor(parameterTypes);
+        }
+        catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        catch (NoClassDefFoundError e) {
+            try {
+                //
+                // This second attempt is useful in retrieving methods that depend on restricted classes.
+                //
+                // See http://stackoverflow.com/questions/8869912/what-library-i-need-so-i-can-acces-this-com-sun-image-codec-jpeg-in-java
+                //
+                // See http://stackoverflow.com/questions/10391271/itext-bouncycastle-classnotfound-org-bouncycastle-asn1-derencodable-and-org-boun
+                //
+                constructor = cls.getConstructor(parameterTypes);
+            }
+            catch (NoSuchMethodException ee) {
+                ee.printStackTrace();
+            }
+            catch (NoClassDefFoundError eee) {
+                eee.printStackTrace();
+            }
+        }
+
+        if (constructor == null) {
+            System.out.println("Could not find constructor " + new String(constructor_binding.readableName()) + " declared in " + constructor_binding.declaringClass.debugName());
+            System.exit(1);
+        }
+
+        return constructor;
+    }
+    
+    
+// TODO: Remove this!
+/*
 Constructor getRawConstructor(MethodBinding constructor_binding) {
     TypeBinding type_binding = constructor_binding.declaringClass;
     TypeBinding arguments[] = constructor_binding.parameters;
@@ -496,6 +624,8 @@ Constructor getRawConstructor(MethodBinding constructor_binding) {
             
     return null;
 }
+*/
+
 
 
     Class getClassForName(String typename) {
@@ -503,27 +633,24 @@ Constructor getRawConstructor(MethodBinding constructor_binding) {
         try {
             cls = Class.forName(typename, true, pathLoader);
         }
-        catch (Throwable e) { // Note that this should have been:  catch (ClassNotFoundException e) ...
-            //
-            // As stated above, the forName function throws the exception ClassNotFoundException. Thus, we
-            // should really have specified the following catch statement for it:
-            //
-            //         catch (ClassNotFoundException e) {
-            //
-            // However, in many instances, the function forName() throws a NullPointerException (why???) which
-            // causes the program to crash.  Since we are interested only in knowing whether or not the typename
-            // in question is associated with a class that is retrievable by the loader, we simply try to catch
-            // any Throwable exception.
-            //
+        catch (ClassNotFoundException e) { // ...
             if (verboseLevel > 0) {
                 System.out.println("Class " + typename + " was not found");
                 System.out.println("(1) Caught error in JavaParserSupport (Parser failed)");
+                System.err.println(e);
+                e.printStackTrace();
+            }
+        }
+        catch (Throwable e) {
+            if (verboseLevel > 0) {
+                System.out.println("Class " + typename + " was not found");
+                System.out.println("(2) Caught error in JavaParserSupport (Parser failed)");
                 System.err.println(e);
                 e.printStackTrace();   
             }
 
             //
-            // Perhaps the class was not loaded at all.  So, try once more ... with feeling.
+            // Perhaps the class has not yet being loaded at all.  So, try once more ... with feelings.
             //
             try {
                 cls = pathLoader.loadClass(typename);
@@ -736,11 +863,12 @@ Constructor getRawConstructor(MethodBinding constructor_binding) {
 
             for (int i = 0; i < unit.types.length; i++) {
                 TypeDeclaration node = unit.types[i];
+
                 if (node.name != TypeConstants.PACKAGE_INFO_NAME) { // ignore package-info declarations
                     identifyUserDefinedTypes(unitPackageName, node);
                 }
             }
-            
+
             for (Class cls : userTypeTable.keySet()) {
                 if (cls.getEnclosingClass() == null) { // a top-level class?
                     preprocessClass(cls);
@@ -762,6 +890,13 @@ Constructor getRawConstructor(MethodBinding constructor_binding) {
           TypeDeclaration enclosing_declaration = enclosing_type_binding.scope.referenceContext,
                           declaration = local_type.scope.referenceContext;
 // TODO: Remove this !
+//
+// THIS CASE OCCURS WHEN a local type is nested in an unreachable block:
+//
+//      boolean DEBUG = false;
+//
+//      if (DEBUG) { .... new Object() { ... }  ... }
+//
 if (local_type.constantPoolName() == null) {
 System.out.println("Type " + local_type.debugName() + " has null constantPoolName");
 System.out.println("The ReferenceBinding constantPoolName of " + local_type.debugName() + " is: " + new String(CharOperation.concatWith(local_type.compoundName, '/')));
@@ -1173,7 +1308,7 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
     public void traverseClass(Class cls) {
         assert(cls != null);
 // TODO: Remove this !!!
-/*        
+/*
 System.out.println("Traversing class " + cls.getCanonicalName());        
 System.out.println();
 System.out.println("Processing class " + cls.getCanonicalName() + " with type parameters:");        
@@ -1374,25 +1509,61 @@ else System.out.println("NO type parameters!!!");
         //
         // Preprocess the types in field declarations
         //
-        for (int i = 0; i < field_list.length; i++) {
-            Field fld = field_list[i];
-            if (fld.isSynthetic()) // skip synthetic fields
-                continue;
-            Class type = fld.getType();
-            preprocessClass(type);
-        }
-        
-        //
-        // Process the constructor parameter types.
-        //
-        for (int i = 0; i < ctor_list.length; i++) {
-            Constructor ct = ctor_list[i];
-            if (ct.isSynthetic()) // skip synthetic constructors
-                continue;
-            Class pvec[] = ct.getParameterTypes();
-            for (int j = 0; j < pvec.length; j++) {
-                preprocessClass(pvec[j]);
+        if (node != null) {
+            //
+            // For some reason, some times we do not get all the the fields from the Class generated for a
+            // type. Thus, if we have access to to the ECJ AST for the type, we traverse its fields directly. 
+            //
+            if (node.fields != null) {
+                for (int i = 0; i < node.fields.length; i++) {
+                    FieldDeclaration field_declaration = node.fields[i];
+                    if (field_declaration.type != null) { // I am not sure why this is sometimes false!
+                        preprocessClass(field_declaration.type.resolvedType);
+                    }
+                }
             }
+        }
+        else {
+            for (int i = 0; i < field_list.length; i++) {
+                Field fld = field_list[i];
+                if (fld.isSynthetic()) // skip synthetic fields
+                    continue;
+                Class type = fld.getType();
+                preprocessClass(type);
+            }
+        }
+
+        //
+        // Process the constructor and methods parameter types.
+        //
+        if (node != null) {
+            if (node.methods != null) {
+                for (int i = 0; i < node.methods.length; i++) {
+                    AbstractMethodDeclaration method_declaration = node.methods[i];
+                    MethodBinding method_binding = method_declaration.binding;
+                    if (method_binding != null) { // We need this guard because default constructors have no binding.
+                        if (! method_binding.isConstructor()) {
+                            preprocessClass(method_binding.returnType);
+                        }
+                        for (int k = 0; k < method_binding.parameters.length; k++) {
+                            preprocessClass(method_binding.parameters[k]);
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            //
+            // Process the constructor parameter types.
+            //
+            for (int i = 0; i < ctor_list.length; i++) {
+                Constructor ct = ctor_list[i];
+                if (ct.isSynthetic()) // skip synthetic constructors
+                    continue;
+                Class pvec[] = ct.getParameterTypes();
+                for (int j = 0; j < pvec.length; j++) {
+                    preprocessClass(pvec[j]);
+                }
 // TODO: Remove this !!!            
 /*
 System.out.println();
@@ -1430,34 +1601,35 @@ if (types != null && types.length > 0) {
 else System.out.print("...");
 System.out.println(") in class " + cls.getCanonicalName());
 */
-        }
-
-        //
-        // Process the method parameter types.
-        //
-        for (int i = 0; i < method_list.length; i++) {
-            Method m = method_list[i];
-            if (m.isSynthetic()) {// skip synthetic methods
-                continue;
             }
+
+            //
+            // Process the method parameter types.
+            //
+            for (int i = 0; i < method_list.length; i++) {
+                Method m = method_list[i];
+                if (m.isSynthetic()) {// skip synthetic methods
+                    continue;
+                }
 
 //if (cls.getSimpleName().equals("Enum")) {
 //System.out.println();
 //System.out.println("Adding method " + m.getName() + " to class " + cls.getCanonicalName());
 //}
-            Class pvec[] = m.getParameterTypes();
+                Class pvec[] = m.getParameterTypes();
 
-            // Process the return type (add a class if this is not already in the ROSE AST).
-            preprocessClass(m.getReturnType());
+                // Process the return type (add a class if this is not already in the ROSE AST).
+                preprocessClass(m.getReturnType());
 //if (cls.getSimpleName().equals("Enum"))
 //System.out.println("The return type is " + m.getReturnType().getCanonicalName() + " and it has " + pvec.length + " parameters");
-            for (int j = 0; j < pvec.length; j++) {
-                preprocessClass(pvec[j]);
+                for (int j = 0; j < pvec.length; j++) {
+                    preprocessClass(pvec[j]);
 //if (cls.getSimpleName().equals("Enum"))
 //System.out.println("Parameter " + j + " has type " + pvec[j].getCanonicalName());
+                }
             }
         }        
-    
+
         //
         // If this class is associated with a user-defined type, process the original source in order to
         // obtain accurate location information.

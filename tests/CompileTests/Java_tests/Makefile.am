@@ -540,6 +540,7 @@ EXTRA_DIST = $(ALL_TESTCODES) testWithJavaSpecification.java testWithoutJavaSpec
 
 clean-local:
 	rm -f *.dot *.class *.java rose_performance_report_lockfile.lock *.out
+	rm -fr ecj-classes-* javac-output-classes javac-syntax-check-classes
 #	Remove any generated JVM log files that could have been generated (these are rare).
 	rm -f *.log
 
