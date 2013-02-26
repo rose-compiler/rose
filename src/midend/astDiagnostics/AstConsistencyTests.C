@@ -975,6 +975,19 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          break;
                        }
 
+                 // DQ (2/23/2013): Added support for SgTemplateFunctionRefExp (required as part of fix for test2013_69.C).
+                    case V_SgTemplateFunctionRefExp:
+                       {
+                         SgTemplateFunctionRefExp* functionRefExp = isSgTemplateFunctionRefExp(functionExpression);
+                         ROSE_ASSERT(functionRefExp != NULL);
+                         SgFunctionSymbol* functionSymbol = functionRefExp->get_symbol();
+                         ROSE_ASSERT(functionSymbol != NULL);
+
+                      // Make sure that the function has a valid declaration
+                         ROSE_ASSERT(functionSymbol->get_declaration() != NULL);
+                         break;
+                       }
+
                     case V_SgMemberFunctionRefExp:
                        {
                          SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(functionExpression);
@@ -1324,6 +1337,17 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
             // There may be a better way to support this within the AST (explicitly mark as function call from pointer?). 
             // ROSE_ASSERT (ft != NULL);
 #endif
+
+            // DQ (2/22/2013): Ben Allen has noticed that this will assert fail instead of returning a null pointer.
+            // This should be fixed now.
+               SgFunctionDeclaration *declaration = fc->getAssociatedFunctionDeclaration();
+               if (declaration == NULL)
+                  {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+                    printf ("Note that getAssociatedFunctionDeclaration() has returned NULL pointer (OK in certain cases, see test2013_68.C) \n");
+#endif
+                  }
+
                break;
              }
 
