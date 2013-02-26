@@ -44,9 +44,9 @@
 //-----------------------------------------------------------------------------
 #include "assert.h"
 #include <iostream>
+#include <jni.h>
 #include <string>
 #include <vector>
-#include <jni.h>
 
 #include "rose_config.h" // X10_INSTALL_PATH
 
@@ -100,6 +100,11 @@ x10_main(int argc, char* argv[])
 
       for (int ii = 1; ii < argc; ++ii)
       {
+          //std::cout
+          //    << "[INFO] [x10_main] argv[" << ii << "] = "
+          //    << argv[ii]
+          //    << std::endl;
+
           std::string arg = argv[ii];
           if ((arg == "-h") || (arg == "--help"))
           {
@@ -112,7 +117,7 @@ x10_main(int argc, char* argv[])
               if (arg.empty())
               {
                   std::cerr
-                      << "[ERROR] -Xmx requires an argument, see --help"
+                      << "[ERROR] [x10_main] -Xmx requires an argument, see --help"
                       << std::endl;
                   return 1;
               }
@@ -127,7 +132,7 @@ x10_main(int argc, char* argv[])
               if (arg.empty())
               {
                   std::cerr
-                      << "[ERROR] -classpath requires an argument, see --help"
+                      << "[ERROR] [x10_main] -classpath requires an argument, see --help"
                       << std::endl;
                   return 1;
               }
@@ -146,10 +151,19 @@ x10_main(int argc, char* argv[])
               else
               {
                   std::cerr
-                      << "[ERROR] -verbose does not accept an argument, see --help"
+                      << "[ERROR] [x10_main] "
+                      << "-verbose does not accept an argument, see --help"
                       << std::endl;
                   return 1;
               }
+          }
+          else if (arg.find("-") == 0)
+          {
+              std::cout
+                  << "[WARN] [x10_main] "
+                  << "Unknown commandline switch: "
+                  << arg
+                  << std::endl;
           }
           else
           {
@@ -220,7 +234,7 @@ CreateJvm(const struct Commandline a_cmdline)
   int ret = JNI_CreateJavaVM(&jvm.jvm, (void**)&jvm.env, &jvm.vm_args);
   if (ret < 0)
   {
-      assert(! "[FATAL] Unable to Launch JVM");
+      assert(! "[FATAL] [x10_main] Unable to Launch JVM");
   }
 
   delete options;
@@ -231,14 +245,14 @@ CreateJvm(const struct Commandline a_cmdline)
 int
 Compile(const struct JVM a_jvm, const struct Commandline a_cmdline)
 {
-  std::vector <std::string> sources = a_cmdline.sources;
+  std::vector <std::string> sources_vector = a_cmdline.sources;
 
   if (a_cmdline.verbose)
   {
       std::cout
-          << "[INFO] Compiling "
-          << sources.size()
-          << " file with x10c"
+          << "[INFO] [x10_main] Compiling "
+          << sources_vector.size()
+          << " file/s with x10c"
           << std::endl;
   }
 
@@ -271,7 +285,7 @@ Compile(const struct JVM a_jvm, const struct Commandline a_cmdline)
       env->ExceptionDescribe();
       env->ExceptionClear();
       std::cerr
-          << "[ERROR] Could not find method '"
+          << "[ERROR] [x10_main] Could not find method '"
           << method_name.c_str()
           << "' for class='"
           << class_name.c_str()
@@ -283,19 +297,11 @@ Compile(const struct JVM a_jvm, const struct Commandline a_cmdline)
   // Create commandline arguments to pass to
   // polyglot.main.Main.main(String args[])
 
-  // input filename
-  jstring filename = env->NewStringUTF("HelloWholeWorld.x10");
-  if (filename == NULL)
-  {
-      std::cerr << "[ERROR] filename is NULL" << std::endl;
-      return 2;
-  }
-
   // -extclass
   jstring extclass = env->NewStringUTF("x10c.ExtensionInfo");
   if (extclass == NULL)
   {
-      std::cerr << "[ERROR] extclass is NULL" << std::endl;
+      std::cerr << "[ERROR] [x10_main] extclass is NULL" << std::endl;
       return 2;
   }
 
@@ -304,18 +310,23 @@ Compile(const struct JVM a_jvm, const struct Commandline a_cmdline)
       (std::string(X10_INSTALL_PATH) + "/stdlib/libx10.properties").c_str());
   if (x10lib == NULL)
   {
-      std::cerr << "[ERROR] x10lib is NULL" << std::endl;
+      std::cerr << "[ERROR] [x10_main] x10lib is NULL" << std::endl;
       return 2;
   }
 
   // Create a Java String Array Primitive to hold the
   // commandline arguments for polyglot.main.Main.main(String args[])
   jclass stringClass = env->FindClass("java/lang/String");
-  jobjectArray args = env->NewObjectArray(5, stringClass, NULL);
+  jobjectArray args =
+      env->NewObjectArray(
+          4 + sources_vector.size(),
+          stringClass,
+          NULL);
   if (args == NULL)
   {
       std::cerr
-          << "[ERROR] Could not create String Array for Polyglot commandline"
+          << "[ERROR] [x10_main] "
+          << "Could not create String Array for Polyglot commandline"
           << std::endl;
       return 2;
   }
@@ -325,13 +336,27 @@ Compile(const struct JVM a_jvm, const struct Commandline a_cmdline)
   env->SetObjectArrayElement(args, 1, extclass);
   env->SetObjectArrayElement(args, 2, env->NewStringUTF("-x10lib"));
   env->SetObjectArrayElement(args, 3, x10lib);
-  env->SetObjectArrayElement(args, 4, filename);
+  for (size_t ii = 0; ii < sources_vector.size(); ++ii)
+  {
+      std::string filename = sources_vector[ii];
+      jstring j_filename = env->NewStringUTF(filename.c_str());
+      if (j_filename == NULL)
+      {
+          std::cerr
+              << "[ERROR] [x10_main] "
+              << "j_filename is NULL for filename="
+              << "'" << filename << "'"
+              << std::endl;
+          return 2;
+      }
+      env->SetObjectArrayElement(args, 4 + ii, j_filename);
+  }
 
   // Call the method!
   if (a_cmdline.verbose)
   {
       std::cout
-          << "[INFO] Calling "
+          << "[INFO] [x10_main] Calling "
           << class_name.c_str()
           << "."
           << method_name.c_str()
@@ -350,6 +375,8 @@ Compile(const struct JVM a_jvm, const struct Commandline a_cmdline)
   jvm->DestroyJavaVM();
 
   if (a_cmdline.verbose)
-      std::cout << "[INFO] Finished executing x10c" << std::endl;
+      std::cout << "[INFO] [x10_main] Finished executing x10c" << std::endl;
+
   return 0;
 }
+

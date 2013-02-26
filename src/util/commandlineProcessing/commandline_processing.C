@@ -1149,10 +1149,9 @@ CommandlineProcessing::initSourceFileSuffixList ( )
 
        // DQ (10/11/2010): Adding support for java.
           validSourceFileSuffixes.push_back(".java");
-
+#endif
           validSourceFileSuffixes.push_back(".x10");
           validSourceFileSuffixes.push_back(".X10");
-#endif
           first_call = false;
         }
    }
