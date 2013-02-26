@@ -7364,6 +7364,9 @@ SageBuilder::buildGotoStatement_nfi(SgLabelStatement *  label)
 //! Build a return statement
 SgReturnStmt* SageBuilder::buildReturnStmt(SgExpression* expression /* = NULL */)
 {
+  // Liao 2/6/2013. We no longer allow NULL express pointer. Use SgNullExpression instead. 
+  if (expression == NULL)
+    expression = buildNullExpression();
   SgReturnStmt * result = new SgReturnStmt(expression);
   ROSE_ASSERT(result);
   if (expression != NULL) expression->set_parent(result);
