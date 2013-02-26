@@ -137,7 +137,8 @@ class CallGraphBuilder
     SgProject *project;
     SgIncidenceDirectedGraph *graph;
     //We map each function to the corresponding graph node
-    boost::unordered_map<SgFunctionDeclaration*, SgGraphNode*> graphNodes;
+    typedef boost::unordered_map<SgFunctionDeclaration*, SgGraphNode*> GraphNodes;
+    GraphNodes graphNodes;
 
 };
 //! Generate a dot graph named 'fileName' from a call graph 
@@ -152,147 +153,57 @@ class GetOneFuncDeclarationPerFunction :  public std::unary_function<SgNode*, Ro
 };
 
 template<typename Predicate>
-  void
+void
 CallGraphBuilder::buildCallGraph(Predicate pred)
 {
-    Rose_STL_Container<FunctionData> callGraphData;
+    // Adds additional constraints to the predicate. It makes no sense to analyze non-instantiated templates.
+    struct isSelected {
+        Predicate &pred;
+        isSelected(Predicate &pred): pred(pred) {}
+        bool operator()(SgNode *node) {
+            SgFunctionDeclaration *f = isSgFunctionDeclaration(node);
+            assert(!f || f==f->get_firstNondefiningDeclaration()); // node uniqueness test
+            return f && !isSgTemplateMemberFunctionDeclaration(f) && !isSgTemplateFunctionDeclaration(f) && pred(f);
+        }
+    };
 
-    //AS (09/23/06) Query the memory pool instead of subtree of project
-    VariantVector vv(V_SgFunctionDeclaration);
-    GetOneFuncDeclarationPerFunction defFunc;
-    Rose_STL_Container<SgNode *> allFunctions = NodeQuery::queryMemoryPool(defFunc, &vv);
-
-    // We don't want to see SgTemplateMemberFunctionDeclaration or SgTemplateFunctionDeclaration objects since it doesn't make
-    // sense to do control flow analysis over templates, but rather only over template instantiations. [RPM 2012-12-06]
-    for (Rose_STL_Container<SgNode*>::iterator fi=allFunctions.begin(); fi!=allFunctions.end(); ++fi)
-        if (isSgTemplateMemberFunctionDeclaration(*fi) || isSgTemplateFunctionDeclaration(*fi))
-            *fi = NULL;
-    allFunctions.erase(std::remove(allFunctions.begin(), allFunctions.end(), (SgNode*)NULL), allFunctions.end());
-
+    // Add nodes to the graph by querying the memory pool for function declarations, mapping them to unique declarations
+    // that can be used as keys in a map (using get_firstNondefiningDeclaration()), and filtering according to the predicate.
+    graph = new SgIncidenceDirectedGraph();
+    std::vector<FunctionData> callGraphData;
     ClassHierarchyWrapper classHierarchy(project);
     graphNodes.clear();
-    
-    //Iterate through all the functions found and resolve all the call expressions in each function with a body
-    for (Rose_STL_Container<SgNode *>::iterator i = allFunctions.begin(); i != allFunctions.end(); ++i)
-    {
-        SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(*i);
-        ROSE_ASSERT(functionDeclaration != NULL);
-        assert(!isSgTemplateFunctionDeclaration(functionDeclaration));
-
-        // determining the in-class declaration
-        if (isSgMemberFunctionDeclaration(functionDeclaration))
-        {
-            // always saving the in-class declaration, so we need to find that one
-            SgDeclarationStatement *nonDefDeclInClass =
-                    isSgMemberFunctionDeclaration(functionDeclaration->get_firstNondefiningDeclaration());
-            // functionDeclaration is outside the class (so it must have a definition)
-            if (nonDefDeclInClass)
-                functionDeclaration = isSgMemberFunctionDeclaration(nonDefDeclInClass);
-        }
-        else
-        {
-            // we need to have only one declaration for regular functions as well
-            // first nondefining declaration has precedence compared to defining declaration
-            SgFunctionDeclaration *nonDefDecl = isSgFunctionDeclaration(functionDeclaration->get_firstNondefiningDeclaration());
-            assert(!isSgTemplateFunctionDeclaration(nonDefDecl));
-            if (nonDefDecl)
-                functionDeclaration = nonDefDecl;
-        }
-
-        //AS(032806) Filter out functions based on criteria in predicate
-        if (pred(functionDeclaration) == true)
-        {
-            FunctionData functionData(functionDeclaration, project, &classHierarchy);
-            ROSE_ASSERT(functionData.functionDeclaration != NULL);
-
-            callGraphData.push_back(functionData);
+    VariantVector vv(V_SgFunctionDeclaration);
+    GetOneFuncDeclarationPerFunction defFunc;
+    std::vector<SgNode*> fdecl_nodes = NodeQuery::queryMemoryPool(defFunc, &vv);
+    BOOST_FOREACH(SgNode *node, fdecl_nodes) {
+        SgFunctionDeclaration *fdecl = isSgFunctionDeclaration(node);
+        SgFunctionDeclaration *unique = isSgFunctionDeclaration(fdecl->get_firstNondefiningDeclaration());
+        if (isSelected(pred)(unique) && graphNodes.find(unique)==graphNodes.end()) {
+            FunctionData fdata(unique, project, &classHierarchy); // computes functions called by unique
+            callGraphData.push_back(fdata);
+            std::string functionName = unique->get_qualified_name().getString();
+            SgGraphNode *graphNode = new SgGraphNode(functionName);
+            graphNode->set_SgNode(unique);
+            graphNodes[unique] = graphNode;
+            graph->addNode(graphNode);
         }
     }
 
-    // Build the graph
-    SgIncidenceDirectedGraph *returnGraph = new SgIncidenceDirectedGraph();
-    ROSE_ASSERT(returnGraph != NULL);
-
-    
-    //Instantiate all the nodes in the graph, one for each function we found
-    BOOST_FOREACH(FunctionData& currentFunction, callGraphData)
-    {
-        std::string functionName;
-        ROSE_ASSERT(currentFunction.functionDeclaration);
-        functionName = currentFunction.functionDeclaration->get_qualified_name().getString();
-
-        // Generate a unique name to test against later
-        SgFunctionDeclaration* id = currentFunction.functionDeclaration;
-        assert(!isSgTemplateFunctionDeclaration(id));
-        SgDeclarationStatement *nonDefDeclInClass = isSgMemberFunctionDeclaration(id->get_firstNondefiningDeclaration());
-        if (nonDefDeclInClass)
-            ROSE_ASSERT(id == nonDefDeclInClass);
-        SgGraphNode* graphNode = new SgGraphNode(functionName);
-        graphNode->set_SgNode(currentFunction.functionDeclaration);
-
-        if (SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL)
-        {
-            std::cout << "Function: "
-                    << currentFunction.functionDeclaration->get_scope()->get_qualified_name().getString() +
-                    currentFunction.functionDeclaration->get_mangled_name().getString()
-                    << " has declaration " << currentFunction.isDefined() << "\n";
-        }
-        
-        graphNodes[currentFunction.functionDeclaration] = graphNode;
-
-        returnGraph->addNode(graphNode);
-    }
-
-    if (SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL)
-        std::cout << "NodeList size: " << graphNodes.size() << "\n";
-
-    //We have all the nodes. Now instantiate all the graph edges
-    int totEdges = 0;
-    BOOST_FOREACH(FunctionData& currentFunction, callGraphData)
-    {
-        ROSE_ASSERT(currentFunction.functionDeclaration != NULL);
-        
-        boost::unordered_map<SgFunctionDeclaration*, SgGraphNode*>::iterator iter
-                = graphNodes.find(currentFunction.functionDeclaration);
-        ROSE_ASSERT(iter != graphNodes.end());
-        SgGraphNode* startingNode = iter->second;
-
-        Rose_STL_Container<SgFunctionDeclaration*> & functionCallees = currentFunction.functionList;
-
-        BOOST_FOREACH(SgFunctionDeclaration* calleeDeclaration, functionCallees)
-        {
-                        ROSE_ASSERT(calleeDeclaration != NULL);
-                        assert(!isSgTemplateFunctionDeclaration(calleeDeclaration));
-
-                        //This function has been filtered out
-                        if (pred(calleeDeclaration) == false)
-                        {
-                                continue;
-                        }
-
-                        iter = graphNodes.find(calleeDeclaration);
-                        ROSE_ASSERT(iter != graphNodes.end());
-                        SgGraphNode *endNode = iter->second;
-
-                        if (returnGraph->checkIfDirectedGraphEdgeExists(startingNode, endNode) == false)
-                        {
-                                ROSE_ASSERT(startingNode != NULL && endNode != NULL);
-                                returnGraph->addDirectedEdge(startingNode, endNode);
-                        }
-                        else if (SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL)
-                        {
-                                std::cout << "Did not add edge since it already exist" << std::endl;
-                                std::cout << "\tEndNode " << calleeDeclaration->get_name().str() << "\n";
-                        }
-
-            totEdges++;
+    // Add edges to the graph
+    BOOST_FOREACH(FunctionData &currentFunction, callGraphData) {
+        SgGraphNode *srcNode = graphNodes.find(currentFunction.functionDeclaration)->second; // we inserted it above
+        std::vector<SgFunctionDeclaration*> &callees = currentFunction.functionList;
+        BOOST_FOREACH(SgFunctionDeclaration *callee, callees) {
+            if (isSelected(pred)(callee)) {
+                GraphNodes::iterator dstNodeFound = graphNodes.find(callee);
+                assert(dstNodeFound!=graphNodes.end()); // should have been added above
+                SgGraphNode *dstNode = dstNodeFound->second;
+                if (graph->checkIfDirectedGraphEdgeExists(srcNode, dstNode) == false)
+                    graph->addDirectedEdge(srcNode, dstNode);
+            }
         }
     }
-    
-    if (SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL)
-        std::cout << "Total number of edges: " << totEdges << "\n";
-
-    graph = returnGraph;
 }
 
 // endif for CALL_GRAPH_H
