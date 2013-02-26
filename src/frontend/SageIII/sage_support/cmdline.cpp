@@ -734,11 +734,15 @@ SgProject::processCommandLine(const vector<string>& input_argv)
      if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, javaRosePrefix,"(ds)", javaTmpParameter, true) == true) {
          set_Java_source_destdir(javaTmpParameter);
      }
+
+#ifdef ROSE_JAVA_SUPPORT
      // Enable remoteDebug of the spawned JVM
      // This is defined in jserver.C, had to rely on that because there's no way
      // to access the command line arguments from there.
      extern bool roseJavaRemoteDebug;
      roseJavaRemoteDebug = CommandlineProcessing::isOption(local_commandLineArgumentList, javaRosePrefix,"(remoteDebug)", true);
+
+#endif
 
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","wave",false) == true )
         {
