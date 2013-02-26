@@ -19,10 +19,13 @@
 #     Automake conditionals:
 #     AM_CONDITIONAL(ROSE_BUILD_X10_LANGUAGE_SUPPORT)
 #
+#     CPP #defines:
+#      AC_DEFINE_UNQUOTED([ROSE_BUILD_X10_LANGUAGE_SUPPORT])
+#
 #
 # LAST MODIFICATION
 #
-#   2013-02-20
+#   2013-02-27
 #
 # COPYLEFT
 #
@@ -39,8 +42,7 @@ AC_DEFUN([ROSE_SUPPORT_X10_FRONTEND],
     [frontend-x10],
     [if the X10 frontend is enabled],
     [Enable the ROSE X10 Frontend (requires the X10 compiler, see --with-x10)],
-    [no]
-  )
+    [no])
 
   if test "x$ROSE_ENABLE_FRONTEND_X10" = "xyes"; then
       # X10 Frontend requires an installation of the X10 Compiler
@@ -51,7 +53,10 @@ AC_DEFUN([ROSE_SUPPORT_X10_FRONTEND],
       fi
 
       AM_CONDITIONAL(ROSE_BUILD_X10_LANGUAGE_SUPPORT, [true])
-      AC_DEFINE([ROSE_BUILD_X10_LANGUAGE_SUPPORT], [], [Build ROSE with the X10 frontend])
+      AC_DEFINE_UNQUOTED(
+          [ROSE_BUILD_X10_LANGUAGE_SUPPORT],
+          [],
+          [Build ROSE with the X10 frontend])
   fi
 
 # End macro ROSE_SUPPORT_X10_FRONTEND.
