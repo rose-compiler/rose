@@ -92,12 +92,16 @@ setSourcePosition( SgLocatedNode* locatedNode )
      ROSE_ASSERT(locatedNode->get_endOfConstruct()   == NULL);
      ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
 
+  // DQ (2/25/2013): Use the SageInterface::setSourcePosition() function since it is the interface 
+  // into the source position support in SageInterface.  This makes the use consistant with that of
+  // the new C11/C++11 work.
   // Call a mechanism defined in the SageInterface support
-   //  SageInterface::setSourcePosition(locatedNode);
-   //  Liao, 11/12/2012. The semantics of SageInterface::setSourcePosition() has changed, which now relies on an internal model variable 
-   //  (default to transformation generated file info, which does not fit to this context).
-   //  So we directly use the real function we want: set to default position info.
-     SageInterface::setSourcePositionToDefault(locatedNode);
+  // SageInterface::setSourcePosition(locatedNode);
+  // Liao, 11/12/2012. The semantics of SageInterface::setSourcePosition() has changed, which now relies on an internal model variable 
+  // (default to transformation generated file info, which does not fit to this context).
+  // So we directly use the real function we want: set to default position info.
+  // SageInterface::setSourcePositionToDefault(locatedNode);
+     SageInterface::setSourcePosition(locatedNode);
    }
 
 void
@@ -116,12 +120,24 @@ setSourcePositionCompilerGenerated( SgLocatedNode* locatedNode )
   // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
      ROSE_ASSERT(locatedNode != NULL);
 
+#if 1
+     printf ("In setSourcePositionCompilerGenerated(): locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+#endif
+
   // Check the endOfConstruct first since it is most likely NULL (helpful in debugging)
      ROSE_ASSERT(locatedNode->get_endOfConstruct()   != NULL);
      ROSE_ASSERT(locatedNode->get_startOfConstruct() != NULL);
 
      locatedNode->get_startOfConstruct()->setCompilerGenerated();
      locatedNode->get_endOfConstruct()->setCompilerGenerated();
+
+  // DQ (2/15/2013): Added support to set the operatorPosition source position consistantly.
+     SgExpression* expression = isSgExpression(locatedNode);
+     if (expression != NULL)
+        {
+          ROSE_ASSERT(expression->get_operatorPosition() != NULL);
+          expression->get_operatorPosition()->setCompilerGenerated();
+        }
    }
 
 void
@@ -151,7 +167,6 @@ setSourcePosition( SgInitializedName* initializedName )
           initializedName->set_startOfConstruct(fileInfo);
 
           initializedName->get_startOfConstruct()->set_parent(initializedName);
-       
         }
        else
         {
@@ -240,6 +255,14 @@ setSourcePosition( SgLocatedNode* locatedNode, const TokenListType & tokenList )
 
      locatedNode->get_startOfConstruct()->set_parent(locatedNode);
      locatedNode->get_endOfConstruct  ()->set_parent(locatedNode);
+
+  // DQ (2/15/2013): Added support to set the operatorPosition source position consistantly.
+     SgExpression* expression = isSgExpression(locatedNode);
+     if (expression != NULL)
+        {
+          ROSE_ASSERT(expression->get_operatorPosition() != NULL);
+          expression->get_operatorPosition()->updateSourcePosition(locatedNode->get_startOfConstruct());
+        }
    }
 
 void
@@ -335,6 +358,21 @@ setSourcePosition  ( SgLocatedNode* locatedNode, Token_t* token )
 
      locatedNode->get_startOfConstruct()->set_parent(locatedNode);
      locatedNode->get_endOfConstruct  ()->set_parent(locatedNode);
+
+  // DQ (2/15/2013): Added support to set the operatorPosition source position consistantly.
+     SgExpression* expression = isSgExpression(locatedNode);
+     if (expression != NULL)
+        {
+       // ROSE_ASSERT(expression->get_operatorPosition() != NULL);
+          if (expression->get_operatorPosition() != NULL)
+             {
+               expression->get_operatorPosition()->updateSourcePosition(locatedNode->get_startOfConstruct());
+             }
+            else
+             {
+               expression->set_operatorPosition(new Sg_File_Info(filename,token->line,token->col));
+             }
+        }
    }
 
 void
@@ -445,6 +483,14 @@ resetSourcePosition( SgLocatedNode* locatedNode, const TokenListType & tokenList
 
      locatedNode->get_startOfConstruct()->set_parent(locatedNode);
      locatedNode->get_endOfConstruct  ()->set_parent(locatedNode);
+
+  // DQ (2/15/2013): Added support to set the operatorPosition source position consistantly.
+     SgExpression* expression = isSgExpression(locatedNode);
+     if (expression != NULL)
+        {
+          ROSE_ASSERT(expression->get_operatorPosition() != NULL);
+          expression->get_operatorPosition()->updateSourcePosition(locatedNode->get_startOfConstruct());
+        }
    }
 
 
@@ -491,6 +537,15 @@ resetSourcePosition( SgLocatedNode* targetLocatedNode, const SgLocatedNode* sour
 
      targetLocatedNode->get_startOfConstruct()->set_parent(targetLocatedNode);
      targetLocatedNode->get_endOfConstruct  ()->set_parent(targetLocatedNode);
+
+  // DQ (2/15/2013): Added support to set the operatorPosition source position consistantly.
+     SgExpression* expression = isSgExpression(targetLocatedNode);
+     if (expression != NULL)
+        {
+          ROSE_ASSERT(expression->get_operatorPosition() != NULL);
+       // expression->get_operatorPosition()->updateSourcePosition(targetLocatedNode->get_startOfConstruct());
+          *(expression->get_operatorPosition()) = *(targetLocatedNode->get_startOfConstruct());
+        }
    }
 
 // void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, Token_t* token )
@@ -3087,6 +3142,9 @@ void
 initialize_global_scope_if_required()
    {
   // First we have to get the global scope initialized (and pushed onto the stack).
+
+  // DQ (2/25/2013): Set the default for source position generation to be consistant with other languages (e.g. C/C++).
+     SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionFrontendConstruction);
 
   // printf ("In initialize_global_scope_if_required(): astScopeStack.empty() = %s \n",astScopeStack.empty() ? "true" : "false");
      if (astScopeStack.empty() == true)
