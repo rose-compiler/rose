@@ -389,7 +389,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
 
      bool emptyArgumentList = templateArgumentsList.empty();
 
-  // DQ (9/24/2012): Don't add "< >" if there are no templte arguments (see test2012_221.C).
+  // DQ (9/24/2012): Don't add "< >" if there are no template arguments (see test2012_221.C).
   // SgName returnName = name + " < ";
      SgName returnName = name;
      if (emptyArgumentList == false)
@@ -6051,9 +6051,17 @@ SageBuilder::buildFunctionRefExp_nfi(SgFunctionSymbol* sym)
 SgTemplateFunctionRefExp *
 SageBuilder::buildTemplateFunctionRefExp_nfi(SgTemplateFunctionSymbol* sym)
    {
+  // DQ (2/23/2013): Added assertion.
+     ROSE_ASSERT(sym != NULL);
+
      SgTemplateFunctionRefExp* func_ref = new SgTemplateFunctionRefExp(sym);
+     ROSE_ASSERT(func_ref != NULL);
+
      setOneSourcePositionNull(func_ref);
-     ROSE_ASSERT(func_ref);
+
+  // DQ (2/23/2013): Added assertion.
+     ROSE_ASSERT(func_ref->get_symbol() != NULL);
+
      return func_ref;
    }
 #endif
