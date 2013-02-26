@@ -2,7 +2,7 @@
 
 int main()
 {
-  int A[100UL];
+  int A[100];
   int i;
   int temp;
   for (i = 0; i < 100; i++) 
@@ -10,5 +10,4 @@ int main()
   for (i = 0; i < 100; i++) {
     temp = A[i];
   }
-  return 0;
 }
