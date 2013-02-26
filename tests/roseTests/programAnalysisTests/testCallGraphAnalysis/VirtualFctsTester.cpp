@@ -177,7 +177,7 @@ void printTestFunc(ostream & os,int classId, int funcId)
 vector<int> resolve(int classId, int funcId, bool correct)
 {
     vector<int> result;
-    for(size_t i =0 ; i <= classId; i++)
+    for(int i =0 ; i <= classId; i++)
     {
         if(table[i][funcId])
             result.push_back(i);

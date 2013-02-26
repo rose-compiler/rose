@@ -148,7 +148,7 @@ bool is_functions_types_equal(SgFunctionType* f1, SgFunctionType* f2)
     return true;
 
   //See if the function types match
-  if(  is_types_equal( f1->get_return_type(), f1->get_return_type() ) == true )
+  if(  is_types_equal( f1->get_return_type(), f2->get_return_type() ) )
   {
     SgTypePtrList& args_f1 = f1->get_arguments();
     SgTypePtrList& args_f2 = f2->get_arguments();
@@ -478,131 +478,109 @@ CallTargetSet::solveMemberFunctionPointerCall(SgExpression *functionExp, ClassHi
     return functionList;
 }
 
-  std::vector<SgFunctionDeclaration*>
-CallTargetSet::solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWrapper *classHierarchy,
-    SgMemberFunctionDeclaration *memberFunctionDeclaration, bool polymorphic, bool includePureVirtualFunc )
+std::vector<SgFunctionDeclaration*>
+CallTargetSet::solveMemberFunctionCall(SgClassType *crtClass, ClassHierarchyWrapper *classHierarchy,
+                                       SgMemberFunctionDeclaration *memberFunctionDeclaration, bool polymorphic,
+                                       bool includePureVirtualFunc)
 {
-  std::vector<SgFunctionDeclaration*> functionList;
-  ROSE_ASSERT ( memberFunctionDeclaration && classHierarchy );
-  //  memberFunctionDeclaration->get_file_info()->display( "Member function we are considering" );
+    std::vector<SgFunctionDeclaration*> functionList;
+    ROSE_ASSERT(memberFunctionDeclaration && classHierarchy);
 
-  SgDeclarationStatement *nonDefDeclInClass = NULL;
-  nonDefDeclInClass = memberFunctionDeclaration->get_firstNondefiningDeclaration();
-  SgMemberFunctionDeclaration *functionDeclarationInClass = NULL;
 
-  // memberFunctionDeclaration is outside the class
-  if ( nonDefDeclInClass )
-  {
-    //      nonDefDeclInClass->get_file_info()->display( "found nondefining" );
-    functionDeclarationInClass = isSgMemberFunctionDeclaration( nonDefDeclInClass );
-  }
-  // in class declaration, since there is no non-defining declaration
-  else
-  {
-    functionDeclarationInClass = memberFunctionDeclaration;
-    //      functionDeclarationInClass->get_file_info()->display("declaration in class already");
-  }
-
-  ROSE_ASSERT ( functionDeclarationInClass );
-  // we need the inclass declaration so we can determine if it is a virtual function
-  if ( functionDeclarationInClass->get_functionModifier().isVirtual() && polymorphic )
-  {
-    SgFunctionDefinition *functionDefinition = NULL;
-    SgMemberFunctionDeclaration* memberFunctionDefDeclaration = 
-      isSgMemberFunctionDeclaration(memberFunctionDeclaration->get_definingDeclaration());
-    if (memberFunctionDefDeclaration != NULL) {
-      functionDefinition = memberFunctionDefDeclaration->get_definition();
-    }
-
-    // if it's not pure virtual then
-    // the current function declaration is a candidate function to be called
-    if ( includePureVirtualFunc || functionDefinition )
-    {
-      functionList.push_back( functionDeclarationInClass );
-    }
-    else {
-      // functionDeclarationInClass->get_file_info()->display( "Pure virtual function found" );
-    }
-
-    // search down the class hierarchy to get
-    // all redeclarations of the current member function
-    // which may be the ones being called via polymorphism
-    SgClassDefinition *crtClsDef = NULL;
-    // selecting the root of the hierarchy
-    if ( crtClass )
-    {
-      SgClassDeclaration *tmp = isSgClassDeclaration( crtClass->get_declaration() );
-      ROSE_ASSERT ( tmp );
-      SgClassDeclaration* tmp2 = isSgClassDeclaration(tmp->get_definingDeclaration());
-      ROSE_ASSERT (tmp2);
-      crtClsDef = tmp2->get_definition();
-      ROSE_ASSERT ( crtClsDef );
-    }
-    else
-    {
-      crtClsDef = isSgClassDefinition( memberFunctionDeclaration->get_scope() );
-      ROSE_ASSERT ( crtClsDef );
-    }
-
-    // for virtual functions, we need to search down in the hierarchy of classes
-    // and retrieve all declarations of member functions with the same type
-    const ClassHierarchyWrapper::ClassDefSet& subclasses = classHierarchy->getSubclasses( crtClsDef );
-    functionDeclarationInClass = NULL;
-    string f1 = memberFunctionDeclaration->get_mangled_name().str();
-    string f2;
-    for ( ClassHierarchyWrapper::ClassDefSet::const_iterator it_cls = subclasses.begin(); it_cls != subclasses.end(); it_cls++ )
-    {
-      SgClassDefinition *cls = isSgClassDefinition( *it_cls );
-      SgDeclarationStatementPtrList &clsMembers = cls->get_members();
-      for ( SgDeclarationStatementPtrList::iterator it_cls_mb = clsMembers.begin(); it_cls_mb != clsMembers.end(); it_cls_mb++ )
-      {
-        SgMemberFunctionDeclaration *cls_mb_decl = isSgMemberFunctionDeclaration( *it_cls_mb );
-        if (cls_mb_decl == NULL) continue;
-
-        ROSE_ASSERT(cls_mb_decl != NULL);
-        SgMemberFunctionType* funcType1 = isSgMemberFunctionType(memberFunctionDeclaration->get_type());
-        SgMemberFunctionType* funcType2 = isSgMemberFunctionType(cls_mb_decl->get_type());
-        if (funcType1 == NULL || funcType2 == NULL) continue;
-        if ( is_functions_types_equal(funcType1, funcType2) )
-        {
-          SgMemberFunctionDeclaration *nonDefDecl =
-            isSgMemberFunctionDeclaration( cls_mb_decl->get_firstNondefiningDeclaration() );
-          SgMemberFunctionDeclaration *defDecl =
-            isSgMemberFunctionDeclaration( cls_mb_decl->get_definingDeclaration() );
-
-          // MD 2010/07/08 defDecl might be NULL
-          // ROSE_ASSERT ( (!nonDefDecl && defDecl == cls_mb_decl) || (nonDefDecl == cls_mb_decl && nonDefDecl) );
-          
-          functionDeclarationInClass = (nonDefDecl) ? nonDefDecl : defDecl;
-          ROSE_ASSERT ( functionDeclarationInClass );
-          if ( includePureVirtualFunc || !( functionDeclarationInClass->get_functionModifier().isPureVirtual() ) )
-          {
-            functionList.push_back( functionDeclarationInClass );
-          }
-        }
-      }
-    }
-  } // end if virtual
-  // non virtual (standard) member function or call not polymorphic (or both)
-  else
-    {
-      // always pushing the in-class declaration, so we need to find that one
-      SgDeclarationStatement *nonDefDeclInClass = NULL;
-      nonDefDeclInClass = memberFunctionDeclaration->get_firstNondefiningDeclaration();
-      SgMemberFunctionDeclaration *functionDeclarationInClass = NULL;
-
-      // memberFunctionDeclaration is outside the class
-      if ( nonDefDeclInClass )
-        functionDeclarationInClass = isSgMemberFunctionDeclaration( nonDefDeclInClass );
-      // in class declaration, since there is no non-defining declaration
-      else
+    SgMemberFunctionDeclaration *functionDeclarationInClass = NULL;
+    if (SgDeclarationStatement *nonDefDeclInClass = memberFunctionDeclaration->get_firstNondefiningDeclaration()) {
+        // memberFunctionDeclaration is outside the class
+        functionDeclarationInClass = isSgMemberFunctionDeclaration(nonDefDeclInClass);
+    } else {
+        // In class declaration, since there is no non-defining declaration
         functionDeclarationInClass = memberFunctionDeclaration;
-
-      ROSE_ASSERT ( functionDeclarationInClass );
-      functionList.push_back( functionDeclarationInClass );
-
     }
-  return functionList;
+    ROSE_ASSERT(functionDeclarationInClass);
+
+    // We need the inclass declaration so we can determine if it is a virtual function
+    if (functionDeclarationInClass->get_functionModifier().isVirtual() && polymorphic) {
+        SgFunctionDefinition *functionDefinition = NULL;
+        SgMemberFunctionDeclaration* memberFunctionDefDeclaration = 
+            isSgMemberFunctionDeclaration(memberFunctionDeclaration->get_definingDeclaration());
+        if (memberFunctionDefDeclaration != NULL) {
+            functionDefinition = memberFunctionDefDeclaration->get_definition();
+        }
+
+        // If it's not pure virtual then the current function declaration is a candidate function to be called
+        if (includePureVirtualFunc || !functionDeclarationInClass->get_functionModifier().isPureVirtual())
+            functionList.push_back( functionDeclarationInClass );
+
+        // Search down the class hierarchy to get all redeclarations of the current member function which may be the ones being
+        // called via polymorphism.
+        SgClassDefinition *crtClsDef = NULL;
+        // selecting the root of the hierarchy
+        if (crtClass) {
+            SgClassDeclaration *tmp = isSgClassDeclaration(crtClass->get_declaration());
+            ROSE_ASSERT(tmp);
+            SgClassDeclaration* tmp2 = isSgClassDeclaration(tmp->get_definingDeclaration());
+            ROSE_ASSERT(tmp2);
+            crtClsDef = tmp2->get_definition();
+            ROSE_ASSERT(crtClsDef);
+        } else {
+            crtClsDef = isSgClassDefinition(memberFunctionDeclaration->get_scope());
+            ROSE_ASSERT(crtClsDef);
+        }
+
+        // For virtual functions, we need to search down in the hierarchy of classes and retrieve all declarations of member
+        // functions with the same name and type.  Names are not important for destructors.
+        const ClassHierarchyWrapper::ClassDefSet& subclasses = classHierarchy->getSubclasses(crtClsDef);
+        functionDeclarationInClass = NULL;
+        string f1 = memberFunctionDeclaration->get_mangled_name().str();
+        assert(!memberFunctionDeclaration->get_name().getString().empty());
+        bool isDestructor1 = '~' == memberFunctionDeclaration->get_name().getString()[0];
+        for (ClassHierarchyWrapper::ClassDefSet::const_iterator sci=subclasses.begin(); sci!=subclasses.end(); ++sci) {
+            SgClassDefinition *cls = isSgClassDefinition(*sci);
+            SgDeclarationStatementPtrList &clsMembers = cls->get_members();
+            for (SgDeclarationStatementPtrList::iterator cmi=clsMembers.begin(); cmi!=clsMembers.end(); ++cmi) {
+                SgMemberFunctionDeclaration *cls_mb_decl = isSgMemberFunctionDeclaration(*cmi);
+                if (cls_mb_decl == NULL)
+                    continue;
+
+                assert(!cls_mb_decl->get_name().getString().empty());
+                bool isDestructor2 = '~' == cls_mb_decl->get_name().getString()[0];
+                bool keep = false;
+                if (isDestructor1 && isDestructor2) {
+                    keep = true;
+                } else if (memberFunctionDeclaration->get_name()==cls_mb_decl->get_name()) {
+                    SgMemberFunctionType* funcType1 = isSgMemberFunctionType(memberFunctionDeclaration->get_type());
+                    SgMemberFunctionType* funcType2 = isSgMemberFunctionType(cls_mb_decl->get_type());
+                    keep = funcType1 && funcType2 && is_functions_types_equal(funcType1, funcType2);
+                }
+                if (keep) {
+                    SgMemberFunctionDeclaration *nonDefDecl =
+                        isSgMemberFunctionDeclaration(cls_mb_decl->get_firstNondefiningDeclaration());
+                    SgMemberFunctionDeclaration *defDecl =
+                        isSgMemberFunctionDeclaration(cls_mb_decl->get_definingDeclaration());
+                    // MD 2010/07/08 defDecl might be NULL
+                    // ROSE_ASSERT ( (!nonDefDecl && defDecl == cls_mb_decl) || (nonDefDecl == cls_mb_decl && nonDefDecl) );
+                    functionDeclarationInClass = nonDefDecl ? nonDefDecl : defDecl;
+                    ROSE_ASSERT(functionDeclarationInClass);
+                    if (includePureVirtualFunc || !(functionDeclarationInClass->get_functionModifier().isPureVirtual()))
+                        functionList.push_back(functionDeclarationInClass);
+                }
+            }
+        }
+    } else {
+        // Non virtual (standard) member function or call not polymorphic (or both)
+        // Always pushing the in-class declaration, so we need to find that one
+        SgDeclarationStatement *nonDefDeclInClass = memberFunctionDeclaration->get_firstNondefiningDeclaration();
+        SgMemberFunctionDeclaration *functionDeclarationInClass = NULL;
+        if (nonDefDeclInClass) {
+            // memberFunctionDeclaration is outside the class
+            functionDeclarationInClass = isSgMemberFunctionDeclaration(nonDefDeclInClass);
+        } else {
+            // In class declaration, since there is no non-defining declaration
+            functionDeclarationInClass = memberFunctionDeclaration;
+        }
+        ROSE_ASSERT(functionDeclarationInClass);
+        functionList.push_back(functionDeclarationInClass);
+    }
+    return functionList;
 }
 
 
@@ -858,6 +836,31 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
             }
 
             functionList.push_back(fctDecl);
+            break;
+        }
+
+        case V_SgVarRefExp: {
+            // This is an indirect function call, as in:
+            //    |void f() {
+            //    |    void (*g)();
+            //    |    g();              <------------
+            //    |}
+            // We don't know what is being called, only its type.  So assume that all functions whose type matches could be
+            // called. [Robb P. Matzke 2013-01-24]
+            VariantVector vv;
+            vv.push_back(V_SgFunctionDeclaration);
+            vv.push_back(V_SgTemplateInstantiationFunctionDecl);
+            SgType *type = isSgVarRefExp(functionExp)->get_type();
+            while (isSgTypedefType(type))
+                type = isSgTypedefType(type)->get_base_type();
+            SgPointerType *functionPointerType = isSgPointerType(type);
+            assert(functionPointerType!=NULL);
+            SgFunctionType *fctType = isSgFunctionType(functionPointerType->findBaseType());
+            assert(fctType!=NULL);
+            SgFunctionDeclarationPtrList matches =
+                AstQueryNamespace::queryMemoryPool(std::bind2nd(std::ptr_fun(solveFunctionPointerCallsFunctional), fctType),
+                                                   &vv);
+            functionList.insert(functionList.end(), matches.begin(), matches.end());
             break;
         }
 
