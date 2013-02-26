@@ -917,8 +917,11 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
      ROSE_ASSERT(expr->get_file_info() != NULL);
      if (expr->get_file_info()->isCompilerGenerated() != expr->get_startOfConstruct()->isCompilerGenerated())
         {
-          printf ("In unparseExpression(%s): Detected error expr->get_file_info()->isCompilerGenerated() != expr->get_startOfConstruct()->isCompilerGenerated() \n",expr->class_name().c_str());
-          printf ("     expr->get_file_info() = %p expr->get_operatorPosition() = %p expr->get_startOfConstruct() = %p \n",expr->get_file_info(),expr->get_operatorPosition(),expr->get_startOfConstruct());
+          printf ("In unparseExpression(%p = %s): Detected error expr->get_file_info()->isCompilerGenerated() != expr->get_startOfConstruct()->isCompilerGenerated() \n",expr,expr->class_name().c_str());
+          printf ("  -- expr->get_file_info() = %p expr->get_operatorPosition() = %p expr->get_startOfConstruct() = %p \n",expr->get_file_info(),expr->get_operatorPosition(),expr->get_startOfConstruct());
+
+          printf ("  -- expr->get_file_info()->isCompilerGenerated()        = %s \n",expr->get_file_info()->isCompilerGenerated()        ? "true" : "false");
+          printf ("  -- expr->get_startOfConstruct()->isCompilerGenerated() = %s \n",expr->get_startOfConstruct()->isCompilerGenerated() ? "true" : "false");
 
        // DQ (9/11/2011): Reorganize to make this better code that can be analyized using static analysis (static analysis tools don't understand access functions).
        // ROSE_ASSERT(expr->get_file_info()->get_parent() != NULL);
@@ -935,7 +938,8 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
        // expr->get_startOfConstruct()->display("expr->get_startOfConstruct(): debug");
           fileInfo->display("expr->get_file_info(): debug");
 
-          Sg_File_Info* startOfConstructFileInfo = expr->get_file_info();
+       // Sg_File_Info* startOfConstructFileInfo = expr->get_file_info();
+          Sg_File_Info* startOfConstructFileInfo = expr->get_startOfConstruct();
           ROSE_ASSERT(startOfConstructFileInfo != NULL);
           startOfConstructFileInfo->display("expr->get_startOfConstruct(): debug");
         }

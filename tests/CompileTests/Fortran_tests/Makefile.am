@@ -11,10 +11,6 @@ SUBDIRS = LANL_POP gfortranTestSuite
 # #######################
 
 F90_TESTCODES_REQUIRED_TO_PASS = \
-     test2011_01.f90 \
-     test2011_04.f90 \
-     test2011_06.f90 \
-     test2011_07.f90 \
      test2007_01.f90 \
      test2007_02.f90 \
      test2007_03.f90 \
@@ -206,7 +202,12 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_173.f90 \
      test2010_182.f90 \
      test2010_183.f90 \
+     test2011_01.f90 \
+     test2011_02.f90 \
+     test2011_04.f90 \
      test2011_05.f90 \
+     test2011_06.f90 \
+     test2011_07.f90 \
      test2011_08.f90 \
      test2011_09.f90 \
      test2011_10.f90 \

@@ -900,7 +900,7 @@ HEADER_FUNCTION_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, const SgFunctionModifier & m );
-		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
+          friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -1025,7 +1025,7 @@ HEADER_SPECIAL_FUNCTION_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, const SgSpecialFunctionModifier & m );
-		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
+          friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -2502,6 +2502,26 @@ SgFunctionModifier::displayString() const
      s += std::string("isExplicit() = ")         + std::string(isExplicit()         ? "true"  : "false");
   // s += std::string("isBind() = ")             + std::string(isBind()             ? "true " : "false ");
      s += std::string("isPure() = ")             + std::string(isPure()             ? "true " : "false ");
+
+  // DQ (2/26/2013): Bug report noticed that a set of these attributes were not properly support.
+     s += std::string("isElemental() = ")                        + std::string(isElemental() ? "true " : "false ");
+     s += std::string("isRecursive() = ")                        + std::string(isRecursive() ? "true " : "false ");
+     s += std::string("isGnuAttributeConstructor() = ")          + std::string(isGnuAttributeConstructor() ? "true " : "false ");
+     s += std::string("isGnuAttributeDestructor() = ")           + std::string(isGnuAttributeDestructor() ? "true " : "false ");
+     s += std::string("isGnuAttributePure() = ")                 + std::string(isGnuAttributePure() ? "true " : "false ");
+     s += std::string("isGnuAttributeWeak() = ")                 + std::string(isGnuAttributeWeak() ? "true " : "false ");
+     s += std::string("isGnuAttributeUnused() = ")               + std::string(isGnuAttributeUnused() ? "true " : "false ");
+     s += std::string("isGnuAttributeUsed() = ")                 + std::string(isGnuAttributeUsed() ? "true " : "false ");
+     s += std::string("isGnuAttributeDeprecated() = ")           + std::string(isGnuAttributeDeprecated() ? "true " : "false ");
+     s += std::string("isGnuAttributeMalloc() = ")               + std::string(isGnuAttributeMalloc() ? "true " : "false ");
+     s += std::string("isGnuAttributeNaked() = ")                + std::string(isGnuAttributeNaked() ? "true " : "false ");
+     s += std::string("isGnuAttributeNoInstrumentFunction() = ") + std::string(isGnuAttributeNoInstrumentFunction() ? "true " : "false ");
+     s += std::string("isGnuAttributeNoCheckMemoryUsage() = ")   + std::string(isGnuAttributeNoCheckMemoryUsage() ? "true " : "false ");
+     s += std::string("isGnuAttributeNoInline() = ")             + std::string(isGnuAttributeNoInline() ? "true " : "false ");
+     s += std::string("isGnuAttributeAlwaysInline() = ")         + std::string(isGnuAttributeAlwaysInline() ? "true " : "false ");
+     s += std::string("isGnuAttributeNoThrow() = ")              + std::string(isGnuAttributeNoThrow() ? "true " : "false ");
+     s += std::string("isGnuAttributeWeakReference() = ")        + std::string(isGnuAttributeWeakReference() ? "true " : "false ");
+
      s += std::string("isJavaNative() = ")       + std::string(isJavaNative()       ? "true " : "false ");
      s += std::string("isJavaSynchronized() = ") + std::string(isJavaSynchronized() ? "true " : "false ");
      s += std::string("isJavaStrictfp() = ")     + std::string(isJavaStrictfp()     ? "true " : "false ");
@@ -2533,8 +2553,8 @@ std::ostream & operator<< ( std::ostream & os, const std::vector<bool> & bv )
    }
 
 bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
-{
-	return
+   {
+     return
 	       (lhs.isUnknown() == rhs.isUnknown() ) &&
 	       (lhs.isDefault() == rhs.isDefault() ) &&
 	       (lhs.isInline()  == rhs.isInline()  ) &&
@@ -2575,7 +2595,7 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 	       (lhs.isJavaSynchronized()         == rhs.isJavaSynchronized()        ) &&
 	       (lhs.isJavaStrictfp()             == rhs.isJavaStrictfp()            ) &&
 		   true;
-}
+   }
 
 // DQ (2/4/2006): Added mechamism to clear all bits
 void SgFunctionModifier::reset()

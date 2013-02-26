@@ -5335,9 +5335,7 @@ void c_action_label(Token_t * lbl)
             buildImplicitVariableDeclaration(name);
 
             // Now verify that it is present.
-            variableSymbol
-            = trace_back_through_parent_scopes_lookup_variable_symbol(name,
-                    astScopeStack.front());
+            variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(name,astScopeStack.front());
             ROSE_ASSERT(variableSymbol != NULL);
 #else
             // If it was NULL the first time then it was at least built as a variable so ask a second time to return the symbol.
@@ -5354,8 +5352,7 @@ void c_action_label(Token_t * lbl)
         SgExpression* rhs = astExpressionStack.front();
         astExpressionStack.pop_front();
 
-        SgAssignOp* assignmentExpression = new SgAssignOp(variableReference, rhs,
-                NULL);
+        SgAssignOp* assignmentExpression = new SgAssignOp(variableReference, rhs, NULL);
         ROSE_ASSERT(assignmentExpression != NULL);
 
         // DQ (1/23/2008): Set the source position to the only availalbe reference point!
@@ -7623,7 +7620,10 @@ void c_action_label(Token_t * lbl)
 
             SgExpression* recordReference = new SgDotExp(lhs, rhs, NULL);
             setSourcePosition(recordReference);
-            setSourcePositionCompilerGenerated(recordReference);
+
+         // DQ (2/26/2013): The source position was just marked with default values and compiler generated is not required here.
+         // Note that the SageInterface support in now used for default source position marking.
+         // setSourcePositionCompilerGenerated(recordReference);
 
             // Push the record reference onto the expression stack
             astExpressionStack.push_front(recordReference);
@@ -19265,7 +19265,7 @@ void c_action_label(Token_t * lbl)
     {
         // New function to support Fortran include mechanism
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_start_of_file(%s) \n", filepath);
+             printf("In c_action_start_of_file(%s) \n", filepath);
 
 #if 0
         // Output debugging information about saved state (stack) information.
