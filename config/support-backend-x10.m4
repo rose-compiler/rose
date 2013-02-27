@@ -44,10 +44,18 @@ AC_DEFUN([ROSE_SUPPORT_X10_BACKEND],
   if test "x$ROSE_WITH_ALTERNATE_BACKEND_X10_COMPILER" != "x"; then
       BACKEND_X10_COMPILER="$ROSE_WITH_ALTERNATE_BACKEND_X10_COMPILER"
 
-      # Simple test that the X10 compiler works
-      "$BACKEND_X10_COMPILER" -version
-      if test $? -ne 0; then
-          ROSE_MSG_ERROR([The backend X10 compiler does not seem to work])
+      # X10 backend only allowed if X10 frontend is enabled
+      if test "x$ROSE_ENABLE_FRONTEND_X10" = "xyes"; then
+          # Simple test that the X10 compiler works
+          "$BACKEND_X10_COMPILER" -version
+          if test $? -ne 0; then
+              ROSE_MSG_ERROR([The backend X10 compiler does not seem to work])
+          fi
+      else
+          AC_MSG_WARN(
+              [The backend X10 compiler is set to '${BACKEND_X10_COMPILER}', ]
+              [but the X10 frontend has not been enabled. ]
+              [See --help for --enable-frontend-x10.])
       fi
 
       AC_SUBST(BACKEND_X10_COMPILER)

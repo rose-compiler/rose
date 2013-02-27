@@ -37,6 +37,8 @@
 
 AC_DEFUN([ROSE_SUPPORT_X10_FRONTEND],
 [
+  AC_BEFORE([$0], [ROSE_SUPPORT_X10_BACKEND])
+
   # --enable-frontend-x10
   ROSE_ARG_ENABLE(
     [frontend-x10],
