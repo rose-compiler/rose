@@ -10570,7 +10570,7 @@ SgVariableDeclaration::initializeData(Sg_File_Info *info, const SgName& var_name
      SgInitializedName* c_item = new SgInitializedName(var_name, type, initializer, this);
      ROSE_ASSERT (c_item != NULL);
      
-     initializeData (NULL,c_item);
+     initializeData (info, c_item);
    }
 
 
