@@ -1,0 +1,4 @@
+dummy::dummy ->
+dummy::operator[] ->
+main -> dummy::dummy dummy::operator[]
+super::operator[] ->

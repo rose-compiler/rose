@@ -28,30 +28,24 @@ class TestStmtModRef : public ProcessAstTree
 {
   TestVarRefCollect mod, use, kill;
   StmtSideEffectCollect op;
-  fstream out;
   void Clear() { mod.Clear(); use.Clear(); kill.Clear(); }
  public:
-  TestStmtModRef(const string& fname)  
-  {
-     out.open(fname.c_str(),ios_base::out);
-  }
-  ~TestStmtModRef() { out.close(); }
   bool ProcessTree( AstInterface &fa, const AstNodePtr& s,
                        AstInterface::TraversalVisitType t)
   {
      if (t == AstInterface::PreVisit && fa.IsExecutableStmt(s)) {
-         out << AstNodePtrImpl(s)->unparseToString();
-         out << "\n";
+         std::cout << AstNodePtrImpl(s)->unparseToString();
+         std::cout << "\n";
          bool r = op ( fa, s, &mod, &use, &kill);
-         out << "modref: ";
-         mod.DumpOut(out);
-         out << " ;  readref: ";
-         use.DumpOut(out); 
-         out << " ;  killref: ";
-         kill.DumpOut(out); 
-         out << "\n";
+         std::cout << "modref: ";
+         mod.DumpOut(std::cout);
+         std::cout << " ;  readref: ";
+         use.DumpOut(std::cout); 
+         std::cout << " ;  killref: ";
+         kill.DumpOut(std::cout); 
+         std::cout << "\n";
          if (!r)
-            out << "Unknown \n";
+            std::cout << "Unknown \n";
          Clear();
      }
      return true;
@@ -84,8 +78,7 @@ main ( int argc,  char * argv[] )
      ROSE_ASSERT(sageFile != NULL);
 
      SgGlobal *root = sageFile->get_globalScope();
-     string name = string(strrchr(sageFile->getFileName().c_str(),'/')+1) + ".outx";
-     TestStmtModRef op(name);
+     TestStmtModRef op;
      AstInterfaceImpl scope(root);
      AstInterface fa(&scope);
      op( fa, AstNodePtrImpl(&sageProject));
