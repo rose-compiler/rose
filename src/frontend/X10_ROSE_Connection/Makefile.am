@@ -2,6 +2,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 EXTRA_DIST = CMakeLists.txt
 
+noinst_LTLIBRARIES = libroseX10.la
+
 include_HEADERS = \
 	jni_x10SourceCodePosition.h \
 	jni_x10_token.h \
@@ -11,12 +13,10 @@ include_HEADERS = \
 	x10_support.h \
 	x10_token.h
 
-
 if ROSE_BUILD_X10_LANGUAGE_SUPPORT
 X10_DIR = @X10_INSTALL_PATH@
 
 lib_LTLIBRARIES = libx10Traversal.la
-noinst_LTLIBRARIES = libroseX10.la
 
 libx10Traversal_la_SOURCES = \
 	jni_x10SourceCodePosition.C \
