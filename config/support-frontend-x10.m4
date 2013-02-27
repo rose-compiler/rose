@@ -44,7 +44,35 @@ AC_DEFUN([ROSE_SUPPORT_X10_FRONTEND],
     [frontend-x10],
     [if the X10 frontend is enabled],
     [Enable the ROSE X10 Frontend (requires the X10 compiler, see --with-x10)],
-    [no])
+    [auto-enable])
+
+  # Validate and Normalize CLI argument:
+  #
+  #   true->yes, false->no
+  #   auto-enable->[yes,no] if X10 is available
+  #       This argument is intended for the default case when
+  #       the user does not specify --[enable/disable]-frontend-x10.
+  #
+  if test "x$ROSE_ENABLE_FRONTEND_X10" = "xtrue"; then
+      ROSE_ENABLE_FRONTEND_X10="yes"
+  elif test "x$ROSE_ENABLE_FRONTEND_X10" = "xfalse"; then
+      ROSE_ENABLE_FRONTEND_X10="no"
+  elif test "x$ROSE_ENABLE_FRONTEND_X10" = "xauto-enable"; then
+      dnl See ROSE/config/support-x10.m4
+      if test "x$X10_BIN_PATH"     != "x" && \
+         test "x$X10_LIBRARY_PATH" != "x"
+      then
+          ROSE_ENABLE_FRONTEND_X10="yes"
+      else
+          ROSE_ENABLE_FRONTEND_X10="no"
+      fi
+  elif test "x$ROSE_ENABLE_FRONTEND_X10" = "xyes"; then
+      :
+  elif test "x$ROSE_ENABLE_FRONTEND_X10" = "xno"; then
+      :
+  else
+      ROSE_MSG_ERROR([Unknown argument passed to --enable-frontend-x10: '$ROSE_ENABLE_FRONTEND_X10'])
+  fi
 
   if test "x$ROSE_ENABLE_FRONTEND_X10" = "xyes"; then
       # X10 Frontend requires an installation of the X10 Compiler
@@ -59,6 +87,8 @@ AC_DEFUN([ROSE_SUPPORT_X10_FRONTEND],
           [ROSE_BUILD_X10_LANGUAGE_SUPPORT],
           [],
           [Build ROSE with the X10 frontend])
+  else
+      AM_CONDITIONAL(ROSE_BUILD_X10_LANGUAGE_SUPPORT, [false])
   fi
 
 # End macro ROSE_SUPPORT_X10_FRONTEND.
