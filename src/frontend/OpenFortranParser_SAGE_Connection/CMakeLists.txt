@@ -14,9 +14,12 @@ set(fortran_ofp_parser_c_jni_FortranParserActionJNI_LIB_SRCS
     ${fortran_parser_dir}/jni_token_funcs.c
     ${fortran_parser_dir}/c_actions_jni.c)
 
-add_library(fortran_ofp_parser_c_jni_FortranParserActionJNI SHARED ${fortran_ofp_parser_c_jni_FortranParserActionJNI_LIB_SRCS})
-
-target_link_libraries(fortran_ofp_parser_c_jni_FortranParserActionJNI ${KDE4_KDECORE_LIBS})
+add_library(fortran_ofp_parser_c_jni_FortranParserActionJNI SHARED
+  ${fortran_ofp_parser_c_jni_FortranParserActionJNI_LIB_SRCS})
+target_link_libraries(fortran_ofp_parser_c_jni_FortranParserActionJNI
+  ${KDE4_KDECORE_LIBS})
+add_dependencies(fortran_ofp_parser_c_jni_FortranParserActionJNI
+  rosetta_generated)
 
 set_target_properties(fortran_ofp_parser_c_jni_FortranParserActionJNI PROPERTIES VERSION 1.0.0 SOVERSION 1)
 install(TARGETS fortran_ofp_parser_c_jni_FortranParserActionJNI ${INSTALL_TARGETS_DEFAULT_ARGS})
@@ -38,6 +41,7 @@ else()
 endif()
 add_library(roseFortran ${libroseFortran_SOURCES})
 target_link_libraries(roseFortran ${JAVA_JVM_LIBRARY})
+add_dependencies(roseFortran rosetta_generated)
 ########### next target ###############
 
 
