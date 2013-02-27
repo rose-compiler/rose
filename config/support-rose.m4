@@ -2289,6 +2289,7 @@ tests/CompileTests/UnparseHeadersTests/Makefile
 tests/CompileTests/CudaTests/Makefile
 tests/CompileTests/OpenClTests/Makefile
 tests/CompileTests/frontend_integration/Makefile
+tests/CompileTests/x10_tests/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile
