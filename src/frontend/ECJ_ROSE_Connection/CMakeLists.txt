@@ -17,6 +17,7 @@ if(enable-java)
   target_link_libraries(libJavaTraversal ${KDE4_KDECORE_LIBS})
 
   set_target_properties(libJavaTraversal PROPERTIES VERSION 1.0.0 SOVERSION 1)
+  add_dependencies(libJavaTraversal rosetta_generated)
   install(TARGETS libJavaTraversal ${INSTALL_TARGETS_DEFAULT_ARGS})
 endif()
 
@@ -38,6 +39,7 @@ else()
 endif()
 
 add_library(roseJava ${libroseJava_SOURCES})
+add_dependencies(roseJava rosetta_generated)
 
 
 ########### install files ###############
