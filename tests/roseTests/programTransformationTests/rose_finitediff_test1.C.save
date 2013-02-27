@@ -2,7 +2,7 @@
 int foo(int n)
 {
   int y;
-// Finite differencing: cache_fd__1 is a cache of (n * x)
+// Finite differencing: cache_fd__1 is a cache of n * x
   int cache_fd__1;
 {
     int x;
