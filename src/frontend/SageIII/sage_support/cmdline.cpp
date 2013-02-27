@@ -4046,6 +4046,16 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
     {
         compilerNameString[0] = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
     }
+    else if (get_binary_only())
+    {
+        if (SgProject::get_verbose() >= 3)
+        {
+            std::cout
+                << "[TRACE] Backend compiler for binary analysis is set as"
+                << "'" << compilerNameString[0] << "'"
+                << std::endl;
+        }
+    }
     else if (get_Fortran_only() == true)
     {
         // compilerNameString = "f77 ";
@@ -4108,11 +4118,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
     }
     else
     {
-        std::cout
+        std::cerr
             << "[FATAL] Unknown backend compiler"
-            << "'" << compilerName << "'"
+            << "'" << compilerName << "', "
+            << "or not implemented."
             << std::endl;
-        ROSE_ASSERT(false);
+        ROSE_ASSERT(! "Unknown backend compiler");
     }
 
   // printf ("compilerName       = %s \n",compilerName);
