@@ -15,6 +15,9 @@ extern "C" {
 #include <stdbool.h>
 #include <stdlib.h> // for abort()
 
+// return the current time stamp in a double floating point number
+extern double xomp_time_stamp(void);
+
 //enum omp_rtl_enum {
 //  e_gomp,
 //  e_omni,
