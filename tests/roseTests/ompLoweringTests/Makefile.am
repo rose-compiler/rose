@@ -44,7 +44,13 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
         task_wait2.c \
 	task_untied4.c \
 	twoRegions.c
-#	axpy_ompacc.c
+
+OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
+        axpy_ompacc.c \
+        matrixmultiply-ompacc.c \
+        jacobi-ompacc.c \
+        jacobi-ompacc-opt1.c
+
 
 # Put test codes which can run (with main() ) here
 # They will be compiled and executed when the gomp library path is set
@@ -146,6 +152,7 @@ ALL_TESTCODES = \
 	$(C_TESTCODES_REQUIRED_TO_RUN) \
 	$(CXX_TESTCODES_REQUIRED_TO_COMPILE) \
 	$(CXX_TESTCODES_REQUIRED_TO_RUN) \
+	$(OMP_ACC_TESTCODES_REQUIRED_TO_PASS) \
 	$(TESTCODE_CURRENTLY_FAILING)
 
 # The runnable tests' object files
@@ -195,6 +202,11 @@ TEST_FLAGS = $(TEST_INCLUDES) -rose:openmp:lowering -g --edg:no_warnings #-rose:
 PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_COMPILE:.c=.o)
 PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_COMPILE:.cpp=.o)
 
+PASSING_OMP_ACC_TEST_CUDA_TEMP_Files = $(OMP_ACC_TESTCODES_REQUIRED_TO_PASS:.c=.cu)
+PASSING_OMP_ACC_TEST_CUDA_Files = $(addprefix rose_, ${PASSING_OMP_ACC_TEST_CUDA_TEMP_Files})
+
+PASSING_OMP_ACC_TEST_EXE_Files = $(OMP_ACC_TESTCODES_REQUIRED_TO_PASS:.c=.out)
+
 # rules to build .o from .c for OpenMP test codes
 $(PASSING_C_TEST_Objects): %.o: $(TEST_DIR)/%.c roseomp
 	./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
@@ -212,27 +224,35 @@ $(CXX_TEST_OBJECT_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.cpp roseomp
 
 # Experimental translation for OpenMP accelerator model directives
 # no final compilation for now, which requires CUDA compiler for the generated code
-test_omp_acc:axpy_ompacc.o matrixmultiply-ompacc.o jacobi-ompacc.o
-rose_axpy_ompacc.cu:roseompacc
-	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $(TEST_DIR)/axpy_ompacc.c 
-rose_matrixmultiply-ompacc.cu:roseompacc
-	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $(TEST_DIR)/matrixmultiply-ompacc.c 
-rose_jacobi-ompacc.cu:roseompacc
-	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $(TEST_DIR)/jacobi-ompacc.c 
+# each rose_*.cu file depends o its corresponding *.c file
+$(PASSING_OMP_ACC_TEST_CUDA_Files): rose_%.cu: $(TEST_DIR)/%.c roseompacc
+	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $<
 
-rose_jacobi-ompacc-opt1.cu:roseompacc
-	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $(TEST_DIR)/jacobi-ompacc-opt1.c 
+#rose_axpy_ompacc.cu:roseompacc
+#	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $(TEST_DIR)/axpy_ompacc.c 
+#rose_matrixmultiply-ompacc.cu:roseompacc
+#	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $(TEST_DIR)/matrixmultiply-ompacc.c 
 
 # build executables using nvcc
-axpy_ompacc.out:rose_axpy_ompacc.cu
+$(PASSING_OMP_ACC_TEST_EXE_Files): %.out: rose_%.cu
 	nvcc $<  $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
-matrixmultiply-ompacc.out:rose_matrixmultiply-ompacc.cu
-	nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
-jacobi-ompacc.out:rose_jacobi-ompacc.cu
-	nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
 
-jacobi-ompacc-opt1.out:rose_jacobi-ompacc-opt1.cu
-	nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
+# a short cut to run omp-acc support test
+ompacc_test:$(PASSING_OMP_ACC_TEST_EXE_Files)
+
+#axpy_ompacc.out:rose_axpy_ompacc.cu
+#	nvcc $<  $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
+#matrixmultiply-ompacc.out:rose_matrixmultiply-ompacc.cu
+#	nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
+
+OMP_ACC_DIFF_FILES=$(PASSING_OMP_ACC_TEST_CUDA_Files:.cu=.cu.diff)
+DIFF=diff
+EXPECTED_PATH = $(top_srcdir)/tests/roseTests/ompLoweringTests/referenceResults
+$(OMP_ACC_DIFF_FILES):$(PASSING_OMP_ACC_TEST_CUDA_Files)
+	echo "Verifying OMP ACC translation by diff ..."; \
+	if $(DIFF) $(@:.cu.diff=.cu) $(EXPECTED_PATH)/$(@:.cu.diff=.cu) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi 
+
+ompacc_diff_check: $(OMP_ACC_DIFF_FILES)
 
 if WITH_GOMP_OPENMP_LIB
 #-------------compile and run using GCC's runtime library--------------------------------	
@@ -255,6 +275,7 @@ check-local: roseomp
 	@echo "Test for ROSE OpenMP lowering."
 	@echo "***************** Testing C input *******************"
 	$(MAKE) $(PASSING_C_TEST_Objects)
+	$(MAKE)	ompacc_diff_check
 if OS_MACOSX
 #	DQ (9/27/2009): We need to generate this file temporaily because the documentation depends on it.
 #	However, documentation should only depend upon generated files in the tutorial directory.
@@ -297,6 +318,7 @@ check-local: roseomp
 	@echo "Test for ROSE OpenMP lowering."
 	@echo "***************** Testing C input *******************"
 	$(MAKE) $(PASSING_C_TEST_Objects)
+	$(MAKE)	ompacc_diff_check
 if OS_MACOSX
 #	DQ (9/27/2009): We need to generate this file temporaily because the documentation depends on it.
 #	However, documentation should only depend upon generated files in the tutorial directory.
@@ -329,6 +351,7 @@ if OS_MACOSX
 endif
 #	$(MAKE) $(PASSING_Objects_With_main) # make objects with main entries here 
 	$(MAKE)	$(C_TEST_OBJECT_REQUIRED_TO_RUN)
+	$(MAKE)	ompacc_diff_check
 	@echo "***************** Testing C++ input ******************"
 	$(MAKE) $(PASSING_CXX_TEST_Objects)
 	$(MAKE)	$(CXX_TEST_OBJECT_REQUIRED_TO_RUN)
@@ -344,9 +367,9 @@ endif # ROSE_USE_OMNI_OPENMP
 endif # 
 
 clean-local:
-	rm -f *.o test*.C rose_*.c rose_*.cpp rose_*.C *.pdf OUT_* *.dot *.out  rose_*.cu
+	rm -f *.o test*.C rose_*.c rose_*.cpp rose_*.C *.pdf OUT_* *.dot *.out  rose_*.cu *.diff
 
-EXTRA_DIST = 
+EXTRA_DIST = referenceResults
 
 CLEANFILES = 
 
