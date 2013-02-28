@@ -220,12 +220,18 @@ rose_matrixmultiply-ompacc.cu:roseompacc
 rose_jacobi-ompacc.cu:roseompacc
 	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $(TEST_DIR)/jacobi-ompacc.c 
 
+rose_jacobi-ompacc-opt1.cu:roseompacc
+	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $(TEST_DIR)/jacobi-ompacc-opt1.c 
+
 # build executables using nvcc
 axpy_ompacc.out:rose_axpy_ompacc.cu
 	nvcc $<  $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
 matrixmultiply-ompacc.out:rose_matrixmultiply-ompacc.cu
 	nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
 jacobi-ompacc.out:rose_jacobi-ompacc.cu
+	nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
+
+jacobi-ompacc-opt1.out:rose_jacobi-ompacc-opt1.cu
 	nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
 
 if WITH_GOMP_OPENMP_LIB
@@ -305,7 +311,7 @@ endif
 	@echo "****** ROSE/tests/roseTests/ompLoweringTests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 
-
+# USE gcc GOMP library
 else
 
 #-------------compile only --------------------------------	

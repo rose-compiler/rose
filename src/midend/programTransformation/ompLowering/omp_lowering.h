@@ -84,6 +84,10 @@ namespace OmpSupport
   //! Translate "omp target"
   void transOmpTarget(SgNode* node);
 
+  //! Translate "omp target data"
+  void transOmpTargetData(SgNode* node);
+
+
   //! Translate omp barrier
   void transOmpBarrier(SgNode* node);
 
