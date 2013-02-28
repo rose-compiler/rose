@@ -1130,7 +1130,7 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
       else
       {
         ptype = buildPointerType (buildVoidType());
-        ROSE_ASSERT (Outliner::useStructureWrapper);
+        ROSE_ASSERT (Outliner::useStructureWrapper); //TODO: this assertion may no longer true for "omp target" + "omp parallel for", in which map() may not show up at all (0 variables)
       }
       parameter1 = buildInitializedName(var1_name,ptype);
       appendArg(params,parameter1);
