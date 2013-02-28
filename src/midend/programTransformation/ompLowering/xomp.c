@@ -23,6 +23,20 @@ extern int omp_get_num_threads(void);
 #include <stdarg.h>
 #include <string.h> // for memcpy()
 
+/* Timing support, Liao 2/15/2013 */
+#include <sys/time.h>
+
+double xomp_time_stamp(void)
+{
+  struct timeval t;
+  double time;
+//  static double prev_time=0.0;
+
+  gettimeofday(&t, NULL);
+  time = t.tv_sec + 1.0e-6*t.tv_usec;
+  return time;
+}
+
 #if 0
 enum omp_rtl_enum {
   e_undefined,
@@ -75,6 +89,7 @@ void xomp_init (void)
 //Runtime library initialization routine
 void XOMP_init (int argc, char ** argv)
 {
+  printf ("%f\t1\n",xomp_time_stamp());
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
 #else   
   _ompc_init (argc, argv);
@@ -90,6 +105,7 @@ void xomp_terminate (int* exitcode)
 // Runtime library termination routine
 void XOMP_terminate (int exitcode)
 {
+  printf ("%f\t1\n",xomp_time_stamp());
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
 #else   
   _ompc_terminate (exitcode);
@@ -180,7 +196,8 @@ void xomp_parallel_start (void (*func) (void *), unsigned* ifClauseValue, unsign
 
 void XOMP_parallel_start (void (*func) (void *), void *data, unsigned ifClauseValue, unsigned numThreadsSpecified)
 {
-
+  printf ("%f\t1\n",xomp_time_stamp());
+  printf ("%f\t2\n",xomp_time_stamp());
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY 
   // XOMP  to GOMP
   unsigned numThread = 0;
@@ -209,6 +226,9 @@ void xomp_parallel_end (void)
 }
 void XOMP_parallel_end (void)
 {
+  //printf ("%s %f\n",__PRETTY_FUNCTION__, xomp_time_stamp());
+  printf ("%f\t2\n",xomp_time_stamp());
+  printf ("%f\t1\n",xomp_time_stamp());
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   GOMP_parallel_end ();
 #else   
