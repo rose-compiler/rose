@@ -6,8 +6,21 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 
 ########### install files ###############
+set(TemplateFiles
+  rewriteMidLevelInterfaceTemplatesImpl.h
+  prefixGenerationImpl.h
+  ASTFragmentCollectorTraversalImpl.h
+  rewriteSynthesizedAttributeTemplatesImpl.h
+  rewriteTreeTraversalImpl.h
+  rewriteASTFragementStringTemplatesImpl.h
+  nodeCollectionTemplatesImpl.h
+  rewriteDebuggingSupportTemplatesImpl.h
+  rewriteTemplateImpl.h)
 
-install(FILES  rewrite.h       lowLevelRewriteInterface.h       midLevelRewriteInterface.h       highLevelRewriteInterface.h       $(TemplateFiles) DESTINATION ${INCLUDE_INSTALL_DIR})
+install(
+  FILES rewrite.h lowLevelRewriteInterface.h midLevelRewriteInterface.h
+        highLevelRewriteInterface.h ${TemplateFiles}
+  DESTINATION ${INCLUDE_INSTALL_DIR})
 
 
 

@@ -7,7 +7,7 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 ########### install files ###############
 
-install(FILES  $(unparsePHPCodeGeneration_headers) DESTINATION ${INCLUDE_INSTALL_DIR})
+install(FILES unparsePHP.h DESTINATION ${INCLUDE_INSTALL_DIR})
 
 
 
