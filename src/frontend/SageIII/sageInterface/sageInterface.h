@@ -216,7 +216,7 @@ struct hash_nodeptr
    // DQ (9/28/2005):
    void rebuildSymbolTable (SgScopeStatement * scope);
 
-   /*! \brief Clear those variable symbols (together with initialized names) which are not referenced by any variable references or declarations under root. If root is NULL, the scope being considering is the entire AST tree.
+   /*! \brief Clear those variable symbols with unknown type (together with initialized names) which are also not referenced by any variable references or declarations under root. If root is NULL, all symbols with unknown type will be deleted.
     */
    void clearUnusedVariableSymbols (SgNode* root = NULL);
 
