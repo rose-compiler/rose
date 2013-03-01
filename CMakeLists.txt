@@ -236,7 +236,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 
 # default paths to install header, executable, and libraries
-set(INCLUDE_INSTALL_DIR "/usr/include")
+set(INCLUDE_INSTALL_DIR "include")
 set(BIN_INSTALL_DIR      "bin"   )   # The install dir for executables
 set(LIB_INSTALL_DIR      "lib" )
 

@@ -2,8 +2,11 @@
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 ########### install files ###############
-
-install(FILES  lib/OpenFortranParser-0.8.2.jar DESTINATION ${INCLUDE_INSTALL_DIR} )
+set(jar_file ${CMAKE_CURRENT_SOURCE_DIR}/OpenFortranParser-20111001.jar)
+install(
+  FILES OpenFortranParser-0.8.3.jar
+        ${jar_file}
+  DESTINATION ${INCLUDE_INSTALL_DIR} )
 
 set(files_to_extract
   "fortran/ofp/parser/c/FortranParserAction.h"
@@ -14,7 +17,6 @@ set(files_to_extract
   "fortran/ofp/parser/c/jni/jni_token_funcs.h"
   "fortran/ofp/parser/c/jni/jni_token_funcs.c"
 )
-set(jar_file ${CMAKE_CURRENT_SOURCE_DIR}/OpenFortranParser-20111001.jar)
 
 if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/ActionEnums.h)
   foreach(file_to_extract ${files_to_extract})

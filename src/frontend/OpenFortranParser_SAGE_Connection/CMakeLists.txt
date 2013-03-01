@@ -47,7 +47,14 @@ add_dependencies(roseFortran rosetta_generated)
 
 ########### install files ###############
 
-install(FILES  ActionEnums.h  FortranParserAction.h  token.h rose_fortran_token_maps.h  rose_token_defs.h fortran_support.h jni_token_funcs.h jserver.h ofp.h FortranModuleInfo.h FortranParserState.h DESTINATION ${INCLUDE_INSTALL_DIR})
+install(
+  FILES rose_fortran_token_maps.h  rose_token_defs.h fortran_support.h jserver.h
+        ofp.h FortranModuleInfo.h FortranParserState.h
+        ${fortran_parser_dir}/ActionEnums.h
+        ${fortran_parser_dir}/FortranParserAction.h
+        ${fortran_parser_dir}/token.h
+        ${fortran_parser_dir}/jni_token_funcs.h
+  DESTINATION ${INCLUDE_INSTALL_DIR})
 
 
 
