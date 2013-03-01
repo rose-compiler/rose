@@ -7187,7 +7187,6 @@ SageBuilder::buildComprehension_nfi(SgExpression *target, SgExpression *iter, Sg
     ROSE_ASSERT(iter != NULL);
     SgComprehension *result = new SgComprehension(target, iter, ifs);
     ROSE_ASSERT(result);
-
     target->set_parent(result);
     iter->set_parent(result);
     if (ifs != NULL) ifs->set_parent(result);
@@ -10507,7 +10506,7 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
      ROSE_ASSERT (nondefdecl->get_type()->get_declaration() == isSgDeclarationStatement(nondefdecl));
      defdecl->set_type(nondefdecl->get_type());
 #else
-  // printf ("========== We might need to force the types used for defining and non-defining SgTemplateClassDeclaration to be the same! \n");
+  // printf ("We might need to force the types used for defining and non-defining SgTemplateClassDeclaration to be the same! \n");
      ROSE_ASSERT(nondefdecl->get_type() != NULL);
 #endif
 
