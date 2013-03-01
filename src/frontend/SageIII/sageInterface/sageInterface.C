@@ -10190,7 +10190,7 @@ int SageInterface::fixVariableReferences(SgNode* root)
     ROSE_ASSERT(varRef->get_symbol());
     SgInitializedName* initname= varRef->get_symbol()->get_declaration();
 
-
+    ROSE_ASSERT (initname != NULL);
     if (initname->get_type()==SgTypeUnknown::createType())
       //    if ((initname->get_scope()==NULL) && (initname->get_type()==SgTypeUnknown::createType()))
     {
