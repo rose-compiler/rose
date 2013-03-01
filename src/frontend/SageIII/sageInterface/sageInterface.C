@@ -3817,6 +3817,23 @@ SageInterface::is_Cuda_language()
      return returnValue;
    }
 
+bool
+SageInterface::is_X10_language()
+{
+  bool returnValue = false;
+
+  vector<SgFile*> fileList = generateFileList();
+
+  int size = (int)fileList.size();
+  for (int i = 0; i < size; i++)
+    {
+      if (fileList[i]->get_X10_only() == true)
+           returnValue = true;
+    }
+
+  return returnValue;
+}
+
 bool SageInterface::is_mixed_C_and_Cxx_language()
    {
      return is_C_language() && is_Cxx_language();

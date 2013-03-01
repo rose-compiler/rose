@@ -2836,6 +2836,9 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           if (funcdecl_stmt->isForward() && !ninfo.SkipSemiColon())
              {
+            // DQ (2/26/2013): Added support for missing attributes.
+               unp->u_sage->printAttributes(funcdecl_stmt,info);
+
                curprint ( string(";"));
                if (funcdecl_stmt->isExternBrace())
                   {
@@ -6023,6 +6026,9 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
           unparseTypeAttributes(typedef_stmt);
         }
+
+  // DQ (2/26/2013): Output any attributes.
+     unp->u_sage->printAttributes(typedef_stmt,info);
 
      if (!info.SkipSemiColon())
         {

@@ -453,11 +453,19 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                                   ROSE_ABORT("unparsing Python requires ROSE_USE_PYTHON be set");
 #endif
                               }
-                           else
-                             {
+                          else
+                          {
+                              if (file->get_X10_only())
+                              {
+                                   Unparse_X10 unparser(this, file->getFileName());
+                                   unparser.unparseStatement(globalScope, info);
+                              }
+                              else
+                              {
                                  printf ("Error: unclear how to unparse the input code! \n");
                                  ROSE_ASSERT(false);
-                             }
+                              }
+                          }
                        }
                   }
              }
@@ -945,8 +953,8 @@ resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp
   // If we did unparse an intermediate file then we want to compile that 
   // file instead of the original source file.
      string outputFilename;
-     if (file->get_unparse_output_filename().empty() == true)
-        {
+      if (file->get_unparse_output_filename().empty() == true)
+      {
           outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
 
           if (file->get_binary_only() == true)
@@ -963,7 +971,16 @@ resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp
                printf ("Warning, output file name of generated Java code is same as input file name but must be but into a separate directory. \n");
                ROSE_ASSERT(false);
              }
-        }
+          else if (file->get_X10_only() == true)
+          {
+               outputFilename = file->get_sourceFileNameWithoutPath();
+
+               printf ("[Warning] Output file name of generated X10 code is the "
+                       "same as the input file name, but must be build into a "
+                       "separate directory.\n");
+               ROSE_ASSERT(false);
+          }
+      }
        else
         {
           outputFilename = file->get_unparse_output_filename();
@@ -1658,40 +1675,43 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
   // DQ (4/22/2006): This can be true when the "-E" option is used, but then we should not have called unparse()!
      ROSE_ASSERT(file->get_skip_unparse() == false);
 
-  // If we did unparse an intermediate file then we want to compile that 
+  // If we did unparse an intermediate file then we want to compile that
   // file instead of the original source file.
-     if (file->get_unparse_output_filename().empty() == true)
-        {
+    if (file->get_unparse_output_filename().empty() == true)
+    {
           string outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
 
-          if (file->get_binary_only() == true)
-             {
+        if (file->get_binary_only() == true)
+        {
             // outputFilename = file->get_sourceFileNameWithoutPath();
                outputFilename += ".s";
-             }
-            else 
-             {
-            // DQ (4/2/2011): Added Java support which requires that the filename for Java match the input file.
-               if (file->get_Java_only() == true)
-                  {
-                    outputFilename = file->get_sourceFileNameWithoutPath();
-                  }
-                 else
-                  {
-                    if (file->get_Cuda_only() == true) // Liao 12/29/2010, generate cuda source files
-                       {
-                         outputFilename = StringUtility::stripFileSuffixFromFileName (outputFilename);
-                         outputFilename += ".cu";
-                       }
-                  }
-             }
+        }
+        // DQ (4/2/2011): Added Java support which requires that the filename for Java match the input file.
+        else if (file->get_Java_only() == true)
+        {
+            outputFilename = file->get_sourceFileNameWithoutPath();
+        }
+        // Liao 12/29/2010, generate cuda source files
+        else if (file->get_Cuda_only() == true)
+        {
+            outputFilename = StringUtility::stripFileSuffixFromFileName (outputFilename);
+            outputFilename += ".cu";
+        }
+        else if (file->get_X10_only())
+        {
+            // X10 is Java source code; see Java file/class naming conventions.
+            // Filenames are based on the Java Class name contained in the file.
+            outputFilename = file->get_sourceFileNameWithPath();
+        }
+        else
+        {
+            //ROSE_ASSERT (! "Not implemented, or unknown file type");
+        }
 
           file->set_unparse_output_filename(outputFilename);
           ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
-#if 0
-          printf ("Inside of SgFile::unparse(UnparseFormatHelp*,UnparseDelegate*) setting the empty filename: outputFilename = %s \n",outputFilename.c_str());
-#endif
-        }
+       // printf ("Inside of SgFile::unparse(UnparseFormatHelp*,UnparseDelegate*) outputFilename = %s \n",outputFilename.c_str());
+    }
 
 #if 0
      printf ("Inside of unparseFile ( SgFile* file ) file->get_skip_unparse() = %s \n",file->get_skip_unparse() ? "true" : "false");

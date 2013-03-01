@@ -1039,6 +1039,32 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                                 // file->display("Marked as java file based on file suffix");
                                  }
+                                else if (CommandlineProcessing::isX10FileNameSuffix(filenameExtension) == true)
+                                {
+                                   SgSourceFile* sourceFile = new SgSourceFile (argv,  project);
+                                   file = sourceFile;
+
+                                  // This a not a C++ file so don't define the __cplusplus macro, just like GNU gcc would
+                                   file->set_sourceFileUsesCppFileExtension(false);
+
+                                // Note that we can use the C++ unparser to provide output that will support inspection of
+                                // code from the AST, but this is a temporary solution.  The only correct setting is to use
+                                // the ongoing support within the Java specific unparser.
+                                // file->set_outputLanguage(SgFile::e_C_output_language);
+                                   file->set_outputLanguage(SgFile::e_X10_output_language);
+
+                                   file->set_X10_only(true);
+
+                                // TOO1 (2/20/2013): X10 code is only compiled, not linked as is C/C++ and Fortran.
+                                   file->set_compileOnly(true);
+
+                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+                                // Note that file->get_requires_C_preprocessor() should be false.
+                                   ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+                                   sourceFile->initializeGlobalScope();
+
+                                // file->display("Marked as X10 file based on file suffix");
+                                }
                               else if (CommandlineProcessing::isPythonFileNameSuffix(filenameExtension) == true)
                               {
                                   // file = new SgSourceFile ( argv,  project );
@@ -1923,9 +1949,17 @@ int openFortranParser_main(int argc, char **argv );
 int openJavaParser_main(int argc, char **argv );
 #endif
 
+// See $ROSE/src/frontend/X10_ROSE_Connection
+extern int x10_main(int argc, char** argv);
+
 int
 SgFile::callFrontEnd()
    {
+  if (SgProject::get_verbose() > 0)
+  {
+      std::cout << "[INFO] [SgFile::callFrontEnd]" << std::endl;
+  }
+
   // DQ (1/17/2006): test this
   // ROSE_ASSERT(get_fileInfo() != NULL);
 
@@ -1988,11 +2022,15 @@ SgFile::callFrontEnd()
 
   // Build the commandline for EDG
   // printf ("Inside of SgFile::callFrontEnd(): Calling build_EDG_CommandLine (fileNameIndex = %d) \n",fileNameIndex);
-  #ifndef ROSE_USE_CLANG_FRONTEND
-     build_EDG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
-  #else
-     build_CLANG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
-  #endif
+  if (get_C_only() ||
+      get_Cxx_only())
+  {
+      #ifndef ROSE_USE_CLANG_FRONTEND
+         build_EDG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
+      #else
+         build_CLANG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
+      #endif
+  }
   // printf ("DONE: Inside of SgFile::callFrontEnd(): Calling build_EDG_CommandLine (fileNameIndex = %d) \n",fileNameIndex);
 
   // DQ (10/15/2005): This is now a single C++ string (and not a list)
@@ -2037,10 +2075,12 @@ SgFile::callFrontEnd()
      set_sage_transform_function(alternativeSageEdgInterfaceConstruction);
 #endif
 
-  // DQ (1/22/2004): As I recall this has a name that really
-  // should be "disable_edg" instead of "disable_edg_backend".
-     if ( get_disable_edg_backend() == false )
-        {
+  if ((get_C_only() || get_Cxx_only()) &&
+      // DQ (1/22/2004): As I recall this has a name that really
+      // should be "disable_edg" instead of "disable_edg_backend".
+      get_disable_edg_backend() == false &&
+      get_new_frontend() == true)
+  {
        // ROSE::new_frontend = true;
 
        // We can either use the newest EDG frontend separately (useful for debugging)
@@ -2061,110 +2101,82 @@ SgFile::callFrontEnd()
        // ROSE_ASSERT (get_unparse_output_filename() != NULL);
        // ROSE_ASSERT (get_unparse_output_filename().empty() == false);
 
-          if ( get_new_frontend() == true )
-             {
-            // Use the current version of the EDG frontend from EDG (or any other version)
-            // abort();
-               printf ("ROSE::new_frontend == true (call edgFrontEnd using unix system() function!) \n");
+      // Use the current version of the EDG frontend from EDG (or any other version)
+      // abort();
+         printf ("ROSE::new_frontend == true (call edgFrontEnd using unix system() function!) \n");
 
-               std::string frontEndCommandLineString;
-               if ( get_KCC_frontend() == true )
-                  {
-                    frontEndCommandLineString = "KCC ";  // -cpfe_only is no longer supported (I think)
-                  }
-                 else
-                  {
-                 // frontEndCommandLineString = "edgFrontEnd ";
-                    frontEndCommandLineString = "edgcpfe --g++ --gnu_version 40201 ";
-                  }
-               frontEndCommandLineString += CommandlineProcessing::generateStringFromArgList(inputCommandLine,true,false);
+         std::string frontEndCommandLineString;
+         if ( get_KCC_frontend() == true )
+            {
+              frontEndCommandLineString = "KCC ";  // -cpfe_only is no longer supported (I think)
+            }
+           else
+            {
+           // frontEndCommandLineString = "edgFrontEnd ";
+              frontEndCommandLineString = "edgcpfe --g++ --gnu_version 40201 ";
+            }
+         frontEndCommandLineString += CommandlineProcessing::generateStringFromArgList(inputCommandLine,true,false);
 
-               if ( get_verbose() > -1 )
-                    printf ("frontEndCommandLineString = %s \n\n",frontEndCommandLineString.c_str());
+         if ( get_verbose() > -1 )
+              printf ("frontEndCommandLineString = %s \n\n",frontEndCommandLineString.c_str());
 
-            // ROSE_ASSERT (!"Should not get here");
-               int status = system(frontEndCommandLineString.c_str());
+      // ROSE_ASSERT (!"Should not get here");
+         int status = system(frontEndCommandLineString.c_str());
 
-               printf ("After calling edgcpfe as a test (status = %d) \n",status);
-               ROSE_ASSERT(status == 0);
-            // ROSE_ASSERT(false);
-             }
-            else
-             {
-            // Call the "INTERNAL" EDG Front End used by ROSE (with modified command
-            // line input so that ROSE's command line is simplified)!
-               if ( get_verbose() > 1 )
-                    printf ("In SgFile::callFrontEnd(): calling edg_main \n");
-#if 0
-               frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
+         printf ("After calling edgcpfe as a test (status = %d) \n",status);
+         ROSE_ASSERT(status == 0);
+      // ROSE_ASSERT(false);
+  }
+  else
+  {
+      if ((get_C_only() || get_Cxx_only()) &&
+          get_disable_edg_backend() == true)
+      {
+          if (SgProject::get_verbose() > 0)
+          {
+              std::cout
+                  << "[INFO] [SgFile::callFrontEnd] Skipping EDG frontend"
+                  << std::endl;
+          }
+      }
+      else
+      {
+      // DQ (9/2/2008): Factored out the details of building the AST for Source code (SgSourceFile IR node) and Binaries (SgBinaryComposite IR node)
+      // Note that making buildAST() a virtual function does not appear to solve the problems since it is called form the base class.  This is
+      // awkward code which is temporary.
 
-               if ( get_verbose() > 1 )
-                    printf ("frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
-#endif
-            // We need to detect errors in this stage so that we can prevent further processing
-            // int edg_errorLevel = edg_main (numberOfCommandLineArguments, inputCommandLine,sageFile);
-            // int edg_errorLevel = edg_main (numberOfCommandLineArguments, inputCommandLine,*this);
-            // int frontendErrorLevel = 0;
+      // printf ("Before calling buildAST(): this->class_name() = %s \n",this->class_name().c_str());
 
-#if 0
-               this->get_project()->display("SgProject::callFrontEnd()");
-               display("SgFile::callFrontEnd()");
-               printf ("get_C_only()                = %s \n",(get_C_only()       == true) ? "true" : "false");
-               printf ("get_C99_only()              = %s \n",(get_C99_only()     == true) ? "true" : "false");
-               printf ("get_Cxx_only()              = %s \n",(get_Cxx_only()     == true) ? "true" : "false");
-               printf ("get_Fortran_only()          = %s \n",(get_Fortran_only() == true) ? "true" : "false");
-               printf ("get_F77_only()              = %s \n",(get_F77_only()     == true) ? "true" : "false");
-               printf ("get_F90_only()              = %s \n",(get_F90_only()     == true) ? "true" : "false");
-               printf ("get_F95_only()              = %s \n",(get_F95_only()     == true) ? "true" : "false");
-               printf ("get_F2003_only()            = %s \n",(get_F2003_only()   == true) ? "true" : "false");
-               printf ("get_CoArrayFortran_only()   = %s \n",(get_CoArrayFortran_only()   == true) ? "true" : "false");
-               printf ("get_PHP_only()              = %s \n",(get_PHP_only()     == true) ? "true" : "false");
-               printf ("get_Java_only()             = %s \n",(get_Java_only()    == true) ? "true" : "false");
-               printf ("get_binary_only()           = %s \n",(get_binary_only()  == true) ? "true" : "false");
-            // printf ("get_addCppDirectivesToAST() = %s \n",(get_addCppDirectivesToAST()  == true) ? "true" : "false");
+         switch (this->variantT())
+            {
+              case V_SgFile:
+              case V_SgSourceFile:
+                 {
+                   SgSourceFile* sourceFile = const_cast<SgSourceFile*>(isSgSourceFile(this));
+                   frontendErrorLevel = sourceFile->buildAST(localCopy_argv, inputCommandLine);
+                   break;
+                 }
 
-            // DQ (18/2008): We now explicit mark files that require C preprocessing...
-               printf ("get_requires_C_preprocessor() = %s \n",(get_requires_C_preprocessor() == true) ? "true" : "false");
-#endif
-#if 0
-               printf ("Exiting while testing binary \n");
-               ROSE_ASSERT(false);
-#endif
+              case V_SgBinaryComposite:
+                 {
+                   SgBinaryComposite* binary = const_cast<SgBinaryComposite*>(isSgBinaryComposite(this));
+                   frontendErrorLevel = binary->buildAST(localCopy_argv, inputCommandLine);
+                   break;
+                 }
 
-            // DQ (9/2/2008): Factored out the details of building the AST for Source code (SgSourceFile IR node) and Binaries (SgBinaryComposite IR node)
-            // Note that making buildAST() a virtual function does not appear to solve the problems since it is called form the base class.  This is
-            // awkward code which is temporary.
+              case V_SgUnknownFile:
+                 {
+                   break;
+                 }
 
-            // printf ("Before calling buildAST(): this->class_name() = %s \n",this->class_name().c_str());
-
-               switch (this->variantT())
-                  {
-                    case V_SgFile:
-                    case V_SgSourceFile:
-                       {
-                         SgSourceFile* sourceFile = const_cast<SgSourceFile*>(isSgSourceFile(this));
-                         frontendErrorLevel = sourceFile->buildAST(argv,inputCommandLine);
-                         break;
-                       }
-
-                    case V_SgBinaryComposite:
-                       {
-                         SgBinaryComposite* binary = const_cast<SgBinaryComposite*>(isSgBinaryComposite(this));
-                         frontendErrorLevel = binary->buildAST(argv,inputCommandLine);
-                         break;
-                       }
-
-                    case V_SgUnknownFile:
-                       {
-                         break;
-                       }
-
-                    default:
-                       {
-                         printf ("Error: default reached in Rose parser/IR translation processing: class name = %s \n",this->class_name().c_str());
-                         ROSE_ASSERT(false);
-                       }
-                  }
+              default:
+                 {
+                   printf ("Error: default reached in Rose parser/IR translation processing: class name = %s \n",this->class_name().c_str());
+                   ROSE_ASSERT(false);
+                 }
+            }
+      }
+  }
 
             // printf ("After calling buildAST(): this->class_name() = %s \n",this->class_name().c_str());
 #if 0
@@ -2195,8 +2207,6 @@ SgFile::callFrontEnd()
                     if ( get_verbose() >= 1 )
                          cout << "Warnings in Rose parser/IR translation processing! (continuing ...) " << endl;
                   }
-             }
-        }
 
   // DQ (4/20/2006): This code was moved from the SgFile constructor so that is would
   // permit the separate construction of the SgProject and call to the front-end cleaner.
@@ -3839,8 +3849,27 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
 #endif
    }
 
+int
+SgSourceFile::build_X10_AST(const vector<string>& p_argv)
+{
+  #ifndef ROSE_BUILD_X10_LANGUAGE_SUPPORT
+      ROSE_ASSERT (!
+          "[FATAL] [ROSE] [frontend] [X10] "
+          "ROSE was not configured to support the X10 frontend, see --help.");
+  #else
+      if (SgProject::get_verbose() >= 1)
+          std::cout << "[INFO] Building the X10 AST" << std::endl;
+  #endif
 
+  int argc = p_argv.size();
+  char** argv = NULL;
 
+  CommandlineProcessing::
+      generateArgcArgvFromList(p_argv, argc, argv);
+
+  int status = x10_main(argc, argv);
+  return status;
+}
 
 namespace SgSourceFile_processCppLinemarkers
    {
@@ -4292,7 +4321,19 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
 
                          }
                       else
-                         {
+                      {
+                          if (get_X10_only() == true)
+                          {
+                              #ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
+                                   frontendErrorLevel = build_X10_AST(argv);
+                                   frontend_failed = (frontendErrorLevel > 0);
+                              #else
+                                   ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [X10] "
+                                                  "ROSE was not configured to support the X10 frontend.");
+                              #endif
+                          }
+                          else
+                          {
                              frontendErrorLevel = build_C_and_Cxx_AST(argv,inputCommandLine);
 
                              // DQ (12/29/2008): The newer version of EDG (version 3.10 and 4.0) use different return codes for indicating an error.
@@ -4303,7 +4344,8 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                              // non-zero error code can mean warnings were produced, values greater than 3 indicate errors.
                              frontend_failed = (frontendErrorLevel > 3);
 #endif
-                         }
+                          }
+                      }
                   }
              }
         }
@@ -4400,6 +4442,11 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
        // ROSE_ASSERT(false);
           compilerNameOrig = BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH;
         }
+
+    if (get_X10_only() == true)
+    {
+        compilerNameOrig = BACKEND_X10_COMPILER_NAME_WITH_PATH;
+    }
 
   // BP : 11/13/2001, checking to see that the compiler name is set
      string compilerName = compilerNameOrig + " ";
@@ -4681,9 +4728,11 @@ SgProject::compileOutput()
             // printf ("In Project::compileOutput(): (BASE of loop) file = %d errorCode = %d localErrorCode = %d \n",i,errorCode,localErrorCode);
              }
 
-       // case 3: linking at the project level (but Java codes should never be linked).
-          if (get_Java_only() == false && get_Python_only() == false)
-             {
+       // case 3: linking at the project level
+          if (! (get_Java_only()   ||
+                 get_Python_only() ||
+                 get_X10_only()))
+          {
             // Liao, 11/19/2009, 
             // I really want to just move the SgFile::compileOutput() to SgProject::compileOutput() 
             // and have both compilation and linking finished at the same time, just as the original command line does.
@@ -4703,7 +4752,7 @@ SgProject::compileOutput()
 #else
    #pragma message ("sageSupport.C : linkingReturnVal = link (compilerName); not implemented yet.")
 #endif
-             }
+          }
         } // end if preprocessing-only is false
 
   // return errorCode;
