@@ -9,6 +9,10 @@ dnl build using ROSE)
 # Make sure that we select a backend compiler before building the backend specific header files
 # AC_BEFORE([CHOOSE_BACKEND_COMPILER],[GENERATE_BACKEND_COMPILER_SPECIFIC_HEADERS])
   AC_BEFORE([CHOOSE_BACKEND_COMPILER],[GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS])
+
+  ROSE_CONFIGURE_SECTION([ROSE Backend])
+  ROSE_SUPPORT_X10_BACKEND()
+
   AC_ARG_WITH(alternate_backend_Cxx_compiler,
     [  --with-alternate_backend_Cxx_compiler=<compiler name>
                                 Specify an alternative C++ back-end compiler],

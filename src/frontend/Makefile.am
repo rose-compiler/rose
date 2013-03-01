@@ -8,7 +8,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # SUBDIRS = SageIII BinaryDisassembly ObjdumpDisassembler OpenFortranParser_SAGE_Connection EDG EDG_SAGE_Connection
 # SUBDIRS = SageIII CxxFrontend OpenFortranParser_SAGE_Connection BinaryDisassembly Disassemblers BinaryFormats BinaryLoader PHPFrontend
 
-SUBDIRS = SageIII 
+SUBDIRS = \
+  SageIII \
+  X10_ROSE_Connection
 
 # Note that CXX and C are either both defined or both undefined.
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
@@ -21,10 +23,6 @@ endif
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
    SUBDIRS += ECJ_ROSE_Connection
-endif
-
-if ROSE_BUILD_X10_LANGUAGE_SUPPORT
-   SUBDIRS += X10_ROSE_Connection
 endif
 
 SUBDIRS += BinaryDisassembly Disassemblers BinaryFormats BinaryLoader

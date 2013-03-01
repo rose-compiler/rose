@@ -1027,7 +1027,20 @@ CommandlineProcessing::isJavaFileNameSuffix ( const std::string & suffix )
 
      return returnValue;
    }
-   
+
+bool
+CommandlineProcessing::isX10FileNameSuffix (const std::string & suffix)
+{
+  bool returnValue = false;
+
+  if (suffix == "x10" ||
+      suffix == "X10")
+  {
+      returnValue = true;
+  }
+
+  return returnValue;
+}
 
 void
 CommandlineProcessing::initSourceFileSuffixList ( )
@@ -1137,6 +1150,8 @@ CommandlineProcessing::initSourceFileSuffixList ( )
        // DQ (10/11/2010): Adding support for java.
           validSourceFileSuffixes.push_back(".java");
 #endif
+          validSourceFileSuffixes.push_back(".x10");
+          validSourceFileSuffixes.push_back(".X10");
           first_call = false;
         }
    }

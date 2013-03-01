@@ -82,6 +82,8 @@ class Unparse_MOD_SAGE
           void printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info);
           void printSpecifier (SgDeclarationStatement* decl_stmt, SgUnparse_Info& info);
 
+       // DQ (2/26/2013): Added support for missing attributes in unparsed code.
+          void printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info);
 
           void directives(SgLocatedNode* lnode);
 

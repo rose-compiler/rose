@@ -1565,6 +1565,139 @@ Unparse_MOD_SAGE::printSpecifier ( SgDeclarationStatement* decl_stmt, SgUnparse_
    }
 
 
+void
+Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info)
+   {
+  // DQ (2/26/2013): Added support for missing attributes in unparsed code.
+  // These are output after the function declaration (and before the body of the function or the closing ";").
+
+#if 0
+     printf ("Output the flags in the declarationModifier for decl_stmt = %p = %s = %s \n",decl_stmt,decl_stmt->class_name().c_str(),SageInterface::get_name(decl_stmt).c_str());
+     decl_stmt->get_declarationModifier().display("Unparse_MOD_SAGE::printAttributes(): declarationModifier");
+#endif
+
+     if (decl_stmt->get_declarationModifier().isThrow() == true)
+        {
+       // DQ (2/26/2013): This is output as part of the function type unparsing (since it is a part of the type system).
+       // curprint( " throw()");
+        }
+
+     unsigned long alignmentValue = decl_stmt->get_declarationModifier().get_typeModifier().get_gnu_attribute_alignment();
+     if (alignmentValue != 0)
+        {
+       // curprint( " __attribute__((align(N)))");
+           curprint( " __attribute__((align(");
+           curprint(StringUtility::numberToString((int)alignmentValue));
+           curprint(")))");
+        }
+
+     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(decl_stmt);
+
+     if (functionDeclaration != NULL)
+        {
+#if 0
+          printf ("Output the flags in the different modifiers for function = %p = %s = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+          functionDeclaration->get_functionModifier().display("Unparse_MOD_SAGE::printAttributes(): functionModifier");
+#endif
+#if 0
+       // DQ (1/3/2009): Added GNU specific attributes
+          bool isGnuAttributeConstructor() const;
+          bool isGnuAttributeDestructor() const;
+          bool isGnuAttributePure() const;
+          bool isGnuAttributeWeak() const;
+          bool isGnuAttributeUnused() const;
+          bool isGnuAttributeUsed() const;
+          bool isGnuAttributeDeprecated() const;
+          bool isGnuAttributeMalloc() const;
+          bool isGnuAttributeNaked() const;
+          bool isGnuAttributeNoInstrumentFunction() const;
+          bool isGnuAttributeNoCheckMemoryUsage() const;
+          bool isGnuAttributeNoInline() const;
+          bool isGnuAttributeAlwaysInline() const;
+          bool isGnuAttributeNoThrow() const;
+          bool isGnuAttributeWeakReference() const;
+#endif
+
+       // DQ (2/26/2013): Added noinline attribute code generation.
+          if (functionDeclaration->get_functionModifier().isGnuAttributeConstructor() == true)
+             {
+               curprint( " __attribute__((constructor))");
+             }
+
+          if (functionDeclaration->get_functionModifier().isGnuAttributeDestructor() == true)
+             {
+               curprint( " __attribute__((destructor))");
+             }
+
+          if (functionDeclaration->get_functionModifier().isGnuAttributePure() == true)
+             {
+               curprint( " __attribute__((pure))");
+             }
+
+          if (functionDeclaration->get_functionModifier().isGnuAttributeWeak() == true)
+             {
+               curprint( " __attribute__((weak))");
+             }
+
+          if (functionDeclaration->get_functionModifier().isGnuAttributeUnused() == true)
+             {
+               curprint( " __attribute__((unused))");
+             }
+
+          if (functionDeclaration->get_functionModifier().isGnuAttributeUsed() == true)
+             {
+               curprint( " __attribute__((used))");
+             }
+
+          if (functionDeclaration->get_functionModifier().isGnuAttributeDeprecated() == true)
+             {
+               curprint( " __attribute__((deprecated))");
+             }
+
+          if (functionDeclaration->get_functionModifier().isGnuAttributeMalloc() == true)
+             {
+               curprint( " __attribute__((malloc))");
+             }
+
+          if (functionDeclaration->get_functionModifier().isGnuAttributeNaked() == true)
+             {
+               curprint( " __attribute__((naked))");
+             }
+
+          if (functionDeclaration->get_functionModifier().isGnuAttributeNoInstrumentFunction() == true)
+             {
+               curprint( " __attribute__((no_instrument_function))");
+             }
+
+          if (functionDeclaration->get_functionModifier().isGnuAttributeNoCheckMemoryUsage() == true)
+             {
+               curprint( " __attribute__((no_check_memory_usage))");
+             }
+
+          if (functionDeclaration->get_functionModifier().isGnuAttributeNoInline() == true)
+             {
+               curprint( " __attribute__((noinline))");
+             }
+
+          if (functionDeclaration->get_functionModifier().isGnuAttributeAlwaysInline() == true)
+             {
+               curprint( " __attribute__((always_inline))");
+             }
+
+          if (functionDeclaration->get_functionModifier().isGnuAttributeNoThrow() == true)
+             {
+               curprint( " __attribute__((no_throw))");
+             }
+
+          if (functionDeclaration->get_functionModifier().isGnuAttributeWeakReference() == true)
+             {
+               curprint( " __attribute__((weakref))");
+             }
+        }
+   }
+
+
+
 #if 0
 // DQ (2/4/2006): Removed (not used)
 void
@@ -1589,7 +1722,7 @@ Unparse_MOD_SAGE::setupColorCodes ( vector< pair<bool,std::string> > & stateVect
    {
   // std::pair<bool,std::string> p1(false,string("red"));
   // stateVector.push_back(p1);
-      stateVector.push_back(pair<bool,std::string>(false,string("red")));
+     stateVector.push_back(pair<bool,std::string>(false,string("red")));
      stateVector.push_back(pair<bool,std::string>(false,string("orange")));
      stateVector.push_back(pair<bool,std::string>(false,string("blue")));
      stateVector.push_back(pair<bool,std::string>(false,string("green")));
