@@ -1798,8 +1798,14 @@ Specifiers that can have only one value (implemented with a protected enum varia
      TypeModifier.setDataPrototype("SgTypeModifier::gnu_extension_machine_mode_enum", "gnu_extension_machine_mode", "= SgTypeModifier::e_gnu_extension_machine_mode_unspecified",
                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (3/1/2013): To support letting zero being an acceptable value, we want to make the default value -1.
+  // To do this we need for this value to be signed, since the range of values is so small it can be a short value.
   // DQ (1/3/2009): Added support for alignment specfication using gnu attributes (zero is used as the default to imply no alignment specification).
-     TypeModifier.setDataPrototype("unsigned long int", "gnu_attribute_alignment", "= 0",
+  // TypeModifier.setDataPrototype("unsigned long int", "gnu_attribute_alignment", "= -1",
+  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // TypeModifier.setDataPrototype("short", "gnu_attribute_alignment", "= -1",
+  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TypeModifier.setDataPrototype("int", "gnu_attribute_alignment", "= -1",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (1/3/2009): This is used for funtion types only. I reserve values less than zero (-1 implies that

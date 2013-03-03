@@ -4212,6 +4212,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                curprint ( tmp_name.str());
              }
 
+       // DQ (2/27/2013): Added support for missing attributes.
+          unp->u_sage->printAttributes(decl_item,info);
+
 #if 0
           curprint ( string("\n /* Inside of unparseVarDeclStmt(): increment the variable iterator */ \n"));
 #endif
@@ -4267,6 +4270,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
   // if (!ninfo.inEnumDecl() && !ninfo.inArgList() && !ninfo.inConditional() && !ninfo.SkipSemiColon())
      if (!ninfo.inEnumDecl() && !ninfo.inArgList() && !ninfo.SkipSemiColon())
         {
+       // DQ (2/27/2013): Added support for missing attributes.
+          unp->u_sage->printAttributes(vardecl_stmt,info);
+
           curprint(";");
         }
 

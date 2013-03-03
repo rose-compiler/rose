@@ -1469,7 +1469,7 @@ HEADER_TYPE_MODIFIER_START
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, const SgTypeModifier & m );
-		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
+          friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -2268,8 +2268,8 @@ SgAccessModifier::displayString() const
      s += std::string("isDefault() = ")   + std::string(isDefault()   ? "true " : "false ");
      s += std::string("isPrivate() = ")   + std::string(isPrivate()   ? "true " : "false ");
      s += std::string("isProtected() = ") + std::string(isProtected() ? "true " : "false ");
-     s += std::string("isPublic() = ")    + std::string(isPublic()    ? "true"  : "false ");
-     s += std::string("isUndefined() = ") + std::string(isUndefined() ? "true"  : "false ");
+     s += std::string("isPublic() = ")    + std::string(isPublic()    ? "true " : "false ");
+     s += std::string("isUndefined() = ") + std::string(isUndefined() ? "true " : "false ");
      s += ")";
      return s;
    }
@@ -3211,12 +3211,17 @@ string
 $CLASSNAME::displayString() const
    {
      std::string s = "$CLASSNAME(";
-     s += std::string("isUnknown() = ")  + std::string(isUnknown()  ? "true " : "false ");
-     s += std::string("isDefault() = ")  + std::string(isDefault()  ? "true " : "false ");
-     s += std::string("isRestrict() = ") + std::string(isRestrict() ? "true " : "false ");
-     s += std::string("\n     ") + get_constVolatileModifier().displayString() + " ";
-     s += std::string("\n     ") + get_upcModifier().displayString() + " ";
-     s += std::string("\n     ") + get_elaboratedTypeModifier().displayString();
+     s += std::string("isUnknown() = ")                + std::string(isUnknown()  ? "true " : "false ");
+     s += std::string("isDefault() = ")                + std::string(isDefault()  ? "true " : "false ");
+     s += std::string("isRestrict() = ")               + std::string(isRestrict() ? "true " : "false ");
+     s += std::string("gnu_extension_machine_mode = ") + StringUtility::numberToString((int)p_gnu_extension_machine_mode) + " ";
+     s += std::string("gnu_attribute_alignment = ")    + StringUtility::numberToString((int)p_gnu_attribute_alignment)    + " ";
+     s += std::string("gnu_attribute_sentinel = ")     + StringUtility::numberToString((int)p_gnu_attribute_sentinel)     + " ";
+     s += std::string("address_space_value = ")        + StringUtility::numberToString((int)p_address_space_value)        + " ";
+     s += std::string("vector_size = ")                + StringUtility::numberToString((int)p_vector_size)                + " ";
+     s += std::string("\n     ")                       + get_constVolatileModifier().displayString()                      + " ";
+     s += std::string("\n     ")                       + get_upcModifier().displayString()                                + " ";
+     s += std::string("\n     ")                       + get_elaboratedTypeModifier().displayString();
      s += ")";
      return s;
    }
@@ -9888,7 +9893,9 @@ SgInitializedName::post_construction_initialization()
   // DQ (1/3/2009): Added support for GNU variable attributes (std::strings will default to null, so they are not setup).
      p_gnu_attribute_modifierVector          = SgBitVector(e_last_gnu_variable_attribute,false);
      p_gnu_attribute_initialization_priority = 0;
-     p_gnu_attribute_alignment               = 0;
+
+  // DQ (3/1/2013): Changed default value to -1 and type to signed short so that we could reserve negative values to be a marked for not explicitly specified.
+     p_gnu_attribute_alignment               = -1;
 
   // Borrow the enum definition (and default value from SgDeclarationModifier).
      p_gnu_attribute_visability              = SgDeclarationModifier::e_unknown_visibility;
