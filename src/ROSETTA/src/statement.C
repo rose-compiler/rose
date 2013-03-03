@@ -1260,9 +1260,12 @@ Grammar::setUpStatements ()
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      VariableDeclaration.setDataPrototype ("unsigned short", "gnu_extension_initialization_priority", "= 0",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (3/1/2013): I think that this should be exclusively on the SgInitializedName since there can be multiple alignment specifications (one for each variable in a multi-variable variable declaration).
   // This has to be of type "unsigned long" (I think)
-     VariableDeclaration.setDataPrototype ("unsigned long", "gnu_extension_alignment", "= 0",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // VariableDeclaration.setDataPrototype ("unsigned long", "gnu_extension_alignment", "= 0",
+  //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      VariableDeclaration.setDataPrototype ("SgDeclarationStatement::gnu_extension_visability_attribute_enum", "gnu_extension_visability", "= SgDeclarationStatement::e_gnu_attribute_visability_unspecified",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      VariableDeclaration.setDataPrototype ("SgVariableDeclaration::gnu_extension_declaration_attributes_enum", "gnu_extension_declaration_attribute", "= SgVariableDeclaration::e_gnu_attribute_unspecified",

@@ -1566,14 +1566,39 @@ Unparse_MOD_SAGE::printSpecifier ( SgDeclarationStatement* decl_stmt, SgUnparse_
 
 
 void
+Unparse_MOD_SAGE::printAttributes(SgInitializedName* initializedName, SgUnparse_Info& info)
+   {
+  // DQ (2/26/2013): Added support for missing attributes in unparsed code.
+  // These are output after the function declaration (and before the body of the function or the closing ";").
+
+#if 0
+     printf ("Output the flags in the declarationModifier for decl_stmt = %p = %s = %s \n",initializedName,initializedName->class_name().c_str(),SageInterface::get_name(initializedName).c_str());
+#endif
+
+     short alignmentValue = initializedName->get_gnu_attribute_alignment();
+
+  // DQ (3/1/2013): The default value is changed from zero to -1 (and the type was make to be a short (signed) value).
+     if (alignmentValue >= 0)
+        {
+       // curprint( " __attribute__((align(N)))");
+           curprint( " __attribute__((align(");
+           curprint(StringUtility::numberToString((int)alignmentValue));
+           curprint(")))");
+        }
+   }
+
+void
 Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info)
    {
   // DQ (2/26/2013): Added support for missing attributes in unparsed code.
   // These are output after the function declaration (and before the body of the function or the closing ";").
 
 #if 0
-     printf ("Output the flags in the declarationModifier for decl_stmt = %p = %s = %s \n",decl_stmt,decl_stmt->class_name().c_str(),SageInterface::get_name(decl_stmt).c_str());
-     decl_stmt->get_declarationModifier().display("Unparse_MOD_SAGE::printAttributes(): declarationModifier");
+     if (isSgVariableDeclaration(decl_stmt) != NULL)
+        {
+          printf ("Output the flags in the declarationModifier for decl_stmt = %p = %s = %s \n",decl_stmt,decl_stmt->class_name().c_str(),SageInterface::get_name(decl_stmt).c_str());
+          decl_stmt->get_declarationModifier().display("Unparse_MOD_SAGE::printAttributes(): declarationModifier");
+        }
 #endif
 
      if (decl_stmt->get_declarationModifier().isThrow() == true)
@@ -1582,8 +1607,10 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
        // curprint( " throw()");
         }
 
-     unsigned long alignmentValue = decl_stmt->get_declarationModifier().get_typeModifier().get_gnu_attribute_alignment();
-     if (alignmentValue != 0)
+     short alignmentValue = decl_stmt->get_declarationModifier().get_typeModifier().get_gnu_attribute_alignment();
+
+  // DQ (3/1/2013): The default value is changed from zero to -1 (and the type was make to be a short (signed) value).
+     if (alignmentValue >= 0)
         {
        // curprint( " __attribute__((align(N)))");
            curprint( " __attribute__((align(");

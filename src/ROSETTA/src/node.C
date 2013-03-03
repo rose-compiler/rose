@@ -540,9 +540,17 @@ Grammar::setUpNodes ()
   // DQ (1/3/2009): Added support for GNU attributes
      InitializedName.setDataPrototype("std::string", "gnu_attribute_section_name", "=\"\"",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (3/1/2013): To support letting zero being an acceptable value, we want to make the default value -1.
+  // To do this we need for this value to be signed, since the range of values is so small it can be a short value.
   // DQ (1/3/2009): Added support for alignment specfication using gnu attributes (zero is used as the default to imply no alignment specification).
-     InitializedName.setDataPrototype("unsigned long int", "gnu_attribute_alignment", "= 0",
+  // InitializedName.setDataPrototype("unsigned long int", "gnu_attribute_alignment", "= 0",
+  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // InitializedName.setDataPrototype("short", "gnu_attribute_alignment", "= -1",
+  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     InitializedName.setDataPrototype("int", "gnu_attribute_alignment", "= -1",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (1/3/2009): Added support for GNU attributes (reuse the enum declaration at the SgDeclarationModifier IR node).
      InitializedName.setDataPrototype("SgDeclarationModifier::gnu_declaration_visability_enum", "gnu_attribute_visability","= SgDeclarationModifier::e_unknown_visibility",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
