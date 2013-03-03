@@ -330,7 +330,28 @@ insertGlobalPrototype (SgFunctionDeclaration* def,
              {
                SgFunctionDeclaration* proto_i = *i;
                ROSE_ASSERT (proto_i);
+#if 0
+               printf ("In insertGlobalPrototype(): proto_i = %p = %s \n",proto_i,proto_i->class_name().c_str());
+#endif
+#if 0
+            // DQ (3/3/2013): We can't reset the firstNondefiningDeclaration if it is already set.
+            // proto_i->set_firstNondefiningDeclaration (prototype);
+               if (proto_i->get_firstNondefiningDeclaration() != NULL)
+                  {
+#if 1
+                    printf ("In insertGlobalPrototype(): prototype = %p = %s \n",prototype,prototype->class_name().c_str());
+                    printf ("In insertGlobalPrototype(): proto_i->get_firstNondefiningDeclaration() = %p = %s \n",proto_i->get_firstNondefiningDeclaration(),proto_i->get_firstNondefiningDeclaration()->class_name().c_str());
+                    printf ("In insertGlobalPrototype(): proto_i->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration() = %p = %s \n",
+                         proto_i->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration(),proto_i->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration()->class_name().c_str());
+#endif
+                  }
+                 else
+                  {
+                    proto_i->set_firstNondefiningDeclaration (prototype);
+                  }
+#else
                proto_i->set_firstNondefiningDeclaration (prototype);
+#endif
                ROSE_ASSERT (proto_i->get_declaration_associated_with_symbol() != NULL);     
 
             // Only set the friend function prototype to reference the defining declaration
