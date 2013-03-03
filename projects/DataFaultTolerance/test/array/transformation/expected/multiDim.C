@@ -2,17 +2,17 @@
 
 int main()
 {
-  int A[100UL][100UL];
-  int B[100UL][100UL];
+  int A[100][100];
+  int B[100][100];
   int i;
   int j;
   int temp;
   
-#pragma mem_fault_tolerance ( A : < 0 : 100 > < 0 : 100 > ) ( B : < 0 : 100 > < 0 : 100 > ) ( Chunksize = 8 )
+#pragma mem_fault_tolerance (A:<0:100><0:100>) (B:<0:100><0:100>) (Chunksize=8)
   for (i = 0; i < 100; i++) {
     for (j = 0; j < 100; j++) {
       int _memTemp0 = A[i][j];
-      A[i][j] = (i + j);
+      A[i][j] = i + j;
       updateElem("A",A[i][j],j,i,_memTemp0,8);
       int _memTemp1 = B[i][j];
       B[i][j] = 0;
@@ -21,7 +21,7 @@ int main()
   }
   clearHashTable();
   
-#pragma mem_fault_tolerance ( A : < 0 : 100 > < 0 : 100 > ) ( B : < 0 : 100 > < 0 : 100 > ) ( Chunksize = 8 )
+#pragma mem_fault_tolerance (A:<0:100><0:100>) (B:<0:100><0:100>) (Chunksize=8)
   updateArray("A",A[0] + 0,0,100,0,100,8);
   for (i = 0; i < 100; i++) {
     for (j = 0; j < 100; j++) {
@@ -32,5 +32,4 @@ int main()
   }
   validateArray("A",A[0] + 0,0,100,0,100,8);
   clearHashTable();
-  return 0;
 }

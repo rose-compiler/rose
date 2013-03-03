@@ -85,6 +85,16 @@ class TestCFGWrap_Text : public TestCFGWrap
   }
 };
 
+class TestCFGWrap_Stdout : public TestCFGWrap {
+public:
+    TestCFGWrap_Stdout(AnalysisDomain _t): TestCFGWrap(_t) {}
+    void operator()(SgNode *head) {
+        TestCFGWrap::operator()(head);
+        write_graph(graph, std::cout, "edge");
+        std::cout <<"\n";
+    }
+};
+
 class TestCFGWrap_DOT : public TestCFGWrap
 {
  public:
@@ -120,10 +130,14 @@ main ( int argc,  char * argv[] )
       ROSE_ASSERT(sageFile != NULL);
 
       TestCFGWrap::AnalysisDomain t = UseOA(argc, argv)? TestCFGWrap::OA : TestCFGWrap::ROSE;
-      //string txtname = string(strrchr(sageFile.getFileName(),'/')+1) + ".outx";
       string filename = sageFile->getFileName();
+
+#if 0 // Test harness uses stdout rather than a temporary file
       string txtname = filename.substr(filename.rfind('/')+1) + ".outx"; 
       TestCFGWrap_Text txtop(t,txtname);
+#else
+      TestCFGWrap_Stdout txtop(t);
+#endif
       //string dotname = string(strrchr(sageFile.getFileName(),'/')+1) + ".dot";
       string dotname = filename.substr(filename.rfind('/')+1) + ".dot";
       TestCFGWrap_DOT dotop(t);

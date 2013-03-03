@@ -279,7 +279,9 @@ bool MintPragmas::isForLoopPragma(SgNode* node, bool verbose)
       nested= pragmaString.substr(0, pragmaString.find(MINT_NESTED_PRAGMA) + 
 					 MINT_NESTED_PRAGMA.length());
   
-      nested = pragmaString.substr (nested.length() + 1);
+      //nested = pragmaString.substr (nested.length() + 1);
+      // Liao 2/6/2013, we need to preserve the leading '('
+      nested = pragmaString.substr (nested.length());
       
       //get rid off the paranthesis around the parameter list 
       nested = nested.substr(nested.find("(")+1 , nested.find_first_of(")")-1);
@@ -322,7 +324,8 @@ bool MintPragmas::isForLoopPragma(SgNode* node, bool verbose)
     {
       string threadblock= pragmaString.substr(0, pragmaString.find(MINT_TILE_PRAGMA) + 
 					      MINT_TILE_PRAGMA.length());
-      threadblock = pragmaString.substr (threadblock.length() + 1);
+      //threadblock = pragmaString.substr (threadblock.length() + 1);
+      threadblock = pragmaString.substr (threadblock.length());
       
       //get rid off the paranthesis around the parameter list 
       threadblock = threadblock.substr(threadblock.find("(")+1 , threadblock.find_first_of(")")-1);
@@ -366,7 +369,8 @@ bool MintPragmas::isForLoopPragma(SgNode* node, bool verbose)
      string unrollfactor= pragmaString.substr(0, pragmaString.find(MINT_CHUNKSIZE_PRAGMA) +
 					      MINT_CHUNKSIZE_PRAGMA.length());
      
-     unrollfactor = pragmaString.substr (unrollfactor.length() + 1);
+     //unrollfactor = pragmaString.substr (unrollfactor.length() + 1);
+     unrollfactor = pragmaString.substr (unrollfactor.length());
 
      //get rid off the paranthesis around the parameter list 
      unrollfactor = unrollfactor.substr(unrollfactor.find("(")+1 , unrollfactor.find_first_of(")")-1);
@@ -501,7 +505,8 @@ MintForClauses_t MintPragmas::getForParameters(SgNode* node)
       nested = pragmaString.substr(0, pragmaString.find(MINT_NESTED_PRAGMA) + 
 				  MINT_NESTED_PRAGMA.length());
 	  
-      nested = pragmaString.substr (nested.length() + 1);
+      //nested = pragmaString.substr (nested.length() + 1);
+      nested = pragmaString.substr (nested.length());
 	  
       //get rid off the paranthesis around the parameter list 
       nested = nested.substr(nested.find("(")+1 , nested.find_first_of(")")-1);
@@ -536,7 +541,8 @@ MintForClauses_t MintPragmas::getForParameters(SgNode* node)
     {
       string threadblock= pragmaString.substr(0, pragmaString.find(MINT_TILE_PRAGMA) + 
 					      MINT_TILE_PRAGMA.length());
-      threadblock = pragmaString.substr (threadblock.length() + 1);
+      //threadblock = pragmaString.substr (threadblock.length() + 1);
+      threadblock = pragmaString.substr (threadblock.length());
       
       //get rid off the paranthesis around the parameter list 
       threadblock = threadblock.substr(threadblock.find("(")+1 , threadblock.find_first_of(")")-1);
@@ -563,7 +569,8 @@ MintForClauses_t MintPragmas::getForParameters(SgNode* node)
    {
      string unrollfactor= pragmaString.substr(0, pragmaString.find(MINT_CHUNKSIZE_PRAGMA) +
 					      MINT_CHUNKSIZE_PRAGMA.length());     
-     unrollfactor = pragmaString.substr (unrollfactor.length() + 1);
+     //unrollfactor = pragmaString.substr (unrollfactor.length() + 1);
+     unrollfactor = pragmaString.substr (unrollfactor.length());
 
      //get rid off the paranthesis around the parameter list 
      unrollfactor = unrollfactor.substr(unrollfactor.find("(")+1 , unrollfactor.find_first_of(")")-1);
@@ -618,7 +625,8 @@ MintTrfParams_t MintPragmas::getTransferParameters(SgNode* node,
   string mintCopy= pragmaString.substr(0, pragmaString.find(MINT_COPY_PRAGMA) + 
 				       MINT_COPY_PRAGMA.length());
   
-  mintCopy = pragmaString.substr (mintCopy.length() + 1);
+  //mintCopy = pragmaString.substr (mintCopy.length() + 1);
+  mintCopy = pragmaString.substr (mintCopy.length());
   
   //get rid off the paranthesis around the parameter list 
   mintCopy = mintCopy.substr(mintCopy.find("(")+1 , mintCopy.find_last_of(")")-1);
@@ -731,7 +739,9 @@ bool MintPragmas::isTransferToFromDevicePragma(SgNode* node, bool verbose)
       string mintCopy= pragmaString.substr(0, pragmaString.find(MINT_COPY_PRAGMA) + 
 					   MINT_COPY_PRAGMA.length());
 
-      mintCopy = pragmaString.substr (mintCopy.length() + 1);
+      // Liao 2/6/2013. We have to preserve the leading '('
+      //mintCopy = pragmaString.substr (mintCopy.length() + 1);
+      mintCopy = pragmaString.substr (mintCopy.length());
       
       //get rid off the paranthesis around the parameter list 
       mintCopy = mintCopy.substr(mintCopy.find("(")+1 , mintCopy.find_last_of(")")-1);
@@ -851,7 +861,8 @@ void MintPragmas::processForLoopMintPragmas(SgOmpForStatement* omp_for,
       string nested= pragmaString.substr(0, pragmaString.find(MINT_NESTED_PRAGMA) + 
 					 MINT_NESTED_PRAGMA.length());
  
-      nested = pragmaString.substr (nested.length() + 1);
+      //nested = pragmaString.substr (nested.length() + 1);
+      nested = pragmaString.substr (nested.length());
   
       //get rid off the paranthesis around the parameter list 
       nested = nested.substr(nested.find("(")+1 , nested.find_first_of(")")-1);

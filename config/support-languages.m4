@@ -10,10 +10,8 @@ AC_DEFUN([ROSE_SUPPORT_LANGUAGE_CONFIG_OPTIONS],
 #
 #  DQ (4/15/2010): Added support to specify selected languages to support in ROSE.
 #########################################################################################
-echo "------------------------------------------------"
-AC_MSG_CHECKING([for user-specified languages to support])
-echo ""
-
+ROSE_CONFIGURE_SECTION([ROSE Frontend])
+ROSE_SUPPORT_X10_FRONTEND()
 
 #########################################################################################
 #
@@ -29,7 +27,6 @@ echo ""
 #	--enable-php
 #	--enable-python
 #	--enable-opencl
-#	--enable-x10
 #
 #	TODO:
 #	-Issue warning if user specifies conflicting language options, e.g.
@@ -42,7 +39,7 @@ echo ""
 ##
   #ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php python opencl"
   ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php        opencl"
-  #ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php        opencl x10"
+  #ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php        opencl"
 ##
 #
 #########################################################################################
@@ -62,10 +59,8 @@ echo ""
 #  issue warnings/errors when the user mistakenly specifies multiple language options,
 #  especially if they are conflicting.
 if test "x$USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION" = "xno" ; then
-#########################################################################################
 AC_ARG_ENABLE([languages],
-#########################################################################################
-               AS_HELP_STRING([--enable-languages=LIST],[Build specific languages: all,none,binaries,c,c++,cuda,fortran,java,opencl,php,python,x10 (default=all)]),,
+               AS_HELP_STRING([--enable-languages=LIST],[Build specific languages: all,none,binaries,c,c++,cuda,fortran,java,opencl,php,python (default=all)]),,
                [enableval=all])
 
 	       # Default support for all languages
@@ -83,11 +78,8 @@ AC_ARG_ENABLE([languages],
 LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed -e 's/,/ /g;s/^[ \t]*//;s/[ \t]*$//'`" 
 #DEBUG#echo "LANGUAGES_TO_SUPPORT='$LANGUAGES_TO_SUPPORT'"
 
-#########################################################################################
 AC_ARG_ENABLE([binary-analysis],
-#########################################################################################
                AS_HELP_STRING([--enable-binary-analysis],[Enable binary analysis support in ROSE (default=yes)]),
-               ##########################################################################
                 echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "binaries"
                 if test $? = 0 ; then 
                   list_has_binaries=yes
@@ -107,13 +99,9 @@ AC_ARG_ENABLE([binary-analysis],
                   	[AC_MSG_FAILURE([--enable-binary-analysis='$enableval' is not supported. Use 'yes' or 'no'])]
                  	;;
                 esac
-               ##########################################################################
                ,)
-#########################################################################################
 AC_ARG_ENABLE([c],
-#########################################################################################
                AS_HELP_STRING([--enable-c],[Enable C language support in ROSE (default=yes). Note:  C++ support must currently be simultaneously enabled/disabled]),
-               ##########################################################################
                 echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "\bc\b"
                 if test $? = 0 ; then 
                   list_has_c=yes
@@ -139,13 +127,9 @@ AC_ARG_ENABLE([c],
                   	[AC_MSG_FAILURE([--enable-c='$enableval' is not supported. Use 'yes' or 'no'])]
                  	;;
                 esac
-               ##########################################################################
                ,)
-#########################################################################################
 AC_ARG_ENABLE([cxx],
-#########################################################################################
                AS_HELP_STRING([--enable-cxx],[Enable C++ language support in ROSE (default=yes). Note: C support must currently be simultaneously enabled/disabled]),
-               ##########################################################################
                 case "$enableval" in
                   [yes)]
                   	if test "x$list_has_cxx" != "xyes" ; then
@@ -166,13 +150,9 @@ AC_ARG_ENABLE([cxx],
                   	[AC_MSG_FAILURE([--enable-cxx='$enableval' is not supported. Use 'yes' or 'no'])]
                  	;;
                 esac
-               ##########################################################################
                ,)
-#########################################################################################
 AC_ARG_ENABLE([cuda],
-#########################################################################################
                AS_HELP_STRING([--enable-cuda],[Enable Cuda language support in ROSE (default=yes)]),
-               ##########################################################################
                 echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "cuda"
                 if test $? = 0 ; then 
                   list_has_cuda=yes
@@ -192,13 +172,9 @@ AC_ARG_ENABLE([cuda],
                   	[AC_MSG_FAILURE([--enable-cuda='$enableval' is not supported. Use 'yes' or 'no'])]
                  	;;
                 esac
-               ##########################################################################
                ,)
-#########################################################################################
 AC_ARG_ENABLE([fortran],
-#########################################################################################
                AS_HELP_STRING([--enable-fortran],[Enable Fortran language support in ROSE (default=yes)]),
-               ##########################################################################
                 echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "fortran"
                 if test $? = 0 ; then 
                   list_has_fortran=yes
@@ -225,18 +201,14 @@ AC_ARG_ENABLE([fortran],
                   	[AC_MSG_FAILURE([--enable-fortran='$enableval' is not supported. Use 'yes' or 'no'])]
                  	;;
                 esac
-               ##########################################################################
                ,
                 if test "x$with_java" = "xno" ; then
                   enable_fortran=no
                   LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/fortran//g'`"
                   [echo "[[Fortran support]] disabling Fortran language support, which requires Java, because you specified --with-java='$with_java'"] 
                 fi)
-#########################################################################################
 AC_ARG_ENABLE([java],
-#########################################################################################
                AS_HELP_STRING([--enable-java],[Enable Java language support in ROSE (default=yes). Note: --without-java turns off support for ALL components in ROSE that depend on Java, including Java language support]),
-               ##########################################################################
                 echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "java"
                 if test $? = 0 ; then 
                   list_has_java=yes
@@ -263,18 +235,14 @@ AC_ARG_ENABLE([java],
                   	[AC_MSG_FAILURE([--enable-java='$enableval' is not supported. Use 'yes' or 'no'])]
                  	;;
                 esac
-               ##########################################################################
                ,
                 if test "x$with_java" = "xno" ; then
                   enable_java=no
                   LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/java//g'`"
                   [echo "[[Java support]] disabling Java language support, which requires Java, because you specified --with-java='$with_java'"] 
                 fi)
-#########################################################################################
 AC_ARG_ENABLE([php],
-#########################################################################################
                AS_HELP_STRING([--enable-php],[Enable PHP language support in ROSE (default=yes)]),
-               ##########################################################################
                 echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "php"
                 if test $? = 0 ; then 
                   list_has_php=yes
@@ -294,13 +262,9 @@ AC_ARG_ENABLE([php],
                   	[AC_MSG_FAILURE([--enable-php='$enableval' is not supported. Use 'yes' or 'no'])]
                  	;;
                 esac
-               ##########################################################################
                ,)
-#########################################################################################
 AC_ARG_ENABLE([python],
-#########################################################################################
                AS_HELP_STRING([--enable-python],[Enable Python language support in ROSE (default=no)]),
-               ##########################################################################
                 echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "python"
                 if test $? = 0 ; then
                   list_has_python=yes
@@ -326,7 +290,6 @@ AC_ARG_ENABLE([python],
                  	;;
                 esac
                ,
-               ##########################################################################
 
                 # Warn if --with-python is specified
                 if test "x$with_python" != "x"; then
@@ -337,11 +300,8 @@ AC_ARG_ENABLE([python],
                     fi
                 fi
                )
-#########################################################################################
 AC_ARG_ENABLE([opencl],
-#########################################################################################
                AS_HELP_STRING([--enable-opencl],[Enable OpenCL language support in ROSE (default=yes)]),
-               ##########################################################################
                 echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "opencl"
                 if test $? = 0 ; then 
                   list_has_opencl=yes
@@ -361,33 +321,6 @@ AC_ARG_ENABLE([opencl],
                   	[AC_MSG_FAILURE([--enable-opencl='$enableval' is not supported. Use 'yes' or 'no'])]
                  	;;
                 esac
-               ##########################################################################
-               ,)
-#########################################################################################
-AC_ARG_ENABLE([x10],
-#########################################################################################
-               AS_HELP_STRING([--enable-x10],[Enable X10 language support in ROSE (default=yes)]),
-               ##########################################################################
-                echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "x10"
-                if test $? = 0 ; then 
-                  list_has_x10=yes
-                fi
-                case "$enableval" in
-                  [yes)]
-                  	if test "x$list_has_x10" != "xyes" ; then
-                          # --enable-languages does not include X10, but --enable-x10=yes
-                  	  LANGUAGES_TO_SUPPORT+=" x10"
-                        fi
-                  	;;
-                  [no)]
-                        # remove 'X10' from support languages list
-                  	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/x10//g'`"
-                  	;;
-                  [*)]
-                  	[AC_MSG_FAILURE([--enable-x10='$enableval' is not supported. Use 'yes' or 'no'])]
-                 	;;
-                esac
-               ##########################################################################
                ,)
 else
   echo "[[enable-only-$LANGUAGES_TO_SUPPORT support:warning]] ignoring any other language-support configuration options."
@@ -427,32 +360,31 @@ count_of_languages_to_support=`expr $count_of_languages_to_support + 1`
 case "$a_language" in 
 
 none|no)
-	support_binaries=no
-	support_c_language=no
-	support_cxx_language=no
-	support_cuda_language=no
-	support_fortran_language=no
-	support_java_language=no
-	support_php_language=no
-	support_python_language=no
-	support_opencl_language=no
-	support_x10_language=no
+	support_binaries_frontend=no
+	support_c_frontend=no
+	support_cxx_frontend=no
+	support_cuda_frontend=no
+	support_fortran_frontend=no
+	support_java_frontend=no
+	support_php_frontend=no
+	support_python_frontend=no
+	support_opencl_frontend=no
 	AC_MSG_WARN([you did not enable any language support])
 	;;
 binaries)
-	support_binaries=yes
+	support_binaries_frontend=yes
 	AC_DEFINE([ROSE_BUILD_BINARY_ANALYSIS_SUPPORT], [], [Build ROSE to support the Binary Analysis])
 	;;
 c)
-	support_c_language=yes
+	support_c_frontend=yes
 	AC_DEFINE([ROSE_BUILD_C_LANGUAGE_SUPPORT], [], [Build ROSE to support the C langauge])
 	;;
 c++)
-	support_cxx_language=yes
+	support_cxx_frontend=yes
 	AC_DEFINE([ROSE_BUILD_CXX_LANGUAGE_SUPPORT], [], [Build ROSE to support the C++ langauge])
 	;;
 cuda)
-	support_cuda_language=yes
+	support_cuda_frontend=yes
 	AC_DEFINE([ROSE_BUILD_CUDA_LANGUAGE_SUPPORT], [], [Build ROSE to support the CUDA langauge])
 	;;
 fortran)
@@ -461,7 +393,7 @@ fortran)
             AC_MSG_FAILURE([[[Fortran support]] gfortran not found: required for syntax checking and semantic analysis.
                            Do you need to explicitly specify gfortran using the "--with-gfortran=path/to/gfortran" configure-option? (See ./configure --help)])
           else
-     	    support_fortran_language=yes
+     	    support_fortran_frontend=yes
 	    AC_DEFINE([ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT], [], [Build ROSE to support the Fortran langauge])
           fi
         elif test "x$with_java" = "xno" ; then
@@ -473,7 +405,7 @@ fortran)
 	;;
 java)
         if test "x$USE_JAVA" = x1; then
-	  support_java_language=yes
+	  support_java_frontend=yes
 	  AC_DEFINE([ROSE_BUILD_JAVA_LANGUAGE_SUPPORT], [], [Build ROSE to support the Java langauge])
         else
           AC_MSG_FAILURE([[[Java support]] Java dependencies not found: required for parser support in ROSE -- uses the  Eclipse Compiler for Java (ECJ).
@@ -481,20 +413,16 @@ java)
         fi
 	;;
 php)
-	support_php_language=yes
+	support_php_frontend=yes
 	AC_DEFINE([ROSE_BUILD_PHP_LANGUAGE_SUPPORT], [], [Build ROSE to support the PHP langauge])
 	;;
 python)
-	support_python_language=yes
+	support_python_frontend=yes
 	AC_DEFINE([ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT], [], [Build ROSE to support the Python langauge])
 	;;
 opencl)
-	support_opencl_language=yes
+	support_opencl_frontend=yes
 	AC_DEFINE([ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT], [], [Build ROSE to support the OpenCL langauge])
-	;;
-x10)
-	support_x10_language=yes
-	AC_DEFINE([ROSE_BUILD_X10_LANGUAGE_SUPPORT], [], [Build ROSE to support the X10 langauge])
 	;;
 *)
 	AC_MSG_FAILURE([unrecognized language '$a_language'])
@@ -505,24 +433,9 @@ done
 
 #########################################################################################
 #
-#  Output language support 
+#  Output language support
 #
 #########################################################################################
-function print_isLanguageSupported() {
-  if test ${#} != 2 ; then
-   echo "Usage: print_isLanguageSupported <language> <is_supported>"
-   exit 1
-  else 
-   local language=${1}
-   local is_supported=${2}
-  fi
-
-  if test "x$is_supported" = "xyes" ; then
-    echo "  + $language"
-  else
-    echo "  - $language"
-  fi
-}
 #########################################################################################
 #
 #  Enabled only one language: set specific configurations for minimal build of ROSE 
@@ -532,7 +445,7 @@ if test $count_of_languages_to_support = 2 ; then
   #
   # Only C/C++ (currently required to be supported simultaneously) 
   #
-  if test "x$support_c_language" = "xyes" && test "x$support_cxx_language" = "xyes" ; then
+  if test "x$support_c_frontend" = "xyes" && test "x$support_cxx_frontend" = "xyes" ; then
     with_haskell=no
     enable_binary_analysis_tests=no
     enable_projects_directory=no
@@ -546,7 +459,7 @@ elif test $count_of_languages_to_support = 1 ; then
   #
   # Only Java 
   #
-  if test "x$support_java_language" = "xyes" ; then
+  if test "x$support_java_frontend" = "xyes" ; then
     # When using fortran only assume that we are not interested in java language support in ROSE.
     # However, currently the --with-java option controls the use of java support for both Fortran
     # and Java language support. Now that we have added Java language support to ROSE this is
@@ -570,7 +483,7 @@ elif test $count_of_languages_to_support = 1 ; then
   # Only Fortran
   # requested by Rice University and LANL 
   #
-  if test "x$support_fortran_language" = "xyes" ; then
+  if test "x$support_fortran_frontend" = "xyes" ; then
     # Scott appears to require CPPFLAGS to be set...
     #debug#echo "Before setting CPPFLAGS: CPPFLAGS = $CPPFLAGS"
     CPPFLAGS="$CPPFLAGS $JAVA_JVM_INCLUDE"
@@ -617,7 +530,7 @@ elif test $count_of_languages_to_support = 1 ; then
   #
   # Only PHP 
   #
-  if test "x$support_php_language" = "xyes" ; then
+  if test "x$support_php_frontend" = "xyes" ; then
     with_haskell=no
     enable_binary_analysis_tests=no
     enable_projects_directory=no
@@ -627,7 +540,7 @@ elif test $count_of_languages_to_support = 1 ; then
   #
   # Only Python
   #
-  if test "x$support_python_language" = "xyes" ; then
+  if test "x$support_python_frontend" = "xyes" ; then
     with_haskell=no
     enable_binary_analysis_tests=no
     enable_projects_directory=no
@@ -637,7 +550,7 @@ elif test $count_of_languages_to_support = 1 ; then
   #
   # Only binary analysis 
   #
-  if test "x$support_binaries" = "xyes" ; then
+  if test "x$support_binaries_frontend" = "xyes" ; then
     with_haskell=no
     enable_projects_directory=no
     enable_tutorial_directory=no
@@ -727,36 +640,79 @@ fi
 # Set the automake conditional macros that will be used in Makefiles.
 #
 #########################################################################################
-echo -n "Creating Automake conditional flags for language support in Makefiles... "
-AM_CONDITIONAL(ROSE_BUILD_C_LANGUAGE_SUPPORT, [test "x$support_c_language" = xyes])
-AM_CONDITIONAL(ROSE_BUILD_CXX_LANGUAGE_SUPPORT, [test "x$support_cxx_language" = xyes])
-AM_CONDITIONAL(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT, [test "x$support_fortran_language" = xyes])
-AM_CONDITIONAL(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT, [test "x$support_java_language" = xyes])
-AM_CONDITIONAL(ROSE_BUILD_PHP_LANGUAGE_SUPPORT, [test "x$support_php_language" = xyes])
-AM_CONDITIONAL(ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT, [test "x$support_python_language" = xyes])
-AM_CONDITIONAL(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT, [test "x$support_binaries" = xyes])
-AM_CONDITIONAL(ROSE_BUILD_CUDA_LANGUAGE_SUPPORT, [test "x$support_cuda_language" = xyes])
-AM_CONDITIONAL(ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT, [test "x$support_opencl_language" = xyes])
-AM_CONDITIONAL(ROSE_BUILD_X10_LANGUAGE_SUPPORT, [test "x$support_x10_language" = xyes])
-echo "done"
+AM_CONDITIONAL(ROSE_BUILD_C_LANGUAGE_SUPPORT, [test "x$support_c_frontend" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_CXX_LANGUAGE_SUPPORT, [test "x$support_cxx_frontend" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT, [test "x$support_fortran_frontend" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT, [test "x$support_java_frontend" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_PHP_LANGUAGE_SUPPORT, [test "x$support_php_frontend" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT, [test "x$support_python_frontend" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT, [test "x$support_binaries_frontend" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_CUDA_LANGUAGE_SUPPORT, [test "x$support_cuda_frontend" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT, [test "x$support_opencl_frontend" = xyes])
 
-echo ""
-print_isLanguageSupported "Binary analysis" "$support_binaries"
-print_isLanguageSupported "C" "$support_c_language"
-print_isLanguageSupported "C++" "$support_cxx_language"
-print_isLanguageSupported "Cuda" "$support_cuda_language"
-print_isLanguageSupported "Fortran" "$support_fortran_language"
-print_isLanguageSupported "Java" "$support_java_language"
-print_isLanguageSupported "PHP" "$support_php_language"
-print_isLanguageSupported "Python" "$support_python_language"
-print_isLanguageSupported "OpenCL" "$support_opencl_language"
-print_isLanguageSupported "X10" "$support_x10_language"
-echo ""
-echo "(+)enabled (-)disabled"
-#AC_MSG_RESULT($LANGUAGES_TO_SUPPORT)
-echo "------------------------------------------------"
+AC_MSG_CHECKING([if the Binary Analysis frontend is enabled])
+if test "x$support_binaries_frontend" = "xyes"; then
+  AC_MSG_RESULT([yes])
+else
+  AC_MSG_RESULT([no])
+fi
 
-echo "Finished configuring user-specified languages to support"
+AC_MSG_CHECKING([if the C frontend is enabled])
+if test "x$support_c_frontend" = "xyes"; then
+  AC_MSG_RESULT([yes])
+else
+  AC_MSG_RESULT([no])
+fi
+
+AC_MSG_CHECKING([if the C++ frontend is enabled])
+if test "x$support_cxx_frontend" = "xyes"; then
+  AC_MSG_RESULT([yes])
+else
+  AC_MSG_RESULT([no])
+fi
+
+AC_MSG_CHECKING([if the Cuda frontend is enabled])
+if test "x$support_cuda_frontend" = "xyes"; then
+  AC_MSG_RESULT([yes])
+else
+  AC_MSG_RESULT([no])
+fi
+
+AC_MSG_CHECKING([if the Fortran frontend is enabled])
+if test "x$support_fortran_frontend" = "xyes"; then
+  AC_MSG_RESULT([yes])
+else
+  AC_MSG_RESULT([no])
+fi
+
+AC_MSG_CHECKING([if the Java frontend is enabled])
+if test "x$support_java_frontend" = "xyes"; then
+  AC_MSG_RESULT([yes])
+else
+  AC_MSG_RESULT([no])
+fi
+
+AC_MSG_CHECKING([if the PHP frontend is enabled])
+if test "x$support_php_frontend" = "xyes"; then
+  AC_MSG_RESULT([yes])
+else
+  AC_MSG_RESULT([no])
+fi
+
+AC_MSG_CHECKING([if the Python frontend is enabled])
+if test "x$support_python_frontend" = "xyes"; then
+  AC_MSG_RESULT([yes])
+else
+  AC_MSG_RESULT([no])
+fi
+
+AC_MSG_CHECKING([if the OpenCL frontend is enabled])
+if test "x$support_opencl_frontend" = "xyes"; then
+  AC_MSG_RESULT([yes])
+else
+  AC_MSG_RESULT([no])
+fi
+
 # End macro ROSE_SUPPORT_LANGUAGES.
 ])
 
@@ -776,17 +732,10 @@ AC_DEFUN([ROSE_SUPPORT_LANGUAGE_CONFIG_OPTIONS_DEPRECATED],
 #
 #########################################################################################
 
-echo "------------------------------------------------"
-AC_MSG_CHECKING([for deprecated language configuration options])
-
-
 USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=no
-#########################################################################################
 AC_ARG_ENABLE([only-binary-analysis],
-#########################################################################################
               AS_HELP_STRING([--enable-only-binary-analysis(=yes)],
                              [Enable ONLY Java support in ROSE (Warning: '--enable-only-binary-analysis=no' and '--disable-only-binary-analysis' are no longer supported)]),
-               ##########################################################################
                 case "$enableval" in
                   [yes)]
                   	LANGUAGES_TO_SUPPORT="binaries"
@@ -799,15 +748,11 @@ AC_ARG_ENABLE([only-binary-analysis],
                   	[AC_MSG_FAILURE([--enable-only-binary-analysis='$enableval' is not supported. Use '--enable-only-binary-analysis(=yes)' (see ./configure --help)])]
                  	;;
                 esac
-               ##########################################################################
                ,)
 
-#########################################################################################
 AC_ARG_ENABLE([only-c],
-#########################################################################################
               AS_HELP_STRING([--enable-only-c(=yes)],
                              [Enable ONLY C support in ROSE (Warning: '--enable-only-c=no' and '--disable-only-c' are no longer supported)]),
-               ##########################################################################
                 case "$enableval" in
                   [yes)]
                   	LANGUAGES_TO_SUPPORT="c"
@@ -820,15 +765,11 @@ AC_ARG_ENABLE([only-c],
                   	[AC_MSG_FAILURE([--enable-only-c='$enableval' is not supported. Use '--enable-only-c(=yes)' (see ./configure --help)])]
                  	;;
                 esac
-               ##########################################################################
                ,)
 
-#########################################################################################
 AC_ARG_ENABLE([only-cxx],
-#########################################################################################
               AS_HELP_STRING([--enable-only-cxx(=yes)],
                              [Enable ONLY C++ support in ROSE (Warning: '--enable-only-cxx=no' and '--disable-only-cxx' are no longer supported)]),
-               ##########################################################################
                 case "$enableval" in
                   [yes)]
                   	LANGUAGES_TO_SUPPORT="c++"
@@ -841,15 +782,11 @@ AC_ARG_ENABLE([only-cxx],
                   	[AC_MSG_FAILURE([--enable-only-cxx='$enableval' is not supported. Use '--enable-only-cxx(=yes)' (see ./configure --help)])]
                  	;;
                 esac
-               ##########################################################################
                ,)
 
-#########################################################################################
 AC_ARG_ENABLE([only-fortran],
-#########################################################################################
               AS_HELP_STRING([--enable-only-fortran(=yes)],
                              [Enable ONLY Fortran support in ROSE (Warning: '--enable-only-fortran=no' and '--disable-only-fortran' are no longer supported)]),
-               ##########################################################################
                 case "$enableval" in
                   [yes)]
                         if test "x$with_java" = "xno" ; then
@@ -866,15 +803,11 @@ AC_ARG_ENABLE([only-fortran],
                   	[AC_MSG_FAILURE([--enable-only-fortran='$enableval' is not supported. Use '--enable-only-fortran(=yes)' (see ./configure --help)])]
                  	;;
                 esac
-               ##########################################################################
                ,)
 
-#########################################################################################
 AC_ARG_ENABLE([only-java],
-#########################################################################################
               AS_HELP_STRING([--enable-only-java(=yes)],
                              [Enable ONLY Java support in ROSE (Warning: '--enable-only-java=no' and '--disable-only-java' are no longer supported)]),
-               ##########################################################################
                 case "$enableval" in
                   [yes)]
                         if test "x$with_java" = "xno" ; then
@@ -891,15 +824,11 @@ AC_ARG_ENABLE([only-java],
                   	[AC_MSG_FAILURE([--enable-only-java='$enableval' is not supported. Use '--enable-only-java(=yes)' (see ./configure --help)])]
                  	;;
                 esac
-               ##########################################################################
                ,)
 
-#########################################################################################
 AC_ARG_ENABLE([only-php],
-#########################################################################################
               AS_HELP_STRING([--enable-only-php(=yes)],
                              [Enable ONLY PHP support in ROSE (Warning: '--enable-only-php=no' and '--disable-only-php' are no longer supported)]),
-               ##########################################################################
                 case "$enableval" in
                   [yes)]
                   	LANGUAGES_TO_SUPPORT="php"
@@ -912,15 +841,11 @@ AC_ARG_ENABLE([only-php],
                   	[AC_MSG_FAILURE([--enable-only-php='$enableval' is not supported. Use '--enable-only-php(=yes)' (see ./configure --help)])]
                  	;;
                 esac
-               ##########################################################################
                ,)
 
-#########################################################################################
 AC_ARG_ENABLE([only-python],
-#########################################################################################
               AS_HELP_STRING([--enable-only-python(=yes)],
                              [Enable ONLY Python support in ROSE (Warning: '--enable-only-python=no' and '--disable-only-python' are no longer supported)]),
-               ##########################################################################
                 case "$enableval" in
                   [yes)]
                         LANGUAGES_TO_SUPPORT="python"
@@ -933,15 +858,11 @@ AC_ARG_ENABLE([only-python],
                   	[AC_MSG_FAILURE([--enable-only-python='$enableval' is not supported. Use '--enable-only-python(=yes)' (see ./configure --help)])]
                  	;;
                 esac
-               ##########################################################################
                ,)
 
-#########################################################################################
 AC_ARG_ENABLE([only-cuda],
-#########################################################################################
               AS_HELP_STRING([--enable-only-cuda(=yes)],
                              [Enable ONLY Cuda support in ROSE (Warning: '--enable-only-cuda=no' and '--disable-only-cuda' are no longer supported)]),
-               ##########################################################################
                 case "$enableval" in
                   [yes)]
                   	LANGUAGES_TO_SUPPORT="cuda"
@@ -954,15 +875,11 @@ AC_ARG_ENABLE([only-cuda],
                   	[AC_MSG_FAILURE([--enable-only-cuda='$enableval' is not supported. Use '--enable-only-cuda(=yes)' (see ./configure --help)])]
                  	;;
                 esac
-               ##########################################################################
                ,)
 
-#########################################################################################
 AC_ARG_ENABLE([only-opencl],
-#########################################################################################
               AS_HELP_STRING([--enable-only-opencl(=yes)],
                              [Enable ONLY OpenCL support in ROSE (Warning: '--enable-only-opencl=no' and '--disable-only-opencl' are no longer supported)]),
-               ##########################################################################
                 case "$enableval" in
                   [yes)]
                   	LANGUAGES_TO_SUPPORT="opencl"
@@ -975,31 +892,8 @@ AC_ARG_ENABLE([only-opencl],
                   	[AC_MSG_FAILURE([--enable-only-opencl='$enableval' is not supported. Use '--enable-only-opencl(=yes)' (see ./configure --help)])]
                  	;;
                 esac
-               ##########################################################################
                ,)
 
-#########################################################################################
-AC_ARG_ENABLE([only-x10],
-#########################################################################################
-              AS_HELP_STRING([--enable-only-x10(=yes)],
-                             [Enable ONLY X10 support in ROSE (Warning: '--enable-only-x10=no' and '--disable-only-x10' are no longer supported)]),
-               ##########################################################################
-                case "$enableval" in
-                  [yes)]
-                  	LANGUAGES_TO_SUPPORT="x10"
-                        USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
-                  	;;
-                  [no)]
-                  	[AC_MSG_FAILURE([--enable-only-x10='$enableval' and --disable-only-x10 are no longer supported. Use '--disable-x10' (see ./configure --help)])]
-                  	;;
-                  [*)]
-                  	[AC_MSG_FAILURE([--enable-only-x10='$enableval' is not supported. Use '--enable-only-x10(=yes)' (see ./configure --help)])]
-                 	;;
-                esac
-               ##########################################################################
-               ,)
-
-AC_MSG_RESULT([done])
 #echo "Finished configuring deprecated user-specified language configuration options"
 # End macro ROSE_SUPPORT_LANGUAGE_CONFIG_OPTIONS_DEPRECATED
 ])

@@ -12,7 +12,7 @@ TEST_Results=\
 	${TESTCODES:.c=.cu}
 
 $(TEST_Results): $(MINT) $(@:.cu=.c)
-	$(MINT) -opt:shared -opt:register $(srcdir)/$(@:.cu=.c)
+	$(MINT) -opt:shared -opt:register -rose:C99 $(srcdir)/$(@:.cu=.c)
 clean-local:
 	rm -f *.o rose_*.[cC] *.cu
 	rm -rf QMTest

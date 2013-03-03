@@ -19,6 +19,7 @@ include $(srcdir)/unparser/PHPCodeGeneration/Makefile_variables
 include $(srcdir)/unparser/PythonCodeGeneration/Makefile_variables
 include $(srcdir)/asmUnparser/Makefile_variables
 include $(srcdir)/unparser/JavaCodeGeneration/Makefile_variables
+include $(srcdir)/unparser/X10CodeGeneration/Makefile_variables
 
 
 unparserPath=$(srcdir)/unparser#
@@ -30,6 +31,7 @@ phpCodeGenerationPath=$(srcdir)/unparser/PHPCodeGeneration#
 pythonCodeGenerationPath=$(srcdir)/unparser/PythonCodeGeneration#
 asmUnparserPath=$(srcdir)/asmUnparser#
 javaCodeGenerationPath=$(srcdir)/unparser/JavaCodeGeneration#
+x10CodeGenerationPath=$(srcdir)/unparser/X10CodeGeneration#
 
 
 ###############################################################################

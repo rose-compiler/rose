@@ -18,7 +18,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # DQ (4/17/2010): These directories are now organized based on what sets of languages 
 # are enabled in ROSE (including binary analysis).
-SUBDIRS = 
+SUBDIRS = \
+	x10_tests
+
 if ROSE_USE_CLANG_FRONTEND
    SUBDIRS += C_tests
    SUBDIRS += C_subset_of_Cxx_tests

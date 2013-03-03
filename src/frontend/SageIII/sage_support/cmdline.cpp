@@ -742,6 +742,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        set_openmp_linking(true);
      }
 
+      SageSupport::Cmdline::X10::
+          Process(this, local_commandLineArgumentList);
+
 
 #if 1
   // DQ (10/3/2010): Adding support for CPP directives to be optionally a part of the AST as declarations
@@ -1104,6 +1107,42 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 #endif
    }
 
+//------------------------------------------------------------------------------
+//                                  Java
+//------------------------------------------------------------------------------
+
+void
+SageSupport::Cmdline::X10::
+Process (SgProject* project, std::vector<std::string>& argv)
+{
+  if (SgProject::get_verbose() >= 1)
+      std::cout << "[INFO] Processing X10 commandline options" << std::endl;
+
+  ProcessX10Only(project, argv);
+}
+
+void
+SageSupport::Cmdline::X10::
+ProcessX10Only (SgProject* project, std::vector<std::string>& argv)
+{
+  bool is_x10_only =
+      CommandlineProcessing::isOption(
+          argv,
+          X10::option_prefix,
+          "",
+          true);
+
+  if (is_x10_only)
+  {
+      if (SgProject::get_verbose() >= 1)
+          std::cout << "[INFO] Turning on X10 only mode" << std::endl;
+
+      // X10 code is only compiled, not linked as is C/C++ and Fortran.
+      project->set_compileOnly(true);
+      project->set_X10_only(true);
+  }
+}
+
 /*-----------------------------------------------------------------------------
  *  namespace SgFile {
  *---------------------------------------------------------------------------*/
@@ -1188,6 +1227,8 @@ SgFile::usage ( int status )
 "                             compile Fortran II code (not implemented yet)\n"
 "     -rose:FortranI, -rose:FI, -rose:fI\n"
 "                             compile Fortran I code (not implemented yet)\n"
+"     -rose:x10\n"
+"                             compile X10 code (work in progress)\n"
 "     -rose:strict            strict enforcement of ANSI/ISO standards\n"
 "     -rose:binary, -rose:binary_only\n"
 "                             assume input file is for binary analysis (this avoids\n"
@@ -3989,70 +4030,101 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // We need a better way of identifying the C compiler which might not be known
   // ideally it should be specified at configure time so that it can be known in
   // case the -rose:C_only option is used.
-     if (get_C_only() == true || get_C99_only() == true)
+    if (get_C_only() == true || get_C99_only() == true)
+    {
+        // compilerNameString = "gcc ";
+        compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
+
+        // DQ (6/4/2008): Added support to trigger use of C99 for older
+        //                versions of GNU that don't use use C99 as the default.
+        if (get_C99_only() == true)
         {
-       // compilerNameString = "gcc ";
-          compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
-
-       // DQ (6/4/2008): Added support to trigger use of C99 for older versions of GNU that don't use use C99 as the default.
-          if (get_C99_only() == true)
-             {
-               compilerNameString.push_back("-std=gnu99");
-             }
+            compilerNameString.push_back("-std=gnu99");
         }
-       else
+    }
+    else if (get_Cxx_only())
+    {
+        compilerNameString[0] = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
+    }
+    else if (get_binary_only())
+    {
+        if (SgProject::get_verbose() >= 3)
         {
-          compilerNameString[0] = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
-          if (get_Fortran_only() == true)
-             {
-            // compilerNameString = "f77 ";
-               compilerNameString[0] = ROSE_GFORTRAN_PATH;
-
-               if (get_backendCompileFormat() == e_fixed_form_output_format)
-                  {
-                 // If backend compilation is specificed to be fixed form, then allow any line length (to simplify code generation for now)
-                 // compilerNameString += "-ffixed-form ";
-                 // compilerNameString += "-ffixed-line-length- "; // -ffixed-line-length-<n>
-                    compilerNameString.push_back("-ffixed-line-length-none");
-                  }
-                 else
-                  {
-                    if (get_backendCompileFormat() == e_free_form_output_format)
-                       {
-                      // If backend compilation is specificed to be free form, then allow any line length (to simplify code generation for now)
-                      // compilerNameString += "-ffree-form ";
-                      // compilerNameString += "-ffree-line-length-<n> "; // -ffree-line-length-<n>
-                      // compilerNameString.push_back("-ffree-line-length-none");
-#if USE_GFORTRAN_IN_ROSE
-                      // DQ (9/16/2009): This option is not available in gfortran version 4.0.x (wonderful).
-                         if ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER >= 4) && (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER >= 1) )
-                            {
-                              compilerNameString.push_back("-ffree-line-length-none");
-                            }
-#endif
-                       }
-                      else
-                       {
-                      // Do nothing (don't specify any option to control compilation of a specific format, assume defaults)
-
-                      // Make this the default
-                         if ( SgProject::get_verbose() >= 1 )
-                              printf ("Compiling generated code using gfortran -ffixed-line-length-none to avoid 72 column limit in code generation \n");
-
-                         compilerNameString.push_back("-ffixed-line-length-none");
-                       }
-                  }
-             }
-            else if (get_Java_only() == true)
-             {
-                 // compilerNameString[0] = ROSE_GNU_JAVA_PATH;
-                    compilerNameString[0] = BACKEND_JAVA_COMPILER_NAME_WITH_PATH;
-             }
-            else if (get_Python_only() == true)
-             {
-                    compilerNameString[0] = BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH;
-             }
+            std::cout
+                << "[TRACE] Backend compiler for binary analysis is set as"
+                << "'" << compilerNameString[0] << "'"
+                << std::endl;
         }
+    }
+    else if (get_Fortran_only() == true)
+    {
+        // compilerNameString = "f77 ";
+        compilerNameString[0] = ROSE_GFORTRAN_PATH;
+
+        if (get_backendCompileFormat() == e_fixed_form_output_format)
+        {
+            // If backend compilation is specificed to be fixed form, then allow any line length (to simplify code generation for now)
+            // compilerNameString += "-ffixed-form ";
+            // compilerNameString += "-ffixed-line-length- "; // -ffixed-line-length-<n>
+            compilerNameString.push_back("-ffixed-line-length-none");
+        }
+        else
+        {
+            if (get_backendCompileFormat() == e_free_form_output_format)
+            {
+                // If backend compilation is specificed to be free form, then
+                // allow any line length (to simplify code generation for now)
+                // compilerNameString += "-ffree-form ";
+                // compilerNameString += "-ffree-line-length-<n> "; // -ffree-line-length-<n>
+                // compilerNameString.push_back("-ffree-line-length-none");
+                #if USE_GFORTRAN_IN_ROSE
+                // DQ (9/16/2009): This option is not available in gfortran version 4.0.x (wonderful).
+                if ((BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER >= 4) &&
+                    (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER >= 1))
+                {
+                    compilerNameString.push_back("-ffree-line-length-none");
+                }
+                #endif
+            }
+            else
+            {
+                // Do nothing (don't specify any option to control compilation
+                // of a specific format, assume defaults)
+
+                // Make this the default
+                if (SgProject::get_verbose() >= 1)
+                {
+                    printf ("Compiling generated code using gfortran "
+                            "-ffixed-line-length-none to avoid 72 column "
+                            "limit in code generation\n");
+                }
+
+                compilerNameString.push_back("-ffixed-line-length-none");
+            }
+        }
+    }
+    else if (get_Java_only() == true)
+    {
+        // compilerNameString[0] = ROSE_GNU_JAVA_PATH;
+        compilerNameString[0] = BACKEND_JAVA_COMPILER_NAME_WITH_PATH;
+    }
+    else if (get_Python_only() == true)
+    {
+        compilerNameString[0] = BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH;
+    }
+    else if (get_X10_only() == true)
+    {
+        compilerNameString[0] = BACKEND_X10_COMPILER_NAME_WITH_PATH;
+    }
+    else
+    {
+        std::cerr
+            << "[FATAL] Unknown backend compiler"
+            << "'" << compilerName << "', "
+            << "or not implemented."
+            << std::endl;
+        ROSE_ASSERT(! "Unknown backend compiler");
+    }
 
   // printf ("compilerName       = %s \n",compilerName);
   // printf ("compilerNameString = %s \n",compilerNameString.c_str());
@@ -4094,9 +4166,13 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
 
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
+if (get_C_only() ||
+    get_Cxx_only())
+{
   // DQ (1/12/2009): Allow in internal indicator that EDG version 3.10 or 4.0 (or greater)
   // is in use to be properly passed on the compilation of the generated code.
      compilerNameString.push_back("-DROSE_USE_NEW_EDG_INTERFACE");
+}
 #endif
 
   // Since we need to do this often, support is provided in the utility_functions.C
@@ -4105,8 +4181,10 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
   // printf ("In buildCompilerCommandLineOptions(): currentDirectory = %s \n",currentDirectory);
 
-     if (get_Java_only() == false && get_Python_only() == false)
-        {
+    if (get_C_only() ||
+        get_Cxx_only() ||
+        get_Fortran_only())
+    {
        // specify compilation only option (new style command line processing)
           if ( CommandlineProcessing::isOption(argv,"-","c",false) == true )
              {
@@ -4131,7 +4209,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
           {
             compilerNameString.push_back("-D_OPENMP");
           }
-     }
+    }
 
   // DQ (3/31/2004): New cleaned up source file handling
      Rose_STL_Container<string> argcArgvList = argv;
@@ -4320,8 +4398,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
 
   // DQ (4/2/2011): Java does not have -I as an accepted option.
-     if (get_Java_only() == false && get_Python_only() == false)
-        {
+    if (get_C_only() || get_Cxx_only())
+    {
   // DQ (12/8/2004): Add -Ipath option so that source file's directory will be searched for any 
   // possible headers.  This is especially important when we are compiling the generated file
   // located in a different directory!  (When the original source file included header files
@@ -4354,7 +4432,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
          compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly); 
        }
      }
-        }
+    }
 
     // Liao 3/30/2011. the search path for the installation path should be the last one, after paths inside
     // source trees, such as -I../../../../sourcetree/src/frontend/SageIII and 
@@ -4405,16 +4483,18 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // printf ("Case of skip_unparse() == true: original source file name should be present compilerNameString = %s \n",compilerNameString.c_str());
         }
 
-     if ( get_compileOnly() == true )
-        {
+    if ( get_compileOnly() == true )
+    {
           std::string objectFileName = generateOutputFileName();
        // printf ("In buildCompilerCommandLineOptions: objectNameSpecified = %s objectFileName = %s \n",objectNameSpecified ? "true" : "false",objectFileName.c_str());
 
        // DQ (4/2/2011): Java does not have -o as an accepted option, though the "-d <dir>" can be used to specify where class files are put.
        // Currently we explicitly output "-d ." so that generated class files will be put into the current directory (build tree), but this
        // is not standard semantics for Java (though it makes the Java support in ROSE consistent with other languages supported in ROSE).
-          if (get_Java_only() == false && get_Python_only() == false)
-             {
+        if (get_C_only() ||
+            get_Cxx_only() ||
+            get_Fortran_only())
+        {
             // DQ (7/14/2004): Suggested fix from Andreas, make the object file name explicit
                if (objectNameSpecified == false)
                   {
@@ -4422,17 +4502,19 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                     compilerNameString.push_back("-o");
                     compilerNameString.push_back(currentDirectory + "/" + objectFileName);
                   }
-             }
         }
-       else
-        {
+    }
+    else
+    {
        // Liao 11/19/2009, changed to support linking multiple source files within one command line
        // We change the compilation mode for each individual file to compile-only even
        // when the original command line is to generate the final executable.
        // We generate the final executable at the SgProject level from object files of each source file
 
-          if (get_Java_only() == false && get_Python_only() == false)
-             {
+        if (get_C_only() ||
+            get_Cxx_only() ||
+            get_Fortran_only())
+        {
             // cout<<"turn on compilation only at the file compilation level"<<endl;
                compilerNameString.push_back("-c");
             // For compile+link mode, -o is used for the final executable, if it exists
@@ -4440,8 +4522,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                std::string objectFileName = generateOutputFileName();
                compilerNameString.push_back("-o");
                compilerNameString.push_back(currentDirectory + "/" + objectFileName);
-             }
         }
+    }
 
 #if 0
      printf ("At base of buildCompilerCommandLineOptions: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());

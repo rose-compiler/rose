@@ -18,6 +18,18 @@ namespace /*SageSupport::*/Cmdline {
 static void
 makeSysIncludeList(const Rose_STL_Container<string> &dirs,
                    Rose_STL_Container<string> &result);
+
+  namespace X10 {
+    static std::string option_prefix = "-rose:x10:";
+
+    void
+    Process (SgProject* project, std::vector<std::string>& argv);
+
+    // -rose:x10
+    void
+    ProcessX10Only (SgProject* project, std::vector<std::string>& argv);
+  } // namespace SageSupport::Cmdline::X10
+
 } // namespace SageSupport::Cmdline
 } // namespace SageSupport
 #endif // ROSE_SAGESUPPORT_CMDLINE_H

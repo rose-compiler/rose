@@ -4903,6 +4903,7 @@ HEADER_APPLICATION_FILE_START
                e_Cxx_output_language,     /*!< value used to specify output of C++ (for testing C++ unparser) */
                e_Fortran_output_language, /*!< value used to specify output of Fortran (for testing the Fortran unparser from C) */
                e_Java_output_language,    /*!< value used to specify output of Java (for testing Java unparser) */
+               e_X10_output_language,     /*!< value used to specify output of X10 (for testing X10 unparser) */
                e_Promela_output_language, /*!< value used to specify output of Promela for uses with SPIN (unsupported option) */
                e_PHP_output_language,     /*!< value used to specify output of PHP */
                e_Python_output_language,  /*!< value used to specify output of Python */
@@ -5132,10 +5133,11 @@ HEADER_APPLICATION_SOURCE_FILE_START
 
       //! Support for processing Java source files.
           int build_Java_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
-// #endif          
+// #endif
           int build_C_and_Cxx_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
           int build_PHP_AST();
           int build_Python_AST();
+          int build_X10_AST(const std::vector<std::string>& p_argv);
           virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
 
        // DQ (12/19/2008): Added support for translation source position information using CPP linemarkers (this is specific to Fortran).
@@ -5393,6 +5395,9 @@ HEADER_APPLICATION_PROJECT_START
           void set_Java_sourcepath (std::list<std::string> param);
           std::string get_Java_destdir (void) const;
           void set_Java_destdir (std::string param);
+
+          bool get_X10_only (void) const;
+          void set_X10_only (bool value);
 
        // DQ (2/4/2009): This is now a data member at the SgProject and so is automatically generated asa member function.
        // bool get_binary_only (void) const;
@@ -13484,6 +13489,7 @@ SgFile::display ( const std::string & label ) const
           case SgFile::e_Cxx_output_language:     outputLanguageName = "C++";     break;
           case SgFile::e_Fortran_output_language: outputLanguageName = "Fortran"; break;
           case SgFile::e_Java_output_language:    outputLanguageName = "Java";    break;
+          case SgFile::e_X10_output_language:     outputLanguageName = "X10";     break;
           case SgFile::e_PHP_output_language:     outputLanguageName = "PHP";     break;
           case SgFile::e_Python_output_language:  outputLanguageName = "Python";  break;
           case SgFile::e_Promela_output_language: outputLanguageName = "Promela"; break;
@@ -14485,6 +14491,26 @@ SgProject::get_Java_destdir (void) const
     }
     return p_Java_destdir;
    }
+
+void
+SgProject::set_X10_only (bool value)
+{
+  ROSE_ASSERT(this != NULL);
+  p_X10_only = value;
+}
+
+bool
+SgProject::get_X10_only (void) const
+{
+  // look at how the files are set.
+  bool result = p_X10_only;
+  for (int i = 0; i < numberOfFiles(); i++)
+  {
+      SgFile & file = get_file(i);
+      result = result || (bool) file.get_X10_only();
+  }
+  return result;
+}
 
 #if 0
 // DQ (2/4/2009): This is now a data member at the SgProject and so is automatically generated asa member function.
