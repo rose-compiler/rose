@@ -2614,6 +2614,23 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                   }
 
            // ROSE_ASSERT(definingDeclarationScope == firstNondefiningDeclarationScope);
+
+           // DQ (3/1/2013): Adding test for access specification (public, protected, private).  First we need to argue that these should be the same 
+           // for the non-defining and defining declaration.  I am not clear that they should be the same.
+               SgAccessModifier::access_modifier_enum definingDeclaration_access_modifier         = definingDeclaration->get_declarationModifier().get_accessModifier().get_modifier();
+               SgAccessModifier::access_modifier_enum firstNondefiningDeclaration_access_modifier = firstNondefiningDeclaration->get_declarationModifier().get_accessModifier().get_modifier();
+               if (definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier)
+                  {
+                    printf ("Error: definingDeclaration = %p firstNondefiningDeclaration = %p = %s  \n",definingDeclaration,firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+
+                    firstNondefiningDeclaration->get_file_info()->display("firstNondefiningDeclaration");
+                    definingDeclaration->get_file_info()->display("definingDeclaration");
+
+                    printf ("Error: definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
+                    printf ("Error: firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
+                  }
+               
+               ROSE_ASSERT(definingDeclaration_access_modifier == firstNondefiningDeclaration_access_modifier);
              }
         }
 

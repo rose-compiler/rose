@@ -965,6 +965,20 @@ void buildForStatement_nfi(SgForStatement* result, SgForInitStatement * init_stm
 SgUpcForAllStatement * buildUpcForAllStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgExpression* affinity, SgStatement * loop_body);
 SgUpcForAllStatement * buildUpcForAllStatement_nfi(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgExpression* affinity, SgStatement * loop_body);
 
+// DQ (3/3/2013): Added UPC specific build functions.
+//! Build a UPC notify statement
+SgUpcNotifyStatement* buildUpcNotifyStatement_nfi(SgExpression* exp);
+
+//! Build a UPC wait statement
+SgUpcWaitStatement* buildUpcWaitStatement_nfi(SgExpression* exp);
+
+//! Build a UPC barrier statement
+SgUpcBarrierStatement* buildUpcBarrierStatement_nfi(SgExpression* exp);
+
+//! Build a UPC fence statement
+SgUpcFenceStatement* buildUpcFenceStatement_nfi();
+
+
 //! Build while statement
 SgWhileStmt * buildWhileStmt(SgStatement *  condition, SgStatement *body, SgStatement *else_body = NULL);
 inline SgWhileStmt * buildWhileStmt(SgExpression *  condition, SgStatement *body, SgStatement* else_body = NULL) {
