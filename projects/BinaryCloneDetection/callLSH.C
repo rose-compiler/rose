@@ -686,13 +686,12 @@ OperateOnClusters::analyzeClusters()
   }
 
 
-  
   string Exec;
-  if(norm == 3)
-     Exec = ABS_TOP_BUILDDIR "/lsh2/lsh2";
-  else
-     Exec = ABS_TOP_BUILDDIR "/lshCloneDetection";
-
+  if(norm == 3){
+     Exec = ABS_BUILDDIR "/lsh2/lsh2";
+  }else{
+     Exec = ABS_BUILDDIR "/lshCloneDetection";
+  }
   std::cout << "Running LSH " << Exec << std::endl;
 
   struct timeval before, after;
@@ -708,7 +707,7 @@ OperateOnClusters::analyzeClusters()
           std::cout << "Similarity is " << similarity << std::endl;
           if( similarity == 1.0)
           {
-            Exec = ABS_TOP_BUILDDIR "/exactCloneDetection";
+            Exec = ABS_BUILDDIR "/exactCloneDetection";
             callExact(con, databaseName,Exec);
             
           }else

@@ -12,6 +12,7 @@ if ROSE_USE_SSL_SUPPORT
 INCLUDES = $(ROSE_INCLUDES)  $(SQLITE_DATABASE_INCLUDE)
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
+ABS_BUILDDIR = @abs_builddir@
 
 bin_PROGRAMS = createVectorsBinary createGML createDOT createDOT2 createGML2 createGML3 createGML4 diffBinary doGrouping findClones findExactDisjointSets \
                findLargestClones lshCloneDetection lshParameterFinding computeStatistics exactCloneDetection printOutClones printOutClones_distinctFiles printPairs
@@ -19,7 +20,7 @@ bin_PROGRAMS = createVectorsBinary createGML createDOT createDOT2 createGML2 cre
 createVectorsBinary_SOURCES = createSignatureVectors.C createVectorsBinary.C vectorCompression.C
 
 findClones_SOURCES = findClones.C callLSH.C computerangesFunc.h computerangesFunc.C vectorCompression.h vectorCompression.C lsh.C lsh.h lshParameterFinding.h
-findClones_CPPFLAGS = -DABS_TOP_BUILDDIR="\"$(ABS_TOP_BUILDDIR)\""
+findClones_CPPFLAGS = -DABS_BUILDDIR="\"$(ABS_BUILDDIR)\""
 
 exactCloneDetection_SOURCES = findExactClones.C lsh.C  lsh.h vectorCompression.h vectorCompression.C
 
