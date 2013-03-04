@@ -252,6 +252,7 @@ $(OMP_ACC_DIFF_FILES):$(PASSING_OMP_ACC_TEST_CUDA_Files)
 	echo "Verifying OMP ACC translation by diff ..."; \
 	if $(DIFF) $(@:.cu.diff=.cu) $(EXPECTED_PATH)/$(@:.cu.diff=.cu) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi 
 
+# We cannot run the diff since the function names of an outlined function has a random integer numbers
 ompacc_diff_check: $(OMP_ACC_DIFF_FILES)
 
 if WITH_GOMP_OPENMP_LIB
@@ -275,7 +276,7 @@ check-local: roseomp
 	@echo "Test for ROSE OpenMP lowering."
 	@echo "***************** Testing C input *******************"
 	$(MAKE) $(PASSING_C_TEST_Objects)
-	$(MAKE)	ompacc_diff_check
+	$(MAKE)	$(PASSING_OMP_ACC_TEST_CUDA_Files)
 if OS_MACOSX
 #	DQ (9/27/2009): We need to generate this file temporaily because the documentation depends on it.
 #	However, documentation should only depend upon generated files in the tutorial directory.
@@ -318,7 +319,7 @@ check-local: roseomp
 	@echo "Test for ROSE OpenMP lowering."
 	@echo "***************** Testing C input *******************"
 	$(MAKE) $(PASSING_C_TEST_Objects)
-	$(MAKE)	ompacc_diff_check
+	$(MAKE)	$(PASSING_OMP_ACC_TEST_CUDA_Files)
 if OS_MACOSX
 #	DQ (9/27/2009): We need to generate this file temporaily because the documentation depends on it.
 #	However, documentation should only depend upon generated files in the tutorial directory.
@@ -351,7 +352,7 @@ if OS_MACOSX
 endif
 #	$(MAKE) $(PASSING_Objects_With_main) # make objects with main entries here 
 	$(MAKE)	$(C_TEST_OBJECT_REQUIRED_TO_RUN)
-	$(MAKE)	ompacc_diff_check
+	$(MAKE)	$(PASSING_OMP_ACC_TEST_CUDA_Files)
 	@echo "***************** Testing C++ input ******************"
 	$(MAKE) $(PASSING_CXX_TEST_Objects)
 	$(MAKE)	$(CXX_TEST_OBJECT_REQUIRED_TO_RUN)
