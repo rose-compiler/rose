@@ -88,7 +88,7 @@ exit(1);
 	variables_map vm;
 	store(command_line_parser(argc, argv).options(desc)
 		.run(), vm);
-
+        notify(vm);
 
 	if (vm.count("help")) {
 	  cout << desc;           
@@ -113,10 +113,10 @@ exit(1);
 	database = vm["database"].as<string >();
 	cout << "database: " << database << std::endl;
 
-	stride = vm["stride"].as< int >();
+	stride = vm["stride"].as<size_t>();
 	cout << "stride: " << stride << std::endl;
 
-	windowSize = vm["windowSize"].as< int >();
+	windowSize = vm["windowSize"].as<size_t>();
 	cout << "windowSize: " << windowSize << std::endl;
   }
   catch(exception& e) {
