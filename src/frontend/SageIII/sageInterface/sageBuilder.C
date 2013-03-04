@@ -6866,6 +6866,62 @@ SgUpcForAllStatement * SageBuilder::buildUpcForAllStatement_nfi(SgForInitStateme
   return result;
 }
 
+// DQ (3/3/2013): Added UPC specific build functions.
+SgUpcNotifyStatement*
+SageBuilder::buildUpcNotifyStatement_nfi(SgExpression* exp)
+   {
+     SgUpcNotifyStatement* result = new SgUpcNotifyStatement(exp);
+
+     setOneSourcePositionNull(result);
+
+     exp->set_parent(result);
+
+     ROSE_ASSERT(exp->get_parent() != NULL);
+
+     return result;
+   }
+
+SgUpcWaitStatement* 
+SageBuilder::buildUpcWaitStatement_nfi(SgExpression* exp)
+   {
+     SgUpcWaitStatement* result = new SgUpcWaitStatement(exp);
+
+     setOneSourcePositionNull(result);
+
+     exp->set_parent(result);
+
+     ROSE_ASSERT(exp->get_parent() != NULL);
+
+     return result;
+   }
+
+SgUpcBarrierStatement* 
+SageBuilder::buildUpcBarrierStatement_nfi(SgExpression* exp)
+   {
+     SgUpcBarrierStatement* result = new SgUpcBarrierStatement(exp);
+
+     setOneSourcePositionNull(result);
+
+     exp->set_parent(result);
+
+     ROSE_ASSERT(exp->get_parent() != NULL);
+
+     return result;
+   }
+
+SgUpcFenceStatement* 
+SageBuilder::buildUpcFenceStatement_nfi()
+   {
+     SgUpcFenceStatement* result = new SgUpcFenceStatement();
+
+     setOneSourcePositionNull(result);
+
+     return result;
+   }
+
+
+
+
 SgWhileStmt * SageBuilder::buildWhileStmt(SgStatement *  condition, SgStatement *body, SgStatement* else_body)
 {
   ROSE_ASSERT(condition);

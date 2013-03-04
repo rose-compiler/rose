@@ -19,6 +19,7 @@ void foobar_9()  __attribute__((malloc));
 
 void foobar_10()  __attribute__((naked));
 
+// Note that most attributes can use either of two names (with or without leading a trailing underscores).
 void foobar_11a()  __attribute__((no_instrument_function));
 void foobar_11b()  __attribute__((__no_instrument_function__));
 
@@ -49,3 +50,32 @@ typedef int foo_integer_9 __attribute__((aligned(128)));
 // These are not legal values for alignment specification.
 // typedef int foo_integer_10 __attribute__((aligned(256)));
 // typedef int foo_integer_11 __attribute__((aligned(512)));
+
+// These will both output (unparsed) the same (without the alignment specification), 
+// the EDG front-end does not proved any choice here.
+int x_0;
+int x_1 __attribute__((aligned(0)));
+
+int x_2 __attribute__((aligned(1)));
+int x_3 __attribute__((aligned(2)));
+int x_4 __attribute__((aligned(4)));
+
+// Alignment directives can be associated with different variables in a single declaration.
+// So it needs to be associated with the SgInitializedName instead of the SgVariableDeclaration.
+int a_1 __attribute__((aligned(2))), b_1 __attribute__((aligned(4)));
+
+// Use of multiple attributes value will generate multiple attribute specifications 
+// which appear to be semantically equivalent but is a normalization of the input code.
+void foobar_multiattribute_1()  __attribute__((noinline,no_instrument_function));
+
+struct X
+   {
+     int field_x_0;
+     int field_x_1 __attribute__((aligned(0)));
+     int field_x_2 __attribute__((aligned(1)));
+     int field_x_3 __attribute__((aligned(2)));
+     int field_x_4 __attribute__((aligned(4)));
+   };
+
+// We don't have to check defining functions since "attributes are not permitted in a function definition"
+// void foobar_2() __attribute__((constructor)) {}

@@ -86,7 +86,8 @@ if ROSE_USE_NEW_EDG_INTERFACE
 # so that we can have declarations in the initializers of forall statements.
 # Note that only upc_all_gather_ex.upc, upc_all_gather_all_ex.upc, and upc_all_exchange_ex.upc require the "-rose:upc_threads 1" option.
 # ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings --edg:c99 -rose:exit_after_parser -rose:skipfinalCompileStep -rose:upc_threads 1
-ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings --edg:c99 -rose:exit_after_parser -rose:skipfinalCompileStep
+# ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings --edg:c99 -rose:exit_after_parser -rose:skipfinalCompileStep
+ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings --edg:c99 -rose:skipfinalCompileStep
 else
 # ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep --edg:upc
 # ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:exit_after_parser -rose:skipfinalCompileStep -rose:upc_threads 1
