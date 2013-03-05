@@ -18,13 +18,32 @@ extern int omp_get_thread_num(void);
 extern int omp_get_num_threads(void);
 
 #include <stdlib.h> // for getenv(), malloc(), etc
-#include <stdio.h> // for getenv()
+#include <stdio.h> // for getenv(), file
 #include <assert.h>
 #include <stdarg.h>
 #include <string.h> // for memcpy()
 
 /* Timing support, Liao 2/15/2013 */
 #include <sys/time.h>
+#include <time.h> /*current time*/
+
+int env_region_instr_val = 0;
+FILE* fp = 0;
+
+extern char* current_time_to_str(void);
+char* current_time_to_str(void)
+{
+  /* careful about the size: match sprintf () */
+  char *timestamp = (char *)malloc(sizeof(char) * 20);
+  time_t ltime;
+  ltime=time(NULL);
+  struct tm *tm;
+  tm=localtime(&ltime);
+
+  sprintf(timestamp,"%04d_%02d_%02d_%02d_%02d_%02d", tm->tm_year+1900, tm->tm_mon+1, // month starts from 0
+      tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
+  return timestamp;
+}
 
 double xomp_time_stamp(void)
 {
@@ -89,7 +108,27 @@ void xomp_init (void)
 //Runtime library initialization routine
 void XOMP_init (int argc, char ** argv)
 {
-  printf ("%f\t1\n",xomp_time_stamp());
+  char* env_var_str;
+  int  env_var_val;
+  env_var_str = getenv("XOMP_REGION_INSTR");
+  if (env_var_str != NULL)
+  {
+    sscanf(env_var_str, "%d", &env_var_val);
+    assert (env_var_val==0 || env_var_val == 1);
+    env_region_instr_val = env_var_val;
+  }
+
+  if (env_region_instr_val)
+  {
+    char* instr_file_name;
+    instr_file_name= current_time_to_str();
+    fp = fopen(instr_file_name, "a+");
+    if (fp != NULL)
+    {
+      printf("XOMP region instrumentation is turned on ...\n");
+      fprintf (fp, "%f\t1\n",xomp_time_stamp());
+    }
+  }
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
 #else   
   _ompc_init (argc, argv);
@@ -105,7 +144,11 @@ void xomp_terminate (int* exitcode)
 // Runtime library termination routine
 void XOMP_terminate (int exitcode)
 {
-  printf ("%f\t1\n",xomp_time_stamp());
+  if (env_region_instr_val)
+  {
+    fprintf (fp, "%f\t1\n",xomp_time_stamp());
+    fclose(fp);
+  }
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
 #else   
   _ompc_terminate (exitcode);
@@ -196,8 +239,11 @@ void xomp_parallel_start (void (*func) (void *), unsigned* ifClauseValue, unsign
 
 void XOMP_parallel_start (void (*func) (void *), void *data, unsigned ifClauseValue, unsigned numThreadsSpecified)
 {
-  printf ("%f\t1\n",xomp_time_stamp());
-  printf ("%f\t2\n",xomp_time_stamp());
+  if (env_region_instr_val)
+  {
+    fprintf (fp,"%f\t1\n",xomp_time_stamp());
+    fprintf (fp, "%f\t2\n",xomp_time_stamp());
+  }
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY 
   // XOMP  to GOMP
   unsigned numThread = 0;
@@ -227,8 +273,11 @@ void xomp_parallel_end (void)
 void XOMP_parallel_end (void)
 {
   //printf ("%s %f\n",__PRETTY_FUNCTION__, xomp_time_stamp());
-  printf ("%f\t2\n",xomp_time_stamp());
-  printf ("%f\t1\n",xomp_time_stamp());
+  if (env_region_instr_val)
+  {
+    fprintf (fp,"%f\t2\n",xomp_time_stamp());
+    fprintf (fp, "%f\t1\n",xomp_time_stamp());
+  }
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   GOMP_parallel_end ();
 #else   
