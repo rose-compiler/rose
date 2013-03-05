@@ -27,6 +27,7 @@ libbinaryMidend_la_SOURCES = \
      instructionSemantics/PartialSymbolicSemantics.C \
      instructionSemantics/SMTSolver.C \
      instructionSemantics/SymbolicSemantics.C \
+     instructionSemantics/SymbolicSemantics2.C \
      instructionSemantics/YicesSolver.C \
      GraphAlgorithms.C \
      BinaryControlFlow.C \
@@ -73,6 +74,7 @@ include_HEADERS = \
    instructionSemantics/PartialSymbolicSemantics2.h \
    instructionSemantics/SMTSolver.h \
    instructionSemantics/SymbolicSemantics.h \
+   instructionSemantics/SymbolicSemantics2.h \
    instructionSemantics/YicesSolver.h \
    instructionSemantics/flowEquations.h \
    instructionSemantics/semanticsModule.h \

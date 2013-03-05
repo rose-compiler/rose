@@ -4,7 +4,7 @@
 #include "integerOps.h"
 
 namespace BinaryAnalysis {
-namespace InstructionSemantics {
+namespace InstructionSemantics2 {
 
 /*******************************************************************************************************************************
  *                                      Support functions
@@ -768,22 +768,13 @@ struct IP_movsx: P {
 struct IP_movzx: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        switch (asm_type_width(args[0]->get_type())) {
-            case 16: {
-                d->write(args[0], ops->concat(d->read(args[1], 8), ops->number_(8, 0)));
-                break;
-            }
-            case 32: {
-                switch (asm_type_width(args[1]->get_type())) {
-                    case 8: d->write(args[0], ops->concat(d->read(args[1], 8), ops->number_(24, 0))); break;
-                    case 16: d->write(args[0], ops->concat(d->read(args[1], 16), ops->number_(16, 0))); break;
-                    default: throw BaseSemantics::Exception("size not implemented", insn);
-                }
-                break;
-            }
-            default:
-                throw BaseSemantics::Exception("size not implemented", insn);
-                break;
+        size_t dst_nbits = asm_type_width(args[0]->get_type());
+        size_t src_nbits = asm_type_width(args[1]->get_type());
+        if (dst_nbits==src_nbits) {
+            d->write(args[0], d->read(args[1], src_nbits));
+        } else {
+            assert(dst_nbits>src_nbits);
+            d->write(args[0], ops->concat(d->read(args[1], src_nbits), ops->number_(dst_nbits-src_nbits, 0)));
         }
     }
 };

@@ -4,7 +4,7 @@
 #include "BaseSemantics2.h"
 
 namespace BinaryAnalysis {
-namespace InstructionSemantics {
+namespace InstructionSemantics2 {
 
 typedef boost::shared_ptr<class DispatcherX86> DispatcherX86Ptr;
 

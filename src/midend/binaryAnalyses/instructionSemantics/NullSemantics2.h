@@ -1,11 +1,11 @@
-#ifndef Rose_NullSemantics_H
-#define Rose_NullSemantics_H
+#ifndef Rose_NullSemantics2_H
+#define Rose_NullSemantics2_H
 
 #include "x86InstructionSemantics.h"
 #include "BaseSemantics2.h"
 
 namespace BinaryAnalysis { // documented elsewhere
-namespace InstructionSemantics { // documented elsewhere
+namespace InstructionSemantics2 { // documented elsewhere
         
 
 /** Semantic domain that does nothing, but is well documented.
@@ -18,8 +18,7 @@ namespace NullSemantics {
  *                                      ValueType
  *******************************************************************************************************************************/
 
-/** Smart pointer to a SValue.  SValue objects are reference counted through boost::shared_ptr smart pointers. The
- *  underlying object should never be explicitly deleted. */
+/** Smart pointer to an SValue object.  SValue objects are reference counted and should not be explicitly deleted. */
 typedef BaseSemantics::Pointer<class SValue> SValuePtr;
 
 /** Values in the NullSemantics domain.  Values are essentially void. */
@@ -48,7 +47,7 @@ public:
     virtual BaseSemantics::SValuePtr number_(size_t nBits, uint64_t number) const /*override*/ {
         return BaseSemantics::SValuePtr(new SValue(nBits)); // the number is not important in this semantic domain
     }
-    virtual BaseSemantics::SValuePtr copy_(size_t new_width=0) const /*override*/ {
+    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const /*override*/ {
         SValuePtr retval(new SValue(*this));
         if (new_width!=0 && new_width!=retval->get_width())
             retval->set_width(new_width);
@@ -75,32 +74,50 @@ public:
  *                                      RISC Operators
  *******************************************************************************************************************************/
 
+/** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
+ *  deleted. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** NullSemantics operators always return a new undefined value.  They do, however, check certain preconditions. */
 class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
-    // Same constructors as for the base class
-    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval): BaseSemantics::RiscOperators(protoval) {}
-    explicit RiscOperators(const BaseSemantics::StatePtr &state): BaseSemantics::RiscOperators(state) {}
+    // Protected constructors, same as for the base class
+    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
+        : BaseSemantics::RiscOperators(protoval, solver) {}
+    explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
+        : BaseSemantics::RiscOperators(state, solver) {}
 
 public:
-    /** Constructor. See the virtual constructor, create(), for details. */
-    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval) {
-        return RiscOperatorsPtr(new RiscOperators(protoval));
+    /** Static allocating constructor. Creates a new RiscOperators object and configures it to use semantic values and states
+     * that are defaults for NullSemantics. */
+    static RiscOperatorsPtr instance() {
+        BaseSemantics::SValuePtr protoval = SValue::instance();
+        // FIXME: register state should probably be chosen based on an architecture [Robb Matzke 2013-03-01]
+        BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateX86::instance(protoval);
+        BaseSemantics::MemoryStatePtr memory = BaseSemantics::MemoryCellList::instance(protoval);
+        BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
+        SMTSolver *solver = NULL;
+        return RiscOperatorsPtr(new RiscOperators(state, solver));
+    }
+
+    /** Static allocating constructor. See the virtual constructor, create(), for details. */
+    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
+        return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Constructor. See the virtual constructor, create(), for details. */
-    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state) {
-        return RiscOperatorsPtr(new RiscOperators(state));
+    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
+        return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval) const /*override*/ {
-        return instance(protoval);
+    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
+                                                   SMTSolver *solver=NULL) const /*override*/ {
+        return instance(protoval, solver);
     }
 
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state) const /*override*/ {
-        return instance(state);
+    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
+                                                   SMTSolver *solver=NULL) const /*override*/ {
+        return instance(state, solver);
     }
 
 public:

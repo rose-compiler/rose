@@ -1,5 +1,5 @@
-#ifndef Rose_PartialSymbolicSemantics_H
-#define Rose_PartialSymbolicSemantics_H
+#ifndef Rose_PartialSymbolicSemantics2_H
+#define Rose_PartialSymbolicSemantics2_H
 
 
 #ifndef __STDC_FORMAT_MACROS
@@ -22,7 +22,7 @@
 #include "FormatRestorer.h"
 
 namespace BinaryAnalysis {              // documented elsewhere
-namespace InstructionSemantics {        // documented elsewhere
+namespace InstructionSemantics2 {       // documented elsewhere
 
 /** A fast, partially symbolic semantic domain.
  *
@@ -32,7 +32,7 @@ namespace InstructionSemantics {        // documented elsewhere
  *  <ul>
  *    <li>SValue: the values stored in registers and memory and used for memory addresses.</li>
  *    <li>State: represents the state of the virtual machine, its registers and memory.</li>
- *    <li>RiscOperators: the policy class used to instantiate X86InstructionSemantic instances.</li>
+ *    <li>RiscOperators: the low-level operators called by instruction dispatchers (e.g., DispatcherX86).</li>
  *  </ul>
  *
  *  Each value is either a known value or an unknown value. An unknown value consists of a base name and offset and whether the
@@ -61,9 +61,11 @@ public:
  *                                      Value Type
  *******************************************************************************************************************************/
 
+/** Smart pointer to an SValue object.  SValue objects are reference counted and should not be explicitly deleted. */
 typedef BaseSemantics::Pointer<class SValue> SValuePtr;
 
-/** A value is either known or unknown. Unknown values have a base name (unique ID number), offset, and sign. */
+/** Type of values manipulated by the PartialSymbolicSemantics domain. A value is either known or unknown. Unknown values have
+ *  a base name (unique ID number), offset, and sign. */
 class SValue: public BaseSemantics::SValue {
 public:
     uint64_t name;              /**< Zero for constants; non-zero ID number for everything else. */
@@ -71,22 +73,22 @@ public:
     bool negate;                /**< Switch between name+offset and (-name)+offset; should be false for constants. */
 
 protected:
-    /** Constructor. Protected because values are reference counted via boost::shared_ptr<>.
-     * @{ */
+    // Constructors are protected because values are reference counted.
     explicit SValue(size_t nbits)
         : BaseSemantics::SValue(nbits), name(++name_counter), offset(0), negate(false) {}
+
     SValue(size_t nbits, uint64_t number)
         : BaseSemantics::SValue(nbits), name(0), offset(number), negate(false) {
         this->offset &= IntegerOps::genMask<uint64_t>(nbits);
     }
+
     SValue(size_t nbits, uint64_t name, uint64_t offset, bool negate)
         : BaseSemantics::SValue(nbits), name(name), offset(offset), negate(negate) {
         this->offset &= IntegerOps::genMask<uint64_t>(nbits);
     }
-    /** @} */
 
 public:
-    /** Construct a prototypical value. Prototypical values are only used for their virtual constructors. */
+    /** Create a prototypical value. Prototypical values are only used for their virtual constructors. */
     static SValuePtr instance() {
         return SValuePtr(new SValue(1));
     }
@@ -106,14 +108,14 @@ public:
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const /*override*/ {
         return BaseSemantics::SValuePtr(new SValue(nbits, value));
     }
-    virtual BaseSemantics::SValuePtr copy_(size_t new_width=0) const /*override*/ {
+    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const /*override*/ {
         SValuePtr retval(new SValue(*this));
         if (new_width!=0 && new_width!=retval->get_width())
             retval->set_width(new_width);
         return retval;
     }
 
-    /** Virtual constructor. Constructs a new semantic value with full control over all aspects of the value. */
+    /** Virtual allocating constructor. Creates a new semantic value with full control over all aspects of the value. */
     virtual BaseSemantics::SValuePtr create(size_t nbits, uint64_t name, uint64_t offset, bool negate) const {
         return SValuePtr(new SValue(nbits, name, offset, negate));
     }
@@ -127,7 +129,7 @@ public:
     virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const /*override*/;
     virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const /*override*/;
 
-    virtual void print(std::ostream &output, BaseSemantics::PrintHelper *helper_=NULL) const /*override*/;
+    virtual void print(std::ostream &output, BaseSemantics::PrintHelper *helper=NULL) const /*override*/;
     
     virtual bool is_number() const /*override*/ {
         return 0==name;
@@ -145,42 +147,12 @@ public:
  *                                      Memory
  *******************************************************************************************************************************/
 
-/** Memory cell with partially symbolic address and data. */
-class MemoryCell: public BaseSemantics::MemoryCell {
-public:
-    MemoryCell(const SValuePtr &address, const SValuePtr &value)
-        : BaseSemantics::MemoryCell(address, value) {}
-
-#if 0 // FIXME [Robb Matzke 2013-01-16]
-    /** Returns true if this memory value could possibly overlap with the @p other memory value.  In other words,
-     *  returns false only if this memory location cannot overlap with @p other memory location. Two addresses that
-     *  are identical alias one another. */
-    bool may_alias(const MemoryCell &other) const;
-
-    /** Returns true if this memory address is the same as the @p other. Note that "same" is more strict than
-     * "overlap". */
-    bool must_alias(const MemoryCell &other) const;
-
-    friend bool operator==(const MemoryCell &a, const MemoryCell &b) {
-        return (a.get_address()==b.get_address() &&
-                a.get_data()==b.get_data() &&
-                a.get_nbytes()==b.get_nbytes() &&
-                a.get_clobbered()==b.get_clobbered() &&
-                a.get_written()==b.get_written());
-    }
-    friend bool operator!=(const MemoryCell &a, const MemoryCell &b) {
-        return !(a==b);
-    }
-    friend bool operator<(const MemoryCell &a, const MemoryCell &b) {
-        return a.get_address() < b.get_address();
-    }
-#endif
-};
 
 /*******************************************************************************************************************************
  *                                      Machine State
  *******************************************************************************************************************************/
 
+/** Smart pointer to a State object.  State objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class State> StatePtr;
 
 /** Represents the entire state of the machine. */
@@ -199,12 +171,13 @@ protected:
     State(const State &other): BaseSemantics::State(other) {}
 
 public:
-    /** Constructor. */
+    /** Static allocating constructor. */
     static StatePtr instance(const BaseSemantics::RegisterStatePtr &registers,
                              const BaseSemantics::MemoryStatePtr &memory) {
         return StatePtr(new State(registers, memory));
     }
 
+    /** Virtual allocating constructor. */
     virtual BaseSemantics::StatePtr create(const BaseSemantics::RegisterStatePtr &registers,
                                            const BaseSemantics::MemoryStatePtr &memory) const /*override*/ {
         return instance(registers, memory);
@@ -226,30 +199,50 @@ public:
  *                                      RISC Operators
  *******************************************************************************************************************************/
 
+/** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
+ *  deleted. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Defines RISC operators for this semantic domain. */
 class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
-    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval): BaseSemantics::RiscOperators(protoval) {}
-    explicit RiscOperators(const BaseSemantics::StatePtr &state): BaseSemantics::RiscOperators(state) {}
+    // Protected constructors, same as for the base class
+    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
+        : BaseSemantics::RiscOperators(protoval, solver) {}
+    explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
+        : BaseSemantics::RiscOperators(state, solver) {}
 
 public:
-    /** Constructor. */
-    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval) {
-        return RiscOperatorsPtr(new RiscOperators(protoval));
+    /** Static allocating constructor.  Creates a new RiscOperators object and configures it to use semantic values and states
+     * that are defaults for PartialSymbolicSemantics. */
+    static RiscOperatorsPtr instance() {
+        BaseSemantics::SValuePtr protoval = SValue::instance();
+        BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateX86::instance(protoval);
+        BaseSemantics::MemoryStatePtr memory = BaseSemantics::MemoryCellList::instance(protoval);
+        BaseSemantics::StatePtr state = State::instance(registers, memory);
+        SMTSolver *solver = NULL;
+        return RiscOperatorsPtr(new RiscOperators(state, solver));
+    }
+    
+
+    /** Static allocating constructor. */
+    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
+        return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
-    /** Constructor. */
-    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state) {
-        return RiscOperatorsPtr(new RiscOperators(state));
+    /** Static allocating constructor. */
+    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
+        return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval) const /*override*/ {
-        return instance(protoval);
+    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
+                                                   SMTSolver *solver=NULL) const /*override*/ {
+        return instance(protoval, solver);
     }
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state) const /*override*/ {
-        return instance(state);
+
+    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
+                                                   SMTSolver *solver=NULL) const /*override*/ {
+        return instance(state, solver);
     }
 
 public:

@@ -1,5 +1,5 @@
-#ifndef Rose_BaseSemantics_H
-#define Rose_BaseSemantics_H
+#ifndef Rose_BaseSemantics2_H
+#define Rose_BaseSemantics2_H
 
 #include "Registers.h"
 #include "FormatRestorer.h"
@@ -29,12 +29,9 @@ namespace BinaryAnalysis {
  *  domain defines what the RISC-operators do (e.g., change a concrete machine state, produce an output listing of RISC
  *  operations, build an LLVM representation).
  *
- *  ROSE defines one @em dispatcher class per machine architecture. In this respect, the dispatcher is akin to the
- *  microcontroller for a CISC architecture, such as the x86 microcontroller within an x86 CPU. Users can subclass the
- *  dispatcher if they need to override how a machine instruction is translated into RISC operations. (Note: ROSE might move
- *  away from the huge "switch" statement implementation to a table-driven approach, in which case subclassing of the entire
- *  dispatcher will likely be replaced by either modifying the dispatch table or by subclassing individual machine instruction
- *  classes.)
+ *  ROSE defines one <em>dispatcher</em> class per machine architecture. In this respect, the dispatcher is akin to the
+ *  microcontroller for a CISC architecture, such as the x86 microcontroller within an x86 CPU.  The base class for all
+ *  dispatchers is BaseSemantics::Dispatcher.
  *
  *  The <em>semantic domain</em> is a loose term that refers to at least three parts taken as a whole: a value type, a machine
  *  state type, and the RISC operators.  Semantic domains have names like "concrete domain", "interval domain", "sign domain",
@@ -45,12 +42,12 @@ namespace BinaryAnalysis {
  *  state type, and RISC operations) into a single name space or class.
  *
  *  The <em>values</em> of a semantic domain (a.k.a., "svalues") are defined by a class type for that domain.  For instance, a
- *  concrete domain's value type would likely hold bit vectors of varying sizes.  Instantiations of the value type are used for
+ *  concrete domain's value type would likely hold bit vectors of varying sizes.  Instances of the value type are used for
  *  register contents, memory contents, memory addresses, and temporary values that exist during execution of a machine
  *  instruction. Every value has a width measured in bits.  For instance, an x86 architecture needs values that are 1, 5, 8,
  *  16, 32, and 64 bits wide (the 1-bit values are for Booleans in the EFLAGS register; the five-bit values are shift counts on
  *  a 32-bit architecutre; the 64-bit values are needed for integer multiply on a 32-bit architecture; this list is likely not
- *  exhaustive).  Various kinds of value type form a class hierarchy whose most basic type is BaseSemantics::SValue.
+ *  exhaustive).  Various kinds of value type form a class hierarchy whose root is BaseSemantics::SValue.
  *
  *  As instructions execute they use inputs and generate outputs, which are read from and written to a <em>machine
  *  state</em>. The machine state consists of registers and memory, each of which holds a value which is instantiated from the
@@ -58,73 +55,59 @@ namespace BinaryAnalysis {
  *  internally, they can use a different type as long as a translation is provided to and from that type).  The names and
  *  inter-relationships of the architecture's registers are contained in a RegisterDictionary while the state itself contains
  *  the values stored in those registers.  The organization of registers and memory within the state is defined by the state.
- *  Various kinds of states form a class hierarchy whose most basic type is BaseSemantics::State.
+ *  Various kinds of states form a class hierarchy whose root is BaseSemantics::State.
  *
- *  The <em>RISC operators</em> class provides the implementations for the RISC operators.  An instance of the RISC operators
- *  class is provided as an argument to the dispatcher constructor in order to create a dispatcher with the specified RISC
- *  semantics.  It is possible (and normal) to create multiple versions of a dispatcher each with a different combination of
- *  value type, state, and RISC operators and each tuned for a specific kind of analysis.
+ *  The <em>RISC operators</em> class provides the implementations for the RISC operators.  Those operators are documented in
+ *  the BaseSemantics::RiscOperators class, which is the root of a class hierarchy.  Most of the RISC operators are pure
+ *  virtual.
+ *
+ *  In order to use binary instruction semantics the user must create the various parts and link them together in a lattice.
+ *  The parts are usually built from the bottom up since higher-level parts take lower-level parts as their constructor
+ *  arguments: svalue, register state, memory state, RISC operators, and dispatcher.  However, most of the RiscOperators
+ *  classes have a default (or mostly default) constructor that builds the prerequisite objects and links them together, so the
+ *  only time a user would need to do it explicitly is when they want to mix in a custom part.
  *
  *  @section IS3 Memory Management
  *
  *  Most of the instruction semantics components have abstract base classes. Instances of concrete subclasses thereof are
- *  passed around by pointers, and in order to simplify memory management issues, those objects are reference counted using
- *  Boost smart pointers.  For convenience, pointer typedefs are created for each class--their names are the same as the class
- *  but suffixed with "Ptr".  Users will almost exclusively work with pointers to the objects rather than objects themselves
- *  (the one exception is during object construction).
+ *  passed around by pointers, and in order to simplify memory management issues, those objects are reference counted.  Most
+ *  objects use boost::shared_ptr, but SValue objects use a faster custom smart pointer (it also uses a custom allocator, and
+ *  testing showed a substantial speed improvement over Boost when compiled with GCC's "-O3" switch). In any case, to alleviate
+ *  the user from having to remember which kind of objects use which smart pointer implementation, pointer typedefs are created
+ *  for each class&mdash;their names are the same as the class but suffixed with "Ptr".  Users will almost exclusively work
+ *  with pointers to the objects rather than objects themselves. In fact, holding only a normal pointer to an object is a bit
+ *  dangerous since the object will be deleted when the last smart pointer disappears.
  *
- *  Implementations of an interface will frequently need to create a new instance of a class even though all they know is the
- *  name of the abstract base class.  Therefore, the base class defines at least one virtual constructor so that given an
- *  object (which is an instance of one of the subclasses), that virtual constructor can be invoked to create another object of
- *  the same dynamic type.  In fact, reference counted objects will define three versions of each constructor: a virtual
- *  constructor, a class-wide constructor, and the actual constructor.  The first two versions return a smart pointer while the
- *  third is the usual C++ constructor.  The C++ constructor should have protected access to help prevent users from
- *  inadvertently instantiating such an object on the stack, or using an object without reference counting it.
- *
- *  From a user's perspective, reference counted objects are constructed from a class known at compile time by calling one of
- *  the class-wide constructors whose name is usually instance():
+ *  In order to encourage users to use the provided smart pointers and not allocate semantic objects on the stack, the normal
+ *  constructors are protected.  To create a new object from a class name known at compile time, use the static instance()
+ *  method which returns a smart pointer. This is how users will typically create the various semantic objects.
  *
  *  @code
  *      // user code
  *      #include <IntervalSemantics.h>
- *      using namespace BinaryAnalysis::InstructionSemantics;
+ *      using namespace BinaryAnalysis::InstructionSemantics2;
  *      BaseSemantics::SValuePtr value = IntervalSemantics::SValue::instance();
  *      // no need to ever delete the object that 'value' points to
  *  @endcode
  *
- *  When subclassing in order to override or agument a method from the base class, the method might need to create an instance
- *  of a class without knowing the name of the class--all it has is an existing object of that class.  The new object can be
- *  created by invoking one of the virtual constructors upon the existing object.  Copyable objects will also define a clone()
- *  virtual constructor that creates an exact copy of the object.  For example:
+ *  Most of the semantic objects also provide virtual constructors.  The <code>this</code> pointer is used only to obtain the
+ *  dynamic type of the object in order to call the correct virtual constructor. The virtual constructor will create a new
+ *  object having the same dynamic type and return a smart pointer to it.  The object on which the virtual constructor is
+ *  invoked is a "prototypical object".  For instance, when a RegisterState object is created its constructor is supplied with
+ *  a prototypical SValue (a "protoval") which will be used to create new values whenever one is needed (such as when setting
+ *  the initial values for the registers).  Virtual constructors are usually named create(), but some classes, particularly
+ *  SValue, define other virtual constructors as well. Virtual constructors are most often used when a function overrides a
+ *  declaration from a base class, such as when a user defines their own RISC operation:
  *
  *  @code
- *      BaseSemantics::SValuePtr func1(const BaseSemantics::SValuePtr &operand, int addend) {
+ *      BaseSemantics::SValuePtr my_accumulate(const BaseSemantics::SValuePtr &operand, int addend) {
  *          BaseSemantics::SValuePtr retval = operand->create(operand->sum + addend);
  *          return retval;
  *      }
  *  @endcode
  *
- *  When writing a subclass, each constructor will have three versions as mentioned above:
- *
- *  @code
- *      typedef boost::shared_ptr<class MyThing> MyThingPtr;
- *      class MyThing: public OtherThing { // subclass of BaseSemantics::Thing
- *      private:
- *          double value;
- *      protected:
- *          // the usual C++ constructors
- *          MyThing(size_t width, double v): OtherThing(width), value(v) {}
- *      public:
- *          // the class-wide constructors, all named "instance"
- *          static MyThingPtr instance(size_t width, double v) {
- *              return MyThingPtr(new MyThing(width, v));
- *          }
- *          // the virtual constructors (no naming convention)
- *          virtual BaseSemantics::ThingPtr generate(size_t width, double v) const override {
- *              return instance(width, v);
- *          }
- *     };
- *  @endcode
+ *  Some of the semantic objects have a virtual copy constructor named copy().  This operates like a normal copy constructor
+ *  but also adjusts reference counts.
  *
  *  @section IS4 Specialization
  *
@@ -132,18 +115,68 @@ namespace BinaryAnalysis {
  *  triplets (value type, state type, RISC operators) that are designed to work together to implement a particular semantic
  *  domain, but users are free to subclass any of those components to build customized semantic domains.  For example, the x86
  *  simulator (in "projects/simulator") subclasses the PartialSymbolicSemantics state in order to use memory mapped via ROSE's
- *  MemoryMap class, and its RISC operators in order to handle system calls (among other things).
+ *  MemoryMap class, and to handle system calls (among other things).
  *
- *  @section IS5 Future work
+ *  When writing a subclass the author should define the (normal) constructors from the base class and any others that are
+ *  needed, and they should have "protected" visibility.  The object should also define static instance() constructors and
+ *  virtual create() constructors that are consistent with its base class.  The instance() constructor will almost always
+ *  create a new object by passing all its arguments to the normal constructor, and then give ownership of the object to a
+ *  smart pointer which is returned.  The virtual constructors will almost always just call the static constructor with the
+ *  same arguments.  Here's an example:
  *
- *  <em>Table-driven dispatch.</em> The current dispatchers are implemented with a huge switch statement selecting for each
- *  possible machine instruction.  This design doesn't lend itself well to users being able to augment/override individual
- *  instructions, users adding new instructions, enabling large groups of instructions individually (e.g., SSE) to handle
- *  variations in machine architecture since each modification requires a subclass.  The plan is to replace the large "switch"
- *  statement with a dispatch table and replace each "case" with a functor specific to that machine instruction.  Users will be
- *  able to modify individual table entries, modify related groups of table entries, subclass functors for individual
- *  instructions, or define new functors.  The functors will likely be class templates that take arguments similar to the
- *  dispatcher's class template.
+ *  @code
+ *      typedef boost::shared_ptr<class MyThing> MyThingPtr;
+ *      class MyThing: public OtherThing { // subclass of BaseSemantics::Thing
+ *      private:
+ *          double value;
+ *      protected:
+ *          // the normal C++ constructors; same arguments as for OtherThing::OtherThing()
+ *          explicit MyThing(size_t width): OtherThing(width) {}
+ *          MyThing(size_t width, double v): OtherThing(width), value(v) {}
+ *      public:
+ *          // the static allocating constructors, all named "instance"
+ *          static MyThingPtr instance(size_t width) {
+ *              return MyThingPtr(new MyThing(width));
+ *          }
+ *          static MyThingPtr instance(size_t width, double v) {
+ *              return MyThingPtr(new MyThing(width, v));
+ *          }
+ *          // the virtual allocating constructors
+ *          virtual BaseSemantics::ThingPtr create(size_t width) const override {
+ *              return instance(width);
+ *          }
+ *          virtual BaseSemantics::ThingPtr generate(size_t width, double v) const override {
+ *              return instance(width, v);
+ *          }
+ *     };
+ *  @endcode
+ *
+ *  @section IS5 Other major changes
+ *
+ *  The new API exists in the BinaryAnalysis::InstructionSemantics2 name space and can coexist with the original API in
+ *  BinaryAnalysis::InstructionSemantics&mdash;a program can use both APIs at the same time.
+ *
+ *  The mapping of class names (and some method) from old API to new API is:
+ *  <ul>
+ *    <li>ValueType is now called SValue, short for "semantic value".</li>
+ *    <li>ValueType::is_known() is now called SValue::is_number() and ValueType::known_value() is now SValue::get_number().
+ *    <li>Policy is now called RiscOperators.</li>
+ *    <li>X86InstructionSemantics is now called "DispatcherX86.</li>
+ *  </ul>
+ *
+ *  The biggest difference between the APIs is that almost everything in the new API is allocated on the heap and passed by
+ *  pointer instead of being allocated on the stack and passed by value.  However, when converting from old API to new API, one
+ *  does not need to add calls to delete objects since this happens automatically.
+ *
+ *  The dispatchers are table driven rather than having a giant "switch" statement.  While nothing prevents a user from
+ *  subclassing a dispatcher to override its processInstruction() method, its often easier to just allocate a new instruction
+ *  handler and register it with the dispatcher.  This also makes it easy to add semantics for instructions that we hadn't
+ *  considered in the original design. See DispatcherX86 for some examples.
+ *
+ *  The interface between RiscOperators and either MemoryState or RegisterState has been formalized somewhat. See documentation
+ *  for RiscOperators::readMemory() and RiscOperators::readRegister().
+ *
+ *  @section IS6 Future work
  *
  *  <em>Floating-point instructions.</em> Floating point registers are defined in the various RegisterDictionary objects but
  *  none of the semantic states actually define space for them, and we haven't defined any floating-point RISC operations for
@@ -152,20 +185,47 @@ namespace BinaryAnalysis {
  *  For instance, the RISC operators for a concrete semantic domain might use the host machine's native IEEE floating point to
  *  emulate the target machine's floating-point operations.
  *
- *  @section IS6 Example
+ *  @section IS7 Example
  *
- *  See actual source code for examples since this interface is an active area of ROSE development (as of Jan-2013). In order
- *  to use one of ROSE's predefined semantic domains you'll likely need to define some types and variables, something along
- *  these lines:
+ *  See actual source code for examples since this interface is an active area of ROSE development (as of Jan-2013). The
+ *  tests/roseTests/binaryTests/semanticSpeed.C has very simple examples for a variety of semantic domains. In order to use one
+ *  of ROSE's predefined semantic domains you'll likely need to define some types and variables. Here's what the code would
+ *  look like when using default components of the Symbolic domain:
  *
  *  @code
+ *   // New API 
+ *   using namespace BinaryAnalysis::InstructionSemantics2;
+ *   BaseSemantics::RiscOperatorsPtr operators = SymbolicSemantics::RiscOperators::instance();
+ *   BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(operators);
+ *
+ *   // Old API for comparison
  *   using namespace BinaryAnalysis::InstructionSemantics;
- *   BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValuePtr::instance();
- *   BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateX86::instance(protoval);
- *   BaseSemantics::MemoryStatePtr memory = BaseSemantics::MemoryCellList::instance(protoval);
- *   BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
+ *   typedef SymbolicSemantics::Policy<> Policy;
+ *   Policy policy;
+ *   X86InstructionSemantics<Policy, SymbolicSemantics::ValueType> semantics(policy);
+ *  @endcode
+ *
+ *  And here's almost the same example but explicitly creating all the parts. Normally you'd only write it this way if you were
+ *  replacing one or more of the parts with your own class, so we'll use MySemanticValue as the semantic value type:
+ *
+ *  @code
+ *   // New API, constructing the lattice from bottom up.
+ *   // Almost copied from SymbolicSemantics::RiscOperators::instance()
+ *   using namespace BinaryAnalysis::InstructionSemantics2;
+ *   BaseSemantics::SValuePtr protoval = MySemanticValue::instance();
+ *   BaseSemantics::RegisterStatePtr regs = BaseSemantics::RegisterStateX86::instance(protoval);
+ *   BaseSemantics::MemoryStatePtr mem = SymbolicSemantics::MemoryState::instance(protoval);
+ *   BaseSemantics::StatePtr state = BaseSemantics::State::instance(regs, mem);
  *   BaseSemantics::RiscOperatorsPtr operators = SymbolicSemantics::RiscOperators::instance(state);
- *   BaseSemantics::DispatcherPtr semantics = DispatcherX86::instance(operators);
+ *
+ *   // The old API was a bit more concise for the user, but was not able to override all the
+ *   // components as easily, and the implementation of MySemanticValue would certainly have been
+ *   // more complex, not to mention that it wasn't even possible for end users to always correctly
+ *   // override a particular method by subclassing.
+ *   using namespace BinaryAnalysis::InstructionSemantics;
+ *   typedef SymbolicSemantics::Policy<SymbolicSemantics::State, MySemanticValue> Policy;
+ *   Policy policy;
+ *   X86InstructionSemantics<Policy, MySemanticValue> semantics(policy);
  *  @endcode
  *
  *  In order to analyze a sequence of instructions, one calls the dispatcher's processInstruction() method one instruction at a
@@ -179,7 +239,7 @@ namespace BinaryAnalysis {
  *  projects/simulator) has many examples how to use instruction semantics--in fact, the simulator defines its own concrete
  *  domain by subclassing PartialSymbolicSemantics in order to execute specimen programs.
  */
-namespace InstructionSemantics {
+namespace InstructionSemantics2 {
 
 /** Base classes for instruction semantics.  Basically, anything that is common to two or more instruction semantic
  *  domains will be factored out and placed in this name space. */
@@ -349,7 +409,9 @@ private:
 
     // Fills the specified freelist by adding another Bucket-worth of objects.
     void fill_freelist(const int listn) { // hot
-        //std::cerr <<"Allocator::fill_freelist(" <<listn <<")\n";
+#if 1 /*DEBUGGING [Robb Matzke 2013-03-04]*/
+        std::cerr <<"Allocator::fill_freelist(" <<listn <<")\n";
+#endif
         assert(listn>=0 && listn<N_FREE_LISTS);
         const size_t object_size = (listn+1) * SIZE_DIVISOR;
         assert(object_size >= sizeof(FreeItem));
@@ -372,7 +434,7 @@ public:
         if (listn>=N_FREE_LISTS) {
             static bool warned = false;
             if (!warned) {
-                std::cerr <<"BinaryAnalysis::InstructionSemantics::BaseSemantics::Allocator::allocate(): warning:"
+                std::cerr <<"BinaryAnalysis::InstructionSemantics2::BaseSemantics::Allocator::allocate(): warning:"
                           <<" object is too large for allocator (" <<size <<" bytes); falling back to global allocator\n";
                 warned = true;
             }
@@ -382,14 +444,18 @@ public:
             fill_freelist(listn);
         void *retval = freelist[listn];
         freelist[listn] = freelist[listn]->next;
-        //std::cerr <<"Allocator::allocate(" <<size <<") = " <<retval <<"\n";
+#if 0 /*DEBUGGING [Robb Matzke 2013-03-04]*/
+        std::cerr <<"Allocator::allocate(" <<size <<") = " <<retval <<"\n";
+#endif
         return retval;
     }
 
     /** Free one object of specified size.  The @p size must be the same size that was used when the object was allocated. This
      *  is a no-op if @p ptr is null. */
     void deallocate(void *ptr, const size_t size) { // hot
-        //std::cerr <<"Allocator::deallocate(" <<ptr <<", " <<size <<")\n";
+#if 0 /*DEBUGGING [Robb Matzke 2013-03-04]*/
+        std::cerr <<"Allocator::deallocate(" <<ptr <<", " <<size <<")\n";
+#endif
         if (ptr) {
             assert(size>0);
             const int listn = (size-1) / SIZE_DIVISOR;
@@ -406,12 +472,14 @@ public:
  *                                      Semantic Values
  *******************************************************************************************************************************/
 
-/** Smart pointer to an SValue object. SValue objects are reference counted through boost::shared_ptr smart pointers. The
- *  underlying object should never be explicitly deleted. */ 
+/** Smart pointer to an SValue object. SValue objects are reference counted and should not be explicitly deleted.
+ *
+ *  Note: Although most semantic *Ptr types are based on boost::shared_ptr<>, SValuePtr uses a custom Pointer class which is
+ *  substantially faster. */
 typedef Pointer<class SValue> SValuePtr;
 
 /** Base class for semantic values. Semantics value objects are allocated on the heap and reference counted.  The
- *  BaseSemantics::SValue is an abstract class that defines the interface.  See the BinaryAnalysis::InstructionSemantics
+ *  BaseSemantics::SValue is an abstract class that defines the interface.  See the BinaryAnalysis::InstructionSemantics2
  *  namespace for an overview of how the parts fit together.*/
 class SValue {
 public:
@@ -422,14 +490,18 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Normal, protected, C++ constructors
     explicit SValue(size_t nbits): nrefs__(0), width(nbits) {}  // hot
+    SValue(const SValue &other): nrefs__(0), width(other.width) {}
 
 public:
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Class-based constructors.  None are needed--this class is abstract.
     virtual ~SValue() { assert(0==nrefs__); } // hot
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Virtual constructors.  false_(), true_(), and undefined_() need underscores, so we do so consistently for all c'tors.
+    // Allocating static constructor.  None are needed--this class is abstract.
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Allocating virtual constructors.  false_(), true_(), and undefined_() need underscores, so we do so consistently for all
+    // these allocating virtual c'tors.  However, we use copy() rather than copy_() because this one is fundamentally
+    // different: the object (this) is use for more than just selecting which virtual method to invoke.
 
     /** Create a new undefined semantic value.  The new semantic value will have the same dynamic type as the value
      *  on which this virtual method is called.  This is the most common way that a new value is created. */
@@ -453,7 +525,7 @@ public:
     /** Create a new value from an existing value, changing the width if @p new_width is non-zero. Increasing the width
      *  logically adds zero bits to the most significant side of the value; decreasing the width logically removes bits from the
      *  most significant side of the value. */
-    virtual SValuePtr copy_(size_t new_width=0) const = 0;
+    virtual SValuePtr copy(size_t new_width=0) const = 0;
 
 public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -497,11 +569,13 @@ public:
  *                                      Register States
  *******************************************************************************************************************************/
 
+/** Smart pointer to a RegisterState object.  RegisterState objects are reference counted and should not be explicitly
+ *  deleted. */
 typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
 
 /** The set of all registers and their values. RegisterState objects are allocated on the heap and reference counted.  The
- *  BaseSemantics::RegisterState is an abstract class that defines the interface.  See the BinaryAnalysis::InstructionSemantics
- *  namespace for an overview of how the parts fit together.*/
+ *  BaseSemantics::RegisterState is an abstract class that defines the interface.  See the
+ *  BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit together.*/
 class RegisterState {
 protected:
     SValuePtr protoval;                         /**< Prototypical value for virtual constructors. */
@@ -513,12 +587,13 @@ protected:
     }
 
 public:
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Class-based constructors.  None are needed--this class is abstract.
     virtual ~RegisterState() {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Virtual constructors.
+    // Static allocating constructors.  None are needed--this class is abstract.
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Allocating virtual constructors.
 
     /** Virtual constructor.  The @p protoval argument must be a non-null pointer to a semantic value which will be used only
      *  to create additional instances of the value via its virtual constructors.  The prototypical value is normally of the
@@ -544,13 +619,13 @@ public:
     /** Read a value from a register. The register descriptor, @p reg, not only describes which register, but also which bits
      * of that register (e.g., "al", "ah", "ax", "eax", and "rax" are all the same hardware register on an amd64, but refer to
      * different parts of that register). The RISC operations are provided so that they can be used to extract the correct bits
-     * from a wider hardware register if necessary. */
+     * from a wider hardware register if necessary. See RiscOperators::readRegister() for more details. */
     virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) = 0;
 
     /** Write a value to a register.  The register descriptor, @p reg, not only describes which register, but also which bits
      * of that register (e.g., "al", "ah", "ax", "eax", and "rax" are all the same hardware register on an amd64, but refer to
      * different parts of that register). The RISC operations are provided so that they can be used to insert the @p value bits
-     * into a wider the hardware register if necessary. */
+     * into a wider the hardware register if necessary. See RiscOperators::readRegister() for more details. */
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) = 0;
 
     /** Print the register contents. This emits one line per register and contains the register name and its value.
@@ -559,9 +634,11 @@ public:
     virtual void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const = 0;
 };
 
-/** The set of all registers and their values for an x86 architecture. The 1-bit flags from the FLAGS/EFLAGS register are
- *  stored individually since that's how they're typically accessed; access to the FLAGS/EFLAGS register as a whole will
- *  require calls to the RISC operators. */
+/** The set of all registers and their values for a 32-bit x86 architecture.
+ *
+ *  The general purpose registers are stored as 32-bit values; subparts thereof will require calls to the RiscOperators
+ *  extract() or concat() operators.  The status bits from the EFLAGS register are stored individually since that's how they're
+ *  typically accessed; access to the FLAGS/EFLAGS register as a whole will require calls to the RISC operators. */
 class RegisterStateX86: public RegisterState {
 public:
     static const size_t n_gprs = 8;             /**< Number of general-purpose registers in this state. */
@@ -579,9 +656,9 @@ protected:
     }
 
 public:
-    /** Constructor. The @p protoval argument must be a non-null pointer to a semantic value which will be used only to create
-     *  additional instances of the value via its virtual constructors.  The prototypical value is normally of the same type
-     *  for all parts of a semantic analysis: its state and operator classes. */
+    /** Static allocating constructor. The @p protoval argument must be a non-null pointer to a semantic value which will be
+     *  used only to create additional instances of the value via its virtual constructors.  The prototypical value is normally
+     *  of the same type for all parts of a semantic analysis: its state and operator classes. */
     static RegisterStatePtr instance(const SValuePtr &protoval) {
         return RegisterStatePtr(new RegisterStateX86(protoval));
     }
@@ -614,10 +691,11 @@ protected:
  *                                      Memory State
  *******************************************************************************************************************************/
 
+/** Smart pointer to a MemoryState object. MemoryState objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
 
 /** Represents all memory in the state. MemoryState objects are allocated on the heap and reference counted.  The
- *  BaseSemantics::MemoryState is an abstract class that defines the interface.  See the BinaryAnalysis::InstructionSemantics
+ *  BaseSemantics::MemoryState is an abstract class that defines the interface.  See the BinaryAnalysis::InstructionSemantics2
  *  namespace for an overview of how the parts fit together.*/
 class MemoryState {
 protected:
@@ -630,10 +708,14 @@ protected:
 public:
     virtual ~MemoryState() {}
 
-    /** Virtual constructor.  Constructs a new MemoryState object having the same dynamic type as this object. */
+    /** Virtual allocating constructor.
+     *
+     *  Allocates and constructs a new MemoryState object having the same dynamic type as this object. A prototypical SValue
+     *  must be supplied and will be used to construct any additional SValue objects needed during the operation of a
+     *  MemoryState. */
     virtual MemoryStatePtr create(const SValuePtr &protoval) const = 0;
 
-    /** Virtual copy constructor. Creates a new MemoryState object which is a copy of this object. */
+    /** Virtual allocating copy constructor. Creates a new MemoryState object which is a copy of this object. */
     virtual MemoryStatePtr clone() const = 0;
 
     /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
@@ -642,11 +724,36 @@ public:
     /** Clear memory. Removes all memory cells from this memory state. */
     virtual void clear() = 0;
 
-    /** Read a value from memory. */
-    virtual SValuePtr readMemory(const SValuePtr &addr) = 0;
+    /** Read a value from memory.
+     *
+     *  Consults the memory represented by this MemoryState object and returns a semantic value. Depending on the semantic
+     *  domain, the value can be a value that is already stored in the memory state, a supplied default value, a new value
+     *  constructed from some combination of existing values and/or the default value, or anything else.  For instance, in a
+     *  symbolic domain the @p address could alias multiple existing memory locations and the implementation may choose to
+     *  return a McCarthy expression.  Additional data (such as SMT solvers) may be passed via the RiscOperators argument.
+     *
+     *  The size of the value being read does not necessarily need to be equal to the size of values stored in the memory
+     *  state, though it typically is(1). For instance, an implementation may allow reading a 32-bit little endian value from a
+     *  memory state that stores only bytes.  A RiscOperators object is provided for use in these situations.
+     *
+     *  In order to support cases where an address does not match any existing location, the @p dflt value can be used to
+     *  initialize a new memory location.  The manner in which the default is used depends on the implementation.
+     *
+     *  Footnote 1: A MemoryState::readMemory() call is the last in a sequence of delegations starting with
+     *  RiscOperators::readMemory().  The designers of the MemoryState, State, and RiscOperators subclasses will need to
+     *  coordinate to decide which layer should handle concatenating values from individual memory locations. */
+    virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt, size_t nbits, RiscOperators *ops) = 0;
 
-    /** Write a value to memory. */
-    virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value) = 0;
+    /** Write a value to memory.
+     *
+     *  Consults the memory represented by this MemoryState object and possibly inserts the specified value.  The details of
+     *  how a value is inserted into a memory state depends entirely on the implementation in a subclass and will probably be
+     *  different for each semantic domain.
+     *
+     *  A MemoryState::writeMemory() call is the last in a sequence of delegations starting with
+     *  RiscOperators::writeMemory(). The designers of the MemoryState, State, and RiscOperators will need to coordinate to
+     *  decide which layer (if any) should handle splitting a multi-byte value into multiple memory locations. */
+    virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *ops) = 0;
 
     /** Print a memory state to more than one line of output. */
     virtual void print(std::ostream &o, const std::string prefix="", PrintHelper *helper=NULL) const = 0;
@@ -657,19 +764,35 @@ public:
  *                                  Cell List Memory State
  ******************************************************************************************************************/
 
-/** Represents one location in memory.  Each memory cell has an address and a value. */
+/** Smart pointer to a MemoryCell object.  MemoryCell objects are reference counted and should not be explicitly deleted. */
+typedef boost::shared_ptr<class MemoryCell> MemoryCellPtr;
+
+/** Represents one location in memory.
+ *
+ *  Each memory cell has an address and a value. MemoryCell objects are used by the MemoryCellList to represent a memory
+ *  state. */
 class MemoryCell {
 protected:
     SValuePtr address;                          /**< Address of memory cell. */
     SValuePtr value;                            /**< Value stored at that address. */
 
-public:
-    /** Constructor. Creates a new memory cell object with the specified address and value. */
+protected:
+    // protected constructors
     MemoryCell(const SValuePtr &address, const SValuePtr &value)
         : address(address), value(value) {
         assert(address!=NULL);
         assert(value!=NULL);
-        assert(value->get_width()==8);
+    }
+
+public:
+    /** Static allocating constructor. Creates a new memory cell object with the specified address and value. */
+    static MemoryCellPtr instance(const SValuePtr &address, const SValuePtr &value) {
+        return MemoryCellPtr(new MemoryCell(address, value));
+    }
+
+    /** Virtual allocating constructor. Creates a new memory cell object with the specified address and value. */
+    virtual MemoryCellPtr create(const SValuePtr &address, const SValuePtr &value) {
+        return instance(address, value);
     }
 
     /** Accessor for the memory cell address.
@@ -690,6 +813,30 @@ public:
     }
     /** @}*/
 
+    /** Determines whether two memory cells can alias one another.  Two cells may alias one another if it is possible that
+     *  their addresses cause them to overlap.  For cells containing one-byte values, aliasing may occur if their two addresses
+     *  may be equal; multi-byte cells will need to check ranges of addresses.  An optional SMT solver may be supplied to
+     *  answer these questions.
+     *
+     *  The base implementation assumes that memory contains 8-bit values and compares addresses via SValue::may_equal(). */
+    virtual bool may_alias(const MemoryCellPtr &other, SMTSolver *solver=NULL) const {
+        assert(value->get_width()==8);
+        assert(other!=NULL && other->get_value()->get_width()==8);
+        return address->may_equal(other->get_address(), solver);
+    }
+
+    /** Determines whether two memory cells must alias one another.  Two cells must alias one another when it can be proven
+     * that their addresses cause them to overlap.  For cells containing one-byte values, aliasing must occur unless their
+     * addresses can be different; multi-byte cells will need to check ranges of addresses.  An optional SMT solver may be
+     * supplied to answer these questions.
+     *
+     * The base implementation assumes that memory contains 8-bit values and compares addresses via SValue::must_equal(). */
+    virtual bool must_alias(const MemoryCellPtr &other, SMTSolver *solver=NULL) const {
+        assert(value->get_width()==8);
+        assert(other!=NULL && other->get_value()->get_width()==8);
+        return address->must_equal(other->get_address(), solver);
+    }
+    
     /** Print the memory cell on a single line. */
     virtual void print(std::ostream &o, PrintHelper *helper=NULL) const {
         o <<"addr=";
@@ -699,49 +846,92 @@ public:
     }
 };
 
-
+/** Smart pointer to a MemoryCell object. MemoryCell objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class MemoryCellList> MemoryCellListPtr;
 
-/** Simple list-based memory state. */
+/** Simple list-based memory state.
+ *
+ *  MemoryCellList uses a list of MemoryCell objects to represent the memory state.  There is no requirement that a State use a
+ *  MemoryCellList as its memory state; it can use any subclass of MemoryState.  Since MemoryCellList is derived from
+ *  MemoryState it must provide virtual allocating constructors, which makes it possible for users to define their own
+ *  subclasses and use them in the semantic framework.
+ *
+ *  This implementation stores memory cells in reverse chronological order: the most recently created cells appear at the
+ *  beginning of the list.  Subclasses, of course, are free to reorder the list however they want.
+ *
+ * */
 class MemoryCellList: public MemoryState {
-protected:
-    std::list<MemoryCell> cells;
-
-    explicit MemoryCellList(const SValuePtr &protoval): MemoryState(protoval) {}
-
 public:
-    static MemoryCellListPtr instance(const SValuePtr &protoval) {
-        return MemoryCellListPtr(new MemoryCellList(protoval));
+    typedef std::list<MemoryCellPtr> CellList;
+protected:
+    MemoryCellPtr protocell;                    // prototypical memory cell used for its virtual constructors
+    CellList cells;
+
+    explicit MemoryCellList(const MemoryCellPtr &protocell, const SValuePtr &protoval)
+        : MemoryState(protoval), protocell(protocell) {
+        assert(protocell!=NULL);
     }
 
+public:
+    /** Static allocating constructor.  This constructor uses the default type for the cell type (based on the semantic
+     *  domain). */
+    static MemoryCellListPtr instance(const SValuePtr &protoval) {
+        MemoryCellPtr protocell = MemoryCell::instance(protoval, protoval);
+        return MemoryCellListPtr(new MemoryCellList(protocell, protoval));
+    }
+    
+    /** Static allocating constructor. */
+    static MemoryCellListPtr instance(const MemoryCellPtr &protocell, const SValuePtr &protoval) {
+        return MemoryCellListPtr(new MemoryCellList(protocell, protoval));
+    }
+
+    /** Virtual allocating constructor. This constructor uses the default type for the cell type (based on the semantic
+     *  domain). */
     virtual MemoryStatePtr create(const SValuePtr &protoval) const /*override*/ {
         return instance(protoval);
     }
+    
+    /** Virtual allocating constructor. */
+    virtual MemoryStatePtr create(const MemoryCellPtr &protocell, const SValuePtr &protoval) const {
+        return instance(protocell, protoval);
+    }
 
+    /** Virtual allocating copy constructor. */
     virtual MemoryStatePtr clone() const /*override*/ {
-        return MemoryStatePtr(new MemoryCellList(*this));
+        return MemoryStatePtr(new MemoryCellList(*this));               // FIXME?
     }
 
     virtual void clear() /*override*/ {
         cells.clear();
     }
 
-    /** Read a value from memory. This implementation reads memory by scanning through the list of memory cells until it
-     *  finds the most recent write to an address that is equal the the specified address.  Subclasses will almost certainly
-     *  want to override this in order to support aliasing. */
-    virtual SValuePtr readMemory(const SValuePtr &addr) /*override*/;
+    /** Read a value from memory.
+     *
+     *  See BaseSemantics::MemoryState() for requirements.  This implementation scans the reverse chronological cell list until
+     *  it finds a cell that must alias the specified addresses and value size. Along the way, it accumulates a list of cells
+     *  that may alias the specified address.  If the accumulated list does not contain exactly one cell, or the scan fell off
+     *  the end of the list, then @p dflt becomes the return value, otherwise the return value is the single value on the
+     *  accumulated list. If the @p dflt value is returned, then it is also pushed onto the front of the cell list.
+     *
+     *  The base implementation assumes that all cells contain 8-bit values. */
+    virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt, size_t nbits, RiscOperators *ops) /*override*/;
 
-    /** Write a value to memory. This implementation just creates a new memory cell and inserts it into the front of the
-     *  memory cell list. Subclasses will almost certainly want to override this behavior. */
-    virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value) /*override*/;
+    /** Write a value to memory.
+     *
+     *  See BaseSemantics::MemoryState() for requirements.  This implementation creates a new memory cell and pushes it onto
+     *  the front of the cell list.
+     *
+     *  The base implementation assumes that all cells contain 8-bit values. */
+    virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *ops) /*override*/;
 
     virtual void print(std::ostream &o, const std::string prefix="", PrintHelper *helper=NULL) const /*override*/;
 };
 
 /******************************************************************************************************************
- *                                  State
+ *                                      State
  ******************************************************************************************************************/
 
+/** Smart pointer to a State object.  State objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class State> StatePtr;
 
 /** Base class for semantics machine states.
@@ -754,7 +944,7 @@ typedef boost::shared_ptr<class State> StatePtr;
  *  vertex.
  *
  *  State objects are allocated on the heap and reference counted.  The BaseSemantics::State is an abstract class that defines
- *  the interface.  See the BinaryAnalysis::InstructionSemantics namespace for an overview of how the parts fit together.  */
+ *  the interface.  See the BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit together.  */
 class State {
 protected:
     SValuePtr protoval;                         /**< Initial value used to create additional values as needed. */
@@ -824,26 +1014,36 @@ public:
         memory->clear();
     }
 
-    /** Read a value from a register. A pointer to the RISC operations is required because the state may need to extract
-     *  certain bits from a wider hardware register in order to satisfy the query. */
+    /** Read a value from a register.
+     *
+     *  The BaseSemantics::readRegister() implementation simply delegates to the register state member of this state. See
+     *  BaseSemantics::RiscOperators::readRegister() for details. */
     virtual SValuePtr readRegister(const RegisterDescriptor &desc, RiscOperators *ops) {
         return registers->readRegister(desc, ops);
     }
 
-    /** Write a value to a register. A pointer to the RISC operations is required because the state may need to insert
-     *  the @p value bits into a wider hardware register. */
+    /** Write a value to a register.
+     *
+     *  The BaseSemantics::readRegister() implementation simply delegates to the register state member of this state. See
+     *  BaseSemantics::RiscOperators::writeRegister() for details. */
     virtual void writeRegister(const RegisterDescriptor &desc, const SValuePtr &value, RiscOperators *ops) {
         registers->writeRegister(desc, value, ops);
     }
 
-    /** Read a value from memory. */
-    virtual SValuePtr readMemory(const SValuePtr &addr) {
-        return memory->readMemory(addr);
+    /** Read a value from memory.
+     *
+     *  The BaseSemantics::readMemory() implementation simply delegates to the memory state member of this state. See
+     *  BaseSemantics::RiscOperators::readMemory() for details.  */
+    virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt, size_t nbits, RiscOperators *ops) {
+        return memory->readMemory(address, dflt, nbits, ops);
     }
 
-    /** Write a value to memory. */
-    virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value) {
-        memory->writeMemory(addr, value);
+    /** Write a value to memory.
+     *
+     *  The BaseSemantics::writeMemory() implementation simply delegates to the memory state member of this state. See
+     *  BaseSemantics::RiscOperators::writeMemory() for details. */
+    virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *ops) {
+        memory->writeMemory(addr, value, ops);
     }
 
     /** Print the register contents. This emits one line per register and contains the register name and its value.  The @p ph
@@ -874,6 +1074,7 @@ public:
  *                                  RISC Operators
  ******************************************************************************************************************/
 
+/** Smart pointer to a RiscOperator object. RiscOperator objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Base class for most instruction semantics RISC operators.  This class is responsible for defining the semantics of the
@@ -881,7 +1082,7 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  of the RISC operations from the base class so that failure to implement them in a subclass is an error.
  *
  *  RiscOperator objects are allocated on the heap and reference counted.  The BaseSemantics::RiscOperator is an abstract class
- *  that defines the interface.  See the BinaryAnalysis::InstructionSemantics namespace for an overview of how the parts fit
+ *  that defines the interface.  See the BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit
  *  together. */
 class RiscOperators {
 protected:
@@ -889,12 +1090,15 @@ protected:
     StatePtr state;                             /**< State upon which RISC operators operate. */
     SgAsmInstruction *cur_insn;                 /**< Current instruction, as set by latest startInstruction() call. */
     size_t ninsns;                              /**< Number of instructions processed. */
+    SMTSolver *solver;                          /**< Optional SMT solver. */
 
 protected:
-    explicit RiscOperators(const SValuePtr &protoval): protoval(protoval), cur_insn(NULL), ninsns(0) {
+    explicit RiscOperators(const SValuePtr &protoval, SMTSolver *solver=NULL)
+        : protoval(protoval), cur_insn(NULL), ninsns(0), solver(solver) {
         assert(protoval!=NULL);
     }
-    explicit RiscOperators(const StatePtr &state): state(state), cur_insn(NULL), ninsns(0) {
+    explicit RiscOperators(const StatePtr &state, SMTSolver *solver=NULL)
+        : state(state), cur_insn(NULL), ninsns(0), solver(solver) {
         assert(state!=NULL);
         protoval = state->get_protoval();
     }
@@ -903,18 +1107,35 @@ protected:
 public:
     virtual ~RiscOperators() {}
 
-    /** Virtual constructor.  The @p protoval is a prototypical semantic value that is used as a factory to create additional
-     *  values as necessary via its virtual constructors.  The state upon which the RISC operations operate must be provided by
-     *  a separate call to the set_state() method. */
-    virtual RiscOperatorsPtr create(const SValuePtr &protoval) const = 0;
+    // Static allocating constructor.  Each subclass should provide some static allocating constructors that will create
+    // a new RiscOperators class. They should provide at least one version that will initialize the operators with default
+    // prototypical values, etc.  These static allocating constructors are usually named "instance":
+    //     static RiscOperatorsPtr instance(....);
 
-    /** Constructor.  The supplied @p state is that upon which the RISC operations operate and is also used to define the
-     *  prototypical semantic value. Other states can be supplied by calling set_state(). The prototypical semantic value
-     *  is used as a factory to create additional values as necessary via its virtual constructors. */
-    virtual RiscOperatorsPtr create(const StatePtr &state) const = 0;
+    /** Virtual allocating constructor.  The @p protoval is a prototypical semantic value that is used as a factory to create
+     *  additional values as necessary via its virtual constructors.  The state upon which the RISC operations operate must be
+     *  provided by a separate call to the set_state() method. An optional SMT solver may be specified (see set_solver()). */
+    virtual RiscOperatorsPtr create(const SValuePtr &protoval, SMTSolver *solver=NULL) const = 0;
+
+    /** Virtual allocating constructor.  The supplied @p state is that upon which the RISC operations operate and is also used
+     *  to define the prototypical semantic value. Other states can be supplied by calling set_state(). The prototypical
+     *  semantic value is used as a factory to create additional values as necessary via its virtual constructors. An optional
+     *  SMT solver may be specified (see set_solver()). */
+    virtual RiscOperatorsPtr create(const StatePtr &state, SMTSolver *solver=NULL) const = 0;
 
     /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
     SValuePtr get_protoval() const { return protoval; }
+
+    /** Sets the satisfiability modulo theory (SMT) solver to use for certain operations.  An SMT solver is optional and not
+     *  all semantic domains will make use of a solver.  Domains that use a solver will fall back to naive implementations when
+     *  a solver is not available (for instance, equality of two values might be checked by looking at whether the values are
+     *  identical).  */
+    void set_solver(SMTSolver *solver) { this->solver = solver; }
+
+    /** Returns the solver that is currently being used.  A null return value means that no SMT solver is being used and that
+     *  certain operations are falling back to naive implementations. */
+    SMTSolver *get_solver() const { return solver; }
+
 
     /** Access the state upon which the RISC operations operate. The state need not be set until the first instruction is
      *  executed (and even then, some RISC operations don't need any machine state (typically, only register and memory read
@@ -967,25 +1188,26 @@ public:
     //                                  Value Construction Operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // The trailing underscores are necessary for true_() and false_() on all machines and necessary for undefined_() on some
-    // machines, so we just add one to the end of all the virtual constructors for consistency.
+    // machines, so we just add one to the end of all the virtual constructors for consistency. There is no reason for these to
+    // be virtual since they're just delegating to virtual functions for SValue.
 
     /** Returns a true value. Uses the prototypical value to virtually construct a new value. */
-    virtual SValuePtr true_() {
+    SValuePtr true_() {
         return protoval->true_();
     }
 
     /** Returns a false value. Uses the prototypical value to virtually construct a new value. */
-    virtual SValuePtr false_() {
+    SValuePtr false_() {
         return protoval->false_();
     }
 
     /** Returns a new undefined value. Uses the prototypical value to virtually construct the new value. */
-    virtual SValuePtr undefined_(size_t nbits) {
+    SValuePtr undefined_(size_t nbits) {
         return protoval->undefined_(nbits);
     }
 
     /** Returns a number of the specified bit width.  Uses the prototypical value to virtually construct a new value. */
-    virtual SValuePtr number_(size_t nbits, uint64_t value) {
+    SValuePtr number_(size_t nbits, uint64_t value) {
         return protoval->number_(nbits, value);
     }
 
@@ -1102,7 +1324,7 @@ public:
     /** Extend (or shrink) operand @p a so it is @p nbits wide by adding or removing high-order bits. Added bits are always
      *  zeros. The result will be the specified @p new_width. */
     virtual SValuePtr unsignedExtend(const SValuePtr &a, size_t new_width) {
-        return a->copy_(new_width);
+        return a->copy(new_width);
     }
 
     /** Sign extends a value. The result will the the specified @p new_width, which must be at least as large as the original
@@ -1157,33 +1379,79 @@ public:
     //                                  State Accessing Operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     
-    /** Reads a value from a register. */
+    /** Reads a value from a register.
+     *
+     *  The base implementation simply delegates to the current semantic State, which probably delegates to a register state,
+     *  but subclasses are welcome to override this behavior at any level.
+     *
+     *  A register state will typically implement storage for hardware registers, but higher layers (the State, RiscOperators,
+     *  Dispatcher, ...)  should not be concerned about the size of the register they're trying to read.  For example, a
+     *  register state for a 32-bit x86 architecture will likely have a storage location for the 32-bit EAX register, but it
+     *  should be possible to ask RiscOperators::readRegister to return the value of AX (the low-order 16-bits).  In order to
+     *  accomplish this, some level of the readRegister delegations needs to invoke RiscOperators::extract() to obtain the low
+     *  16 bits.  The RiscOperators object is passed along the delegation path for this purpose.  The inverse concat()
+     *  operation will be needed at some level when we ask readRegister() to return a value that comes from multiple storage
+     *  locations in the register state (such as can happen if an x86 register state holds individual status flags and we ask
+     *  for the 32-bit EFLAGS register).
+     *
+     *  There needs to be a certain level of cooperation between the RiscOperators, State, and register state classes to decide
+     *  which layer should invoke the extract() or concat() (or whatever other RISC operations might be necessary).
+     */ 
     virtual SValuePtr readRegister(const RegisterDescriptor &reg) {
         assert(state!=NULL);
         return state->readRegister(reg, this);
     }
 
-    /** Writes a value to a register. */
+    /** Writes a value to a register.
+     *
+     *  The base implementation simply delegates to the current semantic State, which probably delegates to a register state,
+     *  but subclasses are welcome to override this behavior at any level.
+     *
+     *  As with readRegister(), writeRegister() may need to perform various RISC operations in order to accomplish the task of
+     *  writing a value to the specified register when the underlying register state doesn't actually store a value for that
+     *  specific register. The RiscOperations object is passed along for that purpose.  See readRegister() for more details. */
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &a) {
         assert(state!=NULL);
         state->writeRegister(reg, a, this);
     }
 
-    /** Reads a value from memory. The @p cond argument is a Boolean value that indicates whether this is a true read
-     *  operation. */
+    /** Reads a value from memory.
+     *
+     *  The implementation (in subclasses) will typically delegate much of the work to State::readMemory().
+     *
+     *  A MemoryState will implement storage for memory locations and might impose certain restrictions, such as "all memory
+     *  values must be eight bits".  However, the RiscOperators::readMemory() should not have these constraints so that it can
+     *  be called from a variety of Dispatcher subclass (e.g., the DispatcherX86 class assumes that RiscOperators::readMemory()
+     *  is capable of reading 32-bit values from little-endian memory). The designers of the MemoryState, State, and
+     *  RiscOperators should collaborate to decide which layer (RiscOperators, State, or MemoryState) is reponsible for
+     *  combining individual memory locations into larger values.  A RiscOperators object is passed along the chain of
+     *  delegations for this purpose. The RiscOperators might also contain other data that's import during the process, such as
+     *  an SMT solver.
+     *
+     *  The X86SegmentRegister argument is architecture-specific and will be removed or replaced in some future version.
+     *
+     *  The @p cond argument is a Boolean value that indicates whether this is a true read operation. If @p cond can be proven
+     *  to be false then the read is a no-op and returns an arbitrary value. */
     virtual SValuePtr readMemory(X86SegmentRegister sg, const SValuePtr &addr, const SValuePtr &cond, size_t nbits) = 0;
 
 
-    /** Writes a value to memory. The @p cond argument is a Boolean value that indicates whether this is a true write
-     * operation. */
+    /** Writes a value to memory.
+     *
+     *  The implementation (in subclasses) will typically delegate much of the work to State::readMemory().  See readMemory()
+     *  for more information.
+     *
+     *  The X86SegmentRegister argument is architecture-specific and will be removed or replaced in some future version.
+     *
+     *  The @p cond argument is a Boolean value that indicates whether this is a true write operation. If @p cond can be proved
+     *  to be false then writeMemory is a no-op. */
     virtual void writeMemory(X86SegmentRegister sg, const SValuePtr &addr, const SValuePtr &data, const SValuePtr &cond) = 0;
 };
-
 
 /*******************************************************************************************************************************
  *                                      Instruction Dispatcher
  *******************************************************************************************************************************/
 
+/** Smart pointer to a Dispatcher object. Dispatcher objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class Dispatcher> DispatcherPtr;
 
 /** Functor that knows how to dispatch a single kind of instruction. */
@@ -1193,13 +1461,18 @@ public:
     virtual void process(const DispatcherPtr &dispatcher, SgAsmInstruction *insn) = 0;
 };
     
-/** Dispatches instructions through the RISC layer.  The dispatcher is the instruction semantics entity that translates a
- *  high-level architecture-dependent instruction into a sequence of RISC operators whose interface is defined by ROSE. These
- *  classes are the key in ROSE's ability to connect a variety of instruction set architectures to a variety of semantic
- *  domains.
+/** Dispatches instructions through the RISC layer.
+ *
+ *  The dispatcher is the instruction semantics entity that translates a high-level architecture-dependent instruction into a
+ *  sequence of RISC operators whose interface is defined by ROSE. These classes are the key in ROSE's ability to connect a
+ *  variety of instruction set architectures to a variety of semantic domains.
+ *
+ *  Each dispatcher contains a table indexed by the machine instruction "kind" (e.g., SgAsmMipsInstruction::get_kind()). The
+ *  table stores functors derived from the abstract InsnProcessor class.  (FIXME: The functors are not currently reference
+ *  counted [Robb Matzke 2013-03-04])
  *
  *  Dispatcher objects are allocated on the heap and reference counted.  The BaseSemantics::Dispatcher is an abstract class
- *  that defines the interface.  See the BinaryAnalysis::InstructionSemantics namespace for an overview of how the parts fit
+ *  that defines the interface.  See the BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit
  *  together. */
 class Dispatcher: public boost::enable_shared_from_this<Dispatcher> {
 protected:

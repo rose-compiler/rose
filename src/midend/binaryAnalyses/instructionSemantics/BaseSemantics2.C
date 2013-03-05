@@ -3,7 +3,7 @@
 #include "AsmUnparser_compat.h"
 
 namespace BinaryAnalysis {
-namespace InstructionSemantics {
+namespace InstructionSemantics2 {
 namespace BaseSemantics {
 
 /*******************************************************************************************************************************
@@ -319,28 +319,50 @@ RegisterStateX86::print(std::ostream &o, const std::string prefix, PrintHelper *
  *******************************************************************************************************************************/
 
 SValuePtr
-MemoryCellList::readMemory(const SValuePtr &addr)
+MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, size_t nbits, RiscOperators *ops)
 {
     assert(addr!=NULL);
-    for (std::list<MemoryCell>::iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
-        if (ci->get_address()->must_equal(addr))
-            return ci->get_value();
+    assert(dflt!=NULL && dflt->get_width()==8);
+    MemoryCellPtr tmpcell = protocell->create(addr, dflt);
+    size_t nmatches = 0; // number of cells that may (or must) match tmpcell
+    CellList::iterator must_match = cells.end();
+    CellList::iterator may_match = cells.end(); // any may-match cell
+    for (CellList::iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
+        if (tmpcell->may_alias(*ci, ops->get_solver())) {
+            assert((*ci)->get_value()->get_width()==8);
+            ++nmatches;
+            may_match = ci;
+            if (tmpcell->must_alias(*ci, ops->get_solver())) {
+                must_match = ci;
+                break;
+            }
+        }
     }
-    return protoval->undefined_(8);
+
+    SValuePtr retval;
+    if (1!=nmatches || must_match==cells.end()) {
+        retval = dflt; // found no matches, multiple matches, or we fell off the end of the cell list
+        cells.push_front(tmpcell);
+    } else {
+        assert(may_match!=cells.end());
+        retval = (*may_match)->get_value();
+    }
+    return retval;
 }
 
 void
-MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value)
+MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *ops)
 {
-    cells.push_front(MemoryCell(addr, value));
+    MemoryCellPtr cell = protocell->create(addr, value);
+    cells.push_front(cell);
 }
 
 void
 MemoryCellList::print(std::ostream &o, const std::string prefix, PrintHelper *helper/*=NULL*/) const
 {
-    for (std::list<MemoryCell>::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
+    for (CellList::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
         o <<prefix;
-        ci->print(o, helper);
+        (*ci)->print(o, helper);
         o <<"\n";
     }
 }

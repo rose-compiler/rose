@@ -2,11 +2,14 @@
 #include "PartialSymbolicSemantics2.h"
 
 namespace BinaryAnalysis {
-namespace InstructionSemantics {
+namespace InstructionSemantics2 {
 namespace PartialSymbolicSemantics {
 
+uint64_t name_counter;
+
 std::ostream&
-operator<<(std::ostream &o, const SValue &e) {
+operator<<(std::ostream &o, const SValue &e)
+{
     e.print(o);
     return o;
 }
@@ -137,13 +140,13 @@ RiscOperators::or_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
     SValuePtr b = SValue::promote(b_);
     assert(a->get_width()==b->get_width());
     if (a->must_equal(b))
-        return a;
+        return a->copy();
     if (!a->name && !b->name)
         return number_(a->get_width(), a->offset | b->offset);
     if (!a->name && a->offset==IntegerOps::genMask<uint64_t>(a->get_width()))
-        return a;
+        return a->copy();
     if (!b->name && b->offset==IntegerOps::genMask<uint64_t>(a->get_width()))
-        return b;
+        return b->copy();
     return undefined_(a->get_width());
 }
 
@@ -159,13 +162,13 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
         return number_(a->get_width(), 0);
     if (!b->name) {
         if (0==b->offset)
-            return a;
+            return a->copy();
         if (b->offset==IntegerOps::genMask<uint64_t>(a->get_width()))
             return invert(a);
     }
     if (!a->name) {
         if (0==a->offset)
-            return b;
+            return b->copy();
         if (a->offset==IntegerOps::genMask<uint64_t>(a->get_width()))
             return invert(b);
     }
@@ -189,8 +192,8 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, siz
     assert(begin_bit<end_bit);
     if (0==begin_bit) {
         if (end_bit==a->get_width())
-            return a;
-        return a->copy_(end_bit);
+            return a->copy();
+        return a->copy(end_bit);
     }
     if (a->name)
         return undefined_(end_bit-begin_bit);
@@ -226,10 +229,10 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
     assert(1==sel->get_width());
     assert(a->get_width()==b->get_width());
     if (a->must_equal(b))
-        return a;
+        return a->copy();
     if (sel->name)
         return undefined_(a->get_width());
-    return sel->offset ? a : b;
+    return sel->offset ? a->copy() : b->copy();
 }
 
 BaseSemantics::SValuePtr
@@ -266,7 +269,7 @@ RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantic
     if (!a->name && !sa->name)
         return number_(a->get_width(), IntegerOps::rotateLeft2(a->offset, sa->offset, a->get_width()));
     if (!sa->name && 0==sa->offset % a->get_width())
-        return a;
+        return a->copy();
     return undefined_(a->get_width());
 }
 
@@ -282,7 +285,7 @@ RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a_, const BaseSemanti
         return number_(a->get_width(), n);
     }
     if (!sa->name && 0==sa->offset % a->get_width())
-        return a;
+        return a->copy();
     return undefined_(a->get_width());
 }
 
@@ -295,7 +298,7 @@ RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantics
         return number_(a->get_width(), IntegerOps::shiftLeft2(a->offset, sa->offset, a->get_width()));
     if (!sa->name) {
         if (0==sa->offset)
-            return a;
+            return a->copy();
         if (sa->offset>=a->get_width())
             return number_(a->get_width(), 0);
     }
@@ -311,7 +314,7 @@ RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a_, const BaseSemantic
         if (sa->offset>a->get_width())
             return number_(a->get_width(), 0);
         if (0==sa->offset)
-            return a;
+            return a->copy();
     }
     if (!a->name && !sa->name)
         return number_(a->get_width(), IntegerOps::shiftRightLogical2(a->offset, sa->offset, a->get_width()));
@@ -324,7 +327,7 @@ RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a_, const Ba
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
     if (!sa->name && 0==sa->offset)
-        return a;
+        return a->copy();
     if (!a->name && !sa->name)
         return number_(a->get_width(), IntegerOps::shiftRightArithmetic2(a->offset, sa->offset, a->get_width()));
     return undefined_(a->get_width());
@@ -402,7 +405,7 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemant
                            (IntegerOps::signExtend2(a->offset, a->get_width(), 64) /
                             IntegerOps::signExtend2(b->offset, b->get_width(), 64)));
         if (1==b->offset)
-            return a;
+            return a->copy();
         if (b->offset==IntegerOps::genMask<uint64_t>(b->get_width()))
             return negate(a);
         /*FIXME: also possible to return zero if B is large enough. [RPM 2010-05-18]*/
@@ -465,7 +468,7 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
         if (!a->name)
             return number_(a->get_width(), a->offset / b->offset);
         if (1==b->offset)
-            return a;
+            return a->copy();
         /*FIXME: also possible to return zero if B is large enough. [RPM 2010-05-18]*/
     }
     return undefined_(a->get_width());
@@ -487,7 +490,7 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr a2 = SValue::promote(unsignedExtend(a, 64));
     SValuePtr b2 = SValue::promote(unsignedExtend(b, 64));
     if (a2->must_equal(b2))
-        return b;
+        return b->copy();
     return undefined_(b->get_width());
 }
 
@@ -519,7 +522,7 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
 {
     SValuePtr a = SValue::promote(a_);
     if (new_width==a->get_width())
-        return a;
+        return a->copy();
     if (a->name)
         return undefined_(new_width);
     return number_(new_width, IntegerOps::signExtend2(a->offset, a->get_width(), new_width));

@@ -216,11 +216,30 @@ test (SETcc) instructions could be implemented with a single
 handler). Designing the table to use functors will allows users to
 easily pass whatever other parameters and/or state they need.
 
-== Example ==
+== Examples ==
 
+=== Using default components ===
 Assuming all the above changes were implemented, setting up one or
-ROSE's predefined instruction semantics would change from something
-like this:
+ROSE's predefined instruction semantics using default components, would change from this:
+
+   using namespace BinaryAnalysis::InstructionSemantics;
+   typedef SymbolicSemantics::Policy<> Policy;
+   Policy policy
+   X86InstructionSemantics<Policy, SymbolicSemantics::ValueType> semantics(policy)
+
+to something like this:
+
+    using namespace BinaryAnalysis::InstructionSemantics2;
+    BaseSemantics::RiscOperatorsPtr operators = SymbolicSemantics::RiscOperators::instance();
+    BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(operators);
+
+One of the nice things about the previous example is that the construction of the dispatcher does not have any compile-time dependencies on the semantic domain.
+
+=== Specifying components explicitly ===
+
+As mentioned, not all the components can be specified for the old API.  The new API builds the objects from bottom up (this example was is actually just the implementation of the no-argument version of SymbolicSemantics::RiscOperators::instance()).
+
+The old API looked like this:
 
    using namespace BinaryAnalysis::InstructionSemantics;
    typedef SymbolicSemantics::State<SymbolicSemantics::ValueType> State;
@@ -229,66 +248,99 @@ like this:
    Policy policy;
    Semantics semantics(policy);
 
-to something like this:
+The new API looks like this:
 
    using namespace BinaryAnalysis::InstructionSemantics;
-   SymbolicSemantics::ValueType prototype_value;
-   SymbolicSemantics::State state(prototype_value);
-   SymbolicSemantics::RiscOperators operators;
-   X86Dispatcher dispatcher(state, operators);
+   BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValue::instance();
+   BaseSemantics::RegisterStatePtr regs = BaseSemantics::RegisterStateX86::instance(protoval);
+   BaseSemantics::MemoryStatePtr mem = SymbolicSemantics::MemoryState::instance(protoval);
+   BaseSemantics::StatePtr state = BaseSemantics::State::isntance(regs, mem);
+   BaseSemantics::RiscOperatorsPtr operators = SymbolicSemantics::RiscOperators::instance(state);
+
 
 The prototype_value is used only for its virtual constructor.
-Using a user-defined semantics would look similar.
 
-== Example ==
+=== RISC operators ===
 
-A RISC operator would change from something like this:
+This example shows a user implementing their own RISC operations (or overriding existing operations, which is not completely possible in the old API). A RISC operator in the old API:
 
-   template <size_t BeginAt, size_t EndAt, size_t nBits>
-   ValueType<EndAt-BeginAt> extract(const ValueType<nBits> &a) const {
-      ValueType<EndAt-BeginAt> retval = ...
-      ...
-      return retval;
+   template <size_t Len>
+   ValueType<Len> add(const ValueType<Len> &a, const ValueType<Len> &b) const {
+       ValueType<Len> retval;
+       if (a.is_known()) {
+	   if (b.is_known()) {
+	       retval = ValueType<Len>(LeafNode::create_integer(Len, a.known_value()+b.known_value()));
+	       retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+	       return retval;
+	   } else if (0==a.known_value()) {
+	       return b;
+	   }
+       } else if (b.is_known() && 0==b.known_value()) {
+	   return a;
+       }
+       retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ADD,
+						    a.get_expression(),
+						    b.get_expression()));
+       retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+       return retval;
    }
 
 to
-
-   BaseSemantics::ValueType *
-   extract(size_t beginAt, size_t endAt, const BaseSemantics::ValueType *a) {
-      ValueType *retval = dynamic_cast<ValueType*>(a->create(endAt-beginAt));
-      retval->....
-      return retval;
+   // inside namespace BinaryAnalysis::InstructionSemantics::SymbolicSemantics2
+   BaseSemantics::SValuePtr
+   RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
+   {
+       SValuePtr a = SValue::promote(a_);
+       SValuePtr b = SValue::promote(b_);
+       assert(a->get_width()==b->get_width());
+       SValuePtr retval;
+       if (a->is_number()) {
+	   if (b->is_number()) {
+	       retval = number_(a->get_width(), a->get_number()+b->get_number());
+	       retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+	       return retval;
+	   } else if (0==a->get_number()) {
+	       return b->copy();
+	   }
+       } else if (b->is_number() && 0==b->get_number()) {
+	   return a->copy();
+       }
+       retval = svalue(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ADD,
+					    a->get_expression(), b->get_expression()));
+       retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+       return retval;
    }
 
 
-== Example ==
+=== User-defined value type ===
 
 User-defined subclasses would not need to do anything with templates.
 Therefore, subclassing SymbolicSemantics to redefine it's
 unsignedMultiply method would change from:
 
     template <
-	template <template <size_t> class ValueType> class State,
-	template <size_t> class ValueType
-	>
+        template <template <size_t> class ValueType> class State,
+        template <size_t> class ValueType
+        >
     class MyPolicy: public SymbolicSemantics::Policy<State, ValueType> {
     public:
-	template <size_t nBitsA, size_t nBitsB>
-	ValueType<nBitsA+nBitsB> unsignedMultiply(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
-	    ValueType<nBitsA+nBitsB> retval;
-	    retval.set_state(retval.VAL_UNDEFINED);
-	    return retval;
-	}
+        template <size_t nBitsA, size_t nBitsB>
+        ValueType<nBitsA+nBitsB> unsignedMultiply(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) const {
+            ValueType<nBitsA+nBitsB> retval undefined_<nBitsA+nBitsB>();
+            retval.set_state(VAL_UNDEFINED);
+            return retval;
+        }
     };
 
 to this:
 
     class MyOperators: public SymbolicSemantics::Operators {
     public:
-        ValueType *unsignedMultiply(const BaseSemantics::ValueType *a, const BaseSemantics::ValueType *b) override {
-            ValueType *retval = dynamic_cast<ValueType>(a->create(a->get_width() + b->get_width()));
-	    retval->set_state(retval.VAL_UNDEFINED);
-	    return retval;
+        BaseSemantics::ValueTypePtr
+        unsignedMultiply(const BaseSemantics::ValueTypePtr &a, const BaseSemantics::ValueTypePtr &b) override {
+	    ValueTypePtr retval = undefined_(a->get_width() + b->get_width()); 
+            retval->set_state(VAL_UNDEFINED);
+            return retval;
         }
     };
 
@@ -301,32 +353,42 @@ template-based design).
 == Experimental Results for Compile and Run Times ==
 
 Using semanticSpeed2.C without distcc or ccache; best of three times;
-with optimizations; tests run on passerina
+with optimizations; tests run on passerina (a laptop with 8-core
+i7-3610QM @ 2.30GHz, 16GB memory, linux 3.2.0 amd64 using gcc 4.4.5).
+Input specimen simply increments EAX in a tight loop:
+
+    _start: mov eax, 0
+    loop:   add eax, 1
+    jmp loop
+
+The performance test was allowed to run for 60 seconds. The table
+lists the best of three runs.
 
 Compiler timings were from (optimization, no-debug, no-profile)
 $ rg-make clean && time env DISTCC_HOSTS= CCACHE_DISABLE=yes make ...
 
-                         Using      Compile  Executable Run speed
-Program                  templates? time (s) size (MB)  (insn/s)
------------------------- ---------- -------- ---------- ---------
-nullSemantics1               yes       9.312      4.961        na
-nullSemantics2                no       7.826      4.924        na
-partialSymbolicSemantics1    yes      15.479      5.943 2,295,040
-partialSymbolicSemantics2     no       7.623      4.864   234,989
+                               Using      Compile  Executable  Virtual   Run speed
+Program                        templates? time (s)  size (MB)  size (MB) (insn/s)
+------------------------------ ---------- -------- ---------- ---------- ----------
+nullSemanticsSpeed1               yes       9.255         4.8            10,500,800
+nullSemanticsSpeed2                no       7.806         4.7             1,813,380
+partialSymbolicSemanticsSpeed1    yes      15.399         5.7       193   2,332,060
+partialSymbolicSemanticsSpeed2     no       7.685         4.7       193     948,840
+symbolicSemanticsSpeed1           yes      29.330         8.0       194      53,137
+symbolicSemanticsSpeed2            no       7.633         4.7       193     136,210
 
-Progress made for increasing performance of the non-template design by
+Progress made for increasing performance of the non-template design
 running partialSymbolicSemantics for 60 seconds, measured in x86
-instructions per second.  The specimen is the infinite loop:
-	     _start: mov eax, 0
-             loop:   add eax, 1
-                     jmp loop
+instructions per second.  The specimen is the infinite loop above.
 
-							Insn/s	 1M insns %chg
-Baseline (initial implementation)			234,989	 4.256s
-Caching of register descriptors				278,741  3.588s   15.7%
-Custom implementation of boost::shared_ptr for SValue	450,311  2.221s   38.1% (max expected 42%)
-Custom allocators for SValue classes	       		657,144  1.522s   31.5% 
-Hand-inlined Allocator::which_freelist()		665,945  1.502s    3.2% (max expected 3.2%)
-Moved EIP increment to DispatcherX86			837,837  1.194s   20.5% (max expected 4.4%) !!!
+                                                        Insn/s   1M insns %speedup
+Baseline (initial implementation)                       234,989  4.256s
+Caching of register descriptors                         278,741  3.588s   15.7%
+Custom implementation of boost::shared_ptr for SValue   450,311  2.221s   38.1% (max expected 42%)
+Custom allocators for SValue classes                    657,144  1.522s   31.5% 
+Hand-inlined Allocator::which_freelist()                665,945  1.502s    3.2% (max expected 3.2%)
+Moved EIP increment to DispatcherX86                    880,705  1.136s   24.4% (max expected 4.4%, ~695k) !!!
+InsnProcessor class uses raw dispatcher pointer         812,898  1.230s   -8.3% (max expected 1.0%)  DISCARDED
+Total improvment from optimizations: 73%
+Original implementation (ultimate goal)               2,295,040  0.4357
 
-Original implementation (ultimate goal)		      2,295,040  0.4357
