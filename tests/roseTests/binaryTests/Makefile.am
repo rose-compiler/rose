@@ -295,6 +295,48 @@ EXTRA_DIST += semantics.conf intervalSemantics.ans
 intervalSemantics.passed: semantics.conf intervalSemantics
 	@$(RTH_RUN) CMD=intervalSemantics INPUT=i686-test1.O3.bin $< $@
 
+# Null semantics using the newer non-template interface
+noinst_PROGRAMS += nullSemantics2
+nullSemantics2_SOURCES = semantics2.C
+nullSemantics2_CPPFLAGS = -DPOLICY_SELECTOR=5
+nullSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+#STATIC_TEST_TARGETS += nullSemantics2.passed
+#EXTRA_DIST += semantics2.conf nullSemantics2.ans
+#nullSemantics2.passed: semantics2.conf nullSemantics2
+#	@$(RTH_RUN) CMD=nullSemantics2 INPUT=i686-test1.O3.bin $< $@
+
+# Tests speed of null instruction semantics with and without using templates
+noinst_PROGRAMS += nullSemanticsSpeed1 nullSemanticsSpeed2
+nullSemanticsSpeed1_SOURCES = semanticSpeed2.C
+nullSemanticsSpeed1_CPPFLAGS = -DPOLICY_SELECTOR=5 -DUSE_TEMPLATES=1
+nullSemanticsSpeed1_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+nullSemanticsSpeed2_SOURCES = semanticSpeed2.C
+nullSemanticsSpeed2_CPPFLAGS = -DPOLICY_SELECTOR=5 -DUSE_TEMPLATES=0
+nullSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Tests speed of partial symbolic instruction semantics with and without using templates
+noinst_PROGRAMS += partialSymbolicSemanticsSpeed1 partialSymbolicSemanticsSpeed2
+partialSymbolicSemanticsSpeed1_SOURCES = semanticSpeed2.C
+partialSymbolicSemanticsSpeed1_CPPFLAGS = -DPOLICY_SELECTOR=3 -DUSE_TEMPLATES=1
+partialSymbolicSemanticsSpeed1_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+partialSymbolicSemanticsSpeed2_SOURCES = semanticSpeed2.C
+partialSymbolicSemanticsSpeed2_CPPFLAGS = -DPOLICY_SELECTOR=3 -DUSE_TEMPLATES=0
+partialSymbolicSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Tests speed of symbolic semantics with and without using templates
+noinst_PROGRAMS += symbolicSemanticsSpeed1 symbolicSemanticsSpeed2
+symbolicSemanticsSpeed1_SOURCES = semanticSpeed2.C
+symbolicSemanticsSpeed1_CPPFLAGS = -DPOLICY_SELECTOR=4 -DUSE_TEMPLATES=1
+symbolicSemanticsSpeed1_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+symbolicSemanticsSpeed2_SOURCES = semanticSpeed2.C
+symbolicSemanticsSpeed2_CPPFLAGS = -DPOLICY_SELECTOR=4 -DUSE_TEMPLATES=0
+symbolicSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+.PHONY: semanticSpeed
+semanticSpeed: nullSemanticsSpeed1 nullSemanticsSpeed2 \
+	       partialSymbolicSemanticsSpeed1 partialSymbolicSemanticsSpeed2 \
+	       symbolicSemanticsSpeed1 symbolicSemanticsSpeed2
+
 # Disassembles an executable according to various command-line switches.
 noinst_PROGRAMS += disassemble
 disassemble_SOURCES = disassemble.C linux_syscalls.C
