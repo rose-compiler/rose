@@ -17,6 +17,8 @@ extern "C" {
 
 // return the current time stamp in a double floating point number
 extern double xomp_time_stamp(void);
+extern int env_region_instr_val; // save the environment variable value for instrumentation support
+//e.g. export XOMP_REGION_INSTR=0|1
 
 //enum omp_rtl_enum {
 //  e_gomp,
