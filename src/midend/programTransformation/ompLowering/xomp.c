@@ -540,7 +540,7 @@ void XOMP_taskwait (void)
 #else
 #endif 
 }
-//===================================== loop scheduling ==============================================
+// loop scheduling 
 // 2^31 -1 for 32-bit integer
 //#define MAX_SIGNED_INT ((int)(1<< (sizeof(int)*8-1)) -1)
 #define MAX_SIGNED_INT 2147483647l
