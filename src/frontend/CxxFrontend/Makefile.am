@@ -100,5 +100,5 @@ endif
 # Cleanup
 MOSTLYCLEANFILES = EDG/libroseEDG.la
 clean-local:
-	rm -rf EDG/.libs {download,}-$(EDGBIN_NAME_PREFIX)-*.tar.gz
+	rm -rf EDG/.libs {download-,}$(EDGBIN_NAME_PREFIX)-*.tar.gz
 endif
