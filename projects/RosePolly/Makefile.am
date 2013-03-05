@@ -31,7 +31,11 @@ rosepoly_API_VERSION=0.1.0
 exec_prefix=${prefix}/rosepoly-$(rosepoly_API_VERSION)
 librosepoly_la_includedir = ${exec_prefix}/include/rosepoly
 
+if ROSE_WITH_ISL
 lib_LTLIBRARIES = librosepoly.la
+else
+lib_LTLIBRARIES = 
+endif	
 
 librosepoly_la_CPPFLAGS = \
   -DISL \

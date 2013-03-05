@@ -350,7 +350,7 @@ insertGlobalPrototype (SgFunctionDeclaration* def,
                     proto_i->set_firstNondefiningDeclaration (prototype);
                   }
 #else
-               proto_i->set_firstNondefiningDeclaration (prototype);
+               proto_i->set_firstNondefiningDeclaration (prototype->get_firstNondefiningDeclaration());
 #endif
                ROSE_ASSERT (proto_i->get_declaration_associated_with_symbol() != NULL);     
 
@@ -433,6 +433,9 @@ isProtPriv (const SgDeclarationStatement* decl)
     {
       SgDeclarationStatement* decl_tmp =
         const_cast<SgDeclarationStatement *> (decl);
+      // Liao 3/1/2013. workaround a bug introduced by Dan: only the defining decl has the correct access modifier.  
+      if (decl_tmp ->get_definingDeclaration () != NULL )
+        decl_tmp = decl_tmp ->get_definingDeclaration ();
       ROSE_ASSERT (decl_tmp);
       const SgAccessModifier& decl_access_mod =
         decl_tmp->get_declarationModifier ().get_accessModifier ();
