@@ -8,7 +8,9 @@
 
 #include "CallGraph.h"
 
+#ifndef _MSC_VER
 #include <err.h>
+#endif
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 
