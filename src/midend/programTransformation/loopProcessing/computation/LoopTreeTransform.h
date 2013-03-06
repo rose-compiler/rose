@@ -21,7 +21,7 @@ class LoopTreeTransform
 
 class LoopTreeDistributeNode : public LoopTreeTransform
 {
-  typedef SelectObject<LoopTreeNode*>& SelectLoopTreeNode;
+  typedef RoseSelectObject<LoopTreeNode*>& SelectLoopTreeNode;
   LoopTreeNode* Distribute( LoopTreeNode *n, SelectLoopTreeNode sel, 
                             ObserveTransform &ob, LoopTreeNode** loc=0);
   /* QY: distribute the parent of loc to separate all children before loc */
