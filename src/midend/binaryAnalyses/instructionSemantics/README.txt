@@ -268,19 +268,19 @@ This example shows a user implementing their own RISC operations (or overriding 
    ValueType<Len> add(const ValueType<Len> &a, const ValueType<Len> &b) const {
        ValueType<Len> retval;
        if (a.is_known()) {
-	   if (b.is_known()) {
-	       retval = ValueType<Len>(LeafNode::create_integer(Len, a.known_value()+b.known_value()));
-	       retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
-	       return retval;
-	   } else if (0==a.known_value()) {
-	       return b;
-	   }
+           if (b.is_known()) {
+               retval = ValueType<Len>(LeafNode::create_integer(Len, a.known_value()+b.known_value()));
+               retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
+               return retval;
+           } else if (0==a.known_value()) {
+               return b;
+           }
        } else if (b.is_known() && 0==b.known_value()) {
-	   return a;
+           return a;
        }
        retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ADD,
-						    a.get_expression(),
-						    b.get_expression()));
+                                                    a.get_expression(),
+                                                    b.get_expression()));
        retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
        return retval;
    }
@@ -295,18 +295,18 @@ to
        assert(a->get_width()==b->get_width());
        SValuePtr retval;
        if (a->is_number()) {
-	   if (b->is_number()) {
-	       retval = number_(a->get_width(), a->get_number()+b->get_number());
-	       retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
-	       return retval;
-	   } else if (0==a->get_number()) {
-	       return b->copy();
-	   }
+           if (b->is_number()) {
+               retval = number_(a->get_width(), a->get_number()+b->get_number());
+               retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+               return retval;
+           } else if (0==a->get_number()) {
+               return b->copy();
+           }
        } else if (b->is_number() && 0==b->get_number()) {
-	   return a->copy();
+           return a->copy();
        }
        retval = svalue(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ADD,
-					    a->get_expression(), b->get_expression()));
+                                            a->get_expression(), b->get_expression()));
        retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
        return retval;
    }
@@ -338,7 +338,7 @@ to this:
     public:
         BaseSemantics::ValueTypePtr
         unsignedMultiply(const BaseSemantics::ValueTypePtr &a, const BaseSemantics::ValueTypePtr &b) override {
-	    ValueTypePtr retval = undefined_(a->get_width() + b->get_width()); 
+            ValueTypePtr retval = undefined_(a->get_width() + b->get_width()); 
             retval->set_state(VAL_UNDEFINED);
             return retval;
         }
@@ -348,6 +348,76 @@ and furthermore, any base class that calls unsignedMultiply() will
 actually call MyOperators::unsignedMultiply() since it's a virtual
 member function in BaseSemantics::Operators (which doesn't work in the
 template-based design).
+
+=== Adding an x86 instruction ===
+
+With the old API, the user had to subclass the X86InstructionSemantics
+class template and override its undocumented translate() method:
+
+template <typename Policy, template <size_t> class ValueType>
+class MySemantics: public X86InstructionSemantics<Policy, ValueType> {
+public:
+    MySemantics(Policy &policy)
+        : X86InstructionSemantics<Policy, ValueType>(policy) {
+    }
+
+    virtual void translate(SgAsmx86Instruction *insn) {
+        switch (insn->get_kind()) {
+            case x86_mov: {
+                if (operands.size()!=2)
+                    throw Exception("instruction must have two operands", insn);
+                switch (numBytesInAsmType(operands[0]->get_type())) {
+                    case 1: write8(operands[0], read8(operands[1])); break;
+                    case 2: write16(operands[0], read16(operands[1])); break;
+                    case 4: write32(operands[0], read32(operands[1])); break;
+                    default: throw Exception("size not implemented", insn); break;
+                }
+                break;
+            }
+            default:
+                X86InstructionSemantics<Policy, ValueType>::translate(insn);
+                break;
+        }
+    }
+ };
+
+The new API allows you to implement a new instruction like this:
+
+ struct IP_mov: BaseSemantics::InsnProcessor {
+     void process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_) override {
+          DispatcherX86 d = DispatcherX86::promote(dispatcher_);
+          SgAsmx86Instruction *insn = isSgAsmx86Instruction(insn_);
+          SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
+          if (insn->args.size()!=2)
+              throw BaseSemantics::Exception("wrong number of args for MOV", insn);
+          size_t nbits = 0;
+          switch (args[0]->get_type()->variantT()) {
+            case V_SgAsmTypeByte: nbits = 8; break;
+            case V_SgAsmTypeWord: nbits = 16; break;
+            case V_SgAsmTypeDoubleWord: nbits = 32; break;
+            case V_SgAsmTypeQuadWord: nbits = 64; break;
+            default:
+                throw BaseSemantics::Exception("argument size not handled for MOV", insn);
+         }
+         d->write(args[0], d->read(args[1], nbits));
+     }
+ };
+
+The instruction is added to a dispatcher with:
+
+ Dispatcher *dispatcher = ...;
+ dispatcher->iproc_set(x86_mov, new IP_mov);
+
+With a little boilerplate it can be even simpler.  Here's the actual definition from DispatcherX86.C:
+
+ struct IP_mov: P {
+     void p(D d, Ops ops, I insn, A args) {
+         assert_args(insn, args, 2);
+         size_t nbits = asm_type_width(args[0]->get_type());
+         d->write(args[0], d->read(args[1], nbits));
+     }
+ };
+
 
 
 == Experimental Results for Compile and Run Times ==
