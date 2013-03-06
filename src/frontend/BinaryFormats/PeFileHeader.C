@@ -2,6 +2,12 @@
 #include "sage3basic.h"
 #include "MemoryMap.h"
 
+/* The __attribute__ mechanism is only supported by GNU compilers */
+#ifndef __GNUC__
+#define  __attribute__(x)  /*NOTHING*/
+#define  __attribute(x)    /*NOTHING*/
+#endif
+
 /** Convert an RVA/Size Pair index number into a section name. This is different than stringifySgAsmPEFileHeaderPairPurpose()
  * because it returns a section name rather than an enum name. */
 std::string

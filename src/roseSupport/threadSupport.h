@@ -57,6 +57,11 @@
 #  endif
 #endif
 
+/* The __attribute__ mechanism is only supported by GNU compilers */
+#ifndef __GNUC__
+#define  __attribute__(x)  /*NOTHING*/
+#define  __attribute(x)    /*NOTHING*/
+#endif
 
 /******************************************************************************************************************************
  *                                      Layered Synchronization Primitives
