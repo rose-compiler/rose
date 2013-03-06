@@ -24,21 +24,17 @@ add_dependencies(fortran_ofp_parser_c_jni_FortranParserActionJNI
 set_target_properties(fortran_ofp_parser_c_jni_FortranParserActionJNI PROPERTIES VERSION 1.0.0 SOVERSION 1)
 install(TARGETS fortran_ofp_parser_c_jni_FortranParserActionJNI ${INSTALL_TARGETS_DEFAULT_ARGS})
 
-if(enable-fortran)
-  FLEX_TARGET(Preproc preproc-fortran.ll
-    ${CMAKE_CURRENT_BINARY_DIR}/preproc-fortran.cc)
-  FLEX_TARGET(PreprocFixed preproc-fortran-fixed.ll
-    ${CMAKE_CURRENT_BINARY_DIR}/preproc-fortran-fixed.cc)
+FLEX_TARGET(Preproc preproc-fortran.ll
+${CMAKE_CURRENT_BINARY_DIR}/preproc-fortran.cc)
+FLEX_TARGET(PreprocFixed preproc-fortran-fixed.ll
+${CMAKE_CURRENT_BINARY_DIR}/preproc-fortran-fixed.cc)
 
-  set(libroseFortran_SOURCES
+set(libroseFortran_SOURCES
     fortran_support.C fortran_error_handler.C openFortranParser_main.C
     jserver.C ofp.C FortranModuleInfo.C FortranParserState.C
     ${FLEX_Preproc_OUTPUTS}
     ${FLEX_PreprocFixed_OUTPUTS})
-else()
-  # Compile using a function that represents the API of the Open Fortran Parser
-  set(libroseFortran_SOURCES dummy_openFortranParser_main.C)
-endif()
+
 add_library(roseFortran ${libroseFortran_SOURCES})
 target_link_libraries(roseFortran ${JAVA_JVM_LIBRARY})
 add_dependencies(roseFortran rosetta_generated)
