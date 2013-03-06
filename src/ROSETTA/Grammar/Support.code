@@ -11546,6 +11546,9 @@ SgName::operator==(const SgName& n1) const
      return p_char == n1.p_char;
    }
 
+#ifdef _MSC_VER
+#define strncasecmp _strnicmp
+#endif
 // DQ (11/27/2010): Added support for case insensitive name matching.
 bool
 SgName::caseInsensitiveEquality ( const SgName & x, const SgName & y )
