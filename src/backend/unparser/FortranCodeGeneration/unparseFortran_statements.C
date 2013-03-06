@@ -13,6 +13,10 @@
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
 
+#ifdef _MSC_VER
+#define strncasecmp _strnicmp
+#endif
+
 using namespace std;
 
 FortranCodeGeneration_locatedNode::FortranCodeGeneration_locatedNode(Unparser* unp, std::string fname)
