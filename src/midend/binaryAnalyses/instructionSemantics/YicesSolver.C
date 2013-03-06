@@ -6,6 +6,10 @@
 
 #include <errno.h>
 
+#ifdef _MSC_VER
+#define strtoull _strtoui64
+#endif
+
 using namespace InsnSemanticsExpr;
 
 void
