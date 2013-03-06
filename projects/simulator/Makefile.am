@@ -255,14 +255,20 @@ MultiWithConversion_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROS
 # Binary clone detection.  Finds semantically similar functions based on fuzz testing. See Andreas and Earl for details.
 noinst_PROGRAMS += CloneDetection
 EXTRA_DIST +=						\
+        clone_detection/Schema.sql			\
 	clone_detection/CloneDetection.h		\
 	clone_detection/CloneDetectionSemantics.h	\
 	clone_detection/CloneDetectionTpl.h		\
 	clone_detection/CloneDetection.patch
-CloneDetection_SOURCES = clone_detection/CloneDetection.C
+CloneDetection_SOURCES = clone_detection/CloneDetection.C CloneDetectionSchema.C
 CloneDetection_CPPFLAGS = $(ROSE_INCLUDES)
 CloneDetection_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+CloneDetectionSchema.C: clone_detection/Schema.sql
+	@echo "  GEN     $@"
+	@echo "const char *clone_detection_schema =" >$@
+	@perl -pe 's/"/\\"/g; s/(.*)/    "$$1\\n"/' <$< >>$@
+	@echo ';' >>$@
 
 ###############################################################################################################################
 #  SUPPORT PROGRAMS FOR PAPERS

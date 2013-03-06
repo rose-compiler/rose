@@ -199,6 +199,7 @@ public:
      *  the SQL statements are written. */
     void dump(const std::string &server_name, const std::string &user_name, const std::string &password) {
         std::ofstream dbc(server_name.c_str());
+        dbc <<"begin transaction;\n";
         renumber_vertices();
         dump_outputsets(dbc);
         dump_inputsets(dbc);
@@ -217,6 +218,7 @@ public:
                 dbc <<"insert into inoutpairs (simset_id, inputset_id, outputset_id) values ("
                     <<leafnum <<", " <<v->get_level() <<", " <<v->id <<");\n";
         }
+        dbc <<"commit;\n";
     }
         
     std::string toString() const {
@@ -473,8 +475,26 @@ public:
                 m->mesg("%s:     0x%08"PRIx64" <%s>", name, (*fi)->get_entry_va(), (*fi)->get_name().c_str());
         }
 
-        m->mesg("%s: dumping final similarity sets to clones.sql", name);
         partition.dump("clones.sql", "NO_USER", "NO_PASSWD");
+        if (sqlite3_from_sql("clones.db", "clones.sql")) {
+            m->mesg("%s: final similarity sets have been saved in clones.db, an SQLite database", name);
+        } else {
+            m->mesg("%s: could not create SQLite database \"clones.db\"", name);
+            m->mesg("%s: SQL has been saved in \"clones.sql\"; the schema is \"%s\"", name,
+                    (ROSE_AUTOMAKE_TOP_SRCDIR + "/projects/simulator/clone_detection/Schema.sql").c_str());;
+        }
+    }
+
+    static bool sqlite3_from_sql(const std::string &dbname, const std::string &sqlname) {
+        (void) unlink(dbname.c_str());
+        FILE *f = popen(("sqlite3 "+dbname).c_str(), "w");
+        if (!f)
+            return false;
+        extern const char *clone_detection_schema; // see CloneDetectionSchema.C in the build directory
+        fputs(clone_detection_schema, f);
+        fclose(f);
+        std::string cmd = "sqlite3 "+dbname+" <"+sqlname;
+        return 0==system(cmd.c_str());
     }
 };
 
