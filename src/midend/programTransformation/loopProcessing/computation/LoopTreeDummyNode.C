@@ -69,7 +69,7 @@ CodeGen( const AstNodePtr& c) const
       return fa.CreateIf( cond1, c );
    }
 
-LoopTreeNode* ApproachAncesLoop( LoopTreeNode* start, SelectObject<LoopTreeNode*>& sel)
+LoopTreeNode* ApproachAncesLoop( LoopTreeNode* start, RoseSelectObject<LoopTreeNode*>& sel)
 {
    LoopTreeNode* l = 0;
       for (l = start->Parent(); l != 0 && l->ChildCount() == 1; 
@@ -149,7 +149,7 @@ bool LoopTreeRestrLoopRange :: RemoveSelf()
       return false;
 }
 
-class SelectRestrLoopAnces : public SelectObject<LoopTreeNode*>
+class SelectRestrLoopAnces : public RoseSelectObject<LoopTreeNode*>
 {
   LoopTreeRestrLoopRange *node;
  public:
@@ -260,7 +260,7 @@ bool LoopTreeRestrLoopRange :: MergeSibling( int opt)
       return false;
    }
 
-class SelectRelateLoopAnces : public SelectObject<LoopTreeNode*>
+class SelectRelateLoopAnces : public RoseSelectObject<LoopTreeNode*>
 {
   LoopTreeRelateLoopIvar *node;
  public:
