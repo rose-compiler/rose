@@ -18,6 +18,10 @@ set(files_to_extract
   "fortran/ofp/parser/c/jni/jni_token_funcs.c"
 )
 
+if (NOT Java_JAR_EXECUTABLE)
+  message(FATAL_ERROR "Need jar to extract source files")
+endif()
+
 if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/ActionEnums.h)
   foreach(file_to_extract ${files_to_extract})
     execute_process(
