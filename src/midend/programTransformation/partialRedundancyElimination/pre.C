@@ -170,7 +170,7 @@ class ReplaceExpressionWithVarrefVisitor: public AstSimpleProcessing {
 
   virtual void visit(SgNode* n) {
     SgExpression* n2 = isSgExpression(n);
-    if (n2 && expressionTreeEqual(n2, expr)) {
+    if (n2 && expressionTreeEqual(n2, expr) && isSgExpression(n->get_parent())) {
       isSgExpression(n->get_parent())->replace_expression(n2, vr);
     }
   }
