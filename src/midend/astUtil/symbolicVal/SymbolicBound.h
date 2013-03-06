@@ -73,20 +73,20 @@ class SymbolicBoundAnalysis
   : public MapObject<SymbolicVal, SymbolicBound>, private SymbolicVisitor
 {
  protected:
-  Interface interface;
+  Interface iface;
   SymbolicBound result;
   Stmt node, ances;
   void VisitVar( const SymbolicVar& var)
    { result = GetBound(var); }
  public:
   SymbolicBoundAnalysis(Interface _interface, Stmt n, Stmt a = 0)
-      : interface(_interface), node(n), ances(a) {}
+      : iface(_interface), node(n), ances(a) {}
   SymbolicBound GetBound(const SymbolicVar& var, Stmt* stop = 0)
        {
          SymbolicBound tmp;
          Stmt n = node; 
-         for ( ; n != ances; n = interface.GetParent(n)) {
-             VarInfo info = interface.GetVarInfo(n);
+         for ( ; n != ances; n = iface.GetParent(n)) {
+             VarInfo info = iface.GetVarInfo(n);
              if (info.IsTop())
                 continue;
              if (info.GetVar() == var) {
@@ -115,7 +115,7 @@ class SymbolicConstBoundAnalysis : public SymbolicBoundAnalysis<Stmt,Interface>
  protected:
   SymbolicBoundAnalysis<Stmt,Interface>::result;
   SymbolicBoundAnalysis<Stmt,Interface>::ances;
-  SymbolicBoundAnalysis<Stmt,Interface>::interface;
+  SymbolicBoundAnalysis<Stmt,Interface>::iface;
   SymbolicBoundAnalysis<Stmt,Interface>::node;
  private:
   void VisitVar( const SymbolicVar& var)
@@ -128,7 +128,7 @@ class SymbolicConstBoundAnalysis : public SymbolicBoundAnalysis<Stmt,Interface>
          Stmt n;
          SymbolicBound tmp = SymbolicBoundAnalysis<Stmt,Interface>::GetBound(var, &n);
          if (n != ances) {
-            SymbolicBoundAnalysis<Stmt,Interface> next(interface,interface.GetParent(n),ances); 
+            SymbolicBoundAnalysis<Stmt,Interface> next(iface,iface.GetParent(n),ances); 
             if (tmp.lb.IsNIL())
                 tmp.lb = var;
             if (tmp.ub.IsNIL())
@@ -137,8 +137,8 @@ class SymbolicConstBoundAnalysis : public SymbolicBoundAnalysis<Stmt,Interface>
             tmp.ub = GetValBound(tmp.ub,next).ub;
          }
          else if (tmp.lb.IsNIL() && tmp.ub.IsNIL()) {
-            for (n = node ; n != ances; n = interface.GetParent(n)) {
-               VarInfo info = interface.GetVarInfo(n);
+            for (n = node ; n != ances; n = iface.GetParent(n)) {
+               VarInfo info = iface.GetVarInfo(n);
                if (info.IsTop())
                   continue;
                SymbolicCond cond(REL_LE, info.GetBound().lb, info.GetBound().ub);
