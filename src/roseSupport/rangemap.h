@@ -947,12 +947,14 @@ public:
     }
 
     /** Returns the minimum value in an extent map.  The extent map must not be empty. */
+    #undef min
     typename Range::Value min() const {
         assert(!empty());
         return ranges.begin()->first.first();
     }
 
     /** Returns the maximum value in an extent map.  The extent map must not be empty. */
+    #undef max
     typename Range::Value max() const {
         assert(!empty());
         return ranges.rbegin()->first.last();
