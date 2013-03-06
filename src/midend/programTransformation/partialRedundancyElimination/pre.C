@@ -759,80 +759,51 @@ class FindExpressionsVisitor
 
 // Do partial redundancy for all expressions within a given function, whose
 // body is given in n.
-void PRE::partialRedundancyEliminationFunction(SgFunctionDefinition* n) 
-   {
-  // FIXME: do expressions in batches using bit vectors
-     typedef PRE::myControlFlowGraph ControlFlowGraph;
-     typedef int Vertex;
-     typedef int Edge;
-     typedef vector<int>::const_iterator VertexIter;
-     typedef vector<int>::const_iterator OutEdgeIter;
-     typedef vector<int>::const_iterator InEdgeIter;
-     typedef vector<int>::const_iterator EdgeIter;
+void
+PRE::partialRedundancyEliminationFunction(SgFunctionDefinition* n)
+{
+    // FIXME: do expressions in batches using bit vectors
+    typedef PRE::myControlFlowGraph ControlFlowGraph;
+    typedef int Vertex;
+    typedef int Edge;
+    typedef vector<int>::const_iterator VertexIter;
+    typedef vector<int>::const_iterator OutEdgeIter;
+    typedef vector<int>::const_iterator InEdgeIter;
+    typedef vector<int>::const_iterator EdgeIter;
 
-     FindExpressionsVisitor vis;
+    // DQ (4/8/2006): Call the new constant folding (not fully implemented except that it works well to eliminate the stored
+    // constant expression trees in the AST which are redundant with the values on SgValueExp IR nodes.  The storage of the
+    // constant expression trees from which constant folded values are generated is a new development within ROSE and required
+    // to represent the complete structure of the source code (and handle details like marcos, floating literals as strings,
+    // etc.).  The storage, and traversal of these redundant constant expressions is a problem for PRE, and since I could not
+    // fix it easily, I implemented the constant folding in ROSE (not finished) so that we could remove the constant expression
+    // trees which interfere with PRE and which are philosophically a problem for other forms of program analysis as well. So
+    // calling this here is as if we have constant folding as a phase before PRE.
+    ConstantFolding::constantFoldingOptimization(n);
 
-#if 1
-  // DQ (4/8/2006): Call the new constanf folding (not fully implemented except that
-  // it works well to eliminate the stored constant expression trees in the AST which
-  // are redundant with the values on SgValueExp IR nodes.  The storage of the 
-  // constant expression trees from which constant folded values are generated is a 
-  // new development within ROSE and required to represent the complete structure of 
-  // the source code (and handle details like marcos, floating literals as strings, etc.).
-  // The storage, and traversal of these redundant constant expressions is a problem for 
-  // PRE ans since I could not fix it easily, I implemented the constant folding in ROSE 
-  // (not finished) so taht we could remove the constaned expression trees which interfer 
-  // with PRE and which are philophically a problem for other forms of program analysis 
-  // as well. so calling this here is an if we have constant folding as a phase before PRE.
-     ConstantFolding::constantFoldingOptimization(n);
+    FindExpressionsVisitor vis;
+    vis.traverse(n, postorder);
+    vector<SgExpression*> exprs_done;
+    for (vector<SgExpression*>::iterator i = vis.exprs.begin(); i != vis.exprs.end(); ++i) {
+        if (std::find_if(exprs_done.begin(), exprs_done.end(), ExpressionTreeEqualTo(*i)) != exprs_done.end())
+            continue;
+        exprs_done.push_back(*i);
 
-  // Original code
-     vis.traverse(n, postorder);
-#else
-  // DQ (4/8/2006): Changed this to use inherited attributes so that we could skip PRE within constant 
-  // folded value expression trees now stored in the AST. These are now stored in the AST and are an 
-  // error in PRE (thought I could not figure out exactly why).
-  // vis.traverse(n, postorder);
-     FindExpressionsVisitorInheritedAttribute ih;
-     vis.traverse(n,ih);
-#endif
-
-     vector<SgExpression*> exprs_done;
-     int count = 0;
-
-  // printf ("At to of PRE::partialRedundancyEliminationFunction(): vis.exprs.size() = %ld \n",vis.exprs.size());
-
-     for (vector<SgExpression*>::iterator i = vis.exprs.begin(); i != vis.exprs.end(); ++i)
-        {
-          if (std::find_if(exprs_done.begin(), exprs_done.end(), ExpressionTreeEqualTo(*i)) != exprs_done.end())
-               continue;
-          exprs_done.push_back(*i);
-
-          myControlFlowGraph controlflow;
-
-       // printf ("Calling makeCfg on statement #%d i = %s \n",count,(*i)->class_name().c_str());
-
-          makeCfg(n, controlflow);
+        myControlFlowGraph controlflow;
+        makeCfg(n, controlflow);
 #if 0
         { ofstream dotfile("cfgnew_preip.dot"); printCfgAsDot(dotfile, controlflow); }
 #endif
 
-       // printf ("Calling addEdgeInsertionPoints on statement #%d i = %s \n",count,(*i)->class_name().c_str());
-
-       // Add insertion points to each edge
-          addEdgeInsertionPoints(controlflow);
-       // Print out graph as dot file
+        // Add insertion points to each edge
+        addEdgeInsertionPoints(controlflow);
 #if 0
         { ofstream dotfile("cfgnew.dot"); printCfgAsDot(dotfile, controlflow); }
 #endif
 
-       // printf ("Calling partialRedundancyEliminationOne on statement #%d i = %s \n",count,(*i)->class_name().c_str());
-
-          partialRedundancyEliminationOne(*i, n->get_body(), controlflow);
-
-          count++;
-        }
-   }
+        partialRedundancyEliminationOne(*i, n->get_body(), controlflow);
+    }
+}
 
 class DoPreOnEachFunctionVisitor: public AstSimpleProcessing
    {
