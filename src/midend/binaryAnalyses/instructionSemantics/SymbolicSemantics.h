@@ -62,7 +62,67 @@ namespace BinaryAnalysis {              // documented elsewhere
              *  TreeNode.  Most of the methods that are invoked on ValueType just call the same methods for TreeNode.
              *
              *  A ValueType also stores the set of instructions that were used in defining the value.  This provides a
-             *  framework for some simple forms of def-use analysis. See get_defining_instructions() for details. */
+             *  framework for some simple forms of def-use analysis. See get_defining_instructions() for details.
+             *
+             *  @section Unk_Uinit Unknown versus Uninitialized Values
+             *
+             *  One sometimes needs to distinguish between registers (or other named storage locations) that contain an
+             *  "unknown" value versus registers that have not been initialized. By "unknown" we mean a value that has no
+             *  constraints except for its size (e.g., a register that contains "any 32-bit value").  By "uninitialized" we
+             *  mean a register that still contains the value that was placed there before we started symbolically evaluating
+             *  instructions (i.e., a register to which symbolic evaluation hasn't written a new value).
+             *
+             *  An "unknown" value might be produced by a RISC operation that is unable/unwilling to express its result
+             *  symbolically.  For instance, the RISC "add(A,B)" operation could return an unknown/unconstrained result if
+             *  either A or B are unknown/unconstrained (in other words, add(A,B) returns C). An unconstrained value is
+             *  represented by a free variable. ROSE's SymbolicSemantics RISC operations never return unconstrained values, but
+             *  rather always return a new expression (add(A,B) returns the symbolic expression A+B). However, user-defined
+             *  subclasses of ROSE's SymbolicSemantics classes might return unconstrained values, and in fact it is quite
+             *  common for a programmer to first stub out all the RISC operations to return unconstrained values and then
+             *  gradually implement them as they're required.  When a RISC operation returns an unconstrained value, it should
+             *  set the returned value's defining instructions to the CPU instruction that caused the RISC operation to be
+             *  called (and possibly the union of the sets of instructions that defined the RISC operation's operands).
+             *
+             *  An "uninitialized" register (or other storage location) is a register that hasn't ever had a value written to
+             *  it as a side effect of a machine instruction, and thus still contains the value that was initialially stored
+             *  there before analysis started (perhaps by a default constructor).  Such values will generally be unconstrained
+             *  (i.e., "unknown" as defined above) but will have an empty defining instruction set.  The defining instruction
+             *  set is empty because the register contains a value that was not generated as the result of simulating some
+             *  machine instruction.
+             *
+             *  Therefore, it is possible to destinguish between an uninitialized register and an unconstrained register by
+             *  looking at its value.  If the value is a variable with an empty set of defining instructions, then it must be
+             *  an initial value.  If the value is a variable but has a non-empty set of defining instructions, then it must be
+             *  a value that came from some RISC operation invoked on behalf of a machine instruction.
+             *
+             *  One should note that a register that contains a variable is not necessarily unconstrained: another register
+             *  might contain the same variable, in which case the two registers are constrained to have the same value,
+             *  although that value could be anything.  Consider the following example:
+             *
+             *  Step 1: Initialize registers. At this point EAX contains v1[32]{}, EBX contains v2[32]{}, and ECX contains
+             *  v3[32]{}. The notation "vN" is a variable, "[32]" means the variable is 32-bits wide, and "{}" indicates that
+             *  the set of defining instructions is empty. Since the defining sets are empty, the registers can be considered
+             *  to be "uninitialized" (more specifically, they contain initial values that were created by the symbolic machine
+             *  state constructor, or by the user explicitly initializing the registers; they don't contain values that were
+             *  put there as a side effect of executing some machine instruction).
+             *
+             *  Step 2: Execute an x86 "I1: MOV EAX, EBX" instruction that moves the value stored in EBX into the EAX register.
+             *  After this instruction executes, EAX contains v2[32]{I1}, EBX contains v2[32]{}, and ECX contains
+             *  v3[32]{}. Registers EBX and ECX continue to have empty sets of defining instructions and thus contain their
+             *  initial values.  Reigister EAX refers to the same variable (v2) as EBX and therefore must have the same value
+             *  as EBX, although that value can be any 32-bit value.  We can also tell that EAX no longer contains its initial
+             *  value because the set of defining instructions is non-empty ({I1}).
+             *
+             *  Step 3: Execute the imaginary "I2: FOO ECX, EAX" instruction and presume that it performs an operation using
+             *  ECX and EAX and stores the result in ECX.  The operation is implemented by a new user-defined RISC operation
+             *  called "doFoo(A,B)". Furthermore, presume that the operation encoded by doFoo(A,B) cannot be represented by
+             *  ROSE's expression trees either directly or indirectly via other expression tree operations. Therefore, the
+             *  implementation of doFoo(A,B) is such that it always returns an unconstrained value (i.e., a new variable):
+             *  doFoo(A,B) returns C.  After this instruction executes, EAX and EBX continue to contain the results they had
+             *  after step 2, and ECX now contains v4[32]{I2}.  We can tell that ECX contains an unknown value (because its
+             *  value is a variable)  that is 32-bits wide.  We can also tell that ECX no longer contains its initial value
+             *  because its set of defining instructions is non-empty ({I2}).
+             */
             template<size_t nBits>
             class ValueType {
             protected:
