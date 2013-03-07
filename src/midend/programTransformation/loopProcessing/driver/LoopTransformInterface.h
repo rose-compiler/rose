@@ -24,7 +24,7 @@ class ArrayAbstractionInterface {
   virtual SymbolicVal CreateArrayAccess(
                                 const SymbolicVal& arr,
                                 const SymbolicVal& index) 
-     { /*QY: need to be defined by a derived class*/ assert(0); return NULL; }
+     { /*QY: need to be defined by a derived class*/ assert(0); return SymbolicVal(0); }
   virtual ~ArrayAbstractionInterface() {}
 };
 

@@ -357,7 +357,7 @@ set(roseBinaryFormats_fileList_part0
 
 include(CheckIncludeFile)
 CHECK_INCLUDE_FILE(sys/mman.h HAVE_SYS_MMAN_H)
-if (HAVE_SYS_MANN_H)
+if (HAVE_SYS_MMAN_H)
   list(APPEND roseBinaryFormats_fileList_part0
        ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/MemoryMap.C)
 endif() 

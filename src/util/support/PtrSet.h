@@ -48,7 +48,11 @@ class PtrSetWrap
     bool ReachEnd() const { return p == impl->end(); }
     VoidPtrSet::iterator remove_constness(VoidPtrSet::const_iterator itr) const
     {
+    #ifdef _MSC_VER
       return const_cast<VoidPtrSet*>(this->impl)->erase(itr, itr);
+    #else
+      return itr;
+    #endif
     }
     friend class PtrSetWrap<T>;
   };
@@ -98,7 +102,11 @@ class PtrSetWrap
   iterator end() { return Iterator(&impl, impl.end()); }
   VoidPtrSet::iterator remove_constness(VoidPtrSet::const_iterator itr) const
   {
+    #ifdef _MSC_VER
     return const_cast<PtrSetWrap<T>*>(this)->impl.erase(itr, itr);
+    #else
+    return itr;
+    #endif
   }
 
   bool IsMember( const T* t) const 

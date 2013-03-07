@@ -636,7 +636,7 @@ SgSymbol* AstInterfaceImpl::CreateDeclarationStmts( const string& _decl)
      if (uniqueFilename == NULL) return NULL;
      int fd = open(uniqueFilename, O_CREAT|O_EXCL, S_IREAD|S_IWRITE);
      #else
-     int fd = return mkstemp(uniqueFilename);
+     int fd = mkstemp(uniqueFilename);
      #endif
      if (fd == -1) {
        perror("mkstemp: ");
