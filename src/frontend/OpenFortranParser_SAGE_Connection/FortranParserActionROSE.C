@@ -1494,8 +1494,7 @@ void c_action_label(Token_t * lbl)
 #if !SKIP_C_ACTION_IMPLEMENTATION
         SgScopeStatement * currentScope = getTopOfScopeStack();
         ROSE_ASSERT(currentScope);
-        SgDerivedTypeStatement * derivedTypeStatement =
-        buildDerivedTypeStatementAndDefinition(id->text, currentScope);
+        SgDerivedTypeStatement * derivedTypeStatement = buildDerivedTypeStatementAndDefinition(id->text, currentScope);
         ROSE_ASSERT(keyword);
         setSourcePosition(derivedTypeStatement, keyword);
         currentScope->append_statement(derivedTypeStatement);
@@ -1504,7 +1503,22 @@ void c_action_label(Token_t * lbl)
         DeclAttributes.setDeclaration(derivedTypeStatement);
         DeclAttributes.setDeclAttrSpecs();
         DeclAttributes.reset();
+
+     // DQ (3/4/2013): Also set the access privilege level for the nondefining declaration to be consistant (now enforced in new edg4x branch).
+        ROSE_ASSERT(derivedTypeStatement->get_firstNondefiningDeclaration() != NULL);
+        derivedTypeStatement->get_firstNondefiningDeclaration()->get_declarationModifier().get_accessModifier().set_modifier(derivedTypeStatement->get_declarationModifier().get_accessModifier().get_modifier());
 #endif // !SKIP_C_ACTION_IMPLEMENTATION
+
+#if 0
+  // DQ (3/4/2013): Check that the access permission level is the same for the defining and nondefining 
+  // declarations (in new edg4x branch these are enforced to be set consistantly).
+     printf ("In c_action_derived_type_stmt(): Checking access privilege level for defining and not defining declarations: derivedTypeStatement = %p derivedTypeStatement->get_firstNondefiningDeclaration() = %p \n",
+          derivedTypeStatement,derivedTypeStatement->get_firstNondefiningDeclaration());
+     derivedTypeStatement->get_declarationModifier().get_accessModifier().display("classDeclaration");
+     ROSE_ASSERT(derivedTypeStatement->get_firstNondefiningDeclaration() != NULL);
+     derivedTypeStatement->get_firstNondefiningDeclaration()->get_declarationModifier().get_accessModifier().display("nondefiningClassDeclaration");
+#endif
+
 #if 0
         // Output debugging information about saved state (stack) information.
         outputState("At BOTTOM of R430 c_action_derived_type_stmt()");
@@ -7621,9 +7635,12 @@ void c_action_label(Token_t * lbl)
             SgExpression* recordReference = new SgDotExp(lhs, rhs, NULL);
             setSourcePosition(recordReference);
 
+         // DQ (3/4/2013): We need a valid source position, so try to use the lhs.
          // DQ (2/26/2013): The source position was just marked with default values and compiler generated is not required here.
          // Note that the SageInterface support in now used for default source position marking.
          // setSourcePositionCompilerGenerated(recordReference);
+         // lhs->get_startOfConstruct()->display("Set position of recordReference using lhs: debug");
+            resetSourcePosition(recordReference,lhs);
 
             // Push the record reference onto the expression stack
             astExpressionStack.push_front(recordReference);
@@ -10584,6 +10601,9 @@ void c_action_label(Token_t * lbl)
 #endif
         if (lastStatement != NULL)
         {
+#if 0
+            printf ("In c_action_block(): lastStatement = %p = %s \n",lastStatement,lastStatement->class_name().c_str());
+#endif
             resetEndingSourcePosition(astScopeStack.front(), lastStatement);
         }
         else
