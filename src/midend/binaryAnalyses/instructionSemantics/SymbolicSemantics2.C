@@ -19,6 +19,44 @@ operator<<(std::ostream &o, const SValue &e)
 
 class PrintHelper: public BaseSemantics::PrintHelper, public InsnSemanticsExpr::RenameMap {};
 
+uint64_t
+SValue::get_number() const
+{
+    LeafNodePtr leaf = expr->isLeafNode();
+    assert(leaf!=NULL);
+    return leaf->get_value();
+}
+
+size_t
+SValue::add_defining_instructions(const InsnSet &to_add)
+{
+    size_t nadded = 0;
+    for (InsnSet::const_iterator i=to_add.begin(); i!=to_add.end(); ++i) {
+        std::pair<InsnSet::iterator, bool> inserted = defs.insert(*i);
+        if (inserted.second)
+            ++nadded;
+    }
+    return nadded;
+}
+
+size_t
+SValue::add_defining_instructions(SgAsmInstruction *insn)
+{
+    InsnSet tmp;
+    if (insn)
+        tmp.insert(insn);
+    return add_defining_instructions(tmp);
+}
+
+void
+SValue::set_defining_instructions(SgAsmInstruction *insn)
+{
+    InsnSet tmp;
+    if (insn)
+        tmp.insert(insn);
+    return set_defining_instructions(tmp);
+}
+
 bool
 SValue::may_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const 
 {

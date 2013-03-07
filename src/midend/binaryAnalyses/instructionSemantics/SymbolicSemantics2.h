@@ -152,7 +152,7 @@ public:
     }
 
     /** Promote a base value to a SymbolicSemantics value.  The value @p v must have a SymbolicSemantics::SValue dynamic type. */
-    static SValuePtr promote(const BaseSemantics::SValuePtr &v) {
+    static SValuePtr promote(const BaseSemantics::SValuePtr &v) { // hot
         SValuePtr retval = BaseSemantics::dynamic_pointer_cast<SValue>(v);
         assert(retval!=NULL);
         return retval;
@@ -193,11 +193,7 @@ public:
         return expr->is_known();
     }
 
-    virtual uint64_t get_number() const /*override*/ {
-        LeafNodePtr leaf = expr->isLeafNode();
-        assert(leaf!=NULL);
-        return leaf->get_value();
-    }
+    virtual uint64_t get_number() const /*override*/;
 
     virtual void print(std::ostream &output, BaseSemantics::PrintHelper *helper=NULL) const /*override*/;
 
@@ -258,24 +254,11 @@ public:
 
     /** Adds definitions to the list of defining instructions. Returns the number of items added that weren't already in the
      *  list of defining instructions.  @{ */
-    virtual size_t add_defining_instructions(const InsnSet &to_add) {
-        size_t nadded = 0;
-        for (InsnSet::const_iterator i=to_add.begin(); i!=to_add.end(); ++i) {
-            std::pair<InsnSet::iterator, bool> inserted = defs.insert(*i);
-            if (inserted.second)
-                ++nadded;
-        }
-        return nadded;
-    }
+    virtual size_t add_defining_instructions(const InsnSet &to_add);
     virtual size_t add_defining_instructions(const SValuePtr &source) {
         return add_defining_instructions(source->get_defining_instructions());
     }
-    virtual size_t add_defining_instructions(SgAsmInstruction *insn) {
-        InsnSet tmp;
-        if (insn)
-            tmp.insert(insn);
-        return add_defining_instructions(tmp);
-    }
+    virtual size_t add_defining_instructions(SgAsmInstruction *insn);
     /** @} */
 
     /** Set definint instructions.  This discards the old set of defining instructions and replaces it with the specified set.
@@ -286,12 +269,7 @@ public:
     virtual void set_defining_instructions(const SValuePtr &source) {
         set_defining_instructions(source->get_defining_instructions());
     }
-    virtual void set_defining_instructions(SgAsmInstruction *insn) {
-        InsnSet tmp;
-        if (insn)
-            tmp.insert(insn);
-        return set_defining_instructions(tmp);
-    }
+    virtual void set_defining_instructions(SgAsmInstruction *insn);
     /** @} */
 };
 
