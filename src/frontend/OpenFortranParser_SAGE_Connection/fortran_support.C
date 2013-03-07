@@ -120,7 +120,7 @@ setSourcePositionCompilerGenerated( SgLocatedNode* locatedNode )
   // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
      ROSE_ASSERT(locatedNode != NULL);
 
-#if 1
+#if 0
      printf ("In setSourcePositionCompilerGenerated(): locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
 #endif
 
@@ -326,6 +326,12 @@ setSourcePosition  ( SgLocatedNode* locatedNode, Token_t* token )
       *  Here the token is the label 125; when this label is parsed the second time around, label->line = 0 and label->col = -1
       */
 
+  // DQ (3/4/2013): Add a warning to support debuging this problem.
+     if (token->line == 0)
+        {
+          printf ("WARNING: locatedNode = %p = %s using token->line == 0 to set source psoition information \n",locatedNode,locatedNode->class_name().c_str());
+        }
+
      if (locatedNode->get_startOfConstruct() != NULL)
         {
           printf ("WARNING: removing predefined START Sg_File_Info object in locatedNode = %p = %s = %s \n",locatedNode,locatedNode->class_name().c_str(),SageInterface::get_name(locatedNode).c_str());
@@ -444,7 +450,9 @@ setOperatorSourcePosition  ( SgExpression* expr, Token_t* token )
 void
 resetSourcePosition( SgLocatedNode* locatedNode, const TokenListType & tokenList )
    {
-  // printf ("In resetSourcePosition locatedNode = %p = %s tokenList.size() = %ld \n",locatedNode,locatedNode->class_name().c_str(),tokenList.size());
+#if 0
+     printf ("In resetSourcePosition locatedNode = %p = %s tokenList.size() = %ld \n",locatedNode,locatedNode->class_name().c_str(),tokenList.size());
+#endif
 
   // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
      ROSE_ASSERT(locatedNode != NULL);
@@ -515,10 +523,19 @@ resetSourcePosition( SgLocatedNode* targetLocatedNode, const SgLocatedNode* sour
 
      if (sourceLocatedNode->get_startOfConstruct()->get_filenameString() == "NULL_FILE")
         {
-          printf ("resetSourcePosition: sourceLocatedNode = %p = %s = %s \n",sourceLocatedNode,sourceLocatedNode->class_name().c_str(),SageInterface::get_name(sourceLocatedNode).c_str());
+          printf ("WARNING: resetSourcePosition: sourceLocatedNode = %p = %s = %s \n",sourceLocatedNode,sourceLocatedNode->class_name().c_str(),SageInterface::get_name(sourceLocatedNode).c_str());
           sourceLocatedNode->get_startOfConstruct()->display("get_filenameString() == NULL_FILE");
         }
   // ROSE_ASSERT(sourceLocatedNode->get_startOfConstruct()->get_filenameString() != "NULL_FILE");
+
+  // DQ (3/4/2013): Added test for zero line number.
+     if (sourceLocatedNode->get_startOfConstruct()->get_line() == 0)
+        {
+          printf ("WARNING: resetSourcePosition: sourceLocatedNode = %p = %s = %s \n",sourceLocatedNode,sourceLocatedNode->class_name().c_str(),SageInterface::get_name(sourceLocatedNode).c_str());
+          sourceLocatedNode->get_startOfConstruct()->display("get_line() == 0: debug");
+        }
+  // DQ (3/4/2013): We can't assert this since ti fails to some test codes (e.g. test2010_120.f90).
+  // ROSE_ASSERT(sourceLocatedNode->get_startOfConstruct()->get_line() != 0);
 
   // Remove the existing Sg_File_Info objects, they will be reset below
      delete targetLocatedNode->get_startOfConstruct();
@@ -556,7 +573,9 @@ resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, Token_t* token )
   // of the blocks (required to get comments woven into the AST properly).
      ROSE_ASSERT(token != NULL);
      int newLineNumber = token->line;
-  // printf ("Resetting the end of the target statement = %s to line = %d \n",targetLocatedNode->class_name().c_str(),newLineNumber);
+#if 0
+     printf ("Resetting the end of the target statement = %s to line = %d \n",targetLocatedNode->class_name().c_str(),newLineNumber);
+#endif
      resetEndingSourcePosition(targetLocatedNode,newLineNumber);
 
      SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(targetLocatedNode);
@@ -642,8 +661,8 @@ void resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, int newLineNum
   // This function is called by the other "resetEndingSourcePosition()" functions.
 
 #if 0
-     printf ("targetLocatedNode = %s get_startOfConstruct()->get_line() = %d \n",targetLocatedNode->class_name().c_str(),targetLocatedNode->get_startOfConstruct()->get_line());
-     printf ("targetLocatedNode = %s get_endOfConstruct()->get_line()   = %d \n",targetLocatedNode->class_name().c_str(),targetLocatedNode->get_endOfConstruct()->get_line());
+     printf ("targetLocatedNode = %p = %s get_startOfConstruct()->get_line() = %d \n",targetLocatedNode,targetLocatedNode->class_name().c_str(),targetLocatedNode->get_startOfConstruct()->get_line());
+     printf ("targetLocatedNode = %p = %s get_endOfConstruct()->get_line()   = %d \n",targetLocatedNode,targetLocatedNode->class_name().c_str(),targetLocatedNode->get_endOfConstruct()->get_line());
 #endif
      // Liao, 11/12/2012. We don't expect transformation or compiler generated file info.
      ROSE_ASSERT (targetLocatedNode->get_endOfConstruct()->isTransformation()!= true);
@@ -824,10 +843,10 @@ createBinaryOperator ( SgExpression* lhs, SgExpression* rhs, string name, bool i
         {
        // Get the function symbol for the function defined by "name"
           SgScopeStatement* currentScope = astScopeStack.front();
-
+#if 0
           printf ("name = %s \n",name.c_str());
           printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
-
+#endif
        // currentScope->print_symboltable ("In createBinaryOperator()");
 
           SgFunctionSymbol* functionSymbol = trace_back_through_parent_scopes_lookup_function_symbol(name,currentScope);
@@ -2698,6 +2717,13 @@ buildModuleStatementAndDefinition (string name, SgScopeStatement* scope)
   // nondefiningClassDeclaration->set_endOfConstruct(SOURCE_POSITION);
      setSourcePosition(nondefiningClassDeclaration);
 
+  // DQ (3/4/2013): Set the firstNondefiningDeclaration declaration in the firstNondefiningDeclaration.
+     ROSE_ASSERT(nondefiningClassDeclaration->get_firstNondefiningDeclaration() == NULL);
+     nondefiningClassDeclaration->set_firstNondefiningDeclaration(nondefiningClassDeclaration);
+
+  // DQ (3/4/2013): Added assertion.
+     ROSE_ASSERT(nondefiningClassDeclaration->get_firstNondefiningDeclaration() != NULL);
+
  // Liao 10/30/2009. we now ask for explicit creation of SgClassType. The constructor will not create it by default
      if (nondefiningClassDeclaration->get_type () == NULL)
           nondefiningClassDeclaration->set_type (SgClassType::createType(nondefiningClassDeclaration));
@@ -2859,6 +2885,14 @@ buildDerivedTypeStatementAndDefinition (string name, SgScopeStatement* scope)
 
           astAttributeSpecStack.pop_front();
         }
+
+#if 0
+  // DQ (3/4/2013): Check that the access permission level is the same for the defining and nondefining 
+  // declarations (in new edg4x branch these are enforced to be set consistantly).
+     printf ("Checking access privilege level for defining and not defining declarations: classDeclaration = %p nondefiningClassDeclaration = %p \n",classDeclaration,nondefiningClassDeclaration);
+     classDeclaration->get_declarationModifier().get_accessModifier().display("classDeclaration");
+     nondefiningClassDeclaration->get_declarationModifier().get_accessModifier().display("nondefiningClassDeclaration");
+#endif
 
      return classDeclaration;
    }
