@@ -333,7 +333,11 @@ namespace OmpSupport
     } 
 
     if (sgvar != NULL)
-      symbol = isSgVariableSymbol(sgvar->search_for_symbol_from_symbol_table ());
+    {
+      symbol = isSgVariableSymbol(sgvar->get_symbol_from_symbol_table());
+      // Liao, 3/7/2013. this may end up with infinite search through cyclic graph.
+      //symbol = isSgVariableSymbol(sgvar->search_for_symbol_from_symbol_table ());
+    }
 
     //debug clause var_list
     // if (targetConstruct== e_copyin) cout<<"debug: adding variable to copyin()"<<endl;
@@ -1148,7 +1152,7 @@ namespace OmpSupport
       SgInitializedName* initname = isSgInitializedName((*iter).second);
       if (initname != NULL)
       {
-       SgVariableSymbol * sym = isSgVariableSymbol(initname->search_for_symbol_from_symbol_table ());
+       SgVariableSymbol * sym = isSgVariableSymbol(initname->get_symbol_from_symbol_table());
        ROSE_ASSERT (sym != NULL);
        std::vector < std::pair <SgExpression*, SgExpression*> > dims = array_dimensions[sym];
        for ( std::vector < std::pair <SgExpression*, SgExpression*> >::const_iterator citer = dims.begin(); citer!= dims.end(); citer ++)
