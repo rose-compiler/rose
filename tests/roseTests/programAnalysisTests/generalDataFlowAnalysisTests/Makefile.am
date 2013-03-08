@@ -91,6 +91,9 @@ clean-cxx-constprop-local:
 ###############################################################################################################################
 ### C++ constant propagation tests on specimens from the CXX_TESTDIR directory ("cxxcp" unique prefix)
 ###############################################################################################################################
+# DQ (3/2/2013): Note that test2006_103.C fails for the new switch statement handling.
+# DQ (2/3/2013): Removed one failing test to see if there were any more.
+# RPM (3/8/2013): You can see all the tests failing by using make's "-k" switch an then "ls *.failed"
 
 # This list comes from $(CXX_TESTDIR)/Makefile-pass.inc as of 2011-??-14 so we can remove failing tests.  Do not add these
 # names to EXTRA_DIST since they are in some other directory.  Additional comments about the failing tests can be found
@@ -172,9 +175,6 @@ CXX_CONSTPROP_SPECIMENS =													 \
 	test2011_82.C test2011_83.C test2011_84.C test2011_85.C test2011_86.C test2011_87.C test2011_88.C test2011_89.C		 \
 	test2011_90.C test2011_91.C test2011_92.C test2011_93.C test2011_94.C test2011_95.C test2011_96.C test2011_97.C		 \
 	test2011_98.C test_CplusplusMacro_Cpp.C test_int_lexemes.C test_int_lexemes_donot_pass.C test_simple_int.C test_wchars.C
-# DQ (3/2/2013): Note that test2006_103.C fails for the new switch statement handling.
-# DQ (2/3/2013): Removed one failing test to see if there were any more.
-# test2006_103.C 
 CXX_CONSTPROP_SPECIMENS_FAILING =											\
 	inputBug317.C inputBug327.C inputForLoopLocator.C test2001_04.C test2001_14.C test2001_28.C test2003_01.C	\
 	test2003_15.C test2003_18.C test2003_32.C test2003_35.C test2003_36.C test2004_02.C test2004_10.C test2004_11.C	\
@@ -251,9 +251,6 @@ C_CONSTPROP_SPECIMENS = 												 \
 	test2006_57.C test2006_62.C test2006_69.C test2006_75.C test2006_76.C test2006_82.C test2006_83.C test2006_88.C	 \
 	test2006_91.C test2006_94.C test2006_97.C test2006_99.C test_CplusplusMacro_C.C test_int_lexemes.C		 \
 	test_int_lexemes_donot_pass.C test_simple_int.C test_wchars.C
-# DQ (3/2/2013): Note that test2006_103.C fails for the new switch statement handling.
-# DQ (2/3/2013): Removed one failing test to see if there were any more.
-# test2006_103.C 
 C_CONSTPROP_SPECIMENS_FAILING =											     \
 	lastTest.C test2001_14.C test2003_15.C test2003_18.C test2003_32.C test2003_35.C test2003_36.C test2004_14.C \
 	test2004_60.C test2005_100.C test2005_164.C test2005_187.C test2005_202.C test2006_40.C test2006_50.C
