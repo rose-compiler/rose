@@ -2,9 +2,18 @@
 How to Find Dataset For Visualization
 ------------------------------
 1. CREATE DATABASE
+[RPM: "tsv" means "tab separated values". The tsv directory was used
+to store the disassembled instructions before ROSE had its own
+disassembler.]
+[RPM: "db-name.sql" isn't actually SQL, but rather an sqlite3
+database.]
+
     Create database of clone vectors to look for clones in
           /path/to/BinaryCloneDetection/createVectorsBinary --database db-name.sql \
-             --tsv-directory tsv-directory --stride 1 --windowSize 40  
+             --tsv-directory tsv-directory --stride 1 --windowSize 40
+
+[RPM: The following comment about not recognizing functions is out-of-date.]
+
     If you want to run this using ROSE as a frontend you have to currently ignore
     procedure boundaries since ROSE does not correctly recognize functions. This
     is done using the '-i' flag as e.g
@@ -13,7 +22,15 @@ How to Find Dataset For Visualization
 
     Create database of all binary files represented as a tsv directory in a sub-directory
       find -name "*-tsv" -exec /path/to/BinaryCloneDetection/createVectorsBinary \
-        --database db-name.sql --tsv-directory {} --stride 1 --windowSize 40 \; 
+        --database db-name.sql --tsv-directory {} --stride 1 --windowSize 40 \;
+
+[RPM: Current way to run this as of 2013-02 is:
+      rm -f results.db  # unless you want to append to previous results
+      for binary in $LIST_OF_BINARIES; do
+          createVectorsBinary --database results.db --tsv-directory $binary --stride 1 \
+              --windowSize 40
+      done
+]
 
 2. RUN CLONE DETECTION TOOL
     Decide which similarity grade you want between 0 and 1.0 where 1.0 is
