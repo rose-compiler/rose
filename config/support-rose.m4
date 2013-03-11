@@ -773,11 +773,6 @@ ROSE_SUPPORT_IDA
 # Setup Automake conditional in projects/AstEquivalence/Makefile.am
 AM_CONDITIONAL(ROSE_USE_IDA,test ! "$with_ida" = no)
 
-# DQ (10/15/2010): Adding execution trace file analysis support to ROSE (default is off).
-trace_support="no"
-# ROSE_SUPPORT_TRACE_ANALYSIS
-AM_CONDITIONAL(ROSE_USE_TRACE_ANALYSIS, [test "x$trace_support" = xyes])
-
 # Call supporting macro to Yices Satisfiability Modulo Theories (SMT) Solver
 ROSE_SUPPORT_YICES
 
@@ -2216,7 +2211,6 @@ projects/mint/tests/Makefile
 projects/Fortran_to_C/Makefile
 projects/Fortran_to_C/src/Makefile
 projects/Fortran_to_C/tests/Makefile
-projects/traceAnalysis/Makefile
 projects/PolyhedralModel/Makefile
 projects/PolyhedralModel/src/Makefile
 projects/PolyhedralModel/docs/Makefile
