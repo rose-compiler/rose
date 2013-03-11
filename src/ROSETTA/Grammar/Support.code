@@ -3879,10 +3879,14 @@ HEADER_SYMBOL_TABLE_START
 
           SgVariableSymbol*  find_variable(const SgName & name);               //! Complexity O(log n) for first match against name, then O(n)
 
-       // DQ (12/27/2011): Added support for template declarations in the AST.
-          SgTemplateVariableSymbol* find_template_variable(const SgName & name);               //! Complexity O(log n) for first match against name, then O(n)
-          SgVariableSymbol*         find_nontemplate_variable(const SgName & name);               //! Complexity O(log n) for first match against name, then O(n)
+// #ifndef ROSE_USE_SWIG_SUPPORT
+#ifndef SWIG
+       // DQ (3/10/2013): These functions are left undefined in the final link step for SWIG support, so remove it from SWIG processing for now.
 
+       // DQ (12/27/2011): Added support for template declarations in the AST.
+          SgTemplateVariableSymbol* find_template_variable(const SgName & name);    //! Complexity O(log n) for first match against name, then O(n)
+          SgVariableSymbol*         find_nontemplate_variable(const SgName & name); //! Complexity O(log n) for first match against name, then O(n)
+#endif
           SgClassSymbol*     find_class(const SgName & name); //! Complexity O(log n) for first match against name, then O(n)
 
        // DQ (8/22/2012): We need more information to disambiguate where template argument name qualification would be important. See test2012_195.C.
@@ -4974,9 +4978,13 @@ HEADER_APPLICATION_FILE_START
           std::string getFileName() const;
 
       //! Move this function from ROSE into the AST restructuring tool
-//        friend void roseDisplayMechanism( SgFile *file );
-          friend void alternativeSageEdgInterfaceConstruction( SgFile *file );
+       // friend void roseDisplayMechanism( SgFile *file );
 
+// #ifndef ROSE_USE_SWIG_SUPPORT
+#ifndef SWIG
+       // DQ (3/10/2013): This function is left undefined in the final link step for SWIG support, so remove it from SWIG processing for now.
+          friend void alternativeSageEdgInterfaceConstruction( SgFile *file );
+#endif
 
       //! Move this function from ROSE into the AST restructuring tool
        // int callFrontEnd ( int & argc, char** & argv , SgFile & file, int fileNameIndex );

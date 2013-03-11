@@ -271,6 +271,7 @@ class  PreprocessingInfo
        // Internal representation of a macro call
        // e.g #define MACRO_CALL int x;
        // MACRO_CALL
+#if 0
           typedef struct r_macro_call
              {
                bool is_functionlike;
@@ -291,6 +292,24 @@ class  PreprocessingInfo
 
                r_macro_call() : macro_call(), arguments(),expanded_macro() {}
              } rose_macro_call;
+#else
+       // DQ (3/9/2013): Modified to address SWIG error.
+          struct rose_macro_call
+             {
+               bool is_functionlike;
+               PreprocessingInfo* macro_def;
+               token_type macro_call;
+               token_container_container arguments;
+               token_container expanded_macro;                
+
+            // DQ (3/9/2013): The function definition is moved to the source file to get around SWIG error.
+            // Get string representation of the expanded macro
+               std::string get_expanded_string();
+
+            // DQ (3/9/2013): The function definition is moved to the source file to get around SWIG error.
+               rose_macro_call();
+             };
+#endif
 
      private:
        // AS add macro definition

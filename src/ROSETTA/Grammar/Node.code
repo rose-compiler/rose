@@ -32,7 +32,6 @@ class AstAttributeMechanism;
 // DQ (6/14/2008): Include the Exec format support.
 // #include "ExecGeneric.h"
 
-
 /* This is similar to rose_addr_t except instead of representing any kind of address (file offset, virtual address, relative
  * virtual address, etc.) it represents only a relative virtual address. The only significant difference between storing
  * a relative virtual address (RVA) in a rose_addr_t and a rose_rva_t is that the latter allows the address to be associated
@@ -58,6 +57,10 @@ class rose_rva_t {
 		rose_addr_t addr;             /* virtual address (relative to section if section is not null) */
 		SgAsmGenericSection *section; /* rva is relative to header base_va if section is null */
 };
+
+// #ifndef ROSE_USE_SWIG_SUPPORT
+#ifndef SWIG
+
 std::ostream &operator<<(std::ostream&, const rose_rva_t&);
 
 rose_addr_t operator-(const rose_rva_t &a1, const rose_rva_t &a2);
@@ -69,6 +72,8 @@ bool operator> (const rose_rva_t &a1, const rose_rva_t &a2);
 bool operator>=(const rose_rva_t &a1, const rose_rva_t &a2);
 bool operator==(const rose_rva_t &a1, const rose_rva_t &a2);
 bool operator!=(const rose_rva_t &a1, const rose_rva_t &a2);
+
+#endif
 
 typedef Range<rose_addr_t> Extent;
 
@@ -90,6 +95,8 @@ public:
 	void dump_extents(FILE *f, const char *prefix, const char *label, bool pad=true) const;
 };
 
+
+// #ifndef ROSE_USE_SWIG_SUPPORT
 
 /** Settings that control how the lowest-level SgAsmExecutableFileFormat::hexdump function behaves. */
 struct HexdumpFormat {
@@ -218,6 +225,9 @@ class mutex
     which includes set_parent and get_parent member functions.  This is assumption 
     within ROSETTA may be eliminated in the future.
  */
+
+// endif for ifndef ROSE_USE_SWIG_SUPPORT
+// #endif
 
 // #include "virtualCFG.h"
 
@@ -480,6 +490,8 @@ typedef SgLabelSymbolPtrList*                  SgLabelSymbolPtrListPtr;
 typedef Rose_STL_Container<SgFormatItem*>      SgFormatItemPtrList;
 typedef SgFormatItemPtrList*                   SgFormatItemPtrListPtr;
 
+// #ifndef ROSE_USE_SWIG_SUPPORT
+
 // DQ (8/21/2008): Use the reference built for rose_addr_t instead.
 // DQ (8/21/2008): Moved this from Node.code to make it local since 
 // we can't reference the nested addr_t directly from glogal scope.
@@ -489,6 +501,9 @@ typedef SgAddressList*                   SgAddressListPtr;
 
 typedef Rose_STL_Container<rose_rva_t>         SgRVAList;
 typedef SgRVAList*                             SgRVAListPtr;
+
+// endif for ifndef ROSE_USE_SWIG_SUPPORT
+// #endif
 
 typedef Rose_STL_Container<SgAsmPEExportEntry*> SgAsmPEExportEntryPtrList;
 typedef SgAsmPEExportEntryPtrList*		SgAsmPEExportEntryPtrListPtr;
@@ -1634,12 +1649,18 @@ class AstSpecificDataManagingClassStorageClass;
 // DQ (4/23/2006): The friend declaration the SgProject class is not enough this must be defined outside of the class (for g++ 4.1.0).
 std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<std::string> & l );
 
+// #ifndef ROSE_USE_SWIG_SUPPORT
+#ifndef SWIG
+
 // DQ (8/8/2008): Added support for std::multimap<rose_addr_t, rose_addr_t> used in binary file format.
 std::ostream & operator<< ( std::ostream & os, const std::multimap<rose_addr_t, rose_addr_t> & m );
 std::ostream & operator<< ( std::ostream & os, const std::vector<std::pair<rose_addr_t, rose_addr_t> > & l );
 // struct SgAsmGenericFormat::fileDetails;
 // std::ostream & operator<< ( std::ostream & os, const SgAsmGenericFormat::fileDetails & sb );
 std::ostream & operator<< ( std::ostream & os, const struct stat & sb );
+
+// endif for ifndef ROSE_USE_SWIG_SUPPORT
+#endif
 
 #if 0
 // DQ (8/28/2006): This fixes a bug in ROSE where the namespace scope is not defined

@@ -983,7 +983,10 @@ echo "value of TCLSH variable = $TCLSH"
 # Call supporting macro for OFP
 ROSE_SUPPORT_OFP
 
-AC_PROG_SWIG(1.3.31)
+# DQ (3/6/2013): The major version number must match or the ac_pkg_swig.m4 will report 
+# we are using the wrong version of swig (likely we need a newer version of this m4 script).
+# AC_PROG_SWIG(1.3.31)
+AC_PROG_SWIG(2.0.0)
 SWIG_ENABLE_CXX
 #AS (10/23/07): introduced conditional use of javaport
 AC_ARG_WITH(javaport,
@@ -1003,6 +1006,12 @@ if test "x$with_javaport" = "xyes"; then
   fi
   AC_MSG_WARN([Enabling Java binding support -- SWIG produces invalid C++ code, so -fno-strict-aliasing is being added to CXXFLAGS to work around this issue.  If you are not using GCC as a compiler, this flag will need to be changed.])
   CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"
+
+# DQ (3/6/2013): Added support to permit conditional compilation for use of SWIG.
+# SWIG has restricted support for C++ and so we need to tailor ROSE to fix into
+# the subset of C++ that SWIG can support.  We only want to turn this ON when SWIG
+# is processing the ROSE source code.  So it need not generate an entry in rose_config.h.
+# AC_DEFINE([ROSE_USE_SWIG_SUPPORT], [], [Whether to use SWIG support or not within ROSE])
 fi
 
 # Call supporting macro for Haskell

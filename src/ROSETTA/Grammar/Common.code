@@ -270,6 +270,9 @@ HEADER_START
        */
        // typedef unsigned long  AddressType;
 
+// #ifndef ROSE_USE_SWIG_SUPPORT
+#ifndef SWIG
+
       /*! \brief Methods to find the pointer to a global and local index
        */
           friend $CLASSNAME* $CLASSNAME_getPointerFromGlobalIndex ( unsigned long globalIndex ) ;
@@ -282,6 +285,9 @@ HEADER_START
           friend void $CLASSNAME_extendMemoryPoolForFileIO ( unsigned long );
           friend void $CLASSNAME_getNextValidPointer ( std::pair<$CLASSNAME*, std::vector < unsigned char* > :: const_iterator >& );
           friend void $CLASSNAME_resetValidFreepointers( );
+
+// endif for ifndef ROSE_USE_SWIG_SUPPORT
+#endif
 
        // necessary, to have direct access to the p_freepointer and the private methods !
           friend class AST_FILE_IO;

@@ -36,6 +36,23 @@ std::map<std::string,ROSEAttributesList* > mapFilenameToAttributes;
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
+// DQ (3/9/2013): Moved this function from the header file to support SWIG
+std::string
+PreprocessingInfo::rose_macro_call::get_expanded_string()
+   {
+     std::ostringstream os;
+     token_container::const_iterator iter;
+     for (iter=expanded_macro.begin(); iter!=expanded_macro.end(); iter++)
+          os << (*iter).get_value();
+     return os.str();
+   }
+
+// DQ (3/9/2013): Moved this function from the header file to support SWIG (to be uniform with fix above).
+PreprocessingInfo::rose_macro_call::rose_macro_call()
+   : macro_call(), arguments(),expanded_macro()
+   {
+   }
+
 
 // JH (01/03/2006) methods for packing the PreprocessingInfo data, in order to store it into
 // a file and rebuild it!

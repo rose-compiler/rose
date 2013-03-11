@@ -1394,8 +1394,11 @@ HEADER_ELF_HEADER_START
                         uint16_t            e_shnum;                /* number of section headers, or zero for extended entries */
                         uint16_t            e_shstrndx;             /* index of name section, or SHN_UNDEF, or SHN_XINDEX */
                 }
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                  __attribute__((packed))
+#endif
 #endif
                 ;
 
@@ -1419,8 +1422,11 @@ HEADER_ELF_HEADER_START
                         uint16_t            e_shnum;
                         uint16_t            e_shstrndx;
                 }
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -1537,8 +1543,11 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
                         uint32_t        sh_addralign;   /* 0x20 Mapped alignment (0 and 1=>byte aligned); sh_addr must be aligned*/
                         uint32_t        sh_entsize;     /* 0x24 If non-zero, size in bytes of each array member in the section */
                 }                                       /* 0x28 */
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 
@@ -1554,8 +1563,11 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
                         uint64_t        sh_addralign;   /* 0x30 */
                         uint64_t        sh_entsize;     /* 0x38 */
                 }                                       /* 0x40 */
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -1767,8 +1779,11 @@ HEADER_ELF_RELOC_ENTRY_START
                         uint32_t        r_info;
                         uint32_t        r_addend;
                 }
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
                 struct Elf64RelaEntry_disk {
@@ -1776,8 +1791,11 @@ HEADER_ELF_RELOC_ENTRY_START
                         uint64_t        r_info;
                         uint64_t        r_addend;
                 }
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 
@@ -1785,8 +1803,11 @@ HEADER_ELF_RELOC_ENTRY_START
                         uint32_t        r_offset;
                         uint32_t        r_info;
                 }
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 
@@ -1794,8 +1815,11 @@ HEADER_ELF_RELOC_ENTRY_START
                         uint64_t        r_offset;
                         uint64_t        r_info;
                 }
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -1927,8 +1951,11 @@ HEADER_ELF_DYNAMIC_ENTRY_START
                         uint32_t            d_tag;  /* Entry type, one of the DT_* constants */
                         uint32_t            d_val;  /* Tag's value */
                 }
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 
@@ -1936,8 +1963,11 @@ HEADER_ELF_DYNAMIC_ENTRY_START
                         uint64_t            d_tag;  /* Entry type, one of the DT_* constants */
                         uint64_t            d_val;  /* Tag's value */
                 }
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -2099,8 +2129,11 @@ HEADER_ELF_SYMVER_DEFINED_ENTRY_START
                         uint32_t      vd_aux;       /**< Offset (in bytes) to start of array of verdaux entries */
                         uint32_t      vd_next;      /**< Offset (in bytes) to next verdef entry */
                 }
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -2127,8 +2160,11 @@ HEADER_ELF_SYMVER_DEFINED_AUX_START
                         uint32_t      vda_name;   /**< Offset (in bytes) to strings table to name string */
                         uint32_t      vda_next;   /**< Offset (in bytes) to next verdaux entry */
                 }
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -2176,8 +2212,11 @@ HEADER_ELF_SYMVER_NEEDED_ENTRY_START
                         uint32_t      vn_aux;      /**< Offset (in bytes) to start of array of vernaux entries */
                         uint32_t      vn_next;     /**< Offset (in bytes) to next verneed entry */
                 }
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -2209,8 +2248,11 @@ HEADER_ELF_SYMVER_NEEDED_AUX_START
                         uint32_t      vna_name;  /**< Offset (in bytes) to strings table to name string */
                         uint32_t      vna_next;  /**< Offset (in bytes) to next vernaux entry */
                 }
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -2307,8 +2349,11 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_START
                         uint32_t        p_flags;        /* 0x28 */
                         uint32_t        p_align;        /* 0x2c alignment for file and memory (0,1=>none); power of two */
                 }                                       /* 0x30 */
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 
@@ -2322,8 +2367,11 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_START
                         uint64_t        p_memsz;        /* 0x28 */
                         uint64_t        p_align;        /* 0x30 */
                 }                                       /* 0x38 */
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -2408,8 +2456,11 @@ HEADER_ELF_SYMBOL_START
                         unsigned char st_res1;  /* Reserved; always zero */
                         uint16_t      st_shndx; /* Section index or special meaning */
                 }
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 
@@ -2421,8 +2472,11 @@ HEADER_ELF_SYMBOL_START
                         uint64_t      st_value;
                         uint64_t      st_size;
                 }
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -2467,8 +2521,11 @@ HEADER_PE_RVA_SIZE_PAIR_START
                         uint32_t    e_rva;
                         uint32_t    e_size;
                 }
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -2521,8 +2578,11 @@ HEADER_PE_FILE_HEADER_START
                         uint16_t    e_nt_hdr_size;      /* 0x14 num remaining bytes in the header following the 'flags' field */
                         uint16_t    e_flags;            /* 0x16 Bit flags: exe file, program/library image, fixed address, etc. */
                 }                                       /* 0x18 */
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 
@@ -2558,8 +2618,11 @@ HEADER_PE_FILE_HEADER_START
                         uint32_t    e_loader_flags;     /* 0x70 Reserved, must be zero */
                         uint32_t    e_num_rvasize_pairs;/* 0x74 Num RVASizePair entries that follow this member; part of header */
                 }                                       /* 0x78 */
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 
@@ -2595,8 +2658,11 @@ HEADER_PE_FILE_HEADER_START
                         uint32_t    e_loader_flags;     /* 0x80 */
                         uint32_t    e_num_rvasize_pairs;/* 0x84 */
                 }                                       /* 0x88 */
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -2735,8 +2801,11 @@ HEADER_PE_IMPORT_DIRECTORY_START
                         uint32_t dll_name_rva;          /* 0x0c address of NUL-terminated DLL name */
                         uint32_t iat_rva;               /* 0x10 Import Address Table (Thunk Table) RVA */
                 }                                       /* 0x14 */
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -2804,8 +2873,11 @@ HEADER_PE_EXPORT_DIRECTORY_START
                         uint32_t nameptr_rva;  /* 0x20 Location of Export Name Pointer Table */
                         uint32_t ordinals_rva; /* 0x24 Location of Ordinal Table */
                 }                               /* 0x28 */
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -2919,8 +2991,11 @@ HEADER_PE_SECTION_TABLE_ENTRY_START
                         uint32_t n_coff_line_nums; /* number of COFF line number entries */
                         uint32_t flags;            /* PESectionFlags bits: code, data, caching, paging, shared, permissions, etc.*/
                 }
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -3000,8 +3075,11 @@ HEADER_PE_COFF_SYMBOL_START
                unsigned char       st_storage_class;
                unsigned char       st_num_aux_entries;
              }
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -3108,8 +3186,11 @@ HEADER_NE_FILE_HEADER_START
                uint16_t    e_res1;                 /* 0x3c reserved */
                uint16_t    e_winvers;              /* 0x3e expected version number for Windows (only for Windows) */
              }                                     /* 0x40 */
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -3394,8 +3475,11 @@ HEADER_NE_SECTION_TABLE_ENTRY_START
                uint16_t    flags;                  /* 0x04 Segment bit flags */
                uint16_t    virtual_size;           /* 0x06 Total size of segment when mapped to memory; zero means 64k */
              }                                     /* 0x08 */
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -3502,8 +3586,11 @@ HEADER_LE_FILE_HEADER_START
               uint32_t    e_num_instance_demand;  /* 0xa4 number of instance data pages found in the demand section */
               uint32_t    e_heap_size;            /* 0xa8 number of bytes added to auto data segment by loader (not used by 32-bit) */
           }                                       /* 0xac */
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
           __attribute__((packed))
+#endif
 #endif
           ;
 #ifdef _MSC_VER
@@ -3642,8 +3729,11 @@ HEADER_LE_PAGE_TABLE_ENTRY_START
                unsigned char       pageno_lo;
                unsigned char       flags;
              }
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -3680,8 +3770,11 @@ HEADER_LE_ENTRY_POINT_START
               uint32_t    entry_offset;   /* 0x04 Offset of entry point */
               uint16_t    res1;           /* 0x08 Reserved */
           }                               /* 0x0a */
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -3717,8 +3810,11 @@ HEADER_LE_SECTION_TABLE_ENTRY_START
                uint32_t    pagemap_nentries;       /* 0x10 number of entries in the page map */
                uint32_t    res1;                   /* 0x14 reserved */
              }                                     /* 0x18 */
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -3801,8 +3897,11 @@ HEADER_DOS_HEADER_START
                         uint16_t      e_overlay;           /* 0x1a overlay number (zero indicates main program) */
                         uint32_t      e_res1;              /* 0x1c unknown purpose */
                 }                                          /* 0x20 */
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 
@@ -3810,8 +3909,11 @@ HEADER_DOS_HEADER_START
                         uint16_t      offset;              /* 0x00 */
                         uint16_t      segment;             /* 0x02 */
                 }                                          /* 0x04 */
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER
@@ -3853,8 +3955,11 @@ HEADER_DOS_EXTENDED_HEADER_START
                         uint32_t      e_res6;     /* 0x18 reserved */
                         uint32_t      e_lfanew;   /* 0x1c file offset of new exe (PE) header */
                 }                                 /* 0x20 */
+// DQ (3/7/2013): Adding support to restrict visability to SWIG.
+#ifndef SWIG
 #ifndef _MSC_VER
                 __attribute__((packed))
+#endif
 #endif
                 ;
 #ifdef _MSC_VER

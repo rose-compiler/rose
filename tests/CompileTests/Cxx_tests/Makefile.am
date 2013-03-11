@@ -1668,9 +1668,14 @@ SKIP_UNPARSE_C_ASM_STATEMENTS = -rose:skip_unparse_asm_commands
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENTS)
 # ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 -rose:skipfinalCompileStep $(SKIP_UNPARSE_C_ASM_STATEMENTS)
 
+# DQ (3/10/2013): Add the Boost path so that the case where Boost is not installed in /usr/include is covered.
 # Some of these test codes reference A++ header files as part of their tests
 # Include the path to A++ and the transformation specification
-TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+# TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+# TESTCODE_INCLUDES = $(ROSE_BOOST_PREINCLUDE_PATH) -I$(top_srcdir)/tests/CompileTests/A++Code
+# TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -DBOOST_REGEX_MATCH_EXTRA -I$(top_srcdir)/tests/CompileTests/A++Code
+TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -DBOOST_REGEX_MATCH_EXTRA
+APP_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
@@ -1739,6 +1744,11 @@ test2010_07.o: $(TEST_TRANSLATOR)
 test2010_08.o: $(TEST_TRANSLATOR)
 	echo "Running boost specific test."
 	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_08.C -o test2010_08.o
+
+test2013_09.o: $(TEST_TRANSLATOR)
+	echo "Running boost specific test."
+#	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) $(ROSE_INCLUDES) -c $(srcdir)/test2010_08.C -o test2010_08.o
+	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) -c $(srcdir)/test2013_09.C -o test2013_09.o
 
 cpp_test2010_07: $(TEST_TRANSLATOR)
 	echo "Running boost specific test."
