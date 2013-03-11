@@ -2,6 +2,7 @@
 //#include "fileoffsetbits.h"
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h" /* for unparseInstruction() for debugging [RPM 2010-11-12] */
+#include "Disassembler.h"
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
