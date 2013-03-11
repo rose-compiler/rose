@@ -30,6 +30,7 @@ Requirements:
        version 1.33 version of boost from my machine so that the specified
       version 1.42 (what I commonly use) would not require the "-isystem"
       option with ROSE.
+   3) This work requires a configuration option: "--with-javaport".
 
 Note that the testlink.cc is a program to test if all the function prototypes in 
 ROSE have corresponding definitions.  It links ROSE with the extension 
