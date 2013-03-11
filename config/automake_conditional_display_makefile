@@ -409,11 +409,6 @@ if ROSE_USE_TEST_SMT_SOLVER
 else
 	@echo "Automake conditional ROSE_USE_TEST_SMT_SOLVER: NOT defined"
 endif
-if ROSE_USE_TRACE_ANALYSIS
-	@echo "Automake conditional ROSE_USE_TRACE_ANALYSIS: DEFINED"
-else
-	@echo "Automake conditional ROSE_USE_TRACE_ANALYSIS: NOT defined"
-endif
 if ROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT
 	@echo "Automake conditional ROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT: DEFINED"
 else

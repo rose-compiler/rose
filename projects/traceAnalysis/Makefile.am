@@ -1,30 +1,38 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+EXTRA_DIST =
+bin_PROGRAMS =
+MOSTLYCLEANFILES =
 
-INCLUDES = $(ROSE_INCLUDES)
+if ROSE_ENABLE_PROJECT_TRACE_ANALYSIS
 
-bin_PROGRAMS = trace
+TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
-# Comment out to test withouth committting to ROSE yet.
+#-------------------------------------------------------------------------------------------------------------------------------
+# The main executable for this project
+
+bin_PROGRAMS += trace
 trace_SOURCES = trace.C generateExecutable.C
+trace_CPPFLAGS = $(ROSE_INCLUDES)
+trace_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-TRACE_FILES = vmp-hw-part.trace
+#-------------------------------------------------------------------------------------------------------------------------------
+# Tests
 
-# DQ (11/2/2010): this automake variable is always fals at the moment.
-if ROSE_USE_TRACE_ANALYSIS
-#  TRACE_FILES = 
-else
-#  TRACE_FILES = 
-endif
+trace_SPECIMEN = $(srcdir)/vmp-hw-part.trace
+EXTRA_DIST += $(trace_SPECIMEN)
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+trace.passed: $(TEST_EXIT_STATUS) trace $(trace_SPECIMEN)
+	@$(RTH_RUN) CMD="./trace $(trace_SPECIMEN)" $< $@
 
-test: trace
-	./trace $(srcdir)/vmp-hw-part.trace
+MOSTLYCLEANFILES += a.exe a.out trace.out
+MOSTLYCLEANFILES += trace.passed trace.failed trace.out trace.err
 
-check-local:
-	$(MAKE) test > trace.out
+#-------------------------------------------------------------------------------------------------------------------------------
+# The usual automake boilerplate
+
+check-local: trace.passed
 
 clean-local:
-	rm -f *.o rose_*.c trace.out a.out
+	rm -rf -- $(MOSTLYCLEANFILES)
 
-EXTRA_DIST = $(TRACE_FILES)
+endif
