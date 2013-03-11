@@ -2509,7 +2509,11 @@ Grammar::buildVariantEnumNames() {
 string
 Grammar::buildReferenceToPointerHandlerCode()
    {
-     string s = "#ifndef REFERENCETOPOINTERHANDLER_DEFINED\n"
+  // DQ (3/9/2013): Adding support to exclude some code from SWIG.
+     string s;
+  // s += string("#ifndef ROSE_USE_SWIG_SUPPORT \n\n");
+     s += string("#ifndef SWIG \n\n");
+     s += "#ifndef REFERENCETOPOINTERHANDLER_DEFINED\n"
                 "#define REFERENCETOPOINTERHANDLER_DEFINED\n\n"
 
                 "struct ReferenceToPointerHandler\n"
@@ -2552,6 +2556,9 @@ Grammar::buildReferenceToPointerHandlerCode()
           "   };\n\n"
 
           "#endif // REFERENCETOPOINTERHANDLER_DEFINED\n\n";
+
+  // DQ (3/9/2013): Adding support to exclude some code from SWIG.
+     s += string("#endif // endif for ifndef SWIG \n\n");
 
      return s;
    }

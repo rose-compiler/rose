@@ -272,15 +272,20 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
    #define ROSE_USING_SMALL_GENERATED_HEADER_FILES 1
 #endif
 
+// DQ (3/7/2013): I think that we need to use "" instead of <> and this may make a difference for SWIG.
 // DQ (9/21/2005): This is the simplest way to include this here
 // This is the definition of the Sage III IR classes (generated header).
-#include <Cxx_Grammar.h>
+// #include <Cxx_Grammar.h>
+#include "Cxx_Grammar.h"
 
 // Disable CC++ extensions (we want to support only the C++ Standard)
 #undef CCPP_EXTENSIONS_ALLOWED
 
 // This should be a simple include (without dependence upon ROSE_META_PROGRAM
 #include "utility_functions.h"
+
+// DQ (3/6/2013): Adding support to restrict visability to SWIG.
+// #ifndef ROSE_USE_SWIG_SUPPORT
 
 // Markus Schordan: temporary fixes for Ast flaws (modified by DQ)
 #include <typeinfo>
@@ -336,8 +341,9 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
    #include "transformationSupport.h"
 #endif
 
+// endif for ifndef ROSE_USE_SWIG_SUPPORT
+// #endif
+
 #endif
-
-
 
 

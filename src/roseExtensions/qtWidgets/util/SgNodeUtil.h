@@ -13,7 +13,10 @@ SgFile *getSgFile( SgNode *node );
 bool isBinaryNode( SgNode *node );
 bool isSourceNode( SgNode *node );
 
+// DQ (3/6/2013): Adding support to restrict visability to SWIG.
+#ifndef ROSE_USE_SWIG_SUPPORT
 typedef std::vector<SgNode *> SgNodeVector;
+#endif
 
 std::vector<SgNode *> getLinkedBinaryNodes( SgNode *node );
 std::vector<SgNode *> getLinkedSourceNodes( SgNode *node );

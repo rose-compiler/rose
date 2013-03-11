@@ -141,7 +141,10 @@ struct hash_nodeptr
                    }
     };
 
+#ifndef SWIG
+// DQ (3/10/2013): This appears to be a problem for the SWIG interface (undefined reference at link-time).
   void supplementReplacementSymbolMap ( rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr> & inputReplacementMap );
+#endif
 
  //------------------------------------------------------------------------
  //@{
@@ -417,8 +420,12 @@ struct hash_nodeptr
   /*! \brief Support for faster mangled name generation (caching avoids recomputation).
 
    */
+#ifndef SWIG
+// DQ (3/10/2013): This appears to be a problem for the SWIG interface (undefined reference at link-time).
   void clearMangledNameCache (SgGlobal * globalScope);
   void resetMangledNameCache (SgGlobal * globalScope);
+#endif
+
   std::string getMangledNameFromCache (SgNode * astNode);
   std::string addMangledNameToCache (SgNode * astNode, const std::string & mangledName);
 

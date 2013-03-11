@@ -118,8 +118,12 @@ HEADER_START
        // size_t numberOfNodesInSubtree();
 
      public:
+
+// #ifndef ROSE_USE_SWIG_SUPPORT
+#ifndef SWIG
        // [MK] Member function to access attached preprocessing info 
           AttachedPreprocessingInfoType*& getAttachedPreprocessingInfo(void);
+#endif
 
        // DQ (4/10/2006): This is replaced by a better interface for attributes.
        // DQ (1/2/2006): Added attribute mechanism to SgLocatedNode

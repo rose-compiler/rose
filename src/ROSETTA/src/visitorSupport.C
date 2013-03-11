@@ -65,8 +65,14 @@ string delegate2strategy ( string name ) {
      return s;
 }
 
-string Grammar::buildVisitorBaseClass() {
-     string s = string("class ROSE_VisitorPattern  {\npublic:\n    virtual ~ROSE_VisitorPattern() {};\n");
+string Grammar::buildVisitorBaseClass()
+   {
+  // DQ (3/9/2013): Adding support to exclude some code from SWIG.
+  // string s = string("class ROSE_VisitorPattern  {\npublic:\n    virtual ~ROSE_VisitorPattern() {};\n");
+     string s;
+  // s += string("#ifndef ROSE_USE_SWIG_SUPPORT \n\n");
+     s += string("#ifndef SWIG \n\n");
+     s += string("class ROSE_VisitorPattern  {\npublic:\n    virtual ~ROSE_VisitorPattern() {};\n");
 
      for (unsigned int i=0; i < terminalList.size(); i++) {
           string name = terminalList[i]->name;
@@ -111,6 +117,9 @@ string Grammar::buildVisitorBaseClass() {
      }
      s += "    virtual void visitDefault(SgNode* n) { _strategy->visitDefault(n); }\n";
      s += "};\n";
+
+  // DQ (3/9/2013): Adding support to exclude some code from SWIG.
+     s += string("#endif // endif for ifndef SWIG \n\n");
 
      return s;
 }

@@ -186,6 +186,7 @@ if USING_INTEL_COMPILER
   ROSE_INTEL_COMPILER_MATH_LIBS = -limf -lm
 endif
 
+# DQ (3/6/2013): We need to build a SWIG path that can't include the isystem option.
 # Note use of "-isystem" option in ROSE_BOOST_PREINCLUDE_PATH to have the 
 # boost specified on the configure
 # command-line be used instead of the OS version of boost that is sometimes
@@ -193,8 +194,9 @@ endif
 # This is used only when the ROSE configuration detects a previously installed
 # version of Boost (e.g /usr/include/boost) that we don't want to use.
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-ROSE_INCLUDES = \
-     $(ROSE_BOOST_PREINCLUDE_PATH) \
+# ROSE_INCLUDES = 
+#    $(ROSE_BOOST_PREINCLUDE_PATH) 
+ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_builddir)/src/roseSupport \
      -I$(top_builddir)/src/frontend/SageIII \
      -I$(top_srcdir)/src \
@@ -236,8 +238,9 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/util/graphs \
      $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -DBOOST_REGEX_MATCH_EXTRA 
 else
-ROSE_INCLUDES = \
-     $(ROSE_BOOST_PREINCLUDE_PATH) \
+# ROSE_INCLUDES = 
+#     $(ROSE_BOOST_PREINCLUDE_PATH) 
+ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_builddir)/src/roseSupport \
      -I$(top_builddir)/src/frontend/SageIII \
      -I$(top_srcdir)/src \
@@ -355,6 +358,9 @@ ROSE_INCLUDES = \
      $(INTEL_PIN_INCLUDE_PATHS) \
      $(ROSE_ETHER_INCLUDE)
 endif
+
+SWIG_ROSE_INCLUDES = $(ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH)
+ROSE_INCLUDES = $(ROSE_BOOST_PREINCLUDE_PATH) $(ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH) 
 
 # DQ (8/15/2010): I have removed these directories from the include paths since it no longer exists.
 # I expect that the directories were removed and the include list not properly cleaned up.

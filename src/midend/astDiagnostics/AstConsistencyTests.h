@@ -66,12 +66,15 @@ class ROSE_DLL_API AstTests
           static bool isCorrectAst(SgProject* sageProject);
    };
 
+#ifndef SWIG
+// DQ (3/10/2013): Swig has a problem with this class (remove from visability to swig).
+
 class TestAstNullPointers : public AstNodePtrs {
  public:
   TestAstNullPointers() {}
   virtual void visitWithAstNodePointersList(SgNode* node, AstNodePointersList l);
 };
-
+#endif
 
   // these dummy classes are just to show the interfaces of the 4 kinds of traversals
   // void dummyTests(SgProject* sageProject); // traverse AST with all 4 kinds of traversals
@@ -516,7 +519,6 @@ class TestForReferencesToDeletedNodes : public ROSE_VisitTraversal
    };
 
 
-
 class TestForParentsMatchingASTStructure: public AstPrePostProcessing
    {
   // DQ (3/19/2012): This is a test from Robb that I want to use uniformally in the AST.
@@ -529,7 +531,12 @@ class TestForParentsMatchingASTStructure: public AstPrePostProcessing
 
      public:
           std::vector<SgNode*> stack;                 // current path within the AST
+#ifndef USE_ROSE
+       // DQ (3/6/2013): Disable code that is a problem for SWIG (vesion 2.0.9).
+       // This data member is a problem for SWIG, so ignore it when
+       // processing using USE_ROSE which we define when using SWIG.
           std::ostream &output;                       // where to emit warning/error messages
+#endif
           size_t nproblems;                           // number of problems detected
           size_t limit;                               // number of errors to allow before exit
           std::string prefix;                         // line prefix

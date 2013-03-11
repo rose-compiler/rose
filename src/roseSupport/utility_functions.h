@@ -78,6 +78,8 @@ void generateAstGraph ( const SgProject* project, int maxSize = 2000, std::strin
 //void pdfPrintAbstractSyntaxTreeEDG ( SgFile *file );
 // void generatePDFofEDG ( const SgProject & project );
 
+#ifndef SWIG
+
 //#include "rose.h"
 //#include "../midend/astProcessing/DOTGeneration.h"
 //#include "roseInternal.h"
@@ -96,6 +98,16 @@ struct generateDOTExtended_withIncludes ;
 
 template <typename ExtraNodeInfo_t = AstDOTGenerationExtended_Defaults::DefaultExtraNodeInfo, typename ExtraNodeOptions_t = AstDOTGenerationExtended_Defaults::DefaultExtraNodeOptions, typename ExtraEdgeInfo_t = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeInfo, typename ExtraEdgeOptions_t = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeOptions>
 struct generateDOTExtendedforMultipleFile ;
+
+// endif for ifndef SWIG
+#endif
+
+#ifndef SWIG
+// DQ (3/10/2013): Swig has a problem with:
+// src/roseSupport/utility_functions.h:138: Error: 'stripPathFromFileName' is multiply defined in the generated target language module in scope 'roseJNI'.
+// src/util/stringSupport/string_functions.h:221: Error: Previous declaration of 'stripPathFromFileName'
+// src/util/stringSupport/string_functions.h:223: Error: Previous declaration of 'getPathFromFileName'
+// So exclude this code below.
 
 namespace ROSE
    {
@@ -157,6 +169,9 @@ namespace ROSE
           SgStatement* getNextStatement     ( SgStatement *targetStatement );
 
    };
+
+// endif for ifndef SWIG
+#endif
 
 #endif // ifndef UTILITY_FUNCTIONS_H
 

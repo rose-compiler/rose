@@ -62,6 +62,10 @@
 //  #define ROSE_DLL_API
 //#endif 
 
+#ifdef USE_ROSE
+// #error "ROSE_DLL_API = "ROSE_DLL_API
+// #define ROSE_DLL_API
+#endif
 
 #endif
 
