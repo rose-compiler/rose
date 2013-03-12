@@ -57,6 +57,53 @@ printOutClones_SOURCES = printOutClones.C
 
 printOutClones_distinctFiles_SOURCES = printOutClones_distinctFiles.C 
 
+# Andreas is looking into whether any of these files are actually necessary or if they
+# can be removed from the source tree. [Robb Matzke, 2013-03-12]
+EXTRA_DIST = 					\
+	callLSH.h				\
+	collateByHash.C				\
+	createCloneDetectionVectorsBinary.h	\
+	createSignatureVectors.h		\
+	createVectors.C				\
+	findExactClones.h			\
+	lsh/BasicDefinitions.h			\
+	lsh/BucketHashing.C			\
+	lsh/BucketHashing.h			\
+	lsh/Geometry.C				\
+	lsh/Geometry.h				\
+	lsh/GlobalVars.C			\
+	lsh/GlobalVars.h			\
+	lsh/LocalitySensitiveHashing.C		\
+	lsh/LocalitySensitiveHashing.h		\
+	lsh/NearNeighbors.C			\
+	lsh/NearNeighbors.h			\
+	lsh/Random.C				\
+	lsh/Random.h				\
+	lsh/SelfTuning.C			\
+	lsh/SelfTuning.h			\
+	lsh/SettingUpLSH.C			\
+	lsh/SettingUpLSH.h			\
+	lsh/headers.h				\
+	lsh/lsh2.C				\
+	lsh2/BasicDefinitions.h			\
+	lsh2/BucketHashing.cpp			\
+	lsh2/BucketHashing.h			\
+	lsh2/Geometry.cpp			\
+	lsh2/Geometry.h				\
+	lsh2/GlobalVars.cpp			\
+	lsh2/GlobalVars.h			\
+	lsh2/LocalitySensitiveHashing.cpp	\
+	lsh2/LocalitySensitiveHashing.h		\
+	lsh2/NearNeighbors.cpp			\
+	lsh2/NearNeighbors.h			\
+	lsh2/Random.cpp				\
+	lsh2/Random.h				\
+	lsh2/SelfTuning.cpp			\
+	lsh2/SelfTuning.h			\
+	lsh2/enumBuckets.cpp			\
+	lsh2/headers.h				\
+	lsh2/lsh2.C
+
 endif
 endif
 
