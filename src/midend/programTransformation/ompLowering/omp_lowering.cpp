@@ -1290,6 +1290,10 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
     ROSE_ASSERT(node != NULL);
     SgOmpParallelStatement* target = isSgOmpParallelStatement(node);
     ROSE_ASSERT (target != NULL);
+
+// Test if the file info has been corrected transferred to SgOmpParallelStatement
+//    target->get_startOfConstruct()->display();
+//    target->get_endOfConstruct()->display();
      
     // Liao 12/7/2010
     // For Fortran code, we have to insert EXTERNAL OUTLINED_FUNC into 
@@ -1413,6 +1417,14 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
   // * data: pointer to a data segment which will be used as the arguments of func
   // * ifClauseValue: set to if-clause-expression if if-clause exists, or default is 1.
   // * numThreadsSpecified: set to the expression of num_threads clause if the clause exists, or default is 0
+  // Liao 3/11/2013, additional file location info, at least for C/C++  for now
+  if (!SageInterface::is_Fortran_language())
+  {
+    string file_name = target->get_startOfConstruct()->get_filenameString();
+    int line = target->get_startOfConstruct()->get_line();
+    parameters->append_expression(buildStringVal(file_name));
+    parameters->append_expression(buildIntVal(line));
+  }
 
     SgExprStatement * s1 = buildFunctionCallStmt("XOMP_parallel_start", buildVoidType(), parameters, p_scope); 
     SageInterface::replaceStatement(target, s1 , true);
@@ -1429,7 +1441,18 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
    pastePreprocessingInfo(s1, PreprocessingInfo::before, save_buf1); 
     // add GOMP_parallel_end ();
 #ifdef ENABLE_XOMP
-    SgExprStatement * s2 = buildFunctionCallStmt("XOMP_parallel_end", buildVoidType(), NULL, p_scope); 
+
+    SgExprListExp*  parameters2 = buildExprListExp();
+    if (!SageInterface::is_Fortran_language())
+    {
+      string file_name = target->get_endOfConstruct()->get_filenameString();
+      int line = target->get_endOfConstruct()->get_line();
+      parameters2->append_expression(buildStringVal(file_name));
+      parameters2->append_expression(buildIntVal(line));
+    }
+
+    //SgExprStatement * s2 = buildFunctionCallStmt("XOMP_parallel_end", buildVoidType(), NULL, p_scope); 
+    SgExprStatement * s2 = buildFunctionCallStmt("XOMP_parallel_end", buildVoidType(), parameters2, p_scope); 
     SageInterface::insertStatementAfter(s1, s2);  // insert s2 after s1
 #else
     SgExprStatement * s2 = buildFunctionCallStmt("GOMP_parallel_end", buildVoidType(), NULL, p_scope); 
