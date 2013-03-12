@@ -39,8 +39,9 @@ extern void XOMP_terminate (int exitcode);
 // data: pointer to a data segment which will be used as the arguments of func
 // ifClauseValue: set to if-clause-expression if if-clause exists, or default is 1. 
 // numThreadsSpecified: set to the expression of num_threads clause if the clause exists, or default is 0
-extern void XOMP_parallel_start (void (*func) (void *), void *data, unsigned ifClauseValue, unsigned numThreadsSpecified);
-extern void XOMP_parallel_end (void);
+// file_name:line_no the start source file info about this parallel region, used to pass source level info. to runtime
+extern void XOMP_parallel_start (void (*func) (void *), void *data, unsigned ifClauseValue, unsigned numThreadsSpecified, char* file_name, int line_no);
+extern void XOMP_parallel_end (char* file_name, int line_no);
 
 /* Initialize sections and return the next section id (starting from 0) to be executed by the current thread */
 extern int XOMP_sections_init_next(int section_count); 

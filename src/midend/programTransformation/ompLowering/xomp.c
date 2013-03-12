@@ -202,7 +202,7 @@ void xomp_parallel_start (void (*func) (void *), unsigned* ifClauseValue, unsign
   if (*argcount == 0)
   {
 
-    XOMP_parallel_start (func, 0, *ifClauseValue, *numThread);
+    XOMP_parallel_start (func, 0, *ifClauseValue, *numThread, NULL, 0);
     return;
   }
   
@@ -237,12 +237,12 @@ void xomp_parallel_start (void (*func) (void *), unsigned* ifClauseValue, unsign
   }
 }
 
-void XOMP_parallel_start (void (*func) (void *), void *data, unsigned ifClauseValue, unsigned numThreadsSpecified)
+void XOMP_parallel_start (void (*func) (void *), void *data, unsigned ifClauseValue, unsigned numThreadsSpecified, char* file_name, int line_no)
 {
   if (env_region_instr_val)
   {
-    fprintf (fp,"%f\t1\n",xomp_time_stamp());
-    fprintf (fp, "%f\t2\n",xomp_time_stamp());
+    fprintf (fp,"%f\t1\t%s\t%d\n",xomp_time_stamp(),file_name, line_no);
+    fprintf (fp, "%f\t2\t%s\t%d\n",xomp_time_stamp(),file_name, line_no);
   }
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY 
   // XOMP  to GOMP
@@ -268,15 +268,15 @@ void xomp_parallel_end (void)
 {
   //TODO nested parallelism
   //free(g_parameter);
-  XOMP_parallel_end ();
+  XOMP_parallel_end (NULL, 0);
 }
-void XOMP_parallel_end (void)
+void XOMP_parallel_end (char* file_name, int line_no)
 {
   //printf ("%s %f\n",__PRETTY_FUNCTION__, xomp_time_stamp());
   if (env_region_instr_val)
   {
-    fprintf (fp,"%f\t2\n",xomp_time_stamp());
-    fprintf (fp, "%f\t1\n",xomp_time_stamp());
+    fprintf (fp,"%f\t2\t%s\t%d\n",xomp_time_stamp(),file_name, line_no);
+    fprintf (fp, "%f\t1\t%s\t%d\n",xomp_time_stamp(),file_name, line_no);
   }
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
   GOMP_parallel_end ();

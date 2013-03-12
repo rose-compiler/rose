@@ -75,6 +75,62 @@ static bool copyStartFileInfo (SgNode* src, SgNode* dest, OmpAttribute* oa)
     
   return result;
 }
+// Liao 3/11/2013, special function to copy end file info of the original SgPragma or Fortran comments (src) to OpenMP node (dest)
+// If the OpenMP node is a body statement, we have to use the body's end file info as the node's end file info.
+static bool copyEndFileInfo (SgNode* src, SgNode* dest, OmpAttribute* oa)
+{
+  bool result = false;
+  ROSE_ASSERT (src && dest);
+  
+  if (isSgOmpBodyStatement(dest))
+    src = isSgOmpBodyStatement(dest)->get_body();
+
+  // same src and dest, no copy is needed
+  if (src == dest) return true;
+
+  SgLocatedNode* lsrc = isSgLocatedNode(src);
+  ROSE_ASSERT (lsrc);
+  SgLocatedNode* ldest= isSgLocatedNode(dest);
+  ROSE_ASSERT (ldest);
+  // ROSE_ASSERT (lsrc->get_file_info()->isTransformation() == false);
+  // already the same, no copy is needed
+  if    (lsrc->get_endOfConstruct()->get_filename() == ldest->get_endOfConstruct()->get_filename()
+      && lsrc->get_endOfConstruct()->get_line()     == ldest->get_endOfConstruct()->get_line()
+      && lsrc->get_endOfConstruct()->get_col()      == ldest->get_endOfConstruct()->get_col())
+    return true; 
+
+  Sg_File_Info* copy = new Sg_File_Info (*(lsrc->get_endOfConstruct())); 
+  ROSE_ASSERT (copy != NULL);
+
+   // delete old start of construct
+  Sg_File_Info *old_info = ldest->get_endOfConstruct();
+  if (old_info) delete (old_info);
+
+  ldest->set_endOfConstruct(copy);
+  copy->set_parent(ldest);
+//  cout<<"debug: set ldest@"<<ldest <<" with file info @"<< copy <<endl;
+
+  ROSE_ASSERT (lsrc->get_endOfConstruct()->get_filename() == ldest->get_endOfConstruct()->get_filename());
+  ROSE_ASSERT (lsrc->get_endOfConstruct()->get_line()     == ldest->get_endOfConstruct()->get_line());
+  ROSE_ASSERT (lsrc->get_endOfConstruct()->get_col()      == ldest->get_endOfConstruct()->get_col());
+
+
+  ROSE_ASSERT (ldest->get_endOfConstruct() == copy);
+// Adjustment for Fortran, the AST node attaching the Fortran comment will not actual give out the accurate line number for the comment
+  if (is_Fortran_language())
+  { //TODO fortran support of end file info
+//    cerr<<"Error. ompAstConstruction.cpp: copying end file info is not yet implemented for Fortran."<<endl;
+//    ROSE_ASSERT (false);
+//    ROSE_ASSERT (oa != NULL);
+//    PreprocessingInfo *currentPreprocessingInfoPtr = oa->getPreprocessingInfo();
+//    ROSE_ASSERT (currentPreprocessingInfoPtr != NULL);
+//    int commentLine = currentPreprocessingInfoPtr->getLineNumber(); 
+//    ldest->get_file_info()->set_line(commentLine);
+  }
+    
+  return result;
+}
+
 
 namespace OmpSupport
 { 
@@ -765,6 +821,8 @@ namespace OmpSupport
     ROSE_ASSERT(result != NULL);
     //setOneSourcePositionForTransformation(result);
     // copyStartFileInfo (att->getNode(), result); // No need here since its caller will set file info again
+//    body->get_startOfConstruct()->display();
+//    body->get_endOfConstruct()->display();
     //set the current parent
     body->set_parent(result);
     // add clauses for those SgOmpClauseBodyStatement
@@ -870,11 +928,13 @@ namespace OmpSupport
     ROSE_ASSERT(second_stmt);
     body->set_parent(second_stmt);
     copyStartFileInfo (att->getNode(), second_stmt, att);
+    copyEndFileInfo (att->getNode(), second_stmt, att);
 
     // build the 1st directive node then
     SgOmpParallelStatement* first_stmt = new SgOmpParallelStatement(NULL, second_stmt); 
     setOneSourcePositionForTransformation(first_stmt);
     copyStartFileInfo (att->getNode(), first_stmt, att);
+    copyEndFileInfo (att->getNode(), first_stmt, att);
     second_stmt->set_parent(first_stmt);
 
     // allocate clauses to them, let the 2nd one have higher priority 
@@ -1124,6 +1184,7 @@ This is no perfect solution until we handle preprocessing information as structu
         }
         setOneSourcePositionForTransformation(omp_stmt);
         copyStartFileInfo (oa->getNode(), omp_stmt, oa);
+        copyEndFileInfo (oa->getNode(), omp_stmt, oa);
         //ROSE_ASSERT (omp_stmt->get_file_info()->isTransformation() != true);
         replaceOmpPragmaWithOmpStatement(decl, omp_stmt);
 
