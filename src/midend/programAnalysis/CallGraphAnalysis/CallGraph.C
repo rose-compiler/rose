@@ -396,10 +396,12 @@ CallTargetSet::solveMemberFunctionPointerCall(SgExpression *functionExp, ClassHi
     left = binaryExp->get_lhs_operand();
     right = binaryExp->get_rhs_operand();
 
-    // left side of the expression should have class type
+    // left side of the expression should have class type (but it might have SgTemplateType which we should ignore since that
+    // means we're trying to do call graph analysis inside a class template, which doesn't make much sense.)
+    if (isSgTemplateType(left->get_type()->findBaseType()))
+        return functionList; // empty
     classType = isSgClassType(left->get_type()->findBaseType());
     ROSE_ASSERT(classType != NULL);
-    //printf ("classType->get_declaration() = %p = %s \n",classType->get_declaration(),classType->get_declaration()->class_name().c_str());
 
     ROSE_ASSERT(classType->get_declaration() != NULL);
     ROSE_ASSERT(classType->get_declaration()->get_definingDeclaration() != NULL);
@@ -411,8 +413,6 @@ CallTargetSet::solveMemberFunctionPointerCall(SgExpression *functionExp, ClassHi
     // right side of the expression should have member function type
     memberFunctionType = isSgMemberFunctionType(right->get_type()->findBaseType());
     ROSE_ASSERT(memberFunctionType);
-    //std::cout << "The member function type: " << memberFunctionType->get_mangled().getString() << std::endl;
-    //std::cout << "The member function type: " << functionExp->unparseToString() << std::endl;
 
     SgDeclarationStatementPtrList &allMembers = classDefinition->get_members();
     for (SgDeclarationStatementPtrList::iterator it = allMembers.begin(); it != allMembers.end(); it++)
