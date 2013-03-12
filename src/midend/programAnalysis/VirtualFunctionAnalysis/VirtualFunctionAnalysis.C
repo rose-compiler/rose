@@ -5,13 +5,21 @@ void VirtualFunctionAnalysis::run(){
     
         vector<SgExpression*> callSites = SageInterface::querySubTree<SgExpression> (project, V_SgFunctionCallExp);
         vector<SgExpression*> constrs = SageInterface::querySubTree<SgExpression> (project, V_SgConstructorInitializer);
-        
         callSites.insert(callSites.end(), constrs.begin(), constrs.end());
+
+        // Not all SgFunctionCallExp or SgConstructorInitialize nodes appear in functions--some are also in templates (for
+        // classes or functions) and we don't want to process those. Templates are not really part of a control flow graph or
+        // call graph until after they're instantiated.
+        for (vector<SgExpression*>::iterator csi=callSites.begin(); csi!=callSites.end(); ++csi) {
+            if (SgFunctionDeclaration *fdecl = SageInterface::getEnclosingNode<SgFunctionDeclaration>(*csi)) {
+                if (isSgTemplateMemberFunctionDeclaration(fdecl) || isSgTemplateFunctionDeclaration(fdecl))
+                    *csi = NULL;
+            }
+        }
+        callSites.erase(std::remove(callSites.begin(), callSites.end(), (SgExpression*)NULL), callSites.end());
         
-        
+
         unsigned int index;
-
-
         resolver.clear();
         for(index = 0; index < callSites.size(); index++) {
             std::vector<SgFunctionDeclaration *> funcs;

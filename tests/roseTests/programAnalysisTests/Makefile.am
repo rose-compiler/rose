@@ -122,7 +122,7 @@ clean-vfa:
 # 10. Command-lines were not printed, which made it difficult to figure out exactly what command failed.
 # We now use the ROSE Test Harness and split each test from TestDriver into its own makefile target. [RPM 2013-02-25]
 
-EXTRA_TEST_NAMES = ptr_01 cfg_01 cfg_02 cfg_03 df_01 df_01 df_03 df_04 sr_01 sr_02 sr_03 vf_01 vf_02 vf_03 vf_04 vf_05
+EXTRA_TEST_NAMES = ptr_01 cfg_01 cfg_02 cfg_03 df_01 df_02 df_03 df_04 sr_01 sr_02 sr_03 vf_01 vf_02 vf_03 vf_04 vf_05
 EXTRA_TEST_TARGETS = $(addsuffix .passed, $(EXTRA_TEST_NAMES))
 
 .PHONY: check-extra
@@ -159,7 +159,7 @@ sr_03.passed: $(CHECK_ANSWER) StmtRefTest $(srcdir)/testfile3.c $(srcdir)/testfi
 	@$(RTH_RUN) CMD="./StmtRefTest -I$(srcdir) $(srcdir)/testfile3.c" ANSWER=$(srcdir)/testfile3.c.ref $< $@
 
 # Virtual function analysis tests (these are only tested for their exit status)
-MOSTLYCLEANFILES += call_graph.dot full_call_graph.dot init_call_graph.dot
+MOSTLYCLEANFILES += call_graph.dot full_call_graph.dot init_call_graph.dot test_vfa[0-5].ti
 vf_01.passed: $(CHECK_EXIT_STATUS) VirtualFunctionAnalysisTest $(srcdir)/test_vfa1.C
 	@$(RTH_RUN) CMD="./VirtualFunctionAnalysisTest -I$(srcdir) $(srcdir)/test_vfa1.C" $< $@
 vf_02.passed: $(CHECK_EXIT_STATUS) VirtualFunctionAnalysisTest $(srcdir)/test_vfa2.C

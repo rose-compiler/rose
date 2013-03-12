@@ -1,0 +1,6 @@
+# Configuration file to check the output of a translator (see "scripts/rth_run.pl --help)
+
+cmd = ${VALGRIND} ${CMD} -c ${INPUT} >&2
+cmd = cat rose_$(basename ${INPUT})
+
+answer = ${ANSWER}

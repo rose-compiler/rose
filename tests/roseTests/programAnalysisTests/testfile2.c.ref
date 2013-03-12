@@ -18,7 +18,5 @@ break;
 modref:  ;  readref:  ;  killref: 
 break;
 modref:  ;  readref:  ;  killref: 
-r =(a - b);
+r = a - b;
 modref:  r ;  readref:  a b ;  killref:  r
-return 0;
-modref:  ;  readref:  ;  killref: 
