@@ -53,6 +53,20 @@
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#elif 7==POLICY_SELECTOR        // Interval semantics
+
+#if USE_TEMPLATES
+#   include "IntervalSemantics.h"
+#   define MyValueType BinaryAnalysis::InstructionSemantics::IntervalSemantics::ValueType
+#   define MyState     BinaryAnalysis::InstructionSemantics::IntervalSemantics::State
+#   define MyPolicy    BinaryAnalysis::InstructionSemantics::IntervalSemantics::Policy
+#else
+#   include "IntervalSemantics2.h"
+    typedef IntervalSemantics::RiscOperators RiscOperators;
+#endif
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #else
 #error "Invalid policy selector"
 #endif

@@ -24,6 +24,7 @@ libbinaryMidend_la_SOURCES = \
      instructionSemantics/FindRegisterDefs.C \
      instructionSemantics/InsnSemanticsExpr.C \
      instructionSemantics/IntervalSemantics.C \
+     instructionSemantics/IntervalSemantics2.C \
      instructionSemantics/PartialSymbolicSemantics.C \
      instructionSemantics/SMTSolver.C \
      instructionSemantics/SymbolicSemantics.C \
@@ -67,6 +68,7 @@ include_HEADERS = \
    instructionSemantics/BaseSemantics2.h \
    instructionSemantics/DispatcherX86.h \
    instructionSemantics/IntervalSemantics.h \
+   instructionSemantics/IntervalSemantics2.h \
    instructionSemantics/NullSemantics.h \
    instructionSemantics/NullSemantics2.h \
    instructionSemantics/MultiSemantics.h \

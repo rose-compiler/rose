@@ -429,7 +429,7 @@ Input specimen simply increments EAX in a tight loop:
 
     _start: mov eax, 0
     loop:   add eax, 1
-    jmp loop
+            jmp loop
 
 The performance test was allowed to run for 60 seconds. The table
 lists the best of three runs.
@@ -446,6 +446,8 @@ partialSymbolicSemanticsSpeed1    yes      15.399         5.7       193   2,332,
 partialSymbolicSemanticsSpeed2     no       7.685         4.7       193     948,840
 symbolicSemanticsSpeed1           yes      29.330         8.0       194      53,137
 symbolicSemanticsSpeed2            no       7.633         4.7       193     136,210
+intervalSemanticsSpeed1           yes      26.849         7.0       193     258,723
+intervalSemanticsSpeed2            no       8.053         4.7       193     255,855
 
 Progress made for increasing performance of the non-template design
 running partialSymbolicSemantics for 60 seconds, measured in x86

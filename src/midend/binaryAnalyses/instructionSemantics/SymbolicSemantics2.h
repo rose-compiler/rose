@@ -144,7 +144,7 @@ protected:
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Virtual constructors...
+    // Static allocating constructors
 public:
     /** Construct a prototypical value. Prototypical values are only used for their virtual constructors. */
     static SValuePtr instance() {
@@ -158,7 +158,9 @@ public:
         return retval;
     }
 
-    // Virtual allocating constructors inherited from the base class
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual allocating constructors
+public:
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const /*override*/ {
         return BaseSemantics::SValuePtr(new SValue(nbits));
     }
