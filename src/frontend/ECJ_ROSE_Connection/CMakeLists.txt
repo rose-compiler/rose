@@ -2,7 +2,7 @@
 include_directories(
   ${CMAKE_SOURCE_DIR}/src/frontend/ECJ_ROSE_Connection
   ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES}
-  ${JAVA_AWT_INCLUDE_PATH})
+  ${JNI_INCLUDE_DIRS})
 
 
 ########### next target ###############
