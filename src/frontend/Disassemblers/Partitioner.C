@@ -133,6 +133,8 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
             bits = SgAsmFunction::FUNC_EH_FRAME;
         } else if (word=="import") {
             bits = SgAsmFunction::FUNC_IMPORT;
+        } else if (word=="export") {
+            bits = SgAsmFunction::FUNC_EXPORT;
         } else if (word=="symbol") {
             bits = SgAsmFunction::FUNC_SYMBOL;
         } else if (word=="pattern") {
@@ -1369,6 +1371,23 @@ Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr)
                     value += section->get_mapped_actual_va();
                 if (find_instruction(value))
                     add_function(value, SgAsmFunction::FUNC_SYMBOL, symbol->get_name()->get_string());
+            }
+        }
+    }
+}
+
+/* Adds PE exports as function entry points. */
+void
+Partitioner::mark_export_entries(SgAsmGenericHeader *fhdr)
+{
+    SgAsmGenericSectionList *sections = fhdr->get_sections();
+    for (size_t i=0; i<sections->get_sections().size(); ++i) {
+        if (SgAsmPEExportSection *export_section = isSgAsmPEExportSection(sections->get_sections()[i])) {
+            const SgAsmPEExportEntryPtrList &exports = export_section->get_exports()->get_exports();
+            for (SgAsmPEExportEntryPtrList::const_iterator ei=exports.begin(); ei!=exports.end(); ++ei) {
+                rose_addr_t va = (*ei)->get_export_rva().get_va();
+                if (find_instruction(va))
+                    add_function(va, SgAsmFunction::FUNC_EXPORT, (*ei)->get_name()->get_string());
             }
         }
     }
@@ -2666,6 +2685,8 @@ Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
                 mark_func_symbols(headers[i]);
             if (func_heuristics & SgAsmFunction::FUNC_IMPORT)
                 mark_elf_plt_entries(headers[i]);
+            if (func_heuristics & SgAsmFunction::FUNC_EXPORT)
+                mark_export_entries(headers[i]);
         }
     }
     if (func_heuristics & SgAsmFunction::FUNC_PATTERN)
