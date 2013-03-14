@@ -198,6 +198,11 @@ message(STATUS "The ROSE SCM version Unix timestamp is ${ROSE_SCM_VERSION_UNIX_D
 set(Boost_USE_STATIC_LIBS TRUE)        
 set(Boost_DEBUG TRUE)
 
+# Honor BOOST_HOME environment variable
+if (DEFINED ENV{BOOST_HOME})
+  set (BOOST_ROOT "$ENV{BOOST_HOME}")
+endif ()
+
 if (WIN32)
 FIND_PACKAGE(Boost REQUIRED) 
 #set (Boost_INCLUDE_DIRS ${Boost_INCLUDE_DIRS}/../../ )
