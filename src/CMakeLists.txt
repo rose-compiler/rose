@@ -511,6 +511,7 @@ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/InsnSemantics
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/IntervalSemantics.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/IntervalSemantics2.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/NullSemantics2.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/MultiSemantics2.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/PartialSymbolicSemantics.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/PartialSymbolicSemantics2.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/SMTSolver.C
