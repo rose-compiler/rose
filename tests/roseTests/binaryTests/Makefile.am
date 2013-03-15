@@ -332,6 +332,15 @@ symbolicSemanticsSpeed2_SOURCES = semanticSpeed2.C
 symbolicSemanticsSpeed2_CPPFLAGS = -DPOLICY_SELECTOR=4 -DUSE_TEMPLATES=0
 symbolicSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
+# Tests speed of multi-domain semantics with and without using templates
+noinst_PROGRAMS += multiSemanticsSpeed1 multiSemanticsSpeed2
+multiSemanticsSpeed1_SOURCES = semanticSpeed2.C
+multiSemanticsSpeed1_CPPFLAGS = -DPOLICY_SELECTOR=6 -DUSE_TEMPLATES=1
+multiSemanticsSpeed1_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+multiSemanticsSpeed2_SOURCES = semanticSpeed2.C
+multiSemanticsSpeed2_CPPFLAGS = -DPOLICY_SELECTOR=6 -DUSE_TEMPLATES=0
+multiSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 # Tests speed of interval semantics with and without using templates
 noinst_PROGRAMS += intervalSemanticsSpeed1 intervalSemanticsSpeed2
 intervalSemanticsSpeed1_SOURCES = semanticSpeed2.C
@@ -342,9 +351,10 @@ intervalSemanticsSpeed2_CPPFLAGS = -DPOLICY_SELECTOR=7 -DUSE_TEMPLATES=0
 intervalSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 .PHONY: semanticSpeed
-semanticSpeed: nullSemanticsSpeed1 nullSemanticsSpeed2 \
-	       partialSymbolicSemanticsSpeed1 partialSymbolicSemanticsSpeed2 \
-	       symbolicSemanticsSpeed1 symbolicSemanticsSpeed2 \
+semanticSpeed: nullSemanticsSpeed1 nullSemanticsSpeed2				\
+	       partialSymbolicSemanticsSpeed1 partialSymbolicSemanticsSpeed2	\
+	       symbolicSemanticsSpeed1 symbolicSemanticsSpeed2			\
+	       multiSemanticsSpeed1 multiSemanticsSpeed2			\
 	       intervalSemanticsSpeed1 intervalSemanticsSpeed2
 
 # Disassembles an executable according to various command-line switches.

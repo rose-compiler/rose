@@ -400,7 +400,7 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Public allocating constructors
 public:
-    /** Static allocating constructor.  Creats a new RiscOperators object and configures it to use semantic values and states
+    /** Static allocating constructor.  Creates a new RiscOperators object and configures it to use semantic values and states
      * that are defaults for SymbolicSemantics. */
     static RiscOperatorsPtr instance(SMTSolver *solver=NULL) {
         BaseSemantics::SValuePtr protoval = SValue::instance();

@@ -56,7 +56,6 @@ SValue::print(std::ostream &output, BaseSemantics::PrintHelper *helper_) const
     /*magnitude of negative value*/
     uint64_t negative = get_width()>1 && (offset & sign_bit) ? (~offset & val_mask) + 1 : 0;
     RenameMap *helper = dynamic_cast<RenameMap*>(helper_);
-    assert(helper || !helper_);
 
     if (name!=0) {
         /* This is a named value rather than a constant. */

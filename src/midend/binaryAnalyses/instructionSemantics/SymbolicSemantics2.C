@@ -84,15 +84,16 @@ void
 SValue::print(std::ostream &o, BaseSemantics::PrintHelper *helper_) const
 {
     PrintHelper *helper = dynamic_cast<PrintHelper*>(helper_);
-    o <<"defs={";
+    o <<"{defs={";
     size_t ndefs=0;
     for (InsnSet::const_iterator di=defs.begin(); di!=defs.end(); ++di, ++ndefs) {
         SgAsmInstruction *insn = *di;
         if (insn!=NULL)
             o <<(ndefs>0?",":"") <<StringUtility::addrToString(insn->get_address());
     }
-    o <<"} expr=";
+    o <<"}, expr=";
     expr->print(o, helper);
+    o <<"}";
 }
     
 

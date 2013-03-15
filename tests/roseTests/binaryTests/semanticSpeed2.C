@@ -20,10 +20,12 @@
 #   include "PartialSymbolicSemantics.h"
 #   define MyValueType BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::ValueType
 #   define MyState     BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::State
-#   define MyPolicy    BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::Policy
+#   define MyPolicy    BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::Policy<MyState, MyValueType>
 #else
 #   include "PartialSymbolicSemantics2.h"
-    typedef PartialSymbolicSemantics::RiscOperators RiscOperators;
+    static BaseSemantics::RiscOperatorsPtr make_ops() {
+        return PartialSymbolicSemantics::RiscOperators::instance();
+    }
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -33,10 +35,12 @@
 #   include "SymbolicSemantics.h"
 #   define MyValueType BinaryAnalysis::InstructionSemantics::SymbolicSemantics::ValueType
 #   define MyState     BinaryAnalysis::InstructionSemantics::SymbolicSemantics::State
-#   define MyPolicy    BinaryAnalysis::InstructionSemantics::SymbolicSemantics::Policy
+#   define MyPolicy    BinaryAnalysis::InstructionSemantics::SymbolicSemantics::Policy<MyState, MyValueType>
 #else
 #   include "SymbolicSemantics2.h"
-    typedef SymbolicSemantics::RiscOperators RiscOperators;
+    static BaseSemantics::RiscOperatorsPtr make_ops() {
+        return SymbolicSemantics::RiscOperators::instance();
+    }
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -46,10 +50,41 @@
 #   include "NullSemantics.h"
 #   define MyValueType BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
 #   define MyState     BinaryAnalysis::InstructionSemantics::NullSemantics::State
-#   define MyPolicy    BinaryAnalysis::InstructionSemantics::NullSemantics::Policy
+#   define MyPolicy    BinaryAnalysis::InstructionSemantics::NullSemantics::Policy<MyState, MyValueType>
 #else
 #   include "NullSemantics2.h"
-    typedef NullSemantics::RiscOperators RiscOperators;
+    static BaseSemantics::RiscOperatorsPtr make_ops() {
+        return NullSemantics::RiscOperators::instance();
+    }
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#elif 6==POLICY_SELECTOR        // Multi semantics
+
+#if USE_TEMPLATES
+#   include "MultiSemantics.h"
+#   include "PartialSymbolicSemantics.h"
+#   include "SymbolicSemantics.h"
+#   include "IntervalSemantics.h"
+#   define MyMultiSemanticsClass MultiSemantics<                                                                               \
+        PartialSymbolicSemantics::ValueType, PartialSymbolicSemantics::State, PartialSymbolicSemantics::Policy,                \
+        SymbolicSemantics::ValueType, SymbolicSemantics::State, SymbolicSemantics::Policy,                                     \
+        IntervalSemantics::ValueType, IntervalSemantics::State, IntervalSemantics::Policy>
+#   define MyValueType MyMultiSemanticsClass::ValueType
+#   define MyState MyMultiSemanticsClass::State
+#   define MyPolicy MyMultiSemanticsClass::Policy<MyState, MyValueType>
+#else
+#   include "MultiSemantics2.h"
+#   include "PartialSymbolicSemantics2.h"
+#   include "SymbolicSemantics2.h"
+#   include "IntervalSemantics2.h"
+    static BaseSemantics::RiscOperatorsPtr make_ops() {
+        MultiSemantics::RiscOperatorsPtr ops = MultiSemantics::RiscOperators::instance();
+        ops->add_subdomain(PartialSymbolicSemantics::RiscOperators::instance(), "PartialSymbolic");
+        ops->add_subdomain(SymbolicSemantics::RiscOperators::instance(), "Symbolic");
+        ops->add_subdomain(IntervalSemantics::RiscOperators::instance(), "Interval");
+        return ops;
+    }
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -59,10 +94,12 @@
 #   include "IntervalSemantics.h"
 #   define MyValueType BinaryAnalysis::InstructionSemantics::IntervalSemantics::ValueType
 #   define MyState     BinaryAnalysis::InstructionSemantics::IntervalSemantics::State
-#   define MyPolicy    BinaryAnalysis::InstructionSemantics::IntervalSemantics::Policy
+#   define MyPolicy    BinaryAnalysis::InstructionSemantics::IntervalSemantics::Policy<MyState, MyValueType>
 #else
 #   include "IntervalSemantics2.h"
-    typedef IntervalSemantics::RiscOperators RiscOperators;
+    static BaseSemantics::RiscOperatorsPtr make_ops() {
+        return IntervalSemantics::RiscOperators::instance();
+    }
 #endif
 
 
@@ -114,10 +151,10 @@ main(int argc, char *argv[])
     rose_addr_t start_va = header->get_base_va() + header->get_entry_rva();
 
 #if USE_TEMPLATES
-    MyPolicy<MyState, MyValueType> operators;
-    X86InstructionSemantics<MyPolicy<MyState, MyValueType>, MyValueType> dispatcher(operators);
+    MyPolicy operators;
+    X86InstructionSemantics<MyPolicy, MyValueType> dispatcher(operators);
 #else
-    BaseSemantics::RiscOperatorsPtr operators = RiscOperators::instance();
+    BaseSemantics::RiscOperatorsPtr operators = make_ops();
     BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(operators);
 #endif
 
@@ -139,7 +176,13 @@ main(int argc, char *argv[])
 #if USE_TEMPLATES
             dispatcher.processInstruction(isSgAsmx86Instruction(insn));
             ++ninsns;
+#if 6==POLICY_SELECTOR
+            // multi-semantics ValueType has no is_known() or get_known(). We need to invoke it on a specific subpolicy.
+            PartialSymbolicSemantics::ValueType<32> ip = operators.readRegister<32>("eip")
+                                                         .get_subvalue(MyMultiSemanticsClass::SP0());
+#else
             MyValueType<32> ip = operators.readRegister<32>("eip");
+#endif
             if (!ip.is_known())
                 break;
             va = ip.known_value();
@@ -161,7 +204,14 @@ main(int argc, char *argv[])
     std::cerr <<"eax = " <<eax <<"\n";
 #else
     BaseSemantics::SValuePtr eax = operators->readRegister(dispatcher->findRegister("eax"));
+#if 6==POLICY_SELECTOR // MultiSemantics
+    // This is entirely optional, but the output looks better if it has the names of the subdomains.
+    std::cerr <<"eax = ";
+    eax->print(std::cerr, MultiSemantics::RiscOperators::promote(operators)->get_print_helper());
+    std::cerr <<"\n";
+#else
     std::cerr <<"eax = " <<*eax <<"\n";
+#endif
 #endif
 
     struct timeval stop_time;

@@ -1219,21 +1219,21 @@ public:
     /** Invoked to filter call targets.  This method is called whenever the translation object is about to invoke a function
      *  call.  The target address is passed as an argument and a (new) target should be returned. */
     virtual SValuePtr filterCallTarget(const SValuePtr &a) {
-        return a;
+        return a->copy();
     }
 
     /** Invoked to filter return targets.  This method is called whenever the translation object is about to return from a
      *  function call (such as for the x86 "RET" instruction).  The return address is passed as an argument and a (new) return
      *  address should be returned. */
     virtual SValuePtr filterReturnTarget(const SValuePtr &a) {
-        return a;
+        return a->copy();
     }
 
     /** Invoked to filter indirect jumps.  This method is called whenever the translation object is about to unconditionally
      *  jump to a new address (such as for the x86 "JMP" instruction).  The target address is passed as an argument and a (new)
      *  target address should be returned. */
     virtual SValuePtr filterIndirectJumpTarget(const SValuePtr &a) {
-        return a;
+        return a->copy();
     }
 
     /** Invoked for the x86 HLT instruction. */

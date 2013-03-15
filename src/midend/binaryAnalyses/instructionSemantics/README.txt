@@ -437,17 +437,19 @@ lists the best of three runs.
 Compiler timings were from (optimization, no-debug, no-profile)
 $ rg-make clean && time env DISTCC_HOSTS= CCACHE_DISABLE=yes make ...
 
-                               Using      Compile  Executable  Virtual   Run speed
-Program                        templates? time (s)  size (MB)  size (MB) (insn/s)
+                               API        Compile  Executable  Virtual   Run speed
+Program                        version    time (s)  size (MB)  size (MB) (insn/s)
 ------------------------------ ---------- -------- ---------- ---------- ----------
-nullSemanticsSpeed1               yes       9.255         4.8            10,500,800
-nullSemanticsSpeed2                no       7.806         4.7             1,813,380
-partialSymbolicSemanticsSpeed1    yes      15.399         5.7       193   2,332,060
-partialSymbolicSemanticsSpeed2     no       7.685         4.7       193     948,840
-symbolicSemanticsSpeed1           yes      29.330         8.0       194      53,137
-symbolicSemanticsSpeed2            no       7.633         4.7       193     136,210
-intervalSemanticsSpeed1           yes      26.849         7.0       193     258,723
-intervalSemanticsSpeed2            no       8.053         4.7       193     255,855
+nullSemanticsSpeed1               old       9.255         4.8            10,500,800
+nullSemanticsSpeed2               new       7.806         4.7             1,813,380
+partialSymbolicSemanticsSpeed1    old      15.399         5.7       193   2,332,060
+partialSymbolicSemanticsSpeed2    new       7.685         4.7       193     948,840
+symbolicSemanticsSpeed1           old      29.330         8.0       194      53,137
+symbolicSemanticsSpeed2           new       7.633         4.7       193     136,210
+intervalSemanticsSpeed1           old      26.849         7.0       193     258,723
+intervalSemanticsSpeed2           new       8.053         4.7       193     255,855
+multiSemantics1                   old      47.329        12         112      30,392
+multiSemantics2                   new       8.005         4.9       111      36,112
 
 Progress made for increasing performance of the non-template design
 running partialSymbolicSemantics for 60 seconds, measured in x86
