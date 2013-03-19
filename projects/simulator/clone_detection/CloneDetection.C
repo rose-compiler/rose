@@ -10,6 +10,13 @@
 #include "BinaryPointerDetection.h"
 #include "YicesSolver.h"
 
+// We'd like to not have to depend on a particular relational database management system, but ROSE doesn't have
+// support for anything like ODBC.  The only other options are either to generate SQL output, which precludes being
+// able to perform queries, or using sqlite3x.h, which is distributed as part of ROSE.  If you want to use a RDMS other
+// than SQLite3, then dump SQL from the generated SQLite3 database and load it into whatever RDMS you want.
+#include "sqlite3x.h"
+using namespace sqlite3x; // its top-level class name start with "sqlite3_"
+
 /*******************************************************************************************************************************
  *                                      Partition Forest
  *******************************************************************************************************************************/
@@ -165,28 +172,46 @@ public:
     }
 
     /** Dump the output sets to the DBMS. (FIXME: dumping SQL to a file instead; see dump())*/
-    void dump_outputsets(std::ostream &dbc) const {
+    void dump_outputsets(sqlite3_connection &sqlite) const {
+        sqlite3_command cmd1(sqlite, "insert into semantic_outputsets (id) values (?)");
+        sqlite3_command cmd2(sqlite, "insert into semantic_outputvalues (outputset_id, val) values (?, ?)");
         for (size_t i=0; i<levels.size(); ++i) {
             for (Vertices::const_iterator vi=levels[i].vertices.begin(); vi!=levels[i].vertices.end(); ++vi) {
-                dbc <<"insert into outputsets (id) values (" <<(*vi)->id <<");\n";
-                for (OutputValues::const_iterator ni=(*vi)->outputs.begin(); ni!=(*vi)->outputs.end(); ++ni)
-                    dbc <<"insert into outputvalues (outputset_id, val) values (" <<(*vi)->id <<", " <<*ni <<");\n";
+                cmd1.bind(1, (*vi)->id);
+                cmd1.executenonquery();
+                for (OutputValues::const_iterator ni=(*vi)->outputs.begin(); ni!=(*vi)->outputs.end(); ++ni) {
+                    cmd2.bind(1, (*vi)->id);
+                    cmd2.bind(2, (*ni));
+                    cmd2.executenonquery();
+                }
             }
         }
     }
 
     /** Dump inputsets to the DBMS. (FIXME: dumping SQL to a file instead; see dump()) */
-    void dump_inputsets(std::ostream &dbc) const {
+    void dump_inputsets(sqlite3_connection &sqlite) const {
+        sqlite3_command cmd1(sqlite, "insert into semantic_inputsets (id) values (?)");
+        sqlite3_command cmd2(sqlite, "insert into semantic_inputvalues (inputset_id, vtype, pos, val) values (?, ?, ?, ?)");
+
         for (size_t i=0; i<levels.size(); ++i) {
-            dbc <<"insert into inputsets (id) values(" <<i <<");\n";
+            cmd1.bind(1, i);
+            cmd1.executenonquery();
             const std::vector<uint64_t> &pointers = levels[i].inputs.get_pointers();
-            for (size_t j=0; j<pointers.size(); ++j)
-                dbc <<"insert into inputvalues (inputset_id, vtype, pos, val)"
-                    <<" values (" <<i <<", 'P', " <<j <<", " <<pointers[j] <<");\n";
+            for (size_t j=0; j<pointers.size(); ++j) {
+                cmd2.bind(1, i);
+                cmd2.bind(2, "P");
+                cmd2.bind(3, j);
+                cmd2.bind(4, pointers[j]);
+                cmd2.executenonquery();
+            }
             const std::vector<uint64_t> &integers = levels[i].inputs.get_integers();
-            for (size_t j=0; j<integers.size(); ++j)
-                dbc <<"insert into inputvalues (inputset_id, vtype, pos, val)"
-                    <<" values (" <<i <<", 'N', " <<j <<", " <<integers[j] <<");\n";
+            for (size_t j=0; j<integers.size(); ++j) {
+                cmd2.bind(1, i);
+                cmd2.bind(2, "N");
+                cmd2.bind(3, j);
+                cmd2.bind(4, integers[j]);
+                cmd2.executenonquery();
+            }
         }
     }
 
@@ -198,27 +223,47 @@ public:
      *  Therefore, the @p user_name and @p password arguments are unused, and @p server_name is the name of the file to which
      *  the SQL statements are written. */
     void dump(const std::string &server_name, const std::string &user_name, const std::string &password) {
-        std::ofstream dbc(server_name.c_str());
-        dbc <<"begin transaction;\n";
+        if (-1==access(server_name.c_str(), F_OK)) {
+            // SQLite3 database does not exist; load the schema from a file, which has been incorporated into this binary
+            extern const char *clone_detection_schema; // see CloneDetectionSchema.C in the build directory
+            FILE *f = popen(("sqlite3 " + server_name).c_str(), "w");
+            assert(f!=NULL);
+            fputs(clone_detection_schema, f);
+            fclose(f);
+        }
+
+        sqlite3_connection sqlite;
+        sqlite.open(server_name.c_str());
+
         renumber_vertices();
-        dump_outputsets(dbc);
-        dump_inputsets(dbc);
+        dump_outputsets(sqlite);
+        dump_inputsets(sqlite);
 
         Vertices leaves = get_leaves();
         size_t leafnum = 0;
 
+        sqlite3_command cmd1(sqlite, "insert into semantic_simsets (id) values (?)");
+        sqlite3_command cmd2(sqlite, "insert into semantic_functions (entry_va, simset_id, funcname) values (?, ?, ?)");
+        sqlite3_command cmd3(sqlite, "insert into semantic_inoutpairs (simset_id, inputset_id, outputset_id) values (?, ?, ?)");
+
         for (Vertices::const_iterator vi=leaves.begin(); vi!=leaves.end(); ++vi, ++leafnum) {
             Vertex *vertex = *vi;
             const Functions &functions = vertex->get_functions();
-            dbc <<"insert into simsets (id) values (" <<leafnum <<");\n";
-
-            for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi)
-                dbc <<"insert into functions (entry_va, simset_id) values (" <<(*fi)->get_entry_va() <<", " <<leafnum <<");\n";
-            for (Vertex *v=vertex; v; v=v->parent)
-                dbc <<"insert into inoutpairs (simset_id, inputset_id, outputset_id) values ("
-                    <<leafnum <<", " <<v->get_level() <<", " <<v->id <<");\n";
+            cmd1.bind(1, leafnum);
+            cmd1.executenonquery();
+            for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+                cmd2.bind(1, (*fi)->get_entry_va());
+                cmd2.bind(2, leafnum);
+                cmd2.bind(3, (*fi)->get_name());
+                cmd2.executenonquery();
+            }
+            for (Vertex *v=vertex; v; v=v->parent) {
+                cmd3.bind(1, leafnum);
+                cmd3.bind(2, v->get_level());
+                cmd3.bind(3, v->id);
+                cmd3.executenonquery();
+            }
         }
-        dbc <<"commit;\n";
     }
         
     std::string toString() const {
@@ -475,26 +520,8 @@ public:
                 m->mesg("%s:     0x%08"PRIx64" <%s>", name, (*fi)->get_entry_va(), (*fi)->get_name().c_str());
         }
 
-        partition.dump("clones.sql", "NO_USER", "NO_PASSWD");
-        if (sqlite3_from_sql("clones.db", "clones.sql")) {
-            m->mesg("%s: final similarity sets have been saved in clones.db, an SQLite database", name);
-        } else {
-            m->mesg("%s: could not create SQLite database \"clones.db\"", name);
-            m->mesg("%s: SQL has been saved in \"clones.sql\"; the schema is \"%s\"", name,
-                    (ROSE_AUTOMAKE_TOP_SRCDIR + "/projects/simulator/clone_detection/Schema.sql").c_str());;
-        }
-    }
-
-    static bool sqlite3_from_sql(const std::string &dbname, const std::string &sqlname) {
-        (void) unlink(dbname.c_str());
-        FILE *f = popen(("sqlite3 "+dbname).c_str(), "w");
-        if (!f)
-            return false;
-        extern const char *clone_detection_schema; // see CloneDetectionSchema.C in the build directory
-        fputs(clone_detection_schema, f);
-        fclose(f);
-        std::string cmd = "sqlite3 "+dbname+" <"+sqlname;
-        return 0==system(cmd.c_str());
+        partition.dump("clones.db", "NO_USER", "NO_PASSWD");
+        m->mesg("%s: final similarity sets have been saved in clones.db, an SQLite database", name);
     }
 };
 
