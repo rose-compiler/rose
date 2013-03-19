@@ -118,6 +118,7 @@ namespace sqlite3x {
                 sqlite3_command(sqlite3_connection &con, const std::wstring &sql);
                 ~sqlite3_command();
 
+                // WARNING: 'index' is 1-origin!!                               [Robb P. Matzke 2013-03-18]
                 void bind(int index);
                 void bind(int index, int data);
                 void bind(int index, long long data);
@@ -127,6 +128,10 @@ namespace sqlite3x {
                 void bind(int index, const void *data, int datalen);
                 void bind(int index, const std::string &data);
                 void bind(int index, const std::wstring &data);
+                // Robb uses unsigned types almost exclusively
+                void bind(int index, unsigned data) { bind(index, (long long)data); }
+                void bind(int index, unsigned long long data) { bind(index, (long long)data); } // possible overflow to negative
+                void bind(int index, size_t data) { bind(index, (long long)data); }
 
                 sqlite3_reader executereader();
                 void executenonquery();
