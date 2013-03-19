@@ -303,12 +303,13 @@ void createVectorsRespectingFunctionBoundaries(SgNode* top, const std::string& f
 	// if( addedVectors == true )
 	{
 		try{
-		  string query = "INSERT into function_ids(file,function_name) VALUES(?,?) ";
+		  string query = "INSERT into function_ids(file,function_name,entry_va) VALUES(?,?,?) ";
 
 		  sqlite3_command cmd(con, query /* selectQuery.str() */ );
 
 		  cmd.bind(1, filename);
 		  cmd.bind(2, funcs[i]->get_name() );
+                  cmd.bind(3, (long long)funcs[i]->get_entry_va());
 		  cmd.executenonquery();
 		} catch(exception &ex) {
 		  cerr << "Exception Occurred: " << ex.what() << endl;
@@ -410,7 +411,7 @@ void createDatabases(sqlite3_connection& con) {
   }
 
   try {
-	  con.executenonquery("create table IF NOT EXISTS function_ids(row_number INTEGER PRIMARY KEY, file TEXT, function_name TEXT)");
+	  con.executenonquery("create table IF NOT EXISTS function_ids(row_number INTEGER PRIMARY KEY, file TEXT, function_name TEXT, entry_va integer)");
   }
   catch(exception &ex) {
 	cerr << "Exception Occurred: " << ex.what() << endl;
