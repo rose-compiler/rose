@@ -4,118 +4,195 @@
 
 #define __STDC_FORMAT_MACROS
 #include "rose.h"
-#include "findConstants.h"
-#include "IntervalSemantics.h"
-#include "PartialSymbolicSemantics.h"
-#include "SymbolicSemantics.h"
-#include "YicesSolver.h"
-#include "NullSemantics.h"
-#include "MultiSemantics.h"
 #include <set>
 #include <inttypes.h>
 
-using namespace BinaryAnalysis::InstructionSemantics;
+// SEMANTIC_DOMAIN values
+#define NULL_DOMAIN 1
+#define PARTSYM_DOMAIN 2
+#define SYMBOLIC_DOMAIN 3
+#define INTERVAL_DOMAIN 4
+#define MULTI_DOMAIN 5
+#define FINDCONST_DOMAIN 6
+#define FINDCONSTABI_DOMAIN 7
 
-#if 1==POLICY_SELECTOR
-#   define TestValueTemplate XVariablePtr
-    struct TestPolicy: public FindConstantsPolicy {
-        void startInstruction(SgAsmInstruction *insn) {
-            addr = insn->get_address();
-            newIp = number<32>(addr);
-            if (rsets.find(addr)==rsets.end())
-                rsets[addr].setToBottom();
-            cur_state = rsets[addr];
-            currentInstruction = isSgAsmx86Instruction(insn);
-        }
-        void dump(SgAsmInstruction *insn) {
-            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
-                      <<cur_state
-                      <<"    ip = " <<newIp <<"\n";
-        }
-    };
+// SMT_SOLVER values
+#define NO_SOLVER 0
+#define YICES_LIB 1
+#define YICES_EXE 2
 
-#elif  2==POLICY_SELECTOR
-#   define TestValueTemplate XVariablePtr
-    struct TestPolicy: public FindConstantsABIPolicy {
-        void startInstruction(SgAsmInstruction *insn) {
-            addr = insn->get_address();
-            newIp = number<32>(addr);
-            if (rsets.find(addr)==rsets.end())
-                rsets[addr].setToBottom();
-            cur_state = rsets[addr];
-            currentInstruction = isSgAsmx86Instruction(insn);
-        }
-        void dump(SgAsmInstruction *insn) {
-            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
-                      <<cur_state
-                      <<"    ip = " <<newIp <<"\n";
-        }
-    };
-#elif  3==POLICY_SELECTOR
-#   define TestSemanticsScope PartialSymbolicSemantics
-#   define TestValueTemplate PartialSymbolicSemantics::ValueType
-    struct TestPolicy: public PartialSymbolicSemantics::Policy<> {
-        void dump(SgAsmInstruction *insn) {
-            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
-                      <<get_state()
-                      <<"    ip = " <<get_ip() <<"\n";
-        }
-    };
-#elif  4==POLICY_SELECTOR
-#   define TestSemanticsScope SymbolicSemantics
-#   define TestValueTemplate SymbolicSemantics::ValueType
-    struct TestPolicy: public SymbolicSemantics::Policy<> {
-        TestPolicy() {
-#           if 1==SOLVER_SELECTOR
-                YicesSolver *solver = new YicesSolver;
-                solver->set_linkage(YicesSolver::LM_EXECUTABLE);
-                set_solver(solver);
-#           elif 2==SOLVER_SELECTOR
-                YicesSolver *solver = new YicesSolver;
-                solver->set_linkage(YicesSolver::LM_LIBRARY);
-                set_solver(solver);
-#           endif
-                //solver->set_debug(stderr);
-        }
-        void dump(SgAsmInstruction *insn) {
-            std::cout <<unparseInstructionWithAddress(insn) <<"\n";
-            print(std::cout, "    ");
-        }
-    };
-#elif 5==POLICY_SELECTOR
-#   define TestSemanticsScope NullSemantics
-#   define TestValueTemplate NullSemantics::ValueType
-    struct TestPolicy: public NullSemantics::Policy<> {
-        void dump(SgAsmInstruction *insn) {
-            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
-                      <<"    null state\n";
-        }
-    };
-#elif 6==POLICY_SELECTOR
-#   define TestSemanticsScope MultiSemantics<                                                                                  \
-        PartialSymbolicSemantics::ValueType, PartialSymbolicSemantics::State, PartialSymbolicSemantics::Policy,                \
-        SymbolicSemantics::ValueType, SymbolicSemantics::State, SymbolicSemantics::Policy                                      \
-        >
-#   define TestValueTemplate TestSemanticsScope::ValueType
-    struct TestPolicy: public TestSemanticsScope::Policy<TestSemanticsScope::State, TestSemanticsScope::ValueType> {
-        void dump(SgAsmInstruction *insn) {
-            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
-                      <<*this;
-        }
-    };
-#elif 7==POLICY_SELECTOR
-#   define TestSemanticsScope IntervalSemantics
-#   define TestValueTemplate IntervalSemantics::ValueType
-    struct TestPolicy: public IntervalSemantics::Policy<> {
-        void dump(SgAsmInstruction *insn) {
-            std::cout <<unparseInstructionWithAddress(insn) <<"\n"
-                      <<get_state();
-        }
-    };
+#if !defined(SEMANTIC_API)
+#   error "SEMANTIC_API must be defined on the compiler command line"
+#elif SEMANTIC_API == 1
+#   include "x86InstructionSemantics.h"
+    using namespace BinaryAnalysis::InstructionSemantics;
+#elif SEMANTIC_API == 2
+#   include "DispatcherX86.h"
+    using namespace BinaryAnalysis::InstructionSemantics2;
 #else
-#error "Invalid policy selector"
+#   error "invalid value for SEMANTIC_API"
 #endif
-typedef X86InstructionSemantics<TestPolicy, TestValueTemplate> Semantics;
+
+#if !defined(SMT_SOLVER) || SMT_SOLVER == NO_SOLVER
+#   include "SMTSolver.h"
+    SMTSolver *make_solver() { return NULL; }
+#elif SMT_SOLVER == YICES_LIB
+#   include "YicesSolver.h"
+    SMTSolver *make_solver() {
+        YicesSolver *solver = new YicesSolver;
+        solver->set_linkage(YicesSolver::LM_LIBRARY);
+        return solver;
+    }
+#elif SMT_SOLVER == YICES_EXE
+#   include "YicesSolver.h"
+    SMTSolver *make_solver() {
+        YicesSolver *solver = new YicesSolver;
+        solver->set_linkage(YicesSolver::LM_EXECUTABLE);
+        return solver;
+    }
+#else
+#   error "invalid value for SMT_SOLVER"
+#endif
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#if SEMANTIC_DOMAIN == NULL_DOMAIN
+
+#if SEMANTIC_API == 1
+#   include "NullSemantics.h"
+#   define MyValueType BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
+#   define MyState     BinaryAnalysis::InstructionSemantics::NullSemantics::State
+#   define MyPolicy    BinaryAnalysis::InstructionSemantics::NullSemantics::Policy<MyState, MyValueType>
+#else
+#   include "NullSemantics2.h"
+    static BaseSemantics::RiscOperatorsPtr make_ops() {
+        return NullSemantics::RiscOperators::instance();
+    }
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#elif  SEMANTIC_DOMAIN == PARTSYM_DOMAIN
+#if SEMANTIC_API == 1
+#   include "PartialSymbolicSemantics.h"
+#   define MyValueType BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::ValueType
+#   define MyState     BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::State
+#   define MyPolicy    BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::Policy<MyState, MyValueType>
+#else
+#   include "PartialSymbolicSemantics2.h"
+    static BaseSemantics::RiscOperatorsPtr make_ops() {
+        return PartialSymbolicSemantics::RiscOperators::instance();
+    }
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#elif  SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
+
+#if SEMANTIC_API == 1
+#   include "SymbolicSemantics.h"
+#   define MyValueType BinaryAnalysis::InstructionSemantics::SymbolicSemantics::ValueType
+#   define MyState     BinaryAnalysis::InstructionSemantics::SymbolicSemantics::State
+#   define MyPolicy    BinaryAnalysis::InstructionSemantics::SymbolicSemantics::Policy<MyState, MyValueType>
+#else
+#   include "SymbolicSemantics2.h"
+    static BaseSemantics::RiscOperatorsPtr make_ops() {
+        return SymbolicSemantics::RiscOperators::instance();
+    }
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#elif SEMANTIC_DOMAIN == INTERVAL_DOMAIN
+#if SEMANTIC_API == 1
+#   include "IntervalSemantics.h"
+#   define MyValueType BinaryAnalysis::InstructionSemantics::IntervalSemantics::ValueType
+#   define MyState     BinaryAnalysis::InstructionSemantics::IntervalSemantics::State
+#   define MyPolicy    BinaryAnalysis::InstructionSemantics::IntervalSemantics::Policy<MyState, MyValueType>
+#else
+#   include "IntervalSemantics2.h"
+    static BaseSemantics::RiscOperatorsPtr make_ops() {
+        return IntervalSemantics::RiscOperators::instance();
+    }
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#elif SEMANTIC_DOMAIN == MULTI_DOMAIN
+#if SEMANTIC_API == 1
+#   include "MultiSemantics.h"
+#   include "PartialSymbolicSemantics.h"
+#   include "SymbolicSemantics.h"
+#   include "IntervalSemantics.h"
+#   define MyMultiSemanticsClass MultiSemantics<                                                                               \
+        PartialSymbolicSemantics::ValueType, PartialSymbolicSemantics::State, PartialSymbolicSemantics::Policy,                \
+        SymbolicSemantics::ValueType, SymbolicSemantics::State, SymbolicSemantics::Policy,                                     \
+        IntervalSemantics::ValueType, IntervalSemantics::State, IntervalSemantics::Policy>
+#   define MyValueType MyMultiSemanticsClass::ValueType
+#   define MyState MyMultiSemanticsClass::State
+#   define MyPolicy MyMultiSemanticsClass::Policy<MyState, MyValueType>
+#else
+#   include "MultiSemantics2.h"
+#   include "PartialSymbolicSemantics2.h"
+#   include "SymbolicSemantics2.h"
+#   include "IntervalSemantics2.h"
+    static BaseSemantics::RiscOperatorsPtr make_ops() {
+        MultiSemantics::RiscOperatorsPtr ops = MultiSemantics::RiscOperators::instance();
+        ops->add_subdomain(PartialSymbolicSemantics::RiscOperators::instance(), "PartialSymbolic");
+        ops->add_subdomain(SymbolicSemantics::RiscOperators::instance(), "Symbolic");
+        ops->add_subdomain(IntervalSemantics::RiscOperators::instance(), "Interval");
+        return ops;
+    }
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#elif SEMANTIC_DOMAIN == FINDCONST_DOMAIN
+
+#if SEMANTIC_API == 1
+#   include "findConstants.h"
+#   define MyValueType XVariablePtr
+    struct MyPolicy: public FindConstantsPolicy {
+        void startInstruction(SgAsmInstruction *insn) {
+            addr = insn->get_address();
+            newIp = number<32>(addr);
+            if (rsets.find(addr)==rsets.end())
+                rsets[addr].setToBottom();
+            cur_state = rsets[addr];
+            currentInstruction = isSgAsmx86Instruction(insn);
+        }
+        void print(std::ostream &out) {
+            out <<cur_state <<"    ip = " <<newIp <<"\n";
+        }
+    };
+
+#else
+#   error "FindConstantsPolicy has no counterpart in the new InstructionSemantics2 API"
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#elif  SEMANTIC_DOMAIN == FINDCONSTABI_DOMAIN
+
+#if SEMANTIC_API == 1
+#   include "findConstants.h"
+#   define MyValueType XVariablePtr
+    struct MyPolicy: public FindConstantsABIPolicy {
+        void startInstruction(SgAsmInstruction *insn) {
+            addr = insn->get_address();
+            newIp = number<32>(addr);
+            if (rsets.find(addr)==rsets.end())
+                rsets[addr].setToBottom();
+            cur_state = rsets[addr];
+            currentInstruction = isSgAsmx86Instruction(insn);
+        }
+        void print(std::ostream &out) {
+            out <<cur_state <<"    ip = " <<newIp <<"\n";
+        }
+    };
+
+#else
+#   error "FindConstantsABIPolicy has no counterpart in the new InstructionSematnics2 API"
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#else
+#error "invalid value for SEMANTIC_DOMAIN"
+#endif
 
 
 /* Analyze a single interpretation a block at a time */
@@ -141,9 +218,18 @@ analyze_interp(SgAsmInterpretation *interp)
         SgAsmx86Instruction *insn = si->second;
         insns.erase(si);
 
-        TestPolicy policy;
-        Semantics semantics(policy);
-
+#if SEMANTIC_API == 1
+        typedef X86InstructionSemantics<MyPolicy, MyValueType> MyDispatcher;
+        MyPolicy operators;
+        MyDispatcher dispatcher(operators);
+#if SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
+        operators.set_solver(make_solver());
+#endif
+#else
+        typedef BaseSemantics::DispatcherPtr MyDispatcher;
+        BaseSemantics::RiscOperatorsPtr operators = make_ops();
+        MyDispatcher dispatcher = DispatcherX86::instance(operators);
+#endif
 
         /* Perform semantic analysis for each instruction in this block. The block ends when we no longer know the value of
          * the instruction pointer or the instruction pointer refers to an instruction that doesn't exist or which has already
@@ -151,13 +237,19 @@ analyze_interp(SgAsmInterpretation *interp)
         while (1) {
             /* Analyze current instruction */
             try {
-                semantics.processInstruction(insn);
-                policy.dump(insn);
-            } catch (const Semantics::Exception &e) {
+                std::cout <<unparseInstructionWithAddress(insn) <<"\n";
+#if SEMANTIC_API == 1
+                dispatcher.processInstruction(insn);
+                operators.print(std::cout);
+#else
+                dispatcher->processInstruction(insn);
+                std::cout <<*operators;
+#endif
+            } catch (const MyDispatcher::Exception &e) {
                 std::cout <<e <<"\n";
                 break;
-#if 3==POLICY_SELECTOR
-            } catch (const TestPolicy::Exception &e) {
+#if SEMANTIC_DOMAIN == PARTSYM_DOMAIN
+            } catch (const MyPolicy::Exception &e) {
                 std::cout <<e <<"\n";
                 break;
 #endif
@@ -171,21 +263,22 @@ analyze_interp(SgAsmInterpretation *interp)
                 break;
 
             /* Get next instruction of this block */
-#if 3==POLICY_SELECTOR || 4==POLICY_SELECTOR
-            TestValueTemplate<32> ip = policy.get_ip();
+#if SEMANTIC_DOMAIN == PARTSYM_DOMAIN || SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
+            MyValueType<32> ip = operators.get_ip();
             if (!ip.is_known()) break;
             rose_addr_t next_addr = ip.known_value();
-#elif 5==POLICY_SELECTOR || 7==POLICY_SELECTOR
-            TestValueTemplate<32> ip = policy.readRegister<32>(semantics.REG_EIP);
+#elif SEMANTIC_DOMAIN == NULL_DOMAIN || SEMANTIC_DOMAIN == INTERVAL_DOMAIN
+            MyValueType<32> ip = operators.readRegister<32>(dispatcher.REG_EIP);
             if (!ip.is_known()) break;
             rose_addr_t next_addr = ip.known_value();
-#elif 6==POLICY_SELECTOR
-            TestValueTemplate<32> ip = policy.readRegister<32>(semantics.REG_EIP);
-            if (!ip.get_subvalue(TestSemanticsScope::SP0()).is_known()) break;
-            rose_addr_t next_addr = ip.get_subvalue(TestSemanticsScope::SP0()).known_value();
+#elif SEMANTIC_DOMAIN == MULTI_DOMAIN
+            PartialSymbolicSemantics::ValueType<32> ip = operators.readRegister<32>(dispatcher.REG_EIP)
+                                                         .get_subvalue(MyMultiSemanticsClass::SP0());
+            if (!ip.is_known()) break;
+            rose_addr_t next_addr = ip.known_value();
 #else
-            if (policy.newIp->get().name) break;
-            rose_addr_t next_addr = policy.newIp->get().offset;
+            if (operators.newIp->get().name) break;
+            rose_addr_t next_addr = operators.newIp->get().offset;
 #endif
             si = insns.find(next_addr);
             if (si==insns.end()) break;

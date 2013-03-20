@@ -3,7 +3,13 @@
 #include <signal.h>
 #include <time.h>
 
-#if USE_TEMPLATES
+#define NULL_DOMAIN 1
+#define PARTSYM_DOMAIN 2
+#define SYMBOLIC_DOMAIN 3
+#define INTERVAL_DOMAIN 4
+#define MULTI_DOMAIN 5
+
+#if SEMANTIC_API == 1
 #   include "x86InstructionSemantics.h"
     using namespace BinaryAnalysis::InstructionSemantics;
 #else
@@ -14,39 +20,9 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#if 3==POLICY_SELECTOR          // Partial symbolic semantics
+#if SEMANTIC_DOMAIN == NULL_DOMAIN
 
-#if USE_TEMPLATES
-#   include "PartialSymbolicSemantics.h"
-#   define MyValueType BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::ValueType
-#   define MyState     BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::State
-#   define MyPolicy    BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::Policy<MyState, MyValueType>
-#else
-#   include "PartialSymbolicSemantics2.h"
-    static BaseSemantics::RiscOperatorsPtr make_ops() {
-        return PartialSymbolicSemantics::RiscOperators::instance();
-    }
-#endif
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#elif 4==POLICY_SELECTOR        // Symbolic semantics
-
-#if USE_TEMPLATES
-#   include "SymbolicSemantics.h"
-#   define MyValueType BinaryAnalysis::InstructionSemantics::SymbolicSemantics::ValueType
-#   define MyState     BinaryAnalysis::InstructionSemantics::SymbolicSemantics::State
-#   define MyPolicy    BinaryAnalysis::InstructionSemantics::SymbolicSemantics::Policy<MyState, MyValueType>
-#else
-#   include "SymbolicSemantics2.h"
-    static BaseSemantics::RiscOperatorsPtr make_ops() {
-        return SymbolicSemantics::RiscOperators::instance();
-    }
-#endif
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#elif 5==POLICY_SELECTOR        // Null semantics
-
-#if USE_TEMPLATES
+#if SEMANTIC_API == 1
 #   include "NullSemantics.h"
 #   define MyValueType BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
 #   define MyState     BinaryAnalysis::InstructionSemantics::NullSemantics::State
@@ -59,9 +35,54 @@
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#elif 6==POLICY_SELECTOR        // Multi semantics
+#elif SEMANTIC_DOMAIN == PARTSYM_DOMAIN
 
-#if USE_TEMPLATES
+#if SEMANTIC_API == 1
+#   include "PartialSymbolicSemantics.h"
+#   define MyValueType BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::ValueType
+#   define MyState     BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::State
+#   define MyPolicy    BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::Policy<MyState, MyValueType>
+#else
+#   include "PartialSymbolicSemantics2.h"
+    static BaseSemantics::RiscOperatorsPtr make_ops() {
+        return PartialSymbolicSemantics::RiscOperators::instance();
+    }
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#elif SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
+
+#if SEMANTIC_API == 1
+#   include "SymbolicSemantics.h"
+#   define MyValueType BinaryAnalysis::InstructionSemantics::SymbolicSemantics::ValueType
+#   define MyState     BinaryAnalysis::InstructionSemantics::SymbolicSemantics::State
+#   define MyPolicy    BinaryAnalysis::InstructionSemantics::SymbolicSemantics::Policy<MyState, MyValueType>
+#else
+#   include "SymbolicSemantics2.h"
+    static BaseSemantics::RiscOperatorsPtr make_ops() {
+        return SymbolicSemantics::RiscOperators::instance();
+    }
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#elif SEMANTIC_DOMAIN == INTERVAL_DOMAIN
+
+#if SEMANTIC_API == 1
+#   include "IntervalSemantics.h"
+#   define MyValueType BinaryAnalysis::InstructionSemantics::IntervalSemantics::ValueType
+#   define MyState     BinaryAnalysis::InstructionSemantics::IntervalSemantics::State
+#   define MyPolicy    BinaryAnalysis::InstructionSemantics::IntervalSemantics::Policy<MyState, MyValueType>
+#else
+#   include "IntervalSemantics2.h"
+    static BaseSemantics::RiscOperatorsPtr make_ops() {
+        return IntervalSemantics::RiscOperators::instance();
+    }
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#elif SEMANTIC_DOMAIN == MULTI_DOMAIN
+
+#if SEMANTIC_API == 1
 #   include "MultiSemantics.h"
 #   include "PartialSymbolicSemantics.h"
 #   include "SymbolicSemantics.h"
@@ -88,24 +109,8 @@
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#elif 7==POLICY_SELECTOR        // Interval semantics
-
-#if USE_TEMPLATES
-#   include "IntervalSemantics.h"
-#   define MyValueType BinaryAnalysis::InstructionSemantics::IntervalSemantics::ValueType
-#   define MyState     BinaryAnalysis::InstructionSemantics::IntervalSemantics::State
-#   define MyPolicy    BinaryAnalysis::InstructionSemantics::IntervalSemantics::Policy<MyState, MyValueType>
 #else
-#   include "IntervalSemantics2.h"
-    static BaseSemantics::RiscOperatorsPtr make_ops() {
-        return IntervalSemantics::RiscOperators::instance();
-    }
-#endif
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#else
-#error "Invalid policy selector"
+#error "Invalid semantic domain"
 #endif
 
 static const unsigned timeout = 60;      // approximate maximum time for test to run.
@@ -150,7 +155,7 @@ main(int argc, char *argv[])
     SgAsmGenericHeader *header = interp->get_headers()->get_headers().front();
     rose_addr_t start_va = header->get_base_va() + header->get_entry_rva();
 
-#if USE_TEMPLATES
+#if SEMANTIC_API == 1
     MyPolicy operators;
     X86InstructionSemantics<MyPolicy, MyValueType> dispatcher(operators);
 #else
@@ -173,10 +178,10 @@ main(int argc, char *argv[])
         rose_addr_t va = start_va;
         while (SgAsmInstruction *insn = insns.fetch(va)) {
             //std::cerr <<unparseInstructionWithAddress(insn) <<"\n";
-#if USE_TEMPLATES
+#if SEMANTIC_API == 1
             dispatcher.processInstruction(isSgAsmx86Instruction(insn));
             ++ninsns;
-#if 6==POLICY_SELECTOR
+#if SEMANTIC_DOMAIN == MULTI_DOMAIN
             // multi-semantics ValueType has no is_known() or get_known(). We need to invoke it on a specific subpolicy.
             PartialSymbolicSemantics::ValueType<32> ip = operators.readRegister<32>("eip")
                                                          .get_subvalue(MyMultiSemanticsClass::SP0());
@@ -199,12 +204,12 @@ main(int argc, char *argv[])
         }
     }
 
-#if USE_TEMPLATES
+#if SEMANTIC_API == 1
     MyValueType<32> eax = operators.readRegister<32>("eax");
     std::cerr <<"eax = " <<eax <<"\n";
 #else
     BaseSemantics::SValuePtr eax = operators->readRegister(dispatcher->findRegister("eax"));
-#if 6==POLICY_SELECTOR // MultiSemantics
+#if SEMANTIC_DOMAIN == MULTI_DOMAIN
     // This is entirely optional, but the output looks better if it has the names of the subdomains.
     std::cerr <<"eax = ";
     eax->print(std::cerr, MultiSemantics::RiscOperators::promote(operators)->get_print_helper());

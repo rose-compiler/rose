@@ -193,170 +193,6 @@ noinst_PROGRAMS += subDominance
 subDominance_SOURCES = subDominance.C
 subDominance_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
-# Finds constant values and propagates them across instructions
-noinst_PROGRAMS += findConstants
-findConstants_SOURCES = semantics.C
-findConstants_CPPFLAGS = -DPOLICY_SELECTOR=1
-findConstants_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-STATIC_TEST_TARGETS += findConstants.passed
-EXTRA_DIST += semantics.conf findConstants.ans
-findConstants.passed: semantics.conf findConstants
-	@$(RTH_RUN) CMD=findConstants INPUT=i686-test1.O3.bin $< $@
-
-
-# Finds constant values and propagates them across instructions using an ABI
-noinst_PROGRAMS += findConstantsABI
-findConstantsABI_SOURCES = semantics.C
-findConstantsABI_CPPFLAGS = -DPOLICY_SELECTOR=2
-findConstantsABI_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-STATIC_TEST_TARGETS += findConstantsABI.passed
-EXTRA_DIST += semantics.conf findConstantsABI.ans
-findConstantsABI.passed: semantics.conf findConstantsABI
-	@$(RTH_RUN) CMD=findConstantsABI INPUT=i686-test1.O3.bin $< $@
-
-
-# Uses PartialSymbolicSemantics semantic analysis policy
-noinst_PROGRAMS += partialSymbolicSemantics
-partialSymbolicSemantics_SOURCES = semantics.C
-partialSymbolicSemantics_CPPFLAGS = -DPOLICY_SELECTOR=3
-partialSymbolicSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-STATIC_TEST_TARGETS += partialSymbolicSemantics.passed
-EXTRA_DIST += semantics.conf partialSymbolicSemantics.ans
-partialSymbolicSemantics.passed: semantics.conf partialSymbolicSemantics
-	@$(RTH_RUN) CMD=partialSymbolicSemantics INPUT=i686-test1.O3.bin $< $@
-
-
-# Use SymbolicSemantics semantic analysis policy
-noinst_PROGRAMS += symbolicSemantics
-symbolicSemantics_SOURCES = semantics.C
-symbolicSemantics_CPPFLAGS = -DPOLICY_SELECTOR=4 -DSOLVER_SELECTOR=0
-symbolicSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-STATIC_TEST_TARGETS += symbolicSemantics.passed
-EXTRA_DIST += semantics.conf symbolicSemantics.ans
-symbolicSemantics.passed: semantics.conf symbolicSemantics
-	@$(RTH_RUN) CMD=symbolicSemantics INPUT=i686-test1.O3.bin $< $@
-
-# Use SymbolicSemantics with YicesSolver policy, invoking "yices" executable. We should be able
-# to compile this test even when the "yices" command is not available. However, we won't be able
-# to test it if we don't have it.
-noinst_PROGRAMS += yicesSemanticsExe
-yicesSemanticsExe_SOURCES = semantics.C
-yicesSemanticsExe_CPPFLAGS = -DPOLICY_SELECTOR=4 -DSOLVER_SELECTOR=1
-yicesSemanticsExe_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-EXTRA_DIST += semantics.conf yicesSemanticsExe.ans
-if ROSE_HAVE_YICES
-STATIC_TEST_TARGETS += yicesSemanticsExe.passed
-yicesSemanticsExe.passed: semantics.conf yicesSemanticsExe
-	@$(RTH_RUN) CMD=yicesSemanticsExe INPUT=i686-test1.O3.bin $< $@
-endif
-
-
-# Use SymbolicSemantics with YicesSolver, linked to Yikes library. We should be able to compile
-# this test even when the "yices" library is not available. However, we won't be able to run the
-# test if we don't have the library.
-noinst_PROGRAMS += yicesSemanticsLib
-yicesSemanticsLib_SOURCES = semantics.C
-yicesSemanticsLib_CPPFLAGS = -DPOLICY_SELECTOR=4 -DSOLVER_SELECTOR=2
-yicesSemanticsLib_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-EXTRA_DIST += semantics.conf yicesSemanticsLib.ans
-if ROSE_HAVE_LIBYICES
-STATIC_TEST_TARGETS += yicesSemanticsLib.passed
-yicesSemanticsLib.passed: semantics.conf yicesSemanticsLib
-	@$(RTH_RUN) CMD=yicesSemanticsLib INPUT=i686-test1.O3.bin $< $@
-endif
-
-# Null semantics do nothing, but we test that they compile and run
-noinst_PROGRAMS += nullSemantics
-nullSemantics_SOURCES = semantics.C
-nullSemantics_CPPFLAGS = -DPOLICY_SELECTOR=5
-nullSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-STATIC_TEST_TARGETS += nullSemantics.passed
-EXTRA_DIST += semantics.conf nullSemantics.ans
-nullSemantics.passed: semantics.conf nullSemantics
-	@$(RTH_RUN) CMD=nullSemantics INPUT=i686-test1.O3.bin $< $@
-
-# Multi-domain semantics
-noinst_PROGRAMS += multiSemantics
-multiSemantics_SOURCES = semantics.C
-multiSemantics_CPPFLAGS = -DPOLICY_SELECTOR=6
-multiSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-STATIC_TEST_TARGETS += multiSemantics.passed
-EXTRA_DIST += semantics.conf multiSemantics.ans
-multiSemantics.passed: semantics.conf multiSemantics
-	@$(RTH_RUN) CMD=multiSemantics INPUT=i686-test1.O3.bin $< $@
-
-# Interval semantics
-noinst_PROGRAMS += intervalSemantics
-intervalSemantics_SOURCES = semantics.C
-intervalSemantics_CPPFLAGS = -DPOLICY_SELECTOR=7
-intervalSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-STATIC_TEST_TARGETS += intervalSemantics.passed
-EXTRA_DIST += semantics.conf intervalSemantics.ans
-intervalSemantics.passed: semantics.conf intervalSemantics
-	@$(RTH_RUN) CMD=intervalSemantics INPUT=i686-test1.O3.bin $< $@
-
-# Null semantics using the newer non-template interface
-noinst_PROGRAMS += nullSemantics2
-nullSemantics2_SOURCES = semantics2.C
-nullSemantics2_CPPFLAGS = -DPOLICY_SELECTOR=5
-nullSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-#STATIC_TEST_TARGETS += nullSemantics2.passed
-#EXTRA_DIST += semantics2.conf nullSemantics2.ans
-#nullSemantics2.passed: semantics2.conf nullSemantics2
-#	@$(RTH_RUN) CMD=nullSemantics2 INPUT=i686-test1.O3.bin $< $@
-
-# Tests speed of null instruction semantics with and without using templates
-noinst_PROGRAMS += nullSemanticsSpeed1 nullSemanticsSpeed2
-nullSemanticsSpeed1_SOURCES = semanticSpeed2.C
-nullSemanticsSpeed1_CPPFLAGS = -DPOLICY_SELECTOR=5 -DUSE_TEMPLATES=1
-nullSemanticsSpeed1_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-nullSemanticsSpeed2_SOURCES = semanticSpeed2.C
-nullSemanticsSpeed2_CPPFLAGS = -DPOLICY_SELECTOR=5 -DUSE_TEMPLATES=0
-nullSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-
-# Tests speed of partial symbolic instruction semantics with and without using templates
-noinst_PROGRAMS += partialSymbolicSemanticsSpeed1 partialSymbolicSemanticsSpeed2
-partialSymbolicSemanticsSpeed1_SOURCES = semanticSpeed2.C
-partialSymbolicSemanticsSpeed1_CPPFLAGS = -DPOLICY_SELECTOR=3 -DUSE_TEMPLATES=1
-partialSymbolicSemanticsSpeed1_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-partialSymbolicSemanticsSpeed2_SOURCES = semanticSpeed2.C
-partialSymbolicSemanticsSpeed2_CPPFLAGS = -DPOLICY_SELECTOR=3 -DUSE_TEMPLATES=0
-partialSymbolicSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-
-# Tests speed of symbolic semantics with and without using templates
-noinst_PROGRAMS += symbolicSemanticsSpeed1 symbolicSemanticsSpeed2
-symbolicSemanticsSpeed1_SOURCES = semanticSpeed2.C
-symbolicSemanticsSpeed1_CPPFLAGS = -DPOLICY_SELECTOR=4 -DUSE_TEMPLATES=1
-symbolicSemanticsSpeed1_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-symbolicSemanticsSpeed2_SOURCES = semanticSpeed2.C
-symbolicSemanticsSpeed2_CPPFLAGS = -DPOLICY_SELECTOR=4 -DUSE_TEMPLATES=0
-symbolicSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-
-# Tests speed of multi-domain semantics with and without using templates
-noinst_PROGRAMS += multiSemanticsSpeed1 multiSemanticsSpeed2
-multiSemanticsSpeed1_SOURCES = semanticSpeed2.C
-multiSemanticsSpeed1_CPPFLAGS = -DPOLICY_SELECTOR=6 -DUSE_TEMPLATES=1
-multiSemanticsSpeed1_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-multiSemanticsSpeed2_SOURCES = semanticSpeed2.C
-multiSemanticsSpeed2_CPPFLAGS = -DPOLICY_SELECTOR=6 -DUSE_TEMPLATES=0
-multiSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-
-# Tests speed of interval semantics with and without using templates
-noinst_PROGRAMS += intervalSemanticsSpeed1 intervalSemanticsSpeed2
-intervalSemanticsSpeed1_SOURCES = semanticSpeed2.C
-intervalSemanticsSpeed1_CPPFLAGS = -DPOLICY_SELECTOR=7 -DUSE_TEMPLATES=1
-intervalSemanticsSpeed1_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-intervalSemanticsSpeed2_SOURCES = semanticSpeed2.C
-intervalSemanticsSpeed2_CPPFLAGS = -DPOLICY_SELECTOR=7 -DUSE_TEMPLATES=0
-intervalSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-
-.PHONY: semanticSpeed
-semanticSpeed: nullSemanticsSpeed1 nullSemanticsSpeed2				\
-	       partialSymbolicSemanticsSpeed1 partialSymbolicSemanticsSpeed2	\
-	       symbolicSemanticsSpeed1 symbolicSemanticsSpeed2			\
-	       multiSemanticsSpeed1 multiSemanticsSpeed2			\
-	       intervalSemanticsSpeed1 intervalSemanticsSpeed2
-
 # Disassembles an executable according to various command-line switches.
 noinst_PROGRAMS += disassemble
 disassemble_SOURCES = disassemble.C linux_syscalls.C
@@ -537,6 +373,168 @@ $(PointerDetectionTestTargets): tpd_%.passed: testPointerDetection.conf testPoin
 .PHONY: testPointerDetection.passed
 testPointerDetection.passed: $(PointerDetectionTestTargets)
 
+###############################################################################################################################
+# Instruction semantics tests.
+#
+# Binary instruction semantics are a plug-n-play architecture, so we try to test a number of different combinations, usually
+# all compiled from a single source file.  Files with "1" in their name use the older, template-based API while files with
+# "2" in their name use the newer run-time plug-n-play API.
+###############################################################################################################################
+
+# Test partial symbolic semantics domain
+noinst_PROGRAMS += partialSymbolicSemantics
+partialSymbolicSemantics_SOURCES = semantics.C
+partialSymbolicSemantics_CPPFLAGS = -DSEMANTIC_DOMAIN=PARTSYM_DOMAIN -DSEMANTIC_API=1
+partialSymbolicSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += partialSymbolicSemantics.passed
+EXTRA_DIST += semantics.conf partialSymbolicSemantics.ans
+partialSymbolicSemantics.passed: semantics.conf partialSymbolicSemantics
+	@$(RTH_RUN) CMD=partialSymbolicSemantics INPUT=i686-test1.O3.bin $< $@
+
+
+# Use SymbolicSemantics semantic analysis policy
+noinst_PROGRAMS += symbolicSemantics
+symbolicSemantics_SOURCES = semantics.C
+symbolicSemantics_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=1 -DSMT_SOLVER=NO_SOLVER
+symbolicSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += symbolicSemantics.passed
+EXTRA_DIST += semantics.conf symbolicSemantics.ans
+symbolicSemantics.passed: semantics.conf symbolicSemantics
+	@$(RTH_RUN) CMD=symbolicSemantics INPUT=i686-test1.O3.bin $< $@
+
+# Use SymbolicSemantics with YicesSolver policy, invoking "yices" executable. We should be able
+# to compile this test even when the "yices" command is not available. However, we won't be able
+# to test it if we don't have it.
+noinst_PROGRAMS += yicesSemanticsExe
+yicesSemanticsExe_SOURCES = semantics.C
+yicesSemanticsExe_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=1 -DSMT_SOLVER=YICES_EXE
+yicesSemanticsExe_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+EXTRA_DIST += semantics.conf yicesSemanticsExe.ans
+if ROSE_HAVE_YICES
+STATIC_TEST_TARGETS += yicesSemanticsExe.passed
+yicesSemanticsExe.passed: semantics.conf yicesSemanticsExe
+	@$(RTH_RUN) CMD=yicesSemanticsExe INPUT=i686-test1.O3.bin $< $@
+endif
+
+
+# Use SymbolicSemantics with YicesSolver, linked to Yikes library. We should be able to compile
+# this test even when the "yices" library is not available. However, we won't be able to run the
+# test if we don't have the library.
+noinst_PROGRAMS += yicesSemanticsLib
+yicesSemanticsLib_SOURCES = semantics.C
+yicesSemanticsLib_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=1 -DSMT_SOLVER=YICES_LIB
+yicesSemanticsLib_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+EXTRA_DIST += semantics.conf yicesSemanticsLib.ans
+if ROSE_HAVE_LIBYICES
+STATIC_TEST_TARGETS += yicesSemanticsLib.passed
+yicesSemanticsLib.passed: semantics.conf yicesSemanticsLib
+	@$(RTH_RUN) CMD=yicesSemanticsLib INPUT=i686-test1.O3.bin $< $@
+endif
+
+# Null semantics do nothing, but we test that they compile and run
+noinst_PROGRAMS += nullSemantics
+nullSemantics_SOURCES = semantics.C
+nullSemantics_CPPFLAGS = -DSEMANTIC_DOMAIN=NULL_DOMAIN -DSEMANTIC_API=1
+nullSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += nullSemantics.passed
+EXTRA_DIST += semantics.conf nullSemantics.ans
+nullSemantics.passed: semantics.conf nullSemantics
+	@$(RTH_RUN) CMD=nullSemantics INPUT=i686-test1.O3.bin $< $@
+
+# Multi-domain semantics
+noinst_PROGRAMS += multiSemantics
+multiSemantics_SOURCES = semantics.C
+multiSemantics_CPPFLAGS = -DSEMANTIC_DOMAIN=MULTI_DOMAIN -DSEMANTIC_API=1
+multiSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += multiSemantics.passed
+EXTRA_DIST += semantics.conf multiSemantics.ans
+multiSemantics.passed: semantics.conf multiSemantics
+	@$(RTH_RUN) CMD=multiSemantics INPUT=i686-test1.O3.bin $< $@
+
+# Interval semantics
+noinst_PROGRAMS += intervalSemantics
+intervalSemantics_SOURCES = semantics.C
+intervalSemantics_CPPFLAGS = -DSEMANTIC_DOMAIN=INTERVAL_DOMAIN -DSEMANTIC_API=1
+intervalSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += intervalSemantics.passed
+EXTRA_DIST += semantics.conf intervalSemantics.ans
+intervalSemantics.passed: semantics.conf intervalSemantics
+	@$(RTH_RUN) CMD=intervalSemantics INPUT=i686-test1.O3.bin $< $@
+
+# Finds constant values and propagates them across instructions
+noinst_PROGRAMS += findConstants
+findConstants_SOURCES = semantics.C
+findConstants_CPPFLAGS = -DSEMANTIC_DOMAIN=FINDCONST_DOMAIN -DSEMANTIC_API=1
+findConstants_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += findConstants.passed
+EXTRA_DIST += semantics.conf findConstants.ans
+findConstants.passed: semantics.conf findConstants
+	@$(RTH_RUN) CMD=findConstants INPUT=i686-test1.O3.bin $< $@
+
+
+# Finds constant values and propagates them across instructions using an ABI
+noinst_PROGRAMS += findConstantsABI
+findConstantsABI_SOURCES = semantics.C
+findConstantsABI_CPPFLAGS = -DSEMANTIC_DOMAIN=FINDCONSTABI_DOMAIN -DSEMANTIC_API=1
+findConstantsABI_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += findConstantsABI.passed
+EXTRA_DIST += semantics.conf findConstantsABI.ans
+findConstantsABI.passed: semantics.conf findConstantsABI
+	@$(RTH_RUN) CMD=findConstantsABI INPUT=i686-test1.O3.bin $< $@
+
+
+
+###############################################################################################################################
+# Instruction semantics speed tests.  These aren't actually run automatically, we just compile them to make sure they
+# compile.  To run them, just run the executable with one argument: the name of a binary file.  The test just starts
+# executing instructions at the entry address until it reaches a branch whose condition is not known, at which time the
+# test repeats.  It does this for one minute and then prints out the execution rate.
+###############################################################################################################################
+
+# Tests speed of null instruction semantics with and without using templates
+noinst_PROGRAMS += nullSemanticsSpeed1 nullSemanticsSpeed2
+nullSemanticsSpeed1_SOURCES = semanticsSpeed.C
+nullSemanticsSpeed1_CPPFLAGS = -DSEMANTIC_DOMAIN=NULL_DOMAIN -DSEMANTIC_API=1
+nullSemanticsSpeed1_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+nullSemanticsSpeed2_SOURCES = semanticsSpeed.C
+nullSemanticsSpeed2_CPPFLAGS = -DSEMANTIC_DOMAIN=NULL_DOMAIN -DSEMANTIC_API=2
+nullSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Tests speed of partial symbolic instruction semantics with and without using templates
+noinst_PROGRAMS += partialSymbolicSemanticsSpeed1 partialSymbolicSemanticsSpeed2
+partialSymbolicSemanticsSpeed1_SOURCES = semanticsSpeed.C
+partialSymbolicSemanticsSpeed1_CPPFLAGS = -DSEMANTIC_DOMAIN=PARTSYM_DOMAIN -DSEMANTIC_API=1
+partialSymbolicSemanticsSpeed1_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+partialSymbolicSemanticsSpeed2_SOURCES = semanticsSpeed.C
+partialSymbolicSemanticsSpeed2_CPPFLAGS = -DSEMANTIC_DOMAIN=PARTSYM_DOMAIN -DSEMANTIC_API=2
+partialSymbolicSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Tests speed of symbolic semantics with and without using templates
+noinst_PROGRAMS += symbolicSemanticsSpeed1 symbolicSemanticsSpeed2
+symbolicSemanticsSpeed1_SOURCES = semanticsSpeed.C
+symbolicSemanticsSpeed1_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=1
+symbolicSemanticsSpeed1_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+symbolicSemanticsSpeed2_SOURCES = semanticsSpeed.C
+symbolicSemanticsSpeed2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=2
+symbolicSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Tests speed of interval semantics with and without using templates
+noinst_PROGRAMS += intervalSemanticsSpeed1 intervalSemanticsSpeed2
+intervalSemanticsSpeed1_SOURCES = semanticsSpeed.C
+intervalSemanticsSpeed1_CPPFLAGS = -DSEMANTIC_DOMAIN=INTERVAL_DOMAIN -DSEMANTIC_API=1
+intervalSemanticsSpeed1_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+intervalSemanticsSpeed2_SOURCES = semanticsSpeed.C
+intervalSemanticsSpeed2_CPPFLAGS = -DSEMANTIC_DOMAIN=INTERVAL_DOMAIN -DSEMANTIC_API=2
+intervalSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Tests speed of multi-domain semantics with and without using templates
+noinst_PROGRAMS += multiSemanticsSpeed1 multiSemanticsSpeed2
+multiSemanticsSpeed1_SOURCES = semanticsSpeed.C
+multiSemanticsSpeed1_CPPFLAGS = -DSEMANTIC_DOMAIN=MULTI_DOMAIN -DSEMANTIC_API=1
+multiSemanticsSpeed1_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+multiSemanticsSpeed2_SOURCES = semanticsSpeed.C
+multiSemanticsSpeed2_CPPFLAGS = -DSEMANTIC_DOMAIN=MULTI_DOMAIN -DSEMANTIC_API=2
+multiSemanticsSpeed2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 
 ###############################################################################################################################
