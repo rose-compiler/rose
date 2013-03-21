@@ -59,7 +59,7 @@ inline bool signBit(T value) {
 template <typename T>
 inline bool signBit2(T value, size_t width=8*sizeof(T)) {
     assert(width>0 && width<=8*sizeof(T));
-    T sign_mask = shl1<T>(width);
+    T sign_mask = shl1<T>(width-1);
     return 0 != (value & sign_mask);
 }
 /** @} */
