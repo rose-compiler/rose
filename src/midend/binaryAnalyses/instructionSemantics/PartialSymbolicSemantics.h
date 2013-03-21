@@ -129,6 +129,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
                         if (negative)
                             o <<" (-0x" <<std::hex <<negative <<")";
                     }
+                    o <<"[" <<std::dec <<nBits <<"]";
                 }
                 void print(std::ostream &o, BaseSemantics::SEMANTIC_NO_PRINT_HELPER *unused=NULL) const {
                     print(o, (RenameMap*)0);
