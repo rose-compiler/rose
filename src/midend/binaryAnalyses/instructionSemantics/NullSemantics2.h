@@ -90,15 +90,7 @@ protected:
 public:
     /** Static allocating constructor. Creates a new RiscOperators object and configures it to use semantic values and states
      * that are defaults for NullSemantics. */
-    static RiscOperatorsPtr instance() {
-        BaseSemantics::SValuePtr protoval = SValue::instance();
-        // FIXME: register state should probably be chosen based on an architecture [Robb Matzke 2013-03-01]
-        BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateX86::instance(protoval);
-        BaseSemantics::MemoryStatePtr memory = BaseSemantics::MemoryCellList::instance(protoval);
-        BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
-        SMTSolver *solver = NULL;
-        return RiscOperatorsPtr(new RiscOperators(state, solver));
-    }
+    static RiscOperatorsPtr instance();
 
     /** Static allocating constructor. See the virtual constructor, create(), for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
@@ -122,206 +114,86 @@ public:
 
 public:
     virtual BaseSemantics::SValuePtr and_(const BaseSemantics::SValuePtr &a_,
-                                          const BaseSemantics::SValuePtr &b_) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        SValuePtr b = SValue::promote(b_);
-        assert(a->get_width()==b->get_width());
-        return undefined_(a->get_width());
-    }
+                                          const BaseSemantics::SValuePtr &b_) /*override*/;
     
     virtual BaseSemantics::SValuePtr or_(const BaseSemantics::SValuePtr &a_,
-                                         const BaseSemantics::SValuePtr &b_) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        SValuePtr b = SValue::promote(b_);
-        assert(a->get_width()==b->get_width());
-        return undefined_(a->get_width());
-    }
+                                         const BaseSemantics::SValuePtr &b_) /*override*/;
 
     virtual BaseSemantics::SValuePtr xor_(const BaseSemantics::SValuePtr &a_,
-                                          const BaseSemantics::SValuePtr &b_) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        SValuePtr b = SValue::promote(b_);
-        assert(a->get_width()==b->get_width());
-        return undefined_(a->get_width());
-    }
+                                          const BaseSemantics::SValuePtr &b_) /*override*/;
 
-    virtual BaseSemantics::SValuePtr invert(const BaseSemantics::SValuePtr &a_) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        return undefined_(a->get_width());
-    }
+    virtual BaseSemantics::SValuePtr invert(const BaseSemantics::SValuePtr &a_) /*override*/;
 
     virtual BaseSemantics::SValuePtr extract(const BaseSemantics::SValuePtr &a_,
-                                             size_t begin_bit, size_t end_bit) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        assert(end_bit<=a->get_width());
-        assert(begin_bit<end_bit);
-        return undefined_(end_bit-begin_bit);
-    }
+                                             size_t begin_bit, size_t end_bit) /*override*/;
 
     virtual BaseSemantics::SValuePtr concat(const BaseSemantics::SValuePtr &a_,
-                                            const BaseSemantics::SValuePtr &b_) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        SValuePtr b = SValue::promote(b_);
-        return undefined_(a->get_width() + b->get_width());
-    }
+                                            const BaseSemantics::SValuePtr &b_) /*override*/;
 
-    virtual BaseSemantics::SValuePtr leastSignificantSetBit(const BaseSemantics::SValuePtr &a_) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        return undefined_(a->get_width());
-    }
+    virtual BaseSemantics::SValuePtr leastSignificantSetBit(const BaseSemantics::SValuePtr &a_) /*override*/;
 
-    virtual BaseSemantics::SValuePtr mostSignificantSetBit(const BaseSemantics::SValuePtr &a_) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        return undefined_(a->get_width());
-    }
+    virtual BaseSemantics::SValuePtr mostSignificantSetBit(const BaseSemantics::SValuePtr &a_) /*override*/;
 
     virtual BaseSemantics::SValuePtr rotateLeft(const BaseSemantics::SValuePtr &a_,
-                                                const BaseSemantics::SValuePtr &sa_) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        SValue::promote(sa_);
-        return undefined_(a->get_width());
-    }
+                                                const BaseSemantics::SValuePtr &sa_) /*override*/;
 
     virtual BaseSemantics::SValuePtr rotateRight(const BaseSemantics::SValuePtr &a_,
-                                                 const BaseSemantics::SValuePtr &sa_) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        SValuePtr sa = SValue::promote(sa_);
-        return undefined_(a->get_width());
-    }
+                                                 const BaseSemantics::SValuePtr &sa_) /*override*/;
 
     virtual BaseSemantics::SValuePtr shiftLeft(const BaseSemantics::SValuePtr &a_,
-                                               const BaseSemantics::SValuePtr &sa_) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        SValuePtr sa = SValue::promote(sa_);
-        return undefined_(a->get_width());
-    }
+                                               const BaseSemantics::SValuePtr &sa_) /*override*/;
 
     virtual BaseSemantics::SValuePtr shiftRight(const BaseSemantics::SValuePtr &a_,
-                                                const BaseSemantics::SValuePtr &sa_) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        SValuePtr sa = SValue::promote(sa_);
-        return undefined_(a->get_width());
-    }
+                                                const BaseSemantics::SValuePtr &sa_) /*override*/;
 
     virtual BaseSemantics::SValuePtr shiftRightArithmetic(const BaseSemantics::SValuePtr &a_,
-                                                          const BaseSemantics::SValuePtr &sa_) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        SValuePtr sa = SValue::promote(sa_);
-        return undefined_(a->get_width());
-    }
+                                                          const BaseSemantics::SValuePtr &sa_) /*override*/;
 
-    virtual BaseSemantics::SValuePtr equalToZero(const BaseSemantics::SValuePtr &a_) /*override*/ {
-        SValue::promote(a_);
-        return undefined_(1);
-    }
+    virtual BaseSemantics::SValuePtr equalToZero(const BaseSemantics::SValuePtr &a_) /*override*/;
 
     virtual BaseSemantics::SValuePtr ite(const BaseSemantics::SValuePtr &sel_,
                                          const BaseSemantics::SValuePtr &a_,
-                                         const BaseSemantics::SValuePtr &b_) /*override*/ {
-        SValuePtr sel = SValue::promote(sel_);
-        SValuePtr a = SValue::promote(a_);
-        SValuePtr b = SValue::promote(b_);
-        assert(1==sel->get_width());
-        assert(a->get_width()==b->get_width());
-        return undefined_(a->get_width());
-    }
+                                         const BaseSemantics::SValuePtr &b_) /*override*/;
 
-    virtual BaseSemantics::SValuePtr signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        if (new_width==a->get_width())
-            return a;
-        return undefined_(new_width);
-    }
+    virtual BaseSemantics::SValuePtr signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width) /*override*/;
 
     virtual BaseSemantics::SValuePtr add(const BaseSemantics::SValuePtr &a_,
-                                         const BaseSemantics::SValuePtr &b_) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        SValuePtr b = SValue::promote(b_);
-        assert(a->get_width()==b->get_width());
-        return undefined_(a->get_width());
-    }
+                                         const BaseSemantics::SValuePtr &b_) /*override*/;
 
     virtual BaseSemantics::SValuePtr addWithCarries(const BaseSemantics::SValuePtr &a_,
                                                     const BaseSemantics::SValuePtr &b_,
                                                     const BaseSemantics::SValuePtr &c_,
-                                                    BaseSemantics::SValuePtr &carry_out/*out*/) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        SValuePtr b = SValue::promote(b_);
-        SValuePtr c = SValue::promote(c_);
-        assert(a->get_width()==b->get_width() && c->get_width()==1);
-        carry_out = undefined_(a->get_width());
-        return undefined_(a->get_width());
-    }
+                                                    BaseSemantics::SValuePtr &carry_out/*out*/) /*override*/;
 
-    virtual BaseSemantics::SValuePtr negate(const BaseSemantics::SValuePtr &a_) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        return undefined_(a->get_width());
-    }
+    virtual BaseSemantics::SValuePtr negate(const BaseSemantics::SValuePtr &a_) /*override*/;
 
     virtual BaseSemantics::SValuePtr signedDivide(const BaseSemantics::SValuePtr &a_,
-                                                  const BaseSemantics::SValuePtr &b_) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        SValuePtr b = SValue::promote(b_);
-        return undefined_(a->get_width());
-    }
+                                                  const BaseSemantics::SValuePtr &b_) /*override*/;
 
     virtual BaseSemantics::SValuePtr signedModulo(const BaseSemantics::SValuePtr &a_,
-                                                  const BaseSemantics::SValuePtr &b_) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        SValuePtr b = SValue::promote(b_);
-        return undefined_(b->get_width());
-    }
+                                                  const BaseSemantics::SValuePtr &b_) /*override*/;
 
     virtual BaseSemantics::SValuePtr signedMultiply(const BaseSemantics::SValuePtr &a_,
-                                                    const BaseSemantics::SValuePtr &b_) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        SValuePtr b = SValue::promote(b_);
-        size_t retwidth = a->get_width() + b->get_width();
-        return undefined_(retwidth);
-    }
+                                                    const BaseSemantics::SValuePtr &b_) /*override*/;
 
     virtual BaseSemantics::SValuePtr unsignedDivide(const BaseSemantics::SValuePtr &a_,
-                                                    const BaseSemantics::SValuePtr &b_) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        SValuePtr b = SValue::promote(b_);
-        return undefined_(a->get_width());
-    }
+                                                    const BaseSemantics::SValuePtr &b_) /*override*/;
 
     virtual BaseSemantics::SValuePtr unsignedModulo(const BaseSemantics::SValuePtr &a_,
-                                                    const BaseSemantics::SValuePtr &b_) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        SValuePtr b = SValue::promote(b_);
-        return undefined_(b->get_width());
-    }
+                                                    const BaseSemantics::SValuePtr &b_) /*override*/;
 
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
-                                                      const BaseSemantics::SValuePtr &b_) /*override*/ {
-        SValuePtr a = SValue::promote(a_);
-        SValuePtr b = SValue::promote(b_);
-        size_t retwidth = a->get_width() + b->get_width();
-        return undefined_(retwidth);
-    }
+                                                      const BaseSemantics::SValuePtr &b_) /*override*/;
 
     virtual BaseSemantics::SValuePtr readMemory(X86SegmentRegister sg,
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &cond,
-                                                size_t nbits) /*override*/ {
-        assert(get_state()!=NULL);
-        assert(8==nbits);
-        (void) SValue::promote(addr);
-        (void) SValue::promote(cond);
-        return undefined_(8);
-    }
+                                                size_t nbits) /*override*/;
 
     virtual void writeMemory(X86SegmentRegister sg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
-                             const BaseSemantics::SValuePtr &cond) /*override*/ {
-        assert(get_state()!=NULL);
-        (void) SValue::promote(addr);
-        (void) SValue::promote(data);
-        (void) SValue::promote(cond);
-    }
+                             const BaseSemantics::SValuePtr &cond) /*override*/;
 };
 
 } /*namespace*/

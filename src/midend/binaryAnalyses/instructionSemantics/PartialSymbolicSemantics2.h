@@ -147,6 +147,8 @@ public:
  *                                      Memory
  *******************************************************************************************************************************/
 
+// PartialSymbolicSemantics uses BaseSemantics::MemoryCellList (or subclass) as its memory state, and does not expect the
+// MemoryCellList to be byte-restricted (i.e., the cells can store multi-byte values).
 
 /*******************************************************************************************************************************
  *                                      Machine State
@@ -155,7 +157,8 @@ public:
 /** Smart pointer to a State object.  State objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class State> StatePtr;
 
-/** Represents the entire state of the machine. */
+/** Represents the entire state of the machine. This state expects to use a subclass of BaseSemantics::MemoryCellList as
+ *  its memory state, and does not expect that MemoryCellList to be byte-restricted. */
 class State: public BaseSemantics::State {
 protected:
     State(const BaseSemantics::RegisterStatePtr &registers,
@@ -166,6 +169,10 @@ protected:
         (void) SValue::promote(registers->get_protoval());
         assert(memory!=NULL);
         (void) SValue::promote(memory->get_protoval());
+
+        // This state should use a BaseSemantics::MemoryCellList that is not byte restricted.
+        BaseSemantics::MemoryCellListPtr mcl = BaseSemantics::MemoryCellList::promote(memory);
+        assert(!mcl->get_byte_restricted());
     }
 
     State(const State &other): BaseSemantics::State(other) {}
@@ -218,7 +225,8 @@ public:
     static RiscOperatorsPtr instance() {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateX86::instance(protoval);
-        BaseSemantics::MemoryStatePtr memory = BaseSemantics::MemoryCellList::instance(protoval);
+        BaseSemantics::MemoryCellListPtr memory = BaseSemantics::MemoryCellList::instance(protoval);
+        memory->set_byte_restricted(false);
         BaseSemantics::StatePtr state = State::instance(registers, memory);
         SMTSolver *solver = NULL;
         return RiscOperatorsPtr(new RiscOperators(state, solver));

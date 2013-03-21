@@ -74,6 +74,8 @@ SValue::print(std::ostream &output, BaseSemantics::PrintHelper *helper_) const
         if (negative)
             output <<" (-0x" <<std::hex <<negative <<")";
     }
+
+    output <<"[" <<std::dec <<get_width() <<"]";
 }
 
 
@@ -527,37 +529,35 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
     return number_(new_width, IntegerOps::signExtend2(a->offset, a->get_width(), new_width));
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::readMemory(X86SegmentRegister sg,
-                          const BaseSemantics::SValuePtr &addr_,
-                          const BaseSemantics::SValuePtr &cond_,
-                          size_t nbits)
-{
-    BaseSemantics::StatePtr state = get_state();
-    assert(8==nbits);
-    assert(state!=NULL);
-    SValuePtr addr = SValue::promote(addr_);
-    SValuePtr cond = SValue::promote(cond_);
-    assert(!"FIXME");
-    abort();
-}
-
 void
 RiscOperators::writeMemory(X86SegmentRegister sg,
-                           const BaseSemantics::SValuePtr &addr_,
-                           const BaseSemantics::SValuePtr &data_,
-                           const BaseSemantics::SValuePtr &cond_)
+                           const BaseSemantics::SValuePtr &address,
+                           const BaseSemantics::SValuePtr &value,
+                           const BaseSemantics::SValuePtr &condition)
 {
-    BaseSemantics::StatePtr state = get_state();
-    assert(state!=NULL);
-    SValuePtr addr = SValue::promote(addr_);
-    SValuePtr data = SValue::promote(data_);
-    SValuePtr cond = SValue::promote(cond_);
-    assert(!"FIXME");
-    abort();
+    size_t nbits = value->get_width();
+    assert(8==nbits || 16==nbits || 32==nbits);
+    assert(1==condition->get_width()); // FIXME: condition is not used
+
+    // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
+    state->writeMemory(address, value, this);
 }
     
-    
+BaseSemantics::SValuePtr
+RiscOperators::readMemory(X86SegmentRegister sg,
+                          const BaseSemantics::SValuePtr &address,
+                          const BaseSemantics::SValuePtr &condition,
+                          size_t nbits)
+{
+    assert(1==condition->get_width()); // FIXME: condition is not used
+    assert(8==nbits || 16==nbits || 32==nbits);
+
+    // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
+    BaseSemantics::SValuePtr dflt = undefined_(nbits);
+    SValuePtr retval = SValue::promote(state->readMemory(address, dflt, nbits, this));
+    return retval;
+}
+
 } // namespace
 } // namespace
 } // namespace

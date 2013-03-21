@@ -1113,7 +1113,8 @@ struct IP_sub: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         size_t nbits = asm_type_width(args[0]->get_type());
-        BaseSemantics::SValuePtr result = d->doAddOperation(d->read(args[0], nbits), d->read(args[1], nbits),
+        BaseSemantics::SValuePtr result = d->doAddOperation(d->read(args[0], nbits),
+                                                            ops->invert(d->read(args[1], nbits)),
                                                             true, ops->false_());
         d->write(args[0], result);
     }

@@ -318,34 +318,95 @@ RegisterStateX86::print(std::ostream &o, const std::string prefix, PrintHelper *
  *                                      MemoryState
  *******************************************************************************************************************************/
 
+bool
+MemoryCell::may_alias(const MemoryCellPtr &other, RiscOperators *ops) const
+{
+    // Check for the easy case:  two one-byte cells may alias one another if their addresses may be equal.
+    if (8==value->get_width() && 8==other->get_value()->get_width())
+        return address->may_equal(other->get_address(), ops->get_solver());
+
+    size_t addr_nbits = address->get_width();
+    assert(other->get_address()->get_width()==addr_nbits);
+
+    assert(value->get_width() % 8 == 0);                // memory is byte addressable, so values must be multiples of a byte
+    SValuePtr lo1 = address;
+    SValuePtr hi1 = ops->add(lo1, ops->number_(lo1->get_width(), value->get_width() / 8));
+
+    assert(other->get_value()->get_width() % 8 == 0);
+    SValuePtr lo2 = other->get_address();
+    SValuePtr hi2 = ops->add(lo2, ops->number_(lo2->get_width(), other->get_value()->get_width() / 8));
+
+    // Two cells may_alias iff we can prove that they are not disjoint.  The two cells are disjoint iff lo2 >= hi1 or lo1 >=
+    // hi2. Two things complicate this: first, the values might not be known quantities, depending on the semantic domain.
+    // Second, the RiscOperators does not define a greater-than-or-equal operation, so we need to write it in terms of a
+    // subtraction. See x86 CMP and JG instructions for examples. ("sf" is sign flag, "of" is overflow flag.)
+    SValuePtr carries;
+    SValuePtr diff = ops->addWithCarries(lo2, ops->invert(hi1), ops->true_(), carries/*out*/);
+    SValuePtr sf = ops->extract(diff, addr_nbits-1, addr_nbits);
+    SValuePtr of = ops->xor_(ops->extract(carries, addr_nbits-1, addr_nbits), ops->extract(carries, addr_nbits-2, addr_nbits-1));
+    SValuePtr cond1 = ops->invert(ops->xor_(sf, of));
+    diff = ops->addWithCarries(lo1, ops->invert(hi2), ops->true_(), carries/*out*/);
+    sf = ops->extract(diff, addr_nbits-1, addr_nbits);
+    of = ops->xor_(ops->extract(carries, addr_nbits-1, addr_nbits), ops->extract(carries, addr_nbits-2, addr_nbits-1));
+    SValuePtr cond2 = ops->invert(ops->xor_(sf, of));
+    SValuePtr disjoint = ops->or_(cond1, cond2);
+    if (disjoint->is_number() && disjoint->get_number()!=0)
+        return false;
+    return true;
+}
+
+bool
+MemoryCell::must_alias(const MemoryCellPtr &other, RiscOperators *ops) const
+{
+    // Check the easy case: two one-byte cells must alias one another if their address must be equal.
+    if (8==value->get_width() && 8==other->get_value()->get_width())
+        return address->must_equal(other->get_address(), ops->get_solver());
+
+    size_t addr_nbits = address->get_width();
+    assert(other->get_address()->get_width()==addr_nbits);
+
+    assert(value->get_width() % 8 == 0);
+    SValuePtr lo1 = address;
+    SValuePtr hi1 = ops->add(lo1, ops->number_(lo1->get_width(), value->get_width() / 8));
+
+    assert(other->get_value()->get_width() % 8 == 0);
+    SValuePtr lo2 = other->get_address();
+    SValuePtr hi2 = ops->add(lo2, ops->number_(lo2->get_width(), other->get_value()->get_width() / 8));
+
+    // Two cells must_alias iff hi2 >= lo1 and hi1 >= lo2. Two things complicate this: first, the values might not be known
+    // quantities, depending on the semantic domain.  Second, the RiscOperators does not define a greater-than-or-equal
+    // operation, so we need to write it in terms of a subtraction. See x86 CMP and JG instructions for examples. ("sf" is sign
+    // flag, "of" is overflow flag.)
+    SValuePtr carries;
+    SValuePtr diff = ops->addWithCarries(hi2, ops->invert(lo1), ops->true_(), carries/*out*/);
+    SValuePtr sf = ops->extract(diff, addr_nbits-1, addr_nbits);
+    SValuePtr of = ops->xor_(ops->extract(carries, addr_nbits-1, addr_nbits), ops->extract(carries, addr_nbits-2, addr_nbits-1));
+    SValuePtr cond1 = ops->invert(ops->xor_(sf, of));
+    diff = ops->addWithCarries(hi1, ops->invert(lo2), ops->true_(), carries/*out*/);
+    sf = ops->extract(diff, addr_nbits-1, addr_nbits);
+    of = ops->xor_(ops->extract(carries, addr_nbits-1, addr_nbits), ops->extract(carries, addr_nbits-2, addr_nbits-1));
+    SValuePtr cond2 = ops->invert(ops->xor_(sf, of));
+    SValuePtr overlap = ops->and_(cond1, cond2);
+    if (overlap->is_number() && overlap->get_number()!=0)
+        return true;
+    return false;
+}
+
 SValuePtr
 MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, size_t nbits, RiscOperators *ops)
 {
     assert(addr!=NULL);
-    assert(dflt!=NULL && dflt->get_width()==8);
-    MemoryCellPtr tmpcell = protocell->create(addr, dflt);
-    size_t nmatches = 0; // number of cells that may (or must) match tmpcell
-    CellList::iterator must_match = cells.end();
-    CellList::iterator may_match = cells.end(); // any may-match cell
-    for (CellList::iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
-        if (tmpcell->may_alias(*ci, ops->get_solver())) {
-            assert((*ci)->get_value()->get_width()==8);
-            ++nmatches;
-            may_match = ci;
-            if (tmpcell->must_alias(*ci, ops->get_solver())) {
-                must_match = ci;
-                break;
-            }
-        }
-    }
+    assert(dflt!=NULL && (!byte_restricted || dflt->get_width()==8));
+    bool short_circuited;
+    CellList found = scan(addr, nbits, ops, short_circuited/*out*/);
+    size_t nfound = found.size();
 
     SValuePtr retval;
-    if (1!=nmatches || must_match==cells.end()) {
+    if (1!=nfound || !short_circuited) {
         retval = dflt; // found no matches, multiple matches, or we fell off the end of the cell list
-        cells.push_front(tmpcell);
+        cells.push_front(protocell->create(addr, dflt));
     } else {
-        assert(may_match!=cells.end());
-        retval = (*may_match)->get_value();
+        retval = found.front()->get_value();
     }
     return retval;
 }
@@ -353,6 +414,7 @@ MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, size_t 
 void
 MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *ops)
 {
+    assert(!byte_restricted || value->get_width()==8);
     MemoryCellPtr cell = protocell->create(addr, value);
     cells.push_front(cell);
 }
@@ -365,6 +427,22 @@ MemoryCellList::print(std::ostream &o, const std::string prefix, PrintHelper *he
         (*ci)->print(o, helper);
         o <<"\n";
     }
+}
+
+MemoryCellList::CellList
+MemoryCellList::scan(const BaseSemantics::SValuePtr &addr, size_t nbits, RiscOperators *ops, bool &short_circuited/*out*/) const
+{
+    short_circuited = false;
+    CellList retval;
+    MemoryCellPtr tmpcell = protocell->create(addr, ops->undefined_(nbits));
+    for (CellList::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
+        if (tmpcell->may_alias(*ci, ops)) {
+            retval.push_back(*ci);
+            if ((short_circuited = tmpcell->must_alias(*ci, ops)))
+                break;
+        }
+    }
+    return retval;
 }
 
 /*******************************************************************************************************************************

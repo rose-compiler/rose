@@ -409,7 +409,7 @@ private:
 
     // Fills the specified freelist by adding another Bucket-worth of objects.
     void fill_freelist(const int listn) { // hot
-#if 1 /*DEBUGGING [Robb Matzke 2013-03-04]*/
+#if 0 /*DEBUGGING [Robb Matzke 2013-03-04]*/
         std::cerr <<"Allocator::fill_freelist(" <<listn <<")\n";
 #endif
         assert(listn>=0 && listn<N_FREE_LISTS);
@@ -815,27 +815,13 @@ public:
 
     /** Determines whether two memory cells can alias one another.  Two cells may alias one another if it is possible that
      *  their addresses cause them to overlap.  For cells containing one-byte values, aliasing may occur if their two addresses
-     *  may be equal; multi-byte cells will need to check ranges of addresses.  An optional SMT solver may be supplied to
-     *  answer these questions.
-     *
-     *  The base implementation assumes that memory contains 8-bit values and compares addresses via SValue::may_equal(). */
-    virtual bool may_alias(const MemoryCellPtr &other, SMTSolver *solver=NULL) const {
-        assert(value->get_width()==8);
-        assert(other!=NULL && other->get_value()->get_width()==8);
-        return address->may_equal(other->get_address(), solver);
-    }
+     *  may be equal; multi-byte cells will need to check ranges of addresses. */
+    virtual bool may_alias(const MemoryCellPtr &other, RiscOperators *ops) const;
 
     /** Determines whether two memory cells must alias one another.  Two cells must alias one another when it can be proven
      * that their addresses cause them to overlap.  For cells containing one-byte values, aliasing must occur unless their
-     * addresses can be different; multi-byte cells will need to check ranges of addresses.  An optional SMT solver may be
-     * supplied to answer these questions.
-     *
-     * The base implementation assumes that memory contains 8-bit values and compares addresses via SValue::must_equal(). */
-    virtual bool must_alias(const MemoryCellPtr &other, SMTSolver *solver=NULL) const {
-        assert(value->get_width()==8);
-        assert(other!=NULL && other->get_value()->get_width()==8);
-        return address->must_equal(other->get_address(), solver);
-    }
+     * addresses can be different; multi-byte cells will need to check ranges of addresses. */
+    virtual bool must_alias(const MemoryCellPtr &other, RiscOperators *ops) const;
     
     /** Print the memory cell on a single line. */
     virtual void print(std::ostream &o, PrintHelper *helper=NULL) const {
@@ -851,24 +837,32 @@ typedef boost::shared_ptr<class MemoryCellList> MemoryCellListPtr;
 
 /** Simple list-based memory state.
  *
- *  MemoryCellList uses a list of MemoryCell objects to represent the memory state.  There is no requirement that a State use a
- *  MemoryCellList as its memory state; it can use any subclass of MemoryState.  Since MemoryCellList is derived from
- *  MemoryState it must provide virtual allocating constructors, which makes it possible for users to define their own
- *  subclasses and use them in the semantic framework.
+ *  MemoryCellList uses a list of MemoryCell objects to represent the memory state. Each memory cell contains at least an
+ *  address and a value, both of which have a run-time width.  The default MemoryCellList configuration restricts memory cell
+ *  values to be one byte wide and requires the caller to perform any necessary byte extraction or concatenation when higher
+ *  software layers are reading/writing multi-byte values.  Using one-byte values simplifies the aliasing calculations.
+ *  However, this class defines a @p byte_restricted property that can be set to false to allow the memory to store
+ *  variable-width cell values.
+ *
+ *  MemoryCellList also provides a scan() method that returns a list of memory cells that alias a specified address. This
+ *  method can be used by a higher-level readMemory() operation in preference to the usuall MemoryState::readMemory().
+ *
+ *  There is no requirement that a State use a MemoryCellList as its memory state; it can use any subclass of MemoryState.
+ *  Since MemoryCellList is derived from MemoryState it must provide virtual allocating constructors, which makes it possible
+ *  for users to define their own subclasses and use them in the semantic framework.
  *
  *  This implementation stores memory cells in reverse chronological order: the most recently created cells appear at the
- *  beginning of the list.  Subclasses, of course, are free to reorder the list however they want.
- *
- * */
+ *  beginning of the list.  Subclasses, of course, are free to reorder the list however they want. */
 class MemoryCellList: public MemoryState {
 public:
     typedef std::list<MemoryCellPtr> CellList;
 protected:
     MemoryCellPtr protocell;                    // prototypical memory cell used for its virtual constructors
-    CellList cells;
+    CellList cells;                             // list of cells in reverse chronological order
+    bool byte_restricted;                       // are cell values all exactly one byte wide?
 
     explicit MemoryCellList(const MemoryCellPtr &protocell, const SValuePtr &protoval)
-        : MemoryState(protoval), protocell(protocell) {
+        : MemoryState(protoval), protocell(protocell), byte_restricted(true) {
         assert(protocell!=NULL);
     }
 
@@ -901,6 +895,14 @@ public:
         return MemoryStatePtr(new MemoryCellList(*this));               // FIXME?
     }
 
+    /** Promote a base memory state pointer to a BaseSemantics::MemoryCellList pointer. The memory state @p m must have
+     *  a BaseSemantics::MemoryCellList dynamic type. */
+    static MemoryCellListPtr promote(const BaseSemantics::MemoryStatePtr &m) {
+        MemoryCellListPtr retval = boost::dynamic_pointer_cast<MemoryCellList>(m);
+        assert(retval!=NULL);
+        return retval;
+    }
+
     virtual void clear() /*override*/ {
         cells.clear();
     }
@@ -925,6 +927,22 @@ public:
     virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *ops) /*override*/;
 
     virtual void print(std::ostream &o, const std::string prefix="", PrintHelper *helper=NULL) const /*override*/;
+
+    /** Indicates whether memory cell values are required to be eight bits wide.  The default is true since this simplifies the
+     * calculations for whether two memory cells are alias and how to combine the value from two or more aliasing cells. A
+     * memory that contains only eight-bit values requires that the caller concatenate/extract individual bytes when
+     * reading/writing multi-byte values.
+     * @{ */
+    virtual bool get_byte_restricted() const { return byte_restricted; }
+    virtual void set_byte_restricted(bool b) { byte_restricted = b; }
+    /** @} */
+
+    /** Scans the cell list and returns entries that may alias the given address and value size. The scanning starts at the
+     *  beginning of the list (which is normally stored in reverse chronological order) and continues until it reaches either
+     *  the end, or a cell that must alias the specified address. If the last cell in the returned list must alias the
+     *  specified address, then true is returned via @p short_circuited argument. */
+    virtual CellList scan(const BaseSemantics::SValuePtr &address, size_t nbits, RiscOperators *ops,
+                          bool &short_circuited/*out*/) const;
 };
 
 /******************************************************************************************************************

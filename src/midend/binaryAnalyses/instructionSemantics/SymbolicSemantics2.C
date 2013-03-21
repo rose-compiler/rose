@@ -135,9 +135,9 @@ MemoryState::readMemory(const BaseSemantics::SValuePtr &address_, const BaseSema
     CellList matches;
     CellList::iterator must_match = cells.end();
     for (CellList::iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
-        if (tmpcell->may_alias(*ci, ops->get_solver())) {
+        if (tmpcell->may_alias(*ci, ops)) {
             matches.push_back(*ci);
-            if (tmpcell->must_alias(*ci, ops->get_solver())) {
+            if (tmpcell->must_alias(*ci, ops)) {
                 must_match = ci;
                 break;
             }
@@ -708,6 +708,7 @@ RiscOperators::readMemory(X86SegmentRegister segreg,
         BaseSemantics::SValuePtr byte_dflt = extract(dflt, 8*bytenum, 8*bytenum+8);
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
         SValuePtr byte_value = SValue::promote(state->readMemory(byte_addr, byte_dflt, 8, this));
+        bytes.push_back(byte_value);
         const InsnSet &definers = byte_value->get_defining_instructions();
         defs.insert(definers.begin(), definers.end());
     }
@@ -758,39 +759,8 @@ RiscOperators::readMemory(X86SegmentRegister segreg,
     } else {
         for (size_t bytenum=0; bytenum<bytes.size(); ++bytenum) { // little endian
             SValuePtr &byte = bytes[bytenum];
-
-            // extend byte
-            SValuePtr word;
-            if (byte->is_number()) {
-                word = number_(nbits, byte->get_number());
-            } else if (nbits==8) {
-                word = svalue(byte->get_expression());
-            } else {
-                word = svalue(InternalNode::create(nbits, InsnSemanticsExpr::OP_UEXTEND,
-                                                   LeafNode::create_integer(32, nbits),
-                                                   byte->get_expression()));
-            }
-
-            // left shift
-            if (0!=bytenum) {
-                if (word->is_number()) {
-                    word = number_(nbits, IntegerOps::shiftLeft2(word->get_number(), 8*bytenum));
-                } else {
-                    word = svalue(InternalNode::create(nbits, InsnSemanticsExpr::OP_SHR0,
-                                                       LeafNode::create_integer(32, 8*bytenum),
-                                                       word->get_expression()));
-                }
-            }
-
-            // bit-wise OR into the return value
-            if (0==bytenum) {
-                retval = word;
-            } else if (retval->is_number() && word->is_number()) {
-                retval = number_(nbits, retval->get_number() | word->get_number());
-            } else {
-                retval = svalue(InternalNode::create(nbits, InsnSemanticsExpr::OP_BV_OR,
-                                                     retval->get_expression(), word->get_expression()));
-            }
+            SValuePtr word = SValue::promote(shiftLeft(unsignedExtend(byte, nbits), number_(5, 8*bytenum)));
+            retval = 0==bytenum ? word : SValue::promote(or_(retval, word));
         }
     }
 
