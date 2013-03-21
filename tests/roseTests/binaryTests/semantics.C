@@ -16,6 +16,10 @@
 #define FINDCONST_DOMAIN 6
 #define FINDCONSTABI_DOMAIN 7
 
+// SEMANTIC_API values
+#define OLD_API 1
+#define NEW_API 2
+
 // SMT_SOLVER values
 #define NO_SOLVER 0
 #define YICES_LIB 1
@@ -23,10 +27,10 @@
 
 #if !defined(SEMANTIC_API)
 #   error "SEMANTIC_API must be defined on the compiler command line"
-#elif SEMANTIC_API == 1
+#elif SEMANTIC_API == OLD_API
 #   include "x86InstructionSemantics.h"
     using namespace BinaryAnalysis::InstructionSemantics;
-#elif SEMANTIC_API == 2
+#elif SEMANTIC_API == NEW_API
 #   include "DispatcherX86.h"
     using namespace BinaryAnalysis::InstructionSemantics2;
 #else
@@ -58,7 +62,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if SEMANTIC_DOMAIN == NULL_DOMAIN
 
-#if SEMANTIC_API == 1
+#if SEMANTIC_API == OLD_API
 #   include "NullSemantics.h"
 #   define MyValueType BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
 #   define MyState     BinaryAnalysis::InstructionSemantics::NullSemantics::State
@@ -72,7 +76,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif  SEMANTIC_DOMAIN == PARTSYM_DOMAIN
-#if SEMANTIC_API == 1
+#if SEMANTIC_API == OLD_API
 #   include "PartialSymbolicSemantics.h"
 #   define MyValueType BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::ValueType
 #   define MyState     BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::State
@@ -87,7 +91,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif  SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
 
-#if SEMANTIC_API == 1
+#if SEMANTIC_API == OLD_API
 #   include "SymbolicSemantics.h"
 #   define MyValueType BinaryAnalysis::InstructionSemantics::SymbolicSemantics::ValueType
 #   define MyState     BinaryAnalysis::InstructionSemantics::SymbolicSemantics::State
@@ -101,7 +105,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif SEMANTIC_DOMAIN == INTERVAL_DOMAIN
-#if SEMANTIC_API == 1
+#if SEMANTIC_API == OLD_API
 #   include "IntervalSemantics.h"
 #   define MyValueType BinaryAnalysis::InstructionSemantics::IntervalSemantics::ValueType
 #   define MyState     BinaryAnalysis::InstructionSemantics::IntervalSemantics::State
@@ -115,7 +119,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif SEMANTIC_DOMAIN == MULTI_DOMAIN
-#if SEMANTIC_API == 1
+#if SEMANTIC_API == OLD_API
 #   include "MultiSemantics.h"
 #   include "PartialSymbolicSemantics.h"
 #   include "SymbolicSemantics.h"
@@ -144,7 +148,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif SEMANTIC_DOMAIN == FINDCONST_DOMAIN
 
-#if SEMANTIC_API == 1
+#if SEMANTIC_API == OLD_API
 #   include "findConstants.h"
 #   define MyValueType XVariablePtr
     struct MyPolicy: public FindConstantsPolicy {
@@ -168,7 +172,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif  SEMANTIC_DOMAIN == FINDCONSTABI_DOMAIN
 
-#if SEMANTIC_API == 1
+#if SEMANTIC_API == OLD_API
 #   include "findConstants.h"
 #   define MyValueType XVariablePtr
     struct MyPolicy: public FindConstantsABIPolicy {
@@ -218,17 +222,17 @@ analyze_interp(SgAsmInterpretation *interp)
         SgAsmx86Instruction *insn = si->second;
         insns.erase(si);
 
-#if SEMANTIC_API == 1
-        typedef X86InstructionSemantics<MyPolicy, MyValueType> MyDispatcher;
-        MyPolicy operators;
-        MyDispatcher dispatcher(operators);
-#if SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
-        operators.set_solver(make_solver());
-#endif
-#else
+#if SEMANTIC_API == NEW_API
         typedef BaseSemantics::DispatcherPtr MyDispatcher;
         BaseSemantics::RiscOperatorsPtr operators = make_ops();
         MyDispatcher dispatcher = DispatcherX86::instance(operators);
+#else   // OLD_API
+        typedef X86InstructionSemantics<MyPolicy, MyValueType> MyDispatcher;
+        MyPolicy operators;
+        MyDispatcher dispatcher(operators);
+#   if SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
+            operators.set_solver(make_solver());
+#   endif
 #endif
 
         /* Perform semantic analysis for each instruction in this block. The block ends when we no longer know the value of
@@ -236,49 +240,60 @@ analyze_interp(SgAsmInterpretation *interp)
          * been processed. */
         while (1) {
             /* Analyze current instruction */
-            try {
                 std::cout <<unparseInstructionWithAddress(insn) <<"\n";
-#if SEMANTIC_API == 1
-                dispatcher.processInstruction(insn);
-                operators.print(std::cout);
-#else
+#if SEMANTIC_API == NEW_API
+            try {
                 dispatcher->processInstruction(insn);
                 std::cout <<*operators;
-#endif
+            } catch (const BaseSemantics::Exception &e) {
+                std::cout <<e <<"\n";
+            }
+#else       // OLD API
+            try {
+                dispatcher.processInstruction(insn);
+                operators.print(std::cout);
             } catch (const MyDispatcher::Exception &e) {
                 std::cout <<e <<"\n";
                 break;
-#if SEMANTIC_DOMAIN == PARTSYM_DOMAIN
+#   if SEMANTIC_DOMAIN == PARTSYM_DOMAIN
             } catch (const MyPolicy::Exception &e) {
                 std::cout <<e <<"\n";
                 break;
-#endif
+#   endif
             } catch (const SMTSolver::Exception &e) {
                 std::cout <<e <<" [ "<<unparseInstructionWithAddress(insn) <<"]\n";
                 break;
             }
+#endif
 
             /* Never follow CALL instructions */
             if (insn->get_kind()==x86_call || insn->get_kind()==x86_farcall)
                 break;
 
             /* Get next instruction of this block */
-#if SEMANTIC_DOMAIN == PARTSYM_DOMAIN || SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
+#if SEMANTIC_API == NEW_API
+            BaseSemantics::SValuePtr ip = operators->readRegister(dispatcher->findRegister("eip"));
+            if (!ip->is_number())
+                break;
+            rose_addr_t next_addr = ip->get_number();
+#else       // OLD_API
+#   if SEMANTIC_DOMAIN == PARTSYM_DOMAIN || SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
             MyValueType<32> ip = operators.get_ip();
             if (!ip.is_known()) break;
             rose_addr_t next_addr = ip.known_value();
-#elif SEMANTIC_DOMAIN == NULL_DOMAIN || SEMANTIC_DOMAIN == INTERVAL_DOMAIN
+#   elif SEMANTIC_DOMAIN == NULL_DOMAIN || SEMANTIC_DOMAIN == INTERVAL_DOMAIN
             MyValueType<32> ip = operators.readRegister<32>(dispatcher.REG_EIP);
             if (!ip.is_known()) break;
             rose_addr_t next_addr = ip.known_value();
-#elif SEMANTIC_DOMAIN == MULTI_DOMAIN
+#   elif SEMANTIC_DOMAIN == MULTI_DOMAIN
             PartialSymbolicSemantics::ValueType<32> ip = operators.readRegister<32>(dispatcher.REG_EIP)
                                                          .get_subvalue(MyMultiSemanticsClass::SP0());
             if (!ip.is_known()) break;
             rose_addr_t next_addr = ip.known_value();
-#else
+#   else
             if (operators.newIp->get().name) break;
             rose_addr_t next_addr = operators.newIp->get().offset;
+#   endif
 #endif
             si = insns.find(next_addr);
             if (si==insns.end()) break;

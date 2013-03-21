@@ -3,13 +3,18 @@
 #include <signal.h>
 #include <time.h>
 
+// SEMANTIC_DOMAIN values
 #define NULL_DOMAIN 1
 #define PARTSYM_DOMAIN 2
 #define SYMBOLIC_DOMAIN 3
 #define INTERVAL_DOMAIN 4
 #define MULTI_DOMAIN 5
 
-#if SEMANTIC_API == 1
+// SEMANTIC_API values
+#define OLD_API 1
+#define NEW_API 2
+
+#if SEMANTIC_API == OLD_API
 #   include "x86InstructionSemantics.h"
     using namespace BinaryAnalysis::InstructionSemantics;
 #else
@@ -22,7 +27,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if SEMANTIC_DOMAIN == NULL_DOMAIN
 
-#if SEMANTIC_API == 1
+#if SEMANTIC_API == OLD_API
 #   include "NullSemantics.h"
 #   define MyValueType BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
 #   define MyState     BinaryAnalysis::InstructionSemantics::NullSemantics::State
@@ -37,7 +42,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif SEMANTIC_DOMAIN == PARTSYM_DOMAIN
 
-#if SEMANTIC_API == 1
+#if SEMANTIC_API == OLD_API
 #   include "PartialSymbolicSemantics.h"
 #   define MyValueType BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::ValueType
 #   define MyState     BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::State
@@ -52,7 +57,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
 
-#if SEMANTIC_API == 1
+#if SEMANTIC_API == OLD_API
 #   include "SymbolicSemantics.h"
 #   define MyValueType BinaryAnalysis::InstructionSemantics::SymbolicSemantics::ValueType
 #   define MyState     BinaryAnalysis::InstructionSemantics::SymbolicSemantics::State
@@ -67,7 +72,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif SEMANTIC_DOMAIN == INTERVAL_DOMAIN
 
-#if SEMANTIC_API == 1
+#if SEMANTIC_API == OLD_API
 #   include "IntervalSemantics.h"
 #   define MyValueType BinaryAnalysis::InstructionSemantics::IntervalSemantics::ValueType
 #   define MyState     BinaryAnalysis::InstructionSemantics::IntervalSemantics::State
@@ -82,7 +87,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif SEMANTIC_DOMAIN == MULTI_DOMAIN
 
-#if SEMANTIC_API == 1
+#if SEMANTIC_API == OLD_API
 #   include "MultiSemantics.h"
 #   include "PartialSymbolicSemantics.h"
 #   include "SymbolicSemantics.h"
@@ -155,7 +160,7 @@ main(int argc, char *argv[])
     SgAsmGenericHeader *header = interp->get_headers()->get_headers().front();
     rose_addr_t start_va = header->get_base_va() + header->get_entry_rva();
 
-#if SEMANTIC_API == 1
+#if SEMANTIC_API == OLD_API
     MyPolicy operators;
     X86InstructionSemantics<MyPolicy, MyValueType> dispatcher(operators);
 #else
@@ -178,7 +183,7 @@ main(int argc, char *argv[])
         rose_addr_t va = start_va;
         while (SgAsmInstruction *insn = insns.fetch(va)) {
             //std::cerr <<unparseInstructionWithAddress(insn) <<"\n";
-#if SEMANTIC_API == 1
+#if SEMANTIC_API == OLD_API
             dispatcher.processInstruction(isSgAsmx86Instruction(insn));
             ++ninsns;
 #if SEMANTIC_DOMAIN == MULTI_DOMAIN
@@ -204,7 +209,7 @@ main(int argc, char *argv[])
         }
     }
 
-#if SEMANTIC_API == 1
+#if SEMANTIC_API == OLD_API
     MyValueType<32> eax = operators.readRegister<32>("eax");
     std::cerr <<"eax = " <<eax <<"\n";
 #else
