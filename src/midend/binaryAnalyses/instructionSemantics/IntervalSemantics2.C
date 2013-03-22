@@ -473,10 +473,10 @@ RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
     if (a->is_number())
-        return 0==a->get_number() ? protoval->true_() : protoval->false_();
+        return 0==a->get_number() ? boolean_(true) : boolean_(false);
     if (!a->get_intervals().contains(Interval(0)))
-        return protoval->false_();
-    return protoval->undefined_(1);
+        return boolean_(false);
+    return undefined_(1);
 }
 
 BaseSemantics::SValuePtr

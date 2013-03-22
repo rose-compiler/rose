@@ -186,10 +186,10 @@ RiscOperators::and_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
 
     SValuePtr retval;
     if (a->is_number() && b->is_number()) {
-        retval = number_(a->get_width(), a->get_number() & b->get_number());
+        retval = svalue_number(a->get_width(), a->get_number() & b->get_number());
     } else {
-        retval = svalue(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_BV_AND,
-                                             a->get_expression(), b->get_expression()));
+        retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_BV_AND,
+                                                  a->get_expression(), b->get_expression()));
     }
     retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
@@ -204,10 +204,10 @@ RiscOperators::or_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
     
     SValuePtr retval;
     if (a->is_number() && b->is_number()) {
-        retval = number_(a->get_width(), a->get_number() | b->get_number());
+        retval = svalue_number(a->get_width(), a->get_number() | b->get_number());
     } else {
-        retval = svalue(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_BV_OR,
-                                             a->get_expression(), b->get_expression()));
+        retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_BV_OR,
+                                                  a->get_expression(), b->get_expression()));
     }
     retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
@@ -222,12 +222,12 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
 
     SValuePtr retval;
     if (a->is_number() && b->is_number()) {
-        retval = number_(a->get_width(), a->get_number() ^ b->get_number());
+        retval = svalue_number(a->get_width(), a->get_number() ^ b->get_number());
     } else if (a->get_expression()->equal_to(b->get_expression(), solver)) {
-        retval = number_(a->get_width(), 0);
+        retval = svalue_number(a->get_width(), 0);
     } else {
-        retval = svalue(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_BV_XOR,
-                                             a->get_expression(), b->get_expression()));
+        retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_BV_XOR,
+                                                  a->get_expression(), b->get_expression()));
     }
     retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
@@ -239,9 +239,9 @@ RiscOperators::invert(const BaseSemantics::SValuePtr &a_)
     SValuePtr a = SValue::promote(a_);
     SValuePtr retval;
     if (a->is_number()) {
-        retval = number_(a->get_width(), ~a->get_number());
+        retval = svalue_number(a->get_width(), ~a->get_number());
     } else {
-        retval = svalue(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_INVERT, a->get_expression()));
+        retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_INVERT, a->get_expression()));
     }
     retval->defined_by(cur_insn, a->get_defining_instructions());
     return retval;
@@ -257,15 +257,15 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, siz
     if (0==begin_bit) {
         retval = SValue::promote(unsignedExtend(a, end_bit));
     } else if (a->is_number()) {
-        retval = number_(end_bit-begin_bit,
-                         (IntegerOps::shiftRightLogical2(a->get_number(), begin_bit) &
-                          IntegerOps::genMask<uint64_t>(end_bit-begin_bit)));
+        retval = svalue_number(end_bit-begin_bit,
+                               (IntegerOps::shiftRightLogical2(a->get_number(), begin_bit) &
+                                IntegerOps::genMask<uint64_t>(end_bit-begin_bit)));
         retval->defined_by(cur_insn, a->get_defining_instructions());
     } else {
-        retval = svalue(InternalNode::create(end_bit-begin_bit, InsnSemanticsExpr::OP_EXTRACT,
-                                             LeafNode::create_integer(32, begin_bit),
-                                             LeafNode::create_integer(32, end_bit),
-                                             a->get_expression()));
+        retval = svalue_expr(InternalNode::create(end_bit-begin_bit, InsnSemanticsExpr::OP_EXTRACT,
+                                                  LeafNode::create_integer(32, begin_bit),
+                                                  LeafNode::create_integer(32, end_bit),
+                                                  a->get_expression()));
         retval->defined_by(cur_insn, a->get_defining_instructions());
     }
     return retval;
@@ -278,11 +278,11 @@ RiscOperators::concat(const BaseSemantics::SValuePtr &a_, const BaseSemantics::S
     SValuePtr b = SValue::promote(b_);
     SValuePtr retval;
     if (a->is_number() && b->is_number()) {
-        retval = number_(a->get_width()+b->get_width(),
-                         a->get_number() | IntegerOps::shiftLeft2(b->get_number(), a->get_width()));
+        retval = svalue_number(a->get_width()+b->get_width(),
+                               a->get_number() | IntegerOps::shiftLeft2(b->get_number(), a->get_width()));
     } else {
-        retval = svalue(InternalNode::create(a->get_width()+b->get_width(), InsnSemanticsExpr::OP_CONCAT,
-                                             b->get_expression(), a->get_expression()));
+        retval = svalue_expr(InternalNode::create(a->get_width()+b->get_width(), InsnSemanticsExpr::OP_CONCAT,
+                                                  b->get_expression(), a->get_expression()));
     }
     retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
@@ -294,9 +294,9 @@ RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a_)
     SValuePtr a = SValue::promote(a_);
     SValuePtr retval;
     if (a->is_number()) {
-        retval = a->get_number() ? false_() : true_();
+        retval = a->get_number() ? svalue_boolean(false) : svalue_boolean(true);
     } else {
-        retval = svalue(InternalNode::create(1, InsnSemanticsExpr::OP_ZEROP, a->get_expression()));
+        retval = svalue_expr(InternalNode::create(1, InsnSemanticsExpr::OP_ZEROP, a->get_expression()));
     }
     retval->defined_by(cur_insn, a->get_defining_instructions());
     return retval;
@@ -340,8 +340,8 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
             return retval;
         }
     }
-    retval = svalue(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ITE, sel->get_expression(),
-                                         a->get_expression(), b->get_expression()));
+    retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ITE, sel->get_expression(),
+                                              a->get_expression(), b->get_expression()));
     retval->defined_by(cur_insn, sel->get_defining_instructions(),
                        a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
@@ -356,16 +356,16 @@ RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a_)
         uint64_t n = a->get_number();
         for (size_t i=0; i<a->get_width(); ++i) {
             if (n & IntegerOps::shl1<uint64_t>(i)) {
-                retval = number_(a->get_width(), i);
+                retval = svalue_number(a->get_width(), i);
                 retval->defined_by(cur_insn, a->get_defining_instructions());
                 return retval;
             }
         }
-        retval = number_(a->get_width(), 0);
+        retval = svalue_number(a->get_width(), 0);
         retval->defined_by(cur_insn, a->get_defining_instructions());
         return retval;
     }
-    retval = svalue(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_LSSB, a->get_expression()));
+    retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_LSSB, a->get_expression()));
     retval->defined_by(cur_insn, a->get_defining_instructions());
     return retval;
 }
@@ -379,16 +379,16 @@ RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a_)
         uint64_t n = a->get_number();
         for (size_t i=a->get_width(); i>0; --i) {
             if (n & IntegerOps::shl1<uint64_t>(i-1)) {
-                retval = number_(a->get_width(), i-1);
+                retval = svalue_number(a->get_width(), i-1);
                 retval->defined_by(cur_insn, a->get_defining_instructions());
                 return retval;
             }
         }
-        retval = number_(a->get_width(), 0);
+        retval = svalue_number(a->get_width(), 0);
         retval->defined_by(cur_insn, a->get_defining_instructions());
         return retval;
     }
-    retval = svalue(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_MSSB, a->get_expression()));
+    retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_MSSB, a->get_expression()));
     retval->defined_by(cur_insn, a->get_defining_instructions());
     return retval;
 }
@@ -400,10 +400,10 @@ RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantic
     SValuePtr sa = SValue::promote(sa_);
     SValuePtr retval;
     if (a->is_number() && sa->is_number()) {
-        retval = number_(a->get_width(), IntegerOps::rotateLeft2(a->get_number(), sa->get_number(), a->get_width()));
+        retval = svalue_number(a->get_width(), IntegerOps::rotateLeft2(a->get_number(), sa->get_number(), a->get_width()));
     } else {
-        retval = svalue(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ROL,
-                                             sa->get_expression(), a->get_expression()));
+        retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ROL,
+                                                  sa->get_expression(), a->get_expression()));
     }
     retval->defined_by(cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
     return retval;
@@ -416,10 +416,10 @@ RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a_, const BaseSemanti
     SValuePtr sa = SValue::promote(sa_);
     SValuePtr retval;
     if (a->is_number() && sa->is_number()) {
-        retval = number_(a->get_width(), IntegerOps::rotateRight2(a->get_number(), sa->get_number(), a->get_width()));
+        retval = svalue_number(a->get_width(), IntegerOps::rotateRight2(a->get_number(), sa->get_number(), a->get_width()));
     } else {
-        retval = svalue(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ROR,
-                                             sa->get_expression(), a->get_expression()));
+        retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ROR,
+                                                  sa->get_expression(), a->get_expression()));
     }
     retval->defined_by(cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
     return retval;
@@ -432,10 +432,10 @@ RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantics
     SValuePtr sa = SValue::promote(sa_);
     SValuePtr retval;
     if (a->is_number() && sa->is_number()) {
-        retval = number_(a->get_width(), IntegerOps::shiftLeft2(a->get_number(), sa->get_number(), a->get_width()));
+        retval = svalue_number(a->get_width(), IntegerOps::shiftLeft2(a->get_number(), sa->get_number(), a->get_width()));
     } else {
-        retval = svalue(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_SHL0,
-                                             sa->get_expression(), a->get_expression()));
+        retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_SHL0,
+                                                  sa->get_expression(), a->get_expression()));
     }
     retval->defined_by(cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
     return retval;
@@ -448,10 +448,10 @@ RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a_, const BaseSemantic
     SValuePtr sa = SValue::promote(sa_);
     SValuePtr retval;
     if (a->is_number() && sa->is_number()) {
-        retval = number_(a->get_width(), IntegerOps::shiftRightLogical2(a->get_number(), sa->get_number(), a->get_width()));
+        retval = svalue_number(a->get_width(), IntegerOps::shiftRightLogical2(a->get_number(), sa->get_number(), a->get_width()));
     } else {
-        retval = svalue(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_SHR0,
-                                             sa->get_expression(), a->get_expression()));
+        retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_SHR0,
+                                                  sa->get_expression(), a->get_expression()));
     }
     retval->defined_by(cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
     return retval;
@@ -464,10 +464,11 @@ RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a_, const Ba
     SValuePtr sa = SValue::promote(sa_);
     SValuePtr retval;
     if (a->is_number() && sa->is_number()) {
-        retval = number_(a->get_width(), IntegerOps::shiftRightArithmetic2(a->get_number(), sa->get_number(), a->get_width()));
+        retval = svalue_number(a->get_width(),
+                               IntegerOps::shiftRightArithmetic2(a->get_number(), sa->get_number(), a->get_width()));
     } else {
-        retval = svalue(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ASR,
-                                             sa->get_expression(), a->get_expression()));
+        retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ASR,
+                                                  sa->get_expression(), a->get_expression()));
     }
     retval->defined_by(cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
     return retval;
@@ -484,28 +485,28 @@ RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a_, size_t new_wid
     if (new_width < a->get_width()) {
         // Truncation.
         if (a->is_number()) {
-            retval = number_(new_width, a->get_number() & IntegerOps::genMask<uint64_t>(new_width));
+            retval = svalue_number(new_width, a->get_number() & IntegerOps::genMask<uint64_t>(new_width));
             if (0!=IntegerOps::shiftRightLogical2(a->get_number(), a->get_width())) {
                 retval->defined_by(cur_insn, a->get_defining_instructions());
             } else {
                 retval->defined_by(NULL, a->get_defining_instructions());
             }
         } else {
-            retval = svalue(InternalNode::create(new_width, InsnSemanticsExpr::OP_EXTRACT,
-                                                 LeafNode::create_integer(32, 0),
-                                                 LeafNode::create_integer(32, new_width),
-                                                 a->get_expression()));
+            retval = svalue_expr(InternalNode::create(new_width, InsnSemanticsExpr::OP_EXTRACT,
+                                                      LeafNode::create_integer(32, 0),
+                                                      LeafNode::create_integer(32, new_width),
+                                                      a->get_expression()));
             retval->defined_by(cur_insn, a->get_defining_instructions());
         }
     } else {
         // Extension
         if (a->is_number()) {
-            retval = number_(new_width, a->get_number());
+            retval = svalue_number(new_width, a->get_number());
             retval->defined_by(NULL, a->get_defining_instructions());
         } else {
-            retval = svalue(InternalNode::create(new_width, InsnSemanticsExpr::OP_UEXTEND,
-                                                 LeafNode::create_integer(32, new_width),
-                                                 a->get_expression()));
+            retval = svalue_expr(InternalNode::create(new_width, InsnSemanticsExpr::OP_UEXTEND,
+                                                      LeafNode::create_integer(32, new_width),
+                                                      a->get_expression()));
             retval->defined_by(cur_insn, a->get_defining_instructions());
         }
     }
@@ -521,7 +522,7 @@ RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
     SValuePtr retval;
     if (a->is_number()) {
         if (b->is_number()) {
-            retval = number_(a->get_width(), a->get_number()+b->get_number());
+            retval = svalue_number(a->get_width(), a->get_number()+b->get_number());
             retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
             return retval;
         } else if (0==a->get_number()) {
@@ -530,8 +531,8 @@ RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
     } else if (b->is_number() && 0==b->get_number()) {
         return a->copy();
     }
-    retval = svalue(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ADD,
-                                         a->get_expression(), b->get_expression()));
+    retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ADD,
+                                              a->get_expression(), b->get_expression()));
     retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
 }
@@ -555,9 +556,9 @@ RiscOperators::negate(const BaseSemantics::SValuePtr &a_)
     SValuePtr a = SValue::promote(a_);
     SValuePtr retval;
     if (a->is_number()) {
-        retval = number_(a->get_width(), -a->get_number());
+        retval = svalue_number(a->get_width(), -a->get_number());
     } else {
-        retval = svalue(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_NEGATE, a->get_expression()));
+        retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_NEGATE, a->get_expression()));
     }
     retval->defined_by(cur_insn, a->get_defining_instructions());
     return retval;
@@ -570,12 +571,12 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemant
     SValuePtr b = SValue::promote(b_);
     SValuePtr retval;
     if (a->is_number() && b->is_number() && 0!=b->get_number()) {
-        retval = number_(a->get_width(),
-                         IntegerOps::signExtend2(a->get_number(), a->get_width(), 64) /
-                         IntegerOps::signExtend2(b->get_number(), b->get_width(), 64));
+        retval = svalue_number(a->get_width(),
+                               IntegerOps::signExtend2(a->get_number(), a->get_width(), 64) /
+                               IntegerOps::signExtend2(b->get_number(), b->get_width(), 64));
     } else {
-        retval = svalue(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_SDIV,
-                                             a->get_expression(), b->get_expression()));
+        retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_SDIV,
+                                                  a->get_expression(), b->get_expression()));
     }
     retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
@@ -588,12 +589,12 @@ RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemant
     SValuePtr b = SValue::promote(b_);
     SValuePtr retval;
     if (a->is_number() && b->is_number() && 0!=b->get_number()) {
-        retval = number_(b->get_width(),
-                         IntegerOps::signExtend2(a->get_number(), a->get_width(), 64) %
-                         IntegerOps::signExtend2(b->get_number(), b->get_width(), 64));
+        retval = svalue_number(b->get_width(),
+                               IntegerOps::signExtend2(a->get_number(), a->get_width(), 64) %
+                               IntegerOps::signExtend2(b->get_number(), b->get_width(), 64));
     } else {
-        retval = svalue(InternalNode::create(b->get_width(), InsnSemanticsExpr::OP_SMOD,
-                                             a->get_expression(), b->get_expression()));
+        retval = svalue_expr(InternalNode::create(b->get_width(), InsnSemanticsExpr::OP_SMOD,
+                                                  a->get_expression(), b->get_expression()));
     }
     retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
@@ -607,12 +608,12 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
     size_t retwidth = a->get_width() + b->get_width();
     SValuePtr retval;
     if (a->is_number() && b->is_number()) {
-        retval = number_(retwidth,
-                         IntegerOps::signExtend2(a->get_number(), a->get_width(), 64) *
-                         IntegerOps::signExtend2(b->get_number(), b->get_width(), 64));
+        retval = svalue_number(retwidth,
+                               IntegerOps::signExtend2(a->get_number(), a->get_width(), 64) *
+                               IntegerOps::signExtend2(b->get_number(), b->get_width(), 64));
     } else {
-        retval = svalue(InternalNode::create(retwidth, InsnSemanticsExpr::OP_SMUL,
-                                             a->get_expression(), b->get_expression()));
+        retval = svalue_expr(InternalNode::create(retwidth, InsnSemanticsExpr::OP_SMUL,
+                                                  a->get_expression(), b->get_expression()));
     }
     retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
@@ -625,10 +626,10 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr b = SValue::promote(b_);
     SValuePtr retval;
     if (a->is_number() && b->is_number() && 0!=b->get_number()) {
-        retval = number_(a->get_width(), a->get_number() / b->get_number());
+        retval = svalue_number(a->get_width(), a->get_number() / b->get_number());
     } else {
-        retval = svalue(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_UDIV,
-                                             a->get_expression(), b->get_expression()));
+        retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_UDIV,
+                                                  a->get_expression(), b->get_expression()));
     }
     retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
@@ -641,10 +642,10 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr b = SValue::promote(b_);
     SValuePtr retval;
     if (a->is_number() && b->is_number() && 0!=b->get_number()) {
-        retval = number_(b->get_width(), a->get_number() % b->get_number());
+        retval = svalue_number(b->get_width(), a->get_number() % b->get_number());
     } else {
-        retval = svalue(InternalNode::create(b->get_width(), InsnSemanticsExpr::OP_UMOD,
-                                             a->get_expression(), b->get_expression()));
+        retval = svalue_expr(InternalNode::create(b->get_width(), InsnSemanticsExpr::OP_UMOD,
+                                                  a->get_expression(), b->get_expression()));
     }
     retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
@@ -658,10 +659,10 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
     size_t retwidth = a->get_width() + b->get_width();
     SValuePtr retval;
     if (a->is_number() && b->is_number()) {
-        retval = number_(retwidth, a->get_number()*b->get_number());
+        retval = svalue_number(retwidth, a->get_number()*b->get_number());
     } else {
-        retval = svalue(InternalNode::create(retwidth, InsnSemanticsExpr::OP_UMUL,
-                                             a->get_expression(), b->get_expression()));
+        retval = svalue_expr(InternalNode::create(retwidth, InsnSemanticsExpr::OP_UMUL,
+                                                  a->get_expression(), b->get_expression()));
     }
     retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
     return retval;
@@ -675,18 +676,18 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
     if (a->get_width() == new_width) {
         return a->copy();
     } else if (a->is_number()) {
-        retval = number_(new_width, IntegerOps::signExtend2(a->get_number(), a->get_width(), new_width));
+        retval = svalue_number(new_width, IntegerOps::signExtend2(a->get_number(), a->get_width(), new_width));
         retval->defined_by(cur_insn, a->get_defining_instructions());
     } else if (a->get_width() > new_width) {
-        retval = svalue(InternalNode::create(new_width, InsnSemanticsExpr::OP_EXTRACT,
-                                             LeafNode::create_integer(32, 0),
-                                             LeafNode::create_integer(32, new_width),
-                                             a->get_expression()));
+        retval = svalue_expr(InternalNode::create(new_width, InsnSemanticsExpr::OP_EXTRACT,
+                                                  LeafNode::create_integer(32, 0),
+                                                  LeafNode::create_integer(32, new_width),
+                                                  a->get_expression()));
         retval->defined_by(cur_insn, a->get_defining_instructions());
     } else {
-        retval = svalue(InternalNode::create(new_width, InsnSemanticsExpr::OP_SEXTEND,
-                                             LeafNode::create_integer(32, new_width),
-                                             a->get_expression()));
+        retval = svalue_expr(InternalNode::create(new_width, InsnSemanticsExpr::OP_SEXTEND,
+                                                  LeafNode::create_integer(32, new_width),
+                                                  a->get_expression()));
         retval->defined_by(cur_insn, a->get_defining_instructions());
     }
     return retval;
@@ -701,7 +702,7 @@ RiscOperators::readMemory(X86SegmentRegister segreg,
     assert(8==nbits || 16==nbits || 32==nbits);
 
     // Read the bytes in little endian order
-    SValuePtr dflt = undefined_(nbits);
+    SValuePtr dflt = svalue_undefined(nbits);
     std::vector<SValuePtr> bytes; // byte read
     InsnSet defs;
     for (size_t bytenum=0; bytenum<nbits/8; ++bytenum) {
@@ -748,13 +749,13 @@ RiscOperators::readMemory(X86SegmentRegister segreg,
     if (matched) {
         TreeNodePtr e0 = bytes[0]->get_expression()->isInternalNode()->child(2);
         if (e0->get_nbits()==nbits) {
-            retval = svalue(e0);
+            retval = svalue_expr(e0);
         } else {
             assert(e0->get_nbits()>nbits);
-            retval = svalue(InternalNode::create(nbits, InsnSemanticsExpr::OP_EXTRACT,
-                                                 LeafNode::create_integer(32, 0),
-                                                 LeafNode::create_integer(32, nbits),
-                                                 e0));
+            retval = svalue_expr(InternalNode::create(nbits, InsnSemanticsExpr::OP_EXTRACT,
+                                                      LeafNode::create_integer(32, 0),
+                                                      LeafNode::create_integer(32, nbits),
+                                                      e0));
         }
     } else {
         for (size_t bytenum=0; bytenum<bytes.size(); ++bytenum) { // little endian

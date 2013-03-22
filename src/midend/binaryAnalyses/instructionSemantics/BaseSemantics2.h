@@ -478,9 +478,20 @@ public:
  *  substantially faster. */
 typedef Pointer<class SValue> SValuePtr;
 
-/** Base class for semantic values. Semantics value objects are allocated on the heap and reference counted.  The
- *  BaseSemantics::SValue is an abstract class that defines the interface.  See the BinaryAnalysis::InstructionSemantics2
- *  namespace for an overview of how the parts fit together.*/
+/** Base class for semantic values.
+ *
+ *  A semantic value represents a datum from the specimen being analyzed. The datum could be from memory, it could be something
+ *  stored in a register, it could be the result of some computation, etc.  The datum in the specimen has a datum type that
+ *  might be only partially known; the datum value could, for instance, be 32-bits but unknown whether it is integer or
+ *  floating point.
+ *
+ *  The various semantic domains will define SValue subclasses that are appropriate for that domain--a concrete domain will
+ *  define an SValue that specimen data in a concrete form, an interval domain will define an SValue that represents specimen
+ *  data in intervals, etc.
+ *
+ *  Semantics value objects are allocated on the heap and reference counted.  The BaseSemantics::SValue is an abstract class
+ *  that defines the interface.  See the BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit
+ *  together.*/
 class SValue {
 public:
     long nrefs__; // shouldn't really be public, but need efficient reference from various Pointer<> classes
@@ -499,7 +510,7 @@ public:
     // Allocating static constructor.  None are needed--this class is abstract.
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Allocating virtual constructors.  false_(), true_(), and undefined_() need underscores, so we do so consistently for all
+    // Allocating virtual constructors.  undefined_() needs underscores, so we do so consistently for all
     // these allocating virtual c'tors.  However, we use copy() rather than copy_() because this one is fundamentally
     // different: the object (this) is use for more than just selecting which virtual method to invoke.
 
@@ -512,15 +523,10 @@ public:
      *  created. */
     virtual SValuePtr number_(size_t nbits, uint64_t number) const = 0; // hot
 
-    /** Create a new, false Boolean value. The new semantic value will have the same dynamic type as the value on
+    /** Create a new, Boolean value. The new semantic value will have the same dynamic type as the value on
      *  which this virtual method is called. This is how 1-bit flag register values (among others) are created. The base
-     *  implementation uses number_() to construct a 1-bit value whose bit is clear. */
-    virtual SValuePtr false_() const { return number_(1, 0); }
-
-    /** Create a new, true Boolean value.  The new semantic value will have the same dynamic type as the value on
-     *  which this virtual method is called. This is how 1-bit flag register values (among others) are created. The base
-     *  implementation uses number_() to construct a 1-bit value whose bit is set. */
-    virtual SValuePtr true_() const { return number_(1, 1); }
+     *  implementation uses number_() to construct a 1-bit value whose bit is zero (false) or one (true). */
+    virtual SValuePtr boolean_(bool value) const { return number_(1, value?1:0); }
 
     /** Create a new value from an existing value, changing the width if @p new_width is non-zero. Increasing the width
      *  logically adds zero bits to the most significant side of the value; decreasing the width logically removes bits from the
@@ -538,7 +544,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // The rest of the API...
 
-    /** Determines if the value is a concrete number. Concrete numbers can be created with the number_(), true_(), or false_()
+    /** Determines if the value is a concrete number. Concrete numbers can be created with the number_(), boolean_()
      *  virtual constructors, or by other means. */
     virtual bool is_number() const = 0;
 
@@ -1205,29 +1211,24 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Value Construction Operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // The trailing underscores are necessary for true_() and false_() on all machines and necessary for undefined_() on some
-    // machines, so we just add one to the end of all the virtual constructors for consistency. There is no reason for these to
-    // be virtual since they're just delegating to virtual functions for SValue.
-
-    /** Returns a true value. Uses the prototypical value to virtually construct a new value. */
-    SValuePtr true_() {
-        return protoval->true_();
-    }
-
-    /** Returns a false value. Uses the prototypical value to virtually construct a new value. */
-    SValuePtr false_() {
-        return protoval->false_();
-    }
+    // The trailing underscores are necessary for for undefined_() on some machines, so we just add one to the end of all the
+    // virtual constructors for consistency.
 
     /** Returns a new undefined value. Uses the prototypical value to virtually construct the new value. */
-    SValuePtr undefined_(size_t nbits) {
+    virtual SValuePtr undefined_(size_t nbits) {
         return protoval->undefined_(nbits);
     }
 
     /** Returns a number of the specified bit width.  Uses the prototypical value to virtually construct a new value. */
-    SValuePtr number_(size_t nbits, uint64_t value) {
+    virtual SValuePtr number_(size_t nbits, uint64_t value) {
         return protoval->number_(nbits, value);
     }
+
+    /** Returns a Boolean value. Uses the prototypical value to virtually construct a new value. */
+    virtual SValuePtr boolean_(bool value) {
+        return protoval->boolean_(value);
+    }
+
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

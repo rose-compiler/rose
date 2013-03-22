@@ -341,11 +341,11 @@ MemoryCell::may_alias(const MemoryCellPtr &other, RiscOperators *ops) const
     // Second, the RiscOperators does not define a greater-than-or-equal operation, so we need to write it in terms of a
     // subtraction. See x86 CMP and JG instructions for examples. ("sf" is sign flag, "of" is overflow flag.)
     SValuePtr carries;
-    SValuePtr diff = ops->addWithCarries(lo2, ops->invert(hi1), ops->true_(), carries/*out*/);
+    SValuePtr diff = ops->addWithCarries(lo2, ops->invert(hi1), ops->boolean_(true), carries/*out*/);
     SValuePtr sf = ops->extract(diff, addr_nbits-1, addr_nbits);
     SValuePtr of = ops->xor_(ops->extract(carries, addr_nbits-1, addr_nbits), ops->extract(carries, addr_nbits-2, addr_nbits-1));
     SValuePtr cond1 = ops->invert(ops->xor_(sf, of));
-    diff = ops->addWithCarries(lo1, ops->invert(hi2), ops->true_(), carries/*out*/);
+    diff = ops->addWithCarries(lo1, ops->invert(hi2), ops->boolean_(true), carries/*out*/);
     sf = ops->extract(diff, addr_nbits-1, addr_nbits);
     of = ops->xor_(ops->extract(carries, addr_nbits-1, addr_nbits), ops->extract(carries, addr_nbits-2, addr_nbits-1));
     SValuePtr cond2 = ops->invert(ops->xor_(sf, of));
@@ -378,11 +378,11 @@ MemoryCell::must_alias(const MemoryCellPtr &other, RiscOperators *ops) const
     // operation, so we need to write it in terms of a subtraction. See x86 CMP and JG instructions for examples. ("sf" is sign
     // flag, "of" is overflow flag.)
     SValuePtr carries;
-    SValuePtr diff = ops->addWithCarries(hi2, ops->invert(lo1), ops->true_(), carries/*out*/);
+    SValuePtr diff = ops->addWithCarries(hi2, ops->invert(lo1), ops->boolean_(true), carries/*out*/);
     SValuePtr sf = ops->extract(diff, addr_nbits-1, addr_nbits);
     SValuePtr of = ops->xor_(ops->extract(carries, addr_nbits-1, addr_nbits), ops->extract(carries, addr_nbits-2, addr_nbits-1));
     SValuePtr cond1 = ops->invert(ops->xor_(sf, of));
-    diff = ops->addWithCarries(hi1, ops->invert(lo2), ops->true_(), carries/*out*/);
+    diff = ops->addWithCarries(hi1, ops->invert(lo2), ops->boolean_(true), carries/*out*/);
     sf = ops->extract(diff, addr_nbits-1, addr_nbits);
     of = ops->xor_(ops->extract(carries, addr_nbits-1, addr_nbits), ops->extract(carries, addr_nbits-2, addr_nbits-1));
     SValuePtr cond2 = ops->invert(ops->xor_(sf, of));

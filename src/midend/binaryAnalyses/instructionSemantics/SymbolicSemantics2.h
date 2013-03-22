@@ -436,33 +436,41 @@ public:
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Methods first introduced by this class
+    // Inherited methods for constructing values.
 public:
-    /** Convenience function to create a new symbolic semantic value having the specified expression and definers. This makes
-     *  the RISC operator implementations less verbose.  We need to promote (dynamic cast) the prototypical value to a
-     *  SymbolicSemantics::SValue in order to get to the methods that were introduced at that level of the class hierarchy. */
-    virtual SValuePtr svalue(const TreeNodePtr &expr, const InsnSet &defs=InsnSet()) {
+    virtual BaseSemantics::SValuePtr boolean_(bool b) {
+        SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::boolean_(b));
+        retval->defined_by(get_insn());
+        return retval;
+    }
+
+    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) {
+        SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::number_(nbits, value));
+        retval->defined_by(get_insn());
+        return retval;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // New methods for constructing values, so we don't have to write so many SValue::promote calls in the RiscOperators
+    // implementations.
+protected:
+    SValuePtr svalue_expr(const TreeNodePtr &expr, const InsnSet &defs=InsnSet()) {
         BaseSemantics::SValuePtr newval = SValue::promote(protoval)->create(expr, defs);
         return SValue::promote(newval);
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Override some non-virtual functions only to change their return type for the convenience of us not having to
-    // constantly explicitly dynamic cast them to our own SValuePtr type.
-public:
-    SValuePtr number_(size_t nbits, uint64_t value) {
-        return SValue::promote(protoval->number_(nbits, value));
+    SValuePtr svalue_undefined(size_t nbits) {
+        return SValue::promote(undefined_(nbits));
     }
-    SValuePtr true_() {
-        return SValue::promote(protoval->true_());
+
+    SValuePtr svalue_number(size_t nbits, uint64_t value) {
+        return SValue::promote(number_(nbits, value));
     }
-    SValuePtr false_() {
-        return SValue::promote(protoval->false_());
+
+    SValuePtr svalue_boolean(bool b) {
+        return SValue::promote(boolean_(b));
     }
-    SValuePtr undefined_(size_t nbits) {
-        return SValue::promote(protoval->undefined_(nbits));
-    }
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override methods from base class.  These are the RISC operators that are invoked by a Dispatcher.
 public:

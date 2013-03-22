@@ -319,22 +319,6 @@ public:
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Override some non-virtual functions only to change their return type for the convenience of us not having to constantly
-    // explicitly dynamic cast them to our own SValuePtr type.
-    SValuePtr number_(size_t nbits, uint64_t value) {
-        return SValue::promote(protoval->number_(nbits, value));
-    }
-    SValuePtr true_() {
-        return SValue::promote(protoval->true_());
-    }
-    SValuePtr false_() {
-        return SValue::promote(protoval->false_());
-    }
-    SValuePtr undefined_(size_t nbits) {
-        return SValue::promote(protoval->undefined_(nbits));
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override methods from base class.  These are the RISC operators that are invoked by a Dispatcher.
 public:
     virtual void interrupt(uint8_t inum) /*override*/;

@@ -217,7 +217,7 @@ RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a_)
     SValuePtr a = SValue::promote(a_);
     if (a->name)
         return undefined_(1);
-    return a->offset ? false_() : true_();
+    return a->offset ? boolean_(false) : boolean_(true);
 }
 
 BaseSemantics::SValuePtr
