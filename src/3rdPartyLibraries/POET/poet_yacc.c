@@ -3824,7 +3824,7 @@ yyreduce:
 
   case 236:
 #line 358 "poet_yacc.y"
-    {(yyval).ptr = (yyvsp[(0) - (2)]).ptr + 1; }
+    {(yyval).ptr = (yyvsp[(0) - (2) + 1]).ptr; }
     break;
 
   case 239:
