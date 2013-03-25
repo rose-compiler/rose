@@ -314,6 +314,7 @@ set(roseBinaryFormats_fileList_part0
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/ExecGeneric.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/ExtentMap.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/Hexdump.C
+   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/MemoryMap.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/Rva.C 
 
    ### Generic Base Classes ###
@@ -354,13 +355,6 @@ set(roseBinaryFormats_fileList_part0
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/ExecNE.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/ExecLE.C 
    )
-
-include(CheckIncludeFile)
-CHECK_INCLUDE_FILE(sys/mman.h HAVE_SYS_MMAN_H)
-if (HAVE_SYS_MMAN_H)
-  list(APPEND roseBinaryFormats_fileList_part0
-       ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/MemoryMap.C)
-endif() 
    
 set(roseBinaryLoader_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryLoader/BinaryLoader.C
@@ -917,12 +911,15 @@ add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR edg33 libhpdf generate_str
 
 # tps : independant Components : ROSE, libhpdf
 set(LINK_FILES
-   edg33
 #   PHP_FRONTEND_LIB 
    libhpdf
 #   libdl
    ${CMAKE_DL_LIBS}
 )
+
+if (NOT WIN32)
+  list(APPEND LINK_FILES edg33)
+endif()
 
 if(enable-fortran)
   list(APPEND LINK_FILES roseFortran)
