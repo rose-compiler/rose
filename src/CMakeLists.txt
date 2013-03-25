@@ -874,9 +874,15 @@ endif (NOT WIN32)
 ### The stringify.h and stringify.C files have prototypes and definitions for functions that convert enum constants
 ### to strings. The add_custom_target is necessary because the add_custom_command only applies to the current directory
 ### (this CMakeList.txt file), but we use these two files when building librose in a higher directory.
+
+find_package(Perl)
+if(NOT PERL_FOUND)
+  message(FATAL_ERROR "Could not find perl.  Perl is needed to generate stringify.C")
+endif()
+
 add_custom_command(
      OUTPUT  ${CMAKE_BINARY_DIR}/src/roseSupport/stringify.C ${CMAKE_BINARY_DIR}/src/roseSupport/stringify.h
-     COMMAND perl ${CMAKE_SOURCE_DIR}/scripts/stringify.pl --header --generic --output=${CMAKE_BINARY_DIR}/src/roseSupport/stringify.C ${CMAKE_SOURCE_DIR}/src ${CMAKE_BINARY_DIR}/src/frontend/SageIII
+     COMMAND ${PERL_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/stringify.pl --header --generic --output=${CMAKE_BINARY_DIR}/src/roseSupport/stringify.C ${CMAKE_SOURCE_DIR}/src ${CMAKE_BINARY_DIR}/src/frontend/SageIII
      #FIXME: This should also depend on all the files that contain enums, but I'm not sure how to do that. [RPM 2010-10-15]
      DEPENDS ${CMAKE_SOURCE_DIR}/scripts/stringify.pl
      )
