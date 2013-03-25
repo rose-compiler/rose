@@ -1979,6 +1979,11 @@ SgType::handledUsingLocalTable(SgType* t)
      return returnValue;
    }
 
+// Kitware 2013/03/25
+// This is a workaround for the lack of EDG on Windows.
+// Once that problem is resolved, this include file can go away.
+#include "fake_EDG.h"
+
 // Liao 10/29/2010
 // My understanding of this code (may not be accurate):
 //  This function was designed to work with C/C++ and Fortran frontends to generate AST.

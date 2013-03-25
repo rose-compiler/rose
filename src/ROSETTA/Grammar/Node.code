@@ -2151,6 +2151,19 @@ void Range<rose_addr_t>::print(std::ostream &o) const
     }
 }
 
+// This resolves a linker error when building ROSE with Visual Studio.
+// If the above function is not called within the same file, the compiler
+// fails to generate the symbol.
+#ifdef _MSC_VER
+namespace {
+void instantiate_range_print_msvc()
+{
+  static Range<rose_addr_t> g;
+  g.print(std::cout);
+}
+}
+#endif
+
 // Support for global function type symbol table (moved to be static data pointer)
 // DQ (1/31/2006): Modified to build all types in the memory pools
 // SgFunctionTypeTable* SgNode::Sgfunc_type_table = new SgFunctionTypeTable();
