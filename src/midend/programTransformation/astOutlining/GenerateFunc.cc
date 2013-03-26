@@ -965,7 +965,8 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
     SgInitializedName* p_init_name = NULL;
     // Case 1: using a wrapper for all variables 
     //   two choices: array of pointers (default)  vs. structure 
-    if (Outliner::useParameterWrapper)
+    if (!Outliner::enable_classic && Outliner::useParameterWrapper) // Liao 3/26/2013. enable_classic overrules useParameterWrapper
+ //   if (Outliner::useParameterWrapper)
     {
       if (i==syms.rbegin())
       {

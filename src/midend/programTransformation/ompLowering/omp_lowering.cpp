@@ -1388,7 +1388,8 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
   SgStatement * body =  target->get_body();
   ROSE_ASSERT(body != NULL);
   SgFunctionDeclaration* result= NULL;
-  //Initialize outliner 
+  //Initialize outliner
+  Outliner::enable_classic = false; // we need use parameter wrapping, which is not classic behavior of outlining
   if (SageInterface::is_Fortran_language())
   {
     //We pass one variable per parameter, at least for Fortran 77
@@ -2509,6 +2510,7 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
 
     // Prepare the outliner
     Outliner::enable_classic = true;
+//    Outliner::useParameterWrapper = false; //TODO: better handling of the dependence among flags
     SgBasicBlock* body_block = Outliner::preprocess(body);
     // translator OpenMP 3.0 and earlier variables.
     transOmpVariables (target, body_block);
