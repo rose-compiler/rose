@@ -123,14 +123,11 @@ set( STORAGECLASSES_SRC
 
      )
 
-
-set( phpFrontend_SRC 
-     ${CMAKE_SOURCE_DIR}/src/frontend/PHPFrontend/PHPFrontend.C
-     )
-
-#set( pythonFrontend_SRC
-#     ${CMAKE_SOURCE_DIR}/src/frontend/PythonFrontend/PythonFrontend.C
-#     )
+if (enable-php)
+  set( phpFrontend_SRC 
+       ${CMAKE_SOURCE_DIR}/src/frontend/PHPFrontend/PHPFrontend.C
+       )
+endif()
 
 set( astFixup_SRC
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astFixup/AstFixup.C 
@@ -205,7 +202,7 @@ set(virtualCFG_SRC
     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/memberFunctions.C
     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/staticCFG.C
     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/customFilteredCFG.C
-
+    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/interproceduralCFG.C
    )
 
 set( binaryFrontend_SRC 
@@ -297,8 +294,6 @@ set (unparser_SRC
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/IncludedFilesUnparser.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/formatSupport/unparseFormatHelp.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/formatSupport/unparse_format.C
-      ${CMAKE_SOURCE_DIR}/src/backend/unparser/PHPCodeGeneration/unparsePHP.C
-      #${CMAKE_SOURCE_DIR}/src/backend/unparser/PythonCodeGeneration/unparsePython.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/languageIndependenceSupport/modified_sage_isUnaryOp.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/languageIndependenceSupport/unparser_opt.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/languageIndependenceSupport/modified_sage.C
@@ -306,7 +301,10 @@ set (unparser_SRC
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/languageIndependenceSupport/unparse_debug.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/languageIndependenceSupport/unparseLanguageIndependentConstructs.C
 )
-
+if(enable-php)
+list(APPEND unparser_SRC
+  ${CMAKE_SOURCE_DIR}/src/backend/unparser/PHPCodeGeneration/unparsePHP.C)
+endif()
 
 set(roseBinaryFormats_fileList_part0
    ### Utilities ###
@@ -803,7 +801,38 @@ ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/astPostProcessing.C
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/fixupConstantFoldedValues.C
    )
 
-
+if(enable-rosehpct)
+  find_package(LibXml2)
+  if(NOT LIBXML2_FOUND)
+    message(ERROR "ROSE_HPCT module requires libxml2")
+  endif()
+  include_directories(${LIBXML2_INCLUDE_DIR}
+    ${CMAKE_SOURCE_DIR}/src/roseExtensions/roseHPCToolkit/include)
+  set(roseHPC_src_dir ${CMAKE_SOURCE_DIR}/src/roseExtensions/roseHPCToolkit/src)
+  set(roseExtensions_SRC
+    ${roseHPC_src_dir}/profir2sage/attach.cc
+    ${roseHPC_src_dir}/xml2profir/query.cc
+    ${roseHPC_src_dir}/xml2profir/convert.cc
+    ${roseHPC_src_dir}/xml2profir/factory.cc
+    ${roseHPC_src_dir}/xml2profir/process.cc
+    ${roseHPC_src_dir}/gprof/gprof_info.cc
+    ${roseHPC_src_dir}/sage/depth.cc
+    ${roseHPC_src_dir}/sage/metric.cc
+    ${roseHPC_src_dir}/sage/collect.cc
+    ${roseHPC_src_dir}/sage/propagate.cc
+    ${roseHPC_src_dir}/util/general.cc
+    ${roseHPC_src_dir}/rosehpct.cc
+    #${roseHPC_src_dir}/xml-xercesc/util.cc
+    #${roseHPC_src_dir}/xml-xercesc/handler.cc
+    #${roseHPC_src_dir}/xml-xercesc/elem.cc
+    #${roseHPC_src_dir}/xml-xercesc/parser.cc
+    ${roseHPC_src_dir}/profir/profir.cc
+    ${roseHPC_src_dir}/xml/util.cc
+    ${roseHPC_src_dir}/xml/handler.cc
+    ${roseHPC_src_dir}/xml/elem.cc
+    ${roseHPC_src_dir}/xml/parser.cc
+    )
+endif()
 
 
 
@@ -843,7 +872,6 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${roseBinaryLoader_SRC}
  ${roseAsmUnparser_SRC}
  ${phpFrontend_SRC}
- #${pythonFrontend_SRC}
  ${libastMerge_SRC}
  ${astFixup_SRC}
  ${midend_src}
@@ -862,6 +890,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${libincludeDirectivesProcessing_SRC}
  ${midend_loopproc_src}
  ${libastPostProcessing_SRC}
+ ${roseExtensions_SRC}
  ${binaryFrontend_SRC}
 # ${AST_REWRITE_SRC}
 )
@@ -935,6 +964,14 @@ if(enable-java)
   list(APPEND LINK_FILES roseJava)
 endif()
 
+if(enable-python)
+  list(APPEND LINK_FILES unparsePython rosePythonFrontend)
+endif()
+
+if(enable-rosehpct)
+  list(APPEND LINK_FILES ${LIBXML2_LIBRARIES})
+endif()
+
 if ( enable-smaller-generated-files )
 set(ROSE_TARGET_LINK 
    libgeneratedIR 
@@ -969,8 +1006,7 @@ set(testSharedRoseLib_SRCS testRoseLib.C)
 add_executable(testSharedRoseLib ${testSharedRoseLib_SRCS}  )
 
 
-target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} ROSE_DLL edg33 ${link_with_libraries} ${Boost_LIBRARIES}
-					${ROSE_TARGET_LINK}
+target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} ROSE_DLL edg33 ${link_with_libraries}
     )
 
 ########### install files ###############

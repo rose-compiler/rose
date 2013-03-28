@@ -1,8 +1,9 @@
+set(TREEBOX_MOC_SOURCES QRTreeBox.h)
+QT4_WRAP_CPP(TREEBOX_MOC_CPP ${TREEBOX_MOC_SOURCES})
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
-
-
-########### next target ###############
+set(TREEBOX_SOURCES
+  QRListViewItem.C QRTreeBox.C QRTreeVisitor.C)
+add_library(qrtreebox ${TREEBOX_SOURCES} ${TREEBOX_MOC_CPP})
 
 
 ########### install files ###############
