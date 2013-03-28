@@ -295,8 +295,10 @@ set( CMAKE_MODULE_LINKER_FLAGS " ${CMAKE_MODULE_LINKER_FLAGS} /INCREMENTAL:NO" )
 set( CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} /INCREMENTAL:NO")
 set( CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} /INCREMENTAL:NO")
 else (WIN32)
-set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC -fvisibility=hidden" )
-set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC -fvisibility=hidden" )
+set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -fPIC" )
+set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -fPIC" )
+#set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC -fvisibility=hidden" )
+#set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC -fvisibility=hidden" )
 #set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
 #set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
 endif (WIN32)
@@ -377,6 +379,7 @@ endif()
 option(enable-python "Enable Python support in ROSE." OFF)
 if (enable-python)
   add_definitions(-DROSE_BUILD_PYTHON_LANGUAGE_SUPPORT)
+  find_package(PythonLibs REQUIRED)
 endif()
 
 option(enable-binary-analysis "Enable binary analysis support in ROSE." ON)
@@ -393,6 +396,19 @@ option(enable-opencl "Enable OpenCL support in ROSE." ON)
 if (enable-opencl)
   add_definitions(-DROSE_BUILD_OPENCL_LANGUAGE_SUPPORT)
 endif()
+
+option(disable-tests-directory
+  "Disable compilation and testing of the ROSE/tests directory" OFF)
+
+option(disable-tutorial-directory
+  "Disable compilation and testing of the ROSE/tutorial directory" OFF)
+
+option(disable-projects-directory
+  "Disable compilation and testing of the ROSE/projects directory" OFF)
+
+option(with-roseQt "Build with roseQt" OFF)
+
+option(enable-rosehpct "enable build of the ROSE-HPCT module" ON)
 
 # tps (01/04/2010) : added verbose output 
 # ------------------------- Begin Generic CMake Variable Logging ------------------
@@ -720,12 +736,34 @@ ENDIF()
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 #include_directories( ${ROSE_INCLUDES} )
 
-message(Status "Enabling QT ...")
+
+if(with-roseQt)
+  find_package(Qt REQUIRED)
+  include(${QT_USE_FILE})
+  #message(Status "Enabling QT ...")
+  list(APPEND ROSE_INCLUDES
+    ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Components/Common
+    ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Components/QueryBox
+    ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Components/SourceBox
+    ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Components/TreeBox
+  )
+endif()
 set(QT_INCLUDES ${ROSE_INCLUDES} ${Boost_INCLUDE_DIRS} )
 
 add_subdirectory(config)
 add_subdirectory(src)
-add_subdirectory(tests)
+
+if(NOT disable-tests-directory)
+  add_subdirectory(tests)
+endif()
+
+if(NOT disable-tutorial-directory)
+  add_subdirectory(tutorial)
+endif()
+
+if(NOT disable-projects-directory)
+  add_subdirectory(projects)
+endif()
 
 enable_testing()
 

@@ -4,7 +4,9 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 add_subdirectory(sqlite3x)
 add_subdirectory(dataStructureTraversal)
 add_subdirectory(highLevelGrammar)
-add_subdirectory(roseHPCToolkit)
+if(enable-rosehpct)
+  add_subdirectory(roseHPCToolkit)
+endif()
 #add_subdirectory(qtWidgets)
 
 

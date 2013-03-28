@@ -1,19 +1,23 @@
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
-
+include_directories(
+  ${ROSE_INCLUDES}
+  ${ROSE_SOURCE_DIR}/src/roseExtensions/roseHPCToolkit/include
+  ${LIBXML2_INCLUDE_DIR})
 
 ########### next target ###############
 
 set(attachMetrics_SRCS attachMetrics.cc)
-
-kde4_add_executable(attachMetrics ${attachMetrics_SRCS})
-
-target_link_libraries(attachMetrics ${KDE4_KDECORE_LIBS})
+add_executable(attachMetrics ${attachMetrics_SRCS})
+target_link_libraries(attachMetrics
+  ROSE_DLL ${LIBXML2_LIBRARIES} ${Boost_LIBRARIES})
 
 
 ########### install files ###############
 
-install(FILES  profiled.out  	is-static.tex command-line.tex  	profiled-p93.pdf DESTINATION )
+# TODO: verify DESTINATION, was previosuly blank
+install(
+  FILES profiled.out is-static.tex command-line.tex	profiled-p93.pdf
+  DESTINATION include)
 
 
 

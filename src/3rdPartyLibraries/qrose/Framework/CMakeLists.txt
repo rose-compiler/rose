@@ -1,6 +1,12 @@
+set(WIDGET_MOC_SOURCES
+  QRGroup.h QRMain_p.h QRSpaceWidget.h QRTiledWidget.h QRWindow.h)
+QT4_WRAP_CPP(WIDGET_MOC_CPP ${WIDGET_MOC_SOURCES})
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
+set(WIDGET_SOURCES
+  QRMain.C QRMain_p.C QRException.C QRTiledWidget.C QRWidgetAccess.C QRWindow.C
+  QRPanel.C QRSpaceWidget.C QRGroup.C)
 
+add_library(qrframework ${WIDGET_SOURCES} ${WIDGET_MOC_CPP})
 
 ########### next target ###############
 
