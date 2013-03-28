@@ -2294,6 +2294,8 @@ ValueP StackFrame::evalExpr(SgExpression *expr, bool arrPtrConv)
           case V_SgVarArgStartOp: val = evalVarArgStartOp(isSgVarArgStartOp(expr)); break;
           case V_SgVarArgOp: val = evalVarArgOp(isSgVarArgOp(expr)); break;
           case V_SgVarArgEndOp: val = evalVarArgEndOp(isSgVarArgEndOp(expr)); break;
+          // Liao 3/28/2013, not sure if this is entirely correct.
+          //case V_SgAggregateInitializer: aggregateInitialize (val, isSgAggregateInitializer(expr), NULL, false); break;
           default: throw InterpError("unhandled expression " + expr->class_name() + " encountered");
         }
      // The SAGE IR does not explicitly represent array-to-pointer conversion.

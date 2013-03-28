@@ -74,8 +74,11 @@ TEST_INPUTS = \
 EXTRA_DIST = interp_core.h interp_extcall.h interp_maple.h interp_mpi.h interp_smt.h maple++.h typeLayoutStore.h smtlib.h $(TEST_INPUTS)
 
 interp_core.o: interp_core.C interp_core.h
-main_core.o: main_core.C interp_core.h
+# Liao 3/28/2013. It is possible the libltdlc.la is not yet built
+main_core.o: main_core.C interp_core.h ../../libltdl/libltdlc.la
 test_core.o: test_core.C interp_core.h
+../../libltdl/libltdlc.la:
+	make -C ../../libltdl 
 
 interp_extcall.o: interp_extcall.C interp_core.h interp_extcall.h
 main_extcall.o: main_extcall.C interp_core.h interp_extcall.h
