@@ -5066,7 +5066,7 @@ SgConstructorInitializer::get_class_decl () const
         // p_expression_type's declaration.
         cdecl = isSgClassDeclaration(expr_type->get_declaration());
         assert(cdecl!=NULL);
-    } else if (SgJavaParameterizedType* parmType = isSgJavaParameterizedType(p_expression_type) {
+    } else if (SgJavaParameterizedType* parmType = isSgJavaParameterizedType(p_expression_type)) {
 	    // 12/16/12 PC added case of SgJavaParameterizedType... Note that Strictly speaking,
 	    // an SgJavaParameterizedType is a class.  However, this is not the case in the current
 	    // SAGE Representation.
