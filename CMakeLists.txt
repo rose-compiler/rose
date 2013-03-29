@@ -353,6 +353,8 @@ include(MacroLibrary)
 # MYSQL_FOUND,MYSQL_INCLUDE_DIR,MYSQL_LIBRARIES, etc
 include(FindMySQL)
 
+find_package(OpenSSL)
+
 #configuration options
 option(enable-c "Enable C/C++ language support in ROSE." ON)
 if (enable-c)
@@ -409,6 +411,14 @@ option(disable-projects-directory
 option(with-roseQt "Build with roseQt" OFF)
 
 option(enable-rosehpct "enable build of the ROSE-HPCT module" ON)
+
+option(with-python "Build code that requires a Python interpreter" ON)
+if(with-python)
+  find_package(PythonInterp)
+endif()
+
+find_path(with-ida "ida2sql.py"
+  DOC "Specify the prefix where IDA Pro is installed")
 
 # tps (01/04/2010) : added verbose output 
 # ------------------------- Begin Generic CMake Variable Logging ------------------
@@ -574,6 +584,8 @@ endif (NOT WIN32)
 
 message(Status "Looking for JAVA ...")
 include(FindJava)
+find_program(GCJ gcj)
+find_program(GCJH gcjh)
 
 message(Status "Looking for flex ...")
 find_package(FLEX)
