@@ -4467,8 +4467,8 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   }
           }
        // DQ (2/20/2013): The timer used in TimingPerformance is now fixed to properly record elapsed wall clock time.
-          //CAVE3 double check that is correct and hsouldn't be compilerCmdLine
-           returnValueForCompiler = systemFromVector (compilerNameString);
+          //CAVE3 double check that is correct and shouldn't be compilerCmdLine
+           returnValueForCompiler = systemFromVector (compilerCmdLine);
         }
        else
         {
