@@ -58,14 +58,13 @@ string(STRIP ${signature} signature)
 set(tarball_site "http://www.rosecompiler.org/edg_binaries")
 set(tarball_filename "roseBinaryEDG-${Local_EDG_Version}-${platform}-${compiler}-${signature}.tar.gz")
 
-# Commenting out locally due to LLNL network restrictions
-#ExternalProject_Add("EDG_tarball"
-#  URL ${tarball_site}/${tarball_filename}
-#  SOURCE_DIR ${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend/EDG
-#  CONFIGURE_COMMAND ""
-#  BUILD_COMMAND ""
-#  INSTALL_COMMAND ""
-#  )
+ExternalProject_Add("EDG_tarball"
+  URL ${tarball_site}/${tarball_filename}
+  SOURCE_DIR ${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend/EDG
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ""
+  )
 
 add_library(edg33 STATIC IMPORTED)
 set_property(TARGET edg33 PROPERTY IMPORTED_LOCATION
