@@ -5070,8 +5070,8 @@ SgConstructorInitializer::get_class_decl () const
 	    // 12/16/12 PC added case of SgJavaParameterizedType... Note that Strictly speaking,
 	    // an SgJavaParameterizedType is a class.  However, this is not the case in the current
 	    // SAGE Representation.
-        returnType = isSgClassDeclaration(parmType->get_declaration());
-        ROSE_ASSERT(returnType != NULL);    
+        cdecl = isSgClassDeclaration(parmType->get_declaration());
+        ROSE_ASSERT(cdecl != NULL);    
     } else {
         // Constructor is for a primitive type.  There is no class declaration to return.
     }
