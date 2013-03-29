@@ -14535,6 +14535,7 @@ SgProject::get_X10_only (void) const
   return result;
 }
 
+void
 SgProject::set_Java_source_destdir (std::string param)
    {
      p_Java_source_destdir = param;
