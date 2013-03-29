@@ -460,8 +460,7 @@
 #undef HAVE__RTC
 
 /* Prefix path for use of IDA. */
-//AS Not quite sure what to do with this
-#undef IDA_PRO_PATH
+#define IDA_PRO_PATH "${with_ida}"
 
 /* Path to JVM executable */
 #define JAVA_JVM_PATH "${JAVA_RUNTIME}"

@@ -8,6 +8,7 @@ set(COMMON_SOURCES
   QRoseComponent.C)
 
 add_library(qrcommon ${COMMON_SOURCES} ${COMMON_MOC_CPP})
+add_dependencies(qrcommon rosetta_generated)
 
 add_subdirectory(icons)
 
