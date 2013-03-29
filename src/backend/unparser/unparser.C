@@ -1687,7 +1687,6 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
         {
             // outputFilename = file->get_sourceFileNameWithoutPath();
                outputFilename += ".s";
-<<<<<<< HEAD
         }
         // DQ (4/2/2011): Added Java support which requires that the filename for Java match the input file.
         else if (file->get_Java_only() == true)

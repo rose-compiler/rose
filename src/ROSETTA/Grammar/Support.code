@@ -14516,7 +14516,6 @@ SgProject::get_Java_destdir (void) const
    }
 
 void
-<<<<<<< HEAD
 SgProject::set_X10_only (bool value)
 {
   ROSE_ASSERT(this != NULL);
