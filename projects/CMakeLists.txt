@@ -24,7 +24,7 @@ endif()
 add_subdirectory(DocumentationGenerator)
 
 if(GCJ)
-  add_subdirectory(FiniteStateModelChecker)
+  #add_subdirectory(FiniteStateModelChecker)
 endif()
 #add_subdirectory(graphColoring)
 #add_subdirectory(HeaderFilesInclusion)

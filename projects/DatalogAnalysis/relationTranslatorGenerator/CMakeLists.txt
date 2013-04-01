@@ -8,4 +8,5 @@ add_custom_command(
 )
 
 add_library(astBinaryRelations output/RelationVisitor.cc)
+add_dependencies(astBinaryRelations rosetta_generated)
 
