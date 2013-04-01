@@ -620,6 +620,24 @@ string EState::toString() const {
   return ss.str();
 }
 
+string EState::toString(VariableIdMapping* vim) const {
+  stringstream ss;
+  ss << "EState";
+  ss << "("<<label()<<", ";
+  if(pstate())
+	ss <<pstate()->toString(vim);
+  else
+	ss <<"NULL";
+  if(constraints()) {
+	ss <<", constraints="<<constraints()->toString(vim);
+  } else {
+	ss <<", NULL";
+  }
+  ss <<", io="<<io.toString(); // TODO
+  ss<<")";
+  return ss.str();
+}
+
 string EState::toHTML() const {
   stringstream ss;
   string nl = " <BR />\n";

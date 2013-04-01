@@ -16,6 +16,7 @@ using namespace CodeThorn;
 
 Visualizer::Visualizer():
   labeler(0),
+  variableIdMapping(0),
   flow(0),
   pstateSet(0),
   estateSet(0),
@@ -32,6 +33,7 @@ Visualizer::Visualizer(Analyzer* analyzer):
   optionTransitionGraphDotHtmlNode(true)
 {
   setLabeler(analyzer->getLabeler());
+  setVariableIdMapping(analyzer->getVariableIdMapping());
   setFlow(analyzer->getFlow());
   setPStateSet(analyzer->getPStateSet());
   setEStateSet(analyzer->getEStateSet());
@@ -39,8 +41,9 @@ Visualizer::Visualizer(Analyzer* analyzer):
 }
 
   //! For providing specific information. For some visualizations not all information is required. The respective set-function can be used as well to set specific program information (this allows to also visualize computed subsets of information (such as post-processed transition graphs etc.).
-Visualizer::Visualizer(Labeler* l, Flow* f, PStateSet* ss, EStateSet* ess, TransitionGraph* tg):
+Visualizer::Visualizer(Labeler* l, VariableIdMapping* vim, Flow* f, PStateSet* ss, EStateSet* ess, TransitionGraph* tg):
   labeler(l),
+  variableIdMapping(vim),
   flow(f),
   pstateSet(ss),
   estateSet(ess),
@@ -52,6 +55,7 @@ Visualizer::Visualizer(Labeler* l, Flow* f, PStateSet* ss, EStateSet* ess, Trans
 
 void Visualizer::setOptionTransitionGraphDotHtmlNode(bool x) {optionTransitionGraphDotHtmlNode=x;}
 void Visualizer::setLabeler(Labeler* x) { labeler=x; }
+void Visualizer::setVariableIdMapping(VariableIdMapping* x) { variableIdMapping=x; }
 void Visualizer::setFlow(Flow* x) { flow=x; }
 void Visualizer::setPStateSet(PStateSet* x) { pstateSet=x; }
 void Visualizer::setEStateSet(EStateSet* x) { estateSet=x; }
@@ -70,7 +74,7 @@ string Visualizer::pstateToString(const PState* pstate) {
 	ss<<"S"<<pstateSet->pstateId(pstate);
   }
   if((tg1&&boolOptions["tg1-pstate-properties"])||(tg2&&boolOptions["tg2-pstate-properties"])) {
-	ss<<pstate->toString();
+	ss<<pstate->toString(variableIdMapping);
   } 
   return ss.str();
 }
@@ -89,7 +93,7 @@ string Visualizer::estateToString(const EState* estate) {
 	ss<<estateIdStringWithTemporaries(estate);
   }
   if((tg1&&boolOptions["tg1-estate-properties"])||(tg2&&boolOptions["tg2-estate-properties"])) {
-	ss<<estate->toString();
+	ss<<estate->toString(variableIdMapping);
   } 
   return ss.str();
 }

@@ -115,6 +115,7 @@ class EState {
  EState(Label label, const PState* pstate, const ConstraintSet* cset, InputOutput io):_label(label),_pstate(pstate),_constraints(cset),io(io){}
 
   string toString() const;
+  string toString(VariableIdMapping* variableIdMapping) const;
   string toHTML() const; /// multi-line version for dot output
   long memorySize() const;
 

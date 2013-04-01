@@ -89,6 +89,7 @@ class ConstraintSet : public set<Constraint> {
   ConstraintSet findSpecificSet(Constraint::ConstraintOp op, VariableId varId) const;
 
   string toString() const;
+  string toString(VariableIdMapping* vim) const;
 
   //! returns concrete int-value if equality exists, otherwise Top.
   AType::ConstIntLattice varConstIntLatticeValue(const VariableId varId) const;

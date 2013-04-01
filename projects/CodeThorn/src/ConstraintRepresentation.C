@@ -688,6 +688,19 @@ string ConstraintSet::toString() const {
   return ss.str();
 }
 
+string ConstraintSet::toString(VariableIdMapping* vim) const {
+  stringstream ss;
+  ss<<"{";
+  for(set<Constraint>::iterator i=begin();i!=end();++i) {
+	if(i!=begin()) 
+	  ss<<",";
+	ss<<(*i).toString(vim);
+  }
+  ss<<"}";
+  return ss.str();
+}
+
+
 long ConstraintSet::memorySize() const {
   long mem=0;
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
