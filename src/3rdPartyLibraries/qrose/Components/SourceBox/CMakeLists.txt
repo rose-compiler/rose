@@ -11,6 +11,7 @@ set(SOURCEBOX_SOURCES
   qeditor_indenter.C  simple_indent.C linenumberwidget.C  q3richtext_px.C
   QRSourceBox.C yyindent.C)
 add_library(qrsourcebox ${SOURCEBOX_SOURCES} ${SOURCEBOX_MOC_CPP})
+add_dependencies(qrsourcebox rosetta_generated)
 
 ########### install files ###############
 

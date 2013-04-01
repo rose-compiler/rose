@@ -5,6 +5,7 @@ set(QUERYBOX_SOURCES
   QRQueryBox.C QRQueryDomain.C QRQueryOp.C QRQueryRange.C)
 
 add_library(qrquerybox ${QUERYBOX_SOURCES} ${QUERYBOX_MOC_CPP})
+add_dependencies(qrquerybox rosetta_generated)
 
 ########### install files ###############
 
