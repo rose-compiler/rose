@@ -14,7 +14,28 @@
 --            echo .dump |sqlite3 syntactic.db |sqlite3 clones.db
 --
 
--- All pairs of functions from each syntactic similarity set (aka., "cluster").
+
+-- Create clusters of semantically similar functions based on fuzz testing results, which are stored in the semantic_fio
+-- (function input/output) table.  The "similarity" column is the number of times this pair of functions produced the same
+-- output when run with the same input.
+drop view semantic_clusters;
+create view semantic_clusters as
+    select a.func_id as func_id_1, b.func_id as func_id_2, count(*) as similarity
+	from semantic_fio a
+	join semantic_fio b on a.func_id < b.func_id and a.inputset_id = b.inputset_id and a.outputset_id = b.outputset_id
+	group by a.func_id, b.func_id;
+
+-- All pairs of functions that are semantically similar according to some similarity threshold (the "where" clause).  Pairs are
+-- always ordered so that the first function id is less than the second (otherwise each pair would appear twice, and we'd have
+-- pairs indicating that a function is similar to itself).
+drop view semantic_clone_pairs;
+create view semantic_clone_pairs as
+    select distinct func_id_1, func_id_2
+        from semantic_clusters
+	where similarity = (select count(*) from (select distinct id from semantic_inputvalues));
+
+-- All pairs of functions that are syntactically similar.  The similarity threshold was specified to the C++ program that
+-- created the syntactic "clusters" table.
 drop view syntactic_clone_pairs;
 create view syntactic_clone_pairs as
     select distinct a.cluster as simset_id, c.entry_va as entry_va_1, d.entry_va as entry_va_2
@@ -23,14 +44,6 @@ create view syntactic_clone_pairs as
     join function_ids c on a.function_id = c.row_number
     join function_ids d on b.function_id = d.row_number
     where c.entry_va < d.entry_va;
-
--- All pairs of functions from each semantic similarity set (aka., "simset").
-drop view semantic_clone_pairs;
-create view semantic_clone_pairs as
-    select a.simset_id, a.entry_va as entry_va_1, b.entry_va as entry_va_2
-    from semantic_functions a
-    join semantic_functions b on a.simset_id = b.simset_id
-    where a.entry_va < b.entry_va;
 
 -- All pairs of functions that appear as both a syntactic pair and a semantic pair.
 drop view clone_pairs;
