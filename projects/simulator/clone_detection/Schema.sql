@@ -51,7 +51,9 @@ create table semantic_inoutpairs (
 -- currently written in such a way that it wouldn't really need to be running inside a simulator, in which case knowing the
 -- file name would be easy since all functions would have come from a file rather than specimen process memory.
 create table semantic_functions (
-       entry_va integer primary key,                  -- unique starting virtual address within the binary specimen
-       simset_id integer references semantic_simsets, -- which similarity set does this function belong to?
-       funcname text                                  -- name of function if known
+       id integer primary key,	                      -- unique function ID
+       entry_va integer,                              -- unique starting virtual address within the binary specimen
+       funcname text,                                 -- name of function if known
+       filename text,                                 -- name of file in which function exists, if known
+       simset_id integer references semantic_simsets  -- which similarity set does this function belong to?
 );

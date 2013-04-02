@@ -17,6 +17,29 @@
 #include "sqlite3x.h"
 using namespace sqlite3x; // its top-level class name start with "sqlite3_"
 
+// Return the name of a file containing the specified virtual address.  We parse the name from the mmap segment.
+static std::string
+va_filename(rose_addr_t va, const MemoryMap &mm)
+{
+    if (!mm.exists(va))
+        return "";
+    std::string s = mm.at(va).second.get_name();
+    size_t ltparen = s.find('(');
+    size_t rtparen = s.rfind(')');
+    std::string retval;
+    if (0==s.substr(0, 5).compare("mmap(")) {
+        if (rtparen==std::string::npos) {
+            retval = s.substr(5);
+        } else {
+            assert(rtparen>=5);
+            retval = s.substr(5, rtparen-5);
+        }
+    } else if (ltparen!=std::string::npos) {
+        retval = s.substr(0, ltparen);
+    }
+    return retval;
+}
+
 /*******************************************************************************************************************************
  *                                      Partition Forest
  *******************************************************************************************************************************/
@@ -128,8 +151,8 @@ public:
         levels[lno].vertices.insert(new Vertex(parent, func, outputs));
     }
 
-    /** Print the entire forest for debugging output. */
-    void print(std::ostream &o) const {
+    /** Print the entire forest for debugging output. The process is used only to print file names. */
+    void print(std::ostream &o, RSIM_Process *proc=NULL) const {
         for (size_t i=0; i<levels.size(); ++i) {
             if (levels[i].vertices.empty()) {
                 o <<"partition forest level " <<i <<" is empty.\n";
@@ -151,7 +174,11 @@ public:
                       <<" contains " <<vertex->functions.size() <<" function" <<(1==vertex->functions.size()?"":"s") <<":\n";
                     for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
                         SgAsmFunction *func = *fi;
-                        o <<"    " <<StringUtility::addrToString(func->get_entry_va()) <<" <" <<func->get_name() <<">\n";
+                        o <<"    " <<StringUtility::addrToString(func->get_entry_va())
+                          <<" <" <<func->get_name() <<">";
+                        if (proc)
+                            o <<"\t" <<va_filename(func->get_entry_va(), proc->get_memory());
+                        o <<"\n";
                     }
                     o <<"    whose output was: {";
                     for (OutputValues::const_iterator oi=vertex->outputs.begin(); oi!=vertex->outputs.end(); ++oi)
@@ -222,7 +249,7 @@ public:
      *  converts all numeric values to text anyway, so there's not really any additional slowdown or loss of precision).
      *  Therefore, the @p user_name and @p password arguments are unused, and @p server_name is the name of the file to which
      *  the SQL statements are written. */
-    void dump(const std::string &server_name, const std::string &user_name, const std::string &password) {
+    void dump(const std::string &server_name, const std::string &user_name, const std::string &password, RSIM_Process *proc) {
         if (-1==access(server_name.c_str(), F_OK)) {
             // SQLite3 database does not exist; load the schema from a file, which has been incorporated into this binary
             extern const char *clone_detection_schema; // see CloneDetectionSchema.C in the build directory
@@ -243,7 +270,7 @@ public:
         size_t leafnum = 0;
 
         sqlite3_command cmd1(sqlite, "insert into semantic_simsets (id) values (?)");
-        sqlite3_command cmd2(sqlite, "insert into semantic_functions (entry_va, simset_id, funcname) values (?, ?, ?)");
+        sqlite3_command cmd2(sqlite, "insert into semantic_functions (entry_va, funcname, filename, simset_id) values (?,?,?,?)");
         sqlite3_command cmd3(sqlite, "insert into semantic_inoutpairs (simset_id, inputset_id, outputset_id) values (?, ?, ?)");
 
         for (Vertices::const_iterator vi=leaves.begin(); vi!=leaves.end(); ++vi, ++leafnum) {
@@ -253,8 +280,9 @@ public:
             cmd1.executenonquery();
             for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
                 cmd2.bind(1, (*fi)->get_entry_va());
-                cmd2.bind(2, leafnum);
-                cmd2.bind(3, (*fi)->get_name());
+                cmd2.bind(2, (*fi)->get_name());
+                cmd2.bind(3, va_filename((*fi)->get_entry_va(), proc->get_memory()));
+                cmd2.bind(4, leafnum);
                 cmd2.executenonquery();
             }
             for (Vertex *v=vertex; v; v=v->parent) {
@@ -265,10 +293,11 @@ public:
             }
         }
     }
-        
-    std::string toString() const {
+
+    // proc is only used to print file names for each function
+    std::string toString(RSIM_Process *proc=NULL) const {
         std::ostringstream ss;
-        print(ss);
+        print(ss, proc);
         return ss.str();
     }
 };
@@ -360,8 +389,8 @@ public:
         PointerDetectors retval;
         CloneDetection::InstructionProvidor *insn_providor = new CloneDetection::InstructionProvidor(thread->get_process());
         for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
-            m->mesg("%s: performing pointer detection analysis for \"%s\" at 0x%08"PRIx64,
-                    name, (*fi)->get_name().c_str(), (*fi)->get_entry_va());
+            m->mesg("%s: performing pointer detection analysis for \"%s\" at 0x%08"PRIx64" in %s",
+                    name, (*fi)->get_name().c_str(), (*fi)->get_entry_va(), filename_for_function(*fi).c_str());
             CloneDetection::PointerDetector pd(insn_providor, solver);
             pd.initial_state().registers.gpr[x86_gpr_sp] = SYMBOLIC_VALUE<32>(thread->policy.INITIAL_STACK);
             pd.initial_state().registers.gpr[x86_gpr_bp] = SYMBOLIC_VALUE<32>(thread->policy.INITIAL_STACK);
@@ -409,13 +438,19 @@ public:
         partition.insert(func, concrete_outputs, parent);
     }
 
+    // Return the name of a file containing the specified function.  We parse the name from the mmap area.
+    std::string filename_for_function(SgAsmFunction *function) {
+        return va_filename(function->get_entry_va(), thread->get_process()->get_memory());
+    }
+    
     // Analyze a single function by running it with the specified inputs and collecting its outputs. */
     CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *fuzz_test(SgAsmFunction *function, CloneDetection::InputValues &inputs,
                                                              const CloneDetection::PointerDetector &pointers) {
         RSIM_Process *proc = thread->get_process();
         RTS_Message *m = thread->tracing(TRACE_MISC);
         m->mesg("==========================================================================================");
-        m->mesg("%s: fuzz testing function \"%s\" at 0x%08"PRIx64, name, function->get_name().c_str(), function->get_entry_va());
+        m->mesg("%s: fuzz testing function \"%s\" at 0x%08"PRIx64" in %s",
+                name, function->get_name().c_str(), function->get_entry_va(), filename_for_function(function).c_str());
 
         // Not sure if saving/restoring memory state is necessary. I don't thing machine memory is adjusted by the semantic
         // policy's writeMemory() or readMemory() operations after the policy is triggered to enable our analysis.  But it
@@ -443,8 +478,11 @@ public:
             // The x86 HLT instruction appears in some functions (like _start) as a failsafe to terminate a process.  We need
             // to intercept it and terminate only the function analysis.
             m->mesg("%s: function executed HLT instruction at 0x%08"PRIx64, name, e.ip);
+        } catch (const RSIM_SEMANTICS_POLICY::Exception &e) {
+            // Some exception in the policy, such as division by zero.
+            m->mesg("%s: %s", name, e.mesg.c_str());
         }
-
+        
         // Gather the function's outputs before restoring machine state.
         bool verbose = true;
         CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *outputs = thread->policy.get_outputs(verbose);
@@ -475,7 +513,9 @@ public:
 
     // Detect functions that are semantically similar by running multiple iterations of partition_functions().
     void analyze() {
+        thread->set_do_coredump(false);
         RTS_Message *m = thread->tracing(TRACE_MISC);
+        thread->get_process()->mem_showmap(m, "Starting clone detection analysis", "  ");
         Functions functions = find_functions(m, thread->get_process());
         PointerDetectors pointers = detect_pointers(m, thread, functions);
         PartitionForest partition;
@@ -505,7 +545,7 @@ public:
 
         m->mesg("==========================================================================================");
         m->mesg("%s: The entire partition forest follows...", name);
-        m->mesg("%s", StringUtility::prefixLines(partition.toString(), std::string(name)+": ").c_str());
+        m->mesg("%s", StringUtility::prefixLines(partition.toString(thread->get_process()), std::string(name)+": ").c_str());
 
         m->mesg("==========================================================================================");
         m->mesg("%s: Final function similarity sets are:", name);
@@ -517,10 +557,11 @@ public:
             m->mesg("%s:   set #%zu at level %zu has %zu function%s:",
                     name, setno, leaf->get_level(), functions.size(), 1==functions.size()?"":"s");
             for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi)
-                m->mesg("%s:     0x%08"PRIx64" <%s>", name, (*fi)->get_entry_va(), (*fi)->get_name().c_str());
+                m->mesg("%s:     0x%08"PRIx64" <%s>\t%s",
+                        name, (*fi)->get_entry_va(), (*fi)->get_name().c_str(), filename_for_function(*fi).c_str());
         }
 
-        partition.dump("clones.db", "NO_USER", "NO_PASSWD");
+        partition.dump("clones.db", "NO_USER", "NO_PASSWD", thread->get_process());
         m->mesg("%s: final similarity sets have been saved in clones.db, an SQLite database", name);
     }
 };
