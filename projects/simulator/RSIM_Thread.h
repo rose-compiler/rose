@@ -17,7 +17,7 @@ public:
      *  thread that will be simulating the speciment's thread described by this object. */
     RSIM_Thread(RSIM_Process *process)
         : process(process), my_tid(-1),
-          mesg_prefix(this), report_interval(10.0),
+          mesg_prefix(this), report_interval(10.0), do_coredump(true),
           policy(this), semantics(policy),
           robust_list_head_va(0), clear_child_tid(0) {
         real_thread = pthread_self();
@@ -163,6 +163,7 @@ private:
     RTS_Message *trace_mesg[TRACE_NFACILITIES];         /**< Array indexed by TraceFacility */
     struct timeval last_report;                         /**< Time of last progress report for TRACE_PROGRESS */
     double report_interval;                             /**< Minimum seconds between progress reports for TRACE_PROGRESS */
+    bool do_coredump;                                   /**< Simulatate a core dump (when true), or throw an exception. */
 
     /** Return a string identifying the thread and time called. */
     std::string id();
@@ -195,6 +196,14 @@ public:
      *  for the containing process.  If an RTS_Message object already exists, then its set_file() method is called to make it
      *  point to the specified file. */
     void reopen_trace_facilities(FILE*);
+
+    /** The do_core_dump determines whether a failing thread should simulate a specimen core dump or throw an exception. When
+     * the property is false, an exception is thrown.
+     * @{ */
+    bool get_do_coredump() const { return do_coredump; }
+    void set_do_coredump(bool b=true) { do_coredump = b; }
+    void clear_do_coredump() { set_do_coredump(false); }
+    /** @} */
 
     /**************************************************************************************************************************
      *                                  Callbacks

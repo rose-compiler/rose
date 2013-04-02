@@ -816,10 +816,14 @@ RSIM_Thread::main()
             std::ostringstream s;
             s <<e;
             tracing(TRACE_MISC)->mesg("caught semantic policy exception: %s\n", s.str().c_str());
-            tracing(TRACE_MISC)->mesg("dumping core...\n");
-            process->dump_core(SIGILL);
-            report_stack_frames(tracing(TRACE_MISC));
-            abort();
+            if (do_coredump) {
+                tracing(TRACE_MISC)->mesg("dumping core...\n");
+                process->dump_core(SIGILL);
+                report_stack_frames(tracing(TRACE_MISC));
+                abort();
+            } else {
+                throw;
+            }
         } catch (const RSIM_Process::Exit &e) {
             post_insn_semaphore();
             sys_exit(e);
