@@ -33,10 +33,7 @@ int jvm_ecj_processing(int argc, char **argv){
 static jclass jofp_get_class() { 
     static jclass ofp_class ;
     if (ofp_class == NULL) {
-        // ofp_class = jserver_FindClass("fortran/ofp/FrontEnd");
         ofp_class = jserver_FindClass("JavaTraversal");
-        // ofp_class = jserver_FindClass("org.eclipse.jdt.internal.compiler.batch.Main");
-
         if (ofp_class == NULL)  jserver_handleException();
     }
     return ofp_class;
@@ -71,6 +68,7 @@ static int jofp_invoke(int argc, char **argv) {
 
     // tps : this code is more transparent and easier to read
     jclass cls = jserver_FindClass("JavaTraversal");
+    if (cls == NULL)  jserver_handleException();
     jmethodID  mainMethod = jserver_GetMethodID(STATIC_METHOD, cls, "main",  "([Ljava/lang/String;)V");
     JNIEnv* env = getEnv();
     (*env).CallStaticVoidMethod(cls, mainMethod,args);

@@ -51,6 +51,8 @@ Unparse_Java::unparseType(SgType* type, SgUnparse_Info& info)
 
           default:
                cout << "Unparse_Java::unparseType(" << type->class_name() << "*,info) is unimplemented." << endl;
+string *p = NULL;
+ if (p -> size()); // force a crash!!!
                ROSE_ASSERT(false);
                break;
         }

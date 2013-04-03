@@ -1,6 +1,8 @@
 #ifndef ROSE_JAVA_SUPPORT
 #define ROSE_JAVA_SUPPORT
 
+extern int sg_file_count;
+
 extern SgGlobal *globalScope;
 extern SgClassType *ObjectClassType;
 extern SgClassType *StringClassType;
@@ -223,6 +225,16 @@ public:
 class ScopeStack : private list<SgScopeStatement *> {
 public:
     void push(SgScopeStatement *n) {
+if (isSgLocatedNode(n)) {
+Sg_File_Info *file_info = isSgLocatedNode(n) -> get_startOfConstruct();
+if (file_info == NULL)
+cout << "Null file_info found while pushing scope node " << n -> class_name() << endl;
+else if (file_info -> get_filenameString().size() == 0)
+cout << "file_info with null string found while pushing scope node " << n -> class_name() << endl;
+//else 
+//cout << "file_info with file: " << file_info -> get_filenameString() << ", found while pushing scope node " << n -> class_name() << endl;
+cout.flush();
+}
         if (SgProject::get_verbose() > 0) {
             cerr << "***Pushing Stack node " << n -> class_name() << endl; 
             cerr.flush();
@@ -233,6 +245,16 @@ public:
     SgScopeStatement *pop() {
         ROSE_ASSERT(size() > 0);
         SgScopeStatement *n = front();
+if (isSgLocatedNode(n)) {
+Sg_File_Info *file_info = isSgLocatedNode(n) -> get_startOfConstruct();
+if (file_info == NULL)
+cout << "Null file_info found while popping scope node " << n -> class_name() << endl;
+else if (file_info -> get_filenameString().size() == 0)
+cout << "file_info with null string found while popping scope node " << n -> class_name() << endl;
+//else 
+//cout << "file_info with file: " << file_info -> get_filenameString() << ", found while popping scope node " << n -> class_name() << endl;
+cout.flush();
+}
         if (SgProject::get_verbose() > 0) {
             cerr << "***Popping Stack node " << n -> class_name() << endl;
             cerr.flush();
@@ -454,6 +476,7 @@ void setJavaSourcePositionUnavailableInFrontend(SgLocatedNode *locatedNode);
 string convertJavaPackageNameToCxxString(JNIEnv *env, const jstring &java_string);
 string convertJavaStringValToWString(JNIEnv *env, const jstring &java_string);
 string convertJavaStringToCxxString(JNIEnv *env, const jstring &java_string);
+extern SgClassDeclaration *buildDefiningClassDeclaration(SgName, SgScopeStatement *);
 
 SgMemberFunctionDeclaration *buildDefiningMemberFunction(const SgName &inputName, SgClassDefinition *classDefinition, int num_arguments, JNIEnv *env, jobject methodLoc, jobject argsLoc);
 SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *classDefinition, const SgName &function_name, int num_arguments);
@@ -461,7 +484,7 @@ SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClass
 SgMemberFunctionDeclaration *findMemberFunctionDeclarationInClass(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *>& types);
 SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *classDefinition, const SgName &function_name, list<SgType *> &);
 
-SgClassDeclaration *buildJavaClass (const SgName &className, SgScopeStatement *scope, JNIEnv *env, jobject jToken);
+SgClassDeclaration *buildJavaClass (SgName className, SgScopeStatement *scope, JNIEnv *env, jobject jToken);
 
 SgVariableDeclaration *buildSimpleVariableDeclaration(const SgName &name, SgType *type);
 

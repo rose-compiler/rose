@@ -368,8 +368,9 @@ string getCurrentJavaFilename() {
     ROSE_ASSERT(sourceFile != NULL);
 
     return sourceFile -> getFileName();
- }
+}
 
+int sg_file_count = 0;
 /*
  * Wrapper to create an Sg_File_Info from line/col info
  */
@@ -402,7 +403,8 @@ void setJavaSourcePosition(SgLocatedNode*locatedNode, JavaSourceCodePosition *po
     // This function sets the source position if java position information has been provided
     // (posInfo != NULL), otherwise it is marked as not available.
     // These nodes WILL be unparsed in the code generation phase.
-    if (posInfo -> getLineStart() == 0) {
+    //    if (posInfo -> getLineStart() == 0) {
+    if (posInfo -> getLineEnd() == 0) {
         setJavaSourcePositionUnavailableInFrontend(locatedNode);
         return;
     }
@@ -592,6 +594,22 @@ string convertJavaPackageNameToCxxString(JNIEnv *env, const jstring &java_string
 }
 
 
+SgClassDeclaration *buildDefiningClassDeclaration(SgName class_name, SgScopeStatement *scope) {
+    ROSE_ASSERT(scope); // there must be a scope
+
+    SgClassDeclaration* nonDefiningDecl              = NULL;
+    bool buildTemplateInstantiation                  = false;
+    SgTemplateArgumentPtrList* templateArgumentsList = NULL;
+
+    SgClassDeclaration* declaration = SageBuilder::buildClassDeclaration_nfi(class_name, SgClassDeclaration::e_class, scope, nonDefiningDecl, buildTemplateInstantiation, templateArgumentsList);
+    ROSE_ASSERT(declaration != NULL);
+    declaration -> set_scope(scope);
+    declaration -> set_parent(scope);
+
+    return declaration;
+}
+
+
 void memberFunctionSetup(SgName &name, SgClassDefinition *class_definition, int num_arguments, SgFunctionParameterList *&parameterlist, SgMemberFunctionType *&memberFunctionType,
                          list<Sg_File_Info *> &startLocation, list<Sg_File_Info *> &endLocation) {
     // Refactored code.
@@ -637,24 +655,6 @@ void memberFunctionSetup(SgName &name, SgClassDefinition *class_definition, int 
         parameterlist -> append_arg(initializedName);
         initializedName -> set_parent(parameterlist);
     }
-// TODO: Remove this !!!
-/*
-cout << "Adding function " 
-<< name
-<< " in type "
-<< class_definition -> get_qualified_name()
-<< " with parameter types: (";
- SgTypePtrList::iterator i = typeList -> get_arguments().begin();
- if (i != typeList -> get_arguments().end()) {
-cout << getTypeName(*i);
- for (i++; i != typeList -> get_arguments().end(); i++) {
-cout << ", " << getTypeName(*i);
-}
-}
-cout << ")"
-<< endl;
-cout.flush();
-*/
     // This is the return type for the member function (top of the stack).
     SgType *return_type = astJavaComponentStack.popType();
     ROSE_ASSERT(return_type != NULL);
@@ -700,27 +700,114 @@ SgMemberFunctionDeclaration *buildDefiningMemberFunction(const SgName &inputName
 
     SgName name = inputName;
 
-    SgFunctionParameterList *parameterlist = NULL;
-    SgMemberFunctionType *memberFunctionType = NULL;
-    list<Sg_File_Info *> startLocation,
-                         endLocation;
-
     // printf("Build defining member function %s\n", inputName.str());
     // Refactored code.
-    memberFunctionSetup(name, class_definition, num_arguments, parameterlist, memberFunctionType, startLocation, endLocation);
+//    memberFunctionSetup(name, class_definition, num_arguments, parameterlist, memberFunctionType, startLocation, endLocation);
 
+
+    // Loop over the types in the astJavaComponentStack (the rest of the stack).
+    list<Sg_File_Info *> startLocation,
+                         endLocation;
+    list<SgInitializedName *> names;
+    for (int i = 0; i < num_arguments; i++) { // charles4 10/12/2011: Reverse the content of the stack.
+        SgNode *node = astJavaComponentStack.pop();
+        SgInitializedName *initializedName = isSgInitializedName(node);
+        ROSE_ASSERT(initializedName);
+        names.push_front(initializedName);
+
+        startLocation.push_front(initializedName -> get_startOfConstruct());
+        endLocation.push_front(initializedName -> get_endOfConstruct());
+    }
+
+    // charles4 10/12/2011: Now, iterate over the list in the proper order
+    SgFunctionParameterTypeList *typeList = SageBuilder::buildFunctionParameterTypeList();
+    ROSE_ASSERT(typeList != NULL);
+    SgFunctionParameterList *parameterlist = SageBuilder::buildFunctionParameterList();
     ROSE_ASSERT(parameterlist != NULL);
-    ROSE_ASSERT(memberFunctionType != NULL);
+    while (! names.empty()) {
+        SgInitializedName *initializedName = names.front();
+        ROSE_ASSERT(initializedName != NULL);
+        names.pop_front();
 
-    SgMemberFunctionDeclaration *functionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration(name, memberFunctionType, parameterlist, class_definition);
+        SgType *parameterType = initializedName -> get_type();
+        ROSE_ASSERT(parameterType != NULL);
+
+        typeList -> append_argument(parameterType);
+
+        parameterlist -> append_arg(initializedName);
+        initializedName -> set_parent(parameterlist);
+    }
+
+// TODO: Remove this !!!
+/*
+cout << "Adding function " 
+<< name
+<< " in type "
+<< class_definition -> get_qualified_name()
+<< " with parameter types: (";
+ SgTypePtrList::iterator i = typeList -> get_arguments().begin();
+ if (i != typeList -> get_arguments().end()) {
+cout << getTypeName(*i);
+ for (i++; i != typeList -> get_arguments().end(); i++) {
+cout << ", " << getTypeName(*i);
+}
+}
+cout << ")"
+<< endl;
+cout.flush();
+*/
+    // This is the return type for the member function (top of the stack).
+    SgType *return_type = astJavaComponentStack.popType();
+    ROSE_ASSERT(return_type != NULL);
+    unsigned int mfunc_specifier = 0;
+    SgMemberFunctionType *member_function_type = SageBuilder::buildMemberFunctionType(return_type, typeList, class_definition, mfunc_specifier);
+    ROSE_ASSERT(member_function_type != NULL);
+
+    // SgFunctionType *func_type = SageBuilder::buildFunctionType(return_type, parameterlist);
+    SgFunctionType *func_type = member_function_type;
+    ROSE_ASSERT(func_type != NULL);
+
+    // DQ (3/24/2011): Currently we am introducing a mechanism to make sure that overloaded function will have 
+    // a unique name. It is temporary until we can handle correct mangled name support using the argument types.
+    SgFunctionSymbol *func_symbol = NULL;
+    bool func_symbol_found = true;
+    while (func_symbol_found == true) {
+        // DQ (3/24/2011): This function should not already exist (else it should be an error).
+        func_symbol = class_definition -> lookup_function_symbol(name, func_type);
+        // ROSE_ASSERT(func_symbol == NULL);
+
+        if (func_symbol != NULL) {
+            func_symbol_found = true;
+
+            // This is a temporary mean to force overloaded functions to have unique names.
+            name += "_overloaded_";
+            if (SgProject::get_verbose() > 0)
+                printf ("Using a temporary mean to force overloaded functions to have unique names (name = %s) \n", name.str());
+        }
+        else {
+            func_symbol_found = false;
+        }
+    }
+
+//SgMemberFunctionDeclaration*
+//buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
+
+    SgMemberFunctionDeclaration *nondefining_functionDeclaration = SageBuilder::buildNondefiningMemberFunctionDeclaration(name, return_type, parameterlist, class_definition, NULL, 0, false, NULL);
+
+    //SgMemberFunctionDeclaration*
+    //buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation, unsigned int functionConstVolatileFlags, SgMemberFunctionDeclaration* first_nondefinng_declaration, SgTemplateArgumentPtrList* templateArgumentsList);
+    SgMemberFunctionDeclaration *functionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration(name, member_function_type, parameterlist, class_definition, NULL, false, 0, nondefining_functionDeclaration, NULL);
+    ROSE_ASSERT(functionDeclaration);
     vector<SgInitializedName *> args = functionDeclaration -> get_args();
     setJavaSourcePosition(parameterlist, env, args_location);
     for (vector<SgInitializedName *>::iterator name_it = args.begin(); name_it != args.end(); name_it++) {
         SgInitializedName *locatedNode = *name_it;
         ROSE_ASSERT(! startLocation.empty());
         ROSE_ASSERT(! endLocation.empty());
-        locatedNode -> set_startOfConstruct(startLocation.front());
-        locatedNode -> set_endOfConstruct(endLocation.front());
+        Sg_File_Info *start_construct = endLocation.front(),
+                     *end_construct = startLocation.front();
+        locatedNode -> set_startOfConstruct(start_construct);
+        locatedNode -> set_endOfConstruct(end_construct);
         startLocation.pop_front();
         endLocation.pop_front();
     }
@@ -729,7 +816,6 @@ SgMemberFunctionDeclaration *buildDefiningMemberFunction(const SgName &inputName
     ROSE_ASSERT(functionDeclaration != NULL);
     ROSE_ASSERT(functionDeclaration -> get_definingDeclaration() != NULL);
     ROSE_ASSERT(functionDeclaration -> get_definition() != NULL);
-
     SgFunctionDefinition *functionDefinition = functionDeclaration -> get_definition();
     ROSE_ASSERT(functionDefinition != NULL);
     setJavaSourcePosition(functionDefinition, env, method_location);
@@ -858,8 +944,10 @@ cout.flush();
 }
 
     ROSE_ASSERT(function_declaration);
+    function_declaration = isSgMemberFunctionDeclaration(function_declaration -> get_definingDeclaration());
+    ROSE_ASSERT(function_declaration);
 
-    SgSymbol *symbol =  function_declaration -> get_symbol_from_symbol_table();
+    SgSymbol *symbol = function_declaration -> search_for_symbol_from_symbol_table();
     ROSE_ASSERT(symbol);
     SgMemberFunctionSymbol *function_symbol = isSgMemberFunctionSymbol(symbol);
     ROSE_ASSERT(function_symbol);
@@ -868,11 +956,11 @@ cout.flush();
 }
 
 
-SgClassDeclaration *buildJavaClass(const SgName &className, SgScopeStatement *scope, JNIEnv *env, jobject jToken) {
+SgClassDeclaration *buildJavaClass(SgName className, SgScopeStatement *scope, JNIEnv *env, jobject jToken) {
     ROSE_ASSERT(scope != NULL);
 
     // Note that this will also build the non-defining declaration.
-    SgClassDeclaration *declaration = SageBuilder::buildDefiningClassDeclaration (className, scope);
+    SgClassDeclaration *declaration = buildDefiningClassDeclaration(className, scope); // SageBuilder::buildDefiningClassDeclaration (className, scope);
     ROSE_ASSERT(declaration != NULL);
 
     ROSE_ASSERT(declaration -> get_type() != NULL);
@@ -881,8 +969,8 @@ SgClassDeclaration *buildJavaClass(const SgName &className, SgScopeStatement *sc
     ROSE_ASSERT(declaration -> get_firstNondefiningDeclaration() != NULL);
 
     // DQ (3/24/2011): I think we should be able to assect this since the scope was valid.
-    ROSE_ASSERT(declaration -> get_symbol_from_symbol_table() == NULL);
-    ROSE_ASSERT(declaration -> get_firstNondefiningDeclaration() -> get_symbol_from_symbol_table() != NULL);
+    ROSE_ASSERT(declaration -> search_for_symbol_from_symbol_table() == NULL);
+    ROSE_ASSERT(declaration -> get_firstNondefiningDeclaration() -> search_for_symbol_from_symbol_table() != NULL);
 
     // Make sure that the new class has been added to the correct synbol table.
     ROSE_ASSERT (scope -> lookup_class_symbol(declaration -> get_name()) != NULL);
@@ -890,16 +978,19 @@ SgClassDeclaration *buildJavaClass(const SgName &className, SgScopeStatement *sc
     setJavaSourcePosition(declaration, env, jToken);
 
     ROSE_ASSERT(astJavaScopeStack.empty() == false);
-    SgClassDefinition *class_definition = SageBuilder::buildClassDefinition(declaration);
+    SgClassDefinition *class_definition = declaration -> get_definition(); // SageBuilder::buildClassDefinition(declaration);
     ROSE_ASSERT(class_definition != NULL);
+    // TODO: Remove this!!!  Replaced by code above.
+    //    SgClassDefinition *class_definition = SageBuilder::buildClassDefinition(declaration);
+    //    ROSE_ASSERT(class_definition != NULL);
 
     setJavaSourcePosition(class_definition, env, jToken);
 
     // DQ (3/25/2011): Added testing.
     ROSE_ASSERT(class_definition -> get_declaration() == declaration);
     ROSE_ASSERT(class_definition -> get_declaration() != NULL);
-    ROSE_ASSERT(class_definition -> get_declaration() != NULL && class_definition -> get_declaration() -> get_symbol_from_symbol_table() == NULL);
-    ROSE_ASSERT(class_definition -> get_declaration() != NULL && class_definition -> get_declaration() -> get_firstNondefiningDeclaration() -> get_symbol_from_symbol_table() != NULL);
+    ROSE_ASSERT(class_definition -> get_declaration() != NULL && class_definition -> get_declaration() -> search_for_symbol_from_symbol_table() == NULL);
+    ROSE_ASSERT(class_definition -> get_declaration() != NULL && class_definition -> get_declaration() -> get_firstNondefiningDeclaration() -> search_for_symbol_from_symbol_table() != NULL);
 
     size_t declarationListSize = class_definition -> generateStatementList().size();
 
@@ -919,6 +1010,7 @@ SgVariableDeclaration *buildSimpleVariableDeclaration(const SgName &name, SgType
     // We are not supporting an initialized at this point in the implementation of the Java support.
     SgVariableDeclaration *variableDeclaration = SageBuilder::buildVariableDeclaration(name, type, NULL, astJavaScopeStack.top());
     ROSE_ASSERT(variableDeclaration != NULL);
+    variableDeclaration -> set_parent(astJavaScopeStack.top());
 
     // DQ (8/21/2011): Note that the default access permission is default, but this is the same enum value as public.
     // Most language support ignores this in the unparser, but we might want to set it better than this.
