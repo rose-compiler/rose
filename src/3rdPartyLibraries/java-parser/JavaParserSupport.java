@@ -33,6 +33,7 @@ class JavaParserSupport {
     // Keep track of the position factory for the unit being processed.
     //
     private JavaSourcePositionInformationFactory posFactory = null;
+    private JavaToken defaultLocation = null;
 
     public JavaToken createJavaToken(ASTNode node) {
         JavaSourcePositionInformation pos = this.posFactory.createPosInfo(node);
@@ -775,6 +776,7 @@ Constructor getRawConstructor(MethodBinding constructor_binding) {
      */
     public void preprocess(CompilationUnitDeclaration unit) {
         this.posFactory = new JavaSourcePositionInformationFactory(unit);
+        this.defaultLocation = new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0));
 
         //
         // Make sure that Object is processed first!
@@ -1260,7 +1262,7 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
                 assert(node == null); // TODO: simplify next statement if this is true!
                 JavaToken location = (node != null
                                             ? createJavaToken(node)
-                                            : new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
+                                            : defaultLocation);
                 JavaParser.cactionPushPackage(package_name, location);
                 insertClasses(base_class);
                 traverseClass(base_class);
@@ -1286,7 +1288,7 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
 
         JavaToken location = (node != null
                                     ? createJavaToken(node)
-                                    : new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
+                                    : defaultLocation);
 
         String class_name = (special_type != null 
                                            ? (special_type.isAnonymous() ? special_type.typename : special_type.simplename)
@@ -1327,7 +1329,7 @@ else System.out.println("NO type parameters!!!");
 
         JavaToken location = (node != null
                                     ? createJavaToken(node)
-                                    : new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
+                                    : defaultLocation);
 
         String class_name = (special_type != null 
                                     ? (special_type.isAnonymous() ? special_type.typename : special_type.simplename)
@@ -1845,7 +1847,7 @@ System.out.println(") in class " + cls.getCanonicalName());
         TypeDeclaration node = userTypeTable.get(cls);
         JavaToken location = (node != null
                                     ? createJavaToken(node)
-                                    : new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
+                                    : defaultLocation);
  
         int num_dimensions = 0;
         while (cls.isArray()) {
