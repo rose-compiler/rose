@@ -71,14 +71,20 @@ static int jofp_invoke(int argc, char **argv) {
     if (cls == NULL)  jserver_handleException();
     jmethodID  mainMethod = jserver_GetMethodID(STATIC_METHOD, cls, "main",  "([Ljava/lang/String;)V");
     JNIEnv* env = getEnv();
+
     (*env).CallStaticVoidMethod(cls, mainMethod,args);
+    if (env->ExceptionOccurred()) {
+        printf("** CAUGHT JNI EXCEPTION **\n");
+        throw std::exception();
+    }
+
 
     jmethodID errorMethod = jofp_get_method(STATIC_METHOD, "getError", "()Z");
     retval = (*env).CallBooleanMethod(cls, errorMethod);
     if (retval != 0)  {
         fprintf(stderr, "C++ side : Error detected ---------------------------------.\n");
-        abort();
-    }      
+        throw std::exception();
+    }
 
     // printf("We are done -----------------------------------------\n");
 

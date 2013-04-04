@@ -2066,20 +2066,47 @@ void unparseDirectory ( SgDirectory* directory, UnparseFormatHelp* unparseFormat
 #endif
    }
 
+#include <setjmp.h>
+#include <signal.h>
+#include <stdio.h>
+#include <unistd.h>
+static sigjmp_buf rose__sgproject_unparse_mark;
+static void HandleUnparserSignal(int sig)
+{
+  std::cout << "[SIGNAL] Caught unparser signal='" << sig << "'" << std::endl;
+  siglongjmp(rose__sgproject_unparse_mark, -1);
+}
 
 // DQ (1/19/2010): Added support for refactored handling directories of files.
 void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate)
-   {
-     ROSE_ASSERT(fileList != NULL);
+{
+  ROSE_ASSERT(fileList != NULL);
   // for (int i=0; i < fileList->numberOfFiles(); ++i)
-     for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
-        {
-          SgFile* file = fileList->get_listOfFiles()[i];
+  for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
+  {
+      SgFile* file = fileList->get_listOfFiles()[i];
 
-          if ( SgProject::get_verbose() > 1 )
-               printf ("Unparsing each file... file = %p = %s \n",file,file->class_name().c_str());
+      if ( SgProject::get_verbose() > 1 )
+           printf ("Unparsing each file... file = %p = %s \n",file,file->class_name().c_str());
 
+      if (file->get_project()->get_keep_going())
+      {
+          struct sigaction act;
+          act.sa_handler = HandleUnparserSignal;
+          sigemptyset(&act.sa_mask);
+          act.sa_flags = 0;
+          sigaction(SIGSEGV, &act, 0);
+      }
+
+      if(sigsetjmp(rose__sgproject_unparse_mark, 0) == -1)
+      {
+          std::cout << "[SIGNAL] Ignored unparser failure" << std::endl;
+          file->set_unparserErrorCode(-1);
+      }
+      else
+      {
           unparseFile(file,unparseFormatHelp,unparseDelegate);
-        }
-   }
+      }
+  }
+}
 
