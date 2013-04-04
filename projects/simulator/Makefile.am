@@ -264,6 +264,11 @@ CloneDetection_SOURCES = clone_detection/CloneDetection.C CloneDetectionSchema.C
 CloneDetection_CPPFLAGS = $(ROSE_INCLUDES)
 CloneDetection_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+noinst_PROGRAMS += clusters_from_pairs
+clusters_from_pairs_SOURCES = clone_detection/clusters_from_pairs.C
+clusters_from_pairs_CPPFLAGS = $(ROSE_INCLUDES)
+clusters_from_pairs_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 CloneDetectionSchema.C: clone_detection/Schema.sql
 	@echo "  GEN     $@"
 	@echo "const char *clone_detection_schema =" >$@

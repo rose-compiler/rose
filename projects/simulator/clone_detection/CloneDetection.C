@@ -156,8 +156,7 @@ public:
     // Save each function to the database.  Returns a mapping from function object to ID number.
     FunctionIdMap save_functions(const Functions &functions) {
         FunctionIdMap retval;
-        size_t nfuncs = sqlite.executeint("select count(*) from semantic_functions");
-        int func_id = 0==nfuncs ? 0 : sqlite.executeint("select max(id) from semantic_functions");
+        int func_id = sqlite.executeint("select coalesce(max(id),0)+1 from semantic_functions");
         sqlite3_command cmd1(sqlite, "insert into semantic_functions (id, entry_va, funcname, filename) values (?,?,?,?)");
         for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
             SgAsmFunction *func = *fi;
@@ -261,7 +260,7 @@ public:
     }
 
     // Return the name of a file containing the specified function.  We parse the name from the mmap area.
-    std::string filename_for_function(SgAsmFunction *function) {
+    std::string filename_for_function(SgAsmFunction *function, bool basename=true) {
         rose_addr_t va = function->get_entry_va();
         const MemoryMap &mm = thread->get_process()->get_memory();
         if (!mm.exists(va))
@@ -279,6 +278,12 @@ public:
             }
         } else if (ltparen!=std::string::npos) {
             retval = s.substr(0, ltparen);
+        }
+
+        if (basename) {
+            size_t slash = retval.rfind('/');
+            if (slash!=std::string::npos)
+                retval = retval.substr(slash+1);
         }
         return retval;
     }
