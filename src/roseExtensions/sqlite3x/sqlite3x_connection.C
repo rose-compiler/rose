@@ -25,6 +25,7 @@
 
 #include <sqlite3.h>
 #include "sqlite3x.h"
+#include "rose_paths.h"
 
 namespace sqlite3x {
 
@@ -36,14 +37,30 @@ sqlite3_connection::sqlite3_connection(const wchar_t *db) : db(NULL) { this->ope
 
 sqlite3_connection::~sqlite3_connection() { if(this->db) sqlite3_close(this->db); }
 
+/** Load required ROSE extensions. */
+void sqlite3_connection::post_open()
+{
+    std::string plug1 = ROSE_AUTOMAKE_TOP_BUILDDIR + "/src/roseExtensions/sqlite3x/.libs/libsqlitefunctions.so";
+    std::string plug2 = ROSE_AUTOMAKE_LIBDIR + "/libsqlitefunctions.so";
+    if (0==access(plug1.c_str(), F_OK)) {
+        load_extension(plug1);
+    } else if (0==access(plug2.c_str(), F_OK)) {
+        load_extension(plug2);
+    } else {
+        throw database_error("where is libsqlitefunctions.so?");
+    }
+}
+
 void sqlite3_connection::open(const char *db) {
         if(sqlite3_open(db, &this->db)!=SQLITE_OK)
                 throw database_error("unable to open database");
+        post_open();
 }
 
 void sqlite3_connection::open(const wchar_t *db) {
         if(sqlite3_open16(db, &this->db)!=SQLITE_OK)
                 throw database_error("unable to open database");
+        post_open();
 }
 
 void sqlite3_connection::close() {
@@ -206,4 +223,13 @@ std::string sqlite3_connection::executeblob(const std::wstring &sql) {
         return sqlite3_command(*this, sql).executeblob();
 }
 
+void sqlite3_connection::load_extension(const std::string &filename)
+{
+    if (!this->db) throw database_error("database is not open");
+    sqlite3_enable_load_extension(db, 1);
+    if (sqlite3_load_extension(db, filename.c_str(), NULL, NULL)!=SQLITE_OK)
+        throw database_error(*this);
 }
+
+} // namespace
+
