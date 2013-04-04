@@ -1481,8 +1481,20 @@ Grammar::setUpSupport ()
 
      Project.setDataPrototype("int","frontendErrorCode", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype("int","frontendErrorCode", "= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype("int","unparserErrorCode", "= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE); 
      Project.setDataPrototype("int","backendErrorCode", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype("bool","compileOutputFailed", "= false",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // TOO1 (03/05/2013): Ignore errors (similar to GNU Make's --keep-going), and
+  //                    simply compile the original input code as a failover.
+     Project.setDataPrototype("bool", "keep_going", "= false",
+                              NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE); 
+
 
      Project.setDataPrototype("std::string","outputFileName", "= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

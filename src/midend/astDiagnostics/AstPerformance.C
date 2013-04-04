@@ -206,7 +206,7 @@ AstPerformance::AstPerformance( std::string s , bool outputReport )
    {
      ProcessingPhase* parentData = NULL;
   // check the stack for an existing performance monitor (it will be come the parent)
-     if (performanceStack.size() > 0)
+     if (false && performanceStack.size() > 0)
         {
           std::list<AstPerformance*>::iterator i = performanceStack.begin();
           parentData = (*i)->localData;
