@@ -39,6 +39,9 @@ namespace sqlite3x {
 
                 struct sqlite3 *db;
 
+                /** Loads ROSE-specific extensions whenever the database is opened. */
+                void post_open();
+
         public:
                 sqlite3_connection();
                 sqlite3_connection(const char *db);
@@ -86,6 +89,9 @@ namespace sqlite3x {
                 std::string executeblob(const wchar_t *sql);
                 std::string executeblob(const std::string &sql);
                 std::string executeblob(const std::wstring &sql);
+
+                /** Load a shared library as an sqlite3 extension. See http://www.sqlite.org/cvstrac/wiki?p=LoadableExtensions. */
+                void load_extension(const std::string &filename);
         };
 
         class sqlite3_transaction : boost::noncopyable {
