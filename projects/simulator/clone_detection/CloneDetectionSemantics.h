@@ -327,11 +327,12 @@ public:
     const PointerDetector *pointers;                    // Addresses of pointer variables
     size_t ninsns;                                      // Number of instructions processed since last trigger() call
     size_t max_ninsns;                                  // Maximum number of instructions to process after trigger()
+    bool verbose;                                       // Produce lots of debugging output?
 
     // "Inherit" super class' constructors (assuming no c++11)
     Policy(RSIM_Thread *thread)
         : Super(thread), name(NULL), triggered(false), active_policies(0x07), inputs(NULL), pointers(NULL),
-          ninsns(0), max_ninsns(255) {
+          ninsns(0), max_ninsns(255), verbose(false) {
         init();
     }
 

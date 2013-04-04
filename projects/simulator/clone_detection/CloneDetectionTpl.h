@@ -85,8 +85,10 @@ Policy<State, ValueType>::startInstruction(SgAsmInstruction *insn_)
 
         SgAsmx86Instruction *insn = isSgAsmx86Instruction(insn_);
         assert(insn!=NULL);
-        trace()->mesg("%s\n", std::string(80, '-').c_str());
-        trace()->mesg("%s: executing: %s", name, unparseInstruction(insn).c_str());
+        if (verbose) {
+            trace()->mesg("%s\n", std::string(80, '-').c_str());
+            trace()->mesg("%s: executing: %s", name, unparseInstruction(insn).c_str());
+        }
 
         // We should be executing in at least the simulator's domain (concrete) right now since we haven't started the
         // instruction.
@@ -100,17 +102,17 @@ Policy<State, ValueType>::startInstruction(SgAsmInstruction *insn_)
         unsigned activated = HighLevel::domains_for_instruction(this, insn);
         assert(activated!=0); // perhaps this should be how we finish an analysis
         this->set_active_policies(activated);
-#if 0 /*DEBUGGING [Robb Matzke 2013-01-14]*/
-        std::string domains;
-        if (0 != (activated & CONCRETE.mask))
-            domains += " concrete";
-        if (0 != (activated & INTERVAL.mask))
-            domains += " interval";
-        if (0 != (activated & SYMBOLIC.mask))
-            domains += " symbolic";
-        trace()->mesg("%s: executing in:%s\n", name, domains.c_str());
-#endif
-
+        if (verbose) {
+            std::string domains;
+            if (0 != (activated & CONCRETE.mask))
+                domains += " concrete";
+            if (0 != (activated & INTERVAL.mask))
+                domains += " interval";
+            if (0 != (activated & SYMBOLIC.mask))
+                domains += " symbolic";
+            trace()->mesg("%s: executing in:%s\n", name, domains.c_str());
+        }
+        
         // Warn about no concrete state
         if (!this->is_active(CONCRETE)) {
             static bool warned = false;
@@ -146,11 +148,13 @@ Policy<State, ValueType>::finishInstruction(SgAsmInstruction *insn)
         //    * The caller cleans up any arguments that were passed via stack
         //    * The function's return value is a non-pointer type
         if (x86_call==insn_x86->get_kind()) {
-            trace()->mesg("%s: special handling for function call (fall through and return via EAX)", name);
+            if (verbose)
+                trace()->mesg("%s: special handling for function call (fall through and return via EAX)", name);
             RSIM_SEMANTICS_VTYPE<32> call_fallthrough_va = this->add(this->template number<32>(insn->get_address()),
                                                                      this->template number<32>(insn->get_size()));
             this->writeRegister("eip", call_fallthrough_va);
-            this->writeRegister("eax", HighLevel::next_input_value<32>(this->inputs, InputValues::NONPOINTER, trace()));
+            this->writeRegister("eax", HighLevel::next_input_value<32>(this->inputs, InputValues::NONPOINTER,
+                                                                       this->verbose?trace():NULL));
         }
 
         // Give Andreas a chance to do his thing.
@@ -180,11 +184,16 @@ Policy<State, ValueType>::xor_(const ValueType<nBits> &a, const ValueType<nBits>
         if (this->is_active(SYMBOLIC) && retval.is_valid(SYMBOLIC)) {
             SYMBOLIC_VALUE<1> symbolic_bool = this->get_policy(SYMBOLIC).equalToZero(retval.get_subvalue(SYMBOLIC));
             if (symbolic_bool.is_known() && symbolic_bool.known_value()!=0) {
-                trace()->mesg("%s: xor_ optimization triggered for interval domain", name);
-                trace()->mesg("%s: instruction: %s", name, unparseInstruction(this->get_policy(CONCRETE).get_insn()).c_str());
+                if (verbose) {
+                    trace()->mesg("%s: xor_ optimization triggered for interval domain", name);
+                    trace()->mesg("%s: instruction: %s",
+                                  name, unparseInstruction(this->get_policy(CONCRETE).get_insn()).c_str());
+                }
 #if 0 // FIXME: throws an exception, segfaults, ? [possibly fixed by commit 5cb0fa28, but not verified yet]
-                std::ostringstream ss; ss <<this->get_policy(SYMBOLIC);
-                trace()->mesg("%s: symbolic state:\n%s", name, StringUtility::prefixLines(ss.str(), "    ").c_str());
+                if (verbose) {
+                    std::ostringstream ss; ss <<this->get_policy(SYMBOLIC);
+                    trace()->mesg("%s: symbolic state:\n%s", name, StringUtility::prefixLines(ss.str(), "    ").c_str());
+                }
 #endif
                 retval.set_subvalue(INTERVAL, INTERVAL_VALUE<nBits>(0));
             }
@@ -292,7 +301,8 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
                 bool never_accessed = 0 == state.register_rw_state.flag[reg.get_offset()].state;
                 state.register_rw_state.flag[reg.get_offset()].state |= HAS_BEEN_READ;
                 if (never_accessed) {
-                    retval = HighLevel::next_input_value<nBits>(this->inputs, InputValues::NONPOINTER, trace());
+                    retval = HighLevel::next_input_value<nBits>(this->inputs, InputValues::NONPOINTER,
+                                                                this->verbose?trace():NULL);
                 } else {
                     retval = this->template unsignedExtend<1, nBits>(state.registers.flag[reg.get_offset()]);
                 }
@@ -310,7 +320,8 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
                 bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                 state.register_rw_state.gpr[reg.get_minor()].state |= HAS_BEEN_READ;
                 if (never_accessed) {
-                    retval = HighLevel::next_input_value<nBits>(this->inputs, InputValues::NONPOINTER, trace());
+                    retval = HighLevel::next_input_value<nBits>(this->inputs, InputValues::NONPOINTER,
+                                                                this->verbose?trace():NULL);
                 } else {
                     switch (reg.get_offset()) {
                         case 0:
@@ -338,7 +349,8 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
                         bool never_accessed = 0==state.register_rw_state.segreg[reg.get_minor()].state;
                         state.register_rw_state.segreg[reg.get_minor()].state |= HAS_BEEN_READ;
                         if (never_accessed) {
-                            retval = HighLevel::next_input_value<nBits>(this->inputs, InputValues::NONPOINTER, trace());
+                            retval = HighLevel::next_input_value<nBits>(this->inputs, InputValues::NONPOINTER,
+                                                                        this->verbose?trace():NULL);
                         } else {
                             retval = this->template unsignedExtend<16, nBits>(state.registers.segreg[reg.get_minor()]);
                         }
@@ -350,7 +362,8 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
                         bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                         state.register_rw_state.segreg[reg.get_minor()].state |= HAS_BEEN_READ;
                         if (never_accessed) {
-                            retval = HighLevel::next_input_value<nBits>(this->inputs, InputValues::NONPOINTER, trace());
+                            retval = HighLevel::next_input_value<nBits>(this->inputs, InputValues::NONPOINTER,
+                                                                        this->verbose?trace():NULL);
                         } else {
                             retval = this->template extract<0, nBits>(state.registers.gpr[reg.get_minor()]);
                         }
@@ -397,7 +410,8 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
                         bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                         state.register_rw_state.gpr[reg.get_minor()].state |= HAS_BEEN_READ;
                         if (never_accessed) {
-                            retval = HighLevel::next_input_value<nBits>(this->inputs, InputValues::UNKNOWN_TYPE, trace());
+                            retval = HighLevel::next_input_value<nBits>(this->inputs, InputValues::UNKNOWN_TYPE,
+                                                                        this->verbose?trace():NULL);
                         } else {
                             retval = this->template unsignedExtend<32, nBits>(state.registers.gpr[reg.get_minor()]);
                         }
@@ -409,7 +423,8 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
                         bool never_accessed = 0==state.register_rw_state.ip.state;
                         state.register_rw_state.ip.state |= HAS_BEEN_READ;
                         if (never_accessed) {
-                            retval = HighLevel::next_input_value<nBits>(this->inputs, InputValues::POINTER, trace());
+                            retval = HighLevel::next_input_value<nBits>(this->inputs, InputValues::POINTER,
+                                                                        this->verbose?trace():NULL);
                         } else {
                             retval = this->template unsignedExtend<32, nBits>(state.registers.ip);
                         }
@@ -421,7 +436,8 @@ Policy<State, ValueType>::readRegister(const RegisterDescriptor &reg)
                         bool never_accessed = 0==state.register_rw_state.segreg[reg.get_minor()].state;
                         state.register_rw_state.segreg[reg.get_minor()].state |= HAS_BEEN_READ;
                         if (never_accessed) {
-                            retval = HighLevel::next_input_value<nBits>(this->inputs, InputValues::UNKNOWN_TYPE, trace());
+                            retval = HighLevel::next_input_value<nBits>(this->inputs, InputValues::UNKNOWN_TYPE,
+                                                                        this->verbose?trace():NULL);
                         } else {
                             retval = this->template unsignedExtend<16, nBits>(state.registers.segreg[reg.get_minor()]);
                         }
@@ -699,7 +715,7 @@ Policy<State, ValueType>::readMemory(X86SegmentRegister sr, ValueType<32> addr, 
         // read next time.
         SYMBOLIC_VALUE<32> a0_sym = convert_to_symbolic(addr);
         InputValues::Type type = this->pointers->is_pointer(a0_sym) ? InputValues::POINTER : InputValues::NONPOINTER;
-        retval = HighLevel::next_input_value<nBits>(this->inputs, type, trace());
+        retval = HighLevel::next_input_value<nBits>(this->inputs, type, this->verbose?trace():NULL);
         this->writeMemory<nBits>(sr, addr, retval, this->true_(), HAS_BEEN_READ);
     }
 

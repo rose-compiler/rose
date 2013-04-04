@@ -11,7 +11,7 @@
 -- or use an absolute path in the .load directive).  You might find it already compiled as part of ROSE in the
 -- src/roseExtensions/sqlite3x/.libs directory.
 
-.load @top_builddir@/src/roseExtensions/sqlite3x/.libs/libsqlitefunctions.so
+.load @top_pwd@/src/roseExtensions/sqlite3x/.libs/libsqlitefunctions.so
 
 --
 -- Before computing the combined similarity, the data needs to be moved into a single database. One way to do that is to
