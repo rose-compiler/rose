@@ -17,7 +17,7 @@ public:
      *  thread that will be simulating the speciment's thread described by this object. */
     RSIM_Thread(RSIM_Process *process)
         : process(process), my_tid(-1),
-          mesg_prefix(this), report_interval(10.0), do_coredump(true),
+          mesg_prefix(this), report_interval(10.0), do_coredump(true), show_exceptions(true),
           policy(this), semantics(policy),
           robust_list_head_va(0), clear_child_tid(0) {
         real_thread = pthread_self();
@@ -164,6 +164,7 @@ private:
     struct timeval last_report;                         /**< Time of last progress report for TRACE_PROGRESS */
     double report_interval;                             /**< Minimum seconds between progress reports for TRACE_PROGRESS */
     bool do_coredump;                                   /**< Simulatate a core dump (when true), or throw an exception. */
+    bool show_exceptions;                               /**< Print an error message about exceptions in RSIM_Thread::main()? */
 
     /** Return a string identifying the thread and time called. */
     std::string id();
@@ -197,12 +198,19 @@ public:
      *  point to the specified file. */
     void reopen_trace_facilities(FILE*);
 
-    /** The do_core_dump determines whether a failing thread should simulate a specimen core dump or throw an exception. When
-     * the property is false, an exception is thrown.
-     * @{ */
+    /** The do_core_dump property determines whether a failing thread should simulate a specimen core dump or throw an
+     *  exception. When the property is false, an exception is thrown.  @{ */
     bool get_do_coredump() const { return do_coredump; }
     void set_do_coredump(bool b=true) { do_coredump = b; }
     void clear_do_coredump() { set_do_coredump(false); }
+    /** @} */
+
+    /** The show_exceptions property determines whether exceptions caught by RSIM_Thread::main() are displayed to the
+     *  TRACE_MISC output stream. The default is true.
+     * @{ */
+    bool get_show_exceptions() const { return show_exceptions; }
+    void set_show_exceptions(bool b=true) { show_exceptions = b; }
+    void clear_show_exceptions() { set_show_exceptions(false); }
     /** @} */
 
     /**************************************************************************************************************************
