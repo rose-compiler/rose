@@ -467,7 +467,7 @@ testJavaTraversal:
 # This is useful for debugging the source code position information. We have to 
 # skip the final compilation because the -rose:dotgraph:fileInfoFilter will be passed
 # to the backend compiler and cause an error.
-# CAVE3 disable that for now.
+# CAVE3 disable that for now in the interest of time
 graphWithFileInfo: ../../testGraphGeneration
 #	../../testGraphGeneration -rose:dotgraph:fileInfoFilter $(ROSE_FLAGS_SKIP_FINAL_COMPILATION) $(srcdir)/test2011_39.java
 
