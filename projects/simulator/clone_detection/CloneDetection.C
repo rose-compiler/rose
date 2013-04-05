@@ -371,6 +371,10 @@ public:
             // to intercept it and terminate only the function analysis.
             if (VERBOSE)
                 m->mesg("%s: function executed HLT instruction at 0x%08"PRIx64, name, e.ip);
+        } catch (const RSIM_Semantics::InnerPolicy<>::Interrupt &e) {
+            // The x86 INT instruction was executed but the policy does not know how to handle it.
+            if (VERBOSE)
+                m->mesg("%s: function executed INT 0x%x at 0x%08"PRIx64, name, e.inum, e.ip);
         } catch (const RSIM_SEMANTICS_POLICY::Exception &e) {
             // Some exception in the policy, such as division by zero.
             if (VERBOSE)

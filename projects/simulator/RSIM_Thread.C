@@ -819,10 +819,16 @@ RSIM_Thread::main()
             }
 #endif
         } catch (const RSIM_Semantics::InnerPolicy<>::Halt &e) {
-            /* Thrown for the HLT instruction */
+            // Thrown for the HLT instruction
             post_insn_semaphore();
             if (show_exceptions)
                 tracing(TRACE_MISC)->mesg("caught RSIM_Semantics::InnerPolicy<>::Halt");
+            throw;
+        } catch (const RSIM_Semantics::InnerPolicy<>::Interrupt &e) {
+            // thrown for the INT instruction if the interrupt is not handled
+            post_insn_semaphore();
+            if (show_exceptions)
+                tracing(TRACE_MISC)->mesg("unhandled specimen interrupt from INT insn");
             throw;
         } catch (const RSIM_SEMANTICS_POLICY::Exception &e) {
             post_insn_semaphore();

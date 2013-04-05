@@ -230,10 +230,8 @@ template<
 void
 RSIM_Semantics::InnerPolicy<State, ValueType>::interrupt(uint8_t num)
 {
-    if (num != 0x80) {
-        fprintf(stderr, "Bad interrupt\n");
-        abort();
-    }
+    if (num != 0x80)
+        throw Interrupt(this->get_insn()->get_address(), num);
     thread->emulate_syscall();
 }
 
@@ -392,5 +390,7 @@ RSIM_Semantics::InnerPolicy<State, ValueType>::load_sr_shadow(X86SegmentRegister
     sr_shadow[sr] = *info;
     //ROSE_ASSERT(sr_shadow[sr].present); //checked when used
 }
+
+#include "clone_detection/CloneDetectionTpl.h"
 
 #endif /* ROSE_RSIM_Templates_H */
