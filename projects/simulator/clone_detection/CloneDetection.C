@@ -139,6 +139,14 @@ public:
         }
         SgAsmBlock *gblk = proc->disassemble(false/*take no shortcuts*/, map);
         delete map; map=NULL;
+
+        // Save the disassembly listing for future reference
+        std::string listing_name = proc->get_exename() + ".lst";
+        m->mesg("%s: saving program listing in %s\n", name, listing_name.c_str());
+        std::ofstream of(listing_name.c_str());
+        AsmUnparser().unparse(of, gblk);
+        of.close();
+
         std::vector<SgAsmFunction*> functions = SageInterface::querySubTree<SgAsmFunction>(gblk);
 #if 0 /*DEBUGGING [Robb P. Matzke 2013-02-12]*/
         // Prune the function list to contain only what we want.
