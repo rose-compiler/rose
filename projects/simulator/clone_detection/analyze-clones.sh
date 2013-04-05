@@ -64,7 +64,7 @@ die () {
 # to fail if we try to build everything.
 make -C $ROSE_BLD/projects/BinaryCloneDetection -k -j createVectorsBinary findClones lshCloneDetection \
     || die "failed to build syntactic clone detection targets in projects/BinaryCloneDetection"
-make -C $ROSE_BLD/projects/simulator -k -j CloneDetection clusters_from_pairs \
+make -C $ROSE_BLD/projects/simulator -k -j CloneDetection clusters_from_pairs show_results \
     || die "failed to build semantic clone detection targets in projects/simulator"
 
 
@@ -107,19 +107,7 @@ echo "                   FINDING SEMANTIC CLONES & COMBINING"
 cp "$semantic_dbname" "$combined_dbname" || exit 1
 echo .dump | sqlite3 "$syntactic_dbname" | sqlite3 "$combined_dbname"
 sqlite3 "$combined_dbname" <$ROSE_BLD/projects/simulator/clone_detection/queries.sql
-./clusters_from_pairs "$combined_dbname" combined_clone_pairs combined_clusters
-
-# Show the results
-echo "================================================================================"
-echo "                                FINAL RESULTS"
-sqlite3 "$combined_dbname" <<EOF
-.headers on
-.mode column
-.width 10 11 13 32 32
-select a.cluster_id, b.id as function_id, b.entry_va, b.funcname, b.filename
-    from combined_clusters a
-    join semantic_functions b on a.func_id = b.id
-    order by a.cluster_id, a.func_id;
-EOF
+$ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" combined_clone_pairs combined_clusters
+$ROSE_BLD/projects/simulator/show_results "$combined_dbname"
 echo "results have been saved in the combined_clusters table in $combined_dbname"
 exit 0

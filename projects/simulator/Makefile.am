@@ -269,6 +269,11 @@ clusters_from_pairs_SOURCES = clone_detection/clusters_from_pairs.C
 clusters_from_pairs_CPPFLAGS = $(ROSE_INCLUDES)
 clusters_from_pairs_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+noinst_PROGRAMS += show_results
+show_results_SOURCES = clone_detection/show_results.C
+show_results_CPPFLAGS = $(ROSE_INCLUDES)
+show_results_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 CloneDetectionSchema.C: clone_detection/Schema.sql
 	@echo "  GEN     $@"
 	@echo "const char *clone_detection_schema =" >$@
