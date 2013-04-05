@@ -8,29 +8,110 @@ namespace BinaryAnalysis {
 
     /** Binary instruction semantics.
      *
-     *  Entities in this namespace deal with the semantics of binary instructions. ROSE's binary semantics framework has two
-     *  major components: the dispatchers and the semantic domains.
+     *  Entities in this namespace deal with the semantics of machine instructions, and with the process of "executing" a
+     *  machine instruction in a particular semantic domain.  Instruction "execution" is a very broad term and can refer to
+     *  execution in the tranditional sense where each instruction modifies the machine state (registers and memory) in a
+     *  particular domain (concrete, interval, sign, symbolic, user-defined).  But it can also refer to any kind of analysis
+     *  that depends on semantics of individual machine instructions (def-use, taint, etc).  It can even refer to the
+     *  transformation of machine instructions in ROSE internal representation to some other representation (e.g., ROSE RISC or
+     *  LLVM) where the other representation is built by "executing" the instruction.
      *
-     *  The instruction dispatcher template classes are like an x86 microcontroller: they take a SgAsmInstruction and break it
-     *  down into a series of low-level, RISC-like operations.  ROSE defines a dispatcher template class for each architecture,
-     *  but they all translate their instructions into the same set of low-level, RISC-like operations.  These template classes
-     *  have names like "X86InstructionSemantics" (which we might rename in the future to "X86SemanticDispatcher").  The
-     *  dispatchers define the interface for the RISC-like operations; that is, they define the operation names, numbers and
-     *  possible widths of operands, and the width of the return value. In particular, the dispatchers do not define the
-     *  semantics of the RISC-like operations nor the datatype of the operands and return values.
+     * @section IS1 Components of instruction semantics
      *
-     *  The other major component is the set of semantic domains.  ROSE defines a number of domains (concrete, symbolic,
-     *  partial-symbolic, interval, etc) and allows the user to define their own domains. Each domain defines the semantics of
-     *  the RISC-like operations in terms of a domain-specific datatype and a domain-specific state (registers, memory,
-     *  etc). Since the semantics, state, and value-type are closely tied to one another, they're usually defined together as
-     *  members of a single class or name space.  For instance, the "SymbolicSemantics" name space defines classes "ValueType",
-     *  "State", and "Policy". Each domain knows only about itself and any child domains it might define; you can't get
-     *  lemonade from a rock -- the domain defined over rocks and minerals can't operate on values defined in the fruit domain.
+     *  ROSE's binary semantics framework has two major components: the dispatchers and the semantic domains. The
+     *  instruction dispatcher "executes" a machine instruction by translating it into a sequence of RISC-like operations, and
+     *  the semantics domain defines what the RISC-operators do (e.g., change a concrete machine state, produce an output
+     *  listing of RISC operations, build an LLVM representation).
      *
-     *  When a user wants to perform an analysis in a certain domain for a certain instruction architecture, they combine an
-     *  architecture-specific dispatcher with domain-specific semantics, state, and value-type.  This is done by instantiating,
-     *  for example, an X86InstructionSemantics dispatcher template class having, for example, SymbolicSemantics template
-     *  arguments.
+     *  The @em dispatcher is a class template and ROSE defines one per machine architecture. In this respect, the dispatcher
+     *  is akin to the microcontroller for a CISC architecture, such as the x86 microcontroller within an x86 CPU. The
+     *  dispatcher implicitly defines the interface for the RISC operations, which are documented in the
+     *  BinaryAnalysis::InstructionSemantics::NullSemantics::Policy class. Users can subclass the dispatcher if they need to
+     *  override how a machine instruction is translated into RISC operations. (Note: ROSE might move away from the huge
+     *  "switch" statement implementation to a table-driven approach, in which case subclassing of the entire dispatcher will
+     *  likely be replaced by either modifying the dispatch table or by subclassing individual machine instruction classes.)
+     *
+     *  The <em>semantic domain</em> is a loose term that refers to at least three parts taken as a whole: a value type, a
+     *  machine state type, and a semantic policy.  Semantic domains have names like "concrete domain", "interval domain",
+     *  "sign domain", "symbolic domain", etc.  The term is used loosely since one could have different implementations of,
+     *  say, a "concrete domain" by instantiating slightly different versions of the dispatcher class template. For instance,
+     *  one concrete domain might use the PartialSymbolicSemantics classes in a concrete way, while another might use custom
+     *  classes tuned for higher performance.  ROSE defines a set of semantic domains--each defined by grouping its three
+     *  components (value type, machine state type, and semantic policy) into a single name space or class.
+     *
+     *  The <em>value type</em> of a semantic domain is a type (usually a class) that holds values for that domain.  For
+     *  instance, a concrete domain's value type would likely hold bit vectors of varying sizes.  Instantiations of the value
+     *  type are used for register contents, memory contents, memory addresses, and temporary values that exist during
+     *  execution of a machine instruction. Value types are templates whose single parameter is the value width in bits.  For
+     *  instance, an x86 architecture needs values that are 1, 5, 8, 16, 32, and 64 bits wide (the 1-bit values are for
+     *  Booleans in the EFLAGS register; the five-bit values are shift counts on a 32-bit architecutre; the 64-bit values are
+     *  needed for integer multiply on a 32-bit architecture; this list is likely not exhaustive).
+     *
+     *  As instructions execute they use inputs and generate outputs, which are read from and written to a <em>machine
+     *  state</em>. The machine state consists of registers and memory, each of which holds a value which is instantiated from
+     *  the domain's value type.  Furthermore, memory addresses are also described by instances of the domain's value type
+     *  (although internally, they can use a different type as long as a translation is provided to and from that type).  The
+     *  names and inter-relationships of the architectures registers are contained in a RegisterDictionary while the state
+     *  itself contains the values stored in those registers.  The organization of registers and memory within the state is
+     *  defined by the state.  The state can choose to either provide an API to access the registers and memory, or it can be
+     *  closely integrated with the semantic policy described next...
+     *
+     *  The <em>semantic policy</em> class provides the implementations for the RISC operators and holds the machine's state
+     *  upon which those operators operate.  The policy class is provided as an argument to the dispatcher class template in
+     *  order to instantiate a dispatcher with the specified RISC semantics.  It is possible (and normal) to define multiple
+     *  versions of a dispatcher each with a different semantic policy and each tuned for a specific kind of analysis.
+     *
+     *  @section IS2 Nomenclature choice
+     *
+     *  The dispatcher class templates currently have names X86InstructionSemantics.  We may change "Semantics" to "Dispatcher"
+     *  since "semantics" is already present in the fully qualified name, and since "dispatcher" is a nounified verb that
+     *  follows our naming convention yet hints at the action it intends to implement.
+     *
+     *  The term "policy" will likely remain as is.  The central idiom in policy-based design is a class template (called the
+     *  "host class"; i.e., our dispatcher classes), taking several type parameters as input, which are instantiated with types
+     *  selected by the user (called "policy classes"), each implementing a particular implicit interface (called a "policy"),
+     *  and encapsulating some orthogonal (or mostly orthogonal) aspect of the behavior of the instantiated class. By supplying
+     *  a host class combined with a set of different, canned implementations for each policy, a library or module can support
+     *  an exponential number of different behavior combinations, resolved at compile time, and selected by mixing and matching
+     *  the different supplied policy classes in the instantiation of the host class template. Additionally, by writing a
+     *  custom implementation of a given policy, a policy-based library can be used in situations requiring behaviors
+     *  unforeseen by the library implementor. Unlike mixins, policies often contain state variables (machine states in our
+     *  case) and nested types (the value type in our case); unlike callbacks, policies typically contain several related
+     *  functions (the RISC operators in our case).
+     *
+     *  @section IS3 Specialization
+     *
+     *  The instruction semantics architecture is designed to allow users to specialize nearly every part of it.  Most of the
+     *  components are class templates whose arguments are types that provide mostly orthogonal parts of the templatized
+     *  class.  ROSE defines triplets (value type, state type, semantic policy) that are designed to work together to implement
+     *  a particular semantic domain, but users are free to replace or subclass any of those components to build customized
+     *  semantic domains.  For example, the x86 simulator (in "projects/simulator") subclasses the PartialSymbolicSemantics
+     *  state in order to use memory mapped via ROSE's MemoryMap class, and its policy in order to handle system calls (among
+     *  other things).
+     *
+     *  @section IS4 Future work
+     *
+     *  <em>Table-driven dispatch.</em> The current dispatchers are implemented with a huge switch statement selecting for each
+     *  possible machine instruction.  This design doesn't lend itself well to users being able to augment/override individual
+     *  instructions, users adding new instructions, enabling large groups of instructions individually (e.g., SSE) to handle
+     *  variations in machine architecture since each modification requires a subclass.  The plan is to replace the large
+     *  "switch" statement with a dispatch table and replace each "case" with a functor specific to that machine instruction.
+     *  Users will be able to modify individual table entries, modify related groups of table entries, subclass functors for
+     *  individual instructions, or define new functors.  The functors will likely be class templates that take arguments
+     *  similar to the dispatcher's class template.
+     *
+     *  <em>Floating-point instructions.</em> Floating point registers are defined in the various RegisterDictionary objects
+     *  but none of the semantic states actually define space for them, and we haven't defined any floating-point RISC
+     *  operations for policies to implement.  As for existing machine instructions, the dispatchers will translate machine
+     *  floating point instructions to RISC operations, and the specifics of those operations will be defined by the various
+     *  semantic policies.  For instance, the policy for a concrete semantic domain might use the host machine's native IEEE
+     *  floating point to emulate the target machine's floating-point operations.
+     *
+     *  @section IS5 Example
+     *
+     *  See actual source code for examples since this interface is an active area of ROSE development (Dec-2012). In order to
+     *  use one of ROSE's predefined semantic domains you'll likely need to define some types and variables, something along
+     *  these lines:
      *
      *  @code
      *   using namespace BinaryAnalysis::InstructionSemantics;
@@ -44,7 +125,13 @@ namespace BinaryAnalysis {
      *  at a time.  The dispatcher breaks the instruction down into a sequence of RISC-like operations and invokes those
      *  operations in the policy.  The policy's operations produce domain-specific result values and/or update the state
      *  (registers, memory, etc) associated with the policy.  Each policy provides methods by which the user can inspect and/or
-     *  modify the state. */
+     *  modify the state.  In fact, in order to follow flow-of-control from one instruction to another, it is customary to read
+     *  the x86 EIP (instruction pointer register) value to get the address for the next instruction fetch.
+     *
+     *  One can find actual uses of instruction semantics in ROSE by searching for X86InstructionSemantics.  Also, the
+     *  simulator project (in projects/simulator) has many examples how to use instruction semantics--in fact, the simulator
+     *  defines its own concrete domain by subclassing PartialSymbolicSemantics in order to execute specimen programs.
+     */
     namespace InstructionSemantics {
 
         /** Base classes for instruction semantics.  Basically, anything that is common to two or more instruction semantic

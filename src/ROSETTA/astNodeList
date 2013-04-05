@@ -185,6 +185,8 @@ SgAsmLESection
 SgAsmLESectionTable
 SgAsmLESectionTableEntry
 SgAsmMemoryReferenceExpression
+SgAsmMipsInstruction
+SgAsmMipsRegisterReferenceExpression
 SgAsmNEEntryPoint
 SgAsmNEEntryTable
 SgAsmNEFileHeader
@@ -247,7 +249,6 @@ SgAsmUnaryMinus
 SgAsmUnaryPlus
 SgAsmUnaryRrx
 SgAsmValueExpression
-SgAsmVectorValueExpression
 SgAsmWordValueExpression
 SgAsmx86Instruction
 SgAsmx86RegisterReferenceExpression
@@ -574,6 +575,7 @@ SgJavaThrowStatement
 SgJavaForEachStatement
 SgJavaSynchronizedStatement
 SgJavaParameterizedType
+SgJavaWildcardType
 SgSpecialFunctionModifier
 SgStatement
 SgStmtDeclarationStatement

@@ -5,6 +5,7 @@
 #include "Disassembler.h"
 #include "DisassemblerPowerpc.h"
 #include "DisassemblerArm.h"
+#include "DisassemblerMips.h"
 #include "DisassemblerX86.h"
 #include "BinaryLoader.h"
 #include "Partitioner.h"
@@ -135,6 +136,7 @@ Disassembler::initclass()
     RTS_INIT_RECURSIVE(class_mutex) {
         register_subclass(new DisassemblerArm());
         register_subclass(new DisassemblerPowerpc());
+        register_subclass(new DisassemblerMips());
         register_subclass(new DisassemblerX86(2)); /*16-bit*/
         register_subclass(new DisassemblerX86(4)); /*32-bit*/
         register_subclass(new DisassemblerX86(8)); /*64-bit*/
@@ -379,7 +381,7 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
 
             /* Is this the end of a basic block? This is naive logic that bases the decision only on the single instruction.
              * A more thorough analysis can be performed below in the get_block_successors() call. */          
-            if (insn->terminatesBasicBlock()) {
+            if (insn->terminates_basic_block()) {
                 if (p_debug)
                     fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: \"%s\" at 0x%08"PRIx64" naively terminates block\n",
                             start_va, unparseMnemonic(insn).c_str(), va);
@@ -749,6 +751,10 @@ Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *success
 {
     const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
     AddressSet worklist;
+
+    /* Use the register dictionary attached to the interpretation, if any. */
+    if (interp->get_registers())
+        set_registers(interp->get_registers());
 
     /* Use the memory map attached to the interpretation, or build a new one and attach it. */
     MemoryMap *map = interp->get_map();

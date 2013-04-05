@@ -239,14 +239,22 @@ namespace BinaryAnalysis {                      // documented elsewhere
 
                 /** Print the value. Prints subvalues that are marked as valid. */
                 void print(std::ostream &o) const {
-                    if (is_valid(SP0()))
-                        o <<get_subvalue(SP0());
-                    if (is_valid(SP1()))
-                        o <<get_subvalue(SP1());
-                    if (is_valid(SP2()))
-                        o <<get_subvalue(SP2());
-                    if (is_valid(SP3()))
-                        o <<get_subvalue(SP3());
+                    std::string sep="";
+                    if (is_valid(SP0())) {
+                        o <<sep <<"SP0: " <<get_subvalue(SP0());
+                        sep = "; ";
+                    }
+                    if (is_valid(SP1())) {
+                        o <<sep <<"SP1: " <<get_subvalue(SP1());
+                        sep = "; ";
+                    }
+                    if (is_valid(SP2())) {
+                        o <<sep <<"SP2: " <<get_subvalue(SP2());
+                        sep = "; ";
+                    }
+                    if (is_valid(SP3())) {
+                        o <<sep <<"SP3: " <<get_subvalue(SP3());
+                    }
                 }
                 friend std::ostream& operator<<(std::ostream &o, const ValueType<nBits> &e) {
                     e.print(o);
@@ -614,10 +622,11 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 }
 
                 /** See NullSemantics::Policy::false_() */
-                ValueType<1> undefined_() {
-                    ValueType<1> retval;
+                template<size_t nBits>
+                ValueType<nBits> undefined_() {
+                    ValueType<nBits> retval;
                     before();
-                    CALL_SUBS_0(undefined_, retval);
+                    CALL_SUBS_0(undefined_<nBits>, retval);
                     after();
                     return retval;
                 }
@@ -865,6 +874,17 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     ValueType<nBitsA> retval;
                     before();
                     CALL_SUBS_2(shiftRightArithmetic, retval, a, b);
+                    after();
+                    return retval;
+                }
+
+                /** Extend (or shrink) from @p FromLen bits to @p ToLen bits by adding or removing high-order bits from the
+                 *  input. Added bits are always zeros. */
+                template <size_t From, size_t To>
+                ValueType<To> unsignedExtend(const ValueType<From> &a) {
+                    ValueType<To> retval;
+                    before();
+                    CALL_SUBS_1b(unsignedExtend<From, To>, retval, a);
                     after();
                     return retval;
                 }

@@ -1,0 +1,66 @@
+diff --git a/projects/simulator/RSIM_SemanticsSettings.h b/projects/simulator/RSIM_SemanticsSettings.h
+index f959600..57b3f54 100644
+--- a/projects/simulator/RSIM_SemanticsSettings.h
++++ b/projects/simulator/RSIM_SemanticsSettings.h
+@@ -31,7 +31,7 @@
+ #define RSIM_SEMANTICS_PARADIGM_B       1                       /* Paradigm B: Simulator uses "Inner"(-like) semantics */
+ #define RSIM_SEMANTICS_PARADIGM_C       2                       /* Paradigm C: Simulator uses "Outer"(-like) semantics */
+ 
+-#define RSIM_SEMANTICS_PARADIGM RSIM_SEMANTICS_PARADIGM_A       /* The paradigm we are actually using */
++#define RSIM_SEMANTICS_PARADIGM RSIM_SEMANTICS_PARADIGM_C       /* The paradigm we are actually using */
+ 
+ 
+ /** ValueType, State, and Semantic Policy used throughout the simulator.
+@@ -56,8 +56,8 @@
+ #else
+     // Paradigm C:  Use outer semantics (using inner semantics indirectly, along with additional user semantics)
+ #   define RSIM_SEMANTICS_VTYPE  RSIM_Semantics::OuterValueType
+-#   define RSIM_SEMANTICS_STATE  RSIM_Semantics::OuterState<>
+-#   define RSIM_SEMANTICS_POLICY RSIM_Semantics::OuterPolicy<>
++#   define RSIM_SEMANTICS_STATE  MultiDomainDemo::State<RSIM_SEMANTICS_VTYPE>
++#   define RSIM_SEMANTICS_POLICY MultiDomainDemo::Policy<MultiDomainDemo::State, RSIM_SEMANTICS_VTYPE>
+ #endif
+ /** @} */
+ 
+@@ -78,12 +78,12 @@
+ #define RSIM_SEMANTICS_OUTER_0_VTYPE    RSIM_Semantics::InnerValueType
+ #define RSIM_SEMANTICS_OUTER_0_STATE    RSIM_Semantics::InnerState
+ #define RSIM_SEMANTICS_OUTER_0_POLICY   RSIM_Semantics::InnerPolicy
+-#define RSIM_SEMANTICS_OUTER_1_VTYPE    BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
+-#define RSIM_SEMANTICS_OUTER_1_STATE    BinaryAnalysis::InstructionSemantics::NullSemantics::State
+-#define RSIM_SEMANTICS_OUTER_1_POLICY   BinaryAnalysis::InstructionSemantics::NullSemantics::Policy
+-#define RSIM_SEMANTICS_OUTER_2_VTYPE    BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
+-#define RSIM_SEMANTICS_OUTER_2_STATE    BinaryAnalysis::InstructionSemantics::NullSemantics::State
+-#define RSIM_SEMANTICS_OUTER_2_POLICY   BinaryAnalysis::InstructionSemantics::NullSemantics::Policy
++#define RSIM_SEMANTICS_OUTER_1_VTYPE    BinaryAnalysis::InstructionSemantics::IntervalSemantics::ValueType
++#define RSIM_SEMANTICS_OUTER_1_STATE    BinaryAnalysis::InstructionSemantics::IntervalSemantics::State
++#define RSIM_SEMANTICS_OUTER_1_POLICY   BinaryAnalysis::InstructionSemantics::IntervalSemantics::Policy
++#define RSIM_SEMANTICS_OUTER_2_VTYPE    BinaryAnalysis::InstructionSemantics::SymbolicSemantics::ValueType
++#define RSIM_SEMANTICS_OUTER_2_STATE    BinaryAnalysis::InstructionSemantics::SymbolicSemantics::State
++#define RSIM_SEMANTICS_OUTER_2_POLICY   BinaryAnalysis::InstructionSemantics::SymbolicSemantics::Policy
+ #define RSIM_SEMANTICS_OUTER_3_VTYPE    BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
+ #define RSIM_SEMANTICS_OUTER_3_STATE    BinaryAnalysis::InstructionSemantics::NullSemantics::State
+ #define RSIM_SEMANTICS_OUTER_3_POLICY   BinaryAnalysis::InstructionSemantics::NullSemantics::Policy
+@@ -95,8 +95,11 @@
+ /** Include files.
+  *
+  *  All necessary semantics are included here.  This is where the user-defined semantics headers should be included. */
++#include "IntervalSemantics.h"
++#include "SymbolicSemantics.h"
+ #include "RSIM_SemanticsInner.h"
+ #include "RSIM_SemanticsOuter.h"
++#include "demos/MultiWithConversion.h"
+ 
+ 
+ 
+diff --git a/projects/simulator/RSIM_Templates.h b/projects/simulator/RSIM_Templates.h
+index 47c722f..2e8d7a9 100644
+--- a/projects/simulator/RSIM_Templates.h
++++ b/projects/simulator/RSIM_Templates.h
+@@ -393,4 +393,6 @@ RSIM_Semantics::InnerPolicy<State, ValueType>::load_sr_shadow(X86SegmentRegister
+     //ROSE_ASSERT(sr_shadow[sr].present); //checked when used
+ }
+ 
++#include "demos/MultiWithConversionTpl.h"
++
+ #endif /* ROSE_RSIM_Templates_H */

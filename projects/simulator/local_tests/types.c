@@ -80,7 +80,7 @@ int* simple08() {
 }
 
 /* statically linked:
- *      two pointers, both at a concrete address: one is the address of global "g2" and
+ *      two pointers: one is the address of global "g2" (a concrete value) and
  *      the other is the local variable "s1".  Both are detected by the single dereference
  *      since both are used to compute the address of the dereference.
  * dynamically linked:
@@ -171,8 +171,7 @@ int* simple17() {
 }
 
 /* statically linked:
- *      two pointers both with concrete addresses: one is the address of "e2" and
- *      the other is the local variable "s1".
+ *      two pointers: the concrete address of "e2" and the local variable "s1".
  * dynamically linked:
  *      three pointers: two as above (except the address of "e2" is symbolic) and
  *      the third is the ECX value returned by __i686.get_pc_thunk.cx to resolve

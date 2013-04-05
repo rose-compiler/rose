@@ -82,8 +82,9 @@ namespace BinaryAnalysis { // documented elsewhere
                 }
 
                 /** Returns an undefined single-bit value. The value is undefined, unknown, and/or unconstrained. */
-                ValueType<1> undefined_() {
-                    return ValueType<1>();
+                template<size_t nBits>
+                ValueType<nBits> undefined_() {
+                    return ValueType<nBits>();
                 }
 
                 /** Returns a number of the specified bit width.  This method converts an unsigned integer to a value in the
@@ -250,6 +251,13 @@ namespace BinaryAnalysis { // documented elsewhere
                 template<size_t nBitsA, size_t nBitsB>
                 ValueType<nBitsA> shiftRightArithmetic(const ValueType<nBitsA> &a, const ValueType<nBitsB> &b) {
                     return ValueType<nBitsA>();
+                }
+
+                /** Extend (or shrink) from @p FromLen bits to @p ToLen bits by adding or removing high-order bits from the
+                 *  input. Added bits are always zeros. */
+                template <size_t FromLen, size_t ToLen>
+                ValueType<ToLen> unsignedExtend(const ValueType<FromLen> &a) {
+                    return ValueType<ToLen>();
                 }
 
                 /** Sign extends a value. */

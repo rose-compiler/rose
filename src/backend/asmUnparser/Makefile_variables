@@ -1,13 +1,14 @@
-# Non-recursive Makefile
+# Non-recursive Makefile -*- makefile -*-
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-asmUnparser_la_sources=\
-	$(asmUnparserPath)/AsmUnparser.C \
-	$(asmUnparserPath)/AsmUnparser_compat.C \
-	$(asmUnparserPath)/AsmFunctionIndex.C \
-	$(asmUnparserPath)/unparseX86Asm.C \
-	$(asmUnparserPath)/unparseArmAsm.C \
-	$(asmUnparserPath)/unparsePowerpcAsm.C
+asmUnparser_la_sources=				\
+	$(asmUnparserPath)/AsmUnparser.C	\
+	$(asmUnparserPath)/AsmUnparser_compat.C	\
+	$(asmUnparserPath)/AsmFunctionIndex.C	\
+	$(asmUnparserPath)/unparseX86Asm.C	\
+	$(asmUnparserPath)/unparseArmAsm.C	\
+	$(asmUnparserPath)/unparsePowerpcAsm.C	\
+	$(asmUnparserPath)/unparseMipsAsm.C
 else
 asmUnparser_la_sources=$(asmUnparserPath)/dummyAsmUnparser.C
 endif

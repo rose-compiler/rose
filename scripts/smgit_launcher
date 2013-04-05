@@ -9,7 +9,7 @@
 ####################################################################################################################
 
 # Parse command-line options for the launcher
-branch=origin/master
+branch=
 while [ "$#" -gt 0 ]; do
     case "$1" in
 	--) shift; break ;;
@@ -67,6 +67,37 @@ if [ ! -d "$rose" ]; then
     exit 1
 fi
 
+# Find a suitable branch.
+find_suitable_branch () {
+    (
+	cd $rose || exit 1
+	local remote=origin
+	if git rev-parse "$remote/master" >/dev/null 2>&1; then
+	    echo "$remote/master"
+	    return 0
+	fi
+
+        # No remote named "origin", so use the first one listed in the config file.  We use the config file rather than
+        # asking git-remote because git-remote sorts them alphabetically, but we want the one used to clone.
+	remote=$(sed -n <$rose/.git/config 's/^\[remote "\([a-zA-Z_0-9]\+\).*/\1/p' 2>/dev/null |head -n1)
+	if git rev-parse "$remote/master" >/dev/null 2>&1; then
+	    echo "$remote/master"
+	    return 0
+	fi
+
+        # No remotes listed in local .git/config, so ask git-remote and use the first one it gives back
+	remote=$(git remote |head -n1)
+	if git rev-parse "$remote/master" >/dev/null 2>&1; then
+	    echo "$remote/master"
+	    return 0
+	fi
+
+	# Default to HEAD
+	echo HEAD
+    )
+}
+[ -n "$branch" ] || branch="$(find_suitable_branch)"
+    
 # Run smgit if possible
 if [ "$branch" = "workdir" ]; then
     echo "smgit_launcher: running smgit from working dir: $rose/scripts/smgit" >&2

@@ -402,17 +402,26 @@ public:
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
     SgAsmInstruction *get_instruction(rose_addr_t va);
 
-    /** Disassembles an entire process based on the current memory map, returning a pointer to a SgAsmBlock AST node and
-     *  inserting all new instructions into the instruction cache used by get_instruction().
+    /** Disassemble a process memory image.
+     * 
+     *  This method disassembles an entire process based on the current memory map (or the supplied submap), returning a
+     *  pointer to a SgAsmBlock AST node and inserting all new instructions into the instruction cache used by
+     *  get_instruction().
      *
      *  If the @p fast argument is set then the partitioner is not run and the disassembly simply disassembles all executable
      *  addresses that haven't been disassembled yet, adding them to the process' instruction cache.  The return value in this
      *  case is an SgAsmBlock that contains all the instructions.
      *
+     *  If a memory map is supplied then that map is used in preference to the process' memory map.  The supplied map should be
+     *  a subset of the process' memory map since new instructions will be added to the process' instruction cache.  One should
+     *  be careful when passing a memory map containing non-readable specimen segments: those segments might map to simulator
+     *  memory that is also non-readable and when the x86 disassembler reads a 15-byte chunk of memory to decode an instruction
+     *  it will get a segfault if any part of that 15 bytes is non-readable.
+     * 
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threaads concurrently.
      *  The callers are serialized and each caller will generate a new AST that does not share nodes with any AST returned by
      *  any previous call by this thread or any other. */
-    SgAsmBlock *disassemble(bool fast=false);
+    SgAsmBlock *disassemble(bool fast=false, MemoryMap *map=NULL);
 
     /** Returns the disassembler that is being used to obtain instructions. This disassembler is chosen automatically when the
      *  specimen is loaded.

@@ -86,29 +86,9 @@ IdaFile::parse(const std::string &csv_name, const std::string &exe_hash)
     fclose(f);
 }
     
-/* An unparser for showing instructions for data blocks. */
-class DataBlockUnparser: public AsmUnparser {
-public:
-    class DataNote: public UnparserCallback {
-    public:
-        virtual bool operator()(bool enabled, const InsnArgs &args) {
-            if (enabled)
-                args.output <<" (data)";
-            return enabled;
-        }
-    } data_note;
-
-    DataBlockUnparser() {
-        insn_callbacks.unparse.prepend(&data_note);
-    }
-};
-
 /* We use our own instruction unparser that does a few additional things that ROSE's default unparser doesn't do.  The extra
  * things are each implemented as a callback and are described below. */
-template<class FunctionCallGraph>
 class MyUnparser: public AsmUnparser {
-    typedef typename boost::graph_traits<FunctionCallGraph>::vertex_descriptor Vertex;
-
     void show_names(std::ostream &output, IdaInfo &ida, SgNode *node,
                     rose_addr_t rose_func_va, const std::vector<rose_addr_t> &ida_func_va,
                     rose_addr_t start_va, size_t nbytes) {
@@ -197,109 +177,21 @@ class MyUnparser: public AsmUnparser {
         }
     };
 
-    template<class NodeType, class Args>
-    class DiscontiguousNotifier: public UnparserCallback {
-    public:
-        virtual bool operator()(bool enabled, const Args &args) {
-            if (enabled) {
-                MyUnparser *unparser = dynamic_cast<MyUnparser*>(args.unparser);
-                NodeType *node = args.get_node();
-                rose_addr_t va = node->get_address();
-                if (unparser->nprinted++>0 && va!=unparser->next_address) {
-                    if (va > unparser->next_address) {
-                        rose_addr_t nskipped = va - unparser->next_address;
-                        args.output <<"Skipping " <<nskipped <<" byte" <<(1==nskipped?"":"s") <<"\n";
-                    } else {
-                        rose_addr_t nskipped = unparser->next_address - va;
-                        args.output <<"Backward " <<nskipped <<" byte" <<(1==nskipped?"":"s") <<"\n";
-                    }
-                }
-                unparser->next_address = va + node->get_size();
-            }
-            return enabled;
-        }
-    };
-
-    /* Emits info about what other functions call this one whenever we hit an entry point of a function. */
-    class FuncCallers: public UnparserCallback {
-    public:
-        FunctionCallGraph &cg;
-        FuncCallers(FunctionCallGraph &cg): cg(cg) {}
-        virtual bool operator()(bool enabled, const FunctionArgs &args) {
-            if (enabled && AsmUnparser::ORGANIZED_BY_ADDRESS==args.unparser->get_organization()) {
-                size_t ncallers = 0;
-                Vertex called_v = args.func->get_cached_vertex();
-                if (called_v!=(Vertex)(-1)) {
-                    typename boost::graph_traits<FunctionCallGraph>::in_edge_iterator ei, eend;
-                    for (boost::tie(ei, eend)=in_edges(called_v, cg); ei!=eend; ++ei) {
-                        SgAsmFunction *caller = get(boost::vertex_name, cg, source(*ei, cg));
-                        if (0==ncallers++)
-                            args.output <<StringUtility::addrToString(args.func->get_entry_va()) <<": Function called by";
-                        args.output <<" 0x" <<std::hex <<caller->get_entry_va() <<std::dec;
-                    }
-                    if (0==ncallers)
-                        args.output <<StringUtility::addrToString(args.func->get_entry_va()) <<": No known callers.";
-                    args.output <<"\n";
-                }
-            }
-            return enabled;
-        }
-    };
-
-    /* Disassembles data blocks.  Data blocks (other than padding and jump tables) are disassembled and we output the
-     * instructions in address order after the data block. */
-    class DataBlockDisassembler: public UnparserCallback {
-    public:
-        Disassembler *disassembler;
-        DataBlockUnparser sub_unparser;
-        DataBlockDisassembler(Disassembler *disassembler): disassembler(disassembler) {}
-        virtual bool operator()(bool enabled, const StaticDataArgs &args) {
-            SgAsmBlock *block = SageInterface::getEnclosingNode<SgAsmBlock>(args.data);
-            if (enabled && block &&
-                0==(block->get_reason() & SgAsmBlock::BLK_PADDING) &&
-                0==(block->get_reason() & SgAsmBlock::BLK_JUMPTABLE)) {
-                SgUnsignedCharList data = args.data->get_raw_bytes();
-                MemoryMap map;
-                map.insert(Extent(args.data->get_address(), data.size()),
-                           MemoryMap::Segment(MemoryMap::ExternBuffer::create(&data[0], data.size()), 0,
-                                              MemoryMap::MM_PROT_RX, "static data block"));
-                Disassembler::AddressSet worklist;
-                worklist.insert(args.data->get_address());
-                Disassembler::InstructionMap insns = disassembler->disassembleBuffer(&map, worklist);
-                for (Disassembler::InstructionMap::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-                    sub_unparser.unparse(args.output, ii->second);
-                    SageInterface::deleteAST(ii->second);
-                }
-            }
-            return enabled;
-        }
-    };
-
 public:
     FuncName<SgAsmInstruction, AsmUnparser::UnparserCallback::InsnArgs> insn_func_name;
     FuncName<SgAsmStaticData,  AsmUnparser::UnparserCallback::StaticDataArgs> data_func_name;
-    FuncCallers func_callers;
-    DiscontiguousNotifier<SgAsmInstruction, AsmUnparser::UnparserCallback::InsnArgs> insn_skip;
-    DiscontiguousNotifier<SgAsmStaticData,  AsmUnparser::UnparserCallback::StaticDataArgs> data_skip;
-    DataBlockDisassembler data_block_disassembler;
-    rose_addr_t next_address;
-    size_t nprinted;
 
-    MyUnparser(FunctionCallGraph &cg, IdaInfo &ida, Disassembler *disassembler)
-        : insn_func_name(ida), data_func_name(ida), func_callers(cg), data_block_disassembler(disassembler),
-          next_address(0), nprinted(0) {
+    MyUnparser(BinaryAnalysis::ControlFlow::Graph &cfg, IdaInfo &ida, Disassembler *disassembler)
+        : insn_func_name(ida), data_func_name(ida) {
+        add_control_flow_graph(cfg);
         set_organization(AsmUnparser::ORGANIZED_BY_ADDRESS);
         insnBlockEntry.show_function = false; // don't show function addresses since our own show_names() does that.
+        staticDataBlockEntry.show_function = false;
+        staticDataDisassembler.init(disassembler);
         insn_callbacks.pre
-            .append(&insn_func_name)
-            .after(&insnBlockSeparation, &insn_skip, 1);
+            .append(&insn_func_name);
         staticdata_callbacks.pre
-            .append(&data_func_name)
-            .after(&staticDataBlockSeparation, &data_skip, 1);
-        staticdata_callbacks.post
-            .append(&data_block_disassembler);
-        function_callbacks.pre
-            .before(&functionAttributes, &func_callers, 1);
+            .append(&data_func_name);
     }
 
     /* Augment parent class by printing a key and some column headings. */
@@ -669,18 +561,6 @@ struct LargeAnonymousRegion: public MemoryMap::Visitor {
     }
 } large_anonymous_region;
 
-/* Label the graphviz vertices with function entry addresses rather than vertex numbers. */
-template<class FunctionCallGraph>
-struct GraphvizVertexWriter {
-    typedef typename boost::graph_traits<FunctionCallGraph>::vertex_descriptor Vertex;
-    const FunctionCallGraph &g;
-    GraphvizVertexWriter(FunctionCallGraph &g): g(g) {}
-    void operator()(std::ostream &output, const Vertex &v) {
-        SgAsmFunction *func = get(boost::vertex_name, g, v);
-        output <<"[ label=\"" <<StringUtility::addrToString(func->get_entry_va()) <<"\" ]";
-    }
-};
-
 int
 main(int argc, char *argv[])
 {
@@ -862,24 +742,22 @@ main(int argc, char *argv[])
 #endif
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    std::cerr <<"Generating function call graph...\n";
-    struct NoLeftovers: public BinaryAnalysis::FunctionCall::VertexFilter {
-        virtual bool operator()(BinaryAnalysis::FunctionCall*, SgAsmFunction *func) {
+    std::cerr <<"Generating control flow graph...\n";
+    struct NoLeftovers: public BinaryAnalysis::ControlFlow::VertexFilter {
+        virtual bool operator()(BinaryAnalysis::ControlFlow*, SgAsmBlock *blk) {
+            SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(blk);
             return func && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS);
         }
     } vertex_filter;
-    BinaryAnalysis::FunctionCall cg_analyzer;
-    cg_analyzer.set_vertex_filter(&vertex_filter);
-    BinaryAnalysis::FunctionCall::Graph cg;
-    cg_analyzer.build_cg_from_ast(interp, cg);
-    cg_analyzer.cache_vertex_descriptors(cg);
-    std::ofstream cgfile("cg.dot");
-    boost::write_graphviz(cgfile, cg, GraphvizVertexWriter<BinaryAnalysis::FunctionCall::Graph>(cg));
+    BinaryAnalysis::ControlFlow cfg_analyzer;
+    cfg_analyzer.set_vertex_filter(&vertex_filter);
+    BinaryAnalysis::ControlFlow::Graph cfg;
+    cfg_analyzer.build_cfg_from_ast(interp, cfg);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::cerr <<"Generating output...\n";
 #if 1
-    MyUnparser<BinaryAnalysis::FunctionCall::Graph> unparser(cg, ida, disassembler);
+    MyUnparser unparser(cfg, ida, disassembler);
     unparser.unparse(std::cout, gblock);
 #else
     AsmUnparser().unparse(std::cout, gblock);

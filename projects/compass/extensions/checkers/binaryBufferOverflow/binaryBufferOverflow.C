@@ -174,7 +174,7 @@ CompassAnalyses::BinaryBufferOverflow::Traversal::run(string& name, SgGraphNode*
       if (ptrList.size()!=0) {
 	SgAsmExpression* expr = *(ptrList.begin());
 	string replace = expr->get_replacement();
-	string op = unparseExpression(expr);
+	string op = unparseExpression(expr, NULL, NULL);
 
 	// we can detect malloc with the help of ida.
 	if (replace=="_malloc" || replace=="malloc@plt") {
@@ -195,7 +195,7 @@ CompassAnalyses::BinaryBufferOverflow::Traversal::run(string& name, SgGraphNode*
 		bool memRef = false, regRef = false;
 		std::pair<X86RegisterClass, int> code;
 		code = check_isRegister(pre, asmPre, false, memRef, regRef);
-		string codeStr = unparseX86Register(RegisterDescriptor(code.first, code.second, 0, 64));
+		string codeStr = unparseX86Register(RegisterDescriptor(code.first, code.second, 0, 64), NULL);
 		if (codeStr=="rsp")
 		  value = getValueOfInstr(asmPre, true);
 		else 

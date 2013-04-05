@@ -1,0 +1,20 @@
+## Facts:
+= could use "sizeof(long int)" to decide the machine's word size
+  - can't be used in another macro def.
+= On 32-bit machines, "long long int" may also be 64 bits.
+
+## What changes should be made for 64-bit machines?
+= type definitions for IntT, UnsT etc.
+= some default values, e.g., MIN_INT, UH_PRIME_DEFAULT etc.
+= usage of Int32T, Uns32T should be generic
+= change "%d" to "%ld" in printf/scanf, etc.
+= change "atoi" etc. to "atol"
+
+
+## What to change in order to work on both 64 and 32 bit machines?
+= a macro "MACHINE_WORD_SIZE" decides the number of bits.
+= define generic int types
+= define generic functions atoi/atol, floor/floorf/ etc.
+= define generic format characters (%d/%ld)
+
+

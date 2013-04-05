@@ -91,7 +91,6 @@ testDominance_SOURCES = testDominance.C
 testDominance_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 STATIC_TEST_TARGETS += testDominance-A.passed testDominance-B.passed testDominance-C.passed testDominance-D.passed
 EXTRA_DIST += testDominance.conf testDominance-A.ans testDominance-B.ans testDominance-C.ans testDominance-D.ans
-MOSTLYCLEANFILES += testDominance-[A-Z]?*.dot
 testDominance-A.passed: testDominance.conf testDominance
 	@$(RTH_RUN) CMD=testDominance ALGORITHM=A INPUT=buffer2.bin $< $@
 testDominance-B.passed: testDominance.conf testDominance
@@ -188,6 +187,11 @@ shiftResizeSection.passed: shiftResizeSection.conf shiftResizeSection
 noinst_PROGRAMS += subSemantics
 subSemantics_SOURCES = subSemantics.C
 subSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Check whether the dominance classes can be specialized.
+noinst_PROGRAMS += subDominance
+subDominance_SOURCES = subDominance.C
+subDominance_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
 # Finds constant values and propagates them across instructions
 noinst_PROGRAMS += findConstants
@@ -437,6 +441,41 @@ cory001.passed: cory001.conf cory001
 noinst_PROGRAMS += cory002
 cory002_SOURCES = cory002.C
 cory002_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
+# Test symbolic semantics memory read-after-write
+noinst_PROGRAMS += testSymReadWrite
+testSymReadWrite_SOURCES = testSymReadWrite.C
+testSymReadWrite_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+STATIC_TEST_TARGETS += testSymReadWrite.passed
+EXTRA_DIST += testSymReadWrite.conf testSymReadWrite.ans
+testSymReadWrite.passed: testSymReadWrite.conf testSymReadWrite.ans testSymReadWrite
+	@$(RTH_RUN) INPUT=memreadwrite $< $@
+
+# Test the WorkList class
+noinst_PROGRAMS += testWorkList
+testWorkList_SOURCES = testWorkList.C
+testWorkList_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+STATIC_TEST_TARGETS += testWorkList.passed
+testWorkList.passed: $(top_srcdir)/scripts/test_exit_status testWorkList
+	@$(RTH_RUN) CMD=./testWorkList $< $@
+
+# Test pointer detection
+noinst_PROGRAMS += testPointerDetection
+testPointerDetection_SOURCES = testPointerDetection.C
+testPointerDetection_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+PointerDetectionSpecimenFunctions = \
+	simple01 simple02 simple03 simple04 simple05 simple06 simple07 simple08 simple09 simple10 simple11 simple12 \
+	simple13 simple14 simple15 simple16 simple17 simple18 simple19 simple20 simple21 simple22 simple23 simple24 \
+	simple25 flow01 flow02 flow03 flow04 flow05 flow06 flow07
+PointerDetectionTestTargets = $(addprefix tpd_, $(addsuffix .passed, $(PointerDetectionSpecimenFunctions)))
+STATIC_TEST_TARGETS += $(PointerDetectionTestTargets)
+EXTRA_DIST += testPointerDetection.conf $(addprefix tpd_, $(addsuffix .ans, $(PointerDetectionSpecimenFunctions)))
+$(PointerDetectionTestTargets): tpd_%.passed: testPointerDetection.conf testPointerDetection $(BINARY_SAMPLES)/i386-pointers
+	@$(RTH_RUN) FUNC="$$(echo "$@" |sed 's/^tpd_//;s/\.passed$$//')" INPUT=$(BINARY_SAMPLES)/i386-pointers $< $@
+.PHONY: testPointerDetection.passed
+testPointerDetection.passed: $(PointerDetectionTestTargets)
+
+
 
 ###############################################################################################################################
 # DEMOS

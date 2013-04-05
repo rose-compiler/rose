@@ -36,7 +36,7 @@ void AST_BIN_Traversal::visit(SgNode* n) {
         add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=orange,fontname=\"7x13bold\",fontcolor=black,style=filled";
       if (isSgAsmx86RegisterReferenceExpression(n)) {
         SgAsmx86RegisterReferenceExpression* rr = isSgAsmx86RegisterReferenceExpression(n);
-        std::string exprName = unparseX86Register(rr->get_descriptor());
+        std::string exprName = unparseX86Register(rr->get_descriptor(), NULL);
         name += " "+exprName;
         add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
       }

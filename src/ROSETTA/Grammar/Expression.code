@@ -5066,6 +5066,12 @@ SgConstructorInitializer::get_class_decl () const
         // p_expression_type's declaration.
         cdecl = isSgClassDeclaration(expr_type->get_declaration());
         assert(cdecl!=NULL);
+    } else if (SgJavaParameterizedType* parmType = isSgJavaParameterizedType(p_expression_type)) {
+	    // 12/16/12 PC added case of SgJavaParameterizedType... Note that Strictly speaking,
+	    // an SgJavaParameterizedType is a class.  However, this is not the case in the current
+	    // SAGE Representation.
+        cdecl = isSgClassDeclaration(parmType->get_declaration());
+        ROSE_ASSERT(cdecl != NULL);    
     } else {
         // Constructor is for a primitive type.  There is no class declaration to return.
     }
@@ -5084,7 +5090,10 @@ SgConstructorInitializer::post_construction_initialization()
      if (p_declaration == NULL)
         {
        // This can be NULL for the case of an undeclared constructor.
-          ROSE_ASSERT( (isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true) );
+       // 12/16/12 PC added case of SgJavaParameterizedType... Note that Strictly speaking,
+       // an SgJavaParameterizedType is a class.  However, this is not the case in the current
+       // SAGE Representation.
+          ROSE_ASSERT( (isSgJavaParameterizedType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true) );
         }
 
   // DQ (11/15/2006): avoid setting newArgs this late in the process.

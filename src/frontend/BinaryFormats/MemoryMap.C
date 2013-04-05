@@ -714,6 +714,8 @@ MemoryMap::read1(void *dst_buf/*=NULL*/, rose_addr_t start_va, size_t desired, u
     const Extent &range = found->first;
     assert(range.contains(Extent(start_va)));
 
+    desired = std::min((rose_addr_t)desired, (range.last()-start_va)+1);
+
     const Segment &segment = found->second;
     if ((segment.get_mapperms() & req_perms) != req_perms || !segment.check(range))
         return 0;
@@ -808,7 +810,8 @@ MemoryMap::va_extents() const
 void
 MemoryMap::mprotect(Extent range, unsigned perms, bool relax)
 {
-    while (!range.empty()) {
+    bool done = false;
+    while (!range.empty() && !done) {
         Segments::iterator found = p_segments.lower_bound(range.first());
 
         // Skip over leading part of range that's not mapped
@@ -824,7 +827,9 @@ MemoryMap::mprotect(Extent range, unsigned perms, bool relax)
         }
 
         Segment &segment = found->second;
-        const Extent &segment_range = found->first;
+        const Extent segment_range = found->first; // don't use a reference; it might be deleted by MemoryMap::insert() below
+        done = segment_range.last() >= range.last();
+
         if (found->second.get_mapperms()!=perms) {
             if (range.contains(segment_range)) {
                 // we can just change the segment in place
@@ -836,13 +841,12 @@ MemoryMap::mprotect(Extent range, unsigned perms, bool relax)
                 Segment new_segment = segment;
                 new_segment.set_mapperms(perms);
                 new_segment.set_buffer_offset(segment.get_buffer_offset(segment_range, new_range.first()));
-                p_segments.insert(new_range, new_segment, true/*make hole*/);
+                p_segments.insert(new_range, new_segment, true/*make hole*/); // 'segment' is now invalid
             }
         }
 
-        if (segment_range.last() >= range.last())
-            break;
-        range = Extent::inin(segment_range.last()+1, range.last());
+        if (!done)
+            range = Extent::inin(segment_range.last()+1, range.last());
     }
 }
 

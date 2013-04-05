@@ -379,7 +379,6 @@ V_SgAsmDoubleWordValueExpression
 V_SgAsmQuadWordValueExpression 	
 V_SgAsmSingleFloatValueExpression 	
 V_SgAsmDoubleFloatValueExpression 	
-V_SgAsmVectorValueExpression 	
 V_SgAsmValueExpression 	
 V_SgAsmExprListExp 	
 V_SgAsmExpression 	

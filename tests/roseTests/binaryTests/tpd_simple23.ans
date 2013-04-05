@@ -1,0 +1,21 @@
+Anlyzing pointers in this function:
+0x080484ad: ================================== Function (symbol, pattern) <simple23>
+
+0x080484ad: Basic block reasons: entry point, graph-1
+0x080484ad: 55                      |U       |   push   ebp
+0x080484ae: 89 e5                   |..      |   mov    ebp, esp
+0x080484b0: 83 ec 28                |..(     |   sub    esp, 0x28
+0x080484b3: c7 45 f4 64 00 00 00    |.E.d... |   mov    DWORD PTR ss:[ebp + 0xf4<-0x0c>], 0x00000064
+0x080484ba: 8d 45 f4                |.E.     |   lea    eax, [ebp + 0xf4<-0x0c>]
+0x080484bd: 89 04 24                |..$     |   mov    DWORD PTR ss:[esp], eax
+0x080484c0: 8b 45 08                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x08]
+0x080484c3: ff d0                   |..      |   call   eax
+0x080484c3: Successor blocks: 0x080484c5, unknown
+
+0x080484c5: Basic block reasons: graph-1
+0x080484c5: c9                      |.       |   leave  
+0x080484c6: c3                      |.       |   ret    
+0x080484c6: Successor blocks: unknown
+
+Not using Yices SMT solver
+code pointer at defs={0x080484ad,0x080484ae,0x080484c0} expr=(add[32] (add[32] v378[32] -4[32]) 8[32])

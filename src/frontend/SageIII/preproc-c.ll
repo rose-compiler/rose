@@ -779,9 +779,6 @@ BEGIN NORMAL;
 <NORMAL>"'"                     { /*preproc_line_num+=num_of_newlines(yytext);*/ preproc_column_num+=strlen(yytext); BEGIN CHAR_LIT;}
 <NORMAL>.                       { preproc_column_num++; }
 
-
-
-
                         /* Actions for character literals. Since the part between single quote can be more than one
                          * character of input (e.g., '\\', '\'', '\n', '\012', etc) we parse them sort of like strings. */
 <CHAR_LIT>\\\r\n                {/*eat escaped DOS line-term*/  preproc_line_num++; preproc_column_num=1; }
@@ -802,9 +799,6 @@ BEGIN NORMAL;
 <STRING_LIT>[^\"\r\n\\]         {/*eat non-special characters*/ preproc_column_num+=strlen(yytext); }
 <STRING_LIT>\n                  {/*eat linefeed*/               preproc_line_num++; preproc_column_num=1; }
 <STRING_LIT>"\""                {/*end of string literal*/      preproc_column_num+=strlen(yytext); BEGIN NORMAL; }
-
-
-
 
         /*Actions for a C++ style comment.*/
 <CXX_COMMENT>[^\\\n]    { /* eat anything that is not a backslash or a newline*/ commentString += yytext;}

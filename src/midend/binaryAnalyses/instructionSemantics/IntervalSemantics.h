@@ -336,8 +336,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                 ValueType<ToLen> unsignedExtend(const ValueType<FromLen> &a) const {
                     Intervals retval = a.get_intervals();
                     if (ToLen<FromLen) {
-                        uint64_t lo = IntegerOps::SHL1<uint64_t, FromLen>::value;
-                        uint64_t hi = IntegerOps::GenMask<uint64_t, ToLen>::value;
+                        uint64_t lo = IntegerOps::SHL1<uint64_t, ToLen>::value;
+                        uint64_t hi = IntegerOps::GenMask<uint64_t, FromLen>::value;
                         retval.erase(Interval::inin(lo, hi));
                     }
                     return ValueType<ToLen>(retval);
@@ -373,8 +373,9 @@ namespace BinaryAnalysis {              // documented elsewhere
                 }
 
                 /** See NullSemantics::Policy::undefined_() */
-                ValueType<1> undefined_() const {
-                    return ValueType<1>(0, 1);
+                template<size_t nBits>
+                ValueType<nBits> undefined_() const {
+                    return ValueType<nBits>();
                 }
 
                 template<size_t nBits>
@@ -446,16 +447,46 @@ namespace BinaryAnalysis {              // documented elsewhere
                                                 ValueType<nBits> &carry_out) const {
                     ValueType<nBits> wide_carry = unsignedExtend<1, nBits>(c);
                     ValueType<nBits> retval = add(add(a, b), wide_carry);
-                    carry_out = ValueType<nBits>(); // FIXME: we can do better
+
+                    uint64_t known1 = a.is_known() ? a.known_value() : 0;
+                    uint64_t known2 = b.is_known() ? b.known_value() : 0;
+                    uint64_t known3 = c.is_known() ? c.known_value() : 0;
+                    uint64_t unkwn1 = a.is_known() ? 0 : a.possible_bits();
+                    uint64_t unkwn2 = b.is_known() ? 0 : b.possible_bits();
+                    uint64_t unkwn3 = c.is_known() ? 0 : c.possible_bits();
+                    enum Carry { C_FALSE, C_TRUE, C_UNKNOWN };
+                    Carry cin = C_FALSE; // carry propagated across loop iterations
+                    uint64_t known_co=0, unkwn_co=0; // known or possible carry-out bits
+                    for (size_t i=0; i<nBits; ++i, known1>>=1, known2>>=1, known3>>=1, unkwn1>>=1, unkwn2>>=1, unkwn3>>=1) {
+                        int known_sum = (known1 & 1) + (known2 & 1) + (known3 & 1) + (C_TRUE==cin ? 1 : 0);
+                        int unkwn_sum = (unkwn1 & 1) + (unkwn2 & 1) + (unkwn3 & 1) + (C_UNKNOWN==cin ? 1 : 0);
+                        if (known_sum>1) {
+                            known_co |= IntegerOps::shl1<uint64_t>(i);
+                            cin = C_TRUE;
+                        } else if (known_sum + unkwn_sum > 1) {
+                            unkwn_co |= IntegerOps::shl1<uint64_t>(i);
+                            cin = C_UNKNOWN;
+                        }
+                    }
+                    if (unkwn_co) {
+                        carry_out = ValueType<nBits>::from_bits(known_co | unkwn_co);
+                    } else {
+                        carry_out = ValueType<nBits>(known_co);
+                    }
                     return retval;
                 }
 
                 /** See NullSemantics::Policy::and_() */
                 template<size_t nBits>
                 ValueType<nBits> and_(const ValueType<nBits> &a, const ValueType<nBits> &b) const {
-                    uint64_t abits = a.possible_bits(), bbits = b.possible_bits();
-                    uint64_t rbits = abits & bbits; // bits that could be set in the result
-                    return ValueType<nBits>::from_bits(rbits);
+                    uint64_t ak = a.is_known() ? a.known_value() : 0;
+                    uint64_t bk = b.is_known() ? b.known_value() : 0;
+                    uint64_t au = a.is_known() ? 0 : a.possible_bits();
+                    uint64_t bu = b.is_known() ? 0 : b.possible_bits();
+                    uint64_t r = ak & bk & au & bu;
+                    if (au || bu)
+                        return ValueType<nBits>::from_bits(r);
+                    return ValueType<nBits>(r);
                 }
 
                 /** See NullSemantics::Policy::equalToZero() */
@@ -465,7 +496,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                         return 0==a.known_value() ? true_() : false_();
                     if (!a.get_intervals().contains(Interval(0)))
                         return false_();
-                    return undefined_();
+                    return undefined_<1>();
                 }
 
                 /** See NullSemantics::Policy::invert() */
@@ -838,6 +869,8 @@ namespace BinaryAnalysis {              // documented elsewhere
                 /** See NullSemantics::Policy::xor_() */
                 template<size_t nBits>
                 ValueType<nBits> xor_(const ValueType<nBits> &a, const ValueType<nBits> &b) const {
+                    if (a.is_known() && b.is_known())
+                        return ValueType<nBits>(a.known_value() ^ b.known_value());
                     uint64_t abits = a.possible_bits(), bbits = b.possible_bits();
                     uint64_t rbits = abits | bbits; // yes, OR, not XOR
                     return ValueType<nBits>::from_bits(rbits);

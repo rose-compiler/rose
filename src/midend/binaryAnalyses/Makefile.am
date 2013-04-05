@@ -75,7 +75,8 @@ include_HEADERS = \
    BinaryControlFlow.h \
    BinaryDominance.h \
    BinaryFunctionCall.h \
-   BinaryCallingConvention.h
+   BinaryCallingConvention.h \
+   BinaryPointerDetection.h
 
 
 EXTRA_DIST = CMakeLists.txt dummyBinaryMidend.C

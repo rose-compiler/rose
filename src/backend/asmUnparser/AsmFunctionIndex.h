@@ -52,8 +52,23 @@
  *  @endcode
  *
  *  The output might look something like this:
- *  <pre>
-
+ *  @verbatim
+  Num Entry-Addr Begin-Addr  End-Addr  Insns/ Bytes      Reason        Kind         Hash                     Name              
+ ---- ---------- ---------- ---------- ------------ ---------------- -------- ---------------- --------------------------------
+    0 0x08048278 0x0804828e 0x0804828f     8/23     .C..S...........  unknown                  _init                           
+    1 0x080482a0 0x080482a0 0x080482a6     1/6      .C.I............  unknown                  malloc@plt                      
+    2 0x080482b0 0x080482b0 0x080482b6     1/6      .C.I............  unknown                  __libc_start_main@plt           
+    3 0x080482c0 0x080482e1 0x080482e2    14/34     E...S...........  unknown                  _start                          
+    4 0x080482e4 0x08048304 0x08048305    15/33     .C..S...........  unknown                  call_gmon_start                 
+    5 0x08048310 0x0804833e 0x0804833f    16/47     .C..S...........  unknown                  __do_global_dtors_aux           
+    6 0x08048340 0x08048362 0x08048363    13/35     .C..S...........  unknown                  frame_dummy                     
+    7 0x08048364 0x080483bf 0x080483c0    29/92     ....S...........  unknown 91badca44c59fae6 main                            
+    8 0x080483c0 0x08048411 0x08048412    34/82     ....S...........  unknown                  __libc_csu_init                 
+    9 0x08048414 0x08048455 0x08048456    27/66     ....S...........  unknown                  __libc_csu_fini                 
+   10 0x08048460 0x08048490 0x08048491    20/49     .C..S...........  unknown                  __do_global_ctors_aux           
+   11 0x08048494 0x080484ad 0x080484ae    12/26     .C..S...........  unknown                  _fini                           
+ ---- ---------- ---------- ---------- ------------ ---------------- -------- ---------------- --------------------------------
+@endverbatim
  */
 class AsmFunctionIndex {
     /**************************************************************************************************************************

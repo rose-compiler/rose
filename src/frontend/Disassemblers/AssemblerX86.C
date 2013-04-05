@@ -79,13 +79,6 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
             fprintf(f, "}");
             break;
         }
-        case V_SgAsmVectorValueExpression: {
-            SgAsmVectorValueExpression *ee = isSgAsmVectorValueExpression(e);
-            fprintf(f, "VectorValue {size=%u, type=?", ee->get_size());
-            printExpr(f, e, prefix, V_SgAsmValueExpression);
-            fprintf(f, "}");
-            break;
-        }
 
         /*=== Binary Expressions ===*/
             

@@ -123,7 +123,7 @@ SgAsmPEImportDirectory::parse(rose_addr_t idir_va)
                                           " has bad DLL name rva %s\n", idir_va, p_dll_name_rva.to_string().c_str());
     } else {
         try {
-            dll_name = p_dll_name_rva.get_section()->read_content_str(fhdr->get_loader_map(), p_dll_name_rva.get_rva());
+            dll_name = p_dll_name_rva.get_section()->read_content_str(fhdr->get_loader_map(), p_dll_name_rva.get_va());
         } catch (const MemoryMap::NotMapped &e) {
             if (SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory::parse: short read of dll name at rva %s for "
                                                   " import directory at va 0x%08"PRIx64"\n",
@@ -171,17 +171,17 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
         return;                 // no ILT/IAT present
 
 
-    rose_addr_t entry_rva=table_start.get_rva(), entry_size=fhdr->get_word_size();
+    rose_addr_t entry_va=table_start.get_va(), entry_size=fhdr->get_word_size();
     uint64_t by_ordinal_bit = 1ull << (8*entry_size-1);
 
-    for (size_t idx=0; 1; ++idx, entry_rva+=entry_size) {
+    for (size_t idx=0; 1; ++idx, entry_va+=entry_size) {
         /* Read the 32- or 64-bit ILT/IAT entry from proces mapped memory. */
         uint64_t entry_word = 0;
         try {
-            isec->read_content(fhdr->get_loader_map(), entry_rva, &entry_word, entry_size);
+            isec->read_content(fhdr->get_loader_map(), entry_va, &entry_word, entry_size);
         } catch (const MemoryMap::NotMapped &e) {
-            if (SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: ILT/IAT entry #%zu at rva 0x%08"PRIx64
-                                                  ": table entry is outside mapped memory\n", idx, entry_rva) && e.map) {
+            if (SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: ILT/IAT entry #%zu at VA 0x%08"PRIx64
+                                                  ": table entry is outside mapped memory\n", idx, entry_va) && e.map) {
                 fprintf(stderr, "    Memory map in effect at time of error:\n");
                 e.map->dump(stderr, "        ");
             }
@@ -195,9 +195,9 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
          *      (3) Missing (or late) termination of the IAT; stop now */
         if (0==entry_word) {
             if (idx<imports.size()) {
-                SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: IAT entry #%zu at rva 0x%08"PRIx64
+                SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: IAT entry #%zu at va 0x%08"PRIx64
                                                   ": IAT zero termination occurs before end of corresponding ILT;"
-                                                  " %scontinuing to read IAT entries.\n", idx, entry_rva,
+                                                  " %scontinuing to read IAT entries.\n", idx, entry_va,
                                                   (assume_bound?"":"assuming this is a bound null address and "));
                 assert(idx<imports.size());
                 imports[idx]->set_bound_rva(rose_rva_t(entry_word).bind(fhdr));
@@ -206,9 +206,9 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
                 break;
             }
         } else if (processing_iat && idx>=imports.size()) {
-            SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: IAT entry #%zu at rva 0x%08"PRIx64
+            SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: IAT entry #%zu at va 0x%08"PRIx64
                                               ": IAT extends beyond end of corresponding ILT (it is not zero terminated)"
-                                              "; forcibly terminating here\n", idx, entry_rva);
+                                              "; forcibly terminating here\n", idx, entry_va);
             break;
         }
 
@@ -225,57 +225,59 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
             /* The entry word is a virtual address. */
             if (entry_existed && import_item->get_bound_rva().get_rva()>0 &&
                 import_item->get_bound_rva().get_rva()!=entry_word) {
-                SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: ILT/IAT entry #%zu at rva 0x%08"PRIx64
+                SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: ILT/IAT entry #%zu at va 0x%08"PRIx64
                                                   ": bound address 0x%08"PRIx64" conflicts with bound address already"
-                                                  " discovered 0x%08"PRIx64" (using new value)\n", idx, entry_rva, entry_word,
+                                                  " discovered 0x%08"PRIx64" (using new value)\n", idx, entry_va, entry_word,
                                                   import_item->get_bound_rva().get_rva());
             }
             import_item->set_bound_rva(rose_rva_t(entry_word).bind(fhdr));
         } else if (0!=(entry_word & by_ordinal_bit)) {
             /* The entry is an ordinal number. */
             if (entry_existed && import_item->get_ordinal()!=0 && import_item->get_ordinal()!=(entry_word & 0xffff)) {
-                SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: ILT/IAT entry #%zu at rva 0x%08"PRIx64
+                SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: ILT/IAT entry #%zu at va 0x%08"PRIx64
                                                   ": ordinal %"PRIu64" conflicts with ordinal already discovered %u"
-                                                  " (assuming this is a bound address)\n", idx, entry_rva, (entry_word&0xffff),
+                                                  " (assuming this is a bound address)\n", idx, entry_va, (entry_word&0xffff),
                                                   import_item->get_ordinal());
                 import_item->set_bound_rva(rose_rva_t(entry_word).bind(fhdr));
             } else {
                 import_item->set_by_ordinal(true);
                 import_item->set_ordinal(entry_word & 0xffff);
                 if (0!=(entry_word & ~(by_ordinal_bit | 0xffff))) {
-                    SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: ILT/IAT entry #%zu at rva 0x%08"PRIx64
+                    SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: ILT/IAT entry #%zu at va 0x%08"PRIx64
                                                       ": contains extra bits in violation of PE specification"
-                                                      " (extra bits removed)\n", idx, entry_rva);
+                                                      " (extra bits removed)\n", idx, entry_va);
                 }
             }
         } else {
             /* The entry word points to a Hint/Name pair: a 2-byte, little endian hint, followed by a NUL-terminated string,
              * followed by an optional extra byte to make the total length a multiple of two. */
             if (entry_existed && import_item->get_by_ordinal()) {
-                SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: ILT/IAT entry #%zu at rva 0x%08"PRIx64
+                SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: ILT/IAT entry #%zu at va 0x%08"PRIx64
                                                   ": entry type \"hint/name\" conflicts with entry type already discovered"
-                                                  " \"ordinal\" (assuming this is a bound address)\n", idx, entry_rva);
+                                                  " \"ordinal\" (assuming this is a bound address)\n", idx, entry_va);
                 import_item->set_bound_rva(rose_rva_t(entry_word).bind(fhdr));
             } else if (entry_existed && import_item->get_hintname_rva().get_rva()>0 &&
                        import_item->get_hintname_rva().get_rva()!=entry_word) {
-                SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: ILT/IAT entry #%zu at rva 0x%08"PRIx64
+                SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: ILT/IAT entry #%zu at va 0x%08"PRIx64
                                                   ": hint/name rva 0x%08"PRIx64" conflicts with hint/name rva already"
                                                   " discovered 0x%08"PRIx64" (assuming this is a bound address)\n",
-                                                  idx, entry_rva, entry_word, import_item->get_hintname_rva().get_rva());
+                                                  idx, entry_va, entry_word, import_item->get_hintname_rva().get_rva());
                 import_item->set_bound_rva(rose_rva_t(entry_word).bind(fhdr));
             } else {
                 import_item->set_by_ordinal(false);
                 import_item->set_hintname_rva(rose_rva_t(entry_word).bind(fhdr));
                 import_item->set_hintname_nalloc(0); // for now, will adjust after we read it
+                rose_addr_t entry_word_va = entry_word + fhdr->get_base_va();
                 uint16_t hint;
                 try {
-                    isec->read_content(fhdr->get_loader_map(), entry_word, &hint, sizeof hint);
+                    isec->read_content(fhdr->get_loader_map(), entry_word_va, &hint, sizeof hint);
                 } catch (const MemoryMap::NotMapped &e) {
                     import_item->set_hint(0);
                     import_item->get_name()->set_string("");
-                    if (SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: ILT/IAT entry #%zu at rva 0x%08"PRIx64
-                                                          ": points to unmapped Hint/Name pair at 0x%08"PRIx64
-                                                          " (when reading hint)\n", idx, entry_rva, entry_word) && e.map) {
+                    if (SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: ILT/IAT entry #%zu at va 0x%08"PRIx64
+                                                          ": points to unmapped Hint/Name pair at va 0x%08"PRIx64
+                                                          " (when reading hint)\n", idx, entry_va, entry_word_va) &&
+                        e.map) {
                         fprintf(stderr, "    Memory map in effect at time of error:\n");
                         e.map->dump(stderr, "        ");
                     }
@@ -286,12 +288,13 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
 
                 std::string s;
                 try {
-                    s = isec->read_content_str(fhdr->get_loader_map(), entry_word+2);
+                    s = isec->read_content_str(fhdr->get_loader_map(), entry_word_va+2);
                 } catch (const MemoryMap::NotMapped &e) {
                     import_item->get_name()->set_string("");
-                    if (SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: ILT/IAT entry #%zu at rva 0x%08"PRIx64
-                                                          ": points to an unmapped Hint/Name pair at 0x%08"PRIx64
-                                                          " (when reading name)\n", idx, entry_rva, entry_word) && e.map) {
+                    if (SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: ILT/IAT entry #%zu at va 0x%08"PRIx64
+                                                          ": points to an unmapped Hint/Name pair at va 0x%08"PRIx64
+                                                          " (when reading name)\n", idx, entry_va, entry_word_va) &&
+                        e.map) {
                         fprintf(stderr, "    Memory map in effect at time of error:\n");
                         e.map->dump(stderr, "        ");
                     }
@@ -302,19 +305,20 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
                 if ((s.size()+1)  % 2) {
                     uint8_t byte = 0;
                     try {
-                        isec->read_content(fhdr->get_loader_map(), entry_word+2+s.size()+1, &byte, 1);
+                        isec->read_content(fhdr->get_loader_map(), entry_word_va+2+s.size()+1, &byte, 1);
                     } catch (const MemoryMap::NotMapped &e) {
-                        if (SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: ILT/IAT entry #%zu at rva 0x%08"PRIx64
-                                                              ": points to an unmapped Hint/Name pair at 0x%08"PRIx64
-                                                              " (when reading pad byte)\n", idx, entry_rva, entry_word) && e.map) {
+                        if (SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory: ILT/IAT entry #%zu at va 0x%08"PRIx64
+                                                              ": points to an unmapped Hint/Name pair at va 0x%08"PRIx64
+                                                              " (when reading pad byte)\n", idx, entry_va, entry_word_va) &&
+                            e.map) {
                             fprintf(stderr, "    Memory map in effect at time of error:\n");
                             e.map->dump(stderr, "        ");
                         }
                         continue; // to next ILT/IAT entry
                     }
                     if (byte) {
-                        SgAsmPEImportSection::import_mesg("SgAsmPEImportDirctory: ILT/IAT entry #%zu at rva 0x%08"PRIx64
-                                                          ": has a non-zero padding byte: 0x%02x\n", idx, entry_rva, byte);
+                        SgAsmPEImportSection::import_mesg("SgAsmPEImportDirctory: ILT/IAT entry #%zu at va 0x%08"PRIx64
+                                                          ": has a non-zero padding byte: 0x%02x\n", idx, entry_va, byte);
                     }
                 }
                 import_item->set_hintname_nalloc(import_item->hintname_required_size());

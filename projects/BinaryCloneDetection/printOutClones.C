@@ -8,11 +8,10 @@
 #include <list>
 #include <math.h>
 #include <boost/program_options.hpp>
-#include <boost/smart_ptr.hpp>
-
 #include <algorithm>
 #include <string>
 #include <cstdio> // for std::remove
+#include "lsh.h"
 using namespace std;
 using namespace sqlite3x;
 using namespace boost::program_options;
@@ -27,28 +26,6 @@ struct Element {
       int64_t offset;
 };
 
-template <typename T>
-class scoped_array_with_size {
-  boost::scoped_array<T> sa;
-  size_t theSize;
-
-  public:
-  scoped_array_with_size(): sa(), theSize(0) {}
-  scoped_array_with_size(size_t s): sa(new T[s]), theSize(s) {}
-
-  void allocate(size_t s) {
-    sa.reset(new T[s]);
-    theSize = s;
-  }
-  size_t size() const {return theSize;}
-  T* get() const {return sa.get();}
-
-  T& operator[](size_t i) {return sa[i];}
-  const T& operator[](size_t i) const {return sa[i];}
-
-  private:
-  scoped_array_with_size(const scoped_array_with_size<T>&); // Not copyable
-};
 
 
 int main(int argc, char* argv[])
@@ -60,8 +37,8 @@ int main(int argc, char* argv[])
 	desc.add_options()
 	  ("help", "produce a help message")
 	  ("database,q", value< string >()->composing(), 
-           "the sqlite database that we are to use")
-          ;
+	   "the sqlite database that we are to use")
+	  ;
 
 	variables_map vm;
 	store(command_line_parser(argc, argv).options(desc)

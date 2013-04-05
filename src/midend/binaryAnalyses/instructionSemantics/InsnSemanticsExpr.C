@@ -81,6 +81,21 @@ InsnSemanticsExpr::InternalNode::equal_to(const TreeNodePtr &other_, SMTSolver *
     return retval;
 }
 
+bool
+InsnSemanticsExpr::InternalNode::equivalent_to(const TreeNodePtr &other_) const
+{
+    bool retval = false;
+    InternalNodePtr other = other_->isInternalNode();
+    if (this==other.get()) {
+        retval = true;
+    } else if (other && get_nbits()==other->get_nbits() && op==other->op && children.size()==other->children.size()) {
+        retval = true;
+        for (size_t i=0; i<children.size() && retval; ++i)
+            retval = children[i]->equivalent_to(other->children[i]);
+    }
+    return retval;
+}
+
 void
 InsnSemanticsExpr::InternalNode::depth_first_visit(Visitor *v) const
 {
@@ -227,6 +242,23 @@ InsnSemanticsExpr::LeafNode::equal_to(const TreeNodePtr &other_, SMTSolver *solv
     return retval;
 }
 
+bool
+InsnSemanticsExpr::LeafNode::equivalent_to(const TreeNodePtr &other_) const
+{
+    bool retval = false;
+    LeafNodePtr other = other_->isLeafNode();
+    if (this==other.get()) {
+        retval = true;
+    } else if (other && get_nbits()==other->get_nbits()) {
+        if (is_known()) {
+            retval = other->is_known() && ival==other->ival;
+        } else {
+            retval = !other->is_known() && name==other->name;
+        }
+    }
+    return retval;
+}
+
 void
 InsnSemanticsExpr::LeafNode::depth_first_visit(Visitor *v) const
 {
@@ -235,7 +267,7 @@ InsnSemanticsExpr::LeafNode::depth_first_visit(Visitor *v) const
 }
 
 std::ostream&
-operator<<(std::ostream &o, const InsnSemanticsExpr::TreeNode &node) {
+InsnSemanticsExpr::operator<<(std::ostream &o, const TreeNode &node) {
     node.print(o);
     return o;
 }

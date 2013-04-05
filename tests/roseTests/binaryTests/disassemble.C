@@ -333,7 +333,7 @@ public:
         }
         if (show_syscall_names)
             insn_callbacks.unparse.append(&syscallName);
-        basicblock_callbacks.post.prepend(&dominatorBlock);
+        basicblock_callbacks.pre.append(&dominatorBlock);
     }
 
 private:
@@ -409,7 +409,8 @@ private:
         bool operator()(bool enabled, const BasicBlockArgs &args) {
             SgAsmBlock *idom = args.block->get_immediate_dominator();
             if (enabled && idom)
-                args.output <<"            (dominator " <<StringUtility::addrToString(idom->get_address()) <<")\n";
+                args.output <<args.unparser->line_prefix()
+                            <<"Dominator block: " <<StringUtility::addrToString(idom->get_address()) <<"\n";
             return enabled;
         }
     };
@@ -1310,6 +1311,7 @@ main(int argc, char *argv[])
         unparser.add_function_labels(block);
         unparser.set_organization(do_linear ? AsmUnparser::ORGANIZED_BY_ADDRESS : AsmUnparser::ORGANIZED_BY_AST);
         unparser.add_control_flow_graph(cfg);
+        unparser.staticDataDisassembler.init(disassembler); // disassemble static data blocks
         fputs("\n\n", stdout);
         unparser.unparse(std::cout, block);
         fputs("\n\n", stdout);

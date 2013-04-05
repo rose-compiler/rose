@@ -1,0 +1,16 @@
+Anlyzing pointers in this function:
+0x080483b0: ================================== Function (symbol, pattern) <simple03>
+
+0x080483b0: Basic block reasons: entry point, graph-1
+0x080483b0: 55                      |U       |   push   ebp
+0x080483b1: 89 e5                   |..      |   mov    ebp, esp
+0x080483b3: 8b 45 08                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x08]
+0x080483b6: 8b 00                   |..      |   mov    eax, DWORD PTR ds:[eax]
+0x080483b8: 8b 00                   |..      |   mov    eax, DWORD PTR ds:[eax]
+0x080483ba: 5d                      |]       |   pop    ebp
+0x080483bb: c3                      |.       |   ret    
+0x080483bb: Successor blocks: unknown
+
+Not using Yices SMT solver
+data pointer at defs={0x080483b0,0x080483b1,0x080483b3} expr=(add[32] (add[32] v5[32] -4[32]) 8[32])
+data pointer at defs={0x080483b3} expr=v172[32]

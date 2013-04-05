@@ -16,7 +16,7 @@ SgAsmPEExportDirectory::ctor(SgAsmPEExportSection *section)
     try {
         section->read_content(fhdr->get_loader_map(), section->get_mapped_actual_va(), &disk, sizeof disk);
     } catch (const MemoryMap::NotMapped &e) {
-        fprintf(stderr, "SgAsmPEExportDirectory::ctor: error: export directory at RVA 0x%08"PRIx64
+        fprintf(stderr, "SgAsmPEExportDirectory::ctor: error: export directory at rva 0x%08"PRIx64
                 " contains unmapped virtual address 0x%08"PRIx64"\n", section->get_mapped_actual_va(), e.va);
         if (e.map) {
             fprintf(stderr, "Memory map in effect at time of error:\n");
@@ -41,9 +41,9 @@ SgAsmPEExportDirectory::ctor(SgAsmPEExportSection *section)
     /* Read the name */
     std::string name;
     try {
-        name = section->read_content_str(fhdr->get_loader_map(), p_name_rva.get_rva());
+        name = section->read_content_str(fhdr->get_loader_map(), p_name_rva.get_va());
     } catch (const MemoryMap::NotMapped &e) {
-        fprintf(stderr, "SgAsmPEExportDirectory::ctor: warning: directory name at RVA 0x%08"PRIx64
+        fprintf(stderr, "SgAsmPEExportDirectory::ctor: warning: directory name at rva 0x%08"PRIx64
                 " contains unmapped virtual address 0x%08"PRIx64"\n", p_name_rva.get_rva(), e.va);
         if (e.map) {
             fprintf(stderr, "Memory map in effect at time of error:\n");
@@ -157,27 +157,28 @@ SgAsmPEExportSection::parse()
     for (size_t i=0; i<p_export_dir->get_nameptr_n(); i++) {
         /* Function name RVA (nameptr)*/
         ExportNamePtr_disk nameptr_disk = 0;
-        rose_addr_t nameptr_rva = p_export_dir->get_nameptr_rva().get_rva() + i*sizeof(nameptr_disk);
+        rose_addr_t nameptr_va = p_export_dir->get_nameptr_rva().get_va() + i*sizeof(nameptr_disk);
         try {
-            read_content(fhdr->get_loader_map(), nameptr_rva, &nameptr_disk, sizeof nameptr_disk);
+            read_content(fhdr->get_loader_map(), nameptr_va, &nameptr_disk, sizeof nameptr_disk);
         } catch (const MemoryMap::NotMapped &e) {
-            fprintf(stderr, "SgAsmPEExportSection::parse: error: export name rva %zu at RVA 0x%08"PRIx64
-                    " contains unmapped virtual address 0x%08"PRIx64"\n", i, nameptr_rva, e.va);
+            fprintf(stderr, "SgAsmPEExportSection::parse: error: export name #%zu at va 0x%08"PRIx64
+                    " contains unmapped va 0x%08"PRIx64"\n", i, nameptr_va, e.va);
             if (e.map) {
                 fprintf(stderr, "Memory map in effect at time of error:\n");
                 e.map->dump(stderr, "    ");
             }
             nameptr_disk = 0;
         }
-        rose_addr_t nameptr = le_to_host(nameptr_disk);
+        rose_addr_t fname_rva = le_to_host(nameptr_disk);
+        rose_addr_t fname_va = fname_rva + fhdr->get_base_va();
 
         /* Function name (fname) */
         std::string s;
         try {
-            s = read_content_str(fhdr->get_loader_map(), nameptr);
+            s = read_content_str(fhdr->get_loader_map(), fname_va);
         } catch (const MemoryMap::NotMapped &e) {
-            fprintf(stderr, "SgAsmPEExportSection::parse: error: export name %zu at RVA 0x%08"PRIx64
-                    " contains unmapped virtual address 0x%08"PRIx64"\n", i, nameptr, e.va);
+            fprintf(stderr, "SgAsmPEExportSection::parse: error: export name %zu at va 0x%08"PRIx64
+                    " contains unmapped virtual address 0x%08"PRIx64"\n", i, fname_va, e.va);
             if (e.map) {
                 fprintf(stderr, "Memory map in effect at time of error:\n");
                 e.map->dump(stderr, "    ");
@@ -187,12 +188,12 @@ SgAsmPEExportSection::parse()
 
         /* Ordinal (sort of an index into the Export Address Table) */
         ExportOrdinal_disk ordinal_disk = 0;
-        rose_addr_t ordinal_rva = p_export_dir->get_ordinals_rva().get_rva() + i*sizeof(ordinal_disk);
+        rose_addr_t ordinal_va = p_export_dir->get_ordinals_rva().get_va() + i*sizeof(ordinal_disk);
         try {
-            read_content(fhdr->get_loader_map(), ordinal_rva, &ordinal_disk, sizeof ordinal_disk);
+            read_content(fhdr->get_loader_map(), ordinal_va, &ordinal_disk, sizeof ordinal_disk);
         } catch (const MemoryMap::NotMapped &e) {
-            fprintf(stderr, "SgAsmPEExportSection::parse: error: ordinal %zu at RVA 0x%08"PRIx64
-                    " contains unmapped virtual address 0x%08"PRIx64"\n", i, ordinal_rva, e.va);
+            fprintf(stderr, "SgAsmPEExportSection::parse: error: ordinal #%zu at va 0x%08"PRIx64
+                    " contains unmapped va 0x%08"PRIx64"\n", i, ordinal_va, e.va);
             if (e.map) {
                 fprintf(stderr, "Memory map in effect at time of error:\n");
                 e.map->dump(stderr, "    ");
@@ -210,12 +211,12 @@ SgAsmPEExportSection::parse()
             unsigned expaddr_idx = ordinal - (p_export_dir->get_ord_base()-1);
             ROSE_ASSERT(expaddr_idx < p_export_dir->get_expaddr_n());
             ExportAddress_disk expaddr_disk = 0;
-            rose_addr_t expaddr_rva = p_export_dir->get_expaddr_rva().get_rva() + expaddr_idx*sizeof(expaddr_disk);
+            rose_addr_t expaddr_va = p_export_dir->get_expaddr_rva().get_va() + expaddr_idx*sizeof(expaddr_disk);
             try {
-                read_content(fhdr->get_loader_map(), expaddr_rva, &expaddr_disk, sizeof expaddr_disk);
+                read_content(fhdr->get_loader_map(), expaddr_va, &expaddr_disk, sizeof expaddr_disk);
             } catch (const MemoryMap::NotMapped &e) {
-                fprintf(stderr, "SgAsmPEExportSection::parse: error: export address %zu at RVA 0x%08"PRIx64
-                        " contains unmapped virtual address 0x%08"PRIx64"\n", i, expaddr_rva, e.va);
+                fprintf(stderr, "SgAsmPEExportSection::parse: error: export address #%zu at va 0x%08"PRIx64
+                        " contains unmapped va 0x%08"PRIx64"\n", i, expaddr_va, e.va);
                 if (e.map) {
                     fprintf(stderr, "Memory map in effect at time of error:\n");
                     e.map->dump(stderr, "    ");
@@ -233,9 +234,9 @@ SgAsmPEExportSection::parse()
         if (expaddr.get_va()>=get_mapped_actual_va() && expaddr.get_va()<get_mapped_actual_va()+get_mapped_size()) {
             std::string s;
             try {
-                s = read_content_str(fhdr->get_loader_map(), expaddr.get_rva());
+                s = read_content_str(fhdr->get_loader_map(), expaddr.get_va());
             } catch (const MemoryMap::NotMapped &e) {
-                fprintf(stderr, "SgAsmPEExportSection::parse: error: forwarder %zu at RVA 0x%08"PRIx64
+                fprintf(stderr, "SgAsmPEExportSection::parse: error: forwarder %zu at rva 0x%08"PRIx64
                         " contains unmapped virtual address 0x%08"PRIx64"\n", i, expaddr.get_rva(), e.va);
                 if (e.map) {
                     fprintf(stderr, "Memory map in effect at time of error:\n");

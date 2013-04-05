@@ -465,7 +465,7 @@ static map<SgAsmExpression*, void*> unparseAndInternTable;
 inline void* unparseAndIntern(SgAsmExpression* e) {
   map<SgAsmExpression*, void*>::const_iterator i = unparseAndInternTable.find(e);
   if (i == unparseAndInternTable.end()) {
-    void* sPtr = intern(unparseExpression(e));
+    void* sPtr = intern(unparseExpression(e, NULL, NULL));
     unparseAndInternTable.insert(std::make_pair(e, sPtr));
     return sPtr;
   } else {
@@ -547,7 +547,7 @@ string unparseX86InstructionToHTMLWithAddress(SgAsmx86Instruction* insn) {
   const SgAsmExpressionPtrList& operands = opList->get_operands();
   for (size_t i = 0; i < operands.size(); ++i) {
     if (i != 0) result += ", ";
-    result += "<font color=\"blue\">" + htmlEscape(unparseExpression(operands[i])) + "</font>";
+    result += "<font color=\"blue\">" + htmlEscape(unparseExpression(operands[i], NULL, NULL)) + "</font>";
   }
   return result;
 }

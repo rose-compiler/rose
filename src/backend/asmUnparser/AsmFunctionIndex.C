@@ -217,7 +217,7 @@ AsmFunctionIndex::BeginAddrCallback::operator()(bool enabled, const DataArgs &ar
         if (!insns.empty()) {
             rose_addr_t addr = insns.front()->get_address();
             for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
-                addr = std::max(addr, (*ii)->get_address());
+                addr = std::min(addr, (*ii)->get_address());
             args.output <<data_prefix <<std::setw(width) <<StringUtility::addrToString(addr);
         } else {
             args.output <<data_prefix <<std::setw(width) <<"";

@@ -266,7 +266,8 @@ namespace BinaryAnalysis {
          *  This method finds post dominators by first locating the function exit blocks via ControlFlow::return_blocks().  If
          *  the exit block is not unique, then a temporary exit vertex is added to the CFG and the original exit blocks are
          *  given control flow edges to this unique vertex.  The CFG is then reversed and build_idom_relation_from_cfg() is
-         *  called.  Finally, if a temporary unique exit vertex was added, it is removed from the result.
+         *  called.  Finally, if a temporary unique exit vertex was added, it is removed from the result.  However, if a @p
+         *  stop vertex is specified then that vertex is used instead of looking for (or creating) a unique exit vertex.
          *
          *  @{ */
         template<class ControlFlowGraph>
@@ -275,8 +276,20 @@ namespace BinaryAnalysis {
                                         typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start);
 
         template<class ControlFlowGraph>
+        RelationMap<ControlFlowGraph>
+        build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
+                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop);
+
+        template<class ControlFlowGraph>
         void build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
                                              typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                             RelationMap<ControlFlowGraph> &idom/*out*/);
+
+        template<class ControlFlowGraph>
+        void build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
+                                             typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                             typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop,
                                              RelationMap<ControlFlowGraph> &idom/*out*/);
         /** @} */
 
@@ -322,16 +335,27 @@ namespace BinaryAnalysis {
          *  temporarily modifies the CFG (specifically, a copy thereof), if necessary, by adding a unique exit vertex and
          *  adjusting all vertices identified by BinaryAnalysis::ControlFlow::return_blocks() so they point to the unique exit
          *  vertex.  If the exit vertex was added, it will be removed (along with its edges) from the returned post dominator
-         *  graph.
+         *  graph.  Alternatively, an explicit @p stop vertex can be specified.
          *
          *  @{ */
         template<class DominanceGraph, class ControlFlowGraph>
         DominanceGraph build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
                                                     typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start);
 
+        template<class DominanceGraph, class ControlFlowGraph>
+        DominanceGraph build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
+                                                    typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                                    typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop);
+
         template<class ControlFlowGraph, class DominanceGraph>
         void build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
                                           typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                          DominanceGraph &pdg/*out*/);
+
+        template<class ControlFlowGraph, class DominanceGraph>
+        void build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
+                                          typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                          typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop,
                                           DominanceGraph &pdg/*out*/);
         /** @} */
 
@@ -690,6 +714,18 @@ BinaryAnalysis::Dominance::build_postdom_graph_from_cfg(const ControlFlowGraph &
     build_graph_from_relation(cfg, pdoms, result);
 }
 
+template<class ControlFlowGraph, class DominanceGraph>
+void
+BinaryAnalysis::Dominance::build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
+                                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop,
+                                                        DominanceGraph &result)
+{
+    RelationMap<ControlFlowGraph> pdoms;
+    build_postdom_relation_from_cfg(cfg, start, stop, pdoms);
+    build_graph_from_relation(cfg, pdoms, result);
+}
+
 template<class DominanceGraph, class ControlFlowGraph>
 DominanceGraph
 BinaryAnalysis::Dominance::build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
@@ -697,6 +733,17 @@ BinaryAnalysis::Dominance::build_postdom_graph_from_cfg(const ControlFlowGraph &
 {
     DominanceGraph dg;
     build_postdom_graph_from_cfg(cfg, start, dg);
+    return dg;
+}
+
+template<class DominanceGraph, class ControlFlowGraph>
+DominanceGraph
+BinaryAnalysis::Dominance::build_postdom_graph_from_cfg(const ControlFlowGraph &cfg,
+                                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop)
+{
+    DominanceGraph dg;
+    build_postdom_graph_from_cfg(cfg, start, stop, dg);
     return dg;
 }
 
@@ -711,13 +758,39 @@ BinaryAnalysis::Dominance::build_postdom_relation_from_cfg(const ControlFlowGrap
 }
 
 template<class ControlFlowGraph>
+BinaryAnalysis::Dominance::RelationMap<ControlFlowGraph>
+BinaryAnalysis::Dominance::build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
+                                                           typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                                           typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop)
+{
+    RelationMap<ControlFlowGraph> pdom;
+    build_postdom_relation_from_cfg(cfg, start, stop, pdom);
+    return pdom;
+}
+
+template<class ControlFlowGraph>
 void
-BinaryAnalysis::Dominance::build_postdom_relation_from_cfg(const ControlFlowGraph &_cfg,
+BinaryAnalysis::Dominance::build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
+                                                           typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                                           typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor stop,
+                                                           RelationMap<ControlFlowGraph> &result)
+{
+    /* Post dominance is the same as doing dominance, but on a reversed CFG, using the stop vertex as the starting point. */
+    if (debug)
+        fprintf(debug, "  Calling build_idom_relation_from_cfg() on reversed CFG...\n");
+    typedef typename boost::reverse_graph<ControlFlowGraph> ReversedControlFlowGraph;
+    ReversedControlFlowGraph rcfg(cfg);
+    RelationMap<ReversedControlFlowGraph> rrelation;
+    build_idom_relation_from_cfg(rcfg, stop, rrelation);
+    result.assign(rrelation.begin(), rrelation.end());
+}
+
+template<class ControlFlowGraph>
+void
+BinaryAnalysis::Dominance::build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
                                                            typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
                                                            RelationMap<ControlFlowGraph> &result)
 {
-    ControlFlowGraph cfg = _cfg;        /* we need our own copy since we might modify it */
-
     if (debug) {
         fprintf(debug, "BinaryAnalysis::Dominance::build_postdom_relation_from_cfg: starting at vertex %zu\n", start);
         SgAsmBlock *block = get(boost::vertex_name, cfg, start);
@@ -736,49 +809,45 @@ BinaryAnalysis::Dominance::build_postdom_relation_from_cfg(const ControlFlowGrap
     /* Does the graph have more than one return block?  By "return", we mean any block whose control flow successor is possibly
      * outside the start node's function.  See ControlFlow::return_blocks(). */
     typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor CFG_Vertex;
-    CFG_Vertex unique_exit;
-    bool unique_exit_created = false;
     std::vector<CFG_Vertex> retblocks = ControlFlow().return_blocks(cfg, start);
     if (1==retblocks.size()) {
         if (debug)
             fprintf(debug, "  CFG has unique exit vertex %zu, block 0x%08"PRIx64"\n",
                     retblocks[0],
                     get(boost::vertex_name, cfg, retblocks[0])->get_address());
-        unique_exit = retblocks[0];
+        build_postdom_relation_from_cfg(cfg, start, retblocks[0], result);
+    } else if (0==retblocks.size()) {
+        // This can happen for a function like "void f() { while(1); }", or the assembly code
+        //    f:  jmp f
+        // It can also happen for functions with more than one basic block as long as every basic block branches to
+        // another basic block in the same function.  Post-dominance is defined in terms of a stop node (i.e., function return,
+        // HLT instruction, etc), but such a function has no stop node.
+        if (debug)
+            fprintf(debug, "  CFG has no exit or terminal vertex; post-dominance cannot be calculated\n");
+        result.insert(result.begin(), num_vertices(cfg), boost::graph_traits<ControlFlowGraph>::null_vertex());
     } else {
+        // Create a temporary unique exit/halt vertex and make all the others point to it.
+        ControlFlowGraph cfg_copy = cfg; /* we need our own copy to modify */
         assert(!retblocks.empty());
-        unique_exit = add_vertex(cfg);
-        unique_exit_created = true;
-        put(boost::vertex_name, cfg, unique_exit, (SgAsmBlock*)0); /* vertex has no basic block */
+        CFG_Vertex unique_exit = add_vertex(cfg_copy);
+        put(boost::vertex_name, cfg_copy, unique_exit, (SgAsmBlock*)0); /* vertex has no basic block */
         for (size_t i=0; i<retblocks.size(); i++)
-            add_edge(retblocks[i], unique_exit, cfg);
+            add_edge(retblocks[i], unique_exit, cfg_copy);
         if (debug)
             fprintf(debug, "  CFG has %zu exit blocks. Added unique exit vertex %zu\n", retblocks.size(), unique_exit);
-    }
 
-    /* Post dominance is the same as doing dominance, but on a reversed CFG, using the unique return vertex as the starting
-     * point. */
-    if (debug)
-        fprintf(debug, "  Calling build_idom_relation_from_cfg() on reversed CFG...\n");
-    typedef typename boost::reverse_graph<ControlFlowGraph> ReversedControlFlowGraph;
-    ReversedControlFlowGraph rcfg(cfg);
-    RelationMap<ReversedControlFlowGraph> rrelation;
-    build_idom_relation_from_cfg(rcfg, unique_exit, rrelation);
-    if (debug)
-        fprintf(debug, "BinaryAnalysis::Dominance::build_postdom_relation_from_cfg() resuming...\n");
+        // Perform the post dominance on this new CFG using the unique exit vertex.
+        build_postdom_relation_from_cfg(cfg_copy, start, unique_exit, result);
 
-    /* Remove the unique exit vertex if appropriate. */
-    if (unique_exit_created) {
-        assert(unique_exit+1==num_vertices(cfg));
-        rrelation.pop_back();
-        for (size_t i=0; i<rrelation.size(); ++i) {
-            if (rrelation[i]>=rrelation.size())
-                rrelation[i] = boost::graph_traits<ControlFlowGraph>::null_vertex();
+        // Remove the unique exit vertex from the returned relation
+        assert(unique_exit+1==num_vertices(cfg_copy));
+        result.pop_back();
+        for (size_t i=0; i<result.size(); ++i) {
+            if (result[i]>=result.size())
+                result[i] = boost::graph_traits<ControlFlowGraph>::null_vertex();
         }
     }
 
-    /* Intiailize the result vector. */
-    result.assign(rrelation.begin(), rrelation.end());
     if (debug) {
         fprintf(debug, "  Final result:\n");
         for (size_t i=0; i<result.size(); i++) {

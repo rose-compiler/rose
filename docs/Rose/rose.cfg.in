@@ -504,6 +504,15 @@ INPUT                  =										     \
                          @top_srcdir@/src/midend/programAnalysis/staticSingleAssignment/		     \
                          @top_srcdir@/src/midend/programAnalysis/ssaUnfilteredCfg/			     \
                          @top_srcdir@/src/midend/programAnalysis/CallGraphAnalysis			     \
+			 @top_srcdir@/src/midend/programAnalysis/genericDataflow			     \
+			 @top_srcdir@/src/midend/programAnalysis/genericDataflow/analysis		     \
+			 @top_srcdir@/src/midend/programAnalysis/genericDataflow/arrIndexLabeler	     \
+			 @top_srcdir@/src/midend/programAnalysis/genericDataflow/cfgUtils		     \
+			 @top_srcdir@/src/midend/programAnalysis/genericDataflow/lattice		     \
+			 @top_srcdir@/src/midend/programAnalysis/genericDataflow/rwAccessLabeler	     \
+			 @top_srcdir@/src/midend/programAnalysis/genericDataflow/simpleAnalyses	 	     \
+			 @top_srcdir@/src/midend/programAnalysis/genericDataflow/state			     \
+			 @top_srcdir@/src/midend/programAnalysis/genericDataflow/variables		     \
                          @top_srcdir@/src/midend/programTransformation/documentation.docs		     \
                          @top_srcdir@/src/midend/programTransformation/extractFunctionArgumentsNormalization \
                          @top_srcdir@/src/midend/astProcessing						     \
@@ -518,6 +527,7 @@ INPUT                  =										     \
                          @top_srcdir@/src/backend/unparser/languageIndependenceSupport/documentation.docs    \
                          @top_srcdir@/src/backend/unparser/CxxCodeGeneration/documentation.docs		     \
                          @top_srcdir@/src/backend/unparser/FortranCodeGeneration/documentation.docs	     \
+			 @top_srcdir@/src/util/FormatRestorer.h						     \
                          @top_srcdir@/src/util/utilDocumentation.docs					     \
                          @top_srcdir@/src/util/stringSupport/stringSupportDocumentation.docs		     \
                          @top_srcdir@/src/util/stringSupport/						     \

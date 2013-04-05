@@ -256,3 +256,33 @@ AstRegExAttribute::AstRegExAttribute(const std::string & s)
    {
      expression = s;
    }
+
+// ********************************************
+//              AstSgNodeAttribute
+// ********************************************
+
+AstSgNodeAttribute::AstSgNodeAttribute()
+   : node(NULL)
+   {
+   }
+
+AstSgNodeAttribute::AstSgNodeAttribute(SgNode * node_) 
+   : node(node_)
+   {
+   }
+
+SgNode *AstSgNodeAttribute::getNode() { return node; }
+
+// ********************************************
+//              AstSgNodeListAttribute
+// ********************************************
+
+AstSgNodeListAttribute::AstSgNodeListAttribute() {}
+
+AstSgNodeListAttribute::AstSgNodeListAttribute(std::vector<SgNode *> &list) {
+    nodeList = list;
+}
+
+void AstSgNodeListAttribute::addNode(SgNode *node) { nodeList.push_back(node); }
+
+std::vector<SgNode *> &AstSgNodeListAttribute::getNodeList() { return nodeList; }

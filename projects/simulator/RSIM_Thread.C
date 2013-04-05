@@ -58,8 +58,8 @@ RSIM_Thread::id()
     sprintf(buf1, "%1.3f", elapsed);
 
     char buf2[64];
-    int n = snprintf(buf2, sizeof(buf2), "0x%08"PRIx64"[%zu]: ",
-                     policy.readRegister<32>(policy.reg_eip).known_value(), policy.get_ninsns());
+    uint64_t eip = policy.readRegister<32>(policy.reg_eip).is_known() ? policy.readRegister<32>(policy.reg_eip).known_value() : 0;
+    int n = snprintf(buf2, sizeof(buf2), "0x%08"PRIx64"[%zu]: ", eip, policy.get_ninsns());
     assert(n>=0 && (size_t)n<sizeof(buf2)-1);
     memset(buf2+n, ' ', sizeof(buf2)-n);
     buf2[std::max(n, 21)] = '\0';
@@ -716,6 +716,16 @@ RSIM_Thread::syscall_return(int retval)
     policy.writeRegister(policy.reg_eax, policy.number<32>(retval));
 }
 
+void
+RSIM_Thread::post_insn_semaphore()
+{
+    if (!insn_semaphore_posted) {
+        int status __attribute__((unused)) = sem_post(process->get_simulator()->get_semaphore());
+        assert(0==status);
+        insn_semaphore_posted = true;
+    }
+}
+
 /* Executed by a real thread to simulate a specimen's thread. */
 void *
 RSIM_Thread::main()
@@ -765,11 +775,7 @@ RSIM_Thread::main()
                 assert(0==status);
                 insn_semaphore_posted = false;
                 semantics.processInstruction(insn);             // blocking syscalls will post, and set insn_semaphore_posted
-                if (!insn_semaphore_posted) {
-                    status = sem_post(process->get_simulator()->get_semaphore());
-                    assert(0==status);
-                    insn_semaphore_posted = true;
-                }
+                post_insn_semaphore();
             }
             callbacks.call_insn_callbacks(RSIM_Callbacks::AFTER, this, insn, cb_status);
 
@@ -777,25 +783,17 @@ RSIM_Thread::main()
             if (mesg->get_file())
                 policy.dump_registers(mesg);
         } catch (const Disassembler::Exception &e) {
-            if (!insn_semaphore_posted) {
-                int status __attribute__((unused)) = sem_post(process->get_simulator()->get_semaphore());
-                assert(0==status);
-                insn_semaphore_posted = true;
-            }
+            post_insn_semaphore();
             std::ostringstream s;
             s <<e;
             tracing(TRACE_MISC)->mesg("caught Disassembler::Exception: %s\n", s.str().c_str());
             tracing(TRACE_MISC)->mesg("dumping core...\n");
             process->dump_core(SIGSEGV);
             report_stack_frames(tracing(TRACE_MISC));
-            abort();
+            throw;
         } catch (const RSIM_Semantics::Dispatcher::Exception &e) {
             /* Thrown for instructions whose semantics are not implemented yet. */
-            if (!insn_semaphore_posted) {
-                int status __attribute__((unused)) = sem_post(process->get_simulator()->get_semaphore());
-                assert(0==status);
-                insn_semaphore_posted = true;
-            }
+            post_insn_semaphore();
             std::ostringstream s;
             s <<e;
             tracing(TRACE_MISC)->mesg("caught RSIM_Semantics::Dispatcher::Exception: %s\n", s.str().c_str());
@@ -808,12 +806,13 @@ RSIM_Thread::main()
             report_stack_frames(tracing(TRACE_MISC));
             tracing(TRACE_MISC)->mesg("exception ignored; continuing with a corrupt state...\n");
 #endif
+        } catch (const RSIM_Semantics::InnerPolicy<>::Halt &e) {
+            /* Thrown for the HLT instruction */
+            tracing(TRACE_MISC)->mesg("caught RSIM_Semantics::InnerPolicy<>::Halt");
+            post_insn_semaphore();
+            throw;
         } catch (const RSIM_SEMANTICS_POLICY::Exception &e) {
-            if (!insn_semaphore_posted) {
-                int status __attribute__((unused)) = sem_post(process->get_simulator()->get_semaphore());
-                assert(0==status);
-                insn_semaphore_posted = true;
-            }
+            post_insn_semaphore();
             std::ostringstream s;
             s <<e;
             tracing(TRACE_MISC)->mesg("caught semantic policy exception: %s\n", s.str().c_str());
@@ -822,19 +821,11 @@ RSIM_Thread::main()
             report_stack_frames(tracing(TRACE_MISC));
             abort();
         } catch (const RSIM_Process::Exit &e) {
-            if (!insn_semaphore_posted) {
-                int status __attribute__((unused)) = sem_post(process->get_simulator()->get_semaphore());
-                assert(0==status);
-                insn_semaphore_posted = true;
-            }
+            post_insn_semaphore();
             sys_exit(e);
             return NULL;
         } catch (RSIM_SignalHandling::siginfo_32 &e) {
-            if (!insn_semaphore_posted) {
-                int status __attribute__((unused)) = sem_post(process->get_simulator()->get_semaphore());
-                assert(0==status);
-                insn_semaphore_posted = true;
-            }
+            post_insn_semaphore();
             if (e.si_signo) {
                 bool cb_status = get_callbacks().call_signal_callbacks(RSIM_Callbacks::BEFORE, this, e.si_signo, &e,
                                                                        RSIM_Callbacks::SignalCallback::ARRIVAL, true);
@@ -843,6 +834,9 @@ RSIM_Thread::main()
                 get_callbacks().call_signal_callbacks(RSIM_Callbacks::AFTER, this, e.si_signo, &e,
                                                       RSIM_Callbacks::SignalCallback::ARRIVAL, cb_status);
             }
+        } catch (...) {
+            post_insn_semaphore();
+            throw;
         }
     }
 }

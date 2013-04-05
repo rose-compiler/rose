@@ -1,4 +1,3 @@
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
 // DQ (10/14/2010): This should only be included by source files that require it.
@@ -59,6 +58,8 @@ DisassemblerX86::can_disassemble(SgAsmGenericHeader *header) const
 void
 DisassemblerX86::init(size_t wordsize)
 {
+    /* The default register dictionary.  If a register dictionary is specified in an SgAsmInterpretation, then that one will be
+     * used instead of the default we set here. */
     switch (wordsize) {
         case 2: insnSize = x86_insnsize_16; set_registers(RegisterDictionary::dictionary_i286());  break;
         case 4: insnSize = x86_insnsize_32; set_registers(RegisterDictionary::dictionary_pentium4());  break;

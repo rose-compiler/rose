@@ -1450,7 +1450,6 @@ void CodeAttributesVisitor::preOrderVisit(SgNode *node) {
      //                 SgAsmQuadWordValueExpression
      //                 SgAsmSingleFloatValueExpression
      //                 SgAsmDoubleFloatValueExpression
-     //                 SgAsmVectorValueExpression
      //             SgAsmBinaryExpression:
      //                 SgAsmBinaryAdd
      //                 SgAsmBinarySubtract
@@ -3468,7 +3467,6 @@ void CodeAttributesVisitor::postOrderVisit(SgNode *node) {
      //                 SgAsmQuadWordValueExpression
      //                 SgAsmSingleFloatValueExpression
      //                 SgAsmDoubleFloatValueExpression
-     //                 SgAsmVectorValueExpression
      //             SgAsmBinaryExpression:
      //                 SgAsmBinaryAdd
      //                 SgAsmBinarySubtract

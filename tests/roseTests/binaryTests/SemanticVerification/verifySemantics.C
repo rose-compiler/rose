@@ -180,9 +180,10 @@ public:
         return true;
     }
 
-    /* Flag having an undefined value. */
-    VerifierValue<1> undefined_() {
-        return false;
+    /* Undefined value. */
+    template<size_t Len>
+    VerifierValue<Len> undefined_() {
+        return 0;
     }
 
     /* A constant */

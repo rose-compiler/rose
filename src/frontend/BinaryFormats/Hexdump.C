@@ -34,8 +34,9 @@ SgAsmExecutableFileFormat::hexdump(std::ostream &f, rose_addr_t base_addr, const
                                    size_t n, const HexdumpFormat &fmt)
 {
     /* Provide default formats. This is done here so that the header file doesn't depend on <inttypes.h> */
-    const char *addr_fmt = fmt.addr_fmt ? fmt.addr_fmt : "0x%08"PRIx64":";
-    const char *numeric_fmt = fmt.numeric_fmt ? fmt.numeric_fmt : " %02x";
+    const char *addr_fmt = fmt.addr_fmt ? fmt.addr_fmt : "0x%08"PRIx64": ";
+    const char *numeric_fmt = fmt.numeric_fmt ? fmt.numeric_fmt : "%02x";
+    const char *numeric_sep = fmt.numeric_sep ? fmt.numeric_sep : " ";
     const char *prefix = fmt.prefix ? fmt.prefix : "";
 
     char s[1024];
@@ -55,10 +56,14 @@ SgAsmExecutableFileFormat::hexdump(std::ostream &f, rose_addr_t base_addr, const
         if (fmt.show_numeric) {
             for (size_t j=0; j<fmt.width; j++) {
                 if (i+j<n) {
+                    if (j>0)
+                        f <<numeric_sep;
                     if (j>0 && 0 == j % fmt.colsize)
                         f <<" ";
                     f <<str_printf(numeric_fmt, data[i+j]);
                 } else if (fmt.pad_numeric) {
+                    if (j>0)
+                        f <<numeric_sep;
                     if (j>0 && 0 == j % fmt.colsize)
                         f <<" ";
                     f <<str_printf("%*s", numeric_width, "");

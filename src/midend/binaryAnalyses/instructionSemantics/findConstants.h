@@ -729,8 +729,10 @@ struct FindConstantsPolicy {
     XVariablePtr<1> true_() {
         return number<1>(1);
     }
-    XVariablePtr<1> undefined_() {
-        return new XVariable<1>();
+
+    template<size_t Len>
+    XVariablePtr<Len> undefined_() {
+        return new XVariable<Len>();
     }
 
     template <size_t Len>
@@ -1089,7 +1091,7 @@ struct FindConstantsPolicy {
             }
             if (isAsmBranch(insnx)) {
                 uint64_t addr = 0;
-                bool knownTarget = getAsmKnownBranchTarget(insnx, addr);
+                bool knownTarget = insnx->get_branch_target(&addr);
                 if (knownTarget) {
                     succs.push_back(addr);
                 }

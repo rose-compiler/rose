@@ -1,18 +1,5 @@
-test B in function <_init> at 0x08048278
-test B in function <malloc@plt> at 0x080482a0
-test B in function <__libc_start_main@plt> at 0x080482b0
-test B in function <_start> at 0x080482c0
-test B in function <call_gmon_start> at 0x080482e4
-test B in function <__do_global_dtors_aux> at 0x08048310
-test B in function <frame_dummy> at 0x08048340
-test B in function <main> at 0x08048364
-test B in function <> at 0x0804836e
-test B in function <__libc_csu_init> at 0x080483c0
-test B in function <__libc_csu_fini> at 0x08048414
-test B in function <__do_global_ctors_aux> at 0x08048460
-test B in function <_fini> at 0x08048494
-
-=== testDominance-B1.dot ===
+================================================================================
+test testDominance-B1.dot in function <_init> at 0x08048278
 digraph G {
 0[ label="0x08048278" ];
 1[ label="0x08048283" ];
@@ -22,25 +9,25 @@ digraph G {
 1->2 ;
 2->3 ;
 }
-
-=== testDominance-B2.dot ===
+================================================================================
+test testDominance-B2.dot in function <malloc@plt> at 0x080482a0
 digraph G {
 0[ label="0x080482a0" ];
 }
-
-=== testDominance-B3.dot ===
+================================================================================
+test testDominance-B3.dot in function <__libc_start_main@plt> at 0x080482b0
 digraph G {
 0[ label="0x080482b0" ];
 }
-
-=== testDominance-B4.dot ===
+================================================================================
+test testDominance-B4.dot in function <_start> at 0x080482c0
 digraph G {
 0[ label="0x080482c0" ];
 1[ label="0x080482e1" ];
 0->1 ;
 }
-
-=== testDominance-B5.dot ===
+================================================================================
+test testDominance-B5.dot in function <call_gmon_start> at 0x080482e4
 digraph G {
 0[ label="0x080482e4" ];
 1[ label="0x080482ff" ];
@@ -48,8 +35,8 @@ digraph G {
 0->1 ;
 0->2 ;
 }
-
-=== testDominance-B6.dot ===
+================================================================================
+test testDominance-B6.dot in function <__do_global_dtors_aux> at 0x08048310
 digraph G {
 0[ label="0x08048310" ];
 1[ label="0x0804831f" ];
@@ -63,8 +50,8 @@ digraph G {
 3->4 ;
 0->5 ;
 }
-
-=== testDominance-B7.dot ===
+================================================================================
+test testDominance-B7.dot in function <frame_dummy> at 0x08048340
 digraph G {
 0[ label="0x08048340" ];
 1[ label="0x0804834f" ];
@@ -73,13 +60,13 @@ digraph G {
 0->1 ;
 0->3 ;
 }
-
-=== testDominance-B8.dot ===
+================================================================================
+test testDominance-B8.dot in function <main> at 0x08048364
 digraph G {
 0[ label="0x08048364" ];
 }
-
-=== testDominance-B9.dot ===
+================================================================================
+test testDominance-B9.dot in function <> at 0x0804836e
 digraph G {
 0[ label="0x0804836e" ];
 1[ label="0x08048381" ];
@@ -91,8 +78,8 @@ digraph G {
 1->3 ;
 3->4 ;
 }
-
-=== testDominance-B10.dot ===
+================================================================================
+test testDominance-B10.dot in function <__libc_csu_init> at 0x080483c0
 digraph G {
 0[ label="0x080483c0" ];
 1[ label="0x080483da" ];
@@ -100,8 +87,8 @@ digraph G {
 3[ label="0x080483fb" ];
 0->1 ;
 }
-
-=== testDominance-B11.dot ===
+================================================================================
+test testDominance-B11.dot in function <__libc_csu_fini> at 0x08048414
 digraph G {
 0[ label="0x08048414" ];
 1[ label="0x0804843f" ];
@@ -109,8 +96,8 @@ digraph G {
 3[ label="0x0804844e" ];
 0->3 ;
 }
-
-=== testDominance-B12.dot ===
+================================================================================
+test testDominance-B12.dot in function <__do_global_ctors_aux> at 0x08048460
 digraph G {
 0[ label="0x08048460" ];
 1[ label="0x08048476" ];
@@ -122,8 +109,8 @@ digraph G {
 2->3 ;
 0->4 ;
 }
-
-=== testDominance-B13.dot ===
+================================================================================
+test testDominance-B13.dot in function <_fini> at 0x08048494
 digraph G {
 0[ label="0x08048494" ];
 1[ label="0x080484aa" ];

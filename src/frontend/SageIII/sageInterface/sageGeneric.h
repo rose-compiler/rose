@@ -1684,10 +1684,6 @@ namespace sg
         Dispatcher::dispatch(rv, assume_sage_type<SgAsmDoubleFloatValueExpression>(*n));
         break;
 
-      case V_SgAsmVectorValueExpression:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmVectorValueExpression>(*n));
-        break;
-
       case V_SgAsmValueExpression:
         Dispatcher::dispatch(rv, assume_sage_type<SgAsmValueExpression>(*n));
         break;

@@ -47,7 +47,6 @@ Grammar::setUpBinaryInstructions()
 
     NEW_TERMINAL_MACRO(Asmx86Instruction, "Asmx86Instruction", "Asmx86InstructionTag");
     Asmx86Instruction.setFunctionPrototype("HEADER_BINARY_X86_INSTRUCTION", "../Grammar/BinaryInstruction.code");
-    Asmx86Instruction.setFunctionSource("SOURCE_BINARY_X86_INSTRUCTION", "../Grammar/BinaryInstruction.code");
     Asmx86Instruction.setDataPrototype("X86InstructionKind", "kind", "= x86_unknown_instruction",
                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
     Asmx86Instruction.setDataPrototype("X86InstructionSize", "baseSize", "= x86_insnsize_none",
@@ -78,8 +77,17 @@ Grammar::setUpBinaryInstructions()
 
 
 
+    NEW_TERMINAL_MACRO(AsmMipsInstruction, "AsmMipsInstruction", "AsmMipsInstructionTag");
+    AsmMipsInstruction.setFunctionPrototype("HEADER_BINARY_MIPS_INSTRUCTION", "../Grammar/BinaryInstruction.code");
+    AsmMipsInstruction.setDataPrototype("MipsInstructionKind", "kind", "= mips_unknown_instruction",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+    AsmMipsInstruction.setPredeclarationString("HEADER_BINARY_MIPS_INSTRUCTION_PREDECLARATION",
+                                               "../Grammar/BinaryInstruction.code");
+
+
+
     NEW_NONTERMINAL_MACRO(AsmInstruction,
-                          Asmx86Instruction | AsmArmInstruction | AsmPowerpcInstruction,
+                          Asmx86Instruction | AsmArmInstruction | AsmPowerpcInstruction | AsmMipsInstruction,
                           "AsmInstruction", "AsmInstructionTag", true);
     AsmInstruction.setPredeclarationString("HEADER_BINARY_INSTRUCTION_PREDECLARATION", "../Grammar/BinaryInstruction.code");
     AsmInstruction.setFunctionPrototype("HEADER_BINARY_INSTRUCTION", "../Grammar/BinaryInstruction.code");
@@ -163,8 +171,6 @@ Grammar::setUpBinaryInstructions()
                        "AsmArmRegisterReferenceExpression", "AsmArmRegisterReferenceExpressionTag");
     AsmArmRegisterReferenceExpression.setFunctionPrototype("HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION",
                                                            "../Grammar/BinaryInstruction.code");
-    AsmArmRegisterReferenceExpression.setFunctionSource("SOURCE_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION",
-                                                        "../Grammar/BinaryInstruction.code");
     AsmArmRegisterReferenceExpression.setDataPrototype("unsigned", "psr_mask", "=0",
                                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -172,40 +178,45 @@ Grammar::setUpBinaryInstructions()
 
     NEW_TERMINAL_MACRO(AsmPowerpcRegisterReferenceExpression,
                        "AsmPowerpcRegisterReferenceExpression", "AsmPowerpcRegisterReferenceExpressionTag");
-    AsmPowerpcRegisterReferenceExpression.setFunctionPrototype("HEADER_BINARY_POWERPC_REGISTER_REFERENCE_EXPRESSION",
-                                                               "../Grammar/BinaryInstruction.code");
-    AsmPowerpcRegisterReferenceExpression.setFunctionSource("SOURCE_BINARY_POWERPC_REGISTER_REFERENCE_EXPRESSION",
-                                                            "../Grammar/BinaryInstruction.code");
+
+
+
+
+    NEW_TERMINAL_MACRO(AsmMipsRegisterReferenceExpression,
+                       "AsmMipsRegisterReferenceExpression", "AsmMipsRegisterReferenceExpressionTag");
+
 
 
 
     NEW_NONTERMINAL_MACRO(AsmRegisterReferenceExpression ,
                           Asmx86RegisterReferenceExpression | AsmArmRegisterReferenceExpression |
-                          AsmPowerpcRegisterReferenceExpression,
+                          AsmPowerpcRegisterReferenceExpression | AsmMipsRegisterReferenceExpression,
                           "AsmRegisterReferenceExpression", "AsmRegisterReferenceExpressionTag" , false);
-    AsmRegisterReferenceExpression.setFunctionPrototype("HEADER_BINARY_REGISTER_REFERENCE_EXPRESSION",
-                                                        "../Grammar/BinaryInstruction.code");
-    AsmRegisterReferenceExpression.setFunctionSource("SOURCE_BINARY_REGISTER_REFERENCE_EXPRESSION",
-                                                     "../Grammar/BinaryInstruction.code");
-    AsmRegisterReferenceExpression.setDataPrototype("SgAsmType*", "type", "= NULL",
-                                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmRegisterReferenceExpression.setDataPrototype("RegisterDescriptor", "descriptor", "",
-                                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
-    // Integer Constants
+    // Integer Constants (FIXME: These use x86 nomenclature and will likely be changed. [Robb P. Matzke 2013-02-13])
     NEW_TERMINAL_MACRO(AsmByteValueExpression, "AsmByteValueExpression", "AsmByteValueExpressionTag");
     AsmByteValueExpression.setFunctionPrototype("HEADER_BYTE_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+    AsmByteValueExpression.setFunctionSource("SOURCE_BYTE_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+    AsmByteValueExpression.setAutomaticGenerationOfConstructor(false); // we need to set the "p_type" member.
 
     NEW_TERMINAL_MACRO(AsmWordValueExpression, "AsmWordValueExpression", "AsmWordValueExpressionTag");
     AsmWordValueExpression.setFunctionPrototype("HEADER_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+    AsmWordValueExpression.setFunctionSource("SOURCE_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+    AsmWordValueExpression.setAutomaticGenerationOfConstructor(false); // we need to set the "p_type" member.
 
     NEW_TERMINAL_MACRO(AsmDoubleWordValueExpression, "AsmDoubleWordValueExpression", "AsmDoubleWordValueExpressionTag");
     AsmDoubleWordValueExpression.setFunctionPrototype("HEADER_DOUBLE_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+    AsmDoubleWordValueExpression.setFunctionSource("SOURCE_DOUBLE_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+    AsmDoubleWordValueExpression.setAutomaticGenerationOfConstructor(false); // we need to set the "p_type" member
 
     NEW_TERMINAL_MACRO(AsmQuadWordValueExpression, "AsmQuadWordValueExpression", "AsmQuadWordValueExpressionTag");
     AsmQuadWordValueExpression.setFunctionPrototype("HEADER_QUAD_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+    AsmQuadWordValueExpression.setFunctionSource("SOURCE_QUAD_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+    AsmQuadWordValueExpression.setAutomaticGenerationOfConstructor(false); // we need to set the "p_type" member
 
     NEW_NONTERMINAL_MACRO(AsmIntegerValueExpression,
                           AsmByteValueExpression | AsmWordValueExpression | AsmDoubleWordValueExpression |
@@ -220,45 +231,34 @@ Grammar::setUpBinaryInstructions()
                                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
-    // Floating point constants
+    // Floating point constants (FIXME: These use x86 nomenclature and will likely be changed. [Robb P. Matzke 2013-02-13])
     NEW_TERMINAL_MACRO(AsmSingleFloatValueExpression, "AsmSingleFloatValueExpression", "AsmSingleFloatValueExpressionTag");
-    AsmSingleFloatValueExpression.setFunctionPrototype("HEADER_BINARY_SINGLE_FLOAT_VALUE_EXPRESSION",
+    AsmSingleFloatValueExpression.setFunctionPrototype("HEADER_SINGLE_FLOAT_VALUE_EXPRESSION",
                                                        "../Grammar/BinaryInstruction.code");
-    AsmSingleFloatValueExpression.setFunctionSource("SOURCE_BINARY_SINGLE_FLOAT_VALUE_EXPRESSION",
-                                                    "../Grammar/BinaryInstruction.code");
+    AsmSingleFloatValueExpression.setFunctionSource("SOURCE_SINGLE_FLOAT_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+    AsmSingleFloatValueExpression.setAutomaticGenerationOfConstructor(false); // we need to set the "p_type" member
     AsmSingleFloatValueExpression.setDataPrototype("float", "value", "= 0.0F",
                                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
     NEW_TERMINAL_MACRO(AsmDoubleFloatValueExpression, "AsmDoubleFloatValueExpression", "AsmDoubleFloatValueExpressionTag");
-    AsmDoubleFloatValueExpression.setFunctionPrototype("HEADER_BINARY_DOUBLE_FLOAT_VALUE_EXPRESSION",
+    AsmDoubleFloatValueExpression.setFunctionPrototype("HEADER_DOUBLE_FLOAT_VALUE_EXPRESSION",
                                                        "../Grammar/BinaryInstruction.code");
-    AsmDoubleFloatValueExpression.setFunctionSource("SOURCE_BINARY_DOUBLE_FLOAT_VALUE_EXPRESSION",
-                                                    "../Grammar/BinaryInstruction.code");
+    AsmDoubleFloatValueExpression.setFunctionSource("SOURCE_DOUBLE_FLOAT_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+    AsmDoubleFloatValueExpression.setAutomaticGenerationOfConstructor(false); // we need to set the "p_type" member
     AsmDoubleFloatValueExpression.setDataPrototype("double", "value", "= 0.0",
                                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
-
-    // Vector constants
-    NEW_TERMINAL_MACRO(AsmVectorValueExpression, "AsmVectorValueExpression", "AsmVectorValueExpressionTag");
-    AsmVectorValueExpression.setFunctionPrototype("HEADER_BINARY_VECTOR_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-    AsmVectorValueExpression.setFunctionSource("SOURCE_BINARY_VECTOR_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-    AsmVectorValueExpression.setDataPrototype("unsigned int", "size", "= 0x0",
-                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmVectorValueExpression.setDataPrototype("SgAsmType*", "type", "= 0x0",
-                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
     // Values that are addresses or references to data will have symbols in a function symbol table.  All other
     // values are assumed to be literals and will not have associated symbols.
     NEW_NONTERMINAL_MACRO(AsmValueExpression,
-                          AsmIntegerValueExpression | AsmSingleFloatValueExpression | AsmDoubleFloatValueExpression |
-                          AsmVectorValueExpression,
+                          AsmIntegerValueExpression | AsmSingleFloatValueExpression | AsmDoubleFloatValueExpression,
                           "AsmValueExpression", "AsmValueExpressionTag", false);
-    AsmValueExpression.setFunctionPrototype("HEADER_BINARY_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
     AsmValueExpression.setDataPrototype("SgAsmValueExpression*", "unfolded_expression_tree", "= NULL",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     AsmValueExpression.setDataPrototype("unsigned short", "bit_offset", "= 0",         // DOXYGEN
@@ -271,16 +271,10 @@ Grammar::setUpBinaryInstructions()
 
     // References to memory
     NEW_TERMINAL_MACRO(AsmMemoryReferenceExpression, "AsmMemoryReferenceExpression", "AsmMemoryReferenceExpressionTag");
-    AsmMemoryReferenceExpression.setFunctionPrototype("HEADER_BINARY_MEMORY_REFERENCE_EXPRESSION",
-                                                      "../Grammar/BinaryInstruction.code");
-    AsmMemoryReferenceExpression.setFunctionSource("SOURCE_BINARY_MEMORY_REFERENCE_EXPRESSION",
-                                                   "../Grammar/BinaryInstruction.code");
     AsmMemoryReferenceExpression.setDataPrototype("SgAsmExpression*", "address", "= NULL",
                                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     AsmMemoryReferenceExpression.setDataPrototype("SgAsmExpression*", "segment", "= NULL",
                                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-    AsmMemoryReferenceExpression.setDataPrototype("SgAsmType*", "type", "= NULL",
-                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
@@ -315,8 +309,8 @@ Grammar::setUpBinaryInstructions()
                           AsmMemoryReferenceExpression | AsmRegisterReferenceExpression | AsmControlFlagsExpression |
                           AsmCommonSubExpression       | AsmExprListExp,
                           "AsmExpression", "AsmExpressionTag", false);
-    AsmExpression.setFunctionPrototype("HEADER_BINARY_EXPRESSION", "../Grammar/BinaryInstruction.code");
-    AsmExpression.setFunctionSource("SOURCE_BINARY_EXPRESSION", "../Grammar/BinaryInstruction.code");
+    AsmExpression.setDataPrototype("SgAsmType*", "type", "= NULL",
+                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmExpression.setDataPrototype("std::string", "replacement", "= \"\"",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmExpression.setDataPrototype("std::string", "comment", "= \"\"",
@@ -406,8 +400,6 @@ Grammar::setUpBinaryInstructions()
                           AsmType128bitFloat | AsmTypeSingleFloat    | AsmTypeDoubleFloat |
                           AsmTypeVector,
                           "AsmType", "AsmTypeTag", false);
-    AsmType.setFunctionPrototype("HEADER_BINARY_TYPE", "../Grammar/BinaryInstruction.code");
-    AsmType.setFunctionSource("SOURCE_BINARY_TYPE", "../Grammar/BinaryInstruction.code");
 
 
 
@@ -571,7 +563,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmElfSectionTable, "AsmElfSectionTable", "AsmElfSectionTableTag");
      AsmElfSectionTable.setFunctionPrototype("HEADER_ELF_SECTION_TABLE", "../Grammar/BinaryInstruction.code");
-     AsmElfSectionTable.setFunctionSource("SOURCE_ELF_SECTION_TABLE", "../Grammar/BinaryInstruction.code");
 
 
 
@@ -613,12 +604,10 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmElfSegmentTable, "AsmElfSegmentTable", "AsmElfSegmentTableTag");
      AsmElfSegmentTable.setFunctionPrototype("HEADER_ELF_SEGMENT_TABLE", "../Grammar/BinaryInstruction.code");
-     AsmElfSegmentTable.setFunctionSource("SOURCE_ELF_SEGMENT_TABLE", "../Grammar/BinaryInstruction.code");
 
 
 
      NEW_TERMINAL_MACRO(AsmElfSegmentTableEntryList, "AsmElfSegmentTableEntryList", "AsmElfSegmentTableEntryListTag");
-     AsmElfSegmentTableEntryList.setFunctionPrototype("HEADER_ELF_SEGMENT_TABLE_ENTRY_LIST", "../Grammar/BinaryInstruction.code");
      AsmElfSegmentTableEntryList.setDataPrototype("SgAsmElfSegmentTableEntryPtrList", "entries", "",
                                                   NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -658,7 +647,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmElfSymbolSection, "AsmElfSymbolSection", "AsmElfSymbolSectionTag");
      AsmElfSymbolSection.setFunctionPrototype("HEADER_ELF_SYMBOL_SECTION", "../Grammar/BinaryInstruction.code");
-     AsmElfSymbolSection.setFunctionSource("SOURCE_ELF_SYMBOL_SECTION", "../Grammar/BinaryInstruction.code");
      AsmElfSymbolSection.setDataPrototype("SgAsmElfSymbolList*", "symbols", "= NULL",
                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmElfSymbolSection.setDataPrototype("bool", "is_dynamic", "= false",
@@ -667,8 +655,6 @@ Grammar::setUpBinaryInstructions()
 
 
      NEW_TERMINAL_MACRO(AsmElfSymbolList, "AsmElfSymbolList", "AsmElfSymbolListTag");
-     AsmElfSymbolList.setFunctionPrototype("HEADER_ELF_SYMBOL_LIST", "../Grammar/BinaryInstruction.code");
-     AsmElfSymbolList.setFunctionSource("SOURCE_ELF_SYMBOL_LIST", "../Grammar/BinaryInstruction.code");
      AsmElfSymbolList.setDataPrototype("SgAsmElfSymbolPtrList", "symbols", "",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -676,7 +662,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmElfSymbol, "AsmElfSymbol", "AsmElfSymbolTag");
      AsmElfSymbol.setFunctionPrototype("HEADER_ELF_SYMBOL", "../Grammar/BinaryInstruction.code");
-     AsmElfSymbol.setFunctionSource("SOURCE_ELF_SYMBOL", "../Grammar/BinaryInstruction.code");
      AsmElfSymbol.setDataPrototype("unsigned char", "st_info", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSymbol.setDataPrototype("unsigned char", "st_res1", "= 0",
@@ -850,7 +835,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmElfDynamicSection, "AsmElfDynamicSection", "AsmElfDynamicSectionTag");
      AsmElfDynamicSection.setFunctionPrototype("HEADER_ELF_DYNAMIC_SECTION", "../Grammar/BinaryInstruction.code");
-     AsmElfDynamicSection.setFunctionSource("SOURCE_ELF_DYNAMIC_SECTION", "../Grammar/BinaryInstruction.code");
      AsmElfDynamicSection.setDataPrototype("SgAsmElfDynamicEntryList*", "entries", "= NULL",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -864,7 +848,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmElfDynamicEntry, "AsmElfDynamicEntry", "AsmElfDynamicEntryTag");
      AsmElfDynamicEntry.setFunctionPrototype("HEADER_ELF_DYNAMIC_ENTRY", "../Grammar/BinaryInstruction.code");
-     AsmElfDynamicEntry.setFunctionSource("SOURCE_ELF_DYNAMIC_ENTRY", "../Grammar/BinaryInstruction.code");
      AsmElfDynamicEntry.setDataPrototype("SgAsmElfDynamicEntry::EntryType", "d_tag", "= SgAsmElfDynamicEntry::DT_NULL",
                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfDynamicEntry.setDataPrototype("rose_rva_t", "d_val", "",
@@ -892,7 +875,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmElfStrtab, "AsmElfStrtab", "AsmElfStrtabTag");
      AsmElfStrtab.setFunctionPrototype("HEADER_ELF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
-     AsmElfStrtab.setFunctionSource("SOURCE_ELF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
      AsmElfStrtab.setAutomaticGenerationOfDestructor(false);
 
 
@@ -1057,7 +1039,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmDOSExtendedHeader, "AsmDOSExtendedHeader", "AsmDOSExtendedHeaderTag");
      AsmDOSExtendedHeader.setFunctionPrototype("HEADER_DOS_EXTENDED_HEADER", "../Grammar/BinaryInstruction.code");
-     AsmDOSFileHeader.setFunctionSource("SOURCE_DOS_HEADER", "../Grammar/BinaryInstruction.code");
      AsmDOSExtendedHeader.setDataPrototype("unsigned", "e_res1", "= 0",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmDOSExtendedHeader.setDataPrototype("unsigned", "e_oemid", "= 0",
@@ -1085,7 +1066,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmPEFileHeader, "AsmPEFileHeader", "AsmPEFileHeaderTag");
      AsmPEFileHeader.setFunctionPrototype("HEADER_PE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
-     AsmPEFileHeader.setFunctionSource("SOURCE_PE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
      AsmPEFileHeader.setDataPrototype("unsigned", "e_cpu_type", "= 0",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned", "e_nsections", "= 0",
@@ -1174,7 +1154,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmPERVASizePair, "AsmPERVASizePair", "AsmPERVASizePairTag");
      AsmPERVASizePair.setFunctionPrototype("HEADER_PE_RVA_SIZE_PAIR", "../Grammar/BinaryInstruction.code");
-     AsmPERVASizePair.setFunctionSource("SOURCE_PE_RVA_SIZE_PAIR", "../Grammar/BinaryInstruction.code");
      AsmPERVASizePair.setDataPrototype("rose_rva_t", "e_rva", "= 0",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPERVASizePair.setDataPrototype("rose_addr_t", "e_size", "= 0",
@@ -1220,7 +1199,6 @@ Grammar::setUpBinaryInstructions()
      // ROSE no longer represents the ILT and IAT with separate IR nodes.
      NEW_TERMINAL_MACRO(AsmPEImportDirectory, "AsmPEImportDirectory", "AsmPEImportDirectoryTag");
      AsmPEImportDirectory.setFunctionPrototype("HEADER_PE_IMPORT_DIRECTORY", "../Grammar/BinaryInstruction.code");
-     AsmPEImportDirectory.setFunctionSource("SOURCE_PE_IMPORT_DIRECTORY", "../Grammar/BinaryInstruction.code");
      AsmPEImportDirectory.setDataPrototype("SgAsmGenericString*", "dll_name", "=0", // name of library from which to import
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmPEImportDirectory.setDataPrototype("rose_rva_t", "dll_name_rva", "= 0", // address of the name
@@ -1337,7 +1315,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmPESectionTable, "AsmPESectionTable", "AsmPESectionTableTag");
      AsmPESectionTable.setFunctionPrototype("HEADER_PE_SECTION_TABLE", "../Grammar/BinaryInstruction.code");
-     AsmPESectionTable.setFunctionSource("SOURCE_PE_SECTION_TABLE", "../Grammar/BinaryInstruction.code");
 
 
 
@@ -1373,7 +1350,6 @@ Grammar::setUpBinaryInstructions()
                            AsmPEImportSection | AsmPEExportSection | AsmPEStringSection,
                            "AsmPESection", "AsmPESectionTag", true);
      AsmPESection.setFunctionPrototype("HEADER_PE_SECTION", "../Grammar/BinaryInstruction.code");
-     AsmPESection.setFunctionSource("SOURCE_PE_SECTION", "../Grammar/BinaryInstruction.code");
      AsmPESection.setDataPrototype("SgAsmPESectionTableEntry*", "section_entry", "= NULL",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -1386,7 +1362,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmCoffSymbolTable, "AsmCoffSymbolTable", "AsmCoffSymbolTableTag");
      AsmCoffSymbolTable.setFunctionPrototype("HEADER_PE_COFF_SYMBOL_TABLE", "../Grammar/BinaryInstruction.code");
-     AsmCoffSymbolTable.setFunctionSource("SOURCE_PE_COFF_SYMBOL_TABLE", "../Grammar/BinaryInstruction.code");
      AsmCoffSymbolTable.setDataPrototype("SgAsmGenericSection*", "strtab", "= NULL",
                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmCoffSymbolTable.setDataPrototype("SgAsmCoffSymbolList*", "symbols", "= NULL",
@@ -1395,7 +1370,6 @@ Grammar::setUpBinaryInstructions()
 
 
      NEW_TERMINAL_MACRO(AsmCoffSymbolList, "AsmCoffSymbolList", "AsmCoffSymbolListTag");
-     AsmCoffSymbolList.setFunctionPrototype("HEADER_PE_COFF_SYMBOL_LIST", "../Grammar/BinaryInstruction.code");
      AsmCoffSymbolList.setDataPrototype("SgAsmCoffSymbolPtrList", "symbols", "",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -1423,7 +1397,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmCoffStrtab, "AsmCoffStrtab", "AsmCoffStrtabTag");
      AsmCoffStrtab.setFunctionPrototype("HEADER_COFF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
-     AsmCoffStrtab.setFunctionSource("SOURCE_COFF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
      AsmCoffStrtab.setAutomaticGenerationOfDestructor(false);
 
 
@@ -1434,7 +1407,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmNEFileHeader, "AsmNEFileHeader", "AsmNEFileHeaderTag");
      AsmNEFileHeader.setFunctionPrototype("HEADER_NE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
-     AsmNEFileHeader.setFunctionSource("SOURCE_NE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
      AsmNEFileHeader.setDataPrototype("unsigned", "e_linker_major", "= 0",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmNEFileHeader.setDataPrototype("unsigned", "e_linker_minor", "= 0",
@@ -1510,7 +1482,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmNEEntryTable, "AsmNEEntryTable", "AsmNEEntryTableTag");
      AsmNEEntryTable.setFunctionPrototype("HEADER_NE_ENTRY_TABLE", "../Grammar/BinaryInstruction.code");
-     AsmNEEntryTable.setFunctionSource("SOURCE_NE_ENTRY_TABLE", "../Grammar/BinaryInstruction.code");
      AsmNEEntryTable.setDataPrototype("SgSizeTList", "bundle_sizes", "",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmNEEntryTable.setDataPrototype("SgAsmNEEntryPointPtrList", "entries", "",
@@ -1538,7 +1509,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmNESectionTable, "AsmNESectionTable", "AsmNESectionTableTag");
      AsmNESectionTable.setFunctionPrototype("HEADER_NE_SECTION_TABLE", "../Grammar/BinaryInstruction.code");
-     AsmNESectionTable.setFunctionSource("SOURCE_NE_SECTION_TABLE", "../Grammar/BinaryInstruction.code");
      AsmNESectionTable.setDataPrototype("unsigned", "flags", "= 0",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmNESectionTable.setDataPrototype("unsigned", "sector", "= 0",
@@ -1570,7 +1540,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmNERelocTable, "AsmNERelocTable", "AsmNERelocTableTag");
      AsmNERelocTable.setFunctionPrototype("HEADER_NE_RELOC_TABLE", "../Grammar/BinaryInstruction.code");
-     AsmNERelocTable.setFunctionSource("SOURCE_NE_RELOC_TABLE", "../Grammar/BinaryInstruction.code");
      AsmNERelocTable.setDataPrototype("SgAsmNERelocEntryPtrList", "entries", "",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -1606,7 +1575,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmNENameTable, "AsmNENameTable", "AsmNENameTableTag");
      AsmNENameTable.setFunctionPrototype("HEADER_NE_NAME_TABLE", "../Grammar/BinaryInstruction.code");
-     AsmNENameTable.setFunctionSource("SOURCE_NE_NAME_TABLE", "../Grammar/BinaryInstruction.code");
      AsmNENameTable.setDataPrototype("SgStringList", "names", "",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmNENameTable.setDataPrototype("SgUnsignedList", "ordinals", "",
@@ -1616,7 +1584,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmNEModuleTable, "AsmNEModuleTable", "AsmNEModuleTableTag");
      AsmNEModuleTable.setFunctionPrototype("HEADER_NE_MODULE_TABLE", "../Grammar/BinaryInstruction.code");
-     AsmNEModuleTable.setFunctionSource("SOURCE_NE_MODULE_TABLE", "../Grammar/BinaryInstruction.code");
      AsmNEModuleTable.setDataPrototype("SgAsmNEStringTable*", "strtab", "= NULL",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmNEModuleTable.setDataPrototype("SgAddressList", "name_offsets", "",
@@ -1628,13 +1595,11 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmNEStringTable, "AsmNEStringTable", "AsmNEStringTableTag");
      AsmNEStringTable.setFunctionPrototype("HEADER_NE_STRING_TABLE", "../Grammar/BinaryInstruction.code");
-     AsmNEStringTable.setFunctionSource("SOURCE_NE_STRING_TABLE", "../Grammar/BinaryInstruction.code");
 
 
 
      NEW_TERMINAL_MACRO(AsmNESection, "AsmNESection", "AsmNESectionTag");
      AsmNESection.setFunctionPrototype("HEADER_NE_SECTION", "../Grammar/BinaryInstruction.code");
-     AsmNESection.setFunctionSource("SOURCE_NE_SECTION", "../Grammar/BinaryInstruction.code");
      AsmNESection.setDataPrototype("SgAsmNESectionTableEntry*", "st_entry", "= NULL",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmNESection.setDataPrototype("SgAsmNERelocTable*", "reloc_table", "= NULL",
@@ -1648,7 +1613,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmLEFileHeader, "AsmLEFileHeader", "AsmLEFileHeaderTag");
      AsmLEFileHeader.setFunctionPrototype("HEADER_LE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
-     AsmLEFileHeader.setFunctionSource("SOURCE_LE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
      AsmLEFileHeader.setDataPrototype("unsigned", "e_byte_order", "= 0",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmLEFileHeader.setDataPrototype("unsigned", "e_word_order", "= 0",
@@ -1760,7 +1724,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmLEEntryTable, "AsmLEEntryTable", "AsmLEEntryTableTag");
      AsmLEEntryTable.setFunctionPrototype("HEADER_LE_ENTRY_TABLE", "../Grammar/BinaryInstruction.code");
-     AsmLEEntryTable.setFunctionSource("SOURCE_LE_ENTRY_TABLE", "../Grammar/BinaryInstruction.code");
      AsmLEEntryTable.setDataPrototype("SgSizeTList", "bundle_sizes", "",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmLEEntryTable.setDataPrototype("SgAsmLEEntryPointPtrList", "entries", "",
@@ -1792,7 +1755,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmLESectionTable, "AsmLESectionTable", "AsmLESectionTableTag");
      AsmLESectionTable.setFunctionPrototype("HEADER_LE_SECTION_TABLE", "../Grammar/BinaryInstruction.code");
-     AsmLESectionTable.setFunctionSource("SOURCE_LE_SECTION_TABLE", "../Grammar/BinaryInstruction.code");
 
 
 
@@ -1820,7 +1782,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmLERelocTable, "AsmLERelocTable", "AsmLERelocTableTag");
      AsmLERelocTable.setFunctionPrototype("HEADER_LE_RELOC_TABLE", "../Grammar/BinaryInstruction.code");
-     AsmLERelocTable.setFunctionSource("SOURCE_LE_RELOC_TABLE", "../Grammar/BinaryInstruction.code");
      AsmLERelocTable.setDataPrototype("SgAsmLERelocEntryPtrList", "entries", "",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -1832,7 +1793,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmLENameTable, "AsmLENameTable", "AsmLENameTableTag");
      AsmLENameTable.setFunctionPrototype("HEADER_LE_NAME_TABLE", "../Grammar/BinaryInstruction.code");
-     AsmLENameTable.setFunctionSource("SOURCE_LE_NAME_TABLE", "../Grammar/BinaryInstruction.code");
      AsmLENameTable.setDataPrototype("SgStringList", "names", "",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmLENameTable.setDataPrototype("SgUnsignedList", "ordinals", "",
@@ -1842,7 +1802,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmLEPageTable, "AsmLEPageTable", "AsmLEPageTableTag");
      AsmLEPageTable.setFunctionPrototype("HEADER_LE_PAGE_TABLE", "../Grammar/BinaryInstruction.code");
-     AsmLEPageTable.setFunctionSource("SOURCE_LE_PAGE_TABLE", "../Grammar/BinaryInstruction.code");
      AsmLEPageTable.setDataPrototype("SgAsmLEPageTableEntryPtrList", "entries", "",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -1860,7 +1819,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmLESection, "AsmLESection", "AsmLESectionTag");
      AsmLESection.setFunctionPrototype("HEADER_LE_SECTION", "../Grammar/BinaryInstruction.code");
-     AsmLESection.setFunctionSource("SOURCE_LE_SECTION", "../Grammar/BinaryInstruction.code");
      AsmLESection.setDataPrototype("SgAsmLESectionTableEntry*", "st_entry", "= NULL",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -2242,24 +2200,18 @@ Grammar::setUpBinaryInstructions()
 
 
      NEW_TERMINAL_MACRO(AsmDwarfMacroList, "AsmDwarfMacroList", "AsmDwarfMacroListTag");
-     AsmDwarfMacroList.setFunctionPrototype("HEADER_DWARF_MACRO_LIST", "../Grammar/BinaryInstruction.code");
-     AsmDwarfMacroList.setFunctionSource("SOURCE_DWARF_MACRO_LIST", "../Grammar/BinaryInstruction.code");
      AsmDwarfMacroList.setDataPrototype("SgAsmDwarfMacroPtrList", "macro_list", "",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
      NEW_TERMINAL_MACRO(AsmDwarfMacro, "AsmDwarfMacro", "AsmDwarfMacroTag");
-     AsmDwarfMacro.setFunctionPrototype("HEADER_DWARF_MACRO", "../Grammar/BinaryInstruction.code");
-     AsmDwarfMacro.setFunctionSource("SOURCE_DWARF_MACRO", "../Grammar/BinaryInstruction.code");
      AsmDwarfMacro.setDataPrototype("std::string", "macro_string", "= \"\"",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
      NEW_TERMINAL_MACRO(AsmDwarfLine, "AsmDwarfLine", "AsmDwarfLineTag");
-     AsmDwarfLine.setFunctionPrototype("HEADER_DWARF_LINE", "../Grammar/BinaryInstruction.code");
-     AsmDwarfLine.setFunctionSource("SOURCE_DWARF_LINE", "../Grammar/BinaryInstruction.code");
      AsmDwarfLine.setDataPrototype("uint64_t", "address", "= 0",
                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmDwarfLine.setDataPrototype("int", "file_id", "= Sg_File_Info::NULL_FILE_ID",
@@ -2288,16 +2240,12 @@ Grammar::setUpBinaryInstructions()
 
 
      NEW_TERMINAL_MACRO(AsmDwarfConstructList, "AsmDwarfConstructList", "AsmDwarfConstructListTag");
-     AsmDwarfConstructList.setFunctionPrototype("HEADER_DWARF_CONSTRUCT_LIST", "../Grammar/BinaryInstruction.code");
-     AsmDwarfConstructList.setFunctionSource("SOURCE_DWARF_CONSTRUCT_LIST", "../Grammar/BinaryInstruction.code");
      AsmDwarfConstructList.setDataPrototype("SgAsmDwarfConstructPtrList", "list", "",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
      NEW_TERMINAL_MACRO(AsmDwarfCompilationUnitList, "AsmDwarfCompilationUnitList", "AsmDwarfCompilationUnitListTag");
-     AsmDwarfCompilationUnitList.setFunctionPrototype("HEADER_DWARF_COMPILATION_UNIT_LIST", "../Grammar/BinaryInstruction.code");
-     AsmDwarfCompilationUnitList.setFunctionSource("SOURCE_DWARF_COMPILATION_UNIT_LIST", "../Grammar/BinaryInstruction.code");
      AsmDwarfCompilationUnitList.setDataPrototype("SgAsmDwarfCompilationUnitPtrList", "cu_list", "",
                                                   NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -2307,8 +2255,6 @@ Grammar::setUpBinaryInstructions()
                            AsmDwarfMacro | AsmDwarfMacroList | AsmDwarfLine | AsmDwarfLineList | AsmDwarfCompilationUnitList |
                            AsmDwarfConstruct | AsmDwarfConstructList,
                            "AsmDwarfInformation", "AsmDwarfInformationTag", false);
-     AsmDwarfInformation.setFunctionPrototype("HEADER_DWARF_INFORMATION", "../Grammar/BinaryInstruction.code");
-     AsmDwarfInformation.setFunctionSource("SOURCE_DWARF_INFORMATION", "../Grammar/BinaryInstruction.code");
 
 
 
@@ -2319,7 +2265,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmStringStorage, "AsmStringStorage", "AsmStringStorageTag");
      AsmStringStorage.setFunctionPrototype("HEADER_STRING_STORAGE", "../Grammar/BinaryInstruction.code");
-     AsmStringStorage.setFunctionSource("SOURCE_STRING_STORAGE", "../Grammar/BinaryInstruction.code");
      AsmStringStorage.setDataPrototype("SgAsmGenericStrtab*", "strtab", "= NULL",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmStringStorage.setDataPrototype("std::string", "string", "= \"\"",
@@ -2331,7 +2276,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmBasicString, "AsmBasicString", "AsmBasicStringTag");
      AsmBasicString.setFunctionPrototype("HEADER_BASIC_STRING", "../Grammar/BinaryInstruction.code");
-     AsmBasicString.setFunctionSource("SOURCE_BASIC_STRING", "../Grammar/BinaryInstruction.code");
      AsmBasicString.setDataPrototype("std::string", "string", "= \"\"",
                                      NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -2339,7 +2283,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmStoredString, "AsmStoredString", "AsmStoredStringTag");
      AsmStoredString.setFunctionPrototype("HEADER_STORED_STRING", "../Grammar/BinaryInstruction.code");
-     AsmStoredString.setFunctionSource("SOURCE_STORED_STRING", "../Grammar/BinaryInstruction.code");
      AsmStoredString.setDataPrototype("SgAsmStringStorage*", "storage", "= NULL",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -2349,7 +2292,6 @@ Grammar::setUpBinaryInstructions()
                            AsmBasicString | AsmStoredString,
                            "AsmGenericString", "AsmGenericStringTag", false);
      AsmGenericString.setFunctionPrototype("HEADER_GENERIC_STRING", "../Grammar/BinaryInstruction.code");
-     AsmGenericString.setFunctionSource("SOURCE_GENERIC_STRING", "../Grammar/BinaryInstruction.code");
 
 
 
@@ -2396,8 +2338,6 @@ Grammar::setUpBinaryInstructions()
 
 
      NEW_TERMINAL_MACRO(AsmGenericSymbolList, "AsmGenericSymbolList", "AsmGenericSymbolListTag");
-     AsmGenericSymbolList.setFunctionPrototype("HEADER_GENERIC_SYMBOL_LIST", "../Grammar/BinaryInstruction.code");
-     AsmGenericSymbolList.setFunctionSource("SOURCE_GENERIC_SYMBOL_LIST", "../Grammar/BinaryInstruction.code");
      AsmGenericSymbolList.setDataPrototype("SgAsmGenericSymbolPtrList", "symbols", "",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -2512,8 +2452,6 @@ Grammar::setUpBinaryInstructions()
 
 
      NEW_TERMINAL_MACRO(AsmGenericDLLList, "AsmGenericDLLList", "AsmGenericDLLListTag");
-     AsmGenericDLLList.setFunctionPrototype("HEADER_GENERIC_DLL_LIST", "../Grammar/BinaryInstruction.code");
-     AsmGenericDLLList.setFunctionSource("SOURCE_GENERIC_DLL_LIST", "../Grammar/BinaryInstruction.code");
      AsmGenericDLLList.setDataPrototype("SgAsmGenericDLLPtrList", "dlls", "",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -2531,7 +2469,6 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmGenericFormat, "AsmGenericFormat", "AsmGenericFormatTag");
      AsmGenericFormat.setFunctionPrototype("HEADER_GENERIC_FORMAT", "../Grammar/BinaryInstruction.code");
-     AsmGenericFormat.setFunctionSource("SOURCE_GENERIC_FORMAT", "../Grammar/BinaryInstruction.code");
      AsmGenericFormat.setDataPrototype("SgAsmGenericFormat::ExecFamily", "family", "= SgAsmGenericFormat::FAMILY_UNSPECIFIED",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericFormat.setDataPrototype("SgAsmGenericFormat::ExecPurpose", "purpose", "= SgAsmGenericFormat::PURPOSE_EXECUTABLE",
@@ -2618,7 +2555,6 @@ Grammar::setUpBinaryInstructions()
                            AsmElfEHFrameEntryFDList | AsmDwarfInformation | AsmPEImportItem | AsmPEImportItemList,
                            "AsmExecutableFileFormat", "AsmExecutableFileFormatTag", false);
      AsmExecutableFileFormat.setFunctionPrototype("HEADER_EXECUTABLE_FILE_FORMAT", "../Grammar/BinaryInstruction.code");
-     AsmExecutableFileFormat.setFunctionSource("SOURCE_EXECUTABLE_FILE_FORMAT", "../Grammar/BinaryInstruction.code");
 
 
 
@@ -2639,7 +2575,6 @@ Grammar::setUpBinaryInstructions()
      AsmNode.setFunctionPrototype("HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      AsmNode.setFunctionSource("SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      AsmNode.setFunctionPrototype("HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
-     AsmNode.setFunctionSource("SOURCE_BINARY_NODE", "../Grammar/BinaryInstruction.code");
      AsmNode.setFunctionSource("SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      AsmNode.setDataPrototype("AstAttributeMechanism*", "attributeMechanism", "= NULL",
                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);

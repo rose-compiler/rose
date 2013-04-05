@@ -3,6 +3,7 @@
 #ifndef ROSE_DISASSEMBLER_X86_H
 #define ROSE_DISASSEMBLER_X86_H
 
+#include "Disassembler.h"
 #include "InstructionEnumsX86.h"
 
 /** Disassembler for the x86 architecture.  Most of the useful disassembly methods can be found in the superclass. There's
@@ -36,16 +37,17 @@ public:
     
     virtual ~DisassemblerX86() {}
 
-    virtual DisassemblerX86 *clone() const { return new DisassemblerX86(*this); }
+    virtual DisassemblerX86 *clone() const /*override*/ { return new DisassemblerX86(*this); }
 
     /** See Disassembler::can_disassemble */
-    virtual bool can_disassemble(SgAsmGenericHeader*) const;
+    virtual bool can_disassemble(SgAsmGenericHeader*) const /*override*/;
 
     /** See Disassembler::disassembleOne */
-    virtual SgAsmInstruction *disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors=NULL);
+    virtual SgAsmInstruction *disassembleOne(const MemoryMap *map, rose_addr_t start_va,
+                                             AddressSet *successors=NULL) /*override*/;
 
     /** Make an unknown instruction from an exception. */
-    virtual SgAsmInstruction *make_unknown_instruction(const Exception&);
+    virtual SgAsmInstruction *make_unknown_instruction(const Exception&) /*override*/;
 
 
     /*========================================================================================================================

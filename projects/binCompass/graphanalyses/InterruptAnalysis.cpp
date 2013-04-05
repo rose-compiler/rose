@@ -397,8 +397,8 @@ InterruptAnalysis::getValueForDefinition(std::vector<uint64_t>& vec,
       check_isRegister(defNode, inst, true, memRef, regRef);
 
     if (RoseBin_support::DEBUG_MODE()) {
-      string regName = unparseX86Register(RegisterDescriptor(reg.first, reg.second, 0, 64));
-      string regNameRight = unparseX86Register(RegisterDescriptor(regRight.first, regRight.second, 0, 64));
+      string regName = unparseX86Register(RegisterDescriptor(reg.first, reg.second, 0, 64), NULL);
+      string regNameRight = unparseX86Register(RegisterDescriptor(regRight.first, regRight.second, 0, 64), NULL);
       cout << " VarAnalysis: getValueForDef . " << regName << "  right hand : " << regNameRight <<endl;
     }
     if (!regRef) {

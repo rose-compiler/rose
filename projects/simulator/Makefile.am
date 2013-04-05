@@ -242,6 +242,41 @@ smt_example_SOURCES = demos/smt_example.C
 smt_example_CPPFLAGS = $(ROSE_INCLUDES)
 smt_example_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+#------------------------------------------------------------------------------------------------------------------------------
+# Multi-domain demo that enables/disables sub-domains and converts values from one sub-domain to another.  This is meant to
+# serve as an example for Andreas and Earl that they can modify to suit their needs.
+noinst_PROGRAMS += MultiWithConversion
+EXTRA_DIST += demos/MultiWithConversion.h demos/MultiWithConversionTpl.h demos/RobinTpl.h
+MultiWithConversion_SOURCES = demos/MultiWithConversion.C
+MultiWithConversion_CPPFLAGS = $(ROSE_INCLUDES)
+MultiWithConversion_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------------
+# Binary clone detection.  Finds semantically similar functions based on fuzz testing. See Andreas and Earl for details.
+noinst_PROGRAMS += CloneDetection
+EXTRA_DIST +=						\
+        clone_detection/Schema.sql			\
+	clone_detection/CloneDetection.h		\
+	clone_detection/CloneDetectionSemantics.h	\
+	clone_detection/CloneDetectionTpl.h		\
+	clone_detection/CloneDetection.patch
+CloneDetection_SOURCES = clone_detection/CloneDetection.C CloneDetectionSchema.C
+CloneDetection_CPPFLAGS = $(ROSE_INCLUDES)
+CloneDetection_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+CloneDetectionSchema.C: clone_detection/Schema.sql
+	@echo "  GEN     $@"
+	@echo "const char *clone_detection_schema =" >$@
+	@perl -pe 's/"/\\"/g; s/(.*)/    "$$1\\n"/' <$< >>$@
+	@echo ';' >>$@
+
+CloneDetection_SPECIMENS =			\
+	clone_detection/tests/externalsort.C	\
+	clone_detection/tests/qsort.C		\
+	clone_detection/tests/quicksort.C	\
+	clone_detection/tests/shellsort.C	\
+	clone_detection/tests/simple001.C	\
+	clone_detection/tests/simple002.C
 
 ###############################################################################################################################
 #  SUPPORT PROGRAMS FOR PAPERS
@@ -519,7 +554,17 @@ EXTRA_DIST +=      $(SYS_TEST_SUPPORT_SRC) \
 		   $(srcdir)/syscall_tests/set_thread_area.h \
 		   $(srcdir)/syscall_tests/system_specific_process_info.h \
 		   $(srcdir)/syscall_tests/test.h \
-		   $(srcdir)/syscall_tests/usctest.h
+		   $(srcdir)/syscall_tests/usctest.h		\
+		   $(srcdir)/syscall_tests/syscall_tst.120.1.c	\
+		   $(srcdir)/syscall_tests/syscall_tst.120.2.c	\
+		   $(srcdir)/syscall_tests/syscall_tst.120.3.c	\
+		   $(srcdir)/syscall_tests/syscall_tst.120.4.c	\
+		   $(srcdir)/syscall_tests/syscall_tst.120.5.c	\
+		   $(srcdir)/syscall_tests/syscall_tst.120.6.c	\
+		   $(srcdir)/syscall_tests/syscall_tst.120.7.c	\
+		   $(srcdir)/syscall_tests/syscall_tst.183.3.c	\
+		   $(srcdir)/syscall_tests/syscall_tst.54.c	\
+		   $(srcdir)/syscall_tests/syscall_tst.65.c
 
 
 # SYS_TEST_INPUTS_SA_SRC = $(wildcard $(srcdir)/syscall_tests/syscall_sa*.c)
@@ -1448,60 +1493,67 @@ PTHREAD_INPUTS_FAILING =                                                        
 #	these tests are hard coded to always fail
 #		    $(srcdir)/pthread_tests/pthread_attr_setscope.5-1.c
 
-PTHREAD_TEST_INCLUDES= \
-                    ${srcdir}/pthread_tests/pthread_atfork.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_atfork.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_cancel.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_cancel.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_cond_broadcast.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_cond_broadcast.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_cond_destroy.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_cond_destroy.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_cond_init.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_cond_init.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_cond_signal.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_cond_signal.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_cond_timedwait.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_cond_timedwait.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_cond_wait.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_cond_wait.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_create.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_create.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_detach.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_detach.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_equal.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_equal.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_exit.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_exit.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_getschedparam.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_getschedparam.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_join.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_join.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_kill.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_kill.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_mutex_destroy.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_mutex_destroy.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_mutex_init.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_mutex_init.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_mutex_lock.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_mutex_lock.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_mutex_trylock.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_mutex_trylock.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_mutex_unlock.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_mutex_unlock.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_once.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_once.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_setschedparam.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_setschedparam.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_sigmask.testfrmw.c \
-                    ${srcdir}/pthread_tests/pthread_sigmask.testfrmw.h \
-                    ${srcdir}/pthread_tests/pthread_create.threads_scenarii.c \
-                    ${srcdir}/pthread_tests/pthread_detach.threads_scenarii.c \
-                    ${srcdir}/pthread_tests/pthread_exit.threads_scenarii.c \
-                    ${srcdir}/pthread_tests/pthread_join.threads_scenarii.c \
-	            ${srcdir}/pthread_tests/posixtest.h 	 
+PTHREAD_TEST_INCLUDES=							\
+	$(srcdir)/pthread_tests/posixtest.h 	 			\
+        $(srcdir)/pthread_tests/pthread_atfork.testfrmw.c		\
+        $(srcdir)/pthread_tests/pthread_atfork.testfrmw.h		\
+        $(srcdir)/pthread_tests/pthread_cancel.testfrmw.c		\
+        $(srcdir)/pthread_tests/pthread_cancel.testfrmw.h		\
+        $(srcdir)/pthread_tests/pthread_cond_broadcast.testfrmw.c	\
+        $(srcdir)/pthread_tests/pthread_cond_broadcast.testfrmw.h	\
+        $(srcdir)/pthread_tests/pthread_cond_destroy.testfrmw.c		\
+        $(srcdir)/pthread_tests/pthread_cond_destroy.testfrmw.h		\
+        $(srcdir)/pthread_tests/pthread_cond_init.testfrmw.c		\
+        $(srcdir)/pthread_tests/pthread_cond_init.testfrmw.h		\
+        $(srcdir)/pthread_tests/pthread_cond_signal.testfrmw.c		\
+        $(srcdir)/pthread_tests/pthread_cond_signal.testfrmw.h		\
+        $(srcdir)/pthread_tests/pthread_cond_timedwait.testfrmw.c	\
+        $(srcdir)/pthread_tests/pthread_cond_timedwait.testfrmw.h	\
+        $(srcdir)/pthread_tests/pthread_cond_wait.testfrmw.c		\
+        $(srcdir)/pthread_tests/pthread_cond_wait.testfrmw.h		\
+        $(srcdir)/pthread_tests/pthread_create.testfrmw.c		\
+        $(srcdir)/pthread_tests/pthread_create.testfrmw.h		\
+        $(srcdir)/pthread_tests/pthread_create.threads_scenarii.c	\
+        $(srcdir)/pthread_tests/pthread_detach.testfrmw.c		\
+        $(srcdir)/pthread_tests/pthread_detach.testfrmw.h		\
+        $(srcdir)/pthread_tests/pthread_detach.threads_scenarii.c	\
+        $(srcdir)/pthread_tests/pthread_equal.testfrmw.c		\
+        $(srcdir)/pthread_tests/pthread_equal.testfrmw.h		\
+        $(srcdir)/pthread_tests/pthread_exit.testfrmw.c			\
+        $(srcdir)/pthread_tests/pthread_exit.testfrmw.h			\
+        $(srcdir)/pthread_tests/pthread_exit.threads_scenarii.c		\
+        $(srcdir)/pthread_tests/pthread_getschedparam.testfrmw.c	\
+        $(srcdir)/pthread_tests/pthread_getschedparam.testfrmw.h	\
+        $(srcdir)/pthread_tests/pthread_join.testfrmw.c			\
+        $(srcdir)/pthread_tests/pthread_join.testfrmw.h			\
+        $(srcdir)/pthread_tests/pthread_join.threads_scenarii.c		\
+        $(srcdir)/pthread_tests/pthread_kill.testfrmw.c			\
+        $(srcdir)/pthread_tests/pthread_kill.testfrmw.h			\
+        $(srcdir)/pthread_tests/pthread_mutex_destroy.testfrmw.c	\
+        $(srcdir)/pthread_tests/pthread_mutex_destroy.testfrmw.h	\
+        $(srcdir)/pthread_tests/pthread_mutex_init.testfrmw.c		\
+        $(srcdir)/pthread_tests/pthread_mutex_init.testfrmw.h		\
+        $(srcdir)/pthread_tests/pthread_mutex_lock.testfrmw.c		\
+        $(srcdir)/pthread_tests/pthread_mutex_lock.testfrmw.h		\
+        $(srcdir)/pthread_tests/pthread_mutex_trylock.testfrmw.c	\
+        $(srcdir)/pthread_tests/pthread_mutex_trylock.testfrmw.h	\
+        $(srcdir)/pthread_tests/pthread_mutex_unlock.testfrmw.c		\
+        $(srcdir)/pthread_tests/pthread_mutex_unlock.testfrmw.h		\
+        $(srcdir)/pthread_tests/pthread_once.testfrmw.c			\
+        $(srcdir)/pthread_tests/pthread_once.testfrmw.h			\
+        $(srcdir)/pthread_tests/pthread_setschedparam.testfrmw.c	\
+        $(srcdir)/pthread_tests/pthread_setschedparam.testfrmw.h	\
+        $(srcdir)/pthread_tests/pthread_sigmask.testfrmw.c		\
+        $(srcdir)/pthread_tests/pthread_sigmask.testfrmw.h		\
+	$(srcdir)/pthread_tests/speculative.3-1.c			\
+	$(srcdir)/pthread_tests/speculative.3-2.c			\
+	$(srcdir)/pthread_tests/speculative.4-1.c			\
+	$(srcdir)/pthread_tests/speculative.4-2.c			\
+	$(srcdir)/pthread_tests/speculative.5-1.c			\
+	$(srcdir)/pthread_tests/speculative.5-2.c			\
+	$(srcdir)/pthread_tests/speculative.6-1.c
 
-EXTRA_DIST += ${PTHREAD_TEST_INPUTS_SRC} ${PTHREAD_TEST_INCLUDES}
+EXTRA_DIST += $(PTHREAD_TEST_INPUTS_SRC) $(PTHREAD_TEST_INCLUDES)
 
 PTHREAD_TEST_INPUTS = $(basename $(notdir $(PTHREAD_TEST_INPUTS_SRC)))
 MOSTLYCLEANFILES += $(PTHREAD_TEST_INPUTS) $(addsufix .o, $(PTHREAD_TEST_INPUTS))

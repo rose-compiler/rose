@@ -216,6 +216,10 @@ SgAsmPEImportSection::parse()
             break;
         }
         idir_va += sizeof(SgAsmPEImportDirectory::PEImportDirectory_disk);
+#if 1   /* FIXME: Do we really want this stuff duplicated in the AST? [RPM 2008-12-12] */
+        SgAsmGenericString *name2 = new SgAsmBasicString(idir->get_dll_name()->get_string());
+        fhdr->add_dll(new SgAsmGenericDLL(name2));
+#endif
     }
     return this;
 }

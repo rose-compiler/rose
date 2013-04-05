@@ -189,8 +189,9 @@ namespace SignAnalysisExample {
             return ValueType<1>(ZERO);
         }
 
-        ValueType<1> undefined_() const {
-            return ValueType<1>();
+        template<size_t Len>
+        ValueType<Len> undefined_() const {
+            return ValueType<Len>();
         }
 
         template<size_t Len>

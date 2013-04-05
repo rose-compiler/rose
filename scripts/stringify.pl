@@ -16,8 +16,8 @@ directories) and generates C++ code to convert enum member values to strings. Th
 names (with an appropriate file name extension) or directories. A directory causes a recursive search for C/C++ source files
 under that directory.  If no source arguments are specified then the current working directory is assumed.
 
-This script is not a full C++ parser--it only recognizes enough of the C++ language to detect an parse enum definitions and
-detect the classes and namespaces the contain the enum.  In particular, stringify.pl does not invoke the C preprocessor
+This script is not a full C++ parser--it only recognizes enough of the C++ language to detect and parse enum definitions and
+detect the classes and namespaces that contain the enum.  In particular, stringify.pl does not invoke the C preprocessor
 although it does make some rudimentary attempt to process certain conditional compilation directives such as "#if 0". Certain
 symbols used as syntactic sugar in ROSE and Qt are recognized even when stringify.pl does not see their CPP definitions.
 

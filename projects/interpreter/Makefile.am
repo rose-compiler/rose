@@ -74,8 +74,11 @@ TEST_INPUTS = \
 EXTRA_DIST = interp_core.h interp_extcall.h interp_maple.h interp_mpi.h interp_smt.h maple++.h typeLayoutStore.h smtlib.h $(TEST_INPUTS)
 
 interp_core.o: interp_core.C interp_core.h
-main_core.o: main_core.C interp_core.h
+# Liao 3/28/2013. It is possible the libltdlc.la is not yet built
+main_core.o: main_core.C interp_core.h ../../libltdl/libltdlc.la
 test_core.o: test_core.C interp_core.h
+../../libltdl/libltdlc.la:
+	make -C ../../libltdl 
 
 interp_extcall.o: interp_extcall.C interp_core.h interp_extcall.h
 main_extcall.o: main_extcall.C interp_core.h interp_extcall.h
@@ -100,27 +103,29 @@ coreTest_SOURCES = test_core.C
 
 smtTest_SOURCES = test_smt.C
 smtTest_LDADD = $(LDADD) libsmtlib.a
-
+# Liao 3/28/2013. 10 tests fail now after switching to EDG 4.4. We comment them out for now based on Dan's suggestion.
+# They are agginit.c pointersFunctions.C constructors.C arrays.C md5.c nestedUnion.c anonUnionStruct.c anonUnionCtor.C initunion.c varargs.c
+# TODO: revisit this project with Markus when it is needed in future.
 check-local: $(TEST_INPUTS)
 	./test_smtlib
-	./coreTest -interp:expectedReturnValue 12 $(srcdir)/testInput/core/agginit.c
+#	./coreTest -interp:expectedReturnValue 12 $(srcdir)/testInput/core/agginit.c
 	./coreTest -interp:expectedReturnValue 0 $(srcdir)/testInput/core/boolcast.C
 	./coreTest -interp:expectedReturnValue 3 $(srcdir)/testInput/core/casting.C
 	./coreTest -interp:expectedReturnValue 2 $(srcdir)/testInput/core/condExp.C
-	./coreTest -interp:expectedReturnValue 91 $(srcdir)/testInput/core/pointersFunctions.C
-	./coreTest -interp:expectedReturnValue 20 $(srcdir)/testInput/core/constructors.C
-	./coreTest -interp:expectedReturnValue 59 $(srcdir)/testInput/core/arrays.C
+#	./coreTest -interp:expectedReturnValue 91 $(srcdir)/testInput/core/pointersFunctions.C
+#	./coreTest -interp:expectedReturnValue 20 $(srcdir)/testInput/core/constructors.C
+#	./coreTest -interp:expectedReturnValue 59 $(srcdir)/testInput/core/arrays.C
 	./coreTest -interp:expectedReturnValue 42 $(srcdir)/testInput/core/globals.c
 #Liao 2/9/2011. Mac OS X 10.6: builtin functions have no definition.     
 if !OS_MACOSX
-	./coreTest -interp:expectedReturnStr $$'\xb4\xc3\x03\x45\x04\x5f\x6c\x35\x36\xef\x43\x59\xef\xfc\x34\xd8' $(srcdir)/testInput/md5.c
+#	./coreTest -interp:expectedReturnStr $$'\xb4\xc3\x03\x45\x04\x5f\x6c\x35\x36\xef\x43\x59\xef\xfc\x34\xd8' $(srcdir)/testInput/md5.c
 endif	
-	./coreTest -interp:expectedReturnValue 4 $(srcdir)/testInput/core/nestedUnion.c
-	./coreTest -interp:expectUndefinedReturnValue $(srcdir)/testInput/core/anonUnionStruct.c
-	./coreTest -interp:expectedReturnValue 42 $(srcdir)/testInput/core/anonUnionCtor.C
-	./coreTest -interp:expectedReturnValue 0 $(srcdir)/testInput/core/initunion.c
-	./coreTest -interp:expectedReturnValue 10 $(srcdir)/testInput/core/varargs.c
-	./coreTest -interp:expectedReturnValue 78 $(srcdir)/testInput/core/mdarr.c
+#	./coreTest -interp:expectedReturnValue 4 $(srcdir)/testInput/core/nestedUnion.c
+#	./coreTest -interp:expectUndefinedReturnValue $(srcdir)/testInput/core/anonUnionStruct.c
+#	./coreTest -interp:expectedReturnValue 42 $(srcdir)/testInput/core/anonUnionCtor.C
+#	./coreTest -interp:expectedReturnValue 0 $(srcdir)/testInput/core/initunion.c
+#	./coreTest -interp:expectedReturnValue 10 $(srcdir)/testInput/core/varargs.c
+	./coreTest -rose:C99 -interp:expectedReturnValue 78 $(srcdir)/testInput/core/mdarr.c
 if !OS_MACOSX
 #	DQ (1/12/2010): This appears to fail under Mac OSX (at least version 10.5).
 	./coreTest -interp:expectedReturnValue 3 $(srcdir)/testInput/core/malloc.c

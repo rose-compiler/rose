@@ -51,6 +51,9 @@ public:
      *  part of RSIM_Thread because each simulator thread must have its own copy. */
     bool insn_semaphore_posted;
 
+    /** Post the instruction semaphore if not already posted. */
+    void post_insn_semaphore();
+
     /**************************************************************************************************************************
      *                                  Thread simulation (specimen threads)
      **************************************************************************************************************************/
@@ -118,6 +121,12 @@ public:
     /** Return a pointer to an entry of the GDT.  The returned pointer might be pointing into the RSIM_Process gdt table or
      *  into the RSIM_Threads tls_array, depending on the value of @p idx. */
     user_desc_32 *gdt_entry(int idx);
+
+    /** Obtain current register values. */
+    pt_regs_32 get_regs() const;
+
+    /** Initialize registers */
+    void init_regs(const pt_regs_32 &regs);
 
     /** Traverse the robust futex list and handle futex death for each item on the list. See the Linux version of this function
      *  for details. */
@@ -560,7 +569,7 @@ public:
 
 
     /**************************************************************************************************************************
-     *                                  Miscellaneous methods
+     *                                  Dynamic Linking
      **************************************************************************************************************************/
 public:
 
@@ -579,12 +588,6 @@ public:
      *
      *  We use the first approach. */
     SgAsmGenericHeader* load(const char *name);
-
-    /** Obtain current register values. */
-    pt_regs_32 get_regs() const;
-
-    /** Initialize registers */
-    void init_regs(const pt_regs_32 &regs);
 
 
     /**************************************************************************************************************************

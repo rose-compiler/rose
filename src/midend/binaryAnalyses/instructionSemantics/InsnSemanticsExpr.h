@@ -99,8 +99,14 @@ namespace InsnSemanticsExpr {
         virtual void print(std::ostream&, RenameMap *rmap=NULL) const = 0;
 
         /** Tests two expressions for equality using an optional satisfiability modulo theory (SMT) solver. Returns true if
-         *  the inequality is not satisfiable. */
+         *  the inequality is not satisfiable.  Two expressions can be equal without necessarily being the same width (e.g., a
+         *  32-bit constant zero is equal to a 16-bit constant zero). */
         virtual bool equal_to(const TreeNodePtr& other, SMTSolver*) const = 0;
+
+        /** Tests two expressions for structural equivalence.  Two leaf nodes are equivalent if they are the same width and
+         *  have equal values or are the same variable. Two internal nodes are equivalent if they are the same width, the same
+         *  operation, have the same number of children, and those children are all pairwise equivalent. */
+        virtual bool equivalent_to(const TreeNodePtr& other) const = 0;
 
         /** Returns true if the expression is a known value.
          *
@@ -209,6 +215,9 @@ namespace InsnSemanticsExpr {
         virtual bool equal_to(const TreeNodePtr &other, SMTSolver*) const;
 
         /* see superclass, where this is pure virtual */
+        virtual bool equivalent_to(const TreeNodePtr &other) const;
+
+        /* see superclass, where this is pure virtual */
         virtual bool is_known() const {
             return false; /*if it's known, then it would have been folded to a leaf*/
         }
@@ -260,7 +269,7 @@ namespace InsnSemanticsExpr {
          *  size will be zeroed. */
         static LeafNodePtr create_integer(size_t nbits, uint64_t n, std::string comment="");
 
-        /** Construct a new memory state.  A memory state is a function that maps an address of specified size to a value of
+        /** Construct a new memory state.  A memory state is a function that maps a 32-bit address to a value of
          *  specified size. */
         static LeafNodePtr create_memory(size_t nbits, std::string comment="");
 
@@ -287,11 +296,14 @@ namespace InsnSemanticsExpr {
         virtual bool equal_to(const TreeNodePtr &other, SMTSolver*) const;
 
         /* see superclass, where this is pure virtual */
+        virtual bool equivalent_to(const TreeNodePtr &other) const;
+
+        /* see superclass, where this is pure virtual */
         virtual void depth_first_visit(Visitor*) const;
     };
+
+    std::ostream& operator<<(std::ostream &o, const InsnSemanticsExpr::TreeNode &node);
 };
 
-
-std::ostream& operator<<(std::ostream &o, const InsnSemanticsExpr::TreeNode &node);
 
 #endif

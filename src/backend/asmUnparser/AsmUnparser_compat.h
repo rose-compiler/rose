@@ -5,17 +5,19 @@
 #include "AsmUnparser.h"
 
 /** Returns the string representation of an assembly instruction, sans address. */
-std::string unparseInstruction(SgAsmInstruction*, const AsmUnparser::LabelMap *labels=NULL);
+std::string unparseInstruction(SgAsmInstruction*, const AsmUnparser::LabelMap *labels=NULL,
+                               const RegisterDictionary *registers=NULL);
 
 /** Returns the string representation of an assembly instruction with address. */
-std::string unparseInstructionWithAddress(SgAsmInstruction*, const AsmUnparser::LabelMap *labels=NULL);
+std::string unparseInstructionWithAddress(SgAsmInstruction*, const AsmUnparser::LabelMap *labels=NULL,
+                                          const RegisterDictionary *registers=NULL);
 
 /** Returns a string representing the part of the assembly instruction before the first operand. */
 std::string unparseMnemonic(SgAsmInstruction*);
 
 /** Returns the string representation of an instruction operand (SgAsmExpression), the format of which might depend on the
  *  instruction with which it's associated. */
-std::string unparseExpression(SgAsmExpression*, const AsmUnparser::LabelMap *labels=NULL);
+std::string unparseExpression(SgAsmExpression*, const AsmUnparser::LabelMap *labels, const RegisterDictionary *registers);
 
 std::string unparseAsmStatement(SgAsmStatement*);
 
@@ -28,9 +30,9 @@ std::string unparseAsmInterpretation(SgAsmInterpretation*);
  *-------------------------------------------------------------------------------------------------------------------------------*/
 
 std::string unparseX86Mnemonic(SgAsmx86Instruction*);
-std::string unparseX86Expression(SgAsmExpression*, const AsmUnparser::LabelMap*);
-std::string unparseX86Expression(SgAsmExpression*, const AsmUnparser::LabelMap*, bool leaMode);
-std::string unparseX86Register(const RegisterDescriptor&);
+std::string unparseX86Expression(SgAsmExpression*, const AsmUnparser::LabelMap*, const RegisterDictionary*);
+std::string unparseX86Expression(SgAsmExpression*, const AsmUnparser::LabelMap*, const RegisterDictionary*, bool leaMode);
+std::string unparseX86Register(const RegisterDescriptor&, const RegisterDictionary*);
 
 /*-------------------------------------------------------------------------------------------------------------------------------
  * ARM
@@ -43,13 +45,20 @@ enum ArmSignForExpressionUnparsing
 } ;
 
 std::string unparseArmMnemonic(SgAsmArmInstruction*);
-std::string unparseArmExpression(SgAsmExpression*, const AsmUnparser::LabelMap*);
+std::string unparseArmExpression(SgAsmExpression*, const AsmUnparser::LabelMap*, const RegisterDictionary*);
 
 /*-------------------------------------------------------------------------------------------------------------------------------
  * PowerPC
  *-------------------------------------------------------------------------------------------------------------------------------*/
 
 std::string unparsePowerpcMnemonic(SgAsmPowerpcInstruction*);
-std::string unparsePowerpcExpression(SgAsmExpression*, const AsmUnparser::LabelMap*);
+std::string unparsePowerpcExpression(SgAsmExpression*, const AsmUnparser::LabelMap*, const RegisterDictionary*);
+
+/*-------------------------------------------------------------------------------------------------------------------------------
+ * MIPS
+ *-------------------------------------------------------------------------------------------------------------------------------*/
+
+std::string unparseMipsMnemonic(SgAsmMipsInstruction*);
+std::string unparseMipsExpression(SgAsmExpression*, const AsmUnparser::LabelMap*, const RegisterDictionary*);
 
 #endif

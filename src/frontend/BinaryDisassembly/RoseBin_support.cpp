@@ -171,11 +171,6 @@ std::string RoseBin_support::resolveValue(SgAsmValueExpression* expr,
             //res = "(qword)" + RoseBin_support::ToString(val);
           } else
 
-            if (isSgAsmVectorValueExpression(expr)) {
-              //SgAsmVectorValueExpression* valExp = isSgAsmVectorValueExpression(expr);
-    
-              res = "(vector)";
-            } else
 
               if (isSgAsmWordValueExpression(expr)) {
                 SgAsmWordValueExpression* valExp = isSgAsmWordValueExpression(expr);
@@ -207,10 +202,3 @@ bool isAsmBranch(SgAsmInstruction* insn) {
   }
 }
 
-bool getAsmKnownBranchTarget(SgAsmInstruction* insn, uint64_t& addr) {
-  switch (insn->variantT()) {
-    case V_SgAsmx86Instruction: return x86GetKnownBranchTarget(isSgAsmx86Instruction(insn), addr);
-    // case V_SgAsmArmInstruction: return armGetKnownBranchTarget(isSgAsmArmInstruction(insn), addr);
-        default: { ROSE_ASSERT (!"Bad instruction type"); /* Avoid MSVC warning. */ return false; }
-  }
-}

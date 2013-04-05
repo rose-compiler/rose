@@ -1,0 +1,50 @@
+Anlyzing pointers in this function:
+0x0804856a: ================================== Function (symbol, pattern) <flow05>
+
+0x0804856a: Basic block reasons: entry point, graph-1
+0x0804856a: 55                      |U       |   push   ebp
+0x0804856b: 89 e5                   |..      |   mov    ebp, esp
+0x0804856d: 83 ec 10                |...     |   sub    esp, 0x10
+0x08048570: c7 45 fc 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xfc<-0x04>], 0x00000000
+0x08048577: c7 45 f8 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xf8<-0x08>], 0x00000000
+0x0804857e: eb 1d                   |..      |   jmp    0x0804859d<<Insn>>
+0x0804857e: Successor blocks: 0x0804859d
+
+0x08048580: Basic block reasons: graph-1
+0x08048580: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-0x08>]
+0x08048583: 83 e0 01                |...     |   and    eax, 0x01
+0x08048586: 84 c0                   |..      |   test   al, al
+0x08048588: 74 07                   |t.      |   je     0x08048591<<Insn>>
+0x08048588: Successor blocks: 0x0804858a, 0x08048591
+
+0x0804858a: Basic block reasons: graph-1
+0x0804858a: 8b 45 0c                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x0c]
+0x0804858d: 8b 00                   |..      |   mov    eax, DWORD PTR ds:[eax]
+0x0804858f: eb 05                   |..      |   jmp    0x08048596<<Insn>>
+0x0804858f: Successor blocks: 0x08048596
+
+0x08048591: Basic block reasons: graph-1
+0x08048591: 8b 45 10                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x10]
+0x08048594: 8b 00                   |..      |   mov    eax, DWORD PTR ds:[eax]
+0x08048594: Successor blocks: 0x08048596
+
+0x08048596: Basic block reasons: graph-1
+0x08048596: 01 45 fc                |.E.     |   add    DWORD PTR ss:[ebp + 0xfc<-0x04>], eax
+0x08048599: 83 45 f8 01             |.E..    |   add    DWORD PTR ss:[ebp + 0xf8<-0x08>], 0x01
+0x08048599: Successor blocks: 0x0804859d
+
+0x0804859d: Basic block reasons: graph-1
+0x0804859d: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-0x08>]
+0x080485a0: 3b 45 08                |;E.     |   cmp    eax, DWORD PTR ss:[ebp + 0x08]
+0x080485a3: 7c db                   ||.      |   jl     0x08048580<<Insn>>
+0x080485a3: Successor blocks: 0x08048580, 0x080485a5
+
+0x080485a5: Basic block reasons: graph-1
+0x080485a5: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-0x04>]
+0x080485a8: c9                      |.       |   leave  
+0x080485a9: c3                      |.       |   ret    
+0x080485a9: Successor blocks: unknown
+
+Not using Yices SMT solver
+data pointer at defs={0x0804856a,0x0804856b,0x08048591} expr=(add[32] (add[32] v2496[32] -4[32]) 16[32])
+data pointer at defs={0x0804856a,0x0804856b,0x0804858a} expr=(add[32] (add[32] v2496[32] -4[32]) 12[32])

@@ -112,7 +112,7 @@ static map<SgAsmExpression*, void*> unparseAndInternTable;
 inline void* unparseAndIntern(SgAsmExpression* e) {
   map<SgAsmExpression*, void*>::const_iterator i = unparseAndInternTable.find(e);
   if (i == unparseAndInternTable.end()) {
-    void* sPtr = intern(unparseExpression(e));
+    void* sPtr = intern(unparseExpression(e, NULL, NULL));
     unparseAndInternTable.insert(std::make_pair(e, sPtr));
     return sPtr;
   } else {
@@ -203,10 +203,8 @@ void normalizeInstructionInSubTree(SgNode* topNode ){
           memRefExp->set_type(new SgAsmTypeWord);
           newOperand = memRefExp;
         }else if(isSgAsmRegisterReferenceExpression(operand) ){
-          SgAsmx86RegisterReferenceExpression* regRef = new SgAsmx86RegisterReferenceExpression;
-          regRef->get_descriptor().set_major(x86_regclass_mm);
-          regRef->get_descriptor().set_minor(0);
-
+          RegisterDescriptor reg(x86_regclass_mm, 0, 0, 64);
+          SgAsmx86RegisterReferenceExpression* regRef = new SgAsmx86RegisterReferenceExpression(reg);
           newOperand = regRef;
 
         }else{
