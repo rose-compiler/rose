@@ -159,10 +159,9 @@ public:
         return Functions(functions.begin(), functions.end());
     }
 
-    // Perform a pointer-detection analysis on each function. We'll need the results in order to determine whether a function
-    // input should consume a pointer or a non-pointer from the input value set.
-    typedef std::map<SgAsmFunction*, CloneDetection::PointerDetector> PointerDetectors;
-    PointerDetectors detect_pointers(RTS_Message *m, RSIM_Thread *thread, const Functions &functions) {
+    // Perform a pointer-detection analysis on the specified function. We'll need the results in order to determine whether a
+    // function input should consume a pointer or a non-pointer from the input value set.
+    CloneDetection::PointerDetector* detect_pointers(RTS_Message *m, RSIM_Thread *thread, SgAsmFunction *func) {
         // Choose an SMT solver. This is completely optional.  Pointer detection still seems to work fairly well (and much,
         // much faster) without an SMT solver.
         SMTSolver *solver = NULL;
@@ -170,45 +169,58 @@ public:
         if (YicesSolver::available_linkage())
             solver = new YicesSolver;
 #endif
-        PointerDetectors retval;
         CloneDetection::InstructionProvidor *insn_providor = new CloneDetection::InstructionProvidor(thread->get_process());
-        for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
-            m->mesg("%s: pointer detection analysis for %s", name, function_to_str(*fi).c_str());
-            CloneDetection::PointerDetector pd(insn_providor, solver);
-            pd.initial_state().registers.gpr[x86_gpr_sp] = SYMBOLIC_VALUE<32>(thread->policy.INITIAL_STACK);
-            pd.initial_state().registers.gpr[x86_gpr_bp] = SYMBOLIC_VALUE<32>(thread->policy.INITIAL_STACK);
-            //pd.set_debug(stderr);
-            pd.analyze(*fi);
-            retval.insert(std::make_pair(*fi, pd));
-            if (VERBOSE && m->get_file()) {
-                const CloneDetection::PointerDetector::Pointers plist = pd.get_pointers();
-                for (CloneDetection::PointerDetector::Pointers::const_iterator pi=plist.begin(); pi!=plist.end(); ++pi) {
-                    std::ostringstream ss;
-                    if (pi->type & BinaryAnalysis::PointerAnalysis::DATA_PTR)
-                        ss <<"data ";
-                    if (pi->type & BinaryAnalysis::PointerAnalysis::CODE_PTR)
-                        ss <<"code ";
-                    ss <<"pointer at " <<pi->address;
-                    m->mesg("   %s", ss.str().c_str());
-                }
+        m->mesg("%s: %s pointer detection analysis", name, function_to_str(func).c_str());
+        CloneDetection::PointerDetector *pd = new CloneDetection::PointerDetector(insn_providor, solver);
+        pd->initial_state().registers.gpr[x86_gpr_sp] = SYMBOLIC_VALUE<32>(thread->policy.INITIAL_STACK);
+        pd->initial_state().registers.gpr[x86_gpr_bp] = SYMBOLIC_VALUE<32>(thread->policy.INITIAL_STACK);
+        //pd.set_debug(stderr);
+        try {
+            pd->analyze(func);
+        } catch (...) {
+            // probably the instruction is not handled by the semantics used in the analysis.  For example, the
+            // instruction might be a floating point instruction that isn't handled yet.
+            m->mesg("%s: %s pointer analysis FAILED", name, function_to_str(func).c_str());
+        }
+        if (VERBOSE && m->get_file()) {
+            const CloneDetection::PointerDetector::Pointers plist = pd->get_pointers();
+            for (CloneDetection::PointerDetector::Pointers::const_iterator pi=plist.begin(); pi!=plist.end(); ++pi) {
+                std::ostringstream ss;
+                if (pi->type & BinaryAnalysis::PointerAnalysis::DATA_PTR)
+                    ss <<"data ";
+                if (pi->type & BinaryAnalysis::PointerAnalysis::CODE_PTR)
+                    ss <<"code ";
+                ss <<"pointer at " <<pi->address;
+                m->mesg("   %s", ss.str().c_str());
             }
         }
-        return retval;
+        return pd;
     }
 
     // Save each function to the database.  Returns a mapping from function object to ID number.
     FunctionIdMap save_functions(const Functions &functions) {
         FunctionIdMap retval;
         int func_id = sqlite.executeint("select coalesce(max(id),0)+1 from semantic_functions");
-        sqlite3_command cmd1(sqlite, "insert into semantic_functions (id, entry_va, funcname, filename) values (?,?,?,?)");
+        sqlite3_command cmd1(sqlite, "select coalesce("
+                             " (select id from semantic_functions where entry_va=? and funcname=? and filename=? limit 1),"
+                             " -1) as existing_id");
+        sqlite3_command cmd2(sqlite, "insert into semantic_functions (id, entry_va, funcname, filename) values (?,?,?,?)");
         for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
             SgAsmFunction *func = *fi;
-            cmd1.bind(1, ++func_id);
-            cmd1.bind(2, func->get_entry_va());
-            cmd1.bind(3, func->get_name());
-            cmd1.bind(4, filename_for_function(func));
-            cmd1.executenonquery();
-            retval.insert(std::make_pair(func, func_id));
+            cmd1.bind(1, func->get_entry_va());
+            cmd1.bind(2, func->get_name());
+            cmd1.bind(3, filename_for_function(func));
+            int existing_id = cmd1.executeint();
+            if (existing_id >=0) {
+                retval.insert(std::make_pair(func, existing_id));
+            } else {
+                cmd2.bind(1, ++func_id);
+                cmd2.bind(2, func->get_entry_va());
+                cmd2.bind(3, func->get_name());
+                cmd2.bind(4, filename_for_function(func));
+                cmd2.executenonquery();
+                retval.insert(std::make_pair(func, func_id));
+            }
         }
         return retval;
     }
@@ -346,11 +358,11 @@ public:
     
     // Analyze a single function by running it with the specified inputs and collecting its outputs. */
     CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *fuzz_test(SgAsmFunction *function, CloneDetection::InputValues &inputs,
-                                                             const CloneDetection::PointerDetector &pointers) {
+                                                             const CloneDetection::PointerDetector *pointers) {
         RSIM_Process *proc = thread->get_process();
         RTS_Message *m = thread->tracing(TRACE_MISC);
 
-        // Not sure if saving/restoring memory state is necessary. I don't thing machine memory is adjusted by the semantic
+        // Not sure if saving/restoring memory state is necessary. I don't think machine memory is adjusted by the semantic
         // policy's writeMemory() or readMemory() operations after the policy is triggered to enable our analysis.  But it
         // shouldn't hurt to save/restore anyway, and it's fast. [Robb Matzke 2013-01-14]
         proc->mem_transaction_start(name);
@@ -358,7 +370,7 @@ public:
 
         // Trigger the analysis, resetting it to start executing the specified function using the input values and pointer
         // variable addresses we selected previously.
-        thread->policy.trigger(function->get_entry_va(), &inputs, &pointers);
+        thread->policy.trigger(function->get_entry_va(), &inputs, pointers);
 
         // "Run" the function using our semantic policy.  The function will not "run" in the normal sense since: since our
         // policy has been triggered, memory access, function calls, system calls, etc. will all operate differently.  See
@@ -409,9 +421,11 @@ public:
         Functions functions = find_functions(m, thread->get_process());
         FunctionIdMap func_ids = save_functions(functions);
 
-        PointerDetectors pointers = detect_pointers(m, thread, functions);
+        typedef std::map<SgAsmFunction*, CloneDetection::PointerDetector*> PointerDetectors;
+        PointerDetectors pointers;
 
         sqlite3_command cmd1(sqlite, "insert into semantic_fio (func_id, inputset_id, outputset_id) values (?,?,?)");
+        sqlite3_command cmd2(sqlite, "select count(*) from semantic_fio where func_id=? and inputset_id=? limit 1");
         for (size_t i=0; i<nfuzz; ++i) {
             InputValues inputs = choose_inputs(i);
             if (VERBOSE) {
@@ -422,17 +436,35 @@ public:
             }
             for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
                 SgAsmFunction *func = *fi;
-                m->mesg("%s: fuzz test #%zu, function %s", name, i, function_to_str(func).c_str());
+
+                // Did we already test this function in a previous incarnation?
+                cmd2.bind(1, func_ids[func]);
+                cmd2.bind(2, i);
+                if (cmd2.executeint()>0) {
+                    m->mesg("%s: %s fuzz test #%zu SKIPPED", name, function_to_str(func).c_str(), i);
+                    continue;
+                }
+
+                // Get the results of pointer analysis.  We could have done this before any fuzz testing started, but by doing
+                // it here we only need to do it for functions that are actually tested.
                 PointerDetectors::iterator ip = pointers.find(func);
+                if (ip==pointers.end())
+                    ip = pointers.insert(std::make_pair(func, detect_pointers(m, thread, func))).first;
                 assert(ip!=pointers.end());
+
+                // Run the test
+                m->mesg("%s: %s fuzz test #%zu", name, function_to_str(func).c_str(), i);
                 CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *outputs = fuzz_test(func, inputs, ip->second);
                 if (VERBOSE) {
                     std::ostringstream output_values_str;
                     OutputValues output_values = outputs->get_values();
                     for (OutputValues::iterator ovi=output_values.begin(); ovi!=output_values.end(); ++ovi)
                         output_values_str <<" " <<*ovi;
-                    m->mesg("%s: function output values are {%s }", name, output_values_str.str().c_str());
+                    m->mesg("%s: %s fuzz test #%zu output values are {%s }",
+                            name, function_to_str(func).c_str(), i, output_values_str.str().c_str());
                 }
+
+                // Save the results
                 size_t outputset_id = save_outputs(outputs->get_values());
                 cmd1.bind(1, func_ids[func]);
                 cmd1.bind(2, i);
