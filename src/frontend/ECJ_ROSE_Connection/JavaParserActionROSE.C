@@ -25,11 +25,493 @@
 #include "java_support.h"
 #include "jni_utils.h"
 #include "VisitorContext.h"
+#include "jni_token.h"
 
 // This is needed so that we can call the FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeIntoCurrentScope() function.
 #include "fixupCxxSymbolTablesToSupportAliasingSymbols.h"
 
 using namespace std;
+
+/**
+ *
+ */
+JNIEXPORT void JNICALL Java_JavaParser_cactionParenthesizedExpression(JNIEnv *env, jclass, jint java_parentheses_count) {
+    if (SgProject::get_verbose() > 0)
+        printf ("Inside of Java_JavaParser_cactionParenthesizedExpression\n");
+
+    int parentheses_count = java_parentheses_count;
+
+    SgExpression *expression = isSgExpression(astJavaComponentStack.top());
+    ROSE_ASSERT(expression);
+
+    string open_parentheses = "";
+    for (int i = 0; i < parentheses_count; i++) {
+        open_parentheses += "(";
+    }
+
+    expression -> setAttribute("java-parenthesis-info", new AstRegExAttribute(open_parentheses));
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Exiting Java_JavaParser_cactionParenthesizedExpression\n");
+}
+
+
+/**
+ *
+ */
+JNIEXPORT void JNICALL Java_JavaParser_cactionInsertClassStart(JNIEnv *env, jclass xxx, jstring java_string, jobject jToken) {
+    SgName name = convertJavaStringToCxxString(env, java_string);
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Inside of Java_JavaParser_cactionInsertClassStart(): = %s \n", name.str());
+
+    SgScopeStatement *outerScope = astJavaScopeStack.top();
+    ROSE_ASSERT(outerScope != NULL);
+    SgClassDeclaration *declaration = buildDefiningClassDeclaration(name, outerScope); // buildJavaClass(name, outerScope, env, jToken);
+    setJavaSourcePosition(declaration, env, jToken);
+    setJavaSourcePosition(declaration -> get_definition(), env, jToken);
+
+    // Make sure that the new class has been added to the correct synbol table.
+    ROSE_ASSERT (outerScope -> lookup_class_symbol(declaration -> get_name()) != NULL);
+
+    // If this is NOT an implicit class then use the class definition as the new current scope.
+    SgClassDefinition *classDefinition = declaration -> get_definition();
+    ROSE_ASSERT(classDefinition && (! classDefinition -> attributeExists("namespace")));
+    astJavaScopeStack.push(classDefinition); // to contain the class members...
+}
+
+
+/**
+ *
+ */
+JNIEXPORT void JNICALL Java_JavaParser_cactionInsertClassEnd(JNIEnv *env, jclass xxx, jstring java_string, jobject jToken) {
+    SgName name = convertJavaStringToCxxString(env, java_string);
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Inside of Java_JavaParser_cactionInsertClassEnd: %s \n", name.str());
+
+    ROSE_ASSERT(! astJavaScopeStack.empty());
+
+    SgClassDefinition *classDefinition = astJavaScopeStack.popClassDefinition();
+    ROSE_ASSERT(! classDefinition -> attributeExists("namespace"));
+}
+
+
+/**
+ *
+ */
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassSupportStart(JNIEnv *env, jclass xxx, jstring java_name, jstring java_external_name, jboolean java_is_interface, jboolean java_is_enum, jboolean java_is_anonymous, jobject jToken) {
+    SgName name = convertJavaStringToCxxString(env, java_name);
+    SgName external_name = convertJavaStringToCxxString(env, java_external_name);
+
+    bool is_interface = java_is_interface;
+    bool is_enum = java_is_enum;
+    bool is_anonymous = java_is_anonymous;
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Inside of Java_JavaParser_cactionBuildClassSupportStart(): %s %s \n", (is_interface ? "interface" : "class"), name.str());
+
+    SgScopeStatement *outerScope = astJavaScopeStack.top();
+    ROSE_ASSERT(outerScope != NULL);
+
+    SgClassSymbol *class_symbol = outerScope -> lookup_class_symbol(name);
+    ROSE_ASSERT(class_symbol);
+    SgClassDeclaration *declaration = (SgClassDeclaration *) class_symbol -> get_declaration() -> get_definingDeclaration();
+    ROSE_ASSERT(declaration);
+    SgClassDefinition *classDefinition = declaration -> get_definition();
+    ROSE_ASSERT(classDefinition && (! classDefinition -> attributeExists("namespace")));
+    astJavaScopeStack.push(classDefinition); // to contain the class members...
+
+    declaration -> set_explicit_interface(is_interface); // Identify whether or not this is an interface.
+    declaration -> set_explicit_enum(is_enum);           // Identify whether or not this is an enum.
+
+    if (external_name.getString().size() > 0) {
+        SgClassType *class_type = declaration -> get_type();
+        ROSE_ASSERT(class_type);
+        class_type -> setAttribute("name", new AstRegExAttribute(external_name.getString()));
+        if (is_anonymous) {
+            class_type -> setAttribute("anonymous", new AstRegExAttribute(""));
+            declaration -> setAttribute("anonymous", new AstRegExAttribute(""));
+        }
+    }
+
+    astJavaComponentStack.push(classDefinition); // To mark the end of the list of components in this type.
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Exiting Java_JavaParser_cactionBuildClassSupportStart(): %s %s \n", (is_interface ? "interface" : "class"), name.str());
+}
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildTypeParameter(JNIEnv *env, jclass, jstring java_name, jobject jToken) {
+    if (SgProject::get_verbose() > 2)
+        printf ("Build an Type Parameter \n");
+
+    SgName name = convertJavaStringToCxxString(env, java_name);
+    ROSE_ASSERT(! astJavaScopeStack.empty());
+    SgClassDefinition *class_definition = isSgClassDefinition(astJavaScopeStack.top());
+    SgClassDeclaration *parameter_declaration = buildDefiningClassDeclaration(name, class_definition); // SageBuilder::buildDefiningClassDeclaration(name, class_definition);
+    setJavaSourcePosition(parameter_declaration, env, jToken);
+    setJavaSourcePosition(parameter_declaration -> get_definition(), env, jToken);
+    astJavaComponentStack.push(parameter_declaration);
+    SgType *type = parameter_declaration -> get_type();
+    type -> setAttribute("is_parameter_type", new AstRegExAttribute(""));
+
+    if (SgProject::get_verbose() > 2)
+        printf ("Done Building a Type Parameter \n");
+}
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassExtendsAndImplementsSupport(JNIEnv *env, jclass xxx, jint java_num_type_parameters, jboolean java_has_super_class, jint java_num_interfaces, jobject jToken) {
+    if (SgProject::get_verbose() > 0)
+        printf ("Inside of Java_JavaParser_cactionBuildClassExtendsAndImplementsSupport()\n");
+
+    int number_of_type_parameters = java_num_type_parameters;
+    bool has_super_class = java_has_super_class;
+    int number_of_interfaces = java_num_interfaces;
+
+    ROSE_ASSERT(! astJavaScopeStack.empty());
+    SgClassDefinition *class_definition = isSgClassDefinition(astJavaScopeStack.top());
+
+    if (SgProject::get_verbose() > 0) {
+        cout << "Type " << class_definition -> get_qualified_name()
+             << " has "
+             << (has_super_class ? "a super class" : "no super class")
+             << " and "
+             << number_of_interfaces
+             << " interface(s)."
+             << endl;
+        cout.flush();
+    }
+
+    //
+    // TODO: Need to do this right !!!
+    //
+    // As an SgJavaParameterized type is not associated with a unique declaration but with the declaration of its 
+    // base raw type, we need to create an attribute that contains the list of types that extends or must be 
+    // implemented by a given base type.
+    //
+    std::vector<SgNode *> extension_list;
+
+    //
+    // Process the interfaces for this type, if any.
+    //
+    for (int i = 0; i < number_of_interfaces; i++) {
+         SgType *type = astJavaComponentStack.popType();
+         SgClassType *interface_type = isSgClassType(type);
+         SgJavaParameterizedType *param_interface_type = isSgJavaParameterizedType(type);
+         ROSE_ASSERT(interface_type || param_interface_type);
+
+         extension_list.push_back(interface_type ? (SgNode *) interface_type : (SgNode *) param_interface_type);
+
+         if (SgProject::get_verbose() > 0) {
+             string name = (interface_type ? getFullyQualifiedTypeName(interface_type) : getFullyQualifiedTypeName(param_interface_type));
+             cout << "   Type " << name
+                  << endl;
+             cout.flush();
+         }
+
+         SgDeclarationStatement *declaration = (interface_type ? interface_type -> get_declaration() : param_interface_type -> get_declaration());
+         SgClassDeclaration *interface_declaration = isSgClassDeclaration(declaration -> get_definingDeclaration());
+         SgBaseClass *base = new SgBaseClass(interface_declaration);
+         base -> set_parent(class_definition);
+         class_definition -> prepend_inheritance(base);
+    }
+
+    //
+    // Add Super class to the current Class definition.
+    //
+    if (has_super_class) {
+        SgType *type = astJavaComponentStack.popType();
+        SgClassType *class_type = isSgClassType(type);
+        SgJavaParameterizedType *param_class_type = isSgJavaParameterizedType(type);
+        ROSE_ASSERT(class_type || param_class_type);
+
+        extension_list.push_back(class_type ? (SgNode *) class_type : (SgNode *) param_class_type);
+
+        if (SgProject::get_verbose() > 0) {
+             string name = (class_type ? getFullyQualifiedTypeName(class_type) : getFullyQualifiedTypeName(param_class_type));
+             cout << "   Type " << name
+                  << endl;
+             cout.flush();
+        }
+        SgDeclarationStatement *declaration = (class_type ? class_type -> get_declaration() : param_class_type -> get_declaration());
+        SgClassDeclaration *class_declaration = isSgClassDeclaration(declaration -> get_definingDeclaration());
+        ROSE_ASSERT(! class_declaration -> get_explicit_interface()); // must be a class
+        SgBaseClass *base = new SgBaseClass(class_declaration);
+        base -> set_parent(class_definition);
+        class_definition -> prepend_inheritance(base);
+    }
+
+    if (number_of_type_parameters > 0) {
+        list<SgTemplateParameter *> parameter_list;
+        for (int i = 0; i < number_of_type_parameters; i++) { // Reverse the content of the stack.
+            SgClassDeclaration *parameter_decl = isSgClassDeclaration(astJavaComponentStack.pop());
+            ROSE_ASSERT(parameter_decl);
+            SgTemplateParameter *parameter = new SgTemplateParameter(parameter_decl -> get_type(), NULL);
+            parameter_list.push_front(parameter);
+        }
+
+        SgTemplateParameterPtrList final_list;
+        while (! parameter_list.empty()) { // Now that we have the parameters in the right order, create the final list.
+            SgTemplateParameter *parameter = parameter_list.front();
+            parameter_list.pop_front();
+            final_list.push_back(parameter);
+        }
+
+        SgTemplateParameterList *template_parameter_list = new SgTemplateParameterList();
+        template_parameter_list -> set_args(final_list);
+        class_definition -> get_declaration() -> setAttribute("type_parameters", new AstSgNodeAttribute(template_parameter_list));
+    }
+
+    AstSgNodeListAttribute *attribute = new AstSgNodeListAttribute();
+    for (int i = extension_list.size() - 1;  i >= 0; i--) { // We need to reverse the content of the vector  to place the parameter types in the correct order.
+        attribute -> addNode(extension_list[i]);
+    }
+    class_definition -> setAttribute("extensions", attribute); // TODO: Since declarations are not mapped one-to-one with parameterized types, we need this attribute.
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Exiting Java_JavaParser_cactionBuildClassExtendsAndImplementsSupport()\n");
+}
+
+
+/**
+ *
+ */
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassSupportEnd(JNIEnv *env, jclass xxx, jstring java_string, jobject jToken) {
+    SgName name = convertJavaStringToCxxString(env, java_string);
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Inside of Java_JavaParser_cactionBuildClassSupportEnd: %s \n", name.str());
+
+    ROSE_ASSERT(! astJavaScopeStack.empty());
+
+    SgClassDefinition *classDefinition = astJavaScopeStack.popClassDefinition();
+    ROSE_ASSERT(! classDefinition -> attributeExists("namespace"));
+
+    for (SgStatement *statement = astJavaComponentStack.popStatement();
+        statement != classDefinition;
+        statement = astJavaComponentStack.popStatement()) {
+        if (SgProject::get_verbose() > 2) {
+            cerr << "(1) Adding statement "
+                 << statement -> class_name()
+                 << " to an implicit Type Declaration"
+                 << endl;
+            cerr.flush();
+        }
+        ROSE_ASSERT(statement != NULL);
+
+        classDefinition -> prepend_statement(statement);
+    }
+
+    ROSE_ASSERT(! astJavaScopeStack.empty());
+    SgScopeStatement *outerScope = astJavaScopeStack.top();
+
+    //
+    // TODO:  Review this because of the package issue and the inability to build a global AST.
+    //
+    ROSE_ASSERT(outerScope != NULL);
+    if (isSgClassDefinition(outerScope) && isSgClassDefinition(outerScope) -> attributeExists("namespace")) { // a type in a package?
+        isSgClassDefinition(outerScope) -> append_statement(classDefinition -> get_declaration());
+    }
+    else if (isSgClassDefinition(outerScope) && (! isSgClassDefinition(outerScope) -> attributeExists("namespace"))) { // an inner type?
+        astJavaComponentStack.push(classDefinition -> get_declaration());
+    }
+    else if (isSgBasicBlock(outerScope)) { // a local type declaration?
+        astJavaComponentStack.push(classDefinition -> get_declaration());
+    }
+    else if (outerScope == ::globalScope) { // a user-defined type?
+        ::globalScope -> append_statement(classDefinition -> get_declaration());
+    }
+    else { // What is this?
+        ROSE_ASSERT(false);
+    }
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Leaving Java_JavaParser_cactionBuildClassSupportEnd: %s \n", name.str());
+}
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildArgumentSupport(JNIEnv *env, jclass, jstring java_argument_name, jboolean java_is_var_args, jboolean java_is_final, jobject jToken) {
+    if (SgProject::get_verbose() > 0)
+        printf ("Inside of Build argument support\n");
+
+    SgName argument_name = convertJavaStringToCxxString(env, java_argument_name);
+    bool is_final = java_is_final;
+    bool is_var_args = java_is_var_args;
+
+    if (SgProject::get_verbose() > 0)
+        printf ("argument argument_name = %s \n", argument_name.str());
+
+    SgType *argument_type = astJavaComponentStack.popType();
+    ROSE_ASSERT(argument_type);
+
+    // Until we attached this to the AST, this will generate an error in the AST consistancy tests.
+    SgInitializedName *initializedName = SageBuilder::buildInitializedName(argument_name, argument_type, NULL);
+    ROSE_ASSERT(initializedName != NULL);
+    setJavaSourcePosition(initializedName, env, jToken);
+
+    //
+    // TODO: This is a patch.  Currently, the final attribute can only be associated with a
+    //       variable declaration. However, a parameter declaration is an SgInitializedName
+    //       in the Sage III representation and not an SgVariableDeclaration.
+    //
+    // The correct code should look something like this:
+    //
+    //    if (is_final) {
+    //        initializedName -> get_declarationModifier().setFinal();
+    //    }
+    //
+    if (is_final) {
+        initializedName -> setAttribute("final", new AstRegExAttribute(""));
+    }
+
+    //
+    // Identify Arguments with var arguments.
+    //
+    if (is_var_args) {
+        SgPointerType *array_type = isSgPointerType(argument_type);
+        ROSE_ASSERT(array_type);
+        SgType *element_type = array_type -> get_base_type();
+
+        initializedName -> setAttribute("var_args", new AstSgNodeAttribute(element_type));
+    }
+
+    //
+    // DQ (4/6/2011): Instead of assuming there is a function declaration available, we 
+    // want to put each SgInitializedName onto the stack so that they can be assembled
+    // into the parameter list as part of building the function declaration afterwards.
+    // This also allows for the function type to be computed from the function
+    // parameter list (the types match the types on the function parameters) and
+    // then the SgFunctionSymbol can be computed and inserted into the function 
+    // declaration's scope (current scope) as part of building the function declaration.
+    //
+    astJavaComponentStack.push(initializedName);
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Exiting Build argument support\n");
+}
+
+
+/**
+ *
+ */
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildMethodSupport(JNIEnv *env, jclass xxx,
+                                                                 jstring java_string,
+                                                                 jboolean java_is_constructor,
+                                                                 jboolean java_is_abstract,
+                                                                 jboolean java_is_native,
+                                                                 jint java_number_of_arguments,
+                                                                 jboolean java_is_user_defined,
+                                                                 jobject args_location,
+                                                                 jobject method_location) {
+    SgName name = convertJavaStringToCxxString(env, java_string);
+    int number_of_arguments = java_number_of_arguments;
+    bool is_constructor = java_is_constructor,
+         is_abstract = java_is_abstract,
+         is_native = java_is_native,
+         is_user_defined = java_is_user_defined;
+
+    if (SgProject::get_verbose() > 1)
+        printf ("Build support for implicit class member function (method) name = %s \n", name.str());
+
+    SgClassDefinition *classDefinition = isSgClassDefinition(astJavaScopeStack.top());
+    ROSE_ASSERT(classDefinition != NULL && (! classDefinition -> attributeExists("namespace")));
+
+    //
+    // There is no reason to distinguish between defining and non-defining declarations in Java...
+    //
+    SgMemberFunctionDeclaration *functionDeclaration = buildDefiningMemberFunction(name, classDefinition, number_of_arguments, env, method_location, args_location);
+    ROSE_ASSERT(functionDeclaration != NULL);
+
+    setJavaSourcePosition(functionDeclaration, env, method_location);
+    if (is_constructor) {
+        functionDeclaration -> get_specialFunctionModifier().setConstructor();
+    }
+    if (is_abstract) {
+        functionDeclaration -> get_declarationModifier().setJavaAbstract();
+        functionDeclaration -> setForward(); // indicate that this function does not contain a body.
+    }
+    if (is_native) {
+        functionDeclaration -> get_functionModifier().setJavaNative();
+        functionDeclaration -> setForward(); // indicate that this function does not contain a body.
+    }
+
+    SgMemberFunctionDeclaration *nondefining_function_declaration = isSgMemberFunctionDeclaration(functionDeclaration -> get_firstNondefiningDeclaration());
+    ROSE_ASSERT(nondefining_function_declaration);
+    nondefining_function_declaration -> get_declarationModifier().get_accessModifier().set_modifier(functionDeclaration -> get_declarationModifier().get_accessModifier().get_modifier());
+
+    astJavaComponentStack.push(functionDeclaration);
+
+    if (SgProject::get_verbose() > 1)
+        printf ("Exiting build support for implicit class member function (method) name = %s \n", name.str());
+}
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildInitializerSupport(JNIEnv *env, jclass, jboolean java_is_static, jstring java_string, jobject jToken) {
+    if (SgProject::get_verbose() > 0)
+        printf ("Inside of Java_JavaParser_cactionBuildInitializerSupport \n");
+
+    bool isStatic = java_is_static;
+    SgName name = convertJavaStringToCxxString(env, java_string);
+
+    //
+    // The initializer block has no return type as it is not a real method. So, we
+    // start by pushing a VOID return type to make it look like a method.
+    //
+    astJavaComponentStack.push(SgTypeVoid::createType()); 
+
+    SgClassDefinition *classDefinition = isSgClassDefinition(astJavaScopeStack.top());
+    ROSE_ASSERT(classDefinition != NULL  && (! classDefinition -> attributeExists("namespace")));
+
+    SgMemberFunctionDeclaration *functionDeclaration = buildDefiningMemberFunction(name, classDefinition, 0 /* no arguments */, env, jToken, jToken);
+    ROSE_ASSERT(functionDeclaration != NULL);
+
+    setJavaSourcePosition(functionDeclaration, env, jToken);
+    // Set the specific modifier, this modifier is common to C/C++.
+    functionDeclaration -> get_functionModifier().setJavaInitializer();
+    functionDeclaration -> get_declarationModifier().get_accessModifier().set_modifier(SgAccessModifier::e_unknown);
+    if (isStatic) {
+        functionDeclaration -> get_declarationModifier().get_storageModifier().setStatic();
+    }
+
+    SgMemberFunctionDeclaration *nondefining_function_declaration = isSgMemberFunctionDeclaration(functionDeclaration -> get_firstNondefiningDeclaration());
+    ROSE_ASSERT(nondefining_function_declaration);
+    nondefining_function_declaration -> get_declarationModifier().get_accessModifier().set_modifier(functionDeclaration -> get_declarationModifier().get_accessModifier().get_modifier());
+
+    astJavaComponentStack.push(functionDeclaration);
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Exiting Java_JavaParser_cactionBuildInitializerSupport \n");
+}
+
+
+// DQ: Note that the function signature is abby-normal...jclass instead of jobject (because they are 
+// declared "public static native" instead of "public native" in the Java side of the JNI interface.
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildFieldSupport(JNIEnv *env, jclass xxx, jstring java_string, jobject jToken) {
+    if (SgProject::get_verbose() > 0)
+        printf ("Inside of Java_JavaParser_cactionBuildFieldSupport (variable declaration for field) \n");
+
+    SgName name = convertJavaStringToCxxString(env, java_string);
+
+    SgType *type = astJavaComponentStack.popType();
+
+    SgVariableDeclaration *variableDeclaration = SageBuilder::buildVariableDeclaration (name, type, NULL, astJavaScopeStack.top());
+    ROSE_ASSERT(variableDeclaration != NULL);
+    setJavaSourcePosition(variableDeclaration, env, jToken);
+    vector<SgInitializedName *> vars = variableDeclaration -> get_variables();
+    for (vector<SgInitializedName *>::iterator name_it = vars.begin(); name_it != vars.end(); name_it++) {
+        setJavaSourcePosition(*name_it, env, jToken);
+    }
+
+    astJavaComponentStack.push(variableDeclaration);
+
+    if (SgProject::get_verbose() > 0)
+        variableDeclaration -> get_file_info() -> display("source position in Java_JavaParser_cactionBuildFieldSupport(): debug");
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Exiting Java_JavaParser_cactionBuildFieldSupport (variable declaration for field) \n");
+}
+
 
 // ***************************************************************************
 // ***************************************************************************
@@ -46,6 +528,47 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTest(JNIEnv *env, jclass) {
 }
 
 
+JNIEXPORT void JNICALL Java_JavaParser_cactionPushPackage(JNIEnv *env, jclass, jstring java_package_name, jobject jToken) {
+    SgName converted_package_name = convertJavaPackageNameToCxxString(env, java_package_name);
+
+    astJavaScopeStack.push(::globalScope);
+
+    SgClassSymbol *namespace_symbol = ::globalScope -> lookup_class_symbol(converted_package_name);
+    SgClassDeclaration *declaration;
+    if (namespace_symbol == NULL) {
+        SgName original_package_name = convertJavaStringToCxxString(env, java_package_name);
+        declaration = buildDefiningClassDeclaration(converted_package_name, ::globalScope); // SageBuilder::buildDefiningClassDeclaration(converted_package_name, ::globalScope);
+        declaration -> setAttribute("namespace", new AstRegExAttribute(original_package_name));
+        SgClassDefinition *definition = declaration -> get_definition();
+        ROSE_ASSERT(definition);
+        definition -> setAttribute("namespace", new AstRegExAttribute(original_package_name));
+        ::globalScope -> append_declaration(declaration);
+        declaration -> set_parent(::globalScope);
+
+        setJavaSourcePosition(declaration, env, jToken);
+        setJavaSourcePosition(definition, env, jToken);
+    }
+    else {
+        declaration = (SgClassDeclaration *) namespace_symbol -> get_declaration() -> get_definingDeclaration();
+    }
+    SgClassDefinition *package = declaration -> get_definition();
+
+    ROSE_ASSERT(package);
+
+    astJavaScopeStack.push(package); // Push the package onto the scopestack.
+}
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionPopPackage(JNIEnv *env, jclass) {
+    ROSE_ASSERT(isSgClassDefinition(astJavaScopeStack.top()) && isSgClassDefinition(astJavaScopeStack.top()) -> attributeExists("namespace"));
+
+    string package_name = isSgClassDefinition(astJavaScopeStack.top()) -> get_qualified_name().getString();
+
+    astJavaScopeStack.popClassDefinition();
+    astJavaScopeStack.popGlobal(); // Push the global scope onto the stack.
+}
+
+
 JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList(JNIEnv *env, jclass, jint, jobjectArray) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionCompilationUnitList \n");
@@ -54,6 +577,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList(JNIEnv *env, j
     ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
     if (SgProject::get_verbose() > 0)
         printf ("OpenFortranParser_globalFilePointer = %s \n", OpenFortranParser_globalFilePointer -> class_name().c_str());
+
+    SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionFrontendConstruction);
 
     SgSourceFile *sourceFile = isSgSourceFile(OpenFortranParser_globalFilePointer);
     ROSE_ASSERT(sourceFile != NULL);
@@ -83,38 +608,94 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList(JNIEnv *env, j
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionProcessObject(JNIEnv *env, jclass) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitListEnd(JNIEnv *env, jclass) {
     if (SgProject::get_verbose() > 0)
-        printf ("Inside of Java_JavaParser_cactionProcessObject\n");
+        printf ("Inside of Java_JavaParser_cactionCompilationUnitListEnd() \n");
 
-    ::ObjectClassType = isSgClassType(astJavaComponentStack.popType());
-    ROSE_ASSERT(::ObjectClassType);
+    ROSE_ASSERT(! astJavaScopeStack.empty());
 
-    SgClassDeclaration *class_declaration = isSgClassDeclaration(::ObjectClassType -> get_declaration() -> get_definingDeclaration());
-    ROSE_ASSERT(class_declaration);
-    ::ObjectClassDefinition = class_declaration -> get_definition();
-    ROSE_ASSERT(::ObjectClassDefinition);
+    SgGlobal *global = astJavaScopeStack.popGlobal(); // remove the global scope
+    ROSE_ASSERT(global == ::globalScope);
+    if (global -> attributeExists("contains_wide_characters")) {
+      AstRegExAttribute *attribute = (AstRegExAttribute *) global -> getAttribute("contains_wide_characters");
+        cout << endl << "Java-ROSE error: At least one non-ASCII character with value " << attribute -> expression << " encountered in a string literal." << endl << endl;
+        ROSE_ASSERT(! "yet implemented Wide Characters");
+    }
+
+    ROSE_ASSERT(astJavaScopeStack.empty());
+
+    SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionTransformation);
 
     if (SgProject::get_verbose() > 0)
-        printf ("Leaving Java_JavaParser_cactionProcessObject\n");
+        printf ("Leaving Java_JavaParser_cactionCompilationUnitListEnd() \n");
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclaration(JNIEnv *env, jclass, jstring compilationUnitFilename, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionSetupObject(JNIEnv *env, jclass) {
     if (SgProject::get_verbose() > 0)
-        printf ("Inside of Java_JavaParser_cactionCompilationUnitDeclaration() \n");
+        printf ("Inside of Java_JavaParser_cactionSetupObject\n");
+
+    ROSE_ASSERT(astJavaScopeStack.size());
+    ::ObjectClassDefinition = isSgClassDefinition(astJavaScopeStack.top());
+    ROSE_ASSERT(::ObjectClassDefinition  && (! ::ObjectClassDefinition -> attributeExists("namespace")));
+    ROSE_ASSERT(::ObjectClassDefinition -> get_qualified_name().getString().compare("java_lang.Object") == 0);
+
+    SgName main_package_name = "java_lang",
+           object_name       = "Object";
+    ::ObjectClassType = isSgClassType(lookupTypeByName(main_package_name, object_name, 0));
+    ROSE_ASSERT(::ObjectClassType);
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Leaving Java_JavaParser_cactionSetupObject\n");
+}
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionSetupStringAndClassTypes(JNIEnv *env, jclass) {
+    if (SgProject::get_verbose() > 0)
+        printf ("Inside of Java_JavaParser_cactionSetupObject\n");
+
+    SgName main_package_name = "java_lang",
+           string_name       = "String";
+
+    ::StringClassType = isSgClassType(lookupTypeByName(main_package_name, string_name, 0));
+    ROSE_ASSERT(::StringClassType);
+
+    SgName class_name = "Class";
+    ::ClassClassType = isSgClassType(lookupTypeByName(main_package_name, class_name, 0));
+    ROSE_ASSERT(::ClassClassType);
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Leaving Java_JavaParser_cactionSetupObject\n");
+}
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclaration(JNIEnv *env, jclass, jstring java_package_name, jstring java_filename, jobject jToken) {
+     if (SgProject::get_verbose() > 0)
+         printf ("Inside of Java_JavaParser_cactionCompilationUnitDeclaration() \n");
+
+    SgName package_name = convertJavaPackageNameToCxxString(env, java_package_name);
+    ROSE_ASSERT(astJavaScopeStack.top() == ::globalScope); // There must be a scope element in the scope stack.
+    SgClassSymbol *namespace_symbol = ::globalScope -> lookup_class_symbol(package_name);
+
+    ROSE_ASSERT(namespace_symbol);
+    SgClassDeclaration *declaration = (SgClassDeclaration *) namespace_symbol -> get_declaration() -> get_definingDeclaration();
+    SgClassDefinition *package = declaration -> get_definition();
+    ROSE_ASSERT(package);
+
+    //
+    // Tag the package so that the unparser can process its containing user-defined types.
+    //
+    package -> setAttribute("translated_package", new AstRegExAttribute(convertJavaStringToCxxString(env, java_package_name)));
+    astJavaScopeStack.push(package); // Push the package onto the scopestack.
 
     // Example of how to get the string...but we don't really use the absolutePathFilename in this function.
-    const char *absolutePathFilename = env -> GetStringUTFChars(compilationUnitFilename, NULL);
+    const char *absolutePathFilename = env -> GetStringUTFChars(java_filename, NULL);
     ROSE_ASSERT(absolutePathFilename != NULL);
     // printf ("Inside of Java_JavaParser_cactionCompilationUnitDeclaration absolutePathFilename = %s \n", absolutePathFilename);
-    env -> ReleaseStringUTFChars(compilationUnitFilename, absolutePathFilename);
+    env -> ReleaseStringUTFChars(java_filename, absolutePathFilename);
 
     // This is already setup by ROSE as part of basic file initialization before calling ECJ.
     ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
-
-    ROSE_ASSERT(! astJavaScopeStack.empty()); // There must be a scope element in the scope stack.
-    ROSE_ASSERT(astJavaScopeStack.top() -> get_parent() != NULL);
 
     astJavaComponentStack.push(astJavaScopeStack.top()); // To mark the end of the list of components in this Compilation unit.
 }
@@ -132,28 +713,22 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclarationEnd(JNIE
     if (SgProject::get_verbose() > 0)
         printf ("cactionCompilationUnitDeclarationEnd(): numberOfStatements = %d \n", numberOfStatements);
 
-    SgGlobal *global = (SgGlobal *) astJavaScopeStack.top();
-    ROSE_ASSERT(isSgGlobal(global));
+    SgScopeStatement *package = (SgScopeStatement *) astJavaScopeStack.top();
     for (SgStatement *statement = astJavaComponentStack.popStatement();
-         statement != global;
-         statement = astJavaComponentStack.popStatement()) {
+        statement != package;
+        statement = astJavaComponentStack.popStatement()) {
         if (SgProject::get_verbose() > 2) {
-            cerr << "Adding statement "
+            cerr << "(2) Adding statement "
                  << statement -> class_name()
-                 << " to a Type Declaration"
+                 << " to a Global Declaration"
                  << endl;
             cerr.flush();
         }
         ROSE_ASSERT(statement != NULL);
-        global -> prepend_statement(statement);
+        package -> prepend_statement(statement);
     }
 
-    if (SgProject::get_verbose() > 0)
-        printf ("Now we pop off the global scope! \n");
-
-    astJavaScopeStack.popGlobal(); // remove the global scope
-
-    ROSE_ASSERT(astJavaScopeStack.empty());
+    astJavaScopeStack.popPackage(); // remove the containing package
 
     if (SgProject::get_verbose() > 0)
         printf ("Leaving Java_JavaParser_cactionCompilationUnitDeclarationEnd() \n");
@@ -161,8 +736,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclarationEnd(JNIE
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration(JNIEnv *env, jclass,
-                                                              jstring java_string,
+                                                              jstring java_package_name,
+                                                              jstring java_type_name,
                                                               jboolean java_is_interface,
+                                                              jboolean java_is_enum,
                                                               jboolean java_is_abstract,
                                                               jboolean java_is_final,
                                                               jboolean java_is_private,
@@ -176,8 +753,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration(JNIEnv *env, jclas
         printf ("Build a SgClassDeclaration \n");
 
     // We could provide a constructor for "SgName" that takes a "jstring".  This might help support a simpler interface.
-    SgName name = convertJavaStringToCxxString(env, java_string);
+    SgName package_name = convertJavaPackageNameToCxxString(env, java_package_name),
+           type_name = convertJavaStringToCxxString(env, java_type_name);
+
+    SgType *type = lookupTypeByName(package_name, type_name, 0 /* not an array - number of dimensions is 0 */);
+
     bool is_interface = java_is_interface;
+    bool is_enum = java_is_enum;
 
     bool is_abstract = java_is_abstract;
     bool is_final = java_is_final;
@@ -188,27 +770,23 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration(JNIEnv *env, jclas
     bool is_strictfp = java_is_strictfp;
 
     if (SgProject::get_verbose() > 0)
-        printf ("Build class type: name = %s \n", name.str());
-
-    Token_t *token = create_token(env, jToken);
-    ROSE_ASSERT(token != NULL);
-
-    // This builds the associated class in the curren scope as defined by the astJavaScopeStack.
-    buildClass(name, token);
+        printf ("Build class type: name = %s \n", type_name.str());
 
     ROSE_ASSERT(astJavaScopeStack.top() != NULL);
 
-    SgClassDefinition *classDefinition = isSgClassDefinition(astJavaScopeStack.top());
-    ROSE_ASSERT(classDefinition != NULL);
-    setJavaSourcePosition(classDefinition, env, jToken);
-    SgClassDeclaration *classDeclaration = classDefinition -> get_declaration();
-    ROSE_ASSERT(classDeclaration != NULL);
-    classDeclaration -> set_explicit_interface(is_interface); // Identify whether or not this is an interface
+    SgClassDeclaration *classDeclaration = (SgClassDeclaration *) type -> getAssociatedDeclaration() -> get_definingDeclaration();
+    ROSE_ASSERT(classDeclaration);
+    SgClassDefinition *classDefinition = classDeclaration -> get_definition();
+    ROSE_ASSERT(classDefinition && (! classDefinition -> attributeExists("namespace")));
 
-    if (is_abstract)
+    classDeclaration -> setAttribute("user-defined-type", new AstRegExAttribute(type_name));
+    classDeclaration -> set_explicit_interface(is_interface); // Identify whether or not this is an interface.
+    classDeclaration -> set_explicit_enum(is_enum);           // Identify whether or not this is an enum.
+
+    if (is_abstract && (! is_enum)) // Enum should not be marked as abstract
          classDeclaration -> get_declarationModifier().setJavaAbstract();
     else classDeclaration -> get_declarationModifier().unsetJavaAbstract();
-    if (is_final)
+    if (is_final && (! is_enum)) // Enum should not be marked as final
          classDeclaration -> get_declarationModifier().setFinal();
     else classDeclaration -> get_declarationModifier().unsetFinal();
     if (is_strictfp)
@@ -230,7 +808,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration(JNIEnv *env, jclas
         classDeclaration -> get_declarationModifier().get_storageModifier().setStatic();
     }
 
-    setJavaSourcePosition(classDefinition -> get_declaration(), env, jToken);
+    SgClassDeclaration *nondefining_class_declaration = isSgClassDeclaration(classDeclaration -> get_firstNondefiningDeclaration());
+    ROSE_ASSERT(nondefining_class_declaration);
+    nondefining_class_declaration -> get_declarationModifier().get_accessModifier().set_modifier(classDeclaration -> get_declarationModifier().get_accessModifier().get_modifier());
+    ROSE_ASSERT(nondefining_class_declaration -> get_declarationModifier().get_accessModifier().get_modifier() == classDeclaration -> get_declarationModifier().get_accessModifier().get_modifier());
+
+    astJavaScopeStack.push(classDefinition);     // Open new scope for this type.
     astJavaComponentStack.push(classDefinition); // To mark the end of the list of components in this type.
 
     if (SgProject::get_verbose() > 0)
@@ -255,25 +838,16 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationHeader(JNIEnv *env,
 
     ROSE_ASSERT(astJavaScopeStack.top() != NULL);
     SgClassDefinition *classDefinition = isSgClassDefinition(astJavaScopeStack.top());
-    ROSE_ASSERT(classDefinition != NULL);
+    ROSE_ASSERT(classDefinition != NULL  && (! classDefinition -> attributeExists("namespace")));
 
     if (SgProject::get_verbose() > 0)
         printf ("Build class type: name = %s \n", classDefinition -> get_qualified_name().str());
-
-    ROSE_ASSERT(number_of_parameters == 0 && " We do not yet support Parameterized types");
 
     //
     // Process the interfaces for this type, if any.
     //
     for (int i = 0; i < number_of_interfaces; i++) {
          SgType *type = astJavaComponentStack.popType();
-         SgClassType *interface_type = isSgClassType(type);
-         SgDeclarationStatement *declaration = interface_type -> get_declaration();
-         SgClassDeclaration *interface_declaration = isSgClassDeclaration(declaration -> get_definingDeclaration());
-         ROSE_ASSERT(interface_declaration -> get_explicit_interface()); // must be an interface
-         SgBaseClass *base = new SgBaseClass(interface_declaration);
-         base -> set_parent(classDefinition);
-         classDefinition -> prepend_inheritance(base);
     }
 
     //
@@ -281,13 +855,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationHeader(JNIEnv *env,
     //
     if (has_super_class) {
         SgType *type = astJavaComponentStack.popType();
-        SgClassType *class_type = isSgClassType(type);
-        SgDeclarationStatement *declaration = class_type -> get_declaration();
-        SgClassDeclaration *class_declaration = isSgClassDeclaration(declaration -> get_definingDeclaration());
-        ROSE_ASSERT(! class_declaration -> get_explicit_interface()); // must be a class
-        SgBaseClass *base = new SgBaseClass(class_declaration);
-        base -> set_parent(classDefinition);
-        classDefinition -> prepend_inheritance(base);
     }
 
     ROSE_ASSERT(classDefinition == astJavaComponentStack.top());
@@ -306,37 +873,25 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationEnd(JNIEnv *env, jc
 
     ROSE_ASSERT(astJavaScopeStack.top() != NULL);
     SgClassDefinition *classDefinition = astJavaScopeStack.popClassDefinition();
+    ROSE_ASSERT(! classDefinition -> attributeExists("namespace"));
 
     if (SgProject::get_verbose() > 0)
         printf ("Build class type: name = %s \n", classDefinition -> get_qualified_name().str());
 
-    for (SgNode *node = astJavaComponentStack.top();
-         node != classDefinition && (! isSgClassType(node));
-         node = astJavaComponentStack.top()) {
-         astJavaComponentStack.pop(); // Remove that node from the stack
-         SgStatement *statement = isSgStatement(node);
-         ROSE_ASSERT(statement != NULL);
-         if (SgProject::get_verbose() > 2) {
-             cerr << "Adding statement "
-                  << statement -> class_name()
-                  << " to a Type Declaration"
-                  << endl;
-             cerr.flush();
-        }
-        classDefinition -> prepend_statement(statement);
-    }
-
     ROSE_ASSERT(classDefinition == astJavaComponentStack.top());
     astJavaComponentStack.pop(); // remove the class definition from the stack
-
-    if (SgProject::get_verbose() > 0)
-        printf ("We might have to be popping off the existing scope for class type: name = %s \n", classDefinition -> get_qualified_name().str());
 
     SgClassDeclaration *classDeclaration = classDefinition -> get_declaration();
     ROSE_ASSERT(classDeclaration != NULL);
 
-    // Push the class declaration onto the statement stack.
-    astJavaComponentStack.push(classDeclaration);
+    //
+    // Now that we are processing declarations in two passes, type declarations are always entered in their
+    // respective scope during the first pass. Thus, in general, we don't need to be process a type declaration
+    // here unless it is an Anonymous type that needs to be associated with an Allocation expression.
+    //
+    if (classDeclaration -> attributeExists("anonymous")) {
+        astJavaComponentStack.push(classDeclaration);
+    }
 
     ROSE_ASSERT(astJavaScopeStack.top() != NULL);
     if (SgProject::get_verbose() > 0)
@@ -384,46 +939,59 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationHeader(JNIEn
     //
     // TODO:
     //
-    for (int i = 0; i  < numberOfThrownExceptions; i++) { // Pop the Thrown types
+    string exceptions = "";
+    for (int i = 0; i < numberOfThrownExceptions; i++) { // Pop the Thrown types
         SgType *type = astJavaComponentStack.popType();
-        // TODO: Do something with this Thrown type !!!
-        ROSE_ASSERT(isSgClassType(type));
+        SgClassType *class_type = isSgClassType(type);
+        ROSE_ASSERT(class_type);
+
+        string throw_name = getFullyQualifiedTypeName(class_type);
+
+        exceptions += throw_name;
+
+        if (i < numberOfThrownExceptions - 1)
+            exceptions += ", ";
     }
 
     SgClassDefinition *classDefinition = isSgClassDefinition(astJavaScopeStack.top());
-    ROSE_ASSERT(classDefinition != NULL); // we must be inside a class scope
+    ROSE_ASSERT(classDefinition != NULL  && (! classDefinition -> attributeExists("namespace"))); // we must be inside a class scope
 
     //
     // NOTE that we left the arguments and the return type on the Component stack.  They will be processed
     // by this function call. 
     //
-    SgMemberFunctionDeclaration *functionDeclaration = buildDefiningMemberFunction(name, classDefinition, numberOfArguments);
+    SgMemberFunctionDeclaration *function_declaration = lookupMemberFunctionDeclarationInClassScope(classDefinition, name, numberOfArguments); // buildDefiningMemberFunction(name, classDefinition, numberOfArguments);
+    ROSE_ASSERT(function_declaration);
+
+    SgFunctionDefinition *function_definition = function_declaration -> get_definition();
+    ROSE_ASSERT(function_definition != NULL);
 
     ROSE_ASSERT(numberOfTypeParameters == 0); // TODO: pop and process the Type Parameters.
 
-    setJavaSourcePosition(functionDeclaration, env, jToken);
-
-    SgFunctionDefinition *functionDefinition = functionDeclaration -> get_definition();
-    ROSE_ASSERT(functionDefinition != NULL);
-
-    setJavaSourcePosition(functionDefinition, env, jToken);
-
-    astJavaScopeStack.push(functionDefinition);
+    astJavaScopeStack.push(function_definition);
     ROSE_ASSERT(astJavaScopeStack.top() -> get_parent() != NULL);
 
-    ROSE_ASSERT(functionDefinition -> get_body() != NULL);
-    astJavaScopeStack.push(functionDefinition -> get_body());
+    ROSE_ASSERT(function_definition -> get_body() != NULL);
+    astJavaScopeStack.push(function_definition -> get_body());
     ROSE_ASSERT(astJavaScopeStack.top() -> get_parent() != NULL);
 
-    setJavaSourcePosition(functionDefinition -> get_body(), env, jToken);
+    setJavaSourcePosition(function_definition -> get_body(), env, jToken);
+
+    if (exceptions.size()) {
+        function_declaration -> setAttribute("exception", new AstRegExAttribute(exceptions));
+    }
 
     // Since this is a constructor, set it explicitly as such.
-    functionDeclaration -> get_specialFunctionModifier().setConstructor();
+    function_declaration -> get_specialFunctionModifier().setConstructor();
 
     // Set the Java specific modifiers
     if (is_native) {
-        functionDeclaration -> get_functionModifier().setJavaNative();
+        function_declaration -> get_functionModifier().setJavaNative();
     }
+
+    SgMemberFunctionDeclaration *nondefining_function_declaration = isSgMemberFunctionDeclaration(function_declaration -> get_firstNondefiningDeclaration());
+    ROSE_ASSERT(nondefining_function_declaration);
+    nondefining_function_declaration -> get_declarationModifier().get_accessModifier().set_modifier(function_declaration -> get_declarationModifier().get_accessModifier().get_modifier());
 }
 
 
@@ -444,7 +1012,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationEnd(JNIEnv *
     for (int i = 0; i  < numberOfStatements; i++) {
         SgStatement *statement = astJavaComponentStack.popStatement();
         if (SgProject::get_verbose() > 2) {
-            cerr << "Adding statement "
+            cerr << "(4) Adding statement "
                  << statement -> class_name()
                  << " to a constructor declaration block"
                  << endl;
@@ -453,11 +1021,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationEnd(JNIEnv *
         constructor_body -> prepend_statement(statement);
     }
 
-    SgFunctionDefinition *memberFunctionDefinition = astJavaScopeStack.popFunctionDefinition();
-    ROSE_ASSERT(memberFunctionDefinition -> get_declaration() != NULL);
-    SgMemberFunctionDeclaration *memberFunctionDeclaration = isSgMemberFunctionDeclaration(memberFunctionDefinition -> get_declaration());
-    ROSE_ASSERT(memberFunctionDeclaration != NULL);
-    astJavaComponentStack.push(memberFunctionDeclaration);
+    /* SgFunctionDefinition *memberFunctionDefinition = */ 
+    astJavaScopeStack.popFunctionDefinition();
 }
 
 
@@ -474,6 +1039,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCallEnd(JNIEnv 
                                                                          jboolean java_is_implicit_super,
                                                                          jboolean java_is_super,
                                                                          jboolean java_has_qualification,
+                                                                         jint java_number_of_parameters,
                                                                          jint java_number_of_type_arguments,
                                                                          jint java_number_of_arguments,
                                                                          jobject jToken) {
@@ -484,26 +1050,20 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCallEnd(JNIEnv 
     bool is_implicit_super = java_is_implicit_super;
     bool is_super = java_is_super;
     bool has_qualification = java_has_qualification;
-    int  number_of_type_arguments = java_number_of_type_arguments;
-    int  number_of_arguments = java_number_of_arguments;
+    int number_of_parameters = java_number_of_parameters;
+    int number_of_type_arguments = java_number_of_type_arguments;
+    int number_of_arguments = java_number_of_arguments;
 
-    list<SgExpression *> arguments;
-    for (int i = 0; i < number_of_arguments; i++) {
-        arguments.push_front(astJavaComponentStack.popExpression());
-    }
-
-    list<SgType *> type_arguments;
-    for (int i = 0; i < number_of_type_arguments; i++) {
-        type_arguments.push_front(astJavaComponentStack.popType());
-    }
-    ROSE_ASSERT(number_of_type_arguments == 0);
+    ROSE_ASSERT(number_of_type_arguments == 0 && "! yet support type arguments");
 
     SgExpression *qualification = (has_qualification ? astJavaComponentStack.popExpression() : NULL);
 
     //
     //
     //
-    SgClassDefinition *class_definition = getCurrentClassDefinition();
+    SgClassDefinition *class_definition = getCurrentTypeDefinition();
+    ROSE_ASSERT(! class_definition -> attributeExists("namespace"));
+
     if (qualification != NULL) {
         SgClassType *class_type = isSgClassType(qualification -> get_type());
         ROSE_ASSERT(class_type);
@@ -511,56 +1071,57 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCallEnd(JNIEnv 
         SgDeclarationStatement *declaration = class_type -> get_declaration() -> get_definingDeclaration();
         SgClassDeclaration *class_declaration = (SgClassDeclaration *) declaration;
         class_definition = isSgClassDefinition(class_declaration -> get_definition());
-        ROSE_ASSERT(class_definition);
+        ROSE_ASSERT(class_definition  && (! class_definition -> attributeExists("namespace")));
     }
 
     if (is_super) {
         vector<SgBaseClass *> &inheritances = class_definition -> get_inheritances();
-        if (inheritances.size() > 0 && (! inheritances[0] -> get_base_class() -> get_explicit_interface())) {
-            class_definition = inheritances[0] -> get_base_class() -> get_definition(); // get the super class definition
+        if (inheritances.size() == 0 || inheritances[0] -> get_base_class() -> get_explicit_interface()) { // no super class specified?
+            class_definition = ::ObjectClassDefinition;
         }
         else {
-            class_definition = ::ObjectClassDefinition;
+            class_definition = inheritances[0] -> get_base_class() -> get_definition(); // get the super class definition
         }
     }
 
     SgClassSymbol *class_symbol = isSgClassSymbol(class_definition -> get_declaration() -> search_for_symbol_from_symbol_table());
     ROSE_ASSERT(class_symbol != NULL);
-
     SgName name = class_definition -> get_declaration() -> get_name();
-    SgFunctionSymbol *function_symbol = class_definition -> lookup_function_symbol(name);
-    if (function_symbol == NULL) { // TODO: REMOVE THIS !!!  It's a patch that's needed because classes are not PRE-PROCESSED!!!
-        astJavaComponentStack.push(SgTypeVoid::createType()); // push a dummy void return type for the function below.
-        SgMemberFunctionDeclaration *function_declaration = buildDefiningMemberFunction(name, class_definition, 0); // TODO: Assume no ARGUMENT!!!  Temporary patch!!! Should go away !!!
-        ROSE_ASSERT(function_declaration != NULL);
-        function_symbol = class_definition -> lookup_function_symbol(name);
-        ROSE_ASSERT(function_symbol != NULL);
+
+    //
+    // The astJavaComponentStack has all of the types of the parameters of the function being called. Note that
+    // it is necessary to use the original types of the formal parameters of the function in order to find the
+    // perfect match for the function.
+    //
+    list<SgType *> parameter_types;
+    for (int i = 0; i < number_of_parameters; i++) { // reverse the arguments' order
+        SgType *type = astJavaComponentStack.popType();
+        parameter_types.push_front(type);
     }
+
+    SgMemberFunctionSymbol *function_symbol = findFunctionSymbolInClass(class_definition, name, parameter_types);
     ROSE_ASSERT(function_symbol);
-    SgExprListExp *parameters = NULL;
-    SgFunctionCallExp *function_call_exp = SageBuilder::buildFunctionCallExp(function_symbol, parameters);
-    //
-    //
-    //
-    while (! arguments.empty()) {
-        function_call_exp -> append_arg(arguments.front());
-        arguments.pop_front();
+
+    // The astJavaComponentStack has all of the arguments to the function call.
+    SgExprListExp *arguments = new SgExprListExp();
+    for (int i = 0; i < number_of_arguments; i++) { // reverse the arguments' order
+        SgExpression *expr = astJavaComponentStack.popExpression();
+        arguments -> prepend_expression(expr);
     }
-
-    function_call_exp -> setAttribute("<init>", new AstRegExAttribute(is_implicit_super || is_super ? "super" : "this"));
-
+    setJavaSourcePosition(arguments, env, jToken);
+    SgFunctionCallExp *function_call_exp = SageBuilder::buildFunctionCallExp(function_symbol, arguments);
     setJavaSourcePosition(function_call_exp, env, jToken);
+    function_call_exp -> setAttribute("<init>", new AstRegExAttribute(is_super ? "super" : "this"));
 
     SgExpression *expr_for_function = function_call_exp;
     if (qualification != NULL) {
         expr_for_function = SageBuilder::buildBinaryExpression<SgDotExp>(qualification, expr_for_function);
+        setJavaSourcePosition(expr_for_function, env, jToken);
     }
 
     SgExprStatement *expression_statement = SageBuilder::buildExprStatement(expr_for_function);
-    ROSE_ASSERT(expression_statement != NULL);
-
-    setJavaSourcePosition(expr_for_function, env, jToken);
     setJavaSourcePosition(expression_statement, env, jToken);
+    ROSE_ASSERT(expression_statement != NULL);
 
     // DQ (7/31/2011): This should be left on the stack instead of being added to the current scope before the end of the scope.
     // printf ("Previously calling appendStatement in cactionExplicitConstructorCallEnd() \n");
@@ -613,29 +1174,31 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationHeader(JNIEnv *en
     //
     // TODO:
     //
+    string exceptions = "";
     for (int i = 0; i < numberOfThrownExceptions; i++) { // Pop the Thrown types
         SgType *type = astJavaComponentStack.popType();
-        // TODO: Do something with this Thrown type !!!
-        ROSE_ASSERT(isSgClassType(type));
+        SgClassType *class_type = isSgClassType(type);
+        ROSE_ASSERT(class_type);
+
+        string throw_name = getFullyQualifiedTypeName(class_type);
+
+        exceptions += throw_name;
+
+        if (i < numberOfThrownExceptions - 1)
+            exceptions += ", ";
     }
 
     SgClassDefinition *classDefinition = isSgClassDefinition(astJavaScopeStack.top());
-    ROSE_ASSERT(classDefinition != NULL);
+    ROSE_ASSERT(classDefinition != NULL  && (! classDefinition -> attributeExists("namespace")));
 
     //
     // NOTE that we left the arguments and the return type on the Component stack.  They will be processed
     // by this function call. 
     //
-    SgMemberFunctionDeclaration *functionDeclaration = buildDefiningMemberFunction(name, classDefinition, numberOfArguments);
+    SgMemberFunctionDeclaration *functionDeclaration = lookupMemberFunctionDeclarationInClassScope(classDefinition, name, numberOfArguments); // buildDefiningMemberFunction(name, classDefinition, numberOfArguments);
     ROSE_ASSERT(functionDeclaration != NULL);
-
-    setJavaSourcePosition(functionDeclaration, env, jToken);
-
-    // This is not a defining function declaration so we can't identify the SgFunctionDefinition and push it's body onto the astJavaScopeStack.
     SgFunctionDefinition *functionDefinition = functionDeclaration -> get_definition();
     ROSE_ASSERT(functionDefinition != NULL);
-
-    setJavaSourcePosition(functionDefinition, env, jToken);
 
     astJavaScopeStack.push(functionDefinition);
     ROSE_ASSERT(astJavaScopeStack.top() -> get_parent() != NULL);
@@ -645,6 +1208,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationHeader(JNIEnv *en
     ROSE_ASSERT(astJavaScopeStack.top() -> get_parent() != NULL);
 
     setJavaSourcePosition(functionDefinition -> get_body(), env, jToken);
+
+    if (exceptions.size()) {
+        functionDeclaration -> setAttribute("exception", new AstRegExAttribute(exceptions));
+    }
+
+    // By default, the access modifier is set to unknown
+    functionDeclaration -> get_declarationModifier().get_accessModifier().set_modifier(SgAccessModifier::e_unknown);
 
     // Set the Java specific modifiers
     if (isAbstract) {
@@ -701,7 +1271,25 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationHeader(JNIEnv *en
         functionDeclaration -> get_functionModifier().setJavaStrictfp();
     }
 
-    astJavaComponentStack.push(functionDeclaration);
+    SgMemberFunctionDeclaration *nondefining_function_declaration = isSgMemberFunctionDeclaration(functionDeclaration -> get_firstNondefiningDeclaration());
+    ROSE_ASSERT(nondefining_function_declaration);
+/*
+if (functionDeclaration -> get_declarationModifier().get_accessModifier().get_modifier() != nondefining_function_declaration -> get_declarationModifier().get_accessModifier().get_modifier()) {
+cout << "(2) Access modifiers of function "
+     << functionDeclaration -> get_qualified_name()
+     << " differ."
+     << endl;
+cout.flush();
+}
+else {
+cout << "(2) Access modifiers of function "
+     << functionDeclaration -> get_qualified_name()
+     << " are the same."
+     << endl;
+cout.flush();
+}
+*/
+    nondefining_function_declaration -> get_declarationModifier().get_accessModifier().set_modifier(functionDeclaration -> get_declarationModifier().get_accessModifier().get_modifier());
 }
 
 
@@ -721,7 +1309,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd(JNIEnv *env, 
     for (int i = 0; i < numberOfStatements; i++) {
          SgStatement *statement = astJavaComponentStack.popStatement();
          if (SgProject::get_verbose() > 2) {
-             cerr << "Adding statement "
+             cerr << "(5) Adding statement "
                   << statement -> class_name()
                   << " to a method declaration block"
                   << endl;
@@ -730,91 +1318,92 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd(JNIEnv *env, 
         method_body -> prepend_statement(statement);
     }
 
-    SgFunctionDefinition *memberFunctionDefinition = astJavaScopeStack.popFunctionDefinition();
-
-    ROSE_ASSERT(isSgMemberFunctionDeclaration(astJavaComponentStack.top()));
+    /* SgFunctionDefinition *memberFunctionDefinition = */
+    astJavaScopeStack.popFunctionDefinition();
 }
 
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionTypeReference(JNIEnv *env, jclass, jstring java_type_name, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameterReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jstring java_type_parameter_name, jobject jToken) {
     if (SgProject::get_verbose() > 0)
-        printf ("Build a type \n");
+        printf ("Inside cactionTypeParameterReference\n");
 
-    SgName type_name = convertJavaStringToCxxString(env, java_type_name);
-
-    SgType *type = NULL;
-
-    if (type_name == "boolean") {
-        // This is a logical true/false value (it's bit widths in implementation dependent.
-        type = SgTypeBool::createType();
-    }
-    else if (type_name == "byte") {
-        // DQ (4/3/2011): In Java the type "byte" is signed!
-        // Reference: http://www.javamex.com/java_equivalents/unsigned.shtml
-        type = SgTypeSignedChar::createType();
-    }
-    else if (type_name == "char") {
-        // In Java, all integers are signed, except for "char". However a "char" is 2 byte unicode so it might be better for it to be SgTypeWchar.
-        type = SgTypeWchar::createType();
-    }
-    else if (type_name == "int") {
-        // This should be a 32-bit type, but ROSE does not specify the bit length explictly (we could us 32-bit field widths, I suppose).
-        type = SgTypeInt::createType();
-    }
-    else if (type_name == "short") {
-        // This is a 2 byte signed type.
-        type = SgTypeShort::createType();
-    }
-    else if (type_name == "float") {
-        // This is a 4 byte floating point type.
-        type = SgTypeFloat::createType();
-    }
-    else if (type_name == "long") {
-        // This is a 8 byte signed type.
-        type = SgTypeLong::createType();
-    }
-    else if (type_name == "double") {
-        // This is an 8 byte floating point type.
-        type = SgTypeDouble::createType();
-    }
-    else if (type_name == "void") {
-        // DQ (4/5/2011): Added support for "void" type (also used as return type fo constructors).
-        // This is the same sort of void type as in C/C++.
-        type = SgTypeVoid::createType();
-    }
-    else {
-        type_name = processNameOfRawType(type_name);
-        type = lookupTypeFromQualifiedName(type_name);
-        ROSE_ASSERT(type != NULL);
-    }
+    SgName package_name = convertJavaPackageNameToCxxString(env, java_package_name),
+           type_name = convertJavaStringToCxxString(env, java_type_name),
+           type_parameter_name = convertJavaStringToCxxString(env, java_type_parameter_name);
+    SgType *enclosing_type = lookupTypeByName(package_name, type_name, 0 /* not an array - number of dimensions is 0 */);
+    ROSE_ASSERT(enclosing_type);
+// TODO: Remove this !!!
+/*
+cout << "Looking for type parameter "
+<< type_parameter_name.getString()
+<< " in "
+<< getTypeName(enclosing_type)
+<< endl;
+cout.flush();
+*/
+    SgClassDeclaration *class_declaration = isSgClassDeclaration(enclosing_type -> getAssociatedDeclaration() -> get_definingDeclaration());
+    ROSE_ASSERT(class_declaration);
+    SgClassDefinition *class_definition = class_declaration -> get_definition();
+    ROSE_ASSERT(class_definition);
+    SgClassSymbol *class_symbol = lookupSimpleNameTypeInClass(type_parameter_name, class_definition);
+    ROSE_ASSERT(class_symbol);
+    SgType *type = class_symbol -> get_type();
+    ROSE_ASSERT(type && type -> attributeExists("is_parameter_type"));
 
     astJavaComponentStack.push(type);
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Exiting cactionTypeParameterReference\n");
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArgument(JNIEnv *env, jclass, jstring java_argument_name, jboolean java_is_catch_argument, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionTypeReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jobject jToken) {
+    if (SgProject::get_verbose() > 0)
+        printf ("Inside cactionTypeReference\n");
+
+    SgName package_name = convertJavaPackageNameToCxxString(env, java_package_name),
+           type_name = convertJavaStringToCxxString(env, java_type_name);
+
+    SgType *type = lookupTypeByName(package_name, type_name, 0 /* not an array - number of dimensions is 0 */);
+    ROSE_ASSERT(type != NULL);
+
+    astJavaComponentStack.push(type);
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Exiting cactionTypeReference\n");
+}
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionCatchArgument(JNIEnv *env, jclass, jstring java_argument_name, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Build a function argument \n");
 
     SgName argument_name = convertJavaStringToCxxString(env, java_argument_name);
-    bool is_catch_argument = java_is_catch_argument;
 
-    if (is_catch_argument) {
-        SgCatchOptionStmt *catch_option_stmt = SageBuilder::buildCatchOptionStmt();
-        ROSE_ASSERT(catch_option_stmt != NULL);
-        setJavaSourcePosition(catch_option_stmt, env, jToken);
-        catch_option_stmt -> set_parent(astJavaScopeStack.top());
-        astJavaScopeStack.push(catch_option_stmt);
-    }
+    SgCatchOptionStmt *catch_option_stmt = SageBuilder::buildCatchOptionStmt();
+    ROSE_ASSERT(catch_option_stmt != NULL);
+    setJavaSourcePosition(catch_option_stmt, env, jToken);
+    catch_option_stmt -> set_parent(astJavaScopeStack.top());
+    astJavaScopeStack.push(catch_option_stmt);
 }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArgumentEnd(JNIEnv *env, jclass, jstring java_argument_name, jboolean java_is_catch_argument, jobject jToken) {
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionArgument(JNIEnv *env, jclass, jstring java_argument_name, jobject jToken) {
+    if (SgProject::get_verbose() > 0)
+        printf ("Build a function argument \n");
+
+    // TODO: Do Nothing ... At some point, this function should be removed!!!
+}
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionCatchArgumentEnd(JNIEnv *env, jclass, jstring java_argument_name, jboolean java_is_final, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Build a function argument \n");
 
     SgName argument_name = convertJavaStringToCxxString(env, java_argument_name);
-    bool is_catch_argument = java_is_catch_argument;
+
+    bool is_final = java_is_final;
 
     if (SgProject::get_verbose() > 0)
         printf ("argument argument_name = %s \n", argument_name.str());
@@ -826,97 +1415,54 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArgumentEnd(JNIEnv *env, jclass, j
     // Create a variable declaration for the Catch Block parameter ... Make sure that it is inserted
     // in the proper scope.
     //
-    if (is_catch_argument) {
-        SgCatchOptionStmt *catch_option_stmt = isSgCatchOptionStmt(astJavaScopeStack.top());
-        ROSE_ASSERT(catch_option_stmt);
-        SgVariableDeclaration *variable_declaration = SageBuilder::buildVariableDeclaration(argument_name, argument_type, NULL, catch_option_stmt);
-        setJavaSourcePosition(variable_declaration, env, jToken);
-    
-        catch_option_stmt -> set_condition(variable_declaration);
-        variable_declaration -> set_parent(catch_option_stmt);
-    }
-    else {
-        // Until we attached this to the AST, this will generate an error in the AST consistancy tests.
-        SgInitializedName *initializedName = SageBuilder::buildInitializedName(argument_name, argument_type, NULL);
-        ROSE_ASSERT(initializedName != NULL);
+    SgCatchOptionStmt *catch_option_stmt = isSgCatchOptionStmt(astJavaScopeStack.top());
+    ROSE_ASSERT(catch_option_stmt);
+    SgVariableDeclaration *variable_declaration = SageBuilder::buildVariableDeclaration(argument_name, argument_type, NULL, catch_option_stmt);
+    setJavaSourcePosition(variable_declaration, env, jToken);
 
-        setJavaSourcePosition(initializedName, env, jToken);
-
-        //
-        // DQ (4/6/2011): Instead of assuming there is a function declaration available, we 
-        // want to put each SgInitializedName onto the stack so that they can be assembled
-        // into the parameter list as part of building the function declaration afterwards.
-        // This also allows for the function type to be computed from the function
-        // parameter list (the types match the types on the function parameters) and
-        // then the SgFunctionSymbol can be computed and inserted into the function 
-        // declaration's scope (current scope) as part of building the function declaration.
-        //
-        astJavaComponentStack.push(initializedName);
-    }
+    catch_option_stmt -> set_condition(variable_declaration);
+    variable_declaration -> set_parent(catch_option_stmt);
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReference(JNIEnv *env, jclass, jstring java_type_name, jint java_number_of_dimensions, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionArgumentEnd(JNIEnv *env, jclass, jstring java_argument_name, jboolean java_is_final, jobject jToken) {
+    if (SgProject::get_verbose() > 0)
+        printf ("Build a function argument \n");
+    // TODO: Do nothing ... At some point, this function should be removed!!!
+}
+
+
+/*
+JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jint java_number_of_dimensions, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Build a array type \n");
 
-    SgName type_name = convertJavaStringToCxxString(env, java_type_name);
+    SgName package_name = convertJavaPackageNameToCxxString(env, java_package_name),
+           type_name = convertJavaStringToCxxString(env, java_type_name);
     int number_of_dimensions = java_number_of_dimensions;
 
-    SgType *type = NULL;
+    SgType *array_type = lookupTypeByName(package_name, type_name, number_of_dimensions);
+    ROSE_ASSERT(array_type);
 
-    if (type_name == "boolean") {
-        // This is a logical true/false value (it's bit widths in implementation dependent.
-        type = SgTypeBool::createType();
-    }
-    else if (type_name == "byte") {
-        // DQ (4/3/2011): In Java the type "byte" is signed!
-        // Reference: http://www.javamex.com/java_equivalents/unsigned.shtml
-        type = SgTypeSignedChar::createType();
-    }
-    else if (type_name == "char") {
-        // In Java, all integers are signed, except for "char". However a "char" is 2 byte unicode so it might be better for it to be SgTypeWchar.
-        type = SgTypeWchar::createType();
-    }
-    else if (type_name == "int") {
-        // This should be a 32-bit type, but ROSE does not specify the bit length explictly (we could us 32-bit field widths, I suppose).
-        type = SgTypeInt::createType();
-    }
-    else if (type_name == "short") {
-        // This is a 2 byte signed type.
-        type = SgTypeShort::createType();
-    }
-    else if (type_name == "float") {
-        // This is a 4 byte floating point type.
-        type = SgTypeFloat::createType();
-    }
-    else if (type_name == "long") {
-        // This is a 8 byte signed type.
-        type = SgTypeLong::createType();
-    }
-    else if (type_name == "double") {
-        // This is an 8 byte floating point type.
-        type = SgTypeDouble::createType();
-    }
-    else if (type_name == "void") {
-        // DQ (4/5/2011): Added support for "void" type (also used as return type fo constructors).
-        // This is the same sort of void type as in C/C++.
-        type = SgTypeVoid::createType();
-    }
-    else {
-        type = lookupTypeFromQualifiedName(type_name);
-        ROSE_ASSERT(type != NULL);
-    }
-
-    //
-    // charles4:  TODO - Allocate a nest of number_of_dimensions arrays?
-    // An Java array is a (parameterized?) class that contains a length field.
-    // TODO: implement the right class with the length field.
-    //
-    SgArrayType *array_type = SageBuilder::buildArrayType(type);
-    array_type -> set_rank(number_of_dimensions);
     astJavaComponentStack.push(array_type);
 }
+*/
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReference(JNIEnv *env, jclass, jint java_num_dimensions, jobject jToken) {
+    if (SgProject::get_verbose() > 0)
+        printf ("Build a array type \n");
+
+    int num_dimensions = java_num_dimensions;
+    ROSE_ASSERT(num_dimensions > 0);
+    SgType *base_type = astJavaComponentStack.popType();
+    ROSE_ASSERT(base_type);
+    SgType *array_type = getUniquePointerType(base_type, num_dimensions);
+    ROSE_ASSERT(array_type);
+
+    astJavaComponentStack.push(array_type);
+}
+
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReferenceEnd(JNIEnv *env, jclass, jstring java_name, jobject jToken) {
     if (SgProject::get_verbose() > 0)
@@ -925,259 +1471,178 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReferenceEnd(JNIEnv *env,
     // Nothing to do !!!
 }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend(JNIEnv *env, jclass, jstring functionName, jstring associatedClassName, jobject jToken) {
-    if (SgProject::get_verbose() > 1)
-        printf ("Build a member function call (message send) \n");
+JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jstring java_function_name, jobject jToken) {
+    if (SgProject::get_verbose() > 0)
+        printf ("Build a function call (Message Send) \n");
 
-    // Should this be a SgBasicBlock or just a SgScopeStatement?
-    SgName name      = convertJavaStringToCxxString(env, functionName);
-    SgName className = convertJavaStringToCxxString(env, associatedClassName);
-
-    // For Java 1.5 and greater we need to process raw type names to remove the "#RAW" suffix.
-    className = processNameOfRawType(className);
-
-    string classNameString = className;
-
-    if (SgProject::get_verbose() > 1)
-        printf ("building function call: name = %s from class name = %s \n", name.str(), className.str());
-
-    // DQ (8/20/2011): Detect if this is a #RAW type (should have been processed to be "java.lang.<class name>".
-    ROSE_ASSERT(classNameString.length() < 4 || classNameString.find("#RAW", classNameString.length() - 4) == string::npos);
-
-    // Refactored this code to "lookupSymbolFromQualifiedName()" so it could be used to generate class types.
-    SgClassSymbol *targetClassSymbol = lookupSymbolFromQualifiedName(className);
-
-    // ROSE_ASSERT(targetClassSymbol != NULL);
-
-    SgClassDefinition *targetClassScope = NULL;
-    if (targetClassSymbol == NULL) {
-        // This case can happen when in debugging mode where we artifically limit the number of implicit 
-        // classes built and so some classes are not available.  We want to have defaults for this mode 
-        // as a way of limiting the complexity of problems as they are debugged.
-
-        // printf ("Build a SgTypeInt in the stack since the class was not built (debugging mode): name = %s\n", name.str());
-
-        // This is not correct, but it allows me to move on and debug other work for now.
-        // What this means is that functions from classes that we don't have available will not be resolved as function call expressions.
-        printf ("ERROR: we can't find the targetClassScope for className = %s (skipping building this function call -- building int value expression for the stack instead) \n", className.str());
-        SgValueExp *dummyValueExpression = SageBuilder::buildIntVal(9999999);
-        ROSE_ASSERT(dummyValueExpression != NULL);
-        astJavaComponentStack.push(dummyValueExpression);
-
-        return;
-    }
-    else {
-        // The associated type was found (after being explicitly built, after not being found the first time)) and is pushed onto the stack.
-        // printf ("On the second search for the class = %s (after building it explicitly) it was found! \n", name.str());
-
-        SgClassDeclaration *classDeclaration = isSgClassDeclaration(targetClassSymbol -> get_declaration() -> get_definingDeclaration());
-        ROSE_ASSERT(classDeclaration != NULL);
-
-        // SgScopeStatement *targetClassScope = classDeclaration -> get_definition();
-        targetClassScope = classDeclaration -> get_definition();
-        ROSE_ASSERT(targetClassScope != NULL);
-    }
-    ROSE_ASSERT(targetClassScope != NULL);
-
-    if (SgProject::get_verbose() > 1)
-        printf ("Looking for the function = %s in class parent scope = %p = %s \n", name.str(), targetClassScope, targetClassScope -> class_name().c_str());
-
-    SgFunctionSymbol *functionSymbol = targetClassScope -> lookup_function_symbol(name);
-    // ROSE_ASSERT(functionSymbol != NULL);
-    if (functionSymbol == NULL) {
-        astJavaComponentStack.push(SgTypeVoid::createType()); // push a dummy void return type for the function below.
-        SgMemberFunctionDeclaration *functionDeclaration = buildDefiningMemberFunction(name, targetClassScope, 0); // TODO: Assume no ARGUMENT!!!  Temporary patch!!! Should go away !!!
-        ROSE_ASSERT(functionDeclaration != NULL);
-        functionSymbol = targetClassScope -> lookup_function_symbol(name);
-        ROSE_ASSERT(functionSymbol != NULL);
-    }
-
-    // printf ("FOUND function symbol = %p \n", functionSymbol);
-
-    // This is OK for now, but might not be good enough for a non-statement function call expression (not clear yet in ECJ AST).
-    SgExprListExp *parameters = NULL;
-
-    SgFunctionCallExp *func_call_expr = SageBuilder::buildFunctionCallExp(functionSymbol, parameters);
-
-    setJavaSourcePosition(func_call_expr, env, jToken);
-
-    // Push the expression onto the stack so that the cactionMessageSendEnd can find it 
-    // and any function arguments and add the arguments to the function call expression.
-    astJavaComponentStack.push(func_call_expr);
+    // Do Nothing on the way down !!!
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd(JNIEnv *env, jclass, jint numTypeArguments, jint numArguments, jboolean java_is_static, jobject jToken) {
-    // Unclear if this should be a function call statement or a function call expression.
-    // When it is a statement there does not appear to be any thing to provide a clue 
-    // about this, so we will assume it is a statement and do more testing.
-
+JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd(JNIEnv *env, jclass, 
+                                                             jboolean java_is_static,
+                                                             jboolean java_has_receiver,
+                                                             jstring java_function_name,
+                                                             jint java_number_of_parameters,
+                                                             jint numTypeArguments,
+                                                             jint numArguments,
+                                                             jobject jToken) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionMessageSendEnd() \n");
 
-    //
-    // TODO: Remove this ... when a preprocessing pass is used to construct the symbol
-    // table properly.
-    //
-    bool is_static = java_is_static;
+    bool is_static = java_is_static,
+         has_receiver = java_has_receiver;
 
-    // The astJavaExpressionStack has all of the arguments to the function call.
-    list<SgExpression*> arguments;
-    for (int i = 0; i < numArguments; i++) {
-        arguments.push_front(astJavaComponentStack.popExpression());
+    SgName function_name  = convertJavaStringToCxxString(env, java_function_name);
+    int num_parameters = java_number_of_parameters;
+
+    //
+    // TODO: Since array types are not properly represented as class types but as (C++) pointer types,
+    // when an array type is used to call a function, we have to substitute the Object class for the
+    // array type in question as the Object type is its (only) super type and contains all the method
+    // that is invokable from an array.
+    //
+    SgType *containing_type = astJavaComponentStack.popType();
+    if (isSgPointerType(containing_type)) { // is this type an array type?
+        containing_type = ::ObjectClassType;
+    }
+    else if (isSgJavaWildcardType(containing_type)) { // is this type a wildcard type?
+        SgJavaWildcardType *wildcard_type = isSgJavaWildcardType(containing_type);
+        if (wildcard_type -> get_is_unbound()) {
+            containing_type = ::ObjectClassType;
+        }
+        else if (wildcard_type -> get_has_extends()) {
+            containing_type = wildcard_type -> get_bound_type();
+        }
+        else {
+            ROSE_ASSERT(false && "! yet support wildcard with super bound");
+        }
     }
 
-    //
-    // charles4: 11/08/2011 - Note that ECJ always adds a "receiver" as the first argument
-    // in a function call.  This receiver is an expression (or type ?) that indicates the instance that
-    // is associated with the function to be invoked. 
-    //
-    SgNode *receiver = astJavaComponentStack.pop();
+    SgClassDeclaration *class_declaration = isSgClassDeclaration(containing_type -> getAssociatedDeclaration() -> get_definingDeclaration());
+    ROSE_ASSERT(class_declaration);
+    SgClassDefinition *targetClassScope = class_declaration -> get_definition();
+    ROSE_ASSERT(targetClassScope != NULL && (! targetClassScope -> attributeExists("namespace")));
 
-    ROSE_ASSERT(isSgFunctionCallExp(astJavaComponentStack.top()));
-    SgFunctionCallExp *functionCallExp = isSgFunctionCallExp(astJavaComponentStack.popExpression());
-
-    // DQ (7/18/2011): Some of these entries in "arguments" from the stack are arguments 
-    // and some are associated with the object whose member function is being called.
-    // SgExpression *functionRefExp = functionCallExp -> get_function();
-    // SgFunctionRefExp *functionRefExp = isSgFunctionRefExp(functionCallExp -> get_function());
-    SgMemberFunctionRefExp *functionRefExp = isSgMemberFunctionRefExp(functionCallExp -> get_function());
-    ROSE_ASSERT(functionRefExp != NULL);
-    // printf ("functionRefExp from functionCallExp = %p = %s \n", functionRefExp, functionRefExp -> class_name().c_str());
-
-    setJavaSourcePosition(functionRefExp, env, jToken);
-
-    SgSymbol *symbol = functionRefExp -> get_symbol();
-    ROSE_ASSERT(symbol != NULL);
-    // printf ("symbol from functionRefExp = %p = %s \n", symbol, symbol -> class_name().c_str());
-    SgMemberFunctionSymbol *functionSymbol = isSgMemberFunctionSymbol(symbol);
-    ROSE_ASSERT(functionSymbol != NULL);
-
-    SgMemberFunctionDeclaration *functionDeclaration = functionSymbol -> get_declaration();
-    ROSE_ASSERT(functionDeclaration != NULL);
+// TODO: Remove this !!!
+/*
+    SgType *return_type = astJavaComponentStack.popType(); // The return type of the function
+    ROSE_ASSERT(return_type);
+*/
 
     //
+    // The astJavaComponentStack has all of the types of the parameters of the function being called. Note that
+    // it is necessary to use the original types of the formal parameters of the function in order to find the
+    // perfect match for the function.
     //
-    //
-    while (! arguments.empty()) {
-        functionCallExp -> append_arg(arguments.front());
-        arguments.pop_front();
+    list<SgType *> function_parameter_types;
+    for (int i = 0; i < num_parameters; i++) { // reverse the arguments' order
+        SgType *type = astJavaComponentStack.popType();
+        function_parameter_types.push_front(type);
     }
 
-    //
-    // Finalize the function by adding its "receiver" prefix.  Note that it is illegal to add a "this."
-    // prefix in front of a static method call - Hence the guard statement below. (ECJ always adds a "this."
-    // prefix in front of every function whose receiver was not specified by the user.)
-    //
-    SgExpression *exprForFunction = functionCallExp;
-    if (isSgNamedType(receiver)) { // Note that if this is true then the function must be static... See unparseJava_expression.C: unparseFucnCall
-        string className = isSgNamedType(receiver) -> get_qualified_name();
-        exprForFunction -> setAttribute("prefix", new AstRegExAttribute(className));
-    }
-    else if (! (isSgThisExp(receiver) && functionDeclaration -> get_declarationModifier().get_storageModifier().isStatic())) {
-        /**/
-        // TODO: Remove this !!!
-        if (is_static) { // TODO: Remove this when symbol table is processed correctly !!!
-                         // Currently, the check on the functionDeclaration does not work if the
-                         // function being invoked appear after the function that is calling it.
-                         // Hence, this extra check!
-            delete receiver;
-        } else
-        /**/
+// TODO: Remove this !!!
+/*
+cout << "Looking for function " 
+<< function_name
+<< " in type "
+<< targetClassScope -> get_qualified_name()
+<< " with parameter types: (";
+std::list<SgType*>::iterator i = function_parameter_types.begin();
+if (i != function_parameter_types.end()) {
+cout << getTypeName(*i);
+for (i++; i != function_parameter_types.end(); i++) {
+cout << ", " << getTypeName(*i);
+}
+}
+cout << ")"
+<< endl;
+cout.flush();
+*/
 
-        exprForFunction = SageBuilder::buildBinaryExpression<SgDotExp>((SgExpression *) receiver, exprForFunction);
+    SgMemberFunctionSymbol *function_symbol = findFunctionSymbolInClass(targetClassScope, function_name, function_parameter_types);
+    ROSE_ASSERT(function_symbol);
+    SgMemberFunctionType *function_type = isSgMemberFunctionType(function_symbol -> get_type());
+    ROSE_ASSERT(function_type);
+
+// TODO: Remove this !!!
+/*
+    //
+    // If we have an accurate return type for this function, set it !!!
+    // This occurs when the method being invoked belongs to a parameterized type.
+    // We need this temporary "zapping" so that the result of this expression will have
+    // the correct type in case it is used for further dereferencing.
+    //
+    if (function_type -> get_return_type() != return_type) {
+        function_type -> set_return_type(return_type);
+    }
+*/
+
+    // The astJavaComponentStack has all of the arguments to the function call.
+    SgExprListExp *arguments = new SgExprListExp();
+    for (int i = 0; i < numArguments; i++) { // reverse the arguments' order
+        SgExpression *expr = astJavaComponentStack.popExpression();
+        arguments -> prepend_expression(expr);
+    }
+    setJavaSourcePosition(arguments, env, jToken);
+
+    //
+    // This receiver, if present, is an expression or type that indicates the enclosing type of
+    // the function being invoked. 
+    //
+    SgNode *receiver = (has_receiver ? astJavaComponentStack.pop() : NULL);
+
+    SgFunctionCallExp *function_call_exp = SageBuilder::buildFunctionCallExp(function_symbol, arguments);
+    setJavaSourcePosition(function_call_exp, env, jToken);
+
+    SgExpression *exprForFunction = function_call_exp;
+
+    //
+    // If this function call has a receiver, finalize its invocation by adding the "receiver" prefix.  Note
+    // that it is illegal to add a "this." prefix in front of a static method call - Hence the guard statement
+    // below. (ECJ always adds a "this." prefix in front of every function whose receiver was not specified by
+    // the user.)
+    //
+    if (receiver != NULL) {
+        if (isSgNamedType(receiver)) { // Note that if this is true then the function must be static... See unparseJava_expression.C: unparseFucnCall
+            if (isSgClassType(receiver)) { // Note that if this is true then the function must be static... See unparseJava_expression.C: unparseFucnCall
+                SgClassType *type = isSgClassType(receiver);
+                string type_name = isSgNamedType(receiver) -> get_name();
+                string full_name = getFullyQualifiedTypeName(type);
+
+                string class_name = (full_name.size() == type_name.size() ? type_name : full_name.substr(0, full_name.size() - type_name.size()) + type_name);
+                exprForFunction -> setAttribute("prefix", new AstRegExAttribute(class_name));
+            }
+            else { // this can't happen!?
+                // TODO: What if the class is a parameterized type?
+                ROSE_ASSERT(false); 
+            }
+        }
+        else if (is_static && isSgThisExp(receiver) && (! receiver -> attributeExists("class"))) { // A sgThisExp receiver in front of a static function?
+            delete receiver; // Ignore the receiver!
+        }
+        else {
+            exprForFunction = SageBuilder::buildBinaryExpression<SgDotExp>((SgExpression *) receiver, exprForFunction);
+            setJavaSourcePosition(exprForFunction, env, jToken);
+
+            SgClassDefinition *current_class_definition = getCurrentTypeDefinition();
+            SgType *enclosing_type = current_class_definition -> get_declaration() -> get_type();
+            if (isSgThisExp(receiver) && (! receiver -> attributeExists("class")) && (! receiver -> attributeExists("prefix")) && (! isCompatibleTypes(containing_type, enclosing_type))) {
+                string prefix_name = (isSgClassType(containing_type)
+                                          ? getFullyQualifiedTypeName(isSgClassType(containing_type))
+                                          : isSgJavaParameterizedType(containing_type)
+                                                ? getFullyQualifiedTypeName(isSgJavaParameterizedType(containing_type))
+                                                : "");
+                ROSE_ASSERT(prefix_name.size() != 0);
+                receiver -> setAttribute("prefix", new AstRegExAttribute(prefix_name));
+            }
+        }
     }
 
     astJavaComponentStack.push(exprForFunction);
-}
 
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedNameReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_prefix, jstring java_type_name, jstring java_name, jobject jToken) {
-    if (SgProject::get_verbose() > 0)
-        printf ("Build a qualified name reference \n");
-
-    string package_name = convertJavaStringToCxxString(env, java_package_name);
-    string type_prefix = convertJavaStringToCxxString(env, java_type_prefix);
-    string type_name = convertJavaStringToCxxString(env, java_type_name);
-    string qualifiedName = convertJavaStringToCxxString(env, java_name);
-
-    // list<SgName> qualifiedNameList = generateQualifierList(qualifiedName);
-    SgClassType *class_type = NULL;
-    if (type_prefix.length() > 0) {
-        string full_name = (package_name.length() > 0 ? (package_name + ".") : "") + type_name;
-        class_type = lookupTypeFromQualifiedName(full_name);
-        ROSE_ASSERT(class_type);
-    }
-
-    if (qualifiedName.length() == 0) { // The qualified name is a Type
-        ROSE_ASSERT(type_name.length() > 0);
-        astJavaComponentStack.push(class_type);
-    }
-    else {
-        list<SgName> nameList = generateQualifierList(qualifiedName);
-        list<SgName>::iterator i = nameList.begin();
-
-        //
-        // Find the first variable and create a variable reference for it.
-        //
-        SgVariableSymbol *variable_symbol;
-        if (class_type != NULL) {
-             //
-             // Look for the class scope.
-             //
-            SgDeclarationStatement *declaration = class_type -> get_declaration() -> get_definingDeclaration();
-            SgClassDeclaration *class_declaration = (SgClassDeclaration *) declaration;
-            SgClassDefinition *definition = isSgClassDefinition(class_declaration -> get_definition());
-            ROSE_ASSERT(definition);
-            SgSymbol *symbol = lookupSimpleNameInClassScope(*i, definition);
-            ROSE_ASSERT(symbol);
-            variable_symbol = isSgVariableSymbol(symbol);
-            ROSE_ASSERT(variable_symbol);
-        }
-        else {
-            variable_symbol = lookupVariableByName(*i);
-        }
-        ROSE_ASSERT(variable_symbol);
-        SgExpression *result = SageBuilder::buildVarRefExp(variable_symbol);
-        ROSE_ASSERT(result != NULL);
-
-        setJavaSourcePosition(result, env, jToken);
-
-        //
-        // Now, process the remaining name items as the right-hand side of a DOT expression.
-        //
-        for (i++; i != nameList.end(); i++) {
-            SgType *type = result -> get_type();
-            ROSE_ASSERT(! isSgJavaParameterizedType(type));
-            if (isSgArrayType(type)) {
-                ROSE_ASSERT((*i).getString().compare("length") == 0);
-                result -> setAttribute("suffix", new AstRegExAttribute("length"));
-            }
-            else {
-                SgClassType *class_type = isSgClassType(type);
-                SgClassDeclaration *class_declaration = (SgClassDeclaration *) class_type -> get_declaration() -> get_definingDeclaration();
-                SgClassDefinition *definition = isSgClassDefinition(class_declaration -> get_definition());
-                ROSE_ASSERT(definition);
-                SgSymbol *symbol = lookupSimpleNameInClassScope(*i, definition);
-                ROSE_ASSERT(symbol);
-                variable_symbol = isSgVariableSymbol(symbol);
-                ROSE_ASSERT(variable_symbol);
-                SgVarRefExp *rhs = SageBuilder::buildVarRefExp(variable_symbol);
-                ROSE_ASSERT(rhs != NULL);
-                setJavaSourcePosition(rhs, env, jToken);
-                result = SageBuilder::buildBinaryExpression<SgDotExp>(result, rhs); // The Java "." operator is equivalent to the C++ Arrow " -> ".
-            }
-        }
-
-        //
-        // If there is a type prefix, add it here to the resulting expression
-        //
-        if (type_prefix.length() > 0) {
-            result -> setAttribute("prefix", new AstRegExAttribute(type_prefix));
-        }
-
-        astJavaComponentStack.push(result);
-    }
+    if (SgProject::get_verbose() > 2)
+        printf ("Leaving Java_JavaParser_cactionMessageSendEnd() \n");
 }
 
 
@@ -1188,354 +1653,18 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral(JNIEnv *env, jclass,
     ROSE_ASSERT(! astJavaScopeStack.empty());
 
     // string stringLiteral = "stringLiteral_abc";
-    SgName stringLiteral = convertJavaStringToCxxString(env, java_string);
+    SgName stringLiteral = convertJavaStringValToWString(env, java_string); // convertJavaStringToCxxString(env, java_string);
 
     // printf ("Building a string value expression = %s \n", stringLiteral.str());
 
-    SgStringVal *stringValue = SageBuilder::buildStringVal(stringLiteral); // new SgStringVal(stringLiteral);
+    SgStringVal *stringValue = SageBuilder::buildStringVal(stringLiteral); // new SgStringVal(stringLiteral); 
+    setJavaSourcePosition(stringValue, env, jToken);
     ROSE_ASSERT(stringValue != NULL);
 
     // Set the source code position (default values for now).
     // setJavaSourcePosition(stringValue);
-    setJavaSourcePosition(stringValue, env, jToken);
 
     astJavaComponentStack.push(stringValue);
-}
-
-
-// DQ: Note that the function signature is abby-normal...jclass instead of jobject (because they are 
-// declared "public static native" instead of "public native" in the Java side of the JNI interface.
-// JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportStart(JNIEnv *env, jclass xxx, jstring java_string, jobject jToken)
-JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportStart(JNIEnv *env, jclass xxx, jstring java_string) {
-    SgName name = convertJavaStringToCxxString(env, java_string);
-
-    if (SgProject::get_verbose() > 0)
-        printf ("Inside of Java_JavaParser_cactionBuildImplicitClassSupportStart(): build support for implicit class (start) name = %s \n", name.str());
-
-    // printf ("In Java_JavaParser_cactionBuildImplicitClassSupportStart(): Exiting as a test! \n");
-    // ROSE_ASSERT(false);
-
-    // This builds a class to represent the implicit classes that are available by default within Java.
-    // Each is built on an as needed basis (driven by references to the class).
-    buildImplicitClass(name);
-    SgClassDefinition *classDefinition = isSgClassDefinition(astJavaScopeStack.top());
-    ROSE_ASSERT(classDefinition != NULL);
-    astJavaComponentStack.push(classDefinition); // To mark the end of the list of components in this type.
-
-    // DQ (4/15/2011): This code should be refactored ...
-    SgName classNameWithQualification = name;
-    if (SgProject::get_verbose() > 0)
-        printf ("implicit class = %s \n", classNameWithQualification.str());
-
-    ROSE_ASSERT(::globalScope != NULL);
-
-    SgName classNameWithoutQualification = stripQualifiers(classNameWithQualification);
-    SgClassSymbol *classSymbol = ::globalScope -> lookup_class_symbol(classNameWithoutQualification);
-    if (classSymbol != NULL) {
-        // Nothing to do.
-        if (SgProject::get_verbose() > 0)
-            printf ("NOTHING TO DO: class = %s is already in global scope (qualified name = %s) \n", classNameWithoutQualification.str(), classNameWithQualification.str());
-    }
-    else {
-        if (SgProject::get_verbose() > 0)
-            printf ("class = %s must be placed into global scope (qualified name = %s) \n", classNameWithoutQualification.str(), classNameWithQualification.str());
-
-        classSymbol = lookupSymbolFromQualifiedName(classNameWithQualification);
-
-        ROSE_ASSERT(classSymbol != NULL);
-
-        ROSE_ASSERT(! ::globalScope -> symbol_exists(classNameWithoutQualification));
-        ROSE_ASSERT(! ::globalScope -> symbol_exists(classSymbol));
-
-        SgAliasSymbol *aliasSymbol = new SgAliasSymbol(classSymbol,/* isRenamed */ false);
-
-        if (SgProject::get_verbose() > 0)
-            printf ("Adding SgAliasSymbol for classNameWithoutQualification = %s \n", classNameWithoutQualification.str());
-
-        ::globalScope -> insert_symbol(classNameWithoutQualification, aliasSymbol);
-    }
-}
-
-// DQ: Note that the function signature is abby-normal...jclass instead of jobject (because they are 
-// declared "public static native" instead of "public native" in the Java side of the JNI interface.
-// JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd(JNIEnv *env, jclass xxx, jstring java_string, jobject jToken)
-JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd(JNIEnv *env, jclass xxx, jint java_numberOfStatements, jstring java_string) {
-    SgName name = convertJavaStringToCxxString(env, java_string);
-
-    if (SgProject::get_verbose() > 0)
-        printf ("Build support for implicit class (end) for class = %s \n", name.str());
-
-    ROSE_ASSERT(! astJavaScopeStack.empty());
-
-    // DQ (8/20/2011): This is the class that we just built implicitly
-    ROSE_ASSERT(astJavaScopeStack.top() != NULL);
-    SgClassDefinition *classDefinition = astJavaScopeStack.popClassDefinition();
-
-    // DQ (7/31/2011): Collection up all of the statements and append to the current scope.
-    // Later I would like to do this more precisely, but for now collect all statements.
-    int numberOfStatements = java_numberOfStatements;
-
-    if (SgProject::get_verbose() > 2)
-        printf ("Appending %d statments\n", numberOfStatements);
-
-    for (SgStatement *statement = astJavaComponentStack.popStatement();
-        statement != classDefinition;
-        statement = astJavaComponentStack.popStatement()) {
-        if (SgProject::get_verbose() > 2) {
-            cerr << "Adding statement "
-                 << statement -> class_name()
-                 << " to an implicit Type Declaration"
-                 << endl;
-            cerr.flush();
-        }
-        ROSE_ASSERT(statement != NULL);
-        classDefinition -> prepend_statement(statement);
-    }
-
-    // Output the list of implicit classes seen so far...
-    if (SgProject::get_verbose() > 0) {
-        printf ("astJavaImplicitClassList: \n");
-        for (list<SgName>::iterator i = astJavaImplicitClassList.begin(); i != astJavaImplicitClassList.end(); i++) {
-            printf ("   --- implicit class = %s \n",(*i).str());
-        }
-    }
-}
-
-
-// DQ: Note that the function signature is abby-normal...jclass instead of jobject (because they are 
-// declared "public static native" instead of "public native" in the Java side of the JNI interface.
-// JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitMethodSupport(JNIEnv *env, jclass xxx, jstring java_string, jobject jToken)
-JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitMethodSupport(JNIEnv *env, jclass xxx, jstring java_string, jint java_number_of_arguments) {
-    SgName name = convertJavaStringToCxxString(env, java_string);
-    int number_of_arguments = java_number_of_arguments;
-
-    if (SgProject::get_verbose() > 1)
-        printf ("Build support for implicit class member function (method) name = %s \n", name.str());
-
-    // Not sure if we want anything specific to implicit class handling to touch the astJavaScopeStack!
-    SgClassDefinition *classDefinition = isSgClassDefinition(astJavaScopeStack.top());
-    ROSE_ASSERT(classDefinition != NULL);
-
-    // DQ (3/25/2011): Changed this to a non-defining declaration.
-    // SgMemberFunctionDeclaration *functionDeclaration = buildSimpleMemberFunction(name, classDefinition);
-    SgMemberFunctionDeclaration *functionDeclaration = buildNonDefiningMemberFunction(name, classDefinition, number_of_arguments);
-    ROSE_ASSERT(functionDeclaration != NULL);
-
-    // setJavaCompilerGenerated(functionDeclaration);
-    setJavaFrontendSpecific(functionDeclaration);
-}
-
-
-// DQ: Note that the function signature is abby-normal...jclass instead of jobject (because they are 
-// declared "public static native" instead of "public native" in the Java side of the JNI interface.
-JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitFieldSupport(JNIEnv *env, jclass xxx, jstring java_string) {
-    if (SgProject::get_verbose() > 0)
-        printf ("Inside of Java_JavaParser_cactionBuildImplicitFieldSupport (variable declaration for field) \n");
-
-    SgName name = convertJavaStringToCxxString(env, java_string);
-
-    SgType *type = astJavaComponentStack.popType();
-
-    SgVariableDeclaration *variableDeclaration = SageBuilder::buildVariableDeclaration (name, type, NULL, astJavaScopeStack.top());
-    ROSE_ASSERT(variableDeclaration != NULL);
-
-    // setJavaCompilerGenerated(variableDeclaration);
-    setJavaFrontendSpecific(variableDeclaration);
-
-    ROSE_ASSERT(! astJavaScopeStack.empty());
-
-    // DQ (7/31/2011): This should be left on the stack instead of being added to the current scope before the end of the scope.
-    // printf ("Previously calling appendStatement in cactionBuildImplicitFieldSupport() \n");
-    // appendStatement(variableDeclaration);
-
-    astJavaComponentStack.push(variableDeclaration);
-
-    if (SgProject::get_verbose() > 0)
-        variableDeclaration -> get_file_info() -> display("source position in Java_JavaParser_cactionBuildImplicitFieldSupport(): debug");
-}
-
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType(JNIEnv *env, jclass xxx, jstring java_string, jint java_num_dimensions) {
-    // This is general support for building types.  Using JNI one to many calls from Java are made to C++ 
-    // with enough information to build specific types or parts of types (for aggragate types such as classes).
-    // All type information is constructed onto the stack, at the end of any recursion a single type is on
-    // the astJavaComponentStack.
-
-    if (SgProject::get_verbose() > 0)
-        printf ("Inside of Java_JavaParser_cactionGenerateType() \n");
-
-    SgName name = convertJavaStringToCxxString(env, java_string);
-
-    int number_of_dimensions = java_num_dimensions;
-    // printf ("Java_JavaParser_cactionGenerateType(): name = %s \n", name.str());
-
-    // Type details (from http://java.sun.com/docs/books/jls/second_edition/html/jTOC.doc.html):
-    // boolean
-    //    1-bit. May take on the values true and false only. true and false are defined constants of the language 
-    //    and are not the same as True and False, TRUE and FALSE, zero and nonzero, 1 and 0 or any other numeric 
-    //    value. Booleans may not be cast into any other type of variable nor may any other variable be cast into 
-    //    a boolean.
-    // byte
-    //    1 signed byte (two's complement). Covers values from -128 to 127.
-    // short
-    //    2 bytes, signed (two's complement), -32,768 to 32,767
-    // int
-    //    4 bytes, signed (two's complement). -2,147,483,648 to 2,147,483,647. Like all numeric types ints may be 
-    //    cast into other numeric types (byte, short, long, float, double). When lossy casts are done (e.g. int 
-    //    to byte) the conversion is done modulo the length of the smaller type.
-    // long
-    //    8 bytes signed (two's complement). Ranges from -9,223,372,036,854,775,808 to +9,223,372,036,854,775,807.
-    // float
-    //    4 bytes, IEEE 754. Covers a range from 1.40129846432481707e-45 to 3.40282346638528860e+38 (positive or negative).
-    //    Like all numeric types floats may be cast into other numeric types (byte, short, long, int, double). When 
-    //    lossy casts to integer types are done (e.g. float to short) the fractional part is truncated and the conversion is done modulo the length of the smaller type.
-    // double
-    //    8 bytes IEEE 754. Covers a range from 4.94065645841246544e-324d to 1.79769313486231570e+308d (positive or negative). 
-    // char
-    //    2 bytes, unsigned, Unicode, 0 to 65,535 Chars are not the same as bytes, ints, shorts or Strings.
-
-    SgType *type = NULL;
-    if (name == "boolean") {
-        // This is a logical true/false value (it's bit widths in implementation dependent.
-        type = SgTypeBool::createType();
-    }
-    else if (name == "byte") {
-        // DQ (4/3/2011): In Java the type "byte" is signed!
-        // Reference: http://www.javamex.com/java_equivalents/unsigned.shtml
-        type = SgTypeSignedChar::createType();
-    }
-    else if (name == "char") {
-        // In Java, all integers are signed, except for "char". However a "char" is 2 byte unicode so it might be better for it to be SgTypeWchar.
-        type = SgTypeWchar::createType();
-    }
-    else if (name == "int") {
-        // This should be a 32-bit type, but ROSE does not specify the bit length explictly (we could us 32-bit field widths, I suppose).
-        type = SgTypeInt::createType();
-    }
-    else if (name == "short") {
-        // This is a 2 byte signed type.
-        type = SgTypeShort::createType();
-    }
-    else if (name == "float") {
-        // This is a 4 byte floating point type.
-        type = SgTypeFloat::createType();
-    }
-    else if (name == "long") {
-        // This is a 8 byte signed type.
-        type = SgTypeLong::createType();
-    }
-    else if (name == "double") {
-        // This is an 8 byte floating point type.
-        type = SgTypeDouble::createType();
-    }
-    else if (name == "void") {
-        // DQ (4/5/2011): Added support for "void" type (also used as return type fo constructors).
-        // This is the same sort of void type as in C/C++.
-        type = SgTypeVoid::createType();
-    }
-    else if (name == "null") {
-        // There is also a special null type, the type of the expression null, which has no name. Because the null type has 
-        // no name, it is impossible to declare a variable of the null type or to cast to the null type. The null reference 
-        // is the only possible value of an expression of null type. The null reference can always be cast to any reference 
-        // type. In practice, the programmer can ignore the null type and just pretend that null is merely a special literal 
-        // that can be of any reference type.
-
-        // Within ROSE it is not yet clear if I should define a new SgType (SgTypeNull) to represent a null type.  For now it
-        // is an error to try to build such a type.
-
-        printf ("Error: SgTypeNull (Java null type) support not implemented (name = %s) \n", name.str());
-        ROSE_ASSERT(false);
-    }
-    else {
-        // DQ (8/17/2011): This should be any implicit type defined in Java (so test for the prefix "java.").
-        // else if (name == "String")
-        // else if (name == "java.lang.String")
-
-        // Strip off the suffix "#RAW" on the class name that is an artifact of Java versions 1.5 and greater???
-        name = processNameOfRawType(name);
-        string nameString = name;
-
-        // Check if the typename starts with "java."
-        if (nameString.find("java.",0) == 0) {
-            // DQ (4/9/2011): Added support for "String" type.
-            // This should maybe be a SgClassType specific to the String class, instead of using the SgTypeString for Java.
-
-            SgClassType *classType = lookupTypeFromQualifiedName(name);
-
-            // printf ("In Java_JavaParser_cactionGenerateType(): classType = %p \n", classType);
-            if (classType == NULL) {
-                // If the "String" class was not found then it is likely because we are in a debug mode which limits the number of implecit classes.
-                // printf ("Build a class for java.<class name>.<type name>: name = %s\n", name.str());
-
-                // We build the class but we need the declarations in the class.
-                buildImplicitClass(name);
-                // printf ("DONE: Build a class for java.<class name>.<type name>: name = %s\n", name.str());
-
-                // DQ (8/20/2011): The new class is on the stack, we want to get it's data members into place so that they will be available to be called.
-                // Can we call Java to force the members to be traversed?  Not clear how to do this!
-
-                //
-                // First, remove the Class Definition that was pushed into the scope stack by the
-                // function buildImplicitClass() (via the function buildClassSupport()).
-                //
-                astJavaScopeStack.popClassDefinition();
-
-                // We need to leave a SgType on the astJavaComponentStack, we need to build the class to build 
-                // the SgClassType, but we don't want to leave a SgClassDefinition on the astJavaScopeStack.
-                // printf ("When we just build a type we don't want the new class definition on the stack. \n");
-
-                SgClassType *classType = lookupTypeFromQualifiedName(name);
-                if (classType == NULL) {
-                    printf ("Build a SgTypeInt in the stack since the class was not built (debugging mode): name = %s\n", name.str());
-                    type = SgTypeInt::createType();
-                }
-                else {
-                    // The associated type was found (after being explicitly built, after not being found the first time)) and is pushed onto the stack.
-                    // printf ("On the second search for the class = %s (after building it explicitly) it was found! \n", name.str());
-                    type = classType;
-                }
-            }
-            else {
-                // The associated type was found and is pushed onto the stack.
-                type = classType;
-            }
-        }
-        else {
-            // This is the last chance to resolve the type.
-            if (SgProject::get_verbose() > 0)
-                printf ("I think this is a user defined class (so we have to look it up) (name = %s) \n", name.str());
-
-            type = lookupTypeFromQualifiedName(name);
-            ROSE_ASSERT(type != NULL);
-        }
-    }
-
-    if (number_of_dimensions > 0) {
-        SgArrayType *array_type = SageBuilder::buildArrayType(type);
-        array_type -> set_rank(number_of_dimensions);
-        type = array_type;
-    }
-}
-
-
-// JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateClassType(JNIEnv *env, jclass xxx, jstring java_string, jobject jToken)
-JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateClassType(JNIEnv *env, jclass xxx, jstring java_string) {
-    if (SgProject::get_verbose() > 0)
-        printf ("Inside of Java_JavaParser_cactionGenerateClassType() \n");
-
-    SgName name = convertJavaStringToCxxString(env, java_string);
-
-    // printf ("In Java_JavaParser_cactionGenerateClassType(): Calling lookupSymbolFromQualifiedName(name = %s) \n", name.str());
-    SgClassType *classType = lookupTypeFromQualifiedName(name);
-
-    // ROSE_ASSERT(classType != NULL);
-    if (classType != NULL) {
-        astJavaComponentStack.push(classType);
-    }
-    else {
-        printf ("WARNING: SgClassSymbol NOT FOUND in Java_JavaParser_cactionGenerateClassType(): name = %s (build an integer type and keep going...) \n", name.str());
-        astJavaComponentStack.push(SgTypeInt::createType());
-    }
 }
 
 
@@ -1547,14 +1676,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAllocationExpression(JNIEnv *env, 
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionAllocationExpressionEnd(JNIEnv *env, jclass, jstring java_string, jint java_num_arguments, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionAllocationExpressionEnd(JNIEnv *env, jclass, jboolean has_type, jint java_num_arguments, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionAllocationExpressionEnd() \n");
 
-    SgName name = convertJavaStringToCxxString(env, java_string);
     int num_arguments = java_num_arguments;
-
-    printf ("Build a new operator for type name = %s \n", name.str());
 
     list<SgExpression*> argument_list;
     for (int i = 0; i < num_arguments; i++) { // pop the arguments in reverse order
@@ -1567,7 +1693,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAllocationExpressionEnd(JNIEnv *en
         argument_list.pop_front();
     }
 
-    SgType *type = astJavaComponentStack.popType();
+//
+// TODO: What todo!? Type is null for Enum field initializer
+//
+if (! has_type) {
+  // ???
+}
+
+    SgType *type = (has_type ? astJavaComponentStack.popType() : ::ObjectClassType);
     SgConstructorInitializer *constInit = SageBuilder::buildConstructorInitializer(NULL,
                                                                                    SageBuilder::buildExprListExp(arguments),
                                                                                    type,
@@ -1576,7 +1709,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAllocationExpressionEnd(JNIEnv *en
                                                                                    false,
                                                                                    ! (isSgClassType(type)));
 
-    // TODO: I think a SgJavaParameterizedType should be a SgClassType.  Currrently, it is not!
+    // TODO: An SgJavaParameterizedType should be a SgClassType.  Currrently, it is not!
 
     // For the simple case, we only need the type as input to build SgNewExp.
     SgExprListExp *exprListExp = NULL;
@@ -1585,13 +1718,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAllocationExpressionEnd(JNIEnv *en
     SgFunctionDeclaration *funcDecl     = NULL;
 
     SgNewExp *newExpression = SageBuilder::buildNewExp(type, exprListExp, constInit, expr, val, funcDecl);
+    setJavaSourcePosition(newExpression, env, jToken);
     ROSE_ASSERT(newExpression != NULL);
     constInit -> set_parent(newExpression);
 
-    setJavaSourcePosition(newExpression, env, jToken);
-
     astJavaComponentStack.push(newExpression);
 }
+
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionANDANDExpression(JNIEnv *env, jclass, jobject jToken) {
     if (SgProject::get_verbose() > 0)
@@ -1612,12 +1745,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionANDANDExpressionEnd(JNIEnv *env, j
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionAnnotationMethodDeclaration(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT( ! "yet implemented");
-}
-
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionArgumentClassScope(JNIEnv *, jclass, jstring, jobject jToken) {
-    ROSE_ASSERT( ! "yet implemented");
+    cerr << "*** Ignoring a Annotation Method Declaration" << endl;
+  //    ROSE_ASSERT( ! "yet implemented");
 }
 
 
@@ -1634,8 +1763,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArrayAllocationExpressionEnd(JNIEn
     int num_dimensions = java_num_dimensions;
     bool has_initializers = java_has_initializers;
 
+    SgAggregateInitializer *initializer = NULL;
     if (has_initializers) {
-        ROSE_ASSERT(! "Yet Implemented");
+        initializer = isSgAggregateInitializer(astJavaComponentStack.pop());
+        ROSE_ASSERT(initializer);
     }
 
     list<SgExpression*> argument_list;
@@ -1644,15 +1775,16 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArrayAllocationExpressionEnd(JNIEn
         argument_list.push_front(arg);
     }
     vector<SgExpression*> arguments;
-    while (! argument_list.empty()) { // place the arguments in the vector proper order
+    while (! argument_list.empty()) { // place the arguments in the vector in proper order
         arguments.push_back(argument_list.front());
         argument_list.pop_front();
     }
 
     SgType *type = astJavaComponentStack.popType();
     ROSE_ASSERT(type);
-    SgArrayType *array_type = SageBuilder::buildArrayType(type);
-    array_type -> set_rank(num_dimensions);
+
+    // SgArrayType *array_type = getUniqueArrayType(type, num_dimensions);
+    SgPointerType *pointer_type = getUniquePointerType(type, num_dimensions);
     SgConstructorInitializer *constInit = SageBuilder::buildConstructorInitializer(NULL,
                                                                                    SageBuilder::buildExprListExp(arguments),
                                                                                    type,
@@ -1668,11 +1800,18 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArrayAllocationExpressionEnd(JNIEn
     short int val                       = 0;
     SgFunctionDeclaration *funcDecl     = NULL;
 
-    SgNewExp *newExpression = SageBuilder::buildNewExp(array_type, exprListExp, constInit, expr, val, funcDecl);
+    // SgNewExp *newExpression = SageBuilder::buildNewExp(array_type, exprListExp, constInit, expr, val, funcDecl);
+    SgNewExp *newExpression = SageBuilder::buildNewExp(pointer_type, exprListExp, constInit, expr, val, funcDecl);
+    setJavaSourcePosition(newExpression, env, jToken);
     ROSE_ASSERT(newExpression != NULL);
     constInit -> set_parent(newExpression);
 
-    setJavaSourcePosition(newExpression, env, jToken);
+    //
+    // TODO: Temporary patch until the SgNewExp can handle aggregate initializers.
+    //
+    if (has_initializers) {
+        newExpression -> setAttribute("initializer", new AstSgNodeAttribute(initializer));
+    }
 
     astJavaComponentStack.push(newExpression);
 }
@@ -1693,6 +1832,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArrayInitializerEnd(JNIEnv *env, j
         SgExpression *init = astJavaComponentStack.popExpression();
         if (! isSgAggregateInitializer(init)) { // wrap simple expression in SgAssignInitializer
             init = SageBuilder::buildAssignInitializer(init, init -> get_type());
+            // TODO: copy the location of the expression in question to the init node.
         }
         init_list.push_front(init);
     }
@@ -1711,22 +1851,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArrayInitializerEnd(JNIEnv *env, j
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArrayQualifiedTypeReference(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT( ! "yet implemented");
-}
-
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionArrayQualifiedTypeReferenceClassScope(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT( ! "yet implemented");
-}
-
-
 JNIEXPORT void JNICALL Java_JavaParser_cactionArrayReference(JNIEnv *env, jclass, jobject jToken) {
     if (SgProject::get_verbose() > 2)
-         printf ("Inside of Java_JavaParser_cactionArrayReference() \n");
+        printf ("Inside of Java_JavaParser_cactionArrayReference() \n");
 
-    // Nothins to do !!!
-
+    // Nothing to do !!!
 }
 
 
@@ -1735,12 +1864,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArrayReferenceEnd(JNIEnv *env, jcl
         printf ("Inside of Java_JavaParser_cactionArrayReferenceEnd() \n");
 
     binaryExpressionSupport<SgPntrArrRefExp>();
-
-}
-
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReferenceClassScope(JNIEnv *, jclass, jstring, jobject jToken) {
-    ROSE_ASSERT( ! "yet implemented");
 }
 
 
@@ -1771,7 +1894,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAssignment(JNIEnv *env, jclass, jo
         printf ("Build an assignement statement (expression?) \n");
 
     // Nothing to do !!!
-
 }
 
 
@@ -1935,7 +2057,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBlockEnd(JNIEnv *env, jclass, jint
     for (int i = 0; i  < numberOfStatements; i++) {
         SgStatement *statement = astJavaComponentStack.popStatement();
         if (SgProject::get_verbose() > 2) {
-            cerr << "Adding statement "
+            cerr << "(7) Adding statement "
                  << statement -> class_name()
                  << " to a block"
                  << endl;
@@ -1954,6 +2076,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBreakStatement(JNIEnv *env, jclass
 
     string label_name = convertJavaStringToCxxString(env, java_string);
     if (label_name.length() > 0) {
+        assert(lookupLabelByName(label_name) != NULL);
         stmt -> set_do_string_label(label_name);
     }
 
@@ -2043,7 +2166,30 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCharLiteral(JNIEnv *env, jclass, j
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionClassLiteralAccess(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT( ! "yet implemented");
+    // Nothing to do
+}
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionClassLiteralAccessEnd(JNIEnv *env, jclass, jobject jToken) {
+    SgType *type = astJavaComponentStack.popType();
+    ROSE_ASSERT(type);
+
+    SgClassDeclaration *class_declaration = isSgClassDeclaration(::ClassClassType -> getAssociatedDeclaration() -> get_definingDeclaration());
+    ROSE_ASSERT(class_declaration);
+    SgClassDefinition *classDefinition = class_declaration -> get_definition();
+    ROSE_ASSERT(classDefinition != NULL && (! classDefinition -> attributeExists("namespace")));
+    SgClassSymbol *classSymbol = isSgClassSymbol(classDefinition -> get_declaration() -> search_for_symbol_from_symbol_table());
+    ROSE_ASSERT(classSymbol != NULL);
+
+    SgThisExp *thisExp = SageBuilder::buildThisExp(classSymbol);
+    ROSE_ASSERT(thisExp != NULL);
+
+    string type_name = getTypeName(type);
+
+    thisExp -> setAttribute("prefix", new AstRegExAttribute(type_name)); // TODO: Figure out how to extend the Sage representation to process this feature better.
+    thisExp -> setAttribute("class", new AstRegExAttribute("class")); // TODO: Figure out how to extend the Sage representation to process this feature better.
+
+    astJavaComponentStack.push(thisExp);
 }
 
 
@@ -2081,6 +2227,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionContinueStatement(JNIEnv *env, jcl
 
     string label_name = convertJavaStringToCxxString(env, java_string);
     if (label_name.length() > 0) {
+        assert(lookupLabelByName(label_name) != NULL);
         stmt -> set_do_string_label(label_name);
     }
 
@@ -2277,7 +2424,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExtendedStringLiteral(JNIEnv *env,
 
     ROSE_ASSERT(! astJavaScopeStack.empty());
 
-    SgName stringLiteral = convertJavaStringToCxxString(env, java_string);
+    SgName stringLiteral = convertJavaStringValToWString(env, java_string); // convertJavaStringToCxxString(env, java_string);
 
     // printf ("Building a string value expression = %s \n", stringLiteral.str());
 
@@ -2299,7 +2446,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFalseLiteral(JNIEnv *env, jclass, 
 // DQ (9/5/2011): This was changed to be processed bottom up (so there is no Java_JavaParser_cactionFieldDeclaration() function now.
 JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, jclass,
                                                                   jstring variableName,
-                                                                  jboolean hasInitializer,
+                                                                  jboolean is_enum_field,
+                                                                  jboolean has_initializer,
                                                                   jboolean java_is_final,
                                                                   jboolean java_is_private,
                                                                   jboolean java_is_protected,
@@ -2327,32 +2475,31 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, j
     bool isTransient = java_is_transient;
 
     if (SgProject::get_verbose() > 2)
-        printf ("Building a variable declaration for name = %s \n", name.str());
+        printf ("Building a Field declaration for name = %s \n", name.str());
 
-    SgExpression *initializer_expression = (hasInitializer ? astJavaComponentStack.popExpression() : NULL);
+    SgExpression *initializer_expression = (((! is_enum_field) && has_initializer) ? astJavaComponentStack.popExpression() : NULL);
 
-    SgType *type = astJavaComponentStack.popType();
+    if (! is_enum_field) { // if this is not an ENUM field then it has a type on the stack.
+        SgType *type = astJavaComponentStack.popType();
+    }
 
-    // Note that the type should have already been built and should be on the astJavaComponentStack.
-    SgVariableDeclaration *variableDeclaration = buildSimpleVariableDeclaration(name, type);
-    ROSE_ASSERT(variableDeclaration != NULL);
+    SgScopeStatement *outer_scope = astJavaScopeStack.top();
+    ROSE_ASSERT(outer_scope);
+    SgVariableSymbol *symbol = outer_scope -> lookup_variable_symbol(name);
+    ROSE_ASSERT(symbol);
+    SgInitializedName *initializedName = symbol -> get_declaration();
+    ROSE_ASSERT(initializedName);
+    SgVariableDeclaration *variableDeclaration = isSgVariableDeclaration(initializedName -> get_declaration());
+    ROSE_ASSERT(variableDeclaration);
 
-    // DQ (8/13/2011): Added test for scope
-    ROSE_ASSERT(variableDeclaration -> get_scope() != NULL);
-
-    // DQ (8/13/2011): This is a test to debug failing test in resetParentPointers.C:1733
-    ROSE_ASSERT(! SageInterface::is_Fortran_language());
-    SgInitializedName *initializedName = variableDeclaration -> get_decl_item(name);
-    ROSE_ASSERT(initializedName != NULL);
-    ROSE_ASSERT(initializedName -> get_scope() != NULL);
-
-    setJavaSourcePosition(initializedName, env, jToken);
-    setJavaSourcePosition(variableDeclaration, env, jToken);
+    // By default, the access modifier is set to unknown
+    variableDeclaration -> get_declarationModifier().get_accessModifier().set_modifier(SgAccessModifier::e_unknown);
 
     // Set the modifiers (shared between PHP and Java)
 
-    if (isFinal)
+    if (isFinal) {
         variableDeclaration -> get_declarationModifier().setFinal();
+    }
 
     // DQ (8/13/2011): Added modifier support.
     if (isPrivate) {
@@ -2400,7 +2547,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, j
         variableDeclaration -> get_file_info() -> display("source position in Java_JavaParser_cactionFieldDeclarationEnd(): debug");
 
     // DQ (9/5/2011): Added from previous Java_JavaParser_cactionFieldDeclarationEnd() function.
-    if (hasInitializer) {
+    if (has_initializer) {
         SgInitializer *initializer = SageBuilder::buildAssignInitializer(initializer_expression);
         ROSE_ASSERT(initializer != NULL);
 
@@ -2409,15 +2556,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, j
 
         initializer_expression -> set_parent(initializer);
 
-        printf ("In cactionFieldDeclarationEnd(): initializer = %p = %s \n", initializer, initializer -> class_name().c_str());
+        // printf ("In cactionFieldDeclarationEnd(): initializer = %p = %s \n", initializer, initializer -> class_name().c_str());
         initializer -> get_file_info() -> display("cactionFieldDeclarationEnd()");
 
         initializedName -> set_initptr(initializer);
         initializer -> set_parent(initializedName);
     }
-
-    // Save it on the stack so that we can add SgInitializedNames to it.
-    astJavaComponentStack.push(variableDeclaration);
 }
 
 
@@ -2430,69 +2574,148 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReference(JNIEnv *env, jclass
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReferenceEnd(JNIEnv *env, jclass, jstring java_field, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReferenceEnd(JNIEnv *env, jclass, jboolean explicit_type, jstring java_field, jobject jToken) {
     if (SgProject::get_verbose() > 2)
         printf ("Inside of Java_JavaParser_cactionFieldReference() \n");
 
     SgName field_name = convertJavaStringToCxxString(env, java_field);
 
     if (SgProject::get_verbose() > 0)
-        printf ("Building a variable reference for name = %s \n", field_name.str());
+        printf ("Building a Field reference for name = %s \n", field_name.str());
 
-    SgExpression *receiver = astJavaComponentStack.popExpression();
+    SgType *receiver_type = (explicit_type ? astJavaComponentStack.popType() : NULL);
+    SgNode *prefix = astJavaComponentStack.pop();
+    SgExpression *receiver = isSgExpression(prefix);
+    ROSE_ASSERT(receiver || isSgType(prefix));
+    if (! explicit_type) {
+        receiver_type = (receiver ? receiver -> get_type() : isSgType(prefix));
+    }
+// TODO: Remove this !!!
+/*
+cout <<  "The receiver type is "
+     << getTypeName(receiver_type)
+     << endl
+     << " The prefix type is "
+     << prefix -> class_name()
+     << endl
+     << " The field name "
+     << field_name
+     << endl;
+cout.flush();
+
+    SgType *type = isSgType(prefix);
+    ROSE_ASSERT(receiver || type);
+    if (type == NULL) {
+        type = receiver -> get_type();
+        if (isSgMemberFunctionType(type)) {
+            type = ((SgMemberFunctionType *) type) -> get_return_type();
+        }
+    }
+    ROSE_ASSERT(type);
+
+ROSE_ASSERT(! isSgMemberFunctionType(receiver_type));
+*/
+
     SgExpression *result;
-    SgType *type = receiver -> get_type();
-    if (isSgPointerType(type)) { // This is NOT C++ !!!
-        SgClassType *class_type = isSgClassType(isSgPointerType(type) -> get_base_type());
+
+// TODO: Remove this !!!
+/*
+    if (isSgThisExp(receiver) || isSgSuperExp(receiver)) { // First, take care of these special pointer types:  "this" and "super"
+        SgClassType *class_type = isSgClassType(isSgPointerType(receiver_type) -> get_base_type());
         ROSE_ASSERT(class_type);
         SgClassDeclaration *declaration = isSgClassDeclaration(class_type -> get_declaration() -> get_definingDeclaration());
         ROSE_ASSERT(declaration);
         ROSE_ASSERT(declaration -> get_definition());
-        SgSymbol *symbol = lookupSimpleNameInClassScope(field_name, declaration -> get_definition());
-        ROSE_ASSERT(symbol);
-        SgVariableSymbol *variable_symbol = isSgVariableSymbol(symbol);
+        SgVariableSymbol *variable_symbol = lookupSimpleNameVariableInClass(field_name, declaration -> get_definition());
         ROSE_ASSERT(variable_symbol);
         SgVarRefExp *field = SageBuilder::buildVarRefExp(variable_symbol);
         ROSE_ASSERT(field != NULL);
         setJavaSourcePosition(field, env, jToken);
         result = SageBuilder::buildBinaryExpression<SgDotExp>(receiver, field);
     }
+    else 
+*/
+
+    //
+    // TODO: Note that the use of attributes is not a valid substitute for supporting these features!
+    // In particular, this approach is not robust enough to fully support parenthesized expressions
+    // as we have no way of indicating whether or not an expression involving a suffix was
+    // parenthesized - In other words, we can't add a "java-parenthesis-info" attribute to a "length"
+    // attribute.
+    //
+    if (isSgPointerType(receiver_type) && field_name.getString().compare("length") == 0) { // In fact, this is a Java array which is a type !!!
+        receiver -> setAttribute("suffix", new AstRegExAttribute("length")); // TODO: The field "length" does not exist since we don't have a real type!
+        result = receiver;
+    }
     else {
-        SgClassType *class_type = isSgClassType(receiver -> get_type());
+        //
+        // TODO: (PC) This is very sloppy and imprecise because we do not yet have an array type !!!
+        //
+        if (isSgPointerType(receiver_type)) { // In fact, this is a Java array which is a type!!!
+            SgType *base_type = isSgPointerType(receiver_type) -> get_base_type();
+            if (! isSgClassType(base_type)) {
+                receiver_type = ::ObjectClassType;
+            }
+            else receiver_type = base_type;
+        }
+
+        //
+        // TODO: Parameterized types should be class types... Need to review this!
+        //
+        if (isSgJavaParameterizedType(receiver_type)) {
+            receiver_type = isSgJavaParameterizedType(receiver_type) -> get_raw_type();
+        }
+
+        SgClassType *class_type = isSgClassType(receiver_type);
         ROSE_ASSERT(class_type);
         SgClassDeclaration *declaration = isSgClassDeclaration(class_type -> get_declaration() -> get_definingDeclaration());
         ROSE_ASSERT(declaration);
         ROSE_ASSERT(declaration -> get_definition());
-        SgSymbol *symbol = lookupSimpleNameInClassScope(field_name, declaration -> get_definition());
-        ROSE_ASSERT(symbol);
-        SgVariableSymbol *variable_symbol = isSgVariableSymbol(symbol);
+        SgVariableSymbol *variable_symbol = lookupSimpleNameVariableInClass(field_name, declaration -> get_definition());
+// TODO: Remove this !
+/*
+if (! variable_symbol) {
+  cout << "Could not find variable " << field_name.getString()
+       << " in type " << getTypeName(class_type)
+       << endl;
+  cout.flush();
+}
+else {
+  cout << "Found variable " << field_name.getString()
+       << " in type " << getTypeName(class_type)
+       << endl;
+  cout.flush();
+}
+*/
         ROSE_ASSERT(variable_symbol);
         SgVarRefExp *field = SageBuilder::buildVarRefExp(variable_symbol);
         ROSE_ASSERT(field != NULL);
         setJavaSourcePosition(field, env, jToken);
-        result = SageBuilder::buildBinaryExpression<SgDotExp>(receiver, field);
+
+        if (receiver) {
+            result = SageBuilder::buildBinaryExpression<SgDotExp>(receiver, field);
+// TODO: Remove this !
+/*
+  cout << "Emitted a SgDotExp"
+       << endl;
+  cout.flush();
+*/
+        }
+        else {
+            string class_name = getFullyQualifiedTypeName(class_type);
+
+            field -> setAttribute("prefix", new AstRegExAttribute(class_name));
+            result = field;
+// TODO: Remove this !
+/*
+  cout << "Decorating a field name"
+       << endl;
+  cout.flush();
+*/
+        }
     }
 
     astJavaComponentStack.push(result);
-}
-
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReferenceClassScope(JNIEnv *env, jclass, jstring java_field, jobject jToken) {
-    if (SgProject::get_verbose() > 2)
-        printf ("Inside of Java_JavaParser_cactionFieldReferenceClassScope() \n");
-
-    // Nothing to do !!!
-
-}
-
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReferenceClassScopeEnd(JNIEnv *env, jclass, jstring java_field, jobject jToken) {
-    if (SgProject::get_verbose() > 2)
-        printf ("Inside of Java_JavaParser_cactionFieldReferenceClassScope() \n");
- 
-    SgName field_name = convertJavaStringToCxxString(env, java_field);
-
-    ROSE_ASSERT( ! "yet implemented");
 }
 
 
@@ -2755,7 +2978,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionIfStatementEnd(JNIEnv *env, jclass
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jclass, jstring java_string, jboolean java_containsWildcard, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jclass,
+                                                              jboolean java_is_static,
+                                                              jstring java_package_name,
+                                                              jstring java_type_name,
+                                                              jstring java_name_suffix,
+                                                              jboolean java_contains_wildcard,
+                                                              jobject jToken) {
     // This is the import statement.  The semantics is to include the named file and add its 
     // declarations to the global scope so that they can be referenced by the current file.
     // The import directive tells the compiler where to look for the class definitions 
@@ -2764,6 +2993,18 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jclas
     if (SgProject::get_verbose() > 1)
         printf ("Inside of Java_JavaParser_cactionImportReference() \n");
 
+    bool is_static = java_is_static;
+
+    SgName package_name = convertJavaPackageNameToCxxString(env, java_package_name),
+           type_name = convertJavaStringToCxxString(env, java_type_name),
+           name_suffix = convertJavaStringToCxxString(env, java_name_suffix),
+           qualifiedName = convertJavaStringToCxxString(env, java_package_name) +
+                           string(package_name.getString().size() && type_name.getString().size() ? "." : "") + 
+                           type_name.getString() +
+                           (name_suffix.getString().size() ? ("." + name_suffix.getString()) : "");
+
+    bool contains_wildcard = java_contains_wildcard;
+
     // I could not debug passing a Java "Boolean" variable, but "int" works fine.
     // containsWildcard = convertJavaBooleanToCxxBoolean(env, input_containsWildcard);
     // containsWildcard = (bool) (env -> CallBooleanMethod(xxx, input_containsWildcard) == 1);
@@ -2771,13 +3012,20 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jclas
     // containsWildcard = (bool) (env -> CallStaticBooleanMethod(xxx, java_containsWildcard) == 1);
     // containsWildcard = (java_containsWildcard == 1);
 
-    SgName qualifiedName  = convertJavaStringToCxxString(env, java_string);
-    bool containsWildcard = java_containsWildcard;
-
     // printf ("import qualifiedName = %s containsWildcard = %s \n", qualifiedName.str(), containsWildcard ? "true" : "false");
 
-    SgJavaImportStatement *importStatement = new SgJavaImportStatement(qualifiedName, containsWildcard);
+    SgJavaImportStatement *importStatement = new SgJavaImportStatement(qualifiedName, contains_wildcard);
     ROSE_ASSERT(importStatement != NULL);
+    importStatement -> set_firstNondefiningDeclaration(importStatement);
+    importStatement -> set_definingDeclaration(importStatement);
+    ROSE_ASSERT(importStatement == importStatement ->  get_firstNondefiningDeclaration());
+    ROSE_ASSERT(importStatement == importStatement ->  get_definingDeclaration());
+    importStatement -> set_parent(astJavaScopeStack.top()); // We also have to set the parent so that the stack debugging output will work.
+    setJavaSourcePosition(importStatement, env, jToken);
+
+    if (is_static) {
+        importStatement -> get_declarationModifier().get_storageModifier().setStatic();
+    }
 
     ROSE_ASSERT(! astJavaScopeStack.empty());
 
@@ -2786,57 +3034,56 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jclas
     // appendStatement(importStatement);
     astJavaComponentStack.push(importStatement);
 
-    // We also have to set the parent so that the stack debugging output will work.
-    importStatement -> set_parent(astJavaScopeStack.top());
+    if (type_name.getString().size() > 0) { // only a package was specified?
+        SgType *type =  lookupTypeByName(package_name, type_name, 0);
 
-    setJavaSourcePosition(importStatement, env, jToken);
+        // DQ (8/22/2011): The Java generics support is tied to the handling of the import statement so that we can find
+        // the parameterized class from the name when it appears without name qualification.
+        // The import statement should act like the using namespace directive in C++ to bring in a class or set of classes
+        // so that they will be visible in the current scope.  On the Java side the classes have all been read.  Now we
+        // just have to build the SgAliasSymbol in the current scope (do this tomorrow morning).
+        // printf ("Now build the SgAliasSymbol in the current scope \n");
 
-    // DQ (8/22/2011): The Java generics support is tied to the handling of the import statement so that we can find
-    // the parameterized class from the name when it appears without name qualification.
-    // The import statement should act like the using namespace directive in C++ to bring in a class or set of classes
-    // so that they will be visible in the current scope.  On the Java side the classes have all been read.  Now we
-    // just have to build the SgAliasSymbol in the current scope (do this tomorrow morning).
-    // printf ("Now build the SgAliasSymbol in the current scope \n");
+        // DQ (8/23/2011): This is part of the AST post-processing, but it has to be done as we process the Java import 
+        // statements (top down) so that the symbol tables will be correct and variable, function, and type references 
+        // will be resolved correctly.
 
-    // DQ (8/23/2011): This is part of the AST post-processing, but it has to be done as we process the Java import 
-    // statements (top down) so that the symbol tables will be correct and variable, function, and type references 
-    // will be resolved correctly.
+        // This is most likely global scope (where import statements are typically used).
+        SgScopeStatement *currentScope = astJavaScopeStack.top();
+        ROSE_ASSERT(currentScope != NULL);
 
-    // This is most likely global scope (where import statements are typically used).
-    SgScopeStatement *currentScope = astJavaScopeStack.top();
-    ROSE_ASSERT(currentScope != NULL);
+        // SgSymbol *importClassSymbol = lookupSymbolInParentScopesUsingQualifiedName(qualifiedName, currentScope);
+        SgSymbol *importClassSymbol = type -> getAssociatedDeclaration() -> search_for_symbol_from_symbol_table();
 
-    SgSymbol *importClassSymbol = lookupSymbolInParentScopesUsingQualifiedName(qualifiedName, currentScope);
-    ROSE_ASSERT(importClassSymbol != NULL);
+        ROSE_ASSERT(importClassSymbol != NULL);
 
-    if (containsWildcard) {
-        // This processing requires that we inject alias symbols from the reference class for all of its data members and member functions. 
+        if (contains_wildcard) {
+            // This processing requires that we inject alias symbols from the reference class for all of its data members and member functions. 
 
-        printf ("WARNING: The use of wildecards in import statements requires additional symbol table support so that all of the specified members of a class can be incerted into the current scope. \n");
+            // Note that the enum values for e_default and e_public are equal.
+            // SgAccessModifier::access_modifier_enum accessLevel = SgAccessModifier::e_default;
+            SgAccessModifier::access_modifier_enum accessLevel = SgAccessModifier::e_public;
 
-        // Note that the enum values for e_default and e_public are equal.
-        // SgAccessModifier::access_modifier_enum accessLevel = SgAccessModifier::e_default;
-        SgAccessModifier::access_modifier_enum accessLevel = SgAccessModifier::e_public;
+            SgScopeStatement *referencedScope = get_scope_from_symbol(importClassSymbol);
+            ROSE_ASSERT(referencedScope != NULL);
 
-        SgScopeStatement *referencedScope = get_scope_from_symbol(importClassSymbol);
-        ROSE_ASSERT(referencedScope != NULL);
+            FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope, currentScope, accessLevel);
+        }
+        else {
+            // Find the referenced class and insert its symbol as an alias into the current scope.
 
-        FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope, currentScope, accessLevel);
-    }
-    else {
-        // Find the referenced class and insert its symbol as an alias into the current scope.
+            // printf ("Find the referenced class and insert its symbol as an alias into the current scope. \n");
 
-        // printf ("Find the referenced class and insert its symbol as an alias into the current scope. \n");
+            SgAliasSymbol *aliasSymbol = new SgAliasSymbol(importClassSymbol);
 
-        SgAliasSymbol *aliasSymbol = new SgAliasSymbol(importClassSymbol);
+            // Use the current name and the alias to the symbol
+            list<SgName> qualifiedNameList = generateQualifierList(qualifiedName);
+            SgName unqualifiedName = *(qualifiedNameList.rbegin());
 
-        // Use the current name and the alias to the symbol
-        list<SgName> qualifiedNameList = generateQualifierList(qualifiedName);
-        SgName unqualifiedName = *(qualifiedNameList.rbegin());
+            // printf ("Building an alias (SgAliasSymbol) for unqualifiedName = %s in qualifiedName = %s \n", unqualifiedName.str(), qualifiedName.str());
 
-        // printf ("Building an alias (SgAliasSymbol) for unqualifiedName = %s in qualifiedName = %s \n", unqualifiedName.str(), qualifiedName.str());
-
-        currentScope -> insert_symbol(unqualifiedName, aliasSymbol);
+            currentScope -> insert_symbol(unqualifiedName, aliasSymbol);
+        }
     }
 
     if (SgProject::get_verbose() > 1)
@@ -2844,14 +3091,48 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jclas
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionInitializer(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented Block Initializers");
+JNIEXPORT void JNICALL Java_JavaParser_cactionInitializer(JNIEnv *env, jclass, jboolean java_is_static, jstring java_string, jobject jToken) {
+    SgName name = convertJavaStringToCxxString(env, java_string);
+    bool isStatic = java_is_static;
+
+    SgClassDefinition *classDefinition = isSgClassDefinition(astJavaScopeStack.top());
+    ROSE_ASSERT(classDefinition != NULL  && (! classDefinition -> attributeExists("namespace")));
+
+    //
+    // The initializer block has no return type as it is not a real method. So, we
+    // start by pushing a VOID return type to make it look like a method.
+    //
+    astJavaComponentStack.push(SgTypeVoid::createType()); 
+
+    SgMemberFunctionDeclaration *functionDeclaration = lookupMemberFunctionDeclarationInClassScope(classDefinition, name, 0 /* no arguments */ );
+    ROSE_ASSERT(functionDeclaration != NULL);
+
+    // This is not a defining function declaration so we can't identify the SgFunctionDefinition and push it's body onto the astJavaScopeStack.
+    SgFunctionDefinition *functionDefinition = functionDeclaration -> get_definition();
+    ROSE_ASSERT(functionDefinition != NULL);
+
+    astJavaScopeStack.push(functionDefinition);
+    ROSE_ASSERT(astJavaScopeStack.top() -> get_parent() != NULL);
+}
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionInitializerEnd(JNIEnv *env, jclass, jobject jToken) {
+    if (SgProject::get_verbose() > 0)
+        printf ("End of SgMemberFunctionDeclaration (method) \n");
+
+    ROSE_ASSERT(isSgBasicBlock(astJavaComponentStack.top()));
+    SgBasicBlock *initializer_body = (SgBasicBlock *) astJavaComponentStack.popStatement();
+
+    SgFunctionDefinition *memberFunctionDefinition = astJavaScopeStack.popFunctionDefinition();
+    memberFunctionDefinition -> set_body(initializer_body);
 }
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionInstanceOfExpression(JNIEnv *env, jclass, jobject jToken) {
     if (SgProject::get_verbose() > 0)
         printf ("Inside of Java_JavaParser_cactionInstanceOfExpression() \n");
+
+    // Do Nothing on the way down.
 }
 
 
@@ -2863,9 +3144,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionInstanceOfExpressionEnd(JNIEnv *en
     SgType *type = astJavaComponentStack.popType();
 
     SgExpression *exp = astJavaComponentStack.popExpression();
-
-    // Warn that this support in not finished.
-    printf ("WARNING: Support for SgJavaInstanceOfOp is incomplete, type not specified! \n");
 
     SgExpression *result = SageBuilder::buildJavaInstanceOfOp(exp, type);
 
@@ -2892,7 +3170,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionIntLiteral(JNIEnv *env, jclass, ji
     astJavaComponentStack.push(integerValue);
 }
 
-
+//
+// Java Doc is not supported!
+//
+/*
 JNIEXPORT void JNICALL Java_JavaParser_cactionJavadoc(JNIEnv *env, jclass, jobject jToken) {
     // Ignore Javadoc structures !!!
 }
@@ -3011,7 +3292,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocSingleTypeReference(JNIEnv 
 JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocSingleTypeReferenceClassScope(JNIEnv *env, jclass, jobject jToken) {
     // Ignore Javadoc structures !!!
 }
-
+*/
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionLabeledStatement(JNIEnv *env, jclass, jstring labelName, jobject jToken) {
     SgName label_name = convertJavaStringToCxxString(env, labelName);
@@ -3053,20 +3334,27 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclarationEnd(JNIEnv *env, j
         printf ("Inside of Java_JavaParser_cactionLocalDeclarationEnd() \n");
 
     SgName name = convertJavaStringToCxxString(env, variableName);
-    bool isFinal = java_is_final;
+    bool is_final = java_is_final;
 
     if (SgProject::get_verbose() > 2)
-        printf ("Building a variable declaration for name = %s \n", name.str());
+        printf ("Building a local variable declaration for name = %s \n", name.str());
 
     SgExpression *initializer_expression = (hasInitializer ? astJavaComponentStack.popExpression() : NULL);
-
+// TODO: Remove this !
+/*
+cout << "The expression is a "
+<< initializer_expression -> class_name()
+<< endl
+<< "; The top of the stack is a "
+     << (isSgClassDefinition(astJavaComponentStack.top()) ? isSgClassDefinition(astJavaComponentStack.top()) -> get_qualified_name().getString() : astJavaComponentStack.top() -> class_name())
+<< endl;
+cout.flush();
+*/
     SgType *type = astJavaComponentStack.popType();
 
     // Note that the type should have already been built and should be on the astJavaComponentStack.
     SgVariableDeclaration *variableDeclaration = buildSimpleVariableDeclaration(name, type);
     ROSE_ASSERT(variableDeclaration != NULL);
-
-    setJavaSourcePosition(variableDeclaration, env, jToken);
 
     // DQ (7/16/2011): Added test for scope
     ROSE_ASSERT(variableDeclaration -> get_scope() != NULL);
@@ -3097,12 +3385,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclarationEnd(JNIEnv *env, j
 
     // We don't want to add the statement to the current scope until it is finished being built.
     // Set the modifiers (shared between PHP and Java)
-    if (isFinal) {
+    if (is_final) {
         variableDeclaration -> get_declarationModifier().setFinal();
     }
 
-    // Local declarations have no definition for this (default is public so we need to explicity mark this as undefined).
-    variableDeclaration -> get_declarationModifier().get_accessModifier().setUndefined();
+    // Local declarations have no definition for this (default is public so we need to explicity mark this as unknown).
+    variableDeclaration -> get_declarationModifier().get_accessModifier().set_modifier(SgAccessModifier::e_unknown);
 
     // DQ (8/21/2011): Debugging declarations in local function should (should not be marked as public).
     ROSE_ASSERT(! variableDeclaration -> get_declarationModifier().get_accessModifier().isPublic());
@@ -3136,12 +3424,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLongLiteral(JNIEnv *env, jclass, j
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionMarkerAnnotation(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented Type Parameters");
+    cerr << "*** Ignoring a Marker Annotation" << endl;
+  //    ROSE_ASSERT(! "yet implemented Marker Annotation");
 }
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionMemberValuePair(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented Type Parameters");
+    cerr << "*** Ignoring a Member Value Pair" << endl; // This is a component of a NormalAnnotation
+  //    ROSE_ASSERT(! "yet implemented Member Value Pair");
 }
 
 
@@ -3151,7 +3441,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteralConcatenation(JNIEnv 
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionNormalAnnotation(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented Type Parameters");
+    cerr << "*** Ignoring a Normal Annotation" << endl;
+//    ROSE_ASSERT(! "yet implemented Normal Annotation");
 }
 
 
@@ -3171,7 +3462,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionORORExpression(JNIEnv *env, jclass
         printf ("Inside of Java_JavaParser_cactionORORExpression() \n");
 
     // Nothing to do !!!
-
 }
 
 
@@ -3185,93 +3475,51 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionORORExpressionEnd(JNIEnv *env, jcl
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedQualifiedTypeReference(JNIEnv *env, jclass, jobject jToken) {
-     if (SgProject::get_verbose() > 0)
-          printf ("Inside of Java_JavaParser_cactionParameterizedQualifiedTypeReference() \n");
-
-    ROSE_ASSERT(! "YET IMPLEMENTED");
-}
-
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedQualifiedTypeReferenceClassScope(JNIEnv *env, jclass, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedTypeReference(JNIEnv *env, jclass, jobject jToken) {
     if (SgProject::get_verbose() > 0)
-        printf ("Inside of Java_JavaParser_cactionParameterizedQualifiedTypeReferenceClassScope() \n");
-
-    ROSE_ASSERT(! "YET IMPLEMENTED");
-}
-
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedSingleTypeReference(JNIEnv *env, jclass, jobject jToken) {
-    if (SgProject::get_verbose() > 0)
-        printf ("Inside of Java_JavaParser_cactionParameterizedSingleTypeReference() \n");
+        printf ("Inside of Java_JavaParser_cactionParameterizedTypeReference() \n");
 
     // Nothing to do here !!!
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedSingleTypeReferenceEnd(JNIEnv *env, jclass, jstring java_name, int java_numberOfTypeArguments, jobject jToken) {
+JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedTypeReferenceEnd(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, int java_num_type_arguments, int java_num_dimensions, jobject jToken) {
     if (SgProject::get_verbose() > 0)
-        printf ("Inside of Java_JavaParser_cactionParameterizedSingleTypeReferenceEnd() \n");
+        printf ("Inside of Java_JavaParser_cactionParameterizedTypeReferenceEnd() \n");
 
-    SgName name = convertJavaStringToCxxString(env, java_name);
+    SgName package_name = convertJavaPackageNameToCxxString(env, java_package_name),
+           type_name = convertJavaStringToCxxString(env, java_type_name);
 
-    int numberOfTypeArguments = java_numberOfTypeArguments;
+    int num_type_arguments = java_num_type_arguments,
+        num_dimensions = java_num_dimensions;
 
-    // printf ("Inside of Java_JavaParser_cactionParameterizedSingleTypeReferenceEnd(): numberOfTypeArguments   = %d  \n", numberOfTypeArguments);
-
-    // Need to find the type with the associated name.
-    printf ("Looking for parameterized type name = %s with %d type arguments\n", name.str(), numberOfTypeArguments);
-
-    SgClassSymbol *parameterizedClassSymbol = lookupSymbolFromQualifiedName(name);
-    ROSE_ASSERT(parameterizedClassSymbol != NULL);
-
-    // This will be the Java raw type, the 
-    SgType *rawParameterizedType = parameterizedClassSymbol -> get_type();
-    ROSE_ASSERT(rawParameterizedType != NULL);
-
-    // DQ (9/3/2011): This should be constructed into a SageBuilder function.
-    // TODO: Add SageBuilder function for this support.
-
-    SgClassDeclaration *classDeclaration = isSgClassDeclaration(parameterizedClassSymbol -> get_declaration());
-    ROSE_ASSERT(classDeclaration != NULL);
-
-    SgTemplateParameterList *typeParameterList = new SgTemplateParameterList();
-    ROSE_ASSERT(typeParameterList != NULL);
-
-    // SgType *parameterizedType = SgJavaParameterizedType::createType();
-    SgJavaParameterizedType *parameterizedType = new SgJavaParameterizedType(classDeclaration, rawParameterizedType, typeParameterList);
-
-    ROSE_ASSERT(parameterizedType != NULL);
-    ROSE_ASSERT(parameterizedType -> get_raw_type() != NULL);
-    ROSE_ASSERT(parameterizedType -> get_type_list() != NULL);
-
-    SgTemplateParameterPtrList typeList;
-    for (int i = 0; i < numberOfTypeArguments; i++) {
+    SgClassType *raw_type = isSgClassType(lookupTypeByName(package_name, type_name, 0 /* Look for the base type not the array of num_dimensions > 0 */));
+    ROSE_ASSERT(raw_type != NULL);
+cout << raw_type -> get_qualified_name()
+     << "<";
+    list<SgTemplateParameter *> type_list;
+    for (int i = 0; i < num_type_arguments; i++) {
         SgType *typeArgument = astJavaComponentStack.popType();
-
-        // Ignore the default type for now (if it exists in Java)
         SgTemplateParameter *templateParameter = new SgTemplateParameter(typeArgument, NULL);
-        ROSE_ASSERT(templateParameter != NULL);
-
-        typeList.push_back(templateParameter);
+        type_list.push_front(templateParameter); // place the arguments in the list in reverse to restore their proper order
     }
 
-    // DQ (9/3/2011): This is pass by value so we have to set the typeList before using it to initialize the list in typeParameterList.
-    // I think this should be fixed in ROSE to be pass by reference so that this is less error prone.
-    // TODO: Fix IR node for ROSE to support references (or more intuative semantics).
-    typeParameterList -> set_args(typeList);
-    ROSE_ASSERT(! typeParameterList -> get_args().empty());
+    SgTemplateParameterPtrList ordered_type_list;
+    while(! type_list.empty()) {
+cout << isSgClassType(type_list.front());
+        ordered_type_list.push_back(type_list.front());
+        type_list.pop_front();
+if(!type_list.empty())
+cout << ", ";
+    }
+cout << ">" 
+     << endl;
+cout.flush();
 
-    // Push this onto the type stack.
-    astJavaComponentStack.push(parameterizedType);
-}
+    SgJavaParameterizedType *parameterizedType = getUniqueParameterizedType(raw_type, ordered_type_list);
+    SgType *result_type = (num_dimensions > 0 ? (SgType *) getUniquePointerType(parameterizedType, num_dimensions) : (SgType *) parameterizedType);
 
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedSingleTypeReferenceClassScope(JNIEnv *env, jclass, jobject jToken) {
-    if (SgProject::get_verbose() > 0)
-        printf ("Inside of Java_JavaParser_cactionParameterizedSingleTypeReferenceClassScope() \n");
-
-    ROSE_ASSERT(! "YET IMPLEMENTED");
+    astJavaComponentStack.push(result_type);
 }
 
 
@@ -3359,110 +3607,97 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedAllocationExpression(JNIE
 }
 
 
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedAllocationExpressionEnd(JNIEnv *env, jclass, jboolean has_type, jboolean java_contains_enclosing_instance, jint java_num_arguments, jboolean java_is_anonymous, jobject jToken) {
+    if (SgProject::get_verbose() > 0)
+        printf ("Inside of Java_JavaParser_cactionQualifiedAllocationExpressionEnd() \n");
+
+    bool contains_enclosing_instance = java_contains_enclosing_instance;
+    int num_arguments = java_num_arguments;
+    bool is_anonymous = java_is_anonymous;
+
+    SgClassDeclaration *declaration = isSgClassDeclaration(is_anonymous ? astJavaComponentStack.pop() : NULL);
+    list<SgExpression*> argument_list;
+    for (int i = 0; i < num_arguments; i++) { // pop the arguments in reverse order
+        SgExpression *arg = astJavaComponentStack.popExpression();
+        argument_list.push_front(arg);
+    }
+    vector<SgExpression*> arguments;
+    while (! argument_list.empty()) { // place the arguments in the vector proper order
+        arguments.push_back(argument_list.front());
+        argument_list.pop_front();
+    }
+
+//
+// TODO: What todo!? 
+//
+if (! has_type) {
+  // ???
+}
+
+    SgType *type = (has_type ? astJavaComponentStack.popType() : ::ObjectClassType);
+    SgExpression *expression_prefix = (contains_enclosing_instance ? astJavaComponentStack.popExpression() :  NULL);
+
+    SgConstructorInitializer *constInit = SageBuilder::buildConstructorInitializer(NULL,
+                                                                                   SageBuilder::buildExprListExp(arguments),
+                                                                                   type,
+                                                                                   false,
+                                                                                   false,
+                                                                                   false,
+                                                                                   ! (isSgClassType(type)));
+
+    // TODO: I think a SgJavaParameterizedType should be a SgClassType.  Currrently, it is not!
+
+    // For the simple case, we only need the type as input to build SgNewExp.
+    SgExprListExp *exprListExp      = NULL;
+    SgExpression *expr              = NULL;
+    short int val                   = 0;
+    SgFunctionDeclaration *funcDecl = NULL;
+
+    SgNewExp *newExpression = SageBuilder::buildNewExp(type, exprListExp, constInit, expr, val, funcDecl);
+    ROSE_ASSERT(newExpression != NULL);
+    constInit -> set_parent(newExpression);
+
+    //
+    // TODO: Temporary patch until the SgNewExp can handle a prefix.
+    //
+    if (expression_prefix) {
+        newExpression -> setAttribute("new_prefix", new AstSgNodeAttribute(expression_prefix));
+    }
+
+    //
+    // TODO: Temporary patch until the SgNewExp can handle anonymous types.
+    //
+    if (is_anonymous) {
+        newExpression -> setAttribute("body", new AstSgNodeAttribute(declaration));
+    }
+
+    setJavaSourcePosition(newExpression, env, jToken);
+
+    astJavaComponentStack.push(newExpression);
+}
+
+/*
 JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedSuperReference(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented Type Parameters");
-}
-
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedSuperReferenceClassScope(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented Type Parameters");
-}
-
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedThisReference(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented Type Parameters");
-}
-
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedThisReferenceClassScope(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented Type Parameters");
-}
-
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedTypeReference(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented Type Parameters");
-}
-
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedTypeReferenceClassScope(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented Type Parameters");
-}
-
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionReturnStatement(JNIEnv *env, jclass, jobject jToken) {
-    // Nothing to do !!!
-}
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionReturnStatementEnd(JNIEnv *env, jclass, jboolean hasExpression, jobject jToken) {
-    if (SgProject::get_verbose() > 2)
-        printf ("Inside of Java_JavaParser_cactionReturnStatementEnd() \n");
-
-    // Build the Return Statement
-    SgExpression *expression = (hasExpression ? astJavaComponentStack.popExpression() : NULL);
-    SgReturnStmt *returnStatement = SageBuilder::buildReturnStmt(expression);
-    setJavaSourcePosition(returnStatement, env, jToken);
-
-    // Pushing 'return' on the statement stack
-    astJavaComponentStack.push(returnStatement);
-}
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionSingleMemberAnnotation(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented Type Parameters");
-}
-
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionSingleNameReference(JNIEnv *env, jclass, jstring variableName, jobject jToken) {
-    SgName name = convertJavaStringToCxxString(env, variableName);
-
+    // Build a member function call...
     if (SgProject::get_verbose() > 0)
-        printf ("Building a variable reference for name = %s \n", name.str());
+        printf ("Build a Qualified Super Reference\n");
 
-    // We have to provide the starting scope to trigger the name to be looked up in parent scopes.
-    SgVarRefExp *varRefExp = NULL;
-    SgClassSymbol *className = SageInterface::lookupClassSymbolInParentScopes(name, astJavaScopeStack.top());
-
-    if (SgProject::get_verbose() > 0)
-        printf ("In cactionSingleNameReference(): className = %p \n", className);
-
-    if (className != NULL) {
-        // DQ (7/18/2011): test2011_24.java demonstrates that this can be a type.  So check for a type first...
-        SgType *type = className -> get_type();
-        ROSE_ASSERT(type != NULL);
-        astJavaComponentStack.push(type);
-    }
-    else {
-        SgVariableSymbol *variable_symbol = lookupVariableByName(name);
-        ROSE_ASSERT(variable_symbol);
-        varRefExp = SageBuilder::buildVarRefExp(variable_symbol);
-        ROSE_ASSERT(varRefExp != NULL);
-
-        if (SgProject::get_verbose() > 0)
-            printf ("In cactionSingleNameReference(): varRefExp = %p type = %p = %s \n", varRefExp, varRefExp -> get_type(), varRefExp -> get_type() -> class_name().c_str());
-
-        setJavaSourcePosition(varRefExp, env, jToken);
-
-        ROSE_ASSERT(! varRefExp -> get_file_info() -> isTransformation());
-        ROSE_ASSERT(! varRefExp -> get_file_info() -> isCompilerGenerated());
-
-        astJavaComponentStack.push(varRefExp);
-    }
+    // Do Nothing on the way down!
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionSingleNameReferenceClassScope(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented Type Parameters");
-}
-
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionSuperReference(JNIEnv *env, jclass, jobject jToken) {
-    SgClassDefinition *classDefinition = getCurrentClassDefinition();
-    ROSE_ASSERT(classDefinition -> get_declaration());
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedSuperReferenceEnd(JNIEnv *env, jclass, jobject jToken) {
+    SgClassType *type = isSgClassType(astJavaComponentStack.popType());
+    ROSE_ASSERT(type);
+    SgClassDeclaration *class_declaration = isSgClassDeclaration(type -> getAssociatedDeclaration() -> get_definingDeclaration());
+    ROSE_ASSERT(class_declaration);
+    SgClassDefinition *classDefinition = getCurrentTypeDefinition();
+    ROSE_ASSERT(classDefinition -> get_declaration() && (! classDefinition -> attributeExists("namespace")));
 
     vector<SgBaseClass *> &inheritances = classDefinition -> get_inheritances();
     ROSE_ASSERT(inheritances.size() > 0);
     SgClassDeclaration *super_declaration = inheritances[0] -> get_base_class();
     ROSE_ASSERT(! super_declaration -> get_explicit_interface()); // this class must have a super class
-    string className = super_declaration -> get_name();
 
     classDefinition = super_declaration -> get_definition(); // get the super class definition
 
@@ -3471,6 +3706,163 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSuperReference(JNIEnv *env, jclass
     ROSE_ASSERT(classSymbol != NULL);
 
     SgSuperExp *superExp = SageBuilder::buildSuperExp(classSymbol);
+    ROSE_ASSERT(superExp != NULL);
+
+    superExp -> setAttribute("prefix", new AstRegExAttribute(getFullyQualifiedTypeName(super_declaration -> get_type()))); // TODO: Figure out how to extend the Sage representation to process this feature better.
+
+    astJavaComponentStack.push(superExp);
+}
+*/
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedSuperReference(JNIEnv *env, jclass, jobject jToken) {
+    // Build a member function call...
+    if (SgProject::get_verbose() > 0)
+        printf ("Build a Qualified Super Reference\n");
+
+    // Do Nothing on the way down!
+}
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedSuperReferenceEnd(JNIEnv *env, jclass, jobject jToken) {
+    SgClassType *type = isSgClassType(astJavaComponentStack.popType());
+    ROSE_ASSERT(type);
+    SgClassDeclaration *class_declaration = isSgClassDeclaration(type -> getAssociatedDeclaration() -> get_definingDeclaration());
+    ROSE_ASSERT(class_declaration);
+    SgClassDefinition *class_definition = getCurrentTypeDefinition();
+    ROSE_ASSERT(class_definition -> get_declaration() && (! class_definition -> attributeExists("namespace")));
+
+    vector<SgBaseClass *> &inheritances = class_definition -> get_inheritances();
+    if (inheritances.size() == 0 || inheritances[0] -> get_base_class() -> get_explicit_interface()) { // no super class specified?
+        class_definition = ::ObjectClassDefinition; // ... then Object is the super class.
+    }
+    else {
+        SgClassDeclaration *super_declaration = inheritances[0] -> get_base_class();
+        ROSE_ASSERT(super_declaration && (! super_declaration -> get_explicit_interface())); // this class must have a super class
+        class_definition = super_declaration -> get_definition(); // get the super class definition
+    }
+
+    SgClassSymbol *class_symbol = isSgClassSymbol(class_definition -> get_declaration() -> search_for_symbol_from_symbol_table());
+    ROSE_ASSERT(class_symbol != NULL);
+
+    SgSuperExp *superExp = SageBuilder::buildSuperExp(class_symbol);
+    ROSE_ASSERT(superExp != NULL);
+
+    superExp -> setAttribute("prefix", new AstRegExAttribute(getFullyQualifiedTypeName(class_definition -> get_declaration() -> get_type()))); // TODO: Figure out how to extend the Sage representation to process this feature better.
+
+    astJavaComponentStack.push(superExp);
+}
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedThisReference(JNIEnv *env, jclass, jobject jToken) {
+    // Build a member function call...
+    if (SgProject::get_verbose() > 0)
+        printf ("Build a Qualified This Reference\n");
+
+    // Do Nothing on the way down!
+}
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedThisReferenceEnd(JNIEnv *env, jclass, jobject jToken) {
+    SgClassType *type = isSgClassType(astJavaComponentStack.popType());
+    ROSE_ASSERT(type);
+    SgClassDeclaration *class_declaration = isSgClassDeclaration(type -> getAssociatedDeclaration() -> get_definingDeclaration());
+    ROSE_ASSERT(class_declaration);
+    SgClassDefinition *class_definition = class_declaration -> get_definition();
+    ROSE_ASSERT(class_definition != NULL && (! class_definition -> attributeExists("namespace")));
+    SgClassSymbol *class_symbol = isSgClassSymbol(class_definition -> get_declaration() -> search_for_symbol_from_symbol_table());
+    ROSE_ASSERT(class_symbol != NULL);
+
+    SgThisExp *thisExp = SageBuilder::buildThisExp(class_symbol);
+    ROSE_ASSERT(thisExp != NULL);
+
+    thisExp -> setAttribute("prefix", new AstRegExAttribute(getFullyQualifiedTypeName(type))); // TODO: Figure out how to extend the Sage representation to process this feature better.
+
+    astJavaComponentStack.push(thisExp);
+}
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionReturnStatement(JNIEnv *env, jclass, jobject jToken) {
+    // Nothing to do !!!
+}
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionReturnStatementEnd(JNIEnv *env, jclass, jboolean hasExpression, jobject jToken) {
+    if (SgProject::get_verbose() > 2)
+        printf ("Inside of Java_JavaParser_cactionReturnStatementEnd() \n");
+
+    // Build the Return Statement
+    SgExpression *expression = (hasExpression ? astJavaComponentStack.popExpression() : NULL);
+    SgReturnStmt *returnStatement = SageBuilder::buildReturnStmt_nfi(expression);
+    setJavaSourcePosition(returnStatement, env, jToken);
+
+    // Pushing 'return' on the statement stack
+    astJavaComponentStack.push(returnStatement);
+}
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionSingleMemberAnnotation(JNIEnv *env, jclass, jobject jToken) {
+    cerr << "*** Ignoring a Single Member Annotation" << endl;
+  //    ROSE_ASSERT(! "yet implemented Single Member Annotation");
+}
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionSingleNameReference(JNIEnv *env, jclass, jstring java_package_name, jstring java_type_name, jstring java_name, jobject jToken) {
+    SgName package_name = convertJavaPackageNameToCxxString(env, java_package_name),
+           type_name = convertJavaStringToCxxString(env, java_type_name),
+           name = convertJavaStringToCxxString(env, java_name);
+    SgVariableSymbol *variable_symbol = NULL;
+    if (! type_name.getString().empty()) { // an instance variable?
+        if (SgProject::get_verbose() > 0)
+            printf ("Building a Single Name reference for name = %s%s%s \n", (package_name.getString().empty() ? "" : (package_name.getString() + ".")).c_str(), (type_name.getString() + ".").c_str(), name.str());
+
+        SgType *type = lookupTypeByName(package_name, type_name, 0 /* not an array - number of dimensions is 0 */);
+        ROSE_ASSERT(type);
+        SgClassType *class_type = isSgClassType(type);
+        ROSE_ASSERT(class_type);
+        SgClassDeclaration *declaration = isSgClassDeclaration(class_type -> get_declaration() -> get_definingDeclaration());
+        ROSE_ASSERT(declaration);
+        ROSE_ASSERT(declaration -> get_definition());
+        variable_symbol = lookupSimpleNameVariableInClass(name, declaration -> get_definition());
+    }
+    else { // a local variable!
+        if (SgProject::get_verbose() > 0)
+            printf ("Building a Single Name reference for name = %s \n", name.str());
+        variable_symbol = lookupVariableByName(name);
+    }
+
+    ROSE_ASSERT(variable_symbol);
+    SgVarRefExp *varRefExp = SageBuilder::buildVarRefExp(variable_symbol);
+    ROSE_ASSERT(varRefExp != NULL);
+
+    if (SgProject::get_verbose() > 0)
+        printf ("In cactionSingleNameReference(): varRefExp = %p type = %p = %s \n", varRefExp, varRefExp -> get_type(), varRefExp -> get_type() -> class_name().c_str());
+
+    setJavaSourcePosition(varRefExp, env, jToken);
+
+    ROSE_ASSERT(! varRefExp -> get_file_info() -> isTransformation());
+    ROSE_ASSERT(! varRefExp -> get_file_info() -> isCompilerGenerated());
+
+    astJavaComponentStack.push(varRefExp);
+}
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionSuperReference(JNIEnv *env, jclass, jobject jToken) {
+    SgClassDefinition *class_definition = getCurrentTypeDefinition();
+    ROSE_ASSERT(class_definition -> get_declaration() && (! class_definition -> attributeExists("namespace")));
+
+    vector<SgBaseClass *> &inheritances = class_definition -> get_inheritances();
+    if (inheritances.size() == 0 || inheritances[0] -> get_base_class() -> get_explicit_interface()) { // no super class specified?
+        class_definition = ::ObjectClassDefinition; // ... then Object is the super class.
+    }
+    else {
+        SgClassDeclaration *super_declaration = inheritances[0] -> get_base_class();
+        ROSE_ASSERT(super_declaration && (! super_declaration -> get_explicit_interface())); // this class must have a super class
+        class_definition = super_declaration -> get_definition(); // get the super class definition
+    }
+
+    SgClassSymbol *class_symbol = isSgClassSymbol(class_definition -> get_declaration() -> search_for_symbol_from_symbol_table());
+    ROSE_ASSERT(class_symbol != NULL);
+
+    SgSuperExp *superExp = SageBuilder::buildSuperExp(class_symbol);
     ROSE_ASSERT(superExp != NULL);
 
     astJavaComponentStack.push(superExp);
@@ -3511,13 +3903,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSwitchStatementEnd(JNIEnv *env, jc
     SgDefaultOptionStmt *default_stmt = NULL;
     for (int i = (hasDefaultCase ? numCases + 1 : numCases); i > 0; i--) {
         SgBasicBlock *case_block = SageBuilder::buildBasicBlock();
-        case_block -> set_parent(switch_block);
 
         SgStatement *sg_stmt = astJavaComponentStack.popStatement();
         while (! (isSgCaseOptionStmt(sg_stmt) || isSgDefaultOptionStmt(sg_stmt))) {
             case_block -> prepend_statement(sg_stmt);
             sg_stmt = astJavaComponentStack.popStatement();
         }
+        case_block -> set_parent(sg_stmt);
 
         if  (isSgCaseOptionStmt(sg_stmt)) {
             SgCaseOptionStmt *case_stmt = (SgCaseOptionStmt *) sg_stmt;
@@ -3571,24 +3963,28 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSynchronizedStatementEnd(JNIEnv *e
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionThisReference(JNIEnv *env, jclass, jobject jToken) {
-    SgClassDefinition *classDefinition = getCurrentClassDefinition();
-    string className = classDefinition -> get_declaration() -> get_name();
+    SgClassDefinition *class_definition = getCurrentTypeDefinition();
+    ROSE_ASSERT(! class_definition -> attributeExists("namespace"));
+
+    string className = class_definition -> get_declaration() -> get_name();
     // printf ("Current class for ThisReference is: %s \n", className.c_str());
 
-    // SgClassSymbol *classSymbol = classDefinition -> get_declaration() -> get_symbol();
-    SgClassSymbol *classSymbol = isSgClassSymbol(classDefinition -> get_declaration() -> search_for_symbol_from_symbol_table());
-    ROSE_ASSERT(classSymbol != NULL);
+    SgClassSymbol *class_symbol = isSgClassSymbol(class_definition -> get_declaration() -> search_for_symbol_from_symbol_table());
+    ROSE_ASSERT(class_symbol != NULL);
 
-    SgThisExp *thisExp = SageBuilder::buildThisExp(classSymbol);
+    SgThisExp *thisExp = SageBuilder::buildThisExp(class_symbol);
     ROSE_ASSERT(thisExp != NULL);
 
     astJavaComponentStack.push(thisExp);
 }
 
 
-// TODO: Same as function above... Merge it !
+// TODO: Same as function above... Remove it !
+/*
 JNIEXPORT void JNICALL Java_JavaParser_cactionThisReferenceClassScope(JNIEnv *env, jclass, jobject jToken) {
-    SgClassDefinition *classDefinition = getCurrentClassDefinition();
+    SgClassDefinition *classDefinition = getCurrentTypeDefinition();
+    ROSE_ASSERT(! classDefinition -> attributeExists("namespace"));
+
     string className = classDefinition -> get_declaration() -> get_name();
     // printf ("Current class for ThisReference is: %s \n", className.c_str());
 
@@ -3601,6 +3997,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionThisReferenceClassScope(JNIEnv *en
 
     astJavaComponentStack.push(thisExp);
 }
+*/
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionThrowStatement(JNIEnv *env, jclass, jobject jToken) {
@@ -3693,14 +4090,74 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTryStatementEnd(JNIEnv *env, jclas
 }
 
 
+JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameter(JNIEnv *env, jclass, jstring java_name, jobject jToken) {
+    if (SgProject::get_verbose() > 2)
+        printf ("Inside cactionTypeParameter \n");
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameter(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented Type Parameters");
+    // Do Nothing!
+
+    if (SgProject::get_verbose() > 2)
+        printf ("Exiting cactionTypeParameter \n");
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameterClassScope(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented Type Parameters");
+JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameterEnd(JNIEnv *env, jclass, jstring java_name, jboolean java_has_extends, jint java_num_bounds, jobject jToken) {
+    if (SgProject::get_verbose() > 2)
+        printf ("Inside cactionTypeParameterEnd \n");
+
+    SgName name = convertJavaStringToCxxString(env, java_name);
+    int num_bounds = java_num_bounds;
+    bool has_extends = java_has_extends;
+
+    ROSE_ASSERT(! astJavaScopeStack.empty());
+    SgClassDefinition *outer_scope = isSgClassDefinition(astJavaScopeStack.top());
+
+    ROSE_ASSERT(outer_scope && (! outer_scope -> attributeExists("namespace")));
+    SgClassSymbol *class_symbol = outer_scope -> lookup_class_symbol(name);
+    ROSE_ASSERT(class_symbol);
+    SgClassDeclaration *parameter_declaration = (SgClassDeclaration *) class_symbol -> get_declaration() -> get_definingDeclaration();
+    ROSE_ASSERT(parameter_declaration);
+    SgClassDefinition *class_definition = parameter_declaration -> get_definition();
+    ROSE_ASSERT(class_definition && (! class_definition -> attributeExists("namespace")));
+
+    //
+    //
+    //
+    std::vector<SgNode *> parameter_type_list;
+    for (int i = 0; i < num_bounds; i++) {
+        SgType *bound_type = astJavaComponentStack.popType();
+        ROSE_ASSERT(bound_type);
+        parameter_type_list.push_back(bound_type);
+        if (SgProject::get_verbose() > 0) {
+            string name = (isSgClassType(bound_type)
+                               ? getFullyQualifiedTypeName(isSgClassType(bound_type))
+                               : isSgJavaParameterizedType(bound_type)
+                                     ? isSgJavaParameterizedType(bound_type) -> get_qualified_name().getString()
+                                     : "???");
+            cout << "   Type " << name
+                 << endl;
+            cout.flush();
+        }
+
+        SgClassDeclaration *bound_declaration = (isSgClassType(bound_type) 
+                                                     ? isSgClassDeclaration(isSgClassType(bound_type) -> get_declaration() -> get_definingDeclaration())
+                                                     : isSgJavaParameterizedType(bound_type)
+                                                           ? isSgClassDeclaration(isSgJavaParameterizedType(bound_type)  -> get_declaration() -> get_definingDeclaration())
+                                                           : NULL);
+        ROSE_ASSERT(bound_declaration);
+        SgBaseClass *base = new SgBaseClass(bound_declaration); // TODO: Why can't one associate attributes with an SgBaseClass?
+        base -> set_parent(class_definition);
+        class_definition -> prepend_inheritance(base);
+    }
+
+    AstSgNodeListAttribute *attribute = new AstSgNodeListAttribute();
+    for (int i = parameter_type_list.size() - 1;  i >= 0; i--) { // We need to reverse the content of the vector  to place the parameter types in the correct order.
+        attribute -> addNode(parameter_type_list[i]);
+    }
+    class_definition -> setAttribute(has_extends ? "parameter_type_bounds_with_extends" : "parameter_type_bounds", attribute); // TODO: Since declarations are not mapped one-to-one with parameterized types, we need this attribute.
+
+    if (SgProject::get_verbose() > 2)
+        printf ("Exiting cactionTypeParameterEnd \n");
 }
 
 
@@ -3793,10 +4250,29 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionWhileStatementEnd(JNIEnv *env, jcl
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionWildcard(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented");
+    if (SgProject::get_verbose() > 2)
+        printf ("Inside cactionWildcard \n");
+
+    // Do Nothing!
+
+    if (SgProject::get_verbose() > 2)
+        printf ("Exiting cactionWildcard \n");
 }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionWildcardClassScope(JNIEnv *env, jclass, jobject jToken) {
-    ROSE_ASSERT(! "yet implemented");
+JNIEXPORT void JNICALL Java_JavaParser_cactionWildcardEnd(JNIEnv *env, jclass, jboolean is_unbound, jboolean has_extends_bound, jboolean has_super_bound, jobject jToken) {
+    if (SgProject::get_verbose() > 2)
+        printf ("Inside cactionWildcardEnd \n");
+
+    SgType *bound_type = (is_unbound ? NULL : astJavaComponentStack.popType());
+
+    SgJavaWildcardType *wildcard = (is_unbound ? getUniqueWildcardUnbound()
+                                               : (has_extends_bound ? getUniqueWildcardExtends(bound_type)
+                                                                    : getUniqueWildcardSuper(bound_type)));
+    ROSE_ASSERT(wildcard);
+
+    astJavaComponentStack.push(wildcard);
+
+    if (SgProject::get_verbose() > 2)
+        printf ("Exiting cactionWildcardEnd \n");
 }

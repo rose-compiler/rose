@@ -7,6 +7,7 @@
 #include "ecj.h"
 
 using std::string;
+using namespace std;
 
 static jmethodID jofp_get_method(int, const char*, const char*);
 
@@ -32,10 +33,7 @@ int jvm_ecj_processing(int argc, char **argv){
 static jclass jofp_get_class() { 
     static jclass ofp_class ;
     if (ofp_class == NULL) {
-        // ofp_class = jserver_FindClass("fortran/ofp/FrontEnd");
         ofp_class = jserver_FindClass("JavaTraversal");
-        // ofp_class = jserver_FindClass("org.eclipse.jdt.internal.compiler.batch.Main");
-
         if (ofp_class == NULL)  jserver_handleException();
     }
     return ofp_class;
@@ -48,10 +46,10 @@ static jobject jofp_get_new_object(jmethodID method, jobjectArray args, jstring 
 
 
 static int jofp_invoke(int argc, char **argv) {
-    int retval= 0;
+    int retval = 0;
 
     jobjectArray args;
- 
+
     /* Create a Java String[] out of argv (everything after the first arg).  */
     args = jserver_getJavaStringArray(argc, argv);
 
@@ -70,6 +68,7 @@ static int jofp_invoke(int argc, char **argv) {
 
     // tps : this code is more transparent and easier to read
     jclass cls = jserver_FindClass("JavaTraversal");
+    if (cls == NULL)  jserver_handleException();
     jmethodID  mainMethod = jserver_GetMethodID(STATIC_METHOD, cls, "main",  "([Ljava/lang/String;)V");
     JNIEnv* env = getEnv();
     (*env).CallStaticVoidMethod(cls, mainMethod,args);
