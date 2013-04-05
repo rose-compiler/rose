@@ -200,11 +200,15 @@ public:
     // Save each function to the database.  Returns a mapping from function object to ID number.
     FunctionIdMap save_functions(const Functions &functions) {
         FunctionIdMap retval;
-        int func_id = sqlite.executeint("select coalesce(max(id),0)+1 from semantic_functions");
-        sqlite3_command cmd1(sqlite, "select coalesce("
-                             " (select id from semantic_functions where entry_va=? and funcname=? and filename=? limit 1),"
-                             " -1) as existing_id");
+        sqlite3_command cmd1(sqlite, "select coalesce(max(id),-1) from semantic_functions"
+                             " where entry_va=? and funcname=? and filename=?");
         sqlite3_command cmd2(sqlite, "insert into semantic_functions (id, entry_va, funcname, filename) values (?,?,?,?)");
+
+        // Hold a write-lock while we update the semantic_functions table so that no other process tries to use the
+        // same function ID numbers.
+        sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE);
+
+        int func_id = sqlite.executeint("select coalesce(max(id),0)+1 from semantic_functions");
         for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
             SgAsmFunction *func = *fi;
             cmd1.bind(1, func->get_entry_va());
@@ -222,6 +226,8 @@ public:
                 retval.insert(std::make_pair(func, func_id));
             }
         }
+
+        lock.commit();
         return retval;
     }
     
@@ -232,6 +238,12 @@ public:
     // are not actually random).
     InputValues choose_inputs(size_t inputset_id) {
         CloneDetection::InputValues inputs;
+
+        // Hold write lock while we check for input values and either read or create them. Otherwise some other
+        // process might concurrently decide that input values don't exist and we'll have two processes trying to create
+        // the input values that might differ.
+        sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE);
+
         sqlite3_command cmd1(sqlite, "select vtype, val from semantic_inputvalues where id = ? order by pos");
         cmd1.bind(1, inputset_id);
         sqlite3_reader cursor = cmd1.executereader();
@@ -274,14 +286,25 @@ public:
             }
         }
 
+        lock.commit();
         return inputs;
     }
 
     // Save output values into the database.  If an output set already exists in the database with these values, return that
     // set's ID instead of saving an new, identical set.
     size_t save_outputs(const OutputValues &outputs) {
-        // Load output sets from the database
-        if (output_sets.empty()) {
+        RTS_Message *m = thread->tracing(TRACE_MISC);
+
+        // We need a write lock for the duration, otherwise some other process might determine that an output set
+        // doesn't exist and then try to create the same one we're about to create.
+        sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE);
+
+        // Load output sets from the database if they've changed since last time we loaded.  If we're the only process
+        // creating output sets then this we'll only load the output sets when we first start.  We're assuming that no
+        // process is deleting output sets and that sets are numbered consecutively starting at zero.
+        if ((int)output_sets.size() != sqlite.executeint("select coalesce(max(id),-1)+1 from semantic_outputvalues")) {
+            if (VERBOSE)
+                m->mesg("%s: loading output sets from the database", name);
             sqlite3_command cmd1(sqlite, "select id, val from semantic_outputvalues");
             sqlite3_reader cursor = cmd1.executereader();
             while (cursor.read()) {
@@ -300,7 +323,7 @@ public:
         }
 
         // Save this output set
-        size_t setid = output_sets.size();
+        int setid = sqlite.executeint("select coalesce(max(id),0)+1 from semantic_outputvalues");
         output_sets.resize(setid+1);
         output_sets[setid] = outputs;
         for (OutputValues::const_iterator oi=outputs.begin(); oi!=outputs.end(); ++oi) {
@@ -310,6 +333,7 @@ public:
             cmd2.executenonquery();
         }
 
+        lock.commit();
         return setid;
     }
 
@@ -464,12 +488,18 @@ public:
                             name, function_to_str(func).c_str(), i, output_values_str.str().c_str());
                 }
 
-                // Save the results
+                // Save the results. Some other process might have tested this function concurrently, in which case we'll
+                // defer to the other process' results.
                 size_t outputset_id = save_outputs(outputs->get_values());
-                cmd1.bind(1, func_ids[func]);
-                cmd1.bind(2, i);
-                cmd1.bind(3, outputset_id);
-                cmd1.executenonquery();
+                sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE, sqlite3_transaction::DEST_COMMIT);
+                if (cmd2.executeint()>0) {
+                    m->mesg("%s: %s fuzz test #%zu ALREADY PRESENT", name, function_to_str(func).c_str(), i);
+                } else {
+                    cmd1.bind(1, func_ids[func]);
+                    cmd1.bind(2, i);
+                    cmd1.bind(3, outputset_id);
+                    cmd1.executenonquery();
+                }
             }
         }
         m->mesg("%s: final results stored in %s", name, dbname.c_str());
