@@ -7,8 +7,11 @@
 /*-----------------------------------------------------------------------------
  *  Dependencies
  *---------------------------------------------------------------------------*/
-#include "sage_support.h"
 #include <algorithm>
+
+#include <boost/filesystem.hpp>
+
+#include "sage_support.h"
 
 #ifdef __INSURE__
 // Provide a dummy function definition to support linking with Insure++.
@@ -4449,24 +4452,45 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
           )
       );
 
-     if (use_original_input_file)
-        {
+    if (use_original_input_file)
+    {
           //ROSE_ASSERT(get_skip_unparse() == true);
           string outputFilename = get_sourceFileNameWithPath();
-#if 0
-          if (get_skip_unparse() == true)
-             {
-            // We we are skipping the unparsing then we didn't generate an intermediate
-            // file and so we want to compile the original source file.
-               outputFilename = get_sourceFileNameWithPath();
-             }
-            else
-             {
-            // If we did unparse an intermediate file then we want to compile that
-            // file instead of the original source file.
-               outputFilename = "rose_" + get_sourceFileNameWithoutPath();
-             }
-#endif
+
+          if (get_unparse_output_filename().empty())
+          {
+              ROSE_ASSERT(! "Not implemented yet");
+          }
+          else
+          {
+              boost::filesystem::path original_file = outputFilename;
+              boost::filesystem::path unparsed_file = get_unparse_output_filename();
+              ROSE_ASSERT(original_file.string() != unparsed_file.string());
+              std::cout
+                  << "unparsed_file "
+                  << "'" << unparsed_file << "' "
+                  << "exists = "
+                  << std::boolalpha
+                  << boost::filesystem::exists(unparsed_file)
+                  << std::endl;
+              std::cout
+                  << "Replacing "
+                  << "'" << unparsed_file << "' "
+                  << "with "
+                  << "'" << original_file << "'"
+                  << std::endl;
+              // copy_file will only completely override the existing file in Boost 1.46+
+              // http://stackoverflow.com/questions/14628836/boost-copy-file-has-inconsistent-behavior-when-overwrite-if-exists-is-used
+              if (boost::filesystem::exists(unparsed_file))
+              {
+                  boost::filesystem::remove(unparsed_file);
+              }
+              boost::filesystem::copy_file(
+                  original_file,
+                  unparsed_file,
+                  boost::filesystem::copy_option::overwrite_if_exists);
+          }
+
           set_unparse_output_filename(outputFilename);
 
        // DQ (6/25/2006): I think it is OK to not have an output file name specified.
@@ -4474,7 +4498,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 
        // printf ("Exiting as a test \n");
        // ROSE_ASSERT(false);
-        }
+    }
 #endif
 
      ROSE_ASSERT (get_unparse_output_filename().empty() == false);
@@ -4540,22 +4564,29 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
           //CAVE3 double check that is correct and shouldn't be compilerCmdLine
            returnValueForCompiler = systemFromVector (compilerCmdLine);
 
-          // unparsed file may not be valid
+          // Compilation failed =>
+          //
+          //   1. Unparsed file is invalid => (2) Try compiling the original input file
+          //   2. Original input file is invalid => abort
           if (returnValueForCompiler != 0)
           {
               if (this->get_project()->get_keep_going() == true)
               {
-                  // The original input file -- what was just compiled above -- is invalid.
-                  if (this->get_compileOutputFailed())
+                  // 1. We already failed the compilation of the ROSE unparsed file.
+                  // 2. Now we tried to compile the original input file --
+                  //    what was just compiled above -- and failed also.
+                  if (this->get_unparsedFileFailedCompilation())
                   {
                       printf("[FATAL] Original input file is invalid\n");
                       exit(1);
                   }
                   else
                   {
-                      // Try to compile the original input file
+                      // The ROSE unparsed file is invalid...
                       this->set_frontendErrorCode(-1);
-                      this->set_compileOutputFailed(true);
+                      this->set_unparsedFileFailedCompilation(true);
+
+                      // So try to compile the original input file instead...
                       returnValueForCompiler = this->compileOutput(argv, fileNameIndex);
                   }
               }
