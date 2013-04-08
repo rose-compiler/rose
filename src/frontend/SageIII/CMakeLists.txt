@@ -1,18 +1,21 @@
-
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 add_subdirectory(astFileIO)
 # tps (04/01/2010) : Added  GENERATED_CODE_DIRECTORY_Cxx_Grammar subdirectory
 add_subdirectory(GENERATED_CODE_DIRECTORY_Cxx_Grammar)
-add_subdirectory(astMerge)
 add_subdirectory(astFixup)
 add_subdirectory(astPostProcessing)
 add_subdirectory(sageInterface)
 add_subdirectory(virtualCFG)
-add_subdirectory(astTokenStream)
-add_subdirectory(astHiddenTypeAndDeclarationLists)
 add_subdirectory(astVisualization)
-add_subdirectory(includeDirectivesProcessing)
 
+if(NOT enable-internalFrontendDevelopment)
+  ##AS Commented out for simpler build
+  ###add_subdirectory(astFileIO)
+  add_subdirectory(astFromString)
+  add_subdirectory(astHiddenTypeAndDeclarationLists)
+  add_subdirectory(astMerge)
+  add_subdirectory(astTokenStream)
+  add_subdirectory(includeDirectivesProcessing)
+endif()
 
 ########### next target ###############
 

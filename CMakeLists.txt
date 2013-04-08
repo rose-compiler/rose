@@ -356,10 +356,22 @@ include(FindMySQL)
 find_package(OpenSSL)
 
 #configuration options
+option(enable-binary-analysis "Enable binary analysis support in ROSE." ON)
+if (enable-binary-analysis)
+  add_definitions(-DROSE_BUILD_BINARY_ANALYSIS_SUPPORT)
+endif()
+
 option(enable-c "Enable C/C++ language support in ROSE." ON)
 if (enable-c)
   add_definitions(-DROSE_BUILD_CXX_LANGUAGE_SUPPORT)
   add_definitions(-DROSE_BUILD_C_LANGUAGE_SUPPORT)
+endif()
+
+option(enable-compass2 "build the Compass2 static analysis tool" OFF)
+
+option(enable-cuda "Enable cuda support in ROSE." ON)
+if (enable-cuda)
+  add_definitions(-DROSE_BUILD_CUDA_LANGUAGE_SUPPORT)
 endif()
 
 option(enable-fortran "Enable Fortran support in ROSE." ON)
@@ -367,10 +379,22 @@ if (enable-fortran)
   add_definitions(-DROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT)
 endif()
 
+option(enable-internalFrontendDevelopment
+  "Enable development mode to reduce files required to support work on
+  language frontends" OFF)
+if (enable-internalFrontendDevelopment)
+  add_definitions(-DROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT)
+endif()
+
 option(enable-java "Enable Java support in ROSE." ON)
 if (enable-java)
   find_package(JNI)
   add_definitions(-DROSE_BUILD_JAVA_LANGUAGE_SUPPORT)
+endif()
+
+option(enable-opencl "Enable OpenCL support in ROSE." ON)
+if (enable-opencl)
+  add_definitions(-DROSE_BUILD_OPENCL_LANGUAGE_SUPPORT)
 endif()
 
 option(enable-php "Enable PHP support in ROSE." ON)
@@ -384,20 +408,14 @@ if (enable-python)
   find_package(PythonLibs REQUIRED)
 endif()
 
-option(enable-binary-analysis "Enable binary analysis support in ROSE." ON)
-if (enable-binary-analysis)
-  add_definitions(-DROSE_BUILD_BINARY_ANALYSIS_SUPPORT)
+option(enable-rosehpct "enable build of the ROSE-HPCT module" ON)
+
+option(enable-rose-openGL "enable openGL" OFF)
+if(enable-rose-openGL)
+  find_package(OpenGL)
+  find_package(GLUT)
 endif()
 
-option(enable-cuda "Enable cuda support in ROSE." ON)
-if (enable-cuda)
-  add_definitions(-DROSE_BUILD_CUDA_LANGUAGE_SUPPORT)
-endif()
-
-option(enable-opencl "Enable OpenCL support in ROSE." ON)
-if (enable-opencl)
-  add_definitions(-DROSE_BUILD_OPENCL_LANGUAGE_SUPPORT)
-endif()
 
 option(disable-tests-directory
   "Disable compilation and testing of the ROSE/tests directory" OFF)
@@ -410,8 +428,6 @@ option(disable-projects-directory
 
 option(with-roseQt "Build with roseQt" OFF)
 
-option(enable-rosehpct "enable build of the ROSE-HPCT module" ON)
-
 option(with-python "Build code that requires a Python interpreter" ON)
 if(with-python)
   find_package(PythonInterp)
@@ -419,6 +435,9 @@ endif()
 
 find_path(with-ida "ida2sql.py"
   DOC "Specify the prefix where IDA Pro is installed")
+
+find_path(with-llvm "llvm"
+  DOC "Specify the prefix where LLVM (and opt) is installed")
 
 # tps (01/04/2010) : added verbose output 
 # ------------------------- Begin Generic CMake Variable Logging ------------------
@@ -750,7 +769,7 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 
 if(with-roseQt)
-  find_package(Qt REQUIRED)
+  find_package(Qt4 REQUIRED)
   include(${QT_USE_FILE})
   #message(Status "Enabling QT ...")
   list(APPEND ROSE_INCLUDES
@@ -758,6 +777,34 @@ if(with-roseQt)
     ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Components/QueryBox
     ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Components/SourceBox
     ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Components/TreeBox
+  )
+  set(qtWidgets_INCLUDE_DIRS
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/AsmInstructionBar
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/AsmView
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/AstBrowserWidget
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/AstGraphWidget
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/AstProcessing
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/BeautifiedAst
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/FlopCounter
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/InstructionCountAnnotator
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/KiviatView
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/MetricsConfig
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/MetricFilter
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/MetricsKiviat
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/NodeInfoWidget
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/ProjectManager
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/PropertyTreeWidget
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/QCodeEditWidget
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/QtGradientEditor
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/RoseCodeEdit
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/RoseFileSelector
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/SrcBinView
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/TaskSystem
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/TreeModel
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/util
+    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/WidgetCreator
   )
 endif()
 set(QT_INCLUDES ${ROSE_INCLUDES} ${Boost_INCLUDE_DIRS} )
@@ -768,6 +815,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_subdirectory(config)
 add_subdirectory(src)
+add_subdirectory(demo)
+add_subdirectory(exampleTranslators)
 
 if(NOT disable-tests-directory)
   add_subdirectory(tests)

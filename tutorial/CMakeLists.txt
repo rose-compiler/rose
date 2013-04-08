@@ -49,8 +49,8 @@ if(HAVE_PTHREAD_H)
 endif()
 
 foreach(tutorial ${tutorials})
-  add_executable(${tutorial} "${tutorial}.C")
-  target_link_libraries(${tutorial} ROSE_DLL ${Boost_LIBRARIES})
+  add_executable(${tutorial}Tutorial "${tutorial}.C")
+  target_link_libraries(${tutorial}Tutorial ROSE_DLL ${Boost_LIBRARIES})
 endforeach()
 
 #if ROSE_HAVE_YICES

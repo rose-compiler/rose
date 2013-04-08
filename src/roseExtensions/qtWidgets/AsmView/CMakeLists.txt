@@ -1,41 +1,7 @@
+QT4_WRAP_UI(AsmView_UI_CPP ConfigureAsmViewDelegate.ui)
+QT4_WRAP_CPP(AsmView_MOC_CPP AsmView.h)
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-
-########### next target ###############
-
-
-########### install files ###############
-
-
-
-
-#original Makefile.am contents follow:
-
-##------------ AsmView Makefile.am -----------
-#include $(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc 
-#
-#if ROSE_WITH_ROSEQT
-#
-#noinst_LTLIBRARIES = libAsmView.la 
-#
-#
-#
-#libAsmView_la_SOURCES = AsmTreeNode.cpp\
-#                        AsmView.cpp
-#
-#nodist_libAsmView_la_SOURCES = moc_AsmView.cxx\
-#                               ui_ConfigureAsmViewDelegate.h
-#
-#BUILT_SOURCES = ui_ConfigureAsmViewDelegate.h
-#
-## Target for installing header 
-#headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
-#headerTarget_HEADERS = AsmTreeNode.h\
-#                       AsmView.h
-#
-#
-#endif
-#
-#EXTRA_DIST = ConfigureAsmViewDelegate.ui
-#
+add_library(AsmView OBJECT
+  AsmTreeNode.cpp AsmView.cpp ${AsmView_UI_CPP} ${AsmView_MOC_CPP})

@@ -73,6 +73,6 @@ set (EDITOR_FILES ${EDITOR_CPP_FILES} ${EDITOR_UI_OUTPUT} ${EDITOR_MOC_OUTPUT} )
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
-add_library(qcodeedit ${EDITOR_FILES} )
+add_library(qcodeedit OBJECT ${EDITOR_FILES} )
 set_target_properties ( qcodeedit PROPERTIES COMPILE_FLAGS "-fPIC")
 

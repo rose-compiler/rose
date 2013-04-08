@@ -5,6 +5,7 @@
 #include <QWidget>
 
 //#include <qrose.h>
+#include "sage3basic.h"
 
 class QBoxLayout;
 

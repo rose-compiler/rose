@@ -119,7 +119,6 @@ set( STORAGECLASSES_SRC
       ${CMAKE_SOURCE_DIR}/src/util/support/VectorCommandOptions.C
       ${CMAKE_SOURCE_DIR}/src/util/stringSupport/string_functions.cpp
 #     ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
-
      )
 add_library(roseutil SHARED ${rose_util_src})
 if (WIN32)
@@ -173,11 +172,6 @@ set( sage3_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/ompparser.yy
    )
 
-set(MSTL_SRC
-    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/MSTL/PDFGeneration.C 
-    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/MSTL/DOTGraphInterface.C
-   )
-
 set(POET_SRC
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/AutoTuningInterface.cpp
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/codegen.cpp
@@ -200,16 +194,6 @@ if(have_EDG_source)
     ${CMAKE_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/wrapperFunctionsForEDG.C
      )
 endif()
-
-set(virtualCFG_SRC
-    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/virtualCFG.C 
-    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/virtualBinCFG.C 
-    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/cfgToDot.C 
-    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/memberFunctions.C
-    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/staticCFG.C
-    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/customFilteredCFG.C
-    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/interproceduralCFG.C
-   )
 
 set( binaryFrontend_SRC 
      ${CMAKE_SOURCE_DIR}/src/frontend/BinaryDisassembly/RoseBin_support.cpp 
@@ -855,10 +839,19 @@ add_subdirectory(backend)
 add_subdirectory(roseSupport)
 add_subdirectory(3rdPartyLibraries)
 add_subdirectory(roseIndependentSupport)
-add_subdirectory(roseExtensions)
+if (NOT enable-internalFrontendDevelopment)
+  add_subdirectory(roseExtensions)
+endif()
 
+set(SageIII_objects "$<TARGET_OBJECTS:virtualCFG>")
+if(NOT enable-internalFrontendDevelopment)
+  list(APPEND SageIII_objects "$<TARGET_OBJECTS:AstFromString>")
+endif()
 
-
+set(midend_objects)
+if(NOT enable-internalFrontendDevelopment)
+  list(APPEND midend_objects "$<TARGET_OBJECTS:SSA>")
+endif()
 
 ########### next target ###############
 set(rose_LIB_SRCS dummyCppFileForLibrose.C 
@@ -866,9 +859,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${EDG_SAGE_Connection_SRC}
  ${unparser_SRC}
  ${sage3_SRC}
- ${MSTL_SRC} 
  ${POET_SRC} 
- ${virtualCFG_SRC} 
  ${rose_support_src}
  ${roseDisassemblers_SRC}
  ${roseBinaryFormats_fileList_part0}
@@ -894,9 +885,12 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${libastPostProcessing_SRC}
  ${roseExtensions_SRC}
  ${binaryFrontend_SRC}
-# $<TARGET_OBJECTS:astFileIO>
- ${AST_REWRITE_SRC}
+ ${SageIII_objects}
+ ${midend_objects}
+ $<TARGET_OBJECTS:mstl>
+# ${AST_REWRITE_SRC}
 )
+
 # commented out AST_REWRITE as it does not compile under Windows: error C2244: 'MidLevelRewrite<ASTNodeCollection>::AST_FragmentIdentificationTraversal::evaluateSynthesizedAttribute' : unable to match function definition to an existing declaration
 if (NOT WIN32)
 set(rose_LIB_SRCS ${rose_LIB_SRCS} ${AST_REWRITE_SRC})
