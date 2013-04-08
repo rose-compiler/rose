@@ -80,9 +80,9 @@ add_executable(CxxGrammarMetaProgram ${CxxGrammarMetaProgram_SRCS})
 set(link_libs roseutil ${Boost_LIBRARIES})
 if (WIN32)
   list(APPEND link_libs shlwapi.lib)
-endif (NOT WIN32)
+endif (WIN32)
 target_link_libraries(CxxGrammarMetaProgram ${link_libs})
-   
+
 
 
 
