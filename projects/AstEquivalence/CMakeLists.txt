@@ -4,9 +4,6 @@ configure_file(
   ${ROSE_BINARY_DIR}/projects/AstEquivalence/
   COPYONLY)
 
-include_directories(${QT_QT3SUPPORT_INCLUDE_DIR})
-add_definitions(-DQT3_SUPPORT)
-
 add_subdirectory(gui)
 
 add_executable(astEquivalence astEquivalenceGui.C astEquivalenceMainGui.C)

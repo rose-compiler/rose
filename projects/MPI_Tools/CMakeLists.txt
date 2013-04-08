@@ -1,0 +1,3 @@
+
+add_subdirectory(MPICodeMotion)
+add_subdirectory(MPIDeterminismAnalysis)

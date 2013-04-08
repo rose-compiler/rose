@@ -1,9 +1,4 @@
 
-include_directories(
-  ${QT_QT3SUPPORT_INCLUDE_DIR} ${ROSE_BINARY_DIR}/src/roseSupport
-)
-add_definitions(-DQT3_SUPPORT)
-
 set(BINQ_MOC_SOURCES slide.h MyBars.h)
 QT4_WRAP_CPP(BINQ_MOC_CPP ${BINQ_MOC_SOURCES})
 

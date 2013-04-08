@@ -9,7 +9,7 @@ set(qrose_LIB_SRCS qroselib.C)
 add_library(qrose SHARED ${qrose_LIB_SRCS})
 
 target_link_libraries(qrose
-  qrframework qrcommon qrquerybox qrsourcebox qrtreebox qrwidgets
+  qrsourcebox qrquerybox qrtreebox qrwidgets qrframework qrcommon
   ${QT_LIBRARIES} ${QT_QT3SUPPORT_LIBRARY})
 
 set_target_properties(qrose PROPERTIES VERSION 1.0.0 SOVERSION 1)
