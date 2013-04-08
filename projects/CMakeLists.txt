@@ -80,6 +80,7 @@ if (with-roseQt)
   add_subdirectory(RoseQt)
 endif()
 
+
 # target was commented out of Makefile
 #add_subdirectory(checkPointExample)
 
