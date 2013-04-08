@@ -16,6 +16,7 @@
 #include <utility>
 #include <limits.h>
 #include <map>
+#include "rosedll.h"
 
 #ifdef _MSC_VER
 // DQ (11/26/2009): Required for definition of PATH_MAX in MSVC.
@@ -148,7 +149,7 @@ namespace AbstractHandle{
   //---------------- An abstract handle --------------------------
   // to specify a construct using a specifier
   // Can be used alone or with parent handles when relative specifiers are used
-  class abstract_handle 
+  class ROSE_DLL_API abstract_handle 
   {
   public:
     //Constructors

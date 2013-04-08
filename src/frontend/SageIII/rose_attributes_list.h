@@ -74,7 +74,7 @@
 // using namespace std;
 #endif
 
-class PreprocessingInfo;
+class ROSE_DLL_API PreprocessingInfo;
 class ROSEAttributesList;
 //AS(01/04/07) Global map of filenames to PreprocessingInfo*'s as it is inefficient
 //to get this by a traversal of the AST

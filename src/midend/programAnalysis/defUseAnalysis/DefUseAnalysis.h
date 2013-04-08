@@ -56,7 +56,7 @@ namespace rose_hash {
 #endif 
 
 
-class DefUseAnalysis : public DFAnalysis, Support {
+class ROSE_DLL_API DefUseAnalysis : public DFAnalysis, Support {
  private:
   SgProject* project;
   bool DEBUG_MODE;

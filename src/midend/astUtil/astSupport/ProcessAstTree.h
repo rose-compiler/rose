@@ -5,7 +5,7 @@
 #include "AstInterface.h"
 #include "SinglyLinkedList.h"
 
-class ProcessAstTreeBase : public ProcessAstNode
+class ROSE_DLL_API ProcessAstTreeBase : public ProcessAstNode
 {
  public:
   typedef enum {BEFORE = 1, AT = 2, INSIDE = 4, BEFORE_AT = 3, INSIDE_AT = 6} TraverseLocation;

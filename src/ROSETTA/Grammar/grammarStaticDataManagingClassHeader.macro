@@ -6,7 +6,7 @@
 class SgProject;
 
 
-class AstSpecificDataManagingClass 
+class ROSE_DLL_API AstSpecificDataManagingClass 
   {
     private:
      SgProject* rootOfAst;

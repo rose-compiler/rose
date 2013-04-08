@@ -142,6 +142,7 @@ insertSupported ( SgStatement* astNode, MidLevelCollectionTypedefs::ScopeIdentif
 
 
 template<>
+ROSE_DLL_API
 void
 MidLevelRewrite<MidLevelInterfaceNodeCollection>::
 insert (

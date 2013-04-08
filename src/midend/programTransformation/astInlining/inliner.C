@@ -15,6 +15,7 @@
 
 #include "replaceExpressionWithStatement.h"
 #include "inlinerSupport.h"
+#include "inliner.h"
 
 using namespace SageInterface;
 // void FixSgTree(SgNode*);

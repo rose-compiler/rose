@@ -100,10 +100,10 @@ namespace Outliner
 
   //! Accept a set of command line options to adjust internal behaviors
   // Please use this function before calling the frontend() to set the internal flags
-  void commandLineProcessing(std::vector<std::string> &argvList);
+  ROSE_DLL_API void commandLineProcessing(std::vector<std::string> &argvList);
   //
   //! Returns true iff the statement is "outlineable."
-  bool isOutlineable (const SgStatement* s, bool verbose = false);
+  ROSE_DLL_API bool isOutlineable (const SgStatement* s, bool verbose = false);
 
 
   /*!
@@ -142,7 +142,7 @@ namespace Outliner
    *  Programmers are expected to tell if a statement is outlineable before
    *  calling this function.
    */
-  Result outline (SgStatement* s);
+  ROSE_DLL_API Result outline (SgStatement* s);
 
   //! Outline to a new function with the specified name, calling preprocessing internally
   Result outline (SgStatement* s, const std::string& func_name);
@@ -158,7 +158,7 @@ namespace Outliner
   /*!
    *  \returns The number of outline directives processed.
    */
-  size_t outlineAll (SgProject *);
+  ROSE_DLL_API size_t outlineAll (SgProject *);
 
   /**
    * \name The following routines, intended for debugging, mirror the
@@ -167,9 +167,9 @@ namespace Outliner
    * present.
    */
   //@{
-  SgBasicBlock* preprocess (SgStatement* s);
-  SgBasicBlock* preprocess (SgPragmaDeclaration* s);
-  size_t preprocessAll (SgProject *);
+  ROSE_DLL_API SgBasicBlock* preprocess (SgStatement* s);
+  ROSE_DLL_API SgBasicBlock* preprocess (SgPragmaDeclaration* s);
+  ROSE_DLL_API size_t preprocessAll (SgProject *);
   //@}
   
    /*!

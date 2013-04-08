@@ -7,10 +7,11 @@
 #include <string>
 #include <typeinfo>
 #include "ObserveObject.h"
+#include "rosedll.h"
 
 class AstNodePtr;
-std::string AstToString( const AstNodePtr& s);
-std::string getAstLocation( const AstNodePtr& s);
+ROSE_DLL_API std::string AstToString( const AstNodePtr& s);
+ROSE_DLL_API std::string getAstLocation( const AstNodePtr& s);
 
 class AST_Error { 
    std::string msg;
@@ -80,7 +81,7 @@ class CopyAstRecord : public ObserveInfo< AstObserver>
 /**
  *  @brief  Holds entire AST, and provides interface to access/modify its nodes.
  */
-class AstInterface 
+class ROSE_DLL_API AstInterface 
 {
 protected:
   AstInterfaceImpl *impl;

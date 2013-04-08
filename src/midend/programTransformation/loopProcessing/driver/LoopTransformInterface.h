@@ -63,7 +63,7 @@ class AutoTuningInterface ;
 QY: Singular interface class which remembers configurations for loop 
     optimizations
 ***********/
-class LoopTransformInterface 
+class ROSE_DLL_API LoopTransformInterface 
 {
   static AstInterface* fa;
   static int configIndex;

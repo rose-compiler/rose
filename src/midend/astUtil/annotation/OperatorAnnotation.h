@@ -104,7 +104,7 @@ class OperatorReadInfoCollection
       OperatorAnnotCollection<OperatorSideEffectDescriptor>::Dump();
     }
 };
-class OperatorSideEffectAnnotation : public FunctionSideEffectInterface
+class ROSE_DLL_API OperatorSideEffectAnnotation : public FunctionSideEffectInterface
 {
   OperatorModInfoCollection modInfo;
   OperatorReadInfoCollection readInfo;

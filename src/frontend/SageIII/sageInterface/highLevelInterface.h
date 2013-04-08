@@ -49,7 +49,7 @@ SgScopeStatementPtrList currentScope;
 void buildInitializedName();
 void buildVariableDeclaration();
 void buildValueExpression();
-void buildAddOperator();
+ROSE_DLL_API void buildAddOperator();
 
 // Functions to set details required to pass later consistancy testing...
 void setStatementDetails   ( SgStatement*   stmt,        SgNode* parent, SgScopeStatement* scope );
