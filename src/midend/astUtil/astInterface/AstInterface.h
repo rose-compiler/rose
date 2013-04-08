@@ -13,6 +13,9 @@ class AstNodePtr;
 ROSE_DLL_API std::string AstToString( const AstNodePtr& s);
 ROSE_DLL_API std::string getAstLocation( const AstNodePtr& s);
 
+class SgProject;
+ROSE_DLL_API void FixSgProject( SgProject &sageProject);
+
 class AST_Error { 
    std::string msg;
   public:

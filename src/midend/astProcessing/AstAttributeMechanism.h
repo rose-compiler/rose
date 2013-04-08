@@ -5,6 +5,7 @@
 #define ASTATTRIBUTEMECHANISM_H
 
 #include "AttributeMechanism.h"
+#include "rosedll.h"
 
 class SgNode;
 
