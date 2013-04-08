@@ -2,8 +2,9 @@
 #define ROSE_ESCAPE_H
 
 #include <string>
+#include "rosedll.h"
 
-std::string escapeString(const std::string& s);
-std::string unescapeString(const std::string& s);
+ROSE_UTIL_API std::string escapeString(const std::string& s);
+ROSE_UTIL_API std::string unescapeString(const std::string& s);
 
 #endif // ROSE_ESCAPE_H

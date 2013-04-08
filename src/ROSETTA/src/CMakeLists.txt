@@ -74,15 +74,15 @@ set(GRAMMAR_SOURCE_FILES
      ../astNodeList
    )
 
-add_executable(CxxGrammarMetaProgram ${CxxGrammarMetaProgram_SRCS} ${rose_util_src})
+add_executable(CxxGrammarMetaProgram ${CxxGrammarMetaProgram_SRCS})
 
 # build ROSETTA code generator
-#target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS} rose_util_lib ${Boost_LIBRARIES})
-if (NOT WIN32)
-  target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS}  ${Boost_LIBRARIES})
-else (NOT WIN32)
-  target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS}  ${Boost_LIBRARIES} shlwapi.lib)
+set(link_libs roseutil ${Boost_LIBRARIES})
+if (WIN32)
+  list(APPEND link_libs shlwapi.lib)
 endif (NOT WIN32)
+target_link_libraries(CxxGrammarMetaProgram ${link_libs})
+   
 
 
 
