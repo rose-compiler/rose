@@ -7,6 +7,7 @@
 // by a new operator written for each class.
 
 #ifndef HAVE_PTHREAD_H
+	#pragma message("pthread.h is not available, synchronization being skipped") 
 	#ifndef ALLOC_MUTEX
 		#define ALLOC_MUTEX(CLASS_NAME, HOW)
 	#endif
