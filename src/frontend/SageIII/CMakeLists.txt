@@ -1,7 +1,6 @@
 
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
-##AS Commented out for simpler build
-###add_subdirectory(astFileIO)
+add_subdirectory(astFileIO)
 # tps (04/01/2010) : Added  GENERATED_CODE_DIRECTORY_Cxx_Grammar subdirectory
 add_subdirectory(GENERATED_CODE_DIRECTORY_Cxx_Grammar)
 add_subdirectory(astMerge)

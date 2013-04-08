@@ -5,6 +5,7 @@
 #include <DoublyLinkedList.h>
 #include <assert.h>
 #include <iostream>
+#include "rosedll.h"
 
 class DirectedEdgeInterface
 { public:
@@ -13,7 +14,7 @@ class DirectedEdgeInterface
 template <class Node, class Edge> class DirectedGraph;
 template <class Node, class Edge> class DirectedGraphEdge;
 template <class Node, class Edge>
-class DirectedGraphNode 
+class ROSE_UTIL_API DirectedGraphNode 
 { 
    DoublyLinkedListWrap <Edge*> edges[2];
    DoublyLinkedEntryWrap<Node*> *entry;
@@ -39,7 +40,7 @@ class DirectedGraphNode
 };
 
 template <class Node, class Edge>
-class DirectedGraphEdge
+class ROSE_UTIL_API DirectedGraphEdge
 {
   Node* nodes[2];
   DoublyLinkedEntryWrap<Edge*> *entries[2];

@@ -2,14 +2,7 @@
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
-
-#ifdef _MSC_VER
-    #include <windows.h>
-    #undef max
-    typedef LONG_PTR ssize_t;
-#else
-    #include <unistd.h>
-#endif
+#include "rose_getline.h"
 
 ssize_t
 rose_getline (char **lineptr, size_t *n, FILE *stream)

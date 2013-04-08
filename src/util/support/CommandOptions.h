@@ -3,8 +3,9 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include "rosedll.h"
 
-class CmdOptions
+class ROSE_UTIL_API CmdOptions
 {
   static CmdOptions *inst;
  public:

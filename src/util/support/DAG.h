@@ -5,11 +5,11 @@
 
 #include <DirectedGraph.h>
 #include <PtrSet.h>
-
+#include "rosedll.h"
 
 template <class Node, class Edge> class DAG;
 template <class Node, class Edge>
-class DAGNode : public DirectedGraphNode<Node, Edge>
+class ROSE_UTIL_API DAGNode : public DirectedGraphNode<Node, Edge>
 {
   unsigned ordNo, visitNo;
  public:
@@ -22,7 +22,7 @@ class DAGNode : public DirectedGraphNode<Node, Edge>
 };
 
 template <class Node, class Edge>
-class DAGEdge : public DirectedGraphEdge<Node,Edge>
+class ROSE_UTIL_API DAGEdge : public DirectedGraphEdge<Node,Edge>
 {
   bool isBackEdge;
   bool ValidTopoOrder() 
@@ -40,7 +40,7 @@ class DAGEdge : public DirectedGraphEdge<Node,Edge>
 };
 
 template <class Node, class Edge>
-class DAG  : public DirectedGraph<Node,Edge>
+class ROSE_UTIL_API DAG  : public DirectedGraph<Node,Edge>
 {
  public:
   typedef enum {NON_SORT, TOPO_SORT, R_TOPO_SORT} SortType;
