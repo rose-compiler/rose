@@ -9,7 +9,7 @@ add_subdirectory(intelPin)
 ########### next target ###############
 
 set(tutorials
-  sharedMemoryTraversals binaryFileRead binaryFileWrite ASTGraphGenerator
+  binaryFileRead binaryFileWrite ASTGraphGenerator
   ASTGraphGeneratorCustomized AST_PDF_Generator wholeASTGraphGenerator
   identityTranslator lineReplacement queryLibraryExample nestedQueryExample
   visitorTraversal prePostTraversal combinedTraversals traverseIRnodeTypes
@@ -44,6 +44,10 @@ set(tutorials
   findVariableDeclarations
 )
 
+if(HAVE_PTHREAD_H)
+  list(APPEND tutorials sharedMemoryTraversals)
+endif()
+
 foreach(tutorial ${tutorials})
   add_executable(${tutorial} "${tutorial}.C")
   target_link_libraries(${tutorial} ROSE_DLL ${Boost_LIBRARIES})
@@ -53,8 +57,10 @@ endforeach()
 #yicesTutorialExample yicesTutorialExample.C)
 #endif
 
-add_executable(codeCoverage codeCoverage.C coverageCodeFromShmuel.c)
-target_link_libraries(codeCoverage ROSE_DLL ${Boost_LIBRARIES})
+if(HAVE_SYS_TIME_H)
+  add_executable(codeCoverage codeCoverage.C coverageCodeFromShmuel.c)
+  target_link_libraries(codeCoverage ROSE_DLL ${Boost_LIBRARIES})
+endif()
 
 add_executable(abstractHandle1 abstractHandle1.cpp)
 target_link_libraries(abstractHandle1 ROSE_DLL ${Boost_LIBRARIES})
