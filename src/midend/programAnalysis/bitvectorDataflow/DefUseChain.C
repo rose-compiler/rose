@@ -10,7 +10,7 @@
 
 #ifdef TEMPLATE_ONLY
 
-bool DebugDefUseChain();
+ROSE_DLL_API bool DebugDefUseChain();
 
 template <class Node>
 class BuildDefUseChain 

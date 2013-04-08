@@ -115,7 +115,7 @@ class AstNodeMemoryPoolStatistics : public ROSE_VisitTraversal
     traversing a specified subtree of the AST, the memory pools using to hold the AST, or traversals
     of representative IR nodes (visits one type or IR node only in the AST).
  */
-class AstNodeStatistics
+class ROSE_DLL_API AstNodeStatistics
    {
      public:
      //! This outputs the types and count of IR nodes used in a traversal of the input file (excluding header files)

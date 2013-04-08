@@ -40,11 +40,13 @@ using namespace OmpSupport;
 
 const string FileHelper::pathDelimiter = "/";
 
+/* These symbols are defined when we include sage_support.h above - ZG (4/5/2013)
 // DQ (9/17/2009): This appears to only be required for the GNU 4.1.x compiler (not for any earlier or later versions).
 extern const std::string ROSE_GFORTRAN_PATH;
 
 // CER (10/11/2011): Added to allow OFP jar file to depend on version number based on date.
 extern const std::string ROSE_OFP_VERSION_STRING;
+*/
 
 #ifdef _MSC_VER
 // DQ (11/29/2009): MSVC does not support sprintf, but "_snprintf" is equivalent

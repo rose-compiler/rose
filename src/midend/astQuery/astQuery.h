@@ -17,7 +17,7 @@
 
 
 
-class VariantVector : public std::vector < VariantT >
+class ROSE_DLL_API VariantVector : public std::vector < VariantT >
 {
   // This class is derived from the STL vector class
   public:
@@ -26,19 +26,19 @@ class VariantVector : public std::vector < VariantT >
     VariantVector (const VariantVector & X);
     VariantVector operator= (const VariantVector & X);
 
-    friend VariantVector operator+ (VariantT lhs, VariantT rhs);
-    friend VariantVector operator+ (VariantT lhs, const VariantVector & rhs);
-    friend VariantVector operator+ (const VariantVector & lhs, VariantT rhs);
-    friend VariantVector operator+ (const VariantVector & lhs, const VariantVector & rhs);
+    ROSE_DLL_API friend VariantVector operator+ (VariantT lhs, VariantT rhs);
+    ROSE_DLL_API friend VariantVector operator+ (VariantT lhs, const VariantVector & rhs);
+    ROSE_DLL_API friend VariantVector operator+ (const VariantVector & lhs, VariantT rhs);
+    ROSE_DLL_API friend VariantVector operator+ (const VariantVector & lhs, const VariantVector & rhs);
 
     static void printVariantVector (const VariantVector & X);
 };
 
 // DQ (4/23/2006): g++ 4.1.0 requires friend functions to be declared outside the class as well!
-VariantVector operator+ (VariantT lhs, VariantT rhs);
-VariantVector operator+ (VariantT lhs, const VariantVector & rhs);
-VariantVector operator+ (const VariantVector & lhs, VariantT rhs);
-VariantVector operator+ (const VariantVector & lhs, const VariantVector & rhs);
+ROSE_DLL_API VariantVector operator+ (VariantT lhs, VariantT rhs);
+ROSE_DLL_API VariantVector operator+ (VariantT lhs, const VariantVector & rhs);
+ROSE_DLL_API VariantVector operator+ (const VariantVector & lhs, VariantT rhs);
+ROSE_DLL_API VariantVector operator+ (const VariantVector & lhs, const VariantVector & rhs);
 
 
 
@@ -113,16 +113,16 @@ namespace AstQueryNamespace
   // forward declaration
   class AstQueryInheritedAttributeType;
 
-  void Merge(Rose_STL_Container<SgNode*>& mergeWith, Rose_STL_Container<SgNode*>  mergeTo );
-  void Merge(Rose_STL_Container<SgFunctionDeclaration*>& mergeWith, Rose_STL_Container<SgFunctionDeclaration*>  mergeTo );
-  void Merge(Rose_STL_Container<int> & mergeWith, Rose_STL_Container<int>  mergeTo );
-  void Merge(Rose_STL_Container<std::string> & mergeWith, Rose_STL_Container<std::string>  mergeTo );
+  ROSE_DLL_API void Merge(Rose_STL_Container<SgNode*>& mergeWith, Rose_STL_Container<SgNode*>  mergeTo );
+  ROSE_DLL_API void Merge(Rose_STL_Container<SgFunctionDeclaration*>& mergeWith, Rose_STL_Container<SgFunctionDeclaration*>  mergeTo );
+  ROSE_DLL_API void Merge(Rose_STL_Container<int> & mergeWith, Rose_STL_Container<int>  mergeTo );
+  ROSE_DLL_API void Merge(Rose_STL_Container<std::string> & mergeWith, Rose_STL_Container<std::string>  mergeTo );
 
   // DQ & AS (3/14/2007): Added to support us of astQuery with functions returning void* (not clear why void 
   // does not work, except that void is not really a return type but instead is a signal that there is no 
   // return type).  This is used in the generation of the list of return types (used for testing in AST 
   // Consistency tests).
-  void Merge(void* mergeWith, void* mergeTo );
+  ROSE_DLL_API void Merge(void* mergeWith, void* mergeTo );
 
   template<typename ResultType>
     void Merge(std::vector<ResultType> & mergeWith, std::vector<ResultType> & mergeTo )

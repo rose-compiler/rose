@@ -4313,7 +4313,7 @@ void FixSgTree( SgNode *r)
   }
 }
 
-void FixSgProject( SgProject &sageProject)
+ROSE_DLL_API inline void FixSgProject( SgProject &sageProject)
 {
    int filenum = sageProject.numberOfFiles();
    for (int i = 0; i < filenum; ++i) {

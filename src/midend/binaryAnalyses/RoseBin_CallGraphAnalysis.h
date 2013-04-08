@@ -13,7 +13,7 @@
 //class RoseBin;
 //class RoseFile;
 
-class RoseBin_CallGraphAnalysis : public RoseBin_FlowAnalysis {
+class ROSE_DLL_API RoseBin_CallGraphAnalysis : public RoseBin_FlowAnalysis {
   void findClusterOfNode(SgGraphNode* next_n,
                          int& currentCluster,
                          std::map<SgAsmFunction*,int>& visited);

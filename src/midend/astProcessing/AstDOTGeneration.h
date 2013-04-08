@@ -9,7 +9,7 @@
 #include "roseInternal.h"
 //#include "sage3.h"
 
-class AstDOTGeneration : public DOTGeneration<SgNode*>
+class ROSE_DLL_API AstDOTGeneration : public DOTGeneration<SgNode*>
    {
      public:
           void generate(SgProject* node, traversalType tt=TOPDOWNBOTTOMUP, std::string filenamePostfix="");
@@ -43,7 +43,7 @@ class AstDOTGeneration : public DOTGeneration<SgNode*>
 
 namespace AstDOTGenerationExtended_Defaults
    {
-     struct NamedExtraNodeInfo
+     struct ROSE_DLL_API NamedExtraNodeInfo
         {
 #if 1
        // DQ (6/25/2011): Put the function definition into the source file (avoid function definitions in header files).
@@ -124,7 +124,7 @@ namespace AstDOTGenerationExtended_Defaults
                 }
         };
 
-        struct LValueExtraNodeInfo
+        struct ROSE_DLL_API LValueExtraNodeInfo
         {
 #if 1
        // DQ (6/25/2011): Put the function definition into the source file (avoid function definitions in header files).
@@ -146,7 +146,7 @@ namespace AstDOTGenerationExtended_Defaults
 #endif
         };
 
-        struct TypeExtraNodeInfo
+        struct ROSE_DLL_API TypeExtraNodeInfo
         {
 #if 1
        // DQ (6/25/2011): Put the function definition into the source file (avoid function definitions in header files).

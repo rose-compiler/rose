@@ -10,7 +10,7 @@ using namespace boost;
 
 //! PtrAliasAnalysis computes Alias Information, which is used for 
 //! Virtual Function Resolving.
-class PtrAliasAnalysis : public InterProcDataFlowAnalysis{
+class ROSE_DLL_API PtrAliasAnalysis : public InterProcDataFlowAnalysis{
 
 protected:
     //! The stored callGraph for internal processing

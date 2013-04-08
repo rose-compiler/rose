@@ -13,7 +13,7 @@
 //class RoseBin;
 //class RoseFile;
 
-class RoseBin_ControlFlowAnalysis : public RoseBin_FlowAnalysis {
+class ROSE_DLL_API RoseBin_ControlFlowAnalysis : public RoseBin_FlowAnalysis {
   void getCFGNodesForFunction(std::set<SgGraphNode*>& visited_f,
                               std::set<std::string>& visited_names,
                               SgGraphNode* next_n, std::string nodeName);

@@ -114,7 +114,7 @@ typedef std::vector<NodeType> NodeTypeVector;
  *   struct defaultFilterUnary
  * is an example filter on nodes.
  **************************************************************************************/
-struct defaultFilterUnary: public std::unary_function<NodeType,FunctionalReturnType >
+struct ROSE_DLL_API defaultFilterUnary: public std::unary_function<NodeType,FunctionalReturnType >
    {
   // This functor filters SgFileInfo objects and IR nodes from the GNU compatability file
      result_type operator() (argument_type x );
@@ -125,7 +125,7 @@ struct defaultFilterUnary: public std::unary_function<NodeType,FunctionalReturnT
  *   struct defaultFilterBinary
  * is an example filter on edges.
  **************************************************************************************/
-struct defaultFilterBinary: public std::binary_function<SgNode*,NodeType,FunctionalReturnType >
+struct ROSE_DLL_API defaultFilterBinary: public std::binary_function<SgNode*,NodeType,FunctionalReturnType >
    {
   // This functor filters SgFileInfo objects and IR nodes from the GNU compatability file
      result_type operator() ( first_argument_type x, second_argument_type y);
@@ -232,7 +232,7 @@ public:
  * is true the nodes and edges representing NULL pointers are filtered out (default).
  **********************************************************************************************/
 template<typename Functional1, typename Functional2>
-void writeGraphOfMemoryPoolToFile(std::string filename, AST_Graph::pointerHandling, Functional1, Functional2);
+ROSE_DLL_API void writeGraphOfMemoryPoolToFile(std::string filename, AST_Graph::pointerHandling, Functional1, Functional2);
 
 
 
@@ -245,7 +245,7 @@ void writeGraphOfMemoryPoolToFile(std::string filename, AST_Graph::pointerHandli
  *                 Functional2, bool graphNullPointers);
  * except there is no filters Filter1 and Filter2 on nodes and edges.
  **********************************************************************************************/
-void writeGraphOfMemoryPoolToFile(std::string filename, AST_Graph::pointerHandling);
+ROSE_DLL_API void writeGraphOfMemoryPoolToFile(std::string filename, AST_Graph::pointerHandling);
 
 /*********************************************************************************************
  *  The function 
@@ -258,7 +258,7 @@ void writeGraphOfMemoryPoolToFile(std::string filename, AST_Graph::pointerHandli
  **********************************************************************************************/
 
 template<typename Functional1>
-void writeGraphOfMemoryPoolToFile(std::string filename, AST_Graph::pointerHandling, Functional1);
+ROSE_DLL_API void writeGraphOfMemoryPoolToFile(std::string filename, AST_Graph::pointerHandling, Functional1);
 
 
 /*************************************************************************************************
@@ -278,7 +278,7 @@ void writeGraphOfMemoryPoolToFile(std::string filename, AST_Graph::pointerHandli
  * is true the nodes and edges representing NULL pointers are filtered out (default).
  **********************************************************************************************/
 template<typename Functional1, typename Functional2>
-void writeGraphOfAstSubGraphToFile(std::string filename, SgNode* node, AST_Graph::pointerHandling, Functional1 addNode, Functional2 addEdge, int depth = -1 );
+ROSE_DLL_API void writeGraphOfAstSubGraphToFile(std::string filename, SgNode* node, AST_Graph::pointerHandling, Functional1 addNode, Functional2 addEdge, int depth = -1 );
 
 
 /************************************************************************************************************
@@ -289,7 +289,7 @@ void writeGraphOfAstSubGraphToFile(std::string filename, SgNode* node, AST_Graph
  * except there is no filter Functional2 to filter on edges.
  ************************************************************************************************************/
 template<typename Functional1>
-void writeGraphOfAstSubGraphToFile(std::string filename, SgNode* node, AST_Graph::pointerHandling, Functional1 addNode, int depth = -1);
+ROSE_DLL_API void writeGraphOfAstSubGraphToFile(std::string filename, SgNode* node, AST_Graph::pointerHandling, Functional1 addNode, int depth = -1);
 
 /************************************************************************************************************
  * The function
@@ -298,7 +298,7 @@ void writeGraphOfAstSubGraphToFile(std::string filename, SgNode* node, AST_Graph
  * void writeGraphOfAstSubGraphToFile(std::string,SgNode*, Functional1, Functional2, int, bool);
  * except there is no filters Functional1 and Functional2 to filter on nodes and edges.
  ************************************************************************************************************/
-void writeGraphOfAstSubGraphToFile(std::string filename, SgNode* node, AST_Graph::pointerHandling graphNullPointers,int depth = -1 );
+ROSE_DLL_API void writeGraphOfAstSubGraphToFile(std::string filename, SgNode* node, AST_Graph::pointerHandling graphNullPointers,int depth = -1 );
 
 } //End namespace AST_Graph
 

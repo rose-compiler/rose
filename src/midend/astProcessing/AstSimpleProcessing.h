@@ -17,7 +17,7 @@
 // had to use a TopDownBottomUpProcessing and ignore the attributes.)
 class AstCombinedPrePostProcessing;
 
-class AstPrePostProcessing
+class ROSE_DLL_API AstPrePostProcessing
     : public SgTreeTraversal<DummyAttribute, DummyAttribute>
 {
 public:
@@ -56,7 +56,7 @@ private:
 // performance hit.
 class AstCombinedSimpleProcessing;
 
-class AstSimpleProcessing
+class ROSE_DLL_API AstSimpleProcessing
     : public SgTreeTraversal<DummyAttribute, DummyAttribute>
 {
 public:

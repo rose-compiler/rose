@@ -6,7 +6,7 @@
 
 // class AbsoluteStringRewrite
 template <class ASTNodeCollection>
-class MidLevelRewrite
+class ROSE_DLL_API MidLevelRewrite
    {
   // Interface classification:
   //      Permits String Based Specification of Transformation: YES
@@ -199,7 +199,7 @@ class MidLevelRewrite
                     PrefixSynthesizedAttribute evaluateSynthesizedAttribute (
                          SgNode* astNode,
                          PrefixInheritedAttribute inputInheritedAttribute,
-                         typename PrefixSuffixGenerationTraversal::SynthesizedAttributesList inputSynthesizedAttributeList );
+                         typename SynthesizedAttributesList inputSynthesizedAttributeList );
              };
 
        // *****************************************************************
@@ -263,7 +263,7 @@ class MidLevelRewrite
                          evaluateSynthesizedAttribute (
                               SgNode* astNode,
                               AST_FragmentIdentificationInheritedAttributeType inheritedValue,
-                              typename AST_FragmentIdentificationTraversal::SubTreeSynthesizedAttributes synthesizedAttributeList );
+                              typename SubTreeSynthesizedAttributes synthesizedAttributeList );
              };
 
           class AST_FragmentIdentificationSynthesizedAttributeType

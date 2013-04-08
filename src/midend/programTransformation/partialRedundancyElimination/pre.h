@@ -51,7 +51,7 @@ void partialRedundancyEliminationOne(
 void partialRedundancyEliminationFunction(SgFunctionDefinition* n);
 
 //! Do partial redundancy elimination on all functions within the scope n.
-void partialRedundancyElimination(SgNode* n);
+void ROSE_DLL_API partialRedundancyElimination(SgNode* n);
 
 // closing scope of namespace: PRE
 }

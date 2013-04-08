@@ -107,7 +107,7 @@ class FindNodeVisitor: public std::binary_function<SgNode*, std::vector<SgLocate
 
 // ************************************************************************************
 
-class RoseBin_FlowAnalysis : public AstSimpleProcessing {//, public GraphAlgorithms {
+class ROSE_DLL_API RoseBin_FlowAnalysis : public AstSimpleProcessing {//, public GraphAlgorithms {
  public:
   //remove later!
    //typedef rose_hash::unordered_map <std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string> nodeType;

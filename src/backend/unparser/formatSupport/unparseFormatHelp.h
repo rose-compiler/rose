@@ -14,7 +14,7 @@ class SgUnparse_Info;
 class SgLocatedNode;
 class Unparser;
 
-class UnparseFormatHelp
+class ROSE_DLL_API UnparseFormatHelp
    {
   // This class provides low level functions to control how we get line number 
   // and column number information.  All formating information comes

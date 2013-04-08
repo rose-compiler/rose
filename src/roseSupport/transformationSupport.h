@@ -21,7 +21,7 @@
      a similar transformation support class that is a part of the preprocessor source code
      representing that specific transformation.
  */
-class TransformationSupport
+class ROSE_DLL_API TransformationSupport
    {
      public:
 

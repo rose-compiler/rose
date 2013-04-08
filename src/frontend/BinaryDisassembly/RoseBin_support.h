@@ -33,7 +33,7 @@ namespace RoseBin_Def {
     x86,
     arm
  } ;
- extern RoseLanguage RoseAssemblyLanguage;
+ ROSE_DLL_API extern RoseLanguage RoseAssemblyLanguage;
 }
 
 namespace RoseBin_OS {
@@ -156,7 +156,7 @@ class RoseBin_support {
    static bool DEBUG_M;
    static bool DEBUG_M_MIN;
    static RoseBin_Def::RoseLanguage assemblyLanguage;
-   static bool db;
+   ROSE_DLL_API static bool db;
 
  public:
    /* This enum used to be defined as part of x86InstructionEnum.h, but we don't represent registers this way anymore. The
