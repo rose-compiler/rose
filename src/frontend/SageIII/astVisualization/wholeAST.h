@@ -207,14 +207,14 @@ class CustomMemoryPoolDOTGenerationData : public ROSE_VisitTraversal
 // we will represent it in a class and use multiple inheritance.
 // This is a copy of CustomDOTGeneration using a CustomMemoryPoolDOTGenerationData
 // instead of a CustomAstDOTGenerationData data member
-class CustomMemoryPoolDOTGeneration
+class ROSE_DLL_API CustomMemoryPoolDOTGeneration
    {
      public:
           typedef CustomAstDOTGenerationData::NodeType NodeType;
           typedef CustomAstDOTGenerationData::EdgeType EdgeType;
 
         // Liao, 10/23/2009, use flags to turn on/off filters, 0 : off, 1: on
-         class s_Filter_Flags
+         class ROSE_DLL_API s_Filter_Flags
          {
            public:
              int m_asmFileFormat;          /*asmFileFormatFilter()*/
@@ -263,8 +263,7 @@ class CustomMemoryPoolDOTGeneration
 
        // Store a DOT graph (really just a list of nodes and edges in a traversal)
           CustomMemoryPoolDOTGenerationData DOTgraph;
-          // Constructors
-          CustomMemoryPoolDOTGeneration();
+          // Constructor
           CustomMemoryPoolDOTGeneration(s_Filter_Flags* f = NULL);
       // ~CustomMemoryPoolDOTGeneration();
 
