@@ -273,7 +273,6 @@ public:
             sqlite3_command cmd3(sqlite, "insert into semantic_inputvalues (id, vtype, pos, val) values (?,?,?,?)");
             static unsigned integer_modulus = 256;  // arbitrary;
             static unsigned nonnull_denom = 3;      // probability of a non-null pointer is 1/N
-            CloneDetection::InputValues inputs;
             for (size_t i=0; i<nnonpointers; ++i) {
                 uint64_t val = rand() % integer_modulus;
                 inputs.add_integer(val);
@@ -468,6 +467,7 @@ public:
             }
             for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
                 SgAsmFunction *func = *fi;
+                inputs.reset();
 
                 // Did we already test this function in a previous incarnation?
                 cmd2.bind(1, func_ids[func]);

@@ -98,15 +98,17 @@ $(foreach F, $(SPECIMENS), \
 	    ./CloneDetection $(SWITCHES) $(F) >$$@ 2>&1))
 all_analyses: $(DIAGNOSTICS)
 	@echo DIAGNOSTICS=$(DIAGNOSTICS)
+.PHONY: clean
+clean:
+	rm -f $(DIAGNOSTICS)
 EOF
-echo + make -k -j$semantic_parallelism -f $makefile SWITCHES="--debug --verbose --database=$semantic_dbname --nfuzz=$semantic_nfuzz --ninputs=$semantic_npointers,$semantic_nnonpointers --max-insns=$semantic_maxinsns " SPECIMENS="$*" >&2
+make -f $makefile SPECIMENS="$*" clean
 make -k -j$semantic_parallelism -f $makefile SWITCHES="--debug --verbose --database=$semantic_dbname --nfuzz=$semantic_nfuzz --ninputs=$semantic_npointers,$semantic_nnonpointers --max-insns=$semantic_maxinsns " SPECIMENS="$*" \
 	|| die "semantic clone detection failed"
 
 
 # Syntactic analysis must be run serially
 for specimen in "$@"; do
-    banner $(basename "$specimen") 2>/dev/null
     echo "================================================================================"
     echo "                           SYNTACTIC ANALYSIS"
     $ROSE_BLD/projects/BinaryCloneDetection/createVectorsBinary --database "$syntactic_dbname" --tsv-directory "$specimen" \
