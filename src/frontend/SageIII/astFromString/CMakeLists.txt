@@ -1,2 +1,0 @@
-add_library(AstFromString OBJECT AstFromString.cpp ParserBuilder.cpp)
-add_dependencies(AstFromString rosetta_generated)

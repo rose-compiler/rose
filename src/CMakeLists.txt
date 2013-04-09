@@ -188,6 +188,28 @@ set(POET_SRC
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_lex.l
    )
 
+set(virtualCFG_SRC
+  ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/memberFunctions.C
+  )
+if(NOT enable-internalFrontendDevelopment)
+  list(APPEND virtualCFG_SRC
+    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/virtualCFG.C
+    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/cfgToDot.C
+    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/memberFunctions.C
+    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/staticCFG.C
+    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/customFilteredCFG.C
+    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/interproceduralCFG.C
+    )
+  set(AstFromString_SRC
+    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astFromString/AstFromString.cpp
+    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astFromString/ParserBuilder.cpp
+    )
+endif()
+if(enable-binary-analysis)
+  list(APPEND virtualCFG_SRC
+    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/virtualBinCFG.C)
+endif()
+
 if(have_EDG_source)
   set(EDG_SAGE_Connection_SRC
     ${CMAKE_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/sage_gen_be.C
@@ -505,109 +527,116 @@ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/YicesSolver.C
 )
 
 
-set( midend_pa_src
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/language-lexer.cc 
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/language-parser.cc 
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/annotations.cc 
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/annvariable.cc 
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/structure.cc 
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/enum_property.cc 
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/procedure.cc 
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/set_property.cc 
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/pointerrule.cc 
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/analyze.cc 
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/rule.cc 
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/broadway_expr.cc 
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/report.cc 
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/defUseAnalysis/DefUseAnalysisAbstract.cpp
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/defUseAnalysis/DefUseAnalysis.cpp
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/defUseAnalysis/GlobalVarAnalysis.cpp
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/defUseAnalysis/LivenessAnalysis.cpp
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/defUseAnalysis/dfaToDot.cpp
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/defUseAnalysis/DefUseAnalysis_perFunction.cpp
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/defUseAnalysis/runTest.cpp
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/RoseBin_GmlGraph.cpp
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/RoseBin_Graph.cpp
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/RoseBin_DotGraph.cpp
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/valuePropagation/ValueAnnot.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/valuePropagation/ValuePropagate.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/variableRenaming/VariableRenaming.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OAWrap/OAWrap.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OAWrap/SAGE2OA.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/proceduralSlicing/SlicingInfo.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/sideEffectAnalysis/sideEffect.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CallGraphAnalysis/CallGraphDB.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CallGraphAnalysis/CallGraph.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CallGraphAnalysis/callgraph_example.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CallGraphAnalysis/ClassHierarchyGraph.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/CFG/OARIFG.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/CFG/TarjanIntervals.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/CFG/CFG.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/CallGraph/CallGraph.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/Utils/BaseGraph.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/Utils/Tree.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/Utils/DGraph.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/Utils/UnionFindUniverse.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/Utils/Graph.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/Utils/trtest.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/Utils/grtest.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/SSA/DomTree.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/SSA/SSA.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/SSA/Phi.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/createFDG.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/testCDG.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/generateSFCFG.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/printDUC.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/createDDG.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/MergedDependenceGraph.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/ControlFlowGraph.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/multiPassTest.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/newControlDependenceGraph.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/testDDG.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/testSlicing.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/FunctionDependenceGraph.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/ControlDependenceGraph.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/generateSFBDT.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/createSDG.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/generateSFDT.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/DependenceGraph.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/EDefUse.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/DataDependenceGraph.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/generateSFDF.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/SlicingInfo.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/slice.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/CreateSlice.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/CreateSliceSet.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/newDU.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/testSDG.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/SystemDependenceGraph.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/createCDG.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/DefUseExtension.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/distributedMemoryAnalysis/functionNames.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/distributedMemoryAnalysis/DistributedMemoryAnalysis.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CFG/CFG_OA.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CFG/CFG_ROSE.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/pointerAnal/PtrAnalCFG.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/pointerAnal/PtrAnal.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CallGraphAnalysisMySQL/Callgraph.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CallGraphAnalysisMySQL/callgraph_example.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CallGraphAnalysisMySQL/Classhierarchy.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/bitvectorDataflow/DataFlowAnalysis.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/bitvectorDataflow/ReachingDefinition.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/bitvectorDataflow/DefUseChain.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/VirtualFunctionAnalysis/VirtualFunctionAnalysis.C 
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/VirtualFunctionAnalysis/PtrAliasAnalysis.C 
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/VirtualFunctionAnalysis/IntraProcAliasAnalysis.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/VirtualFunctionAnalysis/IntraProcDataFlowAnalysis.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/VirtualFunctionAnalysis/InterProcDataFlowAnalysis.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/SB_Graph.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/CallGraphAnalysis.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/RoseSrc_CallGraphAnalysis.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/dominatorTreesAndDominanceFrontiers/ControlFlowGraph.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/dominatorTreesAndDominanceFrontiers/DominanceFrontier.C
-#${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/dominatorTreesAndDominanceFrontiers/DominatorTree.C
-)
-
+if (NOT enable-internalFrontendDevelopment)
+  set( midend_pa_src
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/language-lexer.cc 
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/language-parser.cc 
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/annotations.cc 
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/annvariable.cc 
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/structure.cc 
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/enum_property.cc 
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/procedure.cc 
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/set_property.cc 
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/pointerrule.cc 
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/analyze.cc 
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/rule.cc 
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/broadway_expr.cc 
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/annotationLanguageParser/report.cc 
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/defUseAnalysis/DefUseAnalysisAbstract.cpp
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/defUseAnalysis/DefUseAnalysis.cpp
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/defUseAnalysis/GlobalVarAnalysis.cpp
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/defUseAnalysis/LivenessAnalysis.cpp
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/defUseAnalysis/dfaToDot.cpp
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/defUseAnalysis/DefUseAnalysis_perFunction.cpp
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/defUseAnalysis/runTest.cpp
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/RoseBin_GmlGraph.cpp
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/RoseBin_Graph.cpp
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/RoseBin_DotGraph.cpp
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/valuePropagation/ValueAnnot.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/valuePropagation/ValuePropagate.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/variableRenaming/VariableRenaming.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OAWrap/OAWrap.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OAWrap/SAGE2OA.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/proceduralSlicing/SlicingInfo.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/sideEffectAnalysis/sideEffect.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CallGraphAnalysis/CallGraphDB.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CallGraphAnalysis/CallGraph.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CallGraphAnalysis/callgraph_example.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CallGraphAnalysis/ClassHierarchyGraph.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/CFG/OARIFG.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/CFG/TarjanIntervals.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/CFG/CFG.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/CallGraph/CallGraph.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/Utils/BaseGraph.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/Utils/Tree.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/Utils/DGraph.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/Utils/UnionFindUniverse.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/Utils/Graph.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/Utils/trtest.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/Utils/grtest.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/SSA/DomTree.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/SSA/SSA.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OpenAnalysis/SSA/Phi.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/createFDG.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/testCDG.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/generateSFCFG.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/printDUC.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/createDDG.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/MergedDependenceGraph.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/ControlFlowGraph.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/multiPassTest.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/newControlDependenceGraph.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/testDDG.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/testSlicing.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/FunctionDependenceGraph.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/ControlDependenceGraph.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/generateSFBDT.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/createSDG.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/generateSFDT.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/DependenceGraph.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/EDefUse.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/DataDependenceGraph.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/generateSFDF.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/SlicingInfo.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/slice.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/CreateSlice.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/CreateSliceSet.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/newDU.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/testSDG.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/SystemDependenceGraph.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/createCDG.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing/DefUseExtension.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/distributedMemoryAnalysis/functionNames.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/distributedMemoryAnalysis/DistributedMemoryAnalysis.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CFG/CFG_OA.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CFG/CFG_ROSE.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/pointerAnal/PtrAnalCFG.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/pointerAnal/PtrAnal.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CallGraphAnalysisMySQL/Callgraph.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CallGraphAnalysisMySQL/callgraph_example.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CallGraphAnalysisMySQL/Classhierarchy.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/bitvectorDataflow/DataFlowAnalysis.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/bitvectorDataflow/ReachingDefinition.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/bitvectorDataflow/DefUseChain.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/VirtualFunctionAnalysis/VirtualFunctionAnalysis.C 
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/VirtualFunctionAnalysis/PtrAliasAnalysis.C 
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/VirtualFunctionAnalysis/IntraProcAliasAnalysis.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/VirtualFunctionAnalysis/IntraProcDataFlowAnalysis.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/VirtualFunctionAnalysis/InterProcDataFlowAnalysis.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/SB_Graph.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/CallGraphAnalysis.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/RoseSrc_CallGraphAnalysis.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticSingleAssignment/staticSingleAssignmentCalculation.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticSingleAssignment/staticSingleAssignmentQueries.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticSingleAssignment/uniqueNameTraversal.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticSingleAssignment/defsAndUsesTraversal.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticSingleAssignment/reachingDef.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/staticSingleAssignment/staticSingleAssignmentInterprocedural.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/dominatorTreesAndDominanceFrontiers/ControlFlowGraph.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/dominatorTreesAndDominanceFrontiers/DominanceFrontier.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/dominatorTreesAndDominanceFrontiers/DominatorTree.C
+  )
+endif()
 
 set( midend_pt_src
 ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/astOutlining/NameGenerator.cc
@@ -708,50 +737,51 @@ set( libincludeDirectivesProcessing_SRC
 )
 
 
-set( midend_loopproc_src
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/prepostTransformation/PrivatizeScalar.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/prepostTransformation/BreakupStmt.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/prepostTransformation/LoopUnroll.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/computation/LoopTreeTransform.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/computation/LoopTree.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/computation/LoopTreeDummyNode.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/computation/LoopTreeShadow.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/computation/DepCompTransform.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/computation/LoopTreeDepComp.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/computation/LoopTreeLocality.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/slicing/CompSliceDepGraph.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/slicing/DynamicCompSlice.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/slicing/CompSliceLocality.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/slicing/CompSlice.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/slicing/DependenceHoisting.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depGraph/TransDepGraph.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depGraph/DepGraphBuild.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depGraph/LoopAnalysis.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/outsideInterface/ArrayRewrite.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/outsideInterface/ArrayAnnot.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/outsideInterface/ArrayInterface.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/CopyArrayAnal.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/LoopTransformInterface.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/FusionAnal.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/NormalizeCPP.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/InterchangeAnal.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/LoopTransformOptions.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/TransformComputation.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/BlockingAnal.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/TypedFusionImpl.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/ParallelizeLoop.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/StmtDepAnal.C
-#${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DepTestStatistics.C
-#${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/PlatoOmegaInterface.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DepInfo.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DepRel.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DepInfoSet.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DomainInfo.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DepEDD.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/ReuseAnalysis.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DepInfoAnal.C
-)
-
+if (NOT enable-internalFrontendDevelopment)
+  set( midend_loopproc_src
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/prepostTransformation/PrivatizeScalar.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/prepostTransformation/BreakupStmt.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/prepostTransformation/LoopUnroll.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/computation/LoopTreeTransform.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/computation/LoopTree.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/computation/LoopTreeDummyNode.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/computation/LoopTreeShadow.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/computation/DepCompTransform.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/computation/LoopTreeDepComp.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/computation/LoopTreeLocality.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/slicing/CompSliceDepGraph.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/slicing/DynamicCompSlice.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/slicing/CompSliceLocality.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/slicing/CompSlice.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/slicing/DependenceHoisting.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depGraph/TransDepGraph.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depGraph/DepGraphBuild.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depGraph/LoopAnalysis.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/outsideInterface/ArrayRewrite.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/outsideInterface/ArrayAnnot.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/outsideInterface/ArrayInterface.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/CopyArrayAnal.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/LoopTransformInterface.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/FusionAnal.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/NormalizeCPP.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/InterchangeAnal.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/LoopTransformOptions.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/TransformComputation.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/BlockingAnal.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/TypedFusionImpl.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/ParallelizeLoop.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/StmtDepAnal.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DepTestStatistics.C
+  #${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/PlatoOmegaInterface.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DepInfo.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DepRel.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DepInfoSet.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DomainInfo.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DepEDD.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/ReuseAnalysis.C
+  ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DepInfoAnal.C
+  )
+endif()
 
 set( libastPostProcessing_SRC
 ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/astPostProcessing.C 
@@ -821,7 +851,12 @@ if(enable-rosehpct)
     )
 endif()
 
-
+set(mstl_SRC
+  ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/MSTL/DOTGraphInterface.C)
+if (NOT enable-internalFrontendDevelopment)
+  list(APPEND mstl_SRC
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/MSTL/PDFGeneration.C)
+endif()
 
 
 
@@ -843,16 +878,6 @@ if (NOT enable-internalFrontendDevelopment)
   add_subdirectory(roseExtensions)
 endif()
 
-set(SageIII_objects "$<TARGET_OBJECTS:virtualCFG>")
-if(NOT enable-internalFrontendDevelopment)
-  list(APPEND SageIII_objects "$<TARGET_OBJECTS:AstFromString>")
-endif()
-
-set(midend_objects)
-if(NOT enable-internalFrontendDevelopment)
-  list(APPEND midend_objects "$<TARGET_OBJECTS:SSA>")
-endif()
-
 ########### next target ###############
 set(rose_LIB_SRCS dummyCppFileForLibrose.C 
  ${ROSETTA_SRC} 
@@ -860,6 +885,8 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${unparser_SRC}
  ${sage3_SRC}
  ${POET_SRC} 
+ ${virtualCFG_SRC}
+ ${AstFromString_SRC}
  ${rose_support_src}
  ${roseDisassemblers_SRC}
  ${roseBinaryFormats_fileList_part0}
@@ -885,16 +912,9 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${libastPostProcessing_SRC}
  ${roseExtensions_SRC}
  ${binaryFrontend_SRC}
- ${SageIII_objects}
- ${midend_objects}
- $<TARGET_OBJECTS:mstl>
-# ${AST_REWRITE_SRC}
+ ${AST_REWRITE_SRC}
+ ${mstl_SRC}
 )
-
-# commented out AST_REWRITE as it does not compile under Windows: error C2244: 'MidLevelRewrite<ASTNodeCollection>::AST_FragmentIdentificationTraversal::evaluateSynthesizedAttribute' : unable to match function definition to an existing declaration
-if (NOT WIN32)
-set(rose_LIB_SRCS ${rose_LIB_SRCS} ${AST_REWRITE_SRC})
-endif (NOT WIN32)
 
 ###############################################################################################################################
 ### The stringify.h and stringify.C files have prototypes and definitions for functions that convert enum constants

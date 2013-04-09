@@ -738,6 +738,7 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/dominanceAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/graphAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/pointerAnal 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/staticSingleAssignment
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/valuePropagation 
      ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/partialRedundancyElimination 
