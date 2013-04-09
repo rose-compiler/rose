@@ -626,7 +626,18 @@ main(int argc, char *argv[], char *envp[])
 #else
 int main(int, char *argv[])
 {
-    std::cerr <<argv[0] <<": not supported on this platform" <<std::endl;
+#ifndef RSIM_CloneDetectionSemantics_H
+    std::cerr <<argv[0] <<": this program is not configured properly.\n"
+              <<"  You must apply the CloneDetection.patch to the simulator project\n"
+              <<"  and then recompile the simulator in a clean build directory. I.e,\n"
+              <<"  something along these lines:\n"
+              <<"    $ (cd $ROSE_SRC/projects/simulator;\n"
+              <<"       patch -p3 <clone_detection/CloneDetection.patch)\n"
+              <<"    $ make clean\n"
+              <<"    $ make CloneDetection\n";
+#else
+    std::cerr <<argv[0] <<": the simulator not supported on this platform" <<std::endl;
+#endif
     return 0;
 }
 
