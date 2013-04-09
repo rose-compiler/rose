@@ -43,7 +43,11 @@ static void usage(const std::string &arg0, int exit_status)
               <<"                     default is three pointers and three non-pointers.  If a function\n"
               <<"                     requires more input values, then null/zero are supplied to it.\n"
               <<"   --max-insns=N     Maximum number of instructions to simulate per function. The default\n"
-              <<"                     is 256.\n";
+              <<"                     is 256.\n"
+              <<"   --verbose         Show lots of diagnostics if the --debug simulator switch is specified.\n"
+              <<"                     The default (with --debug) is to show only enough output to track the\n"
+              <<"                     analysis progress.  Without --debug, hardly any diagnostics are\n"
+              <<"                     produced.\n";
     exit(exit_status);
 }
 
@@ -65,17 +69,13 @@ protected:
     size_t nfuzz;                       /** Number of times we run each function, each time with a different input sequence. */
     size_t npointers, nnonpointers;     /** Number of pointer and nonpointer values to supply as inputs per fuzz test. */
     size_t max_insns;                   /** Maximum number of instructions to simulate per fuzz test. */
-#ifdef CLONE_DETECTOR_VERBOSE
-    enum { VERBOSE = 1 };
-#else
-    enum { VERBOSE = 0 };
-#endif
+    bool verbose;                       /** Produce lots of output?  Traces each instruction as it is simulated. */
 
 public:
-    CloneDetector(RSIM_Thread *thread, const std::string &dbname,
+    CloneDetector(RSIM_Thread *thread, const std::string &dbname, bool verbose,
                   size_t nfuzz, size_t npointers, size_t nnonpointers, size_t max_insns)
         : thread(thread), dbname(dbname), nfuzz(nfuzz), npointers(npointers), nnonpointers(nnonpointers),
-          max_insns(max_insns) {
+          max_insns(max_insns), verbose(verbose) {
         open_db(dbname);
     }
 
@@ -132,7 +132,7 @@ public:
     Functions find_functions(RTS_Message *m, RSIM_Process *proc) {
         m->mesg("%s: disassembling entire specimen image...\n", name);
         MemoryMap *map = disassembly_map(proc);
-        if (VERBOSE) {
+        if (verbose) {
             std::ostringstream ss;
             map->dump(ss, "  ");
             m->mesg("%s: using this memory map for disassembly:\n%s", name, ss.str().c_str());
@@ -182,7 +182,7 @@ public:
             // instruction might be a floating point instruction that isn't handled yet.
             m->mesg("%s: %s pointer analysis FAILED", name, function_to_str(func).c_str());
         }
-        if (VERBOSE && m->get_file()) {
+        if (verbose && m->get_file()) {
             const CloneDetection::PointerDetector::Pointers plist = pd->get_pointers();
             for (CloneDetection::PointerDetector::Pointers::const_iterator pi=plist.begin(); pi!=plist.end(); ++pi) {
                 std::ostringstream ss;
@@ -305,7 +305,7 @@ public:
         // creating output sets then this we'll only load the output sets when we first start.  We're assuming that no
         // process is deleting output sets and that sets are numbered consecutively starting at zero.
         if ((int)output_sets.size() != sqlite.executeint("select coalesce(max(id),-1)+1 from semantic_outputvalues")) {
-            if (VERBOSE)
+            if (verbose)
                 m->mesg("%s: loading output sets from the database", name);
             sqlite3_command cmd1(sqlite, "select id, val from semantic_outputvalues");
             sqlite3_reader cursor = cmd1.executereader();
@@ -406,29 +406,29 @@ public:
         } catch (const Disassembler::Exception &e) {
             // Probably due to the analyzed function's RET instruction, but could be from other things as well. In any case, we
             // stop analyzing the function when this happens.
-            if (VERBOSE)
+            if (verbose)
                 m->mesg("%s: function disassembly failed at 0x%08"PRIx64": %s", name, e.ip, e.mesg.c_str());
         } catch (const CloneDetection::InsnLimitException &e) {
             // The analysis might be in an infinite loop, such as when analyzing "void f() { while(1); }"
-            if (VERBOSE)
+            if (verbose)
                 m->mesg("%s: %s", name, e.mesg.c_str());
         } catch (const RSIM_Semantics::InnerPolicy<>::Halt &e) {
             // The x86 HLT instruction appears in some functions (like _start) as a failsafe to terminate a process.  We need
             // to intercept it and terminate only the function analysis.
-            if (VERBOSE)
+            if (verbose)
                 m->mesg("%s: function executed HLT instruction at 0x%08"PRIx64, name, e.ip);
         } catch (const RSIM_Semantics::InnerPolicy<>::Interrupt &e) {
             // The x86 INT instruction was executed but the policy does not know how to handle it.
-            if (VERBOSE)
+            if (verbose)
                 m->mesg("%s: function executed INT 0x%x at 0x%08"PRIx64, name, e.inum, e.ip);
         } catch (const RSIM_SEMANTICS_POLICY::Exception &e) {
             // Some exception in the policy, such as division by zero.
-            if (VERBOSE)
+            if (verbose)
                 m->mesg("%s: %s", name, e.mesg.c_str());
         }
         
         // Gather the function's outputs before restoring machine state.
-        CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *outputs = thread->policy.get_outputs(VERBOSE!=0);
+        CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *outputs = thread->policy.get_outputs(verbose!=0);
         thread->init_regs(saved_regs);
         proc->mem_transaction_rollback(name);
         return outputs;
@@ -436,7 +436,7 @@ public:
 
     // Detect functions that are semantically similar by running multiple iterations of partition_functions().
     void analyze() {
-        thread->policy.verbose = VERBOSE!=0;
+        thread->policy.verbose = verbose!=0;
         thread->policy.max_ninsns = max_insns;
         thread->set_do_coredump(false);
         thread->set_show_exceptions(false);
@@ -454,7 +454,7 @@ public:
         sqlite3_command cmd2(sqlite, "select count(*) from semantic_fio where func_id=? and inputset_id=? limit 1");
         for (size_t i=0; i<nfuzz; ++i) {
             InputValues inputs = choose_inputs(i);
-            if (VERBOSE) {
+            if (verbose) {
                 m->mesg("####################################################################################################");
                 m->mesg("%s: fuzz testing %zu function%s with inputset %zu",
                         name, functions.size(), 1==functions.size()?"":"s", i);
@@ -481,7 +481,7 @@ public:
                 // Run the test
                 m->mesg("%s: %s fuzz test #%zu", name, function_to_str(func).c_str(), i);
                 CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *outputs = fuzz_test(func, inputs, ip->second);
-                if (VERBOSE) {
+                if (verbose) {
                     std::ostringstream output_values_str;
                     OutputValues output_values = outputs->get_values();
                     for (OutputValues::iterator ovi=output_values.begin(); ovi!=output_values.end(); ++ovi)
@@ -521,12 +521,13 @@ protected:
     bool armed;                         /**< Should this object be monitoring instructions yet? */
     bool triggered;                     /**< Has this been triggered yet? */
     std::string dbname;                 /**< Name of database. */
+    bool verbose;                       /**< Produce lots of output? */
     size_t nfuzz;                       /**< Number of times to run each function, each time with a different input sequence. */
     size_t npointers, nnonpointers;     /**< Number of input values to supply to each fuzz test. */
     size_t max_insns;                   /**< Max number of instructions to simulate per fuzz test. */
 public:
-    Trigger(const std::string &dbname, size_t nfuzz, size_t npointers, size_t nnonpointers, size_t max_insns)
-        : trigger_va(0), armed(false), triggered(false), dbname(dbname), nfuzz(nfuzz), npointers(npointers),
+    Trigger(const std::string &dbname, bool verbose, size_t nfuzz, size_t npointers, size_t nnonpointers, size_t max_insns)
+        : trigger_va(0), armed(false), triggered(false), dbname(dbname), verbose(verbose), nfuzz(nfuzz), npointers(npointers),
           nnonpointers(nnonpointers), max_insns(max_insns) {}
 
     // For simplicity, all threads, processes, and simulators will share the same SemanticController object.  This means that
@@ -545,7 +546,7 @@ public:
     virtual bool operator()(bool enabled, const Args &args) /*override*/ {
         if (enabled && armed && !triggered && args.insn->get_address()==trigger_va) {
             triggered = true;
-            throw new CloneDetector(args.thread, dbname, nfuzz, npointers, nnonpointers, max_insns);
+            throw new CloneDetector(args.thread, dbname, verbose, nfuzz, npointers, nnonpointers, max_insns);
         }
         return enabled;
     }
@@ -559,6 +560,7 @@ main(int argc, char *argv[], char *envp[])
 
     // Parse command-line switches that we recognize.
     std::string dbname = "clones.db";
+    bool verbose = false;
     size_t nfuzz=10, npointers=3, nnonpointers=3, max_insns=256;
     for (int i=1; i<argc && '-'==argv[i][0]; /*void*/) {
         bool consume = false;
@@ -567,6 +569,8 @@ main(int argc, char *argv[], char *envp[])
         } else if (!strncmp(argv[i], "--database=", 11)) {
             dbname = argv[i]+11;
             consume = true;
+        } else if (!strcmp(argv[i], "--verbose")) {
+            verbose = consume = true;
         } else if (!strncmp(argv[i], "--nfuzz=", 8)) {
             nfuzz = strtoul(argv[i]+8, 0, NULL);
             consume = true;
@@ -591,7 +595,7 @@ main(int argc, char *argv[], char *envp[])
 
     // Our instruction callback.  We can't set its trigger address until after we load the specimen, but we want to register
     // the callback with the simulator before we create the first thread.
-    Trigger clone_detection_trigger(dbname, nfuzz, npointers, nnonpointers, max_insns);
+    Trigger clone_detection_trigger(dbname, verbose, nfuzz, npointers, nnonpointers, max_insns);
 
     // All of this is standard boilerplate and documented in the first page of the simulator doxygen.
     RSIM_Linux32 sim;
