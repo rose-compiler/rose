@@ -5,15 +5,35 @@
 #include "sqlite3x.h"
 using namespace sqlite3x;
 
+#include <cerrno>
+#include <cstdarg>
+
+#define ALL_CLUSTERS  (-1)
+static std::string argv0;
+
 static void
-usage(const std::string &arg0, int exit_status)
+usage(int exit_status, const std::string &mesg="")
 {
-    size_t slash = arg0.rfind('/');
-    std::string basename = slash==std::string::npos ? arg0 : arg0.substr(slash+1);
-    if (0==basename.substr(0, 3).compare("lt-"))
-        basename = basename.substr(3);
-    std::cerr <<"usage: " <<basename <<" DATABASE_NAME\n";
+    if (!mesg.empty())
+        std::cerr <<argv0 <<": " <<mesg <<"\n";
+    std::cerr <<"usage: " <<argv0 <<" DATABASE_NAME\n"
+              <<"           Show all clusters of similar functions\n"
+              <<"       " <<argv0 <<" DATABASE_NAME cluster CLUSTER_ID\n"
+              <<"           Show a single cluster\n"
+              <<"       " <<argv0 <<" DATABASE_NAME function FUNCTION_ID\n"
+              <<"           Show all information about a single function\n";
     exit(exit_status);
+}
+
+static void
+die(const char *mesg, ...)
+{
+    va_list ap;
+    va_start(ap, mesg);
+    std::cerr <<argv0 <<": ";
+    vfprintf(stderr, mesg, ap);
+    va_end(ap);
+    exit(1);
 }
 
 struct Row {
@@ -24,20 +44,20 @@ struct Row {
         : cluster_id(cluster_id), function_id(function_id), entry_va(entry_va), funcname(funcname), filename(filename) {}
 };
 
-typedef std::vector<Row> Rows;
-
-int
-main(int argc, char *argv[])
+static void
+show_cluster(const std::string &dbname, int cluster_id)
 {
-    if (argc!=2 || '-'==argv[1][0])
-        usage(argv[0], 1);
+    typedef std::vector<Row> Rows;
 
     // Open the database and suck in the information we need
-    sqlite3_connection db(argv[1]);
-    sqlite3_command cmd1(db, "select a.cluster_id, b.id, b.entry_va, b.funcname, b.filename"
-                         " from combined_clusters a"
-                         " join semantic_functions b on a.func_id = b.id"
+    sqlite3_connection db(dbname.c_str());
+    sqlite3_command cmd1(db, std::string("select a.cluster_id, b.id, b.entry_va, b.funcname, b.filename"
+                                         " from combined_clusters a"
+                                         " join semantic_functions b on a.func_id = b.id")
+                         + (ALL_CLUSTERS==cluster_id ? "" : " where cluster_id = ?") +
                          " order by a.cluster_id, a.func_id");
+    if (cluster_id!=ALL_CLUSTERS)
+        cmd1.bind(1, cluster_id);
     sqlite3_reader cursor = cmd1.executereader();
     Rows rows;
     while (cursor.read())
@@ -83,6 +103,124 @@ main(int argc, char *argv[])
                   <<std::setw(width[2]) <<std::right <<buf <<" "
                   <<std::setw(width[3]) <<std::left  <<rows[i].funcname <<" "
                   <<std::setw(width[4]) <<std::left  <<rows[i].filename <<"\n";
+    }
+}
+
+static void
+show_function(const std::string &dbname, int function_id)
+{
+    sqlite3_connection db(dbname.c_str());
+
+    // Print some info about the function itself
+    sqlite3_command cmd1(db, "select entry_va, funcname, filename from semantic_functions where id = ?");
+    cmd1.bind(1, function_id);
+    sqlite3_reader c1 = cmd1.executereader();
+    if (!c1.read())
+        die("function id not found: %d", function_id);
+    rose_addr_t entry_va = c1.getint64(0);
+    std::string funcname = c1.getstring(1);
+    std::string filename = c1.getstring(2);
+    if (c1.read())
+        die("duplicate function id: %d", function_id);
+    std::cout <<"Function ID:               " <<function_id <<"\n"
+              <<"Specimen name:             " <<filename <<"\n"
+              <<"Function name:             " <<funcname <<"\n"
+              <<"Entry virtual address:     " <<entry_va <<"\n";
+
+    // Inputs and outputs
+    sqlite3_command cmd2(db, "select inputset_id, outputset_id from semantic_fio where func_id = ?");
+    sqlite3_command cmd3(db, "select vtype, pos, val from semantic_inputvalues where id=? order by vtype,pos");
+    sqlite3_command cmd4(db, "select val from semantic_outputvalues where id=? order by val");
+
+    cmd2.bind(1, function_id);
+    sqlite3_reader c2 = cmd2.executereader();
+    for (size_t i_run=0; c2.read(); ++i_run) {
+        std::cout <<"\nRun #" <<i_run <<":\n";
+        int inputset_id = c2.getint(0);
+        int outputset_id = c2.getint(1);
+
+        std::cerr <<"  used input sequence #" <<inputset_id;
+        cmd3.bind(1, inputset_id);
+        sqlite3_reader c3 = cmd3.executereader();
+        while (c3.read()) {
+            std::string vtype = c3.getstring(0);
+            int pos = c3.getint(1);
+            uint64_t val = c3.getint64(2);
+            assert(!vtype.empty());
+            if ('P'==vtype[0]) {
+                std::cout <<(0==pos ? "\n    Pointers:     " : ", ") <<StringUtility::addrToString(val);
+            } else {
+                std::cout <<(0==pos ? "\n    Non-pointers: " : ", ") <<val;
+            }
+        }
+        std::cout <<"\n";
+        
+        std::cerr <<"  generated output set #" <<outputset_id <<"\n    Values:       ";
+        cmd4.bind(1, outputset_id);
+        sqlite3_reader c4 = cmd4.executereader();
+        for (size_t i_output=0; c4.read(); ++i_output) {
+            uint64_t val = c4.getint64(0);
+            if (i_output!=0)
+                std::cout <<", ";
+            if (val < 256) {
+                std::cout <<val;
+            } else {
+                std::cout <<StringUtility::addrToString(val);
+            }
+        }
+        std::cout <<"\n";
+        
+    }
+}
+
+int
+main(int argc, char *argv[])
+{
+    std::ios::sync_with_stdio();
+    argv0 = argv[0];
+    size_t slash = argv0.rfind('/');
+    if (slash!=std::string::npos)
+        argv0 = argv0.substr(slash+1);
+    if (0==argv0.substr(0, 3).compare("lt-"))
+        argv0 = argv0.substr(3);
+
+    int argno;
+    for (argno=1; argno<argc && '-'==argv[argno][0]; ++argno) {
+        if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h") || !strcmp(argv[argno], "-?")) {
+            usage(0);
+        } else if (!strcmp(argv[argno], "--")) {
+            ++argno;
+            break;
+        } else {
+            usage(1, std::string("unknown switch: ")+argv[argno]);
+        }
+    }
+
+    if (argno>=argc)
+        usage(2);
+    std::string dbname = argv[argno++];
+
+    if (0==argc-argno) {
+        show_cluster(dbname, ALL_CLUSTERS);
+    } else {
+        std::string cmd = argv[argno++];
+        if (0==cmd.compare("cluster") && 1==argc-argno) {
+            char *rest;
+            errno = 0;
+            int cluster_id = strtol(argv[argno], &rest, 0);
+            if (errno || rest==argv[argno] || *rest)
+                usage(0, "bad cluster ID specified");
+            show_cluster(dbname, cluster_id);
+        } else if (0==cmd.compare("function") && 1==argc-argno) {
+            char *rest;
+            errno = 0;
+            int function_id = strtol(argv[argno], &rest, 0);
+            if (errno || rest==argv[argno] || *rest)
+                usage(0, "bad function ID specified");
+            show_function(dbname, function_id);
+        } else {
+            usage(3, "unknown subcommand: "+cmd);
+        }
     }
 
     return 0;
