@@ -92,6 +92,7 @@ public:
             }
         }
         sqlite.open(dbname.c_str());
+        sqlite.busy_timeout(10*1000);
     }
 
     // Allocate a page of memory in the process address space.
@@ -205,6 +206,11 @@ public:
         sqlite3_command cmd2(sqlite,
                              "insert into semantic_functions (id, entry_va, funcname, filename, listing) values (?,?,?,?,?)");
 
+        // Generate assembly listings before we grab the write lock since they might be slightly expensive.
+        std::map<SgAsmFunction*, std::string> listing;
+        for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi)
+            listing[*fi] = AsmUnparser().to_string(*fi);
+
         // Hold a write-lock while we update the semantic_functions table so that no other process tries to use the
         // same function ID numbers.
         sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE);
@@ -223,7 +229,7 @@ public:
                 cmd2.bind(2, func->get_entry_va());
                 cmd2.bind(3, func->get_name());
                 cmd2.bind(4, filename_for_function(func));
-                cmd2.bind(5, AsmUnparser().to_string(func));
+                cmd2.bind(5, listing[func]);
                 cmd2.executenonquery();
                 retval.insert(std::make_pair(func, func_id));
             }
