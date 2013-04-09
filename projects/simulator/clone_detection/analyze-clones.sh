@@ -23,6 +23,9 @@
 # Precision needed to classify two functions as syntactically similar.  Values are 0 (everything is a clone) to 1 (exact matching)
 : ${syntactic_precision:=0.5}
 
+# Number of specimens that can be analyzed semantically in parallel.
+: ${semantic_parallelism:=8}
+
 # Number of times to run each function when fuzz testing
 : ${semantic_nfuzz:=10}
 
@@ -80,6 +83,28 @@ if [ -e "$syntactic_dbname" -o -e "$semantic_dbname" ]; then
 fi
 rm -f "$combined_dbname";
 
+
+# Semantic analysis can be run in parallel because it uses transactions to control access to the database.  The easiest
+# way to get this to run in parallel is to use GNU make's "-j" switch.
+echo "================================================================================"
+echo "                           SEMANTIC ANALYSIS"
+makefile=clones-$$.mk
+cat >$makefile <<'EOF'
+all: all_analyses
+DIAGNOSTICS =
+$(foreach F, $(SPECIMENS), \
+	$(eval DIAGNOSTICS += $(notdir $(F))-$(shell md5sum $(F) |cut -c1-16).out) \
+	$(eval $(notdir $(F))-$(shell md5sum $(F) |cut -c1-16).out: $(F); \
+	    ./CloneDetection $(SWITCHES) $(F) >$$@ 2>&1))
+all_analyses: $(DIAGNOSTICS)
+	@echo DIAGNOSTICS=$(DIAGNOSTICS)
+EOF
+echo + make -k -j$semantic_parallelism -f $makefile SWITCHES="--debug --verbose --database=$semantic_dbname --nfuzz=$semantic_nfuzz --ninputs=$semantic_npointers,$semantic_nnonpointers --max-insns=$semantic_maxinsns " SPECIMENS="$*" >&2
+make -k -j$semantic_parallelism -f $makefile SWITCHES="--debug --verbose --database=$semantic_dbname --nfuzz=$semantic_nfuzz --ninputs=$semantic_npointers,$semantic_nnonpointers --max-insns=$semantic_maxinsns " SPECIMENS="$*" \
+	|| die "semantic clone detection failed"
+
+
+# Syntactic analysis must be run serially
 for specimen in "$@"; do
     banner $(basename "$specimen") 2>/dev/null
     echo "================================================================================"
@@ -87,11 +112,7 @@ for specimen in "$@"; do
     $ROSE_BLD/projects/BinaryCloneDetection/createVectorsBinary --database "$syntactic_dbname" --tsv-directory "$specimen" \
 	--stride $syntactic_stride --windowSize $syntactic_winsize \
 	|| die "syntactic clone detection failed for $specimen"
-    echo "================================================================================"
-    echo "                           SEMANTIC ANALYSIS"
-    $ROSE_BLD/projects/simulator/CloneDetection --debug --database="$semantic_dbname" --nfuzz=$semantic_nfuzz \
-        --ninputs=$semantic_npointers,$semantic_nnonpointers --max-insns=$semantic_maxinsns "$specimen" \
-	|| die "semantic clone detection failed for $specimen"
+
 done
 
 
