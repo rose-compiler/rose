@@ -849,6 +849,11 @@ public:
      *  unparsed.  In any case, a return value of zero means that nothing was unparsed and no output was produced. */
     virtual size_t unparse(std::ostream&, SgNode *ast);
 
+    /** Unparse part of the AST into a string.
+     *
+     * This is a wrapper around unparse() that returns a string rather than producing output on a stream. */
+    std::string to_string(SgNode *ast);
+
     /** Unparse a single node if possible.
      *
      *  Tries to unparse the given AST node directly, without traversing the AST to find a starting point.  This is basically a

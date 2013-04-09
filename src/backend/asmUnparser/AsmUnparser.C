@@ -282,6 +282,14 @@ AsmUnparser::line_prefix() const
  *                                      Main unparsing functions
  ******************************************************************************************************************************/
 
+std::string
+AsmUnparser::to_string(SgNode *ast)
+{
+    std::ostringstream ss;
+    unparse(ss, ast);
+    return ss.str();
+}
+
 size_t
 AsmUnparser::unparse(std::ostream &output, SgNode *ast)
 {
