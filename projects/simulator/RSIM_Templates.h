@@ -391,6 +391,4 @@ RSIM_Semantics::InnerPolicy<State, ValueType>::load_sr_shadow(X86SegmentRegister
     //ROSE_ASSERT(sr_shadow[sr].present); //checked when used
 }
 
-#include "clone_detection/CloneDetectionTpl.h"
-
 #endif /* ROSE_RSIM_Templates_H */
