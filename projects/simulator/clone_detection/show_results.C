@@ -112,7 +112,7 @@ show_function(const std::string &dbname, int function_id)
     sqlite3_connection db(dbname.c_str());
 
     // Print some info about the function itself
-    sqlite3_command cmd1(db, "select entry_va, funcname, filename from semantic_functions where id = ?");
+    sqlite3_command cmd1(db, "select entry_va, funcname, filename, listing from semantic_functions where id = ?");
     cmd1.bind(1, function_id);
     sqlite3_reader c1 = cmd1.executereader();
     if (!c1.read())
@@ -120,6 +120,7 @@ show_function(const std::string &dbname, int function_id)
     rose_addr_t entry_va = c1.getint64(0);
     std::string funcname = c1.getstring(1);
     std::string filename = c1.getstring(2);
+    std::string listing = c1.getstring(3);
     if (c1.read())
         die("duplicate function id: %d", function_id);
     std::cout <<"Function ID:               " <<function_id <<"\n"
@@ -169,8 +170,8 @@ show_function(const std::string &dbname, int function_id)
             }
         }
         std::cout <<"\n";
-        
     }
+    std::cout <<"\n\n" <<listing;
 }
 
 int

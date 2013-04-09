@@ -21,7 +21,8 @@ create table semantic_functions (
        id integer primary key,                  -- unique function ID
        entry_va integer,                        -- unique starting virtual address within the binary specimen
        funcname text,                           -- name of function if known
-       filename text                            -- name of file in which function exists, if known
+       filename text,                           -- name of file in which function exists, if known
+       listing text                             -- function assembly listing
 );
 
 -- Function input/output. One of these is produced each time we fuzz-test a function.

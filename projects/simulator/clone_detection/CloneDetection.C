@@ -202,7 +202,8 @@ public:
         FunctionIdMap retval;
         sqlite3_command cmd1(sqlite, "select coalesce(max(id),-1) from semantic_functions"
                              " where entry_va=? and funcname=? and filename=?");
-        sqlite3_command cmd2(sqlite, "insert into semantic_functions (id, entry_va, funcname, filename) values (?,?,?,?)");
+        sqlite3_command cmd2(sqlite,
+                             "insert into semantic_functions (id, entry_va, funcname, filename, listing) values (?,?,?,?,?)");
 
         // Hold a write-lock while we update the semantic_functions table so that no other process tries to use the
         // same function ID numbers.
@@ -222,6 +223,7 @@ public:
                 cmd2.bind(2, func->get_entry_va());
                 cmd2.bind(3, func->get_name());
                 cmd2.bind(4, filename_for_function(func));
+                cmd2.bind(5, AsmUnparser().to_string(func));
                 cmd2.executenonquery();
                 retval.insert(std::make_pair(func, func_id));
             }
