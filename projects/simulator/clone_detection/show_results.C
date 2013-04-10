@@ -18,7 +18,7 @@ usage(int exit_status, const std::string &mesg="")
         std::cerr <<argv0 <<": " <<mesg <<"\n";
     std::cerr <<"usage: " <<argv0 <<" DATABASE_NAME\n"
               <<"           Show all clusters of similar functions\n"
-              <<"       " <<argv0 <<" DATABASE_NAME cluster CLUSTER_ID\n"
+              <<"       " <<argv0 <<" DATABASE_NAME [syntactic|semantic] cluster CLUSTER_ID\n"
               <<"           Show a single cluster\n"
               <<"       " <<argv0 <<" DATABASE_NAME function FUNCTION_ID\n"
               <<"           Show all information about a single function\n";
@@ -45,15 +45,16 @@ struct Row {
 };
 
 static void
-show_cluster(const std::string &dbname, int cluster_id)
+show_cluster(const std::string &dbname, const std::string &tabname, int cluster_id)
 {
     typedef std::vector<Row> Rows;
 
     // Open the database and suck in the information we need
     sqlite3_connection db(dbname.c_str());
-    sqlite3_command cmd1(db, std::string("select a.cluster_id, b.id, b.entry_va, b.funcname, b.filename"
-                                         " from combined_clusters a"
-                                         " join semantic_functions b on a.func_id = b.id")
+    sqlite3_command cmd1(db,
+                         "select a.cluster_id, b.id, b.entry_va, b.funcname, b.filename"
+                         " from " + tabname + " a"
+                         " join semantic_functions b on a.func_id = b.id"
                          + (ALL_CLUSTERS==cluster_id ? "" : " where cluster_id = ?") +
                          " order by a.cluster_id, a.func_id");
     if (cluster_id!=ALL_CLUSTERS)
@@ -107,6 +108,17 @@ show_cluster(const std::string &dbname, int cluster_id)
 }
 
 static void
+show_all(const std::string &dbname)
+{
+    std::cout <<"Syntactic clusters (from \"syntactic_clusters\" table):\n";
+    show_cluster(dbname, "syntactic_clusters", ALL_CLUSTERS);
+    std::cout <<"\nSemantic clusters (from \"semantic_clusters\" table):\n";
+    show_cluster(dbname, "semantic_clusters", ALL_CLUSTERS);
+    std::cout <<"\nCombined clusters (intersection of syntactic and semantic clusters):\n";
+    show_cluster(dbname, "combined_clusters", ALL_CLUSTERS);
+}
+
+static void
 show_function(const std::string &dbname, int function_id)
 {
     sqlite3_connection db(dbname.c_str());
@@ -140,7 +152,7 @@ show_function(const std::string &dbname, int function_id)
         int inputset_id = c2.getint(0);
         int outputset_id = c2.getint(1);
 
-        std::cerr <<"  used input sequence #" <<inputset_id;
+        std::cout <<"  used input sequence #" <<inputset_id;
         cmd3.bind(1, inputset_id);
         sqlite3_reader c3 = cmd3.executereader();
         while (c3.read()) {
@@ -156,7 +168,7 @@ show_function(const std::string &dbname, int function_id)
         }
         std::cout <<"\n";
         
-        std::cerr <<"  generated output set #" <<outputset_id <<"\n    Values:       ";
+        std::cout <<"  generated output set #" <<outputset_id <<"\n    Values:       ";
         cmd4.bind(1, outputset_id);
         sqlite3_reader c4 = cmd4.executereader();
         for (size_t i_output=0; c4.read(); ++i_output) {
@@ -202,16 +214,23 @@ main(int argc, char *argv[])
     std::string dbname = argv[argno++];
 
     if (0==argc-argno) {
-        show_cluster(dbname, ALL_CLUSTERS);
+        show_all(dbname);
     } else {
         std::string cmd = argv[argno++];
-        if (0==cmd.compare("cluster") && 1==argc-argno) {
+        if ((0==cmd.compare("symantic") && 2==argc-argno && 0==strcmp(argv[argno], "cluster")) ||
+            (0==cmd.compare("semantic") && 2==argc-argno && 0==strcmp(argv[argno], "cluster")) ||
+            (0==cmd.compare("cluster")  && 1==argc-argno)) {
+            std::string tabname = "combined_clusters";
+            if (0==cmd.compare("syntactic") || 0==cmd.compare("semantic")) {
+                tabname = cmd + "_clusters";
+                ++argno;
+            }
             char *rest;
             errno = 0;
             int cluster_id = strtol(argv[argno], &rest, 0);
             if (errno || rest==argv[argno] || *rest)
                 usage(0, "bad cluster ID specified");
-            show_cluster(dbname, cluster_id);
+            show_cluster(dbname, tabname, cluster_id);
         } else if (0==cmd.compare("function") && 1==argc-argno) {
             char *rest;
             errno = 0;

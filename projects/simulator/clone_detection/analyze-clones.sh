@@ -8,12 +8,6 @@
 # Name of the syntactic database
 : ${syntactic_dbname:=syntactic.db}
 
-# Name of the semantic database
-: ${semantic_dbname:=semantic.db}
-
-# Name of the combined database
-: ${combined_dbname:=clones.db}
-
 # Number of machine instructions in the syntactic clone detection window
 : ${syntactic_winsize:=10}
 
@@ -22,6 +16,9 @@
 
 # Precision needed to classify two functions as syntactically similar.  Values are 0 (everything is a clone) to 1 (exact matching)
 : ${syntactic_precision:=0.5}
+
+# Name of the semantic database
+: ${semantic_dbname:=semantic.db}
 
 # Number of specimens that can be analyzed semantically in parallel.
 : ${semantic_parallelism:=8}
@@ -40,6 +37,9 @@
 
 # Maximum number of instructions to simulate in each function.  This limit prevents infinite loops during fuzz testing.
 : ${semantic_maxinsns:=256}
+
+# Name of the combined database
+: ${combined_dbname:=clones.db}
 
 # End of configuration variables
 #------------------------------------------------------------------------------------------------------------------------------
@@ -131,6 +131,8 @@ cp "$semantic_dbname" "$combined_dbname" || exit 1
 echo .dump | sqlite3 "$syntactic_dbname" | sqlite3 "$combined_dbname"
 sqlite3 "$combined_dbname" <$ROSE_BLD/projects/simulator/clone_detection/queries.sql
 $ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" combined_clone_pairs combined_clusters
+$ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" semantic_clone_pairs semantic_clusters
+$ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" syntactic_clone_pairs syntactic_clusters
 $ROSE_BLD/projects/simulator/show_results "$combined_dbname"
 echo "results have been saved in the combined_clusters table in $combined_dbname"
 exit 0

@@ -208,8 +208,10 @@ public:
 
         // Generate assembly listings before we grab the write lock since they might be slightly expensive.
         std::map<SgAsmFunction*, std::string> listing;
+        AsmUnparser unparser;
+        unparser.staticDataDisassembler.init(thread->get_process()->get_disassembler());
         for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi)
-            listing[*fi] = AsmUnparser().to_string(*fi);
+            listing[*fi] = unparser.to_string(*fi);
 
         // Hold a write-lock while we update the semantic_functions table so that no other process tries to use the
         // same function ID numbers.
@@ -225,13 +227,14 @@ public:
             if (existing_id >=0) {
                 retval.insert(std::make_pair(func, existing_id));
             } else {
-                cmd2.bind(1, ++func_id);
+                cmd2.bind(1, func_id);
                 cmd2.bind(2, func->get_entry_va());
                 cmd2.bind(3, func->get_name());
                 cmd2.bind(4, filename_for_function(func));
                 cmd2.bind(5, listing[func]);
                 cmd2.executenonquery();
                 retval.insert(std::make_pair(func, func_id));
+                ++func_id;
             }
         }
 

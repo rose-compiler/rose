@@ -82,11 +82,11 @@ create view combined_functions as
 -- all three pairs even though any two would suffice: (a,b), (a,c), and (b,c).  The extra transitive pairs are important in
 -- the final step when we reconstruct the clusters from the pairs.
 
--- Create clusters of semantically similar functions based on fuzz testing results, which are stored in the semantic_fio
+-- Create pairs of semantically similar functions based on fuzz testing results, which are stored in the semantic_fio
 -- (function input/output) table.  The "similarity" column is the number of times this pair of functions produced the same
 -- output when run with the same input.
 drop view if exists semantic_clusters;
-create view semantic_clusters as
+create view semantic_similarity as
     select a.func_id as func_id_1, b.func_id as func_id_2, count(*) as similarity
 	from semantic_fio a
 	join semantic_fio b on a.func_id < b.func_id and a.inputset_id = b.inputset_id and a.outputset_id = b.outputset_id
@@ -97,7 +97,7 @@ create view semantic_clusters as
 drop view if exists semantic_clone_pairs;
 create view semantic_clone_pairs as
     select distinct func_id_1, func_id_2
-        from semantic_clusters
+        from semantic_similarity
 	where similarity = (select count(*) from (select distinct id from semantic_inputvalues));
 
 -- All pairs of functions that are syntactically similar.  The similarity threshold was specified to the C++ program that
