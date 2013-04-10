@@ -65,7 +65,7 @@ die () {
 
 # Make sure everything we need has been built.  The projects/BinaryCloneDetection has some errors that cause the build
 # to fail if we try to build everything.
-make -C $ROSE_BLD/projects/BinaryCloneDetection -k -j createVectorsBinary findClones lshCloneDetection \
+make -C $ROSE_BLD/projects/BinaryCloneDetection -k -j createVectorsBinary findClones lshCloneDetection computeStatistics \
     || die "failed to build syntactic clone detection targets in projects/BinaryCloneDetection"
 make -C $ROSE_BLD/projects/simulator -k -j CloneDetection clusters_from_pairs show_results \
     || die "failed to build semantic clone detection targets in projects/simulator"
@@ -123,6 +123,8 @@ echo "==========================================================================
 echo "                         FINDING SYNTACTIC CLONES"
 $ROSE_BLD/projects/BinaryCloneDetection/findClones --database "$syntactic_dbname" -t $syntactic_precision \
     || die "syntactic clone detection failed in findClones with precision $syntactic_precision"
+$ROSE_BLD/projects/BinaryCloneDetection/computeStatistics --database "$syntactic_dbname" \
+    || die "computeStatistics failed for $syntactic_dbname"
 
 # Combine syntactic and semantic databases, find semantic clones, combine clones
 echo "================================================================================"
@@ -134,5 +136,6 @@ $ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" combined_clo
 $ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" semantic_clone_pairs semantic_clusters
 $ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" syntactic_clone_pairs syntactic_clusters
 $ROSE_BLD/projects/simulator/show_results "$combined_dbname"
+echo
 echo "results have been saved in the combined_clusters table in $combined_dbname"
 exit 0
