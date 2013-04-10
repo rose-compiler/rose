@@ -63,6 +63,8 @@ show_cluster(const std::string &dbname, const std::string &tabname, int cluster_
     Rows rows;
     while (cursor.read())
         rows.push_back(Row(cursor.getint(0), cursor.getint(1), cursor.getint64(2), cursor.getstring(3), cursor.getstring(4)));
+    if (rows.size() > 7) // keep output clean; most people can recognize up to seven items without counting
+        std::cout <<rows.size() <<" functions in these clusters\n";
 
     // Column headers
     std::vector<std::string> headers(5, "");
