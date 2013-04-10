@@ -53,7 +53,7 @@
 */
 using namespace VirtualCFG;
 using namespace::DominatorTreesAndDominanceFrontiers;
-bool IsImportantForSliceSgFilter(SgNode * n);
+ROSE_DLL_API bool IsImportantForSliceSgFilter(SgNode * n);
 struct IsImportantForSliceCFGFilter;
 
 
@@ -160,7 +160,7 @@ typedef TemplatedDominanceFrontier<IsImportantForSliceCFGFilter> SliceDominanceF
 
 
 
-class DependenceNode:public SimpleDirectedGraphNode
+class ROSE_DLL_API DependenceNode:public SimpleDirectedGraphNode
 {
   // Han: moved to lower
   /*
@@ -669,7 +669,7 @@ class InterproceduralInfo
 
 */
 
-class DependenceGraph:public SimpleDirectedGraph
+class ROSE_DLL_API DependenceGraph:public SimpleDirectedGraph
 {
  protected:
   bool debugme;
@@ -1245,7 +1245,7 @@ class FunctionDependenceGraph:public MergedDependenceGraph
    call graph analysis, which will let us slice codes which have more
    ambiguous function calls. */
 
-class SystemDependenceGraph:public MergedDependenceGraph
+class ROSE_DLL_API SystemDependenceGraph:public MergedDependenceGraph
 {
 
   std::vector<SDGLibraryExtender *> libraryExtenders;

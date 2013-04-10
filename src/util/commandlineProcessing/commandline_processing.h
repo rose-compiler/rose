@@ -57,7 +57,7 @@ namespace CommandlineProcessing
           ROSE_UTIL_API bool isOptionWithParameter ( std::vector<std::string> & argv, std::string optionPrefix, std::string Option, float & optionParameter, bool removeOption );
 
        //! Search 'argv' for 'optionPrefixOption value',  store the string type value into 'optionParameter'. Remove the original option if 'removeOption' is true.
-          ROSE_UTIL_API bool isOptionWithParameter ( std::vector<std::string> & argv, std::string optionPrefix, std::string Option, std::string & optionParameter, bool removeOption );
+          ROSE_DLL_API bool isOptionWithParameter ( std::vector<std::string> & argv, std::string optionPrefix, std::string Option, std::string & optionParameter, bool removeOption );
 
       //! Add the strings in argList to the command line represented by argc and argv, prepend 'prefix' to each of the arguments
           ROSE_UTIL_API void addListToCommandLine ( std::vector<std::string> & argv , std::string prefix, Rose_STL_Container<std::string> argList );
@@ -72,7 +72,7 @@ namespace CommandlineProcessing
           ROSE_UTIL_API std::string generateStringFromArgList ( Rose_STL_Container<std::string> argList, bool skipInitialEntry, bool skipSourceFiles );
 
       //! Build the list of isolated file names from the command line
-          ROSE_UTIL_API Rose_STL_Container<std::string> generateSourceFilenames ( Rose_STL_Container<std::string> argList, bool binaryMode );
+          ROSE_DLL_API Rose_STL_Container<std::string> generateSourceFilenames ( Rose_STL_Container<std::string> argList, bool binaryMode );
 
        // DQ and PC (6/1/2006): Added Peter's suggested fixes to support auto-documentation.
       //! Add another valid source file suffix
@@ -82,10 +82,10 @@ namespace CommandlineProcessing
           ROSE_UTIL_API bool isSourceFilename ( std::string name ); 
 
           ROSE_UTIL_API bool isObjectFilename ( std::string name );
-          ROSE_UTIL_API bool isExecutableFilename ( std::string name );
+          ROSE_DLL_API bool isExecutableFilename ( std::string name );
 
        // DQ (8/20/2008): Added test that will allow bogus exececutable files (marked as .exe but not executable) to pass
-          ROSE_UTIL_API bool isValidFileWithExecutableFileSuffixes ( std::string name );
+          ROSE_DLL_API bool isValidFileWithExecutableFileSuffixes ( std::string name );
 
           ROSE_UTIL_API bool isCFileNameSuffix ( const std::string & suffix );
 
@@ -130,12 +130,12 @@ namespace CommandlineProcessing
           ROSE_UTIL_API void initObjectFileSuffixList();
           static Rose_STL_Container<std::string> validObjectFileSuffixes;
 
-          ROSE_UTIL_API void initExecutableFileSuffixList();
+          ROSE_DLL_API void initExecutableFileSuffixList();
           static Rose_STL_Container<std::string> validExecutableFileSuffixes;
 
        // bool isOptionTakingFileName( std::string argument );
-          ROSE_UTIL_API bool isOptionTakingSecondParameter( std::string argument );
-          ROSE_UTIL_API bool isOptionTakingThirdParameter ( std::string argument );
+          ROSE_DLL_API bool isOptionTakingSecondParameter( std::string argument );
+          ROSE_DLL_API bool isOptionTakingThirdParameter ( std::string argument );
    };
 
 // DQ (4/5/2010): This are defined in sage_support.cpp
@@ -143,7 +143,7 @@ namespace CommandlineProcessing
 //! roseInstallPrefix()), the top of the source tree plus sourceTreeLocation is
 //! used as the location.  If the variable is not set, the path in
 //! installTreeLocation (with the install prefix added) is used instead.
-ROSE_UTIL_API std::string
+ROSE_DLL_API std::string
 findRoseSupportPathFromSource(const std::string& sourceTreeLocation,
                               const std::string& installTreeLocation);
 
@@ -152,7 +152,7 @@ findRoseSupportPathFromSource(const std::string& sourceTreeLocation,
 //! roseInstallPrefix()), the top of the build tree plus buildTreeLocation is
 //! used as the location.  If the variable is not set, the path in
 //! installTreeLocation (with the install prefix added) is used instead.
-ROSE_UTIL_API std::string
+ROSE_DLL_API std::string
 findRoseSupportPathFromBuild(const std::string& buildTreeLocation,
                              const std::string& installTreeLocation);
 
@@ -163,7 +163,7 @@ findRoseSupportPathFromBuild(const std::string& buildTreeLocation,
 //! directories are set by hand (rather than from $prefix).  This function
 //! either puts the prefix into RESULT and returns true (for an installed copy
 //! of ROSE), or returns false (for a build tree).
-ROSE_UTIL_API bool
+ROSE_DLL_API bool
 roseInstallPrefix(std::string& result);
 
 // endif associated with define ROSE_COMMANDLINE_UTILITY_H

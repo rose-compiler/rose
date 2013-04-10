@@ -106,7 +106,7 @@ std::ostream& operator<<(std::ostream& o, const StructLayoutInfo& i);
 
 //! Basic type layout engine -- handles bookkeeping, plus handing typedefs and
 // modifiers
-class ChainableTypeLayoutGenerator {
+class ROSE_DLL_API ChainableTypeLayoutGenerator {
   public:
     virtual ~ChainableTypeLayoutGenerator() {}
     ChainableTypeLayoutGenerator* next;
@@ -145,7 +145,7 @@ class ChainableTypeLayoutGenerator {
 //! Layout generator for i386 ABI-like struct layout
 // Handles structs and unions only
 // Does not handle C++ stuff (inheritance, virtual functions) for now
-class NonpackedTypeLayoutGenerator: public ChainableTypeLayoutGenerator {
+class ROSE_DLL_API NonpackedTypeLayoutGenerator: public ChainableTypeLayoutGenerator {
   public:
   NonpackedTypeLayoutGenerator(ChainableTypeLayoutGenerator* next)
       : ChainableTypeLayoutGenerator(next)
@@ -202,7 +202,7 @@ class SystemPrimitiveTypeLayoutGenerator: public ChainableTypeLayoutGenerator {
 };
 
 //! Layout generator for customized primitive types, mostly for UPC relying on Berkeley runtime library now
-class CustomizedPrimitiveTypeLayoutGenerator: public ChainableTypeLayoutGenerator {
+class ROSE_DLL_API CustomizedPrimitiveTypeLayoutGenerator: public ChainableTypeLayoutGenerator {
   public:
   CustomizedPrimitiveTypeLayoutGenerator(ChainableTypeLayoutGenerator* next,StructCustomizedSizes* custom_sizes)
       : ChainableTypeLayoutGenerator(next,custom_sizes)

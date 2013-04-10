@@ -56,7 +56,7 @@ class OperatorAnnotCollection
   }
 };
 
-class OperatorInlineAnnotation
+class ROSE_DLL_API OperatorInlineAnnotation
 : public OperatorAnnotCollection<OperatorInlineDescriptor>
 {
   virtual bool read_annot_name( const std::string& annotName) const

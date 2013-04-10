@@ -28,13 +28,13 @@ namespace AstFromString
 
   //! A namespace scope char* to avoid passing and returning a target c string for every and each function
   //! current characters being scanned, what is pointed is const, the pointer itself is not const. 
-  extern const char* c_char; 
+  ROSE_DLL_API extern const char* c_char; 
 
   //! current anchor SgNode associated with parsing. It will serve as a start point to find enclosing scopes for resolving identifiers/symbols 
-  extern SgNode* c_sgnode; 
+  ROSE_DLL_API extern SgNode* c_sgnode; 
 
   //! Store the AST substree (expression, statement) generated from a helper function.
-  extern SgNode* c_parsed_node; 
+  ROSE_DLL_API extern SgNode* c_parsed_node; 
 
   //@}
 
@@ -69,7 +69,7 @@ namespace AstFromString
  */
 
   //! match a char, advance one position if successful.
-  bool afs_match_char(char c);
+  ROSE_DLL_API bool afs_match_char(char c);
 
   /*! \brief Match a sub string: a given sub c string from the input c string, again skip heading space/tabs if any
    * 
@@ -83,58 +83,58 @@ namespace AstFromString
    *   -  true: find a match, the current char is pointed to the next char after the substr
    *   - false: no match, the current char is intact
    */   
-  bool afs_match_substr(const char* substr, bool checkTrail = true);
+  ROSE_DLL_API bool afs_match_substr(const char* substr, bool checkTrail = true);
 
   //! Match and skip whitespace
-  bool afs_skip_whitespace();
+  ROSE_DLL_API bool afs_skip_whitespace();
 
  
   //! Match identifier, move to the next character if successful. The identifier could be a name of a type, function, variable, or label. The resolved identifier (type or variable/function/label name) is stored into c_parsed_node.
-  bool afs_match_identifier();
+  ROSE_DLL_API bool afs_match_identifier();
 
   //! Match an integer constant, store it into result
-  bool afs_match_integer_const(int * result);
+  ROSE_DLL_API bool afs_match_integer_const(int * result);
 
   //! Match a translation unit. Not yet implemented.
-  bool afs_match_translation_unit();
+  ROSE_DLL_API bool afs_match_translation_unit();
 
   //! Match an external declaration. Not yet implemented.
-  bool afs_match_external_declaration();
+  ROSE_DLL_API bool afs_match_external_declaration();
 
   //! Match a function definition. Not yet implemented.
-  bool afs_match_function_definition();
+  ROSE_DLL_API bool afs_match_function_definition();
 
   //! Match a declaration. Not yet implemented. 
-  bool afs_match_declaration();
+  ROSE_DLL_API bool afs_match_declaration();
 
   //!Match declaration specifiers. Not yet implemented.
-  bool afs_match_declaration_specifiers();
+  ROSE_DLL_API bool afs_match_declaration_specifiers();
 
   //!Match an init declarator list. Not yet implemented.
-  bool afs_match_init_declarator_list();
+  ROSE_DLL_API bool afs_match_init_declarator_list();
 
   //! Match init declarator. Not yet implemented.
-  bool afs_match_init_declarator();
+  ROSE_DLL_API bool afs_match_init_declarator();
 
   //! Match a storage class specifier. Not yet implemented.
-  bool afs_match_storage_class_specifier();
+  ROSE_DLL_API bool afs_match_storage_class_specifier();
 
   //! Match a type specifier : 'void' | 'char' | 'short' | 'int' | 'long' | 'float' | 'double' | 'signed' | 'unsigned' | struct_or_union_specifier | enum_specifier | type_id. The recognized type is stored in c_parsed_node.
-  bool afs_match_type_specifier();
+  ROSE_DLL_API bool afs_match_type_specifier();
   // type_id in ANTLR grammar
   //struct_or_union_specifier
   //struct_or_union
   //struct_declaration_list
   //struct_declaration
   //! Match a list of specifiers and qualifiers : : ( type_qualifier | type_specifier )+
-  bool afs_match_specifier_qualifier_list(std::vector<SgNode*> &);
+  ROSE_DLL_API bool afs_match_specifier_qualifier_list(std::vector<SgNode*> &);
   //struct_declarator_list
   //struct_declarator
   // enum_specifier
   //enumerator_list
   // enumerator
   //! Match a type qualifier : 'const' | 'volatile'
-  bool afs_match_type_qualifier();
+  ROSE_DLL_API bool afs_match_type_qualifier();
   //declarator
   //direct_declarator
   // declarator_suffix
@@ -144,7 +144,7 @@ namespace AstFromString
   //parameter_declaration
   // identifier_list
   //! Match a type name : specifier_qualifier_list abstract_declarator? 
-  bool afs_match_type_name(); 
+  ROSE_DLL_API bool afs_match_type_name(); 
   //abstract_declarator
   //direct_abstract_declarator
   //abstract_declarator_suffix
@@ -158,67 +158,67 @@ namespace AstFromString
  */
   //-----------------------------------------
   //!  Grammar:  argument_expression_list : assignment_expression (',' assignment_expression)*  one assignment_expression, followed by optionally arbitrary numbers of (',' assignment_expression)
-  bool afs_match_argument_expression_list();
+  ROSE_DLL_API bool afs_match_argument_expression_list();
 
   //!  Grammar:  additive_expression : (multiplicative_expression) ('+' multiplicative_expression | '-' multiplicative_expression)*
-  bool afs_match_additive_expression();
+  ROSE_DLL_API bool afs_match_additive_expression();
 
   //!  multiplicative_expression : (cast_expression) ('*' cast_expression | '/' cast_expression | '%' cast_expression)*
-  bool afs_match_multiplicative_expression();
+  ROSE_DLL_API bool afs_match_multiplicative_expression();
 
   //! cast_expression  : '(' type_name ')' cast_expression   | unary_expression 
-  bool afs_match_cast_expression();
+  ROSE_DLL_API bool afs_match_cast_expression();
 
   //!      unary_expression : postfix_expression | INC_OP unary_expression  | DEC_OP unary_expression   | unary_operator cast_expression  | SIZEOF unary_expression  | SIZEOF '(' type_name ')'
-  bool afs_match_unary_expression();
+  ROSE_DLL_API bool afs_match_unary_expression();
 
  //! postfix_expression :   primary_expression ( '[' expression ']' | '(' ')' | '(' argument_expression_list ')' | '.' IDENTIFIER | '->' IDENTIFIER | '++' | '--' )*
-  bool afs_match_postfix_expression();
+  ROSE_DLL_API bool afs_match_postfix_expression();
 
   //! primary_expression : IDENTIFIER | constant | '(' expression ')'
-  bool afs_match_primary_expression();
+  ROSE_DLL_API bool afs_match_primary_expression();
 
   //! Only integer constant is supported for now. Full grammar is constant :   HEX_LITERAL |   OCTAL_LITERAL  |   DECIMAL_LITERAL    |   CHARACTER_LITERAL   |   STRING_LITERAL  |   FLOATING_POINT_LITERAL
-  bool afs_match_constant(); 
+  ROSE_DLL_API bool afs_match_constant(); 
 
   //! expression : assignment_expression (',' assignment_expression)*.  Match one or more assignment_expression
-  bool afs_match_expression();
+  ROSE_DLL_API bool afs_match_expression();
 
   //! constant_expression : conditional_expression
-  bool afs_match_constant_expression();
+  ROSE_DLL_API bool afs_match_constant_expression();
 
   //! assignment_expression : lvalue assignment_operator assignment_expression | conditional_expression
-  bool afs_match_assignment_expression();
+  ROSE_DLL_API bool afs_match_assignment_expression();
   
   //! lvalue: unary_expression
-  bool afs_match_lvalue();
+  ROSE_DLL_API bool afs_match_lvalue();
   // assignment_operator, included in assignment_expression in this implementation
   //! conditional_expression : logical_or_expression ('?' expression ':' conditional_expression)?  '?' means 0 or 1 occurrence 
-  bool afs_match_conditional_expression();
+  ROSE_DLL_API bool afs_match_conditional_expression();
 
   //! logical_or_expression : logical_and_expression ('||' logical_and_expression)*
-  bool afs_match_logical_or_expression();
+  ROSE_DLL_API bool afs_match_logical_or_expression();
 
   //! logical_and_expression : inclusive_or_expression ('&&' inclusive_or_expression)*
-  bool afs_match_logical_and_expression();
+  ROSE_DLL_API bool afs_match_logical_and_expression();
 
   //! inclusive_or_expression : exclusive_or_expression ('|' exclusive_or_expression)*
-  bool afs_match_inclusive_or_expression();
+  ROSE_DLL_API bool afs_match_inclusive_or_expression();
 
   //! exclusive_or_expression : and_expression ('^' and_expression)*
-  bool afs_match_exclusive_or_expression();
+  ROSE_DLL_API bool afs_match_exclusive_or_expression();
 
   //! and_expression : equality_expression ('&' equality_expression)*
-  bool afs_match_and_expression();
+  ROSE_DLL_API bool afs_match_and_expression();
 
   //! equality_expression : relational_expression (('=='|'!=') relational_expression)*
-  bool afs_match_equality_expression();
+  ROSE_DLL_API bool afs_match_equality_expression();
 
   //! relational_expression : shift_expression (('<'|'>'|'<='|'>=') shift_expression)*
-  bool afs_match_relational_expression();
+  ROSE_DLL_API bool afs_match_relational_expression();
 
   //! shift_expression : additive_expression (('<<'|'>>') additive_expression)*
-  bool afs_match_shift_expression();
+  ROSE_DLL_API bool afs_match_shift_expression();
  //@}
 
   //-----------------------------------------
@@ -227,20 +227,20 @@ namespace AstFromString
    \brief  utility functions to parse a few statements. Successful match will advance the current position. INCOMPLETE now, Don't use them yet!
  */
   //! match any statement, not complete yet. Don't use it yet . : labeled_statement  | compound_statement | expression_statement | selection_statement | iteration_statement | jump_statement
-  bool afs_match_statement();
+  ROSE_DLL_API bool afs_match_statement();
 
   //! Match labeled statement : IDENTIFIER ':' statement | 'case' constant_expression ':' statement | 'default' ':' statement
-  bool afs_match_labeled_statement();
+  ROSE_DLL_API bool afs_match_labeled_statement();
   //! Not yet implemented. Match compound statement: '{' declaration* statement_list? '}'
-  bool afs_match_compound_statement();
+  ROSE_DLL_API bool afs_match_compound_statement();
   //! Match expression statement: : ';'  | expression ';'
-  bool afs_match_expression_statement();
+  ROSE_DLL_API bool afs_match_expression_statement();
   //! Match selection statement: IF '(' expression ')' statement  | IF '(' expression ')' statement ELSE statement  | SWITCH '(' expression ')' statement
-  bool afs_match_selection_statement();
+  ROSE_DLL_API bool afs_match_selection_statement();
   //! Match an iteration statement: : 'while' '(' expression ')' statement   | 'do' statement 'while' '(' expression ')' ';' | 'for' '(' expression_statement expression_statement expression? ')' statement
-  bool afs_match_iteration_statement();
+  ROSE_DLL_API bool afs_match_iteration_statement();
   //! Match a jump statement : 'goto' IDENTIFIER ';' | 'continue' ';'  | 'break' ';' | 'return' ';' | 'return' expression ';'
-  bool afs_match_jump_statement();
+  ROSE_DLL_API bool afs_match_jump_statement();
 
   //@}
 }

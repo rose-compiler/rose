@@ -4,7 +4,7 @@
 #include <set>
 
 
-class CreateSliceSet
+class ROSE_DLL_API CreateSliceSet
 {
         public:
                 CreateSliceSet(SystemDependenceGraph *program,std::list<SgNode*> targets);

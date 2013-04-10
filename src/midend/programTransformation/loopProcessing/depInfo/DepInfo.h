@@ -62,7 +62,7 @@ class DepInfoImpl
 
 inline DepInfoImpl* Clone(const DepInfoImpl& that) { return that.Clone(); }
 
-class DepInfo : protected CountRefHandle <DepInfoImpl>
+class ROSE_DLL_API DepInfo : protected CountRefHandle <DepInfoImpl>
 {
   DepInfo( DepInfoImpl *impl) : CountRefHandle<DepInfoImpl>(impl) {}
  public:

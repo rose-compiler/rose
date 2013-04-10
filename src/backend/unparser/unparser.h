@@ -81,7 +81,7 @@ std::string get_output_filename( SgFile& file);
 std::string get_type_name( SgType* t);
 
 //! Unparse the declaration as a string for use in prototypes within the AST rewrite mechanism prefix mechanism
-std::string unparseDeclarationToString ( SgDeclarationStatement* declaration, bool unparseAsDeclaration = true );
+ROSE_DLL_API std::string unparseDeclarationToString ( SgDeclarationStatement* declaration, bool unparseAsDeclaration = true );
 
 //! Unparse the header of the scope statement (used in the prefix generation to 
 //! permit context to be accounted for the in generation of AST fragements from 

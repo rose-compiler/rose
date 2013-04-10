@@ -19,7 +19,7 @@
 namespace ASTtools
 {
   //! Create a deep-copy of an SgNode
-  SgNode* deepCopy (const SgNode* n);
+  ROSE_DLL_API SgNode* deepCopy (const SgNode* n);
 }
 
 #endif // !defined(INC_ASTTOOLS_COPY_HH)

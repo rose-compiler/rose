@@ -7,7 +7,7 @@
 #include <ValuePropagate.h>
 #include <LoopTransformInterface.h>
 
-class ArrayInterface 
+class ROSE_DLL_API ArrayInterface 
   : public AstObserver, public AliasAnalysisInterface, public ArrayAbstractionInterface
 {
   StmtVarAliasCollect aliasCollect;

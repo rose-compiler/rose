@@ -102,7 +102,7 @@ namespace StringUtility
           ROSE_UTIL_API void  writeFile ( const std::string& outputString, const std::string& fileNameString, const std::string& directoryName );
 
       //! Read an existing file
-           std::string readFile ( const std::string& fileName );
+           ROSE_UTIL_API std::string readFile ( const std::string& fileName );
 
       //! Read a file, keeping source line number information
            ROSE_UTIL_API FileWithLineNumbers readFileWithPos(const std::string& fileName);

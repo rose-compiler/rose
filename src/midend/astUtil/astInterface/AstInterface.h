@@ -370,11 +370,11 @@ class TransformAstTree
 };
 
 //! Traverse and transform an entire AST, where $op$ is invoked to transform each sub-Tree.
-AstNodePtr TransformAstTraverse( AstInterface& fa, const AstNodePtr& r, 
+ROSE_DLL_API AstNodePtr TransformAstTraverse( AstInterface& fa, const AstNodePtr& r, 
                     bool (*op)( AstInterface& fa, const AstNodePtr& head, 
                                 AstNodePtr& result), 
                     AstInterface::TraversalVisitType t = AstInterface::PreVisit );
-AstNodePtr TransformAstTraverse( AstInterface& fa, const AstNodePtr& r, 
+ROSE_DLL_API AstNodePtr TransformAstTraverse( AstInterface& fa, const AstNodePtr& r, 
                               TransformAstTree& op,
                         AstInterface::TraversalVisitType t = AstInterface::PreVisit);
 
