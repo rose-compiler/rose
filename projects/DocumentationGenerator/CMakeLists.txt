@@ -13,9 +13,15 @@ add_library(ROSEDoxygen
 add_dependencies(ROSEDoxygen rosetta_generated)
 
 set(DocGenExes
-  correctAllComments correctExternalComments correctExternalCommentsAndCompile
-  classifyDeprecated createDocumentationForROSE docLint
+  correctAllComments correctExternalComments classifyDeprecated
+  createDocumentationForROSE docLint
 )
+
+#this one needs execvp
+if(HAVE_UNISTD_H)
+  list(APPEND DocGenExes correctExternalCommentsAndCompile)
+endif()
+
 foreach(DocGenExe ${DocGenExes})
   add_executable(${DocGenExe} ${DocGenExe}.C)
   target_link_libraries(${DocGenExe} ROSE_DLL ${Boost_LIBRARIES} ROSEDoxygen)

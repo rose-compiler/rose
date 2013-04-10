@@ -15,8 +15,6 @@ add_subdirectory(graphColoring)
 add_subdirectory(highLevelGrammars)
 add_subdirectory(mint)
 add_subdirectory(MPI_Tools)
-add_subdirectory(MacroRewrapper)
-add_subdirectory(ManyCoreRuntime)
 add_subdirectory(OpenMP_Analysis)
 add_subdirectory(PowerAwareCompiler)
 add_subdirectory(pragmaParsing)
@@ -52,7 +50,18 @@ endif()
 
 # These targets do not compile using ROSE
 if(NOT ROSE_USING_ROSE_ANALYSIS)
-  add_subdirectory(HeaderFilesInclusion)
+  if(HAVE_REALPATH)
+    add_subdirectory(HeaderFilesInclusion)
+  endif()
+endif()
+
+if(SQLITE3_FOUND)
+  add_subdirectory(MacroRewrapper)
+endif()
+
+# highresTimer.C needs to be rewritten so that it is cross-platform
+if(NOT WIN32)
+  add_subdirectory(ManyCoreRuntime)
 endif()
 
 if(with-yices)
