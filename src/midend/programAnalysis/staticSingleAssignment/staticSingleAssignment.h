@@ -59,7 +59,7 @@ namespace ssa_private
  * optimizations can access the results of this analysis while still preserving
  * the original AST.
  */
-class StaticSingleAssignment
+class ROSE_DLL_API StaticSingleAssignment
 {
 private:
     /** The project to perform SSA Analysis on. */

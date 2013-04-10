@@ -8,8 +8,9 @@
 
 #include <string>
 #include <cstdlib>
+#include "rosedll.h"
 
-class NameGenerator
+class ROSE_DLL_API NameGenerator
 {
 public:
   NameGenerator (size_t first_id = 1);

@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <vector>
 //! SymbolicVal with I/O interface
-class SymbolicValDescriptor
+class ROSE_DLL_API SymbolicValDescriptor
 {
   SymbolicVal val;
   void set_val( const SymbolicVal &v);

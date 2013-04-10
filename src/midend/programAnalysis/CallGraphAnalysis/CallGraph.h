@@ -51,10 +51,10 @@ namespace CallTargetSet
   std::vector<SgFunctionDeclaration*> solveConstructorInitializer ( SgConstructorInitializer* sgCtorInit);
 
   // Populates functionList with Properties of all functions that may get called.
-  void getPropertiesForExpression(SgExpression* exp,
-                                    ClassHierarchyWrapper* classHierarchy,
-                                    Rose_STL_Container<SgFunctionDeclaration*>& propList,
-                                    bool includePureVirtualFunc = false);
+  ROSE_DLL_API void getPropertiesForExpression(SgExpression* exp,
+                                               ClassHierarchyWrapper* classHierarchy,
+                                               Rose_STL_Container<SgFunctionDeclaration*>& propList,
+                                               bool includePureVirtualFunc = false);
 
   //! Populates functionList with definitions of all functions that may get called. This
   //! is basically a wrapper around getPropertiesForExpression that extracts the

@@ -150,7 +150,7 @@ class ROSE_DLL_API LoopTransformInterface
   i++ is normalized to i=i+1
   i-- is normalized to i=i-1
 */
-void NormalizeForLoop (AstInterface& fa, const AstNodePtr& head) ;
+ROSE_DLL_API void NormalizeForLoop (AstInterface& fa, const AstNodePtr& head) ;
 
 
 #endif

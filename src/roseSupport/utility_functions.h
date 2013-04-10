@@ -147,9 +147,9 @@ namespace ROSE
           std::string getSourceDirectory  ( std::string fileNameWithPath ); //! get the sourceDirectory directory
 
           std::string getFileNameWithoutPath ( SgStatement* statementPointer );
-          ROSE_UTIL_API std::string stripPathFromFileName ( const std::string& fileNameWithPath ); //! get the filename from the full filename
+          ROSE_DLL_API std::string stripPathFromFileName ( const std::string& fileNameWithPath ); //! get the filename from the full filename
 
-          std::string getPathFromFileName   ( std::string fileNameWithPath ); //! get the path from the full filename
+          ROSE_DLL_API std::string getPathFromFileName   ( std::string fileNameWithPath ); //! get the path from the full filename
 
        // DQ (9/8/2008): This is removed since it is redundant with the version in StringUtility.
        // std::string stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix ); //! get the name without the ".C"
@@ -165,7 +165,7 @@ namespace ROSE
 
           SgName concatenate ( const SgName & X, const SgName & Y );
 
-          ROSE_UTIL_API void usage (int status);
+          ROSE_DLL_API void usage (int status);
 
           void filterInputFile ( const std::string inputFileName, const std::string outputFileName );
 
