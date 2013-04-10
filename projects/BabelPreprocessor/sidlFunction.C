@@ -261,8 +261,7 @@ SIDL_TreeTraversal::isOverloaded ( SgClassDefinition* classDefinition, string fu
 // #ifndef __INTEL_COMPILER
 #if !defined(__INTEL_COMPILER) && !defined(USE_ROSE)
 		// DQ (6/26/2006): The declaration of arguments uses a GNU extension when we can not support on other compilers.
-		vector<SgType*> arguments[numberOfOverloadedFunctionNames];
-		
+		vector<SgType*> *arguments = new vector<SgType*>[numberOfOverloadedFunctionNames];		
 	
 		//build a matrix of the arguments
 		list<SgFunctionDeclaration*>::iterator funcIter; int j = 0;
@@ -310,6 +309,7 @@ SIDL_TreeTraversal::isOverloaded ( SgClassDefinition* classDefinition, string fu
 		}while(numLeft);	 //we loop until we have passed the end of all declarations
 		
 		information.setTypes(arguments[orderOfOverloadedFunction]);
+		delete [] arguments;
 #else
    // DQ (6/26/2006): The declaration of arguments uses a GNU extension when we can not support on other compilers.
       printf ("Error: Code constructs not supported using Intel C++ Compiler \n");
