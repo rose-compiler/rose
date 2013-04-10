@@ -5,6 +5,10 @@
 
 #include "APIDepAttrib.h"
 
+#ifdef _MSC_VER
+  using boost::uint32_t;
+#endif
+
 typedef boost::bimaps::bimap<uint32_t,std::string> name_table;
 
 class GenericDepAttribute : public APIDepAttribute {
