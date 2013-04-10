@@ -65,13 +65,13 @@ class HC_PragmaAttribute: public AstAttribute
     enum hcpragma_enum pragma_type;
 
     HC_PragmaAttribute (SgNode* n , hcpragma_enum p_type): node(n), pragma_type(p_type) { }
-    virtual SgExpression* get_dim1 (){ assert(0);}; 
-    virtual SgExpression* get_dim2 (){assert(0); }; 
-    virtual SgExpression* get_dim3 (){assert(0); }; 
+    virtual SgExpression* get_dim1 (){ assert(0); return NULL; }; 
+    virtual SgExpression* get_dim2 (){assert(0); return NULL; }; 
+    virtual SgExpression* get_dim3 (){assert(0); return NULL; }; 
 
-    virtual SgExpression* get_blocksPerGrid(){assert(0);};
-    virtual SgExpression* get_threadsPerGrid(){assert(0);};
-    virtual SgExpression* get_shared_size(){assert(0);};
+    virtual SgExpression* get_blocksPerGrid(){assert(0); return NULL; };
+    virtual SgExpression* get_threadsPerGrid(){assert(0); return NULL; };
+    virtual SgExpression* get_shared_size(){assert(0); return NULL; };
 
     virtual std::string toString ()
     {
