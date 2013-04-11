@@ -2073,7 +2073,7 @@ void unparseDirectory ( SgDirectory* directory, UnparseFormatHelp* unparseFormat
 static sigjmp_buf rose__sgproject_unparse_mark;
 static void HandleUnparserSignal(int sig)
 {
-  std::cout << "[SIGNAL] Caught unparser signal='" << sig << "'" << std::endl;
+  std::cout << "[WARN] Caught unparser signal='" << sig << "'" << std::endl;
   siglongjmp(rose__sgproject_unparse_mark, -1);
 }
 
@@ -2100,7 +2100,10 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
 
       if(sigsetjmp(rose__sgproject_unparse_mark, 0) == -1)
       {
-          std::cout << "[SIGNAL] Ignored unparser failure" << std::endl;
+          std::cout
+              << "[WARN] Ignoring unparser failure "
+              << " as directed by -rose:keep_going"
+              << std::endl;
           file->set_unparserErrorCode(-1);
       }
       else
