@@ -731,7 +731,7 @@ SgSourceFile::initializeGlobalScope()
 sigjmp_buf rose__sgproject_parse_mark;
 static void HandleFrontendSignal(int sig)
 {
-  std::cout << "[SIGNAL] Caught frontend signal='" << sig << "'" << std::endl;
+  std::cout << "[WARN] Caught frontend signal='" << sig << "'" << std::endl;
   siglongjmp(rose__sgproject_parse_mark, -1);
 }
 
@@ -1290,7 +1290,10 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
   if (sigsetjmp(rose__sgproject_parse_mark, 0) == -1)
   {
-      std::cout << "[SIGNAL] Ignored frontend failure" << std::endl;
+      std::cout
+          << "[WARN] Ignoring frontend failure "
+          << " as directed by -rose:keep_going"
+          << std::endl;
       file->set_frontendErrorCode(-1);
   }
   else
@@ -1301,7 +1304,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
       }
       catch (...)
       {
-          std::cout << "Caught frontend exception" << std::endl;
+          std::cout << "[WARN] Caught frontend exception" << std::endl;
           if (file->get_project()->get_keep_going())
           {
               file->set_frontendErrorCode(-1);
