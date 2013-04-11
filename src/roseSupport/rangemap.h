@@ -191,6 +191,17 @@ public:
         return Range::inin(first(), right.last());
     }
 
+    /** Intersection of two ranges. */
+    Range intersect(const Range &other) const {
+        if (empty() || contains(other))
+            return other;
+        if (other.empty() || other.contains(*this))
+            return *this;
+        if (!overlaps(other))
+            return Range();
+        return Range::inin(std::max(first(), other.first()), std::min(last(), other.last()));
+    }
+    
     /** Returns true if this range is empty.  Note that many of the range comparison methods have special cases for empty
      *  ranges.  Note that due to overflow, the size() method may return zero for integer ranges if this range contains all
      *  possible values.  It follows, then that the expressions "empty()" and "0==size()" are not always equal. */
