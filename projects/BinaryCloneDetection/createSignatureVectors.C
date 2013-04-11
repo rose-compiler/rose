@@ -262,11 +262,17 @@ createVectorsRespectingFunctionBoundaries(SgNode* top, const std::string& filena
         virtual bool operator()(SgNode *node) { return isSgAsmStaticData(node)!=NULL; }
     } dselector;
 
-    vector<SgAsmFunction*> funcs = SageInterface::querySubTree<SgAsmFunction>(top);
-    int functionId = con.executeint("select coalesce(max(row_number),-1)+1 from function_ids"); // zero origin
     //                                                  1     2              3         4      5      6
     sqlite3_command cmd1(con, "insert into function_ids(file, function_name, entry_va, isize, dsize, size) values(?,?,?,?,?,?)");
-    for (vector<SgAsmFunction*>::iterator fi=funcs.begin(); fi!=funcs.end(); ++fi) {
+    
+    sqlite3_command cmd2(con, //                              1        2     3            4               5
+                         "insert into syntactic_instructions (address, size, function_id, function_index, assembly)"
+                         " values (?,?,?,?,?)");
+
+    vector<SgAsmFunction*> funcs = SageInterface::querySubTree<SgAsmFunction>(top);
+    int functionId = con.executeint("select coalesce(max(row_number),-1)+1 from function_ids"); // zero origin
+    
+    for (vector<SgAsmFunction*>::iterator fi=funcs.begin(); fi!=funcs.end(); ++fi, ++functionId) {
 	createVectorsForAllInstructions(*fi, filename, (*fi)->get_name(), functionId, windowSize, stride, con);
         cmd1.bind(1, filename);
         cmd1.bind(2, (*fi)->get_name() );
@@ -275,6 +281,16 @@ createVectorsRespectingFunctionBoundaries(SgNode* top, const std::string& filena
         cmd1.bind(5, (*fi)->get_extent(NULL, NULL, NULL, &dselector));
         cmd1.bind(6, (*fi)->get_extent());
         cmd1.executenonquery();
+
+        vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(*fi);
+        for (size_t i=0; i<insns.size(); ++i) {
+            cmd2.bind(1, insns[i]->get_address());
+            cmd2.bind(2, insns[i]->get_size());
+            cmd2.bind(3, functionId);
+            cmd2.bind(4, i);
+            cmd2.bind(5, unparseInstructionWithAddress(insns[i]));
+            cmd2.executenonquery();
+        }
     }
     cerr << "Total vectors generated: " << numVectorsGenerated << endl;
 }
@@ -377,6 +393,13 @@ void createDatabases(sqlite3_connection& con) {
                       " isize integer,"                         // size of function instructions in bytes
                       " dsize integer,"                         // size of function data in bytes
                       " size integer)");                        // total size of function in bytes
+
+  con.executenonquery("create table if not exists syntactic_instructions ("
+                      " address integer primary key,"           // starting address of instruction
+                      " size integer,"                          // size of instruction in bytes
+                      " function_id integer references function_ids(row_number),"
+                      " function_index integer,"                // zero-origin index of instruction within function
+                      " assembly text)");                       // disassembled instruction
 
   
   try {
