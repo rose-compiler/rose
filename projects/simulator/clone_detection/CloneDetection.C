@@ -200,11 +200,24 @@ public:
 
     // Save each function to the database.  Returns a mapping from function object to ID number.
     FunctionIdMap save_functions(const Functions &functions) {
+
+        struct InstructionSelector: SgAsmFunction::NodeSelector {
+            virtual bool operator()(SgNode *node) { return isSgAsmInstruction(node)!=NULL; }
+        } iselector;
+
+        struct DataSelector: SgAsmFunction::NodeSelector {
+            virtual bool operator()(SgNode *node) { return isSgAsmStaticData(node)!=NULL; }
+        } dselector;
+
         FunctionIdMap retval;
         sqlite3_command cmd1(sqlite, "select coalesce(max(id),-1) from semantic_functions"
                              " where entry_va=? and funcname=? and filename=?");
         sqlite3_command cmd2(sqlite,
-                             "insert into semantic_functions (id, entry_va, funcname, filename, listing) values (?,?,?,?,?)");
+                             "insert into semantic_functions"
+                             // 1   2         3         4         5        6      7      8
+                             " (id, entry_va, funcname, filename, listing, isize, dsize, size)"
+                             " values (?,?,?,?,?,?,?,?)");
+        sqlite3_command cmd3(sqlite, "insert into semantic_instructions (address, size, assembly, function_id) values (?,?,?,?)");
 
         // Generate assembly listings before we grab the write lock since they might be slightly expensive.
         std::map<SgAsmFunction*, std::string> listing;
@@ -232,8 +245,21 @@ public:
                 cmd2.bind(3, func->get_name());
                 cmd2.bind(4, filename_for_function(func));
                 cmd2.bind(5, listing[func]);
+                cmd2.bind(6, func->get_extent(NULL, NULL, NULL, &iselector));
+                cmd2.bind(7, func->get_extent(NULL, NULL, NULL, &dselector));
+                cmd2.bind(8, func->get_extent());
                 cmd2.executenonquery();
                 retval.insert(std::make_pair(func, func_id));
+
+                std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(func);
+                for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+                    cmd3.bind(1, (*ii)->get_address());
+                    cmd3.bind(2, (*ii)->get_size());
+                    cmd3.bind(3, unparseInstructionWithAddress(*ii));
+                    cmd3.bind(4, func_id);
+                    cmd3.executenonquery();
+                }
+
                 ++func_id;
             }
         }

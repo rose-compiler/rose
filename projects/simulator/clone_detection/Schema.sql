@@ -22,12 +22,25 @@ create table semantic_functions (
        entry_va integer,                        -- unique starting virtual address within the binary specimen
        funcname text,                           -- name of function if known
        filename text,                           -- name of file in which function exists, if known
+       isize integer,                           -- size of function instructions in bytes, non-overlapping
+       dsize integer,                           -- size of function data in bytes, non-overlapping
+       size integer,                            -- total size of function, non-overlapping
        listing text                             -- function assembly listing
+);
+
+-- This is the list of instructions for each function.  Functions need not be contiguous in memory, and two instructions
+-- might overlap, which is why we have to store each instruction individually.  Every instruction belongs to exactly one
+-- function.
+create table semantic_instructions (
+       address integer primary key,             -- virtual address for start of instruction
+       size integer,                            -- size of instruction in bytes
+       assembly text,                           -- unparsed instruction including hexadecimal address
+       function_id integer references semantic_functions(id)
 );
 
 -- Function input/output. One of these is produced each time we fuzz-test a function.
 create table semantic_fio (
-       func_id integer references semantic_functions,
-       inputset_id integer references semantic_inputsets,
-       outputset_id integer references semantic_outputsets
+       func_id integer references semantic_functions(id),
+       inputset_id integer references semantic_inputsets(id),
+       outputset_id integer references semantic_outputsets(id)
 );
