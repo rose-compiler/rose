@@ -236,91 +236,35 @@ bool createVectorsForAllInstructions(SgNode* top, const std::string& filename, c
 }
 
 
-void createVectorsNotRespectingFunctionBoundaries(SgNode* top, const std::string& filename, size_t windowSize, size_t stride, sqlite3_connection& con) {
-  //row_numbers start at 0
-  int functionId=0;
-  try{
-	string query = "SELECT max(row_number) from function_ids";
-
-	sqlite3_command cmd2(con, query /* selectQuery.str() */ );
-
-	sqlite3_reader entriesForFile =cmd2.executereader();
-
-	if(entriesForFile.read())
-	{
-	  functionId = entriesForFile.getint(0);
-	}
-  } catch(exception &ex) {
-	cerr << "Exception Occurred: " << ex.what() << endl;
-  }
-  
-  functionId++;
-
-  std::string functionName = filename+"-all-instructions";
-  createVectorsForAllInstructions(top, filename, functionName, functionId,windowSize, stride, con);
-
-  try{
-    string query = "INSERT into function_ids(file,function_name) VALUES(?,?) ";
-
-    sqlite3_command cmd(con, query /* selectQuery.str() */ );
-
-    cmd.bind(1, filename);
-    cmd.bind(2, functionName );
-    cmd.executenonquery();
-  } catch(exception &ex) {
-    cerr << "Exception Occurred: " << ex.what() << endl;
-  }
-
-  cout << "Total vectors generated: " << numVectorsGenerated << endl;
+void
+createVectorsNotRespectingFunctionBoundaries(SgNode* top, const std::string& filename, size_t windowSize, size_t stride,
+                                             sqlite3_connection& con)
+{
+    int functionId = con.executeint("select coalesce(max(row_number),-1)+1 from function_ids"); // zero origin
+    std::string functionName = filename + "-all-instructions";
+    createVectorsForAllInstructions(top, filename, functionName, functionId, windowSize, stride, con);
+    sqlite3_command cmd1(con, "insert into function_ids(file, function_name) values (?,?)");
+    cmd1.bind(1, filename);
+    cmd1.bind(2, functionName );
+    cmd1.executenonquery();
+    cout << "Total vectors generated: " << numVectorsGenerated << endl;
 }
 
-void createVectorsRespectingFunctionBoundaries(SgNode* top, const std::string& filename, size_t windowSize, size_t stride, sqlite3_connection& con) {
-  vector<SgAsmFunction*> funcs;
-  FindAsmFunctionsVisitor vis;
-  AstQueryNamespace::querySubTree(top, std::bind2nd( vis, &funcs ));
-  size_t funcCount = funcs.size();
-
-  //row_numbers start at 0
-  int functionId=0;
-  try{
-	string query = "SELECT max(row_number) from function_ids";
-
-	sqlite3_command cmd2(con, query /* selectQuery.str() */ );
-
-	sqlite3_reader entriesForFile =cmd2.executereader();
-
-	if(entriesForFile.read())
-	{
-	  functionId = entriesForFile.getint(0);
-	}
-  } catch(exception &ex) {
-	cerr << "Exception Occurred: " << ex.what() << endl;
-  }
-  
-  functionId++;
-  for (size_t i = 0; i < funcCount; ++i) {
-	createVectorsForAllInstructions(funcs[i], filename, funcs[i]->get_name(), functionId, windowSize, stride, con);
-	// if( addedVectors == true )
-	{
-		try{
-		  string query = "INSERT into function_ids(file,function_name,entry_va) VALUES(?,?,?) ";
-
-		  sqlite3_command cmd(con, query /* selectQuery.str() */ );
-
-		  cmd.bind(1, filename);
-		  cmd.bind(2, funcs[i]->get_name() );
-                  cmd.bind(3, (long long)funcs[i]->get_entry_va());
-		  cmd.executenonquery();
-		} catch(exception &ex) {
-		  cerr << "Exception Occurred: " << ex.what() << endl;
-		}
-     	functionId++;
-
-	}
-
-	
-  }
-  cerr << "Total vectors generated: " << numVectorsGenerated << endl;
+void
+createVectorsRespectingFunctionBoundaries(SgNode* top, const std::string& filename, size_t windowSize, size_t stride,
+                                          sqlite3_connection& con)
+{
+    vector<SgAsmFunction*> funcs = SageInterface::querySubTree<SgAsmFunction>(top);
+    int functionId = con.executeint("select coalesce(max(row_number),-1)+1 from function_ids"); // zero origin
+    sqlite3_command cmd1(con, "insert into function_ids(file, function_name, entry_va) values(?,?,?)");
+    for (vector<SgAsmFunction*>::iterator fi=funcs.begin(); fi!=funcs.end(); ++fi) {
+	createVectorsForAllInstructions(*fi, filename, (*fi)->get_name(), functionId, windowSize, stride, con);
+        cmd1.bind(1, filename);
+        cmd1.bind(2, (*fi)->get_name() );
+        cmd1.bind(3, (long long)(*fi)->get_entry_va());
+        cmd1.executenonquery();
+    }
+    cerr << "Total vectors generated: " << numVectorsGenerated << endl;
 }
 
 void addFunctionStatistics(sqlite3_connection& con, const std::string& filename, const std::string& functionName, size_t functionId, size_t numInstructions) {
@@ -345,7 +289,6 @@ void addVectorToDatabase(sqlite3_connection& con, const SignatureVector& vec, co
   string db_select_n = "INSERT INTO vectors( function_id,  index_within_function, line, offset, sum_of_counts, counts, instr_seq ) VALUES(?,?,?,?,?,?,?)";
   string line = boost::lexical_cast<string>(isSgAsmStatement(firstInsn[0])->get_address());
   string offset = boost::lexical_cast<string>(isSgAsmStatement(firstInsn[windowSize - 1])->get_address());
-
 
   unsigned char md[16];
   //calculate_md5_of( (const unsigned char*) normalizedUnparsedInstructions.data() , normalizedUnparsedInstructions.size(), md ) ;
