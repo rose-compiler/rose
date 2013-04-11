@@ -254,14 +254,26 @@ void
 createVectorsRespectingFunctionBoundaries(SgNode* top, const std::string& filename, size_t windowSize, size_t stride,
                                           sqlite3_connection& con)
 {
+    struct InstructionSelector: SgAsmFunction::NodeSelector {
+        virtual bool operator()(SgNode *node) { return isSgAsmInstruction(node)!=NULL; }
+    } iselector;
+
+    struct DataSelector: SgAsmFunction::NodeSelector {
+        virtual bool operator()(SgNode *node) { return isSgAsmStaticData(node)!=NULL; }
+    } dselector;
+
     vector<SgAsmFunction*> funcs = SageInterface::querySubTree<SgAsmFunction>(top);
     int functionId = con.executeint("select coalesce(max(row_number),-1)+1 from function_ids"); // zero origin
-    sqlite3_command cmd1(con, "insert into function_ids(file, function_name, entry_va) values(?,?,?)");
+    //                                                  1     2              3         4      5      6
+    sqlite3_command cmd1(con, "insert into function_ids(file, function_name, entry_va, isize, dsize, size) values(?,?,?,?,?,?)");
     for (vector<SgAsmFunction*>::iterator fi=funcs.begin(); fi!=funcs.end(); ++fi) {
 	createVectorsForAllInstructions(*fi, filename, (*fi)->get_name(), functionId, windowSize, stride, con);
         cmd1.bind(1, filename);
         cmd1.bind(2, (*fi)->get_name() );
         cmd1.bind(3, (long long)(*fi)->get_entry_va());
+        cmd1.bind(4, (*fi)->get_extent(NULL, NULL, NULL, &iselector));
+        cmd1.bind(5, (*fi)->get_extent(NULL, NULL, NULL, &dselector));
+        cmd1.bind(6, (*fi)->get_extent());
         cmd1.executenonquery();
     }
     cerr << "Total vectors generated: " << numVectorsGenerated << endl;
@@ -353,12 +365,18 @@ void createDatabases(sqlite3_connection& con) {
 	cerr << "Exception Occurred: " << ex.what() << endl;
   }
 
-  try {
-	  con.executenonquery("create table IF NOT EXISTS function_ids(row_number INTEGER PRIMARY KEY, file TEXT, function_name TEXT, entry_va integer)");
-  }
-  catch(exception &ex) {
-	cerr << "Exception Occurred: " << ex.what() << endl;
-  }
+
+  // Note, the isize, dsize, and size columns do not double-count overlapping functions or data: isize is not necessarily equal
+  // to the sum of the size of all the function's instructions, dsize is not necessarily the sum of the size of each datum, and
+  // "size" is not necessarily the sum of isize and dsize.
+  con.executenonquery("create table if not exists function_ids ("
+                      " row_number integer primary key,"        // function ID
+                      " file text,"                             // name of specimen in which function appears
+                      " function_name text,"                    // name of function if known
+                      " entry_va integer,"                      // function entry virtual address
+                      " isize integer,"                         // size of function instructions in bytes
+                      " dsize integer,"                         // size of function data in bytes
+                      " size integer)");                        // total size of function in bytes
 
   
   try {
