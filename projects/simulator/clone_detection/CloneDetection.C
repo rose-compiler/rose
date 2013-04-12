@@ -240,14 +240,18 @@ public:
             if (existing_id >=0) {
                 retval.insert(std::make_pair(func, existing_id));
             } else {
+                ExtentMap e_insns, e_data, e_total;
+                func->get_extent(&e_insns, NULL, NULL, &iselector);
+                func->get_extent(&e_data,  NULL, NULL, &iselector);
+                func->get_extent(&e_total);
                 cmd2.bind(1, func_id);
                 cmd2.bind(2, func->get_entry_va());
                 cmd2.bind(3, func->get_name());
                 cmd2.bind(4, filename_for_function(func));
                 cmd2.bind(5, listing[func]);
-                cmd2.bind(6, func->get_extent(NULL, NULL, NULL, &iselector));
-                cmd2.bind(7, func->get_extent(NULL, NULL, NULL, &dselector));
-                cmd2.bind(8, func->get_extent());
+                cmd2.bind(6, e_insns.size());
+                cmd2.bind(7, e_data.size());
+                cmd2.bind(8, e_total.size());
                 cmd2.executenonquery();
                 retval.insert(std::make_pair(func, func_id));
 
