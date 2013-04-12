@@ -104,7 +104,7 @@ SgAsmFunction::reason_str(bool do_pad, unsigned r)
  *  returns the number of nodes (instructions and static data items) in the function.  If the function contains no nodes then
  *  the extent map is not modified and the low and high addresses are both set to zero.
  *
- *  If an @p exclude functor is provided, then any node for which it returns true is not considered part of the function.  This
+ *  If an @p selector functor is provided, then only nodes for which it returns true are considered part of the function.  This
  *  can be used for such things as filtering out data blocks that are marked as padding.  For example:
  *
  *  @code
