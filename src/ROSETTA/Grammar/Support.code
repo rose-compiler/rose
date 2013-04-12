@@ -5314,6 +5314,11 @@ HEADER_APPLICATION_PROJECT_START
       //! This function is depricated and "get_fileList->push_back(SgFile*)" should be used instead.
           void set_file ( SgFile & file ) ROSE_DEPRECATED_FUNCTION;
 
+      //! Intended for use with the -rose:keep_going commandline option.
+      //! \returns A list of files that encountered an error within either
+      //!          the frontend, unparser, or backend compilation.
+          SgFilePtrList get_files_with_errors() const;
+
       //! Access function for retriving a SgFile object from the list stored internally
           SgFile* operator[]( unsigned int i );
 
@@ -14084,6 +14089,29 @@ SgProject::set_file ( SgFile & file )
 
      assert (numberOfFiles() > 0);
    }
+
+SgFilePtrList
+SgProject::get_files_with_errors() const
+{
+  SgFilePtrList failed_files;
+  SgFilePtrList files = p_fileList_ptr->get_listOfFiles();
+  SgFilePtrList::iterator it;
+
+  for (it = files.begin(); it != files.end(); ++it)
+  {
+      SgFile* file = *it;
+      bool failed =
+          file->get_frontendErrorCode()         != 0 ||
+          file->get_unparserErrorCode()         != 0 ||
+          file->get_backendCompilerErrorCode()  != 0;
+      if (failed)
+      {
+          failed_files.push_back(file);
+      }
+  }
+
+  return failed_files;
+}
 
 void
 SgProject::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate )

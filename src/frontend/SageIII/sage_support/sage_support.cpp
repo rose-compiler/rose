@@ -4573,6 +4573,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
           //   2. Original input file is invalid => abort
           if (returnValueForCompiler != 0)
           {
+              this->set_backendCompilerErrorCode(-1);
               if (this->get_project()->get_keep_going() == true)
               {
                   // 1. We already failed the compilation of the ROSE unparsed file.
