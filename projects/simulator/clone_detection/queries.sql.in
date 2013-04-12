@@ -100,16 +100,15 @@ create view semantic_clone_pairs as
         from semantic_similarity
 	where similarity = (select count(*) from (select distinct id from semantic_inputvalues));
 
--- All pairs of functions that are syntactically similar.  The similarity threshold was specified to the C++ program that
--- created the syntactic "clusters" table.  Both function IDs are *semantic* function IDs; we ignore all pairs for which
--- either function of the pair was not considered by the semantic analysis.
+-- All pairs of functions that are syntactically similar.  This view is computed from the cluster_pairs table, which is
+-- created by computeClusterPairs.  The function IDs in this new view are *semantic* function IDs; we ignore all pairs for
+-- which either function of the pair was not considered by the semantic analysis.
 drop view if exists syntactic_clone_pairs;
 create view syntactic_clone_pairs as
-    select distinct b.semantic_id as func_id_1, d.semantic_id as func_id_2
-        from clusters a
-	join combined_functions b on a.function_id = b.syntactic_id and b.semantic_id is not null
-        join clusters c on a.cluster = c.cluster and a.function_id < c.function_id
-	join combined_functions d on c.function_id = d.syntactic_id and d.semantic_id is not null;
+    select b.semantic_id as func_id_1, c.semantic_id as func_id_2
+        from cluster_pairs a
+        join combined_functions b on a.function_id_1 = b.syntactic_id and b.semantic_id is not null
+        join combined_functions c on a.function_id_2 = c.syntactic_id and c.semantic_id is not null
 
 
 --#############################################################################################################################

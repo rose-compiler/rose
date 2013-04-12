@@ -65,7 +65,7 @@ die () {
 
 # Make sure everything we need has been built.  The projects/BinaryCloneDetection has some errors that cause the build
 # to fail if we try to build everything.
-make -C $ROSE_BLD/projects/BinaryCloneDetection -k -j createVectorsBinary findClones lshCloneDetection computeStatistics \
+make -C $ROSE_BLD/projects/BinaryCloneDetection -k -j createVectorsBinary findClones lshCloneDetection computeClusterPairs \
     || die "failed to build syntactic clone detection targets in projects/BinaryCloneDetection"
 make -C $ROSE_BLD/projects/simulator -k -j CloneDetection clusters_from_pairs show_results \
     || die "failed to build semantic clone detection targets in projects/simulator"
@@ -85,7 +85,7 @@ rm -f "$combined_dbname";
 
 
 # Semantic analysis can be run in parallel because it uses transactions to control access to the database.  The easiest
-# way to get this to run in parallel is to use GNU make's "-j" switch.
+# way to get this to run in parallel with error handling, limiting, cleanup, etc. is to use GNU make's "-j" switch.
 echo "================================================================================"
 echo "                           SEMANTIC ANALYSIS"
 makefile=clones-$$.mk
@@ -123,8 +123,8 @@ echo "==========================================================================
 echo "                         FINDING SYNTACTIC CLONES"
 $ROSE_BLD/projects/BinaryCloneDetection/findClones --database "$syntactic_dbname" -t $syntactic_precision \
     || die "syntactic clone detection failed in findClones with precision $syntactic_precision"
-$ROSE_BLD/projects/BinaryCloneDetection/computeStatistics --database "$syntactic_dbname" \
-    || die "computeStatistics failed for $syntactic_dbname"
+$ROSE_BLD/projects/BinaryCloneDetection/computeClusterPairs "$syntactic_dbname" \
+    || die "could not compute syntactic cluster pairs"
 
 # Combine syntactic and semantic databases, find semantic clones, combine clones
 echo "================================================================================"

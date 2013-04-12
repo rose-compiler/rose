@@ -262,24 +262,31 @@ createVectorsRespectingFunctionBoundaries(SgNode* top, const std::string& filena
         virtual bool operator()(SgNode *node) { return isSgAsmStaticData(node)!=NULL; }
     } dselector;
 
-    //                                                  1     2              3         4      5      6
-    sqlite3_command cmd1(con, "insert into function_ids(file, function_name, entry_va, isize, dsize, size) values(?,?,?,?,?,?)");
+    sqlite3_command cmd1(con, //                   1           2     3              4         5      6      7
+                         "insert into function_ids(row_number, file, function_name, entry_va, isize, dsize, size)"
+                         " values(?,?,?,?,?,?,?)");
     
-    sqlite3_command cmd2(con, //                              1        2     3            4               5
-                         "insert into syntactic_instructions (address, size, function_id, function_index, assembly)"
+    sqlite3_command cmd2(con, //                    1        2     3            4                      5
+                         "insert into instructions (address, size, function_id, index_within_function, assembly)"
                          " values (?,?,?,?,?)");
 
     vector<SgAsmFunction*> funcs = SageInterface::querySubTree<SgAsmFunction>(top);
     int functionId = con.executeint("select coalesce(max(row_number),-1)+1 from function_ids"); // zero origin
     
     for (vector<SgAsmFunction*>::iterator fi=funcs.begin(); fi!=funcs.end(); ++fi, ++functionId) {
+        ExtentMap e_insns, e_data, e_total;
+        (*fi)->get_extent(&e_insns, NULL, NULL, &iselector);
+        (*fi)->get_extent(&e_data,  NULL, NULL, &dselector);
+        (*fi)->get_extent(&e_total);
+
 	createVectorsForAllInstructions(*fi, filename, (*fi)->get_name(), functionId, windowSize, stride, con);
-        cmd1.bind(1, filename);
-        cmd1.bind(2, (*fi)->get_name() );
-        cmd1.bind(3, (long long)(*fi)->get_entry_va());
-        cmd1.bind(4, (*fi)->get_extent(NULL, NULL, NULL, &iselector));
-        cmd1.bind(5, (*fi)->get_extent(NULL, NULL, NULL, &dselector));
-        cmd1.bind(6, (*fi)->get_extent());
+        cmd1.bind(1, functionId);
+        cmd1.bind(2, filename);
+        cmd1.bind(3, (*fi)->get_name() );
+        cmd1.bind(4, (long long)(*fi)->get_entry_va());
+        cmd1.bind(5, e_insns.size());
+        cmd1.bind(6, e_data.size());
+        cmd1.bind(7, e_total.size());
         cmd1.executenonquery();
 
         vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(*fi);
@@ -305,34 +312,38 @@ void addFunctionStatistics(sqlite3_connection& con, const std::string& filename,
   cmd.executenonquery();
 }
 
-void addVectorToDatabase(sqlite3_connection& con, const SignatureVector& vec, const std::string& functionName, size_t functionId, size_t indexWithinFunction, const std::string& normalizedUnparsedInstructions, SgAsmx86Instruction* firstInsn[], const std::string& filename, size_t windowSize, size_t stride) {
-  ++numVectorsGenerated;
+void
+addVectorToDatabase(sqlite3_connection& con, const SignatureVector& vec, const std::string& functionName, size_t functionId,
+                    size_t indexWithinFunction, const std::string& normalizedUnparsedInstructions,
+                    SgAsmx86Instruction* firstInsn[], const std::string& filename, size_t windowSize, size_t stride)
+{
+    ++numVectorsGenerated;
 
-  vector<uint8_t> compressedCounts = compressVector(vec.getBase(), SignatureVector::Size);
-  size_t vectorSum = 0;
-  for (size_t i = 0; i < SignatureVector::Size; ++i) {
-    vectorSum += vec[i];
-  }
+    vector<uint8_t> compressedCounts = compressVector(vec.getBase(), SignatureVector::Size);
+    size_t vectorSum = 0;
+    for (size_t i=0; i<SignatureVector::Size; ++i)
+        vectorSum += vec[i];
 
-  string db_select_n = "INSERT INTO vectors( function_id,  index_within_function, line, offset, sum_of_counts, counts, instr_seq ) VALUES(?,?,?,?,?,?,?)";
-  string line = boost::lexical_cast<string>(isSgAsmStatement(firstInsn[0])->get_address());
-  string offset = boost::lexical_cast<string>(isSgAsmStatement(firstInsn[windowSize - 1])->get_address());
+    ExtentMap extent;
+    for (size_t i=0; i<windowSize; ++i)
+        extent.insert(Extent(firstInsn[i]->get_address(), firstInsn[i]->get_size()));
 
-  unsigned char md[16];
-  //calculate_md5_of( (const unsigned char*) normalizedUnparsedInstructions.data() , normalizedUnparsedInstructions.size(), md ) ;
-  MD5( (const unsigned char*) normalizedUnparsedInstructions.data() , normalizedUnparsedInstructions.size(), md ) ;
+    unsigned char md[16];
+    MD5((const unsigned char*)normalizedUnparsedInstructions.data(), normalizedUnparsedInstructions.size(), md);
 
-  sqlite3_command cmd(con, db_select_n.c_str());
-  cmd.bind(1, (int)functionId );
-  cmd.bind(2, (int)indexWithinFunction );
-  cmd.bind(3, line);
-  cmd.bind(4, offset);
-  cmd.bind(5, boost::lexical_cast<string>(vectorSum));
-  cmd.bind(6, &compressedCounts[0], compressedCounts.size());
-  cmd.bind(7, md,16);
-  //cmd.bind(7, "");
-
-  cmd.executenonquery();
+    sqlite3_command cmd(con, "insert into vectors"
+                        // 1            2                      3     4       5     6              7       8
+                        " (function_id, index_within_function, line, offset, size, sum_of_counts, counts, instr_seq)"
+                        " values (?,?,?,?,?,?,?,?)");
+    cmd.bind(1, functionId);
+    cmd.bind(2, indexWithinFunction);
+    cmd.bind(3, firstInsn[0]->get_address());
+    cmd.bind(4, firstInsn[windowSize-1]->get_address());
+    cmd.bind(5, extent.size());
+    cmd.bind(6, vectorSum);
+    cmd.bind(7, &compressedCounts[0], compressedCounts.size());
+    cmd.bind(8, md, 16);
+    cmd.executenonquery();
 }
 
 void createDatabases(sqlite3_connection& con) {
@@ -390,27 +401,29 @@ void createDatabases(sqlite3_connection& con) {
                       " file text,"                             // name of specimen in which function appears
                       " function_name text,"                    // name of function if known
                       " entry_va integer,"                      // function entry virtual address
-                      " isize integer,"                         // size of function instructions in bytes
-                      " dsize integer,"                         // size of function data in bytes
-                      " size integer)");                        // total size of function in bytes
+                      " isize integer,"                         // size of function instructions in bytes, non-overlapping
+                      " dsize integer,"                         // size of function data in bytes, non-overlapping
+                      " size integer)");                        // total size of function in bytes, non-overlapping
 
-  con.executenonquery("create table if not exists syntactic_instructions ("
+  con.executenonquery("create table if not exists instructions ("
                       " address integer primary key,"           // starting address of instruction
                       " size integer,"                          // size of instruction in bytes
                       " function_id integer references function_ids(row_number),"
-                      " function_index integer,"                // zero-origin index of instruction within function
+                      " index_within_function integer,"         // zero-origin index of instruction within function
                       " assembly text)");                       // disassembled instruction
 
   
-  try {
-    // index_within_function values are only unique within a file and function
-//	  con.executenonquery("create table IF NOT EXISTS vectors(row_number INTEGER PRIMARY KEY, line INTEGER, offset INTEGER, sum_of_counts INTEGER, counts BLOB, instr_seq TEXT, function_id INTEGER, index_within_function INTEGER )");
-	  con.executenonquery("create table IF NOT EXISTS vectors(row_number INTEGER PRIMARY KEY, function_id INTEGER,  index_within_function INTEGER, line INTEGER, offset INTEGER, sum_of_counts INTEGER, counts BLOB, instr_seq BLOB)");
+  con.executenonquery("create table if not exists vectors ("
+                      " row_number integer primary key,"        // vector ID
+                      " function_id integer references function_ids(row_number),"
+                      " index_within_function integer,"         // zero-origin index of starting instruction within function
+                      " line integer,"                          // starting virtual address of first instruction
+                      " offset integer,"                        // starting virtual address of last instruction (DEPRECATED)
+                      " size integer,"                          // total size of instructions in bytes, non-overlapping
+                      " sum_of_counts integer,"                 // ?
+                      " counts blob,"                           // ?
+                      " instr_seq blob)");                      // binary MD5 sum of vector
 
-  }
-  catch(exception &ex) {
-	cerr << "Exception Occurred: " << ex.what() << endl;
-  }
 
   try {
     // index_within_function values are only unique within a file and function
