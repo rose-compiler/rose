@@ -8,6 +8,7 @@
 #include "BinaryLoaderElf.h"
 #include "BinaryLoaderPe.h"
 #include "Disassembler.h"
+#include "dwarfSupport.h"
 
 std::vector<BinaryLoader*> BinaryLoader::loaders;
 

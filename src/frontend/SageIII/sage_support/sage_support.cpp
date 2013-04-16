@@ -8,6 +8,7 @@
  *  Dependencies
  *---------------------------------------------------------------------------*/
 #include "sage_support.h"
+#include "dwarfSupport.h"
 
 #ifdef __INSURE__
 // Provide a dummy function definition to support linking with Insure++.
