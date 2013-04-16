@@ -12,6 +12,7 @@
 #include "RSIM_Linux32.h"
 #include "BinaryPointerDetection.h"
 #include "YicesSolver.h"
+#include "DwarfLineMapper.h"
 
 // We'd like to not have to depend on a particular relational database management system, but ROSE doesn't have
 // support for anything like ODBC.  The only other options are either to generate SQL output, which precludes being
@@ -92,7 +93,7 @@ public:
             }
         }
         sqlite.open(dbname.c_str());
-        sqlite.busy_timeout(10*1000);
+        sqlite.busy_timeout(60*1000); // 1 minute
     }
 
     // Allocate a page of memory in the process address space.
@@ -198,6 +199,24 @@ public:
         return pd;
     }
 
+    // Get the ID for a file, adding a new entry to the table if necessary.
+    int get_file_id(const std::string &filename) {
+        sqlite3_command cmd1(sqlite, "select coalesce(max(id),-1) from semantic_files where name = ?");
+        sqlite3_command cmd2(sqlite,
+                             "insert into semantic_files (id, name)"
+                             "values ((select coalesce(max(id),-1)+1 from semantic_files), ?)");
+
+        cmd1.bind(1, filename);
+        int file_id = cmd1.executeint();
+        if (file_id < 0) {
+            cmd2.bind(1, filename);
+            cmd2.executenonquery();
+            file_id = cmd1.executeint();
+            assert(file_id>=0);
+        }
+        return file_id;
+    }
+    
     // Save each function to the database.  Returns a mapping from function object to ID number.
     FunctionIdMap save_functions(const Functions &functions) {
 
@@ -210,65 +229,99 @@ public:
         } dselector;
 
         FunctionIdMap retval;
+        std::vector<SgAsmFunction*> added; // functions that were added
+        RTS_Message *m = thread->tracing(TRACE_MISC);
+
         sqlite3_command cmd1(sqlite, "select coalesce(max(id),-1) from semantic_functions"
-                             " where entry_va=? and funcname=? and filename=?");
+                             " where entry_va=? and funcname=? and file_id=?");
         sqlite3_command cmd2(sqlite,
                              "insert into semantic_functions"
-                             // 1   2         3         4         5        6      7      8
-                             " (id, entry_va, funcname, filename, listing, isize, dsize, size)"
-                             " values (?,?,?,?,?,?,?,?)");
-        sqlite3_command cmd3(sqlite, "insert into semantic_instructions (address, size, assembly, function_id) values (?,?,?,?)");
-
-        // Generate assembly listings before we grab the write lock since they might be slightly expensive.
-        std::map<SgAsmFunction*, std::string> listing;
-        AsmUnparser unparser;
-        unparser.staticDataDisassembler.init(thread->get_process()->get_disassembler());
-        for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi)
-            listing[*fi] = unparser.to_string(*fi);
+                             // 1   2         3         4        5      6      7
+                             " (id, entry_va, funcname, file_id, isize, dsize, size)"
+                             " values (?,?,?,?,?,?,?)");
+        sqlite3_command cmd3(sqlite, "update semantic_functions set listing = ? where id = ?");
+        sqlite3_command cmd4(sqlite,
+                             "insert into semantic_instructions"
+                             // 1        2     3         4            5         6            7
+                             " (address, size, assembly, function_id, position, src_file_id, src_line)"
+                             " values (?,?,?,?,?,?,?)");
 
         // Hold a write-lock while we update the semantic_functions table so that no other process tries to use the
         // same function ID numbers.
-        sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE);
+        sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE); 
+        {
+            int func_id = sqlite.executeint("select coalesce(max(id),0)+1 from semantic_functions");
+            for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+                SgAsmFunction *func = *fi;
+                int file_id = get_file_id(filename_for_function(func));
+                assert(file_id>=0);
 
-        int func_id = sqlite.executeint("select coalesce(max(id),0)+1 from semantic_functions");
-        for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
-            SgAsmFunction *func = *fi;
-            cmd1.bind(1, func->get_entry_va());
-            cmd1.bind(2, func->get_name());
-            cmd1.bind(3, filename_for_function(func));
-            int existing_id = cmd1.executeint();
-            if (existing_id >=0) {
-                retval.insert(std::make_pair(func, existing_id));
-            } else {
-                ExtentMap e_insns, e_data, e_total;
-                func->get_extent(&e_insns, NULL, NULL, &iselector);
-                func->get_extent(&e_data,  NULL, NULL, &iselector);
-                func->get_extent(&e_total);
-                cmd2.bind(1, func_id);
-                cmd2.bind(2, func->get_entry_va());
-                cmd2.bind(3, func->get_name());
-                cmd2.bind(4, filename_for_function(func));
-                cmd2.bind(5, listing[func]);
-                cmd2.bind(6, e_insns.size());
-                cmd2.bind(7, e_data.size());
-                cmd2.bind(8, e_total.size());
-                cmd2.executenonquery();
-                retval.insert(std::make_pair(func, func_id));
-
-                std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(func);
-                for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-                    cmd3.bind(1, (*ii)->get_address());
-                    cmd3.bind(2, (*ii)->get_size());
-                    cmd3.bind(3, unparseInstructionWithAddress(*ii));
-                    cmd3.bind(4, func_id);
-                    cmd3.executenonquery();
+                cmd1.bind(1, func->get_entry_va());
+                cmd1.bind(2, func->get_name());
+                cmd1.bind(3, file_id);
+                int function_id = cmd1.executeint();
+                if (function_id >=0) {
+                    retval.insert(std::make_pair(func, function_id));
+                } else {
+                    ExtentMap e_insns, e_data, e_total;
+                    func->get_extent(&e_insns, NULL, NULL, &iselector);
+                    func->get_extent(&e_data,  NULL, NULL, &iselector);
+                    func->get_extent(&e_total);
+                    cmd2.bind(1, func_id);
+                    cmd2.bind(2, func->get_entry_va());
+                    cmd2.bind(3, func->get_name());
+                    cmd2.bind(4, file_id);
+                    cmd2.bind(5, e_insns.size());
+                    cmd2.bind(6, e_data.size());
+                    cmd2.bind(7, e_total.size());
+                    cmd2.executenonquery();
+                    added.push_back(func);
+                    retval.insert(std::make_pair(func, func_id));
                 }
-
                 ++func_id;
             }
         }
-
         lock.commit();
+
+        // Now add the function listing and instructions. These take longer, and we don't need to hold a lock the whole time.
+        BinaryAnalysis::DwarfLineMapper dlm(thread->get_process()->get_project());
+        dlm.fix_holes();
+        if (verbose) {
+            std::ostringstream ss;
+            ss <<dlm(BinaryAnalysis::DwarfLineMapper::ADDR2SRC);
+            m->mesg("%s: address-to-source mapping:\n%s", name, StringUtility::prefixLines(ss.str(), "    ").c_str());
+        }
+        AsmUnparser unparser;
+        unparser.staticDataDisassembler.init(thread->get_process()->get_disassembler());
+        for (std::vector<SgAsmFunction*>::iterator ai=added.begin(); ai!=added.end(); ++ai) {
+            SgAsmFunction *func = *ai;
+            int func_id = retval[func];
+            if (verbose)
+                std::cerr <<"  unparsing function " <<func_id;
+            cmd3.bind(1, unparser.to_string(func));
+            cmd3.bind(2, func_id);
+            cmd3.executenonquery();
+
+            sqlite3_transaction lock2(sqlite); // much faster when using transactions, but don't hold lock too long
+            std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(func);
+            for (size_t i=0; i<insns.size(); ++i) {
+                BinaryAnalysis::DwarfLineMapper::SrcInfo loc = dlm.addr2src(insns[i]->get_address());
+                int src_file_id = loc.file_id < 0 ? -1 : get_file_id(Sg_File_Info::getFilenameFromID(loc.file_id));
+                cmd4.bind(1, insns[i]->get_address());
+                cmd4.bind(2, insns[i]->get_size());
+                cmd4.bind(3, unparseInstructionWithAddress(insns[i]));
+                cmd4.bind(4, func_id);
+                cmd4.bind(5, i);
+                cmd4.bind(6, src_file_id);
+                cmd4.bind(7, loc.line_num);
+                cmd4.executenonquery();
+                if (verbose)
+                    std::cerr <<'.';
+            }
+            lock2.commit();
+            if (verbose)
+                std::cerr <<"\n";
+        }
         return retval;
     }
     

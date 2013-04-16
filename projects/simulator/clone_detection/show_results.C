@@ -52,11 +52,12 @@ show_cluster(const std::string &dbname, const std::string &tabname, int cluster_
     // Open the database and suck in the information we need
     sqlite3_connection db(dbname.c_str());
     sqlite3_command cmd1(db,
-                         "select a.cluster_id, b.id, b.entry_va, b.funcname, b.filename"
-                         " from " + tabname + " a"
-                         " join semantic_functions b on a.func_id = b.id"
+                         "select clusters.cluster_id, funcs.id, funcs.entry_va, funcs.funcname, files.name"
+                         " from " + tabname + " as clusters"
+                         " join semantic_functions as funcs on clusters.func_id = funcs.id"
+                         " join semantic_files as files on funcs.file_id = files.id"
                          + (ALL_CLUSTERS==cluster_id ? "" : " where cluster_id = ?") +
-                         " order by a.cluster_id, a.func_id");
+                         " order by clusters.cluster_id, clusters.func_id");
     if (cluster_id!=ALL_CLUSTERS)
         cmd1.bind(1, cluster_id);
     sqlite3_reader cursor = cmd1.executereader();
@@ -126,7 +127,11 @@ show_function(const std::string &dbname, int function_id)
     sqlite3_connection db(dbname.c_str());
 
     // Print some info about the function itself
-    sqlite3_command cmd1(db, "select entry_va, funcname, filename, listing from semantic_functions where id = ?");
+    sqlite3_command cmd1(db,
+                         "select funcs.entry_va, funcs.funcname, files.name, funcs.listing"
+                         " from semantic_functions as funcs"
+                         " join semantic_files as files on funcs.file_id = files.id"
+                         " where funcs.id = ?");
     cmd1.bind(1, function_id);
     sqlite3_reader c1 = cmd1.executereader();
     if (!c1.read())
@@ -219,7 +224,7 @@ main(int argc, char *argv[])
         show_all(dbname);
     } else {
         std::string cmd = argv[argno++];
-        if ((0==cmd.compare("symantic") && 2==argc-argno && 0==strcmp(argv[argno], "cluster")) ||
+        if ((0==cmd.compare("syntactic") && 2==argc-argno && 0==strcmp(argv[argno], "cluster")) ||
             (0==cmd.compare("semantic") && 2==argc-argno && 0==strcmp(argv[argno], "cluster")) ||
             (0==cmd.compare("cluster")  && 1==argc-argno)) {
             std::string tabname = "combined_clusters";

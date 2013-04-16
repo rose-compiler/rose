@@ -53,8 +53,8 @@ drop view if exists syntactic_functions;
 create view syntactic_functions as
    select row_number as id,
           entry_va,
-	  function_name as funcname,
-	  rightstr(file, charindex('/',reverse(file),1)-1) as filename
+          function_name as funcname,
+          rightstr(file, charindex('/',reverse(file),1)-1) as filename
        from function_ids;
 
 -- Step 2: match up the function IDs based on the file and either the function name or function entry virtual address,
@@ -64,15 +64,20 @@ drop view if exists combined_functions;
 create view combined_functions as
     select a.id as syntactic_id, b.id as semantic_id
         from syntactic_functions a
-        left join semantic_functions b on a.filename = b.filename and
-	    ((a.funcname != '' and a.funcname = b.funcname) or
+        left join 
+            (select x.id as id, y.name as filename, x.funcname as funcname, entry_va as entry_va
+             from semantic_functions x join semantic_files y on x.file_id=y.id) as b
+            on a.filename = b.filename and
+            ((a.funcname != '' and a.funcname = b.funcname) or
              (a.funcname  = '' and a.entry_va = b.entry_va))
     union all
     select a.id as syntactic_id, b.id as semantic_id
-        from semantic_functions b
-	left join syntactic_functions a on a.filename = b.filename and
+        from (select x.id as id, y.name as filename, x.funcname as funcname, x.entry_va as entry_va
+             from semantic_functions x join semantic_files y on x.file_id=y.id) as b
+        left join syntactic_functions a
+            on a.filename = b.filename and
             ((a.funcname != '' and a.funcname = b.funcname) or
-	     (a.funcname  = '' and a.entry_va = b.entry_va))
+             (a.funcname  = '' and a.entry_va = b.entry_va))
         where a.id is null;
 
 --#############################################################################################################################
@@ -85,12 +90,12 @@ create view combined_functions as
 -- Create pairs of semantically similar functions based on fuzz testing results, which are stored in the semantic_fio
 -- (function input/output) table.  The "similarity" column is the number of times this pair of functions produced the same
 -- output when run with the same input.
-drop view if exists semantic_clusters;
+drop view if exists semantic_similarity;
 create view semantic_similarity as
     select a.func_id as func_id_1, b.func_id as func_id_2, count(*) as similarity
-	from semantic_fio a
-	join semantic_fio b on a.func_id < b.func_id and a.inputset_id = b.inputset_id and a.outputset_id = b.outputset_id
-	group by a.func_id, b.func_id;
+        from semantic_fio a
+        join semantic_fio b on a.func_id < b.func_id and a.inputset_id = b.inputset_id and a.outputset_id = b.outputset_id
+        group by a.func_id, b.func_id;
 
 -- All pairs of functions that are semantically similar according to some similarity threshold (the "where" clause). Both
 -- function IDs are semantic function IDs.
@@ -98,7 +103,7 @@ drop view if exists semantic_clone_pairs;
 create view semantic_clone_pairs as
     select distinct func_id_1, func_id_2
         from semantic_similarity
-	where similarity = (select count(*) from (select distinct id from semantic_inputvalues));
+        where similarity = (select count(*) from (select distinct id from semantic_inputvalues));
 
 -- All pairs of functions that are syntactically similar.  This view is computed from the cluster_pairs table, which is
 -- created by computeClusterPairs.  The function IDs in this new view are *semantic* function IDs; we ignore all pairs for
@@ -108,7 +113,7 @@ create view syntactic_clone_pairs as
     select b.semantic_id as func_id_1, c.semantic_id as func_id_2
         from cluster_pairs a
         join combined_functions b on a.function_id_1 = b.syntactic_id and b.semantic_id is not null
-        join combined_functions c on a.function_id_2 = c.syntactic_id and c.semantic_id is not null
+        join combined_functions c on a.function_id_2 = c.syntactic_id and c.semantic_id is not null;
 
 
 --#############################################################################################################################
