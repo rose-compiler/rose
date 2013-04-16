@@ -90,6 +90,27 @@ DwarfLineMapper::next_src(const SrcInfo &srcinfo) const
 }
 
 void
+DwarfLineMapper::fix_holes(size_t max_hole_size)
+{
+    AddressSourceMap to_add; // entries that will fill in the holes
+    AddressSourceMap::iterator cur = p_addr2src.begin();
+    AddressSourceMap::iterator next = cur==p_addr2src.end() ? cur : ++cur;
+    while (next!=p_addr2src.end()) {
+        const Extent &e1 = cur->first;
+        const Extent &e2 = next->first;
+        if (e1.last() < e2.first()) {
+            size_t hole_size = e2.first() - (e1.last()+1);
+            if (hole_size < max_hole_size)
+                to_add.insert(Extent::inin(e1.last()+1, e2.first()-1), cur->second);
+        }
+        cur = next++;
+    }
+    p_addr2src.insert_ranges(to_add);
+    if (!to_add.empty())
+        up_to_date = false;
+}
+
+void
 DwarfLineMapper::print_addr2src(std::ostream &o) const {
     for (AddressSourceMap::const_iterator ai=p_addr2src.begin(); ai!=p_addr2src.end(); ++ai) {
         const Extent &ex = ai->first;
