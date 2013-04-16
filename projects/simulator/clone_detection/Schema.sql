@@ -32,7 +32,7 @@ create table semantic_functions (
 -- might overlap, which is why we have to store each instruction individually.  Every instruction belongs to exactly one
 -- function.
 create table semantic_instructions (
-       address integer primary key,             -- virtual address for start of instruction
+       address integer,                         -- virtual address for start of instruction
        size integer,                            -- size of instruction in bytes
        assembly text,                           -- unparsed instruction including hexadecimal address
        function_id integer references semantic_functions(id)

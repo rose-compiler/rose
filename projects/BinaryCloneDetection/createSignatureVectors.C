@@ -406,7 +406,7 @@ void createDatabases(sqlite3_connection& con) {
                       " size integer)");                        // total size of function in bytes, non-overlapping
 
   con.executenonquery("create table if not exists instructions ("
-                      " address integer primary key,"           // starting address of instruction
+                      " address integer,"                       // starting address of instruction
                       " size integer,"                          // size of instruction in bytes
                       " function_id integer references function_ids(row_number),"
                       " index_within_function integer,"         // zero-origin index of instruction within function
