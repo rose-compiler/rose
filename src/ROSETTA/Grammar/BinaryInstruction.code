@@ -61,7 +61,7 @@ HEADER_INTERPRETATION_START
 	// NOTE: definitions are in src/frontend/Disassemblers/SgAsmInterpretation.C
 	public:
 		SgAsmInterpretation()
-			: p_map(NULL), p_registers(NULL), coverageComputed(false), percentageCoverage(0.0), p_dwarf_info(NULL),
+			: p_map(NULL), p_registers(NULL), coverageComputed(false), percentageCoverage(0.0),
 			  p_headers(NULL), p_global_block(NULL) {
 			ctor();
              	}
@@ -876,7 +876,7 @@ HEADER_GENERIC_FILE_START
    // DQ (10/20/2010): This section does not have a source code block for ROSETTA to put the function definition.
                 SgAsmGenericFile()
                         : p_unreferenced_cache(NULL), p_data_converter(NULL),p_fd(-1), p_headers(NULL), p_holes(NULL),
-                          p_truncate_zeros(false), p_tracking_references(true), p_neuter(false)
+                          p_truncate_zeros(false), p_tracking_references(true), p_neuter(false), p_dwarf_info(NULL)
                         {ctor();}
 
                 virtual ~SgAsmGenericFile();                            /* Destructor deletes children and unmaps/closes file */
