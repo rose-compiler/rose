@@ -31,6 +31,9 @@ using namespace std;
 // This is controled by using the --with-dwarf configure command line option.
 #if USE_ROSE_DWARF_SUPPORT
 
+#include "dwarf.h"
+#include "libdwarf.h"
+
 #define DIE_STACK_SIZE 300
 static Dwarf_Die die_stack[DIE_STACK_SIZE];
 
