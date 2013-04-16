@@ -448,6 +448,53 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   return Result (func, func_call, new_file);
 }
 
+static SgStatement* build_array_packing_statement( SgExpression * lhs, SgExpression * & rhs, SgStatement * target )
+{
+    SgScopeStatement * scope = target->get_scope( );
+    
+    // Loop initializer
+    std::string loop_index_name = SageInterface::generateUniqueVariableName( scope, "i" );
+    SgVariableDeclaration * loop_index = buildVariableDeclaration( loop_index_name, buildIntType( ), NULL /* initializer */, scope );
+    SageInterface::insertStatementBefore( target, loop_index );
+    SgStatement * loop_init = buildAssignStatement( buildVarRefExp( loop_index_name, scope ), buildIntVal( 0 ) );
+    
+    // Get the real type of the LHS
+    SgType * lhs_type = lhs->get_type();
+    while( isSgTypedefType( lhs_type ) )
+    {
+        lhs_type = isSgTypedefType( lhs_type )->get_base_type( );
+    }
+    ROSE_ASSERT( isSgArrayType( lhs_type ) );
+    
+    // Loop test
+    SgStatement * loop_test = buildExprStatement(
+            buildLessThanOp( buildVarRefExp( loop_index_name, scope ), isSgArrayType( lhs_type )->get_index( ) ) );
+    
+    // Loop increment
+    SgExpression * loop_increment = buildPlusPlusOp( buildVarRefExp( loop_index_name, scope ), SgUnaryOp::postfix );
+    
+    // Loop body    
+    SgExpression * assign_lhs = buildPntrArrRefExp( lhs, buildVarRefExp( loop_index_name, scope ) );
+    SgExpression * assign_rhs = buildPntrArrRefExp( rhs, buildVarRefExp( loop_index_name, scope ) );
+    SgStatement * loop_body = NULL;
+    SgType * assign_lhs_type = assign_lhs->get_type();
+    while( isSgTypedefType( assign_lhs_type ) )
+    {
+        assign_lhs_type = isSgTypedefType( assign_lhs_type )->get_base_type( );
+    }
+    if( isSgArrayType( assign_lhs_type ) )
+    {
+        loop_body = build_array_packing_statement( assign_lhs, assign_rhs, target );
+    }
+    else
+    {
+        loop_body = buildAssignStatement(assign_lhs, assign_rhs);
+    }
+    
+    // Loop satement
+    return buildForStatement( loop_init, loop_test, loop_increment, loop_body );
+}
+
 /* For a set of variables to be passed into the outlined function, 
  * generate the following statements before the call of the outlined function
  * used when useParameterWrapper is set to true
@@ -531,34 +578,18 @@ std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::V
       ROSE_ASSERT (class_def != NULL);
       lhs = buildDotExp ( buildVarRefExp(out_argv), buildVarRefExp (member_name, class_def));
       
-      if(isSgArrayType(lhs->get_type()))
+      SgType * lhs_type = lhs->get_type();
+      while( isSgTypedefType( lhs_type ) )
+      {
+          lhs_type = isSgTypedefType( lhs_type )->get_base_type( );
+      }
+      if( isSgArrayType( lhs_type ) )
       {// Copy each position of the array
-          // Loop initializer
-          std::string loop_index_name = SageInterface::generateUniqueVariableName(target->get_scope(), "i");
-          SgVariableDeclaration* loop_index = buildVariableDeclaration(loop_index_name, buildIntType(), 
-                  NULL /*no initializer here*/, target->get_scope());
-          SageInterface::insertStatementBefore(target, loop_index);
-                // Loop test
-          SgStatement* loop_test = buildExprStatement(
-                  buildLessThanOp(buildVarRefExp(SgName(loop_index_name), target->get_scope()), 
-                                  isSgArrayType(lhs->get_type())->get_index()));
-          // Loop increment
-          SgExpression* loop_increment = buildPlusPlusOp(buildVarRefExp(loop_index_name, 
-                  target->get_scope()), SgUnaryOp::postfix);
-          // Loop body
-          SgExpression* assign_lhs = buildPointerDerefExp( buildAddOp( lhs,
-                  buildVarRefExp( SgName(loop_index_name), target->get_scope() ) ) );
-          SgExpression* assign_rhs = buildPointerDerefExp( buildAddOp( buildVarRefExp(i_symbol),
-                  buildVarRefExp( SgName(loop_index_name), target->get_scope() ) ) );
-          SgStatement* loop_body = buildAssignStatement(assign_lhs, assign_rhs);
-                      
-          // Loop satement
-          assignment = buildForStatement(buildAssignStatement(buildVarRefExp(loop_index_name, 
-                  target->get_scope()), buildIntVal(0)), loop_test, loop_increment, loop_body);
+          assignment = build_array_packing_statement( lhs, rhs, target );
       }
       else
       {
-          assignment = buildAssignStatement(lhs,rhs);
+          assignment = buildAssignStatement( lhs, rhs );
       }
     }
     else
@@ -571,7 +602,7 @@ std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::V
       assignment = buildAssignStatement(lhs,rhs);
     }
     
-    SageInterface::insertStatementBefore(target, assignment);
+    SageInterface::insertStatementBefore( target, assignment );
     counter ++;
   }
   return wrapper_name; 
