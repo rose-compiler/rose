@@ -2186,7 +2186,7 @@ build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCo
 
 /* process each compilation unit in .debug_info */
 void
-build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmInterpretation* asmInterpretation)
+build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file)
    {
      Dwarf_Unsigned cu_header_length = 0;
      Dwarf_Unsigned abbrev_offset = 0;
@@ -2199,25 +2199,11 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmInterpretation* asmInterpretation)
 
   // printf("\n.debug_info\n");
 
-     ROSE_ASSERT(asmInterpretation->get_dwarf_info() == NULL);
+     ROSE_ASSERT(file->get_dwarf_info() == NULL);
 
-#if 0
-     SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit = new SgAsmDwarfCompilationUnit();
-
-     asmInterpretation->set_dwarf_info(asmDwarfCompilationUnit);
-     asmDwarfCompilationUnit->set_parent(asmInterpretation);
-
-     ROSE_ASSERT(asmInterpretation->get_dwarf_info() != NULL);
-#endif
-
-#if 1
      SgAsmDwarfCompilationUnitList* asmDwarfCompilationUnitList = new SgAsmDwarfCompilationUnitList();
-
-     asmInterpretation->set_dwarf_info(asmDwarfCompilationUnitList);
-     asmDwarfCompilationUnitList->set_parent(asmInterpretation);
-
-     ROSE_ASSERT(asmInterpretation->get_dwarf_info() != NULL);
-#endif
+     file->set_dwarf_info(asmDwarfCompilationUnitList);
+     asmDwarfCompilationUnitList->set_parent(file);
 
   // This permits restricting number of CU's read so that we can have a 
   // manageable problem to debug the Dwarf represnetation in ROSE.
@@ -2823,11 +2809,9 @@ readDwarf ( SgAsmGenericFile* asmFile )
        // dwarf_set_frame_rule_inital_value(rose_dwarf_dbg,global_config_file_data.cf_initial_rule_value);
        // dwarf_set_frame_rule_table_size(rose_dwarf_dbg,global_config_file_data.cf_table_entry_count);
 
-       // Dwarf information will be attached to the main SgAsmInterpretation for the binary file.
-          SgAsmInterpretation* asmInterpretation = SageInterface::getMainInterpretation(asmFile);     
-
-       // Main function to read dwarf information
-          build_dwarf_IR_nodes(rose_dwarf_dbg,asmInterpretation);
+       // Dwarf information in a specimen is attached to the specimen's file as a whole.  It is not attached to an
+       // interpretation since the relationship between SgAsmGenericFile and SgAsmInterpretation is many-to-many.
+          build_dwarf_IR_nodes(rose_dwarf_dbg, asmFile);
 
        // printf ("\n\nFinishing Dwarf handling... \n\n");
           int dwarf_finish_status = dwarf_finish( rose_dwarf_dbg, &rose_dwarf_error);
