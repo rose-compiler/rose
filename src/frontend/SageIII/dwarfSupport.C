@@ -1856,7 +1856,9 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in,c
                     printf ("Error: Sorry not implemented (child support on IR nodes %s \n",parentDwarfConstruct->class_name().c_str());
                   }
 #endif
-               astDwarfConstruct->set_parent(parentDwarfConstruct);
+               // The new dwarf construct's parent should be the SgAsmDwarfConstructList, not the parent of the list.
+               // [Robb P. Matzke 2013-04-15]
+               astDwarfConstruct->set_parent(parentDwarfConstruct->get_children());
              }
 
        // printf ("Process children \n");
