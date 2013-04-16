@@ -274,6 +274,7 @@ show_results_SOURCES = clone_detection/show_results.C
 show_results_CPPFLAGS = $(ROSE_INCLUDES)
 show_results_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+MOSTLYCLEANFILES += CloneDetectionSchema.C
 CloneDetectionSchema.C: clone_detection/Schema.sql
 	@echo "  GEN     $@"
 	@echo "const char *clone_detection_schema =" >$@
