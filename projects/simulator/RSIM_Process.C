@@ -326,7 +326,7 @@ RSIM_Process::load(const char *name)
     frontend_args[1] = strdup("-rose:read_executable_file_format_only"); /*delay disassembly until later*/
     frontend_args[2] = strdup(exeargs[0].c_str());
     frontend_args[3] = NULL;
-    SgProject *project = frontend(3, frontend_args);
+    project = frontend(3, frontend_args);
 
     /* Create the main thread */
     RSIM_Thread *thread = create_thread();
