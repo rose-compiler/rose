@@ -2,6 +2,7 @@
 #include "InsnSemanticsExpr.h"
 #include "SMTSolver.h"
 #include "stringify.h"
+#include "integerOps.h"
 
 uint64_t
 InsnSemanticsExpr::LeafNode::name_counter = 0;
@@ -127,7 +128,7 @@ InsnSemanticsExpr::LeafNode::create_integer(size_t nbits, uint64_t n, std::strin
     LeafNode *node = new LeafNode(comment);
     node->nbits = nbits;
     node->leaf_type = CONSTANT;
-    node->ival = n & (((uint64_t)1<<nbits)-1);
+    node->ival = n & IntegerOps::genMask<uint64_t>(nbits);
     LeafNodePtr retval(node);
     return retval;
 }
