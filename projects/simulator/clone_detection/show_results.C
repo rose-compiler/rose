@@ -2,8 +2,11 @@
 // in decimal form, but it's more convenient to see function entry addresses in hexadecimal.
 
 #include "rose.h"
+#include "DwarfLineMapper.h"
+#include "FormatRestorer.h"
 #include "sqlite3x.h"
 using namespace sqlite3x;
+
 
 #include <cerrno>
 #include <cstdarg>
@@ -21,7 +24,9 @@ usage(int exit_status, const std::string &mesg="")
               <<"       " <<argv0 <<" DATABASE_NAME [syntactic|semantic] cluster CLUSTER_ID\n"
               <<"           Show a single cluster\n"
               <<"       " <<argv0 <<" DATABASE_NAME function FUNCTION_ID\n"
-              <<"           Show all information about a single function\n";
+              <<"           Show all information about a single function\n"
+              <<"       " <<argv0 <<" DATABASE_NAME list FUNCTION_ID\n"
+              <<"           List the function with source code if available.\n";
     exit(exit_status);
 }
 
@@ -193,6 +198,125 @@ show_function(const std::string &dbname, int function_id)
     std::cout <<"\n\n" <<listing;
 }
 
+typedef std::map<int/*index*/, std::string/*assembly*/> Instructions;
+
+struct Code {
+    std::string source_code;
+    Instructions assembly_code;
+};
+
+typedef BinaryAnalysis::DwarfLineMapper::SrcInfo SourcePosition;
+typedef std::map<SourcePosition, Code> Listing;
+
+static void
+list_function(const std::string &dbname, int function_id)
+{
+    FormatRestorer saved_flags(std::cout);
+    sqlite3_connection db(dbname.c_str());
+
+    // General function info
+    sqlite3_command cmd0(db,
+                         "select files.name, funcs.funcname, funcs.entry_va"
+                         " from semantic_functions as funcs"
+                         " join semantic_files as files on funcs.file_id = files.id"
+                         " where funcs.id = ?");
+
+    // Range of source positions associated with a binary function.  Include a few extra lines for context.
+    sqlite3_command cmd1(db,
+                         "select"
+                         "   files.name, insns.src_file_id,"
+                         "   min(insns.src_line)-5 as minline, max(insns.src_line)+5 as maxline"
+                         " from semantic_instructions as insns"
+                         " join semantic_files as files on insns.src_file_id = files.id"
+                         " where insns.function_id = ?"
+                         " group by insns.src_file_id");
+
+    // Lines of source code from a particular source file
+    sqlite3_command cmd2(db,
+                         "select linenum, line from semantic_sources"
+                         " where file_id=? and linenum>=? and linenum<=?"
+                         " order by linenum");
+
+    // Lines of assembly listing for a particular function
+    sqlite3_command cmd3(db,
+                         "select src_file_id, src_line, position, assembly"
+                         " from semantic_instructions"
+                         " where function_id = ?"
+                         " order by position");
+
+    // Show some general info about the function
+    cmd0.bind(1, function_id);
+    sqlite3_reader c0 = cmd0.executereader();
+    if (!c0.read())
+        die("function id not found: %d", function_id);
+    std::cout <<""
+              <<"WARNING: This listing should be read cautiously. It is ordered according to the\n"
+              <<"         source code with assembly lines following the source code line from which\n"
+              <<"         they came.  However, the compiler does not always generate machine\n"
+              <<"         instructions in the same order as source code.  When a discontinuity\n"
+              <<"         occurs in the assemly instruction listing, it will be marked by a \"#\"\n"
+              <<"         character.  The assembly instructions are also numbered according to\n"
+              <<"         their relative positions in the binary function.\n"
+              <<"Function ID:                   " <<function_id <<"\n"
+              <<"Binary specimen name:          " <<c0.getstring(0) <<"\n"
+              <<"Function name:                 " <<c0.getstring(1) <<"\n"
+              <<"Entry virtual address:         " <<StringUtility::addrToString(c0.getint(2)) <<" (" <<c0.getint(2) <<")\n";
+
+    // Get lines of source code and add them as keys in the Listing map.
+    std::map<int/*fileid*/, std::string/*filename*/> file_names;
+    Listing listing;
+    cmd1.bind(1, function_id);
+    sqlite3_reader c1 = cmd1.executereader();
+    while (c1.read()) {
+        std::string file_name = c1.getstring(0);
+        int file_id = c1.getint(1);
+        file_names[file_id] = file_name;
+        int minline = c1.getint(2);
+        int maxline = c1.getint(3);
+        cmd2.bind(1, file_id);
+        cmd2.bind(2, minline);
+        cmd2.bind(3, maxline);
+        sqlite3_reader c2 = cmd2.executereader();
+        while (c2.read())
+            listing[SourcePosition(file_id, c2.getint(0))].source_code = c2.getstring(1);
+    }
+
+    // Get lines of assembly code and insert them into the correct place in the Listing.
+    cmd3.bind(1, function_id);
+    sqlite3_reader c3 = cmd3.executereader();
+    while (c3.read()) {
+        int file_id = c3.getint(0);
+        int line_num = c3.getint(1);
+        int position = c3.getint(2);
+        std::string assembly = c3.getstring(3);
+        listing[SourcePosition(file_id, line_num)].assembly_code.insert(std::make_pair(position, assembly));
+    }
+
+    // Print the listing
+    std::cout <<" /---------------------------- Source file ID\n"
+              <<" |   /------------------------ Source line number\n"
+              <<" |   |   /-------------------- Instruction out-of-order indicator\n"
+              <<" |   |   |  /----------------- Instruction position index\n"
+              <<" |   |   |  |      /---------- Address\n"
+              <<"vv vvvvv v vv vvvvvvvvvv\n";
+    int prev_position = -1;
+    std::set<int> seen_files;
+    for (Listing::iterator li=listing.begin(); li!=listing.end(); ++li) {
+        int file_id = li->first.file_id;
+        if (file_id>=0) {
+            if (seen_files.insert(file_id).second)
+                std::cout <<std::setw(2) <<std::right <<file_id <<".file  |" <<file_names[file_id] <<"\n";
+            std::cout <<std::setw(2) <<std::right <<file_id <<"." <<std::setw(6) <<std::left <<li->first.line_num
+                      <<"|" <<li->second.source_code <<"\n";
+        }
+        for (Instructions::iterator ii=li->second.assembly_code.begin(); ii!=li->second.assembly_code.end(); ++ii) {
+            std::cout <<"         " <<(prev_position+1==ii->first ? "|" : "#")
+                      <<std::setw(3) <<std::right <<ii->first <<" " <<ii->second <<"\n";
+            prev_position = ii->first;
+        }
+    }
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -245,6 +369,13 @@ main(int argc, char *argv[])
             if (errno || rest==argv[argno] || *rest)
                 usage(0, "bad function ID specified");
             show_function(dbname, function_id);
+        } else if (0==cmd.compare("list") && 1==argc-argno) {
+            char *rest;
+            errno = 0;
+            int function_id = strtol(argv[argno], &rest, 0);
+            if (errno || rest==argv[argno] || *rest)
+                usage(0, "bad function ID specified");
+            list_function(dbname, function_id);
         } else {
             usage(3, "unknown subcommand: "+cmd);
         }

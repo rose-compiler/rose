@@ -47,6 +47,13 @@ create table semantic_files (
        name text  	  			-- file name
 );
 
+-- List of source code.
+create table semantic_sources (
+       file_id integer references semantic_files(id),
+       linenum integer,				-- one-origin line number within file
+       line text				-- one line from a source file
+);
+
 -- Function input/output. One of these is produced each time we fuzz-test a function.
 create table semantic_fio (
        func_id integer references semantic_functions(id),

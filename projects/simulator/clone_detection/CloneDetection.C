@@ -324,6 +324,72 @@ public:
         }
         return retval;
     }
+
+    // Returns true if the file looks like text
+    bool is_text_file(FILE *f) {
+        if (!f)
+            return false;
+        char buf[4096];
+        fpos_t pos;
+        if (fgetpos(f, &pos)<0)
+            return false;
+        size_t nread = fread(buf, 1, sizeof buf, f);
+        if (0==nread)
+            return false; // empty files are binary
+        int status = fsetpos(f, &pos);
+        assert(status>=0);
+        for (size_t i=0; i<nread; ++i)
+            if (!isascii(buf[i]))
+                return false;
+        return true;
+    }
+
+    // Suck source code into the database.  For any file that can be read and which does not have lines already saved
+    // in the semantic_sources table, read each line of the file and store them in semantic_sources.
+    void save_files() {
+        sqlite3_command cmd1(sqlite,
+                             "select files.id, files.name"
+                             " from semantic_files as files"
+                             " left join semantic_sources as sources"
+                             " on files.id = sources.file_id"
+                             " where sources.file_id is null");
+        sqlite3_command cmd2(sqlite, "select count(*) from semantic_sources where file_id = ?");
+        sqlite3_command cmd3(sqlite, "insert into semantic_sources (file_id, linenum, line) values (?,?,?)");
+
+        sqlite3_reader c1 = cmd1.executereader();
+        while (c1.read()) {
+            int file_id = c1.getint(0);
+            std::string file_name = c1.getstring(1);
+            FILE *f = fopen(file_name.c_str(), "r");
+            if (is_text_file(f)) {
+                sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE, sqlite3_transaction::DEST_COMMIT);
+                cmd2.bind(1, file_id);
+                if (cmd2.executeint()<=0) {
+                    if (verbose)
+                        std::cerr <<"  saving source code for " <<file_name;
+                    char *line = NULL;
+                    size_t linesz=0, line_num=0;
+                    ssize_t nread;
+                    while ((nread=getline(&line, &linesz, f))>0) {
+                        while (nread>0 && isspace(line[nread-1]))
+                            line[--nread] = '\0';
+                        cmd3.bind(1, file_id);
+                        cmd3.bind(2, ++line_num);
+                        cmd3.bind(3, line);
+                        cmd3.executenonquery();
+                        if (verbose)
+                            std::cerr <<".";
+                    }
+                    if (line)
+                        free(line);
+                }
+                if (verbose)
+                    std::cerr <<"\n";
+            }
+            if (f)
+                fclose(f);
+        }
+    }
     
     // Choose input values for fuzz testing.  The input values come from the database if they exist there, otherwise they are
     // chosen randomly and written to the database. The set will consist of some number of non-pointers and pointers. The
@@ -537,6 +603,7 @@ public:
                 name, dbname.c_str(), nfuzz, npointers, nnonpointers, max_insns);
         Functions functions = find_functions(m, thread->get_process());
         FunctionIdMap func_ids = save_functions(functions);
+        save_files();
 
         typedef std::map<SgAsmFunction*, CloneDetection::PointerDetector*> PointerDetectors;
         PointerDetectors pointers;
