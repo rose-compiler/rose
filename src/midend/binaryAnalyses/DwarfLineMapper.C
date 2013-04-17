@@ -98,7 +98,7 @@ DwarfLineMapper::fix_holes(size_t max_hole_size)
     while (next!=p_addr2src.end()) {
         const Extent &e1 = cur->first;
         const Extent &e2 = next->first;
-        if (e1.last() < e2.first()) {
+        if (e1.last()+1 < e2.first()) {
             size_t hole_size = e2.first() - (e1.last()+1);
             if (hole_size < max_hole_size)
                 to_add.insert(Extent::inin(e1.last()+1, e2.first()-1), cur->second);
