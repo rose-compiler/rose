@@ -93,7 +93,7 @@ public:
             }
         }
         sqlite.open(dbname.c_str());
-        sqlite.busy_timeout(60*1000); // 1 minute
+        sqlite.busy_timeout(5*60*1000); // 5 minutes
     }
 
     // Allocate a page of memory in the process address space.
@@ -216,7 +216,7 @@ public:
         }
         return file_id;
     }
-    
+
     // Save each function to the database.  Returns a mapping from function object to ID number.
     FunctionIdMap save_functions(const Functions &functions) {
 
@@ -286,11 +286,13 @@ public:
         // Now add the function listing and instructions. These take longer, and we don't need to hold a lock the whole time.
         BinaryAnalysis::DwarfLineMapper dlm(thread->get_process()->get_project());
         dlm.fix_holes();
+#if 0 /*DEBUGGING [Robb P. Matzke 2013-04-17]*/
         if (verbose) {
             std::ostringstream ss;
             ss <<dlm(BinaryAnalysis::DwarfLineMapper::ADDR2SRC);
             m->mesg("%s: address-to-source mapping:\n%s", name, StringUtility::prefixLines(ss.str(), "    ").c_str());
         }
+#endif
         AsmUnparser unparser;
         unparser.staticDataDisassembler.init(thread->get_process()->get_disassembler());
         for (std::vector<SgAsmFunction*>::iterator ai=added.begin(); ai!=added.end(); ++ai) {

@@ -290,7 +290,7 @@ list_function(const std::string &dbname, int function_id)
               <<"         source code with assembly lines following the source code line from which\n"
               <<"         they came.  However, the compiler does not always generate machine\n"
               <<"         instructions in the same order as source code.  When a discontinuity\n"
-              <<"         occurs in the assemly instruction listing, it will be marked by a \"#\"\n"
+              <<"         occurs in the assembly instruction listing, it will be marked by a \"#\"\n"
               <<"         character.  The assembly instructions are also numbered according to\n"
               <<"         their relative positions in the binary function.\n"
               <<"Function ID:                   " <<function_id <<"\n"
