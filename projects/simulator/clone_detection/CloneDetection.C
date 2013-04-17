@@ -93,7 +93,7 @@ public:
             }
         }
         sqlite.open(dbname.c_str());
-        sqlite.busy_timeout(5*60*1000); // 5 minutes
+        sqlite.busy_timeout(15*60*1000); // 15 minutes
     }
 
     // Allocate a page of memory in the process address space.
@@ -296,6 +296,9 @@ public:
         AsmUnparser unparser;
         unparser.staticDataDisassembler.init(thread->get_process()->get_disassembler());
         for (std::vector<SgAsmFunction*>::iterator ai=added.begin(); ai!=added.end(); ++ai) {
+            // much faster when using transactions, but don't hold lock too long; i.e., lock inside this loop, not outside
+            sqlite3_transaction lock2(sqlite, sqlite3_transaction::LOCK_IMMEDIATE, sqlite3_transaction::DEST_COMMIT);
+
             SgAsmFunction *func = *ai;
             int func_id = retval[func];
             if (verbose)
@@ -304,7 +307,6 @@ public:
             cmd3.bind(2, func_id);
             cmd3.executenonquery();
 
-            sqlite3_transaction lock2(sqlite); // much faster when using transactions, but don't hold lock too long
             std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(func);
             for (size_t i=0; i<insns.size(); ++i) {
                 BinaryAnalysis::DwarfLineMapper::SrcInfo loc = dlm.addr2src(insns[i]->get_address());
@@ -320,7 +322,6 @@ public:
                 if (verbose)
                     std::cerr <<'.';
             }
-            lock2.commit();
             if (verbose)
                 std::cerr <<"\n";
         }
@@ -349,6 +350,7 @@ public:
     // Suck source code into the database.  For any file that can be read and which does not have lines already saved
     // in the semantic_sources table, read each line of the file and store them in semantic_sources.
     void save_files() {
+        sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE, sqlite3_transaction::DEST_COMMIT);
         sqlite3_command cmd1(sqlite,
                              "select files.id, files.name"
                              " from semantic_files as files"
@@ -364,7 +366,6 @@ public:
             std::string file_name = c1.getstring(1);
             FILE *f = fopen(file_name.c_str(), "r");
             if (is_text_file(f)) {
-                sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE, sqlite3_transaction::DEST_COMMIT);
                 cmd2.bind(1, file_id);
                 if (cmd2.executeint()<=0) {
                     if (verbose)
@@ -609,7 +610,6 @@ public:
 
         typedef std::map<SgAsmFunction*, CloneDetection::PointerDetector*> PointerDetectors;
         PointerDetectors pointers;
-
         sqlite3_command cmd1(sqlite, "insert into semantic_fio (func_id, inputset_id, outputset_id) values (?,?,?)");
         sqlite3_command cmd2(sqlite, "select count(*) from semantic_fio where func_id=? and inputset_id=? limit 1");
         for (size_t i=0; i<nfuzz; ++i) {
