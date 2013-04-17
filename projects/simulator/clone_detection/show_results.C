@@ -23,6 +23,8 @@ usage(int exit_status, const std::string &mesg="")
               <<"           Show all clusters of similar functions\n"
               <<"       " <<argv0 <<" DATABASE_NAME [syntactic|semantic] cluster CLUSTER_ID\n"
               <<"           Show a single cluster\n"
+              <<"       " <<argv0 <<" DATABASE_NAME functions\n"
+              <<"           List basic info about all functions\n"
               <<"       " <<argv0 <<" DATABASE_NAME function FUNCTION_ID\n"
               <<"           Show all information about a single function\n"
               <<"       " <<argv0 <<" DATABASE_NAME list FUNCTION_ID\n"
@@ -198,6 +200,39 @@ show_function(const std::string &dbname, int function_id)
     std::cout <<"\n\n" <<listing;
 }
 
+// Show a list of all functions
+static void
+show_functions(const std::string &dbname)
+{
+    FormatRestorer saved_flags(std::cout);
+    sqlite3_connection db(dbname.c_str());
+    sqlite3_command cmd1(db, //  0         1               2            3               4              5
+                         "select funcs.id, funcs.entry_va, funcs.isize, funcs.funcname, funcs.file_id, files.name"
+                         " from semantic_functions as funcs"
+                         " join semantic_files as files on funcs.file_id = files.id"
+                         " order by funcs.id");
+
+    // Figure out the width for the function name column
+    size_t funcname_width = 8;
+    sqlite3_reader c1a = cmd1.executereader();
+    while (c1a.read())
+        funcname_width = std::max(funcname_width, c1a.getstring(3).size());
+
+    // Print the data
+    sqlite3_reader c1b = cmd1.executereader();
+    std::cout <<"Func   Entry    Insn  " <<std::setw(funcname_width) << std::left <<"Function" <<"    File\n"
+              <<"  ID   address  bytes " <<std::setw(funcname_width) << std::left <<"name"     <<"   ID name\n";
+    while (c1b.read()) {
+        std::cout <<std::setw(4) <<std::right <<c1b.getint(0) <<" "
+                  <<StringUtility::addrToString(c1b.getint(1)) <<" "
+                  <<std::setw(5) <<std::right <<c1b.getint(2) <<" "
+                  <<std::setw(funcname_width) <<std::left <<c1b.getstring(3) <<" "
+                  <<std::setw(4) <<std::right <<c1b.getint(4) <<" "
+                  <<c1b.getstring(5) <<"\n";
+    }
+}
+
+
 typedef std::map<int/*index*/, std::string/*assembly*/> Instructions;
 
 struct Code {
@@ -208,6 +243,7 @@ struct Code {
 typedef BinaryAnalysis::DwarfLineMapper::SrcInfo SourcePosition;
 typedef std::map<SourcePosition, Code> Listing;
 
+// Combined source and assembly listing for a single function
 static void
 list_function(const std::string &dbname, int function_id)
 {
@@ -362,6 +398,8 @@ main(int argc, char *argv[])
             if (errno || rest==argv[argno] || *rest)
                 usage(0, "bad cluster ID specified");
             show_cluster(dbname, tabname, cluster_id);
+        } else if (0==cmd.compare("functions") && argc==argno) {
+            show_functions(dbname);
         } else if (0==cmd.compare("function") && 1==argc-argno) {
             char *rest;
             errno = 0;
