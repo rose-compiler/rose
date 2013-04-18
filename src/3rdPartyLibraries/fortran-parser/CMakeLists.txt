@@ -1,8 +1,16 @@
-
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
+set(enable-ofp-version "0.8.3" CACHE STRING "version number for OFP")
 
 ########### install files ###############
-set(jar_file ${CMAKE_CURRENT_SOURCE_DIR}/OpenFortranParser-20111001.jar)
+set(jar_file
+  ${CMAKE_CURRENT_SOURCE_DIR}/OpenFortranParser-${enable-ofp-version}.jar)
+
+if(NOT EXISTS ${jar_file})
+  message(FATAL_ERROR
+    " ${jar_file} does not exist.
+    Please specify a different value for enable-ofp-version."
+  )
+endif()
+
 install(
   FILES OpenFortranParser-0.8.3.jar
         ${jar_file}
