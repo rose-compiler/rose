@@ -585,6 +585,10 @@ public:
             // Some exception in the policy, such as division by zero.
             if (verbose)
                 m->mesg("%s: %s", name, e.mesg.c_str());
+        } catch (const SMTSolver::Exception &e) {
+            // Some exception in the SMT solver
+            if (verbose)
+                m->mesg("%s: %s", name, e.mesg.c_str());
         }
         
         // Gather the function's outputs before restoring machine state.
