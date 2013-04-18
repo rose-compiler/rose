@@ -11,7 +11,8 @@ using namespace sqlite3x;
 #include <cerrno>
 #include <cstdarg>
 
-#define ALL_CLUSTERS  (-1)
+#define ALL_CLUSTERS    (-1)
+#define BUSY_TIMEOUT    (60*1000) /*1 minute*/
 static std::string argv0;
 
 static void
@@ -58,6 +59,7 @@ show_cluster(const std::string &dbname, const std::string &tabname, int cluster_
 
     // Open the database and suck in the information we need
     sqlite3_connection db(dbname.c_str());
+    db.busy_timeout(BUSY_TIMEOUT);
     sqlite3_command cmd1(db,
                          "select clusters.cluster_id, funcs.id, funcs.entry_va, funcs.funcname, files.name"
                          " from " + tabname + " as clusters"
@@ -132,6 +134,7 @@ static void
 show_function(const std::string &dbname, int function_id)
 {
     sqlite3_connection db(dbname.c_str());
+    db.busy_timeout(BUSY_TIMEOUT);
 
     // Print some info about the function itself
     sqlite3_command cmd1(db,
@@ -206,6 +209,7 @@ show_functions(const std::string &dbname)
 {
     FormatRestorer saved_flags(std::cout);
     sqlite3_connection db(dbname.c_str());
+    db.busy_timeout(BUSY_TIMEOUT);
     sqlite3_command cmd1(db, //  0         1               2            3               4              5
                          "select funcs.id, funcs.entry_va, funcs.isize, funcs.funcname, funcs.file_id, files.name"
                          " from semantic_functions as funcs"
@@ -249,6 +253,7 @@ list_function(const std::string &dbname, int function_id)
 {
     FormatRestorer saved_flags(std::cout);
     sqlite3_connection db(dbname.c_str());
+    db.busy_timeout(BUSY_TIMEOUT);
 
     // General function info
     sqlite3_command cmd0(db,
@@ -330,23 +335,23 @@ list_function(const std::string &dbname, int function_id)
 
     // Print the listing
     std::cout <<" /---------------------------- Source file ID\n"
-              <<" |   /------------------------ Source line number\n"
-              <<" |   |   /-------------------- Instruction out-of-order indicator\n"
-              <<" |   |   |  /----------------- Instruction position index\n"
-              <<" |   |   |  |      /---------- Address\n"
-              <<"vv vvvvv v vv vvvvvvvvvv\n";
+              <<" |     /---------------------- Source line number\n"
+              <<" |     |   /------------------ Instruction out-of-order indicator\n"
+              <<" |     |   |  /--------------- Instruction position index\n"
+              <<" |     |   |  |      /-------- Instruction virtual address\n"
+              <<"vvvv vvvvv v vv vvvvvvvvvv\n";
     int prev_position = -1;
     std::set<int> seen_files;
     for (Listing::iterator li=listing.begin(); li!=listing.end(); ++li) {
         int file_id = li->first.file_id;
         if (file_id>=0) {
             if (seen_files.insert(file_id).second)
-                std::cout <<std::setw(2) <<std::right <<file_id <<".file  |" <<file_names[file_id] <<"\n";
-            std::cout <<std::setw(2) <<std::right <<file_id <<"." <<std::setw(6) <<std::left <<li->first.line_num
+                std::cout <<std::setw(4) <<std::right <<file_id <<".file  |" <<file_names[file_id] <<"\n";
+            std::cout <<std::setw(4) <<std::right <<file_id <<"." <<std::setw(6) <<std::left <<li->first.line_num
                       <<"|" <<li->second.source_code <<"\n";
         }
         for (Instructions::iterator ii=li->second.assembly_code.begin(); ii!=li->second.assembly_code.end(); ++ii) {
-            std::cout <<"         " <<(prev_position+1==ii->first ? "|" : "#")
+            std::cout <<"           " <<(prev_position+1==ii->first ? "|" : "#")
                       <<std::setw(3) <<std::right <<ii->first <<" " <<ii->second <<"\n";
             prev_position = ii->first;
         }
