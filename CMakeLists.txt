@@ -2,7 +2,7 @@
 # The order matters!!
 
 #----- put platform independent settings in this section-----------------
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8)
 project (ROSE CXX C)
 
 # Why do we have to have a copy of some standard built-in modules inside rose?
