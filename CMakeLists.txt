@@ -524,6 +524,55 @@ if(enable-yices)
      An executable named /bin/yices should be under the specified prefix.")
 endif()
 
+set(with-alternate_backend_Cxx_compiler "" CACHE STRING
+  "Specify an alternative C++ back-end compiler")
+if(with-alternate_backend_Cxx_compiler)
+  if(EXISTS ${with-alternate_backend_Cxx_compiler})
+    set(BACKEND_CXX_COMPILER ${with-alternate_backend_Cxx_compiler})
+  else()
+    message(WARNING
+      "${with-alternate_backend_Cxx_compiler} does not exist.
+       Specify a full, absolute path to the compiler.")
+  endif()
+endif()
+
+set(with-alternate_backend_C_compiler "" CACHE STRING
+  "Specify an alternative C back-end compiler")
+if(with-alternate_backend_C_compiler)
+  if(EXISTS ${with-alternate_backend_C_compiler})
+    set(BACKEND_C_COMPILER ${with-alternate_backend_C_compiler})
+    message(STATUS "just set backend C compiler to ${BACKEND_C_COMPILER}")
+  else()
+    message(WARNING
+      "${with-alternate_backend_C_compiler} does not exist.
+       Specify a full, absolute path to the compiler.")
+  endif()
+endif()
+
+set(with-alternate_backend_fortran_compiler "" CACHE STRING
+  "Specify an alternative fortran back-end compiler")
+if(with-alternate_backend_fortran_compiler)
+  if(EXISTS ${with-alternate_backend_fortran_compiler})
+    set(BACKEND_FORTRAN_COMPILER ${with-alternate_backend_fortran_compiler})
+  else()
+    message(WARNING
+      "${with-alternate_backend_fortran_compiler} does not exist.
+       Specify a full, absolute path to the compiler.")
+  endif()
+endif()
+
+set(with-alternate_backend_java_compiler "" CACHE STRING
+  "Specify an alternative java back-end compiler")
+if(with-alternate_backend_java_compiler)
+  if(EXISTS ${with-alternate_backend_java_compiler})
+  set(BACKEND_JAVA_COMPILER ${with-alternate_backend_java_compiler})
+  else()
+    message(WARNING
+      "${with-alternate_backend_java_compiler} does not exist.
+       Specify a full, absolute path to the compiler.")
+  endif()
+endif()
+
 find_path(with-backstroke-ross ROSS
   DOC "Specify the path where ROSS is installed")
 
