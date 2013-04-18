@@ -6,6 +6,7 @@ add_subdirectory(BinaryDisassembly)
 add_subdirectory(BinaryLoader)
 add_subdirectory(BinaryFormats)
 add_subdirectory(Disassemblers)
+add_subdirectory(PHPFrontend)
 
 if(enable-c)
   add_subdirectory(CxxFrontend)
@@ -16,19 +17,6 @@ endif()
 if(enable-java)
   add_subdirectory(ECJ_ROSE_Connection)
 endif()
-
-#TP COMMENTED OUT FOR NOW. ADD LATER
-#if (NOT WIN32)
-if(enable-php)
-  add_subdirectory(PHPFrontend)
-endif()
-
 if(enable-python)
   add_subdirectory(PythonFrontend)
 endif()
-add_subdirectory(PHPFrontend)
-#endif (NOT WIN32)
-
-
-########### install files ###############
-

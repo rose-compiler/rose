@@ -68,6 +68,10 @@ if(with-yices)
   add_subdirectory(OpenMP_Checker)
 endif()
 
+if(with-ppl)
+  add_subdirectory(PolyhedralModel)
+endif()
+
 if(with-maple)
   add_subdirectory(programModeling)
 endif()

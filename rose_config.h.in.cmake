@@ -605,16 +605,13 @@
 #undef USE_INSURE
 
 /* Support for Purify */
-//AS Don't know what to do with this
-#undef USE_PURIFY
+#cmakedefine USE_PURIFY
 
 /* Support for Purify API (Compiling with the Purify library). */
-//AS Don't know what to do with this
-#undef USE_PURIFY_API
+#cmakedefine USE_PURIFY_API
 
 /* Link-time support for Purify. */
-//AS Don't know what to do with this
-#undef USE_PURIFY_LINKER
+#cmakedefine USE_PURIFY_LINKER
 
 /* Controls use of ROSE support for bddbddb (Binary decision diagrams (BDD)
    BDD-Based Deductive DataBase. */
@@ -626,8 +623,7 @@
 //#undef USE_ROSE_DWARF_SUPPORT
 
 /* Controls if EDG Union/Struct debugging support is to be used. */
-//AS Fixme: introduce configure control for this
-#define USE_ROSE_EDG_DEBUGGING_SUPPORT 1
+#cmakedefine USE_ROSE_EDG_DEBUGGING_SUPPORT
 
 /* Use of GCC OpenMP in ROSE. */
 //AS Don't know what to do with this

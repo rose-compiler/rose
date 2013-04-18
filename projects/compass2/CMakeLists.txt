@@ -1,3 +1,6 @@
+find_path(XERCES_INCLUDE_DIR xerces DOC "Path to the xerces directory")
+include_directories(${ROSE_SOURCE_DIR}/projects ${XERCES_INCLUDE_DIR})
+
 add_executable(compass2
   bin/compass_main.cpp
   bin/checkers/variable_name_similarity/variable_name_similarity.cpp
