@@ -169,7 +169,7 @@ struct IP_and: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         size_t nbits = asm_type_width(args[0]->get_type());
-        BaseSemantics::SValuePtr result = ops->and_(d->read(args[0], nbits), d->read(args[0], nbits));
+        BaseSemantics::SValuePtr result = ops->and_(d->read(args[0], nbits), d->read(args[1], nbits));
         d->setFlagsForResult(result);
         d->write(args[0], result);
         ops->writeRegister(d->REG_OF, ops->boolean_(false));
