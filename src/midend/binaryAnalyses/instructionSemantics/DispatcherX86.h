@@ -134,6 +134,14 @@ public:
      *  incremented. If @p setCarry is set then the CF flag is affected. */
     virtual BaseSemantics::SValuePtr doIncOperation(const BaseSemantics::SValuePtr &a, bool dec, bool setCarry);
 
+    /** Implements the RCL, RCR, ROL, and ROR instructions for various operand sizes.  The rotate amount is always 8 bits wide
+     * in the instruction, but the semantics mask off all but the low-order bits, keeping 5 bits in 32-bit mode and 6 bits in
+     * 64-bit mode (indicated by the rotateSignificantBits argument). */
+    virtual BaseSemantics::SValuePtr doRotateOperation(X86InstructionKind kind,
+                                                       const BaseSemantics::SValuePtr &operand,
+                                                       const BaseSemantics::SValuePtr &total_rotate,
+                                                       size_t rotateSignificantBits);
+
     /** Implements the SHR, SAR, SHL, SAL, SHRD, and SHLD instructions for various operand sizes.  The shift amount is always 8
      *  bits wide in the instruction, but the semantics mask off all but the low-order bits, keeping 5 bits in 32-bit mode and
      *  7 bits in 64-bit mode (indicated by the @p shiftSignificantBits argument).  The semantics of SHL and SAL are

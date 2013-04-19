@@ -956,40 +956,28 @@ struct IP_ret: P {
     }
 };
 
-// Rotate left
-struct IP_rol: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        size_t nbits = asm_type_width(args[0]->get_type());
-        BaseSemantics::SValuePtr op = d->read(args[0], nbits);
-        BaseSemantics::SValuePtr shiftCount = ops->extract(d->read(args[1], 8), 0, 5);
-        BaseSemantics::SValuePtr result = ops->rotateLeft(op, shiftCount);
-        ops->writeRegister(d->REG_CF, ops->ite(ops->equalToZero(shiftCount),
-                                               ops->readRegister(d->REG_CF),
-                                               ops->extract(result, 0, 1)));
-        ops->writeRegister(d->REG_OF, ops->ite(ops->equalToZero(shiftCount),
-                                               ops->readRegister(d->REG_OF),
-                                               ops->xor_(ops->extract(result, 0, 1),
-                                                         ops->extract(result, nbits-1, nbits))));
-        d->write(args[0], result);
+// Various rotate instructions. Handles RCL, RCR, ROL, and ROR for 8, 16, 32, and 64 bits
+struct IP_rotate: P {
+    const X86InstructionKind kind;
+    const bool with_cf;
+    IP_rotate(X86InstructionKind k): kind(k), with_cf(x86_rcl==kind || x86_rcr==kind) {
+        assert(x86_rcl==k || x86_rcr==k || x86_rol==k || x86_ror==k);
     }
-};
-
-// Rotate right
-struct IP_ror: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
+        assert(insn->get_kind()==kind);
         size_t nbits = asm_type_width(args[0]->get_type());
-        BaseSemantics::SValuePtr op = d->read(args[0], nbits);
-        BaseSemantics::SValuePtr shiftCount = ops->extract(d->read(args[1], 8), 0, 5);
-        BaseSemantics::SValuePtr result = ops->rotateRight(op, shiftCount);
-        ops->writeRegister(d->REG_CF, ops->ite(ops->equalToZero(shiftCount),
-                                               ops->readRegister(d->REG_CF),
-                                               ops->extract(result, nbits-1, nbits)));
-        ops->writeRegister(d->REG_OF, ops->ite(ops->equalToZero(shiftCount),
-                                               ops->readRegister(d->REG_OF),
-                                               ops->xor_(ops->extract(result, nbits-2, nbits-1),
-                                                         ops->extract(result, nbits-1, nbits))));
+        // FIXME: Intel documentation contains conflicting statements about the number of significant bits in the rotate count.
+        // We're doing what seems most reasonable: 6-bit counts for any operand (inc. CF) that's wider than 32 bits.
+        size_t rotateWidth = (nbits>32 || (32==nbits && with_cf)) ? 6 : 5;
+        BaseSemantics::SValuePtr operand = d->read(args[0], nbits);
+        if (with_cf)
+            operand = ops->concat(operand, ops->readRegister(d->REG_CF));
+        BaseSemantics::SValuePtr rotateCount = d->read(args[1], 8);
+        BaseSemantics::SValuePtr result = d->doRotateOperation(kind, operand, rotateCount, rotateWidth);
+        // flags have been updated; we just need to store the result
+        if (with_cf)
+            result = ops->extract(result, 0, nbits);
         d->write(args[0], result);
     }
 };
@@ -1282,6 +1270,8 @@ DispatcherX86::iproc_init()
     iproc_set(x86_push,         new IP_push);
     iproc_set(x86_pushad,       new IP_pushad);
     iproc_set(x86_pushfd,       new IP_pushfd);
+    iproc_set(x86_rcl,          new IP_rotate(x86_rcl));
+    iproc_set(x86_rcr,          new IP_rotate(x86_rcr));
     iproc_set(x86_rdtsc,        new IP_rdtsc);
     iproc_set(x86_rep_lodsb,    new IP_loadstring(x86_repeat_repe, 8));
     iproc_set(x86_rep_lodsw,    new IP_loadstring(x86_repeat_repe, 16));
@@ -1305,8 +1295,8 @@ DispatcherX86::iproc_init()
     iproc_set(x86_repne_scasw,  new IP_scanstring(x86_repeat_repne, 16));
     iproc_set(x86_repne_scasd,  new IP_scanstring(x86_repeat_repne, 32));
     iproc_set(x86_ret,          new IP_ret);
-    iproc_set(x86_rol,          new IP_rol);
-    iproc_set(x86_ror,          new IP_ror);
+    iproc_set(x86_rol,          new IP_rotate(x86_rol));
+    iproc_set(x86_ror,          new IP_rotate(x86_ror));
     iproc_set(x86_sar,          new IP_shift(x86_sar));
     iproc_set(x86_sbb,          new IP_sbb);
     iproc_set(x86_scasb,        new IP_scanstring(x86_repeat_none, 8));
@@ -1726,11 +1716,90 @@ DispatcherX86::doIncOperation(const BaseSemantics::SValuePtr &a, bool dec, bool 
     return result;
 }
 
-/** Implements the SHR, SAR, SHL, SAL, SHRD, and SHLD instructions for various operand sizes.  The shift amount is always 8
- *  bits wide in the instruction, but the semantics mask off all but the low-order bits, keeping 5 bits in 32-bit mode and
- *  7 bits in 64-bit mode (indicated by the shiftSignificantBits template argument).  The semantics of SHL and SAL are
- *  identical (in fact, ROSE doesn't even define x86_sal). The @p source_bits argument contains the bits to be shifted into
- *  the result and is used only for SHRD and SHLD instructions. */
+BaseSemantics::SValuePtr
+DispatcherX86::doRotateOperation(X86InstructionKind kind, const BaseSemantics::SValuePtr &operand,
+                                 const BaseSemantics::SValuePtr &total_rotate, size_t rotateSignificantBits)
+{
+    assert(x86_rcl==kind || x86_rcr==kind || x86_rol==kind || x86_ror==kind);
+    assert(total_rotate->get_width()==8 && rotateSignificantBits<8);
+
+    // The 8086 does not mask the rotate count; processors starting with the 80286 (including virtual-8086 mode) do mask. We
+    // will always mask. The effect (other than timing) is the same either way.
+    BaseSemantics::SValuePtr maskedRotateCount = operators->extract(total_rotate, 0, rotateSignificantBits);
+    if (operand->get_width()==9 || operand->get_width()==17) { //  RCL or RCR on an 8- or 16-bit operand
+        maskedRotateCount = operators->unsignedModulo(maskedRotateCount,
+                                                      number_(maskedRotateCount->get_width(), operand->get_width()));
+    }
+    BaseSemantics::SValuePtr isZeroRotateCount = operators->equalToZero(maskedRotateCount);
+
+    // isOneBitRotate is true if the (masked) amount by which to rotate is equal to one.
+    uintmax_t m = IntegerOps::genMask<uintmax_t>(rotateSignificantBits);
+    BaseSemantics::SValuePtr mask = number_(rotateSignificantBits, m); // -1 in modulo arithmetic
+    BaseSemantics::SValuePtr isOneBitRotate = operators->equalToZero(operators->add(maskedRotateCount, mask));
+
+    // Do the actual rotate.
+    BaseSemantics::SValuePtr result;
+    switch (kind) {
+        case x86_rcl:
+        case x86_rol:
+            result = operators->rotateLeft(operand, maskedRotateCount);
+            break;
+        case x86_rcr:
+        case x86_ror:
+            result = operators->rotateRight(operand, maskedRotateCount);
+            break;
+        default:
+            assert(!"instruction not handled");
+            abort();
+    }
+    assert(result->get_width()==operand->get_width());
+
+    // Compute the new CF value.
+    BaseSemantics::SValuePtr new_cf;
+    switch (kind) {
+        case x86_rcl:
+        case x86_rcr:
+        case x86_ror:
+            new_cf = operators->extract(result, result->get_width()-1, result->get_width());
+            break;
+        case x86_rol:
+            new_cf = operators->extract(result, 0, 1);
+            break;
+        default:
+            assert(!"instruction not handled");
+            abort();
+    }
+
+    // Compute the new OF value.  The new OF value is only used for 1-bit rotates.
+    BaseSemantics::SValuePtr new_of;
+    switch (kind) {
+        case x86_rcl:
+        case x86_ror:
+            new_of = operators->xor_(operators->extract(result, result->get_width()-1, result->get_width()),
+                                     operators->extract(result, result->get_width()-2, result->get_width()-1));
+            break;
+        case x86_rcr:
+            new_of = operators->xor_(operators->extract(operand, operand->get_width()-1, operand->get_width()),
+                                     operators->extract(operand, operand->get_width()-2, operand->get_width()-1));
+            break;
+        case x86_rol:
+            new_of = operators->xor_(new_cf,
+                                     operators->extract(result, result->get_width()-1, result->get_width()));
+            break;
+        default:
+            assert(!"instruction not handled");
+            abort();
+    }
+
+    // Update CF and OF flags. SF, ZF, AF, and PF are not affected.
+    operators->writeRegister(REG_CF, new_cf);
+    operators->writeRegister(REG_OF, operators->ite(isZeroRotateCount,
+                                                    operators->readRegister(REG_OF),
+                                                    operators->ite(isOneBitRotate, new_of, undefined_(1))));
+
+    return result;
+}
+
 BaseSemantics::SValuePtr
 DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SValuePtr &operand,
                                 const BaseSemantics::SValuePtr &source_bits, const BaseSemantics::SValuePtr &total_shift,
