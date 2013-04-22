@@ -60,8 +60,8 @@ create view syntactic_functions as
 -- Step 2: match up the function IDs based on the file and either the function name or function entry virtual address,
 -- prefering name to address).  We'd like to use a full outer join, but alas, SQLite3 doesn't support this directly, so
 -- we need to union two queries
-drop view if exists combined_functions;
-create view combined_functions as
+drop table if exists combined_functions;
+create table combined_functions as
     select a.id as syntactic_id, b.id as semantic_id
         from syntactic_functions a
         left join 
@@ -79,6 +79,9 @@ create view combined_functions as
             ((a.funcname != '' and a.funcname = b.funcname) or
              (a.funcname  = '' and a.entry_va = b.entry_va))
         where a.id is null;
+
+drop index if exists combined_functions_syntactic_id;
+create index combined_functions_syntactic_id on combined_functions(syntactic_id);
 
 --#############################################################################################################################
 -- Find all pairs of functions that are semantically or syntactically similar.  Similarity is reflexive and symmetric, so we
@@ -110,10 +113,12 @@ create view semantic_clone_pairs as
 -- which either function of the pair was not considered by the semantic analysis.
 drop view if exists syntactic_clone_pairs;
 create view syntactic_clone_pairs as
-    select b.semantic_id as func_id_1, c.semantic_id as func_id_2
-        from cluster_pairs a
-        join combined_functions b on a.function_id_1 = b.syntactic_id and b.semantic_id is not null
-        join combined_functions c on a.function_id_2 = c.syntactic_id and c.semantic_id is not null;
+    select func1.semantic_id as func_id_1, func2.semantic_id as func_id_2
+        from cluster_pairs as pair
+        join combined_functions as func1 on pair.function_id_1 = func1.syntactic_id and func1.semantic_id is not null
+        join combined_functions as func2 on pair.function_id_2 = func2.syntactic_id and func2.semantic_id is not null
+	where pair.ratio_1 >= (select min(min_coverage) from run_parameters) and
+              pair.ratio_2 >= (select min(min_coverage) from run_parameters);
 
 
 --#############################################################################################################################

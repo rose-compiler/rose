@@ -17,6 +17,13 @@
 # Precision needed to classify two functions as syntactically similar.  Values are 0 (everything is a clone) to 1 (exact matching)
 : ${syntactic_precision:=0.5}
 
+# Minimum coverage in order for two functions to be considered syntactic clones when building the combined clones table. When
+# findClones runs, it might find functions that are 80% similar but the metric it uses is a function of feature vectors, not a
+# function of how many instructions the similar feature vectors cover.  The value specified for syntactic_min_coverage is a
+# ratio of the number of bytes covered by similar feature vectors to the total number of instruction bytes in the
+# function. Both functions must exceed the specified coverage in order to be considered a syntactic pair.
+: ${syntactic_min_coverage:=0.95}
+
 # Name of the semantic database
 : ${semantic_dbname:=semantic.db}
 
@@ -131,6 +138,7 @@ echo "==========================================================================
 echo "                   FINDING SEMANTIC CLONES & COMBINING"
 cp "$semantic_dbname" "$combined_dbname" || exit 1
 echo .dump | sqlite3 "$syntactic_dbname" | sqlite3 "$combined_dbname"
+echo "update run_parameters set min_coverage = $syntactic_min_coverage;" |sqlite3 "$combined_dbname"
 sqlite3 "$combined_dbname" <$ROSE_BLD/projects/simulator/clone_detection/queries.sql
 $ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" combined_clone_pairs combined_clusters
 $ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" semantic_clone_pairs semantic_clusters

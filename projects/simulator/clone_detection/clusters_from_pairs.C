@@ -91,6 +91,7 @@ main(int argc, char *argv[])
 
     // Populate the output table
     int cluster_id = 0;
+    sqlite3_transaction lock(db, sqlite3_transaction::LOCK_IMMEDIATE);
     sqlite3_command cmd2(db, "insert into " + cluster_table + "(cluster_id, func_id) values (?,?)");
     for (Clusters::iterator ci=clusters.begin(); ci!=clusters.end(); ++ci, ++cluster_id) {
         for (Cluster::iterator fi=ci->begin(); fi!=ci->end(); ++fi) {
@@ -99,6 +100,7 @@ main(int argc, char *argv[])
             cmd2.executenonquery();
         }
     }
+    lock.commit();
 
     return 0;
 }
