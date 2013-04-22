@@ -36,27 +36,29 @@ create table semantic_instructions (
        size integer,                            -- size of instruction in bytes
        assembly text,                           -- unparsed instruction including hexadecimal address
        function_id integer references semantic_functions(id), --function to which this instruction belongs
-       position integer,   	      	        -- zero-origin index of instruction within function
+       position integer,                        -- zero-origin index of instruction within function
        src_file_id integer,                     -- source code file that produced this instruction, or -1
-       src_line integer				-- source line number that produced this instruction, or -1
+       src_line integer                         -- source line number that produced this instruction, or -1
 );
 
 -- List of files. The other tables store file IDs rather than file names.
 create table semantic_files (
-       id integer primary key,			-- unique positive file ID
-       name text  	  			-- file name
+       id integer primary key,                  -- unique positive file ID
+       name text                                -- file name
 );
 
 -- List of source code.
 create table semantic_sources (
        file_id integer references semantic_files(id),
-       linenum integer,				-- one-origin line number within file
-       line text				-- one line from a source file
+       linenum integer,                         -- one-origin line number within file
+       line text                                -- one line from a source file
 );
 
 -- Function input/output. One of these is produced each time we fuzz-test a function.
 create table semantic_fio (
        func_id integer references semantic_functions(id),
        inputset_id integer references semantic_inputsets(id),
-       outputset_id integer references semantic_outputsets(id)
+       outputset_id integer references semantic_outputsets(id),
+       elapsed_time double precision,           -- number of seconds elapsed excluding ptr analysis
+       cpu_time double precision                -- number of CPU seconds used excluding ptr analysis
 );

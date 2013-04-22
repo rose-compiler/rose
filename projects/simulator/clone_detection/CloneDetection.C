@@ -230,7 +230,6 @@ public:
 
         FunctionIdMap retval;
         std::vector<SgAsmFunction*> added; // functions that were added
-        RTS_Message *m = thread->tracing(TRACE_MISC);
 
         sqlite3_command cmd1(sqlite, "select coalesce(max(id),-1) from semantic_functions"
                              " where entry_va=? and funcname=? and file_id=?");
@@ -286,13 +285,6 @@ public:
         // Now add the function listing and instructions. These take longer, and we don't need to hold a lock the whole time.
         BinaryAnalysis::DwarfLineMapper dlm(thread->get_process()->get_project());
         dlm.fix_holes();
-#if 0 /*DEBUGGING [Robb P. Matzke 2013-04-17]*/
-        if (verbose) {
-            std::ostringstream ss;
-            ss <<dlm(BinaryAnalysis::DwarfLineMapper::ADDR2SRC);
-            m->mesg("%s: address-to-source mapping:\n%s", name, StringUtility::prefixLines(ss.str(), "    ").c_str());
-        }
-#endif
         AsmUnparser unparser;
         unparser.staticDataDisassembler.init(thread->get_process()->get_disassembler());
         for (std::vector<SgAsmFunction*>::iterator ai=added.begin(); ai!=added.end(); ++ai) {
@@ -614,7 +606,9 @@ public:
 
         typedef std::map<SgAsmFunction*, CloneDetection::PointerDetector*> PointerDetectors;
         PointerDetectors pointers;
-        sqlite3_command cmd1(sqlite, "insert into semantic_fio (func_id, inputset_id, outputset_id) values (?,?,?)");
+        sqlite3_command cmd1(sqlite, //                 1        2            3             4             5
+                             "insert into semantic_fio (func_id, inputset_id, outputset_id, elapsed_time, cpu_time)"
+                             " values (?,?,?,?,?)");
         sqlite3_command cmd2(sqlite, "select count(*) from semantic_fio where func_id=? and inputset_id=? limit 1");
         for (size_t i=0; i<nfuzz; ++i) {
             InputValues inputs = choose_inputs(i);
@@ -644,6 +638,9 @@ public:
                 assert(ip!=pointers.end());
 
                 // Run the test
+                timeval start_time, stop_time;
+                clock_t start_ticks = clock();
+                gettimeofday(&start_time, NULL);
                 m->mesg("%s: %s fuzz test #%zu", name, function_to_str(func).c_str(), i);
                 CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *outputs = fuzz_test(func, inputs, ip->second);
                 if (verbose) {
@@ -654,6 +651,16 @@ public:
                     m->mesg("%s: %s fuzz test #%zu output values are {%s }",
                             name, function_to_str(func).c_str(), i, output_values_str.str().c_str());
                 }
+                gettimeofday(&stop_time, NULL);
+                clock_t stop_ticks = clock();
+                double elapsed_time = (stop_time.tv_sec - start_time.tv_sec) +
+                                      ((double)stop_time.tv_usec - start_time.tv_usec) * 1e-6;
+
+                // If clock_t is a 32-bit unsigned value then it will wrap around once every ~71.58 minutes. We expect clone
+                // detection to take longer than that, so we need to be careful.
+                double cpu_time = start_ticks <= stop_ticks ?
+                                  (double)(stop_ticks-start_ticks) / CLOCKS_PER_SEC :
+                                  (pow(2.0, 8*sizeof(clock_t)) - (start_ticks-stop_ticks)) / CLOCKS_PER_SEC;
 
                 // Save the results. Some other process might have tested this function concurrently, in which case we'll
                 // defer to the other process' results.
@@ -665,6 +672,8 @@ public:
                     cmd1.bind(1, func_ids[func]);
                     cmd1.bind(2, i);
                     cmd1.bind(3, outputset_id);
+                    cmd1.bind(4, elapsed_time);
+                    cmd1.bind(5, cpu_time);
                     cmd1.executenonquery();
                 }
             }
