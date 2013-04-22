@@ -110,10 +110,11 @@ create view semantic_clone_pairs as
 
 -- All pairs of functions that are syntactically similar.  This view is computed from the cluster_pairs table, which is
 -- created by computeClusterPairs.  The function IDs in this new view are *semantic* function IDs; we ignore all pairs for
--- which either function of the pair was not considered by the semantic analysis.
+-- which either function of the pair was not considered by the semantic analysis.  The first function ID of the pair is
+-- always smaller than the second ID (similarity is symmetric and reflexive, so we omit the redundant and naive relations).
 drop view if exists syntactic_clone_pairs;
 create view syntactic_clone_pairs as
-    select func1.semantic_id as func_id_1, func2.semantic_id as func_id_2
+    select distinct min(func1.semantic_id,func2.semantic_id) as func_id_1, max(func1.semantic_id,func2.semantic_id) as func_id_2
         from cluster_pairs as pair
         join combined_functions as func1 on pair.function_id_1 = func1.syntactic_id and func1.semantic_id is not null
         join combined_functions as func2 on pair.function_id_2 = func2.syntactic_id and func2.semantic_id is not null
