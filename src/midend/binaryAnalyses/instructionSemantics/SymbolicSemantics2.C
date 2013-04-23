@@ -389,7 +389,9 @@ RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantic
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
     SValuePtr retval;
-    if (a->is_number() && sa->is_number()) {
+    if (sa->is_number() && sa->get_number() % a->get_width() == 0) {
+        return a->copy();
+    } else if (a->is_number() && sa->is_number()) {
         retval = svalue_number(a->get_width(), IntegerOps::rotateLeft2(a->get_number(), sa->get_number(), a->get_width()));
     } else {
         retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ROL,
@@ -405,7 +407,9 @@ RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a_, const BaseSemanti
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
     SValuePtr retval;
-    if (a->is_number() && sa->is_number()) {
+    if (sa->is_number() && sa->get_number() % a->get_width() == 0) {
+        return a->copy();
+    } else if (a->is_number() && sa->is_number()) {
         retval = svalue_number(a->get_width(), IntegerOps::rotateRight2(a->get_number(), sa->get_number(), a->get_width()));
     } else {
         retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ROR,
@@ -421,7 +425,9 @@ RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantics
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
     SValuePtr retval;
-    if (a->is_number() && sa->is_number()) {
+    if (sa->is_number() && sa->get_number() == 0) {
+        return a->copy();
+    } else if (a->is_number() && sa->is_number()) {
         retval = svalue_number(a->get_width(), IntegerOps::shiftLeft2(a->get_number(), sa->get_number(), a->get_width()));
     } else {
         retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_SHL0,
@@ -437,7 +443,9 @@ RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a_, const BaseSemantic
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
     SValuePtr retval;
-    if (a->is_number() && sa->is_number()) {
+    if (sa->is_number() && sa->get_number() == 0) {
+        return a->copy();
+    } else if (a->is_number() && sa->is_number()) {
         retval = svalue_number(a->get_width(), IntegerOps::shiftRightLogical2(a->get_number(), sa->get_number(), a->get_width()));
     } else {
         retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_SHR0,
@@ -453,7 +461,9 @@ RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a_, const Ba
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
     SValuePtr retval;
-    if (a->is_number() && sa->is_number()) {
+    if (sa->is_number() && sa->get_number() == 0) {
+        return a->copy();
+    } else if (a->is_number() && sa->is_number()) {
         retval = svalue_number(a->get_width(),
                                IntegerOps::shiftRightArithmetic2(a->get_number(), sa->get_number(), a->get_width()));
     } else {
