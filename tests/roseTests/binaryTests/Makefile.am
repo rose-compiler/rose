@@ -442,7 +442,7 @@ intervalSemantics2.passed: semantics.conf intervalSemantics2
 	@$(RTH_RUN) CMD=intervalSemantics2 INPUT=i686-test1.O3.bin $< $@
 
 
-# Use SymbolicSemantics semantic analysis policy
+# Symbolic semantics, no SMT solver, old API
 noinst_PROGRAMS += symbolicSemantics
 symbolicSemantics_SOURCES = semantics.C
 symbolicSemantics_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=OLD_API -DSMT_SOLVER=NO_SOLVER
@@ -451,6 +451,16 @@ STATIC_TEST_TARGETS += symbolicSemantics.passed
 EXTRA_DIST += semantics.conf symbolicSemantics.ans
 symbolicSemantics.passed: semantics.conf symbolicSemantics
 	@$(RTH_RUN) CMD=symbolicSemantics INPUT=i686-test1.O3.bin $< $@
+
+# Symbolic semantics, no SMT solver, new API
+noinst_PROGRAMS += symbolicSemantics2
+symbolicSemantics2_SOURCES = semantics.C
+symbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=NEW_API -DSMT_SOLVER=NO_SOLVER
+symbolicSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += symbolicSemantics2.passed
+EXTRA_DIST += semantics.conf symbolicSemantics2.ans
+symbolicSemantics2.passed: semantics.conf symbolicSemantics2
+	@$(RTH_RUN) CMD=symbolicSemantics2 INPUT=i686-test1.O3.bin $< $@
 
 # Use SymbolicSemantics with YicesSolver policy, invoking "yices" executable. We should be able
 # to compile this test even when the "yices" command is not available. However, we won't be able
