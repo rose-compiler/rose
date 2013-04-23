@@ -1434,8 +1434,10 @@ DispatcherX86::read(SgAsmExpression *e, size_t nbits)
             SgAsmByteValueExpression* rhs = isSgAsmByteValueExpression(isSgAsmBinaryMultiply(e)->get_rhs());
             if (!rhs)
                 throw BaseSemantics::Exception("byte value expression expected", get_insn());
+            size_t rhs_nbits = asm_type_width(rhs->get_type());
             SgAsmExpression* lhs = isSgAsmBinaryMultiply(e)->get_lhs();
-            retval = operators->extract(operators->unsignedMultiply(read(lhs, nbits), read(rhs, nbits)), 0, nbits);
+            size_t lhs_nbits = asm_type_width(lhs->get_type());
+            retval = operators->extract(operators->unsignedMultiply(read(lhs, lhs_nbits), read(rhs, rhs_nbits)), 0, nbits);
             break;
         }
         case V_SgAsmMemoryReferenceExpression: {
