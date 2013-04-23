@@ -525,6 +525,7 @@ struct IP_fnstcw: P {
 struct IP_imul: P {
     void p(D d, Ops ops, I insn, A args) {
         size_t nbits = asm_type_width(args[0]->get_type());
+        size_t nbits_last = asm_type_width(args.back()->get_type());
         BaseSemantics::SValuePtr result;
         RegisterDescriptor reg0 = d->REG_AX;
         reg0.set_nbits(nbits);
@@ -538,7 +539,7 @@ struct IP_imul: P {
             if (args.size()<1 || args.size()>3)
                 throw BaseSemantics::Exception("instruction must have 1, 2, or 3 arguments", insn);
             BaseSemantics::SValuePtr op0 = 1==args.size() ? ops->readRegister(reg0) : d->read(args[args.size()-2], nbits);
-            BaseSemantics::SValuePtr op1 = d->read(args[args.size()-1], nbits);
+            BaseSemantics::SValuePtr op1 = ops->signExtend(d->read(args.back(), nbits_last), nbits);
             result = ops->signedMultiply(op0, op1);
             if (1==args.size()) {
                 RegisterDescriptor reg1 = d->REG_DX;
@@ -549,8 +550,26 @@ struct IP_imul: P {
                 d->write(args[0], ops->extract(result, 0, nbits));
             }
         }
-        BaseSemantics::SValuePtr carry = ops->invert(ops->or_(ops->equalToZero(ops->invert(ops->extract(result, 7, nbits))),
-                                                              ops->equalToZero(ops->extract(result, 7, nbits))));
+        assert(result->get_width() == 2*nbits);
+
+        // For the one-operand form of the instruction, the CF and OF flags are set only when bits are carried into the upper
+        // half of the result; for the two- and three-operand forms, the CF and OF flags are set only when the signed result
+        // must be truncated to fit in the destination operand size.  The CF and OF flags are cleared otherwise.
+        BaseSemantics::SValuePtr carry;
+        if (1==args.size()) {
+            // carry set when high-order bits are not all zero
+            carry = ops->invert(ops->equalToZero(ops->extract(result, nbits, 2*nbits)));
+        } else {
+            // carry set when high-order bits are not all equal to the low-half sign bit.  In other words, when high-half bits
+            // are not all clear or not all set or when the high-half sign bit is not equal to the low-half sign bit.
+            BaseSemantics::SValuePtr lh_signbit = ops->extract(result, nbits-1, nbits);
+            BaseSemantics::SValuePtr hh_signbit = ops->extract(result, 2*nbits-1, 2*nbits);
+            BaseSemantics::SValuePtr hh = ops->extract(result, nbits, 2*nbits);
+            BaseSemantics::SValuePtr hh_allsame = ops->or_(ops->equalToZero(hh), ops->equalToZero(ops->invert(hh)));
+            BaseSemantics::SValuePtr signsame = ops->equalToZero(ops->xor_(lh_signbit, hh_signbit));
+            carry = ops->invert(ops->and_(hh_allsame, signsame));
+        }
+
         ops->writeRegister(d->REG_CF, carry);
         ops->writeRegister(d->REG_OF, carry);
         ops->writeRegister(d->REG_SF, ops->undefined_(1));
