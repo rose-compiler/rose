@@ -127,25 +127,16 @@ MemoryState::readMemory(const BaseSemantics::SValuePtr &address_, const BaseSema
                         size_t nbits, BaseSemantics::RiscOperators *ops)
 {
     SValuePtr address = SValue::promote(address_);
-
-    // Scan the list of cells to find those that may alias the desired cell.  Stop if we get to a cell that must
-    // alias the desired cell.
-    BaseSemantics::MemoryCellPtr tmpcell = protocell->create(address, dflt);
-    CellList matches;
-    CellList::iterator must_match = cells.end();
-    for (CellList::iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
-        if (tmpcell->may_alias(*ci, ops)) {
-            matches.push_back(*ci);
-            if (tmpcell->must_alias(*ci, ops)) {
-                must_match = ci;
-                break;
-            }
-        }
-    }
+    assert(8==nbits); // SymbolicSemantics::MemoryState assumes that memory cells contain only 8-bit data
+    bool short_circuited;
+    CellList matches = scan(address, nbits, ops, short_circuited/*out*/);
 
     // If we fell off the end of the list then the read could be reading from a memory location for which no cell exists.
-    if (must_match==cells.end())
+    if (!short_circuited) {
+        BaseSemantics::MemoryCellPtr tmpcell = protocell->create(address, dflt);
+        cells.push_front(tmpcell);
         matches.push_back(tmpcell);
+    }
 
     SValuePtr retval = mccarthy(matches, address);
     assert(retval->get_width()==8);
