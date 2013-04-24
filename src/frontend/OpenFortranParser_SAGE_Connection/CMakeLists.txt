@@ -34,11 +34,9 @@ if(enable-fortran)
   #   ${CMAKE_CURRENT_BINARY_DIR}/preproc-fortran-fixed.cc)
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/preproc-fortran.cc
+           ${CMAKE_CURRENT_BINARY_DIR}/preproc-fortran-fixed.cc
     COMMAND ${FLEX_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/preproc-fortran.ll
     COMMAND ${CMAKE_COMMAND} -E rename lex.yy.c preproc-fortran.cc
-  )
-  add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/preproc-fortran-fixed.cc
     COMMAND ${FLEX_EXECUTABLE}
       ${CMAKE_CURRENT_SOURCE_DIR}/preproc-fortran-fixed.ll
     COMMAND ${CMAKE_COMMAND} -E rename lex.yy.c preproc-fortran-fixed.cc
