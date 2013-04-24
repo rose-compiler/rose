@@ -486,9 +486,7 @@ yicesSemanticsExe2.passed: semantics.conf yicesSemanticsExe2
 	@$(RTH_RUN) CMD=yicesSemanticsExe2 INPUT=i686-test1.O3.bin $< $@
 endif
 
-# Use SymbolicSemantics with YicesSolver, linked to Yikes library. We should be able to compile
-# this test even when the "yices" library is not available. However, we won't be able to run the
-# test if we don't have the library.
+# Symbolic semantics, Yices library, old API
 noinst_PROGRAMS += yicesSemanticsLib
 yicesSemanticsLib_SOURCES = semantics.C
 yicesSemanticsLib_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=OLD_API -DSMT_SOLVER=YICES_LIB
@@ -498,6 +496,18 @@ if ROSE_HAVE_LIBYICES
 STATIC_TEST_TARGETS += yicesSemanticsLib.passed
 yicesSemanticsLib.passed: semantics.conf yicesSemanticsLib
 	@$(RTH_RUN) CMD=yicesSemanticsLib INPUT=i686-test1.O3.bin $< $@
+endif
+
+# Symbolic semantics, Yices library, new API
+noinst_PROGRAMS += yicesSemanticsLib2
+yicesSemanticsLib2_SOURCES = semantics.C
+yicesSemanticsLib2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=NEW_API -DSMT_SOLVER=YICES_LIB
+yicesSemanticsLib2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+EXTRA_DIST += semantics.conf yicesSemanticsLib2.ans
+if ROSE_HAVE_LIBYICES
+STATIC_TEST_TARGETS += yicesSemanticsLib2.passed
+yicesSemanticsLib2.passed: semantics.conf yicesSemanticsLib2
+	@$(RTH_RUN) CMD=yicesSemanticsLib2 INPUT=i686-test1.O3.bin $< $@
 endif
 
 # Multi-domain semantics
