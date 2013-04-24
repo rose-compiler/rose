@@ -144,6 +144,7 @@ endif ( enable-smaller-generated-files  )
 add_custom_target( rosetta_generated ALL 
        DEPENDS ${ROSETTA_HEADERS} ${ROSETTA_SRC} ${STORAGECLASSES_SRC}
     )
+add_dependencies(rosetta_generated generate_rosePublicConfig)
 
 
 
