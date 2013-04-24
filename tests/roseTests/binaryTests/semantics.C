@@ -226,6 +226,7 @@ analyze_interp(SgAsmInterpretation *interp)
         typedef BaseSemantics::DispatcherPtr MyDispatcher;
         BaseSemantics::RiscOperatorsPtr operators = make_ops();
         MyDispatcher dispatcher = DispatcherX86::instance(operators);
+        operators->set_solver(make_solver());
 #else   // OLD_API
         typedef X86InstructionSemantics<MyPolicy, MyValueType> MyDispatcher;
         MyPolicy operators;
