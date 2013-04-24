@@ -462,9 +462,7 @@ EXTRA_DIST += semantics.conf symbolicSemantics2.ans
 symbolicSemantics2.passed: semantics.conf symbolicSemantics2
 	@$(RTH_RUN) CMD=symbolicSemantics2 INPUT=i686-test1.O3.bin $< $@
 
-# Use SymbolicSemantics with YicesSolver policy, invoking "yices" executable. We should be able
-# to compile this test even when the "yices" command is not available. However, we won't be able
-# to test it if we don't have it.
+# Symbolic semantics, Yices executable, old API
 noinst_PROGRAMS += yicesSemanticsExe
 yicesSemanticsExe_SOURCES = semantics.C
 yicesSemanticsExe_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=OLD_API -DSMT_SOLVER=YICES_EXE
@@ -476,6 +474,17 @@ yicesSemanticsExe.passed: semantics.conf yicesSemanticsExe
 	@$(RTH_RUN) CMD=yicesSemanticsExe INPUT=i686-test1.O3.bin $< $@
 endif
 
+# Symbolic semantics, Yices executable, new API
+noinst_PROGRAMS += yicesSemanticsExe2
+yicesSemanticsExe2_SOURCES = semantics.C
+yicesSemanticsExe2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSEMANTIC_API=NEW_API -DSMT_SOLVER=YICES_EXE
+yicesSemanticsExe2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+EXTRA_DIST += semantics.conf yicesSemanticsExe2.ans
+if ROSE_HAVE_YICES
+STATIC_TEST_TARGETS += yicesSemanticsExe2.passed
+yicesSemanticsExe2.passed: semantics.conf yicesSemanticsExe2
+	@$(RTH_RUN) CMD=yicesSemanticsExe2 INPUT=i686-test1.O3.bin $< $@
+endif
 
 # Use SymbolicSemantics with YicesSolver, linked to Yikes library. We should be able to compile
 # this test even when the "yices" library is not available. However, we won't be able to run the
