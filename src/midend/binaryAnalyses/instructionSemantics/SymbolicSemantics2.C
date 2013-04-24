@@ -77,7 +77,7 @@ void
 SValue::print(std::ostream &o, BaseSemantics::PrintHelper *helper_) const
 {
     PrintHelper *helper = dynamic_cast<PrintHelper*>(helper_);
-    o <<"defs={";
+    o <<"{defs={";
     size_t ndefs=0;
     for (InsnSet::const_iterator di=defs.begin(); di!=defs.end(); ++di, ++ndefs) {
         SgAsmInstruction *insn = *di;
@@ -86,6 +86,7 @@ SValue::print(std::ostream &o, BaseSemantics::PrintHelper *helper_) const
     }
     o <<"}, expr=";
     expr->print(o, helper);
+    o <<"}";
 }
     
 
