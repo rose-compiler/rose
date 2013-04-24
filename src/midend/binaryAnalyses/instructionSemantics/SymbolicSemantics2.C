@@ -95,7 +95,8 @@ SValue::print(std::ostream &o, BaseSemantics::PrintHelper *helper_) const
  *******************************************************************************************************************************/
 
 SValuePtr
-MemoryState::mccarthy(const CellList &cells, const SValuePtr &address)
+MemoryState::CellCompressorMcCarthy::operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
+                                                BaseSemantics::RiscOperators *ops, const CellList &cells)
 {
     if (1==cells.size())
         return SValue::promote(cells.front()->get_value()->copy());
@@ -116,6 +117,24 @@ MemoryState::mccarthy(const CellList &cells, const SValuePtr &address)
     return retval;
 }
 
+SValuePtr
+MemoryState::CellCompressorSimple::operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
+                                               BaseSemantics::RiscOperators *ops, const CellList &cells)
+{
+    if (1==cells.size())
+        return SValue::promote(cells.front()->get_value()->copy());
+    return SValue::promote(dflt);
+}
+
+SValuePtr
+MemoryState::CellCompressorChoice::operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
+                                              BaseSemantics::RiscOperators *ops, const CellList &cells)
+{
+    if (ops->get_solver())
+        return cc_mccarthy(address, dflt, ops, cells);
+    return cc_simple(address, dflt, ops, cells);
+}
+
 BaseSemantics::SValuePtr
 MemoryState::readMemory(const BaseSemantics::SValuePtr &address_, const BaseSemantics::SValuePtr &dflt,
                         size_t nbits, BaseSemantics::RiscOperators *ops)
@@ -132,7 +151,8 @@ MemoryState::readMemory(const BaseSemantics::SValuePtr &address_, const BaseSema
         matches.push_back(tmpcell);
     }
 
-    SValuePtr retval = mccarthy(matches, address);
+    assert(dflt->get_width()==nbits);
+    SValuePtr retval = get_cell_compressor()->operator()(address, dflt, ops, matches);
     assert(retval->get_width()==8);
     return retval;
 }

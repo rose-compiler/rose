@@ -293,19 +293,63 @@ typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
  *  A memory write operation prunes away any existing memory cell that must-alias the newly written address, then
  *  adds a new memory cell to the front of the memory cell list.
  *
- *  A memory read operation scans the memory cell list and returns a McCarthy expression.  The read operates in two
- *  modes: a mode that returns a full McCarthy expression based on all memory cells in the cell list, or a mode
- *  that returns a pruned McCarthy expression consisting only of memory cells that may-alias the reading-from
- *  address.  The pruning mode is the default, but can be turned off by calling disable_read_pruning(). */
+ *  A memory read operation scans the memory cell list in reverse chronological order to obtain the list of cells that
+ *  may-alias the address being read (stopping when it hits a must-alias cell).  If no must-alias cell is found, then a new
+ *  cell is added to the memory and the may-alias list.  In any case, if the may-alias list contains exactly one cell, that
+ *  cell's value is returned; otherwise a CellCompressor is called.  The default CellCompressor either returns a McCarthy
+ *  expression or the default value depending on whether an SMT solver is being used. */
 class MemoryState: public BaseSemantics::MemoryCellList {
+public:
+    /** Functor for handling a memory read that found more than one cell that might alias the requested address. */
+    struct CellCompressor {
+        virtual ~CellCompressor() {}
+        virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
+                                     BaseSemantics::RiscOperators *ops, const MemoryCellList::CellList &cells) = 0;
+    };
+    
+    /** Functor for handling a memory read whose address matches more than one memory cell.  This functor returns a symbolic
+     * expression that consists of a read operation on a memory state.  The returned expression is essentially a McCarthy
+     * expression that encodes this if-then-else structure:
+     *
+     * @code
+     *  define readMemory(Address A): {
+     *     if A == Cell[0].address then return Cell[0].value
+     *     else if A == Cell[1].address then return Cell[1].value
+     *     else if A == Cell[2].address then return Cell[2].value
+     *     ...
+     *  }
+     * @endcode
+     */
+    struct CellCompressorMcCarthy: CellCompressor {
+        virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
+                                     BaseSemantics::RiscOperators *ops, const CellList &cells) /*override*/;
+    };
+
+    /** Functor for handling a memory read whose address matches more than one memory cell.  Simply returns the @p dflt value. */
+    struct CellCompressorSimple: CellCompressor {
+        virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
+                                     BaseSemantics::RiscOperators *ops, const CellList &cells) /*override*/;
+    };
+
+    /** Functor for handling a memory read whose address matches more than one memory cell.  This is the default cell
+     *  compressor and simply calls either CellCompressionMcCarthy or CellCompressionSimple depending on whether an SMT
+     *  solver is being used. */
+    struct CellCompressorChoice: CellCompressor {
+        CellCompressorMcCarthy cc_mccarthy;
+        CellCompressorSimple cc_simple;
+        virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
+                                     BaseSemantics::RiscOperators *ops, const CellList &cells) /*override*/;
+    };
+
 protected:
     
-    bool read_pruning;                      /**< Prune McCarthy expression for read operations. */
+    CellCompressor *cell_compressor;            /**< Callback when a memory read aliases multiple memory cells. */
+    CellCompressorChoice cc_choice;             /**< The default cell compressor. */
 
 protected:
     // protected constructors, same as for the base class
     MemoryState(const BaseSemantics::MemoryCellPtr &protocell, const BaseSemantics::SValuePtr &protoval)
-        : BaseSemantics::MemoryCellList(protocell, protoval), read_pruning(true) {}
+        : BaseSemantics::MemoryCellList(protocell, protoval), cell_compressor(&cc_choice) {}
 
 public:
     /** Static allocating constructor.  This constructor uses BaseSemantics::MemoryCell as the cell type. */
@@ -346,15 +390,12 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared in this class
 public:
-    /** Enables or disables pruning of the McCarthy expression for read operations.
+    /** Callback for handling a memory read whose address matches more than one memory cell.  See also,
+     * cell_compression_mccarthy(), cell_compression_simple(), cell_compression_choice().
      * @{ */
-    virtual bool get_read_pruning() const { return read_pruning; }
-    virtual void enable_read_pruning(bool b=true) { read_pruning = b; }
-    virtual void disable_read_pruning() { read_pruning = false; }
+    CellCompressor* get_cell_compressor() const { return cell_compressor; }
+    void set_cell_compressor(CellCompressor *cc) { cell_compressor = cc; }
     /** @} */
-
-    /** Build a McCarthy expression to select the specified address from a list of memory cells. */
-    virtual SValuePtr mccarthy(const CellList &cells, const SValuePtr &address);
 };
 
 
