@@ -293,6 +293,15 @@ RiscOperators::set_active(size_t idx, bool status)
 }
 
 void
+RiscOperators::print(std::ostream &o, const std::string prefix, BaseSemantics::PrintHelper *helper) const
+{
+    for (Subdomains::const_iterator sdi=subdomains.begin(); sdi!=subdomains.end(); ++sdi) {
+        o <<"== " <<(*sdi)->get_name() <<" ==\n";
+        (*sdi)->print(o, prefix, helper);
+    }
+}
+
+void
 RiscOperators::startInstruction(SgAsmInstruction *insn)
 {
     BaseSemantics::RiscOperators::startInstruction(insn);

@@ -510,7 +510,7 @@ yicesSemanticsLib2.passed: semantics.conf yicesSemanticsLib2
 	@$(RTH_RUN) CMD=yicesSemanticsLib2 INPUT=i686-test1.O3.bin $< $@
 endif
 
-# Multi-domain semantics
+# Multi-domain semantics, old API
 noinst_PROGRAMS += multiSemantics
 multiSemantics_SOURCES = semantics.C
 multiSemantics_CPPFLAGS = -DSEMANTIC_DOMAIN=MULTI_DOMAIN -DSEMANTIC_API=OLD_API
@@ -519,6 +519,16 @@ STATIC_TEST_TARGETS += multiSemantics.passed
 EXTRA_DIST += semantics.conf multiSemantics.ans
 multiSemantics.passed: semantics.conf multiSemantics
 	@$(RTH_RUN) CMD=multiSemantics INPUT=i686-test1.O3.bin $< $@
+
+# Multi-domain semantics, new API
+noinst_PROGRAMS += multiSemantics2
+multiSemantics2_SOURCES = semantics.C
+multiSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=MULTI_DOMAIN -DSEMANTIC_API=NEW_API
+multiSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += multiSemantics2.passed
+EXTRA_DIST += semantics.conf multiSemantics2.ans
+multiSemantics2.passed: semantics.conf multiSemantics2
+	@$(RTH_RUN) CMD=multiSemantics2 INPUT=i686-test1.O3.bin $< $@
 
 # Finds constant values and propagates them across instructions
 noinst_PROGRAMS += findConstants

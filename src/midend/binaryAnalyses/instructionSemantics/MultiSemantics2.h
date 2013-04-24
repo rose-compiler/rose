@@ -414,8 +414,9 @@ public:
     };
         
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // RISC operations
+    // RISC operations and other overrides
 public:
+    virtual void print(std::ostream &o, const std::string prefix="", BaseSemantics::PrintHelper *helper=NULL) const /*override*/;
     virtual void startInstruction(SgAsmInstruction *insn) /*override*/;
     virtual void finishInstruction(SgAsmInstruction *insn) /*override*/;
     virtual BaseSemantics::SValuePtr filterCallTarget(const BaseSemantics::SValuePtr&) /*override*/;
