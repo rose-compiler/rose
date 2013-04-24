@@ -98,10 +98,14 @@ namespace InsnSemanticsExpr {
          *  names will be numbered from the set M = (i | 0 <= i <= N-1). */
         virtual void print(std::ostream&, RenameMap *rmap=NULL) const = 0;
 
-        /** Tests two expressions for equality using an optional satisfiability modulo theory (SMT) solver. Returns true if
-         *  the inequality is not satisfiable.  Two expressions can be equal without necessarily being the same width (e.g., a
-         *  32-bit constant zero is equal to a 16-bit constant zero). */
-        virtual bool equal_to(const TreeNodePtr& other, SMTSolver*) const = 0;
+        /** Returns true if two expressions must be equal (cannot be unequal).  If an SMT solver is specified then that solver
+         * is used to answer this question, otherwise equality is established by looking only at the structure of the two
+         * expressions. Two expressions can be equal without being the same width (e.g., a 32-bit constant zero is equal to a
+         * 16-bit constant zero). */
+        virtual bool must_equal(const TreeNodePtr& other, SMTSolver*) const = 0;
+
+        /** Returns true if two expressions might be equal, but not necessarily be equal. */
+        virtual bool may_equal(const TreeNodePtr& other, SMTSolver*) const = 0;
 
         /** Tests two expressions for structural equivalence.  Two leaf nodes are equivalent if they are the same width and
          *  have equal values or are the same variable. Two internal nodes are equivalent if they are the same width, the same
@@ -208,24 +212,15 @@ namespace InsnSemanticsExpr {
         }
         /** @} */
 
-        /* see superclass, where this is pure virtual */
+        /* see superclass, where these are pure virtual */
         virtual void print(std::ostream &o, RenameMap *rmap=NULL) const;
-
-        /* see superclass, where this is pure virtual */
-        virtual bool equal_to(const TreeNodePtr &other, SMTSolver*) const;
-
-        /* see superclass, where this is pure virtual */
+        virtual bool must_equal(const TreeNodePtr &other, SMTSolver*) const;
+        virtual bool may_equal(const TreeNodePtr &other, SMTSolver*) const;
         virtual bool equivalent_to(const TreeNodePtr &other) const;
-
-        /* see superclass, where this is pure virtual */
         virtual bool is_known() const {
             return false; /*if it's known, then it would have been folded to a leaf*/
         }
-
-        /* see superclass, where this is pure virtual */
         virtual uint64_t get_value() const { ROSE_ASSERT(!"not a constant value"); return 0;}
-
-        /* see superclass, where this is pure virtual */
         virtual void depth_first_visit(Visitor*) const;
 
         /** Returns the number of children. */
@@ -273,11 +268,14 @@ namespace InsnSemanticsExpr {
          *  specified size. */
         static LeafNodePtr create_memory(size_t nbits, std::string comment="");
 
-        /* see superclass, where this is pure virtual */
+        /* see superclass, where these are pure virtual */
         virtual bool is_known() const;
-
-        /* see superclass, where this is pure virtual */
         virtual uint64_t get_value() const;
+        virtual void print(std::ostream &o, RenameMap *rmap=NULL) const;
+        virtual bool must_equal(const TreeNodePtr &other, SMTSolver*) const;
+        virtual bool may_equal(const TreeNodePtr &other, SMTSolver*) const;
+        virtual bool equivalent_to(const TreeNodePtr &other) const;
+        virtual void depth_first_visit(Visitor*) const;
 
         /** Is the node a bitvector variable? */
         virtual bool is_variable() const;
@@ -289,17 +287,6 @@ namespace InsnSemanticsExpr {
          *  this N that this method returns.  It should only be invoked on leaf nodes for which is_known() returns false. */
         uint64_t get_name() const;
 
-        /* see superclass, where this is pure virtual */
-        virtual void print(std::ostream &o, RenameMap *rmap=NULL) const;
-
-        /* see superclass, where this is pure virtual */
-        virtual bool equal_to(const TreeNodePtr &other, SMTSolver*) const;
-
-        /* see superclass, where this is pure virtual */
-        virtual bool equivalent_to(const TreeNodePtr &other) const;
-
-        /* see superclass, where this is pure virtual */
-        virtual void depth_first_visit(Visitor*) const;
     };
 
     std::ostream& operator<<(std::ostream &o, const InsnSemanticsExpr::TreeNode &node);

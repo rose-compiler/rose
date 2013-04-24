@@ -62,22 +62,15 @@ SValue::may_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) con
 {
     SValuePtr other = SValue::promote(other_);
     assert(get_width()==other->get_width());
-    return get_expression()->equal_to(other->get_expression(), solver);
+    return get_expression()->may_equal(other->get_expression(), solver);
 }
 
 bool
 SValue::must_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const
 {
-    if (must_equal(other_, solver))
-        return true;
     SValuePtr other = SValue::promote(other_);
     assert(get_width()==other->get_width());
-    if (!solver)
-        return false;
-    TreeNodePtr a = get_expression();
-    TreeNodePtr b = other->get_expression();
-    TreeNodePtr assertion = InternalNode::create(1, InsnSemanticsExpr::OP_EQ, a, b);
-    return SMTSolver::SAT_NO != solver->satisfiable(assertion);
+    return get_expression()->must_equal(other->get_expression(), solver);
 }
 
 void
@@ -213,7 +206,7 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
     SValuePtr retval;
     if (a->is_number() && b->is_number()) {
         retval = svalue_number(a->get_width(), a->get_number() ^ b->get_number());
-    } else if (a->get_expression()->equal_to(b->get_expression(), solver)) {
+    } else if (a->get_expression()->must_equal(b->get_expression(), solver)) {
         retval = svalue_number(a->get_width(), 0);
     } else {
         retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_BV_XOR,

@@ -62,7 +62,7 @@ InsnSemanticsExpr::InternalNode::print(std::ostream &o, RenameMap *rmap/*NULL*/)
 }
 
 bool
-InsnSemanticsExpr::InternalNode::equal_to(const TreeNodePtr &other_, SMTSolver *solver/*NULL*/) const
+InsnSemanticsExpr::InternalNode::must_equal(const TreeNodePtr &other_, SMTSolver *solver/*NULL*/) const
 {
     bool retval = false;
     if (solver) {
@@ -76,8 +76,22 @@ InsnSemanticsExpr::InternalNode::equal_to(const TreeNodePtr &other_, SMTSolver *
         } else if (other && op==other->op && children.size()==other->children.size()) {
             retval = true;
             for (size_t i=0; i<children.size() && retval; ++i)
-                retval = children[i]->equal_to(other->children[i], NULL);
+                retval = children[i]->must_equal(other->children[i], NULL);
         }
+    }
+    return retval;
+}
+
+bool
+InsnSemanticsExpr::InternalNode::may_equal(const TreeNodePtr &other, SMTSolver *solver/*NULL*/) const
+{
+    bool retval = false;
+    if (solver) {
+        InternalNodePtr assertion = InternalNode::create(1, OP_EQ, shared_from_this(), other);
+        retval = SMTSolver::SAT_YES==solver->satisfiable(assertion);
+    } else {
+        // The naive approach falls back to must_equal.
+        retval = must_equal(other, solver);
     }
     return retval;
 }
@@ -222,7 +236,7 @@ InsnSemanticsExpr::LeafNode::print(std::ostream &o, RenameMap *rmap/*NULL*/) con
 }
 
 bool
-InsnSemanticsExpr::LeafNode::equal_to(const TreeNodePtr &other_, SMTSolver *solver) const
+InsnSemanticsExpr::LeafNode::must_equal(const TreeNodePtr &other_, SMTSolver *solver) const
 {
     bool retval = false;
     if (solver) {
@@ -238,6 +252,31 @@ InsnSemanticsExpr::LeafNode::equal_to(const TreeNodePtr &other_, SMTSolver *solv
             } else {
                 retval = !other->is_known() && name==other->name;
             }
+        }
+    }
+    return retval;
+}
+
+bool
+InsnSemanticsExpr::LeafNode::may_equal(const TreeNodePtr &other_, SMTSolver *solver) const
+{
+    bool retval = false;
+    if (solver) {
+        InternalNodePtr assertion = InternalNode::create(1, OP_EQ, shared_from_this(), other_);
+        retval = SMTSolver::SAT_YES == solver->satisfiable(assertion);
+    } else {
+        LeafNodePtr other = other_->isLeafNode();
+        if (this==other.get()) {
+            retval = true;
+        } else if (!other) {
+            // 'other' is not a leaf; it might be equal to this, but we can't tell without an SMT solver
+            retval = false;
+        } else if (is_known() && other->is_known()) {
+            // two integers may_equal iff they are equal
+            retval = ival == other->ival;
+        } else {
+            // two variables or a variable-and-integer may be equal in any case
+            retval = true;
         }
     }
     return retval;

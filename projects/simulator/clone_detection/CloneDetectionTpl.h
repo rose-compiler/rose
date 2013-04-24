@@ -765,7 +765,7 @@ State<ValueType>::must_alias(const MEMORY_ADDRESS_TYPE &addr1, const MEMORY_ADDR
 {
 #ifdef USE_SYMBOLIC_MEMORY
     assert(solver);
-    return addr1.get_expression()->equal_to(addr2.get_expression(), solver);
+    return addr1.get_expression()->must_equal(addr2.get_expression(), solver);
 #else // concrete
     return addr1.known_value()==addr2.known_value();
 #endif
@@ -871,7 +871,7 @@ State<ValueType>::mem_read_byte(X86SegmentRegister sr, const MEMORY_ADDRESS_TYPE
                 TreeNodePtr sv = convert_to_symbolic(found[i]).get_expression();
                 bool dup = false; // is 'sv' equivalent to any already in found_symbolic[] ?
                 for (size_t j=0; !dup && j<set_members.size(); ++j)
-                    dup = sv->equal_to(set_members[j], solver);
+                    dup = sv->must_equal(set_members[j], solver);
                 if (!dup) {
                     // Add 'sv' to the set
                     set_members.push_back(sv);

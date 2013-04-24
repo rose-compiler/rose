@@ -333,7 +333,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                  *  "overlap".  The @p solver is optional but recommended (absence of a solver will result in a naive
                  *  definition). */
                 bool must_alias(const ValueType<32> &addr, SMTSolver *solver) const {
-                    return this->address().get_expression()->equal_to(addr.get_expression(), solver);
+                    return this->address().get_expression()->must_equal(addr.get_expression(), solver);
                 }
 
                 /** Returns true if address can refer to this memory cell. */
@@ -1467,7 +1467,7 @@ namespace BinaryAnalysis {              // documented elsewhere
                     ValueType<Len> retval;
                     if (a.is_known() && b.is_known()) {
                         retval = ValueType<Len>(a.known_value() ^ b.known_value());
-                    } else if (a.get_expression()->equal_to(b.get_expression(), solver)) {
+                    } else if (a.get_expression()->must_equal(b.get_expression(), solver)) {
                         retval = number<Len>(0);
                     } else {
                         retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_BV_XOR,
