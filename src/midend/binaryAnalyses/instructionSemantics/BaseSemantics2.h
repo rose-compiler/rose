@@ -1115,6 +1115,7 @@ protected:
     SgAsmInstruction *cur_insn;                 /**< Current instruction, as set by latest startInstruction() call. */
     size_t ninsns;                              /**< Number of instructions processed. */
     SMTSolver *solver;                          /**< Optional SMT solver. */
+    std::string name;                           /**< Name to use for debugging. */
 
 protected:
     explicit RiscOperators(const SValuePtr &protoval, SMTSolver *solver=NULL)
@@ -1160,7 +1161,6 @@ public:
      *  certain operations are falling back to naive implementations. */
     SMTSolver *get_solver() const { return solver; }
 
-
     /** Access the state upon which the RISC operations operate. The state need not be set until the first instruction is
      *  executed (and even then, some RISC operations don't need any machine state (typically, only register and memory read
      *  and write operators need state).  Different state objects can be swapped in at pretty much any time.  Modifying the
@@ -1169,6 +1169,12 @@ public:
      * @{ */
     StatePtr get_state() { return state; }
     void set_state(const StatePtr &s) { state = s; }
+    /** @} */
+
+    /** A name used for debugging.
+     * @{ */
+    const std::string& get_name() const { return name; }
+    void set_name(const std::string &s) { name = s; }
     /** @} */
 
     /** Print multi-line output for this object. */

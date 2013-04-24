@@ -83,9 +83,13 @@ class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
     // Protected constructors, same as for the base class
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(protoval, solver) {}
+        : BaseSemantics::RiscOperators(protoval, solver) {
+        set_name("Null");
+    }
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(state, solver) {}
+        : BaseSemantics::RiscOperators(state, solver) {
+        set_name("Null");
+    }
 
 public:
     /** Static allocating constructor. Creates a new RiscOperators object and configures it to use semantic values and states

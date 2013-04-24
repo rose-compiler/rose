@@ -260,11 +260,13 @@ protected:
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver) {
+        set_name("Multi");
         (void) SValue::promote(protoval); // check that its dynamic type is a MultiSemantics::SValue
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver) {
+        set_name("Multi");
         (void) SValue::promote(state->get_protoval()); // dynamic type must be a MultiSemantics::SValue
     }
 
