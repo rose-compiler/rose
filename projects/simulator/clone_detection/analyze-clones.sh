@@ -95,22 +95,37 @@ rm -f "$combined_dbname";
 # way to get this to run in parallel with error handling, limiting, cleanup, etc. is to use GNU make's "-j" switch.
 echo "================================================================================"
 echo "                           SEMANTIC ANALYSIS"
-makefile=clones-$$.mk
-cat >$makefile <<'EOF'
-all: all_analyses
-DIAGNOSTICS =
-$(foreach F, $(SPECIMENS), \
-	$(eval DIAGNOSTICS += $(notdir $(F))-$(shell md5sum $(F) |cut -c1-16).out) \
-	$(eval $(notdir $(F))-$(shell md5sum $(F) |cut -c1-16).out: $(F); \
-	    ./CloneDetection $(SWITCHES) $(F) >$$@ 2>&1))
-all_analyses: $(DIAGNOSTICS)
-	@echo DIAGNOSTICS=$(DIAGNOSTICS)
-.PHONY: clean
-clean:
-	rm -f $(DIAGNOSTICS)
-EOF
-make -f $makefile SPECIMENS="$*" clean
-make -k -j$semantic_parallelism -f $makefile SWITCHES="--debug --verbose --database=$semantic_dbname --nfuzz=$semantic_nfuzz --ninputs=$semantic_npointers,$semantic_nnonpointers --max-insns=$semantic_maxinsns " SPECIMENS="$*" \
+
+build_makefile () {
+    local mf="clones-$$.mk"
+
+    echo "all: all_analyses" >>$mf
+
+    local all_outputs=
+    for specimen in "$@"; do
+	local base=$(basename $specimen)
+	local hash=$(md5sum $specimen |cut -c1-16)
+	for fuzz in $(seq 0 $[semantic_nfuzz-1]); do
+	    local output="$base-$fuzz-$hash.out"
+	    all_outputs="$all_outputs $output"
+	    echo "$output: $specimen" >>$mf
+	    echo -e "\t\$(ROSE_BLD)/projects/simulator/CloneDetection \$(SWITCHES) --nfuzz=1,$fuzz $specimen >\$@.tmp 2>&1" >>$mf
+	    echo -e "\tmv \$@.tmp \$@" >>$mf
+	done
+    done
+
+    echo "outputs = $all_outputs" >>$mf
+    echo "all_analyses: \$(outputs)" >>$mf
+    echo ".PHONY: clean" >>$mf
+    echo "clean:; rm -f \$(outputs) \$(append .tmp, \$(outputs))" >>$mf
+
+    echo $mf
+}
+
+    
+makefile=$(build_makefile "$@")
+make -f $makefile clean
+make -k -j$semantic_parallelism -f $makefile ROSE_BLD="$ROSE_BLD" SWITCHES="--debug --verbose --database=$semantic_dbname --ninputs=$semantic_npointers,$semantic_nnonpointers --max-insns=$semantic_maxinsns " \
 	|| die "semantic clone detection failed"
 
 
