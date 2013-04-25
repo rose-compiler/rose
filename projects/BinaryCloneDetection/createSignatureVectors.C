@@ -348,10 +348,11 @@ addVectorToDatabase(sqlite3_connection& con, const SignatureVector& vec, const s
 
 void createDatabases(sqlite3_connection& con) {
 
-    con.executenonquery("create table if not exists run_parameters ("
-                        " window_size integer,"         // the --windowSize argument for createVectorsBinary
-                        " stride integer,"              // the --stride argument for createVectorsBinary
-                        " min_coverage double precision"// minimum coverage ratio for clone pairs
+    con.executenonquery("create table if not exists run_parameters (\n"
+                        "    window_size integer,                   -- the --windowSize argument for createVectorsBinary\n"
+                        "    stride integer,                        -- the --stride argument for createVectorsBinary\n"
+                        "    similarity_threshold double precision, -- the argument for the -t switch of findClones\n"
+                        "    min_coverage double precision          -- minimum coverage ratio for clone pairs\n"
                         ")");
 
   try {

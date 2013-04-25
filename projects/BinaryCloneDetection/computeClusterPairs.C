@@ -192,6 +192,10 @@ main(int argc, char *argv[])
                               " join clusters as b on a.cluster = b.cluster and a.function_id < b.function_id");
     std::cerr <<nrows <<"\n"
               <<argv0 <<": scanning cluster pairs...\n";
+    if (verbose && isatty(2)) {
+        fprintf(stderr, "  waiting for sqlite...\r");
+        fflush(stderr);
+    }
     sqlite3_command cmd1(db,//   0          1              2              3              4
                          "select a.cluster, a.function_id, b.function_id, a.vectors_row, b.vectors_row"
                          " from clusters as a"

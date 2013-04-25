@@ -1,4 +1,5 @@
 #include "callLSH.h"
+#include "sqlite3x.h"
 #include <string>
 #include <iostream>
 
@@ -7,6 +8,8 @@
 #include <boost/program_options/variables_map.hpp>
 using namespace boost::program_options;
 using namespace std;
+using namespace sqlite3x;
+
 int main(int argc, char* argv[])
 {
   std::string database;
@@ -58,14 +61,21 @@ int main(int argc, char* argv[])
         cout << e.what() << "\n";
     }
 
- 
-    std::cout << "The similarity threshold is " << similarity_threshold << std::endl;
-  OperateOnClusters op(database, norm, similarity_threshold, k , l);
-  
-  op.analyzeClusters();
-  //op.calculate_false_positives();
+    {
+        std::cout << "The similarity threshold is " << similarity_threshold << std::endl;
+        sqlite3_connection db(database.c_str());
+        sqlite3_command cmd1(db, "update run_parameters set similarity_threshold = ?");
+        cmd1.bind(1, similarity_threshold);
+        cmd1.executenonquery();
+    }
+    
 
-  return 0;
+    OperateOnClusters op(database, norm, similarity_threshold, k , l);
+  
+    op.analyzeClusters();
+    //op.calculate_false_positives();
+
+    return 0;
 };
 
 
