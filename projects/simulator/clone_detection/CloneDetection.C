@@ -95,6 +95,8 @@ public:
                 std::cerr <<name <<": sqlite3 command failed to initialize database \"" <<dbname <<"\"\n";
                 return;
             }
+            sqlite.open(dbname.c_str());
+            sqlite.busy_timeout(15*60*1000); // 15 minutes
         }
     }
 
