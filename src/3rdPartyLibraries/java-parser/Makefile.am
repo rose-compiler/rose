@@ -70,6 +70,10 @@ JavaSourcePositionInformationFactory.class: ${srcdir}/JavaSourcePositionInformat
 
 EXTRA_DIST = CMakeLists.txt ecjROSE.jar JavaTraversal.java JavaParser.java JavaParserSupport.java ExtendedASTVisitor.java ecjASTVisitor.java JavaToken.java JavaSourcePositionInformation.java JavaSourcePositionInformationFactory.java
 
+install-data-local:
+	$(INSTALL_DATA) $(srcdir)/ecjROSE.jar $(libdir)/ecjROSE.jar
+	$(INSTALL_DATA) *.class $(libdir)
+
 clean-local:
 	rm -f *.dot ecjROSE.jar *.class *.java *.h
 
