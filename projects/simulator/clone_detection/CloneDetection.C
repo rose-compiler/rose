@@ -36,7 +36,8 @@ static void usage(const std::string &arg0, int exit_status)
               <<" [SIMULATOR_SWITCHES] SPECIMEN [SPECIMEN_ARGS...]\n"
               <<"   --database=STR    Specifies the name of the database into which results are placed.\n"
               <<"                     The default is \"clones.db\".\n"
-              <<"   --nfuzz=N         Number of times to fuzz test each function. The default is 10.\n"
+              <<"   --nfuzz=N[,START] Number of times to fuzz test each function (default 10) and the\n"
+              <<"                     sequence number of the first test (default 0).\n"
               <<"   --ninputs=N1[,N2] Number of input values to supply each time a function is run. When\n"
               <<"                     N1 and N2 are both specified, then N1 is the number of pointers and\n"
               <<"                     N2 is the number of non-pointers.  When only N1 is specified it will\n"
@@ -52,6 +53,16 @@ static void usage(const std::string &arg0, int exit_status)
     exit(exit_status);
 }
 
+// Command-line switches
+struct Switches {
+    Switches(): dbname("clones.db"), firstfuzz(0), nfuzz(10), npointers(3), nnonpointers(3), max_insns(256), verbose(false) {}
+    std::string dbname;                 /**< Name of database in which to store results. */
+    size_t firstfuzz;                   /**< Sequence number for starting fuzz test. */
+    size_t nfuzz;                       /**< Number of times to run each function, each time with a different input sequence. */
+    size_t npointers, nnonpointers;     /**< Number of pointer and non-pointer values to supply to as inputs per fuzz test. */
+    size_t max_insns;                   /**< Maximum number of instrutions per fuzz test before giving up. */
+    bool verbose;                       /**< Produce lots of output?  Traces each instruction as it is simulated. */
+};
 
 /*******************************************************************************************************************************
  *                                      Clone Detector
@@ -64,20 +75,13 @@ class CloneDetector {
 protected:
     static const char *name;            /**< For --debug output. */
     RSIM_Thread *thread;                /**< Thread where analysis is running. */
-    std::string dbname;                 /**< Name of database in which to store results. */
     sqlite3_connection sqlite;          /**< Database in which to place results; may already exist */
     std::vector<OutputValues> output_sets; /**< Distinct sets of output values. */
-    size_t nfuzz;                       /** Number of times we run each function, each time with a different input sequence. */
-    size_t npointers, nnonpointers;     /** Number of pointer and nonpointer values to supply as inputs per fuzz test. */
-    size_t max_insns;                   /** Maximum number of instructions to simulate per fuzz test. */
-    bool verbose;                       /** Produce lots of output?  Traces each instruction as it is simulated. */
+    Switches opt;                       /**< Analysis configuration switches from the command line. */
 
 public:
-    CloneDetector(RSIM_Thread *thread, const std::string &dbname, bool verbose,
-                  size_t nfuzz, size_t npointers, size_t nnonpointers, size_t max_insns)
-        : thread(thread), dbname(dbname), nfuzz(nfuzz), npointers(npointers), nnonpointers(nnonpointers),
-          max_insns(max_insns), verbose(verbose) {
-        open_db(dbname);
+    CloneDetector(RSIM_Thread *thread, const Switches &opt): thread(thread), opt(opt) {
+        open_db(opt.dbname);
     }
 
     void open_db(const std::string &dbname) {
@@ -88,12 +92,10 @@ public:
             assert(f!=NULL);
             fputs(clone_detection_schema, f);
             if (pclose(f)!=0) {
-                std::cerr <<"sqlite3 command failed to initialize database \"" <<dbname <<"\"\n";
+                std::cerr <<name <<": sqlite3 command failed to initialize database \"" <<dbname <<"\"\n";
                 return;
             }
         }
-        sqlite.open(dbname.c_str());
-        sqlite.busy_timeout(15*60*1000); // 15 minutes
     }
 
     // Allocate a page of memory in the process address space.
@@ -134,7 +136,7 @@ public:
     Functions find_functions(RTS_Message *m, RSIM_Process *proc) {
         m->mesg("%s: disassembling entire specimen image...\n", name);
         MemoryMap *map = disassembly_map(proc);
-        if (verbose) {
+        if (opt.verbose) {
             std::ostringstream ss;
             map->dump(ss, "  ");
             m->mesg("%s: using this memory map for disassembly:\n%s", name, ss.str().c_str());
@@ -184,7 +186,7 @@ public:
             // instruction might be a floating point instruction that isn't handled yet.
             m->mesg("%s: %s pointer analysis FAILED", name, function_to_str(func).c_str());
         }
-        if (verbose && m->get_file()) {
+        if (opt.verbose && m->get_file()) {
             const CloneDetection::PointerDetector::Pointers plist = pd->get_pointers();
             for (CloneDetection::PointerDetector::Pointers::const_iterator pi=plist.begin(); pi!=plist.end(); ++pi) {
                 std::ostringstream ss;
@@ -200,6 +202,7 @@ public:
     }
 
     // Get the ID for a file, adding a new entry to the table if necessary.
+    // Must aquire the write lock before calling this function.
     int get_file_id(const std::string &filename) {
         sqlite3_command cmd1(sqlite, "select coalesce(max(id),-1) from semantic_files where name = ?");
         sqlite3_command cmd2(sqlite,
@@ -217,8 +220,20 @@ public:
         return file_id;
     }
 
+    struct FuncStats {
+        FuncStats(): file_id(-1), isize(0), dsize(0), size(0) {}
+        FuncStats(size_t isize, size_t dsize, size_t size): file_id(-1), isize(isize), dsize(dsize), size(size) {}
+        int file_id;
+        size_t isize, dsize, size;
+    };
+
+
     // Save each function to the database.  Returns a mapping from function object to ID number.
+    // We have to do this in a database-efficient manner without holding a transaction lock too long because we're
+    // likely to be running in parallel.
     FunctionIdMap save_functions(const Functions &functions) {
+        typedef std::map<rose_addr_t/*entry_va*/, SgAsmFunction*> AddrFunc;
+        typedef std::map<SgAsmFunction*, FuncStats> Stats;
 
         struct InstructionSelector: SgAsmFunction::NodeSelector {
             virtual bool operator()(SgNode *node) { return isSgAsmInstruction(node)!=NULL; }
@@ -229,77 +244,119 @@ public:
         } dselector;
 
         FunctionIdMap retval;
-        std::vector<SgAsmFunction*> added; // functions that were added
+        RTS_Message *m = thread->tracing(TRACE_MISC);
 
-        sqlite3_command cmd1(sqlite, "select coalesce(max(id),-1) from semantic_functions"
-                             " where entry_va=? and funcname=? and file_id=?");
-        sqlite3_command cmd2(sqlite,
-                             "insert into semantic_functions"
+        // Pre-compute some function info that doesn't depend on the database.
+        m->mesg("%s:   calculating function information from AST", name);
+        AddrFunc addrfunc;
+        Stats stats;
+        for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+            SgAsmFunction *func = *fi;
+            ExtentMap e_insns, e_data, e_total;
+            func->get_extent(&e_insns, NULL, NULL, &iselector);
+            func->get_extent(&e_data,  NULL, NULL, &dselector);
+            func->get_extent(&e_total);
+            stats[func] = FuncStats(e_insns.size(), e_data.size(), e_total.size());
+            addrfunc[func->get_entry_va()] = func;
+        }
+
+        // Populate the semantic_files table (assuming our functions can come from multiple files)
+        m->mesg("%s:   populating file table from binary function info", name);
+        sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE);
+        for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi)
+            stats[*fi].file_id = get_file_id(filename_for_function(*fi));
+        lock.commit();
+
+        // Scan the whole function table and keep only those entries that correspond to our functions.  Since our functions
+        // might come from multiple files, there isn't an easy way to limit the query to only those files (we could use "in"
+        // but this seems about as fast).
+        m->mesg("%s:   getting function IDs from the database", name);
+        sqlite3_command cmd1(sqlite, "select id, entry_va, file_id from semantic_functions");
+        lock.begin(sqlite3_transaction::LOCK_IMMEDIATE);
+        sqlite3_reader c1 = cmd1.executereader();
+        while (c1.read()) {
+            int function_id = c1.getint(0);
+            rose_addr_t entry_va = (unsigned)c1.getint(1);
+            int file_id = c1.getint(2);
+
+            AddrFunc::iterator found = addrfunc.find(entry_va);
+            if (found==addrfunc.end())
+                continue;
+            SgAsmFunction *func = found->second;
+            if (file_id!=stats[func].file_id)
+                continue;
+            retval[func] = function_id;
+        }
+        lock.commit();
+
+        // Figure out which functions are not in the database.  By time we get done with this loop some other process might
+        // have added those functions, but we'll handle that later.
+        Functions to_add;
+        for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+            SgAsmFunction *func = *fi;
+            if (retval.find(func)==retval.end())
+                to_add.insert(func);
+        }
+
+        // Add necessary functions to the semantic_functions table, but be careful because some other process might have added
+        // them since we released the lock above.
+        m->mesg("%s:   adding %zu function ID%s to the database", name, to_add.size(), 1==to_add.size()?"":"s");
+        sqlite3_command cmd2(sqlite, "select coalesce(max(id),-1) from semantic_functions where entry_va=? and file_id=?");
+        sqlite3_command cmd3(sqlite, "insert into semantic_functions"
                              // 1   2         3         4        5      6      7
                              " (id, entry_va, funcname, file_id, isize, dsize, size)"
                              " values (?,?,?,?,?,?,?)");
-        sqlite3_command cmd3(sqlite, "update semantic_functions set listing = ? where id = ?");
+        lock.begin(sqlite3_transaction::LOCK_IMMEDIATE);
+        int next_id = sqlite.executeint("select coalesce(max(id),-1)+1 from semantic_functions");
+        Functions added;
+        for (Functions::iterator fi=to_add.begin(); fi!=to_add.end(); ++fi) {
+            SgAsmFunction *func = *fi;
+            cmd2.bind(1, func->get_entry_va());
+            cmd2.bind(2, stats[func].file_id);
+            int func_id = cmd2.executeint();
+            if (func_id<0) {
+                retval[func] = next_id;
+                cmd3.bind(1, next_id);
+                cmd3.bind(2, func->get_entry_va());
+                cmd3.bind(3, func->get_name());
+                cmd3.bind(4, stats[func].file_id);
+                const FuncStats &s = stats[func];
+                cmd3.bind(5, s.isize);
+                cmd3.bind(6, s.dsize);
+                cmd3.bind(7, s.size);
+                cmd3.executenonquery();
+                added.insert(func);
+                ++next_id;
+            }
+        }
+        lock.commit();
+        m->mesg("%s:   added %zu function ID%s to the database", name, added.size(), 1==added.size()?"":"s");
+
+        // For each function we added to the database, also add the assembly listing. We assume that if the function already
+        // exists in the database then its assembly listing also exists, but this might not be true if the process is
+        // interruped here.
         sqlite3_command cmd4(sqlite,
                              "insert into semantic_instructions"
                              // 1        2     3         4            5         6            7
                              " (address, size, assembly, function_id, position, src_file_id, src_line)"
                              " values (?,?,?,?,?,?,?)");
-
-        // Hold a write-lock while we update the semantic_functions table so that no other process tries to use the
-        // same function ID numbers.
-        sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE); 
-        {
-            int func_id = sqlite.executeint("select coalesce(max(id),0)+1 from semantic_functions");
-            for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
-                SgAsmFunction *func = *fi;
-                int file_id = get_file_id(filename_for_function(func));
-                assert(file_id>=0);
-
-                cmd1.bind(1, func->get_entry_va());
-                cmd1.bind(2, func->get_name());
-                cmd1.bind(3, file_id);
-                int function_id = cmd1.executeint();
-                if (function_id >=0) {
-                    retval.insert(std::make_pair(func, function_id));
-                } else {
-                    ExtentMap e_insns, e_data, e_total;
-                    func->get_extent(&e_insns, NULL, NULL, &iselector);
-                    func->get_extent(&e_data,  NULL, NULL, &iselector);
-                    func->get_extent(&e_total);
-                    cmd2.bind(1, func_id);
-                    cmd2.bind(2, func->get_entry_va());
-                    cmd2.bind(3, func->get_name());
-                    cmd2.bind(4, file_id);
-                    cmd2.bind(5, e_insns.size());
-                    cmd2.bind(6, e_data.size());
-                    cmd2.bind(7, e_total.size());
-                    cmd2.executenonquery();
-                    added.push_back(func);
-                    retval.insert(std::make_pair(func, func_id));
-                }
-                ++func_id;
-            }
-        }
-        lock.commit();
-
-        // Now add the function listing and instructions. These take longer, and we don't need to hold a lock the whole time.
+        m->mesg("%s:   computing address-to-source mapping", name);
         BinaryAnalysis::DwarfLineMapper dlm(thread->get_process()->get_project());
         dlm.fix_holes();
         AsmUnparser unparser;
         unparser.staticDataDisassembler.init(thread->get_process()->get_disassembler());
-        for (std::vector<SgAsmFunction*>::iterator ai=added.begin(); ai!=added.end(); ++ai) {
+        m->mesg("%s:   saving assembly code for each function", name);
+        for (Functions::iterator ai=added.begin(); ai!=added.end(); ++ai) {
+            SgAsmFunction *func = *ai;
+            int func_id = retval[func];
+            if (opt.verbose)
+                std::cerr <<"  unparsing function " <<func_id;
+            std::string function_lst = unparser.to_string(func);
+            std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(func);
+
             // much faster when using transactions, but don't hold lock too long; i.e., lock inside this loop, not outside
             sqlite3_transaction lock2(sqlite, sqlite3_transaction::LOCK_IMMEDIATE, sqlite3_transaction::DEST_COMMIT);
 
-            SgAsmFunction *func = *ai;
-            int func_id = retval[func];
-            if (verbose)
-                std::cerr <<"  unparsing function " <<func_id;
-            cmd3.bind(1, unparser.to_string(func));
-            cmd3.bind(2, func_id);
-            cmd3.executenonquery();
-
-            std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(func);
             for (size_t i=0; i<insns.size(); ++i) {
                 BinaryAnalysis::DwarfLineMapper::SrcInfo loc = dlm.addr2src(insns[i]->get_address());
                 int src_file_id = loc.file_id < 0 ? -1 : get_file_id(Sg_File_Info::getFilenameFromID(loc.file_id));
@@ -311,12 +368,13 @@ public:
                 cmd4.bind(6, src_file_id);
                 cmd4.bind(7, loc.line_num);
                 cmd4.executenonquery();
-                if (verbose)
+                if (opt.verbose)
                     std::cerr <<'.';
             }
-            if (verbose)
+            if (opt.verbose)
                 std::cerr <<"\n";
         }
+
         return retval;
     }
 
@@ -360,7 +418,7 @@ public:
             if (is_text_file(f)) {
                 cmd2.bind(1, file_id);
                 if (cmd2.executeint()<=0) {
-                    if (verbose)
+                    if (opt.verbose)
                         std::cerr <<"  saving source code for " <<file_name;
                     char *line = NULL;
                     size_t linesz=0, line_num=0;
@@ -372,13 +430,13 @@ public:
                         cmd3.bind(2, ++line_num);
                         cmd3.bind(3, line);
                         cmd3.executenonquery();
-                        if (verbose)
+                        if (opt.verbose)
                             std::cerr <<".";
                     }
                     if (line)
                         free(line);
                 }
-                if (verbose)
+                if (opt.verbose)
                     std::cerr <<"\n";
             }
             if (f)
@@ -420,7 +478,7 @@ public:
             sqlite3_command cmd3(sqlite, "insert into semantic_inputvalues (id, vtype, pos, val) values (?,?,?,?)");
             static unsigned integer_modulus = 256;  // arbitrary;
             static unsigned nonnull_denom = 3;      // probability of a non-null pointer is 1/N
-            for (size_t i=0; i<nnonpointers; ++i) {
+            for (size_t i=0; i<opt.nnonpointers; ++i) {
                 uint64_t val = rand() % integer_modulus;
                 inputs.add_integer(val);
                 cmd3.bind(1, inputset_id);
@@ -429,7 +487,7 @@ public:
                 cmd3.bind(4, val);
                 cmd3.executenonquery();
             }
-            for (size_t i=0; i<npointers; ++i) {
+            for (size_t i=0; i<opt.npointers; ++i) {
                 uint64_t val = rand()%nonnull_denom ? 0 : allocate_page();
                 inputs.add_pointer(val);
                 cmd3.bind(1, inputset_id);
@@ -457,7 +515,7 @@ public:
         // creating output sets then this we'll only load the output sets when we first start.  We're assuming that no
         // process is deleting output sets and that sets are numbered consecutively starting at zero.
         if ((int)output_sets.size() != sqlite.executeint("select coalesce(max(id),-1)+1 from semantic_outputvalues")) {
-            if (verbose)
+            if (opt.verbose)
                 m->mesg("%s: loading output sets from the database", name);
             sqlite3_command cmd1(sqlite, "select id, val from semantic_outputvalues");
             sqlite3_reader cursor = cmd1.executereader();
@@ -558,33 +616,33 @@ public:
         } catch (const Disassembler::Exception &e) {
             // Probably due to the analyzed function's RET instruction, but could be from other things as well. In any case, we
             // stop analyzing the function when this happens.
-            if (verbose)
+            if (opt.verbose)
                 m->mesg("%s: function disassembly failed at 0x%08"PRIx64": %s", name, e.ip, e.mesg.c_str());
         } catch (const CloneDetection::InsnLimitException &e) {
             // The analysis might be in an infinite loop, such as when analyzing "void f() { while(1); }"
-            if (verbose)
+            if (opt.verbose)
                 m->mesg("%s: %s", name, e.mesg.c_str());
         } catch (const RSIM_Semantics::InnerPolicy<>::Halt &e) {
             // The x86 HLT instruction appears in some functions (like _start) as a failsafe to terminate a process.  We need
             // to intercept it and terminate only the function analysis.
-            if (verbose)
+            if (opt.verbose)
                 m->mesg("%s: function executed HLT instruction at 0x%08"PRIx64, name, e.ip);
         } catch (const RSIM_Semantics::InnerPolicy<>::Interrupt &e) {
             // The x86 INT instruction was executed but the policy does not know how to handle it.
-            if (verbose)
+            if (opt.verbose)
                 m->mesg("%s: function executed INT 0x%x at 0x%08"PRIx64, name, e.inum, e.ip);
         } catch (const RSIM_SEMANTICS_POLICY::Exception &e) {
             // Some exception in the policy, such as division by zero.
-            if (verbose)
+            if (opt.verbose)
                 m->mesg("%s: %s", name, e.mesg.c_str());
         } catch (const SMTSolver::Exception &e) {
             // Some exception in the SMT solver
-            if (verbose)
+            if (opt.verbose)
                 m->mesg("%s: %s", name, e.mesg.c_str());
         }
         
         // Gather the function's outputs before restoring machine state.
-        CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *outputs = thread->policy.get_outputs(verbose!=0);
+        CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *outputs = thread->policy.get_outputs(opt.verbose!=0);
         thread->init_regs(saved_regs);
         proc->mem_transaction_rollback(name);
         return outputs;
@@ -592,16 +650,18 @@ public:
 
     // Detect functions that are semantically similar by running multiple iterations of partition_functions().
     void analyze() {
-        thread->policy.verbose = verbose!=0;
-        thread->policy.max_ninsns = max_insns;
+        thread->policy.verbose = opt.verbose!=0;
+        thread->policy.max_ninsns = opt.max_insns;
         thread->set_do_coredump(false);
         thread->set_show_exceptions(false);
         RTS_Message *m = thread->tracing(TRACE_MISC);
         m->mesg("Starting clone detection analysis...");
-        m->mesg("%s: database=%s, nfuzz=%zu, npointers=%zu, nnonpointers=%zu, max_insns=%zu",
-                name, dbname.c_str(), nfuzz, npointers, nnonpointers, max_insns);
+        m->mesg("%s: database=%s, fuzz=@%zu+%zu, npointers=%zu, nnonpointers=%zu, max_insns=%zu",
+                name, opt.dbname.c_str(), opt.firstfuzz, opt.nfuzz, opt.npointers, opt.nnonpointers, opt.max_insns);
         Functions functions = find_functions(m, thread->get_process());
+        m->mesg("%s: saving function information and assembly listings...", name);
         FunctionIdMap func_ids = save_functions(functions);
+        m->mesg("%s: saving source code listings for each function...", name);
         save_files();
 
         typedef std::map<SgAsmFunction*, CloneDetection::PointerDetector*> PointerDetectors;
@@ -610,12 +670,12 @@ public:
                              "insert into semantic_fio (func_id, inputset_id, outputset_id, elapsed_time, cpu_time)"
                              " values (?,?,?,?,?)");
         sqlite3_command cmd2(sqlite, "select count(*) from semantic_fio where func_id=? and inputset_id=? limit 1");
-        for (size_t i=0; i<nfuzz; ++i) {
-            InputValues inputs = choose_inputs(i);
-            if (verbose) {
+        for (size_t fuzz_number=opt.firstfuzz; fuzz_number<opt.firstfuzz+opt.nfuzz; ++fuzz_number) {
+            InputValues inputs = choose_inputs(fuzz_number);
+            if (opt.verbose) {
                 m->mesg("####################################################################################################");
                 m->mesg("%s: fuzz testing %zu function%s with inputset %zu",
-                        name, functions.size(), 1==functions.size()?"":"s", i);
+                        name, functions.size(), 1==functions.size()?"":"s", fuzz_number);
                 m->mesg("%s: using these input values:\n%s", name, inputs.toString().c_str());
             }
             for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
@@ -624,9 +684,9 @@ public:
 
                 // Did we already test this function in a previous incarnation?
                 cmd2.bind(1, func_ids[func]);
-                cmd2.bind(2, i);
+                cmd2.bind(2, fuzz_number);
                 if (cmd2.executeint()>0) {
-                    m->mesg("%s: %s fuzz test #%zu SKIPPED", name, function_to_str(func).c_str(), i);
+                    m->mesg("%s: %s fuzz test #%zu SKIPPED", name, function_to_str(func).c_str(), fuzz_number);
                     continue;
                 }
 
@@ -641,15 +701,15 @@ public:
                 timeval start_time, stop_time;
                 clock_t start_ticks = clock();
                 gettimeofday(&start_time, NULL);
-                m->mesg("%s: %s fuzz test #%zu", name, function_to_str(func).c_str(), i);
+                m->mesg("%s: %s fuzz test #%zu", name, function_to_str(func).c_str(), fuzz_number);
                 CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *outputs = fuzz_test(func, inputs, ip->second);
-                if (verbose) {
+                if (opt.verbose) {
                     std::ostringstream output_values_str;
                     OutputValues output_values = outputs->get_values();
                     for (OutputValues::iterator ovi=output_values.begin(); ovi!=output_values.end(); ++ovi)
                         output_values_str <<" " <<*ovi;
                     m->mesg("%s: %s fuzz test #%zu output values are {%s }",
-                            name, function_to_str(func).c_str(), i, output_values_str.str().c_str());
+                            name, function_to_str(func).c_str(), fuzz_number, output_values_str.str().c_str());
                 }
                 gettimeofday(&stop_time, NULL);
                 clock_t stop_ticks = clock();
@@ -667,10 +727,10 @@ public:
                 size_t outputset_id = save_outputs(outputs->get_values());
                 sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE, sqlite3_transaction::DEST_COMMIT);
                 if (cmd2.executeint()>0) {
-                    m->mesg("%s: %s fuzz test #%zu ALREADY PRESENT", name, function_to_str(func).c_str(), i);
+                    m->mesg("%s: %s fuzz test #%zu ALREADY PRESENT", name, function_to_str(func).c_str(), fuzz_number);
                 } else {
                     cmd1.bind(1, func_ids[func]);
-                    cmd1.bind(2, i);
+                    cmd1.bind(2, fuzz_number);
                     cmd1.bind(3, outputset_id);
                     cmd1.bind(4, elapsed_time);
                     cmd1.bind(5, cpu_time);
@@ -678,7 +738,7 @@ public:
                 }
             }
         }
-        m->mesg("%s: final results stored in %s", name, dbname.c_str());
+        m->mesg("%s: final results stored in %s", name, opt.dbname.c_str());
     }
 };
 
@@ -694,15 +754,9 @@ protected:
     rose_addr_t trigger_va;             /**< Address at which a CloneDetector should be created and thrown. */
     bool armed;                         /**< Should this object be monitoring instructions yet? */
     bool triggered;                     /**< Has this been triggered yet? */
-    std::string dbname;                 /**< Name of database. */
-    bool verbose;                       /**< Produce lots of output? */
-    size_t nfuzz;                       /**< Number of times to run each function, each time with a different input sequence. */
-    size_t npointers, nnonpointers;     /**< Number of input values to supply to each fuzz test. */
-    size_t max_insns;                   /**< Max number of instructions to simulate per fuzz test. */
+    Switches opt;                       /**< Analysis configuration from command-line switches. */
 public:
-    Trigger(const std::string &dbname, bool verbose, size_t nfuzz, size_t npointers, size_t nnonpointers, size_t max_insns)
-        : trigger_va(0), armed(false), triggered(false), dbname(dbname), verbose(verbose), nfuzz(nfuzz), npointers(npointers),
-          nnonpointers(nnonpointers), max_insns(max_insns) {}
+    Trigger(const Switches &opt): trigger_va(0), armed(false), triggered(false), opt(opt) {}
 
     // For simplicity, all threads, processes, and simulators will share the same SemanticController object.  This means that
     // things probably won't work correctly when analyzing a multi-threaded specimen, but it keeps this demo more
@@ -720,7 +774,7 @@ public:
     virtual bool operator()(bool enabled, const Args &args) /*override*/ {
         if (enabled && armed && !triggered && args.insn->get_address()==trigger_va) {
             triggered = true;
-            throw new CloneDetector(args.thread, dbname, verbose, nfuzz, npointers, nnonpointers, max_insns);
+            throw new CloneDetector(args.thread, opt);
         }
         return enabled;
     }
@@ -733,29 +787,30 @@ main(int argc, char *argv[], char *envp[])
     std::ios::sync_with_stdio();
 
     // Parse command-line switches that we recognize.
-    std::string dbname = "clones.db";
-    bool verbose = false;
-    size_t nfuzz=10, npointers=3, nnonpointers=3, max_insns=256;
+    Switches opt;
     for (int i=1; i<argc && '-'==argv[i][0]; /*void*/) {
         bool consume = false;
         if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h") || !strcmp(argv[i], "-?")) {
             usage(argv[0], 0);
         } else if (!strncmp(argv[i], "--database=", 11)) {
-            dbname = argv[i]+11;
+            opt.dbname = argv[i]+11;
             consume = true;
         } else if (!strcmp(argv[i], "--verbose")) {
-            verbose = consume = true;
+            opt.verbose = consume = true;
         } else if (!strncmp(argv[i], "--nfuzz=", 8)) {
-            nfuzz = strtoul(argv[i]+8, 0, NULL);
+            char *rest;
+            opt.nfuzz = strtoul(argv[i]+8, &rest, NULL);
+            if (','==*rest)
+                opt.firstfuzz = strtoul(rest+1, NULL, 0);
             consume = true;
         } else if (!strncmp(argv[i], "--ninputs=", 10)) {
             char *rest;
-            npointers = nnonpointers = strtoul(argv[i]+10, &rest, 0);
+            opt.npointers = opt.nnonpointers = strtoul(argv[i]+10, &rest, 0);
             if (','==*rest)
-                nnonpointers = strtoul(rest+1, NULL, 0);
+                opt.nnonpointers = strtoul(rest+1, NULL, 0);
             consume = true;
         } else if (!strncmp(argv[i], "--max-insns=", 12)) {
-            max_insns = strtoul(argv[i]+12, NULL, 0);
+            opt.max_insns = strtoul(argv[i]+12, NULL, 0);
             consume = true;
         }
         
@@ -769,7 +824,7 @@ main(int argc, char *argv[], char *envp[])
 
     // Our instruction callback.  We can't set its trigger address until after we load the specimen, but we want to register
     // the callback with the simulator before we create the first thread.
-    Trigger clone_detection_trigger(dbname, verbose, nfuzz, npointers, nnonpointers, max_insns);
+    Trigger clone_detection_trigger(opt);
 
     // All of this is standard boilerplate and documented in the first page of the simulator doxygen.
     RSIM_Linux32 sim;
