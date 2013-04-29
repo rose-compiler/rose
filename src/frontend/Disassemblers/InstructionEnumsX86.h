@@ -23,7 +23,7 @@ enum X86RegisterClass
   x86_regclass_dr,              /**< Debug registers; Minors are 0-7 */
   x86_regclass_st,              /**< Floating point stack; Minors are 0-7 */
   x86_regclass_mm,              /**< 64-bit mmN; Minors are 0-7. Note that these reference low 64 bits of st(i) */
-  x86_regclass_xmm,             /**< 128-bit mmxN; Minors are 0-7. */
+  x86_regclass_xmm,             /**< 128-bit xmmN; Minors are 0-7. */
   x86_regclass_ip,              /**< Instruction pointer; Only allowed minor is zero. */
   x86_regclass_flags            /**< Status flags register; Only allowed minor is zero. Offset and size determine flag bit(s). */
 };

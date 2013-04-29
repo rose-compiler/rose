@@ -370,7 +370,7 @@ RegisterDictionary::dictionary_pentium()
 
 /** Intel Pentium 4 registers.
  *
- *  The Pentium 4 has the same register set as the Pentium but adds the MMX0 through MMX7 registers for the SSE instruction
+ *  The Pentium 4 has the same register set as the Pentium but adds the xmm0 through xmm7 registers for the SSE instruction
  *  set. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_pentium4()
@@ -379,14 +379,14 @@ RegisterDictionary::dictionary_pentium4()
     if (!regs) {
         regs = new RegisterDictionary("pentium4");
         regs->insert(dictionary_pentium());
-        regs->insert("mmx0", x86_regclass_xmm, 0, 0, 128);
-        regs->insert("mmx1", x86_regclass_xmm, 1, 0, 128);
-        regs->insert("mmx2", x86_regclass_xmm, 2, 0, 128);
-        regs->insert("mmx3", x86_regclass_xmm, 3, 0, 128);
-        regs->insert("mmx4", x86_regclass_xmm, 4, 0, 128);
-        regs->insert("mmx5", x86_regclass_xmm, 5, 0, 128);
-        regs->insert("mmx6", x86_regclass_xmm, 6, 0, 128);
-        regs->insert("mmx7", x86_regclass_xmm, 7, 0, 128);
+        regs->insert("xmm0", x86_regclass_xmm, 0, 0, 128);
+        regs->insert("xmm1", x86_regclass_xmm, 1, 0, 128);
+        regs->insert("xmm2", x86_regclass_xmm, 2, 0, 128);
+        regs->insert("xmm3", x86_regclass_xmm, 3, 0, 128);
+        regs->insert("xmm4", x86_regclass_xmm, 4, 0, 128);
+        regs->insert("xmm5", x86_regclass_xmm, 5, 0, 128);
+        regs->insert("xmm6", x86_regclass_xmm, 6, 0, 128);
+        regs->insert("xmm7", x86_regclass_xmm, 7, 0, 128);
     }
     return regs;
 }
@@ -430,8 +430,8 @@ RegisterDictionary::dictionary_amd64()
             regs->insert(name+"w", x86_regclass_gpr, i, 0, 16);
             regs->insert(name+"d", x86_regclass_gpr, i, 0, 32);
 
-            /* New media MMX registers */
-            regs->insert(std::string("mmx")+StringUtility::numberToString(i),
+            /* New media XMM registers */
+            regs->insert(std::string("xmm")+StringUtility::numberToString(i),
                          x86_regclass_xmm, i, 0, 128);
         }
 

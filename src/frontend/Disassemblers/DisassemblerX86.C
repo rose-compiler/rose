@@ -466,7 +466,7 @@ DisassemblerX86::makeRegister(uint8_t fullRegisterNumber, RegisterMode m, SgAsmT
             name = "mm" + StringUtility::numberToString(fullRegisterNumber);
             break;
         case rmXMM:
-            name = "mmx" + StringUtility::numberToString(fullRegisterNumber);
+            name = "xmm" + StringUtility::numberToString(fullRegisterNumber);
             break;
         case rmControl:
             name = "cr" + StringUtility::numberToString(fullRegisterNumber);
