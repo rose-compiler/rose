@@ -22,121 +22,155 @@ using namespace std;
 #include "rose_config.h"
 
 
-void
-Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info)
-   {
-
+void Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info) {
   // This is the Java specific expression code generation
-
 #if 0
      printf ("In Unparse_Java::unparseLanguageSpecificExpression ( expr = %p = %s ) language = %s \n",expr,expr->class_name().c_str(),languageName().c_str());
 #endif
 
-     switch (expr->variant())
-        {
-          case UNARY_EXPRESSION:  { unparseUnaryExpr (expr, info); break; }
-          case BINARY_EXPRESSION: { unparseBinaryExpr(expr, info); break; }
-          case CLASSNAME_REF: { unparseClassRef(expr, info); break; }
-
-          case UNSIGNED_INT_VAL: { unparseUIntVal(expr, info); break; }
-          case LONG_INT_VAL: { unparseLongIntVal(expr, info); break; }
-          case LONG_LONG_INT_VAL: { unparseLongLongIntVal(expr, info); break; }
-          case UNSIGNED_LONG_LONG_INT_VAL: { unparseULongLongIntVal(expr, info); break; }
-          case UNSIGNED_LONG_INT_VAL: { unparseULongIntVal(expr, info); break; }
-          case FLOAT_VAL: { unparseFloatVal(expr, info); break; }
-          case LONG_DOUBLE_VAL: { unparseLongDoubleVal(expr, info); break; }
-
-          case FUNC_CALL: { unparseFuncCall(expr, info); break; }
-          case UNARY_MINUS_OP: { unparseUnaryMinusOp(expr, info); break; }
-          case UNARY_ADD_OP: { unparseUnaryAddOp(expr, info); break; }
-
-          case SIZEOF_OP:             { unparseSizeOfOp(expr, info); break; }
-
-          case TYPEID_OP: { unparseTypeIdOp(expr, info); break; }
-          case NOT_OP: { unparseNotOp(expr, info); break; }
-          case BIT_COMPLEMENT_OP: { unparseBitCompOp(expr, info); break; }
-          case EXPR_CONDITIONAL: { unparseExprCond(expr, info); break; }
-          case CAST_OP:                 { unparseCastOp(expr, info); break; }
-          case ARRAY_OP:                { unparseArrayOp(expr, info); break; }
-          case NEW_OP:                  { unparseNewOp(expr, info); break; }
-          case DELETE_OP:               { unparseDeleteOp(expr, info); break; }
-          case THIS_NODE:               { unparseThisNode(expr, info); break; }
-          case SUPER_NODE:              { unparseSuperNode(expr, info); break; }
-
-          case TYPE_REF:                { unparseTypeRef(expr, info); break; }
-          case EXPR_INIT:               { unparseExprInit(expr, info); break; }
-          case AGGREGATE_INIT:          { unparseAggrInit(expr, info); break; }
-          case CONSTRUCTOR_INIT:        { unparseConInit(expr, info); break; }
-          case ASSIGN_INIT:             { unparseAssnInit(expr, info); break; }
-          case THROW_OP:                { unparseThrowOp(expr, info); break; }
-          case DESIGNATED_INITIALIZER:  { unparseDesignatedInitializer(expr, info); break; }
-          case PSEUDO_DESTRUCTOR_REF:   { unparsePseudoDtorRef(expr, info); break; }
-          case JAVA_INSTANCEOF_OP:      { unparseJavaInstanceOfOp(expr, info); break; }
-
-          default:
-
-     // migrate the above switch stmt to use variantT() instead on variant(). The former has much
-     // more consistent names
-     switch (expr->variantT()) {
-         case V_SgPlusAssignOp:
-         case V_SgMinusAssignOp:
-         case V_SgMultAssignOp:
-         case V_SgDivAssignOp:
-         case V_SgModAssignOp:
-         case V_SgAndAssignOp:
-         case V_SgXorAssignOp:
-         case V_SgIorAssignOp:
-         case V_SgRshiftAssignOp:
-         case V_SgLshiftAssignOp:
-         case V_SgJavaUnsignedRshiftAssignOp:
-             unparseCompoundAssignOp( isSgCompoundAssignOp(expr), info ); break;
-
-         case V_SgAddOp:
-         case V_SgAndOp:
-         case V_SgAssignOp:
-         case V_SgBitAndOp:
-         case V_SgBitOrOp:
-         case V_SgBitXorOp:
-         case V_SgDivideOp:
-         case V_SgDotExp:
-         case V_SgArrowExp:
-         case V_SgEqualityOp:
-         case V_SgGreaterOrEqualOp:
-         case V_SgGreaterThanOp:
-         case V_SgJavaUnsignedRshiftOp:
-         case V_SgLessOrEqualOp:
-         case V_SgLessThanOp:
-         case V_SgLshiftOp:
-         case V_SgModOp:
-         case V_SgMultiplyOp:
-         case V_SgOrOp:
-         case V_SgNotEqualOp:
-         case V_SgRshiftOp:
-         case V_SgSubtractOp:
-         case V_SgCommaOpExp: // charles4 10/14/2011
-             unparseBinaryOp( isSgBinaryOp(expr), info ); break;
-
-         case V_SgPlusPlusOp:
-         case V_SgMinusMinusOp:
-         case V_SgUnaryAddOp:
-         case V_SgMinusOp:
-         case V_SgNotOp:
-         case V_SgBitComplementOp:
-             unparseUnaryOp( isSgUnaryOp(expr), info ); break;
-
-         case V_SgVarRefExp:             { unparseVarRef(expr, info); break; }
-         case V_SgFunctionRefExp:        { unparseFuncRef(expr, info); break; }
-         case V_SgMemberFunctionRefExp:  { unparseMFuncRef(expr, info); break; }
-
-         case V_SgNullExpression:        { curprint ("null"); break; }
-
-         default:
-               cout << "error: unparseExpression() is unimplemented for " << expr->class_name() << endl;
-               ROSE_ASSERT(false);
-               break;
-     }
+    //
+    // Check if this expression requires parentheses.  If so, process the opening parentheses now.
+    //
+    AstRegExAttribute *parenthesis_attribute = (AstRegExAttribute *) expr->getAttribute("java-parenthesis-info");
+    if (parenthesis_attribute) { // Output the left paren
+        curprint (parenthesis_attribute -> expression.c_str());
     }
-   }
+
+    //
+    // An expression may contain a Type prefix stored in the "prefix" attribute.
+    //
+    if (expr -> attributeExists("prefix")) {
+        AstRegExAttribute *attribute = (AstRegExAttribute *) expr -> getAttribute("prefix");
+        curprint(attribute -> expression);
+        curprint(".");
+    }
+
+    switch (expr->variant()) {
+        case UNARY_EXPRESSION:  { unparseUnaryExpr (expr, info); break; }
+        case BINARY_EXPRESSION: { unparseBinaryExpr(expr, info); break; }
+        case CLASSNAME_REF: { unparseClassRef(expr, info); break; }
+
+        case CHAR_VAL: { unparseCharVal(expr,info); break; }
+        case UNSIGNED_CHAR_VAL: { unparseUCharVal(expr, info); break; }
+        case WCHAR_VAL: { unparseWCharVal(expr, info); break; }
+
+        case UNSIGNED_INT_VAL: { unparseUIntVal(expr, info); break; }
+        case LONG_INT_VAL: { unparseLongIntVal(expr, info); break; }
+        case LONG_LONG_INT_VAL: { unparseLongLongIntVal(expr, info); break; }
+        case UNSIGNED_LONG_LONG_INT_VAL: { unparseULongLongIntVal(expr, info); break; }
+        case UNSIGNED_LONG_INT_VAL: { unparseULongIntVal(expr, info); break; }
+        case FLOAT_VAL: { unparseFloatVal(expr, info); break; }
+        case LONG_DOUBLE_VAL: { unparseLongDoubleVal(expr, info); break; }
+
+        case FUNC_CALL: { unparseFuncCall(expr, info); break; }
+        case UNARY_MINUS_OP: { unparseUnaryMinusOp(expr, info); break; }
+        case UNARY_ADD_OP: { unparseUnaryAddOp(expr, info); break; }
+
+        case TYPEID_OP: { unparseTypeIdOp(expr, info); break; }
+        case NOT_OP: { unparseNotOp(expr, info); break; }
+        case BIT_COMPLEMENT_OP: { unparseBitCompOp(expr, info); break; }
+        case EXPR_CONDITIONAL: { unparseExprCond(expr, info); break; }
+        case CAST_OP:                 { unparseCastOp(expr, info); break; }
+        case ARRAY_OP:                { unparseArrayOp(expr, info); break; }
+        case NEW_OP:                  { unparseNewOp(expr, info); break; }
+        case DELETE_OP:               { unparseDeleteOp(expr, info); break; }
+        case THIS_NODE:               { unparseThisNode(expr, info); break; }
+        case SUPER_NODE:              { unparseSuperNode(expr, info); break; }
+
+        case TYPE_REF:                { unparseTypeRef(expr, info); break; }
+        case EXPR_INIT:               { unparseExprInit(expr, info); break; }
+        case AGGREGATE_INIT:          { unparseAggrInit(expr, info); break; }
+        case CONSTRUCTOR_INIT:        { unparseConInit(expr, info); break; }
+        case ASSIGN_INIT:             { unparseAssnInit(expr, info); break; }
+        case THROW_OP:                { unparseThrowOp(expr, info); break; }
+        case DESIGNATED_INITIALIZER:  { unparseDesignatedInitializer(expr, info); break; }
+        case PSEUDO_DESTRUCTOR_REF:   { unparsePseudoDtorRef(expr, info); break; }
+        case JAVA_INSTANCEOF_OP:      { unparseJavaInstanceOfOp(expr, info); break; }
+
+        default: {
+
+            // migrate the above switch stmt to use variantT() instead on variant(). The former has much
+            // more consistent names
+            switch (expr->variantT()) {
+                case V_SgPlusAssignOp:
+                case V_SgMinusAssignOp:
+                case V_SgMultAssignOp:
+                case V_SgDivAssignOp:
+                case V_SgModAssignOp:
+                case V_SgAndAssignOp:
+                case V_SgXorAssignOp:
+                case V_SgIorAssignOp:
+                case V_SgRshiftAssignOp:
+                case V_SgLshiftAssignOp:
+                case V_SgJavaUnsignedRshiftAssignOp:
+                     unparseCompoundAssignOp( isSgCompoundAssignOp(expr), info ); break;
+
+                case V_SgAddOp:
+                case V_SgAndOp:
+                case V_SgAssignOp:
+                case V_SgBitAndOp:
+                case V_SgBitOrOp:
+                case V_SgBitXorOp:
+                case V_SgDivideOp:
+                case V_SgDotExp:
+                case V_SgArrowExp:
+                case V_SgEqualityOp:
+                case V_SgGreaterOrEqualOp:
+                case V_SgGreaterThanOp:
+                case V_SgJavaUnsignedRshiftOp:
+                case V_SgLessOrEqualOp:
+                case V_SgLessThanOp:
+                case V_SgLshiftOp:
+                case V_SgModOp:
+                case V_SgMultiplyOp:
+                case V_SgOrOp:
+                case V_SgNotEqualOp:
+                case V_SgRshiftOp:
+                case V_SgSubtractOp:
+                case V_SgCommaOpExp: // charles4 10/14/2011
+                     unparseBinaryOp(isSgBinaryOp(expr), info ); break;
+
+                case V_SgPlusPlusOp:
+                case V_SgMinusMinusOp:
+                case V_SgUnaryAddOp:
+                case V_SgMinusOp:
+                case V_SgNotOp:
+                case V_SgBitComplementOp:
+                     unparseUnaryOp(isSgUnaryOp(expr), info ); break;
+
+                case V_SgVarRefExp:             { unparseVarRef(expr, info); break; }
+                case V_SgFunctionRefExp:        { unparseFuncRef(expr, info); break; }
+                case V_SgMemberFunctionRefExp:  { unparseMFuncRef(expr, info); break; }
+
+                case V_SgNullExpression:        { curprint ("null"); break; }
+
+                default:
+                     cout << "error: unparseExpression() is unimplemented for " << expr->class_name() << endl;
+                     ROSE_ASSERT(false);
+                     break;
+            }
+        }
+    }
+
+    //
+    // If this expression requires closing parentheses, emit them now.
+    //
+    if (parenthesis_attribute) { // Output the right paren
+        string open_parentheses = parenthesis_attribute -> expression;
+        for (int i = 0; i < open_parentheses.size(); i++) {
+            curprint (")");
+        }
+    }
+
+    //
+    // An Expression may contain a name suffix stored in the "suffix" attribute.
+    //
+    if (expr -> attributeExists("suffix")) {
+        curprint(".");
+        AstRegExAttribute *attribute = (AstRegExAttribute *) expr -> getAttribute("suffix");
+        curprint(attribute -> expression);
+    }
+}
 
 PrecedenceSpecifier
 Unparse_Java::getPrecedence(SgExpression* expr) {
@@ -280,25 +314,7 @@ Unparse_Java::unparseVarRef(SgExpression* expr, SgUnparse_Info& info) {
      SgVarRefExp* var_ref = isSgVarRefExp(expr);
      ROSE_ASSERT(var_ref != NULL);
 
-     //
-     // An SgVarRefExp may contain a Type prefix stored in the "prefix" attribute.
-     //
-     if (var_ref -> attributeExists("prefix")) {
-         AstRegExAttribute *attribute = (AstRegExAttribute *) var_ref -> getAttribute("prefix");
-         curprint(attribute -> expression);
-         curprint(".");
-     }
-
      unparseName(var_ref->get_symbol()->get_name(), info);
-
-     //
-     // An SgVarRefExp may contain a name suffix stored in the "suffix" attribute.
-     //
-     if (var_ref -> attributeExists("suffix")) {
-         curprint(".");
-         AstRegExAttribute *attribute = (AstRegExAttribute *) var_ref -> getAttribute("suffix");
-         curprint(attribute -> expression);
-     }
 }
 
 void
@@ -329,6 +345,13 @@ Unparse_Java::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
 
      unparseName(mfunc_ref->get_symbol()->get_name(), info);
    }
+
+void
+Unparse_Java::unparseBoolVal(SgExpression* expr, SgUnparse_Info& info) {
+    SgBoolValExp *bool_val = isSgBoolValExp(expr);
+    ROSE_ASSERT(bool_val != NULL);
+    curprint (bool_val->get_value() ? "true" : "false");
+}
 
 void
 Unparse_Java::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
@@ -376,6 +399,67 @@ Unparse_Java::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
      unp->u_sage->cur_set_linewrap(wrap);
    }
 
+
+/**
+ * PC: override UnparseLanguageIndependentConstructs::unparseWCharVal(),
+ */
+void Unparse_Java::unparseWCharVal(SgExpression* expr, SgUnparse_Info& info) {
+    SgWcharVal* wchar_val = isSgWcharVal(expr);
+    ROSE_ASSERT(wchar_val != NULL);
+
+    if (wchar_val->get_valueString() == "") {
+        int value = wchar_val->get_value();
+        if (value < 256) {
+            if (value == '\b') {
+                curprint("\'\\b\'");
+            }
+            else if (value == '\t') {
+                curprint("\'\\t\'");
+            }
+            else if (value == '\n') {
+                curprint("\'\\n\'");
+            }
+            else if (value == '\f') {
+                curprint("\'\\f\'");
+            }
+            else if (value == '\r') {
+                curprint("\'\\r\'");
+            }
+            else if (value == '\"') {
+                curprint("\'\\\"\'");
+            }
+            else if (value == '\'') {
+                curprint("\'\\\'\'");
+            }
+            else if (value == '\\') {
+                curprint("\'\\\\\'");
+            }
+            else if (isprint(value)) {
+                string str = "\'";
+                str += (char) value;
+                str += "\'";
+                curprint(str.c_str());
+            }
+            else {
+                ostringstream octal; // stream used for the conversion
+                octal.fill('0');
+                octal.width(3);
+                octal << oct << value; // compute the octal character representation of the value
+                curprint("\'\\" + octal.str() + "\'");
+            }
+        }
+        else {
+            ostringstream unicode; // stream used for the conversion
+            unicode.fill('0');
+            unicode.width(4);
+            unicode << hex << value; // compute the Unicode character representation of the value
+            curprint("\'\\u" + unicode.str() + "\'");
+        }
+    }
+    else {
+        curprint(wchar_val->get_valueString());
+    }
+}
 
 void
 Unparse_Java::unparseUIntVal(SgExpression* expr, SgUnparse_Info& info)
@@ -488,32 +572,11 @@ Unparse_Java::unparseFloatVal(SgExpression* expr, SgUnparse_Info& info)
      SgFloatVal* float_val = isSgFloatVal(expr);
      ROSE_ASSERT(float_val != NULL);
 
-#if 0
-     printf ("Inside of unparseFloatVal = %p \n",float_val);
-     float_val->get_file_info()->display("unparseFloatVal");
-#endif
-
   // DQ (10/18/2005): Need to handle C code which cannot use C++ mechanism to specify 
   // infinity, quiet NaN, and signaling NaN values.  Note that we can't use the C++
   // interface since the input program, and thus the generated code, might not have 
   // included the "limits" header file.
      float float_value = float_val->get_value();
-#if 0
-     if (SageInterface::is_C_language() == true)
-        {
-          if (float_val->get_valueString() == "")
-             {
-               curprint ( tostring(float_val->get_value()));
-             }
-            else
-             {
-               curprint ( float_val->get_valueString());
-             }
-        }
-       else
-        {
-        }
-#endif
 
      if (float_value == std::numeric_limits<float>::infinity())
         {
@@ -640,16 +703,6 @@ Unparse_Java::unparseComplexVal(SgExpression* expr, SgUnparse_Info& info)
 void Unparse_Java::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info) {
     SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
     ROSE_ASSERT(func_call != NULL);
-
-    //
-    // If the attribute points to the null string, it identifies an implicit Super call.
-    // We ignore implicit super calls.
-    //
-    if (func_call -> attributeExists("prefix")) {
-        AstRegExAttribute *prefix_attribute = (AstRegExAttribute *) func_call -> getAttribute("prefix");
-        curprint(prefix_attribute -> expression);
-        curprint(".");
-    }
 
     if (func_call -> attributeExists("<init>")) {
         AstRegExAttribute *constructor_attribute = (AstRegExAttribute *) func_call -> getAttribute("<init>");
@@ -786,7 +839,18 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
         }
      */
 
-     curprint ( "new ");
+     //
+     // If this is an allocation expression for an anonymous class, output the body of the class.
+     //
+     if (new_op -> attributeExists("new_prefix")) {
+         AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) new_op -> getAttribute("new_prefix");
+         SgExpression *prefix = isSgExpression(attribute -> getNode());
+         ROSE_ASSERT(prefix);
+         unparseExpression(prefix, info);
+         curprint(".");
+     }
+
+     curprint("new ");
 
   // curprint ( "\n /* Output any placement arguments */ \n";
      // charles4: 02/26/2012  I don't understand the importance of this code.
@@ -830,22 +894,54 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
      /*
      unp->u_type->unparseType(new_op->get_specified_type(), newinfo);
      */
-     if (isSgArrayType(new_op->get_specified_type())) {
-         unparseType(isSgArrayType(new_op->get_specified_type()) -> get_base_type(), info);
-         ROSE_ASSERT(new_op -> get_constructor_args());
+     if (isSgPointerType(new_op->get_specified_type())) {
+         SgPointerType *pointer_type = isSgPointerType(new_op->get_specified_type());
+         while(isSgPointerType(pointer_type -> get_base_type())) { // find the base type...
+             pointer_type = isSgPointerType(pointer_type -> get_base_type());
+         }
+
+         if (new_op -> attributeExists("new_prefix") && isSgClassType(new_op->get_specified_type())) {
+             SgClassType *class_type = isSgClassType(pointer_type -> get_base_type());
+             ROSE_ASSERT(class_type);
+             curprint(class_type -> get_name().getString());
+         }
+         else {
+             unparseType(pointer_type -> get_base_type(), info);
+         }
+
+         bool has_aggregate_initializer = new_op -> attributeExists("initializer");
          SgConstructorInitializer *init = new_op -> get_constructor_args();
          ROSE_ASSERT(init);
          vector<SgExpression *> args = init -> get_args() -> get_expressions();
          for (int i = 0; i < args.size(); i++) {
              curprint ("[");
-             unparseExpression(args[i], info);
+             if (! has_aggregate_initializer) {
+                 unparseExpression(args[i], info);
+             }
              curprint("]");
          }
-         // TODO: Process intializers, if any!!!
+
+         //
+         // If this array allocation expression contains an aggregate initializer process it now.
+         //
+         if (has_aggregate_initializer) {
+             AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) new_op -> getAttribute("initializer");
+             SgAggregateInitializer *initializer = isSgAggregateInitializer(attribute -> getNode());
+             ROSE_ASSERT(initializer);
+             unparseAggrInit(initializer, info);
+         }
      }
      else {
-         unparseType(new_op->get_specified_type(), info);
-         curprint ( "(");
+         if (new_op -> attributeExists("new_prefix") && isSgClassType(new_op->get_specified_type())) {
+             SgClassType *class_type = isSgClassType(new_op->get_specified_type());
+             ROSE_ASSERT(class_type);
+             curprint(class_type -> get_name().getString());
+         }
+         else {
+             unparseType(new_op->get_specified_type(), info);
+         }
+
+         curprint ("(");
          ROSE_ASSERT(new_op -> get_constructor_args());
          SgConstructorInitializer *init = new_op -> get_constructor_args();
          ROSE_ASSERT(init);
@@ -855,7 +951,17 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
              if (i + 1 < args.size())
                  curprint(", ");
          }
-         curprint ( ")");
+         curprint (")");
+
+         //
+         // If this is an allocation expression for an anonymous class, output the body of the class.
+         //
+         if (new_op -> attributeExists("body")) {
+             AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) new_op -> getAttribute("body");
+             SgClassDeclaration *class_declaration = isSgClassDeclaration(attribute -> getNode());
+             ROSE_ASSERT(class_declaration);
+             unparseClassDefnStmt(class_declaration -> get_definition(), info);
+         }
      }
 
   // printf ("DONE: new_op->get_type()->sage_class_name() = %s \n",new_op->get_type()->sage_class_name());
@@ -941,7 +1047,7 @@ Unparse_Java::unparseThisNode(SgExpression* expr, SgUnparse_Info& info)
 
      if (unp->opt.get_this_opt()) // Checks options to determine whether to print "this"  
         {
-          curprint ( "this"); 
+          curprint (this_node -> attributeExists("class") ? "class" : "this"); 
         }
    }
 
@@ -1155,25 +1261,6 @@ Unparse_Java::unparseCompoundAssignOp(SgCompoundAssignOp* op,
 void
 Unparse_Java::unparseBinaryOp(SgBinaryOp* op,
                               SgUnparse_Info & info) {
-
-    //
-    // An SgDotExp may contain a Type prefix stored in the "prefix" attribute.
-    //
-    if (op -> attributeExists("prefix")) {
-        AstRegExAttribute *attribute = (AstRegExAttribute *) op -> getAttribute("prefix");
-        curprint(attribute -> expression);
-        curprint(".");
-    }
-
-     //
-     // An SgDotExp may contain a name suffix stored in the "suffix" attribute.
-     //
-     if (op -> attributeExists("suffix")) {
-         curprint(".");
-         AstRegExAttribute *attribute = (AstRegExAttribute *) op -> getAttribute("suffix");
-         curprint(attribute -> expression);
-     }
-
     unparseExpression(op->get_lhs_operand(), info);
     switch (op->variantT()) {
         case V_SgAddOp:                curprint(" + ");   break;
@@ -1228,3 +1315,114 @@ Unparse_Java::unparseUnaryOp(SgUnaryOp* op,
     if (op->get_mode() == SgUnaryOp::prefix)
         unparseExpression(op->get_operand(), info);
 }
+
+/**
+ * When parsing Java source code, parentheses are stored in an AST attributes.
+ * Although we know the exact number of parentheses specified by the user we only
+ * output one pair, mostly to conform with rose's API that returns a bool.
+ */
+bool
+Unparse_Java::requiresParentheses(SgExpression* expr, SgUnparse_Info& info) {
+    const string attributeName = "java-parenthesis-info";
+    if (expr->attributeExists(attributeName)) {
+        AstRegExAttribute * attribute = (AstRegExAttribute *) expr->getAttribute(attributeName);
+        string parentheses = attribute->expression.c_str();
+        ROSE_ASSERT(parentheses.size() > 0);
+        return true;
+    }
+
+    return false;
+}
+
+//
+// PC: This function was copyed from Unparselanguageindependentconstructs::unparseExpression(SgExpression* expr, SgUnparse_Info & info)
+//
+//-----------------------------------------------------------------------------------
+//  void Unparse_Java::unparseExpression
+//  
+//  General unparse function for expressions. Then it routes to the appropriate 
+//  function to unparse each kind of expression. Type and symbols still use the 
+//  original unparse function because they don't have file_info and therefore, 
+//  will not print out file information
+//-----------------------------------------------------------------------------------
+void Unparse_Java::unparseExpression(SgExpression *expr, SgUnparse_Info &info) {
+    ROSE_ASSERT (expr != NULL);
+
+    switch (expr->variant()) {
+        // DQ (8/15/2007): This has been moved to the base class
+        case EXPR_LIST: { unparseExprList(expr, info); break; }
+
+        // DQ: These cases are separated out so that we can handle the 
+        // original expression tree from any possible constant folding by EDG.
+        case BOOL_VAL:
+        case SHORT_VAL:
+        case CHAR_VAL:
+        case UNSIGNED_CHAR_VAL:
+        case WCHAR_VAL:
+        case STRING_VAL:
+        case UNSIGNED_SHORT_VAL:
+        case ENUM_VAL:
+        case INT_VAL:
+        case UNSIGNED_INT_VAL:
+        case LONG_INT_VAL:
+        case LONG_LONG_INT_VAL:
+        case UNSIGNED_LONG_LONG_INT_VAL:
+        case UNSIGNED_LONG_INT_VAL:
+        case FLOAT_VAL:
+        case DOUBLE_VAL:
+        case LONG_DOUBLE_VAL:
+        case COMPLEX_VAL: {
+            unparseValue(expr, info);
+            break;
+        }
+        default: {
+             unparseLanguageSpecificExpression(expr, info);
+             break;
+        }
+    }
+}
+
+void Unparse_Java::unparseUnaryExpr(SgExpression *expr, SgUnparse_Info &info) {
+    SgUnaryOp *unary_op = isSgUnaryOp(expr);
+    ROSE_ASSERT(unary_op != NULL);
+
+    if (unary_op->get_mode() != SgUnaryOp::postfix) { // a prefix unary operator?
+        //
+        // We have to be careful so that two consecutive unary '+' or '-' are not output
+        // as "++" or "--". Hence the extra space before a prefix operator
+        //
+        curprint(" "); 
+        curprint(info.get_operator_name());
+    }
+
+    unparseExpression(unary_op->get_operand(), info);
+
+    if (unary_op->get_mode() == SgUnaryOp::postfix) { // a postfix unary operator?
+        curprint (info.get_operator_name()); 
+    }
+}
+
+
+void Unparse_Java::unparseBinaryExpr(SgExpression *expr, SgUnparse_Info &info) {
+    SgBinaryOp *binary_op = isSgBinaryOp(expr);
+    ROSE_ASSERT(binary_op != NULL);
+
+
+    // DQ (2/7/2011): Unparser support for more general originalExpressionTree handling.
+    SgExpression *expressionTree = binary_op->get_originalExpressionTree();
+    if (expressionTree != NULL) {
+        unparseExpression(expressionTree, info);
+        return;
+    }
+
+    SgExpression *lhs = binary_op->get_lhs_operand();
+    ROSE_ASSERT(lhs != NULL);
+    unparseExpression(lhs, info);
+
+    curprint(info.get_operator_name()); 
+
+    SgExpression *rhs = binary_op->get_rhs_operand();
+    ROSE_ASSERT(rhs != NULL);
+    unparseExpression(rhs, info);
+}
+

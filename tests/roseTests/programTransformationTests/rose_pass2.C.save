@@ -11,7 +11,7 @@ int unknown()
 
 void foo()
 {
-// Partial redundancy elimination: cachevar__1 is a cache of (a + b)
+// Partial redundancy elimination: cachevar__1 is a cache of a + b
   int cachevar__1;
   int a;
   int b;
@@ -21,48 +21,51 @@ void foo()
   int z;
   int w;
   if ((unknown())) {
-    y = (a + b);
+    y = a + b;
     a = c;
 // Added by Jeremiah Willcock to test local PRE
-    w = (a + b);
+    w = a + b;
     a = b;
-    cachevar__1 = (a + b);
+    cachevar__1 = a + b;
     x = cachevar__1;
     w = cachevar__1;
     a = c;
 // End of added part
-    x = (a + b);
+    x = a + b;
   }
   else {
   }
   if ((unknown())) {
-    cachevar__1 = (a + b);
+    cachevar__1 = a + b;
     while((unknown())){
       y = cachevar__1;
-    }
-  }
-  else if ((unknown())) {
-    while((unknown())){
-    }
-    if ((unknown())) {
-      cachevar__1 = (a + b);
-      y = cachevar__1;
-    }
-    else {
-      goto L9;
     }
   }
   else {
-    goto L10;
+    if ((unknown())) {
+      while((unknown())){
+      }
+      if ((unknown())) {
+        cachevar__1 = a + b;
+        y = cachevar__1;
+      }
+      else {
+        goto L9;
+      }
+    }
+    else {
+      goto L10;
+    }
   }
   z = cachevar__1;
   a = c;
   L9:
-  x = (a + b);
+  x = a + b;
 // DQ (12/16/2006): This appears to be OK now (it was a previous ROSE bug).
 // L10: 0; // ROSE bug: using return; here doesn't work
 // ROSE bug: using return; here doesn't work
-  L10:;
+  L10:
+  return ;
 }
 
 int main(int ,char **)

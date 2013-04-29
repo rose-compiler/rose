@@ -65,7 +65,10 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
        // expression trees from contant folding)
           virtual void unparseStringVal               (SgExpression* expr, SgUnparse_Info& info);  
 
-       // JJW -- these need C-specific suffixes
+       // these need Java-specific treatment
+          virtual void unparseBoolVal                 (SgExpression* expr, SgUnparse_Info& info);  
+          virtual void unparseWCharVal                (SgExpression* expr, SgUnparse_Info& info);  
+
           virtual void unparseUIntVal                 (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseLongIntVal              (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseLongLongIntVal          (SgExpression* expr, SgUnparse_Info& info);    
@@ -112,7 +115,10 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparsePseudoDtorRef           (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseJavaInstanceOfOp        (SgExpression* expr, SgUnparse_Info& info);
 
+//          virtual void unparseGlobalStmt       (SgStatement* stmt, SgUnparse_Info& info);
+
           virtual void unparseBasicBlockStmt   (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseCaseOrDefaultBasicBlockStmt   (SgStatement* stmt, SgUnparse_Info& info);
 
        // DQ (4/16/2011): Added Java specific "import" statement.
           virtual void unparseImportDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info);
@@ -217,6 +223,7 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseTypeVoid(SgTypeVoid* type, SgUnparse_Info& info);
 
           virtual void unparseBaseClass(SgBaseClass* base, SgUnparse_Info& info);
+          virtual void unparseParameterType(SgType *bound_type, SgUnparse_Info& info);
 
           virtual void unparseTypeWchar(SgTypeWchar* type, SgUnparse_Info& info);
           virtual void unparseTypeSignedChar(SgTypeSignedChar* type, SgUnparse_Info& info);
@@ -227,12 +234,22 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseTypeDouble(SgTypeDouble* type, SgUnparse_Info& info);
           virtual void unparseTypeBool(SgTypeBool* type, SgUnparse_Info& info);
 
+          virtual void unparseTypedefType(SgTypedefType* type, SgUnparse_Info& info);
           virtual void unparseClassType(SgClassType* type, SgUnparse_Info& info);
           virtual void unparseEnumType(SgEnumType* type, SgUnparse_Info& info);
           virtual void unparseArrayType(SgArrayType* type, SgUnparse_Info& info);
+          virtual void unparsePointerType(SgPointerType* type, SgUnparse_Info& info);
           virtual void unparseModifierType(SgModifierType* type, SgUnparse_Info& info);
 
           virtual void unparseJavaParameterizedType(SgJavaParameterizedType* type, SgUnparse_Info& info);
+          virtual void unparseJavaWildcardType(SgJavaWildcardType* type, SgUnparse_Info& info);
+
+          virtual bool requiresParentheses(SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseExpression(SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseUnaryExpr(SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseBinaryExpr(SgExpression* expr, SgUnparse_Info& info);
+
+          void unparseEnumBody(SgClassDefinition *, SgUnparse_Info& info);
    };
 
 #endif

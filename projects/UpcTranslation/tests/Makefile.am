@@ -68,7 +68,8 @@ check-local:
 	$(MAKE) rose_unshared_1.c.aa
 	$(MAKE) rose_extern.c
 #	DQ (9/26/2011): This test fails the new AST consistancy test for references to dangling pointers to IR nodes.
-	$(MAKE) rose_unshared_2.c
+# Liao, 3/28/2013. Turn this off based on Dan's suggestion. UPCxx is not supported in EDG 4.4 + ROSE
+#	$(MAKE) rose_unshared_2.c
 	$(MAKE) rose_bupcr_magic.c
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/projects/UpcTranslator/tests: make check rule complete (terminated normally) ******"

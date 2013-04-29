@@ -18,6 +18,8 @@ import org.eclipse.jdt.internal.compiler.parser.*;
 import org.eclipse.jdt.internal.compiler.problem.*;
 import org.eclipse.jdt.internal.compiler.util.*;
 
+import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
+
 // import JavaParser.*;
 
 // DQ (10/12/2010): Make more like the OFP implementation (using Callable<Boolean> abstract base class). 
@@ -30,8 +32,9 @@ class JavaTraversal implements Callable<Boolean> {
     // This class generates a DOT file of the ECJ AST.  It is not used for any ROSE specific translation
     // of the AST.  As a result it should be renamed.
 
-    // Not clear what this means!
-    static Main main;
+// TODO: remove this !!!
+// Not clear what this means!
+// static Main main;
     static BufferedWriter out;
 
     static int verboseLevel = 0;
@@ -127,6 +130,7 @@ class JavaTraversal implements Callable<Boolean> {
 
         }
         catch (Exception e) {
+            e.printStackTrace();
             System.err.println("Error: " + e.getMessage());
         }
     }
@@ -154,783 +158,6 @@ class JavaTraversal implements Callable<Boolean> {
     }
 
 
-    /* tps (10/08/10): AST traversal contains all current nodes of ECJ ---------------------------------------------- */
-    public void traverseAST(CompilationUnitDeclaration unit) {
-        final ASTVisitor visitor = new ASTVisitor() {
-            public void endVisit( AllocationExpression node, BlockScope scope) {
-                popNode(); // do nothing by default
-            }
-
-            public void endVisit(AND_AND_Expression  node, BlockScope scope) {
-                popNode(); // do nothing by default
-            }
-
-            public void endVisit( AnnotationMethodDeclaration node, ClassScope classScope) {
-                popNode(); // do nothing by default
-            }
-
-            public void endVisit(Argument  node, BlockScope scope) {
-                popNode(); // do nothing by default
-            }
-
-            public void endVisit(Argument  node,ClassScope scope) {
-                popNode(); // do nothing by default
-            }
-
-            public void endVisit(ArrayAllocationExpression node,BlockScope scope) {
-                popNode(); // do nothing by default
-            }
-
-            public void endVisit(ArrayInitializer  node, BlockScope scope) {
-                popNode();        // do nothing by default
-            }
-
-            public void endVisit(ArrayQualifiedTypeReference node, BlockScope scope) {
-                popNode();        // do nothing by default
-            }
-
-            public void endVisit(ArrayQualifiedTypeReference node, ClassScope scope) {
-                popNode();        // do nothing by default
-            }
-    
-            public void endVisit(ArrayReference  node, BlockScope scope) {
-                popNode();        // do nothing by default
-            }
-
-            public void endVisit(ArrayTypeReference  node, BlockScope scope) {
-                popNode();        // do nothing by default
-            }
-
-            public void endVisit(ArrayTypeReference  node, ClassScope scope) {
-                popNode();            // do nothing by default
-            }
-    
-            public void endVisit(AssertStatement  node, BlockScope scope) {
-                popNode();// do nothing by default
-            }
-
-            public void endVisit(Assignment  node, BlockScope scope) {
-                popNode();// do nothing by default
-            }
-            public void endVisit(BinaryExpression  node, BlockScope scope) {
-                popNode();// do nothing by default
-            }
-            public void endVisit(Block  node, BlockScope scope) {
-                popNode();// do nothing by default
-            }
-            public void endVisit(BreakStatement  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(CaseStatement  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(CastExpression  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(CharLiteral  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(ClassLiteralAccess  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(Clinit  node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(CompilationUnitDeclaration node, CompilationUnitScope scope) {
-                popNode(); // do nothing by default
-            }
-            public void endVisit(CompoundAssignment  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(ConditionalExpression node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(ConstructorDeclaration node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(ContinueStatement  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(DoStatement  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(DoubleLiteral  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(EmptyStatement  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(EqualExpression  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(ExplicitConstructorCall node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(ExtendedStringLiteral node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(FalseLiteral  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(FieldDeclaration  node, MethodScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(FieldReference  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(FieldReference  node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(FloatLiteral  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(ForeachStatement  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(ForStatement  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(IfStatement  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(ImportReference  node, CompilationUnitScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(Initializer  node, MethodScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(InstanceOfExpression node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(IntLiteral  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(Javadoc  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(Javadoc  node, ClassScope scope) {
-                popNode(); // do nothing  by default
-           }
-            public void endVisit(JavadocAllocationExpression  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(JavadocAllocationExpression  node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(JavadocArgumentExpression  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(JavadocArgumentExpression  node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(JavadocArrayQualifiedTypeReference  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(JavadocArrayQualifiedTypeReference  node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(JavadocArraySingleTypeReference  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(JavadocArraySingleTypeReference  node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(JavadocFieldReference  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(JavadocFieldReference  node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(JavadocImplicitTypeReference  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(JavadocImplicitTypeReference  node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(JavadocMessageSend  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(JavadocMessageSend  node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(JavadocQualifiedTypeReference  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(JavadocQualifiedTypeReference  node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(JavadocReturnStatement  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(JavadocReturnStatement  node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(JavadocSingleNameReference  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(JavadocSingleNameReference  node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(JavadocSingleTypeReference  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(JavadocSingleTypeReference  node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(LabeledStatement  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(LocalDeclaration  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(LongLiteral  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            /**
-             * @param annotation
-             * @param scope
-             * @shashcountere 3.1
-             */
-            public void endVisit(MarkerAnnotation  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            /**
-             * @param pair
-             * @param scope
-             */
-            public void endVisit(MemberValuePair  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(MessageSend  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(MethodDeclaration  node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(StringLiteralConcatenation  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            /**
-             * @param annotation
-             * @param scope
-             * @shashcountere 3.1
-             */
-            public void endVisit(NormalAnnotation  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(NullLiteral  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(OR_OR_Expression  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(ParameterizedQualifiedTypeReference  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(ParameterizedQualifiedTypeReference  node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(ParameterizedSingleTypeReference  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(ParameterizedSingleTypeReference  node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(PostfixExpression  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(PrefixExpression  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(QualifiedAllocationExpression node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(QualifiedNameReference node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(QualifiedNameReference node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(QualifiedSuperReference node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(QualifiedSuperReference node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(QualifiedThisReference node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(QualifiedThisReference node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(QualifiedTypeReference node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(QualifiedTypeReference node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(ReturnStatement  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            /**
-             * @param annotation
-             * @param scope
-             * @shashcountere 3.1
-             */
-            public void endVisit(SingleMemberAnnotation  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(SingleNameReference node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(SingleNameReference node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(SingleTypeReference node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(SingleTypeReference node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(StringLiteral  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(SuperReference  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(SwitchStatement  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(SynchronizedStatement node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(ThisReference  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(ThisReference  node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(ThrowStatement  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(TrueLiteral  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(TryStatement  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(TypeDeclaration node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(TypeDeclaration node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(TypeDeclaration node, CompilationUnitScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(TypeParameter  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(TypeParameter  node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(UnaryExpression  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(WhileStatement  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(Wildcard  node, BlockScope scope) {
-                popNode(); // do nothing  by default
-            }
-            public void endVisit(Wildcard  node, ClassScope scope) {
-                popNode(); // do nothing  by default
-            }
-
-            //----------------------------------------------------------------------------------------------
-
-            public boolean visit(AllocationExpression node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(AND_AND_Expression  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(AnnotationMethodDeclaration node, ClassScope classScope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by default, keep traversing
-            }
-            public boolean visit(Argument  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(Argument  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ArrayAllocationExpression node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ArrayInitializer  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ArrayQualifiedTypeReference node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ArrayQualifiedTypeReference node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ArrayReference  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ArrayTypeReference  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ArrayTypeReference  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(AssertStatement  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(Assignment  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(BinaryExpression  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(Block  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(BreakStatement  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(CaseStatement  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(CastExpression  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(CharLiteral  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ClassLiteralAccess  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(Clinit  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(CompilationUnitDeclaration node, CompilationUnitScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by default, keep traversing
-            }
-            public boolean visit(CompoundAssignment  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ConditionalExpression node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ConstructorDeclaration node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ContinueStatement  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(DoStatement  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(DoubleLiteral  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(EmptyStatement  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(EqualExpression  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ExplicitConstructorCall node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ExtendedStringLiteral node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(FalseLiteral  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(FieldDeclaration  node, MethodScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(FieldReference  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(FieldReference  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(FloatLiteral  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ForeachStatement  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ForStatement  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(IfStatement  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ImportReference  node, CompilationUnitScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(Initializer  node, MethodScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(InstanceOfExpression node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(IntLiteral  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(Javadoc  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(Javadoc  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocAllocationExpression  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocAllocationExpression  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocArgumentExpression  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocArgumentExpression  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocArrayQualifiedTypeReference  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocArrayQualifiedTypeReference  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocArraySingleTypeReference  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocArraySingleTypeReference  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocFieldReference  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocFieldReference  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocImplicitTypeReference  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocImplicitTypeReference  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocMessageSend  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocMessageSend  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocQualifiedTypeReference  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocQualifiedTypeReference  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocReturnStatement  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocReturnStatement  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocSingleNameReference  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocSingleNameReference  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocSingleTypeReference  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(JavadocSingleTypeReference  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(LabeledStatement  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(LocalDeclaration  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(LongLiteral  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            /**
-             * @param annotation
-             * @param scope
-             * @shashcountere 3.1
-             */
-            public boolean visit(MarkerAnnotation  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true;
-            }
-            /**
-             * @param pair
-             * @param scope
-             * @shashcountere 3.1
-             */
-            public boolean visit(MemberValuePair  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true;
-            }
-            public boolean visit(MessageSend  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(MethodDeclaration  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(StringLiteralConcatenation node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            /**
-             * @param annotation
-             * @param scope
-             * @shashcountere 3.1
-             */
-            public boolean visit(NormalAnnotation  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true;
-            }
-            public boolean visit(NullLiteral  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(OR_OR_Expression  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ParameterizedQualifiedTypeReference  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ParameterizedQualifiedTypeReference  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ParameterizedSingleTypeReference  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ParameterizedSingleTypeReference  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(PostfixExpression  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(PrefixExpression  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(QualifiedAllocationExpression node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(QualifiedNameReference node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(QualifiedNameReference node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(QualifiedSuperReference node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(QualifiedSuperReference node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(QualifiedThisReference node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(QualifiedThisReference node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(QualifiedTypeReference node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(QualifiedTypeReference node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ReturnStatement  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            /**
-             * @param annotation
-             * @param scope
-             * @shashcountere 3.1
-             */
-            public boolean visit(SingleMemberAnnotation  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true;
-            }
-            public boolean visit(SingleNameReference node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(SingleNameReference node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(SingleTypeReference node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(SingleTypeReference node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(StringLiteral  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(SuperReference  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(SwitchStatement  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(SynchronizedStatement node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ThisReference  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ThisReference  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(ThrowStatement  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(TrueLiteral  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(TryStatement  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(TypeDeclaration node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(TypeDeclaration node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(TypeDeclaration node, CompilationUnitScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(TypeParameter  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(TypeParameter  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(UnaryExpression  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(WhileStatement  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(Wildcard  node, BlockScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-            public boolean visit(Wildcard  node, ClassScope scope) {
-                printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
-            }
-        };
-
-        unit.traverse(visitor,unit.scope);
-    }
-
     // Added support for command line processing to set the verbose level (passed directly from ROSE "--rose:verbose n").
     public static String [] filterCommandline(String args[]) {
         int commandlineErrorLevel = 0;
@@ -952,11 +179,11 @@ class JavaTraversal implements Callable<Boolean> {
              if (commandlineErrorLevel > 0)
                  System.out.println("ROSE Argument found: " + args[j]);
 
-            // String matchingString = "--rose";
+            // String matchingString = "-rose";
             // Java substring uses index 0 ... 5 (the upper bound "6" is not used.
             // System.out.println("     substring = " + arg.substring(0,6) + " matchingString = " + matchingString);
             // if (arg.substring(0,6) == matchingString.substring(0,6))
-            if (args[j].startsWith("--rose:verbose") == true) {
+            if (args[j].startsWith("-rose:verbose") == true) {
                 if (commandlineErrorLevel > 0)
                     System.out.println("Clear this ROSE specific argument #" + j + ": " + args[j]);
 
@@ -978,10 +205,11 @@ class JavaTraversal implements Callable<Boolean> {
                         System.out.println("integer value = " + verboseLevel);
                 }
                 catch (NumberFormatException nfe) {
+                    nfe.printStackTrace();
                     System.out.println("NumberFormatException: " + nfe.getMessage());
 
                     // It might be better to rethrow the exception
-                    System.out.println("Error: --rose:verbose option specified with out an integer value: veboseLevelString = " + veboseLevelString);
+                    System.out.println("Error: -rose:verbose option specified with out an integer value: veboseLevelString = " + veboseLevelString);
                     System.exit(1);
                 }
             }
@@ -1008,22 +236,64 @@ class JavaTraversal implements Callable<Boolean> {
         return args;
     }
 
-    // This is the "main" function called from the outside (via the JVM from ROSE).
-    public static void main(String args[]) {
-        /* tps : set up and configure ---------------------------------------------- */
-
-        // Filter out ROSE specific options.
-        args = filterCommandline(args);
-
+    /**
+     * Compile the source files specified and all its dependent source files and generate
+     * all the associatd class files.
+     *  
+     * @param args
+     */
+    static boolean compile(String args[]) {
         if (verboseLevel > 0)
             System.out.println("Compiling ...");
 
         // This line of code will run, but the first use of "main" fails ...working now!
-        main = new Main(new PrintWriter(System.out), new PrintWriter(System.err), true/*systemExit*/,  null/*options*/, null/*progress*/);
+        Main main = new Main(new PrintWriter(System.out), new PrintWriter(System.err), true/*systemExit*/,  null/*options*/, null/*progress*/);
+
+        //
+        try {
+            main.configure(args);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Error in main.configure(args): " + e.getMessage()); 
+            System.exit(1);
+        }
+        main.compilerOptions = new CompilerOptions(main.options);
+        main.compilerOptions.performMethodsFullRecovery = false;
+        main.compilerOptions.performStatementsRecovery = false;
+        // main.compilerOptions.verbose = true;
+        main.compilerOptions.sourceLevel = ClassFileConstants.JDK1_7;
+        main.compilerOptions.generateClassFiles = true;
+
+        main.batchCompiler =  new Compiler(main.getLibraryAccess(),
+                                           main.getHandlingPolicy(),
+                                           main.compilerOptions,
+                                           main.getBatchRequestor(),
+                                           main.getProblemFactory(),
+                                           null,
+                                           main.progress
+                                          );
+
+        ICompilationUnit[] sourceUnits = main.getCompilationUnits();
+        if (verboseLevel > 2)
+            System.out.println("We got " + sourceUnits.length + " compilation units");
+
+        main.batchCompiler.compile(sourceUnits); // generate all class files that are needed for these source units.
+
+        return main.globalErrorsCount == 0; // return whether or not the compilation was successful.
+    }
+
+    /**
+     * Compile and generate an AST for each input file specified in args.
+     * 
+     * @param args
+     */
+    static Main generateAst(String args[]) {
+        Main main = new Main(new PrintWriter(System.out), new PrintWriter(System.err), true/*systemExit*/,  null/*options*/, null/*progress*/);
 
         // This is the last message printed to the console ...
         if (verboseLevel > 0)
-            System.out.println("test 1 .... (note call to main.configure(args); fails silently)");
+            System.out.println("(2) test 1 .... (note call to main.configure(args); fails silently)");
 
         // DQ (4/1/2011): Added try...catch to debug command line handling.
         // We want to support the ECJ command line options where possible.
@@ -1033,26 +303,18 @@ class JavaTraversal implements Callable<Boolean> {
             main.configure(args);
         }
         catch (Exception e) {
-             System.err.println("Error in main.configure(args): " + e.getMessage()); 
-             System.exit(1);
+            e.printStackTrace();
+            System.err.println("(2) Error in main.configure(args): " + e.getMessage()); 
+            System.exit(1);
         }
-
-        if (verboseLevel > 0)
-            System.out.println("test 2 ...");
-
-        FileSystem environment = main.getLibraryAccess();
-
-        if (verboseLevel > 0)
-            System.out.println("test 3 ...");
 
         main.compilerOptions = new CompilerOptions(main.options);
         main.compilerOptions.performMethodsFullRecovery = false;
         main.compilerOptions.performStatementsRecovery = false;
+     // main.compilerOptions.verbose = true;
+        main.compilerOptions.sourceLevel = ClassFileConstants.JDK1_7;
 
-        if (verboseLevel > 2)
-            System.out.println("test 4 ...");
-
-        main.batchCompiler =  new Compiler(environment,
+        main.batchCompiler =  new Compiler(main.getLibraryAccess(),
                                            main.getHandlingPolicy(),
                                            main.compilerOptions,
                                            main.getBatchRequestor(),
@@ -1061,35 +323,14 @@ class JavaTraversal implements Callable<Boolean> {
                                            main.progress
                                           );
 
-        if (verboseLevel > 2)
-            System.out.println("test 5 ...");
-
         /* tps : handle compilation units--------------------------------------------- */
         ICompilationUnit[] sourceUnits = main.getCompilationUnits();
         int maxUnits = sourceUnits.length;
+
         main.batchCompiler.totalUnits = 0;
         main.batchCompiler.unitsToProcess = new CompilationUnitDeclaration[maxUnits];
-
-        /* tps : Debug: print Compilation units --------------------------- */
-        if (verboseLevel > 2)
-            System.out.println("We got "+maxUnits+" compilation units");
-
-        CompilationUnit[] units = main.getCompilationUnits();
-
-        if (verboseLevel > 2) {
-            System.out.println("Nr of Compilation Units : "+units.length);
-
-            for (CompilationUnit myunit : units) {
-                 System.out.println("File : "+myunit);
-            }
-        }
-
-        /* tps : start parsing ------------------------------------------------------- */
         main.batchCompiler.internalBeginToCompile(sourceUnits, maxUnits);
-        // main.batchCompiler.compile(sourceUnits);
 
-        JavaTraversal jt = new JavaTraversal();
-        jt.invokeINIT();
         try {
             // writing to the DOT file
             FileWriter fstream = new FileWriter("ast.dot");
@@ -1097,56 +338,105 @@ class JavaTraversal implements Callable<Boolean> {
             out.write("Digraph G {\n");
         }
         catch (Exception e) {
+            e.printStackTrace();
             System.err.println("Error: " + e.getMessage()); 
         }
 
-        /* tps : compile the files and produce class files --------------------------- */
-        // ProcessTaskManager processingTask = null;
+        return main;
+    }
 
-        if (verboseLevel > 2)
-            System.out.println("test 6 ...");
 
+    // This is the "main" function called from the outside (via the JVM from ROSE).
+    public static void main(String args[]) {
+        /* tps : set up and configure ---------------------------------------------- */
+
+        // Filter out ROSE specific options.
+        args = filterCommandline(args);
+
+        //
+        // Generate all necessary classfiles if no errors are detected
+        //
+        if (! compile(args)) { // errors are detected?
+            System.out.flush();
+            System.err.flush();
+
+            System.err.println();
+            System.err.println();
+            System.err.println("ECJ front-end errors detected in input java program");
+            System.exit(1);
+        }
+        
+        Main main = generateAst(args); // get compiler to generate AST.
+        Compiler batchCompiler = main.batchCompiler; // get compiler to generate AST.
+        int maxUnits = main.getCompilationUnits().length;
+        
         // Calling the parser to build the ROSE AST from a traversal of the ECJ AST.
         try {
             if (verboseLevel > 2)
                 System.out.println("test 7 ...");
 
-            JavaParser.cactionCompilationUnitList(main.batchCompiler.totalUnits, args);
-            JavaParser.cactionGenerateType("java.lang.Object", 0);
-            JavaParser.cactionTypeReference("java.lang.Object", new JavaToken("Dummy JavaToken (see createJavaToken)", new JavaSourcePositionInformation(0)));
-            JavaParser.cactionProcessObject();
+            JavaParser.cactionCompilationUnitList(maxUnits, args);
 
             if (verboseLevel > 2)
                 System.out.println("test 8 ...");
 
-            for (int i = 0; i < main.batchCompiler.totalUnits; i++) {
-                CompilationUnitDeclaration unit = main.batchCompiler.unitsToProcess[i];
+            //
+            // What is the class path for these compilation units?
+            //
+            String classpath = "";
+            for (int i = 0; i < args.length; i++) {
+                if (args[i].equals("-classpath") || args[i].equals("-cp")) {
+                    classpath = args[i+1];
+                    break;
+                }
+            }
+            JavaParserSupport java_parser_support = new JavaParserSupport(classpath, verboseLevel);
 
+            //
+            // Note the original commented out limit.  This is wrong!  We only want to process
+            // the source files that were specified by the user and not the ones that were 
+            // pulled in by closure.
+            //
+            for (int i = 0; i < maxUnits /*batchCompiler.totalUnits*/; i++) {
+                CompilationUnitDeclaration unit = batchCompiler.unitsToProcess[i];
+                assert(unit != null);
+
+                if (verboseLevel > 2)
+                    System.out.println("calling batchCompiler.process(unit, i) ..." + new String(unit.getFileName()));
+
+                    batchCompiler.process(unit, i);
+
+                if (unit.compilationResult.hasSyntaxError || unit.compilationResult.hasErrors()) {
+                    System.out.flush();
+                    System.err.flush();
+
+                    System.err.println();
+                    System.err.println();
+                    System.err.println("ECJ front-end errors detected in input java program");
+                    System.exit(1);
+                }
+
+                java_parser_support.preprocess(unit);
+            }
+
+            //
+            // We only process the main unit to prevent the Unparser from generating multiple
+            // compilation units in the same file.
+            //
+            /* for ( */ int i = 0; /* i < main.batchCompiler.totalUnits; i++)*/
+            {
+                CompilationUnitDeclaration unit = batchCompiler.unitsToProcess[i];
                 try {
-                    assert(unit != null);
-
-                    if (verboseLevel > 2)
-                        System.out.println("calling main.batchCompiler.process(unit, i) ...");
-
-                    main.batchCompiler.process(unit, i);
-
-                    if (verboseLevel > 2)
-                        System.out.println("calling jt.traverseAST(unit) ...");
-
-                    jt.traverseAST(unit); /*tps this is a better place for the traversal */
-
-                    if (verboseLevel > 2)
-                        System.out.println("test 9 ...");
-
                     // **************************************************
                     // This is where the traveral of the ECJ AST is done.
                     // **************************************************
-                    JavaParser.startParsingAST(unit, verboseLevel);
+                    java_parser_support.translate(unit);
 
                     if (verboseLevel > 2)
                         System.out.println("test 10 ...");
                 }
                 catch (Exception e) {
+                    e.printStackTrace();
                     System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e.getMessage());
 
                     // This should output the call stack.
@@ -1156,13 +446,14 @@ class JavaTraversal implements Callable<Boolean> {
                     // cleanup compilation unit result
                     unit.cleanUp();
                 }
-                main.batchCompiler.unitsToProcess[i] = null; // release reference to processed unit declaration
-                main.batchCompiler.stats.lineCount += unit.compilationResult.lineSeparatorPositions.length;
-                main.batchCompiler.requestor.acceptResult(unit.compilationResult.tagAsAccepted());
+                batchCompiler.unitsToProcess[i] = null; // release reference to processed unit declaration
+                batchCompiler.stats.lineCount += unit.compilationResult.lineSeparatorPositions.length;
+                batchCompiler.requestor.acceptResult(unit.compilationResult.tagAsAccepted());
             }
         }
         catch (Exception e) {
             // DQ (11/1/2010): Added more aggressive termination of program...
+            e.printStackTrace();
             System.err.println("Error in JavaTraversal::main(): " + e.getMessage());
             // System.exit(1);
 
@@ -1170,13 +461,17 @@ class JavaTraversal implements Callable<Boolean> {
             return;
         }
 
-        jt.invokeEND();
+        JavaParser.cactionCompilationUnitListEnd();
+
+// TODO: REMOVE THIS !
+//        jt.invokeEND();
         try {
             // closing the DOT file
             out.write("}\n");
             out.close();
         } 
         catch (Exception e) {
+            e.printStackTrace();
             System.err.println("Error: " + e.getMessage());
         }
 

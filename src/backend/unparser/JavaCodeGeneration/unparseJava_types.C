@@ -24,32 +24,35 @@ Unparse_Java::unparseType(SgType* type, SgUnparse_Info& info)
    {
 
      ROSE_ASSERT(type != NULL);
+
      switch (type->variantT())
         {
-          case V_SgTypeVoid:   unparseTypeVoid( isSgTypeVoid(type), info); break;
+          case V_SgTypeVoid:       unparseTypeVoid( isSgTypeVoid(type), info); break;
 
           case V_SgTypeSignedChar: unparseTypeSignedChar( isSgTypeSignedChar(type), info); break;
-          case V_SgTypeWchar:  unparseTypeWchar( isSgTypeWchar(type), info); break;
-          case V_SgTypeShort:  unparseTypeShort( isSgTypeShort(type), info); break;
-          case V_SgTypeInt:    unparseTypeInt( isSgTypeInt(type), info); break;
-          case V_SgTypeLong:   unparseTypeLong( isSgTypeLong(type), info); break;
-          case V_SgTypeFloat:  unparseTypeFloat( isSgTypeFloat(type), info); break;
-          case V_SgTypeDouble: unparseTypeDouble( isSgTypeDouble(type), info); break;
-          case V_SgTypeBool:   unparseTypeBool( isSgTypeBool(type), info); break;
+          case V_SgTypeWchar:      unparseTypeWchar( isSgTypeWchar(type), info); break;
+          case V_SgTypeShort:      unparseTypeShort( isSgTypeShort(type), info); break;
+          case V_SgTypeInt:        unparseTypeInt( isSgTypeInt(type), info); break;
+          case V_SgTypeLong:       unparseTypeLong( isSgTypeLong(type), info); break;
+          case V_SgTypeFloat:      unparseTypeFloat( isSgTypeFloat(type), info); break;
+          case V_SgTypeDouble:     unparseTypeDouble( isSgTypeDouble(type), info); break;
+          case V_SgTypeBool:       unparseTypeBool( isSgTypeBool(type), info); break;
 
-          case V_SgArrayType:  unparseArrayType( isSgArrayType(type), info); break;
-          case V_SgClassType:  unparseClassType( isSgClassType(type), info); break;
-          case V_SgEnumType:   unparseEnumType( isSgEnumType(type), info); break;
-          case V_SgModifierType: unparseModifierType( isSgModifierType(type), info); break;
+          case V_SgArrayType:      unparseArrayType( isSgArrayType(type), info); break;
+          case V_SgPointerType:    unparsePointerType( isSgPointerType(type), info); break;
+          case V_SgTypedefType:    unparseTypedefType( isSgTypedefType(type), info); break;
+          case V_SgClassType:      unparseClassType( isSgClassType(type), info); break;
+          case V_SgEnumType:       unparseEnumType( isSgEnumType(type), info); break;
+          case V_SgModifierType:   unparseModifierType( isSgModifierType(type), info); break;
 
        // DQ (9/5/2011): Added support for Java generics.
-          case V_SgJavaParameterizedType:  unparseJavaParameterizedType(isSgJavaParameterizedType(type),info); break;
+          case V_SgJavaParameterizedType:  unparseJavaParameterizedType(isSgJavaParameterizedType(type), info); break;
+          case V_SgJavaWildcardType:  unparseJavaWildcardType(isSgJavaWildcardType(type), info); break;
 
           default:
-cout << "V_SgJavaParameterizedType = " << V_SgJavaParameterizedType << endl
-     << "type->variantT() = " << type->variantT() << endl;
-cout.flush();
                cout << "Unparse_Java::unparseType(" << type->class_name() << "*,info) is unimplemented." << endl;
+string *p = NULL;
+ if (p -> size()); // force a crash!!!
                ROSE_ASSERT(false);
                break;
         }
@@ -58,17 +61,38 @@ cout.flush();
 void
 Unparse_Java::unparseModifierType(SgModifierType* type, SgUnparse_Info& info) {
     unparseTypeModifier(type->get_typeModifier(), info);
+    ROSE_ASSERT(type->get_base_type());
     unparseType(type->get_base_type(), info);
 }
 
 void
-Unparse_Java::unparseClassType(SgClassType* type, SgUnparse_Info& info)
+Unparse_Java::unparseTypedefType(SgTypedefType *type, SgUnparse_Info& info)
    {
-     SgClassDeclaration *decl = isSgClassDeclaration(type->get_declaration());
-     ROSE_ASSERT(decl != NULL);
+     curprint(type -> get_name().getString());
+   }
 
-     unparseName(decl->get_name(), info);
+
+void
+Unparse_Java::unparseClassType(SgClassType *type, SgUnparse_Info& info)
+   {
+     //SgClassDeclaration *decl = isSgClassDeclaration(type->get_declaration());
+     //ROSE_ASSERT(decl != NULL);
+     //unparseName(decl->get_name(), info);
      //todo templates and qualified names
+
+     if (type -> attributeExists("is_parameter_type")) {
+         curprint(type -> get_name().getString());
+     }
+     else {
+         //
+         // Note that we use this attribute to store the qualified name of the type instead of
+         // "type -> get_qualified_name()" because the qualified name has been altered to remap
+         // any use of the character '.' which is not a valid character for a variable name in ROSE.
+         //
+         AstRegExAttribute *attribute = (AstRegExAttribute *) type -> getAttribute("name");
+         ROSE_ASSERT(attribute);
+         curprint(attribute -> expression);
+     }
    }
 
 
@@ -105,17 +129,33 @@ Unparse_Java::unparseJavaParameterizedType(SgJavaParameterizedType* type, SgUnpa
             // There are a number of way in which the argumentType can be set (but maybe a restricted set of ways for Java).
                if (argumentType != NULL)
                   {
-                    unparseType(argumentType,info);
+                    unparseType(argumentType, info);
                   }
                  else
                   {
                  // It might be that this branch should be an error for Java. But likely caught elsewhere in ROSE.
                   }
+
+                 if (i + 1 < type_list->get_args().size())
+                    {
+                      curprint(", ");
+                    }
              }
         }
 
      curprint(">");
    }
+
+
+void 
+Unparse_Java::unparseJavaWildcardType(SgJavaWildcardType* type, SgUnparse_Info& info) {
+     curprint("?");
+
+     if (! type -> get_is_unbound()) {
+         curprint(type -> get_has_extends() ? " extends " : " super ");
+         unparseType(type -> get_bound_type(), info);
+     }
+}
 
 
 void
@@ -245,6 +285,24 @@ Unparse_Java::unparseArrayType(SgArrayType* type, SgUnparse_Info& info)
          curprint("[]");
      }
    }
+
+void
+Unparse_Java::unparsePointerType(SgPointerType *pointer_type, SgUnparse_Info& info) {
+  /*
+    SgType *type = pointer_type;
+    ROSE_ASSERT(type != NULL);
+    string bounds = "";
+    while (isSgPointerType(type)) {
+        bounds += "[]";
+        type = isSgPointerType(type) -> get_base_type();
+    }
+    unparseType(type, info);
+    curprint(bounds);
+  */
+    ROSE_ASSERT(pointer_type != NULL);
+    unparseType(pointer_type -> get_base_type(), info);
+    curprint("[]");
+}
 
 void Unparse_Java::unparseTypeSignedChar(SgTypeSignedChar* type, SgUnparse_Info& info) { curprint("byte"); }
 void Unparse_Java::unparseTypeWchar(SgTypeWchar* type, SgUnparse_Info& info)   { curprint("char"); }

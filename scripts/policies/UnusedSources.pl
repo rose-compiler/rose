@@ -35,11 +35,11 @@ while (my $file = $files->next_file) {
 
 # Report failures
 my @remaining = map {@$_} values %index;
-$warning = "" if @remaining > 1481; # as of 2010-10-18 there are 1480 violations; do not allow more!
+$warning = "" if @remaining > 1454; # as of 2013-03-12 there are 1454 violations; do not allow more!
 print $desc if @remaining;
 print "  $_$warning\n" for sort @remaining;
 
-print "Number of remaining unused source files (limit 1481): " . @remaining . ".\n";
+print "Number of remaining unused source files (limit 1454): " . @remaining . ".\n";
 
 
 exit(@remaining ? ($warning?128:1) : 0);
