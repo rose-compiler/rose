@@ -9,13 +9,13 @@
 : ${syntactic_dbname:=syntactic.db}
 
 # Number of machine instructions in the syntactic clone detection window
-: ${syntactic_winsize:=10}
+: ${syntactic_winsize:=100}
 
 # Number of machine instructions by which to slide the syntactic window
 : ${syntactic_stride:=1}
 
 # Precision needed to classify two functions as syntactically similar.  Values are 0 (everything is a clone) to 1 (exact matching)
-: ${syntactic_precision:=0.5}
+: ${syntactic_precision:=0.9}
 
 # Minimum coverage in order for two functions to be considered syntactic clones when building the combined clones table. When
 # findClones runs, it might find functions that are 80% similar but the metric it uses is a function of feature vectors, not a
@@ -28,7 +28,11 @@
 : ${semantic_dbname:=semantic.db}
 
 # Number of specimens that can be analyzed semantically in parallel.
-: ${semantic_parallelism:=8}
+: ${semantic_parallelism:=10}
+
+# Minimum function size -- skip all functions that have fewer than this many instructions.  The default is the same as
+# the syntactic window size.
+: ${semantic_minfuncsize:=$syntactic_winsize}
 
 # Number of times to run each function when fuzz testing
 : ${semantic_nfuzz:=10}
@@ -36,11 +40,11 @@
 # Number of pointer values to supply as inputs each time we test a function.  The supplied values are randomly either null
 # or non-null. Non-null pointers always point to a valid page of memory. If the function needs more pointer inputs
 # then null pointers are supplied.
-: ${semantic_npointers:=3}
+: ${semantic_npointers:=16}
 
 # Number of non-pointer values to supply as inputs each time we test a function.  The supplied values are random values
 # less than 256.  If the function needs more non-pointer inputs then zeros are supplied.
-: ${semantic_nnonpointers:=3}
+: ${semantic_nnonpointers:=16}
 
 # Maximum number of instructions to simulate in each function.  This limit prevents infinite loops during fuzz testing.
 : ${semantic_maxinsns:=256}
@@ -52,12 +56,25 @@
 #------------------------------------------------------------------------------------------------------------------------------
 
 
-
-
-
-
-
-
+show_settings () {
+    echo "syntactic_dbname:        $syntactic_dbname"
+    echo "syntactic_winsize:       $syntactic_winsize"
+    echo "syntactic_stride:        $syntactic_stride"
+    echo "syntactic_precision:     $syntactic_precision"
+    echo "syntactic_min_coverage:  $syntactic_min_coverage"
+    echo
+    echo "semantic_dbname:         $semantic_dbname"
+    echo "semantic_parallelism:    $semantic_parallelism"
+    echo "semantic_minfuncsize:    $semantic_minfuncsize"
+    echo "semantic_nfuzz:          $semantic_nfuzz"
+    echo "semantic_npointers:      $semantic_npointers"
+    echo "semantic_nnonpointers:   $semantic_nnonpointers"
+    echo "semantic_maxinsns:       $semantic_maxinsns"
+    echo
+    echo "combined_dbname:         $combined_dbname"
+}
+show_settings;
+show_settings >AnalysisSettings-$(date '+%Y%m%d%H%M%S').txt
 
 : ${ROSE_SRC:=$ROSEGIT_SRC}
 : ${ROSE_BLD:=$ROSEGIT_BLD}
@@ -100,6 +117,11 @@ build_makefile () {
     local mf="clones-$$.mk"
 
     echo "all: all_analyses" >>$mf
+    echo >>$mf
+    echo "ROSE_BLD = $ROSE_BLD" >>$mf
+    echo -n "SWITCHES = --debug --verbose --database=$semantic_dbname --ninputs=$semantic_npointers,$semantic_nnonpointers" >>$mf
+    echo " --min-function-size=$semantic_minfuncsize --max-insns=$semantic_maxinsns" >>$mf
+    echo >>$mf
 
     local all_outputs=
     for specimen in "$@"; do
@@ -125,8 +147,7 @@ build_makefile () {
     
 makefile=$(build_makefile "$@")
 make -f $makefile clean
-make -k -j$semantic_parallelism -f $makefile ROSE_BLD="$ROSE_BLD" SWITCHES="--debug --verbose --database=$semantic_dbname --ninputs=$semantic_npointers,$semantic_nnonpointers --max-insns=$semantic_maxinsns " \
-	|| die "semantic clone detection failed"
+make -k -j$semantic_parallelism -f $makefile || die "semantic clone detection failed"
 
 
 # Syntactic analysis must be run serially
@@ -154,6 +175,7 @@ echo "                   FINDING SEMANTIC CLONES & COMBINING"
 cp "$semantic_dbname" "$combined_dbname" || exit 1
 echo .dump | sqlite3 "$syntactic_dbname" | sqlite3 "$combined_dbname"
 echo "update run_parameters set min_coverage = $syntactic_min_coverage;" |sqlite3 "$combined_dbname"
+echo "update run_parameters set min_func_ninsns = $semantic_minfuncsize;" |sqlite3 "$combined_dbname"
 sqlite3 "$combined_dbname" <$ROSE_BLD/projects/simulator/clone_detection/queries.sql
 $ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" combined_clone_pairs combined_clusters
 $ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" semantic_clone_pairs semantic_clusters
