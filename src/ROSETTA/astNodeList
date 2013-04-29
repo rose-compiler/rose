@@ -575,6 +575,7 @@ SgJavaThrowStatement
 SgJavaForEachStatement
 SgJavaSynchronizedStatement
 SgJavaParameterizedType
+SgJavaWildcardType
 SgSpecialFunctionModifier
 SgStatement
 SgStmtDeclarationStatement

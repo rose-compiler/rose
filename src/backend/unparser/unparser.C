@@ -28,6 +28,8 @@
 #include "IncludedFilesUnparser.h"
 #include "FileHelper.h"
 
+#include <boost/algorithm/string.hpp>
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
@@ -1689,7 +1691,43 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
         // DQ (4/2/2011): Added Java support which requires that the filename for Java match the input file.
         else if (file->get_Java_only() == true)
         {
-            outputFilename = file->get_sourceFileNameWithoutPath();
+                // We try to get the package information back to output the translated source file
+                   // in the correct folder structure.
+                   ROSE_ASSERT(isSgSourceFile(file) && "Try to unparse an SgFile not being an SgSourceFile using the java unparser");
+                   SgGlobal * gs = ((SgSourceFile *) file)->get_globalScope();
+                   SgClassDeclaration * packageDecl = NULL;
+                   string packageName = "";
+                   const SgDeclarationStatementPtrList& globalDecls = gs->get_declarations();
+                   for(SgDeclarationStatementPtrList::const_iterator it = globalDecls.begin();
+                                   ((it != globalDecls.end()) && (packageDecl == NULL)); it ++) {
+                           packageDecl = isSgClassDeclaration(*it);
+                           SgClassDefinition * packageDef = packageDecl->get_definition();
+                           ROSE_ASSERT(packageDef != NULL);
+                           AstRegExAttribute * attribute = (AstRegExAttribute *) packageDef->getAttribute("translated_package");
+                           if (attribute == NULL) {
+                                   packageDecl = NULL;
+                           } else {
+                                   packageName = attribute->expression;
+                           }
+                   }
+                   //NOTE: Default package equals the empty string ""
+                   //ROSE_ASSERT((packageDecl != NULL) && "Couldn't find the package definition of the java source file");
+                   string outFolder = "";
+                   SgProject *project = file->get_project();
+                   string ds = project->get_Java_source_destdir();
+                   if (ds != "") {
+                           outFolder = ds;
+                           outFolder += "/";
+                   }
+                   outFolder += "rose-output/";
+                   boost::replace_all(packageName, ".", "/");
+                   outFolder += packageName;
+                   outFolder += "/";
+                   // Create package folder structure
+                   string mkdirCommand = string("mkdir -p ") + outFolder;
+                   int status = system (mkdirCommand.c_str());
+                   ROSE_ASSERT(status == 0);
+                   outputFilename = outFolder + file->get_sourceFileNameWithoutPath();
         }
         // Liao 12/29/2010, generate cuda source files
         else if (file->get_Cuda_only() == true)
