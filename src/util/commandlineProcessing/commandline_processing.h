@@ -25,7 +25,13 @@ namespace CommandlineProcessing
           //! Convert a string vector back to an argc-argv pair
           void generateArgcArgvFromList ( Rose_STL_Container<std::string> argList, int & argc, char** & argv );
 
-          Rose_STL_Container<std::string> generateOptionList ( Rose_STL_Container<std::string> & argList, std::string inputPrefix );
+          //! Looks for inputPrefix prefixed options. Push the stripped-off option in the result list.
+          //! Warning: As opposed to what the former documentation was saying this function doesn't modify argList.
+          Rose_STL_Container<std::string> generateOptionList (const Rose_STL_Container<std::string> & argList, std::string inputPrefix );
+
+          //! Looks for inputPrefix-prefixed options. Push the stripped-off option in the result list.
+          //! If isOptionTakingSecondParameter of the inputPrefix-prefixed returns true, add the parameter(s) to the result list.
+          Rose_STL_Container<std::string> generateOptionListWithDeclaredParameters (const Rose_STL_Container<std::string> & argList, std::string inputPrefix );
 
        //! Find all options matching 'inputPrefix:optionName' || 'inputPrefix:optionName optionValue' from argList,
        //! strip off 'inputPrefix:' or replace it by 'newPrefix' if provided. Returns a string list of matched options.
