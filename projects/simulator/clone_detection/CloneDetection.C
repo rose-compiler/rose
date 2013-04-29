@@ -39,19 +39,28 @@ static void usage(const std::string &arg0, int exit_status)
         basename = basename.substr(3);
     std::cerr <<"usage: " <<basename <<" [--database=STR] [--nfuzz=N] [--ninputs=N1,N2] [--max-insns=N]"
               <<" [SIMULATOR_SWITCHES] SPECIMEN [SPECIMEN_ARGS...]\n"
-              <<"   --database=STR    Specifies the name of the database into which results are placed.\n"
+              <<"   --database=STR\n"
+              <<"                     Specifies the name of the database into which results are placed.\n"
               <<"                     The default is \"clones.db\".\n"
-              <<"   --nfuzz=N[,START] Number of times to fuzz test each function (default 10) and the\n"
+              <<"   --nfuzz=N[,START]\n"
+              <<"                     Number of times to fuzz test each function (default 10) and the\n"
               <<"                     sequence number of the first test (default 0).\n"
-              <<"   --ninputs=N1[,N2] Number of input values to supply each time a function is run. When\n"
+              <<"   --ninputs=N1[,N2]\n"
+              <<"                     Number of input values to supply each time a function is run. When\n"
               <<"                     N1 and N2 are both specified, then N1 is the number of pointers and\n"
               <<"                     N2 is the number of non-pointers.  When only N1 is specified it will\n"
               <<"                     indicate the number of pointers and the number of non-pointers. The\n"
               <<"                     default is three pointers and three non-pointers.  If a function\n"
               <<"                     requires more input values, then null/zero are supplied to it.\n"
-              <<"   --max-insns=N     Maximum number of instructions to simulate per function. The default\n"
+              <<"   --min-function-size=N\n"
+              <<"                     Minimum size of functions to analyze. Any function containing fewer\n"
+              <<"                     than N instructions is not processed. The default is to analyze all\n"
+              <<"                     functions.\n"
+              <<"   --max-insns=N\n"
+              <<"                     Maximum number of instructions to simulate per function. The default\n"
               <<"                     is 256.\n"
-              <<"   --verbose         Show lots of diagnostics if the --debug simulator switch is specified.\n"
+              <<"   --verbose\n"
+              <<"                     Show lots of diagnostics if the --debug simulator switch is specified.\n"
               <<"                     The default (with --debug) is to show only enough output to track the\n"
               <<"                     analysis progress.  Without --debug, hardly any diagnostics are\n"
               <<"                     produced.\n";
@@ -60,11 +69,14 @@ static void usage(const std::string &arg0, int exit_status)
 
 // Command-line switches
 struct Switches {
-    Switches(): dbname("clones.db"), firstfuzz(0), nfuzz(10), npointers(3), nnonpointers(3), max_insns(256), verbose(false) {}
+    Switches()
+        : dbname("clones.db"), firstfuzz(0), nfuzz(10), npointers(3), nnonpointers(3),
+          min_funcsz(0), max_insns(256), verbose(false) {}
     std::string dbname;                 /**< Name of database in which to store results. */
     size_t firstfuzz;                   /**< Sequence number for starting fuzz test. */
     size_t nfuzz;                       /**< Number of times to run each function, each time with a different input sequence. */
     size_t npointers, nnonpointers;     /**< Number of pointer and non-pointer values to supply to as inputs per fuzz test. */
+    size_t min_funcsz;                  /**< Minimum function size measured in instructions; skip smaller functions. */
     size_t max_insns;                   /**< Maximum number of instrutions per fuzz test before giving up. */
     bool verbose;                       /**< Produce lots of output?  Traces each instruction as it is simulated. */
 };
@@ -194,15 +206,20 @@ public:
         AsmUnparser().unparse(of, gblk);
         of.close();
 
+        // All functions, but prune away things we don't care about
         std::vector<SgAsmFunction*> functions = SageInterface::querySubTree<SgAsmFunction>(gblk);
-#if 0 /*DEBUGGING [Robb P. Matzke 2013-02-12]*/
-        // Prune the function list to contain only what we want.
+        m->mesg("%s: found %zu function%s", name, functions.size(), 1==functions.size()?"":"s");
         for (std::vector<SgAsmFunction*>::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
-            if ((*fi)->get_name().compare("_Z1fRi")!=0)
+            size_t ninsns = SageInterface::querySubTree<SgAsmInstruction>(*fi).size();
+            if (opt.min_funcsz>0 && ninsns < opt.min_funcsz) {
+                if (opt.verbose)
+                    m->mesg("%s:   skipping function 0x%08"PRIx64" because it has only %zu instruction%s\n",
+                            name, (*fi)->get_entry_va(), ninsns, 1==ninsns?"":"s");
                 *fi = NULL;
+            }
         }
         functions.erase(std::remove(functions.begin(), functions.end(), (SgAsmFunction*)NULL), functions.end());
-#endif
+        m->mesg("%s: %zu function%s left after pruning", name, functions.size(), 1==functions.size()?"":"s");
         return Functions(functions.begin(), functions.end());
     }
 
@@ -264,10 +281,11 @@ public:
     }
 
     struct FuncStats {
-        FuncStats(): file_id(-1), isize(0), dsize(0), size(0) {}
-        FuncStats(size_t isize, size_t dsize, size_t size): file_id(-1), isize(isize), dsize(dsize), size(size) {}
+        FuncStats(): file_id(-1), isize(0), dsize(0), size(0), ninsns(0) {}
+        FuncStats(size_t isize, size_t dsize, size_t size, size_t ninsns)
+            : file_id(-1), isize(isize), dsize(dsize), size(size), ninsns(ninsns) {}
         int file_id;
-        size_t isize, dsize, size;
+        size_t isize, dsize, size, ninsns;
     };
 
 
@@ -296,10 +314,10 @@ public:
         for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
             SgAsmFunction *func = *fi;
             ExtentMap e_insns, e_data, e_total;
-            func->get_extent(&e_insns, NULL, NULL, &iselector);
+            size_t ninsns = func->get_extent(&e_insns, NULL, NULL, &iselector);
             func->get_extent(&e_data,  NULL, NULL, &dselector);
             func->get_extent(&e_total);
-            stats[func] = FuncStats(e_insns.size(), e_data.size(), e_total.size());
+            stats[func] = FuncStats(e_insns.size(), e_data.size(), e_total.size(), ninsns);
             addrfunc[func->get_entry_va()] = func;
         }
 
@@ -346,9 +364,9 @@ public:
         m->mesg("%s:   adding %zu function ID%s to the database", name, to_add.size(), 1==to_add.size()?"":"s");
         sqlite3_command cmd2(sqlite, "select coalesce(max(id),-1) from semantic_functions where entry_va=? and file_id=?");
         sqlite3_command cmd3(sqlite, "insert into semantic_functions"
-                             // 1   2         3         4        5      6      7
-                             " (id, entry_va, funcname, file_id, isize, dsize, size)"
-                             " values (?,?,?,?,?,?,?)");
+                             // 1   2         3         4        5      6      7     8
+                             " (id, entry_va, funcname, file_id, isize, dsize, size, ninsns)"
+                             " values (?,?,?,?,?,?,?,?)");
         lock.begin(sqlite3_transaction::LOCK_IMMEDIATE);
         int next_id = sqlite.executeint("select coalesce(max(id),-1)+1 from semantic_functions");
         Functions added;
@@ -367,6 +385,7 @@ public:
                 cmd3.bind(5, s.isize);
                 cmd3.bind(6, s.dsize);
                 cmd3.bind(7, s.size);
+                cmd3.bind(8, s.ninsns);
                 cmd3.executenonquery();
                 added.insert(func);
                 ++next_id;
