@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = Clang
+DIST_SUBDIRS = Clang
 
 #If we have Clang, then we don't need EDG at all.
 if !ROSE_USE_CLANG_FRONTEND

@@ -163,19 +163,19 @@ fi
 # generate SHA1 hashes via git without depending on the user having ancillary programs.
 generate_edg_hash () {
     local committish="${1-HEAD}"
-    local commit=$(git rev-parse "$committish")
+    local commit=$(cd $ROSE_SRC && git rev-parse "$committish")
     local edg_dependencies="util src/ROSETTA src/frontend/CxxFrontend/EDG"
-    local head_tree=$(git rev-parse $commit^{tree})
-    git ls-tree --full-tree $head_tree $edg_dependencies |git hash-object --stdin
+    local head_tree=$(cd $ROSE_SRC && git rev-parse $commit^{tree})
+    (cd $ROSE_SRC; git ls-tree --full-tree $head_tree $edg_dependencies |git hash-object --stdin)
 }
 
 # DEPRECATED: This is the same as the method used by the old scripts/bincompat-sig and is *much* slower. It produces a
 # 32-character MD5 hash.
 generate_edg_hash_old () {
     local committish="${1-HEAD}"
-    local commit=$(git rev-parse "$committish")
-    local head_tree=$(git rev-parse $commit^{tree})
-    git ls-tree --full-tree -r $head_tree |sed -n '/\t\(src\/ROSETTA\/\|src\/frontend\/CxxFrontend\/EDG\)/p' |\
+    local commit=$(cd $ROSE_SRC && git rev-parse "$committish")
+    local head_tree=$(cd $ROSE_SRC && git rev-parse $commit^{tree})
+    (cd $ROSE_SRC && git ls-tree --full-tree -r $head_tree) |sed -n '/\t\(src\/ROSETTA\/\|src\/frontend\/CxxFrontend\/EDG\)/p' |\
 	while read MODE TYPE HASH NAME; do
 	    echo -en "$NAME\000"
 	    echo -en "$HASH\000"
@@ -234,13 +234,13 @@ generate_manifest () {
 find_best_edg_version () {
     local start=${1-HEAD} hasher="${2-generate_edg_hash}"
     head -n1 "$manifest" >/dev/null || exit 1 # only for its error message
-    for commit in $(git rev-list -n $ntries $start); do
+    for commit in $(cd $ROSE_SRC && git rev-list -n $ntries $start); do
 	local need_vers=$($hasher $commit)
 	if grep --quiet -- "^$need_vers" "$manifest"; then
 	    [ -n "$progress" ] && echo >&2
 	    echo $need_vers
-	    echo "EDG for commit $(git --no-pager log -n1 --pretty=format:'%h %cD' $commit)" >&2
-	    [ "$find" = "verbose" ] && git --no-pager log -n1 $commit >&2
+	    echo "EDG for commit $(cd $ROSE_SRC && git --no-pager log -n1 --pretty=format:'%h %cD' $commit)" >&2
+	    [ "$find" = "verbose" ] && (cd $ROSE_SRC && git --no-pager log -n1 $commit) >&2
 	    return
 	fi
 	[ -n "$progress" ] && echo -n "." >&2
@@ -282,9 +282,9 @@ else
 	    echo "$myname: include the following information in your bug report:"
 	    echo "    Time          = $(date)"
 	    echo "    ROSE src dir  = $ROSE_SRC"
-	    echo "    Commit        = $(git rev-parse $commit) $commit"
+	    echo "    Commit        = $(cd $ROSE_SRC && git rev-parse $commit) $commit"
 	    if [ -r "$manifest" ]; then
-		echo "    Manifest file = $(git hash-object $manifest) $localdir"
+		echo "    Manifest file = $(cd $ROSE_SRC && git hash-object $manifest) $localdir"
 		echo "    Num versions  = $(grep '^[0-9a-f]' $manifest |wc -l)"
 	    else
 		echo "    Manifest file = not found"
