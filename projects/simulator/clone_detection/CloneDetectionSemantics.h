@@ -205,9 +205,11 @@ struct ReadWriteState {
 template <template <size_t> class ValueType>
 class Outputs {
 public:
+    Outputs(): fault(0) {}
     std::list<ValueType<32> > values32;
     std::list<ValueType<8> > values8;
-    std::set<uint32_t> get_values() const;
+    int fault;
+    std::set<uint32_t> get_values(bool include_fault=true) const;
     void print(std::ostream&, const std::string &title="", const std::string &prefix="") const;
     void print(RTS_Message*, const std::string &title="", const std::string &prefix="") const;
     friend std::ostream& operator<<(std::ostream &o, const Outputs &outputs) {
@@ -323,6 +325,7 @@ public:
     State<ValueType> state;                             // the mixed-semantic state (symbolic address, multi-value)
     unsigned active_policies;                           // Policies that should be active *during* an instruction
     static const rose_addr_t INITIAL_STACK = 0x80000000;// Initial value for the EIP and EBP registers
+    static const rose_addr_t FUNC_RET_ADDR = 4083;      // Special return address to mark end of analysis
     InputValues *inputs;                                // Input values to use when reading a never-before-written variable
     const PointerDetector *pointers;                    // Addresses of pointer variables
     size_t ninsns;                                      // Number of instructions processed since last trigger() call

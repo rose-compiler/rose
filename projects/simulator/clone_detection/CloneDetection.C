@@ -81,6 +81,33 @@ struct Switches {
     bool verbose;                       /**< Produce lots of output?  Traces each instruction as it is simulated. */
 };
 
+// Special output values:
+#define FAULT_NONE        0
+#define FAULT_DISASSEMBLY 911000001    // disassembly failed possibly due to bad address
+#define FAULT_INSN_LIMIT  911000002    // maximum number of instructions executed
+#define FAULT_HALT        911000003    // x86 HLT instruction executed
+#define FAULT_INTERRUPT   911000004    // x86 INT instruction executed
+#define FAULT_SEMANTICS   911000005    // some fatal problem with instruction semantics, such as a not-handled instruction
+#define FAULT_SMTSOLVER   911000006    // some fault in the SMT solver
+
+// Return the short name of a fault ID
+static const char *
+fault_name(int fault)
+{
+    switch (fault) {
+        case FAULT_NONE: return "";
+        case FAULT_DISASSEMBLY: return "FAULT_DISASSEMBLY";
+        case FAULT_INSN_LIMIT:  return "FAULT_INSN_LIMIT";
+        case FAULT_HALT:        return "FAULT_HALT";
+        case FAULT_INTERRUPT:   return "FAULT_INTERRUPT";
+        case FAULT_SEMANTICS:   return "FAULT_SEMANTICS";
+        case FAULT_SMTSOLVER:   return "FAULT_SMTSOLVER";
+        default:
+            assert(!"fault not handled");
+            abort();
+    }
+}
+
 /*******************************************************************************************************************************
  *                                      Clone Detector
  *******************************************************************************************************************************/
@@ -659,6 +686,7 @@ public:
                                                              const CloneDetection::PointerDetector *pointers) {
         RSIM_Process *proc = thread->get_process();
         RTS_Message *m = thread->tracing(TRACE_MISC);
+        int fault = FAULT_NONE;
 
         // Not sure if saving/restoring memory state is necessary. I don't think machine memory is adjusted by the semantic
         // policy's writeMemory() or readMemory() operations after the policy is triggered to enable our analysis.  But it
@@ -678,33 +706,46 @@ public:
         } catch (const Disassembler::Exception &e) {
             // Probably due to the analyzed function's RET instruction, but could be from other things as well. In any case, we
             // stop analyzing the function when this happens.
-            if (opt.verbose)
-                m->mesg("%s: function disassembly failed at 0x%08"PRIx64": %s", name, e.ip, e.mesg.c_str());
+            if (thread->policy.FUNC_RET_ADDR==e.ip) {
+                if (opt.verbose)
+                    m->mesg("%s: function returned", name);
+                fault = FAULT_NONE;
+            } else {
+                if (opt.verbose)
+                    m->mesg("%s: function disassembly failed at 0x%08"PRIx64": %s", name, e.ip, e.mesg.c_str());
+                fault = FAULT_DISASSEMBLY;
+            }
         } catch (const CloneDetection::InsnLimitException &e) {
             // The analysis might be in an infinite loop, such as when analyzing "void f() { while(1); }"
             if (opt.verbose)
                 m->mesg("%s: %s", name, e.mesg.c_str());
+            fault = FAULT_INSN_LIMIT;
         } catch (const RSIM_Semantics::InnerPolicy<>::Halt &e) {
             // The x86 HLT instruction appears in some functions (like _start) as a failsafe to terminate a process.  We need
             // to intercept it and terminate only the function analysis.
             if (opt.verbose)
                 m->mesg("%s: function executed HLT instruction at 0x%08"PRIx64, name, e.ip);
+            fault = FAULT_HALT;
         } catch (const RSIM_Semantics::InnerPolicy<>::Interrupt &e) {
             // The x86 INT instruction was executed but the policy does not know how to handle it.
             if (opt.verbose)
                 m->mesg("%s: function executed INT 0x%x at 0x%08"PRIx64, name, e.inum, e.ip);
+            fault = FAULT_INTERRUPT;
         } catch (const RSIM_SEMANTICS_POLICY::Exception &e) {
             // Some exception in the policy, such as division by zero.
             if (opt.verbose)
                 m->mesg("%s: %s", name, e.mesg.c_str());
+            fault = FAULT_SEMANTICS;
         } catch (const SMTSolver::Exception &e) {
             // Some exception in the SMT solver
             if (opt.verbose)
                 m->mesg("%s: %s", name, e.mesg.c_str());
+            fault = FAULT_SMTSOLVER;
         }
         
         // Gather the function's outputs before restoring machine state.
         CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *outputs = thread->policy.get_outputs(opt.verbose!=0);
+        outputs->fault = fault;
         thread->init_regs(saved_regs);
         proc->mem_transaction_rollback(name);
         return outputs;
@@ -767,9 +808,11 @@ public:
                 CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *outputs = fuzz_test(func, inputs, ip->second);
                 if (opt.verbose) {
                     std::ostringstream output_values_str;
-                    OutputValues output_values = outputs->get_values();
+                    OutputValues output_values = outputs->get_values(false/*exl. fault*/);
                     for (OutputValues::iterator ovi=output_values.begin(); ovi!=output_values.end(); ++ovi)
                         output_values_str <<" " <<*ovi;
+                    if (outputs->fault)
+                        output_values_str <<" " <<fault_name(outputs->fault);
                     m->mesg("%s: %s fuzz test #%zu output values are {%s }",
                             name, function_to_str(func).c_str(), fuzz_number, output_values_str.str().c_str());
                 }
@@ -870,6 +913,9 @@ main(int argc, char *argv[], char *envp[])
             opt.npointers = opt.nnonpointers = strtoul(argv[i]+10, &rest, 0);
             if (','==*rest)
                 opt.nnonpointers = strtoul(rest+1, NULL, 0);
+            consume = true;
+        } else if (!strncmp(argv[i], "--min-function-size=", 20)) {
+            opt.min_funcsz = strtoul(argv[i]+20, NULL, 0);
             consume = true;
         } else if (!strncmp(argv[i], "--max-insns=", 12)) {
             opt.max_insns = strtoul(argv[i]+12, NULL, 0);

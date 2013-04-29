@@ -160,7 +160,10 @@ show_function(const std::string &dbname, int function_id)
     // Inputs and outputs
     sqlite3_command cmd2(db, "select inputset_id, outputset_id from semantic_fio where func_id = ?");
     sqlite3_command cmd3(db, "select vtype, pos, val from semantic_inputvalues where id=? order by vtype,pos");
-    sqlite3_command cmd4(db, "select val from semantic_outputvalues where id=? order by val");
+    sqlite3_command cmd4(db, "select output.val, fault.name"
+                         " from semantic_outputvalues as output"
+                         " left join semantic_faults as fault on output.val = fault.id"
+                         " where output.id=? order by output.val");
 
     cmd2.bind(1, function_id);
     sqlite3_reader c2 = cmd2.executereader();
@@ -190,9 +193,12 @@ show_function(const std::string &dbname, int function_id)
         sqlite3_reader c4 = cmd4.executereader();
         for (size_t i_output=0; c4.read(); ++i_output) {
             uint64_t val = c4.getint64(0);
+            std::string faultname = c4.getstring(1);
             if (i_output!=0)
                 std::cout <<", ";
-            if (val < 256) {
+            if (!faultname.empty()) {
+                std::cout <<faultname;
+            } else if (val < 256) {
                 std::cout <<val;
             } else {
                 std::cout <<StringUtility::addrToString(val);
@@ -210,29 +216,31 @@ show_functions(const std::string &dbname)
     FormatRestorer saved_flags(std::cout);
     sqlite3_connection db(dbname.c_str());
     db.busy_timeout(BUSY_TIMEOUT);
-    sqlite3_command cmd1(db, //  0         1               2            3               4              5
-                         "select funcs.id, funcs.entry_va, funcs.isize, funcs.funcname, funcs.file_id, files.name"
-                         " from semantic_functions as funcs"
-                         " join semantic_files as files on funcs.file_id = files.id"
-                         " order by funcs.id");
+    sqlite3_command cmd1(db, //  0        1                  1               2            3               4              5
+                         "select func.id, fmap.syntactic_id, func.entry_va, func.isize, func.funcname, func.file_id, file.name"
+                         " from semantic_functions as func"
+                         " join semantic_files as file on func.file_id = file.id"
+                         " join combined_functions as fmap on func.id = fmap.semantic_id"
+                         " order by func.id");
 
     // Figure out the width for the function name column
     size_t funcname_width = 8;
     sqlite3_reader c1a = cmd1.executereader();
     while (c1a.read())
-        funcname_width = std::max(funcname_width, c1a.getstring(3).size());
+        funcname_width = std::max(funcname_width, c1a.getstring(4).size());
 
     // Print the data
     sqlite3_reader c1b = cmd1.executereader();
-    std::cout <<"Func   Entry    Insn  " <<std::setw(funcname_width) << std::left <<"Function" <<"    File\n"
-              <<"  ID   address  bytes " <<std::setw(funcname_width) << std::left <<"name"     <<"   ID name\n";
+    std::cout <<"Func Synx   Entry    Insn  " <<std::setw(funcname_width) << std::left <<"Function" <<"    File\n"
+              <<"  ID   ID   address  bytes " <<std::setw(funcname_width) << std::left <<"name"     <<"   ID name\n";
     while (c1b.read()) {
         std::cout <<std::setw(4) <<std::right <<c1b.getint(0) <<" "
-                  <<StringUtility::addrToString(c1b.getint(1)) <<" "
-                  <<std::setw(5) <<std::right <<c1b.getint(2) <<" "
-                  <<std::setw(funcname_width) <<std::left <<c1b.getstring(3) <<" "
-                  <<std::setw(4) <<std::right <<c1b.getint(4) <<" "
-                  <<c1b.getstring(5) <<"\n";
+                  <<std::setw(4) <<std::right <<c1b.getint(1) <<" "
+                  <<StringUtility::addrToString(c1b.getint(2)) <<" "
+                  <<std::setw(5) <<std::right <<c1b.getint(3) <<" "
+                  <<std::setw(funcname_width) <<std::left <<c1b.getstring(4) <<" "
+                  <<std::setw(4) <<std::right <<c1b.getint(5) <<" "
+                  <<c1b.getstring(6) <<"\n";
     }
 }
 

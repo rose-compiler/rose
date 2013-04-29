@@ -16,12 +16,20 @@ create table if not exists semantic_outputvalues (
        val integer                              -- value stored in the output set
 );
 
+-- Some output values indicate special situations described by this table
+create table if not exists semantic_faults (
+       id integer,                              -- the special integer value
+       name varchar(16),                        -- short identifying name
+       desc text                                -- full description
+);
+
 -- A function is the unit of code that is fuzz tested.
 create table if not exists semantic_functions (
        id integer primary key,                  -- unique function ID
        entry_va integer,                        -- unique starting virtual address within the binary specimen
        funcname text,                           -- name of function if known
        file_id integer references semantic_files(id), -- binary file in which function exists, if known
+       ninsns integer,                          -- number of instructions in function
        isize integer,                           -- size of function instructions in bytes, non-overlapping
        dsize integer,                           -- size of function data in bytes, non-overlapping
        size integer,                            -- total size of function, non-overlapping

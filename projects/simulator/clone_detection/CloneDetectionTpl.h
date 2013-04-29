@@ -682,7 +682,21 @@ Policy<State, ValueType>::readMemory(X86SegmentRegister sr, ValueType<32> addr, 
     SMTSolver *solver = NULL;
     MEMORY_ADDRESS_TYPE a0 = convert_to_concrete(addr);
 #endif
-        
+
+    // For RET instructions, when reading DWORD PTR ss:[INITIAL_STACK], do not consume an input, but rather
+    // return FUNC_RET_ADDR.
+    SgAsmx86Instruction *insn = isSgAsmx86Instruction(this->get_policy(CONCRETE).get_insn());
+    if (32==nBits && insn && x86_ret==insn->get_kind()) {
+        rose_addr_t c_addr = 0;
+        if (addr.get_subvalue(CONCRETE).is_known()) {
+            c_addr = addr.get_subvalue(CONCRETE).known_value();
+        } else if (addr.get_subvalue(SYMBOLIC).is_known()) {
+            c_addr = addr.get_subvalue(SYMBOLIC).known_value();
+        }
+        if (c_addr == this->INITIAL_STACK)
+            return ValueType<nBits>(this->FUNC_RET_ADDR);
+    }
+
     // Read a multi-byte value from memory in little-endian order.
     bool uninitialized_read = false; // set to true by any mem_read_byte() that has no data
     assert(8==nBits || 16==nBits || 32==nBits);
@@ -1031,7 +1045,7 @@ State<ValueType>::print(std::ostream &o, unsigned domains) const
 
 template <template <size_t> class ValueType>
 std::set<uint32_t>
-Outputs<ValueType>::get_values() const
+Outputs<ValueType>::get_values(bool include_fault) const
 {
     std::set<uint32_t> retval;
     for (typename std::list<ValueType<32> >::const_iterator vi=values32.begin(); vi!=values32.end(); ++vi) {
@@ -1042,6 +1056,8 @@ Outputs<ValueType>::get_values() const
         CONCRETE_VALUE<8> cval = convert_to_concrete(*vi);
         retval.insert(cval.known_value());
     }
+    if (include_fault && fault!=0)
+        retval.insert(fault);
     return retval;
 }
 
@@ -1055,6 +1071,8 @@ Outputs<ValueType>::print(std::ostream &o, const std::string &title, const std::
         o <<prefix <<*vi <<"\n";
     for (typename std::list<ValueType<32> >::const_iterator vi=values32.begin(); vi!=values32.end(); ++vi)
         o <<prefix <<*vi <<"\n";
+    if (fault)
+        o <<prefix <<"fault " <<fault <<"\n";
 }
 
 template <template <size_t> class ValueType>
