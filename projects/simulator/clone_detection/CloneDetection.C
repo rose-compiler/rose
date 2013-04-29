@@ -21,6 +21,11 @@
 #include "sqlite3x.h"
 using namespace sqlite3x; // its top-level class name start with "sqlite3_"
 
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/regex_find_format.hpp>
+#include <boost/algorithm/string/regex.hpp>
+
+
 typedef std::set<SgAsmFunction*> Functions;
 typedef std::map<SgAsmFunction*, int> FunctionIdMap;
 typedef CloneDetection::InputValues InputValues;
@@ -85,19 +90,55 @@ public:
     }
 
     void open_db(const std::string &dbname) {
-        if (-1==access(dbname.c_str(), F_OK)) {
-            // SQLite3 database does not exist; load the schema from a file, which has been incorporated into this binary
-            extern const char *clone_detection_schema; // see CloneDetectionSchema.C in the build directory
-            FILE *f = popen(("sqlite3 " + dbname).c_str(), "w");
-            assert(f!=NULL);
-            fputs(clone_detection_schema, f);
-            if (pclose(f)!=0) {
-                std::cerr <<name <<": sqlite3 command failed to initialize database \"" <<dbname <<"\"\n";
-                return;
+        sqlite.open(dbname.c_str());
+        sqlite.busy_timeout(15*60*1000); // 15 minutes
+        sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE);
+
+        // Execute the SQL that describes the schema.  We used to just pipe this into the sqlite3 command, but we had
+        // problems when running in parallel.  It would be nice to be able to pass the whole string to executenonquery(),
+        // but that seems to execute only the first statement in the string.  Therefore, we split the big, multi-line string
+        // into statements and execute each individually.
+        extern const char *clone_detection_schema; // contents of Schema.sql file
+        std::string stmts(clone_detection_schema);
+        boost::regex stmt_re("( ( '([^']|'')*'   )"     // string literal
+                             "| ( --[^\n]*       )"     // comment
+                             "| ( [^;]           )"     // other
+                             ")+ ;", boost::regex::perl|boost::regex::mod_x);
+        typedef boost::algorithm::find_iterator<std::string::iterator> Sfi; // string find iterator
+        for (Sfi i=make_find_iterator(stmts, boost::algorithm::regex_finder(stmt_re)); i!=Sfi(); ++i) {
+            std::string stmt = boost::copy_range<std::string>(*i);
+            try {
+                sqlite.executenonquery(stmt);
+            } catch (const database_error &e) {
+                std::cerr <<stmt <<"\n";
+                throw;
             }
-            sqlite.open(dbname.c_str());
-            sqlite.busy_timeout(15*60*1000); // 15 minutes
         }
+
+        // Populate the semantic_faults table.
+        struct FaultInserter {
+            FaultInserter(sqlite3_connection &db, int id, const char *name, const char *desc) {
+                sqlite3_command cmd1(db, "select count(*) from semantic_faults where id = ?");
+                cmd1.bind(1, id);
+                if (cmd1.executeint()==0) {
+                    sqlite3_command cmd2(db, "insert into semantic_faults (id, name, desc) values (?,?,?)");
+                    cmd2.bind(1, id);
+                    cmd2.bind(2, name);
+                    cmd2.bind(3, desc);
+                    cmd2.executenonquery();
+                }
+            }
+        };
+#define add_fault(DB, ID, DESC) FaultInserter(DB, ID, #ID, DESC)
+        add_fault(sqlite, FAULT_DISASSEMBLY, "disassembly failed");
+        add_fault(sqlite, FAULT_INSN_LIMIT,  "simulation instruction limit reached");
+        add_fault(sqlite, FAULT_HALT,        "x86 HLT instruction executed");
+        add_fault(sqlite, FAULT_INTERRUPT,   "interrupt or x86 INT instruction executed");
+        add_fault(sqlite, FAULT_SEMANTICS,   "instruction semantics error");
+        add_fault(sqlite, FAULT_SMTSOLVER,   "SMT solver error");
+#undef  add_fault
+
+        lock.commit();
     }
 
     // Allocate a page of memory in the process address space.

@@ -352,7 +352,8 @@ void createDatabases(sqlite3_connection& con) {
                         "    window_size integer,                   -- the --windowSize argument for createVectorsBinary\n"
                         "    stride integer,                        -- the --stride argument for createVectorsBinary\n"
                         "    similarity_threshold double precision, -- the argument for the -t switch of findClones\n"
-                        "    min_coverage double precision          -- minimum coverage ratio for clone pairs\n"
+                        "    min_coverage double precision,         -- minimum coverage ratio for clone pairs\n"
+                        "    min_func_ninsns integer                -- minimum function size measured in instructions\n"
                         ")");
 
   try {
