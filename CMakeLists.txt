@@ -203,6 +203,9 @@ if (DEFINED ENV{BOOST_HOME})
   set (BOOST_ROOT "$ENV{BOOST_HOME}")
 endif ()
 
+option(Boost_USE_MULTITHREADED
+  "Should Boost multithreaded libraries be used?" OFF)
+
 if (WIN32)
 FIND_PACKAGE(Boost REQUIRED) 
 #set (Boost_INCLUDE_DIRS ${Boost_INCLUDE_DIRS}/../../ )
@@ -326,6 +329,7 @@ if(EXISTS "${PROJECT_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/CMakeLists.txt")
   set(have_EDG_source TRUE)
 else()
   set(have_EDG_source FALSE)
+  add_definitions(-DBINARY_EDG)
   if (NOT WIN32)
   # no need to display this message after the file has been downloaded
   if(NOT EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs")
