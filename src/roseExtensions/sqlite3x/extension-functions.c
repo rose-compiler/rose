@@ -118,7 +118,7 @@ Original code 2006 June 05 by relicoder.
 #define HAVE_LOG10 1
 #define HAVE_ISBLANK 1
 #define SQLITE_SOUNDEX 1
-#define HAVE_TRIM 1		/* LMH 2007-03-25 if sqlite has trim functions */
+#define HAVE_TRIM 1             /* LMH 2007-03-25 if sqlite has trim functions */
 
 #ifdef COMPILE_SQLITE_EXTENSIONS_AS_LOADABLE_MODULE
 #include "sqlite3ext.h"
@@ -132,7 +132,7 @@ SQLITE_EXTENSION_INIT1
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
-#include <errno.h>		/* LMH 2007-03-25 */
+#include <errno.h>              /* LMH 2007-03-25 */
 
 #include <stdlib.h>
 #include <assert.h>
@@ -1463,22 +1463,22 @@ static void modeIterate(void* e, i64 c, void* pp){
   if( 0==p->is_double ){
     ei = *(int*)(e);
 
-	if( p->mcnt==c ){
+        if( p->mcnt==c ){
       ++p->mn;
     }else if( p->mcnt<c ){
       p->riM = ei;
       p->mcnt = c;
-	  p->mn=1;
+          p->mn=1;
     }
   }else{
     ed = *(double*)(e);
 
-	if( p->mcnt==c ){
+        if( p->mcnt==c ){
       ++p->mn;
     }else if(p->mcnt<c){
       p->rdM = ed;
       p->mcnt = c;
-	  p->mn=1;
+          p->mn=1;
     }
   }
 }
@@ -1556,9 +1556,9 @@ static void _medianFinalize(sqlite3_context *context){
 
     if( 0==p->is_double )
       if( 1==p->mn )
-      	sqlite3_result_int64(context, p->riM);
+        sqlite3_result_int64(context, p->riM);
       else
-      	sqlite3_result_double(context, p->riM*1.0/p->mn);
+        sqlite3_result_double(context, p->riM*1.0/p->mn);
     else
       sqlite3_result_double(context, p->rdM/p->mn);
   }
