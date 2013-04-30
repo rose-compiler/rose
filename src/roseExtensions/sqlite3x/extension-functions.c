@@ -120,6 +120,9 @@ Original code 2006 June 05 by relicoder.
 #define SQLITE_SOUNDEX 1
 #define HAVE_TRIM 1             /* LMH 2007-03-25 if sqlite has trim functions */
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 #ifdef COMPILE_SQLITE_EXTENSIONS_AS_LOADABLE_MODULE
 #include "sqlite3ext.h"
 SQLITE_EXTENSION_INIT1
@@ -160,7 +163,6 @@ typedef struct node{
 typedef struct map{
   node *base;
   cmp_func cmp;
-  short free;
 } map;
 
 /*
@@ -616,7 +618,6 @@ static void signFunc(sqlite3_context *context, int argc, sqlite3_value **argv){
 */
 static void ceilFunc(sqlite3_context *context, int argc, sqlite3_value **argv){
   double rVal=0.0;
-  i64 iVal=0;
   assert( argc==1 );
   switch( sqlite3_value_type(argv[0]) ){
     case SQLITE_INTEGER: {
@@ -641,7 +642,6 @@ static void ceilFunc(sqlite3_context *context, int argc, sqlite3_value **argv){
 */
 static void floorFunc(sqlite3_context *context, int argc, sqlite3_value **argv){
   double rVal=0.0;
-  i64 iVal=0;
   assert( argc==1 );
   switch( sqlite3_value_type(argv[0]) ){
     case SQLITE_INTEGER: {
@@ -1942,6 +1942,6 @@ int double_cmp(const void *a, const void *b){
 
 void print_elem(void *e, int64_t c, void* p){
   int ee = *(int*)(e);
-  printf("%d => %lld\n", ee,c);
+  printf("%d => %"PRId64"\n", ee,c);
 }
 
