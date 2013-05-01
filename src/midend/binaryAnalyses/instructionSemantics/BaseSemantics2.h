@@ -1057,6 +1057,16 @@ public:
         memory->clear();
     }
 
+    /** Return the register state. */
+    RegisterStatePtr get_register_state() {
+        return registers;
+    }
+
+    /** Return the memory state. */
+    MemoryStatePtr get_memory_state() {
+        return memory;
+    }
+    
     /** Read a value from a register.
      *
      *  The BaseSemantics::readRegister() implementation simply delegates to the register state member of this state. See
