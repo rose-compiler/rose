@@ -58,6 +58,7 @@
 #   error "invalid value for SMT_SOLVER"
 #endif
 
+const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if SEMANTIC_DOMAIN == NULL_DOMAIN
@@ -70,7 +71,7 @@
 #else
 #   include "NullSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        return NullSemantics::RiscOperators::instance();
+        return NullSemantics::RiscOperators::instance(regdict);
     }
 #endif
 
@@ -84,7 +85,7 @@
 #else
 #   include "PartialSymbolicSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        return PartialSymbolicSemantics::RiscOperators::instance();
+        return PartialSymbolicSemantics::RiscOperators::instance(regdict);
     }
 #endif
 
@@ -99,7 +100,7 @@
 #else
 #   include "SymbolicSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        return SymbolicSemantics::RiscOperators::instance();
+        return SymbolicSemantics::RiscOperators::instance(regdict);
     }
 #endif
 
@@ -113,7 +114,7 @@
 #else
 #   include "IntervalSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        return IntervalSemantics::RiscOperators::instance();
+        return IntervalSemantics::RiscOperators::instance(regdict);
     }
 #endif
 
@@ -137,10 +138,10 @@
 #   include "SymbolicSemantics2.h"
 #   include "IntervalSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        MultiSemantics::RiscOperatorsPtr ops = MultiSemantics::RiscOperators::instance();
-        ops->add_subdomain(PartialSymbolicSemantics::RiscOperators::instance(), "PartialSymbolic");
-        ops->add_subdomain(SymbolicSemantics::RiscOperators::instance(), "Symbolic");
-        ops->add_subdomain(IntervalSemantics::RiscOperators::instance(), "Interval");
+        MultiSemantics::RiscOperatorsPtr ops = MultiSemantics::RiscOperators::instance(regdict);
+        ops->add_subdomain(PartialSymbolicSemantics::RiscOperators::instance(regdict), "PartialSymbolic");
+        ops->add_subdomain(SymbolicSemantics::RiscOperators::instance(regdict), "Symbolic");
+        ops->add_subdomain(IntervalSemantics::RiscOperators::instance(regdict), "Interval");
         return ops;
     }
 #endif

@@ -226,9 +226,9 @@ protected:
 public:
     /** Static allocating constructor.  Creates a new RiscOperators object and configures it to use semantic values and states
      * that are defaults for PartialSymbolicSemantics. */
-    static RiscOperatorsPtr instance() {
+    static RiscOperatorsPtr instance(const RegisterDictionary *regdict) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
-        BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateX86::instance(protoval);
+        BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateX86::instance(protoval, regdict);
         BaseSemantics::MemoryCellListPtr memory = BaseSemantics::MemoryCellList::instance(protoval);
         memory->set_byte_restricted(false);
         BaseSemantics::StatePtr state = State::instance(registers, memory);

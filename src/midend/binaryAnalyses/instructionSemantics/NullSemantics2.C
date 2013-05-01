@@ -11,11 +11,10 @@ namespace NullSemantics { // documented in the header
 
 // class method
 RiscOperatorsPtr
-RiscOperators::instance()
+RiscOperators::instance(const RegisterDictionary *regdict)
 {
     BaseSemantics::SValuePtr protoval = SValue::instance();
-    // FIXME: register state should probably be chosen based on an architecture [Robb Matzke 2013-03-01]
-    BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateX86::instance(protoval);
+    BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateX86::instance(protoval, regdict);
     BaseSemantics::MemoryStatePtr memory = BaseSemantics::MemoryCellList::instance(protoval);
     BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
     SMTSolver *solver = NULL;

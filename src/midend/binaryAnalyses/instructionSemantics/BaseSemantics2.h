@@ -247,12 +247,22 @@ namespace BaseSemantics {
 
 class RiscOperators;
 
-/** Helper class for printing. Some semantic domains may need to pass some additional information to print methods on a
+/** Helper class for printing. Some semantic domains may want to pass some additional information to print methods on a
  *  per-call basis.  This base class provides something they can subclass to do that. A (optional) pointer to an instance of
  *  this class is passed to all semantic print() methods. */
 class PrintHelper {
 public:
+    PrintHelper(): regdict(NULL) {}
     virtual ~PrintHelper() {}
+
+    /** The register dictionary which is used for printing register names.
+     * @{ */
+    RegisterDictionary *get_register_dictionary() const { return regdict; }
+    void set_register_dictionary(RegisterDictionary *rd) { regdict = rd; }
+    /** @} */
+
+protected:
+    RegisterDictionary *regdict;
 };
 
 /*******************************************************************************************************************************
@@ -585,10 +595,11 @@ typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
 class RegisterState {
 protected:
     SValuePtr protoval;                         /**< Prototypical value for virtual constructors. */
+    const RegisterDictionary *regdict;          /**< Registers that are able to be stored by this state. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Normal, protected, C++ constructors
-    explicit RegisterState(const SValuePtr &protoval): protoval(protoval) {
+    explicit RegisterState(const SValuePtr &protoval, const RegisterDictionary *regdict): protoval(protoval), regdict(regdict) {
         assert(protoval!=NULL);
     }
 
@@ -603,8 +614,9 @@ public:
 
     /** Virtual constructor.  The @p protoval argument must be a non-null pointer to a semantic value which will be used only
      *  to create additional instances of the value via its virtual constructors.  The prototypical value is normally of the
-     *  same type for all parts of a semantic analysis. */
-    virtual RegisterStatePtr create(const SValuePtr &protoval) const = 0;
+     *  same type for all parts of a semantic analysis. The register state must be compatible with the rest of the binary
+     *  analysis objects in use. */
+    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const = 0;
 
     /** Make a copy of this register state. */
     virtual RegisterStatePtr clone() const = 0;
@@ -615,6 +627,13 @@ public:
 
     /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
     SValuePtr get_protoval() const { return protoval; }
+
+    /** The register dictionary should be compatible with the register dictionary used for other parts of binary analysis. At
+     *  this time (May 2013) the dictionary is only used when printing.
+     * @{ */
+    const RegisterDictionary *get_register_dictionary() const { return regdict; }
+    void set_register_dictionary(const RegisterDictionary *rd) { regdict = rd; }
+    /** @} */
 
     /** Set all registers to distinct undefined values. */
     virtual void clear() = 0;
@@ -657,7 +676,7 @@ public:
     SValuePtr flag[n_flags];                    /**< Control/status flags (i.e., FLAG register). */
 
 protected:
-    explicit RegisterStateX86(const SValuePtr &protoval): RegisterState(protoval) {
+    explicit RegisterStateX86(const SValuePtr &protoval, const RegisterDictionary *regdict): RegisterState(protoval, regdict) {
         clear();
     }
 
@@ -665,11 +684,11 @@ public:
     /** Static allocating constructor. The @p protoval argument must be a non-null pointer to a semantic value which will be
      *  used only to create additional instances of the value via its virtual constructors.  The prototypical value is normally
      *  of the same type for all parts of a semantic analysis: its state and operator classes. */
-    static RegisterStatePtr instance(const SValuePtr &protoval) {
-        return RegisterStatePtr(new RegisterStateX86(protoval));
+    static RegisterStatePtr instance(const SValuePtr &protoval, const RegisterDictionary *regdict) {
+        return RegisterStatePtr(new RegisterStateX86(protoval, regdict));
     }
 
-    virtual RegisterStatePtr create(const SValuePtr &protoval) const /*override*/;
+    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const /*override*/;
     virtual RegisterStatePtr clone() const /*override*/;
 
     virtual void clear() /*override*/;
@@ -1584,7 +1603,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /** Access the register dictionary.  The register dictionary defines the set of registers over which the RISC operators may
-     *  operate. This should be same registers (or superset) of registers whose values are stored in the machine state(s).
+     *  operate. This should be same registers (or superset thereof) whose values are stored in the machine state(s).
      *  This dictionary is used by the Dispatcher class to translate register names to register descriptors.  For instance, to
      *  read from the "eax" register, the dispatcher will look up "eax" in its register dictionary and then pass that
      *  descriptor to the readRegister() RISC operation.  Register descriptors are also stored in instructions when the

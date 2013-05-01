@@ -94,7 +94,7 @@ protected:
 public:
     /** Static allocating constructor. Creates a new RiscOperators object and configures it to use semantic values and states
      * that are defaults for NullSemantics. */
-    static RiscOperatorsPtr instance();
+    static RiscOperatorsPtr instance(const RegisterDictionary *regdict);
 
     /** Static allocating constructor. See the virtual constructor, create(), for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
