@@ -1,15 +1,49 @@
 #include "sage3basic.h"
 #include "Registers.h"
 
-std::ostream& operator<<(std::ostream &o, const RegisterDictionary &dict) {
+std::ostream&
+operator<<(std::ostream &o, const RegisterDictionary &dict)
+{
     dict.print(o);
     return o;
 }
 
-std::ostream& operator<<(std::ostream &o, const RegisterDescriptor &reg) {
+std::ostream&
+operator<<(std::ostream &o, const RegisterDescriptor &reg)
+{
     reg.print(o);
     return o;
 }
+
+
+/*******************************************************************************************************************************
+ *                                      RegisterDescriptor
+ *******************************************************************************************************************************/
+
+bool
+RegisterDescriptor::operator==(const RegisterDescriptor &other) const 
+{
+    return majr==other.majr && minr==other.minr && offset==other.offset && nbits==other.nbits;
+}
+
+bool
+RegisterDescriptor::operator!=(const RegisterDescriptor &other) const
+{
+    return !(*this==other);
+}
+
+bool
+RegisterDescriptor::operator<(const RegisterDescriptor &other) const
+{
+    if (majr!=other.majr)
+        return majr < other.majr;
+    if (minr!=other.minr)
+        return minr < other.minr;
+    if (offset!=other.offset)
+        return offset < other.offset;
+    return nbits < other.nbits;
+}
+
 
 /* class method */
 uint64_t
@@ -73,11 +107,11 @@ RegisterDictionary::lookup(const RegisterDescriptor &rdesc) const {
             const std::string &name = ri->second[i-1];
             Entries::const_iterator fi = forward.find(name);
             ROSE_ASSERT(fi!=forward.end());
-            if (fi->second.equal(rdesc))
+            if (fi->second==rdesc)
                 return name;
         }
     }
-    
+
     static const std::string empty;
     return empty;
 }
