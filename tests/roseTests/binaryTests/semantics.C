@@ -206,6 +206,11 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 void
 show_state(const BaseSemantics::RiscOperatorsPtr &ops)
 {
+#if SEMANTIC_DOMAIN == MULTI_DOMAIN
+    std::cout <<*ops;
+    return;
+#endif
+
     struct ShowReg {
         BaseSemantics::RiscOperatorsPtr ops;
         std::ostream &o;
