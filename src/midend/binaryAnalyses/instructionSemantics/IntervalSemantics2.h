@@ -273,8 +273,7 @@ public:
      *  that are defaults for IntervalSemantics. */
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
-        // FIXME: register state shoudl probably be chosen based on an architecture [Robb Matzke 2013-03-07]
-        BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateX86::instance(protoval, regdict);
+        BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval);
         BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
         return RiscOperatorsPtr(new RiscOperators(state, solver));

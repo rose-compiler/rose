@@ -274,8 +274,9 @@ protected:
     // Public allocating constructors
 public:
     /** Static allocating constructor. This constructor creates a new MultiDomain RiscOperators object that does't have any
-     *  subdomains.  The subdomains should be added before using this object. */
-    static RiscOperatorsPtr instance() {
+     *  subdomains.  The subdomains should be added before using this object. The @p regdict argument is not used in this
+     *  class and is only present for consistency with other classes and for subclasses. */
+    static RiscOperatorsPtr instance(const RegisterDictionary *regdict) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         return RiscOperatorsPtr(new RiscOperators(protoval));
     }

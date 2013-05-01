@@ -228,7 +228,7 @@ public:
      * that are defaults for PartialSymbolicSemantics. */
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
-        BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateX86::instance(protoval, regdict);
+        BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
         BaseSemantics::MemoryCellListPtr memory = BaseSemantics::MemoryCellList::instance(protoval);
         memory->set_byte_restricted(false);
         BaseSemantics::StatePtr state = State::instance(registers, memory);
