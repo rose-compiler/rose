@@ -659,6 +659,60 @@ public:
     virtual void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const = 0;
 };
 
+/** A RegisterState for any architecture. */
+class RegisterStateGeneric: public RegisterState {
+public:
+    struct RegStore {
+        unsigned majr, minr;
+        RegStore(const RegisterDescriptor &d) // implicit
+            : majr(d.get_major()), minr(d.get_minor()) {}
+        bool operator<(const RegStore &other) const {
+            return majr<other.majr || (majr==other.majr && minr<other.minr);
+        }
+    };
+    struct RegPair {
+        RegisterDescriptor desc;
+        SValuePtr value;
+        RegPair(const RegisterDescriptor &desc, const SValuePtr &value): desc(desc), value(value) {}
+    };
+    typedef std::vector<RegPair> RegPairs;
+    typedef std::map<RegStore, RegPairs> Registers;
+
+protected:
+    bool init_to_zero;                          /**< Initialize registers to zero? */
+    Registers registers;                        /**< Values for registers that have been accessed. */
+
+protected:
+    explicit RegisterStateGeneric(const SValuePtr &protoval, const RegisterDictionary *regdict)
+        : RegisterState(protoval, regdict), init_to_zero(false) {
+        clear();
+    }
+
+public:
+    /** Static allocating constructor.  The @p protoval argument must be a non-null pointer to a semantic value which will be
+     *  used only to create additional instances of the value via its virtual constructors.  The prototypical value is normally
+     *  of the same type for all parts of a semantic analysis: its state and operator classes.
+     *
+     *  The register dictionary, @p regdict, describes the registers that can be stored by this register state, and should be
+     *  compatible with the register dictionary used for other parts of binary analysis. */
+    static RegisterStatePtr instance(const SValuePtr &protoval, const RegisterDictionary *regdict) {
+        return RegisterStatePtr(new RegisterStateGeneric(protoval, regdict));
+    }
+
+    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const /*override*/;
+    virtual RegisterStatePtr clone() const /*override*/;
+
+    virtual void clear() /*override*/;
+    virtual void zero() /*override*/;
+    virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) /*override*/;
+    virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) /*override*/;
+    virtual void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const /*override*/;
+
+protected:
+    static void get_nonoverlapping_parts(const Extent &overlap, const RegPair &rp, RiscOperators *ops,
+                                         RegPairs *pairs/*out*/);
+};
+
 /** The set of all registers and their values for a 32-bit x86 architecture.
  *
  *  The general purpose registers are stored as 32-bit values; subparts thereof will require calls to the RiscOperators

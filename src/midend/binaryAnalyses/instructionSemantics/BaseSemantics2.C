@@ -65,13 +65,189 @@ Exception::print(std::ostream &o) const
 Allocator SValue::allocator;
 
 /*******************************************************************************************************************************
+ *                                      RegisterStateGeneric
+ *******************************************************************************************************************************/
+
+RegisterStatePtr
+RegisterStateGeneric::create(const SValuePtr &protoval, const RegisterDictionary *regdict) const
+{
+    return RegisterStatePtr(new RegisterStateGeneric(protoval, regdict));
+}
+
+RegisterStatePtr
+RegisterStateGeneric::clone() const
+{
+    return RegisterStatePtr(new RegisterStateGeneric(*this));
+}
+
+void
+RegisterStateGeneric::clear()
+{
+    registers.clear();
+    init_to_zero = false;
+}
+
+void
+RegisterStateGeneric::zero()
+{
+    registers.clear();
+    init_to_zero = true;
+}
+
+static bool
+has_null_value(const RegisterStateGeneric::RegPair &rp)
+{
+    return rp.value == NULL;
+}
+
+void
+RegisterStateGeneric::get_nonoverlapping_parts(const Extent &overlap, const RegPair &rp, RiscOperators *ops,
+                                               RegPairs *pairs/*out*/)
+{
+    if (overlap.first() > rp.desc.get_offset()) { // LSB part of existing register does not overlap
+        RegisterDescriptor nonoverlap_desc(rp.desc.get_major(), rp.desc.get_minor(),
+                                           rp.desc.get_offset(),
+                                           overlap.first() - rp.desc.get_offset());
+        SValuePtr nonoverlap_val = ops->extract(rp.value, 0, nonoverlap_desc.get_nbits());
+        pairs->push_back(RegPair(nonoverlap_desc, nonoverlap_val));
+    }
+    if (overlap.last()+1 < rp.desc.get_offset() + rp.desc.get_nbits()) { // MSB part of existing reg does not overlap
+        size_t nonoverlap_first = overlap.last() + 1;
+        size_t nonoverlap_nbits = (rp.desc.get_offset() + rp.desc.get_nbits()) - (overlap.last() + 1);
+        RegisterDescriptor nonoverlap_desc(rp.desc.get_major(), rp.desc.get_minor(), nonoverlap_first, nonoverlap_nbits);
+        SValuePtr nonoverlap_val = ops->extract(rp.value, nonoverlap_first-rp.desc.get_offset(), nonoverlap_nbits);
+        pairs->push_back(RegPair(nonoverlap_desc, nonoverlap_val));
+    }
+}
+
+SValuePtr
+RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators *ops)
+{
+    // Fast case: the state does not store this register or any register that might overlap with this register.
+    Registers::iterator ri = registers.find(reg);
+    if (ri==registers.end()) {
+        size_t nbits = reg.get_nbits();
+        SValuePtr newval = init_to_zero ? get_protoval()->number_(nbits, 0) : get_protoval()->undefined_(nbits);
+        registers[reg].push_back(RegPair(reg, newval));
+        return newval;
+    }
+
+    // Get a list of all the (parts of) registers that might overlap with this register.
+    Extent reg_extent(reg.get_offset(), reg.get_nbits());
+    std::vector<SValuePtr> overlaps(reg.get_nbits()); // overlapping parts of other registers by bit offset
+    std::vector<RegPair> nonoverlaps; // non-overlapping parts of overlapping registers
+    for (RegPairs::iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
+        Extent overlap = reg_extent.intersect(Extent(rvi->desc.get_offset(), rvi->desc.get_nbits()));
+        if (overlap==reg_extent) {
+            return rvi->value; // found exact match; no other overlaps are possible.
+        } else if (!overlap.empty()) {
+            SValuePtr overlap_val = ops->extract(rvi->value, overlap.first()-rvi->desc.get_offset(), overlap.size());
+            overlaps[overlap.first()] = overlap_val;
+
+            // If any part of the existing register is not represented by the register being read, then we need to save that part.
+            get_nonoverlapping_parts(overlap, *rvi, ops, &nonoverlaps);
+
+            // Mark the overlapping register by setting it to null so we can remove it later.
+            rvi->value = SValuePtr();
+        }
+    }
+
+    // Remove the overlapping registers that we marked above, and replace them with their non-overlapping parts.
+    ri->second.erase(std::remove_if(ri->second.begin(), ri->second.end(), has_null_value), ri->second.end());
+    ri->second.insert(ri->second.end(), nonoverlaps.begin(), nonoverlaps.end());
+
+    // Compute the return value by concatenating the overlapping parts and filling in any missing parts.
+    SValuePtr retval;
+    size_t offset = 0;
+    while (offset<reg.get_nbits()) {
+        SValuePtr part;
+        if (overlaps[offset]!=NULL) {
+            part = overlaps[offset];
+        } else {
+            size_t next_offset = offset+1;
+            while (next_offset<reg.get_nbits() && overlaps[next_offset]==NULL) ++next_offset;
+            size_t nbits = next_offset - offset;
+            part = init_to_zero ? get_protoval()->number_(nbits, 0) : get_protoval()->undefined_(nbits);
+        }
+        retval = retval==NULL ? part : ops->concat(part, retval);
+        offset += part->get_width();
+    }
+
+    // Insert the return value; it does not overlap with any of the other parts.
+    ri->second.push_back(RegPair(reg, retval));
+    return retval;
+}
+
+void
+RegisterStateGeneric::writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
+{
+    // Fast case: the state does not store this register or any register that might overlap with this register
+    Registers::iterator ri = registers.find(reg);
+    if (ri==registers.end()) {
+        registers[reg].push_back(RegPair(reg, value));
+        return;
+    }
+
+    // Look for existing registers that overlap with this register and remove them.  If the overlap was only partial, then we
+    // need to eventually add the non-overlapping part back into the list.
+    RegPairs nonoverlaps; // the non-overlapping parts of overlapping registers
+    Extent reg_extent(reg.get_offset(), reg.get_nbits());
+    for (RegPairs::iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
+        Extent overlap = reg_extent.intersect(Extent(rvi->desc.get_offset(), rvi->desc.get_nbits()));
+        if (overlap==reg_extent) {
+            rvi->value = value; // found exact match; no other overlaps are possible
+            return;
+        } else if (!overlap.empty()) {
+            get_nonoverlapping_parts(overlap, *rvi, ops, &nonoverlaps);
+            rvi->value = SValuePtr(); // mark pair for removal by setting it to null
+        }
+    }
+
+    // Remove marked pairs, then add the non-overlapping parts.
+    ri->second.erase(std::remove_if(ri->second.begin(), ri->second.end(), has_null_value), ri->second.end());
+    ri->second.insert(ri->second.end(), nonoverlaps.begin(), nonoverlaps.end());
+
+    // Insert the new value.
+    ri->second.push_back(RegPair(reg, value));
+}
+
+void
+RegisterStateGeneric::print(std::ostream &o, const std::string prefix, PrintHelper *ph) const
+{
+    const RegisterDictionary *regdict = ph ? ph->get_register_dictionary() : NULL;
+    if (!regdict)
+        regdict = get_register_dictionary();
+    RegisterNames regnames(regdict);
+
+    // First pass is to get the maximum length of the register names.
+    size_t maxlen = 6; // use at least this many columns even if register names are short.
+    for (Registers::const_iterator ri=registers.begin(); ri!=registers.end(); ++ri) {
+        for (RegPairs::const_iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
+            maxlen = std::max(maxlen, regnames(rvi->desc).size());
+        }
+    }
+
+    // Second pass actually prints stuff
+    FormatRestorer oflags(o);
+    for (Registers::const_iterator ri=registers.begin(); ri!=registers.end(); ++ri) {
+        for (RegPairs::const_iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
+            std::string name = regnames(rvi->desc);
+            o <<prefix <<std::setw(maxlen) <<std::left <<name <<" = ";
+            oflags.restore();
+            o <<*(rvi->value) <<"\n";
+        }
+    }
+}
+
+
+/*******************************************************************************************************************************
  *                                      RegisterStateX86
  *******************************************************************************************************************************/
 
 RegisterStatePtr
-RegisterStateX86::create(const SValuePtr &protoval) const
+RegisterStateX86::create(const SValuePtr &protoval, const RegisterDictionary *regdict) const
 {
-    return RegisterStatePtr(new RegisterStateX86(protoval));
+    return RegisterStatePtr(new RegisterStateX86(protoval, regdict));
 }
 
 RegisterStatePtr
