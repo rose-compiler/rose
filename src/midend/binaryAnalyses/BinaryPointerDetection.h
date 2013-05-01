@@ -360,7 +360,7 @@ protected:
         // writes to the EIP register that are indicative of dereferencing a code pointer.
         template<size_t Len>
         void writeRegister(const RegisterDescriptor &reg, const ValueType<Len> &value) {
-            if (0==info->pass && !value.is_known() && reg.equal(this->findRegister("eip", 32))) {
+            if (0==info->pass && !value.is_known() && reg == this->findRegister("eip", 32)) {
                 InsnSemanticsExpr::InternalNodePtr inode = value.get_expression()->isInternalNode();
                 if (inode!=NULL && InsnSemanticsExpr::OP_ITE==inode->get_operator() &&
                     inode->child(1)->is_known() && inode->child(2)->is_known()) {
