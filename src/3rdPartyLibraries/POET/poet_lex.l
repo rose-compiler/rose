@@ -44,12 +44,14 @@ extern void* make_Iconst();
 extern void* make_Iconst1();
 extern void* make_any();
 
-#define CHECK_INPUT if (lexState&LEX_INPUT) { BEGIN(IN_INPUT); yylval.ptr=make_sourceString(yytext,yyleng); return SOURCE; }
-#define CHECK_ANNOT if (lexState&LEX_NOANNOT) { yylval.ptr=make_sourceString(yytext,yyleng); return SOURCE; }
+#define IS_INPUT (lexState&LEX_INPUT) 
+#define SET_INPUT { if (lexState&LEX_NOANNOT) BEGIN(IN_INPUT_NOANNOT); else BEGIN(IN_INPUT); } 
+#define RETURN_SOURCE { yylval.ptr=make_sourceString(yytext,yyleng); return SOURCE; }
+#define CHECK_INPUT  if (IS_INPUT) { SET_INPUT; RETURN_SOURCE; } 
 %}
 
 %s IN_CODE_TAG IN_INPUT_TAG IN_TAG IN_TAG_BODY IN_OUTPUT_TAG IN_XFORM_TAG IN_XFORM IN_ARG IN_IARG IN_IARG1 IN_IARG_R IN_IARG1_R IN_IARG_PARSE IN_IARG1_PARSE  
-%x IN_CODE IN_INPUT 
+%x IN_CODE IN_INPUT IN_INPUT_NOANNOT
 %option noyywrap
 %option yylineno
 
@@ -60,13 +62,13 @@ extern void* make_any();
 
 <INITIAL>"<" { CHECK_INPUT; BEGIN(IN_TAG); return LTAG; }
 <INITIAL>[\n\r \t] { CHECK_INPUT; }
-<INITIAL>{id}  { if (lexState&LEX_INPUT) { BEGIN(IN_INPUT);}  yylval.ptr = make_sourceString(yytext, yyleng); return SOURCE; }
-<INITIAL>{integer} { if (lexState&LEX_INPUT) { BEGIN(IN_INPUT);} yylval.ptr = make_Iconst(yytext,yyleng); return ICONST; }
-<INITIAL>. {  if (lexState&LEX_INPUT) { BEGIN(IN_INPUT); } yylval.ptr = make_sourceString(yytext, yyleng); return SOURCE; }
-
+<INITIAL>{id}  { CHECK_INPUT;  RETURN_SOURCE; }
+<INITIAL>{integer} { CHECK_INPUT; yylval.ptr = make_Iconst(yytext,yyleng); return ICONST; }
+<INITIAL>. {  CHECK_INPUT; RETURN_SOURCE; }
 
 <IN_TAG>"define" {  BEGIN(IN_TAG_BODY); return DEFINE; }
 <IN_TAG>"eval" {  BEGIN(IN_TAG_BODY); return EVAL; }
+<IN_TAG>"cond" {  BEGIN(IN_TAG_BODY); return COND; }
 <IN_TAG>"trace" {  BEGIN(IN_TAG_BODY); return TRACE; }
 <IN_TAG>"parameter" { BEGIN(IN_TAG_BODY); return PARAMETER; }
 <IN_TAG>"output" { BEGIN(IN_OUTPUT_TAG); return OUTPUT; }
@@ -82,14 +84,13 @@ extern void* make_any();
 <IN_INPUT_TAG>"debug" { return DEBUG; }
 <IN_INPUT_TAG,IN_TAG_BODY>"type" { return TYPE; }
 <IN_INPUT_TAG>"annot" { return ANNOT; }
-<IN_INPUT_TAG,IN_OUTPUT_TAG,IN_CODE_TAG>"cond" { return COND; }
+<IN_INPUT_TAG,IN_OUTPUT_TAG,IN_CODE_TAG,IN_TAG_BODY>"cond" { return COND; }
 <IN_TAG_BODY>"message" { return MESSAGE; }
 
 <IN_CODE_TAG,IN_XFORM_TAG>"pars" { return PARS; }
 <IN_CODE_TAG>"rebuild" { return REBUILD; }
 <IN_CODE_TAG,IN_TAG_BODY,IN_INPUT_TAG>"parse" { return PARSE; }
 <IN_CODE_TAG>"lookahead" { return LOOKAHEAD; }
-<IN_TAG_BODY,IN_INPUT_TAG,IN_CODE_TAG>"token" { return TOKEN; }
 <IN_CODE_TAG,IN_TAG_BODY,IN_INPUT_TAG>"match" { return MATCH; }
 <IN_XFORM_TAG,IN_CODE_TAG>"output" { return OUTPUT; }
 
@@ -102,8 +103,8 @@ extern void* make_any();
 <IN_XFORM_TAG>">" { BEGIN(IN_XFORM); return RTAG; }
 <IN_XFORM_TAG>"/>" { BEGIN(0); return ENDXFORM; }
 
-<IN_CODE,IN_INPUT>{id}  { yylval.ptr = make_sourceString(yytext, yyleng); return SOURCE; }
-<IN_CODE,IN_INPUT>{integer} {  yylval.ptr = make_Iconst(yytext,yyleng); return ICONST; }
+<IN_CODE,IN_INPUT,IN_INPUT_NOANNOT>{id}  { yylval.ptr = make_sourceString(yytext, yyleng); return SOURCE; }
+<IN_CODE,IN_INPUT,IN_INPUT_NOANNOT>{integer} {  yylval.ptr = make_Iconst(yytext,yyleng); return ICONST; }
 
 <IN_CODE>[\n\r]?[\t ]*"</code>" { BEGIN(0); lexState=LEX_DEFAULT; return ENDCODE; }
 <IN_CODE>[\n\r]([ \t]*"@@")? { yylval.ptr = make_sourceString(yytext,1); return SOURCE; }
@@ -111,15 +112,15 @@ extern void* make_any();
 <IN_ARG>"@" { BEGIN(IN_CODE); lexState=LEX_INPUT; }
 
 <IN_INPUT_TAG>">"[\t ]* { BEGIN(IN_IARG1); return RTAG; }
-<IN_INPUT>[\t ]*"</input>" { CHECK_ANNOT; BEGIN(0); lexState=LEX_DEFAULT; return ENDINPUT; }
-<IN_INPUT>[\n\r]?[\t ]*"//@</input>" { CHECK_ANNOT; BEGIN(0); lexState=LEX_DEFAULT; return ENDINPUT; }
-<IN_INPUT>([\n\r]?[\t ]*"/*@") { CHECK_ANNOT; BEGIN(IN_IARG); lexState=LEX_DEFAULT;  }
-<IN_INPUT>([\n\r]?[\t ]*"//@") { CHECK_ANNOT; BEGIN(IN_IARG1); lexState=LEX_DEFAULT; }
-<IN_INPUT><<EOF>> { BEGIN(0); lexState=LEX_DEFAULT; return INPUT_ENDFILE;}
-<IN_INPUT>(\\\n) { yylval.ptr=make_sourceString("\\\n",2); return INPUT_CONT;}
-<IN_INPUT>[\n\r] { yylval.ptr=make_sourceString("\n", 1); return INPUT_ENDL;}
+<IN_INPUT>[\t ]*"</input>" { BEGIN(0); lexState=LEX_DEFAULT; return ENDINPUT; }
+<IN_INPUT>[\n\r]?[\t ]*"//@</input>" { BEGIN(0); lexState=LEX_DEFAULT; return ENDINPUT; }
+<IN_INPUT>([\n\r]?[\t ]*"/*@") { BEGIN(IN_IARG); lexState=LEX_DEFAULT;  }
+<IN_INPUT>([\n\r]?[\t ]*"//@") { BEGIN(IN_IARG1); lexState=LEX_DEFAULT; }
+<IN_INPUT,IN_INPUT_NOANNOT,IN_INPUT_NOANNOT><<EOF>> { BEGIN(0); lexState=LEX_DEFAULT; return INPUT_ENDFILE;}
+<IN_INPUT,IN_INPUT_NOANNOT>(\\\n) { yylval.ptr=make_sourceString("\\\n",2); return INPUT_CONT;}
+<IN_INPUT,IN_INPUT_NOANNOT>[\n\r] { yylval.ptr=make_sourceString("\n", 1); return INPUT_ENDL;}
 
-<IN_CODE,IN_INPUT>. {  yylval.ptr = make_sourceString(yytext, yyleng); return SOURCE; }
+<IN_CODE,IN_INPUT,IN_INPUT_NOANNOT>. {  yylval.ptr = make_sourceString(yytext, yyleng); return SOURCE; }
 
 <IN_IARG>"</input>" { BEGIN(0); lexState=LEX_DEFAULT; return ENDINPUT;  }
 <IN_IARG,IN_IARG_R>("@") { BEGIN(IN_INPUT); lexState=LEX_INPUT; }
