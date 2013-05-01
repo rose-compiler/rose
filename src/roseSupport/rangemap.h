@@ -382,6 +382,13 @@ public:
         return Range::inin(minimum(), maximum());
     }
 
+    bool operator==(const Range &x) const {
+        return congruent(x);
+    }
+    bool operator!=(const Range &x) const {
+        return !congruent(x);
+    }
+    
     void print(std::ostream &o) const {
         if (empty()) {
             o <<"<empty>";
