@@ -87,9 +87,10 @@ public:
      *  reverse lookups. */
     const RegisterDescriptor *lookup(const std::string &name) const;
 
-    /** Returns a register name for a given descriptor. Returns the empty string if the descriptor cannot be found. If more
-     *  than one register has the same descriptor then the name added latest is returned. */
-    const std::string &lookup(const RegisterDescriptor&) const;
+    /** Returns a register name for a given descriptor. If more than one register has the same descriptor then the name added
+     *  latest is returned.  If no register is found then either return the empty string (default) or generate a generic name
+     *  according to the optional supplied NameGenerator. */
+    const std::string& lookup(const RegisterDescriptor&) const;
 
     /** Returns the list of all register definitions in the dictionary. */
     const Entries& get_registers() const;
@@ -107,7 +108,30 @@ private:
     std::string name; /*name of the dictionary, usually an architecture name like 'i386'*/
     Entries forward;
     Reverse reverse;
-
 };
+
+/** Prints a register name even when no dictionary is available or when the dictionary doesn't contain an entry for the
+ *  specified descriptor. */
+class RegisterNames {
+public:
+    /** Constructor. A RegisterDictionary can be supplied to the constructor, or to each operator() call. */
+    explicit RegisterNames(const RegisterDictionary *dict=NULL)
+        : dflt_dict(dict), prefix("REG"), show_offset(-1), offset_prefix("@"), show_size(false) {}
+
+    /** Obtain a name for a register descriptor.  If a dictionary is supplied, then it will be used instead of the dictionary
+     *  that was supplied to the constructor. */
+    std::string operator()(const RegisterDescriptor&, const RegisterDictionary *dict=NULL) const;
+
+    const RegisterDictionary *dflt_dict;/**< Dictionary supplied to the constructor. */
+    std::string prefix;                 /**< The leading part of a register name. */
+    std::string suffix;                 /**< String to print at the very end of the generated name. */
+    int show_offset;                    /**< 0=>never show offset; positive=>always show; negative=>show only when non-zero */
+    std::string offset_prefix;          /**< String printed before the offset when the offset is shown. */
+    std::string offset_suffix;          /**< String printed after the offset when the offset is shown. */
+    bool show_size;                     /**< Whether to show the size in bits of the register. */
+    std::string size_prefix;            /**< String printed prior to the size when the size is printed. */
+    std::string size_suffix;            /**< String printed after the size when the size is printed. */
+};
+
 
 #endif /*!ROSE_BINARY_REGISTERRS_H*/

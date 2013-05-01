@@ -45,6 +45,36 @@ RegisterDescriptor::operator<(const RegisterDescriptor &other) const
 }
 
 
+/*******************************************************************************************************************************
+ *                                      RegisterNames
+ *******************************************************************************************************************************/
+
+std::string
+RegisterNames::operator()(const RegisterDescriptor &rdesc, const RegisterDictionary *dict_/*=NULL*/) const
+{
+    const RegisterDictionary *dict = dict_ ? dict_ : dflt_dict;
+    if (dict) {
+        std::string name = dict->lookup(rdesc);
+        if (!name.empty())
+            return name;
+    }
+
+    std::ostringstream ss;
+    ss <<prefix <<rdesc.get_major() <<"." <<rdesc.get_minor();
+    if (show_offset>0 || (show_offset<0 && rdesc.get_offset()!=0))
+        ss <<offset_prefix <<rdesc.get_offset() <<offset_suffix;
+    if (show_size)
+        ss <<size_prefix <<rdesc.get_nbits() <<size_suffix;
+    ss <<suffix;
+    return ss.str();
+}
+
+
+/*******************************************************************************************************************************
+ *                                      RegisterDictionary
+ *******************************************************************************************************************************/
+
+
 /* class method */
 uint64_t
 RegisterDictionary::hash(const RegisterDescriptor &d)
