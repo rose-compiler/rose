@@ -659,9 +659,22 @@ public:
     virtual void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const = 0;
 };
 
-/** A RegisterState for any architecture. */
+/** A RegisterState for any architecture.
+ *
+ *  This state stores a list of non-overlapping registers and their values, typically only for the registers that have been
+ *  accessed.  The state automatically switches between different representations when accessing a register that overlaps with
+ *  one or more stored registers.  For instance, if the state stores 64-bit registers and the specimen suddently switches to
+ *  32-bit mode, this state will split the 64-bit registers into 32-bit pieces.  If the analysis later returns to 64-bit mode,
+ *  the 32-bit pieces are concatenated back to 64-bit values. This splitting and concatenation occurs on a per-register basis
+ *  at the time the register is read or written. */
 class RegisterStateGeneric: public RegisterState {
 public:
+    // Like a RegisterDescriptor, but only the major and minor numbers.  This state maintains lists of registers, one list per
+    // major-minor pair.  When reading or writing a register, the register being accessed is guaranteed to overlap only with
+    // those registers on the matching major-minor list, if it overlaps at all.  The lists are typically short (e.g., one list
+    // might refer to all the parts of the x86 RAX register, but the RBX parts would be on a different list. None of the
+    // registers stored on a particular list overlap with any other register on that same list; when adding new register that
+    // would overlap, the registers with which it overlaps must be removed first.
     struct RegStore {
         unsigned majr, minr;
         RegStore(const RegisterDescriptor &d) // implicit
@@ -714,6 +727,8 @@ protected:
 };
 
 /** The set of all registers and their values for a 32-bit x86 architecture.
+ *
+ *  This register state is probably not too useful anymore; use RegisterStateGeneric instead.
  *
  *  The general purpose registers are stored as 32-bit values; subparts thereof will require calls to the RiscOperators
  *  extract() or concat() operators.  The status bits from the EFLAGS register are stored individually since that's how they're
