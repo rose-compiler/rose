@@ -43,6 +43,7 @@ SUBDIRS = \
 	RTC \
 	PowerAwareCompiler \
 	ManyCoreRuntime \
+	StencilManyCore \
 	Fortran_to_C \
 	mint \
 	vectorization \
