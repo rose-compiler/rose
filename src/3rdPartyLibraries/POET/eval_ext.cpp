@@ -1,3 +1,4 @@
+
 /*
    POET : Parameterized Optimizations for Empirical Tuning
    Copyright (c)  2008,  Qing Yi.  All rights reserved.
@@ -25,20 +26,33 @@ OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGEN
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISEDOF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/********************************************************************
+  Routines for implementing evaluation of POET AST which can be substituted
+with alternive implementations to connect POET with existing compilers.
+These routines include:
+  EvaluatePOET::eval_readInput_nosyntax
+  POETAstInterface::GetChildrenList
+  POETAstInterface::Ast2String
+  POETAstInterface::MatchPattern
+********************************************************************/
 #include <poet_ASTeval.h>
+#include <poet_ASTinterface.h>
 
-extern bool debug_time;
-
-int main(int argc, char** argv)
-{
-  int index = initialize(argc, argv);
-  EvaluatePOET::startup();
-  try {
-  for ( ; index < argc; ++index) {
-     const char* fname = argv[index];
-     EvaluatePOET::eval_program(process_file(fname));
-  }
-  }
-  catch (Error err) { return 1;}
-  return 0;
+POETCode* EvaluatePOET::
+eval_readInput_nosyntax(POETCode* inputFiles, POETCode* codeType, POETCode* inputInline)
+{ 
+  return eval_readInput(inputFiles, codeType,inputInline); 
 }
+
+POETAstInterface::AstList POETAstInterface::
+GetChildrenList(const POETAstInterface::Ast& p)
+{ std::cerr << "Need to be implemented by external compilers!"; assert(0); }
+
+bool POETAstInterface::MatchAstTypeName(const Ast& n, const std::string& name, std::vector<POETCode*>* children)
+{ std::cerr << "Need to be implemented by external compilers!"; assert(0); }
+
+std::string POETAstInterface::Ast2String(const Ast & n)
+{ std::cerr << "Need to be implemented by external compilers!"; assert(0); }
+
+std::string POETAstInterface::unparseToString(const Ast & n)
+{ std::cerr << "Need to be implemented by external compilers!"; assert(0); }
