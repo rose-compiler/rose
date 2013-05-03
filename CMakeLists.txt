@@ -1033,7 +1033,27 @@ endif()
 
 enable_testing()
 
-#TODO: support for other compilers & operating systems
+#TODO: better support for other compilers & operating systems
+set(C_INCLUDE_STRING
+  "{\"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS\", \\
+  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs\",  \\
+  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs1\", \\
+  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs2\", \\
+  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs3\", \\
+  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs4\", \\
+  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs5\", \\
+  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs6\", \\
+  \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs7\"")
+set(CXX_INCLUDE_STRING
+  "{\"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS\", \\
+  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs\",  \\
+  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs1\", \\
+  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs2\", \\
+  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs3\", \\
+  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs4\", \\
+  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs5\", \\
+  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs6\", \\
+  \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs7\"")
 find_program(shell sh)
 if(shell AND CMAKE_COMPILER_IS_GNUCXX)
   execute_process(
@@ -1047,38 +1067,18 @@ if(shell AND CMAKE_COMPILER_IS_GNUCXX)
   string(REPLACE "\n" ";" C_backend_includes "${C_backend_includes}")
   string(REPLACE "\n" ";" CXX_backend_includes "${CXX_backend_includes}")
 
-  set(C_INCLUDE_STRING
-    "{\"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS\", \\
-    \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs\",  \\
-    \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs1\", \\
-    \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs2\", \\
-    \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs3\", \\
-    \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs4\", \\
-    \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs5\", \\
-    \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs6\", \\
-    \"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs7\"")
   foreach(C_include_dir ${C_backend_includes})
     string(STRIP "${C_include_dir}" C_include_dir)
     set(C_INCLUDE_STRING "${C_INCLUDE_STRING}, \"${C_include_dir}\"")
   endforeach()
-  set(C_INCLUDE_STRING "${C_INCLUDE_STRING}}")
 
-  set(CXX_INCLUDE_STRING
-    "{\"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS\", \\
-    \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs\",  \\
-    \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs1\", \\
-    \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs2\", \\
-    \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs3\", \\
-    \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs4\", \\
-    \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs5\", \\
-    \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs6\", \\
-    \"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/hdrs7\"")
   foreach(CXX_include_dir ${CXX_backend_includes})
     string(STRIP "${CXX_include_dir}" CXX_include_dir)
     set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING}, \"${CXX_include_dir}\"")
   endforeach()
-  set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING}}")
 endif()
+set(C_INCLUDE_STRING "${C_INCLUDE_STRING}}")
+set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING}}")
 
 # ------------------------- Private Configuration File ----------------------------
 # The rose_config.h file contains CPP macros describing what features were detected
