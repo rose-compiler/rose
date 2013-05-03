@@ -9,7 +9,7 @@ BEGIN {push @INC, "$1/policies" if $0 =~ /(.*)\//}
 use FileLister;
 
 my %status;
-my $files = FileLister->new(@ARGV);
+my $files = FileLister->new("--generated",@ARGV);
 $files->{build} = 1; #include build tree
 while (my $file = $files->next_file) {
   my($target,$ext) = $file =~ /([^\/]+)(?:\.([^\.\/]+))$/;
