@@ -1,6 +1,7 @@
 #ifndef ROSE_MemoryMap_H
 #define ROSE_MemoryMap_H
 
+#include "ByteOrder.h"
 #include <boost/shared_ptr.hpp>
 
 /* Increase ADDR if necessary to make it a multiple of ALMNT */
@@ -483,13 +484,16 @@ public:
      **************************************************************************************************************************/
 
     /** Constructs an empty memory map. */
-    MemoryMap() {}
+    MemoryMap(): sex(ByteOrder::ORDER_UNSPECIFIED) {}
 
     /** Shallow copy constructor.  The new memory map describes the same mapping and points to shared copies of the underlying
      *  data.  In other words, changing the mapping of one map (clear(), insert(), erase()) does not change the mapping of the
      *  other, but changing the data (write()) in one map changes it in the other.  See also init(), which takes an argument
      *  describing how to copy. */
-    MemoryMap(const MemoryMap &other, CopyLevel copy_level=COPY_SHALLOW) { init(other, copy_level); }
+    MemoryMap(const MemoryMap &other, CopyLevel copy_level=COPY_SHALLOW)
+        : sex(ByteOrder::ORDER_UNSPECIFIED) {
+        init(other, copy_level);
+    }
 
     /** Initialize this memory map with info from another.  This map is first cleared and then initialized with a copy of the
      *  @p source map.  A reference to this map is returned for convenience since init is often used in conjunction with
@@ -502,6 +506,13 @@ public:
 
     /** Clear the entire memory map by erasing all addresses that are defined. */
     void clear();
+
+    /** Every map has a default byte order property which can be used by functions that read and write multi-byte values.
+     *  The default byte order is little-endian.
+     * @{ */
+    ByteOrder::Endianness get_byte_order() const { return sex; }
+    void set_byte_order(ByteOrder::Endianness order) { sex = order; }
+     /** @} */
 
     /** Define a new area of memory.  The @p segment is copied into the memory map and the reference count for the Buffer to
      *  which it points (if any) is incremented.  A check is performed to ensure that the @p range and @p segment are
@@ -654,6 +665,7 @@ public:
      **************************************************************************************************************************/
 protected:
     Segments p_segments;
+    ByteOrder::Endianness sex;
 };
 
 #endif

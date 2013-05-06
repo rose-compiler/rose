@@ -562,6 +562,7 @@ MemoryMap&
 MemoryMap::init(const MemoryMap &other, CopyLevel copy_level)
 {
     p_segments = other.p_segments;
+    sex = other.sex;
 
     switch (copy_level) {
         case COPY_SHALLOW:
@@ -1039,4 +1040,3 @@ MemoryMap::load(const std::string &basename)
     if (line) free(line);
     return nread<=0;
 }
-    
