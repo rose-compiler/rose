@@ -357,6 +357,11 @@ HEADER_JAVA_PARAMETERIZED_TYPE_START
 HEADER_JAVA_PARAMETERIZED_TYPE_END
 
 
+HEADER_JAVA_WILDCARD_TYPE_START
+          SgJavaWildcardType ( const SgJavaWildcardType & X );
+HEADER_JAVA_WILDCARD_TYPE_END
+
+
 HEADER_ENUM_TYPE_START
           SgEnumType ( const SgEnumType & X );
 HEADER_ENUM_TYPE_END
@@ -2831,6 +2836,38 @@ $CLASSNAME::get_mangled(void) const
      return mangled_name;
    }
 SOURCE_JAVA_PARAMETERIZED_TYPE_END
+
+
+SOURCE_JAVA_WILDCARD_TYPE_START
+SgJavaWildcardType::SgJavaWildcardType ( const SgJavaWildcardType & X )
+   : SgType(X)
+   {
+   }
+
+SgName
+SgJavaWildcardType::get_name() const
+   {
+       return SgName("?");
+   }
+
+SgName
+SgJavaWildcardType::get_mangled (void) const
+   {
+     ROSE_ASSERT(this != NULL);
+
+     SgName mangled_name;
+     mangled_name << "__" << "MANGLED_ID_WILDCARD_TYPE" << "b__" // start tag
+                  << get_name().str() // name of wildcard type is "?"
+                  << "__" << "MANGLED_ID_WILDCARD_TYPE" << "e__"; // end tag
+
+#if 0
+     printf ("LEAVING: In SgJavaWildcardType::get_mangled(): mangled_name = %s \n",mangled_name.str());
+#endif
+
+     return mangled_name;
+   }
+
+SOURCE_JAVA_WILDCARD_TYPE_END
 
 
 SOURCE_TEMPLATE_TYPE_START
@@ -5320,6 +5357,21 @@ SgJavaParameterizedType::createType(SgClassDeclaration * cd, SgExpression* optio
    }
 
 SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETERIZED_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_JAVA_WILDCARD_TYPE_START
+
+SgJavaWildcardType*
+SgJavaWildcardType::createType(SgType *bound_type /*=NULL*/, SgExpression* optional_fortran_type_kind)
+   {
+  // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+     SgJavaWildcardType* returnType = new SgJavaWildcardType(bound_type, true);
+
+     return returnType;
+   }
+SOURCE_CREATE_TYPE_FOR_JAVA_WILDCARD_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE_START
