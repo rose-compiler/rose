@@ -552,8 +552,22 @@ RiscOperators::readMemory(X86SegmentRegister sg,
     assert(1==condition->get_width()); // FIXME: condition is not used
     assert(8==nbits || 16==nbits || 32==nbits);
 
-    // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
+    // Default values come from an optional memory map.
     BaseSemantics::SValuePtr dflt = undefined_(nbits);
+    if (map && address->is_number()) {
+        size_t nbytes = nbits/8;
+        uint8_t buf[nbytes];
+        size_t nread = map->read(buf, address->get_number(), nbytes);
+        if (nread == nbytes) {
+            ByteOrder::convert(buf, nbytes, map->get_byte_order(), ByteOrder::ORDER_LSB);
+            uint64_t dflt_val = 0;
+            for (size_t i=0; i<nbytes; ++i)
+                dflt_val |= IntegerOps::shiftLeft2<uint64_t>(buf[i], 8*i);
+            dflt = number_(nbits, dflt_val);
+        }
+    }
+    
+    // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
     SValuePtr retval = SValue::promote(state->readMemory(address, dflt, nbits, this));
     return retval;
 }

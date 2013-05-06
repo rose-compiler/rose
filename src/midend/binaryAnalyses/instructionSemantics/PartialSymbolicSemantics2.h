@@ -213,13 +213,16 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 /** Defines RISC operators for this semantic domain. */
 class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
+    MemoryMap *map;
+
+protected:
     // Protected constructors, same as for the base class
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(protoval, solver) {
+        : BaseSemantics::RiscOperators(protoval, solver), map(NULL) {
         set_name("PartialSymbolic");
     }
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(state, solver) {
+        : BaseSemantics::RiscOperators(state, solver), map(NULL) {
         set_name("PartialSymbolic");
     }
 
@@ -256,6 +259,15 @@ public:
                                                    SMTSolver *solver=NULL) const /*override*/ {
         return instance(state, solver);
     }
+
+public:
+    /** A memory map can be used to provide default values for memory cells that are read before being written. Usually one
+     *  would initialize the memory map to contain all the non-writable addresses.  The byte-order property of the memory
+     *  map is used when reading the value.
+     * @{ */
+    MemoryMap *get_memory_map() const { return map; }
+    void set_memory_map(MemoryMap *m) { map = m; }
+    /** @} */
 
 public:
     virtual void interrupt(uint8_t inum) /*override*/;
@@ -347,12 +359,6 @@ protected:
                     orig_state = cur_state;
                 }
 
-                /** Set the memory map that holds known values for known memory addresses.  This map is not modified by the
-                 *  policy and data is read from but not written to the map. */
-                void set_map(MemoryMap *map) {
-                    this->map = map;
-                }
-
                 /** Returns the original state.  The original state is initialized to be equal to the current state twice: once
                  *  by the constructor, and then again when the first instruction is processed. */
                 const State<SValue>& get_orig_state() const { return orig_state; }
@@ -412,69 +418,6 @@ protected:
                  *  a false value is returned. */
                 bool SHA1(unsigned char *digest) const;
 
-                /** Reads a value from memory in a way that always returns the same value provided there are not intervening
-                 *  writes that would clobber the value either directly or by aliasing.  Also, if appropriate, the value is
-                 *  added to the original memory state (thus changing the value at that address from an implicit named value to
-                 *  an explicit named value).
-                 *
-                 *  It is safe to call this function and supply the policy's original state as the state argument.
-                 *
-                 *  The documentation for MemoryCell has an example that demonstrates the desired behavior of mem_read() and
-                 *  mem_write(). */
-                template <size_t Len> SValue<Len> mem_read(State<SValue> &state, const SValue<32> &addr) const {
-                    MemoryCell<SValue> new_cell(addr, SValue<32>(), Len/8);
-                    bool aliased = false; /*is new_cell aliased by any existing writes?*/
-
-                    for (typename State<SValue>::Memory::iterator mi=state.memory.begin(); mi!=state.memory.end(); ++mi) {
-                        if (new_cell.must_alias(*mi)) {
-                            if (mi->is_clobbered()) {
-                                mi->set_clobbered(false);
-                                mi->set_data(new_cell.get_data());
-                                return new_cell.get_data();
-                            } else {
-                                return mi->get_data();
-                            }
-                        } else if (new_cell.may_alias(*mi) && mi->is_written()) {
-                            aliased = true;
-                        }
-                    }
-
-                    if (!aliased && &state!=&orig_state) {
-                        /* We didn't find the memory cell in the specified state and it's not aliased to any writes in that
-                         * state. Therefore use the value from the initial memory state (creating it if necessary). */
-                        for (typename State<SValue>::Memory::iterator mi=orig_state.memory.begin();
-                             mi!=orig_state.memory.end();
-                             ++mi) {
-                            if (new_cell.must_alias(*mi)) {
-                                ROSE_ASSERT(!(*mi).is_clobbered());
-                                ROSE_ASSERT(!(*mi).is_written());
-                                state.memory.push_back(*mi);
-                                return (*mi).get_data();
-                            }
-                        }
-
-                        /* Not found in initial state. But if we have a known address and a valid memory map then initialize
-                         * the original state with data from the memory map. */      
-                        if (map && addr.is_known()) {
-                            uint8_t buf[sizeof(uint64_t)];
-                            ROSE_ASSERT(Len/8 < sizeof buf);
-                            size_t nread = map->read(buf, addr.known_value(), Len/8);
-                            if (nread==Len/8) {
-                                uint64_t n = 0;
-                                for (size_t i=0; i<Len/8; i++)
-                                    n |= buf[i] << (8*i);
-                                new_cell.set_data(number<32>(n));
-                            }
-                        }
-
-                        orig_state.memory.push_back(new_cell);
-                    }
-
-                    /* Create the cell in the current state. */
-                    state.memory.push_back(new_cell);
-                    return new_cell.get_data();
-                }
-
                 /** See memory_reference_type(). */
                 enum MemRefType { MRT_STACK_PTR, MRT_FRAME_PTR, MRT_OTHER_PTR };
 
@@ -492,57 +435,6 @@ protected:
                     if (addr==state.registers.gpr[x86_gpr_bp]) return MRT_FRAME_PTR;
                     return MRT_OTHER_PTR;
                 }
-
-                /** Writes a value to memory. If the address written to is an alias for other addresses then the other
-                 *  addresses will be clobbered. Subsequent reads from clobbered addresses will return new values. See also,
-                 *  mem_read(). */
-                template <size_t Len> void mem_write(State<SValue> &state, const SValue<32> &addr,
-                                                     const SValue<Len> &data) {
-                    ROSE_ASSERT(&state!=&orig_state);
-                    MemoryCell<SValue> new_cell(addr, data, Len/8);
-                    new_cell.set_written();
-                    bool saved = false; /* has new_cell been saved into memory? */
-
-                    /* Is new memory reference through the stack pointer or frame pointer? */
-                    MemRefType new_mrt = memory_reference_type(state, addr);
-
-                    /* Overwrite and/or clobber existing memory locations. */
-                    for (typename State<SValue>::Memory::iterator mi=state.memory.begin(); mi!=state.memory.end(); ++mi) {
-                        if (new_cell.must_alias(*mi)) {
-                            *mi = new_cell;
-                            saved = true;
-                        } else if (p_discard_popped_memory && new_mrt!=memory_reference_type(state, (*mi).get_address())) {
-                            /* Assume that memory referenced through the stack pointer does not alias that which is referenced
-                             * through the frame pointer, and neither of them alias memory that is referenced other ways. */
-                        } else if (new_cell.may_alias(*mi)) {
-                            (*mi).set_clobbered();
-                        } else {
-                            /* memory cell *mi is not aliased to cell being written */
-                        }
-                    }
-                    if (!saved)
-                        state.memory.push_back(new_cell);
-                }
-
-                /*************************************************************************************************************
-                 * Functions invoked by the X86InstructionSemantics class for every processed instruction or block
-                 *************************************************************************************************************/
-
-                /** See NullSemantics::Policy::startInstruction() */
-                void startInstruction(SgAsmInstruction *insn) {
-                    cur_state.registers.ip = SValue<32>(insn->get_address());
-                    if (0==get_ninsns())
-                        orig_state = cur_state;
-                    BaseSemantics::RiscOperators::startInstruction(insn);
-                }
-
-                /** See NullSemantics::Policy::finishInstruction() */
-                void finishInstruction(SgAsmInstruction *insn) {
-                    if (p_discard_popped_memory)
-                        cur_state.discard_popped_memory();
-                    BaseSemantics::RiscOperators::finishInstruction(insn);
-                }
-
 
 
 
