@@ -82,7 +82,7 @@
    ElfFileHeader.Header.Section.purpose                           = SP_HEADER
    ElfFileHeader.Header.Section.mapped                            = <not mapped>
 @@ -59,21 +59,21 @@
-   ElfFileHeader.Header.Format.sex                                = little-endian
+   ElfFileHeader.Header.Format.sex                                = ORDER_LSB
    ElfFileHeader.Header.Format.version                            = 1 (current)
    ElfFileHeader.Header.Format.ABI                                = unspecified
    ElfFileHeader.Header.Format.ABIvers                            = 0
