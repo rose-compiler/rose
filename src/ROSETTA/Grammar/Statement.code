@@ -6714,8 +6714,11 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
 
   // DQ (7/23/2012): This is one of three locations where the template arguments are assembled and where 
   // the name generated idically (in each case) is critical.  Not clear how to best refactor this code.
-  // The other two are in edgRose.C in function: appendTemplateArgumentsToName()
-  // and in Statement.code: SgDeclarationStatement::resetTemplateNameSupport().
+  // The other two are:
+  //      SgName SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplateArgumentPtrList & templateArgumentsList)
+  // and in:
+  //      void SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledForm, SgName & name )
+  // It is less clear how to refactor this code.
 
   // DQ (9/27/2004) Note: This is the only place within the construction of the Sage III AST (from EDG)
   // where the unparser is called.  It is in general unsafe to do this and it may be that this should 
@@ -12639,6 +12642,9 @@ SgEnumDeclaration::get_mangled_name (void) const
      std::string mangledNameString = SageInterface::getMangledNameFromCache(const_cast<SgEnumDeclaration*>(this));
      if (mangledNameString.empty() == false)
         {
+#if 0
+          printf ("In SgEnumDeclaration::get_mangled_name(void): name from getMangledNameFromCache: mangledNameString = %s \n",mangledNameString.c_str());
+#endif
        // return i->second.c_str();
           return mangledNameString;
         }
@@ -12695,8 +12701,26 @@ SgEnumDeclaration::get_mangled_name (void) const
        // SgName mangledName = joinMangledQualifiers (mangleQualifiers(get_scope()),get_name());
           SgName mangledName = joinMangledQualifiers (mangleQualifiersString,get_name());
 
+       // DQ (4/23/2013): If the scope is not available, then don't put this into the MangleNameToCache.
+       // It can be added later when the scope is available and at a point where the name will be more meanningful.
        // p_globalMangledNameMap[declaration] = mangledName;
-          mangledName = SageInterface::addMangledNameToCache(const_cast<SgEnumDeclaration*>(this),mangledName);
+       // mangledName = SageInterface::addMangledNameToCache(const_cast<SgEnumDeclaration*>(this),mangledName);
+          if (get_scope() != NULL)
+             {
+#if 0
+               printf ("In SgEnumDeclaration::get_mangled_name(void): PUT name into MangleNameToCache: mangledName = %s \n",mangledName.str());
+#endif
+               mangledName = SageInterface::addMangledNameToCache(const_cast<SgEnumDeclaration*>(this),mangledName);
+             }
+            else
+             {
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+               printf ("In SgEnumDeclaration::get_mangled_name(void): SKIP putting name into MangleNameToCache: mangledName = %s \n",mangledName.str());
+#endif
+             }
+#if 0
+          printf ("In SgEnumDeclaration::get_mangled_name(void): generated name: mangledName = %s \n",mangledName.str());
+#endif
           return mangledName;
         }
 #endif

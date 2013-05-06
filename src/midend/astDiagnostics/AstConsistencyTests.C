@@ -2184,6 +2184,13 @@ TestAstForProperlyMangledNames::isValidMangledName (string name, bool java_lang 
              }
         }
 
+#if 0
+     if (result == false)
+        {
+          printf ("ERROR: isValidMangledName(name = %s) == false \n",name.c_str());
+        }
+#endif
+
      return result;
    }
 
@@ -2877,6 +2884,9 @@ TestAstSymbolTables::visit ( SgNode* node )
              {
             // DQ: removed SgName casting operator to char*
             // cout << "[" << idx << "] " << (*i).first.str();
+
+            // DQ (5/2/2013): Added to support test2013_141.C.
+               ROSE_ASSERT ( (*i).second != NULL );
 #if 0
                printf ("In symbol table = %p symbol name = i->first = %s i->second = %p = %s \n",symbolTable,i->first.str(),i->second,i->second->class_name().c_str());
 #endif

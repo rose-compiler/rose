@@ -357,6 +357,8 @@ class UnparseLanguageIndependentConstructs
           virtual PrecedenceSpecifier getPrecedence(SgExpression* exp);
           virtual AssociativitySpecifier getAssociativity(SgExpression* exp);
 
-};
+       // DQ (4/14/2013): Added to support the mixed use of both overloaded operator names and operator syntax.
+          bool isRequiredOperator( SgBinaryOp* binary_op, bool current_function_call_uses_operator_syntax, bool parent_function_call_uses_operator_syntax );
+   };
 
 #endif

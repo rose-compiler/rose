@@ -2868,6 +2868,7 @@ SgEnumType::SgEnumType ( const SgEnumType & X )
    {
    }
 
+
 SgName
 SgEnumType::get_name() const
    {
@@ -2876,6 +2877,7 @@ SgEnumType::get_name() const
        else
           return SgName((char *)0L);
    }
+
 
 // RV (2/1/2006): Updated to use the declaration's mangling routine.
 SgName
@@ -2888,11 +2890,17 @@ SgEnumType::get_mangled (void) const
 
   // DQ (1/12/13): Assert that this is not a previously deleted IR node (which will have the name = "SgNode").
   // ROSE_ASSERT(decl->get_scope() != NULL);
+
 #if 0
      printf ("SgEnumType::get_mangled(): decl->get_scope() = %p \n",decl->get_scope());
 #endif
+
      if (decl->get_scope() != NULL)
         {
+#if 0
+          printf ("SgEnumType::get_mangled(): decl->get_scope() = %p = %s name = %s \n",decl->get_scope(),decl->get_scope()->class_name().c_str(),SageInterface::get_name(decl->get_scope()).c_str());
+#endif
+
           ROSE_ASSERT(decl->get_scope()->class_name() != "SgNode");
         }
 
@@ -2904,6 +2912,7 @@ SgEnumType::get_mangled (void) const
 
      return decl->get_mangled_name ();
    }
+
 
 #if 0
 // Older code
@@ -4952,6 +4961,11 @@ SgEnumType::createType(SgEnumDeclaration* cd, SgExpression* optional_fortran_typ
 
        // We have to build the type before we can generate a mangle name for it.
           SgName name = returnType->get_mangled();
+
+#if 0
+          printf ("In SgEnumType::createType(): cd = %p = %s \n",cd,name.str());
+#endif
+
           if (name.is_null() == true)
              {
 #if 0
@@ -4961,12 +4975,16 @@ SgEnumType::createType(SgEnumDeclaration* cd, SgExpression* optional_fortran_typ
 #endif
                name = SageInterface::generateUniqueName(returnType,/* ignoreDifferenceBetweenDefiningAndNondefiningDeclarations = */ true);
 #if 0
-               printf ("Generated a unique name (using SageInterface::generateUniqueName())= %s \n",name.str());
+               printf ("In SgEnumType::createType(): Generated a unique name (using SageInterface::generateUniqueName())= %s \n",name.str());
 #endif
              }
           ROSE_ASSERT(name.is_null() == false);
 
           SgScopeStatement* currentScope = getCurrentScope();
+
+#if 0
+          printf ("In SgEnumType::createType(): currentScope = %p = %s \n",currentScope,currentScope != NULL ? currentScope->class_name().c_str() : "NULL");
+#endif
 
           if (currentScope != NULL)
              {
