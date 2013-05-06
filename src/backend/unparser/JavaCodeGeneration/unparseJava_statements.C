@@ -82,6 +82,8 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
         {
        // DQ (3/14/2011): Need to move the Java specific unparse member functions from the base class to this function.
 
+//          case V_SgGlobal:                   cout << "Got it !!!" << endl; /* unparseGlobalStmt   (stmt, info); */ break;
+
        // declarations
        // case V_SgInterfaceStatement:     unparseInterfaceStmt(stmt, info); break;
           case V_SgVariableDeclaration:    unparseVarDeclStmt  (stmt, info); break;
@@ -204,6 +206,72 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
         if (printNewline) unp->cur.insert_newline();
    }
 
+// TODO: Remove this!
+/*
+void
+Unparse_Java::unparseGlobalStmt (SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgGlobal* globalScope = isSgGlobal(stmt);
+     ROSE_ASSERT(globalScope != NULL);
+
+#if OUTPUT_HIDDEN_LIST_DATA
+     outputHiddenListData (globalScope);
+#endif
+
+
+#if 0
+     int declarationCounter = 0;
+#endif
+
+  // Setup an iterator to go through all the statements in the top scope of the file.
+     SgDeclarationStatementPtrList & globalStatementList = globalScope->get_declarations();
+     SgDeclarationStatementPtrList::iterator statementIterator = globalStatementList.begin();
+     while ( statementIterator != globalStatementList.end() )
+        {
+          SgStatement* currentStatement = *statementIterator;
+          ROSE_ASSERT(currentStatement != NULL);
+
+#if 0
+          printf ("In unparseGlobalStmt(): declaration #%d is %p = %s = %s \n",declarationCounter++,currentStatement,currentStatement->class_name().c_str(),SageInterface::get_name(currentStatement).c_str());
+#endif
+
+          if (ROSE_DEBUG > 3)
+             {
+            // (*primary_os)
+               cout << "In run_unparser(): getLineNumber(currentStatement) = "
+#if 1
+                    << currentStatement->get_file_info()->displayString()
+#else
+                    << ROSE::getLineNumber(currentStatement)
+                    << " getFileName(currentStatement) = " 
+                    << ROSE::getFileName(currentStatement)
+#endif
+                    << " unp->cur_index = " 
+                    << unp->cur_index
+                    << endl;
+             }
+
+       // DQ (6/4/2007): Make a new SgUnparse_Info object for each statement in global scope
+       // This should permit children to set the current_scope and not effect other children
+       // see test2007_56.C for example "namespace A { extern int x; } int A::x = 42;"
+       // Namespace definition scope should not effect scope set in SgGlobal.
+       // unparseStatement(currentStatement, info);
+          SgUnparse_Info infoLocal(info);
+          unparseStatement(currentStatement, infoLocal);
+
+       // Go to the next statement
+          statementIterator++;
+        }
+
+  // DQ (5/27/2005): Added support for compiler-generated statements that might appear at the end of the applications
+  // printf ("At end of unparseGlobalStmt \n");
+  // outputCompilerGeneratedStatements(info);
+
+  // DQ (4/21/2005): Output a new line at the end of the file (some compilers complain if this is not present)
+     unp->cur.insert_newline(1);
+}
+*/
+
 void
 Unparse_Java::unparseNestedStatement(SgStatement* stmt, SgUnparse_Info& info) {
     info.inc_nestingLevel();
@@ -224,6 +292,8 @@ Unparse_Java::unparseImportDeclarationStatement (SgStatement* stmt, SgUnparse_In
      ROSE_ASSERT (importDeclaration != NULL);
 
      curprint("import ");
+     if (importDeclaration -> get_declarationModifier().get_storageModifier().isStatic())
+         curprint("static ");
      unparseName(importDeclaration->get_path(), info);
      if (importDeclaration -> get_containsWildCard())
          curprint(".*");
@@ -446,6 +516,21 @@ Unparse_Java::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 
+void
+Unparse_Java::unparseCaseOrDefaultBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgBasicBlock* basic_stmt = isSgBasicBlock(stmt);
+     ROSE_ASSERT(basic_stmt != NULL);
+
+     // curprint ("{");
+     foreach (SgStatement* stmt, basic_stmt->get_statements()) {
+         unp->cur.insert_newline();
+         unparseNestedStatement(stmt, info);
+     }
+     // curprint_indented ("}", info);
+   }
+
+
 // Determine how many "else {}"'s an outer if that has an else clause needs to
 // prevent dangling if problems
 static size_t countElsesNeededToPreventDangling(SgStatement* s) {
@@ -528,10 +613,8 @@ void Unparse_Java::unparseForEachStmt(SgStatement* stmt, SgUnparse_Info& info) {
 
     curprint("for (");
 
- // DQ (9/3/2011): Change to API for this IR node.
- // unparseInitializedName(foreach_stmt -> get_element(), info);
     ROSE_ASSERT(foreach_stmt -> get_element()->get_variables().size() == 1);
-    unparseInitializedName(foreach_stmt -> get_element()->get_variables()[0], info);
+    unparseVarDeclStmt(foreach_stmt -> get_element(), info);
 
     curprint(" : ");
     unparseExpression(foreach_stmt -> get_collection(), info);
@@ -541,8 +624,21 @@ void Unparse_Java::unparseForEachStmt(SgStatement* stmt, SgUnparse_Info& info) {
 
 void
 Unparse_Java::unparseInitializedName(SgInitializedName* init_name, SgUnparse_Info& info) {
-    unparseType(init_name->get_type(), info);
-    curprint(" ");
+    if (init_name -> attributeExists("final")) {
+        curprint("final ");
+    }
+
+    AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) init_name -> getAttribute("var_args");
+    if (attribute) {
+        SgType *element_type = isSgType(attribute -> getNode());
+        unparseType(element_type, info);
+        curprint("... ");
+    }
+    else {
+        unparseType(init_name->get_type(), info);
+        curprint(" ");
+    }
+
     unparseName(init_name->get_name(), info);
 
     if (init_name->get_initializer() != NULL) {
@@ -725,6 +821,12 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      */
 
      unparseDeclarationModifier(mfuncdecl_stmt->get_declarationModifier(), info);
+
+     if (mfuncdecl_stmt->get_functionModifier().isJavaInitializer()) { // If this is an initializer block, process it here and return.
+         unparseBasicBlockStmt(mfuncdecl_stmt->get_definition() -> get_body(), info);
+         return;
+     }
+
      unparseFunctionModifier(mfuncdecl_stmt->get_functionModifier(), info);
 
      //TODO remove when specialFxnModifier.isConstructor works
@@ -762,11 +864,16 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          unparseInitializedName(*name_it, info);
      }
 
+     AstRegExAttribute *attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("exception");
+           
      if (mfuncdecl_stmt -> isForward()) {
-         curprint(");");
+         curprint(")");
+         curprint(attribute != NULL ? (" throws " + attribute -> expression).c_str() : "");
+         curprint(";");
      }
      else {
          curprint(") ");
+         curprint(attribute != NULL ?  ("throws " + attribute -> expression + " ").c_str() : "");
          SgFunctionDefinition *function_definition = mfuncdecl_stmt->get_definition();
 //
 // charles4 10/10/2011: For some reason, when either of the 2 entry points below are invoked,
@@ -823,15 +930,131 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgClassDeclaration *classdecl_stmt = isSgClassDeclaration(stmt);
      ROSE_ASSERT(classdecl_stmt != NULL);
 
+     if (classdecl_stmt -> attributeExists("anonymous")) { // Do not output Anonymous classes!
+         return;
+     }
+
+     //
+     // If this Class was used to simulate a Java package that contains user-defined types,
+     // process the package and the user-defined types in it.
+     //
+     if (classdecl_stmt -> attributeExists("namespace")) {
+         SgClassDefinition *class_definition = classdecl_stmt -> get_definition();
+         if (class_definition -> attributeExists("translated_package")) {
+             AstRegExAttribute *attribute = (AstRegExAttribute *) class_definition -> getAttribute("translated_package");
+             if (attribute -> expression.size() > 0) { // not the null package name?
+                 curprint("package ");
+                 curprint(attribute -> expression);
+                 curprint(";");
+                 unp->cur.insert_newline();
+             }
+
+             //
+             // Now, process the import and type declarations.
+             //
+             foreach (SgDeclarationStatement *child, class_definition -> get_members()) {
+                 if (isSgJavaImportStatement(child)) {
+                     unparseStatement(child, info);
+                 }
+                 else if (child -> attributeExists("user-defined-type")) {
+                     unparseClassDeclStmt(child, info);
+                 }
+             }
+         }
+
+
+         return;
+     }
+
      unparseDeclarationModifier(classdecl_stmt->get_declarationModifier(), info);
 
-     curprint(classdecl_stmt -> get_explicit_interface() ? "interface " : "class ");
+     curprint(classdecl_stmt -> get_explicit_enum()
+                              ? "enum "
+                              : classdecl_stmt -> get_explicit_interface()
+                                                ? "interface "
+                                                : "class ");
 
      unparseName(classdecl_stmt->get_name(), info);
 
+     if (classdecl_stmt -> attributeExists("type_parameters")) {
+         AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) classdecl_stmt -> getAttribute("type_parameters");
+         curprint("<");
+         SgTemplateParameterList *type_list = isSgTemplateParameterList(attribute -> getNode());
+         ROSE_ASSERT(type_list);
+         for (size_t i = 0; i < type_list -> get_args().size(); i++) {
+             SgClassType *parameter_type = isSgClassType(type_list -> get_args()[i] -> get_type());
+             ROSE_ASSERT(parameter_type);
+             curprint(parameter_type -> get_name().getString());
+             SgClassDeclaration *parameter_class_declaration = isSgClassDeclaration(parameter_type -> get_declaration() -> get_definingDeclaration());
+             ROSE_ASSERT(parameter_class_declaration);
+             SgClassDefinition *parameter_class_definition = parameter_class_declaration -> get_definition();
+             ROSE_ASSERT(parameter_class_definition);
+
+             SgBaseClassPtrList& bases = parameter_class_definition -> get_inheritances();
+
+             //
+             // TODO: This can't work for type parameters as an SgJavaParameterizedType is not mapped one-to-one and onto
+             //  with its associated SgClassDeclaration.  See alternate attributed ("parameter_type_bounds") code below.
+             //
+             /*
+             int first_index = 0;
+             if (bases.size() > 0) {
+                 SgBaseClass *super_class = isSgBaseClass(bases[0]);
+                 ROSE_ASSERT (super_class);
+                 if (! super_class -> get_base_class() -> get_explicit_interface()) {
+                     first_index++;
+                     curprint(" extends ");
+                     unparseParameterType(super_class, info);
+                 }
+             }
+             if (bases.size() - first_index > 0) {
+                 curprint(" & ");
+                 for (int i = first_index; i < bases.size(); i++) {
+                     SgBaseClass *interface = isSgBaseClass(bases[i]);
+                     ROSE_ASSERT(interface -> get_base_class() -> get_explicit_interface());
+                     unparseParameterType(interface, info);
+                     if (i + 1 < bases.size()) {
+                         curprint(", ");
+                     }
+                 }
+             }
+             */
+
+             bool has_extends = parameter_class_definition -> attributeExists("parameter_type_bounds_with_extends");
+             AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *)
+                                                 (has_extends ? parameter_class_definition -> getAttribute("parameter_type_bounds_with_extends")
+                                                              : parameter_class_definition -> getAttribute("parameter_type_bounds"));
+             std::vector<SgNode *> &parm_list = attribute -> getNodeList();
+             ROSE_ASSERT(parm_list.size() == bases.size());
+             SgBaseClass *super_class = (parm_list.size() > 0 ? bases[0] : NULL);
+             for (int k = 0; k < parm_list.size(); k++) {
+                 SgType *type = isSgType(parm_list[k]);
+                 if (k == 0 && has_extends) {
+                     curprint(" extends ");
+                 }
+                 else {
+                     curprint(" & ");
+                 }
+                 unparseParameterType(type, info);
+             }
+
+             if (i + 1 < type_list->get_args().size()) {
+                 curprint(", ");
+             }
+         }
+         curprint(">");
+     }
+
      SgClassDefinition* class_def = classdecl_stmt->get_definition();
      ROSE_ASSERT(class_def != NULL);
+
      SgBaseClassPtrList& bases = class_def->get_inheritances();
+
+     //
+     // TODO: This can't work for type parameters as an SgJavaParameterizedType is not mapped one-to-one and onto
+     //  with its associated SgClassDeclaration.  See alternate attributed ("parameter_type_bounds") code below.
+     //
+     /*
      int first_index = 0;
      if (bases.size() > 0) {
          SgBaseClass *super_class = isSgBaseClass(bases[0]);
@@ -844,18 +1067,59 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      }
 
      if (bases.size() - first_index > 0) {
-         curprint(" implements ");
+         curprint(classdecl_stmt -> get_explicit_interface() ? " extends " : " implements ");
          for (int i = first_index; i < bases.size(); i++) {
              SgBaseClass *interface = isSgBaseClass(bases[i]);
              ROSE_ASSERT(interface -> get_base_class() -> get_explicit_interface());
              unparseBaseClass(interface, info);
-             if (i + 1 > bases.size()) {
+             if (i + 1 < bases.size()) {
                  curprint(", ");
              }
          }
      }
+     */
 
-     unparseStatement(classdecl_stmt->get_definition(), info);
+     AstSgNodeListAttribute *attribute = ( AstSgNodeListAttribute *) class_def -> getAttribute("extensions");
+     std::vector<SgNode *> &parm_list = attribute -> getNodeList();
+     ROSE_ASSERT(parm_list.size() == bases.size());
+     SgBaseClass *super_class = (parm_list.size() > 0 ? bases[0] : NULL);
+     for (int k = 0; k < parm_list.size(); k++) {
+         SgType *type = isSgType(parm_list[k]);
+         if (k == 0) {
+             if (classdecl_stmt -> get_explicit_interface()) {
+                 curprint(" extends "); // We are processing an interface.
+                 unparseParameterType(type, info);
+                 if (k + 1 < parm_list.size())
+                     curprint(", ");
+             }
+             else if (super_class -> get_base_class() -> get_explicit_interface()) {
+                 curprint(" implements ");
+                 unparseParameterType(type, info);
+                 if (k + 1 < parm_list.size())
+                     curprint(", ");
+             }
+             else {
+                 if (! classdecl_stmt -> get_explicit_enum()) { // Don't process super class for enumeration.
+                     curprint(" extends ");
+                     unparseParameterType(type, info);
+                 }
+                 if (k + 1 < parm_list.size())
+                     curprint(" implements ");
+             }
+         }
+         else {
+             unparseParameterType(type, info);
+             if (k + 1 < parm_list.size())
+                 curprint(", ");
+         }
+     }
+
+     if (classdecl_stmt -> get_explicit_enum()) { // An enumeration?
+         unparseEnumBody(classdecl_stmt->get_definition(), info);
+     }
+     else {
+         unparseStatement(classdecl_stmt->get_definition(), info);
+     }
    }
 
 void
@@ -965,9 +1229,9 @@ Unparse_Java::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
      unparseExpression(case_stmt->get_key(), info);
      curprint ( string(":"));
 
-  // if(case_stmt->get_body())
-     if ( (case_stmt->get_body() != NULL) && !info.SkipBasicBlock())
-          unparseStatement(case_stmt->get_body(), info);
+     if ((case_stmt->get_body() != NULL) && !info.SkipBasicBlock()) {
+         unparseCaseOrDefaultBasicBlockStmt(case_stmt->get_body(), info);
+     }
    }
 
 void
@@ -1029,9 +1293,10 @@ Unparse_Java::unparseDefaultStmt(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(default_stmt != NULL);
 
      curprint ( string("default:"));
-  // if(default_stmt->get_body()) 
-     if ( (default_stmt->get_body() != NULL) && !info.SkipBasicBlock())
-          unparseStatement(default_stmt->get_body(), info);
+
+     if ((default_stmt->get_body() != NULL) && !info.SkipBasicBlock()) {
+         unparseCaseOrDefaultBasicBlockStmt(default_stmt->get_body(), info);
+     }
    }
 
 void
@@ -1159,6 +1424,70 @@ void
 Unparse_Java::unparseBaseClass(SgBaseClass* base, SgUnparse_Info& info) {
     ROSE_ASSERT(base != NULL);
 
-    SgClassDeclaration* base_class = base->get_base_class();
-    unparseName(base_class->get_name(), info);
+    //
+    // TODO: What about a SgJavaParameterizedType? See comments in unparseClassDeclStmt(...)
+    //
+    SgClassDeclaration* base_class = base -> get_base_class();
+    SgClassType *class_type = base_class -> get_type();
+    ROSE_ASSERT(class_type);
+    unparseClassType(class_type, info);
+}
+
+
+void
+Unparse_Java::unparseParameterType(SgType *bound_type, SgUnparse_Info& info) {
+    ROSE_ASSERT(bound_type != NULL);
+
+    SgClassType *class_type = isSgClassType(bound_type);
+    SgJavaParameterizedType *parameterized_type = isSgJavaParameterizedType(bound_type);
+    ROSE_ASSERT(class_type || parameterized_type);
+
+    if (class_type)
+         unparseClassType(class_type, info);
+    else unparseJavaParameterizedType(parameterized_type, info);
+}
+
+
+void
+Unparse_Java::unparseEnumBody(SgClassDefinition *class_definition, SgUnparse_Info& info) {
+     curprint(" {");
+     unp->cur.insert_newline();
+     std::vector<SgVariableDeclaration *> fields;
+     std::vector<SgMemberFunctionDeclaration *> methods;
+     foreach (SgDeclarationStatement *child, class_definition -> get_members()) {
+         SgVariableDeclaration *field = isSgVariableDeclaration(child);
+         if (field) { // only process fields ...
+             fields.push_back(field);
+         }
+         else { // ... and methods ...  skip constructor.
+             SgMemberFunctionDeclaration *mfuncdecl_stmt = isSgMemberFunctionDeclaration(child);
+             if (mfuncdecl_stmt && (! mfuncdecl_stmt -> get_specialFunctionModifier().isConstructor())) {
+                 methods.push_back(mfuncdecl_stmt);
+             }
+         }
+     }
+
+     for (int i = 0; i < fields.size(); i++) {
+         SgVariableDeclaration *field = fields[i];
+         // TODO: For now we only process the name... We'll need to process the Arguments and ClassBody later ...
+         // Note that there
+         vector<SgInitializedName *> &vars = field -> get_variables();
+         assert(vars.size() == 1);
+         info.inc_nestingLevel();
+         curprint_indented(vars[0] -> get_name().getString(), info);
+         curprint(i + 1 < fields.size() ? "," : ";");
+         unp->cur.insert_newline();
+         info.dec_nestingLevel();
+     }
+
+     unp->cur.insert_newline();
+
+     for (int i = 0; i < methods.size(); i++) {
+         SgMemberFunctionDeclaration *mfuncdecl_stmt = methods[i];
+         info.inc_nestingLevel();
+         unparseMFuncDeclStmt(mfuncdecl_stmt, info);
+         info.dec_nestingLevel();
+     }
+
+     curprint_indented("}", info);
 }
