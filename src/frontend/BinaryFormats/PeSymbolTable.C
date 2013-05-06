@@ -12,7 +12,7 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
     COFFSymbol_disk disk;
     symtab->read_content_local(idx * COFFSymbol_disk_size, &disk, COFFSymbol_disk_size);
     if (disk.st_zero == 0) {
-        p_st_name_offset = le_to_host(disk.st_offset);
+        p_st_name_offset = ByteOrder::le_to_host(disk.st_offset);
         if (p_st_name_offset < 4) throw FormatError("name collides with size field");
         std::string s = strtab->read_content_local_str(p_st_name_offset);
         set_name(new SgAsmBasicString(s));
@@ -25,10 +25,10 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
     }
 
     p_st_name            = get_name()->get_string();
-    p_st_section_num     = le_to_host(disk.st_section_num);
-    p_st_type            = le_to_host(disk.st_type);
-    p_st_storage_class   = le_to_host(disk.st_storage_class);
-    p_st_num_aux_entries = le_to_host(disk.st_num_aux_entries);
+    p_st_section_num     = ByteOrder::le_to_host(disk.st_section_num);
+    p_st_type            = ByteOrder::le_to_host(disk.st_type);
+    p_st_storage_class   = ByteOrder::le_to_host(disk.st_storage_class);
+    p_st_num_aux_entries = ByteOrder::le_to_host(disk.st_num_aux_entries);
 
     /* Bind to section number. We can do this now because we've already parsed the PE Section Table */
     ROSE_ASSERT(fhdr->get_section_table()!=NULL);
@@ -38,7 +38,7 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
     }
     
     /* Make initial guesses for storage class, type, and definition state. We'll adjust them after reading aux entries. */
-    p_value = le_to_host(disk.st_value);
+    p_value = ByteOrder::le_to_host(disk.st_value);
     p_def_state = SYM_DEFINED;
     switch (p_st_storage_class) {
       case 0:    p_binding = SYM_NO_BINDING; break; /*none*/
@@ -82,11 +82,11 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
 
         if (get_type() == SYM_FUNC && p_st_section_num > 0) {
             /* Function */
-            unsigned bf_idx      = le_to_host(*(uint32_t*)&(p_aux_data[0]));
-            unsigned size        = le_to_host(*(uint32_t*)&(p_aux_data[4]));
-            unsigned lnum_ptr    = le_to_host(*(uint32_t*)&(p_aux_data[8]));
-            unsigned next_fn_idx = le_to_host(*(uint32_t*)&(p_aux_data[12]));
-            unsigned res1        = le_to_host(*(uint16_t*)&(p_aux_data[16]));
+            unsigned bf_idx      = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[0]));
+            unsigned size        = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[4]));
+            unsigned lnum_ptr    = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[8]));
+            unsigned next_fn_idx = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[12]));
+            unsigned res1        = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[16]));
             set_size(size);
             if (debug) {
                 fprintf(stderr, "COFF aux func %s: bf_idx=%u, size=%u, lnum_ptr=%u, next_fn_idx=%u, res1=%u\n", 
@@ -95,12 +95,12 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
             
         } else if (p_st_storage_class == 101 /*function*/ && (0 == p_st_name.compare(".bf") || 0 == p_st_name.compare(".ef"))) {
             /* Beginning/End of function */
-            unsigned res1        = le_to_host(*(uint32_t*)&(p_aux_data[0]));
-            unsigned lnum        = le_to_host(*(uint16_t*)&(p_aux_data[4])); /*line num within source file*/
-            unsigned res2        = le_to_host(*(uint16_t*)&(p_aux_data[6]));
-            unsigned res3        = le_to_host(*(uint32_t*)&(p_aux_data[8]));
-            unsigned next_bf     = le_to_host(*(uint32_t*)&(p_aux_data[12])); /*only for .bf; reserved in .ef*/
-            unsigned res4        = le_to_host(*(uint16_t*)&(p_aux_data[16]));
+            unsigned res1        = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[0]));
+            unsigned lnum        = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[4])); /*line num within source file*/
+            unsigned res2        = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[6]));
+            unsigned res3        = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[8]));
+            unsigned next_bf     = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[12])); /*only for .bf; reserved in .ef*/
+            unsigned res4        = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[16]));
             if (debug) {
                 fprintf(stderr, "COFF aux %s: res1=%u, lnum=%u, res2=%u, res3=%u, next_bf=%u, res4=%u\n", 
                         escapeString(p_st_name).c_str(), res1, lnum, res2, res3, next_bf, res4);
@@ -108,11 +108,11 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
             
         } else if (p_st_storage_class == 2/*external*/ && p_st_section_num == 0/*undef*/ && get_value()==0) {
             /* Weak External */
-            unsigned sym2_idx    = le_to_host(*(uint32_t*)&(p_aux_data[0]));
-            unsigned flags       = le_to_host(*(uint32_t*)&(p_aux_data[4]));
-            unsigned res1        = le_to_host(*(uint32_t*)&(p_aux_data[8]));
-            unsigned res2        = le_to_host(*(uint32_t*)&(p_aux_data[12]));
-            unsigned res3        = le_to_host(*(uint16_t*)&(p_aux_data[16]));
+            unsigned sym2_idx    = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[0]));
+            unsigned flags       = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[4]));
+            unsigned res1        = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[8]));
+            unsigned res2        = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[12]));
+            unsigned res3        = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[16]));
             if (debug) {
                 fprintf(stderr, "COFF aux weak %s: sym2_idx=%u, flags=%u, res1=%u, res2=%u, res3=%u\n",
                         escapeString(p_st_name).c_str(), sym2_idx, flags, res1, res2, res3);
@@ -123,7 +123,7 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
              * into the string table. Replace the fake ".file" with the real file name. */
             const COFFSymbol_disk *d = (const COFFSymbol_disk*) &(p_aux_data[0]);
             if (0 == d->st_zero) {
-                rose_addr_t fname_offset = le_to_host(d->st_offset);
+                rose_addr_t fname_offset = ByteOrder::le_to_host(d->st_offset);
                 if (fname_offset < 4) throw FormatError("name collides with size field");
                 set_name(new SgAsmBasicString(strtab->read_content_local_str(fname_offset)));
                 if (debug) {
@@ -144,14 +144,14 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
 
         } else if (p_st_storage_class == 3/*static*/ && NULL != fhdr->get_file()->get_section_by_name(p_st_name, '$')) {
             /* Section */
-            unsigned size         = le_to_host(*(uint32_t*)&(p_aux_data[0])); /*same as section header SizeOfRawData */
-            unsigned nrel         = le_to_host(*(uint16_t*)&(p_aux_data[4])); /*number of relocations*/
-            unsigned nln_ents     = le_to_host(*(uint16_t*)&(p_aux_data[6])); /*number of line number entries */
-            unsigned cksum        = le_to_host(*(uint32_t*)&(p_aux_data[8]));
-            unsigned sect_id      = le_to_host(*(uint16_t*)&(p_aux_data[12])); /*1-base index into section table*/
+            unsigned size         = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[0])); /*same as section header SizeOfRawData */
+            unsigned nrel         = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[4])); /*number of relocations*/
+            unsigned nln_ents     = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[6])); /*number of line number entries */
+            unsigned cksum        = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[8]));
+            unsigned sect_id      = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[12])); /*1-base index into section table*/
             unsigned comdat       = p_aux_data[14]; /*comdat selection number if section is a COMDAT section*/
             unsigned res1         = p_aux_data[15];
-            unsigned res2         = le_to_host(*(uint16_t*)&(p_aux_data[16]));
+            unsigned res2         = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[16]));
             set_size(size);
             set_type(SYM_SECTION);
             if (debug) {
@@ -188,15 +188,15 @@ SgAsmCoffSymbol::encode(COFFSymbol_disk *disk) const
     } else {
         /* Name is an offset into the string table */
         disk->st_zero = 0;
-        host_to_le(p_st_name_offset, &(disk->st_offset));
+        ByteOrder::host_to_le(p_st_name_offset, &(disk->st_offset));
     }
     
- // host_to_le(get_value(),          &(disk->st_value));
-    host_to_le(p_value,              &(disk->st_value));
-    host_to_le(p_st_section_num,     &(disk->st_section_num));
-    host_to_le(p_st_type,            &(disk->st_type));
-    host_to_le(p_st_storage_class,   &(disk->st_storage_class));
-    host_to_le(p_st_num_aux_entries, &(disk->st_num_aux_entries));
+ // ByteOrder::host_to_le(get_value(),          &(disk->st_value));
+    ByteOrder::host_to_le(p_value,              &(disk->st_value));
+    ByteOrder::host_to_le(p_st_section_num,     &(disk->st_section_num));
+    ByteOrder::host_to_le(p_st_type,            &(disk->st_type));
+    ByteOrder::host_to_le(p_st_storage_class,   &(disk->st_storage_class));
+    ByteOrder::host_to_le(p_st_num_aux_entries, &(disk->st_num_aux_entries));
     return disk;
 }
 
@@ -339,7 +339,7 @@ SgAsmCoffSymbolTable::parse()
 
     uint32_t word;
     p_strtab->read_content(0, &word, sizeof word);
-    rose_addr_t strtab_size = le_to_host(word);
+    rose_addr_t strtab_size = ByteOrder::le_to_host(word);
     if (strtab_size < sizeof(uint32_t))
         throw FormatError("COFF symbol table string table size is less than four bytes");
     p_strtab->extend(strtab_size - sizeof(uint32_t));

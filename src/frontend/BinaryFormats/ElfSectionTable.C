@@ -4,66 +4,66 @@
 
 /** Converts 32-bit disk representation to host representation */
 void
-SgAsmElfSectionTableEntry::ctor(ByteOrder sex, const Elf32SectionTableEntry_disk *disk) 
+SgAsmElfSectionTableEntry::ctor(ByteOrder::Endianness sex, const Elf32SectionTableEntry_disk *disk) 
 {
-    p_sh_name      = disk_to_host(sex, disk->sh_name);
-    p_sh_type      = (SectionType)disk_to_host(sex, disk->sh_type);
-    p_sh_flags     = disk_to_host(sex, disk->sh_flags);
-    p_sh_addr      = disk_to_host(sex, disk->sh_addr);
-    p_sh_offset    = disk_to_host(sex, disk->sh_offset);
-    p_sh_size      = disk_to_host(sex, disk->sh_size);
-    p_sh_link      = disk_to_host(sex, disk->sh_link);
-    p_sh_info      = disk_to_host(sex, disk->sh_info);
-    p_sh_addralign = disk_to_host(sex, disk->sh_addralign);
-    p_sh_entsize   = disk_to_host(sex, disk->sh_entsize);
+    p_sh_name      = ByteOrder::disk_to_host(sex, disk->sh_name);
+    p_sh_type      = (SectionType)ByteOrder::disk_to_host(sex, disk->sh_type);
+    p_sh_flags     = ByteOrder::disk_to_host(sex, disk->sh_flags);
+    p_sh_addr      = ByteOrder::disk_to_host(sex, disk->sh_addr);
+    p_sh_offset    = ByteOrder::disk_to_host(sex, disk->sh_offset);
+    p_sh_size      = ByteOrder::disk_to_host(sex, disk->sh_size);
+    p_sh_link      = ByteOrder::disk_to_host(sex, disk->sh_link);
+    p_sh_info      = ByteOrder::disk_to_host(sex, disk->sh_info);
+    p_sh_addralign = ByteOrder::disk_to_host(sex, disk->sh_addralign);
+    p_sh_entsize   = ByteOrder::disk_to_host(sex, disk->sh_entsize);
 }
     
 /** Converts 64-bit disk representation to host representation */
 void
-SgAsmElfSectionTableEntry::ctor(ByteOrder sex, const Elf64SectionTableEntry_disk *disk) 
+SgAsmElfSectionTableEntry::ctor(ByteOrder::Endianness sex, const Elf64SectionTableEntry_disk *disk) 
 {
-    p_sh_name      = disk_to_host(sex, disk->sh_name);
-    p_sh_type      = (SectionType)disk_to_host(sex, disk->sh_type);
-    p_sh_flags     = disk_to_host(sex, disk->sh_flags);
-    p_sh_addr      = disk_to_host(sex, disk->sh_addr);
-    p_sh_offset    = disk_to_host(sex, disk->sh_offset);
-    p_sh_size      = disk_to_host(sex, disk->sh_size);
-    p_sh_link      = disk_to_host(sex, disk->sh_link);
-    p_sh_info      = disk_to_host(sex, disk->sh_info);
-    p_sh_addralign = disk_to_host(sex, disk->sh_addralign);
-    p_sh_entsize   = disk_to_host(sex, disk->sh_entsize);
+    p_sh_name      = ByteOrder::disk_to_host(sex, disk->sh_name);
+    p_sh_type      = (SectionType)ByteOrder::disk_to_host(sex, disk->sh_type);
+    p_sh_flags     = ByteOrder::disk_to_host(sex, disk->sh_flags);
+    p_sh_addr      = ByteOrder::disk_to_host(sex, disk->sh_addr);
+    p_sh_offset    = ByteOrder::disk_to_host(sex, disk->sh_offset);
+    p_sh_size      = ByteOrder::disk_to_host(sex, disk->sh_size);
+    p_sh_link      = ByteOrder::disk_to_host(sex, disk->sh_link);
+    p_sh_info      = ByteOrder::disk_to_host(sex, disk->sh_info);
+    p_sh_addralign = ByteOrder::disk_to_host(sex, disk->sh_addralign);
+    p_sh_entsize   = ByteOrder::disk_to_host(sex, disk->sh_entsize);
 }
 
 /** Encode a section table entry into the disk structure */
 void *
-SgAsmElfSectionTableEntry::encode(ByteOrder sex, Elf32SectionTableEntry_disk *disk) const
+SgAsmElfSectionTableEntry::encode(ByteOrder::Endianness sex, Elf32SectionTableEntry_disk *disk) const
 {
-    host_to_disk(sex, p_sh_name,      &(disk->sh_name));
-    host_to_disk(sex, p_sh_type,      &(disk->sh_type));
-    host_to_disk(sex, p_sh_flags,     &(disk->sh_flags));
-    host_to_disk(sex, p_sh_addr,      &(disk->sh_addr));
-    host_to_disk(sex, p_sh_offset,    &(disk->sh_offset));
-    host_to_disk(sex, p_sh_size,      &(disk->sh_size));
-    host_to_disk(sex, p_sh_link,      &(disk->sh_link));
-    host_to_disk(sex, p_sh_info,      &(disk->sh_info));
-    host_to_disk(sex, p_sh_addralign, &(disk->sh_addralign));
-    host_to_disk(sex, p_sh_entsize,   &(disk->sh_entsize));
+    ByteOrder::host_to_disk(sex, p_sh_name,      &(disk->sh_name));
+    ByteOrder::host_to_disk(sex, p_sh_type,      &(disk->sh_type));
+    ByteOrder::host_to_disk(sex, p_sh_flags,     &(disk->sh_flags));
+    ByteOrder::host_to_disk(sex, p_sh_addr,      &(disk->sh_addr));
+    ByteOrder::host_to_disk(sex, p_sh_offset,    &(disk->sh_offset));
+    ByteOrder::host_to_disk(sex, p_sh_size,      &(disk->sh_size));
+    ByteOrder::host_to_disk(sex, p_sh_link,      &(disk->sh_link));
+    ByteOrder::host_to_disk(sex, p_sh_info,      &(disk->sh_info));
+    ByteOrder::host_to_disk(sex, p_sh_addralign, &(disk->sh_addralign));
+    ByteOrder::host_to_disk(sex, p_sh_entsize,   &(disk->sh_entsize));
 
     return disk;
 }
 void *
-SgAsmElfSectionTableEntry::encode(ByteOrder sex, Elf64SectionTableEntry_disk *disk) const
+SgAsmElfSectionTableEntry::encode(ByteOrder::Endianness sex, Elf64SectionTableEntry_disk *disk) const
 {
-    host_to_disk(sex, p_sh_name,      &(disk->sh_name));
-    host_to_disk(sex, p_sh_type,      &(disk->sh_type));
-    host_to_disk(sex, p_sh_flags,     &(disk->sh_flags));
-    host_to_disk(sex, p_sh_addr,      &(disk->sh_addr));
-    host_to_disk(sex, p_sh_offset,    &(disk->sh_offset));
-    host_to_disk(sex, p_sh_size,      &(disk->sh_size));
-    host_to_disk(sex, p_sh_link,      &(disk->sh_link));
-    host_to_disk(sex, p_sh_info,      &(disk->sh_info));
-    host_to_disk(sex, p_sh_addralign, &(disk->sh_addralign));
-    host_to_disk(sex, p_sh_entsize,   &(disk->sh_entsize));
+    ByteOrder::host_to_disk(sex, p_sh_name,      &(disk->sh_name));
+    ByteOrder::host_to_disk(sex, p_sh_type,      &(disk->sh_type));
+    ByteOrder::host_to_disk(sex, p_sh_flags,     &(disk->sh_flags));
+    ByteOrder::host_to_disk(sex, p_sh_addr,      &(disk->sh_addr));
+    ByteOrder::host_to_disk(sex, p_sh_offset,    &(disk->sh_offset));
+    ByteOrder::host_to_disk(sex, p_sh_size,      &(disk->sh_size));
+    ByteOrder::host_to_disk(sex, p_sh_link,      &(disk->sh_link));
+    ByteOrder::host_to_disk(sex, p_sh_info,      &(disk->sh_info));
+    ByteOrder::host_to_disk(sex, p_sh_addralign, &(disk->sh_addralign));
+    ByteOrder::host_to_disk(sex, p_sh_entsize,   &(disk->sh_entsize));
 
     return disk;
 }
@@ -98,7 +98,7 @@ SgAsmElfSectionTable::parse()
 
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
-    ByteOrder sex = fhdr->get_sex();
+    ByteOrder::Endianness sex = fhdr->get_sex();
 
     size_t ent_size, struct_size, opt_size, nentries;
     calculate_sizes(&ent_size, &struct_size, &opt_size, &nentries);
@@ -598,7 +598,7 @@ SgAsmElfSectionTable::unparse(std::ostream &f) const
 {
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
-    ByteOrder sex = fhdr->get_sex();
+    ByteOrder::Endianness sex = fhdr->get_sex();
     SgAsmGenericSectionPtrList sections = fhdr->get_sectab_sections();
 
     /* Write the sections first */

@@ -12,14 +12,14 @@ SgAsmPESectionTableEntry::ctor(const PESectionTableEntry_disk *disk)
     this->set_name( name );
 
     /* Decode file format */
-    p_virtual_size     = le_to_host(disk->virtual_size);
-    p_rva              = le_to_host(disk->rva);
-    p_physical_size    = le_to_host(disk->physical_size);
-    p_physical_offset  = le_to_host(disk->physical_offset);
-    p_coff_line_nums   = le_to_host(disk->coff_line_nums);
-    p_n_relocs         = le_to_host(disk->n_relocs);
-    p_n_coff_line_nums = le_to_host(disk->n_coff_line_nums);
-    p_flags            = le_to_host(disk->flags);
+    p_virtual_size     = ByteOrder::le_to_host(disk->virtual_size);
+    p_rva              = ByteOrder::le_to_host(disk->rva);
+    p_physical_size    = ByteOrder::le_to_host(disk->physical_size);
+    p_physical_offset  = ByteOrder::le_to_host(disk->physical_offset);
+    p_coff_line_nums   = ByteOrder::le_to_host(disk->coff_line_nums);
+    p_n_relocs         = ByteOrder::le_to_host(disk->n_relocs);
+    p_n_coff_line_nums = ByteOrder::le_to_host(disk->n_coff_line_nums);
+    p_flags            = ByteOrder::le_to_host(disk->flags);
 }
 
 /** Update this section table entry with newer information from the section */
@@ -143,14 +143,14 @@ SgAsmPESectionTableEntry::encode(PESectionTableEntry_disk *disk) const
     memcpy(disk->name, p_name.c_str(), std::min(sizeof(disk->name), p_name.size()));
 #endif
 
-    host_to_le(p_virtual_size,     &(disk->virtual_size));
-    host_to_le(p_rva,              &(disk->rva));
-    host_to_le(p_physical_size,    &(disk->physical_size));
-    host_to_le(p_physical_offset,  &(disk->physical_offset));
-    host_to_le(p_coff_line_nums,   &(disk->coff_line_nums));
-    host_to_le(p_n_relocs,         &(disk->n_relocs));
-    host_to_le(p_n_coff_line_nums, &(disk->n_coff_line_nums));
-    host_to_le(p_flags,            &(disk->flags));
+    ByteOrder::host_to_le(p_virtual_size,     &(disk->virtual_size));
+    ByteOrder::host_to_le(p_rva,              &(disk->rva));
+    ByteOrder::host_to_le(p_physical_size,    &(disk->physical_size));
+    ByteOrder::host_to_le(p_physical_offset,  &(disk->physical_offset));
+    ByteOrder::host_to_le(p_coff_line_nums,   &(disk->coff_line_nums));
+    ByteOrder::host_to_le(p_n_relocs,         &(disk->n_relocs));
+    ByteOrder::host_to_le(p_n_coff_line_nums, &(disk->n_coff_line_nums));
+    ByteOrder::host_to_le(p_flags,            &(disk->flags));
 
     return disk;
 }

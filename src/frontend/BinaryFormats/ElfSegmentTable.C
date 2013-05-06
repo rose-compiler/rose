@@ -4,57 +4,57 @@
 
 /** Converts 32-bit disk representation to host representation */
 void
-SgAsmElfSegmentTableEntry::ctor(ByteOrder sex, const struct Elf32SegmentTableEntry_disk *disk) 
+SgAsmElfSegmentTableEntry::ctor(ByteOrder::Endianness sex, const struct Elf32SegmentTableEntry_disk *disk) 
 {
-    p_type      = (SegmentType)disk_to_host(sex, disk->p_type);
-    p_offset    = disk_to_host(sex, disk->p_offset);
-    p_vaddr     = disk_to_host(sex, disk->p_vaddr);
-    p_paddr     = disk_to_host(sex, disk->p_paddr);
-    p_filesz    = disk_to_host(sex, disk->p_filesz);
-    p_memsz     = disk_to_host(sex, disk->p_memsz);
-    p_flags     = (SegmentFlags)disk_to_host(sex, disk->p_flags);
-    p_align     = disk_to_host(sex, disk->p_align);
+    p_type      = (SegmentType)ByteOrder::disk_to_host(sex, disk->p_type);
+    p_offset    = ByteOrder::disk_to_host(sex, disk->p_offset);
+    p_vaddr     = ByteOrder::disk_to_host(sex, disk->p_vaddr);
+    p_paddr     = ByteOrder::disk_to_host(sex, disk->p_paddr);
+    p_filesz    = ByteOrder::disk_to_host(sex, disk->p_filesz);
+    p_memsz     = ByteOrder::disk_to_host(sex, disk->p_memsz);
+    p_flags     = (SegmentFlags)ByteOrder::disk_to_host(sex, disk->p_flags);
+    p_align     = ByteOrder::disk_to_host(sex, disk->p_align);
 }
 
 /** Converts 64-bit disk representation to host representation */
 void
-SgAsmElfSegmentTableEntry::ctor(ByteOrder sex, const Elf64SegmentTableEntry_disk *disk) 
+SgAsmElfSegmentTableEntry::ctor(ByteOrder::Endianness sex, const Elf64SegmentTableEntry_disk *disk) 
 {
-    p_type      = (SegmentType)disk_to_host(sex, disk->p_type);
-    p_offset    = disk_to_host(sex, disk->p_offset);
-    p_vaddr     = disk_to_host(sex, disk->p_vaddr);
-    p_paddr     = disk_to_host(sex, disk->p_paddr);
-    p_filesz    = disk_to_host(sex, disk->p_filesz);
-    p_memsz     = disk_to_host(sex, disk->p_memsz);
-    p_flags     = (SegmentFlags)disk_to_host(sex, disk->p_flags);
-    p_align     = disk_to_host(sex, disk->p_align);
+    p_type      = (SegmentType)ByteOrder::disk_to_host(sex, disk->p_type);
+    p_offset    = ByteOrder::disk_to_host(sex, disk->p_offset);
+    p_vaddr     = ByteOrder::disk_to_host(sex, disk->p_vaddr);
+    p_paddr     = ByteOrder::disk_to_host(sex, disk->p_paddr);
+    p_filesz    = ByteOrder::disk_to_host(sex, disk->p_filesz);
+    p_memsz     = ByteOrder::disk_to_host(sex, disk->p_memsz);
+    p_flags     = (SegmentFlags)ByteOrder::disk_to_host(sex, disk->p_flags);
+    p_align     = ByteOrder::disk_to_host(sex, disk->p_align);
 }
 
 /** Converts segment table entry back into disk structure */
 void *
-SgAsmElfSegmentTableEntry::encode(ByteOrder sex, Elf32SegmentTableEntry_disk *disk) const
+SgAsmElfSegmentTableEntry::encode(ByteOrder::Endianness sex, Elf32SegmentTableEntry_disk *disk) const
 {
-    host_to_disk(sex, p_type, &(disk->p_type));
-    host_to_disk(sex, p_offset, &(disk->p_offset));
-    host_to_disk(sex, p_vaddr, &(disk->p_vaddr));
-    host_to_disk(sex, p_paddr, &(disk->p_paddr));
-    host_to_disk(sex, p_filesz, &(disk->p_filesz));
-    host_to_disk(sex, p_memsz, &(disk->p_memsz));
-    host_to_disk(sex, p_flags, &(disk->p_flags));
-    host_to_disk(sex, p_align, &(disk->p_align));
+    ByteOrder::host_to_disk(sex, p_type, &(disk->p_type));
+    ByteOrder::host_to_disk(sex, p_offset, &(disk->p_offset));
+    ByteOrder::host_to_disk(sex, p_vaddr, &(disk->p_vaddr));
+    ByteOrder::host_to_disk(sex, p_paddr, &(disk->p_paddr));
+    ByteOrder::host_to_disk(sex, p_filesz, &(disk->p_filesz));
+    ByteOrder::host_to_disk(sex, p_memsz, &(disk->p_memsz));
+    ByteOrder::host_to_disk(sex, p_flags, &(disk->p_flags));
+    ByteOrder::host_to_disk(sex, p_align, &(disk->p_align));
     return disk;
 }
 void *
-SgAsmElfSegmentTableEntry::encode(ByteOrder sex, Elf64SegmentTableEntry_disk *disk) const
+SgAsmElfSegmentTableEntry::encode(ByteOrder::Endianness sex, Elf64SegmentTableEntry_disk *disk) const
 {
-    host_to_disk(sex, p_type, &(disk->p_type));
-    host_to_disk(sex, p_offset, &(disk->p_offset));
-    host_to_disk(sex, p_vaddr, &(disk->p_vaddr));
-    host_to_disk(sex, p_paddr, &(disk->p_paddr));
-    host_to_disk(sex, p_filesz, &(disk->p_filesz));
-    host_to_disk(sex, p_memsz, &(disk->p_memsz));
-    host_to_disk(sex, p_flags, &(disk->p_flags));
-    host_to_disk(sex, p_align, &(disk->p_align));
+    ByteOrder::host_to_disk(sex, p_type, &(disk->p_type));
+    ByteOrder::host_to_disk(sex, p_offset, &(disk->p_offset));
+    ByteOrder::host_to_disk(sex, p_vaddr, &(disk->p_vaddr));
+    ByteOrder::host_to_disk(sex, p_paddr, &(disk->p_paddr));
+    ByteOrder::host_to_disk(sex, p_filesz, &(disk->p_filesz));
+    ByteOrder::host_to_disk(sex, p_memsz, &(disk->p_memsz));
+    ByteOrder::host_to_disk(sex, p_flags, &(disk->p_flags));
+    ByteOrder::host_to_disk(sex, p_align, &(disk->p_align));
     return disk;
 }
 
@@ -202,7 +202,7 @@ SgAsmElfSegmentTable::parse()
 
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
-    ByteOrder sex = fhdr->get_sex();
+    ByteOrder::Endianness sex = fhdr->get_sex();
 
     size_t ent_size, struct_size, opt_size, nentries;
     calculate_sizes(&ent_size, &struct_size, &opt_size, &nentries);
@@ -400,7 +400,7 @@ SgAsmElfSegmentTable::unparse(std::ostream &f) const
 {
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
-    ByteOrder sex = fhdr->get_sex();
+    ByteOrder::Endianness sex = fhdr->get_sex();
     SgAsmGenericSectionPtrList sections = fhdr->get_segtab_sections();
 
     /* Write the segments first */

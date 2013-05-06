@@ -2473,7 +2473,7 @@ Grammar::setUpBinaryInstructions()
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericFormat.setDataPrototype("SgAsmGenericFormat::ExecPurpose", "purpose", "= SgAsmGenericFormat::PURPOSE_EXECUTABLE",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericFormat.setDataPrototype("SgAsmGenericFormat::ByteOrder", "sex", "= SgAsmGenericFormat::ORDER_UNSPECIFIED",
+     AsmGenericFormat.setDataPrototype("ByteOrder::Endianness", "sex", "= ByteOrder::ORDER_UNSPECIFIED",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      // actual file format version number stored in file
      AsmGenericFormat.setDataPrototype("unsigned", "version", "= 0",

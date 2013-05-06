@@ -36,61 +36,61 @@ SgAsmLEFileHeader::ctor(SgAsmGenericFile *f, rose_addr_t offset)
     set_name(new SgAsmBasicString(section_name));
     set_synthesized(true);
     set_purpose(SP_HEADER);
-    p_e_byte_order = le_to_host(fh.e_byte_order);
-    p_e_word_order = le_to_host(fh.e_word_order);
+    p_e_byte_order = ByteOrder::le_to_host(fh.e_byte_order);
+    p_e_word_order = ByteOrder::le_to_host(fh.e_word_order);
     ROSE_ASSERT(p_e_byte_order == p_e_word_order);
-    ByteOrder sex = 0 == p_e_byte_order ? ORDER_LSB : ORDER_MSB;
+    ByteOrder::Endianness sex = 0 == p_e_byte_order ? ByteOrder::ORDER_LSB : ByteOrder::ORDER_MSB;
 
-    p_e_format_level           = disk_to_host(sex, fh.e_format_level);
-    p_e_cpu_type               = disk_to_host(sex, fh.e_cpu_type);
-    p_e_os_type                = disk_to_host(sex, fh.e_os_type);
-    p_e_module_version         = disk_to_host(sex, fh.e_module_version);
-    p_e_flags                  = disk_to_host(sex, fh.e_flags);
-    p_e_npages                 = disk_to_host(sex, fh.e_npages);
-    p_e_eip_section            = disk_to_host(sex, fh.e_eip_section);
-    p_e_eip                    = disk_to_host(sex, fh.e_eip);
-    p_e_esp_section            = disk_to_host(sex, fh.e_esp_section);
-    p_e_esp                    = disk_to_host(sex, fh.e_esp);
-    p_e_page_size              = disk_to_host(sex, fh.e_page_size);
+    p_e_format_level           = ByteOrder::disk_to_host(sex, fh.e_format_level);
+    p_e_cpu_type               = ByteOrder::disk_to_host(sex, fh.e_cpu_type);
+    p_e_os_type                = ByteOrder::disk_to_host(sex, fh.e_os_type);
+    p_e_module_version         = ByteOrder::disk_to_host(sex, fh.e_module_version);
+    p_e_flags                  = ByteOrder::disk_to_host(sex, fh.e_flags);
+    p_e_npages                 = ByteOrder::disk_to_host(sex, fh.e_npages);
+    p_e_eip_section            = ByteOrder::disk_to_host(sex, fh.e_eip_section);
+    p_e_eip                    = ByteOrder::disk_to_host(sex, fh.e_eip);
+    p_e_esp_section            = ByteOrder::disk_to_host(sex, fh.e_esp_section);
+    p_e_esp                    = ByteOrder::disk_to_host(sex, fh.e_esp);
+    p_e_page_size              = ByteOrder::disk_to_host(sex, fh.e_page_size);
     if (FAMILY_LE == p_exec_format->get_family()) {
-        p_e_last_page_size     = disk_to_host(sex, fh.e_lps_or_shift);
+        p_e_last_page_size     = ByteOrder::disk_to_host(sex, fh.e_lps_or_shift);
         p_e_page_offset_shift  = 0;
     } else {
         ROSE_ASSERT(FAMILY_LX == p_exec_format->get_family());
         p_e_last_page_size     = 0;
-        p_e_page_offset_shift  = disk_to_host(sex, fh.e_lps_or_shift);
+        p_e_page_offset_shift  = ByteOrder::disk_to_host(sex, fh.e_lps_or_shift);
     }
-    p_e_fixup_sect_size        = disk_to_host(sex, fh.e_fixup_sect_size);
-    p_e_fixup_sect_cksum       = disk_to_host(sex, fh.e_fixup_sect_cksum);
-    p_e_loader_sect_size       = disk_to_host(sex, fh.e_loader_sect_size);
-    p_e_loader_sect_cksum      = disk_to_host(sex, fh.e_loader_sect_cksum);
-    p_e_secttab_rfo            = disk_to_host(sex, fh.e_secttab_rfo);
-    p_e_secttab_nentries       = disk_to_host(sex, fh.e_secttab_nentries);
-    p_e_pagetab_rfo            = disk_to_host(sex, fh.e_pagetab_rfo);
-    p_e_iterpages_offset       = disk_to_host(sex, fh.e_iterpages_offset);
-    p_e_rsrctab_rfo            = disk_to_host(sex, fh.e_rsrctab_rfo);
-    p_e_rsrctab_nentries       = disk_to_host(sex, fh.e_rsrctab_nentries);
-    p_e_resnametab_rfo         = disk_to_host(sex, fh.e_resnametab_rfo);
-    p_e_entrytab_rfo           = disk_to_host(sex, fh.e_entrytab_rfo);
-    p_e_fmtdirtab_rfo          = disk_to_host(sex, fh.e_fmtdirtab_rfo);
-    p_e_fmtdirtab_nentries     = disk_to_host(sex, fh.e_fmtdirtab_nentries);
-    p_e_fixup_pagetab_rfo      = disk_to_host(sex, fh.e_fixup_pagetab_rfo);
-    p_e_fixup_rectab_rfo       = disk_to_host(sex, fh.e_fixup_rectab_rfo);
-    p_e_import_modtab_rfo      = disk_to_host(sex, fh.e_import_modtab_rfo);
-    p_e_import_modtab_nentries = disk_to_host(sex, fh.e_import_modtab_nentries);
-    p_e_import_proctab_rfo     = disk_to_host(sex, fh.e_import_proctab_rfo);
-    p_e_ppcksumtab_rfo         = disk_to_host(sex, fh.e_ppcksumtab_rfo);
-    p_e_data_pages_offset      = disk_to_host(sex, fh.e_data_pages_offset);
-    p_e_preload_npages         = disk_to_host(sex, fh.e_preload_npages);
-    p_e_nonresnametab_offset   = disk_to_host(sex, fh.e_nonresnametab_offset);
-    p_e_nonresnametab_size     = disk_to_host(sex, fh.e_nonresnametab_size);
-    p_e_nonresnametab_cksum    = disk_to_host(sex, fh.e_nonresnametab_cksum);
-    p_e_auto_ds_section        = disk_to_host(sex, fh.e_auto_ds_section);
-    p_e_debug_info_rfo         = disk_to_host(sex, fh.e_debug_info_rfo);
-    p_e_debug_info_size        = disk_to_host(sex, fh.e_debug_info_size);
-    p_e_num_instance_preload   = disk_to_host(sex, fh.e_num_instance_preload);
-    p_e_num_instance_demand    = disk_to_host(sex, fh.e_num_instance_demand);
-    p_e_heap_size              = disk_to_host(sex, fh.e_heap_size);
+    p_e_fixup_sect_size        = ByteOrder::disk_to_host(sex, fh.e_fixup_sect_size);
+    p_e_fixup_sect_cksum       = ByteOrder::disk_to_host(sex, fh.e_fixup_sect_cksum);
+    p_e_loader_sect_size       = ByteOrder::disk_to_host(sex, fh.e_loader_sect_size);
+    p_e_loader_sect_cksum      = ByteOrder::disk_to_host(sex, fh.e_loader_sect_cksum);
+    p_e_secttab_rfo            = ByteOrder::disk_to_host(sex, fh.e_secttab_rfo);
+    p_e_secttab_nentries       = ByteOrder::disk_to_host(sex, fh.e_secttab_nentries);
+    p_e_pagetab_rfo            = ByteOrder::disk_to_host(sex, fh.e_pagetab_rfo);
+    p_e_iterpages_offset       = ByteOrder::disk_to_host(sex, fh.e_iterpages_offset);
+    p_e_rsrctab_rfo            = ByteOrder::disk_to_host(sex, fh.e_rsrctab_rfo);
+    p_e_rsrctab_nentries       = ByteOrder::disk_to_host(sex, fh.e_rsrctab_nentries);
+    p_e_resnametab_rfo         = ByteOrder::disk_to_host(sex, fh.e_resnametab_rfo);
+    p_e_entrytab_rfo           = ByteOrder::disk_to_host(sex, fh.e_entrytab_rfo);
+    p_e_fmtdirtab_rfo          = ByteOrder::disk_to_host(sex, fh.e_fmtdirtab_rfo);
+    p_e_fmtdirtab_nentries     = ByteOrder::disk_to_host(sex, fh.e_fmtdirtab_nentries);
+    p_e_fixup_pagetab_rfo      = ByteOrder::disk_to_host(sex, fh.e_fixup_pagetab_rfo);
+    p_e_fixup_rectab_rfo       = ByteOrder::disk_to_host(sex, fh.e_fixup_rectab_rfo);
+    p_e_import_modtab_rfo      = ByteOrder::disk_to_host(sex, fh.e_import_modtab_rfo);
+    p_e_import_modtab_nentries = ByteOrder::disk_to_host(sex, fh.e_import_modtab_nentries);
+    p_e_import_proctab_rfo     = ByteOrder::disk_to_host(sex, fh.e_import_proctab_rfo);
+    p_e_ppcksumtab_rfo         = ByteOrder::disk_to_host(sex, fh.e_ppcksumtab_rfo);
+    p_e_data_pages_offset      = ByteOrder::disk_to_host(sex, fh.e_data_pages_offset);
+    p_e_preload_npages         = ByteOrder::disk_to_host(sex, fh.e_preload_npages);
+    p_e_nonresnametab_offset   = ByteOrder::disk_to_host(sex, fh.e_nonresnametab_offset);
+    p_e_nonresnametab_size     = ByteOrder::disk_to_host(sex, fh.e_nonresnametab_size);
+    p_e_nonresnametab_cksum    = ByteOrder::disk_to_host(sex, fh.e_nonresnametab_cksum);
+    p_e_auto_ds_section        = ByteOrder::disk_to_host(sex, fh.e_auto_ds_section);
+    p_e_debug_info_rfo         = ByteOrder::disk_to_host(sex, fh.e_debug_info_rfo);
+    p_e_debug_info_size        = ByteOrder::disk_to_host(sex, fh.e_debug_info_size);
+    p_e_num_instance_preload   = ByteOrder::disk_to_host(sex, fh.e_num_instance_preload);
+    p_e_num_instance_demand    = ByteOrder::disk_to_host(sex, fh.e_num_instance_demand);
+    p_e_heap_size              = ByteOrder::disk_to_host(sex, fh.e_heap_size);
 
     /* Magic number */
     for (size_t i = 0; i < sizeof(fh.e_magic); ++i)
@@ -152,7 +152,7 @@ SgAsmLEFileHeader::is_LE(SgAsmGenericFile *file)
         /* Read four-byte offset of potential LE/LX File Header at offset 0x3c */
         uint32_t lfanew_disk;
         file->read_content(0x3c, &lfanew_disk, sizeof lfanew_disk);
-        rose_addr_t le_offset = le_to_host(lfanew_disk);
+        rose_addr_t le_offset = ByteOrder::le_to_host(lfanew_disk);
         
         /* Look for the LE/LX File Header magic number */
         unsigned char le_magic[4];
@@ -170,7 +170,7 @@ SgAsmLEFileHeader::is_LE(SgAsmGenericFile *file)
 
 /* Encode the LE header into disk format */
 void *
-SgAsmLEFileHeader::encode(ByteOrder sex, LEFileHeader_disk *disk) const
+SgAsmLEFileHeader::encode(ByteOrder::Endianness sex, LEFileHeader_disk *disk) const
 {
     for (size_t i=0; i<NELMTS(disk->e_magic); i++)
         disk->e_magic[i] = get_magic()[i];
@@ -395,17 +395,17 @@ SgAsmLEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 /* Constructor */
 void
-SgAsmLEPageTableEntry::ctor(ByteOrder sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk)
+SgAsmLEPageTableEntry::ctor(ByteOrder::Endianness sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk)
 {
-    unsigned pageno_lo = disk_to_host(sex, disk->pageno_lo);
-    unsigned pageno_hi = disk_to_host(sex, disk->pageno_hi);
+    unsigned pageno_lo = ByteOrder::disk_to_host(sex, disk->pageno_lo);
+    unsigned pageno_hi = ByteOrder::disk_to_host(sex, disk->pageno_hi);
     p_pageno      = (pageno_hi << 8) | pageno_lo;
-    p_flags       = disk_to_host(sex, disk->flags);
+    p_flags       = ByteOrder::disk_to_host(sex, disk->flags);
 }
 
 /* Encode page table entry to disk format */
 void *
-SgAsmLEPageTableEntry::encode(ByteOrder sex, SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk) const
+SgAsmLEPageTableEntry::encode(ByteOrder::Endianness sex, SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk) const
 {
     host_to_disk(sex, (p_pageno & 0xff),    &(disk->pageno_lo));
     host_to_disk(sex, (p_pageno>>8)&0xffff, &(disk->pageno_hi));
@@ -499,26 +499,26 @@ SgAsmLEPageTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 /* Constructor */
 void
-SgAsmLESectionTableEntry::ctor(ByteOrder sex, const LESectionTableEntry_disk *disk)
+SgAsmLESectionTableEntry::ctor(ByteOrder::Endianness sex, const LESectionTableEntry_disk *disk)
 {
-    p_mapped_size      = disk_to_host(sex, disk->mapped_size);
-    p_base_addr        = disk_to_host(sex, disk->base_addr);
-    p_flags            = disk_to_host(sex, disk->flags);
-    p_pagemap_index    = disk_to_host(sex, disk->pagemap_index);
-    p_pagemap_nentries = disk_to_host(sex, disk->pagemap_nentries);
-    p_res1             = disk_to_host(sex, disk->res1);
+    p_mapped_size      = ByteOrder::disk_to_host(sex, disk->mapped_size);
+    p_base_addr        = ByteOrder::disk_to_host(sex, disk->base_addr);
+    p_flags            = ByteOrder::disk_to_host(sex, disk->flags);
+    p_pagemap_index    = ByteOrder::disk_to_host(sex, disk->pagemap_index);
+    p_pagemap_nentries = ByteOrder::disk_to_host(sex, disk->pagemap_nentries);
+    p_res1             = ByteOrder::disk_to_host(sex, disk->res1);
 }
 
 /* Encodes a section table entry back into disk format. */
 void *
-SgAsmLESectionTableEntry::encode(ByteOrder sex, LESectionTableEntry_disk *disk) const
+SgAsmLESectionTableEntry::encode(ByteOrder::Endianness sex, LESectionTableEntry_disk *disk) const
 {
-    host_to_disk(sex, p_mapped_size,      &(disk->mapped_size));
-    host_to_disk(sex, p_base_addr,        &(disk->base_addr));
-    host_to_disk(sex, p_flags,            &(disk->flags));
-    host_to_disk(sex, p_pagemap_index,    &(disk->pagemap_index));
-    host_to_disk(sex, p_pagemap_nentries, &(disk->pagemap_nentries));
-    host_to_disk(sex, p_res1,             &(disk->res1));
+    ByteOrder::host_to_disk(sex, p_mapped_size,      &(disk->mapped_size));
+    ByteOrder::host_to_disk(sex, p_base_addr,        &(disk->base_addr));
+    ByteOrder::host_to_disk(sex, p_flags,            &(disk->flags));
+    ByteOrder::host_to_disk(sex, p_pagemap_index,    &(disk->pagemap_index));
+    ByteOrder::host_to_disk(sex, p_pagemap_nentries, &(disk->pagemap_nentries));
+    ByteOrder::host_to_disk(sex, p_res1,             &(disk->res1));
     return disk;
 }
 
@@ -746,7 +746,7 @@ SgAsmLENameTable::ctor(rose_addr_t offset)
         extend(2);
         uint16_t u16_disk;
         read_content_local(at, &u16_disk, 2);
-        p_ordinals.push_back(le_to_host(u16_disk));
+        p_ordinals.push_back(ByteOrder::le_to_host(u16_disk));
         at += 2;
     }
 }
@@ -769,7 +769,7 @@ SgAsmLENameTable::unparse(std::ostream &f) const
         /* Ordinal */
         ROSE_ASSERT(p_ordinals[i] <= 0xffff);
         uint16_t ordinal_le;
-        host_to_le(p_ordinals[i], &ordinal_le);
+        ByteOrder::host_to_le(p_ordinals[i], &ordinal_le);
         spos = write(f, spos, sizeof ordinal_le, &ordinal_le);
     }
     
@@ -804,32 +804,33 @@ SgAsmLENameTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 /* Constructor */
 void
-SgAsmLEEntryPoint::ctor(ByteOrder sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk)
+SgAsmLEEntryPoint::ctor(ByteOrder::Endianness sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk)
 {
-    p_flags        = disk_to_host(sex, disk->flags);
-    p_objnum       = disk_to_host(sex, disk->objnum);
-    p_entry_type   = disk_to_host(sex, disk->entry_type);
-    p_entry_offset = disk_to_host(sex, disk->entry_offset);
-    p_res1         = disk_to_host(sex, disk->res1);
+    p_flags        = ByteOrder::disk_to_host(sex, disk->flags);
+    p_objnum       = ByteOrder::disk_to_host(sex, disk->objnum);
+    p_entry_type   = ByteOrder::disk_to_host(sex, disk->entry_type);
+    p_entry_offset = ByteOrder::disk_to_host(sex, disk->entry_offset);
+    p_res1         = ByteOrder::disk_to_host(sex, disk->res1);
 }
 
 /* Write the entry information back to the disk at the specified section and section offset, returning the new section offset. */
 rose_addr_t
-SgAsmLEEntryPoint::unparse(std::ostream &f, ByteOrder sex, const SgAsmGenericSection *section, rose_addr_t spos) const
+SgAsmLEEntryPoint::unparse(std::ostream &f, ByteOrder::Endianness sex, const SgAsmGenericSection *section,
+                           rose_addr_t spos) const
 {
     if (0==(p_flags & 0x01)) {
         /* Empty entry; write only the flag byte */
         uint8_t byte;
-        host_to_disk(sex, p_flags, &byte);
+        ByteOrder::host_to_disk(sex, p_flags, &byte);
         spos = section->write(f, spos, byte);
     } else {
         /* Non-empty entry */
         LEEntryPoint_disk disk;
-        host_to_disk(sex, p_flags,        &(disk.flags));
-        host_to_disk(sex, p_objnum,       &(disk.objnum));
-        host_to_disk(sex, p_entry_type,   &(disk.entry_type));
-        host_to_disk(sex, p_entry_offset, &(disk.entry_offset));
-        host_to_disk(sex, p_res1,         &(disk.res1));
+        ByteOrder::host_to_disk(sex, p_flags,        &(disk.flags));
+        ByteOrder::host_to_disk(sex, p_objnum,       &(disk.objnum));
+        ByteOrder::host_to_disk(sex, p_entry_type,   &(disk.entry_type));
+        ByteOrder::host_to_disk(sex, p_entry_offset, &(disk.entry_offset));
+        ByteOrder::host_to_disk(sex, p_res1,         &(disk.res1));
         spos = section->write(f, spos, sizeof disk, &disk);
     }
     return spos;
@@ -922,7 +923,7 @@ SgAsmLEEntryTable::unparse(std::ostream &f) const
     uint8_t byte = p_entries.size();
     spos = write(f, spos, byte);
     
-    ByteOrder sex = get_header()->get_sex();
+    ByteOrder::Endianness sex = get_header()->get_sex();
     for (size_t i = 0; i < p_entries.size(); i++) {
         spos = p_entries[i]->unparse(f, sex, this, spos);
     }
