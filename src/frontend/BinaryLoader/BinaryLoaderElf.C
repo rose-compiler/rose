@@ -805,7 +805,7 @@ BinaryLoaderElf::fixup_info_addend(SgAsmElfRelocEntry *reloc, rose_addr_t target
     if (get_debug())
         fprintf(get_debug(), "    reading %zu-byte addend from memory at 0x%08"PRIx64"\n", nbytes, target_va);
     rose_addr_t retval = 0;
-    SgAsmExecutableFileFormat::ByteOrder sex = reloc_section->get_header()->get_sex();
+    ByteOrder::Endianness sex = reloc_section->get_header()->get_sex();
     ROSE_ASSERT(memmap!=0);
     switch (nbytes) {
         case 4: {
@@ -816,7 +816,7 @@ BinaryLoaderElf::fixup_info_addend(SgAsmElfRelocEntry *reloc, rose_addr_t target
                     fprintf(get_debug(), "    short read of relocation addend at 0x%08"PRIx64"\n", target_va);
                 throw Exception("short read of relocation addend at " + StringUtility::addrToString(target_va));
             }
-            retval = SgAsmExecutableFileFormat::disk_to_host(sex, guest);
+            retval = ByteOrder::disk_to_host(sex, guest);
             break;
         }
         case 8: {
@@ -827,7 +827,7 @@ BinaryLoaderElf::fixup_info_addend(SgAsmElfRelocEntry *reloc, rose_addr_t target
                     fprintf(get_debug(), "    short read of relocation addend at 0x%08"PRIx64"\n", target_va);
                 throw Exception("short read of relocation addend at " + StringUtility::addrToString(target_va));
             }
-            retval = SgAsmExecutableFileFormat::disk_to_host(sex, guest);
+            retval = ByteOrder::disk_to_host(sex, guest);
             break;
         }
         default:
@@ -904,7 +904,7 @@ BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, Memor
 {
     SgAsmGenericHeader *header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(reloc);
     assert(header);
-    SgAsmExecutableFileFormat::ByteOrder sex = header->get_sex();
+    ByteOrder::Endianness sex = header->get_sex();
 
     if (0==target_va)
         target_va = fixup_info_target_va(reloc);
@@ -918,7 +918,7 @@ BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, Memor
     switch (nbytes) {
         case 4: {
             uint32_t guest;
-            SgAsmExecutableFileFormat::host_to_disk(sex, value, &guest);
+            ByteOrder::host_to_disk(sex, value, &guest);
             size_t nwrite = memmap->write(&guest, target_va, sizeof guest);
             if (nwrite<sizeof guest) {
                 if (get_debug())
@@ -929,7 +929,7 @@ BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, Memor
         }
         case 8: {
             uint64_t guest;
-            SgAsmExecutableFileFormat::host_to_disk(sex, value, &guest);
+            ByteOrder::host_to_disk(sex, value, &guest);
             size_t nwrite = memmap->write(&guest, target_va, sizeof guest);
             if (nwrite<sizeof guest) {
                 if (get_debug())

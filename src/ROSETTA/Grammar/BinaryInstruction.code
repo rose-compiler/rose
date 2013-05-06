@@ -343,12 +343,6 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
 
           typedef struct stat fileDetails;
 
-          enum ByteOrder {
-              ORDER_UNSPECIFIED,
-              ORDER_LSB,                                          /* little-endian; least significant byte first */
-              ORDER_MSB,                                          /* big-endian; most significant byte first */
-             };
-    
           enum ExecFamily {
               FAMILY_UNSPECIFIED,
               FAMILY_DOS,                                         /* Microsoft DOS format */
@@ -603,89 +597,10 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
         static void hexdump(FILE*, rose_addr_t base_addr, const std::string &prefix, const SgFileContentList& data,
                             bool multiline=true);
 
-       /* Return byte order of caller */
-          static SgAsmExecutableFileFormat::ByteOrder host_order();
-
-       /* Swap (reverse) bytes taking care of sign extension */
-          static uint8_t swap_bytes(uint8_t n);
-          static uint16_t swap_bytes(uint16_t n);
-          static uint32_t swap_bytes(uint32_t n);
-          static uint64_t swap_bytes(uint64_t n);
-
-          static int8_t swap_bytes(int8_t n);
-          static int16_t swap_bytes(int16_t n);
-          static int32_t swap_bytes(int32_t n);
-          static int64_t swap_bytes(int64_t n);
-
-       /* Little-endian byte order conversions */
-          static uint8_t le_to_host(uint8_t n);
-          static uint16_t le_to_host(uint16_t n);
-          static uint32_t le_to_host(uint32_t n);
-          static uint64_t le_to_host(uint64_t n);
-
-          static int8_t le_to_host(int8_t n);
-          static int16_t le_to_host(int16_t n);
-          static int32_t le_to_host(int32_t n);
-          static int64_t le_to_host(int64_t n);
-
-          static void host_to_le(unsigned h, uint8_t *n);
-          static void host_to_le(unsigned h, uint16_t *n);
-          static void host_to_le(unsigned h, uint32_t *n);
-          static void host_to_le(rose_addr_t h, uint64_t *n);
-          static void host_to_le(rose_rva_t h, uint32_t *n);
-          static void host_to_le(rose_rva_t h, uint64_t *n);
-          static void host_to_le(int h, int8_t *n);
-          static void host_to_le(int h, int16_t *n);
-          static void host_to_le(int h, int32_t *n);
-          static void host_to_le(int64_t h, int64_t *n);
-
-       /* Big-endian byte order conversions */
-          static uint8_t be_to_host(uint8_t n);
-          static uint16_t be_to_host(uint16_t n);
-          static uint32_t be_to_host(uint32_t n);
-          static uint64_t be_to_host(uint64_t n);
-          static int8_t be_to_host(int8_t n);
-          static int16_t be_to_host(int16_t n);
-          static int32_t be_to_host(int32_t n);
-          static int64_t be_to_host(int64_t n);
-
-          static void host_to_be(unsigned h, uint8_t *n);
-          static void host_to_be(unsigned h, uint16_t *n);
-          static void host_to_be(unsigned h, uint32_t *n);
-          static void host_to_be(rose_addr_t h, uint64_t *n);
-          static void host_to_be(rose_rva_t h, uint32_t *n);
-          static void host_to_be(rose_rva_t h, uint64_t *n);
-          static void host_to_be(int h, int8_t *n);
-          static void host_to_be(int h, int16_t *n);
-          static void host_to_be(int h, int32_t *n);
-          static void host_to_be(int64_t h, int64_t *n);
-
-       /* Caller-specified byte order conversions */
-          static uint8_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, uint8_t n);
-          static uint16_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, uint16_t n);
-          static uint32_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, uint32_t n);
-          static uint64_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, uint64_t n);
-          static int8_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, int8_t n);
-          static int16_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, int16_t n);
-          static int32_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, int32_t n);
-          static int64_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, int64_t n);
-
-       // static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder, unsigned char h, unsigned char *np);
-          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, unsigned h, uint8_t *np);
-          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, unsigned h, uint16_t *np);
-          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, unsigned h, uint32_t *np);
-          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, rose_addr_t h, uint64_t *np);
-          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, rose_rva_t h, uint64_t *np);
-          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int h, int8_t *np);
-          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int h, int16_t *np);
-          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int h, int32_t *np);
-          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int64_t h, int64_t *np);
-
           static std::string isa_family_to_string(SgAsmExecutableFileFormat::InsSetArchitecture);
           static std::string isa_to_string(SgAsmExecutableFileFormat::InsSetArchitecture);
        /**alias for isa_to_string(InsSetArchitecture) */
           static std::string to_string(SgAsmExecutableFileFormat::InsSetArchitecture);
-          static std::string to_string(SgAsmExecutableFileFormat::ByteOrder);
           static std::string to_string(SgAsmExecutableFileFormat::ExecFamily);
           static std::string to_string(SgAsmExecutableFileFormat::ExecABI);
           static std::string to_string(SgAsmExecutableFileFormat::ExecPurpose);
@@ -842,7 +757,7 @@ HEADER_GENERIC_HEADER_START
                 void add_entry_rva(const rose_rva_t &rva) { p_entry_rvas.push_back(rva);}
 
                 /* Convenience functions */
-                SgAsmExecutableFileFormat::ByteOrder get_sex() const;
+                ByteOrder::Endianness get_sex() const;
                 size_t get_word_size() const;
 
                 /* Functions for sections */
@@ -1262,8 +1177,8 @@ HEADER_ELF_HEADER_START
 
         private:
                 void ctor();
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf32FileHeader_disk*) const;
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf64FileHeader_disk*) const;
+                void *encode(ByteOrder::Endianness, SgAsmElfFileHeader::Elf32FileHeader_disk*) const;
+                void *encode(ByteOrder::Endianness, SgAsmElfFileHeader::Elf64FileHeader_disk*) const;
 HEADER_ELF_HEADER_END
 
 
@@ -1381,21 +1296,21 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
 # pragma pack ()
 #endif
 
-                SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex,
+                SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
                         const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk);
-                SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex,
+                SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
                         const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk);
-                void *encode(SgAsmExecutableFileFormat::ByteOrder sex,
+                void *encode(ByteOrder::Endianness sex,
                         SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk) const;
-                void *encode(SgAsmExecutableFileFormat::ByteOrder sex,
+                void *encode(ByteOrder::Endianness sex,
                         SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk) const;
                 void update_from_section(SgAsmElfSection*);
                 virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
                 static std::string to_string(SgAsmElfSectionTableEntry::SectionType);
                 static std::string to_string(SgAsmElfSectionTableEntry::SectionFlags);
         private:
-                void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk*);
-                void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk*);
+                void ctor(ByteOrder::Endianness, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk*);
+                void ctor(ByteOrder::Endianness, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk*);
 HEADER_ELF_SECTION_TABLE_ENTRY_END
 
 
@@ -1637,14 +1552,14 @@ HEADER_ELF_RELOC_ENTRY_START
                         : p_r_offset(0), p_r_addend(0), p_sym(0), p_type(R_386_NONE)
                         {ctor(section);}
 
-                void parse(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelocEntry::Elf32RelaEntry_disk *disk);
-                void parse(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelocEntry::Elf64RelaEntry_disk *disk);
-                void parse(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelocEntry::Elf32RelEntry_disk *disk);
-                void parse(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelocEntry::Elf64RelEntry_disk *disk);
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelocEntry::Elf32RelaEntry_disk*) const;
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelocEntry::Elf64RelaEntry_disk*) const;
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelocEntry::Elf32RelEntry_disk*) const;
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelocEntry::Elf64RelEntry_disk*) const;
+                void parse(ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf32RelaEntry_disk *disk);
+                void parse(ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf64RelaEntry_disk *disk);
+                void parse(ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf32RelEntry_disk *disk);
+                void parse(ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf64RelEntry_disk *disk);
+                void *encode(ByteOrder::Endianness, SgAsmElfRelocEntry::Elf32RelaEntry_disk*) const;
+                void *encode(ByteOrder::Endianness, SgAsmElfRelocEntry::Elf64RelaEntry_disk*) const;
+                void *encode(ByteOrder::Endianness, SgAsmElfRelocEntry::Elf32RelEntry_disk*) const;
+                void *encode(ByteOrder::Endianness, SgAsmElfRelocEntry::Elf64RelEntry_disk*) const;
 
                 void dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbolSection *symtab) const;
                 virtual void dump(FILE *f, const char *prefix, ssize_t idx) const
@@ -1783,10 +1698,10 @@ HEADER_ELF_DYNAMIC_ENTRY_START
                 explicit SgAsmElfDynamicEntry(SgAsmElfDynamicSection *dynsec)
                         : p_d_tag(DT_NULL), p_name(NULL)
                         {ctor(dynsec);}
-                void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*);
-                void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*);
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*) const;
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*) const;
+                void parse(ByteOrder::Endianness, const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*);
+                void parse(ByteOrder::Endianness, const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*);
+                void *encode(ByteOrder::Endianness, SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*) const;
+                void *encode(ByteOrder::Endianness, SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*) const;
                 virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
                 static std::string to_string(SgAsmElfDynamicEntry::EntryType);
                 /*Override ROSETTA because set_name() needs to adjust parent pointer*/
@@ -1949,8 +1864,8 @@ HEADER_ELF_SYMVER_DEFINED_ENTRY_START
 
                 explicit SgAsmElfSymverDefinedEntry(SgAsmElfSymverDefinedSection *symver_defined)
                         {ctor(symver_defined);}
-                void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk*);
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk*) const;
+                void parse(ByteOrder::Endianness, const SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk*);
+                void *encode(ByteOrder::Endianness, SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk*) const;
                 virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
         private:
                 void ctor(SgAsmElfSymverDefinedSection*);
@@ -1983,8 +1898,8 @@ HEADER_ELF_SYMVER_DEFINED_AUX_START
                                                   SgAsmElfSymverDefinedSection *symver_def_sec)
                         : p_name(NULL)
                         {ctor(symver_def_entry,symver_def_sec);}
-                void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk*);
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk*) const;
+                void parse(ByteOrder::Endianness, const SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk*);
+                void *encode(ByteOrder::Endianness, SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk*) const;
                 virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
         private:
                 void ctor(SgAsmElfSymverDefinedEntry*,SgAsmElfSymverDefinedSection *symver_def_sec);
@@ -2034,8 +1949,8 @@ HEADER_ELF_SYMVER_NEEDED_ENTRY_START
                 explicit SgAsmElfSymverNeededEntry(SgAsmElfSymverNeededSection *symver_needed)
                         : p_file_name(NULL)
                         {ctor(symver_needed);}
-                void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*);
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*) const;
+                void parse(ByteOrder::Endianness, const SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*);
+                void *encode(ByteOrder::Endianness, SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*) const;
                 virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
         private:
                 void ctor(SgAsmElfSymverNeededSection*);
@@ -2071,8 +1986,8 @@ HEADER_ELF_SYMVER_NEEDED_AUX_START
                                         SgAsmElfSymverNeededSection *symver_needed_sec)
                         : p_name(NULL)
                         {ctor(symver_needed_entry,symver_needed_sec);}
-                void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*);
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*) const;
+                void parse(ByteOrder::Endianness, const SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*);
+                void *encode(ByteOrder::Endianness, SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*) const;
                 virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
         private:
                 void ctor(SgAsmElfSymverNeededEntry*,SgAsmElfSymverNeededSection*);
@@ -2186,13 +2101,13 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_START
 #endif
 
 
-                SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex,
+                SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex,
                         const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk);
-                SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex,
+                SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex,
                         const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk);
 
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*) const;
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*) const;
+                void *encode(ByteOrder::Endianness, SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*) const;
+                void *encode(ByteOrder::Endianness, SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*) const;
                 void update_from_section(SgAsmElfSection*);
                 virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
                 static std::string to_string(SgAsmElfSegmentTableEntry::SegmentType);
@@ -2200,8 +2115,8 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_START
 
 
         private:
-                void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*);
-                void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*);
+                void ctor(ByteOrder::Endianness, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*);
+                void ctor(ByteOrder::Endianness, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*);
 HEADER_ELF_SEGMENT_TABLE_ENTRY_END
 
 
@@ -2286,10 +2201,10 @@ HEADER_ELF_SYMBOL_START
 
                 explicit SgAsmElfSymbol(SgAsmElfSymbolSection *symtab)
                         {ctor(symtab);}
-                void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf32SymbolEntry_disk*);
-                void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf64SymbolEntry_disk*);
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf32SymbolEntry_disk*) const;
-                void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf64SymbolEntry_disk*) const;
+                void parse(ByteOrder::Endianness, const SgAsmElfSymbol::Elf32SymbolEntry_disk*);
+                void parse(ByteOrder::Endianness, const SgAsmElfSymbol::Elf64SymbolEntry_disk*);
+                void *encode(ByteOrder::Endianness, SgAsmElfSymbol::Elf32SymbolEntry_disk*) const;
+                void *encode(ByteOrder::Endianness, SgAsmElfSymbol::Elf64SymbolEntry_disk*) const;
                 virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
                 void dump(FILE*, const char *prefix, ssize_t idx, SgAsmGenericSection*) const;
                 SgAsmElfSymbol::ElfSymBinding get_elf_binding() const;
@@ -3427,7 +3342,7 @@ HEADER_LE_FILE_HEADER_START
           virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
      private:
           void ctor(SgAsmGenericFile *f, rose_addr_t offset);
-          void *encode(SgAsmExecutableFileFormat::ByteOrder sex, SgAsmLEFileHeader::LEFileHeader_disk*) const;
+          void *encode(ByteOrder::Endianness sex, SgAsmLEFileHeader::LEFileHeader_disk*) const;
 HEADER_LE_FILE_HEADER_END
 
 
@@ -3539,15 +3454,15 @@ HEADER_LE_PAGE_TABLE_ENTRY_START
 # pragma pack ()
 #endif
 
-          SgAsmLEPageTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk);
+          SgAsmLEPageTableEntry(ByteOrder::Endianness sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk);
 
           void dump(FILE*, const char *prefix, ssize_t idx) const;
-          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmLEPageTableEntry::LEPageTableEntry_disk*) const;
+          void *encode(ByteOrder::Endianness, SgAsmLEPageTableEntry::LEPageTableEntry_disk*) const;
 
        // unsigned get_pageno() {return pageno;}
 
      private:
-          void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmLEPageTableEntry::LEPageTableEntry_disk*);
+          void ctor(ByteOrder::Endianness, const SgAsmLEPageTableEntry::LEPageTableEntry_disk*);
 
        // unsigned    pageno;
        // unsigned    flags;
@@ -3580,13 +3495,13 @@ HEADER_LE_ENTRY_POINT_START
 # pragma pack ()
 #endif
 
-          SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk);
-          SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, unsigned flags);
+          SgAsmLEEntryPoint(ByteOrder::Endianness sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk);
+          SgAsmLEEntryPoint(ByteOrder::Endianness sex, unsigned flags);
 
-          rose_addr_t unparse(std::ostream&, SgAsmExecutableFileFormat::ByteOrder, const SgAsmGenericSection*, rose_addr_t spos) const;
+          rose_addr_t unparse(std::ostream&, ByteOrder::Endianness, const SgAsmGenericSection*, rose_addr_t spos) const;
           void dump(FILE*, const char *prefix, ssize_t idx) const;
      private:
-          void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmLEEntryPoint::LEEntryPoint_disk*);
+          void ctor(ByteOrder::Endianness, const SgAsmLEEntryPoint::LEEntryPoint_disk*);
 
        // std::vector<LEEntryPoint> entries;
        // unsigned flags, objnum, entry_type, res1;
@@ -3651,17 +3566,17 @@ HEADER_LE_SECTION_TABLE_ENTRY_START
                SF_IO_PRIV          = 0x00008000,   /**< Section I/O privilege level (80x86 specific; used only for 16:16 alias objects) */
              };
 
-          SgAsmLESectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk);
+          SgAsmLESectionTableEntry(ByteOrder::Endianness sex, const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk);
        // virtual ~LESectionTableEntry() {};
 
-          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmLESectionTableEntry::LESectionTableEntry_disk*) const;
+          void *encode(ByteOrder::Endianness, SgAsmLESectionTableEntry::LESectionTableEntry_disk*) const;
           virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
        /* These are the native-format versions of the same members described in the NESectionTableEntry_disk struct. */
        // unsigned    flags, pagemap_index, pagemap_nentries, res1;
        // rose_addr_t      mapped_size, base_addr;
 
      private:
-          void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmLESectionTableEntry::LESectionTableEntry_disk*);
+          void ctor(ByteOrder::Endianness, const SgAsmLESectionTableEntry::LESectionTableEntry_disk*);
 
 HEADER_LE_SECTION_TABLE_ENTRY_END
 
@@ -4987,7 +4902,7 @@ SgAsmGenericHeader::format_name() const
      return "ASM_GENERIC_HEADER";
    }
 
-SgAsmGenericFormat::ByteOrder
+ByteOrder::Endianness
 SgAsmGenericHeader::get_sex() const
    {
      ROSE_ASSERT(p_exec_format != NULL);
@@ -5059,7 +4974,7 @@ SOURCE_ELF_STRING_SECTION_END
 
 
 SOURCE_ELF_SECTION_TABLE_ENTRY_START
-SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk)
+SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(ByteOrder::Endianness sex, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk)
    {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
@@ -5069,7 +4984,7 @@ SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::
 #endif
    }
 
-SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk)
+SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(ByteOrder::Endianness sex, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk)
    {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
@@ -5127,7 +5042,7 @@ SOURCE_ELF_SECTION_END
 
 
 SOURCE_ELF_SEGMENT_TABLE_ENTRY_START
-SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk)
+SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk)
    {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
@@ -5137,7 +5052,7 @@ SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::
 #endif
    }
 
-SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk)
+SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk)
    {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);
@@ -5228,7 +5143,7 @@ SOURCE_NE_SECTION_TABLE_ENTRY_END
 
 
 SOURCE_LE_PAGE_TABLE_ENTRY_START
-SgAsmLEPageTableEntry::SgAsmLEPageTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk)
+SgAsmLEPageTableEntry::SgAsmLEPageTableEntry(ByteOrder::Endianness sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk)
    : p_pageno(0), p_flags(0)
    {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
@@ -5242,7 +5157,7 @@ SgAsmLEPageTableEntry::SgAsmLEPageTableEntry(SgAsmExecutableFileFormat::ByteOrde
 SOURCE_LE_PAGE_TABLE_ENTRY_END
 
 SOURCE_LE_ENTRY_POINT_START
-SgAsmLEEntryPoint::SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk)
+SgAsmLEEntryPoint::SgAsmLEEntryPoint(ByteOrder::Endianness sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk)
    : p_flags(0), p_objnum(0), p_entry_type(0), p_res1(0), p_entry_offset(0)
    {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
@@ -5253,7 +5168,7 @@ SgAsmLEEntryPoint::SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, c
 #endif
    }
 
-SgAsmLEEntryPoint::SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, unsigned flags)
+SgAsmLEEntryPoint::SgAsmLEEntryPoint(ByteOrder::Endianness sex, unsigned flags)
    : p_flags(flags), p_objnum(0), p_entry_type(0), p_res1(0), p_entry_offset(0)
    {
    }
@@ -5261,7 +5176,7 @@ SgAsmLEEntryPoint::SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, u
 SOURCE_LE_ENTRY_POINT_END
 
 SOURCE_LE_SECTION_TABLE_ENTRY_START
-SgAsmLESectionTableEntry::SgAsmLESectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk)
+SgAsmLESectionTableEntry::SgAsmLESectionTableEntry(ByteOrder::Endianness sex, const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk)
    {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ctor(sex, disk);

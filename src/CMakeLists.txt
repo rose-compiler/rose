@@ -306,6 +306,7 @@ set (unparser_SRC
 
 set(roseBinaryFormats_fileList_part0
    ### Utilities ###
+   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/ByteOrder.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/DataConversion.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/ExecGeneric.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/ExtentMap.C

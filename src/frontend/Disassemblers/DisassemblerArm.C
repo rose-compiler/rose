@@ -21,7 +21,7 @@ DisassemblerArm::init()
     decodeUnconditionalInstructions = true;
     set_wordsize(4);
     set_alignment(4);
-    set_sex(SgAsmExecutableFileFormat::ORDER_LSB);
+    set_sex(ByteOrder::ORDER_LSB);
     set_registers(RegisterDictionary::dictionary_arm7()); // only a default
 }
 

@@ -2,8 +2,8 @@
 
 void
 SgAsmPERVASizePair::ctor(SgAsmPERVASizePairList *parent, const RVASizePair_disk *disk) {
-    p_e_rva  = le_to_host(disk->e_rva);
-    p_e_size = le_to_host(disk->e_size);
+    p_e_rva  = ByteOrder::le_to_host(disk->e_rva);
+    p_e_size = ByteOrder::le_to_host(disk->e_size);
     set_parent(parent);
 }
 
@@ -17,8 +17,8 @@ SgAsmPERVASizePair::ctor(SgAsmPERVASizePairList *parent, rose_addr_t rva, rose_a
 
 void*
 SgAsmPERVASizePair::encode(RVASizePair_disk *disk) const {
-    host_to_le(p_e_rva,  &(disk->e_rva));
-    host_to_le(p_e_size, &(disk->e_size));
+    ByteOrder::host_to_le(p_e_rva,  &(disk->e_rva));
+    ByteOrder::host_to_le(p_e_size, &(disk->e_size));
     return disk;
 }
 

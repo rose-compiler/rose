@@ -68,7 +68,7 @@ DisassemblerX86::init(size_t wordsize)
     }
     set_wordsize(wordsize);
     set_alignment(1);
-    set_sex(SgAsmExecutableFileFormat::ORDER_LSB);
+    set_sex(ByteOrder::ORDER_LSB);
     ROSE_ASSERT(get_registers()!=NULL);
 
     /* Not actually necessary because we'll call it before each instruction. We call it here just to initialize all the data

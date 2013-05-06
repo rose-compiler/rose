@@ -1,6 +1,7 @@
 /* Classes describing basic features of a binary file that are in common to all file formats. (SgAsmGenericFormat class) */
 
 #include "sage3basic.h"
+#include "stringify.h"
 
 /* Print some debugging info */
 void
@@ -16,7 +17,7 @@ SgAsmGenericFormat::dump(FILE *f, const char *prefix, ssize_t idx) const
     
     fprintf(f, "%s%-*s = %s\n", p, w, "family", to_string(get_family()).c_str());
     fprintf(f, "%s%-*s = %s\n", p, w, "purpose", to_string(get_purpose()).c_str());
-    fprintf(f, "%s%-*s = %s\n", p, w, "sex", to_string(get_sex()).c_str());
+    fprintf(f, "%s%-*s = %s\n", p, w, "sex", stringifyByteOrderEndianness(get_sex()).c_str());
 
     fprintf(f, "%s%-*s = %u (%scurrent)\n", p, w, "version", get_version(), get_is_current_version() ? "" : "not-" );
     

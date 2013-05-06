@@ -28,16 +28,8 @@ public:
 class Rot13: public DataConverter {
     virtual ~Rot13() {}
     virtual std::string name() const {return "ROT-13";}
-    virtual uint8_t* encode(uint8_t* buffer, size_t* nbytes) {
-        for (size_t i=0; i<*nbytes; i++)
-            buffer[i] += 13;
-        return buffer;
-    }
-    virtual uint8_t* decode(uint8_t* buffer, size_t* nbytes) {
-        for (size_t i=0; i<*nbytes; i++)
-            buffer[i] -= 13;
-        return buffer;
-    }
+    virtual uint8_t* encode(uint8_t* buffer, size_t* nbytes);
+    virtual uint8_t* decode(uint8_t* buffer, size_t* nbytes);
 };
 
 #endif

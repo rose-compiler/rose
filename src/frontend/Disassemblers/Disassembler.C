@@ -591,10 +591,10 @@ Disassembler::search_words(AddressSet *worklist, const MemoryMap *map, const Bad
 
                 for (size_t i=0; i<d->get_wordsize(); i++) {
                     switch (d->get_sex()) {
-                        case SgAsmExecutableFileFormat::ORDER_LSB:
+                        case ByteOrder::ORDER_LSB:
                             constant |= buf[i] << (8*i);
                             break;
-                        case SgAsmExecutableFileFormat::ORDER_MSB:
+                        case ByteOrder::ORDER_MSB:
                             constant |= buf[i] << (8*(d->get_wordsize()-(i+1)));
                             break;
                         default:
