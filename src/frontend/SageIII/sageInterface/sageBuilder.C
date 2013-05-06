@@ -11183,6 +11183,87 @@ SgEnumDeclaration * SageBuilder::buildEnumDeclaration_nfi(const SgName& name, Sg
    } //buildEnumDeclaration_nfi()
 
 
+SgBaseClass*
+SageBuilder::buildBaseClass ( SgClassDeclaration* classDeclaration, SgClassDefinition* classDefinition, bool isVirtual, bool isDirect )
+   {
+  // DQ (5/6/2013): Refactored the construction of the SgBaseClass support to the builder API.
+
+  // Note: classDeclaration should be the first non-defining class declaration, not required to be the the declaration associated with the SgClassDefinition.
+     ROSE_ASSERT(classDeclaration != NULL);
+     ROSE_ASSERT(classDefinition  != NULL);
+
+  // DQ (5/6/2013): This is not always true (see test2013_63.C).
+  // ROSE_ASSERT(classDeclaration == classDeclaration->get_firstNondefiningDeclaration());
+
+     ROSE_ASSERT(classDefinition->get_declaration() != NULL);
+
+  // DQ (5/6/2013): This is not always true (see test2004_30.C).
+  // ROSE_ASSERT(classDefinition->get_declaration() == classDeclaration->get_firstNondefiningDeclaration());
+
+     SgBaseClass* baseclass = new SgBaseClass ( classDeclaration, isDirect );
+     ROSE_ASSERT(baseclass != NULL);
+
+     if (isVirtual == true)
+        {
+          baseclass->get_baseClassModifier().setVirtual();
+        }
+
+  // DQ (4/29/2004): add support to set access specifier
+  // baseclass->get_baseClassModifier().get_accessModifier() = set_access_modifiers(bcdp->access);
+  // baseclass->get_baseClassModifier().get_accessModifier() = buildAccessModifier(accessModifiers);
+
+  // DQ (6/21/2005): Set the parent of the base class to the class definition
+  // (these are not traversed in ROSE currently, so their parents are not set).
+     baseclass->set_parent(classDefinition);
+
+  // DQ (6/21/2005): Notice that this is copied by value (the base class list should be a list of pointers to SgBaseClass (later)
+     classDefinition->append_inheritance(baseclass);
+
+     return baseclass;
+   }
+
+
+#if 0
+// This function would be more complex that I want to support at present since the mapping of 
+// edg modifier values to ROSE modifier values is offset and backwards (reversed in numerical order).
+SgAccessModifier
+SageBuilder::buildAccessModifier ( unsigned int access )
+   {
+     SgAccessModifier a;
+
+     switch (access)
+        {
+          case as_public:
+#if 0
+               printf ("In SageBuilder::set_access_modifiers(): Mark as public \n");
+#endif
+               a.setPublic();
+               break;
+
+          case as_protected:
+#if 0
+               printf ("In SageBuilder::set_access_modifiers(): Mark as protected \n");
+#endif
+               a.setProtected();
+               break;
+
+          case as_private:
+#if 0
+               printf ("In SageBuilder::set_access_modifiers(): Mark as private \n");
+#endif
+               a.setPrivate();
+               break;
+
+          default:
+               printf ("Error: default reached in SageBuilder::set_access_modifiers() \n");
+               ROSE_ASSERT (false);
+        }
+
+     return a;
+   }
+#endif
+
+
   //! Build a SgFile node
 SgFile*
 SageBuilder::buildFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project/*=NULL*/)

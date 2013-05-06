@@ -434,7 +434,7 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
                     goto incrementPosition;
                   }
 #if 1
-               cout << "second call " << endl;
+            // cout << "second call " << endl;
                if ( isObjectFilename(*i) == false && isSourceFilename(*i) == false && isValidFileWithExecutableFileSuffixes(*i) == true )
                   {
                  // printf ("This is at least an existing file of some kind: *i = %s \n",(*i).c_str());
