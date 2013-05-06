@@ -54,7 +54,9 @@ TESTCODES_REQUIRED_TO_PASS = \
    static_upc_all_gather_all_ex.upc \
    static_upc_all_gather_ex.upc \
    static_test2011_12.upc \
-   static_test2011_13.upc
+   static_test2011_13.upc \
+   test2013_01.upc \
+   test2013_02.upc
 
 # upc_XXXsizeof() has two issues:
 # 1. They are evaluated by EDG, operators are not preserved in EDG's IL

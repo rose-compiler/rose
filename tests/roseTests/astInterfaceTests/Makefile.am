@@ -25,7 +25,8 @@ noinst_PROGRAMS = \
     deepDelete insertStatementBeforeFunction removeStatementCommentRelocation \
     generateUniqueName annotateExpressionsWithUniqueNames buildExternalStatement \
     buildCommonBlock doLoopNormalization buildLabelStatement2 replaceWithPattern \
-    insertBeforeUsingCommaOp insertAfterUsingCommaOp deepCopy fixVariableReferences
+    insertBeforeUsingCommaOp insertAfterUsingCommaOp deepCopy fixVariableReferences \
+    buildJavaPackage
 
 # list of test SAGE AST builders 
 fixVariableReferences_SOURCES = fixVariableReferences.C 
@@ -81,6 +82,7 @@ replaceWithPattern_SOURCES               = replaceWithPattern.C
 insertBeforeUsingCommaOp_SOURCES         = insertBeforeUsingCommaOp.C
 insertAfterUsingCommaOp_SOURCES          = insertAfterUsingCommaOp.C
 deepCopy_SOURCES                         = deepCopy.C
+buildJavaPackage_SOURCES                 = buildJavaPackage.C           
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -141,7 +143,8 @@ generatedCodeExamples = \
   rose_inputreplaceWithPattern.C \
   rose_inputinsertBeforeUsingCommaOp.C \
   rose_inputinsertAfterUsingCommaOp.C \
-  rose_inputdeepCopy.C
+  rose_inputdeepCopy.C \
+  rose_inputbuildJavaPackage
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -321,6 +324,9 @@ rose_inputRemoveStatementCommentRelocation.C: removeStatementCommentRelocation $
 	./removeStatementCommentRelocation$(EXEEXT) $(TEST_CXXFLAGS) -c -I$(srcdir) $(srcdir)/inputRemoveStatementCommentRelocation_withoutBottomBoundingStatement.C
 	./removeStatementCommentRelocation$(EXEEXT) $(TEST_CXXFLAGS) -c -I$(srcdir) $(srcdir)/inputRemoveStatementCommentRelocation_withTopandBottomBoundingStatement.C
 	./removeStatementCommentRelocation$(EXEEXT) $(TEST_CXXFLAGS) -c -I$(srcdir) $(srcdir)/inputRemoveStatementCommentRelocation_withoutTopandBottomBoundingStatement.C
+
+rose_inputbuildJavaPackage.C:buildJavaPackage
+	./buildJavaPackage$(EXEEXT) $(TEST_CXXFLAGS) -I$(srcdir) -c $(srcdir)/inputbuildJavaPackage.C 
 
 
 # MUST keep this up-to-date!!

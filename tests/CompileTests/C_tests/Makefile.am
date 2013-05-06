@@ -418,11 +418,15 @@ $(OLD_TESTCODES_REQUIRED_TO_PASS)
 # File option to accumulate performance information about the compilation
 # PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/C_ROSE_PERFORMANCE_DATA.csv
 
-ROSE_FLAGS = -rose:C
+# DQ (3/28/2013): Now that we have changed the default C behavior to C99 (from C89), we need 
+# to explicitly specify the C89 behavior for make of the C test codes in this directory.
+# ROSE_FLAGS = -rose:C
+ROSE_FLAGS = -rose:C89
 if !ROSE_USE_CLANG_FRONTEND
    ROSE_FLAGS += --edg:no_warnings --edg:restrict
 endif
 ROSE_FLAGS += -w
+
 
 PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}

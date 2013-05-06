@@ -237,7 +237,6 @@ test2005_03.C \
 test2005_04.C \
 test2005_05.C \
 test2005_07.C \
-test2005_08.C \
 test2005_09.C \
 test2005_10.C \
 test2005_11.C \
@@ -1168,6 +1167,83 @@ test2013_69.C \
 test2013_70.C \
 test2013_71.C \
 test2013_72.C \
+test2013_73.C \
+test2013_74.C \
+test2013_75.C \
+test2013_76.C \
+test2013_77.C \
+test2013_78.C \
+test2013_79.C \
+test2013_80.C \
+test2013_81.C \
+test2013_82.C \
+test2013_83.C \
+test2013_84.C \
+test2013_85.C \
+test2013_86.C \
+test2013_87.C \
+test2013_88.C \
+test2013_89.C \
+test2013_90.C \
+test2013_91.C \
+test2013_92.C \
+test2013_93.C \
+test2013_94.C \
+test2013_95.C \
+test2013_96.C \
+test2013_97.C \
+test2013_98.C \
+test2013_99.C \
+test2013_100.C \
+test2013_101.C \
+test2013_102.C \
+test2013_103.C \
+test2013_104.C \
+test2013_105.C \
+test2013_106.C \
+test2013_107.C \
+test2013_108.C \
+test2013_109.C \
+test2013_110.C \
+test2013_111.C \
+test2013_112.C \
+test2013_113.C \
+test2013_114.C \
+test2013_115.C \
+test2013_116.C \
+test2013_118.C \
+test2013_119.C \
+test2013_120.C \
+test2013_121.C \
+test2013_122.C \
+test2013_123.C \
+test2013_124.C \
+test2013_125.C \
+test2013_126.C \
+test2013_127.C \
+test2013_128.C \
+test2013_129.C \
+test2013_130.C \
+test2013_131.C \
+test2013_132.C \
+test2013_133.C \
+test2013_134.C \
+test2013_135.C \
+test2013_136.C \
+test2013_137.C \
+test2013_138.C \
+test2013_139.C \
+test2013_140.C \
+test2013_141.C \
+test2013_142.C \
+test2013_143.C \
+test2013_144.C \
+test2013_145.C \
+test2013_146.C \
+test2013_147.C \
+test2013_148.C \
+test2013_149.C \
+test2013_150.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1180,6 +1256,7 @@ X.C \
 dynamic_cast.C \
 fstream.C \
 test2005_06.C \
+test2005_08.C \
 test2012_57.C \
 test2012_59.C \
 $(NEW_PASSING_FILES)
@@ -1192,6 +1269,17 @@ NEW_PASSING_FILES =
 TESTCODE_CURRENTLY_FAILING_ON_OSX = \
 test2011_06.C \
 test2004_35.C 
+
+# DQ (4/21/2013): failing regression tests (result of fix for operator vs. non-operator syntax in function calls).
+# test2013_117.C 
+
+# DQ (4/9/2013): failing regression tests (result of fix for operator vs. non-operator syntax in function calls).
+
+
+# DQ (4/7/2013): new tests codes from Doxygen work, a few still fail.
+# test2013_84.C
+# test2013_85.C
+# test2013_96.C
 
 
 # DQ (2/16/2013): Failing test codes as a result of name qualification on friend class declaration

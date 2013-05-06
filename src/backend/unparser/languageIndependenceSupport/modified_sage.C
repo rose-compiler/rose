@@ -513,6 +513,11 @@ Unparse_MOD_SAGE::RemoveArgs(SgExpression* expr)
 int
 GetOperatorVariant(SgExpression* expr) 
    {
+#if 0
+     printf ("In GetOperatorVariant(): expr = %p = %s \n",expr,expr->class_name().c_str());
+  // curprint(string("/* In GetOperatorVariant(): expr = ") + expr->class_name() + " */ \n");
+#endif
+
      SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
      if (func_call == NULL)
         {
@@ -572,7 +577,7 @@ GetOperatorVariant(SgExpression* expr)
                     ROSE_ASSERT(template_mfunc_ref != NULL);
                     name = template_mfunc_ref->get_symbol()->get_name();
                   }
-#endif       
+#endif
                break;
              }
 
@@ -581,6 +586,11 @@ GetOperatorVariant(SgExpression* expr)
         }
 
      string func_name = name.str();
+
+#if 0
+     printf ("In GetOperatorVariant(): func_name = %s \n",func_name.c_str());
+#endif
+
      if (func_name == "operator,") return V_SgCommaOpExp;
        else if (func_name == "operator=") return V_SgAssignOp;
        else if (func_name == "operator+=") return V_SgPlusAssignOp;
@@ -620,8 +630,9 @@ GetOperatorVariant(SgExpression* expr)
        else if (func_name == "operator[]") return V_SgPntrArrRefExp;
        else if (func_name == "operator->") return V_SgArrowExp;
        else if (func_name == "operator.") return V_SgDotExp;
-       else if (func_name.find("operator") == string::npos ||
-                func_name == "operator()") return V_SgFunctionCallExp;
+    // Detect function call or function call operator.
+       else if (func_name.find("operator") == string::npos || func_name == "operator()") return V_SgFunctionCallExp;
+    // Detect case operator from one class to another.
        else if (func_name.find("operator") != string::npos) return V_SgCastExp;
        else
         {

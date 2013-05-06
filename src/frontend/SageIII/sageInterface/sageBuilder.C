@@ -375,8 +375,11 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
 
   // DQ (7/23/2012): This is one of three locations where the template arguments are assembled and where 
   // the name generated identically (in each case) is critical.  Not clear how to best refactor this code.
-  // The other two are in edgRose.C in function: appendTemplateArgumentsToName()
-  // and in Statement.code: SgDeclarationStatement::resetTemplateNameSupport().
+  // The other two are:
+  //      Unparse_ExprStmt::unparseTemplateArgumentList()
+  // and in:
+  //      void SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledForm, SgName & name )
+  // It is less clear how to refactor this code.
 
 #if 0
      printf ("In SageBuilder::appendTemplateArgumentsToName(): CRITICAL FUNCTION TO BE REFACTORED (name = %s) \n",name.str());
@@ -1757,6 +1760,10 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
      SgName                typeName    = SgMemberFunctionType::get_mangled(return_type,typeList,classType,mfunc_specifier);
      SgType*               typeInTable = fTable->lookup_function_type(typeName);
 
+#if 0
+     printf ("In buildMemberFunctionType(): fTable->lookup_function_type(typeName = %s) = %p \n",typeName.str(),typeInTable);
+#endif
+
      SgMemberFunctionType* funcType = NULL;
      if (typeInTable == NULL)
         {
@@ -2134,7 +2141,12 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 #endif
         }
 
-     ROSE_ASSERT(XXX_name.is_null() == false);
+  // ROSE_ASSERT(XXX_name.is_null() == false);
+     if (XXX_name.is_null() == true)
+        {
+       // DQ (4/2/2013): This case is generated for test2013_86.C.
+          printf ("NOTE: In buildNondefiningFunctionDeclaration_T(): XXX_name.is_null() == true: This is a function with an empty name (allowed as compiler generated initializing constructors to un-named classes, structs, and unions in C++ \n");
+        }
 
      SgName nameWithoutTemplateArguments = XXX_name;
      SgName nameWithTemplateArguments    = nameWithoutTemplateArguments;
@@ -2168,8 +2180,19 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 
   // ROSE_ASSERT(scope->containsOnlyDeclarations()); 
   // this function is also called when building a function reference before the function declaration exists.  So, skip the check
-     ROSE_ASSERT(nameWithoutTemplateArguments.is_null() == false);
-     ROSE_ASSERT(nameWithTemplateArguments.is_null() == false);
+  // ROSE_ASSERT(nameWithTemplateArguments.is_null() == false);
+     if (nameWithTemplateArguments.is_null() == true)
+        {
+       // DQ (4/2/2013): This case is generated for test2013_86.C.
+          printf ("NOTE: In buildNondefiningFunctionDeclaration_T(): nameWithTemplateArguments.is_null() == true: This is a function with an empty name (allowed as compiler generated initializing constructors to un-named classes, structs, and unions in C++ \n");
+        }
+
+  // ROSE_ASSERT(nameWithoutTemplateArguments.is_null() == false);
+     if (nameWithoutTemplateArguments.is_null() == true)
+        {
+       // DQ (4/2/2013): This case is generated for test2013_86.C.
+          printf ("NOTE: In buildNondefiningFunctionDeclaration_T(): nameWithoutTemplateArguments.is_null() == true: This is a function with an empty name (allowed as compiler generated initializing constructors to un-named classes, structs, and unions in C++ \n");
+        }
 
      ROSE_ASSERT(return_type != NULL);
      ROSE_ASSERT(paralist != NULL);
@@ -5694,6 +5717,9 @@ SgExprListExp * SageBuilder::buildExprListExp_nfi(const std::vector<SgExpression
      setOneSourcePositionNull(expList);
      for (size_t i = 0; i < exprs.size(); ++i)
         {
+#if 0
+          printf ("In SageBuilder::buildExprListExp_nfi(): exprs[i=%zu] = %p = %s \n",i,exprs[i],exprs[i]->class_name().c_str());
+#endif
           appendExpression(expList, exprs[i]);
         }
 
@@ -6263,25 +6289,29 @@ SageBuilder::buildFunctionCallExp(SgFunctionSymbol* sym,
 
 SgFunctionCallExp* 
 SageBuilder::buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters /*=NULL*/)
-{
-  SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(f,parameters,f->get_type());
-  if (f) f->set_parent(func_call_expr);
-  if (parameters) parameters->set_parent(func_call_expr);
-  setOneSourcePositionNull(func_call_expr);
-  ROSE_ASSERT(func_call_expr);
-  return func_call_expr;  
-}
+   {
+     SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(f,parameters,f->get_type());
+     ROSE_ASSERT(func_call_expr != NULL);
+
+     if (f) f->set_parent(func_call_expr);
+     if (parameters) parameters->set_parent(func_call_expr);
+     setOneSourcePositionNull(func_call_expr);
+
+     return func_call_expr;  
+   }
 
 SgFunctionCallExp* 
 SageBuilder::buildFunctionCallExp(SgExpression* f, SgExprListExp* parameters/*=NULL*/)
-{
-  SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(f,parameters,f->get_type());
-  if (f) f->set_parent(func_call_expr);
-  if (parameters) parameters->set_parent(func_call_expr);
-  setOneSourcePositionForTransformation(func_call_expr);
-  ROSE_ASSERT(func_call_expr);
-  return func_call_expr;  
-}
+   {
+     SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(f,parameters,f->get_type());
+     ROSE_ASSERT(func_call_expr != NULL);
+
+     if (f) f->set_parent(func_call_expr);
+     if (parameters) parameters->set_parent(func_call_expr);
+     setOneSourcePositionForTransformation(func_call_expr);
+
+     return func_call_expr;  
+   }
 
 SgExprStatement*
 SageBuilder::buildFunctionCallStmt(const SgName& name, 
@@ -7859,7 +7889,8 @@ SgReferenceType* SageBuilder::buildReferenceType(SgType * base_type /*= NULL*/)
      return result;
    }
 
-#if 0    // Liao, 8/16/2010, This function is being phased out. Please don't call this!!
+#if 0
+// Liao, 8/16/2010, This function is being phased out. Please don't call this!!
 SgModifierType* SageBuilder::buildModifierType(SgType * base_type /*= NULL*/)
    {
   // DQ (7/30/2010): Note that this is called by the outline test: tests/roseTests/astOutliningTests/moreTest3.cpp
@@ -8964,46 +8995,6 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
   // DQ (12/27/2011): Added new test.
   // ROSE_ASSERT(nondefdecl->get_scope()->lookup_nontemplate_class_symbol(name) != NULL);
      ROSE_ASSERT(nondefdecl->get_scope()->lookup_nontemplate_class_symbol(nameWithTemplateArguments,templateArgumentsList) != NULL);
-
-     return nondefdecl;
-   }
-
-SgEnumDeclaration* SageBuilder::buildNondefiningEnumDeclaration_nfi(const SgName& name, SgScopeStatement* scope)
-   {
-  // The support for SgEnumDeclaration is identical to that for SgClassDeclaration (excpet for the type handleing, why is that?).
-
-  // DQ (7/27/2012): Note that the input name should not have template argument syntax.
-  // I think this could still fail for a function with a name such as "X<Y>"  strange converstion operators.
-     ROSE_ASSERT(SageInterface::hasTemplateSyntax(name) == false);
-
-     SgEnumDeclaration* nondefdecl = new SgEnumDeclaration(name, NULL);
-     ROSE_ASSERT(nondefdecl);
-     setOneSourcePositionNull(nondefdecl);
-     nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
-     nondefdecl->set_definingDeclaration(NULL);
-
-  // Any non-defining declaration is not always a forward declaration.
-     nondefdecl->setForward();    
-
-     if (scope != NULL)
-        {
-          SgEnumSymbol* mysymbol = new SgEnumSymbol(nondefdecl);
-          ROSE_ASSERT(mysymbol);
-          scope->insert_symbol(name, mysymbol);
-          nondefdecl->set_scope(scope);
-
-       // Can this be defined in C++ so that it is in a logical scope different from its structural scope?
-          nondefdecl->set_parent(scope);
-        }
-
-  // DQ (1/25/2009): I want to check into this later, since it is not symetric with SageBuilder::buildNondefiningClassDeclaration()
-#if 0
-     printf ("Need to check if SgEnumDeclaration constructor builds the SgEnumType already nondefdecl->get_type() = %p \n",nondefdecl->get_type());
-#endif
-     ROSE_ASSERT(nondefdecl->get_type() != NULL);
-
-     SgEnumType* t = new SgEnumType(nondefdecl);
-     nondefdecl->set_type(t);
 
      return nondefdecl;
    }
@@ -11013,7 +11004,8 @@ SgEnumDeclaration * SageBuilder::buildEnumDeclaration(const SgName& name, SgScop
  // DQ (1/11/2009): This function has semantics very different from the buildEnumDeclaration_nfi() function!
 
     if (scope == NULL)
-      scope = SageBuilder::topScopeStack();
+         scope = SageBuilder::topScopeStack();
+
     SgEnumDeclaration* decl = buildEnumDeclaration_nfi(name, scope);
     setOneSourcePositionForTransformation(decl);
     setOneSourcePositionForTransformation(decl->get_firstNondefiningDeclaration());
@@ -11026,10 +11018,128 @@ SgEnumDeclaration * SageBuilder::buildEnumDeclaration(const SgName& name, SgScop
   } //buildEnumDeclaration()
 
 
+SgEnumDeclaration* SageBuilder::buildNondefiningEnumDeclaration_nfi(const SgName& name, SgScopeStatement* scope)
+   {
+  // The support for SgEnumDeclaration is identical to that for SgClassDeclaration (excpet for the type handleing, why is that?).
+
+  // DQ (7/27/2012): Note that the input name should not have template argument syntax.
+  // I think this could still fail for a function with a name such as "X<Y>"  strange converstion operators.
+     ROSE_ASSERT(SageInterface::hasTemplateSyntax(name) == false);
+
+  // DQ (4/22/2013): We need this to be provided.
+     ROSE_ASSERT(scope != NULL);
+
+#if 0
+     printf ("In buildNondefiningEnumDeclaration_nfi(): name = %s \n",name.str());
+#endif
+
+#if 1
+  // This forces each call to buildNondefiningEnumDeclaration_nfi() to build a unique declaration
+  // required to avoid sharing declaration in examples such as test2007_29.C.
+     SgEnumDeclaration* nondefdecl = new SgEnumDeclaration(name, NULL);
+     ROSE_ASSERT(nondefdecl);
+     setOneSourcePositionNull(nondefdecl);
+     nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
+     nondefdecl->set_definingDeclaration(NULL);
+
+  // Any non-defining declaration is not always a forward declaration.
+     nondefdecl->setForward();    
+
+     SgEnumDeclaration* first_nondefdecl = NULL;
+#else
+     SgEnumDeclaration* nondefdecl = NULL;
+#endif
+
+     if (scope != NULL)
+        {
+       // DQ (4/22/2013): check for an existing symbol (reuse it if it is found).
+          SgEnumSymbol* mysymbol = NULL;
+          SgEnumSymbol* existing_symbol = scope->lookup_enum_symbol(name);
+       // ROSE_ASSERT(existing_symbol == NULL);
+
+          if (existing_symbol != NULL)
+             {
+               mysymbol = existing_symbol;
+#if 0
+               nondefdecl = new SgEnumDeclaration(name, NULL);
+               ROSE_ASSERT(nondefdecl != NULL);
+#else
+               first_nondefdecl = mysymbol->get_declaration();
+#endif
+             }
+            else
+             {
+#if 0
+               nondefdecl = new SgEnumDeclaration(name, NULL);
+               ROSE_ASSERT(nondefdecl != NULL);
+               setOneSourcePositionNull(nondefdecl);
+               nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
+               nondefdecl->set_definingDeclaration(NULL);
+
+            // Any non-defining declaration is not always a forward declaration.
+               nondefdecl->setForward();    
+#endif
+               first_nondefdecl = nondefdecl;
+
+               mysymbol = new SgEnumSymbol(nondefdecl);
+               ROSE_ASSERT(mysymbol != NULL);
+               scope->insert_symbol(name, mysymbol);
+             }
+
+       // SgEnumSymbol* mysymbol = new SgEnumSymbol(nondefdecl);
+
+          nondefdecl->set_scope(scope);
+
+       // Can this be defined in C++ so that it is in a logical scope different from its structural scope?
+          nondefdecl->set_parent(scope);
+        }
+
+     if (first_nondefdecl != nondefdecl)
+        {
+          nondefdecl->set_firstNondefiningDeclaration(first_nondefdecl);
+       // nondefdecl->set_definingDeclaration(first_nondefdecl->get_definingDeclaration());
+
+          if (first_nondefdecl->get_definingDeclaration() != NULL)
+             {
+               nondefdecl->set_definingDeclaration(first_nondefdecl->get_definingDeclaration());
+             }
+        }
+
+  // DQ (1/25/2009): I want to check into this later, since it is not symetric with SageBuilder::buildNondefiningClassDeclaration()
+#if 0
+     printf ("In buildNondefiningEnumDeclaration_nfi(): Need to check if SgEnumDeclaration constructor builds the SgEnumType already nondefdecl->get_type() = %p \n",nondefdecl->get_type());
+#endif
+     ROSE_ASSERT(nondefdecl->get_type() != NULL);
+
+  // DQ (4/22/2013): This type should already exist (likely built by call to get_type()).
+  // SgEnumType* t = new SgEnumType(nondefdecl);
+  // nondefdecl->set_type(t);
+
+#if 0
+     printf ("Leaving buildNondefiningEnumDeclaration_nfi(): name = %s nondefdecl = %p \n",name.str(),nondefdecl);
+#endif
+
+     return nondefdecl;
+   }
+
+
 SgEnumDeclaration * SageBuilder::buildEnumDeclaration_nfi(const SgName& name, SgScopeStatement* scope)
    {
-     SgEnumDeclaration* defdecl = new SgEnumDeclaration (name,NULL);
+     ROSE_ASSERT(scope != NULL);
+
+#if 0
+     printf ("In buildEnumDeclaration_nfi(): name = %s scope = %p = %s \n",name.str(),scope,scope->class_name().c_str());
+#endif
+
+     SgEnumType* enumType = NULL;
+  // SgEnumDeclaration* defdecl = new SgEnumDeclaration (name,NULL);
+     SgEnumDeclaration* defdecl = new SgEnumDeclaration (name,enumType);
      ROSE_ASSERT(defdecl);
+
+#if 0
+     printf ("In buildEnumDeclaration_nfi(): built defining declaration = %p name = %s scope = %p = %s \n",defdecl,name.str(),scope,scope->class_name().c_str());
+#endif
+
      setOneSourcePositionNull(defdecl);
   // constructor is side-effect free
      defdecl->set_definingDeclaration(defdecl);
@@ -11037,7 +11147,22 @@ SgEnumDeclaration * SageBuilder::buildEnumDeclaration_nfi(const SgName& name, Sg
   // build the nondefining declaration
      SgEnumDeclaration* nondefdecl = buildNondefiningEnumDeclaration_nfi(name, scope);
      nondefdecl->set_definingDeclaration(defdecl);
-     defdecl->set_firstNondefiningDeclaration(nondefdecl);
+  // defdecl->set_firstNondefiningDeclaration(nondefdecl);
+     defdecl->set_firstNondefiningDeclaration(nondefdecl->get_firstNondefiningDeclaration());
+
+  // DQ (4/22/2013): We need to set the defining declaration on the first non-defining declaration.
+     if (nondefdecl->get_firstNondefiningDeclaration() != NULL && nondefdecl->get_firstNondefiningDeclaration() != nondefdecl)
+        {
+          nondefdecl->get_firstNondefiningDeclaration()->set_definingDeclaration(defdecl);
+        }
+
+  // DQ (4/22/2013): Thing that should be true at this point.
+     ROSE_ASSERT(nondefdecl->get_definingDeclaration() != NULL);
+     ROSE_ASSERT(nondefdecl->get_firstNondefiningDeclaration() != NULL);
+     ROSE_ASSERT(nondefdecl->get_firstNondefiningDeclaration()->get_definingDeclaration() != NULL);
+     ROSE_ASSERT(nondefdecl->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration() != NULL);
+     ROSE_ASSERT(defdecl->get_definingDeclaration() != NULL);
+     ROSE_ASSERT(defdecl->get_firstNondefiningDeclaration() != NULL);
 
   // DQ (1/11/2009): The buildNondefiningEnumDeclaration function builds an entry in the symbol table, and so we don't want a second one!
 #if 0
@@ -11060,6 +11185,10 @@ SgEnumDeclaration * SageBuilder::buildEnumDeclaration_nfi(const SgName& name, Sg
   // (and will have it's parent set in the associated variable or typedef declaration.
   // In the case of a class declaration this is always NULL (this should be similar).
      ROSE_ASSERT(defdecl->get_parent() == NULL);
+
+#if 0
+     printf ("In buildEnumDeclaration_nfi(): name = %s defdecl = %p \n",name.str(),defdecl);
+#endif
 
      return defdecl;    
    } //buildEnumDeclaration_nfi()

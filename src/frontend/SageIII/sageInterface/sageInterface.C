@@ -1608,6 +1608,15 @@ SageInterface::get_name ( const SgExpression* expr )
                break;
              }
 
+       // DQ (4/19/2013): Added support for SgMemberFunctionRefExp.
+          case V_SgMemberFunctionRefExp:
+             {
+               const SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(expr);
+               name = "member_function_ref_";
+               name += memberFunctionRefExp->get_symbol()->get_name();
+               break;
+             }
+
           case V_SgIntVal:
              {
                const SgIntVal* valueExp = isSgIntVal(expr);
@@ -1676,6 +1685,20 @@ SageInterface::get_name ( const SgExpression* expr )
             // name += valueExp->get_value();
             // name += get_name(valueExp);
                name += StringUtility::numberToString(valueExp->get_template_parameter_position());
+               break;
+             }
+
+       // DQ (4/19/2013): Added support for SgDotExp.
+          case V_SgDotExp:
+             {
+               const SgDotExp* dotExp = isSgDotExp(expr);
+               ROSE_ASSERT(dotExp != NULL);
+
+               name = "_dot_exp_lhs_";
+               name += get_name(dotExp->get_lhs_operand());
+               name += "_dot_exp_rhs_";
+               name += get_name(dotExp->get_rhs_operand());
+            // name += StringUtility::numberToString(valueExp->get_template_parameter_position());
                break;
              }
 
@@ -4136,6 +4159,18 @@ SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMa
 
 #if 0
      printf ("Updating mangled name cache for node = %p = %s with mangledName = %s \n",astNode,astNode->class_name().c_str(),mangledName.c_str());
+#endif
+
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+     SgStatement* statement = isSgStatement(astNode);
+     if (statement != NULL && statement->hasExplicitScope() == true)
+        {
+          if (statement->get_scope() == NULL)
+             {
+               printf ("Warning: SageInterface::addMangledNameToCache(): In it might be premature to add this IR node and name to the mangledNameCache: statement = %p = %s oldMangledName = %s \n",
+                    statement,statement->class_name().c_str(),oldMangledName.c_str());
+             }
+        }
 #endif
 
      mangledNameCache.insert(pair<SgNode*,string>(astNode,mangledName));
@@ -12899,6 +12934,167 @@ SageInterface::getDependentDeclarations ( SgStatement* stmt )
 #endif
    }
 
+
+bool
+SageInterface::isPrefixOperatorName( const SgName & functionName )
+   {
+     bool returnValue = false;
+
+#if 0
+     printf ("In SageInterface::isPrefixOperatorName(): functionName = %s (might have to check the return type to distinguish the deref operator from the multiply operator) \n",functionName.str());
+#endif
+
+     if (functionName.is_null() == false)
+        {
+          if ( functionName == "operator++" || functionName == "operator--" || functionName == "operator&" || 
+               functionName == "operator!"  || functionName == "operator*"  || functionName == "operator+" ||
+               functionName == "operator-"  || functionName == "operator+" )
+             {
+               returnValue = true;
+             }
+        }
+
+     return returnValue;
+   }
+
+
+// DQ (4/13/2013): We need these to support the unparing of operators defined by operator syntax or member function names.
+//! Is an overloaded operator a prefix operator (e.g. address operator X * operator&(), dereference operator X & operator*(), unary plus operator X & operator+(), etc.
+bool
+SageInterface::isPrefixOperator( SgExpression* exp )
+   {
+  // DQ (4/21/2013): Reimplemented this function to support more of the prefix operators.
+  // Also we now support when they are defined as member functions and non-member functions.
+
+     bool returnValue = false;
+
+     SgFunctionRefExp* functionRefExp             = isSgFunctionRefExp(exp);
+     SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(exp);
+  // ROSE_ASSERT(memberFunctionRefExp != NULL);
+
+     SgName functionName;
+     size_t numberOfOperands = 0;
+
+     if (memberFunctionRefExp != NULL)
+        {
+          ROSE_ASSERT(functionRefExp == NULL);
+          SgMemberFunctionDeclaration* memberFunctionDeclaration = memberFunctionRefExp->getAssociatedMemberFunctionDeclaration();
+          if (memberFunctionDeclaration != NULL)
+             {
+               functionName = memberFunctionDeclaration->get_name();
+               numberOfOperands = memberFunctionDeclaration->get_args().size();
+             }
+        }
+       else
+        {
+       // This could be "friend bool operator!(const X & x);"
+          if (functionRefExp != NULL)
+             {
+               SgFunctionDeclaration* functionDeclaration = functionRefExp->getAssociatedFunctionDeclaration();
+               if (functionDeclaration != NULL)
+                  {
+                    functionName     = functionDeclaration->get_name();
+                    numberOfOperands = functionDeclaration->get_args().size();
+                  }
+             }
+            else
+             {
+            // Note clear if this should be an error.
+               printf ("In SageInterface::isPrefixOperator(): unknown case of exp = %p = %s \n",exp,exp->class_name().c_str());
+             }
+        }
+
+#if 0
+     printf ("In SageInterface::isPrefixOperator(): functionName = %s numberOfOperands = %zu (might have to check the return type to distinguish the deref operator from the multiply operator) \n",functionName.str(),numberOfOperands);
+#endif
+
+     if (isPrefixOperatorName(functionName) == true)
+        {
+          if (memberFunctionRefExp != NULL)
+             {
+            // This case is for member functions.
+               ROSE_ASSERT(functionRefExp == NULL);
+               if (numberOfOperands == 0)
+                  {
+                 // This is the C++ signature for the operator++() prefix operator.
+                    returnValue = true;
+                  }
+                 else
+                  {
+                 // This is the C++ signature for the operator++() postfix operator.
+                    returnValue = false;
+                  }
+             }
+            else
+             {
+            // This case is for non-member functions.
+               ROSE_ASSERT(functionRefExp != NULL);
+               ROSE_ASSERT(memberFunctionRefExp == NULL);
+               if (numberOfOperands == 1)
+                  {
+                 // This is the C++ signature for the operator++() prefix operator.
+                    returnValue = true;
+                  }
+                 else
+                  {
+                 // This is the C++ signature for the operator++() postfix operator.
+                    ROSE_ASSERT(numberOfOperands == 2);
+                    returnValue = false;
+                  }
+             }
+        }
+
+#if 0
+     printf ("Leaving SageInterface::isPrefixOperator(): returnValue = %s \n",returnValue ? "true" : "false");
+#endif
+
+     return returnValue;
+   }
+
+
+//! Is an overloaded operator a postfix operator. (e.g. ).
+bool
+SageInterface::isPostfixOperator( SgExpression* exp )
+   {
+     return ( (isPrefixOperator(exp) == false) && (isIndexOperator(exp) == false) );
+   }
+
+
+//! Is an overloaded operator an index operator (also refereded to as call or subscript operators). (e.g. X & operator()() or X & operator[]()).
+bool
+SageInterface::isIndexOperator( SgExpression* exp )
+   {
+     bool returnValue = false;
+     SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(exp);
+     ROSE_ASSERT(memberFunctionRefExp != NULL);
+
+     SgMemberFunctionDeclaration* memberFunctionDeclaration = memberFunctionRefExp->getAssociatedMemberFunctionDeclaration();
+     if (memberFunctionDeclaration != NULL)
+        {
+          SgName functionName = memberFunctionDeclaration->get_name();
+          if ( (functionName == "operator[]") && (isSgType(memberFunctionDeclaration->get_type()) != NULL) )
+             {
+               returnValue = true;
+             }
+            else
+             {
+               if ( (functionName == "operator()") && (isSgType(memberFunctionDeclaration->get_type()) != NULL) )
+                  {
+                    returnValue = true;
+                  }
+                 else
+                  {
+                    returnValue = false;
+                  }
+             }
+        }
+      
+     return returnValue;
+   }
+
+
+
+
 //! Generate copies for a list of declarations and insert them into a different targetScope.
 vector<SgDeclarationStatement*>
 generateCopiesOfDependentDeclarations (const  vector<SgDeclarationStatement*>& dependentDeclarations, SgScopeStatement* targetScope)
@@ -13953,6 +14149,10 @@ SageInterface::deleteAST ( SgNode* n )
                 ClassicVisitor(SgFunctionSymbol* symbol){
                         SgFunctionSymbol_count = 0;
                         SgFunctionSymbolPtr = symbol;
+
+                     // DQ (5/2/2013): Added to fix test2013_141.C.
+                        SgMemFuncSymbol_count =0;
+
                         SgVariableSymbolPtr = NULL;
                         SgClassSymbolPtr =NULL;
                         SgTypedefPtr = NULL;
@@ -14207,9 +14407,38 @@ SageInterface::deleteAST ( SgNode* n )
 
                 void visit(SgFunctionRefExp* node)
                 {
-                        if (SgFunctionSymbolPtr !=NULL){
+#if 0
+                        printf ("In visit(SgFunctionRefExp* node): SgFunctionSymbolPtr = %p \n",SgFunctionSymbolPtr);
+#endif
+                        if (SgFunctionSymbolPtr !=NULL)
+                        {
                                 SgFunctionSymbol* s = node->get_symbol_i();
-                                if (isSgFunctionSymbol(s) == SgFunctionSymbolPtr) SgFunctionSymbol_count++;
+                                if (isSgFunctionSymbol(s) == SgFunctionSymbolPtr) 
+                                {
+                                  SgFunctionSymbol_count++;
+#if 0
+                                  printf ("Increment SgFunctionSymbol_count = %d \n",SgFunctionSymbol_count);
+#endif
+                                }
+                        }
+                }
+
+             // DQ (5/2/2013): Added support for SgMemberFunctionRefExp which is not derived from SgFunctionRefExp.
+                void visit(SgMemberFunctionRefExp* node)
+                {
+#if 0
+                        printf ("In visit(SgMemberFunctionRefExp* node): SgFunctionSymbolPtr = %p \n",SgFunctionSymbolPtr);
+#endif
+                        if (SgFunctionSymbolPtr !=NULL)
+                        {
+                                SgFunctionSymbol* s = node->get_symbol_i();
+                                if (isSgFunctionSymbol(s) == SgFunctionSymbolPtr) 
+                                {
+                                  SgFunctionSymbol_count++;
+#if 0
+                                  printf ("Increment SgFunctionSymbol_count = %d \n",SgFunctionSymbol_count);
+#endif
+                                }
                         }
                 }
 
@@ -14414,6 +14643,10 @@ SageInterface::deleteAST ( SgNode* n )
                                 /remove SgVariableDefinition, SgVariableSymbol and SgEnumFieldSymbol
                                 /////////////////////////////////////////////////*/
 
+#if 0
+                                printf ("In DeleteAST::visit(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+
                                 if(isSgInitializedName(node) !=NULL){
                                         //remove SgVariableDefinition
                                         SgDeclarationStatement* var_def;
@@ -14485,11 +14718,19 @@ SageInterface::deleteAST ( SgNode* n )
                                 }
 
 
-                                if(isSgFunctionRefExp(node) !=NULL){
+                                if(isSgFunctionRefExp(node) !=NULL)
+                                {
+#if 0
+                                   SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(node);
+                                   ROSE_ASSERT(functionRefExp->get_symbol_i() != NULL);
+                                   printf ("In DeleteAST::visit(): functionRefExp->get_symbol_i() = %p = %s \n",functionRefExp->get_symbol_i(),functionRefExp->get_symbol_i()->class_name().c_str());
+#endif
                                                 SgFunctionSymbol *symbol = ((SgFunctionRefExp*)node)->get_symbol_i();
                                                 ClassicVisitor visitor(symbol);
                                                 traverseMemoryPoolVisitorPattern(visitor);
-                                                if(visitor.get_num_Function_pointers()==1){ //only one reference to this FunctionSymbol => safe to delete
+                                                if(visitor.get_num_Function_pointers()==1)
+                                                {
+                                               // only one reference to this FunctionSymbol => safe to delete
                                                         //((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
                                                         delete symbol;
                                                         //printf("A SgFunctionSymbol was deleted\n");
