@@ -195,7 +195,9 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      printf ("unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = %zu \n",funcdecl_stmt->get_args().size());
      curprint( string("\n/* unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = ") + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
 #endif
-
+#if 0
+     info.display("unparseFunctionParameterDeclaration()");
+#endif
 #if 0
    // Liao 11/9/2010, moved to upper callers since this is called when unparsing both old-style and new-style function parameter lists
    // Skip duplicated unparsing of the attached information for C function arguments declared in old style.
@@ -3392,11 +3394,11 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              {
                if (mftype->isConstFunc())
                   {
-                    curprint ( string(" const"));
+                    curprint(" const");
                   }
                if (mftype->isVolatileFunc())
                   {
-                    curprint ( string(" volatile"));
+                    curprint(" volatile");
                   }
 
             // DQ (12/11/2012): Added support for restrict (in EDG 4.x we want this to be more uniform with "const" and "volatile" modifier handling.
@@ -3776,6 +3778,33 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                curprint ("\n /* In unparseVarDeclStmt(): (first variable): cname = decl_item->get_name() = " + decl_item->get_name() + " */ \n");
 #endif
+#if 0
+            // DQ (5/6/2013): Experiment with calling the new refactored function. This code is perhaps specific to the problem demonstrated in test2013_153.C.
+            // void outputType(T* referenceNode, SgType* referenceNodeType, SgUnparse_Info & info);
+            // unp->u_type->outputType<SgInitializedName>(decl_item,tmp_type,ninfo);
+               SgPointerType* pointerType = isSgPointerType(tmp_type);
+               bool outputAsFunctionPointer = false;
+               if (pointerType != NULL && isSgFunctionType(pointerType->get_base_type()) != NULL)
+                  {
+                    outputAsFunctionPointer = true;
+                  }
+
+#error "DEAD CODE!"
+
+               printf ("outputAsFunctionPointer = %s \n",outputAsFunctionPointer ? "true" : "false");
+
+               outputAsFunctionPointer = true;
+               if (outputAsFunctionPointer == false)
+                  {
+                 // This is a new branch that handles the typical case...(outputAsFunctionPointer == false)
+                    unp->u_type->unparseType(tmp_type, ninfo);
+                    SgName nm = decl_item->get_name();
+                    curprint(nm + " ");
+                  }
+                 else
+                  {
+                 // This is the original branch that was always taken.
+#endif
                decl_item = *p;
                ROSE_ASSERT(decl_item != NULL);
                unp->u_exprStmt->unparseAttachedPreprocessingInfo(decl_item, info, PreprocessingInfo::before);
@@ -3792,7 +3821,6 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                printf ("In unparseVarDeclStmt(): tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
 #endif
-
 
             // DQ (10/17/2012): I am not clear why we need the "declStmt" variable, since it does not appear to be used for anything important.
             // In particular it appears that we carefully construct it to be either the defining or non-defining declaration; but I don't see why.
@@ -3838,11 +3866,13 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                       // DQ (10/11/2006): As part of new implementation of qualified names we now default to the generation of all qualified names unless they are skipped.
                          ninfo.set_SkipQualifiedNames();
 
+                      // DQ (5/8/2013): This is a problem for where we call the unparser in the name qualification and set 
+                      // SkipEnumDefinition and SkipClassDefinition to generate types with qualified names.
                       // DQ (5/23/2007): Commented these out since they are not applicable for statement expressions (see test2007_51.C).
                       // DQ (10/5/2004): If this is a defining declaration then make sure that we don't skip the definition
-                         ROSE_ASSERT(ninfo.SkipClassDefinition() == false);
-                         ROSE_ASSERT(ninfo.SkipEnumDefinition()  == false);
-                         ROSE_ASSERT(ninfo.SkipDefinition()      == false);
+                      // ROSE_ASSERT(ninfo.SkipClassDefinition() == false);
+                      // ROSE_ASSERT(ninfo.SkipEnumDefinition()  == false);
+                      // ROSE_ASSERT(ninfo.SkipDefinition()      == false);
                        }
                       else
                        {
@@ -3943,7 +3973,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                ninfo_for_type.set_isTypeFirstPart();
 #if 0
                printf ("ninfo2.SkipClassDefinition() = %s \n",(ninfo_for_type.SkipClassDefinition() == true) ? "true" : "false");
-               curprint ( string("\n/* START: output using unp->u_type->unparseType (1st part) */ \n"));
+               curprint("\n/* START: output using unp->u_type->unparseType (1st part) */ \n");
                printf ("Calling 1st part of unp->u_type->unparseType for %s \n",tmp_type->class_name().c_str());
 #endif
             // ROSE_ASSERT(ninfo2.get_declstatement_ptr() != NULL);
@@ -3959,7 +3989,6 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
             // unp->u_type->unparseType(tmp_type, ninfo2);
                ROSE_ASSERT(isSgType(tmp_type) != NULL);
-
 #if 1
             // DQ (7/28/2012): This is similar to code in the variable declaration unpaser function and so might be refactored.
             // DQ (7/28/2012): If this is a declaration associated with a declaration list from a previous (the last statement) typedef
@@ -3997,6 +4026,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                                    curprint (nm + " ");
                                  }
                             }
+#error "DEAD CODE!"
                          if (enumType != NULL)
                             {
                               SgEnumDeclaration *decl = isSgEnumDeclaration(enumType->get_declaration());
@@ -4016,12 +4046,30 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                   }
                  else
                   {
+                 // DQ (5/7/2013): Added this since it was not set.
+                    ninfo.set_isTypeFirstPart();
+
+                 // DQ (5/7/2013): This should be set.
+                    ROSE_ASSERT(ninfo.isTypeFirstPart()  == true);
+                    ROSE_ASSERT(ninfo.isTypeSecondPart() == false);
+                    ROSE_ASSERT(ninfo_for_type.isTypeFirstPart()  == true);
+                    ROSE_ASSERT(ninfo_for_type.isTypeSecondPart() == false);
+#if 0
+                    printf ("##### This works for test2013_156.C and not quite for test2013_158.C, but it should be using ninfo_for_type so that the name qualification info is passed properly! \n");
+#endif
+                 // DQ (5/7/2013): This is an attempt to fix test2013_156.C.
                  // DQ (7/28/2012): Output the type if this is not associated with a declaration list from a previous declaration.
+                 // unp->u_type->unparseType(tmp_type, ninfo_for_type);
+                 // unp->u_type->unparseType(tmp_type, ninfo);
                     unp->u_type->unparseType(tmp_type, ninfo_for_type);
                   }
 #else
+
+#error "DEAD CODE!"
+
                unp->u_type->unparseType(tmp_type, ninfo_for_type);
 #endif
+
 #if 0
                printf ("Inside of unparseVarDeclStmt: DONE calling unparseType() \n");
 #endif
@@ -4136,10 +4184,17 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // ninfo2.set_isTypeSecondPart();
                ninfo_for_type.set_isTypeSecondPart();
 #if 0
-               curprint ( string("\n/* START: output using unp->u_type->unparseType (2nd part) */ \n"));
+               curprint("\n/* START: output using unp->u_type->unparseType (2nd part) */ \n");
                printf ("Calling 2nd part of unp->u_type->unparseType for %s \n",tmp_type->sage_class_name());
                printf ("ninfo2.SkipClassDefinition() = %s \n",(ninfo_for_type.SkipClassDefinition() == true) ? "true" : "false");
 #endif
+
+            // DQ (5/7/2013): This should be set.
+            // ROSE_ASSERT(ninfo.isTypeSecondPart() == true);
+            // ROSE_ASSERT(ninfo.isTypeFirstPart() == false);
+               ROSE_ASSERT(ninfo_for_type.isTypeSecondPart() == true);
+               ROSE_ASSERT(ninfo_for_type.isTypeFirstPart() == false);
+
             // DQ (7/31/2006): I think that we can simplify to just this code.
             // unp->u_type->unparseType(tmp_type, ninfo2);
                unp->u_type->unparseType(tmp_type, ninfo_for_type);
@@ -4147,8 +4202,11 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // Mark that we are no longer processing the first entry 
             // (first variable in a declaration containing multiple "," separated names)
                first = false;
+
+            // DQ (5/6/2013): Associated end of block for alternative handling of type in variable declaration.
+            //    }
 #if 0
-               curprint ( string("\n/* Handle initializers (if any) */ \n"));
+               curprint("\n/* Handle initializers (if any) */ \n");
 #endif
             // Unparse the initializers if any exist
 
@@ -5556,10 +5614,13 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
   // DQ (7/23/2006): Added support for volatile as modifier.
      if (asm_stmt->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isVolatile())
         {
-          curprint ( string("volatile "));
+#if 0
+          curprint("/* output volatile keyword from unparseAsmStmt */ \n ");
+#endif
+          curprint("volatile ");
         }
 
-     curprint ( string("("));
+     curprint("(");
 
   // DQ (7/22/2006): This IR node has been changed to have a list of SgAsmOp IR nodes
   // unparseExpression(asm_stmt->get_expr(), info);
@@ -5696,7 +5757,9 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 #if 0
      printf ("In unp->u_type->unparseTypeDefStmt() = %p \n",typedef_stmt);
-  // curprint("\n /* In unp->u_type->unparseTypeDefStmt() */ \n");
+#endif
+#if 0
+     curprint("\n /* In unp->u_type->unparseTypeDefStmt() */ \n");
 #endif
 
   // DQ (10/5/2004): This is the explicitly set boolean value which indicates that a class declaration is buried inside
@@ -5711,7 +5774,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
      if (!info.inEmbeddedDecl())
         {
 #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-          curprint ( string("\n/* NOT an embeddedDeclaration */ \n"));
+          curprint("\n/* NOT an embeddedDeclaration */ \n");
 #endif
           SgClassDefinition *cdefn = isSgClassDefinition(typedef_stmt->get_parent());
           if (cdefn && cdefn->get_declaration()->get_class_type() == SgClassDeclaration::e_class)
@@ -5723,7 +5786,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
        else
         {
 #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-          curprint ( string("\n/* Found an embeddedDeclaration */ \n"));
+          curprint("\n/* Found an embeddedDeclaration */ \n");
 #endif
         }
      
@@ -5802,10 +5865,10 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
           printf ("In unparseTypeDefStmt(): case of typedefs for function and member function pointers \n");
 #endif
 #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-          curprint ( string("\n/* Case of typedefs for function and member function pointers */ \n"));
+          curprint("\n/* Case of typedefs for function and member function pointers */ \n");
 #endif
           ninfo.set_SkipFunctionQualifier();
-          curprint ( string("typedef "));
+          curprint("typedef ");
 
        // Specify that only the first part of the type shold be unparsed 
        // (this will permit the introduction of the name into the member
@@ -5818,8 +5881,10 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 
        // The base type contains the function po9inter type
           SgType *btype = typedef_stmt->get_base_type();
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-          curprint ( string("\n/* Output base type (first part) */ \n"));
+
+// #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if 0
+          curprint("\n/* Output base type (first part) */ \n");
 #endif
 
 #if 0
@@ -5842,22 +5907,25 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
        // unp->u_type->unparseType(btype, ninfo);
           unp->u_type->unparseType(btype, ninfo_for_type);
 
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-          curprint ( string("\n/* Done: Output base type (first part) */ \n"));
+// #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if 0
+          curprint("\n/* Done: Output base type (first part) */ \n");
 #endif
 
-          curprint ( typedef_stmt->get_name().str());
+          curprint(typedef_stmt->get_name().str());
 
        // Now unparse the second part of the typedef
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-          curprint ( string("\n/* Output base type (second part) */ \n"));
+// #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if 0
+          curprint("\n/* Output base type (second part) */ \n");
 #endif
 
           ninfo.set_isTypeSecondPart();
           unp->u_type->unparseType(btype, ninfo);
 
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-          curprint ( string("\n/* Done: Output base type (second part) */ \n"));
+// #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if 0
+          curprint("\n/* Done: Output base type (second part) */ \n");
 #endif
 
 #if 0
@@ -5874,12 +5942,14 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
           printf ("Not a typedef for a function type or member function type \n");
 #endif
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-          curprint ( string("\n/* Output a non function pointer typedef (Not a typedef for a function type or member function type) */ \n"));
+
+// #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if 0
+          curprint("\n/* Output a non function pointer typedef (Not a typedef for a function type or member function type) */ \n");
 #endif
 
           ninfo.set_SkipFunctionQualifier();
-          curprint ( string("typedef "));
+          curprint ("typedef ");
 
           ninfo.set_SkipSemiColon();
           SgType *btype = typedef_stmt->get_base_type();
@@ -5904,7 +5974,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
              {
 #if 0
                printf ("In Unparse_ExprStmt::unp->u_type->unparseTypedefStmt(): This base type requires a global qualifier \n");
-               curprint ( string("\n/* This base type requires a global qualifier, calling set_requiresGlobalNameQualification() */ \n"));
+               curprint("\n/* This base type requires a global qualifier, calling set_requiresGlobalNameQualification() */ \n");
 #endif
             // ninfo_for_type.set_forceQualifiedNames();
                ninfo_for_type.set_requiresGlobalNameQualification();
@@ -5953,8 +6023,9 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
 
        // curprint ( string("\n/* unp->u_type->unparseTypeDefStmt: Before first part of type */ \n";
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-          curprint ( string("\n/* Output base type (first part) */ \n"));
+// #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if 0
+          curprint("\n/* Output base type (first part) */ \n");
 #endif
 
        // DQ (5/30/2011): Added support for name qualification.
@@ -6005,6 +6076,9 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
                               printf ("In unparseTypedefStmt(): Skipping the class name for the un-named class \n");
                             }
                        }
+
+#error "DEAD CODE!"
+
                     if (enumType != NULL)
                        {
                          SgEnumDeclaration *decl = isSgEnumDeclaration(enumType->get_declaration());
@@ -6031,14 +6105,24 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
              {
             // DQ (7/28/2012): Output the type if this is not associated with a declaration list from a previous declaration.
             // unp->u_type->unparseType(btype, ninfo);
+#if 0
+               ninfo_for_type.display("Output base type (first part)");
+#endif
+#if 0
+               printf ("In unparseTypedefStmt(): (first part): btype = %p = %s \n",btype,btype->class_name().c_str());
+#endif
+            // DQ (5/7/2013): Using ninfoallows test2013_156.C to work.
+            // unp->u_type->unparseType(btype, ninfo_for_type);
+            // unp->u_type->unparseType(btype, ninfo);
                unp->u_type->unparseType(btype, ninfo_for_type);
              }
 #else
           unp->u_type->unparseType(btype, ninfo_for_type);
 #endif
 
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-          curprint ( string("\n/* Done: Output base type (second part) */ \n"));
+// #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if 0
+          curprint("\n/* Done: Output base type (first part) */ \n");
 #endif
 
        // curprint ( string("\n/* unp->u_type->unparseTypeDefStmt: After first part of type */ \n";
@@ -6052,21 +6136,25 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 
        // The name of the type (X, in the following example) has to appear after the 
        // declaration. Example: struct { int a; } X;
-          curprint ( typedef_stmt->get_name().str());
+       // curprint(typedef_stmt->get_name().str());
+          curprint(string("/* before 2nd part */ ") + typedef_stmt->get_name().str());
 
           ninfo.set_isTypeSecondPart();
 
        // printf ("Before 2nd part of type \n");
        // curprint ( string("\n/* unp->u_type->unparseTypeDefStmt: Before second part of type */ \n";
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-          curprint ( string("\n/* Output base type (second part) */ \n"));
+// #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if 0
+          curprint("\n/* Output base type (second part) */ \n");
 #endif
 
           unp->u_type->unparseType(btype, ninfo);
        // unp->u_type->unparseType(btype, ninfo_for_type);
+       // unp->u_type->unparseType(btype, ninfo_for_type);
 
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
-          curprint ( string("\n/* Done: Output base type (second part) */ \n"));
+// #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if 0
+          curprint("\n/* Done: Output base type (second part) */ \n");
 #endif
        // curprint ( string("\n/* unp->u_type->unparseTypeDefStmt: After second part of type */ \n";
        // printf ("After 2nd part of type \n");

@@ -243,6 +243,11 @@ Unparse_ExprStmt::unparseTemplateName(SgTemplateInstantiationDecl* templateInsta
      ROSE_ASSERT (templateInstantiationDeclaration != NULL);
 
      unp->u_exprStmt->curprint ( templateInstantiationDeclaration->get_templateName().str());
+
+  // DQ (5/7/2013): I think these should be false so that the full type will be output.
+     ROSE_ASSERT(info.isTypeFirstPart()  == false);
+     ROSE_ASSERT(info.isTypeSecondPart() == false);
+
 #if 1
   // DQ (6/21/2011): Refactored this code to generate more then templated class names.
      unparseTemplateArgumentList(templateInstantiationDeclaration->get_templateArguments(),info);
@@ -306,12 +311,39 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
         }
 #endif
 
+     SgUnparse_Info ninfo(info);
+
+  // DQ (5/6/2013): This fixes the test2013_153.C test code.
+     if (ninfo.isTypeFirstPart() == true)
+        {
+#if 0
+          printf ("In unparseTemplateArgumentList(): resetting isTypeFirstPart() == false \n");
+#endif
+          ninfo.unset_isTypeFirstPart();
+        }
+
+     if (ninfo.isTypeSecondPart() == true)
+        {
+#if 0
+          printf ("In unparseTemplateArgumentList(): resetting isTypeSecondPart() == false \n");
+#endif
+          ninfo.unset_isTypeSecondPart();
+        }
+
+  // DQ (5/6/2013): I think these should be false so that the full type will be output.
+     ROSE_ASSERT(ninfo.isTypeFirstPart()  == false);
+     ROSE_ASSERT(ninfo.isTypeSecondPart() == false);
+
      if (!templateArgListPtr.empty())
         {
        // printf ("templateArgListPtr->size() = %zu \n",templateArgListPtr->size());
 
        // DQ (4/18/2005): We would like to avoid output of "<>" if possible so verify that there are template arguments
           ROSE_ASSERT(templateArgListPtr.size() > 0);
+
+       // DQ (5/6/2013): I think these should be false so that the full type will be output.
+          ROSE_ASSERT(ninfo.isTypeFirstPart()  == false);
+          ROSE_ASSERT(ninfo.isTypeSecondPart() == false);
 
           unp->u_exprStmt->curprint ( "< ");
           SgTemplateArgumentPtrList::const_iterator i = templateArgListPtr.begin();
@@ -323,7 +355,8 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
 #if 0
                unp->u_exprStmt->curprint ( string("/* templateArgument is explicitlySpecified = ") + (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */");
 #endif
-               unparseTemplateArgument(*i,info);
+            // unparseTemplateArgument(*i,info);
+               unparseTemplateArgument(*i,ninfo);
                i++;
 
                if (i != templateArgListPtr.end())
@@ -690,6 +723,8 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                     curprint(nameQualifier);
 #else
 #if 1
+            // newInfo.display("In unparseTemplateArgument(): newInfo.display()");
+
             // DQ (5/5/2013): Refactored code used here and in the unparseFunctionParameterDeclaration().
                unp->u_type->outputType<SgTemplateArgument>(templateArgument,templateArgumentType,newInfo);
 #else

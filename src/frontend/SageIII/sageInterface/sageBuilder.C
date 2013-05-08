@@ -11007,7 +11007,8 @@ SgEnumDeclaration * SageBuilder::buildEnumDeclaration(const SgName& name, SgScop
   } //buildEnumDeclaration()
 
 
-SgEnumDeclaration* SageBuilder::buildNondefiningEnumDeclaration_nfi(const SgName& name, SgScopeStatement* scope)
+SgEnumDeclaration*
+SageBuilder::buildNondefiningEnumDeclaration_nfi(const SgName& name, SgScopeStatement* scope)
    {
   // The support for SgEnumDeclaration is identical to that for SgClassDeclaration (excpet for the type handleing, why is that?).
 
@@ -11019,25 +11020,63 @@ SgEnumDeclaration* SageBuilder::buildNondefiningEnumDeclaration_nfi(const SgName
      ROSE_ASSERT(scope != NULL);
 
 #if 0
-     printf ("In buildNondefiningEnumDeclaration_nfi(): name = %s \n",name.str());
+     printf ("In buildNondefiningEnumDeclaration_nfi(): name = %s scope = %p = %s \n",name.str(),scope,scope->class_name().c_str());
 #endif
 
-#if 1
+  // DQ (5/8/2013): For testing with test2007_140.C, make sure this is not the SgBasicBlock (should be SgClassDefinition).
+  // ROSE_ASSERT(isSgBasicBlock(scope) == NULL);
+
+  // DQ (5/8/2013): I think if we searched for the type it might exist and this would allow the types to be shared.
+     SgEnumType* enumType = NULL;
+  // SgEnumDeclaration* nondefdecl = NULL;
+     SgEnumDeclaration* first_nondefdecl = NULL;
+
+     if (scope != NULL)
+        {
+          SgEnumSymbol* existing_symbol = scope->lookup_enum_symbol(name);
+          if (existing_symbol != NULL)
+             {
+               enumType = isSgEnumType(existing_symbol->get_type());
+               first_nondefdecl = existing_symbol->get_declaration();
+               ROSE_ASSERT(first_nondefdecl != NULL);
+             }
+        }
+
+#if 0
+     printf ("In buildNondefiningEnumDeclaration_nfi(): name = %s building using enumType = %p first_nondefdecl = %p \n",name.str(),enumType,first_nondefdecl);
+#endif
+
+  // DQ (5/8/2013): We do want to build a new SgEnumDeclaration (to avoid sharing).
   // This forces each call to buildNondefiningEnumDeclaration_nfi() to build a unique declaration
   // required to avoid sharing declaration in examples such as test2007_29.C.
-     SgEnumDeclaration* nondefdecl = new SgEnumDeclaration(name, NULL);
+  // SgEnumDeclaration* nondefdecl = new SgEnumDeclaration(name, NULL);
+     SgEnumDeclaration* nondefdecl = new SgEnumDeclaration(name, enumType);
+
      ROSE_ASSERT(nondefdecl);
      setOneSourcePositionNull(nondefdecl);
-     nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
-     nondefdecl->set_definingDeclaration(NULL);
+
+  // DQ (5/8/2013): Set the definig and first non-defining declarations.
+  // nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
+  // nondefdecl->set_definingDeclaration(NULL);
+     if (first_nondefdecl != NULL)
+        {
+          nondefdecl->set_firstNondefiningDeclaration(first_nondefdecl);
+          nondefdecl->set_definingDeclaration(first_nondefdecl->get_definingDeclaration());
+        }
+       else
+        {
+          nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
+          nondefdecl->set_definingDeclaration(NULL);
+        }
 
   // Any non-defining declaration is not always a forward declaration.
-     nondefdecl->setForward();    
+     nondefdecl->setForward();
 
-     SgEnumDeclaration* first_nondefdecl = NULL;
-#else
-     SgEnumDeclaration* nondefdecl = NULL;
-#endif
+  // SgEnumDeclaration* first_nondefdecl = NULL;
+
+  // DQ (5/8/2013): Make sure that the enum type is available.
+     SgType* type = nondefdecl->get_type();
+     ROSE_ASSERT(type != NULL);
 
      if (scope != NULL)
         {
@@ -11108,11 +11147,15 @@ SgEnumDeclaration* SageBuilder::buildNondefiningEnumDeclaration_nfi(const SgName
      printf ("Leaving buildNondefiningEnumDeclaration_nfi(): name = %s nondefdecl = %p \n",name.str(),nondefdecl);
 #endif
 
+  // DQ (5/8/2013): Check that the symbol is present.
+     ROSE_ASSERT(scope->lookup_enum_symbol(name) != NULL);
+
      return nondefdecl;
    }
 
 
-SgEnumDeclaration * SageBuilder::buildEnumDeclaration_nfi(const SgName& name, SgScopeStatement* scope)
+SgEnumDeclaration*
+SageBuilder::buildEnumDeclaration_nfi(const SgName& name, SgScopeStatement* scope)
    {
      ROSE_ASSERT(scope != NULL);
 
@@ -11120,7 +11163,22 @@ SgEnumDeclaration * SageBuilder::buildEnumDeclaration_nfi(const SgName& name, Sg
      printf ("In buildEnumDeclaration_nfi(): name = %s scope = %p = %s \n",name.str(),scope,scope->class_name().c_str());
 #endif
 
+  // DQ (5/8/2013): I think if we searched for the type it might exist and this would allow the types to be shared.
      SgEnumType* enumType = NULL;
+
+     if (scope != NULL)
+        {
+          SgEnumSymbol* existing_symbol = scope->lookup_enum_symbol(name);
+          if (existing_symbol != NULL)
+             {
+               enumType = isSgEnumType(existing_symbol->get_type());
+             }
+        }
+
+#if 0
+     printf ("In buildEnumDeclaration_nfi(): name = %s building using enumType = %p \n",name.str(),enumType);
+#endif
+
   // SgEnumDeclaration* defdecl = new SgEnumDeclaration (name,NULL);
      SgEnumDeclaration* defdecl = new SgEnumDeclaration (name,enumType);
      ROSE_ASSERT(defdecl);
@@ -11128,6 +11186,10 @@ SgEnumDeclaration * SageBuilder::buildEnumDeclaration_nfi(const SgName& name, Sg
 #if 0
      printf ("In buildEnumDeclaration_nfi(): built defining declaration = %p name = %s scope = %p = %s \n",defdecl,name.str(),scope,scope->class_name().c_str());
 #endif
+
+  // DQ (5/8/2013): Make sure that the enum type is available.
+     SgType* type = defdecl->get_type();
+     ROSE_ASSERT(type != NULL);
 
      setOneSourcePositionNull(defdecl);
   // constructor is side-effect free
@@ -11178,6 +11240,9 @@ SgEnumDeclaration * SageBuilder::buildEnumDeclaration_nfi(const SgName& name, Sg
 #if 0
      printf ("In buildEnumDeclaration_nfi(): name = %s defdecl = %p \n",name.str(),defdecl);
 #endif
+
+  // DQ (5/8/2013): Check that the symbol is present.
+     ROSE_ASSERT(scope->lookup_enum_symbol(name) != NULL);
 
      return defdecl;    
    } //buildEnumDeclaration_nfi()

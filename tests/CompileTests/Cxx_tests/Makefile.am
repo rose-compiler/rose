@@ -1244,6 +1244,14 @@ test2013_147.C \
 test2013_148.C \
 test2013_149.C \
 test2013_150.C \
+test2013_151.C \
+test2013_152.C \
+test2013_153.C \
+test2013_154.C \
+test2013_155.C \
+test2013_156.C \
+test2013_157.C \
+test2013_158.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \

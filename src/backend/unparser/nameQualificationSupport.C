@@ -2173,17 +2173,16 @@ NameQualificationTraversal::addToNameMap ( SgNode* nodeReferenceToType, string t
                ROSE_ASSERT (i != typeNameMap.end());
 
                string previousTypeName = i->second.c_str();
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+// #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if 1
                printf ("WARNING: replacing previousTypeName = %s with new typeNameString = %s for nodeReferenceToType = %p = %s \n",previousTypeName.c_str(),typeNameString.c_str(),nodeReferenceToType,nodeReferenceToType->class_name().c_str());
 #endif
                if (i->second != typeNameString)
                   {
                     i->second = typeNameString;
 
-#if 1
                     printf ("Error: name in qualifiedNameMapForNames already exists and is different... nodeReferenceToType = %p = %s \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str());
                     ROSE_ASSERT(false);
-#endif
                  }
              }
         }
@@ -2237,11 +2236,27 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
        // Avoid unpasing the class definition when unparseing the type.
           unparseInfoPointer->set_SkipClassDefinition();
 
+       // DQ (5/8/2013): Added specification to skip enum definitions also (see test2012_202.C).
+          unparseInfoPointer->set_SkipEnumDefinition();
+
        // Associate the unparsing of this type with the statement or scope where it occures.
        // This is the key to use in the lookup of the qualified name. But this is the correct key....
        // unparseInfoPointer->set_reference_node_for_qualification(positionStatement);
        // unparseInfoPointer->set_reference_node_for_qualification(currentScope);
           unparseInfoPointer->set_reference_node_for_qualification(nodeReferenceToType);
+
+       // DQ (5/7/2013): A problem with this is that it combines the first and second parts of the 
+       // type into a single string (e.g. the array type will include two parts "base_type" <array name> "[index]".
+       // When this is combined for types that have two parts (most types don't) the result is an error
+       // when the type is unparsed.  It is not clear, but a solution might be for this to be built here
+       // as just the 1st part, and let the second part be generated when the array type is unparsed.
+       // BTW, the reason why it is computed here is that there may be many nested types that require 
+       // name qualifications and so it is required that we save the whole string.  However, name 
+       // qualification might only apply to the first part of types.  So we need to investigate this.
+       // This is a problem demonstrated in test2013_156.C and test2013_158.C.
+
+       // DQ (5/8/2013): Set the SgUnparse_Info so that only the first part will be unparsed.
+          unparseInfoPointer->set_isTypeFirstPart();
 
           string typeNameString = globalUnparseToString(type,unparseInfoPointer);
 
@@ -2354,6 +2369,9 @@ NameQualificationTraversal::traverseTemplatedFunction(SgFunctionRefExp* function
 
           string functionNameString = globalUnparseToString(functionRefExp,unparseInfoPointer);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("++++++++++++++++ functionNameString (globalUnparseToString()) = %s \n",functionNameString.c_str());
+#endif
+#if 0
           printf ("++++++++++++++++ functionNameString (globalUnparseToString()) = %s \n",functionNameString.c_str());
 #endif
        // This is symptematic of an error which causes the whole class to be included with the class 
