@@ -970,8 +970,10 @@ set(LINK_FILES
    ${CMAKE_DL_LIBS}
 )
 
-if (NOT WIN32)
+if (have_EDG_source OR NOT WIN32)
   list(APPEND LINK_FILES edg33)
+else()
+  add_definitions(-DUSE_FAKE_EDG)
 endif()
 
 if(enable-fortran)

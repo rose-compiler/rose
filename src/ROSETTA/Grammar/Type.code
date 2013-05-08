@@ -1982,7 +1982,9 @@ SgType::handledUsingLocalTable(SgType* t)
 // Kitware 2013/03/25
 // This is a workaround for the lack of EDG on Windows.
 // Once that problem is resolved, this include file can go away.
-#include "fake_EDG.h"
+#ifdef USE_FAKE_EDG
+  #include "fake_EDG.h"
+#endif
 
 // Liao 10/29/2010
 // My understanding of this code (may not be accurate):
