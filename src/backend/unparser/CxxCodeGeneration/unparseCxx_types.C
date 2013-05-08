@@ -377,7 +377,8 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
 #endif
 
 #if 0
-     curprint ( string("\n/* Top of unparseType: class_name() = ") + type->class_name() + " */ \n");
+  // DQ (5/8/2013): Note that this will make the type name very long and can cause problems with nexted type generating nested comments.
+     curprint(string("\n/* Top of unparseType: class_name() = ") + type->class_name() + " */ \n");
 #endif
 
 #if 0
@@ -392,7 +393,6 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
      bool usingGeneratedNameQualifiedTypeNameString = false;
      string typeNameString;
 
-#if 1
   // DQ (6/4/2011): Support for output of generated string for type (used where name 
   // qualification is required for subtypes (e.g. template arguments)).
      SgNode* nodeReferenceToType = info.get_reference_node_for_qualification();
@@ -404,7 +404,11 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
           std::map<SgNode*,std::string>::iterator i = SgNode::get_globalTypeNameMap().find(nodeReferenceToType);
           if (i != SgNode::get_globalTypeNameMap().end())
              {
-               usingGeneratedNameQualifiedTypeNameString = true;
+            // usingGeneratedNameQualifiedTypeNameString = true;
+               if (info.isTypeSecondPart() == false)
+                  {
+                    usingGeneratedNameQualifiedTypeNameString = true;
+                  }
 
                typeNameString = i->second.c_str();
 #if 0
@@ -412,12 +416,12 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
 #endif
              }
         }
-#endif
 
      if (usingGeneratedNameQualifiedTypeNameString == true)
         {
        // Output the previously generated type name contianing the correct name qualification of subtypes (e.g. template arguments).
 #if 0
+       // DQ (5/8/2013): Note that this will make the type name very long and can cause problems with nexted type generating nested comments.
           string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
           string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
           printf ("In Unparse_Type::unparseType() using generated type name string: type->class_name() = %s firstPart = %s secondPart = %s \n",type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
@@ -425,7 +429,9 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
 #endif
           if (info.isTypeFirstPart() == true)
              {
-            // printf ("Ouput typeNameString = %s \n",typeNameString.c_str());
+#if 0
+               printf ("Ouput typeNameString = %s \n",typeNameString.c_str());
+#endif
                curprint(typeNameString);
              }
             else
@@ -942,7 +948,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
      ROSE_ASSERT(decl != NULL);
 
 #if 0
-     printf ("In Unparse_Type::unparseClassType(): decl = %p = %s \n",decl,decl->class_name().c_str());
+     printf ("In Unparse_Type::unparseClassType(): decl = %p = %s decl->get_definition() = %p \n",decl,decl->class_name().c_str(),decl->get_definition());
 #endif
 
      if (decl->get_definition() == NULL)
@@ -1187,12 +1193,40 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                          if (isSgTemplateInstantiationDecl(decl) != NULL)
                             {
                            // Handle case of class template instantiation (code located in unparse_stmt.C)
-                           // curprint ("/* Calling unparseTemplateName */ \n ");
+#if 0
+                              curprint ("/* Calling unparseTemplateName */ \n ");
+#endif
 #if 0
                               printf ("In unparseClassType: calling unparseTemplateName() for templateInstantiationDeclaration = %p \n",templateInstantiationDeclaration);
 #endif
-                              unp->u_exprStmt->unparseTemplateName(templateInstantiationDeclaration,info);
-                           // curprint ("/* DONE: Calling unparseTemplateName */ \n ");
+                              SgUnparse_Info ninfo(info);
+
+                           // DQ (5/7/2013): This fixes the test2013_153.C test code.
+                              if (ninfo.isTypeFirstPart() == true)
+                                 {
+#if 0
+                                   printf ("In unparseClassType(): resetting isTypeFirstPart() == false \n");
+#endif
+                                   ninfo.unset_isTypeFirstPart();
+                                 }
+
+                              if (ninfo.isTypeSecondPart() == true)
+                                 {
+#if 0
+                                   printf ("In unparseClassType(): resetting isTypeSecondPart() == false \n");
+#endif
+                                   ninfo.unset_isTypeSecondPart();
+                                 }
+
+                           // DQ (5/7/2013): I think these should be false so that the full type will be output.
+                              ROSE_ASSERT(ninfo.isTypeFirstPart()  == false);
+                              ROSE_ASSERT(ninfo.isTypeSecondPart() == false);
+
+                           // unp->u_exprStmt->unparseTemplateName(templateInstantiationDeclaration,info);
+                              unp->u_exprStmt->unparseTemplateName(templateInstantiationDeclaration,ninfo);
+#if 0
+                              curprint ("/* DONE: Calling unparseTemplateName */ \n ");
+#endif
                             }
                            else
                             {
@@ -1320,7 +1354,9 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
 #if 0
      printf ("Inside of unparseEnumType(): info.isTypeFirstPart() = %s info.isTypeSecondPart() = %s \n",(info.isTypeFirstPart() == true) ? "true" : "false",(info.isTypeSecondPart() == true) ? "true" : "false");
 #endif
-
+#if 0
+     printf ("Inside of unparseEnumType(): info.SkipEnumDefinition() = %s \n",info.SkipEnumDefinition() ? "true" : "false");
+#endif
 #if 0
      info.display("Inside of unparseEnumType(): call to info.display()");
 #endif
@@ -1564,8 +1600,17 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
               SgEnumDeclaration* enum_stmt = isSgEnumDeclaration(enum_type->get_declaration());
               ROSE_ASSERT(enum_stmt != NULL);
 
+           // DQ (5/8/2013): Make sure this is a valid pointer.
+              if (enum_stmt->get_definingDeclaration() == NULL)
+                 {
+                   printf ("enum_stmt = %p = %s \n",enum_stmt,enum_stmt->class_name().c_str());
+                 }
+              ROSE_ASSERT(enum_stmt->get_definingDeclaration() != NULL);
+
            // DQ (4/22/2013): We need the defining declaration.
               enum_stmt = isSgEnumDeclaration(enum_stmt->get_definingDeclaration());
+
+           // This fails for test2007_140.C.
               ROSE_ASSERT(enum_stmt != NULL);
 
            // DQ (6/26/2005): Output the opend and closing braces even if there are no enumerators!
@@ -2251,6 +2296,15 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
      printf ("In Unparse_Type::unparseArrayType(): type->class_name() = %s firstPart = %s secondPart = %s \n",type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
 #endif
 
+#if 0
+  // DQ (5/8/2013): Note that this will make the type name very long and can cause problems with nexted type generating nested comments.
+     curprint("/* In unparseArrayType() */ \n ");
+#endif
+#if 0
+  // DQ (5/8/2013): Note that this will make the type name very long and can cause problems with nexted type generating nested comments.
+     curprint(string("\n/* Top of unparseArrayType() using generated type name string: ") + type->class_name() + " firstPart " + firstPartString + " secondPart " + secondPartString + " */ \n");
+#endif
+
      SgUnparse_Info ninfo(info);
      bool needParen = false;
      if (ninfo.isReferenceToSomething() || ninfo.isPointerToSomething())
@@ -2287,7 +2341,7 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
                curprint ( "[");
                if (array_type->get_index())
                   {
-                    // JJW (12/14/2008): There may be types inside the size of an array, and they are not the second part of the type
+                 // JJW (12/14/2008): There may be types inside the size of an array, and they are not the second part of the type
                     SgUnparse_Info ninfo2(ninfo);
                     ninfo2.unset_isTypeSecondPart();
                     unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
@@ -2303,6 +2357,11 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
                unparseType(array_type, ninfo);
              }
         }
+
+#if 0
+  // DQ (5/8/2013): Note that this will make the type name very long and can cause problems with nexted type generating nested comments.
+     curprint("/* Leaving unparseArrayType() */ \n ");
+#endif
    }
 
 
