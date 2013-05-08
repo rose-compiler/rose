@@ -7,13 +7,14 @@ target_link_libraries(bug125 ROSE_DLL ${link_with_libraries} )
 target_link_libraries(qualifiedName ROSE_DLL edg33 ${link_with_libraries} )
 
 ENABLE_TESTING()
-ADD_TEST (
-#  testbug125 bug125 -c ${ROSE_TOP_SRC_DIR}/tests/translatorTests/inputbug125.C
-  testbug125 bug125 -c ${CMAKE_CURRENT_SOURCE_DIR}/inputbug125.C
+ADD_TEST(
+  NAME testbug125
+  COMMAND bug125 -c ${CMAKE_CURRENT_SOURCE_DIR}/inputbug125.C
 )
 
 ADD_TEST(
-  testqualifiedName qualifiedName -c ${ROSE_TOP_SRC_DIR}/projects/autoTuning/tests/jacobi.c
+  NAME testqualifiedName
+  COMMAND qualifiedName -c ${ROSE_TOP_SRC_DIR}/projects/autoTuning/tests/jacobi.c
 )
 
 #include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
