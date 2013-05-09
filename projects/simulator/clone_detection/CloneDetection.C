@@ -81,33 +81,6 @@ struct Switches {
     bool verbose;                       /**< Produce lots of output?  Traces each instruction as it is simulated. */
 };
 
-// Special output values:
-#define FAULT_NONE        0
-#define FAULT_DISASSEMBLY 911000001    // disassembly failed possibly due to bad address
-#define FAULT_INSN_LIMIT  911000002    // maximum number of instructions executed
-#define FAULT_HALT        911000003    // x86 HLT instruction executed
-#define FAULT_INTERRUPT   911000004    // x86 INT instruction executed
-#define FAULT_SEMANTICS   911000005    // some fatal problem with instruction semantics, such as a not-handled instruction
-#define FAULT_SMTSOLVER   911000006    // some fault in the SMT solver
-
-// Return the short name of a fault ID
-static const char *
-fault_name(int fault)
-{
-    switch (fault) {
-        case FAULT_NONE: return "";
-        case FAULT_DISASSEMBLY: return "FAULT_DISASSEMBLY";
-        case FAULT_INSN_LIMIT:  return "FAULT_INSN_LIMIT";
-        case FAULT_HALT:        return "FAULT_HALT";
-        case FAULT_INTERRUPT:   return "FAULT_INTERRUPT";
-        case FAULT_SEMANTICS:   return "FAULT_SEMANTICS";
-        case FAULT_SMTSOLVER:   return "FAULT_SMTSOLVER";
-        default:
-            assert(!"fault not handled");
-            abort();
-    }
-}
-
 /*******************************************************************************************************************************
  *                                      Clone Detector
  *******************************************************************************************************************************/
@@ -171,12 +144,12 @@ public:
             }
         };
 #define add_fault(DB, ID, DESC) FaultInserter(DB, ID, #ID, DESC)
-        add_fault(sqlite, FAULT_DISASSEMBLY, "disassembly failed");
-        add_fault(sqlite, FAULT_INSN_LIMIT,  "simulation instruction limit reached");
-        add_fault(sqlite, FAULT_HALT,        "x86 HLT instruction executed");
-        add_fault(sqlite, FAULT_INTERRUPT,   "interrupt or x86 INT instruction executed");
-        add_fault(sqlite, FAULT_SEMANTICS,   "instruction semantics error");
-        add_fault(sqlite, FAULT_SMTSOLVER,   "SMT solver error");
+        add_fault(sqlite, AnalysisFault::DISASSEMBLY, "disassembly failed");
+        add_fault(sqlite, AnalysisFault::INSN_LIMIT,  "simulation instruction limit reached");
+        add_fault(sqlite, AnalysisFault::HALT,        "x86 HLT instruction executed");
+        add_fault(sqlite, AnalysisFault::INTERRUPT,   "interrupt or x86 INT instruction executed");
+        add_fault(sqlite, AnalysisFault::SEMANTICS,   "instruction semantics error");
+        add_fault(sqlite, AnalysisFault::SMTSOLVER,   "SMT solver error");
 #undef  add_fault
 
         lock.commit();
@@ -684,11 +657,11 @@ public:
     }
     
     // Analyze a single function by running it with the specified inputs and collecting its outputs. */
-    CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *fuzz_test(SgAsmFunction *function, CloneDetection::InputValues &inputs,
-                                                             const CloneDetection::PointerDetector *pointers) {
+    Outputs<RSIM_SEMANTICS_VTYPE> *fuzz_test(SgAsmFunction *function, InputValues &inputs,
+                                             const PointerDetector *pointers) {
         RSIM_Process *proc = thread->get_process();
         RTS_Message *m = thread->tracing(TRACE_MISC);
-        int fault = FAULT_NONE;
+        AnalysisFault::Fault fault = AnalysisFault::NONE;
 
         // Not sure if saving/restoring memory state is necessary. I don't think machine memory is adjusted by the semantic
         // policy's writeMemory() or readMemory() operations after the policy is triggered to enable our analysis.  But it
@@ -711,42 +684,42 @@ public:
             if (thread->policy.FUNC_RET_ADDR==e.ip) {
                 if (opt.verbose)
                     m->mesg("%s: function returned", name);
-                fault = FAULT_NONE;
+                fault = AnalysisFault::NONE;
             } else {
                 if (opt.verbose)
                     m->mesg("%s: function disassembly failed at 0x%08"PRIx64": %s", name, e.ip, e.mesg.c_str());
-                fault = FAULT_DISASSEMBLY;
+                fault = AnalysisFault::DISASSEMBLY;
             }
-        } catch (const CloneDetection::InsnLimitException &e) {
+        } catch (const InsnLimitException &e) {
             // The analysis might be in an infinite loop, such as when analyzing "void f() { while(1); }"
             if (opt.verbose)
                 m->mesg("%s: %s", name, e.mesg.c_str());
-            fault = FAULT_INSN_LIMIT;
+            fault = AnalysisFault::INSN_LIMIT;
         } catch (const RSIM_Semantics::InnerPolicy<>::Halt &e) {
             // The x86 HLT instruction appears in some functions (like _start) as a failsafe to terminate a process.  We need
             // to intercept it and terminate only the function analysis.
             if (opt.verbose)
                 m->mesg("%s: function executed HLT instruction at 0x%08"PRIx64, name, e.ip);
-            fault = FAULT_HALT;
+            fault = AnalysisFault::HALT;
         } catch (const RSIM_Semantics::InnerPolicy<>::Interrupt &e) {
             // The x86 INT instruction was executed but the policy does not know how to handle it.
             if (opt.verbose)
                 m->mesg("%s: function executed INT 0x%x at 0x%08"PRIx64, name, e.inum, e.ip);
-            fault = FAULT_INTERRUPT;
+            fault = AnalysisFault::INTERRUPT;
         } catch (const RSIM_SEMANTICS_POLICY::Exception &e) {
             // Some exception in the policy, such as division by zero.
             if (opt.verbose)
                 m->mesg("%s: %s", name, e.mesg.c_str());
-            fault = FAULT_SEMANTICS;
+            fault = AnalysisFault::SEMANTICS;
         } catch (const SMTSolver::Exception &e) {
             // Some exception in the SMT solver
             if (opt.verbose)
                 m->mesg("%s: %s", name, e.mesg.c_str());
-            fault = FAULT_SMTSOLVER;
+            fault = AnalysisFault::SMTSOLVER;
         }
         
         // Gather the function's outputs before restoring machine state.
-        CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *outputs = thread->policy.get_outputs(opt.verbose!=0);
+        Outputs<RSIM_SEMANTICS_VTYPE> *outputs = thread->policy.get_outputs(opt.verbose!=0);
         outputs->fault = fault;
         thread->init_regs(saved_regs);
         proc->mem_transaction_rollback(name);

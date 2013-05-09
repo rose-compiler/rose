@@ -73,6 +73,36 @@ INTERVAL_VALUE<nBits> convert_to_interval(const ValueType<nBits> &value);
 template <template <size_t> class ValueType, size_t nBits>
 SYMBOLIC_VALUE<nBits> convert_to_symbolic(const ValueType<nBits> &value);
 
+/** Special output values for when something goes wrong. */
+class AnalysisFault {
+public:
+    enum Fault {
+        NONE        = 0,
+        DISASSEMBLY = 911000001,     /**< Disassembly failed possibly due to bad address. */
+        INSN_LIMIT  = 911000002,     /**< Maximum number of instructions executed. */
+        HALT        = 911000003,     /**< x86 HLT instruction executed. */
+        INTERRUPT   = 911000004,     /**< x86 INT instruction executed. */
+        SEMANTICS   = 911000005,     /**< Some fatal problem with instruction semantics, such as a not-handled instruction. */
+        SMTSOLVER   = 911000006,     /**< Some fault in the SMT solver. */
+    };
+    
+    /** Return the short name of a fault ID. */
+    static const char *fault_name(Fault fault) {
+        switch (fault) {
+            case NONE:          return "";
+            case DISASSEMBLY:   return "FAULT_DISASSEMBLY";
+            case INSN_LIMIT:    return "FAULT_INSN_LIMIT";
+            case HALT:          return "FAULT_HALT";
+            case INTERRUPT:     return "FAULT_INTERRUPT";
+            case SEMANTICS:     return "FAULT_SEMANTICS";
+            case SMTSOLVER:     return "FAULT_SMTSOLVER";
+            default:
+                assert(!"fault not handled");
+                abort();
+        }
+    }
+};
+
 /** Instruction providor for pointer detection analysis. */
 class InstructionProvidor {
 public:
@@ -205,11 +235,11 @@ struct ReadWriteState {
 template <template <size_t> class ValueType>
 class Outputs {
 public:
-    Outputs(): fault(0) {}
+    Outputs(): fault(AnalysisFault::NONE) {}
     std::list<ValueType<32> > values32;
     std::list<ValueType<8> > values8;
-    int fault;
-    std::set<uint32_t> get_values(bool include_fault=true) const;
+    AnalysisFault::Fault fault;
+    template<typename Container> Container get_values(bool include_fault=true) const;
     void print(std::ostream&, const std::string &title="", const std::string &prefix="") const;
     void print(RTS_Message*, const std::string &title="", const std::string &prefix="") const;
     friend std::ostream& operator<<(std::ostream &o, const Outputs &outputs) {
