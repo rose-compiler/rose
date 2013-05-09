@@ -52,19 +52,19 @@ convert_to_symbolic(const ValueType<nBits> &value)
 /** Return the next input value from the queue of possible inputs. */
 template <size_t nBits>
 RSIM_SEMANTICS_VTYPE<nBits>
-next_input_value(InputValues *inputs, InputValues::Type type, RTS_Message *m)
+next_input_value(InputGroup *inputs, InputGroup::Type type, RTS_Message *m)
 {
     uint64_t value = 0;
     size_t nvalues = 0;
     const char *type_name = NULL;
     switch (type) {
-        case InputValues::POINTER:
+        case InputGroup::POINTER:
             value = inputs->next_pointer();
             nvalues = inputs->pointers_consumed();
             type_name = "pointer";
             break;
-        case InputValues::UNKNOWN_TYPE:
-        case InputValues::NONPOINTER:
+        case InputGroup::UNKNOWN_TYPE:
+        case InputGroup::NONPOINTER:
             value = inputs->next_integer();
             nvalues = inputs->integers_consumed();
             type_name = "non-pointer";

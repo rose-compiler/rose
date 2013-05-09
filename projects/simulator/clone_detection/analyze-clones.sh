@@ -137,7 +137,7 @@ build_makefile () {
     echo "all: all_analyses" >>$mf
     echo >>$mf
     echo "ROSE_BLD = $ROSE_BLD" >>$mf
-    echo -n "SWITCHES = --debug --verbose --database=$semantic_dbname --ninputs=$semantic_npointers,$semantic_nnonpointers" >>$mf
+    echo -n "SWITCHES = --debug --database=$semantic_dbname --ninputs=$semantic_npointers,$semantic_nnonpointers" >>$mf
     echo " --min-function-size=$semantic_minfuncsize --max-insns=$semantic_maxinsns" >>$mf
     echo >>$mf
 
@@ -202,14 +202,17 @@ echo "update run_parameters set min_coverage = $syntactic_coverage;"      |sqlit
 echo "update run_parameters set min_func_ninsns = $semantic_minfuncsize;" |sqlite3 "$combined_dbname"
 
 # Run a batch of SQL statements.  Some of this might take a long time
+echo "Running SQL commands from $ROSE_BLD/projects/simulator/clone_detection/queries.sql"
 sqlite3 "$combined_dbname" <$ROSE_BLD/projects/simulator/clone_detection/queries.sql
 
 # Generate cluster tables from similarity pairs
+echo "Building cluster tables"
 $ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" syntactic_clone_pairs syntactic_clusters
 $ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" semantic_clone_pairs semantic_clusters
 $ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" combined_clone_pairs combined_clusters
 
 # Generate call-graph pairs from similarity pairs, and then call-graph clusters from call-graph pairs
+echo "Building CG-cluster tables"
 $ROSE_BLD/projects/simulator/call_graph_clones   "$combined_dbname" syntactic_clone_pairs   syntactic_cgclone_pairs
 $ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" syntactic_cgclone_pairs syntacitc_cgclusters
 $ROSE_BLD/projects/simulator/call_graph_clones   "$combined_dbname" semantic_clone_pairs    semantic_cgclone_pairs

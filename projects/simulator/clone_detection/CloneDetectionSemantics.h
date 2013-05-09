@@ -127,10 +127,10 @@ typedef BinaryAnalysis::PointerAnalysis::PointerDetection<InstructionProvidor> P
  *  when needed.  During fuzz testing, whenever the specimen reads from a register or memory location which has never been
  *  written, we consume the next value from this input object. When all values are consumed, this object begins to return only
  *  zero values. */
-class InputValues {
+class InputGroup {
 public:
     enum Type { POINTER, NONPOINTER, UNKNOWN_TYPE };
-    InputValues(): next_integer_(0), next_pointer_(0) {}
+    InputGroup(): next_integer_(0), next_pointer_(0) {}
     void add_integer(uint64_t i) { integers_.push_back(i); }
     void add_pointer(uint64_t p) { pointers_.push_back(p); }
     uint64_t next_integer() {
@@ -227,22 +227,19 @@ struct ReadWriteState {
 /** Collection of output values. The output values are gathered from the instruction semantics state after a specimen function
  *  is analyzed.  The outputs consist of those interesting registers that are marked as having been written to by the specimen
  *  function, and the memory values whose memory cells are marked as having been written to.  We omit status flags since they
- *  are not typically treated as function call results, and we omit the instruction pointer (EIP).
- *
- *  The orders of outputs does not matter for clone detection, but we must use a list rather than a set because we don't define
- *  an operator< for the value types. There's nothing stopping a user from sorting the values, but it might incur the overhead
- *  of calling an SMT solver for the symbolic values, and even then a less-than relation might not be strict. */ 
-template <template <size_t> class ValueType>
-class Outputs {
+ *  are not typically treated as function call results, and we omit the instruction pointer (EIP). */
+class OutputGroup {
 public:
-    Outputs(): fault(AnalysisFault::NONE) {}
-    std::list<ValueType<32> > values32;
-    std::list<ValueType<8> > values8;
+    typedef uint32_t value_type;
+    OutputGroup(): fault(AnalysisFault::NONE) {}
+    std::vector<value_type> values;
+    std::vector<value_type> callees_va;         // virtual address of every function call
+    std::vector<int> syscalls;                  // system call numbers in the order they occur
     AnalysisFault::Fault fault;
-    template<typename Container> Container get_values(bool include_fault=true) const;
+    bool operator==(const OutputGroup &other) const;
     void print(std::ostream&, const std::string &title="", const std::string &prefix="") const;
     void print(RTS_Message*, const std::string &title="", const std::string &prefix="") const;
-    friend std::ostream& operator<<(std::ostream &o, const Outputs &outputs) {
+    friend std::ostream& operator<<(std::ostream &o, const OutputGroup &outputs) {
         outputs.print(o);
         return o;
     }
@@ -274,8 +271,8 @@ struct MemoryCell {
 /**************************************************************************************************************************/
 
 /** Mixed-interpretation memory.  Addresses are symbolic expressions and values are multi-domain.  We'll override the
- * multi-domain policy's memory access functions to use this state rather than chaining to the memory states associated with
- * the sub-policies. */
+ *  multi-domain policy's memory access functions to use this state rather than chaining to the memory states associated with
+ *  the sub-policies. */
 template <template <size_t> class ValueType>
 class State: public RSIM_Semantics::OuterState<ValueType> {
 public:
@@ -288,7 +285,8 @@ public:
     MemoryCells data_cells;                                     // memory state for anything that non-stack (e.g., DS register)
     BinaryAnalysis::InstructionSemantics::BaseSemantics::RegisterStateX86<RSIM_SEMANTICS_VTYPE> registers;
     BinaryAnalysis::InstructionSemantics::BaseSemantics::RegisterStateX86<ReadWriteState> register_rw_state;
-    InputValues *input_values;                                  // user-supplied input values
+    InputGroup *input_group;                                   // user-supplied input values
+    OutputGroup output_group;                                  // output values filled in as we run a function
 
     // Write a single byte to memory. The rw_state are the HAS_BEEN_READ and/or HAS_BEEN_WRITTEN bits.
     void mem_write_byte(X86SegmentRegister sr, const MEMORY_ADDRESS_TYPE &addr, const ValueType<8> &value,
@@ -322,7 +320,7 @@ public:
     // stack_frame_top but larger than @p stack_frame_top - @p frame_size are not considered to be outputs (they are the
     // function's local variables). The @p stack_frame_top is usually the address of the function's return EIP, the address
     // that was pushed onto the stack by the CALL instruction.
-    Outputs<ValueType> *get_outputs(const MEMORY_ADDRESS_TYPE &stack_frame_top, size_t frame_size, bool verbose=false) const;
+    OutputGroup get_outputs(const MEMORY_ADDRESS_TYPE &stack_frame_top, size_t frame_size, bool verbose=false);
 
     // Printing
     template<size_t nBits>
@@ -356,7 +354,7 @@ public:
     unsigned active_policies;                           // Policies that should be active *during* an instruction
     static const rose_addr_t INITIAL_STACK = 0x80000000;// Initial value for the EIP and EBP registers
     static const rose_addr_t FUNC_RET_ADDR = 4083;      // Special return address to mark end of analysis
-    InputValues *inputs;                                // Input values to use when reading a never-before-written variable
+    InputGroup *inputs;                                 // Input values to use when reading a never-before-written variable
     const PointerDetector *pointers;                    // Addresses of pointer variables
     size_t ninsns;                                      // Number of instructions processed since last trigger() call
     size_t max_ninsns;                                  // Maximum number of instructions to process after trigger()
@@ -372,9 +370,8 @@ public:
     // Initializer used by constructors.  This is where the SMT solver gets attached to the policy.
     void init();
 
-    // Return output values.  These are the general-purpose registers to which a value has been written, and the memory
-    // locations to which a value has been written.  The returned object can be deleted when no longer needed.
-    Outputs<ValueType> *get_outputs(bool verbose=false) const;
+    // Return output values. These include the return value, certain memory writes, function calls, system calls, etc.
+    OutputGroup get_outputs(bool verbose=false);
 
     // Returns the message stream for the calling threads miscellaneous diagnostics.  We try to always use this for output so
     // that we can turn it on/off via simulator's "--debug" switch, so that output from multiple threads is still readable, and
@@ -384,7 +381,7 @@ public:
 
     // Calling this method will cause all our subdomains to be activated and the simulator will branch
     // to the specified target_va.
-    void trigger(rose_addr_t target_va, InputValues *inputs, const PointerDetector *pointers);
+    void trigger(rose_addr_t target_va, InputGroup *inputs, const PointerDetector *pointers);
 
     // We can get control at the beginning of every instruction.  This allows us to do things like enabling/disabling
     // sub-domains based on the kind of instruction.  We could also examine the entire multi-domain state at this point and do
@@ -395,6 +392,10 @@ public:
     // that throws an exception will skip over this.  The simulator's concrete semantics throw various exceptions for things
     // like signal handling, thread termination, specimen segmentation faults, etc.
     void finishInstruction(SgAsmInstruction *insn) /*override*/;
+
+    // Handle INT 0x80 instructions: save the system call number (from EAX) in the output group and set EAX to a random
+    // value, thus consuming one input.
+    void interrupt(uint8_t) /*override*/;
 
     // You can get control around individual RISC operations by augmenting the particular function.  For instance, here's how
     // you would intercept an XOR operation.

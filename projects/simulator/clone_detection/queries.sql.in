@@ -115,17 +115,19 @@ create index combined_functions_syntactic_id on combined_functions(syntactic_id)
 -- output when run with the same input.
 create index if not exists semantic_fio_func_id on semantic_fio(func_id);
 create index if not exists semantic_fio_inputgroup_id on semantic_fio(inputgroup_id);
-create index if not exists semantic_fio_outputgroup_id on semantic_fio(outputgroup_id);
+create index if not exists semantic_fio_effective_outputgroup on semantic_fio(effective_outputgroup);
 drop table if exists semantic_similarity;
 create table semantic_similarity as
     select a.func_id as func_id_1, b.func_id as func_id_2, count(*) as similarity
         from semantic_fio a
         join semantic_fio b
-            on a.inputgroup_id = b.inputgroup_id and a.outputgroup_id = b.outputgroup_id and a.func_id < b.func_id
+            on a.inputgroup_id = b.inputgroup_id and
+               a.effective_outputgroup = b.effective_outputgroup and
+               a.func_id < b.func_id
         group by a.func_id, b.func_id;
 drop index semantic_fio_func_id;
 drop index semantic_fio_inputgroup_id;
-drop index semantic_fio_outputgroup_id;
+drop index semantic_fio_effective_outputgroup;
 
 -- All pairs of functions that are semantically similar according to some similarity threshold (the "where" clause). Both
 -- function IDs are semantic function IDs.

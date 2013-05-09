@@ -26,8 +26,9 @@ create table if not exists semantic_inputvalues (
 -- sets.
 create table if not exists semantic_outputvalues (
        id integer,                              -- output set to which this value belongs; non-unique
-       pos integer,                             -- position of value within its output group
-       val integer                              -- value stored in the output set
+       vtype character,				-- V=>value, F=>fault, C=>function call, S=>syscall
+       pos integer,                             -- position of value within its output group and vtype pair
+       val integer                              -- value, fault ID, or function ID depending on vtype
 );
 
 -- Some output values indicate special situations described by this table
@@ -87,7 +88,8 @@ create table if not exists semantic_sources (
 create table if not exists semantic_fio (
        func_id integer references semantic_functions(id),
        inputgroup_id integer references semantic_inputvalues(id),
-       outputgroup_id integer references semantic_outputvalues(id),
+       actual_outputgroup integer references semantic_outputvalues(id), -- actual output produced by this function
+       effective_outputgroup integer references semantic_outputvalues(id), -- effective output used for similarity
        elapsed_time double precision,           -- number of seconds elapsed excluding ptr analysis
        cpu_time double precision                -- number of CPU seconds used excluding ptr analysis
 );
