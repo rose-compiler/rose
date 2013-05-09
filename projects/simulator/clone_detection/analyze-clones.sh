@@ -5,6 +5,9 @@
 #------------------------------------------------------------------------------------------------------------------------------
 # Configuration, either by changing these values or setting environment variables...
 
+# If set to anything but an empty string, then entirely skip syntactic clone detection.
+: ${syntactic_skip:=}
+
 # Name of the syntactic database
 : ${syntactic_dbname:=syntactic.db}
 
@@ -19,10 +22,15 @@
 
 # Minimum coverage in order for two functions to be considered syntactic clones when building the combined clones table. When
 # findClones runs, it might find functions that are 80% similar but the metric it uses is a function of feature vectors, not a
-# function of how many instructions the similar feature vectors cover.  The value specified for syntactic_min_coverage is a
+# function of how many instructions the similar feature vectors cover.  The value specified for syntactic_coverage is a
 # ratio of the number of bytes covered by similar feature vectors to the total number of instruction bytes in the
 # function. Both functions must exceed the specified coverage in order to be considered a syntactic pair.
-: ${syntactic_min_coverage:=0.95}
+: ${syntactic_coverage:=0.95}
+
+
+
+# If set to anything but an empty string, then entirely skip semantic clone detection
+: ${semantic_skip:=}
 
 # Name of the semantic database
 : ${semantic_dbname:=semantic.db}
@@ -49,6 +57,8 @@
 # Maximum number of instructions to simulate in each function.  This limit prevents infinite loops during fuzz testing.
 : ${semantic_maxinsns:=256}
 
+
+
 # Name of the combined database
 : ${combined_dbname:=clones.db}
 
@@ -57,19 +67,27 @@
 
 
 show_settings () {
-    echo "syntactic_dbname:        $syntactic_dbname"
-    echo "syntactic_winsize:       $syntactic_winsize"
-    echo "syntactic_stride:        $syntactic_stride"
-    echo "syntactic_precision:     $syntactic_precision"
-    echo "syntactic_min_coverage:  $syntactic_min_coverage"
+    if [ -n "$syntactic_skip" ]; then
+	echo "syntactic clone detection was skipped"
+    else
+        echo "syntactic_dbname:        $syntactic_dbname"
+	echo "syntactic_winsize:       $syntactic_winsize"
+	echo "syntactic_stride:        $syntactic_stride"
+	echo "syntactic_precision:     $syntactic_precision"
+	echo "syntactic_coverage:      $syntactic_coverage"
+    fi
     echo
-    echo "semantic_dbname:         $semantic_dbname"
-    echo "semantic_parallelism:    $semantic_parallelism"
-    echo "semantic_minfuncsize:    $semantic_minfuncsize"
-    echo "semantic_nfuzz:          $semantic_nfuzz"
-    echo "semantic_npointers:      $semantic_npointers"
-    echo "semantic_nnonpointers:   $semantic_nnonpointers"
-    echo "semantic_maxinsns:       $semantic_maxinsns"
+    if [ -n "$semantic_skip" ]; then
+	echo "semantic clone detection was skipped"
+    else
+	echo "semantic_dbname:         $semantic_dbname"
+	echo "semantic_parallelism:    $semantic_parallelism"
+	echo "semantic_minfuncsize:    $semantic_minfuncsize"
+	echo "semantic_nfuzz:          $semantic_nfuzz"
+	echo "semantic_npointers:      $semantic_npointers"
+	echo "semantic_nnonpointers:   $semantic_nnonpointers"
+	echo "semantic_maxinsns:       $semantic_maxinsns"
+    fi
     echo
     echo "combined_dbname:         $combined_dbname"
 }
@@ -89,11 +107,14 @@ die () {
 
 # Make sure everything we need has been built.  The projects/BinaryCloneDetection has some errors that cause the build
 # to fail if we try to build everything.
-make -C $ROSE_BLD/projects/BinaryCloneDetection -k -j createVectorsBinary findClones lshCloneDetection computeClusterPairs \
-    || die "failed to build syntactic clone detection targets in projects/BinaryCloneDetection"
-make -C $ROSE_BLD/projects/simulator -k -j CloneDetection clusters_from_pairs show_results \
-    || die "failed to build semantic clone detection targets in projects/simulator"
-
+if [ "$syntactic_skip" = "" ]; then
+    make -C $ROSE_BLD/projects/BinaryCloneDetection -k -j createVectorsBinary findClones lshCloneDetection computeClusterPairs \
+	|| die "failed to build syntactic clone detection targets in projects/BinaryCloneDetection"
+fi
+if [ "$semantic_skip" = "" ]; then
+    make -C $ROSE_BLD/projects/simulator -k -j CloneDetection clusters_from_pairs call_graph_clones show_results \
+	|| die "failed to build semantic clone detection targets in projects/simulator"
+fi
 
 # Build the databases, one for syntactic and one for semantic
 if [ -e "$syntactic_dbname" -o -e "$semantic_dbname" ]; then
@@ -110,9 +131,6 @@ rm -f "$combined_dbname";
 
 # Semantic analysis can be run in parallel because it uses transactions to control access to the database.  The easiest
 # way to get this to run in parallel with error handling, limiting, cleanup, etc. is to use GNU make's "-j" switch.
-echo "================================================================================"
-echo "                           SEMANTIC ANALYSIS"
-
 build_makefile () {
     local mf="clones-$$.mk"
 
@@ -144,43 +162,63 @@ build_makefile () {
     echo $mf
 }
 
-    
-makefile=$(build_makefile "$@")
-make -f $makefile clean
-make -k -j$semantic_parallelism -f $makefile || die "semantic clone detection failed"
+if [ "$semantic_skip" = "" ]; then
+    echo "================================================================================"
+    echo "                           SEMANTIC ANALYSIS"
+    makefile=$(build_makefile "$@")
+    make -f $makefile clean
+    make -k -j$semantic_parallelism -f $makefile || die "semantic clone detection failed"
+fi
 
 
-# Syntactic analysis must be run serially
-for specimen in "$@"; do
+if [ "$syntactic_skip" = "" ]; then
     echo "================================================================================"
     echo "                           SYNTACTIC ANALYSIS"
-    $ROSE_BLD/projects/BinaryCloneDetection/createVectorsBinary --database "$syntactic_dbname" --tsv-directory "$specimen" \
-	--stride $syntactic_stride --windowSize $syntactic_winsize \
-	|| die "syntactic clone detection failed for $specimen"
 
-done
+    # Syntactic analysis must be run serially
+    for specimen in "$@"; do
+	$ROSE_BLD/projects/BinaryCloneDetection/createVectorsBinary --database "$syntactic_dbname" --tsv-directory "$specimen" \
+	    --stride $syntactic_stride --windowSize $syntactic_winsize \
+	    || die "syntactic clone detection failed for $specimen"
+    done
 
-
-# Find syntactic clones
-echo "================================================================================"
-echo "                         FINDING SYNTACTIC CLONES"
-$ROSE_BLD/projects/BinaryCloneDetection/findClones --database "$syntactic_dbname" -t $syntactic_precision \
-    || die "syntactic clone detection failed in findClones with precision $syntactic_precision"
-$ROSE_BLD/projects/BinaryCloneDetection/computeClusterPairs "$syntactic_dbname" \
-    || die "could not compute syntactic cluster pairs"
+    # Find syntactic clones
+    echo "================================================================================"
+    echo "                         FINDING SYNTACTIC CLONES"
+    $ROSE_BLD/projects/BinaryCloneDetection/findClones --database "$syntactic_dbname" -t $syntactic_precision \
+	|| die "syntactic clone detection failed in findClones with precision $syntactic_precision"
+    $ROSE_BLD/projects/BinaryCloneDetection/computeClusterPairs "$syntactic_dbname" \
+	|| die "could not compute syntactic cluster pairs"
+fi
 
 # Combine syntactic and semantic databases, find semantic clones, combine clones
 echo "================================================================================"
-echo "                   FINDING SEMANTIC CLONES & COMBINING"
+echo "                             COMPUTING CLUSTERS"
 cp "$semantic_dbname" "$combined_dbname" || exit 1
 echo .dump | sqlite3 "$syntactic_dbname" | sqlite3 "$combined_dbname"
-echo "update run_parameters set min_coverage = $syntactic_min_coverage;" |sqlite3 "$combined_dbname"
+
+# FIXME: Thse two run parameters should be stored in their respective database rather than only the combined database
+echo "update run_parameters set min_coverage = $syntactic_coverage;"      |sqlite3 "$combined_dbname"
 echo "update run_parameters set min_func_ninsns = $semantic_minfuncsize;" |sqlite3 "$combined_dbname"
+
+# Run a batch of SQL statements.  Some of this might take a long time
 sqlite3 "$combined_dbname" <$ROSE_BLD/projects/simulator/clone_detection/queries.sql
-$ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" combined_clone_pairs combined_clusters
-$ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" semantic_clone_pairs semantic_clusters
+
+# Generate cluster tables from similarity pairs
 $ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" syntactic_clone_pairs syntactic_clusters
-$ROSE_BLD/projects/simulator/show_results "$combined_dbname"
+$ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" semantic_clone_pairs semantic_clusters
+$ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" combined_clone_pairs combined_clusters
+
+# Generate call-graph pairs from similarity pairs, and then call-graph clusters from call-graph pairs
+$ROSE_BLD/projects/simulator/call_graph_clones   "$combined_dbname" syntactic_clone_pairs   syntactic_cgclone_pairs
+$ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" syntactic_cgclone_pairs syntacitc_cgclusters
+$ROSE_BLD/projects/simulator/call_graph_clones   "$combined_dbname" semantic_clone_pairs    semantic_cgclone_pairs
+$ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" semantic_cgclone_pairs  semantic_cgclusters
+$ROSE_BLD/projects/simulator/call_graph_clones   "$combined_dbname" combined_clone_pairs    combined_cgclone_pairs
+$ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" combined_cgclone_pairs  combined_cgclusters
+
+# Show the results (see --help for other options)
+$ROSE_BLD/projects/simulator/show_results "$combined_dbname" combined cgclusters
 echo
 echo "results have been saved in the combined_clusters table in $combined_dbname"
 exit 0
