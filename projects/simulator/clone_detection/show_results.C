@@ -22,7 +22,12 @@ usage(int exit_status, const std::string &mesg="")
         std::cerr <<argv0 <<": " <<mesg <<"\n";
     std::cerr <<"usage: " <<argv0 <<" DATABASE_NAME\n"
               <<"           Show all clusters of similar functions\n"
-              <<"       " <<argv0 <<" DATABASE_NAME [syntactic|semantic] cluster CLUSTER_ID\n"
+              <<"       " <<argv0 <<" DATABASE_NAME [syntactic|semantic|combined] clusters\n"
+              <<"       " <<argv0 <<" DATABASE_NAME [syntactic|semantic|combined] cgclusters\n"
+              <<"           Show all syntactic, semantic, or combined (intersection of syntactic and semantic) clusters\n"
+              <<"           using either normal clusters or callgraph clusters.\n"
+              <<"       " <<argv0 <<" DATABASE_NAME [syntactic|semantic|combined] cluster CLUSTER_ID\n"
+              <<"       " <<argv0 <<" DATABASE_NAME [syntactic|semantic|combined] cgcluster CLUSTER_ID\n"
               <<"           Show a single cluster\n"
               <<"       " <<argv0 <<" DATABASE_NAME functions\n"
               <<"           List basic info about all functions\n"
@@ -395,41 +400,48 @@ main(int argc, char *argv[])
 
     if (0==argc-argno) {
         show_all(dbname);
+        return 0;
+    }
+
+    std::string analysis = "combined";
+    if (!strcmp(argv[argno], "syntactic") || !strcmp(argv[argno], "semantic") || !strcmp(argv[argno], "combined"))
+        analysis = argv[argno++];
+    if (0==argc-argno) {
+        show_cluster(dbname, analysis+"_clusters", ALL_CLUSTERS);
+        return 0;
+    }
+
+    if (argno==argc) {
+        show_cluster(dbname, analysis+"_clusters", ALL_CLUSTERS);
+    } else if (argno+1==argc && (!strcmp(argv[argno], "clusters") || !strcmp(argv[argno], "cgclusters"))) {
+        std::string tabname = analysis + "_" + argv[argno];
+        show_cluster(dbname, tabname, ALL_CLUSTERS);
+    } else if (argno+1==argc && !strcmp(argv[argno], "functions")) {
+        show_functions(dbname);
+    } else if (argno+2==argc && !strcmp(argv[argno], "function")) {
+        char *rest;
+        errno = 0;
+        int function_id = strtol(argv[argno+1], &rest, 0);
+        if (errno || rest==argv[argno+1] || *rest)
+            usage(0, "bad function ID specified");
+        show_function(dbname, function_id);
+    } else if (argno+2==argc && (!strcmp(argv[argno], "cluster") || !strcmp(argv[argno], "cgcluster"))) {
+        std::string tabname = analysis + "_" + argv[argno] + "s";
+        char *rest;
+        errno = 0;
+        int cluster_id = strtol(argv[argno+1], &rest, 0);
+        if (errno || rest==argv[argno+1] || *rest)
+            usage(0, "bad cluster ID specified");
+        show_cluster(dbname, tabname, cluster_id);
+    } else if (argno+1==argc && !strcmp(argv[argno], "list")) {
+        char *rest;
+        errno = 0;
+        int function_id = strtol(argv[argno+1], &rest, 0);
+        if (errno || rest==argv[argno+1] || *rest)
+            usage(0, "bad function ID specified");
+        list_function(dbname, function_id);
     } else {
-        std::string cmd = argv[argno++];
-        if ((0==cmd.compare("syntactic") && 2==argc-argno && 0==strcmp(argv[argno], "cluster")) ||
-            (0==cmd.compare("semantic") && 2==argc-argno && 0==strcmp(argv[argno], "cluster")) ||
-            (0==cmd.compare("cluster")  && 1==argc-argno)) {
-            std::string tabname = "combined_clusters";
-            if (0==cmd.compare("syntactic") || 0==cmd.compare("semantic")) {
-                tabname = cmd + "_clusters";
-                ++argno;
-            }
-            char *rest;
-            errno = 0;
-            int cluster_id = strtol(argv[argno], &rest, 0);
-            if (errno || rest==argv[argno] || *rest)
-                usage(0, "bad cluster ID specified");
-            show_cluster(dbname, tabname, cluster_id);
-        } else if (0==cmd.compare("functions") && argc==argno) {
-            show_functions(dbname);
-        } else if (0==cmd.compare("function") && 1==argc-argno) {
-            char *rest;
-            errno = 0;
-            int function_id = strtol(argv[argno], &rest, 0);
-            if (errno || rest==argv[argno] || *rest)
-                usage(0, "bad function ID specified");
-            show_function(dbname, function_id);
-        } else if (0==cmd.compare("list") && 1==argc-argno) {
-            char *rest;
-            errno = 0;
-            int function_id = strtol(argv[argno], &rest, 0);
-            if (errno || rest==argv[argno] || *rest)
-                usage(0, "bad function ID specified");
-            list_function(dbname, function_id);
-        } else {
-            usage(3, "unknown subcommand: "+cmd);
-        }
+        usage(3, std::string("unknown subcommand: ")+argv[argno]);
     }
 
     return 0;
