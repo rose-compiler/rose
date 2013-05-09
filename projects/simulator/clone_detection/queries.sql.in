@@ -49,37 +49,57 @@
 -- Step 1: rename the columns of (syntactic) function_ids to match the semantic_functions table, and drop all but the base name
 --         of all filename strings (specimens may have been specified with relative names that are different between syntactic
 --         and semantic clone detection.
-drop view if exists syntactic_functions;
-create view syntactic_functions as
+drop index if exists syntactic_functions_funcname;
+drop index if exists syntacitc_functions_entry_va;
+
+drop table if exists syntactic_functions;
+create table syntactic_functions as
    select row_number as id,
           entry_va,
           function_name as funcname,
           rightstr(file, charindex('/',reverse(file),1)-1) as filename
        from function_ids;
 
--- Step 2: match up the function IDs based on the file and either the function name or function entry virtual address,
--- prefering name to address).  We'd like to use a full outer join, but alas, SQLite3 doesn't support this directly, so
--- we need to union two queries
+-- Step 2: match up the function IDs based on the file and function entry virtual address. This should work fine most of the
+-- time but will fail when the loader (used by the simulator that runs semantic analysis) chooses to map the specimen to a
+-- different virtual address than specified in the specimen.  We cannot match on function name because (1) many functions will
+-- not have names, (2) the same function name can appear many times in one specimen.  We also have to be careful because not
+-- all functions will exist in both the syntactic and semantic analysis due to filtering by those analyses. SQLite3 doesn't
+-- have a full outer join, so we use a union of two left joins.
+
+-- Indexes used when creating the combined_functions table
+create index if not exists syntactic_functions_funcname on syntactic_functions(funcname);
+create index if not exists syntactic_functions_entry_va on syntactic_functions(entry_va);
+create index if not exists semantic_functions_funcname on semantic_functions(funcname);
+create index if not exists semantic_functions_entry_va on semantic_functions(entry_va);
+
+-- Temporary table used only to construct combined_functions
+drop table if exists combined_functions_tmp;
+create temporary table combined_functions_tmp as
+    select x.id as id, y.name as filename, x.funcname as funcname, x.entry_va as entry_va
+        from semantic_functions as x join semantic_files as y on x.file_id = y.id;
+
+-- The mapping between syntactic and semantic functions
 drop table if exists combined_functions;
 create table combined_functions as
     select a.id as syntactic_id, b.id as semantic_id
-        from syntactic_functions a
-        left join 
-            (select x.id as id, y.name as filename, x.funcname as funcname, entry_va as entry_va
-             from semantic_functions x join semantic_files y on x.file_id=y.id) as b
-            on a.filename = b.filename and
-            ((a.funcname != '' and a.funcname = b.funcname) or
-             (a.funcname  = '' and a.entry_va = b.entry_va))
+        from syntactic_functions as a 
+        left join combined_functions_tmp as b
+            on a.filename = b.filename and a.entry_va = b.entry_va
     union all
     select a.id as syntactic_id, b.id as semantic_id
-        from (select x.id as id, y.name as filename, x.funcname as funcname, x.entry_va as entry_va
-             from semantic_functions x join semantic_files y on x.file_id=y.id) as b
-        left join syntactic_functions a
-            on a.filename = b.filename and
-            ((a.funcname != '' and a.funcname = b.funcname) or
-             (a.funcname  = '' and a.entry_va = b.entry_va))
+        from combined_functions_tmp as b
+        left join syntactic_functions as a
+            on a.filename = b.filename and a.entry_va = b.entry_va
         where a.id is null;
 
+-- Drop indexes that are no longer useful and only take up space
+drop index syntactic_functions_funcname;
+drop index syntactic_functions_entry_va;
+drop index semantic_functions_funcname;
+drop index semantic_functions_entry_va;
+
+-- This index is useful later
 drop index if exists combined_functions_syntactic_id;
 create index combined_functions_syntactic_id on combined_functions(syntactic_id);
 
@@ -93,17 +113,24 @@ create index combined_functions_syntactic_id on combined_functions(syntactic_id)
 -- Create pairs of semantically similar functions based on fuzz testing results, which are stored in the semantic_fio
 -- (function input/output) table.  The "similarity" column is the number of times this pair of functions produced the same
 -- output when run with the same input.
-drop view if exists semantic_similarity;
-create view semantic_similarity as
+create index if not exists semantic_fio_func_id on semantic_fio(func_id);
+create index if not exists semantic_fio_inputgroup_id on semantic_fio(inputgroup_id);
+create index if not exists semantic_fio_outputgroup_id on semantic_fio(outputgroup_id);
+drop table if exists semantic_similarity;
+create table semantic_similarity as
     select a.func_id as func_id_1, b.func_id as func_id_2, count(*) as similarity
         from semantic_fio a
-        join semantic_fio b on a.func_id < b.func_id and a.inputset_id = b.inputset_id and a.outputset_id = b.outputset_id
+        join semantic_fio b
+            on a.inputgroup_id = b.inputgroup_id and a.outputgroup_id = b.outputgroup_id and a.func_id < b.func_id
         group by a.func_id, b.func_id;
+drop index semantic_fio_func_id;
+drop index semantic_fio_inputgroup_id;
+drop index semantic_fio_outputgroup_id;
 
 -- All pairs of functions that are semantically similar according to some similarity threshold (the "where" clause). Both
 -- function IDs are semantic function IDs.
-drop view if exists semantic_clone_pairs;
-create view semantic_clone_pairs as
+drop table if exists semantic_clone_pairs;
+create table semantic_clone_pairs as
     select distinct func_id_1, func_id_2
         from semantic_similarity
         where similarity = (select count(*) from (select distinct id from semantic_inputvalues));
@@ -112,13 +139,13 @@ create view semantic_clone_pairs as
 -- created by computeClusterPairs.  The function IDs in this new view are *semantic* function IDs; we ignore all pairs for
 -- which either function of the pair was not considered by the semantic analysis.  The first function ID of the pair is
 -- always smaller than the second ID (similarity is symmetric and reflexive, so we omit the redundant and naive relations).
-drop view if exists syntactic_clone_pairs;
-create view syntactic_clone_pairs as
+drop table if exists syntactic_clone_pairs;
+create table syntactic_clone_pairs as
     select distinct min(func1.semantic_id,func2.semantic_id) as func_id_1, max(func1.semantic_id,func2.semantic_id) as func_id_2
         from cluster_pairs as pair
         join combined_functions as func1 on pair.function_id_1 = func1.syntactic_id and func1.semantic_id is not null
         join combined_functions as func2 on pair.function_id_2 = func2.syntactic_id and func2.semantic_id is not null
-	where pair.ratio_1 >= (select min(min_coverage) from run_parameters) and
+        where pair.ratio_1 >= (select min(min_coverage) from run_parameters) and
               pair.ratio_2 >= (select min(min_coverage) from run_parameters);
 
 
@@ -127,12 +154,8 @@ create view syntactic_clone_pairs as
 -- into clusters.
 
 -- All pairs of functions that appear as both a syntactic pair and a semantic pair.
-drop view if exists combined_clone_pairs;
-create view combined_clone_pairs as
+drop table if exists combined_clone_pairs;
+create table combined_clone_pairs as
     select * from semantic_clone_pairs
     intersect
     select * from syntactic_clone_pairs;
-
-
--- At this point we need to run:
---  $ ./clusters_from_pairs clones.db combined_clone_pairs combined_clusters
