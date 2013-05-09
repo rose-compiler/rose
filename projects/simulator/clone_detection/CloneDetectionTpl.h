@@ -1043,24 +1043,34 @@ State<ValueType>::print(std::ostream &o, unsigned domains) const
     }
 }
 
+template <typename T>
+static void save_output(std::set<uint32_t> &container, const T &value) {
+    container.insert(value);
+}
+template <typename T>
+static void save_output(std::vector<uint32_t> &container, const T &value) {
+    container.push_back(value);
+}
+
 template <template <size_t> class ValueType>
-std::set<uint32_t>
+template <typename Container>
+Container
 Outputs<ValueType>::get_values(bool include_fault) const
 {
-    std::set<uint32_t> retval;
+    Container retval;
     for (typename std::list<ValueType<32> >::const_iterator vi=values32.begin(); vi!=values32.end(); ++vi) {
         CONCRETE_VALUE<32> cval = convert_to_concrete(*vi);
-        retval.insert(cval.known_value());
+        save_output(retval, cval.known_value());
     }
     for (typename std::list<ValueType<8> >::const_iterator vi=values8.begin(); vi!=values8.end(); ++vi) {
         CONCRETE_VALUE<8> cval = convert_to_concrete(*vi);
-        retval.insert(cval.known_value());
+        save_output(retval, cval.known_value());
     }
     if (include_fault && fault!=0)
-        retval.insert(fault);
+        save_output(retval, fault);
     return retval;
 }
-
+    
 template <template <size_t> class ValueType>
 void
 Outputs<ValueType>::print(std::ostream &o, const std::string &title, const std::string &prefix) const

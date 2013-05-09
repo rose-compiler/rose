@@ -1,18 +1,32 @@
 -- Schema for binary clone detection output
 
--- An inputvalue is either a pointer or non-pointer value that belongs to an inputset.  Each pointer value has a sequential
--- position in its inputset; similarly for non-pointers.  The sequence for pointers and non-pointers are independent of one
--- another; they compose two separate input value lists within the inputset as mentioned above.
+-- ********************************************************************************
+-- *** WARNING:  This file is incorporated into C++ code and executed via the   ***
+-- ***           sqlite3x library.  SQL commands should be separated from one   ***
+-- ***           another by a blank line because sqlite3x silently truncates    ***
+-- ***           executenonquery() calls that contain more than one statement!  ***
+-- ********************************************************************************
+
+
+
+
+-- An inputvalue is either a pointer or non-pointer value that belongs to an input group.  Each pointer value has a sequential
+-- position in its input group; similarly for non-pointers.  The sequence for pointers and non-pointers are independent of one
+-- another; they compose two separate input value lists within the input group.
 create table if not exists semantic_inputvalues (
-       id integer,                              -- ID for the inputset; non-unique
+       id integer,                              -- ID for the input group; non-unique
        vtype character,                         -- P (pointer) or N (non-pointer)
-       pos integer,                             -- position of this inputvalue within an input sequence, per vtype
+       pos integer,                             -- position of this inputvalue within its input group, per vtype
        val integer                              -- the integer (pointer or non-pointer) value used as input
 );
 
--- An outputvalue is a member of an outputset.  The relative positions of outputvalues within an outputset is unimportant.
+-- An output value is a value produced as output when a specimen function is "executed" during fuzz testing.  Each execution of
+-- a function produces zero or more output values which are grouped together into a output group.  The values in an output
+-- group have a position within the group, although the analysis can be written to treat output groups as either vectors or
+-- sets.
 create table if not exists semantic_outputvalues (
        id integer,                              -- output set to which this value belongs; non-unique
+       pos integer,                             -- position of value within its output group
        val integer                              -- value stored in the output set
 );
 
@@ -65,8 +79,8 @@ create table if not exists semantic_sources (
 -- Function input/output. One of these is produced each time we fuzz-test a function.
 create table if not exists semantic_fio (
        func_id integer references semantic_functions(id),
-       inputset_id integer references semantic_inputsets(id),
-       outputset_id integer references semantic_outputsets(id),
+       inputgroup_id integer references semantic_inputvalues(id),
+       outputgroup_id integer references semantic_outputvalues(id),
        elapsed_time double precision,           -- number of seconds elapsed excluding ptr analysis
        cpu_time double precision                -- number of CPU seconds used excluding ptr analysis
 );

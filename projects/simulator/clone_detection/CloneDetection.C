@@ -29,7 +29,14 @@ using namespace sqlite3x; // its top-level class name start with "sqlite3_"
 typedef std::set<SgAsmFunction*> Functions;
 typedef std::map<SgAsmFunction*, int> FunctionIdMap;
 typedef CloneDetection::InputValues InputValues;
-typedef std::set<uint32_t> OutputValues;
+
+// #define OUTPUT_ORDER_SIGNIFICANT
+#ifdef OUTPUT_ORDER_SIGNIFICANT
+typedef std::vector<uint32_t> OutputGroup;
+#else
+typedef std::set<uint32_t> OutputGroup;
+#endif
+typedef std::vector<OutputGroup> OutputGroups;
 
 static void usage(const std::string &arg0, int exit_status)
 {
@@ -95,7 +102,7 @@ protected:
     static const char *name;            /**< For --debug output. */
     RSIM_Thread *thread;                /**< Thread where analysis is running. */
     sqlite3_connection sqlite;          /**< Database in which to place results; may already exist */
-    std::vector<OutputValues> output_sets; /**< Distinct sets of output values. */
+    OutputGroups output_groups;         /**< Distinct groups of output values from fuzz tests. */
     Switches opt;                       /**< Analysis configuration switches from the command line. */
 
 public:
@@ -522,7 +529,7 @@ public:
         sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE);
 
         sqlite3_command cmd1(sqlite, "select vtype, val from semantic_inputvalues where id = ? order by pos");
-        cmd1.bind(1, inputset_id);
+        cmd1.bind(1, inputgroup_id);
         sqlite3_reader cursor = cmd1.executereader();
         while (cursor.read()) {
             std::string vtype = cursor.getstring(0);
@@ -545,7 +552,7 @@ public:
             for (size_t i=0; i<opt.nnonpointers; ++i) {
                 uint64_t val = rand() % integer_modulus;
                 inputs.add_integer(val);
-                cmd3.bind(1, inputset_id);
+                cmd3.bind(1, inputgroup_id);
                 cmd3.bind(2, "N");
                 cmd3.bind(3, i);
                 cmd3.bind(4, val);
@@ -554,7 +561,7 @@ public:
             for (size_t i=0; i<opt.npointers; ++i) {
                 uint64_t val = rand()%nonnull_denom ? 0 : allocate_page();
                 inputs.add_pointer(val);
-                cmd3.bind(1, inputset_id);
+                cmd3.bind(1, inputgroup_id);
                 cmd3.bind(2, "P");
                 cmd3.bind(3, i);
                 cmd3.bind(4, val);
@@ -566,51 +573,67 @@ public:
         return inputs;
     }
 
-    // Save output values into the database.  If an output set already exists in the database with these values, return that
-    // set's ID instead of saving an new, identical set.
-    size_t save_outputs(const OutputValues &outputs) {
+    // Save output values into the database. Each fuzz test generates some number of output_values, all of which are collected
+    // into a single container that we call an output group. An output group can be either a set or vector depending on whether
+    // we want the order to matter. If an output group already exists in the database with these values, return that
+    // output group's ID instead of saving an new, identical group.
+    size_t save_outputs(const Outputs<RSIM_SEMANTICS_VTYPE> *outputs) {
         RTS_Message *m = thread->tracing(TRACE_MISC);
+        OutputGroup output_group = outputs->get_values<OutputGroup>();
 
         // We need a write lock for the duration, otherwise some other process might determine that an output set
         // doesn't exist and then try to create the same one we're about to create.
         sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE);
 
-        // Load output sets from the database if they've changed since last time we loaded.  If we're the only process
-        // creating output sets then this we'll only load the output sets when we first start.  We're assuming that no
-        // process is deleting output sets and that sets are numbered consecutively starting at zero.
-        if ((int)output_sets.size() != sqlite.executeint("select coalesce(max(id),-1)+1 from semantic_outputvalues")) {
+        sqlite3_command cmd1(sqlite, "select coalesce(max(id),-1)+1 from semantic_outputvalues"); // next group ID
+        sqlite3_command cmd2(sqlite, "select id, pos, val from semantic_outputvalues order by id, pos"); // all values
+        sqlite3_command cmd3(sqlite, "insert into semantic_outputvalues (id, pos, val) values (?,?,?)");
+
+        // Load output vectors from the database if they've changed since last time we loaded.  If we're the only process
+        // creating output vectors then we'll only load the output vectors when we first start.  We're assuming that no process
+        // is deleting output vectors and that vectors are numbered consecutively starting at zero.
+        int next_id = cmd1.executeint();
+        if ((int)output_groups.size() != next_id) {
             if (opt.verbose)
-                m->mesg("%s: loading output sets from the database", name);
-            sqlite3_command cmd1(sqlite, "select id, val from semantic_outputvalues");
-            sqlite3_reader cursor = cmd1.executereader();
+                m->mesg("%s: loading output groups from the database", name);
+            sqlite3_reader cursor = cmd2.executereader();
             while (cursor.read()) {
-                size_t setid = cursor.getint(0);
-                int value = cursor.getint(1);
-                if (setid>=output_sets.size())
-                    output_sets.resize(setid+1);
-                output_sets[setid].insert(value);
+                size_t id = cursor.getint(0);
+                int value = cursor.getint(2);
+                if (id>=output_groups.size())
+                    output_groups.resize(id+1);
+#ifdef OUTPUT_ORDER_SIGNIFICANT
+                int pos = cursor.getint(1);
+                assert(pos>=0);
+                if ((size_t)pos>=output_groups[id].size())
+                    output_groups[id].resize(pos+1, 0);
+                output_groups[id][pos] = value;
+#else
+                output_groups[id].insert(value);
+#endif
             }
         }
 
-        // Find an existing output set that matches the given values
-        for (size_t i=0; i<output_sets.size(); ++i) {
-            if (output_sets[i].size()==outputs.size() && std::equal(outputs.begin(), outputs.end(), output_sets[i].begin()))
+        // Find an existing output group that matches the given values
+        for (size_t i=0; i<output_groups.size(); ++i) {
+            if (output_groups[i].size()==output_group.size()&&
+                std::equal(output_group.begin(), output_group.end(), output_groups[i].begin()))
                 return i;
         }
 
         // Save this output set
-        int setid = sqlite.executeint("select coalesce(max(id),0)+1 from semantic_outputvalues");
-        output_sets.resize(setid+1);
-        output_sets[setid] = outputs;
-        for (OutputValues::const_iterator oi=outputs.begin(); oi!=outputs.end(); ++oi) {
-            sqlite3_command cmd2(sqlite, "insert into semantic_outputvalues (id, val) values (?,?)");
-            cmd2.bind(1, setid);
-            cmd2.bind(2, *oi);
-            cmd2.executenonquery();
+        output_groups.resize(next_id+1);
+        output_groups[next_id] = output_group;
+        int position = 0;
+        for (OutputGroup::const_iterator oi=output_group.begin(); oi!=output_group.end(); ++oi) {
+            cmd3.bind(1, next_id);
+            cmd3.bind(2, position++);
+            cmd3.bind(3, *oi);
+            cmd3.executenonquery();
         }
 
         lock.commit();
-        return setid;
+        return next_id;
     }
 
     // Return the name of a file containing the specified function.  We parse the name from the mmap area.
@@ -742,17 +765,17 @@ public:
         m->mesg("%s: saving source code listings for each function...", name);
         save_files();
 
-        typedef std::map<SgAsmFunction*, CloneDetection::PointerDetector*> PointerDetectors;
+        typedef std::map<SgAsmFunction*, PointerDetector*> PointerDetectors;
         PointerDetectors pointers;
-        sqlite3_command cmd1(sqlite, //                 1        2            3             4             5
-                             "insert into semantic_fio (func_id, inputset_id, outputset_id, elapsed_time, cpu_time)"
+        sqlite3_command cmd1(sqlite, //                 1        2              3               4             5
+                             "insert into semantic_fio (func_id, inputgroup_id, outputgroup_id, elapsed_time, cpu_time)"
                              " values (?,?,?,?,?)");
-        sqlite3_command cmd2(sqlite, "select count(*) from semantic_fio where func_id=? and inputset_id=? limit 1");
+        sqlite3_command cmd2(sqlite, "select count(*) from semantic_fio where func_id=? and inputgroup_id=? limit 1");
         for (size_t fuzz_number=opt.firstfuzz; fuzz_number<opt.firstfuzz+opt.nfuzz; ++fuzz_number) {
             InputValues inputs = choose_inputs(fuzz_number);
             if (opt.verbose) {
                 m->mesg("####################################################################################################");
-                m->mesg("%s: fuzz testing %zu function%s with inputset %zu",
+                m->mesg("%s: fuzz testing %zu function%s with inputgroup %zu",
                         name, functions.size(), 1==functions.size()?"":"s", fuzz_number);
                 m->mesg("%s: using these input values:\n%s", name, inputs.toString().c_str());
             }
@@ -780,17 +803,7 @@ public:
                 clock_t start_ticks = clock();
                 gettimeofday(&start_time, NULL);
                 m->mesg("%s: %s fuzz test #%zu", name, function_to_str(func).c_str(), fuzz_number);
-                CloneDetection::Outputs<RSIM_SEMANTICS_VTYPE> *outputs = fuzz_test(func, inputs, ip->second);
-                if (opt.verbose) {
-                    std::ostringstream output_values_str;
-                    OutputValues output_values = outputs->get_values(false/*exl. fault*/);
-                    for (OutputValues::iterator ovi=output_values.begin(); ovi!=output_values.end(); ++ovi)
-                        output_values_str <<" " <<*ovi;
-                    if (outputs->fault)
-                        output_values_str <<" " <<fault_name(outputs->fault);
-                    m->mesg("%s: %s fuzz test #%zu output values are {%s }",
-                            name, function_to_str(func).c_str(), fuzz_number, output_values_str.str().c_str());
-                }
+                Outputs<RSIM_SEMANTICS_VTYPE> *outputs = fuzz_test(func, inputs, ip->second);
                 gettimeofday(&stop_time, NULL);
                 clock_t stop_ticks = clock();
                 double elapsed_time = (stop_time.tv_sec - start_time.tv_sec) +
@@ -804,14 +817,18 @@ public:
 
                 // Save the results. Some other process might have tested this function concurrently, in which case we'll
                 // defer to the other process' results.
-                size_t outputset_id = save_outputs(outputs->get_values());
+                if (opt.verbose) {
+                    m->mesg("%s: %s fuzz test #%zu output values:", name, function_to_str(func).c_str(), fuzz_number);
+                    outputs->print(m, "", std::string(name) + ":  ");
+                }
+                size_t outputgroup_id = save_outputs(outputs);
                 sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE, sqlite3_transaction::DEST_COMMIT);
                 if (cmd2.executeint()>0) {
                     m->mesg("%s: %s fuzz test #%zu ALREADY PRESENT", name, function_to_str(func).c_str(), fuzz_number);
                 } else {
                     cmd1.bind(1, func_ids[func]);
                     cmd1.bind(2, fuzz_number);
-                    cmd1.bind(3, outputset_id);
+                    cmd1.bind(3, outputgroup_id);
                     cmd1.bind(4, elapsed_time);
                     cmd1.bind(5, cpu_time);
                     cmd1.executenonquery();
