@@ -50,6 +50,13 @@ create table if not exists semantic_functions (
        listing text                             -- function assembly listing
 );
 
+-- Function call graph
+create table if not exists semantic_cg (
+       caller integer references semantic_functions(id),
+       callee integer references semantic_functions(id),
+       file_id integer references semantic_file(id)	-- File from which this call originates (used during update)
+);
+
 -- This is the list of instructions for each function.  Functions need not be contiguous in memory, and two instructions
 -- might overlap, which is why we have to store each instruction individually.  Every instruction belongs to exactly one
 -- function.

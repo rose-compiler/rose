@@ -449,6 +449,63 @@ public:
         return retval;
     }
 
+    // Save the function call graph.
+    void save_cg(const FunctionIdMap &func_ids) {
+
+        typedef BinaryAnalysis::FunctionCall::Graph CG;
+        typedef boost::graph_traits<CG>::vertex_descriptor Vertex;
+
+        // Find the root of the AST, which is not necessarily a SgProject.
+        if (func_ids.empty())
+            return;
+        SgNode *root = func_ids.begin()->first;
+        while (root && root->get_parent()) root = root->get_parent();
+
+        // Filter out all vertices of the function call graph so it contains only functions that we're analyzing.
+        struct CGFilter: BinaryAnalysis::FunctionCall::VertexFilter {
+            const FunctionIdMap &func_ids;
+            CGFilter(const FunctionIdMap &func_ids): func_ids(func_ids) {}
+            virtual bool operator()(BinaryAnalysis::FunctionCall*, SgAsmFunction *vertex) /*override*/ {
+                return func_ids.find(vertex)!=func_ids.end();
+            }
+        } vertex_filter(func_ids);
+        BinaryAnalysis::FunctionCall analyzer;
+        analyzer.set_vertex_filter(&vertex_filter);
+        CG cg = analyzer.build_cg_from_ast<CG>(root);
+
+        sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE);
+
+        // Delete from the database those call graph edges which have a source or target vertex that is one of the functions
+        // we're analyzing.  This would be much easier if we could guarantee that all the functions we're analyzing come from
+        // the same file.
+        sqlite.executenonquery("drop table if exists tmp_cg");
+        sqlite.executenonquery("create temporary table tmp_cg (func_id integer)");
+        sqlite3_command cmd1(sqlite, "insert into tmp_cg (func_id) values (?)");
+        for (FunctionIdMap::const_iterator fi=func_ids.begin(); fi!=func_ids.end(); ++fi) {
+            cmd1.bind(1, fi->second);
+            cmd1.executenonquery();
+        }
+        sqlite.executenonquery("delete from semantic_cg where exists"
+                               " (select * from tmp_cg where caller = func_id or callee = func_id)");
+
+        // Add the new call graph into to the database (that's still locked)
+        sqlite3_command cmd2(sqlite, "insert into semantic_cg (caller, callee) values (?,?)");
+        boost::graph_traits<CG>::edge_iterator ei, ei_end;
+        for (boost::tie(ei, ei_end)=edges(cg); ei!=ei_end; ++ei) {
+            Vertex caller_v = source(*ei, cg);
+            Vertex callee_v = target(*ei, cg);
+            SgAsmFunction *caller = get(boost::vertex_name, cg, caller_v);
+            SgAsmFunction *callee = get(boost::vertex_name, cg, callee_v);
+            int caller_id = func_ids.at(caller);
+            int callee_id = func_ids.at(callee);
+            cmd2.bind(1, caller_id);
+            cmd2.bind(2, callee_id);
+            cmd2.executenonquery();
+        }
+
+        lock.commit();
+    };
+
     // Returns true if the file looks like text
     bool is_text_file(FILE *f) {
         if (!f)
@@ -764,6 +821,8 @@ public:
         FunctionIdMap func_ids = save_functions(functions);
         m->mesg("%s: saving source code listings for each function...", name);
         save_files();
+        m->mesg("%s: saving call graph...", name);
+        save_cg(func_ids);
 
         typedef std::map<SgAsmFunction*, PointerDetector*> PointerDetectors;
         PointerDetectors pointers;
