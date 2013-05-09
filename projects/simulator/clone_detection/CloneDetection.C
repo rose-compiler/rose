@@ -112,6 +112,8 @@ fault_name(int fault)
  *                                      Clone Detector
  *******************************************************************************************************************************/
 
+namespace CloneDetection {
+
 /** Main driving function for clone detection.  This is the class that chooses inputs, runs each function, and looks at the
  *  outputs to decide how to partition the functions.  It does this repeatedly in order to build a PartitionForest. The
  *  analyze() method is the main entry point. */
@@ -137,8 +139,8 @@ public:
         // problems when running in parallel.  It would be nice to be able to pass the whole string to executenonquery(),
         // but that seems to execute only the first statement in the string.  Therefore, we split the big, multi-line string
         // into statements and execute each individually.
-        extern const char *clone_detection_schema; // contents of Schema.sql file
-        std::string stmts(clone_detection_schema);
+        extern const char *schema; // contents of Schema.sql file
+        std::string stmts(schema);
         boost::regex stmt_re("( ( '([^']|'')*'   )"     // string literal
                              "| ( --[^\n]*       )"     // comment
                              "| ( [^;]           )"     // other
@@ -252,7 +254,7 @@ public:
 
     // Perform a pointer-detection analysis on the specified function. We'll need the results in order to determine whether a
     // function input should consume a pointer or a non-pointer from the input value set.
-    CloneDetection::PointerDetector* detect_pointers(RTS_Message *m, RSIM_Thread *thread, SgAsmFunction *func) {
+    PointerDetector* detect_pointers(RTS_Message *m, RSIM_Thread *thread, SgAsmFunction *func) {
         // Choose an SMT solver. This is completely optional.  Pointer detection still seems to work fairly well (and much,
         // much faster) without an SMT solver.
         SMTSolver *solver = NULL;
@@ -260,9 +262,9 @@ public:
         if (YicesSolver::available_linkage())
             solver = new YicesSolver;
 #endif
-        CloneDetection::InstructionProvidor *insn_providor = new CloneDetection::InstructionProvidor(thread->get_process());
+        InstructionProvidor *insn_providor = new InstructionProvidor(thread->get_process());
         m->mesg("%s: %s pointer detection analysis", name, function_to_str(func).c_str());
-        CloneDetection::PointerDetector *pd = new CloneDetection::PointerDetector(insn_providor, solver);
+        PointerDetector *pd = new PointerDetector(insn_providor, solver);
         pd->initial_state().registers.gpr[x86_gpr_sp] = SYMBOLIC_VALUE<32>(thread->policy.INITIAL_STACK);
         pd->initial_state().registers.gpr[x86_gpr_bp] = SYMBOLIC_VALUE<32>(thread->policy.INITIAL_STACK);
         //pd.set_debug(stderr);
@@ -274,8 +276,8 @@ public:
             m->mesg("%s: %s pointer analysis FAILED", name, function_to_str(func).c_str());
         }
         if (opt.verbose && m->get_file()) {
-            const CloneDetection::PointerDetector::Pointers plist = pd->get_pointers();
-            for (CloneDetection::PointerDetector::Pointers::const_iterator pi=plist.begin(); pi!=plist.end(); ++pi) {
+            const PointerDetector::Pointers plist = pd->get_pointers();
+            for (PointerDetector::Pointers::const_iterator pi=plist.begin(); pi!=plist.end(); ++pi) {
                 std::ostringstream ss;
                 if (pi->type & BinaryAnalysis::PointerAnalysis::DATA_PTR)
                     ss <<"data ";
@@ -538,8 +540,8 @@ public:
     // non-pointer values are chosen randomly, but limited to a certain range.  The pointers are chosen randomly to be null or
     // non-null and the non-null values each have one page allocated via simulated mmap() (i.e., the non-null values themselves
     // are not actually random).
-    InputValues choose_inputs(size_t inputset_id) {
-        CloneDetection::InputValues inputs;
+    InputValues choose_inputs(size_t inputgroup_id) {
+        InputValues inputs;
 
         // Hold write lock while we check for input values and either read or create them. Otherwise some other
         // process might concurrently decide that input values don't exist and we'll have two processes trying to create
@@ -885,6 +887,9 @@ public:
     }
 };
 
+} // namespace
+
+
 /******************************************************************************************************************************/
 int
 main(int argc, char *argv[], char *envp[])
@@ -932,7 +937,7 @@ main(int argc, char *argv[], char *envp[])
 
     // Our instruction callback.  We can't set its trigger address until after we load the specimen, but we want to register
     // the callback with the simulator before we create the first thread.
-    Trigger clone_detection_trigger(opt);
+    CloneDetection::Trigger clone_detection_trigger(opt);
 
     // All of this is standard boilerplate and documented in the first page of the simulator doxygen.
     RSIM_Linux32 sim;
@@ -953,7 +958,7 @@ main(int argc, char *argv[], char *envp[])
         sim.get_process()->get_main_thread()->tracing(TRACE_MISC)
             ->mesg("running specimen until we hit the analysis trigger address: 0x%08"PRIx64, trigger_va);
         sim.main_loop();
-    } catch (CloneDetector *clone_detector) {
+    } catch (CloneDetection::CloneDetector *clone_detector) {
         clone_detector->analyze();
     }
 

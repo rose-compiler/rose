@@ -277,9 +277,11 @@ show_results_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 MOSTLYCLEANFILES += CloneDetectionSchema.C
 CloneDetectionSchema.C: clone_detection/Schema.sql
 	@echo "  GEN     $@"
-	@echo "const char *clone_detection_schema =" >$@
-	@perl -pe 's/"/\\"/g; s/(.*)/    "$$1\\n"/' <$< >>$@
-	@echo ';' >>$@
+	@echo "namespace CloneDetection {" 			>$@
+	@echo "const char *schema =" 				>>$@
+	@perl -pe 's/"/\\"/g; s/(.*)/    "$$1\\n"/' <$< 	>>$@
+	@echo ';' 						>>$@
+	@echo "} //namespace" 					>>$@
 
 CloneDetection_SPECIMENS =			\
 	clone_detection/tests/externalsort.C	\
