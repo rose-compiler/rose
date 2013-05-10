@@ -26,11 +26,11 @@
 
 #include "rose.h"
 #include "sqlite3x.h"
+#include "CloneDetectionProgress.h"
+
 using namespace sqlite3x;
 
 static std::string argv0;
-static bool is_terminal;
-static const int progress_ncols = 100;
 
 typedef std::vector<int> Callees;
 typedef std::map<int, Callees> CG;

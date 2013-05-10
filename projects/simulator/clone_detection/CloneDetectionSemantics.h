@@ -46,6 +46,8 @@
 #endif
 
 #include "BinaryPointerDetection.h"
+#include "CloneDetectionAnalysisFault.h"
+#include "CloneDetectionOutputs.h"
 
 namespace CloneDetection {
 
@@ -72,36 +74,6 @@ template <template <size_t> class ValueType, size_t nBits>
 INTERVAL_VALUE<nBits> convert_to_interval(const ValueType<nBits> &value);
 template <template <size_t> class ValueType, size_t nBits>
 SYMBOLIC_VALUE<nBits> convert_to_symbolic(const ValueType<nBits> &value);
-
-/** Special output values for when something goes wrong. */
-class AnalysisFault {
-public:
-    enum Fault {
-        NONE        = 0,
-        DISASSEMBLY = 911000001,     /**< Disassembly failed possibly due to bad address. */
-        INSN_LIMIT  = 911000002,     /**< Maximum number of instructions executed. */
-        HALT        = 911000003,     /**< x86 HLT instruction executed. */
-        INTERRUPT   = 911000004,     /**< x86 INT instruction executed. */
-        SEMANTICS   = 911000005,     /**< Some fatal problem with instruction semantics, such as a not-handled instruction. */
-        SMTSOLVER   = 911000006,     /**< Some fault in the SMT solver. */
-    };
-    
-    /** Return the short name of a fault ID. */
-    static const char *fault_name(Fault fault) {
-        switch (fault) {
-            case NONE:          return "";
-            case DISASSEMBLY:   return "FAULT_DISASSEMBLY";
-            case INSN_LIMIT:    return "FAULT_INSN_LIMIT";
-            case HALT:          return "FAULT_HALT";
-            case INTERRUPT:     return "FAULT_INTERRUPT";
-            case SEMANTICS:     return "FAULT_SEMANTICS";
-            case SMTSOLVER:     return "FAULT_SMTSOLVER";
-            default:
-                assert(!"fault not handled");
-                abort();
-        }
-    }
-};
 
 /** Instruction providor for pointer detection analysis. */
 class InstructionProvidor {
@@ -220,29 +192,6 @@ template<size_t nBits>
 struct ReadWriteState {
     unsigned state;                     /**< Bit vector containing HAS_BEEN_READ and/or HAS_BEEN_WRITTEN, or zero. */
     ReadWriteState(): state(NO_ACCESS) {}
-};
-
-/**************************************************************************************************************************/
-
-/** Collection of output values. The output values are gathered from the instruction semantics state after a specimen function
- *  is analyzed.  The outputs consist of those interesting registers that are marked as having been written to by the specimen
- *  function, and the memory values whose memory cells are marked as having been written to.  We omit status flags since they
- *  are not typically treated as function call results, and we omit the instruction pointer (EIP). */
-class OutputGroup {
-public:
-    typedef uint32_t value_type;
-    OutputGroup(): fault(AnalysisFault::NONE) {}
-    std::vector<value_type> values;
-    std::vector<value_type> callees_va;         // virtual address of every function call
-    std::vector<int> syscalls;                  // system call numbers in the order they occur
-    AnalysisFault::Fault fault;
-    bool operator==(const OutputGroup &other) const;
-    void print(std::ostream&, const std::string &title="", const std::string &prefix="") const;
-    void print(RTS_Message*, const std::string &title="", const std::string &prefix="") const;
-    friend std::ostream& operator<<(std::ostream &o, const OutputGroup &outputs) {
-        outputs.print(o);
-        return o;
-    }
 };
 
 /**************************************************************************************************************************/

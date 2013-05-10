@@ -260,7 +260,11 @@ EXTRA_DIST +=						\
 	clone_detection/CloneDetectionSemantics.h	\
 	clone_detection/CloneDetectionTpl.h		\
 	clone_detection/CloneDetection.patch
-CloneDetection_SOURCES = clone_detection/CloneDetection.C CloneDetectionSchema.C
+CloneDetection_SOURCES =				\
+	clone_detection/CloneDetection.C		\
+        clone_detection/CloneDetectionOutputs.C		\
+	clone_detection/CloneDetectionProgress.C	\
+	CloneDetectionSchema.C
 CloneDetection_CPPFLAGS = $(ROSE_INCLUDES)
 CloneDetection_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 

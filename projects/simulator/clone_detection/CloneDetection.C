@@ -13,6 +13,7 @@
 #include "BinaryPointerDetection.h"
 #include "YicesSolver.h"
 #include "DwarfLineMapper.h"
+#include "CloneDetectionProgress.h"
 
 // We'd like to not have to depend on a particular relational database management system, but ROSE doesn't have
 // support for anything like ODBC.  The only other options are either to generate SQL output, which precludes being
@@ -76,34 +77,6 @@ struct Switches {
     bool verbose;                       /**< Produce lots of output?  Traces each instruction as it is simulated. */
 };
 
-static void
-progress(size_t total)
-{
-    static size_t ncalls = 0;
-    static time_t last_report = 0;
-    static bool is_terminal = false;
-    static int progress_ncols = 100;
-
-    if (0==ncalls++)
-        is_terminal = isatty(2);
-
-    if (is_terminal) {
-        if ((size_t)(-1)==total) {
-            fputc('\n', stderr);
-        } else {
-            ncalls = std::min(ncalls, total);
-            time_t now = time(NULL);
-            if (now > last_report || ncalls==total) {
-                int nchars = round((double)ncalls/total * progress_ncols);
-                fprintf(stderr, " %3d%% |%-*s|\r",
-                        (int)round(100.0*ncalls/total), progress_ncols, std::string(nchars, '=').c_str());
-                fflush(stderr);
-                last_report = now;
-            }
-        }
-    }
-}
-
 /*******************************************************************************************************************************
  *                                      Clone Detector
  *******************************************************************************************************************************/
@@ -112,46 +85,6 @@ namespace CloneDetection {
 
 typedef std::set<SgAsmFunction*> Functions;
 typedef std::map<SgAsmFunction*, int> FunctionIdMap;
-typedef std::vector<OutputGroup> OutputGroups;
-typedef std::map<int, rose_addr_t> IdVa;
-typedef std::map<rose_addr_t, int> VaId;
-
-bool
-OutputGroup::operator==(const OutputGroup &other) const
-{
-    return (values.size()==other.values.size() &&
-            std::equal(values.begin(), values.end(), other.values.begin()) &&
-            callees_va.size()==other.callees_va.size() &&
-            std::equal(callees_va.begin(), callees_va.end(), other.callees_va.begin()) &&
-            syscalls.size()==other.syscalls.size() &&
-            std::equal(syscalls.begin(), syscalls.end(), other.syscalls.begin()) &&
-            fault == other.fault);
-}
-
-void
-OutputGroup::print(std::ostream &o, const std::string &title, const std::string &prefix) const
-{
-    if (!title.empty())
-        o <<title <<"\n";
-    for (size_t i=0; i<values.size(); ++i)
-        o <<prefix <<"value " <<values[i] <<"\n";
-    for (size_t i=0; i<callees_va.size(); ++i)
-        o <<prefix <<"fcall " <<callees_va[i] <<"\n";
-    for (size_t i=0; i<syscalls.size(); ++i)
-        o <<prefix <<"scall " <<syscalls[i] <<"\n";
-    if (fault)
-        o <<prefix <<"fault " <<fault <<"\n";
-}
-
-void
-OutputGroup::print(RTS_Message *m, const std::string &title, const std::string &prefix) const
-{
-    if (m && m->get_file()) {
-        std::ostringstream ss;
-        print(ss, title, prefix);
-        m->mesg("%s", ss.str().c_str());
-    }
-}
 
 /** Main driving function for clone detection.  This is the class that chooses inputs, runs each function, and looks at the
  *  outputs to decide how to partition the functions.  It does this repeatedly in order to build a PartitionForest. The
@@ -700,7 +633,6 @@ public:
         sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE);
 
         sqlite3_command cmd1(sqlite, "select coalesce(max(id),-1)+1 from semantic_outputvalues"); // next group ID
-        sqlite3_command cmd2(sqlite, "select id, pos, val, vtype from semantic_outputvalues order by id, pos"); // all values
         sqlite3_command cmd3(sqlite, "insert into semantic_outputvalues (id, pos, val, vtype) values (?,?,?,?)");
 
         // Load output groups from the database if they've changed since last time we loaded.  If we're the only process
@@ -710,45 +642,7 @@ public:
         if ((int)output_groups.size() != next_id) {
             if (opt.verbose)
                 m->mesg("%s: loading output groups from the database", name);
-            sqlite3_reader cursor = cmd2.executereader();
-            while (cursor.read()) {
-                size_t id = cursor.getint(0);
-                int pos = cursor.getint(1);
-                assert(pos>=0);
-                int value = cursor.getint(2);
-                std::string vtype= cursor.getstring(3);
-                assert(!vtype.empty());
-                if (id>=output_groups.size())
-                    output_groups.resize(id+1);
-                switch (vtype[0]) {
-                    case 'V':
-                        if ((size_t)pos>=output_groups[id].values.size())
-                            output_groups[id].values.resize(pos+1, 0);
-                        output_groups[id].values[pos] = value;
-                        break;
-                    case 'F':
-                        assert(output_groups[id].fault == AnalysisFault::NONE);
-                        output_groups[id].fault = (AnalysisFault::Fault)value;
-                        break;
-                    case 'C': {
-                        // value is a function ID; we need a function entry_va
-                        if ((size_t)pos>=output_groups[id].callees_va.size())
-                            output_groups[id].callees_va.resize(pos+1, 0);
-                        IdVa::const_iterator found = func_id2va.find(value);
-                        assert(found!=func_id2va.end());
-                        output_groups[id].callees_va[pos] = found->second;
-                        break;
-                    }
-                    case 'S':
-                        if ((size_t)pos>=output_groups[id].syscalls.size())
-                            output_groups[id].syscalls.resize(pos+1, 0);
-                        output_groups[id].syscalls[pos] = value;
-                        break;
-                    default:
-                        assert(!"invalid output value type");
-                        abort();
-                }
-            }
+            load_output_groups(sqlite, &func_id2va, output_groups);
         }
 
         // Remove non-analyzed functions from the output callee list
@@ -947,7 +841,7 @@ public:
                              "(func_id, inputgroup_id, actual_outputgroup, effective_outputgroup, elapsed_time, cpu_time)"
                              " values (?,?,?,?,?,?)");
         sqlite3_command cmd2(sqlite, "select count(*) from semantic_fio where func_id=? and inputgroup_id=? limit 1");
-        size_t progress_total = opt.nfuzz * functions.size();
+        Progress progress(opt.nfuzz * functions.size());
         for (size_t fuzz_number=opt.firstfuzz; fuzz_number<opt.firstfuzz+opt.nfuzz; ++fuzz_number) {
             InputGroup inputs = choose_inputs(fuzz_number);
             if (opt.verbose) {
@@ -958,7 +852,7 @@ public:
             }
             for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
                 if (!opt.verbose && NULL==m->get_file())
-                    progress(progress_total);
+                    progress.show();
                 SgAsmFunction *func = *fi;
                 inputs.reset();
 
