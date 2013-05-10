@@ -279,7 +279,7 @@ show_results_CPPFLAGS = $(ROSE_INCLUDES)
 show_results_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 noinst_PROGRAMS += call_graph_clones
-call_graph_clones_SOURCES = clone_detection/call_graph_clones.C clone_detection/CallGraphProgress.C
+call_graph_clones_SOURCES = clone_detection/call_graph_clones.C clone_detection/CloneDetectionProgress.C
 call_graph_clones_CPPFLAGS = $(ROSE_INCLUDES)
 call_graph_clones_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
