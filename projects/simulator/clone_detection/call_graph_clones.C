@@ -210,30 +210,10 @@ public:
     }
 };
 
-static void
-progress(size_t total)
-{
-    static size_t ncalls = 0;
-    static time_t last_report = 0;
-    ++ncalls;
-    ncalls = std::min(ncalls, total);
-
-    if (is_terminal) {
-        time_t now = time(NULL);
-        if (now > last_report || ncalls==total) {
-            int nchars = round((double)ncalls/total * progress_ncols);
-            fprintf(stderr, " %3d%% |%-*s|\r", (int)round(100.0*ncalls/total), progress_ncols, std::string(nchars, '=').c_str());
-            fflush(stderr);
-            last_report = now;
-        }
-    }
-}
-
 int
 main(int argc, char *argv[])
 {
     std::ios::sync_with_stdio();
-    is_terminal = isatty(2);
     argv0 = argv[0];
     size_t slash = argv0.rfind('/');
     if (slash!=std::string::npos)
@@ -279,7 +259,7 @@ main(int argc, char *argv[])
     sqlite3_reader c2 = cmd2.executereader();
     while (c2.read())
         ccp.insert(ClonePair(c2.getint(0), c2.getint(1)));
-    size_t total = ccp.size();
+    CloneDetection::Progress progress(ccp.size());
         
     // Process the clone pairs
     sqlite3_transaction lock(db, sqlite3_transaction::LOCK_IMMEDIATE);
@@ -288,7 +268,7 @@ main(int argc, char *argv[])
         const Callees &callees_a = cg[ccpi->a];
         const Callees &callees_b = cg[ccpi->b];
         bool save = false;
-        progress(total);
+        progress.show();
 
         if (callees_a.size()==callees_b.size()) {
             if (callees_a.empty()) {
@@ -314,8 +294,5 @@ main(int argc, char *argv[])
         }
     }
     lock.commit();
-    if (is_terminal)
-        std::cerr <<"\n";
-
     return 0;
 }
