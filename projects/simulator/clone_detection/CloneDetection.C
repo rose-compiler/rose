@@ -59,7 +59,10 @@ static void usage(const std::string &arg0, int exit_status)
               <<"                     Show lots of diagnostics if the --debug simulator switch is specified.\n"
               <<"                     The default (with --debug) is to show only enough output to track the\n"
               <<"                     analysis progress.  Without --debug, hardly any diagnostics are\n"
-              <<"                     produced.\n";
+              <<"                     produced.\n"
+              <<"   --progress\n"
+              <<"                     Force a progress bar to be displayed even if the standard error stream\n"
+              <<"                     is not a terminal and even if the --debug switch is turned on.\n";
     exit(exit_status);
 }
 
@@ -75,6 +78,7 @@ struct Switches {
     size_t min_funcsz;                  /**< Minimum function size measured in instructions; skip smaller functions. */
     size_t max_insns;                   /**< Maximum number of instrutions per fuzz test before giving up. */
     bool verbose;                       /**< Produce lots of output?  Traces each instruction as it is simulated. */
+    bool show_progress;                 /**< Force progress reports even if stderr is a non-terminal or --debug is specified. */
 };
 
 /*******************************************************************************************************************************
@@ -842,6 +846,7 @@ public:
                              " values (?,?,?,?,?,?)");
         sqlite3_command cmd2(sqlite, "select count(*) from semantic_fio where func_id=? and inputgroup_id=? limit 1");
         Progress progress(opt.nfuzz * functions.size());
+        progress.force_output(opt.show_progress);
         for (size_t fuzz_number=opt.firstfuzz; fuzz_number<opt.firstfuzz+opt.nfuzz; ++fuzz_number) {
             InputGroup inputs = choose_inputs(fuzz_number);
             if (opt.verbose) {
@@ -851,7 +856,7 @@ public:
                 m->mesg("%s: using these input values:\n%s", name, inputs.toString().c_str());
             }
             for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
-                if (!opt.verbose && NULL==m->get_file())
+                if (opt.show_progress || (!opt.verbose && NULL==m->get_file()))
                     progress.show();
                 SgAsmFunction *func = *fi;
                 inputs.reset();
@@ -988,6 +993,9 @@ main(int argc, char *argv[], char *envp[])
             consume = true;
         } else if (!strncmp(argv[i], "--max-insns=", 12)) {
             opt.max_insns = strtoul(argv[i]+12, NULL, 0);
+            consume = true;
+        } else if (!strcmp(argv[i], "--progress")) {
+            opt.show_progress = true;
             consume = true;
         }
         

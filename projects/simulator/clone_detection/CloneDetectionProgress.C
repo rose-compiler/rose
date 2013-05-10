@@ -20,7 +20,7 @@ void
 Progress::show()
 {
     ++cur;
-    if (is_terminal && total>0) {
+    if ((force || is_terminal) && total>0) {
         if ((size_t)(-1)==total) {
             if (had_output)
                 fputc('\n', stderr);
@@ -29,8 +29,9 @@ Progress::show()
             time_t now = time(NULL);
             if (now > last_report || cur==total) {
                 int nchars = round((double)n/total * WIDTH);
-                fprintf(stderr, " %3d%% |%-*s|\r",
-                        (int)round(100.0*n/total), WIDTH, std::string(nchars, '=').c_str());
+                fprintf(stderr, " %3d%% |%-*s|%c",
+                        (int)round(100.0*n/total), WIDTH, std::string(nchars, '=').c_str(),
+                        is_terminal?'\r':'\n');
                 fflush(stderr);
                 last_report = now;
                 had_output = true;
@@ -42,9 +43,11 @@ Progress::show()
 void
 Progress::clear()
 {
-    if (is_terminal && total>0) {
-        fprintf(stderr, "%*s\r", 8+WIDTH, "");
-        fflush(stderr);
+    if (had_output) {
+        if (is_terminal) {
+            fprintf(stderr, "%*s\r", 8+WIDTH, "");
+            fflush(stderr);
+        }
         had_output = false;
     }
 }
