@@ -279,9 +279,17 @@ show_results_CPPFLAGS = $(ROSE_INCLUDES)
 show_results_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 noinst_PROGRAMS += call_graph_clones
-call_graph_clones_SOURCES = clone_detection/call_graph_clones.C
+call_graph_clones_SOURCES = clone_detection/call_graph_clones.C clone_detection/CallGraphProgress.C
 call_graph_clones_CPPFLAGS = $(ROSE_INCLUDES)
 call_graph_clones_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+noinst_PROGRAMS += compare_outputs
+compare_outputs_SOURCES =				\
+	clone_detection/compare_outputs.C		\
+	clone_detection/CloneDetectionOutputs.C		\
+	clone_detection/CloneDetectionProgress.C
+compare_outputs_CPPFLAGS = $(ROSE_INCLUDES)
+compare_outputs_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
 MOSTLYCLEANFILES += CloneDetectionSchema.C

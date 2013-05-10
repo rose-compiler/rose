@@ -112,7 +112,7 @@ if [ "$syntactic_skip" = "" ]; then
 	|| die "failed to build syntactic clone detection targets in projects/BinaryCloneDetection"
 fi
 if [ "$semantic_skip" = "" ]; then
-    make -C $ROSE_BLD/projects/simulator -k -j CloneDetection clusters_from_pairs call_graph_clones show_results \
+    make -C $ROSE_BLD/projects/simulator -k -j CloneDetection clusters_from_pairs call_graph_clones compare_outputs show_results \
 	|| die "failed to build semantic clone detection targets in projects/simulator"
 fi
 
@@ -200,6 +200,11 @@ echo .dump | sqlite3 "$syntactic_dbname" | sqlite3 "$combined_dbname"
 # FIXME: Thse two run parameters should be stored in their respective database rather than only the combined database
 echo "update run_parameters set min_coverage = $syntactic_coverage;"      |sqlite3 "$combined_dbname"
 echo "update run_parameters set min_func_ninsns = $semantic_minfuncsize;" |sqlite3 "$combined_dbname"
+
+# Resolve output groups. The main executable compares output groups exactly, but we might not want that for this
+# analysis.  This command updates the values of the semantic_fio.effective_outputgroup column.
+echo "Renumbering fuzz test outputs"
+$ROSE_BLD/projects/simulator/compare_outputs "$combined_dbname"
 
 # Run a batch of SQL statements.  Some of this might take a long time
 echo "Running SQL commands from $ROSE_BLD/projects/simulator/clone_detection/queries.sql"
