@@ -57,6 +57,9 @@
 # Maximum number of instructions to simulate in each function.  This limit prevents infinite loops during fuzz testing.
 : ${semantic_maxinsns:=256}
 
+# Extra debugging flags to pass to semantic analysis. Try "--debug" or "--debug --verbose"
+: ${semantic_flags:=}
+
 
 
 # Name of the combined database
@@ -137,8 +140,8 @@ build_makefile () {
     echo "all: all_analyses" >>$mf
     echo >>$mf
     echo "ROSE_BLD = $ROSE_BLD" >>$mf
-    echo -n "SWITCHES = --debug --database=$semantic_dbname --ninputs=$semantic_npointers,$semantic_nnonpointers" >>$mf
-    echo " --min-function-size=$semantic_minfuncsize --max-insns=$semantic_maxinsns" >>$mf
+    echo -n "SWITCHES = --database=$semantic_dbname --ninputs=$semantic_npointers,$semantic_nnonpointers" >>$mf
+    echo " --min-function-size=$semantic_minfuncsize --max-insns=$semantic_maxinsns $semantic_flags" >>$mf
     echo >>$mf
 
     local all_outputs=
