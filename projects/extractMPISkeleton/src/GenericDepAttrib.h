@@ -2,7 +2,6 @@
 #define __GenericDepAttrib_H_LOADED__
 
 #include <boost/bimap/bimap.hpp>
-
 #include "APIDepAttrib.h"
 
 typedef boost::bimaps::bimap<uint32_t,std::string> name_table;
@@ -17,93 +16,27 @@ class GenericDepAttribute : public APIDepAttribute {
 
     public:
 
-    GenericDepAttribute(name_table *tab, uint32_t ty) {
-        depType = ty;
-        nameTable = tab;
-        depForm = SELF;
-        backward = false;
-    }
+    GenericDepAttribute(name_table *tab, uint32_t ty);
+    GenericDepAttribute(name_table *tab, std::string ty);
 
-    GenericDepAttribute(name_table *tab, std::string ty) {
-        nameTable = tab;
-        depForm = SELF;
-        backward = false;
-        name_table::right_const_iterator it = nameTable->right.find(ty);
-        if(it != nameTable->right.end()) {
-            depType = it->second;
-        } else {
-            depType = 0;
-        }
-    }
+    uint32_t getDepType() const;
 
-    uint32_t getDepType() { return depType; }
+    GenericDepAttribute *copy() const;
 
-    GenericDepAttribute *copy() {
-        GenericDepAttribute *newAttr =
-            new GenericDepAttribute(nameTable, depType);
-        newAttr->depForm = depForm;
-        newAttr->backward = backward;
-        return newAttr;
-    }
+    void join(const APIDepAttribute *attr);
+    void joinForm(const DependenceForm form);
+    void joinType(const uint32_t type);
 
-    void join(const APIDepAttribute *attr) {
-        GenericDepAttribute *other = (GenericDepAttribute *)attr;
-        joinForm(other->depForm);
-        joinType(other->depType);
-    }
+    bool matches(const APIDepAttribute *attr) const;
 
-    void joinForm(const DependenceForm form) {
-        depForm = (APIDepAttribute::DependenceForm)
-                   ((int)depForm | (int)form);
-    }
+    bool contains(const APIDepAttribute *attr) const;
 
-    void joinType(const uint32_t type) {
-        depType |= type;
-    }
+    DependenceForm getDepForm() const;
+    void setDepForm(DependenceForm newDepForm);
 
-    bool matches(const APIDepAttribute *attr) {
-        GenericDepAttribute *other = (GenericDepAttribute *)attr;
-        return (depType == other->depType);
-    }
+    std::string attribute_class_name() const;
 
-    bool contains(const APIDepAttribute *attr) {
-        GenericDepAttribute *other = (GenericDepAttribute *)attr;
-        return (depType | other->depType) == depType;
-    }
-
-    DependenceForm getDepForm() {
-        return depForm;
-    }
-
-    void setDepForm(DependenceForm newDepForm) {
-        depForm = newDepForm;
-    }
-
-    std::string attribute_class_name() { return "GenericDepAttribute"; }
-
-    std::string toString() {
-        std::string str = "API dependency: ";
-        if(depForm & DATA) str += "data ";
-        if(depForm & CONTROL) str += "control ";
-        if(depForm & SELF) str += "self ";
-        if(backward) str += "(backward) ";
-        if(depType == 0) {
-            str += "(call)";
-        } else {
-            for(uint32_t mask = 1; mask != 0; mask <<= 1) {
-                if(depType & mask) {
-                    name_table::left_const_iterator it =
-                        nameTable->left.find(mask);
-                    if(it != nameTable->left.end()) {
-                        str += "(" + it->second + ") ";
-                    } else {
-                        str += "UNKNOWN ";
-                    }
-                }
-            }
-        }
-        return str;
-    }
+    std::string toString() const;
 };
 
 #endif

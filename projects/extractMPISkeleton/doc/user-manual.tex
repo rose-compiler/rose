@@ -1,38 +1,148 @@
-Skeleton Generator
-------------------
+\section{MPI Skeleton Generator}
 
-1. Invoking the tool
---------------------
+In order to support separate compilation of programs, we have separated the
+analysis into three parts:
+
+\begin{itemize}
+\item Generating summary information for each function in a given compilation unit.
+\item Combining individual summary files into a larger summary of the program.
+\item Extraction of the MPI Skeleton using the combined summary information.
+\end{itemize}
+
+\subsection{Invoking the tools}
+
+\subsubsection{Generating summary information}
+
+The first stage of the analysis is to provide summary information for each
+function in the compilation unit. Currently, the signature of each function is
+the call graph of the function, including information about how each argument
+of the function is passed to called functions.
+
+Given this program:
+\begin{verbatim}
+#include <stdio.h>
+#include "mpi.h"
+
+int main( argc, argv )
+int argc;
+char **argv;
+{
+    int rank, value;
+    MPI_Init( &argc, &argv );
+
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+    do {
+        if (rank == 0)
+            scanf( "%d", &value );
+
+        MPI_Bcast( &value, 1, MPI_INT, 0, MPI_COMM_WORLD );
+
+        printf( "Process %d got %d\n", rank, value );
+    } while (value >= 0);
+
+    MPI_Finalize( );
+    return 0;
+}
+\end{verbatim}
+
+We would generate this signature:
+\begin{verbatim}
+("function-signature"
+  ("function-name" "main")
+    ("arg-count" "2")
+    ("calls" "MPI_Bcast" "MPI_Comm_rank" "MPI_Finalize" "MPI_Init" "printf" "scanf")
+    ("arg-mapping" ("0" ("MPI_Init" "0")) ("1" ("MPI_Init" "1"))))
+\end{verbatim}
+
+The line \verb|arg-mapping| records the information that \verb|argc| is passed
+to \verb|MPI_Init| and \verb|argv| is passed to \verb|MPI_Init|.
+
+The tool is invoked as follows:
+\begin{verbatim}
+  generateSignatures [options] file...
+\end{verbatim}
+
+The command line options are these:
+
+\begin{verbatim}
+ -signature:(o|output) filename - Use 'filename' as the output of the signature.
+ -signature:(d|debug)           - Print debugging messages.
+\end{verbatim}
+
+%\end  of subsubsection on for generateSignatures
+
+\subsubsection{Combining summaries}
+
+Given signature information from one or more compilation units, we need to
+compute the transitive closure of both the function call graph and also of the
+parameter passing graph. With the transitive closure of both of these graphs it
+is straightforward to detect dependencies between both function calls and data
+flow with respcet to API calls. For example, given the transitive call graph,
+then during the skeletonization pass we can perform a simple lookup to
+determine if an arbitrary function would eventually result in a call to an API
+function. Similarly, for we can consult the transitive parameter passing graph
+for determining when parameters will get passed to the API.
+
+The tool is invoked as follows:
+\begin{verbatim}
+  summarizeSignatures [options] <signature files>
+\end{verbatim}
+
+The command line options are these:
+
+\begin{verbatim}
+ -summarize:(o|output) filename - Use 'filename' as the output of the summarized signature.
+ -summarize:(s|spec) filename   - Use 'filename' as the specification of the API.
+                                - See section 2.
+ -summarize:(d|debug)           - Print debugging messages.
+\end{verbatim}
+
+The last two are only needed for debugging.
+
+You should specify all the signature files from the previous step of the
+analysis at once. While the generation of the summary is additive, the overall
+analysis should be more efficient if done at once.
+
+%\end  of subsubsection on for summarizeSignatures
+
+\subsubsection{Extracting Skeleton}
 
 The tool is invoked as follows:
 
+\begin{verbatim}
   extractMPISkeleton [options] file...
+\end{verbatim}
 
-The filenames are skeletonized and the output is written to files with 'rose_'
+The filenames are skeletonized and the output is written to files with `rose\_'
 prepended to the filenames.
 
 The command line options are these:
 
+% TODO: are these section numbers correct?
+\begin{verbatim}
  -skel:(o|outline)       - Outline everything not in the skeleton.
                          - See section 3.
  -skel:(s|spec) filename - Use 'filename' as the specification of the API.
                          - See section 2.
+ -skel:(g|sig)  filename - Use 'filename' as the summary information.
  -skel:(d|debug)         - Print debugging messages.
  -skel:(p|pdf)           - Generate PDF of the generated AST.
+\end{verbatim}
 
-The last two are only needed for debugging.
+The last two are only needed for debugging. In order for the analysis to be
+complete, a signature file generated from the \verb|summarizeSignatures| tool
+must be provide.
 
 Current limitations:
 
-  - The skeleton generator only supports C and C++.
+\begin{itemize}
+
+\item The skeleton generator only supports C and C++.
     Fortran is not supported at the current time.
 
-  - When extractMPISkeleton is applied to multiple files, the analysis it
-    performs is not guaranteed to be complete.  A workaround for this is to
-    simple catenate all the input files before processing.
+\end{itemize}
 
-2. API Specification
---------------------
+\subsection{API Specification}
 
 The skeleton generator skeletonizes programs relative to one or more
 API specifications.  This means that functions that are part of the
@@ -52,6 +162,7 @@ the skeleton generator.
 APIs are specified in a configuration file that uses an s-expression
 format.  For example, here is a subset of the MPI API:
 
+\begin{verbatim}
 (api-spec MPI
   ( dep-types payload topology tag other )
   ( default_deptype other )
@@ -69,6 +180,7 @@ format.  For example, here is a subset of the MPI API:
     (MPI_Send              6  (payload 0 1 2) (topology 3) (tag 4) )
   )
 )
+\end{verbatim}
 
 First, we define the API name via the api-spec tag.  This is followed
 by an s-expression that contains a list of dependency types, prefaced
@@ -80,7 +192,9 @@ catch-all class, making the API specification a bit briefer.  Finally,
 we have an expression that contains the API calls.  Each API call is a
 sub-expression with the format:
 
+\begin{verbatim}
 (API_FUNCTION_NAME ARGUMENT_COUNT (deptype argA ..) (deptype argB ..) ...)
+\end{verbatim}
 
 For example, on MPI_send above, we see that it has 6 arguments, the
 first three of which are related to payload, the fourth is topology,
@@ -92,10 +206,12 @@ Given a set of API specifications, we then provide an API collection
 file that is used by the skeleton generator to know what set of APIs
 to skeletonize relative to, and how to do so.  For example:
 
+\begin{verbatim}
 (api-spec-collection
   ( include-api "mpi_api.spec"     (omit-deps payload) )
   ( include-api "stdio_input.spec" (omit-deps buffer) )
 )
+\end{verbatim}
 
 This tells the tool to include API specifications for MPI and a subset
 of C STDIO functions.  In each case, it also specifies a dependency
@@ -106,40 +222,46 @@ allows a user to have relatively fine control over what is and is not
 removed.  The API collection file is specified using the -skel:s
 command line option:
 
+\begin{verbatim}
 % extractMPISkeleton -skel:s /where/is/the/collection/file
+\end{verbatim}
 
-3. Outlining
-------------
+\subsection{Outlining}
 
 The skeleton generator can work in an alternate mode, Outlining.  This mode is
 specified with the following command line option:
 
+\begin{verbatim}
   -skel:o
   -skel:outline
+\end{verbatim}
 
 In this mode, rather than removing the non-skeleton code, the tool will
 "outline" (move into separate functions, the converse of inlining) all
 non-skeleton code.  I.e., the non-skeleton code is moved out of the skeleton
 code into separate functions.
 
-4. Annotations
---------------
+\subsection{Code annotations}
 
 Annotations used by this tool are specified in the following format:
 
+\begin{verbatim}
   #pragma skel [specific pragma text here]
+\end{verbatim}
 
 For example,
 
+\begin{verbatim}
   #pragma skel loop iterate atmost(10)
+\end{verbatim}
 
-4.1. Loop annotations
----------------------
+\subsubsection{Loop annotations}
 
 It is not uncommon for skeletonized code to no longer have the looping
 behavior of the original.  For example, say we have an iterative
 solver with the following stucture:
 
+\begin{verbatim}
 do {
   // some numerical computation
   for (i=0;i<n;i++) { current[i] = a_big_computation(); }
@@ -150,6 +272,7 @@ do {
   // do some message passing
   MPI_Send(stuff);
 } while (delta > eps);
+\end{verbatim}
 
 If the numerical computation is removed, we can be in a situation
 where delta will not ever change and will never drop below the
@@ -165,9 +288,11 @@ test their values).
 
 Three loop annotations are available:
 
+\begin{verbatim}
   #pragma skel loop iterate exactly(n)
   #pragma skel loop iterate atmost(n)
   #pragma skel loop iterate atleast(n)
+\end{verbatim}
 
 These correspond to forcing an exact, upper, and lower bound on the
 iteration count.  The pragma must be placed immediately preceeding the
@@ -191,6 +316,7 @@ division by an appropriate power of ten (e.g., 21376/100000).
 For example, the following will produce a skeleton
 in which the loop iterates exactly 14 times.
 
+\begin{verbatim}
 #pragma skel loop iterate exactly(14)
 do {
   // some numerical computation
@@ -202,11 +328,9 @@ do {
   // do some message passing
   MPI_Send(stuff);
 } while (delta > eps);
+\end{verbatim}
 
-
-
-4.2. Data declaration annotations
----------------------------------
+\subsubsection{Data declaration annotations}
 
 If a program contains an array that should be preserved in the
 skeleton, it is useful to have control over how it is initialized
@@ -214,8 +338,10 @@ since often the skeleton will NOT contain the computational code that
 populates the array elements.  The initializer pragma allows these
 element values to be specified.
 
+\begin{verbatim}
 #pragma skel initializer repeat(x)
 int myArray[14];
+\end{verbatim}
 
 (Where 'x' is a C expression interpreted in the current scope of the program.)
 
@@ -228,12 +354,13 @@ initialization of static arrays, and dynamically
 allocated arrays.
 Future versions will also support initializing non-array variables,
 in which case we will have a pragma something like:
+
+\begin{verbatim}
   #pragma skel initializer value(NULL)
   int *myArray;
+\end{verbatim}
 
-
-4.3. Conditional statement annotations
---------------------------------------
+\subsubsection{Conditional statement annotations}
 
 Like the loop termination criteria, loop tests will likely have
 different behavior in a skeleton than in real circumstances.  A common
@@ -245,15 +372,20 @@ probability.  This probability could easily be measured in the
 original program.  For example, if we want a conditional where the
 then-clause executes 60% of the time we would say:
 
+\begin{verbatim}
 #pragma skel condition prob(6/10)  // make true 60% of time.
   if (x % 2) {
     x += 5;
   } else {
     x = 0;
   }
+\end{verbatim}
 
 The general case is
+
+\begin{verbatim}
   #pragma skel condition prob(p)
+\end{verbatim}
 
 (Where 'p' is a C expression interpreted in the current scope of the program
 which should be a floating point number between 0 and 1.0.  As noted above,
@@ -265,173 +397,3 @@ branch randomly, but will exhibit a pattern.  For example: T, T, T, F,
 F, T, T, T, F, F.  Future versions of the skeleton generator will
 provide facilities for supporting conditional branches that preserve
 non-random patterns seen in practice.
-
-4.4 Skeleton control annotations: Preserve and Remove
------------------------------------------------------
-
-The 'preserve' and 'remove' annotations are used when one requires more control
-over what is generated by the skeletonizer.
-
-One can use 'remove' like this
-
-   #pragma skel remove
-   statement2
-
-to force the removal of 'statement2' (and any sub-statements) that might
-otherwise be retained by the skeletonizer.  (Note that any remove pragmas on
-sub-statements of 'statement2' would be redundant, and any preserve pragmas
-inside of 'statement2' are ignored.)
-
-One can use 'preserve' like this
-
-   #pragma skel preserve
-   statement1
-
-to ensure 'statement1' is never removed by the skeletonizer.  However, explicit
-'skel remove' pragmas on sub-statements of 'statement1' are allowed.
-
-When outlining is specified on the command line, statements removed with
-"#pragma skel remove" are outlined along with all other code that is not in the
-code skeleton.  In other words, preserve and remove give finer control over
-what's in or not in the skeleton while the outlining option indicates that
-instead of removing all non-skeleton code, it should be outlined.
-
-4.4.1 The Interactions of Preserve and Remove with Other Annotations
---------------------------------------------------------------------
-
-The preserve and remove annotations cannot be used before another '#pragma
-skel', they must be used immediately before a normal C statement or declaration.
-This restriction shouldn't be too onerous because
-
- - The initializer, loop, and condition pragmas imply "preserve".
- - One could always use add a basic block if one wanted to have, for instance,
-   a remove and a loop pragma:
-
-     #pragma skel remove
-     {
-       #pragma skel loop iterate exactly(n)
-       for(;;) s;
-     }
-
-
-APPENDIX A: Quick Reference for Pragma Annotations
---------------------------------------------------
-
-#pragma skel loop iterate ...
-for (;;) s; / while (p) s; / do {...} while (p)
-
-#pragma skel loop iterate exactly(n)
-#pragma skel loop iterate atmost(n)
-#pragma skel loop iterate atleast(n)
-
-  - 'n' is a C expression interpreted in the current scope of the program.
-
-
-#pragma skel remove
-#pragma skel preserve
-
-
-#pragma skel initializer repeat(x)
-int myArray[14];
-
-  - 'x' is a C expression interpreted in the current scope of the program.
-
-
-#pragma skel condition prob(p)
-if (test) ...
-
-  - 'p' is a C expression interpreted in the current scope of the program,
-  - 'p' should evaluate to a floating point number between 0 and 1.0.
-
-
-NOTE LIMITATION:
-
-  - C expressions embedded in the pragmas ('n', 'x', and 'p' above) cannot
-    contain floating point constants (ROSE limitation).
-
-
-APPENDIX B: Specifications for pragma based transformations
------------------------------------------------------------
-
-These 'specifications' are written somewhat informally in the following form:
-   forall v1,v2,... :
-     <ORIGINAL-CODE>
-   =>
-     <TRANSFORMED-CODE>
-
-#pragma skel initializer
-------------------------
-
-* #pragma skel initializer (static allocation)
-
-  forall i, a, n:        // 'n' must eval to int statically.
-    // in static scope:
-    #pragma skel initializer repeat(i)
-    int a[n];
-  =>
-    int a[n] = {i,i,...};       // i repeated n times.
-
-* #pragma skel initializer (automatic allocation)
-
-  forall i, a, e:        // 'e' a
-    // in non-static scope:
-    #pragma skel initializer repeat(i)
-    int a[e];
-  =>
-    int a[e];
-    for (k = 0; k < e; k++)
-      a[k] = i;
-
-
-#pragma skel loop iterate
--------------------------
-
-exactly:
-
-  forall count:
-    #pragma skel loop iterate exactly(count)
-    for (init;pred;incr)
-      body;
-  =>
-    int k = 0;                                           k fresh!
-    for (init; pred, k<count; k++)
-       {body; incr;}
-
-atmost:
-
-  forall count:
-    #pragma skel loop iterate atmost(count)
-    for (init;pred;incr)
-      body;
-  =>
-    int k = 0;                                           k fresh!
-     for (init; pred && k<count; k++)
-       {body; incr;}
-
-atleast:
-
-  forall count:
-    #pragma skel loop iterate atleast(count)
-    for (init;pred;incr)
-      body;
-  =>
-    int k = 0;                                           k fresh!
-     for (init; pred || k<count; k++)
-       {body; incr;}
-
-
-  NOTE: on atleast, we could have some surprises if pred doesn't "stay false" on
-      successive iterations, e.g., we have loop sequences such that we have
-      pred, !pred, !pred, pred
-
-#pragma skel condition
-----------------------
-
-  forall f:
-      #pragma skel condition prob(f)
-      if (t)
-        s;
-  =>
-      #pragma skel condition prob(f)
-      if (t, ((double)rand()/RAND_MAX) < f)
-        s;

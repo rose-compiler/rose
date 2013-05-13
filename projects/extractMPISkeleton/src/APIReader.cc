@@ -68,13 +68,13 @@ APISpec *readAPISpec(string fname, uint32_t typeCode) {
       depType = theSpec->lookupType(s->getValue());
 
       for (s = s->getNext(); s != NULL; s = s->getNext()) {
-	idx = atoi(s->getValue().c_str());
-	(*funHandle)[idx] = depType;
+        idx = atoi(s->getValue().c_str());
+        (*funHandle)[idx] = depType;
       }
     }
-    
+
   }
-  
+
   delete sx;
 
   return theSpec;

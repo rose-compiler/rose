@@ -3,6 +3,15 @@
 
 #include <AstAttributeMechanism.h>
 
+/*
+ * this class represents an API dependency attribute.  The goal
+ * of this class is to allow attributes to be associated with
+ * nodes in the AST, and allow attributes to be meaningfully
+ * merged and interrogated.  Internally this shouldn't be much
+ * more complex than operations on a short bit sequence, but we'd
+ * like to hide the representation and operations on it behind
+ * a proper object.
+ */
 class APIDepAttribute : public AstAttribute {
     public:
 
@@ -15,18 +24,24 @@ class APIDepAttribute : public AstAttribute {
         DATA    = 0x02,
     };
 
-    virtual APIDepAttribute *copy() = 0;
+    virtual APIDepAttribute *copy() const = 0;
 
+    // join with another instance of APIDepAttribute
     virtual void join(const APIDepAttribute *other) = 0;
 
+    // join with an enumeration value
     virtual void joinForm(const DependenceForm form) = 0;
 
-    virtual bool matches(const APIDepAttribute *other) = 0;
+    // query if two APIDepAttributes match
+    virtual bool matches(const APIDepAttribute *other) const = 0;
 
-    virtual bool contains(const APIDepAttribute *other) = 0;
+    // does this instance contain another one?
+    virtual bool contains(const APIDepAttribute *other) const = 0;
 
-    virtual DependenceForm getDepForm() = 0;
+    // extract the enumeration value
+    virtual DependenceForm getDepForm() const = 0;
 
+    // set the enumeration value
     virtual void setDepForm(DependenceForm depForm) = 0;
 };
 

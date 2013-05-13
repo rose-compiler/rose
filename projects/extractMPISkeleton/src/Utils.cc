@@ -1,4 +1,6 @@
-#include "rose.h"
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
+#include <rose.h>
 #include "Utils.h"
 
 using namespace SageBuilder;
@@ -18,7 +20,7 @@ std::set<SgNode*> getNodeVarDefsSSA(StaticSingleAssignment *ssa, SgNode *n) {
     StaticSingleAssignment::NodeReachingDefTable defTable =
         ssa->getUsesAtNode(n);
     StaticSingleAssignment::NodeReachingDefTable::iterator di;
-    for(di = defTable.begin(); di != defTable.end(); di++) {
+    for(di = defTable.begin(); di != defTable.end(); ++di) {
         StaticSingleAssignment::ReachingDefPtr dp = di->second;
         defs.insert(dp->getDefinitionNode());
     }
@@ -26,7 +28,7 @@ std::set<SgNode*> getNodeVarDefsSSA(StaticSingleAssignment *ssa, SgNode *n) {
         std::cout << "Defs for " << n->unparseToString()
                   << ":" << std::endl;
         std::set <SgNode*>::iterator di = defs.begin();
-        for(; di != defs.end(); di++) {
+        for(; di != defs.end(); ++di) {
             std::cout << "  " << (*di)->unparseToString() << std::endl;
         }
     }
@@ -37,7 +39,7 @@ void getNodeVarDefsTransSSA(StaticSingleAssignment *ssa,
                             SgNode *n, std::set<SgNode*> *defs) {
     std::set <SgNode*> newDefs = getNodeVarDefsSSA(ssa, n);
     std::set <SgNode*>::iterator di = newDefs.begin();
-    for(; di != newDefs.end(); di++) {
+    for(; di != newDefs.end(); ++di) {
         if(defs->find(*di) == defs->end()) {
             defs->insert(*di);
             getNodeVarDefsTransSSA(ssa, *di, defs);
@@ -55,37 +57,113 @@ SgSymbol *getEnclosingSym(SgNode *n) {
     return getEnclosingSym(n->get_parent());
 }
 
-void addStdioH (const SgNode *n) {
+void addInclude ( const std::string & header
+                , const SgNode*     node
+                ) {
   // For each global scope, only insert header one time.
-  // FIXME: may add an extraneous "include <stdio.h>" if one exists.
+  // FIXME: may add an extraneous "include <header>" if one exists.
 
-  static SgScopeStatement *gs = NULL;
+  static SgScopeStatement *scope = NULL;
 
-  SgScopeStatement *current_gs = getGlobalScope(n);
+  SgScopeStatement *current = getGlobalScope(node);
 
-  if (current_gs != gs) {
-    gs = current_gs;
-    insertHeader ( "stdio.h",
-                   PreprocessingInfo::after,
-                   true,
-                   current_gs);
+  if ( current != scope ) {
+    scope = current;
+    insertHeader ( header
+                 , PreprocessingInfo::after
+                 , true
+                 , current
+                 );
   }
 }
 
-void addStdlibH (const SgNode *n) {
-  // For each global scope, only insert header one time.
-  // FIXME: may add an extraneous "include <stdlib.h>" if one exists.
+void addStdioH (const SgNode* node) {
+  addInclude("stdio.h", node);
+}
 
-  static SgScopeStatement *gs = NULL;
+void addStdlibH (const SgNode* node) {
+  addInclude("stdlib.h", node);
+}
 
-  SgScopeStatement *current_gs = getGlobalScope(n);
-
-  if (current_gs != gs) {
-    gs = current_gs;
-    insertHeader ( "stdlib.h",
-                   PreprocessingInfo::after,
-                   true,
-                   current_gs);
+SgFunctionCallExp*
+isFunctionCall( SgNode* node ) {
+  if ( node ) {
+    switch ( node->variantT() ) {
+      case V_SgFunctionCallExp: {
+        return isSgFunctionCallExp(node);
+      }
+      case V_SgExprStatement: {
+        SgExprStatement* e_stmt = isSgExprStatement(node);
+        return isFunctionCall(e_stmt->get_expression());
+      }
+      case V_SgAssignOp: {
+        SgAssignOp* op = isSgAssignOp(node);
+        return isFunctionCall(op->get_rhs_operand());
+      }
+      case V_SgCastExp: {
+        SgCastExp* cast = isSgCastExp(node);
+        return isFunctionCall(cast->get_operand());
+      }
+      case V_SgReturnStmt: {
+        SgReturnStmt* r_stmt = isSgReturnStmt(node);
+        return isFunctionCall(r_stmt->get_expression());
+      }
+      default: {
+        return NULL;
+      }
+    }
   }
+
+  return NULL;
+}
+
+SgSymbol*
+findFunctionHead( SgNode* node ) {
+  if ( node ) {
+    SgFunctionCallExp* call = isFunctionCall(node);
+    if ( call ) {
+      return (SgSymbol*) call->getAssociatedFunctionSymbol();
+    }
+  }
+
+  return NULL;
+}
+
+void
+buildSymbolToDeclMap( SgProject* const project
+                    , std::map <SgSymbol*, SgFunctionDeclaration* > declTable
+                    ) {
+    NodeQuerySynthesizedAttributeType defs =
+        NodeQuery::querySubTree(project, V_SgFunctionDefinition);
+    foreach(const SgNode * const node, defs) {
+        const SgFunctionDefinition * const def = isSgFunctionDefinition(node);
+        if ( def ) {
+          SgFunctionDeclaration* const decl = def->get_declaration();
+          if ( decl ) {
+            SgSymbol* const fun = decl->get_symbol_from_symbol_table();
+            if ( fun ) {
+              if ( declTable[fun] == NULL ) {
+                declTable[fun] = decl;
+                if ( debug ) {
+                  std::cout << "Added binding for "
+                            << fun->get_name().str()            << std::endl;
+                }
+              } else if ( debug ) {
+                std::cout << "Duplicate definition for "
+                          << fun->get_name().str()              << std::endl;
+              }
+            } else if ( debug ) {
+              std::cout << "No declaration associated with definition"
+                                                                << std::endl;
+            }
+          } else if ( debug ) {
+            std::cout << "Duplicate definition for "
+                                                                << std::endl;
+          }
+        } else if ( debug ) {
+          std::cout << "No definition?"
+                                                                << std::endl;
+        }
+    }
 }
 

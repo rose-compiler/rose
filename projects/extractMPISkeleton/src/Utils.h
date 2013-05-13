@@ -17,4 +17,12 @@ SgSymbol *getEnclosingSym(SgNode *n);
 void addStdioH (const SgNode *n);
 void addStdlibH (const SgNode *n);
 
+SgFunctionCallExp* isFunctionCall( SgNode* node );
+SgSymbol* findFunctionHead( SgNode* node );
+
+void
+buildSymbolToDeclMap( SgProject* const project
+                    , std::map <SgSymbol*, SgFunctionDeclaration* > declTable
+                    );
+
 #endif

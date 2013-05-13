@@ -45,7 +45,7 @@ class DangerousOperationFinder : public AstBottomUpProcessing<bool> {
             std::set<SgNode*> defs;
             getNodeVarDefsTransSSA(ssa, dangerous, &defs);
             std::set<SgNode*>::iterator di = defs.begin();
-            for(; di != defs.end(); di++) {
+            for(; di != defs.end(); ++di) {
                 if(checker->check(*di)) {
                     std::cout << "Dangerous operation" << std::endl
                               << "  " << n->unparseToString()
