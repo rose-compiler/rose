@@ -324,7 +324,7 @@ static SgStatement* build_array_unpacking_statement( SgExpression * lhs, SgExpre
     SgExpression * assign_lhs = buildPntrArrRefExp( lhs, buildVarRefExp( loop_index_name, scope ) );
     SgExpression * assign_rhs = buildPntrArrRefExp( rhs, buildVarRefExp( loop_index_name, scope ) );
     SgStatement * loop_body = NULL;
-    SgType * base_type = isSgArrayType( type )->get_base_type( ); 
+    SgType * base_type = isSgArrayType( type )->get_base_type( )->stripType( SgType::STRIP_TYPEDEF_TYPE );
     if( isSgArrayType( base_type ) )
     {
         loop_body = build_array_unpacking_statement( assign_lhs, assign_rhs, base_type, scope, loop_indexes );
@@ -577,13 +577,13 @@ createUnpackDecl (SgInitializedName* param, // the function parameter
     }
 
     SgVariableDeclaration* decl;
-    if( isSgArrayType( local_type ) )
+    if( isSgArrayType( local_type->stripType( SgType::STRIP_TYPEDEF_TYPE ) ) )
     {   // The original variable was no statically allocated and passed as private or firstprivate
         // We need to copy every element of the array
         decl = buildVariableDeclaration( local_name, local_type, NULL, scope );
         SgStatementPtrList loop_indexes;
         SgStatement * array_init = build_array_unpacking_statement( buildVarRefExp( decl ), param_ref, 
-                                                                    local_type, scope, loop_indexes );
+                                                                    local_type->stripType( SgType::STRIP_TYPEDEF_TYPE ), scope, loop_indexes );
         SageInterface::prependStatement( array_init, scope );
         SageInterface::prependStatementList( loop_indexes, scope );
     }
