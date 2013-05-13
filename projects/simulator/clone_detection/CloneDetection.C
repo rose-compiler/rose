@@ -220,19 +220,12 @@ struct ReadWriteState {
     ReadWriteState(): state(NO_ACCESS) {}
 };
 
-/** One cell of memory.  A cell contains an address and a byte value and an indicatation of how the cell has been accessed. */
-struct MemoryCell {
-    MemoryCell()
-        : addr(PartialSymbolicSemantics::ValueType<32>(0)),
-          val(PartialSymbolicSemantics::ValueType<8>(0)),
-          rw_state(NO_ACCESS) {}
-    MemoryCell(const PartialSymbolicSemantics::ValueType<32> &addr,
-               const PartialSymbolicSemantics::ValueType<8> &val,
-               unsigned rw_state)
-        : addr(addr), val(val), rw_state(rw_state) {}
-    PartialSymbolicSemantics::ValueType<32> addr;
+/** One value stored in memory. */
+struct MemoryValue {
+    MemoryValue(): val(PartialSymbolicSemantics::ValueType<8>(0)), rw_state(NO_ACCESS) {}
+    MemoryValue(const PartialSymbolicSemantics::ValueType<8> &val, unsigned rw_state): val(val), rw_state(rw_state) {}
     PartialSymbolicSemantics::ValueType<8> val;
-    unsigned rw_state;                                          // NO_ACCESS or HAS_BEEN_READ and/or HAS_BEEN_WRITTEN bits
+    unsigned rw_state;
 };
 
 /** Analysis machine state. We override some of the memory operations. All values are concrete (we're using
@@ -241,7 +234,7 @@ struct MemoryCell {
 template <template <size_t> class ValueType>
 class State: public PartialSymbolicSemantics::State<ValueType> {
 public:
-    typedef std::map<uint32_t, MemoryCell> MemoryCells;         // memory cells indexed by address
+    typedef std::map<uint32_t, MemoryValue> MemoryCells;        // memory cells indexed by address
     MemoryCells stack_cells;                                    // memory state for stack memory (accessed via SS register)
     MemoryCells data_cells;                                     // memory state for anything that non-stack (e.g., DS register)
     BaseSemantics::RegisterStateX86<ValueType> registers;
@@ -253,7 +246,7 @@ public:
     void mem_write_byte(X86SegmentRegister sr, const ValueType<32> &addr, const ValueType<8> &value,
                         unsigned rw_state=HAS_BEEN_WRITTEN) {
         MemoryCells &cells = x86_segreg_ss==sr ? stack_cells : data_cells;
-        cells[addr.known_value()] = MemoryCell(addr, value, rw_state);
+        cells[addr.known_value()] = MemoryValue(value, rw_state);
     }
         
     // Read a single byte from memory.  If the read operation cannot find an appropriate memory cell, then @p
@@ -263,10 +256,8 @@ public:
 
         std::vector<ValueType<8> > found;
         typename MemoryCells::iterator ci = cells.find(addr.known_value());
-        if (ci!=cells.end()) {
-            assert(must_alias(addr, ci->second.addr));
+        if (ci!=cells.end())
             found.push_back(ci->second.val);
-        }
         if (!found.empty())
             return found[rand()%found.size()];
         *uninitialized_read = true;
@@ -297,7 +288,7 @@ public:
     // stack_frame_top but larger than @p stack_frame_top - @p frame_size are not considered to be outputs (they are the
     // function's local variables). The @p stack_frame_top is usually the address of the function's return EIP, the address
     // that was pushed onto the stack by the CALL instruction.
-    OutputGroup get_outputs(const ValueType<32> &stack_frame_top, size_t frame_size, Verbosity verbosity) {
+    OutputGroup get_outputs(uint32_t stack_frame_top, size_t frame_size, Verbosity verbosity) {
         OutputGroup outputs = this->output_group;
 
         // Function return value is EAX, but only if it has been written to.
@@ -309,25 +300,26 @@ public:
 
         // Add to the outputs the memory cells that are outside the local stack frame (estimated).
         for (MemoryCells::iterator ci=stack_cells.begin(); ci!=stack_cells.end(); ++ci) {
-            MemoryCell &cell = ci->second;
-            bool cell_in_frame = (cell.addr.known_value() <= stack_frame_top.known_value() &&
-                                  cell.addr.known_value() > stack_frame_top.known_value() - frame_size);
-            if (0 != (cell.rw_state & HAS_BEEN_WRITTEN)) {
+            uint32_t addr = ci->first;
+            MemoryValue &mval = ci->second;
+            bool cell_in_frame = (addr <= stack_frame_top && addr > stack_frame_top-frame_size);
+            if (0 != (mval.rw_state & HAS_BEEN_WRITTEN)) {
                 if (verbosity>=EFFUSIVE)
-                    std::cerr <<"output for stack address "
-                              <<cell.addr <<": " <<cell.val <<(cell_in_frame?" (IGNORED)":"") <<"\n";
+                    std::cerr <<"output for stack address " <<StringUtility::addrToString(addr) <<": "
+                              <<mval.val <<(cell_in_frame?" (IGNORED)":"") <<"\n";
                 if (!cell_in_frame)
-                    outputs.values.push_back(cell.val.known_value());
+                    outputs.values.push_back(mval.val.known_value());
             }
         }
 
         // Add to the outputs the non-stack memory cells
         for (MemoryCells::iterator ci=data_cells.begin(); ci!=data_cells.end(); ++ci) {
-            MemoryCell &cell = ci->second;
-            if (0 != (cell.rw_state & HAS_BEEN_WRITTEN)) {
+            uint32_t addr = ci->first;
+            MemoryValue &mval = ci->second;
+            if (0 != (mval.rw_state & HAS_BEEN_WRITTEN)) {
                 if (verbosity>=EFFUSIVE)
-                    std::cerr <<"output for data address " <<cell.addr <<": " <<cell.val <<"\n";
-                outputs.values.push_back(cell.val.known_value());
+                    std::cerr <<"output for data address " <<addr <<": " <<mval.val <<"\n";
+                outputs.values.push_back(mval.val.known_value());
             }
         }
 
@@ -343,18 +335,19 @@ public:
             const MemoryCells &cells = 0==i ? stack_cells : data_cells;
             o <<"== Memory (" <<(0==i?"stack":"data") <<" segment) ==\n";
             for (typename MemoryCells::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
-                const MemoryCell &cell = ci->second;
+                uint32_t addr = ci->first;
+                const MemoryValue &mval = ci->second;
                 if (++ncells>max_ncells) {
                     o <<"    skipping " <<cells.size()-(ncells-1) <<" more memory cells for brevity's sake...\n";
                     break;
                 }
                 o <<"         cell access:"
-                  <<(0==(cell.rw_state & HAS_BEEN_READ)?"":" read")
-                  <<(0==(cell.rw_state & HAS_BEEN_WRITTEN)?"":" written")
-                  <<(0==(cell.rw_state & (HAS_BEEN_READ|HAS_BEEN_WRITTEN))?" none":"")
+                  <<(0==(mval.rw_state & HAS_BEEN_READ)?"":" read")
+                  <<(0==(mval.rw_state & HAS_BEEN_WRITTEN)?"":" written")
+                  <<(0==(mval.rw_state & (HAS_BEEN_READ|HAS_BEEN_WRITTEN))?" none":"")
                   <<"\n"
-                  <<"    address symbolic: " <<cell.addr <<"\n";
-                o <<"        value " <<cell.val <<"\n";
+                  <<"    address symbolic: " <<addr <<"\n";
+                o <<"        value " <<mval.val <<"\n";
             }
         }
     }
@@ -427,8 +420,7 @@ public:
 
     // Return output values. These include the return value, certain memory writes, function calls, system calls, etc.
     OutputGroup get_outputs() {
-        ValueType<32> stack_frame_top(INITIAL_STACK);
-        return state.get_outputs(stack_frame_top, 8192, verbosity);
+        return state.get_outputs(INITIAL_STACK, 8192, verbosity);
     }
     
     // Sets up the machine state to start the analysis of one function.
