@@ -17,6 +17,13 @@ int main()
     for(i=0;i<100;i++)
       array[i] += i;
   }
+  
+  // Sara 5/13/2013
+  // Check result since firsprivate copies were not properly handled
+  int i;
+  for(i=0;i<100;i++)
+      assert( array[i]==10 );
+  
   return 0;
 }
 

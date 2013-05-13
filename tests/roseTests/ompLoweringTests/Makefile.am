@@ -59,6 +59,7 @@ OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
 C_TESTCODES_REQUIRED_TO_RUN = \
 	3loops.c \
 	array_init.c \
+	array_init_2.c \
 	atomic.c \
 	barrier.c \
 	critical.c \
