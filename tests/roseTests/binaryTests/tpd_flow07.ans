@@ -32,6 +32,6 @@ Anlyzing pointers in this function:
 0x0804861d: 90 90 90                |...     | 11-byte padding beginning at 0x08048615
 
 Not using Yices SMT solver
-data pointer at defs={0x080485ed,0x080485ee,0x08048608} expr=(add[32] (add[32] v626[32] -4[32]) 16[32])
-data pointer at defs={0x080485ed,0x080485ee,0x0804860e} expr=(add[32] (add[32] v626[32] -4[32]) -4[32])
-data pointer at defs={0x080485ed,0x080485ee,0x08048600} expr=(add[32] (add[32] v626[32] -4[32]) 12[32])
+data pointer at defs={0x080485ed,0x080485ee,0x08048608} expr=(add[32] v5[32] 12[32])
+data pointer at defs={0x080485ed,0x080485ee,0x0804860e} expr=(add[32] v5[32] -8[32])
+data pointer at defs={0x080485ed,0x080485ee,0x08048600} expr=(add[32] v5[32] 8[32])

@@ -15,4 +15,4 @@ Anlyzing pointers in this function:
 0x080484ac: Successor blocks: unknown
 
 Not using Yices SMT solver
-code pointer at defs={0x080484a0,0x080484a1,0x080484a6} expr=(add[32] (add[32] v348[32] -4[32]) 8[32])
+code pointer at defs={0x080484a0,0x080484a1,0x080484a6} expr=(add[32] v5[32] 4[32])

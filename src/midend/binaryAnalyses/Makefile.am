@@ -16,13 +16,20 @@ libbinaryMidend_la_SOURCES = \
      dataflowanalyses/InterruptAnalysis.cpp \
      dataflowanalyses/RoseBin_Emulate.cpp \
      dataflowanalyses/RoseBin_DataFlowAbstract.cpp \
+     instructionSemantics/BaseSemantics2.C \
+     instructionSemantics/DispatcherX86.C \
+     instructionSemantics/NullSemantics2.C \
+     instructionSemantics/MultiSemantics2.C \
+     instructionSemantics/PartialSymbolicSemantics2.C \
      instructionSemantics/findConstants.C \
      instructionSemantics/FindRegisterDefs.C \
      instructionSemantics/InsnSemanticsExpr.C \
      instructionSemantics/IntervalSemantics.C \
+     instructionSemantics/IntervalSemantics2.C \
      instructionSemantics/PartialSymbolicSemantics.C \
      instructionSemantics/SMTSolver.C \
      instructionSemantics/SymbolicSemantics.C \
+     instructionSemantics/SymbolicSemantics2.C \
      instructionSemantics/YicesSolver.C \
      GraphAlgorithms.C \
      BinaryControlFlow.C \
@@ -60,12 +67,19 @@ include_HEADERS = \
    instructionSemantics/FindRegisterDefs.h \
    instructionSemantics/InsnSemanticsExpr.h \
    instructionSemantics/BaseSemantics.h \
+   instructionSemantics/BaseSemantics2.h \
+   instructionSemantics/DispatcherX86.h \
    instructionSemantics/IntervalSemantics.h \
+   instructionSemantics/IntervalSemantics2.h \
    instructionSemantics/NullSemantics.h \
+   instructionSemantics/NullSemantics2.h \
    instructionSemantics/MultiSemantics.h \
+   instructionSemantics/MultiSemantics2.h \
    instructionSemantics/PartialSymbolicSemantics.h \
+   instructionSemantics/PartialSymbolicSemantics2.h \
    instructionSemantics/SMTSolver.h \
    instructionSemantics/SymbolicSemantics.h \
+   instructionSemantics/SymbolicSemantics2.h \
    instructionSemantics/YicesSolver.h \
    instructionSemantics/flowEquations.h \
    instructionSemantics/semanticsModule.h \

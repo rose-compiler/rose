@@ -303,8 +303,8 @@ public:
      *
      *  They are equal if the start and end at the same place or if they are both empty. */
     bool congruent(const Range &x) const {
-        if (empty() && x.empty())
-            return true;
+        if (empty() || x.empty())
+            return empty() && x.empty();
         return first()==x.first() && last()==x.last();
     }
 
@@ -382,6 +382,13 @@ public:
         return Range::inin(minimum(), maximum());
     }
 
+    bool operator==(const Range &x) const {
+        return congruent(x);
+    }
+    bool operator!=(const Range &x) const {
+        return !congruent(x);
+    }
+    
     void print(std::ostream &o) const {
         if (empty()) {
             o <<"<empty>";

@@ -1,3 +1,6 @@
+#ifndef ROSE_FormatRestorer_H
+#define ROSE_FormatRestorer_H
+
 #include <iostream>
 
 /** Restores output stream flags to original values.
@@ -52,13 +55,25 @@ protected:
     std::ios_base::fmtflags fmt;
 
 public:
+    /** Constructor saves output stream flags. */
     FormatRestorer(std::ostream &o): stream(o) {
+        save(o);
+    }
+
+    /** Destructor restores output stream flags. */
+    ~FormatRestorer() {
+        restore();
+    }
+
+    /** Save current output stream flags. */
+    void save(std::ostream &o) {
         fmt = o.flags();
     }
 
-    ~FormatRestorer() {
+    /** Restore saved flags. Flags can be restored as many times as desired. */
+    void restore() {
         stream.flags(fmt);
     }
 };
-
     
+#endif
