@@ -306,6 +306,7 @@ set (unparser_SRC
 
 set(roseBinaryFormats_fileList_part0
    ### Utilities ###
+   ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/ByteOrder.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/DataConversion.C
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/ExecGeneric.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/ExtentMap.C
@@ -510,9 +511,14 @@ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/findConstants
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/FindRegisterDefs.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/InsnSemanticsExpr.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/IntervalSemantics.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/IntervalSemantics2.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/NullSemantics2.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/MultiSemantics2.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/PartialSymbolicSemantics.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/PartialSymbolicSemantics2.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/SMTSolver.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/SymbolicSemantics.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/SymbolicSemantics2.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/YicesSolver.C
 )
 

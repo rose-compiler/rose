@@ -171,9 +171,9 @@ public:
         this->nbits = nbits;
         return *this;
     }
-    bool equal(const RegisterDescriptor &other) const {
-	return majr==other.majr && minr==other.minr && offset==other.offset && nbits==other.nbits;
-    }
+    bool operator<(const RegisterDescriptor &other) const;
+    bool operator==(const RegisterDescriptor &other) const;
+    bool operator!=(const RegisterDescriptor &other) const;
     void print(std::ostream &o) const {
 	o <<"{" <<majr <<"," <<minr <<"," <<offset <<"," <<nbits <<"}";
     }

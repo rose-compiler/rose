@@ -28,7 +28,7 @@ SgAsmElfFileHeader::ctor()
     ROSE_ASSERT(p_exec_format!=NULL);
     p_exec_format->set_family(FAMILY_ELF);
     p_exec_format->set_purpose(PURPOSE_EXECUTABLE);
-    p_exec_format->set_sex(ORDER_LSB);
+    p_exec_format->set_sex(ByteOrder::ORDER_LSB);
     p_exec_format->set_word_size(4);
     p_exec_format->set_version(1);
     p_exec_format->set_is_current_version(true);
@@ -137,27 +137,27 @@ SgAsmElfFileHeader::parse()
     /* File byte order should be 1 or 2. However, we've seen at least one example that left the byte order at zero, implying
      * that it was the native order. We don't have the luxury of decoding the file on the native machine, so in that case we
      * try to infer the byte order by looking at one of the other multi-byte fields of the file. */
-    ByteOrder sex;
+    ByteOrder::Endianness sex;
     if (1 == disk32.e_ident_data_encoding) {
-        sex = ORDER_LSB;
+        sex = ByteOrder::ORDER_LSB;
     } else if (2==disk32.e_ident_data_encoding) {
-        sex = ORDER_MSB;
+        sex = ByteOrder::ORDER_MSB;
     } else if ((disk32.e_type & 0xff00)==0xff00) {
         /* One of the 0xffxx processor-specific flags in native order */
         if ((disk32.e_type & 0x00ff)==0xff)
             throw FormatError("invalid ELF header byte order"); /*ambiguous*/
-        sex = host_order();
+        sex = ByteOrder::host_order();
     } else if ((disk32.e_type & 0x00ff)==0x00ff) {
         /* One of the 0xffxx processor specific orders in reverse native order */
-        sex = host_order()==ORDER_LSB ? ORDER_MSB : ORDER_LSB;
+        sex = ByteOrder::host_order()==ByteOrder::ORDER_LSB ? ByteOrder::ORDER_MSB : ByteOrder::ORDER_LSB;
     } else if ((disk32.e_type & 0xff00)==0) {
         /* One of the low-valued file types in native order */
         if ((disk32.e_type & 0x00ff)==0)
             throw FormatError("invalid ELF header byte order"); /*ambiguous*/
-        sex = host_order();
+        sex = ByteOrder::host_order();
     } else if ((disk32.e_type & 0x00ff)==0) {
         /* One of the low-valued file types in reverse native order */
-        sex = host_order() == ORDER_LSB ? ORDER_MSB : ORDER_LSB;
+        sex = ByteOrder::host_order() == ByteOrder::ORDER_LSB ? ByteOrder::ORDER_MSB : ByteOrder::ORDER_LSB;
     } else {
         /* Ambiguous order */
         throw FormatError("invalid ELF header byte order");
@@ -175,36 +175,36 @@ SgAsmElfFileHeader::parse()
         for (size_t i=0; i<sizeof(disk32.e_ident_padding); i++)
              p_e_ident_padding.push_back(disk32.e_ident_padding[i]);
 
-        p_e_ident_file_class    = disk_to_host(sex, disk32.e_ident_file_class);
-        p_e_ident_file_version  = disk_to_host(sex, disk32.e_ident_file_version);
-        p_e_type                = disk_to_host(sex, disk32.e_type);
-        p_e_machine             = disk_to_host(sex, disk32.e_machine);
-        p_exec_format->set_version(disk_to_host(sex, disk32.e_version));
-        entry_rva               = disk_to_host(sex, disk32.e_entry);
-        segtab_rva              = disk_to_host(sex, disk32.e_phoff);
-        sectab_rva              = disk_to_host(sex, disk32.e_shoff);
-        p_e_flags               = disk_to_host(sex, disk32.e_flags);
-        p_e_ehsize              = disk_to_host(sex, disk32.e_ehsize);
+        p_e_ident_file_class    = ByteOrder::disk_to_host(sex, disk32.e_ident_file_class);
+        p_e_ident_file_version  = ByteOrder::disk_to_host(sex, disk32.e_ident_file_version);
+        p_e_type                = ByteOrder::disk_to_host(sex, disk32.e_type);
+        p_e_machine             = ByteOrder::disk_to_host(sex, disk32.e_machine);
+        p_exec_format->set_version(ByteOrder::disk_to_host(sex, disk32.e_version));
+        entry_rva               = ByteOrder::disk_to_host(sex, disk32.e_entry);
+        segtab_rva              = ByteOrder::disk_to_host(sex, disk32.e_phoff);
+        sectab_rva              = ByteOrder::disk_to_host(sex, disk32.e_shoff);
+        p_e_flags               = ByteOrder::disk_to_host(sex, disk32.e_flags);
+        p_e_ehsize              = ByteOrder::disk_to_host(sex, disk32.e_ehsize);
 
-        p_e_phnum               = disk_to_host(sex, disk32.e_phnum);
+        p_e_phnum               = ByteOrder::disk_to_host(sex, disk32.e_phnum);
         if (p_e_phnum>0) {
-            p_phextrasz         = disk_to_host(sex, disk32.e_phentsize);
+            p_phextrasz         = ByteOrder::disk_to_host(sex, disk32.e_phentsize);
             ROSE_ASSERT(p_phextrasz>=sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
             p_phextrasz -= sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk);
         } else {
             p_phextrasz = 0;
         }
 
-        p_e_shnum               = disk_to_host(sex, disk32.e_shnum);
+        p_e_shnum               = ByteOrder::disk_to_host(sex, disk32.e_shnum);
         if (p_e_shnum>0) {
-            p_shextrasz         = disk_to_host(sex, disk32.e_shentsize);
+            p_shextrasz         = ByteOrder::disk_to_host(sex, disk32.e_shentsize);
             ROSE_ASSERT(p_shextrasz>=sizeof(SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk));
             p_shextrasz -= sizeof(SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk);
         } else {
             p_shextrasz = 0;
         }
 
-        p_e_shstrndx            = disk_to_host(sex, disk32.e_shstrndx);
+        p_e_shstrndx            = ByteOrder::disk_to_host(sex, disk32.e_shstrndx);
     } else if (2 == disk32.e_ident_file_class) {
         /* We guessed wrong. This is a 64-bit header, not 32-bit. */
         p_exec_format->set_word_size(8);
@@ -217,36 +217,36 @@ SgAsmElfFileHeader::parse()
         for (size_t i=0; i<sizeof(disk64.e_ident_padding); i++)
              p_e_ident_padding.push_back(disk64.e_ident_padding[i]);
 
-        p_e_ident_file_class    = disk_to_host(sex, disk64.e_ident_file_class);
-        p_e_ident_file_version  = disk_to_host(sex, disk64.e_ident_file_version);
-        p_e_type                = disk_to_host(sex, disk64.e_type);
-        p_e_machine             = disk_to_host(sex, disk64.e_machine);
-        p_exec_format->set_version(disk_to_host(sex, disk64.e_version));
-        entry_rva               = disk_to_host(sex, disk64.e_entry);
-        segtab_rva              = disk_to_host(sex, disk64.e_phoff);
-        sectab_rva              = disk_to_host(sex, disk64.e_shoff);
-        p_e_flags               = disk_to_host(sex, disk64.e_flags);
-        p_e_ehsize              = disk_to_host(sex, disk64.e_ehsize);
+        p_e_ident_file_class    = ByteOrder::disk_to_host(sex, disk64.e_ident_file_class);
+        p_e_ident_file_version  = ByteOrder::disk_to_host(sex, disk64.e_ident_file_version);
+        p_e_type                = ByteOrder::disk_to_host(sex, disk64.e_type);
+        p_e_machine             = ByteOrder::disk_to_host(sex, disk64.e_machine);
+        p_exec_format->set_version(ByteOrder::disk_to_host(sex, disk64.e_version));
+        entry_rva               = ByteOrder::disk_to_host(sex, disk64.e_entry);
+        segtab_rva              = ByteOrder::disk_to_host(sex, disk64.e_phoff);
+        sectab_rva              = ByteOrder::disk_to_host(sex, disk64.e_shoff);
+        p_e_flags               = ByteOrder::disk_to_host(sex, disk64.e_flags);
+        p_e_ehsize              = ByteOrder::disk_to_host(sex, disk64.e_ehsize);
 
-        p_e_phnum               = disk_to_host(sex, disk64.e_phnum);
+        p_e_phnum               = ByteOrder::disk_to_host(sex, disk64.e_phnum);
         if (p_e_phnum>0) {
-            p_phextrasz         = disk_to_host(sex, disk64.e_phentsize);
+            p_phextrasz         = ByteOrder::disk_to_host(sex, disk64.e_phentsize);
             ROSE_ASSERT(p_phextrasz>=sizeof(SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk));
             p_phextrasz -= sizeof(SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk);
         } else {
             p_phextrasz = 0;
         }
 
-        p_e_shnum               = disk_to_host(sex, disk64.e_shnum);
+        p_e_shnum               = ByteOrder::disk_to_host(sex, disk64.e_shnum);
         if (p_e_shnum>0) {
-            p_shextrasz         = disk_to_host(sex, disk64.e_shentsize);
+            p_shextrasz         = ByteOrder::disk_to_host(sex, disk64.e_shentsize);
             ROSE_ASSERT(p_shextrasz>=sizeof(SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk));
             p_shextrasz -= sizeof(SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk);
         } else {
             p_shextrasz = 0;
         }
 
-        p_e_shstrndx            = disk_to_host(sex, disk64.e_shstrndx);
+        p_e_shstrndx            = ByteOrder::disk_to_host(sex, disk64.e_shstrndx);
     } else {
         throw FormatError("invalid ELF header file class");
     }
@@ -352,83 +352,87 @@ SgAsmElfFileHeader::get_segtab_sections()
 
 /** Encode Elf header disk structure */
 void *
-SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk) const
+SgAsmElfFileHeader::encode(ByteOrder::Endianness sex, Elf32FileHeader_disk *disk) const
 {
     ROSE_ASSERT(p_magic.size() == NELMTS(disk->e_ident_magic));
     for (size_t i=0; i<NELMTS(disk->e_ident_magic); i++)
         disk->e_ident_magic[i] = p_magic[i];
-    host_to_disk(sex, p_e_ident_file_class, &(disk->e_ident_file_class));
-    host_to_disk(sex, p_e_ident_data_encoding, &(disk->e_ident_data_encoding));
-    host_to_disk(sex, p_e_ident_file_version, &(disk->e_ident_file_version));
+    ByteOrder::host_to_disk(sex, p_e_ident_file_class, &(disk->e_ident_file_class));
+    ByteOrder::host_to_disk(sex, p_e_ident_data_encoding, &(disk->e_ident_data_encoding));
+    ByteOrder::host_to_disk(sex, p_e_ident_file_version, &(disk->e_ident_file_version));
     ROSE_ASSERT(p_e_ident_padding.size() == NELMTS(disk->e_ident_padding));
     for (size_t i=0; i<NELMTS(disk->e_ident_padding); i++)
         disk->e_ident_padding[i] = p_e_ident_padding[i];
-    host_to_disk(sex, p_e_type, &(disk->e_type));
-    host_to_disk(sex, p_e_machine, &(disk->e_machine));
-    host_to_disk(sex, p_exec_format->get_version(), &(disk->e_version));
-    host_to_disk(sex, get_entry_rva(), &(disk->e_entry));
+    ByteOrder::host_to_disk(sex, p_e_type, &(disk->e_type));
+    ByteOrder::host_to_disk(sex, p_e_machine, &(disk->e_machine));
+    ByteOrder::host_to_disk(sex, p_exec_format->get_version(), &(disk->e_version));
+    ByteOrder::host_to_disk(sex, get_entry_rva(), &(disk->e_entry));
     if (get_segment_table()) {
-        host_to_disk(sex, get_segment_table()->get_offset(), &(disk->e_phoff));
+        ByteOrder::host_to_disk(sex, get_segment_table()->get_offset(), &(disk->e_phoff));
     } else {
-        host_to_disk(sex, 0, &(disk->e_phoff));
+        ByteOrder::host_to_disk(sex, 0, &(disk->e_phoff));
     }
     if (get_section_table()) {
-        host_to_disk(sex, get_section_table()->get_offset(), &(disk->e_shoff));
+        ByteOrder::host_to_disk(sex, get_section_table()->get_offset(), &(disk->e_shoff));
     } else {
-        host_to_disk(sex, 0, &(disk->e_shoff));
+        ByteOrder::host_to_disk(sex, 0, &(disk->e_shoff));
     }
-    host_to_disk(sex, p_e_flags,               &(disk->e_flags));
-    host_to_disk(sex, p_e_ehsize,              &(disk->e_ehsize));
+    ByteOrder::host_to_disk(sex, p_e_flags,               &(disk->e_flags));
+    ByteOrder::host_to_disk(sex, p_e_ehsize,              &(disk->e_ehsize));
 
     if (p_e_phnum>0) {
-        host_to_disk(sex, p_phextrasz+sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk), &(disk->e_phentsize));
+        ByteOrder::host_to_disk(sex, p_phextrasz+sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk),
+                                &(disk->e_phentsize));
     } else {
-        host_to_disk(sex, 0, &(disk->e_phentsize));
+        ByteOrder::host_to_disk(sex, 0, &(disk->e_phentsize));
     }
     if (p_e_shnum>0) {
-        host_to_disk(sex, p_shextrasz+sizeof(SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk), &(disk->e_shentsize));
+        ByteOrder::host_to_disk(sex, p_shextrasz+sizeof(SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk),
+                                &(disk->e_shentsize));
     } else {
-        host_to_disk(sex, 0, &(disk->e_shentsize));
+        ByteOrder::host_to_disk(sex, 0, &(disk->e_shentsize));
     }
-    host_to_disk(sex, p_e_phnum,               &(disk->e_phnum));
-    host_to_disk(sex, p_e_shnum,               &(disk->e_shnum));
-    host_to_disk(sex, p_e_shstrndx,            &(disk->e_shstrndx));
+    ByteOrder::host_to_disk(sex, p_e_phnum,               &(disk->e_phnum));
+    ByteOrder::host_to_disk(sex, p_e_shnum,               &(disk->e_shnum));
+    ByteOrder::host_to_disk(sex, p_e_shstrndx,            &(disk->e_shstrndx));
 
     return disk;
 }
 void *
-SgAsmElfFileHeader::encode(ByteOrder sex, Elf64FileHeader_disk *disk) const
+SgAsmElfFileHeader::encode(ByteOrder::Endianness sex, Elf64FileHeader_disk *disk) const
 {
     ROSE_ASSERT(p_magic.size() == NELMTS(disk->e_ident_magic));
     for (size_t i=0; i < NELMTS(disk->e_ident_magic); i++)
         disk->e_ident_magic[i] = p_magic[i];
-    host_to_disk(sex, p_e_ident_file_class, &(disk->e_ident_file_class));
-    host_to_disk(sex, p_e_ident_data_encoding, &(disk->e_ident_data_encoding));
-    host_to_disk(sex, p_e_ident_file_version,&(disk->e_ident_file_version));
+    ByteOrder::host_to_disk(sex, p_e_ident_file_class, &(disk->e_ident_file_class));
+    ByteOrder::host_to_disk(sex, p_e_ident_data_encoding, &(disk->e_ident_data_encoding));
+    ByteOrder::host_to_disk(sex, p_e_ident_file_version,&(disk->e_ident_file_version));
     ROSE_ASSERT(p_e_ident_padding.size() == NELMTS(disk->e_ident_padding));
     for (size_t i=0; i<NELMTS(disk->e_ident_padding); i++)
         disk->e_ident_padding[i] = p_e_ident_padding[i];
-    host_to_disk(sex, p_e_type, &(disk->e_type));
-    host_to_disk(sex, p_e_machine, &(disk->e_machine));
-    host_to_disk(sex, p_exec_format->get_version(), &(disk->e_version));
-    host_to_disk(sex, get_entry_rva(),         &(disk->e_entry));
+    ByteOrder::host_to_disk(sex, p_e_type, &(disk->e_type));
+    ByteOrder::host_to_disk(sex, p_e_machine, &(disk->e_machine));
+    ByteOrder::host_to_disk(sex, p_exec_format->get_version(), &(disk->e_version));
+    ByteOrder::host_to_disk(sex, get_entry_rva(),         &(disk->e_entry));
     if (get_segment_table()) {
-        host_to_disk(sex, get_segment_table()->get_offset(), &(disk->e_phoff));
+        ByteOrder::host_to_disk(sex, get_segment_table()->get_offset(), &(disk->e_phoff));
     } else {
-        host_to_disk(sex, 0, &(disk->e_phoff));
+        ByteOrder::host_to_disk(sex, 0, &(disk->e_phoff));
     }
     if (get_section_table()) {
-        host_to_disk(sex, get_section_table()->get_offset(), &(disk->e_shoff));
+        ByteOrder::host_to_disk(sex, get_section_table()->get_offset(), &(disk->e_shoff));
     } else {
-        host_to_disk(sex, 0, &(disk->e_shoff));
+        ByteOrder::host_to_disk(sex, 0, &(disk->e_shoff));
     }
-    host_to_disk(sex, p_e_flags,               &(disk->e_flags));
-    host_to_disk(sex, p_e_ehsize,              &(disk->e_ehsize));
-    host_to_disk(sex, p_phextrasz+sizeof(SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk), &(disk->e_phentsize));
-    host_to_disk(sex, p_e_phnum,               &(disk->e_phnum));
-    host_to_disk(sex, p_shextrasz+sizeof(SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk), &(disk->e_shentsize));
-    host_to_disk(sex, p_e_shnum,               &(disk->e_shnum));
-    host_to_disk(sex, p_e_shstrndx,            &(disk->e_shstrndx));
+    ByteOrder::host_to_disk(sex, p_e_flags,               &(disk->e_flags));
+    ByteOrder::host_to_disk(sex, p_e_ehsize,              &(disk->e_ehsize));
+    ByteOrder::host_to_disk(sex, p_phextrasz+sizeof(SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk),
+                            &(disk->e_phentsize));
+    ByteOrder::host_to_disk(sex, p_e_phnum,               &(disk->e_phnum));
+    ByteOrder::host_to_disk(sex, p_shextrasz+sizeof(SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk),
+                            &(disk->e_shentsize));
+    ByteOrder::host_to_disk(sex, p_e_shnum,               &(disk->e_shnum));
+    ByteOrder::host_to_disk(sex, p_e_shstrndx,            &(disk->e_shstrndx));
 
     return disk;
 }
@@ -480,7 +484,7 @@ SgAsmElfFileHeader::reallocate()
      * original value other than 1 or 2 will be written to the new output; otherwise we choose 1 or 2 based on the currently
      * defined byte order. */
     if (p_e_ident_data_encoding==1 || p_e_ident_data_encoding==2) {
-        p_e_ident_data_encoding = ORDER_LSB==get_sex() ? 1 : 2;
+        p_e_ident_data_encoding = ByteOrder::ORDER_LSB==get_sex() ? 1 : 2;
     }
 
     /* Update ELF-specific file type from generic data. */
