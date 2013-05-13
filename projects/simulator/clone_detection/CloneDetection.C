@@ -1,19 +1,14 @@
 #include "rose.h"
-#include "RSIM_Private.h"
 
-// Define this if you want LOTS of debugging output.  The default is to only print enough messages to show progress.
-// #define CLONE_DETECTOR_VERBOSE
-
-// This source file can only be compiled if the simulator is enabled. Furthermore, it only makes sense to compile this file if
-// the simulator is using our code from CloneDetectionSemantics.h (i.e., the CloneDetection.patch file has been applied to
-// RSIM).
-#if defined(ROSE_ENABLE_SIMULATOR) && defined(RSIM_CloneDetectionSemantics_H)
-
-#include "RSIM_Linux32.h"
 #include "BinaryPointerDetection.h"
 #include "YicesSolver.h"
 #include "DwarfLineMapper.h"
 #include "CloneDetectionProgress.h"
+#include "CloneDetectionAnalysisFault.h"
+#include "CloneDetectionOutputs.h"
+#include "PartialSymbolicSemantics.h"
+#include "x86InstructionSemantics.h"
+using namespace BinaryAnalysis::InstructionSemantics;
 
 // We'd like to not have to depend on a particular relational database management system, but ROSE doesn't have
 // support for anything like ODBC.  The only other options are either to generate SQL output, which precludes being
@@ -26,15 +21,13 @@ using namespace sqlite3x; // its top-level class name start with "sqlite3_"
 #include <boost/algorithm/string/regex_find_format.hpp>
 #include <boost/algorithm/string/regex.hpp>
 
-
 static void usage(const std::string &arg0, int exit_status)
 {
     size_t slash = arg0.rfind('/');
     std::string basename = slash==std::string::npos ? arg0 : arg0.substr(slash+1);
     if (0==basename.substr(0, 3).compare("lt-"))
         basename = basename.substr(3);
-    std::cerr <<"usage: " <<basename <<" [--database=STR] [--nfuzz=N] [--ninputs=N1,N2] [--max-insns=N]"
-              <<" [SIMULATOR_SWITCHES] SPECIMEN [SPECIMEN_ARGS...]\n"
+    std::cerr <<"usage: " <<basename <<" [SWITCHES] [FRONTEND_SWITCHES] SPECIMEN\n"
               <<"   --database=STR\n"
               <<"                     Specifies the name of the database into which results are placed.\n"
               <<"                     The default is \"clones.db\".\n"
@@ -56,53 +49,927 @@ static void usage(const std::string &arg0, int exit_status)
               <<"                     Maximum number of instructions to simulate per function. The default\n"
               <<"                     is 256.\n"
               <<"   --verbose\n"
-              <<"                     Show lots of diagnostics if the --debug simulator switch is specified.\n"
-              <<"                     The default (with --debug) is to show only enough output to track the\n"
-              <<"                     analysis progress.  Without --debug, hardly any diagnostics are\n"
-              <<"                     produced.\n"
+              <<"   --verbosity=(silent|laconic|effusive)\n"
+              <<"                     How much diagnostics to show.  The default is silent.  The \"--verbose\"\n"
+              <<"                     switch does the same thing as \"--verbosity=laconic\".\n"
               <<"   --progress\n"
               <<"                     Force a progress bar to be displayed even if the standard error stream\n"
-              <<"                     is not a terminal and even if the --debug switch is turned on.\n";
+              <<"                     is not a terminal and even if the verbosity is more than silent.\n";
     exit(exit_status);
 }
+
+enum Verbosity { SILENT, LACONIC, EFFUSIVE };
 
 // Command-line switches
 struct Switches {
     Switches()
         : dbname("clones.db"), firstfuzz(0), nfuzz(10), npointers(3), nnonpointers(3),
-          min_funcsz(0), max_insns(256), verbose(false) {}
+          min_funcsz(0), max_insns(256), verbosity(SILENT) {}
     std::string dbname;                 /**< Name of database in which to store results. */
     size_t firstfuzz;                   /**< Sequence number for starting fuzz test. */
     size_t nfuzz;                       /**< Number of times to run each function, each time with a different input sequence. */
     size_t npointers, nnonpointers;     /**< Number of pointer and non-pointer values to supply to as inputs per fuzz test. */
     size_t min_funcsz;                  /**< Minimum function size measured in instructions; skip smaller functions. */
     size_t max_insns;                   /**< Maximum number of instrutions per fuzz test before giving up. */
-    bool verbose;                       /**< Produce lots of output?  Traces each instruction as it is simulated. */
+    Verbosity verbosity;                /**< Produce lots of output?  Traces each instruction as it is simulated. */
     bool show_progress;                 /**< Force progress reports even if stderr is a non-terminal or --debug is specified. */
 };
-
-/*******************************************************************************************************************************
- *                                      Clone Detector
- *******************************************************************************************************************************/
 
 namespace CloneDetection {
 
 typedef std::set<SgAsmFunction*> Functions;
 typedef std::map<SgAsmFunction*, int> FunctionIdMap;
 
+/*******************************************************************************************************************************
+ *                                      Exceptions
+ *******************************************************************************************************************************/
+
+/** Exception thrown by this semantics domain. */
+class Exception {
+public:
+    Exception(const std::string &mesg): mesg(mesg) {}
+    std::string mesg;
+};
+
+/** Exceptions thrown by the analysis semantics to indicate some kind of fault. */
+class FaultException: public Exception {
+public:
+    AnalysisFault::Fault fault;
+    FaultException(AnalysisFault::Fault fault)
+        : Exception(std::string("encountered ") + AnalysisFault::fault_name(fault)), fault(fault) {}
+};
+
+/*******************************************************************************************************************************
+ *                                      Instruction Providor
+ *******************************************************************************************************************************/
+
+/** Efficient mapping from address to instruction. */
+class InstructionProvidor {
+protected:
+    typedef std::map<rose_addr_t, SgAsmInstruction*> Addr2Insn;
+    Addr2Insn addr2insn;
+public:
+    InstructionProvidor(const Functions &functions) {
+        for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi)
+            insert(*fi);
+    }
+    InstructionProvidor(SgNode *ast) {
+        std::vector<SgAsmFunction*> functions = SageInterface::querySubTree<SgAsmFunction>(ast);
+        for (size_t i=0; i<functions.size(); ++i)
+            insert(functions[i]);
+    }
+    void insert(SgAsmFunction *func) {
+        std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(func);
+        for (size_t i=0; i<insns.size(); ++i)
+            addr2insn[insns[i]->get_address()] = insns[i];
+    }
+    SgAsmInstruction *get_instruction(rose_addr_t addr) const {
+        Addr2Insn::const_iterator found = addr2insn.find(addr);
+        return found==addr2insn.end() ? NULL : found->second;
+    }
+};
+
+typedef BinaryAnalysis::PointerAnalysis::PointerDetection<InstructionProvidor> PointerDetector;
+
+/*******************************************************************************************************************************
+ *                                      Input Group
+ *******************************************************************************************************************************/
+
+/** Initial values to supply for inputs.  These are defined in terms of integers which are then cast to the appropriate size
+ *  when needed.  During fuzz testing, whenever the specimen reads from a register or memory location which has never been
+ *  written, we consume the next value from this input object. When all values are consumed, this object begins to return only
+ *  zero values. */
+class InputGroup {
+public:
+    enum Type { POINTER, NONPOINTER, UNKNOWN_TYPE };
+    InputGroup(): next_integer_(0), next_pointer_(0) {}
+    void add_integer(uint64_t i) { integers_.push_back(i); }
+    void add_pointer(uint64_t p) { pointers_.push_back(p); }
+    uint64_t next_integer() {
+        uint64_t retval = next_integer_ < integers_.size() ? integers_[next_integer_] : 0;
+        ++next_integer_; // increment even past the end so we know how many inputs were consumed
+        return retval;
+    }
+    uint64_t next_pointer() {
+        uint64_t retval = next_pointer_ < pointers_.size() ? pointers_[next_pointer_] : 0;
+        ++next_pointer_; // increment even past the end so we know how many inputs were consumed
+        return retval;
+    }
+    size_t integers_consumed() const { return next_integer_; }
+    size_t pointers_consumed() const { return next_pointer_; }
+    const std::vector<uint64_t> get_integers() const { return integers_; }
+    const std::vector<uint64_t> get_pointers() const { return pointers_; }
+    size_t num_inputs() const { return integers_consumed() + pointers_consumed(); }
+    void reset() { next_integer_ = next_pointer_ = 0; }
+    void clear() {
+        reset();
+        integers_.clear();
+        pointers_.clear();
+    }
+    void shuffle() {
+        for (size_t i=0; i<integers_.size(); ++i) {
+            size_t j = rand() % integers_.size();
+            std::swap(integers_[i], integers_[j]);
+        }
+        for (size_t i=0; i<pointers_.size(); ++i) {
+            size_t j = rand() % pointers_.size();
+            std::swap(pointers_[i], pointers_[j]);
+        }
+    }
+    std::string toString() const {
+        std::ostringstream ss;
+        print(ss);
+        return ss.str();
+    }
+    void print(std::ostream &o) const {
+        o <<"non-pointer inputs (" <<integers_.size() <<" total):\n";
+        for (size_t i=0; i<integers_.size(); ++i)
+            o <<"  " <<integers_[i] <<(i==next_integer_?"\t<-- next input":"") <<"\n";
+        if (next_integer_>=integers_.size())
+            o <<"  all non-pointers have been consumed; returning zero\n";
+        o <<"pointer inputs (" <<pointers_.size() <<" total):\n";
+        for (size_t i=0; i<pointers_.size(); ++i)
+            o <<"  " <<pointers_[i] <<(i==next_pointer_?"\t<-- next input":"") <<"\n";
+        if (next_pointer_>=pointers_.size())
+            o <<"  all pointers have been consumed; returning null\n";
+    }
+        
+protected:
+    std::vector<uint64_t> integers_;
+    std::vector<uint64_t> pointers_;
+    size_t next_integer_, next_pointer_;        // May increment past the end of its array
+};
+
+/*******************************************************************************************************************************
+ *                                      Analysis Machine State
+ *******************************************************************************************************************************/
+
+/** Bits to track variable access. */
+enum {
+    NO_ACCESS=0,                        /**< Variable has been neither read nor written. */
+    HAS_BEEN_READ=1,                    /**< Variable has been read. */
+    HAS_BEEN_WRITTEN=2                  /**< Variable has been written. */ 
+};
+
+/** Semantic value to track read/write state of registers. The basic idea is that we have a separate register state object
+ *  whose values are instances of this ReadWriteState type. We can use the same RegisterStateX86 template for the read/write
+ *  state as we do for the real register state. */
+template<size_t nBits>
+struct ReadWriteState {
+    unsigned state;                     /**< Bit vector containing HAS_BEEN_READ and/or HAS_BEEN_WRITTEN, or zero. */
+    ReadWriteState(): state(NO_ACCESS) {}
+};
+
+/** One cell of memory.  A cell contains an address and a byte value and an indicatation of how the cell has been accessed. */
+struct MemoryCell {
+    MemoryCell()
+        : addr(PartialSymbolicSemantics::ValueType<32>(0)),
+          val(PartialSymbolicSemantics::ValueType<8>(0)),
+          rw_state(NO_ACCESS) {}
+    MemoryCell(const PartialSymbolicSemantics::ValueType<32> &addr,
+               const PartialSymbolicSemantics::ValueType<8> &val,
+               unsigned rw_state)
+        : addr(addr), val(val), rw_state(rw_state) {}
+    PartialSymbolicSemantics::ValueType<32> addr;
+    PartialSymbolicSemantics::ValueType<8> val;
+    unsigned rw_state;                                          // NO_ACCESS or HAS_BEEN_READ and/or HAS_BEEN_WRITTEN bits
+};
+
+/** Analysis machine state. We override some of the memory operations. All values are concrete (we're using
+ *  PartialSymbolicSemantics only for its constant-folding ability and because we don't yet have a specifically concrete
+ *  semantics domain). */
+template <template <size_t> class ValueType>
+class State: public PartialSymbolicSemantics::State<ValueType> {
+public:
+    typedef std::map<uint32_t, MemoryCell> MemoryCells;         // memory cells indexed by address
+    MemoryCells stack_cells;                                    // memory state for stack memory (accessed via SS register)
+    MemoryCells data_cells;                                     // memory state for anything that non-stack (e.g., DS register)
+    BaseSemantics::RegisterStateX86<ValueType> registers;
+    BaseSemantics::RegisterStateX86<ReadWriteState> register_rw_state;
+    InputGroup *input_group;                                   // user-supplied input values
+    OutputGroup output_group;                                  // output values filled in as we run a function
+
+    // Write a single byte to memory. The rw_state are the HAS_BEEN_READ and/or HAS_BEEN_WRITTEN bits.
+    void mem_write_byte(X86SegmentRegister sr, const ValueType<32> &addr, const ValueType<8> &value,
+                        unsigned rw_state=HAS_BEEN_WRITTEN) {
+        MemoryCells &cells = x86_segreg_ss==sr ? stack_cells : data_cells;
+        cells[addr.known_value()] = MemoryCell(addr, value, rw_state);
+    }
+        
+    // Read a single byte from memory.  If the read operation cannot find an appropriate memory cell, then @p
+    // uninitialized_read is set (it is not cleared in the counter case).
+    ValueType<8> mem_read_byte(X86SegmentRegister sr, const ValueType<32> &addr, bool *uninitialized_read/*out*/) {
+        MemoryCells &cells = x86_segreg_ss==sr ? stack_cells : data_cells;
+
+        std::vector<ValueType<8> > found;
+        typename MemoryCells::iterator ci = cells.find(addr.known_value());
+        if (ci!=cells.end()) {
+            assert(must_alias(addr, ci->second.addr));
+            found.push_back(ci->second.val);
+        }
+        if (!found.empty())
+            return found[rand()%found.size()];
+        *uninitialized_read = true;
+        return ValueType<8>(rand()%256);
+    }
+        
+    // Returns true if two memory addresses can be equal.
+    static bool may_alias(const ValueType<32> &addr1, const ValueType<32> &addr2) {
+        return addr1.known_value()==addr2.known_value();
+    }
+
+    // Returns true if two memory address are equivalent.
+    static bool must_alias(const ValueType<32> &addr1, const ValueType<32> &addr2) {
+        return addr1.known_value()==addr2.known_value();
+    }
+
+    // Reset the analysis state by clearing all memory and by resetting the read/written status of all registers.
+    void reset_for_analysis() {
+        stack_cells.clear();
+        data_cells.clear();
+        registers.clear();
+        register_rw_state.clear();
+    }
+
+    // Return output values.  These are the interesting general-purpose registers to which a value has been written, and the
+    // memory locations to which a value has been written.  The returned object can be deleted when no longer needed.  The EIP,
+    // ESP, and EBP registers are not considered to be interesting.  Memory addresses that are less than or equal to the @p
+    // stack_frame_top but larger than @p stack_frame_top - @p frame_size are not considered to be outputs (they are the
+    // function's local variables). The @p stack_frame_top is usually the address of the function's return EIP, the address
+    // that was pushed onto the stack by the CALL instruction.
+    OutputGroup get_outputs(const ValueType<32> &stack_frame_top, size_t frame_size, Verbosity verbosity) {
+        OutputGroup outputs = this->output_group;
+
+        // Function return value is EAX, but only if it has been written to.
+        if (0 != (register_rw_state.gpr[x86_gpr_ax].state & HAS_BEEN_WRITTEN)) {
+            if (verbosity>=EFFUSIVE)
+                std::cerr <<"output for ax = " <<registers.gpr[x86_gpr_ax].known_value() <<"\n";
+            outputs.values.push_back(registers.gpr[x86_gpr_ax].known_value());
+        }
+
+        // Add to the outputs the memory cells that are outside the local stack frame (estimated).
+        for (MemoryCells::iterator ci=stack_cells.begin(); ci!=stack_cells.end(); ++ci) {
+            MemoryCell &cell = ci->second;
+            bool cell_in_frame = (cell.addr.known_value() <= stack_frame_top.known_value() &&
+                                  cell.addr.known_value() > stack_frame_top.known_value() - frame_size);
+            if (0 != (cell.rw_state & HAS_BEEN_WRITTEN)) {
+                if (verbosity>=EFFUSIVE)
+                    std::cerr <<"output for stack address "
+                              <<cell.addr <<": " <<cell.val <<(cell_in_frame?" (IGNORED)":"") <<"\n";
+                if (!cell_in_frame)
+                    outputs.values.push_back(cell.val.known_value());
+            }
+        }
+
+        // Add to the outputs the non-stack memory cells
+        for (MemoryCells::iterator ci=data_cells.begin(); ci!=data_cells.end(); ++ci) {
+            MemoryCell &cell = ci->second;
+            if (0 != (cell.rw_state & HAS_BEEN_WRITTEN)) {
+                if (verbosity>=EFFUSIVE)
+                    std::cerr <<"output for data address " <<cell.addr <<": " <<cell.val <<"\n";
+                outputs.values.push_back(cell.val.known_value());
+            }
+        }
+
+        return outputs;
+    }
+
+    // Printing
+    void print(std::ostream &o, unsigned domain_mask=0x07) const {
+        BaseSemantics::SEMANTIC_NO_PRINT_HELPER *helper = NULL;
+        this->registers.print(o, "   ", helper);
+        for (size_t i=0; i<2; ++i) {
+            size_t ncells=0, max_ncells=100;
+            const MemoryCells &cells = 0==i ? stack_cells : data_cells;
+            o <<"== Memory (" <<(0==i?"stack":"data") <<" segment) ==\n";
+            for (typename MemoryCells::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
+                const MemoryCell &cell = ci->second;
+                if (++ncells>max_ncells) {
+                    o <<"    skipping " <<cells.size()-(ncells-1) <<" more memory cells for brevity's sake...\n";
+                    break;
+                }
+                o <<"         cell access:"
+                  <<(0==(cell.rw_state & HAS_BEEN_READ)?"":" read")
+                  <<(0==(cell.rw_state & HAS_BEEN_WRITTEN)?"":" written")
+                  <<(0==(cell.rw_state & (HAS_BEEN_READ|HAS_BEEN_WRITTEN))?" none":"")
+                  <<"\n"
+                  <<"    address symbolic: " <<cell.addr <<"\n";
+                o <<"        value " <<cell.val <<"\n";
+            }
+        }
+    }
+        
+    friend std::ostream& operator<<(std::ostream &o, const State &state) {
+        state.print(o);
+        return o;
+    }
+};
+
+/*******************************************************************************************************************************
+ *                                      Analysis Semantic Policy
+ *******************************************************************************************************************************/
+
+// Define the template portion of the CloneDetection::Policy so we don't have to repeat it over and over in the method
+// defintions found in CloneDetectionTpl.h.  This also helps Emac's c++-mode auto indentation engine since it seems to
+// get confused by complex multi-line templates.
+#define CLONE_DETECTION_TEMPLATE template <                                                                                    \
+    template <template <size_t> class ValueType> class State,                                                                  \
+    template <size_t nBits> class ValueType                                                                                    \
+>
+
+CLONE_DETECTION_TEMPLATE
+class Policy: public PartialSymbolicSemantics::Policy<State, ValueType> {
+public:
+    typedef          PartialSymbolicSemantics::Policy<State, ValueType> Super;
+
+    State<ValueType> state;
+    static const rose_addr_t INITIAL_STACK = 0x80000000;// Initial value for the EIP and EBP registers
+    static const rose_addr_t FUNC_RET_ADDR = 4083;      // Special return address to mark end of analysis
+    InputGroup *inputs;                                 // Input values to use when reading a never-before-written variable
+    const PointerDetector *pointers;                    // Addresses of pointer variables
+    size_t ninsns;                                      // Number of instructions processed since last trigger() call
+    size_t max_ninsns;                                  // Maximum number of instructions to process after trigger()
+    Verbosity verbosity;                                // How much diagnostics to emit
+
+    Policy(): inputs(NULL), pointers(NULL), ninsns(0), max_ninsns(255), verbosity(SILENT) {}
+
+    template <size_t nBits>
+    ValueType<nBits>
+    next_input_value(InputGroup::Type type) {
+        // Instruction semantics API1 calls readRegister when initializing X86InstructionSemantics in order to obtain the
+        // original EIP value, but we haven't yet set up an input group (nor would we want this initialization to consume
+        // an input anyway).  So just return zero.
+        if (!inputs)
+            return ValueType<nBits>(0);
+
+        uint64_t value = 0;
+        size_t nvalues = 0;
+        const char *type_name = NULL;
+        switch (type) {
+            case InputGroup::POINTER:
+                value = inputs->next_pointer();
+                nvalues = inputs->pointers_consumed();
+                type_name = "pointer";
+                break;
+            case InputGroup::UNKNOWN_TYPE:
+            case InputGroup::NONPOINTER:
+                value = inputs->next_integer();
+                nvalues = inputs->integers_consumed();
+                type_name = "non-pointer";
+                break;
+        }
+
+        ValueType<nBits> retval(value);
+        if (verbosity>=EFFUSIVE)
+            std::cerr <<"CloneDetection: using " <<type_name <<" input #" <<nvalues <<": " <<retval <<"\n";
+        return retval;
+    }
+
+    // Return output values. These include the return value, certain memory writes, function calls, system calls, etc.
+    OutputGroup get_outputs() {
+        ValueType<32> stack_frame_top(INITIAL_STACK);
+        return state.get_outputs(stack_frame_top, 8192, verbosity);
+    }
+    
+    // Sets up the machine state to start the analysis of one function.
+    void reset(rose_addr_t target_va, InputGroup *inputs, const PointerDetector *pointers) {
+        inputs->reset();
+        this->inputs = inputs;
+        this->pointers = pointers;
+        this->ninsns = 0;
+        state.reset_for_analysis();
+
+        // Initialize some registers.  Obviously, the EIP register needs to be set, but we also set the ESP and EBP to known
+        // (but arbitrary) values so we can detect when the function returns.  Be sure to use these same values in related
+        // analyses (like pointer variable detection).
+        ValueType<32> eip(target_va);
+        this->writeRegister("eip", eip);
+        ValueType<32> esp(INITIAL_STACK); // stack grows down
+        this->writeRegister("esp", esp);
+        ValueType<32> ebp(INITIAL_STACK);
+        this->writeRegister("ebp", ebp);
+    }
+
+    void startInstruction(SgAsmInstruction *insn_) /*override*/ {
+        if (++ninsns >= max_ninsns)
+            throw FaultException(AnalysisFault::INSN_LIMIT);
+        SgAsmx86Instruction *insn = isSgAsmx86Instruction(insn_);
+        assert(insn!=NULL);
+        if (verbosity>=EFFUSIVE) {
+            std::cerr <<"CloneDetection: " <<std::string(80, '-') <<"\n"
+                      <<"CloneDetection: executing: " <<unparseInstructionWithAddress(insn) <<"\n";
+        }
+
+        // Make sure EIP is updated with the instruction's address (most policies assert this).
+        this->writeRegister("eip", ValueType<32>(insn->get_address()));
+
+        Super::startInstruction(insn_);
+    }
+        
+
+    // Special handling for some instructions. Like CALL, which does not call the function but rather consumes an input value.
+    void finishInstruction(SgAsmInstruction *insn) /*override*/ {
+        SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
+        assert(insn_x86!=NULL);
+
+        // Special handling for function calls.  Instead of calling the function, we treat the function as returning a new
+        // input value to the function being analyzed.  We make the following assumptions:
+        //    * Function calls are via CALL instruction
+        //    * The called function always returns
+        //    * The called function's return value is in the EAX register
+        //    * The caller cleans up any arguments that were passed via stack
+        //    * The function's return value is a non-pointer type
+        if (x86_call==insn_x86->get_kind()) {
+            if (verbosity>=EFFUSIVE)
+                std::cerr <<"CloneDetection: special handling for function call (fall through and return via EAX)\n";
+
+            ValueType<32> callee_va = this->template readRegister<32>("eip");
+            state.output_group.callees_va.push_back(callee_va.known_value());
+
+            ValueType<32> call_fallthrough_va = this->template number<32>(insn->get_address() +
+                                                                                                    insn->get_size());
+            this->writeRegister("eip", call_fallthrough_va);
+            this->writeRegister("eax", next_input_value<32>(InputGroup::NONPOINTER));
+        }
+
+        Super::finishInstruction(insn);
+    }
+    
+    // Handle INT 0x80 instructions: save the system call number (from EAX) in the output group and set EAX to a random
+    // value, thus consuming one input.
+    void interrupt(uint8_t inum) /*override*/ {
+        if (0x80==inum) {
+            if (verbosity>=EFFUSIVE)
+                std::cerr <<"CloneDetection: special handling for system call (fall through and consume an input into EAX)\n";
+            ValueType<32> syscall_num = this->template readRegister<32>("eax");
+            state.output_group.syscalls.push_back(syscall_num.known_value());
+            this->writeRegister("eax", next_input_value<32>(InputGroup::NONPOINTER));
+        } else {
+            Super::interrupt(inum);
+            throw FaultException(AnalysisFault::INTERRUPT);
+        }
+    }
+
+    // Handle the HLT instruction by throwing an exception.
+    void hlt() {
+        throw FaultException(AnalysisFault::HALT);
+    }
+
+    // Track memory access.
+    template<size_t nBits>
+    ValueType<nBits> readMemory(X86SegmentRegister sr, ValueType<32> a0, const ValueType<1> &cond) {
+        // For RET instructions, when reading DWORD PTR ss:[INITIAL_STACK], do not consume an input, but rather
+        // return FUNC_RET_ADDR.
+        SgAsmx86Instruction *insn = isSgAsmx86Instruction(this->get_insn());
+        if (32==nBits && insn && x86_ret==insn->get_kind()) {
+            rose_addr_t c_addr = a0.known_value();
+            if (c_addr == this->INITIAL_STACK)
+                return ValueType<nBits>(this->FUNC_RET_ADDR);
+        }
+
+        // Read a multi-byte value from memory in little-endian order.
+        bool uninitialized_read = false; // set to true by any mem_read_byte() that has no data
+        assert(8==nBits || 16==nBits || 32==nBits);
+        ValueType<32> dword = this->concat(state.mem_read_byte(sr, a0, &uninitialized_read),
+                                           ValueType<24>(0));
+        if (nBits>=16) {
+            ValueType<32> a1 = this->add(a0, ValueType<32>(1));
+            dword = this->or_(dword, this->concat(ValueType<8>(0),
+                                                  this->concat(state.mem_read_byte(sr, a1, &uninitialized_read),
+                                                               ValueType<16>(0))));
+        }
+        if (nBits>=24) {
+            ValueType<32> a2 = this->add(a0, ValueType<32>(2));
+            dword = this->or_(dword, this->concat(ValueType<16>(0),
+                                                  this->concat(state.mem_read_byte(sr, a2, &uninitialized_read),
+                                                               ValueType<8>(0))));
+        }
+        if (nBits>=32) {
+            ValueType<32> a3 = this->add(a0, ValueType<32>(3));
+            dword = this->or_(dword, this->concat(ValueType<24>(0), state.mem_read_byte(sr, a3, &uninitialized_read)));
+        }
+
+        ValueType<nBits> retval = this->template extract<0, nBits>(dword);
+        if (uninitialized_read) {
+            // At least one of the bytes read did not previously exist.  Return either a pointer or non-pointer value depending
+            // on whether the memory address is known to be a pointer, and then write the value back to memory so the same
+            // value is read next time.
+            SymbolicSemantics::ValueType<32> a0_sym(a0.known_value());
+            InputGroup::Type type = this->pointers->is_pointer(a0_sym) ? InputGroup::POINTER : InputGroup::NONPOINTER;
+            retval = next_input_value<nBits>(type);
+            this->writeMemory<nBits>(sr, a0, retval, this->true_(), HAS_BEEN_READ);
+        }
+
+        return retval;
+    }
+        
+    template<size_t nBits>
+    void writeMemory(X86SegmentRegister sr, ValueType<32> a0, const ValueType<nBits> &data, const ValueType<1> &cond,
+                     unsigned rw_state=HAS_BEEN_WRITTEN) {
+
+        // Add the address/value pair to the memory state one byte at a time in little-endian order.
+        assert(8==nBits || 16==nBits || 32==nBits);
+        ValueType<8> b0 = this->template extract<0, 8>(data);
+        state.mem_write_byte(sr, a0, b0, rw_state);
+        if (nBits>=16) {
+            ValueType<32> a1 = this->add(a0, ValueType<32>(1));
+            ValueType<8> b1 = this->template extract<8, 16>(data);
+            state.mem_write_byte(sr, a1, b1, rw_state);
+        }
+        if (nBits>=24) {
+            ValueType<32> a2 = this->add(a0, ValueType<32>(2));
+            ValueType<8> b2 = this->template extract<16, 24>(data);
+            state.mem_write_byte(sr, a2, b2, rw_state);
+        }
+        if (nBits>=32) {
+            ValueType<32> a3 = this->add(a0, ValueType<32>(3));
+            ValueType<8> b3 = this->template extract<24, 32>(data);
+            state.mem_write_byte(sr, a3, b3, rw_state);
+        }
+    }
+
+    // Track register access
+    template<size_t nBits>
+    ValueType<nBits> readRegister(const char *regname) {
+        const RegisterDescriptor &reg = this->findRegister(regname, nBits);
+        return this->template readRegister<nBits>(reg);
+    }
+
+    template<size_t nBits>
+    ValueType<nBits> readRegister(const RegisterDescriptor &reg) {
+        ValueType<nBits> retval;
+        switch (nBits) {
+            case 1: {
+                // Only FLAGS/EFLAGS bits have a size of one.  Other registers cannot be accessed at this granularity.
+                if (reg.get_major()!=x86_regclass_flags)
+                    throw Exception("bit access only valid for FLAGS/EFLAGS register");
+                if (reg.get_minor()!=0 || reg.get_offset()>=state.registers.n_flags)
+                    throw Exception("register not implemented in semantic policy");
+                if (reg.get_nbits()!=1)
+                    throw Exception("semantic policy supports only single-bit flags");
+                bool never_accessed = 0 == state.register_rw_state.flag[reg.get_offset()].state;
+                state.register_rw_state.flag[reg.get_offset()].state |= HAS_BEEN_READ;
+                if (never_accessed) {
+                    retval = next_input_value<nBits>(InputGroup::NONPOINTER);
+                } else {
+                    retval = this->template unsignedExtend<1, nBits>(state.registers.flag[reg.get_offset()]);
+                }
+                break;
+            }
+
+            case 8: {
+                // Only general-purpose registers can be accessed at a byte granularity, and we can access only the low-order
+                // byte or the next higher byte.  For instance, "al" and "ah" registers.
+                if (reg.get_major()!=x86_regclass_gpr)
+                    throw Exception("byte access only valid for general purpose registers");
+                if (reg.get_minor()>=state.registers.n_gprs)
+                    throw Exception("register not implemented in semantic policy");
+                assert(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
+                bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
+                state.register_rw_state.gpr[reg.get_minor()].state |= HAS_BEEN_READ;
+                if (never_accessed) {
+                    retval = next_input_value<nBits>(InputGroup::NONPOINTER);
+                } else {
+                    switch (reg.get_offset()) {
+                        case 0:
+                            retval = this->template extract<0, nBits>(state.registers.gpr[reg.get_minor()]);
+                            break;
+                        case 8:
+                            retval = this->template extract<8, 8+nBits>(state.registers.gpr[reg.get_minor()]);
+                            break;
+                        default:
+                            throw Exception("invalid one-byte access offset");
+                    }
+                }
+                break;
+            }
+
+            case 16: {
+                if (reg.get_nbits()!=16)
+                    throw Exception("invalid 2-byte register");
+                if (reg.get_offset()!=0)
+                    throw Exception("policy does not support non-zero offsets for word granularity register access");
+                switch (reg.get_major()) {
+                    case x86_regclass_segment: {
+                        if (reg.get_minor()>=state.registers.n_segregs)
+                            throw Exception("register not implemented in semantic policy");
+                        bool never_accessed = 0==state.register_rw_state.segreg[reg.get_minor()].state;
+                        state.register_rw_state.segreg[reg.get_minor()].state |= HAS_BEEN_READ;
+                        if (never_accessed) {
+                            retval = next_input_value<nBits>(InputGroup::NONPOINTER);
+                        } else {
+                            retval = this->template unsignedExtend<16, nBits>(state.registers.segreg[reg.get_minor()]);
+                        }
+                        break;
+                    }
+                    case x86_regclass_gpr: {
+                        if (reg.get_minor()>=state.registers.n_gprs)
+                            throw Exception("register not implemented in semantic policy");
+                        bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
+                        state.register_rw_state.segreg[reg.get_minor()].state |= HAS_BEEN_READ;
+                        if (never_accessed) {
+                            retval = next_input_value<nBits>(InputGroup::NONPOINTER);
+                        } else {
+                            retval = this->template extract<0, nBits>(state.registers.gpr[reg.get_minor()]);
+                        }
+                        break;
+                    }
+
+                    case x86_regclass_flags: {
+                        if (reg.get_minor()!=0 || state.registers.n_flags<16)
+                            throw Exception("register not implemented in semantic policy");
+                        // FIXME: we need to grab flags from next_input_value if they've never been read or written
+                        for (size_t i=0; i<state.register_rw_state.n_flags; ++i)
+                            state.register_rw_state.flag[i].state |= HAS_BEEN_READ;
+                        retval = this->template unsignedExtend<16, nBits>(concat(state.registers.flag[0],
+                                                                          concat(state.registers.flag[1],
+                                                                          concat(state.registers.flag[2],
+                                                                          concat(state.registers.flag[3],
+                                                                          concat(state.registers.flag[4],
+                                                                          concat(state.registers.flag[5],
+                                                                          concat(state.registers.flag[6],
+                                                                          concat(state.registers.flag[7],
+                                                                          concat(state.registers.flag[8],
+                                                                          concat(state.registers.flag[9],
+                                                                          concat(state.registers.flag[10],
+                                                                          concat(state.registers.flag[11],
+                                                                          concat(state.registers.flag[12],
+                                                                          concat(state.registers.flag[13],
+                                                                          concat(state.registers.flag[14],
+                                                                                 state.registers.flag[15]))))))))))))))));
+                        break;
+                    }
+                    default:
+                        throw Exception("word access not valid for this register type");
+                }
+                break;
+            }
+
+            case 32: {
+                if (reg.get_offset()!=0)
+                    throw Exception("policy does not support non-zero offsets for double word granularity register access");
+                switch (reg.get_major()) {
+                    case x86_regclass_gpr: {
+                        if (reg.get_minor()>=state.registers.n_gprs)
+                            throw Exception("register not implemented in semantic policy");
+                        bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
+                        state.register_rw_state.gpr[reg.get_minor()].state |= HAS_BEEN_READ;
+                        if (never_accessed) {
+                            retval = next_input_value<nBits>(InputGroup::UNKNOWN_TYPE);
+                        } else {
+                            retval = this->template unsignedExtend<32, nBits>(state.registers.gpr[reg.get_minor()]);
+                        }
+                        break;
+                    }
+                    case x86_regclass_ip: {
+                        if (reg.get_minor()!=0)
+                            throw Exception("register not implemented in semantic policy");
+                        bool never_accessed = 0==state.register_rw_state.ip.state;
+                        state.register_rw_state.ip.state |= HAS_BEEN_READ;
+                        if (never_accessed) {
+                            retval = next_input_value<nBits>(InputGroup::POINTER);
+                        } else {
+                            retval = this->template unsignedExtend<32, nBits>(state.registers.ip);
+                        }
+                        break;
+                    }
+                    case x86_regclass_segment: {
+                        if (reg.get_minor()>=state.registers.n_segregs || reg.get_nbits()!=16)
+                            throw Exception("register not implemented in semantic policy");
+                        bool never_accessed = 0==state.register_rw_state.segreg[reg.get_minor()].state;
+                        state.register_rw_state.segreg[reg.get_minor()].state |= HAS_BEEN_READ;
+                        if (never_accessed) {
+                            retval = next_input_value<nBits>(InputGroup::UNKNOWN_TYPE);
+                        } else {
+                            retval = this->template unsignedExtend<16, nBits>(state.registers.segreg[reg.get_minor()]);
+                        }
+                        break;
+                    }
+                    case x86_regclass_flags: {
+                        if (reg.get_minor()!=0 || state.registers.n_flags<32)
+                            throw Exception("register not implemented in semantic policy");
+                        if (reg.get_nbits()!=32)
+                            throw Exception("register is not 32 bits");
+                        // FIXME: we need to grab flags from next_input_value() if they have never been read or written
+                        for (size_t i=0; i<state.register_rw_state.n_flags; ++i)
+                            state.register_rw_state.flag[i].state |= HAS_BEEN_READ;
+                        retval = this->template unsignedExtend<32, nBits>(concat(readRegister<16>("flags"),
+                                                                          concat(state.registers.flag[16],
+                                                                          concat(state.registers.flag[17],
+                                                                          concat(state.registers.flag[18],
+                                                                          concat(state.registers.flag[19],
+                                                                          concat(state.registers.flag[20],
+                                                                          concat(state.registers.flag[21],
+                                                                          concat(state.registers.flag[22],
+                                                                          concat(state.registers.flag[23],
+                                                                          concat(state.registers.flag[24],
+                                                                          concat(state.registers.flag[25],
+                                                                          concat(state.registers.flag[26],
+                                                                          concat(state.registers.flag[27],
+                                                                          concat(state.registers.flag[28],
+                                                                          concat(state.registers.flag[29],
+                                                                          concat(state.registers.flag[30],
+                                                                                 state.registers.flag[31])))))))))))))))));
+                        break;
+                    }
+                    default:
+                        throw Exception("double word access not valid for this register type");
+                }
+                break;
+            }
+            default:
+                throw Exception("invalid register access width");
+        }
+
+        this->writeRegister(reg, retval, HAS_BEEN_READ);
+        return retval;
+    }
+
+    template<size_t nBits>
+    void writeRegister(const char *regname, const ValueType<nBits> &value) {
+        const RegisterDescriptor &reg = this->findRegister(regname, nBits);
+        this->template writeRegister(reg, value);
+    }
+
+    template<size_t nBits>
+    void writeRegister(const RegisterDescriptor &reg, const ValueType<nBits> &value, unsigned update_access=HAS_BEEN_WRITTEN) {
+        switch (nBits) {
+            case 1: {
+                // Only FLAGS/EFLAGS bits have a size of one.  Other registers cannot be accessed at this granularity.
+                if (reg.get_major()!=x86_regclass_flags)
+                    throw Exception("bit access only valid for FLAGS/EFLAGS register");
+                if (reg.get_minor()!=0 || reg.get_offset()>=state.registers.n_flags)
+                    throw Exception("register not implemented in semantic policy");
+                if (reg.get_nbits()!=1)
+                    throw Exception("semantic policy supports only single-bit flags");
+                state.registers.flag[reg.get_offset()] = this->template unsignedExtend<nBits, 1>(value);
+                state.register_rw_state.flag[reg.get_offset()].state |= update_access;
+                break;
+            }
+
+            case 8: {
+                // Only general purpose registers can be accessed at byte granularity, and only for offsets 0 and 8.
+                if (reg.get_major()!=x86_regclass_gpr)
+                    throw Exception("byte access only valid for general purpose registers.");
+                if (reg.get_minor()>=state.registers.n_gprs)
+                    throw Exception("register not implemented in semantic policy");
+                assert(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
+                switch (reg.get_offset()) {
+                    case 0:
+                        state.registers.gpr[reg.get_minor()] =
+                            concat(this->template signExtend<nBits, 8>(value),
+                                   this->template extract<8, 32>(state.registers.gpr[reg.get_minor()])); // no-op extend
+                        break;
+                    case 8:
+                        state.registers.gpr[reg.get_minor()] =
+                            concat(this->template extract<0, 8>(state.registers.gpr[reg.get_minor()]),
+                                   concat(this->template unsignedExtend<nBits, 8>(value),
+                                          this->template extract<16, 32>(state.registers.gpr[reg.get_minor()])));
+                        break;
+                    default:
+                        throw Exception("invalid byte access offset");
+                }
+                state.register_rw_state.gpr[reg.get_minor()].state |= update_access;
+                break;
+            }
+
+            case 16: {
+                if (reg.get_nbits()!=16)
+                    throw Exception("invalid 2-byte register");
+                if (reg.get_offset()!=0)
+                    throw Exception("policy does not support non-zero offsets for word granularity register access");
+                switch (reg.get_major()) {
+                    case x86_regclass_segment: {
+                        if (reg.get_minor()>=state.registers.n_segregs)
+                            throw Exception("register not implemented in semantic policy");
+                        state.registers.segreg[reg.get_minor()] = this->template unsignedExtend<nBits, 16>(value);
+                        state.register_rw_state.segreg[reg.get_minor()].state |= update_access;
+                        break;
+                    }
+                    case x86_regclass_gpr: {
+                        if (reg.get_minor()>=state.registers.n_gprs)
+                            throw Exception("register not implemented in semantic policy");
+                        state.registers.gpr[reg.get_minor()] =
+                            concat(this->template unsignedExtend<nBits, 16>(value),
+                                   this->template extract<16, 32>(state.registers.gpr[reg.get_minor()]));
+                        state.register_rw_state.gpr[reg.get_minor()].state |= update_access;
+                        break;
+                    }
+                    case x86_regclass_flags: {
+                        if (reg.get_minor()!=0 || state.registers.n_flags<16)
+                            throw Exception("register not implemented in semantic policy");
+                        state.registers.flag[0]  = this->template extract<0,  1 >(value);
+                        state.registers.flag[1]  = this->template extract<1,  2 >(value);
+                        state.registers.flag[2]  = this->template extract<2,  3 >(value);
+                        state.registers.flag[3]  = this->template extract<3,  4 >(value);
+                        state.registers.flag[4]  = this->template extract<4,  5 >(value);
+                        state.registers.flag[5]  = this->template extract<5,  6 >(value);
+                        state.registers.flag[6]  = this->template extract<6,  7 >(value);
+                        state.registers.flag[7]  = this->template extract<7,  8 >(value);
+                        state.registers.flag[8]  = this->template extract<8,  9 >(value);
+                        state.registers.flag[9]  = this->template extract<9,  10>(value);
+                        state.registers.flag[10] = this->template extract<10, 11>(value);
+                        state.registers.flag[11] = this->template extract<11, 12>(value);
+                        state.registers.flag[12] = this->template extract<12, 13>(value);
+                        state.registers.flag[13] = this->template extract<13, 14>(value);
+                        state.registers.flag[14] = this->template extract<14, 15>(value);
+                        state.registers.flag[15] = this->template extract<15, 16>(value);
+                        for (size_t i=0; i<state.register_rw_state.n_flags; ++i)
+                            state.register_rw_state.flag[i].state |= update_access;
+                        break;
+                    }
+                    default:
+                        throw Exception("word access not valid for this register type");
+                }
+                break;
+            }
+
+            case 32: {
+                if (reg.get_offset()!=0)
+                    throw Exception("policy does not support non-zero offsets for double word granularity register access");
+                switch (reg.get_major()) {
+                    case x86_regclass_gpr: {
+                        if (reg.get_minor()>=state.registers.n_gprs)
+                            throw Exception("register not implemented in semantic policy");
+                        state.registers.gpr[reg.get_minor()] = this->template signExtend<nBits, 32>(value);
+                        state.register_rw_state.gpr[reg.get_minor()].state |= update_access;
+                        break;
+                    }
+                    case x86_regclass_ip: {
+                        if (reg.get_minor()!=0)
+                            throw Exception("register not implemented in semantic policy");
+                        state.registers.ip = this->template unsignedExtend<nBits, 32>(value);
+                        state.register_rw_state.ip.state |= update_access;
+                        break;
+                    }
+                    case x86_regclass_flags: {
+                        if (reg.get_minor()!=0 || state.registers.n_flags<32)
+                            throw Exception("register not implemented in semantic policy");
+                        if (reg.get_nbits()!=32)
+                            throw Exception("register is not 32 bits");
+                        this->template writeRegister<16>("flags", this->template unsignedExtend<nBits, 16>(value));
+                        state.registers.flag[16] = this->template extract<16, 17>(value);
+                        state.registers.flag[17] = this->template extract<17, 18>(value);
+                        state.registers.flag[18] = this->template extract<18, 19>(value);
+                        state.registers.flag[19] = this->template extract<19, 20>(value);
+                        state.registers.flag[20] = this->template extract<20, 21>(value);
+                        state.registers.flag[21] = this->template extract<21, 22>(value);
+                        state.registers.flag[22] = this->template extract<22, 23>(value);
+                        state.registers.flag[23] = this->template extract<23, 24>(value);
+                        state.registers.flag[24] = this->template extract<24, 25>(value);
+                        state.registers.flag[25] = this->template extract<25, 26>(value);
+                        state.registers.flag[26] = this->template extract<26, 27>(value);
+                        state.registers.flag[27] = this->template extract<27, 28>(value);
+                        state.registers.flag[28] = this->template extract<28, 29>(value);
+                        state.registers.flag[29] = this->template extract<29, 30>(value);
+                        state.registers.flag[30] = this->template extract<30, 31>(value);
+                        state.registers.flag[31] = this->template extract<31, 32>(value);
+                        for (size_t i=0; i<state.register_rw_state.n_flags; ++i)
+                            state.register_rw_state.flag[i].state |= update_access;
+                        break;
+                    }
+                    default:
+                        throw Exception("double word access not valid for this register type");
+                }
+                break;
+            }
+
+            default:
+                throw Exception("invalid register access width");
+        }
+    }
+        
+
+    // Print the state, including memory and register access flags
+    void print(std::ostream &o, bool abbreviated=false) const {
+        state.print(o, abbreviated?this->get_active_policies() : 0x07);
+    }
+    
+    friend std::ostream& operator<<(std::ostream &o, const Policy &p) {
+        p.print(o);
+        return o;
+    }
+};
+
+/*******************************************************************************************************************************
+ *                                      Clone Detection Analysis
+ *******************************************************************************************************************************/
+
+
 /** Main driving function for clone detection.  This is the class that chooses inputs, runs each function, and looks at the
  *  outputs to decide how to partition the functions.  It does this repeatedly in order to build a PartitionForest. The
  *  analyze() method is the main entry point. */
-class CloneDetector {
+class Analysis {
 protected:
-    static const char *name;            /**< For --debug output. */
-    RSIM_Thread *thread;                /**< Thread where analysis is running. */
     sqlite3_connection sqlite;          /**< Database in which to place results; may already exist */
     OutputGroups output_groups;         /**< Distinct groups of output values from fuzz tests. */
     Switches opt;                       /**< Analysis configuration switches from the command line. */
 
+    Policy<State, PartialSymbolicSemantics::ValueType> policy;
+    X86InstructionSemantics<Policy<State, PartialSymbolicSemantics::ValueType>, PartialSymbolicSemantics::ValueType> semantics;
+
 public:
-    CloneDetector(RSIM_Thread *thread, const Switches &opt): thread(thread), opt(opt) {
+    Analysis(const Switches &opt): opt(opt), semantics(policy) {
         open_db(opt.dbname);
     }
 
@@ -158,79 +1025,30 @@ public:
         lock.commit();
     }
 
-    // Allocate a page of memory in the process address space.
-    rose_addr_t allocate_page(rose_addr_t hint=0) {
-        RSIM_Process *proc = thread->get_process();
-        rose_addr_t addr = proc->mem_map(hint, 4096, MemoryMap::MM_PROT_RW, MAP_ANONYMOUS, 0, -1);
-        assert((int64_t)addr>=0 || (int64_t)addr<-256); // disallow error numbers
-        return addr;
+    // Allocate a page of memory in the analysis state
+    rose_addr_t allocate_page() {
+        static size_t ncalls = 0;
+        static const uint32_t base = 0x40000000;
+        static const uint32_t npages = 512;
+        static const uint32_t page_size = 4096;
+        return base + (ncalls++ % npages)*page_size;
     }
-
-    // Obtain a memory map for disassembly
-    MemoryMap *disassembly_map(RSIM_Process *proc) {
-        MemoryMap *map = new MemoryMap(proc->get_memory(), MemoryMap::COPY_SHALLOW);
-        map->prune(MemoryMap::MM_PROT_READ); // don't let the disassembler read unreadable memory, else it will segfault
-
-        // Removes execute permission for any segment whose debug name does not contain the name of the executable. When
-        // comparing two different executables for clones, we probably don't need to compare code that came from dynamically
-        // linked libraries since they will be identical in both executables.
-        struct Pruner: MemoryMap::Visitor {
-            std::string exename;
-            Pruner(const std::string &exename): exename(exename) {}
-            virtual bool operator()(const MemoryMap*, const Extent&, const MemoryMap::Segment &segment_) {
-                MemoryMap::Segment *segment = const_cast<MemoryMap::Segment*>(&segment_);
-                if (segment->get_name().find(exename)==std::string::npos) {
-                    unsigned p = segment->get_mapperms();
-                    p &= ~MemoryMap::MM_PROT_EXEC;
-                    segment->set_mapperms(p);
-                }
-                return true;
-            }
-        } pruner(proc->get_exename());
-        map->traverse(pruner);
-        return map;
-    }
-
-    // Get all the functions defined for this process image.  We do this by disassembling the entire process executable memory
-    // and using CFG analysis to figure out where the functions are located.
-    Functions find_functions(RTS_Message *m, RSIM_Process *proc) {
-        m->mesg("%s: disassembling entire specimen image...\n", name);
-        MemoryMap *map = disassembly_map(proc);
-        if (opt.verbose) {
-            std::ostringstream ss;
-            map->dump(ss, "  ");
-            m->mesg("%s: using this memory map for disassembly:\n%s", name, ss.str().c_str());
+    
+    // Get a list of functions to analyze.
+    Functions find_functions(SgNode *ast) {
+        Functions retval;
+        std::vector<SgAsmFunction*> allfuncs = SageInterface::querySubTree<SgAsmFunction>(ast);
+        for (size_t i=0; i<allfuncs.size(); ++i) {
+            size_t ninsns = SageInterface::querySubTree<SgAsmInstruction>(allfuncs[i]).size();
+            if (0==opt.min_funcsz || ninsns >= opt.min_funcsz)
+                retval.insert(allfuncs[i]);
         }
-        SgAsmBlock *gblk = proc->disassemble(false/*take no shortcuts*/, map);
-        delete map; map=NULL;
-
-        // Save the disassembly listing for future reference
-        std::string listing_name = proc->get_exename() + ".lst";
-        m->mesg("%s: saving program listing in %s\n", name, listing_name.c_str());
-        std::ofstream of(listing_name.c_str());
-        AsmUnparser().unparse(of, gblk);
-        of.close();
-
-        // All functions, but prune away things we don't care about
-        std::vector<SgAsmFunction*> functions = SageInterface::querySubTree<SgAsmFunction>(gblk);
-        m->mesg("%s: found %zu function%s", name, functions.size(), 1==functions.size()?"":"s");
-        for (std::vector<SgAsmFunction*>::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
-            size_t ninsns = SageInterface::querySubTree<SgAsmInstruction>(*fi).size();
-            if (opt.min_funcsz>0 && ninsns < opt.min_funcsz) {
-                if (opt.verbose)
-                    m->mesg("%s:   skipping function 0x%08"PRIx64" because it has only %zu instruction%s\n",
-                            name, (*fi)->get_entry_va(), ninsns, 1==ninsns?"":"s");
-                *fi = NULL;
-            }
-        }
-        functions.erase(std::remove(functions.begin(), functions.end(), (SgAsmFunction*)NULL), functions.end());
-        m->mesg("%s: %zu function%s left after pruning", name, functions.size(), 1==functions.size()?"":"s");
-        return Functions(functions.begin(), functions.end());
+        return retval;
     }
 
     // Perform a pointer-detection analysis on the specified function. We'll need the results in order to determine whether a
     // function input should consume a pointer or a non-pointer from the input value set.
-    PointerDetector* detect_pointers(RTS_Message *m, RSIM_Thread *thread, SgAsmFunction *func) {
+    PointerDetector* detect_pointers(SgAsmFunction *func) {
         // Choose an SMT solver. This is completely optional.  Pointer detection still seems to work fairly well (and much,
         // much faster) without an SMT solver.
         SMTSolver *solver = NULL;
@@ -238,29 +1056,29 @@ public:
         if (YicesSolver::available_linkage())
             solver = new YicesSolver;
 #endif
-        InstructionProvidor *insn_providor = new InstructionProvidor(thread->get_process());
-        m->mesg("%s: %s pointer detection analysis", name, function_to_str(func).c_str());
-        PointerDetector *pd = new PointerDetector(insn_providor, solver);
-        pd->initial_state().registers.gpr[x86_gpr_sp] = SYMBOLIC_VALUE<32>(thread->policy.INITIAL_STACK);
-        pd->initial_state().registers.gpr[x86_gpr_bp] = SYMBOLIC_VALUE<32>(thread->policy.INITIAL_STACK);
+        InstructionProvidor insn_providor(func);
+        if (opt.verbosity>=LACONIC)
+            std::cerr <<"CloneDetection: " <<function_to_str(func) <<" pointer detection analysis\n";
+        PointerDetector *pd = new PointerDetector(&insn_providor, solver);
+        pd->initial_state().registers.gpr[x86_gpr_sp] = SymbolicSemantics::ValueType<32>(policy.INITIAL_STACK);
+        pd->initial_state().registers.gpr[x86_gpr_bp] = SymbolicSemantics::ValueType<32>(policy.INITIAL_STACK);
         //pd.set_debug(stderr);
         try {
             pd->analyze(func);
         } catch (...) {
             // probably the instruction is not handled by the semantics used in the analysis.  For example, the
             // instruction might be a floating point instruction that isn't handled yet.
-            m->mesg("%s: %s pointer analysis FAILED", name, function_to_str(func).c_str());
+            std::cerr <<"CloneDetection: pointer analysis FAILED for " <<function_to_str(func) <<"\n";
         }
-        if (opt.verbose && m->get_file()) {
+        if (opt.verbosity>=EFFUSIVE) {
             const PointerDetector::Pointers plist = pd->get_pointers();
             for (PointerDetector::Pointers::const_iterator pi=plist.begin(); pi!=plist.end(); ++pi) {
-                std::ostringstream ss;
+                std::cerr <<"    ";
                 if (pi->type & BinaryAnalysis::PointerAnalysis::DATA_PTR)
-                    ss <<"data ";
+                    std::cerr <<"data ";
                 if (pi->type & BinaryAnalysis::PointerAnalysis::CODE_PTR)
-                    ss <<"code ";
-                ss <<"pointer at " <<pi->address;
-                m->mesg("   %s", ss.str().c_str());
+                    std::cerr <<"code ";
+                std::cerr <<"pointer at " <<pi->address <<"\n";
             }
         }
         return pd;
@@ -297,7 +1115,10 @@ public:
     // Save each function to the database.  Returns a mapping from function object to ID number.
     // We have to do this in a database-efficient manner without holding a transaction lock too long because we're
     // likely to be running in parallel.
-    FunctionIdMap save_functions(const Functions &functions) {
+    FunctionIdMap save_functions(SgNode *ast, const Functions &functions) {
+        if (opt.verbosity>=LACONIC)
+            std::cerr <<"CloneDetection: saving function information and assembly listings...\n";
+
         typedef std::map<rose_addr_t/*entry_va*/, SgAsmFunction*> AddrFunc;
         typedef std::map<SgAsmFunction*, FuncStats> Stats;
 
@@ -310,10 +1131,10 @@ public:
         } dselector;
 
         FunctionIdMap retval;
-        RTS_Message *m = thread->tracing(TRACE_MISC);
 
         // Pre-compute some function info that doesn't depend on the database.
-        m->mesg("%s:   calculating function information from AST", name);
+        if (opt.verbosity>=LACONIC)
+            std::cerr <<"CloneDetection:   calculating function information from AST\n";
         AddrFunc addrfunc;
         Stats stats;
         for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
@@ -327,7 +1148,8 @@ public:
         }
 
         // Populate the semantic_files table (assuming our functions can come from multiple files)
-        m->mesg("%s:   populating file table from binary function info", name);
+        if (opt.verbosity>=LACONIC)
+            std::cerr <<"CloneDetection:   populating file table from binary function info\n";
         sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE);
         for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi)
             stats[*fi].file_id = get_file_id(filename_for_function(*fi));
@@ -336,7 +1158,8 @@ public:
         // Scan the whole function table and keep only those entries that correspond to our functions.  Since our functions
         // might come from multiple files, there isn't an easy way to limit the query to only those files (we could use "in"
         // but this seems about as fast).
-        m->mesg("%s:   getting function IDs from the database", name);
+        if (opt.verbosity>=LACONIC)
+            std::cerr <<"CloneDetection:   getting function IDs from the database\n";
         sqlite3_command cmd1(sqlite, "select id, entry_va, file_id from semantic_functions");
         lock.begin(sqlite3_transaction::LOCK_IMMEDIATE);
         sqlite3_reader c1 = cmd1.executereader();
@@ -366,7 +1189,10 @@ public:
 
         // Add necessary functions to the semantic_functions table, but be careful because some other process might have added
         // them since we released the lock above.
-        m->mesg("%s:   adding %zu function ID%s to the database", name, to_add.size(), 1==to_add.size()?"":"s");
+        if (opt.verbosity>=LACONIC) {
+            std::cerr <<"CloneDetection:   adding " <<to_add.size() <<" function ID" <<(1==to_add.size()?"":"s")
+                      <<" to the database\n";
+        }
         sqlite3_command cmd2(sqlite, "select coalesce(max(id),-1) from semantic_functions where entry_va=? and file_id=?");
         sqlite3_command cmd3(sqlite, "insert into semantic_functions"
                              // 1   2         3         4        5      6      7     8
@@ -397,7 +1223,10 @@ public:
             }
         }
         lock.commit();
-        m->mesg("%s:   added %zu function ID%s to the database", name, added.size(), 1==added.size()?"":"s");
+        if (opt.verbosity>=LACONIC) {
+            std::cerr <<"CloneDetection:   added " <<added.size() <<" function ID" <<(1==added.size()?"":"s")
+                      <<" to the database\n";
+        }
 
         // For each function we added to the database, also add the assembly listing. We assume that if the function already
         // exists in the database then its assembly listing also exists, but this might not be true if the process is
@@ -407,16 +1236,18 @@ public:
                              // 1        2     3         4            5         6            7
                              " (address, size, assembly, function_id, position, src_file_id, src_line)"
                              " values (?,?,?,?,?,?,?)");
-        m->mesg("%s:   computing address-to-source mapping", name);
-        BinaryAnalysis::DwarfLineMapper dlm(thread->get_process()->get_project());
+        if (opt.verbosity>=LACONIC)
+            std::cerr <<"CloneDetection:   computing address-to-source mapping\n";
+        BinaryAnalysis::DwarfLineMapper dlm(ast);
         dlm.fix_holes();
         AsmUnparser unparser;
-        unparser.staticDataDisassembler.init(thread->get_process()->get_disassembler());
-        m->mesg("%s:   saving assembly code for each function", name);
+        //unparser.staticDataDisassembler.init(thread->get_process()->get_disassembler()); //FIXME
+        if (opt.verbosity>=LACONIC)
+            std::cerr <<"CloneDetection:   saving assembly code for each function\n";
         for (Functions::iterator ai=added.begin(); ai!=added.end(); ++ai) {
             SgAsmFunction *func = *ai;
             int func_id = retval[func];
-            if (opt.verbose)
+            if (opt.verbosity>=EFFUSIVE)
                 std::cerr <<"  unparsing function " <<func_id;
             std::string function_lst = unparser.to_string(func);
             std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(func);
@@ -435,10 +1266,10 @@ public:
                 cmd4.bind(6, src_file_id);
                 cmd4.bind(7, loc.line_num);
                 cmd4.executenonquery();
-                if (opt.verbose)
+                if (opt.verbosity>=EFFUSIVE)
                     std::cerr <<'.';
             }
-            if (opt.verbose)
+            if (opt.verbosity>=EFFUSIVE)
                 std::cerr <<"\n";
         }
 
@@ -447,6 +1278,8 @@ public:
 
     // Save the function call graph.
     void save_cg(const FunctionIdMap &func_ids) {
+        if (opt.verbosity>=LACONIC)
+            std::cerr <<"CloneDetection: saving call graph...\n";
 
         typedef BinaryAnalysis::FunctionCall::Graph CG;
         typedef boost::graph_traits<CG>::vertex_descriptor Vertex;
@@ -524,6 +1357,8 @@ public:
     // Suck source code into the database.  For any file that can be read and which does not have lines already saved
     // in the semantic_sources table, read each line of the file and store them in semantic_sources.
     void save_files() {
+        if (opt.verbosity>=LACONIC)
+            std::cerr <<"CloneDetection: saving source code listings for each function...\n";
         sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE, sqlite3_transaction::DEST_COMMIT);
         sqlite3_command cmd1(sqlite,
                              "select files.id, files.name"
@@ -542,7 +1377,7 @@ public:
             if (is_text_file(f)) {
                 cmd2.bind(1, file_id);
                 if (cmd2.executeint()<=0) {
-                    if (opt.verbose)
+                    if (opt.verbosity>=EFFUSIVE)
                         std::cerr <<"  saving source code for " <<file_name;
                     char *line = NULL;
                     size_t linesz=0, line_num=0;
@@ -554,13 +1389,13 @@ public:
                         cmd3.bind(2, ++line_num);
                         cmd3.bind(3, line);
                         cmd3.executenonquery();
-                        if (opt.verbose)
+                        if (opt.verbosity>=EFFUSIVE)
                             std::cerr <<".";
                     }
                     if (line)
                         free(line);
                 }
-                if (opt.verbose)
+                if (opt.verbosity>=EFFUSIVE)
                     std::cerr <<"\n";
             }
             if (f)
@@ -630,8 +1465,6 @@ public:
     // into a single container that we call an output group.  In order to cut down on the number of output groups in the
     // database, this function will reuse output groups that already exist.
     size_t save_outputs(OutputGroup &outputs, const VaId &func_va2id, const IdVa &func_id2va) {
-        RTS_Message *m = thread->tracing(TRACE_MISC);
-
         // We need a write lock for the duration, otherwise some other process might determine that an output set
         // doesn't exist and then try to create the same one we're about to create.
         sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE);
@@ -644,8 +1477,8 @@ public:
         // is deleting output groups and that groups are numbered consecutively starting at zero.
         int next_id = cmd1.executeint();
         if ((int)output_groups.size() != next_id) {
-            if (opt.verbose)
-                m->mesg("%s: loading output groups from the database", name);
+            if (opt.verbosity>=EFFUSIVE)
+                std::cerr <<"CloneDetection: loading output groups from the database\n";
             load_output_groups(sqlite, &func_id2va, output_groups);
         }
 
@@ -700,27 +1533,22 @@ public:
         return next_id;
     }
 
-    // Return the name of a file containing the specified function.  We parse the name from the mmap area.
+    // Return the name of a file containing the specified function.
     std::string filename_for_function(SgAsmFunction *function, bool basename=true) {
-        rose_addr_t va = function->get_entry_va();
-        const MemoryMap &mm = thread->get_process()->get_memory();
-        if (!mm.exists(va))
-            return "";
-        std::string s = mm.at(va).second.get_name();
-        size_t ltparen = s.find('(');
-        size_t rtparen = s.rfind(')');
         std::string retval;
-        if (0==s.substr(0, 5).compare("mmap(")) {
-            if (rtparen==std::string::npos) {
-                retval = s.substr(5);
-            } else {
-                assert(rtparen>=5);
-                retval = s.substr(5, rtparen-5);
+        SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(function);
+        const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+        for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
+            size_t nmatch;
+            (*hi)->get_section_by_va(function->get_entry_va(), false, &nmatch);
+            if (nmatch>0) {
+                SgAsmGenericFile *file = SageInterface::getEnclosingNode<SgAsmGenericFile>(*hi);
+                if (file!=NULL && !file->get_name().empty()) {
+                    retval = file->get_name();
+                    break;
+                }
             }
-        } else if (ltparen!=std::string::npos) {
-            retval = s.substr(0, ltparen);
         }
-
         if (basename) {
             size_t slash = retval.rfind('/');
             if (slash!=std::string::npos)
@@ -745,89 +1573,56 @@ public:
     
     // Analyze a single function by running it with the specified inputs and collecting its outputs. */
     OutputGroup fuzz_test(SgAsmFunction *function, InputGroup &inputs, const PointerDetector *pointers) {
-        RSIM_Process *proc = thread->get_process();
-        RTS_Message *m = thread->tracing(TRACE_MISC);
+        InstructionProvidor insns(function);
         AnalysisFault::Fault fault = AnalysisFault::NONE;
-
-        // Not sure if saving/restoring memory state is necessary. I don't think machine memory is adjusted by the semantic
-        // policy's writeMemory() or readMemory() operations after the policy is triggered to enable our analysis.  But it
-        // shouldn't hurt to save/restore anyway, and it's fast. [Robb Matzke 2013-01-14]
-        proc->mem_transaction_start(name);
-        pt_regs_32 saved_regs = thread->get_regs();
-
-        // Trigger the analysis, resetting it to start executing the specified function using the input values and pointer
-        // variable addresses we selected previously.
-        thread->policy.trigger(function->get_entry_va(), &inputs, pointers);
-
-        // "Run" the function using our semantic policy.  The function will not "run" in the normal sense since: since our
-        // policy has been triggered, memory access, function calls, system calls, etc. will all operate differently.  See
-        // CloneDetectionSemantics.h and CloneDetectionTpl.h for details.
+        policy.reset(function->get_entry_va(), &inputs, pointers);
         try {
-            thread->main();
-        } catch (const Disassembler::Exception &e) {
-            // Probably due to the analyzed function's RET instruction, but could be from other things as well. In any case, we
-            // stop analyzing the function when this happens.
-            if (thread->policy.FUNC_RET_ADDR==e.ip) {
-                if (opt.verbose)
-                    m->mesg("%s: function returned", name);
-                fault = AnalysisFault::NONE;
-            } else {
-                if (opt.verbose)
-                    m->mesg("%s: function disassembly failed at 0x%08"PRIx64": %s", name, e.ip, e.mesg.c_str());
-                fault = AnalysisFault::DISASSEMBLY;
+            while (1) {
+                rose_addr_t insn_va = policy.state.registers.ip.known_value();
+                if (policy.FUNC_RET_ADDR==insn_va) {
+                    if (opt.verbosity>=EFFUSIVE)
+                        std::cerr <<"CloneDetection: function returned\n";
+                    fault = AnalysisFault::NONE;
+                    break;
+                }
+                
+                if (SgAsmx86Instruction *insn = isSgAsmx86Instruction(insns.get_instruction(insn_va))) {
+                    semantics.processInstruction(insn);
+                } else {
+                    if (opt.verbosity>=EFFUSIVE)
+                        std::cerr <<"CloneDetection: no instruction at " <<StringUtility::addrToString(insn_va) <<"\n";
+                    fault = AnalysisFault::DISASSEMBLY;
+                    break;
+                }
             }
-        } catch (const InsnLimitException &e) {
-            // The analysis might be in an infinite loop, such as when analyzing "void f() { while(1); }"
-            if (opt.verbose)
-                m->mesg("%s: %s", name, e.mesg.c_str());
-            fault = AnalysisFault::INSN_LIMIT;
-        } catch (const RSIM_Semantics::InnerPolicy<>::Halt &e) {
-            // The x86 HLT instruction appears in some functions (like _start) as a failsafe to terminate a process.  We need
-            // to intercept it and terminate only the function analysis.
-            if (opt.verbose)
-                m->mesg("%s: function executed HLT instruction at 0x%08"PRIx64, name, e.ip);
-            fault = AnalysisFault::HALT;
-        } catch (const RSIM_Semantics::InnerPolicy<>::Interrupt &e) {
-            // The x86 INT instruction was executed but the policy does not know how to handle it.
-            if (opt.verbose)
-                m->mesg("%s: function executed INT 0x%x at 0x%08"PRIx64, name, e.inum, e.ip);
-            fault = AnalysisFault::INTERRUPT;
-        } catch (const RSIM_SEMANTICS_POLICY::Exception &e) {
+        } catch (const FaultException &e) {
+            if (opt.verbosity>=EFFUSIVE)
+                std::cerr <<"CloneDetection: analysis terminated by " <<AnalysisFault::fault_name(e.fault) <<"\n";
+            fault = e.fault;
+        } catch (const BaseSemantics::Policy::Exception &e) {
             // Some exception in the policy, such as division by zero.
-            if (opt.verbose)
-                m->mesg("%s: %s", name, e.mesg.c_str());
+            if (opt.verbosity>=EFFUSIVE)
+                std::cerr <<"CloneDetection: analysis terminated by FAULT_SEMANTICS\n";
             fault = AnalysisFault::SEMANTICS;
-        } catch (const SMTSolver::Exception &e) {
-            // Some exception in the SMT solver
-            if (opt.verbose)
-                m->mesg("%s: %s", name, e.mesg.c_str());
-            fault = AnalysisFault::SMTSOLVER;
         }
         
         // Gather the function's outputs before restoring machine state.
-        OutputGroup outputs = thread->policy.get_outputs(opt.verbose!=0);
+        OutputGroup outputs = policy.get_outputs();
         outputs.fault = fault;
-        thread->init_regs(saved_regs);
-        proc->mem_transaction_rollback(name);
         return outputs;
     }
 
     // Detect functions that are semantically similar by running multiple iterations of partition_functions().
-    void analyze() {
-        thread->policy.verbose = opt.verbose!=0;
-        thread->policy.max_ninsns = opt.max_insns;
-        thread->set_do_coredump(false);
-        thread->set_show_exceptions(false);
-        RTS_Message *m = thread->tracing(TRACE_MISC);
-        m->mesg("Starting clone detection analysis...");
-        m->mesg("%s: database=%s, fuzz=@%zu+%zu, npointers=%zu, nnonpointers=%zu, max_insns=%zu",
-                name, opt.dbname.c_str(), opt.firstfuzz, opt.nfuzz, opt.npointers, opt.nnonpointers, opt.max_insns);
-        Functions functions = find_functions(m, thread->get_process());
-        m->mesg("%s: saving function information and assembly listings...", name);
-        FunctionIdMap func_ids = save_functions(functions);
-        m->mesg("%s: saving source code listings for each function...", name);
+    void analyze(SgNode *ast) {
+        policy.verbosity = opt.verbosity;
+        policy.max_ninsns = opt.max_insns;
+        std::cerr <<"CloneDetection: database=" <<opt.dbname
+                  <<" fuzz=@" <<opt.firstfuzz <<"+" <<opt.nfuzz
+                  <<" npointers=" <<opt.npointers <<" nnonpointers=" <<opt.nnonpointers
+                  <<" max_insns=" <<opt.max_insns <<"\n";
+        Functions functions = find_functions(ast);
+        FunctionIdMap func_ids = save_functions(ast, functions);
         save_files();
-        m->mesg("%s: saving call graph...", name);
         save_cg(func_ids);
 
         // Mapping from function ID to function entry va and vice versa
@@ -849,14 +1644,14 @@ public:
         progress.force_output(opt.show_progress);
         for (size_t fuzz_number=opt.firstfuzz; fuzz_number<opt.firstfuzz+opt.nfuzz; ++fuzz_number) {
             InputGroup inputs = choose_inputs(fuzz_number);
-            if (opt.verbose) {
-                m->mesg("####################################################################################################");
-                m->mesg("%s: fuzz testing %zu function%s with inputgroup %zu",
-                        name, functions.size(), 1==functions.size()?"":"s", fuzz_number);
-                m->mesg("%s: using these input values:\n%s", name, inputs.toString().c_str());
+            if (opt.verbosity>=LACONIC) {
+                std::cerr <<"CloneDetection: " <<std::string(80, '#') <<"\n"
+                          <<"CloneDetection: fuzz testing " <<functions.size() <<" function " <<(1==functions.size()?"":"s")
+                          <<" with inputgroup " <<fuzz_number <<"\n"
+                          <<"CloneDetection: using these input values:\n" <<inputs.toString();
             }
             for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
-                if (opt.show_progress || (!opt.verbose && NULL==m->get_file()))
+                if (opt.show_progress || opt.verbosity==SILENT)
                     progress.show();
                 SgAsmFunction *func = *fi;
                 inputs.reset();
@@ -865,7 +1660,8 @@ public:
                 cmd2.bind(1, func_ids[func]);
                 cmd2.bind(2, fuzz_number);
                 if (cmd2.executeint()>0) {
-                    m->mesg("%s: %s fuzz test #%zu SKIPPED", name, function_to_str(func).c_str(), fuzz_number);
+                    if (opt.verbosity>=LACONIC)
+                        std::cerr <<"CloneDetection: " <<function_to_str(func) <<" fuzz test #" <<fuzz_number <<" SKIPPED\n";
                     continue;
                 }
 
@@ -873,14 +1669,15 @@ public:
                 // it here we only need to do it for functions that are actually tested.
                 PointerDetectors::iterator ip = pointers.find(func);
                 if (ip==pointers.end())
-                    ip = pointers.insert(std::make_pair(func, detect_pointers(m, thread, func))).first;
+                    ip = pointers.insert(std::make_pair(func, detect_pointers(func))).first;
                 assert(ip!=pointers.end());
 
                 // Run the test
                 timeval start_time, stop_time;
                 clock_t start_ticks = clock();
                 gettimeofday(&start_time, NULL);
-                m->mesg("%s: %s fuzz test #%zu", name, function_to_str(func).c_str(), fuzz_number);
+                if (opt.verbosity>=LACONIC)
+                    std::cerr <<"CloneDetection: " <<function_to_str(func) <<" fuzz test #" <<fuzz_number <<"\n";
                 OutputGroup outputs = fuzz_test(func, inputs, ip->second);
                 gettimeofday(&stop_time, NULL);
                 clock_t stop_ticks = clock();
@@ -895,14 +1692,14 @@ public:
 
                 // Save the results. Some other process might have tested this function concurrently, in which case we'll
                 // defer to the other process' results.
-                if (opt.verbose) {
-                    m->mesg("%s: %s fuzz test #%zu output values:", name, function_to_str(func).c_str(), fuzz_number);
-                    outputs.print(m, "", std::string(name) + ":  ");
+                if (opt.verbosity>=EFFUSIVE) {
+                    std::cerr <<"CloneDetection: " <<function_to_str(func) <<" fuzz test #" <<fuzz_number <<" output values:\n";
+                    outputs.print(std::cerr, "", "CloneDetection:  ");
                 }
                 size_t outputgroup_id = save_outputs(outputs, func_va2id, func_id2va);
                 sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE, sqlite3_transaction::DEST_COMMIT);
                 if (cmd2.executeint()>0) {
-                    m->mesg("%s: %s fuzz test #%zu ALREADY PRESENT", name, function_to_str(func).c_str(), fuzz_number);
+                    std::cerr <<"CloneDetection: " <<function_to_str(func) <<" fuzz test #" <<fuzz_number <<" ALREADY PRESENT\n";
                 } else {
                     cmd1.bind(1, func_ids[func]);
                     cmd1.bind(2, fuzz_number);
@@ -914,50 +1711,12 @@ public:
                 }
             }
         }
-        m->mesg("%s: final results stored in %s", name, opt.dbname.c_str());
-    }
-};
-
-const char *CloneDetector::name = "CloneDetector";
-
-/******************************************************************************************************************************/
-
-// Instruction callback to trigger clone detection.  The specimen executable is allowed to run until it hits the specified
-// trigger address (in order to cause dynamically linked libraries to be loaded and linked), at which time a CloneDetector
-// object is created and thrown.
-class Trigger: public RSIM_Callbacks::InsnCallback {
-protected:
-    rose_addr_t trigger_va;             /**< Address at which a CloneDetector should be created and thrown. */
-    bool armed;                         /**< Should this object be monitoring instructions yet? */
-    bool triggered;                     /**< Has this been triggered yet? */
-    Switches opt;                       /**< Analysis configuration from command-line switches. */
-public:
-    Trigger(const Switches &opt): trigger_va(0), armed(false), triggered(false), opt(opt) {}
-
-    // For simplicity, all threads, processes, and simulators will share the same SemanticController object.  This means that
-    // things probably won't work correctly when analyzing a multi-threaded specimen, but it keeps this demo more
-    // understandable.
-    virtual Trigger *clone() /*override*/ { return this; }
-
-    // Arm this callback so it starts monitoring instructions for the trigger address.
-    void arm(rose_addr_t trigger_va) {
-        this->trigger_va = trigger_va;
-        armed = true;
-    }
-
-    // Called for every instruction by every thread. When the trigger address is reached for the first time, create a new
-    // CloneDetector and throw it.  The main() will catch it and start its analysis.
-    virtual bool operator()(bool enabled, const Args &args) /*override*/ {
-        if (enabled && armed && !triggered && args.insn->get_address()==trigger_va) {
-            triggered = true;
-            throw new CloneDetector(args.thread, opt);
-        }
-        return enabled;
+        progress.clear();
+        std::cerr <<"CloneDetection: final results stored in " <<opt.dbname <<"\n";
     }
 };
 
 } // namespace
-
 
 /******************************************************************************************************************************/
 int
@@ -975,7 +1734,18 @@ main(int argc, char *argv[], char *envp[])
             opt.dbname = argv[i]+11;
             consume = true;
         } else if (!strcmp(argv[i], "--verbose")) {
-            opt.verbose = consume = true;
+            opt.verbosity = EFFUSIVE;
+            consume = true;
+        } else if (!strncmp(argv[i], "--verbosity=", 12)) {
+            size_t n = strtoul(argv[i]+12, NULL, 0);
+            if (n>=EFFUSIVE || !strcmp(argv[i]+12, "effusive")) {
+                opt.verbosity = EFFUSIVE;
+            } else if (n>=LACONIC || !strcmp(argv[i]+12, "laconic")) {
+                opt.verbosity = LACONIC;
+            } else {
+                opt.verbosity = SILENT;
+            }
+            consume = true;
         } else if (!strncmp(argv[i], "--nfuzz=", 8)) {
             char *rest;
             opt.nfuzz = strtoul(argv[i]+8, &rest, NULL);
@@ -1007,52 +1777,8 @@ main(int argc, char *argv[], char *envp[])
         }
     }
 
-    // Our instruction callback.  We can't set its trigger address until after we load the specimen, but we want to register
-    // the callback with the simulator before we create the first thread.
-    CloneDetection::Trigger clone_detection_trigger(opt);
-
-    // All of this is standard boilerplate and documented in the first page of the simulator doxygen.
-    RSIM_Linux32 sim;
-    sim.install_callback(new RSIM_Tools::UnhandledInstruction); // needed by some versions of ld-linux.so
-    sim.install_callback(&clone_detection_trigger);             // it mustn't be destroyed while the simulator's running
-    int n = sim.configure(argc, argv, envp);
-    sim.exec(argc-n, argv+n);
-
-    // Now that we've loaded the specimen into memory and created its first thread, figure out its original entry point (OEP)
-    // and arm the clone_detection_trigger so that it triggers clone detection when the OEP is reached.  This will allow the
-    // specimen's dynamic linker to run.
-    rose_addr_t trigger_va = sim.get_process()->get_ep_orig_va();
-    clone_detection_trigger.arm(trigger_va);
-
-    // Allow the specimen to run until it reaches the clone detection trigger point, at which time a CloneDetector object is
-    // thrown for that thread that reaches it first.
-    try {
-        sim.get_process()->get_main_thread()->tracing(TRACE_MISC)
-            ->mesg("running specimen until we hit the analysis trigger address: 0x%08"PRIx64, trigger_va);
-        sim.main_loop();
-    } catch (CloneDetection::CloneDetector *clone_detector) {
-        clone_detector->analyze();
-    }
-
+    SgProject *project = frontend(argc, argv);
+    CloneDetection::Analysis analysis(opt);
+    analysis.analyze(project);
     return 0;
 }
-
-#else
-int main(int, char *argv[])
-{
-#ifndef RSIM_CloneDetectionSemantics_H
-    std::cerr <<argv[0] <<": this program is not configured properly.\n"
-              <<"  You must apply the CloneDetection.patch to the simulator project\n"
-              <<"  and then recompile the simulator in a clean build directory. I.e,\n"
-              <<"  something along these lines:\n"
-              <<"    $ (cd $ROSE_SRC/projects/simulator;\n"
-              <<"       patch -p3 <clone_detection/CloneDetection.patch)\n"
-              <<"    $ make clean\n"
-              <<"    $ make CloneDetection\n";
-#else
-    std::cerr <<argv[0] <<": the simulator not supported on this platform" <<std::endl;
-#endif
-    return 0;
-}
-
-#endif /* ROSE_ENABLE_SIMULATOR */
