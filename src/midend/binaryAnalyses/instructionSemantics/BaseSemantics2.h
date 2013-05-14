@@ -1209,6 +1209,11 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  RISC-like operations invoked by the translation object (e.g., X86InstructionSemantics).  We omit the definitions for most
  *  of the RISC operations from the base class so that failure to implement them in a subclass is an error.
  *
+ *  RISC operator arguments are, in general, SValue pointers.  However, if the width of a RISC operator's result depends on an
+ *  argument's value (as opposed to depending on the argument width), then that argument must be a concrete value (i.e., an
+ *  integral type).  This requirement is due to the fact that SMT solvers need to know the sizes of their bit
+ *  vectors. Operators extract(), unsignedExtend(), signExtend(), readRegister(), and readMemory() fall into this category.
+ *
  *  RiscOperator objects are allocated on the heap and reference counted.  The BaseSemantics::RiscOperator is an abstract class
  *  that defines the interface.  See the BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit
  *  together. */
