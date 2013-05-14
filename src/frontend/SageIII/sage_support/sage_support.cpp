@@ -4447,8 +4447,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
       (get_unparse_output_filename().empty() == true) ||
       (
           (
-              this->get_frontendErrorCode() != 0 ||
-              this->get_unparserErrorCode() != 0
+              this->get_frontendErrorCode()         != 0 ||
+              this->get_unparserErrorCode()         != 0 ||
+              this->get_backendCompilerErrorCode()  != 0
           ) &&
           (
               get_project()->get_keep_going()
@@ -4482,16 +4483,20 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   << "with "
                   << "'" << original_file << "'"
                   << std::endl;
-              // copy_file will only completely override the existing file in Boost 1.46+
-              // http://stackoverflow.com/questions/14628836/boost-copy-file-has-inconsistent-behavior-when-overwrite-if-exists-is-used
-              if (boost::filesystem::exists(unparsed_file))
+              // Don't replace the original input file
+              if (original_file.string() != unparsed_file.string())
               {
-                  boost::filesystem::remove(unparsed_file);
+                  // copy_file will only completely override the existing file in Boost 1.46+
+                  // http://stackoverflow.com/questions/14628836/boost-copy-file-has-inconsistent-behavior-when-overwrite-if-exists-is-used
+                  if (boost::filesystem::exists(unparsed_file))
+                  {
+                      boost::filesystem::remove(unparsed_file);
+                  }
+                  boost::filesystem::copy_file(
+                      original_file,
+                      unparsed_file,
+                      boost::filesystem::copy_option::overwrite_if_exists);
               }
-              boost::filesystem::copy_file(
-                  original_file,
-                  unparsed_file,
-                  boost::filesystem::copy_option::overwrite_if_exists);
           }
 
           set_unparse_output_filename(outputFilename);
@@ -4581,8 +4586,8 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   //    what was just compiled above -- and failed also.
                   if (this->get_unparsedFileFailedCompilation())
                   {
-                      printf("[FATAL] Original input file is invalid\n");
-                      exit(1);
+                      this->set_backendCompilerErrorCode(-1);
+                      throw std::runtime_error("Original input file is invalid");
                   }
                   else
                   {
@@ -4772,7 +4777,27 @@ SgProject::compileOutput()
             // makes sense with multiple files specified on the commandline)!
             // int localErrorCode = file.compileOutput(i, compilerName);
             // int localErrorCode = file.compileOutput(0, compilerName);
-               int localErrorCode = file.compileOutput(0);
+            int localErrorCode = 0;
+            try
+            {
+                localErrorCode = file.compileOutput(0);
+            } catch (std::exception &e)
+            {
+                if (this->get_keep_going())
+                {
+                    std::cerr
+                        << "[ERROR] Caught backend exception: "
+                        << "'" << e.what() << "'"
+                        << std::endl;
+                    std::cerr
+                        << "[WARN] Ignoring backend exception "
+                        << "as directed by the -rose:keep_going option"
+                        << std::endl;
+                }
+                {
+                    throw;
+                }
+            }
 
                if (localErrorCode > errorCode)
                     errorCode = localErrorCode;
