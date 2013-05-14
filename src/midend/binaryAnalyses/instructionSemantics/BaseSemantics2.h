@@ -1037,6 +1037,12 @@ public:
      *  specified address, then true is returned via @p short_circuited argument. */
     virtual CellList scan(const BaseSemantics::SValuePtr &address, size_t nbits, RiscOperators *ops,
                           bool &short_circuited/*out*/) const;
+
+    /** Returns the list of all memory cells.
+     * @{ */
+    virtual const CellList& get_cells() const { return cells; }
+    virtual       CellList& get_cells()       { return cells; }
+    /** @} */
 };
 
 /******************************************************************************************************************
