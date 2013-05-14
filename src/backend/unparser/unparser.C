@@ -3,6 +3,10 @@
  * and fucntions that unparse directives.
  */
 
+// TOO1 (05/14/2013): Signal handling for -rose:keep_going
+#include <setjmp.h>
+#include <signal.h>
+
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 // #include "propagateHiddenListData.h"
@@ -32,6 +36,14 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+
+// TOO1 (05/14/2013): Signal handling for -rose:keep_going
+static sigjmp_buf rose__sgproject_unparse_mark;
+static void HandleUnparserSignal(int sig)
+{
+  std::cout << "[WARN] Caught unparser signal='" << sig << "'" << std::endl;
+  siglongjmp(rose__sgproject_unparse_mark, -1);
+}
 
 // extern ROSEAttributesList *getPreprocessorDirectives( char *fileName); // [DT] 3/16/2000
 
@@ -2066,17 +2078,6 @@ void unparseDirectory ( SgDirectory* directory, UnparseFormatHelp* unparseFormat
 #endif
    }
 
-#include <setjmp.h>
-#include <signal.h>
-#include <stdio.h>
-#include <unistd.h>
-static sigjmp_buf rose__sgproject_unparse_mark;
-static void HandleUnparserSignal(int sig)
-{
-  std::cout << "[WARN] Caught unparser signal='" << sig << "'" << std::endl;
-  siglongjmp(rose__sgproject_unparse_mark, -1);
-}
-
 // DQ (1/19/2010): Added support for refactored handling directories of files.
 void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate)
 {
@@ -2089,6 +2090,7 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
       if ( SgProject::get_verbose() > 1 )
            printf ("Unparsing each file... file = %p = %s \n",file,file->class_name().c_str());
 
+      // TOO1 (05/14/2013): Signal handling for -rose:keep_going
       if (file->get_project()->get_keep_going())
       {
           struct sigaction act;
@@ -2108,7 +2110,7 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
       }
       else
       {
-          unparseFile(file,unparseFormatHelp,unparseDelegate);
+          unparseFile(file, unparseFormatHelp, unparseDelegate);
       }
   }
 }
