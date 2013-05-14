@@ -394,14 +394,15 @@ ConcatSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterato
     size_t nbits = 0;
     for (TreeNodes::const_iterator ti=begin; ti!=end; ++ti)
         nbits += (*ti)->get_nbits();
+    size_t result_nbits = nbits;
+    assert(nbits>0 && nbits<=8*sizeof result);
 
     for (/*void*/; begin!=end; ++begin) {
         LeafNodePtr leaf = (*begin)->isLeafNode();
         nbits -= leaf->get_nbits();
         result |= IntegerOps::shiftLeft2(leaf->get_value(), nbits);
     }
-    assert(nbits>0 && nbits<=8*sizeof result);
-    return LeafNode::create_integer(nbits, result);
+    return LeafNode::create_integer(result_nbits, result);
 }
 
 TreeNodePtr
