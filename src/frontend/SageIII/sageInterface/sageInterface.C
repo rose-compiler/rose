@@ -9252,7 +9252,8 @@ SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgSco
        // printf ("In appendStatementList(): stmts[i = %zu]->get_parent() = %p \n",i,stmts[i]->get_parent());
 #endif
 #endif
-       // appendStatement(stmts[i], scope);
+        appendStatement(stmts[i], scope); // Liao 5/15/2013, defer the logic of checking parent pointers to appendStatement()
+#if 0        
           if (stmts[i]->get_parent() != NULL)
              {
 #if 0
@@ -9266,6 +9267,7 @@ SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgSco
              {
                printf ("   --- WARNING: In appendStatementList(): stmts[i = %zu] not added to scope (because stmts[i]->get_parent() == NULL) \n",i);
              }
+#endif        
         }
    }
 
