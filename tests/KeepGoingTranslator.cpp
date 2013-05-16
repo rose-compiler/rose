@@ -44,6 +44,7 @@ main(int argc, char * argv[])
   std::string report_filename("rose-file_errors.txt");
   std::string expectations_filename;
   std::string path_prefix;
+  bool        verbose;
 
   std::string program_name(argv[0]);
 
@@ -55,6 +56,7 @@ main(int argc, char * argv[])
       std::string cli_report = "--report=";
       std::string cli_expectations = "--expectations=";
       std::string cli_strip_path_prefix = "--strip-path-prefix=";
+      std::string cli_verbose = "--verbose";
 
       for (int ii = 1; ii < argc; ++ii)
       {
@@ -65,6 +67,11 @@ main(int argc, char * argv[])
           {
               ShowUsage(program_name);
               return 0;
+          }
+          // --verbose
+          else if (arg.find(cli_verbose) == 0)
+          {
+              verbose = true;
           }
           // --report=<filename>
           else if (arg.find(cli_report) == 0)
@@ -131,14 +138,17 @@ main(int argc, char * argv[])
           }
           else
           {
-              rose_cmdline.push_back(argv[ii]);
+              rose_cmdline.push_back(arg);
           }
       }
 
-      std::cout
-          << "ROSE Commandline: "
-          << boost::algorithm::join(rose_cmdline, " ")
-          << std::endl;
+      if (verbose)
+      {
+          std::cout
+              << "ROSE Commandline: "
+              << boost::algorithm::join(rose_cmdline, " ")
+              << std::endl;
+      }
   }// CLI
 
   // Build the AST used by ROSE
@@ -159,6 +169,15 @@ main(int argc, char * argv[])
       std::string filename = file->getFileName();
       filename = StripPrefix(path_prefix, filename);
 
+      if (verbose)
+      {
+          std::cout
+              << "[ERROR] "
+              << "ROSE encountered an error while processing this file: "
+              << "'" << filename << "'"
+              << std::endl;
+      }
+
       std::stringstream ss;
       ss
           //<< "[ERROR] "
@@ -167,6 +186,29 @@ main(int argc, char * argv[])
           << filename;
 
       AppendToFile(report_filename, ss.str());
+  }
+
+  if (verbose)
+  {
+      // Report successes
+      SgFilePtrList files_without_errors = project->get_files_without_errors();
+      std::cout
+          << "[INFO] "
+          << "ROSE successfully compiled "
+          << "'" << files_without_errors.size() << "' "
+          << "files"
+          << std::endl;
+      BOOST_FOREACH(SgFile* file, files_without_errors)
+      {
+          std::string filename = file->getFileName();
+          filename = StripPrefix(path_prefix, filename);
+
+          std::cout
+              << "[INFO] "
+              << "ROSE successfully compiled this file: "
+              << "'" << filename << "'"
+              << std::endl;
+      }
   }
 
   if (!expectations_filename.empty())
@@ -191,6 +233,17 @@ main(int argc, char * argv[])
                   << std::endl;
               abort();
           }
+          else
+          {
+              if (verbose)
+              {
+                  std::cout
+                      << "[INFO] "
+                      << "Expected failure for file: "
+                      << "'" << filename << "'"
+                      << std::endl;
+              }
+          }
       }
   }
 
@@ -208,6 +261,7 @@ ShowUsage(std::string program_name)
     << "  --strip-path-prefix=<filename>  Normalize filenames by stripping this path prefix from them\n"
     << "\n"
     << "  -h,--help                       Show this help message\n"
+    << "  --verbose                       Enables debugging output, e.g. outputs successful files\n"
     << std::endl;
 }
 
