@@ -5318,6 +5318,7 @@ HEADER_APPLICATION_PROJECT_START
       //! \returns A list of files that encountered an error within either
       //!          the frontend, unparser, or backend compilation.
           SgFilePtrList get_files_with_errors() const;
+          SgFilePtrList get_files_without_errors() const;
 
       //! Access function for retriving a SgFile object from the list stored internally
           SgFile* operator[]( unsigned int i );
@@ -14093,24 +14094,47 @@ SgProject::set_file ( SgFile & file )
 SgFilePtrList
 SgProject::get_files_with_errors() const
 {
-  SgFilePtrList failed_files;
+  SgFilePtrList files_with_errors;
+
   SgFilePtrList files = p_fileList_ptr->get_listOfFiles();
   SgFilePtrList::iterator it;
-
   for (it = files.begin(); it != files.end(); ++it)
   {
       SgFile* file = *it;
-      bool failed =
+      bool has_errors =
           file->get_frontendErrorCode()         != 0 ||
           file->get_unparserErrorCode()         != 0 ||
           file->get_backendCompilerErrorCode()  != 0;
-      if (failed)
+      if (has_errors)
       {
-          failed_files.push_back(file);
+          files_with_errors.push_back(file);
       }
   }
 
-  return failed_files;
+  return files_with_errors;
+}
+
+SgFilePtrList
+SgProject::get_files_without_errors() const
+{
+  SgFilePtrList files_without_errors;
+
+  SgFilePtrList files = p_fileList_ptr->get_listOfFiles();
+  SgFilePtrList::iterator it;
+  for (it = files.begin(); it != files.end(); ++it)
+  {
+      SgFile* file = *it;
+      bool has_no_errors =
+          file->get_frontendErrorCode()         == 0 &&
+          file->get_unparserErrorCode()         == 0 &&
+          file->get_backendCompilerErrorCode()  == 0;
+      if (has_no_errors)
+      {
+          files_without_errors.push_back(file);
+      }
+  }
+
+  return files_without_errors;
 }
 
 void
