@@ -293,11 +293,34 @@ Grammar::setUpStatements ()
 
 #endif
 
+//============================================================================
+// Java Support
+//============================================================================
 #if USE_JAVA_IR_NODES
+  //============================================================================
+  // SgJavaImportStatement
+  //============================================================================
   // DQ (4/16/2011): This is the Java specific SgJavaImportStatement (which is a declaration), there is also a Fortran specific import statment IR node.
   // DQ (4/12/2011): Added Java support for "import" keyword.
-     NEW_TERMINAL_MACRO (JavaImportStatement,        "JavaImportStatement",         "TEMP_JavaImportStatement" );
+     NEW_TERMINAL_MACRO (JavaImportStatement,     "JavaImportStatement",    "TEMP_JavaImportStatement" );
+
+  //============================================================================
+  // SgJavaPackageStatement
+  //============================================================================
+  NEW_TERMINAL_MACRO (JavaPackageStatement, "JavaPackageStatement", "TEMP_JavaPackageStatement" );
+  {
+      JavaPackageStatement.setFunctionPrototype ( "HEADER_JAVA_PACKAGE_STATEMENT", "../Grammar/Statement.code" );
+      JavaPackageStatement.setFunctionSource    ( "SOURCE_JAVA_PACKAGE_STATEMENT", "../Grammar/Statement.code" );
+
+      // SgJavaPackageStatement Attributes, format:
+      //
+      //     JavaPackageStatement.setDataPrototype(
+      //         "<data type>", "<name>", "= <default initialization>",
+      //         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+      //
+  }//JavaPackageStatement
 #endif
+
 
   // DQ (8/21/2007): More IR nodes required for Fortran support
      NEW_TERMINAL_MACRO (BlockDataStatement,        "BlockDataStatement",         "TEMP_Block_Data_Statement" );
@@ -501,7 +524,7 @@ Grammar::setUpStatements ()
              OmpBarrierStatement       | OmpTaskwaitStatement   |  OmpFlushStatement              | OmpBodyStatement      |
              SequenceStatement         | WithStatement          | PythonPrintStmt                 | PassStatement         |
              AssertStmt                | ExecStatement          | PythonGlobalStmt                | JavaThrowStatement    |
-             JavaSynchronizedStatement,
+             JavaSynchronizedStatement | JavaPackageStatement,
              "Statement","StatementTag", false);
 
   // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
