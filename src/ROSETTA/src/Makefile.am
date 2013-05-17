@@ -102,7 +102,8 @@ CxxGrammarMetaProgram_SOURCES = \
    buildAstFileIO.C \
    buildStorageClasses.C \
    buildConstructorsWithoutSourcePositionInformation.C \
-   outputClassesAndFields.C
+   outputClassesAndFields.C \
+   java/terminals.cpp
 
 # buildConstructorsWithoutSourcePositionInformation.o: buildConstructorsWithoutSourcePositionInformation.C
 
