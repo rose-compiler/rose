@@ -768,7 +768,7 @@ BinaryLoader::align_values(SgAsmGenericSection *section, MemoryMap *map,
 
 /* Used to be called relocateAllLibraries */
 void
-BinaryLoader::fixup(SgAsmInterpretation *interp)
+BinaryLoader::fixup(SgAsmInterpretation *interp, FixupErrors *errors)
 {
     // 1. Get section map (name -> list<section*>)
     // 2. Create Symbol map from relevant sections (.dynsym)
