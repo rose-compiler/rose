@@ -33,7 +33,7 @@ std::string unparseX86Register(const RegisterDescriptor &reg, const RegisterDict
         static bool dumped_dict = false;
         std::cerr <<"unparseX86Register(" <<reg <<"): register descriptor not found in dictionary.\n";
         if (!dumped_dict) {
-            std::cerr <<"  FIXME: we might be using the amd64 register dictionary. [RPM 2011-03-02]\n";
+            std::cerr <<"  FIXME: we might need the amd64 register dictionary. [RPM 2011-03-02]\n";
             //std::cerr <<*dict;
             dumped_dict = true;
         }
