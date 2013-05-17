@@ -1,5 +1,6 @@
 #include "rose.h"
 
+#include "BinaryLoader.h"
 #include "BinaryPointerDetection.h"
 #include "YicesSolver.h"
 #include "DwarfLineMapper.h"
@@ -21,16 +22,28 @@ using namespace sqlite3x; // its top-level class name start with "sqlite3_"
 #include <boost/algorithm/string/regex_find_format.hpp>
 #include <boost/algorithm/string/regex.hpp>
 
-static void usage(const std::string &arg0, int exit_status)
+static std::string argv0; // base name of argv[0]
+
+static void usage(int exit_status)
 {
-    size_t slash = arg0.rfind('/');
-    std::string basename = slash==std::string::npos ? arg0 : arg0.substr(slash+1);
-    if (0==basename.substr(0, 3).compare("lt-"))
-        basename = basename.substr(3);
-    std::cerr <<"usage: " <<basename <<" [SWITCHES] [FRONTEND_SWITCHES] SPECIMEN\n"
+    std::cerr <<"usage: " <<argv0 <<" [SWITCHES] [FRONTEND_SWITCHES] SPECIMEN\n"
               <<"   --database=STR\n"
               <<"                     Specifies the name of the database into which results are placed.\n"
               <<"                     The default is \"clones.db\".\n"
+              <<"   --function=ADDR\n"
+              <<"                     Analyze only the specified function (provided it also satisfies\n"
+              <<"                     all other selection criteria.  Normally all functions are considered.\n"
+              <<"                     This switch may appear more than once to select multiple functions.\n"
+              <<"   --link\n"
+              <<"                     Perform dynamic linking and analyze the libraries along with the\n"
+              <<"                     specified executable. The default is to not link.\n"
+              <<"   --min-function-size=N\n"
+              <<"                     Minimum size of functions to analyze. Any function containing fewer\n"
+              <<"                     than N instructions is not processed. The default is to analyze all\n"
+              <<"                     functions.\n"
+              <<"   --max-insns=N\n"
+              <<"                     Maximum number of instructions to simulate per function. The default\n"
+              <<"                     is 256.\n"
               <<"   --nfuzz=N[,START]\n"
               <<"                     Number of times to fuzz test each function (default 10) and the\n"
               <<"                     sequence number of the first test (default 0).\n"
@@ -41,21 +54,27 @@ static void usage(const std::string &arg0, int exit_status)
               <<"                     indicate the number of pointers and the number of non-pointers. The\n"
               <<"                     default is three pointers and three non-pointers.  If a function\n"
               <<"                     requires more input values, then null/zero are supplied to it.\n"
-              <<"   --min-function-size=N\n"
-              <<"                     Minimum size of functions to analyze. Any function containing fewer\n"
-              <<"                     than N instructions is not processed. The default is to analyze all\n"
-              <<"                     functions.\n"
-              <<"   --max-insns=N\n"
-              <<"                     Maximum number of instructions to simulate per function. The default\n"
-              <<"                     is 256.\n"
+              <<"   --progress\n"
+              <<"                     Force a progress bar to be displayed even if the standard error stream\n"
+              <<"                     is not a terminal and even if the verbosity is more than silent.\n"
               <<"   --verbose\n"
               <<"   --verbosity=(silent|laconic|effusive)\n"
               <<"                     How much diagnostics to show.  The default is silent.  The \"--verbose\"\n"
-              <<"                     switch does the same thing as \"--verbosity=laconic\".\n"
-              <<"   --progress\n"
-              <<"                     Force a progress bar to be displayed even if the standard error stream\n"
-              <<"                     is not a terminal and even if the verbosity is more than silent.\n";
+              <<"                     switch does the same thing as \"--verbosity=laconic\".\n";
     exit(exit_status);
+}
+
+static void die(std::string mesg="")
+{
+    std::cerr <<argv0 <<": " <<mesg;
+    if (mesg.empty()) {
+        std::cerr <<"unspecified failure\n";
+        abort(); // for post mortem
+    } else if (mesg.find_last_of('\n')==std::string::npos) {
+        std::cerr <<"\n";
+    }
+    std::cerr <<"  See \"--help\" for basic usage information.\n";
+    exit(1);
 }
 
 enum Verbosity { SILENT, LACONIC, EFFUSIVE };
@@ -64,7 +83,7 @@ enum Verbosity { SILENT, LACONIC, EFFUSIVE };
 struct Switches {
     Switches()
         : dbname("clones.db"), firstfuzz(0), nfuzz(10), npointers(3), nnonpointers(3),
-          min_funcsz(0), max_insns(256), verbosity(SILENT) {}
+          min_funcsz(0), max_insns(256), verbosity(SILENT), show_progress(false), link(false) {}
     std::string dbname;                 /**< Name of database in which to store results. */
     size_t firstfuzz;                   /**< Sequence number for starting fuzz test. */
     size_t nfuzz;                       /**< Number of times to run each function, each time with a different input sequence. */
@@ -73,12 +92,16 @@ struct Switches {
     size_t max_insns;                   /**< Maximum number of instrutions per fuzz test before giving up. */
     Verbosity verbosity;                /**< Produce lots of output?  Traces each instruction as it is simulated. */
     bool show_progress;                 /**< Force progress reports even if stderr is a non-terminal or --debug is specified. */
+    bool link;                          /**< Perform dynamic linking. */
+    std::set<rose_addr_t> functions;    /**< If non-empty, consider only these functions. */
 };
 
 namespace CloneDetection {
 
 typedef std::set<SgAsmFunction*> Functions;
 typedef std::map<SgAsmFunction*, int> FunctionIdMap;
+typedef BinaryAnalysis::FunctionCall::Graph CG;
+typedef boost::graph_traits<CG>::vertex_descriptor CG_Vertex;
 
 /*******************************************************************************************************************************
  *                                      Exceptions
@@ -291,8 +314,10 @@ public:
     OutputGroup get_outputs(uint32_t stack_frame_top, size_t frame_size, Verbosity verbosity) {
         OutputGroup outputs = this->output_group;
 
-        // Function return value is EAX, but only if it has been written to.
-        if (0 != (register_rw_state.gpr[x86_gpr_ax].state & HAS_BEEN_WRITTEN)) {
+        // Function return value is EAX, but only if it has been written to.  It is possible for a written-to register to
+        // contain a non-concrete value. This can happen if only a sub-part of the register was written (e.g., writing a
+        // concrete value to AX will result in EAX still having a non-concrete value.
+        if (0 != (register_rw_state.gpr[x86_gpr_ax].state & HAS_BEEN_WRITTEN) && registers.gpr[x86_gpr_ax].is_known()) {
             if (verbosity>=EFFUSIVE)
                 std::cerr <<"output for ax = " <<registers.gpr[x86_gpr_ax].known_value() <<"\n";
             outputs.values.push_back(registers.gpr[x86_gpr_ax].known_value());
@@ -956,9 +981,12 @@ protected:
     sqlite3_connection sqlite;          /**< Database in which to place results; may already exist */
     OutputGroups output_groups;         /**< Distinct groups of output values from fuzz tests. */
     Switches opt;                       /**< Analysis configuration switches from the command line. */
+    FunctionIdMap func_ids;             /**< Mapping from SgAsmFunction* to the ID stored in the database. */
 
     Policy<State, PartialSymbolicSemantics::ValueType> policy;
-    X86InstructionSemantics<Policy<State, PartialSymbolicSemantics::ValueType>, PartialSymbolicSemantics::ValueType> semantics;
+    typedef X86InstructionSemantics<Policy<State, PartialSymbolicSemantics::ValueType>,
+                                    PartialSymbolicSemantics::ValueType> Semantics;
+    Semantics semantics;
 
 public:
     Analysis(const Switches &opt): opt(opt), semantics(policy) {
@@ -1027,12 +1055,13 @@ public:
     }
     
     // Get a list of functions to analyze.
-    Functions find_functions(SgNode *ast) {
+    Functions find_functions(SgNode *ast, const std::set<rose_addr_t> &limited) {
         Functions retval;
         std::vector<SgAsmFunction*> allfuncs = SageInterface::querySubTree<SgAsmFunction>(ast);
         for (size_t i=0; i<allfuncs.size(); ++i) {
             size_t ninsns = SageInterface::querySubTree<SgAsmInstruction>(allfuncs[i]).size();
-            if (0==opt.min_funcsz || ninsns >= opt.min_funcsz)
+            if ((0==opt.min_funcsz || ninsns >= opt.min_funcsz) &&
+                (limited.empty() || limited.find(allfuncs[i]->get_entry_va())!=limited.end()))
                 retval.insert(allfuncs[i]);
         }
         return retval;
@@ -1104,10 +1133,10 @@ public:
     };
 
 
-    // Save each function to the database.  Returns a mapping from function object to ID number.
+    // Save each function to the database. Updates the mapping from function object to ID number.
     // We have to do this in a database-efficient manner without holding a transaction lock too long because we're
     // likely to be running in parallel.
-    FunctionIdMap save_functions(SgNode *ast, const Functions &functions) {
+    void save_functions(SgNode *ast, const Functions &functions) {
         if (opt.verbosity>=LACONIC)
             std::cerr <<"CloneDetection: saving function information and assembly listings...\n";
 
@@ -1121,8 +1150,6 @@ public:
         struct DataSelector: SgAsmFunction::NodeSelector {
             virtual bool operator()(SgNode *node) { return isSgAsmStaticData(node)!=NULL; }
         } dselector;
-
-        FunctionIdMap retval;
 
         // Pre-compute some function info that doesn't depend on the database.
         if (opt.verbosity>=LACONIC)
@@ -1166,7 +1193,7 @@ public:
             SgAsmFunction *func = found->second;
             if (file_id!=stats[func].file_id)
                 continue;
-            retval[func] = function_id;
+            func_ids[func] = function_id;
         }
         lock.commit();
 
@@ -1175,7 +1202,7 @@ public:
         Functions to_add;
         for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
             SgAsmFunction *func = *fi;
-            if (retval.find(func)==retval.end())
+            if (func_ids.find(func)==func_ids.end())
                 to_add.insert(func);
         }
 
@@ -1199,7 +1226,7 @@ public:
             cmd2.bind(2, stats[func].file_id);
             int func_id = cmd2.executeint();
             if (func_id<0) {
-                retval[func] = next_id;
+                func_ids[func] = next_id;
                 cmd3.bind(1, next_id);
                 cmd3.bind(2, func->get_entry_va());
                 cmd3.bind(3, func->get_name());
@@ -1238,7 +1265,7 @@ public:
             std::cerr <<"CloneDetection:   saving assembly code for each function\n";
         for (Functions::iterator ai=added.begin(); ai!=added.end(); ++ai) {
             SgAsmFunction *func = *ai;
-            int func_id = retval[func];
+            int func_id = func_ids[func];
             if (opt.verbosity>=EFFUSIVE)
                 std::cerr <<"  unparsing function " <<func_id;
             std::string function_lst = unparser.to_string(func);
@@ -1264,25 +1291,77 @@ public:
             if (opt.verbosity>=EFFUSIVE)
                 std::cerr <<"\n";
         }
-
-        return retval;
     }
 
+    // Rewrite a call graph by removing dynamic linked function thunks.  If we were using ROSE's experimental Graph2 stuff
+    // instead of the Boost Graph Library's (BGL) adjacency_list, we could modify the graph in place efficiently.  But with
+    // adjacency_list it's more efficient to create a whole new graph. [Robb P. Matzke 2013-05-16]
+    CG rewrite_cg(CG &src) {
+        if (opt.verbosity>=LACONIC)
+            std::cerr <<"CloneDetection:   rewriting call graph to eliminate dynamic-linking thunks\n";
+        CG dst;
+        typedef std::map<CG_Vertex, CG_Vertex> VertexMap;
+        VertexMap vmap; // mapping from src to dst vertex
+        boost::graph_traits<CG>::vertex_iterator vi, vi_end;
+        for (boost::tie(vi, vi_end)=vertices(src); vi!=vi_end; ++vi) {
+            CG_Vertex f1 = *vi;
+            SgAsmFunction *func1 = get(boost::vertex_name, src, f1);
+            if (vmap.find(f1)==vmap.end() && 0!=(SgAsmFunction::FUNC_IMPORT & func1->get_reason()) && 1==out_degree(f1, src)) {
+                CG_Vertex f2 = target(*(out_edges(*vi, src).first), src); // the function that f1 calls
+                SgAsmFunction *func2 = get(boost::vertex_name, src, f2);
+                // We found thunk F1 that calls function F2. We want to remove F1 from the returned graph and replace all edges
+                // (X,F1) with (X,F2). Therefore, create two mappings in the vmap: F2->F2' and F1->F2'. Be careful because we
+                // might have already added vertex F2' to the returned graph.
+                VertexMap::iterator f2i = vmap.find(f2);
+                CG_Vertex f2prime;
+                if (f2i==vmap.end()) {
+                    f2prime = add_vertex(dst);
+                    put(boost::vertex_name, dst, f2prime, func2);
+                    vmap[f2] = f2prime;
+                } else {
+                    f2prime = f2i->second;
+                }
+                vmap[f1] = f2prime;
+                if (opt.verbosity>=EFFUSIVE) {
+                    FunctionIdMap::const_iterator id1=func_ids.find(func1), id2=func_ids.find(func2);
+                    std::cerr <<"CloneDetection:     thunk " <<function_to_str(func1)
+                              <<" delegated to " <<function_to_str(func2) <<"\n";
+                }
+            } else {
+                CG_Vertex f1prime = add_vertex(dst);
+                vmap[f1] = f1prime;
+                put(boost::vertex_name, dst, f1prime, func1);
+            }
+        }
+
+        // Now add the edges
+        boost::graph_traits<CG>::edge_iterator ei, ei_end;
+        for (boost::tie(ei, ei_end)=edges(src); ei!=ei_end; ++ei) {
+            CG_Vertex f1 = source(*ei, src);
+            CG_Vertex f2 = target(*ei, src);
+            VertexMap::iterator f1i = vmap.find(f1);
+            VertexMap::iterator f2i = vmap.find(f2);
+            assert(f1i!=vmap.end());
+            assert(f2i!=vmap.end());
+            CG_Vertex f1prime = f1i->second;
+            CG_Vertex f2prime = f2i->second;
+            add_edge(f1prime, f2prime, dst);
+        }
+        return dst;
+    }
+    
     // Save the function call graph.
-    void save_cg(const FunctionIdMap &func_ids) {
+    void save_cg(SgNode *ast) {
         if (opt.verbosity>=LACONIC)
             std::cerr <<"CloneDetection: saving call graph...\n";
 
-        typedef BinaryAnalysis::FunctionCall::Graph CG;
-        typedef boost::graph_traits<CG>::vertex_descriptor Vertex;
+        // Generate the full call graph, then rewrite the call graph so calls to thunks for dynamically-linked functions look
+        // like they're calls directly to the dynamically linked function.
+        CG cg1 = BinaryAnalysis::FunctionCall().build_cg_from_ast<CG>(ast);
+        CG cg2 = rewrite_cg(cg1);
 
-        // Find the root of the AST, which is not necessarily a SgProject.
-        if (func_ids.empty())
-            return;
-        SgNode *root = func_ids.begin()->first;
-        while (root && root->get_parent()) root = root->get_parent();
-
-        // Filter out all vertices of the function call graph so it contains only functions that we're analyzing.
+        // Filter out vertices (and their incident edges) if the vertex is a function which is not part of the database (has no
+        // function ID).
         struct CGFilter: BinaryAnalysis::FunctionCall::VertexFilter {
             const FunctionIdMap &func_ids;
             CGFilter(const FunctionIdMap &func_ids): func_ids(func_ids) {}
@@ -1290,9 +1369,14 @@ public:
                 return func_ids.find(vertex)!=func_ids.end();
             }
         } vertex_filter(func_ids);
-        BinaryAnalysis::FunctionCall analyzer;
-        analyzer.set_vertex_filter(&vertex_filter);
-        CG cg = analyzer.build_cg_from_ast<CG>(root);
+        BinaryAnalysis::FunctionCall copier;
+        copier.set_vertex_filter(&vertex_filter);
+        CG cg = copier.copy<CG>(cg2);
+#if 1 /*DEBUGGING [Robb P. Matzke 2013-05-16]*/
+        std::cerr <<"cg1 has " <<num_vertices(cg1) <<" vertices and " <<num_edges(cg1) <<" edges\n";
+        std::cerr <<"cg2 has " <<num_vertices(cg2) <<" vertices and " <<num_edges(cg2) <<" edges\n";
+        std::cerr <<"cg  has " <<num_vertices(cg)  <<" vertices and " <<num_edges(cg)  <<" edges\n";
+#endif
 
         sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE);
 
@@ -1313,8 +1397,8 @@ public:
         sqlite3_command cmd2(sqlite, "insert into semantic_cg (caller, callee) values (?,?)");
         boost::graph_traits<CG>::edge_iterator ei, ei_end;
         for (boost::tie(ei, ei_end)=edges(cg); ei!=ei_end; ++ei) {
-            Vertex caller_v = source(*ei, cg);
-            Vertex callee_v = target(*ei, cg);
+            CG_Vertex caller_v = source(*ei, cg);
+            CG_Vertex callee_v = target(*ei, cg);
             SgAsmFunction *caller = get(boost::vertex_name, cg, caller_v);
             SgAsmFunction *callee = get(boost::vertex_name, cg, callee_v);
             int caller_id = func_ids.at(caller);
@@ -1549,17 +1633,32 @@ public:
         return retval;
     }
 
-    // Display string for function.  Includes function address, and in angle brackets, the function and file names if known.
+    // Display string for function.  Includes function address, and in angle brackets, the database function ID if known, the
+    // function name if known, and file name if known.
     std::string function_to_str(SgAsmFunction *function) {
         std::ostringstream ss;
-        ss <<StringUtility::addrToString(function->get_entry_va()) <<" <" <<function->get_name();
-        std::string s = filename_for_function(function);
-        if (!s.empty()) {
-            if (function->get_name().empty())
-                ss <<"\"\"";
-            ss <<" in " <<s;
+        FunctionIdMap::const_iterator idi = func_ids.find(function);
+        std::string func_name = function->get_name();
+        std::string file_name = filename_for_function(function);
+
+        ss <<StringUtility::addrToString(function->get_entry_va());
+
+        bool printed = false;
+        if (!func_name.empty()) {
+            ss <<" <\"" <<func_name <<"\"";
+            printed = true;
         }
-        ss <<">";
+        if (idi!=func_ids.end()) {
+            ss <<(printed?" ":" <") <<"id=" <<idi->second;
+            printed = true;
+        }
+        if (!file_name.empty()) {
+            ss <<(printed?" ":" <") <<"in " <<file_name;
+            printed = true;
+        }
+        if (printed)
+            ss <<">";
+
         return ss.str();
     }
     
@@ -1570,6 +1669,13 @@ public:
         policy.reset(function->get_entry_va(), &inputs, pointers);
         try {
             while (1) {
+                if (!policy.state.registers.ip.is_known()) {
+                    if (opt.verbosity>=EFFUSIVE)
+                        std::cerr <<"CloneDetection: EIP value is not concrete\n";
+                    fault = AnalysisFault::SEMANTICS;
+                    break;
+                }
+
                 rose_addr_t insn_va = policy.state.registers.ip.known_value();
                 if (policy.FUNC_RET_ADDR==insn_va) {
                     if (opt.verbosity>=EFFUSIVE)
@@ -1591,13 +1697,21 @@ public:
             if (opt.verbosity>=EFFUSIVE)
                 std::cerr <<"CloneDetection: analysis terminated by " <<AnalysisFault::fault_name(e.fault) <<"\n";
             fault = e.fault;
+        } catch (const Exception &e) {
+            if (opt.verbosity>=EFFUSIVE)
+                std::cerr <<"CloneDetection: analysis terminated by semantic exception: " <<e.mesg <<"\n";
+            fault = AnalysisFault::SEMANTICS;
         } catch (const BaseSemantics::Policy::Exception &e) {
             // Some exception in the policy, such as division by zero.
             if (opt.verbosity>=EFFUSIVE)
-                std::cerr <<"CloneDetection: analysis terminated by FAULT_SEMANTICS\n";
+                std::cerr <<"CloneDetection: analysis terminated by FAULT_SEMANTICS: " <<e.mesg <<"\n";
+            fault = AnalysisFault::SEMANTICS;
+        } catch (const Semantics::Exception &e) { // X86InstructionSemantics<...>::Exception
+            if (opt.verbosity>=EFFUSIVE)
+                std::cerr <<"CloneDetection: analysis terminated by X86InstructionSemantics exception: " <<e.mesg <<"\n";
             fault = AnalysisFault::SEMANTICS;
         }
-        
+
         // Gather the function's outputs before restoring machine state.
         OutputGroup outputs = policy.get_outputs();
         outputs.fault = fault;
@@ -1612,10 +1726,10 @@ public:
                   <<" fuzz=@" <<opt.firstfuzz <<"+" <<opt.nfuzz
                   <<" npointers=" <<opt.npointers <<" nnonpointers=" <<opt.nnonpointers
                   <<" max_insns=" <<opt.max_insns <<"\n";
-        Functions functions = find_functions(ast);
-        FunctionIdMap func_ids = save_functions(ast, functions);
+        Functions functions = find_functions(ast, opt.functions);
+        save_functions(ast, functions); // must be first because it initializes our func_ids data member
         save_files();
-        save_cg(func_ids);
+        save_cg(ast);
 
         // Mapping from function ID to function entry va and vice versa
         IdVa func_id2va;
@@ -1715,15 +1829,53 @@ int
 main(int argc, char *argv[], char *envp[])
 {
     std::ios::sync_with_stdio();
+    argv0 = argv[0];
+    {
+        size_t slash = argv0.rfind('/');
+        argv0 = slash==std::string::npos ? argv0 : argv0.substr(slash+1);
+        if (0==argv0.substr(0, 3).compare("lt-"))
+            argv0 = argv0.substr(3);
+    }
 
     // Parse command-line switches that we recognize.
     Switches opt;
     for (int i=1; i<argc && '-'==argv[i][0]; /*void*/) {
         bool consume = false;
         if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h") || !strcmp(argv[i], "-?")) {
-            usage(argv[0], 0);
+            usage(0);
         } else if (!strncmp(argv[i], "--database=", 11)) {
             opt.dbname = argv[i]+11;
+            consume = true;
+        } else if (!strncmp(argv[i], "--function=", 11)) {
+            char *rest;
+            rose_addr_t va = strtoull(argv[i]+11, &rest, 0);
+            if (rest==argv[i]+11 || *rest) {
+                std::cerr <<argv0 <<": --function should specify a function entry address\n";
+                exit(1);
+            }
+            opt.functions.insert(va);
+        } else if (!strcmp(argv[i], "--link")) {
+            opt.link = consume = true;
+        } else if (!strncmp(argv[i], "--min-function-size=", 20)) {
+            opt.min_funcsz = strtoul(argv[i]+20, NULL, 0);
+            consume = true;
+        } else if (!strncmp(argv[i], "--max-insns=", 12)) {
+            opt.max_insns = strtoul(argv[i]+12, NULL, 0);
+            consume = true;
+        } else if (!strncmp(argv[i], "--nfuzz=", 8)) {
+            char *rest;
+            opt.nfuzz = strtoul(argv[i]+8, &rest, NULL);
+            if (','==*rest)
+                opt.firstfuzz = strtoul(rest+1, NULL, 0);
+            consume = true;
+        } else if (!strncmp(argv[i], "--ninputs=", 10)) {
+            char *rest;
+            opt.npointers = opt.nnonpointers = strtoul(argv[i]+10, &rest, 0);
+            if (','==*rest)
+                opt.nnonpointers = strtoul(rest+1, NULL, 0);
+            consume = true;
+        } else if (!strcmp(argv[i], "--progress")) {
+            opt.show_progress = true;
             consume = true;
         } else if (!strcmp(argv[i], "--verbose")) {
             opt.verbosity = EFFUSIVE;
@@ -1738,27 +1890,6 @@ main(int argc, char *argv[], char *envp[])
                 opt.verbosity = SILENT;
             }
             consume = true;
-        } else if (!strncmp(argv[i], "--nfuzz=", 8)) {
-            char *rest;
-            opt.nfuzz = strtoul(argv[i]+8, &rest, NULL);
-            if (','==*rest)
-                opt.firstfuzz = strtoul(rest+1, NULL, 0);
-            consume = true;
-        } else if (!strncmp(argv[i], "--ninputs=", 10)) {
-            char *rest;
-            opt.npointers = opt.nnonpointers = strtoul(argv[i]+10, &rest, 0);
-            if (','==*rest)
-                opt.nnonpointers = strtoul(rest+1, NULL, 0);
-            consume = true;
-        } else if (!strncmp(argv[i], "--min-function-size=", 20)) {
-            opt.min_funcsz = strtoul(argv[i]+20, NULL, 0);
-            consume = true;
-        } else if (!strncmp(argv[i], "--max-insns=", 12)) {
-            opt.max_insns = strtoul(argv[i]+12, NULL, 0);
-            consume = true;
-        } else if (!strcmp(argv[i], "--progress")) {
-            opt.show_progress = true;
-            consume = true;
         }
         
         if (consume) {
@@ -1769,8 +1900,114 @@ main(int argc, char *argv[], char *envp[])
         }
     }
 
-    SgProject *project = frontend(argc, argv);
+    // Parse the binary container (ELF, PE, etc) but do not disassemble yet.
+    if (opt.verbosity >= LACONIC)
+        std::cerr <<"CloneDetection: Parsing binary specimen...\n"
+                  <<"CloneDetection:   parsing container\n";
+    int argc2 = argc+1;
+    char **argv2 = new char*[argc+2];
+    argv2[0] = argv[0];
+    argv2[1] = strdup("-rose:read_executable_file_format_only");
+    for (int i=1; i<argc; ++i)
+        argv2[i+1] = argv[i];
+    argv[argc2] = NULL;
+    SgProject *project = frontend(argc2, argv2);
+
+    // Find the primary interpretation (e.g., the PE, not DOS, interpretation in PE files).
+    if (opt.verbosity >= LACONIC)
+        std::cerr <<"CloneDetection:   finding primary interpretation\n";
+    std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
+    if (interps.empty())
+        die("no binary specimen given");
+    SgAsmInterpretation *interp = interps.back();
+
+    // Get the shared libraries, map them, and apply relocation fixups. We have to do the mapping step even if we're not
+    // linking with shared libraries, because that's what gets the various file sections lined up in memory for the
+    // disassembler.
+    if (opt.link && opt.verbosity >= LACONIC)
+        std::cerr <<"CloneDetection:   loading shared libraries\n";
+    if (BinaryLoader *loader = BinaryLoader::lookup(interp)) {
+        try {
+            loader = loader->clone(); // so our settings are private
+            if (opt.link) {
+                loader->add_directory("/lib32");
+                loader->add_directory("/usr/lib32");
+                loader->add_directory("/lib");
+                loader->add_directory("/usr/lib");
+                if (char *ld_library_path = getenv("LD_LIBRARY_PATH")) {
+                    std::vector<std::string> paths;
+                    StringUtility::splitStringIntoStrings(ld_library_path, ':', paths/*out*/);
+                    loader->add_directories(paths);
+                }
+            }
+            loader->link(interp);
+            loader->remap(interp);
+            BinaryLoader::FixupErrors fixup_errors;
+            loader->fixup(interp, &fixup_errors);
+            if (!fixup_errors.empty()) {
+                std::cerr <<argv0 <<":     warning: " <<fixup_errors.size()
+                          <<" relocation fixup error" <<(1==fixup_errors.size()?"":"s") <<" encountered\n";
+            }
+            if (SageInterface::querySubTree<SgAsmInterpretation>(project).size() != interps.size())
+                std::cerr <<argv0 <<": warning: new interpretations created by the linker; mixed 32- and 64-bit libraries?\n";
+        } catch (const BinaryLoader::Exception &e) {
+            std::cerr <<argv0 <<": BinaryLoader error: " <<e.mesg <<"\n";
+            exit(1);
+        }
+    } else {
+        die("no suitable loader/linker found");
+    }
+
+    // Figure out what to disassemble.  If we did dynamic linking then we can mark the .got and .got.plt sections as read-only
+    // because we've already filled them in with the addresses of the dynamically linked entities.  This will allow the
+    // disassembler to know the successors for the indirect JMP instruction in the .plt section (the dynamic function thunks).
+    assert(interp->get_map()!=NULL);
+    MemoryMap map = *interp->get_map();
+    if (opt.link) {
+        const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+        for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
+            SgAsmGenericSectionPtrList sections = (*hi)->get_sections_by_name(".got.plt");      // ELF
+            SgAsmGenericSectionPtrList s2 = (*hi)->get_sections_by_name(".got");                // ELF
+            SgAsmGenericSectionPtrList s3 = (*hi)->get_sections_by_name(".import");             // PE
+            sections.insert(sections.end(), s2.begin(), s2.end());
+            sections.insert(sections.end(), s3.begin(), s3.end());
+            for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
+                if ((*si)->is_mapped()) {
+                    Extent mapped_va((*si)->get_mapped_actual_va(), (*si)->get_mapped_size());
+                    map.mprotect(mapped_va, MemoryMap::MM_PROT_READ, true/*relax*/);
+                }
+            }
+        }
+    }
+
+    // Disassemble the executable
+    if (opt.verbosity >= LACONIC)
+        std::cerr <<"CloneDetection:   disassembling and partitioning\n";
+    if (Disassembler *disassembler = Disassembler::lookup(interp)) {
+        disassembler = disassembler->clone(); // so our settings are private
+#if 1 // FIXME [Robb P. Matzke 2013-05-14]
+        // We need to handle -rose:disassembler_search, -rose:partitioner_search, and -rose:partitioner_config
+        // command-line switches.
+#endif
+        if (opt.verbosity >= EFFUSIVE) {
+            std::cerr <<"CloneDetection:     memory map for disassembly:\n";
+            map.print(std::cerr, "CloneDetection:       ");
+        }
+        Partitioner *partitioner = new Partitioner();
+        SgAsmBlock *gblk = partitioner->partition(interp, disassembler, &map);
+        interp->set_global_block(gblk);
+        gblk->set_parent(interp);
+    } else {
+        die("unable to disassemble this specimen");
+    }
+
+    // Save listings and dumps to aid debugging
+    if (opt.verbosity>=LACONIC)
+        std::cerr <<"CloneDetection: saving dumps and listings to text files\n";
+    backend(project);
+
+    // Run the clone detection analysis
     CloneDetection::Analysis analysis(opt);
-    analysis.analyze(project);
+    analysis.analyze(interp);
     return 0;
 }

@@ -30,7 +30,7 @@ OutputGroup::print(std::ostream &o, const std::string &title, const std::string 
     for (size_t i=0; i<syscalls.size(); ++i)
         o <<prefix <<"scall " <<syscalls[i] <<"\n";
     if (fault)
-        o <<prefix <<"fault " <<fault <<"\n";
+        o <<prefix <<AnalysisFault::fault_name(fault) <<"\n";
 }
 
 void

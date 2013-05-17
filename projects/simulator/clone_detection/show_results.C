@@ -433,7 +433,7 @@ main(int argc, char *argv[])
         if (errno || rest==argv[argno+1] || *rest)
             usage(0, "bad cluster ID specified");
         show_cluster(dbname, tabname, cluster_id);
-    } else if (argno+1==argc && !strcmp(argv[argno], "list")) {
+    } else if (argno+2==argc && !strcmp(argv[argno], "list")) {
         char *rest;
         errno = 0;
         int function_id = strtol(argv[argno+1], &rest, 0);
