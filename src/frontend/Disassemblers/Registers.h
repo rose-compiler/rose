@@ -31,6 +31,7 @@ public:
     static const RegisterDictionary *dictionary_i8088();
     static const RegisterDictionary *dictionary_i286();
     static const RegisterDictionary *dictionary_i386();
+    static const RegisterDictionary *dictionary_i386_387();
     static const RegisterDictionary *dictionary_i486();
     static const RegisterDictionary *dictionary_pentium();
     static const RegisterDictionary *dictionary_pentium4();
