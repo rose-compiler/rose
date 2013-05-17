@@ -380,7 +380,7 @@ void
 BinaryAnalysis::FunctionCall::copy(const FunctionCallGraph &src, FunctionCallGraph &dst)
 {
     typedef typename boost::graph_traits<FunctionCallGraph>::vertex_descriptor Vertex;
-    Vertex NO_VERTEX = typename boost::graph_traits<FunctionCallGraph>::null_vertex();
+    Vertex NO_VERTEX = boost::graph_traits<FunctionCallGraph>::null_vertex();
 
     dst.clear();
     std::vector<Vertex> src_to_dst(num_vertices(src), NO_VERTEX);
