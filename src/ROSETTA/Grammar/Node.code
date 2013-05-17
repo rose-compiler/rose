@@ -548,6 +548,9 @@ typedef SgUnsignedCharList*                  SgUnsignedCharListPtr;
 typedef Rose_STL_Container<SgModuleStatement*> SgModuleStatementPtrList;
 typedef SgModuleStatementPtrList*              SgModuleStatementPtrListPtr;
 
+// TOO1 (5/16/2013)
+typedef Rose_STL_Container<SgJavaPackageStatement*> SgJavaPackageStatementPtrList;
+
 // DQ (10/4/2008): Support for list of names or rename entries for the SgUseStatement (Fortran 90 support)
 typedef Rose_STL_Container<SgRenamePair*> SgRenamePairPtrList;
 typedef SgRenamePairPtrList*              SgRenamePairPtrListPtr;
