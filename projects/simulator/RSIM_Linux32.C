@@ -620,7 +620,7 @@ syscall_waitpid(RSIM_Thread *t, int callno)
         result = -errno;
     } else if (status_va) {
         uint32_t status_le;
-        SgAsmExecutableFileFormat::host_to_le(sys_status, &status_le);
+        ByteOrder::host_to_le(sys_status, &status_le);
         size_t nwritten = t->get_process()->mem_write(&status_le, status_va, 4);
         ROSE_ASSERT(4==nwritten);
     }
@@ -825,7 +825,7 @@ syscall_time(RSIM_Thread *t, int callno)
     time_t result = time(NULL);
     if (t->syscall_arg(0)) {
         uint32_t t_le;
-        SgAsmExecutableFileFormat::host_to_le(result, &t_le);
+        ByteOrder::host_to_le(result, &t_le);
         size_t nwritten = t->get_process()->mem_write(&t_le, t->syscall_arg(0), 4);
         ROSE_ASSERT(4==nwritten);
     }
@@ -1440,7 +1440,7 @@ syscall_ioctl(RSIM_Thread *t, int callno)
                 break;
             }
             uint32_t pgrp_le;
-            SgAsmExecutableFileFormat::host_to_le(pgrp, &pgrp_le);
+            ByteOrder::host_to_le(pgrp, &pgrp_le);
             size_t nwritten = t->get_process()->mem_write(&pgrp_le, t->syscall_arg(2), 4);
             ROSE_ASSERT(4==nwritten);
             t->syscall_return(pgrp);
@@ -1451,7 +1451,7 @@ syscall_ioctl(RSIM_Thread *t, int callno)
             uint32_t pgid_le;
             size_t nread = t->get_process()->mem_read(&pgid_le, t->syscall_arg(2), 4);
             ROSE_ASSERT(4==nread);
-            pid_t pgid = SgAsmExecutableFileFormat::le_to_host(pgid_le);
+            pid_t pgid = ByteOrder::le_to_host(pgid_le);
             int result = tcsetpgrp(fd, pgid);
             if (-1==result)
                 result = -errno;
