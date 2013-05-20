@@ -358,12 +358,6 @@ parallel_sections_directive
                   parallel_sections_clause_optseq
                 ;
 
-<<<<<<< HEAD
-parallel_sections_clause_optseq
-                : /* empty*/
-                | parallel_sections_clause_seq
-                ;
-=======
 single_clause : unique_single_clause
               | data_privatization_clause
               | data_privatization_in_clause
@@ -462,7 +456,6 @@ parallel_sections_clause : unique_parallel_clause
 master_directive : /* #pragma */ OMP MASTER { 
                      ompattribute = buildOmpAttribute(e_master, gNode, true);}
                  ;
->>>>>>> 68473de... (OpenMP Accelerator Model)
 
 parallel_sections_clause_seq
                 : parallel_sections_clause
@@ -1009,16 +1002,9 @@ unary_expr
 
 
 /* in C++ (we use the C++ version) */ 
-<<<<<<< HEAD
-variable_list   : ID_EXPRESSION { if (!addVar((const char*)$1)) YYABORT; }
-                | 
-                | variable_list ',' ID_EXPRESSION { if (!addVar((const char*)$3)) YYABORT; }
-                ;
-=======
 variable_list : id_expression_opt_dimension
               | variable_list ',' id_expression_opt_dimension
               ;
->>>>>>> 55d2153... (OpenMP accelerator) parse lower and upper bound dimension info for array variables in map clause
 
 id_expression_opt_dimension: ID_EXPRESSION { if (!addVar((const char*)$1)) YYABORT; } dimension_field_optseq
                            ;
@@ -1063,16 +1049,9 @@ void omp_parser_init(SgNode* aNode, const char* str) {
         gNode = aNode;
 }
 
-<<<<<<< HEAD
-static bool addVar(const char* var) 
-{
-  ompattribute->addVariable(omptype,var);
-  return true;
-=======
 static bool addVar(const char* var)  {
     array_symbol = ompattribute->addVariable(omptype,var);
     return true;
->>>>>>> 55d2153... (OpenMP accelerator) parse lower and upper bound dimension info for array variables in map clause
 }
 
 // The ROSE's string-based AST construction is not stable,
