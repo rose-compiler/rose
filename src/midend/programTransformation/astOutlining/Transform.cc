@@ -468,6 +468,47 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   return Result (func, func_call, new_file);
 }
 
+/**
+ *  \brief Initializes packing statements for array types
+ *  The function also skips typedef types to get the real type
+ *  
+ *  \param lhs Left-hand side of the assignment 
+ *  \param rhs Right-hand side of the assignment
+ *  \param target OpenMP pragme before which we have to place the packing statments
+ *
+ *  Example:
+ *    Input code:
+ *        int a;
+ *        int b[10];
+ *        int c[10];
+ *        int * d = ( int * ) malloc( sizeof( int ) * 10 );
+ *        int i;
+ *        #pragma omp parallel for firstprivate(c)
+ *        {
+ *            for(i=0;i<10;i++) {
+ *                b[i] = a;
+ *                c[i] = a;
+ *                d[i] = a;
+ *            }
+ *        }
+ *
+ *    Outlined parameters struct:
+ *        struct OUT__1__7768___data {
+ *            void *a_p;
+ *            int (*b_p)[10UL];
+ *            int c[10UL];
+ *            void *d_p;
+ *        };
+ *
+ *    Packing statements:
+ *        struct OUT__1__7768___data __out_argv;
+ *        __out_argv.a_p = ((void *)(&a));                  -> shared scalar
+ *        __out_argv.b_p = ((void *)(&b));                  -> shared static array
+ *        int __i0__;
+ *        for (__i0__ = 0; __i0__ < 10UL; __i0__++)         -> firstprivate array 
+ *            __out_argv.c[__i0__] = c[__i0__];
+ *        __out_argv.d_p = ((void *)(&d));                  -> shared dynamic array
+ */
 static SgStatement* build_array_packing_statement( SgExpression * lhs, SgExpression * & rhs, SgStatement * target )
 {
     SgScopeStatement * scope = target->get_scope( );
