@@ -301,6 +301,34 @@ createParam (const SgInitializedName* i_name,  // the variable to be passed into
     return OutlinedFuncParam_t (new_param_name, new_param_type);
 }
 
+/*!
+ *  \brief Initializes unpacking statements for array types
+ *  The function takes into account that array types must be initialized element by element
+ *  The function also skips typedef types to get the real type
+ *  
+ *  \param lhs Left-hand side of the assignment 
+ *  \param rhs Right-hand side of the assignment
+ *  \param type Current type being initialized
+ *  \param scope Scope where the assignments will be placed
+ *  \param loop_indexes Indexes of all loops, to be declared after calling this function
+ *                      So they are initialized before the most outer loop
+ *
+ *  Example:
+ *    Outlined parameters struct:
+ *        struct OUT__1__7768___data {
+ *            void *a_p;
+ *            int (*b_p)[10UL];
+ *            int c[10UL];
+ *            void *d_p;
+ *        };
+ *    Unpacking statements:
+ *        int *a = (int *)(((struct OUT__1__7768___data *)__out_argv) -> a_p);                      -> shared scalar
+ *        int (*b)[10UL] = (int (*)[10UL])(((struct OUT__1__7768___data *)__out_argv) -> b_p);      -> shared static array
+ *        int __i0__;
+ *        for (__i0__ = 0; __i0__ < 10UL; __i0__++)                                                 -> firstprivate array 
+ *            c[__i0__] = ((struct OUT__1__7768___data *)__out_argv) -> c[__i0__];
+ *        int **d = (int **)(((struct OUT__1__7768___data *)__out_argv) -> d_p);                    -> shared dynamic array
+ */
 static SgStatement* build_array_unpacking_statement( SgExpression * lhs, SgExpression * rhs, SgType * type, 
                                                      SgScopeStatement * scope, SgStatementPtrList & loop_indexes )
 {

@@ -42,6 +42,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	falsesharing.c \
 	firstprivate.c \
 	firstPrivateArray.c \
+	firstPrivateArray_2.c \
 	firstlastprivate.c \
 	flush.c \
 	flush_exampleA_21_1c.c \

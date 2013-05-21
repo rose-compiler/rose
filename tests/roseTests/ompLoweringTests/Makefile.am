@@ -24,7 +24,6 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
 	dynamicChunk.c \
 	endif.c \
 	endif3.c \
-	firstPrivateArray.c \
 	full_verify.c \
 	init.c \
 	lastprivateOrphaned.c \
@@ -68,6 +67,8 @@ C_TESTCODES_REQUIRED_TO_RUN = \
 	falsesharing.c \
 	firstlastprivate.c \
 	firstprivate.c \
+	firstPrivateArray.c \
+	firstPrivateArray_2.c \
 	flush.c \
 	get_max_threads.c \
 	hello-1.c \
