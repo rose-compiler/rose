@@ -65,6 +65,8 @@ codethorn_SOURCES = \
   VariableIdMapping.h              \
   Visualizer.C                     \
   Visualizer.h                     \
+  RDLattice.h                      \
+  RDLattice.C                      \
   RERS_empty_specialization.C      \
   codethorn.C                      \
   codethorn.h
@@ -90,17 +92,24 @@ faketarget:
 	WorkList.h
 	WorkList.C
 	SetAlgo.h
+	AstMatching.C
 
-ast_demo_SOURCES = ast_demo.C Timer.cpp Timer.h  RoseAst.C RoseAst.h AstTerm.C AstTerm.h
-ast_demo_LDADD = -lrose libmatcher.la
+#      AstMatching.h
+#      MatchOperation.C
+#      MatchOperation.h
+#      ast_demo.C
+#      matcherparser_decls.h
 
-lib_LTLIBRARIES = libmatcher.la
+#ast_demo_SOURCES = ast_demo.C Timer.cpp Timer.h  RoseAst.C RoseAst.h AstTerm.C AstTerm.h
+#ast_demo_LDADD = -lrose libmatcher.la
 
-libmatcher_la_SOURCES = \
-  AstMatching.C AstMatching.h matcherlexer.lxx matcherparser.yxx matcherparser_decls.h MatchOperation.C MatchOperation.h
+#lib_LTLIBRARIES = libmatcher.la
 
-libmatcher_la_LFLAGS = -Pmatcher
-libmatcher_la_YFLAGS = -p matcher --defines=matcherparser.h
+#libmatcher_la_SOURCES = \
+#  AstMatching.C AstMatching.h matcherlexer.lxx matcherparser.yxx matcherparser_decls.h MatchOperation.C MatchOperation.h
+
+#libmatcher_la_LFLAGS = -Pmatcher
+#libmatcher_la_YFLAGS = -p matcher --defines=matcherparser.h
 
 REGRESSION_DATA_DIR=regressiondata
 
@@ -365,6 +374,13 @@ CODETHORN_TESTS= \
     tests/test_for1.c \
     tests/test_for2.c \
     tests/test_for3.c \
+    tests/rers_mini10.c \
+    tests/rers_mini11.c \
+    tests/rers_mini12.c \
+    tests/rers_mini13.c \
+    tests/rers_mini14.c \
+    tests/rers_mini15.c \
+    tests/test_for4.c \
      \
     tests/matchexpressions/test1.mat \
     tests/matchexpressions/test2.mat \

@@ -2,10 +2,11 @@
 #ifndef __LTL_H__
 #define __LTL_H__
 
-#include <boost/shared_ptr.hpp>
+//#include <boost/shared_ptr.hpp>
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <cassert>
 
 extern FILE* ltl_input;
 extern int ltl_parse();
@@ -35,7 +36,11 @@ namespace LTL {
   
   /// Inherited Attribute for visitor pattern
   class InheritedAttribute {};
-  typedef boost::shared_ptr<InheritedAttribute> IAttr;
+
+  //MS: removed smart pointers
+  //typedef boost::shared_ptr<InheritedAttribute> IAttr;
+  typedef InheritedAttribute* IAttr;
+
   class Expr;
   class InputSymbol;
   class OutputSymbol;
@@ -306,8 +311,9 @@ namespace LTL {
         };
 
 	// FIXME: is there a less ugly way to implement generic attributes?
-        static Attr* getAttr(IAttr a) { return static_cast<Attr*>(a.get()); }
-        static IAttr newAttr(bool b)  { return IAttr((InheritedAttribute*)new Attr(b)); }
+	// MS: needed to remove the shared ptr
+        static Attr* getAttr(IAttr a) { return static_cast<Attr*>(a); }
+        static IAttr newAttr(bool b)  { return new Attr(b); }
 
         IAttr visit(InputSymbol* e, IAttr a) {
 	  e->quantified=getAttr(a)->quantified; 

@@ -58,8 +58,11 @@ public:
     Attr(int i) : dot_label(i) {}
     int dot_label;
   };
-  static Attr* get(IAttr a) { return static_cast<Attr*>(a.get()); }
+  // MS: removed smart pointer
+  //  static Attr* get(IAttr a) { return static_cast<Attr*>(a.get()); }
+  static Attr* get(IAttr a) { return static_cast<Attr*>(a); }
   static IAttr newAttr(int n)  { return IAttr((InheritedAttribute*)new Attr(n)); }
+
   int newNode(IAttr a) {
     int node = label*shift+n++;
     s<<node<<" -> "<<get(a)->dot_label<<" [color=limegreen, weight=2, style=dashed];\n  ";
