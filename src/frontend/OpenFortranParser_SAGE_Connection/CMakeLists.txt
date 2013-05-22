@@ -50,6 +50,7 @@ else()
   # Compile using a function that represents the API of the Open Fortran Parser
   set(libroseFortran_SOURCES dummy_openFortranParser_main.C)
 endif()
+
 add_library(roseFortran ${libroseFortran_SOURCES})
 target_link_libraries(roseFortran ${JAVA_JVM_LIBRARY})
 add_dependencies(roseFortran rosetta_generated)
