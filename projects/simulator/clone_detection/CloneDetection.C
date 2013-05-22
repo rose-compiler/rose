@@ -18,6 +18,10 @@ using namespace BinaryAnalysis::InstructionSemantics;
 #include "sqlite3x.h"
 using namespace sqlite3x; // its top-level class name start with "sqlite3_"
 
+#ifdef ROSE_HAVE_GCRYPT_H
+#include <gcrypt.h>
+#endif
+
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/regex_find_format.hpp>
 #include <boost/algorithm/string/regex.hpp>
@@ -1025,7 +1029,7 @@ public:
                 sqlite3_command cmd1(db, "select count(*) from semantic_faults where id = ?");
                 cmd1.bind(1, id);
                 if (cmd1.executeint()==0) {
-                    sqlite3_command cmd2(db, "insert into semantic_faults (id, name, desc) values (?,?,?)");
+                    sqlite3_command cmd2(db, "insert into semantic_faults (id, name, description) values (?,?,?)");
                     cmd2.bind(1, id);
                     cmd2.bind(2, name);
                     cmd2.bind(3, desc);
@@ -1124,12 +1128,23 @@ public:
         return file_id;
     }
 
+    static std::string
+    digest_to_str(const unsigned char digest[20]) {
+        std::string digest_str;
+        for (size_t i=20; i>0; --i) {
+            digest_str += "0123456789abcdef"[(digest[i-1] >> 4) & 0xf];
+            digest_str += "0123456789abcdef"[digest[i-1] & 0xf];
+        }
+        return digest_str;
+    }
+
     struct FuncStats {
         FuncStats(): file_id(-1), isize(0), dsize(0), size(0), ninsns(0) {}
-        FuncStats(size_t isize, size_t dsize, size_t size, size_t ninsns)
-            : file_id(-1), isize(isize), dsize(dsize), size(size), ninsns(ninsns) {}
+        FuncStats(size_t isize, size_t dsize, size_t size, size_t ninsns, const std::string &digest)
+            : file_id(-1), isize(isize), dsize(dsize), size(size), ninsns(ninsns), digest(digest) {}
         int file_id;
         size_t isize, dsize, size, ninsns;
+        std::string digest;                             // SHA1 hash of function bytes in virtual address order if known
     };
 
 
@@ -1141,6 +1156,7 @@ public:
             std::cerr <<"CloneDetection: saving function information and assembly listings...\n";
 
         typedef std::map<rose_addr_t/*entry_va*/, SgAsmFunction*> AddrFunc;
+        typedef std::map<std::string/* sha1 */, SgAsmFunction*> Sha1Func;
         typedef std::map<SgAsmFunction*, FuncStats> Stats;
 
         struct InstructionSelector: SgAsmFunction::NodeSelector {
@@ -1153,17 +1169,24 @@ public:
 
         // Pre-compute some function info that doesn't depend on the database.
         if (opt.verbosity>=LACONIC)
-            std::cerr <<"CloneDetection:   calculating function information from AST\n";
+            std::cerr <<"CloneDetection:   calculating function information from AST"
+                      <<" (" <<functions.size() <<" function" <<(1==functions.size()?"":"s") <<")\n";
         AddrFunc addrfunc;
+        Sha1Func sha1func;
         Stats stats;
+        assert(gcry_md_get_algo_dlen(GCRY_MD_SHA1)==20);
         for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
             SgAsmFunction *func = *fi;
             ExtentMap e_insns, e_data, e_total;
             size_t ninsns = func->get_extent(&e_insns, NULL, NULL, &iselector);
             func->get_extent(&e_data,  NULL, NULL, &dselector);
             func->get_extent(&e_total);
-            stats[func] = FuncStats(e_insns.size(), e_data.size(), e_total.size(), ninsns);
+            uint8_t digest[20];
+            func->get_sha1(digest);
+            std::string digest_str = digest_to_str(digest);
+            stats[func] = FuncStats(e_insns.size(), e_data.size(), e_total.size(), ninsns, digest_str);
             addrfunc[func->get_entry_va()] = func;
+            sha1func[digest_str] = func;
         }
 
         // Populate the semantic_files table (assuming our functions can come from multiple files)
@@ -1179,23 +1202,32 @@ public:
         // but this seems about as fast).
         if (opt.verbosity>=LACONIC)
             std::cerr <<"CloneDetection:   getting function IDs from the database\n";
-        sqlite3_command cmd1(sqlite, "select id, entry_va, file_id from semantic_functions");
+        sqlite3_command cmd1(sqlite, "select id, entry_va, file_id, digest from semantic_functions");
         lock.begin(sqlite3_transaction::LOCK_IMMEDIATE);
         sqlite3_reader c1 = cmd1.executereader();
         while (c1.read()) {
             int function_id = c1.getint(0);
-            rose_addr_t entry_va = (unsigned)c1.getint(1);
+            rose_addr_t entry_va = c1.getint64(1);
             int file_id = c1.getint(2);
-
-            AddrFunc::iterator found = addrfunc.find(entry_va);
-            if (found==addrfunc.end())
-                continue;
-            SgAsmFunction *func = found->second;
-            if (file_id!=stats[func].file_id)
-                continue;
-            func_ids[func] = function_id;
+            std::string digest = c1.getstring(3);
+            Sha1Func::iterator sha1_found = sha1func.find(digest);
+            SgAsmFunction *func = NULL;
+            if (sha1_found!=sha1func.end()) {
+                func = sha1_found->second;
+            } else {
+                AddrFunc::iterator addr_found = addrfunc.find(entry_va);
+                if (addr_found!=addrfunc.end()) {
+                    func = addr_found->second;
+                }
+            }
+            // Functions are the same if they have either the same address or message digest, and they come from the same file.
+            if (func!=NULL && file_id==stats[func].file_id)
+                func_ids[func] = function_id;
         }
         lock.commit();
+        if (opt.verbosity>=LACONIC)
+            std::cerr <<"CloneDetection:   " <<func_ids.size() <<" of our functions " <<(1==func_ids.size()?"is":"are")
+                      <<" already in the database\n";
 
         // Figure out which functions are not in the database.  By time we get done with this loop some other process might
         // have added those functions, but we'll handle that later.
@@ -1214,9 +1246,9 @@ public:
         }
         sqlite3_command cmd2(sqlite, "select coalesce(max(id),-1) from semantic_functions where entry_va=? and file_id=?");
         sqlite3_command cmd3(sqlite, "insert into semantic_functions"
-                             // 1   2         3         4        5      6      7     8
-                             " (id, entry_va, funcname, file_id, isize, dsize, size, ninsns)"
-                             " values (?,?,?,?,?,?,?,?)");
+                             // 1   2         3         4        5      6      7     8       9
+                             " (id, entry_va, funcname, file_id, isize, dsize, size, ninsns, digest)"
+                             " values (?,?,?,?,?,?,?,?,?)");
         lock.begin(sqlite3_transaction::LOCK_IMMEDIATE);
         int next_id = sqlite.executeint("select coalesce(max(id),-1)+1 from semantic_functions");
         Functions added;
@@ -1236,6 +1268,7 @@ public:
                 cmd3.bind(6, s.dsize);
                 cmd3.bind(7, s.size);
                 cmd3.bind(8, s.ninsns);
+                cmd3.bind(9, s.digest);
                 cmd3.executenonquery();
                 added.insert(func);
                 ++next_id;
@@ -1372,11 +1405,6 @@ public:
         BinaryAnalysis::FunctionCall copier;
         copier.set_vertex_filter(&vertex_filter);
         CG cg = copier.copy<CG>(cg2);
-#if 1 /*DEBUGGING [Robb P. Matzke 2013-05-16]*/
-        std::cerr <<"cg1 has " <<num_vertices(cg1) <<" vertices and " <<num_edges(cg1) <<" edges\n";
-        std::cerr <<"cg2 has " <<num_vertices(cg2) <<" vertices and " <<num_edges(cg2) <<" edges\n";
-        std::cerr <<"cg  has " <<num_vertices(cg)  <<" vertices and " <<num_edges(cg)  <<" edges\n";
-#endif
 
         sqlite3_transaction lock(sqlite, sqlite3_transaction::LOCK_IMMEDIATE);
 
@@ -1837,6 +1865,13 @@ main(int argc, char *argv[], char *envp[])
             argv0 = argv0.substr(3);
     }
 
+#ifdef ROSE_HAVE_GCRYPT_H
+    if (!gcry_check_version(GCRYPT_VERSION)) {
+        std::cerr <<argv0 <<": libgcrypt version mismatch\n";
+        exit(1);
+    }
+#endif
+    
     // Parse command-line switches that we recognize.
     Switches opt;
     for (int i=1; i<argc && '-'==argv[i][0]; /*void*/) {
@@ -1939,8 +1974,8 @@ main(int argc, char *argv[], char *envp[])
                     StringUtility::splitStringIntoStrings(ld_library_path, ':', paths/*out*/);
                     loader->add_directories(paths);
                 }
+                loader->link(interp);
             }
-            loader->link(interp);
             loader->remap(interp);
             BinaryLoader::FixupErrors fixup_errors;
             loader->fixup(interp, &fixup_errors);

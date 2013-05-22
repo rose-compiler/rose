@@ -25,7 +25,7 @@
 # function of how many instructions the similar feature vectors cover.  The value specified for syntactic_coverage is a
 # ratio of the number of bytes covered by similar feature vectors to the total number of instruction bytes in the
 # function. Both functions must exceed the specified coverage in order to be considered a syntactic pair.
-: ${syntactic_coverage:=0.95}
+: ${syntactic_coverage:=0.9}
 
 
 
@@ -57,7 +57,7 @@
 # Maximum number of instructions to simulate in each function.  This limit prevents infinite loops during fuzz testing.
 : ${semantic_maxinsns:=256}
 
-# Extra debugging flags to pass to semantic analysis. Try "--debug" or "--debug --verbose"
+# Extra flags to pass to semantic analysis.  See CloneDetection --help for documentation
 : ${semantic_flags:=}
 
 
