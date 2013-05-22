@@ -7,6 +7,13 @@ target_link_libraries(testTranslator ROSE_DLL edg33 ${link_with_libraries} )
 add_subdirectory (translatorTests)
 enable_testing()
 
+if(shell)
+  add_test(
+    NAME check_policies
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND ${CMAKE_SOURCE_DIR}/scripts/policies-checker.sh)
+endif()
+
 # ${Boost_LIBRARIES}
 #    libastMerge libsageInterface libastTokenStream 
 #    libastHiddenTypeAndDeclarationLists libastVisualization 
