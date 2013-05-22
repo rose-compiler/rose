@@ -420,7 +420,7 @@ void createDatabases(sqlite3_connection& con) {
                       " function_id integer references function_ids(row_number),"
                       " index_within_function integer,"         // zero-origin index of starting instruction within function
                       " line integer,"                          // starting virtual address of first instruction
-                      " offset integer,"                        // starting virtual address of last instruction (DEPRECATED)
+                      " \"offset\" integer,"                      // starting virtual address of last instruction (DEPRECATED)
                       " size integer,"                          // total size of instructions in bytes, non-overlapping
                       " sum_of_counts integer,"                 // ?
                       " counts blob,"                           // ?
