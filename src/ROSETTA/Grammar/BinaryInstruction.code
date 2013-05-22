@@ -3917,8 +3917,15 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
                 virtual bool operator()(SgNode*) = 0;
         };
 
-        /* Returns info about what addresses a function occupies. */
-        size_t get_extent(ExtentMap *emap=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL, NodeSelector *exclude=NULL);
+        /** Returns info about what addresses a function occupies. */
+        size_t get_extent(ExtentMap *emap=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL,
+	        NodeSelector *selector=NULL);
+
+        /** Computes the SHA1 message digest for the bytes of a function. Returns true if the SHA1 is available, false
+         *  if the message digest cannot be computed because the prerequisite gcrypt functions are not available. The
+         *  optional @p selector argument can be used to limit the digest to only certain nodes of the function; by default,
+         *  all instructions and static data are accumulated. */
+        bool get_sha1(uint8_t digest[20]/*out*/, NodeSelector *selector=NULL);
 
       //! enum declaration as specified in proposed Sabre database schema
           enum function_kind_enum {
