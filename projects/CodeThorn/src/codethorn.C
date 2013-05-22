@@ -99,6 +99,9 @@ void checkProgram(SgNode* root) {
   vs.insert(V_SgGreaterThanOp);
   vs.insert(V_SgLessOrEqualOp);
 
+  // temporary: is used inside asserts (on some systems), but no handled yet in general. It is ignored in assert, because __fail is called before.
+  vs.insert(V_SgCommaOpExp);
+
   lr.setAstNodeVariantSet(vs,true);
   cout << "INIT: Running CodeThorn language restrictor."<<endl;
   bool valid=lr.checkIfAstIsAllowed(root);

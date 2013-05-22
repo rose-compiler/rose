@@ -882,7 +882,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 		  // pass on EState
 		  newLabel=edge.target;
 		  newPState=*evalResult.estate.pstate();
-		  // merge with collected constraints of expr (exprConstraints), and invert for false branch
+		  // merge with collected constraints of expr (exprConstraints)
 		  if(edge.isType(EDGE_TRUE)) {
 			newCSet=*evalResult.estate.constraints()+evalResult.exprConstraints;
 		  } else if(edge.isType(EDGE_FALSE)) {
@@ -901,6 +901,12 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	if(isSgConditionalExp(nextNodeToAnalyze2)) {
 	  cerr<<"Error: found conditional expression outside assert. We do not support this form yet."<<endl;
 	  exit(1);
+#if 0
+	  // TODO
+	  SgExpression* cond=nextNodeToAnalyze2->get_conditional_exp();
+	  SgExpression* trueexp=nextNodeToAnalyze2->get_true_exp();
+	  SgExpression* falseexp=nextNodeToAnalyze2->get_false_exp();
+#endif
 	  // we currently only handle ConditionalExpressions as used in asserts (handled above)
 	  ConstraintSet cset=*currentEState.constraints();
 	  PState newPState=*currentEState.pstate();
