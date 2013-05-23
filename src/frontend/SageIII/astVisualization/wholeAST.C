@@ -1465,8 +1465,24 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
                case V_SgNamespaceDefinitionStatement:
                   {
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
-                    labelWithSourceCode = "\\n  " +  StringUtility::numberToString(node) + "  ";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+
+                    SgNamespaceDefinitionStatement* ns = isSgNamespaceDefinitionStatement(node);
+                    ROSE_ASSERT(ns != NULL);
+
+                    size_t index = ns->namespaceIndex() + 1;
+                    size_t count = ns->numberOfNamespaceDefinitions();
+
+                    if (ns->get_isUnionOfReentrantNamespaceDefinitions() == false)
+                       {
+                         labelWithSourceCode = "\\n  " +  StringUtility::numberToString(index) + " of " +  StringUtility::numberToString(count) + "  ";
+                       }
+                      else
+                       {
+                         labelWithSourceCode = "\\n  union of " +  StringUtility::numberToString(count) + " reentrant namespace definitions ";
+                       }
+
+                    labelWithSourceCode += "\\n  " +  StringUtility::numberToString(node) + "  ";
                     break;
                   }
 

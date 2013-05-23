@@ -191,10 +191,10 @@ NameQualificationTraversal::associatedDeclaration(SgScopeStatement* scope)
             // Let the first definition be used to get the associated first declaration so that we 
             // are always refering to a consistant declaration for any chain of namespaces.  If not
             // the first then perhaps the last?
-               while (definition->get_previousNamepaceDefinition() != NULL)
+               while (definition->get_previousNamespaceDefinition() != NULL)
                   {
                  // printf ("Iterating through the namespace chain... \n");
-                    definition = definition->get_previousNamepaceDefinition();
+                    definition = definition->get_previousNamespaceDefinition();
                   }
 
                SgNamespaceDeclarationStatement* declaration = definition->get_namespaceDeclaration();
