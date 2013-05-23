@@ -866,26 +866,54 @@ void
 Unparse_ExprStmt::unparseNamespaceDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info)
    {
   // There is a SgNamespaceDefinition, but it is not unparsed except through the SgNamespaceDeclaration
+#if 0
+     curprint("/* In unparseNamespaceDeclarationStatement() */ ");
+#endif
 
      SgNamespaceDeclarationStatement* namespaceDeclaration = isSgNamespaceDeclarationStatement(stmt);
      ROSE_ASSERT (namespaceDeclaration != NULL);
-     curprint ( string("namespace "));
+     curprint("namespace ");
 
   // This can be an empty string (in the case of an unnamed namespace)
      SgName name = namespaceDeclaration->get_name();
      curprint(name.str());
+
+#if 0
+     printf ("In unparseNamespaceDeclarationStatement(): namespaceDeclaration->get_definition() = %p \n",namespaceDeclaration->get_definition());
+#endif
 
   // DQ (8/6/2012): test2010_24.C causes the new namespace alias support to generate namespaceDeclaration->get_definition() == NULL.
   // I don't know yet if this is reasonable, so output a warning for now.
   // unparseStatement(namespaceDeclaration->get_definition(),info);
      if (namespaceDeclaration->get_definition() != NULL)
         {
+#if 0
+          printf ("Calling unparseStatement() for namespaceDeclaration->get_definition() = %p \n",namespaceDeclaration->get_definition());
+#endif
           unparseStatement(namespaceDeclaration->get_definition(),info);
         }
        else
         {
           printf ("WARNING: I think we were expecting a definition associated with this SgNamespaceDeclarationStatement \n");
         }
+
+#if 0
+     curprint("/* Leaving unparseNamespaceDeclarationStatement() */ ");
+#endif
+
+#if 1
+  // DQ (5/19/2013): There should always be proper source file position infomation so this should not be required.
+  // if (stmt->get_file_info()->isCompilerGenerated() == true && stmt->get_file_info()->isOutputInCodeGeneration() == true)
+     if (stmt->get_file_info()->isCompilerGenerated() == false && stmt->get_file_info()->isOutputInCodeGeneration() == true)
+        {
+          printf ("WARNING: stmt = %p = %s stmt->get_file_info()->isCompilerGenerated() == true && stmt->get_file_info()->isOutputInCodeGeneration() == true \n",stmt,stmt->class_name().c_str());
+          stmt->get_file_info()->display("Leaving unparseNamespaceDeclarationStatement(): debug");
+        }
+#endif
+  // DQ (5/20/2013): I think this is the wrong assertion, see test2013_170.C.  Basically, line directives might make the logical file
+  // name so that this declaration would not be output, but we want to output the declaration and set isOutputInCodeGeneration() == false 
+  // to support the output of the declaration.
+  // ROSE_ASSERT(stmt->get_file_info()->isCompilerGenerated() == true || stmt->get_file_info()->isOutputInCodeGeneration() == false);
    }
 
 void
@@ -894,6 +922,10 @@ Unparse_ExprStmt::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnp
      ROSE_ASSERT (stmt != NULL);
      SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(stmt);
      ROSE_ASSERT (namespaceDefinition != NULL);
+
+#if 0
+     curprint("/* In unparseNamespaceDefinitionStatement() */ ");
+#endif
 
 #if OUTPUT_HIDDEN_LIST_DATA
      outputHiddenListData (namespaceDefinition);
@@ -915,7 +947,7 @@ Unparse_ExprStmt::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnp
      ninfo.set_current_namespace(namespaceDefinition->get_namespaceDeclaration());
 
      unp->cur.format(namespaceDefinition, info, FORMAT_BEFORE_BASIC_BLOCK2);
-     curprint ( string("{"));
+     curprint("{");
      unp->cur.format(namespaceDefinition, info, FORMAT_AFTER_BASIC_BLOCK2);
 
   // unparse all the declarations
@@ -937,7 +969,7 @@ Unparse_ExprStmt::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnp
      unparseAttachedPreprocessingInfo(namespaceDefinition, info, PreprocessingInfo::inside);
 
      unp->cur.format(namespaceDefinition, info, FORMAT_BEFORE_BASIC_BLOCK2);
-     curprint ( string("}\n"));
+     curprint("}\n");
      unp->cur.format(namespaceDefinition, info, FORMAT_AFTER_BASIC_BLOCK2);
 
   // DQ (11/3/2007): Since "ninfo" will go out of scope shortly, this is not significant.
@@ -949,6 +981,9 @@ Unparse_ExprStmt::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnp
 #if 0
      if (saved_namespace != NULL)
           printf ("In unparseNamespaceDefinitionStatement(): reset saved_namespace = %p = %s \n",saved_namespace,saved_namespace->class_name().c_str());
+#endif
+#if 0
+     curprint("/* Leaving unparseNamespaceDefinitionStatement() */ ");
 #endif
    }
 
@@ -1739,7 +1774,8 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
           isSgTemplateInstantiationMemberFunctionDecl(stmt);
      ROSE_ASSERT(templateInstantiationMemberFunctionDeclaration != NULL);
 
-#if OUTPUT_DEBUGGING_FUNCTION_NAME
+// #if OUTPUT_DEBUGGING_FUNCTION_NAME
+#if 0
      printf ("Inside of unparseTemplateInstantiationMemberFunctionDeclStmt() = %p name = %s  transformed = %s prototype = %s static = %s compiler generated = %s transformation = %s output = %s \n",
        // templateInstantiationMemberFunctionDeclaration->get_templateName().str(),
           templateInstantiationMemberFunctionDeclaration,
@@ -1761,12 +1797,12 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
      if ( isTransformed (templateInstantiationMemberFunctionDeclaration) == true )
         {
        // Always output the template member function declaration if they are transformed.
+#if 0
           printf ("templateInstantiationMemberFunctionDeclaration has been transformed \n");
-
+#endif
           SgDeclarationStatement* definingDeclaration = templateInstantiationMemberFunctionDeclaration->get_definingDeclaration();
        // ROSE_ASSERT(definingDeclaration != NULL);
-          SgMemberFunctionDeclaration* memberFunctionDeclaration = 
-               (definingDeclaration == NULL) ? NULL : isSgMemberFunctionDeclaration(definingDeclaration);
+          SgMemberFunctionDeclaration* memberFunctionDeclaration = (definingDeclaration == NULL) ? NULL : isSgMemberFunctionDeclaration(definingDeclaration);
        // ROSE_ASSERT(memberFunctionDeclaration != NULL);
 
        // SgTemplateDeclaration* templateDeclaration = templateInstantiationMemberFunctionDeclaration->get_templateDeclaration();
@@ -1827,6 +1863,11 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
              }
             else
              {
+            // DQ (5/22/2013): Added to support output of non-template member functions with valid source position (e.g. the constructor in test2013_176.C).
+               if (templateInstantiationMemberFunctionDeclaration->get_file_info()->get_file_id() >= 0)
+                  {
+                    outputMemberFunctionTemplateInstantiation = true;
+                  }
 #if 0
                printf ("Declaration does NOT appear in the current source file (templateInstantiationMemberFunctionDeclaration = %p = %s) \n",
                     templateInstantiationMemberFunctionDeclaration, templateInstantiationMemberFunctionDeclaration->get_qualified_name().str());
@@ -1897,6 +1938,10 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
           curprint ( string("/* Skipped output of template member function declaration (name = " ) + templateInstantiationMemberFunctionDeclaration->get_qualified_name().str() + ") */ \n");
 #endif
         }
+
+#if 0
+     printf ("Leaving unparseTemplateInstantiationMemberFunctionDeclStmt(): outputMemberFunctionTemplateInstantiation = %s \n",outputMemberFunctionTemplateInstantiation ? "true" : "false");
+#endif
    }
 
 void

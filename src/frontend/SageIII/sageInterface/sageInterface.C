@@ -606,12 +606,11 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
      ROSE_ASSERT(parent_declaration != NULL);
 
   // Find the symbols associated with p_name
-     std::pair<SgSymbolTable::hash_iterator,SgSymbolTable::hash_iterator> pair_it =
-          scope_stmt->get_symbol_table()->get_table()->equal_range(initializedNameNode->get_name());
+     std::pair<SgSymbolTable::hash_iterator,SgSymbolTable::hash_iterator> pair_it = scope_stmt->get_symbol_table()->get_table()->equal_range(initializedNameNode->get_name());
 
-     SgSymbolTable::hash_iterator found_it=scope_stmt->get_symbol_table()->get_table()->end();
+     SgSymbolTable::hash_iterator found_it = scope_stmt->get_symbol_table()->get_table()->end();
 
-     for(SgSymbolTable::hash_iterator it = pair_it.first; it != pair_it.second; ++it)
+     for (SgSymbolTable::hash_iterator it = pair_it.first; it != pair_it.second; ++it)
         {
           switch(parent_declaration->variantT())
              {
@@ -2009,12 +2008,13 @@ SageInterface::OutputLocalSymbolTables::visit ( SgNode* node )
      SgScopeStatement* scope = isSgScopeStatement(node);
      if (scope != NULL)
         {
-          SgSymbolTable* symbolTable = scope->get_symbol_table();
-          ROSE_ASSERT(symbolTable != NULL);
+       // SgSymbolTable* symbolTable = scope->get_symbol_table();
+       // ROSE_ASSERT(symbolTable != NULL);
 
           printf ("Symbol Table from %p = %s at: \n",scope,scope->sage_class_name());
           scope->get_file_info()->display("Symbol Table Location (Called from SageInterface::OutputLocalSymbolTables::visit())");
-          symbolTable->print("Called from SageInterface::OutputLocalSymbolTables::visit()");
+       // symbolTable->print("Called from SageInterface::OutputLocalSymbolTables::visit()");
+          scope->print_symboltable("Called from SageInterface::OutputLocalSymbolTables::visit()");
         }
    }
 
@@ -4745,6 +4745,8 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
 #endif
      while ((cscope != NULL) && (symbol == NULL))
         {
+#if 0
+       // DQ (5/21/2013): Restricting direct access to the symbol table to support namespace symbol table support.
           if (cscope->get_symbol_table() == NULL)
              {
                printf ("Error: cscope->get_symbol_table() == NULL for cscope = %p = %s \n",cscope,cscope->class_name().c_str());
@@ -4761,6 +4763,7 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
 #endif
              }
           ROSE_ASSERT(cscope->get_symbol_table() != NULL);
+#endif
 
 #if 0
           printf("   --- In SageInterface:: lookupSymbolInParentScopes(): name = %s cscope = %p = %s \n",name.str(),cscope,cscope->class_name().c_str());
@@ -6141,9 +6144,12 @@ getVarSymFromName_const (const SgInitializedName* name)
 #if 0
           printf ("In getVarSymFromName(): name->get_name() = %s \n",name->get_name().str());
 #endif
-          SgScopeStatement* s = name->get_scope();
-          ROSE_ASSERT (s != NULL);
-          v_sym = s->lookup_var_symbol (name->get_name());
+          SgScopeStatement* scope = name->get_scope();
+          ROSE_ASSERT (scope != NULL);
+#if 0
+          printf ("In getVarSymFromName(): name->get_name() = %s scope = %p = %s \n",name->get_name().str(),scope,scope->class_name().c_str());
+#endif
+          v_sym = scope->lookup_var_symbol (name->get_name());
 
           if (!v_sym) // E.g., might be part of an 'extern' declaration.
             {
@@ -9060,7 +9066,8 @@ SageInterface::setParameterList(actualFunction * func,SgFunctionParameterList * 
    }
 #endif
 
-static SgVariableSymbol * addArg(SgFunctionParameterList *paraList, SgInitializedName* initName, bool isPrepend)
+// static 
+SgVariableSymbol* addArg(SgFunctionParameterList *paraList, SgInitializedName* initName, bool isPrepend)
    {
      ROSE_ASSERT(paraList != NULL);
      ROSE_ASSERT(initName != NULL);
@@ -10081,11 +10088,15 @@ void SageInterface::fixNamespaceDeclaration(SgNamespaceDeclarationStatement* str
 void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope)
    {
      ROSE_ASSERT(varDecl != NULL);
-     ROSE_ASSERT(scope != NULL);
+     ROSE_ASSERT(scope   != NULL);
 
      SgInitializedNamePtrList namelist = varDecl->get_variables();
 
   // printf ("In SageInterface::fixVariableDeclaration(): Is this a recursive call! \n");
+
+#if 0
+     printf ("In SageInterface::fixVariableDeclaration(): varDecl = %p scope = %p = %s \n",varDecl,scope,scope->class_name().c_str());
+#endif
 
 #if 0
   // DQ (11/19/2011): This is dangerous code since for C++ the declarations can have different scopes.
@@ -10180,7 +10191,28 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
                   {
                     varSymbol = new SgVariableSymbol(initName);
                     ROSE_ASSERT(varSymbol);
+#if 1
+                 // DQ (5/16/2013): We now want to use the SgScopeStatement::insert_symbol() functions since we put 
+                 // the complexity of handling namespaces into the implementation of that function.
                     scope->insert_symbol(name, varSymbol);
+#else
+                 // DQ (5/9/2013): If this is a namespace scope then we need so handle that case there there can be many since it is reentrant.
+                    SgScopeStatement* associatedScope = NULL;
+                    SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(scope);
+                    if (namespaceDefinition != NULL)
+                       {
+                         associatedScope = namespaceDefinition->get_global_definition();
+
+                         printf ("WARNING: We should check the scope of the variable as well! initName->get_scope() = %p = %s associatedScope = %p \n",
+                              initName->get_scope(),initName->get_scope()->class_name().c_str(),associatedScope);
+                       }
+                      else
+                       {
+                         associatedScope = scope;
+                       }
+                    ROSE_ASSERT(associatedScope != NULL);
+                    associatedScope->insert_symbol(name, varSymbol);
+#endif
                   }
              }
             else
@@ -14351,25 +14383,33 @@ SageInterface::deleteAST ( SgNode* n )
 
         // SgVariableSymbol and SgEnumFieldSymbol
                 void visit(SgInitializedName* node)
-                {
-                        if(SgVariableSymbolPtr !=NULL){
-                                if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
-                                                SgSymbol* s = node->get_symbol_from_symbol_table();
-                                                if (isSgVariableSymbol(s) == SgVariableSymbolPtr) SgVariableSymbol_count++;
-                                        }
-                                }
+                   {
+                     if(SgVariableSymbolPtr !=NULL)
+                        {
+                          if(node->get_scope()!=NULL)
+                             {
+                            // DQ (5/21/2013): We want to restrict access to the symbol table.
+                            // if(node->get_scope()->get_symbol_table()!=NULL)
+                                  {
+                                    SgSymbol* s = node->get_symbol_from_symbol_table();
+                                    if (isSgVariableSymbol(s) == SgVariableSymbolPtr) SgVariableSymbol_count++;
+                                  }
+                             }
                         }
 
-                        if(SgEnumFieldSymbolPtr !=NULL){
-                                if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
-                                                SgSymbol* s = node->get_symbol_from_symbol_table();
-                                                if (isSgEnumFieldSymbol(s) == SgEnumFieldSymbolPtr) SgEnumFieldSymbol_count++;
-                                        }
-                                }
+                     if(SgEnumFieldSymbolPtr !=NULL)
+                        {
+                          if(node->get_scope()!=NULL)
+                             {
+                            // DQ (5/21/2013): We want to restrict access to the symbol table.
+                            // if(node->get_scope()->get_symbol_table()!=NULL)
+                                  {
+                                    SgSymbol* s = node->get_symbol_from_symbol_table();
+                                    if (isSgEnumFieldSymbol(s) == SgEnumFieldSymbolPtr) SgEnumFieldSymbol_count++;
+                                  }
+                             }
                         }
-                }
+                   }
 
                 void visit(SgVarRefExp* node)
                 {
@@ -14388,7 +14428,8 @@ SageInterface::deleteAST ( SgNode* n )
                 void visit(SgFunctionDeclaration* node)         {
                         if(SgFunctionSymbolPtr !=NULL){
                                 if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                   // if(node->get_scope()->get_symbol_table()!=NULL)
+                                        {
                                                 SgSymbol* s = ((SgFunctionDeclaration*)node)->get_symbol_from_symbol_table();
                                                 if ((SgFunctionSymbol *)s == SgFunctionSymbolPtr) SgFunctionSymbol_count++;
                                         }
@@ -14457,7 +14498,8 @@ SageInterface::deleteAST ( SgNode* n )
                 {
                         if(SgClassSymbolPtr !=NULL){
                                 if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                   // if(node->get_scope()->get_symbol_table()!=NULL)
+                                        {
                                                 SgSymbol* s = node->get_symbol_from_symbol_table();
                                                 if (isSgClassSymbol(s) == SgClassSymbolPtr) SgClassDeclaration_count++;
                                         }
@@ -14478,7 +14520,8 @@ SageInterface::deleteAST ( SgNode* n )
                 {
                         if(SgClassSymbolPtr !=NULL){
                                 if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                   // if(node->get_scope()->get_symbol_table()!=NULL)
+                                        {
                                                 SgSymbol* s = node->get_symbol_from_symbol_table();
                                                 if (isSgClassSymbol(s) == SgClassSymbolPtr) SgClassDeclaration_count++;
                                         }
@@ -14487,7 +14530,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                         if(templateInstantiate_defining!=NULL) {
                                 if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                   // if(node->get_scope()->get_symbol_table()!=NULL)
+                                        {
                                                 if(node->get_symbol_from_symbol_table() == NULL){
                                                         SgDeclarationStatement * template_decl = ((SgDeclarationStatement*)node)->get_firstNondefiningDeclaration();
                                                         SgDeclarationStatement * template_decl1 = ((SgDeclarationStatement*)node)->get_definingDeclaration();
@@ -14545,7 +14589,8 @@ SageInterface::deleteAST ( SgNode* n )
                 {
                         if (SgMemFuncSymbolPtr !=NULL){
                                 if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                   // if(node->get_scope()->get_symbol_table()!=NULL)
+                                        {
                                                 SgSymbol* symbol = ((SgMemberFunctionDeclaration*)node)->get_symbol_from_symbol_table();
                                                 if(symbol == SgMemFuncSymbolPtr){
                                                         SgMemFuncSymbol_count++;
@@ -14559,7 +14604,8 @@ SageInterface::deleteAST ( SgNode* n )
                 {
                         if (SgMemFuncSymbolPtr !=NULL){
                                 if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                   // if(node->get_scope()->get_symbol_table()!=NULL)
+                                        {
                                                 SgSymbol* symbol = ((SgTemplateInstantiationMemberFunctionDecl*)node)->get_symbol_from_symbol_table();
                                                 if(symbol == SgMemFuncSymbolPtr){
                                                         SgMemFuncSymbol_count++;
@@ -14579,7 +14625,8 @@ SageInterface::deleteAST ( SgNode* n )
                 {
                         if(SgTypedefPtr!=NULL){
                                 if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                   // if(node->get_scope()->get_symbol_table()!=NULL)
+                                        {
                                                 SgSymbol* s = ((SgTypedefDeclaration*)node)->get_symbol_from_symbol_table();
                                                 if ((SgTypedefSymbol *)s == SgTypedefPtr) SgTypedefSymbol_count++;
                                         }
@@ -14601,7 +14648,8 @@ SageInterface::deleteAST ( SgNode* n )
                 {
                         if (SgTemplateSymbolPtr !=NULL){
                                 if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                   // if(node->get_scope()->get_symbol_table()!=NULL)
+                                        {
                                                 SgSymbol* symbol = ((SgTemplateDeclaration*)node)->get_symbol_from_symbol_table();
                                                 if(symbol == SgTemplateSymbolPtr){
                                                         SgTemplateSymbol_count++;
@@ -14612,7 +14660,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                         if(template_defining !=NULL) {
                                 if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                   // if(node->get_scope()->get_symbol_table()!=NULL)
+                                        {
                                                 if(node->get_symbol_from_symbol_table() == NULL){
                                                         SgDeclarationStatement * template_decl = ((SgDeclarationStatement*)node)->get_firstNondefiningDeclaration();
                                                         SgDeclarationStatement * template_decl1 = ((SgDeclarationStatement*)node)->get_definingDeclaration();
@@ -14659,7 +14708,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                         //remove SgVariableSymbol
                                         if(isSgInitializedName(node)->get_scope()!=NULL){
-                                                if(isSgInitializedName(node)->get_scope()->get_symbol_table()!=NULL){
+                                           // if(isSgInitializedName(node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgInitializedName *)node)->get_symbol_from_symbol_table();
                                                         if(isSgVariableSymbol(symbol) !=NULL){
                                                                 ClassicVisitor visitor((SgVariableSymbol*)symbol);
@@ -14702,7 +14752,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgFunctionDeclaration(node) && isSgMemberFunctionDeclaration(node)==NULL){
                                         if(isSgFunctionDeclaration(node)->get_scope()!=NULL){
-                                                if(isSgFunctionDeclaration(node)->get_scope()->get_symbol_table()!=NULL){
+                                           // if(isSgFunctionDeclaration(node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgFunctionDeclaration*)node)->get_symbol_from_symbol_table();
                                                         ClassicVisitor visitor((SgFunctionSymbol *)symbol);
                                                         traverseMemoryPoolVisitorPattern(visitor);
@@ -14755,7 +14806,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgTypedefDeclaration(node) !=NULL){
                                         if(((SgTypedefDeclaration*)node)->get_scope()!=NULL){
-                                                if(((SgTypedefDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+                                           // if(((SgTypedefDeclaration*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgTypedefDeclaration*)node)->get_symbol_from_symbol_table();
                                                         if(isSgTypedefSymbol(symbol)){
                                                                 ClassicVisitor visitor((SgTypedefSymbol*) symbol);
@@ -14781,7 +14833,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgNamespaceDeclarationStatement(node) !=NULL){
                                         if(((SgNamespaceDeclarationStatement*)node)->get_scope()!=NULL){
-                                                if(((SgNamespaceDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL){
+                                           // if(((SgNamespaceDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgNamespaceDeclarationStatement*)node)->get_symbol_from_symbol_table();
                                                         if(isSgNamespaceSymbol(symbol)){
                                                                 ((SgNamespaceDeclarationStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -14795,7 +14848,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgNamespaceAliasDeclarationStatement(node) !=NULL){
                                         if(((SgNamespaceAliasDeclarationStatement*)node)->get_scope()!=NULL){
-                                                if(((SgNamespaceAliasDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL){
+                                           // if(((SgNamespaceAliasDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgNamespaceAliasDeclarationStatement*)node)->get_symbol_from_symbol_table();
                                                         if(isSgNamespaceSymbol(symbol)){
                                                                 ((SgNamespaceAliasDeclarationStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -14813,7 +14867,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgLabelStatement(node) !=NULL){
                                         if(((SgLabelStatement*)node)->get_scope()!=NULL){
-                                                if(((SgLabelStatement*)node)->get_scope()->get_symbol_table()!=NULL){
+                                           // if(((SgLabelStatement*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgLabelStatement*)node)->get_symbol_from_symbol_table();
                                                         if(isSgLabelSymbol(symbol)){
                                                                 ((SgLabelStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -14838,7 +14893,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgEnumDeclaration(node) !=NULL){
                                         if(((SgEnumDeclaration*)node)->get_scope()!=NULL){
-                                                if(((SgEnumDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+                                           // if(((SgEnumDeclaration*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgEnumDeclaration*)node)->get_symbol_from_symbol_table();
                                                         if(isSgEnumSymbol(symbol) !=NULL){
                                                                 ((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
@@ -14861,7 +14917,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgClassDeclaration(node) !=NULL && isSgTemplateInstantiationDecl(node) ==NULL){
                                         if(((SgClassDeclaration*)node)->get_scope()!=NULL){
-                                                if(((SgClassDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+                                           // if(((SgClassDeclaration*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgClassDeclaration*)node)->get_symbol_from_symbol_table();
                                                         if(isSgClassSymbol(symbol) !=NULL){
                                                                 ClassicVisitor visitor((SgClassSymbol*)symbol);
@@ -14918,7 +14975,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgMemberFunctionDeclaration(node) !=NULL){
                                         if(((SgMemberFunctionDeclaration*)node)->get_scope()!=NULL){
-                                                if(((SgMemberFunctionDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+                                           // if(((SgMemberFunctionDeclaration*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgMemberFunctionDeclaration*)node)->get_symbol_from_symbol_table();
                                                         if(isSgMemberFunctionSymbol(symbol)){
                                                                 ClassicVisitor visitor((SgMemberFunctionSymbol*)symbol);
@@ -14965,7 +15023,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgInterfaceStatement(node) !=NULL){
                                         if(((SgDeclarationStatement*)node)->get_scope()!=NULL){
-                                                if(((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL){
+                                           // if(((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgDeclarationStatement*)node)->get_symbol_from_symbol_table();
                                                         if(isSgInterfaceSymbol(symbol)){
                                                                 ((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -14980,7 +15039,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgModuleStatement(node) !=NULL){
                                         if(((SgClassDeclaration*)node)->get_scope()!=NULL){
-                                                if(((SgClassDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+                                           // if(((SgClassDeclaration*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgClassDeclaration*)node)->get_symbol_from_symbol_table();
                                                         if(isSgModuleSymbol(symbol)){
                                                                 ((SgClassDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -14997,7 +15057,8 @@ SageInterface::deleteAST ( SgNode* n )
 #if 0
                                 if(isSgTemplateInstantiationMemberFunctionDecl(node) !=NULL){
                                         if(((SgTemplateInstantiationMemberFunctionDecl*)node)->get_scope()!=NULL){
-                                                if(((SgTemplateInstantiationMemberFunctionDecl*)node)->get_scope()->get_symbol_table()!=NULL){
+                                           // if(((SgTemplateInstantiationMemberFunctionDecl*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgTemplateInstantiationMemberFunctionDecl*)node)->get_symbol_from_symbol_table();
                                                         if(isSgMemberFunctionSymbol(symbol)){
                                                                 ClassicVisitor visitor((SgMemberFunctionSymbol*)symbol);
@@ -15016,7 +15077,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgTemplateDeclaration(node) !=NULL){
                                         if(((SgTemplateDeclaration*)node)->get_scope()!=NULL){
-                                                if(((SgTemplateDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+                                           // if(((SgTemplateDeclaration*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgTemplateDeclaration*)node)->get_symbol_from_symbol_table();
                                                         ClassicVisitor visitor((SgTemplateSymbol*)symbol);
                                                         traverseMemoryPoolVisitorPattern(visitor);
@@ -15036,7 +15098,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgInterfaceStatement(node) !=NULL){
                                         if(((SgDeclarationStatement*)node)->get_scope()!=NULL){
-                                                if(((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL){
+                                           // if(((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgDeclarationStatement*)node)->get_symbol_from_symbol_table();
                                                         if(isSgInterfaceSymbol(symbol)){
                                                                 ((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -15051,7 +15114,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgModuleStatement(node) !=NULL){
                                         if(((SgClassDeclaration*)node)->get_scope()!=NULL){
-                                                if(((SgClassDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+                                           // if(((SgClassDeclaration*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgClassDeclaration*)node)->get_symbol_from_symbol_table();
                                                         if(isSgModuleSymbol(symbol)){
                                                                 ((SgClassDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -15065,7 +15129,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgTemplateInstantiationDecl(node) !=NULL){
                                         if(((SgTemplateInstantiationDecl*)node)->get_scope()!=NULL){
-                                                if(((SgTemplateInstantiationDecl*)node)->get_scope()->get_symbol_table()!=NULL){
+                                           // if(((SgTemplateInstantiationDecl*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgTemplateInstantiationDecl*)node)->get_symbol_from_symbol_table();
                                                         if(isSgClassSymbol(symbol)){
                                                                 ClassicVisitor visitor((SgClassSymbol*)symbol);

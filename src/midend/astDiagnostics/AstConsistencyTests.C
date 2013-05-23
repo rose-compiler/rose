@@ -5072,7 +5072,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                                    node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str(),SageInterface::get_name(parent).c_str());
                               printf ("templateInstantiationDecl->get_definingDeclaration() = %p templateInstantiationDecl->get_firstNondefiningDeclaration() = %p \n",
                                    templateInstantiationDecl->get_definingDeclaration(),templateInstantiationDecl->get_firstNondefiningDeclaration());
-                              templateInstantiationDecl->get_file_info()->display("case V_SgTemplateArgument: location: debug");
+                           // templateInstantiationDecl->get_file_info()->display("case V_SgTemplateArgument: location: debug");
 #endif
                             }
                            else
@@ -5968,11 +5968,11 @@ TestForParentsMatchingASTStructure::preOrderVisit(SgNode *node)
                          SgNamespaceDeclarationStatement* namespaceDeclaration = namespaceDefinition->get_namespaceDeclaration();
                          printf ("Found a namespaceDefinition = %p = %s \n",namespaceDefinition,namespaceDeclaration->get_name().str());
 
-                         SgNamespaceDefinitionStatement* previousNamepaceDefinition = namespaceDefinition;
-                         while (previousNamepaceDefinition != NULL)
+                         SgNamespaceDefinitionStatement* previousNamespaceDefinition = namespaceDefinition;
+                         while (previousNamespaceDefinition != NULL)
                             {
-                              printf ("previousNamepaceDefinition = %p \n",previousNamepaceDefinition);
-                              previousNamepaceDefinition = previousNamepaceDefinition->get_previousNamepaceDefinition();
+                              printf ("previousNamespaceDefinition = %p \n",previousNamespaceDefinition);
+                              previousNamespaceDefinition = previousNamespaceDefinition->get_previousNamespaceDefinition();
                             }
                        }
 

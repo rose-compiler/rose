@@ -459,7 +459,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #if 0
      int line    = stmt->get_startOfConstruct()->get_raw_line();
      string file = stmt->get_startOfConstruct()->get_filenameString();
-     printf ("Unparse (language independent = %s) statement (%p): %s line = %d file = %s \n",languageName().c_str(),stmt,stmt->class_name().c_str(),line,file.c_str());
+     printf ("unparseStatement(): (language independent = %s) statement (%p): %s line = %d file = %s \n",languageName().c_str(),stmt,stmt->class_name().c_str(),line,file.c_str());
 #endif
 
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
@@ -552,7 +552,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
         }
      ROSE_ASSERT(stmt->get_file_info() != NULL);
 
-#if 1 // FIXME cause conflict in "make check"?
+  // FIXME cause conflict in "make check"?
   // DQ (5/19/2011): Allow unparsing of even compiler generated statements when specified via the SgUnparse_Info object.
   // FMZ : we have ".rmod" file which will not satisfy this condition
   // JJW (6/23/2008): Move check for statement-within-file here rather than in individual procedures
@@ -567,7 +567,6 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #endif
           return;
         }
-#endif
 
   // saveCompilerGeneratedStatements(stmt,info);
   // DQ (5/27/2005): fixup ordering of comments and any compiler generated code
@@ -896,7 +895,7 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
      ROSE_ASSERT (expr != NULL);
 
 #if 0
-     printf ("Unparse (language independent = %s) expression (%p): %s compiler-generated = %s \n",languageName().c_str(),expr,expr->class_name().c_str(),expr->get_file_info()->isCompilerGenerated() ? "true" : "false");
+     printf ("unparseExpression() (language independent = %s) expression (%p): %s compiler-generated = %s \n",languageName().c_str(),expr,expr->class_name().c_str(),expr->get_file_info()->isCompilerGenerated() ? "true" : "false");
 #endif
 
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
@@ -4762,11 +4761,14 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
             // DQ (4/17/2013): If this is an overloaded operator then we can't just treat it like a normal function (must detect if it is an overloaded operator).
                SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(expr);
                ROSE_ASSERT(functionCallExp != NULL);
-               ROSE_ASSERT(functionCallExp->get_uses_operator_syntax() == false);
-#if 0
-               printf ("In getPrecedence(): case V_SgFunctionCallExp: If this is an overloaded operator then the precedence should be that of the operator being overloaded (not zero). \n");
-               printf ("   --- functionCallExp = %p functionCallExp->get_uses_operator_syntax() = %s \n",functionCallExp,functionCallExp->get_uses_operator_syntax() ? "true" : "false");
+#if 1
+               if (functionCallExp->get_uses_operator_syntax() == true)
+                  {
+                    printf ("WARNING: In getPrecedence(): case V_SgFunctionCallExp: If this is an overloaded operator then the precedence should be that of the operator being overloaded (not zero). \n");
+                    printf ("   --- functionCallExp = %p functionCallExp->get_uses_operator_syntax() = %s \n",functionCallExp,functionCallExp->get_uses_operator_syntax() ? "true" : "false");
+                  }
 #endif
+            // ROSE_ASSERT(functionCallExp->get_uses_operator_syntax() == false);
 #if 0
                if (functionCallExp != NULL && functionCallExp->get_uses_operator_syntax() == true)
                   {

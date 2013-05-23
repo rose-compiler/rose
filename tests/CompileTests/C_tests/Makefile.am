@@ -277,6 +277,9 @@ TESTCODES_REQUIRED_TO_PASS = \
      complex_01.c \
      constants.c
 
+# DQ (5/23/2013): This is a failing case (reported by Sara). Case of "void foo(int N,int a[N]){}"
+# test2013_04.c 
+
 
 # DQ (9/28/2012): Failing tests.
 # test2012_04.c (infinite recursion!) (DQ: 11/21/2012: NOW FIXED)

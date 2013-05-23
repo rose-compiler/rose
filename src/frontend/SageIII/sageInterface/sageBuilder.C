@@ -168,6 +168,10 @@ SageBuilder::display(SourcePositionClassification & scp)
      return s;
    }
 
+#if 0
+// DQ (5/21/2013): This function is now replaced by the one at the SgScopeStatement level API.
+// This allows us to make the get_symbol_table() access function private as part of the namespace 
+// symbol table handling.
 
 // DQ (3/13/2012): Added support for organizing how we match function declarations with function symbols.
 template <class T>
@@ -260,6 +264,120 @@ SgSymbolTable::find_symbol_by_type_of_function (const SgName & name, const SgTyp
 
   // return isSgFunctionSymbol(func_symbol);
      return func_symbol;
+   }
+#endif
+
+// DQ (5/21/2013): Added function to support hidding the implementation in the SgScopeStatement API.
+template <class T>
+SgFunctionSymbol*
+SgScopeStatement::find_symbol_by_type_of_function (const SgName & name, const SgType* func_type)
+   {
+#if 0
+     return get_symbol_table()->find_symbol_by_type_of_function<T>();
+#else
+  // DQ (3/13/2012): This is to address the fact that there are 6 different types of functions in ROSE:
+  //    1) SgFunctionDeclaration
+  //    2) SgMemberFunctionDeclaration
+  //    3) SgTemplateFunctionDeclaration
+  //    4) SgTemplateMemberFunctionDeclaration
+  //    5) SgTemplateFunctionInstntiationDeclaration
+  //    6) SgTemplateMemberFunctionInstntiationDeclaration
+  // And 4 different types of function symbols:
+  //    1) SgFunctionSymbol
+  //    2) SgMemberFunctionSymbol
+  //    3) SgTemplateFunctionSymbol
+  //    4) SgTemplateMemberFunctionSymbol
+  // Note that both:
+  //    SgTemplateFunctionInstntiationDeclaration
+  //    SgTemplateMemberFunctionInstntiationDeclaration
+  // map to 
+  //    SgFunctionSymbol
+  //    SgMemberFunctionSymbol
+  // respectively.
+
+  // Check if there is a function symbol of any kind, then narrow the selection.
+  // SgFunctionSymbol* func_symbol = lookup_function_symbol(name,func_type);
+     SgFunctionSymbol* func_symbol = NULL;
+
+  // if (func_symbol == NULL)
+        {
+       // Use the static variant as a selector.
+          switch((VariantT)T::static_variant)
+             {
+               case V_SgFunctionDeclaration:
+               case V_SgTemplateInstantiationFunctionDecl:
+                  {
+#if 0
+                    printf ("In SgScopeStatement::find_symbol_by_type_of_function(): This is a SgFunctionDeclaration or SgTemplateInstantiationFunctionDecl function \n");
+#endif
+                 // DQ (5/21/2013): Calling the SgScopeStatement API.
+                 // func_symbol = find_nontemplate_function(name,func_type);
+                    func_symbol = lookup_nontemplate_function_symbol(name,func_type);
+
+                 // DQ (5/22/2013): This function symbol should not be a SgTemplateFunctionSymbol (associated with a template function.  It should be an instantiated template.
+                    ROSE_ASSERT(isSgTemplateFunctionSymbol(func_symbol) == NULL);
+                    
+                    break;
+                  }
+
+               case V_SgMemberFunctionDeclaration:
+               case V_SgTemplateInstantiationMemberFunctionDecl:
+                  {
+#if 0
+                    printf ("In SgScopeStatement::find_symbol_by_type_of_function(): This is a SgMemberFunctionDeclaration or SgTemplateInstantiationMemberFunctionDecl function \n");
+#endif
+                 // DQ (5/21/2013): there is no SgScopeStatement API that calls this function.
+                 // printf ("WARNING: There is no SgScopeStatement API that calls this function: find_nontemplate_member_function(). \n");
+
+                 // func_symbol = find_nontemplate_member_function(name,func_type);
+                 // ROSE_ASSERT(isSgNamespaceDefinitionStatement(this) == NULL);
+                 // func_symbol = get_symbol_table()->find_nontemplate_member_function(name,func_type);
+                    func_symbol = lookup_nontemplate_member_function_symbol(name,func_type);
+                    break;
+                  }
+
+               case V_SgTemplateFunctionDeclaration:
+                  {
+#if 0
+                    printf ("In SgScopeStatement::find_symbol_by_type_of_function(): This is a SgTemplateFunctionDeclaration function \n");
+#endif
+                 // DQ (5/21/2013): Calling the SgScopeStatement API.
+                 // func_symbol = find_template_function(name,func_type);
+                    func_symbol = lookup_template_function_symbol(name,func_type);
+
+                    break;
+                  }
+
+               case V_SgTemplateMemberFunctionDeclaration:
+                  {
+#if 0
+                    printf ("In SgScopeStatement::find_symbol_by_type_of_function(): This is a SgTemplateMemberFunctionDeclaration function \n");
+#endif
+                 // DQ (5/21/2013): Calling the SgScopeStatement API.
+                 // func_symbol = find_template_member_function(name,func_type);
+                    func_symbol = lookup_template_member_function_symbol(name,func_type);
+                    break;
+                  }
+
+               default:
+                  {
+                 // printf ("default reach in buildNondefiningFunctionDeclaration_T(): variantT(T::static_variant) = %d = %s \n",T::static_variant,T::class_name().c_str());
+                    printf ("In SgScopeStatement::find_symbol_by_type_of_function(): default reached --- variantT(T::static_variant) = %d \n",T::static_variant);
+                    ROSE_ASSERT(false);
+                  }
+             }
+        }
+
+#if 0
+     if (func_symbol != NULL)
+          printf ("In SgScopeStatement::find_symbol_by_type_of_function(): func_symbol = %p = %s \n",func_symbol,func_symbol->class_name().c_str());
+       else
+          printf ("In SgScopeStatement::find_symbol_by_type_of_function(): func_symbol = %p \n",func_symbol);
+#endif
+
+  // return isSgFunctionSymbol(func_symbol);
+     return func_symbol;
+#endif
    }
 
 
@@ -1005,9 +1123,11 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
       SgFunctionDefinition * f_def = getEnclosingProcedure (scope);
       if (f_def != NULL)
       {
-        SgSymbolTable * st = f_def->get_symbol_table();
-        ROSE_ASSERT (st != NULL);
-        SgVariableSymbol * v_symbol = st->find_variable(name); 
+     // DQ (5/21/2013): Removed direct reference to symbol table (namespace handling is only supported at the SgScopeStatement level).
+     // SgSymbolTable * st = f_def->get_symbol_table();
+     // ROSE_ASSERT (st != NULL);
+     // SgVariableSymbol * v_symbol = st->find_variable(name); 
+        SgVariableSymbol * v_symbol = f_def->lookup_variable_symbol(name); 
         if (v_symbol != NULL) // find a function parameter with the same name
         {
           // replace the default one with the one from parameter
@@ -1141,14 +1261,22 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
        else
         {
        // DQ (7/12/2012): This is not correct for C++ (to use the input scope), so don't set it here (unless we use the current scope instead of scope).
-       // Yes, let's set it to the current top of the scope stack.  This might be a problem if the scope stacj is not being used...
+       // Yes, let's set it to the current top of the scope stack.  This might be a problem if the scope stack is not being used...
           varDecl->set_parent(topScopeStack());
           ROSE_ASSERT(varDecl->get_parent() != NULL);
         }
 
      SgInitializedName *initName = varDecl->get_decl_item (name);   
      ROSE_ASSERT(initName);
-     ROSE_ASSERT((initName->get_declptr())!=NULL);
+     ROSE_ASSERT(initName->get_declptr() != NULL);
+
+  // DQ (5/17/2013): Added test.
+     if (initName->get_scope() == NULL)
+        {
+       // Make this a warning for the few places where this fails.
+          printf ("WARNING: Note in buildVariableDeclaration_nfi(): initName->get_scope() == NULL \n");
+        }
+  // ROSE_ASSERT(initName->get_scope() != NULL);
 
   // DQ (7/9/2012): Added test (parent should not be set yet; set in parse_statement).
   // ROSE_ASSERT(varDecl->get_parent() == NULL);
@@ -1174,8 +1302,10 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
   // DQ (7/9/2012): Added test (parent should not be set yet; set in parse_statement).
   // ROSE_ASSERT(varDecl->get_parent() == NULL);
   // Liao, 1/23/2013, quick fix for now, this condition is a mirror to the code setting parent in SageInterface::fixVariableDeclaration()
-   if (topScopeStack() != NULL)
-     ROSE_ASSERT(varDecl->get_parent() != NULL);
+     if (topScopeStack() != NULL)
+        {
+          ROSE_ASSERT(varDecl->get_parent() != NULL);
+        }
 
   // ROSE_ASSERT (varDecl->get_declarationModifier().get_accessModifier().isPublic() == false);
      return varDecl;
@@ -1416,8 +1546,33 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
         {
           SgTypedefSymbol* typedef_symbol = new SgTypedefSymbol(type_decl);
           ROSE_ASSERT(typedef_symbol);
+
+#if 1
+       // DQ (5/16/2013): This is the code we want now that we have implemented the namespace support behind the scope symbol bable interface.
           scope->insert_symbol(SgName(name),typedef_symbol);
           type_decl->set_scope(scope);
+#else
+       // DQ (5/9/2013): If this is a namespace scope then we need so handle that case there there can be many since it is reentrant.
+          SgScopeStatement* associatedScope = NULL;
+          SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(scope);
+          if (namespaceDefinition != NULL)
+             {
+               associatedScope = namespaceDefinition->get_global_definition();
+               if (namespaceDefinition->get_global_definition() == NULL)
+                  {
+                    printf ("ERROR: namespaceDefinition->get_global_definition() == NULL: namespaceDefinition = %p \n",namespaceDefinition);
+                  }
+               ROSE_ASSERT(associatedScope != NULL);
+             }
+            else
+             {
+               associatedScope = scope;
+             }
+          ROSE_ASSERT(associatedScope != NULL);
+
+          associatedScope->insert_symbol(SgName(name),typedef_symbol);
+          type_decl->set_scope(associatedScope);
+#endif
 
        // DQ (3/20/2012): Commented added only: The parent is always the scope in this case, I think.
           type_decl->set_parent(scope);
@@ -2003,7 +2158,11 @@ SgType * SageBuilder::buildOpaqueType(std::string const name, SgScopeStatement *
     type_symbol = new SgTypedefSymbol(type_decl);
     ROSE_ASSERT(type_symbol);
     SgName n = name;
-    scope->get_symbol_table()->insert(n, type_symbol); 
+
+ // DQ (5/21/2013): The symbol table should only be accessed through the SgScopeStatement interface.
+ // scope->get_symbol_table()->insert(n, type_symbol); 
+    scope->insert_symbol(n,type_symbol); 
+
     type_decl->set_firstNondefiningDeclaration (type_decl);
     setOneSourcePositionForTransformation(type_decl);
     prependStatement(type_decl,scope);
@@ -2141,6 +2300,10 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 #endif
         }
 
+#if 0
+     printf ("In buildNondefiningFunctionDeclaration_T(): scope = %p = %s \n",scope,scope != NULL ? scope->class_name().c_str() : "NULL");
+#endif
+
   // ROSE_ASSERT(XXX_name.is_null() == false);
      if (XXX_name.is_null() == true)
         {
@@ -2156,6 +2319,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 #if 0
      printf ("In buildNondefiningFunctionDeclaration_T(): buildTemplateInstantiation = %s \n",buildTemplateInstantiation ? "true" : "false");
 #endif
+
      if (buildTemplateInstantiation == true)
         {
           ROSE_ASSERT(templateArgumentsList != NULL);
@@ -2163,10 +2327,12 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 #if 0
           printf ("Building a non-defining function: buildNondefiningFunctionDeclaration_T() nameWithTemplateArguments = %s buildTemplateInstantiation = %s \n",nameWithTemplateArguments.str(),buildTemplateInstantiation ? "true:" : "false");
 #endif
+#if 0
           if (nameWithTemplateArguments == "insert < __normal_iterator< SgInitializedName ** , __type  >  > ")
              {
                printf ("In buildNondefiningFunctionDeclaration_T(): Found function nameWithTemplateArguments = %s \n",nameWithTemplateArguments.str());
              }
+#endif
         }
 
 #if 0
@@ -2271,13 +2437,14 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
        // SgSymbol* symbol = scope->get_symbol_table()->find_symbol_by_type_of_function<actualFunction>(name,func_type);
        // func_symbol = symbol;
 #if 0
-          printf ("In buildNondefiningFunctionDeclaration_T(): name = %s func_type = %p = %s \n",name.str(),func_type,func_type->get_mangled().str());
+          printf ("In buildNondefiningFunctionDeclaration_T(): name = %s func_type = %p = %s \n",nameWithTemplateArguments.str(),func_type,func_type->get_mangled().str());
 #endif
        // func_symbol = scope->get_symbol_table()->find_symbol_by_type_of_function<actualFunction>(name,func_type);
-          func_symbol = scope->get_symbol_table()->find_symbol_by_type_of_function<actualFunction>(nameWithTemplateArguments,func_type);
+       // func_symbol = scope->get_symbol_table()->find_symbol_by_type_of_function<actualFunction>(nameWithTemplateArguments,func_type);
+          func_symbol = scope->find_symbol_by_type_of_function<actualFunction>(nameWithTemplateArguments,func_type);
 
 #if 0
-          printf ("In buildNondefiningFunctionDeclaration_T(): func_symbol from scope->find_symbol_by_type_of_function<actualFunction>(name = %s) = %p \n",name.str(),func_symbol);
+          printf ("In buildNondefiningFunctionDeclaration_T(): func_symbol from scope->find_symbol_by_type_of_function<actualFunction>(name = %s) = %p \n",nameWithTemplateArguments.str(),func_symbol);
 #endif
        // If not a proper function (or instantiated template function), then check for a template function declaration.
           if (func_symbol == NULL)
@@ -2328,7 +2495,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
                case V_SgTemplateInstantiationFunctionDecl:
                   {
 #if 0
-                    printf ("This is a SgFunctionDeclaration function \n");
+                    printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): This is a SgFunctionDeclaration function \n");
 #endif
                     ROSE_ASSERT(isSgFunctionSymbol(func_symbol) != NULL);
                     break;
@@ -2337,7 +2504,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
                case V_SgTemplateInstantiationMemberFunctionDecl:
                   {
 #if 0
-                    printf ("This is a SgMemberFunctionDeclaration function \n");
+                    printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): This is a SgMemberFunctionDeclaration function \n");
 #endif
                     ROSE_ASSERT(isSgMemberFunctionSymbol(func_symbol) != NULL);
                     break;
@@ -2345,7 +2512,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
                case V_SgTemplateFunctionDeclaration:
                   {
 #if 0
-                    printf ("This is a SgTemplateFunctionDeclaration function \n");
+                    printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): This is a SgTemplateFunctionDeclaration function \n");
 #endif
                     ROSE_ASSERT(isSgTemplateFunctionSymbol(func_symbol) != NULL);
                     break;
@@ -2353,7 +2520,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
                case V_SgTemplateMemberFunctionDeclaration:
                   {
 #if 0
-                    printf ("This is a SgTemplateMemberFunctionDeclaration function \n");
+                    printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): This is a SgTemplateMemberFunctionDeclaration function \n");
 #endif
                     ROSE_ASSERT(isSgTemplateMemberFunctionSymbol(func_symbol) != NULL);
                     break;
@@ -2405,6 +2572,8 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
                printf ("WARNING: setting parent of function to match scope by default \n");
                func->set_parent(scope);
 
+#error "DEAD CODE!"
+
                ROSE_ASSERT(scope != NULL);
 
                if (isSgTemplateInstantiationMemberFunctionDecl(func) != NULL)
@@ -2415,6 +2584,9 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
              }
             else
              {
+
+#error "DEAD CODE!"
+
                if (isSgTemplateFunctionDeclaration(func) != NULL)
                   {
                     if (isSgTemplateInstantiationMemberFunctionDecl(func) != NULL)
@@ -2639,6 +2811,9 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
        // func = new actualFunction(name,func_type,NULL);
           func = new actualFunction(nameWithTemplateArguments,func_type,NULL);
           ROSE_ASSERT(func != NULL);
+#if 0
+          printf ("In buildNondefiningFunctionDeclaration_T(): func->get_name() = %s func = %p = %s \n",func->get_name().str(),func,func->class_name().c_str());
+#endif
 
 #if BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS
        // DQ (5/1/2012): Make sure that we don't have IR nodes marked as translformations.
@@ -2672,6 +2847,8 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
                printf ("WARNING: setting parent of function to match scope by default \n");
                func->set_parent(scope);
 
+#error "DEAD CODE!"
+
                ROSE_ASSERT(scope != NULL);
                ROSE_ASSERT(isSgTemplateClassDefinition(scope) == NULL);
              }
@@ -2691,24 +2868,32 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
        // prevDecl = func_symbol->get_declaration();
           if (functionDeclaration != NULL)
              {
+#if 0
+               printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): Set prevDecl = functionDeclaration \n");
+#endif
                prevDecl = functionDeclaration;
              }
             else
              {
                ROSE_ASSERT(templateFunctionDeclaration != NULL);
+#if 0
+               printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): Set prevDecl = templateFunctionDeclaration \n");
+#endif
                prevDecl = templateFunctionDeclaration;
              }
 
           ROSE_ASSERT(prevDecl != NULL);
-
-       // printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): prevDecl = %p \n",prevDecl);
-
+#if 0
+          printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): prevDecl = %p = %s \n",prevDecl,prevDecl->class_name().c_str());
+#endif
 #if 0
           if (prevDecl == prevDecl->get_definingDeclaration())
              {
             // The symbol points to a defining declaration and now that we have added a non-defining 
             // declaration we should have the symbol point to the new non-defining declaration.
             // printf ("Switching declaration in functionSymbol to point to the non-defining declaration \n");
+
+#error "DEAD CODE!"
 
             // DQ (11/23/2011): This change allows this to compile for where SgTemplateFunctionDeclarations are used.
             // func_symbol->set_declaration(func);
@@ -3634,7 +3819,8 @@ SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType
                SgMemberFunctionType* func_type = isSgMemberFunctionType(first_nondefining_declaration->get_type());
                ROSE_ASSERT(func_type != NULL);
 
-               SgSymbol* func_symbol = scope->get_symbol_table()->find_symbol_by_type_of_function<SgTemplateInstantiationMemberFunctionDecl>(nameWithTemplateArguments,func_type);
+            // SgSymbol* func_symbol = scope->get_symbol_table()->find_symbol_by_type_of_function<SgTemplateInstantiationMemberFunctionDecl>(nameWithTemplateArguments,func_type);
+               SgSymbol* func_symbol = scope->find_symbol_by_type_of_function<SgTemplateInstantiationMemberFunctionDecl>(nameWithTemplateArguments,func_type);
                if (func_symbol == NULL)
                   {
                     printf ("ERROR caught in SageBuilder::buildDefiningMemberFunctionDeclaration(): nameWithTemplateArguments = %s buildTemplateInstantiation = %s \n",nameWithTemplateArguments.c_str(),buildTemplateInstantiation ? "true:" : "false");
@@ -3815,9 +4001,10 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
   // SgSymbol* func_symbol = scope->lookup_function_symbol(name,func_type);
 
      ROSE_ASSERT(scope != NULL);
-     ROSE_ASSERT(scope->get_symbol_table() != NULL);
+  // ROSE_ASSERT(scope->get_symbol_table() != NULL);
   // SgSymbol* func_symbol = scope->get_symbol_table()->find_symbol_by_type_of_function<actualFunction>(name,func_type);
-     SgSymbol* func_symbol = scope->get_symbol_table()->find_symbol_by_type_of_function<actualFunction>(nameWithTemplateArguments,func_type);
+  // SgSymbol* func_symbol = scope->get_symbol_table()->find_symbol_by_type_of_function<actualFunction>(nameWithTemplateArguments,func_type);
+     SgSymbol* func_symbol = scope->find_symbol_by_type_of_function<actualFunction>(nameWithTemplateArguments,func_type);
 
 #if 0
      if (func_symbol == NULL)
@@ -3869,7 +4056,8 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
           ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
 
           nameWithTemplateArguments = nondefiningFunctionDeclaration->get_name();
-          func_symbol = scope->get_symbol_table()->find_symbol_by_type_of_function<actualFunction>(nameWithTemplateArguments,func_type);
+       // func_symbol = scope->get_symbol_table()->find_symbol_by_type_of_function<actualFunction>(nameWithTemplateArguments,func_type);
+          func_symbol = scope->find_symbol_by_type_of_function<actualFunction>(nameWithTemplateArguments,func_type);
 
           printf ("In buildDefiningFunctionDeclaration_T(): func_symbol = %p reset using lookup with reset nameWithTemplateArguments = %s \n",func_symbol,nameWithTemplateArguments.str());
 
@@ -4259,7 +4447,11 @@ SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return
         {
           SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(first_nondefining_declaration);
 
+          ROSE_ASSERT(first_nondefining_declaration != NULL);
+          printf ("In buildDefiningFunctionDeclaration(): first_nondefining_declaration->get_declarationModifier().isFriend() = %s \n",first_nondefining_declaration->get_declarationModifier().isFriend() ? "true" : "false");
+
        // func = buildDefiningFunctionDeclaration_T<SgTemplateInstantiationFunctionDecl>(name,return_type,paralist,/* isMemberFunction = */ false,scope,decoratorList,0,templateInstantiationFunctionDecl);
+       // func = buildDefiningFunctionDeclaration_T<SgTemplateInstantiationFunctionDecl>(name,return_type,paralist,/* isMemberFunction = */ false,scope,decoratorList,0,templateInstantiationFunctionDecl, templateArgumentsList);
           func = buildDefiningFunctionDeclaration_T<SgTemplateInstantiationFunctionDecl>(name,return_type,paralist,/* isMemberFunction = */ false,scope,decoratorList,0,templateInstantiationFunctionDecl, templateArgumentsList);
 
           ROSE_ASSERT(isSgTemplateInstantiationFunctionDecl(func) != NULL);
@@ -8596,12 +8788,14 @@ SageBuilder::buildNamespaceDefinition(SgNamespaceDeclarationStatement* d)
   {
     SgNamespaceDefinitionStatement* result = NULL;
     if (d!=NULL) // the constructor does not check for NULL d, causing segmentation fault
-    {
-      result = new SgNamespaceDefinitionStatement(d);
-      result->set_parent(d); // set_declaration() == set_parent() in this case
-    }
-    else
-      result = new SgNamespaceDefinitionStatement(d);
+       {
+         result = new SgNamespaceDefinitionStatement(d);
+         result->set_parent(d); // set_declaration() == set_parent() in this case
+       }
+      else
+       {
+         result = new SgNamespaceDefinitionStatement(d);
+       }
     
     ROSE_ASSERT(result);
 
@@ -8705,7 +8899,9 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
 
        // DQ (6/6/2012): Added support for template arguments so that they can be a part of any generated type.
           ROSE_ASSERT(templateArgumentsList != NULL);
-          ROSE_ASSERT(templateArgumentsList->size() > 0);
+
+       // DQ (5/8/2013): This fails for explicit template instantation examples (e.g. template <> class RepeatedPtrField<string>::TypeHandler {};, in test2013_159.C)
+       // ROSE_ASSERT(templateArgumentsList->size() > 0);
 
 #if 0
        // DQ (9/16/2012): Call the newly refactored function after the firstNondefiningDeclaration is set.
@@ -8933,7 +9129,9 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
                   {
                     setTemplateArgumentsInDeclaration(nondefdecl,templateArgumentsList);
                   }
-
+#if 0
+               printf ("BEFORE scope->insert_symbol(): scope = %p = %s nameWithTemplateArguments = %s mysymbol = %p = %s \n",scope,scope->class_name().c_str(),nameWithTemplateArguments.str(),mysymbol,mysymbol->class_name().c_str());
+#endif
             // scope->insert_symbol(name, mysymbol);
                scope->insert_symbol(nameWithTemplateArguments, mysymbol);
 
@@ -9097,23 +9295,27 @@ SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednames
 
   // TODO How about class type??
   // build defining declaration
-     SgNamespaceDefinitionStatement* classDef = buildNamespaceDefinition();
+     SgNamespaceDefinitionStatement* namespaceDef = buildNamespaceDefinition();
 
 #if 1
-     SgNamespaceDeclarationStatement* defdecl = new SgNamespaceDeclarationStatement(name,classDef, unnamednamespace);
+     SgNamespaceDeclarationStatement* defdecl = new SgNamespaceDeclarationStatement(name,namespaceDef,unnamednamespace);
      ROSE_ASSERT(defdecl != NULL);
-     classDef->set_parent(defdecl);
-     printf ("SageBuilder::buildNamespaceDeclaration_nfi(): defdecl = %p \n",defdecl);
+     namespaceDef->set_parent(defdecl);
 
-     setOneSourcePositionForTransformation(defdecl);
+#if 0
+     printf ("#################### SageBuilder::buildNamespaceDeclaration_nfi(): defdecl = %p = %s namespaceDef = %p \n",defdecl,defdecl->get_name().str(),namespaceDef);
+#endif
+
+  // setOneSourcePositionForTransformation(defdecl);
+     setOneSourcePositionNull(defdecl);
+
   // constructor is side-effect free
-     classDef->set_namespaceDeclaration(defdecl);
+     namespaceDef->set_namespaceDeclaration(defdecl);
 
   // DQ (3/6/2012): For namespaces the definingDeclaration should be NULL.
   // defdecl->set_definingDeclaration(defdecl);
      ROSE_ASSERT(defdecl->get_definingDeclaration() == NULL);
 #endif
-
 
   // Get the nondefining declaration from the symbol if it has been built (if this works, 
   // then we likely don't need the "SgClassDeclaration* nonDefiningDecl" parameter).
@@ -9133,25 +9335,127 @@ SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednames
           printf ("Warning: In SageBuilder::buildNamespaceDeclaration_nfi(): scope == NULL \n");
         }
 
-  // printf ("In SageBuilder::buildNamespaceDeclaration_nfi(): mysymbol = %p \n",mysymbol);
+#if 0
+     printf ("In SageBuilder::buildNamespaceDeclaration_nfi(): mysymbol = %p \n",mysymbol);
+#endif
+
      if (mysymbol != NULL)
         {
-          nondefdecl = isSgNamespaceDeclarationStatement(mysymbol->get_declaration());
+       // nondefdecl = isSgNamespaceDeclarationStatement(mysymbol->get_declaration());
+          SgNamespaceDeclarationStatement* namespaceDeclaration = mysymbol->get_declaration();
+          ROSE_ASSERT(namespaceDeclaration != NULL);
+          nondefdecl = isSgNamespaceDeclarationStatement(namespaceDeclaration);
 
           ROSE_ASSERT(nondefdecl != NULL);
           ROSE_ASSERT(nondefdecl->get_parent() != NULL);
 
-          nondefdecl->set_definingDeclaration(defdecl);
-
-          ROSE_ASSERT(nondefdecl->get_definingDeclaration() == defdecl);
+       // DQ (5/16/2013): These should be non-defining declarations for the case of a C++ namespace (all instances are a non-defining declaration).
+       // nondefdecl->set_definingDeclaration(defdecl);
+       // ROSE_ASSERT(nondefdecl->get_definingDeclaration() == defdecl);
+          ROSE_ASSERT(nondefdecl->get_definingDeclaration() == NULL);
           ROSE_ASSERT(nondefdecl->get_firstNondefiningDeclaration() != defdecl);
+
+       // DQ (5/16/2013): Set the global definition for the new namespace definition.
+          ROSE_ASSERT(namespaceDeclaration->get_definition() != NULL);
+          if (namespaceDeclaration->get_definition()->get_global_definition() == NULL)
+             {
+               printf ("ERROR: namespaceDeclaration->get_definition()->get_global_definition() == NULL: namespaceDeclaration = %p = %s namespaceDeclaration->get_definition() = %p \n",
+                    namespaceDeclaration,namespaceDeclaration->get_name().str(),namespaceDeclaration->get_definition());
+             }
+          ROSE_ASSERT(namespaceDeclaration->get_definition()->get_global_definition() != NULL);
+          namespaceDef->set_global_definition(namespaceDeclaration->get_definition()->get_global_definition());
+          ROSE_ASSERT(namespaceDef->get_global_definition() != NULL);
+
+       // DQ (5/19/2013): Make the global_definition point to itself.
+          ROSE_ASSERT(namespaceDef->get_global_definition() == namespaceDef->get_global_definition()->get_global_definition());
+
+          ROSE_ASSERT(defdecl->get_definition()->get_global_definition() != NULL);
+
+          ROSE_ASSERT(nondefdecl->get_definition()->get_previousNamespaceDefinition() == NULL);
+       // ROSE_ASSERT(nondefdecl->get_definition()->get_nextNamespaceDefinition() == NULL);
+
+          SgNamespaceDefinitionStatement* i = namespaceDeclaration->get_definition();
+          ROSE_ASSERT(i != NULL);
+          while (i != NULL && i->get_nextNamespaceDefinition() != NULL)
+             {
+               i = i->get_nextNamespaceDefinition();
+               ROSE_ASSERT(i->get_previousNamespaceDefinition() != NULL);
+             }
+
+          ROSE_ASSERT(i != NULL);
+          i->set_nextNamespaceDefinition(namespaceDef);
+          namespaceDef->set_previousNamespaceDefinition(i);
         }
        else
         {
-       // DQ (1/25/2009): We only want to build a new declaration if we can't reuse the existing declaration.
-          nondefdecl = new SgNamespaceDeclarationStatement(name,NULL, unnamednamespace);
-          ROSE_ASSERT(nondefdecl != NULL);
+       // DQ (5/16/2013): Note that since we don't build a SgNamespaceDefinition for the declaration we can't 
+       // build the global_definition.  This is a potential problem.
 
+#if 1
+          nondefdecl = defdecl;
+          ROSE_ASSERT(nondefdecl != NULL);
+          namespaceDef = nondefdecl->get_definition();
+          ROSE_ASSERT(namespaceDef->get_namespaceDeclaration() != NULL);
+#else
+       // DQ (5/16/2013): We want to build an associated SgNamespaceDefinitionStatement so that we can 
+       // support a reference to a SgNamespaceDefinitionStatement as a global definition.
+       // DQ (1/25/2009): We only want to build a new declaration if we can't reuse the existing declaration.
+       // nondefdecl = new SgNamespaceDeclarationStatement(name,NULL, unnamednamespace);
+
+#error "DEAD CODE!"
+
+          SgNamespaceDefinitionStatement* namespaceDef = buildNamespaceDefinition();
+          nondefdecl = new SgNamespaceDeclarationStatement(name,namespaceDef,unnamednamespace);
+          ROSE_ASSERT(nondefdecl != NULL);
+#if 0
+          printf ("In SageBuilder::buildNamespaceDeclaration_nfi(): Built namespace definition for nondefdecl = %p = %s definition = %p \n",nondefdecl,nondefdecl->get_name().str(),namespaceDef);
+#endif
+       // DQ (5/16/2013): Added tests and setting of the associated declaration.
+          ROSE_ASSERT(namespaceDef->get_namespaceDeclaration() == NULL);
+          namespaceDef->set_namespaceDeclaration(nondefdecl);
+          ROSE_ASSERT(namespaceDef->get_namespaceDeclaration() != NULL);
+#endif
+
+       // DQ (5/16/2013): Now add the global definition where we will accumulate all of the symbols for the logical namespace.
+          SgNamespaceDefinitionStatement* global_definition_namespaceDef = buildNamespaceDefinition();
+          namespaceDef->set_global_definition(global_definition_namespaceDef);
+          ROSE_ASSERT(namespaceDef->get_global_definition() != NULL);
+
+       // DQ (5/19/2013): Make the global_definition point to itself.
+          global_definition_namespaceDef->set_global_definition(global_definition_namespaceDef);
+
+          global_definition_namespaceDef->set_isUnionOfReentrantNamespaceDefinitions(true);
+
+       // DQ (5/16/2013): Added tests and setting of the associated declaration.
+          ROSE_ASSERT(global_definition_namespaceDef->get_namespaceDeclaration() == NULL);
+          global_definition_namespaceDef->set_namespaceDeclaration(nondefdecl);
+          ROSE_ASSERT(global_definition_namespaceDef->get_namespaceDeclaration() != NULL);
+
+       // DQ (5/16/2013): Set the associated declaration to be the nondefdecl.
+          global_definition_namespaceDef->set_namespaceDeclaration(nondefdecl);
+          ROSE_ASSERT(global_definition_namespaceDef->get_namespaceDeclaration() != NULL);
+
+#if 0
+          ROSE_ASSERT(defdecl->get_definition()->get_global_definition() == NULL);
+       // defdecl->get_definition()->set_global_definition(namespaceDef->get_global_definition());
+          defdecl->get_definition()->set_global_definition(global_definition_namespaceDef);
+#else
+#if 0
+          printf ("In SageBuilder::buildNamespaceDeclaration_nfi(): defdecl->get_definition()->get_global_definition() = %p \n",defdecl->get_definition()->get_global_definition());
+#endif
+          if (defdecl->get_definition()->get_global_definition() == NULL)
+             {
+               defdecl->get_definition()->set_global_definition(global_definition_namespaceDef);
+             }
+
+       // DQ (5/19/2013): Make the global_definition point to itself.
+          ROSE_ASSERT(global_definition_namespaceDef == global_definition_namespaceDef->get_global_definition());
+#endif
+          ROSE_ASSERT(defdecl->get_definition()->get_global_definition() != NULL);
+          ROSE_ASSERT(defdecl->get_definition()->get_global_definition() == namespaceDef->get_global_definition());
+#if 0
+          printf ("In SageBuilder::buildNamespaceDeclaration_nfi(): Built namespace definition for nondefdecl = %p = %s get_global_definition() = %p \n",nondefdecl,nondefdecl->get_name().str(),namespaceDef->get_global_definition());
+#endif
        // printf ("SageBuilder::buildNamespaceDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
 
        // The nondefining declaration will not appear in the source code, but is compiler
@@ -9159,7 +9463,7 @@ SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednames
        // types).  At the moment we make it a transformation, there might be another kind 
        // of source position that would be more precise.  FIXME.
        // setOneSourcePositionNull(nondefdecl);
-          setOneSourcePositionForTransformation(nondefdecl);
+       // setOneSourcePositionForTransformation(nondefdecl);
 
           nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
 
@@ -9170,8 +9474,7 @@ SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednames
 
           nondefdecl->setForward();
 
-
-          //nondefdecl->set_parent(topScopeStack());
+       // nondefdecl->set_parent(topScopeStack());
           nondefdecl->set_parent(scope);
                   ROSE_ASSERT(nondefdecl->get_parent());
 
@@ -9186,13 +9489,20 @@ SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednames
             // break the existing interface. Need to discuss this with Liao.
                printf ("Warning: no scope provided to support symbol table entry! \n");
              }
+
+          ROSE_ASSERT(defdecl->get_definition() != NULL);
+          ROSE_ASSERT(defdecl->get_definition()->get_global_definition() != NULL);
+
+          ROSE_ASSERT(nondefdecl->get_definition()->get_previousNamespaceDefinition() == NULL);
+          ROSE_ASSERT(nondefdecl->get_definition()->get_nextNamespaceDefinition() == NULL);
         }
 
+     ROSE_ASSERT(nondefdecl != NULL);
 
   // printf ("SageBuilder::buildNamespaceDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
 
   // setOneSourcePositionForTransformation(nondefdecl);
-     setOneSourcePositionNull(nondefdecl);
+  // setOneSourcePositionNull(nondefdecl);
 
   // nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
   // nondefdecl->set_definingDeclaration(defdecl);
@@ -9239,6 +9549,20 @@ SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednames
 
   // DQ (3/6/2012): For namespaces the definingDeclaration should be NULL.
      ROSE_ASSERT(defdecl->get_definingDeclaration() == NULL);
+
+  // DQ (5/16/2013): Added tests.
+     ROSE_ASSERT(defdecl->get_firstNondefiningDeclaration() != NULL);
+     ROSE_ASSERT(defdecl->get_definition() != NULL);
+     ROSE_ASSERT(defdecl->get_definition()->get_global_definition() != NULL);
+
+#if 0
+  // DQ (5/19/2013): There should always be proper source file position infomation so this should not be required.
+     if (defdecl->get_file_info()->isOutputInCodeGeneration() == true)
+        {
+          defdecl->get_file_info()->display("In buildNamespaceDeclaration_nfi(): namespaceDeclaration: debug");
+        }
+  // ROSE_ASSERT(defdecl->get_file_info()->isOutputInCodeGeneration() == false);
+#endif
 
      return defdecl;    
    }
@@ -9860,7 +10184,6 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
         }
 #endif
 
-#if 1
   // DQ (3/15/2012): I hhava moved construction of defining declaration to be AFTER the nondefining declaration!
   // This is a better organization ans also should make sure that the declaration in the SgClassType will
   // properly reference the firstNondefiningDeclaration (instead of the defining declaration).
@@ -9904,6 +10227,8 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
           printf ("In buildClassDeclaration_nfi(): templateName = %s \n",templateName.str());
           isSgTemplateInstantiationDecl(defdecl)->set_templateName(templateName);
 
+#error "DEAD CODE!"
+
        // DQ (5/31/2012): Find locations where this is set and include template syntax.
        // ROSE_ASSERT(templateName.getString().find('<') == string::npos);
           ROSE_ASSERT(hasTemplateSyntax(templateName) == false);
@@ -9914,10 +10239,16 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 #endif
 #else
 #if 0
-          printf ("In buildClassDeclaration_nfi(): nameWithoutTemplateArguments = %s \n",nameWithoutTemplateArguments.str());
+          printf ("In buildClassDeclaration_nfi(): nameWithoutTemplateArguments = %s nameWithTemplateArguments = %s \n",nameWithoutTemplateArguments.str(),nameWithTemplateArguments.str());
 #endif
           isSgTemplateInstantiationDecl(defdecl)->set_templateName(nameWithoutTemplateArguments);
-          ROSE_ASSERT(hasTemplateSyntax(nameWithTemplateArguments) == true);
+
+       // DQ (5/8/2013): This fails for test2013_159.C, and it appears that we have been overly restrictive here.
+          if (hasTemplateSyntax(nameWithTemplateArguments) == false)
+             {
+               printf ("WARNING: In buildClassDeclaration_nfi(): nameWithTemplateArguments = %s is not using template syntax \n",nameWithTemplateArguments.str());
+             }
+       // ROSE_ASSERT(hasTemplateSyntax(nameWithTemplateArguments) == true);
 
        // DQ (7/27/2012): This fails for test2005_35.C where conversion operators are seen.
        // ROSE_ASSERT(hasTemplateSyntax(nameWithoutTemplateArguments) == false);
@@ -9966,7 +10297,6 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
   // constructor is side-effect free
      classDef->set_declaration(defdecl);
      defdecl->set_definingDeclaration(defdecl);
-#endif
 
      testTemplateArgumentParents(nondefdecl);
      testTemplateArgumentParents(defdecl);
@@ -10213,7 +10543,7 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
   // DQ (11/20/2011): This is for initial debugging only.
      ROSE_ASSERT(scope != NULL);
 
-#if 0
+#if 1
      printf ("SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(): XXX_name = %s scope = %p = %s \n",XXX_name.str(),scope,scope->class_name().c_str());
 #endif
 
@@ -10255,7 +10585,7 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
        // break the existing interface. Need to discuss this with Liao.
           printf ("Warning: In SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(): scope == NULL \n");
         }
-#if 0
+#if 1
      printf ("In SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
 #endif
 
@@ -10424,8 +10754,8 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
        // Build a SgTemplateClassSymbol and put it into the specified scope.
           if (scope != NULL)
              {
-#if 0
-               printf ("Building a SgTemplateSymbol using name = %s and nondefdecl = %p = %s \n",name.str(),nondefdecl,nondefdecl->class_name().c_str());
+#if 1
+               printf ("Building a SgTemplateSymbol using nameWithTemplateSpecializationArguments = %s and nondefdecl = %p = %s \n",nameWithTemplateSpecializationArguments.str(),nondefdecl,nondefdecl->class_name().c_str());
 #endif
             // DQ (12/21/2011): We want to use a newer design that derives the SgTemplateClassDeclaration from the SgClassDeclaration.
             // mysymbol = new SgTemplateSymbol(nondefdecl);
@@ -10450,7 +10780,7 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
             // DQ (9/12/2012): We want to include the template specialization into the name where it is required.
             // scope->insert_symbol(name, mysymbol);
                scope->insert_symbol(nameWithTemplateSpecializationArguments, mysymbol);
-#if 0
+#if 1
                printf ("SageBuilder::buildNondefiningTemplateClassDeclaration_nfi() (after building symbol): scope = %p = %s \n",scope,scope->class_name().c_str());
 #endif
                ROSE_ASSERT(nondefdecl->get_scope() != NULL);

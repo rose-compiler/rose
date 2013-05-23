@@ -1252,6 +1252,32 @@ test2013_155.C \
 test2013_156.C \
 test2013_157.C \
 test2013_158.C \
+test2013_159.C \
+test2013_160.C \
+test2013_161.C \
+test2013_162.C \
+test2013_163.C \
+test2013_164.C \
+test2013_165.C \
+test2013_166.C \
+test2013_167.C \
+test2013_168.C \
+test2013_169.C \
+test2013_170.C \
+test2013_171.C \
+test2013_172.C \
+test2013_173.C \
+test2013_174.C \
+test2013_175.C \
+test2013_176.C \
+test2013_177.C \
+test2013_178.C \
+test2013_179.C \
+test2013_180.C \
+test2013_181.C \
+test2013_182.C \
+test2013_183.C \
+test2013_184.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1277,6 +1303,13 @@ NEW_PASSING_FILES =
 TESTCODE_CURRENTLY_FAILING_ON_OSX = \
 test2011_06.C \
 test2004_35.C 
+
+
+# DQ (5/23/2013): This is a failing test because we fixup the symbol tables and then compute 
+# the name qualification (and with the fixed up symbol tables we get the name qualification wrong).
+# Not clear how to fix this at the moment, it was a made up test that I will work on later.
+# test2013_185.C 
+
 
 # DQ (4/21/2013): failing regression tests (result of fix for operator vs. non-operator syntax in function calls).
 # test2013_117.C 
