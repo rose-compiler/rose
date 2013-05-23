@@ -29,6 +29,7 @@ public:
     std::vector<int> syscalls;                  // system call numbers in the order they occur
     AnalysisFault::Fault fault;
     bool operator==(const OutputGroup &other) const;
+    void clear();
     void print(std::ostream&, const std::string &title="", const std::string &prefix="") const;
     void print(RTS_Message*, const std::string &title="", const std::string &prefix="") const;
     friend std::ostream& operator<<(std::ostream &o, const OutputGroup &outputs) {

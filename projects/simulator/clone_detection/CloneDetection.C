@@ -307,6 +307,7 @@ public:
         data_cells.clear();
         registers.clear();
         register_rw_state.clear();
+        output_group.clear();
     }
 
     // Return output values.  These are the interesting general-purpose registers to which a value has been written, and the

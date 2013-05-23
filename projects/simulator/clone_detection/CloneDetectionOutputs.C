@@ -19,6 +19,15 @@ OutputGroup::operator==(const OutputGroup &other) const
 }
 
 void
+OutputGroup::clear()
+{
+    values.clear();
+    callees_va.clear();
+    syscalls.clear();
+    fault = AnalysisFault::NONE;
+}
+
+void
 OutputGroup::print(std::ostream &o, const std::string &title, const std::string &prefix) const
 {
     if (!title.empty())
