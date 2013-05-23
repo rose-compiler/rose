@@ -20,9 +20,32 @@
 #include <map>
 #include "InternalChecks.h"
 #include "Miscellaneous.h"
+#include "AttributeAnnotator.h"
+#include "AstTerm.h"
 
 namespace po = boost::program_options;
 using namespace CodeThorn;
+
+class TermRepresentation : public AnalysisResultAttribute {
+public:
+  TermRepresentation(SgNode* node) : _node(node) {}
+  string getPreInfoString() { return "// AST: "+astTermWithNullValuesToString(_node); }
+  string getPostInfoString() { return ""; }
+private:
+  SgNode* _node;
+};
+
+void attachAnalysisResults(SgNode* node) {
+  RoseAst ast(node);
+  for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
+	if(SgStatement* stmt=dynamic_cast<SgStatement*>(*i)) {
+	  // use default for tests
+	  AstAttribute* ara=new TermRepresentation(stmt);
+	  // TODO: use specialized CodeThorn::AnalysisResult inheriting from AnalysisResultAttribute;
+	  stmt->setAttribute("codethorn-value-analysis",ara);
+	}
+  }
+}
 
 bool CodeThornLanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
   RoseAst ast(node);
@@ -440,6 +463,8 @@ int main( int argc, char * argv[] ) {
     ("abstract-interpreter",po::value< string >(),"Run analyzer in abstract interpreter mode. Use [=yes|no]")
     ("rers-binary",po::value< string >(),"Call rers binary functions in analysis. Use [=yes|no]")
 	("print-all-options",po::value< string >(),"print all yes/no command line options.")
+	("annotate-results",po::value< string >(),"annotate results in program and output program (using ROSE unparser).")
+	("skip-analysis",po::value< string >(),"Run without performaing any analysis (only used for testing).")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -485,6 +510,8 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("run-rose-tests",false);
   boolOptions.registerOption("reduce-cfg",true);
   boolOptions.registerOption("print-all-options",false);
+  boolOptions.registerOption("annotate-results",false);
+  boolOptions.registerOption("skip-analysis",false);
 
   boolOptions.registerOption("ltl-output-dot",false);
   boolOptions.registerOption("ltl-show-derivation",true);
@@ -603,6 +630,9 @@ int main( int argc, char * argv[] ) {
   }
 
   SgNode* root=sageProject;
+
+  if(!boolOptions["skip-analysis"])
+  {
   checkProgram(root);
   timer.start();
 
@@ -800,7 +830,17 @@ int main( int argc, char * argv[] ) {
 		   );
   }
 #endif
-
+  } // skip-analysis end
+  
+  if (boolOptions["annotate-results"]) {
+	cout << "INFO: Annotating analysis results."<<endl;
+	attachAnalysisResults(sageProject);
+	AnalysisResultAnnotator ara;
+	ara.annotateAnalysisResultAttributesAsComments(sageProject,"codethorn-value-analysis");
+	cout << "INFO: Generating annotated program."<<endl;
+	//backend(sageProject);
+	sageProject->unparse(0,0);
+  }
 
   // reset terminal
   cout<<color("normal")<<"done."<<endl;

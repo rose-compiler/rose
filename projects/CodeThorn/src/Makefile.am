@@ -67,6 +67,8 @@ codethorn_SOURCES = \
   Visualizer.h                     \
   RDLattice.h                      \
   RDLattice.C                      \
+  AttributeAnnotator.h             \
+  AttributeAnnotator.C             \
   RERS_empty_specialization.C      \
   codethorn.C                      \
   codethorn.h
