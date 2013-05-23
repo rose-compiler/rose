@@ -1738,8 +1738,12 @@ public:
             if (opt.verbosity>=EFFUSIVE)
                 std::cerr <<"CloneDetection: analysis terminated by X86InstructionSemantics exception: " <<e.mesg <<"\n";
             fault = AnalysisFault::SEMANTICS;
+        } catch (const SMTSolver::Exception &e) {
+            if (opt.verbosity>=EFFUSIVE)
+                std::cerr <<"CloneDetection: analysis terminated by SMT solver exception: " <<e.mesg <<"\n";
+            fault = AnalysisFault::SMTSOLVER;
         }
-
+        
         // Gather the function's outputs before restoring machine state.
         OutputGroup outputs = policy.get_outputs();
         outputs.fault = fault;
