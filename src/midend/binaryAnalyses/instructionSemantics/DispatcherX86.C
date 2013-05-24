@@ -57,6 +57,7 @@ public:
         operators->writeRegister(dispatcher->REG_EIP, operators->add(operators->number_(32, insn->get_address()),
                                                                      operators->number_(32, insn->get_size())));
         SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
+        check_arg_width(insn, operands);
         p(dispatcher.get(), operators.get(), insn, operands);
     }
 
@@ -64,6 +65,16 @@ public:
         if (args.size()!=nargs) {
             std::string mesg = "instruction must have " + StringUtility::numberToString(nargs) + "argument" + (1==nargs?"":"s");
             throw BaseSemantics::Exception(mesg, insn);
+        }
+    }
+
+    // This is here because we don't fully support 64-bit mode yet, and a few of the support functions will fail in bad ways.
+    // E.g., "jmp ds:[rip+0x200592]" will try to read32() the argument and then fail an assertion because it isn't 32 bits wide.
+    void check_arg_width(I insn, A args) {
+        for (size_t i=0; i<args.size(); ++i) {
+            size_t nbits = asm_type_width(args[i]->get_type());
+            if (nbits > 32)
+                throw BaseSemantics::Exception(StringUtility::numberToString(nbits)+"-bit operands not supported yet", insn);
         }
     }
 };
