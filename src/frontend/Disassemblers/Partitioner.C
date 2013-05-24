@@ -6,8 +6,11 @@
 #include "Assembler.h"
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
-#include "PartialSymbolicSemantics.h"
+#include "PartialSymbolicSemantics.h"           // FIXME: expensive to compile; remove when no longer needed [RPM 2012-05-06]
 #include "stringify.h"
+
+#include "PartialSymbolicSemantics2.h"
+#include "DispatcherX86.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -190,7 +193,7 @@ Partitioner::set_map(MemoryMap *map, MemoryMap *ro_map)
 Disassembler::AddressSet
 Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *table_extent)
 {
-    using namespace BinaryAnalysis::InstructionSemantics;
+    using namespace BinaryAnalysis::InstructionSemantics2;
 
     /* Do some cheap up-front checks. */
     SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(bb->last_insn());
@@ -204,18 +207,16 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
         return Disassembler::AddressSet(); // no indirection
 
     /* Evaluate the basic block semantically to get an expression for the final EIP. */
-    typedef PartialSymbolicSemantics::ValueType<32> RegisterValueType;
-    typedef PartialSymbolicSemantics::Policy<> Policy;
-    typedef X86InstructionSemantics<Policy, PartialSymbolicSemantics::ValueType> Semantics;
-    Policy policy;
-    policy.set_map(&ro_map);
-    Semantics semantics(policy);
+    const RegisterDictionary *regdict = RegisterDictionary::dictionary_amd64(); // compatible w/ older x86 models
+    const RegisterDescriptor *REG_EIP = regdict->lookup("eip");
+    PartialSymbolicSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(regdict);
+    BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops);
+    ops->set_memory_map(&ro_map);
     try {
         for (size_t i=0; i<bb->insns.size(); ++i) {
             insn_x86 = isSgAsmx86Instruction(bb->insns[i]->node);
             assert(insn_x86); // we know we're in a basic block of x86 instructions already
-            policy.writeRegister(semantics.REG_EIP, policy.number<32>(insn_x86->get_address()));
-            semantics.processInstruction(insn_x86);
+            dispatcher->processInstruction(insn_x86);
         }
     } catch (...) {
         return Disassembler::AddressSet(); // something went wrong, so just give up (e.g., unhandled instruction)
@@ -227,12 +228,14 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
      * is also stored at some other memory addresses outside the jump table (e.g., a function pointer argument stored on the
      * stack), so we also skip over any memory whose address is known. */
     Disassembler::AddressSet successors;
-    RegisterValueType eip = policy.readRegister<32>(semantics.REG_EIP);
+    BaseSemantics::SValuePtr eip = ops->readRegister(*REG_EIP);
     size_t entry_size = 4; // FIXME: bytes per jump table entry
-    if (!eip.is_known()) {
-        for (Policy::StateType::Memory::iterator mi=policy.get_state().memory.begin(); mi!=policy.get_state().memory.end(); ++mi) {
-            if (mi->get_data()==eip && !mi->get_address().is_known()) {
-                rose_addr_t base_va = mi->get_address().offset;
+    if (!eip->is_number()) {
+        BaseSemantics::MemoryCellListPtr mem = BaseSemantics::MemoryCellList::promote(ops->get_state()->get_memory_state());
+        for (BaseSemantics::MemoryCellList::CellList::iterator mi=mem->get_cells().begin(); mi!=mem->get_cells().end(); ++mi) {
+            BaseSemantics::MemoryCellPtr cell = *mi;
+            if (cell->get_address()->is_number() && cell->get_value()->must_equal(eip)) {
+                rose_addr_t base_va = cell->get_address()->get_number();
                 size_t nentries = 0;
                 while (1) {
                     uint8_t buf[entry_size];
