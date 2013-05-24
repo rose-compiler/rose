@@ -4,11 +4,11 @@
 0x80482c8:push   ebp
 == PartialSymbolic ==
 registers:
-    esp    = v2-0x4[32]
-    ebp    = v3[32]
+    esp    = v163-0x4[32]
+    ebp    = v164[32]
     eip    = 0x80482c9[32]
 memory:
-    addr=v2-0x4[32] value=v3[32]
+    addr=v163-0x4[32] value=v164[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x080482c8}, expr=(add[32] v1[32] -4[32])}
@@ -28,11 +28,11 @@ memory:
 0x80482c9:mov    ebp, esp
 == PartialSymbolic ==
 registers:
-    esp    = v2-0x4[32]
-    ebp    = v2-0x4[32]
+    esp    = v163-0x4[32]
+    ebp    = v163-0x4[32]
     eip    = 0x80482cb[32]
 memory:
-    addr=v2-0x4[32] value=v3[32]
+    addr=v163-0x4[32] value=v164[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x080482c8}, expr=(add[32] v1[32] -4[32])}
@@ -52,17 +52,17 @@ memory:
 0x80482cb:sub    esp, 0x08
 == PartialSymbolic ==
 registers:
-    esp    = v2-0xc[32]
-    ebp    = v2-0x4[32]
+    esp    = v163-0xc[32]
+    ebp    = v163-0x4[32]
     eip    = 0x80482ce[32]
-    pf     = -v18+0x1[1]
-    sf     = v19[1]
-    zf     = v20[1]
-    af     = -v23+0x1[1]
-    cf     = -v21+0x1[1]
-    of     = v24[1]
+    pf     = -v179+0x1[1]
+    sf     = v180[1]
+    zf     = v181[1]
+    af     = -v184+0x1[1]
+    cf     = -v182+0x1[1]
+    of     = v185[1]
 memory:
-    addr=v2-0x4[32] value=v3[32]
+    addr=v163-0x4[32] value=v164[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x080482c8,0x080482cb}, expr=(add[32] v1[32] -12[32])}
@@ -94,18 +94,18 @@ memory:
 0x80482ce:call   0x08048364<call_gmon_start>
 == PartialSymbolic ==
 registers:
-    esp    = v2-0x10[32]
-    ebp    = v2-0x4[32]
+    esp    = v163-0x10[32]
+    ebp    = v163-0x4[32]
     eip    = 0x8048364[32]
-    pf     = -v18+0x1[1]
-    sf     = v19[1]
-    zf     = v20[1]
-    af     = -v23+0x1[1]
-    cf     = -v21+0x1[1]
-    of     = v24[1]
+    pf     = -v179+0x1[1]
+    sf     = v180[1]
+    zf     = v181[1]
+    af     = -v184+0x1[1]
+    cf     = -v182+0x1[1]
+    of     = v185[1]
 memory:
-    addr=v2-0x10[32] value=0x80482d3[32]
-    addr=v2-0x4[32] value=v3[32]
+    addr=v163-0x10[32] value=0x80482d3[32]
+    addr=v163-0x4[32] value=v164[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x080482c8,0x080482cb,0x080482ce}, expr=(add[32] v1[32] -16[32])}
@@ -144,10 +144,10 @@ memory:
 0x80482d3:call   0x080483d0<frame_dummy>
 == PartialSymbolic ==
 registers:
-    esp    = v26-0x4[32]
+    esp    = v187-0x4[32]
     eip    = 0x80483d0[32]
 memory:
-    addr=v26-0x4[32] value=0x80482d8[32]
+    addr=v187-0x4[32] value=0x80482d8[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x080482d3}, expr=(add[32] v4[32] -4[32])}
@@ -168,10 +168,10 @@ memory:
 0x80482d8:call   0x08048580<__do_global_ctors_aux>
 == PartialSymbolic ==
 registers:
-    esp    = v28-0x4[32]
+    esp    = v189-0x4[32]
     eip    = 0x8048580[32]
 memory:
-    addr=v28-0x4[32] value=0x80482dd[32]
+    addr=v189-0x4[32] value=0x80482dd[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x080482d8}, expr=(add[32] v6[32] -4[32])}
@@ -192,11 +192,11 @@ memory:
 0x80482dd:leave  
 == PartialSymbolic ==
 registers:
-    esp    = v30+0x4[32]
-    ebp    = v31[32]
+    esp    = v191+0x4[32]
+    ebp    = v192[32]
     eip    = 0x80482de[32]
 memory:
-    addr=v30[32] value=v31[32]
+    addr=v191[32] value=v192[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x080482dd}, expr=(add[32] v8[32] 4[32])}
@@ -216,12 +216,12 @@ memory:
 0x80482de:ret    
 == PartialSymbolic ==
 registers:
-    esp    = v30+0x8[32]
-    ebp    = v31[32]
-    eip    = v33[32]
+    esp    = v191+0x8[32]
+    ebp    = v192[32]
+    eip    = v194[32]
 memory:
-    addr=v30+0x4[32] value=v33[32]
-    addr=v30[32] value=v31[32]
+    addr=v191+0x4[32] value=v194[32]
+    addr=v191[32] value=v192[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x080482dd,0x080482de}, expr=(add[32] v8[32] 8[32])}
@@ -248,9 +248,9 @@ memory:
 0x80482f0:jmp    DWORD PTR ds:[0x080496d4<.got.plt+0x0c>]
 == PartialSymbolic ==
 registers:
-    eip    = v36[32]
+    eip    = v197[32]
 memory:
-    addr=0x80496d4[32] value=v36[32]
+    addr=0x80496d4[32] value=v197[32]
 == Symbolic ==
 registers:
     eip    = {defs={0x080482f0}, expr=v20[32]}
@@ -269,9 +269,9 @@ memory:
 0x8048300:jmp    DWORD PTR ds:[0x080496d8<.got.plt+0x10>]
 == PartialSymbolic ==
 registers:
-    eip    = v39[32]
+    eip    = v200[32]
 memory:
-    addr=0x80496d8[32] value=v39[32]
+    addr=0x80496d8[32] value=v200[32]
 == Symbolic ==
 registers:
     eip    = {defs={0x08048300}, expr=v26[32]}
@@ -290,9 +290,9 @@ memory:
 0x8048310:jmp    DWORD PTR ds:[0x080496dc<.got.plt+0x14>]
 == PartialSymbolic ==
 registers:
-    eip    = v42[32]
+    eip    = v203[32]
 memory:
-    addr=0x80496dc[32] value=v42[32]
+    addr=0x80496dc[32] value=v203[32]
 == Symbolic ==
 registers:
     eip    = {defs={0x08048310}, expr=v32[32]}
@@ -311,9 +311,9 @@ memory:
 0x8048320:jmp    DWORD PTR ds:[0x080496e0<.got.plt+0x18>]
 == PartialSymbolic ==
 registers:
-    eip    = v45[32]
+    eip    = v206[32]
 memory:
-    addr=0x80496e0[32] value=v45[32]
+    addr=0x80496e0[32] value=v206[32]
 == Symbolic ==
 registers:
     eip    = {defs={0x08048320}, expr=v38[32]}
@@ -332,9 +332,9 @@ memory:
 0x8048330:jmp    DWORD PTR ds:[0x080496e4<.got.plt+0x1c>]
 == PartialSymbolic ==
 registers:
-    eip    = v48[32]
+    eip    = v209[32]
 memory:
-    addr=0x80496e4[32] value=v48[32]
+    addr=0x80496e4[32] value=v209[32]
 == Symbolic ==
 registers:
     eip    = {defs={0x08048330}, expr=v44[32]}
@@ -359,7 +359,7 @@ registers:
     sf     = 0x0[1]
     zf     = 0x1[1]
     of     = 0x0[1]
-    af     = v52[1]
+    af     = v213[1]
     cf     = 0x0[1]
 memory:
 == Symbolic ==
@@ -387,18 +387,18 @@ memory:
 0x8048342:pop    esi
 == PartialSymbolic ==
 registers:
-    esp    = v53+0x4[32]
+    esp    = v214+0x4[32]
     ebp    = 0x0[32]
-    esi    = v54[32]
+    esi    = v215[32]
     eip    = 0x8048343[32]
     pf     = 0x1[1]
     sf     = 0x0[1]
     zf     = 0x1[1]
     of     = 0x0[1]
-    af     = v52[1]
+    af     = v213[1]
     cf     = 0x0[1]
 memory:
-    addr=v53[32] value=v54[32]
+    addr=v214[32] value=v215[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048342}, expr=(add[32] v52[32] 4[32])}
@@ -432,19 +432,19 @@ memory:
 0x8048343:mov    ecx, esp
 == PartialSymbolic ==
 registers:
-    ecx    = v53+0x4[32]
-    esp    = v53+0x4[32]
+    ecx    = v214+0x4[32]
+    esp    = v214+0x4[32]
     ebp    = 0x0[32]
-    esi    = v54[32]
+    esi    = v215[32]
     eip    = 0x8048345[32]
     pf     = 0x1[1]
     sf     = 0x0[1]
     zf     = 0x1[1]
     of     = 0x0[1]
-    af     = v52[1]
+    af     = v213[1]
     cf     = 0x0[1]
 memory:
-    addr=v53[32] value=v54[32]
+    addr=v214[32] value=v215[32]
 == Symbolic ==
 registers:
     ecx    = {defs={0x08048342}, expr=(add[32] v52[32] 4[32])}
@@ -480,19 +480,19 @@ memory:
 0x8048345:and    esp, 0xf0<-0x10>
 == PartialSymbolic ==
 registers:
-    ecx    = v53+0x4[32]
-    esp    = v56[32]
+    ecx    = v214+0x4[32]
+    esp    = v217[32]
     ebp    = 0x0[32]
-    esi    = v54[32]
+    esi    = v215[32]
     eip    = 0x8048348[32]
-    pf     = -v70+0x1[1]
-    sf     = v71[1]
-    zf     = v72[1]
+    pf     = -v231+0x1[1]
+    sf     = v232[1]
+    zf     = v233[1]
     of     = 0x0[1]
-    af     = v73[1]
+    af     = v234[1]
     cf     = 0x0[1]
 memory:
-    addr=v53[32] value=v54[32]
+    addr=v214[32] value=v215[32]
 == Symbolic ==
 registers:
     ecx    = {defs={0x08048342}, expr=(add[32] v52[32] 4[32])}
@@ -528,21 +528,21 @@ memory:
 0x8048348:push   eax
 == PartialSymbolic ==
 registers:
-    eax    = v74[32]
-    ecx    = v53+0x4[32]
-    esp    = v56-0x4[32]
+    eax    = v235[32]
+    ecx    = v214+0x4[32]
+    esp    = v217-0x4[32]
     ebp    = 0x0[32]
-    esi    = v54[32]
+    esi    = v215[32]
     eip    = 0x8048349[32]
-    pf     = -v70+0x1[1]
-    sf     = v71[1]
-    zf     = v72[1]
+    pf     = -v231+0x1[1]
+    sf     = v232[1]
+    zf     = v233[1]
     of     = 0x0[1]
-    af     = v73[1]
+    af     = v234[1]
     cf     = 0x0[1]
 memory:
-    addr=v56-0x4[32] value=v74[32]
-    addr=v53[32] value=v54[32]
+    addr=v217-0x4[32] value=v235[32]
+    addr=v214[32] value=v215[32]
 == Symbolic ==
 registers:
     eax    = {defs={}, expr=v59[32]}
@@ -584,22 +584,22 @@ memory:
 0x8048349:push   esp
 == PartialSymbolic ==
 registers:
-    eax    = v74[32]
-    ecx    = v53+0x4[32]
-    esp    = v56-0x8[32]
+    eax    = v235[32]
+    ecx    = v214+0x4[32]
+    esp    = v217-0x8[32]
     ebp    = 0x0[32]
-    esi    = v54[32]
+    esi    = v215[32]
     eip    = 0x804834a[32]
-    pf     = -v70+0x1[1]
-    sf     = v71[1]
-    zf     = v72[1]
+    pf     = -v231+0x1[1]
+    sf     = v232[1]
+    zf     = v233[1]
     of     = 0x0[1]
-    af     = v73[1]
+    af     = v234[1]
     cf     = 0x0[1]
 memory:
-    addr=v56-0x8[32] value=v56-0x4[32]
-    addr=v56-0x4[32] value=v74[32]
-    addr=v53[32] value=v54[32]
+    addr=v217-0x8[32] value=v217-0x4[32]
+    addr=v217-0x4[32] value=v235[32]
+    addr=v214[32] value=v215[32]
 == Symbolic ==
 registers:
     eax    = {defs={}, expr=v59[32]}
@@ -645,24 +645,24 @@ memory:
 0x804834a:push   edx
 == PartialSymbolic ==
 registers:
-    eax    = v74[32]
-    ecx    = v53+0x4[32]
-    edx    = v75[32]
-    esp    = v56-0xc[32]
+    eax    = v235[32]
+    ecx    = v214+0x4[32]
+    edx    = v236[32]
+    esp    = v217-0xc[32]
     ebp    = 0x0[32]
-    esi    = v54[32]
+    esi    = v215[32]
     eip    = 0x804834b[32]
-    pf     = -v70+0x1[1]
-    sf     = v71[1]
-    zf     = v72[1]
+    pf     = -v231+0x1[1]
+    sf     = v232[1]
+    zf     = v233[1]
     of     = 0x0[1]
-    af     = v73[1]
+    af     = v234[1]
     cf     = 0x0[1]
 memory:
-    addr=v56-0xc[32] value=v75[32]
-    addr=v56-0x8[32] value=v56-0x4[32]
-    addr=v56-0x4[32] value=v74[32]
-    addr=v53[32] value=v54[32]
+    addr=v217-0xc[32] value=v236[32]
+    addr=v217-0x8[32] value=v217-0x4[32]
+    addr=v217-0x4[32] value=v235[32]
+    addr=v214[32] value=v215[32]
 == Symbolic ==
 registers:
     eax    = {defs={}, expr=v59[32]}
@@ -714,25 +714,25 @@ memory:
 0x804834b:push   0x08048520<__libc_csu_fini>
 == PartialSymbolic ==
 registers:
-    eax    = v74[32]
-    ecx    = v53+0x4[32]
-    edx    = v75[32]
-    esp    = v56-0x10[32]
+    eax    = v235[32]
+    ecx    = v214+0x4[32]
+    edx    = v236[32]
+    esp    = v217-0x10[32]
     ebp    = 0x0[32]
-    esi    = v54[32]
+    esi    = v215[32]
     eip    = 0x8048350[32]
-    pf     = -v70+0x1[1]
-    sf     = v71[1]
-    zf     = v72[1]
+    pf     = -v231+0x1[1]
+    sf     = v232[1]
+    zf     = v233[1]
     of     = 0x0[1]
-    af     = v73[1]
+    af     = v234[1]
     cf     = 0x0[1]
 memory:
-    addr=v56-0x10[32] value=0x8048520[32]
-    addr=v56-0xc[32] value=v75[32]
-    addr=v56-0x8[32] value=v56-0x4[32]
-    addr=v56-0x4[32] value=v74[32]
-    addr=v53[32] value=v54[32]
+    addr=v217-0x10[32] value=0x8048520[32]
+    addr=v217-0xc[32] value=v236[32]
+    addr=v217-0x8[32] value=v217-0x4[32]
+    addr=v217-0x4[32] value=v235[32]
+    addr=v214[32] value=v215[32]
 == Symbolic ==
 registers:
     eax    = {defs={}, expr=v59[32]}
@@ -788,26 +788,26 @@ memory:
 0x8048350:push   0x080484b0<__libc_csu_init>
 == PartialSymbolic ==
 registers:
-    eax    = v74[32]
-    ecx    = v53+0x4[32]
-    edx    = v75[32]
-    esp    = v56-0x14[32]
+    eax    = v235[32]
+    ecx    = v214+0x4[32]
+    edx    = v236[32]
+    esp    = v217-0x14[32]
     ebp    = 0x0[32]
-    esi    = v54[32]
+    esi    = v215[32]
     eip    = 0x8048355[32]
-    pf     = -v70+0x1[1]
-    sf     = v71[1]
-    zf     = v72[1]
+    pf     = -v231+0x1[1]
+    sf     = v232[1]
+    zf     = v233[1]
     of     = 0x0[1]
-    af     = v73[1]
+    af     = v234[1]
     cf     = 0x0[1]
 memory:
-    addr=v56-0x14[32] value=0x80484b0[32]
-    addr=v56-0x10[32] value=0x8048520[32]
-    addr=v56-0xc[32] value=v75[32]
-    addr=v56-0x8[32] value=v56-0x4[32]
-    addr=v56-0x4[32] value=v74[32]
-    addr=v53[32] value=v54[32]
+    addr=v217-0x14[32] value=0x80484b0[32]
+    addr=v217-0x10[32] value=0x8048520[32]
+    addr=v217-0xc[32] value=v236[32]
+    addr=v217-0x8[32] value=v217-0x4[32]
+    addr=v217-0x4[32] value=v235[32]
+    addr=v214[32] value=v215[32]
 == Symbolic ==
 registers:
     eax    = {defs={}, expr=v59[32]}
@@ -867,27 +867,27 @@ memory:
 0x8048355:push   ecx
 == PartialSymbolic ==
 registers:
-    eax    = v74[32]
-    ecx    = v53+0x4[32]
-    edx    = v75[32]
-    esp    = v56-0x18[32]
+    eax    = v235[32]
+    ecx    = v214+0x4[32]
+    edx    = v236[32]
+    esp    = v217-0x18[32]
     ebp    = 0x0[32]
-    esi    = v54[32]
+    esi    = v215[32]
     eip    = 0x8048356[32]
-    pf     = -v70+0x1[1]
-    sf     = v71[1]
-    zf     = v72[1]
+    pf     = -v231+0x1[1]
+    sf     = v232[1]
+    zf     = v233[1]
     of     = 0x0[1]
-    af     = v73[1]
+    af     = v234[1]
     cf     = 0x0[1]
 memory:
-    addr=v56-0x18[32] value=v53+0x4[32]
-    addr=v56-0x14[32] value=0x80484b0[32]
-    addr=v56-0x10[32] value=0x8048520[32]
-    addr=v56-0xc[32] value=v75[32]
-    addr=v56-0x8[32] value=v56-0x4[32]
-    addr=v56-0x4[32] value=v74[32]
-    addr=v53[32] value=v54[32]
+    addr=v217-0x18[32] value=v214+0x4[32]
+    addr=v217-0x14[32] value=0x80484b0[32]
+    addr=v217-0x10[32] value=0x8048520[32]
+    addr=v217-0xc[32] value=v236[32]
+    addr=v217-0x8[32] value=v217-0x4[32]
+    addr=v217-0x4[32] value=v235[32]
+    addr=v214[32] value=v215[32]
 == Symbolic ==
 registers:
     eax    = {defs={}, expr=v59[32]}
@@ -951,28 +951,28 @@ memory:
 0x8048356:push   esi
 == PartialSymbolic ==
 registers:
-    eax    = v74[32]
-    ecx    = v53+0x4[32]
-    edx    = v75[32]
-    esp    = v56-0x1c[32]
+    eax    = v235[32]
+    ecx    = v214+0x4[32]
+    edx    = v236[32]
+    esp    = v217-0x1c[32]
     ebp    = 0x0[32]
-    esi    = v54[32]
+    esi    = v215[32]
     eip    = 0x8048357[32]
-    pf     = -v70+0x1[1]
-    sf     = v71[1]
-    zf     = v72[1]
+    pf     = -v231+0x1[1]
+    sf     = v232[1]
+    zf     = v233[1]
     of     = 0x0[1]
-    af     = v73[1]
+    af     = v234[1]
     cf     = 0x0[1]
 memory:
-    addr=v56-0x1c[32] value=v54[32]
-    addr=v56-0x18[32] value=v53+0x4[32]
-    addr=v56-0x14[32] value=0x80484b0[32]
-    addr=v56-0x10[32] value=0x8048520[32]
-    addr=v56-0xc[32] value=v75[32]
-    addr=v56-0x8[32] value=v56-0x4[32]
-    addr=v56-0x4[32] value=v74[32]
-    addr=v53[32] value=v54[32]
+    addr=v217-0x1c[32] value=v215[32]
+    addr=v217-0x18[32] value=v214+0x4[32]
+    addr=v217-0x14[32] value=0x80484b0[32]
+    addr=v217-0x10[32] value=0x8048520[32]
+    addr=v217-0xc[32] value=v236[32]
+    addr=v217-0x8[32] value=v217-0x4[32]
+    addr=v217-0x4[32] value=v235[32]
+    addr=v214[32] value=v215[32]
 == Symbolic ==
 registers:
     eax    = {defs={}, expr=v59[32]}
@@ -1040,29 +1040,29 @@ memory:
 0x8048357:push   0x08048410<main>
 == PartialSymbolic ==
 registers:
-    eax    = v74[32]
-    ecx    = v53+0x4[32]
-    edx    = v75[32]
-    esp    = v56-0x20[32]
+    eax    = v235[32]
+    ecx    = v214+0x4[32]
+    edx    = v236[32]
+    esp    = v217-0x20[32]
     ebp    = 0x0[32]
-    esi    = v54[32]
+    esi    = v215[32]
     eip    = 0x804835c[32]
-    pf     = -v70+0x1[1]
-    sf     = v71[1]
-    zf     = v72[1]
+    pf     = -v231+0x1[1]
+    sf     = v232[1]
+    zf     = v233[1]
     of     = 0x0[1]
-    af     = v73[1]
+    af     = v234[1]
     cf     = 0x0[1]
 memory:
-    addr=v56-0x20[32] value=0x8048410[32]
-    addr=v56-0x1c[32] value=v54[32]
-    addr=v56-0x18[32] value=v53+0x4[32]
-    addr=v56-0x14[32] value=0x80484b0[32]
-    addr=v56-0x10[32] value=0x8048520[32]
-    addr=v56-0xc[32] value=v75[32]
-    addr=v56-0x8[32] value=v56-0x4[32]
-    addr=v56-0x4[32] value=v74[32]
-    addr=v53[32] value=v54[32]
+    addr=v217-0x20[32] value=0x8048410[32]
+    addr=v217-0x1c[32] value=v215[32]
+    addr=v217-0x18[32] value=v214+0x4[32]
+    addr=v217-0x14[32] value=0x80484b0[32]
+    addr=v217-0x10[32] value=0x8048520[32]
+    addr=v217-0xc[32] value=v236[32]
+    addr=v217-0x8[32] value=v217-0x4[32]
+    addr=v217-0x4[32] value=v235[32]
+    addr=v214[32] value=v215[32]
 == Symbolic ==
 registers:
     eax    = {defs={}, expr=v59[32]}
@@ -1134,30 +1134,30 @@ memory:
 0x804835c:call   0x08048310<__libc_start_main@plt>
 == PartialSymbolic ==
 registers:
-    eax    = v74[32]
-    ecx    = v53+0x4[32]
-    edx    = v75[32]
-    esp    = v56-0x24[32]
+    eax    = v235[32]
+    ecx    = v214+0x4[32]
+    edx    = v236[32]
+    esp    = v217-0x24[32]
     ebp    = 0x0[32]
-    esi    = v54[32]
+    esi    = v215[32]
     eip    = 0x8048310[32]
-    pf     = -v70+0x1[1]
-    sf     = v71[1]
-    zf     = v72[1]
+    pf     = -v231+0x1[1]
+    sf     = v232[1]
+    zf     = v233[1]
     of     = 0x0[1]
-    af     = v73[1]
+    af     = v234[1]
     cf     = 0x0[1]
 memory:
-    addr=v56-0x24[32] value=0x8048361[32]
-    addr=v56-0x20[32] value=0x8048410[32]
-    addr=v56-0x1c[32] value=v54[32]
-    addr=v56-0x18[32] value=v53+0x4[32]
-    addr=v56-0x14[32] value=0x80484b0[32]
-    addr=v56-0x10[32] value=0x8048520[32]
-    addr=v56-0xc[32] value=v75[32]
-    addr=v56-0x8[32] value=v56-0x4[32]
-    addr=v56-0x4[32] value=v74[32]
-    addr=v53[32] value=v54[32]
+    addr=v217-0x24[32] value=0x8048361[32]
+    addr=v217-0x20[32] value=0x8048410[32]
+    addr=v217-0x1c[32] value=v215[32]
+    addr=v217-0x18[32] value=v214+0x4[32]
+    addr=v217-0x14[32] value=0x80484b0[32]
+    addr=v217-0x10[32] value=0x8048520[32]
+    addr=v217-0xc[32] value=v236[32]
+    addr=v217-0x8[32] value=v217-0x4[32]
+    addr=v217-0x4[32] value=v235[32]
+    addr=v214[32] value=v215[32]
 == Symbolic ==
 registers:
     eax    = {defs={}, expr=v59[32]}
@@ -1252,11 +1252,11 @@ memory:
 0x8048364:push   ebp
 == PartialSymbolic ==
 registers:
-    esp    = v78-0x4[32]
-    ebp    = v79[32]
+    esp    = v239-0x4[32]
+    ebp    = v240[32]
     eip    = 0x8048365[32]
 memory:
-    addr=v78-0x4[32] value=v79[32]
+    addr=v239-0x4[32] value=v240[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048364}, expr=(add[32] v63[32] -4[32])}
@@ -1276,11 +1276,11 @@ memory:
 0x8048365:mov    ebp, esp
 == PartialSymbolic ==
 registers:
-    esp    = v78-0x4[32]
-    ebp    = v78-0x4[32]
+    esp    = v239-0x4[32]
+    ebp    = v239-0x4[32]
     eip    = 0x8048367[32]
 memory:
-    addr=v78-0x4[32] value=v79[32]
+    addr=v239-0x4[32] value=v240[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048364}, expr=(add[32] v63[32] -4[32])}
@@ -1300,13 +1300,13 @@ memory:
 0x8048367:push   ebx
 == PartialSymbolic ==
 registers:
-    ebx    = v80[32]
-    esp    = v78-0x8[32]
-    ebp    = v78-0x4[32]
+    ebx    = v241[32]
+    esp    = v239-0x8[32]
+    ebp    = v239-0x4[32]
     eip    = 0x8048368[32]
 memory:
-    addr=v78-0x8[32] value=v80[32]
-    addr=v78-0x4[32] value=v79[32]
+    addr=v239-0x8[32] value=v241[32]
+    addr=v239-0x4[32] value=v240[32]
 == Symbolic ==
 registers:
     ebx    = {defs={}, expr=v65[32]}
@@ -1332,15 +1332,15 @@ memory:
 0x8048368:push   ecx
 == PartialSymbolic ==
 registers:
-    ecx    = v81[32]
-    ebx    = v80[32]
-    esp    = v78-0xc[32]
-    ebp    = v78-0x4[32]
+    ecx    = v242[32]
+    ebx    = v241[32]
+    esp    = v239-0xc[32]
+    ebp    = v239-0x4[32]
     eip    = 0x8048369[32]
 memory:
-    addr=v78-0xc[32] value=v81[32]
-    addr=v78-0x8[32] value=v80[32]
-    addr=v78-0x4[32] value=v79[32]
+    addr=v239-0xc[32] value=v242[32]
+    addr=v239-0x8[32] value=v241[32]
+    addr=v239-0x4[32] value=v240[32]
 == Symbolic ==
 registers:
     ecx    = {defs={}, expr=v66[32]}
@@ -1372,16 +1372,16 @@ memory:
 0x8048369:call   0x0804836e<<Insn>>
 == PartialSymbolic ==
 registers:
-    ecx    = v81[32]
-    ebx    = v80[32]
-    esp    = v78-0x10[32]
-    ebp    = v78-0x4[32]
+    ecx    = v242[32]
+    ebx    = v241[32]
+    esp    = v239-0x10[32]
+    ebp    = v239-0x4[32]
     eip    = 0x804836e[32]
 memory:
-    addr=v78-0x10[32] value=0x804836e[32]
-    addr=v78-0xc[32] value=v81[32]
-    addr=v78-0x8[32] value=v80[32]
-    addr=v78-0x4[32] value=v79[32]
+    addr=v239-0x10[32] value=0x804836e[32]
+    addr=v239-0xc[32] value=v242[32]
+    addr=v239-0x8[32] value=v241[32]
+    addr=v239-0x4[32] value=v240[32]
 == Symbolic ==
 registers:
     ecx    = {defs={}, expr=v66[32]}
@@ -1420,11 +1420,11 @@ memory:
 0x804836e:pop    ebx
 == PartialSymbolic ==
 registers:
-    ebx    = v84[32]
-    esp    = v83+0x4[32]
+    ebx    = v245[32]
+    esp    = v244+0x4[32]
     eip    = 0x804836f[32]
 memory:
-    addr=v83[32] value=v84[32]
+    addr=v244[32] value=v245[32]
 == Symbolic ==
 registers:
     ebx    = {defs={0x0804836e}, expr=v69[32]}
@@ -1444,17 +1444,17 @@ memory:
 0x804836f:add    ebx, 0x0000135a
 == PartialSymbolic ==
 registers:
-    ebx    = v84+0x135a[32]
-    esp    = v83+0x4[32]
+    ebx    = v245+0x135a[32]
+    esp    = v244+0x4[32]
     eip    = 0x8048375[32]
-    pf     = -v100+0x1[1]
-    sf     = v101[1]
-    zf     = v102[1]
-    af     = v105[1]
-    cf     = v103[1]
-    of     = v106[1]
+    pf     = -v261+0x1[1]
+    sf     = v262[1]
+    zf     = v263[1]
+    af     = v266[1]
+    cf     = v264[1]
+    of     = v267[1]
 memory:
-    addr=v83[32] value=v84[32]
+    addr=v244[32] value=v245[32]
 == Symbolic ==
 registers:
     ebx    = {defs={0x0804836e,0x0804836f}, expr=(add[32] v69[32] 4954[32])}
@@ -1486,19 +1486,19 @@ memory:
 0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-0x00000004>]
 == PartialSymbolic ==
 registers:
-    edx    = v107[32]
-    ebx    = v84+0x135a[32]
-    esp    = v83+0x4[32]
+    edx    = v268[32]
+    ebx    = v245+0x135a[32]
+    esp    = v244+0x4[32]
     eip    = 0x804837b[32]
-    pf     = -v100+0x1[1]
-    sf     = v101[1]
-    zf     = v102[1]
-    af     = v105[1]
-    cf     = v103[1]
-    of     = v106[1]
+    pf     = -v261+0x1[1]
+    sf     = v262[1]
+    zf     = v263[1]
+    af     = v266[1]
+    cf     = v264[1]
+    of     = v267[1]
 memory:
-    addr=v84+0x1356[32] value=v107[32]
-    addr=v83[32] value=v84[32]
+    addr=v245+0x1356[32] value=v268[32]
+    addr=v244[32] value=v245[32]
 == Symbolic ==
 registers:
     edx    = {defs={0x08048375}, expr=v74[32]}
@@ -1536,19 +1536,19 @@ memory:
 0x804837b:test   edx, edx
 == PartialSymbolic ==
 registers:
-    edx    = v107[32]
-    ebx    = v84+0x135a[32]
-    esp    = v83+0x4[32]
+    edx    = v268[32]
+    ebx    = v245+0x135a[32]
+    esp    = v244+0x4[32]
     eip    = 0x804837d[32]
-    pf     = -v153+0x1[1]
-    sf     = v154[1]
-    zf     = v155[1]
-    af     = v156[1]
+    pf     = -v314+0x1[1]
+    sf     = v315[1]
+    zf     = v316[1]
+    af     = v317[1]
     cf     = 0x0[1]
     of     = 0x0[1]
 memory:
-    addr=v84+0x1356[32] value=v107[32]
-    addr=v83[32] value=v84[32]
+    addr=v245+0x1356[32] value=v268[32]
+    addr=v244[32] value=v245[32]
 == Symbolic ==
 registers:
     edx    = {defs={0x08048375}, expr=v74[32]}
@@ -1586,19 +1586,19 @@ memory:
 0x804837d:je     0x08048384<<Insn>>
 == PartialSymbolic ==
 registers:
-    edx    = v107[32]
-    ebx    = v84+0x135a[32]
-    esp    = v83+0x4[32]
-    eip    = v157[32]
-    pf     = -v153+0x1[1]
-    sf     = v154[1]
-    zf     = v155[1]
-    af     = v156[1]
+    edx    = v268[32]
+    ebx    = v245+0x135a[32]
+    esp    = v244+0x4[32]
+    eip    = v318[32]
+    pf     = -v314+0x1[1]
+    sf     = v315[1]
+    zf     = v316[1]
+    af     = v317[1]
     cf     = 0x0[1]
     of     = 0x0[1]
 memory:
-    addr=v84+0x1356[32] value=v107[32]
-    addr=v83[32] value=v84[32]
+    addr=v245+0x1356[32] value=v268[32]
+    addr=v244[32] value=v245[32]
 == Symbolic ==
 registers:
     edx    = {defs={0x08048375}, expr=v74[32]}
@@ -1639,10 +1639,10 @@ memory:
 0x804837f:call   0x08048330<__gmon_start__@plt>
 == PartialSymbolic ==
 registers:
-    esp    = v159-0x4[32]
+    esp    = v320-0x4[32]
     eip    = 0x8048330[32]
 memory:
-    addr=v159-0x4[32] value=0x8048384[32]
+    addr=v320-0x4[32] value=0x8048384[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x0804837f}, expr=(add[32] v81[32] -4[32])}
@@ -1663,11 +1663,11 @@ memory:
 0x8048384:pop    eax
 == PartialSymbolic ==
 registers:
-    eax    = v162[32]
-    esp    = v161+0x4[32]
+    eax    = v323[32]
+    esp    = v322+0x4[32]
     eip    = 0x8048385[32]
 memory:
-    addr=v161[32] value=v162[32]
+    addr=v322[32] value=v323[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x08048384}, expr=v84[32]}
@@ -1687,13 +1687,13 @@ memory:
 0x8048385:pop    ebx
 == PartialSymbolic ==
 registers:
-    eax    = v162[32]
-    ebx    = v164[32]
-    esp    = v161+0x8[32]
+    eax    = v323[32]
+    ebx    = v325[32]
+    esp    = v322+0x8[32]
     eip    = 0x8048386[32]
 memory:
-    addr=v161+0x4[32] value=v164[32]
-    addr=v161[32] value=v162[32]
+    addr=v322+0x4[32] value=v325[32]
+    addr=v322[32] value=v323[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x08048384}, expr=v84[32]}
@@ -1719,15 +1719,15 @@ memory:
 0x8048386:leave  
 == PartialSymbolic ==
 registers:
-    eax    = v162[32]
-    ebx    = v164[32]
-    esp    = v166+0x4[32]
-    ebp    = v167[32]
+    eax    = v323[32]
+    ebx    = v325[32]
+    esp    = v327+0x4[32]
+    ebp    = v328[32]
     eip    = 0x8048387[32]
 memory:
-    addr=v166[32] value=v167[32]
-    addr=v161+0x4[32] value=v164[32]
-    addr=v161[32] value=v162[32]
+    addr=v327[32] value=v328[32]
+    addr=v322+0x4[32] value=v325[32]
+    addr=v322[32] value=v323[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x08048384}, expr=v84[32]}
@@ -1759,16 +1759,16 @@ memory:
 0x8048387:ret    
 == PartialSymbolic ==
 registers:
-    eax    = v162[32]
-    ebx    = v164[32]
-    esp    = v166+0x8[32]
-    ebp    = v167[32]
-    eip    = v229[32]
+    eax    = v323[32]
+    ebx    = v325[32]
+    esp    = v327+0x8[32]
+    ebp    = v328[32]
+    eip    = v390[32]
 memory:
-    addr=v166+0x4[32] value=v229[32]
-    addr=v166[32] value=v167[32]
-    addr=v161+0x4[32] value=v164[32]
-    addr=v161[32] value=v162[32]
+    addr=v327+0x4[32] value=v390[32]
+    addr=v327[32] value=v328[32]
+    addr=v322+0x4[32] value=v325[32]
+    addr=v322[32] value=v323[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x08048384}, expr=v84[32]}
@@ -1807,11 +1807,11 @@ memory:
 0x8048390:push   ebp
 == PartialSymbolic ==
 registers:
-    esp    = v292-0x4[32]
-    ebp    = v293[32]
+    esp    = v453-0x4[32]
+    ebp    = v454[32]
     eip    = 0x8048391[32]
 memory:
-    addr=v292-0x4[32] value=v293[32]
+    addr=v453-0x4[32] value=v454[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048390}, expr=(add[32] v106[32] -4[32])}
@@ -1831,11 +1831,11 @@ memory:
 0x8048391:mov    ebp, esp
 == PartialSymbolic ==
 registers:
-    esp    = v292-0x4[32]
-    ebp    = v292-0x4[32]
+    esp    = v453-0x4[32]
+    ebp    = v453-0x4[32]
     eip    = 0x8048393[32]
 memory:
-    addr=v292-0x4[32] value=v293[32]
+    addr=v453-0x4[32] value=v454[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048390}, expr=(add[32] v106[32] -4[32])}
@@ -1855,17 +1855,17 @@ memory:
 0x8048393:sub    esp, 0x08
 == PartialSymbolic ==
 registers:
-    esp    = v292-0xc[32]
-    ebp    = v292-0x4[32]
+    esp    = v453-0xc[32]
+    ebp    = v453-0x4[32]
     eip    = 0x8048396[32]
-    pf     = -v308+0x1[1]
-    sf     = v309[1]
-    zf     = v310[1]
-    af     = -v313+0x1[1]
-    cf     = -v311+0x1[1]
-    of     = v314[1]
+    pf     = -v469+0x1[1]
+    sf     = v470[1]
+    zf     = v471[1]
+    af     = -v474+0x1[1]
+    cf     = -v472+0x1[1]
+    of     = v475[1]
 memory:
-    addr=v292-0x4[32] value=v293[32]
+    addr=v453-0x4[32] value=v454[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048390,0x08048393}, expr=(add[32] v106[32] -12[32])}
@@ -1897,18 +1897,18 @@ memory:
 0x8048396:cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00
 == PartialSymbolic ==
 registers:
-    esp    = v292-0xc[32]
-    ebp    = v292-0x4[32]
+    esp    = v453-0xc[32]
+    ebp    = v453-0x4[32]
     eip    = 0x804839d[32]
-    pf     = -v357+0x1[1]
-    sf     = v358[1]
-    zf     = v359[1]
-    af     = -v362+0x1[1]
-    cf     = -v360+0x1[1]
-    of     = v363[1]
+    pf     = -v518+0x1[1]
+    sf     = v519[1]
+    zf     = v520[1]
+    af     = -v523+0x1[1]
+    cf     = -v521+0x1[1]
+    of     = v524[1]
 memory:
-    addr=0x80496f4[32] value=v315[8]
-    addr=v292-0x4[32] value=v293[32]
+    addr=0x80496f4[32] value=v476[8]
+    addr=v453-0x4[32] value=v454[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048390,0x08048393}, expr=(add[32] v106[32] -12[32])}
@@ -1941,18 +1941,18 @@ memory:
 0x804839d:jne    0x080483cc<<Insn>>
 == PartialSymbolic ==
 registers:
-    esp    = v292-0xc[32]
-    ebp    = v292-0x4[32]
-    eip    = v364[32]
-    pf     = -v357+0x1[1]
-    sf     = v358[1]
-    zf     = v359[1]
-    af     = -v362+0x1[1]
-    cf     = -v360+0x1[1]
-    of     = v363[1]
+    esp    = v453-0xc[32]
+    ebp    = v453-0x4[32]
+    eip    = v525[32]
+    pf     = -v518+0x1[1]
+    sf     = v519[1]
+    zf     = v520[1]
+    af     = -v523+0x1[1]
+    cf     = -v521+0x1[1]
+    of     = v524[1]
 memory:
-    addr=0x80496f4[32] value=v315[8]
-    addr=v292-0x4[32] value=v293[32]
+    addr=0x80496f4[32] value=v476[8]
+    addr=v453-0x4[32] value=v454[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048390,0x08048393}, expr=(add[32] v106[32] -12[32])}
@@ -1988,10 +1988,10 @@ memory:
 0x804839f:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
 == PartialSymbolic ==
 registers:
-    eax    = v366[32]
+    eax    = v527[32]
     eip    = 0x80483a4[32]
 memory:
-    addr=0x80496f0[32] value=v366[32]
+    addr=0x80496f0[32] value=v527[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x0804839f}, expr=v111[32]}
@@ -2009,12 +2009,12 @@ memory:
 0x80483a4:mov    edx, DWORD PTR ds:[eax]
 == PartialSymbolic ==
 registers:
-    eax    = v366[32]
-    edx    = v368[32]
+    eax    = v527[32]
+    edx    = v529[32]
     eip    = 0x80483a6[32]
 memory:
-    addr=v366[32] value=v368[32]
-    addr=0x80496f0[32] value=v366[32]
+    addr=v527[32] value=v529[32]
+    addr=0x80496f0[32] value=v527[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x0804839f}, expr=v111[32]}
@@ -2038,18 +2038,18 @@ memory:
 0x80483a6:test   edx, edx
 == PartialSymbolic ==
 registers:
-    eax    = v366[32]
-    edx    = v368[32]
+    eax    = v527[32]
+    edx    = v529[32]
     eip    = 0x80483a8[32]
-    pf     = -v410+0x1[1]
-    sf     = v411[1]
-    zf     = v412[1]
+    pf     = -v571+0x1[1]
+    sf     = v572[1]
+    zf     = v573[1]
     of     = 0x0[1]
-    af     = v413[1]
+    af     = v574[1]
     cf     = 0x0[1]
 memory:
-    addr=v366[32] value=v368[32]
-    addr=0x80496f0[32] value=v366[32]
+    addr=v527[32] value=v529[32]
+    addr=0x80496f0[32] value=v527[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x0804839f}, expr=v111[32]}
@@ -2085,18 +2085,18 @@ memory:
 0x80483a8:je     0x080483c5<<Insn>>
 == PartialSymbolic ==
 registers:
-    eax    = v366[32]
-    edx    = v368[32]
-    eip    = v414[32]
-    pf     = -v410+0x1[1]
-    sf     = v411[1]
-    zf     = v412[1]
+    eax    = v527[32]
+    edx    = v529[32]
+    eip    = v575[32]
+    pf     = -v571+0x1[1]
+    sf     = v572[1]
+    zf     = v573[1]
     of     = 0x0[1]
-    af     = v413[1]
+    af     = v574[1]
     cf     = 0x0[1]
 memory:
-    addr=v366[32] value=v368[32]
-    addr=0x80496f0[32] value=v366[32]
+    addr=v527[32] value=v529[32]
+    addr=0x80496f0[32] value=v527[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x0804839f}, expr=v111[32]}
@@ -2135,7 +2135,7 @@ memory:
 0x80483aa:lea    esi, [esi + 0x00000000]
 == PartialSymbolic ==
 registers:
-    esi    = v416[32]
+    esi    = v577[32]
     eip    = 0x80483b0[32]
 memory:
 == Symbolic ==
@@ -2151,15 +2151,15 @@ memory:
 0x80483b0:add    eax, 0x04
 == PartialSymbolic ==
 registers:
-    eax    = v417+0x4[32]
-    esi    = v416[32]
+    eax    = v578+0x4[32]
+    esi    = v577[32]
     eip    = 0x80483b3[32]
-    pf     = -v432+0x1[1]
-    sf     = v433[1]
-    zf     = v434[1]
-    af     = v437[1]
-    cf     = v435[1]
-    of     = v438[1]
+    pf     = -v593+0x1[1]
+    sf     = v594[1]
+    zf     = v595[1]
+    af     = v598[1]
+    cf     = v596[1]
+    of     = v599[1]
 memory:
 == Symbolic ==
 registers:
@@ -2188,17 +2188,17 @@ memory:
 0x80483b3:mov    DWORD PTR ds:[0x080496f0<.data+8>], eax
 == PartialSymbolic ==
 registers:
-    eax    = v417+0x4[32]
-    esi    = v416[32]
+    eax    = v578+0x4[32]
+    esi    = v577[32]
     eip    = 0x80483b8[32]
-    pf     = -v432+0x1[1]
-    sf     = v433[1]
-    zf     = v434[1]
-    af     = v437[1]
-    cf     = v435[1]
-    of     = v438[1]
+    pf     = -v593+0x1[1]
+    sf     = v594[1]
+    zf     = v595[1]
+    af     = v598[1]
+    cf     = v596[1]
+    of     = v599[1]
 memory:
-    addr=0x80496f0[32] value=v417+0x4[32]
+    addr=0x80496f0[32] value=v578+0x4[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080483b0}, expr=(add[32] v124[32] 4[32])}
@@ -2230,20 +2230,20 @@ memory:
 0x80483b8:call   edx
 == PartialSymbolic ==
 registers:
-    eax    = v417+0x4[32]
-    edx    = v440[32]
-    esp    = v439-0x4[32]
-    esi    = v416[32]
-    eip    = v440[32]
-    pf     = -v432+0x1[1]
-    sf     = v433[1]
-    zf     = v434[1]
-    af     = v437[1]
-    cf     = v435[1]
-    of     = v438[1]
+    eax    = v578+0x4[32]
+    edx    = v601[32]
+    esp    = v600-0x4[32]
+    esi    = v577[32]
+    eip    = v601[32]
+    pf     = -v593+0x1[1]
+    sf     = v594[1]
+    zf     = v595[1]
+    af     = v598[1]
+    cf     = v596[1]
+    of     = v599[1]
 memory:
-    addr=v439-0x4[32] value=0x80483ba[32]
-    addr=0x80496f0[32] value=v417+0x4[32]
+    addr=v600-0x4[32] value=0x80483ba[32]
+    addr=0x80496f0[32] value=v578+0x4[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080483b0}, expr=(add[32] v124[32] 4[32])}
@@ -2286,10 +2286,10 @@ memory:
 0x80483ba:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
 == PartialSymbolic ==
 registers:
-    eax    = v442[32]
+    eax    = v603[32]
     eip    = 0x80483bf[32]
 memory:
-    addr=0x80496f0[32] value=v442[32]
+    addr=0x80496f0[32] value=v603[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080483ba}, expr=v128[32]}
@@ -2307,12 +2307,12 @@ memory:
 0x80483bf:mov    edx, DWORD PTR ds:[eax]
 == PartialSymbolic ==
 registers:
-    eax    = v442[32]
-    edx    = v444[32]
+    eax    = v603[32]
+    edx    = v605[32]
     eip    = 0x80483c1[32]
 memory:
-    addr=v442[32] value=v444[32]
-    addr=0x80496f0[32] value=v442[32]
+    addr=v603[32] value=v605[32]
+    addr=0x80496f0[32] value=v603[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080483ba}, expr=v128[32]}
@@ -2336,18 +2336,18 @@ memory:
 0x80483c1:test   edx, edx
 == PartialSymbolic ==
 registers:
-    eax    = v442[32]
-    edx    = v444[32]
+    eax    = v603[32]
+    edx    = v605[32]
     eip    = 0x80483c3[32]
-    pf     = -v486+0x1[1]
-    sf     = v487[1]
-    zf     = v488[1]
+    pf     = -v647+0x1[1]
+    sf     = v648[1]
+    zf     = v649[1]
     of     = 0x0[1]
-    af     = v489[1]
+    af     = v650[1]
     cf     = 0x0[1]
 memory:
-    addr=v442[32] value=v444[32]
-    addr=0x80496f0[32] value=v442[32]
+    addr=v603[32] value=v605[32]
+    addr=0x80496f0[32] value=v603[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080483ba}, expr=v128[32]}
@@ -2383,18 +2383,18 @@ memory:
 0x80483c3:jne    0x080483b0<<Insn>>
 == PartialSymbolic ==
 registers:
-    eax    = v442[32]
-    edx    = v444[32]
-    eip    = v490[32]
-    pf     = -v486+0x1[1]
-    sf     = v487[1]
-    zf     = v488[1]
+    eax    = v603[32]
+    edx    = v605[32]
+    eip    = v651[32]
+    pf     = -v647+0x1[1]
+    sf     = v648[1]
+    zf     = v649[1]
     of     = 0x0[1]
-    af     = v489[1]
+    af     = v650[1]
     cf     = 0x0[1]
 memory:
-    addr=v442[32] value=v444[32]
-    addr=0x80496f0[32] value=v442[32]
+    addr=v603[32] value=v605[32]
+    addr=0x80496f0[32] value=v603[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080483ba}, expr=v128[32]}
@@ -2448,11 +2448,11 @@ memory:
 0x80483cc:leave  
 == PartialSymbolic ==
 registers:
-    esp    = v492+0x4[32]
-    ebp    = v493[32]
+    esp    = v653+0x4[32]
+    ebp    = v654[32]
     eip    = 0x80483cd[32]
 memory:
-    addr=v492[32] value=v493[32]
+    addr=v653[32] value=v654[32]
     addr=0x80496f4[32] value=0x1[8]
 == Symbolic ==
 registers:
@@ -2474,12 +2474,12 @@ memory:
 0x80483cd:ret    
 == PartialSymbolic ==
 registers:
-    esp    = v492+0x8[32]
-    ebp    = v493[32]
-    eip    = v521[32]
+    esp    = v653+0x8[32]
+    ebp    = v654[32]
+    eip    = v682[32]
 memory:
-    addr=v492+0x4[32] value=v521[32]
-    addr=v492[32] value=v493[32]
+    addr=v653+0x4[32] value=v682[32]
+    addr=v653[32] value=v654[32]
     addr=0x80496f4[32] value=0x1[8]
 == Symbolic ==
 registers:
@@ -2508,11 +2508,11 @@ memory:
 0x80483d0:push   ebp
 == PartialSymbolic ==
 registers:
-    esp    = v550-0x4[32]
-    ebp    = v551[32]
+    esp    = v711-0x4[32]
+    ebp    = v712[32]
     eip    = 0x80483d1[32]
 memory:
-    addr=v550-0x4[32] value=v551[32]
+    addr=v711-0x4[32] value=v712[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x080483d0}, expr=(add[32] v152[32] -4[32])}
@@ -2532,11 +2532,11 @@ memory:
 0x80483d1:mov    ebp, esp
 == PartialSymbolic ==
 registers:
-    esp    = v550-0x4[32]
-    ebp    = v550-0x4[32]
+    esp    = v711-0x4[32]
+    ebp    = v711-0x4[32]
     eip    = 0x80483d3[32]
 memory:
-    addr=v550-0x4[32] value=v551[32]
+    addr=v711-0x4[32] value=v712[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x080483d0}, expr=(add[32] v152[32] -4[32])}
@@ -2556,17 +2556,17 @@ memory:
 0x80483d3:sub    esp, 0x08
 == PartialSymbolic ==
 registers:
-    esp    = v550-0xc[32]
-    ebp    = v550-0x4[32]
+    esp    = v711-0xc[32]
+    ebp    = v711-0x4[32]
     eip    = 0x80483d6[32]
-    pf     = -v566+0x1[1]
-    sf     = v567[1]
-    zf     = v568[1]
-    af     = -v571+0x1[1]
-    cf     = -v569+0x1[1]
-    of     = v572[1]
+    pf     = -v727+0x1[1]
+    sf     = v728[1]
+    zf     = v729[1]
+    af     = -v732+0x1[1]
+    cf     = -v730+0x1[1]
+    of     = v733[1]
 memory:
-    addr=v550-0x4[32] value=v551[32]
+    addr=v711-0x4[32] value=v712[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x080483d0,0x080483d3}, expr=(add[32] v152[32] -12[32])}
@@ -2598,19 +2598,19 @@ memory:
 0x80483d6:mov    eax, DWORD PTR ds:[0x080495f8<.jcr>]
 == PartialSymbolic ==
 registers:
-    eax    = v573[32]
-    esp    = v550-0xc[32]
-    ebp    = v550-0x4[32]
+    eax    = v734[32]
+    esp    = v711-0xc[32]
+    ebp    = v711-0x4[32]
     eip    = 0x80483db[32]
-    pf     = -v566+0x1[1]
-    sf     = v567[1]
-    zf     = v568[1]
-    af     = -v571+0x1[1]
-    cf     = -v569+0x1[1]
-    of     = v572[1]
+    pf     = -v727+0x1[1]
+    sf     = v728[1]
+    zf     = v729[1]
+    af     = -v732+0x1[1]
+    cf     = -v730+0x1[1]
+    of     = v733[1]
 memory:
-    addr=0x80495f8[32] value=v573[32]
-    addr=v550-0x4[32] value=v551[32]
+    addr=0x80495f8[32] value=v734[32]
+    addr=v711-0x4[32] value=v712[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080483d6}, expr=v154[32]}
@@ -2648,19 +2648,19 @@ memory:
 0x80483db:test   eax, eax
 == PartialSymbolic ==
 registers:
-    eax    = v573[32]
-    esp    = v550-0xc[32]
-    ebp    = v550-0x4[32]
+    eax    = v734[32]
+    esp    = v711-0xc[32]
+    ebp    = v711-0x4[32]
     eip    = 0x80483dd[32]
-    pf     = -v615+0x1[1]
-    sf     = v616[1]
-    zf     = v617[1]
-    af     = v618[1]
+    pf     = -v776+0x1[1]
+    sf     = v777[1]
+    zf     = v778[1]
+    af     = v779[1]
     cf     = 0x0[1]
     of     = 0x0[1]
 memory:
-    addr=0x80495f8[32] value=v573[32]
-    addr=v550-0x4[32] value=v551[32]
+    addr=0x80495f8[32] value=v734[32]
+    addr=v711-0x4[32] value=v712[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080483d6}, expr=v154[32]}
@@ -2698,19 +2698,19 @@ memory:
 0x80483dd:je     0x08048400<<Insn>>
 == PartialSymbolic ==
 registers:
-    eax    = v573[32]
-    esp    = v550-0xc[32]
-    ebp    = v550-0x4[32]
-    eip    = v619[32]
-    pf     = -v615+0x1[1]
-    sf     = v616[1]
-    zf     = v617[1]
-    af     = v618[1]
+    eax    = v734[32]
+    esp    = v711-0xc[32]
+    ebp    = v711-0x4[32]
+    eip    = v780[32]
+    pf     = -v776+0x1[1]
+    sf     = v777[1]
+    zf     = v778[1]
+    af     = v779[1]
     cf     = 0x0[1]
     of     = 0x0[1]
 memory:
-    addr=0x80495f8[32] value=v573[32]
-    addr=v550-0x4[32] value=v551[32]
+    addr=0x80495f8[32] value=v734[32]
+    addr=v711-0x4[32] value=v712[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080483d6}, expr=v154[32]}
@@ -2773,7 +2773,7 @@ registers:
     sf     = 0x0[1]
     zf     = 0x1[1]
     of     = 0x0[1]
-    af     = v621[1]
+    af     = v782[1]
     cf     = 0x0[1]
 memory:
 == Symbolic ==
@@ -2807,7 +2807,7 @@ registers:
     sf     = 0x0[1]
     zf     = 0x1[1]
     of     = 0x0[1]
-    af     = v621[1]
+    af     = v782[1]
     cf     = 0x0[1]
 memory:
 == Symbolic ==
@@ -2836,14 +2836,14 @@ memory:
 == PartialSymbolic ==
 registers:
     eax    = 0x0[32]
-    esp    = v622[32]
-    ebp    = v622[32]
+    esp    = v783[32]
+    ebp    = v783[32]
     eip    = 0x8048402[32]
     pf     = 0x1[1]
     sf     = 0x0[1]
     zf     = 0x1[1]
     of     = 0x0[1]
-    af     = v621[1]
+    af     = v782[1]
     cf     = 0x0[1]
 memory:
 == Symbolic ==
@@ -2876,17 +2876,17 @@ memory:
 == PartialSymbolic ==
 registers:
     eax    = 0x0[32]
-    esp    = v622+0x4[32]
-    ebp    = v623[32]
+    esp    = v783+0x4[32]
+    ebp    = v784[32]
     eip    = 0x8048403[32]
     pf     = 0x1[1]
     sf     = 0x0[1]
     zf     = 0x1[1]
     of     = 0x0[1]
-    af     = v621[1]
+    af     = v782[1]
     cf     = 0x0[1]
 memory:
-    addr=v622[32] value=v623[32]
+    addr=v783[32] value=v784[32]
 == Symbolic ==
 registers:
     eax    = {defs={}, expr=0[32]}
@@ -2921,18 +2921,18 @@ memory:
 == PartialSymbolic ==
 registers:
     eax    = 0x0[32]
-    esp    = v622+0x8[32]
-    ebp    = v623[32]
-    eip    = v625[32]
+    esp    = v783+0x8[32]
+    ebp    = v784[32]
+    eip    = v786[32]
     pf     = 0x1[1]
     sf     = 0x0[1]
     zf     = 0x1[1]
     of     = 0x0[1]
-    af     = v621[1]
+    af     = v782[1]
     cf     = 0x0[1]
 memory:
-    addr=v622+0x4[32] value=v625[32]
-    addr=v622[32] value=v623[32]
+    addr=v783+0x4[32] value=v786[32]
+    addr=v783[32] value=v784[32]
 == Symbolic ==
 registers:
     eax    = {defs={}, expr=0[32]}
@@ -2973,10 +2973,10 @@ memory:
 0x80483e8:mov    DWORD PTR ss:[esp], 0x080495f8<.jcr>
 == PartialSymbolic ==
 registers:
-    esp    = v628[32]
+    esp    = v789[32]
     eip    = 0x80483ef[32]
 memory:
-    addr=v628[32] value=0x80495f8[32]
+    addr=v789[32] value=0x80495f8[32]
 == Symbolic ==
 registers:
     esp    = {defs={}, expr=v174[32]}
@@ -2994,11 +2994,11 @@ memory:
 0x80483ef:call   0x00000000
 == PartialSymbolic ==
 registers:
-    esp    = v628-0x4[32]
+    esp    = v789-0x4[32]
     eip    = 0x0[32]
 memory:
-    addr=v628-0x4[32] value=0x80483f4[32]
-    addr=v628[32] value=0x80495f8[32]
+    addr=v789-0x4[32] value=0x80483f4[32]
+    addr=v789[32] value=0x80495f8[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x080483ef}, expr=(add[32] v174[32] -4[32])}
@@ -3023,7 +3023,7 @@ memory:
 0x80483f4:lea    esi, [esi + 0x00000000]
 == PartialSymbolic ==
 registers:
-    esi    = v630[32]
+    esi    = v791[32]
     eip    = 0x80483fa[32]
 memory:
 == Symbolic ==
@@ -3039,8 +3039,8 @@ memory:
 0x80483fa:lea    edi, [edi + 0x00000000]
 == PartialSymbolic ==
 registers:
-    esi    = v630[32]
-    edi    = v631[32]
+    esi    = v791[32]
+    edi    = v792[32]
     eip    = 0x8048400[32]
 memory:
 == Symbolic ==
@@ -3061,11 +3061,11 @@ memory:
 0x8048410:push   ebp
 == PartialSymbolic ==
 registers:
-    esp    = v633-0x4[32]
-    ebp    = v634[32]
+    esp    = v794-0x4[32]
+    ebp    = v795[32]
     eip    = 0x8048411[32]
 memory:
-    addr=v633-0x4[32] value=v634[32]
+    addr=v794-0x4[32] value=v795[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048410}, expr=(add[32] v179[32] -4[32])}
@@ -3086,11 +3086,11 @@ memory:
 == PartialSymbolic ==
 registers:
     edx    = 0x8048480[32]
-    esp    = v633-0x4[32]
-    ebp    = v634[32]
+    esp    = v794-0x4[32]
+    ebp    = v795[32]
     eip    = 0x8048416[32]
 memory:
-    addr=v633-0x4[32] value=v634[32]
+    addr=v794-0x4[32] value=v795[32]
 == Symbolic ==
 registers:
     edx    = {defs={}, expr=0x08048480[32]}
@@ -3113,11 +3113,11 @@ memory:
 == PartialSymbolic ==
 registers:
     edx    = 0x8048480[32]
-    esp    = v633-0x4[32]
-    ebp    = v633-0x4[32]
+    esp    = v794-0x4[32]
+    ebp    = v794-0x4[32]
     eip    = 0x8048418[32]
 memory:
-    addr=v633-0x4[32] value=v634[32]
+    addr=v794-0x4[32] value=v795[32]
 == Symbolic ==
 registers:
     edx    = {defs={}, expr=0x08048480[32]}
@@ -3140,17 +3140,17 @@ memory:
 == PartialSymbolic ==
 registers:
     edx    = 0x8048480[32]
-    esp    = v633-0xc[32]
-    ebp    = v633-0x4[32]
+    esp    = v794-0xc[32]
+    ebp    = v794-0x4[32]
     eip    = 0x804841b[32]
-    pf     = -v649+0x1[1]
-    sf     = v650[1]
-    zf     = v651[1]
-    af     = -v654+0x1[1]
-    cf     = -v652+0x1[1]
-    of     = v655[1]
+    pf     = -v810+0x1[1]
+    sf     = v811[1]
+    zf     = v812[1]
+    af     = -v815+0x1[1]
+    cf     = -v813+0x1[1]
+    of     = v816[1]
 memory:
-    addr=v633-0x4[32] value=v634[32]
+    addr=v794-0x4[32] value=v795[32]
 == Symbolic ==
 registers:
     edx    = {defs={}, expr=0x08048480[32]}
@@ -3185,17 +3185,17 @@ memory:
 == PartialSymbolic ==
 registers:
     edx    = 0x8048480[32]
-    esp    = v656[32]
-    ebp    = v633-0x4[32]
+    esp    = v817[32]
+    ebp    = v794-0x4[32]
     eip    = 0x804841e[32]
-    pf     = -v670+0x1[1]
-    sf     = v671[1]
-    zf     = v672[1]
-    af     = v673[1]
+    pf     = -v831+0x1[1]
+    sf     = v832[1]
+    zf     = v833[1]
+    af     = v834[1]
     cf     = 0x0[1]
     of     = 0x0[1]
 memory:
-    addr=v633-0x4[32] value=v634[32]
+    addr=v794-0x4[32] value=v795[32]
 == Symbolic ==
 registers:
     edx    = {defs={}, expr=0x08048480[32]}
@@ -3230,18 +3230,18 @@ memory:
 == PartialSymbolic ==
 registers:
     edx    = 0x8048480[32]
-    esp    = v656[32]
-    ebp    = v633-0x4[32]
+    esp    = v817[32]
+    ebp    = v794-0x4[32]
     eip    = 0x8048422[32]
-    pf     = -v670+0x1[1]
-    sf     = v671[1]
-    zf     = v672[1]
-    af     = v673[1]
+    pf     = -v831+0x1[1]
+    sf     = v832[1]
+    zf     = v833[1]
+    af     = v834[1]
     cf     = 0x0[1]
     of     = 0x0[1]
 memory:
-    addr=v656+0x4[32] value=0x8048480[32]
-    addr=v633-0x4[32] value=v634[32]
+    addr=v817+0x4[32] value=0x8048480[32]
+    addr=v794-0x4[32] value=v795[32]
 == Symbolic ==
 registers:
     edx    = {defs={}, expr=0x08048480[32]}
@@ -3280,19 +3280,19 @@ memory:
 == PartialSymbolic ==
 registers:
     edx    = 0x8048480[32]
-    esp    = v656[32]
-    ebp    = v633-0x4[32]
+    esp    = v817[32]
+    ebp    = v794-0x4[32]
     eip    = 0x8048429[32]
-    pf     = -v670+0x1[1]
-    sf     = v671[1]
-    zf     = v672[1]
-    af     = v673[1]
+    pf     = -v831+0x1[1]
+    sf     = v832[1]
+    zf     = v833[1]
+    af     = v834[1]
     cf     = 0x0[1]
     of     = 0x0[1]
 memory:
-    addr=v656[32] value=0xa[32]
-    addr=v656+0x4[32] value=0x8048480[32]
-    addr=v633-0x4[32] value=v634[32]
+    addr=v817[32] value=0xa[32]
+    addr=v817+0x4[32] value=0x8048480[32]
+    addr=v794-0x4[32] value=v795[32]
 == Symbolic ==
 registers:
     edx    = {defs={}, expr=0x08048480[32]}
@@ -3335,20 +3335,20 @@ memory:
 == PartialSymbolic ==
 registers:
     edx    = 0x8048480[32]
-    esp    = v656-0x4[32]
-    ebp    = v633-0x4[32]
+    esp    = v817-0x4[32]
+    ebp    = v794-0x4[32]
     eip    = 0x80482f0[32]
-    pf     = -v670+0x1[1]
-    sf     = v671[1]
-    zf     = v672[1]
-    af     = v673[1]
+    pf     = -v831+0x1[1]
+    sf     = v832[1]
+    zf     = v833[1]
+    af     = v834[1]
     cf     = 0x0[1]
     of     = 0x0[1]
 memory:
-    addr=v656-0x4[32] value=0x804842e[32]
-    addr=v656[32] value=0xa[32]
-    addr=v656+0x4[32] value=0x8048480[32]
-    addr=v633-0x4[32] value=v634[32]
+    addr=v817-0x4[32] value=0x804842e[32]
+    addr=v817[32] value=0xa[32]
+    addr=v817+0x4[32] value=0x8048480[32]
+    addr=v794-0x4[32] value=v795[32]
 == Symbolic ==
 registers:
     edx    = {defs={}, expr=0x08048480[32]}
@@ -3397,8 +3397,8 @@ memory:
 0x804842e:mov    esp, ebp
 == PartialSymbolic ==
 registers:
-    esp    = v675[32]
-    ebp    = v675[32]
+    esp    = v836[32]
+    ebp    = v836[32]
     eip    = 0x8048430[32]
 memory:
 == Symbolic ==
@@ -3417,14 +3417,14 @@ memory:
 == PartialSymbolic ==
 registers:
     eax    = 0x0[32]
-    esp    = v675[32]
-    ebp    = v675[32]
+    esp    = v836[32]
+    ebp    = v836[32]
     eip    = 0x8048432[32]
     pf     = 0x1[1]
     sf     = 0x0[1]
     zf     = 0x1[1]
     of     = 0x0[1]
-    af     = v677[1]
+    af     = v838[1]
     cf     = 0x0[1]
 memory:
 == Symbolic ==
@@ -3457,17 +3457,17 @@ memory:
 == PartialSymbolic ==
 registers:
     eax    = 0x0[32]
-    esp    = v675+0x4[32]
-    ebp    = v678[32]
+    esp    = v836+0x4[32]
+    ebp    = v839[32]
     eip    = 0x8048433[32]
     pf     = 0x1[1]
     sf     = 0x0[1]
     zf     = 0x1[1]
     of     = 0x0[1]
-    af     = v677[1]
+    af     = v838[1]
     cf     = 0x0[1]
 memory:
-    addr=v675[32] value=v678[32]
+    addr=v836[32] value=v839[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x08048430}, expr=0[32]}
@@ -3502,18 +3502,18 @@ memory:
 == PartialSymbolic ==
 registers:
     eax    = 0x0[32]
-    esp    = v675+0x8[32]
-    ebp    = v678[32]
-    eip    = v680[32]
+    esp    = v836+0x8[32]
+    ebp    = v839[32]
+    eip    = v841[32]
     pf     = 0x1[1]
     sf     = 0x0[1]
     zf     = 0x1[1]
     of     = 0x0[1]
-    af     = v677[1]
+    af     = v838[1]
     cf     = 0x0[1]
 memory:
-    addr=v675+0x4[32] value=v680[32]
-    addr=v675[32] value=v678[32]
+    addr=v836+0x4[32] value=v841[32]
+    addr=v836[32] value=v839[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x08048430}, expr=0[32]}
@@ -3554,11 +3554,11 @@ memory:
 0x8048440:push   ebp
 == PartialSymbolic ==
 registers:
-    esp    = v683-0x4[32]
-    ebp    = v684[32]
+    esp    = v844-0x4[32]
+    ebp    = v845[32]
     eip    = 0x8048441[32]
 memory:
-    addr=v683-0x4[32] value=v684[32]
+    addr=v844-0x4[32] value=v845[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048440}, expr=(add[32] v197[32] -4[32])}
@@ -3578,11 +3578,11 @@ memory:
 0x8048441:mov    ebp, esp
 == PartialSymbolic ==
 registers:
-    esp    = v683-0x4[32]
-    ebp    = v683-0x4[32]
+    esp    = v844-0x4[32]
+    ebp    = v844-0x4[32]
     eip    = 0x8048443[32]
 memory:
-    addr=v683-0x4[32] value=v684[32]
+    addr=v844-0x4[32] value=v845[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048440}, expr=(add[32] v197[32] -4[32])}
@@ -3602,17 +3602,17 @@ memory:
 0x8048443:sub    esp, 0x08
 == PartialSymbolic ==
 registers:
-    esp    = v683-0xc[32]
-    ebp    = v683-0x4[32]
+    esp    = v844-0xc[32]
+    ebp    = v844-0x4[32]
     eip    = 0x8048446[32]
-    pf     = -v699+0x1[1]
-    sf     = v700[1]
-    zf     = v701[1]
-    af     = -v704+0x1[1]
-    cf     = -v702+0x1[1]
-    of     = v705[1]
+    pf     = -v860+0x1[1]
+    sf     = v861[1]
+    zf     = v862[1]
+    af     = -v865+0x1[1]
+    cf     = -v863+0x1[1]
+    of     = v866[1]
 memory:
-    addr=v683-0x4[32] value=v684[32]
+    addr=v844-0x4[32] value=v845[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048440,0x08048443}, expr=(add[32] v197[32] -12[32])}
@@ -3644,18 +3644,18 @@ memory:
 0x8048446:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 == PartialSymbolic ==
 registers:
-    esp    = v683-0xc[32]
-    ebp    = v683-0x4[32]
+    esp    = v844-0xc[32]
+    ebp    = v844-0x4[32]
     eip    = 0x804844d[32]
-    pf     = -v699+0x1[1]
-    sf     = v700[1]
-    zf     = v701[1]
-    af     = -v704+0x1[1]
-    cf     = -v702+0x1[1]
-    of     = v705[1]
+    pf     = -v860+0x1[1]
+    sf     = v861[1]
+    zf     = v862[1]
+    af     = -v865+0x1[1]
+    cf     = -v863+0x1[1]
+    of     = v866[1]
 memory:
-    addr=v683-0xc[32] value=0x80485d4[32]
-    addr=v683-0x4[32] value=v684[32]
+    addr=v844-0xc[32] value=0x80485d4[32]
+    addr=v844-0x4[32] value=v845[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048440,0x08048443}, expr=(add[32] v197[32] -12[32])}
@@ -3691,19 +3691,19 @@ memory:
 0x804844d:call   0x08048300<puts@plt>
 == PartialSymbolic ==
 registers:
-    esp    = v683-0x10[32]
-    ebp    = v683-0x4[32]
+    esp    = v844-0x10[32]
+    ebp    = v844-0x4[32]
     eip    = 0x8048300[32]
-    pf     = -v699+0x1[1]
-    sf     = v700[1]
-    zf     = v701[1]
-    af     = -v704+0x1[1]
-    cf     = -v702+0x1[1]
-    of     = v705[1]
+    pf     = -v860+0x1[1]
+    sf     = v861[1]
+    zf     = v862[1]
+    af     = -v865+0x1[1]
+    cf     = -v863+0x1[1]
+    of     = v866[1]
 memory:
-    addr=v683-0x10[32] value=0x8048452[32]
-    addr=v683-0xc[32] value=0x80485d4[32]
-    addr=v683-0x4[32] value=v684[32]
+    addr=v844-0x10[32] value=0x8048452[32]
+    addr=v844-0xc[32] value=0x80485d4[32]
+    addr=v844-0x4[32] value=v845[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048440,0x08048443,0x0804844d}, expr=(add[32] v197[32] -16[32])}
@@ -3746,8 +3746,8 @@ memory:
 0x8048452:mov    esp, ebp
 == PartialSymbolic ==
 registers:
-    esp    = v707[32]
-    ebp    = v707[32]
+    esp    = v868[32]
+    ebp    = v868[32]
     eip    = 0x8048454[32]
 memory:
 == Symbolic ==
@@ -3765,11 +3765,11 @@ memory:
 0x8048454:pop    ebp
 == PartialSymbolic ==
 registers:
-    esp    = v707+0x4[32]
-    ebp    = v708[32]
+    esp    = v868+0x4[32]
+    ebp    = v869[32]
     eip    = 0x8048455[32]
 memory:
-    addr=v707[32] value=v708[32]
+    addr=v868[32] value=v869[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048454}, expr=(add[32] v200[32] 4[32])}
@@ -3789,12 +3789,12 @@ memory:
 0x8048455:ret    
 == PartialSymbolic ==
 registers:
-    esp    = v707+0x8[32]
-    ebp    = v708[32]
-    eip    = v710[32]
+    esp    = v868+0x8[32]
+    ebp    = v869[32]
+    eip    = v871[32]
 memory:
-    addr=v707+0x4[32] value=v710[32]
-    addr=v707[32] value=v708[32]
+    addr=v868+0x4[32] value=v871[32]
+    addr=v868[32] value=v869[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048454,0x08048455}, expr=(add[32] v200[32] 8[32])}
@@ -3821,11 +3821,11 @@ memory:
 0x8048460:push   ebp
 == PartialSymbolic ==
 registers:
-    esp    = v713-0x4[32]
-    ebp    = v714[32]
+    esp    = v874-0x4[32]
+    ebp    = v875[32]
     eip    = 0x8048461[32]
 memory:
-    addr=v713-0x4[32] value=v714[32]
+    addr=v874-0x4[32] value=v875[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048460}, expr=(add[32] v212[32] -4[32])}
@@ -3845,11 +3845,11 @@ memory:
 0x8048461:mov    ebp, esp
 == PartialSymbolic ==
 registers:
-    esp    = v713-0x4[32]
-    ebp    = v713-0x4[32]
+    esp    = v874-0x4[32]
+    ebp    = v874-0x4[32]
     eip    = 0x8048463[32]
 memory:
-    addr=v713-0x4[32] value=v714[32]
+    addr=v874-0x4[32] value=v875[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048460}, expr=(add[32] v212[32] -4[32])}
@@ -3869,17 +3869,17 @@ memory:
 0x8048463:sub    esp, 0x08
 == PartialSymbolic ==
 registers:
-    esp    = v713-0xc[32]
-    ebp    = v713-0x4[32]
+    esp    = v874-0xc[32]
+    ebp    = v874-0x4[32]
     eip    = 0x8048466[32]
-    pf     = -v729+0x1[1]
-    sf     = v730[1]
-    zf     = v731[1]
-    af     = -v734+0x1[1]
-    cf     = -v732+0x1[1]
-    of     = v735[1]
+    pf     = -v890+0x1[1]
+    sf     = v891[1]
+    zf     = v892[1]
+    af     = -v895+0x1[1]
+    cf     = -v893+0x1[1]
+    of     = v896[1]
 memory:
-    addr=v713-0x4[32] value=v714[32]
+    addr=v874-0x4[32] value=v875[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048460,0x08048463}, expr=(add[32] v212[32] -12[32])}
@@ -3911,18 +3911,18 @@ memory:
 0x8048466:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 == PartialSymbolic ==
 registers:
-    esp    = v713-0xc[32]
-    ebp    = v713-0x4[32]
+    esp    = v874-0xc[32]
+    ebp    = v874-0x4[32]
     eip    = 0x804846d[32]
-    pf     = -v729+0x1[1]
-    sf     = v730[1]
-    zf     = v731[1]
-    af     = -v734+0x1[1]
-    cf     = -v732+0x1[1]
-    of     = v735[1]
+    pf     = -v890+0x1[1]
+    sf     = v891[1]
+    zf     = v892[1]
+    af     = -v895+0x1[1]
+    cf     = -v893+0x1[1]
+    of     = v896[1]
 memory:
-    addr=v713-0xc[32] value=0x80485d4[32]
-    addr=v713-0x4[32] value=v714[32]
+    addr=v874-0xc[32] value=0x80485d4[32]
+    addr=v874-0x4[32] value=v875[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048460,0x08048463}, expr=(add[32] v212[32] -12[32])}
@@ -3958,19 +3958,19 @@ memory:
 0x804846d:call   0x08048300<puts@plt>
 == PartialSymbolic ==
 registers:
-    esp    = v713-0x10[32]
-    ebp    = v713-0x4[32]
+    esp    = v874-0x10[32]
+    ebp    = v874-0x4[32]
     eip    = 0x8048300[32]
-    pf     = -v729+0x1[1]
-    sf     = v730[1]
-    zf     = v731[1]
-    af     = -v734+0x1[1]
-    cf     = -v732+0x1[1]
-    of     = v735[1]
+    pf     = -v890+0x1[1]
+    sf     = v891[1]
+    zf     = v892[1]
+    af     = -v895+0x1[1]
+    cf     = -v893+0x1[1]
+    of     = v896[1]
 memory:
-    addr=v713-0x10[32] value=0x8048472[32]
-    addr=v713-0xc[32] value=0x80485d4[32]
-    addr=v713-0x4[32] value=v714[32]
+    addr=v874-0x10[32] value=0x8048472[32]
+    addr=v874-0xc[32] value=0x80485d4[32]
+    addr=v874-0x4[32] value=v875[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048460,0x08048463,0x0804846d}, expr=(add[32] v212[32] -16[32])}
@@ -4013,10 +4013,10 @@ memory:
 0x8048472:mov    DWORD PTR ss:[esp], 0x00000000
 == PartialSymbolic ==
 registers:
-    esp    = v737[32]
+    esp    = v898[32]
     eip    = 0x8048479[32]
 memory:
-    addr=v737[32] value=0x0[32]
+    addr=v898[32] value=0x0[32]
 == Symbolic ==
 registers:
     esp    = {defs={}, expr=v215[32]}
@@ -4034,11 +4034,11 @@ memory:
 0x8048479:call   0x08048320<_exit@plt>
 == PartialSymbolic ==
 registers:
-    esp    = v737-0x4[32]
+    esp    = v898-0x4[32]
     eip    = 0x8048320[32]
 memory:
-    addr=v737-0x4[32] value=0x804847e[32]
-    addr=v737[32] value=0x0[32]
+    addr=v898-0x4[32] value=0x804847e[32]
+    addr=v898[32] value=0x0[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048479}, expr=(add[32] v215[32] -4[32])}
@@ -4063,11 +4063,11 @@ memory:
 0x8048480:push   ebp
 == PartialSymbolic ==
 registers:
-    esp    = v739-0x4[32]
-    ebp    = v740[32]
+    esp    = v900-0x4[32]
+    ebp    = v901[32]
     eip    = 0x8048481[32]
 memory:
-    addr=v739-0x4[32] value=v740[32]
+    addr=v900-0x4[32] value=v901[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048480}, expr=(add[32] v217[32] -4[32])}
@@ -4087,11 +4087,11 @@ memory:
 0x8048481:mov    ebp, esp
 == PartialSymbolic ==
 registers:
-    esp    = v739-0x4[32]
-    ebp    = v739-0x4[32]
+    esp    = v900-0x4[32]
+    ebp    = v900-0x4[32]
     eip    = 0x8048483[32]
 memory:
-    addr=v739-0x4[32] value=v740[32]
+    addr=v900-0x4[32] value=v901[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048480}, expr=(add[32] v217[32] -4[32])}
@@ -4111,17 +4111,17 @@ memory:
 0x8048483:sub    esp, 0x08
 == PartialSymbolic ==
 registers:
-    esp    = v739-0xc[32]
-    ebp    = v739-0x4[32]
+    esp    = v900-0xc[32]
+    ebp    = v900-0x4[32]
     eip    = 0x8048486[32]
-    pf     = -v755+0x1[1]
-    sf     = v756[1]
-    zf     = v757[1]
-    af     = -v760+0x1[1]
-    cf     = -v758+0x1[1]
-    of     = v761[1]
+    pf     = -v916+0x1[1]
+    sf     = v917[1]
+    zf     = v918[1]
+    af     = -v921+0x1[1]
+    cf     = -v919+0x1[1]
+    of     = v922[1]
 memory:
-    addr=v739-0x4[32] value=v740[32]
+    addr=v900-0x4[32] value=v901[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048480,0x08048483}, expr=(add[32] v217[32] -12[32])}
@@ -4153,19 +4153,19 @@ memory:
 0x8048486:inc    DWORD PTR ds:[0x080496f8<.bss+4>]
 == PartialSymbolic ==
 registers:
-    esp    = v739-0xc[32]
-    ebp    = v739-0x4[32]
+    esp    = v900-0xc[32]
+    ebp    = v900-0x4[32]
     eip    = 0x804848c[32]
-    pf     = -v804+0x1[1]
-    sf     = v805[1]
-    zf     = v806[1]
-    af     = v809[1]
-    cf     = -v758+0x1[1]
-    of     = v810[1]
+    pf     = -v965+0x1[1]
+    sf     = v966[1]
+    zf     = v967[1]
+    af     = v970[1]
+    cf     = -v919+0x1[1]
+    of     = v971[1]
 memory:
-    addr=0x80496f8[32] value=v762+0x1[32]
-    addr=0x80496f8[32] value=v762[32]
-    addr=v739-0x4[32] value=v740[32]
+    addr=0x80496f8[32] value=v923+0x1[32]
+    addr=0x80496f8[32] value=v923[32]
+    addr=v900-0x4[32] value=v901[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048480,0x08048483}, expr=(add[32] v217[32] -12[32])}
@@ -4205,20 +4205,20 @@ memory:
 0x804848c:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 == PartialSymbolic ==
 registers:
-    esp    = v739-0xc[32]
-    ebp    = v739-0x4[32]
+    esp    = v900-0xc[32]
+    ebp    = v900-0x4[32]
     eip    = 0x8048493[32]
-    pf     = -v804+0x1[1]
-    sf     = v805[1]
-    zf     = v806[1]
-    af     = v809[1]
-    cf     = -v758+0x1[1]
-    of     = v810[1]
+    pf     = -v965+0x1[1]
+    sf     = v966[1]
+    zf     = v967[1]
+    af     = v970[1]
+    cf     = -v919+0x1[1]
+    of     = v971[1]
 memory:
-    addr=v739-0xc[32] value=0x80485d4[32]
-    addr=0x80496f8[32] value=v762+0x1[32]
-    addr=0x80496f8[32] value=v762[32]
-    addr=v739-0x4[32] value=v740[32]
+    addr=v900-0xc[32] value=0x80485d4[32]
+    addr=0x80496f8[32] value=v923+0x1[32]
+    addr=0x80496f8[32] value=v923[32]
+    addr=v900-0x4[32] value=v901[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048480,0x08048483}, expr=(add[32] v217[32] -12[32])}
@@ -4262,21 +4262,21 @@ memory:
 0x8048493:call   0x08048300<puts@plt>
 == PartialSymbolic ==
 registers:
-    esp    = v739-0x10[32]
-    ebp    = v739-0x4[32]
+    esp    = v900-0x10[32]
+    ebp    = v900-0x4[32]
     eip    = 0x8048300[32]
-    pf     = -v804+0x1[1]
-    sf     = v805[1]
-    zf     = v806[1]
-    af     = v809[1]
-    cf     = -v758+0x1[1]
-    of     = v810[1]
+    pf     = -v965+0x1[1]
+    sf     = v966[1]
+    zf     = v967[1]
+    af     = v970[1]
+    cf     = -v919+0x1[1]
+    of     = v971[1]
 memory:
-    addr=v739-0x10[32] value=0x8048498[32]
-    addr=v739-0xc[32] value=0x80485d4[32]
-    addr=0x80496f8[32] value=v762+0x1[32]
-    addr=0x80496f8[32] value=v762[32]
-    addr=v739-0x4[32] value=v740[32]
+    addr=v900-0x10[32] value=0x8048498[32]
+    addr=v900-0xc[32] value=0x80485d4[32]
+    addr=0x80496f8[32] value=v923+0x1[32]
+    addr=0x80496f8[32] value=v923[32]
+    addr=v900-0x4[32] value=v901[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048480,0x08048483,0x08048493}, expr=(add[32] v217[32] -16[32])}
@@ -4327,10 +4327,10 @@ memory:
 0x8048498:mov    DWORD PTR ss:[esp], 0x00000000
 == PartialSymbolic ==
 registers:
-    esp    = v812[32]
+    esp    = v973[32]
     eip    = 0x804849f[32]
 memory:
-    addr=v812[32] value=0x0[32]
+    addr=v973[32] value=0x0[32]
 == Symbolic ==
 registers:
     esp    = {defs={}, expr=v225[32]}
@@ -4348,11 +4348,11 @@ memory:
 0x804849f:call   0x08048320<_exit@plt>
 == PartialSymbolic ==
 registers:
-    esp    = v812-0x4[32]
+    esp    = v973-0x4[32]
     eip    = 0x8048320[32]
 memory:
-    addr=v812-0x4[32] value=0x80484a4[32]
-    addr=v812[32] value=0x0[32]
+    addr=v973-0x4[32] value=0x80484a4[32]
+    addr=v973[32] value=0x0[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x0804849f}, expr=(add[32] v225[32] -4[32])}
@@ -4377,11 +4377,11 @@ memory:
 0x80484b0:push   ebp
 == PartialSymbolic ==
 registers:
-    esp    = v814-0x4[32]
-    ebp    = v815[32]
+    esp    = v975-0x4[32]
+    ebp    = v976[32]
     eip    = 0x80484b1[32]
 memory:
-    addr=v814-0x4[32] value=v815[32]
+    addr=v975-0x4[32] value=v976[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x080484b0}, expr=(add[32] v227[32] -4[32])}
@@ -4401,11 +4401,11 @@ memory:
 0x80484b1:mov    ebp, esp
 == PartialSymbolic ==
 registers:
-    esp    = v814-0x4[32]
-    ebp    = v814-0x4[32]
+    esp    = v975-0x4[32]
+    ebp    = v975-0x4[32]
     eip    = 0x80484b3[32]
 memory:
-    addr=v814-0x4[32] value=v815[32]
+    addr=v975-0x4[32] value=v976[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x080484b0}, expr=(add[32] v227[32] -4[32])}
@@ -4425,13 +4425,13 @@ memory:
 0x80484b3:push   edi
 == PartialSymbolic ==
 registers:
-    esp    = v814-0x8[32]
-    ebp    = v814-0x4[32]
-    edi    = v816[32]
+    esp    = v975-0x8[32]
+    ebp    = v975-0x4[32]
+    edi    = v977[32]
     eip    = 0x80484b4[32]
 memory:
-    addr=v814-0x8[32] value=v816[32]
-    addr=v814-0x4[32] value=v815[32]
+    addr=v975-0x8[32] value=v977[32]
+    addr=v975-0x4[32] value=v976[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x080484b0,0x080484b3}, expr=(add[32] v227[32] -8[32])}
@@ -4457,15 +4457,15 @@ memory:
 0x80484b4:push   esi
 == PartialSymbolic ==
 registers:
-    esp    = v814-0xc[32]
-    ebp    = v814-0x4[32]
-    esi    = v817[32]
-    edi    = v816[32]
+    esp    = v975-0xc[32]
+    ebp    = v975-0x4[32]
+    esi    = v978[32]
+    edi    = v977[32]
     eip    = 0x80484b5[32]
 memory:
-    addr=v814-0xc[32] value=v817[32]
-    addr=v814-0x8[32] value=v816[32]
-    addr=v814-0x4[32] value=v815[32]
+    addr=v975-0xc[32] value=v978[32]
+    addr=v975-0x8[32] value=v977[32]
+    addr=v975-0x4[32] value=v976[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x080484b0,0x080484b3,0x080484b4}, expr=(add[32] v227[32] -12[32])}
@@ -4497,17 +4497,17 @@ memory:
 0x80484b5:push   ebx
 == PartialSymbolic ==
 registers:
-    ebx    = v818[32]
-    esp    = v814-0x10[32]
-    ebp    = v814-0x4[32]
-    esi    = v817[32]
-    edi    = v816[32]
+    ebx    = v979[32]
+    esp    = v975-0x10[32]
+    ebp    = v975-0x4[32]
+    esi    = v978[32]
+    edi    = v977[32]
     eip    = 0x80484b6[32]
 memory:
-    addr=v814-0x10[32] value=v818[32]
-    addr=v814-0xc[32] value=v817[32]
-    addr=v814-0x8[32] value=v816[32]
-    addr=v814-0x4[32] value=v815[32]
+    addr=v975-0x10[32] value=v979[32]
+    addr=v975-0xc[32] value=v978[32]
+    addr=v975-0x8[32] value=v977[32]
+    addr=v975-0x4[32] value=v976[32]
 == Symbolic ==
 registers:
     ebx    = {defs={}, expr=v231[32]}
@@ -4545,23 +4545,23 @@ memory:
 0x80484b6:sub    esp, 0x0c
 == PartialSymbolic ==
 registers:
-    ebx    = v818[32]
-    esp    = v814-0x1c[32]
-    ebp    = v814-0x4[32]
-    esi    = v817[32]
-    edi    = v816[32]
+    ebx    = v979[32]
+    esp    = v975-0x1c[32]
+    ebp    = v975-0x4[32]
+    esi    = v978[32]
+    edi    = v977[32]
     eip    = 0x80484b9[32]
-    pf     = -v833+0x1[1]
-    sf     = v834[1]
-    zf     = v835[1]
-    af     = -v838+0x1[1]
-    cf     = -v836+0x1[1]
-    of     = v839[1]
+    pf     = -v994+0x1[1]
+    sf     = v995[1]
+    zf     = v996[1]
+    af     = -v999+0x1[1]
+    cf     = -v997+0x1[1]
+    of     = v1000[1]
 memory:
-    addr=v814-0x10[32] value=v818[32]
-    addr=v814-0xc[32] value=v817[32]
-    addr=v814-0x8[32] value=v816[32]
-    addr=v814-0x4[32] value=v815[32]
+    addr=v975-0x10[32] value=v979[32]
+    addr=v975-0xc[32] value=v978[32]
+    addr=v975-0x8[32] value=v977[32]
+    addr=v975-0x4[32] value=v976[32]
 == Symbolic ==
 registers:
     ebx    = {defs={}, expr=v231[32]}
@@ -4611,24 +4611,24 @@ memory:
 0x80484b9:call   0x080484be<<Insn>>
 == PartialSymbolic ==
 registers:
-    ebx    = v818[32]
-    esp    = v814-0x20[32]
-    ebp    = v814-0x4[32]
-    esi    = v817[32]
-    edi    = v816[32]
+    ebx    = v979[32]
+    esp    = v975-0x20[32]
+    ebp    = v975-0x4[32]
+    esi    = v978[32]
+    edi    = v977[32]
     eip    = 0x80484be[32]
-    pf     = -v833+0x1[1]
-    sf     = v834[1]
-    zf     = v835[1]
-    af     = -v838+0x1[1]
-    cf     = -v836+0x1[1]
-    of     = v839[1]
+    pf     = -v994+0x1[1]
+    sf     = v995[1]
+    zf     = v996[1]
+    af     = -v999+0x1[1]
+    cf     = -v997+0x1[1]
+    of     = v1000[1]
 memory:
-    addr=v814-0x20[32] value=0x80484be[32]
-    addr=v814-0x10[32] value=v818[32]
-    addr=v814-0xc[32] value=v817[32]
-    addr=v814-0x8[32] value=v816[32]
-    addr=v814-0x4[32] value=v815[32]
+    addr=v975-0x20[32] value=0x80484be[32]
+    addr=v975-0x10[32] value=v979[32]
+    addr=v975-0xc[32] value=v978[32]
+    addr=v975-0x8[32] value=v977[32]
+    addr=v975-0x4[32] value=v976[32]
 == Symbolic ==
 registers:
     ebx    = {defs={}, expr=v231[32]}
@@ -4685,11 +4685,11 @@ memory:
 0x80484be:pop    ebx
 == PartialSymbolic ==
 registers:
-    ebx    = v842[32]
-    esp    = v841+0x4[32]
+    ebx    = v1003[32]
+    esp    = v1002+0x4[32]
     eip    = 0x80484bf[32]
 memory:
-    addr=v841[32] value=v842[32]
+    addr=v1002[32] value=v1003[32]
 == Symbolic ==
 registers:
     ebx    = {defs={0x080484be}, expr=v234[32]}
@@ -4709,17 +4709,17 @@ memory:
 0x80484bf:add    ebx, 0x0000120a
 == PartialSymbolic ==
 registers:
-    ebx    = v842+0x120a[32]
-    esp    = v841+0x4[32]
+    ebx    = v1003+0x120a[32]
+    esp    = v1002+0x4[32]
     eip    = 0x80484c5[32]
-    pf     = -v858+0x1[1]
-    sf     = v859[1]
-    zf     = v860[1]
-    af     = v863[1]
-    cf     = v861[1]
-    of     = v864[1]
+    pf     = -v1019+0x1[1]
+    sf     = v1020[1]
+    zf     = v1021[1]
+    af     = v1024[1]
+    cf     = v1022[1]
+    of     = v1025[1]
 memory:
-    addr=v841[32] value=v842[32]
+    addr=v1002[32] value=v1003[32]
 == Symbolic ==
 registers:
     ebx    = {defs={0x080484be,0x080484bf}, expr=(add[32] v234[32] 4618[32])}
@@ -4751,18 +4751,18 @@ memory:
 0x80484c5:call   0x080482c8<_init>
 == PartialSymbolic ==
 registers:
-    ebx    = v842+0x120a[32]
-    esp    = v841[32]
+    ebx    = v1003+0x120a[32]
+    esp    = v1002[32]
     eip    = 0x80482c8[32]
-    pf     = -v858+0x1[1]
-    sf     = v859[1]
-    zf     = v860[1]
-    af     = v863[1]
-    cf     = v861[1]
-    of     = v864[1]
+    pf     = -v1019+0x1[1]
+    sf     = v1020[1]
+    zf     = v1021[1]
+    af     = v1024[1]
+    cf     = v1022[1]
+    of     = v1025[1]
 memory:
-    addr=v841[32] value=0x80484ca[32]
-    addr=v841[32] value=v842[32]
+    addr=v1002[32] value=0x80484ca[32]
+    addr=v1002[32] value=v1003[32]
 == Symbolic ==
 registers:
     ebx    = {defs={0x080484be,0x080484bf}, expr=(add[32] v234[32] 4618[32])}
@@ -4801,8 +4801,8 @@ memory:
 0x80484ca:lea    eax, [ebx + 0xffffff20<-0x000000e0>]
 == PartialSymbolic ==
 registers:
-    eax    = v866-0xe0[32]
-    ebx    = v866[32]
+    eax    = v1027-0xe0[32]
+    ebx    = v1027[32]
     eip    = 0x80484d0[32]
 memory:
 == Symbolic ==
@@ -4820,9 +4820,9 @@ memory:
 0x80484d0:lea    edx, [ebx + 0xffffff20<-0x000000e0>]
 == PartialSymbolic ==
 registers:
-    eax    = v866-0xe0[32]
-    edx    = v866-0xe0[32]
-    ebx    = v866[32]
+    eax    = v1027-0xe0[32]
+    edx    = v1027-0xe0[32]
+    ebx    = v1027[32]
     eip    = 0x80484d6[32]
 memory:
 == Symbolic ==
@@ -4843,8 +4843,8 @@ memory:
 == PartialSymbolic ==
 registers:
     eax    = 0x0[32]
-    edx    = v866-0xe0[32]
-    ebx    = v866[32]
+    edx    = v1027-0xe0[32]
+    ebx    = v1027[32]
     eip    = 0x80484d8[32]
     pf     = 0x1[1]
     sf     = 0x0[1]
@@ -4883,15 +4883,15 @@ memory:
 == PartialSymbolic ==
 registers:
     eax    = 0x0[32]
-    edx    = v866-0xe0[32]
-    ebx    = v866[32]
+    edx    = v1027-0xe0[32]
+    ebx    = v1027[32]
     eip    = 0x80484db[32]
     pf     = 0x1[1]
     sf     = 0x0[1]
     zf     = 0x1[1]
-    af     = v868[1]
+    af     = v1029[1]
     cf     = 0x0[1]
-    of     = v869[1]
+    of     = v1030[1]
 memory:
 == Symbolic ==
 registers:
@@ -4923,18 +4923,18 @@ memory:
 == PartialSymbolic ==
 registers:
     eax    = 0x0[32]
-    edx    = v866-0xe0[32]
-    ebx    = v866[32]
-    ebp    = v870[32]
+    edx    = v1027-0xe0[32]
+    ebx    = v1027[32]
+    ebp    = v1031[32]
     eip    = 0x80484de[32]
     pf     = 0x1[1]
     sf     = 0x0[1]
     zf     = 0x1[1]
-    af     = v868[1]
+    af     = v1029[1]
     cf     = 0x0[1]
-    of     = v869[1]
+    of     = v1030[1]
 memory:
-    addr=v870-0x10[32] value=0x0[32]
+    addr=v1031-0x10[32] value=0x0[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080484ca,0x080484d0,0x080484d6,0x080484d8}, expr=(asr[32] 2[5] (add[32] (invert[32] (add[32] v240[32] -224[32])) v240[32] -223[32]))}
@@ -4971,18 +4971,18 @@ memory:
 == PartialSymbolic ==
 registers:
     eax    = 0x0[32]
-    edx    = v866-0xe0[32]
-    ebx    = v866[32]
-    ebp    = v870[32]
+    edx    = v1027-0xe0[32]
+    ebx    = v1027[32]
+    ebp    = v1031[32]
     eip    = 0x80484e0[32]
     pf     = 0x1[1]
     sf     = 0x0[1]
     zf     = 0x1[1]
-    af     = v868[1]
+    af     = v1029[1]
     cf     = 0x0[1]
-    of     = v869[1]
+    of     = v1030[1]
 memory:
-    addr=v870-0x10[32] value=0x0[32]
+    addr=v1031-0x10[32] value=0x0[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080484ca,0x080484d0,0x080484d6,0x080484d8}, expr=(asr[32] 2[5] (add[32] (invert[32] (add[32] v240[32] -224[32])) v240[32] -223[32]))}
@@ -5021,14 +5021,14 @@ memory:
 0x80484e0:add    esp, 0x0c
 == PartialSymbolic ==
 registers:
-    esp    = v872+0xc[32]
+    esp    = v1033+0xc[32]
     eip    = 0x80484e3[32]
-    pf     = -v887+0x1[1]
-    sf     = v888[1]
-    zf     = v889[1]
-    af     = v892[1]
-    cf     = v890[1]
-    of     = v893[1]
+    pf     = -v1048+0x1[1]
+    sf     = v1049[1]
+    zf     = v1050[1]
+    af     = v1053[1]
+    cf     = v1051[1]
+    of     = v1054[1]
 memory:
 == Symbolic ==
 registers:
@@ -5055,17 +5055,17 @@ memory:
 0x80484e3:pop    ebx
 == PartialSymbolic ==
 registers:
-    ebx    = v894[32]
-    esp    = v872+0x10[32]
+    ebx    = v1055[32]
+    esp    = v1033+0x10[32]
     eip    = 0x80484e4[32]
-    pf     = -v887+0x1[1]
-    sf     = v888[1]
-    zf     = v889[1]
-    af     = v892[1]
-    cf     = v890[1]
-    of     = v893[1]
+    pf     = -v1048+0x1[1]
+    sf     = v1049[1]
+    zf     = v1050[1]
+    af     = v1053[1]
+    cf     = v1051[1]
+    of     = v1054[1]
 memory:
-    addr=v872+0xc[32] value=v894[32]
+    addr=v1033+0xc[32] value=v1055[32]
 == Symbolic ==
 registers:
     ebx    = {defs={0x080484e3}, expr=v247[32]}
@@ -5097,19 +5097,19 @@ memory:
 0x80484e4:pop    esi
 == PartialSymbolic ==
 registers:
-    ebx    = v894[32]
-    esp    = v872+0x14[32]
-    esi    = v896[32]
+    ebx    = v1055[32]
+    esp    = v1033+0x14[32]
+    esi    = v1057[32]
     eip    = 0x80484e5[32]
-    pf     = -v887+0x1[1]
-    sf     = v888[1]
-    zf     = v889[1]
-    af     = v892[1]
-    cf     = v890[1]
-    of     = v893[1]
+    pf     = -v1048+0x1[1]
+    sf     = v1049[1]
+    zf     = v1050[1]
+    af     = v1053[1]
+    cf     = v1051[1]
+    of     = v1054[1]
 memory:
-    addr=v872+0x10[32] value=v896[32]
-    addr=v872+0xc[32] value=v894[32]
+    addr=v1033+0x10[32] value=v1057[32]
+    addr=v1033+0xc[32] value=v1055[32]
 == Symbolic ==
 registers:
     ebx    = {defs={0x080484e3}, expr=v247[32]}
@@ -5147,21 +5147,21 @@ memory:
 0x80484e5:pop    edi
 == PartialSymbolic ==
 registers:
-    ebx    = v894[32]
-    esp    = v872+0x18[32]
-    esi    = v896[32]
-    edi    = v898[32]
+    ebx    = v1055[32]
+    esp    = v1033+0x18[32]
+    esi    = v1057[32]
+    edi    = v1059[32]
     eip    = 0x80484e6[32]
-    pf     = -v887+0x1[1]
-    sf     = v888[1]
-    zf     = v889[1]
-    af     = v892[1]
-    cf     = v890[1]
-    of     = v893[1]
+    pf     = -v1048+0x1[1]
+    sf     = v1049[1]
+    zf     = v1050[1]
+    af     = v1053[1]
+    cf     = v1051[1]
+    of     = v1054[1]
 memory:
-    addr=v872+0x14[32] value=v898[32]
-    addr=v872+0x10[32] value=v896[32]
-    addr=v872+0xc[32] value=v894[32]
+    addr=v1033+0x14[32] value=v1059[32]
+    addr=v1033+0x10[32] value=v1057[32]
+    addr=v1033+0xc[32] value=v1055[32]
 == Symbolic ==
 registers:
     ebx    = {defs={0x080484e3}, expr=v247[32]}
@@ -5205,23 +5205,23 @@ memory:
 0x80484e6:pop    ebp
 == PartialSymbolic ==
 registers:
-    ebx    = v894[32]
-    esp    = v872+0x1c[32]
-    ebp    = v900[32]
-    esi    = v896[32]
-    edi    = v898[32]
+    ebx    = v1055[32]
+    esp    = v1033+0x1c[32]
+    ebp    = v1061[32]
+    esi    = v1057[32]
+    edi    = v1059[32]
     eip    = 0x80484e7[32]
-    pf     = -v887+0x1[1]
-    sf     = v888[1]
-    zf     = v889[1]
-    af     = v892[1]
-    cf     = v890[1]
-    of     = v893[1]
+    pf     = -v1048+0x1[1]
+    sf     = v1049[1]
+    zf     = v1050[1]
+    af     = v1053[1]
+    cf     = v1051[1]
+    of     = v1054[1]
 memory:
-    addr=v872+0x18[32] value=v900[32]
-    addr=v872+0x14[32] value=v898[32]
-    addr=v872+0x10[32] value=v896[32]
-    addr=v872+0xc[32] value=v894[32]
+    addr=v1033+0x18[32] value=v1061[32]
+    addr=v1033+0x14[32] value=v1059[32]
+    addr=v1033+0x10[32] value=v1057[32]
+    addr=v1033+0xc[32] value=v1055[32]
 == Symbolic ==
 registers:
     ebx    = {defs={0x080484e3}, expr=v247[32]}
@@ -5271,24 +5271,24 @@ memory:
 0x80484e7:ret    
 == PartialSymbolic ==
 registers:
-    ebx    = v894[32]
-    esp    = v872+0x20[32]
-    ebp    = v900[32]
-    esi    = v896[32]
-    edi    = v898[32]
-    eip    = v902[32]
-    pf     = -v887+0x1[1]
-    sf     = v888[1]
-    zf     = v889[1]
-    af     = v892[1]
-    cf     = v890[1]
-    of     = v893[1]
+    ebx    = v1055[32]
+    esp    = v1033+0x20[32]
+    ebp    = v1061[32]
+    esi    = v1057[32]
+    edi    = v1059[32]
+    eip    = v1063[32]
+    pf     = -v1048+0x1[1]
+    sf     = v1049[1]
+    zf     = v1050[1]
+    af     = v1053[1]
+    cf     = v1051[1]
+    of     = v1054[1]
 memory:
-    addr=v872+0x1c[32] value=v902[32]
-    addr=v872+0x18[32] value=v900[32]
-    addr=v872+0x14[32] value=v898[32]
-    addr=v872+0x10[32] value=v896[32]
-    addr=v872+0xc[32] value=v894[32]
+    addr=v1033+0x1c[32] value=v1063[32]
+    addr=v1033+0x18[32] value=v1061[32]
+    addr=v1033+0x14[32] value=v1059[32]
+    addr=v1033+0x10[32] value=v1057[32]
+    addr=v1033+0xc[32] value=v1055[32]
 == Symbolic ==
 registers:
     ebx    = {defs={0x080484e3}, expr=v247[32]}
@@ -5345,11 +5345,11 @@ memory:
 0x8048520:push   ebp
 == PartialSymbolic ==
 registers:
-    esp    = v905-0x4[32]
-    ebp    = v906[32]
+    esp    = v1066-0x4[32]
+    ebp    = v1067[32]
     eip    = 0x8048521[32]
 memory:
-    addr=v905-0x4[32] value=v906[32]
+    addr=v1066-0x4[32] value=v1067[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048520}, expr=(add[32] v273[32] -4[32])}
@@ -5369,11 +5369,11 @@ memory:
 0x8048521:mov    ebp, esp
 == PartialSymbolic ==
 registers:
-    esp    = v905-0x4[32]
-    ebp    = v905-0x4[32]
+    esp    = v1066-0x4[32]
+    ebp    = v1066-0x4[32]
     eip    = 0x8048523[32]
 memory:
-    addr=v905-0x4[32] value=v906[32]
+    addr=v1066-0x4[32] value=v1067[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048520}, expr=(add[32] v273[32] -4[32])}
@@ -5393,13 +5393,13 @@ memory:
 0x8048523:push   edi
 == PartialSymbolic ==
 registers:
-    esp    = v905-0x8[32]
-    ebp    = v905-0x4[32]
-    edi    = v907[32]
+    esp    = v1066-0x8[32]
+    ebp    = v1066-0x4[32]
+    edi    = v1068[32]
     eip    = 0x8048524[32]
 memory:
-    addr=v905-0x8[32] value=v907[32]
-    addr=v905-0x4[32] value=v906[32]
+    addr=v1066-0x8[32] value=v1068[32]
+    addr=v1066-0x4[32] value=v1067[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048520,0x08048523}, expr=(add[32] v273[32] -8[32])}
@@ -5425,15 +5425,15 @@ memory:
 0x8048524:push   esi
 == PartialSymbolic ==
 registers:
-    esp    = v905-0xc[32]
-    ebp    = v905-0x4[32]
-    esi    = v908[32]
-    edi    = v907[32]
+    esp    = v1066-0xc[32]
+    ebp    = v1066-0x4[32]
+    esi    = v1069[32]
+    edi    = v1068[32]
     eip    = 0x8048525[32]
 memory:
-    addr=v905-0xc[32] value=v908[32]
-    addr=v905-0x8[32] value=v907[32]
-    addr=v905-0x4[32] value=v906[32]
+    addr=v1066-0xc[32] value=v1069[32]
+    addr=v1066-0x8[32] value=v1068[32]
+    addr=v1066-0x4[32] value=v1067[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048520,0x08048523,0x08048524}, expr=(add[32] v273[32] -12[32])}
@@ -5465,17 +5465,17 @@ memory:
 0x8048525:push   ebx
 == PartialSymbolic ==
 registers:
-    ebx    = v909[32]
-    esp    = v905-0x10[32]
-    ebp    = v905-0x4[32]
-    esi    = v908[32]
-    edi    = v907[32]
+    ebx    = v1070[32]
+    esp    = v1066-0x10[32]
+    ebp    = v1066-0x4[32]
+    esi    = v1069[32]
+    edi    = v1068[32]
     eip    = 0x8048526[32]
 memory:
-    addr=v905-0x10[32] value=v909[32]
-    addr=v905-0xc[32] value=v908[32]
-    addr=v905-0x8[32] value=v907[32]
-    addr=v905-0x4[32] value=v906[32]
+    addr=v1066-0x10[32] value=v1070[32]
+    addr=v1066-0xc[32] value=v1069[32]
+    addr=v1066-0x8[32] value=v1068[32]
+    addr=v1066-0x4[32] value=v1067[32]
 == Symbolic ==
 registers:
     ebx    = {defs={}, expr=v277[32]}
@@ -5513,23 +5513,23 @@ memory:
 0x8048526:sub    esp, 0x0c
 == PartialSymbolic ==
 registers:
-    ebx    = v909[32]
-    esp    = v905-0x1c[32]
-    ebp    = v905-0x4[32]
-    esi    = v908[32]
-    edi    = v907[32]
+    ebx    = v1070[32]
+    esp    = v1066-0x1c[32]
+    ebp    = v1066-0x4[32]
+    esi    = v1069[32]
+    edi    = v1068[32]
     eip    = 0x8048529[32]
-    pf     = -v924+0x1[1]
-    sf     = v925[1]
-    zf     = v926[1]
-    af     = -v929+0x1[1]
-    cf     = -v927+0x1[1]
-    of     = v930[1]
+    pf     = -v1085+0x1[1]
+    sf     = v1086[1]
+    zf     = v1087[1]
+    af     = -v1090+0x1[1]
+    cf     = -v1088+0x1[1]
+    of     = v1091[1]
 memory:
-    addr=v905-0x10[32] value=v909[32]
-    addr=v905-0xc[32] value=v908[32]
-    addr=v905-0x8[32] value=v907[32]
-    addr=v905-0x4[32] value=v906[32]
+    addr=v1066-0x10[32] value=v1070[32]
+    addr=v1066-0xc[32] value=v1069[32]
+    addr=v1066-0x8[32] value=v1068[32]
+    addr=v1066-0x4[32] value=v1067[32]
 == Symbolic ==
 registers:
     ebx    = {defs={}, expr=v277[32]}
@@ -5579,24 +5579,24 @@ memory:
 0x8048529:call   0x0804852e<<Insn>>
 == PartialSymbolic ==
 registers:
-    ebx    = v909[32]
-    esp    = v905-0x20[32]
-    ebp    = v905-0x4[32]
-    esi    = v908[32]
-    edi    = v907[32]
+    ebx    = v1070[32]
+    esp    = v1066-0x20[32]
+    ebp    = v1066-0x4[32]
+    esi    = v1069[32]
+    edi    = v1068[32]
     eip    = 0x804852e[32]
-    pf     = -v924+0x1[1]
-    sf     = v925[1]
-    zf     = v926[1]
-    af     = -v929+0x1[1]
-    cf     = -v927+0x1[1]
-    of     = v930[1]
+    pf     = -v1085+0x1[1]
+    sf     = v1086[1]
+    zf     = v1087[1]
+    af     = -v1090+0x1[1]
+    cf     = -v1088+0x1[1]
+    of     = v1091[1]
 memory:
-    addr=v905-0x20[32] value=0x804852e[32]
-    addr=v905-0x10[32] value=v909[32]
-    addr=v905-0xc[32] value=v908[32]
-    addr=v905-0x8[32] value=v907[32]
-    addr=v905-0x4[32] value=v906[32]
+    addr=v1066-0x20[32] value=0x804852e[32]
+    addr=v1066-0x10[32] value=v1070[32]
+    addr=v1066-0xc[32] value=v1069[32]
+    addr=v1066-0x8[32] value=v1068[32]
+    addr=v1066-0x4[32] value=v1067[32]
 == Symbolic ==
 registers:
     ebx    = {defs={}, expr=v277[32]}
@@ -5653,11 +5653,11 @@ memory:
 0x804852e:pop    ebx
 == PartialSymbolic ==
 registers:
-    ebx    = v933[32]
-    esp    = v932+0x4[32]
+    ebx    = v1094[32]
+    esp    = v1093+0x4[32]
     eip    = 0x804852f[32]
 memory:
-    addr=v932[32] value=v933[32]
+    addr=v1093[32] value=v1094[32]
 == Symbolic ==
 registers:
     ebx    = {defs={0x0804852e}, expr=v280[32]}
@@ -5677,17 +5677,17 @@ memory:
 0x804852f:add    ebx, 0x0000119a
 == PartialSymbolic ==
 registers:
-    ebx    = v933+0x119a[32]
-    esp    = v932+0x4[32]
+    ebx    = v1094+0x119a[32]
+    esp    = v1093+0x4[32]
     eip    = 0x8048535[32]
-    pf     = -v949+0x1[1]
-    sf     = v950[1]
-    zf     = v951[1]
-    af     = v954[1]
-    cf     = v952[1]
-    of     = v955[1]
+    pf     = -v1110+0x1[1]
+    sf     = v1111[1]
+    zf     = v1112[1]
+    af     = v1115[1]
+    cf     = v1113[1]
+    of     = v1116[1]
 memory:
-    addr=v932[32] value=v933[32]
+    addr=v1093[32] value=v1094[32]
 == Symbolic ==
 registers:
     ebx    = {defs={0x0804852e,0x0804852f}, expr=(add[32] v280[32] 4506[32])}
@@ -5719,18 +5719,18 @@ memory:
 0x8048535:lea    eax, [ebx + 0xffffff20<-0x000000e0>]
 == PartialSymbolic ==
 registers:
-    eax    = v933+0x10ba[32]
-    ebx    = v933+0x119a[32]
-    esp    = v932+0x4[32]
+    eax    = v1094+0x10ba[32]
+    ebx    = v1094+0x119a[32]
+    esp    = v1093+0x4[32]
     eip    = 0x804853b[32]
-    pf     = -v949+0x1[1]
-    sf     = v950[1]
-    zf     = v951[1]
-    af     = v954[1]
-    cf     = v952[1]
-    of     = v955[1]
+    pf     = -v1110+0x1[1]
+    sf     = v1111[1]
+    zf     = v1112[1]
+    af     = v1115[1]
+    cf     = v1113[1]
+    of     = v1116[1]
 memory:
-    addr=v932[32] value=v933[32]
+    addr=v1093[32] value=v1094[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x0804852e,0x0804852f,0x08048535}, expr=(add[32] v280[32] 4282[32])}
@@ -5764,19 +5764,19 @@ memory:
 0x804853b:lea    edx, [ebx + 0xffffff20<-0x000000e0>]
 == PartialSymbolic ==
 registers:
-    eax    = v933+0x10ba[32]
-    edx    = v933+0x10ba[32]
-    ebx    = v933+0x119a[32]
-    esp    = v932+0x4[32]
+    eax    = v1094+0x10ba[32]
+    edx    = v1094+0x10ba[32]
+    ebx    = v1094+0x119a[32]
+    esp    = v1093+0x4[32]
     eip    = 0x8048541[32]
-    pf     = -v949+0x1[1]
-    sf     = v950[1]
-    zf     = v951[1]
-    af     = v954[1]
-    cf     = v952[1]
-    of     = v955[1]
+    pf     = -v1110+0x1[1]
+    sf     = v1111[1]
+    zf     = v1112[1]
+    af     = v1115[1]
+    cf     = v1113[1]
+    of     = v1116[1]
 memory:
-    addr=v932[32] value=v933[32]
+    addr=v1093[32] value=v1094[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x0804852e,0x0804852f,0x08048535}, expr=(add[32] v280[32] 4282[32])}
@@ -5813,9 +5813,9 @@ memory:
 == PartialSymbolic ==
 registers:
     eax    = 0x0[32]
-    edx    = v933+0x10ba[32]
-    ebx    = v933+0x119a[32]
-    esp    = v932+0x4[32]
+    edx    = v1094+0x10ba[32]
+    ebx    = v1094+0x119a[32]
+    esp    = v1093+0x4[32]
     eip    = 0x8048543[32]
     pf     = 0x1[1]
     sf     = 0x0[1]
@@ -5824,7 +5824,7 @@ registers:
     cf     = 0x0[1]
     of     = 0x0[1]
 memory:
-    addr=v932[32] value=v933[32]
+    addr=v1093[32] value=v1094[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x0804852e,0x0804852f,0x08048535,0x0804853b,0x08048541}, expr=(add[32] (invert[32] (add[32] v280[32] 4282[32])) v280[32] 4283[32])}
@@ -5861,18 +5861,18 @@ memory:
 == PartialSymbolic ==
 registers:
     eax    = 0x0[32]
-    edx    = v933+0x10ba[32]
-    ebx    = v933+0x119a[32]
-    esp    = v932+0x4[32]
+    edx    = v1094+0x10ba[32]
+    ebx    = v1094+0x119a[32]
+    esp    = v1093+0x4[32]
     eip    = 0x8048546[32]
     pf     = 0x1[1]
     sf     = 0x0[1]
     zf     = 0x1[1]
-    af     = v957[1]
+    af     = v1118[1]
     cf     = 0x0[1]
-    of     = v958[1]
+    of     = v1119[1]
 memory:
-    addr=v932[32] value=v933[32]
+    addr=v1093[32] value=v1094[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x0804852e,0x0804852f,0x08048535,0x0804853b,0x08048541,0x08048543}, expr=(asr[32] 2[5] (add[32] (invert[32] (add[32] v280[32] 4282[32])) v280[32] 4283[32]))}
@@ -5909,20 +5909,20 @@ memory:
 == PartialSymbolic ==
 registers:
     eax    = 0x0[32]
-    edx    = v933+0x10ba[32]
-    ebx    = v933+0x119a[32]
-    esp    = v932+0x4[32]
-    ebp    = v959[32]
+    edx    = v1094+0x10ba[32]
+    ebx    = v1094+0x119a[32]
+    esp    = v1093+0x4[32]
+    ebp    = v1120[32]
     eip    = 0x8048549[32]
     pf     = 0x1[1]
     sf     = 0x0[1]
     zf     = 0x1[1]
-    af     = v957[1]
+    af     = v1118[1]
     cf     = 0x0[1]
-    of     = v958[1]
+    of     = v1119[1]
 memory:
-    addr=v959-0x10[32] value=0x0[32]
-    addr=v932[32] value=v933[32]
+    addr=v1120-0x10[32] value=0x0[32]
+    addr=v1093[32] value=v1094[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x0804852e,0x0804852f,0x08048535,0x0804853b,0x08048541,0x08048543}, expr=(asr[32] 2[5] (add[32] (invert[32] (add[32] v280[32] 4282[32])) v280[32] 4283[32]))}
@@ -5965,10 +5965,10 @@ memory:
 == PartialSymbolic ==
 registers:
     eax    = 0xffffffff (-0x1)[32]
-    edx    = v933+0x10ba[32]
-    ebx    = v933+0x119a[32]
-    esp    = v932+0x4[32]
-    ebp    = v959[32]
+    edx    = v1094+0x10ba[32]
+    ebx    = v1094+0x119a[32]
+    esp    = v1093+0x4[32]
+    ebp    = v1120[32]
     eip    = 0x804854a[32]
     pf     = 0x1[1]
     sf     = 0x1[1]
@@ -5977,8 +5977,8 @@ registers:
     cf     = 0x0[1]
     of     = 0x0[1]
 memory:
-    addr=v959-0x10[32] value=0x0[32]
-    addr=v932[32] value=v933[32]
+    addr=v1120-0x10[32] value=0x0[32]
+    addr=v1093[32] value=v1094[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x0804852e,0x0804852f,0x08048535,0x0804853b,0x08048541,0x08048543,0x08048549}, expr=(add[32] (asr[32] 2[5] (add[32] (invert[32] (add[32] v280[32] 4282[32])) v280[32] 4283[32])) -1[32])}
@@ -6021,10 +6021,10 @@ memory:
 == PartialSymbolic ==
 registers:
     eax    = 0xffffffff (-0x1)[32]
-    edx    = v933+0x10ba[32]
-    ebx    = v933+0x119a[32]
-    esp    = v932+0x4[32]
-    ebp    = v959[32]
+    edx    = v1094+0x10ba[32]
+    ebx    = v1094+0x119a[32]
+    esp    = v1093+0x4[32]
+    ebp    = v1120[32]
     eip    = 0x804854d[32]
     pf     = 0x1[1]
     sf     = 0x0[1]
@@ -6033,8 +6033,8 @@ registers:
     cf     = 0x0[1]
     of     = 0x0[1]
 memory:
-    addr=v959-0x10[32] value=0x0[32]
-    addr=v932[32] value=v933[32]
+    addr=v1120-0x10[32] value=0x0[32]
+    addr=v1093[32] value=v1094[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x0804852e,0x0804852f,0x08048535,0x0804853b,0x08048541,0x08048543,0x08048549}, expr=(add[32] (asr[32] 2[5] (add[32] (invert[32] (add[32] v280[32] 4282[32])) v280[32] 4283[32])) -1[32])}
@@ -6077,10 +6077,10 @@ memory:
 == PartialSymbolic ==
 registers:
     eax    = 0xffffffff (-0x1)[32]
-    edx    = v933+0x10ba[32]
-    ebx    = v933+0x119a[32]
-    esp    = v932+0x4[32]
-    ebp    = v959[32]
+    edx    = v1094+0x10ba[32]
+    ebx    = v1094+0x119a[32]
+    esp    = v1093+0x4[32]
+    ebp    = v1120[32]
     eip    = 0x804856b[32]
     pf     = 0x1[1]
     sf     = 0x0[1]
@@ -6089,8 +6089,8 @@ registers:
     cf     = 0x0[1]
     of     = 0x0[1]
 memory:
-    addr=v959-0x10[32] value=0x0[32]
-    addr=v932[32] value=v933[32]
+    addr=v1120-0x10[32] value=0x0[32]
+    addr=v1093[32] value=v1094[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x0804852e,0x0804852f,0x08048535,0x0804853b,0x08048541,0x08048543,0x08048549}, expr=(add[32] (asr[32] 2[5] (add[32] (invert[32] (add[32] v280[32] 4282[32])) v280[32] 4283[32])) -1[32])}
@@ -6135,16 +6135,16 @@ memory:
 0x804854f:lea    esi, [edx + eax*0x04]
 == PartialSymbolic ==
 registers:
-    eax    = v961[32]
-    edx    = v963[32]
-    esi    = v964[32]
+    eax    = v1123[32]
+    edx    = v1122[32]
+    esi    = v1125[32]
     eip    = 0x8048552[32]
 memory:
 == Symbolic ==
 registers:
-    eax    = {defs={}, expr=v290[32]}
-    edx    = {defs={}, expr=v291[32]}
-    esi    = {defs={0x0804854f}, expr=(add[32] (extract[32] 0[32] 32[32] (umul[40] v290[32] 4[8])) v291[32])}
+    eax    = {defs={}, expr=v291[32]}
+    edx    = {defs={}, expr=v290[32]}
+    esi    = {defs={0x0804854f}, expr=(add[32] (extract[32] 0[32] 32[32] (umul[64] v291[32] 4[32])) v290[32])}
     eip    = {defs={0x0804854f}, expr=0x08048552[32]}
 memory:
 == Interval ==
@@ -6157,23 +6157,23 @@ memory:
 0x8048552:xor    edi, edi
 == PartialSymbolic ==
 registers:
-    eax    = v961[32]
-    edx    = v963[32]
-    esi    = v964[32]
+    eax    = v1123[32]
+    edx    = v1122[32]
+    esi    = v1125[32]
     edi    = 0x0[32]
     eip    = 0x8048554[32]
     pf     = 0x1[1]
     sf     = 0x0[1]
     zf     = 0x1[1]
     of     = 0x0[1]
-    af     = v966[1]
+    af     = v1127[1]
     cf     = 0x0[1]
 memory:
 == Symbolic ==
 registers:
-    eax    = {defs={}, expr=v290[32]}
-    edx    = {defs={}, expr=v291[32]}
-    esi    = {defs={0x0804854f}, expr=(add[32] (extract[32] 0[32] 32[32] (umul[40] v290[32] 4[8])) v291[32])}
+    eax    = {defs={}, expr=v291[32]}
+    edx    = {defs={}, expr=v290[32]}
+    esi    = {defs={0x0804854f}, expr=(add[32] (extract[32] 0[32] 32[32] (umul[64] v291[32] 4[32])) v290[32])}
     edi    = {defs={0x08048552}, expr=0[32]}
     eip    = {defs={0x08048552}, expr=0x08048554[32]}
     pf     = {defs={0x08048552}, expr=1[1]}
@@ -6200,23 +6200,23 @@ memory:
 0x8048554:lea    esi, [esi + 0x00000000]
 == PartialSymbolic ==
 registers:
-    eax    = v961[32]
-    edx    = v963[32]
-    esi    = v964[32]
+    eax    = v1123[32]
+    edx    = v1122[32]
+    esi    = v1125[32]
     edi    = 0x0[32]
     eip    = 0x804855a[32]
     pf     = 0x1[1]
     sf     = 0x0[1]
     zf     = 0x1[1]
     of     = 0x0[1]
-    af     = v966[1]
+    af     = v1127[1]
     cf     = 0x0[1]
 memory:
 == Symbolic ==
 registers:
-    eax    = {defs={}, expr=v290[32]}
-    edx    = {defs={}, expr=v291[32]}
-    esi    = {defs={0x0804854f,0x08048554}, expr=(add[32] (extract[32] 0[32] 32[32] (umul[40] v290[32] 4[8])) v291[32])}
+    eax    = {defs={}, expr=v291[32]}
+    edx    = {defs={}, expr=v290[32]}
+    esi    = {defs={0x0804854f,0x08048554}, expr=(add[32] (extract[32] 0[32] 32[32] (umul[64] v291[32] 4[32])) v290[32])}
     edi    = {defs={0x08048552}, expr=0[32]}
     eip    = {defs={0x08048554}, expr=0x0804855a[32]}
     pf     = {defs={0x08048552}, expr=1[1]}
@@ -6243,23 +6243,23 @@ memory:
 0x804855a:lea    edi, [edi + 0x00000000]
 == PartialSymbolic ==
 registers:
-    eax    = v961[32]
-    edx    = v963[32]
-    esi    = v964[32]
+    eax    = v1123[32]
+    edx    = v1122[32]
+    esi    = v1125[32]
     edi    = 0x0[32]
     eip    = 0x8048560[32]
     pf     = 0x1[1]
     sf     = 0x0[1]
     zf     = 0x1[1]
     of     = 0x0[1]
-    af     = v966[1]
+    af     = v1127[1]
     cf     = 0x0[1]
 memory:
 == Symbolic ==
 registers:
-    eax    = {defs={}, expr=v290[32]}
-    edx    = {defs={}, expr=v291[32]}
-    esi    = {defs={0x0804854f,0x08048554}, expr=(add[32] (extract[32] 0[32] 32[32] (umul[40] v290[32] 4[8])) v291[32])}
+    eax    = {defs={}, expr=v291[32]}
+    edx    = {defs={}, expr=v290[32]}
+    esi    = {defs={0x0804854f,0x08048554}, expr=(add[32] (extract[32] 0[32] 32[32] (umul[64] v291[32] 4[32])) v290[32])}
     edi    = {defs={0x08048552,0x0804855a}, expr=0[32]}
     eip    = {defs={0x0804855a}, expr=0x08048560[32]}
     pf     = {defs={0x08048552}, expr=1[1]}
@@ -6286,27 +6286,27 @@ memory:
 0x8048560:call   DWORD PTR ds:[esi]
 == PartialSymbolic ==
 registers:
-    eax    = v961[32]
-    edx    = v963[32]
-    esp    = v967-0x4[32]
-    esi    = v964[32]
+    eax    = v1123[32]
+    edx    = v1122[32]
+    esp    = v1128-0x4[32]
+    esi    = v1125[32]
     edi    = 0x0[32]
-    eip    = v968[32]
+    eip    = v1129[32]
     pf     = 0x1[1]
     sf     = 0x0[1]
     zf     = 0x1[1]
     of     = 0x0[1]
-    af     = v966[1]
+    af     = v1127[1]
     cf     = 0x0[1]
 memory:
-    addr=v964[32] value=v968[32]
-    addr=v967-0x4[32] value=0x8048562[32]
+    addr=v1125[32] value=v1129[32]
+    addr=v1128-0x4[32] value=0x8048562[32]
 == Symbolic ==
 registers:
-    eax    = {defs={}, expr=v290[32]}
-    edx    = {defs={}, expr=v291[32]}
+    eax    = {defs={}, expr=v291[32]}
+    edx    = {defs={}, expr=v290[32]}
     esp    = {defs={0x08048560}, expr=(add[32] v294[32] -4[32])}
-    esi    = {defs={0x0804854f,0x08048554}, expr=(add[32] (extract[32] 0[32] 32[32] (umul[40] v290[32] 4[8])) v291[32])}
+    esi    = {defs={0x0804854f,0x08048554}, expr=(add[32] (extract[32] 0[32] 32[32] (umul[64] v291[32] 4[32])) v290[32])}
     edi    = {defs={0x08048552,0x0804855a}, expr=0[32]}
     eip    = {defs={0x08048560}, expr=v295[32]}
     pf     = {defs={0x08048552}, expr=1[1]}
@@ -6316,10 +6316,10 @@ registers:
     af     = {defs={}, expr=v293[1]}
     cf     = {defs={}, expr=0[1]}
 memory:
-    addr={defs={0x0804854f,0x08048554,0x08048560}, expr=(add[32] (extract[32] 0[32] 32[32] (umul[40] v290[32] 4[8])) v291[32] 3[32])} value={defs={0x08048560}, expr=(extract[8] 24[32] 32[32] v295[32])}
-    addr={defs={0x0804854f,0x08048554,0x08048560}, expr=(add[32] (extract[32] 0[32] 32[32] (umul[40] v290[32] 4[8])) v291[32] 2[32])} value={defs={0x08048560}, expr=(extract[8] 16[32] 24[32] v295[32])}
-    addr={defs={0x0804854f,0x08048554,0x08048560}, expr=(add[32] (extract[32] 0[32] 32[32] (umul[40] v290[32] 4[8])) v291[32] 1[32])} value={defs={0x08048560}, expr=(extract[8] 8[32] 16[32] v295[32])}
-    addr={defs={0x0804854f,0x08048554,0x08048560}, expr=(add[32] (extract[32] 0[32] 32[32] (umul[40] v290[32] 4[8])) v291[32])} value={defs={0x08048560}, expr=(extract[8] 0[32] 8[32] v295[32])}
+    addr={defs={0x0804854f,0x08048554,0x08048560}, expr=(add[32] (extract[32] 0[32] 32[32] (umul[64] v291[32] 4[32])) v290[32] 3[32])} value={defs={0x08048560}, expr=(extract[8] 24[32] 32[32] v295[32])}
+    addr={defs={0x0804854f,0x08048554,0x08048560}, expr=(add[32] (extract[32] 0[32] 32[32] (umul[64] v291[32] 4[32])) v290[32] 2[32])} value={defs={0x08048560}, expr=(extract[8] 16[32] 24[32] v295[32])}
+    addr={defs={0x0804854f,0x08048554,0x08048560}, expr=(add[32] (extract[32] 0[32] 32[32] (umul[64] v291[32] 4[32])) v290[32] 1[32])} value={defs={0x08048560}, expr=(extract[8] 8[32] 16[32] v295[32])}
+    addr={defs={0x0804854f,0x08048554,0x08048560}, expr=(add[32] (extract[32] 0[32] 32[32] (umul[64] v291[32] 4[32])) v290[32])} value={defs={0x08048560}, expr=(extract[8] 0[32] 8[32] v295[32])}
     addr={defs={0x08048560}, expr=(add[32] v294[32] -1[32])} value={defs={0x08048560}, expr=8[8]}
     addr={defs={0x08048560}, expr=(add[32] v294[32] -2[32])} value={defs={0x08048560}, expr=4[8]}
     addr={defs={0x08048560}, expr=(add[32] v294[32] -3[32])} value={defs={0x08048560}, expr=-123[8]}
@@ -6345,13 +6345,13 @@ memory:
 0x8048562:inc    edi
 == PartialSymbolic ==
 registers:
-    edi    = v1001+0x1[32]
+    edi    = v1162+0x1[32]
     eip    = 0x8048563[32]
-    pf     = -v1016+0x1[1]
-    sf     = v1017[1]
-    zf     = v1018[1]
-    af     = v1021[1]
-    of     = v1022[1]
+    pf     = -v1177+0x1[1]
+    sf     = v1178[1]
+    zf     = v1179[1]
+    af     = v1182[1]
+    of     = v1183[1]
 memory:
 == Symbolic ==
 registers:
@@ -6376,15 +6376,15 @@ memory:
 0x8048563:sub    esi, 0x04
 == PartialSymbolic ==
 registers:
-    esi    = v1023-0x4[32]
-    edi    = v1001+0x1[32]
+    esi    = v1184-0x4[32]
+    edi    = v1162+0x1[32]
     eip    = 0x8048566[32]
-    pf     = -v1038+0x1[1]
-    sf     = v1039[1]
-    zf     = v1040[1]
-    af     = -v1043+0x1[1]
-    of     = v1044[1]
-    cf     = -v1041+0x1[1]
+    pf     = -v1199+0x1[1]
+    sf     = v1200[1]
+    zf     = v1201[1]
+    af     = -v1204+0x1[1]
+    of     = v1205[1]
+    cf     = -v1202+0x1[1]
 memory:
 == Symbolic ==
 registers:
@@ -6413,18 +6413,18 @@ memory:
 0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi
 == PartialSymbolic ==
 registers:
-    ebp    = v1045[32]
-    esi    = v1023-0x4[32]
-    edi    = v1001+0x1[32]
+    ebp    = v1206[32]
+    esi    = v1184-0x4[32]
+    edi    = v1162+0x1[32]
     eip    = 0x8048569[32]
-    pf     = -v1063+0x1[1]
-    sf     = v1064[1]
-    zf     = v1065[1]
-    af     = -v1068+0x1[1]
-    of     = v1069[1]
-    cf     = -v1066+0x1[1]
+    pf     = -v1224+0x1[1]
+    sf     = v1225[1]
+    zf     = v1226[1]
+    af     = -v1229+0x1[1]
+    of     = v1230[1]
+    cf     = -v1227+0x1[1]
 memory:
-    addr=v1045-0x10[32] value=v1046[32]
+    addr=v1206-0x10[32] value=v1207[32]
 == Symbolic ==
 registers:
     ebp    = {defs={}, expr=v303[32]}
@@ -6458,18 +6458,18 @@ memory:
 0x8048569:jne    0x08048560<<Insn>>
 == PartialSymbolic ==
 registers:
-    ebp    = v1045[32]
-    esi    = v1023-0x4[32]
-    edi    = v1001+0x1[32]
-    eip    = v1070[32]
-    pf     = -v1063+0x1[1]
-    sf     = v1064[1]
-    zf     = v1065[1]
-    af     = -v1068+0x1[1]
-    of     = v1069[1]
-    cf     = -v1066+0x1[1]
+    ebp    = v1206[32]
+    esi    = v1184-0x4[32]
+    edi    = v1162+0x1[32]
+    eip    = v1231[32]
+    pf     = -v1224+0x1[1]
+    sf     = v1225[1]
+    zf     = v1226[1]
+    af     = -v1229+0x1[1]
+    of     = v1230[1]
+    cf     = -v1227+0x1[1]
 memory:
-    addr=v1045-0x10[32] value=v1046[32]
+    addr=v1206-0x10[32] value=v1207[32]
 == Symbolic ==
 registers:
     ebp    = {defs={}, expr=v303[32]}
@@ -6506,10 +6506,10 @@ memory:
 0x804856b:call   0x080485b0<_fini>
 == PartialSymbolic ==
 registers:
-    esp    = v1072-0x4[32]
+    esp    = v1233-0x4[32]
     eip    = 0x80485b0[32]
 memory:
-    addr=v1072-0x4[32] value=0x8048570[32]
+    addr=v1233-0x4[32] value=0x8048570[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x0804856b}, expr=(add[32] v310[32] -4[32])}
@@ -6530,14 +6530,14 @@ memory:
 0x8048570:add    esp, 0x0c
 == PartialSymbolic ==
 registers:
-    esp    = v1074+0xc[32]
+    esp    = v1235+0xc[32]
     eip    = 0x8048573[32]
-    pf     = -v1089+0x1[1]
-    sf     = v1090[1]
-    zf     = v1091[1]
-    af     = v1094[1]
-    cf     = v1092[1]
-    of     = v1095[1]
+    pf     = -v1250+0x1[1]
+    sf     = v1251[1]
+    zf     = v1252[1]
+    af     = v1255[1]
+    cf     = v1253[1]
+    of     = v1256[1]
 memory:
 == Symbolic ==
 registers:
@@ -6564,17 +6564,17 @@ memory:
 0x8048573:pop    ebx
 == PartialSymbolic ==
 registers:
-    ebx    = v1096[32]
-    esp    = v1074+0x10[32]
+    ebx    = v1257[32]
+    esp    = v1235+0x10[32]
     eip    = 0x8048574[32]
-    pf     = -v1089+0x1[1]
-    sf     = v1090[1]
-    zf     = v1091[1]
-    af     = v1094[1]
-    cf     = v1092[1]
-    of     = v1095[1]
+    pf     = -v1250+0x1[1]
+    sf     = v1251[1]
+    zf     = v1252[1]
+    af     = v1255[1]
+    cf     = v1253[1]
+    of     = v1256[1]
 memory:
-    addr=v1074+0xc[32] value=v1096[32]
+    addr=v1235+0xc[32] value=v1257[32]
 == Symbolic ==
 registers:
     ebx    = {defs={0x08048573}, expr=v313[32]}
@@ -6606,19 +6606,19 @@ memory:
 0x8048574:pop    esi
 == PartialSymbolic ==
 registers:
-    ebx    = v1096[32]
-    esp    = v1074+0x14[32]
-    esi    = v1098[32]
+    ebx    = v1257[32]
+    esp    = v1235+0x14[32]
+    esi    = v1259[32]
     eip    = 0x8048575[32]
-    pf     = -v1089+0x1[1]
-    sf     = v1090[1]
-    zf     = v1091[1]
-    af     = v1094[1]
-    cf     = v1092[1]
-    of     = v1095[1]
+    pf     = -v1250+0x1[1]
+    sf     = v1251[1]
+    zf     = v1252[1]
+    af     = v1255[1]
+    cf     = v1253[1]
+    of     = v1256[1]
 memory:
-    addr=v1074+0x10[32] value=v1098[32]
-    addr=v1074+0xc[32] value=v1096[32]
+    addr=v1235+0x10[32] value=v1259[32]
+    addr=v1235+0xc[32] value=v1257[32]
 == Symbolic ==
 registers:
     ebx    = {defs={0x08048573}, expr=v313[32]}
@@ -6656,21 +6656,21 @@ memory:
 0x8048575:pop    edi
 == PartialSymbolic ==
 registers:
-    ebx    = v1096[32]
-    esp    = v1074+0x18[32]
-    esi    = v1098[32]
-    edi    = v1100[32]
+    ebx    = v1257[32]
+    esp    = v1235+0x18[32]
+    esi    = v1259[32]
+    edi    = v1261[32]
     eip    = 0x8048576[32]
-    pf     = -v1089+0x1[1]
-    sf     = v1090[1]
-    zf     = v1091[1]
-    af     = v1094[1]
-    cf     = v1092[1]
-    of     = v1095[1]
+    pf     = -v1250+0x1[1]
+    sf     = v1251[1]
+    zf     = v1252[1]
+    af     = v1255[1]
+    cf     = v1253[1]
+    of     = v1256[1]
 memory:
-    addr=v1074+0x14[32] value=v1100[32]
-    addr=v1074+0x10[32] value=v1098[32]
-    addr=v1074+0xc[32] value=v1096[32]
+    addr=v1235+0x14[32] value=v1261[32]
+    addr=v1235+0x10[32] value=v1259[32]
+    addr=v1235+0xc[32] value=v1257[32]
 == Symbolic ==
 registers:
     ebx    = {defs={0x08048573}, expr=v313[32]}
@@ -6714,23 +6714,23 @@ memory:
 0x8048576:pop    ebp
 == PartialSymbolic ==
 registers:
-    ebx    = v1096[32]
-    esp    = v1074+0x1c[32]
-    ebp    = v1102[32]
-    esi    = v1098[32]
-    edi    = v1100[32]
+    ebx    = v1257[32]
+    esp    = v1235+0x1c[32]
+    ebp    = v1263[32]
+    esi    = v1259[32]
+    edi    = v1261[32]
     eip    = 0x8048577[32]
-    pf     = -v1089+0x1[1]
-    sf     = v1090[1]
-    zf     = v1091[1]
-    af     = v1094[1]
-    cf     = v1092[1]
-    of     = v1095[1]
+    pf     = -v1250+0x1[1]
+    sf     = v1251[1]
+    zf     = v1252[1]
+    af     = v1255[1]
+    cf     = v1253[1]
+    of     = v1256[1]
 memory:
-    addr=v1074+0x18[32] value=v1102[32]
-    addr=v1074+0x14[32] value=v1100[32]
-    addr=v1074+0x10[32] value=v1098[32]
-    addr=v1074+0xc[32] value=v1096[32]
+    addr=v1235+0x18[32] value=v1263[32]
+    addr=v1235+0x14[32] value=v1261[32]
+    addr=v1235+0x10[32] value=v1259[32]
+    addr=v1235+0xc[32] value=v1257[32]
 == Symbolic ==
 registers:
     ebx    = {defs={0x08048573}, expr=v313[32]}
@@ -6780,24 +6780,24 @@ memory:
 0x8048577:ret    
 == PartialSymbolic ==
 registers:
-    ebx    = v1096[32]
-    esp    = v1074+0x20[32]
-    ebp    = v1102[32]
-    esi    = v1098[32]
-    edi    = v1100[32]
-    eip    = v1104[32]
-    pf     = -v1089+0x1[1]
-    sf     = v1090[1]
-    zf     = v1091[1]
-    af     = v1094[1]
-    cf     = v1092[1]
-    of     = v1095[1]
+    ebx    = v1257[32]
+    esp    = v1235+0x20[32]
+    ebp    = v1263[32]
+    esi    = v1259[32]
+    edi    = v1261[32]
+    eip    = v1265[32]
+    pf     = -v1250+0x1[1]
+    sf     = v1251[1]
+    zf     = v1252[1]
+    af     = v1255[1]
+    cf     = v1253[1]
+    of     = v1256[1]
 memory:
-    addr=v1074+0x1c[32] value=v1104[32]
-    addr=v1074+0x18[32] value=v1102[32]
-    addr=v1074+0x14[32] value=v1100[32]
-    addr=v1074+0x10[32] value=v1098[32]
-    addr=v1074+0xc[32] value=v1096[32]
+    addr=v1235+0x1c[32] value=v1265[32]
+    addr=v1235+0x18[32] value=v1263[32]
+    addr=v1235+0x14[32] value=v1261[32]
+    addr=v1235+0x10[32] value=v1259[32]
+    addr=v1235+0xc[32] value=v1257[32]
 == Symbolic ==
 registers:
     ebx    = {defs={0x08048573}, expr=v313[32]}
@@ -6854,11 +6854,11 @@ memory:
 0x8048580:push   ebp
 == PartialSymbolic ==
 registers:
-    esp    = v1107-0x4[32]
-    ebp    = v1108[32]
+    esp    = v1268-0x4[32]
+    ebp    = v1269[32]
     eip    = 0x8048581[32]
 memory:
-    addr=v1107-0x4[32] value=v1108[32]
+    addr=v1268-0x4[32] value=v1269[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048580}, expr=(add[32] v339[32] -4[32])}
@@ -6878,11 +6878,11 @@ memory:
 0x8048581:mov    ebp, esp
 == PartialSymbolic ==
 registers:
-    esp    = v1107-0x4[32]
-    ebp    = v1107-0x4[32]
+    esp    = v1268-0x4[32]
+    ebp    = v1268-0x4[32]
     eip    = 0x8048583[32]
 memory:
-    addr=v1107-0x4[32] value=v1108[32]
+    addr=v1268-0x4[32] value=v1269[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x08048580}, expr=(add[32] v339[32] -4[32])}
@@ -6902,13 +6902,13 @@ memory:
 0x8048583:push   ebx
 == PartialSymbolic ==
 registers:
-    ebx    = v1109[32]
-    esp    = v1107-0x8[32]
-    ebp    = v1107-0x4[32]
+    ebx    = v1270[32]
+    esp    = v1268-0x8[32]
+    ebp    = v1268-0x4[32]
     eip    = 0x8048584[32]
 memory:
-    addr=v1107-0x8[32] value=v1109[32]
-    addr=v1107-0x4[32] value=v1108[32]
+    addr=v1268-0x8[32] value=v1270[32]
+    addr=v1268-0x4[32] value=v1269[32]
 == Symbolic ==
 registers:
     ebx    = {defs={}, expr=v341[32]}
@@ -6934,19 +6934,19 @@ memory:
 0x8048584:sub    esp, 0x04
 == PartialSymbolic ==
 registers:
-    ebx    = v1109[32]
-    esp    = v1107-0xc[32]
-    ebp    = v1107-0x4[32]
+    ebx    = v1270[32]
+    esp    = v1268-0xc[32]
+    ebp    = v1268-0x4[32]
     eip    = 0x8048587[32]
-    pf     = -v1124+0x1[1]
-    sf     = v1125[1]
-    zf     = v1126[1]
-    af     = -v1129+0x1[1]
-    cf     = -v1127+0x1[1]
-    of     = v1130[1]
+    pf     = -v1285+0x1[1]
+    sf     = v1286[1]
+    zf     = v1287[1]
+    af     = -v1290+0x1[1]
+    cf     = -v1288+0x1[1]
+    of     = v1291[1]
 memory:
-    addr=v1107-0x8[32] value=v1109[32]
-    addr=v1107-0x4[32] value=v1108[32]
+    addr=v1268-0x8[32] value=v1270[32]
+    addr=v1268-0x4[32] value=v1269[32]
 == Symbolic ==
 registers:
     ebx    = {defs={}, expr=v341[32]}
@@ -6985,18 +6985,18 @@ memory:
 == PartialSymbolic ==
 registers:
     ebx    = 0x80495e8[32]
-    esp    = v1107-0xc[32]
-    ebp    = v1107-0x4[32]
+    esp    = v1268-0xc[32]
+    ebp    = v1268-0x4[32]
     eip    = 0x804858c[32]
-    pf     = -v1124+0x1[1]
-    sf     = v1125[1]
-    zf     = v1126[1]
-    af     = -v1129+0x1[1]
-    cf     = -v1127+0x1[1]
-    of     = v1130[1]
+    pf     = -v1285+0x1[1]
+    sf     = v1286[1]
+    zf     = v1287[1]
+    af     = -v1290+0x1[1]
+    cf     = -v1288+0x1[1]
+    of     = v1291[1]
 memory:
-    addr=v1107-0x8[32] value=v1109[32]
-    addr=v1107-0x4[32] value=v1108[32]
+    addr=v1268-0x8[32] value=v1270[32]
+    addr=v1268-0x4[32] value=v1269[32]
 == Symbolic ==
 registers:
     ebx    = {defs={}, expr=0x080495e8[32]}
@@ -7034,21 +7034,21 @@ memory:
 0x804858c:mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]
 == PartialSymbolic ==
 registers:
-    eax    = v1131[32]
+    eax    = v1292[32]
     ebx    = 0x80495e8[32]
-    esp    = v1107-0xc[32]
-    ebp    = v1107-0x4[32]
+    esp    = v1268-0xc[32]
+    ebp    = v1268-0x4[32]
     eip    = 0x8048591[32]
-    pf     = -v1124+0x1[1]
-    sf     = v1125[1]
-    zf     = v1126[1]
-    af     = -v1129+0x1[1]
-    cf     = -v1127+0x1[1]
-    of     = v1130[1]
+    pf     = -v1285+0x1[1]
+    sf     = v1286[1]
+    zf     = v1287[1]
+    af     = -v1290+0x1[1]
+    cf     = -v1288+0x1[1]
+    of     = v1291[1]
 memory:
-    addr=0x80495e8[32] value=v1131[32]
-    addr=v1107-0x8[32] value=v1109[32]
-    addr=v1107-0x4[32] value=v1108[32]
+    addr=0x80495e8[32] value=v1292[32]
+    addr=v1268-0x8[32] value=v1270[32]
+    addr=v1268-0x4[32] value=v1269[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x0804858c}, expr=v342[32]}
@@ -7092,21 +7092,21 @@ memory:
 0x8048591:cmp    eax, 0xff<-0x01>
 == PartialSymbolic ==
 registers:
-    eax    = v1131[32]
+    eax    = v1292[32]
     ebx    = 0x80495e8[32]
-    esp    = v1107-0xc[32]
-    ebp    = v1107-0x4[32]
+    esp    = v1268-0xc[32]
+    ebp    = v1268-0x4[32]
     eip    = 0x8048594[32]
-    pf     = -v1199+0x1[1]
-    sf     = v1200[1]
-    zf     = v1201[1]
-    af     = -v1204+0x1[1]
-    cf     = -v1202+0x1[1]
-    of     = v1205[1]
+    pf     = -v1360+0x1[1]
+    sf     = v1361[1]
+    zf     = v1362[1]
+    af     = -v1365+0x1[1]
+    cf     = -v1363+0x1[1]
+    of     = v1366[1]
 memory:
-    addr=0x80495e8[32] value=v1131[32]
-    addr=v1107-0x8[32] value=v1109[32]
-    addr=v1107-0x4[32] value=v1108[32]
+    addr=0x80495e8[32] value=v1292[32]
+    addr=v1268-0x8[32] value=v1270[32]
+    addr=v1268-0x4[32] value=v1269[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x0804858c}, expr=v342[32]}
@@ -7150,21 +7150,21 @@ memory:
 0x8048594:je     0x080485ac<<Insn>>
 == PartialSymbolic ==
 registers:
-    eax    = v1131[32]
+    eax    = v1292[32]
     ebx    = 0x80495e8[32]
-    esp    = v1107-0xc[32]
-    ebp    = v1107-0x4[32]
-    eip    = v1206[32]
-    pf     = -v1199+0x1[1]
-    sf     = v1200[1]
-    zf     = v1201[1]
-    af     = -v1204+0x1[1]
-    cf     = -v1202+0x1[1]
-    of     = v1205[1]
+    esp    = v1268-0xc[32]
+    ebp    = v1268-0x4[32]
+    eip    = v1367[32]
+    pf     = -v1360+0x1[1]
+    sf     = v1361[1]
+    zf     = v1362[1]
+    af     = -v1365+0x1[1]
+    cf     = -v1363+0x1[1]
+    of     = v1366[1]
 memory:
-    addr=0x80495e8[32] value=v1131[32]
-    addr=v1107-0x8[32] value=v1109[32]
-    addr=v1107-0x4[32] value=v1108[32]
+    addr=0x80495e8[32] value=v1292[32]
+    addr=v1268-0x8[32] value=v1270[32]
+    addr=v1268-0x4[32] value=v1269[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x0804858c}, expr=v342[32]}
@@ -7211,7 +7211,7 @@ memory:
 0x8048596:lea    esi, [esi + 0x00]
 == PartialSymbolic ==
 registers:
-    esi    = v1208[32]
+    esi    = v1369[32]
     eip    = 0x8048599[32]
 memory:
 == Symbolic ==
@@ -7227,8 +7227,8 @@ memory:
 0x8048599:lea    edi, [edi + 0x00000000]
 == PartialSymbolic ==
 registers:
-    esi    = v1208[32]
-    edi    = v1209[32]
+    esi    = v1369[32]
+    edi    = v1370[32]
     eip    = 0x80485a0[32]
 memory:
 == Symbolic ==
@@ -7246,16 +7246,16 @@ memory:
 0x80485a0:sub    ebx, 0x04
 == PartialSymbolic ==
 registers:
-    ebx    = v1210-0x4[32]
-    esi    = v1208[32]
-    edi    = v1209[32]
+    ebx    = v1371-0x4[32]
+    esi    = v1369[32]
+    edi    = v1370[32]
     eip    = 0x80485a3[32]
-    pf     = -v1225+0x1[1]
-    sf     = v1226[1]
-    zf     = v1227[1]
-    af     = -v1230+0x1[1]
-    cf     = -v1228+0x1[1]
-    of     = v1231[1]
+    pf     = -v1386+0x1[1]
+    sf     = v1387[1]
+    zf     = v1388[1]
+    af     = -v1391+0x1[1]
+    cf     = -v1389+0x1[1]
+    of     = v1392[1]
 memory:
 == Symbolic ==
 registers:
@@ -7286,20 +7286,20 @@ memory:
 0x80485a3:call   eax
 == PartialSymbolic ==
 registers:
-    eax    = v1233[32]
-    ebx    = v1210-0x4[32]
-    esp    = v1232-0x4[32]
-    esi    = v1208[32]
-    edi    = v1209[32]
-    eip    = v1233[32]
-    pf     = -v1225+0x1[1]
-    sf     = v1226[1]
-    zf     = v1227[1]
-    af     = -v1230+0x1[1]
-    cf     = -v1228+0x1[1]
-    of     = v1231[1]
+    eax    = v1394[32]
+    ebx    = v1371-0x4[32]
+    esp    = v1393-0x4[32]
+    esi    = v1369[32]
+    edi    = v1370[32]
+    eip    = v1394[32]
+    pf     = -v1386+0x1[1]
+    sf     = v1387[1]
+    zf     = v1388[1]
+    af     = -v1391+0x1[1]
+    cf     = -v1389+0x1[1]
+    of     = v1392[1]
 memory:
-    addr=v1232-0x4[32] value=0x80485a5[32]
+    addr=v1393-0x4[32] value=0x80485a5[32]
 == Symbolic ==
 registers:
     eax    = {defs={}, expr=v352[32]}
@@ -7340,11 +7340,11 @@ memory:
 0x80485a5:mov    eax, DWORD PTR ds:[ebx]
 == PartialSymbolic ==
 registers:
-    eax    = v1236[32]
-    ebx    = v1235[32]
+    eax    = v1397[32]
+    ebx    = v1396[32]
     eip    = 0x80485a7[32]
 memory:
-    addr=v1235[32] value=v1236[32]
+    addr=v1396[32] value=v1397[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080485a5}, expr=v355[32]}
@@ -7364,17 +7364,17 @@ memory:
 0x80485a7:cmp    eax, 0xff<-0x01>
 == PartialSymbolic ==
 registers:
-    eax    = v1236[32]
-    ebx    = v1235[32]
+    eax    = v1397[32]
+    ebx    = v1396[32]
     eip    = 0x80485aa[32]
-    pf     = -v1252+0x1[1]
-    sf     = v1253[1]
-    zf     = v1254[1]
-    af     = -v1257+0x1[1]
-    cf     = -v1255+0x1[1]
-    of     = v1258[1]
+    pf     = -v1413+0x1[1]
+    sf     = v1414[1]
+    zf     = v1415[1]
+    af     = -v1418+0x1[1]
+    cf     = -v1416+0x1[1]
+    of     = v1419[1]
 memory:
-    addr=v1235[32] value=v1236[32]
+    addr=v1396[32] value=v1397[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080485a5}, expr=v355[32]}
@@ -7406,17 +7406,17 @@ memory:
 0x80485aa:jne    0x080485a0<<Insn>>
 == PartialSymbolic ==
 registers:
-    eax    = v1236[32]
-    ebx    = v1235[32]
-    eip    = v1259[32]
-    pf     = -v1252+0x1[1]
-    sf     = v1253[1]
-    zf     = v1254[1]
-    af     = -v1257+0x1[1]
-    cf     = -v1255+0x1[1]
-    of     = v1258[1]
+    eax    = v1397[32]
+    ebx    = v1396[32]
+    eip    = v1420[32]
+    pf     = -v1413+0x1[1]
+    sf     = v1414[1]
+    zf     = v1415[1]
+    af     = -v1418+0x1[1]
+    cf     = -v1416+0x1[1]
+    of     = v1419[1]
 memory:
-    addr=v1235[32] value=v1236[32]
+    addr=v1396[32] value=v1397[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080485a5}, expr=v355[32]}
@@ -7451,11 +7451,11 @@ memory:
 0x80485ac:pop    eax
 == PartialSymbolic ==
 registers:
-    eax    = v1262[32]
-    esp    = v1261+0x4[32]
+    eax    = v1423[32]
+    esp    = v1422+0x4[32]
     eip    = 0x80485ad[32]
 memory:
-    addr=v1261[32] value=v1262[32]
+    addr=v1422[32] value=v1423[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080485ac}, expr=v362[32]}
@@ -7475,13 +7475,13 @@ memory:
 0x80485ad:pop    ebx
 == PartialSymbolic ==
 registers:
-    eax    = v1262[32]
-    ebx    = v1264[32]
-    esp    = v1261+0x8[32]
+    eax    = v1423[32]
+    ebx    = v1425[32]
+    esp    = v1422+0x8[32]
     eip    = 0x80485ae[32]
 memory:
-    addr=v1261+0x4[32] value=v1264[32]
-    addr=v1261[32] value=v1262[32]
+    addr=v1422+0x4[32] value=v1425[32]
+    addr=v1422[32] value=v1423[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080485ac}, expr=v362[32]}
@@ -7507,15 +7507,15 @@ memory:
 0x80485ae:pop    ebp
 == PartialSymbolic ==
 registers:
-    eax    = v1262[32]
-    ebx    = v1264[32]
-    esp    = v1261+0xc[32]
-    ebp    = v1266[32]
+    eax    = v1423[32]
+    ebx    = v1425[32]
+    esp    = v1422+0xc[32]
+    ebp    = v1427[32]
     eip    = 0x80485af[32]
 memory:
-    addr=v1261+0x8[32] value=v1266[32]
-    addr=v1261+0x4[32] value=v1264[32]
-    addr=v1261[32] value=v1262[32]
+    addr=v1422+0x8[32] value=v1427[32]
+    addr=v1422+0x4[32] value=v1425[32]
+    addr=v1422[32] value=v1423[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080485ac}, expr=v362[32]}
@@ -7547,16 +7547,16 @@ memory:
 0x80485af:ret    
 == PartialSymbolic ==
 registers:
-    eax    = v1262[32]
-    ebx    = v1264[32]
-    esp    = v1261+0x10[32]
-    ebp    = v1266[32]
-    eip    = v1268[32]
+    eax    = v1423[32]
+    ebx    = v1425[32]
+    esp    = v1422+0x10[32]
+    ebp    = v1427[32]
+    eip    = v1429[32]
 memory:
-    addr=v1261+0xc[32] value=v1268[32]
-    addr=v1261+0x8[32] value=v1266[32]
-    addr=v1261+0x4[32] value=v1264[32]
-    addr=v1261[32] value=v1262[32]
+    addr=v1422+0xc[32] value=v1429[32]
+    addr=v1422+0x8[32] value=v1427[32]
+    addr=v1422+0x4[32] value=v1425[32]
+    addr=v1422[32] value=v1423[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080485ac}, expr=v362[32]}
@@ -7595,11 +7595,11 @@ memory:
 0x80485b0:push   ebp
 == PartialSymbolic ==
 registers:
-    esp    = v1271-0x4[32]
-    ebp    = v1272[32]
+    esp    = v1432-0x4[32]
+    ebp    = v1433[32]
     eip    = 0x80485b1[32]
 memory:
-    addr=v1271-0x4[32] value=v1272[32]
+    addr=v1432-0x4[32] value=v1433[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x080485b0}, expr=(add[32] v383[32] -4[32])}
@@ -7619,11 +7619,11 @@ memory:
 0x80485b1:mov    ebp, esp
 == PartialSymbolic ==
 registers:
-    esp    = v1271-0x4[32]
-    ebp    = v1271-0x4[32]
+    esp    = v1432-0x4[32]
+    ebp    = v1432-0x4[32]
     eip    = 0x80485b3[32]
 memory:
-    addr=v1271-0x4[32] value=v1272[32]
+    addr=v1432-0x4[32] value=v1433[32]
 == Symbolic ==
 registers:
     esp    = {defs={0x080485b0}, expr=(add[32] v383[32] -4[32])}
@@ -7643,13 +7643,13 @@ memory:
 0x80485b3:push   ebx
 == PartialSymbolic ==
 registers:
-    ebx    = v1273[32]
-    esp    = v1271-0x8[32]
-    ebp    = v1271-0x4[32]
+    ebx    = v1434[32]
+    esp    = v1432-0x8[32]
+    ebp    = v1432-0x4[32]
     eip    = 0x80485b4[32]
 memory:
-    addr=v1271-0x8[32] value=v1273[32]
-    addr=v1271-0x4[32] value=v1272[32]
+    addr=v1432-0x8[32] value=v1434[32]
+    addr=v1432-0x4[32] value=v1433[32]
 == Symbolic ==
 registers:
     ebx    = {defs={}, expr=v385[32]}
@@ -7675,15 +7675,15 @@ memory:
 0x80485b4:push   eax
 == PartialSymbolic ==
 registers:
-    eax    = v1274[32]
-    ebx    = v1273[32]
-    esp    = v1271-0xc[32]
-    ebp    = v1271-0x4[32]
+    eax    = v1435[32]
+    ebx    = v1434[32]
+    esp    = v1432-0xc[32]
+    ebp    = v1432-0x4[32]
     eip    = 0x80485b5[32]
 memory:
-    addr=v1271-0xc[32] value=v1274[32]
-    addr=v1271-0x8[32] value=v1273[32]
-    addr=v1271-0x4[32] value=v1272[32]
+    addr=v1432-0xc[32] value=v1435[32]
+    addr=v1432-0x8[32] value=v1434[32]
+    addr=v1432-0x4[32] value=v1433[32]
 == Symbolic ==
 registers:
     eax    = {defs={}, expr=v386[32]}
@@ -7715,16 +7715,16 @@ memory:
 0x80485b5:call   0x080485ba<<Insn>>
 == PartialSymbolic ==
 registers:
-    eax    = v1274[32]
-    ebx    = v1273[32]
-    esp    = v1271-0x10[32]
-    ebp    = v1271-0x4[32]
+    eax    = v1435[32]
+    ebx    = v1434[32]
+    esp    = v1432-0x10[32]
+    ebp    = v1432-0x4[32]
     eip    = 0x80485ba[32]
 memory:
-    addr=v1271-0x10[32] value=0x80485ba[32]
-    addr=v1271-0xc[32] value=v1274[32]
-    addr=v1271-0x8[32] value=v1273[32]
-    addr=v1271-0x4[32] value=v1272[32]
+    addr=v1432-0x10[32] value=0x80485ba[32]
+    addr=v1432-0xc[32] value=v1435[32]
+    addr=v1432-0x8[32] value=v1434[32]
+    addr=v1432-0x4[32] value=v1433[32]
 == Symbolic ==
 registers:
     eax    = {defs={}, expr=v386[32]}
@@ -7763,11 +7763,11 @@ memory:
 0x80485ba:pop    ebx
 == PartialSymbolic ==
 registers:
-    ebx    = v1277[32]
-    esp    = v1276+0x4[32]
+    ebx    = v1438[32]
+    esp    = v1437+0x4[32]
     eip    = 0x80485bb[32]
 memory:
-    addr=v1276[32] value=v1277[32]
+    addr=v1437[32] value=v1438[32]
 == Symbolic ==
 registers:
     ebx    = {defs={0x080485ba}, expr=v389[32]}
@@ -7787,17 +7787,17 @@ memory:
 0x80485bb:add    ebx, 0x0000110e
 == PartialSymbolic ==
 registers:
-    ebx    = v1277+0x110e[32]
-    esp    = v1276+0x4[32]
+    ebx    = v1438+0x110e[32]
+    esp    = v1437+0x4[32]
     eip    = 0x80485c1[32]
-    pf     = -v1293+0x1[1]
-    sf     = v1294[1]
-    zf     = v1295[1]
-    af     = v1298[1]
-    cf     = v1296[1]
-    of     = v1299[1]
+    pf     = -v1454+0x1[1]
+    sf     = v1455[1]
+    zf     = v1456[1]
+    af     = v1459[1]
+    cf     = v1457[1]
+    of     = v1460[1]
 memory:
-    addr=v1276[32] value=v1277[32]
+    addr=v1437[32] value=v1438[32]
 == Symbolic ==
 registers:
     ebx    = {defs={0x080485ba,0x080485bb}, expr=(add[32] v389[32] 4366[32])}
@@ -7829,18 +7829,18 @@ memory:
 0x80485c1:call   0x08048390<__do_global_dtors_aux>
 == PartialSymbolic ==
 registers:
-    ebx    = v1277+0x110e[32]
-    esp    = v1276[32]
+    ebx    = v1438+0x110e[32]
+    esp    = v1437[32]
     eip    = 0x8048390[32]
-    pf     = -v1293+0x1[1]
-    sf     = v1294[1]
-    zf     = v1295[1]
-    af     = v1298[1]
-    cf     = v1296[1]
-    of     = v1299[1]
+    pf     = -v1454+0x1[1]
+    sf     = v1455[1]
+    zf     = v1456[1]
+    af     = v1459[1]
+    cf     = v1457[1]
+    of     = v1460[1]
 memory:
-    addr=v1276[32] value=0x80485c6[32]
-    addr=v1276[32] value=v1277[32]
+    addr=v1437[32] value=0x80485c6[32]
+    addr=v1437[32] value=v1438[32]
 == Symbolic ==
 registers:
     ebx    = {defs={0x080485ba,0x080485bb}, expr=(add[32] v389[32] 4366[32])}
@@ -7879,11 +7879,11 @@ memory:
 0x80485c6:pop    eax
 == PartialSymbolic ==
 registers:
-    eax    = v1302[32]
-    esp    = v1301+0x4[32]
+    eax    = v1463[32]
+    esp    = v1462+0x4[32]
     eip    = 0x80485c7[32]
 memory:
-    addr=v1301[32] value=v1302[32]
+    addr=v1462[32] value=v1463[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080485c6}, expr=v396[32]}
@@ -7903,13 +7903,13 @@ memory:
 0x80485c7:pop    ebx
 == PartialSymbolic ==
 registers:
-    eax    = v1302[32]
-    ebx    = v1304[32]
-    esp    = v1301+0x8[32]
+    eax    = v1463[32]
+    ebx    = v1465[32]
+    esp    = v1462+0x8[32]
     eip    = 0x80485c8[32]
 memory:
-    addr=v1301+0x4[32] value=v1304[32]
-    addr=v1301[32] value=v1302[32]
+    addr=v1462+0x4[32] value=v1465[32]
+    addr=v1462[32] value=v1463[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080485c6}, expr=v396[32]}
@@ -7935,15 +7935,15 @@ memory:
 0x80485c8:leave  
 == PartialSymbolic ==
 registers:
-    eax    = v1302[32]
-    ebx    = v1304[32]
-    esp    = v1306+0x4[32]
-    ebp    = v1307[32]
+    eax    = v1463[32]
+    ebx    = v1465[32]
+    esp    = v1467+0x4[32]
+    ebp    = v1468[32]
     eip    = 0x80485c9[32]
 memory:
-    addr=v1306[32] value=v1307[32]
-    addr=v1301+0x4[32] value=v1304[32]
-    addr=v1301[32] value=v1302[32]
+    addr=v1467[32] value=v1468[32]
+    addr=v1462+0x4[32] value=v1465[32]
+    addr=v1462[32] value=v1463[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080485c6}, expr=v396[32]}
@@ -7975,16 +7975,16 @@ memory:
 0x80485c9:ret    
 == PartialSymbolic ==
 registers:
-    eax    = v1302[32]
-    ebx    = v1304[32]
-    esp    = v1306+0x8[32]
-    ebp    = v1307[32]
-    eip    = v1369[32]
+    eax    = v1463[32]
+    ebx    = v1465[32]
+    esp    = v1467+0x8[32]
+    ebp    = v1468[32]
+    eip    = v1530[32]
 memory:
-    addr=v1306+0x4[32] value=v1369[32]
-    addr=v1306[32] value=v1307[32]
-    addr=v1301+0x4[32] value=v1304[32]
-    addr=v1301[32] value=v1302[32]
+    addr=v1467+0x4[32] value=v1530[32]
+    addr=v1467[32] value=v1468[32]
+    addr=v1462+0x4[32] value=v1465[32]
+    addr=v1462[32] value=v1463[32]
 == Symbolic ==
 registers:
     eax    = {defs={0x080485c6}, expr=v396[32]}
