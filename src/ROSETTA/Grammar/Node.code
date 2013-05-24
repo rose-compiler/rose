@@ -146,6 +146,9 @@ public:
     unsigned get_major() const {
         return majr;
     }
+    bool is_valid() const {
+        return nbits!=0;
+    }
     RegisterDescriptor &set_major(unsigned majr) {
         this->majr = majr;
         return *this;
