@@ -163,7 +163,6 @@ SageBuilderAsm::buildMultibyteNopInstruction(int n)
 
      bool lock                               = false;
      X86RepeatPrefix repeatPrefix            = x86_repeat_none;
-     X86SegmentRegister segOverride          = x86_segreg_none;
      bool branchPredictionEnabled            = false;
      X86BranchPrediction branchPrediction    = x86_branch_prediction_none;
 
@@ -211,7 +210,6 @@ SageBuilderAsm::buildMultibyteNopInstruction(int n)
      instruction->set_lockPrefix(lock);
      instruction->set_repeatPrefix(repeatPrefix);
 
-     instruction->set_segmentOverride(segOverride);
      if (branchPredictionEnabled)
           instruction->set_branchPrediction(branchPrediction);
 

@@ -726,7 +726,7 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(X86SegmentRegister segreg,
+RiscOperators::readMemory(const RegisterDescriptor &segreg,
                           const BaseSemantics::SValuePtr &address,
                           const BaseSemantics::SValuePtr &condition,
                           size_t nbits)
@@ -735,7 +735,7 @@ RiscOperators::readMemory(X86SegmentRegister segreg,
 }
 
 void
-RiscOperators::writeMemory(X86SegmentRegister segreg,
+RiscOperators::writeMemory(const RegisterDescriptor &segreg,
                            const BaseSemantics::SValuePtr &address,
                            const BaseSemantics::SValuePtr &value,
                            const BaseSemantics::SValuePtr &condition) {

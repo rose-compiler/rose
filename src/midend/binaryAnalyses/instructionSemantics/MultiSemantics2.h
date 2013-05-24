@@ -465,10 +465,10 @@ public:
                                                       const BaseSemantics::SValuePtr &b) /*override*/;
     virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) /*override*/;
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a) /*override*/;
-    virtual BaseSemantics::SValuePtr readMemory(X86SegmentRegister sg, const BaseSemantics::SValuePtr &addr,
+    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &cond, size_t nbits) /*override*/;
-    virtual void writeMemory(X86SegmentRegister sg, const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &data,
-                             const BaseSemantics::SValuePtr &cond) /*override*/;
+    virtual void writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
+                             const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond) /*override*/;
 };
 
 } // namespace

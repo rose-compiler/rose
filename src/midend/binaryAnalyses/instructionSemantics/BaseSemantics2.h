@@ -530,7 +530,7 @@ public:
 
     /** Create a new concrete semantic value. The new value will represent the specified concrete value and have the same
      *  dynamic type as the value on which this virtual method is called. This is the most common way that a new constant is
-     *  created. */
+     *  created.  The @p number is truncated to contain @p nbits bits (higher order bits are cleared). */
     virtual SValuePtr number_(size_t nbits, uint64_t number) const = 0; // hot
 
     /** Create a new, Boolean value. The new semantic value will have the same dynamic type as the value on
@@ -1562,11 +1562,13 @@ public:
      *  delegations for this purpose. The RiscOperators might also contain other data that's import during the process, such as
      *  an SMT solver.
      *
-     *  The X86SegmentRegister argument is architecture-specific and will be removed or replaced in some future version.
+     *  The @p segreg argument is an optional segment register. Most architectures have a flat virtual address space and will
+     *  pass a default-constructed register descriptor whose is_valid() method returns false.
      *
      *  The @p cond argument is a Boolean value that indicates whether this is a true read operation. If @p cond can be proven
      *  to be false then the read is a no-op and returns an arbitrary value. */
-    virtual SValuePtr readMemory(X86SegmentRegister sg, const SValuePtr &addr, const SValuePtr &cond, size_t nbits) = 0;
+    virtual SValuePtr readMemory(const RegisterDescriptor &segreg, const SValuePtr &addr, const SValuePtr &cond,
+                                 size_t nbits) = 0;
 
 
     /** Writes a value to memory.
@@ -1574,11 +1576,13 @@ public:
      *  The implementation (in subclasses) will typically delegate much of the work to State::readMemory().  See readMemory()
      *  for more information.
      *
-     *  The X86SegmentRegister argument is architecture-specific and will be removed or replaced in some future version.
+     *  The @p segreg argument is an optional segment register. Most architectures have a flat virtual address space and will
+     *  pass a default-constructed register descriptor whose is_valid() method returns false.
      *
      *  The @p cond argument is a Boolean value that indicates whether this is a true write operation. If @p cond can be proved
      *  to be false then writeMemory is a no-op. */
-    virtual void writeMemory(X86SegmentRegister sg, const SValuePtr &addr, const SValuePtr &data, const SValuePtr &cond) = 0;
+    virtual void writeMemory(const RegisterDescriptor &segreg, const SValuePtr &addr, const SValuePtr &data,
+                             const SValuePtr &cond) = 0;
 };
 
 /*******************************************************************************************************************************
@@ -1716,6 +1720,30 @@ public:
      *  register cannot be found then an exception is thrown. */
     virtual const RegisterDescriptor& findRegister(const std::string &regname, size_t nbits=0);
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Miscellaneous methods that tend to be the same for most dispatchers
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /** Returns a register descriptor for the segment part of a memory reference expression.  Many architectures don't use
+     *  segment registers (they have a flat virtual address space), in which case the returned register descriptor's is_valid()
+     *  method returns false. */
+    virtual RegisterDescriptor segmentRegister(SgAsmMemoryReferenceExpression*);
+
+    /** Returns a memory address by evaluating the address expression.  The address expression can be either a constant or an
+     *  expression containing operators and constants.  If @p nbits is non-zero then the result is sign extended or truncated
+     *  to the specified width, otherwise the returned SValue is the natural width of the expression. */
+    virtual SValuePtr effectiveAddress(SgAsmExpression*, size_t nbits=0);
+
+    /** Reads an R-value expression.  The expression can be a constant, register reference, or memory reference.  The width of
+     *  the returned value is specified by the @p value_nbits argument.  The width of the address passed to lower-level memory
+     *  access functions is specified by @p addr_nbits.  If @p addr_nbits is zero then the natural width of the effective
+     *  address is passed to lower level functions. */
+    virtual SValuePtr read(SgAsmExpression*, size_t value_nbits, size_t addr_nbits=32);
+
+    /** Writes to an L-value expression. The expression can be a register or memory reference.  The width of the address passed
+     *  to lower-level memory access functions is specified by @p addr_nbits.  If @p addr_nbits is zero then the natural width
+     *  of the effective address is passed to lower level functions. */
+    virtual void write(SgAsmExpression*, const SValuePtr &value, size_t addr_nbits=32);
 };
 
 /*******************************************************************************************************************************

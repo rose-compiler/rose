@@ -701,6 +701,101 @@ Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/)
     return *reg;
 }
 
+SValuePtr
+Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
+{
+    BaseSemantics::SValuePtr retval;
+    if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
+        retval = effectiveAddress(mre->get_address(), nbits);
+    } else if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(e)) {
+        retval = operators->readRegister(rre->get_descriptor());
+    } else if (SgAsmBinaryAdd *op = isSgAsmBinaryAdd(e)) {
+        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
+        BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
+        if (0==nbits)
+            nbits = std::max(lhs->get_width(), rhs->get_width());
+        if (lhs->get_width() < nbits)
+            lhs = operators->signExtend(lhs, nbits);
+        if (rhs->get_width() < nbits)
+            rhs = operators->signExtend(rhs, nbits);
+        retval = operators->add(lhs, rhs);
+    } else if (SgAsmBinaryMultiply *op = isSgAsmBinaryMultiply(e)) {
+        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
+        BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
+        retval = operators->unsignedMultiply(lhs, rhs);
+    } else if (SgAsmByteValueExpression *val = isSgAsmByteValueExpression(e)) {
+        retval = operators->number_(8, SageInterface::getAsmSignedConstant(val));
+    } else if (SgAsmWordValueExpression *val = isSgAsmWordValueExpression(e)) {
+        retval = operators->number_(16, SageInterface::getAsmSignedConstant(val));
+    } else if (SgAsmDoubleWordValueExpression *val = isSgAsmDoubleWordValueExpression(e)) {
+        retval = operators->number_(32, SageInterface::getAsmSignedConstant(val));
+    } else if (SgAsmQuadWordValueExpression *val = isSgAsmQuadWordValueExpression(e)) {
+        retval = operators->number_(64, SageInterface::getAsmSignedConstant(val));
+    }
+
+    assert(retval!=NULL);
+    if (nbits!=0) {
+        if (retval->get_width() < nbits) {
+            retval = operators->signExtend(retval, nbits);
+        } else if (retval->get_width() > nbits) {
+            retval = operators->extract(retval, 0, nbits);
+        }
+    }
+
+    return retval;
+}
+
+RegisterDescriptor
+Dispatcher::segmentRegister(SgAsmMemoryReferenceExpression *mre)
+{
+    if (mre!=NULL && mre->get_segment()!=NULL) {
+        if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(mre->get_segment())) {
+            return rre->get_descriptor();
+        }
+    }
+    return RegisterDescriptor();
+}
+
+void
+Dispatcher::write(SgAsmExpression *e, const SValuePtr &value, size_t addr_nbits/*=0*/)
+{
+    assert(e!=NULL && value!=NULL);
+    if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(e)) {
+        operators->writeRegister(rre->get_descriptor(), value);
+    } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
+        SValuePtr addr = effectiveAddress(mre, addr_nbits);
+        operators->writeMemory(segmentRegister(mre), addr, value, operators->boolean_(true));
+    } else {
+        assert(!"not implemented");
+        abort();
+    }
+}
+
+SValuePtr
+Dispatcher::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*=0*/)
+{
+    assert(e!=NULL);
+    BaseSemantics::SValuePtr retval;
+    if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(e)) {
+        retval = operators->readRegister(rre->get_descriptor());
+    } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
+        BaseSemantics::SValuePtr addr = effectiveAddress(mre, addr_nbits);
+        retval = operators->readMemory(segmentRegister(mre), addr, operators->boolean_(true), value_nbits);
+    } else if (SgAsmValueExpression *ve = isSgAsmValueExpression(e)) {
+        uint64_t val = SageInterface::getAsmSignedConstant(ve);
+        retval = operators->number_(value_nbits, val);
+    } else {
+        assert(!"not implemented");
+        abort();
+    }
+    assert(retval!=NULL && retval->get_width()==value_nbits);
+    return retval;
+}
+
+
+    
+    
+
 } // namespace
 } // namespace
 } // namespace

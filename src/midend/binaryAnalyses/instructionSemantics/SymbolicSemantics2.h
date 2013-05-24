@@ -566,11 +566,11 @@ public:
                                                     const BaseSemantics::SValuePtr &b_) /*override*/;
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) /*override*/;
-    virtual BaseSemantics::SValuePtr readMemory(X86SegmentRegister sg,
+    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &cond,
                                                 size_t nbits) /*override*/;
-    virtual void writeMemory(X86SegmentRegister sg,
+    virtual void writeMemory(const RegisterDescriptor &segreg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
                              const BaseSemantics::SValuePtr &cond) /*override*/;

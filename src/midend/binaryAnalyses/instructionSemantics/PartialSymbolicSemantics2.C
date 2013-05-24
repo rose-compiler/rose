@@ -530,7 +530,7 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
 }
 
 void
-RiscOperators::writeMemory(X86SegmentRegister sg,
+RiscOperators::writeMemory(const RegisterDescriptor &segreg,
                            const BaseSemantics::SValuePtr &address,
                            const BaseSemantics::SValuePtr &value,
                            const BaseSemantics::SValuePtr &condition)
@@ -544,7 +544,7 @@ RiscOperators::writeMemory(X86SegmentRegister sg,
 }
     
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(X86SegmentRegister sg,
+RiscOperators::readMemory(const RegisterDescriptor &segreg,
                           const BaseSemantics::SValuePtr &address,
                           const BaseSemantics::SValuePtr &condition,
                           size_t nbits)

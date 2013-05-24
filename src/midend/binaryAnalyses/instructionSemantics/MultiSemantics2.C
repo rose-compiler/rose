@@ -603,21 +603,21 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(X86SegmentRegister sg, const BaseSemantics::SValuePtr &addr,
+RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
                           const BaseSemantics::SValuePtr &cond, size_t nbits)
 {
     SValuePtr retval = svalue_empty(nbits);
     SUBDOMAINS(sd, (addr, cond))
-        retval->set_subvalue(sd.idx(), sd->readMemory(sg, sd(addr), sd(cond), nbits));
+        retval->set_subvalue(sd.idx(), sd->readMemory(segreg, sd(addr), sd(cond), nbits));
     return retval;
 }
 
 void
-RiscOperators::writeMemory(X86SegmentRegister sg, const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &data,
-                           const BaseSemantics::SValuePtr &cond)
+RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
+                           const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond)
 {
     SUBDOMAINS(sd, (addr, data, cond))
-        sd->writeMemory(sg, sd(addr), sd(data), cond);
+        sd->writeMemory(segreg, sd(addr), sd(data), cond);
 }
 
 } // namespace
