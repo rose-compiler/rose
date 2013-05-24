@@ -229,6 +229,10 @@ HEADER_SCOPE_STATEMENT_START
 
      public:
 
+#if 0
+       // DQ (5/23/2013): Put the get_symbol_table() function back to being public so that we can proceed with testing.  
+       // This fails for the GNU 4.4 compiler only. Sort it out later.
+
        // DQ (5/21/2013): These function require access to the private symbol table support so that they can support the AST merge functionality.
           friend void deleteSetErrorCheck( SgProject* project, const std::set<SgNode*> & listToDelete );
        // friend void addAssociatedNodes ( SgExpression* expression, std::set<SgNode*> & nodeList, bool markMemberNodesDefinedToBeDeleted );
@@ -265,7 +269,7 @@ HEADER_SCOPE_STATEMENT_START
        // DQ (5/21/2013): Support for the outliner.
           friend void ASTtools::moveStatements (SgBasicBlock* src, SgBasicBlock* dest);
           friend void ASTtools::collectLocalVisibleVarSyms (const SgStatement* root,const SgStatement* target,VarSymSet_t& syms);
-
+#endif
 
 
        // Since we suppress the generation of the constructors we have to declare them explicitly
@@ -546,6 +550,10 @@ HEADER_SCOPE_STATEMENT_END
 
 HEADER_STATEMENT_POSTDECLARATION_START
 
+#if 0
+       // DQ (5/23/2013): Put the get_symbol_table() function back to being public so that we can proceed with testing.  
+       // This fails for the GNU 4.4 compiler only. Sort it out later.
+
 // DQ (5/21/2013): Inserted forward namespace declaration, so that we can reference the namespace 
 // in the friend functions of the SgScopeStatement.  It appears hat this is not allowed.
 namespace SageInterface
@@ -568,6 +576,7 @@ namespace ASTtools
      void moveStatements (SgBasicBlock* src, SgBasicBlock* dest);
      void collectLocalVisibleVarSyms (const SgStatement* root,const SgStatement* target,VarSymSet_t& syms);
    }
+#endif
 
 
 // DQ (12/30/2009): This has been moved from SOURCE_MAIN_STATEMENT to
