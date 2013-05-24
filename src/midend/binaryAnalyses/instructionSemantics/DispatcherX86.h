@@ -11,8 +11,9 @@ typedef boost::shared_ptr<class DispatcherX86> DispatcherX86Ptr;
 class DispatcherX86: public BaseSemantics::Dispatcher {
 protected:
     explicit DispatcherX86(const BaseSemantics::RiscOperatorsPtr &ops): BaseSemantics::Dispatcher(ops) {
-        iproc_init();
+        set_register_dictionary(RegisterDictionary::dictionary_i386());
         regcache_init();
+        iproc_init();
     }
 
     /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */

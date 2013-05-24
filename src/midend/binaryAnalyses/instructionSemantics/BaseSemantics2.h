@@ -1617,12 +1617,11 @@ public:
  *  together. */
 class Dispatcher: public boost::enable_shared_from_this<Dispatcher> {
 protected:
-    const RegisterDictionary *regdict;          /**< See set_register_dictionary(). */
     RiscOperatorsPtr operators;
+    const RegisterDictionary *regdict;          /**< See set_register_dictionary(). */
 
-    explicit Dispatcher(const RiscOperatorsPtr &ops): operators(ops) {
+    explicit Dispatcher(const RiscOperatorsPtr &ops): operators(ops), regdict(NULL) {
         assert(operators!=NULL);
-        regdict = RegisterDictionary::dictionary_i386();
     }
 
     // Dispatchers keep a table of all the kinds of instructions they can handle.  The lookup key is typically some sort of
