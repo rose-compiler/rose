@@ -128,7 +128,8 @@ namespace BinaryAnalysis { // documented elsewhere
                 /** Invoked for the x86 INT instruction. */
                 void interrupt(uint8_t) {}
 
-                /** Invoked for the x86 SYSENTER instruction. */
+                /** Invoked for the x86 SYSENTER instruction.  Note: the semantics API2 uses interrupt() for the x86 SYSENTER
+                 *  instruction. */
                 void sysenter() {}
 
                 /** Adds two integers. */

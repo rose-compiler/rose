@@ -110,13 +110,7 @@ State::discard_popped_memory()
  *******************************************************************************************************************************/
 
 void
-RiscOperators::interrupt(uint8_t inum)
-{
-    get_state()->clear();
-}
-
-void
-RiscOperators::sysenter()
+RiscOperators::interrupt(int majr, int minr)
 {
     get_state()->clear();
 }

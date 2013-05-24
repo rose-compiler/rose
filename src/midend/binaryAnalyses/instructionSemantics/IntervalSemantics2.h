@@ -322,8 +322,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override methods from base class.  These are the RISC operators that are invoked by a Dispatcher.
 public:
-    virtual void interrupt(uint8_t inum) /*override*/;
-    virtual void sysenter() /*override*/;
     virtual BaseSemantics::SValuePtr and_(const BaseSemantics::SValuePtr &a_,
                                           const BaseSemantics::SValuePtr &b_) /*override*/;
     virtual BaseSemantics::SValuePtr or_(const BaseSemantics::SValuePtr &a_,

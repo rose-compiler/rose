@@ -171,13 +171,8 @@ MemoryState::writeMemory(const BaseSemantics::SValuePtr &address, const BaseSema
  *******************************************************************************************************************************/
 
 void
-RiscOperators::interrupt(uint8_t inum)
+RiscOperators::interrupt(int majr, int minr)
 {
-    get_state()->clear();
-}
-
-void
-RiscOperators::sysenter() {
     get_state()->clear();
 }
 

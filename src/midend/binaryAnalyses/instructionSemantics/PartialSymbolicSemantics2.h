@@ -270,8 +270,7 @@ public:
     /** @} */
 
 public:
-    virtual void interrupt(uint8_t inum) /*override*/;
-    virtual void sysenter() /*override*/;
+    virtual void interrupt(int majr, int minr) /*override*/;
     virtual BaseSemantics::SValuePtr and_(const BaseSemantics::SValuePtr &a_,
                                           const BaseSemantics::SValuePtr &b_) /*override*/;
     virtual BaseSemantics::SValuePtr or_(const BaseSemantics::SValuePtr &a_,

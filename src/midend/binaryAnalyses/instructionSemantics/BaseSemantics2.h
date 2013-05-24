@@ -1379,12 +1379,6 @@ public:
     /** Invoked for the x86 RDTSC instruction. FIXME: x86-specific stuff should be in the dispatcher. */
     virtual SValuePtr rdtsc() { return undefined_(64); }
 
-    /** Invoked for the x86 INT instruction. FIXME: x86-specific stuff should be in the dispatcher. */
-    virtual void interrupt(uint8_t) {}
-
-    /** Invoked for the x86 SYSENTER instruction. FIXME: x86-specific stuff should be in the dispatcher. */
-    virtual void sysenter() {};
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Boolean Operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1508,6 +1502,15 @@ public:
 
     /** Multiply two unsigned values. The width of the result is the sum of the widths of @p a and @p b. */
     virtual SValuePtr unsignedMultiply(const SValuePtr &a, const SValuePtr &b) = 0;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Interrupt and system calls
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /** Invoked for instructions that cause an interrupt.  The major and minor numbers are architecture specific.  For
+     *  instance, an x86 INT instruction uses major number zero and the minor number is the interrupt number (e.g., 0x80 for
+     *  Linux system calls), while an x86 SYSENTER instruction uses major number one. */
+    virtual void interrupt(int majr, int minr) {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  State Accessing Operations

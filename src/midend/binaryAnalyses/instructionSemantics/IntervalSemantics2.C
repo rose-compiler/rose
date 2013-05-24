@@ -163,14 +163,6 @@ MemoryState::writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemanti
  *                                      RISC operators
  *******************************************************************************************************************************/
 
-void
-RiscOperators::interrupt(uint8_t)
-{}
-
-void
-RiscOperators::sysenter() {
-}
-
 BaseSemantics::SValuePtr
 RiscOperators::and_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
 {

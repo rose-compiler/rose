@@ -596,7 +596,7 @@ struct IP_int: P {
         SgAsmByteValueExpression *bv = isSgAsmByteValueExpression(args[0]);
         if (!bv)
             throw BaseSemantics::Exception("operand must be a byte value expression", insn);
-        ops->interrupt(bv->get_value());
+        ops->interrupt(0, bv->get_value());
     }
 };
 
@@ -1135,7 +1135,7 @@ struct IP_sub: P {
 struct IP_sysenter: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        ops->sysenter();
+        ops->interrupt(1, 0); // 1 indicates a SYSENTER instruction as opposed to an INT instruction
     }
 };
 
