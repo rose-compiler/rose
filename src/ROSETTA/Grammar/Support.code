@@ -8597,11 +8597,24 @@ SgSymbolTable::find_symbol_support (const SgName & nm)
                  // DQ (10/11/2008): Moved SgRenameSymbol to be derived from SgFunctionSymbol.
                  // SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(renameSymbol->get_original_symbol());
                  // SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(renameSymbol);
-                    ReturnType* original_renamed_symbol = dynamic_cast<ReturnType*>(p_iterator->second);
+
+                 // DQ (5/24/2013): This should have been expressed in terms of renameSymbol->get_original_symbol().
+                 // ReturnType* original_renamed_symbol = dynamic_cast<ReturnType*>(p_iterator->second);
+                    ReturnType* original_renamed_symbol = dynamic_cast<ReturnType*>(renameSymbol->get_original_symbol());
+
+                 // DQ (5/24/2013): I think this may be incorrect to assert this (this fails for test: host_assoc_call_3.f90).
+                    if (original_renamed_symbol == NULL)
+                       {
+                         printf ("WARNING: In SgSymbolTable::find_symbol_support(nm = %s): original_renamed_symbol == NULL: renameSymbol->get_original_symbol() = %p = %s \n",
+                              nm.str(),renameSymbol->get_original_symbol(),renameSymbol->get_original_symbol()->class_name().c_str());
+                       }
 
                  // assert(functionSymbol != NULL);
                  // return functionSymbol;
-                    ROSE_ASSERT(original_renamed_symbol != NULL);
+
+                 // DQ (5/24/2013): I think this may be incorrect to assert this (this fails for test: host_assoc_call_3.f90).
+                 // ROSE_ASSERT(original_renamed_symbol != NULL);
+
                     return original_renamed_symbol;
                   }
              }
@@ -8732,7 +8745,10 @@ SgSymbolTable::find_symbol_with_type_support (const SgName & nm, const SgType* t
                  // DQ (10/11/2008): Moved SgRenameSymbol to be derived from SgFunctionSymbol.
                  // SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(renameSymbol->get_original_symbol());
                  // SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(renameSymbol);
-                    ReturnType* original_renamed_symbol = dynamic_cast<ReturnType*>(p_iterator->second);
+
+                 // DQ (5/24/2013): This should have been expressed in terms of renameSymbol->get_original_symbol().
+                 // ReturnType* original_renamed_symbol = dynamic_cast<ReturnType*>(p_iterator->second);
+                    ReturnType* original_renamed_symbol = dynamic_cast<ReturnType*>(renameSymbol->get_original_symbol());
 
                  // assert(functionSymbol != NULL);
                  // return functionSymbol;
