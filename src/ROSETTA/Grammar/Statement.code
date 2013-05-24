@@ -514,8 +514,13 @@ HEADER_SCOPE_STATEMENT_START
 
        // DQ (1/21/2013): Added test for equivalents (e.g. namespace definitions that might be different IR nodes, but for an equivalent namespace).
           static bool isEquivalentScope( SgScopeStatement* scope1, SgScopeStatement* scope2);
-
+#if 0
+  // DQ (5/23/2013): We want to make this private, and this works for C/C++, but not yet for Fortran (at least).
      private:
+#else
+  // DQ (5/23/2013): Restore this as public so that I can get the C/C++ work tested in Jenkins and fixup the Fortran support afterward.
+     public:
+#endif
        // DQ (5/21/2013): This function is removed from the SgScopeStatement API as a public member function.
        // It is replaced in the SgScopeStatement as a soon to be private member function.  This is done to 
        // support hiding the namespace symbol table handling behind the SgScopeStatement level of support.
