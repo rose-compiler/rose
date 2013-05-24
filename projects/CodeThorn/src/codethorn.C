@@ -22,6 +22,8 @@
 #include "Miscellaneous.h"
 #include "AttributeAnnotator.h"
 #include "AstTerm.h"
+#include "SgNodeHelper.h"
+#include "rose.h"
 
 namespace po = boost::program_options;
 using namespace CodeThorn;
@@ -35,14 +37,43 @@ private:
   SgNode* _node;
 };
 
-void attachAnalysisResults(SgNode* node) {
+class PointerExprListAnnotation : public AnalysisResultAttribute {
+public:
+  PointerExprListAnnotation(SgNode* node) : _node(node) {
+	//std::cout<<"DEBUG:generated: "+pointerExprToString(node)+"\n";
+  }
+  string getPreInfoString() { 
+	if(true||isSgAssignOp(_node))
+	  return "// POINTEREXPR: "+pointerExprToString(_node);
+	else
+	  return "x";
+  }
+  string getPostInfoString() { return ""; }
+private:
+  SgNode* _node;
+};
+
+void attachTermRepresentation(SgNode* node) {
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
 	if(SgStatement* stmt=dynamic_cast<SgStatement*>(*i)) {
-	  // use default for tests
 	  AstAttribute* ara=new TermRepresentation(stmt);
-	  // TODO: use specialized CodeThorn::AnalysisResult inheriting from AnalysisResultAttribute;
-	  stmt->setAttribute("codethorn-value-analysis",ara);
+	  stmt->setAttribute("codethorn-term-representation",ara);
+	}
+  }
+}
+
+void attachPointerExprLists(SgNode* node) {
+  RoseAst ast(node);
+  for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
+	SgStatement* stmt=0;
+	// SgVariableDeclaration is necessary to allow for pointer initialization
+	if((stmt=dynamic_cast<SgExprStatement*>(*i))
+	   ||(stmt=dynamic_cast<SgVariableDeclaration*>(*i))
+	   ||(stmt=dynamic_cast<SgReturnStmt*>(*i))
+	   ) {
+	  AstAttribute* ara=new PointerExprListAnnotation(stmt);
+	  stmt->setAttribute("codethorn-pointer-expr-lists",ara);
 	}
   }
 }
@@ -833,10 +864,13 @@ int main( int argc, char * argv[] ) {
   } // skip-analysis end
   
   if (boolOptions["annotate-results"]) {
+	// TODO: it might be useful to be able to select certain analysis results to be only annotated
 	cout << "INFO: Annotating analysis results."<<endl;
-	attachAnalysisResults(sageProject);
+	attachTermRepresentation(sageProject);
+	attachPointerExprLists(sageProject);
 	AnalysisResultAnnotator ara;
-	ara.annotateAnalysisResultAttributesAsComments(sageProject,"codethorn-value-analysis");
+	ara.annotateAnalysisResultAttributesAsComments(sageProject,"codethorn-term-representation");
+	ara.annotateAnalysisResultAttributesAsComments(sageProject,"codethorn-pointer-expr-lists");
 	cout << "INFO: Generating annotated program."<<endl;
 	//backend(sageProject);
 	sageProject->unparse(0,0);

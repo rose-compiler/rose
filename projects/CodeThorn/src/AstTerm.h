@@ -15,6 +15,7 @@ using namespace std;
 std::string nodeTypeName(SgNode* node);
 std::string astTermToMultiLineString(SgNode* node,int sep=1, int pos=0);
 std::string astTermWithNullValuesToString(SgNode* node);
+std::string pointerExprToString(SgNode* node);
 std::string astTermWithNullValuesToDot(SgNode* root);
 std::string astTermWithoutNullValuesToDot(SgNode* root);
 std::string dotFragmentToDot(string fragment);

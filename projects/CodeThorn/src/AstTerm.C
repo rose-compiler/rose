@@ -4,6 +4,9 @@
 
 #include "AstTerm.h"
 #include <iostream>
+#include "SgNodeHelper.h"
+
+using namespace CodeThorn;
 
 std::string nodeTypeName(SgNode* node) {
   if(node==0) {
@@ -57,6 +60,92 @@ std::string astTermWithNullValuesToString(SgNode* node) {
       s+=astTermWithNullValuesToString(child);
     }
     s+=")";
+  }
+  return s;
+}
+
+std::string pointerExprToString(SgNode* node) {
+  // MS: TODO: type check is required to ensure the expression is indeed a pointer expression
+  // e.g. for return 0 it produces "null" even if the integer 0 is returned.
+#if 0
+  // does not work anymore in new branch
+  if(SgNodeHelper::isCond(node)) {
+	return string("COND ")+pointerExprToString(SgNodeHelper::getFirstChild(node));
+  }
+#endif
+
+  if(isSgExprListExp(node)) {
+	return string("EXPRLIST ")+"["+pointerExprToString(SgNodeHelper::getFirstChild(node))+"]"; 
+  }
+  if(isSgDeleteExp(node)) {
+	return string("DELETE ")+"["+pointerExprToString(SgNodeHelper::getFirstChild(node))+"]"; 
+  }
+  if(isSgReturnStmt(node)) {
+	return string("RETURN ")+"["+pointerExprToString(SgNodeHelper::getFirstChild(node))+"]"; 
+  }
+  if(dynamic_cast<SgBinaryOp*>(node)) {
+	string lhs=pointerExprToString(SgNodeHelper::getLhs(node));
+	string rhs=pointerExprToString(SgNodeHelper::getRhs(node));
+	string result="["+lhs+"]["+rhs+"]";
+	if(isSgEqualityOp(node))
+	  return string("CMPEQ ")+result;
+	else if(isSgNotEqualOp(node))
+	  return string("CMPNEQ ")+result;
+	else if(isSgLessOrEqualOp(node))
+	  return string("CMPLEQ ")+result;
+	else if(isSgLessThanOp(node))
+	  return string("CMPLT ")+result;
+	else if(isSgGreaterOrEqualOp(node))
+	  return string("CMPGEQ ")+result;
+	else if(isSgGreaterThanOp(node))
+	  return string("CMPGT ")+result;
+  }
+
+  if(node==0)
+    return ""; // null
+  if(isSgNewExp(node))
+	return "\"new\"";
+  if(SgIntVal* intVal=isSgIntVal(node)) {
+	if(intVal->get_value()==0)
+	  return "\"null\"";
+	else
+	  return "";
+  }
+  if(isSgReturnStmt(node)) {
+	pointerExprToString(SgNodeHelper::getFirstChild(node));
+  }
+  if(SgVarRefExp* varRefExp=isSgVarRefExp(node))
+	return "\""+SgNodeHelper::symbolToString(SgNodeHelper::getSymbolOfVariable(varRefExp))+"\" ";
+
+  string s;
+  if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
+	SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
+	string lhs="\""+SgNodeHelper::symbolToString(SgNodeHelper::getSymbolOfInitializedName(initName))+"\"";
+	
+#if 1
+	string rhs=pointerExprToString(SgNodeHelper::getFirstChild(initName));
+#else
+	// this fails in new branch (but should not?)
+	assert(initName->get_initializer());
+	SgExpression* initExp=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(varDecl);
+	string rhs=pointerExprToString(initExp);
+#endif
+	return string("DECLINIT ")+"["+lhs+"]["+rhs+"]";
+  }
+
+  int arity=node->get_numberOfTraversalSuccessors();
+  if(arity>0) {
+	if(isSgAssignOp(node)) {
+	  string lhs=pointerExprToString(SgNodeHelper::getLhs(node));
+	  string rhs=pointerExprToString(SgNodeHelper::getRhs(node));
+	  return string("ASSIGN ")+"["+lhs+"]["+rhs+"]";
+	}
+    for(int i=0; i<arity;i++) {
+      SgNode* child = node->get_traversalSuccessorByIndex(i);   
+      //if(i!=0) 
+	  //	s+=",";
+      s+=pointerExprToString(child);
+    }
   }
   return s;
 }
