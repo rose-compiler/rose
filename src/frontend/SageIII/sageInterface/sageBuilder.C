@@ -1274,7 +1274,9 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
      if (initName->get_scope() == NULL)
         {
        // Make this a warning for the few places where this fails.
+#if 0
           printf ("WARNING: Note in buildVariableDeclaration_nfi(): initName->get_scope() == NULL \n");
+#endif
         }
   // ROSE_ASSERT(initName->get_scope() != NULL);
 
@@ -4448,8 +4450,9 @@ SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return
           SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(first_nondefining_declaration);
 
           ROSE_ASSERT(first_nondefining_declaration != NULL);
+#if 0
           printf ("In buildDefiningFunctionDeclaration(): first_nondefining_declaration->get_declarationModifier().isFriend() = %s \n",first_nondefining_declaration->get_declarationModifier().isFriend() ? "true" : "false");
-
+#endif
        // func = buildDefiningFunctionDeclaration_T<SgTemplateInstantiationFunctionDecl>(name,return_type,paralist,/* isMemberFunction = */ false,scope,decoratorList,0,templateInstantiationFunctionDecl);
        // func = buildDefiningFunctionDeclaration_T<SgTemplateInstantiationFunctionDecl>(name,return_type,paralist,/* isMemberFunction = */ false,scope,decoratorList,0,templateInstantiationFunctionDecl, templateArgumentsList);
           func = buildDefiningFunctionDeclaration_T<SgTemplateInstantiationFunctionDecl>(name,return_type,paralist,/* isMemberFunction = */ false,scope,decoratorList,0,templateInstantiationFunctionDecl, templateArgumentsList);
@@ -9522,8 +9525,9 @@ SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednames
           ROSE_ASSERT(mysymbol);
           scope->insert_symbol(name, mysymbol);
 #endif
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("@@@@@@@@@@@@@@ In buildNamespaceDeclaration_nfi(): setting scope of defining and non-defining declaration to scope = %s \n",scope->class_name().c_str());
-
+#endif
           // tps namespace has no scope
           //defdecl->set_scope(scope);
           //nondefdecl->set_scope(scope);
@@ -10543,7 +10547,7 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
   // DQ (11/20/2011): This is for initial debugging only.
      ROSE_ASSERT(scope != NULL);
 
-#if 1
+#if 0
      printf ("SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(): XXX_name = %s scope = %p = %s \n",XXX_name.str(),scope,scope->class_name().c_str());
 #endif
 
@@ -10585,7 +10589,7 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
        // break the existing interface. Need to discuss this with Liao.
           printf ("Warning: In SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(): scope == NULL \n");
         }
-#if 1
+#if 0
      printf ("In SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
 #endif
 
@@ -10754,7 +10758,7 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
        // Build a SgTemplateClassSymbol and put it into the specified scope.
           if (scope != NULL)
              {
-#if 1
+#if 0
                printf ("Building a SgTemplateSymbol using nameWithTemplateSpecializationArguments = %s and nondefdecl = %p = %s \n",nameWithTemplateSpecializationArguments.str(),nondefdecl,nondefdecl->class_name().c_str());
 #endif
             // DQ (12/21/2011): We want to use a newer design that derives the SgTemplateClassDeclaration from the SgClassDeclaration.
@@ -10780,7 +10784,7 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
             // DQ (9/12/2012): We want to include the template specialization into the name where it is required.
             // scope->insert_symbol(name, mysymbol);
                scope->insert_symbol(nameWithTemplateSpecializationArguments, mysymbol);
-#if 1
+#if 0
                printf ("SageBuilder::buildNondefiningTemplateClassDeclaration_nfi() (after building symbol): scope = %p = %s \n",scope,scope->class_name().c_str());
 #endif
                ROSE_ASSERT(nondefdecl->get_scope() != NULL);

@@ -53,7 +53,9 @@ fixupFunctionDefaultArguments( SgNode* node )
             else
              {
             // DQ (4/25/2013): Output at least a warning message.
+#if 0
                printf ("WARNING: In fixupFunctionDefaultArguments(): This is not a proper AST, default arguments not processed... \n");
+#endif
              }
         }
        else

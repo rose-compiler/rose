@@ -4125,7 +4125,10 @@ void
 TestMangledNames::visit ( SgNode* node )
    {
      ROSE_ASSERT(node != NULL);
-  // printf ("node = %p = %s \n",node,node->class_name().c_str());
+
+#if 0
+     printf ("In TestMangledNames::visit(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
 
   // DQ (1/12/13): Added to support detection of scopes that have been deleted.
      bool isDeletedNode = false;
@@ -4246,6 +4249,17 @@ TestMangledNames::visit ( SgNode* node )
 #endif
           if (decl != NULL)
              {
+               if (decl->class_name() == "SgNode")
+                  {
+                    printf ("ERROR: decl = %p was previously deleted \n",decl);
+                    ROSE_ASSERT(false);
+                  }
+            // DQ (5/25/2013): This is failing for the astInterface tests: deepDelete.C
+               if (decl->get_scope() == NULL)
+                  {
+                 // printf ("ERROR: TestMangledNames::visit(): decl = %p = %s \n",decl,decl != NULL ? decl->class_name().c_str() : "null");
+                    printf ("ERROR: TestMangledNames::visit(): decl = %p \n",decl);
+                  }
                ROSE_ASSERT(decl->get_scope() != NULL);
 #if 0
                printf ("TestMangledNames::visit(): decl->get_scope() = %p = %s \n",decl->get_scope(),decl->get_scope()->class_name().c_str());
@@ -4255,6 +4269,11 @@ TestMangledNames::visit ( SgNode* node )
                   {
                     isDeletedNode = true;
                   }
+             }
+            else
+             {
+            // DQ (5/25/2013): Added this case to set isDeletedNode = true when decl == NULL.
+               isDeletedNode = true;
              }
 
        // SgScopeStatement* scope = type->getCurrentScope();
@@ -4277,8 +4296,13 @@ TestMangledNames::visit ( SgNode* node )
              }
             else
              {
-               ROSE_ASSERT(decl != NULL);
-               printf ("WARNING: evaluation of the mangled name for a declaration in a scope = %p that has been deleted is being skipped! \n",decl->get_scope());
+            // DQ (5/25/2013): Fixed SgType::getAssociatedDeclaration() to return NULL when we detect that the declaration was deleted (e.g. when decl->class_name() == "SgNode").
+            // ROSE_ASSERT(decl != NULL);
+            // printf ("WARNING: evaluation of the mangled name for a declaration in a scope = %p that has been deleted is being skipped! \n",decl->get_scope());
+               if (decl != NULL)
+                  {
+                    printf ("WARNING: evaluation of the mangled name for a declaration in a scope = %p that has been deleted is being skipped! \n",decl->get_scope());
+                  }
              }
        // printf ("Test generated mangledName for node = %p = %s = %s \n",node,node->class_name().c_str(),mangledName.c_str());
         }

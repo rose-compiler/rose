@@ -144,7 +144,7 @@ generatedCodeExamples = \
   rose_inputinsertBeforeUsingCommaOp.C \
   rose_inputinsertAfterUsingCommaOp.C \
   rose_inputdeepCopy.C \
-  rose_inputbuildJavaPackage
+  rose_inputbuildJavaPackage.C
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -158,13 +158,17 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
     rose_inputbuildLabelStatement2.f
 endif
 
+VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
+# VALGRIND = valgrind $(VALGRIND_OPTIONS)
+VALGRIND =
+
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
 TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3
 
 rose_inputfixVariableReferences.C:fixVariableReferences
 	./fixVariableReferences$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputfixVariableReferences.C
 rose_inputdeepDelete.C:deepDelete
-	./deepDelete$(EXEEXT) $(TEST_CXXFLAGS) -rose:detect_dangling_pointers 1 -c $(srcdir)/inputdeepDelete.C
+	$(VALGRIND) ./deepDelete$(EXEEXT) $(TEST_CXXFLAGS) -rose:detect_dangling_pointers 1 -c $(srcdir)/inputdeepDelete.C
 rose_inputBlank1.C:buildFunctionDeclaration
 	./buildFunctionDeclaration$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputBlank1.C
 rose_inputBlank2.C:buildNondefiningFunction
@@ -326,8 +330,9 @@ rose_inputRemoveStatementCommentRelocation.C: removeStatementCommentRelocation $
 	./removeStatementCommentRelocation$(EXEEXT) $(TEST_CXXFLAGS) -c -I$(srcdir) $(srcdir)/inputRemoveStatementCommentRelocation_withoutTopandBottomBoundingStatement.C
 
 rose_inputbuildJavaPackage.C:buildJavaPackage
-	./buildJavaPackage$(EXEEXT) $(TEST_CXXFLAGS) -I$(srcdir) -c $(srcdir)/inputbuildJavaPackage.C 
-
+	./buildJavaPackage$(EXEEXT) $(TEST_CXXFLAGS) -I$(srcdir) -c $(srcdir)/inputbuildJavaPackage.C
+#	DQ (5/25/2013): The buildJavaPackage.C translator does not generate a file (nothing is unparsed), so build an empty file.
+#	touch rose_inputbuildJavaPackage.C
 
 # MUST keep this up-to-date!!
 EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDeclaration.C \

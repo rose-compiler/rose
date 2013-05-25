@@ -1101,10 +1101,10 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
 #if 0
                     curprint ( string("\n/* In unparseClassType: info.forceQualifiedNames() = ") + ((info.forceQualifiedNames() == true) ? "true" : "false") + " */ \n");
                  // curprint ( "\n/* cdecl->get_need_name_qualifier() = " + (cdecl->get_need_name_qualifier() == true ? "true" : "false") + " */ \n";
-                    curprint ( string("\n/* cdecl->get_scope() = ") + cdecl->get_scope()->class_name() + " */\n ");
-                    curprint ( string("\n/* info.get_current_namespace() = ") + ((info.get_current_namespace() != NULL) ? info.get_current_namespace()->class_name() : "no namespace in use") + " */\n ";
-                    curprint ( string("\n/* info.get_declstatement_ptr() = ") + ((info.get_declstatement_ptr() != NULL) ? info.get_declstatement_ptr()->class_name() : "no declaration statement being generated") + " */\n ";
-                 // curprint ( "\n/* SageInterface::get_name(info.get_declstatement_ptr()) = " + ((info.get_declstatement_ptr() != NULL) ? SageInterface::get_name(info.get_declstatement_ptr()) : "no declaration statement available") + " */\n ";
+                    curprint ( string("\n/* decl->get_scope() = ") + decl->get_scope()->class_name() + " */\n ");
+                    curprint ( string("\n/* info.get_current_namespace() = ") + ((info.get_current_namespace() != NULL) ? info.get_current_namespace()->class_name() : "no namespace in use") + " */\n ");
+                    curprint ( string("\n/* info.get_declstatement_ptr() = ") + ((info.get_declstatement_ptr() != NULL) ? info.get_declstatement_ptr()->class_name() : "no declaration statement being generated") + " */\n ");
+                 // curprint ( "\n/* SageInterface::get_name(info.get_declstatement_ptr()) = " + ((info.get_declstatement_ptr() != NULL) ? SageInterface::get_name(info.get_declstatement_ptr()) : "no declaration statement available") + " */\n ");
 #endif
 
                  // info.display("In unparseClassType: The C++ support is more complex and can require qualified names");
@@ -1289,7 +1289,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                     curprint("{");
                     if (classdefn_stmt == NULL)
                        {
-                         printf ("Error: In unparseClassType(): classdefn_stmt = NULL cdecl = %p = %s \n",decl,decl->get_name().str());
+                         printf ("Error: In unparseClassType(): classdefn_stmt = NULL decl = %p = %s \n",decl,decl->get_name().str());
                        }
                     ROSE_ASSERT(classdefn_stmt != NULL);
 #if 0
@@ -1341,6 +1341,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
 
 #if 0
      printf ("Leaving Unparse_Type::unparseClassType \n");
+     curprint("/* Leaving Unparse_Type::unparseClassType */ \n");
 #endif
    }
 
