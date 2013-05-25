@@ -1278,6 +1278,11 @@ test2013_181.C \
 test2013_182.C \
 test2013_183.C \
 test2013_184.C \
+test2013_186.C \
+test2013_187.C \
+test2013_188.C \
+test2013_189.C \
+test2013_190.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
