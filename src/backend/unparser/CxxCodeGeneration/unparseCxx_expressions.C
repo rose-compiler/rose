@@ -260,6 +260,8 @@ Unparse_ExprStmt::unparseTemplateName(SgTemplateInstantiationDecl* templateInsta
        // DQ (4/18/2005): We would like to avoid output of "<>" if possible so verify that there are template arguments
           ROSE_ASSERT(templateArgListPtr.size() > 0);
 
+#error "DEAD CODE!"
+
           unp->u_exprStmt->curprint ( "< ");
           SgTemplateArgumentPtrList::const_iterator i = templateArgListPtr.begin();
           while (i != templateArgListPtr.end())
@@ -289,6 +291,17 @@ Unparse_ExprStmt::unparseTemplateFunctionName(SgTemplateInstantiationFunctionDec
      unp->u_exprStmt->curprint(templateInstantiationFunctionDeclaration->get_templateName().str());
 
      unparseTemplateArgumentList(templateInstantiationFunctionDeclaration->get_templateArguments(),info);
+   }
+
+void
+Unparse_ExprStmt::unparseTemplateMemberFunctionName(SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDeclaration, SgUnparse_Info& info)
+   {
+  // DQ (5/25/2013): Generated this function to match that of unparseTemplateFunctionName().
+     ROSE_ASSERT (templateInstantiationMemberFunctionDeclaration != NULL);
+
+     unp->u_exprStmt->curprint(templateInstantiationMemberFunctionDeclaration->get_templateName().str());
+
+     unparseTemplateArgumentList(templateInstantiationMemberFunctionDeclaration->get_templateArguments(),info);
    }
 
 void
@@ -336,8 +349,9 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
 
      if (!templateArgListPtr.empty())
         {
-       // printf ("templateArgListPtr->size() = %zu \n",templateArgListPtr->size());
-
+#if 0
+          printf ("templateArgListPtr.size() = %zu \n",templateArgListPtr.size());
+#endif
        // DQ (4/18/2005): We would like to avoid output of "<>" if possible so verify that there are template arguments
           ROSE_ASSERT(templateArgListPtr.size() > 0);
 
@@ -367,6 +381,10 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
 
           unp->u_exprStmt->curprint(" > ");
         }
+
+#if 0
+     printf ("Leaving Unparse_ExprStmt::unparseTemplateArgumentList(): CRITICAL FUNCTION TO BE REFACTORED \n");
+#endif
    }
 
 void
@@ -1416,7 +1434,7 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
 
 #if 0
      printf ("In unparseFuncRefSupport(): uses_operator_syntax = %s \n",uses_operator_syntax ? "true" : "false");
-     curprint (string("\n /* Inside of unparseFuncRef: uses_operator_syntax = ") + (uses_operator_syntax ? "true" : "false") + " */ \n");
+     curprint (string("\n /* Inside of unparseFuncRefSupport: uses_operator_syntax = ") + (uses_operator_syntax ? "true" : "false") + " */ \n");
 #endif
 
   // If we have previously computed a name for this function (because it was a templated function 
@@ -1428,21 +1446,24 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
      bool usingGeneratedNameQualifiedFunctionNameString = false;
      string functionNameString;
 
-#if 1
   // DQ (6/4/2011): Support for output of generated string for type (used where name 
   // qualification is required for subtypes (e.g. template arguments)).
      SgNode* nodeReferenceToFunction = info.get_reference_node_for_qualification();
      if (nodeReferenceToFunction != NULL)
         {
-       // printf ("rrrrrrrrrrrr In unparseFuncRefSupport() output type generated name: nodeReferenceToFunction = %p = %s SgNode::get_globalTypeNameMap().size() = %zu \n",nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
-
+#if 0
+          printf ("rrrrrrrrrrrr In unparseFuncRefSupport() output type generated name: nodeReferenceToFunction = %p = %s SgNode::get_globalTypeNameMap().size() = %zu \n",
+               nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
+#endif
           std::map<SgNode*,std::string>::iterator i = SgNode::get_globalTypeNameMap().find(nodeReferenceToFunction);
           if (i != SgNode::get_globalTypeNameMap().end())
              {
                usingGeneratedNameQualifiedFunctionNameString = true;
 
                functionNameString = i->second.c_str();
-            // printf ("ssssssssssssssss Found type name in SgNode::get_globalTypeNameMap() typeNameString = %s for nodeReferenceToType = %p = %s \n",functionNameString.c_str(),nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str());
+#if 0
+               printf ("ssssssssssssssss Found type name in SgNode::get_globalTypeNameMap() typeNameString = %s for nodeReferenceToType = %p = %s \n",functionNameString.c_str(),nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str());
+#endif
              }
         }
        else
@@ -1454,7 +1475,6 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
        // printf ("WARNING: In unparseType(): nodeReferenceToFunction = NULL \n");
        // ROSE_ASSERT(false);
         }
-#endif
 
 #if 0
      printf ("In unparseFuncRef(): usingGeneratedNameQualifiedFunctionNameString = %s \n",usingGeneratedNameQualifiedFunctionNameString ? "true" : "false");
@@ -1735,6 +1755,64 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
      mfd->get_specialFunctionModifier().display("In unparseMFuncRef: specialFunctionModifier");
 #endif
 
+  // If we have previously computed a name for this function (because it was a templated function 
+  // with template arguments that required name qualification) then output the name directly.
+
+  // DQ (6/21/2011): This controls if we output the generated name of the type (required to 
+  // support name qualification of subtypes) or if we unparse the type from the AST (where 
+  // name qualification of subtypes is not required).
+     bool usingGeneratedNameQualifiedFunctionNameString = false;
+     string functionNameString;
+
+  // DQ (6/4/2011): Support for output of generated string for type (used where name 
+  // qualification is required for subtypes (e.g. template arguments)).
+     SgNode* nodeReferenceToFunction = info.get_reference_node_for_qualification();
+     if (nodeReferenceToFunction != NULL)
+        {
+#if 0
+          printf ("rrrrrrrrrrrr In unparseMFuncRefSupport() output type generated name: nodeReferenceToFunction = %p = %s SgNode::get_globalTypeNameMap().size() = %zu \n",
+               nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
+#endif
+          std::map<SgNode*,std::string>::iterator i = SgNode::get_globalTypeNameMap().find(nodeReferenceToFunction);
+          if (i != SgNode::get_globalTypeNameMap().end())
+             {
+               usingGeneratedNameQualifiedFunctionNameString = true;
+
+               functionNameString = i->second.c_str();
+#if 0
+               printf ("ssssssssssssssss Found type name in SgNode::get_globalTypeNameMap() typeNameString = %s for nodeReferenceToType = %p = %s \n",
+                    functionNameString.c_str(),nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str());
+#endif
+             }
+        }
+       else
+        {
+       // DQ (6/23/2011): Make this a warning since the tests/CompileTests/OpenMP_tests/alignment.c fails in the tests/roseTests/ompLoweringTests directory.
+       // This also happens for the tests/roseTests/programAnalysisTests/testPtr1.C when run by the tests/roseTests/programAnalysisTests/PtrAnalTest tool.
+
+       // printf ("ERROR: In unparseType(): nodeReferenceToFunction = NULL \n");
+       // printf ("WARNING: In unparseType(): nodeReferenceToFunction = NULL \n");
+       // ROSE_ASSERT(false);
+        }
+
+#if 0
+     printf ("In unparseMFuncRef(): usingGeneratedNameQualifiedFunctionNameString = %s \n",usingGeneratedNameQualifiedFunctionNameString ? "true" : "false");
+#endif
+
+     if (usingGeneratedNameQualifiedFunctionNameString == true)
+        {
+       // Output the previously generated type name contianing the correct name qualification of subtypes (e.g. template arguments).
+       // curprint ("/* output the function in unparseFuncRef() */");
+
+          curprint(functionNameString);
+       // curprint ("/* DONE: output the function in unparseFuncRef() */");
+        }
+       else
+        {
+       // This is the code that was always used before the addition of type names generated from where name qualification of subtypes are required.
+
+       // Start of old code (not yet intended properly).
+
   // qualified name is always outputed except when the p_need_qualifier is
   // set to 0 (when the naming class is identical to the selection class, and
   // and when we aren't suppressing the virtual function mechanism).
@@ -1978,7 +2056,59 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                          printf ("In unparseMFuncRefSupport(): function name IS output \n");
                          curprint("/* In unparseMFuncRefSupport(): function name IS output */ \n");
 #endif
+#if 0
+                      // DQ (5/25/2013): This is the older version of the code.
                          curprint(" " + func_name + " ");
+#else
+                      // DQ (5/25/2013): Added support to unparse the template arguments seperately from the member function name (which should NOT 
+                      // include the template arguments when unparsing). Note the the template arguments in the name are important for the generation
+                      // of mangled names for use in symbol tabls, but that we need to output the member function name and it's template arguments 
+                      // seperately so that they name qulification can be computed and saved in the name qualification name maps.
+
+                      // Note that this code below is a copy of that from the support for unpasing the SgTemplateInstantiationFunctionDecl (in function above).
+
+                         SgDeclarationStatement* declaration = mfd;
+
+                      // DQ (6/21/2011): Support for new name qualification (output of generated function name).
+                         ROSE_ASSERT(declaration != NULL);
+                      // printf ("Inside of Unparse_ExprStmt::unparseFuncRef(): declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+#if 0
+                      // DQ (4/15/2013): If there is other debug output turned on then nesting of comments inside of comments can occur in this output (see test2007_17.C).
+                         curprint (string("\n /* In unparseMFuncRef(): put out func_name = ") + func_name + " */ \n ");
+#endif
+                      // If this is a template then the name will include template arguments which require name qualification and the name 
+                      // qualification will depend on where the name is referenced in the code.  So we have generate the non-canonical name 
+                      // with all possible qualifications and save it to be reused by the unparser when it unparses the tempated function name.
+                         SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(declaration);
+                         if (templateInstantiationMemberFunctionDecl != NULL)
+                            {
+#if 0
+                              printf ("In unparseMFuncRef(): declaration->get_declarationModifier().isFriend() = %s \n",declaration->get_declarationModifier().isFriend() ? "true" : "false");
+                           // printf ("In unparseMFuncRef(): diff = %d \n",diff);
+#endif
+                           // if ( (declaration->get_declarationModifier().isFriend() == false) && (diff == 0) )
+                              if (declaration->get_declarationModifier().isFriend() == false)
+                                 {
+#if 0
+                                   printf ("Regenerate the name func_name = %s \n",func_name.c_str());
+                                   printf ("templateInstantiationMemberFunctionDecl->get_templateName() = %s \n",templateInstantiationMemberFunctionDecl->get_templateName().str());
+#endif
+                                   unparseTemplateMemberFunctionName(templateInstantiationMemberFunctionDecl,info);
+                                 }
+                                else
+                                 {
+                                // This case supports test2004_77.C
+
+                                   printf ("WARNING: In unparseMFuncRef(): No name qualification permitted in this case! (not clear if this case if important for unparseMFuncRef(), as it was for unparseFuncRef()) \n");
+
+                                   curprint (func_name);
+                                 }
+                            }
+                           else
+                            {
+                              curprint (func_name);
+                            }
+#endif
                        }
                       else
                        {
@@ -2032,6 +2162,9 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
           unp->u_debug->printDebugInfo("unparseMFuncRef, Function Name: ", false);
           unp->u_debug->printDebugInfo(func_name.c_str(), true);
 #endif
+        }
+
+       // End of old code (not yet intended properly).
         }
 
 #if 0

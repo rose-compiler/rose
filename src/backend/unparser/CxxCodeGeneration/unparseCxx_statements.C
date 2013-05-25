@@ -1372,7 +1372,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnp
 
   // curprint("/* Output in curprint in Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt() */");
 
-#if OUTPUT_DEBUGGING_CLASS_NAME || 0
+#if OUTPUT_DEBUGGING_CLASS_NAME || 1
      printf ("Inside of unparseTemplateInstantiationDeclStmt() stmt = %p/%p name = %s  templateName = %s transformed = %s/%s prototype = %s compiler-generated = %s compiler-generated and marked for output = %s \n",
           classDeclaration,templateInstantiationDeclaration,
           templateInstantiationDeclaration->get_name().str(),
@@ -3089,6 +3089,118 @@ Unparse_ExprStmt::trimGlobalScopeQualifier ( string qualifiedName )
    }
 
 
+#if 0
+void
+Unparse_ExprStmt::unparseGeneratedTemplateArgumentsList (SgName unqualifiedName, SgName qualifiedName, SgLocatedNode* locatedNode, SgUnparse_Info& info)
+   {
+  // DQ (5/25/2013): For statements that unparse with a template argument list, we need to refactor 
+  // the support for unparsing the template argument list when it is computed with associated 
+  // name qualification.  This supposrt is redundantly represented in the unparsing of the
+  // SgClassType.
+
+     bool isTemplateWithTemplateArgumentList = true;
+
+     printf ("unparseGeneratedTemplateArgumentsList(): This function is not yet called \n");
+     ROSE_ASSERT(false);
+
+  // DQ (6/25/2011): Fixing name qualifiction to work with unparseToString().  In this case we don't 
+  // have an associated node to reference as a way to lookup the strored name qualification.  In this 
+  // case we return a fully qualified name.
+     if (info.get_reference_node_for_qualification() == NULL)
+        {
+#if 1
+          printf ("WARNING: In unparseClassType(): info.get_reference_node_for_qualification() == NULL (assuming this is for unparseToString() \n");
+#endif
+       // SgName nameQualifierAndType = class_type->get_qualified_name();
+          SgName nameQualifierAndType = qualifiedName;
+          curprint(nameQualifierAndType.str());
+        }
+       else
+        {
+       // DQ (6/2/2011): Newest support for name qualification...
+#if 1
+          printf ("info.get_reference_node_for_qualification() = %p = %s \n",info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
+#endif
+          SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
+#if 1
+          printf ("nameQualifier (from initializedName->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
+#endif
+
+          SgName nm = unqualifiedName;
+#if 0
+       // printf ("nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
+       // curprint ("\n/* nameQualifier (from unp->u_name->generateNameQualifier function) = " + nameQualifier + " */ \n ";
+          curprint (nameQualifier.str());
+          SgName nm = class_type->get_name();
+
+#error "DEAD CODE!"
+          if (nm.getString() != "")
+             {
+            // printf ("Output qualifier of current types to the name = %s \n",nm.str());
+               curprint ( nm.getString() + " ");
+             }
+#endif
+       // SgName nameQualifier = unp->u_name->generateNameQualifierForType( type , info );
+#if 0
+          printf ("In unparseClassType: nameQualifier (from initializedName->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
+       // curprint ( string("\n/* In unparseClassType: nameQualifier (from unp->u_name->generateNameQualifier function) = ") + nameQualifier + " */ \n ");
+#endif
+          curprint(nameQualifier.str());
+
+       // SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(decl);
+       // if (isSgTemplateInstantiationDecl(decl) != NULL)
+          if (isTemplateWithTemplateArgumentList == true)
+             {
+            // Handle case of class template instantiation (code located in unparse_stmt.C)
+#if 1
+               curprint ("/* Calling unparseTemplateName */ \n ");
+#endif
+#if 0
+               printf ("In unparseClassType: calling unparseTemplateName() for templateInstantiationDeclaration = %p \n",templateInstantiationDeclaration);
+#endif
+               SgUnparse_Info ninfo(info);
+
+            // DQ (5/7/2013): This fixes the test2013_153.C test code.
+               if (ninfo.isTypeFirstPart() == true)
+                  {
+#if 0
+                    printf ("In unparseClassType(): resetting isTypeFirstPart() == false \n");
+#endif
+                    ninfo.unset_isTypeFirstPart();
+                  }
+
+               if (ninfo.isTypeSecondPart() == true)
+                  {
+#if 0
+                    printf ("In unparseClassType(): resetting isTypeSecondPart() == false \n");
+#endif
+                    ninfo.unset_isTypeSecondPart();
+                  }
+
+            // DQ (5/7/2013): I think these should be false so that the full type will be output.
+               ROSE_ASSERT(ninfo.isTypeFirstPart()  == false);
+               ROSE_ASSERT(ninfo.isTypeSecondPart() == false);
+
+            // unp->u_exprStmt->unparseTemplateName(templateInstantiationDeclaration,info);
+            // unp->u_exprStmt->unparseTemplateName(templateInstantiationDeclaration,ninfo);
+            // unp->u_exprStmt->unparseTemplateName(locatedNode,ninfo);
+#if 1
+               curprint ("/* DONE: Calling unparseTemplateName (commented out) */ \n ");
+#endif
+             }
+            else
+             {
+               curprint ( string(nm.str()) + " ");
+#if 1
+               printf ("class type name: nm = %s \n",nm.str());
+#endif
+             }
+        }
+   }
+#endif
+
+
+
 void
 Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
@@ -3612,7 +3724,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 void
 Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
      printf ("Inside of unparseVarDeclStmt(%p) \n",stmt);
   // ROSE_ASSERT(info.get_current_scope() != NULL);
   // printf ("An the current scope is (from info): info.get_current_scope() = %p = %s = %s \n",info.get_current_scope(),info.get_current_scope()->class_name().c_str(),SageInterface::get_name(info.get_current_scope()).c_str());
@@ -3999,7 +4111,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // just one (the more general one) even though it is only used for global name qualification.
             // DQ (8/20/2006): We can't mark the SgType (since it is shared), and we can't mark the SgInitializedName,
             // so we have to carry the information that we should mark the type in the SgVariableDeclaration.
-            // printf ("vardecl_stmt->get_requiresNameQualification() = %s \n",vardecl_stmt->get_requiresNameQualification() ? "true" : "false");
+#if 0
+               printf ("vardecl_stmt->get_requiresGlobalNameQualificationOnType() = %s \n",vardecl_stmt->get_requiresGlobalNameQualificationOnType() ? "true" : "false");
+#endif
             // ROSE_ASSERT(vardecl_stmt->get_requiresGlobalNameQualificationOnType() == true);
                if (vardecl_stmt->get_requiresGlobalNameQualificationOnType() == true)
                   {
