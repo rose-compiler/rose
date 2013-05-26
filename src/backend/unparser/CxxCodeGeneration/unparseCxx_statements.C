@@ -4455,6 +4455,10 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                     printf ("Unparse the initializer = %p = %s \n",tmp_init,tmp_init->class_name().c_str());
 #endif
+                 // DQ (5/26/2013): Added support for name qualification.
+                    statementInfo.set_reference_node_for_qualification(tmp_init);
+                    ROSE_ASSERT(statementInfo.get_reference_node_for_qualification() != NULL);
+
                  // curprint (string("/* Unparse the initializer */ \n"));
                  // unparseExpression(tmp_init, ninfo);
                     unparseExpression(tmp_init, statementInfo);
@@ -6295,8 +6299,8 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 
        // The name of the type (X, in the following example) has to appear after the 
        // declaration. Example: struct { int a; } X;
-       // curprint(typedef_stmt->get_name().str());
-          curprint(string("/* before 2nd part */ ") + typedef_stmt->get_name().str());
+          curprint(typedef_stmt->get_name().str());
+       // curprint(string("/* before 2nd part */ ") + typedef_stmt->get_name().str());
 
           ninfo.set_isTypeSecondPart();
 
