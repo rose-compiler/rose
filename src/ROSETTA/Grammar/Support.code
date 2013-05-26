@@ -17369,7 +17369,8 @@ SgTemplateArgument::get_qualified_name_prefix() const
   //    SgBaseClass
   //    SgTemplateArgument
 
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+// #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+#if 0
   // DQ (9/27/2012): This does appear to be called in processing test2004_127.C.
      printf ("This is not called see the function: SgTemplateArgument::get_qualified_name_prefix_for_type() \n");
 #endif

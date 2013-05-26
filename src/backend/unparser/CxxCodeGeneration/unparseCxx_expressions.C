@@ -318,7 +318,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
   // DQ (8/24/2012): Print this out a little less often; but still enough so that we know to fix this later.
      static int counter = 0;
-     if (counter++ % 1 == 0)
+     if (counter++ % 100 == 0)
         {
           printf ("In Unparse_ExprStmt::unparseTemplateArgumentList(): CRITICAL FUNCTION TO BE REFACTORED \n");
         }
