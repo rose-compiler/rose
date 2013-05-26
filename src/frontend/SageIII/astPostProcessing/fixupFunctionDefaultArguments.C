@@ -141,7 +141,10 @@ fixupFunctionDefaultArguments( SgNode* node )
             else
              {
             // DQ (4/25/2013): Output at least a warning message.
+#if 0
+            // DQ (5/25/2013): Comment out this warning message since I think it is causing the binaryAnalysis tests to fail.
                printf ("WARNING: In fixupFunctionDefaultArguments(): This function handles only SgProject and SgFile IR nodes as input, default arguments not processed... \n");
+#endif
              }
         }
    }

@@ -1717,7 +1717,8 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
             // DQ (5/3/2012): Allow this for now, but make it a warning.
                if (s->get_templateDeclaration() == NULL)
                   {
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+// #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+#if 0
                     printf ("WARNING: case V_SgTemplateInstantiationMemberFunctionDecl: templateDeclaration == NULL (some templates are unavailable in EDG). \n");
 #endif
                   }
@@ -4602,7 +4603,9 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                     SgNode* parent = support->get_parent();
                     if (parent == NULL)
                        {
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+// DQ (5/25/2013): Commented out for now, too much output spew.
+// #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+#if 0
                          printf ("Warning: detected SgTemplateParameter without parent set properly at %p = %s parent is currently NULL \n",support,support->class_name().c_str());
 #endif
                        }
@@ -5090,8 +5093,10 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                          SgTemplateInstantiationDecl* templateInstantiationDecl = isSgTemplateInstantiationDecl(templateArgument->get_parent());
                          if (templateInstantiationDecl != NULL)
                             {
-                           // DQ (3/6/2007): This is soemthing to investigate.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+                           // DQ (3/6/2007): This is somwthing to investigate.
+// DQ (5/25/2013): Commented out for now, too much output spew.
+// #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+#if 0
                               printf ("SgTemplateArgument is not in parent's child list, node: %p = %s = %s parent: %p = %s = %s \n",
                                    node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str(),SageInterface::get_name(parent).c_str());
                               printf ("templateInstantiationDecl->get_definingDeclaration() = %p templateInstantiationDecl->get_firstNondefiningDeclaration() = %p \n",
