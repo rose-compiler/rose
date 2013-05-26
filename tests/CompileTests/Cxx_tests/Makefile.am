@@ -1283,6 +1283,10 @@ test2013_187.C \
 test2013_188.C \
 test2013_189.C \
 test2013_190.C \
+test2013_191.C \
+test2013_192.C \
+test2013_193.C \
+test2013_194.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1311,10 +1315,6 @@ test2004_35.C
 
 # DQ (5/26/2013): Currently faling tests:
 CURRENTLY_FAILING_TESTS = \
-test2013_191.C \
-test2013_192.C \
-test2013_193.C \
-test2013_194.C \
 test2013_195.C \
 test2013_196.C 
 

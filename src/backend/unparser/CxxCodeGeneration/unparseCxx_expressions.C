@@ -63,66 +63,66 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
                unparseBinaryExpr(expr, info); break; 
              }
 
-       // case EXPRESSION_ROOT: { unparseExprRoot(expr, info); break; }
-       // case EXPR_LIST: { unparseExprList(expr, info); break; }
-          case VAR_REF: { unparseVarRef(expr, info); break; }
-          case CLASSNAME_REF: { unparseClassRef(expr, info); break; }
-          case FUNCTION_REF: { unparseFuncRef(expr, info); break; }
-          case MEMBER_FUNCTION_REF: { unparseMFuncRef(expr, info); break; }
-          case UNSIGNED_INT_VAL: { unparseUIntVal(expr, info); break; }
-          case LONG_INT_VAL: { unparseLongIntVal(expr, info); break; }
-          case LONG_LONG_INT_VAL: { unparseLongLongIntVal(expr, info); break; }
+       // case EXPRESSION_ROOT:       { unparseExprRoot(expr, info); break; }
+       // case EXPR_LIST:             { unparseExprList(expr, info); break; }
+          case VAR_REF:               { unparseVarRef(expr, info); break; }
+          case CLASSNAME_REF:         { unparseClassRef(expr, info); break; }
+          case FUNCTION_REF:          { unparseFuncRef(expr, info); break; }
+          case MEMBER_FUNCTION_REF:   { unparseMFuncRef(expr, info); break; }
+          case UNSIGNED_INT_VAL:      { unparseUIntVal(expr, info); break; }
+          case LONG_INT_VAL:          { unparseLongIntVal(expr, info); break; }
+          case LONG_LONG_INT_VAL:     { unparseLongLongIntVal(expr, info); break; }
           case UNSIGNED_LONG_LONG_INT_VAL: { unparseULongLongIntVal(expr, info); break; }
           case UNSIGNED_LONG_INT_VAL: { unparseULongIntVal(expr, info); break; }
-          case FLOAT_VAL: { unparseFloatVal(expr, info); break; }
-          case LONG_DOUBLE_VAL: { unparseLongDoubleVal(expr, info); break; }
+          case FLOAT_VAL:             { unparseFloatVal(expr, info); break; }
+          case LONG_DOUBLE_VAL:       { unparseLongDoubleVal(expr, info); break; }
        // Liao, 6/18/2008 , UPC identifiers 
-          case UPC_THREADS: { unparseUpcThreads(expr, info); break; }
-          case UPC_MYTHREAD: { unparseUpcMythread(expr, info); break; }
-          case FUNC_CALL: { unparseFuncCall(expr, info); break; }
-          case POINTST_OP: { unparsePointStOp(expr, info); break; }
-          case RECORD_REF: { unparseRecRef(expr, info); break; }
-          case DOTSTAR_OP: { unparseDotStarOp(expr, info); break; }
-          case ARROWSTAR_OP: { unparseArrowStarOp(expr, info); break; }
-          case EQ_OP: { unparseEqOp(expr, info); break; }
-          case LT_OP: { unparseLtOp(expr, info); break; }
-          case GT_OP: { unparseGtOp(expr, info); break; }
-          case NE_OP: { unparseNeOp(expr, info); break; }
-          case LE_OP: { unparseLeOp(expr, info); break; }
-          case GE_OP: { unparseGeOp(expr, info); break; }
-          case ADD_OP: { unparseAddOp(expr, info); break; }
-          case SUBT_OP: { unparseSubtOp(expr, info); break; }
-          case MULT_OP: { unparseMultOp(expr, info); break; }
-          case DIV_OP: { unparseDivOp(expr, info); break; }
-          case INTEGER_DIV_OP: { unparseIntDivOp(expr, info); break; }
-          case MOD_OP: { unparseModOp(expr, info); break; }
-          case AND_OP: { unparseAndOp(expr, info); break; }
-          case OR_OP: { unparseOrOp(expr, info); break; }
-          case BITXOR_OP: { unparseBitXOrOp(expr, info); break; }
-          case BITAND_OP: { unparseBitAndOp(expr, info); break; }
-          case BITOR_OP: { unparseBitOrOp(expr, info); break; }
-          case COMMA_OP: { unparseCommaOp(expr, info); break; }
-          case LSHIFT_OP: { unparseLShiftOp(expr, info); break; }
-          case RSHIFT_OP: { unparseRShiftOp(expr, info); break; }
-          case UNARY_MINUS_OP: { unparseUnaryMinusOp(expr, info); break; }
-          case UNARY_ADD_OP: { unparseUnaryAddOp(expr, info); break; }
+          case UPC_THREADS:           { unparseUpcThreads(expr, info); break; }
+          case UPC_MYTHREAD:          { unparseUpcMythread(expr, info); break; }
+          case FUNC_CALL:             { unparseFuncCall(expr, info); break; }
+          case POINTST_OP:            { unparsePointStOp(expr, info); break; }
+          case RECORD_REF:            { unparseRecRef(expr, info); break; }
+          case DOTSTAR_OP:            { unparseDotStarOp(expr, info); break; }
+          case ARROWSTAR_OP:          { unparseArrowStarOp(expr, info); break; }
+          case EQ_OP:                 { unparseEqOp(expr, info); break; }
+          case LT_OP:                 { unparseLtOp(expr, info); break; }
+          case GT_OP:                 { unparseGtOp(expr, info); break; }
+          case NE_OP:                 { unparseNeOp(expr, info); break; }
+          case LE_OP:                 { unparseLeOp(expr, info); break; }
+          case GE_OP:                 { unparseGeOp(expr, info); break; }
+          case ADD_OP:                { unparseAddOp(expr, info); break; }
+          case SUBT_OP:               { unparseSubtOp(expr, info); break; }
+          case MULT_OP:               { unparseMultOp(expr, info); break; }
+          case DIV_OP:                { unparseDivOp(expr, info); break; }
+          case INTEGER_DIV_OP:        { unparseIntDivOp(expr, info); break; }
+          case MOD_OP:                { unparseModOp(expr, info); break; }
+          case AND_OP:                { unparseAndOp(expr, info); break; }
+          case OR_OP:                 { unparseOrOp(expr, info); break; }
+          case BITXOR_OP:             { unparseBitXOrOp(expr, info); break; }
+          case BITAND_OP:             { unparseBitAndOp(expr, info); break; }
+          case BITOR_OP:              { unparseBitOrOp(expr, info); break; }
+          case COMMA_OP:              { unparseCommaOp(expr, info); break; }
+          case LSHIFT_OP:             { unparseLShiftOp(expr, info); break; }
+          case RSHIFT_OP:             { unparseRShiftOp(expr, info); break; }
+          case UNARY_MINUS_OP:        { unparseUnaryMinusOp(expr, info); break; }
+          case UNARY_ADD_OP:          { unparseUnaryAddOp(expr, info); break; }
 
           case SIZEOF_OP:             { unparseSizeOfOp(expr, info); break; }
           case UPC_LOCAL_SIZEOF_EXPR: { unparseUpcLocalSizeOfOp(expr, info); break; }
           case UPC_BLOCK_SIZEOF_EXPR: { unparseUpcBlockSizeOfOp(expr, info); break; }
           case UPC_ELEM_SIZEOF_EXPR:  { unparseUpcElemSizeOfOp(expr, info); break; }
 
-          case TYPEID_OP: { unparseTypeIdOp(expr, info); break; }
-          case NOT_OP: { unparseNotOp(expr, info); break; }
-          case DEREF_OP: { unparseDerefOp(expr, info); break; }
-          case ADDRESS_OP: { unparseAddrOp(expr, info); break; }
-          case MINUSMINUS_OP: { unparseMinusMinusOp(expr, info); break; }
-          case PLUSPLUS_OP: { unparsePlusPlusOp(expr, info); break; }
-          case BIT_COMPLEMENT_OP: { unparseBitCompOp(expr, info); break; }
-          case REAL_PART_OP: { unparseRealPartOp(expr, info); break; }
-          case IMAG_PART_OP: { unparseImagPartOp(expr, info); break; }
-          case CONJUGATE_OP: { unparseConjugateOp(expr, info); break; }
-          case EXPR_CONDITIONAL: { unparseExprCond(expr, info); break; }
+          case TYPEID_OP:               { unparseTypeIdOp(expr, info); break; }
+          case NOT_OP:                  { unparseNotOp(expr, info); break; }
+          case DEREF_OP:                { unparseDerefOp(expr, info); break; }
+          case ADDRESS_OP:              { unparseAddrOp(expr, info); break; }
+          case MINUSMINUS_OP:           { unparseMinusMinusOp(expr, info); break; }
+          case PLUSPLUS_OP:             { unparsePlusPlusOp(expr, info); break; }
+          case BIT_COMPLEMENT_OP:       { unparseBitCompOp(expr, info); break; }
+          case REAL_PART_OP:            { unparseRealPartOp(expr, info); break; }
+          case IMAG_PART_OP:            { unparseImagPartOp(expr, info); break; }
+          case CONJUGATE_OP:            { unparseConjugateOp(expr, info); break; }
+          case EXPR_CONDITIONAL:        { unparseExprCond(expr, info); break; }
           case CAST_OP:                 { unparseCastOp(expr, info); break; }
           case ARRAY_OP:                { unparseArrayOp(expr, info); break; }
           case NEW_OP:                  { unparseNewOp(expr, info); break; }
@@ -165,7 +165,7 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
 
        // DQ (7/21/2012): This is only called if we process C++ code using the Cxx11 option.
        // This can be demonstrated on test2012_133.C (any maybe many other places too).
-          case TEMPLATE_PARAMETER_VAL: { unparseTemplateParameterValue(expr, info); break; }
+          case TEMPLATE_PARAMETER_VAL:  { unparseTemplateParameterValue(expr, info); break; }
 
           default:
              {
@@ -301,7 +301,24 @@ Unparse_ExprStmt::unparseTemplateMemberFunctionName(SgTemplateInstantiationMembe
 
      unp->u_exprStmt->curprint(templateInstantiationMemberFunctionDeclaration->get_templateName().str());
 
-     unparseTemplateArgumentList(templateInstantiationMemberFunctionDeclaration->get_templateArguments(),info);
+  // DQ (5/26/2013): test2013_194.C demonstrates that we need to drop the template argument list for the case of a constructor (I think).
+  // I think that this applies to constructors, destructors, and conversion operators, but I am not sure...
+  // unparseTemplateArgumentList(templateInstantiationMemberFunctionDeclaration->get_templateArguments(),info);
+     bool isConstructor        = templateInstantiationMemberFunctionDeclaration->get_specialFunctionModifier().isConstructor();
+     bool isDestructor         = templateInstantiationMemberFunctionDeclaration->get_specialFunctionModifier().isDestructor();
+     bool isConversionOperator = templateInstantiationMemberFunctionDeclaration->get_specialFunctionModifier().isConversion();
+
+  // DQ (5/26/2013): Output output the template argument list when this is not a constructor, destructor, or conversion operator.
+     bool skipTemplateArgumentList = (isConstructor == true || isDestructor == true || isConversionOperator == true);
+
+#if 0
+     printf ("In unparseTemplateMemberFunctionName(): skipTemplateArgumentList = %s \n",skipTemplateArgumentList ? "true" : "false");
+#endif
+
+     if (skipTemplateArgumentList == false)
+        {
+          unparseTemplateArgumentList(templateInstantiationMemberFunctionDeclaration->get_templateArguments(),info);
+        }
    }
 
 void
@@ -3140,7 +3157,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                          if (con_init != NULL && unp->u_sage->isOneElementList(con_init))
                             {
                               unp->u_debug->printDebugInfo("entering unp->u_sage->unparseOneElemConInit", true);
-#if 0
+#if 1
                               curprint("\n/* unp->u_sage->unparseOneElemConInit in unparseFuncCall */ \n"); 
 #endif
                               unparseOneElemConInit(con_init, newinfo);
@@ -3148,7 +3165,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                             }
                            else
                             {
-#if 0
+#if 1
                               curprint("\n/* unparseExpression in args processing in unparseFuncCall */ \n");
 #endif
                            // printf ("unparseExpression in args processing in unparseFuncCall \n");
@@ -4321,12 +4338,15 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
   // This should have been set from wherever it is called.
   // ROSE_ASSERT(newinfo.get_reference_node_for_qualification() != NULL);
 
+#if 0
   // DQ (3/17/2005): Ignoring ned_name in favor of is_explicit_cast!
   // if (con_init->get_need_name() == true)
      if ((con_init->get_need_name() == true) && (con_init->get_is_explicit_cast() == true) )
         {
        // for foo(B())
           SgName nm;
+
+#error "DEAD CODE!"
 
        // DQ (12/4/2003): Added assertion (one of these is required!)
        // ROSE_ASSERT (con_init->get_declaration() != NULL || con_init->get_class_decl() != NULL);
@@ -4338,6 +4358,8 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
        // now indicates when both pointers are NULL (else they should be valid pointers).
        // ROSE_ASSERT (con_init->get_declaration() != NULL && con_init->get_class_decl() != NULL);
 
+#error "DEAD CODE!"
+
           ROSE_ASSERT ( con_init->get_associated_class_unknown() == true || 
                         con_init->get_declaration() != NULL || 
                         con_init->get_class_decl() != NULL);
@@ -4345,11 +4367,13 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
        // DQ (4/27/2006): Maybe we can finally assert this!
        // ROSE_ASSERT ( con_init->get_associated_class_unknown() == true);
 
+#error "DEAD CODE!"
+
        // DQ (8/5/2005): Now this logic is greatly simplified! Unforntunately not!
        // DQ (6/1/2011): It can't be this simple since con_init->get_declaration() 
        // can be NULL where in a struct there is no constructor defined.
 #if 0
-          printf ("con_init->get_declaration() = %s \n",con_init->get_declaration() ? "true" : "false");
+          printf ("con_init->get_declaration() = %p \n",con_init->get_declaration());
        // curprint ( "\n /* con_init->get_declaration() = " + string(con_init->get_declaration() ? "valid" : "null") + " pointer */ \n");
 #endif
           if (con_init->get_declaration() != NULL)
@@ -4357,7 +4381,172 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
             // DQ (6/1/2011): Newest refactored support for name qualification.
             // nm = con_init->get_declaration()->get_qualified_name();
                SgName nameQualifier = con_init->get_qualified_name_prefix();
+
+#error "DEAD CODE!"
+
+#if 0
+               printf ("In unparseConInit(): nameQualifier = %s \n",nameQualifier.str());
+               printf ("In unparseConInit(): con_init->get_declaration()->get_name() = %s \n",con_init->get_declaration()->get_name().str());
+#endif
                nm = nameQualifier + con_init->get_declaration()->get_name();
+             }
+            else
+             {
+
+#error "DEAD CODE!"
+
+#if 0
+               printf ("con_init->get_class_decl() = %s \n",con_init->get_class_decl() ? "true" : "false");
+#endif
+               if (con_init->get_class_decl() != NULL)
+                  {
+                 // DQ (6/1/2011): Newest refactored support for name qualification.
+                 // nm = con_init->get_class_decl()->get_qualified_name();
+
+#error "DEAD CODE!"
+
+                    SgName nameQualifier = con_init->get_qualified_name_prefix();
+#if 0
+                    printf ("In Unparse_ExprStmt::unparseConInit(): con_init->get_declaration() == NULL -- nameQualifier = %s \n",nameQualifier.str());
+#endif
+                    nm = nameQualifier + con_init->get_class_decl()->get_name();
+                  }
+              // DQ (8/4/2012): We need this case to handle tests such as test2012_162.C.
+              // DQ (3/29/2012): For EDG 4.x it appear we need a bit more since both con_init->get_declaration() and con_init->get_class_decl() can be NULL (see test2012_52.C).
+                 else
+                  {
+#if 0
+                    printf ("Need to handle new case for where both con_init->get_declaration() and con_init->get_class_decl() can be NULL \n");
+                    printf ("Get name of type = %p = %s name = %s \n",con_init->get_type(),con_init->get_type()->class_name().c_str(),"NOT EVALUATED YET");
+#endif
+                    unp->u_type->unparseType(con_init->get_type(),newinfo);
+
+#error "DEAD CODE!"
+
+                 // ROSE_ASSERT ( nm.is_null() == false );
+                  }
+             }
+
+#if 0
+          printf ("In Unparse_ExprStmt::unparseConInit(): nm = %s \n",nm.str());
+#endif
+
+       // DQ (8/4/2012): Commented out this test since we output the type name using unparseType() for the case of a primative type.
+       // ROSE_ASSERT ( nm.is_null() == false );
+
+#error "DEAD CODE!"
+
+       // printf ("In Unparse_ExprStmt::unparseConInit: info.PrintName() = %s nm = %s \n",info.PrintName() ? "true" : "false",nm.str());
+       // curprint ( "\n /* Debugging In Unparse_ExprStmt::unparseConInit: nm = " + nm.str() + " */ \n";
+
+       // purify error: nm.str() could be a NULL string
+       // if (unp->u_sage->printConstructorName(con_init) && info.PrintName())
+       // if ( unp->u_sage->printConstructorName(con_init) )
+          if ( unp->u_sage->printConstructorName(con_init) && !nm.is_null() )
+             {
+            // printf ("unp->u_sage->printConstructorName(con_init) == true \n");
+               curprint(nm.str());
+               outputParenthisis = true;
+             }
+        }
+
+#error "DEAD CODE!"
+
+#else
+ // DQ (5/26/2013): Alternative form of SgConstructorInitializer unparsing.
+
+  // DQ (5/26/2013): Combined these predicates so that we could rewrite this to not generate a SgName and ouput it later.  
+  // This is required to allow us to call the function that output the member function name (if used), so that we can 
+  // under specific cases drop the output of the template argument list where it is redundant with the class.
+  // if ( unp->u_sage->printConstructorName(con_init) && !nm.is_null() )
+  // if ((con_init->get_need_name() == true) && (con_init->get_is_explicit_cast() == true) )
+     if ((con_init->get_need_name() == true) && (con_init->get_is_explicit_cast() == true) && unp->u_sage->printConstructorName(con_init) == true)
+        {
+       // for foo(B())
+          ROSE_ASSERT(con_init->get_associated_class_unknown() == true || con_init->get_declaration() != NULL || con_init->get_class_decl() != NULL);
+
+       // DQ (4/27/2006): Maybe we can finally assert this!
+       // ROSE_ASSERT ( con_init->get_associated_class_unknown() == true);
+
+       // DQ (8/5/2005): Now this logic is greatly simplified! Unforntunately not!
+       // DQ (6/1/2011): It can't be this simple since con_init->get_declaration() can be NULL where in a struct there is no constructor defined.
+#if 0
+          printf ("con_init->get_declaration() = %p \n",con_init->get_declaration());
+       // curprint ( "\n /* con_init->get_declaration() = " + string(con_init->get_declaration() ? "valid" : "null") + " pointer */ \n");
+#endif
+          if (con_init->get_declaration() != NULL)
+             {
+            // DQ (6/1/2011): Newest refactored support for name qualification.
+            // nm = con_init->get_declaration()->get_qualified_name();
+               SgName nameQualifier = con_init->get_qualified_name_prefix();
+#if 0
+               printf ("In unparseConInit(): nameQualifier = %s \n",nameQualifier.str());
+               printf ("In unparseConInit(): con_init->get_declaration()->get_name() = %s \n",con_init->get_declaration()->get_name().str());
+#endif
+#if 0
+#error "DEAD CODE!"
+
+            // DQ (5/26/2013): This is the older version of the code
+               curprint(nameQualifier.str());
+               curprint(con_init->get_declaration()->get_name().str());
+#else
+            // DQ (5/26/2013): This is the newer version of the code.
+
+            // DQ (5/26/2013): Output the name qualification for the class.
+               curprint(nameQualifier.str());
+
+            // DQ (5/25/2013): Added support to unparse the template arguments seperately from the member function name (which should NOT 
+            // include the template arguments when unparsing). Note the the template arguments in the name are important for the generation
+            // of mangled names for use in symbol tabls, but that we need to output the member function name and it's template arguments 
+            // seperately so that they name qulification can be computed and saved in the name qualification name maps.
+
+            // Note that this code below is a copy of that from the support for unpasing the SgTemplateInstantiationFunctionDecl (in function above).
+
+               SgDeclarationStatement* declaration = con_init->get_declaration();
+
+               SgName func_name = con_init->get_declaration()->get_name();
+
+            // DQ (6/21/2011): Support for new name qualification (output of generated function name).
+               ROSE_ASSERT(declaration != NULL);
+            // printf ("Inside of Unparse_ExprStmt::unparseFuncRef(): declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+#if 0
+            // DQ (4/15/2013): If there is other debug output turned on then nesting of comments inside of comments can occur in this output (see test2007_17.C).
+               printf ("In unparseConInit(): put out func_name = %s \n",func_name.str());
+               curprint (string("\n /* In unparseConInit(): put out func_name = ") + func_name + " */ \n ");
+#endif
+            // If this is a template then the name will include template arguments which require name qualification and the name 
+            // qualification will depend on where the name is referenced in the code.  So we have generate the non-canonical name 
+            // with all possible qualifications and save it to be reused by the unparser when it unparses the tempated function name.
+               SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(declaration);
+               if (templateInstantiationMemberFunctionDecl != NULL)
+                  {
+#if 0
+                    printf ("In unparseConInit(): declaration->get_declarationModifier().isFriend() = %s \n",declaration->get_declarationModifier().isFriend() ? "true" : "false");
+                 // printf ("In unparseConInit(): diff = %d \n",diff);
+#endif
+                 // if ( (declaration->get_declarationModifier().isFriend() == false) && (diff == 0) )
+                    if (declaration->get_declarationModifier().isFriend() == false)
+                       {
+#if 0
+                         printf ("Regenerate the name func_name = %s \n",func_name.str());
+                         printf ("templateInstantiationMemberFunctionDecl->get_templateName() = %s \n",templateInstantiationMemberFunctionDecl->get_templateName().str());
+#endif
+                         unparseTemplateMemberFunctionName(templateInstantiationMemberFunctionDecl,info);
+                       }
+                      else
+                       {
+                      // This case supports test2004_77.C
+
+                         printf ("WARNING: In unparseConInit(): No name qualification permitted in this case! (not clear if this case if important for unparseMFuncRef(), as it was for unparseFuncRef()) \n");
+
+                         curprint(func_name);
+                       }
+                  }
+                 else
+                  {
+                    curprint(func_name);
+                  }
+#endif
              }
             else
              {
@@ -4373,7 +4562,9 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #if 0
                     printf ("In Unparse_ExprStmt::unparseConInit(): con_init->get_declaration() == NULL -- nameQualifier = %s \n",nameQualifier.str());
 #endif
-                    nm = nameQualifier + con_init->get_class_decl()->get_name();
+                 // nm = nameQualifier + con_init->get_class_decl()->get_name();
+                    curprint(nameQualifier.str());
+                    curprint(con_init->get_class_decl()->get_name().str());
                   }
               // DQ (8/4/2012): We need this case to handle tests such as test2012_162.C.
               // DQ (3/29/2012): For EDG 4.x it appear we need a bit more since both con_init->get_declaration() and con_init->get_class_decl() can be NULL (see test2012_52.C).
@@ -4402,13 +4593,17 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
        // purify error: nm.str() could be a NULL string
        // if (unp->u_sage->printConstructorName(con_init) && info.PrintName())
        // if ( unp->u_sage->printConstructorName(con_init) )
-          if ( unp->u_sage->printConstructorName(con_init) && !nm.is_null() )
+       // if ( unp->u_sage->printConstructorName(con_init) && !nm.is_null() )
+          if (unp->u_sage->printConstructorName(con_init) == true)
              {
             // printf ("unp->u_sage->printConstructorName(con_init) == true \n");
-               curprint(nm.str());
+
+            // DQ (5/26/2013): In this rewritten part of the function we no longer output the name as a SgName (it was unparsed directly as needed).
+            // curprint(nm.str());
                outputParenthisis = true;
              }
         }
+#endif
 
   // printf ("Now unparse the constructor arguments \n");
   // newinfo.display("Unparse_ExprStmt::unparseConInit");
@@ -4427,6 +4622,9 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
   // if (con_init->get_args())
      if ( (con_init->get_args() != NULL) && (con_init->get_args()->get_expressions().empty() == false) )
         {
+
+#error "DEAD CODE!"
+
           curprint ( "/* (reset) trigger output of ()  outputParenthisis = " + (outputParenthisis ? "true" : "false") + " */ ");
           outputParenthisis = true;
         }
@@ -4500,7 +4698,9 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
         }
 #endif
 
-  // printf ("Leaving Unparse_ExprStmt::unparseConInit \n");
+#if 0
+     printf ("Leaving Unparse_ExprStmt::unparseConInit \n");
+#endif
    }
 
 
