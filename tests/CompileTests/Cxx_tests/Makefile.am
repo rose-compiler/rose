@@ -1309,6 +1309,15 @@ TESTCODE_CURRENTLY_FAILING_ON_OSX = \
 test2011_06.C \
 test2004_35.C 
 
+# DQ (5/26/2013): Currently faling tests:
+CURRENTLY_FAILING_TESTS = \
+test2013_191.C \
+test2013_192.C \
+test2013_193.C \
+test2013_194.C \
+test2013_195.C \
+test2013_196.C 
+
 
 # DQ (5/23/2013): This is a failing test because we fixup the symbol tables and then compute 
 # the name qualification (and with the fixed up symbol tables we get the name qualification wrong).
