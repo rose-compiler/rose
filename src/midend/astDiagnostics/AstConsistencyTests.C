@@ -4134,6 +4134,17 @@ TestMangledNames::visit ( SgNode* node )
   // DQ (1/12/13): Added to support detection of scopes that have been deleted.
      bool isDeletedNode = false;
 
+  // DQ (5/26/2013): This is the signature in the IR node held by the memory pool for an IR node that has been previously deleted.
+  // This node is being traversed by the AST traversal following a dangling pointer.  This was a problem that was previously
+  // difficult to detect but now appears to be more easily reproduced in ROSE (at least with the gnu 4.2.4 compiler).
+     ROSE_ASSERT(node != NULL);
+     if (node->class_name() == "SgNode")
+        {
+          printf ("ERROR: This node = %p has been previously deleted \n",node);
+          ROSE_ASSERT(false);
+        }
+
+
      string mangledName;
 #if 0
      SgGlobal* global = isSgGlobal(node);

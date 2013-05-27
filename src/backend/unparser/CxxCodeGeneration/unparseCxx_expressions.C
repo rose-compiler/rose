@@ -3157,7 +3157,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                          if (con_init != NULL && unp->u_sage->isOneElementList(con_init))
                             {
                               unp->u_debug->printDebugInfo("entering unp->u_sage->unparseOneElemConInit", true);
-#if 1
+#if 0
                               curprint("\n/* unp->u_sage->unparseOneElemConInit in unparseFuncCall */ \n"); 
 #endif
                               unparseOneElemConInit(con_init, newinfo);
@@ -3165,7 +3165,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                             }
                            else
                             {
-#if 1
+#if 0
                               curprint("\n/* unparseExpression in args processing in unparseFuncCall */ \n");
 #endif
                            // printf ("unparseExpression in args processing in unparseFuncCall \n");
