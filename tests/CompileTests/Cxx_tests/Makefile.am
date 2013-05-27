@@ -1315,8 +1315,7 @@ test2004_35.C
 
 # DQ (5/26/2013): Currently faling tests:
 CURRENTLY_FAILING_TESTS = \
-test2013_195.C \
-test2013_196.C 
+test2013_195.C 
 
 
 # DQ (5/23/2013): This is a failing test because we fixup the symbol tables and then compute 
