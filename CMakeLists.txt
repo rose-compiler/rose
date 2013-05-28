@@ -1009,6 +1009,18 @@ if(with-roseQt)
 endif()
 set(QT_INCLUDES ${ROSE_INCLUDES} ${Boost_INCLUDE_DIRS} )
 
+# Set default output paths for libraries and directories.
+# This causes all the libraries to be built into a single lib directory,
+# and all the executables to be built into a single bin directory.
+# If these variables are not set, then by default the targets will be
+# littered throughout the binary directory, matching the structure of
+# the source directory.
+#
+# Organizing the output of the build directory this way is important
+# when building on Windows.  By default, Windows .exes do not know where
+# to find their required .dlls.  The easiest way to overcome this problem
+# is by placing the .exe and all its dependent .dlls in the same directory.
+# We accomplish this with CMake by setting CMAKE_RUNTIME_OUTPUT_DIRECTORY.
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -1075,6 +1087,28 @@ if(shell AND CMAKE_COMPILER_IS_GNUCXX)
     string(STRIP "${CXX_include_dir}" CXX_include_dir)
     set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING}, \"${CXX_include_dir}\"")
   endforeach()
+
+  # In the Autools build system, ROSE stores compiler specific headers in two
+  # distinct locations:
+  #    In the build tree, the directory is named $ROSE_BUILD/include-staging
+  #    In the installation tree, the directory is named $ROSE_INSTALL/include
+  # During make-install, the content of $ROSE_BUILD/include-staging is simply
+  # copied over into $ROSE_INSTALL/include.
+  #
+  # If a ROSE translator is detected as being run from the build tree, then the
+  # associated header file include paths are added to the translator's command
+  # line, e.g. <translator> -I$ROSE_BUILD/include-staging/<path>. Similarly, if
+  # the ROSE translator is detected as being run from the install tree, the
+  # command line will contain the associated paths in the installation
+  # location, e.g. -I$ROSE_INSTALL/include/<path>
+  #
+  # The setup of CMake for ROSE, on the other hand, does not make this
+  # distinction. Instead, the CMake system utilizes a single directory
+  # $ROSE_CMAKE_BIN/include for the same purpose.
+  execute_process(
+    COMMAND ${CMAKE_COMMAND} -E create_symlink
+    ${CMAKE_BINARY_DIR}/include-staging ${CMAKE_BINARY_DIR}/include
+  )
 endif()
 set(C_INCLUDE_STRING "${C_INCLUDE_STRING}}")
 set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING}}")
