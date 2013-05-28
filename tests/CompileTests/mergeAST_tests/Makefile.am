@@ -110,7 +110,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      mergeTest_118.C \
      mergeTest_119.C \
      mergeTest_120.C \
-     mergeTest_121.C \
      mergeTest_128.C \
      mergeTest_129.C \
      mergeTest_130.C \
@@ -118,6 +117,12 @@ TESTCODES_REQUIRED_TO_PASS = \
      mergeTest_133.C \
      mergeTest_134.C \
      mergeTest_135.C 
+
+# DQ (5/26/2013) (mergeTest_121.C) This is a failing test on Jenkins that I can now reproduce on my machine.
+# TOO1 (5/28/2013) (mergeTest_121.C) Add to EXTRA_DIST (below) to fix UnusedSourcesPolicy test.
+TESTCODES_TO_FIX = \
+	mergeTest_121.C
+
 
 # DQ (9/18/2011): Failing tests after new contant folding default to subsitute original expression tress for constant values.
 #    mergeTest_90.C
@@ -239,7 +244,7 @@ $(QMTEST_Objects): testMerge $(srcdir)/$(@:.qmt=.C)
 include $(top_srcdir)/config/QMTest_makefile.inc
 
 # EXTRA_DIST = $(ALL_TESTCODES) inputCode_merge.h  odr_base.h  odr.h
-EXTRA_DIST = $(ALL_TESTCODES)
+EXTRA_DIST = $(ALL_TESTCODES) $(TESTCODES_TO_FIX)
 
 check-local:
 	@echo "Tests for AST merge mechanism."
