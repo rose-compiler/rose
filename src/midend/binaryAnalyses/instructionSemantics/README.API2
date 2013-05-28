@@ -219,8 +219,10 @@ easily pass whatever other parameters and/or state they need.
 == Examples ==
 
 === Using default components ===
+
 Assuming all the above changes were implemented, setting up one or
-ROSE's predefined instruction semantics using default components, would change from this:
+ROSE's predefined instruction semantics using default components,
+would change from this:
 
    using namespace BinaryAnalysis::InstructionSemantics;
    typedef SymbolicSemantics::Policy<> Policy;
@@ -233,11 +235,16 @@ to something like this:
     BaseSemantics::RiscOperatorsPtr operators = SymbolicSemantics::RiscOperators::instance();
     BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(operators);
 
-One of the nice things about the previous example is that the construction of the dispatcher does not have any compile-time dependencies on the semantic domain.
+One of the nice things about the previous example is that the
+construction of the dispatcher does not have any compile-time
+dependencies on the semantic domain.
 
 === Specifying components explicitly ===
 
-As mentioned, not all the components can be specified for the old API.  The new API builds the objects from bottom up (this example was is actually just the implementation of the no-argument version of SymbolicSemantics::RiscOperators::instance()).
+As mentioned, not all the components can be specified for the old API.
+The new API builds the objects from bottom up (this example was is
+actually just the implementation of the no-argument version of
+SymbolicSemantics::RiscOperators::instance()).
 
 The old API looked like this:
 
@@ -262,7 +269,9 @@ The prototype_value is used only for its virtual constructor.
 
 === RISC operators ===
 
-This example shows a user implementing their own RISC operations (or overriding existing operations, which is not completely possible in the old API). A RISC operator in the old API:
+This example shows a user implementing their own RISC operations (or
+overriding existing operations, which is not completely possible in
+the old API). A RISC operator in the old API:
 
    template <size_t Len>
    ValueType<Len> add(const ValueType<Len> &a, const ValueType<Len> &b) const {
@@ -293,24 +302,11 @@ to
        SValuePtr a = SValue::promote(a_);
        SValuePtr b = SValue::promote(b_);
        assert(a->get_width()==b->get_width());
-       SValuePtr retval;
-       if (a->is_number()) {
-           if (b->is_number()) {
-               retval = number_(a->get_width(), a->get_number()+b->get_number());
-               retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
-               return retval;
-           } else if (0==a->get_number()) {
-               return b->copy();
-           }
-       } else if (b->is_number() && 0==b->get_number()) {
-           return a->copy();
-       }
-       retval = svalue(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ADD,
-                                            a->get_expression(), b->get_expression()));
+       SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ADD,
+                                                           a->get_expression(), b->get_expression()));
        retval->defined_by(cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
        return retval;
-   }
-
+}
 
 === User-defined value type ===
 
@@ -418,6 +414,8 @@ With a little boilerplate it can be even simpler.  Here's the actual definition 
      }
  };
 
+
+You're still able to subclass DispatcherX86 if you like.
 
 
 == Experimental Results for Compile and Run Times ==
