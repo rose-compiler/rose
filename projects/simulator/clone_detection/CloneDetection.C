@@ -47,7 +47,7 @@ static void usage(int exit_status)
               <<"                     functions.\n"
               <<"   --max-insns=N\n"
               <<"                     Maximum number of instructions to simulate per function. The default\n"
-              <<"                     is 256.\n"
+              <<"                     is 5000.\n"
               <<"   --nfuzz=N[,START]\n"
               <<"                     Number of times to fuzz test each function (default 10) and the\n"
               <<"                     sequence number of the first test (default 0).\n"
@@ -56,10 +56,10 @@ static void usage(int exit_status)
               <<"                     N1 and N2 are both specified, then N1 is the number of pointers and\n"
               <<"                     N2 is the number of non-pointers.  When only N1 is specified it will\n"
               <<"                     indicate the number of pointers and the number of non-pointers. The\n"
-              <<"                     default is three pointers and three non-pointers.  If a function\n"
+              <<"                     default is 20 pointers and 100 non-pointers.  If a function\n"
               <<"                     requires more input values, then null/zero are supplied to it.\n"
               <<"   --[no-]pointers\n"
-              <<"                     Turn pointer analysis on or off (the default is on).  When pointer\n"
+              <<"                     Turn pointer analysis on or off (the default is off).  When pointer\n"
               <<"                     analysis is turned on, each function is analyzed to find memory addresses\n"
               <<"                     that are used as code or data pointers.  This information is used when\n"
               <<"                     deciding whether to consume a pointer or non-pointer input.  When the\n"
@@ -92,9 +92,9 @@ enum Verbosity { SILENT, LACONIC, EFFUSIVE };
 // Command-line switches
 struct Switches {
     Switches()
-        : dbname("clones.db"), firstfuzz(0), nfuzz(10), npointers(3), nnonpointers(3),
-          min_funcsz(0), max_insns(256), verbosity(SILENT), show_progress(false), link(false),
-          pointer_analysis(true) {}
+        : dbname("clones.db"), firstfuzz(0), nfuzz(10), npointers(20), nnonpointers(100),
+          min_funcsz(0), max_insns(5000), verbosity(SILENT), show_progress(false), link(false),
+          pointer_analysis(false) {}
     std::string dbname;                 /**< Name of database in which to store results. */
     size_t firstfuzz;                   /**< Sequence number for starting fuzz test. */
     size_t nfuzz;                       /**< Number of times to run each function, each time with a different input sequence. */
