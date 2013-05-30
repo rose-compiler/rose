@@ -70,7 +70,7 @@ static void usage(int exit_status)
               <<"   --verbose\n"
               <<"   --verbosity=(silent|laconic|effusive)\n"
               <<"                     How much diagnostics to show.  The default is silent.  The \"--verbose\"\n"
-              <<"                     switch does the same thing as \"--verbosity=laconic\".\n";
+              <<"                     switch does the same thing as \"--verbosity=effusive\".\n";
     exit(exit_status);
 }
 
