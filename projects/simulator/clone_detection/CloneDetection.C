@@ -528,10 +528,13 @@ public:
             ValueType<32> callee_va = this->template readRegister<32>("eip");
             state.output_group.callees_va.push_back(callee_va.known_value());
 
-            ValueType<32> call_fallthrough_va = this->template number<32>(insn->get_address() +
-                                                                                                    insn->get_size());
+            ValueType<32> call_fallthrough_va = this->template number<32>(insn->get_address() + insn->get_size());
             this->writeRegister("eip", call_fallthrough_va);
             this->writeRegister("eax", next_input_value<32>(InputGroup::NONPOINTER));
+
+            ValueType<32> esp = this->template readRegister<32>("esp");
+            esp = this->add(esp, ValueType<32>(4));
+            this->writeRegister("esp", esp);
         }
 
         Super::finishInstruction(insn);
