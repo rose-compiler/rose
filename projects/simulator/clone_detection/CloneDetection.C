@@ -633,11 +633,9 @@ public:
                     throw Exception("semantic policy supports only single-bit flags");
                 bool never_accessed = 0 == state.register_rw_state.flag[reg.get_offset()].state;
                 state.register_rw_state.flag[reg.get_offset()].state |= HAS_BEEN_READ;
-                if (never_accessed) {
-                    retval = next_input_value<nBits>(InputGroup::NONPOINTER);
-                } else {
-                    retval = this->template unsignedExtend<1, nBits>(state.registers.flag[reg.get_offset()]);
-                }
+                if (never_accessed)
+                    state.registers.flag[reg.get_offset()] = next_input_value<1>(InputGroup::NONPOINTER);
+                retval = this->template unsignedExtend<1, nBits>(state.registers.flag[reg.get_offset()]);
                 break;
             }
 
@@ -651,19 +649,17 @@ public:
                 assert(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
                 bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                 state.register_rw_state.gpr[reg.get_minor()].state |= HAS_BEEN_READ;
-                if (never_accessed) {
-                    retval = next_input_value<nBits>(InputGroup::NONPOINTER);
-                } else {
-                    switch (reg.get_offset()) {
-                        case 0:
-                            retval = this->template extract<0, nBits>(state.registers.gpr[reg.get_minor()]);
-                            break;
-                        case 8:
-                            retval = this->template extract<8, 8+nBits>(state.registers.gpr[reg.get_minor()]);
-                            break;
-                        default:
-                            throw Exception("invalid one-byte access offset");
-                    }
+                if (never_accessed)
+                    state.registers.gpr[reg.get_minor()] = next_input_value<32>(InputGroup::NONPOINTER);
+                switch (reg.get_offset()) {
+                    case 0:
+                        retval = this->template extract<0, nBits>(state.registers.gpr[reg.get_minor()]);
+                        break;
+                    case 8:
+                        retval = this->template extract<8, 8+nBits>(state.registers.gpr[reg.get_minor()]);
+                        break;
+                    default:
+                        throw Exception("invalid one-byte access offset");
                 }
                 break;
             }
@@ -679,11 +675,9 @@ public:
                             throw Exception("register not implemented in semantic policy");
                         bool never_accessed = 0==state.register_rw_state.segreg[reg.get_minor()].state;
                         state.register_rw_state.segreg[reg.get_minor()].state |= HAS_BEEN_READ;
-                        if (never_accessed) {
-                            retval = next_input_value<nBits>(InputGroup::NONPOINTER);
-                        } else {
-                            retval = this->template unsignedExtend<16, nBits>(state.registers.segreg[reg.get_minor()]);
-                        }
+                        if (never_accessed)
+                            state.registers.segreg[reg.get_minor()] = next_input_value<16>(InputGroup::NONPOINTER);
+                        retval = this->template unsignedExtend<16, nBits>(state.registers.segreg[reg.get_minor()]);
                         break;
                     }
                     case x86_regclass_gpr: {
@@ -691,20 +685,21 @@ public:
                             throw Exception("register not implemented in semantic policy");
                         bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                         state.register_rw_state.segreg[reg.get_minor()].state |= HAS_BEEN_READ;
-                        if (never_accessed) {
-                            retval = next_input_value<nBits>(InputGroup::NONPOINTER);
-                        } else {
-                            retval = this->template extract<0, nBits>(state.registers.gpr[reg.get_minor()]);
-                        }
+                        if (never_accessed)
+                            state.registers.gpr[reg.get_minor()] = next_input_value<32>(InputGroup::NONPOINTER);
+                        retval = this->template extract<0, nBits>(state.registers.gpr[reg.get_minor()]);
                         break;
                     }
 
                     case x86_regclass_flags: {
                         if (reg.get_minor()!=0 || state.registers.n_flags<16)
                             throw Exception("register not implemented in semantic policy");
-                        // FIXME: we need to grab flags from next_input_value if they've never been read or written
-                        for (size_t i=0; i<state.register_rw_state.n_flags; ++i)
+                        for (size_t i=0; i<16; ++i) {
+                            bool never_accessed = 0==state.register_rw_state.flag[i].state;
                             state.register_rw_state.flag[i].state |= HAS_BEEN_READ;
+                            if (never_accessed)
+                                state.registers.flag[i] = next_input_value<1>(InputGroup::NONPOINTER);
+                        }
                         retval = this->template unsignedExtend<16, nBits>(concat(state.registers.flag[0],
                                                                           concat(state.registers.flag[1],
                                                                           concat(state.registers.flag[2],
@@ -738,11 +733,9 @@ public:
                             throw Exception("register not implemented in semantic policy");
                         bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                         state.register_rw_state.gpr[reg.get_minor()].state |= HAS_BEEN_READ;
-                        if (never_accessed) {
-                            retval = next_input_value<nBits>(InputGroup::UNKNOWN_TYPE);
-                        } else {
-                            retval = this->template unsignedExtend<32, nBits>(state.registers.gpr[reg.get_minor()]);
-                        }
+                        if (never_accessed)
+                            state.registers.gpr[reg.get_minor()] = next_input_value<32>(InputGroup::UNKNOWN_TYPE);
+                        retval = this->template unsignedExtend<32, nBits>(state.registers.gpr[reg.get_minor()]);
                         break;
                     }
                     case x86_regclass_ip: {
@@ -750,11 +743,9 @@ public:
                             throw Exception("register not implemented in semantic policy");
                         bool never_accessed = 0==state.register_rw_state.ip.state;
                         state.register_rw_state.ip.state |= HAS_BEEN_READ;
-                        if (never_accessed) {
-                            retval = next_input_value<nBits>(InputGroup::POINTER);
-                        } else {
-                            retval = this->template unsignedExtend<32, nBits>(state.registers.ip);
-                        }
+                        if (never_accessed)
+                            state.registers.ip = next_input_value<32>(InputGroup::POINTER);
+                        retval = this->template unsignedExtend<32, nBits>(state.registers.ip);
                         break;
                     }
                     case x86_regclass_segment: {
@@ -762,11 +753,9 @@ public:
                             throw Exception("register not implemented in semantic policy");
                         bool never_accessed = 0==state.register_rw_state.segreg[reg.get_minor()].state;
                         state.register_rw_state.segreg[reg.get_minor()].state |= HAS_BEEN_READ;
-                        if (never_accessed) {
-                            retval = next_input_value<nBits>(InputGroup::UNKNOWN_TYPE);
-                        } else {
-                            retval = this->template unsignedExtend<16, nBits>(state.registers.segreg[reg.get_minor()]);
-                        }
+                        if (never_accessed)
+                            state.registers.segreg[reg.get_minor()] = next_input_value<16>(InputGroup::UNKNOWN_TYPE);
+                        retval = this->template unsignedExtend<16, nBits>(state.registers.segreg[reg.get_minor()]);
                         break;
                     }
                     case x86_regclass_flags: {
@@ -774,10 +763,28 @@ public:
                             throw Exception("register not implemented in semantic policy");
                         if (reg.get_nbits()!=32)
                             throw Exception("register is not 32 bits");
-                        // FIXME: we need to grab flags from next_input_value() if they have never been read or written
-                        for (size_t i=0; i<state.register_rw_state.n_flags; ++i)
+                        for (size_t i=0; i<32; ++i) {
+                            bool never_accessed = 0==state.register_rw_state.flag[i].state;
                             state.register_rw_state.flag[i].state |= HAS_BEEN_READ;
-                        retval = this->template unsignedExtend<32, nBits>(concat(readRegister<16>("flags"),
+                            if (never_accessed)
+                                state.registers.flag[i] = next_input_value<1>(InputGroup::NONPOINTER);
+                        }
+                        retval = this->template unsignedExtend<32, nBits>(concat(state.registers.flag[0],
+                                                                          concat(state.registers.flag[1],
+                                                                          concat(state.registers.flag[2],
+                                                                          concat(state.registers.flag[3],
+                                                                          concat(state.registers.flag[4],
+                                                                          concat(state.registers.flag[5],
+                                                                          concat(state.registers.flag[6],
+                                                                          concat(state.registers.flag[7],
+                                                                          concat(state.registers.flag[8],
+                                                                          concat(state.registers.flag[9],
+                                                                          concat(state.registers.flag[10],
+                                                                          concat(state.registers.flag[11],
+                                                                          concat(state.registers.flag[12],
+                                                                          concat(state.registers.flag[13],
+                                                                          concat(state.registers.flag[14],
+                                                                          concat(state.registers.flag[15],
                                                                           concat(state.registers.flag[16],
                                                                           concat(state.registers.flag[17],
                                                                           concat(state.registers.flag[18],
@@ -793,7 +800,8 @@ public:
                                                                           concat(state.registers.flag[28],
                                                                           concat(state.registers.flag[29],
                                                                           concat(state.registers.flag[30],
-                                                                                 state.registers.flag[31])))))))))))))))));
+                                                                                 state.registers.flag[31]
+                                                                                 ))))))))))))))))))))))))))))))));
                         break;
                     }
                     default:
@@ -804,8 +812,6 @@ public:
             default:
                 throw Exception("invalid register access width");
         }
-
-        this->writeRegister(reg, retval, HAS_BEEN_READ);
         return retval;
     }
 
@@ -838,6 +844,10 @@ public:
                 if (reg.get_minor()>=state.registers.n_gprs)
                     throw Exception("register not implemented in semantic policy");
                 assert(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
+                bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
+                state.register_rw_state.gpr[reg.get_minor()].state |= update_access;
+                if (never_accessed)
+                    state.registers.gpr[reg.get_minor()] = next_input_value<32>(InputGroup::NONPOINTER);
                 switch (reg.get_offset()) {
                     case 0:
                         state.registers.gpr[reg.get_minor()] =
@@ -853,7 +863,6 @@ public:
                     default:
                         throw Exception("invalid byte access offset");
                 }
-                state.register_rw_state.gpr[reg.get_minor()].state |= update_access;
                 break;
             }
 
@@ -873,10 +882,13 @@ public:
                     case x86_regclass_gpr: {
                         if (reg.get_minor()>=state.registers.n_gprs)
                             throw Exception("register not implemented in semantic policy");
+                        bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
+                        state.register_rw_state.gpr[reg.get_minor()].state |= update_access;
+                        if (never_accessed)
+                            state.registers.gpr[reg.get_minor()] = next_input_value<32>(InputGroup::NONPOINTER);
                         state.registers.gpr[reg.get_minor()] =
                             concat(this->template unsignedExtend<nBits, 16>(value),
                                    this->template extract<16, 32>(state.registers.gpr[reg.get_minor()]));
-                        state.register_rw_state.gpr[reg.get_minor()].state |= update_access;
                         break;
                     }
                     case x86_regclass_flags: {
