@@ -480,8 +480,18 @@ public:
         this->writeRegister("esp", esp);
         ValueType<32> ebp(INITIAL_STACK);
         this->writeRegister("ebp", ebp);
-    }
 
+        // Initialize callee-saved registers. The callee-saved registers interfere with the analysis because if the same
+        // function is compiled two different ways, then it might use different numbers of callee-saved registers.  Since
+        // callee-saved registers are pushed onto the stack without first initializing them, the push consumes an input.
+        // Therefore, we must consistently initialize all possible callee-saved registers.  We are assuming cdecl calling
+        // convention (i.e., GCC's default for C/C++).
+        ValueType<32> rval(inputs->next_integer());
+        this->writeRegister("ebx", rval);
+        this->writeRegister("esi", rval);
+        this->writeRegister("edi", rval);
+    }
+    
     void startInstruction(SgAsmInstruction *insn_) /*override*/ {
         if (++ninsns >= max_ninsns)
             throw FaultException(AnalysisFault::INSN_LIMIT);
