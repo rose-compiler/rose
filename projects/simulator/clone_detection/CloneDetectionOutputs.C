@@ -9,7 +9,8 @@ using namespace sqlite3x;
 bool
 OutputGroup::operator==(const OutputGroup &other) const
 {
-    return (values.size()==other.values.size() &&
+    return (is_valid() && other.is_valid() &&
+            values.size()==other.values.size() &&
             std::equal(values.begin(), values.end(), other.values.begin()) &&
             callees_va.size()==other.callees_va.size() &&
             std::equal(callees_va.begin(), callees_va.end(), other.callees_va.begin()) &&
@@ -32,14 +33,18 @@ OutputGroup::print(std::ostream &o, const std::string &title, const std::string 
 {
     if (!title.empty())
         o <<title <<"\n";
-    for (size_t i=0; i<values.size(); ++i)
-        o <<prefix <<"value " <<values[i] <<"\n";
-    for (size_t i=0; i<callees_va.size(); ++i)
-        o <<prefix <<"fcall " <<callees_va[i] <<"\n";
-    for (size_t i=0; i<syscalls.size(); ++i)
-        o <<prefix <<"scall " <<syscalls[i] <<"\n";
-    if (fault)
-        o <<prefix <<AnalysisFault::fault_name(fault) <<"\n";
+    if (is_valid()) {
+        for (size_t i=0; i<values.size(); ++i)
+            o <<prefix <<"value " <<values[i] <<"\n";
+        for (size_t i=0; i<callees_va.size(); ++i)
+            o <<prefix <<"fcall " <<callees_va[i] <<"\n";
+        for (size_t i=0; i<syscalls.size(); ++i)
+            o <<prefix <<"scall " <<syscalls[i] <<"\n";
+        if (fault)
+            o <<prefix <<AnalysisFault::fault_name(fault) <<"\n";
+    } else {
+        o <<prefix <<"invalid\n";
+    }
 }
 
 void

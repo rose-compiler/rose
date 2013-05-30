@@ -23,12 +23,14 @@ typedef std::map<uint64_t, int> VaId;
 class OutputGroup {
 public:
     typedef uint32_t value_type;
-    OutputGroup(): fault(AnalysisFault::NONE) {}
+    OutputGroup(): valid(true), fault(AnalysisFault::NONE) {}
+    bool valid;                                 // false means callees_va is not fully initialized
     std::vector<value_type> values;
     std::vector<value_type> callees_va;         // virtual address of every function call
     std::vector<int> syscalls;                  // system call numbers in the order they occur
     AnalysisFault::Fault fault;
     bool operator==(const OutputGroup &other) const;
+    bool is_valid() const { return valid; }
     void clear();
     void print(std::ostream&, const std::string &title="", const std::string &prefix="") const;
     void print(RTS_Message*, const std::string &title="", const std::string &prefix="") const;

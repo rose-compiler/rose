@@ -316,24 +316,26 @@ public:
     // stack_frame_top but larger than @p stack_frame_top - @p frame_size are not considered to be outputs (they are the
     // function's local variables). The @p stack_frame_top is usually the address of the function's return EIP, the address
     // that was pushed onto the stack by the CALL instruction.
+    //
+    // Even though we're operating in the concrete domain, it is possible for a register or memory location to contain a
+    // non-concrete value.  This can happen if only a sub-part of the register was written (e.g., writing a concrete value to
+    // AX will result in EAX still having a non-concrete value.
     OutputGroup get_outputs(uint32_t stack_frame_top, size_t frame_size, Verbosity verbosity) {
         OutputGroup outputs = this->output_group;
 
-        // Function return value is EAX, but only if it has been written to.  It is possible for a written-to register to
-        // contain a non-concrete value. This can happen if only a sub-part of the register was written (e.g., writing a
-        // concrete value to AX will result in EAX still having a non-concrete value.
+        // Function return value is EAX, but only if it has been written to and is concrete
         if (0 != (register_rw_state.gpr[x86_gpr_ax].state & HAS_BEEN_WRITTEN) && registers.gpr[x86_gpr_ax].is_known()) {
             if (verbosity>=EFFUSIVE)
                 std::cerr <<"output for ax = " <<registers.gpr[x86_gpr_ax].known_value() <<"\n";
             outputs.values.push_back(registers.gpr[x86_gpr_ax].known_value());
         }
 
-        // Add to the outputs the memory cells that are outside the local stack frame (estimated).
+        // Add to the outputs the memory cells that are outside the local stack frame (estimated) and are concrete
         for (MemoryCells::iterator ci=stack_cells.begin(); ci!=stack_cells.end(); ++ci) {
             uint32_t addr = ci->first;
             MemoryValue &mval = ci->second;
             bool cell_in_frame = (addr <= stack_frame_top && addr > stack_frame_top-frame_size);
-            if (0 != (mval.rw_state & HAS_BEEN_WRITTEN)) {
+            if (0 != (mval.rw_state & HAS_BEEN_WRITTEN) && mval.val.is_known()) {
                 if (verbosity>=EFFUSIVE)
                     std::cerr <<"output for stack address " <<StringUtility::addrToString(addr) <<": "
                               <<mval.val <<(cell_in_frame?" (IGNORED)":"") <<"\n";
@@ -346,7 +348,7 @@ public:
         for (MemoryCells::iterator ci=data_cells.begin(); ci!=data_cells.end(); ++ci) {
             uint32_t addr = ci->first;
             MemoryValue &mval = ci->second;
-            if (0 != (mval.rw_state & HAS_BEEN_WRITTEN)) {
+            if (0 != (mval.rw_state & HAS_BEEN_WRITTEN) && mval.val.is_known()) {
                 if (verbosity>=EFFUSIVE)
                     std::cerr <<"output for data address " <<addr <<": " <<mval.val <<"\n";
                 outputs.values.push_back(mval.val.known_value());
@@ -1785,7 +1787,7 @@ public:
             InputGroup inputs = choose_inputs(fuzz_number);
             if (opt.verbosity>=LACONIC) {
                 std::cerr <<"CloneDetection: " <<std::string(80, '#') <<"\n"
-                          <<"CloneDetection: fuzz testing " <<functions.size() <<" function " <<(1==functions.size()?"":"s")
+                          <<"CloneDetection: fuzz testing " <<functions.size() <<" function" <<(1==functions.size()?"":"s")
                           <<" with inputgroup " <<fuzz_number <<"\n"
                           <<"CloneDetection: using these input values:\n" <<inputs.toString();
             }
