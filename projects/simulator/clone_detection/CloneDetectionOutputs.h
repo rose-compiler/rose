@@ -42,6 +42,8 @@ public:
 
 typedef std::vector<OutputGroup> OutputGroups;
 
+/** Loads output groups from the database.  Does not load output groups that call functions that are not part of the
+ *  supplied IdVa map. */
 void load_output_groups(sqlite3x::sqlite3_connection&, const IdVa*, OutputGroups&/*out*/);
 
 } // namespace

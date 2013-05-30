@@ -88,8 +88,11 @@ load_output_groups(sqlite3_connection &db, const IdVa *func_id2va/*NULL*/, Outpu
                     output_groups[id].callees_va.resize(pos+1, 0);
                 if (func_id2va) {
                     IdVa::const_iterator found = func_id2va->find(value);
-                    assert(found!=func_id2va->end());
-                    value = found->second;
+                    if (found!=func_id2va->end()) {
+                        value = found->second;
+                    } else {
+                        output_groups[id].valid = false;
+                    }
                 }
                 output_groups[id].callees_va[pos] = value;
                 break;
