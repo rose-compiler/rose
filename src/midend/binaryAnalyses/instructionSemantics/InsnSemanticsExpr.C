@@ -783,7 +783,7 @@ SdivSimplifier::rewrite(const InternalNode *inode) const
     // Constant folding
     LeafNodePtr a_leaf = inode->child(0)->isLeafNode();
     LeafNodePtr b_leaf = inode->child(1)->isLeafNode();
-    if (a_leaf && b_leaf && a_leaf->is_known() && b_leaf->is_known()) {
+    if (a_leaf && b_leaf && a_leaf->is_known() && b_leaf->is_known() && b_leaf->get_value()!=0) {
         int64_t a = IntegerOps::signExtend2(a_leaf->get_value(), a_leaf->get_nbits(), 8*sizeof(int8_t));
         int64_t b = IntegerOps::signExtend2(b_leaf->get_value(), b_leaf->get_nbits(), 8*sizeof(int8_t));
         return LeafNode::create_integer(a_leaf->get_nbits(), a/b, inode->get_comment());
@@ -798,7 +798,7 @@ SmodSimplifier::rewrite(const InternalNode *inode) const
     // Constant folding
     LeafNodePtr a_leaf = inode->child(0)->isLeafNode();
     LeafNodePtr b_leaf = inode->child(1)->isLeafNode();
-    if (a_leaf && b_leaf && a_leaf->is_known() && b_leaf->is_known()) {
+    if (a_leaf && b_leaf && a_leaf->is_known() && b_leaf->is_known() && b_leaf->get_value()!=0) {
         int64_t a = IntegerOps::signExtend2(a_leaf->get_value(), a_leaf->get_nbits(), 8*sizeof(int8_t));
         int64_t b = IntegerOps::signExtend2(b_leaf->get_value(), b_leaf->get_nbits(), 8*sizeof(int8_t));
         return LeafNode::create_integer(b_leaf->get_nbits(), a%b, inode->get_comment());
@@ -813,7 +813,7 @@ UdivSimplifier::rewrite(const InternalNode *inode) const
     // Constant folding
     LeafNodePtr a_leaf = inode->child(0)->isLeafNode();
     LeafNodePtr b_leaf = inode->child(1)->isLeafNode();
-    if (a_leaf && b_leaf && a_leaf->is_known() && b_leaf->is_known()) {
+    if (a_leaf && b_leaf && a_leaf->is_known() && b_leaf->is_known() && b_leaf->get_value()!=0) {
         uint64_t a = a_leaf->get_value();
         uint64_t b = b_leaf->get_value();
         return LeafNode::create_integer(a_leaf->get_nbits(), a/b, inode->get_comment());
@@ -828,7 +828,7 @@ UmodSimplifier::rewrite(const InternalNode *inode) const
     // Constant folding
     LeafNodePtr a_leaf = inode->child(0)->isLeafNode();
     LeafNodePtr b_leaf = inode->child(1)->isLeafNode();
-    if (a_leaf && b_leaf && a_leaf->is_known() && b_leaf->is_known()) {
+    if (a_leaf && b_leaf && a_leaf->is_known() && b_leaf->is_known() && b_leaf->get_value()!=0) {
         uint64_t a = a_leaf->get_value();
         uint64_t b = b_leaf->get_value();
         return LeafNode::create_integer(b_leaf->get_nbits(), a%b, inode->get_comment());
