@@ -58,6 +58,12 @@ static void usage(int exit_status)
               <<"                     indicate the number of pointers and the number of non-pointers. The\n"
               <<"                     default is three pointers and three non-pointers.  If a function\n"
               <<"                     requires more input values, then null/zero are supplied to it.\n"
+              <<"   --[no-]pointers\n"
+              <<"                     Turn pointer analysis on or off (the default is on).  When pointer\n"
+              <<"                     analysis is turned on, each function is analyzed to find memory addresses\n"
+              <<"                     that are used as code or data pointers.  This information is used when\n"
+              <<"                     deciding whether to consume a pointer or non-pointer input.  When the\n"
+              <<"                     analysis is turned off, only non-pointer inputs are used.\n"
               <<"   --progress\n"
               <<"                     Force a progress bar to be displayed even if the standard error stream\n"
               <<"                     is not a terminal and even if the verbosity is more than silent.\n"
@@ -87,7 +93,8 @@ enum Verbosity { SILENT, LACONIC, EFFUSIVE };
 struct Switches {
     Switches()
         : dbname("clones.db"), firstfuzz(0), nfuzz(10), npointers(3), nnonpointers(3),
-          min_funcsz(0), max_insns(256), verbosity(SILENT), show_progress(false), link(false) {}
+          min_funcsz(0), max_insns(256), verbosity(SILENT), show_progress(false), link(false),
+          pointer_analysis(true) {}
     std::string dbname;                 /**< Name of database in which to store results. */
     size_t firstfuzz;                   /**< Sequence number for starting fuzz test. */
     size_t nfuzz;                       /**< Number of times to run each function, each time with a different input sequence. */
@@ -98,6 +105,7 @@ struct Switches {
     bool show_progress;                 /**< Force progress reports even if stderr is a non-terminal or --debug is specified. */
     bool link;                          /**< Perform dynamic linking. */
     std::set<rose_addr_t> functions;    /**< If non-empty, consider only these functions. */
+    bool pointer_analysis;              /**< Perform pointer detection analysis?  Use pointer and non-pointer inputs? */
 };
 
 namespace CloneDetection {
@@ -411,7 +419,7 @@ public:
     static const rose_addr_t INITIAL_STACK = 0x80000000;// Initial value for the EIP and EBP registers
     static const rose_addr_t FUNC_RET_ADDR = 4083;      // Special return address to mark end of analysis
     InputGroup *inputs;                                 // Input values to use when reading a never-before-written variable
-    const PointerDetector *pointers;                    // Addresses of pointer variables
+    const PointerDetector *pointers;                    // Addresses of pointer variables, or null if not analyzed
     size_t ninsns;                                      // Number of instructions processed since last trigger() call
     size_t max_ninsns;                                  // Maximum number of instructions to process after trigger()
     Verbosity verbosity;                                // How much diagnostics to emit
@@ -456,7 +464,7 @@ public:
     }
     
     // Sets up the machine state to start the analysis of one function.
-    void reset(rose_addr_t target_va, InputGroup *inputs, const PointerDetector *pointers) {
+    void reset(rose_addr_t target_va, InputGroup *inputs, const PointerDetector *pointers/*=NULL*/) {
         inputs->reset();
         this->inputs = inputs;
         this->pointers = pointers;
@@ -579,7 +587,8 @@ public:
             // on whether the memory address is known to be a pointer, and then write the value back to memory so the same
             // value is read next time.
             SymbolicSemantics::ValueType<32> a0_sym(a0.known_value());
-            InputGroup::Type type = this->pointers->is_pointer(a0_sym) ? InputGroup::POINTER : InputGroup::NONPOINTER;
+            InputGroup::Type type = this->pointers!=NULL && this->pointers->is_pointer(a0_sym) ?
+                                    InputGroup::POINTER : InputGroup::NONPOINTER;
             retval = next_input_value<nBits>(type);
             this->writeMemory<nBits>(sr, a0, retval, this->true_(), HAS_BEEN_READ);
         }
@@ -1089,6 +1098,9 @@ public:
     // Perform a pointer-detection analysis on the specified function. We'll need the results in order to determine whether a
     // function input should consume a pointer or a non-pointer from the input value set.
     PointerDetector* detect_pointers(SgAsmFunction *func) {
+        if (!opt.pointer_analysis)
+            return NULL;
+
         // Choose an SMT solver. This is completely optional.  Pointer detection still seems to work fairly well (and much,
         // much faster) without an SMT solver.
         SMTSolver *solver = NULL;
@@ -1706,7 +1718,7 @@ public:
     }
     
     // Analyze a single function by running it with the specified inputs and collecting its outputs. */
-    OutputGroup fuzz_test(SgAsmFunction *function, InputGroup &inputs, const PointerDetector *pointers) {
+    OutputGroup fuzz_test(SgAsmFunction *function, InputGroup &inputs, const PointerDetector *pointers/*=NULL*/) {
         InstructionProvidor insns(function);
         AnalysisFault::Fault fault = AnalysisFault::NONE;
         policy.reset(function->get_entry_va(), &inputs, pointers);
@@ -1931,6 +1943,12 @@ main(int argc, char *argv[], char *envp[])
             opt.npointers = opt.nnonpointers = strtoul(argv[i]+10, &rest, 0);
             if (','==*rest)
                 opt.nnonpointers = strtoul(rest+1, NULL, 0);
+            consume = true;
+        } else if (!strcmp(argv[i], "--pointers")) {
+            opt.pointer_analysis = true;
+            consume = true;
+        } else if (!strcmp(argv[i], "--no-pointers")) {
+            opt.pointer_analysis = false;
             consume = true;
         } else if (!strcmp(argv[i], "--progress")) {
             opt.show_progress = true;
