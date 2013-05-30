@@ -1789,9 +1789,11 @@ public:
         typedef std::map<SgAsmFunction*, PointerDetector*> PointerDetectors;
         PointerDetectors pointers;
         sqlite3_command cmd1(sqlite, "insert into semantic_fio "
-                             //1        2              3                   4                      5             6
-                             "(func_id, inputgroup_id, actual_outputgroup, effective_outputgroup, elapsed_time, cpu_time)"
-                             " values (?,?,?,?,?,?)");
+                             //1        2              3                  4                     5
+                             "(func_id, inputgroup_id, pointers_consumed, nonpointers_consumed, actual_outputgroup,"
+                             //6                      7             8
+                             " effective_outputgroup, elapsed_time, cpu_time)"
+                             " values (?,?,?,?,?,?,?,?)");
         sqlite3_command cmd2(sqlite, "select count(*) from semantic_fio where func_id=? and inputgroup_id=? limit 1");
         Progress progress(opt.nfuzz * functions.size());
         progress.force_output(opt.show_progress);
@@ -1856,10 +1858,12 @@ public:
                 } else {
                     cmd1.bind(1, func_ids[func]);
                     cmd1.bind(2, fuzz_number);
-                    cmd1.bind(3, outputgroup_id);
-                    cmd1.bind(4, outputgroup_id);
-                    cmd1.bind(5, elapsed_time);
-                    cmd1.bind(6, cpu_time);
+                    cmd1.bind(3, inputs.pointers_consumed());
+                    cmd1.bind(4, inputs.integers_consumed());
+                    cmd1.bind(5, outputgroup_id);
+                    cmd1.bind(6, outputgroup_id);
+                    cmd1.bind(7, elapsed_time);
+                    cmd1.bind(8, cpu_time);
                     cmd1.executenonquery();
                 }
             }

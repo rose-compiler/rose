@@ -99,9 +99,11 @@ main(int argc, char *argv[])
     db.executenonquery("create table compare_outputs_tmp as select * from semantic_fio limit 0");
     sqlite3_command cmd1(db,
                          "insert into compare_outputs_tmp"
-                         // 1        2              3                   4                      5             6
-                         " (func_id, inputgroup_id, actual_outputgroup, effective_outputgroup, elapsed_time, cpu_time)"
-                         " values (?,?,?,?,?,?)");
+                         // 1        2              3                  4                     5
+                         " (func_id, inputgroup_id, pointers_consumed, nonpointers_consumed, actual_outputgroup,"
+                         // 6                     7             8
+                         " effective_outputgroup, elapsed_time, cpu_time)"
+                         " values (?,?,?,?,?,?,?,?)");
     sqlite3_command cmd2(db, "select * from semantic_fio");     // these two lines must be two separate C++ statements
     sqlite3_reader c2 = cmd2.executereader();                   // otherwise sqlite3x seg faults.
     while (c2.read()) {
@@ -109,14 +111,16 @@ main(int argc, char *argv[])
         cmd1.bind(1, c2.getint(0)); // bind is 1-origin; get*() are zero-origin; what a stupid API
         cmd1.bind(2, c2.getint(1));
         cmd1.bind(3, c2.getint(2));
-        std::map<int, int>::iterator found = eqmap.find(c2.getint(3));
+        cmd1.bind(4, c2.getint(3));
+        cmd1.bind(5, c2.getint(4));
+        std::map<int, int>::iterator found = eqmap.find(c2.getint(5));
         if (found==eqmap.end()) {
-            cmd1.bind(4, c2.getint(3));
+            cmd1.bind(6, c2.getint(5));
         } else {
-            cmd1.bind(4, found->second);
+            cmd1.bind(6, found->second);
         }
-        cmd1.bind(5, c2.getdouble(4));
-        cmd1.bind(6, c2.getdouble(5));
+        cmd1.bind(7, c2.getdouble(6));
+        cmd1.bind(8, c2.getdouble(7));
         cmd1.executenonquery();
     }
     progress2.clear();

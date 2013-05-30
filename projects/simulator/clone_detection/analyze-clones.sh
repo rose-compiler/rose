@@ -90,6 +90,7 @@ show_settings () {
 	echo "semantic_npointers:      $semantic_npointers"
 	echo "semantic_nnonpointers:   $semantic_nnonpointers"
 	echo "semantic_maxinsns:       $semantic_maxinsns"
+	echo "semantic_flags:          $semantic_flags"
     fi
     echo
     echo "combined_dbname:         $combined_dbname"

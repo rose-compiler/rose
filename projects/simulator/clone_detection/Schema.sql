@@ -89,6 +89,8 @@ create table if not exists semantic_sources (
 create table if not exists semantic_fio (
        func_id integer references semantic_functions(id),
        inputgroup_id integer references semantic_inputvalues(id),
+       pointers_consumed integer,		-- number of pointers from the inputgroup consumed by this test
+       nonpointers_consumed integer,		-- number of non-pointers from the inputgroup consumed by this test
        actual_outputgroup integer references semantic_outputvalues(id), -- actual output produced by this function
        effective_outputgroup integer references semantic_outputvalues(id), -- effective output used for similarity
        elapsed_time double precision,           -- number of seconds elapsed excluding ptr analysis
