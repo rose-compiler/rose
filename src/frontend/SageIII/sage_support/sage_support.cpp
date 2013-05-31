@@ -4468,7 +4468,14 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 
           if (get_unparse_output_filename().empty())
           {
-              ROSE_ASSERT(! "Not implemented yet");
+              if (get_skipfinalCompileStep())
+              {
+                  // nothing to do...
+              }
+              else
+              {
+                  ROSE_ASSERT(! "Not implemented yet");
+              }
           }
           else
           {
