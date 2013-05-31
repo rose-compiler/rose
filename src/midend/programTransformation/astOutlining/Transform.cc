@@ -78,6 +78,7 @@ SgClassDeclaration* Outliner::generateParameterStructureDeclaration(
         string member_name = i_name->get_name( ).str( );
         SgType* member_type = i_name->get_type( ) ;
         // use pointer type or its original type?
+        SgType * non_typef_type = member_type->stripType( SgType::STRIP_TYPEDEF_TYPE );
         if (symsUsingAddress.find(i_symbol) != symsUsingAddress.end())
         {
             member_name = member_name+"_p";
@@ -85,19 +86,36 @@ SgClassDeclaration* Outliner::generateParameterStructureDeclaration(
             // member_type = buildPointerType(member_type);
             // Liao, 10/26/2009
             // We use void* instead of type* to ease the handling of C++ class pointers wrapped into the data structure
-            // Using void* can avoid adding a forward class declaration  which is needed for classA *
+            // Using void* can avoid adding a forward class declaration  which is needed for classA * 
             // It also simplifies unparsing: unparsing the use of classA* has some complications. 
             // The downside is that type casting is needed for setting and using the pointer typed values
-            if( isSgArrayType( member_type->stripType( SgType::STRIP_TYPEDEF_TYPE ) ) )
+            if( isSgArrayType( non_typef_type ) != NULL )
             {   // Sara, 05/10/2013
                 // An array type here means that the memory was statically allocated.
                 // In this case we need the array to be allocated in the struct
-                member_type = buildPointerType( buildArrayMemberType( member_type ) );
+                if( isSgFunctionDefinition( i_symbol->get_scope( ) ) )
+                {   // When the variable is a parameter (function definition scope), the first dimension is passed by pointer
+                    member_type = buildPointerType( buildPointerType( isSgArrayType( non_typef_type )->get_base_type( ) ) );
+                }
+                else
+                {   // Otherwise, all dimensions remain
+                    member_type = buildPointerType( member_type );
+                }
+            }
+            else if( isSgArrayType( non_typef_type->stripType( SgType::STRIP_POINTER_TYPE ) ) )
+            {   // Shared array which first dimension is expressed as a pointerbuildPointerType( non_typef_type->get_base_type( ) )
+                // int (*c1)[10] = calloc(sizeof(int), 10 * 10);
+                // #pragma omp task shared(c1)
+                member_type = buildPointerType( non_typef_type );
             }
             else
-            {
+            {   // Scalars, Pointers, Structures
                 member_type = buildPointerType( buildVoidType( ) );
             }
+        }
+        else if( ( isSgArrayType( non_typef_type ) ) && ( isSgFunctionDefinition( i_symbol->get_scope( ) ) ) )
+        {   // First dimension is passed by pointer for all array symbols that are parameters
+            member_type = buildPointerType( isSgArrayType( non_typef_type )->get_base_type( ) );
         }
         SgVariableDeclaration *member_decl = buildVariableDeclaration( member_name, member_type, NULL, def_scope );
         appendStatement( member_decl, def_scope );
