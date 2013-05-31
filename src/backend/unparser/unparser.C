@@ -3,14 +3,14 @@
  * and fucntions that unparse directives.
  */
 
-// TOO1 (05/14/2013): Signal handling for -rose:keep_going
-#include <setjmp.h>
-#include <signal.h>
-
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 // #include "propagateHiddenListData.h"
 // #include "HiddenList.h"
+
+// TOO1 (05/14/2013): Signal handling for -rose:keep_going
+#include <setjmp.h>
+#include <signal.h>
 
 // include "array_class_interface.h"
 #include "unparser.h"
