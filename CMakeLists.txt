@@ -1044,6 +1044,14 @@ endif()
 
 enable_testing()
 
+# Copy CTestCustom.cmake into the binary directory.
+# This file tells CTest to ignore some output that it otherwise
+# considers compilation errors.
+configure_file(
+  cmake/CTestCustom.cmake.in
+  ${CMAKE_BINARY_DIR}/CTestCustom.cmake
+  @ONLY)
+
 #TODO: better support for other compilers & operating systems
 set(C_INCLUDE_STRING
   "{\"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS\", \\

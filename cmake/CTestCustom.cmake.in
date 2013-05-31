@@ -1,0 +1,4 @@
+set(CTEST_CUSTOM_ERROR_EXCEPTION
+  "previous definition is here"
+  "unbalanced braces"
+)
