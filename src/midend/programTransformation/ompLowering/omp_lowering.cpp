@@ -480,6 +480,28 @@ void gatherReferences( const Rose_STL_Container< SgNode* >& expr, Rose_STL_Conta
     }
     return result;
   }
+  
+  int replaceVariableReferences(SgNode* root, ASTtools::VarSymSet_t vars)
+  {
+      int result = 0;
+      typedef Rose_STL_Container<SgNode *> NodeList_t;
+      NodeList_t refs = NodeQuery::querySubTree (root, V_SgVarRefExp);
+      for (NodeList_t::iterator i = refs.begin (); i != refs.end (); ++i)
+      {
+          SgVarRefExp* ref_orig = isSgVarRefExp (*i);
+          ROSE_ASSERT (ref_orig);
+          ASTtools::VarSymSet_t::const_iterator i = vars.find( ref_orig->get_symbol( ) );
+          if( i != vars.end( ) )
+          {
+              SgExpression * ptr_ref = buildPointerDerefExp( copyExpression(ref_orig) );
+              ptr_ref->set_need_paren(true);
+              SageInterface::replaceExpression( ref_orig, ptr_ref );
+              result ++;
+          }
+      }
+      return result;
+  }
+  
   //! Create a stride expression from an existing stride expression based on the loop iteration's order (incremental or decremental)
   // The assumption is orig_stride is just the raw operand of the condition expression of a loop
   // so it has to be adjusted to reflect the real stride: *(-1) if decremental
@@ -3929,7 +3951,8 @@ static void insertInnerThreadBlockReduction(SgOmpClause::omp_reduction_operator_
      SgInitializedNamePtrList:: iterator new_end = unique (var_list.begin(), var_list.end());
      var_list.erase(new_end, var_list.end());
      VariableSymbolMap_t var_map; 
-
+     ASTtools::VarSymSet_t var_set;
+     
      vector <SgStatement* > front_stmt_list, end_stmt_list, front_init_list;  
     
 // this is call by both transOmpTargetParallel and transOmpTargetLoop, we should move this to the correct caller place 
@@ -3959,47 +3982,74 @@ static void insertInnerThreadBlockReduction(SgOmpClause::omp_reduction_operator_
       bool isReductionVar = isInClauseVariableList(orig_var, clause_stmt,V_SgOmpReductionClause);
 
       // step 1. Insert local declaration for private, firstprivate, lastprivate and reduction
+      // Sara, 5/31/2013: if variable is in Function Scope ( a parameter ) and array, 
+      // we don't want a private copy, since the only thing private is the pointer, not the pointed data
+      // We had a variable passed as private that has to be used as shared
+      // We create a pointer to the variable and replace all the occurrences of the variable by the pointer
+      // Example:
+      // source code: 
+      // void outlining( int M[10][10] ) {
+      //   #pragma omp task firstprivate( M )
+      //   M[0][0] = 4;
+      // }
+      // outlined parameters struct
+      // struct OUT__17__7038___data {
+      //   int (*M)[10UL];
+      // };
+      // outlined function:
+      // static void OUT__17__7038__(void *__out_argv) {
+      //   int (**M)[10UL] = (int (**)[10UL])(&(((struct OUT__17__7038___data *)__out_argv) -> M));
+      //   (*M)[0][0] = 4;
+      // }
       if (isInClauseVariableList(orig_var, clause_stmt, vvt))
       {
-        SgInitializer * init = NULL;
-        // use copy constructor for firstprivate on C++ class object variables
-        // For simplicity, we handle C and C++ scalar variables the same way
-        //
-        // But here is one exception: an array type firstprivate variable should
-        // be initialized element-by-element
-        // Liao, 4/12/2010
-        if (isInClauseVariableList(orig_var, clause_stmt,V_SgOmpFirstprivateClause) && !isSgArrayType(orig_type))
+        if( !(isSgArrayType(orig_type) && isSgFunctionDefinition (orig_var->get_scope ())) )
         {
-          init = buildAssignInitializer(buildVarRefExp(orig_var, bb1));
-        }
-        string private_name = "_p_"+orig_name;
+          SgInitializer * init = NULL;
+          // use copy constructor for firstprivate on C++ class object variables
+          // For simplicity, we handle C and C++ scalar variables the same way
+          //
+          // But here is one exception: an array type firstprivate variable should
+          // be initialized element-by-element
+          // Liao, 4/12/2010
+          if (isInClauseVariableList(orig_var, clause_stmt,V_SgOmpFirstprivateClause) && !isSgArrayType(orig_type) )
+          {  
+            init = buildAssignInitializer(buildVarRefExp(orig_var, bb1));
+          }
+          
+          string private_name;
+          if (SageInterface::is_Fortran_language() )
+          {
+            // leading _ is not allowed in Fortran
+            private_name = "i_"+orig_name;
+            nCounter ++; // Fortran does not have basic block as a scope at source level
+            // I have to generated all declarations at the same flat level under function definitions
+            // So a name counter is needed to avoid name collision
+            private_name = private_name + "_" + StringUtility::numberToString(nCounter);
 
-        if (SageInterface::is_Fortran_language() )
-        {
-          // leading _ is not allowed in Fortran
-          private_name = "i_"+orig_name;
-          nCounter ++; // Fortran does not have basic block as a scope at source level
-          // I have to generated all declarations at the same flat level under function definitions
-          // So a name counter is needed to avoid name collision
-          private_name = private_name + "_" + StringUtility::numberToString(nCounter);
-
-          // Special handling for variable declarations in Fortran
-          local_decl = buildAndInsertDeclarationForOmp (private_name, orig_type, init, bb1);
+            // Special handling for variable declarations in Fortran
+            local_decl = buildAndInsertDeclarationForOmp (private_name, orig_type, init, bb1);
+          }
+          else
+          {
+            private_name = "_p_"+orig_name;
+            local_decl = buildVariableDeclaration(private_name, orig_type, init, bb1);
+            //ROSE_ASSERT (getFirst);isSgFunctionDefinition (orig_var->get_scope (
+            //   prependStatement(local_decl, bb1);
+            front_stmt_list.push_back(local_decl);   
+          }
+          // record the map from old to new symbol
+          var_map.insert( VariableSymbolMap_t::value_type( orig_symbol, getFirstVarSym(local_decl)) ); 
         }
         else
         {
-          private_name = "_p_"+orig_name;
-          local_decl = buildVariableDeclaration(private_name, orig_type, init, bb1);
-          //ROSE_ASSERT (getFirst);
-          //   prependStatement(local_decl, bb1);
-          front_stmt_list.push_back(local_decl);   
+            var_set.insert(orig_symbol);
         }
-        // record the map from old to new symbol
-        var_map.insert( VariableSymbolMap_t::value_type( orig_symbol, getFirstVarSym(local_decl)) ); 
       }
       // step 2. Initialize the local copy for array-type firstprivate variables TODO copyin, copyprivate
 #if 1
-      if (isInClauseVariableList(orig_var, clause_stmt,V_SgOmpFirstprivateClause) && isSgArrayType(orig_type))
+      if (isInClauseVariableList(orig_var, clause_stmt,V_SgOmpFirstprivateClause) && 
+          isSgArrayType(orig_type) && !isSgFunctionDefinition (orig_var->get_scope ()))
       {
         // SgExprStatement* init_stmt = buildAssignStatement(buildVarRefExp(local_decl), buildVarRefExp(orig_var, bb1));
         SgInitializedName* leftArray = getFirstInitializedName(local_decl); 
@@ -4067,6 +4117,7 @@ static void insertInnerThreadBlockReduction(SgOmpClause::omp_reduction_operator_
 
    // step 4. Variable replacement for all original bb1
    replaceVariableReferences(bb1, var_map); 
+   replaceVariableReferences(bb1, var_set); // Variables that must be replaced by a pointer to the variable
 
    // We delay the insertion of declaration, initialization , and save-back statements until variable replacement is done
    // in order to avoid replacing variables of these newly generated statements.
