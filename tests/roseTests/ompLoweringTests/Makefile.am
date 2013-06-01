@@ -120,6 +120,7 @@ C_TESTCODES_REQUIRED_TO_RUN = \
 	subteam2.c \
 	spmd1.c \
 	task_largenumber.c \
+	task_outlining.c \
 	task_untied.c \
 	task_untied2.c \
 	task_untied3.c

@@ -422,7 +422,7 @@ createUnpackDecl (SgInitializedName* param, // the function parameter
     // decide on the type : local_type
     // the original data type of the variable passed via parameter
     SgType* orig_var_type = i_name ->get_type();
-
+    bool is_array_parameter = false;
     if( !SageInterface::is_Fortran_language( ) )
     {  
         // Convert an array type parameter's first dimension to a pointer type
@@ -431,7 +431,10 @@ createUnpackDecl (SgInitializedName* param, // the function parameter
         // Liao, 4/24/2009  TODO we should only adjust this for the case 1
         if( isSgArrayType(orig_var_type) ) 
             if( isSgFunctionDefinition( i_name->get_scope( ) ) )
+            {    
                 orig_var_type = SageBuilder::buildPointerType(isSgArrayType(orig_var_type)->get_base_type());
+                is_array_parameter = true;
+            }
     }
 
     SgType* local_type = NULL;
@@ -440,7 +443,8 @@ createUnpackDecl (SgInitializedName* param, // the function parameter
     else if( Outliner::temp_variable || Outliner::useStructureWrapper ) 
     // unique processing for C/C++ if temp variables are used
     {
-        if( isPointerDeref )    // use pointer dereferencing for some
+        if( isPointerDeref || ( !isPointerDeref && is_array_parameter ) )    
+            // use pointer dereferencing for some
             local_type = buildPointerType(orig_var_type);
         else                    // use variable clone instead for others
             local_type = orig_var_type;
@@ -508,18 +512,19 @@ createUnpackDecl (SgInitializedName* param, // the function parameter
                 // We use void* for all pointer types elements within the data structure. So type casting is needed here
                 // e.g.   class Hello **this__ptr__ = (class Hello **)(((struct OUT__1__1527___data *)__out_argv) -> this__ptr___p);
                 
-                if( isSgArrayType( local_type ) )
-                {    
-                    param_ref = buildArrowExp( buildCastExp( buildVarRefExp( param, scope ), 
-                                                             buildPointerType( struct_decl->get_type( ) ) ), 
-                                               buildVarRefExp( field_name, struct_def ) );
-                }
-                else
-                {    
-                    param_ref = buildCastExp( buildArrowExp( buildCastExp( buildVarRefExp( param, scope ), 
-                                                                           buildPointerType( struct_decl->get_type( ) ) ), 
-                                                             buildVarRefExp( field_name, struct_def ) ), 
-                                              local_type );
+                
+                param_ref = buildArrowExp( buildCastExp( buildVarRefExp( param, scope ), 
+                                                         buildPointerType( struct_decl->get_type( ) ) ), 
+                                           buildVarRefExp( field_name, struct_def ) );
+                if( !isSgArrayType( local_type ) )
+                {
+                    // When necessary, we must catch the address before we do the casting
+                    if( !isPointerDeref && is_array_parameter )
+                    {
+                        param_ref = buildAddressOfOp( param_ref );
+                    }
+                    
+                    param_ref = buildCastExp( param_ref, local_type );
                 }
             }
             else
