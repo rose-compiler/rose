@@ -26,6 +26,10 @@ using namespace sqlite3x; // its top-level class name start with "sqlite3_"
 #include <boost/algorithm/string/regex_find_format.hpp>
 #include <boost/algorithm/string/regex.hpp>
 
+// Define USE_ADDRESS_HASHER if you want readMemory() of an uninitialized address to return a value determined by the
+// address. If not defined, then readMemory() consumes an input value.
+#define USE_ADDRESS_HASHER
+
 static std::string argv0; // base name of argv[0]
 
 static void usage(int exit_status)
@@ -167,6 +171,43 @@ public:
 typedef BinaryAnalysis::PointerAnalysis::PointerDetection<InstructionProvidor> PointerDetector;
 
 /*******************************************************************************************************************************
+ *                                      Address hasher
+ *******************************************************************************************************************************/
+
+/** Hashes a virtual address to a small integer. */
+class AddressHasher {
+public:
+    AddressHasher() { init(0); }
+    AddressHasher(unsigned seed) { init(seed); }
+
+    void init(unsigned seed) {
+        lcgN = seed;
+        for (size_t i=0; i<256; ++i)
+            tab[i] = random8();
+    }
+    
+    uint8_t operator()(rose_addr_t addr, Verbosity verbosity) {
+        uint8_t retval = 0;
+        for (size_t i=0; i<4; ++i) {
+            uint8_t byte = IntegerOps::shiftRightLogical2(addr, 8*i) & 0xff;
+            retval = tab[(retval+byte) & 0xff];
+        }
+        if (verbosity>=EFFUSIVE)
+            std::cerr <<"CloneDetection: initializing memory[" <<StringUtility::addrToString(addr) <<"]"
+                      <<" = (uint8_t)" <<(unsigned)retval <<"\n";
+        return retval;
+    }
+protected:
+    uint8_t random8() {
+        lcgN = 6364136223846793005ull * lcgN + 1442695040888963407ull;
+        return IntegerOps::shiftRightLogical<64>(lcgN, 7) & 0xff;
+    }
+private:
+    uint64_t lcgN;                      // previous value from linear congruential generator
+    uint8_t tab[256];
+};
+    
+/*******************************************************************************************************************************
  *                                      Input Group
  *******************************************************************************************************************************/
 
@@ -274,7 +315,6 @@ public:
     MemoryCells data_cells;                                     // memory state for anything that non-stack (e.g., DS register)
     BaseSemantics::RegisterStateX86<ValueType> registers;
     BaseSemantics::RegisterStateX86<ReadWriteState> register_rw_state;
-    InputGroup *input_group;                                   // user-supplied input values
     OutputGroup output_group;                                  // output values filled in as we run a function
 
     // Write a single byte to memory. The rw_state are the HAS_BEEN_READ and/or HAS_BEEN_WRITTEN bits.
@@ -423,6 +463,9 @@ public:
     size_t ninsns;                                      // Number of instructions processed since last trigger() call
     size_t max_ninsns;                                  // Maximum number of instructions to process after trigger()
     Verbosity verbosity;                                // How much diagnostics to emit
+#ifdef USE_ADDRESS_HASHER
+    AddressHasher address_hasher;                       // Hashes a virtual address
+#endif
 
     Policy(): inputs(NULL), pointers(NULL), ninsns(0), max_ninsns(255), verbosity(SILENT) {}
 
@@ -470,6 +513,9 @@ public:
         this->pointers = pointers;
         this->ninsns = 0;
         state.reset_for_analysis();
+#ifdef USE_ADDRESS_HASHER
+        address_hasher.init(inputs->next_integer());
+#endif
 
         // Initialize some registers.  Obviously, the EIP register needs to be set, but we also set the ESP and EBP to known
         // (but arbitrary) values so we can detect when the function returns.  Be sure to use these same values in related
@@ -600,9 +646,13 @@ public:
             // on whether the memory address is known to be a pointer, and then write the value back to memory so the same
             // value is read next time.
             SymbolicSemantics::ValueType<32> a0_sym(a0.known_value());
+#ifdef USE_ADDRESS_HASHER
+            retval = ValueType<nBits>(address_hasher(a0.known_value(), verbosity));
+#else
             InputGroup::Type type = this->pointers!=NULL && this->pointers->is_pointer(a0_sym) ?
                                     InputGroup::POINTER : InputGroup::NONPOINTER;
             retval = next_input_value<nBits>(type);
+#endif
             this->writeMemory<nBits>(sr, a0, retval, this->true_(), HAS_BEEN_READ);
         }
 
@@ -1330,7 +1380,9 @@ public:
                              " values (?,?,?,?,?,?,?)");
         if (opt.verbosity>=LACONIC)
             std::cerr <<"CloneDetection:   computing address-to-source mapping\n";
-        BinaryAnalysis::DwarfLineMapper dlm(ast);
+        SgBinaryComposite *binfile = SageInterface::getEnclosingNode<SgBinaryComposite>(ast);
+        assert(binfile!=NULL);
+        BinaryAnalysis::DwarfLineMapper dlm(binfile);
         dlm.fix_holes();
         AsmUnparser unparser;
         //unparser.staticDataDisassembler.init(thread->get_process()->get_disassembler()); //FIXME
