@@ -1100,6 +1100,16 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                break;
              }
 
+           case V_SgJavaPackageStatement:
+             {
+               name = "_java_package_stmt_";
+               const SgJavaPackageStatement* statement = isSgJavaPackageStatement(declaration);
+               ROSE_ASSERT(statement != NULL);
+               ROSE_ASSERT(statement->get_parent() != NULL);
+               name += StringUtility::numberToString(const_cast<SgJavaPackageStatement*>(statement));
+               break;
+             }
+
        // Note that the case for SgVariableDeclaration is not implemented
           default:
             // name = "default name (default case reached: not handled)";
