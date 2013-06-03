@@ -536,6 +536,13 @@ public:
         this->writeRegister("ebx", rval);
         this->writeRegister("esi", rval);
         this->writeRegister("edi", rval);
+
+        // Initialize some additional registers.  GCC optimization sometimes preserves a register's value as part of a code
+        // path that's shared between points when the register has been initialized and when it hasn't.  Non-optimized code
+        // (apparently) never does this.  Therefore, we need to also initialize registers used this way.
+        this->writeRegister("eax", rval);
+        this->writeRegister("ecx", rval);
+        this->writeRegister("edx", rval);
     }
     
     void startInstruction(SgAsmInstruction *insn_) /*override*/ {
