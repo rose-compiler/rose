@@ -493,8 +493,6 @@ Grammar::setUpBinaryInstructions()
       * an AST that represents a single, coherent sub-part of the file.
       *************************************************************************************************************************/
 
-     // The "dwarf_info" member is first as an optimization: a single AST traversal will see the dwarf information first and
-     // therefore have the necessary debugging information already available when the traversal gets to the rest of the AST.
      NEW_TERMINAL_MACRO(AsmInterpretationList, "AsmInterpretationList", "AsmInterpretationListTag");
      AsmInterpretationList.setDataPrototype("SgAsmInterpretationPtrList", "interpretations", "",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -2502,6 +2500,10 @@ Grammar::setUpBinaryInstructions()
      AsmGenericFile.setPredeclarationString("HEADER_GENERIC_FILE_PREDECLARATION", "../Grammar/BinaryInstruction.code");
      AsmGenericFile.setAutomaticGenerationOfConstructor(false);
      AsmGenericFile.setAutomaticGenerationOfDestructor(false);
+     // The "dwarf_info" member is first as an optimization: a single AST traversal will see the dwarf information first and
+     // therefore have the necessary debugging information already available when the traversal gets to the rest of the AST.
+     AsmGenericFile.setDataPrototype("SgAsmDwarfCompilationUnitList*", "dwarf_info", "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmGenericFile.setDataPrototype("std::string", "name", "= \"\"",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      // File descriptor opened for read-only (or negative)
@@ -2527,8 +2529,6 @@ Grammar::setUpBinaryInstructions()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericFile.setDataPrototype("bool", "neuter", "= false", // if set, refuse to unparse file
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericFile.setDataPrototype("SgAsmDwarfCompilationUnitList*", "dwarf_info", "= NULL",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
