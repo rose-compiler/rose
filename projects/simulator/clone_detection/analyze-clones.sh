@@ -35,7 +35,7 @@
 # Name of the semantic database
 : ${semantic_dbname:=semantic.db}
 
-# Number of specimens that can be analyzed semantically in parallel.
+# Number of analysis processes to run in parallel.
 : ${semantic_parallelism:=10}
 
 # Minimum function size -- skip all functions that have fewer than this many instructions.  The default is the same as
@@ -43,19 +43,19 @@
 : ${semantic_minfuncsize:=$syntactic_winsize}
 
 # Number of times to run each function when fuzz testing
-: ${semantic_nfuzz:=10}
+: ${semantic_nfuzz:=100}
 
 # Number of pointer values to supply as inputs each time we test a function.  The supplied values are randomly either null
 # or non-null. Non-null pointers always point to a valid page of memory. If the function needs more pointer inputs
 # then null pointers are supplied.
-: ${semantic_npointers:=16}
+: ${semantic_npointers:=20}
 
 # Number of non-pointer values to supply as inputs each time we test a function.  The supplied values are random values
 # less than 256.  If the function needs more non-pointer inputs then zeros are supplied.
-: ${semantic_nnonpointers:=16}
+: ${semantic_nnonpointers:=100}
 
 # Maximum number of instructions to simulate in each function.  This limit prevents infinite loops during fuzz testing.
-: ${semantic_maxinsns:=256}
+: ${semantic_maxinsns:=5000}
 
 # Extra flags to pass to semantic analysis.  See CloneDetection --help for documentation
 : ${semantic_flags:=}
@@ -94,9 +94,12 @@ show_settings () {
     fi
     echo
     echo "combined_dbname:         $combined_dbname"
+    echo
+    echo "specimens:"
+    echo "$@" |sed 's/[ \t]\+/\n/g' |sed 's/^/    /'
 }
-show_settings;
-show_settings >AnalysisSettings-$(date '+%Y%m%d%H%M%S').txt
+show_settings "$@";
+[ "$#" -ne 0 ] && show_settings >AnalysisSettings-$(date '+%Y%m%d%H%M%S').txt
 
 : ${ROSE_SRC:=$ROSEGIT_SRC}
 : ${ROSE_BLD:=$ROSEGIT_BLD}
@@ -120,6 +123,8 @@ if [ "$semantic_skip" = "" ]; then
 	|| die "failed to build semantic clone detection targets in projects/simulator"
 fi
 
+[ "$#" -eq 0 ] && exit 0
+
 # Build the databases, one for syntactic and one for semantic
 if [ -e "$syntactic_dbname" -o -e "$semantic_dbname" ]; then
     echo
@@ -133,9 +138,12 @@ fi
 rm -f "$combined_dbname";
 
 
-# Semantic analysis can be run in parallel because it uses transactions to control access to the database.  The easiest
-# way to get this to run in parallel with error handling, limiting, cleanup, etc. is to use GNU make's "-j" switch.
+# Semantic analysis can be run in parallel because it uses transactions to control access to the database.  The easiest way
+# to get this to run in parallel with error handling, limiting, cleanup, etc. is to use GNU make's "-j" switch.  The
+# granularity is either "test" (each fuzz test for each specimen is run as its own process) or "specimen" (all fuzz tests for
+# a single specimen are run by a single executable).
 build_makefile () {
+    local granularity="$1"; shift
     local mf="clones-$$.mk"
 
     echo "all: all_analyses" >>$mf
@@ -143,19 +151,33 @@ build_makefile () {
     echo "ROSE_BLD = $ROSE_BLD" >>$mf
     echo -n "SWITCHES = --database=$semantic_dbname --ninputs=$semantic_npointers,$semantic_nnonpointers" >>$mf
     echo " --min-function-size=$semantic_minfuncsize --max-insns=$semantic_maxinsns $semantic_flags" >>$mf
+    echo "CloneDetection = \$(ROSE_BLD)/projects/simulator/CloneDetection" >>$mf
     echo >>$mf
 
     local all_outputs=
     for specimen in "$@"; do
 	local base=$(basename $specimen)
 	local hash=$(md5sum $specimen |cut -c1-16)
-	for fuzz in $(seq 0 $[semantic_nfuzz-1]); do
-	    local output="$base-$fuzz-$hash.out"
+
+	if [ "$granularity" = "test" ]; then
+	    for fuzz in $(seq 0 $[semantic_nfuzz-1]); do
+		local output="$base-$fuzz-$hash.out"
+		all_outputs="$all_outputs $output"
+		echo "$output: $specimen" >>$mf
+		echo -e "\t\$(CloneDetection) \$(SWITCHES) --nfuzz=1,$fuzz $specimen >\$@.tmp 2>&1" >>$mf
+		echo -e "\tmv \$@.tmp \$@" >>$mf
+	    done
+	elif [ "$granularity" = "specimen" ]; then
+	    local output="$base-$hash.out"
 	    all_outputs="$all_outputs $output"
 	    echo "$output: $specimen" >>$mf
-	    echo -e "\t\$(ROSE_BLD)/projects/simulator/CloneDetection \$(SWITCHES) --nfuzz=1,$fuzz $specimen >\$@.tmp 2>&1" >>$mf
+	    echo -e "\t\$(CloneDetection) \$(SWITCHES) --nfuzz=$semantic_nfuzz $specimen >\$@.tmp 2>&1" >>$mf
 	    echo -e "\tmv \$@.tmp \$@" >>$mf
-	done
+	else
+	    echo "$0: invalid parallelism granularity: $granularity" >&2
+	    echo "$0: granularity should be 'test' or 'specimen'" >&2
+	    exit 1
+	fi
     done
 
     echo "outputs = $all_outputs" >>$mf
@@ -169,7 +191,7 @@ build_makefile () {
 if [ "$semantic_skip" = "" ]; then
     echo "================================================================================"
     echo "                           SEMANTIC ANALYSIS"
-    makefile=$(build_makefile "$@")
+    makefile=$(build_makefile specimen "$@")
     make -f $makefile clean
     make -k -j$semantic_parallelism -f $makefile || die "semantic clone detection failed"
 fi
