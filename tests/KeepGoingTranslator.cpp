@@ -1,4 +1,6 @@
 #include <assert.h>
+#include <setjmp.h>
+#include <signal.h>
 
 #include <fstream>
 #include <iostream>
@@ -37,6 +39,9 @@ AppendToFile(const std::string& filename, const std::string& msg);
  */
 std::map<std::string, std::string>
 CreateExpectedFailuresMap(const std::string& filename);
+
+sigjmp_buf rose__midend_mark;
+static void HandleMidendSignal(int sig);
 
 int
 main(int argc, char * argv[])
@@ -154,8 +159,26 @@ main(int argc, char * argv[])
   // Build the AST used by ROSE
   SgProject* project = frontend(rose_cmdline);
 
-  // Run internal consistency tests on AST
-  AstTests::runAllTests(project);
+  struct sigaction act;
+  act.sa_handler = HandleMidendSignal;
+  sigemptyset(&act.sa_mask);
+  act.sa_flags = 0;
+  sigaction(SIGSEGV, &act, 0);
+  sigaction(SIGABRT, &act, 0);
+
+  if (sigsetjmp(rose__midend_mark, 0) == -1)
+  {
+      std::cout
+          << "[WARN] Ignoring midend failure "
+          << " as directed by -rose:keep_going"
+          << std::endl;
+      project->set_midendErrorCode(-1);
+  }
+  else
+  {
+      // Run internal consistency tests on AST
+      AstTests::runAllTests(project);
+  }
 
   // Insert your own manipulation of the AST here...
 
@@ -347,4 +370,10 @@ CreateExpectedFailuresMap(const std::string& filename)
   fin.close();
 
   return expected_failures;
+}
+
+static void HandleMidendSignal(int sig)
+{
+  std::cout << "[WARN] Caught midend signal='" << sig << "'" << std::endl;
+  siglongjmp(rose__midend_mark, -1);
 }

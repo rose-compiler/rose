@@ -4450,9 +4450,10 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
       (get_unparse_output_filename().empty() == true) ||
       (
           (
-              this->get_frontendErrorCode()         != 0 ||
-              this->get_unparserErrorCode()         != 0 ||
-              this->get_backendCompilerErrorCode()  != 0
+              this->get_frontendErrorCode()               != 0 ||
+              this->get_project()->get_midendErrorCode()  != 0 ||
+              this->get_unparserErrorCode()               != 0 ||
+              this->get_backendCompilerErrorCode()        != 0
           ) &&
           (
               get_project()->get_keep_going()
