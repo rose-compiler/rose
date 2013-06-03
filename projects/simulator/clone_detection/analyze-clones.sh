@@ -245,7 +245,7 @@ $ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" combined_clo
 # Generate call-graph pairs from similarity pairs, and then call-graph clusters from call-graph pairs
 echo "Building CG-cluster tables"
 $ROSE_BLD/projects/simulator/call_graph_clones   "$combined_dbname" syntactic_clone_pairs   syntactic_cgclone_pairs
-$ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" syntactic_cgclone_pairs syntacitc_cgclusters
+$ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" syntactic_cgclone_pairs syntactic_cgclusters
 $ROSE_BLD/projects/simulator/call_graph_clones   "$combined_dbname" semantic_clone_pairs    semantic_cgclone_pairs
 $ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" semantic_cgclone_pairs  semantic_cgclusters
 $ROSE_BLD/projects/simulator/call_graph_clones   "$combined_dbname" combined_clone_pairs    combined_cgclone_pairs
