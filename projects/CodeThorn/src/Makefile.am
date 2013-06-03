@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-bin_PROGRAMS = codethorn 
+bin_PROGRAMS = codethorn matcher_demo
 #ast_demo matcher_demo iterator_test
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 BUILT_SOURCES = 
@@ -111,18 +111,32 @@ faketarget:
 #  AstMatching.C AstMatching.h matcherlexer.lxx matcherparser.yxx matcherparser_decls.h MatchOperation.C MatchOperation.h
 
 #libmatcher_la_LFLAGS = -Pmatcher
-#libmatcher_la_YFLAGS = -p matcher --defines=matcherparser.h
+#libmatcher_la_YFLAGS = -d -p matcher
+
+#ast_demo_SOURCES = ast_demo.C Timer.cpp Timer.h  RoseAst.C RoseAst.h AstTerm.C AstTerm.h
+
+#ast_demo_LFLAGS = -Pmatcher
+#ast_demo_YFLAGS = -d -p matcher
+
+matcherlexer.C: $(srcdir)/matcherlexer.lxx
+	$(LEX) -Pmatcher $(srcdir)/matcherlexer.lxx # -o option does not work with flex 2.5.4
+	mv lex.yy.c $(srcdir)/matcherlexer.C
+
+matcherparser.C: $(srcdir)/matcherparser.yxx
+	$(YACC) -p matcher -o $(srcdir)/matcherparser.C $(srcdir)/matcherparser.yxx --defines=$*.h
+
+
 
 REGRESSION_DATA_DIR=regressiondata
 
 .PHONY: codethorn-dist viz bsps docs test checkdemos
 
 #MS: not finished yet. Flip comments for the next couple of lines to test it
-matcher_demo_LDADD = -lrose libmatcher.la
-matcher_demo_SOURCES = matcher_demo.C Timer.cpp RoseAst.C AstTerm.C
+matcher_demo_LDADD = -lrose
+matcher_demo_SOURCES = matcher_demo.C Timer.cpp RoseAst.C AstTerm.C AstMatching.C AstMatching.h matcherlexer.C matcherparser.C matcherparser_decls.h MatchOperation.C MatchOperation.h SgNodeHelper.h SgNodeHelper.C
 
-iterator_test_SOURCES = iterator_test.C ShowSeq.h
-iterator_test_LDADD = -lrose libmatcher.la
+#iterator_test_SOURCES = iterator_test.C ShowSeq.h
+#iterator_test_LDADD = -lrose libmatcher.la
 
 check-local:
 	./codethorn --internal-checks				 
