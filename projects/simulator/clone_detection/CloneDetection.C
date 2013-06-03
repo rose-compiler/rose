@@ -1153,9 +1153,9 @@ public:
     }
     
     // Get a list of functions to analyze.
-    Functions find_functions(SgNode *ast, const std::set<rose_addr_t> &limited) {
+    Functions find_functions(SgAsmInterpretation *interp, const std::set<rose_addr_t> &limited) {
         Functions retval;
-        std::vector<SgAsmFunction*> allfuncs = SageInterface::querySubTree<SgAsmFunction>(ast);
+        std::vector<SgAsmFunction*> allfuncs = SageInterface::querySubTree<SgAsmFunction>(interp);
         for (size_t i=0; i<allfuncs.size(); ++i) {
             size_t ninsns = SageInterface::querySubTree<SgAsmInstruction>(allfuncs[i]).size();
             if ((0==opt.min_funcsz || ninsns >= opt.min_funcsz) &&
@@ -1248,7 +1248,7 @@ public:
     // Save each function to the database. Updates the mapping from function object to ID number.
     // We have to do this in a database-efficient manner without holding a transaction lock too long because we're
     // likely to be running in parallel.
-    void save_functions(SgNode *ast, const Functions &functions) {
+    void save_functions(SgAsmInterpretation *interp, const Functions &functions) {
         if (opt.verbosity>=LACONIC)
             std::cerr <<"CloneDetection: saving function information and assembly listings...\n";
 
@@ -1387,7 +1387,7 @@ public:
                              " values (?,?,?,?,?,?,?)");
         if (opt.verbosity>=LACONIC)
             std::cerr <<"CloneDetection:   computing address-to-source mapping\n";
-        SgBinaryComposite *binfile = SageInterface::getEnclosingNode<SgBinaryComposite>(ast);
+        SgBinaryComposite *binfile = SageInterface::getEnclosingNode<SgBinaryComposite>(interp);
         assert(binfile!=NULL);
         BinaryAnalysis::DwarfLineMapper dlm(binfile);
         dlm.fix_holes();
@@ -1483,13 +1483,13 @@ public:
     }
     
     // Save the function call graph.
-    void save_cg(SgNode *ast) {
+    void save_cg(SgAsmInterpretation *interp) {
         if (opt.verbosity>=LACONIC)
             std::cerr <<"CloneDetection: saving call graph...\n";
 
         // Generate the full call graph, then rewrite the call graph so calls to thunks for dynamically-linked functions look
         // like they're calls directly to the dynamically linked function.
-        CG cg1 = BinaryAnalysis::FunctionCall().build_cg_from_ast<CG>(ast);
+        CG cg1 = BinaryAnalysis::FunctionCall().build_cg_from_ast<CG>(interp);
         CG cg2 = rewrite_cg(cg1);
 
         // Filter out vertices (and their incident edges) if the vertex is a function which is not part of the database (has no
@@ -1850,17 +1850,17 @@ public:
     }
 
     // Detect functions that are semantically similar by running multiple iterations of partition_functions().
-    void analyze(SgNode *ast) {
+    void analyze(SgAsmInterpretation *interp) {
         policy.verbosity = opt.verbosity;
         policy.max_ninsns = opt.max_insns;
         std::cerr <<"CloneDetection: database=" <<opt.dbname
                   <<" fuzz=@" <<opt.firstfuzz <<"+" <<opt.nfuzz
                   <<" npointers=" <<opt.npointers <<" nnonpointers=" <<opt.nnonpointers
                   <<" max_insns=" <<opt.max_insns <<"\n";
-        Functions functions = find_functions(ast, opt.functions);
-        save_functions(ast, functions); // must be first because it initializes our func_ids data member
+        Functions functions = find_functions(interp, opt.functions);
+        save_functions(interp, functions); // must be first because it initializes our func_ids data member
         save_files();
-        save_cg(ast);
+        save_cg(interp);
 
         // Mapping from function ID to function entry va and vice versa
         IdVa func_id2va;
