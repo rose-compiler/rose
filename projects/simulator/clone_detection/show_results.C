@@ -163,7 +163,8 @@ show_function(const std::string &dbname, int function_id)
               <<"Entry virtual address:     " <<entry_va <<"\n";
 
     // Inputs and outputs
-    sqlite3_command cmd2(db, "select inputset_id, outputset_id from semantic_fio where func_id = ?");
+    sqlite3_command cmd2(db, "select inputgroup_id, effective_outputgroup from semantic_fio where func_id = ?"
+                         " order by inputgroup_id");
     sqlite3_command cmd3(db, "select vtype, pos, val from semantic_inputvalues where id=? order by vtype,pos");
     sqlite3_command cmd4(db, "select output.val, fault.name"
                          " from semantic_outputvalues as output"
@@ -174,11 +175,11 @@ show_function(const std::string &dbname, int function_id)
     sqlite3_reader c2 = cmd2.executereader();
     for (size_t i_run=0; c2.read(); ++i_run) {
         std::cout <<"\nRun #" <<i_run <<":\n";
-        int inputset_id = c2.getint(0);
-        int outputset_id = c2.getint(1);
+        int inputgroup_id = c2.getint(0);
+        int outputgroup_id = c2.getint(1);
 
-        std::cout <<"  used input sequence #" <<inputset_id;
-        cmd3.bind(1, inputset_id);
+        std::cout <<"  used input sequence #" <<inputgroup_id;
+        cmd3.bind(1, inputgroup_id);
         sqlite3_reader c3 = cmd3.executereader();
         while (c3.read()) {
             std::string vtype = c3.getstring(0);
@@ -193,8 +194,8 @@ show_function(const std::string &dbname, int function_id)
         }
         std::cout <<"\n";
         
-        std::cout <<"  generated output set #" <<outputset_id <<"\n    Values:       ";
-        cmd4.bind(1, outputset_id);
+        std::cout <<"  generated output set #" <<outputgroup_id <<"\n    Values:       ";
+        cmd4.bind(1, outputgroup_id);
         sqlite3_reader c4 = cmd4.executereader();
         for (size_t i_output=0; c4.read(); ++i_output) {
             uint64_t val = c4.getint64(0);
