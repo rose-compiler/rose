@@ -68,13 +68,19 @@ if __name__ == '__main__':
                 unverified += 1
     print correct,inconsistent,unverified,unknown,n
     assert(correct+inconsistent+unverified+unknown == n)
-    red = '\033[91m'
+    red = '\033[31m' # MS: changed color code to standard 31-38 (instead of non-standard aixterm codes)
+	green = '\033[32m'
     reset = '\033[39m'
     print
     print "Statistics"
     print "=========="
+	if inconsistent > 0:
+		inconsistent_color=red
+	else:
+	    inconsistent_color=green
+		
     print "%d/%d Consistent, %s%d/%d Inconsistent%s, %d/%d Unverified, %d/%d Unknown" % (
-        correct, n, red, inconsistent, n, reset, unverified, n, unknown, n)
+        correct, n, red, inconsistent_color, n, reset, unverified, n, unknown, n)
     
     if inconsistent > 0:
         exit(1)
