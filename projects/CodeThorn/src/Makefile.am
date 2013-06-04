@@ -118,11 +118,11 @@ faketarget:
 #ast_demo_LFLAGS = -Pmatcher
 #ast_demo_YFLAGS = -d -p matcher
 
-matcherlexer.C: $(srcdir)/matcherlexer.lxx
+matcherlexer.C: $(srcdir)/matcherlexer.lxx matcherparser.h
 	$(LEX) -Pmatcher $(srcdir)/matcherlexer.lxx # -o option does not work with flex 2.5.4
 	mv lex.yy.c $(srcdir)/matcherlexer.C
 
-matcherparser.C: $(srcdir)/matcherparser.yxx
+matcherparser.C matcherparser.h: $(srcdir)/matcherparser.yxx
 	$(YACC) -p matcher -o $(srcdir)/matcherparser.C $(srcdir)/matcherparser.yxx --defines=$*.h
 
 
