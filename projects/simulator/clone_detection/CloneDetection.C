@@ -26,10 +26,6 @@ using namespace sqlite3x; // its top-level class name start with "sqlite3_"
 #include <boost/algorithm/string/regex_find_format.hpp>
 #include <boost/algorithm/string/regex.hpp>
 
-// Define USE_ADDRESS_HASHER if you want readMemory() of an uninitialized address to return a value determined by the
-// address. If not defined, then readMemory() consumes an input value.
-#define USE_ADDRESS_HASHER
-
 static std::string argv0; // base name of argv[0]
 
 static void usage(int exit_status)
@@ -38,6 +34,11 @@ static void usage(int exit_status)
               <<"   --database=STR\n"
               <<"                     Specifies the name of the database into which results are placed.\n"
               <<"                     The default is \"clones.db\".\n"
+              <<"   --follow-calls\n"
+              <<"                     Normally, x86 CALL instructions are not followed, but rather consume\n"
+              <<"                     the next input value as a return value.  This switch disables\n"
+              <<"                     that special handling so that the CALL executes normally.  However,\n"
+              <<"                     if the called address is invalid then the special handling still applies.\n"
               <<"   --function=ADDR\n"
               <<"                     Analyze only the specified function (provided it also satisfies\n"
               <<"                     all other selection criteria.  Normally all functions are considered.\n"
@@ -62,6 +63,14 @@ static void usage(int exit_status)
               <<"                     indicate the number of pointers and the number of non-pointers. The\n"
               <<"                     default is 20 pointers and 100 non-pointers.  If a function\n"
               <<"                     requires more input values, then null/zero are supplied to it.\n"
+              <<"   --permute-inputs=N\n"
+              <<"                     Normally, each input group contains random non-pointer values.  If\n"
+              <<"                     this switch is given with N greater than 1 then the first N non-pointer\n"
+              <<"                     values of an input group is a permutation of the first N non-pointer\n"
+              <<"                     values of an earlier input group.  For instance, if N is three then\n"
+              <<"                     input groups will be generated in groups of six (6=3!).  The N\n"
+              <<"                     specified here may be larger than the N1 value for the --ninputs\n"
+              <<"                     switch, in which case some of the values are zero.\n"
               <<"   --[no-]pointers\n"
               <<"                     Turn pointer analysis on or off (the default is off).  When pointer\n"
               <<"                     analysis is turned on, each function is analyzed to find memory addresses\n"
@@ -78,6 +87,33 @@ static void usage(int exit_status)
     exit(exit_status);
 }
 
+enum Verbosity { SILENT, LACONIC, EFFUSIVE };
+
+// Command-line switches
+struct Switches {
+    Switches()
+        : dbname("clones.db"), firstfuzz(0), nfuzz(10), npointers(20), nnonpointers(100),
+          min_funcsz(0), max_insns(5000), verbosity(SILENT), show_progress(false), link(false),
+          pointer_analysis(false), follow_calls(false), permute_inputs(0) {}
+    std::string dbname;                 /**< Name of database in which to store results. */
+    size_t firstfuzz;                   /**< Sequence number for starting fuzz test. */
+    size_t nfuzz;                       /**< Number of times to run each function, each time with a different input sequence. */
+    size_t npointers, nnonpointers;     /**< Number of pointer and non-pointer values to supply to as inputs per fuzz test. */
+    size_t min_funcsz;                  /**< Minimum function size measured in instructions; skip smaller functions. */
+    size_t max_insns;                   /**< Maximum number of instrutions per fuzz test before giving up. */
+    Verbosity verbosity;                /**< Produce lots of output?  Traces each instruction as it is simulated. */
+    bool show_progress;                 /**< Force progress reports even if stderr is a non-terminal or --debug is specified. */
+    bool link;                          /**< Perform dynamic linking. */
+    std::set<rose_addr_t> functions;    /**< If non-empty, consider only these functions. */
+    bool pointer_analysis;              /**< Perform pointer detection analysis?  Use pointer and non-pointer inputs? */
+    bool follow_calls;                  /**< Follow CALL instructions if possible rather than consuming an input? */
+    size_t permute_inputs;              /**< Number of non-pointer inputs to permute. */
+};
+
+/*******************************************************************************************************************************
+ *                                      Miscellaneous functions
+ *******************************************************************************************************************************/
+
 static void die(std::string mesg="")
 {
     std::cerr <<argv0 <<": " <<mesg;
@@ -91,26 +127,51 @@ static void die(std::string mesg="")
     exit(1);
 }
 
-enum Verbosity { SILENT, LACONIC, EFFUSIVE };
+template<typename T>
+static T
+factorial(T n)
+{
+    T retval = 1;
+    while (n>1) {
+        T next = retval * n--;
+        assert(next>retval); // overflow
+        retval = next;
+    }
+    return retval;
+}
 
-// Command-line switches
-struct Switches {
-    Switches()
-        : dbname("clones.db"), firstfuzz(0), nfuzz(10), npointers(20), nnonpointers(100),
-          min_funcsz(0), max_insns(5000), verbosity(SILENT), show_progress(false), link(false),
-          pointer_analysis(false) {}
-    std::string dbname;                 /**< Name of database in which to store results. */
-    size_t firstfuzz;                   /**< Sequence number for starting fuzz test. */
-    size_t nfuzz;                       /**< Number of times to run each function, each time with a different input sequence. */
-    size_t npointers, nnonpointers;     /**< Number of pointer and non-pointer values to supply to as inputs per fuzz test. */
-    size_t min_funcsz;                  /**< Minimum function size measured in instructions; skip smaller functions. */
-    size_t max_insns;                   /**< Maximum number of instrutions per fuzz test before giving up. */
-    Verbosity verbosity;                /**< Produce lots of output?  Traces each instruction as it is simulated. */
-    bool show_progress;                 /**< Force progress reports even if stderr is a non-terminal or --debug is specified. */
-    bool link;                          /**< Perform dynamic linking. */
-    std::set<rose_addr_t> functions;    /**< If non-empty, consider only these functions. */
-    bool pointer_analysis;              /**< Perform pointer detection analysis?  Use pointer and non-pointer inputs? */
-};
+// Permute a vector according to the specified permutation number. The permutation number should be between zero (inclusive)
+// and the factorial of the values size (exclusive).  A permutation number of zero is a no-op; higher permutation numbers
+// shuffle the values in repeatable ways.  Using swap rather that erase/insert is much faster than the standard Lehmer codes,
+// but doesn't return permutations in lexicographic order.  This function can perform approx 9.6 million permutations per
+// second on a vector of 12 64-bit integers on Robb's machine (computing all 12! permutations in about 50 seconds).
+template<typename T>
+static void
+permute(std::vector<T> &values/*in,out*/, uint64_t pn, size_t sz=(size_t)(-1))
+{
+    if ((size_t)(-1)==sz)
+        sz = values.size();
+    assert(sz<=values.size());
+    assert(pn<factorial(sz));
+    for (size_t i=0; i<sz; ++i) {
+        uint64_t radix = sz - i;
+        uint64_t idx = pn % radix;
+        std::swap(values[i+idx], values[i]);
+        pn /= radix;
+    }
+}
+
+
+
+
+/*****************************************************************************************************************************/
+
+
+
+
+
+
+
 
 namespace CloneDetection {
 
@@ -460,14 +521,13 @@ public:
     static const rose_addr_t FUNC_RET_ADDR = 4083;      // Special return address to mark end of analysis
     InputGroup *inputs;                                 // Input values to use when reading a never-before-written variable
     const PointerDetector *pointers;                    // Addresses of pointer variables, or null if not analyzed
+    SgAsmInterpretation *interp;                        // Interpretation in which we're executing
     size_t ninsns;                                      // Number of instructions processed since last trigger() call
-    size_t max_ninsns;                                  // Maximum number of instructions to process after trigger()
-    Verbosity verbosity;                                // How much diagnostics to emit
-#ifdef USE_ADDRESS_HASHER
     AddressHasher address_hasher;                       // Hashes a virtual address
-#endif
+    const InstructionProvidor *insns;                   // Instruction cache
+    Switches opt;                                       // Command-line switches
 
-    Policy(): inputs(NULL), pointers(NULL), ninsns(0), max_ninsns(255), verbosity(SILENT) {}
+    Policy(const Switches &opt): inputs(NULL), pointers(NULL), ninsns(0), opt(opt) {}
 
     template <size_t nBits>
     ValueType<nBits>
@@ -496,30 +556,32 @@ public:
         }
 
         ValueType<nBits> retval(value);
-        if (verbosity>=EFFUSIVE)
+        if (opt.verbosity>=EFFUSIVE)
             std::cerr <<"CloneDetection: using " <<type_name <<" input #" <<nvalues <<": " <<retval <<"\n";
         return retval;
     }
 
     // Return output values. These include the return value, certain memory writes, function calls, system calls, etc.
     OutputGroup get_outputs() {
-        return state.get_outputs(INITIAL_STACK, 8192, verbosity);
+        return state.get_outputs(INITIAL_STACK, 8192, opt.verbosity);
     }
     
     // Sets up the machine state to start the analysis of one function.
-    void reset(rose_addr_t target_va, InputGroup *inputs, const PointerDetector *pointers/*=NULL*/) {
+    void reset(SgAsmInterpretation *interp, SgAsmFunction *func, InputGroup *inputs, const InstructionProvidor *insns,
+               const PointerDetector *pointers/*=NULL*/) {
         inputs->reset();
         this->inputs = inputs;
+        this->insns = insns;
         this->pointers = pointers;
         this->ninsns = 0;
+        this->interp = interp;
         state.reset_for_analysis();
-#ifdef USE_ADDRESS_HASHER
         address_hasher.init(inputs->next_integer());
-#endif
 
         // Initialize some registers.  Obviously, the EIP register needs to be set, but we also set the ESP and EBP to known
         // (but arbitrary) values so we can detect when the function returns.  Be sure to use these same values in related
         // analyses (like pointer variable detection).
+        rose_addr_t target_va = func->get_entry_va();
         ValueType<32> eip(target_va);
         this->writeRegister("eip", eip);
         ValueType<32> esp(INITIAL_STACK); // stack grows down
@@ -546,11 +608,11 @@ public:
     }
     
     void startInstruction(SgAsmInstruction *insn_) /*override*/ {
-        if (++ninsns >= max_ninsns)
+        if (++ninsns >= opt.max_insns)
             throw FaultException(AnalysisFault::INSN_LIMIT);
         SgAsmx86Instruction *insn = isSgAsmx86Instruction(insn_);
         assert(insn!=NULL);
-        if (verbosity>=EFFUSIVE) {
+        if (opt.verbosity>=EFFUSIVE) {
             std::cerr <<"CloneDetection: " <<std::string(80, '-') <<"\n"
                       <<"CloneDetection: executing: " <<unparseInstructionWithAddress(insn) <<"\n";
         }
@@ -567,27 +629,36 @@ public:
         SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
         assert(insn_x86!=NULL);
 
-        // Special handling for function calls.  Instead of calling the function, we treat the function as returning a new
-        // input value to the function being analyzed.  We make the following assumptions:
+        // Special handling for function calls.  Optionally, instead of calling the function, we treat the function as
+        // returning a newly consumed input value to the caller via EAX.  We make the following assumptions:
         //    * Function calls are via CALL instruction
         //    * The called function always returns
         //    * The called function's return value is in the EAX register
         //    * The caller cleans up any arguments that were passed via stack
         //    * The function's return value is a non-pointer type
         if (x86_call==insn_x86->get_kind()) {
-            if (verbosity>=EFFUSIVE)
-                std::cerr <<"CloneDetection: special handling for function call (fall through and return via EAX)\n";
-
+            bool follow = opt.follow_calls;
             ValueType<32> callee_va = this->template readRegister<32>("eip");
-            state.output_group.callees_va.push_back(callee_va.known_value());
-
-            ValueType<32> call_fallthrough_va = this->template number<32>(insn->get_address() + insn->get_size());
-            this->writeRegister("eip", call_fallthrough_va);
-            this->writeRegister("eax", next_input_value<32>(InputGroup::NONPOINTER));
-
-            ValueType<32> esp = this->template readRegister<32>("esp");
-            esp = this->add(esp, ValueType<32>(4));
-            this->writeRegister("esp", esp);
+            if (follow) {
+                SgAsmInstruction *called_insn = insns->get_instruction(callee_va.known_value());
+                SgAsmFunction *called_func = called_insn ? SageInterface::getEnclosingNode<SgAsmFunction>(called_insn) : NULL;
+                if ((follow = called_insn!=NULL && called_func!=NULL)) {
+                    std::string func_name = called_func->get_name();
+                    if (func_name.size()>4 && 0==func_name.substr(func_name.size()-4).compare("@plt"))
+                        follow = false;
+                }
+            }
+            if (!follow) {
+                if (opt.verbosity>=EFFUSIVE)
+                    std::cerr <<"CloneDetection: special handling for function call (fall through and return via EAX)\n";
+                state.output_group.callees_va.push_back(callee_va.known_value());
+                ValueType<32> call_fallthrough_va = this->template number<32>(insn->get_address() + insn->get_size());
+                this->writeRegister("eip", call_fallthrough_va);
+                this->writeRegister("eax", next_input_value<32>(InputGroup::NONPOINTER));
+                ValueType<32> esp = this->template readRegister<32>("esp");
+                esp = this->add(esp, ValueType<32>(4));
+                this->writeRegister("esp", esp);
+            }
         }
 
         Super::finishInstruction(insn);
@@ -597,7 +668,7 @@ public:
     // value, thus consuming one input.
     void interrupt(uint8_t inum) /*override*/ {
         if (0x80==inum) {
-            if (verbosity>=EFFUSIVE)
+            if (opt.verbosity>=EFFUSIVE)
                 std::cerr <<"CloneDetection: special handling for system call (fall through and consume an input into EAX)\n";
             ValueType<32> syscall_num = this->template readRegister<32>("eax");
             state.output_group.syscalls.push_back(syscall_num.known_value());
@@ -649,17 +720,25 @@ public:
 
         ValueType<nBits> retval = this->template extract<0, nBits>(dword);
         if (uninitialized_read) {
-            // At least one of the bytes read did not previously exist.  Return either a pointer or non-pointer value depending
-            // on whether the memory address is known to be a pointer, and then write the value back to memory so the same
-            // value is read next time.
-            SymbolicSemantics::ValueType<32> a0_sym(a0.known_value());
-#ifdef USE_ADDRESS_HASHER
-            retval = ValueType<nBits>(address_hasher(a0.known_value(), verbosity));
-#else
-            InputGroup::Type type = this->pointers!=NULL && this->pointers->is_pointer(a0_sym) ?
-                                    InputGroup::POINTER : InputGroup::NONPOINTER;
-            retval = next_input_value<nBits>(type);
-#endif
+            // At least one of the bytes read did not previously exist, so we need to initialize these memory locations.
+            // Sometimes we want memory to have a value that depends on the next input, and other times we want a value that
+            // depends on the address.
+            bool consume_input = false;
+            if (this->interp!=NULL && this->interp->get_map()!=NULL) {
+                consume_input = this->interp->get_map()->exists(a0.known_value());
+            }
+            if (consume_input) {
+                // Return either a pointer or non-pointer value depending pointer detection analysis
+                SymbolicSemantics::ValueType<32> a0_sym(a0.known_value());
+                InputGroup::Type type = this->pointers!=NULL && this->pointers->is_pointer(a0_sym) ?
+                                        InputGroup::POINTER : InputGroup::NONPOINTER;
+                retval = next_input_value<nBits>(type);
+            } else {
+                // Return a value which is a function of the address (and one of the inputs that was used to initialize the
+                // hash function).
+                retval = ValueType<nBits>(address_hasher(a0.known_value(), opt.verbosity));
+            }
+            // Write the value back to memory so the same value is read next time.
             this->writeMemory<nBits>(sr, a0, retval, this->true_(), HAS_BEEN_READ);
         }
 
@@ -1087,7 +1166,7 @@ protected:
     Semantics semantics;
 
 public:
-    Analysis(const Switches &opt): opt(opt), semantics(policy) {
+    Analysis(const Switches &opt): opt(opt), policy(opt), semantics(policy) {
         open_db(opt.dbname);
     }
 
@@ -1605,12 +1684,12 @@ public:
                 fclose(f);
         }
     }
-    
+
     // Choose input values for fuzz testing.  The input values come from the database if they exist there, otherwise they are
-    // chosen randomly and written to the database. The set will consist of some number of non-pointers and pointers. The
-    // non-pointer values are chosen randomly, but limited to a certain range.  The pointers are chosen randomly to be null or
-    // non-null and the non-null values each have one page allocated via simulated mmap() (i.e., the non-null values themselves
-    // are not actually random).
+    // chosen and written to the database. The set will consist of some number of non-pointers and pointers.  The pointers are
+    // chosen to be randomly null or non-null, but the non-null values are not random.  Pointer values are only used if pointer
+    // detection analysis is performed (i.e., the "--pointers" switch).  The non-pointers are chosen randomly or are a
+    // permutation of a previous group's non-pointer values, depending on the "--permute-inputs" switch.
     InputGroup choose_inputs(size_t inputgroup_id) {
         InputGroup inputs;
 
@@ -1638,17 +1717,34 @@ public:
         // If we didn't get any input values, then create some and add them to the database.
         if (inputs.get_integers().size() + inputs.get_pointers().size() == 0) {
             sqlite3_command cmd3(sqlite, "insert into semantic_inputvalues (id, vtype, pos, val) values (?,?,?,?)");
-            static unsigned integer_modulus = 256;  // arbitrary;
-            static unsigned nonnull_denom = 3;      // probability of a non-null pointer is 1/N
-            for (size_t i=0; i<opt.nnonpointers; ++i) {
-                uint64_t val = rand() % integer_modulus;
-                inputs.add_integer(val);
+            size_t np = factorial(opt.permute_inputs); // number of possible permutations
+            size_t pn = inputgroup_id % np; // non-pointer permutation number; zero means no permutation, but random values
+
+            std::vector<uint64_t> nonpointers;
+            if (0==pn) {
+                static unsigned integer_modulus = 256;  // arbitrary;
+                for (size_t i=0; i<opt.nnonpointers; ++i)
+                    nonpointers.push_back(rand() % integer_modulus);
+            } else {
+                sqlite3_command cmd4(sqlite, "select val from semantic_inputvalues where id=? and vtype='N' order by pos");
+                size_t base_group_id = (inputgroup_id / np) * np; // input group that serves as the base
+                cmd4.bind(1, base_group_id);
+                sqlite3_reader c4 = cmd4.executereader();
+                while (c4.read())
+                    nonpointers.push_back(c4.getint(0));
+                if (opt.permute_inputs>nonpointers.size())
+                    nonpointers.resize(opt.permute_inputs, 0);
+                permute(nonpointers, pn, opt.permute_inputs);
+            }
+            for (size_t i=0; i<nonpointers.size(); ++i) {
                 cmd3.bind(1, inputgroup_id);
                 cmd3.bind(2, "N");
                 cmd3.bind(3, i);
-                cmd3.bind(4, val);
+                cmd3.bind(4, nonpointers[i]);
                 cmd3.executenonquery();
             }
+                
+            static unsigned nonnull_denom = 3;      // probability of a non-null pointer is 1/N
             for (size_t i=0; i<opt.npointers; ++i) {
                 uint64_t val = rand()%nonnull_denom ? 0 : allocate_page();
                 inputs.add_pointer(val);
@@ -1790,10 +1886,10 @@ public:
     }
     
     // Analyze a single function by running it with the specified inputs and collecting its outputs. */
-    OutputGroup fuzz_test(SgAsmFunction *function, InputGroup &inputs, const PointerDetector *pointers/*=NULL*/) {
-        InstructionProvidor insns(function);
+    OutputGroup fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inputs,
+                          const InstructionProvidor &insns, const PointerDetector *pointers/*=NULL*/) {
         AnalysisFault::Fault fault = AnalysisFault::NONE;
-        policy.reset(function->get_entry_va(), &inputs, pointers);
+        policy.reset(interp, function, &inputs, &insns, pointers);
         try {
             while (1) {
                 if (!policy.state.registers.ip.is_known()) {
@@ -1851,8 +1947,6 @@ public:
 
     // Detect functions that are semantically similar by running multiple iterations of partition_functions().
     void analyze(SgAsmInterpretation *interp) {
-        policy.verbosity = opt.verbosity;
-        policy.max_ninsns = opt.max_insns;
         std::cerr <<"CloneDetection: database=" <<opt.dbname
                   <<" fuzz=@" <<opt.firstfuzz <<"+" <<opt.nfuzz
                   <<" npointers=" <<opt.npointers <<" nnonpointers=" <<opt.nnonpointers
@@ -1861,6 +1955,7 @@ public:
         save_functions(interp, functions); // must be first because it initializes our func_ids data member
         save_files();
         save_cg(interp);
+        InstructionProvidor insns(interp);
 
         // Mapping from function ID to function entry va and vice versa
         IdVa func_id2va;
@@ -1874,10 +1969,10 @@ public:
         PointerDetectors pointers;
         sqlite3_command cmd1(sqlite, "insert into semantic_fio "
                              //1        2              3                  4                     5
-                             "(func_id, inputgroup_id, pointers_consumed, nonpointers_consumed, actual_outputgroup,"
-                             //6                      7             8
-                             " effective_outputgroup, elapsed_time, cpu_time)"
-                             " values (?,?,?,?,?,?,?,?)");
+                             "(func_id, inputgroup_id, pointers_consumed, nonpointers_consumed, instructions_executed,"
+                             //6                   7                      8             9
+                             " actual_outputgroup, effective_outputgroup, elapsed_time, cpu_time)"
+                             " values (?,?,?,?,?,?,?,?,?)");
         sqlite3_command cmd2(sqlite, "select count(*) from semantic_fio where func_id=? and inputgroup_id=? limit 1");
         Progress progress(opt.nfuzz * functions.size());
         progress.force_output(opt.show_progress);
@@ -1917,7 +2012,7 @@ public:
                 gettimeofday(&start_time, NULL);
                 if (opt.verbosity>=LACONIC)
                     std::cerr <<"CloneDetection: " <<function_to_str(func) <<" fuzz test #" <<fuzz_number <<"\n";
-                OutputGroup outputs = fuzz_test(func, inputs, ip->second);
+                OutputGroup outputs = fuzz_test(interp, func, inputs, insns, ip->second);
                 gettimeofday(&stop_time, NULL);
                 clock_t stop_ticks = clock();
                 double elapsed_time = (stop_time.tv_sec - start_time.tv_sec) +
@@ -1944,10 +2039,11 @@ public:
                     cmd1.bind(2, fuzz_number);
                     cmd1.bind(3, inputs.pointers_consumed());
                     cmd1.bind(4, inputs.integers_consumed());
-                    cmd1.bind(5, outputgroup_id);
+                    cmd1.bind(5, policy.ninsns);
                     cmd1.bind(6, outputgroup_id);
-                    cmd1.bind(7, elapsed_time);
-                    cmd1.bind(8, cpu_time);
+                    cmd1.bind(7, outputgroup_id);
+                    cmd1.bind(8, elapsed_time);
+                    cmd1.bind(9, cpu_time);
                     cmd1.executenonquery();
                 }
             }
@@ -1988,6 +2084,8 @@ main(int argc, char *argv[], char *envp[])
         } else if (!strncmp(argv[i], "--database=", 11)) {
             opt.dbname = argv[i]+11;
             consume = true;
+        } else if (!strcmp(argv[i], "--follow-calls")) {
+            opt.follow_calls = consume = true;
         } else if (!strncmp(argv[i], "--function=", 11)) {
             char *rest;
             rose_addr_t va = strtoull(argv[i]+11, &rest, 0);
@@ -2015,6 +2113,9 @@ main(int argc, char *argv[], char *envp[])
             opt.npointers = opt.nnonpointers = strtoul(argv[i]+10, &rest, 0);
             if (','==*rest)
                 opt.nnonpointers = strtoul(rest+1, NULL, 0);
+            consume = true;
+        } else if (!strncmp(argv[i], "--permute-inputs=", 17)) {
+            opt.permute_inputs = strtoul(argv[i]+17, NULL, 0);
             consume = true;
         } else if (!strcmp(argv[i], "--pointers")) {
             opt.pointer_analysis = true;
