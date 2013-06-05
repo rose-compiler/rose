@@ -993,6 +993,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                  {
                                    SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
                                    file = sourceFile;
+
+                                   file->set_outputLanguage(SgFile::e_Cxx_output_language);
+
                                    file->set_Cuda_only(true);
 
                                 // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
@@ -2023,7 +2026,8 @@ SgFile::callFrontEnd()
   // Build the commandline for EDG
   // printf ("Inside of SgFile::callFrontEnd(): Calling build_EDG_CommandLine (fileNameIndex = %d) \n",fileNameIndex);
   if (get_C_only() ||
-      get_Cxx_only())
+      get_Cxx_only() ||
+      get_Cuda_only())
   {
       #ifndef ROSE_USE_CLANG_FRONTEND
          build_EDG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
