@@ -38,6 +38,9 @@
 # Number of analysis processes to run in parallel.
 : ${semantic_parallelism:=10}
 
+# Parallelism granularity, either 'specimen' or 'test'
+: ${semantic_granularity:=test}
+
 # Minimum function size -- skip all functions that have fewer than this many instructions.  The default is the same as
 # the syntactic window size.
 : ${semantic_minfuncsize:=$syntactic_winsize}
@@ -85,6 +88,7 @@ show_settings () {
     else
 	echo "semantic_dbname:         $semantic_dbname"
 	echo "semantic_parallelism:    $semantic_parallelism"
+	echo "semantic_granularity:    $semantic_granularity"
 	echo "semantic_minfuncsize:    $semantic_minfuncsize"
 	echo "semantic_nfuzz:          $semantic_nfuzz"
 	echo "semantic_npointers:      $semantic_npointers"
@@ -99,7 +103,7 @@ show_settings () {
     echo "$@" |sed 's/[ \t]\+/\n/g' |sed 's/^/    /'
 }
 show_settings "$@";
-[ "$#" -ne 0 ] && show_settings >AnalysisSettings-$(date '+%Y%m%d%H%M%S').txt
+[ "$#" -ne 0 ] && show_settings "$@" >AnalysisSettings-$(date '+%Y%m%d%H%M%S').txt
 
 : ${ROSE_SRC:=$ROSEGIT_SRC}
 : ${ROSE_BLD:=$ROSEGIT_BLD}
@@ -191,7 +195,7 @@ build_makefile () {
 if [ "$semantic_skip" = "" ]; then
     echo "================================================================================"
     echo "                           SEMANTIC ANALYSIS"
-    makefile=$(build_makefile specimen "$@")
+    makefile=$(build_makefile "$semantic_granularity" "$@")
     make -f $makefile clean
     make -k -j$semantic_parallelism -f $makefile || die "semantic clone detection failed"
 fi
