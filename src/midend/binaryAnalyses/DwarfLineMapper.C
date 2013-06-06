@@ -18,8 +18,21 @@ operator<<(std::ostream &o, const DwarfLineMapper &x)
 }
 
 void
+DwarfLineMapper::init()
+{
+#ifndef HAVE_DWARF_H
+    static bool called = false;
+    if (!called) {
+        std::cerr <<"DwarfLineMapper::DwarfLineMapper: warning: DWARF support is not enabled in ROSE\n";
+        called = true;
+    }
+#endif
+}
+
+void
 DwarfLineMapper::init(SgNode *ast, Direction d)
 {
+    init();
     p_direction = d;
     clear();
     insert(ast);

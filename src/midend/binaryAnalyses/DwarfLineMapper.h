@@ -53,7 +53,7 @@ public:
 
 public:
     /** Construct an empty line mapper. */
-    explicit DwarfLineMapper(Direction d=BIDIRECTIONAL): p_direction(d), up_to_date(true) {}
+    explicit DwarfLineMapper(Direction d=BIDIRECTIONAL): p_direction(d), up_to_date(true) { init(); }
 
     /** Create a new mapping using Dwarf information found in the specified part of the AST. */
     explicit DwarfLineMapper(SgNode *ast, Direction d=BIDIRECTIONAL) { init(ast, d); }
@@ -115,6 +115,7 @@ protected:
     mutable bool up_to_date;                            // Is reverse mapping up-to-date?
     virtual void visit(SgNode *node) /*override*/;
     void update() const;                                // update p_src2addr if necessary
+    void init();                                        // called by constructors
 };
 
 std::ostream& operator<<(std::ostream&, const DwarfLineMapper::SrcInfo&);
