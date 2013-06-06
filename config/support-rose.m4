@@ -320,8 +320,14 @@ else
                enable_edg_version44=yes
                AC_DEFINE([ROSE_USE_EDG_VERSION_4_4], [], [Whether to use the new EDG version 4.4])
             else
-               echo "ERROR: Could not identify the EDG minor version number."
-               exit 1
+               if test "x$edg_minor_version_number" = "x7"; then
+                  echo "Recognized an accepted minor version number."
+                  enable_edg_version47=yes
+                  AC_DEFINE([ROSE_USE_EDG_VERSION_4_7], [], [Whether to use the new EDG version 4.7])
+               else
+                  echo "ERROR: Could not identify the EDG minor version number."
+                  exit 1
+               fi
             fi
          fi
       fi
@@ -352,6 +358,7 @@ AM_CONDITIONAL(ROSE_USE_EDG_VERSION_3, [test "x$enable_edg_version3" = xyes])
 AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
 AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_3, [test "x$enable_edg_version43" = xyes])
 AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_4, [test "x$enable_edg_version44" = xyes])
+AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_7, [test "x$enable_edg_version47" = xyes])
 
 ROSE_SUPPORT_CLANG
 
@@ -1896,10 +1903,16 @@ src/frontend/CxxFrontend/EDG/EDG_4.4/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.4/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.4/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.4/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.7/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.7/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.7/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.7/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.7/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/Makefile
 src/frontend/CxxFrontend/EDG/edgRose/Makefile
 src/frontend/CxxFrontend/EDG/edg43Rose/Makefile
 src/frontend/CxxFrontend/EDG/edg44Rose/Makefile
+src/frontend/CxxFrontend/EDG/edg47Rose/Makefile
 ])], [])
 
 
