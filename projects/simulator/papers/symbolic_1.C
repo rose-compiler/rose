@@ -111,7 +111,7 @@ public:
                 using namespace InsnSemanticsExpr;
                 std::vector<TreeNodePtr> exprs;
                 LeafNodePtr result_var = LeafNode::create_variable(32);
-                InternalNodePtr expr = InternalNode::create(32, OP_EQ, result.get_expression(), result_var);
+                TreeNodePtr expr = InternalNode::create(32, OP_EQ, result.get_expression(), result_var);
                 exprs.push_back(expr);
                 for (std::set<LeafNodePtr>::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {
                     expr = InternalNode::create(32, OP_EQ, *vi, LeafNode::create_integer(32, (int)'x'));
@@ -136,8 +136,8 @@ public:
             if (!result.is_known()) {
                 trace->mesg("Analysis: setting result equal to 0xff015e7c and trying to find inputs...");
                 using namespace InsnSemanticsExpr;
-                InternalNodePtr expr = InternalNode::create(32, OP_EQ, result.get_expression(),
-                                                            LeafNode::create_integer(32, 0xff015e7c));
+                TreeNodePtr expr = InternalNode::create(32, OP_EQ, result.get_expression(),
+                                                        LeafNode::create_integer(32, 0xff015e7c));
                 if (SMTSolver::SAT_YES == smt_solver.satisfiable(expr)) {
                     for (std::set<LeafNodePtr>::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {
                         LeafNodePtr var_val = smt_solver.evidence_for_variable(*vi)->isLeafNode();
