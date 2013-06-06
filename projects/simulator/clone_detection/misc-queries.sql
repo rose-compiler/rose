@@ -72,3 +72,30 @@ select
     from semantic_fio
     group by instructions_executed
     order by instructions_executed;
+
+-- =============================================================================================================================
+-- To get a list of false negatives for semantic anysis after having run the failure-rate.sql queries.  Replace fr_fn_semantic
+-- using "fp" instead of "fn" to see false positives, or replacing "semantic" with "syntactic", "combined", etc.
+--
+-- Sample output:
+--     func_id_1   func_id_2   funcname    entry_va_1  entry_va_2
+--     ----------  ----------  ----------  ----------  ----------
+--     0           59          GEAcompile  134519808   134520640 
+--     1           58          EGexecute   134520622   134519216 
+--     2           60          Fexecute    134522506   134521840 
+--     4           62          fillbuf     134524272   134524560 
+--     5           63          print_line  134526014   134525696 
+--     7           64          prline      134527186   134526928 
+--     8           65          prtext      134527934   134528144 
+--     9           66          grepbuf     134528929   134529184 
+--     11          67          grepfile    134530702   134529744 
+--     12          69          grepdir     134531700   134538240 
+--     
+select
+        fn.*,
+        func1.funcname,
+        func1.entry_va as entry_va_1,
+        func2.entry_va as entry_va_2
+    from fr_fn_semantic as fn
+    join semantic_functions as func1 on fn.func_id_1=func1.id
+    join semantic_functions as func2 on fn.func_id_2=func2.id;
