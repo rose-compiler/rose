@@ -116,11 +116,12 @@ die () {
 [ -n "$ROSE_SRC" -a -d "$ROSE_SRC/projects" ] || die "ROSE_SRC should be set to the root of the ROSE source directory"
 [ -n "$ROSE_BLD" -a -d "$ROSE_BLD/projects" ] || die "ROSE_BLD should be set to the root of the ROSE build directory"
 
-# Make sure everything we need has been built.  The projects/BinaryCloneDetection has some errors that cause the build
+# Make sure everything we need has been built.  The projects/BinaryCloneDetection/syntactic has some errors that cause the build
 # to fail if we try to build everything.
 if [ "$syntactic_skip" = "" ]; then
-    make -C $ROSE_BLD/projects/BinaryCloneDetection -k -j createVectorsBinary findClones lshCloneDetection computeClusterPairs \
-	|| die "failed to build syntactic clone detection targets in projects/BinaryCloneDetection"
+    make -C $ROSE_BLD/projects/BinaryCloneDetection/syntactic -k -j \
+        createVectorsBinary findClones lshCloneDetection computeClusterPairs \
+	|| die "failed to build syntactic clone detection targets in projects/BinaryCloneDetection/syntactic"
 fi
 if [ "$semantic_skip" = "" ]; then
     make -C $ROSE_BLD/projects/simulator -k -j CloneDetection clusters_from_pairs call_graph_clones compare_outputs show_results \
@@ -207,17 +208,20 @@ if [ "$syntactic_skip" = "" ]; then
 
     # Syntactic analysis must be run serially
     for specimen in "$@"; do
-	$ROSE_BLD/projects/BinaryCloneDetection/createVectorsBinary --database "$syntactic_dbname" --tsv-directory "$specimen" \
-	    --stride $syntactic_stride --windowSize $syntactic_winsize \
+	$ROSE_BLD/projects/BinaryCloneDetection/syntactic/createVectorsBinary \
+            --database "$syntactic_dbname" \
+            --tsv-directory "$specimen" \
+	    --stride $syntactic_stride \
+            --windowSize $syntactic_winsize \
 	    || die "syntactic clone detection failed for $specimen"
     done
 
     # Find syntactic clones
     echo "================================================================================"
     echo "                         FINDING SYNTACTIC CLONES"
-    $ROSE_BLD/projects/BinaryCloneDetection/findClones --database "$syntactic_dbname" -t $syntactic_precision \
+    $ROSE_BLD/projects/BinaryCloneDetection/syntactic/findClones --database "$syntactic_dbname" -t $syntactic_precision \
 	|| die "syntactic clone detection failed in findClones with precision $syntactic_precision"
-    $ROSE_BLD/projects/BinaryCloneDetection/computeClusterPairs "$syntactic_dbname" \
+    $ROSE_BLD/projects/BinaryCloneDetection/syntactic/computeClusterPairs "$syntactic_dbname" \
 	|| die "could not compute syntactic cluster pairs"
 fi
 
