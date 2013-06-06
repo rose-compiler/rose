@@ -8,6 +8,10 @@
 // #include "propagateHiddenListData.h"
 // #include "HiddenList.h"
 
+// TOO1 (05/14/2013): Signal handling for -rose:keep_going
+#include <setjmp.h>
+#include <signal.h>
+
 // include "array_class_interface.h"
 #include "unparser.h"
 
@@ -32,6 +36,14 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+
+// TOO1 (05/14/2013): Signal handling for -rose:keep_going
+static sigjmp_buf rose__sgproject_unparse_mark;
+static void HandleUnparserSignal(int sig)
+{
+  std::cout << "[WARN] Caught unparser signal='" << sig << "'" << std::endl;
+  siglongjmp(rose__sgproject_unparse_mark, -1);
+}
 
 // extern ROSEAttributesList *getPreprocessorDirectives( char *fileName); // [DT] 3/16/2000
 
@@ -2069,20 +2081,40 @@ void unparseDirectory ( SgDirectory* directory, UnparseFormatHelp* unparseFormat
 #endif
    }
 
-
 // DQ (1/19/2010): Added support for refactored handling directories of files.
 void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate)
-   {
-     ROSE_ASSERT(fileList != NULL);
+{
+  ROSE_ASSERT(fileList != NULL);
   // for (int i=0; i < fileList->numberOfFiles(); ++i)
-     for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
-        {
-          SgFile* file = fileList->get_listOfFiles()[i];
+  for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
+  {
+      SgFile* file = fileList->get_listOfFiles()[i];
 
-          if ( SgProject::get_verbose() > 1 )
-               printf ("Unparsing each file... file = %p = %s \n",file,file->class_name().c_str());
+      if ( SgProject::get_verbose() > 1 )
+           printf ("Unparsing each file... file = %p = %s \n",file,file->class_name().c_str());
 
-          unparseFile(file,unparseFormatHelp,unparseDelegate);
-        }
-   }
+      // TOO1 (05/14/2013): Signal handling for -rose:keep_going
+      if (file->get_project()->get_keep_going())
+      {
+          struct sigaction act;
+          act.sa_handler = HandleUnparserSignal;
+          sigemptyset(&act.sa_mask);
+          act.sa_flags = 0;
+          sigaction(SIGSEGV, &act, 0);
+      }
+
+      if(sigsetjmp(rose__sgproject_unparse_mark, 0) == -1)
+      {
+          std::cout
+              << "[WARN] Ignoring unparser failure "
+              << " as directed by -rose:keep_going"
+              << std::endl;
+          file->set_unparserErrorCode(-1);
+      }
+      else
+      {
+          unparseFile(file, unparseFormatHelp, unparseDelegate);
+      }
+  }
+}
 
