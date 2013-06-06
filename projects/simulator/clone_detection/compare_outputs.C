@@ -100,10 +100,10 @@ main(int argc, char *argv[])
     sqlite3_command cmd1(db,
                          "insert into compare_outputs_tmp"
                          // 1        2              3                  4                     5
-                         " (func_id, inputgroup_id, pointers_consumed, nonpointers_consumed, actual_outputgroup,"
-                         // 6                     7             8
-                         " effective_outputgroup, elapsed_time, cpu_time)"
-                         " values (?,?,?,?,?,?,?,?)");
+                         " (func_id, inputgroup_id, pointers_consumed, nonpointers_consumed, instructions_executed,"
+                         // 6                     7                   8             9
+                         " actual_outputgroup, effective_outputgroup, elapsed_time, cpu_time)"
+                         " values (?,?,?,?,?,?,?,?,?)");
     sqlite3_command cmd2(db, "select * from semantic_fio");     // these two lines must be two separate C++ statements
     sqlite3_reader c2 = cmd2.executereader();                   // otherwise sqlite3x seg faults.
     while (c2.read()) {
@@ -113,14 +113,15 @@ main(int argc, char *argv[])
         cmd1.bind(3, c2.getint(2));
         cmd1.bind(4, c2.getint(3));
         cmd1.bind(5, c2.getint(4));
-        std::map<int, int>::iterator found = eqmap.find(c2.getint(5));
+        cmd1.bind(6, c2.getint(5));
+        std::map<int, int>::iterator found = eqmap.find(c2.getint(6));
         if (found==eqmap.end()) {
-            cmd1.bind(6, c2.getint(5));
+            cmd1.bind(7, c2.getint(6));
         } else {
-            cmd1.bind(6, found->second);
+            cmd1.bind(7, found->second);
         }
-        cmd1.bind(7, c2.getdouble(6));
         cmd1.bind(8, c2.getdouble(7));
+        cmd1.bind(9, c2.getdouble(8));
         cmd1.executenonquery();
     }
     progress2.clear();
