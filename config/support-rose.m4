@@ -836,6 +836,9 @@ AC_SUBST(TEST_SMT_SOLVER)
 #   AC_MSG_ERROR([Support for both DWARF and Intel Pin fails, these configure options are incompatable!])
 #fi
 
+# DQ (3/14/2013): Adding support for Aterm library use in ROSE.
+ROSE_SUPPORT_ATERM
+
 ROSE_SUPPORT_MINT
 
 ROSE_SUPPORT_PHP
@@ -2062,6 +2065,7 @@ src/roseIndependentSupport/Makefile
 src/roseIndependentSupport/dot2gml/Makefile
 projects/AstEquivalence/Makefile
 projects/AstEquivalence/gui/Makefile
+projects/AtermTranslation/Makefile
 projects/BabelPreprocessor/Makefile
 projects/BinFuncDetect/Makefile
 projects/BinQ/Makefile

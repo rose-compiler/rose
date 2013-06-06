@@ -1309,7 +1309,10 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
             // printf ("SgTemplateArgument case: scope = %p = %s \n",scope,scope->class_name().c_str());
                inheritedAttributeInfo.set_current_scope(scope);
 #else
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+
+// DQ (5/25/2013): Commented out this message (too much output spew for test codes, debugging test2013_191.C).
+// #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+#if 0
                printf ("Skipping set of inheritedAttributeInfo.set_current_scope(scope); for SgTemplateArgument \n");
 #endif
 #endif

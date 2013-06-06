@@ -31,7 +31,6 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (TemplateFunctionRefExp,       "TemplateFunctionRefExp",       "TEMPLATE_FUNCTION_REF" );
      NEW_TERMINAL_MACRO (TemplateMemberFunctionRefExp, "TemplateMemberFunctionRefExp", "TEMPLATE_MEMBER_FUNCTION_REF" );
 
-     NEW_TERMINAL_MACRO (FunctionCallExp,              "FunctionCallExp",              "FUNC_CALL" );
      NEW_TERMINAL_MACRO (SizeOfOp,                     "SizeOfOp",                     "SIZEOF_OP" );
      NEW_TERMINAL_MACRO (JavaInstanceOfOp,             "JavaInstanceOfOp",             "JAVA_INSTANCEOF_OP" );
 
@@ -287,6 +286,11 @@ Grammar::setUpExpressions ()
           ListExp  | TupleExp,
           "ExprListExp","EXPR_LIST", /* can have instances = */ true);
 
+     // TV (06/06/13) : CudaKernelCall are now considered to be a FunctionCall
+     NEW_NONTERMINAL_MACRO (FunctionCallExp,
+          CudaKernelCallExp,
+          "FunctionCallExp","FUNC_CALL", true);
+
      NEW_NONTERMINAL_MACRO (CallExpression,
           FunctionCallExp,
           "CallExpression","CALL_EXPRESSION", true);
@@ -301,7 +305,7 @@ Grammar::setUpExpressions ()
           ColonShapeExp            | AsteriskShapeExp         | /*UseOnlyExpression     |*/ ImpliedDo         | IOItemExpression         |
        /* UseRenameExpression      | */ StatementExpression   | AsmOp                   | LabelRefExp         | ActualArgumentExpression |
           UnknownArrayOrFunctionReference               | PseudoDestructorRefExp | CAFCoExpression  |
-          CudaKernelCallExp   | CudaKernelExecConfig    |  /* TV (04/22/2010): CUDA support */
+          CudaKernelExecConfig    |  /* TV (04/22/2010): CUDA support */
           LambdaRefExp        | DictionaryExp           | KeyDatumPair             |
           Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension | NaryOp |
           StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp,
@@ -1356,6 +1360,13 @@ Grammar::setUpExpressions ()
      FunctionCallExp.setFunctionPrototype ( "HEADER_FUNCTION_CALL_EXPRESSION", "../Grammar/Expression.code" );
   // FunctionCallExp.editSubstitute       ( "LIST_FUNCTION_RETURN_TYPE", "void" );
 
+  // DQ (4/8/2013): Added support for specification of operator vs. non-operator syntax ("x+y" instead of "operator+(x,y)").
+  // This is relevant for generated code in some cases (has different function evaluation rules).  See test2013_100.C.
+  // ROSE has historically defaulted to using the operator syntax ("x+y") in generated code, but sometimes this is an error
+  // as test2013_100.C demonstrates.
+     FunctionCallExp.setDataPrototype ( "bool", "uses_operator_syntax", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      CallExpression.setFunctionPrototype ( "HEADER_CALL_EXPRESSION", "../Grammar/Expression.code" );
      CallExpression.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
      CallExpression.editSubstitute       ( "LIST_NAME", "arg" );
@@ -2031,10 +2042,7 @@ Grammar::setUpExpressions ()
      CudaKernelCallExp.setFunctionPrototype ( "HEADER_CUDA_KERNEL_CALL_EXPRESSION", "../Grammar/Expression.code" );
      
      CudaKernelCallExp.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
-     CudaKernelCallExp.editSubstitute       ( "LIST_NAME", "arg" );
   
-     CudaKernelCallExp.setDataPrototype ( "SgExpression*", "function", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     CudaKernelCallExp.setDataPrototype ( "SgExprListExp*", "args", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      CudaKernelCallExp.setDataPrototype ( "SgCudaKernelExecConfig*", "exec_config", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
  // driscoll6 (6/27/11): Python support
