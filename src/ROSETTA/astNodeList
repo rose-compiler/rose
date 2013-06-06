@@ -716,3 +716,4 @@ SgCAFCoExpression
 SgCallExpression
 SgTypeCrayPointer
 SgJavaImportStatement
+SgJavaPackageStatement
