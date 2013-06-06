@@ -2689,11 +2689,12 @@ SgSourceFile::fixupASTSourcePositionsBasedOnDetectedLineDirectives(set<int> equi
      linemarkerTraversal_1.traverse(sourceFile,preorder);
 #endif
 #if 0
+     printf ("In SgSourceFile::fixupASTSourcePositionsBasedOnDetectedLineDirectives(): output set of associated filenames: \n");
      set<int>::iterator i = linemarkerTraversal_1.filenameIdList.begin();
      int counter = 0;
      while (i != linemarkerTraversal_1.filenameIdList.end())
         {
-          printf ("filenameIdList entry #%d = %d \n",counter,*i);
+          printf ("   --- filenameIdList entry #%d = %d \n",counter,*i);
           counter++;
 
           i++;
@@ -5583,19 +5584,22 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
        // It might be that this should resolve to a symbol.
           case V_SgConstructorInitializer:
              {
-               printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): Found a case of SgConstructorInitializer \n");
                ROSE_ASSERT(functionExp->get_file_info() != NULL);
+#if 0
+               printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): Found a case of SgConstructorInitializer \n");
                functionExp->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): new case to be supported: checking this out: debug");
+#endif
                break;
              }
 
        // DQ (2/25/2013): Added support for this case, but I would like to review this (likely OK).
           case V_SgFunctionCallExp:
              {
-               printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): Found a case of SgFunctionCallExp \n");
                ROSE_ASSERT(functionExp->get_file_info() != NULL);
+#if 0
+               printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): Found a case of SgFunctionCallExp \n");
                functionExp->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): new case to be supported: checking this out: debug");
-
+#endif
                SgFunctionCallExp* nestedFunctionCallExp = isSgFunctionCallExp(functionExp);
                ROSE_ASSERT(nestedFunctionCallExp != NULL);
 

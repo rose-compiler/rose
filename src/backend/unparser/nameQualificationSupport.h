@@ -26,9 +26,19 @@ void generateNameQualificationSupport( SgNode* node, std::set<SgNode*> & referen
 
 class NameQualificationInheritedAttribute
    {
+     private:
+          SgScopeStatement* currentScope;
+
      public:
+
           NameQualificationInheritedAttribute();
           NameQualificationInheritedAttribute(const NameQualificationInheritedAttribute & X);
+
+       // DQ (5/24/2013): Allow the current scope to be tracked from the traversal of the AST
+       // instead of being computed at each IR node which is a problem for template arguments.
+       // See test2013_187.C for an example of this.
+          SgScopeStatement* get_currentScope();
+          void set_currentScope(SgScopeStatement* scope);         
    };
 
 
@@ -188,11 +198,14 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // template parameters if required, my preference is to save the string for the whole time.
           void traverseType ( SgType* type, SgNode* nodeReferenceToType, SgScopeStatement* currentScope, SgStatement* positionStatement );
 
-       // DQ (6/21/2011): Added support to generate function names containging template arguments.
-          void traverseTemplatedFunction(SgFunctionRefExp* functionRefExp, SgNode* nodeReferenceToType, SgScopeStatement* currentScope, SgStatement* positionStatement );
+       // DQ (6/21/2011): Added support to generate function names containing template arguments.
+          void traverseTemplatedFunction(SgFunctionRefExp* functionRefExp, SgNode* nodeReference, SgScopeStatement* currentScope, SgStatement* positionStatement );
+
+       // DQ (5/24/2013): Added support to generate function names containing template arguments.
+          void traverseTemplatedMemberFunction(SgMemberFunctionRefExp* memberFunctionRefExp, SgNode* nodeReference, SgScopeStatement* currentScope, SgStatement* positionStatement );
 
        // DQ (6/21/2011): Added function to store names with associated SgNode IR nodes.
-          void addToNameMap ( SgNode* nodeReferenceToType, std::string typeNameString );
+          void addToNameMap ( SgNode* nodeReference, std::string typeNameString );
 
        // This extracts the template arguments and calls the function to evaluate them.
           void evaluateTemplateInstantiationDeclaration ( SgDeclarationStatement* declaration, SgScopeStatement* currentScope, SgStatement* positionStatement );

@@ -22,6 +22,13 @@ void resetConstantFoldedValues( SgNode* node )
      bool makeASTConstantFoldingExpressionConsistant = false;
 #endif
 
+#if 1
+  // This should be turned on except for internal testing.
+     ROSE_ASSERT(makeASTConstantFoldingExpressionConsistant == true);
+#else
+     printf ("WARNING: INTERNAL TESTING MODE! \n");
+#endif
+
   // This will become an input option in the near future.  Once they can be supported through all of the test codes.
   // The default is to use the original expression trees and replace the saved constant folded values in the AST.
   // Note that having both can lead to some confusion (e.g. in the control flow graph and analysis, so we select one
@@ -101,8 +108,18 @@ void resetConstantFoldedValues( SgNode* node )
 
        // DQ (11/5/2012): I think this should be here rather than outside of this (put it back the way it was).
        // verifyOriginalExpressionTreesSetToNull(node);
+
+       // DQ (4/26/2013): Moved here to permit makeASTConstantFoldingExpressionConsistant == false for debugging.
+       // DQ (11/5/2012): Moved to inside of conditional (put this back the way it was).
+       // verifyOriginalExpressionTreesSetToNull(node);
+        }
+       else
+        {
+       // DQ (4/26/2013): Added warning to support debugging of default argument handling in function call arguments.
+          printf ("WARNING: makeASTConstantFoldingExpressionConsistant == false (temporary state for debugging mixed AST with constants and their original expression trees). \n");
         }
 
+  // DQ (4/26/2013): Commented out (see comment above).
   // DQ (11/5/2012): Moved to inside of conditional (put this back the way it was).
      verifyOriginalExpressionTreesSetToNull(node);
    }

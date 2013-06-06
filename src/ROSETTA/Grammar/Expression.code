@@ -1393,7 +1393,6 @@ HEADER_CUDA_KERNEL_EXEC_CONFIG_START
 HEADER_CUDA_KERNEL_EXEC_CONFIG_END
 
 HEADER_CUDA_KERNEL_CALL_EXPRESSION_START
-HEADER_LIST_DECLARATIONS
 HEADER_CUDA_KERNEL_CALL_EXPRESSION_END
 
 // #########################################################
@@ -4058,15 +4057,6 @@ SgPointerDerefExp::get_type() const
                break;
              }
 
-       // DQ (6/18/2007): The dereference of a function type is a function call so the type is it's return type (I think)
-          case V_SgFunctionType:
-             {
-               SgFunctionType* functionType = isSgFunctionType(someType);
-            // returnType = functionType->get_return_type();
-               returnType = functionType;
-               break;
-             }
-
        // DQ (12/30/2008): Added case to support EDG 4.0 (see test2001_03.C)
           case V_SgTypeString:
              {
@@ -4116,6 +4106,23 @@ SgPointerDerefExp::get_type() const
                break;
              }
 
+       // DQ (5/25/2013): Added this for the case of the new EDG interface.
+       // DQ (6/18/2007): The dereference of a function type is a function call so the type is it's return type (I think)
+          case V_SgFunctionType:
+             {
+               SgFunctionType* functionType = isSgFunctionType(someType);
+            // returnType = functionType->get_return_type();
+               returnType = functionType;
+               break;
+             }
+
+       // DQ (5/25/2013): Added this for the case of the new EDG interface.
+          case V_SgClassType:
+             {
+               SgClassType* classType = isSgClassType(someType);
+               returnType = classType;
+               break;
+             }
 
 #if 0
        // DQ (10/3/2006): I think this is no longer required, since we fixed the case of sizeof taking an 
@@ -6539,75 +6546,6 @@ SgCudaKernelCallExp::post_construction_initialization()
      // TODO : exec_config
    }
 
-void
-SgCudaKernelCallExp::append_arg(SgExpression* what)
-   {
-     assert(this != NULL);
+SgType * SgCudaKernelCallExp::get_type() const { return SgFunctionCallExp::get_type(); }
 
-  // DQ (11/15/2006): avoid setting newArgs this late in the process.
-     ROSE_ASSERT(p_args != NULL);
-     if (p_args == NULL)
-        {
-       // set_args(new SgExprListExp(this->get_file_info()));
-          SgExprListExp* newArgs = new SgExprListExp ( this->get_file_info() );
-          assert(newArgs != NULL);
-          newArgs->set_endOfConstruct( this->get_file_info() );
-          set_args(newArgs);
-        }
-
-    // insert_arg(p_args->end(),what);
-       p_args->append_expression(what);
-   }
-   
-SgType* SgCudaKernelCallExp::get_type() const
-   {
-	SgType* returnType = NULL;
-
-     ROSE_ASSERT(p_function != NULL);
-  // printf ("In SgFunctionCallExp::get_type(): calling get_type() on p_function = %p = %s \n",p_function,p_function->class_name().c_str());
-     SgType* likelyFunctionType = p_function->get_type();
-     ROSE_ASSERT(likelyFunctionType != NULL);
-     while (likelyFunctionType && isSgTypedefType(likelyFunctionType))
-        {
-          likelyFunctionType = isSgTypedefType(likelyFunctionType)->get_base_type();
-          ROSE_ASSERT(likelyFunctionType != NULL);
-        }
-
-     SgFunctionType* functionType = isSgFunctionType(likelyFunctionType);
-     if (functionType == NULL)
-        {
-          printf ("Error: unexpected type found for likelyFunctionType = %p = %s \n",likelyFunctionType,likelyFunctionType->class_name().c_str());
-       // get_file_info()->display("Location of call to SgFunctionCallExp::get_type(): debug");
-
-       // DQ (7/15/2007): Handle case of typedef of function type
-          likelyFunctionType = likelyFunctionType->stripType(SgType::STRIP_TYPEDEF_TYPE);
-
-          printf ("After calling stripType(SgType::STRIP_TYPEDEF_TYPE): likelyFunctionType = %p = %s \n",likelyFunctionType,likelyFunctionType->class_name().c_str());
-
-          functionType = isSgFunctionType(likelyFunctionType);
-
-#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
-       // DQ (12/31/2008): EDG version 4.0 has a simpler representation which translates a bit differently.
-       // I think this is an improvement to this functionality of this function.
-          if (functionType == NULL)
-               returnType = likelyFunctionType;
-#else
-          ROSE_ASSERT(functionType != NULL);
-#endif
-        }
-
-#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
-  // if not already set
-     if (returnType == NULL)
-          returnType = functionType->get_return_type();
-#else
-     ROSE_ASSERT(functionType != NULL);
-     returnType = functionType->get_return_type();
-#endif
-     ROSE_ASSERT(returnType != NULL);
-
-     return returnType;
-   }
-
-   
 SOURCE_CUDA_KERNEL_CALL_EXPRESSION_END

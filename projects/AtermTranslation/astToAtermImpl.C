@@ -7,14 +7,22 @@
 #include <algorithm>
 #include <numeric>
 #include "atermTranslation.h"
-#include "MergeUtils.h"
+
+// #include "MergeUtils.h"
 
 using namespace std;
 
-string uniqueId(SgNode* n) {
+std::string uniqueId(SgNode* n)
+   {
   // return SageInterface::generateUniqueName(n, false);
-  return intToHex(n);
-}
+  // return intToHex(n);
+
+     ROSE_ASSERT(n != NULL);
+#if 0
+     printf ("In uniqueId(): n = %p = %s \n",n,n->class_name().c_str());
+#endif
+     return SageInterface::generateUniqueName(n, false);
+   }
 
 ATerm convertFileInfoToAterm(Sg_File_Info* fi) {
   ATerm term =  ATmake("Position(<str>, <int>, <int>)", fi->get_filename(), fi->get_line(), fi->get_col());
@@ -127,30 +135,46 @@ ATerm getTraversalChildrenAsAterm(SgNode* n) {
   return convertSgNodeRangeToAterm(children.begin(), children.end());
 }
 
-ATerm convertNodeToAterm(SgNode* n) {
-  if (!n) return ATmake("NULL");
-  ATerm term;
-  switch (n->variantT()) {
-    case V_SgFile:
-    // Special case needed to include file name
-    term = ATmake("File(<str>, <term>)", isSgFile(n)->getFileName(), convertNodeToAterm(isSgFile(n)->get_root()));
-    break;
+ATerm convertNodeToAterm(SgNode* n) 
+   {
+     if (n == NULL)
+        {
+#if 0
+          printf ("convertNodeToAterm(): n = %p = %s \n",n,"NULL");
+#endif
+          return ATmake("NULL");
+        }
 
-    case V_SgPlusPlusOp:
-    case V_SgMinusMinusOp:
-    // Special cases needed to include prefix/postfix status
-    term = ATmake("<appl(<appl>, <term>)>",
+     ROSE_ASSERT(n != NULL);
+#if 0
+     printf ("convertNodeToAterm(): n = %p = %s \n",n,n->class_name().c_str());
+#endif
+
+     ATerm term;
+     switch (n->variantT())
+        {
+       // case V_SgFile:
+          case V_SgSourceFile:
+            // Special case needed to include file name
+            // term = ATmake("File(<str>, <term>)", isSgFile(n)->getFileName(), convertNodeToAterm(isSgFile(n)->get_root()));
+               term = ATmake("File(<str>, <term>)", isSgSourceFile(n)->getFileName().c_str(), convertNodeToAterm(isSgSourceFile(n)->get_globalScope()));
+               break;
+
+          case V_SgPlusPlusOp:
+          case V_SgMinusMinusOp:
+            // Special cases needed to include prefix/postfix status
+               term = ATmake("<appl(<appl>, <term>)>",
                   getShortVariantName((VariantT)(n->variantT())).c_str(),
                   (isSgUnaryOp(n)->get_mode() == SgUnaryOp::prefix ? "Prefix" :
                    isSgUnaryOp(n)->get_mode() == SgUnaryOp::postfix ? "Postfix" :
                    "Unknown"),
-                  convertNodeToAterm(isSgUnaryOp(n)->get_operand()));
-    break;
+                   convertNodeToAterm(isSgUnaryOp(n)->get_operand()));
+               break;
 
-    case V_SgExpressionRoot:
-    // Special case to remove this node
-    term = convertNodeToAterm(isSgExpressionRoot(n)->get_operand());
-    break;
+          case V_SgExpressionRoot:
+            // Special case to remove this node
+               term = convertNodeToAterm(isSgExpressionRoot(n)->get_operand());
+               break;
 
     case V_SgCastExp:
     // Special case needed to include type
@@ -199,27 +223,66 @@ ATerm convertNodeToAterm(SgNode* n) {
     term = ATmake("DoubleC(<real>)", isSgDoubleVal(n)->get_value());
     break;
 
-    case V_SgInitializedName: {
-      // Works around double initname problem
-      SgInitializer* initializer = 
-	isSgInitializedName(n)->get_initializer();
-      const SgName& name = isSgInitializedName(n)->get_name();
-      SgType* type = isSgInitializedName(n)->get_type();
-      // Works around fact that ... is not really an initname and shouldn't be
-      // a type either
-      if (isSgTypeEllipse(type))
-	term = ATmake("Ellipses");
-      else {
-	term = ATmake("InitName(<str>, <term>, <term>) {[id, <str>]}", 
-		      (name.str() ? name.str() : ""), 
-		      convertNodeToAterm(type), 
-		      convertNodeToAterm(initializer),
-		      uniqueId(n).c_str());
-	term = ATsetAnnotation(term, ATmake("id"),
-                               ATmake("<str>", uniqueId(n).c_str()));
-      }
-    }
-    break;
+          case V_SgInitializedName:
+             {
+            // Works around double initname problem
+               SgInitializer* initializer = isSgInitializedName(n)->get_initializer();
+               const SgName& name = isSgInitializedName(n)->get_name();
+               SgType* type = isSgInitializedName(n)->get_type();
+
+               ROSE_ASSERT(type != NULL);
+#if 0
+               printf ("convertNodeToAterm(): case V_SgInitializedName: name = %s initializer = %p type = %p = %s \n",name.str(),initializer,type,type->class_name().c_str());
+#endif
+            // Works around fact that ... is not really an initname and shouldn't be a type either
+               if (isSgTypeEllipse(type))
+                  {
+                    term = ATmake("Ellipses");
+                  }
+                 else
+                  {
+                    std::string uniqueIdString = uniqueId(n);
+#if 0
+                    printf ("uniqueIdString = %s \n",uniqueIdString.c_str());
+                    printf ("Calling generate ATerm for SgInitializedName->get_name() name = %s \n",name.str());
+                    ATerm name_aterm = ATmake("Name(<str>)",name.str());
+                 // ATerm name_aterm = ATmake(name.str());
+                    printf ("Calling convertNodeToAterm(type) \n");
+                    ATerm type_aterm = convertNodeToAterm(type);
+                    printf ("Calling convertNodeToAterm(initializer) \n");
+#endif
+                    ATerm initializer_aterm = convertNodeToAterm(initializer);
+#if 0
+                    printf ("Calling ATmake() \n");
+#endif
+#if 1
+                    term = ATmake("InitName(<str>, <term>, <term>) {[id, <str>]}", 
+                                    (name.str() ? name.str() : ""), 
+                                    convertNodeToAterm(type), 
+                                    convertNodeToAterm(initializer),
+                                    uniqueId(n).c_str());
+                                 // uniqueIdString.c_str());
+#else
+                    term = ATmake("InitName(<term>,<term>)",
+                                  //(name.str() ? name.str() : ""), 
+                                  // name_aterm,
+                                    type_aterm, 
+                                    initializer_aterm
+                                 // uniqueId(n).c_str());
+                                 // uniqueIdString.c_str());
+                                    );
+#endif
+#if 0
+                    printf ("Calling ATsetAnnotation() \n");
+#endif
+                    term = ATsetAnnotation(term, ATmake("id"), ATmake("<str>", uniqueId(n).c_str()));
+#if 0
+                    printf ("DONE: Calling ATsetAnnotation() \n");
+#endif
+                  }
+
+               break;
+             }
 
     case V_SgFunctionDeclaration: {
       // Special case needed to include name
@@ -241,7 +304,7 @@ ATerm convertNodeToAterm(SgNode* n) {
       SgClassDeclaration* decl = isSgClassDeclaration(n);
       assert (decl);
       SgName sname = decl->get_name();
-      char* name = sname.str();
+      const char* name = sname.str();
       // Suggestion: have a field named local_definition in each class
       // declaration that is 0 whenever the current declaration doesn't
       // have a definition attached, even if there is another declaration
@@ -349,7 +412,7 @@ ATerm convertNodeToAterm(SgNode* n) {
 
     case V_SgLabelStatement: {
       // Special case to put in label id
-      char* name = isSgLabelStatement(n)->get_name().str();
+      const char* name = isSgLabelStatement(n)->get_name().str();
       term = ATmake("Label(<str>)", (name ? name : ""));
       term = ATsetAnnotation(term, ATmake("id"),
                              ATmake("<str>", uniqueId(n).c_str()));
@@ -378,9 +441,10 @@ ATerm convertNodeToAterm(SgNode* n) {
       // Traversal doesn't work for these
       SgTemplateDeclaration* td = isSgTemplateDeclaration(n);
       ROSE_ASSERT (td);
-      SgTemplateParameterPtrListPtr paramsPtr = td->get_templateParameters();
-      SgTemplateParameterPtrList params = 
-	paramsPtr ? *paramsPtr : SgTemplateParameterPtrList();
+   // SgTemplateParameterPtrListPtr paramsPtr = td->get_templateParameters();
+   // SgTemplateParameterPtrList & paramsPtr = td->get_templateParameters();
+   // SgTemplateParameterPtrList params =	paramsPtr ? *paramsPtr : SgTemplateParameterPtrList();
+      SgTemplateParameterPtrList & params =	td->get_templateParameters();
       string templateKindString;
       switch (td->get_template_kind()) {
 	case SgTemplateDeclaration::e_template_none:
@@ -409,12 +473,10 @@ ATerm convertNodeToAterm(SgNode* n) {
       // Traversal doesn't work for these
       SgTemplateInstantiationDecl* td = isSgTemplateInstantiationDecl(n);
       ROSE_ASSERT (td);
-      SgTemplateArgumentPtrListPtr argsPtr = td->get_templateArguments();
-      SgTemplateArgumentPtrList args = 
-	argsPtr ? *argsPtr : SgTemplateArgumentPtrList();
-      term = ATmake("TemplateInstantiationDecl(<str>, <term>)",
-		    td->get_templateDeclaration()->get_name().str(),
-		    convertSgNodeRangeToAterm(args.begin(), args.end()));
+   // SgTemplateArgumentPtrListPtr argsPtr = td->get_templateArguments();
+   // SgTemplateArgumentPtrList args = argsPtr ? *argsPtr : SgTemplateArgumentPtrList();
+      SgTemplateArgumentPtrList & args = td->get_templateArguments();
+      term = ATmake("TemplateInstantiationDecl(<str>, <term>)", td->get_templateDeclaration()->get_name().str(), convertSgNodeRangeToAterm(args.begin(), args.end()));
     }
     break;
 
@@ -487,20 +549,30 @@ ATerm convertNodeToAterm(SgNode* n) {
     break;
   }
 
-  assert (term);
+#if 0
+     printf ("Base of switch statement in convertNodeToAterm(): n = %p = %s \n",n,n->class_name().c_str());
+#endif
+     assert (term);
 
-  term = ATsetAnnotation(term, ATmake("ptr"), pointerAsAterm(n));
+     term = ATsetAnnotation(term, ATmake("ptr"), pointerAsAterm(n));
 
 #if 1
-  if (n->get_file_info())
-    term = ATsetAnnotation(term, ATmake("location"),
-                           convertFileInfoToAterm(n->get_file_info()));
+     if (n->get_file_info() != NULL)
+        {
+          term = ATsetAnnotation(term, ATmake("location"),convertFileInfoToAterm(n->get_file_info()));
+        }
 
-  if (isSgExpression(n))
-    term = ATsetAnnotation(term, ATmake("type"),
-                           convertNodeToAterm(isSgExpression(n)->get_type()));
+     if (isSgExpression(n))
+        term = ATsetAnnotation(term, ATmake("type"), convertNodeToAterm(isSgExpression(n)->get_type()));
+#endif
+
+#if 0
+     printf ("Leaving convertNodeToAterm(): n = %p = %s \n",n,n->class_name().c_str());
+#endif
+#if 0
+     printf ("--- n->class_name() = %s ATwriteToString(term) = %s \n",n->class_name().c_str(),ATwriteToString(term));
 #endif
 
   // cout << n->sage_class_name() << " -> " << ATwriteToString(term) << endl;
-  return term;
-}
+     return term;
+   }
