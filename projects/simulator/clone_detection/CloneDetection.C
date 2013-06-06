@@ -43,6 +43,11 @@ static void usage(int exit_status)
               <<"                     Analyze only the specified function (provided it also satisfies\n"
               <<"                     all other selection criteria.  Normally all functions are considered.\n"
               <<"                     This switch may appear more than once to select multiple functions.\n"
+              <<"   --init-memory\n"
+              <<"                     If specified, most of memory is initialized according to a linear\n"
+              <<"                     congruential generator seeded with one of the input values.  The\n"
+              <<"                     default is that each read of an uninitialized memory address consumes\n"
+              <<"                     the next input value from the input group.\n"
               <<"   --link\n"
               <<"                     Perform dynamic linking and analyze the libraries along with the\n"
               <<"                     specified executable. The default is to not link.\n"
@@ -70,7 +75,8 @@ static void usage(int exit_status)
               <<"                     values of an earlier input group.  For instance, if N is three then\n"
               <<"                     input groups will be generated in groups of six (6=3!).  The N\n"
               <<"                     specified here may be larger than the N1 value for the --ninputs\n"
-              <<"                     switch, in which case some of the values are zero.\n"
+              <<"                     switch, in which case some of the values are zero.  It probably\n"
+              <<"                     doesn't make much sense to use --permute-inputs with --init-memory.\n"
               <<"   --[no-]pointers\n"
               <<"                     Turn pointer analysis on or off (the default is off).  When pointer\n"
               <<"                     analysis is turned on, each function is analyzed to find memory addresses\n"
@@ -88,31 +94,6 @@ static void usage(int exit_status)
 }
 
 enum Verbosity { SILENT, LACONIC, EFFUSIVE };
-
-// Command-line switches
-struct Switches {
-    Switches()
-        : dbname("clones.db"), firstfuzz(0), nfuzz(10), npointers(20), nnonpointers(100),
-          min_funcsz(0), max_insns(5000), verbosity(SILENT), show_progress(false), link(false),
-          pointer_analysis(false), follow_calls(false), permute_inputs(0) {}
-    std::string dbname;                 /**< Name of database in which to store results. */
-    size_t firstfuzz;                   /**< Sequence number for starting fuzz test. */
-    size_t nfuzz;                       /**< Number of times to run each function, each time with a different input sequence. */
-    size_t npointers, nnonpointers;     /**< Number of pointer and non-pointer values to supply to as inputs per fuzz test. */
-    size_t min_funcsz;                  /**< Minimum function size measured in instructions; skip smaller functions. */
-    size_t max_insns;                   /**< Maximum number of instrutions per fuzz test before giving up. */
-    Verbosity verbosity;                /**< Produce lots of output?  Traces each instruction as it is simulated. */
-    bool show_progress;                 /**< Force progress reports even if stderr is a non-terminal or --debug is specified. */
-    bool link;                          /**< Perform dynamic linking. */
-    std::set<rose_addr_t> functions;    /**< If non-empty, consider only these functions. */
-    bool pointer_analysis;              /**< Perform pointer detection analysis?  Use pointer and non-pointer inputs? */
-    bool follow_calls;                  /**< Follow CALL instructions if possible rather than consuming an input? */
-    size_t permute_inputs;              /**< Number of non-pointer inputs to permute. */
-};
-
-/*******************************************************************************************************************************
- *                                      Miscellaneous functions
- *******************************************************************************************************************************/
 
 static void die(std::string mesg="")
 {
@@ -158,6 +139,75 @@ permute(std::vector<T> &values/*in,out*/, uint64_t pn, size_t sz=(size_t)(-1))
         uint64_t idx = pn % radix;
         std::swap(values[i+idx], values[i]);
         pn /= radix;
+    }
+}
+
+// Command-line switches
+struct Switches {
+    Switches()
+        : dbname("clones.db"), firstfuzz(0), nfuzz(10), npointers(20), nnonpointers(100),
+          min_funcsz(0), max_insns(5000), verbosity(SILENT), show_progress(false), link(false),
+          pointer_analysis(false), follow_calls(false), permute_inputs(0), init_memory(false) {}
+    std::string dbname;                 /**< Name of database in which to store results. */
+    size_t firstfuzz;                   /**< Sequence number for starting fuzz test. */
+    size_t nfuzz;                       /**< Number of times to run each function, each time with a different input sequence. */
+    size_t npointers, nnonpointers;     /**< Number of pointer and non-pointer values to supply to as inputs per fuzz test. */
+    size_t min_funcsz;                  /**< Minimum function size measured in instructions; skip smaller functions. */
+    size_t max_insns;                   /**< Maximum number of instrutions per fuzz test before giving up. */
+    Verbosity verbosity;                /**< Produce lots of output?  Traces each instruction as it is simulated. */
+    bool show_progress;                 /**< Force progress reports even if stderr is a non-terminal or --debug is specified. */
+    bool link;                          /**< Perform dynamic linking. */
+    std::set<rose_addr_t> functions;    /**< If non-empty, consider only these functions. */
+    bool pointer_analysis;              /**< Perform pointer detection analysis?  Use pointer and non-pointer inputs? */
+    bool follow_calls;                  /**< Follow CALL instructions if possible rather than consuming an input? */
+    size_t permute_inputs;              /**< Number of non-pointer inputs to permute. */
+    bool init_memory;                   /**< Initialize most of memory with an address hash function seeded with an input. */
+    void print(std::ostream&, const std::string &prefix="") const;
+};
+
+void
+Switches::print(std::ostream &o, const std::string &prefix) const
+{
+    o <<prefix <<"database connection: " <<dbname <<"\n";
+
+    o <<prefix <<"function criteria:\n";
+    if (min_funcsz>1)
+        o <<prefix <<"  functions having at least " <<min_funcsz <<" instructions\n";
+    if (functions.size()) {
+        o <<prefix <<"  entry addresses in:";
+        for (std::set<rose_addr_t>::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi)
+            o <<" " <<StringUtility::addrToString(*fi);
+        o <<"\n";
+    }
+    if (min_funcsz<=1 && functions.empty())
+        o <<prefix <<"  all functions\n";
+
+    if (link)
+        o <<prefix <<"linking in shared libraries\n";
+    if (pointer_analysis)
+        o <<prefix <<"performing pointer detection analysis\n";
+    if (follow_calls)
+        o <<prefix <<"following x86 CALL instructions\n";
+
+    if (nfuzz>0) {
+        o <<prefix <<"running " <<nfuzz <<" test" <<(1==nfuzz?"":"s") <<" per function";
+        if (firstfuzz!=0)
+            o <<" starting at test #" <<firstfuzz;
+        o <<"\n";
+        o <<prefix <<"each test will run for at most " <<max_insns <<" instructions\n";
+
+        o <<prefix <<"each test input group contains "
+          <<npointers <<" pointer value" <<(1==npointers?"":"s") <<(pointer_analysis?"":" (unused)")
+          <<" and " <<nnonpointers <<" non-pointer value" <<(1==nnonpointers?"":"s") <<"\n";
+        if (permute_inputs>1)
+            o <<prefix <<"the first " <<permute_inputs <<" non-pointer values will be permuted across "
+              <<factorial(permute_inputs) <<" consecutive input groups\n";
+    }
+
+    if (init_memory) {
+        o <<prefix <<"most memory is initialized from a random number generator seeded with an input value\n";
+        if (permute_inputs>1)
+            o <<prefix <<"WARNING: initializing memory and permuting intputs might not make sense together!\n";
     }
 }
 
@@ -576,7 +626,8 @@ public:
         this->ninsns = 0;
         this->interp = interp;
         state.reset_for_analysis();
-        address_hasher.init(inputs->next_integer());
+        if (opt.init_memory)
+            address_hasher.init(inputs->next_integer());
 
         // Initialize some registers.  Obviously, the EIP register needs to be set, but we also set the ESP and EBP to known
         // (but arbitrary) values so we can detect when the function returns.  Be sure to use these same values in related
@@ -723,8 +774,8 @@ public:
             // At least one of the bytes read did not previously exist, so we need to initialize these memory locations.
             // Sometimes we want memory to have a value that depends on the next input, and other times we want a value that
             // depends on the address.
-            bool consume_input = false;
-            if (this->interp!=NULL && this->interp->get_map()!=NULL) {
+            bool consume_input = !opt.init_memory;
+            if (consume_input && this->interp!=NULL && this->interp->get_map()!=NULL) {
                 consume_input = this->interp->get_map()->exists(a0.known_value());
             }
             if (consume_input) {
@@ -1947,10 +1998,7 @@ public:
 
     // Detect functions that are semantically similar by running multiple iterations of partition_functions().
     void analyze(SgAsmInterpretation *interp) {
-        std::cerr <<"CloneDetection: database=" <<opt.dbname
-                  <<" fuzz=@" <<opt.firstfuzz <<"+" <<opt.nfuzz
-                  <<" npointers=" <<opt.npointers <<" nnonpointers=" <<opt.nnonpointers
-                  <<" max_insns=" <<opt.max_insns <<"\n";
+        std::cerr <<"CloneDetection: semantic analysis is starting\n";
         Functions functions = find_functions(interp, opt.functions);
         save_functions(interp, functions); // must be first because it initializes our func_ids data member
         save_files();
@@ -2149,10 +2197,11 @@ main(int argc, char *argv[], char *envp[])
         }
     }
 
+    opt.print(std::cerr, "CloneDetection: ");
+
     // Parse the binary container (ELF, PE, etc) but do not disassemble yet.
-    if (opt.verbosity >= LACONIC)
-        std::cerr <<"CloneDetection: Parsing binary specimen...\n"
-                  <<"CloneDetection:   parsing container\n";
+    std::cerr <<"CloneDetection: Parsing binary specimen...\n"
+              <<"CloneDetection:   parsing container\n";
     int argc2 = argc+1;
     char **argv2 = new char*[argc+2];
     argv2[0] = argv[0];
@@ -2163,8 +2212,7 @@ main(int argc, char *argv[], char *envp[])
     SgProject *project = frontend(argc2, argv2);
 
     // Find the primary interpretation (e.g., the PE, not DOS, interpretation in PE files).
-    if (opt.verbosity >= LACONIC)
-        std::cerr <<"CloneDetection:   finding primary interpretation\n";
+    std::cerr <<"CloneDetection:   finding primary interpretation\n";
     std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
     if (interps.empty())
         die("no binary specimen given");
@@ -2173,7 +2221,7 @@ main(int argc, char *argv[], char *envp[])
     // Get the shared libraries, map them, and apply relocation fixups. We have to do the mapping step even if we're not
     // linking with shared libraries, because that's what gets the various file sections lined up in memory for the
     // disassembler.
-    if (opt.link && opt.verbosity >= LACONIC)
+    if (opt.link)
         std::cerr <<"CloneDetection:   loading shared libraries\n";
     if (BinaryLoader *loader = BinaryLoader::lookup(interp)) {
         try {
@@ -2230,8 +2278,7 @@ main(int argc, char *argv[], char *envp[])
     }
 
     // Disassemble the executable
-    if (opt.verbosity >= LACONIC)
-        std::cerr <<"CloneDetection:   disassembling and partitioning\n";
+    std::cerr <<"CloneDetection:   disassembling and partitioning\n";
     if (Disassembler *disassembler = Disassembler::lookup(interp)) {
         disassembler = disassembler->clone(); // so our settings are private
 #if 1 // FIXME [Robb P. Matzke 2013-05-14]
@@ -2251,8 +2298,7 @@ main(int argc, char *argv[], char *envp[])
     }
 
     // Save listings and dumps to aid debugging
-    if (opt.verbosity>=LACONIC)
-        std::cerr <<"CloneDetection: saving dumps and listings to text files\n";
+    std::cerr <<"CloneDetection: saving dumps and listings to text files\n";
     backend(project);
 
     // Run the clone detection analysis
