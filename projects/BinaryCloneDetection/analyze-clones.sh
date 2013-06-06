@@ -71,6 +71,11 @@
 # End of configuration variables
 #------------------------------------------------------------------------------------------------------------------------------
 
+: ${ROSE_SRC:=$ROSEGIT_SRC}
+: ${ROSE_BLD:=$ROSEGIT_BLD}
+: ${SEMANTIC_BLD:=$ROSE_BLD/projects/BinaryCloneDetection/semantic}
+: ${SYNTACTIC_BLD:=$ROSE_BLD/projects/BinaryCloneDetection/syntactic}
+
 
 show_settings () {
     if [ -n "$syntactic_skip" ]; then
@@ -105,9 +110,6 @@ show_settings () {
 show_settings "$@";
 [ "$#" -ne 0 ] && show_settings "$@" >AnalysisSettings-$(date '+%Y%m%d%H%M%S').txt
 
-: ${ROSE_SRC:=$ROSEGIT_SRC}
-: ${ROSE_BLD:=$ROSEGIT_BLD}
-
 die () {
     echo "$0: $*" >&2
     exit 1
@@ -115,17 +117,19 @@ die () {
 
 [ -n "$ROSE_SRC" -a -d "$ROSE_SRC/projects" ] || die "ROSE_SRC should be set to the root of the ROSE source directory"
 [ -n "$ROSE_BLD" -a -d "$ROSE_BLD/projects" ] || die "ROSE_BLD should be set to the root of the ROSE build directory"
+[ -n "$SEMANTIC_BLD" -a -d "$SEMANTIC_BLD" ] || die "SEMANTIC_BLD ($SEMANTIC_BLD) is not a directory"
+[ -n "$SYNTACTIC_BLD" -a -d "$SYNTACTIC_BLD" ] || die "SYNTACTIC_BLD ($SYNTACTIC_BLD) is not a directory"
 
 # Make sure everything we need has been built.  The projects/BinaryCloneDetection/syntactic has some errors that cause the build
 # to fail if we try to build everything.
 if [ "$syntactic_skip" = "" ]; then
-    make -C $ROSE_BLD/projects/BinaryCloneDetection/syntactic -k -j \
+    make -C $SYNTACTIC_BLD -k -j \
         createVectorsBinary findClones lshCloneDetection computeClusterPairs \
 	|| die "failed to build syntactic clone detection targets in projects/BinaryCloneDetection/syntactic"
 fi
 if [ "$semantic_skip" = "" ]; then
-    make -C $ROSE_BLD/projects/simulator -k -j CloneDetection clusters_from_pairs call_graph_clones compare_outputs show_results \
-	|| die "failed to build semantic clone detection targets in projects/simulator"
+    make -C $SEMANTIC_BLD -k -j \
+	|| die "failed to build semantic clone detection targets in projects/BinaryCloneDetection/semantic"
 fi
 
 [ "$#" -eq 0 ] && exit 0
@@ -153,10 +157,10 @@ build_makefile () {
 
     echo "all: all_analyses" >>$mf
     echo >>$mf
-    echo "ROSE_BLD = $ROSE_BLD" >>$mf
+    echo "SEMANTIC_BLD = $SEMANTIC_BLD" >>$mf
     echo -n "SWITCHES = --database=$semantic_dbname --ninputs=$semantic_npointers,$semantic_nnonpointers" >>$mf
     echo " --min-function-size=$semantic_minfuncsize --max-insns=$semantic_maxinsns $semantic_flags" >>$mf
-    echo "CloneDetection = \$(ROSE_BLD)/projects/simulator/CloneDetection" >>$mf
+    echo "CloneDetection = \$(SEMANTIC_BLD)/CloneDetection" >>$mf
     echo >>$mf
 
     local all_outputs=
@@ -208,7 +212,7 @@ if [ "$syntactic_skip" = "" ]; then
 
     # Syntactic analysis must be run serially
     for specimen in "$@"; do
-	$ROSE_BLD/projects/BinaryCloneDetection/syntactic/createVectorsBinary \
+	$SYNTACTIC_BLD/createVectorsBinary \
             --database "$syntactic_dbname" \
             --tsv-directory "$specimen" \
 	    --stride $syntactic_stride \
@@ -219,9 +223,9 @@ if [ "$syntactic_skip" = "" ]; then
     # Find syntactic clones
     echo "================================================================================"
     echo "                         FINDING SYNTACTIC CLONES"
-    $ROSE_BLD/projects/BinaryCloneDetection/syntactic/findClones --database "$syntactic_dbname" -t $syntactic_precision \
+    $SYNTACTIC_BLD/findClones --database "$syntactic_dbname" -t $syntactic_precision \
 	|| die "syntactic clone detection failed in findClones with precision $syntactic_precision"
-    $ROSE_BLD/projects/BinaryCloneDetection/syntactic/computeClusterPairs "$syntactic_dbname" \
+    $SYNTACTIC_BLD/computeClusterPairs "$syntactic_dbname" \
 	|| die "could not compute syntactic cluster pairs"
 fi
 
@@ -238,29 +242,29 @@ echo "update run_parameters set min_func_ninsns = $semantic_minfuncsize;" |sqlit
 # Resolve output groups. The main executable compares output groups exactly, but we might not want that for this
 # analysis.  This command updates the values of the semantic_fio.effective_outputgroup column.
 echo "Renumbering fuzz test outputs"
-$ROSE_BLD/projects/simulator/compare_outputs "$combined_dbname"
+$SEMANTIC_BLD/compare_outputs "$combined_dbname"
 
 # Run a batch of SQL statements.  Some of this might take a long time
-echo "Running SQL commands from $ROSE_BLD/projects/simulator/clone_detection/queries.sql"
-sqlite3 "$combined_dbname" <$ROSE_BLD/projects/simulator/clone_detection/queries.sql
+echo "Running SQL commands from $SEMANTIC_BLD/queries.sql"
+sqlite3 "$combined_dbname" <$SEMANTIC_BLD/queries.sql
 
 # Generate cluster tables from similarity pairs
 echo "Building cluster tables"
-$ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" syntactic_clone_pairs syntactic_clusters
-$ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" semantic_clone_pairs semantic_clusters
-$ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" combined_clone_pairs combined_clusters
+$SEMANTIC_BLD/clusters_from_pairs "$combined_dbname" syntactic_clone_pairs syntactic_clusters
+$SEMANTIC_BLD/clusters_from_pairs "$combined_dbname" semantic_clone_pairs semantic_clusters
+$SEMANTIC_BLD/clusters_from_pairs "$combined_dbname" combined_clone_pairs combined_clusters
 
 # Generate call-graph pairs from similarity pairs, and then call-graph clusters from call-graph pairs
 echo "Building CG-cluster tables"
-$ROSE_BLD/projects/simulator/call_graph_clones   "$combined_dbname" syntactic_clone_pairs   syntactic_cgclone_pairs
-$ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" syntactic_cgclone_pairs syntactic_cgclusters
-$ROSE_BLD/projects/simulator/call_graph_clones   "$combined_dbname" semantic_clone_pairs    semantic_cgclone_pairs
-$ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" semantic_cgclone_pairs  semantic_cgclusters
-$ROSE_BLD/projects/simulator/call_graph_clones   "$combined_dbname" combined_clone_pairs    combined_cgclone_pairs
-$ROSE_BLD/projects/simulator/clusters_from_pairs "$combined_dbname" combined_cgclone_pairs  combined_cgclusters
+$SEMANTIC_BLD/call_graph_clones   "$combined_dbname" syntactic_clone_pairs   syntactic_cgclone_pairs
+$SEMANTIC_BLD/clusters_from_pairs "$combined_dbname" syntactic_cgclone_pairs syntactic_cgclusters
+$SEMANTIC_BLD/call_graph_clones   "$combined_dbname" semantic_clone_pairs    semantic_cgclone_pairs
+$SEMANTIC_BLD/clusters_from_pairs "$combined_dbname" semantic_cgclone_pairs  semantic_cgclusters
+$SEMANTIC_BLD/call_graph_clones   "$combined_dbname" combined_clone_pairs    combined_cgclone_pairs
+$SEMANTIC_BLD/clusters_from_pairs "$combined_dbname" combined_cgclone_pairs  combined_cgclusters
 
 # Show the results (see --help for other options)
-$ROSE_BLD/projects/simulator/show_results "$combined_dbname" combined cgclusters
+$SEMANTIC_BLD/show_results "$combined_dbname" combined cgclusters
 echo
 echo "results have been saved in the combined_clusters table in $combined_dbname"
 exit 0

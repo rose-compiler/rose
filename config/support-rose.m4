@@ -1824,6 +1824,10 @@ AC_CHECK_TYPE(user_desc,
               [],
 	      [#include <asm/ldt.h>])
 
+# Check whether PostgreSQL is supported
+AC_CHECK_HEADERS([pqxx/version.hxx])
+AC_CHECK_LIB(pqxx, PQconnectdb)
+
 # PC (7/10/2009): The Haskell build system expects a fully numeric version number.
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
 AC_SUBST(PACKAGE_VERSION_NUMERIC)
@@ -2053,7 +2057,10 @@ projects/BabelPreprocessor/Makefile
 projects/BinFuncDetect/Makefile
 projects/BinQ/Makefile
 projects/BinaryCloneDetection/Makefile
-projects/BinaryCloneDetection/gui/Makefile
+projects/BinaryCloneDetection/semantic/Makefile
+projects/BinaryCloneDetection/semantic/queries.sql
+projects/BinaryCloneDetection/syntactic/Makefile
+projects/BinaryCloneDetection/syntactic/gui/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
@@ -2187,7 +2194,6 @@ projects/roseToLLVM/src/rosetollvm/Makefile
 projects/roseToLLVM/tests/Makefile
 projects/RosePolly/Makefile
 projects/simulator/Makefile
-projects/simulator/clone_detection/queries.sql
 projects/symbolicAnalysisFramework/Makefile
 projects/symbolicAnalysisFramework/src/chkptRangeAnalysis/Makefile
 projects/symbolicAnalysisFramework/src/external/Makefile
