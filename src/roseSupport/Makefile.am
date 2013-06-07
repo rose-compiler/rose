@@ -27,7 +27,8 @@ libroseSupport_la_SOURCES =			\
 	utility_functions.C			\
 	memoryUsage.C				\
 	threadSupport.C				\
-	IncludeDirective.C
+	IncludeDirective.C			\
+	SqlDatabase.C
 
 nodist_libroseSupport_la_SOURCES =		\
 	stringify.C
@@ -42,7 +43,8 @@ include_HEADERS =				\
 	stringify.h				\
 	utility_functions.h			\
 	threadSupport.h				\
-	IncludeDirective.h
+	IncludeDirective.h			\
+	SqlDatabase.h
 
 # DQ (10/11/2007): This used to be part of the template instationation mechanism, but it was 
 # based on nm and was not robust.  Instead we instantiate all templates and figure out which 
