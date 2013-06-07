@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <assert.h>
+#include "rosedll.h"
 
 
 //! FIXME: The CFG support for Fortran is still buggy -- if Fortran is
