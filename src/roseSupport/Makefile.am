@@ -28,7 +28,8 @@ libroseSupport_la_SOURCES =			\
 	memoryUsage.C				\
 	threadSupport.C				\
 	IncludeDirective.C			\
-	SqlDatabase.C
+	SqlDatabase.C				\
+	LinearCongruentialGenerator.C
 
 nodist_libroseSupport_la_SOURCES =		\
 	stringify.C
@@ -44,7 +45,8 @@ include_HEADERS =				\
 	utility_functions.h			\
 	threadSupport.h				\
 	IncludeDirective.h			\
-	SqlDatabase.h
+	SqlDatabase.h				\
+	LinearCongruentialGenerator.h
 
 # DQ (10/11/2007): This used to be part of the template instationation mechanism, but it was 
 # based on nm and was not robust.  Instead we instantiate all templates and figure out which 
