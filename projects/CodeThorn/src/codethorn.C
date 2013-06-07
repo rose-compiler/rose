@@ -650,9 +650,10 @@ int main( int argc, char * argv[] ) {
   }
 
   // Build the AST used by ROSE
-  cout << "INIT: Parsing and creating AST."<<endl;
+  cout << "INIT: Parsing and creating AST: started."<<endl;
   SgProject* sageProject = frontend(argc,argv);
   double frontEndRunTime=timer.getElapsedTimeInMilliSec();
+  cout << "INIT: Parsing and creating AST: finished."<<endl;
   
   if(boolOptions["run-rose-tests"]) {
 	cout << "INIT: Running ROSE AST tests."<<endl;
@@ -664,6 +665,7 @@ int main( int argc, char * argv[] ) {
 
   if(!boolOptions["skip-analysis"])
   {
+	cout << "INIT: Checking input program."<<endl;
   checkProgram(root);
   timer.start();
 
