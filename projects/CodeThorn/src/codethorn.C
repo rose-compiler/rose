@@ -209,14 +209,15 @@ void generateAssertsCsvFile(Analyzer& analyzer, SgProject* sageProject, string f
 void printAsserts(Analyzer& analyzer, SgProject* sageProject) {
   if(boolOptions["rers-binary"]) {
 	for(int i=0;i<62;i++) {
-	  cout << "assert: error_"<<i<<": ";
+	  cout <<color("white")<<"assert: error_"<<i<<": ";
 	  if(analyzer.binaryBindingAssert[i]) {
-		cout << color("green")<<"YES (REACHABLE)"<<color("normal");
+		cout << color("green")<<"YES (REACHABLE)";
 	  } else {
-		cout << color("cyan")<<"NO (UNREACHABLE)"<<color("normal");
+		cout << color("cyan")<<"NO (UNREACHABLE)";
 	  }
 	  cout << endl;
 	}
+	cout<<color("normal");
 	return;
   }
   LabelSet lset=analyzer.getTransitionGraph()->labelSetOfIoOperations(InputOutput::FAILED_ASSERT);
@@ -263,11 +264,12 @@ void printAssertStatistics(Analyzer& analyzer, SgProject* sageProject) {
 		unreachable++;
 	}
   }
-  cout<<"Assert reachability statistics: "
-	  <<color("normal")<<"YES: "<<color("green")<<reachable
-	  <<color("normal")<<", NO: " <<color("cyan")<<unreachable
-	  <<color("normal")<<", TOTAL: " <<n
-	  <<endl
+  cout<<color("white")<<"Assert reachability statistics: "
+	  <<color("white")<<"YES: "<<color("green")<<reachable
+	  <<color("white")<<", NO: " <<color("cyan")<<unreachable
+	  <<color("white")<<", TOTAL: " <<n
+	  <<endl<<color("normal")
+
 	;
 }
 
@@ -756,6 +758,7 @@ int main( int argc, char * argv[] ) {
   long constraintSetsMaxCollisions=analyzer.getConstraintSetMaintainer()->maxCollisions();
   double constraintSetsLoadFactor=analyzer.getConstraintSetMaintainer()->loadFactor();
 
+  cout <<color("white");
   cout << "Number of stdin-estates        : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR))<<color("white")<<endl;
   cout << "Number of stdout-estates       : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR))<<color("white")<<endl;
   cout << "Number of stderr-estates       : "<<color("cyan")<<(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR))<<color("white")<<endl;
@@ -767,9 +770,10 @@ int main( int argc, char * argv[] ) {
   cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/"<<constraintSetsMaxCollisions<<")"<<endl;
   cout << "=============================================================="<<endl;
   long totalMemory=pstateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
-  cout << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("normal")<<endl;
-  cout << "Time total           : "<<color("green")<<readableruntime(totalRunTime)<<color("normal")<<endl;
+  cout << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
+  cout << "Time total           : "<<color("green")<<readableruntime(totalRunTime)<<color("white")<<endl;
   cout << "=============================================================="<<endl;
+  cout <<color("normal");
 
   if(args.count("csv-stats")) {
 	string filename=args["csv-stats"].as<string>().c_str();
