@@ -16,6 +16,8 @@
 
 #include <assert.h>
 
+#include "rosedll.h"
+
 /*! \brief This is a mechanism for reporting the performance of processing of the AST, subtrees, 
            and IR nodes.  
 
