@@ -109,9 +109,11 @@ REGRESSION_DATA_DIR=regressiondata
 # MS: matcher_demo
 matcher_demo_LDADD = -lrose
 matcher_demo_SOURCES = matcherparser.yy matcherlexer.ll Timer.cpp RoseAst.C AstTerm.C matcherparser_decls.h AstMatching.C AstMatching.h MatchOperation.C MatchOperation.h SgNodeHelper.h SgNodeHelper.C matcher_demo.C
-matcher_demo_AM_YFLAGS = -d -p matcherparser
-matcher_demo_AM_LFLAGS = -o$(LEX_OUTPUT_ROOT).c
+#matcher_demo_AM_YFLAGS = -d -p matcherparser
+#matcher_demo_AM_LFLAGS = -Pmatcherparser -o$(LEX_OUTPUT_ROOT).c
 matcher_demo_BUILT_SOURCES = matcherparser.h
+AM_YFLAGS = -d -p matcherparser
+AM_LFLAGS = -Pmatcherparser -o$(LEX_OUTPUT_ROOT).c
 
 #MS: iterator_test not ingegrated yet
 #iterator_test_SOURCES = iterator_test.C ShowSeq.h

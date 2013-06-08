@@ -29,10 +29,10 @@ single			[(),|#_^=.]
 
 %%
 "'"[^']"'"		{
-						int purelen=strlen(yytext)-2;
+						int purelen=strlen(matcherparsertext)-2;
 						char* purestring=(char*)malloc(purelen+1);
-						strncpy(purestring,yytext+1,purelen)[purelen]=0;
-						matcherlval.sq_string = purestring; 
+						strncpy(purestring,matcherparsertext+1,purelen)[purelen]=0;
+						matcherparserlval.sq_string = purestring; 
 						return SQ_STRING; 
 				}
 "//".*                  ; /* comment */
@@ -50,14 +50,14 @@ single			[(),|#_^=.]
 "true"			{ return TRUE; }
 "false"			{ return FALSE; }
 
-{single}		{  return *matchertext; }
+{single}		{  return *matcherparsertext; }
 
-"$"{letter}({letter}|{digit})*  { matcherlval.varstring = strdup(matchertext); /* = lookup(matchertext); */ return VARIABLE; }
-{letter}({letter}|{digit})*  { matcherlval.idstring = strdup(matchertext); /* = lookup(matchertext); */ return IDENT; }
+"$"{letter}({letter}|{digit})*  { matcherparserlval.varstring = strdup(matcherparsertext); /* = lookup(matcherparsertext); */ return VARIABLE; }
+{letter}({letter}|{digit})*  { matcherparserlval.idstring = strdup(matcherparsertext); /* = lookup(matcherparsertext); */ return IDENT; }
 
 [ \t\r]                      ; /* white space */
 \n                           ; /* we are using #option yylineno */ 
-.                            printf("ERROR 1: Lexical error! : <%s>\n",matchertext); exit(1);
+.                            printf("ERROR 1: Lexical error! : <%s>\n",matcherparsertext); exit(1);
 
 %%
 
@@ -78,6 +78,6 @@ FinishLexer()
 }
 
 /*
-\"[^"\n]**["\n]	{ int slen=strlen(matchertext+1); char* snew=(char*)malloc(slen-1+1);strncpy(snew,matchertext+1,slen-1);snew[slen-1]=0; matcherlval.string = snew; return STRING; }
-{digit}{digit}*              { matcherlval.intval = atoi(matchertext); return INTEGER; }
+\"[^"\n]**["\n]	{ int slen=strlen(matcherparsertext+1); char* snew=(char*)malloc(slen-1+1);strncpy(snew,matcherparsertext+1,slen-1);snew[slen-1]=0; matcherparserlval.string = snew; return STRING; }
+{digit}{digit}*              { matcherparserlval.intval = atoi(matcherparsertext); return INTEGER; }
 */

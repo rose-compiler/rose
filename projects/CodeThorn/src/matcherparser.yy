@@ -81,32 +81,32 @@ where_clause: WHERE where_expression
 
 where_expression:
 		where_expression_operand C_EQ where_expression_operand
-		{ $$=new MatchOpBinaryOp((enum yytokentype)C_EQ,$1,$3); }
+		{ $$=new MatchOpBinaryOp((int)C_EQ,$1,$3); }
 		| where_expression_operand C_NEQ where_expression_operand 
-		{ $$=new MatchOpBinaryOp((enum yytokentype)C_NEQ,$1,$3); }
+		{ $$=new MatchOpBinaryOp((int)C_NEQ,$1,$3); }
 		| where_expression_operand EQ where_expression_operand
-		{ $$=new MatchOpBinaryOp((enum yytokentype)EQ,$1,$3); }
+		{ $$=new MatchOpBinaryOp((int)EQ,$1,$3); }
 		| where_expression_operand NEQ where_expression_operand
-		{ $$=new MatchOpBinaryOp((enum yytokentype)NEQ,$1,$3); }
+		{ $$=new MatchOpBinaryOp((int)NEQ,$1,$3); }
 		| where_expression_operand AND where_expression_operand
-		{ $$=new MatchOpBinaryOp((enum yytokentype)AND,$1,$3); }
+		{ $$=new MatchOpBinaryOp((int)AND,$1,$3); }
 		| where_expression_operand OR where_expression_operand
-		{ $$=new MatchOpBinaryOp((enum yytokentype)OR,$1,$3); }
+		{ $$=new MatchOpBinaryOp((int)OR,$1,$3); }
 		| where_expression_operand XOR where_expression_operand
-		{ $$=new MatchOpBinaryOp((enum yytokentype)XOR,$1,$3); }
+		{ $$=new MatchOpBinaryOp((int)XOR,$1,$3); }
 		| NOT where_expression_operand
-		{ $$=new MatchOpUnaryOp((enum yytokentype)NOT,$2); }
+		{ $$=new MatchOpUnaryOp((int)NOT,$2); }
 		| '(' where_expression ')'
 		{ $$=$2; }
 		| TRUE
-		{ $$=new MatchOpConstant((enum yytokentype)TRUE); }
+		{ $$=new MatchOpConstant((int)TRUE); }
 		| FALSE
-		{ $$=new MatchOpConstant((enum yytokentype)FALSE); }
+		{ $$=new MatchOpConstant((int)FALSE); }
 		;
 
 where_expression_operand:
 		NULL_NODE
-		{ $$=new MatchOpConstant((enum yytokentype)NULL_NODE); }
+		{ $$=new MatchOpConstant((int)NULL_NODE); }
 		| VARIABLE
 		{ $$=new MatchOpAccessVariable($1); }
 		| VARIABLE '.' IDENT
@@ -258,9 +258,9 @@ void FinishParser() {
 }
 
 void
-matchererror(const char* errorMessage)
+matcherparsererror(const char* errorMessage)
 {
   /* matcherlineno, errorMessage, matchertext */
-  fprintf(stderr,"MATCHER parse error: line %d: %s at %s\n",matcherlineno,errorMessage,matchertext);
+  fprintf(stderr,"MATCHER parse error: line %d: %s at %s\n",matcherparserlineno,errorMessage,matcherparsertext);
   exit(2);
 }

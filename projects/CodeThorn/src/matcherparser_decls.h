@@ -16,11 +16,11 @@ void FinishParser();
 void InitializeLexer(const std::string& tokenizeString);
 void FinishLexer();
 
-extern char* matchertext;
-extern int matcherlineno;
-extern bool matcherdeprecated;
-int matcherlex();
-int matcherparse();
-void matchererror(const char*);
+extern char* matcherparsertext;
+extern int matcherparserlineno;
+extern bool matcherparserdeprecated;
+int matcherparserlex();
+int matcherparserparse();
+void matcherparsererror(const char*);
 
 #endif

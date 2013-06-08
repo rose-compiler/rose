@@ -34,10 +34,10 @@ void AstMatching::performMatching() {
   performMatchingOnAst(_root);
 }
 void AstMatching::generateMatchOperationsSequence() {
-  extern int matcherparse();
+  extern int matcherparserparse();
   extern MatchOperationList* matchOperationsSequence;
   InitializeParser(_matchExpression);
-  matcherparse();
+  matcherparserparse();
   _matchOperationsSequence=matchOperationsSequence;
   FinishParser();
 }

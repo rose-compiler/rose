@@ -174,33 +174,36 @@ class MatchOpDotDot : public MatchOperation {
 typedef MatchOpSequence MatchOperationList; // TODO: eliminate type alias
 typedef std::list<MatchOperationList*> MatchOperationListList;
 
-#include "matcherparser.h" // we are using yytokentype in MatchOpBinaryOp
-
+//#include "matcherparser.h" // we are using yytokentype in MatchOpBinaryOp
+// TODO: fake type for testing
 
 class MatchOpBinaryOp : public MatchOperation {
  public:
- MatchOpBinaryOp(enum yytokentype op,MatchOperation* l,MatchOperation* r):_op(op),_left(l),_right(r) {}
+ MatchOpBinaryOp(int op,MatchOperation* l,MatchOperation* r):_op(op),_left(l),_right(r) {}
   std::string toString() { return "binop()";}
   bool performOperation(MatchStatus&  status, RoseAst::iterator& i, SingleMatchResult& vb) {
     switch(_op) {
+#if 0
     case C_NEQ: return _left->performOperation(status,i,vb) != _right->performOperation(status,i,vb);
     case C_EQ:  return _left->performOperation(status,i,vb) == _right->performOperation(status,i,vb);
+#endif
     default: throw "Error: unknown operation in where-expression.";
     }
   }
   private:
-  enum yytokentype _op;
+  int _op;
   MatchOperation* _left;
   MatchOperation* _right;
 };
+
 class MatchOpUnaryOp : public MatchOperation {
  public:
-  MatchOpUnaryOp(enum yytokentype,MatchOperation* o) {}
+  MatchOpUnaryOp(int,MatchOperation* o) {}
   std::string toString() { return "not-implemented-yet";}  
 };
 class MatchOpConstant : public MatchOperation {
  public:
-  MatchOpConstant(enum yytokentype) {}
+  MatchOpConstant(int) {}
   std::string toString() { return "not-implemented-yet";}  
 };
 
