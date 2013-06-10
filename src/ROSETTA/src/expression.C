@@ -1356,6 +1356,13 @@ Grammar::setUpExpressions ()
      FunctionCallExp.setFunctionPrototype ( "HEADER_FUNCTION_CALL_EXPRESSION", "../Grammar/Expression.code" );
   // FunctionCallExp.editSubstitute       ( "LIST_FUNCTION_RETURN_TYPE", "void" );
 
+  // DQ (4/8/2013): Added support for specification of operator vs. non-operator syntax ("x+y" instead of "operator+(x,y)").
+  // This is relevant for generated code in some cases (has different function evaluation rules).  See test2013_100.C.
+  // ROSE has historically defaulted to using the operator syntax ("x+y") in generated code, but sometimes this is an error
+  // as test2013_100.C demonstrates.
+     FunctionCallExp.setDataPrototype ( "bool", "uses_operator_syntax", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      CallExpression.setFunctionPrototype ( "HEADER_CALL_EXPRESSION", "../Grammar/Expression.code" );
      CallExpression.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
      CallExpression.editSubstitute       ( "LIST_NAME", "arg" );

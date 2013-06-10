@@ -434,7 +434,7 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
                     goto incrementPosition;
                   }
 #if 1
-               cout << "second call " << endl;
+            // cout << "second call " << endl;
                if ( isObjectFilename(*i) == false && isSourceFilename(*i) == false && isValidFileWithExecutableFileSuffixes(*i) == true )
                   {
                  // printf ("This is at least an existing file of some kind: *i = %s \n",(*i).c_str());
@@ -1230,6 +1230,8 @@ SgFile::usage ( int status )
 "Operation modifiers:\n"
 "     -rose:output_warnings   compile with warnings mode on\n"
 "     -rose:C_only, -rose:C   follow C89 standard, disable C++\n"
+"     -rose:C89_only, -rose:C89\n"
+"                             follow C89 standard, disable C++\n"
 "     -rose:C99_only, -rose:C99\n"
 "                             follow C99 standard, disable C++\n"
 "     -rose:Cxx_only, -rose:Cxx\n"
@@ -1459,6 +1461,14 @@ SgFile::usage ( int status )
 "                               reference to the original file and line number\n"
 "                               to support view of original source in debuggers\n"
 "                               and external tools\n"
+"     -rose:unparse_function_calls_using_operator_syntax\n"
+"                               unparse overloaded operators using operator syntax\n"
+"                               relevant to C++ only (default is to reproduce use\n"
+"                               defined by the input code).\n"
+"     -rose:unparse_function_calls_using_operator_names\n"
+"                               unparse overloaded operators using operator names \n"
+"                               (not operator syntax) relevant to C++ only (default\n"
+"                               is to reproduce use defined by the input code).\n"
 "     -rose:unparse_instruction_addresses\n"
 "                               Outputs the addresses in left column (output\n"
 "                               inappropriate as input to assembler)\n"
@@ -1761,6 +1771,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              }
         }
 
+  // DQ (3/28/2013): Added support for C89 mode so that we can change the default C mode to C99, yet still handle the older standard.
+  //
+  // C89 only option (turns on EDG "--c89" option and g++ "-xc" option)
+  //
+     set_C89_only(false);
+     ROSE_ASSERT (get_C89_only() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(C89|C89_only)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("C89 mode ON \n");
+          set_C89_only(true);
+        }
+
   //
   // C99 only option (turns on EDG "--c" option and g++ "-xc" option)
   //
@@ -1882,6 +1905,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        // Not clear what behavior I want here!
 #if 1
           set_C_only(false);
+          set_C89_only(false);
           set_C99_only(false);
 #else
           if (get_sourceFileUsesCFileExtension() == true)
@@ -2424,6 +2448,24 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 
   //
+  // unparse_function_calls_using_operator_syntax option (added 4/14/2013).
+  //
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(unparse_function_calls_using_operator_syntax)",true) == true )
+        {
+          printf ("option -rose:unparse_function_calls_using_operator_syntax found \n");
+          set_unparse_function_calls_using_operator_syntax(true);
+        }
+
+  //
+  // unparse_function_calls_using_operator_names option (added 4/14/2013).
+  //
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(unparse_function_calls_using_operator_names)",true) == true )
+        {
+          printf ("option -rose:unparse_function_calls_using_operator_names found \n");
+          set_unparse_function_calls_using_operator_names(true);
+        }
+
+  //
   // unparse_instruction_addresses option (added 8/30/2008).
   //
      if ( CommandlineProcessing::isOption(argv,"-rose:","(unparse_instruction_addresses)",true) == true )
@@ -2813,6 +2855,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(openmp:parse_only|OpenMP:parse_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(openmp:ast_only|OpenMP:ast_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(openmp:lowering|OpenMP:lowering)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(C89|C89_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(C99|C99_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx|Cxx_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(C11|C11_only)",1);
@@ -2857,6 +2900,8 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(skip_unparse)",1);
      optionCount = sla(argv, "-rose:", "($)", "(unparse_includes)",1);
      optionCount = sla(argv, "-rose:", "($)", "(unparse_line_directives)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(unparse_function_calls_using_operator_syntax)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(unparse_function_calls_using_operator_names)",1);
 
      optionCount = sla(argv, "-rose:", "($)", "(unparse_instruction_addresses)",1);
      optionCount = sla(argv, "-rose:", "($)", "(unparse_raw_memory_contents)",1);
@@ -3430,7 +3475,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      }
      else {
        // if (get_C_only() == true || get_C99_only() == true)
-          if (get_C_only() == true || get_C99_only() == true || get_C11_only() == true)
+       // if (get_C_only() == true || get_C99_only() == true || get_C11_only() == true)
+          if (get_C_only() == true || get_C89_only() == true || get_C99_only() == true || get_C11_only() == true)
              {
             // AS(02/21/07) Add support for the gcc 'nostdinc' and 'nostdinc++' options
             // DQ (11/29/2006): if required turn on the use of the __cplusplus macro
@@ -3518,13 +3564,19 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // some C code can not be compiled with a C++ compiler.
      if (get_C_only() == true)
         {
-       // Add option to indicate use of C code (not C++) to EDG frontend
+       // Add option to indicate use of C code (not C++) to EDG frontend, default will be C99 (changed 3/28/2013).
           inputCommandLine.push_back("--c");
+        }
+
+     if (get_C89_only() == true)
+        {
+       // Add option to indicate use of C89 code (not C++) to EDG frontend
+          inputCommandLine.push_back("--c89");
         }
 
      if (get_C99_only() == true)
         {
-       // Add option to indicate use of C code (not C++) to EDG frontend
+       // Add option to indicate use of C99 code (not C++) to EDG frontend
           inputCommandLine.push_back("--c99");
         }
 
@@ -3774,6 +3826,14 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
             // This is the EDG option "--c" obtained from the ROSE "--edg:c" option
                set_C_only(true);
              }
+
+       // DQ (3/28/2013): Added support for specify C89 behavior so that default could be C99 (as in EDG3x branch).
+          if (*i == "c89")
+             {
+            // This is the EDG option "--c89" obtained from the ROSE "--edg:c89" option
+               set_C89_only(true);
+             }
+
           if (*i == "c99")
              {
             // This is the EDG option "--c99" obtained from the ROSE "--edg:c99" option
@@ -3901,7 +3961,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         }
 
   // DQ (10/15/2005): Trap out case of C programs where it is an EDG error to specify template instantiation details
-     if (get_C_only() == true ||get_C99_only() == true )
+  // if (get_C_only() == true || get_C99_only() == true )
+     if (get_C_only() == true || get_C89_only() == true || get_C99_only() == true || get_C11_only() == true )
         {
        // printf ("In build_EDG_CommandLine(): compiling input as C program so turn off all template instantiation details \n");
           autoInstantiation = false;

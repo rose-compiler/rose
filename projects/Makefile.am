@@ -134,6 +134,12 @@ endif
 endif
 endif
 
+# DQ (3/23/2013): Adding support for aterm translation.
+if ROSE_WITH_ATERM
+   SUBDIRS += AtermTranslation
+endif
+
+
 # DQ (2/28/2010): We can't make this conditionsl this since then the Makefile.in will 
 # be missing at configure time.
 # if ROSE_USE_SAT
