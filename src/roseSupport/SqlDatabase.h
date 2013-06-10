@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 /** Support for a variety of relational database drivers.
  *
@@ -109,7 +110,23 @@ class Exception: public std::runtime_error {
 public:
     explicit Exception(const char *mesg): std::runtime_error(mesg) {}
     explicit Exception(const std::string &mesg): std::runtime_error(mesg) {}
+    explicit Exception(const std::runtime_error &e, const ConnectionPtr &conn, const TransactionPtr &tx,
+                       const StatementPtr &stmt)
+        : std::runtime_error(e), connection(conn), transaction(tx), statement(stmt) {}
+    explicit Exception(const std::string &mesg, const ConnectionPtr &conn, const TransactionPtr &tx,
+                       const StatementPtr &stmt)
+        : std::runtime_error(mesg), connection(conn), transaction(tx), statement(stmt) {}
+
+    virtual ~Exception() throw() {}
+    virtual const char *what() const throw() /*override*/;
+    void print(std::ostream&) const;
+    ConnectionPtr connection;
+    TransactionPtr transaction;
+    StatementPtr statement;
+private:
+    mutable std::string what_str;       // backing store for what()
 };
+
 
 /*******************************************************************************************************************************
  *                                      Connections
@@ -149,6 +166,16 @@ public:
     /** Return the low-level driver being used. */
     Driver driver() const;
 
+    /** Debugging property.  If non-null, then debugging information is sent to that file. Transactions inherit the debugging
+     * property of their connection, and statements inherit the debugging property of their transaction.
+     * @{ */
+    void set_debug(FILE *f);
+    FILE *get_debug() const;
+    /** @} */
+
+    /** Print some basic info about this connection. */
+    void print(std::ostream&) const;
+
     // Only called by boost::shared_ptr
     ~Connection() { finish(); }
 
@@ -165,7 +192,6 @@ private:
     ConnectionImpl *impl;
 };
 
-
 /*******************************************************************************************************************************
  *                                      Transactions
  *******************************************************************************************************************************/
@@ -176,6 +202,7 @@ private:
  *  transaction can be canceled with its rollback() method or by deletion; it can be completed by calling its commit() method.
  *  A transaction that has been canceled or completed can no longer be used. */
 class Transaction: public boost::enable_shared_from_this<Transaction> {
+    friend class Statement;
     friend class StatementImpl;
 public:
     /** Create a new transaction.  Transactions can be created either by this class method or by calling
@@ -200,8 +227,24 @@ public:
     /** Create a new statement. */
     StatementPtr statement(const std::string &sql);
 
+    /** Execute one or more statements. The provided SQL source code is parsed into individual statements and executed one
+     *  statement at a time until all are processed or statement fails causing an exception to be thrown.  All results are
+     *  discarded. The transaction is not automatically committed. */
+    void execute(const std::string &sql);
+
     /** Returns the low-level driver name for this transaction. */
     Driver driver() const;
+
+    /** Debugging property.  If non-null, then debugging information is sent to that file. Transactions inherit the debugging
+     * property of their connection (which is overridden by this method), and statements inherit the debugging property of
+     * their transaction.
+     *  @{ */
+    void set_debug(FILE *f);
+    FILE *get_debug() const;
+    /** @} */
+
+    /** Print some basic info about this transaction. */
+    void print(std::ostream&) const;
 
     // Only called by boost::shared_ptr
     ~Transaction() { finish(); }
@@ -294,6 +337,17 @@ public:
     /** Returns the low-level driver name for this statement. */
     Driver driver() const;
 
+    /** Debugging property.  If non-null, then debugging information is sent to that file. Transactions inherit the debugging
+     * property of their connection, and statements inherit the debugging property of their transaction (which is overridden by
+     * this method).
+     *  @{ */
+    void set_debug(FILE *f);
+    FILE *get_debug() const;
+    /** @} */
+
+    /** Print some basic info about this statement. */
+    void print(std::ostream&) const;
+
 public:
     // Called only by boost::shared_ptr
     ~Statement() { finish(); }
@@ -317,5 +371,17 @@ template<> float Statement::iterator::get<float>(size_t idx);
 template<> double Statement::iterator::get<double>(size_t idx);
 template<> std::string Statement::iterator::get<std::string>(size_t idx);
     
+/*******************************************************************************************************************************
+ *                                      Miscellaneous functions
+ *******************************************************************************************************************************/
+
+/** Split SQL source code into individual statements.  This is not a full parser--it only looks for top-level semicolons. */
+std::vector<std::string> split_sql(const std::string &sql);
+
+std::ostream& operator<<(std::ostream&, const Exception&);
+std::ostream& operator<<(std::ostream&, const Connection&);
+std::ostream& operator<<(std::ostream&, const Transaction&);
+std::ostream& operator<<(std::ostream&, const Statement&);
+
 } // namespace
 #endif
