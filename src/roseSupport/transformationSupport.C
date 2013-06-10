@@ -1203,10 +1203,15 @@ TransformationSupport::getTransformationOptions (
                SgGlobal* globalScope = isSgGlobal(astNode);
                ROSE_ASSERT (globalScope != NULL);
 
+#if 0
                SgSymbolTable* symbolTable = globalScope->get_symbol_table();
                ROSE_ASSERT (symbolTable != NULL);
                getTransformationOptions ( symbolTable, generatedList, identifingTypeName );
-
+#else
+            // DQ (5/21/2013): We now make this an error, but I think this code is not used any more.
+               printf ("ERROR: access to symbol table is restricted from SgGlobal \n");
+               ROSE_ASSERT(false);
+#endif
             // printf ("Processed global scope, exiting .. \n");
             // ROSE_ABORT();
                break;
@@ -1339,11 +1344,15 @@ TransformationSupport::getTransformationOptions (
             // printf ("List all the variables in this scope! \n");
                SgBasicBlock* basicBlock = isSgBasicBlock(astNode);
                ROSE_ASSERT (basicBlock != NULL);
-
+#if 0
                SgSymbolTable* symbolTable = basicBlock->get_symbol_table();
                ROSE_ASSERT (symbolTable != NULL);
                getTransformationOptions ( symbolTable, generatedList, identifingTypeName );
-
+#else
+            // DQ (5/21/2013): We now make this an error, but I think this code is not used any more.
+               printf ("ERROR: access to symbol table is restricted from SgBasicBlock \n");
+               ROSE_ASSERT(false);
+#endif
             // Next go (fall through this case) to the default case so that we traverse the parent
             // of the SgBasicBlock.
             // break;

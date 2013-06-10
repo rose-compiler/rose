@@ -756,6 +756,10 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "int", "upc_threads", "= 0",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (3/28/2013): Added support to specify C89 support, so that default can be C99 support (same as EDG3x branch).
+     File.setDataPrototype         ( "bool", "C89_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      File.setDataPrototype         ( "bool", "C99_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "Cxx_only", "= false",
@@ -893,6 +897,15 @@ Grammar::setUpSupport ()
   // The use of #line directives permits the debugger to reference the original source code instead of
   // ROSE generated source code.
      File.setDataPrototype         ( "bool", "unparse_line_directives", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/14/2013): Added options to permit selection of either overloaded operator names or use of operator syntax 
+  // for function calls in the unparsed code.  The default is to reproduce the same use as in the input code.
+  // These options permit agressive levels of testing of both extremes (and overrides the default behavior to
+  // reproduce the function call use as specified in the input code.
+     File.setDataPrototype         ( "bool", "unparse_function_calls_using_operator_syntax", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "unparse_function_calls_using_operator_names", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/30/2008): Added support for tailoring the output of unparsed disassembled instructions
@@ -2042,6 +2055,35 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // DQ (5/14/2011): Added information required for new name qualification support.
      TemplateArgument.setDataPrototype("bool","global_qualification_required","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 1
+  // DQ (5/4/2013): These variables are needed to reproduce the way that we handle types 
+  // in function parameters and allow the same technique to be used for template arguments.
+  // This needs to be handled using a template function where we will refactor the relevent 
+  // code that can be shared between the function parameter handling in function
+  // unparseFunctionParameterDeclaration() and the template argument handling in 
+  // function unparseTemplateArgument().
+
+  // DQ (12/20/2006): Record if global name qualification is required on the type.
+  // See test2003_01.C for an example of where this is required. Note that for a
+  // variable declaration (SgVariableDeclaration) this information is recorded directly
+  // on the SgVariableDeclaration node.  This use on the InitializedName is reserved for
+  // function parameters, and I am not sure if it is useful anyhwere else.
+     TemplateArgument.setDataPrototype("bool", "requiresGlobalNameQualificationOnType", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added support for name qualification on the type referenced by the InitializedName
+  // (not the SgInitializedName itself since it might be referenced from several places, I think).
+     TemplateArgument.setDataPrototype ( "int", "name_qualification_length_for_type", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     TemplateArgument.setDataPrototype("bool","type_elaboration_required_for_type","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     TemplateArgument.setDataPrototype("bool","global_qualification_required_for_type","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
   // DQ (4/2/2007): Added list as separate IR node to support mixing of lists and data members in IR nodes in ROSETTA.
      TemplateArgumentList.setFunctionPrototype ( "HEADER_TEMPLATE_ARGUMENT_LIST", "../Grammar/Support.code");

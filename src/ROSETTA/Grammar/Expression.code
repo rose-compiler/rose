@@ -4058,15 +4058,6 @@ SgPointerDerefExp::get_type() const
                break;
              }
 
-       // DQ (6/18/2007): The dereference of a function type is a function call so the type is it's return type (I think)
-          case V_SgFunctionType:
-             {
-               SgFunctionType* functionType = isSgFunctionType(someType);
-            // returnType = functionType->get_return_type();
-               returnType = functionType;
-               break;
-             }
-
        // DQ (12/30/2008): Added case to support EDG 4.0 (see test2001_03.C)
           case V_SgTypeString:
              {
@@ -4116,6 +4107,23 @@ SgPointerDerefExp::get_type() const
                break;
              }
 
+       // DQ (5/25/2013): Added this for the case of the new EDG interface.
+       // DQ (6/18/2007): The dereference of a function type is a function call so the type is it's return type (I think)
+          case V_SgFunctionType:
+             {
+               SgFunctionType* functionType = isSgFunctionType(someType);
+            // returnType = functionType->get_return_type();
+               returnType = functionType;
+               break;
+             }
+
+       // DQ (5/25/2013): Added this for the case of the new EDG interface.
+          case V_SgClassType:
+             {
+               SgClassType* classType = isSgClassType(someType);
+               returnType = classType;
+               break;
+             }
 
 #if 0
        // DQ (10/3/2006): I think this is no longer required, since we fixed the case of sizeof taking an 
