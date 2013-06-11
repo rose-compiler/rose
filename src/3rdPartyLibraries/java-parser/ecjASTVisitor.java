@@ -162,7 +162,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
             else {
                 System.out.println();
                 System.out.println("*** No support yet for Type Variable enclosed in " + binding.getClass().getCanonicalName());
-                System.exit(1);
+                throw new RuntimeException();
             }
         }
         else if (node.binding instanceof TypeBinding) { // is this name a type?
@@ -1048,7 +1048,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (node.typeParameters != null) {
             System.out.println();
             System.out.println("*** No support yet for constructor type parameters");
-            System.exit(1);
+            throw new RuntimeException();
         }
 
         JavaParser.cactionConstructorDeclaration(name, javaParserSupport.createJavaToken(node));
@@ -1207,7 +1207,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (node.genericTypeArguments != null) {
             System.out.println();
             System.out.println("*** No support yet for constructor type arguments");
-            System.exit(1);
+            throw new RuntimeException();
         }
 
         JavaParser.cactionExplicitConstructorCall(javaParserSupport.createJavaToken(node));
@@ -1317,7 +1317,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (hasInitializer && node.getKind() == AbstractVariableDeclaration.ENUM_CONSTANT) {
             System.out.println();
             System.out.println("*** No support yet for Enum Values with initialization");
-            System.exit(1);
+            throw new RuntimeException();
         }
 
         String name = new String(node.name);
@@ -2237,7 +2237,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
         if (node.genericTypeArguments != null) {
             System.out.println();
             System.out.println("*** No support yet for method type arguments");
-            System.exit(1);
+            throw new RuntimeException();
         }
 
         // 
@@ -2337,7 +2337,7 @@ class ecjASTVisitor extends ExtendedASTVisitor {
 
                 System.out.println();
                 System.out.println("*** No support yet for calls to method with synthetic binding");
-                System.exit(1);
+                throw new RuntimeException();
             }
             
             if (javaParserSupport.userTypeTable.containsKey(cls)) { // A user-defined method that I am currently processing?
@@ -2381,7 +2381,7 @@ System.out.println("The original method is " + new String(method_binding.origina
 
             System.out.println();
             System.out.println("*** No support yet for calls to method with synthetic binding and \"purpose\" = " + synthetic_binding.purpose);
-            System.exit(1);
+            throw new RuntimeException();
         }
         else {
             Class cls = javaParserSupport.findClass(type_binding);
@@ -2460,7 +2460,7 @@ System.out.println("The original method is " + new String(method_binding.origina
         if (node.typeParameters != null) {
             System.out.println();
             System.out.println("*** No support yet for method type parameters");
-            System.exit(1);
+            throw new RuntimeException();
         }
             
         // Setup the function modifiers
@@ -3034,7 +3034,7 @@ System.out.println("The original method is " + new String(method_binding.origina
         else if (! (node.resolvedType instanceof BaseTypeBinding)) {
             System.out.println();
             System.out.println("*** No support yet for type: " + node.resolvedType.getClass().getCanonicalName());
-            System.exit(1);
+            throw new RuntimeException();
         }
         
         String package_name = javaParserSupport.getPackageName(node.resolvedType);
@@ -3067,7 +3067,7 @@ System.out.println("The original method is " + new String(method_binding.origina
         else if (! (node.resolvedType instanceof BaseTypeBinding)) {
             System.out.println();
             System.out.println("*** No support yet for type: " + node.resolvedType.getClass().getCanonicalName());
-            System.exit(1);
+            throw new RuntimeException();
         }
 
         String package_name = javaParserSupport.getPackageName(node.resolvedType);
@@ -3181,7 +3181,7 @@ System.out.println("The original method is " + new String(method_binding.origina
         else if (! (node.resolvedType instanceof BaseTypeBinding)) {
             System.out.println();
             System.out.println("*** No support yet for type: " + node.resolvedType.getClass().getCanonicalName());
-            System.exit(1);
+            throw new RuntimeException();
         }
 
         if (node.resolvedType instanceof TypeVariableBinding) { // is this name a type variable?
@@ -3201,7 +3201,7 @@ System.out.println("The original method is " + new String(method_binding.origina
             else {
                 System.out.println();
                 System.out.println("*** No support yet for Type Variable enclosed in " + binding.getClass().getCanonicalName());
-                System.exit(1);
+                throw new RuntimeException();
             }
         }
         else { 
@@ -3235,7 +3235,7 @@ System.out.println("The original method is " + new String(method_binding.origina
         else if (! (node.resolvedType instanceof BaseTypeBinding)) {
             System.out.println();
             System.out.println("*** No support yet for type: " + node.resolvedType.getClass().getCanonicalName());
-            System.exit(1);
+            throw new RuntimeException();
         }
 
         if (node.resolvedType instanceof TypeVariableBinding) { // is this name a type variable?
@@ -3255,7 +3255,7 @@ System.out.println("The original method is " + new String(method_binding.origina
             else {
                 System.out.println();
                 System.out.println("*** No support yet for Type Variable enclosed in " + binding.getClass().getCanonicalName());
-                System.exit(1);
+                throw new RuntimeException();
             }
         }
         else { 

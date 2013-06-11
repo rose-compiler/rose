@@ -7,8 +7,15 @@
 /*-----------------------------------------------------------------------------
  *  Dependencies
  *---------------------------------------------------------------------------*/
-#include "sage_support.h"
+// TOO1 (05/14/2013): Signal handling for -rose:keep_going
+#include <setjmp.h>
+#include <signal.h>
+
 #include <algorithm>
+
+#include <boost/filesystem.hpp>
+
+#include "sage_support.h"
 
 #ifdef __INSURE__
 // Provide a dummy function definition to support linking with Insure++.
@@ -721,6 +728,13 @@ SgSourceFile::initializeGlobalScope()
         }
    }
 
+// TOO1 (05/14/2013): Signal handling for -rose:keep_going
+sigjmp_buf rose__sgproject_parse_mark;
+static void HandleFrontendSignal(int sig)
+{
+  std::cout << "[WARN] Caught frontend signal='" << sig << "'" << std::endl;
+  siglongjmp(rose__sgproject_parse_mark, -1);
+}
 
 SgFile*
 #if 0
@@ -1264,7 +1278,47 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
      if ( file != NULL && isSgUnknownFile(file) == NULL )
         {
        // printf ("Calling file->callFrontEnd() \n");
+
+  // TOO1 (05/14/2013): Signal handling for -rose:keep_going
+  if (file->get_project()->get_keep_going())
+  {
+      struct sigaction act;
+      act.sa_handler = HandleFrontendSignal;
+      sigemptyset(&act.sa_mask);
+      act.sa_flags = 0;
+      sigaction(SIGSEGV, &act, 0);
+      sigaction(SIGABRT, &act, 0);
+  }
+
+  if (sigsetjmp(rose__sgproject_parse_mark, 0) == -1)
+  {
+      std::cout
+          << "[WARN] Ignoring frontend failure "
+          << " as directed by -rose:keep_going"
+          << std::endl;
+      file->set_frontendErrorCode(-1);
+  }
+  else
+  {
+      try
+      {
           nextErrorCode = file->callFrontEnd();
+      }
+      catch (...)
+      {
+          // TOO1 (05/14/2013): Handling for -rose:keep_going
+          std::cout << "[WARN] Caught frontend exception" << std::endl;
+          if (file->get_project()->get_keep_going())
+          {
+              file->set_frontendErrorCode(-1);
+          }
+          else
+          {
+              throw;
+          }
+      }
+  }
+
        // printf ("DONE: Calling file->callFrontEnd() \n");
           ROSE_ASSERT ( nextErrorCode <= 3);
         }
@@ -3116,7 +3170,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                printf ("Syntax errors detected in input fortran program ... \n");
 
             // We should define some convention for error codes returned by ROSE
-               exit(1);
+               throw std::exception();
              }
           ROSE_ASSERT(returnValueForSyntaxCheckUsingBackendCompiler == 0);
 
@@ -3635,7 +3689,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
                printf ("Syntax errors detected in input java program ... status = %d \n",returnValueForSyntaxCheckUsingBackendCompiler);
 
             // We should define some convention for error codes returned by ROSE
-               exit(1);
+               throw std::exception();
              }
           ROSE_ASSERT(returnValueForSyntaxCheckUsingBackendCompiler == 0);
 
@@ -4379,32 +4433,95 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
   // unparse and we want to compile the original source file as a backup mechanism to generate an
   // object file.
   // printf ("In SgFile::compileOutput(): get_unparse_output_filename() = %s \n",get_unparse_output_filename().c_str());
-     if (get_unparse_output_filename().empty() == true)
-        {
-          ROSE_ASSERT(get_skip_unparse() == true);
+
+  // TOO1 (05/14/2013): Handling for -rose:keep_going
+  //
+  // Compile the original source code file if:
+  //
+  // 1. Unparsing was skipped
+  // 2. The frontend encountered any errors, and the user specified to
+  //    "keep going" with -rose:keep_going.
+  //
+  //    Warning: Apparently, a frontend error code <= 3 indicates an EDG
+  //    frontend warning; however, existing logic says nothing about the
+  //    other language frontends' exit statuses.
+  bool use_original_input_file = false;
+  use_original_input_file =
+      (get_unparse_output_filename().empty() == true) ||
+      (
+          (
+              this->get_frontendErrorCode()               != 0 ||
+              this->get_project()->get_midendErrorCode()  != 0 ||
+              this->get_unparserErrorCode()               != 0 ||
+              this->get_backendCompilerErrorCode()        != 0
+          ) &&
+          (
+              get_project()->get_keep_going()
+          )
+      );
+
+    // TOO1 (05/14/2013): Handling for -rose:keep_going
+    // Replace the unparsed file with the original input file.
+    if (use_original_input_file)
+    {
+          //ROSE_ASSERT(get_skip_unparse() == true);
           string outputFilename = get_sourceFileNameWithPath();
-#if 0
-          if (get_skip_unparse() == true)
-             {
-            // We we are skipping the unparsing then we didn't generate an intermediate
-            // file and so we want to compile the original source file.
-               outputFilename = get_sourceFileNameWithPath();
-             }
-            else
-             {
-            // If we did unparse an intermediate file then we want to compile that
-            // file instead of the original source file.
-               outputFilename = "rose_" + get_sourceFileNameWithoutPath();
-             }
-#endif
+
+          if (get_unparse_output_filename().empty())
+          {
+              if (get_skipfinalCompileStep())
+              {
+                  // nothing to do...
+              }
+              else
+              {
+                  ROSE_ASSERT(! "Not implemented yet");
+              }
+          }
+          else
+          {
+              boost::filesystem::path original_file = outputFilename;
+              boost::filesystem::path unparsed_file = get_unparse_output_filename();
+              ROSE_ASSERT(original_file.string() != unparsed_file.string());
+              if (SgProject::get_verbose() >= 2)
+              {
+                  std::cout
+                      << "[DEBUG] "
+                      << "unparsed_file "
+                      << "'" << unparsed_file << "' "
+                      << "exists = "
+                      << std::boolalpha
+                      << boost::filesystem::exists(unparsed_file)
+                      << std::endl;
+              }
+              // Don't replace the original input file with itself
+              if (original_file.string() != unparsed_file.string())
+              {
+                  if (SgProject::get_verbose() >= 1)
+                  {
+                      std::cout
+                          << "[INFO] "
+                          << "Replacing "
+                          << "'" << unparsed_file << "' "
+                          << "with "
+                          << "'" << original_file << "'"
+                          << std::endl;
+                  }
+
+                  // copy_file will only completely override the existing file in Boost 1.46+
+                  // http://stackoverflow.com/questions/14628836/boost-copy-file-has-inconsistent-behavior-when-overwrite-if-exists-is-used
+                  if (boost::filesystem::exists(unparsed_file))
+                  {
+                      boost::filesystem::remove(unparsed_file);
+                  }
+                  boost::filesystem::copy_file(
+                      original_file,
+                      unparsed_file,
+                      boost::filesystem::copy_option::overwrite_if_exists);
+              }
+          }
           set_unparse_output_filename(outputFilename);
-
-       // DQ (6/25/2006): I think it is OK to not have an output file name specified.
-       // display ("In SgFile::compileOutput(): get_unparse_output_filename().empty() == true");
-
-       // printf ("Exiting as a test \n");
-       // ROSE_ASSERT(false);
-        }
+    }
 #endif
 
      ROSE_ASSERT (get_unparse_output_filename().empty() == false);
@@ -4469,6 +4586,37 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
        // DQ (2/20/2013): The timer used in TimingPerformance is now fixed to properly record elapsed wall clock time.
           //CAVE3 double check that is correct and shouldn't be compilerCmdLine
            returnValueForCompiler = systemFromVector (compilerCmdLine);
+
+          // TOO1 (05/14/2013): Handling for -rose:keep_going
+          //
+          // Compilation failed =>
+          //
+          //   1. Unparsed file is invalid => Try compiling the original input file
+          //   2. Original input file is invalid => abort
+          if (returnValueForCompiler != 0)
+          {
+              this->set_backendCompilerErrorCode(-1);
+              if (this->get_project()->get_keep_going() == true)
+              {
+                  // 1. We already failed the compilation of the ROSE unparsed file.
+                  // 2. Now we tried to compile the original input file --
+                  //    what was just compiled above -- and failed also.
+                  if (this->get_unparsedFileFailedCompilation())
+                  {
+                      this->set_backendCompilerErrorCode(-1);
+                      throw std::runtime_error("Original input file is invalid");
+                  }
+                  else
+                  {
+                      // The ROSE unparsed file is invalid...
+                      this->set_frontendErrorCode(-1);
+                      this->set_unparsedFileFailedCompilation(true);
+
+                      // So try to compile the original input file instead...
+                      returnValueForCompiler = this->compileOutput(argv, fileNameIndex);
+                  }
+              }
+          }
         }
        else
         {
@@ -4647,7 +4795,6 @@ SgProject::compileOutput()
             // int localErrorCode = file.compileOutput(i, compilerName);
             // int localErrorCode = file.compileOutput(0, compilerName);
                int localErrorCode = file.compileOutput(0);
-
                if (localErrorCode > errorCode)
                     errorCode = localErrorCode;
 
