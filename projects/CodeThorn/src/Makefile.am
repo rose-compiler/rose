@@ -95,11 +95,10 @@ faketarget:
 	WorkList.C
 	SetAlgo.h
 	AstMatching.C
+	ast_demo.C
+	ShowSeq.h
+	iterator_test.C
 
-#      AstMatching.h
-#      MatchOperation.C
-#      MatchOperation.h
-#      ast_demo.C
 #      matcherparser_decls.h
 
 REGRESSION_DATA_DIR=regressiondata
