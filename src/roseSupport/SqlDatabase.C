@@ -659,7 +659,6 @@ public:
     StatementPtr bind(const StatementPtr &stmt, size_t idx, uint64_t);
     StatementPtr bind(const StatementPtr &stmt, size_t idx, double);
     StatementPtr bind(const StatementPtr &stmt, size_t idx, const std::string&);
-    std::string escape(const std::string&, bool &has_backslash/*out*/);
     std::string expand();
     size_t begin(const StatementPtr &stmt);
     TransactionPtr tranx;
@@ -764,33 +763,8 @@ StatementPtr
 StatementImpl::bind(const StatementPtr &stmt, size_t idx, const std::string &val)
 {
     bind_check(stmt, idx);
-    bool has_backslash;
-    std::string escaped = escape(val, has_backslash/*out*/);
-    placeholders[idx].second = (has_backslash && tranx->driver()==POSTGRESQL?"E":"") + std::string("'") + escaped + "'";
+    placeholders[idx].second = escape(val, tranx->driver());
     return stmt;
-}
-
-std::string
-StatementImpl::escape(const std::string &src, bool &has_backslash/*out*/)
-{
-    has_backslash = false;
-    std::string dst;
-    size_t sz = src.size();
-    for (size_t i=0; i<sz; ++i) {
-        if ('\\'==src[i]) {
-            has_backslash = true;
-            if (tranx->driver()==POSTGRESQL) {
-                dst += "\\\\";
-            } else {
-                dst += "\\";
-            }
-        } else if ('\''==src[i]) {
-            dst += "''";
-        } else {
-            dst += src[i];
-        }
-    }
-    return dst;
 }
 
 std::string
@@ -1251,6 +1225,33 @@ split_sql(const std::string &all_)
     }
     return retval;
 }
+
+std::string
+escape(const std::string &s, Driver driver)
+{
+    bool has_backslash = false;
+    std::string retval;
+    size_t sz = s.size();
+    for (size_t i=0; i<sz; ++i) {
+        if ('\''==s[i]) {
+            retval += "''";
+        } else if ('\\'==s[i]) {
+            has_backslash = true;
+            retval += POSTGRESQL==driver ? "\\\\" : "\\";
+        } else if (!isprint(s[i])) {
+            has_backslash = true;
+            retval += POSTGRESQL==driver ? "\\\\" : "\\";
+            char buf[16];
+            sprintf(buf, "%03o", (unsigned)s[i]);
+            retval += buf;
+        } else {
+            retval += s[i];
+        }
+    }
+
+    return std::string(POSTGRESQL==driver && has_backslash ? "E" : "") + "'" + retval + "'";
+}
+    
 
 std::ostream& operator<<(std::ostream &o, const Exception &x) { x.print(o); return o; }
 std::ostream& operator<<(std::ostream &o, const Connection &x) { x.print(o); return o; }

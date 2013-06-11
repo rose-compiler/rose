@@ -379,6 +379,9 @@ template<> std::string Statement::iterator::get<std::string>(size_t idx);
 /** Split SQL source code into individual statements.  This is not a full parser--it only looks for top-level semicolons. */
 std::vector<std::string> split_sql(const std::string &sql);
 
+/** Produce an SQL string literal from a C++ string. */
+std::string escape(const std::string&, Driver);
+
 std::ostream& operator<<(std::ostream&, const Exception&);
 std::ostream& operator<<(std::ostream&, const Connection&);
 std::ostream& operator<<(std::ostream&, const Transaction&);
