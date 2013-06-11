@@ -449,6 +449,7 @@ namespace StringUtility
         *  Xenix, etc.), BeOS, Amiga, RISC OS and others.  Any occurrance of CR+LF, LF+CR, or CR by itself (in that order of
         *  left-to-right matching) is replaced by a single LF character. */
        std::string fixLineTermination(const std::string &input);
+
        /** Converts a multi-line string to a single line.  This function converts a multi-line string to a single line by
         *  replacing line-feeds and carriage-returns (and their surrounding white space) with a user-supplied replacement
         *  string (that defaults to a single space). Line termination (and it's surrounding white space) that appears at the
@@ -458,6 +459,14 @@ namespace StringUtility
         *
         *  A new string is returned. */
        std::string makeOneLine(const std::string &s, std::string replacement=" ");
+
+       /** Convert binary data to base-64. The base64 number system uses the characters A-Z, a-z, 0-9, +, and / (in that
+        * order). The returned string does not include linefeeds.  If @p do_pad is true then '=' characters may appear at the
+        * end to make the total length a multiple of four. */
+       std::string encode_base64(const std::vector<uint8_t> &data, bool do_pad=true);
+
+       /** Convert base-64 to binary. */
+       std::vector<uint8_t> decode_base64(const std::string &encoded);
 
    };
 

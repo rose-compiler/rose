@@ -48,6 +48,9 @@
 // DQ (9/29/2006): This is required for 64-bit g++ 3.4.4 compiler.
 #include <errno.h>
 
+// Needed for base64 functions
+#include "integerOps.h"
+
 // tps (11/10/2009): This include is needed in windows to find the realpath
 #if ROSE_MICROSOFT_OS
 #include <unistd.h>
@@ -1584,4 +1587,88 @@ StringUtility::add_to_reason_string(std::string &result, bool isset, bool do_pad
         for (size_t i=0; i<abbr.size(); ++i)
             result += ".";
     }
+}
+
+std::string
+StringUtility::encode_base64(const std::vector<uint8_t> &data, bool do_pad)
+{
+    static const char *digits = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    std::string s;
+    unsigned val = 0; // only low-order 24 bits used
+    for (size_t i=0; i<data.size(); ++i) {
+        switch (i%3) {
+            case 0:
+                val = IntegerOps::shiftLeft2<unsigned>(data[i], 16);
+                break;
+            case 1:
+                val |= IntegerOps::shiftLeft2<unsigned>(data[i], 8);
+                break;
+            case 2:
+                val |= data[i];
+                s += digits[IntegerOps::shiftRightLogical2(val, 18) & 0x3f];
+                s += digits[IntegerOps::shiftRightLogical2(val, 12) & 0x3f];
+                s += digits[IntegerOps::shiftRightLogical2(val, 6) & 0x3f];
+                s += digits[val & 0x3f];
+                break;
+        }
+    }
+    switch (data.size() % 3) {
+        case 0:
+            break;
+        case 1:
+            s += digits[IntegerOps::shiftRightLogical2(val, 18) & 0x3f];
+            s += digits[IntegerOps::shiftRightLogical2(val, 12) & 0x3f];
+            if (do_pad)
+                s += "==";
+            break;
+        case 2:
+            s += digits[IntegerOps::shiftRightLogical2(val, 18) & 0x3f];
+            s += digits[IntegerOps::shiftRightLogical2(val, 12) & 0x3f];
+            s += digits[IntegerOps::shiftRightLogical2(val, 6) & 0x3f];
+            if (do_pad)
+                s += "=";
+            break;
+    }
+    return s;
+}
+
+std::vector<uint8_t>
+StringUtility::decode_base64(const std::string &s)
+{
+    std::vector<uint8_t> retval;
+    retval.reserve((s.size()*3)/4+3);
+    unsigned val=0, ndigits=0;
+    for (size_t i=0; i<s.size(); ++i) {
+        unsigned digit;
+        if (s[i]>='A' && s[i]<='Z') {
+            digit = s[i]-'A';
+        } else if (s[i]>='a' && s[i]<='z') {
+            digit = s[i]-'a' + 26;
+        } else if (s[i]>='0' && s[i]<='9') {
+            digit = s[i]-'0' + 52;
+        } else if (s[i]=='+') {
+            digit = 62;
+        } else if (s[i]=='/') {
+            digit = 63;
+        } else {
+            continue;
+        }
+
+        // only reached for valid base64 characters
+        val |= IntegerOps::shiftLeft2(digit, 18-6*ndigits);
+        if (4==++ndigits) {
+            retval.push_back(IntegerOps::shiftRightLogical2(val, 16) & 0xff);
+            retval.push_back(IntegerOps::shiftRightLogical2(val, 8) & 0xff);
+            retval.push_back(val & 0xff);
+            val = ndigits = 0;
+        }
+    }
+
+    assert(0==ndigits || 2==ndigits || 3==ndigits);
+    if (ndigits>=2) {
+        retval.push_back(IntegerOps::shiftRightLogical2(val, 16) & 0xff);
+        if (ndigits==3)
+            retval.push_back(IntegerOps::shiftRightLogical2(val, 8) & 0xff);
+    }
+    return retval;
 }
