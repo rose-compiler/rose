@@ -149,7 +149,7 @@ class JavaParserSupport {
             this.pathLoader = new URLClassLoader(urls);
         } catch (MalformedURLException e) {
             System.err.println("(3) Error in processClasspath: " + e.getMessage()); 
-            System.exit(1);
+            throw new RuntimeException();
         }
     }
 
@@ -229,12 +229,12 @@ class JavaParserSupport {
         else if (binding == TypeBinding.NULL) {
             System.out.println();
             System.out.println("Don't Know what to do with ECJ's Null type!");
-            System.exit(1);
+            throw new RuntimeException();
         }
         System.out.println();
         System.out.println("Don't Know what to do with ECJ's " + binding.getClass().getCanonicalName());
-        System.exit(1);
-        return null;
+        throw new RuntimeException();
+        //return null;
     }
     
 
@@ -279,7 +279,7 @@ class JavaParserSupport {
         else if (binding instanceof WildcardBinding) {
             System.out.println();
             System.out.println("What(1) !???" + ((WildcardBinding) binding).debugName());
-            System.exit(1);
+            throw new RuntimeException();
         }
 
 // TODO: Remove this!
@@ -340,7 +340,7 @@ class JavaParserSupport {
         }
         else {
             System.out.println("(3) Don't know what to do with parameter type " + in_type.getClass().getCanonicalName() + " and argument " + argument.getClass().getCanonicalName());
-            System.exit(1);
+            throw new RuntimeException();
         }
 
         return false;
@@ -386,7 +386,7 @@ private String getTypeName(Type in_type) {
         Class cls = findClass(type_binding);
 //if (cls == null){
 //System.out.println("(2) Could not find type " + type_binding.debugName() + " with binding type " + type_binding.getClass().getCanonicalName());
-//System.exit(1);
+//throw new RuntimeException();
 //}
         assert(cls != null);
         String method_name = new String(parameterized_method_binding.selector);
@@ -480,7 +480,7 @@ private String getTypeName(Type in_type) {
 
         if (method == null) {
             System.out.println("Could not find method " + new String(method_binding.readableName()) + " declared in " + method_binding.declaringClass.debugName());
-            System.exit(1);
+            throw new RuntimeException();
         }
 
         return method;
@@ -546,7 +546,7 @@ catch(NoClassDefFoundError e){
         System.out.println("Could not find method " + new String(method_binding.readableName()) + " declared in " + method_binding.declaringClass.debugName());
         e.printStackTrace();
     }
-    System.exit(1);
+    throw new RuntimeException();
 }
 
     return null;
@@ -592,7 +592,7 @@ catch(NoClassDefFoundError e){
 
         if (constructor == null) {
             System.out.println("Could not find constructor " + new String(constructor_binding.readableName()) + " declared in " + constructor_binding.declaringClass.debugName());
-            System.exit(1);
+            throw new RuntimeException();
         }
 
         return constructor;
@@ -766,7 +766,7 @@ Constructor getRawConstructor(MethodBinding constructor_binding) {
             System.out.println("(2) Caught error in JavaParserSupport (Parser failed) - " + typename);
             System.err.println(e);
 
-            System.exit(1);
+            throw new RuntimeException();
         }
     }
 
@@ -1208,7 +1208,7 @@ System.out.println("    Class Name           " + ": " + (cls == null ? "What!?" 
                 throw new ClassNotFoundException("*** Fatal Error: Could not load class " + typename);
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
-                System.exit(1);
+                throw new RuntimeException();
             }
         }
         preprocessClass(cls);
@@ -1374,7 +1374,7 @@ else System.out.println("NO type parameters!!!");
             }
             else {
                 e.printStackTrace();
-                System.exit(1);
+                throw new RuntimeException();
             }
         }
 
@@ -1396,7 +1396,7 @@ else System.out.println("NO type parameters!!!");
             }
             else {
                 e.printStackTrace();
-                System.exit(1);
+                throw new RuntimeException();
             }
         }
 
@@ -1418,7 +1418,7 @@ else System.out.println("NO type parameters!!!");
             }
             else {
                 e.printStackTrace();
-                System.exit(1);
+                throw new RuntimeException();
             }
         }
 
@@ -1431,7 +1431,7 @@ else System.out.println("NO type parameters!!!");
                 System.out.println("Problem inner classes for " + cls.getCanonicalName());
             }
             e.printStackTrace();
-            System.exit(1);
+            throw new RuntimeException();
         }
 
         TypeVariable<?> parameters[] = cls.getTypeParameters();
@@ -1680,7 +1680,7 @@ System.out.println(") in class " + cls.getCanonicalName());
                     if (method.typeParameters() != null) {
                         System.out.println();
                         System.out.println("*** No support yet for method/constructor type parameters");
-                        System.exit(1);
+                        throw new RuntimeException();
                     }
 
                     JavaToken method_location = createJavaToken(method);
@@ -1762,7 +1762,7 @@ System.out.println(") in class " + cls.getCanonicalName());
                 // if (ct.getTypeParameters().length > 0) {
                 //    System.out.println();
                 //    System.out.println("*** No support yet for constructor type parameters");
-                //    System.exit(1);
+                //    throw new RuntimeException();
                 // }
 
                 Class pvec[] = ct.getParameterTypes();
@@ -1802,7 +1802,7 @@ System.out.println(") in class " + cls.getCanonicalName());
                 // if (m.getTypeParameters().length > 0) {
                 //    System.out.println();
                 //    System.out.println("*** No support yet for method type parameters");
-                //    System.exit(1);
+                //    throw new RuntimeException();
                 // }
 
                 Class pvec[] = m.getParameterTypes();
@@ -1952,7 +1952,7 @@ System.out.println(") in class " + cls.getCanonicalName());
                 else {
                     System.out.println();
                     System.out.println("*** No support yet for Type Variable binding " + new String(type_binding.shortReadableName()) + " with binding type " + type_binding.getClass().getCanonicalName());
-                    System.exit(1);
+                    throw new RuntimeException();
                 }
             }
             else {
@@ -1971,7 +1971,7 @@ System.out.println(") in class " + cls.getCanonicalName());
                 else {
                     System.out.println();
                     System.out.println("*** No support yet for Type Variable " + new String(type_binding.shortReadableName()) + " with binding type " + type_binding.getClass().getCanonicalName() + " enclosed in " + (binding == null ? "?" : binding.getClass().getCanonicalName()));
-                    System.exit(1);
+                    throw new RuntimeException();
                 }
             }
         }
@@ -2000,7 +2000,7 @@ System.out.println(") in class " + cls.getCanonicalName());
         else {
             System.out.println();
             System.out.println("*** No support yet for " + type_binding.getClass().getCanonicalName() + ": " + type_binding.debugName());
-            System.exit(1);
+            throw new RuntimeException();
         }
     }
 
@@ -2022,7 +2022,7 @@ System.out.println(") in class " + cls.getCanonicalName());
             System.err.println(e);
 
             // Make sure we exit as quickly as possible to simplify debugging.
-            System.exit(1);
+            throw new RuntimeException();
         }
 
         // Debugging support...
