@@ -312,13 +312,14 @@ public:
     
     /** Bind value to a '?' placeholder in the SQL statement.  Placeholders are counted from zero based on their position
      *  in the text of the SQL command.  Only after all placeholders are bound to values can this statement be executed.
+     *  The bind() method returns the statement pointer so that bind calls can be chained together.
      * @{ */
-    void bind(size_t idx, int32_t val);
-    void bind(size_t idx, int64_t val);
-    void bind(size_t idx, uint32_t val);
-    void bind(size_t idx, uint64_t val);
-    void bind(size_t idx, double val);
-    void bind(size_t idx, const std::string &val);
+    StatementPtr bind(size_t idx, int32_t val);
+    StatementPtr bind(size_t idx, int64_t val);
+    StatementPtr bind(size_t idx, uint32_t val);
+    StatementPtr bind(size_t idx, uint64_t val);
+    StatementPtr bind(size_t idx, double val);
+    StatementPtr bind(size_t idx, const std::string &val);
     /** @} */
 
     /** Execute this statement.  Returns the iterator pointing to the first row of the result. */

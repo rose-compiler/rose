@@ -653,12 +653,12 @@ public:
     void finish();
     Driver driver() const;
     void bind_check(const StatementPtr &stmt, size_t idx);
-    void bind(const StatementPtr &stmt, size_t idx, int32_t);
-    void bind(const StatementPtr &stmt, size_t idx, uint32_t);
-    void bind(const StatementPtr &stmt, size_t idx, int64_t);
-    void bind(const StatementPtr &stmt, size_t idx, uint64_t);
-    void bind(const StatementPtr &stmt, size_t idx, double);
-    void bind(const StatementPtr &stmt, size_t idx, const std::string&);
+    StatementPtr bind(const StatementPtr &stmt, size_t idx, int32_t);
+    StatementPtr bind(const StatementPtr &stmt, size_t idx, uint32_t);
+    StatementPtr bind(const StatementPtr &stmt, size_t idx, int64_t);
+    StatementPtr bind(const StatementPtr &stmt, size_t idx, uint64_t);
+    StatementPtr bind(const StatementPtr &stmt, size_t idx, double);
+    StatementPtr bind(const StatementPtr &stmt, size_t idx, const std::string&);
     std::string escape(const std::string&, bool &has_backslash/*out*/);
     std::string expand();
     size_t begin(const StatementPtr &stmt);
@@ -720,48 +720,54 @@ StatementImpl::bind_check(const StatementPtr &stmt, size_t idx)
     }
 }
 
-void
+StatementPtr
 StatementImpl::bind(const StatementPtr &stmt, size_t idx, int32_t val)
 {
     bind_check(stmt, idx);
     placeholders[idx].second = StringUtility::numberToString(val);
+    return stmt;
 }
 
-void
+StatementPtr
 StatementImpl::bind(const StatementPtr &stmt, size_t idx, uint32_t val)
 {
     bind_check(stmt, idx);
     placeholders[idx].second = StringUtility::numberToString(val);
+    return stmt;
 }
 
-void
+StatementPtr
 StatementImpl::bind(const StatementPtr &stmt, size_t idx, int64_t val)
 {
     bind_check(stmt, idx);
     placeholders[idx].second = StringUtility::numberToString(val);
+    return stmt;
 }
 
-void
+StatementPtr
 StatementImpl::bind(const StatementPtr &stmt, size_t idx, uint64_t val)
 {
     bind_check(stmt, idx);
     placeholders[idx].second = StringUtility::numberToString(val);
+    return stmt;
 }
 
-void
+StatementPtr
 StatementImpl::bind(const StatementPtr &stmt, size_t idx, double val)
 {
     bind_check(stmt, idx);
     placeholders[idx].second = StringUtility::numberToString(val);
+    return stmt;
 }
 
-void
+StatementPtr
 StatementImpl::bind(const StatementPtr &stmt, size_t idx, const std::string &val)
 {
     bind_check(stmt, idx);
     bool has_backslash;
     std::string escaped = escape(val, has_backslash/*out*/);
     placeholders[idx].second = (has_backslash && tranx->driver()==POSTGRESQL?"E":"") + std::string("'") + escaped + "'";
+    return stmt;
 }
 
 std::string
@@ -939,12 +945,12 @@ Statement::print(std::ostream &o) const
         o <<"executed SQL:\n" <<StringUtility::prefixLines(impl->sql_expanded, "    |") <<"\n";
 }
 
-void Statement::bind(size_t idx, int32_t val) { impl->bind(shared_from_this(), idx, val); }
-void Statement::bind(size_t idx, int64_t val) { impl->bind(shared_from_this(), idx, val); }
-void Statement::bind(size_t idx, uint32_t val) { impl->bind(shared_from_this(), idx, val); }
-void Statement::bind(size_t idx, uint64_t val) { impl->bind(shared_from_this(), idx, val); }
-void Statement::bind(size_t idx, double val) { impl->bind(shared_from_this(), idx, val); }
-void Statement::bind(size_t idx, const std::string &val) { impl->bind(shared_from_this(), idx, val); }
+StatementPtr Statement::bind(size_t idx, int32_t val) { return impl->bind(shared_from_this(), idx, val); }
+StatementPtr Statement::bind(size_t idx, int64_t val) { return impl->bind(shared_from_this(), idx, val); }
+StatementPtr Statement::bind(size_t idx, uint32_t val) { return impl->bind(shared_from_this(), idx, val); }
+StatementPtr Statement::bind(size_t idx, uint64_t val) { return impl->bind(shared_from_this(), idx, val); }
+StatementPtr Statement::bind(size_t idx, double val) { return impl->bind(shared_from_this(), idx, val); }
+StatementPtr Statement::bind(size_t idx, const std::string &val) { return impl->bind(shared_from_this(), idx, val); }
 
 /*******************************************************************************************************************************
  *                                      Statement iterators
