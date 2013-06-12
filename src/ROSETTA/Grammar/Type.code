@@ -1734,7 +1734,7 @@ SgType::stripType(unsigned char bit_array) const
      SgType* currentType = (SgType*) this;
 
 #if 0
-     printf ("Inside of SgType::stripType(bit_array = %u) this = %p = %s \n",bit_array,currentType,currentType->class_name().c_str());
+     printf ("Inside of SgType::stripType(bit_array = %u): this = %p = %s \n",bit_array,currentType,currentType->class_name().c_str());
 #endif
 
      SgModifierType*  modType     = NULL;
@@ -1743,8 +1743,12 @@ SgType::stripType(unsigned char bit_array) const
      SgArrayType*     arrayType   = NULL;
      SgTypedefType*   typedefType = NULL;
 
+     size_t counter = 0;
      while (true)
         {
+#if 0
+          printf ("In loop of SgType::stripType(bit_array = %u): counter = %zu this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
+#endif
           if ( (bit_array & STRIP_MODIFIER_TYPE) && (modType = isSgModifierType(currentType)) )
              {
                currentType = modType->get_base_type();
@@ -1783,6 +1787,22 @@ SgType::stripType(unsigned char bit_array) const
                        }
                   }
              }
+
+       // DQ (7/4/2013): This should be a reasonable limit.
+          if (counter >= 80)
+             {
+               printf ("In loop of SgType::stripType(bit_array = %u): counter = %zu this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
+             }
+          if (counter >= 100)
+             {
+            // Exit loop and return the currentType... 
+               printf ("In loop of SgType::stripType(bit_array = %u): exiting loop using currentType (counter = %zu) this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
+
+               break;
+             }
+          ROSE_ASSERT(counter < 100);
+
+          counter++;
         }
 
      return currentType;

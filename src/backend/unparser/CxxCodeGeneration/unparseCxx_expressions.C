@@ -1061,6 +1061,22 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                break;
              }
 
+           case SgTemplateArgument::start_of_pack_expansion_argument:
+             {
+            // DQ (7/3/2013): Added initial support for varadic template arguments.
+            // Using an expression for now, but we might need something else.
+               ROSE_ASSERT (templateArgument->get_expression() != NULL);
+#if 1
+               printf ("In unparseTemplateArgument(): Template argument = %p = %s \n",templateArgument->get_expression(),templateArgument->get_expression()->class_name().c_str());
+#endif
+            // unp->u_exprStmt->unparseExpression(templateArgument->get_expression(),newInfo);
+
+            // DQ (7/4/2013): I am not sure if this is correct.
+               curprint("/* varadic template argument */ ...");
+
+               break;
+             }
+
           case SgTemplateArgument::argument_undefined:
              {
                printf ("Error argument_undefined in Unparse_ExprStmt::unparseTemplateArgument \n");

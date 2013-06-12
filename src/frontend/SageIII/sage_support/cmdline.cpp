@@ -1761,6 +1761,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
                printf ("C only mode ON \n");
           set_C_only(true);
 
+       // DQ (7/4/2013): Added default behavior to be C99 to make this consistant with EDG default 
+       // behavior (changed to be C99 in March of 2013), (but we need to discuss this).
+          set_C99_only(true);
+
        // I think that explicit specificiation of C mode should turn off C++ mode!
           set_Cxx_only(false);
 
@@ -1789,7 +1793,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   //
      set_C99_only(false);
      ROSE_ASSERT (get_C99_only() == false);
-     if ( CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",true) == true )
+  // DQ (7/4/2013): Added support for -std=c99 and -std=gnu99 options to specify C99 behavior.
+  // if ( CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",true) == true )
+     if ( (CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",true) == true) || 
+          (CommandlineProcessing::isOption(argv,"-std=","(c99|gnu99)",true) == true) )
         {
           if ( SgProject::get_verbose() >= 1 )
                printf ("C99 mode ON \n");
@@ -3345,6 +3352,10 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      ROSE_ASSERT(false);
 #endif
 
+#if 0
+     commandLine.push_back("--dump_configuration");
+#endif
+
   // DQ (11/1/2011): This is not enough to support C++ code (e.g. "limits" header file).
 
   // JJW (12/11/2008):  add --edg_base_dir as a new ROSE-set flag
@@ -4236,7 +4247,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // DQ (1/17/2006): test this
   // ROSE_ASSERT(get_fileInfo() != NULL);
 
-#if 0
+#if 1
   // display("SgFile::buildCompilerCommandLineOptions()");
      printf ("C   compiler              = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
      printf ("C++ compiler              = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
