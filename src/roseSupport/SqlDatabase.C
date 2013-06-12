@@ -364,6 +364,12 @@ Connection::driver() const
     return impl->driver;
 }
 
+std::string
+Connection::openspec() const
+{
+    return impl->open_spec;
+}
+
 TransactionPtr
 Connection::transaction()
 {
@@ -578,6 +584,12 @@ Driver
 Transaction::driver() const
 {
     return impl->driver();
+}
+
+ConnectionPtr
+Transaction::connection() const
+{
+    return impl->conn;
 }
 
 void
@@ -870,6 +882,12 @@ Driver
 Statement::driver() const
 {
     return impl->driver();
+}
+
+TransactionPtr
+Statement::transaction() const
+{
+    return impl->tranx;
 }
 
 Statement::iterator

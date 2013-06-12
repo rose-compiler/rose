@@ -166,6 +166,9 @@ public:
     /** Return the low-level driver being used. */
     Driver driver() const;
 
+    /** Returns the open specification used when the connection was established. */
+    std::string openspec() const;
+
     /** Debugging property.  If non-null, then debugging information is sent to that file. Transactions inherit the debugging
      * property of their connection, and statements inherit the debugging property of their transaction.
      * @{ */
@@ -234,6 +237,9 @@ public:
 
     /** Returns the low-level driver name for this transaction. */
     Driver driver() const;
+
+    /** Returns the connection for this transaction. */
+    ConnectionPtr connection() const;
 
     /** Debugging property.  If non-null, then debugging information is sent to that file. Transactions inherit the debugging
      * property of their connection (which is overridden by this method), and statements inherit the debugging property of
@@ -337,6 +343,9 @@ public:
 
     /** Returns the low-level driver name for this statement. */
     Driver driver() const;
+
+    /** Returns the transaction for this statement. */
+    TransactionPtr transaction() const;
 
     /** Debugging property.  If non-null, then debugging information is sent to that file. Transactions inherit the debugging
      * property of their connection, and statements inherit the debugging property of their transaction (which is overridden by
