@@ -10,7 +10,11 @@ using namespace CodeThorn;
 
 void VariableIdMapping::toStream(ostream& os) {
   for(size_t i=0;i<mappingVarIdToSym.size();++i) {
-	os<<"("<<i<<","<<mappingVarIdToSym[i]<<","<<SgNodeHelper::symbolToString(mappingVarIdToSym[i])<<")"<<endl;
+	os<<"("<<i
+	  <<","<<mappingVarIdToSym[i]
+	  <<","<<SgNodeHelper::symbolToString(mappingVarIdToSym[i])
+	  <<" ::: "<<SgNodeHelper::uniqueLongVariableName(SgNodeHelper::findVariableDeclarationWithVariableSymbol(mappingVarIdToSym[i]))
+	  <<")"<<endl;
 	assert(mappingSymToVarId[mappingVarIdToSym[i]]==i);
   }
 }
@@ -43,17 +47,18 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
 		if(sym)
 		  found=true;
 		else
-		  ;//cerr<<"WARNING: ROSE-AST ERROR: VariableDeclaration without associated symbol found. Ignoring.";
+		  cerr<<"WARNING: ROSE-AST ERROR: VariableDeclaration without associated symbol found. Ignoring.";
 	  }
 	  if(SgVarRefExp* varRef=isSgVarRefExp(*i)) {
 		sym=SgNodeHelper::getSymbolOfVariable(varRef);
 		if(sym)
 		  found=true;
 		else
-		  ;//cerr<<"WARNING: ROSE-AST ERROR: VarRefExp without associated symbol found. Ignoring.";
+		  cerr<<"WARNING: ROSE-AST ERROR: VarRefExp without associated symbol found. Ignoring.";
 	  }
 	  if(found) {
 		string longName=SgNodeHelper::uniqueLongVariableName(*i);
+		
 		MapPair pair=make_pair(longName,sym);
 		checkSet.insert(pair);
 		if(symbolSet.find(sym)==symbolSet.end()) {
@@ -88,13 +93,24 @@ void VariableIdMapping::reportUniqueVariableSymbolMappingViolations() {
 	  for(set<MapPair>::iterator j=checkSet.begin();j!=checkSet.end();++j) {
 		// check if we find a pair with same name but different symbol
 		if((*i).first==(*j).first && i!=j) {
-		  cout << "    Problematic mapping: same name  : "<<(*i).first <<" <-> "<<(*i).second
+		  cout << "Problematic mapping: same name  : "<<(*i).first <<" <-> "<<(*i).second
 			   << " <==> "
 			   <<(*j).first <<" <-> "<<(*j).second
 			   <<endl;
+		  // look up declaration and print
+
+		  SgVariableSymbol* varsym1=isSgVariableSymbol((*i).second);
+		  SgVariableSymbol* varsym2=isSgVariableSymbol((*j).second);
+		  SgDeclarationStatement* vardecl1=SgNodeHelper::findVariableDeclarationWithVariableSymbol(varsym1);
+		  SgDeclarationStatement* vardecl2=SgNodeHelper::findVariableDeclarationWithVariableSymbol(varsym2);
+		  string lc1=SgNodeHelper::sourceFileLineColumnToString(vardecl1);
+		  string lc2=SgNodeHelper::sourceFileLineColumnToString(vardecl2);
+		  cout << "  VarSym1:"<<varsym1  <<" Decl1:"<<lc1<<" @"<<vardecl1<<": "<<vardecl1->unparseToString()<< endl;
+		  cout << "  VarSym2:"<<varsym2  <<" Decl2:"<<lc2<< " @"<<vardecl2<<": "<<vardecl2->unparseToString()<< endl;
+		  cout << "------------------------------------------------------------------"<<endl;
 		}
 		if((*i).second==(*j).second && i!=j) {
-		  cout << "    Problematic mapping: same symbol: "<<(*i).first <<" <-> "<<(*i).second
+		  cout << "Problematic mapping: same symbol: "<<(*i).first <<" <-> "<<(*i).second
 			   << " <==> "
 			   <<(*j).first <<" <-> "<<(*j).second
 			   <<endl;

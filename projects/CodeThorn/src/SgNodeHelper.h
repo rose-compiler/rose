@@ -35,6 +35,12 @@ namespace SgNodeHelper {
   //! returns the initialized name object of a variable declaration. Otherwise it throws an exception.
   SgInitializedName* getInitializedNameOfVariableDeclaration(SgVariableDeclaration* decl);
 
+  //! returns the declaration statement found for a given variable symbol.
+  SgDeclarationStatement* findVariableDeclarationWithVariableSymbol(SgNode* node);
+
+  //! returns filename+line+column information of AST fragment in format "filename:line:column". Used for generating readable output
+  std::string sourceFileLineColumnToString(SgNode* node);
+
   /*! computes for a given node at which scope nesting level this node is in its AST */
   int scopeNestingLevel(SgNode* node);
 

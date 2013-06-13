@@ -6,9 +6,34 @@
 #include "limits.h"
 #include "RoseAst.h"
 #include <list>
+#include <sstream>
 
 using namespace std;
 using namespace CodeThorn;
+
+SgDeclarationStatement* SgNodeHelper::findVariableDeclarationWithVariableSymbol(SgNode* node) {
+  if(SgVariableSymbol* varsym=isSgVariableSymbol(node)) {
+	SgInitializedName* initname=varsym->get_declaration();
+	assert(initname);
+	SgDeclarationStatement* declstmt=initname->get_declaration();
+	assert(declstmt);
+	return declstmt;
+  } else {
+	throw "Error: SgNodeHelper::getSgVariableDeclarationOfSgVariableSymbol : parameter not a SgVariableSymbol";
+  }
+  return 0; // non-reachable
+}
+
+std::string SgNodeHelper::sourceFileLineColumnToString(SgNode* node) {
+  Sg_File_Info* fi=node->get_file_info();
+  std::stringstream ss;
+  ss<<fi->get_filenameString();
+  ss<<":";
+  ss<<fi->get_line();
+  ss<<":";
+  ss<<fi->get_col();
+  return ss.str();
+}
 
 SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarScanf(SgNode* node) {
   SgNode* nextNodeToAnalyze1=node;
@@ -232,20 +257,32 @@ SgNodeHelper::getSymbolOfInitializedName(SgInitializedName* initName) {
 }
 
 string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
+  if(!(isSgVarRefExp(node)||isSgVariableDeclaration(node)))
+	return "non-variable-name";
+
   SgSymbol* sym=0;
   bool found=false;
+  string name="$+++unknown+++$";
+
+  if(SgVarRefExp* varRef=isSgVarRefExp(node)) {
+	SgVariableSymbol* varsym=isSgVariableSymbol(SgNodeHelper::getSymbolOfVariable(varRef));
+	assert(varsym);
+	node=findVariableDeclarationWithVariableSymbol(varsym);
+	assert(node);
+  }
   if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
 	sym=SgNodeHelper::getSymbolOfVariableDeclaration(varDecl);
+	assert(sym);
+	assert(isSgVariableDeclaration(node));
 	found=true;
-  }
-  if(SgVarRefExp* varRef=isSgVarRefExp(node)) {
-	sym=SgNodeHelper::getSymbolOfVariable(varRef);
-	found=true;
+	name=varDecl->get_mangled_name();
+  } else {
+	name=std::string("??")+node->sage_class_name()+"??";
+	return name;
   }
   if(found) {
 	if(sym==0)
 	  throw "SgNodeHelper::uniqueLongVariableName: sym==0.";
-	string name=SgNodeHelper::symbolToString(sym);
 	// we search from the SgSymbol (which is somewhere found in the AST). Even if it is in the symbol table
 	// we will still find the right function!
 	SgFunctionDefinition* funDef=SgNodeHelper::correspondingSgFunctionDefinition(sym);
@@ -258,6 +295,7 @@ string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
 	string longName=string("$")+funName+"$"+scopeLevel+"$"+name;
 	return longName;
   } else {
+	std::cerr<<"SgNode type of : "<<node->sage_class_name()<<std::endl;
 	throw "SgNodeHelper::uniqueLongVariableName: improper node operation.";
   }
 }
