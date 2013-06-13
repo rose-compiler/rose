@@ -1,15 +1,51 @@
 #define __STDC_LIMIT_MACROS
-#include <stdint.h>
-#include <stdlib.h>
 
 #include "LinearCongruentialGenerator.h"
+#include "integerOps.h"
+
+#include <fcntl.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <sys/time.h>
+
+void
+LinearCongruentialGenerator::init()
+{
+    if (0==access("/dev/urandom", R_OK)) {                      // try non-blocking version first
+        int fd = open("/dev/urandom", O_RDONLY);
+        assert(fd>=0);
+        ssize_t nread __attribute__((unused)) = read(fd, &seed_, sizeof seed_);
+        assert(nread==sizeof seed_);
+        value_ = seed_;
+        close(fd);
+    } else if (0==access("/dev/random", R_OK)) {                // this one might block for a while
+        int fd = open("/dev/random", O_RDONLY);
+        assert(fd>=0);
+        ssize_t nread __attribute__((unused)) = read(fd, &seed_, sizeof seed_);
+        assert(nread==sizeof seed_);
+        value_ = seed_;
+        close(fd);
+    } else {
+        // We don't know if srand() has been called yet, so we must assume that it hasn't.
+        struct timeval tv;
+        int status __attribute__((unused)) = gettimeofday(&tv, NULL);
+        assert(status>=0);
+        srand(tv.tv_sec ^ tv.tv_usec);
+        seed_ = value_ = rand();
+    }
+}
 
 uint64_t
-LinearCongruentialGenerator::next()
+LinearCongruentialGenerator::next(size_t nbits, size_t niter)
 {
-    // These are the values used by MMIX written by Donald Knuth. All 64 bits are returned.
-    value_ = 6364136223846793005ull * value_ + 1442695040888963407ull;
-    return value_;
+    uint64_t retval = 0;
+    for (size_t i=0; i<niter; ++i) {
+        // These are the values used by MMIX written by Donald Knuth. All 64 bits are returned.
+        value_ = 6364136223846793005ull * value_ + 1442695040888963407ull;
+        retval ^= value_;
+    }
+
+    return retval & IntegerOps::genMask<uint64_t>(nbits);
 }
 
 uint64_t
