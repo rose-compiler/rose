@@ -1,4 +1,5 @@
 #include "sage3basic.h"
+#include "rosePublicConfig.h"
 #include "DwarfLineMapper.h"
 
 namespace BinaryAnalysis {
@@ -20,7 +21,7 @@ operator<<(std::ostream &o, const DwarfLineMapper &x)
 void
 DwarfLineMapper::init()
 {
-#ifndef HAVE_DWARF_H
+#if !defined(ROSE_HAVE_DWARF_H) || !defined(ROSE_HAVE_LIBDWARF)
     static bool called = false;
     if (!called) {
         std::cerr <<"DwarfLineMapper::DwarfLineMapper: warning: DWARF support is not enabled in ROSE\n";
