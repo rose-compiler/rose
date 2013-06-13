@@ -468,6 +468,24 @@ namespace StringUtility
        /** Convert base-64 to binary. */
        std::vector<uint8_t> decode_base64(const std::string &encoded);
 
+      /** Join individual strings to form a single string.  Unlike listToString, these functions allow the caller to indicate
+       *  how the strings should be separated from one another: the @p separator (default SPC) is inserted between each pair
+       *  of strings, but not at the beginning or end, even if strings are empty.
+       * @{ */
+      template<class Container>
+      std::string join(const std::string &separator, Container &strings) {
+          return join(separator, strings.begin(), strings.end());
+      }
+      template<class Iterator>
+      std::string join(const std::string &separator, Iterator begin, Iterator end) {
+          std::string retval;
+          for (Iterator i=begin; i!=end; ++i)
+              retval += (i==begin ? std::string() : separator) + *i;
+          return retval;
+      }
+      std::string join(const std::string &separator, char *strings[], size_t nstrings);
+      std::string join(const std::string &separator, const char *strings[], size_t nstrings);
+      /** @} */
    };
 
 
