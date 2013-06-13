@@ -2592,12 +2592,14 @@ TransformationSupport::getTemplateDeclaration( const SgNode* astNode)
 
   // DQ (7/25/2012): Updated to reflect new template design using different types or template IR nodes.
   // while ( (isSgTemplateDeclaration(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
-     while ( (isSgTemplateDeclaration(parentNode) == NULL) && (isSgTemplateClassDeclaration(parentNode) == NULL) && 
+     while ( (isSgTemplateDeclaration(parentNode) == NULL)         && (isSgTemplateClassDeclaration(parentNode) == NULL) && 
              (isSgTemplateFunctionDeclaration(parentNode) == NULL) && (isSgTemplateMemberFunctionDeclaration(parentNode) == NULL) && 
-             (isSgTemplateVariableDeclaration(parentNode) == NULL) &&(parentNode->get_parent() != NULL) )
+             (isSgTemplateVariableDeclaration(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
         {
           parentNode = parentNode->get_parent();
+#if 1
           printf ("parentNode = %p = %s \n",parentNode,parentNode != NULL ? parentNode->class_name().c_str() : "NULL");
+#endif
         }
 
   // DQ (7/25/2012): Updated to reflect new template design using different types or template IR nodes.
@@ -2613,10 +2615,17 @@ TransformationSupport::getTemplateDeclaration( const SgNode* astNode)
         {
 #if 1
           if (astNode == NULL)
+             {
                printf ("Error: could not trace back to SgTemplateDeclaration node \n");
+               ROSE_ASSERT(false);
+             }
             else
-               printf ("Warning: could not trace back to template declaration node from %s \n",astNode->class_name().c_str());
-          ROSE_ASSERT(false);
+             {
+               printf ("Warning: In TransformationSupport::getTemplateDeclaration(): could not trace back to template declaration node from %s \n",astNode->class_name().c_str());
+            // ROSE_ASSERT(false);
+             }
+       // DQ (6/6/2013): commented this out since it is OK to return NULL (I think).
+       // ROSE_ASSERT(false);
 #endif
 
        // DQ (12/27/2010): This should not be an error (OK to return NULL).

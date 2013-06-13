@@ -1115,6 +1115,11 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "int", "detect_dangling_pointers", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/7/2013): Added support for use of experimental fortran front-end.
+     File.setDataPrototype("bool", "experimental_fortran_frontend", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
   // To be consistant with the use of binaryFile we will implement get_binaryFile() and set_binaryFile()
   // functions so that we can support the more common (previous) interface where there was only a single
   // SgAsmFile pointers called "binaryFile".
