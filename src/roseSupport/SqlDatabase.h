@@ -205,6 +205,7 @@ private:
  *  transaction can be canceled with its rollback() method or by deletion; it can be completed by calling its commit() method.
  *  A transaction that has been canceled or completed can no longer be used. */
 class Transaction: public boost::enable_shared_from_this<Transaction> {
+    friend class ConnectionImpl;
     friend class Statement;
     friend class StatementImpl;
 public:
@@ -234,6 +235,11 @@ public:
      *  statement at a time until all are processed or statement fails causing an exception to be thrown.  All results are
      *  discarded. The transaction is not automatically committed. */
     void execute(const std::string &sql);
+
+    /** Bulk load data into table.  The specified input stream contains comma-separated values which are inserted in bulk
+     *  into the specified table.  The number of fields in each row of the input stream must match the number of columns
+     *  in the table. Some drivers require that a bulk load is the only operation performed in a transaction. */
+    void bulk_load(const std::string &tablename, std::istream&);
 
     /** Returns the low-level driver name for this transaction. */
     Driver driver() const;
@@ -373,10 +379,10 @@ private:
     StatementImpl *impl;
 };
 
-template<> int32_t Statement::iterator::get<int32_t>(size_t idx);
 template<> int64_t Statement::iterator::get<int64_t>(size_t idx);
-template<> uint32_t Statement::iterator::get<uint32_t>(size_t idx);
 template<> uint64_t Statement::iterator::get<uint64_t>(size_t idx);
+template<> int32_t Statement::iterator::get<int32_t>(size_t idx);
+template<> uint32_t Statement::iterator::get<uint32_t>(size_t idx);
 template<> float Statement::iterator::get<float>(size_t idx);
 template<> double Statement::iterator::get<double>(size_t idx);
 template<> std::string Statement::iterator::get<std::string>(size_t idx);

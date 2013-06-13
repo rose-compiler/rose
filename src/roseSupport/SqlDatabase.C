@@ -15,6 +15,7 @@
 #ifdef ROSE_HAVE_LIBPQXX
 #include <pqxx/connection>
 #include <pqxx/transaction>
+#include <pqxx/tablewriter>
 #endif
 
 #include <cassert>
@@ -411,6 +412,7 @@ public:
     }
     ~TransactionImpl() { finish(); }
     void init();
+    void bulk_load(const std::string &tablename, std::istream&);
     void finish();
     void rollback();
     void commit();
@@ -443,7 +445,7 @@ TransactionImpl::init()
 #ifdef ROSE_HAVE_SQLITE3
         case SQLITE3: {
             sqlite3x::sqlite3_connection *drv_conn = conn->impl->sqlite3_connections[drv_conn_idx];
-            sqlite3_tranx = new sqlite3x::sqlite3_transaction(*drv_conn, sqlite3x::sqlite3_transaction::LOCK_IMMEDIATE);
+            sqlite3_tranx = new sqlite3x::sqlite3_transaction(*drv_conn);
             break;
         }
 #endif
@@ -457,6 +459,56 @@ TransactionImpl::init()
         }
 #endif
 
+        default:
+            assert(!"database driver not supported");
+            abort();
+    }
+}
+
+void
+TransactionImpl::bulk_load(const std::string &tablename, std::istream &file)
+{
+    switch (driver()) {
+#ifdef ROSE_HAVE_SQLITE3
+        case SQLITE3: {
+            sqlite3x::sqlite3_command *cmd = NULL;
+            try {
+                char buf[4096];
+                while (file.getline(buf, sizeof buf).good()) {
+                    std::vector<std::string> tuple;
+                    StringUtility::splitStringIntoStrings(buf, ',', tuple);
+                    if (!cmd) {
+                        std::string sql = "insert into "+tablename+" values(";
+                        for (size_t i=0; i<tuple.size(); ++i)
+                            sql += i?", ?":"?";
+                        sql += ")";
+                        cmd = new sqlite3x::sqlite3_command(*conn->impl->sqlite3_connections[drv_conn_idx], sql);
+                    }
+                    for (size_t i=0; i<tuple.size(); ++i)
+                        cmd->bind(i+1, tuple[i]); // sqlite3x bind() uses 1-origin indices
+                    cmd->executenonquery();
+                }
+            } catch (...) {
+                delete cmd;
+                throw;
+            }
+            delete cmd;
+            break;
+        }
+#endif
+#ifdef ROSE_HAVE_LIBPQXX
+        case POSTGRESQL: {
+            pqxx::tablewriter twriter(*postgres_tranx, tablename);
+            char buf[4096];
+            while (file.getline(buf, sizeof buf).good()) {
+                std::vector<std::string> tuple;
+                StringUtility::splitStringIntoStrings(buf, ',', tuple);
+                twriter.insert(tuple);
+            }
+            twriter.complete();
+            break;
+        }
+#endif
         default:
             assert(!"database driver not supported");
             abort();
@@ -624,6 +676,12 @@ Transaction::execute(const std::string &all)
     std::vector<std::string> sql = split_sql(all);
     for (size_t i=0; i<sql.size(); ++i)
         statement(sql[i])->execute();
+}
+
+void
+Transaction::bulk_load(const std::string &tablename, std::istream &file)
+{
+    impl->bulk_load(tablename, file);
 }
 
 void
@@ -822,21 +880,25 @@ StatementImpl::begin(const StatementPtr &stmt)
     switch (driver()) {
 #ifdef ROSE_HAVE_SQLITE3
         case SQLITE3: {
-            delete sqlite3_cursor;
-            sqlite3_cursor = NULL;
-            delete sqlite3_cmd;
-            sqlite3_cmd = NULL;
-            size_t drv_conn_idx = tranx->impl->drv_conn_idx;
-            sqlite3x::sqlite3_connection *drv_conn = tranx->impl->conn->impl->sqlite3_connections[drv_conn_idx];
-            assert(drv_conn!=NULL);
-            sqlite3_cmd = new sqlite3x::sqlite3_command(*drv_conn, sql_expanded);
-            sqlite3_cursor = new sqlite3x::sqlite3_reader;
-            *sqlite3_cursor = sqlite3_cmd->executereader();
-            if (!sqlite3_cursor->read()) {
+            try {
                 delete sqlite3_cursor;
                 sqlite3_cursor = NULL;
                 delete sqlite3_cmd;
                 sqlite3_cmd = NULL;
+                size_t drv_conn_idx = tranx->impl->drv_conn_idx;
+                sqlite3x::sqlite3_connection *drv_conn = tranx->impl->conn->impl->sqlite3_connections[drv_conn_idx];
+                assert(drv_conn!=NULL);
+                sqlite3_cmd = new sqlite3x::sqlite3_command(*drv_conn, sql_expanded);
+                sqlite3_cursor = new sqlite3x::sqlite3_reader;
+                *sqlite3_cursor = sqlite3_cmd->executereader();
+                if (!sqlite3_cursor->read()) {
+                    delete sqlite3_cursor;
+                    sqlite3_cursor = NULL;
+                    delete sqlite3_cmd;
+                    sqlite3_cmd = NULL;
+                }
+            } catch (const std::runtime_error &e) {
+                throw Exception(e, tranx->impl->conn, tranx, stmt);
             }
             break;
         }
@@ -847,7 +909,7 @@ StatementImpl::begin(const StatementPtr &stmt)
             try {
                 postgres_result = tranx->impl->postgres_tranx->exec(sql_expanded);
                 postgres_iter = postgres_result.begin();
-            } catch (std::runtime_error &e) { // postgres exception
+            } catch (const std::runtime_error &e) { // postgres exception
                 throw Exception(e, tranx->impl->conn, tranx, stmt);
             }
             break;
