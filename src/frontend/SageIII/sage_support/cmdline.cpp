@@ -641,6 +641,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                printf ("verbose mode ON (for SgProject)\n");
         }
 
+  SageSupport::Cmdline::
+      ProcessKeepGoing(this, local_commandLineArgumentList);
+
   //
   // Standard compiler options (allows alternative -E option to just run CPP)
   //
@@ -1126,6 +1129,30 @@ SgProject::processCommandLine(const vector<string>& input_argv)
    }
 
 //------------------------------------------------------------------------------
+//                                 Cmdline
+//------------------------------------------------------------------------------
+
+void
+SageSupport::Cmdline::
+ProcessKeepGoing (SgProject* project, std::vector<std::string>& argv)
+{
+  bool keep_going =
+      CommandlineProcessing::isOption(
+          argv,
+          "-rose:keep_going",
+          "",
+          true);
+
+  if (keep_going)
+  {
+      if (SgProject::get_verbose() >= 1)
+          std::cout << "[INFO] [Cmdline] [-rose:keep_going]" << std::endl;
+
+      project->set_keep_going(true);
+  }
+}
+
+//------------------------------------------------------------------------------
 //                                  Java
 //------------------------------------------------------------------------------
 
@@ -1187,6 +1214,18 @@ SgFile::usage ( int status )
 "     -rose:(o|output) FILENAME\n"
 "                             file containing final unparsed C++ code\n"
 "                             (relative or absolute paths are supported)\n"
+"     -rose:keep_going\n"
+"                             Similar to GNU Make's --keep-going option.\n"
+"\n"
+"                             If ROSE encounters an error while processing your\n"
+"                             input code, ROSE will simply run your backend compiler on\n"
+"                             your original source code file, as is, without modification.\n"
+"\n"
+"                             This is useful for compiler tests. For example,\n"
+"                             when compiling a 100K LOC application, you can\n"
+"                             try to compile as much as possible, ignoring failures,\n"
+"                             in order to gauage the overall status of your translator,\n"
+"                             with respect to that application.\n"
 "\n"
 "Operation modifiers:\n"
 "     -rose:output_warnings   compile with warnings mode on\n"
@@ -2815,6 +2854,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(h|help)",1);
      optionCount = sla(argv, "-rose:", "($)", "(V|version)", 1);
   // optionCount = sla(argv, "-rose:", "($)", "(v|verbose)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(keep_going)",1);
      int integerOption = 0;
      optionCount = sla(argv, "-rose:", "($)^", "(v|verbose)", &integerOption, 1);
      optionCount = sla(argv, "-rose:", "($)^", "(upc_threads)", &integerOption, 1);

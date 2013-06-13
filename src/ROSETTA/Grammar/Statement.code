@@ -3540,6 +3540,9 @@ HEADER_JAVA_IMPORT_STATEMENT_START
 
 HEADER_JAVA_IMPORT_STATEMENT_END
 
+HEADER_JAVA_PACKAGE_STATEMENT_START
+HEADER_JAVA_PACKAGE_STATEMENT_END
+
 // #########################################################
 // #########################################################
 //                      SOURCE CODE
@@ -16677,5 +16680,13 @@ SgJavaImportStatement::get_mangled_name(void) const
    }
 
 SOURCE_JAVA_IMPORT_STATEMENT_END
+
+SOURCE_JAVA_PACKAGE_STATEMENT_START
+void
+SgJavaPackageStatement::post_construction_initialization()
+{
+  // Nothing to setup here.
+}
+SOURCE_JAVA_PACKAGE_STATEMENT_END
 
 
