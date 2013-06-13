@@ -5143,6 +5143,9 @@ HEADER_APPLICATION_FILE_START
        // it was previously reversed.
        // bool get_binary_only (void) const;
 
+       // DQ (6/13/2013): Added to support to call the frontend after all SgFiles are built up.
+          void runFrontend(int & nextErrorCode);
+
 #if 0
 // DQ (9/5/2008): Moved to SgSourceFile
 #if ALT_FIXUP_COPY
@@ -5270,6 +5273,7 @@ HEADER_APPLICATION_FILE_LIST_START
 
 HEADER_APPLICATION_FILE_LIST_END
 
+
 HEADER_APPLICATION_DIRECTORY_START
      public:
           int numberOfFiles() const;
@@ -5282,10 +5286,24 @@ HEADER_APPLICATION_DIRECTORY_START
 
 HEADER_APPLICATION_DIRECTORY_END
 
+
 HEADER_APPLICATION_DIRECTORY_LIST_START
      public:
 
 HEADER_APPLICATION_DIRECTORY_LIST_END
+
+
+HEADER_JAVA_IMPORT_STATEMENT_LIST_START
+     public:
+
+HEADER_JAVA_IMPORT_STATEMENT_LIST_END
+
+
+HEADER_JAVA_CLASS_DECLARATION_LIST_START
+     public:
+
+HEADER_JAVA_CLASS_DECLARATION_LIST_END
+
 
 HEADER_APPLICATION_PROJECT_START
 
@@ -5344,7 +5362,7 @@ HEADER_APPLICATION_PROJECT_START
 
       //! Access function for retriving a SgFile object from the list stored internally
       //! This function is depricated and "operator[unsigned int]" should be used instead.
-          SgFile& get_file ( int i ) const ROSE_DEPRECATED_FUNCTION;
+          SgFile & get_file ( int i ) const ROSE_DEPRECATED_FUNCTION;
 
       //! Access function for putting a new SgFile object into the list stored internally
       //! This function is depricated and "get_fileList->push_back(SgFile*)" should be used instead.
@@ -5358,6 +5376,9 @@ HEADER_APPLICATION_PROJECT_START
 
       //! Access function for retriving a SgFile object from the list stored internally
           SgFile* operator[]( unsigned int i );
+
+      //! Access function for retriving a SgFile object from the list stored internally, but using the filename with full path.
+          SgFile* operator[]( std::string filename );
 
       //! function to generate output for all files in the project (arguments control code generation)
        // void unparse();
@@ -14632,6 +14653,16 @@ SOURCE_APPLICATION_DIRECTORY_END
 SOURCE_APPLICATION_DIRECTORY_LIST_START
 SOURCE_APPLICATION_DIRECTORY_LIST_END
 
+
+SOURCE_JAVA_IMPORT_STATEMENT_LIST_START
+SOURCE_JAVA_IMPORT_STATEMENT_LIST_END
+
+
+SOURCE_JAVA_CLASS_DECLARATION_LIST_START
+SOURCE_JAVA_CLASS_DECLARATION_LIST_END
+
+
+
 SOURCE_APPLICATION_PROJECT_START
 
 //! Declaration of space for static variables
@@ -14797,6 +14828,47 @@ SgProject::operator[]( unsigned int i )
      return p_fileList_ptr->get_listOfFiles()[i];
 #endif
    }
+
+// DQ (6/13/2013): Access function for retriving a SgFile object from the list stored internally, 
+// but using the filename with full path.  This is part of the new Java performance support and
+// a design change that first builds all of the SgFile IR nodes and then calls the frontend for
+// each of them.  This permits a more sophisticated level of command line multiple file support.
+SgFile* SgProject::operator[]( std::string filename )
+   {
+  // Since we use an STL vector internally we can use the vector::operator[] directly.
+#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
+#error "ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT should be FALSE"
+#else
+     ROSE_ASSERT(p_fileList_ptr != NULL);
+     ROSE_ASSERT(numberOfFiles() > 0);
+
+#if 0
+     printf ("In SgProject::operator[]( std::string filename ): Searching for the SgFile matching filename: filename = %s \n",filename.c_str());
+#endif
+
+     SgFilePtrList::iterator i = p_fileList_ptr->get_listOfFiles().begin();
+     while (i != p_fileList_ptr->get_listOfFiles().end())
+        {
+          ROSE_ASSERT(*i != NULL);
+#if 0
+          printf ("Searching for the matching filename: filename = %s *i = %p  \n",filename.c_str(),*i);
+#endif
+       // Find the matching SgFile object using the get_sourceFileNameWithPath()
+          if (filename == (*i)->get_sourceFileNameWithPath())
+             {
+#if 0
+               printf ("Found the matching filename: filename = %s *i = %p  \n",filename.c_str(),*i);
+#endif
+               return *i;
+             }
+
+          i++;
+        }
+
+     return NULL;
+#endif
+   }
+
 
 // Moved to sage_support.cpp: int SgProject::parse(const vector<string>& argv)
 // Moved to sage_support.cpp: void SgProject::processCommandLine(const vector<string>& input_argv)
