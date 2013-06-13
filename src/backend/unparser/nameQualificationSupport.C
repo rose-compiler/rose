@@ -2841,7 +2841,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                             }
                            else
                             {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               printf ("This classDeclaration has not been seen before so skip the name qualification \n");
+#endif
                             }
                        }
                   }

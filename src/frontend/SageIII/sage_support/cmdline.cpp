@@ -26,11 +26,11 @@ makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_Container<st
        // DQ (11/8/2011): We want to exclude the /usr/include directory since it will be search automatically by EDG.
        // If we include it here it will become part of the -sys_include directories and that will cause it to 
        // be searched before the -I<directory> options (which is incorrect).
-          if ( SgProject::get_verbose() >= 1 )
+          if ( SgProject::get_verbose() > 1 )
                printf ("In makeSysIncludeList(): Building commandline: --sys_include %s \n",(*i).c_str());
           if (*i == "/usr/include")
              {
-               if ( SgProject::get_verbose() >= 1 )
+               if ( SgProject::get_verbose() > 1 )
                     printf ("Filtering out from the sys_include paths: *i = %s \n",(*i).c_str());
              }
             else
@@ -386,7 +386,7 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
      Rose_STL_Container<string>::iterator i = argList.begin();
 
 
-     if (SgProject::get_verbose() > 0)
+     if (SgProject::get_verbose() > 1)
         {
           printf ("######################### Inside of CommandlineProcessing::generateSourceFilenames() ############################ \n");
         }
@@ -394,8 +394,6 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
   // skip the 0th entry since this is just the name of the program (e.g. rose)
      ROSE_ASSERT(argList.size() > 0);
      i++;
-
-
 
      while ( i != argList.end() )
         {
@@ -472,7 +470,7 @@ incrementPosition:
           i++;
         }
 
-     if (SgProject::get_verbose() > 0)
+     if (SgProject::get_verbose() > 1)
         {
           printf ("sourceFileList = = %s \n",StringUtility::listToString(sourceFileList).c_str());
           printf ("######################### Leaving of CommandlineProcessing::generateSourceFilenames() ############################ \n");
@@ -952,14 +950,14 @@ SgProject::processCommandLine(const vector<string>& input_argv)
      iter = local_commandLineArgumentList.begin();
      while ( iter != local_commandLineArgumentList.end() )
         {
-          if ( SgProject::get_verbose() >= 1 )
+          if ( SgProject::get_verbose() > 1 )
                printf ("Searching for -isystem options iter = %s \n",(*iter).c_str());
           if ( *iter == "-isystem")
              {
                iter++;
                tempDirectory = *iter;
 
-               if ( SgProject::get_verbose() >= 1 )
+               if ( SgProject::get_verbose() > 1 )
                     printf ("Adding tempHeaderFile = %s to p_preincludeDirectoryList \n",tempDirectory.c_str());
                p_preincludeDirectoryList.push_back(tempDirectory);
              }
@@ -1160,7 +1158,7 @@ void
 SageSupport::Cmdline::X10::
 Process (SgProject* project, std::vector<std::string>& argv)
 {
-  if (SgProject::get_verbose() >= 1)
+  if (SgProject::get_verbose() > 1)
       std::cout << "[INFO] Processing X10 commandline options" << std::endl;
 
   ProcessX10Only(project, argv);
@@ -1179,7 +1177,7 @@ ProcessX10Only (SgProject* project, std::vector<std::string>& argv)
 
   if (is_x10_only)
   {
-      if (SgProject::get_verbose() >= 1)
+      if (SgProject::get_verbose() > 1)
           std::cout << "[INFO] Turning on X10 only mode" << std::endl;
 
       // X10 code is only compiled, not linked as is C/C++ and Fortran.
@@ -3329,10 +3327,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
   // display("Called from SgFile::build_EDG_CommandLine");
 
-     SgProject* project = isSgProject(this->get_parent());
+  // DQ (6/13/2013): This was wrong, the parent of the SgFile is the SgFileList IR node and it is better to call the function to get the SgProject.
+  // SgProject* project = isSgProject(this->get_parent());
+     SgProject* project = TransformationSupport::getProject(this);     
      ROSE_ASSERT (project != NULL);
 
-     //AS(063006) Changed implementation so that real paths can be found later
+  // AS(063006) Changed implementation so that real paths can be found later
      vector<string> includePaths;
 
   // skip the 0th entry since this is just the name of the program (e.g. rose)
