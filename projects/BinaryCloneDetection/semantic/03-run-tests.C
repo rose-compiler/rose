@@ -1,0 +1,518 @@
+// Runs specific functions with specific inputs.
+
+#include "sage3basic.h"
+#include "CloneDetectionLib.h"
+#include "rose_getline.h"
+
+#include <cerrno>
+#include <csignal>
+
+using namespace CloneDetection;
+typedef CloneDetection::Policy<State, PartialSymbolicSemantics::ValueType> ClonePolicy;
+typedef X86InstructionSemantics<ClonePolicy, PartialSymbolicSemantics::ValueType> CloneSemantics;
+std::string argv0;
+
+static void
+usage(int exit_status)
+{
+    std::cerr <<"usage: " <<argv0 <<" [SWITCHES] [--] DATABASE < FUNC_INPUT_PAIRS\n"
+              <<"  This command runs the tests specified on standard input.\n"
+              <<"\n"
+              <<"    --checkpoint=NSEC\n"
+              <<"            Commit test results to the database every NSEC seconds.  The default (when NSEC is zero) is to\n"
+              <<"            commit every ten minutes so that not too much data gets thrown away if problems occur.\n"
+              <<"    --[no-]follow-calls\n"
+              <<"            If --follow-calls is specified, then x86 CALL instructions are treated the same as any other\n"
+              <<"            instruction, resulting in the analysis of the called function in-line with the caller if possible,\n"
+              <<"            otherwise that particular call is treaded as for the --no-follow-calls case.  If --no-follow-calls\n"
+              <<"            is specified (the default) then all x86 CALL instructions are skipped and the EAX register is\n"
+              <<"            loaded with the next integer input value.\n"
+              <<"    --[no-]init-memory\n"
+              <<"            If --init-memory is specified, then most of memory (excluding memory that is initialized with\n"
+              <<"            content from the binary container file) is initialized by consuming the first integer input value\n"
+              <<"            and using it to seed a linear congruential generator.  The default, --no-init-memory, causes\n"
+              <<"            an input value to be consumed whenever an uninitialized memory location is read.\n"
+              <<"    --timeout=NINSNS\n"
+              <<"            Any test for which more than NINSNS instructions are executed times out.  The default is 5000.\n"
+              <<"            Tests that time out produce a fault output in addition to whatever normal output values were\n"
+              <<"            produced.\n"
+              <<"    --[no-]pointers\n"
+              <<"            Perform [or not] pointer analysis on each function.  The pointer analysis is a binary-only\n"
+              <<"            analysis that looks for memory addresses that hold pointers from the source code.  When this is\n"
+              <<"            enabled, any read from such an address before it's initialized causes an input to be consumed.\n"
+              <<"            This analysis slows down processing considerably and is therefore disabled by default.  It also\n"
+              <<"            doesn't make sense to use the analysis with --init-memory since --init-memory would preclude\n"
+              <<"            any pointer input values from being used even if a pointer was detected by the analysis.\n"
+              <<"    --[no-]progress\n"
+              <<"            Show a progress bar even if standard error is not a terminal or the verbosity level is not silent.\n"
+              <<"    --verbose\n"
+              <<"    --verbosity=(silent|laconic|effusive)\n"
+              <<"            Determines how much diagnostic info to send to the standard error stream.  The --verbose\n"
+              <<"            switch does the same thing as --verbosity=effusive.  The default is \"silent\".\n"
+              <<"    DATABASE\n"
+              <<"            The name of the database to which we are connecting.  For SQLite3 databases this is just a local\n"
+              <<"            file name that will be created if it doesn't exist; for other database drivers this is a URL\n"
+              <<"            containing the driver type and all necessary connection parameters.\n"
+              <<"    FUNC_INPUT_PAIRS\n"
+              <<"            A text file containing one line per test to be executed.  Each line contains three numbers: the\n"
+              <<"            file ID for the specimen as a whole, the ID number for a function within that specimen, and the\n"
+              <<"            ID number of the input group that contains the input  values to use for that test.  The '#'\n"
+              <<"            character indroduces a comment that continues to the end of the line; blank lines are ignored.\n"
+              <<"            Generally, this input is produced with the 02-pending-tests executable.\n";
+    exit(exit_status);
+}
+
+struct Switches {
+    Switches(): verbosity(SILENT), progress(false), pointers(false), checkpoint(600) {
+        params.timeout = 5000;
+        params.verbosity = SILENT;
+        params.follow_calls = false;
+        params.init_memory = false;
+        params.initial_stack = 0x80000000;
+    }
+    Verbosity verbosity;                        // semantic policy has a separate verbosity
+    bool progress;
+    bool pointers;
+    time_t checkpoint;
+    PolicyParams params;
+};
+
+struct WorkItem {
+    WorkItem(): specimen_id(-1), func_id(-1), igroup_id(-1) {}
+    WorkItem(int specimen_id, int func_id, int igroup_id): specimen_id(specimen_id), func_id(func_id), igroup_id(igroup_id) {}
+    bool operator<(const WorkItem &other) const {
+        if (specimen_id!=other.specimen_id)
+            return specimen_id < other.specimen_id;
+        if (func_id!=other.func_id)
+            return func_id < other.func_id;
+        return igroup_id < other.igroup_id;
+    }
+    int specimen_id, func_id, igroup_id;
+};
+
+static int interrupted = -1;
+
+static void
+sig_handler(int signo)
+{
+    if (interrupted==SIGINT && signo==SIGINT) {
+        // Pressing Ctrl-C twice will abort without committing.
+        struct sigaction sa;
+        sa.sa_handler = SIG_DFL;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_flags = 0;
+        sigaction(SIGINT, &sa, NULL);
+        raise(SIGINT);
+        abort();
+    }
+
+    if (SIGINT==signo && isatty(2)) {
+        static const char *s = "\nterminating after this test...\n";
+        write(2, s, strlen(s));
+    }
+
+    interrupted = signo;
+}
+
+// Perform a pointer-detection analysis on the specified function. We'll need the results in order to determine whether a
+// function input should consume a pointer or a non-pointer from the input value set.
+static PointerDetector *
+detect_pointers(SgAsmFunction *func, const FunctionIdMap &function_ids, const Switches &opt)
+{
+    if (!opt.pointers)
+        return NULL;
+
+    // Choose an SMT solver. This is completely optional.  Pointer detection still seems to work fairly well (and much,
+    // much faster) without an SMT solver.
+    SMTSolver *solver = NULL;
+#if 0   // optional code
+    if (YicesSolver::available_linkage())
+        solver = new YicesSolver;
+#endif
+    InstructionProvidor insn_providor(func);
+    if (opt.verbosity>=LACONIC)
+        std::cerr <<argv0 <<": " <<function_to_str(func, function_ids) <<" pointer detection analysis\n";
+    PointerDetector *pd = new PointerDetector(&insn_providor, solver);
+    pd->initial_state().registers.gpr[x86_gpr_sp] = SymbolicSemantics::ValueType<32>(opt.params.initial_stack);
+    pd->initial_state().registers.gpr[x86_gpr_bp] = SymbolicSemantics::ValueType<32>(opt.params.initial_stack);
+    //pd.set_debug(stderr);
+    try {
+        pd->analyze(func);
+    } catch (...) {
+        // probably the instruction is not handled by the semantics used in the analysis.  For example, the
+        // instruction might be a floating point instruction that isn't handled yet.
+        std::cerr <<argv0 <<": pointer analysis FAILED for " <<function_to_str(func, function_ids) <<"\n";
+    }
+    if (opt.verbosity>=EFFUSIVE) {
+        const PointerDetector::Pointers plist = pd->get_pointers();
+        for (PointerDetector::Pointers::const_iterator pi=plist.begin(); pi!=plist.end(); ++pi) {
+            std::cerr <<argv0 <<":     ";
+            if (pi->type & BinaryAnalysis::PointerAnalysis::DATA_PTR)
+                std::cerr <<"data ";
+            if (pi->type & BinaryAnalysis::PointerAnalysis::CODE_PTR)
+                std::cerr <<"code ";
+            std::cerr <<"pointer at " <<pi->address <<"\n";
+        }
+    }
+    return pd;
+}
+
+// Analyze a single function by running it with the specified inputs and collecting its outputs. */
+static OutputGroup
+fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inputs,
+          const InstructionProvidor &insns, const PointerDetector *pointers, const Switches &opt,
+          const AddressIdMap &entry2id)
+{
+    ClonePolicy policy(opt.params, entry2id);
+    CloneSemantics semantics(policy);
+
+    AnalysisFault::Fault fault = AnalysisFault::NONE;
+    policy.reset(interp, function, &inputs, &insns, pointers);
+    try {
+        while (1) {
+            if (!policy.state.registers.ip.is_known()) {
+                if (opt.verbosity>=EFFUSIVE)
+                    std::cerr <<"CloneDetection: EIP value is not concrete\n";
+                fault = AnalysisFault::SEMANTICS;
+                break;
+            }
+
+            rose_addr_t insn_va = policy.state.registers.ip.known_value();
+            if (policy.FUNC_RET_ADDR==insn_va) {
+                if (opt.verbosity>=EFFUSIVE)
+                    std::cerr <<"CloneDetection: function returned\n";
+                fault = AnalysisFault::NONE;
+                break;
+            }
+
+            if (SgAsmx86Instruction *insn = isSgAsmx86Instruction(insns.get_instruction(insn_va))) {
+                semantics.processInstruction(insn);
+            } else {
+                if (opt.verbosity>=EFFUSIVE)
+                    std::cerr <<"CloneDetection: no instruction at " <<StringUtility::addrToString(insn_va) <<"\n";
+                fault = AnalysisFault::DISASSEMBLY;
+                break;
+            }
+        }
+    } catch (const FaultException &e) {
+        if (opt.verbosity>=EFFUSIVE)
+            std::cerr <<"CloneDetection: analysis terminated by " <<AnalysisFault::fault_name(e.fault) <<"\n";
+        fault = e.fault;
+    } catch (const Exception &e) {
+        if (opt.verbosity>=EFFUSIVE)
+            std::cerr <<"CloneDetection: analysis terminated by semantic exception: " <<e.mesg <<"\n";
+        fault = AnalysisFault::SEMANTICS;
+    } catch (const BaseSemantics::Policy::Exception &e) {
+        // Some exception in the policy, such as division by zero.
+        if (opt.verbosity>=EFFUSIVE)
+            std::cerr <<"CloneDetection: analysis terminated by FAULT_SEMANTICS: " <<e.mesg <<"\n";
+        fault = AnalysisFault::SEMANTICS;
+    } catch (const CloneSemantics::Exception &e) { // X86InstructionSemantics<...>::Exception
+        if (opt.verbosity>=EFFUSIVE)
+            std::cerr <<"CloneDetection: analysis terminated by X86InstructionSemantics exception: " <<e.mesg <<"\n";
+        fault = AnalysisFault::SEMANTICS;
+    } catch (const SMTSolver::Exception &e) {
+        if (opt.verbosity>=EFFUSIVE)
+            std::cerr <<"CloneDetection: analysis terminated by SMT solver exception: " <<e.mesg <<"\n";
+        fault = AnalysisFault::SMTSOLVER;
+    }
+
+    // Gather the function's outputs before restoring machine state.
+    OutputGroup outputs = policy.get_outputs();
+    outputs.fault = fault;
+    return outputs;
+}
+
+// Commit everything and return a new transaction
+static SqlDatabase::TransactionPtr
+checkpoint(const SqlDatabase::TransactionPtr &tx, OutputGroups &ogroups, Progress &progress)
+{
+    SqlDatabase::ConnectionPtr conn = tx->connection();
+    progress.message("checkpoint: saving output groups");
+    ogroups.save(tx);
+    progress.message("checkpoint: committing");
+    tx->commit();
+    progress.message("");
+    return conn->transaction();
+}
+
+int
+main(int argc, char *argv[])
+{
+    std::ios::sync_with_stdio();
+    argv0 = argv[0];
+    {
+        size_t slash = argv0.rfind('/');
+        argv0 = slash==std::string::npos ? argv0 : argv0.substr(slash+1);
+        if (0==argv0.substr(0, 3).compare("lt-"))
+            argv0 = argv0.substr(3);
+    }
+
+    // Parse command-line switches
+    Switches opt;
+    int argno = 1;
+    for (/*void*/; argno<argc && '-'==argv[argno][0]; ++argno) {
+        if (!strcmp(argv[argno], "--")) {
+            ++argno;
+            break;
+        } else if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
+            usage(0);
+        } else if (!strncmp(argv[argno], "--checkpoint=", 13)) {
+            opt.checkpoint = strtoul(argv[argno]+13, NULL, 0);
+        } else if (!strcmp(argv[argno], "--follow-calls")) {
+            opt.params.follow_calls = true;
+        } else if (!strcmp(argv[argno], "--no-follow-calls")) {
+            opt.params.follow_calls = false;
+        } else if (!strcmp(argv[argno], "--init-memory")) {
+            opt.params.init_memory = true;
+        } else if (!strcmp(argv[argno], "--no-init-memory")) {
+            opt.params.init_memory = false;
+        } else if (!strncmp(argv[argno], "--timeout=", 10)) {
+            opt.params.timeout = strtoull(argv[argno]+10, NULL, 0);
+        } else if (!strcmp(argv[argno], "--pointers")) {
+            opt.pointers = true;
+        } else if (!strcmp(argv[argno], "--no-pointers")) {
+            opt.pointers = false;
+        } else if (!strcmp(argv[argno], "--progress")) {
+            opt.progress = true;
+        } else if (!strcmp(argv[argno], "--no-progress")) {
+            opt.progress = false;
+        } else if (!strcmp(argv[argno], "--verbose")) {
+            opt.verbosity = opt.params.verbosity = EFFUSIVE;
+        } else if (!strcmp(argv[argno], "--verbosity=silent")) {
+            opt.verbosity = opt.params.verbosity = SILENT;
+        } else if (!strcmp(argv[argno], "--verbosity=laconic")) {
+            opt.verbosity = opt.params.verbosity = LACONIC;
+        } else if (!strcmp(argv[argno], "--verbosity=effusive")) {
+            opt.verbosity = opt.params.verbosity = EFFUSIVE;
+        } else {
+            std::cerr <<argv0 <<": unknown switch: " <<argv[argno] <<"\n"
+                      <<argv0 <<": see --help\n";
+            exit(1);
+        }
+    }
+    if (argno+1!=argc)
+        usage(1);
+    SqlDatabase::ConnectionPtr conn = SqlDatabase::Connection::create(argv[argno++]);
+    SqlDatabase::TransactionPtr tx = conn->transaction();
+    int64_t cmd_id = start_command(tx, argc, argv, "running tests");
+
+    // Read list of tests from stdin
+    std::cerr <<argv0 <<": reading worklist from stdin...\n";
+    WorkList<WorkItem> worklist;
+    char *line = NULL;
+    size_t line_sz = 0, line_num = 0;
+    while (rose_getline(&line, &line_sz, stdin)>0) {
+        ++line_num;
+        if (char *c = strchr(line, '#'))
+            *c = '\0';
+        char *s = line + strspn(line, " \t\r\n"), *rest;
+        if (!*s)
+            continue; // blank line
+
+        errno = 0;
+        int specimen_id = strtol(s, &rest, 0);
+        if (errno!=0 || rest==s) {
+            std::cerr <<argv0 <<": stdin:" <<line_num <<": syntax error: specimen file ID expected\n";
+            exit(1);
+        }
+        s = rest;
+
+        errno = 0;
+        int func_id = strtol(s, &rest, 0);
+        if (errno!=0 || rest==s) {
+            std::cerr <<argv0 <<": stdin:" <<line_num <<": syntax error: function ID expected\n";
+            exit(1);
+        }
+        s = rest;
+
+        errno = 0;
+        int igroup_id = strtol(s, &rest, 0);
+        if (errno!=0 || rest==s) {
+            std::cerr <<argv0 <<": stdin:" <<line_num <<": syntax error: input group ID expected\n";
+            exit(1);
+        }
+
+        while (isspace(*rest)) ++rest;
+        if (*rest) {
+            std::cerr <<argv0 <<": stdin:" <<line_num <<": syntax error: extra text after input group ID\n";
+            exit(1);
+        }
+
+        worklist.push(WorkItem(specimen_id, func_id, igroup_id));
+    }
+    std::cerr <<argv0 <<": " <<worklist.size() <<(1==worklist.size()?" test needs":" tests need") <<" to be run\n";
+    Progress progress(worklist.size());
+    OutputGroups ogroups; // do not load from database (that might take a very long time)
+    
+    // Set up the interrupt handler
+    struct sigaction sa;
+    sa.sa_handler = sig_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    sigaction(SIGINT, &sa, NULL);
+
+    // Process each item on the work list.
+    typedef std::map<SgAsmFunction*, PointerDetector*> PointerDetectors;
+    PointerDetectors pointers;
+    FilesTable files(tx);
+    WorkItem prev_work;
+    IdFunctionMap functions;
+    FunctionIdMap function_ids;
+    InputGroup igroup;
+    InstructionProvidor insns;
+    AddressIdMap entry2id;                      // maps function entry address to function ID
+    time_t last_checkpoint = time(NULL);
+    size_t ntests_ran=0, ntests_committed=0;
+    while (!worklist.empty()) {
+        ++progress;
+        WorkItem work = worklist.shift();
+
+        // Load the AST either from the database (if available) or by parsing the specimen. This is an expensive operation,
+        // so we do it only when the specimen changes, and we process the work list in specimen order.
+        if (work.specimen_id!=prev_work.specimen_id) {
+            if (opt.verbosity>=LACONIC) {
+                progress.clear();
+                if (opt.verbosity>=EFFUSIVE)
+                    std::cerr <<argv0 <<": " <<std::string(100, '#') <<"\n";
+                std::cerr <<argv0 <<": processing binary specimen \"" <<files.name(work.specimen_id) <<"\"\n";
+            }
+            progress.message("loading AST");
+            SgProject *project = CloneDetection::load_ast(tx, work.specimen_id);
+            if (!project) {
+                // The AST was not saved, so we need to reparse the specimen.
+                assert(!"not implemented yet"); abort();
+            }
+            std::vector<SgAsmFunction*> all_functions = SageInterface::querySubTree<SgAsmFunction>(project);
+            functions = existing_functions(tx, files, all_functions);
+            function_ids.clear();
+            entry2id.clear();
+            for (IdFunctionMap::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+                function_ids[fi->second] = fi->first;
+                entry2id[fi->second->get_entry_va()] = fi->first;
+            }
+            insns = InstructionProvidor(all_functions);
+            progress.message("");
+        }
+
+        // Load the input group from the database if necessary.
+        if (work.igroup_id!=prev_work.igroup_id) {
+            if (!igroup.load(tx, work.igroup_id)) {
+                progress.clear();
+                std::cerr <<argv0 <<": input group " <<work.igroup_id <<" is empty or does not exist\n";
+                exit(1);
+            }
+        }
+
+        // Find the function to test
+        IdFunctionMap::iterator func_found = functions.find(work.func_id);
+        assert(func_found!=functions.end());
+        SgAsmFunction *func = func_found->second;
+        if (opt.verbosity>=LACONIC) {
+            progress.clear();
+            if (opt.verbosity>=EFFUSIVE)
+                std::cerr <<argv0 <<": " <<std::string(100, '=') <<"\n";
+            std::cerr <<argv0 <<": processing function " <<function_to_str(func, function_ids) <<"\n";
+        }
+        SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(func);
+        assert(interp!=NULL);
+
+        // Get the results of pointer analysis.  We could have done this before any fuzz testing started, but by doing
+        // it here we only need to do it for functions that are actually tested.
+        PointerDetectors::iterator ip = pointers.find(func);
+        if (ip==pointers.end())
+            ip = pointers.insert(std::make_pair(func, detect_pointers(func, function_ids, opt))).first;
+        assert(ip!=pointers.end());
+
+        // Run the test
+        timeval start_time, stop_time;
+        clock_t start_ticks = clock();
+        gettimeofday(&start_time, NULL);
+        if (opt.verbosity>=LACONIC)
+            std::cerr <<argv0 <<": " <<function_to_str(func, function_ids) <<" with input group " <<work.igroup_id <<"\n";
+        OutputGroup ogroup = fuzz_test(interp, func, igroup, insns, ip->second, opt, entry2id);
+        gettimeofday(&stop_time, NULL);
+        clock_t stop_ticks = clock();
+        double elapsed_time = (stop_time.tv_sec - start_time.tv_sec) +
+                              ((double)stop_time.tv_usec - start_time.tv_usec) * 1e-6;
+
+        // If clock_t is a 32-bit unsigned value then it will wrap around once every ~71.58 minutes. We expect clone
+        // detection to take longer than that, so we need to be careful.
+        double cpu_time = start_ticks <= stop_ticks ?
+                                  (double)(stop_ticks-start_ticks) / CLOCKS_PER_SEC :
+                                  (pow(2.0, 8*sizeof(clock_t)) - (start_ticks-stop_ticks)) / CLOCKS_PER_SEC;
+
+        // Find a matching output group, or create a new one
+        int64_t ogroup_id = ogroups.find(ogroup);
+        if (ogroup_id<0)
+            ogroup_id = ogroups.insert(ogroup);
+
+        // Update the database with the test results
+        SqlDatabase::StatementPtr stmt = tx->statement("insert into semantic_fio"
+                                                       // 0        1          2                  3
+                                                       " (func_id, igroup_id, pointers_consumed, nonpointers_consumed,"
+                                                       // 4                     5          6             7         8
+                                                       " instructions_executed, ogroup_id, elapsed_time, cpu_time, cmd)"
+                                                       " values (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        stmt->bind(0, work.func_id);
+        stmt->bind(1, work.igroup_id);
+        stmt->bind(2, igroup.pointers_consumed());
+        stmt->bind(3, igroup.integers_consumed());
+        stmt->bind(4, ogroup.ninsns);
+        stmt->bind(5, ogroup_id);
+        stmt->bind(6, elapsed_time);
+        stmt->bind(7, cpu_time);
+        stmt->bind(8, cmd_id);
+        stmt->execute();
+        ++ntests_ran;
+
+        // Check for user interrupts
+        bool do_checkpoint=false, do_exit=false;
+        if (SIGINT==interrupted) {
+            progress.clear();
+            if (isatty(1)) {
+                FILE *f = fopen("/dev/tty", "r");
+                if (f!=NULL) {
+                    std::cout <<argv0 <<": interrupted by user.\n"
+                              <<argv0 <<": c=commit and conintue, q=commit and quit, a=abort w/out commit\n"
+                              <<argv0 <<": your choice? [C/q/a] ";
+                    char *line=NULL;
+                    size_t line_sz=0;
+                    if (rose_getline(&line, &line_sz, f)>0) {
+                        do_checkpoint = NULL!=strchr("cCqQ\r\n", line[0]);
+                        do_exit = NULL==strchr("cC\r\n", line[0]);
+                    }
+                }
+            }
+            interrupted = -1;
+        }
+        
+        // Checkpoint
+        if (do_checkpoint || (opt.checkpoint>0 && time(NULL)-last_checkpoint > opt.checkpoint)) {
+            tx = checkpoint(tx, ogroups, progress);
+            last_checkpoint = time(NULL);
+            ntests_committed = ntests_ran;
+        }
+        if (do_exit) {
+            tx->rollback();
+            break;
+        }
+        
+        prev_work = work;
+    }
+
+    // Cleanup
+    if (!tx->is_terminated()) // we might have done a rollback above to indicate that we should do this checkpoint
+        tx = checkpoint(tx, ogroups, progress);
+    progress.clear();
+    std::string desc = "ran "+StringUtility::numberToString(ntests_ran)+" test"+(1==ntests_ran?"":"s");
+    if (ntests_committed!=ntests_ran)
+        desc += "; committed "+StringUtility::numberToString(ntests_committed);
+    if (ntests_ran>0) {
+        SqlDatabase::TransactionPtr tx2 = conn->transaction();
+        finish_command(tx2, cmd_id, desc);
+        tx2->commit();
+    }
+
+    return 0;
+}
