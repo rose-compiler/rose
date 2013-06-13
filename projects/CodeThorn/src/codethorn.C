@@ -497,7 +497,7 @@ int main( int argc, char * argv[] ) {
     ("rers-binary",po::value< string >(),"Call rers binary functions in analysis. Use [=yes|no]")
 	("print-all-options",po::value< string >(),"print all yes/no command line options.")
 	("annotate-results",po::value< string >(),"annotate results in program and output program (using ROSE unparser).")
-	("skip-analysis",po::value< string >(),"Run without performaing any analysis (only used for testing).")
+	("skip-analysis",po::value< string >(),"Run without performing any analysis (only used for testing).")
     ;
 
   po::store(po::command_line_parser(argc, argv).
