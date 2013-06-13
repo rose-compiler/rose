@@ -69,6 +69,9 @@
 // DQ (12/20/2012): Added support for testing the physical source position information.
 #include "checkPhysicalSourcePosition.h"
 
+// DQ (6/11/2013): This corrects where EDG can set the scope of a friend declaration to be different from the defining declaration.
+#include "fixupDeclarationScope.h"
+
 
 /*! \brief Postprocessing that is not likely to be handled in the EDG/Sage III translation.
  */

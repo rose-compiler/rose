@@ -41,7 +41,8 @@ libastPostProcessing_la_SOURCES      = \
      fixupTypeReferences.C \
      fixupSelfReferentialMacros.C \
      fixupFunctionDefaultArguments.C \
-     checkPhysicalSourcePosition.C
+     checkPhysicalSourcePosition.C \
+     fixupDeclarationScope.C
 
 libastPostProcessing_la_LIBADD       = 
 libastPostProcessing_la_DEPENDENCIES = 
@@ -82,7 +83,8 @@ include_HEADERS = \
      fixupTypeReferences.h \
      fixupSelfReferentialMacros.h \
      fixupFunctionDefaultArguments.h \
-     checkPhysicalSourcePosition.h
+     checkPhysicalSourcePosition.h \
+     fixupDeclarationScope.h
 
 EXTRA_DIST = CMakeLists.txt
 

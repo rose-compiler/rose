@@ -4479,7 +4479,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           unp->u_sage->printAttributes(decl_item,info);
 
 #if 0
-          curprint ( string("\n /* Inside of unparseVarDeclStmt(): increment the variable iterator */ \n"));
+          curprint("\n /* Inside of unparseVarDeclStmt(): increment the variable iterator */ \n");
 #endif
        // Increment the iterator through the list of variables within a single variable declaration.
        // Currently each variable declaration contains only a single variable!
@@ -4693,7 +4693,9 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
 
           info.unset_inEmbeddedDecl();
-
+#if 0
+          printf ("In unparseClassDeclStmt(): info.SkipClassSpecifier() = %s \n",info.SkipClassSpecifier() ? "true" : "false");
+#endif
           if (!info.SkipClassSpecifier())
              {
 #if 0
@@ -4770,15 +4772,34 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
           printf ("In unparseClassDeclStmt(): Output SgClassDeclaration = %p = %s qualified name: nameQualifier = %s \n",classdecl_stmt,classdecl_stmt->get_name().str(),nameQualifier.str());
 #endif
-       // Output the qualified name.
-          curprint (nameQualifier);
+#if 0
+          printf ("In unparseClassDeclStmt(): classdecl_stmt->get_isUnNamed() = %s \n",classdecl_stmt->get_isUnNamed() ? "true" : "false");
+          printf ("In unparseClassDeclStmt(): Output className = %s \n",classdecl_stmt->get_name().str());
+#endif
 
-       // printf ("Output className = %s \n",classdecl_stmt->get_name().str());
-       // curprint ( (classdecl_stmt->get_name() + " ").str();
-          curprint ( (nm + " ").str());
+       // DQ (6/9/2013): Further restrict this to the special case of un-named unions.
+       // bool isAnonymousName = (string(classdecl_stmt->get_name()).substr(0,14) == "__anonymous_0x") != string::npos);
+       // bool isAnonymousName = (string(classdecl_stmt->get_name()).substr(0,14) == "__anonymous_0x");
+          bool isAnonymousName = (string(classdecl_stmt->get_name()).substr(0,14) == "__anonymous_0x") && (classdecl_stmt->get_class_type() == SgClassDeclaration::e_union);
+#if 0
+          printf ("In unparseClassDeclStmt(): isAnonymousName = %s \n",isAnonymousName ? "true" : "false");
+#endif
+       // DQ (6/9/2013): Skip output of name when it is a generated name such as "__anonymous_0x10f3efa8"
+       // curprint (nameQualifier);
+       // curprint ( (nm + " ").str());
+       // if (isAnonymousName == false)
+          if (isAnonymousName == false && classdecl_stmt->get_isUnNamed() == false)
+             {
+            // Output the qualified name.
+               curprint (nameQualifier);
+               curprint ( (nm + " ").str());
+             }
 #else
        // DQ (7/28/2012): This is the modified version of the code and I think it is not required.
        // DQ (7/28/2012): Support un-named classes (see test2012_141.C).
+
+#error "DEAD CODE!"
+
           printf ("In unparseClassDeclStmt(): classdecl_stmt->get_isUnNamed() = %s \n",classdecl_stmt->get_isUnNamed() ? "true" : "false");
           if (classdecl_stmt->get_isUnNamed() == false)
              {
@@ -4789,6 +4810,8 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
             // Output the qualified name.
                curprint (nameQualifier);
+
+#error "DEAD CODE!"
 
             // printf ("Output className = %s \n",classdecl_stmt->get_name().str());
             // curprint ( (classdecl_stmt->get_name() + " ").str();
@@ -4817,6 +4840,7 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
 
 #if 0
+     printf ("Leaving unparseClassDeclStmt \n");
      curprint ("/* Leaving unparseClassDeclStmt */ \n");
 #endif
    }
@@ -4972,8 +4996,7 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 #if 0
   // curprint ( string("\n/* After specification of base classes unparse the declaration body */ \n";
-     printf ("After specification of base classes unparse the declaration body  info.SkipBasicBlock() = %s \n",
-          (info.SkipBasicBlock() == true) ? "true" : "false");
+     printf ("After specification of base classes unparse the declaration body  info.SkipBasicBlock() = %s \n",(info.SkipBasicBlock() == true) ? "true" : "false");
 #endif
 
   // DQ (9/28/2004): Turn this back on as the only way to prevent this from being unparsed!
@@ -5037,8 +5060,8 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
      unparseTypeAttributes(classdefn_stmt->get_declaration());
 
 #if 0
-     curprint("/* Leaving unparseClassDefnStmt */ \n");
      printf ("Leaving unparseClassDefnStmt \n");
+     curprint("/* Leaving unparseClassDefnStmt */ \n");
 #endif
    }
 

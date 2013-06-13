@@ -1287,6 +1287,13 @@ test2013_191.C \
 test2013_192.C \
 test2013_193.C \
 test2013_194.C \
+test2013_195.C \
+test2013_196.C \
+test2013_198.C \
+test2013_199.C \
+test2013_200.C \
+test2013_201.C \
+test2013_202.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1315,7 +1322,8 @@ test2004_35.C
 
 # DQ (5/26/2013): Currently faling tests:
 CURRENTLY_FAILING_TESTS = \
-test2013_195.C 
+test2013_195.C \
+test2013_197.C
 
 
 # DQ (5/23/2013): This is a failing test because we fixup the symbol tables and then compute 

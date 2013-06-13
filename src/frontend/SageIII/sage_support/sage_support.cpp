@@ -1863,8 +1863,8 @@ SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
      set_sourceFileNameWithPath(sourceFilename);
 
   // printf ("In SgFile::setupSourceFilename(const vector<string>& argv): p_sourceFileNameWithPath = %s \n",get_sourceFileNameWithPath().c_str());
-//tps: 08/18/2010, This should call StringUtility for WINDOWS- there are two implementations of this?
-//     set_sourceFileNameWithoutPath( ROSE::stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
+  // tps: 08/18/2010, This should call StringUtility for WINDOWS- there are two implementations of this?
+  // set_sourceFileNameWithoutPath( ROSE::stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
      set_sourceFileNameWithoutPath( StringUtility::stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
 
 #if 1
@@ -1942,6 +1942,7 @@ SgFile::generate_C_preprocessor_intermediate_filename( string sourceFilename )
 // This function calls the Java JVM to load the Java implemented parser (written
 // using ANTLR, a parser generator).
 int openFortranParser_main(int argc, char **argv );
+int experimental_openFortranParser_main(int argc, char **argv );
 #endif
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
@@ -3369,7 +3370,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
 #if 1
      if ( get_verbose() > 0 )
-          printf ("Fortran numberOfCommandLineArguments = %zu frontEndCommandLine = %s \n",inputCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
+          printf ("Fortran numberOfCommandLineArguments = %zu frontEndCommandLine = %s \n",frontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
 #endif
 
 #if 0
@@ -3415,8 +3416,44 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // compiled together on the same command line.
      ROSE_ASSERT(astIncludeStack.size() == 0);
 
+  // DQ (6/7/2013): Added support for call the experimental frontran frontend (if the associated option is specified on the command line).
   // frontendErrorLevel = openFortranParser_main (numberOfCommandLineArguments, inputCommandLine);
-     int frontendErrorLevel = openFortranParser_main (openFortranParser_argc, openFortranParser_argv);
+  // int frontendErrorLevel = openFortranParser_main (openFortranParser_argc, openFortranParser_argv);
+     int frontendErrorLevel = 0;
+     if (get_experimental_fortran_frontend() == true)
+        {
+          vector<string> experimentalFrontEndCommandLine;
+
+       // Push an initial argument onto the command line stack so that the command line can be interpreted 
+       // as coming from an command shell command line (where the calling program is always argument zero).
+          experimentalFrontEndCommandLine.push_back("dummyArg_0");
+
+          string parseTableOption = "--parseTable";
+          experimentalFrontEndCommandLine.push_back(parseTableOption);
+
+       // string path_to_table = findRoseSupportPathFromSource("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
+          string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
+
+          experimentalFrontEndCommandLine.push_back(path_to_table);
+
+          experimentalFrontEndCommandLine.push_back(get_sourceFileNameWithPath());
+
+       // experimentalFrontEndCommandLine.push_back(get_sourceFileNameWithoutPath());
+
+          int experimental_openFortranParser_argc    = 0;
+          char** experimental_openFortranParser_argv = NULL;
+          CommandlineProcessing::generateArgcArgvFromList(experimentalFrontEndCommandLine,experimental_openFortranParser_argc,experimental_openFortranParser_argv);
+
+          printf ("Calling the experimental fortran frontend (this work is incomplete) \n");
+          printf ("   --- Fortran numberOfCommandLineArguments = %zu frontEndCommandLine = %s \n",experimentalFrontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(experimentalFrontEndCommandLine,false,false).c_str());
+          frontendErrorLevel = experimental_openFortranParser_main (experimental_openFortranParser_argc, experimental_openFortranParser_argv);
+          printf ("DONE: Calling the experimental fortran frontend (this work is incomplete) \n");
+        }
+       else
+        {
+          frontendErrorLevel = openFortranParser_main (openFortranParser_argc, openFortranParser_argv);
+        }
+     
 
   // DQ (11/11/2010): There should be no include files left in the stack, see test2010_78.C and test2010_79.C when
   // compiled together on the same command line.

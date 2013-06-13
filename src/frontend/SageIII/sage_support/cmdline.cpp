@@ -2566,6 +2566,15 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
          set_partitionerConfigurationFileName(stringParameter);
      }
 
+  // DQ (6/7/2013): Added support for alternatively calling the experimental fortran frontend.
+     set_experimental_fortran_frontend(false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","experimental_fortran_frontend",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 0 )
+               printf ("Using experimental fortran frontend (explicitly set: ON) \n");
+          set_experimental_fortran_frontend(true);
+        }
+
 
   // DQ (9/26/2011): Adding options to support internal debugging of ROSE based tools and language support.
   // ****************
@@ -2967,6 +2976,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (2/17/2013): Added support for skipping AST consistancy testing (for performance evaluation).
      optionCount = sla(argv, "-rose:", "($)", "(skipAstConsistancyTests)",1);
+
+  // DQ (6/8/2013): Added support for experimental fortran frontend.
+     optionCount = sla(argv, "-rose:", "($)", "(experimental_fortran_frontend)",1);
 
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
