@@ -1,11 +1,12 @@
-
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${Boost_INCLUDE_DIRS} )
+include_directories(${QT_INCLUDES} ${Boost_INCLUDE_DIRS})
 
 add_executable( testTranslator testTranslator.C )
 target_link_libraries(testTranslator ROSE_DLL EDG ${link_with_libraries} )
 
+option(with-ROSE_LONG_MAKE_CHECK_RULE "Specify longer internal testing" ON)
+
 add_subdirectory (translatorTests)
-enable_testing()
+add_subdirectory (CompileTests)
 
 find_program(bash bash)
 if(bash)
