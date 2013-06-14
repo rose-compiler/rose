@@ -1286,6 +1286,16 @@ test2013_191.C \
 test2013_192.C \
 test2013_193.C \
 test2013_194.C \
+test2013_195.C \
+test2013_196.C \
+test2013_198.C \
+test2013_199.C \
+test2013_200.C \
+test2013_201.C \
+test2013_202.C \
+test2013_203.C \
+test2013_204.C \
+test2013_205.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1320,7 +1330,8 @@ endif
 
 # DQ (5/26/2013): Currently faling tests:
 CURRENTLY_FAILING_TESTS = \
-test2013_195.C 
+test2013_195.C \
+test2013_197.C
 
 
 # DQ (5/23/2013): This is a failing test because we fixup the symbol tables and then compute 
@@ -1967,7 +1978,7 @@ test_MPI_LAM:
 	$(TEST_TRANSLATOR) -rose:verbose 0 -I$(MPI_LOCATION)/LAM_MPI/include -c $(MPI_LOCATION)/tests/input.C
 
 test_multiple_files: $(srcdir)/test2012_246a.C $(srcdir)/test2012_246b.C
-	../../testTranslator -rose:verbose 0 $(srcdir)/test2012_246a.C $(srcdir)/test2012_246b.C 
+	../../testTranslator -rose:verbose 1 -c $(srcdir)/test2012_246a.C $(srcdir)/test2012_246b.C 
 
 # DQ (7/24/2011): These test fail the AST IO but pass the compilation tests.  Debug these for AST File I/O separately.
 failingAST_IO_tests: test2011_113.o test2011_114.o test2011_116.o
@@ -2005,6 +2016,7 @@ if !ROSE_USE_NEW_EDG_INTERFACE
 #	DQ (5/8/2011): Special tests are now moved to the end.
 	@$(MAKE) test2005_56.o
 	@$(MAKE) test2010_07.o
+	@$(MAKE) test_multiple_files
 endif
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Cxx_tests: make check rule complete (terminated normally) ******"

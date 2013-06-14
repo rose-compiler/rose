@@ -192,6 +192,10 @@ void postProcessingSupport (SgNode* node)
        // non-defining declaration reference to the defining declaration.
           fixupAstDefiningAndNondefiningDeclarations(node);
 
+       // DQ (6/11/2013): This corrects where EDG can set the scope of a friend declaration to be different from the defining declaration.
+       // We need it to be a rule in ROSE that the scope of the declarations are consistant between defining and all non-defining declaration).
+          fixupAstDeclarationScope(node);
+
        // Fixup the symbol tables (in each scope) and the global function type 
        // symbol table. This is less important for C, but required for C++.
        // But since the new EDG interface has to handle C and C++ we don't

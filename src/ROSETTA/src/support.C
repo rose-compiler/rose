@@ -213,6 +213,10 @@ Grammar::setUpSupport ()
   // This is also where the FunctionTypeTable should be moved (to tidy up ROSE a bit).
      NEW_TERMINAL_MACRO (TypeTable,         "TypeTable",         "TYPE_TABLE" );
 
+  // DQ (6/12/2013): Added list IR nodes to support Java language requirements.
+     NEW_TERMINAL_MACRO (JavaImportStatementList,  "JavaImportStatementList", "JavaImportStatementListTag" );
+     NEW_TERMINAL_MACRO (JavaClassDeclarationList, "JavaClassDeclarationList", "JavaClassDeclarationListTag" );
+
 #if 0
   // tps (08/08/07): Added the graph, graph nodes and graph edges
      NEW_NONTERMINAL_MACRO (Support,
@@ -246,7 +250,7 @@ Grammar::setUpSupport ()
 
           NameGroup             | DimensionObject     | FormatItem           |
           FormatItemList        | DataStatementGroup        | DataStatementObject | 
-          DataStatementValue    ,
+          DataStatementValue    | JavaImportStatementList | JavaClassDeclarationList,
           "Support", "SupportTag", false);
 //#endif
 
@@ -389,6 +393,10 @@ Grammar::setUpSupport ()
      FileList.setFunctionPrototype             ( "HEADER_APPLICATION_FILE_LIST", "../Grammar/Support.code");
      Directory.setFunctionPrototype            ( "HEADER_APPLICATION_DIRECTORY", "../Grammar/Support.code");
      DirectoryList.setFunctionPrototype        ( "HEADER_APPLICATION_DIRECTORY_LIST", "../Grammar/Support.code");
+
+  // DQ (6/12/2013): Added to support Java requirements.
+     JavaImportStatementList.setFunctionPrototype  ( "HEADER_JAVA_IMPORT_STATEMENT_LIST", "../Grammar/Support.code");
+     JavaClassDeclarationList.setFunctionPrototype ( "HEADER_JAVA_CLASS_DECLARATION_LIST", "../Grammar/Support.code");
 
   // DQ (12/19/2005): Support for explicitly specified qualified names
      QualifiedName.setFunctionPrototype        ( "HEADER_QUALIFIED_NAME", "../Grammar/Support.code");
@@ -620,6 +628,11 @@ Grammar::setUpSupport ()
      Directory.setFunctionPrototype      ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      Directory.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 
+  // DQ (6/12/2013): Added support for Java requirements.
+     JavaImportStatementList.setDataPrototype ( "SgJavaImportStatementPtrList", "java_import_list", "",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     JavaClassDeclarationList.setDataPrototype ( "SgClassDeclarationPtrList", "java_class_list", "",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      FileList.setDataPrototype          ( "SgFilePtrList", "listOfFiles", "",
   //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -717,6 +730,16 @@ Grammar::setUpSupport ()
   // This is part of support for a new implementation of name qualification.
      SourceFile.setDataPrototype   ( "SgStatementPtrList", "statementNumberContainer", "",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+  // DQ (6/12/2013): Added Java support for reference to SgJavaPackageStatement.
+     SourceFile.setDataPrototype   ( "SgJavaPackageStatement*", "package", "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
+#if 0
+     SourceFile.setDataPrototype   ( "SgJavaImportStatementPtrList", "import_list", "",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     SourceFile.setDataPrototype   ( "SgClassDeclarationPtrList", "class_list", "",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 #endif
 
      UnknownFile.setDataPrototype   ( "SgGlobal*", "globalScope", "= NULL",
@@ -1114,6 +1137,11 @@ Grammar::setUpSupport ()
   // test in the AST consistancy tests).
      File.setDataPrototype         ( "int", "detect_dangling_pointers", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/7/2013): Added support for use of experimental fortran front-end.
+     File.setDataPrototype("bool", "experimental_fortran_frontend", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // To be consistant with the use of binaryFile we will implement get_binaryFile() and set_binaryFile()
   // functions so that we can support the more common (previous) interface where there was only a single
@@ -1722,6 +1750,11 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("bool", "skipAstConsistancyTests", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+
+  // DQ (6/12/2013): Added Java support for a global scope spanning files. Might be 
+  // useful in the future for multiple file handling in other languages.
+     Project.setDataPrototype("SgGlobal*", "globalScopeAcrossFiles", "= NULL",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
      
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -2254,6 +2287,9 @@ Specifiers that can have only one value (implemented with a protected enum varia
      BinaryComposite.setFunctionSource ( "SOURCE_APPLICATION_BINARY_FILE", "../Grammar/Support.code");
      FileList.setFunctionSource        ( "SOURCE_APPLICATION_FILE_LIST", "../Grammar/Support.code");
      UnknownFile.setFunctionSource     ( "SOURCE_APPLICATION_UNKNOWN_FILE", "../Grammar/Support.code");
+
+     JavaImportStatementList.setFunctionSource  ( "SOURCE_JAVA_IMPORT_STATEMENT_LIST", "../Grammar/Support.code");
+     JavaClassDeclarationList.setFunctionSource ( "SOURCE_JAVA_CLASS_DECLARATION_LIST", "../Grammar/Support.code");
 
      Project.setFunctionSource         ( "SOURCE_APPLICATION_PROJECT", "../Grammar/Support.code");
      Options.setFunctionSource         ( "SOURCE_OPTIONS", "../Grammar/Support.code");

@@ -9235,7 +9235,39 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
      if (classDeclaration != NULL)
         {
        // DQ (7/9/2012): We only skip the attachment of the class declaration to the scope if it is NOT and autonomous declaration.
+#if 0
+          if (classDeclaration->get_parent() != NULL)
+             {
+               printf ("Since the parent of this SgClassDeclaration is set, it must have been previously added to the AST: classDeclaration = %p = %s \n",classDeclaration,classDeclaration->class_name().c_str());
+             }
+#endif
+
+#if 1
+       // DQ (6/9/2013): This is the original code...
           skipAddingStatement = (classDeclaration->get_isAutonomousDeclaration() == false);
+#else
+       // DQ (6/9/2013): We have no other way to detect if the SgClassDeclaration has previously been added to the AST (short of searching the AST directly).
+       // This fails to add enough statements to the AST.
+          skipAddingStatement = (classDeclaration->get_isAutonomousDeclaration() == false) || (classDeclaration->get_parent() != NULL);
+#endif
+
+       // DQ (6/9/2013): Check if this is a SgTemplateInstantiationDecl, since it might be appearing 
+       // twice as a result of a template argument being instantiated and we only want to add it into 
+       // the scope once.  This happens for test2013_198.C and I can't find a better solution.
+          if (isSgTemplateInstantiationDecl(classDeclaration) != NULL && scope->containsOnlyDeclarations() == true)
+             {
+            // Check if this instnatiated template has already been added to the scope.
+               const SgDeclarationStatementPtrList & declarationList = scope->getDeclarationList();
+               SgDeclarationStatementPtrList::const_iterator existingDeclaration = find(declarationList.begin(),declarationList.end(),classDeclaration);
+               if (existingDeclaration != declarationList.end())
+                  {
+#if 1
+                    printf ("RARE ISSUE: In SageInterface::appendStatement(): This template instantiation has previously been added to the scope, so avoid doing so again (see test2013_198.C): classDeclaration = %p = %s scope = %p = %s \n",
+                         classDeclaration,classDeclaration->class_name().c_str(),scope,scope->class_name().c_str());
+#endif
+                    skipAddingStatement = true;
+                  }
+             }
         }
        else
         {
@@ -9266,6 +9298,10 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
           printf ("   --- calling insertStatementInScope(): scope = %p = %s stmt = %p = %s \n",scope,scope->class_name().c_str(),stmt,stmt->class_name().c_str());
 #endif
           scope->insertStatementInScope(stmt,false);
+
+       // DQ (6/9/2013): Added comment only: This is needed because some declaration have to have the 
+       // setting of there paremtn pointes delayed until now based on if they appear nested inside of 
+       // other declarations (e.g. "typedef struct { int x; } y;").
           stmt->set_parent(scope); // needed?
         }
 #endif
@@ -9284,7 +9320,7 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
         }
 
 #if 0
-  // DQ (9/1/2012): this is a debugging mode that we need to more easily turn on an off.
+  // DQ (9/1/2012): this is a debugging mode that we need to more easily turn on and off.
   // DQ (4/3/2012): Added test to make sure that the pointers are unique.
      testAstForUniqueNodes(scope);
 #else
