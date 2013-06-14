@@ -1294,6 +1294,9 @@ test2013_199.C \
 test2013_200.C \
 test2013_201.C \
 test2013_202.C \
+test2013_203.C \
+test2013_204.C \
+test2013_205.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
