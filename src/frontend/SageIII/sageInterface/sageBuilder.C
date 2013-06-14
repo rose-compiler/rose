@@ -6518,7 +6518,7 @@ SgCudaKernelCallExp * SageBuilder::buildCudaKernelCallExp_nfi(SgExpression * ker
     ROSE_ASSERT(false);
   }
 
-  SgCudaKernelCallExp * kernel_call_expr = new SgCudaKernelCallExp(kernel, parameters, config);
+  SgCudaKernelCallExp * kernel_call_expr = new SgCudaKernelCallExp(kernel, parameters, kernel->get_type(), config);
 
   kernel->set_parent(kernel_call_expr);
   parameters->set_parent(kernel_call_expr);

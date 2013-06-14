@@ -20,12 +20,9 @@ test_2011_11.cu \
 test_2011_12.cu \
 test_2011_13.cu
 
-TESTCODES=
-if ROSE_USE_CLANG_FRONTEND
-TESTCODES+= \
+TESTCODES= \
   $(CUDA_NO_BUILT_IN_CODES) \
   $(CUDA_CODES)
-endif
 
 TESTCODES_Objects = ${TESTCODES:.cu=.o}
 
