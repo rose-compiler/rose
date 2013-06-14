@@ -5143,6 +5143,9 @@ HEADER_APPLICATION_FILE_START
        // it was previously reversed.
        // bool get_binary_only (void) const;
 
+       // DQ (6/13/2013): Added to support to call the frontend after all SgFiles are built up.
+          void runFrontend(int & nextErrorCode);
+
 #if 0
 // DQ (9/5/2008): Moved to SgSourceFile
 #if ALT_FIXUP_COPY
@@ -5270,6 +5273,7 @@ HEADER_APPLICATION_FILE_LIST_START
 
 HEADER_APPLICATION_FILE_LIST_END
 
+
 HEADER_APPLICATION_DIRECTORY_START
      public:
           int numberOfFiles() const;
@@ -5282,10 +5286,24 @@ HEADER_APPLICATION_DIRECTORY_START
 
 HEADER_APPLICATION_DIRECTORY_END
 
+
 HEADER_APPLICATION_DIRECTORY_LIST_START
      public:
 
 HEADER_APPLICATION_DIRECTORY_LIST_END
+
+
+HEADER_JAVA_IMPORT_STATEMENT_LIST_START
+     public:
+
+HEADER_JAVA_IMPORT_STATEMENT_LIST_END
+
+
+HEADER_JAVA_CLASS_DECLARATION_LIST_START
+     public:
+
+HEADER_JAVA_CLASS_DECLARATION_LIST_END
+
 
 HEADER_APPLICATION_PROJECT_START
 
@@ -5344,7 +5362,7 @@ HEADER_APPLICATION_PROJECT_START
 
       //! Access function for retriving a SgFile object from the list stored internally
       //! This function is depricated and "operator[unsigned int]" should be used instead.
-          SgFile& get_file ( int i ) const ROSE_DEPRECATED_FUNCTION;
+          SgFile & get_file ( int i ) const ROSE_DEPRECATED_FUNCTION;
 
       //! Access function for putting a new SgFile object into the list stored internally
       //! This function is depricated and "get_fileList->push_back(SgFile*)" should be used instead.
@@ -5358,6 +5376,9 @@ HEADER_APPLICATION_PROJECT_START
 
       //! Access function for retriving a SgFile object from the list stored internally
           SgFile* operator[]( unsigned int i );
+
+      //! Access function for retriving a SgFile object from the list stored internally, but using the filename with full path.
+          SgFile* operator[]( std::string filename );
 
       //! function to generate output for all files in the project (arguments control code generation)
        // void unparse();
@@ -7684,7 +7705,7 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
                                      // if (isTemplateType == true && templateArgumentLocal != NULL && templateArgumentFromSymbol != NULL)
                                         if (isTemplateType == true)
                                            {
-                                          // If these are pointers or referneces to SgTypeType IR nodes then we might have to strip off the type modifiers.
+                                          // If these are pointers or references to SgTypeType IR nodes then we might have to strip off the type modifiers.
                                           // isTemplateType = (templateArgumentTypeLocal != NULL && templateArgumentTypeFromSymbol != NULL);
                                              isTemplateType = ( (templateArgumentLocal->get_type() == templateArgumentFromSymbol->get_type()) || (templateArgumentTypeLocal != NULL && templateArgumentTypeFromSymbol != NULL) );
 #if 0
@@ -7696,6 +7717,8 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
                                 else
                                  {
                                 // DQ (8/23/2012): This still might not be precise enough since but this is a test.
+                                // Note that both might for example be a value type, but we don't know that they are 
+                                // the same value (e.g. a boolean value used as a template argument could be true or false).
                                    if (templateArgumentLocal->get_argumentType() == templateArgumentFromSymbol->get_argumentType())
                                       {
 #if 0
@@ -7717,6 +7740,7 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
 #endif
 #if 0
                       // DQ (8/23/2012): As a test always return true (should fail for only test2012_195.C).
+#error "DEAD CODE!"
                          isTemplateType = true;
 #endif
                          returnValue = isTemplateType;
@@ -8562,6 +8586,10 @@ SgSymbolTable::find_symbol_support (const SgName & nm)
 
      assert(p_table != NULL);
 
+#if 0
+     printf ("In find_symbol_support(nm = %s) \n",nm.str());
+#endif
+
   // First look through only the local (non-aliased) symbols.
 
      p_iterator = p_table->find(nm);
@@ -8574,7 +8602,9 @@ SgSymbolTable::find_symbol_support (const SgName & nm)
           printf ("Check for SgAliasSymbol in SgSymbolTable::find_function(const SgName & nm = %s) \n",nm.str());
 #endif
           ReturnType* symbol = dynamic_cast<ReturnType*>(p_iterator->second);
-
+#if 0
+          printf ("In loop over target symbols associated with nm = %s p_iterator->second = %p = %s \n",nm.str(),p_iterator->second,p_iterator->second->class_name().c_str());
+#endif
        // if (isSgFunctionSymbol(p_iterator->second) && (*p_iterator).first==nm)
        // if (isSgFunctionSymbol(p_iterator->second) && get_table()->key_eq()((*p_iterator).first,nm))
           if (symbol != NULL && get_table()->key_eq()((*p_iterator).first,nm))
@@ -8635,7 +8665,10 @@ SgSymbolTable::find_symbol_support (const SgName & nm)
   // while(p_iterator != p_table->end() && (*p_iterator).first==nm)
      while(p_iterator != p_table->end() && get_table()->key_eq()((*p_iterator).first,nm))
         {
+#if 0
+          printf ("In loop over alias symbols associated with nm = %s p_iterator->second->class_name() = %s p_iterator->second->get_name() = %s \n",nm.str(),p_iterator->second->class_name().c_str(),p_iterator->second->get_name().str());
        // printf ("Looking for aliased symbols: p_iterator->second->class_name() = %s p_iterator->second->get_name() = %s \n",p_iterator->second->class_name().c_str(),p_iterator->second->get_name().str());
+#endif
           SgAliasSymbol* aliasedSymbol = isSgAliasSymbol(p_iterator->second);
           if (aliasedSymbol != NULL)
              {
@@ -8826,6 +8859,10 @@ SgSymbolTable::find_symbol_with_template_args_support ( const SgName & nm, SgTem
    {
      ReturnType* s = NULL;
 
+#if 0
+     printf ("In SgSymbolTable::find_symbol_with_template_args_support(nm = %s, templateArgumentsList = %p) \n",nm.str(),templateArgumentsList);
+#endif
+
   // Find the sublist that matchs the name.
      std::pair<hash_iterator, hash_iterator> range = p_table->equal_range(nm);
 
@@ -8835,7 +8872,8 @@ SgSymbolTable::find_symbol_with_template_args_support ( const SgName & nm, SgTem
      for (hash_iterator i = range.first; i != range.second; ++i)
         {
 #if 0
-          printf ("In SgSymbolTable::find_symbol_with_template_args_support(): Found a possible symbol with correct name = %s: symbol = %p = %s \n",nm.str(),i->second,i->second->class_name().c_str());
+          printf ("In SgSymbolTable::find_symbol_with_template_args_support(): Found a possible symbol with correct name = %s: symbol = %p = %s (%s) \n",
+               nm.str(),i->second,i->second->class_name().c_str(),isSgAliasSymbol(i->second) != NULL ? "alias symbol ignored" : "consider this symbol");
 #endif
        // SgClassSymbol* sym = isSgClassSymbol(i->second);
           ReturnType* sym = isSgClassSymbol(i->second);
@@ -13807,6 +13845,9 @@ X aggressive
   // DQ (2/17/2013): This permits skipping the AST consistancy test if the AstTests::runAllTests() 
   // function is called as part of the user's translator.
      p_skipAstConsistancyTests = false;
+
+  // DQ (6/7/2013): Added support for using experimental forntran frontend.
+     p_experimental_fortran_frontend = false;
    }
 
 #if 0
@@ -14393,6 +14434,9 @@ SgFile::display ( const std::string & label ) const
 
      printf ("     p_skipAstConsistancyTests              = %s \n",(p_skipAstConsistancyTests == true) ? "true" : "false");
 
+  // DQ (6/8/2013): Added support for experimental fortran frontend.
+     printf ("     p_experimental_fortran_frontend        = %s \n",(p_experimental_fortran_frontend == true) ? "true" : "false");
+
 #if 0
 // Order of data member entries in support.C, matched against the 
 // initialization to make sure that all data members are initialized.
@@ -14609,6 +14653,16 @@ SOURCE_APPLICATION_DIRECTORY_END
 SOURCE_APPLICATION_DIRECTORY_LIST_START
 SOURCE_APPLICATION_DIRECTORY_LIST_END
 
+
+SOURCE_JAVA_IMPORT_STATEMENT_LIST_START
+SOURCE_JAVA_IMPORT_STATEMENT_LIST_END
+
+
+SOURCE_JAVA_CLASS_DECLARATION_LIST_START
+SOURCE_JAVA_CLASS_DECLARATION_LIST_END
+
+
+
 SOURCE_APPLICATION_PROJECT_START
 
 //! Declaration of space for static variables
@@ -14774,6 +14828,47 @@ SgProject::operator[]( unsigned int i )
      return p_fileList_ptr->get_listOfFiles()[i];
 #endif
    }
+
+// DQ (6/13/2013): Access function for retriving a SgFile object from the list stored internally, 
+// but using the filename with full path.  This is part of the new Java performance support and
+// a design change that first builds all of the SgFile IR nodes and then calls the frontend for
+// each of them.  This permits a more sophisticated level of command line multiple file support.
+SgFile* SgProject::operator[]( std::string filename )
+   {
+  // Since we use an STL vector internally we can use the vector::operator[] directly.
+#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
+#error "ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT should be FALSE"
+#else
+     ROSE_ASSERT(p_fileList_ptr != NULL);
+     ROSE_ASSERT(numberOfFiles() > 0);
+
+#if 0
+     printf ("In SgProject::operator[]( std::string filename ): Searching for the SgFile matching filename: filename = %s \n",filename.c_str());
+#endif
+
+     SgFilePtrList::iterator i = p_fileList_ptr->get_listOfFiles().begin();
+     while (i != p_fileList_ptr->get_listOfFiles().end())
+        {
+          ROSE_ASSERT(*i != NULL);
+#if 0
+          printf ("Searching for the matching filename: filename = %s *i = %p  \n",filename.c_str(),*i);
+#endif
+       // Find the matching SgFile object using the get_sourceFileNameWithPath()
+          if (filename == (*i)->get_sourceFileNameWithPath())
+             {
+#if 0
+               printf ("Found the matching filename: filename = %s *i = %p  \n",filename.c_str(),*i);
+#endif
+               return *i;
+             }
+
+          i++;
+        }
+
+     return NULL;
+#endif
+   }
+
 
 // Moved to sage_support.cpp: int SgProject::parse(const vector<string>& argv)
 // Moved to sage_support.cpp: void SgProject::processCommandLine(const vector<string>& input_argv)

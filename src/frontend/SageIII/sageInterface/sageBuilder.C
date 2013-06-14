@@ -8949,6 +8949,9 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
 
      ROSE_ASSERT(nondefdecl != NULL);
 
+  // DQ (6/9/2013): Added assertion to debug test2013_198.C.
+     ROSE_ASSERT(nondefdecl->get_definition() == NULL);
+
   // DQ (3/22/2012): I think we can assert this! No, in fact we can assert that it is not built yet.
   // ROSE_ASSERT(nondefdecl->get_type() != NULL);
      ROSE_ASSERT(nondefdecl->get_type() == NULL);
@@ -9120,8 +9123,16 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
                nondefdecl->set_definingDeclaration(NULL);
                nondefdecl->setForward();
 #endif
+
+            // DQ (6/9/2013): Added assertion to debug test2013_198.C.
+               ROSE_ASSERT(nondefdecl->get_definition() == NULL);
+
                mysymbol = new SgClassSymbol(nondefdecl);
                firstNondefdecl = nondefdecl;
+
+            // DQ (6/9/2013): Adding assertions to make sure that symbols only reference non-defining declarations.
+               ROSE_ASSERT(nondefdecl->get_definition() == NULL);
+               ROSE_ASSERT(mysymbol->get_declaration()->get_definition() == NULL);
 
             // DQ (9/16/2012): This is a newly refactored function (call this after the firstNondefiningDeclaration is set).
             // Note that since the symbol tables use the template arguments associated with the declaration it is best to 
@@ -9157,6 +9168,10 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
             // DQ (12/27/2011): Added new test.
             // ROSE_ASSERT(scope->lookup_nontemplate_class_symbol(name) != NULL);
                ROSE_ASSERT(scope->lookup_nontemplate_class_symbol(nameWithTemplateArguments,templateArgumentsList) != NULL);
+
+            // DQ (6/9/2013): Added test to make sure that symbols only reference non-defining declarations.
+               SgClassSymbol* temp_classSymbol = nondefdecl->get_scope()->lookup_nontemplate_class_symbol(nameWithTemplateArguments,templateArgumentsList);
+               ROSE_ASSERT(temp_classSymbol->get_declaration()->get_definition() == NULL);
              }
 
           ROSE_ASSERT(mysymbol != NULL);
@@ -9185,6 +9200,10 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
   // DQ (12/27/2011): Added new test.
   // ROSE_ASSERT(nondefdecl->get_scope()->lookup_nontemplate_class_symbol(name) != NULL);
      ROSE_ASSERT(nondefdecl->get_scope()->lookup_nontemplate_class_symbol(nameWithTemplateArguments,templateArgumentsList) != NULL);
+
+  // DQ (6/9/2013): Added test to make sure that symbols only reference non-defining declarations.
+     SgClassSymbol* temp_classSymbol = nondefdecl->get_scope()->lookup_nontemplate_class_symbol(nameWithTemplateArguments,templateArgumentsList);
+     ROSE_ASSERT(temp_classSymbol->get_declaration()->get_definition() == NULL);
 
      return nondefdecl;
    }
@@ -9648,6 +9667,13 @@ SageBuilder::buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* s
   // I think this could still fail for a function with a name such as "X<Y>"  strange converstion operators.
      ROSE_ASSERT(SageInterface::hasTemplateSyntax(name) == false);
 
+#if 1
+     printf ("In buildNondefiningClassDeclaration(): name = %s scope = %p = %s \n",name.str(),scope,scope != NULL ? scope->class_name().c_str() : "NULL");
+
+  // DQ (6/9/2013): I want to know that I'm not debugging this function.
+     ROSE_ASSERT(false);
+#endif
+
   // DQ (1/26/2009): It seems that (scope == NULL) can happen in the tests/roseTests/astInterfaceTests test codes.
   // ROSE_ASSERT(scope != NULL);
      SgClassSymbol* mysymbol = NULL;
@@ -9715,6 +9741,9 @@ SageBuilder::buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* s
                ROSE_ASSERT(nondefdecl->get_scope() != NULL);
 
                mysymbol = new SgClassSymbol(nondefdecl);
+#if 1
+               printf ("In buildNondefiningClassDeclaration(): Adding SgClassSymbol: mysymbol = %p from nondefdecl = %p = %s to scope = %p = %s \n",mysymbol,nondefdecl,nondefdecl->class_name().c_str(),scope,scope->class_name().c_str());
+#endif
                scope->insert_symbol(name, mysymbol);
              }
             else
@@ -9747,7 +9776,14 @@ SageBuilder::buildDefiningClassDeclaration ( SgName name, SgScopeStatement* scop
   // named differently (from this one) and depricate this function...which I like much better.
      printf ("WARNING: This function for building defining class declarations has different semantics from that of the function to build defining function declarations. \n");
 
-   // DQ (7/27/2012): Note that the input name should not have template argument syntax.
+#if 1
+     printf ("In buildDefiningClassDeclaration(): name = %s scope = %p = %s \n",name.str(),scope,scope != NULL ? scope->class_name().c_str() : "NULL");
+
+  // DQ (6/9/2013): I want to know that I'm not debugging this function.
+     ROSE_ASSERT(false);
+#endif
+
+  // DQ (7/27/2012): Note that the input name should not have template argument syntax.
   // I think this could still fail for a function with a name such as "X<Y>"  strange converstion operators.
      ROSE_ASSERT(SageInterface::hasTemplateSyntax(name) == false);
 
@@ -9838,7 +9874,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
         }
 
 #if 0
-     printf ("Building a SgClassDeclaration: buildClassDeclaration_nfi() name = %s buildTemplateInstantiation = %s \n",name.str(),buildTemplateInstantiation ? "true" : "false");
+     printf ("Building a SgClassDeclaration: buildClassDeclaration_nfi() XXX_name = %s buildTemplateInstantiation = %s \n",XXX_name.str(),buildTemplateInstantiation ? "true" : "false");
 #endif
 
   // Step 2 (now step 1). build the nondefining declaration, 
@@ -9911,6 +9947,16 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 
           ROSE_ASSERT(nondefdecl != NULL);
 
+#if 0
+          printf ("In SageBuilder::buildClassDeclaration_nfi(): mysymbol->get_declaration(): nondefdecl = %p = %s nondefdecl->get_definition() = %p = %s \n",
+               nondefdecl,nondefdecl->class_name().c_str(),nondefdecl->get_definition(),
+               nondefdecl->get_definition() != NULL ? nondefdecl->get_definition()->class_name().c_str() : "NULL");
+#endif
+       // DQ (6/8/2013): This should not be true (see test2013_198.C).
+       // Fundamentally the symbol should always only have a pointer to a non-defining 
+       // declaration, where by definition (get_definition() == NULL).
+          ROSE_ASSERT(nondefdecl->get_definition() == NULL);
+
        // DQ (9/16/2012): This should be true by definition (verify).
           ROSE_ASSERT(nondefdecl == nondefdecl->get_firstNondefiningDeclaration());
 
@@ -9937,7 +9983,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
           if (nondefdecl->get_definingDeclaration() != NULL)
              {
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-               printf ("ERROR: Non defining declaration nondefdecl = %p = %s already has a defining declaration, so we would be build another nondefdecl->get_definingDeclaration() = %p = %s \n",
+               printf ("ERROR: In SageBuilder::buildClassDeclaration_nfi(): Non defining declaration nondefdecl = %p = %s already has a defining declaration, so we would be build another nondefdecl->get_definingDeclaration() = %p = %s \n",
                     nondefdecl,nondefdecl->class_name().c_str(),nondefdecl->get_definingDeclaration(),nondefdecl->get_definingDeclaration()->class_name().c_str());
 #endif
                SgClassDeclaration* nondefining_classDeclaration = isSgClassDeclaration(nondefdecl);
@@ -10006,6 +10052,8 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
                setTemplateArgumentsInDeclaration(nondefdecl,templateArgumentsList);
 #else
                isSgTemplateInstantiationDecl(nondefdecl)->get_templateArguments() = *templateArgumentsList;
+
+#error "DEAD CODE!"
 
             // DQ (9/13/2012): Set the parents of the template arguments (if not already set, to the first non-defining declaration).
             // printf ("Calling setTemplateArgumentParents(): nondefdecl = %p = %s \n",nondefdecl,nondefdecl->class_name().c_str());
@@ -10148,7 +10196,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
              {
                mysymbol = new SgClassSymbol(nondefdecl);
 #if 0
-               printf ("Insert the new SgClassSymbol = %p into the scope = %p = %s \n",mysymbol,scope,scope->class_name().c_str());
+               printf ("In buildClassDeclaration_nfi(): Insert the new SgClassSymbol = %p from nondefdecl = %p = %s into the scope = %p = %s \n",mysymbol,nondefdecl,nondefdecl->class_name().c_str(),scope,scope->class_name().c_str());
 #endif
             // scope->insert_symbol(name, mysymbol);
                scope->insert_symbol(nameWithTemplateArguments, mysymbol);
@@ -10176,6 +10224,8 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
             // DQ (7/25/2012): This should be true because the template argument was set to the functions 
             // scope so that the name with template arguments could be computed (with name qualification).
                ROSE_ASSERT((*templateArgumentsList)[i]->get_parent() != NULL);
+
+#error "DEAD CODE!"
 
             // ROSE_ASSERT(isSgGlobal(templateArgumentsList[i]->get_parent()) == NULL);
             // ROSE_ASSERT(templateArgumentsList[i]->get_parent() == nondefining_templateInstantiation);

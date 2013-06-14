@@ -2332,8 +2332,9 @@ TestAstForUniqueStatementsInScopes::visit ( SgNode* node )
                scope->get_file_info()->display("Error: duplicate statements in scope");
              }
 #if 1
-          ROSE_ASSERT(pass);
+          ROSE_ASSERT(pass == true);
 #else
+       // DQ (6/6/2013): debugging... (test2013_198.C)
        // DQ (8/9/2012): debugging... (test2012_174.C)
           if (pass == false)
              {
