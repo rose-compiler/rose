@@ -24,16 +24,39 @@ SgDeclarationStatement* SgNodeHelper::findVariableDeclarationWithVariableSymbol(
   return 0; // non-reachable
 }
 
-std::string SgNodeHelper::sourceFileLineColumnToString(SgNode* node) {
+std::string SgNodeHelper::sourceFilenameToString(SgNode* node) {
   Sg_File_Info* fi=node->get_file_info();
   std::stringstream ss;
   ss<<fi->get_filenameString();
-  ss<<":";
+  return ss.str();
+}
+
+std::string SgNodeHelper::sourceLineColumnToString(SgNode* node) {
+  std::stringstream ss;
+  Sg_File_Info* fi=node->get_file_info();
   ss<<fi->get_line();
   ss<<":";
   ss<<fi->get_col();
   return ss.str();
 }
+
+std::string SgNodeHelper::sourceFilenameLineColumnToString(SgNode* node) {
+  string filename=SgNodeHelper::sourceFilenameToString(node);
+  string lc=SgNodeHelper::sourceLineColumnToString(node);
+  std::stringstream ss;
+  ss<<filename;
+  ss<<":";
+  ss<<lc;
+  return ss.str();
+}
+size_t SgNodeHelper::determineChildIndex(SgNode* child) {
+  SgNode* parent=child->get_parent();
+  if(parent==0)
+	return -1;
+  else
+	return parent->get_childIndex(child);
+}
+
 
 SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarScanf(SgNode* node) {
   SgNode* nextNodeToAnalyze1=node;
@@ -256,14 +279,36 @@ SgNodeHelper::getSymbolOfInitializedName(SgInitializedName* initName) {
  return initDeclVar;
 }
 
+list<SgClassDeclaration*> SgNodeHelper::classDeclarationNestingSequence(SgDeclarationStatement* node) {
+  list<SgClassDeclaration*> cdlist;
+  SgNode* node2=node;
+  while(node2) {
+	if(SgClassDeclaration* cd=isSgClassDeclaration(node2))
+	  cdlist.push_front(cd);
+	node2=node2->get_parent();
+  }
+  return cdlist;
+}
+
 string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
-  if(!(isSgVarRefExp(node)||isSgVariableDeclaration(node)))
+  if(!(isSgVarRefExp(node)||isSgVariableDeclaration(node)||isSgVariableSymbol(node)))
 	return "non-variable-name";
 
   SgSymbol* sym=0;
   bool found=false;
-  string name="$+++unknown+++$";
-
+  string name="";
+  string filenamelinecol=":0:0";
+  string classnestingname;
+  string scopesequencenumber;
+  if(SgVariableSymbol* varsym=isSgVariableSymbol(node)) {
+	SgInitializedName* initname=varsym->get_declaration();
+	assert(initname);
+	SgNode* node1=initname->get_definition();
+	if(!node1)
+	  node=initname->get_declaration();
+	else
+	  node=node1;
+  }
   if(SgVarRefExp* varRef=isSgVarRefExp(node)) {
 	SgVariableSymbol* varsym=isSgVariableSymbol(SgNodeHelper::getSymbolOfVariable(varRef));
 	assert(varsym);
@@ -271,11 +316,28 @@ string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
 	assert(node);
   }
   if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
+	filenamelinecol=SgNodeHelper::sourceFilenameToString(varDecl);
 	sym=SgNodeHelper::getSymbolOfVariableDeclaration(varDecl);
 	assert(sym);
-	assert(isSgVariableDeclaration(node));
 	found=true;
-	name=varDecl->get_mangled_name();
+	//name=varDecl->get_mangled_name();
+	name=SgNodeHelper::symbolToString(sym);
+
+	// class nesting name
+	classnestingname="[";
+	list<SgClassDeclaration*> typenestingsequence=SgNodeHelper::classDeclarationNestingSequence(varDecl);
+	for(list<SgClassDeclaration*>::iterator i=typenestingsequence.begin();i!=typenestingsequence.end();++i) {
+	  SgClassDeclaration* decl=*i;
+	  if(i!=typenestingsequence.begin())
+		classnestingname+="::";
+	  classnestingname+=decl->get_name();
+	}
+	classnestingname+="]";
+	// scope sequence number
+	stringstream ss;
+	ss << SgNodeHelper::scopeSequenceNumber(varDecl);
+	scopesequencenumber=ss.str();
+
   } else {
 	name=std::string("??")+node->sage_class_name()+"??";
 	return name;
@@ -292,7 +354,8 @@ string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
 	stringstream ss;
 	ss << SgNodeHelper::scopeNestingLevel(sym);
 	string scopeLevel=ss.str();
-	string longName=string("$")+funName+"$"+scopeLevel+"$"+name;
+	//name=SageInterface::generateUniqueName(sym,true);
+	string longName=string("$")+filenamelinecol+string("$")+funName+"$"+scopeLevel+"/"+scopesequencenumber+"$"+classnestingname+"$"+name;
 	return longName;
   } else {
 	std::cerr<<"SgNode type of : "<<node->sage_class_name()<<std::endl;
@@ -321,6 +384,38 @@ int SgNodeHelper::scopeNestingLevel(SgNode* node) {
 	  return 0;
   }
   return 1+scopeNestingLevel(SgNodeHelper::getParent(node));
+}
+
+int SgNodeHelper::scopeSequenceNumber(SgNode* node) {
+  /* this is quite an expensive function (searches the AST upwards and within one container). However, the purpose is to provide
+	 a meaningful (=human readable) scope-sequence number. Alternatively it could also be provided for each scope as precomputed value
+	 attached as ast-attribute.
+  /* 1) find scope we are in
+	 2) determine scope number from parent container
+	 scopes are numbered 0 .. n
+	 returns the scope-number of the provided node's scope within the outer scope
+	 returns -1 if the provided node has no outer scope
+  */
+  size_t cnum=-1;
+  // ad1)
+  while(!isSgScopeStatement(node)) {
+	node=node->get_parent();
+  }
+  // check if no outer scope existed
+  if(node==0)
+	return -1;
+  // ad2)
+  SgNode* parent=node->get_parent();
+  size_t num=parent->get_numberOfTraversalSuccessors();
+  for(size_t i=0; i<num;++i) {
+	SgNode* child=parent->get_traversalSuccessorByIndex(i);
+	if(isSgScopeStatement(child)) {
+	  ++cnum;
+	  if(child==node)
+		return cnum;
+	}
+  }
+  throw "SgNodeHelper::scopeSequenceNumber: improper node operation.";
 }
 
 bool SgNodeHelper::isForwardFunctionDeclaration(SgNode* node) {

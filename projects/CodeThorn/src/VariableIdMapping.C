@@ -103,8 +103,8 @@ void VariableIdMapping::reportUniqueVariableSymbolMappingViolations() {
 		  SgVariableSymbol* varsym2=isSgVariableSymbol((*j).second);
 		  SgDeclarationStatement* vardecl1=SgNodeHelper::findVariableDeclarationWithVariableSymbol(varsym1);
 		  SgDeclarationStatement* vardecl2=SgNodeHelper::findVariableDeclarationWithVariableSymbol(varsym2);
-		  string lc1=SgNodeHelper::sourceFileLineColumnToString(vardecl1);
-		  string lc2=SgNodeHelper::sourceFileLineColumnToString(vardecl2);
+		  string lc1=SgNodeHelper::sourceFilenameLineColumnToString(vardecl1);
+		  string lc2=SgNodeHelper::sourceFilenameLineColumnToString(vardecl2);
 		  cout << "  VarSym1:"<<varsym1  <<" Decl1:"<<lc1<<" @"<<vardecl1<<": "<<vardecl1->unparseToString()<< endl;
 		  cout << "  VarSym2:"<<varsym2  <<" Decl2:"<<lc2<< " @"<<vardecl2<<": "<<vardecl2->unparseToString()<< endl;
 		  cout << "------------------------------------------------------------------"<<endl;

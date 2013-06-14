@@ -39,10 +39,32 @@ namespace SgNodeHelper {
   SgDeclarationStatement* findVariableDeclarationWithVariableSymbol(SgNode* node);
 
   //! returns filename+line+column information of AST fragment in format "filename:line:column". Used for generating readable output
-  std::string sourceFileLineColumnToString(SgNode* node);
+  std::string sourceFilenameLineColumnToString(SgNode* node);
+
+  //! returns filename information of AST fragment in format "filename". Used for generating readable output
+  std::string sourceFilenameToString(SgNode* node);
+
+  //! returns filename information of AST fragment in format "line:col". Used for generating readable output
+  std::string sourceLineColumnToString(SgNode* node);
+
+  /*! computes a list representing the nesting structure of classes (including structs and unions). 
+	It traverses the AST upwards and collects SgClassDeclaration(s) only. This covers nested classes, nested structs, and nested unions,
+	and combinations of those. 
+  */
+  list<SgClassDeclaration*> classDeclarationNestingSequence(SgDeclarationStatement*);
 
   /*! computes for a given node at which scope nesting level this node is in its AST */
   int scopeNestingLevel(SgNode* node);
+
+  /*! computes for a given node at which scope nesting level this node is in its AST */
+  int scopeSequenceNumber(SgNode* node);
+
+  /*! computes for a given node the index number of it from the parent.
+	e.g. node1(node2,node3,node4) : node4 has index 2 (starting at 0)
+	For the root node of an AST (e.g. SgProject) this function returns -1.
+   */
+  size_t determineChildIndex(SgNode* node);
+
 
   //! returns the initializer-list of For.
   SgStatementPtrList& getForInitList(SgNode* node);
