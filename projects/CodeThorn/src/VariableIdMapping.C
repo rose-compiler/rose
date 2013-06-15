@@ -13,7 +13,7 @@ void VariableIdMapping::toStream(ostream& os) {
 	os<<"("<<i
 	  <<","<<mappingVarIdToSym[i]
 	  <<","<<SgNodeHelper::symbolToString(mappingVarIdToSym[i])
-	  <<" ::: "<<SgNodeHelper::uniqueLongVariableName(SgNodeHelper::findVariableDeclarationWithVariableSymbol(mappingVarIdToSym[i]))
+	  <<" ::: "<<SgNodeHelper::uniqueLongVariableName(mappingVarIdToSym[i])
 	  <<")"<<endl;
 	assert(mappingSymToVarId[mappingVarIdToSym[i]]==i);
   }
@@ -47,24 +47,38 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
 		if(sym)
 		  found=true;
 		else
-		  cerr<<"WARNING: ROSE-AST ERROR: VariableDeclaration without associated symbol found. Ignoring.";
+		  cerr<<"WARNING: computeVariableSymbolMapping: VariableDeclaration without associated symbol found. Ignoring.";
+		assert(!isSgVariableDefinition(sym));
 	  }
 	  if(SgVarRefExp* varRef=isSgVarRefExp(*i)) {
 		sym=SgNodeHelper::getSymbolOfVariable(varRef);
 		if(sym)
 		  found=true;
 		else
-		  cerr<<"WARNING: ROSE-AST ERROR: VarRefExp without associated symbol found. Ignoring.";
+		  cerr<<"WARNING: computeVariableSymbolMapping: VarRefExp without associated symbol found. Ignoring.";
+		assert(!isSgVariableDefinition(sym));
 	  }
 	  if(found) {
-		string longName=SgNodeHelper::uniqueLongVariableName(*i);
+		//cout << "INFO: var: "<<SgNodeHelper::symbolToString(sym)<<endl;
+		// currently not possible because variables in forward declarations are not represented by a SgSymbol (only as SgName).
+#if 0
+		if(SgNodeHelper::isVariableSymbolInFunctionForwardDeclaration(sym)) {
+		  // special case: we exclude variables in forward declarations to be used in variable id mappings.
+		  cout << "INFO: ignoring variable in forward declaration: "<<SgNodeHelper::symbolToString(sym)<<endl;
+		  continue;
+		}
+#endif		
+		string longName=SgNodeHelper::uniqueLongVariableName(sym);
 		
-		MapPair pair=make_pair(longName,sym);
+		// ensure all symbols are SgVariableSymbol
+		SgVariableSymbol* finalvarsym=isSgVariableSymbol(sym);
+		assert(finalvarsym);
+		MapPair pair=make_pair(longName,finalvarsym);
 		checkSet.insert(pair);
-		if(symbolSet.find(sym)==symbolSet.end()) {
-		  assert(sym);
-		  registerNewSymbol(sym);
-		  symbolSet.insert(sym);
+		if(symbolSet.find(finalvarsym)==symbolSet.end()) {
+		  assert(finalvarsym);
+		  registerNewSymbol(finalvarsym);
+		  symbolSet.insert(finalvarsym);
 		}
 	  }
 	}
@@ -103,6 +117,8 @@ void VariableIdMapping::reportUniqueVariableSymbolMappingViolations() {
 		  SgVariableSymbol* varsym2=isSgVariableSymbol((*j).second);
 		  SgDeclarationStatement* vardecl1=SgNodeHelper::findVariableDeclarationWithVariableSymbol(varsym1);
 		  SgDeclarationStatement* vardecl2=SgNodeHelper::findVariableDeclarationWithVariableSymbol(varsym2);
+		  assert(vardecl1);
+		  assert(vardecl2);
 		  string lc1=SgNodeHelper::sourceFilenameLineColumnToString(vardecl1);
 		  string lc2=SgNodeHelper::sourceFilenameLineColumnToString(vardecl2);
 		  cout << "  VarSym1:"<<varsym1  <<" Decl1:"<<lc1<<" @"<<vardecl1<<": "<<vardecl1->unparseToString()<< endl;

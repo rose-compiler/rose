@@ -52,7 +52,8 @@ int main( int argc, char *argv[] ) {
   cout << endl;
   if(!check)
 	variableIdMapping.reportUniqueVariableSymbolMappingViolations();
-  else {
+  //  else
+ {
 	cout<<"MAPPING:\n";
 	variableIdMapping.toStream(cout);
 	cout<<"-------------------------------------- OK --------------------------------------"<<endl;

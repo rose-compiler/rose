@@ -219,6 +219,14 @@ namespace SgNodeHelper {
    */
   string doubleQuotedEscapedString(string s1);
 
+  //! checks whether a SgVariableSymbol is representing a variable in
+  //a forward declaration. This case no declaration for the variable
+  //exists. This is currently not possible in the ROSE AST.
+  bool isVariableSymbolInFunctionForwardDeclaration(SgNode* node);
+
+  //! checks whether a SgVariableSymbol is representing a function parameter (this does not apply for forward declarations)
+  SgVariableSymbol* isFunctionParameterVariableSymbol(SgNode* node);
+
   //! returns a string representing the node (excluding the subtree)
   string nodeToString(SgNode* node);
 
