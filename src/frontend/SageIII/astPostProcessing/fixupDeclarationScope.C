@@ -97,17 +97,29 @@ FixupAstDeclarationScope::visit ( SgNode* node )
              }
             else
              {
-               ROSE_ASSERT(firstNondefiningDeclaration != NULL);
-               if (mapOfSets.find(firstNondefiningDeclaration) == mapOfSets.end())
+            // DQ (6/15/2013): The older tutorial examples demonstrate addition of new functions using older rules that allows 
+            // there to not be a non-defining declaration.  We need to remove these tutrial example in favor of the AST builder
+            // API to build functions that will follow the newer AST constistancy rules.  Until we do this work in the tutorial
+            // we can't inforce this below else the older tutorial examples (e.g. addFunctionDeclaration.C) will fail.  So I will
+            // allow this for now and output a warning when (firstNondefiningDeclaration == NULL).
+            // ROSE_ASSERT(firstNondefiningDeclaration != NULL);
+               if (firstNondefiningDeclaration == NULL)
                   {
-                    std::set<SgDeclarationStatement*>* new_empty_set = new std::set<SgDeclarationStatement*>();
-                    ROSE_ASSERT(new_empty_set != NULL);
-                    mapOfSets.insert(std::pair<SgDeclarationStatement*,std::set<SgDeclarationStatement*>*>(firstNondefiningDeclaration,new_empty_set));
+                    printf ("WARNING: In FixupAstDeclarationScope::visit(): firstNondefiningDeclaration == NULL for case of node = %p = %s (allowed for tutorial example transformations only) \n",node,node->class_name().c_str());
                   }
+                 else
+                  {
+                    if (mapOfSets.find(firstNondefiningDeclaration) == mapOfSets.end())
+                       {
+                         std::set<SgDeclarationStatement*>* new_empty_set = new std::set<SgDeclarationStatement*>();
+                         ROSE_ASSERT(new_empty_set != NULL);
+                         mapOfSets.insert(std::pair<SgDeclarationStatement*,std::set<SgDeclarationStatement*>*>(firstNondefiningDeclaration,new_empty_set));
+                       }
 
-                ROSE_ASSERT(mapOfSets.find(firstNondefiningDeclaration) != mapOfSets.end());
+                     ROSE_ASSERT(mapOfSets.find(firstNondefiningDeclaration) != mapOfSets.end());
 
-                mapOfSets[firstNondefiningDeclaration]->insert(declaration);
+                     mapOfSets[firstNondefiningDeclaration]->insert(declaration);
+                  }
              }
         }
    }
