@@ -61,6 +61,9 @@ public:
     /** Immediately erase the progress bar from the screen by emitting white space. */
     void clear();
 
+    /** Reset the progress counter back to zero. */
+    void reset(size_t current=0, size_t total=(size_t)(-1));
+
     /** Show a message. The progress bar is updated only if it's been at least RPT_INTERVAL seconds since the previous
      *  update or if @p update_now is true.*/
     void message(const std::string&, bool update_now=true);
@@ -92,6 +95,7 @@ public:
         INTERRUPT   = 911000004,     /**< x86 INT instruction executed. */
         SEMANTICS   = 911000005,     /**< Some fatal problem with instruction semantics, such as a not-handled instruction. */
         SMTSOLVER   = 911000006,     /**< Some fault in the SMT solver. */
+        INPUT_LIMIT = 911000007,     /**< Too many input values consumed. */
     };
     
     /** Return the short name of a fault ID. */
@@ -104,6 +108,7 @@ public:
             case INTERRUPT:     return "FAULT_INTERRUPT";
             case SEMANTICS:     return "FAULT_SEMANTICS";
             case SMTSOLVER:     return "FAULT_SMTSOLVER";
+            case INPUT_LIMIT:   return "FAULT_INPUT_LIMIT";
             default:
                 assert(!"fault not handled");
                 abort();
@@ -369,19 +374,26 @@ private:
  *  zero values. */
 class InputGroup {
 public:
-    enum Type { POINTER, NONPOINTER, UNKNOWN_TYPE };
-    InputGroup(): next_integer_(0), next_pointer_(0) {}
-    InputGroup(const SqlDatabase::TransactionPtr &tx, int id): next_integer_(0), next_pointer_(0) { load(tx, id); }
+    enum Type { INTEGER, POINTER, UNKNOWN_TYPE };
+    InputGroup(): next_integer_(0), next_pointer_(0), limit_consumption_(false) {}
+    InputGroup(const SqlDatabase::TransactionPtr &tx, int id): next_integer_(0), next_pointer_(0), limit_consumption_(false) {
+        load(tx, id);
+    }
     bool load(const SqlDatabase::TransactionPtr&, int id);
     void add_integer(uint64_t i) { integers_.push_back(i); }
     void add_pointer(uint64_t p) { pointers_.push_back(p); }
     size_t size() const { return integers_.size() + pointers_.size(); }
+    void limit_consumption(bool b) { limit_consumption_=b; }
     uint64_t next_integer() {
+        if (limit_consumption_ && next_integer_ >= integers_.size())
+            throw FaultException(AnalysisFault::INPUT_LIMIT);
         uint64_t retval = next_integer_ < integers_.size() ? integers_[next_integer_] : 0;
         ++next_integer_; // increment even past the end so we know how many inputs were consumed
         return retval;
     }
     uint64_t next_pointer() {
+        if (limit_consumption_ && next_pointer_ >= pointers_.size())
+            throw FaultException(AnalysisFault::INPUT_LIMIT);
         uint64_t retval = next_pointer_ < pointers_.size() ? pointers_[next_pointer_] : 0;
         ++next_pointer_; // increment even past the end so we know how many inputs were consumed
         return retval;
@@ -413,11 +425,11 @@ public:
         return ss.str();
     }
     void print(std::ostream &o) const {
-        o <<"non-pointer inputs (" <<integers_.size() <<" total):\n";
+        o <<"integer inputs (" <<integers_.size() <<" total):\n";
         for (size_t i=0; i<integers_.size(); ++i)
             o <<"  " <<integers_[i] <<(i==next_integer_?"\t<-- next input":"") <<"\n";
         if (next_integer_>=integers_.size())
-            o <<"  all non-pointers have been consumed; returning zero\n";
+            o <<"  all integers have been consumed; returning zero\n";
         o <<"pointer inputs (" <<pointers_.size() <<" total):\n";
         for (size_t i=0; i<pointers_.size(); ++i)
             o <<"  " <<pointers_[i] <<(i==next_pointer_?"\t<-- next input":"") <<"\n";
@@ -429,6 +441,7 @@ protected:
     std::vector<uint64_t> integers_;
     std::vector<uint64_t> pointers_;
     size_t next_integer_, next_pointer_;        // May increment past the end of its array
+    bool limit_consumption_;                    // throw exeption if we consume too much?
 };
 
 /****************************************************************************************************************************
@@ -659,10 +672,10 @@ public:
                 type_name = "pointer";
                 break;
             case InputGroup::UNKNOWN_TYPE:
-            case InputGroup::NONPOINTER:
+            case InputGroup::INTEGER:
                 value = inputs->next_integer();
                 nvalues = inputs->integers_consumed();
-                type_name = "non-pointer";
+                type_name = "integer";
                 break;
         }
 
@@ -748,7 +761,7 @@ public:
         //    * The called function always returns
         //    * The called function's return value is in the EAX register
         //    * The caller cleans up any arguments that were passed via stack
-        //    * The function's return value is a non-pointer type
+        //    * The function's return value is an integer (non-pointer) type
         if (x86_call==insn_x86->get_kind()) {
             bool follow = params.follow_calls;
             ValueType<32> callee_va = this->template readRegister<32>("eip");
@@ -771,7 +784,7 @@ public:
 #endif
                 ValueType<32> call_fallthrough_va = this->template number<32>(insn->get_address() + insn->get_size());
                 this->writeRegister("eip", call_fallthrough_va);
-                this->writeRegister("eax", next_input_value<32>(InputGroup::NONPOINTER));
+                this->writeRegister("eax", next_input_value<32>(InputGroup::INTEGER));
                 ValueType<32> esp = this->template readRegister<32>("esp");
                 esp = this->add(esp, ValueType<32>(4));
                 this->writeRegister("esp", esp);
@@ -791,7 +804,7 @@ public:
             ValueType<32> syscall_num = this->template readRegister<32>("eax");
             state.output_group.syscalls.push_back(syscall_num.known_value());
 #endif
-            this->writeRegister("eax", next_input_value<32>(InputGroup::NONPOINTER));
+            this->writeRegister("eax", next_input_value<32>(InputGroup::INTEGER));
         } else {
             Super::interrupt(inum);
             throw FaultException(AnalysisFault::INTERRUPT);
@@ -847,10 +860,10 @@ public:
                 consume_input = this->interp->get_map()->exists(a0.known_value());
             }
             if (consume_input) {
-                // Return either a pointer or non-pointer value depending pointer detection analysis
+                // Return either a pointer or integer value depending pointer detection analysis
                 SymbolicSemantics::ValueType<32> a0_sym(a0.known_value());
                 InputGroup::Type type = this->pointers!=NULL && this->pointers->is_pointer(a0_sym) ?
-                                        InputGroup::POINTER : InputGroup::NONPOINTER;
+                                        InputGroup::POINTER : InputGroup::INTEGER;
                 retval = next_input_value<nBits>(type);
             } else {
                 // Return a value which is a function of the address (and one of the inputs that was used to initialize the
@@ -911,7 +924,7 @@ public:
                 bool never_accessed = 0 == state.register_rw_state.flag[reg.get_offset()].state;
                 state.register_rw_state.flag[reg.get_offset()].state |= HAS_BEEN_READ;
                 if (never_accessed)
-                    state.registers.flag[reg.get_offset()] = next_input_value<1>(InputGroup::NONPOINTER);
+                    state.registers.flag[reg.get_offset()] = next_input_value<1>(InputGroup::INTEGER);
                 retval = this->template unsignedExtend<1, nBits>(state.registers.flag[reg.get_offset()]);
                 break;
             }
@@ -927,7 +940,7 @@ public:
                 bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                 state.register_rw_state.gpr[reg.get_minor()].state |= HAS_BEEN_READ;
                 if (never_accessed)
-                    state.registers.gpr[reg.get_minor()] = next_input_value<32>(InputGroup::NONPOINTER);
+                    state.registers.gpr[reg.get_minor()] = next_input_value<32>(InputGroup::INTEGER);
                 switch (reg.get_offset()) {
                     case 0:
                         retval = this->template extract<0, nBits>(state.registers.gpr[reg.get_minor()]);
@@ -953,7 +966,7 @@ public:
                         bool never_accessed = 0==state.register_rw_state.segreg[reg.get_minor()].state;
                         state.register_rw_state.segreg[reg.get_minor()].state |= HAS_BEEN_READ;
                         if (never_accessed)
-                            state.registers.segreg[reg.get_minor()] = next_input_value<16>(InputGroup::NONPOINTER);
+                            state.registers.segreg[reg.get_minor()] = next_input_value<16>(InputGroup::INTEGER);
                         retval = this->template unsignedExtend<16, nBits>(state.registers.segreg[reg.get_minor()]);
                         break;
                     }
@@ -963,7 +976,7 @@ public:
                         bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                         state.register_rw_state.segreg[reg.get_minor()].state |= HAS_BEEN_READ;
                         if (never_accessed)
-                            state.registers.gpr[reg.get_minor()] = next_input_value<32>(InputGroup::NONPOINTER);
+                            state.registers.gpr[reg.get_minor()] = next_input_value<32>(InputGroup::INTEGER);
                         retval = this->template extract<0, nBits>(state.registers.gpr[reg.get_minor()]);
                         break;
                     }
@@ -975,7 +988,7 @@ public:
                             bool never_accessed = 0==state.register_rw_state.flag[i].state;
                             state.register_rw_state.flag[i].state |= HAS_BEEN_READ;
                             if (never_accessed)
-                                state.registers.flag[i] = next_input_value<1>(InputGroup::NONPOINTER);
+                                state.registers.flag[i] = next_input_value<1>(InputGroup::INTEGER);
                         }
                         retval = this->template unsignedExtend<16, nBits>(concat(state.registers.flag[0],
                                                                           concat(state.registers.flag[1],
@@ -1044,7 +1057,7 @@ public:
                             bool never_accessed = 0==state.register_rw_state.flag[i].state;
                             state.register_rw_state.flag[i].state |= HAS_BEEN_READ;
                             if (never_accessed)
-                                state.registers.flag[i] = next_input_value<1>(InputGroup::NONPOINTER);
+                                state.registers.flag[i] = next_input_value<1>(InputGroup::INTEGER);
                         }
                         retval = this->template unsignedExtend<32, nBits>(concat(state.registers.flag[0],
                                                                           concat(state.registers.flag[1],
@@ -1124,7 +1137,7 @@ public:
                 bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                 state.register_rw_state.gpr[reg.get_minor()].state |= update_access;
                 if (never_accessed)
-                    state.registers.gpr[reg.get_minor()] = next_input_value<32>(InputGroup::NONPOINTER);
+                    state.registers.gpr[reg.get_minor()] = next_input_value<32>(InputGroup::INTEGER);
                 switch (reg.get_offset()) {
                     case 0:
                         state.registers.gpr[reg.get_minor()] =
@@ -1162,7 +1175,7 @@ public:
                         bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                         state.register_rw_state.gpr[reg.get_minor()].state |= update_access;
                         if (never_accessed)
-                            state.registers.gpr[reg.get_minor()] = next_input_value<32>(InputGroup::NONPOINTER);
+                            state.registers.gpr[reg.get_minor()] = next_input_value<32>(InputGroup::INTEGER);
                         state.registers.gpr[reg.get_minor()] =
                             concat(this->template unsignedExtend<nBits, 16>(value),
                                    this->template extract<16, 32>(state.registers.gpr[reg.get_minor()]));

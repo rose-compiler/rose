@@ -190,7 +190,7 @@ OutputGroups::insert(const OutputGroup &ogroup, int64_t hashkey)
         int status = 0; // sign bit will be set on failure; other bits are meaningless
         int pos = 0;
         for (OutputGroup::Values::const_iterator vi=ogroup.values.begin(); vi!=ogroup.values.end(); ++vi)
-            status |= fprintf(file, "%"PRId64",V,%zu,%u\n", hashkey, pos++, *vi);
+            status |= fprintf(file, "%"PRId64",V,%d,%u\n", hashkey, pos++, *vi);
         for (size_t i=0; i<ogroup.callee_ids.size(); ++i)
             status |= fprintf(file, "%"PRId64",C,%zu,%d\n", hashkey, i, ogroup.callee_ids[i]);
         for (size_t i=0; i<ogroup.syscalls.size(); ++i)
@@ -375,6 +375,15 @@ Progress::clear()
         }
         had_output = false;
     }
+}
+
+void
+Progress::reset(size_t current, size_t total)
+{
+    cur = current;
+    if ((size_t)(-1)!=total)
+        this->total = total;
+    update();
 }
 
 void
@@ -755,7 +764,7 @@ InputGroup::load(const SqlDatabase::TransactionPtr &tx, int igroup_id)
         assert(!vtype.empty());
         uint64_t val = row.get<uint64_t>(1);
         switch (vtype[0]) {
-            case 'N':
+            case 'I':
                 add_integer(val);
                 break;
             case 'P':

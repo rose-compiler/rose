@@ -8,7 +8,7 @@ std::string argv0;
 static void
 usage(int exit_status)
 {
-    std::cerr <<"usage: " <<argv0 <<" DATABASE\n"
+    std::cerr <<"usage: " <<argv0 <<" [SWITCHES] [--] DATABASE\n"
               <<"  This command updates the semantic_funcsim table with information about the similarity between pairs of\n"
               <<"  functions.  The table contains three primary columns: two function IDs and one floating point similarity\n"
               <<"  value between zero and one (one implies that functions are identical according to the chosen similarity\n"
@@ -20,7 +20,27 @@ usage(int exit_status)
               <<"            from scratch. The default is to calculate similarity only for those pairs of functions for which\n"
               <<"            similarity has not been calculated already.\n"
               <<"    --ogroup=ALGORITHM\n"
-              <<"            Indicates the algorithm that should be used to compare output groups.\n"
+              <<"            Indicates the algorithm that should be used to compare output groups. These are the choices,\n"
+              <<"            where \"valueset-jaccard\" is the default:\n"
+              <<"              * \"full-equality\" returns 1.0 if two functions produced identical output groups for each\n"
+              <<"                input group on which they both ran, and zero in all other cases.  The comparison is made\n"
+              <<"                by the CloneDetection::OutputGroup::operator==(), and is transitive.\n"
+              <<"              * \"valueset-equality\" compares only the output values, not the call graph, system calls, or\n"
+              <<"                other members of an output group.  The values are compared using set equality so that\n"
+              <<"                neither the order that the outputs were produced nor their cardinality is considered. Also,\n"
+              <<"                if either output group indicates an analysis fault, then the value sets are considered to\n"
+              <<"                be unequal. This algorithm produces similarities of zero or one and is transitive.\n"
+              <<"              * \"valueset-jaccard\" compares values (but not the other members of an output group) as sets\n"
+              <<"                using the Jaccard index to measure similarity of the sets.  It returns a continuum of values\n"
+              <<"                between zero and one and is not transitive.  The Jaccard index is the ratio of the size of\n"
+              <<"                intersection of two sets to the size of the union.  Also, if either output group indicates\n"
+              <<"                an analysis fault, then the Jaccard index is multiplied by 0.25.\n"
+              <<"    --aggregate=ALGORITHM\n"
+              <<"            Indicates how the similarities for individual output groups are combined to form a single\n"
+              <<"            similarity value for two functions.  The following choices are available, where \"average\"\n"
+              <<"            is the default:\n"
+              <<"              * \"average\" takes the average of the individual output group similarities.\n"
+              <<"              * \"maximum\" takes the maximum of the individual output group similarities.\n"
               <<"    DATABASE\n"
               <<"            The name of the database to which we are connecting.  For SQLite3 databases this is just a local\n"
               <<"            file name that will be created if it doesn't exist; for other database drivers this is a URL\n"
@@ -34,10 +54,16 @@ enum OutputComparison {
     OC_VALUESET_JACCARD,
 };
 
+enum Aggregation {
+    AG_AVERAGE,
+    AG_MAXIMUM, 
+};
+
 static struct Switches {
-    Switches(): recreate(false), output_cmp(OC_VALUESET_JACCARD) {}
+    Switches(): recreate(false), output_cmp(OC_VALUESET_JACCARD), aggregation(AG_AVERAGE) {}
     bool recreate;
     OutputComparison output_cmp;
+    Aggregation aggregation;
 } opt;
 
 // Abstract base class for various methods of computing similarity between two output groups.  The class not only provides
@@ -167,7 +193,7 @@ static double
 similarity(const CachedOutputs &f1_outs, const CachedOutputs &f2_outs)
 {
     size_t nintersect = 0;
-    double total_sim = 0;
+    double total_sim=0, max_sim=0;
     for (CachedOutputs::const_iterator oi1=f1_outs.begin(); oi1!=f1_outs.end(); ++oi1) {
         int igroup_id = oi1->first;
         CachedOutput *o1 = oi1->second;
@@ -178,11 +204,18 @@ similarity(const CachedOutputs &f1_outs, const CachedOutputs &f2_outs)
             CachedOutput *o2 = oi2->second;
             double sim = o1->similarity(o2);
             total_sim += sim;
+            max_sim = std::max(max_sim, sim);
         }
     }
     double ave_sim = total_sim / (nintersect?nintersect:1);
-    return ave_sim;
+    switch (opt.aggregation) {
+        case AG_AVERAGE:
+            return ave_sim;
+        case AG_MAXIMUM:
+            return max_sim;
+    }
 }
+
 
 int
 main(int argc, char *argv[])
@@ -203,6 +236,14 @@ main(int argc, char *argv[])
             break;
         } else if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
             usage(0);
+        } else if (!strncmp(argv[argno], "--aggregate=", 12)) {
+            if (!strcmp(argv[argno]+12, "average")) {
+                opt.aggregation = AG_AVERAGE;
+            } else {
+                std::cerr <<argv0 <<": unknown value for --aggregate switch: " <<argv[argno]+12 <<"\n"
+                          <<argv0 <<": see --help for more info\n";
+                exit(1);
+            }
         } else if (!strcmp(argv[argno], "--delete")) {
             opt.recreate = true;
         } else if (!strcmp(argv[argno], "--no-delete")) {
@@ -215,7 +256,7 @@ main(int argc, char *argv[])
             } else if (!strcmp(argv[argno]+9, "valueset-jaccard")) {
                 opt.output_cmp = OC_VALUESET_JACCARD;
             } else {
-                std::cerr <<argv0 <<": unknown value for --ogroup switch: " <<argv[argno]+13 <<"\n"
+                std::cerr <<argv0 <<": unknown value for --ogroup switch: " <<argv[argno]+9 <<"\n"
                           <<argv0 <<": see --help for more info\n";
                 exit(1);
             }
@@ -294,55 +335,3 @@ main(int argc, char *argv[])
     progress.clear();
     return 0;
 }
-        
-
-
-
-//     SqlDatabase::StatementPtr stmt1 = tx->statement("select"
-//                                                     "   fpair.func1_id,"
-//                                                     "   fpair.func2_id,"
-//                                                     "   fio1.ogroup_id as func1_ogroup,"
-//                                                     "   fio2.ogroup_id as func2_ogroup"
-//                                                     " from tmp_fpairs as fpair"
-//                                                     " join semantic_fio as fio1 on fpair.func1_id=fio1.func_id"
-//                                                     " join semantic_fio as fio2 on fpair.func2_id=fio2.func_id"
-// 
-// 
-// 
-//     // Process each hash key pair.
-//     OutputGroups ogroups;
-//     SimilarityMap simmap;
-//     int npairs = tx->statement("select count(*) from tmp_hashkeypairs")->execute_int();
-//     std::cerr <<argv0 <<": compairing " <<npairs <<" pair" <<(1==npairs?"":"s") <<" of output groups\n";
-//     Progress progress(npairs);
-//     SqlDatabase::StatementPtr stmt1 = tx->statement("select hashkey1, hashkey2 from tmp_hashkeypairs");
-//     SqlDatabase::StatementPtr stmt2 = tx->statement("insert into semantic_ogprsim"
-//                                                     // 0         1         2           3
-//                                                     " (hashkey1, hashkey2, similarity, cmd) values (?, ?, ?, ?)");
-//     for (SqlDatabase::Statement::iterator row=stmt1->begin(); row!=stmt1->end(); ++row) {
-//         ++progress;
-//         int64_t hashkey1 = row.get<int64_t>(0);
-//         int64_t hashkey2 = row.get<int64_t>(1);
-//         std::pair<SimilarityBase*, SimilarityBase*> pair(NULL, NULL);
-//         switch (opt.algorithm) {
-//             case SIM_EQUALITY:
-//                 pair = load<FullEquality>(tx, ogroups, simmap, hashkey1, hashkey2);
-//                 break;
-//             case SIM_VALUE_SET_EQUALITY:
-//                 pair = load<ValueSetEquality>(tx, ogroups, simmap, hashkey1, hashkey2);
-//                 break;
-//             case SIM_VALUE_JACCARD:
-//                 pair = load<ValueSetJaccard>(tx, ogroups, simmap, hashkey1, hashkey2);
-//                 break;
-//         }
-//         double similarity = pair.first->similarity(pair.second);
-//         stmt2->bind(0, hashkey1)->bind(1, hashkey2)->bind(2, similarity)->bind(3, cmd_id)->execute();
-//     }
-// 
-//     progress.message("committing changes");
-//     finish_command(tx, cmd_id,
-//                    "calculated output group similarity for "+StringUtility::numberToString(npairs)+" pair"+(1==npairs?"":"s"));
-//     tx->commit();
-//     progress.clear();
-//     return 0;
-// }

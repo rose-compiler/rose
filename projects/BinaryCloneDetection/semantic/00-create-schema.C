@@ -57,12 +57,14 @@ main(int argc, char *argv[])
     };
 
 #define add_fault(DB, ID, ABBR, DESC) FaultInserter(DB, ID, #ABBR, DESC)
+    add_fault(tx, AnalysisFault::NONE,        NONE,        "success");
     add_fault(tx, AnalysisFault::DISASSEMBLY, DISASSEMBLY, "disassembly failed");
     add_fault(tx, AnalysisFault::INSN_LIMIT,  INSN_LIMIT,  "simulation instruction limit reached");
     add_fault(tx, AnalysisFault::HALT,        HALT,        "x86 HLT instruction executed");
     add_fault(tx, AnalysisFault::INTERRUPT,   INTERRUPT,   "interrupt or x86 INT instruction executed");
     add_fault(tx, AnalysisFault::SEMANTICS,   SEMANTICS,   "instruction semantics error");
     add_fault(tx, AnalysisFault::SMTSOLVER,   SMTSOLVER,   "SMT solver error");
+    add_fault(tx, AnalysisFault::INPUT_LIMIT, INPUT_LIMIT, "over-consumption of input values");
 #undef  add_fault
 
     finish_command(tx, cmd_id);

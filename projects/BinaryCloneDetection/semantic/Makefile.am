@@ -49,6 +49,15 @@ noinst_PROGRAMS += 04-func-similarity
 04_func_similarity_CPPFLAGS = $(ROSE_INCLUDES)
 04_func_similarity_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+noinst_PROGRAMS += 05-clusters-from-pairs
+05_clusters_from_pairs_SOURCES = 05-clusters-from-pairs.C
+05_clusters_from_pairs_CPPFLAGS = $(ROSE_INCLUDES)
+05_clusters_from_pairs_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+noinst_PROGRAMS += 06-list-clusters
+06_list_clusters_SOURCES = 06-list-clusters.C
+06_list_clusters_CPPFLAGS = $(ROSE_INCLUDES)
+06_list_clusters_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
 

@@ -8,6 +8,7 @@
 -- ********************************************************************************
 
 -- Clean up. Tables need to be dropped in the opposite order they're created.
+drop table if exists semantic_clusters_tpl;
 drop table if exists semantic_funcsim;
 drop table if exists semantic_fio;
 drop table if exists semantic_sources;
@@ -30,14 +31,14 @@ create table semantic_history (
        command text                             -- Command-line that was issued
 );
 
--- An inputvalue is either a pointer or non-pointer value that belongs to an input group.  Each pointer value has a sequential
--- position in its input group; similarly for non-pointers.  The sequence for pointers and non-pointers are independent of one
+-- An inputvalue is either an integer or pointer value that belongs to an input group.  Each integer value has a sequential
+-- position in its input group; similarly for pointers.  The sequence for integers and pointers are independent of one
 -- another; they compose two separate input value lists within the input group.
 create table semantic_inputvalues (
        id integer,                              -- ID for the input group; non-unique
-       vtype character,                         -- P (pointer) or N (non-pointer)
+       vtype character,                         -- P (pointer) or I (integer)
        pos integer,                             -- position of this inputvalue within its input group, per vtype
-       val bigint,                              -- the integer (pointer or non-pointer) value used as input
+       val bigint,                              -- the integer or pointer input value
        cmd bigint references semantic_history(hashkey) -- command that created this row
 );
 
@@ -56,7 +57,7 @@ create table semantic_outputvalues (
 
 -- Some output values indicate special situations described by this table
 create table semantic_faults (
-       id integer,                              -- the special integer value
+       id integer primary key,                  -- the special integer value
        name varchar(16),                        -- short identifying name
        description text                         -- full description
 );
@@ -101,7 +102,7 @@ create table semantic_instructions (
        position integer,                        -- zero-origin index of instruction within function
        src_file_id integer,                     -- source code file that produced this instruction, or -1
        src_line integer,                        -- source line number that produced this instruction, or -1
-       cmd bigint references semantic_history(id) -- command that created this row
+       cmd bigint references semantic_history(hashkey) -- command that created this row
 );
 
 -- A binary version of the AST
@@ -124,9 +125,10 @@ create table semantic_fio (
        func_id integer references semantic_functions(id),
        igroup_id integer,                       -- references semantic_inputvalues.id
        pointers_consumed integer,               -- number of pointers from the inputgroup consumed by this test
-       nonpointers_consumed integer,            -- number of non-pointers from the inputgroup consumed by this test
+       integers_consumed integer,               -- number of integers from the inputgroup consumed by this test
        instructions_executed integer,           -- number of instructions executed by this test
        ogroup_id bigint,                        -- output produced by this function, semantic_outputvalues.hashkey
+       status integer references semantic_faults(id), -- exit status of the test
        elapsed_time double precision,           -- number of seconds elapsed excluding ptr analysis
        cpu_time double precision,               -- number of CPU seconds used excluding ptr analysis
        cmd bigint references semantic_history(hashkey) -- command that created this row
@@ -140,4 +142,9 @@ create table semantic_funcsim (
        cmd bigint references semantic_history(hashkey) -- command that set the precision on this row
 );
 
-
+-- Clusters. The commands allow many different cluster tables to be created. This is the template for creating
+-- those tables.
+create table semantic_clusters_tpl (
+       id integer,                              -- cluster ID number
+       func_id integer references semantic_functions(id)
+);

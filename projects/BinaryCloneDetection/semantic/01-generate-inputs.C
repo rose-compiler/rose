@@ -22,8 +22,8 @@ usage(int exit_status)
               <<"            Input groups are numbered consecutively starting at zero.  Even if not new input groups are\n"
               <<"            created, the input group tables are created in the database.\n"
               <<"    --nintegers=N\n"
-              <<"            Each newly created input group will be initialized to have N non-pointer values. The default is to\n"
-              <<"            create 100 non-pointer values per input group.  If a function consumes more than N non-pointer\n"
+              <<"            Each newly created input group will be initialized to have N integer values. The default is to\n"
+              <<"            create 100 integer values per input group.  If a function consumes more than N non-pointer\n"
               <<"            values, the values after N are all zero.\n"
               <<"    --integer-modulus=N\n"
               <<"            Integer values are constrained to be in the range zero (inclusive) to N (exclusive).  The default\n"
@@ -140,7 +140,7 @@ main(int argc, char *argv[])
             lcg.reseed(id);
 
         // Generate integer input values
-        size_t pn = id % np; // non-pointer permutation number; zero means no permutation, but random values
+        size_t pn = id % np; // integer permutation number; zero means no permutation, but random values
         std::vector<uint64_t> integer_inputs;
         if (0==pn) {
             for (size_t i=0; i<opt.nintegers; ++i)
@@ -155,7 +155,7 @@ main(int argc, char *argv[])
                 size_t base_group_id = (id / np) * np; // input group that serves as the base
                 SqlDatabase::StatementPtr stmt = tx->statement("select val"
                                                                " from semantic_inputvalues"
-                                                               " where id=? and vtype='N'"
+                                                               " where id=? and vtype='I'"
                                                                " order by pos");
                 stmt->bind(0, base_group_id);
                 for (SqlDatabase::Statement::iterator result=stmt->begin(); result!=stmt->end(); ++result)
@@ -172,7 +172,7 @@ main(int argc, char *argv[])
                                                        " (id, vtype, pos, val, cmd) values (?, ?, ?, ?, ?)");
         for (size_t i=0; i<integer_inputs.size(); ++i) {
             stmt->bind(0, id);
-            stmt->bind(1, "N");
+            stmt->bind(1, "I");
             stmt->bind(2, i);
             stmt->bind(3, integer_inputs[i]);
             stmt->bind(4, cmd_id);
@@ -192,8 +192,9 @@ main(int argc, char *argv[])
         }
     }
 
-    std::string desc = "generated "+StringUtility::numberToString(opt.ngroups-first_id)+
-                       " input group"+(1==opt.ngroups-first_id?"":"s");
+    size_t ngenerated = opt.ngroups>first_id ? opt.ngroups-first_id : 0;
+    std::string desc = "generated "+StringUtility::numberToString(ngenerated)+
+                       " input group"+(1==ngenerated?"":"s");
     finish_command(tx, cmd_id, desc);
     tx->commit();
     std::cerr <<argv0 <<": " <<desc <<"\n";

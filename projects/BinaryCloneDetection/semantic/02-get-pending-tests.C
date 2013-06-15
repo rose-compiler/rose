@@ -27,9 +27,10 @@ usage(int exit_status)
               <<"            Restricts the number of input groups to be at most N.  The default is to consider all existing\n"
               <<"            input groups.\n"
               <<"    --first-fuzz=N\n"
-              <<"            Lowest numbered fuzz test to consider.  The default is zero."
+              <<"            Lowest numbered fuzz test to consider.  The default is zero.\n"
               <<"    --size=NINSNS\n"
               <<"            Select only functions that have at least NINSNS instructions.\n"
+              <<"\n"
               <<"    DATABASE\n"
               <<"            The name of the database to which we are connecting.  For SQLite3 databases this is just a local\n"
               <<"            file name that will be created if it doesn't exist; for other database drivers this is a URL\n"
@@ -101,7 +102,7 @@ main(int argc, char *argv[])
         constraints.push_back(s+")");
     }
     if (opt.ninsns>0)
-        constraints.push_back("size >= " + StringUtility::numberToString(opt.ninsns));
+        constraints.push_back("ninsns >= " + StringUtility::numberToString(opt.ninsns));
     std::string sql1 = "select id, specimen_id from semantic_functions";
     for (std::vector<std::string>::iterator i=constraints.begin(); i!=constraints.end(); ++i)
         sql1 += (i==constraints.begin()?" where ":" and ") + *i;

@@ -32,6 +32,15 @@ usage(int exit_status)
               <<"            content from the binary container file) is initialized by consuming the first integer input value\n"
               <<"            and using it to seed a linear congruential generator.  The default, --no-init-memory, causes\n"
               <<"            an input value to be consumed whenever an uninitialized memory location is read.\n"
+              <<"    --[no-]interactive\n"
+              <<"            With the \"--interactive\" switch, pressing control-C (or otherwise sending SIGINT to the\n"
+              <<"            process) will cause the process to finish executing the current test and then prompt the user\n"
+              <<"            on the tty whether it should checkpoint and/or terminate. The default is --no-interactive.\n"
+              <<"    --[no-]limit-inputs\n"
+              <<"            Controls whether or not a test is terminated when it attempts to consume more inputs than are\n"
+              <<"            available in the input group.  If \"--limit-inputs\" is specified, then the test is terminated\n"
+              <<"            and the FAULT_INPUT_LIMIT is noted in its output group.  The default is --no-limit-inputs, in\n"
+              <<"            which case the input group gives back zeros when it is exhausted.\n"
               <<"    --timeout=NINSNS\n"
               <<"            Any test for which more than NINSNS instructions are executed times out.  The default is 5000.\n"
               <<"            Tests that time out produce a fault output in addition to whatever normal output values were\n"
@@ -63,7 +72,7 @@ usage(int exit_status)
 }
 
 struct Switches {
-    Switches(): verbosity(SILENT), progress(false), pointers(false), checkpoint(600) {
+    Switches(): verbosity(SILENT), progress(false), pointers(false), checkpoint(600), interactive(false), limit_inputs(false) {
         params.timeout = 5000;
         params.verbosity = SILENT;
         params.follow_calls = false;
@@ -74,6 +83,8 @@ struct Switches {
     bool progress;
     bool pointers;
     time_t checkpoint;
+    bool interactive;
+    bool limit_inputs;
     PolicyParams params;
 };
 
@@ -115,7 +126,7 @@ sig_handler(int signo)
 }
 
 // Perform a pointer-detection analysis on the specified function. We'll need the results in order to determine whether a
-// function input should consume a pointer or a non-pointer from the input value set.
+// function input should consume a pointer or an integer from the input value set.
 static PointerDetector *
 detect_pointers(SgAsmFunction *func, const FunctionIdMap &function_ids, const Switches &opt)
 {
@@ -267,6 +278,14 @@ main(int argc, char *argv[])
             opt.params.init_memory = true;
         } else if (!strcmp(argv[argno], "--no-init-memory")) {
             opt.params.init_memory = false;
+        } else if (!strcmp(argv[argno], "--interactive")) {
+            opt.interactive = true;
+        } else if (!strcmp(argv[argno], "--no-interactive")) {
+            opt.interactive = false;
+        } else if (!strcmp(argv[argno], "--limit-inputs")) {
+            opt.limit_inputs = true;
+        } else if (!strcmp(argv[argno], "--no-limit-inputs")) {
+            opt.limit_inputs = false;
         } else if (!strncmp(argv[argno], "--timeout=", 10)) {
             opt.params.timeout = strtoull(argv[argno]+10, NULL, 0);
         } else if (!strcmp(argv[argno], "--pointers")) {
@@ -343,14 +362,17 @@ main(int argc, char *argv[])
     }
     std::cerr <<argv0 <<": " <<worklist.size() <<(1==worklist.size()?" test needs":" tests need") <<" to be run\n";
     Progress progress(worklist.size());
+    progress.force_output(opt.progress);
     OutputGroups ogroups; // do not load from database (that might take a very long time)
     
     // Set up the interrupt handler
-    struct sigaction sa;
-    sa.sa_handler = sig_handler;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART;
-    sigaction(SIGINT, &sa, NULL);
+    if (opt.interactive) {
+        struct sigaction sa;
+        sa.sa_handler = sig_handler;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_flags = SA_RESTART;
+        sigaction(SIGINT, &sa, NULL);
+    }
 
     // Process each item on the work list.
     typedef std::map<SgAsmFunction*, PointerDetector*> PointerDetectors;
@@ -402,6 +424,8 @@ main(int argc, char *argv[])
                 std::cerr <<argv0 <<": input group " <<work.igroup_id <<" is empty or does not exist\n";
                 exit(1);
             }
+            if (opt.limit_inputs)
+                igroup.limit_consumption(true);
         }
 
         // Find the function to test
@@ -450,19 +474,22 @@ main(int argc, char *argv[])
         // Update the database with the test results
         SqlDatabase::StatementPtr stmt = tx->statement("insert into semantic_fio"
                                                        // 0        1          2                  3
-                                                       " (func_id, igroup_id, pointers_consumed, nonpointers_consumed,"
-                                                       // 4                     5          6             7         8
-                                                       " instructions_executed, ogroup_id, elapsed_time, cpu_time, cmd)"
-                                                       " values (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                                                       " (func_id, igroup_id, pointers_consumed, integers_consumed,"
+                                                       // 4                     5          6
+                                                       " instructions_executed, ogroup_id, status,"
+                                                       // 7           8         9
+                                                       "elapsed_time, cpu_time, cmd)"
+                                                       " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         stmt->bind(0, work.func_id);
         stmt->bind(1, work.igroup_id);
         stmt->bind(2, igroup.pointers_consumed());
         stmt->bind(3, igroup.integers_consumed());
         stmt->bind(4, ogroup.ninsns);
         stmt->bind(5, ogroup_id);
-        stmt->bind(6, elapsed_time);
-        stmt->bind(7, cpu_time);
-        stmt->bind(8, cmd_id);
+        stmt->bind(6, ogroup.fault);
+        stmt->bind(7, elapsed_time);
+        stmt->bind(8, cpu_time);
+        stmt->bind(9, cmd_id);
         stmt->execute();
         ++ntests_ran;
 
@@ -502,8 +529,10 @@ main(int argc, char *argv[])
     }
 
     // Cleanup
-    if (!tx->is_terminated()) // we might have done a rollback above to indicate that we should do this checkpoint
+    if (!tx->is_terminated()) { // we might have done a rollback above to indicate that we should do this checkpoint
         tx = checkpoint(tx, ogroups, progress);
+        ntests_committed = ntests_ran;
+    }
     progress.clear();
     std::string desc = "ran "+StringUtility::numberToString(ntests_ran)+" test"+(1==ntests_ran?"":"s");
     if (ntests_committed!=ntests_ran)
