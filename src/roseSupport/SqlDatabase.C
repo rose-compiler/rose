@@ -1271,6 +1271,7 @@ Statement::iterator::get_str(size_t idx)
     return retval;
 }
 
+template<> NoColumn Statement::iterator::get<NoColumn>(size_t idx) { return NoColumn(); }
 template<> int32_t Statement::iterator::get<int32_t>(size_t idx) { return get_i32(idx); }
 template<> int64_t Statement::iterator::get<int64_t>(size_t idx) { return get_i64(idx); }
 template<> uint32_t Statement::iterator::get<uint32_t>(size_t idx) { return get_u32(idx); }
@@ -1333,10 +1334,34 @@ escape(const std::string &s, Driver driver)
 }
     
 
+std::ostream& operator<<(std::ostream &o, const NoColumn&) { return o; }
 std::ostream& operator<<(std::ostream &o, const Exception &x) { x.print(o); return o; }
 std::ostream& operator<<(std::ostream &o, const Connection &x) { x.print(o); return o; }
 std::ostream& operator<<(std::ostream &o, const Transaction &x) { x.print(o); return o; }
 std::ostream& operator<<(std::ostream &o, const Statement &x) { x.print(o); return o; }
 
+/*******************************************************************************************************************************
+ *                                      Tables
+ *******************************************************************************************************************************/
+
+std::string
+TimeRenderer::operator()(const time_t &value, size_t width) const
+{
+    char buf[256];
+    struct tm tm;
+    if (local_tz) {
+        if (NULL==localtime_r(&value, &tm))
+            return "(invalid time value)";
+    } else {
+        if (NULL==gmtime_r(&value, &tm))
+            return "(invalid time value)";
+    }
+    if (0==strftime(buf, sizeof buf, format.c_str(), &tm) && !format.empty())
+        return "(invalid format)";
+    return buf;
+}
+
+AddrRenderer addr8Renderer(8), addr16Renderer(16), addr32Renderer(32), addr64Renderer(64);
+TimeRenderer timeRenderer, dateRenderer("%F"), humanTimeRenderer("%c");
 
 } // namespace
