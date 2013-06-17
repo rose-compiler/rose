@@ -1374,10 +1374,10 @@ escape(const std::string &s, Driver driver)
             retval += "''";
         } else if ('\\'==s[i]) {
             has_backslash = true;
-            retval += POSTGRESQL==driver ? "\\\\" : "\\";
+            retval += "\\\\";
         } else if (!isprint(s[i])) {
             has_backslash = true;
-            retval += POSTGRESQL==driver ? "\\\\" : "\\";
+            retval += "\\";
             char buf[16];
             sprintf(buf, "%03o", (unsigned)s[i]);
             retval += buf;
