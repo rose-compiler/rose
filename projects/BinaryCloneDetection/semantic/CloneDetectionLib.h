@@ -144,20 +144,38 @@ class FilesTable {
 public:
     struct Row {
         Row(): in_db(false), id(-1) {}
-        Row(int id, const std::string &name, bool in_db): in_db(in_db), id(id), name(name) {}
+        Row(int id, const std::string &name, const std::string &digest, const std::string &ast_digest, bool in_db)
+            : in_db(in_db), id(id), name(name), digest(digest), ast_digest(ast_digest) {}
         bool in_db;
         int id;
         std::string name;
+        std::string digest;             // SHA1 of this file if it is's stored in the semantic_binaries table
+        std::string ast_digest;         // SHA1 hash of binary AST if it's stored in the semantic_binaries table
     };
     typedef std::map<int, Row> Rows;
     Rows rows;
     typedef std::map<std::string, int> NameIdx;
     NameIdx name_idx;
     int next_id;
-    
+
+    /** Constructor loads file information from the database. */
     FilesTable(const SqlDatabase::TransactionPtr &tx): next_id(0) { load(tx); }
+
+    /** Reload information from the database. */
     void load(const SqlDatabase::TransactionPtr &tx);
+
+    /** Save all unsaved files to the database. */
     void save(const SqlDatabase::TransactionPtr &tx);
+
+    /** Add or remove an AST for this file. Returns the SHA1 digest for the AST, which also serves as the key in the
+     *  semantic_binaries table. */
+    std::string save_ast(const SqlDatabase::TransactionPtr&, int64_t cmd_id, int file_id, SgProject*);
+
+    /** Load an AST from the database if it is saved there. Returns the SgProject or null. */
+    SgProject *load_ast(const SqlDatabase::TransactionPtr&, int file_id);
+
+    /** Add (or update) file content to the database. Returns the SHA1 digest for the file. */
+    std::string add_content(const SqlDatabase::TransactionPtr&, int64_t cmd_id, int file_id);
 
     void clear() {
         rows.clear();
@@ -1277,8 +1295,12 @@ public:
     }
 };
 
-// Open the specim binary and return its primary, most interesting interpretation
+/** Open the specimen binary file and return its primary, most interesting interpretation. */
 SgAsmInterpretation *open_specimen(const std::string &specimen_name, const std::string &argv0, bool do_link);
+
+/** Open a specimen that was already added to the database. Parse the specimen using the same flags as when it was added. This
+ * is the fallback method when an AST is not saved in the database. */
+SgProject *open_specimen(const SqlDatabase::TransactionPtr&, FilesTable&, int specimen_id, const std::string &argv0);
 
 /** Start the command by adding a new entry to the semantic_history table. Returns the hashkey ID for this command. */
 int64_t start_command(const SqlDatabase::TransactionPtr&, int argc, char *argv[], const std::string &desc, time_t begin=0);
@@ -1303,16 +1325,34 @@ IdFunctionMap missing_functions(const SqlDatabase::TransactionPtr&, CloneDetecti
 IdFunctionMap existing_functions(const SqlDatabase::TransactionPtr&, CloneDetection::FilesTable&,
                                  const std::vector<SgAsmFunction*> &functions);
 
-/** Save the binary representation of the AST into the database, overwriting any AST that was previously stored for the
- *  specified file. */
-void save_ast(const SqlDatabase::TransactionPtr&, int specimen_file_id, int64_t cmd_id);
+/** Save binary data in the database. The data is saved under a hashkey which is the 20-byte (40 hexadecimal characters)
+ *  SHA1 digest of the data.  The data is then split into chunks, encoded in base64, and saved one chunk per row in the
+ *  semantic_binaries table. The 40-character hash key is returned.
+ * @{ */
+std::string save_binary_data(const SqlDatabase::TransactionPtr &tx, int64_t cmd_id, const std::string &filename);
+std::string save_binary_data(const SqlDatabase::TransactionPtr &tx, int64_t cmd_id, const uint8_t *data, size_t nbytes);
+/** @} */
 
-/** Load the AST from the database.  Returns null if the AST is not stored in the database. */
-SgProject *load_ast(const SqlDatabase::TransactionPtr&, int specimen_file_id);
+/** Download binary data from the database.  The data is saved in the specified file, or a new file is created.  The name
+ *  of the file is returned.  The file will be empty if the specified hash key is not present in the database. */
+std::string load_binary_data(const SqlDatabase::TransactionPtr &tx, const std::string &hashkey, std::string filename="");
+
+/** Save the binary representation of the AST into the database A 40-character hash key is returned which identifies the
+ *  saved data. */
+std::string save_ast(const SqlDatabase::TransactionPtr&, int64_t cmd_id);
+
+/** Loads the specified AST from the database. Replaces any existing AST. */
+SgProject *load_ast(const SqlDatabase::TransactionPtr&, const std::string &hashkey);
 
 /** Identifying string for function.  Includes function address, and in angle brackets, the database function ID if known, the
  *  function name if known, and file name if known. */
 std::string function_to_str(SgAsmFunction*, const FunctionIdMap&);
+
+/** Compute a SHA1 digest from a buffer. */
+std::string compute_digest(const uint8_t *data, size_t size);
+
+/** Convert a 20-byte array to a hexadecimal string. */
+std::string digest_to_str(const unsigned char digest[20]);
 
 } // namespace
 #endif

@@ -1,21 +1,17 @@
 -- Schema for binary clone detection output
-
--- ********************************************************************************
--- *** WARNING:  This file is incorporated into C++ code and executed via the   ***
--- ***           sqlite3x library.  SQL commands should be separated from one   ***
--- ***           another by a blank line because sqlite3x silently truncates    ***
--- ***           executenonquery() calls that contain more than one statement!  ***
--- ********************************************************************************
+-- SQL contained herein should be written portably for either SQLite3 or PostgreSQL
 
 -- Clean up. Tables need to be dropped in the opposite order they're created.
+drop table if exists semantic_clusters;         -- The default name for the clusters table; not created in this SQL file
 drop table if exists semantic_clusters_tpl;
 drop table if exists semantic_funcsim;
 drop table if exists semantic_fio;
 drop table if exists semantic_sources;
 drop table if exists semantic_instructions;
 drop table if exists semantic_cg;
-drop table if exists semantic_ast;
+drop table if exists semantic_binaries;
 drop table if exists semantic_functions;
+drop table if exists semantic_specfiles;
 drop table if exists semantic_files;
 drop table if exists semantic_faults;
 drop table if exists semantic_outputvalues;
@@ -24,7 +20,7 @@ drop table if exists semantic_history;
 
 -- A history of the commands that were run to produce this database, excluding SQL run by the user.
 create table semantic_history (
-       hashkey bigint unique,                   -- nonsequential ID number to identify the command
+       hashkey bigint unique primary key,       -- nonsequential ID number to identify the command
        begin_time bigint,                       -- Approx time that command started (Unix time, seconds since epoch)
        end_time bigint,                         -- Approx time command ended, or zero if command terminated with failure
        notation text,                           -- Notation describing what action was performed
@@ -65,7 +61,16 @@ create table semantic_faults (
 -- List of files. The other tables store file IDs rather than file names.
 create table semantic_files (
        id integer primary key,                  -- unique positive file ID
-       name text                                -- file name
+       name text,                               -- file name
+       digest varchar(40),                      -- SHA1 digest if the file is stored in the semantic_binaries table
+       ast varchar(40)                          -- SHA1 digest of the binary AST if one is stored in the database
+);
+
+-- Associatations between a specimen and its dynamic libraries.  A "specimen" is a file that appeared as an argument
+-- to the 01-add-functions tool; the file_id is any other file (binary or otherwise) that's used by the specimen.
+create table semantic_specfiles (
+       specimen_id integer references semantic_files(id),
+       file_id integer references semantic_files(id)
 );
 
 -- A function is the unit of code that is fuzz tested.
@@ -105,11 +110,14 @@ create table semantic_instructions (
        cmd bigint references semantic_history(hashkey) -- command that created this row
 );
 
--- A binary version of the AST
-create table semantic_ast (
-       file_id integer references semantic_files(id),
+-- Table that holds base-64 encoded binary information.  Large binary information is split into smaller, more manageable
+-- chunks that are reassembled according to the 'pos' column.  The key used to look up data is a 20-byte (40 hexadecimal
+-- characters) SHA1 computed across all the chunks.
+create table semantic_binaries (
+       hashkey character(40),                   -- SHA1 hash across all the chunks with this hashkey
        cmd bigint references semantic_history(hashkey), -- command that created this row
-       content text                             -- base-64 encoding of the binary AST data ("blob"/"bytea" is not portable)
+       pos integer,                             -- chunk number for content
+       chunk text                               -- base-64 encoding of the binary data
 );
 
 -- List of source code.

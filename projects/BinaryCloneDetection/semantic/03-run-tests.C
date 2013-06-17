@@ -390,8 +390,9 @@ main(int argc, char *argv[])
         ++progress;
         WorkItem work = worklist.shift();
 
-        // Load the AST either from the database (if available) or by parsing the specimen. This is an expensive operation,
-        // so we do it only when the specimen changes, and we process the work list in specimen order.
+        // If we're switching to a new specimen then we need to reinitialize the AST, throwing away the old information and
+        // getting new information.  The new information comes from either a stored AST, or by extracting the binaries from
+        // the database and reparsing them, or by reparsing existing binaries (in that order of preference).
         if (work.specimen_id!=prev_work.specimen_id) {
             if (opt.verbosity>=LACONIC) {
                 progress.clear();
@@ -399,12 +400,20 @@ main(int argc, char *argv[])
                     std::cerr <<argv0 <<": " <<std::string(100, '#') <<"\n";
                 std::cerr <<argv0 <<": processing binary specimen \"" <<files.name(work.specimen_id) <<"\"\n";
             }
+
+            if (prev_work.specimen_id>=0)
+                SageInterface::deleteAST(SageInterface::getProject()); // is this the best way to delete a whole AST?
+
             progress.message("loading AST");
-            SgProject *project = CloneDetection::load_ast(tx, work.specimen_id);
+            SgProject *project = files.load_ast(tx, work.specimen_id);
+            progress.message("");
+
             if (!project) {
-                // The AST was not saved, so we need to reparse the specimen.
-                assert(!"not implemented yet"); abort();
+                progress.message("parsing specimen");
+                project = open_specimen(tx, files, work.specimen_id, argv0);
+                progress.message("");
             }
+
             std::vector<SgAsmFunction*> all_functions = SageInterface::querySubTree<SgAsmFunction>(project);
             functions = existing_functions(tx, files, all_functions);
             function_ids.clear();

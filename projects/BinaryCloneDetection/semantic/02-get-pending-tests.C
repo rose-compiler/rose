@@ -87,6 +87,16 @@ main(int argc, char *argv[])
         usage(1);
     SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(argv[argno++])->transaction();
 
+    // Sanity checks
+    if (0==tx->statement("select count(*) from semantic_functions")->execute_int()) {
+        std::cerr <<argv0 <<": database has no functions; nothing to test\n";
+        return 0;
+    }
+    if (0==tx->statement("select count(*) from semantic_inputvalues")->execute_int()) {
+        std::cerr <<argv0 <<": database has no input groups; nothing to test\n";
+        return 0;
+    }
+    
     // Create table tmp_functions containing IDs for selected functions and their specimen IDs
     std::vector<std::string> constraints;
     if (!opt.entry_vas.empty()) {

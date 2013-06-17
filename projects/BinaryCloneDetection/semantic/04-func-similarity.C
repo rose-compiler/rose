@@ -19,6 +19,14 @@ usage(int exit_status)
               <<"            The --delete switch causes all previous similarity information to be discarded and recalculated\n"
               <<"            from scratch. The default is to calculate similarity only for those pairs of functions for which\n"
               <<"            similarity has not been calculated already.\n"
+              <<"    --[no-]ignore-faults\n"
+              <<"            If --ignore-faults is specified, then any test that failed is ignored as if it never even ran.\n"
+              <<"            Ignoring failures can speed up the function similarity calculations, especially when output\n"
+              <<"            groups are large, because it avoids having to download failed output groups from the database\n"
+              <<"            server.  When failed tests aren't ignored (--no-ignore-faults) then the --ogroup algorithm\n"
+              <<"            decides how to compare those outputs, and those output group similarities are eventually\n"
+              <<"            folded into the similarity measure for the function pair whose outputs are being considered.\n"
+              <<"            The default is to not ignore faults.\n"
               <<"    --ogroup=ALGORITHM\n"
               <<"            Indicates the algorithm that should be used to compare output groups. These are the choices,\n"
               <<"            where \"valueset-jaccard\" is the default:\n"
@@ -60,10 +68,11 @@ enum Aggregation {
 };
 
 static struct Switches {
-    Switches(): recreate(false), output_cmp(OC_VALUESET_JACCARD), aggregation(AG_AVERAGE) {}
+    Switches(): recreate(false), output_cmp(OC_VALUESET_JACCARD), aggregation(AG_AVERAGE), ignore_faults(false) {}
     bool recreate;
     OutputComparison output_cmp;
     Aggregation aggregation;
+    bool ignore_faults;
 } opt;
 
 // Abstract base class for various methods of computing similarity between two output groups.  The class not only provides
@@ -168,7 +177,10 @@ load_function_outputs(const SqlDatabase::TransactionPtr &tx, CachedOutputs &all_
 {
     FunctionOutputs::iterator found = function_outputs.find(func_id);
     if (found==function_outputs.end()) {
-        SqlDatabase::StatementPtr stmt = tx->statement("select igroup_id, ogroup_id from semantic_fio where func_id = ?");
+        SqlDatabase::StatementPtr stmt = tx->statement("select igroup_id, ogroup_id"
+                                                       " from semantic_fio"
+                                                       " where func_id = ?"+
+                                                       std::string(opt.ignore_faults?" and status = 0":""));
         stmt->bind(0, func_id);
         CachedOutputs outputs;
         for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
@@ -230,7 +242,7 @@ main(int argc, char *argv[])
     }
 
     int argno = 1;
-    for (/*void*/; argno<argc && '-'==argv[argno][0]; ++argv) {
+    for (/*void*/; argno<argc && '-'==argv[argno][0]; ++argno) {
         if (!strcmp(argv[argno], "--")) {
             ++argno;
             break;
@@ -239,6 +251,8 @@ main(int argc, char *argv[])
         } else if (!strncmp(argv[argno], "--aggregate=", 12)) {
             if (!strcmp(argv[argno]+12, "average")) {
                 opt.aggregation = AG_AVERAGE;
+            } else if (!strcmp(argv[argno]+12, "maximum")) {
+                opt.aggregation = AG_MAXIMUM;
             } else {
                 std::cerr <<argv0 <<": unknown value for --aggregate switch: " <<argv[argno]+12 <<"\n"
                           <<argv0 <<": see --help for more info\n";
@@ -248,6 +262,10 @@ main(int argc, char *argv[])
             opt.recreate = true;
         } else if (!strcmp(argv[argno], "--no-delete")) {
             opt.recreate = false;
+        } else if (!strcmp(argv[argno], "--ignore-faults")) {
+            opt.ignore_faults = true;
+        } else if (!strcmp(argv[argno], "--no-ignore-faults")) {
+            opt.ignore_faults = false;
         } else if (!strncmp(argv[argno], "--ogroup=", 9)) {
             if (!strcmp(argv[argno]+9, "full-equality")) {
                 opt.output_cmp = OC_FULL_EQUALITY;

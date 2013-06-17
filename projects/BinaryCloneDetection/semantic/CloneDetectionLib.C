@@ -397,11 +397,13 @@ void
 FilesTable::load(const SqlDatabase::TransactionPtr &tx)
 {
     clear();
-    SqlDatabase::StatementPtr stmt = tx->statement("select id, name from semantic_files");
+    SqlDatabase::StatementPtr stmt = tx->statement("select id, name, digest, ast from semantic_files");
     for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
         int id = row.get<int>(0);
         std::string name = row.get<std::string>(1);
-        rows[id] = Row(id, name, true);
+        std::string digest = row.get<std::string>(2);
+        std::string ast_digest = row.get<std::string>(3);
+        rows[id] = Row(id, name, digest, ast_digest, true);
         name_idx[name] = id;
         next_id = std::max(next_id, id+1);
     }
@@ -410,12 +412,16 @@ FilesTable::load(const SqlDatabase::TransactionPtr &tx)
 void
 FilesTable::save(const SqlDatabase::TransactionPtr &tx)
 {
-    SqlDatabase::StatementPtr stmt = tx->statement("insert into semantic_files (id, name) values (?, ?)");
+    SqlDatabase::StatementPtr stmt = tx->statement("insert into semantic_files"
+                                                   // 0  1     2       3
+                                                   "(id, name, digest, ast) values (?, ?, ?, ?)");
     for (Rows::iterator ri=rows.begin(); ri!=rows.end(); ++ri) {
         assert(ri->second.id==ri->first);
         if (!ri->second.in_db) {
             stmt->bind(0, ri->first);
             stmt->bind(1, ri->second.name);
+            stmt->bind(2, ri->second.digest);
+            stmt->bind(3, ri->second.ast_digest);
             stmt->execute();
             ri->second.in_db = true;
         }
@@ -434,11 +440,55 @@ FilesTable::insert(const std::string &name)
     if (found!=name_idx.end())
         return found->second;
     int id = next_id++;
-    rows[id] = Row(id, name, false);
+    rows[id] = Row(id, name, "", "", false);
     name_idx[name] = id;
     return id;
 }
 
+std::string
+FilesTable::save_ast(const SqlDatabase::TransactionPtr &tx, int64_t cmd_id, int file_id, SgProject *ast)
+{
+    Rows::iterator found = rows.find(file_id);
+    assert(found!=rows.end());
+    if (!ast) {
+        found->second.ast_digest.clear();
+    } else {
+        found->second.ast_digest = CloneDetection::save_ast(tx, cmd_id);
+    }
+    if (found->second.in_db) {
+        tx->statement("update semantic_files set ast = ? where id = ?")
+            ->bind(0, found->second.ast_digest)
+            ->bind(1, file_id)
+            ->execute();
+    }
+    return found->second.ast_digest;
+}
+
+SgProject *
+FilesTable::load_ast(const SqlDatabase::TransactionPtr &tx, int file_id)
+{
+    Rows::iterator found = rows.find(file_id);
+    assert(found!=rows.end());
+    if (found->second.ast_digest.empty())
+        return NULL;
+    return CloneDetection::load_ast(tx, found->second.ast_digest);
+}
+
+std::string
+FilesTable::add_content(const SqlDatabase::TransactionPtr &tx, int64_t cmd_id, int file_id)
+{
+    Rows::iterator found = rows.find(file_id);
+    assert(found!=rows.end());
+    found->second.digest = save_binary_data(tx, cmd_id, found->second.name);
+    if (found->second.in_db) {
+        tx->statement("update semantic_files set digest = ? where id = ?")
+            ->bind(0, found->second.digest)
+            ->bind(1, file_id)
+            ->execute();
+    }
+    return found->second.digest;
+}
+    
 int
 FilesTable::id(const std::string &name) const
 {
@@ -453,6 +503,15 @@ FilesTable::name(int id) const
     Rows::const_iterator found = rows.find(id);
     assert(found!=rows.end());
     return found->second.name;
+}
+
+SgProject *
+open_specimen(const SqlDatabase::TransactionPtr &tx, FilesTable &files, int specimen_id, const std::string &argv0)
+{
+    bool do_link = 0 < (tx->statement("select count (*) from semantic_specfiles where specimen_id = ?")
+                        ->bind(0, specimen_id)->execute_int());
+    open_specimen(files.name(specimen_id), argv0, do_link);
+    return SageInterface::getProject();
 }
 
 SgAsmInterpretation *
@@ -685,39 +744,141 @@ existing_functions(const SqlDatabase::TransactionPtr &tx, CloneDetection::FilesT
     return retval;
 }
 
-void
-save_ast(const SqlDatabase::TransactionPtr &tx, int specimen_file_id, int64_t cmd_id)
+std::string
+digest_to_str(const unsigned char digest[20])
 {
+    std::string digest_str;
+    for (size_t i=20; i>0; --i) {
+        digest_str += "0123456789abcdef"[(digest[i-1] >> 4) & 0xf];
+        digest_str += "0123456789abcdef"[digest[i-1] & 0xf];
+    }
+    return digest_str;
+}
+
+std::string
+compute_digest(const uint8_t *data, size_t size)
+{
+#ifndef ROSE_HAVE_GCRYPT_H
+#error "libgcrypt is required"
+#endif
+    gcry_md_hd_t md; // message digest
+    gcry_error_t error __attribute__((unused)) = gcry_md_open(&md, GCRY_MD_SHA1, 0);
+    assert(GPG_ERR_NO_ERROR==error);
+    gcry_md_write(md, data, size);
+    assert(gcry_md_get_algo_dlen(GCRY_MD_SHA1)==20);
+    gcry_md_final(md);
+    unsigned char *d = gcry_md_read(md, GCRY_MD_SHA1);
+    assert(d!=NULL);
+    std::string hex = digest_to_str(d);
+    gcry_md_close(md);
+    return hex;
+}
+
+std::string
+save_binary_data(const SqlDatabase::TransactionPtr &tx, int64_t cmd_id, const std::string &filename)
+{
+    int fd = open(filename.c_str(), O_RDONLY);
+    assert(fd>=0);
+    struct stat sb;
+    int status __attribute__((unused)) = fstat(fd, &sb);
+    assert(status>=0);
+    const uint8_t *data = (const uint8_t*)mmap(NULL, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
+    assert(data!=MAP_FAILED);
+    close(fd);
+    std::string hashkey = save_binary_data(tx, cmd_id, data, sb.st_size);
+    munmap((void*)data, sb.st_size);
+    return hashkey;
+}
+
+std::string
+save_binary_data(const SqlDatabase::TransactionPtr &tx, int64_t cmd_id, const uint8_t *data, size_t size)
+{
+    std::string hashkey = compute_digest(data, size);
+    if (tx->statement("select count(*) from semantic_binaries where hashkey = ?")->bind(0, hashkey)->execute_int())
+        return hashkey; // already saved
+
+    // Store the base64-encoded chunks
+    SqlDatabase::StatementPtr stmt = tx->statement("insert into semantic_binaries"
+                                                   // 0       1    2    3
+                                                   "(hashkey, cmd, pos, chunk) values (?, ?, ?, ?)")
+                                     ->bind(0, hashkey)
+                                     ->bind(1, cmd_id);
+    size_t at=0, chunk_size=10*1024*1024, chunk_number=0;
+    while (at<size) {
+        size_t nbytes = std::min(chunk_size, size-at);
+        std::string chunk_base64 = StringUtility::encode_base64(data+at, nbytes);
+        stmt->bind(2, chunk_number++);
+        stmt->bind(3, chunk_base64);
+        stmt->execute();
+        at += nbytes;
+    }
+
+    return hashkey;
+}
+
+std::string
+load_binary_data(const SqlDatabase::TransactionPtr &tx, const std::string &hashkey, std::string filename)
+{
+    // Create the file where the biary data will be saved
+    assert(40==hashkey.size());
+    assert(std::string::npos==hashkey.find_first_not_of("0123456789abcdef"));
+    int fd = -1;
+    if (filename.empty()) {
+        char s[64];
+        strcpy(s, "/tmp/roseXXXXXX");
+        fd = mkstemp(s);
+        filename = s;
+    } else {
+        fd = open(filename.c_str(), O_CREAT|O_TRUNC|O_RDWR, 0666);
+    }
+    assert(fd>=0);
+
+    // Read, decode, and save the binary data.
+    SqlDatabase::StatementPtr stmt = tx->statement("select chunk from semantic_binaries where hashkey = ? order by pos")
+                                     ->bind(0, hashkey);
+    for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
+        std::vector<uint8_t> chunk_binary = StringUtility::decode_base64(row.get<std::string>(0));
+        ssize_t nwrite __attribute__((unused)) = write(fd, &chunk_binary[0], chunk_binary.size());
+        assert((size_t)nwrite==chunk_binary.size());
+    }
+
+    // Verify that the checksum is correct
+    struct stat sb;
+    int status __attribute__((unused)) = fstat(fd, &sb);
+    assert(status>=0);
+    const uint8_t *data = (const uint8_t*)mmap(NULL, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
+    assert(data!=MAP_FAILED);
+    std::string digest = compute_digest(data, sb.st_size);
+    munmap((void*)data, sb.st_size);
+    assert(0==digest.compare(hashkey));
+    close(fd);
+
+    return filename;
+}
+
+std::string
+save_ast(const SqlDatabase::TransactionPtr &tx, int64_t cmd_id)
+{
+    char filename[64];
+    sprintf(filename, "/tmp/roseXXXXXX");
+    int fd = mkstemp(filename);
+    assert(fd>=0);
+    close(fd);
     AST_FILE_IO::startUp(SageInterface::getProject());
-    std::string s = AST_FILE_IO::writeASTToString();
-    std::vector<uint8_t> s_binary(s.begin(), s.end());
-    std::string s_base64 = StringUtility::encode_base64(s_binary);
-    tx->statement("delete from semantic_ast where file_id = ?")
-        ->bind(0, specimen_file_id)
-        ->execute();
-    tx->statement("insert into semantic_ast (file_id, content, cmd) values (?, ?, ?)")
-        ->bind(0, specimen_file_id)
-        ->bind(1, s_base64)
-        ->bind(2, cmd_id)
-        ->execute();
+    AST_FILE_IO::writeASTToFile(filename);
+    std::string hashkey = save_binary_data(tx, cmd_id, filename);
+    unlink(filename);
+    return hashkey;
 }
 
 SgProject *
-load_ast(const SqlDatabase::TransactionPtr &tx, int specimen_file_id)
+load_ast(const SqlDatabase::TransactionPtr &tx, const std::string &hashkey)
 {
-    SqlDatabase::StatementPtr stmt = tx->statement("select content from semantic_ast where file_id = ?");
-    stmt->bind(0, specimen_file_id);
-    SqlDatabase::Statement::iterator row = stmt->begin();
-    if (row==stmt->end())
-        return NULL;
-    std::string s_base64 = row.get<std::string>(0);
-    std::vector<uint8_t> s_binary = StringUtility::decode_base64(s_base64);
-    std::string s(s_binary.begin(), s_binary.end());
-    ++row;
-    assert(row==stmt->end()); // table should have only one row for the AST
-
+    std::string filename = load_binary_data(tx, hashkey);
     AST_FILE_IO::clearAllMemoryPools();
-    SgProject *project = AST_FILE_IO::readASTFromString(s);
+    SgProject *project = AST_FILE_IO::readASTFromFile(filename);
+    unlink(filename.c_str());
+    assert(project==SageInterface::getProject());
     return project;
 }
 
@@ -777,12 +938,5 @@ InputGroup::load(const SqlDatabase::TransactionPtr &tx, int igroup_id)
 
     return size()!=0;
 }
-
-
-
-        
-        
-
-
 
 } // namespace

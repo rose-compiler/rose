@@ -135,7 +135,9 @@ main(int argc, char *argv[])
     unsigned first_id = tx->statement("select coalesce(max(id),-1)+1 from semantic_inputvalues")->execute_int();
     std::vector<uint64_t> permutation_base;
     size_t np = Combinatorics::factorial(opt.permute_integers); // number of possible permutations
+    Progress progress(opt.ngroups);
     for (unsigned id=first_id; id<opt.ngroups; ++id) {
+        ++progress;
         if (opt.seed!=-1)
             lcg.reseed(id);
 
@@ -191,6 +193,7 @@ main(int argc, char *argv[])
             stmt->execute();
         }
     }
+    progress.clear();
 
     size_t ngenerated = opt.ngroups>first_id ? opt.ngroups-first_id : 0;
     std::string desc = "generated "+StringUtility::numberToString(ngenerated)+

@@ -59,6 +59,11 @@ noinst_PROGRAMS += 06-list-clusters
 06_list_clusters_CPPFLAGS = $(ROSE_INCLUDES)
 06_list_clusters_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+noinst_PROGRAMS += 06-list-function
+06_list_function_SOURCES = 06-list-function.C
+06_list_function_CPPFLAGS = $(ROSE_INCLUDES)
+06_list_function_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 
 
 ## noinst_PROGRAMS += CloneDetection

@@ -22,7 +22,8 @@ usage(int exit_status)
               <<"    --[no-]save-ast\n"
               <<"            The --save-ast switch causes a binary version of the AST to be saved in the database.  This\n"
               <<"            AST will be read by other specimen-processing commands rather than reparsing the specimen.\n"
-              <<"            The default is to save the AST in the database.\n"
+              <<"            The default is to not save the AST in the database because not all necessary binary information\n"
+              <<"            is saved (MemoryMaps for instance, are not part of the AST).\n"
               <<"    DATABASE\n"
               <<"            The name of the database to which we are connecting.  For SQLite3 databases this is just a local\n"
               <<"            file name that will be created if it doesn't exist; for other database drivers this is a URL\n"
@@ -33,7 +34,7 @@ usage(int exit_status)
 }
 
 struct Switches {
-    Switches(): link(false), save_ast(true) {}
+    Switches(): link(false), save_ast(false) {}
     bool link, save_ast;
 };
 
@@ -44,16 +45,6 @@ static struct InstructionSelector: SgAsmFunction::NodeSelector {
 static struct DataSelector: SgAsmFunction::NodeSelector {
     virtual bool operator()(SgNode *node) { return isSgAsmStaticData(node)!=NULL; }
 } dselector;
-
-static std::string
-digest_to_str(const unsigned char digest[20]) {
-    std::string digest_str;
-    for (size_t i=20; i>0; --i) {
-        digest_str += "0123456789abcdef"[(digest[i-1] >> 4) & 0xf];
-        digest_str += "0123456789abcdef"[digest[i-1] & 0xf];
-    }
-    return digest_str;
-}
 
 // Returns true if the file looks like text
 static bool
@@ -302,10 +293,9 @@ main(int argc, char *argv[])
         if (srcinfo.file_id>=0)
             files.insert(Sg_File_Info::getFilenameFromID(srcinfo.file_id));
     }
-    files.save(tx); // needs to be saved before we write the semantic_functions table's foreign keys
+    files.save(tx); // needs to be saved before we write foriegn keys into the semantic_functions table
 
-
-
+    // Process each function
     SqlDatabase::StatementPtr stmt1 = tx->statement("insert into semantic_functions"
                                                     // 0   1         2     3        4            5
                                                     " (id, entry_va, name, file_id, specimen_id, ninsns,"
@@ -357,18 +347,44 @@ main(int argc, char *argv[])
         }
     }
 
+    // Save specimen information
     if (!functions_to_add.empty()) {
         save_source_files(tx, cmd_id);
         save_call_graph(tx, cmd_id, interp, files, all_functions);
         if (opt.save_ast) {
             std::cerr <<argv0 <<": saving AST\n";
-            save_ast(tx, specimen_id, cmd_id);
+            files.save_ast(tx, cmd_id, specimen_id, SageInterface::getProject());
         }
     }
+
+    // Add binary files to the database and populate the semantic_specfiles table
+    std::cerr <<argv0 <<": saving specimen-related binary files\n";
+    struct T1: AstSimpleProcessing {
+        SqlDatabase::TransactionPtr &tx;
+        FilesTable &files;
+        int64_t cmd_id;
+        int specimen_id;
+        T1(SqlDatabase::TransactionPtr &tx, FilesTable &files, int64_t cmd_id, int specimen_id)
+            : tx(tx), files(files), cmd_id(cmd_id), specimen_id(specimen_id) {}
+        void visit(SgNode *node) {
+            if (SgAsmGenericFile *file = isSgAsmGenericFile(node)) {
+                int file_id = files.id(file->get_name());
+                files.add_content(tx, cmd_id, file_id);
+                if (file_id!=specimen_id) {
+                    tx->statement("insert into semantic_specfiles (specimen_id, file_id) values (?, ?)")
+                        ->bind(0, specimen_id)
+                        ->bind(1, file_id)
+                        ->execute();
+                }
+            }
+        }
+    };
+    T1(tx, files, cmd_id, specimen_id).traverse(SageInterface::getProject(), preorder);
 
     finish_command(tx, cmd_id,
                    "added "+StringUtility::numberToString(functions_to_add.size())+
                    " function"+(1==functions_to_add.size()?"":"s"));
+    files.save(tx);
     tx->commit();
     std::cout <<specimen_id <<"\n";
     return 0;
