@@ -119,12 +119,60 @@ ConnectionImpl::~ConnectionImpl()
     }
 }
 
+#ifdef ROSE_HAVE_SQLITE3
+// Parse an sqlite3 URL of the form:
+//    sqlite3://[FILENAME][?PARAM1[=VALUE1]&...]
+// The only parameter that's currently understood is "debug", which turns on the debug property for the connection.
+static std::string
+sqlite3_parse_url(const std::string &src, bool *has_debug/*in,out*/)
+{
+    std::string dbname;
+    size_t at1 = 0;
+    if (0!=src.substr(at1, 10).compare("sqlite3://"))
+        throw Exception("malformed SQLite3 connection URL: missing \"sqlite3://\"");
+    at1 = 10;
+
+    // Database name is everything up to the next '?' or end of string
+    size_t at2 = src.find_first_of('?', at1);
+    if (at2==std::string::npos) {
+        dbname = src.substr(at1);
+        at1 = src.size();
+    } else {
+        dbname = src.substr(at1, at2-at1);
+        at1 = at2;
+    }
+
+    // Parameters
+    if (at1<src.size() && '?'==src[at1]) {
+        ++at1;
+        while (at1<src.size()) {
+            at2 = src.find_first_of('&');
+            std::string param;
+            if (at2==std::string::npos) {
+                param = src.substr(at1);
+                at1 = src.size();
+            } else {
+                param = src.substr(at1, at2-at1);
+                at1 = at2 + 1;
+            }
+            if (0==param.compare("debug")) {
+                if (has_debug!=NULL)
+                    *has_debug = true;
+            } else {
+                throw Exception("invalid SQLite3 parameter: "+param);
+            }
+        }
+    }
+    return dbname;
+}
+#endif
+
 #ifdef ROSE_HAVE_LIBPQXX
 // Documentation for lipqxx says pqxx::connection's argument is whatever libpq connect takes, but apparently URLs don't work.
 // This function converts a postgresql connection URL into an old-style libpq connection string.  A url is of the form:
-//    postgresql://[USER[:PASSWORD]@][NETLOC][:PORT][/DBNAME][?PARAM1=VALUE1&...]
+//    postgresql://[USER[:PASSWORD]@][NETLOC][:PORT][/DBNAME][?PARAM1[=VALUE1]&...]
 // The has_debug argument is set if a "debug" parameter is found.
-std::string
+static std::string
 postgres_parse_url(const std::string &src, bool *has_debug/*in,out*/)
 {
     std::string user, password, netloc, port, dbname;
@@ -249,7 +297,15 @@ ConnectionImpl::conn_for_transaction()
                 sqlite3_connections.resize(pending.size(), NULL);
             }
             if (sqlite3_connections[retval]==NULL) {
-                sqlite3_connections[retval] = new sqlite3x::sqlite3_connection(open_spec.c_str());
+                bool has_debug_param = false;
+                std::string specs = 0==open_spec.substr(0, 10).compare("sqlite3://") ?
+                                    sqlite3_parse_url(open_spec, &has_debug_param) :
+                                    open_spec;
+                if (has_debug_param && debug==NULL)
+                    debug = stderr;
+                if (debug && 0==retval)
+                    fprintf(debug, "SqlDatabase::Connection: SQLite3 open spec: %s\n", specs.c_str());
+                sqlite3_connections[retval] = new sqlite3x::sqlite3_connection(specs.c_str());
                 sqlite3_connections[retval]->busy_timeout(15*60*1000); // 15 minutes
             }
             ++pending[retval];
