@@ -462,8 +462,11 @@ namespace StringUtility
 
        /** Convert binary data to base-64. The base64 number system uses the characters A-Z, a-z, 0-9, +, and / (in that
         * order). The returned string does not include linefeeds.  If @p do_pad is true then '=' characters may appear at the
-        * end to make the total length a multiple of four. */
+        * end to make the total length a multiple of four.
+        * @{ */
        std::string encode_base64(const std::vector<uint8_t> &data, bool do_pad=true);
+       std::string encode_base64(const uint8_t *data, size_t nbytes, bool do_padd=true);
+       /** @} */
 
        /** Convert base-64 to binary. */
        std::vector<uint8_t> decode_base64(const std::string &encoded);

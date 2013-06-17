@@ -1592,10 +1592,16 @@ StringUtility::add_to_reason_string(std::string &result, bool isset, bool do_pad
 std::string
 StringUtility::encode_base64(const std::vector<uint8_t> &data, bool do_pad)
 {
+    return encode_base64(&data[0], data.size(), do_pad);
+}
+
+std::string
+StringUtility::encode_base64(const uint8_t *data, size_t nbytes, bool do_pad)
+{
     static const char *digits = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     std::string s;
     unsigned val = 0; // only low-order 24 bits used
-    for (size_t i=0; i<data.size(); ++i) {
+    for (size_t i=0; i<nbytes; ++i) {
         switch (i%3) {
             case 0:
                 val = IntegerOps::shiftLeft2<unsigned>(data[i], 16);
@@ -1612,7 +1618,7 @@ StringUtility::encode_base64(const std::vector<uint8_t> &data, bool do_pad)
                 break;
         }
     }
-    switch (data.size() % 3) {
+    switch (nbytes % 3) {
         case 0:
             break;
         case 1:
