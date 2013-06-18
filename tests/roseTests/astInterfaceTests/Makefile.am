@@ -7,7 +7,7 @@ INCLUDES =  \
         $(ROSE_INCLUDES) \
         -I$(top_srcdir)/src/frontend/SageIII/sageInterface
 # We install a few test programs since they might be useful for external users
-bin_PROGRAMS = loopInterchange loopUnrolling loopTiling
+bin_PROGRAMS = loopInterchange loopUnrolling loopTiling loopCollapsing
 
 #not for installation
 noinst_PROGRAMS = \
@@ -82,6 +82,7 @@ insertBeforeUsingCommaOp_SOURCES         = insertBeforeUsingCommaOp.C
 insertAfterUsingCommaOp_SOURCES          = insertAfterUsingCommaOp.C
 deepCopy_SOURCES                         = deepCopy.C
 
+loopCollapsing_SOURCES                    = loopCollapsing.C
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
 
@@ -141,7 +142,8 @@ generatedCodeExamples = \
   rose_inputreplaceWithPattern.C \
   rose_inputinsertBeforeUsingCommaOp.C \
   rose_inputinsertAfterUsingCommaOp.C \
-  rose_inputdeepCopy.C
+  rose_inputdeepCopy.C\
+  rose_inputloopCollapsing.C 
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -295,6 +297,20 @@ rose_inputloopUnrolling.C:loopUnrolling
 	./loopUnrolling$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopUnrolling.C -rose:loopunroll:abstract_handle "Statement<position,6>" -rose:loopunroll:factor 3 -rose:output rose_inputloopUnrolling2.C
 endif
 
+if ROSE_USE_INDENT
+rose_inputloopCollapsing.C:loopCollapsing
+	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopunroll:abstract_handle "Statement<position,5>" -rose:loopunroll:factor 3 && indent rose_inputloopCollapsing.C
+	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopunroll:abstract_handle "Statement<position,6>" -rose:loopunroll:factor 5 -rose:output rose_inputloopCollapsing1.C && indent rose_inputloopCollapsing1.C 
+	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopunroll:abstract_handle "Statement<position,6>" -rose:loopunroll:factor 3 -rose:output rose_inputloopCollapsing2.C && indent rose_inputloopCollapsing2.C
+else
+# This case is required for platforms where we test ROSE, and which sometimes don't have "indent" available.
+rose_inputloopCollapsing.C:loopCollapsing
+	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopunroll:abstract_handle "Statement<position,5>" -rose:loopunroll:factor 3
+	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopunroll:abstract_handle "Statement<position,6>" -rose:loopunroll:factor 5 -rose:output rose_inputloopCollapsing1.C
+	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopunroll:abstract_handle "Statement<position,6>" -rose:loopunroll:factor 3 -rose:output rose_inputloopCollapsing2.C
+endif
+
+
 # interchange the first loop within the input file, interchange depth is 4, lexicographical order is 1.
 rose_inputloopInterchange.C:loopInterchange
 	./loopInterchange$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopInterchange.C -rose:loopInterchange:abstract_handle "ForStatement<numbering,1>" -rose:loopInterchange:depth 4 -rose:loopInterchange:order 1 
@@ -350,7 +366,7 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputgenerateUniqueName.C inputannotateExpressionsWithUniqueNames.C \
        inputbuildExternalStatement.f inputbuildCommonBlock.f inputdoLoopNormalization.f \
        inputbuildLabelStatement2.f inputreplaceWithPattern.C inputinsertBeforeUsingCommaOp.C \
-       inputinsertAfterUsingCommaOp.C inputdeepCopy.C inputfixVariableReferences.C
+       inputinsertAfterUsingCommaOp.C inputdeepCopy.C inputfixVariableReferences.C inputloopCollapsing.C
 
 
 check-local:

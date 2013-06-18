@@ -16189,4 +16189,208 @@ SageInterface::collectSourceSequenceNumbers( SgNode* astNode )
     
   }
 
+//Winnie, loop collapse
+#ifndef USE_ROSE
+bool SageInterface::loopCollapsing(SgForStatement* target_loop, size_t collapsing_factor)
+{
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+  //Handle 0 and 1, which means no collapsing at all
+    if (collapsing_factor <= 1)
+        return true;
+    // grab the target loop's essential header information
+
+    SgInitializedName* ivar[collapsing_factor];
+    SgExpression* lb[collapsing_factor];
+    SgExpression* ub[collapsing_factor];
+    SgExpression* step[collapsing_factor];
+    SgStatement* orig_body[collapsing_factor]; 
+
+    //Winnie, get loops info first
+
+    std::vector<SgForStatement* > loops= SageInterface::querySubTree<SgForStatement>(target_loop,V_SgForStatement);
+    ROSE_ASSERT(loops.size()>=collapsing_factor);
+ 
+    SgForStatement* temp_target_loop = NULL;
+
+    //Winnie, upbound
+    SgExpression* ub_exp = buildMultiplyOp(buildIntVal(1),buildIntVal(1));
+    //Winnie, header information for inner loops
+    for(size_t i = 0; i < collapsing_factor; i ++)
+    {
+        ivar[i] = NULL;
+        lb[i] = NULL;
+        ub[i] = NULL;
+        step[i] = NULL;
+        orig_body[i] = NULL;
+
+        temp_target_loop = loops[i]; 
+
+        // normalize the target loop first  // adjust to numbering starting from 0
+        forLoopNormalization(temp_target_loop);
+ 
+
+        if (!isCanonicalForLoop(temp_target_loop, &ivar[i], &lb[i], &ub[i], &step[i], &orig_body[i]))
+        {
+            cerr<<"Error in SageInterface::loopCollapsing(): target loop is not canonical."<<endl;
+            dumpInfo(target_loop);
+            return false;
+        }
+        
+        ROSE_ASSERT(ivar[i]&& lb[i] && ub[i] && step[i]);
+
+        ub[i] = buildAddOp(ub[i],buildIntVal(1));  //Winnie, ub and range does not equal after normalization
+        ub_exp = buildMultiplyOp(ub_exp, ub[i]);    //Winnie, build up the final upper bound
+
+    }
+
+    //Winnie, try to remove var declarations, does not work now
+    SgProject* project = SageInterface::getProject();
+    Rose_STL_Container<SgNode*> queryResult = NodeQuery::querySubTree(project,V_SgDeclarationStatement);
+    for (Rose_STL_Container<SgNode*>::const_iterator iter = queryResult.begin(); iter!= queryResult.end(); iter++)
+    {
+        SgNode* cur_node = *iter;
+        SgVariableDeclaration* cur_stmt =  isSgVariableDeclaration(cur_node); //Winnie, is this really return only variable declaration statements?
+
+    //    if(cur_stmt != NULL);
+    //     removeStatement(cur_stmt);
+    }
+
+    //Winnie, declare a brand new var as the new index
+   SgScopeStatement* scope = target_loop->get_scope();
+   ROSE_ASSERT(scope != NULL);
+   string ivar_name = "_new_index";
+   SgVariableDeclaration* loop_index_decl = buildVariableDeclaration(ivar_name, buildIntType(),NULL, scope);
+   insertStatementBefore(target_loop, loop_index_decl);
+   // init statement of the loop header, copy the lower bound
+   SgStatement* init_stmt = buildAssignStatement(buildVarRefExp(ivar_name,scope), copyExpression(lb[0]));  //Winnie, lb[i-1]??
+  
+  
+/*
+* Winnie, start from here is specific loopunrolling work
+*/  
+//Winnie, end here, build nodes for new lower bound and upper bound
+
+//Winnie, we need to build nodes for new lb and ub as well
+
+
+
+/*
+*Winnie, seems like hanlding fringe part
+*/
+//Winnie, seems an end of fringe part
+
+//Winnie, new ub because of fringe
+
+//Winnie, we need to build new ub because of loopCollapsing, i*j
+
+/*
+*Winnie, start handling step
+*/
+//Winnie, step isPlus flag
+/*
+   SgBinaryOp* step_bin_op = isSgBinaryOp(step[0]->get_parent());
+   ROSE_ASSERT(step_bin_op != NULL);
+   step_bin_op->set_rhs_operand(copyExpression(step[collapsing_factor-1]));
+
+   bool isPlus = false;
+   if (isSgPlusAssignOp(step_bin_op))
+     isPlus = true;
+    else if (isSgMinusAssignOp(step_bin_op))
+      isPlus = false;
+    else
+    {
+      cerr<<"Error in SageInterface::loopUnrolling(): illegal incremental exp of a canonical loop"<<endl;
+      dumpInfo(step_bin_op);
+      ROSE_ASSERT(false);
+    }
+
+*/
+//Winnie, end of loop unrolling body copy
+
+
+     SgBasicBlock* body = isSgBasicBlock(deepCopy(temp_target_loop->get_loop_body())); // normalized loop has a BB body
+     ROSE_ASSERT(body);
+     SgExpression* new_exp = NULL;
+     SgExpression* ub_temp = ub_exp;
+     SgExpression* remain_temp= buildVarRefExp(ivar_name, scope);
+      
+     for(int i = 0; i < collapsing_factor - 1; i ++)     //Winnie, pass expressions one by one, instead of one whole statement. So, this one should be the outer loop
+     {  
+        //build replacement  expression if it is NULL //Winnie, for one var, only need to build expression once
+            if (new_exp == NULL)
+            {
+	        	ub_temp = buildDivideOp(copyExpression(ub_temp),copyExpression(ub[i]));
+                new_exp = buildDivideOp(copyExpression(remain_temp), copyExpression(ub_temp));
+		        remain_temp = buildModOp(copyExpression(remain_temp), copyExpression(ub_temp)); 
+            } 
+        	std::vector<SgVarRefExp*> refs = querySubTree<SgVarRefExp> (body, V_SgVarRefExp);
+            for (std::vector<SgVarRefExp*>::iterator iter = refs.begin(); iter !=refs.end(); iter++)
+            {
+                SgVarRefExp* refexp = *iter;
+	            if (refexp->get_symbol()==ivar[i]->get_symbol_from_symbol_table())
+                {
+                    // replace it with the right one
+                    replaceExpression(refexp, copyExpression(new_exp));
+                }
+            }
+
+	        new_exp = NULL;
+     }
+
+	//Winnie, modify ivar[collapsing_factor - 1]
+	 std::vector<SgVarRefExp*> refs = querySubTree<SgVarRefExp> (body, V_SgVarRefExp);
+     for (std::vector<SgVarRefExp*>::iterator iter = refs.begin(); iter !=refs.end(); iter++)
+     {
+        SgVarRefExp* refexp = *iter;
+
+	    if (refexp->get_symbol()==ivar[collapsing_factor - 1]->get_symbol_from_symbol_table())
+           {
+            //build replacement  expression if it is NULL
+            if (new_exp == NULL)
+            {
+               new_exp = buildModOp(buildVarRefExp(ivar_name,scope),copyExpression(ub[collapsing_factor - 1]));
+
+            }
+            // replace it with the right one
+            replaceExpression(refexp, new_exp);
+           }
+        }
+
+    //Winnie, build the new step expression
+    SgExpression* incr_exp = buildPlusAssignOp(buildVarRefExp(ivar_name, scope), copyExpression(step[collapsing_factor-1])); 
+
+   //Winnie, build the new conditional expression/ub
+    SgExprStatement* cond_stmt = NULL;
+    if (isSgBinaryOp(ub_exp))
+    {
+        ub_exp = buildSubtractOp(ub_exp, buildIntVal(1));
+        cond_stmt = buildExprStatement(buildLessOrEqualOp(buildVarRefExp(ivar_name,scope),copyExpression(ub_exp)));
+    }
+    else
+    {
+        cerr<<"Error: illegal condition expression for a canonical loop"<<endl;
+        dumpInfo(ub_exp);
+         ROSE_ASSERT(false);
+    }
+    ROSE_ASSERT(cond_stmt != NULL);
+
+  
+    SgForStatement* new_loop = buildForStatement(init_stmt, cond_stmt,incr_exp, body);  //Winnie, add in the new block!
+    insertStatementBefore(target_loop, new_loop);
+    removeStatement(target_loop);
+
+    //Winnie, try this one to remove original index declarations //still doesn't work
+    //  clearUnusedVariableSymbols(); 
+   
+   // constant folding for the transformed AST
+   ConstantFolding::constantFoldingOptimization(scope,false);   //Winnie, what's this?
+   //ConstantFolding::constantFoldingOptimization(getProject(),false);
+
+    #endif
+
+    return true;
+}
+
+#endif
+
 
