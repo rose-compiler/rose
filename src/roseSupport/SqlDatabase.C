@@ -188,7 +188,7 @@ postgres_parse_url(const std::string &src, bool *has_debug/*in,out*/)
         size_t colon = src.find_first_of(':', at1);
         if (colon!=std::string::npos && colon<atsign) {
             user = src.substr(at1, colon-at1);
-            password = src.substr(colon+1, atsign-colon);
+            password = src.substr(colon+1, atsign-colon-1);
         } else {
             user = src.substr(at1, atsign-at1);
         }
@@ -367,7 +367,19 @@ ConnectionImpl::dec_pending(size_t idx)
 
 #ifdef ROSE_HAVE_LIBPQXX
         case POSTGRESQL: {
-            // keep the connection around in case we need it later
+            // Once a transaction is committed or rolled back the connection is no good for anything else; we can't
+            // create more transactions on that connection.
+            if (0==pending[idx]) {
+#if 0 // Disabled; leaking memory [Robb P. Matzke 2013-06-17]
+                // The delete is commented out because it segfaults if its transaction was rolled back. Valgrind says
+                // this is happening down in libpqxx. The bug can be exhibited by opening a SqlDatabase::Connection,
+                // creating two SqlDatabase::Transactions (thus two different postgres connections and two postgresql
+                // transactions), committing the first transactions, and rolling back the second transaction. Both the
+                // commit and the rollback execute this code, but the rollback dies with a segfault in libpqxx.
+                delete postgres_connections[idx];
+#endif
+                postgres_connections[idx] = NULL;
+            }
             break;
         }
 #endif
@@ -474,6 +486,7 @@ public:
     void commit();
     bool is_terminated() const;
     Driver driver() const;
+    void print(std::ostream&) const;
 
     ConnectionPtr conn;         // Reference to the connection, or null when terminated
     size_t drv_conn_idx;        // index of driver connection number
@@ -596,6 +609,13 @@ void
 TransactionImpl::rollback()
 {
     assert(!is_terminated());
+    if (debug) {
+        std::ostringstream ss;
+        ss <<"connection: " <<*conn <<"\n";
+        ss <<"transaction: "; print(ss);
+        fprintf(debug, "SqlDatabase: rolling back transaction\n%s\n", StringUtility::prefixLines(ss.str(), "    ").c_str());
+    }
+    
     switch (driver()) {
 #ifdef ROSE_HAVE_SQLITE3
         case SQLITE3: {
@@ -629,6 +649,13 @@ void
 TransactionImpl::commit()
 {
     assert(!is_terminated());
+    if (debug) {
+        std::ostringstream ss;
+        ss <<"connection: " <<*conn <<"\n";
+        ss <<"transaction: "; print(ss);
+        fprintf(debug, "SqlDatabase: committing transaction\n%s\n", StringUtility::prefixLines(ss.str(), "    ").c_str());
+    }
+
     switch (driver()) {
 #ifdef ROSE_HAVE_SQLITE3
         case SQLITE3: {
@@ -661,6 +688,12 @@ bool
 TransactionImpl::is_terminated() const
 {
     return conn==NULL;
+}
+
+void
+TransactionImpl::print(std::ostream &o) const
+{
+    o <<"connection number " <<drv_conn_idx;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -758,7 +791,7 @@ void
 Transaction::print(std::ostream &o) const
 {
     assert(impl!=NULL);
-    o <<"connection number " <<impl->drv_conn_idx;
+    impl->print(o);
 }
 
 
@@ -787,6 +820,7 @@ public:
     StatementPtr bind(const StatementPtr &stmt, size_t idx, const std::string&);
     std::string expand();
     size_t begin(const StatementPtr &stmt);
+    void print(std::ostream&) const;
     TransactionPtr tranx;
     std::string sql;            // with '?' placeholders
     std::string sql_expanded;   // with '?' placeholders expanded to bound values
@@ -930,8 +964,12 @@ StatementImpl::begin(const StatementPtr &stmt)
     sql_expanded = expand();
     execution_seq += 1;
     row_num = 0;
-    if (debug)
-        fprintf(debug, "SqlDatabase: executing:\n%s\n", StringUtility::prefixLines(sql_expanded, "    |").c_str());
+    if (debug) {
+        std::ostringstream ss;
+        ss <<"connection: " <<*tranx->impl->conn <<"\ntransaction: " <<*tranx <<"\n";
+        print(ss);
+        fprintf(debug, "SqlDatabase: executing\n%s\n", StringUtility::prefixLines(ss.str(), "    ").c_str());
+    }
 
     switch (driver()) {
 #ifdef ROSE_HAVE_SQLITE3
@@ -978,6 +1016,15 @@ StatementImpl::begin(const StatementPtr &stmt)
     }
 
     return execution_seq;
+}
+
+void
+StatementImpl::print(std::ostream &o) const
+{
+    if (0!=sql.compare(sql_expanded))
+        o <<"original SQL:\n" <<StringUtility::prefixLines(sql, "    |") <<"\n";
+    if (!sql_expanded.empty())
+        o <<"executed SQL:\n" <<StringUtility::prefixLines(sql_expanded, "    |") <<"\n";
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1049,10 +1096,7 @@ void
 Statement::print(std::ostream &o) const
 {
     assert(impl!=NULL);
-    if (0!=impl->sql.compare(impl->sql_expanded))
-        o <<"original SQL:\n" <<StringUtility::prefixLines(impl->sql, "    |") <<"\n";
-    if (!impl->sql_expanded.empty())
-        o <<"executed SQL:\n" <<StringUtility::prefixLines(impl->sql_expanded, "    |") <<"\n";
+    impl->print(o);
 }
 
 StatementPtr Statement::bind(size_t idx, int32_t val) { return impl->bind(shared_from_this(), idx, val); }
@@ -1364,7 +1408,7 @@ split_sql(const std::string &all_)
 }
 
 std::string
-escape(const std::string &s, Driver driver)
+escape(const std::string &s, Driver driver, bool quote)
 {
     bool has_backslash = false;
     std::string retval;
@@ -1386,7 +1430,9 @@ escape(const std::string &s, Driver driver)
         }
     }
 
-    return std::string(POSTGRESQL==driver && has_backslash ? "E" : "") + "'" + retval + "'";
+    if (quote)
+        retval = std::string(POSTGRESQL==driver && has_backslash ? "E" : "") + "'" + retval + "'";
+    return retval;
 }
     
 
