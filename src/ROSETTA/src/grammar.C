@@ -2332,6 +2332,10 @@ Grammar::extractStringFromFile (
         }
 
   // If this is false then the MARKER_*_END strings were not located in the file
+     if (found == false)
+        {
+          printf ("Error: could not locate endMarker = %s in file = %s \n",endMarker.c_str(),filename.c_str());
+        }
      ROSE_ASSERT (found);
 
      return fileString;

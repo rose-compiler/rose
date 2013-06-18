@@ -116,3 +116,141 @@ int openFortranParser_main(int argc, char **argv)
   }
 
 
+#if 0
+int
+experimental_openFortranParser_main(int argc, char **argv)
+   {
+  // This function does not need to call the JVM.
+     int status = 0;
+
+     printf ("ERROR: This function is defined in openFortranParser_main.C of the src/frontend/OpenFortranParser_SAGE_Connection directory (the experimental fortran frontend has not been enabled) \n");
+     ROSE_ASSERT(false);
+
+  // Put the call the the new SDF Open Fortran Parser here.
+
+     return status;
+   }
+#else
+int
+experimental_openFortranParser_main(int argc, char **argv)
+   {
+  // This function does not need to call the JVM.
+
+#if 0
+     printf ("In experimental_openFortranParser_main(): Put the call the the new SDF Open Fortran Parser here... \n");
+#endif
+
+     int i, err;
+     char parse_table[128];
+
+     parse_table[0] = '\0';
+
+     if (argc < 4) 
+        {
+          printf("usage: fortran_parser --parseTable parse_table_path filename(s)\n");
+          return 1;
+        }
+
+     string commandString = "sglri ";
+
+  // Parse each filename (args not associated with "--parseTable", "--" or "-I")
+     for (i = 1; i < argc; i++)
+        {
+#if 0
+          printf ("In experimental_openFortranParser_main(): i = %d argv[%d] = %s \n",i,i,argv[i]);
+#endif
+          if (strncmp(argv[i], "--parseTable", 12) == 0) 
+             {
+#if 0
+               printf ("In experimental_openFortranParser_main(): argv[i+1 = %d] = %s \n",i+1,argv[i+1]);
+#endif
+               commandString += "-p ";
+               commandString += argv[i+1];
+               commandString += " ";
+
+               sprintf(parse_table, "%s", argv[i+1]);
+               i += 1;
+            // continue;
+             }
+            else
+             {
+            // This skips over commands line arguments that begin with "--" (this does not appears to be meaningful).
+               if (strncmp(argv[i], "--", 2) == 0) 
+                  {
+                // skip args that are not files
+                   i += 1;
+                   continue;
+                  }
+                 else
+                  {
+                 // This only skips over the options that begin with "-I" but not "-I <path>" (where the "-I" and the path are seperated by a space).
+                    if (strncmp(argv[i], "-I", 2) == 0)
+                       {
+                      // Skip the include dir stuff; it's handled by the lexer.
+                      // TODO - not currently true, so skip arg for now? 
+                         i += 1;
+                         continue;
+                       }
+                      else
+                       {
+                      // All other options are ignored.
+                      // commandString += argv[i];
+                       }
+                  }
+             }
+        }
+
+  // string filename = argv[argc-1];
+     string filenameWithPath    = argv[argc-1];
+     string filenameWithoutPath = StringUtility::stripPathFromFileName(filenameWithPath);
+
+     commandString += " -i ";
+     commandString += filenameWithPath;
+     commandString += " -o ";
+     commandString += filenameWithoutPath;
+     commandString += ".aterm";
+
+#if 0
+     printf ("filenameWithPath    = %s \n",filenameWithPath.c_str());
+     printf ("filenameWithoutPath = %s \n",filenameWithoutPath.c_str());
+#endif
+
+  // make sure there is a parse table
+     if (parse_table[0] == '\0')
+        {
+          fprintf(stderr, "fortran_parser: no parse table provided, use option --parseTable\n");
+          return -1;
+        }
+
+  // parse the file
+  // sprintf(cmd, "sglri -p %s -i %s -o %s.ptree", parse_table, argv[i], argv[i]);
+
+#if 0
+     printf ("In experimental_openFortranParser_main(): commandString = %s \n",commandString.c_str());
+#endif
+
+  // err = system(cmd);
+     err = system(commandString.c_str());
+
+     if (err)
+        {
+          fprintf(stderr, "fortran_parser: error parsing file %s\n", argv[i]);
+          return err;
+        }
+
+  // At this point we have a valid aterm file in the working (current) directory.
+  // We have to read that aterm file and generate an uninterpreted AST, then iterate
+  // on the uninterpreted AST to resolve types, disambiguate function calls and 
+  // array references, etc.; until we have a correctly formed AST.  These operations
+  // will be seperate passes over the AST which should build a simpler frontend to
+  // use as a basis for fortran research and also permit a better design for the
+  // frontend to maintain and develop cooperatively with community support.
+
+  // ******************************************************
+  // Put the call the the new SDF Open Fortran Parser here.
+  // ******************************************************
+
+     return 0;
+   }
+#endif
+
