@@ -10,6 +10,17 @@
     <parameter name="target_directory">
       @absolute_path_srcdir@
     </parameter>
+    <parameter name="enabled_checker">deadFunction</parameter>
+    <parameter name="enabled_checker">defaultArgument</parameter>
+    <parameter name="enabled_checker">functionPointer</parameter>
+    <parameter name="enabled_checker">functionPrototype</parameter>
+    <parameter name="enabled_checker">functionWithMultipleReturns</parameter>
+    <parameter name="enabled_checker">globalVariables</parameter>
+    <parameter name="enabled_checker">keywordMacro</parameter>
+    <parameter name="enabled_checker">keywordMacros</parameter>
+    <parameter name="enabled_checker">nonGlobalCppDirective</parameter>
+    <parameter name="enabled_checker">nonStaticArraySize</parameter>
+    <parameter name="enabled_checker">variableNameSimilarity</parameter>
   </general>
 
   <!-- Checker-specific Compass Parameters //-->
