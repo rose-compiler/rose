@@ -2059,6 +2059,7 @@ projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
 projects/CodeThorn/Makefile
 projects/CodeThorn/src/Makefile
+projects/CodeThorn/addressTakenAnalysis/Makefile
 projects/DataFaultTolerance/Makefile
 projects/DataFaultTolerance/src/Makefile
 projects/DataFaultTolerance/test/Makefile
