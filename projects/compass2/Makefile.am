@@ -27,6 +27,7 @@ LDFLAGS = $(XERCES_LDFLAGS)
 
 compass2_API_VERSION=0.0.0
 exec_prefix=${prefix}/compass2-$(compass2_API_VERSION)
+compass2_datadir=${exec_prefix}/share
 libcompass2_la_includedir = ${exec_prefix}/include/compass2
 
 lib_LTLIBRARIES = libcompass2.la
@@ -112,18 +113,23 @@ bin_checkers_variable_name_similarity_libvariablenamesimilarity_la_SOURCES=\
 #  XML Schemas
 # ------------------------------------------------------------------------------
 
-COMPASS_PARAMETERS_GRAMMAR=\
+COMPASS_PARAMETERS_GRAMMAR_FILE=\
 	share/xml/compass_parameters.xsd
+
+COMPASS_PARAMETERS_DEFAULT_FILE=\
+	share/xml/compass_parameters.xml
 
 ## The nobase_ prefix instructs Automake to not strip the directory part from
 ## each filename. For example,
 ##
 ##     Install to ${PREFIX}/share/compass2/xml/compass_parameters.xsd
-compass2_xmldir = $(datadir)
-nobase_compass2_xml_DATA = $(COMPASS_PARAMETERS_GRAMMAR)
+compass2_xmldir = $(compass2_datadir)/xml
+compass2_xml_DATA = \
+	$(COMPASS_PARAMETERS_GRAMMAR_FILE) \
+	$(COMPASS_PARAMETERS_DEFAULT_FILE)
 
 CPPFLAGS=\
-	-DPREFIX_COMPASS2_XML_DIR="\"$(compass2_xmldir)/compass2/xml\"" \
+	-DPREFIX_COMPASS2_XML_DIR="\"$(compass2_xmldir)\"" \
 	-DSOURCE_COMPASS2_XML_DIR="\"@ABS_COMPASS2_XML_SRCDIR@\""
 
 # ------------------------------------------------------------------------------
