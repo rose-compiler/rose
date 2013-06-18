@@ -18,7 +18,7 @@ TESTCODES= \
 TESTCODES_Objects = ${TESTCODES:.cu=.o}
 
 $(TESTCODES_Objects): ../../testTranslator
-	../../testTranslator $(srcdir)/$(@:.o=.cu)
+	../../testTranslator -rose:skipfinalCompileStep -c $(srcdir)/$(@:.o=.cu)
 
 check-local:
 if ROSE_BUILD_CUDA_LANGUAGE_SUPPORT

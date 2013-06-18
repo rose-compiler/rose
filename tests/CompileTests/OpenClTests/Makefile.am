@@ -1,35 +1,29 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-bin_PROGRAMS = OpenClTests
-
-# This tests the ability to read and regnerate the input CUDA code.
-OpenClTests_SOURCES = OpenClTests.C
-
-# Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
-INCLUDES = $(ROSE_INCLUDES)
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-
-OPENCL_NO_BUILT_IN_CODES = 
-
 OPENCL_CODES = \
-    transpose_kernel.cl
+  empty.cl
 
-OPENCL_CODES_FAILING = \
-    nbody.cl \
-    nbody_cpu.cl \
-    nbody_gpu.cl
-
-TESTCODES=
 if ROSE_USE_CLANG_FRONTEND
-TESTCODES+= \
-  $(OPENCL_NO_BUILT_IN_CODES) \
-  $(OPENCL_CODES)
+OPENCL_CODES += \
+  transpose_kernel.cl \
+  nbody.cl \
+  nbody_cpu.cl \
+  nbody_gpu.cl
+else
+OPENCL_CODES_FAILING = \
+  transpose_kernel.cl \
+  nbody.cl \
+  nbody_cpu.cl \
+  nbody_gpu.cl
 endif
 
-TESTCODES_Objects = ${TESTCODES:.ocl=.o}
+TESTCODES= \
+  $(OPENCL_CODES)
+
+TESTCODES_Objects = ${TESTCODES:.cl=.o}
 
 $(TESTCODES_Objects): ../../testTranslator
-	./OpenClTests $(srcdir)/$(@:.o=.cu)
+	../../testTranslator -rose:skipfinalCompileStep $(srcdir)/$(@:.o=.cl)
 
 
 check-local:

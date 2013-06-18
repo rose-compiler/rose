@@ -2252,8 +2252,9 @@ SgFile::callFrontEnd()
   // printf ("Inside of SgFile::callFrontEnd(): Calling build_EDG_CommandLine (fileNameIndex = %d) \n",fileNameIndex);
   if (get_C_only() ||
       get_Cxx_only() ||
-      get_Cuda_only())
-  {
+      get_Cuda_only() ||
+      get_OpenCL_only()
+  ) {
       #ifndef ROSE_USE_CLANG_FRONTEND
          build_EDG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
       #else

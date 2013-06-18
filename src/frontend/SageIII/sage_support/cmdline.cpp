@@ -3488,6 +3488,10 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           // OpenCL is a C extention, add default C options
           commandLine.push_back("-DROSE_LANGUAGE_MODE=0");
           SageSupport::Cmdline::makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
+
+#ifndef ROSE_USE_CLANG_FRONTEND
+          commandLine.push_back("-DSKIP_OPENCL_SPECIFIC_DEFINITION");
+#endif
         }
         else {
                 printf ("Error: CUDA and OpenCL are mutually exclusive.\n");
@@ -4268,6 +4272,9 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
     else if (get_X10_only() == true)
     {
         compilerNameString[0] = BACKEND_X10_COMPILER_NAME_WITH_PATH;
+    }
+    else if (get_Cuda_only() || get_OpenCL_only()) {
+        std::cerr << "[WARN] No backend compiler for CUDA and OpenCL." << std::endl;
     }
     else
     {
