@@ -3475,10 +3475,19 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         if (enable_cuda && !enable_opencl) {
           commandLine.push_back("--preinclude");
           commandLine.push_back(header_path + "/cuda_HEADERS/preinclude-cuda.h");
+
+          // CUDA is a C++ extention, add default C++ options
+          commandLine.push_back("-DROSE_LANGUAGE_MODE=1");
+          commandLine.push_back("-D__cplusplus=1");
+          SageSupport::Cmdline::makeSysIncludeList(Cxx_ConfigIncludeDirs, commandLine);
         }
         else if (enable_opencl && !enable_cuda) {
           commandLine.push_back("--preinclude");
           commandLine.push_back(header_path + "/opencl_HEADERS/preinclude-opencl.h");
+
+          // OpenCL is a C extention, add default C options
+          commandLine.push_back("-DROSE_LANGUAGE_MODE=0");
+          SageSupport::Cmdline::makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
         }
         else {
                 printf ("Error: CUDA and OpenCL are mutually exclusive.\n");

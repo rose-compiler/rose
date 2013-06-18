@@ -913,7 +913,6 @@ test2012_64.C \
 test2012_65.C \
 test2012_66.C \
 test2012_67.C \
-test2012_68.C \
 test2012_69.C \
 test2012_70.C \
 test2012_71.C \
@@ -1322,6 +1321,12 @@ NEW_PASSING_FILES =
 TESTCODE_CURRENTLY_FAILING_ON_OSX = \
 test2011_06.C \
 test2004_35.C 
+
+if !ROSE_USE_EDG_VERSION_4_7
+# DQ (6/12/2013): This fails to compile with EDG 4.7 (EDG complains: line 13: error: constructor or destructor may not have its address taken)
+# Skip this test code while we report the problem to EDG (and investigate more in internally).
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += test2012_68.C
+endif
 
 # DQ (5/26/2013): Currently faling tests:
 CURRENTLY_FAILING_TESTS = \
