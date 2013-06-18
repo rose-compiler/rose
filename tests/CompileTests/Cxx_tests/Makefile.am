@@ -6,9 +6,6 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #
 
 
-
-if ROSE_USE_EDG_VERSION_4
-
 # EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 #  $(TESTCODE_CURRENTLY_FAILING)
 
@@ -1383,12 +1380,8 @@ test2013_197.C
 # test2012_57.C
 # test2012_59.C
 
-
-
-
-else
-include $(srcdir)/Makefile-pass.inc
-endif
+# TV (06/17/13): [TODO] This was used for EDG 3.3. We now have the long list in this file...
+# include $(srcdir)/Makefile-pass.inc
 
 
 # TV (08/02/12): Added a list of none previously referenced test codes, code to be sorted
@@ -1411,7 +1404,6 @@ test2012_79.C
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
 #
-if ROSE_USE_EDG_VERSION_4
 TESTCODE_CURRENTLY_FAILING = 
 
 # DQ (8/12/2012): This test code appears to demonstrate a loss of the template arguments in the name qualification.
@@ -1790,10 +1782,8 @@ math.C
 NEW_FAILING_TESTS = \
 test2012_86.C
 
-
-else
-include $(srcdir)/Makefile-fail.inc
-endif
+# TV (06/17/13): [TODO] This was used for EDG 3.3. We now have the long list in this file...
+# include $(srcdir)/Makefile-fail.inc
 
 # Configure-time automake conditional
 if ROSE_USE_LONG_MAKE_CHECK_RULE
@@ -1999,25 +1989,7 @@ hpctoolkit:
 
 
 check-local:
-if !ROSE_USE_NEW_EDG_INTERFACE
-#	@$(MAKE) testUsingBadCommandline
-	@$(MAKE) testBuildUsingNoPath
-	@$(MAKE) testBuildUsingRelativePath
-	@$(MAKE) testBuildUsingAbsolutePath
-	@echo "Tests of C++."
-	@$(MAKE) failingAST_IO_tests
-endif
 	@$(MAKE) $(PASSING_TEST_Objects)
-if !ROSE_USE_NEW_EDG_INTERFACE
-#	DQ (9/18/2011): Added tests for folded constant option.
-	@$(MAKE) $(TEST_Objects_FoldedConstants)
-#	DQ (4/6/2010): This fails on Hudson, but I don't know why!
-#	@$(MAKE) testParser
-#	DQ (5/8/2011): Special tests are now moved to the end.
-	@$(MAKE) test2005_56.o
-	@$(MAKE) test2010_07.o
-	@$(MAKE) test_multiple_files
-endif
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Cxx_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
