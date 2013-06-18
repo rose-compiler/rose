@@ -386,6 +386,6 @@ main(int argc, char *argv[])
                    " function"+(1==functions_to_add.size()?"":"s"));
     files.save(tx);
     tx->commit();
-    std::cout <<specimen_id <<"\n";
+    std::cout <<"specimen " <<specimen_id <<"\n";
     return 0;
 }

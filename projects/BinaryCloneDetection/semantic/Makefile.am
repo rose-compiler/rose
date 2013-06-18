@@ -64,7 +64,15 @@ noinst_PROGRAMS += 06-list-function
 06_list_function_CPPFLAGS = $(ROSE_INCLUDES)
 06_list_function_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+noinst_PROGRAMS += 06-list-ogroup
+06_list_ogroup_SOURCES = 06-list-ogroup.C
+06_list_ogroup_CPPFLAGS = $(ROSE_INCLUDES)
+06_list_ogroup_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+noinst_PROGRAMS += 99-grants
+99_grants_SOURCES = 99-grants.C
+99_grants_CPPFLAGS = $(ROSE_INCLUDES)
+99_grants_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 ## noinst_PROGRAMS += CloneDetection
 ## CloneDetection_SOURCES = CloneDetection.C

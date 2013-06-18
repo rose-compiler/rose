@@ -3,6 +3,7 @@
 #include "sage3basic.h"
 #include "CloneDetectionLib.h"
 #include "rose_getline.h"
+#include "AST_FILE_IO.h"        // only for the clearAllMemoryPools() function [Robb P. Matzke 2013-06-17]
 
 #include <cerrno>
 #include <csignal>
@@ -401,8 +402,17 @@ main(int argc, char *argv[])
                 std::cerr <<argv0 <<": processing binary specimen \"" <<files.name(work.specimen_id) <<"\"\n";
             }
 
-            if (prev_work.specimen_id>=0)
-                SageInterface::deleteAST(SageInterface::getProject()); // is this the best way to delete a whole AST?
+            if (prev_work.specimen_id>=0) {
+#if 0 // [Robb P. Matzke 2013-06-17]
+                // Is this the preferred way to delete a whole AST? It fails an assertion:
+                // Cxx_GrammarTreeTraversalSuccessorContainer.C:23573:
+                //     virtual SgNode* SgAsmGenericSectionList::get_traversalSuccessorByIndex(size_t):
+                //     Assertion `idx < p_sections.size()' failed.
+                SageInterface::deleteAST(SageInterface::getProject());
+#else
+                AST_FILE_IO::clearAllMemoryPools();
+#endif
+            }
 
             progress.message("loading AST");
             SgProject *project = files.load_ast(tx, work.specimen_id);

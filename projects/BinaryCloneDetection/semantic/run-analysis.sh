@@ -131,22 +131,21 @@ done
 [ -n "$BLDDIR" -a -d "$BLDDIR" ]              || die "not a directory: $BLDDIR"
 
 if [ "$interactive" = "yes" ]; then
-    echo "=============================================================================="
-    echo "Specify a database which will hold information about the analysis.  The data-"
-    echo "base can be either a file name (SQLite3 database) or a URL.  The only URLs"
-    echo "accepted at this time are PostgreSQL URLs that have the following format:"
+    echo "=================================================================================================="
+    echo "Specify a database which will hold information about the analysis.  The database can be either a"
+    echo "file name (SQLite3 database) or a URL.  URLs that have the following syntac:"
     echo "    postgresql://[USER[:PASSWORD]@]HOST[:PORT][/DATABASE][?PARAM=VALUE&...]"
-    echo "SQLite3 databases are created if they don't exist; PostgreSQL databases must"
-    echo "be created before this analysis runs (see the 'createdb' man page)."
+    echo "    sqlite3://[FILENAME[?PARAM[=VALUE]&...]"
+    echo "SQLite3 databases are created if they don't exist; PostgreSQL databases must be created before this"
+    echo "analysis runs (see the 'createdb' man page)."
     read -e -p "Database name: " -i "$dbname" dbname
 fi
 
 if [ "$interactive" = "yes" ]; then
     echo
-    echo "=============================================================================="
-    echo "The analysis can incrementally build the database a few specimens at a time."
-    echo "If you want to delete all existing tables and start over, then enter 'no' for"
-    echo "this question..."
+    echo "=================================================================================================="
+    echo "The analysis can incrementally build the database a few specimens at a time. If you want to delete"
+    echo "all existing tables and start over, then enter 'no' for this question..."
     recreate=$(yes_or_no "Do you want to (re)create the database?" ${recreate:-no})
     save_settings
 fi
@@ -156,8 +155,10 @@ fi
 
 if [ "$interactive" = "yes" ]; then
     echo
-    echo "=============================================================================="
-    echo "These are the flags for the 01-generate-inputs command:"
+    echo "=================================================================================================="
+    echo "These are the flags for the 01-generate-inputs command. This command creates input groups, each"
+    echo "having a list of input values.  One input group is supplied to each test.  Input groups that are"
+    echo "already present in the database are not modified by this command."
     $BLDDIR/01-generate-inputs --help 2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
     read -e -p "Switches for generating input groups: " -i "$generate_inputs_flags" generate_inputs_flags
     save_settings
@@ -167,8 +168,9 @@ execute $BLDDIR/01-generate-inputs $generate_inputs_flags "$dbname" || exit 1
 if [ "$#" -gt 0 ]; then
     if [ "$interactive" = "yes" ]; then
 	echo
-	echo "=============================================================================="
-	echo "These are the flags for the 01-add-functions command:"
+	echo "=================================================================================================="
+	echo "These are the flags for the 01-add-functions command, which parses a specimen and adds its"
+	echo "functions to the database.  You will be able to select which functions to test in the next step."
 	$BLDDIR/01-add-functions --help 2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
 	read -e -p "Switches for adding specimens: " -i "$add_functions_flags" add_functions_flags
 	save_settings
@@ -180,8 +182,9 @@ fi
 
 if [ "$interactive" ]; then
     echo
-    echo "=============================================================================="
-    echo "These are the flags for the 02-get-pending-tests command:"
+    echo "=================================================================================================="
+    echo "These are the flags for the 02-get-pending-tests command, which consults the database to determine"
+    echo "which combinations of function and input group need to be tested."
     $BLDDIR/02-get-pending-tests --help 2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
     read -e -p "Switches for selecting tests to run: " -i "$get_pending_tests_flags" get_pending_tests_flags
     save_settings
@@ -213,15 +216,15 @@ else
     tests_per_part=$[(ntests_to_run + nparts - 1) / nparts]
     rm -f $test_list_file-[a-z] $test_list_file-[a-z][a-z] $test_list_file-[a-z][a-z][a-z]
     split --lines=$tests_per_part $test_list_file $test_list_file-
-    test_list_files=$(ls "$test_list_file"-* |head -n $nprocs |tr '\n' ' ')
+    test_list_files=$(ls "$test_list_file"-* |head -n $nparts |tr '\n' ' ')
     rm "$test_list_file"
     echo "number of processes to run in parallel: $nprocs"
     save_settings
 
     if [ "$interactive" = "yes" ]; then
 	echo
-	echo "=============================================================================="
-	echo "These are the flags for 03-run-tests:"
+	echo "=================================================================================================="
+	echo "These are the flags for 03-run-tests, which runs the tests selected in the previous step."
 	$BLDDIR/03-run-tests --help 2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
 	read -e -p "Switches for running tests: " -i "$run_tests_flags" run_tests_flags
 	save_settings
@@ -247,8 +250,10 @@ fi
 
 if [ "$interactive" = "yes" ]; then
     echo
-    echo "=============================================================================="
-    echo "These are the flags for 04-func-similarity:"
+    echo "=================================================================================================="
+    echo "These are the flags for 04-func-similarity. This tool measures similarity between pairs of"
+    echo "functions by comparing output groups that were produced by the tests.  Basically, if two functions"
+    echo "produced similar outputs for the same input then the functions are similar."
     $BLDDIR/04-func-similarity --help 2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
     read -e -p "Switches for function similarity: " -i "$func_similarity_flags" func_similarity_flags
     save_settings
@@ -257,9 +262,10 @@ execute $BLDDIR/04-func-similarity $func_similarity_flags "$dbname" || exit 1
 
 if [ "$interactive" = "yes" ]; then
     echo
-    echo "=============================================================================="
-    echo "These are the flags for 05-clusters-from-pairs, which organizes pairs of"
-    echo "similar functions into clusters:"
+    echo "=================================================================================================="
+    echo "These are the flags for 05-clusters-from-pairs, which organizes pairs of similar functions into"
+    echo "clusters. The similarity relationship is non-transitive, otherwise this step would be trivial."
+    echo "Rather, this tool needs to consult the similarity graph and find all maximal cliques."
     $BLDDIR/05-clusters-from-pairs --help  2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
     read -e -p "Switches for creating clusters: " -i "$clusters_from_pairs_flags" clusters_from_pairs_flags
     save_settings
@@ -267,5 +273,6 @@ fi
 execute $BLDDIR/05-clusters-from-pairs $clusters_from_pairs_flags "$dbname" semantic_funcsim semantic_clusters
 
 echo
-echo "=============================================================================="
+echo "=================================================================================================="
+echo "Cluster results"
 execute $BLDDIR/06-list-clusters --summarize "$dbname"

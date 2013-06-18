@@ -5,6 +5,7 @@
 
 #include "sage3basic.h"
 #include "CloneDetectionLib.h"
+#include <cerrno>
 
 std::string argv0;
 
@@ -20,6 +21,10 @@ usage(int exit_status)
               <<"            Select only functions having the specified entry address, which may be specified in decimal\n"
               <<"            hexadecimal, or octal using the usual C syntax.  This switch may appear more than once to select\n"
               <<"            functions that have any of the specified addresses.\n"
+              <<"    --file=ID[,...]\n"
+              <<"            Select only functions that are defined in one of the specified binary files.  The ID list is a\n"
+              <<"            comma-separated list of file identifiers.  Invoking with --file=list will produce a list of all\n"
+              <<"            files that contain functions.  This switch may appear more than once and its effect is cumulative.\n"
               <<"    --name=NAME\n"
               <<"            Select only functions having the specified names.  This switch may appear more than once to\n"
               <<"            select functions that have any of the specified names.\n"
@@ -30,6 +35,13 @@ usage(int exit_status)
               <<"            Lowest numbered fuzz test to consider.  The default is zero.\n"
               <<"    --size=NINSNS\n"
               <<"            Select only functions that have at least NINSNS instructions.\n"
+              <<"    --specimen=ID[,...]\n"
+              <<"            Select only functions belonging to one of the specified specimens.  A \"specimen\" is a binary\n"
+              <<"            file whose name was given to the 01-add-functions command, and does not include dynamically\n"
+              <<"            linked libraries (unless such a library was also given as an argument to 01-add-functions).\n"
+              <<"            The ID list is a comma-separated list of specimen identifiers. Invoking with --specimen=list\n"
+              <<"            will produce a list of specimen ID numbers and their file names.  This switch may appear more\n"
+              <<"            than once and its effect is cumulative.\n"
               <<"\n"
               <<"    DATABASE\n"
               <<"            The name of the database to which we are connecting.  For SQLite3 databases this is just a local\n"
@@ -39,11 +51,13 @@ usage(int exit_status)
 }
 
 struct Switches {
-    Switches(): ninsns(0), nfuzz(0), first_fuzz(0), nfuzz_set(false) {}
+    Switches(): ninsns(0), nfuzz(0), first_fuzz(0), nfuzz_set(false), list_specimens(false), list_files(false) {}
     std::set<rose_addr_t> entry_vas;
     std::set<std::string> names;
+    std::set<int> specimens, files;
     size_t ninsns, nfuzz, first_fuzz;
     bool nfuzz_set; // is nfuzz value valid?
+    bool list_specimens, list_files;
 };
     
 int
@@ -68,15 +82,55 @@ main(int argc, char *argv[])
             usage(0);
         } else if (!strncmp(argv[argno], "--entry=", 8)) {
             opt.entry_vas.insert(strtoull(argv[argno]+8, NULL, 0));
+        } else if (!strcmp(argv[argno], "--file=list") || !strcmp(argv[argno], "--files=list")) {
+            opt.list_files = true;
+        } else if (!strncmp(argv[argno], "--file=", 7) || !strncmp(argv[argno], "--files=", 8)) {
+            char *s = strchr(argv[argno], '=')+1;
+            while (*s) {
+                while (isspace(*s)) ++s;
+                if (!*s) break;
+                char *rest;
+                errno = 0;
+                int id = strtol(s, &rest, 0);
+                if (errno || rest==s) {
+                    char *comma = strchr(s, ',');
+                    std::cerr <<argv0 <<": invalid file ID: " <<(comma?std::string(s, comma):std::string(s)) <<"\n";
+                    exit(1);
+                }
+                opt.files.insert(id);
+                s = rest;
+                while (isspace(*s)) ++s;
+                if (','==*s) ++s;
+            }
+        } else if (!strncmp(argv[argno], "--first-fuzz=", 13)) {
+            opt.first_fuzz = strtoul(argv[argno]+13, NULL, 0);
         } else if (!strncmp(argv[argno], "--name=", 7)) {
             opt.names.insert(argv[argno]+7);
-        } else if (!strncmp(argv[argno], "--size=", 7)) {
-            opt.ninsns = strtoul(argv[argno]+7, NULL, 0);
         } else if (!strncmp(argv[argno], "--nfuzz=", 8)) {
             opt.nfuzz = strtoul(argv[argno]+8, NULL, 0);
             opt.nfuzz_set = true;
-        } else if (!strncmp(argv[argno], "--first-fuzz=", 13)) {
-            opt.first_fuzz = strtoul(argv[argno]+13, NULL, 0);
+        } else if (!strncmp(argv[argno], "--size=", 7)) {
+            opt.ninsns = strtoul(argv[argno]+7, NULL, 0);
+        } else if (!strcmp(argv[argno], "--specimen=list") || !strcmp(argv[argno], "--specimens=list")) {
+            opt.list_specimens = true;
+        } else if (!strncmp(argv[argno], "--specimen=", 11) || !strncmp(argv[argno], "--specimens=", 12)) {
+            char *s = strchr(argv[argno], '=')+1;
+            while (*s) {
+                while (isspace(*s)) ++s;
+                if (!*s) break;
+                char *rest;
+                errno = 0;
+                int id = strtol(s, &rest, 0);
+                if (errno || rest==s) {
+                    char *comma = strchr(s, ',');
+                    std::cerr <<argv0 <<": invalid specimen ID: " <<(comma?std::string(s, comma):std::string(s)) <<"\n";
+                    exit(1);
+                }
+                opt.specimens.insert(id);
+                s = rest;
+                while (isspace(*s)) ++s;
+                if (','==*s) ++s;
+            }
         } else {
             std::cerr <<argv0 <<": unrecognized switch: " <<argv[argno] <<"\n"
                       <<"see \"" <<argv0 <<" --help\" for usage info.\n";
@@ -86,6 +140,30 @@ main(int argc, char *argv[])
     if (argno+1!=argc)
         usage(1);
     SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(argv[argno++])->transaction();
+
+    // List the ID numbers and names for all specimen files
+    if (opt.list_specimens) {
+        SqlDatabase::Table<int, std::string> specimens;
+        specimens.insert(tx->statement("select file.id, file.name"
+                                       " from (select distinct specimen_id as id from semantic_functions) as specimen"
+                                       " join semantic_files as file on specimen.id = file.id"
+                                       " order by file.name"));
+        specimens.headers("File ID", "Specimen Name");
+        specimens.print(std::cout);
+        return 0;
+    }
+
+    // List the ID numbers and names for all files containing functions
+    if (opt.list_files) {
+        SqlDatabase::Table<int, std::string> files;
+        files.insert(tx->statement("select file.id, file.name"
+                                   " from (select distinct file_id as id from semantic_functions) as used"
+                                   " join semantic_files as file on used.id = file.id"
+                                   " order by file.name"));
+        files.headers("File ID", "Binary File Name");
+        files.print(std::cout);
+        return 0;
+    }
 
     // Sanity checks
     if (0==tx->statement("select count(*) from semantic_functions")->execute_int()) {
@@ -109,6 +187,18 @@ main(int argc, char *argv[])
         std::string s = "name in (";
         for (std::set<std::string>::iterator i=opt.names.begin(); i!=opt.names.end(); ++i)
             s += (i==opt.names.begin()?"":", ") + SqlDatabase::escape(*i, tx->driver());
+        constraints.push_back(s+")");
+    }
+    if (!opt.specimens.empty()) {
+        std::string s = "specimen_id in (";
+        for (std::set<int>::iterator i=opt.specimens.begin(); i!=opt.specimens.end(); ++i)
+            s += (i==opt.specimens.begin()?"":", ") + StringUtility::numberToString(*i);
+        constraints.push_back(s+")");
+    }
+    if (!opt.files.empty()) {
+        std::string s = "file_id in (";
+        for (std::set<int>::iterator i=opt.files.begin(); i!=opt.files.end(); ++i)
+            s += (i==opt.specimens.begin()?"":", ") + StringUtility::numberToString(*i);
         constraints.push_back(s+")");
     }
     if (opt.ninsns>0)

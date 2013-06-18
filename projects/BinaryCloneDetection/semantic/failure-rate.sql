@@ -1,204 +1,83 @@
--- Reads a database containing semantic, syntactic, and combined clone pair tables and their call-graph variants
--- from runs where the same source code was compiled with multiple compilers or compiler switches, and tries to figure
--- out what the ideal answer should have been, and how each of those six tables compares to the ideal answer.
---
--- The input clone-pair tables are:
---     semantic_clone_pairs
---     syntactic_clone_pairs
---     combined_clone_pairs
---     semantic_cgclone_pairs
---     syntacitc_cgclone_pairs
---     combined_cgclone_pairs
---
--- Additional inputs:
---     combined_functions	-- table that associates semantic and syntactic function IDs
---     semantic_functions	-- information about individual functions
---
--- Outputs ("fr" prefix for "failure_rates")
---     fr_persistent_functions  -- functions whose name appears exactly once per specimen
---     fr_positive_pairs        -- pairs of functions that should be clones
---     fr_negative_pairs        -- pairs of functions that should not be clones
---     fr_fn_*                  -- false negatives per clone pairs input table
---     fr_fp_*                  -- false positives per clone pairs input table
---     fr_failures		-- the number of failures for each clone pairs input table and the failure rates
---
--- Assumptions:
---    1. If a function has no name, then it is excluded from consideration.
---    2. If a function was not analyzed by both semantic and syntactic clone detection, then it is excluded from consideration.
---    3. If a 
-
---    1. If a function name does not appear exactly once in every specimen then all functions with that name are excluded
---       from consideration.  We cannot say whether a pair of such functions is similar or dissimilar.
---    2. Of the remaining functions, any pair of functions is considered a clone pair if and only if both functions have
---       the same name.
---
---=============================================================================================================================
-
-
-
-
--------------------------------------------------------------------------------------------------------------------------------
--- Build the fr_persistent_functions table that lists those named functions whose names appear exactly once per specimen
+-- Computes statistics about false negatives in a database populated with two or more specimens compiled in different ways.
 begin transaction;
 
--- All functions that have names, and exist in all files, and were processed by both semantic and syntactic clone detection.
-drop table if exists fr_all_functions;
-create table fr_all_functions as
-    select func.id as id, func.file_id as file_id, func.funcname as name
-        from combined_functions as combined
-        join semantic_functions as func on combined.semantic_id = func.id
-        where combined.semantic_id is not null and combined.syntactic_id is not null and name <> '';
-
--- Functions whose names appear only once in a single specimen file.
-drop table if exists fr_nondups;
-create table fr_nondups as
-    select id, file_id, name
-    from fr_all_functions
-    group by file_id, name
-    having count(*) = 1;
-
--- Function names that appear in every specimen
-drop table if exists fr_counts;
-create table fr_namecounts as
-    select func.name as name
-        from fr_nondups as func
-        group by func.name
-        having count(*) = (select count(*) from (select distinct file_id from fr_nondups));
-
--- Functions by name that appear exactly once in each specimen
-drop table if exists fr_persistent_functions;
-create table fr_persistent_functions as
-    select func.*
-        from fr_nondups as func
-        join fr_namecounts as counts on func.name = counts.name;
-
-
-drop table fr_all_functions;
-drop table fr_nondups;
-drop table fr_namecounts;
-
-commit;
-
--------------------------------------------------------------------------------------------------------------------------------
--- Build the fr_positive_pairs and fr_negative_pairs tables.
-
-drop table if exists fr_positive_pairs;
-create table fr_positive_pairs as
-    select f1.id as func_id_1, f2.id as func_id_2
-        from fr_persistent_functions as f1
-        join fr_persistent_functions as f2 on f1.name = f2.name and f1.id < f2.id;
-
+drop table if exists fr_false_positives;
+drop table if exists fr_false_negatives;
+drop table if exists fr_clone_pairs;
 drop table if exists fr_negative_pairs;
+drop table if exists fr_positive_pairs;
+drop table if exists fr_functions;
+drop table if exists fr_funcnames;
+drop table if exists fr_specimens;
+
+-- Files that are binary specimens; i.e., not shared libraries, etc.
+create table fr_specimens as
+    select distinct specimen_id
+    from semantic_functions;
+
+-- Function names that are present exactly once in each specimen
+-- And which contain 100 or more instructions						!!FIXME!!
+create table fr_funcnames as
+    select func1.name as name
+	from semantic_functions as func1
+	left join semantic_functions as func2
+	    on func1.id<>func2.id and func1.name=func2.name and func1.specimen_id=func2.specimen_id
+	where func2.id is null and func1.ninsns >= 100
+	group by func1.name
+	having count(*) = (select count(*) from fr_specimens);
+
+-- Functions that have a name and which appear once per specimen by that name.
+create table fr_functions as
+    select func.*
+        from fr_funcnames as named
+        join semantic_functions as func on named.name = func.name;
+
+-- Pairs of functions that should have been detected as being similar.  We're assuming that any pair of binary functions that
+-- have the same name are in fact the same function at the source level and should therefore be similar.
+create table fr_positive_pairs as
+    select f1.id as func1_id, f2.id as func2_id
+        from fr_functions as f1
+        join fr_functions as f2 on f1.name = f2.name and f1.id < f2.id and f1.specimen_id <> f2.specimen_id;
+
+-- Pairs of functions that should not have been detected as being similar.  We're assuming that if the two functions have
+-- different names then they are different functions in the source code, and that no two functions in source code are similar.
+-- That second assumption almost certainly doesn't hold water!
 create table fr_negative_pairs as
-    select f1.id as func_id_1, f2.id as func_id_2
-        from fr_persistent_functions as f1
-        join fr_persistent_functions as f2 on f1.name <> f2.name and f1.id < f2.id;
+    select f1.id as func1_id, f2.id as func2_id
+        from fr_functions as f1
+        join fr_functions as f2 on f1.name <> f2.name and f1.id < f2.id;
 
--------------------------------------------------------------------------------------------------------------------------------
--- Build the false negatives (fn) and false positives (fp) tables for each of the clone pair input tables.
--- False negatives are those pairs which appear in the fr_positive_pairs table but were not in the input table.
--- False positives are those pairs from the input table which are also present in the fr_negatives_pairs.
+-- Pairs of functions that were _detected_ as being similar.
+create table fr_clone_pairs as
+    select distinct c1.func_id as func1_id, c2.func_id as func2_id
+        from semantic_clusters as c1
+        join semantic_clusters as c2 on c1.id = c2.id and c1.func_id < c2.func_id;
 
-drop table if exists fr_fn_semantic;
-create table fr_fn_semantic as
-    select * from fr_positive_pairs except select func_id_1, func_id_2 from semantic_clone_pairs;
-drop table if exists fr_fp_semantic;
-create table fr_fp_semantic as
-    select * from fr_negative_pairs intersect select func_id_1, func_id_2 from semantic_clone_pairs;
+-- Table of false negative pairs.  These are pairs of functions that were not determined to be similar but which are present
+-- in the fr_positives_pairs table.
+create table fr_false_negatives as
+    select * from fr_positive_pairs except select func1_id, func2_id from fr_clone_pairs;
 
-drop table if exists fr_fn_syntactic;
-create table fr_fn_syntactic as
-    select * from fr_positive_pairs except select func_id_1, func_id_2 from syntactic_clone_pairs;
-drop table if exists fr_fp_syntactic;
-create table fr_fp_syntactic as
-    select * from fr_negative_pairs intersect select func_id_1, func_id_2 from syntactic_clone_pairs;
+-- Table of false positive pairs.  These are pairs of functions that were determined to be similar but which are present
+-- in the fr_negative_pairs table.
+create table fr_false_positives as
+    select * from fr_negative_pairs intersect select func1_id, func2_id from fr_clone_pairs;
 
-drop table if exists fr_fn_combined;
-create table fr_fn_combined as
-    select * from fr_positive_pairs except select func_id_1, func_id_2 from combined_clone_pairs;
-drop table if exists fr_fp_combined;
-create table fr_fp_combined as
-    select * from fr_negative_pairs intersect select func_id_1, func_id_2 from combined_clone_pairs;
+-- False negative rate is the ratio of false negatives to expected positives
+-- False positive rate is the ratio of false positives to expected negatives
+create table fr_results as
+    select
+	(select count(*) from fr_positive_pairs) as "Expected Positives",
+	(select count(*) from fr_negative_pairs) as "Expected Negatives",
+	(select count(*) from fr_false_negatives) as "False Negatives",
+	(select count(*) from fr_false_positives) as "False Positives",
+	((select 100.0*count(*) from fr_false_negatives) / (select count(*) from fr_positive_pairs)) as "FN Percent",
+	((select 100.0*count(*) from fr_false_positives) / (select count(*) from fr_negative_pairs)) as "FP Percent";
 
-drop table if exists fr_fn_semantic_cg;
-create table fr_fn_semantic_cg as
-    select * from fr_positive_pairs except select func_id_1, func_id_2 from semantic_cgclone_pairs;
-drop table if exists fr_fp_semantic_cg;
-create table fr_fp_semantic_cg as
-    select * from fr_negative_pairs intersect select func_id_1, func_id_2 from semantic_cgclone_pairs;
+select * from fr_results;
 
-drop table if exists fr_fn_syntactic_cg;
-create table fr_fn_syntactic_cg as
-    select * from fr_positive_pairs except select func_id_1, func_id_2 from syntactic_cgclone_pairs;
-drop table if exists fr_fp_syntactic_cg;
-create table fr_fp_syntactic_cg as
-    select * from fr_negative_pairs intersect select func_id_1, func_id_2 from syntactic_cgclone_pairs;
+select 'The following table shows functions that appear in all specimens exactly once each' as "Notice";
+select * from fr_functions order by name, specimen_id;
 
-drop table if exists fr_fn_combined_cg;
-create table fr_fn_combined_cg as
-    select * from fr_positive_pairs except select func_id_1, func_id_2 from combined_cgclone_pairs;
-drop table if exists fr_fp_combined_cg;
-create table fr_fp_combined_cg as
-    select * from fr_negative_pairs intersect select func_id_1, func_id_2 from combined_cgclone_pairs;
 
--------------------------------------------------------------------------------------------------------------------------------
--- Count the false positives and false negatives for each input pairs table
-
-drop table if exists fr_failures;
-create table fr_failures (
-    name varchar(64),                   -- name of the table
-    false_negatives integer,            -- number of false negatives missing from that table
-    false_positives integer,            -- number of false positives present in that table
-    false_negatives_rate double precision, -- ratio of false negatives to expected positives
-    false_positives_rate double precision  -- ratio of false positives to expected negatives
-);
-
-insert into fr_failures (name, false_negatives, false_positives) values (
-       'semantic',
-       (select count(*) from fr_fn_semantic),
-       (select count(*) from fr_fp_semantic));
-insert into fr_failures (name, false_negatives, false_positives) values (
-       'syntactic',
-       (select count(*) from fr_fn_syntactic),
-       (select count(*) from fr_fp_syntactic));
-insert into fr_failures (name, false_negatives, false_positives) values (
-       'combined',
-       (select count(*) from fr_fn_combined),
-       (select count(*) from fr_fp_combined));
-insert into fr_failures (name, false_negatives, false_positives) values (
-       'semantic_cg',
-       (select count(*) from fr_fn_semantic_cg),
-       (select count(*) from fr_fp_semantic_cg));
-insert into fr_failures (name, false_negatives, false_positives) values (
-       'syntactic_cg',
-       (select count(*) from fr_fn_syntactic_cg),
-       (select count(*) from fr_fp_syntactic_cg));
-insert into fr_failures (name, false_negatives, false_positives) values (
-       'combined_cg',
-       (select count(*) from fr_fn_combined_cg),
-       (select count(*) from fr_fp_combined_cg));
-
--- Answers
-select
-    (select count(*) from fr_positive_pairs) as positives,
-    (select count(*) from fr_negative_pairs) as negatives;
-
--- Update the ratio columns
-select '' as ""; --blank line
-update fr_failures
-    set false_negatives_rate = (1.0*false_negatives) / (select count(*) from fr_positive_pairs);
-update fr_failures
-    set false_positives_rate = (1.0*false_positives) / (select count(*) from fr_negative_pairs);
-
-select * from fr_failures;
-
--- One can easily compute true positive and negative rates from these tables
-select '' as ""; --blank line
-select
-	name,
-	(select count(*) from fr_positive_pairs) - false_negatives as true_positives,
-	1.0 - false_negatives_rate as true_positives_rate,
-	(select count(*) from fr_negative_pairs) - false_positives as true_negatives,
-	1.0 - false_positives_rate as true_negatives_rate
-    from fr_failures;
-
+rollback;

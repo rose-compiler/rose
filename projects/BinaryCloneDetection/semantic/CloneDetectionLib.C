@@ -321,7 +321,7 @@ std::string
 Progress::line() const
 {
     size_t n = std::min(cur, total);
-    int nchars = round((double)n/total * WIDTH);
+    int nchars = total>0 ? round((double)n/total * WIDTH) : 0;
     std::string bar(nchars, '=');
     bar += std::string(WIDTH-nchars, ' ');
     if (!mesg.empty()) {
@@ -331,7 +331,7 @@ Progress::line() const
         bar.replace(3, s.size(), s);
     }
     std::ostringstream ss;
-    ss <<" " <<std::setw(3) <<(int)round(100.0*n/total) <<"% " <<cur <<"/" <<total <<" |" <<bar <<"|";
+    ss <<" " <<std::setw(3) <<(total>0?(int)round(100.0*n/total):0) <<"% " <<cur <<"/" <<total <<" |" <<bar <<"|";
     return ss.str();
 }
 
@@ -518,7 +518,7 @@ SgAsmInterpretation *
 open_specimen(const std::string &specimen_name, const std::string &argv0, bool do_link)
 {
     // Parse the binary container (ELF, PE, etc) but do not disassemble yet.
-    std::cerr <<argv0 <<": parsing binary container\n";
+    std::cerr <<argv0 <<": parsing binary container: " <<specimen_name <<"\n";
     std::string arg = "-rose:read_executable_file_format_only";
     char *argv[4];
     argv[0] = strdup(argv0.c_str());

@@ -14,17 +14,18 @@ usage(int exit_status)
               <<"  This command lists function instructions interspersed with source code if source code is available.\n"
               <<"\n"
               <<"    --summary|--details\n"
-              <<"            The --summary switch causes only summary information about clusters to be shown, while the\n"
-              <<"            --details switch (the default) also lists the contents of each cluster.\n"
+              <<"            The --summary switch causes only summary information about the function to be shown, while the\n"
+              <<"            --details switch (the default) also lists the instructions for the function.\n"
               <<"\n"
               <<"    DATABASE\n"
               <<"            The name of the database to which we are connecting.  For SQLite3 databases this is just a local\n"
               <<"            file name that will be created if it doesn't exist; for other database drivers this is a URL\n"
               <<"            containing the driver type and all necessary connection parameters.\n"
               <<"    FUNCTION\n"
-              <<"            A function ID number, a function entry address, or a function name, tried in that order. If\n"
-              <<"            a function entry address or function name matches more than one function, then those function\n"
-              <<"            ID numbers are listed.  If no FUNCTION is specified then a list of all functions is presented.\n";
+              <<"            A function ID number, a function entry address, a function name, the base name of a specimen, or\n"
+              <<"            an absolute name of a specimen. If FUNCTION matches more than a single function, then those\n"
+              <<"            function ID numbers are listed.  If no FUNCTION is specified then a list of all functions is\n"
+              <<"            presented.\n";
     exit(exit_status);
 }
 
@@ -104,18 +105,24 @@ main(int argc, char *argv[])
         1==tx->statement("select count(*) from semantic_functions where id = ?")->bind(0, func_spec_i)->execute_int())
         func_id = func_spec_i;
     if (-1==func_id) {
-        SqlDatabase::StatementPtr stmt1 = tx->statement("select func.id, func.entry_va, func.name, func.ninsns, file.name"
-                                                        " from semantic_functions as func"
-                                                        " join semantic_files as file on func.specimen_id = file.id"
-                                                        " where entry_va = ?")->bind(0, func_spec_i);
-        SqlDatabase::StatementPtr stmt2 = tx->statement("select func.id, func.entry_va, func.name, func.ninsns, file.name"
-                                                        " from semantic_functions as func"
-                                                        " join semantic_files as file on func.specimen_id = file.id"
-                                                        " where func.name = ?")->bind(0, func_spec);
+        SqlDatabase::StatementPtr stmt1a = tx->statement("select func.id, func.entry_va, func.name, func.ninsns, file.name"
+                                                         " from semantic_functions as func"
+                                                         " join semantic_files as file on func.file_id = file.id"
+                                                         " where entry_va = ?")->bind(0, func_spec_i);
+        SqlDatabase::StatementPtr stmt1b = tx->statement("select func.id, func.entry_va, func.name, func.ninsns, file.name"
+                                                         " from semantic_functions as func"
+                                                         " join semantic_files as file on func.file_id = file.id"
+                                                         " where func.name = ?")->bind(0, func_spec);
+        SqlDatabase::StatementPtr stmt1c = tx->statement("select func.id, func.entry_va, func.name, func.ninsns, file.name"
+                                                         " from semantic_functions as func"
+                                                         " join semantic_files as file on func.file_id = file.id"
+                                                         " where file.name like"
+                                                         " '%/"+SqlDatabase::escape(func_spec, tx->driver(), false)+"'");
         SqlDatabase::Table<int, rose_addr_t, std::string, size_t, std::string> functions;
         if (func_spec_i!=-1)
-            functions.insert(stmt1);
-        functions.insert(stmt2);
+            functions.insert(stmt1a);
+        functions.insert(stmt1b);
+        functions.insert(stmt1c);
         functions.headers("ID", "Entry VA", "Function Name", "NInsns", "Specimen Name");
         functions.renderers().r1 = &SqlDatabase::addr32Renderer;
         if (functions.empty()) {
@@ -161,14 +168,33 @@ main(int argc, char *argv[])
     SqlDatabase::Table<int, std::string> srcfiles(tx->statement("select distinct file.id, file.name"
                                                                 " from semantic_instructions as insn"
                                                                 " join semantic_files as file on insn.src_file_id = file.id"
-                                                                " order by file.name"));
+                                                                " where insn.func_id = ?"
+                                                                " order by file.name")->bind(0, func_id));
     if (1==srcfiles.size()) {
         std::cout <<"Source file name:                 " <<srcfiles[0].v1 <<" (id=" <<srcfiles[0].v0 <<")\n";
     } else if (!srcfiles.empty()) {
-        std::cout <<"Function comes from these source files:\n";
+        std::cout <<"\nFunction comes from these source files:\n";
         srcfiles.headers("ID", "Name");
         srcfiles.line_prefix("    ");
         srcfiles.print(std::cout);
+    }
+
+    // Show the results of tests
+    std::cout <<"\n";
+    SqlDatabase::Table<int, size_t, size_t, size_t, int64_t, std::string, double, double, int64_t> fio;
+    fio.insert(tx->statement("select"
+                             " fio.igroup_id, fio.integers_consumed, fio.pointers_consumed,"
+                             " fio.instructions_executed, fio.ogroup_id, fault.name, fio.elapsed_time, fio.cpu_time, fio.cmd"
+                             " from semantic_fio as fio"
+                             " join semantic_faults as fault on fio.status = fault.id"
+                             " where func_id = ?"
+                             " order by igroup_id")->bind(0, func_id));
+    if (fio.empty()) {
+        std::cout <<"Not tested.\n";
+    } else {
+        fio.headers("IGroup", "Ints", "Ptrs", "Insns", "OGroup", "Status", "Elapsed Time",
+                    "CPU Time", "Command");
+        fio.print(std::cout);
     }
 
     if (!opt.show_details)

@@ -11,9 +11,9 @@ select
         count(*) as nfaults,
         100.0*count(*)/(select count(*) from semantic_fio) as percent
     from semantic_fio as fio
-    join semantic_outputvalues as output on fio.effective_outputgroup=output.id and output.vtype='F'
+    join semantic_outputvalues as output on fio.ogroup_id=output.hashkey and output.vtype='F'
     join semantic_faults as fault on output.val=fault.id
-    group by output.val;
+    group by output.val, fault.name;
 
 -- =============================================================================================================================
 -- Numbers of instructions executed.
