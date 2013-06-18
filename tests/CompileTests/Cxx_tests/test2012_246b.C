@@ -1,5 +1,5 @@
 // cat file1.c
-// void foo();
+void foo();
 
 
 //cat file2.c

@@ -1,0 +1,545 @@
+      
+%%%%%%%%%%
+%% Fortran ISO/IEC 1539:1991 4xx DataTypes
+%%%%%%%%%%
+
+%%module languages/fortran/syntax/R400DataTypes
+module R400DataTypes
+
+imports
+%%  languages/fortran/syntax/FortranLex
+%%  languages/fortran/syntax/R500DataDeclarations
+  FortranLex
+  R500DataDeclarations
+
+exports
+
+sorts
+
+%% 3.2 Low-level syntax
+
+  Constant                            %% R304
+  LiteralConstant                     %% R305
+  NamedConstant                       %% R306
+  IntConstant                         %% R307
+  CharConstant                        %% R308
+
+%% 4.2 Type parameters
+
+  TypeParamValue                      %% R401
+
+%% 4.3 Relationship of types and values to objects
+
+  TypeSpec                            %% R402
+  DeclarationTypeSpec                 %% R403
+
+%% 4.4 Intrinsic types
+
+  IntrinsicTypeSpec                   %% R404
+  KindSelector                        %% R405
+  SignedIntLiteralConstant            %% R406
+  IntLiteralConstant                  %% R407
+  KindParam                           %% R408
+  SignedDigitString                   %% R409
+  DigitString                         %% R410
+  Sign                                %% R411
+  SignedRealLiteralConstant           %% R412
+  RealLiteralConstant                 %% R413
+                                      %% R414  Significand    - lex
+                                      %% R415  ExponentLetter - lex
+                                      %% R416  Exponent       - lex
+  ComplexLiteralConstant              %% R417
+  RealPart                            %% R418
+  ImagPart                            %% R419
+  CharSelector                        %% R420
+  LengthSelector                      %% R421
+  CharLength                          %% R422
+  CharLiteralConstant                 %% R423
+  LogicalLiteralConstant              %% R424
+
+%% 4.5 Derived types
+
+  DerivedTypeDef                      %% R425
+  DerivedTypeStmt                     %% R426
+  TypeAttrSpec                        %% R427
+  PrivateOrSequence                   %% R428
+  EndTypeStmt                         %% R429
+  SequenceStmt                        %% R430
+  TypeParamDefStmt                    %% R431
+  TypeParamDecl                       %% R432
+  TypeParamAttrSpec                   %% R433
+  ComponentPart                       %% R434
+  ComponentDefStmt                    %% R435
+  DataComponentDefStmt                %% R436
+  ComponentAttrSpec                   %% R437
+  ComponentDecl                       %% R438
+  ComponentArraySpec                  %% R439
+  ProcComponentDefStmt                %% R440
+  ProcComponentAttrSpec               %% R441
+  ComponentInitialization             %% R442
+  InitialDataTarget                   %% R443
+  PrivateComponentsStmt               %% R444
+  TypeBoundProcedurePart              %% R445
+  BindingPrivateStmt                  %% R446
+  TypeBoundProcBinding                %% R447
+  TypeBoundProcedureStmt              %% R448
+  TypeBoundProcDecl                   %% R449
+  TypeBoundGenericStmt                %% R450
+  BindingAttr                         %% R451
+  FinalProcedureStmt                  %% R452
+  DerivedTypeSpec                     %% R453
+  TypeParamSpec                       %% R454
+  StructureConstructor                %% R455
+  ComponentSpec                       %% R456
+  ComponentDataSource                 %% R457
+
+%% 4.6 Enumerations and enumerators
+
+  EnumDef                             %% R458
+  EnumDefStmt                         %% R459
+  EnumeratorDefStmt                   %% R460
+  Enumerator                          %% R461
+  EndEnumStmt                         %% R462
+
+%% 4.7 Binary, octal, and hexadecimal literal constants
+
+  BozLiteralConstant                  %% R463
+                                      %% R464  BinaryConstant - lex
+                                      %% R465  OctalConstant  - lex
+                                      %% R466  HexConstant    - lex
+                                      %% R467  HexDigit       - lex
+
+%% 4.8 Construction of array values
+
+  ArrayConstructor                    %% R468
+  AcSpec                              %% R469
+                                      %% R470  Lbracket - lex
+                                      %% R471  Lbracket - lex
+  AcValue                             %% R472
+  AcImpliedDo                         %% R473
+  AcImpliedDoControl                  %% R474
+  AcDoVariable                        %% R475
+
+context-free syntax
+
+%%TODO-F08 - move to clause 300
+
+%%R305
+%%TODO-DELETE   NamedConstantUse                      -> Constant
+%%TODO-DELETE   UnsignedArithmeticConstant            -> Constant
+%%TODO-DELETE   '+' UnsignedArithmeticConstant        -> Constant
+%%TODO-DELETE   '-' UnsignedArithmeticConstant        -> Constant
+%%TODO-DELETE   Scon                                  -> Constant
+%%TODO-DELETE   Hcon                                  -> Constant
+%%TODO-DELETE   LogicalConstant                       -> Constant
+%%TODO-DELETE   Icon '_' Scon                         -> Constant
+%%TODO-DELETE   NamedConstantUse '_' Scon             -> Constant
+
+
+%% 3.2 Low-level syntax
+%%
+
+%%R304
+  LiteralConstant                       -> Constant         {cons("Constant_AMB")}
+  NamedConstant                         -> Constant         {reject} %% can't tell name is constant
+
+%%R305
+    IntLiteralConstant
+  | RealLiteralConstant
+  | ComplexLiteralConstant
+  | LogicalLiteralConstant
+  | CharLiteralConstant
+  | BozLiteralConstant                  -> LiteralConstant  {cons("LiteralConstant")}
+
+%%R306
+  Name                                  -> NamedConstant    {cons("NamedConstant")}
+
+%%TODO-AMBIGUOUS
+%%TODO-F08 the following rules look way ambiguous
+
+%%R307
+  Constant                              -> IntConstant      {cons("int-constant")}
+
+%%R308
+  Constant                              -> CharConstant     {cons("char-constant")}
+
+
+%% 4.2 Type parameters
+%%
+
+%%R401
+%%       expr substituted for scalar-int-expr
+%%
+  Expr                                  -> TypeParamValue       {cons("TypeParamValue_Expr")}
+  '*'                                   -> TypeParamValue       {cons("TypeParamValue_STAR")}
+  ':'                                   -> TypeParamValue       {cons("TypeParamValue_COLON")}
+
+%% 4.3 Relationship of types and values to objects
+%%
+
+%%R402
+    IntrinsicTypeSpec
+  | DerivedTypeSpec                     -> TypeSpec             {cons("type-spec")}
+
+%%R403
+  IntrinsicTypeSpec                       -> DeclarationTypeSpec  {cons("DeclarationTypeSpec")}
+  'TYPE'  '(' IntrinsicTypeSpec ')'       -> DeclarationTypeSpec  {cons("DeclarationTypeSpec_TYPE")}
+  'TYPE'  '(' DerivedTypeSpec   ')'       -> DeclarationTypeSpec  {cons("DeclarationTypeSpec_TYPE")}
+  'CLASS' '(' DerivedTypeSpec   ')'       -> DeclarationTypeSpec  {cons("DeclarationTypeSpec_CLASS")}
+  'CLASS' '(' '*'               ')'       -> DeclarationTypeSpec  {cons("DeclarationTypeSpec_CLASS")}
+%%TR29113
+  'TYPE'  '(' '*'               ')'       -> DeclarationTypeSpec  {cons("DeclarationTypeSpec_TYPE")}
+
+
+%% 4.4 Intrinsic types
+%%
+
+%%R404
+  'INTEGER'   KindSelector?             -> IntrinsicTypeSpec    {cons("IntrinsicTypeSpec_INTEGER")}
+  'REAL'      KindSelector?             -> IntrinsicTypeSpec    {cons("IntrinsicTypeSpec_REAL")}
+  'DOUBLE' 'PRECISION'                  -> IntrinsicTypeSpec    {cons("IntrinsicTypeSpec_DOUBLE_PRECISION")}
+  'COMPLEX'   KindSelector?             -> IntrinsicTypeSpec    {cons("IntrinsicTypeSpec_COMPLEX")}
+  'CHARACTER' CharSelector?             -> IntrinsicTypeSpec    {cons("IntrinsicTypeSpec_CHARACTER")}
+  'LOGICAL'   KindSelector?             -> IntrinsicTypeSpec    {cons("IntrinsicTypeSpec_LOGICAL")}
+  'DOUBLE' 'COMPLEX'                    -> IntrinsicTypeSpec    {cons("IntrinsicTypeSpec_DOUBLE_COMPLEX")}
+
+%%R405
+%%       expr substituted for scalar-int-constant-expr
+%%       NONSTANDARD: e.g., integer*8 complex*8 complex*16
+%%
+  '(' ('KIND' '=')? Expr ')'            -> KindSelector  {cons("KindSelector_KIND")}
+  '*' Icon                              -> KindSelector  {cons("KindSelector_STAR")}
+
+%%406
+  Sign? IntLiteralConstant              -> SignedIntLiteralConstant  {cons("signed-int-literal-constant")}
+
+%%R407
+  DigitString ('_' KindParam)?          -> IntLiteralConstant  {cons("IntLiteralConstant")}
+
+%%R408
+    DigitString
+  | ScalarIntConstantName               -> KindParam          {cons("kind-param")}
+
+%%R409
+  Sign? DigitString                     -> SignedDigitString  {cons("signed-digit-string")}
+
+%%R410
+  Icon                                  -> DigitString        {cons("DigitString")}
+
+%%R411
+  '+'                                   -> Sign               {cons("sign_PLUS")}
+  '-'                                   -> Sign               {cons("sign_MINUS")}
+
+%%R412
+  Sign? RealLiteralConstant             -> SignedRealLiteralConstant  {cons("signed-real-literal-constant")}
+
+%%R413
+  Rcon ('_' KindParam)?                 -> RealLiteralConstant        {cons("real-literal-constant")}
+
+%%R414 significand     - lex
+
+%%R415 exponent-letter - lex
+
+%%R416 exponent        - lex
+
+%%R417
+  '(' RealPart ',' ImagPart ')'         -> ComplexLiteralConstant  {cons("complex-literal-constant")}
+
+%%418
+    SignedIntLiteralConstant
+  | SignedRealLiteralConstant
+  | NamedConstant                       -> RealPart                {cons("real-part")}
+
+%%419
+    SignedIntLiteralConstant
+  | SignedRealLiteralConstant
+  | NamedConstant                       -> ImagPart                {cons("imag-part")}
+
+%%R420
+%%       expr substituted for scalar-int-constant-expr
+%%
+  LengthSelector                                               -> CharSelector    {cons("CharSelector_LS")}
+  '(' 'LEN'  '=' TypeParamValue ',' 'KIND'  '=' Expr ')'       -> CharSelector    {cons("CharSelector_LEN_KIND")}
+  '('            TypeParamValue ',' 'KIND'  '=' Expr ')'       -> CharSelector    {cons("CharSelector_LEN_KIND")}
+  '('            TypeParamValue ','             Expr ')'       -> CharSelector    {cons("CharSelector_LEN_KIND")}
+  '(' 'KIND' '=' Expr ',' 'LEN' '=' TypeParamValue   ')'       -> CharSelector    {cons("CharSelector_KIND_LEN")}
+  '(' 'KIND' '=' Expr                                ')'       -> CharSelector    {cons("CharSelector_KIND")}
+
+%%R421
+  '(' 'LEN' '=' TypeParamValue ')'                             -> LengthSelector  {cons("LengthSelector_LEN")}
+  '('           TypeParamValue ')'                             -> LengthSelector  {cons("LengthSelector_LEN")}
+  '*' CharLength ','                                           -> LengthSelector  {cons("LengthSelector_STAR")}
+  '*' CharLength                                               -> LengthSelector  {cons("LengthSelector_STAR")}
+
+%%R422
+    ( '(' TypeParamValue ')' )
+  | ( Icon                   )                                 -> CharLength      {cons("char-length")}
+
+%%R423
+  (KindParam '_')? Scon                 -> CharLiteralConstant     {cons("char-literal-constant")}
+
+%%R424
+  '.TRUE.'  ('_' KindParam)?            -> LogicalLiteralConstant  {cons("logical-literal-constant_TRUE")}
+  '.FALSE.' ('_' KindParam)?            -> LogicalLiteralConstant  {cons("logical-literal-constant_FALSE")}
+
+
+%% 4.5 Derived types
+%%
+
+%%R425
+  DerivedTypeStmt
+    TypeParamDefStmt*
+    PrivateOrSequence*
+    ComponentPart?
+    TypeBoundProcedurePart?
+  EndTypeStmt                           -> DerivedTypeDef          {cons("derived-type-def")}
+
+%%R426
+  LblDef 'TYPE'
+             ( (',' {TypeAttrSpec ','}+)? '::' )?
+             TypeName
+             ( '('  {TypeParamName ','}+ ')'   )?          EOS -> DerivedTypeStmt  {cons("derived-type-stmt")}
+
+  'INTEGER'                                                    -> TypeName  {reject}
+  'REAL'                                                       -> TypeName  {reject}
+  'DOUBLEPRECISION'                                            -> TypeName  {reject}
+  'COMPLEX'                                                    -> TypeName  {reject}
+  'CHARACTER'                                                  -> TypeName  {reject}
+  'LOGICAL'                                                    -> TypeName  {reject}
+  'DOUBLECOMPLEX'                                              -> TypeName  {reject}
+
+
+%%R427
+  'ABSTRACT'                                                   -> TypeAttrSpec     {cons("TypeAttrSpec_ABSTRACT")}
+   AccessSpec                                                  -> TypeAttrSpec     {cons("typeAttrSpec_AS")}
+  'BIND'     '(' 'C'            ')'                            -> TypeAttrSpec     {cons("typeAttrSpec_BIND")}
+  'EXTENDS'  '(' ParentTypeName ')'                            -> TypeAttrSpec     {cons("typeAttrSpec_EXTENDS")}
+
+%%R428
+    PrivateComponentsStmt
+  | SequenceStmt                                               -> PrivateOrSequence  {cons("private-components-stmt")}
+
+%%R429
+  LblDef 'END' 'TYPE' TypeName?                            EOS -> EndTypeStmt      {cons("end-type-stmt")}
+
+%%R430
+  LblDef 'SEQUENCE'                                        EOS -> SequenceStmt     {cons("sequence-stmt")}
+
+%%R431
+  LblDef 'INTEGER' KindSelector? ','   TypeParamAttrSpec
+                                 '::' {TypeParamDecl ','}+ EOS -> TypeParamDefStmt {cons("type-param-def-stmt")}
+
+%%R432
+%%        expr substituted for scalar-int-constant-expr
+%%
+  TypeParamName ( '=' Expr )?                                  -> TypeParamDecl    {cons("type-param-decl")}
+
+%%R433
+  'KIND'                                -> TypeParamAttrSpec  {cons("type-param-attr-spec_KIND")}
+  'LEN'                                 -> TypeParamAttrSpec  {cons("type-param-attr-spec_LEN")}
+
+%%R434
+  ComponentDefStmt*                     -> ComponentPart     {cons("component-part")}
+
+%%R435
+    DataComponentDefStmt
+  | ProcComponentDefStmt                -> ComponentDefStmt  {cons("component-def-stmt")}
+
+%%R436
+  LblDef DeclarationTypeSpec
+           ( (',' {ComponentAttrSpec ','}+ )? '::' )?
+                  {ComponentDecl     ','}+             EOS   -> DataComponentDefStmt  {cons("data-component-def-stmt")}
+
+%%R437
+  AccessSpec                                -> ComponentAttrSpec  {cons("component-attr-spec_AS")}
+  'ALLOCATABLE'                             -> ComponentAttrSpec  {cons("component-attr-spec_ALLOCATABLE")}
+  'CODIMENSION' '[' CoarraySpec ']'         -> ComponentAttrSpec  {cons("component-attr-spec_CODIMENSION")}
+  'CONTIGUOUS'                              -> ComponentAttrSpec  {cons("component-attr-spec_CONTIGUOUS")}
+  'DIMENSION' '(' ComponentArraySpec ')'    -> ComponentAttrSpec  {cons("component-attr-spec_DIMENSION")}
+  'POINTER'                                 -> ComponentAttrSpec  {cons("component-attr-spec_POINTER")}
+
+%%R438
+  ComponentName ( '(' ComponentArraySpec ')' )?
+                ( '[' CoarraySpec        ']' )?
+                ( '*' CharLength )? ComponentInitialization?  -> ComponentDecl  {cons("component-decl")}
+
+%%R439
+    ( {ExplicitShapeSpec ','}+ )
+  | ( {DeferredShapeSpec ','}+ )                -> ComponentArraySpec  {cons("component-array-spec")}
+
+%%R440
+  LblDef 'PROCEDURE'
+           '('   ProcInterface? ')' ','
+                {ProcComponentAttrSpec ','}+
+           '::' {ProcDecl              ','}+  EOS  -> ProcComponentDefStmt  {cons("proc-component-def-stmt")}
+
+%%R441
+  'POINTER'                                   -> ProcComponentAttrSpec {cons("proc-component-attr-spec_POINTER")}
+  'PASS'                                      -> ProcComponentAttrSpec {cons("proc-component-attr-spec_PASS")}
+  'NOPASS'                                    -> ProcComponentAttrSpec {cons("proc-component-attr-spec_NOPASS")}
+  AccessSpec                                  -> ProcComponentAttrSpec {cons("proc-component-attr-spec_AS")}
+
+%%R442
+    ( '=' Expr               )
+  | ( '=>' NullInit          )
+  | ( '=>' InitialDataTarget )                     -> ComponentInitialization  {cons("component-initialization")}
+
+%%R443
+%%ABIGUITY Replace designator by variable?
+  Designator                                       -> InitialDataTarget      {cons("initial-data-target")}
+
+%%R444
+  LblDef 'PRIVATE'                             EOS -> PrivateComponentsStmt  {cons("private-components-stmt")}
+
+%%R445
+  ContainsStmt
+    BindingPrivateStmt?
+    TypeBoundProcBinding*                          -> TypeBoundProcedurePart {cons("type-bound-procedure-part")}
+
+%%R446
+  LblDef 'PRIVATE'                             EOS -> BindingPrivateStmt     {cons("binding-private--stmt")}
+
+%%R447
+    TypeBoundProcedureStmt
+  | TypeBoundGenericStmt
+  | FinalProcedureStmt                             -> TypeBoundProcBinding   {cons("type-bound-proc-binding")}
+
+%%R448
+  LblDef 'PROCEDURE'
+            ( (( ',' {BindingAttr ','}+ )? '::')?
+                     {TypeBoundProcDecl ','}+    )
+          | ( '(' InterfaceName ')'
+                 ',' {BindingAttr ','}+    '::'
+                     {BindingName ','}+          )
+                                               EOS -> TypeBoundProcedureStmt  {cons("type-bound-procedure-stmt")}
+
+%%R449
+  BindingName ( '=>' ProcedureName )?              -> TypeBoundProcDecl       {cons("type-bound-proc-decl")}
+
+%%R450
+  LblDef 'GENERIC' ( ',' AccessSpec )?
+     '::' GenericSpec '=>' {BindingName ','}+  EOS -> TypeBoundGenericStmt    {cons("type-bound-generic-stmt")}
+
+%%451
+  'PASS' ('(' ArgName ')')?                        -> BindingAttr             {cons("binding-attr_PASS")}
+  'NOPASS'                                         -> BindingAttr             {cons("binding-attr_NOPASS")}
+  'NON_OVERRIDABLE'                                -> BindingAttr             {cons("binding-attr_NON_OVERRIDABLE")}
+  'DEFERRED'                                       -> BindingAttr             {cons("binding-attr_DEFERRED")}
+  AccessSpec                                       -> BindingAttr             {cons("binding-attr_AS")}
+
+%%452
+  LblDef 'FINAL'
+         OptCC {FinalSubroutineName ','}+      EOS -> FinalProcedureStmt      {cons("final-procedure-stmt")}
+
+%%R453
+  TypeName ( '(' {TypeParamSpec ','}+ ')' )?       -> DerivedTypeSpec         {cons("DerivedTypeSpec")}
+
+%%R454
+  ( Keyword '=' )? TypeParamValue                  -> TypeParamSpec           {cons("type-param-spec")}
+
+%%R455
+  DerivedTypeSpec '(' {ComponentSpec ','}* ')'     -> StructureConstructor    {cons("structure-constructor")}
+
+%%R456
+  ( Keyword '=' )? ComponentDataSource             -> ComponentSpec           {cons("component-source")}
+
+%%R457
+    Expr
+  | DataTarget
+  | ProcTarget                                     -> ComponentDataSource     {cons("component-data-source")}  
+
+
+%% 4.6 Enumerations and enumerators
+%%
+
+%%R458
+  EnumDefStmt
+    EnumeratorDefStmt+
+  EndEnumStmt                                      -> EnumDef                 {cons("enum-def")}
+
+%%R459
+  LblDef 'ENUM' ',' 'BIND' '(' 'C' ')'         EOS -> EnumDefStmt             {cons("enum-def-stmt")}
+
+%%R460
+  LblDef 'ENUMERATOR' OptCC
+         {Enumerator ','}+                     EOS -> EnumeratorDefStmt       {cons("enumerator-def-stmt")}
+
+%%R461
+%%       IntConstantExpr substituted for ScalarIntConstantExpr
+%%
+  NamedConstant ('=' IntConstantExpr)?             -> Enumerator              {cons("enumerator")}
+
+%%R462
+  LblDef 'END' 'ENUM'                          EOS -> EndEnumStmt             {cons("end-enum-stmt")}
+
+
+%% 4.7 Binary, octal, and hexadecimal literal constants
+%%
+
+%%R463
+    BinaryConstant
+  | OctalConstant
+  | HexConstant                                    -> BozLiteralConstant      {cons("boz-literal-constant")}
+
+%%R464
+%% BinaryConstant - lex
+
+%%R465
+%% OctalConstant - lex
+
+%%R466
+%% HexConstant - lex
+
+%%R467
+%% HexDigit - ex
+
+
+%% 4.8 Construction of array values
+%%
+
+%%R468
+  '(/' AcSpec '/)'                                 -> ArrayConstructor     {cons("array-constructor")}
+  '['  AcSpec  ']'                                 -> ArrayConstructor     {cons("array-constructor")}
+
+%%R469
+    (  TypeSpec '::'                  )
+  | ( (TypeSpec '::')? {AcValue ','}+ )            -> AcSpec               {cons("ac-spec")}
+
+%%R470
+%% Lbracket - lex
+
+%%R471
+%% Rbracket - lex
+
+%%R472
+    Expr
+  | AcImpliedDo                                    -> AcValue              {cons("ac-value")}
+   
+%%R473
+  '(' {AcValue ','}+ ',' AcImpliedDoControl ')'    -> AcImpliedDo          {cons("ac-implied-do")}
+
+%%R474
+%%      expr substituted for scalar-int-expr
+%%
+  AcDoVariable '=' Expr ',' Expr (',' Expr)?       -> AcImpliedDoControl   {cons("ac-implied-do-control")}
+
+%%R475
+  DoVariable                                       -> AcDoVariable         {cons("ac-do-variable")}
+
+%%R432
+%%TODO-REMOVE
+%%  Expr                                        -> AcValueList
+%%  AcValueList1                                -> AcValueList
+%%  Expr ',' Expr                               -> AcValueList1
+%%  Expr ',' AcImpliedDo                        -> AcValueList1
+%%  AcImpliedDo                                 -> AcValueList1
+%%  AcValueList1 ',' Expr                       -> AcValueList1
+%%  AcValueList1 ',' AcImpliedDo                -> AcValueList1
+
+%%R433
+%%TODO-REMOVE
+%%TODO   '(' Expr ',' ImpliedDoVariable '=' Expr ',' Expr ')'                  -> AcImpliedDo
+%%TODO   '(' Expr ',' ImpliedDoVariable '=' Expr ',' Expr ',' Expr ')'         -> AcImpliedDo
+%%TODO   '(' AcImpliedDo ',' ImpliedDoVariable '=' Expr ',' Expr ')'           -> AcImpliedDo
+%%TODO   '(' AcImpliedDo ',' ImpliedDoVariable '=' Expr ',' Expr ',' Expr ')'  -> AcImpliedDo
+%%TODO   '(' Expr ',' ImpliedDoVariable '=' Expr ',' Expr ')'                  -> AcImpliedDo

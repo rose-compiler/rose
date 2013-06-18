@@ -2,21 +2,34 @@
 #include "aterm1.h"
 #include "atermTranslation.h"
 
-int main (int argc, char* argv[]) {
-  ATerm bottom;
-  SgProject* sageProject = frontend(argc,argv);
-  ATinit(argc, argv, &bottom);
+int main (int argc, char* argv[]) 
+   {
+     printf ("Building ATerm bottom; \n");
+     ATerm bottom;
 
-  ATerm term = convertNodeToAterm(sageProject /*.get_file(0).get_root()*/);
-  ROSE_ASSERT (term);
+     printf ("Building the ROSE AST \n");
+     SgProject* project = frontend(argc,argv);
+
+     printf ("Calling ATinit \n");
+     ATinit(argc, argv, &bottom);
+
+     printf ("Calling convertNodeToAterm \n");
+     ATerm term = convertNodeToAterm(project /*.get_file(0).get_root()*/);
+     printf ("DONE: Calling convertNodeToAterm \n");
+
+     ROSE_ASSERT (term);
+
 #if 0
-  AST_FILE_IO::startUp(sageProject);
-  std::string astBlob = AST_FILE_IO::writeASTToString();
-  term = ATsetAnnotation(term, 
-                         ATmake("ast"),
-                         ATmake("<blob>", astBlob.length(), astBlob.data()));
+  // DQ (3/23/2013): This was already commented out...
+     AST_FILE_IO::startUp(sageProject);
+     std::string astBlob = AST_FILE_IO::writeASTToString();
+     term = ATsetAnnotation(term, ATmake("ast"), ATmake("<blob>", astBlob.length(), astBlob.data()));
 #endif
-  ATwriteToBinaryFile(term, stdout);
 
-  return 0;
-}
+#if 0
+  // DQ (3/23/2013): commented out while debugging.
+     ATwriteToBinaryFile(term, stdout);
+#endif
+
+     return 0;
+   }

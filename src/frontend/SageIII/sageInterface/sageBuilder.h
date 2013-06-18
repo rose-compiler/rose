@@ -1221,6 +1221,10 @@ SgAsmStmt* buildAsmStatement_nfi(std::string s);
 // ! Building nop statement using asm statement
 SgAsmStmt* buildMultibyteNopStatement( int n );
 
+// DQ (5/6/2013): Added build functions to support SgBaseClass construction.
+SgBaseClass* buildBaseClass ( SgClassDeclaration* classDeclaration, SgClassDefinition* classDefinition, bool isVirtual, bool isDirect );
+// SgAccessModifier buildAccessModifier ( unsigned int access );
+
 
 //@}
 

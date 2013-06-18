@@ -83,12 +83,12 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
 
           case V_SgTemplateArgument:
              {
-            // SgTemplateArgument* node = isSgTemplateArgument(referencedNode);
-            // nameQualifier = node->get_qualified_name_prefix_for_type();
 #if 0
+            // DQ (5/4/2013): This was previously disabled, maybe because the SgTemplateArgument is shared between too many declarations (in different scopes).
+               printf ("WARNING: lookup of qualifier prefix from SgTemplateArgument was previously disabled \n");
+#endif
                SgTemplateArgument* node = isSgTemplateArgument(referencedNode);
                nameQualifier = node->get_qualified_name_prefix_for_type();
-#endif
                break;
              }
 
@@ -182,6 +182,7 @@ Unparser_Nameq::generateNameQualifier( SgDeclarationStatement* declarationStatem
      return generateNameQualifierSupport(declarationStatement->get_scope(),info,qualificationOfType);
    }
 
+#error "DEAD CODE!"
 
 SgName
 Unparser_Nameq::generateNameQualifierSupport ( SgScopeStatement* scope, const SgUnparse_Info& info, bool qualificationOfType )
