@@ -164,8 +164,10 @@ void postProcessingSupport (SgNode* node)
           printf ("In postProcessingSupport: Test 1: Calling postProcessingTestFunctionCallArguments() \n");
           postProcessingTestFunctionCallArguments(node);
 #endif
+#ifndef ROSE_USE_CLANG_FRONTEND
        // DQ (10/31/2012): Added fixup for EDG bug which drops variable declarations of some source sequence lists.
           fixupEdgBugDuplicateVariablesInAST();
+#endif
 
        // DQ (5/1/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
        // Liao 11/21/2012. AstPostProcessing() is called within both Frontend and Midend
