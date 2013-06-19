@@ -261,10 +261,6 @@ set(INSTALL_TARGETS_DEFAULT_ARGS  RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
 set(USE_CMAKE 1)
 
 
-if (NOT WIN32)
-enable_language(Fortran)
-endif (NOT WIN32)
-
 # tps (1/4/2010) Do not know how to add flag to CMakeSetup yet
 option ( enable-smaller-generated-files "Build with smaller generated files for IR nodes" )
 #set( enable-smaller-generated-files 1 )
@@ -389,6 +385,18 @@ endif()
 option(enable-fortran "Enable Fortran support in ROSE." ON)
 if (enable-fortran)
   set(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT 1)
+  enable_language(Fortran)
+  # check if gfortran was found
+  if(CMAKE_COMPILER_IS_GNUG77)
+    set(USE_GFORTRAN_IN_ROSE 1)
+    # query gfortran version
+    execute_process(
+      COMMAND ${CMAKE_Fortran_COMPILER} -dumpversion
+      OUTPUT_VARIABLE gfortran_version_output)
+    string(REGEX MATCH "([0-9]+\\.[0-9]+\\.[0-9]+)"
+      gfortran_version "${gfortran_version_output}")
+    message(STATUS "gfortran version ${gfortran_version} detected")
+  endif()
 endif()
 
 option(enable-java "Enable Java support in ROSE." ON)
