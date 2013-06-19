@@ -276,32 +276,40 @@ SgNodeHelper::getSymbolOfVariableDeclaration(SgVariableDeclaration* decl) {
 SgSymbol*
 SgNodeHelper::getSymbolOfVariable(SgVarRefExp* varRefExp) {
   SgVariableSymbol* varSym=varRefExp->get_symbol();
-  SgInitializedName* varInitName=varSym->get_declaration();
-  if(varInitName==0) {
-	//cout << "DEBUG: *only* varSym available."<<endl;
-	return varSym;
-  }
-  SgSymbol* symbol=getSymbolOfInitializedName(varInitName);
-  if(symbol==0) {
-	// MS: Fall back solution: try to find a symbol using the declaration 
-	//     (that's sometimes necessary when coming from a SgVariableSymbol)
-	SgDeclarationStatement* varInitNameDecl=varInitName->get_declaration();
-	if(SgVariableDeclaration* decl=isSgVariableDeclaration(varInitNameDecl)) {
-	  return SgNodeHelper::getSymbolOfVariableDeclaration(decl);
-	} else {
-	  // we give up
-	  //cerr << "WARNING: getSymbolOfVariable: no symbol found."<<endl;
-	  return 0;
+  if(varSym==0) {
+	cerr << "WARNING: SymbolofVariable: 0 (fallback)"<<endl;
+	SgInitializedName* varInitName=varSym->get_declaration();
+	if(varInitName==0) {
+	  //cout << "DEBUG: *only* varSym available."<<endl;
+	  return varSym;
 	}
-  } else {
-	return symbol;
+	SgSymbol* symbol=getSymbolOfInitializedName(varInitName);
+	if(symbol==0) {
+	  // MS: Fall back solution: try to find a symbol using the declaration 
+	  //     (that's sometimes necessary when coming from a SgVariableSymbol)
+	  SgDeclarationStatement* varInitNameDecl=varInitName->get_declaration();
+	  if(SgVariableDeclaration* decl=isSgVariableDeclaration(varInitNameDecl)) {
+		return SgNodeHelper::getSymbolOfVariableDeclaration(decl);
+	  } else {
+		// we give up
+		cerr << "WARNING: getSymbolOfVariable: no symbol found."<<endl;
+		return 0;
+	  }
+	} else {
+	  return symbol;
+	}
   }
+  return varSym;
 }
 
 SgSymbol*
 SgNodeHelper::getSymbolOfInitializedName(SgInitializedName* initName) {
- SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
- return initDeclVar;
+  if(initName->get_prev_decl_item()==0 && initName->get_symbol_from_symbol_table()==0) {
+	cerr<<"WARNING: SgInitializedName: symbol-look-up would fail: get_name()=="<<initName->get_name()<< " .. skipping."<<endl;
+	return 0;
+  }
+  SgSymbol* varsym=initName->search_for_symbol_from_symbol_table();
+  return varsym;
 }
 
 list<SgClassDeclaration*> SgNodeHelper::classDeclarationNestingSequence(SgDeclarationStatement* node) {

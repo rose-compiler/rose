@@ -53,11 +53,12 @@ int main( int argc, char *argv[] ) {
   if(!check)
 	variableIdMapping.reportUniqueVariableSymbolMappingViolations();
   //  else
- {
+  {
 	cout<<"MAPPING:\n";
 	variableIdMapping.toStream(cout);
 	cout<<"-------------------------------------- OK --------------------------------------"<<endl;
   }
+  variableIdMapping.generateDot("vidmapping.dot",astRoot);
 
   } catch(char* str) {
 	cerr << "*Exception raised: " << str << endl;

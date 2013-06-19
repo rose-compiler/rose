@@ -5,6 +5,7 @@
  *************************************************************/
 
 #include "VariableIdMapping.h"
+#include "RoseAst.h"
 
 using namespace CodeThorn;
 
@@ -18,6 +19,120 @@ void VariableIdMapping::toStream(ostream& os) {
 	assert(mappingSymToVarId[mappingVarIdToSym[i]]==i);
   }
 }
+
+VariableId VariableIdMapping::variableIdFromCode(int i) {
+  VariableId id;
+  id.setIdCode(i);
+  return id;
+}
+
+void VariableIdMapping::generateStmtSymbolDotEdge(std::ofstream& file, SgNode* node,VariableId id) {
+  file<<"_"<<node<<" "
+	  <<"->"
+	  <<id.toString()
+	  << endl;
+}
+
+
+string VariableIdMapping::generateDotSgSymbol(SgSymbol* sym) {
+  stringstream ss;
+  ss<<"_"<<sym;
+  return ss.str();
+}
+
+#if 0
+SgSymbol*
+my_search_for_symbol_from_symbol_table(SgInitializedName* initname) const
+   {
+     SgSymbol *symbol;
+     SgInitializedName* aPrevDeclItem = p_prev_decl_item;
+     while(aPrevDeclItem != NULL && aPrevDeclItem->p_prev_decl_item != NULL)
+        {
+       // DQ (11/19/2011): This loop will not terminate if (aPrevDeclItem->p_prev_decl_item == aPrevDeclItem).
+       // This should not happen but this mistake has happened and this assertion helps it be caught instead 
+       // of be an infinite loop.
+          ROSE_ASSERT(aPrevDeclItem->p_prev_decl_item != aPrevDeclItem);
+
+          aPrevDeclItem = aPrevDeclItem->p_prev_decl_item;
+        }
+
+     if (aPrevDeclItem != NULL)
+          symbol = aPrevDeclItem->get_symbol_from_symbol_table();
+       else
+          symbol = get_symbol_from_symbol_table();
+
+     assert(symbol != NULL);
+     return symbol;
+   }
+#endif
+
+
+void VariableIdMapping::generateDot(string filename, SgNode* astRoot) {
+  std::ofstream myfile;
+  myfile.open(filename.c_str(),std::ios::out);
+
+  myfile<<"digraph VarIdMapping {"<<endl;
+  myfile<<"rankdir=LR"<<endl;
+
+  // nodes
+  for(size_t i=0;i<mappingVarIdToSym.size();++i) {
+	myfile<<generateDotSgSymbol(mappingVarIdToSym[i])<<" [label=\""<<generateDotSgSymbol(mappingVarIdToSym[i])<<"\\n"
+		  <<"\\\""
+		  <<SgNodeHelper::symbolToString(mappingVarIdToSym[i])
+		  <<"\\\""
+		  <<"\""
+		  <<"]"
+		  <<endl;
+  }
+  myfile<<endl;
+  // edges : sym->vid
+  for(size_t i=0;i<mappingVarIdToSym.size();++i) {
+	myfile<<"_"<<mappingVarIdToSym[i]
+		  <<"->"
+		  <<variableIdFromCode(i).toString()
+		  <<endl;
+  }
+  // edges: stmt/expr->sym
+  
+  RoseAst ast(astRoot);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+	if(SgVariableDeclaration* vardecl=isSgVariableDeclaration(*i)) {
+	  generateStmtSymbolDotEdge(myfile,vardecl,variableId(vardecl));
+	}
+	if(SgVarRefExp* varref=isSgVarRefExp(*i)) {
+	  generateStmtSymbolDotEdge(myfile,varref,variableId(varref));
+	}
+	if(SgInitializedName* initname=isSgInitializedName(*i)) {
+	  // ROSE-BUG-1
+	  // this guard protects from calling search_for_symbol .. which fails for this kind of SgInitializedName nodes.
+#if 1
+	  SgSymbol* sym=SgNodeHelper::getSymbolOfInitializedName(initname);
+	  if(sym)
+		generateStmtSymbolDotEdge(myfile,initname,variableId(initname));
+#else		  
+	  cout << "AT:"<<initname->get_name()<<endl;
+	  if(initname->get_name()=="") {
+		cerr<<"WARNING: SgInitializedName::get_name()==\"\" .. skipping."<<endl;
+	  } else {
+		// check for __built_in - prefix
+		string s=initname->get_name();
+		string prefix="__builtin";
+		if(s.substr(0,prefix.size())==prefix)
+		  cerr<<"WARNING: variable with prefix \""<<prefix<<"\" in SgInitializedName::get_name()=="<<initname->get_name()<<" -- skipping"<<endl;
+		else {
+		  if(initname->get_prev_decl_item()==0 && initname->get_symbol_from_symbol_table()==0)
+			cerr<<"WARNING: SgInitializedName: symbol-look-up would fail: get_name()=="<<initname->get_name()<< " .. skipping."<<endl;
+		  else
+			generateStmtSymbolDotEdge(myfile,initname,variableId(initname));
+		}
+	  }
+#endif
+	}
+  }
+  myfile<<"}"<<endl;
+  myfile.close();
+}
+
 
 VariableId VariableIdMapping::variableId(SgSymbol* sym) {
   assert(sym);
@@ -162,7 +277,11 @@ VariableId VariableIdMapping::variableId(SgVarRefExp* varRefExp) {
 
 VariableId VariableIdMapping::variableId(SgInitializedName* initName) {
   assert(initName);
-  return variableId(SgNodeHelper::getSymbolOfInitializedName(initName));
+  SgSymbol* sym=SgNodeHelper::getSymbolOfInitializedName(initName);
+  if(sym)
+	return variableId(sym);
+  else
+	return VariableId(); // always defaults to a value different to all mapped values
 }
 
 bool VariableIdMapping::isTemporaryVariableId(VariableId varId) {
