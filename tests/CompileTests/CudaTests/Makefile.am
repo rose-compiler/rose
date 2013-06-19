@@ -1,5 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+../../testTranslator:
+	make -C ../.. testTranslator
+
 CUDA_NO_BUILT_IN_CODES = \
 test_2011_01.cu \
 test_2011_02.cu

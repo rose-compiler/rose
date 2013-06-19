@@ -1,5 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+../../testTranslator:
+	make -C../.. testTranslator
+
 OPENCL_CODES = \
   empty.cl
 
