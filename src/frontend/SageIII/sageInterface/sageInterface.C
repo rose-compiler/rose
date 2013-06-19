@@ -7399,8 +7399,7 @@ static SgExpression* SkipCasting (SgExpression* exp)
 }
 
 //! Promote the single variable declaration statement outside of the for loop header's init statement, e.g. for (int i=0;) becomes int i_x; for (i_x=0;..) and rewrite the loop with the new index variable
-bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop)
-{
+bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop) {
   ROSE_ASSERT(loop!=NULL);
 
   SgStatementPtrList &init = loop ->get_init_stmt();
@@ -16244,16 +16243,16 @@ bool SageInterface::loopCollapsing(SgForStatement* target_loop, size_t collapsin
     }
 
     //Winnie, try to remove var declarations, does not work now
-    SgProject* project = SageInterface::getProject();
-    Rose_STL_Container<SgNode*> queryResult = NodeQuery::querySubTree(project,V_SgDeclarationStatement);
-    for (Rose_STL_Container<SgNode*>::const_iterator iter = queryResult.begin(); iter!= queryResult.end(); iter++)
-    {
-        SgNode* cur_node = *iter;
-        SgVariableDeclaration* cur_stmt =  isSgVariableDeclaration(cur_node); //Winnie, is this really return only variable declaration statements?
+//    SgProject* project = SageInterface::getProject();
+//    Rose_STL_Container<SgNode*> queryResult = NodeQuery::querySubTree(project,V_SgDeclarationStatement);
+//    for (Rose_STL_Container<SgNode*>::const_iterator iter = queryResult.begin(); iter!= queryResult.end(); iter++)
+//    {
+//        SgNode* cur_node = *iter;
+//        SgVariableDeclaration* cur_stmt =  isSgVariableDeclaration(cur_node); //Winnie, is this really return only variable declaration statements?
 
     //    if(cur_stmt != NULL);
     //     removeStatement(cur_stmt);
-    }
+//    }
 
     //Winnie, declare a brand new var as the new index
    SgScopeStatement* scope = target_loop->get_scope();
@@ -16265,27 +16264,6 @@ bool SageInterface::loopCollapsing(SgForStatement* target_loop, size_t collapsin
    SgStatement* init_stmt = buildAssignStatement(buildVarRefExp(ivar_name,scope), copyExpression(lb[0]));  //Winnie, lb[i-1]??
   
   
-/*
-* Winnie, start from here is specific loopunrolling work
-*/  
-//Winnie, end here, build nodes for new lower bound and upper bound
-
-//Winnie, we need to build nodes for new lb and ub as well
-
-
-
-/*
-*Winnie, seems like hanlding fringe part
-*/
-//Winnie, seems an end of fringe part
-
-//Winnie, new ub because of fringe
-
-//Winnie, we need to build new ub because of loopCollapsing, i*j
-
-/*
-*Winnie, start handling step
-*/
 //Winnie, step isPlus flag
 /*
    SgBinaryOp* step_bin_op = isSgBinaryOp(step[0]->get_parent());
@@ -16312,17 +16290,34 @@ bool SageInterface::loopCollapsing(SgForStatement* target_loop, size_t collapsin
      ROSE_ASSERT(body);
      SgExpression* new_exp = NULL;
      SgExpression* ub_temp = ub_exp;
-     SgExpression* remain_temp= buildVarRefExp(ivar_name, scope);
+     SgExpression* remain_exp_temp = buildVarRefExp(ivar_name, scope);
+     std::vector<SgStatement*> new_stmt_list; 
       
      for(int i = 0; i < collapsing_factor - 1; i ++)     //Winnie, pass expressions one by one, instead of one whole statement. So, this one should be the outer loop
      {  
         //build replacement  expression if it is NULL //Winnie, for one var, only need to build expression once
-            if (new_exp == NULL)
+            if (new_exp == NULL) //Winnie, do we really need this if check?
             {
 	        	ub_temp = buildDivideOp(copyExpression(ub_temp),copyExpression(ub[i]));
-                new_exp = buildDivideOp(copyExpression(remain_temp), copyExpression(ub_temp));
-		        remain_temp = buildModOp(copyExpression(remain_temp), copyExpression(ub_temp)); 
+
+                //Winnie, add in a new variable, and a new declaration and initialization statement for new_exp
+                new_exp = buildDivideOp(copyExpression(remain_exp_temp), copyExpression(ub_temp));
+                SgExprStatement* assign_stmt = buildAssignStatement(buildVarRefExp(ivar[i], scope), copyExpression(new_exp));   //Winnie, there might be scope problem!
+                new_stmt_list.push_back(assign_stmt); //Winnie, add new statement add the end of the new statement list
+                remain_exp_temp = buildModOp((remain_exp_temp), copyExpression(ub_temp));  //Winnie, remain value after div op of the new_exp stmt
+
+                if(i != collapsing_factor - 2){ //Winnie, if this is the second last level of loop, no need to create new variable to hold the remain_value, or remove the original index variable declaration
+                //Winnie, declare and initialize the variable
+                    string remain_var_name= "_remain_value";
+                    remain_var_name = ivar[i]->get_name().getString() + remain_var_name;  //Winnie, create var name
+                    SgVariableDeclaration* loop_index_decl = buildVariableDeclaration(remain_var_name, buildIntType(), buildAssignInitializer(remain_exp_temp, buildIntType()), scope);  
+                    remain_exp_temp = buildVarRefExp(remain_var_name, scope);
+                    new_stmt_list.push_back(loop_index_decl); //Winnie, add new statement at the end of the new statement list
+                }
             } 
+
+//Winnie, no need to modify these index ref exp any more, since we've already assign them correct value.
+            /*
         	std::vector<SgVarRefExp*> refs = querySubTree<SgVarRefExp> (body, V_SgVarRefExp);
             for (std::vector<SgVarRefExp*>::iterator iter = refs.begin(); iter !=refs.end(); iter++)
             {
@@ -16333,12 +16328,18 @@ bool SageInterface::loopCollapsing(SgForStatement* target_loop, size_t collapsin
                     replaceExpression(refexp, copyExpression(new_exp));
                 }
             }
-
+            */
 	        new_exp = NULL;
      }
 
+
+//     new_exp = buildModOp(remain_exp_temp, copyExpression(ub[collapsing_factor - 1]));
+     SgExprStatement* assign_stmt = buildAssignStatement(buildVarRefExp(ivar[collapsing_factor - 1], scope), copyExpression(remain_exp_temp));   //Winnie, there might be scope problem!
+     //SgExprStatement* assign_stmt = buildAssignStatement(buildVarRefExp(ivar[collapsing_factor - 1], scope), copyExpression(new_exp));   //Winnie, there might be scope problem!
+     new_stmt_list.push_back(assign_stmt);
+     prependStatementList(new_stmt_list, body);
 	//Winnie, modify ivar[collapsing_factor - 1]
-	 std::vector<SgVarRefExp*> refs = querySubTree<SgVarRefExp> (body, V_SgVarRefExp);
+/*	 std::vector<SgVarRefExp*> refs = querySubTree<SgVarRefExp> (body, V_SgVarRefExp);
      for (std::vector<SgVarRefExp*>::iterator iter = refs.begin(); iter !=refs.end(); iter++)
      {
         SgVarRefExp* refexp = *iter;
@@ -16348,13 +16349,12 @@ bool SageInterface::loopCollapsing(SgForStatement* target_loop, size_t collapsin
             //build replacement  expression if it is NULL
             if (new_exp == NULL)
             {
-               new_exp = buildModOp(buildVarRefExp(ivar_name,scope),copyExpression(ub[collapsing_factor - 1]));
-
-            }
+           }
             // replace it with the right one
-            replaceExpression(refexp, new_exp);
+           // replaceExpression(refexp, new_exp);
            }
         }
+*/
 
     //Winnie, build the new step expression
     SgExpression* incr_exp = buildPlusAssignOp(buildVarRefExp(ivar_name, scope), copyExpression(step[collapsing_factor-1])); 

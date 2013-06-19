@@ -299,15 +299,15 @@ endif
 
 if ROSE_USE_INDENT
 rose_inputloopCollapsing.C:loopCollapsing
-	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopunroll:abstract_handle "Statement<position,5>" -rose:loopunroll:factor 3 && indent rose_inputloopCollapsing.C
-	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopunroll:abstract_handle "Statement<position,6>" -rose:loopunroll:factor 5 -rose:output rose_inputloopCollapsing1.C && indent rose_inputloopCollapsing1.C 
-	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopunroll:abstract_handle "Statement<position,6>" -rose:loopunroll:factor 3 -rose:output rose_inputloopCollapsing2.C && indent rose_inputloopCollapsing2.C
+	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopcollapse:abstract_handle "Statement<position,5>" -rose:loopcollapse:factor 3 && indent rose_inputloopCollapsing.C
+	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopcollapse:abstract_handle "Statement<position,6>" -rose:loopcollapse:factor 5 -rose:output rose_inputloopCollapsing1.C && indent rose_inputloopCollapsing1.C 
+	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopcollapse:abstract_handle "Statement<position,6>" -rose:loopcollapse:factor 3 -rose:output rose_inputloopCollapsing2.C && indent rose_inputloopCollapsing2.C
 else
 # This case is required for platforms where we test ROSE, and which sometimes don't have "indent" available.
 rose_inputloopCollapsing.C:loopCollapsing
-	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopunroll:abstract_handle "Statement<position,5>" -rose:loopunroll:factor 3
-	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopunroll:abstract_handle "Statement<position,6>" -rose:loopunroll:factor 5 -rose:output rose_inputloopCollapsing1.C
-	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopunroll:abstract_handle "Statement<position,6>" -rose:loopunroll:factor 3 -rose:output rose_inputloopCollapsing2.C
+	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopcollapse:abstract_handle "Statement<position,5>" -rose:loopcollapse:factor 3
+	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopcollapse:abstract_handle "Statement<position,6>" -rose:loopcollapse:factor 5 -rose:output rose_inputloopCollapsing1.C
+	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopcollapse:abstract_handle "Statement<position,6>" -rose:loopcollapse:factor 3 -rose:output rose_inputloopCollapsing2.C
 endif
 
 
