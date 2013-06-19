@@ -51,7 +51,7 @@ else()
     endif()
 
     if(enable-fortran)
-      #add_subdirectory(Fortran_tests)
+      add_subdirectory(Fortran_tests)
       add_subdirectory(CAF2_tests)
     endif()
 

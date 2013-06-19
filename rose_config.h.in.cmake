@@ -604,8 +604,7 @@
 #cmakedefine TM_IN_SYS_TIME 1
 
 /* Mark that GFORTRAN is available */
-//AS Don't know what to do with this
-#undef USE_GFORTRAN_IN_ROSE
+#cmakedefine USE_GFORTRAN_IN_ROSE 1
 
 /* Link-time support for Insure. */
 //AS Don't know what to do with this

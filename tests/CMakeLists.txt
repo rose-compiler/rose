@@ -3,6 +3,12 @@ include_directories(${QT_INCLUDES} ${Boost_INCLUDE_DIRS})
 add_executable( testTranslator testTranslator.C )
 target_link_libraries(testTranslator ROSE_DLL EDG ${link_with_libraries} )
 
+add_executable( testGraphGeneration testGraphGeneration.C )
+target_link_libraries(testGraphGeneration ROSE_DLL edg33 ${link_with_libraries} )
+
+add_executable( testTokenGeneration testTokenGeneration.C )
+target_link_libraries(testTokenGeneration ROSE_DLL edg33 ${link_with_libraries} )
+
 option(with-ROSE_LONG_MAKE_CHECK_RULE "Specify longer internal testing" ON)
 
 add_subdirectory (translatorTests)
