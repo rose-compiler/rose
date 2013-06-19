@@ -57,13 +57,6 @@ if(valgrind)
 
 endif()
 
-# Test for UPC example code
-add_test(
-  NAME test2004_22
-  COMMAND testTranslator ${ROSE_FLAGS} --edg:upc
-          -c ${CMAKE_CURRENT_SOURCE_DIR}/test2004_22.C
-)
-
 add_test(
   NAME gconv_info_Cpp
   COMMAND	testTranslator ${ROSE_FLAGS} -rose:verbose 0 -c

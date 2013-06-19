@@ -48,3 +48,19 @@
   set (ROSE_C_HEADERS_DIR "${CMAKE_INSTALL_PREFIX}/include/${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS")
 
 
+# DQ (9/15/2010): Copy the upc.h header file from the config directory to our include-staging/${compilerName}_HEADERS directory.
+# It might be that these should be put into a UPC specific subdirectory (so that the C compiler can't accedentally find them), but this should be discussed.
+
+set(upc_headers
+  upc.h upc_io.h upc_relaxed.h upc_strict.h upc_collective.h bupc_extensions.h)
+
+foreach(header ${upc_headers})
+  configure_file(
+    ${PROJECT_SOURCE_DIR}/config/include-staging/${header}
+    ${PROJECT_BINARY_DIR}/include-staging/${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/
+    COPYONLY)
+  configure_file(
+    ${PROJECT_SOURCE_DIR}/config/include-staging/${header}
+    ${PROJECT_BINARY_DIR}/include-staging/${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/
+    COPYONLY)
+endforeach()
