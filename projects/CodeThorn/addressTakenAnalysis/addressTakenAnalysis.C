@@ -8,6 +8,7 @@
 using namespace CodeThorn;
 
 typedef std::set<VariableId> VariableIdSet;
+typedef std::set<VariableId>::iterator VariableIdSetIterator;
 
 // debug print
 void printMatchResults(MatchResult& matches)
@@ -23,43 +24,60 @@ void printMatchResults(MatchResult& matches)
   }
 }
 
-class ProcessOperand : public ROSE_VisitorPatternDefaultBase
+// Visitor pattern to process the operands of SgAddressOfOp
+class OperandToVarID : public ROSE_VisitorPatternDefaultBase
 {
   // store the reference to address taken set
   VariableIdSet& addressTakenSet;
-  VariableIdMapping vidm;
+  // store the reference to VariableId mappings
+  VariableIdMapping& vidm;
   
 public:
-  ProcessOperand(VariableIdSet& _addrTakenSet) : addressTakenSet(_addrTakenSet) { }                                                                                                                                                                                                                                                    
+  OperandToVarID(VariableIdSet& _addrTakenSet, VariableIdMapping& _vidm) : addressTakenSet(_addrTakenSet), vidm(_vidm)  { }                                                                                                                                                                                                                                                    
   void visit(SgVarRefExp* sgn)
   {
-    VariableId varID = vidm.variableId(sgn);
-    // push it into the set
-    addressTakenSet.insert(varID);
+    // get the VariableId for SgVarRefExp
+    addressTakenSet.insert(vidm.variableId(sgn));
   }
 };
 
 int main(int argc, char* argv[])
 {
   // Build the AST used by ROSE
-  SgProject* sageProject = frontend(argc,argv);
-  SgNode* root = sageProject;
+  SgProject* project = frontend(argc,argv);
+  SgNode* root = project;
 
+  // compute variableId mappings
+  VariableIdMapping vidm;
+  vidm.computeVariableSymbolMapping(project);
+
+  // set to track address taken elements
   VariableIdSet addressTakenSet;
-  ProcessOperand processoperand(addressTakenSet);
+
+  OperandToVarID optovarid(addressTakenSet, vidm);
 
   AstMatching m;
   // NOTE: $X=SgAddressOfOp($Y=_) should not be a parser error. Verify !!
+  // query to match all SgAddressOfOp subtrees
   MatchResult matches = m.performMatching("$HEAD=SgAddressOfOp($OP)", root);
+
   // MatchResult is list of maps
   // each map corresponds to one particular match instance
   for(MatchResult::iterator it = matches.begin(); it != matches.end(); it++)
   {
     SgNode* matchedOperand = (*it)["$OP"];
     ROSE_ASSERT(matchedOperand != NULL);
-    std::cout << "MATCHED OP=" << matchedOperand->unparseToString() << std::endl;
-    
+    std::cout << "MATCHED OP=" << matchedOperand->unparseToString() << " classname=" << matchedOperand->class_name() << std::endl;
+    matchedOperand->accept(optovarid);  
   }
-  
+
+  VariableIdSetIterator vidsIt = addressTakenSet.begin();
+  std::cout << "addressTakenSet: {";
+  for( ; vidsIt != addressTakenSet.end(); vidsIt++)
+  {
+    std::cout << vidm.variableName(*vidsIt) << ",";
+  }
+  std::cout << "}\n";
+
   return 0;
 }
