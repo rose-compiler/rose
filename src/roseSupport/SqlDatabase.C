@@ -58,66 +58,51 @@ public:
         assert(driver!=NO_DRIVER);
     }
 
-    ~ConnectionImpl();
-
     // Returns a driver-level connection number for a new transaction and increments the pending count for that connection.
     size_t conn_for_transaction();
 
-    // Decrements the pending count for a driver-level connection number.  This may or may not close that connection.
-    void dec_pending(size_t idx);
+    // Decrements the reference count for a driver-level connection number.  This may or may not close that connection.
+    void dec_driver_connection(size_t idx);
 
     std::string open_spec;              // specification for opening a connection
     Driver driver;                      // low-level driver number
     FILE *debug;                        // optional debugging stream
 
     // Most drivers allow only one outstanding transaction per connection, so we create enough connections to handle all the
-    // outstanding transactions.  The pending.size() is always equal to the driver's connections.size().
-    std::vector<size_t> pending;
+    // outstanding transactions.
+    struct DriverConnection {
+        size_t nrefs;                   // number of transactions using this connection
 #ifdef ROSE_HAVE_SQLITE3
-    std::vector<sqlite3x::sqlite3_connection*> sqlite3_connections;
+        sqlite3x::sqlite3_connection* sqlite3_connection;
 #endif
 #ifdef ROSE_HAVE_LIBPQXX
-    std::vector<pqxx::connection*> postgres_connections;
+        pqxx::connection* postgres_connection;
 #endif
+        DriverConnection(): nrefs(0)
+#ifdef ROSE_HAVE_SQLITE3
+                            , sqlite3_connection(NULL)
+#endif
+#ifdef ROSE_HAVE_LIBPQXX
+                            , postgres_connection(NULL)
+#endif
+            {}
+        ~DriverConnection() {
+            assert(0==nrefs);
+#ifdef ROSE_HAVE_SQLITE3
+            delete sqlite3_connection;
+            sqlite3_connection = NULL;
+#endif
+#ifdef ROSE_HAVE_LIBPQXX
+            delete postgres_connection;
+            postgres_connection = NULL;
+#endif
+        }
+    };
+
+    typedef std::vector<DriverConnection> DriverConnections;
+    DriverConnections driver_connections;
 
 };
-
-ConnectionImpl::~ConnectionImpl()
-{
-    switch (driver) {
-#ifdef ROSE_HAVE_SQLITE3
-        case SQLITE3: {
-            assert(pending.size()==sqlite3_connections.size());
-            for (size_t i=0; i<sqlite3_connections.size(); ++i) {
-                assert(0==pending[i]);
-                if (sqlite3_connections[i]) {
-                    delete sqlite3_connections[i];
-                    sqlite3_connections[i] = NULL;
-                }
-            }
-            break;
-        }
-#endif
-
-#ifdef ROSE_HAVE_LIBPQXX
-        case POSTGRESQL: {
-            assert(pending.size()==postgres_connections.size());
-            for (size_t i=0; i<postgres_connections.size(); ++i) {
-                assert(0==pending[i]);
-                if (postgres_connections[i]) {
-                    delete postgres_connections[i];
-                    postgres_connections[i] = NULL;
-                }
-            }
-            break;
-        }
-#endif
-
-        default:
-            assert(!"database driver not supported");
-            abort();
-    }
-}
 
 #ifdef ROSE_HAVE_SQLITE3
 // Parse an sqlite3 URL of the form:
@@ -280,23 +265,25 @@ postgres_parse_url(const std::string &src, bool *has_debug/*in,out*/)
 size_t
 ConnectionImpl::conn_for_transaction()
 {
+    // Find first driver connection that has a zero reference count, or allocate a fresh one
+    size_t retval = (size_t)(-1);
+    for (size_t i=0; i<driver_connections.size(); ++i) {
+        if (0==driver_connections[i].nrefs) {
+            retval = i;
+            break;
+        }
+    }
+    if (retval==(size_t)(-1)) {
+        retval = driver_connections.size();
+        driver_connections.resize(retval+10);
+    }
+    DriverConnection &dconn = driver_connections[retval];
+
+    // Fill in the necessary info for the driver connection and establish the connection
     switch (driver) {
 #ifdef ROSE_HAVE_SQLITE3
         case SQLITE3: {
-            assert(pending.size()==sqlite3_connections.size());
-            size_t retval = (size_t)(-1);
-            for (size_t i=0; i<pending.size(); ++i) {
-                if (0==pending[i]) {
-                    retval = i;
-                    break;
-                }
-            }
-            if (retval==(size_t)(-1)) {
-                retval = pending.size();
-                pending.resize(pending.size()+10, 0);
-                sqlite3_connections.resize(pending.size(), NULL);
-            }
-            if (sqlite3_connections[retval]==NULL) {
+            if (dconn.sqlite3_connection==NULL) {
                 bool has_debug_param = false;
                 std::string specs = 0==open_spec.substr(0, 10).compare("sqlite3://") ?
                                     sqlite3_parse_url(open_spec, &has_debug_param) :
@@ -305,30 +292,16 @@ ConnectionImpl::conn_for_transaction()
                     debug = stderr;
                 if (debug && 0==retval)
                     fprintf(debug, "SqlDatabase::Connection: SQLite3 open spec: %s\n", specs.c_str());
-                sqlite3_connections[retval] = new sqlite3x::sqlite3_connection(specs.c_str());
-                sqlite3_connections[retval]->busy_timeout(15*60*1000); // 15 minutes
+                dconn.sqlite3_connection = new sqlite3x::sqlite3_connection(specs.c_str());
+                dconn.sqlite3_connection->busy_timeout(15*60*1000); // 15 minutes
             }
-            ++pending[retval];
-            return retval;
+            break;
         }
 #endif
 
 #ifdef ROSE_HAVE_LIBPQXX
         case POSTGRESQL: {
-            assert(pending.size()==postgres_connections.size());
-            size_t retval = (size_t)(-1);
-            for (size_t i=0; i<pending.size(); ++i) {
-                if (0==pending[i]) {
-                    retval = i;
-                    break;
-                }
-            }
-            if (retval==(size_t)(-1)) {
-                retval = pending.size();
-                pending.resize(pending.size()+10, 0);
-                postgres_connections.resize(pending.size(), NULL);
-            }
-            if (postgres_connections[retval]==NULL) {
+            if (dconn.postgres_connection==NULL) {
                 bool has_debug_param = false;
                 std::string specs = 0==open_spec.substr(0, 13).compare("postgresql://") ?
                                     postgres_parse_url(open_spec, &has_debug_param) :
@@ -337,10 +310,9 @@ ConnectionImpl::conn_for_transaction()
                     debug = stderr;
                 if (debug && 0==retval)
                     fprintf(debug, "SqlDatabase::Connection: PostgreSQL open spec: %s\n", specs.c_str());
-                postgres_connections[retval] = new pqxx::connection(specs);
+                dconn.postgres_connection = new pqxx::connection(specs);
             }
-            ++pending[retval];
-            return retval;
+            break;
         }
 #endif
 
@@ -348,14 +320,19 @@ ConnectionImpl::conn_for_transaction()
             assert(!"database driver not supported");
             abort();
     }
+
+    ++driver_connections[retval].nrefs;
+    return retval;
 }
 
 void
-ConnectionImpl::dec_pending(size_t idx)
+ConnectionImpl::dec_driver_connection(size_t idx)
 {
-    assert(idx<pending.size());
-    assert(pending[idx]>0);
-    --pending[idx];
+    assert(idx<driver_connections.size());
+    DriverConnection &dconn = driver_connections[idx];
+    assert(dconn.nrefs>0);
+    if (--dconn.nrefs > 0)
+        return;
 
     switch (driver) {
 #ifdef ROSE_HAVE_SQLITE3
@@ -369,17 +346,8 @@ ConnectionImpl::dec_pending(size_t idx)
         case POSTGRESQL: {
             // Once a transaction is committed or rolled back the connection is no good for anything else; we can't
             // create more transactions on that connection.
-            if (0==pending[idx]) {
-#if 0 // Disabled; leaking memory [Robb P. Matzke 2013-06-17]
-                // The delete is commented out because it segfaults if its transaction was rolled back. Valgrind says
-                // this is happening down in libpqxx. The bug can be exhibited by opening a SqlDatabase::Connection,
-                // creating two SqlDatabase::Transactions (thus two different postgres connections and two postgresql
-                // transactions), committing the first transactions, and rolling back the second transaction. Both the
-                // commit and the rollback execute this code, but the rollback dies with a segfault in libpqxx.
-                delete postgres_connections[idx];
-#endif
-                postgres_connections[idx] = NULL;
-            }
+            delete dconn.postgres_connection;
+            dconn.postgres_connection = NULL;
             break;
         }
 #endif
@@ -509,21 +477,24 @@ TransactionImpl::init()
 #ifdef ROSE_HAVE_LIBPQXX
     postgres_tranx = NULL;
 #endif
+    assert(drv_conn_idx < conn->impl->driver_connections.size());
+    ConnectionImpl::DriverConnection &dconn = conn->impl->driver_connections[drv_conn_idx];
+    assert(dconn.nrefs>0);
 
     switch (driver()) {
 #ifdef ROSE_HAVE_SQLITE3
         case SQLITE3: {
-            sqlite3x::sqlite3_connection *drv_conn = conn->impl->sqlite3_connections[drv_conn_idx];
-            sqlite3_tranx = new sqlite3x::sqlite3_transaction(*drv_conn);
+            assert(dconn.sqlite3_connection != NULL);
+            sqlite3_tranx = new sqlite3x::sqlite3_transaction(*dconn.sqlite3_connection);
             break;
         }
 #endif
 
 #ifdef ROSE_HAVE_LIBPQXX
         case POSTGRESQL: {
+            assert(dconn.postgres_connection != NULL);
             std::string tranx_name = "Transaction_" + StringUtility::numberToString(drv_conn_idx);
-            pqxx::connection *drv_conn = conn->impl->postgres_connections[drv_conn_idx];
-            postgres_tranx = new pqxx::transaction<>(*drv_conn, tranx_name);
+            postgres_tranx = new pqxx::transaction<>(*dconn.postgres_connection, tranx_name);
             break;
         }
 #endif
@@ -541,6 +512,7 @@ TransactionImpl::bulk_load(const std::string &tablename, std::istream &file)
 #ifdef ROSE_HAVE_SQLITE3
         case SQLITE3: {
             sqlite3x::sqlite3_command *cmd = NULL;
+            ConnectionImpl::DriverConnection &dconn = conn->impl->driver_connections[drv_conn_idx];
             try {
                 char buf[4096];
                 while (file.getline(buf, sizeof buf).good()) {
@@ -551,7 +523,7 @@ TransactionImpl::bulk_load(const std::string &tablename, std::istream &file)
                         for (size_t i=0; i<tuple.size(); ++i)
                             sql += i?", ?":"?";
                         sql += ")";
-                        cmd = new sqlite3x::sqlite3_command(*conn->impl->sqlite3_connections[drv_conn_idx], sql);
+                        cmd = new sqlite3x::sqlite3_command(*dconn.sqlite3_connection, sql);
                     }
                     for (size_t i=0; i<tuple.size(); ++i)
                         cmd->bind(i+1, tuple[i]); // sqlite3x bind() uses 1-origin indices
@@ -630,6 +602,11 @@ TransactionImpl::rollback()
             assert(postgres_tranx != NULL);
             delete postgres_tranx;
             postgres_tranx = NULL;
+            // Libpqxx gets a segmentation fault if we delete a connection whose transaction was rolled back. Therefore, we
+            // set the transaction pointer to NULL here so it doesn't get deleted by the dec_driver_connection() call
+            // below. [Robb P. Matzke 2013-06-18]
+            assert(1==conn->impl->driver_connections[drv_conn_idx].nrefs);
+            conn->impl->driver_connections[drv_conn_idx].postgres_connection = NULL; // intentional leak
             break;
         }
 #endif
@@ -639,7 +616,7 @@ TransactionImpl::rollback()
             abort();
     }
 
-    conn->impl->dec_pending(drv_conn_idx);
+    conn->impl->dec_driver_connection(drv_conn_idx);
     conn.reset();
     drv_conn_idx = -1;
     assert(is_terminated());
@@ -678,7 +655,7 @@ TransactionImpl::commit()
             abort();
     }
 
-    conn->impl->dec_pending(drv_conn_idx);
+    conn->impl->dec_driver_connection(drv_conn_idx);
     conn.reset();
     drv_conn_idx = -1;
     assert(is_terminated());
@@ -711,7 +688,7 @@ Transaction::init(const ConnectionPtr &conn, size_t drv_conn_idx)
 {
     assert(conn!=NULL);
     assert(drv_conn_idx!=(size_t)(-1));
-    assert(conn->impl->pending[drv_conn_idx] > 0);
+    assert(conn->impl->driver_connections[drv_conn_idx].nrefs > 0);
     impl = new TransactionImpl(conn, drv_conn_idx);
 }
 
@@ -980,9 +957,9 @@ StatementImpl::begin(const StatementPtr &stmt)
                 delete sqlite3_cmd;
                 sqlite3_cmd = NULL;
                 size_t drv_conn_idx = tranx->impl->drv_conn_idx;
-                sqlite3x::sqlite3_connection *drv_conn = tranx->impl->conn->impl->sqlite3_connections[drv_conn_idx];
-                assert(drv_conn!=NULL);
-                sqlite3_cmd = new sqlite3x::sqlite3_command(*drv_conn, sql_expanded);
+                ConnectionImpl::DriverConnection &dconn = tranx->impl->conn->impl->driver_connections[drv_conn_idx];
+                assert(dconn.sqlite3_connection!=NULL);
+                sqlite3_cmd = new sqlite3x::sqlite3_command(*dconn.sqlite3_connection, sql_expanded);
                 sqlite3_cursor = new sqlite3x::sqlite3_reader;
                 *sqlite3_cursor = sqlite3_cmd->executereader();
                 if (!sqlite3_cursor->read()) {
