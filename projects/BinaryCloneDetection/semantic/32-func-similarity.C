@@ -2,23 +2,23 @@
 
 #include "sage3basic.h"
 #include "CloneDetectionLib.h"
+#include "rose_getline.h"
+
+#include <cerrno>
 
 std::string argv0;
 
 static void
 usage(int exit_status)
 {
-    std::cerr <<"usage: " <<argv0 <<" [SWITCHES] [--] DATABASE\n"
+    std::cerr <<"usage: " <<argv0 <<" [SWITCHES] [--] DATABASE < FUNC_PAIRS\n"
               <<"  This command updates the semantic_funcsim table with information about the similarity between pairs of\n"
               <<"  functions.  The table contains three primary columns: two function IDs and one floating point similarity\n"
               <<"  value between zero and one (one implies that functions are identical according to the chosen similarity\n"
-              <<"  algorithm).  Since similarity is reflexive and symmetric, the pairs of functions are chosen so that\n"
-              <<"  the first function ID is less than the second function ID.\n"
+              <<"  algorithm).  Since similarity is reflexive and symmetric, the table will store function IDs such that\n"
+              <<"  the first function ID is less than the second function ID.  The pairs of function IDs are read from the\n"
+              <<"  standard input stream.\n"
               <<"\n"
-              <<"    --[no-]delete\n"
-              <<"            The --delete switch causes all previous similarity information to be discarded and recalculated\n"
-              <<"            from scratch. The default is to calculate similarity only for those pairs of functions for which\n"
-              <<"            similarity has not been calculated already.\n"
               <<"    --[no-]ignore-faults\n"
               <<"            If --ignore-faults is specified, then any test that failed is ignored as if it never even ran.\n"
               <<"            Ignoring failures can speed up the function similarity calculations, especially when output\n"
@@ -43,16 +43,35 @@ usage(int exit_status)
               <<"                between zero and one and is not transitive.  The Jaccard index is the ratio of the size of\n"
               <<"                intersection of two sets to the size of the union.  Also, if either output group indicates\n"
               <<"                an analysis fault, then the Jaccard index is multiplied by 0.25.\n"
+              <<"    --permutations=NPERM[,NSEL]\n"
+              <<"            Normally, the similarity of a pair of output groups is computed only if both output groups were\n"
+              <<"            produced from the same input, however, this switch changes that restriction and computes the\n"
+              <<"            similarity for other pairs of output groups.  When this switch is specified, input groups 0\n"
+              <<"            through NPERM-1 are assumed to be permutations of one another, input groups NPERM through\n"
+              <<"            2 NPERM - 1 are assumed to be permutations of one another, etc.  Similarity is calculated across\n"
+              <<"            the entire set of NPERM outputs from one function crossed with the NPERM outputs from another\n"
+              <<"            function (with some optimizations due to similarity being reflexive and symmetric).  Since this\n"
+              <<"            can be a very large number (e.g., 8!8! = 1,625,702,400), the NSEL parameter can be used to pare\n"
+              <<"            it down:  at most NSEL output groups from one function are compared to all output groups from\n"
+              <<"            the other function for a single set of permutations of inputs.  NSEL defaults to the same value\n"
+              <<"            as NPERM and must be positive.\n"
               <<"    --aggregate=ALGORITHM\n"
               <<"            Indicates how the similarities for individual output groups are combined to form a single\n"
               <<"            similarity value for two functions.  The following choices are available, where \"average\"\n"
               <<"            is the default:\n"
               <<"              * \"average\" takes the average of the individual output group similarities.\n"
               <<"              * \"maximum\" takes the maximum of the individual output group similarities.\n"
+              <<"    --progress\n"
+              <<"            Show progress reports even if stderr is not a tty.\n"
+              <<"\n"
               <<"    DATABASE\n"
               <<"            The name of the database to which we are connecting.  For SQLite3 databases this is just a local\n"
               <<"            file name that will be created if it doesn't exist; for other database drivers this is a URL\n"
-              <<"            containing the driver type and all necessary connection parameters.\n";
+              <<"            containing the driver type and all necessary connection parameters.\n"
+              <<"    FUNC_PAIRS\n"
+              <<"            Standard input should contain one pair of function IDs per line with the IDs separated from one\n"
+              <<"            another by spaces and/or tabs.  Blank lines and lines beginning with '#' are ignored. The input\n"
+              <<"            is read in its entirety before computation starts.\n";
     exit(exit_status);
 }
 
@@ -68,11 +87,13 @@ enum Aggregation {
 };
 
 static struct Switches {
-    Switches(): recreate(false), output_cmp(OC_VALUESET_JACCARD), aggregation(AG_AVERAGE), ignore_faults(false) {}
-    bool recreate;
+    Switches()
+        : ignore_faults(false), show_progress(false), output_cmp(OC_VALUESET_JACCARD), aggregation(AG_AVERAGE),
+          nperm(1), nsel(1) {}
+    bool recreate, ignore_faults, show_progress;
     OutputComparison output_cmp;
     Aggregation aggregation;
-    bool ignore_faults;
+    size_t nperm, nsel;
 } opt;
 
 // Abstract base class for various methods of computing similarity between two output groups.  The class not only provides
@@ -201,25 +222,63 @@ find_outputs(const FunctionOutputs &func_outputs, int func_id)
     return found->second;
 }
 
-static double
-similarity(const CachedOutputs &f1_outs, const CachedOutputs &f2_outs)
+template<typename T>
+static size_t
+shuffle(std::vector<T> &vector, size_t nitems)
 {
-    size_t nintersect = 0;
-    double total_sim=0, max_sim=0;
-    for (CachedOutputs::const_iterator oi1=f1_outs.begin(); oi1!=f1_outs.end(); ++oi1) {
-        int igroup_id = oi1->first;
-        CachedOutput *o1 = oi1->second;
-        CachedOutputs::const_iterator oi2 = f2_outs.find(igroup_id);
-        if (oi2!=f2_outs.end()) {
-            // We only compare f1's output with f2's output if both outputs were created with the same inputs.
-            ++nintersect;
-            CachedOutput *o2 = oi2->second;
-            double sim = o1->similarity(o2);
-            total_sim += sim;
-            max_sim = std::max(max_sim, sim);
+    static LinearCongruentialGenerator lcg;
+    nitems = std::min(nitems, vector.size());
+    for (size_t i=0; i<nitems; ++i)
+        std::swap(vector[i], vector[lcg()%vector.size()]);
+    return nitems;
+}
+
+static double
+similarity(const CachedOutputs &f1_outs, const CachedOutputs &f2_outs,
+           size_t &ncompares/*out*/, size_t &maxcompares/*out*/)
+{
+    // Create buckets of output. Each bucket contains the output groups that were generated from inputs that were
+    // (presumably) permutations of one another. The opt.nperms is nominally 1, but is always positive
+    typedef std::vector<int/*igroup_id*/> Bucket;
+    typedef std::map<int/*bucket*/, Bucket> Buckets;
+    Buckets f1_buckets, f2_buckets;
+    for (CachedOutputs::const_iterator oi=f1_outs.begin(); oi!=f1_outs.end(); ++oi)
+        f1_buckets[oi->first/opt.nperm].push_back(oi->first);
+    for (CachedOutputs::const_iterator oi=f2_outs.begin(); oi!=f2_outs.end(); ++oi)
+        f2_buckets[oi->first/opt.nperm].push_back(oi->first);
+
+    // Statistics accumulators
+    ncompares = maxcompares = 0;
+    double total_sim = 0, max_sim = 0.0;
+
+    // Compare buckets with each other
+    for (Buckets::iterator b1=f1_buckets.begin(); b1!=f1_buckets.end(); ++b1) {
+        Bucket &f1_bucket = b1->second;
+        Buckets::iterator b2 = f2_buckets.find(b1->first);
+        if (b2!=f2_buckets.end()) {
+            Bucket &f2_bucket = b2->second;
+
+            // Both functions produced at least one output group from some permutation of the input.  Select some random output
+            // groups from the first function and compare them with all the output groups of the second function.
+            maxcompares += f1_bucket.size() * f2_bucket.size();
+            size_t n = shuffle(f1_bucket, opt.nsel);
+            for (size_t i=0; i<n; ++i) {
+                const CachedOutput *f1_ogroup = f1_outs.find(f1_bucket[i])->second;
+                for (size_t j=0; j<f2_bucket.size(); ++j) {
+                    const CachedOutput *f2_ogroup = f2_outs.find(f2_bucket[j])->second;
+
+                    // Compare output groups f1_ogroup and f2_ogroup
+                    ++ncompares;
+                    double sim = f1_ogroup->similarity(f2_ogroup);
+                    total_sim += sim;
+                    max_sim = std::max(max_sim, sim);
+                }
+            }
         }
     }
-    double ave_sim = total_sim / (nintersect?nintersect:1);
+    
+    // Compute aggreged value for these two functions
+    double ave_sim = total_sim / (ncompares?ncompares:1);
     switch (opt.aggregation) {
         case AG_AVERAGE:
             return ave_sim;
@@ -227,7 +286,6 @@ similarity(const CachedOutputs &f1_outs, const CachedOutputs &f2_outs)
             return max_sim;
     }
 }
-
 
 int
 main(int argc, char *argv[])
@@ -258,10 +316,6 @@ main(int argc, char *argv[])
                           <<argv0 <<": see --help for more info\n";
                 exit(1);
             }
-        } else if (!strcmp(argv[argno], "--delete")) {
-            opt.recreate = true;
-        } else if (!strcmp(argv[argno], "--no-delete")) {
-            opt.recreate = false;
         } else if (!strcmp(argv[argno], "--ignore-faults")) {
             opt.ignore_faults = true;
         } else if (!strcmp(argv[argno], "--no-ignore-faults")) {
@@ -278,74 +332,111 @@ main(int argc, char *argv[])
                           <<argv0 <<": see --help for more info\n";
                 exit(1);
             }
+        } else if (!strncmp(argv[argno], "--permutations=", 15) || !strncmp(argv[argno], "--permute=", 10)) {
+            char *s = strchr(argv[argno], '=')+1, *rest;
+            errno = 0;
+            opt.nperm = strtoul(s, &rest, 0);
+            if (errno || rest==s || opt.nperm<1) {
+                std::cerr <<argv0 <<": NPERM value is invalid: " <<argv[argno] <<"\n";
+                exit(1);
+            }
+            s = rest;
+            while (isspace(*s)) ++s;
+            if (','==*s) ++s;
+            while (isspace(*s)) ++s;
+            if (*s) {
+                errno = 0;
+                opt.nsel = strtoul(s, &rest, 0);
+                if (errno || rest==s || *rest) {
+                    std::cerr <<argv0 <<": NSEL value is invalid: " <<argv[argno] <<"\n";
+                    exit(1);
+                }
+            } else {
+                opt.nsel = opt.nperm;
+            }
+        } else if (!strcmp(argv[argno], "--progress")) {
+            opt.show_progress = true;
         } else {
             std::cerr <<argv0 <<": unknown switch: " <<argv[argno] <<"\n"
                       <<argv0 <<": see --help for more info\n";
             exit(1);
         }
     };
-    if (argno>=argc)
+    if (argno+1!=argc)
         usage(1);
     SqlDatabase::ConnectionPtr conn = SqlDatabase::Connection::create(argv[argno++]);
     SqlDatabase::TransactionPtr tx = conn->transaction();
     int64_t cmd_id = CloneDetection::start_command(tx, argc, argv, "calculating function similarity");
 
-    // Create the ogroup index. This table can be huge!  This might take a long time, so don't drop the index if it
-    // alreay exists.  PostgreSQL doesn't have "create index if not exists...".
-    std::cerr <<argv0 <<": creating output group index (could take a while)\n";
-    try {
-        tx->execute("create index idx_ogroups_hashkey on semantic_outputvalues(hashkey)");
-    } catch (const SqlDatabase::Exception&) {
-        std::cerr <<argv0 <<": idx_ogroups_hashkey index already exists; NOT dropping and recreating\n";
-        // postgres seems to need a new transaction now, otherwise the next query fails with:
-        // Error executing query .  Attempt to activate transaction<READ COMMITTED> 'Transaction_0' which is already closed
-        tx = conn->transaction();
-    }
+    // Read function pairs from standard input
+    std::cerr <<argv0 <<": reading function pairs worklist from stdin...\n";
+    WorkList< std::pair<int, int> > worklist;
+    char *line = NULL;
+    size_t line_sz = 0, line_num = 0;
+    while (rose_getline(&line, &line_sz, stdin)>0) {
+        ++line_num;
+        if (char *c = strchr(line, '#'))
+            *c = '\0';
+        char *s = line + strspn(line, " \t\r\n"), *rest;
+        if (!*s)
+            continue; // blank line
 
-    // Delete rather than recreate, otherwise we have to duplicate code from Schema.sql
-    if (opt.recreate) {
-        std::cerr <<argv0 <<": deleting rows from semantic_funcsim\n";
-        tx->execute("delete from semantic_funcsim");
-    }
+        errno = 0;
+        int func1_id = strtol(s, &rest, 0);
+        if (errno!=0 || rest==s) {
+            std::cerr <<argv0 <<": stdin:" <<line_num <<": syntax error: func1_id expected\n";
+            exit(1);
+        }
+        s = rest;
 
-    // Create pairs of function IDs for those functions which have been tested and for which no similarity measurement has been
-    // computed.  (FIXME: We should probably recompute similarity that might have changed due to re-running functions)
-    std::cerr <<argv0 <<": creating work list\n";
-    tx->execute("create temporary table tmp_tested_funcs as select distinct func_id from semantic_fio");
-    tx->execute("create temporary table tmp_fpairs as"
-                "  select distinct f1.func_id as func1_id, f2.func_id as func2_id"
-                "    from tmp_tested_funcs as f1"
-                "    join tmp_tested_funcs as f2 on f1.func_id < f2.func_id"
-                "  except"
-                "    select func1_id, func2_id from semantic_funcsim");
-    size_t npairs = tx->statement("select count(*) from tmp_fpairs")->execute_int();
-    std::cerr <<argv0 <<": work list has " <<npairs <<" pair" <<(1==npairs?"":"s") <<" of functions\n";
+        errno = 0;
+        int func2_id = strtol(s, &rest, 0);
+        if (errno!=0 || rest==s) {
+            std::cerr <<argv0 <<": stdin:" <<line_num <<": syntax error: func2_id expected\n";
+            exit(1);
+        }
+        s = rest;
+
+        while (isspace(*s)) ++s;
+        if (*s) {
+            std::cerr <<argv0 <<": stdin:" <<line_num <<": syntax error: extra text after func2_id\n";
+            exit(1);
+        }
+
+        worklist.push(std::make_pair(std::min(func1_id, func2_id), std::max(func1_id, func2_id)));
+    }
+    size_t npairs = worklist.size();
+    std::cerr <<argv0 <<": work list has " <<npairs <<" function pair" <<(1==npairs?"":"s") <<"\n";
 
     // Process each function pair
     CloneDetection::Progress progress(npairs);
-    SqlDatabase::StatementPtr stmt1 = tx->statement("select func1_id, func2_id from tmp_fpairs");
-    SqlDatabase::StatementPtr stmt2 = tx->statement("insert into semantic_funcsim"
-                                                    // 0        1         2           3
-                                                    "(func1_id, func2_id, similarity, cmd) values (?, ?, ?, ?)");
+    progress.force_output(opt.show_progress);
+    SqlDatabase::StatementPtr stmt = tx->statement("insert into semantic_funcsim"
+                                                   // 0        1         2           3          4            5
+                                                   "(func1_id, func2_id, similarity, ncompares, maxcompares, cmd)"
+                                                   " values (?, ?, ?, ?, ?, ?)");
     CachedOutputs all_outputs;
     FunctionOutputs func_outputs;
-    for (SqlDatabase::Statement::iterator pair=stmt1->begin(); pair!=stmt1->end(); ++pair) {
+    while (!worklist.empty()) {
         ++progress;
-        int func1_id = pair.get<int>(0);
-        int func2_id = pair.get<int>(1);
+        int func1_id, func2_id;
+        boost::tie(func1_id, func2_id) = worklist.shift();
+        assert(func1_id < func2_id);
         load_function_outputs(tx, all_outputs, func_outputs, func1_id);
         load_function_outputs(tx, all_outputs, func_outputs, func2_id);
         const CachedOutputs &f1_outs = find_outputs(func_outputs, func1_id);
         const CachedOutputs &f2_outs = find_outputs(func_outputs, func2_id);
-        double sim = similarity(f1_outs, f2_outs);
-        stmt2->bind(0, func1_id);
-        stmt2->bind(1, func2_id);
-        stmt2->bind(2, sim);
-        stmt2->bind(3, cmd_id);
-        stmt2->execute();
+        size_t ncompares, maxcompares;
+        double sim = similarity(f1_outs, f2_outs, ncompares/*out*/, maxcompares/*out*/);
+        stmt->bind(0, func1_id);
+        stmt->bind(1, func2_id);
+        stmt->bind(2, sim);
+        stmt->bind(3, ncompares);
+        stmt->bind(4, maxcompares);
+        stmt->bind(5, cmd_id);
+        stmt->execute();
     }
     
-        
     progress.message("committing changes");
     std::string mesg = "calculated similarity for "+StringUtility::numberToString(npairs)+" function pair"+(1==npairs?"":"s");
     CloneDetection::finish_command(tx, cmd_id, mesg);

@@ -37,8 +37,8 @@ usage(int exit_status)
               <<"            Select only functions that have at least NINSNS instructions.\n"
               <<"    --specimen=ID[,...]\n"
               <<"            Select only functions belonging to one of the specified specimens.  A \"specimen\" is a binary\n"
-              <<"            file whose name was given to the 01-add-functions command, and does not include dynamically\n"
-              <<"            linked libraries (unless such a library was also given as an argument to 01-add-functions).\n"
+              <<"            file whose name was given to the 11-add-functions command, and does not include dynamically\n"
+              <<"            linked libraries (unless such a library was also given as an argument to 11-add-functions).\n"
               <<"            The ID list is a comma-separated list of specimen identifiers. Invoking with --specimen=list\n"
               <<"            will produce a list of specimen ID numbers and their file names.  This switch may appear more\n"
               <<"            than once and its effect is cumulative.\n"
@@ -198,7 +198,7 @@ main(int argc, char *argv[])
     if (!opt.files.empty()) {
         std::string s = "file_id in (";
         for (std::set<int>::iterator i=opt.files.begin(); i!=opt.files.end(); ++i)
-            s += (i==opt.specimens.begin()?"":", ") + StringUtility::numberToString(*i);
+            s += (i==opt.files.begin()?"":", ") + StringUtility::numberToString(*i);
         constraints.push_back(s+")");
     }
     if (opt.ninsns>0)

@@ -67,7 +67,7 @@ create table semantic_files (
 );
 
 -- Associatations between a specimen and its dynamic libraries.  A "specimen" is a file that appeared as an argument
--- to the 01-add-functions tool; the file_id is any other file (binary or otherwise) that's used by the specimen.
+-- to the 11-add-functions tool; the file_id is any other file (binary or otherwise) that's used by the specimen.
 create table semantic_specfiles (
        specimen_id integer references semantic_files(id),
        file_id integer references semantic_files(id)
@@ -147,6 +147,8 @@ create table semantic_funcsim (
        func1_id integer references semantic_functions(id),
        func2_id integer references semantic_functions(id), -- func1_id < func2_id
        similarity double precision,             -- a value between 0 and 1, with one being equality
+       ncompares integer,			-- number of output groups compared to reach this value
+       maxcompares integer,			-- potential number of comparisons possible (ncompares is a random sample)
        cmd bigint references semantic_history(hashkey) -- command that set the precision on this row
 );
 

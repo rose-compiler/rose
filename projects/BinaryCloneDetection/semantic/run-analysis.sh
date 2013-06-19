@@ -4,6 +4,7 @@
 argv0="${0##*/}"
 dir0="${0%$argv0}"
 [ -n "$dir0" ] || dir0="."
+worklist="clone-analysis-$$"
 
 usage () {
     local exit_status="${1:-0}"
@@ -49,6 +50,44 @@ execute () {
     return $?
 }
 
+parallelism () {
+    local varname="$1"
+    local nwork=$(wc -l <$worklist)
+    rm -f $worklist-[a-z][a-z]
+    echo "Number of items in work list: $nwork" >&2
+    if [ $nwork -gt 1 -a "$interactive" = "yes" ]; then
+	local dflt=$(eval "echo \$$varname")
+	read -e -p "How many processes should be used? " -i "$dflt" $varname
+    fi
+    local nprocs=$(eval "echo \$$varname")
+    [ "$nprocs" = "" ] && nprocs=1
+    [ $nprocs -lt 1 ] && nprocs=1
+    echo $nprocs
+}
+
+# Split a file into parts of equal size based on the parallelism desired.  The varname holds the name of the config
+# variable containing the desired parallelism, which is only a hint.
+split_worklist () {
+    local nprocs="$1"
+    local nwork=$(wc -l <$worklist)
+    local nparts=$[3 * nprocs]
+    [ $nparts -gt $nwork ] && nparts=$nwork
+    [ $nparts -gt 676 ] && nparts=676 # 26*26
+    if [ $nparts -gt 1 ]; then
+	local work_per_part=$[(nwork + nparts - 1) / nparts]
+	split --lines=$work_per_part $worklist $worklist-
+	rm $worklist
+    else
+	mv $worklist $worklist-aa
+    fi
+    echo $worklist-[a-z][a-z]
+}
+
+# Counts the number of arguments
+count_args () {
+    echo "$#"
+}
+
 save_settings () {
     if [ "$save_config" = "yes" ]; then
 	cat >$configfile <<EOF
@@ -67,11 +106,19 @@ add_functions_flags='$add_functions_flags'
 # Flags for obtaining the list of functions to test
 get_pending_tests_flags='$get_pending_tests_flags'
 
-# A hint for how much parallelism to employ
-parallelism='$parallelism'
+# A hint for how much parallelism to employ when running tests
+test_parallelism='$test_parallelism'
 
 # Flags for running each test
 run_tests_flags='$run_tests_flags'
+
+# Flags for obtaining the list of function pairs for which similarity needs
+# to be calculated
+func_similarity_worklist_flags='$func_similarity_worklist_flags'
+
+# A hint for how much parallelism to employ when computing function
+# similarities with the 32-func-similarities command
+funcsim_parallelism='$funcsim_parallelism'
 
 # Flags for determining similarity of pairs of functions based on their output
 func_similarity_flags='$func_similarity_flags'
@@ -118,7 +165,12 @@ while [ "$#" -gt 0 -a "${1:0:1}" = "-" ]; do
     esac
 done
 
-[ -r "$configfile" ] && . "$configfile"
+if [ -r "$configfile" ]; then
+    echo "$0: reading from config file: $configfile" >&2
+    . "$configfile"
+else
+    echo "$0: creating configuration file: $configfile" >&2
+fi
 
 : ${ROSE_SRC:=$ROSEGIT_SRC}
 : ${ROSE_BLD:=$ROSEGIT_BLD}
@@ -156,84 +208,65 @@ fi
 if [ "$interactive" = "yes" ]; then
     echo
     echo "=================================================================================================="
-    echo "These are the flags for the 01-generate-inputs command. This command creates input groups, each"
+    echo "These are the flags for the 10-generate-inputs command. This command creates input groups, each"
     echo "having a list of input values.  One input group is supplied to each test.  Input groups that are"
     echo "already present in the database are not modified by this command."
-    $BLDDIR/01-generate-inputs --help 2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
+    $BLDDIR/10-generate-inputs --help 2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
     read -e -p "Switches for generating input groups: " -i "$generate_inputs_flags" generate_inputs_flags
     save_settings
 fi
-execute $BLDDIR/01-generate-inputs $generate_inputs_flags "$dbname" || exit 1
+execute $BLDDIR/10-generate-inputs $generate_inputs_flags "$dbname" || exit 1
 
 if [ "$#" -gt 0 ]; then
     if [ "$interactive" = "yes" ]; then
 	echo
 	echo "=================================================================================================="
-	echo "These are the flags for the 01-add-functions command, which parses a specimen and adds its"
+	echo "These are the flags for the 11-add-functions command, which parses a specimen and adds its"
 	echo "functions to the database.  You will be able to select which functions to test in the next step."
-	$BLDDIR/01-add-functions --help 2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
+	$BLDDIR/11-add-functions --help 2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
 	read -e -p "Switches for adding specimens: " -i "$add_functions_flags" add_functions_flags
 	save_settings
     fi
     for specimen in "$@"; do
-	execute $BLDDIR/01-add-functions $add_functions_flags "$dbname" "$specimen" || exit 1
+	execute $BLDDIR/11-add-functions $add_functions_flags "$dbname" "$specimen" || exit 1
     done
 fi
 
 if [ "$interactive" ]; then
     echo
     echo "=================================================================================================="
-    echo "These are the flags for the 02-get-pending-tests command, which consults the database to determine"
+    echo "These are the flags for the 20-get-pending-tests command, which consults the database to determine"
     echo "which combinations of function and input group need to be tested."
-    $BLDDIR/02-get-pending-tests --help 2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
+    $BLDDIR/20-get-pending-tests --help 2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
+    $BLDDIR/20-get-pending-tests --specimens=list "$dbname"
     read -e -p "Switches for selecting tests to run: " -i "$get_pending_tests_flags" get_pending_tests_flags
     save_settings
 fi
-test_list_file="clone-analysis-$$"
-execute $BLDDIR/02-get-pending-tests $get_pending_tests_flags "$dbname" >$test_list_file || exit 1
-ntests_to_run=$(wc -l <$test_list_file)
-if [ "$ntests_to_run" -eq 0 ]; then
+execute $BLDDIR/20-get-pending-tests $get_pending_tests_flags "$dbname" >$worklist || exit 1
+nwork=$(wc -l <$worklist)
+if [ "$nwork" -eq 0 ]; then
     echo "No tests to run"
 else
-    # Figure out some settings for parallelism.  In the simplest case, if the user wants parallelism of N we could just split
-    # the list of inputs into N parts. However, if the inputs include wildly different classes of functions in terms of how
-    # long it takes to execute each one, then some parts might finish long before others.  Therefore, for N>1, we split the
-    # input into 3*N parts.  We don't want the factor to be too large because each part runs in a separate process, and each
-    # process may have to do an expensive specimen parsing and disassembly step. Also, we need to make sure that the user's
-    # choice of parallelism in the config file is reasonable for the number of tests to run, but not change that setting in the
-    # config file.  The config file variable is "parallelism" while we use "nprocs" and "nparts" in this script.
-    echo "Number of tests to run: $ntests_to_run"
-    [ $ntests_to_run -gt 1 -a "$interactive" = "yes" ] && \
-	read -e -p "How many processes should run these tests? " -i "$parallelism" parallelism
-    nprocs="$parallelism"
-    [ "$nprocs" = "" ] && nprocs=1
-    [ $nprocs -lt 1 ] && nprocs=1
-    [ $nprocs -gt $ntests_to_run ] && nprocs=$ntests_to_run
-
-    nparts=$nprocs;
-    [ "$nparts" -gt 1 ] && nparts=$[3 * nparts]
-
-    tests_per_part=$[(ntests_to_run + nparts - 1) / nparts]
-    rm -f $test_list_file-[a-z] $test_list_file-[a-z][a-z] $test_list_file-[a-z][a-z][a-z]
-    split --lines=$tests_per_part $test_list_file $test_list_file-
-    test_list_files=$(ls "$test_list_file"-* |head -n $nparts |tr '\n' ' ')
-    rm "$test_list_file"
-    echo "number of processes to run in parallel: $nprocs"
+    nprocs=$(parallelism test_parallelism)
+    worklist_parts=$(split_worklist $nprocs)
+    nparts=$(count_args $worklist_parts)
     save_settings
 
     if [ "$interactive" = "yes" ]; then
 	echo
 	echo "=================================================================================================="
-	echo "These are the flags for 03-run-tests, which runs the tests selected in the previous step."
-	$BLDDIR/03-run-tests --help 2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
+	echo "These are the flags for 25-run-tests, which runs the tests selected in the previous step."
+	$BLDDIR/25-run-tests --help 2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
 	read -e -p "Switches for running tests: " -i "$run_tests_flags" run_tests_flags
 	save_settings
     fi
     if [ "$nparts" -gt 1 ]; then
 	redirect=yes
-	echo "Use this command in another window to watch the progress of this run: "
-	echo "    watch 'tail -n1 $test_list_file-*.out.tmp'"
-	sleep 2
+	echo
+	echo "Use this command in another window to monitor the progress of 25-run-tests:"
+	echo "    watch 'tail -n1 $worklist-[a-z][a-z].rt.out.tmp'"
+	echo
+	sleep 5
     else
 	redirect=no
     fi
@@ -241,38 +274,75 @@ else
 	BINDIR="$BLDDIR" \
 	RUN_FLAGS="$run_tests_flags" \
 	DBNAME="$dbname" \
-	INPUTS="$test_list_files" \
+	INPUTS="$worklist_parts" \
 	ERROR= \
 	REDIRECT="$redirect" \
-	|| exit 1
-    rm -f $test_list_files
+	run-tests || exit 1
+    rm -f $worklist_parts
 fi
 
 if [ "$interactive" = "yes" ]; then
-    echo
     echo "=================================================================================================="
-    echo "These are the flags for 04-func-similarity. This tool measures similarity between pairs of"
-    echo "functions by comparing output groups that were produced by the tests.  Basically, if two functions"
-    echo "produced similar outputs for the same input then the functions are similar."
-    $BLDDIR/04-func-similarity --help 2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
-    read -e -p "Switches for function similarity: " -i "$func_similarity_flags" func_similarity_flags
+    echo "These are the flags for 31-func-similarity-worklist. This command generates a list of function"
+    echo "pairs for which similarity needs to be calculated."
+    $BLDDIR/31-func-similarity-worklist --help 2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
+    read -e -p "Switches for func-similarity-worklist: " -i "$func_similarity_worklist_flags" func_similarity_worklist_flags
     save_settings
 fi
-execute $BLDDIR/04-func-similarity $func_similarity_flags "$dbname" || exit 1
+execute $BLDDIR/31-func-similarity-worklist $func_similarity_worklist_flags "$dbname" >$worklist || exit 1
+nwork=$(wc -l <$worklist)
+if [ "$nwork" -eq 0 ]; then
+    echo "No similarities to compute"
+else
+    nprocs=$(parallelism funcsim_parallelism)
+    worklist_parts=$(split_worklist $nprocs)
+    nparts=$(count_args $worklist_parts)
+    save_settings
+
+    if [ "$interactive" = "yes" ]; then
+	echo
+	echo "=================================================================================================="
+	echo "These are the flags for 32-func-similarity. This tool measures similarity between pairs of"
+	echo "functions by comparing output groups that were produced by the tests.  Basically, if two functions"
+	echo "produced similar outputs for the same input then the functions are similar."
+	$BLDDIR/32-func-similarity --help 2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
+	read -e -p "Switches for function similarity: " -i "$func_similarity_flags" func_similarity_flags
+	save_settings
+    fi
+    if [ "$nparts" -gt 1 ]; then
+	redirect=yes
+	echo
+	echo "Use this command in another window to monitor the progress of 32-func-similarity:"
+	echo "    watch 'tail -n1 $worklist-[a-z][a-z].fs.out.tmp'"
+	echo
+	sleep 5
+    else
+	redirect=no
+    fi
+    execute make -f $SRCDIR/run-analysis.mk -j $nprocs \
+	BINDIR="$BLDDIR" \
+	RUN_FLAGS="$func_similarity_flags" \
+	DBNAME="$dbname" \
+	INPUTS="$worklist_parts" \
+	ERROR= \
+	REDIRECT="$redirect" \
+	func-sim || exit 1
+    rm -f $worklist_parts
+fi
 
 if [ "$interactive" = "yes" ]; then
     echo
     echo "=================================================================================================="
-    echo "These are the flags for 05-clusters-from-pairs, which organizes pairs of similar functions into"
+    echo "These are the flags for 35-clusters-from-pairs, which organizes pairs of similar functions into"
     echo "clusters. The similarity relationship is non-transitive, otherwise this step would be trivial."
     echo "Rather, this tool needs to consult the similarity graph and find all maximal cliques."
-    $BLDDIR/05-clusters-from-pairs --help  2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
+    $BLDDIR/35-clusters-from-pairs --help  2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
     read -e -p "Switches for creating clusters: " -i "$clusters_from_pairs_flags" clusters_from_pairs_flags
     save_settings
 fi
-execute $BLDDIR/05-clusters-from-pairs $clusters_from_pairs_flags "$dbname" semantic_funcsim semantic_clusters
+execute $BLDDIR/35-clusters-from-pairs $clusters_from_pairs_flags "$dbname" semantic_funcsim semantic_clusters
 
 echo
 echo "=================================================================================================="
 echo "Cluster results"
-execute $BLDDIR/06-list-clusters --summarize "$dbname"
+execute $BLDDIR/90-list-clusters --summarize "$dbname"

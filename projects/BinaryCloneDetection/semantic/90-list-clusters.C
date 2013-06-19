@@ -108,7 +108,7 @@ main(int argc, char *argv[])
         std::string filename = table[i].v4;
         functions.insert(func_id);
         if (cluster_id!=prev_cluster_id) {
-            if (prev_cluster_id>0) {
+            if (prev_cluster_id>=0) {
                 cluster_sizes.push_back(cluster_size);
                 ++nclusters;
             }

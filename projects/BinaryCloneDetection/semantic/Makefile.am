@@ -12,94 +12,83 @@ libCloneDetection_la_CPPFLAGS = $(ROSE_INCLUDES)
 CloneDetectionLib.o: CloneDetectionLib.h
 CloneDetectionLib.lo: CloneDetectionLib.h
 
-
+#-----------------------------------------------------------------------------------------------------------------------------
+# Level 00-09: initializing database (non-incremental)
 noinst_PROGRAMS += 00-create-schema
 00_create_schema_SOURCES = 00-create-schema.C CloneDetectionSchema.C
 00_create_schema_CPPFLAGS = $(ROSE_INCLUDES)
 00_create_schema_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 EXTRA_DIST += Schema.sql
 
-noinst_PROGRAMS += 01-generate-inputs
-01_generate_inputs_SOURCES = 01-generate-inputs.C
-01_generate_inputs_CPPFLAGS = $(ROSE_INCLUDES)
-01_generate_inputs_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+#-----------------------------------------------------------------------------------------------------------------------------
+# Level 10-19: initializing database (incremental)
+noinst_PROGRAMS += 10-generate-inputs
+10_generate_inputs_SOURCES = 10-generate-inputs.C
+10_generate_inputs_CPPFLAGS = $(ROSE_INCLUDES)
+10_generate_inputs_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-noinst_PROGRAMS += 01-add-functions
-01_add_functions_SOURCES = 01-add-functions.C
-01_add_functions_CPPFLAGS = $(ROSE_INCLUDES)
-01_add_functions_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+noinst_PROGRAMS += 11-add-functions
+11_add_functions_SOURCES = 11-add-functions.C
+11_add_functions_CPPFLAGS = $(ROSE_INCLUDES)
+11_add_functions_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-noinst_PROGRAMS += 02-get-pending-tests
-02_get_pending_tests_SOURCES = 02-get-pending-tests.C
-02_get_pending_tests_CPPFLAGS = $(ROSE_INCLUDES)
-02_get_pending_tests_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+noinst_PROGRAMS += 14-bulk-load
+14_bulk_load_SOURCES = 14-bulk-load.C
+14_bulk_load_CPPFLAGS = $(ROSE_INCLUDES)
+14_bulk_load_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-noinst_PROGRAMS += 03-run-tests
-03_run_tests_SOURCES = 03-run-tests.C
-03_run_tests_CPPFLAGS = $(ROSE_INCLUDES)
-03_run_tests_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+#-----------------------------------------------------------------------------------------------------------------------------
+# Level 20-29: running tests
+noinst_PROGRAMS += 20-get-pending-tests
+20_get_pending_tests_SOURCES = 20-get-pending-tests.C
+20_get_pending_tests_CPPFLAGS = $(ROSE_INCLUDES)
+20_get_pending_tests_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-noinst_PROGRAMS += 04-bulk-load
-04_bulk_load_SOURCES = 04-bulk-load.C
-04_bulk_load_CPPFLAGS = $(ROSE_INCLUDES)
-04_bulk_load_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+noinst_PROGRAMS += 25-run-tests
+25_run_tests_SOURCES = 25-run-tests.C
+25_run_tests_CPPFLAGS = $(ROSE_INCLUDES)
+25_run_tests_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-noinst_PROGRAMS += 04-func-similarity
-04_func_similarity_SOURCES = 04-func-similarity.C
-04_func_similarity_CPPFLAGS = $(ROSE_INCLUDES)
-04_func_similarity_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+#-----------------------------------------------------------------------------------------------------------------------------
+# Level 30-39: analysing test results
+noinst_PROGRAMS += 31-func-similarity-worklist
+31_func_similarity_worklist_SOURCES = 31-func-similarity-worklist.C
+31_func_similarity_worklist_CPPFLAGS = $(ROSE_INCLUDES)
+31_func_similarity_worklist_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-noinst_PROGRAMS += 05-clusters-from-pairs
-05_clusters_from_pairs_SOURCES = 05-clusters-from-pairs.C
-05_clusters_from_pairs_CPPFLAGS = $(ROSE_INCLUDES)
-05_clusters_from_pairs_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+noinst_PROGRAMS += 32-func-similarity
+32_func_similarity_SOURCES = 32-func-similarity.C
+32_func_similarity_CPPFLAGS = $(ROSE_INCLUDES)
+32_func_similarity_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-noinst_PROGRAMS += 06-list-clusters
-06_list_clusters_SOURCES = 06-list-clusters.C
-06_list_clusters_CPPFLAGS = $(ROSE_INCLUDES)
-06_list_clusters_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+noinst_PROGRAMS += 35-clusters-from-pairs
+35_clusters_from_pairs_SOURCES = 35-clusters-from-pairs.C
+35_clusters_from_pairs_CPPFLAGS = $(ROSE_INCLUDES)
+35_clusters_from_pairs_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-noinst_PROGRAMS += 06-list-function
-06_list_function_SOURCES = 06-list-function.C
-06_list_function_CPPFLAGS = $(ROSE_INCLUDES)
-06_list_function_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+#-----------------------------------------------------------------------------------------------------------------------------
+# Level 90-99: querying results
+noinst_PROGRAMS += 90-list-clusters
+90_list_clusters_SOURCES = 90-list-clusters.C
+90_list_clusters_CPPFLAGS = $(ROSE_INCLUDES)
+90_list_clusters_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-noinst_PROGRAMS += 06-list-ogroup
-06_list_ogroup_SOURCES = 06-list-ogroup.C
-06_list_ogroup_CPPFLAGS = $(ROSE_INCLUDES)
-06_list_ogroup_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+noinst_PROGRAMS += 90-list-function
+90_list_function_SOURCES = 90-list-function.C
+90_list_function_CPPFLAGS = $(ROSE_INCLUDES)
+90_list_function_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+noinst_PROGRAMS += 90-list-ogroup
+90_list_ogroup_SOURCES = 90-list-ogroup.C
+90_list_ogroup_CPPFLAGS = $(ROSE_INCLUDES)
+90_list_ogroup_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 noinst_PROGRAMS += 99-grants
 99_grants_SOURCES = 99-grants.C
 99_grants_CPPFLAGS = $(ROSE_INCLUDES)
 99_grants_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-## noinst_PROGRAMS += CloneDetection
-## CloneDetection_SOURCES = CloneDetection.C
-## CloneDetection_CPPFLAGS = $(ROSE_INCLUDES)
-## CloneDetection_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-##
-##noinst_PROGRAMS += clusters_from_pairs
-##clusters_from_pairs_SOURCES = clusters_from_pairs.C
-##clusters_from_pairs_CPPFLAGS = $(ROSE_INCLUDES)
-##clusters_from_pairs_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-##
-##noinst_PROGRAMS += show_results
-##show_results_SOURCES = show_results.C
-##show_results_CPPFLAGS = $(ROSE_INCLUDES)
-##show_results_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-##
-##noinst_PROGRAMS += call_graph_clones
-##call_graph_clones_SOURCES = call_graph_clones.C
-##call_graph_clones_CPPFLAGS = $(ROSE_INCLUDES)
-##call_graph_clones_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-##
-##noinst_PROGRAMS += compare_outputs
-##compare_outputs_SOURCES = compare_outputs.C
-##compare_outputs_CPPFLAGS = $(ROSE_INCLUDES)
-##compare_outputs_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-
-
+#-----------------------------------------------------------------------------------------------------------------------------
 MOSTLYCLEANFILES += CloneDetectionSchema.C
 CloneDetectionSchema.C: Schema.sql
 	@echo "  GEN     $@"
