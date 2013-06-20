@@ -6,7 +6,9 @@
 
 using namespace std;
 
-#if 0
+FixupTypeReferencesOnMemoryPool::~FixupTypeReferencesOnMemoryPool() {}
+
+#ifdef ROSE_USE_CLANG_FRONTEND
 // This function's implementation is moved to the edgRose.C file so that it
 // can easily reference EDG types and the EDG/ROSE type map in its implementation.
 
@@ -14,12 +16,8 @@ void
 FixupTypeReferencesOnMemoryPool::visit ( SgNode* node )
    {
      ROSE_ASSERT(node != NULL);
-
-#error "IMPLEMENTED IN edgRose.C"
-
    }
 #endif
-
 
 void fixupTypeReferences()
    {
