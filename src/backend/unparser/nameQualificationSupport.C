@@ -2392,12 +2392,18 @@ NameQualificationTraversal::traverseTemplatedFunction(SgFunctionRefExp* function
        // Avoid unpasing the class definition when unparseing the type.
           unparseInfoPointer->set_SkipClassDefinition();
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("nodeReference = %p = %s \n",nodeReference,nodeReference->class_name().c_str());
+#endif
        // Associate the unparsing of this type with the statement or scope where it occures.
        // This is the key to use in the lookup of the qualified name. But this is the correct key....
        // unparseInfoPointer->set_reference_node_for_qualification(positionStatement);
        // unparseInfoPointer->set_reference_node_for_qualification(currentScope);
           unparseInfoPointer->set_reference_node_for_qualification(nodeReference);
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("Calling globalUnparseToString() \n");
+#endif
           string functionNameString = globalUnparseToString(functionRefExp,unparseInfoPointer);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("++++++++++++++++ functionNameString (globalUnparseToString()) = %s \n",functionNameString.c_str());
@@ -2464,12 +2470,18 @@ NameQualificationTraversal::traverseTemplatedMemberFunction(SgMemberFunctionRefE
        // Avoid unpasing the class definition when unparseing the type.
           unparseInfoPointer->set_SkipClassDefinition();
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("nodeReference = %p = %s \n",nodeReference,nodeReference->class_name().c_str());
+#endif
        // Associate the unparsing of this type with the statement or scope where it occures.
        // This is the key to use in the lookup of the qualified name. But this is the correct key....
        // unparseInfoPointer->set_reference_node_for_qualification(positionStatement);
        // unparseInfoPointer->set_reference_node_for_qualification(currentScope);
           unparseInfoPointer->set_reference_node_for_qualification(nodeReference);
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("Calling globalUnparseToString() \n");
+#endif
           string memberFunctionNameString = globalUnparseToString(memberFunctionRefExp,unparseInfoPointer);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("++++++++++++++++ memberFunctionNameString (globalUnparseToString()) = %s \n",memberFunctionNameString.c_str());
@@ -2923,7 +2935,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              {
                if (currentScope != NULL && inheritedAttribute.get_currentScope() != NULL)
                   {
-                    printf ("WARNING: currentScope != inheritedAttribute.get_currentScope(): inheritedAttribute.get_currentScope() = %p = %s \n",
+                    printf ("WARNING: currentScope != inheritedAttribute.get_currentScope(): currentScope = %p = %s inheritedAttribute.get_currentScope() = %p = %s \n",
                          currentScope,currentScope->class_name().c_str(),inheritedAttribute.get_currentScope(),inheritedAttribute.get_currentScope()->class_name().c_str());
                   }
              }
@@ -3643,6 +3655,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
         {
           SgMemberFunctionDeclaration* memberFunctionDeclaration = memberFunctionRefExp->getAssociatedMemberFunctionDeclaration();
        // ROSE_ASSERT(functionDeclaration != NULL);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("case of SgMemberFunctionRefExp: memberFunctionDeclaration = %p \n",memberFunctionDeclaration);
+#endif
           if (memberFunctionDeclaration != NULL)
              {
                SgStatement* currentStatement = TransformationSupport::getStatement(memberFunctionRefExp);
@@ -3654,11 +3670,19 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   }
                ROSE_ASSERT(currentStatement != NULL);
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("case of SgMemberFunctionRefExp: currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
+#endif
                SgScopeStatement* currentScope = currentStatement->get_scope();
                ROSE_ASSERT(currentScope != NULL);
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("case of SgMemberFunctionRefExp: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+               printf ("***** case of SgMemberFunctionRefExp: Calling nameQualificationDepth() ***** \n");
+#endif
                int amountOfNameQualificationRequired = nameQualificationDepth(memberFunctionDeclaration,currentScope,currentStatement);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("***** case of SgMemberFunctionRefExp: DONE: Calling nameQualificationDepth() ***** \n");
                printf ("SgMemberFunctionCallExp's member function name: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
             // DQ (6/5/2011): test2005_112.C demonstrates a case where this special case applies.
@@ -3701,9 +3725,19 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                SgScopeStatement* currentScope = currentStatement->get_scope();
                ROSE_ASSERT(currentScope != NULL);
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("case of SgMemberFunctionRefExp: currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
+               printf ("case of SgMemberFunctionRefExp: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+               printf ("***** calling traverseTemplatedMemberFunction() \n");
+#endif
+
             // traverseTemplatedFunction(functionRefExp,templateInstantiationFunctionDeclaration,currentScope,currentStatement);
             // traverseTemplatedFunction(functionRefExp,functionRefExp,currentScope,currentStatement);
                traverseTemplatedMemberFunction(memberFunctionRefExp,memberFunctionRefExp,currentScope,currentStatement);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("***** DONE: calling traverseTemplatedMemberFunction() \n");
+#endif
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
@@ -3893,6 +3927,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
           SgStatement* currentStatement = TransformationSupport::getStatement(enumVal);
        // ROSE_ASSERT(currentStatement != NULL);
+#if 0
+          printf ("case of SgEnumVal: currentStatement = %p \n",currentStatement);
+#endif
           if (currentStatement != NULL)
              {
                currentScope = isSgScopeStatement(currentStatement);
@@ -3939,6 +3976,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // DQ (9/17/2011): this is the original case we waant to restore later...
                ROSE_ASSERT(currentScope != NULL);
                int amountOfNameQualificationRequired = nameQualificationDepth(enumDeclaration,currentScope,currentStatement);
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("SgEnumVal: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
@@ -4787,7 +4825,32 @@ NameQualificationTraversal::setNameQualification ( SgBaseClass* baseClass, SgCla
         }
        else
         {
+       // DQ (6/17/2013): I think it is reasonable that this might have been previously set and 
+       // we have to overwrite the last value as we handle it again in a different context.
+
+       // If it already existes then overwrite the existing information.
+          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(baseClass);
+          ROSE_ASSERT (i != qualifiedNameMapForNames.end());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          string previousQualifier = i->second.c_str();
+          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+#endif
+       // I think I can do this!
+       // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
+          if (i->second != qualifier)
+             {
+               i->second = qualifier;
 #if 1
+            // DQ (6/17/2013): Commented out this assertion.
+               printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
+               ROSE_ASSERT(false);
+#else
+            // DQ (6/17/2013): I think this is OK, but I'm not certain (see test2012_57.C).
+               printf ("WARNING: name in qualifiedNameMapForNames already exists and is different... (reset) \n");
+#endif
+             }
+#if 0
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
           ROSE_ASSERT(false);
 #endif

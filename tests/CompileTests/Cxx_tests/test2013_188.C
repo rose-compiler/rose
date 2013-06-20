@@ -7,10 +7,9 @@ namespace X
                enum FieldType
                   {
                     ALPHA
-                  };   
+                  };
 
-               template <typename CType, enum FieldType DeclaredType>
-               static inline bool ReadPrimitive(CType* value);
+               template <typename CType, enum FieldType DeclaredType> static inline bool ReadPrimitive(CType* value);
 
             // template <enum FieldType DeclaredType> class B{};
         };

@@ -1865,6 +1865,7 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
   // if (unary_op->get_mode() != SgUnaryOp::postfix && !arrow_op)
      if (unary_op->get_mode() != SgUnaryOp::postfix)
 #else
+#error "DEAD CODE!"
      if (unary_op->get_mode() != SgUnaryOp::postfix && !arrow_op && !isFunctionType)
 #endif
         {
@@ -1880,6 +1881,9 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
           curprint ( info.get_operator_name());
         }
 
+#if 0
+     printf ("In unparseUnaryExpr(): info.isPrefixOperator() = %s \n",info.isPrefixOperator() ? "true" : "false");
+#endif
 #if 0
      curprint ("\n /* Calling unparseExpression from unparseUnaryExpr */ \n");
 #endif
@@ -2635,12 +2639,23 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                       else 
                        {
                       // Prefix unary operator.
-                      // printf ("Handle prefix operator ... \n");
-                      // printf ("Prefix unary operator: Output the RHS operand ... = %s \n",binary_op->get_rhs_operand()->sage_class_name());
-                      // curprint ( "\n /* Prefix unary operator: Output the RHS operand ... */ \n";
-
 #if DEBUG_BINARY_OPERATORS
                          printf ("In unparseBinaryExp(): Case 1.1.1.2 \n");
+#endif
+#if DEBUG_BINARY_OPERATORS
+                      // printf ("Handle prefix operator ... \n");
+                         printf ("Prefix unary operator: Output the RHS operand ... = %s \n",binary_op->get_rhs_operand()->sage_class_name());
+                         curprint("\n /* Prefix unary operator: Output the RHS operand ... */ \n");
+#endif
+                         if (info.isPrefixOperator() == false)
+                            {
+#if 1
+                              printf ("In unparseBinaryExp(): info.isPrefixOperator() == false: reset to be true! \n");
+#endif
+                              info.set_prefixOperator();
+                            }
+#if DEBUG_BINARY_OPERATORS
+                         printf ("In unparseBinaryExpr(): info.isPrefixOperator() = %s \n",info.isPrefixOperator() ? "true" : "false");
 #endif
                          unparseExpression(binary_op->get_rhs_operand(), info);
                        }
@@ -3413,7 +3428,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
 
 #if 0
      printf ("In Unparse_ExprStmt::unparseEnumVal: info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
-     curprint("\n/* In Unparse_ExprStmt::unparseEnumVal() */\n");
+  // curprint("\n/* In Unparse_ExprStmt::unparseEnumVal() */\n");
 #endif
 
   // todo: optimize this so that the qualified name is only printed when necessary.
@@ -3441,13 +3456,20 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                if (SageInterface::is_Cxx_language() == true)
                   {
                  // SgScopeStatement* parentScope = decl_item->get_scope();
-#if 1
+#if 0
+                 // DQ (6/15/2013): Added in name qualification support for enum values.
+                 // SgName nameQualifier = "NEED_QUALIFIED_NAME_for_unparseEnumVal::";
+                 // DQ (5/29/2011): Newest refactored support for name qualification.
+                 // printf ("In unparseFuncRef(): Looking for name qualification for SgFunctionRefExp = %p \n",func_ref);
+                    SgName nameQualifier = enum_val->get_qualified_name_prefix();
+#else
                  // DQ (12/22/2006): This is use the information that qualification is required. This will trigger the use of 
                  // global qualification even if it is not required with normal qualification.  That is that the specification 
                  // of qualification triggers possible (likely) over qualification.  Overqualification is generally the default
                  // this flag is sometime taken to mean that the "::" is required as well.
-
-                 // printf ("enum_val->get_requiresNameQualification() = %s \n",enum_val->get_requiresNameQualification() ? "true" : "false");
+#if 0
+                    printf ("enum_val->get_requiresNameQualification() = %s \n",enum_val->get_requiresNameQualification() ? "true" : "false");
+#endif
                  // cur << "\n/* funcdecl_stmt->get_requiresNameQualificationOnReturnType() = " << (funcdecl_stmt->get_requiresNameQualificationOnReturnType() ? "true" : "false") << " */ \n";
                     if (enum_val->get_requiresNameQualification() == true)
                        {
@@ -3455,11 +3477,13 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                       // info.set_forceQualifiedNames();
                          info.set_requiresGlobalNameQualification();
                        }
-#endif
+
                  // DQ (6/9/2011): Newest refactored support for name qualification.
                  // SgName nameQualifier = unp->u_name->generateNameQualifier(enum_val->get_declaration(),info);
                     SgName nameQualifier = enum_val->get_qualified_name_prefix();
-
+#if 0
+                    printf ("In Unparse_ExprStmt::unparseEnumVal: nameQualifier = %s \n",nameQualifier.str());
+#endif
                  // DQ (8/31/2012): If we are going to NOT output a name, then we had better not out any name qualification.
                     if (enum_val->get_name().is_null() == true)
                        {
@@ -3467,8 +3491,10 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                          nameQualifier = "";
                          ROSE_ASSERT(nameQualifier.is_null() == true);
                        }
-
-                 // printf ("variable's nameQualifier = %s \n",(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
+#endif
+#if 0
+                    printf ("enum value's nameQualifier = %s \n",(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
+#endif
                  // ROSE_ASSERT (nameQualifier.is_null() == false);
                     if (nameQualifier.is_null() == false)
                        {
@@ -3519,7 +3545,12 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
 
 #if 0
      printf ("Leaving Unparse_ExprStmt::unparseEnumVal: info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
-     curprint("\n/* Leaving Unparse_ExprStmt::unparseEnumVal() */\n");
+  // curprint("\n/* Leaving Unparse_ExprStmt::unparseEnumVal() */\n");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
    }
 
