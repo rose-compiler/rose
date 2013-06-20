@@ -2262,6 +2262,7 @@ Unparse_ExprStmt::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info)
      while(i != forInitStmt->get_init_stmt().end())
         {
 #if 0
+          printf ("--- *i = %p = %s \n",*i,(*i)->class_name().c_str());
           curprint("/* unparseForInitStmt: " + (*i)->class_name() + " */ ");
 #endif
           unparseStatement(*i, newinfo);
@@ -3200,7 +3201,6 @@ Unparse_ExprStmt::unparseGeneratedTemplateArgumentsList (SgName unqualifiedName,
 #endif
 
 
-
 void
 Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
@@ -3208,6 +3208,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(mfuncdecl_stmt != NULL);
 
 #if 0
+     printf ("Inside of Unparse_ExprStmt::unparseMFuncDeclStmt(stmt = %p = %s) \n",stmt,stmt->class_name().c_str());
      curprint ("\n/* Inside of Unparse_ExprStmt::unparseMFuncDeclStmt */ \n"); 
 #endif
 
@@ -3506,8 +3507,14 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // Generate the qualified name
        // SgName nameQualifier = unp->u_name->generateNameQualifier( mfuncdecl_stmt , ninfo );
           SgName nameQualifier = mfuncdecl_stmt->get_qualified_name_prefix();
-       // printf ("nameQualifier for member function = %s \n",nameQualifier.str());
+#if 0
+          printf ("nameQualifier for member function = %s \n",nameQualifier.str());
+#endif
           curprint ( nameQualifier.str() );
+
+#if 0
+          printf ("mfuncdecl_stmt->get_name() for member function = %s \n",mfuncdecl_stmt->get_name().str());
+#endif
           curprint ( mfuncdecl_stmt->get_name().str());
 
           SgUnparse_Info ninfo2(info);
@@ -3718,6 +3725,10 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
   // Unparse any comments of directives attached to the SgCtorInitializerList
      if (mfuncdecl_stmt->get_CtorInitializerList() != NULL)
           unparseAttachedPreprocessingInfo(mfuncdecl_stmt->get_CtorInitializerList(), info, PreprocessingInfo::after);
+
+#if 0
+     printf ("Leaving Unparse_ExprStmt::unparseMFuncDeclStmt(stmt = %p = %s) \n",stmt,stmt->class_name().c_str());
+#endif
    }
 
 
@@ -3763,6 +3774,10 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 #if 0
      ninfo.display ("At top of Unparse_ExprStmt::unparseVarDeclStmt");
+#endif
+
+#if 0
+     printf ("Inside of unparseVarDeclStmt(): ninfo.SkipBaseType() = %s \n",ninfo.SkipBaseType() ? "true" : "false");
 #endif
 
   // DQ (10/14/2006): Set the context to record the variable declaration being generated!
@@ -4158,6 +4173,10 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                ninfo_for_type.display ("At top of Unparse_ExprStmt::unparseVarDeclStmt: ninfo_for_type");
 #endif
+#if 0
+               printf ("Inside of unparseVarDeclStmt(): ninfo_for_type.SkipBaseType() = %s \n",ninfo_for_type.SkipBaseType() ? "true" : "false");
+               curprint ("\n /* In unparseVarDeclStmt(): ninfo_for_type.SkipBaseType() = " + string(ninfo_for_type.SkipBaseType() ? "true" : "false") + " */ \n");
+#endif
 
                if (vardecl_stmt->get_isAssociatedWithDeclarationList() == true)
                   {
@@ -4365,6 +4384,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // DQ (5/6/2013): Associated end of block for alternative handling of type in variable declaration.
             //    }
 #if 0
+               printf ("In unparseVarDeclStmt(): Handle initializers (if any) \n");
                curprint("\n/* Handle initializers (if any) */ \n");
 #endif
             // Unparse the initializers if any exist
