@@ -311,7 +311,6 @@ test2005_37.C \
 test2005_38.C \
 test2005_40.C \
 test2005_41.C \
-test2005_42.C \
 test2005_43.C \
 test2005_44.C \
 test2005_45.C \
@@ -376,16 +375,10 @@ test2005_125.C \
 test2005_126.C \
 test2005_127.C \
 test2005_128.C \
-test2005_129.C \
-test2005_130.C \
-test2005_131.C \
-test2005_132.C \
-test2005_133.C \
 test2005_134.C \
 test2005_136.C \
 test2005_140.C \
 test2005_141.C \
-test2005_142.C \
 test2005_143.C \
 test2005_144.C \
 test2005_145.C \
@@ -746,7 +739,16 @@ test2004_44.C \
 --> Variables declared inside switch statements are not visited by the virtual CFG (not SSA bug)\
 test2005_187.C \
 test2005_114.C \
-test2006_47.C 
+test2006_47.C
+
+FAIL_WITH_EDG_47_AND_GCC_4_2_4_NOT_GCC_4_4_5 = \
+ test2005_42.C \
+ test2005_142.C \
+ test2005_132.C \
+ test2005_129.C \
+ test2005_130.C \
+ test2005_131.C \
+ test2005_133.C
 
 TEST_INCLUDES = \
 	-I$(top_srcdir)/tests/CompileTests/A++Code \
