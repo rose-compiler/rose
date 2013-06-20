@@ -273,9 +273,16 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_01.c \
      test2013_02.c \
      test2013_03.c \
+     test2013_06.c \
      math.c \
      complex_01.c \
      constants.c
+
+# DQ (5/23/2013): This is a failing case (reported by Sara). Case of "void foo(int N,int a[N]){}"
+# test2013_04.c 
+
+# DQ (6/19/2013): Failing case of include used to initialize array (still working on this case).
+# test2013_05.c 
 
 
 # DQ (9/28/2012): Failing tests.
@@ -352,13 +359,12 @@ if ROSE_USE_CLANG_FRONTEND
 endif
 
 if !ROSE_USE_CLANG_FRONTEND
-if ROSE_USE_EDG_VERSION_4_4
    TESTCODES_REQUIRED_TO_PASS += \
      test2004_21.c \
      test2005_168.c \
      test2006_65.c
-endif
 if !ROSE_USE_EDG_VERSION_4_4
+if !ROSE_USE_EDG_VERSION_4_7
    TESTCODES_REQUIRED_TO_PASS += \
      stdio.c \
      test2006_48.c \
@@ -367,6 +373,7 @@ if !ROSE_USE_EDG_VERSION_4_4
      test2010_11.c \
      test2010_12.c \
      test2010_14.c
+endif
 endif
 endif
 
@@ -418,11 +425,15 @@ $(OLD_TESTCODES_REQUIRED_TO_PASS)
 # File option to accumulate performance information about the compilation
 # PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/C_ROSE_PERFORMANCE_DATA.csv
 
-ROSE_FLAGS = -rose:C
+# DQ (3/28/2013): Now that we have changed the default C behavior to C99 (from C89), we need 
+# to explicitly specify the C89 behavior for make of the C test codes in this directory.
+# ROSE_FLAGS = -rose:C
+ROSE_FLAGS = -rose:C89
 if !ROSE_USE_CLANG_FRONTEND
    ROSE_FLAGS += --edg:no_warnings --edg:restrict
 endif
 ROSE_FLAGS += -w
+
 
 PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}
@@ -431,10 +442,12 @@ TEST_Exe_Objects = ${TESTCODES_REQUIRED_TO_RUN:.c=.o}
 PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
 
 if !ROSE_USE_EDG_VERSION_4_4
+if !ROSE_USE_EDG_VERSION_4_7
 # any programs needed by your tests that does not need to be built by make all.
 check_PROGRAMS = $(PASSING_TEST_Executables)
 # a list of programs or scripts to run in order to do the testing 
 TESTS= $(check_PROGRAMS) caller.out 
+endif
 endif
 
 testTranslator = ../../testTranslator
