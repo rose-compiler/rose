@@ -18,20 +18,20 @@ now:
 	diff $(input)-new.$(ext) $(srcdir)/$(input)-save.$(ext)
 
 compile:
-	g++ $(input)-new.$(ext)
+	$(CXX) $(input)-new.$(ext)
 
 check-local:
-	make now input=relax ext=cpp
-	make now input=input ext=cpp
-	make now input=testPermutations ext=C
+	$(MAKE) now input=relax ext=cpp
+	$(MAKE) now input=input ext=cpp
+	$(MAKE) now input=testPermutations ext=C
 	@echo "*******************************************************************************************"
 	@echo "****** ROSE/projects/StencilManyCore: make check rule complete (terminated normally) ******"
 	@echo "*******************************************************************************************"
 
 test: $(srcdir)/relax-main.cpp $(srcdir)/relax.cpp relax-new.cpp 
 	rm -f optimized.cpp
-	cat relax-new.cpp | sed -e 's/high_level_relax/high_level_relax_optimized/' > optimized.cpp
-	g++ -g $(manycore_include) $(srcdir)/relax-main.cpp $(srcdir)/relax.cpp optimized.cpp  -o tune 
+	cat relax-new.cpp | $(SED) -e 's/high_level_relax/high_level_relax_optimized/' > optimized.cpp
+	$(CXX) -g $(manycore_include) $(srcdir)/relax-main.cpp $(srcdir)/relax.cpp optimized.cpp  -o tune 
 	bash -c 'for i in `seq 12 20` ; do \
 		for c in  `seq 2 5` ; do \
 		./tune $$i $$i $$i $$c $$c 1 ; \
@@ -39,9 +39,9 @@ test: $(srcdir)/relax-main.cpp $(srcdir)/relax.cpp relax-new.cpp
 	done'
 
 clean:
-	rm -Rf tune
-	rm -Rf *.o
-	rm -Rf optimized.cpp *-new.*
+	rm -f tune
+	rm -f *.o
+	rm -f optimized.cpp *-new.*
 
 
 
