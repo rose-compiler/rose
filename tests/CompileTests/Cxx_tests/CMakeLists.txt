@@ -217,7 +217,7 @@ foreach(file_to_test ${files_to_test})
   compile_test(${file_to_test} TRUE)
 endforeach()
 
-set(files_to_test_with_includes test2010_01.C test2010_07.C)
+set(files_to_test_with_includes test2010_07.C)
 foreach(file_to_test ${files_to_test_with_includes})
   compile_test(${file_to_test})
 endforeach()

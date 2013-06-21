@@ -241,7 +241,7 @@
 
 /* Name of backend C++ compiler including path (may or may not explicit
    include path; used to call backend). */
-#define BACKEND_CXX_COMPILER_NAME_WITH_PATH "${BACKEND_CXX_COMPILER}"
+#define BACKEND_CXX_COMPILER_NAME_WITH_PATH "${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}"
 
 /* Name of backend C++ compiler excluding path (used to select code generation
    options). */
@@ -255,7 +255,7 @@
 
 /* Name of backend C compiler including path (may or may not explicit include
    path; used to call backend). */
-#define BACKEND_C_COMPILER_NAME_WITH_PATH "${BACKEND_C_COMPILER}"
+#define BACKEND_C_COMPILER_NAME_WITH_PATH "${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}"
 
 #define BACKEND_C_COMPILER_NAME_WITHOUT_PATH "${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}"
 #define BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER ${BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER}

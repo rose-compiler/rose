@@ -60,7 +60,7 @@ else()
     endif()
 
     if(enable-c)
-      #add_subdirectory(copyAST_tests)
+      add_subdirectory(copyAST_tests)
       #add_subdirectory(RoseExample_tests)
       #add_subdirectory(PythonExample_tests)
       #add_subdirectory(colorAST_tests)
