@@ -1497,12 +1497,46 @@ Partitioner::pattern3(const InstructionMap& insns, InstructionMap::const_iterato
 }
 #endif
 
-/** Seeds functions according to instruction patterns.  Note that this pattern matcher only looks at existing instructions--it
- *  does not actively disassemble new instructions.  In other words, this matcher is intended mostly for passive-mode
- *  partitioners where the disassembler has already disassembled everything it can. */
+/** Seeds functions according to byte and instruction patterns.  Note that the instruction pattern matcher looks only at
+ *  existing instructions--it does not actively disassemble new instructions.  In other words, this matcher is intended mostly
+ *  for passive-mode partitioners where the disassembler has already disassembled everything it can. The byte pattern matcher
+ *  works whether or not instructions are available. */
 void
 Partitioner::mark_func_patterns()
 {
+    // Create functions when we see certain patterns of bytes
+    struct T1: ByteRangeCallback {
+        Partitioner *p;
+        T1(Partitioner *p): p(p) {}
+        virtual bool operator()(bool enabled, const Args &args) /*override*/ {
+            assert(args.restrict_map!=NULL);
+            uint8_t buf[4096];
+            static const size_t patternsz=16;
+            assert(patternsz<sizeof buf);
+            if (enabled) {
+                rose_addr_t va = args.range.first();
+                while (va<=args.range.last()) {
+                    size_t nbytes = std::min(args.range.last()+1-va, sizeof buf);
+                    size_t nread = args.restrict_map->read(buf, va, nbytes);
+                    for (size_t i=0; i<nread; ++i) {
+                        // "55 8b ec" is x86 "push ebp; mov ebp, esp"
+                        if (i+3<nread && 0x55==buf[i+0] && 0x8b==buf[i+1] && 0xec==buf[i+2]) {
+                            p->add_function(va+i, SgAsmFunction::FUNC_PATTERN);
+                            i+=2;
+                        }
+                    }
+                    va += nread;
+                }
+            }
+            return enabled;
+        }
+    } t1(this);
+    MemoryMap *mm = get_map();
+    if (mm)
+        scan_unassigned_bytes(&t1, mm);
+
+    // Create functions when we see certain patterns of instructions. Note that this will only work if we've already
+    // disassembled the instructions.
     Disassembler::AddressSet exclude;
     InstructionMap::const_iterator found;
 
@@ -2939,9 +2973,6 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
                     invalid_callee_va = NULL==find_instruction(*si);
                 if (invalid_callee_va) {// otherwise we can just analyze the linked-in code
                     bb->function->promote_may_return(SgAsmFunction::RET_SOMETIMES);
-#if 1 /*DEBUGGING [Robb P. Matzke 2013-06-20]*/
-                    std::cerr <<"ROBB: PE dynlink thunk at " <<StringUtility::addrToString(bb->address()) <<"\n";
-#endif
                 }
             }
         }
