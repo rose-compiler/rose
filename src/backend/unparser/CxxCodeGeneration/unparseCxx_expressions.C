@@ -112,6 +112,9 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case UPC_BLOCK_SIZEOF_EXPR: { unparseUpcBlockSizeOfOp(expr, info); break; }
           case UPC_ELEM_SIZEOF_EXPR:  { unparseUpcElemSizeOfOp(expr, info); break; }
 
+       // DQ (6/20/2013): Added alignof operator to support C/C++ extensions (used in EDG 4.7).
+          case ALIGNOF_OP:            { unparseAlignOfOp(expr, info); break; }
+
           case TYPEID_OP:               { unparseTypeIdOp(expr, info); break; }
           case NOT_OP:                  { unparseNotOp(expr, info); break; }
           case DEREF_OP:                { unparseDerefOp(expr, info); break; }
@@ -413,7 +416,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
           while (i != templateArgListPtr.end())
              {
 #if 0
-               printf ("In unparseTemplateArgumentList(): templateArgList element *i = %s \n",(*i)->class_name().c_str());
+               printf ("In unparseTemplateArgumentList(): templateArgList element *i = %s explicitlySpecified = %s \n",(*i)->class_name().c_str(),((*i)->get_explicitlySpecified() == true) ? "true" : "false");
 #endif
 #if 0
                unp->u_exprStmt->curprint ( string("/* templateArgument is explicitlySpecified = ") + (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */");
@@ -648,7 +651,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
      ROSE_ASSERT(templateArgument != NULL);
 
 #if 0
-     printf ("In unparseTemplateArgument(%p) \n",templateArgument);
+     printf ("In unparseTemplateArgument() = %p \n",templateArgument);
 #endif
 
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
@@ -690,6 +693,21 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
   // ROSE_ASSERT(newInfo.isTypeFirstPart() == false);
   // ROSE_ASSERT(newInfo.isTypeSecondPart() == false);
+
+#if 0
+     printf ("In unparseTemplateArgument(): newInfo.isWithType()       = %s \n",(newInfo.isWithType()       == true) ? "true" : "false");
+     printf ("In unparseTemplateArgument(): newInfo.SkipBaseType()     = %s \n",(newInfo.SkipBaseType()     == true) ? "true" : "false");
+     printf ("In unparseTemplateArgument(): newInfo.isTypeFirstPart()  = %s \n",(newInfo.isTypeFirstPart()  == true) ? "true" : "false");
+     printf ("In unparseTemplateArgument(): newInfo.isTypeSecondPart() = %s \n",(newInfo.isTypeSecondPart() == true) ? "true" : "false");
+#endif
+
+     if (newInfo.SkipBaseType() == true)
+        {
+#if 1
+          printf ("In unparseTemplateArgument(): unset SkipBaseType() (how was this set? Maybe from the function reference expression?) \n");
+#endif
+          newInfo.unset_SkipBaseType();
+        }
 
 #if 0
      printf ("In unparseTemplateArgument(): templateArgument->get_argumentType() = %d \n",templateArgument->get_argumentType());
@@ -915,12 +933,13 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                  // ROSE_ASSERT(newInfo.isTypeFirstPart()  == false);
                  // ROSE_ASSERT(newInfo.isTypeSecondPart() == false);
 
-#if 1
+#if 0
                  // DQ (6/19/2013): If we are not using name qualification we at least need to unparse the whold type (both of the two parts).
                  // DQ (5/4/2013): I think we have to separate out the parts of the type so that the name qualificaion will not be output before the "const" for const types.
                     newInfo.set_isTypeFirstPart();
 #if 0
                     printf ("In unparseTemplateArgument(): Calling unparseType(templateArgument->get_type(),newInfo); (first part) templateArgument->get_type() = %p = %s \n",templateArgument->get_type(),templateArgument->get_type()->class_name().c_str());
+                    curprint ( "\n /* first part of type */ \n");
 #endif
                     unp->u_type->unparseType(templateArgumentType,newInfo);
                  // newInfo.unset_isTypeFirstPart();
@@ -929,11 +948,13 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                  // This will unparse the type will any required name qualification.
 #if 0
                     printf ("In unparseTemplateArgument(): Calling unparseType(templateArgument->get_type(),newInfo); (second part) templateArgument->get_type() = %p = %s \n",templateArgument->get_type(),templateArgument->get_type()->class_name().c_str());
+                    curprint ( "\n /* second part of type */ \n");
 #endif
                  // unp->u_type->unparseType(templateArgument->get_type(),newInfo);
                     unp->u_type->unparseType(templateArgumentType,newInfo);
 #if 0
                     printf ("DONE: In unparseTemplateArgument(): Calling unparseType(templateArgument->get_type(),newInfo); \n");
+                    curprint ( "\n /* end of type */ \n");
 #endif
                   }
 
@@ -3416,6 +3437,89 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
 #endif
 
      curprint ( "sizeof(");
+     if (sizeof_op->get_operand_expr() != NULL)
+        {
+          ROSE_ASSERT(sizeof_op->get_operand_expr() != NULL);
+          unparseExpression(sizeof_op->get_operand_expr(), info);
+        }
+       else
+        {
+          ROSE_ASSERT(sizeof_op->get_operand_type() != NULL);
+          SgUnparse_Info info2(info);
+          info2.unset_SkipBaseType();
+          info2.set_SkipClassDefinition();
+          info2.unset_isTypeFirstPart();
+          info2.unset_isTypeSecondPart();
+
+       // DQ (6/2/2011): Added support for name qualification of types reference via sizeof operator.
+          info2.set_reference_node_for_qualification(sizeof_op);
+
+       // DQ (10/19/2012): Modified to support output of the type's defining declaration (see test2012_57.c).
+       // unp->u_type->unparseType(sizeof_op->get_operand_type(), info2);
+
+          SgUnparse_Info newinfo(info2);
+
+          if (outputTypeDefinition == true)
+             {
+            // DQ (10/11/2006): As part of new implementation of qualified names we now default to the generation of all qualified names unless they are skipped.
+            // newinfo.set_SkipQualifiedNames();
+
+            // DQ (10/17/2012): Added new code not present where this is handled for SgVariableDeclaration IR nodes.
+               newinfo.unset_SkipDefinition();
+
+            // DQ (5/23/2007): Commented these out since they are not applicable for statement expressions (see test2007_51.C).
+            // DQ (10/5/2004): If this is a defining declaration then make sure that we don't skip the definition
+               ROSE_ASSERT(newinfo.SkipClassDefinition() == false);
+               ROSE_ASSERT(newinfo.SkipEnumDefinition()  == false);
+               ROSE_ASSERT(newinfo.SkipDefinition()      == false);
+             }
+            else
+             {
+               newinfo.set_SkipDefinition();
+               ROSE_ASSERT(newinfo.SkipClassDefinition() == true);
+               ROSE_ASSERT(newinfo.SkipEnumDefinition() == true);
+             }
+
+#if 0
+          printf ("In unparseSizeOfOp(): calling newinfo.unset_SkipSemiColon() \n");
+#endif
+       // DQ (10/18/2012): Added to unset ";" usage in defining declaration.
+          newinfo.unset_SkipSemiColon();
+#if 1
+       // DQ (10/17/2012): We have to separate these out if we want to output the defining declarations.
+          newinfo.set_isTypeFirstPart();
+          unp->u_type->unparseType(sizeof_op->get_operand_type(), newinfo);
+          newinfo.set_isTypeSecondPart();
+          unp->u_type->unparseType(sizeof_op->get_operand_type(), newinfo);
+#else
+       // DQ (1/14/2006): p_expression_type is no longer stored (type is computed instead)
+       // unp->u_type->unparseType(cast_op->get_expression_type(), newinfo);
+       // unp->u_type->unparseType(cast_op->get_type(), newinfo);
+          unp->u_type->unparseType(sizeof_op->get_operand_type(), newinfo);
+#endif
+        }
+     curprint ( ")");
+   }
+
+
+void
+Unparse_ExprStmt::unparseAlignOfOp(SgExpression* expr, SgUnparse_Info & info)
+   {
+     SgAlignOfOp* sizeof_op = isSgAlignOfOp(expr);
+     ROSE_ASSERT(sizeof_op != NULL);
+
+  // DQ (10/19/2012): This is the explicitly set boolean value which indicates that a class declaration is buried inside
+  // the current cast expression's reference to a type (e.g. "(((union ABC { int __in; int __i; }) { .__in = 42 }).__i);").
+  // In this case we have to output the base type with its definition.
+     bool outputTypeDefinition = sizeof_op->get_alignOfContainsBaseTypeDefiningDeclaration();
+
+#if 0
+     printf ("In unparseAlignOfOp(expr = %p): outputTypeDefinition = %s \n",expr,(outputTypeDefinition == true) ? "true" : "false");
+#endif
+
+  // curprint ( "alignof(");
+     curprint ( "__alignof__(");
+
      if (sizeof_op->get_operand_expr() != NULL)
         {
           ROSE_ASSERT(sizeof_op->get_operand_expr() != NULL);
