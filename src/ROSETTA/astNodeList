@@ -568,6 +568,7 @@ SgSequenceStatement
 SgSetComprehension
 SgShortVal
 SgSizeOfOp
+SgAlignOfOp
 SgJavaInstanceOfOp
 SgSourceFile
 SgSpawnStmt

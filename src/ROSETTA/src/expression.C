@@ -32,6 +32,10 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (TemplateMemberFunctionRefExp, "TemplateMemberFunctionRefExp", "TEMPLATE_MEMBER_FUNCTION_REF" );
 
      NEW_TERMINAL_MACRO (SizeOfOp,                     "SizeOfOp",                     "SIZEOF_OP" );
+
+  // DQ (6/20/2013): Added alignOf operator.
+     NEW_TERMINAL_MACRO (AlignOfOp,                    "AlignOfOp",                    "ALIGNOF_OP" );
+
      NEW_TERMINAL_MACRO (JavaInstanceOfOp,             "JavaInstanceOfOp",             "JAVA_INSTANCEOF_OP" );
 
 #if USE_UPC_IR_NODES
@@ -307,8 +311,8 @@ Grammar::setUpExpressions ()
           UnknownArrayOrFunctionReference               | PseudoDestructorRefExp | CAFCoExpression  |
           CudaKernelExecConfig    |  /* TV (04/22/2010): CUDA support */
           LambdaRefExp        | DictionaryExp           | KeyDatumPair             |
-          Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension | NaryOp |
-          StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp,
+          Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension  | NaryOp |
+          StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp     | AlignOfOp,
           "Expression","ExpressionTag", false);
 
   // ***********************************************************************
@@ -553,6 +557,8 @@ Grammar::setUpExpressions ()
                                   "../Grammar/Expression.code" );
      SizeOfOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
+     AlignOfOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
      JavaInstanceOfOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
      TypeIdOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
@@ -732,6 +738,7 @@ Grammar::setUpExpressions ()
   // Now set the precedence values for each leaf of the grammar 
   // (where the precedence member function is defined)
      SizeOfOp.editSubstitute        ( "PRECEDENCE_VALUE", "16" );
+     AlignOfOp.editSubstitute       ( "PRECEDENCE_VALUE", "16" );
 
   // DQ (7/18/2011): What is the precedence of this operator?
      JavaInstanceOfOp.editSubstitute        ( "PRECEDENCE_VALUE", "16" );
@@ -1476,6 +1483,32 @@ Grammar::setUpExpressions ()
      SizeOfOp.setDataPrototype("bool","sizeOfContainsBaseTypeDefiningDeclaration","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/20/2013): Added alignOf operator.
+     AlignOfOp.setFunctionPrototype ( "HEADER_ALIGNOF_OPERATOR", "../Grammar/Expression.code" );
+     AlignOfOp.setDataPrototype ( "SgExpression*", "operand_expr", "= NULL",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AlignOfOp.setDataPrototype ( "SgType*", "operand_type", "= NULL",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+     AlignOfOp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
+            CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/2/2011): Added support for name qualification.
+     AlignOfOp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/2/2011): Added information required for new name qualification support.
+     AlignOfOp.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/2/2011): Added information required for new name qualification support.
+     AlignOfOp.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/17/2012): Added information to trigger output of the defining declaration of the type (see test2012_57.c).
+  // We need to control the output of the defining declaration in some interesting places where it can be specified.
+     AlignOfOp.setDataPrototype("bool","alignOfContainsBaseTypeDefiningDeclaration","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (7/18/2011): This is structurally similar to the SizeOfOp in that it takes a type operand
   // and we have to save the expression type explicitly (I think).
      JavaInstanceOfOp.setFunctionPrototype ( "HEADER_JAVA_INSTANCEOF_OPERATOR", "../Grammar/Expression.code" );
@@ -2217,6 +2250,7 @@ Grammar::setUpExpressions ()
      IsNotOp.editSubstitute       ( "SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION", "SOURCE_BOOLEAN_GET_TYPE", "../Grammar/Expression.code" );
 
      SizeOfOp.setFunctionSource ( "SOURCE_SIZE_OF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     AlignOfOp.setFunctionSource ( "SOURCE_ALIGN_OF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      JavaInstanceOfOp.setFunctionSource ( "SOURCE_JAVA_INSTANCEOF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
 
   // DQ (2/12/2011): Added support for UPC specific sizeof operators.
