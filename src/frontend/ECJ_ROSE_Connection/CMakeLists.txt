@@ -32,7 +32,8 @@ if(NOT enable-fortran)
 endif()
 
 add_library(roseJava ${libroseJava_SOURCES})
-target_link_libraries(roseJava JavaTraversal)
+add_dependencies(roseJava
+  rosetta_generated extract_rose_required_ecj_source_files)
 
 
 ########### install files ###############
