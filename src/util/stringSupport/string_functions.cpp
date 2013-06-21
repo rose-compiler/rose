@@ -1682,11 +1682,11 @@ StringUtility::decode_base64(const std::string &s)
 std::string
 StringUtility::join(const std::string &separator, char *strings[], size_t nstrings)
 {
-    return join(separator, strings, strings+nstrings);
+    return join_range(separator, strings, strings+nstrings);
 }
 
 std::string
 StringUtility::join(const std::string &separator, const char *strings[], size_t nstrings)
 {
-    return join(separator, strings, strings+nstrings);
+    return join_range(separator, strings, strings+nstrings);
 }

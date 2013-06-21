@@ -477,10 +477,10 @@ namespace StringUtility
        * @{ */
       template<class Container>
       std::string join(const std::string &separator, Container &strings) {
-          return join(separator, strings.begin(), strings.end());
+          return join_range(separator, strings.begin(), strings.end());
       }
       template<class Iterator>
-      std::string join(const std::string &separator, Iterator begin, Iterator end) {
+      std::string join_range(const std::string &separator, Iterator begin, Iterator end) {
           std::string retval;
           for (Iterator i=begin; i!=end; ++i)
               retval += (i==begin ? std::string() : separator) + *i;
