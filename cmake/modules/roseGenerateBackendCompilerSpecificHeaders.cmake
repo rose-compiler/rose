@@ -64,3 +64,17 @@ foreach(header ${upc_headers})
     ${PROJECT_BINARY_DIR}/include-staging/${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/
     COPYONLY)
 endforeach()
+
+# DQ (8/22/2011): Added support for SSE.
+# Copy alternative SSE and MMX headers to be seen by ROSE ahead of the originals.
+set(SSE_headers emmintrin.h xmmintrin.h)
+foreach(header ${SSE_headers})
+  configure_file(
+    ${PROJECT_SOURCE_DIR}/config/include-staging/rose_specific_${header}
+    ${PROJECT_BINARY_DIR}/include-staging/${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS/${header}
+    COPYONLY)
+  configure_file(
+    ${PROJECT_SOURCE_DIR}/config/include-staging/rose_specific_${header}
+    ${PROJECT_BINARY_DIR}/include-staging/${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/${header}
+    COPYONLY)
+endforeach()
