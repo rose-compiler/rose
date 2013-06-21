@@ -172,7 +172,7 @@ TEST_MEDIUM_LIST_EXTRA = \
 test2004_01.C   test2004_106.C  test2004_11.C   test2004_134.C  test2004_148.C  test2004_30.C  test2004_47.C test2004_63.C  test2004_79.C  test2004_95.C \
 test2004_02.C   test2004_107.C                  test2004_162.C  test2004_31.C  test2004_48.C  test2004_64.C  test2004_80.C  test2004_96.C \
 test2004_03.C   test2004_108.C  test2004_121.C  test2004_14.C   test2004_163.C  test2004_32.C  test2004_49.C  test2004_65.C  test2004_81.C \
-test2004_04.C   test2004_109.C  test2004_122.C  test2004_137.C  test2004_150.C  test2004_33.C  test2004_67.C  test2004_82.C  test2004_98.C test2004_164.C
+test2004_04.C   test2004_109.C  test2004_122.C  test2004_137.C  test2004_150.C  test2004_33.C  test2004_67.C                 test2004_98.C test2004_164.C
 
 # Problem files:
 # test2004_161.C 
@@ -189,12 +189,18 @@ TEST_MEDIUM_PROBLEM_FILE_LIST = test2004_136.C test2004_161.C
 # One of these (large) files is a problem
 # test2004_135.C  test2004_149.C  
 
+# ALT2_TEST_MEDIUM_LIST_EXTRA = test2004_06.C   test2004_110.C  test2004_124.C  test2004_139.C  test2004_152.C  test2004_17.C   test2004_35.C  test2004_52.C \
+# test2004_04.C   test2004_109.C  test2004_122.C  test2004_137.C  test2004_150.C  test2004_164.C  test2004_33.C  test2004_50.C  test2004_67.C  test2004_82.C  test2004_98.C \
+# test2004_69.C   test2004_84.C test2004_07.C   test2004_111.C  test2004_125.C  test2004_13.C test2004_153.C  test2004_18.C   test2004_36.C  test2004_53.C  test2004_70.C  \
+# test2004_05.C   test2004_10.C   test2004_123.C  test2004_138.C  test2004_151.C  test2004_16.C   test2004_34.C  test2004_51.C  test2004_68.C  test2004_83.C  test2004_99.C \
+# test2004_08.C   test2004_112.C  test2004_140.C  test2004_154.C test2004_19.C   test2004_37.C  test2004_54.C  test2004_71.C  test2004_86.C \
+# test2004_09.C   test2004_113.C  test2004_128.C  test2004_141.C  test2004_155.C  test2004_23.C   test2004_38.C  test2004_55.C  test2004_72.C  test2004_87.C 
 ALT2_TEST_MEDIUM_LIST_EXTRA = test2004_06.C   test2004_110.C  test2004_124.C  test2004_139.C  test2004_152.C  test2004_17.C   test2004_35.C  test2004_52.C \
-test2004_04.C   test2004_109.C  test2004_122.C  test2004_137.C  test2004_150.C  test2004_164.C  test2004_33.C  test2004_50.C  test2004_67.C  test2004_82.C  test2004_98.C \
+test2004_04.C   test2004_109.C  test2004_122.C  test2004_137.C  test2004_150.C  test2004_164.C  test2004_33.C  test2004_50.C  test2004_67.C                 test2004_98.C \
 test2004_69.C   test2004_84.C test2004_07.C   test2004_111.C  test2004_125.C  test2004_13.C test2004_153.C  test2004_18.C   test2004_36.C  test2004_53.C  test2004_70.C  \
 test2004_05.C   test2004_10.C   test2004_123.C  test2004_138.C  test2004_151.C  test2004_16.C   test2004_34.C  test2004_51.C  test2004_68.C  test2004_83.C  test2004_99.C \
 test2004_08.C   test2004_112.C  test2004_140.C  test2004_154.C test2004_19.C   test2004_37.C  test2004_54.C  test2004_71.C  test2004_86.C \
-test2004_09.C   test2004_113.C  test2004_128.C  test2004_141.C  test2004_155.C  test2004_23.C   test2004_38.C  test2004_55.C  test2004_72.C  test2004_87.C 
+test2004_09.C   test2004_113.C  test2004_128.C  test2004_141.C  test2004_155.C  test2004_23.C   test2004_38.C  test2004_55.C  test2004_72.C  test2004_87.C
 
 # These files are a problem for the "medium" size test.
 # test2004_85.C 
