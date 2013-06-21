@@ -50,11 +50,27 @@ void LoopTrees::toText(node_t * node, std::ostream & out, std::string indent) {
   assert(loop != NULL || stmt != NULL);
   
   if (loop != NULL) {
-    // TODO
+    out << indent << " |- " << "Loop: " << loop->iterator->get_name().getString() << " from " << loop->lower_bound->unparseToString() << " to " << loop->upper_bound->unparseToString() << std::endl;
+    switch (loop->parallel_pattern) {
+      case loop_t::none: break;
+      case loop_t::parfor:
+        out << indent << " |   |    parallel" << std::endl;
+        break;
+      case loop_t::reduction:
+        assert(loop->reduction_lhs != NULL);
+        out << indent << " |   |    reduction : " << loop->reduction_lhs->unparseToString() << std::endl;
+        break;
+      default:
+        assert(false);
+    }
+    
+    std::list<node_t *>::const_iterator it_child;
+    for (it_child = loop->children.begin(); it_child != loop->children.end(); it_child++)
+      toText(*it_child, out, indent + " |  ");
   }
   
   if (stmt != NULL) {
-    // TODO
+    out << indent << " |> " << stmt->statement->unparseToString() << std::endl;
   }
 }
 

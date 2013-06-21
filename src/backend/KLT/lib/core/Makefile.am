@@ -11,8 +11,6 @@ libKLT_core_la_SOURCES= \
 libKLT_core_la_CXXFLAGS= \
   -g -I$(srcdir)/../../include \
   $(ROSE_INCLUDES)
-libKLT_core_la_LIBADD= \
-  $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 libKLT_core_la_includedir=$(prefix)/include/KLT
 libKLT_core_la_include_HEADERS= \
   $(srcdir)/../../include/KLT/Core/generator.hpp \
