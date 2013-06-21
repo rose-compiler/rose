@@ -55,6 +55,12 @@ usage(int exit_status)
               <<"            any pointer input values from being used even if a pointer was detected by the analysis.\n"
               <<"    --[no-]progress\n"
               <<"            Show a progress bar even if standard error is not a terminal or the verbosity level is not silent.\n"
+              <<"    --trace[=EVENTS]\n"
+              <<"    --no-trace\n"
+              <<"            Sets the events that are traced by each test.  The EVENTS is a bit vector specified as an integer\n"
+              <<"            (\"0x\"-prefix hexadecimal and \"0\"-prefix octal values may be used. The default for --trace when\n"
+              <<"            no EVENTS are specified is to enable all events.  The default if neither --trace nor --no-trace\n"
+              <<"            are specified is to not trace any events.\n"
               <<"    --verbose\n"
               <<"    --verbosity=(silent|laconic|effusive)\n"
               <<"            Determines how much diagnostic info to send to the standard error stream.  The --verbose\n"
@@ -73,7 +79,9 @@ usage(int exit_status)
 }
 
 struct Switches {
-    Switches(): verbosity(SILENT), progress(false), pointers(false), checkpoint(600), interactive(false), limit_inputs(false) {
+    Switches()
+        : verbosity(SILENT), progress(false), pointers(false), checkpoint(600), interactive(false),
+          limit_inputs(false), trace_events(0) {
         params.timeout = 5000;
         params.verbosity = SILENT;
         params.follow_calls = false;
@@ -86,6 +94,7 @@ struct Switches {
     time_t checkpoint;
     bool interactive;
     bool limit_inputs;
+    unsigned trace_events;
     PolicyParams params;
 };
 
@@ -171,11 +180,11 @@ detect_pointers(SgAsmFunction *func, const FunctionIdMap &function_ids, const Sw
 
 // Analyze a single function by running it with the specified inputs and collecting its outputs. */
 static OutputGroup
-fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inputs,
+fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inputs, Tracer &tracer,
           const InstructionProvidor &insns, const PointerDetector *pointers, const Switches &opt,
           const AddressIdMap &entry2id)
 {
-    ClonePolicy policy(opt.params, entry2id);
+    ClonePolicy policy(opt.params, entry2id, tracer);
     CloneSemantics semantics(policy);
 
     AnalysisFault::Fault fault = AnalysisFault::NONE;
@@ -229,6 +238,11 @@ fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inpu
         fault = AnalysisFault::SMTSOLVER;
     }
 
+    if (fault) {
+        rose_addr_t va = policy.state.registers.ip.is_known() ? policy.state.registers.ip.known_value() : 0;
+        tracer.emit(va, Tracer::EV_FAULT, fault);
+    }
+    
     // Gather the function's outputs before restoring machine state.
     OutputGroup outputs = policy.get_outputs();
     outputs.fault = fault;
@@ -237,11 +251,13 @@ fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inpu
 
 // Commit everything and return a new transaction
 static SqlDatabase::TransactionPtr
-checkpoint(const SqlDatabase::TransactionPtr &tx, OutputGroups &ogroups, Progress &progress)
+checkpoint(const SqlDatabase::TransactionPtr &tx, OutputGroups &ogroups, Tracer &tracer, Progress &progress)
 {
     SqlDatabase::ConnectionPtr conn = tx->connection();
     progress.message("checkpoint: saving output groups");
     ogroups.save(tx);
+    progress.message("checkpoint: saving trace events");
+    tracer.save(tx);
     progress.message("checkpoint: committing");
     tx->commit();
     progress.message("");
@@ -297,6 +313,12 @@ main(int argc, char *argv[])
             opt.progress = true;
         } else if (!strcmp(argv[argno], "--no-progress")) {
             opt.progress = false;
+        } else if (!strcmp(argv[argno], "--trace")) {
+            opt.trace_events = Tracer::ALL_EVENTS;
+        } else if (!strcmp(argv[argno], "--no-trace")) {
+            opt.trace_events = 0;
+        } else if (!strncmp(argv[argno], "--trace=", 8)) {
+            opt.trace_events = strtoul(argv[argno]+8, NULL, 0);
         } else if (!strcmp(argv[argno], "--verbose")) {
             opt.verbosity = opt.params.verbosity = EFFUSIVE;
         } else if (!strcmp(argv[argno], "--verbosity=silent")) {
@@ -385,6 +407,7 @@ main(int argc, char *argv[])
     InputGroup igroup;
     InstructionProvidor insns;
     AddressIdMap entry2id;                      // maps function entry address to function ID
+    Tracer tracer;
     time_t last_checkpoint = time(NULL);
     size_t ntests_ran=0, ntests_committed=0;
     while (!worklist.empty()) {
@@ -468,12 +491,13 @@ main(int argc, char *argv[])
         assert(ip!=pointers.end());
 
         // Run the test
+        tracer.reset(work.func_id, work.igroup_id, opt.trace_events);
         timeval start_time, stop_time;
         clock_t start_ticks = clock();
         gettimeofday(&start_time, NULL);
         if (opt.verbosity>=LACONIC)
             std::cerr <<argv0 <<": " <<function_to_str(func, function_ids) <<" with input group " <<work.igroup_id <<"\n";
-        OutputGroup ogroup = fuzz_test(interp, func, igroup, insns, ip->second, opt, entry2id);
+        OutputGroup ogroup = fuzz_test(interp, func, igroup, tracer, insns, ip->second, opt, entry2id);
         gettimeofday(&stop_time, NULL);
         clock_t stop_ticks = clock();
         double elapsed_time = (stop_time.tv_sec - start_time.tv_sec) +
@@ -535,7 +559,7 @@ main(int argc, char *argv[])
         
         // Checkpoint
         if (do_checkpoint || (opt.checkpoint>0 && time(NULL)-last_checkpoint > opt.checkpoint)) {
-            tx = checkpoint(tx, ogroups, progress);
+            tx = checkpoint(tx, ogroups, tracer, progress);
             last_checkpoint = time(NULL);
             ntests_committed = ntests_ran;
         }
@@ -549,7 +573,7 @@ main(int argc, char *argv[])
 
     // Cleanup
     if (!tx->is_terminated()) { // we might have done a rollback above to indicate that we should do this checkpoint
-        tx = checkpoint(tx, ogroups, progress);
+        tx = checkpoint(tx, ogroups, tracer, progress);
         ntests_committed = ntests_ran;
     }
     progress.clear();

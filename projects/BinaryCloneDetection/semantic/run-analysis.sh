@@ -71,6 +71,7 @@ split_worklist () {
     local nprocs="$1"
     local nwork=$(wc -l <$worklist)
     local nparts=$[3 * nprocs]
+    [ $nprocs -le 1 ] && nparts=1
     [ $nparts -gt $nwork ] && nparts=$nwork
     [ $nparts -gt 676 ] && nparts=676 # 26*26
     if [ $nparts -gt 1 ]; then

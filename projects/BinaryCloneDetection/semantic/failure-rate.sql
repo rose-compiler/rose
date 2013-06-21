@@ -19,7 +19,7 @@ create table fr_specimens as
 
 -- Function names that are present exactly once in each specimen
 -- And which contain 100 or more instructions                                           !!FIXME: should be a parameter
--- And for which every test consumed 8 or fewer inputs (status<>911000007)
+-- And for which no test tried to consume too many inputs (status<>911000007)
 -- And which come from the specimen, not from a dynamic library
 create table fr_funcnames as
     select func1.name as name
@@ -99,17 +99,17 @@ select * from fr_results;
 
 select 'The following table contains all the functions of interest: functions that
 * appear in all specimens exactly once each
-* have 100 or more instructions, and
-* consumed 8 or fewer inputs, and
-* defined in a specimen, not a dynamic library' as "Notice";
+* have a certain number of instructions, and
+* didn''t try to consume too many inputs, and
+* are defined in a specimen, not a dynamic library' as "Notice";
 select * from fr_functions order by name, specimen_id;
 
-select 'The following table shows the false negative function pairs' as "Notice";
+select 'The following table shows the false negative function pairs.
+Both functions of the pair always have the same name.' as "Notice";
 select
         func1.id as func1_id,
 	func2.id as func2_id,
-	func1.name as func1_name,
-	func2.name as func2_name,
+	func1.name as name,
 	func1.file_id as file1_id,
 	func2.file_id as file2_id
     from fr_false_negatives as falseneg

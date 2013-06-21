@@ -28,6 +28,11 @@ usage(int exit_status)
               <<"            Show a list of tests that were run for this function, including which input group was used,\n"
               <<"            which output group was produced, how many instructions were executed, how long the test ran,\n"
               <<"            the final status, etc.  The default is to show this information.\n"
+              <<"    --trace[=IGROUP,...]\n"
+              <<"    --no-trace\n"
+              <<"            Annotate the listing with test trace events if they are available in the database.  If --trace\n"
+              <<"            is specified with no input group ID numbers, then traces from all tests of this function are\n"
+              <<"            used.  Traces for other functions that happened to call this function are not shown.\n"
               <<"\n"
               <<"    DATABASE\n"
               <<"            The name of the database to which we are connecting.  For SQLite3 databases this is just a local\n"
@@ -42,11 +47,14 @@ usage(int exit_status)
 }
 
 struct Switches {
-    Switches(): show_summary(true), show_source_names(true), show_tests(true), show_assembly(true), show_source(true) {}
-    bool show_summary, show_source_names, show_tests, show_assembly, show_source;
-};
+    Switches()
+        : show_summary(true), show_source_names(true), show_tests(true), show_assembly(true), show_source(true),
+          show_trace(false) {}
+    bool show_summary, show_source_names, show_tests, show_assembly, show_source, show_trace;
+    std::set<int/*igroup_id*/> traces;
+} opt;
 
-typedef std::map<int/*index*/, std::string/*assembly*/> Instructions;
+typedef std::map<int/*index*/, std::pair<rose_addr_t, std::string/*assembly*/> > Instructions;
 
 struct Code {
     std::string source_code;
@@ -55,6 +63,22 @@ struct Code {
 
 typedef BinaryAnalysis::DwarfLineMapper::SrcInfo SourcePosition;
 typedef std::map<SourcePosition, Code> Listing;
+
+struct Event {
+    typedef std::map<int64_t/*input*/, size_t/*count*/> Inputs;
+    typedef std::map<CloneDetection::AnalysisFault::Fault, size_t/*count*/> Faults;
+    typedef std::map<rose_addr_t/*target*/, size_t/*count*/> Branches;
+    Event(): nexecuted(0), ninputs(0), nfaults(0), nbranches(0) {}
+    size_t nexecuted;           // number of times this basic block was executed
+    size_t ninputs;             // number of inputs consumed here
+    Inputs inputs;              // input value distribution
+    size_t nfaults;             // 0 or 1 unless we've accumulated multiple tests
+    Faults faults;              // fault distribution
+    size_t nbranches;           // number of times we branched
+    Branches branches;          // branch target distribution
+};
+
+typedef std::map<rose_addr_t/*va*/, Event> Events;
 
 static int
 find_function_or_exit(const SqlDatabase::TransactionPtr &tx, char *func_spec)
@@ -196,12 +220,144 @@ show_tests(const SqlDatabase::TransactionPtr &tx, int func_id)
 }
 
 static void
+load_events(const SqlDatabase::TransactionPtr &tx, int func_id, Events &events/*in,out*/)
+{
+    if (opt.show_trace) {
+        std::vector<std::string> igroups;
+        for (std::set<int>::const_iterator i=opt.traces.begin(); i!=opt.traces.end(); ++i)
+            igroups.push_back(StringUtility::numberToString(*i));
+        std::string sql = "select addr, event_id, val from semantic_fio_trace where func_id=?";
+        if (!igroups.empty())
+            sql += " and igroup_id in (" + StringUtility::join(" and ", igroups) + ")";
+        SqlDatabase::StatementPtr stmt2 = tx->statement(sql)->bind(0, func_id);
+        for (SqlDatabase::Statement::iterator row=stmt2->begin(); row!=stmt2->end(); ++row) {
+            rose_addr_t addr = row.get<rose_addr_t>(0);
+            int event_id = row.get<int>(1);
+            int64_t val = row.get<int64_t>(2);
+            switch (event_id) {
+                case CloneDetection::Tracer::EV_REACHED:
+                    ++events[addr].nexecuted;
+                    break;
+                case CloneDetection::Tracer::EV_BRANCHED:
+                    ++events[addr].nbranches;
+                    ++events[addr].branches[val];
+                    break;
+                case CloneDetection::Tracer::EV_CONSUME_INTEGER:
+                case CloneDetection::Tracer::EV_CONSUME_POINTER:
+                    ++events[addr].ninputs;
+                    ++events[addr].inputs[val];
+                    break;
+                case CloneDetection::Tracer::EV_FAULT:
+                    ++events[addr].nfaults;
+                    ++events[addr].faults[(CloneDetection::AnalysisFault::Fault)val];
+                    break;
+                default:
+                    /*void*/
+                    break;
+            }
+        }
+    }
+}
+
+static void
+show_events(const Event &e)
+{
+    // Subsequent lines for inputs consumed
+    if (e.ninputs>0) {
+        std::cout <<std::setw(9) <<std::right <<e.ninputs <<"> |   inputs = {";
+        size_t nvals = 0, col=0;
+        for (Event::Inputs::const_iterator ii=e.inputs.begin(); ii!=e.inputs.end(); ++ii, ++nvals) {
+            if (nvals++) {
+                std::cout <<", ";
+                col += 2;
+            }
+            if (col>90) {
+                std::cout <<"\n" <<std::string(11, ' ') <<"|             ";
+                col = 0;
+            }
+            std::ostringstream ss;
+            int64_t val = ii->first;
+            size_t count = ii->second;
+            if (val<=4096 && val>-4096) {
+                ss <<val;
+            } else {
+                ss <<StringUtility::addrToString((uint64_t)val);
+            }
+            if (count>1)
+                ss <<"(" <<count <<"x)";
+            std::cout <<ss.str();
+            col += ss.str().size();
+        }
+        std::cout <<"}\n";
+    }
+
+    // Subsequent lines for control flow branches
+    if (e.nbranches>0) {
+        size_t col=0;
+        std::cout <<std::setw(10) <<std::right <<"BR" <<" |  ";
+        if (e.branches.size()>1) {
+            std::string s = " branch taken " + StringUtility::numberToString(e.nbranches) +
+                            " time" + (1==e.nbranches?"":"s") + ":";
+            std::cout <<s;
+            col = s.size();
+        }
+        for (Event::Branches::const_iterator bi=e.branches.begin(); bi!=e.branches.end(); ++bi) {
+            if (col>100) {
+                std::cout <<"\n" <<std::string(11, ' ') <<"|  ";
+                col = 0;
+            }
+            std::ostringstream ss;
+            ss <<" " <<StringUtility::addrToString(bi->first);
+            if (bi->second>1)
+                ss <<"(" <<bi->second <<"x)";
+            std::cout <<ss.str();
+            col += ss.str().size();
+        }
+        std::cout <<"\n";
+    };
+
+    // Subsequent lines for faults encountered
+    if (e.nfaults>0) {
+        std::cout <<std::setw(10) <<std::left <<"FAULT" <<" |  ";
+        for (Event::Faults::const_iterator fi=e.faults.begin(); fi!=e.faults.end(); ++fi) {
+            std::cout <<" " <<CloneDetection::AnalysisFault::fault_name(fi->first);
+            if (e.nfaults>1)
+                std::cout <<" (" <<fi->second <<"x)";
+        }
+        std::cout <<"\n";
+    }
+}
+
+static void
 list_assembly(const SqlDatabase::TransactionPtr &tx, int func_id)
 {
-    SqlDatabase::StatementPtr stmt = tx->statement("select assembly from semantic_instructions where func_id = ?"
+    Events events;
+    load_events(tx, func_id, events);
+
+    SqlDatabase::StatementPtr stmt = tx->statement("select address, assembly from semantic_instructions where func_id = ?"
                                                    " order by position")->bind(0, func_id);
-    for (SqlDatabase::Statement::iterator insn=stmt->begin(); insn!=stmt->end(); ++insn)
-        std::cout <<insn.get<std::string>(0) <<"\n";
+    for (SqlDatabase::Statement::iterator insn=stmt->begin(); insn!=stmt->end(); ++insn) {
+        rose_addr_t addr = insn.get<rose_addr_t>(0);
+        std::string assembly = insn.get<std::string>(1);
+        size_t colon = assembly.find(':');
+        if (colon!=std::string::npos)
+            assembly.insert(colon+1, "  ");
+
+        Events::const_iterator ei=events.find(addr);
+
+        // Assembly line prefix
+        if (ei!=events.end() && ei->second.nexecuted>0) {
+            std::cout <<std::setw(9) <<std::right <<ei->second.nexecuted <<"x ";
+        } else {
+            std::cout <<std::string(11, ' ');
+        }
+            
+        // Assembly instruction
+        std::cout <<"| " <<assembly <<"\n";
+
+        if (ei!=events.end())
+            show_events(ei->second);
+    }
 }
 
 static void
@@ -232,8 +388,10 @@ list_combined(const SqlDatabase::TransactionPtr &tx, int func_id, bool show_asse
     }
 
     // Get lines of assembly code and insert them into the correct place in the Listing.
+    Events events;
     if (show_assembly) {
-        SqlDatabase::StatementPtr stmt5 = tx->statement("select src_file_id, src_line, position, assembly"
+        load_events(tx, func_id, events);
+        SqlDatabase::StatementPtr stmt5 = tx->statement("select src_file_id, src_line, position, address, assembly"
                                                         " from semantic_instructions"
                                                         " where func_id = ?"
                                                         " order by position")->bind(0, func_id);
@@ -241,11 +399,16 @@ list_combined(const SqlDatabase::TransactionPtr &tx, int func_id, bool show_asse
             int file_id = row.get<int>(0);
             int line_num = row.get<int>(1);
             int position = row.get<int>(2);
-            std::string assembly = row.get<std::string>(3);
-            listing[SourcePosition(file_id, line_num)].assembly_code.insert(std::make_pair(position, assembly));
+            rose_addr_t addr = row.get<rose_addr_t>(3);
+            std::string assembly = row.get<std::string>(4);
+            size_t colon = assembly.find(':');
+            if (colon!=std::string::npos)
+                assembly.insert(colon+1, "  ");
+            listing[SourcePosition(file_id, line_num)].assembly_code.insert(std::make_pair(position,
+                                                                                           std::make_pair(addr, assembly)));
         }
 
-        // Print the listing
+        // Listing header
         std::cout <<"WARNING: This listing should be read cautiously. It is ordered according to the\n"
                   <<"         source code with assembly lines following the source code line from which\n"
                   <<"         they came.  However, the compiler does not always generate machine\n"
@@ -254,12 +417,35 @@ list_combined(const SqlDatabase::TransactionPtr &tx, int func_id, bool show_asse
                   <<"         character.  The assembly instructions are also numbered according to\n"
                   <<"         their relative positions in the binary function.\n"
                   <<"\n"
-                  <<" /---------------------------- Source file ID\n"
-                  <<" |     /---------------------- Source line number\n"
-                  <<" |     |   /------------------ Instruction out-of-order indicator\n"
-                  <<" |     |   |  /--------------- Instruction position index\n"
+                  <<"         The prefix area contains either source location information or test trace\n"
+                  <<"         information.  Note that trace information might be incomplete because\n"
+                  <<"         tracing was disabled or only partially enabled, or the trace includes\n"
+                  <<"         instructions that are not present in this function listing (e.g., when\n"
+                  <<"         execution follows a CALL instruction). The following notes are possible:\n"
+                  <<"           * \"Nx\" where N is an integer indicates that this instruction\n"
+                  <<"             was reached N times during testing.  These notes are typically\n"
+                  <<"             only attached to the first instruction of a basic block and only\n"
+                  <<"             if the trace contains EV_REACHED events.  Lack of an Nx notation\n"
+                  <<"             doesn't necessarily mean that the basic block was not reached, it\n"
+                  <<"             only means that there is no EV_REACHED event for that block.\n"
+                  <<"           * \"N>\" where N is an integer indicates that the instruction\n"
+                  <<"             on the previous line consumed N inputs. Information about the\n"
+                  <<"             inputs is listed on the right side of this line.\n"
+                  <<"           * \"BR\" indicates that the instruction on the previous line is a\n"
+                  <<"             control flow branch point. The right side of the line shows more\n"
+                  <<"             detailed information about how many times the branch was taken.\n"
+                  <<"           * \"FAULT\" indicates that the test was terminated at the previous\n"
+                  <<"             instruction. The right side of the line shows the distribution of\n"
+                  <<"             faults that occurred here.\n"
+                  <<"\n"
+                  <<"                /------------- Prefix area\n"
+                  <<" /-------------/-------------- Source file ID\n"
+                  <<" |     /------/--------------- Source line number\n"
+                  <<" |     |   /-/---------------- Instruction out-of-order indicator\n"
+                  <<" |     |   |/ /--------------- Instruction position index\n"
                   <<" |     |   |  |      /-------- Instruction virtual address\n"
-                  <<"vvvv vvvvv v vv vvvvvvvvvv\n";
+                  <<"vvvv vvvvv/|  |      |\n"
+                  <<"vvvvvvvvvv v vv vvvvvvvvvv\n";
     }
 
     // Show the listing
@@ -274,8 +460,22 @@ list_combined(const SqlDatabase::TransactionPtr &tx, int func_id, bool show_asse
                       <<"|" <<li->second.source_code <<"\n";
         }
         for (Instructions::iterator ii=li->second.assembly_code.begin(); ii!=li->second.assembly_code.end(); ++ii) {
-            std::cout <<"           " <<(prev_position+1==ii->first ? "|" : "#")
-                      <<std::setw(3) <<std::right <<ii->first <<" " <<ii->second <<"\n";
+            rose_addr_t addr = ii->second.first;
+            const std::string &assembly = ii->second.second;
+            Events::const_iterator ei=events.find(addr);
+
+            if (ei!=events.end() && ei->second.nexecuted>0) {
+                std::cout <<std::setw(9) <<std::right <<ei->second.nexecuted <<"x ";
+            } else {
+                std::cout <<std::string(11, ' ');
+            }
+            
+            std::cout <<(prev_position+1==ii->first ? "|" : "#")
+                      <<std::setw(4) <<std::right <<ii->first <<" " <<assembly <<"\n";
+
+            if (ei!=events.end())
+                show_events(ei->second);
+            
             prev_position = ii->first;
         }
     }
@@ -293,7 +493,6 @@ main(int argc, char *argv[])
             argv0 = argv0.substr(3);
     }
 
-    Switches opt;
     int argno=1;
     for (/*void*/; argno<argc && '-'==argv[argno][0]; ++argno) {
         if (!strcmp(argv[argno], "--")) {
@@ -319,6 +518,10 @@ main(int argc, char *argv[])
             opt.show_summary = false;
         } else if (!strcmp(argv[argno], "--tests")) {
             opt.show_tests = true;
+        } else if (!strcmp(argv[argno], "--trace")) {
+            opt.show_trace = true;
+        } else if (!strcmp(argv[argno], "--no-trace")) {
+            opt.show_trace = false;
         } else if (!strcmp(argv[argno], "--no-tests")) {
             opt.show_tests = false;
         } else {
@@ -372,7 +575,7 @@ main(int argc, char *argv[])
         std::cout <<(had_output?"\n":"");
         list_assembly(tx, func_id);
     }
-    
+
     // no commit -- database not modified; otherwise be sure to also add CloneDetection::finish_command()
     return 0;
 }

@@ -41,31 +41,43 @@ main(int argc, char *argv[])
     int64_t cmd_id = start_command(tx, argc, argv, "initialized schema", begin_time);
 
     // Populate the semantic_faults table.
-    struct FaultInserter {
-        FaultInserter(const SqlDatabase::TransactionPtr &tx, int id, const char *name, const char *desc) {
-            SqlDatabase::StatementPtr stmt1 = tx->statement("select count(*) from semantic_faults where id = ?");
-            stmt1->bind(0, id);
-            if (stmt1->execute_int()==0) {
-                SqlDatabase::StatementPtr stmt2 = tx->statement("insert into semantic_faults"
-                                                                " (id, name, description) values (?,?,?)");
-                stmt2->bind(0, id);
-                stmt2->bind(1, name);
-                stmt2->bind(2, desc);
-                stmt2->execute();
-            }
+    struct Faults {
+        SqlDatabase::StatementPtr stmt;
+        Faults(const SqlDatabase::TransactionPtr &tx) {
+            stmt = tx->statement("insert into semantic_faults (id, name, description) values (?, ?, ?)");
         }
-    };
+        void insert(AnalysisFault::Fault fault) {
+            stmt->bind(0, fault);
+            stmt->bind(1, AnalysisFault::fault_name(fault));
+            stmt->bind(2, AnalysisFault::fault_desc(fault));
+            stmt->execute();
+        }
+    } faults(tx);
+    faults.insert(AnalysisFault::NONE);
+    faults.insert(AnalysisFault::DISASSEMBLY);
+    faults.insert(AnalysisFault::INSN_LIMIT);
+    faults.insert(AnalysisFault::HALT);
+    faults.insert(AnalysisFault::INTERRUPT);
+    faults.insert(AnalysisFault::SEMANTICS);
+    faults.insert(AnalysisFault::SMTSOLVER);
+    faults.insert(AnalysisFault::INPUT_LIMIT);
 
-#define add_fault(DB, ID, ABBR, DESC) FaultInserter(DB, ID, #ABBR, DESC)
-    add_fault(tx, AnalysisFault::NONE,        SUCCESS,     "success");
-    add_fault(tx, AnalysisFault::DISASSEMBLY, DISASSEMBLY, "disassembly failed");
-    add_fault(tx, AnalysisFault::INSN_LIMIT,  INSN_LIMIT,  "simulation instruction limit reached");
-    add_fault(tx, AnalysisFault::HALT,        HALT,        "x86 HLT instruction executed");
-    add_fault(tx, AnalysisFault::INTERRUPT,   INTERRUPT,   "interrupt or x86 INT instruction executed");
-    add_fault(tx, AnalysisFault::SEMANTICS,   SEMANTICS,   "instruction semantics error");
-    add_fault(tx, AnalysisFault::SMTSOLVER,   SMTSOLVER,   "SMT solver error");
-    add_fault(tx, AnalysisFault::INPUT_LIMIT, INPUT_LIMIT, "over-consumption of input values");
-#undef  add_fault
+    // Populate the semantic_fio_events table
+    struct Events {
+        SqlDatabase::StatementPtr stmt;
+        Events(const SqlDatabase::TransactionPtr &tx) {
+            stmt = tx->statement("insert into semantic_fio_events (id, name, description) values (?, ?, ?)");
+        }
+        void insert(Tracer::Event event, const std::string &name, const std::string &desc) {
+            stmt->bind(0, event)->bind(1, name)->bind(2, desc)->execute();
+        }
+    } events(tx);
+    events.insert(Tracer::EV_REACHED,           "reached",              "this address was executed");
+    events.insert(Tracer::EV_BRANCHED,          "branched",             "branch taken");
+    events.insert(Tracer::EV_CONSUME_INTEGER,   "consume integer",      "consumed an integer value from the input group");
+    events.insert(Tracer::EV_CONSUME_POINTER,   "consume pointer",      "consumed a pointer value from the input group");
+    events.insert(Tracer::EV_FAULT,             "fault",                "test failed; event value is the fault ID");
+
 
     finish_command(tx, cmd_id);
     tx->commit();

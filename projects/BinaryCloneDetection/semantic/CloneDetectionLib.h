@@ -79,6 +79,59 @@ public:
     size_t current() const { return cur; }
 };
 
+/*******************************************************************************************************************************
+ *                                      Test trace events
+ *******************************************************************************************************************************/
+
+class Tracer {
+public:
+    enum Event {
+        EV_REACHED              = 0x00000001,   /**< Basic block executed. */
+        EV_BRANCHED             = 0x00000002,   /**< Branch taken. */
+        EV_FAULT                = 0x00000004,   /**< Test failed due to some exceptional condition. */
+        EV_CONSUME_INTEGER      = 0x00000008,   /**< Consumed an integer value from the input group. */
+        EV_CONSUME_POINTER      = 0x00000010,   /**< Consumed a pointer value from the input gorup. */
+        // Masks
+        CONTROL_FLOW            = 0x00000003,   /**< Control flow events. */
+        INPUT_CONSUMPTION       = 0x00000018,   /**< Events related to consumption of input. */
+        ALL_EVENTS              = 0xffffffff    /**< All possible events. */
+    };
+
+    /** Construct a tracer not yet associated with any function or input group. The reset() method must be called before
+     *  any events can be emitted. */
+    Tracer(): func_id(-1), igroup_id(-1), fd(-1), event_mask(ALL_EVENTS), pos(0) {}
+
+    /** Open a tracer for a particular file and input group pair. The @p events mask determines which kinds of events will be
+     *  accumulated; event types not set in the mask are ignored. */
+    Tracer(int func_id, int igroup_id, unsigned events=ALL_EVENTS)
+        : func_id(func_id), igroup_id(igroup_id), fd(-1), event_mask(events), pos(0) {
+        reset(func_id, igroup_id);
+    }
+
+    /** Destructor does not save accumulated events.  The save() method should be called first otherwise events accumulated
+     *  since the last save() will be lost. This behavior is consistent with SqlDatabase, where an explicit commit is necessary
+     *  before destroying a transaction. */
+    ~Tracer() {
+        if (fd>=0) {
+            close(fd);
+            unlink(filename.c_str());
+        }
+    }
+    
+    /** Associate a tracer with a particular function and input group.  Accumulated events are not lost. */
+    void reset(int func_id, int igroup_id, unsigned events=ALL_EVENTS, size_t pos=0);
+
+    /** Add an event to the stream.  The event is not actually inserted into the database until save() is called. */
+    void emit(rose_addr_t addr, Event event, uint64_t value=0);
+
+    /** Save events that have accumulated. */
+    void save(const SqlDatabase::TransactionPtr &tx);
+
+    std::string filename;
+    int func_id, igroup_id, fd;
+    unsigned event_mask;
+    size_t pos;
+};
 
 /*******************************************************************************************************************************
  *                                      Analysis faults
@@ -101,14 +154,31 @@ public:
     /** Return the short name of a fault ID. */
     static const char *fault_name(Fault fault) {
         switch (fault) {
-            case NONE:          return "";
-            case DISASSEMBLY:   return "FAULT_DISASSEMBLY";
-            case INSN_LIMIT:    return "FAULT_INSN_LIMIT";
-            case HALT:          return "FAULT_HALT";
-            case INTERRUPT:     return "FAULT_INTERRUPT";
-            case SEMANTICS:     return "FAULT_SEMANTICS";
-            case SMTSOLVER:     return "FAULT_SMTSOLVER";
-            case INPUT_LIMIT:   return "FAULT_INPUT_LIMIT";
+            case NONE:          return "none";
+            case DISASSEMBLY:   return "disassembly";
+            case INSN_LIMIT:    return "insn limit";
+            case HALT:          return "halt";
+            case INTERRUPT:     return "interrupt";
+            case SEMANTICS:     return "semantics";
+            case SMTSOLVER:     return "SMT solver";
+            case INPUT_LIMIT:   return "input limit";
+            default:
+                assert(!"fault not handled");
+                abort();
+        }
+    }
+
+    /** Return the description for a fault ID. */
+    static const char *fault_desc(Fault fault) {
+        switch (fault) {
+            case NONE:          return "success";
+            case DISASSEMBLY:   return "disassembly failed or bad instruction address";
+            case INSN_LIMIT:    return "simulation instruction limit reached";
+            case HALT:          return "x86 HLT instruction executed";
+            case INTERRUPT:     return "interrupt or x86 INT instruction executed";
+            case SEMANTICS:     return "instruction semantics error";
+            case SMTSOLVER:     return "SMT solver error";
+            case INPUT_LIMIT:   return "over-consumption of input values";
             default:
                 assert(!"fault not handled");
                 abort();
@@ -667,9 +737,11 @@ public:
     const InstructionProvidor *insns;                   // Instruction cache
     PolicyParams params;                                // Parameters for controlling the policy
     AddressIdMap entry2id;                              // Map from function entry address to function ID
+    SgAsmBlock *prev_bb;                                // Previously executed basic block
+    Tracer &tracer;                                     // Responsible for emitting rows for semantic_fio_trace
 
-    Policy(const PolicyParams &params, const AddressIdMap &entry2id)
-        : inputs(NULL), pointers(NULL), ninsns(0), params(params), entry2id(entry2id) {}
+    Policy(const PolicyParams &params, const AddressIdMap &entry2id, Tracer &tracer)
+        : inputs(NULL), pointers(NULL), ninsns(0), params(params), entry2id(entry2id), prev_bb(NULL), tracer(tracer) {}
 
     template <size_t nBits>
     ValueType<nBits>
@@ -688,12 +760,14 @@ public:
                 value = inputs->next_pointer();
                 nvalues = inputs->pointers_consumed();
                 type_name = "pointer";
+                tracer.emit(this->get_insn()->get_address(), Tracer::EV_CONSUME_POINTER, value);
                 break;
             case InputGroup::UNKNOWN_TYPE:
             case InputGroup::INTEGER:
                 value = inputs->next_integer();
                 nvalues = inputs->integers_consumed();
                 type_name = "integer";
+                tracer.emit(this->get_insn()->get_address(), Tracer::EV_CONSUME_INTEGER, value);
                 break;
         }
 
@@ -751,7 +825,7 @@ public:
     }
     
     void startInstruction(SgAsmInstruction *insn_) /*override*/ {
-        if (++ninsns >= params.timeout)
+        if (ninsns++ >= params.timeout)
             throw FaultException(AnalysisFault::INSN_LIMIT);
         SgAsmx86Instruction *insn = isSgAsmx86Instruction(insn_);
         assert(insn!=NULL);
@@ -759,6 +833,11 @@ public:
             std::cerr <<"CloneDetection: " <<std::string(80, '-') <<"\n"
                       <<"CloneDetection: executing: " <<unparseInstructionWithAddress(insn) <<"\n";
         }
+
+        SgAsmBlock *bb = SageInterface::getEnclosingNode<SgAsmBlock>(insn);
+        if (bb!=prev_bb)
+            tracer.emit(insn->get_address(), Tracer::EV_REACHED);
+        prev_bb = bb;
 
         // Make sure EIP is updated with the instruction's address (most policies assert this).
         this->writeRegister("eip", ValueType<32>(insn->get_address()));
@@ -808,6 +887,12 @@ public:
                 this->writeRegister("esp", esp);
             }
         }
+
+        // Emit an event if the next instruction to execute is not at the fall through address.
+        rose_addr_t fall_through_va = insn->get_address() + insn->get_size();
+        rose_addr_t next_eip = state.registers.ip.known_value();
+        if (next_eip!=fall_through_va)
+            tracer.emit(insn->get_address(), Tracer::EV_BRANCHED, next_eip);
 
         Super::finishInstruction(insn);
     }

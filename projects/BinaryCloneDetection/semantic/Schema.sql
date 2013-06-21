@@ -5,6 +5,8 @@
 drop table if exists semantic_clusters;         -- The default name for the clusters table; not created in this SQL file
 drop table if exists semantic_clusters_tpl;
 drop table if exists semantic_funcsim;
+drop table if exists semantic_fio_trace;
+drop table if exists semantic_fio_events;
 drop table if exists semantic_fio;
 drop table if exists semantic_sources;
 drop table if exists semantic_instructions;
@@ -51,7 +53,8 @@ create table semantic_outputvalues (
        -- figuring out the command ID by looking at the semantic_fio table.
 );
 
--- Some output values indicate special situations described by this table
+-- Some output values indicate special situations described by this table. See 00-create-schema.C for how this table
+-- is populated.
 create table semantic_faults (
        id integer primary key,                  -- the special integer value
        name varchar(16),                        -- short identifying name
@@ -142,13 +145,32 @@ create table semantic_fio (
        cmd bigint references semantic_history(hashkey) -- command that created this row
 );
 
+-- This table describes the kinds of events that can happen while a function is running. The events themselves are
+-- stored in semantic_fio_trace. See 00-create-schema.C for how this table is populated.
+create table semantic_fio_events (
+       id integer primary key,
+       name varchar(16),                        -- short name of event
+       description text                         -- full event description
+);
+
+-- This table contains trace info per test.  Not all tests generate trace info, and the contents of this table is
+-- mostly for debugging what happened during a test.
+create table semantic_fio_trace (
+       func_id integer references semantic_functions(id),
+       igroup_id integer,                       -- references semantic_inputvalues.id
+       pos integer,                             -- sequence number of this event within this test
+       addr bigint,                             -- specimen virtual address where event occurred
+       event_id integer references semantic_fio_events(id),
+       val bigint				-- event value, interpretation depends on event_id
+);
+
 -- Function similarity--how similar are pairs of functions
 create table semantic_funcsim (
        func1_id integer references semantic_functions(id),
        func2_id integer references semantic_functions(id), -- func1_id < func2_id
        similarity double precision,             -- a value between 0 and 1, with one being equality
-       ncompares integer,			-- number of output groups compared to reach this value
-       maxcompares integer,			-- potential number of comparisons possible (ncompares is a random sample)
+       ncompares integer,                       -- number of output groups compared to reach this value
+       maxcompares integer,                     -- potential number of comparisons possible (ncompares is a random sample)
        cmd bigint references semantic_history(hashkey) -- command that set the precision on this row
 );
 

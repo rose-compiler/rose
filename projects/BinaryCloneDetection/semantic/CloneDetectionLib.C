@@ -20,6 +20,47 @@ using namespace sqlite3x;
 namespace CloneDetection {
 
 void
+Tracer::reset(int func_id, int igroup_id, unsigned event_mask, size_t pos)
+{
+    if (fd<0) {
+        char buf[64];
+        strcpy(buf, "/tmp/roseXXXXXX");
+        fd = mkstemp(buf);
+        assert(fd>=0);
+        filename = buf;
+    }
+    this->func_id = func_id;
+    this->igroup_id = igroup_id;
+    this->event_mask = event_mask;
+    this->pos = pos;
+}
+
+void
+Tracer::emit(rose_addr_t addr, Event event, uint64_t value)
+{
+    if (0!=(event & event_mask)) {
+        char buf[256];
+        int nprint = snprintf(buf, sizeof buf, "%d,%d,%zu,%"PRIu64",%d,%"PRId64"\n",
+                              func_id, igroup_id, pos++, addr, (int)event, value);
+        assert(nprint>0 && (size_t)nprint<sizeof buf);
+        ssize_t nwrite __attribute__((unused)) = write(fd, buf, nprint);
+        assert(nwrite==nprint);
+    }
+}
+
+void
+Tracer::save(const SqlDatabase::TransactionPtr &tx)
+{
+    std::ifstream in(filename.c_str());
+    tx->bulk_load("semantic_fio_trace", in);
+    in.close();
+    off_t fp __attribute__((unused)) = lseek(fd, 0, SEEK_SET);
+    assert(0==fp);
+    int status __attribute__((unused)) = ftruncate(fd, 0);
+    assert(0==status);
+}
+
+void
 OutputGroup::add_param(const std::string vtype, int pos, int64_t value)
 {
     assert(!vtype.empty());
