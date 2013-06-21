@@ -698,9 +698,10 @@ void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
 #endif
 
 #if 0
-     printf ("In Unparse_Type::unparsePointerType(): info.isWithType()       = %s \n",(info.isWithType()       == true) ? "true" : "false");
-     printf ("In Unparse_Type::unparsePointerType(): info.SkipBaseType()     = %s \n",(info.SkipBaseType()     == true) ? "true" : "false");
-     printf ("In Unparse_Type::unparsePointerType(): info.isTypeSecondPart() = %s \n",(info.isTypeSecondPart() == true) ? "true" : "false");
+     printf ("In unparsePointerType(): info.isWithType()       = %s \n",(info.isWithType()       == true) ? "true" : "false");
+     printf ("In unparsePointerType(): info.SkipBaseType()     = %s \n",(info.SkipBaseType()     == true) ? "true" : "false");
+     printf ("In unparsePointerType(): info.isTypeFirstPart()  = %s \n",(info.isTypeFirstPart()  == true) ? "true" : "false");
+     printf ("In unparsePointerType(): info.isTypeSecondPart() = %s \n",(info.isTypeSecondPart() == true) ? "true" : "false");
 #endif
 
      SgPointerType* pointer_type = isSgPointerType(type);
@@ -1755,9 +1756,10 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
      curprint ( string("\n /* info.isTypeSecondPart() = ") + ((info.isTypeSecondPart() == true) ? "true" : "false") + " */ \n");
 #endif
 #if 0
-     printf ("info.isWithType()       = %s \n",(info.isWithType()       == true) ? "true" : "false");
-     printf ("info.SkipBaseType()     = %s \n",(info.SkipBaseType()     == true) ? "true" : "false");
-     printf ("info.isTypeSecondPart() = %s \n",(info.isTypeSecondPart() == true) ? "true" : "false");
+     printf ("In unparseTypedefType(): info.isWithType()       = %s \n",(info.isWithType()       == true) ? "true" : "false");
+     printf ("In unparseTypedefType(): info.SkipBaseType()     = %s \n",(info.SkipBaseType()     == true) ? "true" : "false");
+     printf ("In unparseTypedefType(): info.isTypeFirstPart()  = %s \n",(info.isTypeFirstPart()  == true) ? "true" : "false");
+     printf ("In unparseTypedefType(): info.isTypeSecondPart() = %s \n",(info.isTypeSecondPart() == true) ? "true" : "false");
 #endif
 
      if ((info.isWithType() && info.SkipBaseType()) || info.isTypeSecondPart())
@@ -2032,13 +2034,14 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
 #endif
 #if 0
   // mod_type->get_typeModifier().display("called from Unparse_Type::unparseModifierType()");
-     printf ("In Unparse_Type::unparseModifierType(): modifier values (at %p): %s \n",mod_type,mod_type->get_typeModifier().displayString().c_str());
+     printf ("In unparseModifierType(): modifier values (at %p): %s \n",mod_type,mod_type->get_typeModifier().displayString().c_str());
 #endif
 
 #if 0
-     printf ("In Unparse_Type::unparseModifierType(): info.isWithType()       = %s \n",(info.isWithType()       == true) ? "true" : "false");
-     printf ("In Unparse_Type::unparseModifierType(): info.SkipBaseType()     = %s \n",(info.SkipBaseType()     == true) ? "true" : "false");
-     printf ("In Unparse_Type::unparseModifierType(): info.isTypeSecondPart() = %s \n",(info.isTypeSecondPart() == true) ? "true" : "false");
+     printf ("In unparseModifierType(): info.isWithType()       = %s \n",(info.isWithType()       == true) ? "true" : "false");
+     printf ("In unparseModifierType(): info.SkipBaseType()     = %s \n",(info.SkipBaseType()     == true) ? "true" : "false");
+     printf ("In unparseModifierType(): info.isTypeFirstPart()  = %s \n",(info.isTypeFirstPart()  == true) ? "true" : "false");
+     printf ("In unparseModifierType(): info.isTypeSecondPart() = %s \n",(info.isTypeSecondPart() == true) ? "true" : "false");
 #endif
 
   // Determine if we have to print the base type first (before printing the modifier).
