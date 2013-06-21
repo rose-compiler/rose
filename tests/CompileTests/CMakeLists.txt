@@ -56,7 +56,7 @@ else()
     endif()
 
     if(enable-java)
-      #add_subdirectory(Java_tests)
+      add_subdirectory(Java_tests)
     endif()
 
     if(enable-c)

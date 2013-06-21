@@ -1,8 +1,94 @@
-
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
-
-
 ########### install files ###############
 
 install(FILES  ecjROSE.jar DESTINATION ${INCLUDE_INSTALL_DIR} )
+
+# This file also needs to be in the binary dir for related
+# tests to pass
+configure_file(
+  ecjROSE.jar
+  ${CMAKE_CURRENT_BINARY_DIR}
+  COPYONLY)
+
+add_custom_command(
+  OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/JavaParser.class
+          ${CMAKE_CURRENT_BINARY_DIR}/JavaParser.h
+  COMMAND ${Java_JAVAC_EXECUTABLE} -cp
+          ${CMAKE_CURRENT_SOURCE_DIR}/ecjROSE.jar:${CMAKE_CURRENT_SOURCE_DIR}:.
+          -d ${CMAKE_CURRENT_BINARY_DIR}
+          ${CMAKE_CURRENT_SOURCE_DIR}/JavaParser.java
+  COMMAND ${Java_JAVAH_EXECUTABLE} -jni
+          -classpath ${CMAKE_CURRENT_SOURCE_DIR}/ecjROSE.jar:.
+          -d ${CMAKE_CURRENT_BINARY_DIR} JavaParser
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
+add_custom_command(
+  OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/JavaTraversal.class
+          ${CMAKE_CURRENT_BINARY_DIR}/JavaTraversal.h
+  COMMAND ${Java_JAVAC_EXECUTABLE} -cp
+	        ${CMAKE_CURRENT_SOURCE_DIR}/ecjROSE.jar:${CMAKE_CURRENT_SOURCE_DIR}:.
+          ${CMAKE_CURRENT_SOURCE_DIR}/JavaTraversal.java
+          -d ${CMAKE_CURRENT_BINARY_DIR}
+  COMMAND ${Java_JAVAH_EXECUTABLE} -jni
+          -classpath
+          ${CMAKE_CURRENT_SOURCE_DIR}/ecjROSE.jar:.
+          -d ${CMAKE_CURRENT_BINARY_DIR} JavaTraversal
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
+# This is needed when distcheck compiles the code, I don't know why.
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/JavaParserSupport.class
+	COMMAND ${Java_JAVAC_EXECUTABLE} -cp
+          ${CMAKE_CURRENT_SOURCE_DIR}/ecjROSE.jar:${CMAKE_CURRENT_SOURCE_DIR}:.
+          -d ${CMAKE_CURRENT_BINARY_DIR}
+          ${CMAKE_CURRENT_SOURCE_DIR}/JavaParserSupport.java
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
+# I assume this is needed the same as for the JavaParserSupport.class rule
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/ecjASTVisitor.class
+	COMMAND ${Java_JAVAC_EXECUTABLE} -cp
+          ${CMAKE_CURRENT_SOURCE_DIR}/ecjROSE.jar:${CMAKE_CURRENT_SOURCE_DIR}:.
+          -d ${CMAKE_CURRENT_BINARY_DIR}
+          ${CMAKE_CURRENT_SOURCE_DIR}/ExtendedASTVisitor.java
+          ${CMAKE_CURRENT_SOURCE_DIR}/ecjASTVisitor.java
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
+# DQ (4/16/2011): Added support for Java specific tokens (to support source position information in ROSE).
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/JavaToken.class
+	COMMAND ${Java_JAVAC_EXECUTABLE} -cp
+          ${CMAKE_CURRENT_SOURCE_DIR}/ecjROSE.jar:${CMAKE_CURRENT_SOURCE_DIR}:.
+          -d ${CMAKE_CURRENT_BINARY_DIR}
+          ${CMAKE_CURRENT_SOURCE_DIR}/JavaToken.java
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
+# DQ (4/16/2011): Added support for Java specific tokens (to support source position information in ROSE).
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/JavaSourcePositionInformation.class
+	COMMAND ${Java_JAVAC_EXECUTABLE} -cp
+          ${CMAKE_CURRENT_SOURCE_DIR}/ecjROSE.jar:${CMAKE_CURRENT_SOURCE_DIR}:.
+          -d ${CMAKE_CURRENT_BINARY_DIR}
+          ${CMAKE_CURRENT_SOURCE_DIR}/JavaSourcePositionInformation.java
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
+# charles4: (2/23/2012):
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/JavaSourcePositionInformationFactory.class
+	COMMAND ${Java_JAVAC_EXECUTABLE} -cp
+          ${CMAKE_CURRENT_SOURCE_DIR}/ecjROSE.jar:${CMAKE_CURRENT_SOURCE_DIR}:.
+          -d ${CMAKE_CURRENT_BINARY_DIR}
+          ${CMAKE_CURRENT_SOURCE_DIR}/JavaSourcePositionInformationFactory.java
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
+add_custom_target(extract_rose_required_ecj_source_files
+  DEPENDS
+    ${CMAKE_CURRENT_BINARY_DIR}/JavaParserSupport.class
+    ${CMAKE_CURRENT_BINARY_DIR}/ecjASTVisitor.class
+    ${CMAKE_CURRENT_BINARY_DIR}/JavaToken.class
+    ${CMAKE_CURRENT_BINARY_DIR}/JavaSourcePositionInformation.class
+    ${CMAKE_CURRENT_BINARY_DIR}/JavaSourcePositionInformationFactory.class
+    ${CMAKE_CURRENT_BINARY_DIR}/JavaParser.class
+    ${CMAKE_CURRENT_BINARY_DIR}/JavaParser.h
+    ${CMAKE_CURRENT_BINARY_DIR}/JavaTraversal.class
+    ${CMAKE_CURRENT_BINARY_DIR}/JavaTraversal.h)
 

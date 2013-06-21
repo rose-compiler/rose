@@ -352,9 +352,9 @@ else()
   endif()
 endif()
 
-# Set ROSE_SHLIBPATH_VAR.  For now, it just has the same value as
+# Set ROSE_SHLIBPATH_VAR.  For now, it is just LD_LIBRARY_PATH.
 # LD_LIBRARY_PATH.
-set(ROSE_SHLIBPATH_VAR $ENV{LD_LIBRARY_PATH})
+set(ROSE_SHLIBPATH_VAR "LD_LIBRARY_PATH")
 
 # a set of common features: including endian, stdio.h, printf, size of long int ,etc
 #taken from LyX
@@ -407,6 +407,7 @@ if (enable-java)
   find_program(GCJH gcjh)
   find_package(JNI)
   set(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT 1)
+  get_filename_component(BACKEND_JAVA_COMPILER ${Java_JAVAC_EXECUTABLE} NAME)
 endif()
 
 option(enable-opencl "Enable OpenCL support in ROSE." ON)

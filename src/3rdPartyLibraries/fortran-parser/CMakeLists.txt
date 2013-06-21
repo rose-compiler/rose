@@ -16,6 +16,13 @@ install(
         ${jar_file}
   DESTINATION ${INCLUDE_INSTALL_DIR} )
 
+# this file also needs to be in the binary directory for
+# related tests to pass
+configure_file(
+  ${jar_file}
+  ${CMAKE_CURRENT_BINARY_DIR}
+  COPYONLY)
+
 set(files_to_extract
   "fortran/ofp/parser/c/FortranParserAction.h"
   "fortran/ofp/parser/c/jni/c_actions_jni.c"
