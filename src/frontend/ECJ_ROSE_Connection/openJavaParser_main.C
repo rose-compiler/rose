@@ -90,7 +90,11 @@ int openJavaParser_main(int argc, char **argv) {
 
     /* Overwite to a new value. It is not clear when to use the install path and when to use the build path! */
     // string new_value = findRoseSupportPathFromBuild("src/frontend/OpenFortranParser_SAGE_Connection/.libs", "lib");
+    #ifdef USE_CMAKE
+    string new_value = findRoseSupportPathFromBuild("lib", "lib");
+    #else
     string new_value = findRoseSupportPathFromBuild("src/frontend/ECJ_ROSE_Connection/.libs", "lib");
+    #endif
 
     // This does not help or hurt.
     // new_value += ":" + findRoseSupportPathFromBuild("src/3rdPartyLibraries/java-parser", "lib");
