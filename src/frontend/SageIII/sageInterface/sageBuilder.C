@@ -5822,6 +5822,60 @@ SgSizeOfOp* SageBuilder::buildSizeOfOp_nfi(SgType* type /* = NULL*/)
   return result;
 }
 
+
+//! Build __alignof__() expression with an expression parameter
+SgAlignOfOp* SageBuilder::buildAlignOfOp(SgExpression* exp/*= NULL*/)
+{
+  SgType* exp_type =NULL;
+  if (exp) exp_type = exp->get_type();
+
+  SgAlignOfOp* result = new SgAlignOfOp(exp,NULL, NULL);
+  ROSE_ASSERT(result);
+  if (exp)
+  {
+    exp->set_parent(result);
+    markLhsValues(result);
+  }
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+//! Build __alignof__() expression with an expression parameter
+SgAlignOfOp* SageBuilder::buildAlignOfOp_nfi(SgExpression* exp/*= NULL*/)
+{
+  SgType* exp_type =NULL;
+  if (exp) exp_type = exp->get_type();
+
+  SgAlignOfOp* result = new SgAlignOfOp(exp,NULL, NULL);
+  ROSE_ASSERT(result);
+  if (exp)
+  {
+    exp->set_parent(result);
+    markLhsValues(result);
+  }
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+//! Build __alignof__() expression with a type parameter
+SgAlignOfOp* SageBuilder::buildAlignOfOp(SgType* type /* = NULL*/)
+{
+  SgAlignOfOp* result = new SgAlignOfOp((SgExpression*)NULL,type,NULL);
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+//! Build __alignof__() expression with a type parameter
+SgAlignOfOp* SageBuilder::buildAlignOfOp_nfi(SgType* type /* = NULL*/)
+{
+  SgAlignOfOp* result = new SgAlignOfOp((SgExpression*)NULL,type,NULL);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+
 SgExprListExp * SageBuilder::buildExprListExp(SgExpression * expr1, SgExpression* expr2, SgExpression* expr3, SgExpression* expr4, SgExpression* expr5, SgExpression* expr6, SgExpression* expr7, SgExpression* expr8, SgExpression* expr9, SgExpression* expr10)
 {
   SgExprListExp* expList = new SgExprListExp();
