@@ -2580,7 +2580,7 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
 #endif
    }
 
-
+#if 0
 void
 Unparse_Type::foobar( SgUnparse_Info & info )
    {
@@ -2597,7 +2597,11 @@ Unparse_Type::foobar( SgUnparse_Info & info )
      printf ("This function should not be called \n");
      ROSE_ASSERT(false);
    }
-
+#else
+// explicit instantiation of Unparse_Type::outputType
+template void Unparse_Type::outputType(SgInitializedName*, SgType* , SgUnparse_Info &);
+template void Unparse_Type::outputType(SgTemplateArgument*, SgType*, SgUnparse_Info &);
+#endif
 
 template <class T>
 void
