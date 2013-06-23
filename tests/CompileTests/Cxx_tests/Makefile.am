@@ -1307,6 +1307,10 @@ test2013_216.C \
 test2013_217.C \
 test2013_218.C \
 test2013_219.C \
+test2013_220.C \
+test2013_221.C \
+test2013_222.C \
+test2013_223.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \

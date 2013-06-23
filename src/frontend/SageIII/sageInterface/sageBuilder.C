@@ -381,6 +381,14 @@ SgScopeStatement::find_symbol_by_type_of_function (const SgName & name, const Sg
    }
 
 
+// explicit instantiation of find_symbol_by_type_of_function
+template SgFunctionSymbol* SgScopeStatement::find_symbol_by_type_of_function<SgTemplateFunctionDeclaration>(SgName const&, SgType const*);
+template SgFunctionSymbol* SgScopeStatement::find_symbol_by_type_of_function<SgTemplateInstantiationMemberFunctionDecl>(SgName const&, SgType const*);
+template SgFunctionSymbol* SgScopeStatement::find_symbol_by_type_of_function<SgTemplateInstantiationFunctionDecl>(SgName const&, SgType const*);
+template SgFunctionSymbol* SgScopeStatement::find_symbol_by_type_of_function<SgMemberFunctionDeclaration>(SgName const&, SgType const*);
+template SgFunctionSymbol* SgScopeStatement::find_symbol_by_type_of_function<SgTemplateMemberFunctionDeclaration>(SgName const&, SgType const*);
+template SgFunctionSymbol* SgScopeStatement::find_symbol_by_type_of_function<SgFunctionDeclaration>(SgName const&, SgType const*);
+
 void SageBuilder::pushScopeStack (SgScopeStatement* stmt)
 {
   ROSE_ASSERT(stmt != NULL);
