@@ -1,265 +1,268 @@
+set(ROSE_FLAGS -rose:verbose 0)
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
+function(LANL_POP_test file_to_compile)
+  add_test(
+    NAME ${file_to_compile}
+    COMMAND testAnalysis ${ROSE_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}
+            -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_compile})
+endfunction()
 
+# Main file to compile (includes all other files as modules)
 
-########### install files ###############
+set(files_to_compile
+  advection.F90
+  baroclinic.F90
+  barotropic.F90
+  blocks.F90
+  boundary.F90
+  broadcast.F90
+  communicate.F90
+  constants.F90
+  diagnostics.F90
+  distribution.F90
+  domain.F90
+  domain_size.F90
+  exit_mod.F90
+  forcing.F90
+  forcing_ap.F90
+  forcing_coupled.F90
+  forcing_pt_interior.F90
+  forcing_s_interior.F90
+  forcing_sfwf.F90
+  forcing_shf.F90
+  forcing_tools.F90
+  forcing_ws.F90
+  gather_scatter.F90
+  global_reductions.F90
+  grid.F90
+  history.F90
+  hmix_aniso.F90
+  hmix_del2.F90
+  hmix_del4.F90
+  hmix_gm.F90
+  horizontal_mix.F90
+  ice.F90
+  initial.F90
+  io.F90
+  io_binary.F90
+  io_netcdf.F90
+  io_netcdf_testcode_01.F90
+  io_netcdf_testcode_02.F90
+  io_types.F90
+  kinds_mod.F90
+  movie.F90
+  netcdf.F90
+  operators.F90
+  output.F90
+  pressure_grad.F90
+  prognostic.F90
+  restart.F90
+  solvers.F90
+  state_mod.F90
+  step_mod.F90
+  surface_hgt.F90
+  tavg.F90
+  test_constants.F90
+  test_forcing.F90
+  test_kinds_mod.F90
+  time_management.F90
+  timers.F90
+  topostress.F90
+  typeSizes.F90
+  vertical_mix.F90
+  vmix_const.F90
+  vmix_kpp.F90
+  vmix_rich.F90
+  xdisplay.F90
+  POP.F90
+)
 
+foreach(file_to_compile ${files_to_compile})
+  LANL_POP_test(${file_to_compile})
+endforeach()
 
+# set up dependencies between tests
 
+# Main file to compile (includes all other files as modules)
+set_tests_properties(POP.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;communicate.F90;domain.F90;timers.F90;time_management.F90;step_mod.F90;initial.F90;xdisplay.F90;diagnostics.F90;output.F90;solvers.F90")
 
-#original Makefile.am contents follow:
+set_tests_properties(advection.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;constants.F90;blocks.F90;distribution.F90;grid.F90;diagnostics.F90;state_mod.F90;operators.F90;hmix_gm.F90")
 
-#include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-#
-############################################################################
-## These are Fortran testcodes from the LANL POP code (mostly F77 and F90) #
-############################################################################
-#
-## #######################
-##      PASSING TESTS
-## #######################
-#
-#F90_TESTCODES_REQUIRED_TO_PASS = 
-#
-## Make all the code dependent upon the kinds_mod.F90 file
-## advection.o : kinds_mod.o
-#
-#F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = 
-#
-#F03_TESTCODES_REQUIRED_TO_PASS = 
-#
-#
-## #######################
-##      FAILING TESTS
-## #######################
-#
-#F90_TESTCODES_CURRENTLY_FAILING = 
-#
-#F90_EXTRA_TESTS = \
-#   advection.F90 \
-#   baroclinic.F90 \
-#   barotropic.F90 \
-#   blocks.F90 \
-#   current_meters.F90 \
-#   diagnostics.F90 \
-#   distribution.F90 \
-#   domain.F90 \
-#   drifters.F90 \
-#   exit_mod.F90 \
-#   fix_64.C \
-#   forcing_ap.F90 \
-#   forcing_coupled.F90 \
-#   forcing.F90 \
-#   forcing_pt_interior.F90 \
-#   forcing_sfwf.F90 \
-#   forcing_shf.F90 \
-#   forcing_s_interior.F90 \
-#   forcing_tools.F90 \
-#   forcing_ws.F90 \
-#   grid.F90 \
-#   history.F90 \
-#   hmix_aniso.F90 \
-#   hmix_del2.F90 \
-#   hmix_del4.F90 \
-#   hmix_gm.F90 \
-#   horizontal_mix.F90 \
-#   hydro_sections.F90 \
-#   ice.F90 \
-#   initial.F90 \
-#   io_binary.F90 \
-#   io.F90 \
-#   io_netcdf.F90 \
-#   io_types.F90 \
-#   movie.F90 \
-#   operators.F90 \
-#   output.F90 \
-#   POP.F90 \
-#   pressure_grad.F90 \
-#   prognostic.F90 \
-#   restart.F90 \
-#   solvers.F90 \
-#   state_mod.F90 \
-#   step_mod.F90 \
-#   surface_hgt.F90 \
-#   tavg.F90 \
-#   time_management.F90 \
-#   timers.F90 \
-#   topostress.F90 \
-#   vertical_mix.F90 \
-#   vmix_const.F90 \
-#   vmix_kpp.F90 \
-#   vmix_rich.F90 \
-#   xdisplay.F90
-#
-#F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = 
-#
-#F03_TESTCODES_CURRENTLY_FAILING = 
-#
-#
-#
-#
-#
-#
-#
-#
-#F77_TESTCODES_REQUIRED_TO_PASS = 
-#
-#F77_TESTCODES_CURRENTLY_FAILING = 
-#
-#noinst_headers =
-#
-## Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
-#F90_TESTCODES = \
-#$(F90_TESTCODES_REQUIRED_TO_PASS)
-#
-#F77_TESTCODES = \
-#$(F77_TESTCODES_REQUIRED_TO_PASS)
-#
-#F77_FIXED_FORMAT_TESTCODES = \
-#$(F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS)
-#
-#F03_TESTCODES = \
-#$(F03_TESTCODES_REQUIRED_TO_PASS)
-#
-## QMTest allows both passing and failing tests.
-#ALL_F90_TESTCODES = \
-#$(F90_TESTCODES_REQUIRED_TO_PASS) \
-#$(F90_TESTCODES_CURRENTLY_FAILING)
-#
-#ALL_F77_TESTCODES = \
-#$(F77_TESTCODES_REQUIRED_TO_PASS) \
-#$(F77_TESTCODES_CURRENTLY_FAILING)
-#
-#ALL_F77_FIXED_FORMAT_TESTCODES = \
-#$(F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS) \
-#$(F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING)
-#
-#ALL_F03_TESTCODES = \
-#$(F03_TESTCODES_REQUIRED_TO_PASS) \
-#$(F03_TESTCODES_CURRENTLY_FAILING)
-#
-## "if" for DQ_DEVELOPER_TESTS (AutoMake conditional block)
-#if DQ_DEVELOPER_TESTS
-#
-#if ROSE_USE_OPEN_FORTRAN_PARSER
-#
-#../../preprocessor:
-#	cd ../..; $(MAKE) preprocessor
-#
-#preprocessor: ../../preprocessor
-#
-## File option to accumulate performance information about the compilation
-#PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/FORTRAN_ROSE_PERFORMANCE_DATA.csv
-#
-## Vebose setting of 3 is required for all stack information to be output.
-## ROSE_FLAGS = -rose:verbose 0 -rose:output_warnings -rose:output_parser_actions -rose:exit_after_parser
-## ROSE_FLAGS = -rose:verbose 3 -rose:output_warnings -rose:output_parser_actions
-## ROSE_FLAGS = -rose:verbose 0 -rose:output_warnings -rose:output_parser_actions -rose:compileFixed
-## ROSE_FLAGS = -rose:verbose 3 -rose:output_warnings -rose:output_parser_actions -rose:compileFixed
-## ROSE_FLAGS = -rose:verbose 0 -rose:compileFixed
-## ROSE_FLAGS = -rose:verbose 3
-#ROSE_FLAGS = -rose:verbose 3 -rose:output_warnings -rose:output_parser_actions
-## ROSE_FLAGS = -rose:verbose 0
-#
-## VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
-#VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
-## VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
-## VALGRIND = valgrind $(VALGRIND_OPTIONS)
-#VALGRIND =
-#
-#PASSING_TEST_F90_Objects = ${F90_TESTCODES:.F90=.o}
-#PASSING_TEST_F77_Objects = ${F77_TESTCODES:.F77=.o}
-## PASSING_TEST_F77_FIXED_FORMAT_Objects = ${F77_TESTCODES:.F=.o}
-#PASSING_TEST_F77_FIXED_FORMAT_Objects = ${F77_FIXED_FORMAT_TESTCODES:.F=.o}
-#PASSING_TEST_F03_Objects = ${F03_TESTCODES:.F03=.o}
-#TEST_F90_Objects = ${ALL_F90_TESTCODES:.F90=.o}
-#TEST_F77_Objects = ${ALL_F77_TESTCODES:.F77=.o}
-#TEST_F77_FIXED_FORMAT_Objects = ${ALL_F77_FIXED_FORMAT_TESTCODES:.F=.o}
-#TEST_F03_Objects = ${ALL_F03_TESTCODES:.F03=.o}
-#
-#PASSING_TEST_Objects = $(PASSING_TEST_F90_Objects) $(PASSING_TEST_F77_Objects) $(PASSING_TEST_F77_FIXED_FORMAT_Objects) $(PASSING_TEST_F03_Objects) 
-#
-#
-#kinds_mod.o:  ../../preprocessor
-#	$(VALGRIND) ../../preprocessor $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-#
-#constants.o:  ../../preprocessor kinds_mod.o
-#	$(VALGRIND) ../../preprocessor $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-#
-## Example of how to call the OpenFortranParser
-##	java parser.java.FortranMain --class parser.java.FortranParserActionJNI $(srcdir)/$(@:.o=.f90)
-#
-## $(TEST_F90_Objects): ../preprocessor ${ALL_TESTCODES}
-#$(TEST_F90_Objects): ../../preprocessor kinds_mod.o constants.o
-##	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f90)
-##	java fortran.ofp.FrontEnd --dump $(srcdir)/$(@:.o=.f90)
-##	$(VALGRIND) ../preprocessor $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
-#	$(VALGRIND) ../../preprocessor $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-#
-#$(TEST_F77_Objects): ../../preprocessor
-##	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f77)
-##	java fortran.ofp.FrontEnd --dump $(srcdir)/$(@:.o=.f77)
-#	$(VALGRIND) ../../preprocessor $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.F77)
-#
-#$(TEST_F77_FIXED_FORMAT_Objects): ../../preprocessor
-##	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f)
-##	java fortran.ofp.FrontEnd --dump $(srcdir)/$(@:.o=.f)
-#	$(VALGRIND) ../../preprocessor $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.F)
-#
-## Note: If using gfortran version greater then 4.1, we can't call it with Fortran 2003 code since it is so buggy.
-##       So we use -rose:skip_syntax_check to avoid the frontend syntax checking and -rose:skipfinalCompileStep
-##       to avoid processing the generated code (which would have the same problem).  It is easier to just use
-##       the version 4.1 gfortran which has better Fortran 2003 syntax checking support. This problem is confirmed 
-##       on versions of gfortran 4.2 and 4.3.
-#$(TEST_F03_Objects): ../../preprocessor
-##	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f03)
-##	java fortran.ofp.FrontEnd --dump $(srcdir)/$(@:.o=.f03)
-#	$(VALGRIND) ../../preprocessor $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.o=.F03)
-##	Build a object file since gfortran fails to do so (avoids remaking the makefile target)
-#	touch $@
-#
-#
-#QMTEST_Objects = ${ALL_TESTCODES:.f90=.qmt}
-#
-## Make rule to build the QMTest database files
-#CURRENT_DIRECTORY = `pwd`
-#$(QMTEST_Objects): preprocessor $(srcdir)/$(@:.qmt=.c)
-#	@echo "Calling QMTEST_Objects rule: "
-#	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../preprocessor NULL $(ROSE_FLAGS) -c $(srcdir)/$(@:.qmt=.f90)
-#
-## Include makefile rules specific to QMTest
-#include $(top_srcdir)/config/QMTest_makefile.inc
-#
-#
-## This will output the example testcodes that are failing
-#listProblemFiles: $(F77_TESTCODES_CURRENTLY_FAILING) $(F90_TESTCODES_CURRENTLY_FAILING) $(F03_TESTCODES_CURRENTLY_FAILING) $(F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING)
-#	egrep -n "*"  $(srcdir)/$(?)
-#
-#
-#check-local:
-#	@echo "Dan Quinlan's development tests for Fortran."
-##  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
-##	These C programs must be called externally to the test codes in the "TESTCODES" make variable
-#	@$(MAKE) $(PASSING_TEST_Objects)
-#	@echo "********************************************************************************************************************"
-#	@echo "****** ROSE/developersScratchSpace/Dan/Fortran_tests/LANL_POP: make check rule complete (terminated normally) ******"
-#	@echo "********************************************************************************************************************"
-#endif
-#
-#copyFiles:
-#	echo "LANL POP files not copied to ROSE/tests directory..."
-#
-#else
-#check-local:
-#	@echo "\nDan Quinlan's Fortran development tests using the LANL POP code NOT run.  To run these reconfigure with:"
-#	@echo "**********************************************************************************************************"
-#	@echo "******************* make check not run here: configure --enable-dq-developer-tests ***********************"
-#	@echo "**********************************************************************************************************"
-#endif
-#
-#EXTRA_DIST = $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TESTCODES) $(ALL_F03_TESTCODES)
-#
-#clean-local:
-#	rm -f *.o *.s *.mod rose_*.C rose_*.f rose_*.F* rose_*.f77 rose_*.f90 rose_*.f95 rose_*.f03 *_postprocessed.* *.dot *.pdf *~ *.ps *.out *.log rose_performance_report_lockfile.lock
-#	rm -rf QMTest
-#
+set_tests_properties(baroclinic.F90 PROPERTIES DEPENDS
+  "domain.F90;prognostic.F90;broadcast.F90;boundary.F90;communicate.F90;advection.F90;pressure_grad.F90;horizontal_mix.F90;vertical_mix.F90;vmix_kpp.F90;diagnostics.F90;state_mod.F90;ice.F90;time_management.F90;io_types.F90;tavg.F90;forcing.F90;forcing_shf.F90;forcing_pt_interior.F90;forcing_s_interior.F90;exit_mod.F90")
+
+set_tests_properties(barotropic.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;domain.F90;constants.F90;prognostic.F90;boundary.F90;solvers.F90;operators.F90;grid.F90;time_management.F90;global_reductions.F90;forcing.F90;forcing_ap.F90;tavg.F90")
+
+set_tests_properties(blocks.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;exit_mod.F90;domain_size.F90")
+
+set_tests_properties(boundary.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;communicate.F90;constants.F90;blocks.F90;distribution.F90;exit_mod.F90")
+
+set_tests_properties(broadcast.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;communicate.F90")
+
+set_tests_properties(communicate.F90 PROPERTIES DEPENDS kinds_mod.F90)
+
+set_tests_properties(constants.F90 PROPERTIES DEPENDS kinds_mod.F90)
+
+set_tests_properties(diagnostics.F90 PROPERTIES DEPENDS
+  "prognostic.F90;time_management.F90;solvers.F90;forcing.F90;timers.F90")
+
+set_tests_properties(distribution.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;communicate.F90;blocks.F90;exit_mod.F90")
+
+set_tests_properties(domain.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;constants.F90;communicate.F90;broadcast.F90;blocks.F90;distribution.F90;exit_mod.F90;io_types.F90;boundary.F90;domain_size.F90")
+
+set_tests_properties(domain_size.F90 PROPERTIES DEPENDS kinds_mod.F90)
+
+set_tests_properties(exit_mod.F90 PROPERTIES DEPENDS
+  "communicate.F90;constants.F90")
+
+set_tests_properties(forcing.F90 PROPERTIES DEPENDS
+  "forcing_ap.F90;forcing_coupled.F90;forcing_pt_interior.F90;forcing_sfwf.F90;forcing_shf.F90;forcing_s_interior.F90;forcing_tools.F90;forcing_ws.F90;tavg.F90")
+
+set_tests_properties(forcing_ap.F90 PROPERTIES DEPENDS forcing_tools.F90)
+
+set_tests_properties(forcing_coupled.F90 PROPERTIES DEPENDS
+  "ice.F90;forcing_shf.F90;forcing_sfwf.F90;timers.F90")
+
+set_tests_properties(forcing_pt_interior.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;domain.F90;constants.F90;broadcast.F90;boundary.F90;io.F90;forcing_tools.F90;time_management.F90;prognostic.F90;grid.F90;exit_mod.F90")
+
+set_tests_properties(forcing_sfwf.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;distribution.F90;domain.F90;constants.F90;boundary.F90;grid.F90;io.F90;global_reductions.F90;forcing_tools.F90;forcing_shf.F90;time_management.F90;prognostic.F90;exit_mod.F90")
+
+set_tests_properties(forcing_shf.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;distribution.F90;domain.F90;constants.F90;boundary.F90;grid.F90;io.F90;forcing_tools.F90;time_management.F90;prognostic.F90;exit_mod.F90")
+
+set_tests_properties(forcing_s_interior.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;domain.F90;constants.F90;boundary.F90;io.F90;forcing_tools.F90;time_management.F90;prognostic.F90;grid.F90;exit_mod.F90")
+
+set_tests_properties(forcing_tools.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;domain.F90;constants.F90;io.F90;io_types.F90;grid.F90;time_management.F90;exit_mod.F90")
+
+set_tests_properties(forcing_ws.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;constants.F90;blocks.F90;distribution.F90;domain.F90;boundary.F90;io.F90;forcing_tools.F90;time_management.F90;grid.F90;exit_mod.F90")
+
+set_tests_properties(gather_scatter.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;communicate.F90;constants.F90;blocks.F90;distribution.F90;domain.F90;domain_size.F90;exit_mod.F90")
+
+set_tests_properties(global_reductions.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;communicate.F90;constants.F90;blocks.F90;distribution.F90;domain_size.F90;domain.F90")
+
+set_tests_properties(grid.F90 PROPERTIES DEPENDS
+  "domain.F90;io.F90;global_reductions.F90")
+
+set_tests_properties(history.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;domain.F90;constants.F90;prognostic.F90;grid.F90;io.F90;broadcast.F90;time_management.F90;forcing.F90;forcing_shf.F90;exit_mod.F90")
+
+set_tests_properties(hmix_aniso.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;communicate.F90;distribution.F90;domain.F90;constants.F90;broadcast.F90;global_reductions.F90;gather_scatter.F90;diagnostics.F90;time_management.F90;grid.F90;io.F90;exit_mod.F90")
+
+set_tests_properties(hmix_del2.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;communicate.F90;distribution.F90;domain_size.F90;domain.F90;broadcast.F90;boundary.F90;constants.F90;topostress.F90;diagnostics.F90;io.F90;global_reductions.F90;grid.F90;exit_mod.F90")
+
+set_tests_properties(hmix_del4.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;communicate.F90;distribution.F90;domain_size.F90;domain.F90;constants.F90;grid.F90;broadcast.F90;io.F90;global_reductions.F90;boundary.F90;diagnostics.F90;exit_mod.F90")
+
+set_tests_properties(hmix_gm.F90 PROPERTIES DEPENDS
+  "vertical_mix.F90;vmix_kpp.F90")
+
+set_tests_properties(horizontal_mix.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;distribution.F90;domain.F90;constants.F90;communicate.F90;time_management.F90;broadcast.F90;grid.F90;io_types.F90;hmix_del2.F90;hmix_del4.F90;hmix_gm.F90;hmix_aniso.F90;topostress.F90;tavg.F90;timers.F90;exit_mod.F90")
+
+set_tests_properties(ice.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;constants.F90;broadcast.F90;io_types.F90;time_management.F90;exit_mod.F90")
+
+set_tests_properties(initial.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;domain.F90;constants.F90;communicate.F90;broadcast.F90;prognostic.F90;solvers.F90;grid.F90;io.F90;io_types.F90;baroclinic.F90;barotropic.F90;pressure_grad.F90;surface_hgt.F90;vertical_mix.F90;horizontal_mix.F90;advection.F90;diagnostics.F90;state_mod.F90;time_management.F90;topostress.F90;ice.F90;xdisplay.F90;output.F90;tavg.F90;forcing.F90;forcing_coupled.F90;exit_mod.F90;restart.F90;global_reductions.F90;timers.F90")
+
+set_tests_properties(io_types.F90 PROPERTIES DEPENDS broadcast.F90)
+
+set_tests_properties(io.F90 PROPERTIES DEPENDS "io_netcdf.F90;io_binary.F90")
+
+set_tests_properties(io_binary.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;domain_size.F90;domain.F90;constants.F90;boundary.F90;communicate.F90;broadcast.F90;gather_scatter.F90;exit_mod.F90;io_types.F90")
+
+set_tests_properties(io_netcdf.F90 PROPERTIES DEPENDS
+  "gather_scatter.F90;netcdf.F90")
+
+# DQ (9/17/2010): This is a test code to demonstrate a bug in the ROSE F90 support.
+set_tests_properties(io_netcdf_testcode_01.F90 PROPERTIES DEPENDS
+  "gather_scatter.F90;netcdf.F90")
+
+# DQ (9/17/2010): This is a test code to demonstrate a bug in the ROSE F90 support.
+set_tests_properties(io_netcdf_testcode_02.F90 PROPERTIES DEPENDS
+  "gather_scatter.F90;netcdf.F90")
+
+set_tests_properties(io_types.F90 PROPERTIES DEPENDS broadcast.F90)
+
+set_tests_properties(movie.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;domain.F90;constants.F90;prognostic.F90;grid.F90;io.F90;broadcast.F90;time_management.F90;forcing.F90;exit_mod.F90;operators.F90")
+
+# DQ (8/23/2010): Added support for NetCDFlib
+set_tests_properties(netcdf.F90 PROPERTIES DEPENDS typeSizes.F90)
+
+set_tests_properties(operators.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;domain_size.F90;domain.F90;constants.F90;grid.F90;")
+
+set_tests_properties(output.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;restart.F90;history.F90;movie.F90;tavg.F90")
+
+set_tests_properties(pressure_grad.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;constants.F90;operators.F90;grid.F90;broadcast.F90;communicate.F90;io.F90;io_types.F90;state_mod.F90;time_management.F90;exit_mod.F90")
+
+set_tests_properties(prognostic.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;constants.F90;blocks.F90;distribution.F90;domain.F90;domain_size.F90")
+
+set_tests_properties(restart.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;domain.F90;constants.F90;blocks.F90;prognostic.F90;broadcast.F90;boundary.F90;communicate.F90;operators.F90;grid.F90;io.F90;io_types.F90;time_management.F90;ice.F90;forcing.F90;forcing_ap.F90;forcing_ws.F90;forcing_shf.F90;forcing_sfwf.F90;forcing_pt_interior.F90;forcing_s_interior.F90;exit_mod.F90")
+
+set_tests_properties(solvers.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;distribution.F90;domain.F90;constants.F90;boundary.F90;global_reductions.F90;gather_scatter.F90;broadcast.F90;grid.F90;io.F90;time_management.F90;exit_mod.F90")
+
+set_tests_properties(state_mod.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;distribution.F90;domain.F90;constants.F90;grid.F90;io.F90;broadcast.F90;time_management.F90;exit_mod.F90")
+
+set_tests_properties(step_mod.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;domain.F90;constants.F90;prognostic.F90;boundary.F90;timers.F90;grid.F90;io.F90;diagnostics.F90;state_mod.F90;time_management.F90;xdisplay.F90;baroclinic.F90;barotropic.F90;surface_hgt.F90;tavg.F90;forcing.F90;forcing_coupled.F90;ice.F90")
+
+set_tests_properties(surface_hgt.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;domain.F90;constants.F90;prognostic.F90;forcing.F90;grid.F90;time_management.F90;tavg.F90")
+
+set_tests_properties(tavg.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;constants.F90;blocks.F90;distribution.F90;domain.F90;prognostic.F90;grid.F90;time_management.F90;global_reductions.F90;broadcast.F90;io.F90;exit_mod.F90")
+
+set_tests_properties(test_constants.F90 PROPERTIES DEPENDS test_kinds_mod.F90)
+
+set_tests_properties(test_forcing.F90 PROPERTIES DEPENDS test_constants.F90)
+
+set_tests_properties(time_management.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;constants.F90;blocks.F90;domain.F90;domain_size.F90;broadcast.F90;grid.F90;io.F90;exit_mod.F90")
+
+set_tests_properties(timers.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;constants.F90;domain.F90;global_reductions.F90;io.F90;exit_mod.F90")
+
+set_tests_properties(topostress.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;domain.F90;blocks.F90;distribution.F90;constants.F90;io.F90;grid.F90;broadcast.F90;boundary.F90;exit_mod.F90")
+
+set_tests_properties(vertical_mix.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;distribution.F90;domain.F90;constants.F90;grid.F90;state_mod.F90;broadcast.F90;io.F90;timers.F90;tavg.F90;time_management.F90;diagnostics.F90;vmix_kpp.F90;vmix_const.F90;vmix_rich.F90;exit_mod.F90")
+
+set_tests_properties(vmix_const.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;distribution.F90;domain_size.F90;domain.F90;constants.F90;grid.F90;broadcast.F90;io.F90;state_mod.F90;exit_mod.F90")
+
+set_tests_properties(vmix_kpp.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;distribution.F90;domain_size.F90;domain.F90;constants.F90;grid.F90;broadcast.F90;io.F90;state_mod.F90;exit_mod.F90;forcing_shf.F90")
+
+set_tests_properties(vmix_rich.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;distribution.F90;domain.F90;constants.F90;grid.F90;broadcast.F90;io.F90;state_mod.F90;time_management.F90;exit_mod.F90")
+
+set_tests_properties(xdisplay.F90 PROPERTIES DEPENDS
+  "kinds_mod.F90;blocks.F90;domain_size.F90;domain.F90;constants.F90;communicate.F90;io_types.F90;broadcast.F90;prognostic.F90;grid.F90;exit_mod.F90")
+

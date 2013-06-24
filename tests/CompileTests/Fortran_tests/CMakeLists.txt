@@ -1,4 +1,7 @@
-#add_subdirectory(LANL_POP
+if(NOT "${gfortran_version}" VERSION_EQUAL "4.0")
+  add_subdirectory(LANL_POP)
+endif()
+
 #add_subdirectory(gfortranTestSuite)
 
 set(F90_TESTCODES
