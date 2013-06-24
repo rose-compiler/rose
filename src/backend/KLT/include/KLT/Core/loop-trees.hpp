@@ -23,8 +23,10 @@ class LoopTrees {
     struct node_t {
       node_t * parent;
 
-      node_t();
       virtual ~node_t();
+
+      protected:
+        node_t(); // Prevent construction of the base class
     };
 
     struct loop_t : public node_t {

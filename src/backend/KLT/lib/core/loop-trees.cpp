@@ -4,7 +4,7 @@
 
 #include <fstream>
 
-#include "rose.h"
+#include "sage3basic.h"
 
 #include <cassert>
 
@@ -50,27 +50,41 @@ void LoopTrees::toText(node_t * node, std::ostream & out, std::string indent) {
   assert(loop != NULL || stmt != NULL);
   
   if (loop != NULL) {
-    out << indent << " |- " << "Loop: " << loop->iterator->get_name().getString() << " from " << loop->lower_bound->unparseToString() << " to " << loop->upper_bound->unparseToString() << std::endl;
+    out << indent << "loop(" << std::endl;
+    out << indent << "  "
+        << loop->iterator->get_name().getString() << ", "
+        << loop->lower_bound->unparseToString()   << ", "
+        << loop->upper_bound->unparseToString()   << ", ";
+
     switch (loop->parallel_pattern) {
-      case loop_t::none: break;
+      case loop_t::none:
+        out << "none, ";
+        break;
       case loop_t::parfor:
-        out << indent << " |   |    parallel" << std::endl;
+        out << "parfor, ";
         break;
       case loop_t::reduction:
         assert(loop->reduction_lhs != NULL);
-        out << indent << " |   |    reduction : " << loop->reduction_lhs->unparseToString() << std::endl;
+        out << "reduction(" << loop->reduction_lhs->unparseToString() << "), ";
         break;
       default:
         assert(false);
     }
+    out << std::endl;
     
-    std::list<node_t *>::const_iterator it_child;
-    for (it_child = loop->children.begin(); it_child != loop->children.end(); it_child++)
-      toText(*it_child, out, indent + " |  ");
+    std::list<node_t *>::const_iterator it_child = loop->children.begin();
+    toText(*it_child, out, indent + "  ");
+    it_child++;
+    for (; it_child != loop->children.end(); it_child++) {
+      out << "," << std::endl;
+      toText(*it_child, out, indent + "  ");
+    }
+
+    out << indent << ")";
   }
   
   if (stmt != NULL) {
-    out << indent << " |> " << stmt->statement->unparseToString() << std::endl;
+    out << indent << "stmt(" << stmt->statement->unparseToString() << ")";
   }
 }
 
@@ -110,34 +124,50 @@ void LoopTrees::toText(std::ostream & out) const {
   std::set<Data *>::const_iterator it_data;
   std::list<node_t *>::const_iterator it_tree;
 
-  out << "Parameters:" << std::endl;
-  for (it_sym = p_parameters.begin(); it_sym != p_parameters.end(); it_sym++)
-    out << " > " << (*it_sym)->get_name().getString() << std::endl;
+  if (!p_parameters.empty()) {
+    it_sym = p_parameters.begin();
+    out << "params(" << (*it_sym)->get_name().getString();
+    it_sym++;
+    for (; it_sym != p_parameters.end(); it_sym++)
+      out << ", " << (*it_sym)->get_name().getString();
+    out << ")" << std::endl;
+  }
+  else assert(false);
 
-  out << "Coefficient:" << std::endl;
-  for (it_sym = p_coefficients.begin(); it_sym != p_coefficients.end(); it_sym++)
-    out << " > " << (*it_sym)->get_name().getString() << std::endl;
+  if (!p_coefficients.empty()) {
+    it_sym = p_coefficients.begin();
+    out << "coefs(" << (*it_sym)->get_name().getString();
+    it_sym++;
+    for (; it_sym != p_coefficients.end(); it_sym++)
+      out << ", " << (*it_sym)->get_name().getString();
+    out << ")" << std::endl;
+  }
 
-  out << "Data:" << std::endl;
   for (it_data = p_datas_in.begin(); it_data != p_datas_in.end(); it_data++) {
-    out << " >    in : ";
+    out << "data(";
     (*it_data)->toText(out);
-    out << std::endl;
+    out << ", flow-in)" << std::endl;
   }
   for (it_data = p_datas_out.begin(); it_data != p_datas_out.end(); it_data++) {
-    out << " >   out : ";
+    out << "data(";
     (*it_data)->toText(out);
-    out << std::endl;
+    out << ", flow-out)" << std::endl;
   }
   for (it_data = p_datas_local.begin(); it_data != p_datas_local.end(); it_data++) {
-    out << " > local : ";
+    out << "data(";
     (*it_data)->toText(out);
-    out << std::endl;
+    out << ", local)" << std::endl;
   } 
 
-  out << "Loop trees:" << std::endl;
-  for (it_tree = p_trees.begin(); it_tree != p_trees.end(); it_tree++)
-    toText(*it_tree, out, " > ");
+  it_tree = p_trees.begin();
+  out << "loop-trees(" << std::endl;
+  toText(*it_tree, out, "  ");
+  it_tree++;
+  for (; it_tree != p_trees.end(); it_tree++) {
+    out << "," << std::endl;
+    toText(*it_tree, out, "  ");
+  }
+  out << ")" << std::endl;
 }
 
 }

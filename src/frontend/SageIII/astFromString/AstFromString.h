@@ -89,7 +89,7 @@ namespace AstFromString
   bool afs_skip_whitespace();
 
  
-  //! Match identifier, move to the next character if successful. The identifier could be a name of a type, function, variable, or label. The resolved identifier (type or variable/function/label name) is stored into c_parsed_node.
+  //! Match identifier, move to the next character if successful. The identifier could be a name of a type, function, variable, or label. The resolved identifier (type or variable/function/label name) is stored into c_parsed_node (unrecognized symbol are stored as SgName).
   bool afs_match_identifier();
 
   //! Match an integer constant, store it into result

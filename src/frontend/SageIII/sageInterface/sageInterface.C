@@ -3528,7 +3528,9 @@ SageInterface::generateFileList()
   // This would alternatively traverse all IR nodes in thememory pool!
   // fileTraversal.traverseMemoryPool();
 
-     ROSE_ASSERT(fileTraversal.fileList.empty() == false);
+  // TV (06/24/2013): This fail when calling SageBuilder::buildVariableDeclaration(...) without any file created.
+  // ROSE_ASSERT(fileTraversal.fileList.empty() == false);
+
      return fileTraversal.fileList;
    }
 
