@@ -481,7 +481,7 @@ void gatherReferences( const Rose_STL_Container< SgNode* >& expr, Rose_STL_Conta
     return result;
   }
   
-  int replaceVariableReferences(SgNode* root, ASTtools::VarSymSet_t vars)
+  int replaceVariablesWithPointerDereference(SgNode* root, ASTtools::VarSymSet_t vars)
   {
       int result = 0;
       typedef Rose_STL_Container<SgNode *> NodeList_t;
@@ -4117,7 +4117,7 @@ static void insertInnerThreadBlockReduction(SgOmpClause::omp_reduction_operator_
 
    // step 4. Variable replacement for all original bb1
    replaceVariableReferences(bb1, var_map); 
-   replaceVariableReferences(bb1, var_set); // Variables that must be replaced by a pointer to the variable
+   replaceVariablesWithPointerDereference(bb1, var_set); // Variables that must be replaced by a pointer to the variable
 
    // We delay the insertion of declaration, initialization , and save-back statements until variable replacement is done
    // in order to avoid replacing variables of these newly generated statements.

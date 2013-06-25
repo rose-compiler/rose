@@ -142,7 +142,7 @@ namespace OmpSupport
   //SgFunctionDeclaration* generateOutlinedFunction(SgNode* node);
 
   //! Replace all variable references in a set by pointers to the variable
-  int replaceVariableReferences(SgNode* root, std::set<SgVariableSymbol*>& vars);
+  int replaceVariablesWithPointerDereference(SgNode* root, std::set<SgVariableSymbol*>& vars);
   
   //! Add a variable into a non-reduction clause of an OpenMP statement, create the clause transparently if it does not exist
   void addClauseVariable(SgInitializedName* var, SgOmpClauseBodyStatement * clause_stmt, const VariantT& vt);
