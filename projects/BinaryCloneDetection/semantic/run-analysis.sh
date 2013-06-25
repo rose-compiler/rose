@@ -50,30 +50,49 @@ execute () {
     return $?
 }
 
+# Echos the number of processors that should be used
 parallelism () {
-    local varname="$1"
     local nwork=$(wc -l <$worklist)
-    rm -f $worklist-[a-z][a-z]
-    echo "Number of items in work list: $nwork" >&2
-    if [ $nwork -gt 1 -a "$interactive" = "yes" ]; then
-	local dflt=$(eval "echo \$$varname")
-	read -e -p "How many processes should be used? " -i "$dflt" $varname
+
+    # Choose number of processors
+    if [ $nwork -le 1 ]; then
+	echo $nwork
+	return 0
     fi
-    local nprocs=$(eval "echo \$$varname")
-    [ "$nprocs" = "" ] && nprocs=1
-    [ $nprocs -lt 1 ] && nprocs=1
+    local nprocs=$(grep --perl-regexp '^processor\s*:' /proc/cpuinfo 2>/dev/null |wc -l)
+    [ $nprocs -gt 1 ] && nprocs=$[nprocs-1]
+    [ $nprocs -gt $nwork ] && nprocs=$nwork
+    echo "Number of items in work list: $nwork" >&2
+    if [ $nprocs -gt 1 -a "$interactive" = "yes" ]; then
+	read -e -p "How many parallel processes should be used? " -i "$nprocs"
+	if [ -n "$REPLY" ]; then
+	    nprocs="$REPLY"
+	    [ $nprocs -gt $nwork ] && nprocs=$nwork
+	fi
+    fi
+
     echo $nprocs
 }
 
-# Split a file into parts of equal size based on the parallelism desired.  The varname holds the name of the config
-# variable containing the desired parallelism, which is only a hint.
+# Split a file into parts of equal size based on the parallelism desired.
 split_worklist () {
     local nprocs="$1"
     local nwork=$(wc -l <$worklist)
-    local nparts=$[3 * nprocs]
-    [ $nprocs -le 1 ] && nparts=1
+
+    # Choose number of parts to create
+    local nparts=$[5 * nprocs]
+    [ $nprocs -eq 1 ] && nparts=1
     [ $nparts -gt $nwork ] && nparts=$nwork
+    if [ $nprocs -gt 1 -a "$interactive" = "yes" ]; then
+	read -e -p "How many units of work for $nprocs processors? " -i "$nparts"
+	if [ -n "$REPLY" ]; then
+	    nparts="$REPLY"
+	    [ $nparts -gt $nwork ] && nparts=$nwork;
+	fi
+    fi
     [ $nparts -gt 676 ] && nparts=676 # 26*26
+
+    # Create parts
     if [ $nparts -gt 1 ]; then
 	local work_per_part=$[(nwork + nparts - 1) / nparts]
 	split --lines=$work_per_part $worklist $worklist-
@@ -107,19 +126,12 @@ add_functions_flags='$add_functions_flags'
 # Flags for obtaining the list of functions to test
 get_pending_tests_flags='$get_pending_tests_flags'
 
-# A hint for how much parallelism to employ when running tests
-test_parallelism='$test_parallelism'
-
 # Flags for running each test
 run_tests_flags='$run_tests_flags'
 
 # Flags for obtaining the list of function pairs for which similarity needs
 # to be calculated
 func_similarity_worklist_flags='$func_similarity_worklist_flags'
-
-# A hint for how much parallelism to employ when computing function
-# similarities with the 32-func-similarities command
-funcsim_parallelism='$funcsim_parallelism'
 
 # Flags for determining similarity of pairs of functions based on their output
 func_similarity_flags='$func_similarity_flags'
@@ -216,7 +228,9 @@ if [ "$interactive" = "yes" ]; then
     read -e -p "Switches for generating input groups: " -i "$generate_inputs_flags" generate_inputs_flags
     save_settings
 fi
-execute $BLDDIR/10-generate-inputs $generate_inputs_flags "$dbname" || exit 1
+if [ -n "$generate_inputs_flags" ]; then
+    execute $BLDDIR/10-generate-inputs $generate_inputs_flags "$dbname" || exit 1
+fi
 
 if [ "$#" -gt 0 ]; then
     if [ "$interactive" = "yes" ]; then
@@ -248,7 +262,7 @@ nwork=$(wc -l <$worklist)
 if [ "$nwork" -eq 0 ]; then
     echo "No tests to run"
 else
-    nprocs=$(parallelism test_parallelism)
+    nprocs=$(parallelism)
     worklist_parts=$(split_worklist $nprocs)
     nparts=$(count_args $worklist_parts)
     save_settings
@@ -295,7 +309,7 @@ nwork=$(wc -l <$worklist)
 if [ "$nwork" -eq 0 ]; then
     echo "No similarities to compute"
 else
-    nprocs=$(parallelism funcsim_parallelism)
+    nprocs=$(parallelism)
     worklist_parts=$(split_worklist $nprocs)
     nparts=$(count_args $worklist_parts)
     save_settings
@@ -341,7 +355,7 @@ if [ "$interactive" = "yes" ]; then
     read -e -p "Switches for creating clusters: " -i "$clusters_from_pairs_flags" clusters_from_pairs_flags
     save_settings
 fi
-execute $BLDDIR/35-clusters-from-pairs $clusters_from_pairs_flags "$dbname" semantic_funcsim semantic_clusters
+execute $BLDDIR/35-clusters-from-pairs $clusters_from_pairs_flags "$dbname" semantic_clusters
 
 echo
 echo "=================================================================================================="

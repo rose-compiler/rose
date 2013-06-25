@@ -18,6 +18,7 @@ drop table if exists semantic_files;
 drop table if exists semantic_faults;
 drop table if exists semantic_outputvalues;
 drop table if exists semantic_inputvalues;
+drop table if exists semantic_input_queues;
 drop table if exists semantic_history;
 
 -- A history of the commands that were run to produce this database, excluding SQL run by the user.
@@ -29,14 +30,24 @@ create table semantic_history (
        command text                             -- Command-line that was issued
 );
 
--- An inputvalue is either an integer or pointer value that belongs to an input group.  Each integer value has a sequential
--- position in its input group; similarly for pointers.  The sequence for integers and pointers are independent of one
--- another; they compose two separate input value lists within the input group.
+-- Table of input queue names.
+create table semantic_input_queues (
+       id integer primary key,			-- Queue ID or a special value (see InputGroupName)
+       name varchar(16),  			-- Short name
+       description text				-- Single-line, full description
+);
+
+-- This table encodes the set of all input groups.  Each input group consists of an input queue which contains zero or
+-- more values.  This table uses special values for queue_id and pos to encode some additional information:
+--   When:
+--     queue_id = -1 the val column is the collection_id, otherwise collection_id == igroup_id
+--     pos == -1     the queue is an infinite sequence where the val column contains the padding value.
+--     pos == -2     the val column is a queue number to which consumption requests are redirected.
 create table semantic_inputvalues (
-       id integer,                              -- ID for the input group; non-unique
-       vtype character,                         -- P (pointer) or I (integer)
-       pos integer,                             -- position of this inputvalue within its input group, per vtype
-       val bigint,                              -- the integer or pointer input value
+       igroup_id integer,                       -- ID for the input group; non-unique
+       queue_id integer references semantic_input_queues(id),
+       pos integer,                             -- position of this value within its queue (some positions are special)
+       val bigint,				-- the 64-bit unsigned value
        cmd bigint references semantic_history(hashkey) -- command that created this row
 );
 
@@ -135,6 +146,9 @@ create table semantic_sources (
 create table semantic_fio (
        func_id integer references semantic_functions(id),
        igroup_id integer,                       -- references semantic_inputvalues.id
+       arguments_consumed integer,		-- number of inputs consumed from the arguments queue
+       locals_consumed integer,			-- number of inputs consumed form the locals queue
+       globals_consumed integer,		-- number of inputs consumed from the globals queue
        pointers_consumed integer,               -- number of pointers from the inputgroup consumed by this test
        integers_consumed integer,               -- number of integers from the inputgroup consumed by this test
        instructions_executed integer,           -- number of instructions executed by this test
@@ -156,21 +170,25 @@ create table semantic_fio_events (
 -- This table contains trace info per test.  Not all tests generate trace info, and the contents of this table is
 -- mostly for debugging what happened during a test.
 create table semantic_fio_trace (
-       func_id integer references semantic_functions(id),
+       func_id integer, -- (need for speed) references semantic_functions(id),
        igroup_id integer,                       -- references semantic_inputvalues.id
        pos integer,                             -- sequence number of this event within this test
        addr bigint,                             -- specimen virtual address where event occurred
-       event_id integer references semantic_fio_events(id),
+       event_id integer, --(need for speed) references semantic_fio_events(id),
+       minor integer,				-- event minor number (usually zero)
        val bigint				-- event value, interpretation depends on event_id
 );
 
--- Function similarity--how similar are pairs of functions
+-- Function similarity--how similar are pairs of functions.  The relation_id allows us to store multiple function similarity
+-- relationships where all the similarity values for a given relationship were calculated the same way.  E.g., relationship
+-- #0 could be computed as the maximum output group similarity while relationship #1 could be the average.
 create table semantic_funcsim (
        func1_id integer references semantic_functions(id),
        func2_id integer references semantic_functions(id), -- func1_id < func2_id
        similarity double precision,             -- a value between 0 and 1, with one being equality
        ncompares integer,                       -- number of output groups compared to reach this value
        maxcompares integer,                     -- potential number of comparisons possible (ncompares is a random sample)
+       relation_id int,                         -- Identying number for this set of function similarity values (default is zero)
        cmd bigint references semantic_history(hashkey) -- command that set the precision on this row
 );
 

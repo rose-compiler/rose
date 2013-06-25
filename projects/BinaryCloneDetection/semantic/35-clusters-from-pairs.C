@@ -12,6 +12,13 @@ usage(int exit_status)
               <<"  This command reads the list of function similarity pairs and builds clusters, storing the result in\n"
               <<"  the specified CLUSTERS_TABLE.\n"
               <<"\n"
+              <<"    --relation=ID\n"
+              <<"            An integer that identifies which similarity values are being selected.  All similarity values\n"
+              <<"            that have the same relation ID form a single similarity relationship.  This allows the database\n"
+              <<"            to store multiple relationships. For example, relationship #1 could be similarity values that\n"
+              <<"            are calculated from the maximum output group Jaccard index, while relationship #2 could be\n"
+              <<"            similarity values that are calculated using a threshold of output group equality count. The\n"
+              <<"            default relation ID is zero.\n"
               <<"    --threshold=T\n"
               <<"            Only function pairs whose similarity is at least T are considered to be similar enough\n"
               <<"            to be in the same cluster.  All pairs of functions in a cluster thus have a similarity\n"
@@ -21,12 +28,6 @@ usage(int exit_status)
               <<"            The name of the database to which we are connecting.  For SQLite3 databases this is just a local\n"
               <<"            file name that will be created if it doesn't exist; for other database drivers this is a URL\n"
               <<"            containing the driver type and all necessary connection parameters.\n"
-              <<"    PAIRS_TABLE\n"
-              <<"            The name of the table containing function similarity pairs.  This table should have at least\n"
-              <<"            these three columns: \"func1_id\" and \"func2_id\" are function ID numbers, and \"similarity\"\n"
-              <<"            is a floating point value between zero and one, inclusive, that indicates how similar the\n"
-              <<"            two functions are.  Since similarity is reflexive and symmetric, the table only needs to\n"
-              <<"            contain rows where \"func1_id\" is less than \"func2_id\".\n"
               <<"    CLUSTERS_TABLE\n"
               <<"            The name of the table that will contain cluster information.  This table is droped and\n"
               <<"            recreated to contain two columns: \"id\", the cluster identification number chosen\n"
@@ -36,8 +37,9 @@ usage(int exit_status)
 }
 
 struct Switches {
-    Switches(): threshold(0.75) {}
+    Switches(): threshold(0.75), relation_id(0) {}
     double threshold;
+    int relation_id;
 };
 
 typedef std::set<int/*func_id*/> Functions;
@@ -74,16 +76,6 @@ struct Clique {
 
 typedef std::set<Clique> Cliques;
 
-static bool
-is_valid_table_name(const std::string &name)
-{
-    static const char *valid_chars = "abcdefghijklmnopqrstuvwxyz"
-                                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                     "0123456789"
-                                     "_";
-    return std::string::npos == name.find_first_not_of(valid_chars);
-}
-
 static double
 similarity(const Similarities &similarities, int func1_id, int func2_id)
 {
@@ -114,6 +106,8 @@ main(int argc, char *argv[])
             break;
         } else if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
             usage(0);
+        } else if (!strncmp(argv[argno], "--relation=", 11)) {
+            opt.relation_id = strtol(argv[argno]+11, NULL, 0);
         } else if (!strncmp(argv[argno], "--threshold=", 12)) {
             opt.threshold = strtod(argv[argno]+12, NULL);
         } else {
@@ -122,25 +116,25 @@ main(int argc, char *argv[])
             exit(1);
         }
     };
-    if (argno+3!=argc)
+    if (argno+2!=argc)
         usage(1);
     SqlDatabase::ConnectionPtr conn = SqlDatabase::Connection::create(argv[argno++]);
     SqlDatabase::TransactionPtr tx = conn->transaction();
-    std::string pairs_table = argv[argno++];
     std::string clusters_table = argv[argno++];
-    if (!is_valid_table_name(pairs_table)) {
-        std::cerr <<argv0 <<": not a valid table name: " <<pairs_table <<"\n";
-        exit(1);
-    }
-    if (!is_valid_table_name(clusters_table)) {
+    if (!SqlDatabase::is_valid_table_name(clusters_table)) {
         std::cerr <<argv0 <<": not a valid table name: " <<clusters_table <<"\n";
         exit(1);
     }
     int64_t cmd_id = CloneDetection::start_command(tx, argc, argv, "generating clusters from pairs");
 
     // Count how much work to do
-    size_t npairs = tx->statement("select count(*) from "+pairs_table+" where func1_id<func2_id and similarity>=?")
-                    ->bind(0, opt.threshold)->execute_int();
+    size_t npairs = tx->statement("select count(*) from semantic_funcsim"
+                                  " where relation_id = ?"
+                                  " and similarity >= ?"
+                                  " and func1_id < func2_id")
+                    ->bind(0, opt.relation_id)
+                    ->bind(1, opt.threshold)
+                    ->execute_int();
     CloneDetection::Progress progress(npairs);
 
     // Recreate the output table.
@@ -152,8 +146,13 @@ main(int argc, char *argv[])
     // Load all function similarities so we don't have to make lots of queries
     Similarities similarities;
     Functions all_functions;
-    SqlDatabase::StatementPtr stmt1 = tx->statement("select func1_id, func2_id, similarity from "+pairs_table+
-                                                    " where func1_id < func2_id and similarity >= ?")->bind(0, opt.threshold);
+    SqlDatabase::StatementPtr stmt1 = tx->statement("select func1_id, func2_id, similarity"
+                                                    " from semantic_funcsim"
+                                                    " where relation_id = ?"
+                                                    " and similarity >= ?"
+                                                    " and func1_id < func2_id")
+                                      ->bind(0, opt.relation_id)
+                                      ->bind(1, opt.threshold);
     progress.clear();
     std::cerr <<argv0 <<": loading function similarity pairs\n";
     for (SqlDatabase::Statement::iterator row=stmt1->begin(); row!=stmt1->end(); ++row) {

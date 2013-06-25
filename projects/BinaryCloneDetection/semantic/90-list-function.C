@@ -15,6 +15,12 @@ usage(int exit_status)
               <<"\n"
               <<"    --[no-]assembly\n"
               <<"            Show the assembly listing for this function.  The default is to show the listing.\n"
+              <<"    --[no-]color\n"
+              <<"            Emit ANSI escape codes to colorize source code. The default is to emit escape codes if standard\n"
+              <<"            output is a terminal.\n"
+              <<"    --quiet\n"
+              <<"            Turn all output off. This is usually only useful when it is followed by switches that turn\n"
+              <<"            some things back on again.\n"
               <<"    --[no-]source\n"
               <<"            Show the source code if available.  If --assembly and --source are both specified, then the\n"
               <<"            source code is listed with assembly interspersed.  The default is to show source code.\n"
@@ -49,9 +55,10 @@ usage(int exit_status)
 struct Switches {
     Switches()
         : show_summary(true), show_source_names(true), show_tests(true), show_assembly(true), show_source(true),
-          show_trace(false) {}
+          show_trace(false), colorize(isatty(1)) {}
     bool show_summary, show_source_names, show_tests, show_assembly, show_source, show_trace;
     std::set<int/*igroup_id*/> traces;
+    bool colorize;
 } opt;
 
 typedef std::map<int/*index*/, std::pair<rose_addr_t, std::string/*assembly*/> > Instructions;
@@ -66,12 +73,13 @@ typedef std::map<SourcePosition, Code> Listing;
 
 struct Event {
     typedef std::map<int64_t/*input*/, size_t/*count*/> Inputs;
+    typedef std::vector<Inputs> InputQueues; // indexed by queue number
     typedef std::map<CloneDetection::AnalysisFault::Fault, size_t/*count*/> Faults;
     typedef std::map<rose_addr_t/*target*/, size_t/*count*/> Branches;
     Event(): nexecuted(0), ninputs(0), nfaults(0), nbranches(0) {}
     size_t nexecuted;           // number of times this basic block was executed
     size_t ninputs;             // number of inputs consumed here
-    Inputs inputs;              // input value distribution
+    InputQueues inputs;         // input value distribution per queue
     size_t nfaults;             // 0 or 1 unless we've accumulated multiple tests
     Faults faults;              // fault distribution
     size_t nbranches;           // number of times we branched
@@ -204,16 +212,17 @@ show_source_names(const SqlDatabase::TransactionPtr &tx, int func_id)
 static void
 show_tests(const SqlDatabase::TransactionPtr &tx, int func_id)
 {
-    SqlDatabase::Table<int, size_t, size_t, size_t, int64_t, std::string, double, double, int64_t> fio;
+    SqlDatabase::Table<int, size_t, size_t, size_t, size_t, size_t, size_t, int64_t, std::string, double, double, int64_t> fio;
     fio.insert(tx->statement("select"
-                             " fio.igroup_id, fio.integers_consumed, fio.pointers_consumed,"
-                             " fio.instructions_executed, fio.ogroup_id, fault.name, fio.elapsed_time, fio.cpu_time, fio.cmd"
+                             " fio.igroup_id, fio.arguments_consumed, fio.locals_consumed, fio.globals_consumed,"
+                             " fio.integers_consumed, fio.pointers_consumed, fio.instructions_executed, fio.ogroup_id,"
+                             " fault.name, fio.elapsed_time, fio.cpu_time, fio.cmd"
                              " from semantic_fio as fio"
                              " join semantic_faults as fault on fio.status = fault.id"
                              " where func_id = ?"
                              " order by igroup_id")->bind(0, func_id));
     std::cout <<"Tests run for this function:\n";
-    fio.headers("IGroup", "Ints", "Ptrs", "Insns", "OGroup", "Status", "Elapsed Time",
+    fio.headers("IGroup", "Args", "Locals", "Globals", "Ints", "Ptrs", "Insns", "OGroup", "Status", "Elapsed Time",
                 "CPU Time", "Command");
     fio.line_prefix("    ");
     fio.print(std::cout);
@@ -226,14 +235,15 @@ load_events(const SqlDatabase::TransactionPtr &tx, int func_id, Events &events/*
         std::vector<std::string> igroups;
         for (std::set<int>::const_iterator i=opt.traces.begin(); i!=opt.traces.end(); ++i)
             igroups.push_back(StringUtility::numberToString(*i));
-        std::string sql = "select addr, event_id, val from semantic_fio_trace where func_id=?";
+        std::string sql = "select addr, event_id, minor, val from semantic_fio_trace where func_id=?";
         if (!igroups.empty())
-            sql += " and igroup_id in (" + StringUtility::join(" and ", igroups) + ")";
+            sql += " and igroup_id in (" + StringUtility::join(", ", igroups) + ")";
         SqlDatabase::StatementPtr stmt2 = tx->statement(sql)->bind(0, func_id);
         for (SqlDatabase::Statement::iterator row=stmt2->begin(); row!=stmt2->end(); ++row) {
             rose_addr_t addr = row.get<rose_addr_t>(0);
             int event_id = row.get<int>(1);
-            int64_t val = row.get<int64_t>(2);
+            int minor = row.get<int>(2);
+            int64_t val = row.get<int64_t>(3);
             switch (event_id) {
                 case CloneDetection::Tracer::EV_REACHED:
                     ++events[addr].nexecuted;
@@ -242,14 +252,16 @@ load_events(const SqlDatabase::TransactionPtr &tx, int func_id, Events &events/*
                     ++events[addr].nbranches;
                     ++events[addr].branches[val];
                     break;
-                case CloneDetection::Tracer::EV_CONSUME_INTEGER:
-                case CloneDetection::Tracer::EV_CONSUME_POINTER:
+                case CloneDetection::Tracer::EV_CONSUME_INPUT:
                     ++events[addr].ninputs;
-                    ++events[addr].inputs[val];
+                    assert(minor>=0);
+                    if ((size_t)minor>=events[addr].inputs.size())
+                        events[addr].inputs.resize(minor+1);
+                    ++events[addr].inputs[minor][val];
                     break;
                 case CloneDetection::Tracer::EV_FAULT:
                     ++events[addr].nfaults;
-                    ++events[addr].faults[(CloneDetection::AnalysisFault::Fault)val];
+                    ++events[addr].faults[(CloneDetection::AnalysisFault::Fault)minor];
                     break;
                 default:
                     /*void*/
@@ -264,43 +276,51 @@ show_events(const Event &e)
 {
     // Subsequent lines for inputs consumed
     if (e.ninputs>0) {
-        std::cout <<std::setw(9) <<std::right <<e.ninputs <<"> |   inputs = {";
-        size_t nvals = 0, col=0;
-        for (Event::Inputs::const_iterator ii=e.inputs.begin(); ii!=e.inputs.end(); ++ii, ++nvals) {
-            if (nvals++) {
-                std::cout <<", ";
-                col += 2;
+        std::cout <<std::setw(9) <<std::right <<e.ninputs <<"> |   ";
+        size_t nlines=0;
+        for (size_t q=0; q<e.inputs.size(); ++q) {
+            if (e.inputs[q].empty())
+                continue;
+            if (0!=nlines)
+                std::cout <<std::string(11, ' ') <<"|   ";
+            std::cout <<CloneDetection::InputGroup::queue_name((CloneDetection::InputQueueName)q) <<" = {";
+            size_t nvals = 0, col=0;
+            for (Event::Inputs::const_iterator ii=e.inputs[q].begin(); ii!=e.inputs[q].end(); ++ii, ++nvals) {
+                if (nvals++) {
+                    std::cout <<", ";
+                    col += 2;
+                }
+                if (col>90) {
+                    std::cout <<"\n" <<std::string(11, ' ') <<"|             ";
+                    col = 0;
+                    ++nlines;
+                }
+                std::ostringstream ss;
+                int64_t val = ii->first;
+                size_t count = ii->second;
+                if (val<=4096 && val>-4096) {
+                    ss <<val;
+                } else {
+                    ss <<StringUtility::addrToString((uint64_t)val);
+                }
+                if (count>1)
+                    ss <<"(" <<count <<"x)";
+                std::cout <<ss.str();
+                col += ss.str().size();
             }
-            if (col>90) {
-                std::cout <<"\n" <<std::string(11, ' ') <<"|             ";
-                col = 0;
-            }
-            std::ostringstream ss;
-            int64_t val = ii->first;
-            size_t count = ii->second;
-            if (val<=4096 && val>-4096) {
-                ss <<val;
-            } else {
-                ss <<StringUtility::addrToString((uint64_t)val);
-            }
-            if (count>1)
-                ss <<"(" <<count <<"x)";
-            std::cout <<ss.str();
-            col += ss.str().size();
+            std::cout <<"}\n";
+            ++nlines;
         }
-        std::cout <<"}\n";
     }
 
     // Subsequent lines for control flow branches
     if (e.nbranches>0) {
         size_t col=0;
         std::cout <<std::setw(10) <<std::right <<"BR" <<" |  ";
-        if (e.branches.size()>1) {
-            std::string s = " branch taken " + StringUtility::numberToString(e.nbranches) +
-                            " time" + (1==e.nbranches?"":"s") + ":";
-            std::cout <<s;
-            col = s.size();
-        }
+        std::string s = " branch taken " + StringUtility::numberToString(e.nbranches) +
+                        " time" + (1==e.nbranches?"":"s") + ":";
+        std::cout <<s;
+        col = s.size();
         for (Event::Branches::const_iterator bi=e.branches.begin(); bi!=e.branches.end(); ++bi) {
             if (col>100) {
                 std::cout <<"\n" <<std::string(11, ' ') <<"|  ";
@@ -308,7 +328,7 @@ show_events(const Event &e)
             }
             std::ostringstream ss;
             ss <<" " <<StringUtility::addrToString(bi->first);
-            if (bi->second>1)
+            if (bi->second!=e.nbranches)
                 ss <<"(" <<bi->second <<"x)";
             std::cout <<ss.str();
             col += ss.str().size();
@@ -339,10 +359,6 @@ list_assembly(const SqlDatabase::TransactionPtr &tx, int func_id)
     for (SqlDatabase::Statement::iterator insn=stmt->begin(); insn!=stmt->end(); ++insn) {
         rose_addr_t addr = insn.get<rose_addr_t>(0);
         std::string assembly = insn.get<std::string>(1);
-        size_t colon = assembly.find(':');
-        if (colon!=std::string::npos)
-            assembly.insert(colon+1, "  ");
-
         Events::const_iterator ei=events.find(addr);
 
         // Assembly line prefix
@@ -353,7 +369,7 @@ list_assembly(const SqlDatabase::TransactionPtr &tx, int func_id)
         }
             
         // Assembly instruction
-        std::cout <<"| " <<assembly <<"\n";
+        std::cout <<"| " <<StringUtility::addrToString(addr) <<":  " <<assembly <<"\n";
 
         if (ei!=events.end())
             show_events(ei->second);
@@ -401,9 +417,6 @@ list_combined(const SqlDatabase::TransactionPtr &tx, int func_id, bool show_asse
             int position = row.get<int>(2);
             rose_addr_t addr = row.get<rose_addr_t>(3);
             std::string assembly = row.get<std::string>(4);
-            size_t colon = assembly.find(':');
-            if (colon!=std::string::npos)
-                assembly.insert(colon+1, "  ");
             listing[SourcePosition(file_id, line_num)].assembly_code.insert(std::make_pair(position,
                                                                                            std::make_pair(addr, assembly)));
         }
@@ -457,7 +470,8 @@ list_combined(const SqlDatabase::TransactionPtr &tx, int func_id, bool show_asse
             if (seen_files.insert(file_id).second)
                 std::cout <<std::setw(4) <<std::right <<file_id <<".file  |" <<file_names[file_id] <<"\n";
             std::cout <<std::setw(4) <<std::right <<file_id <<"." <<std::setw(6) <<std::left <<li->first.line_num
-                      <<"|" <<li->second.source_code <<"\n";
+                      <<"|"
+                      <<(opt.colorize?"\033[34m":"") <<li->second.source_code <<(opt.colorize?"\033[m":"") <<"\n";
         }
         for (Instructions::iterator ii=li->second.assembly_code.begin(); ii!=li->second.assembly_code.end(); ++ii) {
             rose_addr_t addr = ii->second.first;
@@ -471,7 +485,8 @@ list_combined(const SqlDatabase::TransactionPtr &tx, int func_id, bool show_asse
             }
             
             std::cout <<(prev_position+1==ii->first ? "|" : "#")
-                      <<std::setw(4) <<std::right <<ii->first <<" " <<assembly <<"\n";
+                      <<std::setw(4) <<std::right <<ii->first <<" " <<StringUtility::addrToString(addr) <<":  "
+                      <<(opt.colorize?"\033[32m":"") <<assembly <<(opt.colorize?"\033[m":"") <<"\n";
 
             if (ei!=events.end())
                 show_events(ei->second);
@@ -504,6 +519,13 @@ main(int argc, char *argv[])
             opt.show_assembly = true;
         } else if (!strcmp(argv[argno], "--no-assembly")) {
             opt.show_assembly = false;
+        } else if (!strcmp(argv[argno], "--color")) {
+            opt.colorize = true;
+        } else if (!strcmp(argv[argno], "--no-color")) {
+            opt.colorize = false;
+        } else if (!strcmp(argv[argno], "--quiet")) {
+            opt.show_summary = opt.show_source_names = opt.show_tests = opt.show_assembly = false;
+            opt.show_source = opt.show_trace = false;
         } else if (!strcmp(argv[argno], "--source")) {
             opt.show_source = true;
         } else if (!strcmp(argv[argno], "--no-source")) {
@@ -519,6 +541,25 @@ main(int argc, char *argv[])
         } else if (!strcmp(argv[argno], "--tests")) {
             opt.show_tests = true;
         } else if (!strcmp(argv[argno], "--trace")) {
+            opt.show_trace = true;
+        } else if (!strncmp(argv[argno], "--trace=", 8)) {
+            std::vector<std::string> id_strings = StringUtility::split(',', argv[argno]+8, (size_t)-1, true);
+            for (size_t i=0; i<id_strings.size(); ++i) {
+                const char *s = id_strings[i].c_str();
+                char *rest;
+                errno = 0;
+                int id = strtol(s, &rest, 0);
+                if (errno || rest==s) {
+                    std::cerr <<argv0 <<": invalid test ID for --trace switch: " <<s <<"\n";
+                    exit(1);
+                }
+                while (isspace(*rest)) ++rest;
+                if (*rest) {
+                    std::cerr <<argv0 <<": invalid test ID for --trace switch: " <<s <<"\n";
+                    exit(1);
+                }
+                opt.traces.insert(id);
+            }
             opt.show_trace = true;
         } else if (!strcmp(argv[argno], "--no-trace")) {
             opt.show_trace = false;

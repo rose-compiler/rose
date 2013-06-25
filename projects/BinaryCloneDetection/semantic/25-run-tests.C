@@ -19,29 +19,24 @@ usage(int exit_status)
     std::cerr <<"usage: " <<argv0 <<" [SWITCHES] [--] DATABASE < FUNC_INPUT_PAIRS\n"
               <<"  This command runs the tests specified on standard input.\n"
               <<"\n"
-              <<"    --checkpoint=NSEC\n"
-              <<"            Commit test results to the database every NSEC seconds.  The default (when NSEC is zero) is to\n"
-              <<"            commit every ten minutes so that not too much data gets thrown away if problems occur.\n"
+              <<"    --checkpoint[=NSEC,[NSEC2]]\n"
+              <<"    --no-checkpoint\n"
+              <<"            Commit test results to the database every NSEC seconds.  If NSEC2 is also present then the\n"
+              <<"            checkpoint interval will be a random value between NSEC and NSEC2.  If neither NSEC nor NSEC2\n"
+              <<"            are specified then a random interval between 5 and 15 minutes is chosen (this is also the default\n"
+              <<"            if neither --checkpoint nor --no-checkpoint is specified). A random interval is useful when large\n"
+              <<"            output groups and/or traces need to be saved in the database since it makes it more likely that\n"
+              <<"            not all instances of a parallel run will hit the database server at the about the same time.\n"
               <<"    --[no-]follow-calls\n"
               <<"            If --follow-calls is specified, then x86 CALL instructions are treated the same as any other\n"
               <<"            instruction, resulting in the analysis of the called function in-line with the caller if possible,\n"
               <<"            otherwise that particular call is treaded as for the --no-follow-calls case.  If --no-follow-calls\n"
               <<"            is specified (the default) then all x86 CALL instructions are skipped and the EAX register is\n"
               <<"            loaded with the next integer input value.\n"
-              <<"    --[no-]init-memory\n"
-              <<"            If --init-memory is specified, then most of memory (excluding memory that is initialized with\n"
-              <<"            content from the binary container file) is initialized by consuming the first integer input value\n"
-              <<"            and using it to seed a linear congruential generator.  The default, --no-init-memory, causes\n"
-              <<"            an input value to be consumed whenever an uninitialized memory location is read.\n"
               <<"    --[no-]interactive\n"
               <<"            With the \"--interactive\" switch, pressing control-C (or otherwise sending SIGINT to the\n"
               <<"            process) will cause the process to finish executing the current test and then prompt the user\n"
               <<"            on the tty whether it should checkpoint and/or terminate. The default is --no-interactive.\n"
-              <<"    --[no-]limit-inputs\n"
-              <<"            Controls whether or not a test is terminated when it attempts to consume more inputs than are\n"
-              <<"            available in the input group.  If \"--limit-inputs\" is specified, then the test is terminated\n"
-              <<"            and the FAULT_INPUT_LIMIT is noted in its output group.  The default is --no-limit-inputs, in\n"
-              <<"            which case the input group gives back zeros when it is exhausted.\n"
               <<"    --timeout=NINSNS\n"
               <<"            Any test for which more than NINSNS instructions are executed times out.  The default is 5000.\n"
               <<"            Tests that time out produce a fault output in addition to whatever normal output values were\n"
@@ -49,10 +44,9 @@ usage(int exit_status)
               <<"    --[no-]pointers\n"
               <<"            Perform [or not] pointer analysis on each function.  The pointer analysis is a binary-only\n"
               <<"            analysis that looks for memory addresses that hold pointers from the source code.  When this is\n"
-              <<"            enabled, any read from such an address before it's initialized causes an input to be consumed.\n"
-              <<"            This analysis slows down processing considerably and is therefore disabled by default.  It also\n"
-              <<"            doesn't make sense to use the analysis with --init-memory since --init-memory would preclude\n"
-              <<"            any pointer input values from being used even if a pointer was detected by the analysis.\n"
+              <<"            enabled, any read from such an address before it's initialized causes an input to be consumed\n"
+              <<"            from the \"pointers\" input queue. This analysis slows down processing considerably and is\n"
+              <<"            therefore disabled by default.\n"
               <<"    --[no-]progress\n"
               <<"            Show a progress bar even if standard error is not a terminal or the verbosity level is not silent.\n"
               <<"    --trace[=EVENTS]\n"
@@ -80,12 +74,11 @@ usage(int exit_status)
 
 struct Switches {
     Switches()
-        : verbosity(SILENT), progress(false), pointers(false), checkpoint(600), interactive(false),
-          limit_inputs(false), trace_events(0) {
+        : verbosity(SILENT), progress(false), pointers(false), interactive(false), trace_events(0) {
+        checkpoint = 300 + LinearCongruentialGenerator()()%600;
         params.timeout = 5000;
         params.verbosity = SILENT;
         params.follow_calls = false;
-        params.init_memory = false;
         params.initial_stack = 0x80000000;
     }
     Verbosity verbosity;                        // semantic policy has a separate verbosity
@@ -93,7 +86,6 @@ struct Switches {
     bool pointers;
     time_t checkpoint;
     bool interactive;
-    bool limit_inputs;
     unsigned trace_events;
     PolicyParams params;
 };
@@ -240,7 +232,7 @@ fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inpu
 
     if (fault) {
         rose_addr_t va = policy.state.registers.ip.is_known() ? policy.state.registers.ip.known_value() : 0;
-        tracer.emit(va, Tracer::EV_FAULT, fault);
+        tracer.emit(va, Tracer::EV_FAULT, 0, (int)fault);
     }
     
     // Gather the function's outputs before restoring machine state.
@@ -285,24 +277,49 @@ main(int argc, char *argv[])
             break;
         } else if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
             usage(0);
+        } else if (!strcmp(argv[argno], "--checkpoint")) {
+            opt.checkpoint = 300 + LinearCongruentialGenerator()() % 600; // between 5 and 15 minutes
+        } else if (!strcmp(argv[argno], "--no-checkpoint")) {
+            opt.checkpoint = 0;
         } else if (!strncmp(argv[argno], "--checkpoint=", 13)) {
-            opt.checkpoint = strtoul(argv[argno]+13, NULL, 0);
+            char *s=argv[argno]+13, *rest;
+            errno = 0;
+            time_t c1 = strtoul(s, &rest, 0), c2=0;
+            if (errno || rest==s) {
+                std::cerr <<argv0 <<": invalid time spec for --checkpoint switch: " <<argv[argno]+13 <<"\n";
+                exit(1);
+            }
+            while (isspace(*rest)) ++rest;
+            if (','==*rest) {
+                s = rest;
+                errno = 0;
+                c2 = strtoul(s, &rest, 0);
+                if (errno || rest==s) {
+                    std::cerr <<argv0 <<": invalid end time spec for --checkpoint switch: " <<argv[argno]+13 <<"\n";
+                    exit(1);
+                }
+            } else if (*rest) {
+                std::cerr <<argv0 <<": invalid time spec for --checkpoint switch: " <<argv[argno]+13 <<"\n";
+                exit(1);
+            } else {
+                c2 = c1;
+            }
+            c1 = std::max((time_t)1, c1);
+            c2 = std::max((time_t)1, c2);
+            if (c1==c2) {
+                opt.checkpoint = c1;
+            } else {
+                if (c1 > c2) std::swap(c1, c2);
+                opt.checkpoint = c1 + LinearCongruentialGenerator()() % (c2-c1);
+            }
         } else if (!strcmp(argv[argno], "--follow-calls")) {
             opt.params.follow_calls = true;
         } else if (!strcmp(argv[argno], "--no-follow-calls")) {
             opt.params.follow_calls = false;
-        } else if (!strcmp(argv[argno], "--init-memory")) {
-            opt.params.init_memory = true;
-        } else if (!strcmp(argv[argno], "--no-init-memory")) {
-            opt.params.init_memory = false;
         } else if (!strcmp(argv[argno], "--interactive")) {
             opt.interactive = true;
         } else if (!strcmp(argv[argno], "--no-interactive")) {
             opt.interactive = false;
-        } else if (!strcmp(argv[argno], "--limit-inputs")) {
-            opt.limit_inputs = true;
-        } else if (!strcmp(argv[argno], "--no-limit-inputs")) {
-            opt.limit_inputs = false;
         } else if (!strncmp(argv[argno], "--timeout=", 10)) {
             opt.params.timeout = strtoull(argv[argno]+10, NULL, 0);
         } else if (!strcmp(argv[argno], "--pointers")) {
@@ -466,8 +483,6 @@ main(int argc, char *argv[])
                 std::cerr <<argv0 <<": input group " <<work.igroup_id <<" is empty or does not exist\n";
                 exit(1);
             }
-            if (opt.limit_inputs)
-                igroup.limit_consumption(true);
         }
 
         // Find the function to test
@@ -516,23 +531,28 @@ main(int argc, char *argv[])
 
         // Update the database with the test results
         SqlDatabase::StatementPtr stmt = tx->statement("insert into semantic_fio"
-                                                       // 0        1          2                  3
-                                                       " (func_id, igroup_id, pointers_consumed, integers_consumed,"
-                                                       // 4                     5          6
+                                                       // 0        1          2                   3
+                                                       " (func_id, igroup_id, arguments_consumed, locals_consumed,"
+                                                       // 4               5                  6
+                                                       "globals_consumed, pointers_consumed, integers_consumed,"
+                                                       // 7                     8          9
                                                        " instructions_executed, ogroup_id, status,"
-                                                       // 7           8         9
+                                                       // 10          11        12
                                                        "elapsed_time, cpu_time, cmd)"
-                                                       " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                                                       " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         stmt->bind(0, work.func_id);
         stmt->bind(1, work.igroup_id);
-        stmt->bind(2, igroup.pointers_consumed());
-        stmt->bind(3, igroup.integers_consumed());
-        stmt->bind(4, ogroup.ninsns);
-        stmt->bind(5, ogroup_id);
-        stmt->bind(6, ogroup.fault);
-        stmt->bind(7, elapsed_time);
-        stmt->bind(8, cpu_time);
-        stmt->bind(9, cmd_id);
+        stmt->bind(2, igroup.queue(IQ_ARGUMENT).nconsumed());
+        stmt->bind(3, igroup.queue(IQ_LOCAL).nconsumed());
+        stmt->bind(4, igroup.queue(IQ_GLOBAL).nconsumed());
+        stmt->bind(5, igroup.queue(IQ_POINTER).nconsumed());
+        stmt->bind(6, igroup.queue(IQ_INTEGER).nconsumed());
+        stmt->bind(7, ogroup.ninsns);
+        stmt->bind(8, ogroup_id);
+        stmt->bind(9, ogroup.fault);
+        stmt->bind(10, elapsed_time);
+        stmt->bind(11, cpu_time);
+        stmt->bind(12, cmd_id);
         stmt->execute();
         ++ntests_ran;
 

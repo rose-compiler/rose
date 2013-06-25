@@ -209,7 +209,7 @@ main(int argc, char *argv[])
     tx->execute("create temporary table tmp_functions as " + sql1);
 
     // Create table tmp_inputgroups containing IDs for selected input groups
-    std::string sql2 = "select distinct id from semantic_inputvalues where id >= " +
+    std::string sql2 = "select distinct igroup_id from semantic_inputvalues where igroup_id >= " +
                        StringUtility::numberToString(opt.first_fuzz);
     if (opt.nfuzz_set)
         sql2 += " and id < " + StringUtility::numberToString(opt.first_fuzz+opt.nfuzz);
@@ -217,10 +217,10 @@ main(int argc, char *argv[])
 
     // Create tmp_pending as the cross product of functions and inputgroups except for those already tested
     tx->execute("create temporary table tmp_pending as"
-                "    select func.specimen_id as specimen_id, func.id as func_id, igroup.id as igroup_id"
+                "    select func.specimen_id as specimen_id, func.id as func_id, igroup.igroup_id as igroup_id"
                 "      from tmp_functions as func"
                 "      join tmp_inputgroups as igroup"
-                "      on igroup.id is not null"        // "on" clause and "is not null" (rather than "true") for portability
+                "      on igroup.igroup_id is not null" // "on" clause and "is not null" (rather than "true") for portability
                 "  except"
                 "    select func.specimen_id, func.id, fio.igroup_id"
                 "      from semantic_fio as fio"

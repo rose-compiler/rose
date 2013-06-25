@@ -88,9 +88,8 @@ public:
     enum Event {
         EV_REACHED              = 0x00000001,   /**< Basic block executed. */
         EV_BRANCHED             = 0x00000002,   /**< Branch taken. */
-        EV_FAULT                = 0x00000004,   /**< Test failed due to some exceptional condition. */
-        EV_CONSUME_INTEGER      = 0x00000008,   /**< Consumed an integer value from the input group. */
-        EV_CONSUME_POINTER      = 0x00000010,   /**< Consumed a pointer value from the input gorup. */
+        EV_FAULT                = 0x00000004,   /**< Test failed; minor number is the fault ID */
+        EV_CONSUME_INPUT        = 0x00000008,   /**< Consumed an input. Minor number is the queue. */
         // Masks
         CONTROL_FLOW            = 0x00000003,   /**< Control flow events. */
         INPUT_CONSUMPTION       = 0x00000018,   /**< Events related to consumption of input. */
@@ -122,7 +121,7 @@ public:
     void reset(int func_id, int igroup_id, unsigned events=ALL_EVENTS, size_t pos=0);
 
     /** Add an event to the stream.  The event is not actually inserted into the database until save() is called. */
-    void emit(rose_addr_t addr, Event event, uint64_t value=0);
+    void emit(rose_addr_t addr, Event event, uint64_t value=0, int minor=0);
 
     /** Save events that have accumulated. */
     void save(const SqlDatabase::TransactionPtr &tx);
@@ -154,7 +153,7 @@ public:
     /** Return the short name of a fault ID. */
     static const char *fault_name(Fault fault) {
         switch (fault) {
-            case NONE:          return "none";
+            case NONE:          return "success";
             case DISASSEMBLY:   return "disassembly";
             case INSN_LIMIT:    return "insn limit";
             case HALT:          return "halt";
@@ -205,6 +204,8 @@ public:
     FaultException(AnalysisFault::Fault fault)
         : Exception(std::string("encountered ") + AnalysisFault::fault_name(fault)), fault(fault) {}
 };
+
+std::ostream& operator<<(std::ostream&, const Exception&);
 
 /*******************************************************************************************************************************
  *                                      File names table
@@ -425,111 +426,174 @@ typedef BinaryAnalysis::PointerAnalysis::PointerDetection<InstructionProvidor> P
  *                                      Address hasher
  *******************************************************************************************************************************/
 
-/** Hashes a virtual address to a small integer. */
+/** Hashes a virtual address to a random integer. */
 class AddressHasher {
 public:
-    AddressHasher() { init_table(); }
-    AddressHasher(unsigned seed): lcg(seed) { init_table(); }
+    AddressHasher() { init(0, 255, 0); }
+    AddressHasher(uint64_t minval, uint64_t maxval, int seed): lcg(0) { init(minval, maxval, seed); }
 
-    void init_table() {
-        for (size_t i=0; i<256; ++i)
+    void init(uint64_t minval, uint64_t maxval, int seed) {
+        this->minval = std::min(minval, maxval);
+        this->maxval = std::max(minval, maxval);
+        lcg.reseed(seed);
+        for (size_t i=0; i<256; ++i) {
             tab[i] = lcg() % 256;
+            val[i] = lcg();
+        }
     }
     
-    uint8_t operator()(rose_addr_t addr, Verbosity verbosity) {
-        uint8_t retval = 0;
+    uint64_t operator()(rose_addr_t addr) {
+        uint64_t retval;
+        uint8_t idx = 0;
         for (size_t i=0; i<4; ++i) {
             uint8_t byte = IntegerOps::shiftRightLogical2(addr, 8*i) & 0xff;
-            retval = tab[(retval+byte) & 0xff];
+            idx = tab[(idx+byte) & 0xff];
+            retval ^= val[idx];
         }
-        if (verbosity>=EFFUSIVE)
-            std::cerr <<"CloneDetection: initializing memory[" <<StringUtility::addrToString(addr) <<"]"
-                      <<" = (uint8_t)" <<(unsigned)retval <<"\n";
-        return retval;
+        return minval + retval % (maxval+1-minval);
     }
 private:
+    uint64_t minval, maxval;
     LinearCongruentialGenerator lcg;
     uint8_t tab[256];
+    uint64_t val[256];
 };
     
 /*******************************************************************************************************************************
  *                                      Input Group
  *******************************************************************************************************************************/
 
-/** Initial values to supply for inputs.  These are defined in terms of integers which are then cast to the appropriate size
- *  when needed.  During fuzz testing, whenever the specimen reads from a register or memory location which has never been
- *  written, we consume the next value from this input object. When all values are consumed, this object begins to return only
- *  zero values. */
+enum InputQueueName {
+    IQ_ARGUMENT= 0,                            // queue used for function arguments
+    IQ_LOCAL,                                  // queue used for local variables
+    IQ_GLOBAL,                                 // queue used for global variables
+    IQ_POINTER,                                // queue used for pointers if none of the above apply
+    IQ_MEMHASH,                                // pseudo-queue used for memory values if none of the above apply
+    IQ_INTEGER,                                // queue used if none of the above apply
+    // must be last
+    IQ_NONE,
+    IQ_NQUEUES=IQ_NONE
+};
+
+/** Queue of values for input during testing. */
+class InputQueue {
+public:
+    InputQueue(): nconsumed_(0), infinite_(false), pad_value_(0), redirect_(IQ_NONE) {}
+
+    /** Reset the queue back to the beginning. */
+    void reset() { nconsumed_=0; }
+
+    /** Remove all values from the queue and set it to an initial state. */
+    void clear() { *this=InputQueue(); }
+
+    /** Returns true if the queue is an infinite sequence of values. */
+    bool is_infinite() const { return infinite_; }
+
+    /** Returns true if the queue contains a value at the specified position.*/
+    bool has(size_t idx) { return infinite_ || idx<values_.size(); }
+
+    /** Returns the finite size of the queue not counting any infinite padding. */
+    size_t size() const { return values_.size(); }
+
+    /** Returns a value or throws an INPUT_LIMIT FaultException. */
+    uint64_t get(size_t idx) const;
+
+    /** Consumes a value or throws an INPUT_LIMIT FaultException. */
+    uint64_t next() { return get(nconsumed_++); }
+
+    /** Returns the number of values consumed. */
+    size_t nconsumed() const { return nconsumed_; }
+
+    /** Appends N copies of a value to the queue. */
+    void append(uint64_t val, size_t n=1) { if (!infinite_) values_.resize(values_.size()+n, val); }
+
+    /** Appends values using a range of iterators. */
+    template<typename Iterator>
+    void append_range(Iterator from, Iterator to) {
+        if (!infinite_)
+            values_.insert(values_.end(), from, to);
+    }
+
+    /** Appends an infinite number copies of @p val to the queue. */
+    void pad(uint64_t val) { if (!infinite_) { pad_value_=val; infinite_=true; }}
+
+    /** Extend the explicit values by copying some of the infinite values. */
+    std::vector<uint64_t>& extend(size_t n);
+
+    /** Explicit values for an input group.
+     * @{ */
+    std::vector<uint64_t>& values() { return values_; }
+    const std::vector<uint64_t>& values() const { return values_; }
+    /** @} */
+
+    /** Redirect property. This causes InputGroup to redirect one queue to another. Only one level of indirection
+     *  is supported, which allows two queues to be swapped.
+     * @{ */
+    void redirect(InputQueueName qn) { redirect_=qn; }
+    InputQueueName redirect() const { return redirect_; }
+    /** @} */
+    
+    /** Load a row from the semantic_outputvalues table into this queue. */
+    void load(int pos, uint64_t val);
+
+private:
+    size_t nconsumed_;                          // Number of values consumed
+    std::vector<uint64_t> values_;              // List of explicit values
+    bool infinite_;                             // List of explicit values followed by an infinite number of pad_values
+    uint64_t pad_value_;                        // Value padded to infinity
+    InputQueueName redirect_;                   // Use some other queue instead of this one (max 1 level of indirection)
+};
+
+/** Initial values to supply for inputs to tests.  An input group constists of a set of value queues.  The values are defined
+ *  as unsigned 64-bit integers which are then cast to the appropriate size when needed. */
 class InputGroup {
 public:
-    enum Type { INTEGER, POINTER, UNKNOWN_TYPE };
-    InputGroup(): next_integer_(0), next_pointer_(0), limit_consumption_(false) {}
-    InputGroup(const SqlDatabase::TransactionPtr &tx, int id): next_integer_(0), next_pointer_(0), limit_consumption_(false) {
-        load(tx, id);
+    typedef std::vector<InputQueue> Queues;
+
+    InputGroup(): queues_(IQ_NQUEUES), collection_id(-1) {}
+    InputGroup(const SqlDatabase::TransactionPtr &tx, int id): queues_(IQ_NQUEUES), collection_id(-1) { load(tx, id); }
+
+    /** Return a name for one of the queues. */
+    static std::string queue_name(InputQueueName q) {
+        switch (q) {
+            case IQ_ARGUMENT: return "argument";
+            case IQ_LOCAL:    return "local";
+            case IQ_GLOBAL:   return "global";
+            case IQ_POINTER:  return "pointer";
+            case IQ_MEMHASH:  return "memhash";
+            case IQ_INTEGER:  return "integer";
+            default: assert(!"fixme"); abort();
+        }
     }
+    
+    /** Load a single input group from the database. Returns true if the input group exists in the database. */
     bool load(const SqlDatabase::TransactionPtr&, int id);
-    void add_integer(uint64_t i) { integers_.push_back(i); }
-    void add_pointer(uint64_t p) { pointers_.push_back(p); }
-    size_t size() const { return integers_.size() + pointers_.size(); }
-    void limit_consumption(bool b) { limit_consumption_=b; }
-    uint64_t next_integer() {
-        if (limit_consumption_ && next_integer_ >= integers_.size())
-            throw FaultException(AnalysisFault::INPUT_LIMIT);
-        uint64_t retval = next_integer_ < integers_.size() ? integers_[next_integer_] : 0;
-        ++next_integer_; // increment even past the end so we know how many inputs were consumed
-        return retval;
-    }
-    uint64_t next_pointer() {
-        if (limit_consumption_ && next_pointer_ >= pointers_.size())
-            throw FaultException(AnalysisFault::INPUT_LIMIT);
-        uint64_t retval = next_pointer_ < pointers_.size() ? pointers_[next_pointer_] : 0;
-        ++next_pointer_; // increment even past the end so we know how many inputs were consumed
-        return retval;
-    }
-    size_t integers_consumed() const { return next_integer_; }
-    size_t pointers_consumed() const { return next_pointer_; }
-    const std::vector<uint64_t> get_integers() const { return integers_; }
-    const std::vector<uint64_t> get_pointers() const { return pointers_; }
-    size_t nconsumed() const { return integers_consumed() + pointers_consumed(); }
-    void reset() { next_integer_ = next_pointer_ = 0; }
-    void clear() {
-        reset();
-        integers_.clear();
-        pointers_.clear();
-    }
-    void shuffle() {
-        for (size_t i=0; i<integers_.size(); ++i) {
-            size_t j = rand() % integers_.size();
-            std::swap(integers_[i], integers_[j]);
-        }
-        for (size_t i=0; i<pointers_.size(); ++i) {
-            size_t j = rand() % pointers_.size();
-            std::swap(pointers_[i], pointers_[j]);
-        }
-    }
-    std::string toString() const {
-        std::ostringstream ss;
-        print(ss);
-        return ss.str();
-    }
-    void print(std::ostream &o) const {
-        o <<"integer inputs (" <<integers_.size() <<" total):\n";
-        for (size_t i=0; i<integers_.size(); ++i)
-            o <<"  " <<integers_[i] <<(i==next_integer_?"\t<-- next input":"") <<"\n";
-        if (next_integer_>=integers_.size())
-            o <<"  all integers have been consumed; returning zero\n";
-        o <<"pointer inputs (" <<pointers_.size() <<" total):\n";
-        for (size_t i=0; i<pointers_.size(); ++i)
-            o <<"  " <<pointers_[i] <<(i==next_pointer_?"\t<-- next input":"") <<"\n";
-        if (next_pointer_>=pointers_.size())
-            o <<"  all pointers have been consumed; returning null\n";
-    }
+
+    /** Save this input group in the database.  It shouldn't already be in the database, or this will add a conflicting copy. */
+    void save(const SqlDatabase::TransactionPtr&, int igroup_id, int64_t cmd_id);
+
+    /** Obtain a reference to one of the queues.
+     *  @{ */
+    InputQueue& queue(InputQueueName qn) { return queues_[(int)qn]; }
+    const InputQueue& queue(InputQueueName qn) const { return queues_[(int)qn]; }
+    /** @} */
+
+    /** Returns how many items were consumed across all queues. */
+    size_t nconsumed() const;
+
+    /** Resets the queues to the beginning. */
+    void reset();
+
+    /** Resets and emptiess all queues. */
+    void clear();
+
+    /** Collection to which input group is assigned. The @p dflt is usually the same as the input group ID. */
+    int get_collection_id(int dflt=-1) const { return collection_id<0 ? dflt : collection_id; }
+    void set_collection_id(int collection_id) { this->collection_id=collection_id; }
         
 protected:
-    std::vector<uint64_t> integers_;
-    std::vector<uint64_t> pointers_;
-    size_t next_integer_, next_pointer_;        // May increment past the end of its array
-    bool limit_consumption_;                    // throw exeption if we consume too much?
+    Queues queues_;
+    int collection_id;
 };
 
 /****************************************************************************************************************************
@@ -538,12 +602,10 @@ protected:
 
 struct PolicyParams {
     PolicyParams()
-        : timeout(5000), verbosity(SILENT), follow_calls(false), init_memory(false),
-          initial_stack(0x80000000) {}
+        : timeout(5000), verbosity(SILENT), follow_calls(false), initial_stack(0x80000000) {}
     size_t timeout;                     /**< Maximum number of instrutions per fuzz test before giving up. */
     Verbosity verbosity;                /**< Produce lots of output?  Traces each instruction as it is simulated. */
     bool follow_calls;                  /**< Follow CALL instructions if possible rather than consuming an input? */
-    bool init_memory;                   /**< Initialize most of memory with an address hash function seeded with an input. */
     rose_addr_t initial_stack;          /**< Initial values for ESP and EBP. */
 };
 
@@ -734,6 +796,7 @@ public:
     SgAsmInterpretation *interp;                        // Interpretation in which we're executing
     size_t ninsns;                                      // Number of instructions processed since last trigger() call
     AddressHasher address_hasher;                       // Hashes a virtual address
+    bool address_hasher_initialized;                    // True if address_hasher was initialized
     const InstructionProvidor *insns;                   // Instruction cache
     PolicyParams params;                                // Parameters for controlling the policy
     AddressIdMap entry2id;                              // Map from function entry address to function ID
@@ -741,39 +804,42 @@ public:
     Tracer &tracer;                                     // Responsible for emitting rows for semantic_fio_trace
 
     Policy(const PolicyParams &params, const AddressIdMap &entry2id, Tracer &tracer)
-        : inputs(NULL), pointers(NULL), ninsns(0), params(params), entry2id(entry2id), prev_bb(NULL), tracer(tracer) {}
+        : inputs(NULL), pointers(NULL), interp(NULL), ninsns(0), address_hasher(0, 255, 0),
+          address_hasher_initialized(false), insns(0), params(params), entry2id(entry2id), prev_bb(NULL),
+          tracer(tracer) {}
 
+    // Consume and return an input value.  An argument is needed only when the memhash queue is being used.
     template <size_t nBits>
     ValueType<nBits>
-    next_input_value(InputGroup::Type type) {
+    next_input_value(InputQueueName qn, rose_addr_t addr=0) {
         // Instruction semantics API1 calls readRegister when initializing X86InstructionSemantics in order to obtain the
         // original EIP value, but we haven't yet set up an input group (nor would we want this initialization to consume
         // an input anyway).  So just return zero.
         if (!inputs)
             return ValueType<nBits>(0);
 
-        uint64_t value = 0;
-        size_t nvalues = 0;
-        const char *type_name = NULL;
-        switch (type) {
-            case InputGroup::POINTER:
-                value = inputs->next_pointer();
-                nvalues = inputs->pointers_consumed();
-                type_name = "pointer";
-                tracer.emit(this->get_insn()->get_address(), Tracer::EV_CONSUME_POINTER, value);
-                break;
-            case InputGroup::UNKNOWN_TYPE:
-            case InputGroup::INTEGER:
-                value = inputs->next_integer();
-                nvalues = inputs->integers_consumed();
-                type_name = "integer";
-                tracer.emit(this->get_insn()->get_address(), Tracer::EV_CONSUME_INTEGER, value);
-                break;
-        }
+        // One level of indirection allowed
+        InputQueueName qn2 = inputs->queue(qn).redirect();
+        if (qn2!=IQ_NONE)
+            qn = qn2;
 
-        ValueType<nBits> retval(value);
-        if (params.verbosity>=EFFUSIVE)
-            std::cerr <<"CloneDetection: using " <<type_name <<" input #" <<nvalues <<": " <<retval <<"\n";
+        // Get next value, which might throw an AnalysisFault::INPUT_LIMIT FaultException
+        ValueType<nBits> retval;
+        if (IQ_MEMHASH==qn) {
+            retval = ValueType<nBits>(address_hasher(addr));
+            if (params.verbosity>=EFFUSIVE) {
+                std::cerr <<"CloneDetection: using " <<InputGroup::queue_name(qn)
+                          <<" addr " <<StringUtility::addrToString(addr) <<": " <<retval <<"\n";
+            }
+        } else {
+            retval = ValueType<nBits>(inputs->queue(qn).next());
+            size_t nvalues = inputs->queue(qn).nconsumed();
+            if (params.verbosity>=EFFUSIVE) {
+                std::cerr <<"CloneDetection: using " <<InputGroup::queue_name(qn)
+                          <<" input #" <<nvalues <<": " <<retval <<"\n";
+            }
+        }
+        tracer.emit(this->get_insn()->get_address(), Tracer::EV_CONSUME_INPUT, retval.known_value(), (int)qn);
         return retval;
     }
 
@@ -792,8 +858,18 @@ public:
         this->ninsns = 0;
         this->interp = interp;
         state.reset_for_analysis();
-        if (params.init_memory)
-            address_hasher = AddressHasher(inputs->next_integer());
+
+        // Initialize the address-to-value hasher for the memhash input "queue"
+        InputQueue &memhash = inputs->queue(IQ_MEMHASH);
+        if (memhash.has(0)) {
+            uint64_t seed   = memhash.get(0);
+            uint64_t minval = memhash.has(1) ? memhash.get(1) : 255;
+            uint64_t maxval = memhash.has(2) ? memhash.get(2) : 0;
+            address_hasher.init(minval, maxval, seed);
+            address_hasher_initialized = true;
+        } else {
+            address_hasher_initialized = false;
+        }
 
         // Initialize some registers.  Obviously, the EIP register needs to be set, but we also set the ESP and EBP to known
         // (but arbitrary) values so we can detect when the function returns.  Be sure to use these same values in related
@@ -811,7 +887,7 @@ public:
         // callee-saved registers are pushed onto the stack without first initializing them, the push consumes an input.
         // Therefore, we must consistently initialize all possible callee-saved registers.  We are assuming cdecl calling
         // convention (i.e., GCC's default for C/C++).
-        ValueType<32> rval(inputs->next_integer());
+        ValueType<32> rval(inputs->queue(IQ_INTEGER).next());
         this->writeRegister("ebx", rval);
         this->writeRegister("esi", rval);
         this->writeRegister("edi", rval);
@@ -881,7 +957,7 @@ public:
 #endif
                 ValueType<32> call_fallthrough_va = this->template number<32>(insn->get_address() + insn->get_size());
                 this->writeRegister("eip", call_fallthrough_va);
-                this->writeRegister("eax", next_input_value<32>(InputGroup::INTEGER));
+                this->writeRegister("eax", next_input_value<32>(IQ_INTEGER));
                 ValueType<32> esp = this->template readRegister<32>("esp");
                 esp = this->add(esp, ValueType<32>(4));
                 this->writeRegister("esp", esp);
@@ -907,7 +983,7 @@ public:
             ValueType<32> syscall_num = this->template readRegister<32>("eax");
             state.output_group.syscalls.push_back(syscall_num.known_value());
 #endif
-            this->writeRegister("eax", next_input_value<32>(InputGroup::INTEGER));
+            this->writeRegister("eax", next_input_value<32>(IQ_INTEGER));
         } else {
             Super::interrupt(inum);
             throw FaultException(AnalysisFault::INTERRUPT);
@@ -958,20 +1034,28 @@ public:
             // At least one of the bytes read did not previously exist, so we need to initialize these memory locations.
             // Sometimes we want memory to have a value that depends on the next input, and other times we want a value that
             // depends on the address.
-            bool consume_input = !params.init_memory;
-            if (consume_input && this->interp!=NULL && this->interp->get_map()!=NULL) {
-                consume_input = this->interp->get_map()->exists(a0.known_value());
-            }
-            if (consume_input) {
-                // Return either a pointer or integer value depending pointer detection analysis
-                SymbolicSemantics::ValueType<32> a0_sym(a0.known_value());
-                InputGroup::Type type = this->pointers!=NULL && this->pointers->is_pointer(a0_sym) ?
-                                        InputGroup::POINTER : InputGroup::INTEGER;
-                retval = next_input_value<nBits>(type);
+            MemoryMap *map = this->interp ? this->interp->get_map() : NULL;
+            rose_addr_t addr = a0.known_value();
+            rose_addr_t ebp = state.registers.gpr[x86_gpr_bp].known_value();
+            bool ebp_is_stack_frame = ebp>=params.initial_stack-16*4096 && ebp<params.initial_stack;
+            if (ebp_is_stack_frame && addr>=ebp+8 && addr<ebp+8+40) {
+                // This is probably an argument to the function, so consume an argument input value.
+                retval = next_input_value<nBits>(IQ_ARGUMENT, addr);
+            } else if (ebp_is_stack_frame && addr>=ebp-8192 && addr<ebp+8) {
+                // This is probably a local stack variable
+                retval = next_input_value<nBits>(IQ_LOCAL, addr);
+            } else if (map!=NULL && map->exists(addr)) {
+                // Memory mapped from a file, thus probably a global variable, function pointer, etc.
+                retval = next_input_value<nBits>(IQ_GLOBAL, addr);
+            } else if (this->pointers!=NULL && this->pointers->is_pointer(SymbolicSemantics::ValueType<32>(addr))) {
+                // Pointer detection analysis says this address is a pointer
+                retval = next_input_value<nBits>(IQ_POINTER, addr);
+            } else if (address_hasher_initialized && map!=NULL && map->exists(addr)) {
+                // Use memory that was already initialized with values
+                retval = next_input_value<nBits>(IQ_MEMHASH, addr);
             } else {
-                // Return a value which is a function of the address (and one of the inputs that was used to initialize the
-                // hash function).
-                retval = ValueType<nBits>(address_hasher(a0.known_value(), params.verbosity));
+                // Unknown classification
+                retval = next_input_value<nBits>(IQ_INTEGER, addr);
             }
             // Write the value back to memory so the same value is read next time.
             this->writeMemory<nBits>(sr, a0, retval, this->true_(), HAS_BEEN_READ);
@@ -1027,7 +1111,7 @@ public:
                 bool never_accessed = 0 == state.register_rw_state.flag[reg.get_offset()].state;
                 state.register_rw_state.flag[reg.get_offset()].state |= HAS_BEEN_READ;
                 if (never_accessed)
-                    state.registers.flag[reg.get_offset()] = next_input_value<1>(InputGroup::INTEGER);
+                    state.registers.flag[reg.get_offset()] = next_input_value<1>(IQ_INTEGER);
                 retval = this->template unsignedExtend<1, nBits>(state.registers.flag[reg.get_offset()]);
                 break;
             }
@@ -1043,7 +1127,7 @@ public:
                 bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                 state.register_rw_state.gpr[reg.get_minor()].state |= HAS_BEEN_READ;
                 if (never_accessed)
-                    state.registers.gpr[reg.get_minor()] = next_input_value<32>(InputGroup::INTEGER);
+                    state.registers.gpr[reg.get_minor()] = next_input_value<32>(IQ_INTEGER);
                 switch (reg.get_offset()) {
                     case 0:
                         retval = this->template extract<0, nBits>(state.registers.gpr[reg.get_minor()]);
@@ -1069,7 +1153,7 @@ public:
                         bool never_accessed = 0==state.register_rw_state.segreg[reg.get_minor()].state;
                         state.register_rw_state.segreg[reg.get_minor()].state |= HAS_BEEN_READ;
                         if (never_accessed)
-                            state.registers.segreg[reg.get_minor()] = next_input_value<16>(InputGroup::INTEGER);
+                            state.registers.segreg[reg.get_minor()] = next_input_value<16>(IQ_INTEGER);
                         retval = this->template unsignedExtend<16, nBits>(state.registers.segreg[reg.get_minor()]);
                         break;
                     }
@@ -1079,7 +1163,7 @@ public:
                         bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                         state.register_rw_state.segreg[reg.get_minor()].state |= HAS_BEEN_READ;
                         if (never_accessed)
-                            state.registers.gpr[reg.get_minor()] = next_input_value<32>(InputGroup::INTEGER);
+                            state.registers.gpr[reg.get_minor()] = next_input_value<32>(IQ_INTEGER);
                         retval = this->template extract<0, nBits>(state.registers.gpr[reg.get_minor()]);
                         break;
                     }
@@ -1091,7 +1175,7 @@ public:
                             bool never_accessed = 0==state.register_rw_state.flag[i].state;
                             state.register_rw_state.flag[i].state |= HAS_BEEN_READ;
                             if (never_accessed)
-                                state.registers.flag[i] = next_input_value<1>(InputGroup::INTEGER);
+                                state.registers.flag[i] = next_input_value<1>(IQ_INTEGER);
                         }
                         retval = this->template unsignedExtend<16, nBits>(concat(state.registers.flag[0],
                                                                           concat(state.registers.flag[1],
@@ -1127,7 +1211,7 @@ public:
                         bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                         state.register_rw_state.gpr[reg.get_minor()].state |= HAS_BEEN_READ;
                         if (never_accessed)
-                            state.registers.gpr[reg.get_minor()] = next_input_value<32>(InputGroup::UNKNOWN_TYPE);
+                            state.registers.gpr[reg.get_minor()] = next_input_value<32>(IQ_INTEGER);
                         retval = this->template unsignedExtend<32, nBits>(state.registers.gpr[reg.get_minor()]);
                         break;
                     }
@@ -1137,7 +1221,7 @@ public:
                         bool never_accessed = 0==state.register_rw_state.ip.state;
                         state.register_rw_state.ip.state |= HAS_BEEN_READ;
                         if (never_accessed)
-                            state.registers.ip = next_input_value<32>(InputGroup::POINTER);
+                            state.registers.ip = next_input_value<32>(IQ_POINTER);
                         retval = this->template unsignedExtend<32, nBits>(state.registers.ip);
                         break;
                     }
@@ -1147,7 +1231,7 @@ public:
                         bool never_accessed = 0==state.register_rw_state.segreg[reg.get_minor()].state;
                         state.register_rw_state.segreg[reg.get_minor()].state |= HAS_BEEN_READ;
                         if (never_accessed)
-                            state.registers.segreg[reg.get_minor()] = next_input_value<16>(InputGroup::UNKNOWN_TYPE);
+                            state.registers.segreg[reg.get_minor()] = next_input_value<16>(IQ_INTEGER);
                         retval = this->template unsignedExtend<16, nBits>(state.registers.segreg[reg.get_minor()]);
                         break;
                     }
@@ -1160,7 +1244,7 @@ public:
                             bool never_accessed = 0==state.register_rw_state.flag[i].state;
                             state.register_rw_state.flag[i].state |= HAS_BEEN_READ;
                             if (never_accessed)
-                                state.registers.flag[i] = next_input_value<1>(InputGroup::INTEGER);
+                                state.registers.flag[i] = next_input_value<1>(IQ_INTEGER);
                         }
                         retval = this->template unsignedExtend<32, nBits>(concat(state.registers.flag[0],
                                                                           concat(state.registers.flag[1],
@@ -1240,7 +1324,7 @@ public:
                 bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                 state.register_rw_state.gpr[reg.get_minor()].state |= update_access;
                 if (never_accessed)
-                    state.registers.gpr[reg.get_minor()] = next_input_value<32>(InputGroup::INTEGER);
+                    state.registers.gpr[reg.get_minor()] = next_input_value<32>(IQ_INTEGER);
                 switch (reg.get_offset()) {
                     case 0:
                         state.registers.gpr[reg.get_minor()] =
@@ -1278,7 +1362,7 @@ public:
                         bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                         state.register_rw_state.gpr[reg.get_minor()].state |= update_access;
                         if (never_accessed)
-                            state.registers.gpr[reg.get_minor()] = next_input_value<32>(InputGroup::INTEGER);
+                            state.registers.gpr[reg.get_minor()] = next_input_value<32>(IQ_INTEGER);
                         state.registers.gpr[reg.get_minor()] =
                             concat(this->template unsignedExtend<nBits, 16>(value),
                                    this->template extract<16, 32>(state.registers.gpr[reg.get_minor()]));

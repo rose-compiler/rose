@@ -17,9 +17,17 @@ usage(int exit_status)
               <<"  commands running in parallel.\n"
               <<"\n"
               <<"    --[no-]delete\n"
-              <<"            The --delete switch causes all previous similarity information to be discarded and recalculated\n"
-              <<"            from scratch. The default is to calculate similarity only for those pairs of functions for which\n"
-              <<"            similarity has not been calculated already.\n"
+              <<"            This switch causes all previous similarity information for the specified relation ID to be\n"
+              <<"            discarded so that it is recalculated from scratch. The default is to calculate similarity values\n"
+              <<"            only for those pairs of functions in the specified relationship for which similarity has not\n"
+              <<"            been calculated already.\n"
+              <<"    --relation=ID\n"
+              <<"            An integer that identifies which similarity values are being selected.  All similarity values\n"
+              <<"            that have the same relation ID form a single similarity relationship.  This allows the database\n"
+              <<"            to store multiple relationships. For example, relationship #1 could be similarity values that\n"
+              <<"            are calculated from the maximum output group Jaccard index, while relationship #2 could be\n"
+              <<"            similarity values that are calculated using a threshold of output group equality count. The\n"
+              <<"            default relation ID is zero.\n"
               <<"\n"
               <<"    DATABASE\n"
               <<"            The name of the database to which we are connecting.  For SQLite3 databases this is just a local\n"
@@ -30,8 +38,9 @@ usage(int exit_status)
 
 static struct Switches {
     Switches()
-        : recreate(false) {}
-    bool recreate;
+        : delete_old_data(false), relation_id(0) {}
+    bool delete_old_data;
+    int relation_id;
 } opt;
 
 int
@@ -54,9 +63,11 @@ main(int argc, char *argv[])
         } else if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
             usage(0);
         } else if (!strcmp(argv[argno], "--delete")) {
-            opt.recreate = true;
+            opt.delete_old_data = true;
         } else if (!strcmp(argv[argno], "--no-delete")) {
-            opt.recreate = false;
+            opt.delete_old_data = false;
+        } else if (!strncmp(argv[argno], "--relation=", 11)) {
+            opt.relation_id = strtol(argv[argno]+11, NULL, 0);
         } else {
             std::cerr <<argv0 <<": unknown switch: " <<argv[argno] <<"\n"
                       <<argv0 <<": see --help for more info\n";
@@ -68,6 +79,12 @@ main(int argc, char *argv[])
     time_t start_time = time(NULL);
     SqlDatabase::ConnectionPtr conn = SqlDatabase::Connection::create(argv[argno++]);
     SqlDatabase::TransactionPtr tx = conn->transaction();
+    
+    // Save ourself in the history if we're modifying the database.
+    int64_t cmd_id=-1;
+    if (opt.delete_old_data)
+        cmd_id = CloneDetection::start_command(tx, argc, argv, "clearing funcsim data for relation #"+
+                                               StringUtility::numberToString(opt.relation_id), start_time);
 
     // The 32-func-similarity tool needs this index, so we might as well create it here when we're running serially.  The
     // semantic_outputvalues table can be HUGE depending on how the analysis is configured (i.e., whether it saves output
@@ -77,23 +94,17 @@ main(int argc, char *argv[])
     // then start a new transaction (because the current one is hosed).
     std::cerr <<argv0 <<": creating output group index (could take a while)\n";
     try {
+        SqlDatabase::TransactionPtr tx = conn->transaction();
         tx->execute("create index idx_ogroups_hashkey on semantic_outputvalues(hashkey)");
+        tx->commit();
     } catch (const SqlDatabase::Exception&) {
         std::cerr <<argv0 <<": idx_ogroups_hashkey index already exists; NOT dropping and recreating\n";
-        tx = conn->transaction();
     }
 
-    // Save ourself in the history if we're modifying the database.
-    int64_t cmd_id=-1;
-    if (opt.recreate)
-        cmd_id = CloneDetection::start_command(tx, argc, argv, "clearing funcsim table", start_time);
-
-    // Delete rather than recreate, otherwise we have to duplicate code from Schema.sql
-    if (opt.recreate) {
-        std::cerr <<argv0 <<": deleting rows from semantic_funcsim\n";
-        tx->execute("delete from semantic_funcsim");
-    }
-
+    // Delete old data.
+    if (opt.delete_old_data)
+        tx->statement("delete from semantic_funcsim where relation_id = ?")->bind(0, opt.relation_id)->execute();
+    
     // Create pairs of function IDs for those functions which have been tested and for which no similarity measurement has been
     // computed.  (FIXME: We should probably recompute similarity that might have changed due to rerunning tests or running the
     // same function but with more input groups. [Robb P. Matzke 2013-06-19])
@@ -103,12 +114,15 @@ main(int argc, char *argv[])
                                                    " from tmp_tested_funcs as f1"
                                                    " join tmp_tested_funcs as f2 on f1.func_id < f2.func_id"
                                                    " except"
-                                                   " select func1_id, func2_id from semantic_funcsim");
+                                                   " select func1_id, func2_id from semantic_funcsim as sim"
+                                                   " where sim.relation_id = ?");
+    stmt->bind(0, opt.relation_id);
     for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row)
         std::cout <<row.get<int>(0) <<"\t" <<row.get<int>(1) <<"\n";
 
     if (cmd_id>=0)
-        CloneDetection::finish_command(tx, cmd_id, "cleared funcsim table");
+        CloneDetection::finish_command(tx, cmd_id, "cleared funcsim table for relation #"+
+                                       StringUtility::numberToString(opt.relation_id));
 
     tx->commit();
     return 0;

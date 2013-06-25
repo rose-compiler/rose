@@ -6,6 +6,7 @@
 #include "Partitioner.h"
 
 #include <algorithm>
+#include <cerrno>
 #include <cmath>
 #include <cstdio>
 #include <ctime>
@@ -18,6 +19,21 @@
 using namespace sqlite3x;
 
 namespace CloneDetection {
+
+/*******************************************************************************************************************************
+ *                                      Exceptions
+ *******************************************************************************************************************************/
+
+std::ostream &
+operator<<(std::ostream &o, const Exception &e)
+{
+    o <<e.mesg;
+    return o;
+}
+
+/*******************************************************************************************************************************
+ *                                      Tracer
+ *******************************************************************************************************************************/
 
 void
 Tracer::reset(int func_id, int igroup_id, unsigned event_mask, size_t pos)
@@ -36,15 +52,16 @@ Tracer::reset(int func_id, int igroup_id, unsigned event_mask, size_t pos)
 }
 
 void
-Tracer::emit(rose_addr_t addr, Event event, uint64_t value)
+Tracer::emit(rose_addr_t addr, Event event, uint64_t value, int minor)
 {
     if (0!=(event & event_mask)) {
         char buf[256];
-        int nprint = snprintf(buf, sizeof buf, "%d,%d,%zu,%"PRIu64",%d,%"PRId64"\n",
-                              func_id, igroup_id, pos++, addr, (int)event, value);
+        int nprint = snprintf(buf, sizeof buf, "%d,%d,%zu,%"PRIu64",%d,%d,%"PRId64"\n",
+                              func_id, igroup_id, pos++, addr, (int)event, minor, value);
         assert(nprint>0 && (size_t)nprint<sizeof buf);
-        ssize_t nwrite __attribute__((unused)) = write(fd, buf, nprint);
-        assert(nwrite==nprint);
+        ssize_t nwrite = write(fd, buf, nprint);
+        if (nwrite!=nprint)
+            throw Exception(std::string("CloneDetection::Tracer::emit write: ")+strerror(errno));
     }
 }
 
@@ -54,10 +71,12 @@ Tracer::save(const SqlDatabase::TransactionPtr &tx)
     std::ifstream in(filename.c_str());
     tx->bulk_load("semantic_fio_trace", in);
     in.close();
-    off_t fp __attribute__((unused)) = lseek(fd, 0, SEEK_SET);
-    assert(0==fp);
-    int status __attribute__((unused)) = ftruncate(fd, 0);
-    assert(0==status);
+    off_t fp = lseek(fd, 0, SEEK_SET);
+    if (fp!=0)
+        throw Exception(std::string("CloneDetection::Tracer::save lseek: ")+strerror(errno));
+    int status = ftruncate(fd, 0);
+    if (status!=0)
+        throw Exception(std::string("CloneDetection::Tracer::save ftruncate: ")+strerror(errno));
 }
 
 void
@@ -93,6 +112,329 @@ OutputGroup::add_param(const std::string vtype, int pos, int64_t value)
             abort();
     }
 }
+
+/*******************************************************************************************************************************
+ *                                      Progress
+ *******************************************************************************************************************************/
+
+void
+Progress::init()
+{
+    is_terminal = isatty(2);
+    update(true);
+    cur = 0;
+}
+
+std::string
+Progress::line() const
+{
+    size_t n = std::min(cur, total);
+    int nchars = total>0 ? round((double)n/total * WIDTH) : 0;
+    std::string bar(nchars, '=');
+    bar += std::string(WIDTH-nchars, ' ');
+    if (!mesg.empty()) {
+        assert(WIDTH>9);
+        size_t mesg_sz = std::min((size_t)WIDTH-9, mesg.size());
+        std::string s = mesg_sz>=mesg.size() ? mesg : mesg.substr(0, mesg_sz)+"...";
+        bar.replace(3, s.size(), s);
+    }
+    std::ostringstream ss;
+    ss <<" " <<std::setw(3) <<(total>0?(int)round(100.0*n/total):0) <<"% " <<cur <<"/" <<total <<" |" <<bar <<"|";
+    return ss.str();
+}
+
+void
+Progress::update(bool update_now)
+{
+    if ((force || is_terminal) && total>0) {
+        if ((size_t)(-1)==total) {
+            if (had_output)
+                fputc('\n', stderr);
+        } else {
+            if (!update_now)
+                update_now = !had_output || time(NULL) - last_report > RPT_INTERVAL;
+            if (update_now) {
+                std::string s = line();
+                fputs(s.c_str(), stderr);
+                fputc(is_terminal?'\r':'\n', stderr);
+                fflush(stderr);
+                last_report = time(NULL);
+                had_output = true;
+            }
+        }
+    }
+}
+
+void
+Progress::increment(bool update_now)
+{
+    update(update_now || cur==total);
+    ++cur;
+}
+
+void
+Progress::clear()
+{
+    if (had_output) {
+        if (is_terminal) {
+            std::string s = line();
+            fprintf(stderr, "\r%*s\r", (int)s.size(), "");
+            fflush(stderr);
+        }
+        had_output = false;
+    }
+}
+
+void
+Progress::reset(size_t current, size_t total)
+{
+    cur = current;
+    if ((size_t)(-1)!=total)
+        this->total = total;
+    update();
+}
+
+void
+Progress::message(const std::string &s, bool update_now)
+{
+    mesg = s;
+    update(update_now);
+}
+
+/*******************************************************************************************************************************
+ *                                      Files table
+ *******************************************************************************************************************************/
+
+void
+FilesTable::load(const SqlDatabase::TransactionPtr &tx)
+{
+    clear();
+    SqlDatabase::StatementPtr stmt = tx->statement("select id, name, digest, ast from semantic_files");
+    for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
+        int id = row.get<int>(0);
+        std::string name = row.get<std::string>(1);
+        std::string digest = row.get<std::string>(2);
+        std::string ast_digest = row.get<std::string>(3);
+        rows[id] = Row(id, name, digest, ast_digest, true);
+        name_idx[name] = id;
+        next_id = std::max(next_id, id+1);
+    }
+}
+
+void
+FilesTable::save(const SqlDatabase::TransactionPtr &tx)
+{
+    SqlDatabase::StatementPtr stmt = tx->statement("insert into semantic_files"
+                                                   // 0  1     2       3
+                                                   "(id, name, digest, ast) values (?, ?, ?, ?)");
+    for (Rows::iterator ri=rows.begin(); ri!=rows.end(); ++ri) {
+        assert(ri->second.id==ri->first);
+        if (!ri->second.in_db) {
+            stmt->bind(0, ri->first);
+            stmt->bind(1, ri->second.name);
+            stmt->bind(2, ri->second.digest);
+            stmt->bind(3, ri->second.ast_digest);
+            stmt->execute();
+            ri->second.in_db = true;
+        }
+    }
+#ifndef NDEBUG
+    int ndups = tx->statement("select count(*) from semantic_files f1"
+                              " join semantic_files f2 on f1.id<>f2.id and f1.name=f2.name")->execute_int();
+    assert(0==ndups);
+#endif
+}
+
+int
+FilesTable::insert(const std::string &name)
+{
+    NameIdx::iterator found = name_idx.find(name);
+    if (found!=name_idx.end())
+        return found->second;
+    int id = next_id++;
+    rows[id] = Row(id, name, "", "", false);
+    name_idx[name] = id;
+    return id;
+}
+
+std::string
+FilesTable::save_ast(const SqlDatabase::TransactionPtr &tx, int64_t cmd_id, int file_id, SgProject *ast)
+{
+    Rows::iterator found = rows.find(file_id);
+    assert(found!=rows.end());
+    if (!ast) {
+        found->second.ast_digest.clear();
+    } else {
+        found->second.ast_digest = CloneDetection::save_ast(tx, cmd_id);
+    }
+    if (found->second.in_db) {
+        tx->statement("update semantic_files set ast = ? where id = ?")
+            ->bind(0, found->second.ast_digest)
+            ->bind(1, file_id)
+            ->execute();
+    }
+    return found->second.ast_digest;
+}
+
+SgProject *
+FilesTable::load_ast(const SqlDatabase::TransactionPtr &tx, int file_id)
+{
+    Rows::iterator found = rows.find(file_id);
+    assert(found!=rows.end());
+    if (found->second.ast_digest.empty())
+        return NULL;
+    return CloneDetection::load_ast(tx, found->second.ast_digest);
+}
+
+std::string
+FilesTable::add_content(const SqlDatabase::TransactionPtr &tx, int64_t cmd_id, int file_id)
+{
+    Rows::iterator found = rows.find(file_id);
+    assert(found!=rows.end());
+    found->second.digest = save_binary_data(tx, cmd_id, found->second.name);
+    if (found->second.in_db) {
+        tx->statement("update semantic_files set digest = ? where id = ?")
+            ->bind(0, found->second.digest)
+            ->bind(1, file_id)
+            ->execute();
+    }
+    return found->second.digest;
+}
+    
+int
+FilesTable::id(const std::string &name) const
+{
+    NameIdx::const_iterator found = name_idx.find(name);
+    assert(found!=name_idx.end());
+    return found->second;
+}
+
+std::string
+FilesTable::name(int id) const
+{
+    Rows::const_iterator found = rows.find(id);
+    assert(found!=rows.end());
+    return found->second.name;
+}
+
+/*******************************************************************************************************************************
+ *                                      Input groups
+ *******************************************************************************************************************************/
+
+void
+InputQueue::load(int pos, uint64_t val)
+{
+    if (-1==pos) {
+        pad_value_ = val;
+        infinite_ = true;
+    } else if (-2==pos) {
+        InputQueueName to = (InputQueueName)val;
+        assert(to>=0 && to<IQ_NQUEUES);
+        redirect(to);
+    } else {
+        assert((size_t)pos==values_.size());
+        values_.push_back(val);
+    }
+}
+
+uint64_t
+InputQueue::get(size_t idx) const
+{
+    if (idx<values_.size())
+        return values_[idx];
+    if (infinite_)
+        return pad_value_;
+    throw FaultException(AnalysisFault::INPUT_LIMIT);
+}
+
+std::vector<uint64_t> &
+InputQueue::extend(size_t n)
+{
+    if (n>values_.size()) {
+        if (!infinite_)
+            throw FaultException(AnalysisFault::INPUT_LIMIT);
+        values_.resize(n, pad_value_);
+    }
+    return values_;
+}
+
+bool
+InputGroup::load(const SqlDatabase::TransactionPtr &tx, int igroup_id)
+{
+    bool retval = false;
+    clear();
+    SqlDatabase::StatementPtr stmt = tx->statement("select queue_id, pos, val"
+                                                   " from semantic_inputvalues"
+                                                   " where igroup_id = ?"
+                                                   " order by queue_id, pos")->bind(0, igroup_id);
+    collection_id = igroup_id;
+    for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
+        if (-1==row.get<int>(0)) {
+            collection_id = row.get<int>(2);
+        } else {
+            InputQueueName queue_id = (InputQueueName)row.get<int>(0);
+            assert(queue_id>=0 && queue_id<IQ_NQUEUES);
+            InputQueue &q = queue(queue_id);
+            int pos = row.get<int>(1);
+            uint64_t val = row.get<uint64_t>(2);
+            q.load(pos, val);
+            retval=true;
+        }
+    }
+    return retval;
+}
+
+void
+InputGroup::save(const SqlDatabase::TransactionPtr &tx, int igroup_id, int64_t cmd_id)
+{
+    SqlDatabase::StatementPtr stmt = tx->statement("insert into semantic_inputvalues"
+                                                   // 0          1         2    3    4
+                                                   " (igroup_id, queue_id, pos, val, cmd)"
+                                                   " values (?, ?, ?, ?, ?)");
+    stmt->bind(0, igroup_id);
+    stmt->bind(4, cmd_id);
+    for (size_t qn=0; qn<IQ_NQUEUES; ++qn) {
+        InputQueue &q = queue((InputQueueName)qn);
+        size_t nvals = q.size();
+        stmt->bind(1, qn);
+        for (size_t i=0; i<nvals; ++i)
+            stmt->bind(2, i)->bind(3, q.get(i))->execute();
+        if (q.is_infinite())
+            stmt->bind(2, -1)->bind(3, q.get(nvals))->execute();
+        if (q.redirect()!=IQ_NONE && q.redirect()!=(InputQueueName)qn)
+            stmt->bind(2, -2)->bind(3, q.redirect())->execute();
+    }
+    if (collection_id>=0 && collection_id!=igroup_id)
+        stmt->bind(1, -1)->bind(2, -1)->bind(3, collection_id)->execute();
+}
+
+size_t
+InputGroup::nconsumed() const
+{
+    size_t retval = 0;
+    for (Queues::const_iterator qi=queues_.begin(); qi!=queues_.end(); ++qi)
+        retval += qi->nconsumed();
+    return retval;
+}
+
+void
+InputGroup::reset()
+{
+    for (Queues::iterator qi=queues_.begin(); qi!=queues_.end(); ++qi)
+        qi->reset();
+}
+
+void
+InputGroup::clear()
+{
+    for (Queues::iterator qi=queues_.begin(); qi!=queues_.end(); ++qi)
+        qi->clear();
+    collection_id = -1;
+}
+
+/*******************************************************************************************************************************
+ *                                      Output groups
+ *******************************************************************************************************************************/
 
 bool
 OutputGroup::operator<(const OutputGroup &other) const
@@ -222,7 +564,7 @@ OutputGroups::insert(const OutputGroup &ogroup, int64_t hashkey)
     if (!in_database) {
         if (NULL==file) {
             char tpl[64];
-            strcpy(tpl, "./outputvalues-XXXXXX");
+            strcpy(tpl, "/tmp/roseXXXXXX");
             int fd = mkstemp(tpl);
             file = fdopen(fd, "wb");
             assert(fileno(file)==fd);
@@ -350,201 +692,10 @@ OutputGroups::lookup(int64_t hashkey) const
     return found==ogroups.end() ? NULL : found->second;
 }
 
-void
-Progress::init()
-{
-    is_terminal = isatty(2);
-    update(true);
-    cur = 0;
-}
+/*******************************************************************************************************************************
+ *                                      Miscellaneous functions
+ *******************************************************************************************************************************/
 
-std::string
-Progress::line() const
-{
-    size_t n = std::min(cur, total);
-    int nchars = total>0 ? round((double)n/total * WIDTH) : 0;
-    std::string bar(nchars, '=');
-    bar += std::string(WIDTH-nchars, ' ');
-    if (!mesg.empty()) {
-        assert(WIDTH>9);
-        size_t mesg_sz = std::min((size_t)WIDTH-9, mesg.size());
-        std::string s = mesg_sz>=mesg.size() ? mesg : mesg.substr(0, mesg_sz)+"...";
-        bar.replace(3, s.size(), s);
-    }
-    std::ostringstream ss;
-    ss <<" " <<std::setw(3) <<(total>0?(int)round(100.0*n/total):0) <<"% " <<cur <<"/" <<total <<" |" <<bar <<"|";
-    return ss.str();
-}
-
-void
-Progress::update(bool update_now)
-{
-    if ((force || is_terminal) && total>0) {
-        if ((size_t)(-1)==total) {
-            if (had_output)
-                fputc('\n', stderr);
-        } else {
-            if (!update_now)
-                update_now = !had_output || time(NULL) - last_report > RPT_INTERVAL;
-            if (update_now) {
-                std::string s = line();
-                fputs(s.c_str(), stderr);
-                fputc(is_terminal?'\r':'\n', stderr);
-                fflush(stderr);
-                last_report = time(NULL);
-                had_output = true;
-            }
-        }
-    }
-}
-
-void
-Progress::increment(bool update_now)
-{
-    update(update_now || cur==total);
-    ++cur;
-}
-
-void
-Progress::clear()
-{
-    if (had_output) {
-        if (is_terminal) {
-            std::string s = line();
-            fprintf(stderr, "\r%*s\r", (int)s.size(), "");
-            fflush(stderr);
-        }
-        had_output = false;
-    }
-}
-
-void
-Progress::reset(size_t current, size_t total)
-{
-    cur = current;
-    if ((size_t)(-1)!=total)
-        this->total = total;
-    update();
-}
-
-void
-Progress::message(const std::string &s, bool update_now)
-{
-    mesg = s;
-    update(update_now);
-}
-
-void
-FilesTable::load(const SqlDatabase::TransactionPtr &tx)
-{
-    clear();
-    SqlDatabase::StatementPtr stmt = tx->statement("select id, name, digest, ast from semantic_files");
-    for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
-        int id = row.get<int>(0);
-        std::string name = row.get<std::string>(1);
-        std::string digest = row.get<std::string>(2);
-        std::string ast_digest = row.get<std::string>(3);
-        rows[id] = Row(id, name, digest, ast_digest, true);
-        name_idx[name] = id;
-        next_id = std::max(next_id, id+1);
-    }
-}
-
-void
-FilesTable::save(const SqlDatabase::TransactionPtr &tx)
-{
-    SqlDatabase::StatementPtr stmt = tx->statement("insert into semantic_files"
-                                                   // 0  1     2       3
-                                                   "(id, name, digest, ast) values (?, ?, ?, ?)");
-    for (Rows::iterator ri=rows.begin(); ri!=rows.end(); ++ri) {
-        assert(ri->second.id==ri->first);
-        if (!ri->second.in_db) {
-            stmt->bind(0, ri->first);
-            stmt->bind(1, ri->second.name);
-            stmt->bind(2, ri->second.digest);
-            stmt->bind(3, ri->second.ast_digest);
-            stmt->execute();
-            ri->second.in_db = true;
-        }
-    }
-#ifndef NDEBUG
-    int ndups = tx->statement("select count(*) from semantic_files f1"
-                              " join semantic_files f2 on f1.id<>f2.id and f1.name=f2.name")->execute_int();
-    assert(0==ndups);
-#endif
-}
-
-int
-FilesTable::insert(const std::string &name)
-{
-    NameIdx::iterator found = name_idx.find(name);
-    if (found!=name_idx.end())
-        return found->second;
-    int id = next_id++;
-    rows[id] = Row(id, name, "", "", false);
-    name_idx[name] = id;
-    return id;
-}
-
-std::string
-FilesTable::save_ast(const SqlDatabase::TransactionPtr &tx, int64_t cmd_id, int file_id, SgProject *ast)
-{
-    Rows::iterator found = rows.find(file_id);
-    assert(found!=rows.end());
-    if (!ast) {
-        found->second.ast_digest.clear();
-    } else {
-        found->second.ast_digest = CloneDetection::save_ast(tx, cmd_id);
-    }
-    if (found->second.in_db) {
-        tx->statement("update semantic_files set ast = ? where id = ?")
-            ->bind(0, found->second.ast_digest)
-            ->bind(1, file_id)
-            ->execute();
-    }
-    return found->second.ast_digest;
-}
-
-SgProject *
-FilesTable::load_ast(const SqlDatabase::TransactionPtr &tx, int file_id)
-{
-    Rows::iterator found = rows.find(file_id);
-    assert(found!=rows.end());
-    if (found->second.ast_digest.empty())
-        return NULL;
-    return CloneDetection::load_ast(tx, found->second.ast_digest);
-}
-
-std::string
-FilesTable::add_content(const SqlDatabase::TransactionPtr &tx, int64_t cmd_id, int file_id)
-{
-    Rows::iterator found = rows.find(file_id);
-    assert(found!=rows.end());
-    found->second.digest = save_binary_data(tx, cmd_id, found->second.name);
-    if (found->second.in_db) {
-        tx->statement("update semantic_files set digest = ? where id = ?")
-            ->bind(0, found->second.digest)
-            ->bind(1, file_id)
-            ->execute();
-    }
-    return found->second.digest;
-}
-    
-int
-FilesTable::id(const std::string &name) const
-{
-    NameIdx::const_iterator found = name_idx.find(name);
-    assert(found!=name_idx.end());
-    return found->second;
-}
-
-std::string
-FilesTable::name(int id) const
-{
-    Rows::const_iterator found = rows.find(id);
-    assert(found!=rows.end());
-    return found->second.name;
-}
 
 SgProject *
 open_specimen(const SqlDatabase::TransactionPtr &tx, FilesTable &files, int specimen_id, const std::string &argv0)
@@ -950,34 +1101,6 @@ function_to_str(SgAsmFunction *function, const FunctionIdMap &ids)
         ss <<">";
 
     return ss.str();
-}
-
-bool
-InputGroup::load(const SqlDatabase::TransactionPtr &tx, int igroup_id)
-{
-    clear();
-    SqlDatabase::StatementPtr stmt = tx->statement("select vtype, val"
-                                                   " from semantic_inputvalues"
-                                                   " where id = ?"
-                                                   " order by vtype, pos");
-    stmt->bind(0, igroup_id);
-    for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
-        std::string vtype = row.get<std::string>(0);
-        assert(!vtype.empty());
-        uint64_t val = row.get<uint64_t>(1);
-        switch (vtype[0]) {
-            case 'I':
-                add_integer(val);
-                break;
-            case 'P':
-                add_pointer(val);
-                break;
-            default:
-                assert(!"unknown input value type"); abort();
-        }
-    }
-
-    return size()!=0;
 }
 
 } // namespace

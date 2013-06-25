@@ -337,7 +337,7 @@ main(int argc, char *argv[])
             int file_id = srcinfo.file_id < 0 ? -1 : files.id(Sg_File_Info::getFilenameFromID(srcinfo.file_id));
             stmt2->bind(0, insns[i]->get_address());
             stmt2->bind(1, insns[i]->get_size());
-            stmt2->bind(2, unparseInstructionWithAddress(insns[i]));
+            stmt2->bind(2, unparseInstruction(insns[i]));
             stmt2->bind(3, fi->first);
             stmt2->bind(4, i);
             stmt2->bind(5, file_id);

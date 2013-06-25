@@ -74,10 +74,25 @@ main(int argc, char *argv[])
     } events(tx);
     events.insert(Tracer::EV_REACHED,           "reached",              "this address was executed");
     events.insert(Tracer::EV_BRANCHED,          "branched",             "branch taken");
-    events.insert(Tracer::EV_CONSUME_INTEGER,   "consume integer",      "consumed an integer value from the input group");
-    events.insert(Tracer::EV_CONSUME_POINTER,   "consume pointer",      "consumed a pointer value from the input group");
+    events.insert(Tracer::EV_CONSUME_INPUT,     "consume input",      "consumed an integer value from the input group");
     events.insert(Tracer::EV_FAULT,             "fault",                "test failed; event value is the fault ID");
 
+    // Populate the semantic_input_queues table
+    struct Queues {
+        SqlDatabase::StatementPtr stmt;
+        Queues(const SqlDatabase::TransactionPtr &tx) {
+            stmt = tx->statement("insert into semantic_input_queues (id, name, description) values (?, ?, ?)");
+        }
+        void insert(InputQueueName qn, const std::string &desc) {
+            stmt->bind(0, (int)qn)->bind(1, InputGroup::queue_name(qn))->bind(2, desc)->execute();
+        }
+    } queues(tx);
+    queues.insert(IQ_ARGUMENT,  "arguments of the function being analyzed");
+    queues.insert(IQ_LOCAL,     "local variables appearing on the stack");
+    queues.insert(IQ_GLOBAL,    "global variables");
+    queues.insert(IQ_POINTER,   "variables of pointer type not in lower-numbered queues");
+    queues.insert(IQ_MEMHASH,   "memory not in lower-numbered queues");
+    queues.insert(IQ_INTEGER,   "locations not not in lower-numbered queues");
 
     finish_command(tx, cmd_id);
     tx->commit();
