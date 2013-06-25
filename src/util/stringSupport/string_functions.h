@@ -471,7 +471,7 @@ namespace StringUtility
        /** Convert base-64 to binary. */
        std::vector<uint8_t> decode_base64(const std::string &encoded);
 
-      /** Join individual strings to form a single string.  Unlike listToString, these functions allow the caller to indicate
+      /** Join individual strings to form a single string.  Unlike listToString(), this function allows the caller to indicate
        *  how the strings should be separated from one another: the @p separator (default SPC) is inserted between each pair
        *  of strings, but not at the beginning or end, even if strings are empty.
        * @{ */
@@ -489,7 +489,24 @@ namespace StringUtility
       std::string join(const std::string &separator, char *strings[], size_t nstrings);
       std::string join(const std::string &separator, const char *strings[], size_t nstrings);
       /** @} */
-   };
+
+     /** Splits strings into parts.  Unlink stringToList(), this function allows the caller to indicate where to split the
+      *  string.  The parts are the portions of the string on either side of the separator: if the separator appears at the
+      *  beginning of the string, then the first part is empty; likewise if the separator appears at the end of the string then
+      *  the last part is empty. At most @p maxparts are returned, the last of which may contain occurrences of the separator.
+      *  If @p trim_white_space is true then white space is removed from the beginning and end of each part. Empty parts are
+      *  never removed from the returned vector since the C++ library already has functions for that. The first few arguments
+      *  are in the same order as for Perl's "split" operator. */
+     std::vector<std::string> split(const std::string &separator, const std::string &str, size_t maxparts=(size_t)(-1),
+                                    bool trim_white_space=false);
+     std::vector<std::string> split(char separator, const std::string &str, size_t maxparts=(size_t)(-1),
+                                    bool trim_white_space=false);
+
+     /** Trims white space from the beginning and end of a string. Caller may specify the characters to strip and whether the
+      * stripping occurs at the begining, the end, or both. */
+     std::string trim(const std::string &str, const std::string &strip=" \t\r\n", bool at_beginning=true, bool at_end=true);
+
+     };
 
 
 // endif for ROSE_STRING_UTILITY_H

@@ -1690,3 +1690,63 @@ StringUtility::join(const std::string &separator, const char *strings[], size_t 
 {
     return join_range(separator, strings, strings+nstrings);
 }
+
+std::vector<std::string>
+StringUtility::split(char separator, const std::string &str, size_t maxparts, bool trim_white_space)
+{
+    return split(std::string(1, separator), str, maxparts, trim_white_space);
+}
+
+std::vector<std::string>
+StringUtility::split(const std::string &separator, const std::string &str, size_t maxparts, bool trim_white_space)
+{
+    std::vector<std::string> retval;
+    if (0==maxparts || str.empty())
+        return retval;
+    if (separator.empty()) {
+        for (size_t i=0; i<str.size() && i<maxparts-1; ++i)
+            retval.push_back(str.substr(i, 1));
+        retval.push_back(str.substr(retval.size()));
+    } else {
+        size_t at = 0;
+        while (at<=str.size() && retval.size()+1<maxparts) {
+            if (at==str.size()) {
+                retval.push_back(""); // string ends with separator
+                break;
+            }
+            size_t sep_at = str.find(separator, at);
+            if (sep_at==std::string::npos) {
+                retval.push_back(str.substr(at));
+                at = str.size() + 1; // "+1" means string doesn't end with separator
+                break;
+            } else {
+                retval.push_back(str.substr(at, sep_at-at));
+                at = sep_at + separator.size();
+            }
+        }
+        if (at<str.size() && retval.size()<maxparts)
+            retval.push_back(str.substr(at));
+    }
+
+    if (trim_white_space) {
+        for (size_t i=0; i<retval.size(); ++i)
+            retval[i] = trim(retval[i]);
+    }
+    return retval;
+}
+
+std::string
+StringUtility::trim(const std::string &str, const std::string &strip, bool at_beginning, bool at_end)
+{
+    if (str.empty())
+        return str;
+    size_t first=0, last=str.size()-1;
+    if (at_beginning)
+        first = str.find_first_not_of(strip);
+    if (at_end && first!=std::string::npos)
+        last = str.find_last_not_of(strip);
+    if (first==std::string::npos || last==std::string::npos)
+        return "";
+    assert(last>=first);
+    return str.substr(first, last+1-first);
+}
