@@ -1,8 +1,7 @@
 if(NOT "${gfortran_version}" VERSION_EQUAL "4.0")
   add_subdirectory(LANL_POP)
+  add_subdirectory(gfortranTestSuite)
 endif()
-
-#add_subdirectory(gfortranTestSuite)
 
 set(F90_TESTCODES
   test2011_01.f90 test2011_02.f90 test2011_04.f90 test2011_06.f90
