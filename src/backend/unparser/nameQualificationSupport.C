@@ -2500,9 +2500,11 @@ NameQualificationTraversal::traverseTemplatedFunction(SgFunctionRefExp* function
 #if 0
           printf ("++++++++++++++++ functionNameString (globalUnparseToString()) = %s \n",functionNameString.c_str());
 #endif
+       // DQ (6/24/2013): Increased upper bound to support ROSE compiling ROSE.
        // This is symptematic of an error which causes the whole class to be included with the class 
        // definition.  This was fixed by calling unparseInfoPointer->set_SkipClassDefinition() above.
-          if (functionNameString.length() > 2000)
+       // if (functionNameString.length() > 2000)
+          if (functionNameString.length() > 5000)
              {
                printf ("Error: function names should not be this long... functionNameString.length() = %zu \n",functionNameString.length());
 #if 1
