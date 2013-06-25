@@ -1412,6 +1412,15 @@ escape(const std::string &s, Driver driver, bool quote)
     return retval;
 }
     
+bool
+is_valid_table_name(const std::string &name)
+{
+    static const char *valid_chars = "abcdefghijklmnopqrstuvwxyz"
+                                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                     "0123456789"
+                                     "_";
+    return std::string::npos == name.find_first_not_of(valid_chars);
+}
 
 std::ostream& operator<<(std::ostream &o, const NoColumn&) { return o; }
 std::ostream& operator<<(std::ostream &o, const Exception &x) { x.print(o); return o; }

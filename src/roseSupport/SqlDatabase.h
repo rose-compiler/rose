@@ -448,6 +448,9 @@ std::vector<std::string> split_sql(const std::string &sql);
 /** Produce an SQL string literal from a C++ string. If do_quote is false then don't add the surrounding quote characters. */
 std::string escape(const std::string&, Driver, bool do_quote=true);
 
+/** Returns true if @p name is a valid table name. */
+bool is_valid_table_name(const std::string &name);
+
 std::ostream& operator<<(std::ostream&, const NoColumn&);
 std::ostream& operator<<(std::ostream&, const Exception&);
 std::ostream& operator<<(std::ostream&, const Connection&);
