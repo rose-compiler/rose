@@ -43,5 +43,23 @@ permute(std::vector<T> &values/*in,out*/, uint64_t pn, size_t sz=(size_t)(-1))
     }
 }
 
+/** Shuffle the values of a vector.  If @p nitems is supplied then only the first @p nitems of the vector are shuffled. If
+ *  @p limit is specified then the algorithm returns after at least the first @p limit elements are sufficiently shuffled. If
+ *  an @p lcg is specified, then it will be used to generate the random numbers, otherwise a built-in random number generator
+ *  is used. */
+template<typename T>
+void
+shuffle(std::vector<T> &vector, size_t nitems=(size_t)(-1), size_t limit=(size_t)(-1), LinearCongruentialGenerator *lcg=NULL)
+{
+    static LinearCongruentialGenerator my_lcg;
+    if (!lcg)
+        lcg = &my_lcg;
+    nitems = std::min(nitems, vector.size());
+    limit = std::min(limit, nitems);
+
+    for (size_t i=0; i<limit; ++i)
+        std::swap(vector[i], vector[lcg->next()%nitems]);
+}
+
 } // namespace
 #endif
