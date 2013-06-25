@@ -30,7 +30,7 @@ LinearCongruentialGenerator::init()
         struct timeval tv;
         int status __attribute__((unused)) = gettimeofday(&tv, NULL);
         assert(status>=0);
-        srand(tv.tv_sec ^ tv.tv_usec);
+        srand(tv.tv_sec ^ tv.tv_usec); // tv_sec is too slow, tv_usec might not be too discrete
         seed_ = value_ = rand();
     }
 }

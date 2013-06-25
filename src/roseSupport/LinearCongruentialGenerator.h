@@ -13,6 +13,9 @@ public:
     /** Initialize the generator with a seed. The seed determines which sequence of numbers is returned. */
     LinearCongruentialGenerator(int seed): seed_(seed), value_(seed) {}
 
+    /** Random initialization. This uses /dev/urandom or /dev/random to initailize the sequence. */
+    void init();
+
     /** Reset the sequence back to the first value. */
     void reset() { value_=seed_; }
 
@@ -38,7 +41,6 @@ public:
     /** @} */
 
 protected:
-    void init(); // random initialization
     int seed_;
     uint64_t value_;
 };
