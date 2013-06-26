@@ -146,6 +146,7 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 	hello1.cpp \
 	helloNested.cpp \
 	memberFunction.cpp \
+	memberFunction2.cpp \
 	objectPrivate.cpp \
 	objectFirstPrivate.cpp \
 	objectLastprivate.cpp \
