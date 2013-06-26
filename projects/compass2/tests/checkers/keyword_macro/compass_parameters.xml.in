@@ -7,7 +7,7 @@
 
   <general>
     <parameter name="target_directory">
-      @absolute_path_srcdir@
+      @res_top_src@
     </parameter>
     <parameter name="enabled_checker">keywordMacros</parameter>
   </general>

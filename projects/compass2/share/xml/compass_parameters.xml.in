@@ -8,7 +8,7 @@
   <!-- General Compass Parameters for all checkers //-->
   <general>
     <parameter name="target_directory">
-      @absolute_path_srcdir@
+      @res_top_src@
     </parameter>
     <parameter name="enabled_checker">deadFunction</parameter>
     <parameter name="enabled_checker">defaultArgument</parameter>
