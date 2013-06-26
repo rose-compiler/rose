@@ -1438,6 +1438,10 @@ AC_SUBST(absolute_path_srcdir)
 res_top_src=$(cd "$srcdir" && pwd -P)
 AC_DEFINE_UNQUOTED([ROSE_SOURCE_TREE_PATH],"$res_top_src",[Location of ROSE Source Tree.])
 
+# kelly64 (6/26/2013): Compass2 xml configuration files require fully-resolved
+#                      absolute paths.
+AC_SUBST(res_top_src)
+
 # This is silly, but it is done to hide an include command (in
 # projects/compass/Makefile.am, including compass-makefile.inc in the build
 # tree) from Automake because the needed include file does not exist when
