@@ -10,7 +10,7 @@
       bar
     </parameter>
     <parameter name="target_directory">
-      @absolute_path_srcdir@
+      @res_top_src@
     </parameter>
   </general>
 
