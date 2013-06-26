@@ -85,10 +85,16 @@ class LoopTrees {
     /// Parameters (constant integers not used in computation, array shape and loop sizes) of the sequence loop trees
     std::set<SgVariableSymbol *> p_parameters;
 
+  protected:
+    const std::list<node_t *> & getTrees() const;
+
+    const std::set<Data *> getDatasIn() const;
+    const std::set<Data *> getDatasOut() const;
+    const std::set<Data *> getDatasLocal() const;
+
   public:
     LoopTrees();
     virtual ~LoopTrees();
-
 
     /// Add a tree at the end of the list
     void addTree(node_t * tree);
@@ -108,11 +114,16 @@ class LoopTrees {
     /// Add a parameter of the sequence of loop trees
     void addParameter(SgVariableSymbol * var_sym);
 
+    /// Read from a lisp like text file
+    void read(char * filename);
 
-    /// Write a Graphiz representation
+    /// Read from a lisp like text file
+    void read(std::ifstream & in_file);
+
+    /// Write a lisp like text
     void toText(char * filename) const;
     
-    /// Write a Graphiz representation
+    /// Write a lisp like text
     void toText(std::ostream & out) const;
 
   friend class Generator;

@@ -7,7 +7,11 @@ libKLT_core_la_SOURCES= \
   loop-trees.cpp \
   kernel.cpp \
   data.cpp \
-  generator.cpp
+  generator.cpp \
+  cg-config.cpp \
+  data-flow.cpp \
+  loop-selector.cpp \
+  utils.cpp
 libKLT_core_la_CXXFLAGS= \
   -g -I$(srcdir)/../../include \
   $(ROSE_INCLUDES)

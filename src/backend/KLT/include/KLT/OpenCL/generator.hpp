@@ -13,7 +13,7 @@ class Generator : public virtual Core::Generator {
     Generator();
     virtual ~Generator();
 
-    virtual bool generate(const Core::LoopTrees & loop_trees, std::set<Core::Kernel> & kernels, std::map<unsigned long, std::set<unsigned long> > & kernel_deps);
+    virtual bool generate(const Core::LoopTrees & loop_trees, std::set<Core::Kernel *> & kernels, std::map<unsigned long, std::set<unsigned long> > & kernel_deps);
 };
 
 }

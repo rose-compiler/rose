@@ -1,6 +1,7 @@
 
 #include "KLT/Core/loop-trees.hpp"
 #include "KLT/Core/data.hpp"
+#include "KLT/Core/utils.hpp"
 
 #include <fstream>
 
@@ -80,13 +81,21 @@ void LoopTrees::toText(node_t * node, std::ostream & out, std::string indent) {
       toText(*it_child, out, indent + "  ");
     }
 
-    out << indent << ")";
+    out << std::endl << indent << ")";
   }
   
   if (stmt != NULL) {
     out << indent << "stmt(" << stmt->statement->unparseToString() << ")";
   }
 }
+
+const std::list<LoopTrees::node_t *> & LoopTrees::getTrees() const { return p_trees; }
+
+const std::set<Data *> LoopTrees::getDatasIn() const { return p_datas_in; }
+
+const std::set<Data *> LoopTrees::getDatasOut() const { return p_datas_out; }
+
+const std::set<Data *> LoopTrees::getDatasLocal() const { return p_datas_local; }
 
 LoopTrees::LoopTrees() :
   p_trees(),
@@ -167,7 +176,250 @@ void LoopTrees::toText(std::ostream & out) const {
     out << "," << std::endl;
     toText(*it_tree, out, "  ");
   }
-  out << ")" << std::endl;
+  out << std::endl << ")" << std::endl;
+}
+
+void parseParams(LoopTrees & loop_trees) {
+  if (AstFromString::afs_match_substr("params")) {
+    SgType * param_type = SageBuilder::buildUnsignedLongType();
+
+    ensure('(');
+
+    do {
+      AstFromString::afs_skip_whitespace();
+
+      assert(AstFromString::afs_match_identifier());
+      SgName * label = dynamic_cast<SgName *>(AstFromString::c_parsed_node);
+      assert(label != NULL);
+
+      SgVariableDeclaration * param_decl = SageBuilder::buildVariableDeclaration_nfi(*label, param_type, NULL, NULL);
+      SgVariableSymbol * var_sym = isSgVariableSymbol(param_decl->get_variables()[0]->search_for_symbol_from_symbol_table());
+      assert(var_sym != NULL);
+
+      loop_trees.addParameter(var_sym);
+
+      AstFromString::afs_skip_whitespace();
+    } while (AstFromString::afs_match_char(','));
+
+    ensure(')');
+  }
+  AstFromString::afs_skip_whitespace();
+}
+
+void parseCoefs(LoopTrees & loop_trees) {
+  if (AstFromString::afs_match_substr("coefs")) {
+    SgType * coef_type = SageBuilder::buildFloatType();
+
+    ensure('(');
+
+    do {
+      AstFromString::afs_skip_whitespace();
+
+      assert(AstFromString::afs_match_identifier());
+      SgName * label = dynamic_cast<SgName *>(AstFromString::c_parsed_node);
+      assert(label != NULL);
+
+      SgVariableDeclaration * coef_decl = SageBuilder::buildVariableDeclaration_nfi(*label, coef_type, NULL, NULL);
+      SgVariableSymbol * var_sym = isSgVariableSymbol(coef_decl->get_variables()[0]->search_for_symbol_from_symbol_table());
+      assert(var_sym != NULL);
+
+      loop_trees.addCoefficient(var_sym);
+ 
+      AstFromString::afs_skip_whitespace();
+    } while (AstFromString::afs_match_char(','));
+
+    ensure(')');
+  }
+  AstFromString::afs_skip_whitespace();
+}
+
+void parseDatas(LoopTrees & loop_trees) {
+  while (AstFromString::afs_match_substr("data")) {
+
+    ensure('(');
+
+    assert(AstFromString::afs_match_identifier());
+    SgName * label = dynamic_cast<SgName *>(AstFromString::c_parsed_node);
+    assert(label != NULL);
+
+    std::list<std::pair<SgExpression *, SgExpression *> > sections;
+    SgType * data_type = SageBuilder::buildFloatType();
+    while (AstFromString::afs_match_char('[')) {
+      sections.push_back(std::pair<SgExpression *, SgExpression *>(NULL, NULL));
+      std::pair<SgExpression *, SgExpression *> & section = sections.back();
+
+      AstFromString::afs_skip_whitespace();
+
+      assert(AstFromString::afs_match_additive_expression());
+      section.first = isSgExpression(AstFromString::c_parsed_node);
+      assert(section.first != NULL);
+
+      AstFromString::afs_skip_whitespace();
+      if (AstFromString::afs_match_char(':')) {
+        AstFromString::afs_skip_whitespace();
+
+        assert(AstFromString::afs_match_additive_expression());
+        section.second = isSgExpression(AstFromString::c_parsed_node);
+        assert(section.second != NULL);
+
+        AstFromString::afs_skip_whitespace();
+      }
+      else {
+        section.second = section.first;
+      }
+
+      ensure(']');
+
+      data_type = SageBuilder::buildPointerType(data_type);
+    }
+
+    SgVariableDeclaration * data_decl = SageBuilder::buildVariableDeclaration_nfi(*label, data_type, NULL, NULL);
+    SgVariableSymbol * var_sym = isSgVariableSymbol(data_decl->get_variables()[0]->search_for_symbol_from_symbol_table());
+    assert(var_sym != NULL);
+
+    Data * data = new Data(var_sym);
+
+    std::list<std::pair<SgExpression *, SgExpression *> >::const_iterator it_section;
+    for (it_section = sections.begin(); it_section != sections.end(); it_section++)
+      data->addSection(*it_section);
+
+    ensure(',');
+
+    if (AstFromString::afs_match_substr("flow-in")) {
+      loop_trees.addDataIn(data);
+    }
+    else if (AstFromString::afs_match_substr("flow-out")) {
+      loop_trees.addDataOut(data);
+    }
+    else if (AstFromString::afs_match_substr("local")) {
+      loop_trees.addDataLocal(data);
+    }
+    else assert(false);
+
+    ensure(')');
+  }
+  AstFromString::afs_skip_whitespace();
+}
+
+LoopTrees::node_t * parseLoopTreesNode() {
+  LoopTrees::node_t * lt_node = NULL;
+  AstFromString::afs_skip_whitespace();
+
+  if (AstFromString::afs_match_substr("loop")) {
+    ensure('(');
+
+    assert(AstFromString::afs_match_identifier());
+    SgName * label = dynamic_cast<SgName *>(AstFromString::c_parsed_node);
+    assert(label != NULL);
+
+    SgVariableDeclaration * it_decl = SageBuilder::buildVariableDeclaration_nfi(*label, SageBuilder::buildUnsignedLongType(), NULL, NULL);
+    SgVariableSymbol * it_sym = isSgVariableSymbol(it_decl->get_variables()[0]->search_for_symbol_from_symbol_table());
+    assert(it_sym != NULL);
+
+    ensure(',');
+
+    assert(AstFromString::afs_match_additive_expression());
+    SgExpression * lb_exp = isSgExpression(AstFromString::c_parsed_node);
+    assert(lb_exp != NULL);
+
+    ensure(',');
+
+    assert(AstFromString::afs_match_additive_expression());
+    SgExpression * ub_exp = isSgExpression(AstFromString::c_parsed_node);
+    assert(ub_exp != NULL);
+
+    ensure(',');
+
+    LoopTrees::loop_t::parallel_pattern_e pattern;
+    SgExpression * parameter = NULL;
+    if (AstFromString::afs_match_substr("none", false))
+      pattern = LoopTrees::loop_t::none;
+    else if (AstFromString::afs_match_substr("parfor", false))
+      pattern = LoopTrees::loop_t::parfor;
+    else if (AstFromString::afs_match_substr("reduction")) {
+      pattern = LoopTrees::loop_t::reduction;
+
+      ensure('(');
+
+      assert(AstFromString::afs_match_additive_expression());
+      parameter = isSgExpression(AstFromString::c_parsed_node);
+      assert(parameter != NULL);
+
+      ensure(')');
+    }
+    else assert(false);
+
+    ensure(',');
+
+    LoopTrees::loop_t * lt_loop = new LoopTrees::loop_t(it_sym, lb_exp, ub_exp, pattern, parameter);
+
+    do {
+      AstFromString::afs_skip_whitespace();
+
+      LoopTrees::node_t * child_node = parseLoopTreesNode();
+      assert(child_node != NULL);
+      lt_loop->children.push_back(child_node);
+
+      AstFromString::afs_skip_whitespace();
+    } while (AstFromString::afs_match_char(','));
+
+    lt_node = lt_loop;
+
+    ensure(')');
+  }
+  else if (AstFromString::afs_match_substr("stmt")) {
+
+    ensure('(');
+
+    assert(AstFromString::afs_match_statement());
+    SgStatement * stmt = isSgStatement(AstFromString::c_parsed_node);
+    assert(stmt != NULL);
+    stmt->set_parent(AstFromString::c_sgnode);
+    lt_node = new LoopTrees::stmt_t(stmt);
+
+    ensure(')');
+  }
+  else assert(false);
+
+  AstFromString::afs_skip_whitespace();
+  return lt_node;
+}
+
+void LoopTrees::read(char * filename) {
+  std::ifstream in_file;
+  in_file.open(filename);
+
+  assert(in_file.is_open());
+
+  read(in_file);
+}
+
+void LoopTrees::read(std::ifstream & in_file) {
+  initAstFromString(in_file);
+
+  parseParams(*this);
+
+  parseCoefs(*this);
+
+  parseDatas(*this);
+
+  if (AstFromString::afs_match_substr("loop-trees")) {
+
+    ensure('(');
+
+    do {
+      LoopTrees::node_t * lt_node = parseLoopTreesNode();
+      assert(lt_node != NULL);
+      addTree(lt_node);
+
+      AstFromString::afs_skip_whitespace();
+    } while (AstFromString::afs_match_char(','));
+
+    ensure(')');
+  }
+  else assert(false);
+
+  SageBuilder::popScopeStack();
 }
 
 }

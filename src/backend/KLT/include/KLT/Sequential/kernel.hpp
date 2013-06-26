@@ -19,6 +19,10 @@ class Kernel : public virtual Core::Kernel {
     /// Symbol associated to the "arguments packer", a struct used to be pass the arguments as one void pointer
     SgClassSymbol * p_arguments_packer;
 
+  protected:
+    void setKernelSymbol(SgFunctionSymbol * kernel_symbol);
+    void setArgumentPacker(SgClassSymbol * arguments_packer);
+
   public:
     Kernel();
     virtual ~Kernel();
@@ -28,6 +32,8 @@ class Kernel : public virtual Core::Kernel {
 
     /// \return Symbol associated to the "arguments packer", a struct used to be pass the arguments as one void pointer
     SgClassSymbol * getArgumentsPacker() const;
+
+  friend class Generator;
 };
 
 }

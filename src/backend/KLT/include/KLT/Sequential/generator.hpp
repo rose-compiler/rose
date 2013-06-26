@@ -4,16 +4,28 @@
 
 #include "KLT/Core/generator.hpp"
 
+#include "KLT/Sequential/kernel.hpp"
+
+#include <string>
+
 namespace KLT {
 
 namespace Sequential {
 
 class Generator : public virtual Core::Generator {
+  protected:
+    SgSourceFile * p_decl_file;
+    SgSourceFile * p_defn_file;
+
+  protected:
+    virtual Kernel * makeKernel() const;
+    virtual void doCodeGeneration(Core::Kernel * kernel, const Core::CG_Config & cg_config);
+
   public:
-    Generator();
+    Generator(SgProject * project, std::string filename);
     virtual ~Generator();
 
-    virtual bool generate(const Core::LoopTrees & loop_trees, std::set<Core::Kernel> & kernels, std::map<unsigned long, std::set<unsigned long> > & kernel_deps);
+    void unparse();
 };
 
 }
