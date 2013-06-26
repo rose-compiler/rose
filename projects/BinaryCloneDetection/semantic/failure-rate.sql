@@ -30,12 +30,12 @@ create table fr_funcnames as
         where func2.id is null and func1.ninsns >= 2						-- !!FIXME
         group by func1.name
         having count(*) = (select count(*) from fr_specimens)
-     except (
-       select func.name as name
-           from semantic_fio as fio
-           join semantic_functions as func on fio.func_id = func.id
-           where fio.globals_consumed > 0
-     )
+--     except (
+--       select func.name as name
+--           from semantic_fio as fio
+--           join semantic_functions as func on fio.func_id = func.id
+--           where fio.globals_consumed > 0
+--     )
 ;
 
 
