@@ -2,7 +2,7 @@
 
 
 CXX = g++
-CXXFLAGS = -Wall -m32
+CXXFLAGS = -Wall -m32 -g
 OPT_LEVELS = 0 1 2 3 s
 MOSTLYCLEANFILES =
 CLEANFILES =
