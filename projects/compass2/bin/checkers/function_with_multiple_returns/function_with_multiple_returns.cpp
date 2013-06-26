@@ -1,17 +1,23 @@
 /**
  * \file    function_with_multiple_returns.cpp
- * \author  Justin Too <too1@llnl.gov>
- * \date    August 16, 2012
+ * \author  Sam Kelly <kelly64@llnl.gov> <kellys@dickinson.edu>
+ * \date    June 25, 2013
  */
 
-#include "rose.h"
-#include "string_functions.h"
+#include <iostream>
+#include <fstream>
+
+#include <algorithm>
+#include <map>
 
 #include <boost/foreach.hpp>
 
+#include "rose.h"
+#include "string_functions.h"
+#include "CodeThorn/src/AstMatching.h"
+#include "CodeThorn/src/AstTerm.h"
 #include "compass2/compass.h"
 
-using std::string;
 using namespace StringUtility;
 
 extern const Compass::Checker* const functionWithMultipleReturnsChecker;
@@ -25,216 +31,144 @@ extern const Compass::Checker* const functionWithMultipleReturnsChecker;
 
 namespace CompassAnalyses
 {
-/**
- * \brief Detect functions that contain multiple return sites.
- */
-namespace FunctionWithMultipleReturns
-{
-  extern const string checker_name;
-  extern const string short_description;
-  extern const string long_description;
-
   /**
-   * \brief Specificaiton of checker results.
+   * \brief Detect functions that are never called,
+   *        sometimes called "unreachable" or "dead".
    */
-  class CheckerOutput: public Compass::OutputViolationBase {
-   public:
-    explicit CheckerOutput(SgNode *const node);
-
-   private:
-    DISALLOW_COPY_AND_ASSIGN(CheckerOutput);
-  };
-
-  /**
-   * \brief Specification of AST traversal.
-   */
-  class Traversal : public Compass::AstSimpleProcessingWithRunFunction {
-   public:
-    Traversal(Compass::Parameters inputParameters,
-              Compass::OutputObject *output);
+  namespace FunctionWithMultipleReturns
+  {
+    extern const string checker_name;
+    extern const string short_description;
+    extern const string long_description;
+    extern string source_directory;
 
     /**
-     * \brief Get inherited attribute for traversal.
-     *
-     * We are not using an inherited attribute for this checker.
-     *
-     * \returns NULL
+     * \brief Specificaiton of checker results.
      */
-    void* initialInheritedAttribute() const
+    class CheckerOutput : public Compass::OutputViolationBase
+    {
+     public:
+      explicit CheckerOutput(SgNode * const node);
+
+     private:
+      DISALLOW_COPY_AND_ASSIGN(CheckerOutput);
+    };
+
+    bool IsNodeNotInUserLocation(const SgNode* node)
+    {
+      const SgLocatedNode* located_node = isSgLocatedNode(node);
+      if (located_node != NULL)
       {
-        return NULL;
+        return !Compass::IsNodeInUserLocation(
+            located_node, FunctionWithMultipleReturns::source_directory);
+      } else {
+        return true;
       }
+    };
 
-    void run(SgNode *n)
-      {
-        this->traverse(n, preorder);
-      }
-
-    void visit(SgNode *n);
-
-    /*-----------------------------------------------------------------------
-     * Utilities
-     *---------------------------------------------------------------------*/
-
-    /*-----------------------------------------------------------------------
-     * Accessors / Mutators
-     *---------------------------------------------------------------------*/
-    string source_directory() const { return source_directory_; }
-    void set_source_directory(const string &source_directory)
-      {
-        source_directory_ = source_directory;
-      }
-
-    Compass::OutputObject* output() const { return output_; }
-    void set_output(Compass::OutputObject *const output)
-      {
-        output_ = output;
-      }
-
-   private:
-    /*-----------------------------------------------------------------------
-     * Attributes
-     *---------------------------------------------------------------------*/
-    string source_directory_; ///< Restrict analysis to user input files.
-    Compass::OutputObject* output_;
-
-    /*-----------------------------------------------------------------------
-     * Utilities
-     *---------------------------------------------------------------------*/
-    DISALLOW_COPY_AND_ASSIGN(Traversal);
-  };
-} // ::CompassAnalyses
-} // ::FunctionWithMultipleReturns
+  }  // ::CompassAnalyses
+}  // ::FunctionWithMultipleReturns
 #endif // COMPASS_FUNCTION_WITH_MULTIPLE_RETURNS_H
-
 /*-----------------------------------------------------------------------------
  * Implementation
  *---------------------------------------------------------------------------*/
 
 namespace CompassAnalyses
 {
- namespace FunctionWithMultipleReturns
- {
-  const string checker_name      = "FunctionWithMultipleReturns";
-  const string short_description = "Function with multiple returns detected.";
-  const string long_description  = "This analysis looks for functions \
-      that contain multiple return sites.";
- }
+  namespace FunctionWithMultipleReturns
+  {
+    const string checker_name = "FunctionWithMultipleReturns";
+    const string short_description = "Function with multiple returns detected";
+    const string long_description =
+        "This analysis looks for functions with multiple returns";
+    string source_directory = "/";
+  }
 }
 
-CompassAnalyses::FunctionWithMultipleReturns::
-CheckerOutput::CheckerOutput(SgNode *const node)
-    : OutputViolationBase(node,
-                          ::functionWithMultipleReturnsChecker->checkerName,
-                          ::functionWithMultipleReturnsChecker->shortDescription) {}
-
-CompassAnalyses::FunctionWithMultipleReturns::Traversal::
-Traversal(Compass::Parameters a_parameters, Compass::OutputObject* output)
-    : output_(output)
-  {
-    try
-    {
-        string target_directory = a_parameters["general::target_directory"].front();
-        source_directory_.assign(target_directory);
-    }
-    catch (Compass::ParameterNotFoundException e)
-    {
-        std::cout << "ParameterNotFoundException: " << e.what() << std::endl;
-        homeDir(source_directory_);
-    }
-  }
+CompassAnalyses::FunctionWithMultipleReturns::CheckerOutput::CheckerOutput(
+    SgNode * const node) : OutputViolationBase(
+    node, ::functionWithMultipleReturnsChecker->checkerName,
+    ::functionWithMultipleReturnsChecker->shortDescription){}
 
 //////////////////////////////////////////////////////////////////////////////
 
-/** visit(SgNode *node)
+// Checker main run function and metadata
+
+/** run(Compass::Parameters parameters, Compass::OutputObject* output)
  *
  *  Purpose
  *  ========
  *
- *  Search for functions that contain more than one
- *  return site.  For example:
+ *  Search for functions with multiple returns
+ *  int func1(int a)
+ *  {
+ *      if(a > 0) return 1;
+ *      else return -1;
+ *  }
  *
- *      int multiple_returns()
- *      {
- *          if (0)
- *            return 0;
- *          else
- *            return 1;
- *      }
+ *  ^ would be flagged because there are 2 returns
  *
- *  Target AST
+ *
+ *  Algorithm
  *  ==========
- *              (1)
- *      SgFunctionDefinition
- *               |
- *             (body)
- *               |
- *          SgBasicBlock
- *      ```C++
- *        {
- *            if (0)
- *              return 0;
- *            else
- *              return 1;
- *        }
- *      ```
- *               |
- *              (2)
- *  (search for return statements)
- *           SgReturnStmt
+ *
+ *  1. Search for all SgFunctionDeclarations
+ *
+ *  2. For each SgFunctionDeclaration, search for child nodes that
+ *     are SgReturnStmt's
  */
-void
-CompassAnalyses::FunctionWithMultipleReturns::Traversal::
-visit(SgNode *node)
+static void run(Compass::Parameters parameters, Compass::OutputObject* output)
 {
-    SgLocatedNode* located_node = isSgLocatedNode(node);
-    if (located_node != NULL &&
-        Compass::IsNodeInUserLocation(located_node, source_directory_))
+  // We only care about source code in the user's space, not,
+  // for example, Boost or system files.
+  string target_directory = parameters["general::target_directory"].front();
+  CompassAnalyses::FunctionWithMultipleReturns::source_directory.assign(
+      target_directory);
+
+  // Use the pre-built ROSE AST
+  SgProject* sageProject = Compass::projectPrerequisite.getProject();
+  SgNode* root_node = (SgNode*) sageProject;
+
+  // 1. Search for all SgFunctionDeclarations
+  CodeThorn::AstMatching function_matcher;
+  MatchResult function_matches = function_matcher
+      .performMatching("$r = SgFunctionDefinition", root_node);
+
+  // 2. Check if there are multiple SgReturnStmt's for this SgFunctionDefinition
+  BOOST_FOREACH(SingleMatchVarBindings matched_function, function_matches)
+  {
+    SgNode* function = matched_function["$r"];
+
+    CodeThorn::AstMatching return_matcher;
+    MatchResult return_matches = return_matcher
+        .performMatching("$r = SgReturnStmt", function);
+
+    int num_matches = return_matches.size();
+
+    if(num_matches > 1)
     {
-        // (1)
-        SgFunctionDefinition* function_definition =
-            isSgFunctionDefinition(node);
-        if (function_definition != NULL)
-        {
-            SgBasicBlock* function_body = function_definition->get_body();
-            ROSE_ASSERT(function_body != NULL);
+      output->addOutput(
+          new CompassAnalyses::FunctionWithMultipleReturns::
+          CheckerOutput(function));
 
-            // (2)
-            Rose_STL_Container<SgNode*> return_statements =
-                NodeQuery::querySubTree(function_body, V_SgReturnStmt);
-            if (return_statements.size() > 1)
-            {
-                output_->addOutput(
-                  new CheckerOutput(node));
-            }
-        }
+      // verbose output
+      /*
+      if (SgProject::get_verbose > 0)
+      {
+        std::cout << "num_returns: " << num_matches << std::endl;
+      }*/
     }
-}// end of the visit function.
 
-// Checker main run function and metadata
-
-static void
-run(Compass::Parameters params, Compass::OutputObject* output)
-  {
-    CompassAnalyses::FunctionWithMultipleReturns::Traversal(params, output).run(
-      Compass::projectPrerequisite.getProject());
   }
+}
 
-// Remove this function if your checker is not an AST traversal
-static Compass::AstSimpleProcessingWithRunFunction*
-createTraversal(Compass::Parameters params, Compass::OutputObject* output)
-  {
-    return new CompassAnalyses::FunctionWithMultipleReturns::Traversal(params, output);
-  }
 
 extern const Compass::Checker* const functionWithMultipleReturnsChecker =
-  new Compass::CheckerUsingAstSimpleProcessing(
-      CompassAnalyses::FunctionWithMultipleReturns::checker_name,
-    // Descriptions should not include the newline character "\n".
-      CompassAnalyses::FunctionWithMultipleReturns::short_description,
-      CompassAnalyses::FunctionWithMultipleReturns::long_description,
-      Compass::C | Compass::Cpp,
-      Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
-      run,
-      createTraversal);
-
+    new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::FunctionWithMultipleReturns::checker_name,
+        // Descriptions should not include the newline character "\n".
+        CompassAnalyses::FunctionWithMultipleReturns::short_description,
+        CompassAnalyses::FunctionWithMultipleReturns::long_description,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite), run,
+        NULL);
