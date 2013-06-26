@@ -14,9 +14,11 @@ add_executable(printOutClones printOutClones.C)
 target_link_libraries(printOutClones
   ROSE_DLL RoseSQLite3xDatabase ${Boost_LIBRARIES})
 
-add_executable(createVectorsBinary
-  createVectorsBinary.C createSignatureVectors.C vectorCompression.C
-)
-target_link_libraries(createVectorsBinary
-  ROSE_DLL RoseSQLite3xDatabase ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES}
-)
+if(NOT "${Boost_VERSION}" STREQUAL "104000")
+  add_executable(createVectorsBinary
+    createVectorsBinary.C createSignatureVectors.C vectorCompression.C
+  )
+  target_link_libraries(createVectorsBinary
+    ROSE_DLL RoseSQLite3xDatabase ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES}
+  )
+endif()
