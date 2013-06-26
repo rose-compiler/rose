@@ -243,16 +243,24 @@ fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inpu
 
 // Commit everything and return a new transaction
 static SqlDatabase::TransactionPtr
-checkpoint(const SqlDatabase::TransactionPtr &tx, OutputGroups &ogroups, Tracer &tracer, Progress &progress)
+checkpoint(const SqlDatabase::TransactionPtr &tx, OutputGroups &ogroups, Tracer &tracer, Progress &progress,
+           size_t ntests_ran, int64_t cmd_id)
 {
     SqlDatabase::ConnectionPtr conn = tx->connection();
     progress.message("checkpoint: saving output groups");
     ogroups.save(tx);
     progress.message("checkpoint: saving trace events");
     tracer.save(tx);
+
     progress.message("checkpoint: committing");
+    std::string desc = "ran "+StringUtility::numberToString(ntests_ran)+" test"+(1==ntests_ran?"":"s");
+    if (ntests_ran>0)
+        finish_command(tx, cmd_id, desc);
     tx->commit();
+
     progress.message("");
+    progress.clear();
+    std::cerr <<argv0 <<": " <<desc <<"\n";
     return conn->transaction();
 }
 
@@ -426,7 +434,7 @@ main(int argc, char *argv[])
     AddressIdMap entry2id;                      // maps function entry address to function ID
     Tracer tracer;
     time_t last_checkpoint = time(NULL);
-    size_t ntests_ran=0, ntests_committed=0;
+    size_t ntests_ran=0;
     while (!worklist.empty()) {
         ++progress;
         WorkItem work = worklist.shift();
@@ -579,9 +587,8 @@ main(int argc, char *argv[])
         
         // Checkpoint
         if (do_checkpoint || (opt.checkpoint>0 && time(NULL)-last_checkpoint > opt.checkpoint)) {
-            tx = checkpoint(tx, ogroups, tracer, progress);
+            tx = checkpoint(tx, ogroups, tracer, progress, ntests_ran, cmd_id);
             last_checkpoint = time(NULL);
-            ntests_committed = ntests_ran;
         }
         if (do_exit) {
             tx->rollback();
@@ -592,19 +599,9 @@ main(int argc, char *argv[])
     }
 
     // Cleanup
-    if (!tx->is_terminated()) { // we might have done a rollback above to indicate that we should do this checkpoint
-        tx = checkpoint(tx, ogroups, tracer, progress);
-        ntests_committed = ntests_ran;
-    }
+    if (!tx->is_terminated()) // we might have done a rollback above to indicate that we should not do this checkpoint
+        tx = checkpoint(tx, ogroups, tracer, progress, ntests_ran, cmd_id);
     progress.clear();
-    std::string desc = "ran "+StringUtility::numberToString(ntests_ran)+" test"+(1==ntests_ran?"":"s");
-    if (ntests_committed!=ntests_ran)
-        desc += "; committed "+StringUtility::numberToString(ntests_committed);
-    if (ntests_ran>0) {
-        SqlDatabase::TransactionPtr tx2 = conn->transaction();
-        finish_command(tx2, cmd_id, desc);
-        tx2->commit();
-    }
 
     return 0;
 }
