@@ -24,6 +24,8 @@ addressTakenAnalysis_SOURCES = \
 	$(CODETHORN_SRC_ROOT)/MatchOperation.C \
 	$(CODETHORN_SRC_ROOT)/SgNodeHelper.C \
 	$(CODETHORN_SRC_ROOT)/VariableIdMapping.C \
+	$(CODETHORN_SRC_ROOT)/Miscellaneous.C \
+	$(CODETHORN_SRC_ROOT)/CommandLineOptions.C \
 	addressTakenAnalysis.C
 
 addressTakenAnalysis_LDADD = -lrose

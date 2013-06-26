@@ -4,6 +4,7 @@
 #include "AstTerm.h"
 #include "AstMatching.h"
 #include "VariableIdMapping.h"
+#include "Miscellaneous.h"
 
 using namespace CodeThorn;
 
@@ -21,7 +22,7 @@ class ProcessQuery
 {
   // the root node on which the AST matching needs to be performed
   MatchResult match_result;
-  AstMatching m;
+
 public:
   ProcessQuery() { }
   // functor to operate on the given query
@@ -59,6 +60,7 @@ void ProcessQuery::clearMatchResult()
 
 MatchResult ProcessQuery::operator()(std::string query, SgNode* root)
 {
+  AstMatching m;
   match_result = m.performMatching(query, root);
   return match_result;
 }
@@ -68,6 +70,9 @@ MatchResult ProcessQuery::operator()(std::string query, SgNode* root)
  *************************************************/
 
 // Visitor pattern to process the operands of SgAddressOfOp
+// SgAddressOfOp can be applied to anything that is an r-value
+// TODO: handle expressions that can be r-values
+// 
 class OperandToVarID : public ROSE_VisitorPatternDefaultBase
 {
   // store the reference to address taken set
@@ -82,6 +87,15 @@ public:
     // get the VariableId for SgVarRefExp
     addressTakenSet.insert(vidm.variableId(sgn));
   }
+
+  void visit(SgDotExp* sgn)
+  {    
+  }
+
+  void visit(SgArrowExp* sgn)
+  {
+  }
+
 };
 
 /*************************************************
@@ -132,6 +146,45 @@ void AddressTakenAnalysis::printAddressTakenSet()
 }
 
 /*************************************************
+ ************* PointerTypeAnalysis ***************
+ *************************************************/
+class PointerTypeAnalysis
+{
+  SgNode* root;
+  VariableIdMapping& vidm;
+  VariableIdSet pointerTypeSet;
+public:
+  PointerTypeAnalysis(SgNode* _root, VariableIdMapping& _vidm) : root(_root), vidm(_vidm) { }
+  void collectPointerTypes();
+};
+
+
+void PointerTypeAnalysis::collectPointerTypes()
+{
+  // query AST
+  ProcessQuery procQueryAST;
+  // query type tree (SgType*)
+  ProcessQuery procQueryType;
+  MatchResult matches = procQueryAST("$VAR=SgVarRefExp", root);
+  for(MatchResult::iterator it = matches.begin(); it != matches.end(); it++)
+  {
+    SgVarRefExp* matchedVar = isSgVarRefExp((*it)["$VAR"]); ROSE_ASSERT(matchedVar);
+    // check if the type is SgPointerType
+    SgType* sgtype = matchedVar->get_type();
+    MatchResult matchedTypes = procQueryType("$T=SgPointerType(_,..)", sgtype);
+    for(MatchResult::iterator typeIt = matchedTypes.begin(); typeIt != matchedTypes.end(); typeIt++)
+    {
+      // each element should be a type
+      ROSE_ASSERT(isSgType((*typeIt)["$T"]));
+      SgType* matchedType = isSgType((*typeIt)["$T"]);
+      std::cout << "<Node: " << matchedVar->unparseToString() << ",\nType= " << astTermToMultiLineString(matchedType) << ">\n";
+    }
+    procQueryType.clearMatchResult();
+  }
+}
+
+
+/*************************************************
  ******************* main ************************
  *************************************************/
 int main(int argc, char* argv[])
@@ -140,6 +193,21 @@ int main(int argc, char* argv[])
   SgProject* project = frontend(argc,argv);
   SgNode* root = project;
 
+  RoseAst ast(root);
+  // write_file("rootast.dot", astTermToDot(ast.begin().withoutNullValues(), ast.end()));
+  // for(RoseAst::iterator it = ast.begin().withNullValues(); it != ast.end(); it++)
+  // {
+  //   if(isSgExpression(*it))
+  //   {
+  //     SgType* sgtype = isSgExpression(*it)->get_type();
+  //     std::cout << "<Node: " << (*it)->unparseToString() << ", Type: " << sgtype->class_name() << ">\n";
+  //     ROSE_ASSERT(sgtype);
+  //     RoseAst asttype(sgtype);
+  //     std::cout << astTermToMultiLineString(sgtype);
+  //     write_file(sgtype->class_name() + "_ast.dot", astTermToDot(asttype.begin().withoutNullValues(), asttype.end()));
+  //   }
+  // }
+
   // compute variableId mappings
   VariableIdMapping vidm;
   vidm.computeVariableSymbolMapping(project);
@@ -147,6 +215,9 @@ int main(int argc, char* argv[])
   AddressTakenAnalysis addrTakenAnalysis(root, vidm);
   addrTakenAnalysis.computeAddressTakenSet();
   addrTakenAnalysis.printAddressTakenSet();
+
+  PointerTypeAnalysis ptrTypeAnalysis(root, vidm);
+  ptrTypeAnalysis.collectPointerTypes();
 
   return 0;
 }
