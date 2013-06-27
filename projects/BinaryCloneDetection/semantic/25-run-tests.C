@@ -27,6 +27,9 @@ usage(int exit_status)
               <<"            if neither --checkpoint nor --no-checkpoint is specified). A random interval is useful when large\n"
               <<"            output groups and/or traces need to be saved in the database since it makes it more likely that\n"
               <<"            not all instances of a parallel run will hit the database server at the about the same time.\n"
+              <<"    --dry-run\n"
+              <<"            Do not modify the database. This is really only useful with the --verbose switch in order to\n"
+              <<"            re-run a test for debugging purposes.\n"
               <<"    --[no-]follow-calls\n"
               <<"            If --follow-calls is specified, then x86 CALL instructions are treated the same as any other\n"
               <<"            instruction, resulting in the analysis of the called function in-line with the caller if possible,\n"
@@ -74,7 +77,7 @@ usage(int exit_status)
 
 struct Switches {
     Switches()
-        : verbosity(SILENT), progress(false), pointers(false), interactive(false), trace_events(0) {
+        : verbosity(SILENT), progress(false), pointers(false), interactive(false), trace_events(0), dry_run(false) {
         checkpoint = 300 + LinearCongruentialGenerator()()%600;
         params.timeout = 5000;
         params.verbosity = SILENT;
@@ -87,6 +90,7 @@ struct Switches {
     time_t checkpoint;
     bool interactive;
     unsigned trace_events;
+    bool dry_run;
     PolicyParams params;
 };
 
@@ -320,6 +324,8 @@ main(int argc, char *argv[])
                 if (c1 > c2) std::swap(c1, c2);
                 opt.checkpoint = c1 + LinearCongruentialGenerator()() % (c2-c1);
             }
+        } else if (!strcmp(argv[argno], "--dry-run")) {
+            opt.dry_run = true;
         } else if (!strcmp(argv[argno], "--follow-calls")) {
             opt.params.follow_calls = true;
         } else if (!strcmp(argv[argno], "--no-follow-calls")) {
@@ -568,17 +574,31 @@ main(int argc, char *argv[])
         bool do_checkpoint=false, do_exit=false;
         if (SIGINT==interrupted) {
             progress.clear();
+            std::cout <<argv0 <<": interrupted by user.\n";
             if (isatty(1)) {
                 FILE *f = fopen("/dev/tty", "r");
                 if (f!=NULL) {
-                    std::cout <<argv0 <<": interrupted by user.\n"
-                              <<argv0 <<": c=commit and conintue, q=commit and quit, a=abort w/out commit\n"
-                              <<argv0 <<": your choice? [C/q/a] ";
+                    if (opt.dry_run) {
+                        std::cout <<argv0 <<":"
+                                  <<" c=continue in dry-run mode;"
+                                  <<" d=turn dry-run mode off;"
+                                  <<" q=commit and quit;"
+                                  <<" a=abort w/out commit\n"
+                                  <<argv0 <<": your choice? [C/d/q/a] ";
+                    } else {
+                        std::cout <<argv0 <<":"
+                                  <<" c=commit and conintue;"
+                                  <<" q=commit and quit;"
+                                  <<" a=abort w/out commit\n"
+                                  <<argv0 <<": your choice? [C/q/a] ";
+                    }
                     char *line=NULL;
                     size_t line_sz=0;
                     if (rose_getline(&line, &line_sz, f)>0) {
-                        do_checkpoint = NULL!=strchr("cCqQ\r\n", line[0]);
+                        do_checkpoint = NULL!=strchr("cCdDqQ\r\n", line[0]);
                         do_exit = NULL==strchr("cC\r\n", line[0]);
+                        if (opt.dry_run && strchr("dD", line[0]))
+                            opt.dry_run = false;
                     }
                 }
             }
@@ -587,7 +607,8 @@ main(int argc, char *argv[])
         
         // Checkpoint
         if (do_checkpoint || (opt.checkpoint>0 && time(NULL)-last_checkpoint > opt.checkpoint)) {
-            tx = checkpoint(tx, ogroups, tracer, progress, ntests_ran, cmd_id);
+            if (!opt.dry_run)
+                tx = checkpoint(tx, ogroups, tracer, progress, ntests_ran, cmd_id);
             last_checkpoint = time(NULL);
         }
         if (do_exit) {
@@ -599,7 +620,7 @@ main(int argc, char *argv[])
     }
 
     // Cleanup
-    if (!tx->is_terminated()) // we might have done a rollback above to indicate that we should not do this checkpoint
+    if (!tx->is_terminated() && !opt.dry_run)
         tx = checkpoint(tx, ogroups, tracer, progress, ntests_ran, cmd_id);
     progress.clear();
 
