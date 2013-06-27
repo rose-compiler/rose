@@ -717,7 +717,13 @@ public:
         for (MemoryCells::iterator ci=stack_cells.begin(); ci!=stack_cells.end(); ++ci) {
             uint32_t addr = ci->first;
             MemoryValue &mval = ci->second;
+#if 1
+            // ignore all writes to memory that occur through the ss segment register.
+            bool cell_in_frame = true;
+#else
+            // ignore writes through the ss segment register if they seem to be in our original stack frame
             bool cell_in_frame = (addr <= stack_frame_top && addr > stack_frame_top-frame_size);
+#endif
             if (0 != (mval.rw_state & HAS_BEEN_WRITTEN) && mval.val.is_known()) {
                 if (verbosity>=EFFUSIVE)
                     std::cerr <<"output for stack address " <<StringUtility::addrToString(addr) <<": "
