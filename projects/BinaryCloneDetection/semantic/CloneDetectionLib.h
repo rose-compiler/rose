@@ -618,7 +618,8 @@ struct PolicyParams {
 enum {
     NO_ACCESS=0,                        /**< Variable has been neither read nor written. */
     HAS_BEEN_READ=1,                    /**< Variable has been read. */
-    HAS_BEEN_WRITTEN=2                  /**< Variable has been written. */ 
+    HAS_BEEN_WRITTEN=2,                 /**< Variable has been written. */
+    HAS_BEEN_INITIALIZED=4,             /**< Variable has been initialized by the analysis before the test starts. */
 };
 
 /** Semantic value to track read/write state of registers. The basic idea is that we have a separate register state object
@@ -873,31 +874,42 @@ public:
 
         // Initialize some registers.  Obviously, the EIP register needs to be set, but we also set the ESP and EBP to known
         // (but arbitrary) values so we can detect when the function returns.  Be sure to use these same values in related
-        // analyses (like pointer variable detection).
+        // analyses (like pointer variable detection).  Registers are marked as HAS_BEEN_INITIALIZED so that an input isn't
+        // consumed when they're read during the test.
         rose_addr_t target_va = func->get_entry_va();
         ValueType<32> eip(target_va);
-        this->writeRegister("eip", eip);
+        state.registers.ip = eip;
+        state.register_rw_state.ip.state = HAS_BEEN_INITIALIZED;
         ValueType<32> esp(params.initial_stack); // stack grows down
-        this->writeRegister("esp", esp);
+        state.registers.gpr[x86_gpr_sp] = esp;
+        state.register_rw_state.gpr[x86_gpr_sp].state = HAS_BEEN_INITIALIZED;
         ValueType<32> ebp(params.initial_stack);
-        this->writeRegister("ebp", ebp);
+        state.registers.gpr[x86_gpr_bp] = ebp;
+        state.register_rw_state.gpr[x86_gpr_bp].state = HAS_BEEN_INITIALIZED;
 
         // Initialize callee-saved registers. The callee-saved registers interfere with the analysis because if the same
         // function is compiled two different ways, then it might use different numbers of callee-saved registers.  Since
         // callee-saved registers are pushed onto the stack without first initializing them, the push consumes an input.
         // Therefore, we must consistently initialize all possible callee-saved registers.  We are assuming cdecl calling
-        // convention (i.e., GCC's default for C/C++).
+        // convention (i.e., GCC's default for C/C++).  Registers are marked as HAS_BEEN_INITIALIZED so that an input isn't
+        // consumed when they're read during the test.
         ValueType<32> rval(inputs->queue(IQ_INTEGER).next());
-        this->writeRegister("ebx", rval);
-        this->writeRegister("esi", rval);
-        this->writeRegister("edi", rval);
+        state.registers.gpr[x86_gpr_bx] = rval;
+        state.register_rw_state.gpr[x86_gpr_bx].state = HAS_BEEN_INITIALIZED;
+        state.registers.gpr[x86_gpr_si] = rval;
+        state.register_rw_state.gpr[x86_gpr_si].state = HAS_BEEN_INITIALIZED;
+        state.registers.gpr[x86_gpr_di] = rval;
+        state.register_rw_state.gpr[x86_gpr_di].state = HAS_BEEN_INITIALIZED;
 
         // Initialize some additional registers.  GCC optimization sometimes preserves a register's value as part of a code
         // path that's shared between points when the register has been initialized and when it hasn't.  Non-optimized code
         // (apparently) never does this.  Therefore, we need to also initialize registers used this way.
-        this->writeRegister("eax", rval);
-        this->writeRegister("ecx", rval);
-        this->writeRegister("edx", rval);
+        state.registers.gpr[x86_gpr_ax] = rval;
+        state.register_rw_state.gpr[x86_gpr_ax].state = HAS_BEEN_INITIALIZED;
+        state.registers.gpr[x86_gpr_cx] = rval;
+        state.register_rw_state.gpr[x86_gpr_cx].state = HAS_BEEN_INITIALIZED;
+        state.registers.gpr[x86_gpr_dx] = rval;
+        state.register_rw_state.gpr[x86_gpr_dx].state = HAS_BEEN_INITIALIZED;
     }
     
     void startInstruction(SgAsmInstruction *insn_) /*override*/ {
