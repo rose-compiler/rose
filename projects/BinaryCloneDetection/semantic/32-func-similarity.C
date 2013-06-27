@@ -171,7 +171,8 @@ public:
     }
 };
 
-// Treat output values as sets and use the Jaccard index to measure similarity. Use a penalty for failed tests
+// Treat output values as sets and use the Jaccard index to measure similarity. Use a penalty for failed tests.
+// The Jaccard index of two empty sets is 1.
 class ValuesetJaccard: public ValuesetEquality {
 public:
     ValuesetJaccard(const CloneDetection::OutputGroup *ogroup): ValuesetEquality(ogroup) {}
@@ -189,7 +190,8 @@ public:
                                                     other->values.begin(), other->values.end(), sinter.begin());
         size_t usize = ui-sunion.begin();
         size_t isize = ii-sinter.begin();
-        return multiplier*isize/usize;
+        double jaccard = usize ? (double)isize/usize : 1.0;
+        return multiplier*jaccard;
     }
 };
 
