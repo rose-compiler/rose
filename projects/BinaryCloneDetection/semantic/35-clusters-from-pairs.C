@@ -8,7 +8,7 @@ std::string argv0;
 static void
 usage(int exit_status)
 {
-    std::cerr <<"usage: " <<argv0 <<" [SWITCHES] [--] DATABASE PAIRS_TABLE CLUSTERS_TABLE\n"
+    std::cerr <<"usage: " <<argv0 <<" [SWITCHES] [--] CLUSTERS_TABLE\n"
               <<"  This command reads the list of function similarity pairs and builds clusters, storing the result in\n"
               <<"  the specified CLUSTERS_TABLE.\n"
               <<"\n"
