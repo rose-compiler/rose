@@ -2,6 +2,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = LANL_POP gfortranTestSuite
 
+if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
+   SUBDIRS += experimental_frontend_tests
+endif
+
+
 ###########################################################################
 # These are Fortran testcodes targeting aspects F66, F77, F90, F95, F2003 #
 ###########################################################################

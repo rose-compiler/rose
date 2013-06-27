@@ -572,6 +572,7 @@ SgSequenceStatement
 SgSetComprehension
 SgShortVal
 SgSizeOfOp
+SgAlignOfOp
 SgJavaInstanceOfOp
 SgSourceFile
 SgSpawnStmt
@@ -721,3 +722,5 @@ SgCallExpression
 SgTypeCrayPointer
 SgJavaImportStatement
 SgJavaPackageStatement
+SgJavaImportStatementList
+SgJavaClassDeclarationList

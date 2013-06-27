@@ -26,11 +26,11 @@ makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_Container<st
        // DQ (11/8/2011): We want to exclude the /usr/include directory since it will be search automatically by EDG.
        // If we include it here it will become part of the -sys_include directories and that will cause it to 
        // be searched before the -I<directory> options (which is incorrect).
-          if ( SgProject::get_verbose() >= 1 )
+          if ( SgProject::get_verbose() > 1 )
                printf ("In makeSysIncludeList(): Building commandline: --sys_include %s \n",(*i).c_str());
           if (*i == "/usr/include")
              {
-               if ( SgProject::get_verbose() >= 1 )
+               if ( SgProject::get_verbose() > 1 )
                     printf ("Filtering out from the sys_include paths: *i = %s \n",(*i).c_str());
              }
             else
@@ -386,7 +386,7 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
      Rose_STL_Container<string>::iterator i = argList.begin();
 
 
-     if (SgProject::get_verbose() > 0)
+     if (SgProject::get_verbose() > 1)
         {
           printf ("######################### Inside of CommandlineProcessing::generateSourceFilenames() ############################ \n");
         }
@@ -394,8 +394,6 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
   // skip the 0th entry since this is just the name of the program (e.g. rose)
      ROSE_ASSERT(argList.size() > 0);
      i++;
-
-
 
      while ( i != argList.end() )
         {
@@ -434,7 +432,7 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
                     goto incrementPosition;
                   }
 #if 1
-               cout << "second call " << endl;
+            // cout << "second call " << endl;
                if ( isObjectFilename(*i) == false && isSourceFilename(*i) == false && isValidFileWithExecutableFileSuffixes(*i) == true )
                   {
                  // printf ("This is at least an existing file of some kind: *i = %s \n",(*i).c_str());
@@ -472,7 +470,7 @@ incrementPosition:
           i++;
         }
 
-     if (SgProject::get_verbose() > 0)
+     if (SgProject::get_verbose() > 1)
         {
           printf ("sourceFileList = = %s \n",StringUtility::listToString(sourceFileList).c_str());
           printf ("######################### Leaving of CommandlineProcessing::generateSourceFilenames() ############################ \n");
@@ -640,6 +638,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           if ( SgProject::get_verbose() >= 1 )
                printf ("verbose mode ON (for SgProject)\n");
         }
+
+  SageSupport::Cmdline::
+      ProcessKeepGoing(this, local_commandLineArgumentList);
 
   //
   // Standard compiler options (allows alternative -E option to just run CPP)
@@ -949,14 +950,14 @@ SgProject::processCommandLine(const vector<string>& input_argv)
      iter = local_commandLineArgumentList.begin();
      while ( iter != local_commandLineArgumentList.end() )
         {
-          if ( SgProject::get_verbose() >= 1 )
+          if ( SgProject::get_verbose() > 1 )
                printf ("Searching for -isystem options iter = %s \n",(*iter).c_str());
           if ( *iter == "-isystem")
              {
                iter++;
                tempDirectory = *iter;
 
-               if ( SgProject::get_verbose() >= 1 )
+               if ( SgProject::get_verbose() > 1 )
                     printf ("Adding tempHeaderFile = %s to p_preincludeDirectoryList \n",tempDirectory.c_str());
                p_preincludeDirectoryList.push_back(tempDirectory);
              }
@@ -1126,6 +1127,30 @@ SgProject::processCommandLine(const vector<string>& input_argv)
    }
 
 //------------------------------------------------------------------------------
+//                                 Cmdline
+//------------------------------------------------------------------------------
+
+void
+SageSupport::Cmdline::
+ProcessKeepGoing (SgProject* project, std::vector<std::string>& argv)
+{
+  bool keep_going =
+      CommandlineProcessing::isOption(
+          argv,
+          "-rose:keep_going",
+          "",
+          true);
+
+  if (keep_going)
+  {
+      if (SgProject::get_verbose() >= 1)
+          std::cout << "[INFO] [Cmdline] [-rose:keep_going]" << std::endl;
+
+      project->set_keep_going(true);
+  }
+}
+
+//------------------------------------------------------------------------------
 //                                  Java
 //------------------------------------------------------------------------------
 
@@ -1133,7 +1158,7 @@ void
 SageSupport::Cmdline::X10::
 Process (SgProject* project, std::vector<std::string>& argv)
 {
-  if (SgProject::get_verbose() >= 1)
+  if (SgProject::get_verbose() > 1)
       std::cout << "[INFO] Processing X10 commandline options" << std::endl;
 
   ProcessX10Only(project, argv);
@@ -1152,7 +1177,7 @@ ProcessX10Only (SgProject* project, std::vector<std::string>& argv)
 
   if (is_x10_only)
   {
-      if (SgProject::get_verbose() >= 1)
+      if (SgProject::get_verbose() > 1)
           std::cout << "[INFO] Turning on X10 only mode" << std::endl;
 
       // X10 code is only compiled, not linked as is C/C++ and Fortran.
@@ -1187,10 +1212,24 @@ SgFile::usage ( int status )
 "     -rose:(o|output) FILENAME\n"
 "                             file containing final unparsed C++ code\n"
 "                             (relative or absolute paths are supported)\n"
+"     -rose:keep_going\n"
+"                             Similar to GNU Make's --keep-going option.\n"
+"\n"
+"                             If ROSE encounters an error while processing your\n"
+"                             input code, ROSE will simply run your backend compiler on\n"
+"                             your original source code file, as is, without modification.\n"
+"\n"
+"                             This is useful for compiler tests. For example,\n"
+"                             when compiling a 100K LOC application, you can\n"
+"                             try to compile as much as possible, ignoring failures,\n"
+"                             in order to gauage the overall status of your translator,\n"
+"                             with respect to that application.\n"
 "\n"
 "Operation modifiers:\n"
 "     -rose:output_warnings   compile with warnings mode on\n"
 "     -rose:C_only, -rose:C   follow C89 standard, disable C++\n"
+"     -rose:C89_only, -rose:C89\n"
+"                             follow C89 standard, disable C++\n"
 "     -rose:C99_only, -rose:C99\n"
 "                             follow C99 standard, disable C++\n"
 "     -rose:Cxx_only, -rose:Cxx\n"
@@ -1420,6 +1459,14 @@ SgFile::usage ( int status )
 "                               reference to the original file and line number\n"
 "                               to support view of original source in debuggers\n"
 "                               and external tools\n"
+"     -rose:unparse_function_calls_using_operator_syntax\n"
+"                               unparse overloaded operators using operator syntax\n"
+"                               relevant to C++ only (default is to reproduce use\n"
+"                               defined by the input code).\n"
+"     -rose:unparse_function_calls_using_operator_names\n"
+"                               unparse overloaded operators using operator names \n"
+"                               (not operator syntax) relevant to C++ only (default\n"
+"                               is to reproduce use defined by the input code).\n"
 "     -rose:unparse_instruction_addresses\n"
 "                               Outputs the addresses in left column (output\n"
 "                               inappropriate as input to assembler)\n"
@@ -1722,6 +1769,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              }
         }
 
+  // DQ (3/28/2013): Added support for C89 mode so that we can change the default C mode to C99, yet still handle the older standard.
+  //
+  // C89 only option (turns on EDG "--c89" option and g++ "-xc" option)
+  //
+     set_C89_only(false);
+     ROSE_ASSERT (get_C89_only() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(C89|C89_only)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("C89 mode ON \n");
+          set_C89_only(true);
+        }
+
   //
   // C99 only option (turns on EDG "--c" option and g++ "-xc" option)
   //
@@ -1843,6 +1903,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        // Not clear what behavior I want here!
 #if 1
           set_C_only(false);
+          set_C89_only(false);
           set_C99_only(false);
 #else
           if (get_sourceFileUsesCFileExtension() == true)
@@ -2385,6 +2446,24 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 
   //
+  // unparse_function_calls_using_operator_syntax option (added 4/14/2013).
+  //
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(unparse_function_calls_using_operator_syntax)",true) == true )
+        {
+          printf ("option -rose:unparse_function_calls_using_operator_syntax found \n");
+          set_unparse_function_calls_using_operator_syntax(true);
+        }
+
+  //
+  // unparse_function_calls_using_operator_names option (added 4/14/2013).
+  //
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(unparse_function_calls_using_operator_names)",true) == true )
+        {
+          printf ("option -rose:unparse_function_calls_using_operator_names found \n");
+          set_unparse_function_calls_using_operator_names(true);
+        }
+
+  //
   // unparse_instruction_addresses option (added 8/30/2008).
   //
      if ( CommandlineProcessing::isOption(argv,"-rose:","(unparse_instruction_addresses)",true) == true )
@@ -2523,6 +2602,15 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "partitioner_config", stringParameter, true)) {
          set_partitionerConfigurationFileName(stringParameter);
      }
+
+  // DQ (6/7/2013): Added support for alternatively calling the experimental fortran frontend.
+     set_experimental_fortran_frontend(false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","experimental_fortran_frontend",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 0 )
+               printf ("Using experimental fortran frontend (explicitly set: ON) \n");
+          set_experimental_fortran_frontend(true);
+        }
 
 
   // DQ (9/26/2011): Adding options to support internal debugging of ROSE based tools and language support.
@@ -2764,6 +2852,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(h|help)",1);
      optionCount = sla(argv, "-rose:", "($)", "(V|version)", 1);
   // optionCount = sla(argv, "-rose:", "($)", "(v|verbose)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(keep_going)",1);
      int integerOption = 0;
      optionCount = sla(argv, "-rose:", "($)^", "(v|verbose)", &integerOption, 1);
      optionCount = sla(argv, "-rose:", "($)^", "(upc_threads)", &integerOption, 1);
@@ -2773,6 +2862,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(openmp:parse_only|OpenMP:parse_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(openmp:ast_only|OpenMP:ast_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(openmp:lowering|OpenMP:lowering)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(C89|C89_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(C99|C99_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx|Cxx_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(C11|C11_only)",1);
@@ -2817,6 +2907,8 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(skip_unparse)",1);
      optionCount = sla(argv, "-rose:", "($)", "(unparse_includes)",1);
      optionCount = sla(argv, "-rose:", "($)", "(unparse_line_directives)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(unparse_function_calls_using_operator_syntax)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(unparse_function_calls_using_operator_names)",1);
 
      optionCount = sla(argv, "-rose:", "($)", "(unparse_instruction_addresses)",1);
      optionCount = sla(argv, "-rose:", "($)", "(unparse_raw_memory_contents)",1);
@@ -2922,6 +3014,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (2/17/2013): Added support for skipping AST consistancy testing (for performance evaluation).
      optionCount = sla(argv, "-rose:", "($)", "(skipAstConsistancyTests)",1);
+
+  // DQ (6/8/2013): Added support for experimental fortran frontend.
+     optionCount = sla(argv, "-rose:", "($)", "(experimental_fortran_frontend)",1);
 
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
@@ -3232,10 +3327,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
   // display("Called from SgFile::build_EDG_CommandLine");
 
-     SgProject* project = isSgProject(this->get_parent());
+  // DQ (6/13/2013): This was wrong, the parent of the SgFile is the SgFileList IR node and it is better to call the function to get the SgProject.
+  // SgProject* project = isSgProject(this->get_parent());
+     SgProject* project = TransformationSupport::getProject(this);     
      ROSE_ASSERT (project != NULL);
 
-     //AS(063006) Changed implementation so that real paths can be found later
+  // AS(063006) Changed implementation so that real paths can be found later
      vector<string> includePaths;
 
   // skip the 0th entry since this is just the name of the program (e.g. rose)
@@ -3378,10 +3475,23 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         if (enable_cuda && !enable_opencl) {
           commandLine.push_back("--preinclude");
           commandLine.push_back(header_path + "/cuda_HEADERS/preinclude-cuda.h");
+
+          // CUDA is a C++ extention, add default C++ options
+          commandLine.push_back("-DROSE_LANGUAGE_MODE=1");
+          commandLine.push_back("-D__cplusplus=1");
+          SageSupport::Cmdline::makeSysIncludeList(Cxx_ConfigIncludeDirs, commandLine);
         }
         else if (enable_opencl && !enable_cuda) {
           commandLine.push_back("--preinclude");
           commandLine.push_back(header_path + "/opencl_HEADERS/preinclude-opencl.h");
+
+          // OpenCL is a C extention, add default C options
+          commandLine.push_back("-DROSE_LANGUAGE_MODE=0");
+          SageSupport::Cmdline::makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
+
+#ifndef ROSE_USE_CLANG_FRONTEND
+          commandLine.push_back("-DSKIP_OPENCL_SPECIFIC_DEFINITION");
+#endif
         }
         else {
                 printf ("Error: CUDA and OpenCL are mutually exclusive.\n");
@@ -3390,7 +3500,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      }
      else {
        // if (get_C_only() == true || get_C99_only() == true)
-          if (get_C_only() == true || get_C99_only() == true || get_C11_only() == true)
+       // if (get_C_only() == true || get_C99_only() == true || get_C11_only() == true)
+          if (get_C_only() == true || get_C89_only() == true || get_C99_only() == true || get_C11_only() == true)
              {
             // AS(02/21/07) Add support for the gcc 'nostdinc' and 'nostdinc++' options
             // DQ (11/29/2006): if required turn on the use of the __cplusplus macro
@@ -3478,13 +3589,19 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // some C code can not be compiled with a C++ compiler.
      if (get_C_only() == true)
         {
-       // Add option to indicate use of C code (not C++) to EDG frontend
+       // Add option to indicate use of C code (not C++) to EDG frontend, default will be C99 (changed 3/28/2013).
           inputCommandLine.push_back("--c");
+        }
+
+     if (get_C89_only() == true)
+        {
+       // Add option to indicate use of C89 code (not C++) to EDG frontend
+          inputCommandLine.push_back("--c89");
         }
 
      if (get_C99_only() == true)
         {
-       // Add option to indicate use of C code (not C++) to EDG frontend
+       // Add option to indicate use of C99 code (not C++) to EDG frontend
           inputCommandLine.push_back("--c99");
         }
 
@@ -3734,6 +3851,14 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
             // This is the EDG option "--c" obtained from the ROSE "--edg:c" option
                set_C_only(true);
              }
+
+       // DQ (3/28/2013): Added support for specify C89 behavior so that default could be C99 (as in EDG3x branch).
+          if (*i == "c89")
+             {
+            // This is the EDG option "--c89" obtained from the ROSE "--edg:c89" option
+               set_C89_only(true);
+             }
+
           if (*i == "c99")
              {
             // This is the EDG option "--c99" obtained from the ROSE "--edg:c99" option
@@ -3861,7 +3986,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         }
 
   // DQ (10/15/2005): Trap out case of C programs where it is an EDG error to specify template instantiation details
-     if (get_C_only() == true ||get_C99_only() == true )
+  // if (get_C_only() == true || get_C99_only() == true )
+     if (get_C_only() == true || get_C89_only() == true || get_C99_only() == true || get_C11_only() == true )
         {
        // printf ("In build_EDG_CommandLine(): compiling input as C program so turn off all template instantiation details \n");
           autoInstantiation = false;
@@ -4146,6 +4272,9 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
     else if (get_X10_only() == true)
     {
         compilerNameString[0] = BACKEND_X10_COMPILER_NAME_WITH_PATH;
+    }
+    else if (get_Cuda_only() || get_OpenCL_only()) {
+        std::cerr << "[WARN] No backend compiler for CUDA and OpenCL." << std::endl;
     }
     else
     {

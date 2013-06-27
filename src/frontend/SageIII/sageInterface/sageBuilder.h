@@ -657,6 +657,14 @@ SgSizeOfOp* buildSizeOfOp_nfi(SgExpression* exp);
 SgSizeOfOp* buildSizeOfOp(SgType* type = NULL);
 SgSizeOfOp* buildSizeOfOp_nfi(SgType* type);
 
+//! Build __alignof__() expression with an expression parameter
+SgAlignOfOp* buildAlignOfOp(SgExpression* exp= NULL);
+SgAlignOfOp* buildAlignOfOp_nfi(SgExpression* exp);
+
+//! Build __alignof__() expression with a type parameter
+SgAlignOfOp* buildAlignOfOp(SgType* type = NULL);
+SgAlignOfOp* buildAlignOfOp_nfi(SgType* type);
+
 // DQ (7/18/2011): Added support for SgJavaInstanceOfOp
 //! This is part of Java specific operator support.
 SgJavaInstanceOfOp* buildJavaInstanceOfOp(SgExpression* exp = NULL, SgType* type = NULL);
@@ -1220,6 +1228,10 @@ SgAsmStmt* buildAsmStatement_nfi(std::string s);
 // DQ (4/30/2010): Added support for building nop statement using asm statement
 // ! Building nop statement using asm statement
 SgAsmStmt* buildMultibyteNopStatement( int n );
+
+// DQ (5/6/2013): Added build functions to support SgBaseClass construction.
+SgBaseClass* buildBaseClass ( SgClassDeclaration* classDeclaration, SgClassDefinition* classDefinition, bool isVirtual, bool isDirect );
+// SgAccessModifier buildAccessModifier ( unsigned int access );
 
 
 //@}

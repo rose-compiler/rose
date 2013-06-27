@@ -37,6 +37,9 @@ typedef unsigned __int16        half;
 
 typedef unsigned __int32        size_t;
 
+typedef uint32_t intptr_t;
+typedef uint32_t uintptr_t;
+
 #else
 
 #include <stdint.h>
@@ -58,8 +61,9 @@ typedef uint16_t        half     __attribute__((aligned(2)));
 #endif
 
 typedef uint32_t ptrdiff_t;
-typedef uint32_t intptr_t;
-typedef uint32_t uintptr_t;
+
+typedef unsigned int uint;
+typedef unsigned int size_t;
 
   /* Vector Types */
   
@@ -478,6 +482,7 @@ size_t get_group_id(uint dimindx);
 
   /* Image Functions */
   
+#ifndef SKIP_OPENCL_SPECIFIC_DEFINITION
 float4 read_imagef  (image2d_t image, sampler_t sampler, int2 coord);
 float4 read_imagef  (image2d_t image, sampler_t sampler, float2 coord);
 int4   read_imagei  (image2d_t image, sampler_t sampler, int2 coord);
@@ -504,19 +509,25 @@ int    get_image_channel_order (image2d_t image);
 int    get_image_channel_order (image3d_t image);
 int2   get_image_dim (image2d_t image);
 int4   get_image_dim (image3d_t image);
+#endif /* SKIP_OPENCL_SPECIFIC_DEFINITION */
 
   /* Synchronization Functions */
-  
+
+#ifndef SKIP_OPENCL_SPECIFIC_DEFINITION  
 void barrier (cl_mem_fence_ﬂags ﬂags);
+#endif /* SKIP_OPENCL_SPECIFIC_DEFINITION */
 
   /* Explicit Memory Fence Functions */
-  
+
+#ifndef SKIP_OPENCL_SPECIFIC_DEFINITION
 void mem_fence (cl_mem_fence_ﬂags ﬂags);
 void read_mem_fence (cl_mem_fence_ﬂags ﬂags);
 void write_mem_fence (cl_mem_fence_ﬂags ﬂags);
+#endif /* SKIP_OPENCL_SPECIFIC_DEFINITION */
 
   /* Miscellaneous Functions */
-  
+
+#ifndef SKIP_OPENCL_SPECIFIC_DEFINITION
 void wait_group_events (int num_events, event_t * event_list);
 event_t async_work_group_copy (__local char *dst, const __global char *src, size_t num_elements, event_t event);
 event_t async_work_group_copy (__global char *dst, const __local char *src, size_t num_elements, event_t event);
@@ -653,6 +664,7 @@ void prefetch (const __global float8 *p, size_t num_elements);
 event_t async_work_group_copy (__local float16 *dst, const __global float16 *src, size_t num_elements, event_t event);
 event_t async_work_group_copy (__global float16 *dst, const __local float16 *src, size_t num_elements, event_t event);
 void prefetch (const __global float16 *p, size_t num_elements);
+#endif /* SKIP_OPENCL_SPECIFIC_DEFINITION */
 
   /* Miscellaneous Functions (TODO) */
 

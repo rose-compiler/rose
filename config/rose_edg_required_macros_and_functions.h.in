@@ -29,6 +29,14 @@
 */
 #undef __VERSION__
 
+// TV (3/8/13): undef 6 additionals macros because they are define while using EDG 4.0 with CUDA support
+#undef __unix__
+#undef __x86_64
+#undef __linux__
+#undef unix
+#undef __x86_64__
+#undef __WCHAR_TYPE__
+
 // $REPLACE_ME_WITH_MACRO_DEFINITIONS
 
 /* DQ (10/22/2010): Isolate some of the OSX specific details. */

@@ -349,6 +349,10 @@ MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection (
      SgSourceFile* transformationASTPointer = isSgSourceFile(determineFileType(transformation_argv, errorCode, project));
 
      ROSE_ASSERT (transformationASTPointer != NULL);
+
+  // DQ (6/14/2013): Since we seperated the construction of the SgFile IR nodes from the invocation of the frontend, we have to call the frontend explicitly.
+     transformationASTPointer->runFrontend(errorCode);
+
      ROSE_ASSERT (errorCode <= 2);
 
   // GB (9/4/2009): Construction of a SgFile using determineFileType() no

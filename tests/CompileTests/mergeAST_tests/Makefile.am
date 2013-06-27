@@ -119,6 +119,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      mergeTest_135.C 
 
 # DQ (5/26/2013) (mergeTest_121.C) This is a failing test on Jenkins that I can now reproduce on my machine.
+# Command line to generate problem: ./testMerge --edg:no_warnings -w --edg:restrict -rose:astMerge -c /home/dquinlan/ROSE/git-dq-edg4x-rc/tests/CompileTests/mergeAST_tests/mergeTest_121.C mergeTest_121_alt.C
 # TOO1 (5/28/2013) (mergeTest_121.C) Add to EXTRA_DIST (below) to fix UnusedSourcesPolicy test.
 TESTCODES_TO_FIX = \
 	mergeTest_121.C

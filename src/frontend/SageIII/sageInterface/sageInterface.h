@@ -522,6 +522,20 @@ void dumpInfo(SgNode* node, std::string desc="");
 std::vector<SgDeclarationStatement*>
 sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStatement*>& nodevec);
 
+// DQ (4/13/2013): We need these to support the unparing of operators defined by operator syntax or member function names.
+//! Is an overloaded operator a prefix operator (e.g. address operator X * operator&(), dereference operator X & operator*(), unary plus operator X & operator+(), etc.
+// bool isPrefixOperator( const SgMemberFunctionRefExp* memberFunctionRefExp );
+bool isPrefixOperator( SgExpression* exp );
+
+//! Check for proper names of possible prefix operators (used in isPrefixOperator()). 
+bool isPrefixOperatorName( const SgName & functionName );
+
+//! Is an overloaded operator a postfix operator. (e.g. ).
+bool isPostfixOperator( SgExpression* exp );
+
+//! Is an overloaded operator an index operator (also refereded to as call or subscript operators). (e.g. X & operator()() or X & operator[]()).
+bool isIndexOperator( SgExpression* exp );
+
 //@}
 
 //------------------------------------------------------------------------
