@@ -1797,3 +1797,9 @@ void XOMP_ordered_end (void)
 
 }
 
+/*Initial values for the DDE node list */
+struct DDE_data* DDE_head = NULL;
+struct DDE_data* DDE_tail = NULL;
+// implementation of DDE functions have to be put into .cu files, to avoid undefined references to CUDA function calls!
+
+

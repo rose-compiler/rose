@@ -42,13 +42,61 @@ void xomp_print_gpu_info()
       max_threads_per_block, max_blocks_per_grid_x, global_memory_size ,  shared_memory_size,
       registers_per_block);
 }
+// A helper function to probe physical limits based on GPU Compute Capability numbers
+// Reference: http://developer.download.nvidia.com/compute/cuda/CUDA_Occupancy_calculator.xls
+size_t xomp_get_maxThreadBlocksPerMultiprocessor()
+{
+  int major, minor; 
+  major = xomp_getCudaDeviceProp()-> major;
+  minor = xomp_getCudaDeviceProp()-> minor;
+  if (major <= 2) //1.x and 2.x: 8 blocks per multiprocessor
+    return 8;
+  else if (minor <= 5)
+    return 16;
+  else
+  {
+   printf("Error: xomp_get_maxThreadBlocksPerMultiprocessor(): unhandled Compute Capability numbers%d.%d \n", major, minor);
+   assert (false);
+  }
+  assert (false);
+  return 0;
+}
+
+// max thread per block, useful for 1-D problem
+// The goal is to maximize GPU occupancy for each multiprocessor : physical max warps 
+// Reference: http://developer.download.nvidia.com/compute/cuda/CUDA_Occupancy_calculator.xls
+//
+// Two physical limits are considered for now
+//  1) max-active-threads per multiprocessor 
+//  2) max active thread blocks per multiprocessor
+// So for 1-D block, max threads per block = maxThreadsPerMultiProcessor /  maxBlocks per multiprocessor
+size_t xomp_get_maxThreadsPerBlock()
+{
+  // this often causes oversubscription to the cores supported by GPU SM processors
+  //return xomp_getCudaDeviceProp()->maxThreadsPerBlock;
+  //return 128;
+  // 2.0: 1536/8= 192 threads per block
+  // 3.5 2048/16 = 128
+  return xomp_getCudaDeviceProp()->maxThreadsPerMultiProcessor / xomp_get_maxThreadBlocksPerMultiprocessor();
+}
+
 
 size_t xomp_get_max1DBlock(size_t s)
 {
+#if 1  
   size_t block_num = s/xomp_get_maxThreadsPerBlock();
   if (s % xomp_get_maxThreadsPerBlock()!= 0)
      block_num ++;
-  return block_num;     
+  //return block_num;     
+  size_t max_block = xomp_getCudaDeviceProp()->multiProcessorCount* xomp_get_maxThreadBlocksPerMultiprocessor();
+  return block_num<max_block? block_num: max_block; 
+
+  /* max threads per multiprocessor / threads-per-block  * num_multiprocessor */
+  //return xomp_getCudaDeviceProp()->multiProcessorCount*(xomp_getCudaDeviceProp()->maxThreadsPerMultiProcessor /xomp_get_maxThreadsPerBlock()) ;
+  //return xomp_getCudaDeviceProp()->maxThreadsPerMultiProcessor /xomp_get_maxThreadsPerBlock() ;
+#else
+  return xomp_getCudaDeviceProp()->multiProcessorCount* xomp_get_maxThreadBlocksPerMultiprocessor();
+#endif
 }
 
 // Get the max number threads for one dimension (x or y) of a 2D block
@@ -85,13 +133,6 @@ size_t xomp_get_maxSegmentsPerDimensionOf2DBlock(size_t dimension_size)
      block_num_x_or_y ++;
 
   return block_num_x_or_y;
-}
-
-
-// max thread per block, useful for 1-D problem
-size_t xomp_get_maxThreadsPerBlock()
-{
-  return xomp_getCudaDeviceProp()->maxThreadsPerBlock;
 }
 
 /*-----------------------------------------------------
@@ -515,8 +556,163 @@ XOMP_BEYOND_BLOCK_REDUCTION_DEF(double)
 
 #undef XOMP_BEYOND_BLOCK_REDUCTION_DEF 
 
+/* some of the ompacc runtime API */
+int omp_get_num_devices() {
+  int deviceCount = 0;
+  cudaGetDeviceCount(&deviceCount);
+  return deviceCount;
+}
 
+//! A helper function to copy a mapped variable from src to desc
+void copy_mapped_variable (struct XOMP_mapped_variable* desc, struct XOMP_mapped_variable* src)
+{
+  assert (src != NULL);
+  assert (desc != NULL);
 
+  desc->address = src->address; 
+  desc->size= src->size; 
+  desc->dev_address = src ->dev_address; 
+  desc->copyBack= src ->copyBack; 
+}
 
+// create a new DDE-data node and 
+// append it to the end of the tracking list, and 
+// copy all variables from its parent node to be into the set of inherited variable set.
+void xomp_deviceDataEnvironmentEnter()
+{
+  // create a new DDE node and initialize it
+  struct DDE_data * data = (struct DDE_data *) malloc (sizeof (struct DDE_data));
+  assert (data!=NULL);
+  data->new_variable_count = 0;
+  data->inherited_variable_count = 0;
+  data->parent = NULL;
+  data->child= NULL;
+
+  // For simplicity, we pre-allocate the storage for the list of variables
+  // TODO: improve the efficiency
+  data->new_variables = (struct XOMP_mapped_variable*) malloc (XOMP_MAX_MAPPED_VARS * sizeof (struct XOMP_mapped_variable));
+  data->inherited_variables = (struct XOMP_mapped_variable*) malloc (XOMP_MAX_MAPPED_VARS * sizeof (struct XOMP_mapped_variable));
+
+  // Append the data to the list
+  // Case 1: empty list, add as the first node, nothing else to do
+  if (DDE_tail == NULL)
+  {
+    assert (DDE_head == NULL );
+    DDE_head = data;
+    DDE_tail = data;
+    return; 
+  }
+
+  // Case 2: non-empty list
+  // create double links
+  data->parent = DDE_tail; 
+  DDE_tail->child = data;
+  // shift the tail
+  DDE_tail = data;
+
+  // copy all variables from its parent node into the inherited variable set. 
+  // Both new and inherited variables of the parent node become inherited for the current node
+  data->inherited_variable_count = data->parent->new_variable_count + data->parent->inherited_variable_count;
+  data->inherited_variables = (struct XOMP_mapped_variable*) malloc (data->inherited_variable_count * sizeof (struct XOMP_mapped_variable));
+  assert (data->inherited_variables != NULL);
+
+  int i;
+  int offset = 0;
+  for (i = 0; i < data->parent->new_variable_count; i++)
+  {
+    struct XOMP_mapped_variable* dest_element  = data->inherited_variables + offset;
+    struct DDE_data* p = data->parent;
+    struct XOMP_mapped_variable* src_element  =  p->new_variables + i;
+
+    copy_mapped_variable(dest_element, src_element);
+    offset ++;
+  }
+
+  for (i = 0; i < data->parent->inherited_variable_count; i++)
+  {
+    //copy_mapped_variable(&((data->inherited_variables)[offset]), &( (data->parent->inherited_variables)[i]));
+    copy_mapped_variable( (struct XOMP_mapped_variable*) (data->inherited_variables + offset), (struct XOMP_mapped_variable*) (data->parent->inherited_variables + i));
+    offset ++;
+  }
+  assert (offset == data->inherited_variable_count);
+
+}
+
+// Check if an original  variable is already mapped in enclosing data environment, return its device variable's address if yes.
+// return NULL if not
+void* xomp_deviceDataEnvironmentGetInheritedVariable (void* orig_var, int size)
+{
+  void * dev_address = NULL; 
+  assert (orig_var != NULL);
+  int i; 
+  // At this point, DDE list should not be empty
+  // At least a call to XOMP_Device_Data_Environment_Enter() should have finished before
+  assert ( DDE_tail != NULL );
+  for (i = 0; i < DDE_tail->inherited_variable_count; i++)
+  {
+    struct XOMP_mapped_variable* cur_var = DDE_tail->inherited_variables + i; 
+    if (cur_var->address == orig_var && cur_var->size == size)
+    {
+      dev_address = cur_var-> dev_address;
+      break;
+    }
+  } 
+  return dev_address; 
+}
+
+//! Add a newly mapped variable into the current DDE's new variable list
+void xomp_deviceDataEnvironmentAddVariable (void* var_addr, int var_size, void * dev_addr, bool copyBack)
+{
+  // TODO: sanity check to avoid add duplicated variable or inheritable variable
+  assert ( DDE_tail != NULL );
+  struct XOMP_mapped_variable* mapped_var = DDE_tail->new_variables + DDE_tail->new_variable_count ;
+  mapped_var-> address = var_addr; 
+  mapped_var-> size = var_size; 
+  mapped_var-> dev_address = dev_addr; 
+  mapped_var-> copyBack= copyBack; 
+  // now move up the offset
+  DDE_tail->new_variable_count ++;
+}
+
+// Exit current DDE: copy back values if specified, deallocate memory, delete the DDE-data node from the end of the tracking list
+void xomp_deviceDataEnvironmentExit()
+{
+  assert ( DDE_tail != NULL );
+
+  // Deallocate mapped device variables which are allocated by this current DDE
+  // Optionally copy the value back to host if specified.
+  int i; 
+  for (i = 0; i < DDE_tail->new_variable_count; i++)
+  {
+    struct XOMP_mapped_variable* mapped_var = DDE_tail->new_variables + i;
+    void * dev_address = mapped_var->dev_address;
+    if (mapped_var->copyBack)
+    {
+       xomp_memcpyDeviceToHost(((void *)mapped_var->address),((const void *)mapped_var->dev_address), mapped_var->size);
+    }
+    // free after copy back!!
+    xomp_freeDevice (dev_address); //TODO Will this work without type info? Looks so!
+  }
+
+  // Deallocate pre-allocated variable lists
+  free (DDE_tail->new_variables);
+  free (DDE_tail->inherited_variables);
+  
+  // Delete the node from the tail
+  struct DDE_data * parent = DDE_tail->parent; 
+  if (parent != NULL)
+  {
+    assert (DDE_tail == parent->child); 
+    DDE_tail = parent; 
+    free (parent->child);
+    parent->child = NULL;
+  }
+  else // last node in the list
+  {
+    free (DDE_tail);
+    DDE_head = NULL;
+    DDE_tail = NULL;
+  }  
+}
 
 

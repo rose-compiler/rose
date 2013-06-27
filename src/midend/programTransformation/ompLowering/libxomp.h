@@ -139,10 +139,10 @@ extern void XOMP_ordered_end (void);
 //--------------------- kernel launch ------------------
 
 // the max number of threads per thread block of the first available device
-size_t xomp_get_maxThreadsPerBlock();
+extern size_t xomp_get_maxThreadsPerBlock();
 
 //get the max number of 1D blocks for a given input length
-size_t xomp_get_max1DBlock(size_t ss);
+extern size_t xomp_get_max1DBlock(size_t ss);
 
 // Get the max number threads for one dimension (x or y) of a 2D block
 // Two factors are considered: the total number of threads within the 2D block must<= total threads per block
@@ -151,10 +151,10 @@ size_t xomp_get_max1DBlock(size_t ss);
 //    x <= maxThreadsDim[0],  1024
 //    y <= maxThreadsDim[1], 1024 
 //  maxThreadsDim[0] happens to be equal to  maxThreadsDim[1] so we use a single function to calculate max segments for both dimensions
-size_t xomp_get_max_threads_per_dimesion_2D ();
+extern size_t xomp_get_max_threads_per_dimesion_2D ();
 
 // return the max number of segments for a dimension (either x or y) of a 2D block
-size_t xomp_get_maxSegmentsPerDimensionOf2DBlock(size_t dimension_size);
+extern size_t xomp_get_maxSegmentsPerDimensionOf2DBlock(size_t dimension_size);
 
 //------------------memory allocation/copy/free----------------------------------
 //Allocate device memory and return the pointer
@@ -167,38 +167,38 @@ return a null pointer if
   * size is 0 
   * failure due to any reason
 */
-void* xomp_deviceMalloc(size_t size);
+extern void* xomp_deviceMalloc(size_t size);
 
 // A host version
-void* xomp_hostMalloc(size_t size);
+extern void* xomp_hostMalloc(size_t size);
 
 //get the time stamp for now, up to microsecond resolution: 1e-6 , but maybe 1e-4 in practice
-double xomp_time_stamp();
+extern double xomp_time_stamp();
 
 
 // memory copy from src to dest, return the pointer to dest. NULL pointer if anything is wrong 
-void * xomp_memcpyHostToDevice (void *dest, const void * src, size_t n_n);
-void * xomp_memcpyDeviceToHost (void *dest, const void * src, size_t n_n);
+extern void * xomp_memcpyHostToDevice (void *dest, const void * src, size_t n_n);
+extern void * xomp_memcpyDeviceToHost (void *dest, const void * src, size_t n_n);
 // copy a dynamically allocated host source array to linear dest address on a GPU device. the dimension information of the source array
 // is given by: int dimensions[dimension_size], with known element size. 
 // bytes_copied reports the total bytes copied by this function.  
 // Note: It cannot be used copy static arrays declared like type array[N][M] !!
-void * xomp_memcpyDynamicHostToDevice (void *dest, const void * src, int * dimensions, size_t dimension_size, size_t element_size, size_t *bytes_copied);
+extern void * xomp_memcpyDynamicHostToDevice (void *dest, const void * src, int * dimensions, size_t dimension_size, size_t element_size, size_t *bytes_copied);
 
 // copy linear src memory to dynamically allocated destination, with dimension information given by
 // int dimensions[dimension_size]
 // the source memory has total n continuous memory, with known size for each element
 // the total bytes copied by this function is reported by bytes_copied
-void * xomp_memcpyDynamicDeviceToHost (void *dest, int * dimensions, size_t dimension_size, const void * src, size_t element_size, size_t *bytes_copied);
+extern void * xomp_memcpyDynamicDeviceToHost (void *dest, int * dimensions, size_t dimension_size, const void * src, size_t element_size, size_t *bytes_copied);
 
-void * xomp_memcpyDeviceToDevice (void *dest, const void * src, size_t n_n);
-void * xomp_memcpyHostToHost (void *dest, const void * src, size_t n_n); // same as memcpy??
+extern void * xomp_memcpyDeviceToDevice (void *dest, const void * src, size_t n_n);
+extern void * xomp_memcpyHostToHost (void *dest, const void * src, size_t n_n); // same as memcpy??
 
 
 // free the device memory pointed by a pointer, return false in case of failure, otherwise return true
-bool xomp_freeDevice(void* devPtr);
+extern bool xomp_freeDevice(void* devPtr);
 // free the host memory pointed by a pointer, return false in case of failure, otherwise return true
-bool xomp_freeHost(void* hostPtr);
+extern bool xomp_freeHost(void* hostPtr);
 
 /* Allocation/Free functions for Host */
 /* Allocate a multi-dimensional array
@@ -211,9 +211,9 @@ bool xomp_freeHost(void* hostPtr);
  * return:
  *  the pointer to the allocated array
  * */
-void * xomp_mallocArray(int * dimensions, size_t dimension_num, size_t esize);
+extern void * xomp_mallocArray(int * dimensions, size_t dimension_num, size_t esize);
 
-void xomp_freeArrayPointer (void* array, int * dimensions, size_t dimension_num);
+extern void xomp_freeArrayPointer (void* array, int * dimensions, size_t dimension_num);
 
 
 /* CUDA reduction support */
@@ -259,6 +259,68 @@ XOMP_BEYOND_BLOCK_REDUCTION_DECL(float)
 XOMP_BEYOND_BLOCK_REDUCTION_DECL(double)
 
 #undef XOMP_BEYOND_BLOCK_REDUCTION_DECL
+
+#define XOMP_MAX_MAPPED_VARS 256 // for simplicity, we use preallocated memory for storing the mapped variable list
+/* Test runtime support for nested device data environments */
+/* Liao, May 2, 2013*/
+/* A data structure to keep track of a mapped variable
+ *  Right now we use memory address of the original variable and the size of the variable
+ * */
+struct XOMP_mapped_variable
+{
+  void * address; // original variable's address
+  int size; 
+  void * dev_address; // the corresponding device variable's address
+  bool copyBack; // if this variable should be copied back to HOST
+};
+
+//! A helper function to copy a mapped variable from src to desc
+extern void copy_mapped_variable (struct XOMP_mapped_variable* desc, struct XOMP_mapped_variable* src );
+
+/* A doubly linked list for tracking Device Data Environment (DDE) */
+struct DDE_data {
+    // Do we need this at all?  we can allocate/deallocate data without saving region ID
+ int Region_ID;  // hash of the AST node? or just memory address of the AST node for now 
+
+// array of the newly mapped variables
+ int new_variable_count;
+ struct XOMP_mapped_variable* new_variables;
+ //struct XOMP_mapped_variable new_variables[XOMP_MAX_MAPPED_VARS];
+
+// array of inherited mapped variable from possible upper level DDEs
+ int inherited_variable_count;
+ struct XOMP_mapped_variable*  inherited_variables;
+ //struct XOMP_mapped_variable  inherited_variables[XOMP_MAX_MAPPED_VARS];
+
+ // link to its parent node
+ struct  DDE_data* parent;
+ // link to its child node
+ struct  DDE_data* child;
+};
+
+// The head of the list of DDE data nodes
+extern struct DDE_data* DDE_head; //TODO. We don't really need this head pointer, it is like a stack, access the end is enough
+// The tail of the list
+extern struct DDE_data* DDE_tail;
+
+// create a new DDE-data node and append it to the end of the tracking list
+// copy all variables from its parent node to be into the set of inherited variable set.
+//void XOMP_Device_Data_Environment_Enter();
+extern void xomp_deviceDataEnvironmentEnter();
+
+// Check if an original  variable is already mapped in enclosing data environment, return its device variable's address if yes.
+// return NULL if not
+//void* XOMP_Device_Data_Environment_Get_Inherited_Variable (void* original_variable_address, int size);
+extern void* xomp_deviceDataEnvironmentGetInheritedVariable (void* original_variable_address, int size);
+
+//! Add a newly mapped variable into the current DDE's new variable list
+//void XOMP_Device_Data_Environment_Add_Variable (void* var_addr, int var_size, void * dev_addr);
+extern void xomp_deviceDataEnvironmentAddVariable (void* var_addr, int var_size, void * dev_addr, bool copy_back);
+
+// Exit current DDE: deallocate device memory, delete the DDE-data node from the end of the tracking list
+//void XOMP_Device_Data_Environment_Exit();   
+extern void xomp_deviceDataEnvironmentExit();   
+
 
 #ifdef __cplusplus
  }
