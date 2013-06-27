@@ -555,8 +555,10 @@ Grammar::setUpStatements ()
      ScopeStatement.setAutomaticGenerationOfConstructor(false);
 
   // Switch between inlcuding the SgSymbolTable as a pointer or as a data member
+  // ScopeStatement.setDataPrototype    ( "SgSymbolTable*","symbol_table","= NULL",
+  //                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
      ScopeStatement.setDataPrototype    ( "SgSymbolTable*","symbol_table","= NULL",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
+                                          NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
 
   // DQ (7/23/2010): Build a local type table because during construction of the AST we can't yet build the global type table.
   // After construction of the AST it might be that we can build a global type table and then perhaps not use this local one at each scope.
@@ -2471,9 +2473,18 @@ Grammar::setUpStatements ()
                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (7/23/2011): Pointers to previous and next matching namespace definitions (C++ namespaces are reintrant).
-     NamespaceDefinitionStatement.setDataPrototype ( "SgNamespaceDefinitionStatement*", "previousNamepaceDefinition", "= NULL",
+     NamespaceDefinitionStatement.setDataPrototype ( "SgNamespaceDefinitionStatement*", "previousNamespaceDefinition", "= NULL",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     NamespaceDefinitionStatement.setDataPrototype ( "SgNamespaceDefinitionStatement*", "nextNamepaceDefinition", "= NULL",
+     NamespaceDefinitionStatement.setDataPrototype ( "SgNamespaceDefinitionStatement*", "nextNamespaceDefinition", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/16/2013): This is where we put the union of all of the symbols for all of the namespace definitions that
+  // are logically the same namespace, but seperated structurally because C++ namespaces can be re-entrant.
+  // Note that only SgAliasSymbols are put here and that the original symbol is placed into the namespace definition
+  // associated with its declaration.  
+     NamespaceDefinitionStatement.setDataPrototype ( "SgNamespaceDefinitionStatement*", "global_definition", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     NamespaceDefinitionStatement.setDataPrototype ( "bool", "isUnionOfReentrantNamespaceDefinitions", "= false",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      UsingDeclarationStatement.setFunctionPrototype ( "HEADER_USING_DECLARATION_STATEMENT",
@@ -3505,8 +3516,10 @@ Grammar::setUpStatements ()
 
      NamespaceDefinitionStatement.setFunctionSource (
           "SOURCE_NAMESPACE_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
+#if 0
      NamespaceDefinitionStatement.setFunctionSource (
           "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
+#endif
 
      UsingDirectiveStatement.setFunctionSource (
           "SOURCE_USING_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );

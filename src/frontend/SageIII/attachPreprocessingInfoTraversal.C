@@ -751,23 +751,31 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
             // The lex token stream is now returned in the ROSEAttributesList object.
 
 #if 1
-            // DQ (11/23/2008): This is part of CPP handling for Fortran, but tested on C and C++ codes aditionally, (it is redundant for C and C++).
+            // DQ (11/23/2008): This is part of CPP handling for Fortran, but tested on C and C++ codes additionally, (it is redundant for C and C++).
             // This is a way of testing the extraction of CPP directives (on C and C++ codes, so that it is more agressively tested).
             // Since this is a redundant test, it can be removed in later development (its use is only a performance issue).
             // returnListOfAttributes = new ROSEAttributesList();
 
             // This call is just a test, this function is defined for use on Fortran.  For C and C++ we have alternative methods to extract the CPP directives and comments.
-            // printf ("Call collectPreprocessorDirectivesAndCommentsForAST to test C and C++ preprocessor directive collection \n");
+#if 0
+               printf ("Call collectPreprocessorDirectivesAndCommentsForAST to test C and C++ preprocessor directive collection \n");
+#endif
                returnListOfAttributes->collectPreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments,ROSEAttributesList::e_C_language);
-            // printf ("DONE: Call collectPreprocessorDirectivesAndCommentsForAST to test C and C++ preprocessor directive collection \n");
+#if 0
+               printf ("DONE: Call collectPreprocessorDirectivesAndCommentsForAST to test C and C++ preprocessor directive collection \n");
+#endif
 #endif
 
             // This function has been modified to clear any existing list of PreprocessingInfo*
             // objects (so that we can test the function: collectPreprocessorDirectivesAndCommentsForAST()).
             // returnListOfAttributes = getPreprocessorDirectives( Sg_File_Info::getFilenameFromID(currentFileNameId) );
-            // printf ("Calling lex or wave based mechanism for collecting CPP directives, comments, and token stream \n");
+#if 0
+               printf ("Calling lex or wave based mechanism for collecting CPP directives, comments, and token stream \n");
+#endif
                returnListOfAttributes = getPreprocessorDirectives(fileNameForDirectivesAndComments);
-            // printf ("DONE: Calling lex or wave based mechanism for collecting CPP directives, comments, and token stream \n");
+#if 0
+               printf ("DONE: Calling lex or wave based mechanism for collecting CPP directives, comments, and token stream \n");
+#endif
              }
         }
        else
@@ -841,6 +849,9 @@ AttachPreprocessingInfoTreeTrav::getListOfAttributes ( int currentFileNameId )
                int sourceFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ? 
                                   Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFileInfo->get_filename())) : 
                                   sourceFileInfo->get_file_id();
+
+#error "DEAD CODE!"
+
 #else
                int sourceFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ? 
                                   Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFileInfo->get_filename())) : 
@@ -849,10 +860,14 @@ AttachPreprocessingInfoTreeTrav::getListOfAttributes ( int currentFileNameId )
 
                bool skipProcessFile = (processAllIncludeFiles == false) && (currentFileNameId != sourceFileNameId);
 #if 0
-               printf ("currentFileNameId = %d sourceFileNameId = %d skipProcessFile = %s \n",currentFileNameId,sourceFileNameId,skipProcessFile ? "true" : "false");
+               printf ("In AttachPreprocessingInfoTreeTrav::getListOfAttributes(): currentFileNameId = %d sourceFileNameId = %d skipProcessFile = %s \n",currentFileNameId,sourceFileNameId,skipProcessFile ? "true" : "false");
 #endif
                if (skipProcessFile == false)
                   {
+#if 0
+                    printf ("In AttachPreprocessingInfoTreeTrav::getListOfAttributes(): currentFileNameId = %d sourceFileNameId = %d Sg_File_Info::getFilenameFromID(currentFileNameId) = %s \n",
+                         currentFileNameId,sourceFileNameId,Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
+#endif
                     attributeMapForAllFiles[currentFileNameId] = buildCommentAndCppDirectiveList(use_Wave, Sg_File_Info::getFilenameFromID(currentFileNameId) );
 
                     ROSE_ASSERT(attributeMapForAllFiles.find(currentFileNameId) != attributeMapForAllFiles.end());
@@ -866,6 +881,13 @@ AttachPreprocessingInfoTreeTrav::getListOfAttributes ( int currentFileNameId )
                ROSE_ASSERT(currentListOfAttributes != NULL);
              }
         }
+
+  // DQ (5/19/2013): Added test... only valid for specific test codes with appropriate CPP directives.
+  // ROSE_ASSERT(currentListOfAttributes != NULL);
+
+#if 0
+     printf ("In AttachPreprocessingInfoTreeTrav::getListOfAttributes(): currentListOfAttributes = %p currentListOfAttributes->size() = %d \n",currentListOfAttributes,currentListOfAttributes != NULL ? currentListOfAttributes->size() : -1);
+#endif
 
      return currentListOfAttributes;
    }
@@ -1009,6 +1031,14 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                SgSourceFile* sourceFile = isSgSourceFile(currentFilePtr);
                ROSE_ASSERT(sourceFile != NULL);
                sourceFile->fixupASTSourcePositionsBasedOnDetectedLineDirectives(equivalentFilenames);
+#endif
+             }
+            else
+             {
+#if 0
+            // DQ (5/19/2013): Trap this case for test2013_171.C.
+               printf ("Error: This should not happen for test2013_171.C \n");
+               ROSE_ASSERT(false);
 #endif
              }
         }

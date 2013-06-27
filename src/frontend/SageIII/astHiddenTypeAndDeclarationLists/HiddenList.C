@@ -1,3 +1,8 @@
+
+#if 0
+// DQ (5/21/2013): I think that we can and should remove this file.
+// for the moment I will comment out the whole file.
+
 // Implementation of Class Members of HiddenList.h
 // Robert Preissl
 // Last modified : April 16, 2007
@@ -2754,3 +2759,7 @@ void buildHiddenTypeAndDeclarationLists( SgNode* node /*SgProject* project*/ )
 
 } // namespace
 
+
+// DQ (5/21/2013): I think that we can and should remove this file.
+// for the moment I will comment out the whole file.
+#endif
