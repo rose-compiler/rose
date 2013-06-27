@@ -69,6 +69,7 @@ usage(int exit_status)
               <<"            is the default:\n"
               <<"              * \"average\" takes the average of the individual output group similarities.\n"
               <<"              * \"maximum\" takes the maximum of the individual output group similarities.\n"
+              <<"              * \"minimum\" takes the minimum of the individual output group similarities.\n"
               <<"\n"
               <<"  Other switches and arguments:\n"
               <<"    --relation=ID\n"
@@ -100,7 +101,8 @@ enum OutputComparison {
 
 enum Aggregation {
     AG_AVERAGE,
-    AG_MAXIMUM, 
+    AG_MINIMUM,
+    AG_MAXIMUM,
 };
 
 static struct Switches {
@@ -287,7 +289,7 @@ similarity(const CachedOutputs &f1_outs, const CachedOutputs &f2_outs,
 
     // Statistics accumulators
     ncompares = maxcompares = 0;
-    double total_sim = 0, max_sim = 0.0;
+    double total_sim = 0, max_sim = 0.0, min_sim=1.0;
 
     // Compare buckets with each other
     for (Buckets::iterator b1=f1_buckets.begin(); b1!=f1_buckets.end(); ++b1) {
@@ -321,19 +323,28 @@ similarity(const CachedOutputs &f1_outs, const CachedOutputs &f2_outs,
                     double sim = f1_ogroup->similarity(f2_ogroup);
                     total_sim += sim;
                     max_sim = std::max(max_sim, sim);
+                    min_sim = std::min(min_sim, sim);
                     ++ncompares;
                 }
             }
         }
     }
+
+    if (0==ncompares)
+        return 0;
     
     // Compute aggreged value for these two functions
-    double ave_sim = total_sim / (ncompares?ncompares:1);
+    double ave_sim = total_sim / ncompares;
     switch (opt.aggregation) {
         case AG_AVERAGE:
             return ave_sim;
         case AG_MAXIMUM:
             return max_sim;
+        case AG_MINIMUM:
+            return min_sim;
+        default:
+            assert(!"not handled");
+            abort();
     }
 }
 
@@ -435,6 +446,8 @@ main(int argc, char *argv[])
                 opt.aggregation = AG_AVERAGE;
             } else if (!strcmp(argv[argno]+12, "maximum")) {
                 opt.aggregation = AG_MAXIMUM;
+            } else if (!strcmp(argv[argno]+12, "minimum")) {
+                opt.aggregation = AG_MINIMUM;
             } else {
                 std::cerr <<argv0 <<": unknown value for --aggregate switch: " <<argv[argno]+12 <<"\n"
                           <<argv0 <<": see --help for more info\n";
