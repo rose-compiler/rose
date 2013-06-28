@@ -38,12 +38,27 @@ LinearCongruentialGenerator::init()
 uint64_t
 LinearCongruentialGenerator::next(size_t nbits, size_t niter)
 {
+#if 0
     uint64_t retval = 0;
     for (size_t i=0; i<niter; ++i) {
         // These are the values used by MMIX written by Donald Knuth. All 64 bits are returned.
         value_ = 6364136223846793005ull * value_ + 1442695040888963407ull;
         retval ^= value_;
     }
+#else
+    // multiplier and addend are from java.util.Random and we avoid the low-order bits
+    uint64_t retval = 0;
+    static const uint64_t a=25214903917, c=11;
+    for (size_t i=0; i<niter; ++i) {
+        value_ = a * value_ + c;
+        uint64_t v = (value_ >> 17) & 0x3fffff; // 22 bits: 17 (inclusive) through 39 (exclusive)
+        value_ = a * value_ + c;
+        v |= ((value_ >> 18) & 0x3fffff) << 22; // 22 bits: 18 (inclusive) through 40 (exclusive)
+        value_ = a * value_ + c;
+        v |= ((value_ >> 19) & 0x0fffff) << 44; // 20 bits: 19 (inclusive) through 39 (exclusive)
+        retval ^= v;
+    }
+#endif
 
     return retval & IntegerOps::genMask<uint64_t>(nbits);
 }
