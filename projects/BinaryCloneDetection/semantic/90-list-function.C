@@ -77,6 +77,7 @@ struct Event {
     typedef std::map<CloneDetection::AnalysisFault::Fault, size_t/*count*/> Faults;
     typedef std::map<rose_addr_t/*target*/, size_t/*count*/> Branches;
     Event(): nexecuted(0), ninputs(0), nfaults(0), nbranches(0) {}
+    int func_id;                // function for event address (not the analyzed function that emitted the event)
     size_t nexecuted;           // number of times this basic block was executed
     size_t ninputs;             // number of inputs consumed here
     InputQueues inputs;         // input value distribution per queue
@@ -145,8 +146,10 @@ show_summary(const SqlDatabase::TransactionPtr &tx, int func_id)
                                                              "   func.entry_va, func.name, file1.name, file2.name,"
                                                              //  4            5           6           7
                                                              "   func.ninsns, func.isize, func.dsize, func.size,"
-                                                             //  8            9            10
-                                                             "   func.digest, cmd.hashkey, cmd.begin_time"
+                                                             //  8            9            10              11
+                                                             "   func.digest, cmd.hashkey, cmd.begin_time, func.specimen_id,"
+                                                             //  12
+                                                             "   func.file_id"
                                                              " from semantic_functions as func"
                                                              " join semantic_files as file1 on func.specimen_id = file1.id"
                                                              " join semantic_files as file2 on func.file_id = file2.id"
@@ -155,9 +158,9 @@ show_summary(const SqlDatabase::TransactionPtr &tx, int func_id)
     std::cout <<"Function ID:                      " <<func_id <<"\n"
               <<"Entry virtual address:            " <<StringUtility::addrToString(geninfo.get<rose_addr_t>(0)) <<"\n"
               <<"Function name:                    " <<geninfo.get<std::string>(1) <<"\n"
-              <<"Binary specimen name:             " <<geninfo.get<std::string>(2) <<"\n";
+              <<"Binary specimen name:             " <<geninfo.get<std::string>(2) <<" (id=" <<geninfo.get<int>(11) <<")\n";
     if (0!=geninfo.get<std::string>(2).compare(geninfo.get<std::string>(3)))
-        std::cout <<"Binary file name:                 " <<geninfo.get<std::string>(3) <<"\n";
+        std::cout <<"Binary file name:                 " <<geninfo.get<std::string>(3) <<" (id=" <<geninfo.get<int>(12) <<")\n";
     std::cout <<"Number of instructions:           " <<geninfo.get<size_t>(4) <<"\n"
               <<"Number of bytes for instructions: " <<geninfo.get<size_t>(5) <<"\n"
               <<"Number of bytes for static data:  " <<geninfo.get<size_t>(6) <<"\n"
@@ -228,48 +231,89 @@ show_tests(const SqlDatabase::TransactionPtr &tx, int func_id)
     fio.print(std::cout);
 }
 
+// Create and populate the tmp_events table.
 static void
-load_events(const SqlDatabase::TransactionPtr &tx, int func_id, Events &events/*in,out*/)
+gather_events(const SqlDatabase::TransactionPtr &tx, int func_id)
 {
+    tx->execute("create temporary table tmp_events as select * from semantic_fio_trace limit 0");
     if (opt.show_trace) {
+        std::string sql = "insert into tmp_events select * from semantic_fio_trace where func_id = ?";
         std::vector<std::string> igroups;
         for (std::set<int>::const_iterator i=opt.traces.begin(); i!=opt.traces.end(); ++i)
             igroups.push_back(StringUtility::numberToString(*i));
-        std::string sql = "select addr, event_id, minor, val from semantic_fio_trace where func_id=?";
         if (!igroups.empty())
             sql += " and igroup_id in (" + StringUtility::join(", ", igroups) + ")";
-        SqlDatabase::StatementPtr stmt2 = tx->statement(sql)->bind(0, func_id);
-        for (SqlDatabase::Statement::iterator row=stmt2->begin(); row!=stmt2->end(); ++row) {
-            rose_addr_t addr = row.get<rose_addr_t>(0);
-            int event_id = row.get<int>(1);
-            int minor = row.get<int>(2);
-            int64_t val = row.get<int64_t>(3);
-            switch (event_id) {
-                case CloneDetection::Tracer::EV_REACHED:
-                    ++events[addr].nexecuted;
-                    break;
-                case CloneDetection::Tracer::EV_BRANCHED:
-                    ++events[addr].nbranches;
-                    ++events[addr].branches[val];
-                    break;
-                case CloneDetection::Tracer::EV_CONSUME_INPUT:
-                    ++events[addr].ninputs;
-                    assert(minor>=0);
-                    if ((size_t)minor>=events[addr].inputs.size())
-                        events[addr].inputs.resize(minor+1);
-                    ++events[addr].inputs[minor][val];
-                    break;
-                case CloneDetection::Tracer::EV_FAULT:
-                    ++events[addr].nfaults;
-                    ++events[addr].faults[(CloneDetection::AnalysisFault::Fault)minor];
-                    break;
-                default:
-                    /*void*/
-                    break;
-            }
+        tx->statement(sql)->bind(0, func_id)->execute();
+    }
+}
+
+
+// Load all events into memory.  Events are emitted for a particular function ID being analyzed, but if the 25-run-test
+// --follow-calls was specified, then events for that function ID might be at instructions that are outside that function.
+// We need to make note of those functions so that we can load all their instructions.
+static void
+load_events(const SqlDatabase::TransactionPtr &tx, int func_id, Events &events/*in,out*/)
+{
+    int specimen_id = tx->statement("select specimen_id from semantic_functions where id = ?")
+                      ->bind(0, func_id)->execute_int();
+    SqlDatabase::StatementPtr stmt = tx->statement("select"
+                                                   // 0          1               2            3          4
+                                                   " event.addr, event.event_id, event.minor, event.val, func.id"
+                                                   " from tmp_events as event"
+                                                   " join semantic_instructions as insn on event.addr = insn.address"
+                                                   " join semantic_functions as func on insn.func_id = func.id"
+                                                   " where func.specimen_id = ?"
+                                                   " order by igroup_id, pos");
+    stmt->bind(0, specimen_id);
+    for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
+        rose_addr_t addr = row.get<rose_addr_t>(0);
+        int event_id = row.get<int>(1);
+        int minor = row.get<int>(2);
+        int64_t val = row.get<int64_t>(3);
+        events[addr].func_id = row.get<int>(4); // the hard-to-get ID, not the one stored in the events func_id column.
+        switch (event_id) {
+            case CloneDetection::Tracer::EV_REACHED:
+                ++events[addr].nexecuted;
+                break;
+            case CloneDetection::Tracer::EV_BRANCHED:
+                ++events[addr].nbranches;
+                ++events[addr].branches[val];
+                break;
+            case CloneDetection::Tracer::EV_CONSUME_INPUT:
+                ++events[addr].ninputs;
+                assert(minor>=0);
+                if ((size_t)minor>=events[addr].inputs.size())
+                    events[addr].inputs.resize(minor+1);
+                ++events[addr].inputs[minor][val];
+                break;
+            case CloneDetection::Tracer::EV_FAULT:
+                ++events[addr].nfaults;
+                ++events[addr].faults[(CloneDetection::AnalysisFault::Fault)minor];
+                break;
+            default:
+                /*void*/
+                break;
         }
     }
 }
+
+// Create the tmp_insns table to hold all the instructions for the function-to-be-listed and all the instructions of all
+// the functions that are mentioned in events.
+static void
+gather_instructions(const SqlDatabase::TransactionPtr tx, int func_id, const Events &events)
+{
+    std::set<std::string> func_ids;
+    func_ids.insert(StringUtility::numberToString(func_id));
+    for (Events::const_iterator ei=events.begin(); ei!=events.end(); ++ei)
+        func_ids.insert(StringUtility::numberToString(ei->second.func_id));
+    std::string sql = "create temporary table tmp_insns as"
+                      " select * from semantic_instructions"
+                      " where func_id in ("+StringUtility::join_range(", ", func_ids.begin(), func_ids.end())+")";
+    tx->execute(sql);
+}
+
+    
+    
 
 static void
 show_events(const Event &e)
@@ -377,48 +421,59 @@ list_assembly(const SqlDatabase::TransactionPtr &tx, int func_id)
 }
 
 static void
+gather_source_code(const SqlDatabase::TransactionPtr &tx)
+{
+    tx->execute("create temporary table tmp_src as"
+                "  select distinct src.*"
+                "    from tmp_insns as insn"
+                "    join semantic_sources as src"
+                "      on insn.src_file_id=src.file_id"
+                "      and src.linenum >= insn.src_line-10"
+                "      and src.linenum <= insn.src_line+10");
+}
+
+static void
+load_source_code(const SqlDatabase::TransactionPtr &tx, Listing &listing/*in,out*/)
+{
+    SqlDatabase::StatementPtr stmt = tx->statement("select file_id, linenum, line from tmp_src");
+    for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
+        int file_id = row.get<int>(0);
+        int linenum = row.get<int>(1);
+        SourcePosition srcpos(file_id, linenum);
+        listing[srcpos].source_code = row.get<std::string>(2);
+    }
+}
+
+    
+
+static void
 list_combined(const SqlDatabase::TransactionPtr &tx, int func_id, bool show_assembly)
 {
-    // Get lines of source code and add them as keys in the Listing map. Include a few extra lines for context.
-    std::map<int/*fileid*/, std::string/*filename*/> file_names;
-    Listing listing;
-    SqlDatabase::StatementPtr stmt3 = tx->statement("select"
-                                                    "   file.name, insn.src_file_id,"
-                                                    "   min(insn.src_line)-5 as minline, max(insn.src_line)+5 as maxline"
-                                                    " from semantic_instructions as insn"
-                                                    " join semantic_files as file on insn.src_file_id = file.id"
-                                                    " where insn.func_id = ?"
-                                                    " group by insn.src_file_id, file.name")->bind(0, func_id);
-    for (SqlDatabase::Statement::iterator row=stmt3->begin(); row!=stmt3->end(); ++row) {
-        std::string file_name = row.get<std::string>(0);
-        int file_id = row.get<int>(1);
-        file_names[file_id] = file_name;
-        int minline = row.get<int>(2);
-        int maxline = row.get<int>(3);
-        SqlDatabase::StatementPtr stmt4 = tx->statement("select linenum, line from semantic_sources"
-                                                        " where file_id=? and linenum>=? and linenum<=?"
-                                                        " order by linenum")
-                                          ->bind(0, file_id)->bind(1, minline)->bind(2, maxline);
-        for (SqlDatabase::Statement::iterator srcinfo=stmt4->begin(); srcinfo!=stmt4->end(); ++srcinfo)
-            listing[SourcePosition(file_id, srcinfo.get<int>(0))].source_code = srcinfo.get<std::string>(1);
-    }
+    CloneDetection::FilesTable files(tx);
 
-    // Get lines of assembly code and insert them into the correct place in the Listing.
     Events events;
+    gather_events(tx, func_id);
+    load_events(tx, func_id, events/*out*/);
+    gather_instructions(tx, func_id, events);
+
+    Listing listing;
+    gather_source_code(tx);
+    load_source_code(tx, listing/*out*/);
+    
+    // Get lines of assembly code and insert them into the correct place in the Listing.
     if (show_assembly) {
-        load_events(tx, func_id, events);
-        SqlDatabase::StatementPtr stmt5 = tx->statement("select src_file_id, src_line, position, address, assembly"
-                                                        " from semantic_instructions"
-                                                        " where func_id = ?"
-                                                        " order by position")->bind(0, func_id);
-        for (SqlDatabase::Statement::iterator row=stmt5->begin(); row!=stmt5->end(); ++row) {
+        SqlDatabase::StatementPtr stmt = tx->statement("select"
+                                                       // 0           1         2         3        4
+                                                       " src_file_id, src_line, position, address, assembly"
+                                                       " from tmp_insns order by position");
+        for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
             int file_id = row.get<int>(0);
             int line_num = row.get<int>(1);
+            SourcePosition srcpos(file_id, line_num);
             int position = row.get<int>(2);
             rose_addr_t addr = row.get<rose_addr_t>(3);
             std::string assembly = row.get<std::string>(4);
-            listing[SourcePosition(file_id, line_num)].assembly_code.insert(std::make_pair(position,
-                                                                                           std::make_pair(addr, assembly)));
+            listing[srcpos].assembly_code.insert(std::make_pair(position,std::make_pair(addr, assembly)));
         }
 
         // Listing header
@@ -467,8 +522,10 @@ list_combined(const SqlDatabase::TransactionPtr &tx, int func_id, bool show_asse
     for (Listing::iterator li=listing.begin(); li!=listing.end(); ++li) {
         int file_id = li->first.file_id;
         if (file_id>=0) {
-            if (seen_files.insert(file_id).second)
-                std::cout <<std::setw(4) <<std::right <<file_id <<".file  |" <<file_names[file_id] <<"\n";
+            if (seen_files.insert(file_id).second) {
+                std::cout <<"\n" <<std::setw(4) <<std::right <<file_id <<".file  |"
+                          <<(opt.colorize?"\033[33;4m":"") <<files.name(file_id) <<(opt.colorize?"\033[m":"") <<"\n";
+            }
             std::cout <<std::setw(4) <<std::right <<file_id <<"." <<std::setw(6) <<std::left <<li->first.line_num
                       <<"|"
                       <<(opt.colorize?"\033[34m":"") <<li->second.source_code <<(opt.colorize?"\033[m":"") <<"\n";
