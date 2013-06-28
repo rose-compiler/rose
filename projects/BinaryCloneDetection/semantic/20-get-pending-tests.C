@@ -25,6 +25,9 @@ usage(int exit_status)
               <<"            Select only functions that are defined in one of the specified binary files.  The ID list is a\n"
               <<"            comma-separated list of file identifiers.  Invoking with --file=list will produce a list of all\n"
               <<"            files that contain functions.  This switch may appear more than once and its effect is cumulative.\n"
+              <<"    --function=ID[,...]\n"
+              <<"            Select only functions with the specified ID numbers.  This switch may appear more than once and\n"
+              <<"            its effect is cumulative.\n"
               <<"    --name=NAME\n"
               <<"            Select only functions having the specified names.  This switch may appear more than once to\n"
               <<"            select functions that have any of the specified names.\n"
@@ -54,7 +57,7 @@ struct Switches {
     Switches(): ninsns(0), nfuzz(0), first_fuzz(0), nfuzz_set(false), list_specimens(false), list_files(false) {}
     std::set<rose_addr_t> entry_vas;
     std::set<std::string> names;
-    std::set<int> specimens, files;
+    std::set<int> specimens, files, functions;
     size_t ninsns, nfuzz, first_fuzz;
     bool nfuzz_set; // is nfuzz value valid?
     bool list_specimens, list_files;
@@ -85,22 +88,30 @@ main(int argc, char *argv[])
         } else if (!strcmp(argv[argno], "--file=list") || !strcmp(argv[argno], "--files=list")) {
             opt.list_files = true;
         } else if (!strncmp(argv[argno], "--file=", 7) || !strncmp(argv[argno], "--files=", 8)) {
-            char *s = strchr(argv[argno], '=')+1;
-            while (*s) {
-                while (isspace(*s)) ++s;
-                if (!*s) break;
+            std::vector<std::string> ids = StringUtility::split(",", strchr(argv[argno], '=')+1, (size_t)-1, true);
+            for (size_t i=0; i<ids.size(); ++i) {
+                const char *s = ids[i].c_str();
                 char *rest;
                 errno = 0;
-                int id = strtol(s, &rest, 0);
-                if (errno || rest==s) {
-                    char *comma = strchr(s, ',');
-                    std::cerr <<argv0 <<": invalid file ID: " <<(comma?std::string(s, comma):std::string(s)) <<"\n";
+                int id = strtoul(s, &rest, 0);
+                if (errno || rest==s || *rest) {
+                    std::cerr <<argv0 <<": invalid file ID: " <<ids[i] <<"\n";
                     exit(1);
                 }
                 opt.files.insert(id);
-                s = rest;
-                while (isspace(*s)) ++s;
-                if (','==*s) ++s;
+            }
+        } else if (!strncmp(argv[argno], "--function=", 11) || !strncmp(argv[argno], "--functions=", 12)) {
+            std::vector<std::string> ids = StringUtility::split(",", strchr(argv[argno], '=')+1, (size_t)-1, true);
+            for (size_t i=0; i<ids.size(); ++i) {
+                const char *s = ids[i].c_str();
+                char *rest;
+                errno = 0;
+                int id = strtoul(s, &rest, 0);
+                if (errno || rest==s || *rest) {
+                    std::cerr <<argv0 <<": invalid function ID: " <<ids[i] <<"\n";
+                    exit(1);
+                }
+                opt.functions.insert(id);
             }
         } else if (!strncmp(argv[argno], "--first-fuzz=", 13)) {
             opt.first_fuzz = strtoul(argv[argno]+13, NULL, 0);
@@ -114,22 +125,17 @@ main(int argc, char *argv[])
         } else if (!strcmp(argv[argno], "--specimen=list") || !strcmp(argv[argno], "--specimens=list")) {
             opt.list_specimens = true;
         } else if (!strncmp(argv[argno], "--specimen=", 11) || !strncmp(argv[argno], "--specimens=", 12)) {
-            char *s = strchr(argv[argno], '=')+1;
-            while (*s) {
-                while (isspace(*s)) ++s;
-                if (!*s) break;
+            std::vector<std::string> ids = StringUtility::split(",", strchr(argv[argno], '=')+1, (size_t)-1, true);
+            for (size_t i=0; i<ids.size(); ++i) {
+                const char *s = ids[i].c_str();
                 char *rest;
                 errno = 0;
-                int id = strtol(s, &rest, 0);
-                if (errno || rest==s) {
-                    char *comma = strchr(s, ',');
-                    std::cerr <<argv0 <<": invalid specimen ID: " <<(comma?std::string(s, comma):std::string(s)) <<"\n";
+                int id = strtoul(s, &rest, 0);
+                if (errno || rest==s || *rest) {
+                    std::cerr <<argv0 <<": invalid specimen ID: " <<ids[i] <<"\n";
                     exit(1);
                 }
                 opt.specimens.insert(id);
-                s = rest;
-                while (isspace(*s)) ++s;
-                if (','==*s) ++s;
             }
         } else {
             std::cerr <<argv0 <<": unrecognized switch: " <<argv[argno] <<"\n"
@@ -199,6 +205,12 @@ main(int argc, char *argv[])
         std::string s = "file_id in (";
         for (std::set<int>::iterator i=opt.files.begin(); i!=opt.files.end(); ++i)
             s += (i==opt.files.begin()?"":", ") + StringUtility::numberToString(*i);
+        constraints.push_back(s+")");
+    }
+    if (!opt.functions.empty()) {
+        std::string s = "id in (";
+        for (std::set<int>::iterator i=opt.functions.begin(); i!=opt.functions.end(); ++i)
+            s += (i==opt.functions.begin()?"":", ") + StringUtility::numberToString(*i);
         constraints.push_back(s+")");
     }
     if (opt.ninsns>0)
