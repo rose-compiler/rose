@@ -61,6 +61,9 @@ usage(int exit_status)
               <<"                between zero and one and is not transitive.  The Jaccard index is the ratio of the size of\n"
               <<"                intersection of two sets to the size of the union.  Also, if either output group indicates\n"
               <<"                an analysis fault, then the Jaccard index is multiplied by 0.25.\n"
+              <<"              * \"dl-edit-distance\" compares value vectors by calculating the Damerau-Levenshtein edit\n"
+              <<"                distance. The similarity value is (1-DL/DL_max) where DL_max is the maximum possible edit\n"
+              <<"                distance for vectors of that length.\n"
               <<"\n"
               <<"  These switches control  how output group similarities are combined to form function similarities:\n"
               <<"    --aggregate=ALGORITHM\n"
@@ -81,6 +84,8 @@ usage(int exit_status)
               <<"            default relation ID is zero.\n"
               <<"    --progress\n"
               <<"            Show progress reports even if stderr is not a tty.\n"
+              <<"    --verbose\n"
+              <<"            Show lots of diagnostics.\n"
               <<"\n"
               <<"    DATABASE\n"
               <<"            The name of the database to which we are connecting.  For SQLite3 databases this is just a local\n"
@@ -97,6 +102,7 @@ enum OutputComparison {
     OC_FULL_EQUALITY,
     OC_VALUESET_EQUALITY,
     OC_VALUESET_JACCARD,
+    OC_DAMERAU_LEVENSHTEIN,
 };
 
 enum Aggregation {
@@ -109,7 +115,7 @@ static struct Switches {
     Switches()
         : recreate(false), show_progress(false), ignore_faults(false),
           collection_ratio(1.0, 1.0), collection_limit((size_t)-1, (size_t)-1),
-          output_cmp(OC_VALUESET_JACCARD), aggregation(AG_AVERAGE), relation_id(0) {}
+          output_cmp(OC_VALUESET_JACCARD), aggregation(AG_AVERAGE), relation_id(0), verbose(false) {}
     bool recreate;                      // recreate the database
     bool show_progress;                 // the --show-progress switch
     bool ignore_faults;                 // ignore tests that failed
@@ -118,6 +124,7 @@ static struct Switches {
     OutputComparison output_cmp;
     Aggregation aggregation;
     int relation_id;
+    bool verbose;
 } opt;
 
 static SqlDatabase::TransactionPtr transaction;
@@ -132,6 +139,7 @@ public:
     virtual ~CachedOutput() {}
     // Similarity of two objects as a value between zero and one (one being identical)
     virtual double similarity(const CachedOutput *other) const = 0;
+    virtual void print(std::ostream&, const std::string &prefix) const = 0;
 };
 
 typedef std::map<int64_t/*igroup_id or ogroup_id*/, CachedOutput*> CachedOutputs;
@@ -148,6 +156,9 @@ public:
         const FullEquality *other = dynamic_cast<const FullEquality*>(other_);
         return *ogroup == *other->ogroup ? 1.0 : 0.0;
     }
+    virtual void print(std::ostream &o, const std::string &prefix="") const /*override*/ {
+        ogroup->print(o, prefix);
+    }
 };
 
 // Treat output values as a set and compare them using set equality.
@@ -159,7 +170,9 @@ public:
     CloneDetection::AnalysisFault::Fault fault;
 
     ValuesetEquality(const CloneDetection::OutputGroup *ogroup) {
-        values.insert(ogroup->values.begin(), ogroup->values.end());
+        std::vector<VSet::value_type> vvec = ogroup->get_values();
+        for (size_t i=0; i<vvec.size(); ++i)
+            values.insert(vvec[i]);
         fault = ogroup->fault;
     }
 
@@ -170,6 +183,41 @@ public:
             std::equal(values.begin(), values.end(), other->values.begin()))
             return 1.0;
         return 0.0;
+    }
+
+    virtual void print(std::ostream &o, const std::string &prefix="") const /*override*/ {
+        o <<prefix <<"values:";
+        for (VSet::const_iterator vi=values.begin(); vi!=values.end(); ++vi)
+            o <<" " <<*vi;
+        o <<"\n" <<prefix <<"fault: " <<CloneDetection::AnalysisFault::fault_name(fault) <<"\n";
+    }
+};
+
+// Treat output values as vectors and use the Damerau-Levenshtein edit distance to calculate similarity.
+class ValuesDamerauLevenshtein: public CachedOutput {
+public:
+    typedef CloneDetection::OutputGroup::value_type VType;
+    typedef std::vector<VType> ValVector;
+    ValVector values;
+
+    ValuesDamerauLevenshtein(const CloneDetection::OutputGroup *ogroup) {
+        values = ogroup->get_values();
+    }
+
+    virtual double similarity(const CachedOutput *other_) const /*override*/ {
+        const ValuesDamerauLevenshtein *other = dynamic_cast<const ValuesDamerauLevenshtein*>(other_);
+        size_t dl = Combinatorics::damerau_levenshtein_distance(values, other->values);
+        size_t dl_max = std::max(values.size(), other->values.size());
+        if (0==dl_max)
+            return values[0]==other->values[0] ? 1.0 : 0.0;
+        return 1.0 - (double)dl / dl_max;
+    }
+
+    virtual void print(std::ostream &o, const std::string &prefix="") const /*override*/ {
+        o <<prefix <<"values:";
+        for (ValVector::const_iterator vi=values.begin(); vi!=values.end(); ++vi)
+            o <<" " <<*vi;
+        o <<"\n";
     }
 };
 
@@ -196,6 +244,8 @@ public:
         return multiplier*jaccard;
     }
 };
+
+// Treat output values as vectors and use
 
 typedef std::map<int/*igroup_id*/, CloneDetection::InputGroup*> InputGroups;
 static InputGroups igroup_cache;
@@ -239,6 +289,9 @@ load_output(CachedOutputs &all_outputs, int64_t ogroup_id)
             break;
         case OC_VALUESET_JACCARD:
             output = new ValuesetJaccard(ogs.lookup(ogroup_id));
+            break;
+        case OC_DAMERAU_LEVENSHTEIN:
+            output = new ValuesDamerauLevenshtein(ogs.lookup(ogroup_id));
             break;
     }
     return output;
@@ -325,6 +378,13 @@ similarity(const CachedOutputs &f1_outs, const CachedOutputs &f2_outs,
                     max_sim = std::max(max_sim, sim);
                     min_sim = std::min(min_sim, sim);
                     ++ncompares;
+                    if (opt.verbose) {
+                        std::cerr <<argv0 <<":  ogroup1 = " <<f1_bucket[i] <<":\n";
+                        f1_ogroup->print(std::cerr, "    ");
+                        std::cerr <<argv0 <<":  ogroup2 = " <<f2_bucket[j] <<":\n";
+                        f2_ogroup->print(std::cerr, "    ");
+                        std::cerr <<argv0 <<":  similarity(" <<f1_bucket[i] <<", " <<f2_bucket[j] <<") = " <<sim <<"\n";
+                    }
                 }
             }
         }
@@ -491,6 +551,8 @@ main(int argc, char *argv[])
                 opt.output_cmp = OC_VALUESET_EQUALITY;
             } else if (!strcmp(argv[argno]+9, "valueset-jaccard")) {
                 opt.output_cmp = OC_VALUESET_JACCARD;
+            } else if (!strcmp(argv[argno]+9, "dl-edit-distance")) {
+                opt.output_cmp = OC_DAMERAU_LEVENSHTEIN;
             } else {
                 std::cerr <<argv0 <<": unknown value for --ogroup switch: " <<argv[argno]+9 <<"\n"
                           <<argv0 <<": see --help for more info\n";
@@ -498,6 +560,8 @@ main(int argc, char *argv[])
             }
         } else if (!strcmp(argv[argno], "--progress")) {
             opt.show_progress = true;
+        } else if (!strcmp(argv[argno], "--verbose")) {
+            opt.verbose = true;
         } else {
             std::cerr <<argv0 <<": unknown switch: " <<argv[argno] <<"\n"
                       <<argv0 <<": see --help for more info\n";
@@ -531,6 +595,8 @@ main(int argc, char *argv[])
         ++progress;
         int func1_id, func2_id;
         boost::tie(func1_id, func2_id) = worklist.shift();
+        if (opt.verbose)
+            std::cerr <<argv0 <<": func1_id=" <<func1_id <<" func2_id=" <<func2_id <<"\n";
         assert(func1_id < func2_id);
         load_function_outputs(all_outputs, func_outputs, func1_id);
         load_function_outputs(all_outputs, func_outputs, func2_id);
