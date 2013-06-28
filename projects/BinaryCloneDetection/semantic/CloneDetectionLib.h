@@ -143,7 +143,7 @@ public:
         NONE        = 0,
         DISASSEMBLY = 911000001,     /**< Disassembly failed possibly due to bad address. */
         INSN_LIMIT  = 911000002,     /**< Maximum number of instructions executed. */
-        HALT        = 911000003,     /**< x86 HLT instruction executed. */
+        HALT        = 911000003,     /**< x86 HLT instruction executed or "abort@plt" called. */
         INTERRUPT   = 911000004,     /**< x86 INT instruction executed. */
         SEMANTICS   = 911000005,     /**< Some fatal problem with instruction semantics, such as a not-handled instruction. */
         SMTSOLVER   = 911000006,     /**< Some fault in the SMT solver. */
@@ -268,14 +268,133 @@ public:
 typedef std::map<int, uint64_t> IdVa;
 typedef std::map<uint64_t, int> VaId;
 
-// How to store values: 1 => vector; 2 => set
-#define OUTPUTGROUP_VALUE_CONTAINER 2
+// How to store values.  Define this to be OutputGroupValueVector, OutputGroupValueSet, or OutputGroupValueAddrSet. See their
+// definitions below.  They all store values, just in different orders and cardinalities.
+#define OUTPUTGROUP_VALUE_CONTAINER OutputGroupValueAddrSet
 
 // Should we store call graph info?
 #undef OUTPUTGROUP_SAVE_CALLGRAPH
 
 // Should we store system call info?
 #undef OUTPUTGROUP_SAVE_SYSCALLS
+
+// Store every value (including duplicate values) in address order.
+template<typename T>
+class OutputGroupValueVector {
+private:
+    typedef std::vector<T> Values;
+    Values values_;
+public:
+    void clear() {
+        values_.clear();
+    }
+    void insert(T value, rose_addr_t where=0) {
+        values_.push_back(value);
+    }
+    const std::vector<T>& get_vector() const { return values_; }
+    bool operator<(const OutputGroupValueVector &other) const {
+        if (values_.size() != other.values_.size())
+            return values_.size() < other.values_.size();
+        typedef std::pair<typename Values::const_iterator, typename Values::const_iterator> vi_pair;
+        vi_pair vi = std::mismatch(values_.begin(), values_.end(), other.values_.begin());
+        if (vi.first!=values_.end())
+            return *(vi.first) < *(vi.second);
+        return false;
+    }
+    bool operator==(const OutputGroupValueVector &other) const {
+        return values_.size() == other.values_.size() && std::equal(values_.begin(), values_.end(), other.values_.begin());
+    }
+};
+
+// Store set of unique values in ascending order of value
+template<typename T>
+class OutputGroupValueSet {
+private:
+    typedef std::set<T> Values;
+    Values values_;
+public:
+    void clear() {
+        values_.clear();
+    }
+    void insert(T value, rose_addr_t where=0) {
+        values_.insert(value);
+    }
+    std::vector<T> get_vector() const {
+        std::vector<T> retval(values_.begin(), values_.end());
+        return retval;
+    }
+    bool operator<(const OutputGroupValueSet &other) const {
+        if (values_.size() != other.values_.size())
+            return values_.size() < other.values_.size();
+        typedef std::pair<typename Values::const_iterator, typename Values::const_iterator> vi_pair;
+        vi_pair vi = std::mismatch(values_.begin(), values_.end(), other.values_.begin());
+        if (vi.first!=values_.end())
+            return *(vi.first) < *(vi.second);
+        return false;
+    }
+    bool operator==(const OutputGroupValueSet &other) const {
+        return values_.size() == other.values_.size() && std::equal(values_.begin(), values_.end(), other.values_.begin());
+    }
+};
+
+template<typename T>
+struct OutputGroupValueAddrSetLessp {
+    bool operator()(const std::pair<T, rose_addr_t> &a, const std::pair<T, rose_addr_t> &b) {
+        return a.second < b.second;
+    }
+};
+
+// Store set of unique values in ascending order of the value's minimum address
+template<typename T>
+class OutputGroupValueAddrSet {
+private:
+    typedef std::map<T, rose_addr_t> Values;
+    Values values_;
+public:
+    void clear() {
+        values_.clear();
+    }
+    void insert(T value, rose_addr_t where=0) {
+        std::pair<typename Values::iterator, bool> found = values_.insert(std::make_pair(value, where));
+        if (!found.second)
+            found.first->second = std::min(found.first->second, where);
+    }
+    std::vector<T> get_vector() const {
+        std::vector<std::pair<T, rose_addr_t> > tmp(values_.begin(), values_.end());
+        std::sort(tmp.begin(), tmp.end(), OutputGroupValueAddrSetLessp<T>());
+#if 1 /*DEBUGGING [Robb P. Matzke 2013-06-27]*/
+        for (size_t i=1; i<tmp.size(); ++i)
+            ROSE_ASSERT(tmp[i-1].second <= tmp[i].second);
+#endif
+        std::vector<T> retval;
+        retval.reserve(tmp.size());
+        for (size_t i=0; i<tmp.size(); ++i)
+            retval.push_back(tmp[i].first);
+        return retval;
+    }
+    bool operator<(const OutputGroupValueAddrSet &other) const {
+        if (values_.size() != other.values_.size())
+            return values_.size() < other.values_.size();
+        typename Values::const_iterator vi1 = values_.begin();
+        typename Values::const_iterator vi2 = other.values_.begin();
+        for (/*void*/; vi1!=values_.end(); ++vi1, ++vi2) {
+            if (vi1->first!=vi2->first)
+                return vi1->first < vi2->first;
+        }
+        return false;
+    }
+    bool operator==(const OutputGroupValueAddrSet &other) const {
+        if (values_.size() != other.values_.size())
+            return false;
+        typename Values::const_iterator vi1 = values_.begin();
+        typename Values::const_iterator vi2 = other.values_.begin();
+        for (/*void*/; vi1!=values_.end(); ++vi1, ++vi2) {
+            if (vi1->first!=vi2->first)
+                return false;
+        }
+        return true;
+    }
+};
 
 /** Collection of output values. The output values are gathered from the instruction semantics state after a specimen function
  *  is analyzed.  The outputs consist of those interesting registers that are marked as having been written to by the specimen
@@ -284,11 +403,6 @@ typedef std::map<uint64_t, int> VaId;
 class OutputGroup {
 public:
     typedef uint32_t value_type;
-#if OUTPUTGROUP_VALUE_CONTAINER == 1
-    typedef std::vector<value_type> Values;
-#else
-    typedef std::set<value_type> Values;
-#endif
     OutputGroup(): fault(AnalysisFault::NONE), ninsns(0) {}
     bool operator<(const OutputGroup &other) const;
     bool operator==(const OutputGroup &other) const;
@@ -300,15 +414,12 @@ public:
         return o;
     }
     void add_param(const std::string vtype, int pos, int64_t value); // used by OutputGroups
-    void add_value(int64_t value) {
-#if OUTPUTGROUP_VALUE_CONTAINER == 1
-        values.push_back(value);
-#else
-        values.insert(value);
-#endif
+    void insert_value(int64_t value, rose_addr_t where=0) {
+        values.insert(value, where);
     }
+    std::vector<value_type> get_values() const { return values.get_vector(); }
 
-    Values values;
+    OUTPUTGROUP_VALUE_CONTAINER<value_type> values;
     std::vector<int> callee_ids;                // IDs for called functions
     std::vector<int> syscalls;                  // system call numbers in the order they occur
     AnalysisFault::Fault fault;
@@ -710,7 +821,7 @@ public:
         if (0 != (register_rw_state.gpr[x86_gpr_ax].state & HAS_BEEN_WRITTEN) && registers.gpr[x86_gpr_ax].is_known()) {
             if (verbosity>=EFFUSIVE)
                 std::cerr <<"output for ax = " <<registers.gpr[x86_gpr_ax].known_value() <<"\n";
-            outputs.add_value(registers.gpr[x86_gpr_ax].known_value());
+            outputs.insert_value(registers.gpr[x86_gpr_ax].known_value());
         }
 
         // Add to the outputs the memory cells that are outside the local stack frame (estimated) and are concrete
@@ -729,7 +840,7 @@ public:
                     std::cerr <<"output for stack address " <<StringUtility::addrToString(addr) <<": "
                               <<mval.val <<(cell_in_frame?" (IGNORED)":"") <<"\n";
                 if (!cell_in_frame)
-                    outputs.add_value(mval.val.known_value());
+                    outputs.insert_value(mval.val.known_value(), addr);
             }
         }
 
@@ -740,7 +851,7 @@ public:
             if (0 != (mval.rw_state & HAS_BEEN_WRITTEN) && mval.val.is_known()) {
                 if (verbosity>=EFFUSIVE)
                     std::cerr <<"output for data address " <<addr <<": " <<mval.val <<"\n";
-                outputs.add_value(mval.val.known_value());
+                outputs.insert_value(mval.val.known_value(), addr);
             }
         }
 
@@ -961,6 +1072,8 @@ public:
                 SgAsmFunction *called_func = called_insn ? SageInterface::getEnclosingNode<SgAsmFunction>(called_insn) : NULL;
                 if ((follow = called_insn!=NULL && called_func!=NULL)) {
                     std::string func_name = called_func->get_name();
+                    if (0==func_name.compare("abort@plt"))
+                        throw FaultException(AnalysisFault::HALT);
                     if (func_name.size()>4 && 0==func_name.substr(func_name.size()-4).compare("@plt"))
                         follow = false;
                 }

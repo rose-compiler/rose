@@ -79,40 +79,6 @@ Tracer::save(const SqlDatabase::TransactionPtr &tx)
         throw Exception(std::string("CloneDetection::Tracer::save ftruncate: ")+strerror(errno));
 }
 
-void
-OutputGroup::add_param(const std::string vtype, int pos, int64_t value)
-{
-    assert(!vtype.empty());
-    assert(pos>=0);
-    switch (vtype[0]) {
-        case 'V':
-            assert(pos>=0 && (size_t)pos==values.size());
-            add_value(value);
-            break;
-        case 'F':
-            assert(fault == AnalysisFault::NONE);
-            fault = (AnalysisFault::Fault)value;
-            break;
-        case 'C': {
-            if ((size_t)pos>=callee_ids.size())
-                callee_ids.resize(pos+1, 0);
-            callee_ids[pos] = value;
-            break;
-        }
-        case 'S':
-            if ((size_t)pos>=syscalls.size())
-                syscalls.resize(pos+1, 0);
-            syscalls[pos] = value;
-            break;
-        case 'I':
-            ninsns += value;
-            break;
-        default:
-            assert(!"invalid output value type");
-            abort();
-    }
-}
-
 /*******************************************************************************************************************************
  *                                      Progress
  *******************************************************************************************************************************/
@@ -439,7 +405,6 @@ InputGroup::clear()
 bool
 OutputGroup::operator<(const OutputGroup &other) const
 {
-    typedef std::pair<Values::const_iterator, Values::const_iterator> vi_pair;
     typedef std::pair<std::vector<int>::const_iterator, std::vector<int>::const_iterator> ii_pair;
 
     // scalar comparisons */
@@ -449,11 +414,8 @@ OutputGroup::operator<(const OutputGroup &other) const
         return ninsns < other.ninsns;
 
     // Values
-    if (values.size() != other.values.size())
-        return values.size() < other.values.size();
-    vi_pair vi = std::mismatch(values.begin(), values.end(), other.values.begin());
-    if (vi.first!=values.end())
-        return *(vi.first) < *(vi.second);
+    if (values < other.values)
+        return true;
 
     // Function calls
     if (callee_ids.size() != other.callee_ids.size())
@@ -477,8 +439,7 @@ OutputGroup::operator<(const OutputGroup &other) const
 bool
 OutputGroup::operator==(const OutputGroup &other) const
 {
-    return (values.size()==other.values.size() &&
-            std::equal(values.begin(), values.end(), other.values.begin()) &&
+    return (values==other.values &&
             callee_ids.size()==other.callee_ids.size() &&
             std::equal(callee_ids.begin(), callee_ids.end(), other.callee_ids.begin()) &&
             syscalls.size()==other.syscalls.size() &&
@@ -502,8 +463,21 @@ OutputGroup::print(std::ostream &o, const std::string &title, const std::string 
 {
     if (!title.empty())
         o <<title <<"\n";
-    for (Values::const_iterator vi=values.begin(); vi!=values.end(); ++vi)
-        o <<prefix <<"value " <<*vi <<"\n";
+    std::vector<value_type> valvec = values.get_vector();
+    o <<prefix <<"values:";
+    static const size_t width=100;
+    size_t col = prefix.size()+7;
+    for (size_t i=0; i<valvec.size(); ++i) {
+        std::string valstr = StringUtility::addrToString(valvec[i]);
+        col += 1 + valstr.size();
+        if (col>width) {
+            o <<"\n" <<prefix <<std::string(7, ' ');
+            col = prefix.size()+7+1+valstr.size();
+        }
+        o <<" " <<valstr;
+    }
+    o <<"\n";
+
     for (size_t i=0; i<callee_ids.size(); ++i)
         o <<prefix <<"fcall " <<callee_ids[i] <<"\n";
     for (size_t i=0; i<syscalls.size(); ++i)
@@ -547,6 +521,39 @@ OutputGroups::erase(int64_t hashkey)
     }
 }
 
+void
+OutputGroup::add_param(const std::string vtype, int pos, int64_t value)
+{
+    assert(!vtype.empty());
+    assert(pos>=0);
+    switch (vtype[0]) {
+        case 'V':
+            insert_value(value, pos);
+            break;
+        case 'F':
+            assert(fault == AnalysisFault::NONE);
+            fault = (AnalysisFault::Fault)value;
+            break;
+        case 'C': {
+            if ((size_t)pos>=callee_ids.size())
+                callee_ids.resize(pos+1, 0);
+            callee_ids[pos] = value;
+            break;
+        }
+        case 'S':
+            if ((size_t)pos>=syscalls.size())
+                syscalls.resize(pos+1, 0);
+            syscalls[pos] = value;
+            break;
+        case 'I':
+            ninsns += value;
+            break;
+        default:
+            assert(!"invalid output value type");
+            abort();
+    }
+}
+
 int64_t
 OutputGroups::insert(const OutputGroup &ogroup, int64_t hashkey)
 {
@@ -571,9 +578,11 @@ OutputGroups::insert(const OutputGroup &ogroup, int64_t hashkey)
             filename = tpl;
         }
         int status = 0; // sign bit will be set on failure; other bits are meaningless
-        int pos = 0;
-        for (OutputGroup::Values::const_iterator vi=ogroup.values.begin(); vi!=ogroup.values.end(); ++vi)
-            status |= fprintf(file, "%"PRId64",V,%d,%u\n", hashkey, pos++, *vi);
+        std::vector<OutputGroup::value_type> valvec = ogroup.values.get_vector();
+        for (size_t i=0; i<valvec.size(); ++i) {
+            unsigned val = valvec[i];
+            status |= fprintf(file, "%"PRId64",V,%zu,%u\n", hashkey, i, val);
+        }
         for (size_t i=0; i<ogroup.callee_ids.size(); ++i)
             status |= fprintf(file, "%"PRId64",C,%zu,%d\n", hashkey, i, ogroup.callee_ids[i]);
         for (size_t i=0; i<ogroup.syscalls.size(); ++i)
