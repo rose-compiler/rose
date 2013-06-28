@@ -185,6 +185,7 @@ fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inpu
 
     AnalysisFault::Fault fault = AnalysisFault::NONE;
     policy.reset(interp, function, &inputs, &insns, pointers);
+    rose_addr_t last_good_va = 0;
     try {
         while (1) {
             if (!policy.state.registers.ip.is_known()) {
@@ -210,6 +211,7 @@ fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inpu
                 fault = AnalysisFault::DISASSEMBLY;
                 break;
             }
+            last_good_va = insn_va;
         }
     } catch (const FaultException &e) {
         if (opt.verbosity>=EFFUSIVE)
@@ -236,7 +238,7 @@ fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inpu
 
     if (fault) {
         rose_addr_t va = policy.state.registers.ip.is_known() ? policy.state.registers.ip.known_value() : 0;
-        tracer.emit(va, Tracer::EV_FAULT, 0, (int)fault);
+        tracer.emit(va, Tracer::EV_FAULT, last_good_va, (int)fault);
     }
     
     // Gather the function's outputs before restoring machine state.
