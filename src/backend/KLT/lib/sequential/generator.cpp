@@ -1,5 +1,6 @@
 
 #include "KLT/Sequential/generator.hpp"
+#include "KLT/Sequential/kernel.hpp"
 
 #include "sage3basic.h"
 
@@ -10,13 +11,30 @@ namespace KLT {
 namespace Sequential {
 
 Kernel * Generator::makeKernel() const {
-  // TODO
-
-  return NULL;
+  return new Kernel();
 }
 
-void Generator::doCodeGeneration(Core::Kernel * kernel, const Core::CG_Config & cg_config) {
+void Generator::doCodeGeneration(Core::Kernel * kernel_, const Core::CG_Config & cg_config) {
+  Kernel * kernel = dynamic_cast<Kernel *>(kernel_);
+  assert(kernel != NULL);
+
+  assert(kernel->isDataflowDone());
+  assert(kernel->isArgumentDone());
+  assert(kernel->isContentDone());
+
+  SgClassSymbol * arguments_packer = NULL;
+
   // TODO
+
+  assert(arguments_packer != NULL);
+  kernel->setArgumentPacker(arguments_packer);
+
+  SgFunctionSymbol * kernel_symbol = NULL;
+
+  // TODO
+
+  assert(kernel_symbol != NULL);
+  kernel->setKernelSymbol(kernel_symbol);
 }
 
 Generator::Generator(SgProject * project, std::string filename_) :

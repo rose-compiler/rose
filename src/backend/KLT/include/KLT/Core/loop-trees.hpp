@@ -85,12 +85,15 @@ class LoopTrees {
     /// Parameters (constant integers not used in computation, array shape and loop sizes) of the sequence loop trees
     std::set<SgVariableSymbol *> p_parameters;
 
-  protected:
+  public:
     const std::list<node_t *> & getTrees() const;
 
     const std::set<Data *> getDatasIn() const;
     const std::set<Data *> getDatasOut() const;
     const std::set<Data *> getDatasLocal() const;
+
+    const std::set<SgVariableSymbol *> getCoefficients() const;
+    const std::set<SgVariableSymbol *> getParameters() const;
 
   public:
     LoopTrees();
@@ -128,6 +131,8 @@ class LoopTrees {
 
   friend class Generator;
 };
+
+void collectLeaves(LoopTrees::node_t * tree, std::set<SgStatement *> & leaves);
 
 }
 

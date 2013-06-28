@@ -18,12 +18,13 @@ class Generator : public virtual Core::Generator {
     SgSourceFile * p_defn_file;
 
   protected:
-    virtual Kernel * makeKernel() const;
     virtual void doCodeGeneration(Core::Kernel * kernel, const Core::CG_Config & cg_config);
 
   public:
     Generator(SgProject * project, std::string filename);
     virtual ~Generator();
+
+    virtual Kernel * makeKernel() const;
 
     void unparse();
 };

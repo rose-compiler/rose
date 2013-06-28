@@ -15,6 +15,15 @@ class Data;
 class Kernel;
 
 class DataFlow {
+  protected:
+    void append_access(SgExpression * exp, std::set<Data *> & access_set, const std::set<Data *> & datas) const;
+
+    virtual void compute_read_write(
+      LoopTrees::node_t * tree,
+      std::pair<std::set<Data *>, std::set<Data *> > & data_rw,
+      const std::set<Data *> & datas
+    ) const;
+
   public:
     virtual void apply(
       const std::set<Data *> & datas_in,

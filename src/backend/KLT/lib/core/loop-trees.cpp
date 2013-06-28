@@ -97,6 +97,10 @@ const std::set<Data *> LoopTrees::getDatasOut() const { return p_datas_out; }
 
 const std::set<Data *> LoopTrees::getDatasLocal() const { return p_datas_local; }
 
+const std::set<SgVariableSymbol *> LoopTrees::getCoefficients() const { return p_coefficients; }
+
+const std::set<SgVariableSymbol *> LoopTrees::getParameters() const { return p_parameters; }
+
 LoopTrees::LoopTrees() :
   p_trees(),
   p_datas_in(),
@@ -420,6 +424,21 @@ void LoopTrees::read(std::ifstream & in_file) {
   else assert(false);
 
   SageBuilder::popScopeStack();
+}
+
+void collectLeaves(LoopTrees::node_t * tree, std::set<SgStatement *> & leaves) {
+  LoopTrees::loop_t * loop = dynamic_cast<LoopTrees::loop_t *>(tree);
+  if (loop != NULL) {
+    std::list<LoopTrees::node_t * >::const_iterator it_child;
+    for (it_child = loop->children.begin(); it_child != loop->children.end(); it_child++)
+      collectLeaves(*it_child, leaves);
+    return;
+  }
+
+  LoopTrees::stmt_t * stmt = dynamic_cast<LoopTrees::stmt_t *>(tree);
+  assert(stmt != NULL);
+
+  leaves.insert(stmt->statement);
 }
 
 }

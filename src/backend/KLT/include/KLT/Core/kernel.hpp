@@ -46,12 +46,17 @@ class Kernel {
   protected:
     Kernel();
 
-    void setDataflow(const std::set<Data *> & data_in, const std::set<Data *> & data_out);
-    void setArgument(const std::list<Data *> &datas_argument_order, const std::list<SgVariableSymbol *> & parameters_argument_order, const std::list<SgVariableSymbol *> & coefficients_argument_order);
-    void setContent(const std::list<LoopTrees::loop_t *> & perfectly_nested_loops, const std::list<LoopTrees::node_t *> & body_branches);
-
   public:
     virtual ~Kernel();
+
+    /// Set the result of the Data Flow Analysis (called only once), set flag p_dataflow_done
+    void setDataflow(const std::set<Data *> & data_in, const std::set<Data *> & data_out);
+
+    /// Set the result of the Argument Analysis (called only once), set flag p_arguments_done
+    void setArgument(const std::list<Data *> &datas_argument_order, const std::list<SgVariableSymbol *> & parameters_argument_order, const std::list<SgVariableSymbol *> & coefficients_argument_order);
+
+    /// Set the result of the Content Analysis (called only once), set flag p_content_done
+    void setContent(const std::list<LoopTrees::loop_t *> & perfectly_nested_loops, const std::list<LoopTrees::node_t *> & body_branches);
 
     /// \return true if the dataflow analysis results are available
     bool isDataflowDone() const;

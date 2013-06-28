@@ -40,6 +40,92 @@ void Data::toText(std::ostream & out) const {
   }
 }
 
+bool Data::subset(Data * d) const {
+  assert(getVariableSymbol() == d->getVariableSymbol());
+  // FIXME currently: same symbol => same data
+  return false;
+}
+
+bool Data::match(Data * d) const {
+  assert(getVariableSymbol() == d->getVariableSymbol());
+  // FIXME currently: same symbol => same data
+  return true;
+}
+
+Data * Data::remove(Data * d) {
+  if (getVariableSymbol() != d->getVariableSymbol()) return this;
+  return NULL; // FIXME currently: same symbol => same data
+}
+
+Data * Data::add(Data * d) {
+  if (getVariableSymbol() != d->getVariableSymbol()) this;
+  return this; // FIXME currently: same symbol => same data
+}
+
+bool Data::less(Data * d1, Data * d2) {
+  return (d1->getVariableSymbol() < d2->getVariableSymbol()) || ((d1->getVariableSymbol() == d2->getVariableSymbol()) && d1->subset(d2));
+}
+
+bool Data::equal(Data * d1, Data * d2) {
+  return (d1->getVariableSymbol() == d2->getVariableSymbol()) && d1->match(d2);
+}
+
+void Data::set_union(std::set<Data *> & result_, const std::set<Data *> & datas_1_, const std::set<Data *> & datas_2_) {
+  assert(result_.empty());
+  // FIXME currently: same symbol => same data
+
+  std::vector<Data *> datas_1(datas_1_.begin(), datas_1_.end());
+  std::vector<Data *> datas_2(datas_2_.begin(), datas_2_.end());
+  std::vector<Data *> result(datas_1.size() + datas_2.size());
+
+  std::sort(datas_1.begin(), datas_1.end(), less);
+  std::sort(datas_2.begin(), datas_2.end(), less);
+
+  std::vector<Data *>::iterator it_result_begin = result.begin();
+  std::vector<Data *>::iterator it_result_end = std::set_union(datas_1.begin(), datas_1.end(), datas_2.begin(), datas_2.end(), it_result_begin, less);
+
+  result_.insert(it_result_begin, it_result_end);
+}
+
+void Data::set_intersection(std::set<Data *> & result_, const std::set<Data *> & datas_1_, const std::set<Data *> & datas_2_) {
+  assert(result_.empty());
+  // FIXME currently: same symbol => same data
+
+  std::vector<Data *> datas_1(datas_1_.begin(), datas_1_.end());
+  std::vector<Data *> datas_2(datas_2_.begin(), datas_2_.end());
+  std::vector<Data *> result(std::min(datas_1.size(), datas_2.size()));
+
+  std::sort(datas_1.begin(), datas_1.end(), less);
+  std::sort(datas_2.begin(), datas_2.end(), less);
+
+  std::vector<Data *>::iterator it_result_begin = result.begin();
+  std::vector<Data *>::iterator it_result_end = std::set_intersection(datas_1.begin(), datas_1.end(), datas_2.begin(), datas_2.end(), it_result_begin, less);
+
+  result_.insert(it_result_begin, it_result_end);
+}
+
+void Data::set_remove(std::set<Data *> & result_, const std::set<Data *> & datas) {
+  // FIXME currently: same symbol => same data
+  std::list<Data *> result(result_.begin(), result_.end());
+  result_.clear();
+
+  std::list<Data *>::iterator it_result = result.begin();
+  while (it_result != result.end()) {
+    Data * data = *it_result;
+    
+    std::set<Data *>::iterator it_data;
+    for (it_data = datas.begin(); it_data != datas.end(); it_data++)
+      data = data->remove(*it_data);
+
+    if (data != NULL)
+      result_.insert(data);
+
+    it_result++;
+  }
+
+  // TODO minimize result_
+}
+
 }
 
 }
