@@ -5,7 +5,9 @@
 
 /* quicksort */
 
+#ifdef NAMESPACE
 namespace NAMESPACE {
+#endif
 namespace quicksort {
 
 template<typename T>
@@ -96,5 +98,13 @@ void quickSort(T *a, tblIndex lb, tblIndex ub) {
     }
 }
 
+void sort(T *a, int n)
+{
+    quickSort(a, 0, n-1);
+}
+
+
 } // namespace
+#ifdef NAMESPACE
 } // namespace
+#endif

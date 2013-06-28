@@ -5,7 +5,9 @@
 
 /* shell sort */
 
+#ifdef NAMESPACE
 namespace NAMESPACE {
+#endif
 namespace shellsort {
 
 template<typename T>
@@ -51,5 +53,13 @@ void shellSort(T *a, tblIndex lb, tblIndex ub) {
     }
 }
 
+void sort(T *a, int n)
+{
+    shellSort(a, 0, n-1);
+}
+
+
 } // namespace
+#ifdef NAMESPACE
 } // namespace
+#endif

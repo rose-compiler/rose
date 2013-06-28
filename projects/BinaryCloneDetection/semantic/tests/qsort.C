@@ -5,7 +5,9 @@
 
 /* qsort() */
 
+#ifdef NAMESPACE
 namespace NAMESPACE {
+#endif
 namespace qsort {
 
 typedef unsigned size_t;
@@ -99,5 +101,22 @@ void qsort(void *base, size_t nmemb, size_t size,
         }
     }
 }
+
+int T_compare(const void *a_, const void *b_)
+{
+    const T *a = (const T*)a_;
+    const T *b = (const T*)b_;
+    if (*a < *b) return -1;
+    if (*a > *b) return 1;
+    return 0;
+}
+
+void sort(T *a, size_t n)
+{
+    qsort(a, n, sizeof(T), T_compare);
+}
+
 } // namespace
+#ifdef NAMESPACE
 } // namespace
+#endif

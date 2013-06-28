@@ -5,7 +5,9 @@
 
 /* insert sort */
 
+#ifdef NAMESPACE
 namespace NAMESPACE {
+#endif
 namespace insertsort {
 
 typedef int T;          /* type of item to be sorted */
@@ -33,5 +35,12 @@ void insertSort(T *a, tblIndex lb, tblIndex ub) {
     }
 }
 
+void sort(T *a, int n)
+{
+    insertSort(a, 0, n-1);
+}
+
 } // namespace
+#ifdef NAMESPACE
 } // namespace
+#endif

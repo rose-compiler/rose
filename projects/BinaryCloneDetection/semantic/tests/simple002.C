@@ -1,7 +1,9 @@
 extern int gvar_e01, gvar_e02;
 static int gvar_s01, gvar_s02;
 
+#ifdef NAMESPACE
 namespace NAMESPACE {
+#endif
 
 // File-wide interprocedural optimizations can replace static variables with their initial value if the static variable is
 // never written.  Therefore, this function is only here to defeat that optimization. If you comment it out, then some of the
@@ -175,5 +177,6 @@ int global_09()
 }
 
 
-
+#ifdef NAMESPACE
 } // namespace
+#endif

@@ -9,7 +9,9 @@
 #include <cstdlib>
 #include <cstring>
 
+#ifdef NAMESPACE
 namespace NAMESPACE {
+#endif
 namespace externalsort {
 
 /****************************
@@ -477,4 +479,6 @@ void extSort(void) {
 }
 
 } // namespace
+#ifdef NAMESPACE
 } // namespace
+#endif

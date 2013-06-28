@@ -1,4 +1,7 @@
+
+#ifdef NAMESPACE
 namespace NAMESPACE {
+#endif
 
 // Testing no argument returning constant value
 static int global_numb_one = 1;
@@ -86,4 +89,6 @@ add_numbers_static_var(int var_1, int var_2)
     return add_argument_static_var_1 + add_argument_static_var_2;
 }
 
+#ifdef NAMESPACE
 } // namespace
+#endif
