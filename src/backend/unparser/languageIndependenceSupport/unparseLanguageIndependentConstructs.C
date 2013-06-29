@@ -4787,6 +4787,9 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgUpcLocalsizeofExpression:   // \pp 03/03/11
           case V_SgSizeOfOp:         return 15;
 
+       // DQ (6/20/2013): Added support for __alignof__ operator.
+          case V_SgAlignOfOp:        return 15;
+
           case V_SgFunctionCallExp:
              {
             // DQ (4/17/2013): If this is an overloaded operator then we can't just treat it like a normal function (must detect if it is an overloaded operator).
