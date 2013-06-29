@@ -42,7 +42,7 @@ long intval; /* INTEGER */
 int length; /* #elements */
 }
 
-%left '|'
+%left ALTERNATION
 %right NOT
 %left AND
 %left OR XOR
@@ -117,8 +117,10 @@ where_expression_operand:
 		{ $$=$1; }
 		;
 
-match_expression	: term { $$=$1; }
-		| match_expression '|' match_expression
+match_expression: term 
+		{
+			$$=$1;
+		}		| match_expression ALTERNATION match_expression
 		{ 
 			$$=new MatchOperationList();
 			$$->push_back(new MatchOpOr($1,$3));

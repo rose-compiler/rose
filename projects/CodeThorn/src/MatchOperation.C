@@ -35,6 +35,9 @@ MatchOpOr::performOperation(MatchStatus& status, RoseAst::iterator& i, SingleMat
   RoseAst::iterator tmp_iter_right=i;
   SingleMatchResult left_smr;
   SingleMatchResult right_smr;
+  if(status.debug) {
+	std::cout<<"performing OR-match operation."<<std::endl;
+  }
   bool left_result=_left->performOperation(status,tmp_iter_left,left_smr);
   bool right_result=_right->performOperation(status,tmp_iter_right,right_smr);
   if(left_result && right_result) {
@@ -236,7 +239,7 @@ bool MatchOpDotDot::performOperation(MatchStatus&  status, RoseAst::iterator& i,
 
 bool MatchOpSequence::performOperation(MatchStatus& status, RoseAst::iterator& i, SingleMatchResult& vb) {
   if(status.debug)
-    std::cerr << "match_sequence:";
+    std::cout << "match_sequence:";
 
   /* an empty sequence does not not match (therefore we return true) but
      it also does not modify the state (as not vars can be added nor can
@@ -244,7 +247,7 @@ bool MatchOpSequence::performOperation(MatchStatus& status, RoseAst::iterator& i
   */
   if(this->size()==0) {
     if(status.debug)
-      std::cerr << "empty-sequence;";
+      std::cout << "empty-sequence;"<<std::endl;
     return true;
   }
   SingleMatchResult smr; // we intentionally avoid dynamic allocation for var-bindings of a single pattern
@@ -257,7 +260,7 @@ bool MatchOpSequence::performOperation(MatchStatus& status, RoseAst::iterator& i
     if(!tmpresult) {
       // matchVarBindings and matchRegisteredIterators is automatically deleted if we return with false
       if(status.debug)
-	std::cerr << "not matched;";
+		std::cout << "not matched;"<<std::endl;
       return false;
     }
   }

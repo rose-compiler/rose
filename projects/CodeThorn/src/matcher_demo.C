@@ -28,10 +28,9 @@ void write_file(std::string filename, std::string data) {
 
 int main( int argc, char * argv[] ) {
 
-  char matchexpression[80];
-  printf("Enter match-expression: ");
-  int numScanned=scanf("%s",matchexpression);
-  assert(numScanned==1);
+  std::string matchexpression;
+  std::cout<<"Enter match-expression: ";
+  std::getline(std::cin, matchexpression);
 
   bool measurementmode=false;
   if(matchexpression[0]=='.') measurementmode=true;
@@ -47,10 +46,11 @@ int main( int argc, char * argv[] ) {
   SgNode* root;
   //root=sageProject->get_traversalSuccessorByIndex(0)->get_traversalSuccessorByIndex(0)->get_traversalSuccessorByIndex(0)->get_traversalSuccessorByIndex(0);
   root=sageProject;
-
+#if 0
   std::cout << "TERM INFO OUTPUT: START\n";
   std::cout << astTermToMultiLineString(root,0);
   std::cout << "TERM INFO OUTPUT: END\n";
+#endif
   RoseAst ast(root);
 
 #if 0
