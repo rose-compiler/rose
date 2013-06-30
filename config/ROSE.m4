@@ -114,19 +114,29 @@ echo "Setup CXX_OPTIMIZE"
 AC_ARG_WITH(CXX_OPTIMIZE, [  --with-CXX_OPTIMIZE=ARG   manually set the C++ compiler optimization
                            to ARG (leave blank to choose automatically)])
 if test "$with_CXX_OPTIMIZE" = yes; then
-  # CXX_OPTIMIZE was activated but not specified, so set it.
+# CXX_OPTIMIZE was activated but not specified, so set it.
   case $CXX in
     KCC | mpKCC) CXX_OPTIMIZE='-g +K0 --no_exceptions --no_rtti --keep_gen_c' ;;
     *) CXX_OPTIMIZE='' ;;
   esac
 elif test "$with_CXX_OPTIMIZE" = no; then
+# use defaults for any compiler compiling ROSE (for g++ this means no optimization).
   CXX_OPTIMIZE=''
-else
+# else
+elif test "$with_CXX_OPTIMIZE"; then
   CXX_OPTIMIZE=$with_CXX_OPTIMIZE
+else
+# DQ (6/30/2013): Select optimization level -O2 to be the default for ROSE distributions.
+  CXX_OPTIMIZE='-O2'
 fi
 AC_SUBST(CXX_OPTIMIZE)
 if test "$CXX_OPTIMIZE"; then CXXFLAGS="$CXXFLAGS $CXX_OPTIMIZE"; fi
 
+echo "After initialization: with_CXX_OPTIMIZE = $with_CXX_OPTIMIZE"
+echo "After initialization: CXX_OPTIMIZE = $CXX_OPTIMIZE"
+
+# echo "After processing CXX_OPTIMIZE: Exiting as a test!"
+# exit 1
 
 dnl *********************************************************************
 dnl * Set the C++ compiler flags in CXX_WARNINGS
@@ -365,11 +375,18 @@ if test "$with_C_OPTIMIZE" = yes; then
   esac
 elif test "$with_C_OPTIMIZE" = no; then
   C_OPTIMIZE=''
-else
+# else
+elif test "$with_C_OPTIMIZE"; then
   C_OPTIMIZE=$with_C_OPTIMIZE
+else
+# DQ (6/30/2013): Select optimization level -O2 to be the default for ROSE distributions.
+  C_OPTIMIZE='-O2'
 fi
 AC_SUBST(C_OPTIMIZE)
 if test "$C_OPTIMIZE"; then CFLAGS="$CFLAGS $C_OPTIMIZE"; fi
+
+echo "After initialization: with_C_OPTIMIZE = $with_C_OPTIMIZE"
+echo "After initialization: C_OPTIMIZE = $C_OPTIMIZE"
 
 dnl *********************************************************************
 dnl * Set the C++ compiler flags in C_WARNINGS

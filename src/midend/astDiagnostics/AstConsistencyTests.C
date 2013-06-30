@@ -174,6 +174,15 @@ AstTests::runAllTests(SgProject* sageProject)
   // DQ (3/30/2004): This function is called by the 
   //      ROSE/src/roseTranslator.C RoseTestTranslator class
 
+#ifdef NDEBUG
+  // DQ (6/30/20133): If we have compiled with NDEBUG then nothing identified in this function 
+  // will be cause because every place we detect a problem we expect to end with ROSE_ASSERT() 
+  // which is disabled when ROSE is compiled with NDEBUG.  So more approriate (and equvalent) 
+  // semantics is that if ROSE is compiled with NDEBUG then we should just exit directly.
+     TimingPerformance ndebug_timer ("AST Consistency Tests (disabled by NDEBUG):");
+     return;
+#endif
+
   // It is a proper place to put any tests of the AST that must always pass!
 
   // Possible future tests: 
