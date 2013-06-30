@@ -2387,7 +2387,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
        // DQ (7/13/2011): OSX can have types that are about 2487 characters long (see test2004_35.C).
        // This is symptematic of an error which causes the whole class to be included with the class 
        // definition.  This was fixed by calling unparseInfoPointer->set_SkipClassDefinition() above.
-          if (typeNameString.length() > 2000)
+          if (typeNameString.length() > 4000)
              {
                printf ("Warning: type names should not be this long... typeNameString.length() = %zu \n",typeNameString.length());
 
