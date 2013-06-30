@@ -15,13 +15,10 @@ class WorkList {
   bool exists(Element estate);
   void add(Element estate);
   Element take();
-  Element top();
-  Element pop();
+  Element examine();
  private:
   list<Element> workList;
 };
-
-#include "WorkList.C"
 
 } // end of namespace CodeThorn
 

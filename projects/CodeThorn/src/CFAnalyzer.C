@@ -39,7 +39,7 @@ void Edge::addType(EdgeType et) {
   bool ok=true;
   // for EDGE_PATH we allow any combination, otherwise we check
 
-  if(!isType(EDGE_PATH) && !(et==EDGE_PATH) && !boolOptions["semantic-fold"] && !boolOptions["post-semantic-fold"]) {
+  if(!isType(EDGE_PATH) && !(et==EDGE_PATH) /*&& !boolOptions["semantic-fold"] && !boolOptions["post-semantic-fold"]*/) {
 	switch(et) {
 	case EDGE_FORWARD: if(isType(EDGE_BACKWARD)) ok=false;break;
 	case EDGE_BACKWARD: if(isType(EDGE_FORWARD)) ok=false;break;
@@ -384,7 +384,7 @@ LabelSet CFAnalyzer::finalLabels(SgNode* node) {
     set<SgNode*> breakNodes=SgNodeHelper::LoopRelevantBreakStmtNodes(node);
 	LabelSet lset=labeler->getLabelSet(breakNodes);
 	finalSet+=lset;
-	cout << finalSet.toString() << endl;
+	//cout << finalSet.toString() << endl;
 	return finalSet;
   }
   case V_SgBasicBlock: {
