@@ -2088,7 +2088,15 @@ clean-local:
 #  TIMEOUT              Maximum time limit for the compilation of a <testcode>
 #  TIMEOUT_TOLERANCE    $gnu_time * $TIMEOUT_TOLERANCE (threshold tests only)
 #------------------------------------------------------------------------------
-TIMEOUT            ?= 60  # Default timeout value
+
+# DQ (6/30/2013): Increased this to support compiling Boost example tests. We 
+# need to rethink how we want to handl this. I suggest restricting this to a 
+# few tests instead of each test. Compiling with optimization also makes about
+# a factor of four difference for test2013_241.C (boost example test code).
+# Since Jenkins testing is currently done without optimization we need the 
+# larger timeout value just to handle the newer boost test codes.
+# TIMEOUT            ?= 60  # Default timeout value
+TIMEOUT            ?= 420  # Default timeout value
 TIMEOUT_TOLERANCE  ?= 20  # Default timeout tolerance value for threshold
                           # tests = $gnu_time * $TIMEOUT_TOLERANCE
 
