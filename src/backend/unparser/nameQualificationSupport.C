@@ -2390,7 +2390,16 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
           if (typeNameString.length() > 4000)
              {
                printf ("Warning: type names should not be this long... typeNameString.length() = %zu \n",typeNameString.length());
-
+#if 0
+            // DQ (6/30/2013): Allow the output of an example so that we can verify that this make 
+            // sense (and that it is not a result of some comment output from the unparsing of types).
+               static bool outputOneExample = true;
+               if (outputOneExample == true)
+                  {
+                    printf ("   --- example typeNameString = %s \n",typeNameString.c_str());
+                    outputOneExample = false;
+                  }
+#endif
             // DQ (1/30/2013): Increased already too long limit for string lengths for typenames.  This 
             // test fails for ROSE compiling ROSE with a type name that is 17807 characters long.  I have
             // increased the max allowable typename lengtt to over twice that for good measure.
