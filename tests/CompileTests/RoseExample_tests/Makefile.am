@@ -84,6 +84,14 @@ test2: $(srcdir)/testRoseHeaders_02.C
 test3: $(srcdir)/testRoseHeaders_03.C
 	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C
 
+# Same compilation but with optimization (which only effects the g++ compilation performance)
+test3_O2: $(srcdir)/testRoseHeaders_03.C
+	../../testGraphGeneration $(ROSE_FLAGS) -O2 -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C
+
+# Same compilation but with optimization (which only effects the g++ compilation performance)
+test3_O3: $(srcdir)/testRoseHeaders_03.C
+	../../testGraphGeneration $(ROSE_FLAGS) -O3 -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C
+
 # This tests compiling: Cxx_Grammar.C: fails "ROSE_ASSERT (kind == iek_statement);" in edgRose.C:20798
 test4: $(srcdir)/testRoseHeaders_04.C
 	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_04.C
