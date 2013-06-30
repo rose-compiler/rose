@@ -294,7 +294,30 @@ Unparse_ExprStmt::unparseTemplateFunctionName(SgTemplateInstantiationFunctionDec
 
      unp->u_exprStmt->curprint(templateInstantiationFunctionDeclaration->get_templateName().str());
 
-     unparseTemplateArgumentList(templateInstantiationFunctionDeclaration->get_templateArguments(),info);
+     bool unparseTemplateArguments = templateInstantiationFunctionDeclaration->get_template_argument_list_is_explicit();
+
+#if 0
+  // DQ (6/29/2013): This controls if the template arguments for the function should be unparsed.
+  // printf ("In unparseTemplateFunctionName(): templateInstantiationFunctionDeclaration->get_template_argument_list_is_explicit() = %s \n",
+  //      templateInstantiationFunctionDeclaration->get_template_argument_list_is_explicit() ? "true" : "false");
+     printf ("In unparseTemplateFunctionName(): name = %s unparse template arguments = %s \n",
+          templateInstantiationFunctionDeclaration->get_templateName().str(),unparseTemplateArguments ? "true" : "false");
+#endif
+
+  // DQ (6/29/2013): Use the information recorded in the AST as to if this function has been used with 
+  // template arguments in the original code.  If so then we always unparse the template arguments, if 
+  // not then we never unparse the template arguments.  See test2013_242.C for an example of where this 
+  // is significant in the generated code.  Note that this goes a long way toward making the generated
+  // code look more like the original input code (where before we have always unparsed template arguments
+  // resulting in some very long function calls in the generated code).  Note that if some template
+  // arguments are specified and some are not then control over not unparsing template arguments that
+  // where not explicit in the original code will be handled seperately in the near future (in the 
+  // SgTemplateArgument IR nodes).
+  // unparseTemplateArgumentList(templateInstantiationFunctionDeclaration->get_templateArguments(),info);
+     if (unparseTemplateArguments == true)
+        {
+          unparseTemplateArgumentList(templateInstantiationFunctionDeclaration->get_templateArguments(),info);
+        }
    }
 
 
@@ -309,6 +332,12 @@ Unparse_ExprStmt::unparseTemplateMemberFunctionName(SgTemplateInstantiationMembe
 
 #if 0
      printf ("In unparseTemplateMemberFunctionName(): function_name before processing to remove >> references = %s \n",function_name.c_str());
+#endif
+#if 0
+  // printf ("In unparseTemplateMemberFunctionName(): templateInstantiationMemberFunctionDeclaration->get_template_argument_list_is_explicit() = %s \n",
+  //      templateInstantiationMemberFunctionDeclaration->get_template_argument_list_is_explicit() ? "true" : "false");
+     printf ("In unparseTemplateMemberFunctionName(): name = %s unparse template arguments = %s \n",
+          function_name.c_str(),templateInstantiationMemberFunctionDeclaration->get_template_argument_list_is_explicit() ? "true" : "false");
 #endif
 
   // DQ (6/15/2013): Now that we have fixed template handling for member function name output in member 
@@ -348,6 +377,14 @@ Unparse_ExprStmt::unparseTemplateMemberFunctionName(SgTemplateInstantiationMembe
 #if 0
      printf ("In unparseTemplateMemberFunctionName(): skipTemplateArgumentList = %s \n",skipTemplateArgumentList ? "true" : "false");
 #endif
+
+  // DQ (6/29/2013): Use the information recorded in the AST as to if this function has been used with 
+  // template arguments in the original code.  See note in unparseTemplateFunctionName().
+     bool unparseTemplateArguments = templateInstantiationMemberFunctionDeclaration->get_template_argument_list_is_explicit();
+     if (unparseTemplateArguments == false)
+        {
+          skipTemplateArgumentList = true;
+        }
 
      if (skipTemplateArgumentList == false)
         {
@@ -1773,6 +1810,15 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
                printf ("In unparseFuncRef(): declaration->get_declarationModifier().isFriend() = %s \n",declaration->get_declarationModifier().isFriend() ? "true" : "false");
                printf ("In unparseFuncRef(): diff = %d \n",diff);
 #endif
+#if 0
+               printf ("In unparseFuncRef(): templateInstantiationFunctionDecl = %p \n",templateInstantiationFunctionDecl);
+#endif
+            // SgTemplateFunctionDeclaration* templateFunctionDeclaration = templateInstantiationFunctionDecl->get_templateDeclaration();
+            // ROSE_ASSERT(templateFunctionDeclaration != NULL);
+#if 0
+            // printf ("In unparseFuncRef(): templateFunctionDeclaration->get_template_argument_list_is_explicit() = %s \n",templateFunctionDeclaration->get_template_argument_list_is_explicit() ? "true" : "false");
+               printf ("In unparseFuncRef(): templateInstantiationFunctionDecl->get_template_argument_list_is_explicit() = %s \n",templateInstantiationFunctionDecl->get_template_argument_list_is_explicit() ? "true" : "false");
+#endif
                if ( (declaration->get_declarationModifier().isFriend() == false) && (diff == 0) )
                   {
 #if 0
@@ -1903,7 +1949,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                usingGeneratedNameQualifiedFunctionNameString = true;
 
                functionNameString = i->second.c_str();
-#if 1
+#if 0
                printf ("ssssssssssssssss Found type name in SgNode::get_globalTypeNameMap() typeNameString = %s for nodeReferenceToType = %p = %s \n",
                     functionNameString.c_str(),nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str());
 #endif
@@ -2260,8 +2306,11 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                          if (templateInstantiationMemberFunctionDecl != NULL)
                             {
 #if 0
-                              printf ("In unparseMFuncRef(): declaration->get_declarationModifier().isFriend() = %s \n",declaration->get_declarationModifier().isFriend() ? "true" : "false");
-                           // printf ("In unparseMFuncRef(): diff = %d \n",diff);
+                              printf ("In unparseMFuncRefSupport(): templateInstantiationMemberFunctionDecl->get_template_argument_list_is_explicit() = %s \n",templateInstantiationMemberFunctionDecl->get_template_argument_list_is_explicit() ? "true" : "false");
+#endif
+#if 0
+                              printf ("In unparseMFuncRefSupport(): declaration->get_declarationModifier().isFriend() = %s \n",declaration->get_declarationModifier().isFriend() ? "true" : "false");
+                           // printf ("In unparseMFuncRefSupport(): diff = %d \n",diff);
 #endif
                            // if ( (declaration->get_declarationModifier().isFriend() == false) && (diff == 0) )
                               if (declaration->get_declarationModifier().isFriend() == false)
@@ -2320,9 +2369,9 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                            // printf ("In unparseFuncRef(): Looking for name qualification for SgFunctionRefExp = %p \n",func_ref);
                               SgName nameQualifier = func_ref->get_qualified_name_prefix();
 #if 0
-                              printf ("In unparseFuncRef(): nameQualifier = %s \n",nameQualifier.str());
+                              printf ("In unparseMFuncRefSupport(): nameQualifier = %s \n",nameQualifier.str());
                               printf ("SgNode::get_globalQualifiedNameMapForNames().size() = %zu \n",SgNode::get_globalQualifiedNameMapForNames().size());
-                              printf ("In unparseFuncRef(): Testing name in map: for SgFunctionRefExp = %p qualified name = %s \n",func_ref,func_ref->get_qualified_name_prefix().str());
+                              printf ("In unparseMFuncRefSupport(): Testing name in map: for SgFunctionRefExp = %p qualified name = %s \n",func_ref,func_ref->get_qualified_name_prefix().str());
                            // curprint ( "\n /* unparseFuncRef using nameQualifier = " + nameQualifier.str() + " */ \n";
 #endif
 #if 0
@@ -2384,7 +2433,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                       // printf ("Inside of Unparse_ExprStmt::unparseFuncRef(): declaration = %p = %s \n",declaration,declaration->class_name().c_str());
 #if 0
                       // DQ (4/15/2013): If there is other debug output turned on then nesting of comments inside of comments can occur in this output (see test2007_17.C).
-                         curprint (string("\n /* In unparseMFuncRef(): put out func_name = ") + func_name + " */ \n ");
+                         curprint (string("\n /* In unparseMFuncRefSupport(): put out func_name = ") + func_name + " */ \n ");
 #endif
                       // If this is a template then the name will include template arguments which require name qualification and the name 
                       // qualification will depend on where the name is referenced in the code.  So we have generate the non-canonical name 
@@ -2393,7 +2442,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                          if (templateInstantiationMemberFunctionDecl != NULL)
                             {
 #if 0
-                              printf ("In unparseMFuncRef(): declaration->get_declarationModifier().isFriend() = %s \n",declaration->get_declarationModifier().isFriend() ? "true" : "false");
+                              printf ("In unparseMFuncRefSupport(): declaration->get_declarationModifier().isFriend() = %s \n",declaration->get_declarationModifier().isFriend() ? "true" : "false");
                            // printf ("In unparseMFuncRef(): diff = %d \n",diff);
 #endif
                            // if ( (declaration->get_declarationModifier().isFriend() == false) && (diff == 0) )
@@ -2408,7 +2457,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                                 else
                                  {
                                 // This case supports test2004_77.C
-                                   printf ("WARNING: In unparseMFuncRef(): No name qualification permitted in this case! (not clear if this case if important for unparseMFuncRef(), as it was for unparseFuncRef()) \n");
+                                   printf ("WARNING: In unparseMFuncRefSupport(): No name qualification permitted in this case! (not clear if this case if important for unparseMFuncRef(), as it was for unparseFuncRef()) \n");
 
                                    curprint (func_name);
                                  }

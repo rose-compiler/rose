@@ -9149,7 +9149,11 @@ SgSymbolTable::find_template_symbol_support ( const SgName & nm, SgTemplateParam
      for (hash_iterator i = range.first; i != range.second; ++i)
         {
 #if 0
-          printf ("Check for SgAliasSymbol in SgSymbolTable::find_template_symbol_support(const SgName & nm,SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) \n");
+          printf ("Check for symbol in template function SgSymbolTable::find_template_symbol_support<%s>(const SgName & nm,SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) \n",
+               Cxx_GrammarTerminalNames[ReturnType::static_variant].name.c_str());
+          printf ("   --- name (key)                                = %s \n",nm.str());
+          printf ("   --- templateParameterList.size()              = %d \n",(templateParameterList != NULL)              ? (int)(templateParameterList->size()) : -1);
+          printf ("   --- templateSpecializationArgumentList.size() = %d \n",(templateSpecializationArgumentList != NULL) ? (int)(templateSpecializationArgumentList->size()) : -1);
 #endif
           ReturnType* sym = dynamic_cast<ReturnType*>(i->second);
 
@@ -9233,7 +9237,10 @@ SgSymbolTable::find_template_symbol_support ( const SgName & nm, SgTemplateParam
 #if 0
                     printf ("NOTE: In SgSymbolTable::find_template_symbol_support(): template parameters only used for SgTemplateClassSymbol: this is a sym = %p = %s \n",sym,sym->class_name().c_str());
 #endif
-                    break;
+                    printf ("Skipping break in loop over looking for non-SgAliasSymbols: i->second = %p \n",i->second);
+
+                 // DQ (6/26/2013): We can't break out of the loop here we must evaluate the next symbol.
+                 // break;
                   }
             // break;
              }
@@ -9280,7 +9287,9 @@ SgSymbolTable::find_template_symbol_support ( const SgName & nm, SgTemplateParam
                p_name    = nm;
                p_no_name = false;
                s         = dynamic_cast<ReturnType*>(aliasSymbol->get_alias());
-
+#if 0
+               printf ("Processing aliasSymbol to find base symbol = %p = %s s = %p \n",aliasSymbol->get_alias(),aliasSymbol->get_alias()->class_name().c_str(),s);
+#endif
             // DQ (9/9/2012): Note that for template declarations we cna't match just on names, we have to include the template parameters (both number and type).
             // SgTemplateClassSymbol* templateClassSymbol = isSgTemplateClassSymbol(sym);
                ReturnType* templateClassSymbol = isSgTemplateClassSymbol(s);
@@ -9307,7 +9316,7 @@ SgSymbolTable::find_template_symbol_support ( const SgName & nm, SgTemplateParam
                                  {
                                 // This is, I think, the correct sysmbol (since I don't think we have the treat the template parameter names as significant (or a I need a test code for this detail).
 #if 0
-                                   printf ("In SgSymbolTable::find_template_symbol_support(): This appears to be the matching symbol: sym = %p = %s \n",sym,sym->class_name().c_str());
+                                   printf ("In SgSymbolTable::find_template_symbol_support(): This appears to be the matching symbol: sym = %p = %s \n",s,s->class_name().c_str());
 #endif
                                    break;
                                  }
@@ -9315,7 +9324,7 @@ SgSymbolTable::find_template_symbol_support ( const SgName & nm, SgTemplateParam
                                  {
                                 // This is not the template declaration symbol you are looking for...
 #if 0
-                                   printf ("In SgSymbolTable::find_template_symbol_support(): This is NOT the correct symbol sym = %p = %s \n",sym,sym->class_name().c_str());
+                                   printf ("In SgSymbolTable::find_template_symbol_support(): This is NOT the correct symbol sym = %p = %s \n",s,s->class_name().c_str());
 #endif
                                    s = NULL;
                                  }
@@ -9338,9 +9347,12 @@ SgSymbolTable::find_template_symbol_support ( const SgName & nm, SgTemplateParam
                   {
                  // Since this is not for a SgTemplateClassSymbol, we don't use the template parameter list (likely I need to handle this next).
 #if 0
-                    printf ("NOTE: In SgSymbolTable::find_template_symbol_support(): template parameters only used for SgTemplateClassSymbol: this is a sym = %p = %s \n",sym,sym->class_name().c_str());
+                    printf ("NOTE: In SgSymbolTable::find_template_symbol_support(): template parameters only used for SgTemplateClassSymbol: this is a aliasSymbol->get_alias() = %p = %s \n",aliasSymbol->get_alias(),aliasSymbol->get_alias()->class_name().c_str());
 #endif
-                    break;
+                    printf ("Skipping break in loop over looking for SgAliasSymbols: i->second = %p \n",i->second);
+
+                 // DQ (6/26/2013): We can't break out of the loop here we must evaluate the next symbol.
+                 // break;
                   }
             // break;
              }

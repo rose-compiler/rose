@@ -1311,6 +1311,23 @@ test2013_220.C \
 test2013_221.C \
 test2013_222.C \
 test2013_223.C \
+test2013_225.C \
+test2013_226.C \
+test2013_227.C \
+test2013_228.C \
+test2013_229.C \
+test2013_230.C \
+test2013_231.C \
+test2013_232.C \
+test2013_234.C \
+test2013_235.C \
+test2013_236.C \
+test2013_237.C \
+test2013_238.C \
+test2013_239.C \
+test2013_240.C \
+test2013_241.C \
+test2013_242.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1919,6 +1936,15 @@ test2013_09.o: $(TEST_TRANSLATOR)
 cpp_test2010_07: $(TEST_TRANSLATOR)
 	echo "Running boost specific test."
 	g++ -E -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_07.C
+
+test2013_235.o: $(TEST_TRANSLATOR)
+	echo "Running boost specific test."
+	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2013_235.C -o test2013_235.o
+
+test2013_236.o: $(TEST_TRANSLATOR)
+	echo "Running boost specific test."
+	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2013_236.C -o test2013_236.o
+
 
 $(TEST_TRANSLATOR):
 	cd ../..; $(MAKE) testTranslator

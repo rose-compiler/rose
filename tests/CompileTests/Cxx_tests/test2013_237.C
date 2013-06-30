@@ -11,5 +11,39 @@
 // ROSE currently has a bug that prevents it from handling BOOST 1.42 for this specific code,
 // but ROSE handles BOOST 1.33 (likely because version 1.33 is different code than version 1.42).
 
-#include <boost/graph/adjacency_list.hpp>
+// #include <boost/graph/adjacency_list.hpp>
 
+namespace boost { namespace mpl {
+
+// n.a. == not available
+struct na {};
+
+template<typename param = na > struct next {};
+
+}}
+
+namespace boost { namespace mpl {
+
+template< typename Dummy = na > struct set0 {};
+
+}}
+
+
+
+namespace boost { namespace mpl {
+
+template< typename Set, typename Tail > struct s_iter;
+
+template< typename Set, typename Tail > struct s_iter_get {};
+
+template< typename Set, typename Tail > struct s_iter_impl {};
+
+template< typename Set, typename Tail > struct next< s_iter<Set,Tail> > {};
+template< typename Set > struct next< s_iter<Set,set0<> > > {};
+
+template< typename Set, typename Tail > struct s_iter {};
+
+// DQ (6/26/2013): This is where ROSE has a problem.
+template< typename Set > struct s_iter<Set, set0<> > {};
+
+}}
