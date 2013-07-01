@@ -7298,6 +7298,7 @@ SgSymbolTable::find_any(const SgName & nm)
 
      return NULL;
 #else
+  // DQ (6/24/2013): This special case requires some special support in find_symbol_support.
      return find_symbol_support<SgSymbol>(nm);
 #endif
    }
@@ -8703,6 +8704,20 @@ SgSymbolTable::find_symbol_support (const SgName & nm)
 #if 0
           printf ("In loop over target symbols associated with nm = %s p_iterator->second = %p = %s \n",nm.str(),p_iterator->second,p_iterator->second->class_name().c_str());
 #endif
+
+       // DQ (6/24/2013): We catch the case of SgAliasSymbol in the tailing test of the symbol table, 
+       // there we properly resolve it to its base symbol.  When this template is instatiated using 
+       // SgSymbol we have to worry about this detail, else the initialization of symbol above can never
+       // result in a SgAliasSymbol. So this is a result of writting very general code. Not sure how to
+       // make this a compile-time test so that we could avoid the overhead of using this dynamic cast.
+       // One performance alternative would be to have a specialization of this template for the general
+       // case of SgSymbol, but that should be considered later when we are sure that this is the final 
+       // working implementation (so we will leave the code it is most re-factored state for now).
+          if (isSgAliasSymbol(symbol) != NULL)
+             {
+               symbol = NULL;
+             }
+
        // if (isSgFunctionSymbol(p_iterator->second) && (*p_iterator).first==nm)
        // if (isSgFunctionSymbol(p_iterator->second) && get_table()->key_eq()((*p_iterator).first,nm))
           if (symbol != NULL && get_table()->key_eq()((*p_iterator).first,nm))
