@@ -14,7 +14,8 @@ of commands is:
     10-19: Initializing database (incremental)
     20-29: Running tests
     30-39: Analyzing test results
-    40-89: Reserved
+    40-79: Reserved
+    80-89: Database maintenance
     90-99: Querying results
 
 All information is stored in a database. We found that SQLite3 was

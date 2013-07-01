@@ -67,6 +67,13 @@ noinst_PROGRAMS += 35-clusters-from-pairs
 35_clusters_from_pairs_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #-----------------------------------------------------------------------------------------------------------------------------
+# Level 80-89: database maintenance
+noinst_PROGRAMS += 85-delete
+85_delete_SOURCES = 85-delete.C
+85_delete_CPPFLAGS = $(ROSE_INCLUDES)
+85_delete_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#-----------------------------------------------------------------------------------------------------------------------------
 # Level 90-99: querying results
 noinst_PROGRAMS += 90-list-clusters
 90_list_clusters_SOURCES = 90-list-clusters.C
