@@ -289,7 +289,15 @@ fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inpu
 
     if (fault) {
         rose_addr_t va = policy.state.registers.ip.is_known() ? policy.state.registers.ip.known_value() : 0;
-        tracer.emit(va, Tracer::EV_FAULT, last_good_va, (int)fault);
+        if (fault==AnalysisFault::DISASSEMBLY) {
+            // We need to assign disassembly faults to the last good address, otherwise they'll never get attached to anything
+            // in the listings.  We'll save the actual fault address as the value.
+            tracer.emit(last_good_va, Tracer::EV_FAULT, va, (int)fault);
+        } else {
+            // Non-disassembly faults will be assigned to the address where they occur, and the previous instruction's address
+            // is stored as the value of the fault.
+            tracer.emit(va, Tracer::EV_FAULT, last_good_va, (int)fault);
+        }
     }
     
     // Gather the function's outputs before restoring machine state.
