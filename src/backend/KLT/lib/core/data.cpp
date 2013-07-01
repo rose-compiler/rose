@@ -114,8 +114,10 @@ void Data::set_remove(std::set<Data *> & result_, const std::set<Data *> & datas
     Data * data = *it_result;
     
     std::set<Data *>::iterator it_data;
-    for (it_data = datas.begin(); it_data != datas.end(); it_data++)
+    for (it_data = datas.begin(); it_data != datas.end(); it_data++) {
       data = data->remove(*it_data);
+      if (data == NULL) break;
+    }
 
     if (data != NULL)
       result_.insert(data);
