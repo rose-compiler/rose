@@ -254,11 +254,14 @@ namespace BinaryAnalysis {                      // documented elsewhere
                     orig_state = cur_state;
                 }
 
-                /** Set the memory map that holds known values for known memory addresses.  This map is not modified by the
-                 *  policy and data is read from but not written to the map. */
+                /** Memory map that holds known values for known memory addresses.  This map is not modified by the
+                 *  policy and data is read from but not written to the map.
+                 * @{ */
                 void set_map(MemoryMap *map) {
                     this->map = map;
                 }
+                MemoryMap *get_map() const { return map; }
+                /** @} */
 
                 /** Returns the number of instructions processed. This counter is incremented at the beginning of each
                  *  instruction. */
