@@ -246,6 +246,7 @@ fi
 # This list should be the same as in configure.in (search for CLASSPATH_COND_IF)
 if [[ ! -e src/frontend/CxxFrontend/EDG/Makefile.am ]]; then
     for file in \
+        src/frontend/CxxFrontend/EDG/Makefile.in \
         src/frontend/CxxFrontend/EDG/EDG_4.7/Makefile.in \
         src/frontend/CxxFrontend/EDG/EDG_4.7/misc/Makefile.in \
         src/frontend/CxxFrontend/EDG/EDG_4.7/src/Makefile.in \

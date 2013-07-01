@@ -1713,17 +1713,11 @@ AC_CONFIG_SUBDIRS([libltdl src/3rdPartyLibraries/libharu-2.1.0])
 CLASSPATH_COND_IF([ROSE_HAS_EDG_SOURCE], [test "x$has_edg_source" = "xyes"], [
 AC_CONFIG_FILES([
 src/frontend/CxxFrontend/EDG/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.7/lib/Makefile
-src/frontend/CxxFrontend/EDG/edg44Rose/Makefile
 src/frontend/CxxFrontend/EDG/edg47Rose/Makefile
 ])], [])
 
