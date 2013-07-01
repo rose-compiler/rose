@@ -4,14 +4,18 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-#ifndef MFANALYSIS_H
-#define MFANALYSIS_H
+#ifndef DFANALYZER_H
+#define DFANALYZER_H
 
 #include "Labeler.h"
 #include "CFAnalyzer.h"
-#include "WorkList.h"
+#include "WorkListSeq.h"
+#include <set>
+
 
 namespace CodeThorn {
+
+  using std::set;
 
 template<typename LatticeType>
 class DFAnalyzer {
@@ -34,8 +38,12 @@ class DFAnalyzer {
   // following members are initialized by function initialize()
   long _numberOfLabels; 
   vector<LatticeType> _analyzerData;
-  WorkList<Label> _workList;
+  WorkListSeq<Label> _workList;
 };
 
-}
+} // end of namespace
+
+// template implementation code
+#include "DFAnalyzer.C"
+
 #endif

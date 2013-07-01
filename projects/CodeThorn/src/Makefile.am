@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-bin_PROGRAMS = codethorn matcher_demo varwatch
+bin_PROGRAMS = codethorn matcher_demo varwatch rdmain
 #ast_demo matcher_demo iterator_test
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 BUILT_SOURCES = 
@@ -116,6 +116,10 @@ AM_LFLAGS = -Pmatcherparser -o$(LEX_OUTPUT_ROOT).c
 
 varwatch_LDADD = -lrose
 varwatch_SOURCES = varwatch.C VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C RoseAst.h RoseAst.C
+
+rdmain_LDADD = -lrose
+rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C RoseAst.h RoseAst.C Labeler.h Labeler.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C rdmain.C RDAnalyzer.h RDAnalyzer.C
+
 
 #MS: iterator_test not ingegrated yet
 #iterator_test_SOURCES = iterator_test.C ShowSeq.h

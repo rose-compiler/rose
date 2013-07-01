@@ -39,7 +39,7 @@ void Edge::addType(EdgeType et) {
   bool ok=true;
   // for EDGE_PATH we allow any combination, otherwise we check
 
-  if(!isType(EDGE_PATH) && !(et==EDGE_PATH) /*&& !boolOptions["semantic-fold"] && !boolOptions["post-semantic-fold"]*/) {
+  if(!isType(EDGE_PATH) && !(et==EDGE_PATH) && !boolOptions["semantic-fold"] && !boolOptions["post-semantic-fold"]) {
 	switch(et) {
 	case EDGE_FORWARD: if(isType(EDGE_BACKWARD)) ok=false;break;
 	case EDGE_BACKWARD: if(isType(EDGE_FORWARD)) ok=false;break;

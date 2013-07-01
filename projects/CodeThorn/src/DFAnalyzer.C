@@ -4,8 +4,12 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-#ifndef MFANALYZER_C
-#define MFANALYZER_C
+#ifndef DFANALYZER_C
+#define DFANALYZER_C
+
+#include "DFAnalyzer.h"
+
+using namespace CodeThorn;
 
 template<typename LatticeType>
 void DFAnalyzer<LatticeType>::setExtremalLabels(set<Label> extremalLabels) {
