@@ -909,6 +909,7 @@ public:
 
     State<ValueType> state;
     static const rose_addr_t FUNC_RET_ADDR = 4083;      // Special return address to mark end of analysis
+    static const rose_addr_t GOTPLT_VALUE = 0x09110911; // Address of all dynamic functions that are not loaded
     InputGroup *inputs;                                 // Input values to use when reading a never-before-written variable
     const PointerDetector *pointers;                    // Addresses of pointer variables, or null if not analyzed
     SgAsmInterpretation *interp;                        // Interpretation in which we're executing
@@ -989,15 +990,19 @@ public:
             address_hasher_initialized = false;
         }
 
-        // Initialize some registers.  Obviously, the EIP register needs to be set, but we also set the ESP and EBP to known
-        // (but arbitrary) values so we can detect when the function returns.  Be sure to use these same values in related
-        // analyses (like pointer variable detection).  Registers are marked as HAS_BEEN_INITIALIZED so that an input isn't
-        // consumed when they're read during the test.
+        // Initialize EIP. Anything part of the machine state initialized in this reset are marked as HAS_BEEN_INITIALIZE
+        // as opposed to HAS_BEEN_WRITTEN.  This allows us to distinguish later between stuff we initialized as part of the
+        // analysis vs. output that the test produced while it was running.
         rose_addr_t target_va = func->get_entry_va();
         ValueType<32> eip(target_va);
         state.registers.ip = eip;
         state.register_rw_state.ip.state = HAS_BEEN_INITIALIZED;
-        ValueType<32> esp(params.initial_stack); // stack grows down
+
+        // Initialize the stack and frame pointer. Push a special return address onto the top of the stack.  When the analysis
+        // sees this value in the EIP register then we know the test has completed.
+        this->writeMemory<32>(x86_segreg_ss, ValueType<32>(params.initial_stack-4), ValueType<32>(FUNC_RET_ADDR),
+                              ValueType<1>(1), HAS_BEEN_INITIALIZED);
+        ValueType<32> esp(params.initial_stack-4); // stack grows down
         state.registers.gpr[x86_gpr_sp] = esp;
         state.register_rw_state.gpr[x86_gpr_sp].state = HAS_BEEN_INITIALIZED;
         ValueType<32> ebp(params.initial_stack);
@@ -1056,6 +1061,28 @@ public:
         SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
         assert(insn_x86!=NULL);
         ++state.output_group.ninsns;
+        rose_addr_t next_eip = state.registers.ip.known_value();
+
+        // If the test branches (via CALL or JMP or other) to a dynamically-loaded function that has not been linked into the
+        // address space, then we need to do something about it or we'll likely get a disassemble failure on the next
+        // instruction (because the addresses in the .got.plt table are invalid).  Therefore, before we ran the test we
+        // initialized the .got.plt with the GOTPLT_VALUE that we recognize here.  When we detect that the next instruction is
+        // at the GOTPLT_VALUE address, we consume an input value and place it in EAX (the return value), then pop the return
+        // address off the stack and load it into EIP.
+        if (GOTPLT_VALUE==next_eip) {
+            if (params.verbosity>=EFFUSIVE)
+                std::cerr <<"CloneDetection: special handling for non-linked dynamic function\n";
+            // Don't return if abort@plt is the thing that just tried to branch to GOTPLT_VALUE
+            if (SgAsmFunction *cur_func=SageInterface::getEnclosingNode<SgAsmFunction>(insn)) {
+                std::string func_name = cur_func->get_name();
+                if (0==func_name.compare("abort@plt") || 0==func_name.compare("__assert_fail@plt")) {
+                    state.registers.ip = ValueType<32>(insn->get_address());
+                    throw FaultException(AnalysisFault::HALT);
+                }
+            }
+            next_eip = skip_call(insn);
+            this->writeRegister("eax", next_input_value<32>(IQ_INTEGER));
+        }
 
         // Special handling for function calls.  Optionally, instead of calling the function, we treat the function as
         // returning a newly consumed input value to the caller via EAX.  We make the following assumptions:
@@ -1175,6 +1202,11 @@ public:
             } else if (ebp_is_stack_frame && addr>=ebp-8192 && addr<ebp+8) {
                 // This is probably a local stack variable
                 retval = next_input_value<nBits>(IQ_LOCAL, addr);
+            } else if (this->get_map() && this->get_map()->exists(Extent(addr, 4))) {
+                // Memory is read only, so we don't need to consume a value.
+                int32_t buf=0;
+                this->get_map()->read(&buf, addr, 4);
+                retval = ValueType<nBits>(buf);
             } else if (map!=NULL && map->exists(addr)) {
                 // Memory mapped from a file, thus probably a global variable, function pointer, etc.
                 retval = next_input_value<nBits>(IQ_GLOBAL, addr);

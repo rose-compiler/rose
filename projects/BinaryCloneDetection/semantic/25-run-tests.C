@@ -231,6 +231,34 @@ detect_pointers(SgAsmFunction *func, const FunctionIdMap &function_ids, const Sw
     return pd;
 }
 
+// Scan the probject to find all the locations that contain addresses of dynamically linked functions and replace them with
+// a special address that can be recognized by the fetch-execute loop in fuzz_test().  We do this by adding some entries to the
+// memory map that serves up values when needed by memory-reading instructions.  For ELF, we replace the .got.plt section; for
+// PE we replace the "Import Address Table" section.
+static void
+overmap_dynlink_addresses(SgAsmInterpretation *interp, MemoryMap *ro_map, rose_addr_t special_value)
+{
+    const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
+    for (SgAsmGenericHeaderPtrList::const_iterator hi=hdrs.begin(); hi!=hdrs.end(); ++hi) {
+        const SgAsmGenericSectionPtrList &sections = (*hi)->get_sections()->get_sections();
+        for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si) {
+            std::string name = (*si)->get_name()->get_string();
+            if ((*si)->is_mapped() && (0==name.compare(".got.plt") || 0==name.compare("Import Address Table"))) {
+                size_t nbytes = (*si)->get_mapped_size();
+                size_t nwords = nbytes / 4;
+                if (nwords>0) {
+                    uint32_t *buf = new uint32_t[nwords];
+                    for (size_t i=0; i<nwords; ++i)
+                        buf[i] = special_value;
+                    MemoryMap::BufferPtr mmbuf = MemoryMap::ByteBuffer::create(buf, nbytes);
+                    ro_map->insert(Extent((*si)->get_mapped_actual_va(), nbytes),
+                                   MemoryMap::Segment(mmbuf, 0, MemoryMap::MM_PROT_READ, "analysis-mapped dynlink addresses"));
+                }
+            }
+        }
+    }
+}
+
 // Analyze a single function by running it with the specified inputs and collecting its outputs. */
 static OutputGroup
 fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inputs, Tracer &tracer,
@@ -239,6 +267,13 @@ fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inpu
 {
     ClonePolicy policy(opt.params, entry2id, tracer);
     CloneSemantics semantics(policy);
+
+    // Initialize non-writable memory.
+    assert(interp->get_map()!=NULL);
+    MemoryMap ro_map = *interp->get_map();
+    ro_map.prune(MemoryMap::MM_PROT_READ, MemoryMap::MM_PROT_WRITE);
+    overmap_dynlink_addresses(interp, &ro_map, policy.GOTPLT_VALUE);
+    policy.set_map(&ro_map);
 
     AnalysisFault::Fault fault = AnalysisFault::NONE;
     policy.reset(interp, function, &inputs, &insns, pointers);
