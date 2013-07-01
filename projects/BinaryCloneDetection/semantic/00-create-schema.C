@@ -61,6 +61,7 @@ main(int argc, char *argv[])
     faults.insert(AnalysisFault::SEMANTICS);
     faults.insert(AnalysisFault::SMTSOLVER);
     faults.insert(AnalysisFault::INPUT_LIMIT);
+    faults.insert(AnalysisFault::BAD_STACK);
 
     // Populate the semantic_fio_events table
     struct Events {

@@ -86,13 +86,13 @@ public:
 class Tracer {
 public:
     enum Event {
+        EV_NONE                 = 0x00000000,   /**< No event. */
         EV_REACHED              = 0x00000001,   /**< Basic block executed. */
         EV_BRANCHED             = 0x00000002,   /**< Branch taken. */
         EV_FAULT                = 0x00000004,   /**< Test failed; minor number is the fault ID */
         EV_CONSUME_INPUT        = 0x00000008,   /**< Consumed an input. Minor number is the queue. */
         // Masks
         CONTROL_FLOW            = 0x00000003,   /**< Control flow events. */
-        INPUT_CONSUMPTION       = 0x00000018,   /**< Events related to consumption of input. */
         ALL_EVENTS              = 0xffffffff    /**< All possible events. */
     };
 
@@ -148,6 +148,8 @@ public:
         SEMANTICS   = 911000005,     /**< Some fatal problem with instruction semantics, such as a not-handled instruction. */
         SMTSOLVER   = 911000006,     /**< Some fault in the SMT solver. */
         INPUT_LIMIT = 911000007,     /**< Too many input values consumed. */
+        BAD_STACK   = 911000008,     /**< ESP is above the starting point. */
+        // don't forget to fix 00-create-schema.C and the functions below
     };
     
     /** Return the short name of a fault ID. */
@@ -161,6 +163,7 @@ public:
             case SEMANTICS:     return "semantics";
             case SMTSOLVER:     return "SMT solver";
             case INPUT_LIMIT:   return "input limit";
+            case BAD_STACK:     return "bad stack ptr";
             default:
                 assert(!"fault not handled");
                 abort();
@@ -178,6 +181,7 @@ public:
             case SEMANTICS:     return "instruction semantics error";
             case SMTSOLVER:     return "SMT solver error";
             case INPUT_LIMIT:   return "over-consumption of input values";
+            case BAD_STACK:     return "stack pointer is above analysis starting point";
             default:
                 assert(!"fault not handled");
                 abort();
@@ -907,6 +911,16 @@ class Policy: public PartialSymbolicSemantics::Policy<State, ValueType> {
 public:
     typedef          PartialSymbolicSemantics::Policy<State, ValueType> Super;
 
+    struct StackFrame {
+        StackFrame(SgAsmFunction *func, rose_addr_t esp)
+            : func(func), entry_esp(esp), monitoring_stdcall(true), stdcall_args_va(0) {}
+        SgAsmFunction *func;                            // Function that is called
+        rose_addr_t entry_esp;                          // ESP when this function was first entered
+        bool monitoring_stdcall;                        // True for a little while when we enter a new function
+        rose_addr_t stdcall_args_va;                    // ESP where stdcall arguments will be pushed
+    };
+    typedef std::vector<StackFrame> StackFrames;
+
     State<ValueType> state;
     static const rose_addr_t FUNC_RET_ADDR = 4083;      // Special return address to mark end of analysis
     static const rose_addr_t GOTPLT_VALUE = 0x09110911; // Address of all dynamic functions that are not loaded
@@ -921,11 +935,13 @@ public:
     AddressIdMap entry2id;                              // Map from function entry address to function ID
     SgAsmBlock *prev_bb;                                // Previously executed basic block
     Tracer &tracer;                                     // Responsible for emitting rows for semantic_fio_trace
+    bool uses_stdcall;                                  // True if this executable uses the stdcall calling convention
+    StackFrames stack_frames;                           // Stack frames ordered by decreasing entry_esp values
 
     Policy(const PolicyParams &params, const AddressIdMap &entry2id, Tracer &tracer)
         : inputs(NULL), pointers(NULL), interp(NULL), ninsns(0), address_hasher(0, 255, 0),
           address_hasher_initialized(false), insns(0), params(params), entry2id(entry2id), prev_bb(NULL),
-          tracer(tracer) {}
+          tracer(tracer), uses_stdcall(false) {}
 
     // Consume and return an input value.  An argument is needed only when the memhash queue is being used.
     template <size_t nBits>
@@ -976,7 +992,14 @@ public:
         this->pointers = pointers;
         this->ninsns = 0;
         this->interp = interp;
+        stack_frames.clear();
         state.reset_for_analysis();
+
+        // Windows PE uses stdcall, where the callee cleans up its arguments that were pushed by the caller.
+        this->uses_stdcall = false;
+        const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
+        for (SgAsmGenericHeaderPtrList::const_iterator hi=hdrs.begin(); hi!=hdrs.end() && !uses_stdcall; ++hi)
+            uses_stdcall = NULL!=isSgAsmPEFileHeader(*hi);
 
         // Initialize the address-to-value hasher for the memhash input "queue"
         InputQueue &memhash = inputs->queue(IQ_MEMHASH);
@@ -1033,24 +1056,137 @@ public:
         state.registers.gpr[x86_gpr_dx] = rval;
         state.register_rw_state.gpr[x86_gpr_dx].state = HAS_BEEN_INITIALIZED;
     }
-    
+
+    // Tries to figure out where the function call arguments start for functions called by this function.  This is important
+    // when using the stdcall convention because we might need to pop arguments for function calls that we skip
+    // over. Unfortunately, it doesn't work all that well -- it often sets the value too high because the demarcation is too
+    // vague.
+    void monitor_esp(SgAsmInstruction *insn, StackFrame &stack_frame) {
+        if (!uses_stdcall) {
+            stack_frame.monitoring_stdcall = false;
+            return;
+        }
+        SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
+        SgAsmBlock *bb = SageInterface::getEnclosingNode<SgAsmBlock>(insn);
+        SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(bb);
+        assert(func!=NULL);
+        if (stack_frame.monitoring_stdcall) {
+            bool do_monitor = false;
+            if (bb->get_id()==func->get_entry_va()) {   // are we in the function's entry block?
+                const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
+                if (x86_push==insn_x86->get_kind() && 1==args.size() && isSgAsmRegisterReferenceExpression(args[0])) {
+                    RegisterDescriptor reg = isSgAsmRegisterReferenceExpression(args[0])->get_descriptor();
+                    do_monitor = reg.get_major()!=x86_regclass_gpr ||
+                                 (reg.get_minor()!=x86_gpr_ax && reg.get_minor()!=x86_gpr_cx &&
+                                  reg.get_minor()!=x86_gpr_dx); // pushing a callee-saved register
+                } else if (x86_mov==insn_x86->get_kind() && 2==args.size() &&
+                           isSgAsmRegisterReferenceExpression(args[0]) && isSgAsmRegisterReferenceExpression(args[1])) {
+                    RegisterDescriptor dst_reg = isSgAsmRegisterReferenceExpression(args[0])->get_descriptor();
+                    RegisterDescriptor src_reg = isSgAsmRegisterReferenceExpression(args[1])->get_descriptor();
+                    do_monitor = dst_reg.get_major()==x86_regclass_gpr && dst_reg.get_minor()==x86_gpr_bp &&
+                                 src_reg.get_major()==x86_regclass_gpr && src_reg.get_minor()==x86_gpr_sp; // mov ebp, esp
+                } else if (args.size()>=1 && isSgAsmRegisterReferenceExpression(args[0])) {
+                    RegisterDescriptor reg = isSgAsmRegisterReferenceExpression(args[0])->get_descriptor();
+                    do_monitor = reg.get_major()==x86_regclass_gpr && reg.get_minor()==x86_gpr_sp; // e.g., sub esp, 0x44
+                }
+            }
+            if (!do_monitor) {
+                // this is the first instruction of this function that is no longer setting up the stack frame
+                stack_frame.monitoring_stdcall = false;
+                stack_frame.stdcall_args_va = state.registers.gpr[x86_gpr_sp].known_value();
+                if (params.verbosity>=EFFUSIVE)
+                    std::cerr <<"CloneDetection: stdcall args start at "
+                              <<StringUtility::addrToString(stack_frame.stdcall_args_va) <<"\n";
+            }
+        }
+    }
+
+    // Skips over a function call by effectively executing a RET instruction.  The current EIP is already inside the function
+    // being called and 'insn' is the instruction that caused the call.  The StackFrame for the callee has not yet been created
+    // in the stack_frames data member.
+    //
+    // For caller-cleanup (like the cdecl convention) this is easy: all we need to do is simulate a RET.
+    //
+    // For calleee-cleanup (like the stdcall convention) this is a lot trickier and basically comes down to two cases.  If we
+    // have the callee's code, we can find one of its return blocks and look at the argument for RET. If we don't have the
+    // callee's code, we might be able to figure something out by looking at how the caller manipulates its stack.
+    rose_addr_t skip_call(SgAsmInstruction *insn) {
+        assert(!stack_frames.empty());
+        StackFrame &caller_frame = stack_frames.back();
+        rose_addr_t esp = state.registers.gpr[x86_gpr_sp].known_value(); // stack address of the return address
+        assert(caller_frame.entry_esp>esp);
+        rose_addr_t ret_va = this->template readMemory<32>(x86_segreg_ss, ValueType<32>(esp), ValueType<1>(1)).known_value();
+        if (!uses_stdcall) {
+            state.registers.gpr[x86_gpr_sp] = ValueType<32>(esp+4);
+        } else {
+            rose_addr_t callee_va = state.registers.ip.known_value();
+            SgAsmFunction *callee = SageInterface::getEnclosingNode<SgAsmFunction>(insns->get_instruction(callee_va));
+            if (callee) {
+                // We have the callee's code, so find one of its return blocks. (FIXME: we should cache this)
+                struct T1: AstSimpleProcessing {
+                    size_t nbytes;
+                    T1(): nbytes(0) {}
+                    void visit(SgNode *node) {
+                        if (SgAsmx86Instruction *ret = isSgAsmx86Instruction(node)) {
+                            const SgAsmExpressionPtrList &args = ret->get_operandList()->get_operands();
+                            if (x86_ret==ret->get_kind() && 1==args.size() && isSgAsmIntegerValueExpression(args[0]))
+                                nbytes = isSgAsmIntegerValueExpression(args[0])->get_absolute_value();
+                        }
+                    }
+                } t1;
+                t1.traverse(callee, preorder);
+                state.registers.gpr[x86_gpr_sp] = ValueType<32>(esp+4+t1.nbytes);
+            } else if (0!=caller_frame.stdcall_args_va) {
+                // We don't have the callee's code, but we've computed the stdcall arguments position
+                state.registers.gpr[x86_gpr_sp] = ValueType<32>(caller_frame.stdcall_args_va);
+            } else {
+                // We have no idea how much to pop, so just pop the return address and don't try to pop any args.
+                state.registers.gpr[x86_gpr_sp] = ValueType<32>(esp+4);
+            }
+        }
+        state.registers.ip = ValueType<32>(ret_va);
+        return ret_va;
+    }
+
     void startInstruction(SgAsmInstruction *insn_) /*override*/ {
         if (ninsns++ >= params.timeout)
             throw FaultException(AnalysisFault::INSN_LIMIT);
         SgAsmx86Instruction *insn = isSgAsmx86Instruction(insn_);
         assert(insn!=NULL);
+        SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
+        assert(func!=NULL);
+
+        // Adjust stack frames, popping stale frames and adding new ones
+        rose_addr_t esp = state.registers.gpr[x86_gpr_sp].known_value();
+        while (!stack_frames.empty() && stack_frames.back().entry_esp<esp)
+            stack_frames.pop_back();
+        if (insn->get_address()==func->get_entry_va())
+            stack_frames.push_back(StackFrame(func, esp));
+        if (stack_frames.empty())
+            throw FaultException(AnalysisFault::BAD_STACK);
+        StackFrame &stack_frame = stack_frames.back();
+
+        // Debugging
         if (params.verbosity>=EFFUSIVE) {
+            std::string funcname = func->get_name();
+            if (!funcname.empty())
+                funcname = " <" + funcname + ">";
             std::cerr <<"CloneDetection: " <<std::string(80, '-') <<"\n"
-                      <<"CloneDetection: executing: " <<unparseInstructionWithAddress(insn) <<"\n";
+                      <<"CloneDetection: in function " <<StringUtility::addrToString(func->get_entry_va()) <<funcname
+                      <<" at call level " <<stack_frames.size() <<"\n"
+                      <<"CloneDetection: stack ptr: " <<StringUtility::addrToString(stack_frame.entry_esp)
+                      <<" - " <<(stack_frame.entry_esp-esp) <<" = " <<StringUtility::addrToString(esp) <<"\n";
         }
 
+        // Update some necessary things
+        state.registers.ip = ValueType<32>(insn->get_address());
+        monitor_esp(insn, stack_frame);
+        if (params.verbosity>=EFFUSIVE)
+            std::cerr <<"CloneDetection: executing: " <<unparseInstructionWithAddress(insn) <<"\n";
         SgAsmBlock *bb = SageInterface::getEnclosingNode<SgAsmBlock>(insn);
         if (bb!=prev_bb)
             tracer.emit(insn->get_address(), Tracer::EV_REACHED);
         prev_bb = bb;
-
-        // Make sure EIP is updated with the instruction's address (most policies assert this).
-        this->writeRegister("eip", ValueType<32>(insn->get_address()));
 
         Super::startInstruction(insn_);
     }
@@ -1092,39 +1228,41 @@ public:
         //    * The caller cleans up any arguments that were passed via stack
         //    * The function's return value is an integer (non-pointer) type
         if (x86_call==insn_x86->get_kind()) {
-            bool follow = params.follow_calls;
-            ValueType<32> callee_va = this->template readRegister<32>("eip");
-            if (follow) {
-                SgAsmInstruction *called_insn = insns->get_instruction(callee_va.known_value());
-                SgAsmFunction *called_func = called_insn ? SageInterface::getEnclosingNode<SgAsmFunction>(called_insn) : NULL;
-                if ((follow = called_insn!=NULL && called_func!=NULL)) {
-                    std::string func_name = called_func->get_name();
-                    if (0==func_name.compare("abort@plt"))
-                        throw FaultException(AnalysisFault::HALT);
-                    if (func_name.size()>4 && 0==func_name.substr(func_name.size()-4).compare("@plt"))
-                        follow = false;
-                }
-            }
-            if (!follow) {
+            if (!params.follow_calls) {
                 if (params.verbosity>=EFFUSIVE)
                     std::cerr <<"CloneDetection: special handling for function call (fall through and return via EAX)\n";
 #ifdef OUTPUTGROUP_SAVE_CALLGRAPH
-                AddressIdMap::const_iterator found = entry2id.find(callee_va.known_value());
+                AddressIdMap::const_iterator found = entry2id.find(next_eip);
                 if (found!=entry2id.end())
                     state.output_group.callee_ids.push_back(found->second);
 #endif
-                ValueType<32> call_fallthrough_va = this->template number<32>(insn->get_address() + insn->get_size());
-                this->writeRegister("eip", call_fallthrough_va);
+                next_eip = skip_call(insn);
                 this->writeRegister("eax", next_input_value<32>(IQ_INTEGER));
-                ValueType<32> esp = this->template readRegister<32>("esp");
-                esp = this->add(esp, ValueType<32>(4));
-                this->writeRegister("esp", esp);
             }
         }
 
+        // The way monitor_esp() looks for the the stdcall_args_va value often doesn't work because the compiler doesn't always
+        // work.  Therefore, we'll monitor "RET n" instructions and make adjustments.
+        if (uses_stdcall && x86_ret==insn_x86->get_kind()) {
+            const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
+            if (args.size()==1 && isSgAsmIntegerValueExpression(args[0])) {
+                rose_addr_t esp = state.registers.gpr[x86_gpr_sp].known_value(); // after the RET has executed
+                for (size_t i=stack_frames.size(); i>0; --i) {
+                    StackFrame &sf = stack_frames[i-1];
+                    if (sf.entry_esp>=esp && sf.stdcall_args_va!=esp) {
+                        sf.stdcall_args_va = esp;
+                        if (params.verbosity>=EFFUSIVE) {
+                            std::cerr <<"CloneDetection: adjusted function "
+                                      <<StringUtility::addrToString(sf.func->get_entry_va()) <<" stdcall args start to "
+                                      <<StringUtility::addrToString(sf.stdcall_args_va) <<"\n";
+                        }
+                    }
+                }
+            }
+        }
+        
         // Emit an event if the next instruction to execute is not at the fall through address.
         rose_addr_t fall_through_va = insn->get_address() + insn->get_size();
-        rose_addr_t next_eip = state.registers.ip.known_value();
         if (next_eip!=fall_through_va)
             tracer.emit(insn->get_address(), Tracer::EV_BRANCHED, next_eip);
 
@@ -1156,15 +1294,6 @@ public:
     // Track memory access.
     template<size_t nBits>
     ValueType<nBits> readMemory(X86SegmentRegister sr, ValueType<32> a0, const ValueType<1> &cond) {
-        // For RET instructions, when reading DWORD PTR ss:[INITIAL_STACK], do not consume an input, but rather
-        // return FUNC_RET_ADDR.
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(this->get_insn());
-        if (32==nBits && insn && x86_ret==insn->get_kind()) {
-            rose_addr_t c_addr = a0.known_value();
-            if (c_addr == this->params.initial_stack)
-                return ValueType<nBits>(this->FUNC_RET_ADDR);
-        }
-
         // Read a multi-byte value from memory in little-endian order.
         bool uninitialized_read = false; // set to true by any mem_read_byte() that has no data
         assert(8==nBits || 16==nBits || 32==nBits);
