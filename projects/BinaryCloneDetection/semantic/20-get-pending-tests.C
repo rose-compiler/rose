@@ -224,7 +224,7 @@ main(int argc, char *argv[])
     std::string sql2 = "select distinct igroup_id from semantic_inputvalues where igroup_id >= " +
                        StringUtility::numberToString(opt.first_fuzz);
     if (opt.nfuzz_set)
-        sql2 += " and id < " + StringUtility::numberToString(opt.first_fuzz+opt.nfuzz);
+        sql2 += " and igroup_id < " + StringUtility::numberToString(opt.first_fuzz+opt.nfuzz);
     tx->execute("create temporary table tmp_inputgroups as " + sql2);
 
     // Create tmp_pending as the cross product of functions and inputgroups except for those already tested
