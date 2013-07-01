@@ -61,7 +61,18 @@ struct Switches {
     bool colorize;
 } opt;
 
-typedef std::map<int/*index*/, std::pair<rose_addr_t, std::string/*assembly*/> > Instructions;
+struct AssemblyCode {
+    AssemblyCode(int pos, rose_addr_t addr, const std::string &assembly, int func_id=-1, const std::string &func_name="")
+        : pos(pos), addr(addr), assembly(assembly), func_id(func_id), func_name(func_name) {}
+    int pos; // index of instruction within function
+    rose_addr_t addr;
+    std::string assembly;
+    int func_id;
+    std::string func_name;
+};
+
+
+typedef std::map<rose_addr_t, AssemblyCode> Instructions;
 
 struct Code {
     std::string source_code;
@@ -286,10 +297,12 @@ load_events(const SqlDatabase::TransactionPtr &tx, int func_id, Events &events/*
                     events[addr].inputs.resize(minor+1);
                 ++events[addr].inputs[minor][val];
                 break;
-            case CloneDetection::Tracer::EV_FAULT:
+            case CloneDetection::Tracer::EV_FAULT: {
+                CloneDetection::AnalysisFault::Fault fault = (CloneDetection::AnalysisFault::Fault)minor;
                 ++events[addr].nfaults;
-                ++events[addr].faults[(CloneDetection::AnalysisFault::Fault)minor];
+                ++events[addr].faults[fault];
                 break;
+            }
             default:
                 /*void*/
                 break;
@@ -463,17 +476,23 @@ list_combined(const SqlDatabase::TransactionPtr &tx, int func_id, bool show_asse
     // Get lines of assembly code and insert them into the correct place in the Listing.
     if (show_assembly) {
         SqlDatabase::StatementPtr stmt = tx->statement("select"
-                                                       // 0           1         2         3        4
-                                                       " src_file_id, src_line, position, address, assembly"
-                                                       " from tmp_insns order by position");
+                                                       // 0                1              2              3
+                                                       " insn.src_file_id, insn.src_line, insn.position, insn.address,"
+                                                       // 4             5        6
+                                                       " insn.assembly, func.id, func.name"
+                                                       " from tmp_insns as insn"
+                                                       " join semantic_functions as func on insn.func_id = func.id"
+                                                       " order by position");
         for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
-            int file_id = row.get<int>(0);
-            int line_num = row.get<int>(1);
-            SourcePosition srcpos(file_id, line_num);
-            int position = row.get<int>(2);
+            int src_file_id = row.get<int>(0);
+            int src_line_num = row.get<int>(1);
+            SourcePosition srcpos(src_file_id, src_line_num);
+            int pos = row.get<int>(2);
             rose_addr_t addr = row.get<rose_addr_t>(3);
             std::string assembly = row.get<std::string>(4);
-            listing[srcpos].assembly_code.insert(std::make_pair(position,std::make_pair(addr, assembly)));
+            int func_id = row.get<int>(5);
+            std::string func_name = row.get<std::string>(6);
+            listing[srcpos].assembly_code.insert(std::make_pair(addr, AssemblyCode(pos, addr, assembly, func_id, func_name)));
         }
 
         // Listing header
@@ -507,48 +526,66 @@ list_combined(const SqlDatabase::TransactionPtr &tx, int func_id, bool show_asse
                   <<"             faults that occurred here.\n"
                   <<"\n"
                   <<"                /------------- Prefix area\n"
-                  <<" /-------------/-------------- Source file ID\n"
-                  <<" |     /------/--------------- Source line number\n"
+                  <<" /-------------/-------------- Source file ID or assembly function ID\n"
+                  <<" |     /------/--------------- Source line number or assembly instruction index\n"
                   <<" |     |   /-/---------------- Instruction out-of-order indicator\n"
-                  <<" |     |   |/ /--------------- Instruction position index\n"
-                  <<" |     |   |  |      /-------- Instruction virtual address\n"
-                  <<"vvvv vvvvv/|  |      |\n"
-                  <<"vvvvvvvvvv v vv vvvvvvvvvv\n";
+                  <<" |     |   |/     /----------- Instruction virtual address\n"
+                  <<" |     |   |      |\n"
+                  <<"vvvv vvvvv/|      |\n"
+                  <<"vvvvvvvvvv v vvvvvvvvvv\n";
     }
 
     // Show the listing
-    int prev_position = -1;
+    int prev_func_id = -1, prev_position = -1;
     std::set<int> seen_files;
     for (Listing::iterator li=listing.begin(); li!=listing.end(); ++li) {
         int file_id = li->first.file_id;
-        if (file_id>=0) {
-            if (seen_files.insert(file_id).second) {
+        if (seen_files.insert(file_id).second) {
+            if (file_id>=0) {
                 std::cout <<"\n" <<std::setw(4) <<std::right <<file_id <<".file  |"
                           <<(opt.colorize?"\033[33;4m":"") <<files.name(file_id) <<(opt.colorize?"\033[m":"") <<"\n";
+            } else {
+                std::cout <<"\n" <<std::string(11, ' ') <<"|"
+                          <<(opt.colorize?"\033[33;4m":"") <<"instructions not associated with a source file"
+                          <<(opt.colorize?"\033[m":"") <<"\n";
             }
+        }
+        if (file_id>=0) {
             std::cout <<std::setw(4) <<std::right <<file_id <<"." <<std::setw(6) <<std::left <<li->first.line_num
                       <<"|"
-                      <<(opt.colorize?"\033[34m":"") <<li->second.source_code <<(opt.colorize?"\033[m":"") <<"\n";
+                      <<(opt.colorize?"\033[34m":"")
+                      <<StringUtility::untab(li->second.source_code)
+                      <<(opt.colorize?"\033[m":"") <<"\n";
         }
-        for (Instructions::iterator ii=li->second.assembly_code.begin(); ii!=li->second.assembly_code.end(); ++ii) {
-            rose_addr_t addr = ii->second.first;
-            const std::string &assembly = ii->second.second;
-            Events::const_iterator ei=events.find(addr);
 
+        for (Instructions::iterator ii=li->second.assembly_code.begin(); ii!=li->second.assembly_code.end(); ++ii) {
+            const AssemblyCode assm = ii->second;
+            if (assm.func_id!=prev_func_id) {
+                std::cout <<std::string(11, ' ') <<"# "
+                          <<(opt.colorize?"\033[33;4m":"") <<"function " <<StringUtility::numberToString(assm.func_id);
+                if (!assm.func_name.empty())
+                    std::cout <<" <" <<assm.func_name <<">";
+                std::cout <<(opt.colorize?"\033[m":"") <<"\n";
+            }
+
+            Events::const_iterator ei=events.find(assm.addr);
+            std::cout <<std::setw(4) <<std::right <<assm.func_id <<"." <<std::setw(6) <<std::left <<assm.pos
+                      <<(prev_func_id==assm.func_id && prev_position+1==assm.pos ? "|" : "#");
+            
             if (ei!=events.end() && ei->second.nexecuted>0) {
                 std::cout <<std::setw(9) <<std::right <<ei->second.nexecuted <<"x ";
             } else {
                 std::cout <<std::string(11, ' ');
             }
             
-            std::cout <<(prev_position+1==ii->first ? "|" : "#")
-                      <<std::setw(4) <<std::right <<ii->first <<" " <<StringUtility::addrToString(addr) <<":  "
-                      <<(opt.colorize?"\033[32m":"") <<assembly <<(opt.colorize?"\033[m":"") <<"\n";
+            std::cout <<StringUtility::addrToString(assm.addr) <<":  "
+                      <<(opt.colorize?"\033[32m":"") <<assm.assembly <<(opt.colorize?"\033[m":"") <<"\n";
 
             if (ei!=events.end())
                 show_events(ei->second);
-            
-            prev_position = ii->first;
+
+            prev_func_id = assm.func_id;
+            prev_position = assm.pos;
         }
     }
 }
