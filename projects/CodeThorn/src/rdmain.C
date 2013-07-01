@@ -1,3 +1,5 @@
+// Author: Markus Schordan, 2013.
+
 #include <iostream>
 #include "VariableIdMapping.h"
 #include "Labeler.h"
@@ -15,9 +17,50 @@ using namespace CodeThorn;
 class RDAnalyzer : public DFAnalyzer<RDLattice> {
 public:
   RDAnalyzer():DFAnalyzer<RDLattice>(){}
-  RDLattice transfer(Label l, RDLattice element) {
-	cout << "RDAnalyzer: called transfer function."<<endl;
+  RDLattice transfer(Label lab, RDLattice element) {
+	SgNode* node=_labeler->getNode(lab);
+	cout<<"Analyzing:"<<node->class_name()<<endl;
+	if(isSgExprStatement(node))
+	  node=SgNodeHelper::getExprStmtChild(node);
+	if(isSgAssignOp(node)) {
+	  // update analysis information
+	  // this is only correct for RERS12-C programs
+	  // 1) remove all pairs with lhs-variableid
+	  // 2) add (lab,lhs.varid)
+	  
+	  // (for programs with pointers we require a set here)
+	  set<VariableId> lhsVarIds=determineLValueVariableIdSet(SgNodeHelper::getLhs(node));
+	  if(lhsVarIds.size()>1) {
+		// since multiple memory locations may be modified, we cannot know which one will be updated and can only add information
+		for(set<VariableId>::iterator i=lhsVarIds.begin();i!=lhsVarIds.end();++i) {
+		  element.insertPair(lab,*i);
+		}
+	  } else if(lhsVarIds.size()==1) {
+		// one unique memory location (variable). We can remove all pairs with this variable
+		VariableId var=*lhsVarIds.begin();
+		element.eraseAllPairsWithVariableId(var);
+		element.insertPair(lab,var);
+	  }
+
+	}
+	cout << "RDAnalyzer: called transfer function. result: ";
+	element.toStream(cout,&_variableIdMapping);
+	cout<<endl;
+
 	return element;
+  }
+  // this function assumes that a pointer to an AST subtree representing a LHS of an assignment has been passed
+  set<VariableId> determineLValueVariableIdSet(SgNode* node) {
+	set<VariableId> resultSet;
+	// only x=... is supported yet
+	cout<<"LHS: "<<node->class_name()<<endl;
+	if(SgVarRefExp* lhsVar=isSgVarRefExp(node)) {
+	  resultSet.insert(_variableIdMapping.variableId(lhsVar));
+	} else {
+	  // TODO
+	  cout<<"WARNING: unsupported lhs of assignment: "<<SgNodeHelper::nodeToString(node)<<std::endl;
+	}
+	return resultSet;
   }
 };
 
@@ -51,7 +94,7 @@ int main(int argc, char* argv[]) {
   RDAnalyzer rdAnalyzer;
   rdAnalyzer.initialize(root);
   set<SgVariableDeclaration*> globalVarDecls=determineGlobalVarDeclarations(root);
-  SgNode* startFunRoot=determineStartFunction("main",root);
+  SgNode* startFunRoot=0; //determineStartFunction("main",root);
   rdAnalyzer.determineExtremalLabels(startFunRoot);
   rdAnalyzer.run();
   return 0;

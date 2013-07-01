@@ -35,6 +35,16 @@ void WorkList<Element>::add(Element elem) {
 }
 
 template<typename Element>
+void WorkList<Element>::add(std::set<Element>& elemSet) { 
+#pragma omp critical
+  {
+	for(typename std::set<Element>::iterator i=elemSet.begin();i!=elemSet.end();++i) {
+		workList.push_back(*i);
+	}
+  }
+}
+
+template<typename Element>
 Element WorkList<Element>::take() {
   if(workList.size()==0) {
 	throw "Error: attempted to take element from empty work list.";

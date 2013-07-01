@@ -107,22 +107,35 @@ DFAnalyzer<LatticeType>::determineExtremalLabels(SgNode* startFunRoot=0) {
   if(startFunRoot) {
 	Label startLabel=_cfanalyzer->getLabel(startFunRoot);
 	_extremalLabels.insert(startLabel);
-	cout<<"STATUS: Number of extremal labels: "<<_extremalLabels.size()<<endl;
   } else {
-	// we may initialize alternatively with all labels
+	for(Label i=0;i<_labeler->numberOfLabels();++i) {
+	  _extremalLabels.insert(i);
+	}
   }
+  cout<<"STATUS: Number of extremal labels: "<<_extremalLabels.size()<<endl;
 }
 // runs until worklist is empty
 template<typename LatticeType>
 void
 DFAnalyzer<LatticeType>::solve() {
-  while(!workList.isEmpty()) {
-	Label lab=workList.take();
-	// TODO;
-	// compute set of predecessors Pred
-	// apply combined(Pred)
+  while(!_workList.isEmpty()) {
+	Label lab=_workList.take();
+
 	//_analyzerData[lab]=_analyzerData comb transfer(lab,combined(Pred));
-	_analyzerData[lab]=transfer(lab,_analyzerData[lab]);
+	LabelSet pred=_flow.pred(lab);
+	LatticeType inInfo;
+	for(LabelSet::iterator i=pred.begin();i!=pred.end();++i) {
+	  inInfo.combine(_analyzerData[*i]);
+	}
+	
+	LatticeType newInfo=transfer(lab,inInfo);
+	if(!newInfo.approximatedBy(_analyzerData[lab])) {
+	  _analyzerData[lab].combine(newInfo);
+	  LabelSet succ=_flow.succ(lab);
+	  _workList.add(succ);
+	} else {
+	  // no new information was computed. Nothing to do.
+	}
   }
 }
 // runs until worklist is empty
@@ -131,7 +144,7 @@ void
 DFAnalyzer<LatticeType>::run() {
   // initialize work list with extremal labels
   for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
-	workList.add(*i);
+	_workList.add(*i);
   }
   solve();
 }

@@ -7,13 +7,16 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
+#include <set>
+
 namespace CodeThorn {
 template <typename Element>
 class WorkList {
  public:	
   bool isEmpty();
-  bool exists(Element estate);
-  void add(Element estate);
+  bool exists(Element elem);
+  void add(Element elem);
+  void add(std::set<Element>& elemSet);
   Element take();
   Element examine();
  private:

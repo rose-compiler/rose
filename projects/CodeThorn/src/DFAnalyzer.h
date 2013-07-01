@@ -34,7 +34,7 @@ class DFAnalyzer {
   // following members are initialized by function initialize()
   long _numberOfLabels; 
   vector<LatticeType> _analyzerData;
-  WorkList<Label> workList;
+  WorkList<Label> _workList;
 };
 
 }
