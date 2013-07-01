@@ -56,10 +56,16 @@ usage(int exit_status)
               <<"            Show a progress bar even if standard error is not a terminal or the verbosity level is not silent.\n"
               <<"    --trace[=EVENTS]\n"
               <<"    --no-trace\n"
-              <<"            Sets the events that are traced by each test.  The EVENTS is a bit vector specified as an integer\n"
-              <<"            (\"0x\"-prefix hexadecimal and \"0\"-prefix octal values may be used. The default for --trace when\n"
-              <<"            no EVENTS are specified is to enable all events.  The default if neither --trace nor --no-trace\n"
-              <<"            are specified is to not trace any events.\n"
+              <<"            Sets the events that are traced by each test.  The EVENTS is a comma-separated list of event\n"
+              <<"            specifiers. Each event specifier is an optional '+' or '-' to indicate whether the event type will\n"
+              <<"            be added or subtracted from the set (default is added), followed by either an event name or\n"
+              <<"            integer bit vector.  The following event names are recognized:\n"
+              <<"                reached: events indicating that a basic block has been reached\n"
+              <<"                branched: events indicating that a branch has been taken, as opposed to falling through.\n"
+              <<"                fault: events indicating that the test terminated abnormally.\n"
+              <<"                consumed: events indicating that input was consumed.\n"
+              <<"                cfg: short-hand for both \"reached\" and \"branched\" together.\n"
+              <<"                all: all event types.\n"
               <<"    --verbose\n"
               <<"    --verbosity=(silent|laconic|effusive)\n"
               <<"            Determines how much diagnostic info to send to the standard error stream.  The --verbose\n"
@@ -412,7 +418,50 @@ main(int argc, char *argv[])
         } else if (!strcmp(argv[argno], "--no-trace")) {
             opt.trace_events = 0;
         } else if (!strncmp(argv[argno], "--trace=", 8)) {
-            opt.trace_events = strtoul(argv[argno]+8, NULL, 0);
+            std::vector<std::string> words = StringUtility::split(",", argv[argno]+8, (size_t)-1, true);
+            for (size_t i=0; i<words.size(); ++i) {
+                unsigned events = Tracer::EV_NONE;
+                bool status = true;
+                if (!words[i].empty() && '-'==words[i][0]) {
+                    status = false;
+                    words[i] = words[i].substr(1);
+                } else if (!words[i].empty() && '+'==words[i][0]) {
+                    status = true;
+                    words[i] = words[i].substr(1);
+                }
+                if (0==words[i].compare("none")) {
+                    events = Tracer::EV_NONE;
+                } else if (0==words[i].compare("reached")) {
+                    events = Tracer::EV_REACHED;
+                } else if (0==words[i].compare("branched")) {
+                    events = Tracer::EV_BRANCHED;
+                } else if (0==words[i].compare("fault") || 0==words[i].compare("faults")) {
+                    events = Tracer::EV_FAULT;
+                } else if (0==words[i].compare("consume") || 0==words[i].compare("consumed")) {
+                    events = Tracer::EV_CONSUME_INPUT;
+                } else if (0==words[i].compare("cfg")) {
+                    events = Tracer::CONTROL_FLOW;
+                } else if (0==words[i].compare("all")) {
+                    events = Tracer::ALL_EVENTS;
+                } else if (!words[i].empty() && isdigit(words[i][0])) {
+                    const char *s = words[i].c_str();
+                    char *rest;
+                    errno = 0;
+                    events = strtoul(s, &rest, 0);
+                    if (errno || rest==s || *rest) {
+                        std::cerr <<argv0 <<": invalid event spec: " <<words[i] <<"\n";
+                        exit(1);
+                    }
+                } else {
+                    std::cerr <<argv0 <<": invalid event spec: " <<words[i] <<"\n";
+                    exit(1);
+                }
+                if (status) {
+                    opt.trace_events |= events;
+                } else {
+                    opt.trace_events &= ~events;
+                }
+            }
         } else if (!strcmp(argv[argno], "--verbose")) {
             opt.verbosity = opt.params.verbosity = EFFUSIVE;
         } else if (!strcmp(argv[argno], "--verbosity=silent")) {
