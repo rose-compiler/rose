@@ -103,8 +103,11 @@ AstMatching::performSingleMatch(SgNode* node, MatchOperationList* matchOperation
     if(!tmpresult) {return false;}
   }
   if(!tmpresult) {return false;}
+
   // pattern has been successfully matched
-  _status._allMatchVarBindings->push_back(smr.singleMatchVarBindings);
+  // only record successful match if variables have been bound
+  if(smr.singleMatchVarBindings.size()>0)
+	_status._allMatchVarBindings->push_back(smr.singleMatchVarBindings);
   // move elements (instead of copy)
   _status._allMatchMarkedLocations.splice(_status._allMatchMarkedLocations.end(),smr.singleMatchMarkedLocations);
   return true;

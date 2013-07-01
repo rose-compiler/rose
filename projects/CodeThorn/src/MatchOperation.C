@@ -31,13 +31,24 @@ MatchOpOr::toString() {
 }
 bool
 MatchOpOr::performOperation(MatchStatus& status, RoseAst::iterator& i, SingleMatchResult& smr) {
+  if(status.debug) {
+	std::cout<<"performing OR-match operation."<<std::endl;
+  }
+  // ensure match-operations are performed left to right
+#if 1
+  bool result;
+  result=_left->performOperation(status,i,smr);
+  if(!result) {
+	result=result||_right->performOperation(status,i,smr);
+  }
+  return result;
+
+#else
+  // alternate semantics 
   RoseAst::iterator tmp_iter_left=i;
   RoseAst::iterator tmp_iter_right=i;
   SingleMatchResult left_smr;
   SingleMatchResult right_smr;
-  if(status.debug) {
-	std::cout<<"performing OR-match operation."<<std::endl;
-  }
   bool left_result=_left->performOperation(status,tmp_iter_left,left_smr);
   bool right_result=_right->performOperation(status,tmp_iter_right,right_smr);
   if(left_result && right_result) {
@@ -58,6 +69,7 @@ MatchOpOr::performOperation(MatchStatus& status, RoseAst::iterator& i, SingleMat
     return true;
   }
   return false;
+#endif
 }
 
 MatchOpVariableAssignment::MatchOpVariableAssignment(std::string varName):_varName(varName){}
