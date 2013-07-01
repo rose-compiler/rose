@@ -6,6 +6,8 @@
 #include <vector>
 #include <utility>
 
+#include <iostream>
+
 class SgExpression;
 class SgVariableSymbol;
 

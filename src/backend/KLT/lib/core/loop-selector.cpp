@@ -11,12 +11,17 @@ namespace KLT {
 
 namespace Core {
 
-void LoopSelector::createKernels(const LoopTrees & loop_trees, std::list<Kernel *> & kernels, std::map<Kernel *, LoopTrees::node_t *> & kernels_map, Generator * generator) const {
+void LoopSelector::createKernels(
+  const LoopTrees & loop_trees,
+  std::list<Kernel *> & kernels,
+  std::map<Kernel *, LoopTrees::node_t *> & kernels_map,
+  Generator * generator
+) const {
   const std::list< LoopTrees::node_t * > & trees = loop_trees.getTrees();
 
   assert(trees.size() > 0);
 
-  assert(trees.size() == 1); // FIXME Minimal handling
+  // assert(trees.size() == 1); // FIXME Minimal handling
 
   std::list< LoopTrees::node_t * >::const_iterator it_tree;
   for (it_tree = trees.begin(); it_tree != trees.end(); it_tree++) {

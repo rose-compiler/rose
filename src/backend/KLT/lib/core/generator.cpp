@@ -85,7 +85,12 @@ void Generator::buildArgumentLists(
   }
 }
 
-void Generator::generate(const LoopTrees & loop_trees, std::list<Kernel *> & kernels, const DataFlow & data_flow, const LoopSelector & loop_selector) {
+void Generator::generate(
+  const LoopTrees & loop_trees,
+  std::list<Kernel *> & kernels,
+  const DataFlow & data_flow,
+  const LoopSelector & loop_selector
+) {
   assert(kernels.empty());
 
   std::map<Kernel *, LoopTrees::node_t *> kernels_map;
