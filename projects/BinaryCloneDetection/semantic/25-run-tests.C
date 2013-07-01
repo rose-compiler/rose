@@ -30,6 +30,8 @@ usage(int exit_status)
               <<"    --dry-run\n"
               <<"            Do not modify the database. This is really only useful with the --verbose switch in order to\n"
               <<"            re-run a test for debugging purposes.\n"
+              <<"    --file=NAME\n"
+              <<"            Load the FUNC_INPUT_PAIRS work list from this file rather than standard input.\n"
               <<"    --[no-]follow-calls\n"
               <<"            If --follow-calls is specified, then x86 CALL instructions are treated the same as any other\n"
               <<"            instruction, resulting in the analysis of the called function in-line with the caller if possible,\n"
@@ -91,6 +93,7 @@ struct Switches {
     bool interactive;
     unsigned trace_events;
     bool dry_run;
+    std::string input_file_name;
     PolicyParams params;
 };
 
@@ -129,6 +132,54 @@ sig_handler(int signo)
     }
 
     interrupted = signo;
+}
+
+static WorkList<WorkItem>
+load_worklist(const std::string &filename, FILE *f)
+{
+    WorkList<WorkItem> worklist;
+    char *line = NULL;
+    size_t line_sz = 0, line_num = 0;
+    while (rose_getline(&line, &line_sz, f)>0) {
+        ++line_num;
+        if (char *c = strchr(line, '#'))
+            *c = '\0';
+        char *s = line + strspn(line, " \t\r\n"), *rest;
+        if (!*s)
+            continue; // blank line
+
+        errno = 0;
+        int specimen_id = strtol(s, &rest, 0);
+        if (errno!=0 || rest==s) {
+            std::cerr <<argv0 <<": " <<filename <<":" <<line_num <<": syntax error: specimen file ID expected\n";
+            exit(1);
+        }
+        s = rest;
+
+        errno = 0;
+        int func_id = strtol(s, &rest, 0);
+        if (errno!=0 || rest==s) {
+            std::cerr <<argv0 <<": " <<filename <<":" <<line_num <<": syntax error: function ID expected\n";
+            exit(1);
+        }
+        s = rest;
+
+        errno = 0;
+        int igroup_id = strtol(s, &rest, 0);
+        if (errno!=0 || rest==s) {
+            std::cerr <<argv0 <<": " <<filename <<":" <<line_num <<": syntax error: input group ID expected\n";
+            exit(1);
+        }
+
+        while (isspace(*rest)) ++rest;
+        if (*rest) {
+            std::cerr <<argv0 <<": " <<filename <<":" <<line_num <<": syntax error: extra text after input group ID\n";
+            exit(1);
+        }
+
+        worklist.push(WorkItem(specimen_id, func_id, igroup_id));
+    }
+    return worklist;
 }
 
 // Perform a pointer-detection analysis on the specified function. We'll need the results in order to determine whether a
@@ -328,6 +379,8 @@ main(int argc, char *argv[])
             }
         } else if (!strcmp(argv[argno], "--dry-run")) {
             opt.dry_run = true;
+        } else if (!strncmp(argv[argno], "--file=", 7)) {
+            opt.input_file_name = argv[argno]+7;
         } else if (!strcmp(argv[argno], "--follow-calls")) {
             opt.params.follow_calls = true;
         } else if (!strcmp(argv[argno], "--no-follow-calls")) {
@@ -373,48 +426,18 @@ main(int argc, char *argv[])
     int64_t cmd_id = start_command(tx, argc, argv, "running tests");
 
     // Read list of tests from stdin
-    std::cerr <<argv0 <<": reading worklist from stdin...\n";
     WorkList<WorkItem> worklist;
-    char *line = NULL;
-    size_t line_sz = 0, line_num = 0;
-    while (rose_getline(&line, &line_sz, stdin)>0) {
-        ++line_num;
-        if (char *c = strchr(line, '#'))
-            *c = '\0';
-        char *s = line + strspn(line, " \t\r\n"), *rest;
-        if (!*s)
-            continue; // blank line
-
-        errno = 0;
-        int specimen_id = strtol(s, &rest, 0);
-        if (errno!=0 || rest==s) {
-            std::cerr <<argv0 <<": stdin:" <<line_num <<": syntax error: specimen file ID expected\n";
+    if (opt.input_file_name.empty()) {
+        std::cerr <<argv0 <<": reading worklist from stdin...\n";
+        worklist = load_worklist("stdin", stdin);
+    } else {
+        FILE *f = fopen(opt.input_file_name.c_str(), "r");
+        if (NULL==f) {
+            std::cerr <<argv0 <<": " <<strerror(errno) <<": " <<opt.input_file_name <<"\n";
             exit(1);
         }
-        s = rest;
-
-        errno = 0;
-        int func_id = strtol(s, &rest, 0);
-        if (errno!=0 || rest==s) {
-            std::cerr <<argv0 <<": stdin:" <<line_num <<": syntax error: function ID expected\n";
-            exit(1);
-        }
-        s = rest;
-
-        errno = 0;
-        int igroup_id = strtol(s, &rest, 0);
-        if (errno!=0 || rest==s) {
-            std::cerr <<argv0 <<": stdin:" <<line_num <<": syntax error: input group ID expected\n";
-            exit(1);
-        }
-
-        while (isspace(*rest)) ++rest;
-        if (*rest) {
-            std::cerr <<argv0 <<": stdin:" <<line_num <<": syntax error: extra text after input group ID\n";
-            exit(1);
-        }
-
-        worklist.push(WorkItem(specimen_id, func_id, igroup_id));
+        worklist = load_worklist(opt.input_file_name, f);
+        fclose(f);
     }
     std::cerr <<argv0 <<": " <<worklist.size() <<(1==worklist.size()?" test needs":" tests need") <<" to be run\n";
     Progress progress(worklist.size());
@@ -479,7 +502,8 @@ main(int argc, char *argv[])
                 project = open_specimen(tx, files, work.specimen_id, argv0);
                 progress.message("");
             }
-
+            
+            // Get list of functions and initialize the instruction cache
             std::vector<SgAsmFunction*> all_functions = SageInterface::querySubTree<SgAsmFunction>(project);
             functions = existing_functions(tx, files, all_functions);
             function_ids.clear();
@@ -526,8 +550,6 @@ main(int argc, char *argv[])
         timeval start_time, stop_time;
         clock_t start_ticks = clock();
         gettimeofday(&start_time, NULL);
-        if (opt.verbosity>=LACONIC)
-            std::cerr <<argv0 <<": " <<function_to_str(func, function_ids) <<" with input group " <<work.igroup_id <<"\n";
         OutputGroup ogroup = fuzz_test(interp, func, igroup, tracer, insns, ip->second, opt, entry2id);
         gettimeofday(&stop_time, NULL);
         clock_t stop_ticks = clock();

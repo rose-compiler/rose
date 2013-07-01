@@ -75,6 +75,8 @@ usage(int exit_status)
               <<"              * \"minimum\" takes the minimum of the individual output group similarities.\n"
               <<"\n"
               <<"  Other switches and arguments:\n"
+              <<"    --file=NAME\n"
+              <<"            Read pairs from this file instead of standard input.\n"
               <<"    --relation=ID\n"
               <<"            An integer that identifies which similarity values are being selected.  All similarity values\n"
               <<"            that have the same relation ID form a single similarity relationship.  This allows the database\n"
@@ -125,6 +127,7 @@ static struct Switches {
     Aggregation aggregation;
     int relation_id;
     bool verbose;
+    std::string input_file_name;
 } opt;
 
 static SqlDatabase::TransactionPtr transaction;
@@ -208,8 +211,10 @@ public:
         const ValuesDamerauLevenshtein *other = dynamic_cast<const ValuesDamerauLevenshtein*>(other_);
         size_t dl = Combinatorics::damerau_levenshtein_distance(values, other->values);
         size_t dl_max = std::max(values.size(), other->values.size());
-        if (0==dl_max)
-            return values[0]==other->values[0] ? 1.0 : 0.0;
+        if (0==dl && 0==dl_max) {
+            assert(values.empty() && other->values.empty());
+            return 1;
+        }
         return 1.0 - (double)dl / dl_max;
     }
 
@@ -442,12 +447,12 @@ parse_double(const std::string &str, double bad_value=BAD_DOUBLE)
 }
 
 static FunctionPairs
-load_worklist()
+load_worklist(const std::string &input_name, FILE *f)
 {
     FunctionPairs worklist;
     char *line = NULL;
     size_t line_sz = 0, line_num = 0;
-    while (rose_getline(&line, &line_sz, stdin)>0) {
+    while (rose_getline(&line, &line_sz, f)>0) {
         ++line_num;
         if (char *c = strchr(line, '#'))
             *c = '\0';
@@ -458,7 +463,7 @@ load_worklist()
         errno = 0;
         int func1_id = strtol(s, &rest, 0);
         if (errno!=0 || rest==s) {
-            std::cerr <<argv0 <<": stdin:" <<line_num <<": syntax error: func1_id expected\n";
+            std::cerr <<argv0 <<": " <<input_name <<":" <<line_num <<": syntax error: func1_id expected\n";
             exit(1);
         }
         s = rest;
@@ -466,14 +471,14 @@ load_worklist()
         errno = 0;
         int func2_id = strtol(s, &rest, 0);
         if (errno!=0 || rest==s) {
-            std::cerr <<argv0 <<": stdin:" <<line_num <<": syntax error: func2_id expected\n";
+            std::cerr <<argv0 <<": " <<input_name <<":" <<line_num <<": syntax error: func2_id expected\n";
             exit(1);
         }
         s = rest;
 
         while (isspace(*s)) ++s;
         if (*s) {
-            std::cerr <<argv0 <<": stdin:" <<line_num <<": syntax error: extra text after func2_id\n";
+            std::cerr <<argv0 <<": " <<input_name <<":" <<line_num <<": syntax error: extra text after func2_id\n";
             exit(1);
         }
 
@@ -538,6 +543,8 @@ main(int argc, char *argv[])
                 std::cerr <<argv0 <<": --collection-ratio requires one or two floating point values in [0..1]\n";
                 exit(1);
             }
+        } else if (!strncmp(argv[argno], "--file=", 7)) {
+            opt.input_file_name = argv[argno]+7;
         } else if (!strncmp(argv[argno], "--relation=", 11)) {
             opt.relation_id = strtol(argv[argno]+11, NULL, 0);
         } else if (!strcmp(argv[argno], "--ignore-faults")) {
@@ -574,9 +581,20 @@ main(int argc, char *argv[])
     transaction = conn->transaction();
     int64_t cmd_id = CloneDetection::start_command(transaction, argc, argv, "calculating function similarity");
 
-    // Read function pairs from standard input
-    std::cerr <<argv0 <<": reading function pairs worklist from stdin...\n";
-    FunctionPairs worklist = load_worklist();
+    // Read function pairs from standard input or the file
+    FunctionPairs worklist;
+    if (opt.input_file_name.empty()) {
+        std::cerr <<argv0 <<": reading function pairs worklist from stdin...\n";
+        worklist = load_worklist("stdin", stdin);
+    } else {
+        FILE *in = fopen(opt.input_file_name.c_str(), "r");
+        if (NULL==in) {
+            std::cerr <<argv0 <<": " <<strerror(errno) <<": " <<opt.input_file_name <<"\n";
+            exit(1);
+        }
+        worklist = load_worklist(opt.input_file_name, in);
+        fclose(in);
+    }
     size_t npairs = worklist.size();
     std::cerr <<argv0 <<": work list has " <<npairs <<" function pair" <<(1==npairs?"":"s") <<"\n";
 
