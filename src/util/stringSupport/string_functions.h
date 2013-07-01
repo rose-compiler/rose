@@ -506,6 +506,9 @@ namespace StringUtility
       * stripping occurs at the begining, the end, or both. */
      std::string trim(const std::string &str, const std::string &strip=" \t\r\n", bool at_beginning=true, bool at_end=true);
 
+     /** Expand horizontal tab characters. */
+     std::string untab(const std::string &str, size_t tabstops=8, size_t firstcol=0);
+
      };
 
 

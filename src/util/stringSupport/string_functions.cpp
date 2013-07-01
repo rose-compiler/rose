@@ -1750,3 +1750,30 @@ StringUtility::trim(const std::string &str, const std::string &strip, bool at_be
     assert(last>=first);
     return str.substr(first, last+1-first);
 }
+
+std::string
+StringUtility::untab(const std::string &str, size_t tabstops, size_t colnum)
+{
+    tabstops = std::max(tabstops, (size_t)1);
+    std::string retval;
+    for (size_t i=0; i<str.size(); ++i) {
+        switch (str[i]) {
+            case '\t': {
+                size_t nspc = tabstops - colnum % tabstops;
+                retval += std::string(nspc, ' ');
+                colnum += nspc;
+                break;
+            }
+            case '\n':
+            case '\r':
+                retval += str[i];
+                colnum = 0;
+                break;
+            default:
+                retval += str[i];
+                ++colnum;
+                break;
+        }
+    }
+    return retval;
+}
