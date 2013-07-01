@@ -9729,7 +9729,7 @@ SageBuilder::buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* s
   // I think this could still fail for a function with a name such as "X<Y>"  strange converstion operators.
      ROSE_ASSERT(SageInterface::hasTemplateSyntax(name) == false);
 
-#if 1
+#if 0
      printf ("In buildNondefiningClassDeclaration(): name = %s scope = %p = %s \n",name.str(),scope,scope != NULL ? scope->class_name().c_str() : "NULL");
 
   // DQ (6/9/2013): I want to know that I'm not debugging this function.
@@ -9775,8 +9775,6 @@ SageBuilder::buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* s
           SgClassDeclaration::class_types kind = SgClassDeclaration::e_class;
           nondefdecl = new SgClassDeclaration(name,kind,NULL,NULL);
           ROSE_ASSERT(nondefdecl != NULL);
-          if (nondefdecl->get_type() == NULL)
-            nondefdecl->set_type(SgClassType::createType(nondefdecl));
 
  //         printf ("SageBuilder::buildClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
 
@@ -9816,6 +9814,10 @@ SageBuilder::buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* s
             // printf ("Warning: no scope provided to support symbol table entry! \n");
              }
 
+          // TV (06/29/13): an assertion fails in SgClassType::createType. Moved set_scope.
+           if (nondefdecl->get_type() == NULL)
+             nondefdecl->set_type(SgClassType::createType(nondefdecl));
+
        // DQ (10/30/2010): There should be a properly defined type at this point!
           ROSE_ASSERT(nondefdecl->get_type() != NULL);
 
@@ -9838,7 +9840,7 @@ SageBuilder::buildDefiningClassDeclaration ( SgName name, SgScopeStatement* scop
   // named differently (from this one) and depricate this function...which I like much better.
      printf ("WARNING: This function for building defining class declarations has different semantics from that of the function to build defining function declarations. \n");
 
-#if 1
+#if 0
      printf ("In buildDefiningClassDeclaration(): name = %s scope = %p = %s \n",name.str(),scope,scope != NULL ? scope->class_name().c_str() : "NULL");
 
   // DQ (6/9/2013): I want to know that I'm not debugging this function.
