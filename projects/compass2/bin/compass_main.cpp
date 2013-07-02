@@ -32,6 +32,7 @@ extern const Compass::Checker* const keywordMacroChecker;
 extern const Compass::Checker* const nonGlobalCppDirectiveChecker;
 extern const Compass::Checker* const nonStaticArraySizeChecker;
 extern const Compass::Checker* const variableNameSimilarityChecker;
+extern const Compass::Checker* const noGotoChecker;
 //PLACEHOLDER1
 /*-----------------------------------------------------------------------------
  * Main program
@@ -140,6 +141,8 @@ int main (int argc, char** argv)
             //    traversals.push_back (nonStaticArraySizeChecker);
             else if ("variableNameSimilarity" == checker_name)
                 traversals.push_back (variableNameSimilarityChecker);
+            else if ("noGoto" == checker_name)
+                traversals.push_back (noGotoChecker);
             //PLACEHOLDER2
             else
             {
