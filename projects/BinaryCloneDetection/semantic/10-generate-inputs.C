@@ -95,6 +95,8 @@ usage(int exit_status)
               <<"      stack pointer.\n"
               <<"    * \"global\" is used when a test needs a value for a global variable.  Global variables are defined as\n"
               <<"      those memory addresses that are mapped from the specimen or one of its dynamically linked libraries.\n"
+              <<"    * \"function\" is used as the return value from functions that are treated as black boxes--those\n"
+              <<"      functions that are skipped over instead of traversing into the function.\n"
               <<"    * \"pointer\" is used when a test needs a value for a variable for which none of the previous queues\n"
               <<"      apply and a pointer detection analysis has determined that the address stores a pointer.\n"
               <<"    * \"memhash\" is a special queue representing memory values that are a function of their address. This\n"
@@ -134,6 +136,8 @@ InputQueueName parse_queuename(const std::string &name)
         return IQ_LOCAL;
     } else if (0==name.compare("global") || 0==name.compare("globals")) {
         return IQ_GLOBAL;
+    } else if (0==name.compare("function") || 0==name.compare("functions")) {
+        return IQ_FUNCTION;
     } else if (0==name.compare("pointer") || 0==name.compare("pointers")) {
         return IQ_POINTER;
     } else if (0==name.compare("memhash")) {

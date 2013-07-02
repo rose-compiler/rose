@@ -149,6 +149,7 @@ create table semantic_fio (
        arguments_consumed integer,		-- number of inputs consumed from the arguments queue
        locals_consumed integer,			-- number of inputs consumed form the locals queue
        globals_consumed integer,		-- number of inputs consumed from the globals queue
+       functions_consumed integer,		-- number of return values from black-box (skipped-over) functions
        pointers_consumed integer,               -- number of pointers from the inputgroup consumed by this test
        integers_consumed integer,               -- number of integers from the inputgroup consumed by this test
        instructions_executed integer,           -- number of instructions executed by this test

@@ -663,26 +663,27 @@ main(int argc, char *argv[])
         SqlDatabase::StatementPtr stmt = tx->statement("insert into semantic_fio"
                                                        // 0        1          2                   3
                                                        " (func_id, igroup_id, arguments_consumed, locals_consumed,"
-                                                       // 4               5                  6
-                                                       "globals_consumed, pointers_consumed, integers_consumed,"
-                                                       // 7                     8          9
-                                                       " instructions_executed, ogroup_id, status,"
-                                                       // 10          11        12
+                                                       // 4               5                   6
+                                                       "globals_consumed, functions_consumed, pointers_consumed,"
+                                                       // 7                8                      9          10
+                                                       "integers_consumed, instructions_executed, ogroup_id, status,"
+                                                       // 11          12        13
                                                        "elapsed_time, cpu_time, cmd)"
-                                                       " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                                                       " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         stmt->bind(0, work.func_id);
         stmt->bind(1, work.igroup_id);
         stmt->bind(2, igroup.queue(IQ_ARGUMENT).nconsumed());
         stmt->bind(3, igroup.queue(IQ_LOCAL).nconsumed());
         stmt->bind(4, igroup.queue(IQ_GLOBAL).nconsumed());
-        stmt->bind(5, igroup.queue(IQ_POINTER).nconsumed());
-        stmt->bind(6, igroup.queue(IQ_INTEGER).nconsumed());
-        stmt->bind(7, ogroup.ninsns);
-        stmt->bind(8, ogroup_id);
-        stmt->bind(9, ogroup.fault);
-        stmt->bind(10, elapsed_time);
-        stmt->bind(11, cpu_time);
-        stmt->bind(12, cmd_id);
+        stmt->bind(5, igroup.queue(IQ_FUNCTION).nconsumed());
+        stmt->bind(6, igroup.queue(IQ_POINTER).nconsumed());
+        stmt->bind(7, igroup.queue(IQ_INTEGER).nconsumed());
+        stmt->bind(8, ogroup.ninsns);
+        stmt->bind(9, ogroup_id);
+        stmt->bind(10, ogroup.fault);
+        stmt->bind(11, elapsed_time);
+        stmt->bind(12, cpu_time);
+        stmt->bind(13, cmd_id);
         stmt->execute();
         ++ntests_ran;
 

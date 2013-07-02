@@ -91,6 +91,7 @@ main(int argc, char *argv[])
     queues.insert(IQ_ARGUMENT,  "arguments of the function being analyzed");
     queues.insert(IQ_LOCAL,     "local variables appearing on the stack");
     queues.insert(IQ_GLOBAL,    "global variables");
+    queues.insert(IQ_FUNCTION,  "function black box return values");
     queues.insert(IQ_POINTER,   "variables of pointer type not in lower-numbered queues");
     queues.insert(IQ_MEMHASH,   "memory not in lower-numbered queues");
     queues.insert(IQ_INTEGER,   "locations not not in lower-numbered queues");

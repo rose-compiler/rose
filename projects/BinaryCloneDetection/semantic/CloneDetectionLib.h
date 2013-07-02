@@ -582,6 +582,7 @@ enum InputQueueName {
     IQ_ARGUMENT= 0,                            // queue used for function arguments
     IQ_LOCAL,                                  // queue used for local variables
     IQ_GLOBAL,                                 // queue used for global variables
+    IQ_FUNCTION,                               // queue used for return value for functions skipped over
     IQ_POINTER,                                // queue used for pointers if none of the above apply
     IQ_MEMHASH,                                // pseudo-queue used for memory values if none of the above apply
     IQ_INTEGER,                                // queue used if none of the above apply
@@ -674,6 +675,7 @@ public:
             case IQ_ARGUMENT: return "argument";
             case IQ_LOCAL:    return "local";
             case IQ_GLOBAL:   return "global";
+            case IQ_FUNCTION: return "function";
             case IQ_POINTER:  return "pointer";
             case IQ_MEMHASH:  return "memhash";
             case IQ_INTEGER:  return "integer";
@@ -1198,6 +1200,7 @@ public:
         assert(insn_x86!=NULL);
         ++state.output_group.ninsns;
         rose_addr_t next_eip = state.registers.ip.known_value();
+        bool call_skipped = false;
 
         // If the test branches (via CALL or JMP or other) to a dynamically-loaded function that has not been linked into the
         // address space, then we need to do something about it or we'll likely get a disassemble failure on the next
@@ -1205,7 +1208,7 @@ public:
         // initialized the .got.plt with the GOTPLT_VALUE that we recognize here.  When we detect that the next instruction is
         // at the GOTPLT_VALUE address, we consume an input value and place it in EAX (the return value), then pop the return
         // address off the stack and load it into EIP.
-        if (GOTPLT_VALUE==next_eip) {
+        if (GOTPLT_VALUE==next_eip && !call_skipped) {
             if (params.verbosity>=EFFUSIVE)
                 std::cerr <<"CloneDetection: special handling for non-linked dynamic function\n";
             // Don't return if abort@plt is the thing that just tried to branch to GOTPLT_VALUE
@@ -1217,7 +1220,7 @@ public:
                 }
             }
             next_eip = skip_call(insn);
-            this->writeRegister("eax", next_input_value<32>(IQ_INTEGER));
+            this->writeRegister("eax", next_input_value<32>(IQ_FUNCTION));
         }
 
         // Special handling for function calls.  Optionally, instead of calling the function, we treat the function as
@@ -1227,7 +1230,7 @@ public:
         //    * The called function's return value is in the EAX register
         //    * The caller cleans up any arguments that were passed via stack
         //    * The function's return value is an integer (non-pointer) type
-        if (x86_call==insn_x86->get_kind()) {
+        if (x86_call==insn_x86->get_kind() && !call_skipped) {
             if (!params.follow_calls) {
                 if (params.verbosity>=EFFUSIVE)
                     std::cerr <<"CloneDetection: special handling for function call (fall through and return via EAX)\n";
@@ -1237,7 +1240,10 @@ public:
                     state.output_group.callee_ids.push_back(found->second);
 #endif
                 next_eip = skip_call(insn);
-                this->writeRegister("eax", next_input_value<32>(IQ_INTEGER));
+                this->writeRegister("eax", next_input_value<32>(IQ_FUNCTION));
+            }
+        }
+
             }
         }
 
@@ -1279,7 +1285,7 @@ public:
             ValueType<32> syscall_num = this->template readRegister<32>("eax");
             state.output_group.syscalls.push_back(syscall_num.known_value());
 #endif
-            this->writeRegister("eax", next_input_value<32>(IQ_INTEGER));
+            this->writeRegister("eax", next_input_value<32>(IQ_FUNCTION));
         } else {
             Super::interrupt(inum);
             throw FaultException(AnalysisFault::INTERRUPT);
