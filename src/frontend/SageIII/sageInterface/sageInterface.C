@@ -3528,7 +3528,9 @@ SageInterface::generateFileList()
   // This would alternatively traverse all IR nodes in thememory pool!
   // fileTraversal.traverseMemoryPool();
 
-     ROSE_ASSERT(fileTraversal.fileList.empty() == false);
+  // TV (06/24/2013): This fail when calling SageBuilder::buildVariableDeclaration(...) without any file created.
+  // ROSE_ASSERT(fileTraversal.fileList.empty() == false);
+
      return fileTraversal.fileList;
    }
 
@@ -10982,6 +10984,19 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
         }
    }
 
+PreprocessingInfo* SageInterface::attachComment(SgSourceFile * source_file, const std::string & content, PreprocessingInfo::DirectiveType directive_type, PreprocessingInfo::RelativePositionType  position) {
+  assert(source_file != NULL);
+  assert(position == PreprocessingInfo::before || position ==  PreprocessingInfo::after);
+
+  SgGlobal * global_scope = source_file->get_globalScope();
+
+  PreprocessingInfo* result = new PreprocessingInfo(directive_type, content, "Transformation generated",0, 0, 0, position);
+  ROSE_ASSERT(result);
+
+  global_scope->addToAttachedPreprocessingInfo(result, position);
+
+  return result;
+}
 
 //---------------------------------------------------------------
 PreprocessingInfo* SageInterface::attachComment(
@@ -11062,6 +11077,26 @@ PreprocessingInfo* SageInterface::attachComment(
      target->addToAttachedPreprocessingInfo(result);
      return result;
    }
+
+PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const string & header_file_name, bool isSystemHeader, PreprocessingInfo::RelativePositionType position) {
+  assert(source_file != NULL);
+  assert(position == PreprocessingInfo::before || position ==  PreprocessingInfo::after);
+
+  SgGlobal * global_scope = source_file->get_globalScope();
+
+  string content;
+  if (isSystemHeader)
+    content = "#include <" + header_file_name + "> \n";
+  else
+    content = "#include \"" + header_file_name + "\" \n";
+
+  PreprocessingInfo* result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration, content, "Transformation generated",0, 0, 0, position);
+  ROSE_ASSERT(result);
+
+  global_scope->addToAttachedPreprocessingInfo(result, position);
+
+  return result;
+}
 
 PreprocessingInfo* SageInterface::insertHeader(const string& filename, PreprocessingInfo::RelativePositionType position /*=after*/, bool isSystemHeader /*=false*/, SgScopeStatement* scope /*=NULL*/)
   {

@@ -616,6 +616,9 @@ bool isIndexOperator( SgExpression* exp );
   //! Dumps a located node's preprocessing information.
   void dumpPreprocInfo (SgLocatedNode* locatedNode);
 
+//! Insert  #include "filename" or #include <filename> (system header) onto the global scope of a source file
+PreprocessingInfo * insertHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader = false, PreprocessingInfo::RelativePositionType position = PreprocessingInfo::before);
+
 //! Insert  #include "filename" or #include <filename> (system header) into the global scope containing the current scope, right after other #include XXX.
 PreprocessingInfo* insertHeader(const std::string& filename, PreprocessingInfo::RelativePositionType position=PreprocessingInfo::after, bool isSystemHeader=false, SgScopeStatement* scope=NULL);
 
@@ -640,14 +643,15 @@ PreprocessingInfo* attachArbitraryText(SgLocatedNode* target,
 
 //!Check if a pragma declaration node has macro calls attached, if yes, replace macro calls within the pragma string with expanded strings. This only works if -rose:wave is turned on.
 void replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* target);
-//@}
 
+//! Build and attach comment onto the global scope of a source file
+PreprocessingInfo* attachComment(
+  SgSourceFile * source_file,
+  const std::string & content,
+  PreprocessingInfo::DirectiveType directive_type = PreprocessingInfo::C_StyleComment,
+  PreprocessingInfo::RelativePositionType  position = PreprocessingInfo::before
+);
 
-//------------------------------------------------------------------------
-//@{
-/*! @name Source File Position
-  \brief set Sg_File_Info for a SgNode
-*/
 //! Build and attach comment, comment style is inferred from the language type of the target node if not provided
    PreprocessingInfo* attachComment(SgLocatedNode* target, const std::string & content,
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before,
@@ -661,7 +665,14 @@ void replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* target);
 //! Add a string to be unparsed to support code generation for back-end specific tools or compilers.
   void addTextForUnparser ( SgNode* astNode, std::string s, AstUnparseAttribute::RelativePositionType inputlocation );
 
+//@}
 
+
+//------------------------------------------------------------------------
+//@{
+/*! @name Source File Position
+  \brief set Sg_File_Info for a SgNode
+*/
 
 // ************************************************************************
 //              Newer versions of now depricated functions
