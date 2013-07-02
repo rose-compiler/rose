@@ -21,6 +21,7 @@
     <parameter name="enabled_checker">nonGlobalCppDirective</parameter>
     <parameter name="enabled_checker">nonStaticArraySize</parameter>
     <parameter name="enabled_checker">variableNameSimilarity</parameter>
+    <!--PLACEHOLDER-->
   </general>
 
   <!-- Checker-specific Compass Parameters //-->

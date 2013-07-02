@@ -36,7 +36,19 @@ libcompass2_la_SOURCES=\
 	compass.cpp
 
 libcompass2_la_include_HEADERS=\
-	compass.h
+	compass.h \
+	$(top_srcdir)/projects/CodeThorn/src/RoseAst.h \
+	$(top_srcdir)/projects/CodeThorn/src/AstTerm.h \
+	$(top_srcdir)/projects/CodeThorn/src/matcherparser_decls.h \
+	$(top_srcdir)/projects/CodeThorn/src/AstMatching.h \
+	$(top_srcdir)/projects/CodeThorn/src/MatchOperation.h \
+	$(top_srcdir)/projects/CodeThorn/src/SgNodeHelper.h
+
+BUILT_SOURCES = generate-matcherparser.h
+
+#make matcherparser.h -C $(top_builddir)/projects/CodeThorn/src
+generate-matcherparser.h:
+	make matcher_demo -C $(top_builddir)/projects/CodeThorn/src
 
 # ------------------------------------------------------------------------------
 #  Compass2 main executable
@@ -51,18 +63,26 @@ bin_compass2_LDADD=\
 	libcompass2.la \
 	bin/checkers/dead_function/libdeadfunction.la \
 	bin/checkers/default_argument/libdefaultargument.la \
+	bin/checkers/floating_point_exact_comparison/libfloatingpointexactcomparison.la \
 	bin/checkers/function_pointer/libfunctionpointer.la \
 	bin/checkers/function_prototype/libfunctionprototype.la \
 	bin/checkers/function_with_multiple_returns/libfunctionwithmultiplereturns.la \
-	bin/checkers/floating_point_exact_comparison/libfloating_point_exact_comparison.la \
 	bin/checkers/global_variables/libglobalvariables.la \
 	bin/checkers/keyword_macro/libkeywordmacro.la \
 	bin/checkers/keyword_macro/libkeywordmacro.la \
 	bin/checkers/non_global_cpp_directive/libnonglobalcppdirective.la \
 	bin/checkers/non_static_array_size/libnonstaticarraysize.la \
 	bin/checkers/variable_name_similarity/libvariablenamesimilarity.la \
+	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
-	$(ROSE_LIBS)
+	$(ROSE_LIBS) \
+	$(top_builddir)/projects/CodeThorn/src/AstMatching.o \
+	$(top_builddir)/projects/CodeThorn/src/AstTerm.o \
+	$(top_builddir)/projects/CodeThorn/src/matcherlexer.o \
+	$(top_builddir)/projects/CodeThorn/src/matcherparser.o \
+	$(top_builddir)/projects/CodeThorn/src/MatchOperation.o \
+	$(top_builddir)/projects/CodeThorn/src/RoseAst.o \
+	$(top_builddir)/projects/CodeThorn/src/SgNodeHelper.o
 
 # ------------------------------------------------------------------------------
 #  Checkers
@@ -71,6 +91,7 @@ bin_compass2_LDADD=\
 noinst_LTLIBRARIES=\
 	bin/checkers/dead_function/libdeadfunction.la \
 	bin/checkers/default_argument/libdefaultargument.la \
+	bin/checkers/floating_point_exact_comparison/libfloatingpointexactcomparison.la \
 	bin/checkers/function_pointer/libfunctionpointer.la \
 	bin/checkers/function_prototype/libfunctionprototype.la \
 	bin/checkers/floating_point_exact_comparison/libfloating_point_exact_comparison.la \
@@ -113,6 +134,8 @@ bin_checkers_non_static_array_size_libnonstaticarraysize_la_SOURCES=\
 
 bin_checkers_variable_name_similarity_libvariablenamesimilarity_la_SOURCES=\
 	bin/checkers/variable_name_similarity/variable_name_similarity.cpp
+
+#PLACEHOLDER
 
 # ------------------------------------------------------------------------------
 #  XML Schemas
@@ -175,4 +198,3 @@ clean-local:
 		compass.lo  \
 	rm -f \
 		bin/compass_main.o
-
