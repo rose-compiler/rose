@@ -54,6 +54,7 @@ bin_compass2_LDADD=\
 	bin/checkers/function_pointer/libfunctionpointer.la \
 	bin/checkers/function_prototype/libfunctionprototype.la \
 	bin/checkers/function_with_multiple_returns/libfunctionwithmultiplereturns.la \
+	bin/checkers/floating_point_exact_comparison/libfloating_point_exact_comparison.la \
 	bin/checkers/global_variables/libglobalvariables.la \
 	bin/checkers/keyword_macro/libkeywordmacro.la \
 	bin/checkers/keyword_macro/libkeywordmacro.la \
@@ -72,6 +73,7 @@ noinst_LTLIBRARIES=\
 	bin/checkers/default_argument/libdefaultargument.la \
 	bin/checkers/function_pointer/libfunctionpointer.la \
 	bin/checkers/function_prototype/libfunctionprototype.la \
+	bin/checkers/floating_point_exact_comparison/libfloating_point_exact_comparison.la \
 	bin/checkers/function_with_multiple_returns/libfunctionwithmultiplereturns.la \
 	bin/checkers/global_variables/libglobalvariables.la \
 	bin/checkers/keyword_macro/libkeywordmacro.la \
@@ -90,6 +92,9 @@ bin_checkers_function_pointer_libfunctionpointer_la_SOURCES=\
 
 bin_checkers_function_prototype_libfunctionprototype_la_SOURCES=\
 	bin/checkers/function_prototype/function_prototype.cpp
+
+bin_checkers_floating_point_exact_comparison_la_SOURCES=\
+	bin/checkers/floating_point_exact_comparison/floating_point_exact_comparison.cpp
 
 bin_checkers_function_with_multiple_returns_libfunctionwithmultiplereturns_la_SOURCES=\
 	bin/checkers/function_with_multiple_returns/function_with_multiple_returns.cpp
