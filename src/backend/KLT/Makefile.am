@@ -1,0 +1,2 @@
+
+SUBDIRS=include lib docs

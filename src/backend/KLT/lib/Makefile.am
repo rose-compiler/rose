@@ -1,0 +1,3 @@
+
+SUBDIRS=core sequential opencl
+
