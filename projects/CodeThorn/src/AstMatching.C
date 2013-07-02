@@ -30,7 +30,8 @@ MatchResult AstMatching::getResult() {
 
 void AstMatching::performMatching() {
   generateMatchOperationsSequence();
-  printMatchOperationsSequence();
+  if(_status.debug)
+	printMatchOperationsSequence();
   performMatchingOnAst(_root);
 }
 void AstMatching::generateMatchOperationsSequence() {
