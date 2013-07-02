@@ -61,11 +61,6 @@ noinst_PROGRAMS += 32-func-similarity
 32_func_similarity_CPPFLAGS = $(ROSE_INCLUDES)
 32_func_similarity_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-noinst_PROGRAMS += 35-clusters-from-pairs
-35_clusters_from_pairs_SOURCES = 35-clusters-from-pairs.C
-35_clusters_from_pairs_CPPFLAGS = $(ROSE_INCLUDES)
-35_clusters_from_pairs_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-
 #-----------------------------------------------------------------------------------------------------------------------------
 # Level 80-89: database maintenance
 noinst_PROGRAMS += 85-delete

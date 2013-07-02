@@ -2,8 +2,6 @@
 -- SQL contained herein should be written portably for either SQLite3 or PostgreSQL
 
 -- Clean up. Tables need to be dropped in the opposite order they're created.
-drop table if exists semantic_clusters;         -- The default name for the clusters table; not created in this SQL file
-drop table if exists semantic_clusters_tpl;
 drop table if exists semantic_funcsim;
 drop table if exists semantic_fio_trace;
 drop table if exists semantic_fio_events;
@@ -191,11 +189,4 @@ create table semantic_funcsim (
        maxcompares integer,                     -- potential number of comparisons possible (ncompares is a random sample)
        relation_id int,                         -- Identying number for this set of function similarity values (default is zero)
        cmd bigint references semantic_history(hashkey) -- command that set the precision on this row
-);
-
--- Clusters. The commands allow many different cluster tables to be created. This is the template for creating
--- those tables.
-create table semantic_clusters_tpl (
-       id integer,                              -- cluster ID number
-       func_id integer references semantic_functions(id)
 );

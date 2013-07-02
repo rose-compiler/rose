@@ -135,9 +135,6 @@ func_similarity_worklist_flags='$func_similarity_worklist_flags'
 
 # Flags for determining similarity of pairs of functions based on their output
 func_similarity_flags='$func_similarity_flags'
-
-# Flags for creating clusters from pairs of similar functions
-clusters_from_pairs_flags='$clusters_from_pairs_flags'
 EOF
     fi
 }
@@ -344,20 +341,3 @@ else
 	func-sim || exit 1
     rm -f $worklist_parts
 fi
-
-if [ "$interactive" = "yes" ]; then
-    echo
-    echo "=================================================================================================="
-    echo "These are the flags for 35-clusters-from-pairs, which organizes pairs of similar functions into"
-    echo "clusters. The similarity relationship is non-transitive, otherwise this step would be trivial."
-    echo "Rather, this tool needs to consult the similarity graph and find all maximal cliques."
-    $BLDDIR/35-clusters-from-pairs --help  2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
-    read -e -p "Switches for creating clusters: " -i "$clusters_from_pairs_flags" clusters_from_pairs_flags
-    save_settings
-fi
-execute $BLDDIR/35-clusters-from-pairs $clusters_from_pairs_flags "$dbname" semantic_clusters
-
-echo
-echo "=================================================================================================="
-echo "Cluster results"
-execute $BLDDIR/90-list-clusters --summarize "$dbname"
