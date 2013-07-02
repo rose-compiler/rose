@@ -1,5 +1,5 @@
 /**
- * \file    floatingPointExactComparison.cpp
+ * \file    floating_point_exact_comparison.cpp
  * \author  Sam Kelly <kelly64@llnl.gov>
  * \date    June 26, 2013
  */
@@ -10,9 +10,6 @@
 #include "string_functions.h"
 #include "CodeThorn/src/AstMatching.h"
 #include "CodeThorn/src/AstTerm.h"
-
-#include <algorithm>
-#include <map>
 
 #include <boost/foreach.hpp>
 

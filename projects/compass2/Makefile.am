@@ -73,6 +73,7 @@ bin_compass2_LDADD=\
 	bin/checkers/non_global_cpp_directive/libnonglobalcppdirective.la \
 	bin/checkers/non_static_array_size/libnonstaticarraysize.la \
 	bin/checkers/variable_name_similarity/libvariablenamesimilarity.la \
+	bin/checkers/no_goto/libnogoto.la \
 	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS) \
@@ -89,6 +90,7 @@ bin_compass2_LDADD=\
 # ------------------------------------------------------------------------------
 
 noinst_LTLIBRARIES=\
+	bin/checkers/no_goto/libnogoto.la \
 	bin/checkers/dead_function/libdeadfunction.la \
 	bin/checkers/default_argument/libdefaultargument.la \
 	bin/checkers/floating_point_exact_comparison/libfloatingpointexactcomparison.la \
@@ -134,6 +136,9 @@ bin_checkers_non_static_array_size_libnonstaticarraysize_la_SOURCES=\
 
 bin_checkers_variable_name_similarity_libvariablenamesimilarity_la_SOURCES=\
 	bin/checkers/variable_name_similarity/variable_name_similarity.cpp
+
+bin_checkers_no_goto_libnogoto_la_SOURCES=\
+	bin/checkers/no_goto/no_goto.cpp
 
 #PLACEHOLDER
 
