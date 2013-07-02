@@ -1244,6 +1244,16 @@ public:
             }
         }
 
+        // Special handling for indirect calls whose target is not a valid instruction.  Treat the call as if it were to a
+        // black box function, skipping the call.
+        if (x86_call==insn_x86->get_kind() && !call_skipped) {
+            const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
+            SgAsmInstruction *target_insn = insns->get_instruction(next_eip);
+            if (args.size()==1 && NULL==isSgAsmValueExpression(args[0]) && NULL==target_insn) {
+                if (params.verbosity>=EFFUSIVE)
+                    std::cerr <<"CloneDetection: special handling for invalid indirect function call\n";
+                next_eip = skip_call(insn);
+                this->writeRegister("eax", next_input_value<32>(IQ_FUNCTION));
             }
         }
 
