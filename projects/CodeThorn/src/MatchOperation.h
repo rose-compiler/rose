@@ -28,6 +28,7 @@ struct SingleMatchResult {
   SingleMatchMarkedLocations singleMatchMarkedLocations;
   bool success;
   void clear();
+  bool isSMRMarkedLocation(RoseAst::iterator& i);
 };
 
 class MatchStatus {
@@ -40,7 +41,7 @@ class MatchStatus {
   }
   enum PatternMatchMode {MATCHMODE_SHALLOW, MATCHMODE_DEEP, MATCHMODE_SINGLE};
   enum CheckNodeMode {NODECHECKMODE_TYPEID,NODECHECKMODE_VARIANT};
-  bool isMarkedLocation(RoseAst::iterator& i);
+  bool isMarkedLocationAddress(RoseAst::iterator& i);
 
  public:
   bool debug;
