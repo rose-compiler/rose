@@ -1419,7 +1419,7 @@ is_valid_table_name(const std::string &name)
                                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                      "0123456789"
                                      "_";
-    return std::string::npos == name.find_first_not_of(valid_chars);
+    return !name.empty() && std::string::npos==name.find_first_not_of(valid_chars);
 }
 
 std::ostream& operator<<(std::ostream &o, const NoColumn&) { return o; }

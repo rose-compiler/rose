@@ -451,6 +451,37 @@ std::string escape(const std::string&, Driver, bool do_quote=true);
 /** Returns true if @p name is a valid table name. */
 bool is_valid_table_name(const std::string &name);
 
+/** Converts a container of values to an SQL "in" clause. */
+template<class Container>
+std::string in(const Container &values)
+{
+    std::ostringstream retval;
+    retval <<"in (";
+    unsigned nvals = 0;
+    for (typename Container::const_iterator vi=values.begin(); vi!=values.end(); ++vi, ++nvals)
+        retval <<(nvals?", ":"") <<*vi;
+    retval <<")";
+    return retval.str();
+}
+
+/** Converts a container of numbers to an SQL "in" clause using StringUtility to format them. */
+template<class Container, class Stringifier>
+std::string in_numbers(const Container &values, Stringifier &stringifier)
+{
+    return "in (" + StringUtility::join(", ", StringUtility::toStrings(values, stringifier)) + ")";
+}
+
+/** Converts a container of strings to an SQL "in" clause of strings. The @p driver is necessary in order to properly
+ *  quote and escape the supplied values. */
+template<class Container>
+std::string in_strings(const Container &values, Driver driver)
+{
+    std::vector<std::string> strings;
+    for (typename Container::const_iterator vi=values.begin(); vi!=values.end(); ++vi)
+        strings.push_back(escape(*vi, driver));
+    return in(strings);
+}
+
 std::ostream& operator<<(std::ostream&, const NoColumn&);
 std::ostream& operator<<(std::ostream&, const Exception&);
 std::ostream& operator<<(std::ostream&, const Connection&);
