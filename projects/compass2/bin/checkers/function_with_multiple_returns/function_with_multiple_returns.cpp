@@ -152,11 +152,10 @@ static void run(Compass::Parameters parameters, Compass::OutputObject* output)
           CheckerOutput(function));
 
       // verbose output
-      /*
       if (SgProject::get_verbose > 0)
       {
         std::cout << "num_returns: " << num_matches << std::endl;
-      }*/
+      }
     }
 
   }
