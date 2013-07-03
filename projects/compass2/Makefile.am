@@ -74,6 +74,8 @@ bin_compass2_LDADD=\
 	bin/checkers/non_static_array_size/libnonstaticarraysize.la \
 	bin/checkers/variable_name_similarity/libvariablenamesimilarity.la \
 	bin/checkers/no_goto/libnogoto.la \
+	bin/checkers/no_rand/libnorand.la \
+	bin/checkers/boolean_is_has/libbooleanishas.la \
 	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS) \
@@ -90,6 +92,8 @@ bin_compass2_LDADD=\
 # ------------------------------------------------------------------------------
 
 noinst_LTLIBRARIES=\
+	bin/checkers/boolean_is_has/libbooleanishas.la \
+	bin/checkers/no_rand/libnorand.la \
 	bin/checkers/no_goto/libnogoto.la \
 	bin/checkers/dead_function/libdeadfunction.la \
 	bin/checkers/default_argument/libdefaultargument.la \
@@ -139,6 +143,12 @@ bin_checkers_variable_name_similarity_libvariablenamesimilarity_la_SOURCES=\
 
 bin_checkers_no_goto_libnogoto_la_SOURCES=\
 	bin/checkers/no_goto/no_goto.cpp
+
+bin_checkers_no_rand_libnorand_la_SOURCES=\
+	bin/checkers/no_rand/no_rand.cpp
+
+bin_checkers_boolean_is_has_libbooleanishas_la_SOURCES=\
+	bin/checkers/boolean_is_has/boolean_is_has.cpp
 
 #PLACEHOLDER
 
