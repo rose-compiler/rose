@@ -21,7 +21,7 @@ usage(int exit_status)
               <<"  standard input stream.\n"
               <<"\n"
               <<"  The similarity of two functions is calculated by first computing the similarity of the output groups\n"
-              <<"  of those functions.  Output groups are compared only when the are both generated from input groups\n"
+              <<"  of those functions.  Output groups are compared only when they are both generated from input groups\n"
               <<"  belonging to the same input group collection.  Usually each input group belongs to its own singleton\n"
               <<"  collection (see the --collection switch for 10-generate-inputs).  Once output group similarities are\n"
               <<"  computed they are aggregated to form a function pair similarity."

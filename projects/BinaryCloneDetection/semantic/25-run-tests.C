@@ -35,7 +35,7 @@ usage(int exit_status)
               <<"    --[no-]follow-calls\n"
               <<"            If --follow-calls is specified, then x86 CALL instructions are treated the same as any other\n"
               <<"            instruction, resulting in the analysis of the called function in-line with the caller if possible,\n"
-              <<"            otherwise that particular call is treaded as for the --no-follow-calls case.  If --no-follow-calls\n"
+              <<"            otherwise that particular call is treated as for the --no-follow-calls case.  If --no-follow-calls\n"
               <<"            is specified (the default) then all x86 CALL instructions are skipped and the EAX register is\n"
               <<"            loaded with the next integer input value.\n"
               <<"    --[no-]interactive\n"
