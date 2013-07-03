@@ -15,7 +15,6 @@
     <parameter name="enabled_checker">functionPointer</parameter>
     <parameter name="enabled_checker">functionPrototype</parameter>
     <parameter name="enabled_checker">functionWithMultipleReturns</parameter>
-    <parameter name="enabled_checker">globalVariables</parameter>
     <parameter name="enabled_checker">keywordMacro</parameter>
     <parameter name="enabled_checker">keywordMacros</parameter>
     <parameter name="enabled_checker">nonGlobalCppDirective</parameter>
@@ -24,6 +23,7 @@
     <parameter name="enabled_checker">noGoto</parameter>
     <parameter name="enabled_checker">noRand</parameter>
     <parameter name="enabled_checker">booleanIsHas</parameter>
+    <parameter name="enabled_checker">globalVariables</parameter>
     <!--PLACEHOLDER-->
   </general>
 

@@ -67,7 +67,6 @@ bin_compass2_LDADD=\
 	bin/checkers/function_pointer/libfunctionpointer.la \
 	bin/checkers/function_prototype/libfunctionprototype.la \
 	bin/checkers/function_with_multiple_returns/libfunctionwithmultiplereturns.la \
-	bin/checkers/global_variables/libglobalvariables.la \
 	bin/checkers/keyword_macro/libkeywordmacro.la \
 	bin/checkers/keyword_macro/libkeywordmacro.la \
 	bin/checkers/non_global_cpp_directive/libnonglobalcppdirective.la \
@@ -76,6 +75,7 @@ bin_compass2_LDADD=\
 	bin/checkers/no_goto/libnogoto.la \
 	bin/checkers/no_rand/libnorand.la \
 	bin/checkers/boolean_is_has/libbooleanishas.la \
+	bin/checkers/global_variables/libglobalvariables.la \
 	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS) \
@@ -92,6 +92,7 @@ bin_compass2_LDADD=\
 # ------------------------------------------------------------------------------
 
 noinst_LTLIBRARIES=\
+	bin/checkers/global_variables/libglobalvariables.la \
 	bin/checkers/boolean_is_has/libbooleanishas.la \
 	bin/checkers/no_rand/libnorand.la \
 	bin/checkers/no_goto/libnogoto.la \
@@ -102,7 +103,6 @@ noinst_LTLIBRARIES=\
 	bin/checkers/function_prototype/libfunctionprototype.la \
 	bin/checkers/floating_point_exact_comparison/libfloating_point_exact_comparison.la \
 	bin/checkers/function_with_multiple_returns/libfunctionwithmultiplereturns.la \
-	bin/checkers/global_variables/libglobalvariables.la \
 	bin/checkers/keyword_macro/libkeywordmacro.la \
 	bin/checkers/non_global_cpp_directive/libnonglobalcppdirective.la \
 	bin/checkers/non_static_array_size/libnonstaticarraysize.la \
@@ -129,9 +129,6 @@ bin_checkers_function_with_multiple_returns_libfunctionwithmultiplereturns_la_SO
 bin_checkers_keyword_macro_libkeywordmacro_la_SOURCES=\
 	bin/checkers/keyword_macro/keyword_macro.cpp
 
-bin_checkers_global_variables_libglobalvariables_la_SOURCES=\
-	bin/checkers/global_variables/global_variables.cpp
-
 bin_checkers_non_global_cpp_directive_libnonglobalcppdirective_la_SOURCES=\
 	bin/checkers/non_global_cpp_directive/non_global_cpp_directive.cpp
 
@@ -149,6 +146,9 @@ bin_checkers_no_rand_libnorand_la_SOURCES=\
 
 bin_checkers_boolean_is_has_libbooleanishas_la_SOURCES=\
 	bin/checkers/boolean_is_has/boolean_is_has.cpp
+
+bin_checkers_global_variables_libglobalvariables_la_SOURCES=\
+	bin/checkers/global_variables/global_variables.cpp
 
 #PLACEHOLDER
 

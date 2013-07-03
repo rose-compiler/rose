@@ -155,13 +155,6 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
   }
 }
 
-// Remove this function if your checker is not an AST traversal
-static Compass::AstSimpleProcessingWithRunFunction*
-createTraversal(Compass::Parameters params, Compass::OutputObject* output)
-{
-  return NULL;
-}
-
 extern const Compass::Checker* const floatingPointExactComparisonChecker =
     new Compass::CheckerUsingAstSimpleProcessing(
         CompassAnalyses::FloatingPointExactComparison::checker_name,
@@ -171,5 +164,5 @@ extern const Compass::Checker* const floatingPointExactComparisonChecker =
         Compass::C | Compass::Cpp,
         Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
         run,
-        createTraversal);
+        NULL);
 

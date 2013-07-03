@@ -27,7 +27,6 @@ extern const Compass::Checker* const defaultArgumentChecker;
 extern const Compass::Checker* const functionPointerChecker;
 extern const Compass::Checker* const functionPrototypeChecker;
 extern const Compass::Checker* const functionWithMultipleReturnsChecker;
-extern const Compass::Checker* const globalVariablesChecker;
 extern const Compass::Checker* const keywordMacroChecker;
 extern const Compass::Checker* const nonGlobalCppDirectiveChecker;
 extern const Compass::Checker* const nonStaticArraySizeChecker;
@@ -35,6 +34,7 @@ extern const Compass::Checker* const variableNameSimilarityChecker;
 extern const Compass::Checker* const noGotoChecker;
 extern const Compass::Checker* const noRandChecker;
 extern const Compass::Checker* const booleanIsHasChecker;
+extern const Compass::Checker* const globalVariablesChecker;
 //PLACEHOLDER1
 /*-----------------------------------------------------------------------------
  * Main program
@@ -133,8 +133,6 @@ int main (int argc, char** argv)
                 traversals.push_back (functionPrototypeChecker);
             else if ("functionWithMultipleReturns" == checker_name)
                 traversals.push_back (functionWithMultipleReturnsChecker);
-            else if ("globalVariables" == checker_name)
-                traversals.push_back (globalVariablesChecker);
             else if ("keywordMacros" == checker_name)
                 traversals.push_back (keywordMacroChecker);
             else if ("nonGlobalCppDirective" == checker_name)
@@ -149,6 +147,8 @@ int main (int argc, char** argv)
                 traversals.push_back (noRandChecker);
             else if ("booleanIsHas" == checker_name)
                 traversals.push_back (booleanIsHasChecker);
+            else if ("globalVariables" == checker_name)
+                traversals.push_back (globalVariablesChecker);
             //PLACEHOLDER2
             else
             {
