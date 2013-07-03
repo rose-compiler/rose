@@ -2187,6 +2187,7 @@ tests/roseTests/mergeTraversal_tests/Makefile
 tests/translatorTests/Makefile
 tests/backend/Makefile
 tests/backend/KLT/Makefile
+tests/backend/SCSM/Makefile
 tutorial/Makefile
 tutorial/exampleMakefile
 tutorial/roseHPCT/Makefile
