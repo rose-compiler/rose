@@ -1,6 +1,6 @@
 /**
  * \file    floating_point_exact_comparison.cpp
- * \author  Sam Kelly <kelly64@llnl.gov>
+ * \author  Sam Kelly <kelly64@llnl.gov> <kellys@dickinson.edu>
  * \date    June 26, 2013
  */
 

@@ -22,6 +22,8 @@
     <parameter name="enabled_checker">nonStaticArraySize</parameter>
     <parameter name="enabled_checker">variableNameSimilarity</parameter>
     <parameter name="enabled_checker">noGoto</parameter>
+    <parameter name="enabled_checker">noRand</parameter>
+    <parameter name="enabled_checker">booleanIsHas</parameter>
     <!--PLACEHOLDER-->
   </general>
 
