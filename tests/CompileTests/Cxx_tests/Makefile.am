@@ -1311,6 +1311,23 @@ test2013_220.C \
 test2013_221.C \
 test2013_222.C \
 test2013_223.C \
+test2013_225.C \
+test2013_226.C \
+test2013_227.C \
+test2013_228.C \
+test2013_229.C \
+test2013_230.C \
+test2013_231.C \
+test2013_232.C \
+test2013_234.C \
+test2013_235.C \
+test2013_236.C \
+test2013_237.C \
+test2013_238.C \
+test2013_239.C \
+test2013_240.C \
+test2013_241.C \
+test2013_242.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1920,6 +1937,15 @@ cpp_test2010_07: $(TEST_TRANSLATOR)
 	echo "Running boost specific test."
 	g++ -E -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_07.C
 
+test2013_235.o: $(TEST_TRANSLATOR)
+	echo "Running boost specific test."
+	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2013_235.C -o test2013_235.o
+
+test2013_236.o: $(TEST_TRANSLATOR)
+	echo "Running boost specific test."
+	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2013_236.C -o test2013_236.o
+
+
 $(TEST_TRANSLATOR):
 	cd ../..; $(MAKE) testTranslator
 
@@ -2062,7 +2088,15 @@ clean-local:
 #  TIMEOUT              Maximum time limit for the compilation of a <testcode>
 #  TIMEOUT_TOLERANCE    $gnu_time * $TIMEOUT_TOLERANCE (threshold tests only)
 #------------------------------------------------------------------------------
-TIMEOUT            ?= 60  # Default timeout value
+
+# DQ (6/30/2013): Increased this to support compiling Boost example tests. We 
+# need to rethink how we want to handl this. I suggest restricting this to a 
+# few tests instead of each test. Compiling with optimization also makes about
+# a factor of four difference for test2013_241.C (boost example test code).
+# Since Jenkins testing is currently done without optimization we need the 
+# larger timeout value just to handle the newer boost test codes.
+# TIMEOUT            ?= 60  # Default timeout value
+TIMEOUT            ?= 420  # Default timeout value
 TIMEOUT_TOLERANCE  ?= 20  # Default timeout tolerance value for threshold
                           # tests = $gnu_time * $TIMEOUT_TOLERANCE
 

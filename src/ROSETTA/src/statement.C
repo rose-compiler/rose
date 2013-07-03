@@ -1620,7 +1620,19 @@ Grammar::setUpStatements ()
                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateFunctionDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#if 0
+  // DQ (6/28/2013): The template arguments should not always be output where the function is used in a SgTemplateFunctionRefExp 
+  // and so we need to record this.  This does not handle where individual function reference expression may or may not explicitly
+  // specify the template argument list, but only where some do or all do not explicitly specify the template argument list.
+  // See test2013_242.C for an example of where this is required (a boost graph example test code).
+     TemplateFunctionDeclaration.setDataPrototype ( "bool", "template_argument_list_is_explicit", "= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 #else
+
+#error "DEAD CODE!"
+
      TemplateFunctionDeclaration.editSubstitute   ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
      TemplateFunctionDeclaration.editSubstitute   ( "LIST_DATA_TYPE", "SgInitializedNamePtrList" );
      TemplateFunctionDeclaration.editSubstitute   ( "LIST_NAME", "args" );
@@ -1715,7 +1727,18 @@ Grammar::setUpStatements ()
                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateMemberFunctionDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#if 0
+  // DQ (6/28/2013): The template arguments should not always be output where the function is used in a SgTemplateMemberFunctionRefExp 
+  // and so we need to record this.  This does not handle where individual function reference expression may or may not explicitly
+  // specify the template argument list, but only where some do or all do not explicitly specify the template argument list.
+     TemplateMemberFunctionDeclaration.setDataPrototype ( "bool", "template_argument_list_is_explicit", "= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 #else
+
+#error "DEAD CODE!"
+
      TemplateMemberFunctionDeclaration.editSubstitute      ( "LIST_DATA_TYPE", "SgInitializedNamePtrList" );
      TemplateMemberFunctionDeclaration.editSubstitute      ( "LIST_NAME", "ctors" );
      TemplateMemberFunctionDeclaration.editSubstitute      ( "LIST_FUNCTION_RETURN_TYPE", "void" );
@@ -1853,6 +1876,14 @@ Grammar::setUpStatements ()
   // if the name has been reset or not to avoid using mangled names in the unparsed (generated) code.
      TemplateInstantiationFunctionDecl.setDataPrototype ( "bool", "nameResetFromMangledForm", "= false",
                                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 1
+  // DQ (6/28/2013): The template arguments should not always be output where the function is used in a SgTemplateFunctionRefExp 
+  // and so we need to record this.  This does not handle where individual function reference expression may or may not explicitly
+  // specify the template argument list, but only where some do or all do not explicitly specify the template argument list.
+  // See test2013_242.C for an example of where this is required (a boost graph example test code).
+     TemplateInstantiationFunctionDecl.setDataPrototype ( "bool", "template_argument_list_is_explicit", "= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
   // DQ (3/22/2004): Support for template member functions
      TemplateInstantiationMemberFunctionDecl.setFunctionPrototype ( 
@@ -1890,6 +1921,14 @@ Grammar::setUpStatements ()
   // if the name has been reset or not to avoid using mangled names in the unparsed (generated) code.
      TemplateInstantiationMemberFunctionDecl.setDataPrototype ( "bool", "nameResetFromMangledForm", "= false",
                                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 1
+  // DQ (6/28/2013): The template arguments should not always be output where the function is used in a SgTemplateMemberFunctionRefExp 
+  // and so we need to record this.  This does not handle where individual function reference expression may or may not explicitly
+  // specify the template argument list, but only where some do or all do not explicitly specify the template argument list.
+     TemplateInstantiationMemberFunctionDecl.setDataPrototype ( "bool", "template_argument_list_is_explicit", "= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
 
 
 #if 0
