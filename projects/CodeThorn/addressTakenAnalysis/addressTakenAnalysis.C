@@ -165,23 +165,118 @@ void PointerTypeAnalysis::collectPointerTypes()
   ProcessQuery procQueryAST;
   // query type tree (SgType*)
   ProcessQuery procQueryType;
-  MatchResult matches = procQueryAST("$VAR=SgVarRefExp", root);
+  // MatchResult matches = procQueryAST("$VAR=SgVarRefExp", root);
+  // for(MatchResult::iterator it = matches.begin(); it != matches.end(); it++)
+  // {
+  //   SgVarRefExp* matchedVar = isSgVarRefExp((*it)["$VAR"]); ROSE_ASSERT(matchedVar);
+  //   // check if the type is SgPointerType
+  //   SgType* sgtype = matchedVar->get_type();
+  //   MatchResult matchedTypes = procQueryType("$T=SgPointerType(_,null,..)", sgtype);
+  //   for(MatchResult::iterator typeIt = matchedTypes.begin(); typeIt != matchedTypes.end(); typeIt++)
+  //   {
+  //     // each element should be a type
+  //     ROSE_ASSERT(isSgType((*typeIt)["$T"]));
+  //     SgType* matchedType = isSgType((*typeIt)["$T"]);
+  //     std::cout << "<Node: " << matchedVar->unparseToString() << ",\nType= " << astTermToMultiLineString(matchedType) << ">\n";
+  //   }
+  //   procQueryType.clearMatchResult();
+  // }
+  MatchResult matches = procQueryAST("$C=SgClassDeclaration(_,..)", root);
   for(MatchResult::iterator it = matches.begin(); it != matches.end(); it++)
   {
-    SgVarRefExp* matchedVar = isSgVarRefExp((*it)["$VAR"]); ROSE_ASSERT(matchedVar);
-    // check if the type is SgPointerType
-    SgType* sgtype = matchedVar->get_type();
-    MatchResult matchedTypes = procQueryType("$T=SgPointerType(_,..)", sgtype);
-    for(MatchResult::iterator typeIt = matchedTypes.begin(); typeIt != matchedTypes.end(); typeIt++)
+    SgClassDeclaration* cl_decl = isSgClassDeclaration((*it)["$C"]); ROSE_ASSERT(cl_decl);
+    std::cout << "Class=<" << cl_decl << "," << astTermToMultiLineString(cl_decl) << ">\n";
+    SgType* class_type = cl_decl->get_type(); ROSE_ASSERT(class_type);
+    MatchResult matchedTypes = procQueryType("$X=SgClassDeclaration(_,..)", class_type);
+    for(MatchResult::iterator itT = matchedTypes.begin(); itT != matchedTypes.end(); itT++)
     {
-      // each element should be a type
-      ROSE_ASSERT(isSgType((*typeIt)["$T"]));
-      SgType* matchedType = isSgType((*typeIt)["$T"]);
-      std::cout << "<Node: " << matchedVar->unparseToString() << ",\nType= " << astTermToMultiLineString(matchedType) << ">\n";
+      SgClassDeclaration* matchedDecl = isSgClassDeclaration((*itT)["$X"]);
+      std::cout << "Class=<" << matchedDecl << "," << astTermToMultiLineString(matchedDecl) << ">\n";
     }
     procQueryType.clearMatchResult();
   }
 }
+
+class ExprTypeCycleDetect
+{
+  // pointer based '<' comparison
+  // will do to detect if there is any cycle
+  // we only go to type from SgExpression
+  // NOTE: identify top of class hierarchy that defines get_type() interface
+  // 
+  std::set<SgNode*> visited;
+
+public:
+  ExprTypeCycleDetect() { }
+  bool isVisited(SgNode* node)
+  {
+    if(visited.find(node) == visited.end())
+      return false;
+    return true;
+  }
+
+  void printVisitedSet()
+  {
+    std::set<SgNode*>::iterator it;
+    std::cout << "<VisitedSet:\n";
+    for(it = visited.begin(); it != visited.end(); it++)
+    {
+      std::cout << "<" << (*it)->unparseToString() << ", " << astTermToMultiLineString(*it) << "\n";
+    }
+    std::cout << ">\n";
+  }
+
+  bool operator()(SgNode* root)
+  {
+    // ignore the root
+    RoseAst ast(root);
+    for(RoseAst::iterator it = ast.begin(); it != ast.end(); it++)
+    {
+      if(isVisited(*it))
+      {
+        std::cout << "CYCLE!CYCLE!CYCLE!CYCLE!\n";
+        return false;
+      }
+
+      visited.insert(*it);
+
+      if(isSgExpression(*it))
+      {
+        // if already visited a expression -- cycle
+        // std::cout << "Visit <" << *it << ", " << (*it)->unparseToString() << ">\n";
+
+        SgType* type = isSgExpression(*it)->get_type();      
+        RoseAst type_ast(type);
+
+        for(RoseAst::iterator tIt = type_ast.begin(); tIt != type_ast.end(); tIt++)
+        {
+          // if its SgTypeDefType
+          // skip the children
+          if(isSgTypedefType(*tIt) || isSgEnumType(*tIt) || isSgClassType(*tIt))
+            tIt.skipChildrenOnForward();
+
+          // if already visited the children of a type
+          if(isVisited(*tIt)) 
+          {
+            std::cout << "SUBTYPE: CYCLE!CYCLE!CYCLE!CYCLE!\n";            
+            // write_file(type->class_name()+"_type_ast.dot", astTermToDot(type_ast.begin().withNullValues(), type_ast.end()));
+            // write_file((*tIt)->class_name()+"_under_type_ast.dot", astTermWithNullValuesToDot(*tIt));
+            // write_file((*it)->class_name() + "_ast.dot", astTermWithNullValuesToDot(*it));
+            std::cout << "<Type AST: " << astTermToMultiLineString(type) << ">\n";
+            std::cout << "<" << (*it)->unparseToString() << ", " << astTermToMultiLineString(*it) << ">\n";
+            std::cout << "<" << (*tIt)->unparseToString() << ", " << astTermToMultiLineString(*tIt) << "\n";
+            // printVisitedSet();
+            return false;
+          }
+          // if not a typedefseq or SgType insert it to visited
+          // if(!isSgTypedefSeq(*tIt) && !isSgType(*tIt))
+          //   visited.insert(*tIt);
+        }
+      }
+    }
+    return true;
+  }
+};
 
 
 /*************************************************
@@ -195,29 +290,34 @@ int main(int argc, char* argv[])
 
   RoseAst ast(root);
   // write_file("rootast.dot", astTermToDot(ast.begin().withoutNullValues(), ast.end()));
-  // for(RoseAst::iterator it = ast.begin().withNullValues(); it != ast.end(); it++)
-  // {
-  //   if(isSgExpression(*it))
-  //   {
-  //     SgType* sgtype = isSgExpression(*it)->get_type();
-  //     std::cout << "<Node: " << (*it)->unparseToString() << ", Type: " << sgtype->class_name() << ">\n";
-  //     ROSE_ASSERT(sgtype);
-  //     RoseAst asttype(sgtype);
-  //     std::cout << astTermToMultiLineString(sgtype);
-  //     write_file(sgtype->class_name() + "_ast.dot", astTermToDot(asttype.begin().withoutNullValues(), asttype.end()));
-  //   }
-  // }
+  // std::cout << "<AST=" << astTermToMultiLineString(root) << ">\n";
+   // for(RoseAst::iterator it = ast.begin().withNullValues(); it != ast.end(); it++)
+   // {
+   //   if(isSgExpression(*it))
+   //   {
+   //     SgType* sgtype = isSgExpression(*it)->get_type();
+   //     std::cout << "<Node: " << (*it)->unparseToString() << ", Type: " << sgtype->class_name() << ">\n";
+   //     ROSE_ASSERT(sgtype);
+   //     RoseAst asttype(sgtype);
+   //     std::cout << astTermToMultiLineString(sgtype);
+   //     write_file(sgtype->class_name() + "_ast.dot", astTermToDot(asttype.begin().withNullValues(), asttype.end()));
+   //   }
+   // }
 
   // compute variableId mappings
-  VariableIdMapping vidm;
-  vidm.computeVariableSymbolMapping(project);
+  // VariableIdMapping vidm;
+  // vidm.computeVariableSymbolMapping(project);
 
-  AddressTakenAnalysis addrTakenAnalysis(root, vidm);
-  addrTakenAnalysis.computeAddressTakenSet();
-  addrTakenAnalysis.printAddressTakenSet();
+  // AddressTakenAnalysis addrTakenAnalysis(root, vidm);
+  // addrTakenAnalysis.computeAddressTakenSet();
+  // addrTakenAnalysis.printAddressTakenSet();
 
-  PointerTypeAnalysis ptrTypeAnalysis(root, vidm);
-  ptrTypeAnalysis.collectPointerTypes();
+  // PointerTypeAnalysis ptrTypeAnalysis(root, vidm);
+  // ptrTypeAnalysis.collectPointerTypes();
+
+  ExprTypeCycleDetect etcd;
+  if(!etcd(root))
+    return -1;
 
   return 0;
 }
