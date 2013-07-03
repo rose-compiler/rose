@@ -476,7 +476,7 @@ namespace StringUtility
        *  of strings, but not at the beginning or end, even if strings are empty.
        * @{ */
       template<class Container>
-      std::string join(const std::string &separator, Container &strings) {
+      std::string join(const std::string &separator, const Container &strings) {
           return join_range(separator, strings.begin(), strings.end());
       }
       template<class Iterator>
@@ -509,6 +509,46 @@ namespace StringUtility
      /** Expand horizontal tab characters. */
      std::string untab(const std::string &str, size_t tabstops=8, size_t firstcol=0);
 
+     /** Converts a bunch of numbers to strings.  This is convenient when one has a container of numbers and wants to
+      *  call join() to turn it into a single string.  For instance, here's how to convert a set of integers to a
+      *  comma-separated list:
+      * @code
+      *  using namespace StringUtility;
+      *  std::set<int> numbers = ...;
+      *  std::string s = join(", ", toStrings(numbers));
+      * @endcode
+      *
+      *  Here's how to convert a vector of addresses to space-separated hexadecimal values:
+      * @code
+      *  using namespace StringUtility;
+      *  std::vector<rose_addr_t> addresses = ...;
+      *  std::string s = join(" ", toStrings(addresses, addrToString));
+      * @endcode
+      *
+      *  Here's how one could surround each address with angle brackets:
+      * @code
+      *  using namespace StringUtility;
+      *  struct AngleSurround {
+      *      std::string operator()(rose_addr_t addr) {
+      *         return "<" + addrToString(addr) + ">";
+      *      }
+      *  };
+      *  std::string s = join(" ", toStrings(addresses, AngleSurround()));
+      * @endcode
+      * @{ */
+     template<class Container, class Stringifier>
+     std::vector<std::string> toStrings(const Container &numbers, const Stringifier &stringifier=numberToString) {
+         return toStrings_range(numbers.begin(), numbers.end(), stringifier);
+     }
+     template<class Iterator, class Stringifier>
+     std::vector<std::string> toStrings_range(Iterator begin, Iterator end, const Stringifier &stringifier=numberToString) {
+         std::vector<std::string> retval;
+         for (/*void*/; begin!=end; ++begin)
+             retval.push_back(stringifier(*begin));
+         return retval;
+     }
+     /** @} */
+         
      };
 
 
