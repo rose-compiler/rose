@@ -949,9 +949,9 @@ std::string
 digest_to_str(const unsigned char digest[20])
 {
     std::string digest_str;
-    for (size_t i=20; i>0; --i) {
-        digest_str += "0123456789abcdef"[(digest[i-1] >> 4) & 0xf];
-        digest_str += "0123456789abcdef"[digest[i-1] & 0xf];
+    for (size_t i=0; i<20; ++i) {
+        digest_str += "0123456789abcdef"[(digest[i] >> 4) & 0xf];
+        digest_str += "0123456789abcdef"[digest[i] & 0xf];
     }
     return digest_str;
 }
