@@ -50,18 +50,6 @@ parse_id_list(std::list<std::string> &input/*in,out*/)
     return retval;
 }
 
-template<class Container>
-static std::string
-in(const Container &values)
-{
-    assert(!values.empty());
-    std::string retval = "in (";
-    for (typename Container::const_iterator vi=values.begin(); vi!=values.end(); ++vi)
-        retval += (vi==values.begin()?"":", ") + StringUtility::numberToString(*vi);
-    retval += ")";
-    return retval;
-}
-
 int
 main(int argc, char *argv[])
 {
@@ -115,9 +103,9 @@ main(int argc, char *argv[])
 
         std::string cond;
         if (!igroup_ids.empty())
-            cond += "igroup_id " + in(igroup_ids);
+            cond += "igroup_id " + SqlDatabase::in(igroup_ids);
         if (!func_ids.empty())
-            cond += (cond.empty()?"":" and ") + std::string(" func_id ") + in(func_ids);
+            cond += (cond.empty()?"":" and ") + std::string(" func_id ") + SqlDatabase::in(func_ids);
         if (!cond.empty())
             cond = " where " + cond;
 

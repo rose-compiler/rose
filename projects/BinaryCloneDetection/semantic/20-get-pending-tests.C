@@ -27,7 +27,10 @@ usage(int exit_status)
               <<"            files that contain functions.  This switch may appear more than once and its effect is cumulative.\n"
               <<"    --function=ID[,...]\n"
               <<"            Select only functions with the specified ID numbers.  This switch may appear more than once and\n"
-              <<"            its effect is cumulative.\n"
+              <<"            its effect is cumulative.  If no IDs are specified then all IDs are considered.\n"
+              <<"    --function=TABLE.COLUMN\n"
+              <<"            Select only the functions whose IDs are mentioned in the specified table column.  The normal\n"
+              <<"            behavior is to use \"semantic_functions.id\".\n"
               <<"    --name=NAME\n"
               <<"            Select only functions having the specified names.  This switch may appear more than once to\n"
               <<"            select functions that have any of the specified names.\n"
@@ -58,6 +61,7 @@ struct Switches {
     std::set<rose_addr_t> entry_vas;
     std::set<std::string> names;
     std::set<int> specimens, files, functions;
+    std::string function_table, function_column;
     size_t ninsns, nfuzz, first_fuzz;
     bool nfuzz_set; // is nfuzz value valid?
     bool list_specimens, list_files;
@@ -102,16 +106,27 @@ main(int argc, char *argv[])
             }
         } else if (!strncmp(argv[argno], "--function=", 11) || !strncmp(argv[argno], "--functions=", 12)) {
             std::vector<std::string> ids = StringUtility::split(",", strchr(argv[argno], '=')+1, (size_t)-1, true);
-            for (size_t i=0; i<ids.size(); ++i) {
-                const char *s = ids[i].c_str();
-                char *rest;
-                errno = 0;
-                int id = strtoul(s, &rest, 0);
-                if (errno || rest==s || *rest) {
-                    std::cerr <<argv0 <<": invalid function ID: " <<ids[i] <<"\n";
+            if (ids.size()==1 && isalpha(ids[0][0]) && ids[0].find_first_of('.')!=std::string::npos) {
+                std::vector<std::string> words = StringUtility::split(".", ids[0]);
+                if (words.size()!=2 ||
+                    !SqlDatabase::is_valid_table_name(words[0]) || !SqlDatabase::is_valid_table_name(words[1])) {
+                    std::cerr <<argv0 <<": --function switch needs either IDs or a database TABLE.COLUMN\n";
                     exit(1);
                 }
-                opt.functions.insert(id);
+                opt.function_table = words[0];
+                opt.function_column = words[1];
+            } else {
+                for (size_t i=0; i<ids.size(); ++i) {
+                    const char *s = ids[i].c_str();
+                    char *rest;
+                    errno = 0;
+                    int id = strtoul(s, &rest, 0);
+                    if (errno || rest==s || *rest) {
+                        std::cerr <<argv0 <<": invalid function ID: " <<ids[i] <<"\n";
+                        exit(1);
+                    }
+                    opt.functions.insert(id);
+                }
             }
         } else if (!strncmp(argv[argno], "--first-fuzz=", 13)) {
             opt.first_fuzz = strtoul(argv[argno]+13, NULL, 0);
@@ -172,6 +187,10 @@ main(int argc, char *argv[])
     }
 
     // Sanity checks
+    if (!opt.functions.empty() && !opt.function_table.empty()) {
+        std::cerr <<argv0 <<": --function=ID and --function=TABLE are mutually exclusive\n";
+        exit(1);
+    }
     if (0==tx->statement("select count(*) from semantic_functions")->execute_int()) {
         std::cerr <<argv0 <<": database has no functions; nothing to test\n";
         return 0;
@@ -183,41 +202,23 @@ main(int argc, char *argv[])
     
     // Create table tmp_functions containing IDs for selected functions and their specimen IDs
     std::vector<std::string> constraints;
-    if (!opt.entry_vas.empty()) {
-        std::string s = "entry_va in (";
-        for (std::set<rose_addr_t>::iterator i=opt.entry_vas.begin(); i!=opt.entry_vas.end(); ++i)
-            s += (i==opt.entry_vas.begin()?"":", ") + StringUtility::numberToString(*i);
-        constraints.push_back(s+")");
-    }
-    if (!opt.names.empty()) {
-        std::string s = "name in (";
-        for (std::set<std::string>::iterator i=opt.names.begin(); i!=opt.names.end(); ++i)
-            s += (i==opt.names.begin()?"":", ") + SqlDatabase::escape(*i, tx->driver());
-        constraints.push_back(s+")");
-    }
-    if (!opt.specimens.empty()) {
-        std::string s = "specimen_id in (";
-        for (std::set<int>::iterator i=opt.specimens.begin(); i!=opt.specimens.end(); ++i)
-            s += (i==opt.specimens.begin()?"":", ") + StringUtility::numberToString(*i);
-        constraints.push_back(s+")");
-    }
-    if (!opt.files.empty()) {
-        std::string s = "file_id in (";
-        for (std::set<int>::iterator i=opt.files.begin(); i!=opt.files.end(); ++i)
-            s += (i==opt.files.begin()?"":", ") + StringUtility::numberToString(*i);
-        constraints.push_back(s+")");
-    }
-    if (!opt.functions.empty()) {
-        std::string s = "id in (";
-        for (std::set<int>::iterator i=opt.functions.begin(); i!=opt.functions.end(); ++i)
-            s += (i==opt.functions.begin()?"":", ") + StringUtility::numberToString(*i);
-        constraints.push_back(s+")");
-    }
+    if (!opt.entry_vas.empty())
+        constraints.push_back("func.entry_va " + SqlDatabase::in(opt.entry_vas));
+    if (!opt.names.empty())
+        constraints.push_back("func.name " + SqlDatabase::in_strings(opt.names, tx->driver()));
+    if (!opt.specimens.empty())
+        constraints.push_back("func.specimen_id " + SqlDatabase::in(opt.specimens));
+    if (!opt.files.empty())
+        constraints.push_back("func.file_id " + SqlDatabase::in(opt.files));
+    if (!opt.functions.empty())
+        constraints.push_back("func.id " + SqlDatabase::in(opt.functions));
     if (opt.ninsns>0)
-        constraints.push_back("ninsns >= " + StringUtility::numberToString(opt.ninsns));
-    std::string sql1 = "select id, specimen_id from semantic_functions";
-    for (std::vector<std::string>::iterator i=constraints.begin(); i!=constraints.end(); ++i)
-        sql1 += (i==constraints.begin()?" where ":" and ") + *i;
+        constraints.push_back("func.ninsns >= " + StringUtility::numberToString(opt.ninsns));
+    std::string sql1 = "select func.id, func.specimen_id from semantic_functions as func";
+    if (!opt.function_table.empty())
+        sql1 += " join "+opt.function_table+" as flist on func.id = flist."+opt.function_column;
+    if (!constraints.empty())
+        sql1 += " where " + StringUtility::join(" and ", constraints);
     tx->execute("create temporary table tmp_functions as " + sql1);
 
     // Create table tmp_inputgroups containing IDs for selected input groups
@@ -237,7 +238,7 @@ main(int argc, char *argv[])
                 "    select func.specimen_id, func.id, fio.igroup_id"
                 "      from semantic_fio as fio"
                 "      join semantic_functions as func on fio.func_id=func.id");
-    SqlDatabase::StatementPtr stmt = tx->statement("select specimen_id, func_id, igroup_id"
+    SqlDatabase::StatementPtr stmt = tx->statement("select distinct specimen_id, func_id, igroup_id"
                                                    " from tmp_pending"
                                                    " order by specimen_id, igroup_id, func_id");
     for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row)
