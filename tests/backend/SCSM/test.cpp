@@ -1,5 +1,5 @@
 
-#include "scsm-sage.hpp"
+#include "mfb-sage.hpp"
 
 #include "sage3basic.h"
 
@@ -14,15 +14,15 @@ int main(int argc, char ** argv) {
     project->set_originalCommandLineArgumentList (arglist);
   }
 
-  SCSM::Driver<SCSM::Sage> driver("output", project);
+  MultiFileBuilder::Driver<MultiFileBuilder::Sage> driver("output", project);
 
   SgClassSymbol * class_symbol = NULL;
   {
-    SCSM::Sage<SgClassDeclaration>::object_desc_t desc;
+    MultiFileBuilder::Sage<SgClassDeclaration>::object_desc_t desc;
       desc.name = "A";
       desc.kind = (unsigned long)SgClassDeclaration::e_class;
 
-    SCSM::Sage<SgClassDeclaration>::build_result_t result = driver.build<SgClassDeclaration>(desc);
+    MultiFileBuilder::Sage<SgClassDeclaration>::build_result_t result = driver.build<SgClassDeclaration>(desc);
 
     class_symbol = result.symbol;
   }
@@ -30,13 +30,13 @@ int main(int argc, char ** argv) {
 
   SgMemberFunctionSymbol * member_function_symbol = NULL;
   {
-    SCSM::Sage<SgMemberFunctionDeclaration>::object_desc_t desc;
+    MultiFileBuilder::Sage<SgMemberFunctionDeclaration>::object_desc_t desc;
       desc.name = "foo";
       desc.return_type = SageBuilder::buildVoidType();
       desc.params = SageBuilder::buildFunctionParameterList();
       desc.parent_class = class_symbol;
 
-    SCSM::Sage<SgMemberFunctionDeclaration>::build_result_t result = driver.build<SgMemberFunctionDeclaration>(desc);
+    MultiFileBuilder::Sage<SgMemberFunctionDeclaration>::build_result_t result = driver.build<SgMemberFunctionDeclaration>(desc);
 
     member_function_symbol = result.symbol;
 
@@ -47,12 +47,12 @@ int main(int argc, char ** argv) {
 
   SgFunctionSymbol * function_symbol = NULL;
   {
-    SCSM::Sage<SgFunctionDeclaration>::object_desc_t desc;
+    MultiFileBuilder::Sage<SgFunctionDeclaration>::object_desc_t desc;
       desc.name = "foo";
       desc.return_type = SageBuilder::buildVoidType();
       desc.params = SageBuilder::buildFunctionParameterList();
 
-    SCSM::Sage<SgFunctionDeclaration>::build_result_t result = driver.build<SgFunctionDeclaration>(desc);
+    MultiFileBuilder::Sage<SgFunctionDeclaration>::build_result_t result = driver.build<SgFunctionDeclaration>(desc);
 
     function_symbol = result.symbol;
 

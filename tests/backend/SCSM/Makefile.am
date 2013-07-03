@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 bin_PROGRAMS = test
 
-test_SOURCES = test.cpp scsm-sage.cpp
+test_SOURCES = test.cpp mfb-sage.cpp
 test_CXXFLAGS = \
   -g \
   $(ROSE_INCLUDES)

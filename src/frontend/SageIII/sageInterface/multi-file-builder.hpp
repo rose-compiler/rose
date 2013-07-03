@@ -44,13 +44,16 @@ class Driver {
     template <typename Object>
     typename Model<Object>::build_result_t build(const typename Model<Object>::object_desc_t & desc);
 
-    /** Indicate to the 
-     *
+    /** Indicate to the Driver that a symbol is in use in a scope. Add any needed include directives.
+     *  \return a replacement symbol if needed
      */
     template <typename Object>
-    typename Model<Object>::symbol_t useSymbol(typename Model<Object>::symbol_t symbol, Model::scope_t scope);
+    typename Model<Object>::symbol_t useSymbol(typename Model<Object>::symbol_t symbol, typename Model<Object>::scope_t scope);
 
   protected:
+    /** Provide the scopes need to build the object
+     * \return a structure containing all necessary scope information
+     */
     template <typename Object>
     typename Model<Object>::build_scopes_t getBuildScopes(const typename Model<Object>::object_desc_t & desc);
 };
