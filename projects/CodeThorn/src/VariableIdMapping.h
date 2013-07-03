@@ -8,11 +8,13 @@
  *************************************************************/
 
 #include "rose.h"
+
 #include <string>
-#include "SgNodeHelper.h"
-#include "RoseAst.h"
 #include <map>
 #include <vector>
+
+#include "RoseAst.h"
+#include "SgNodeHelper.h"
 
 using namespace std;
 
@@ -67,8 +69,11 @@ class VariableIdMapping {
 
   void registerNewSymbol(SgSymbol* sym);
   void toStream(ostream& os);
+  void generateDot(string filename,SgNode* astRoot);
 
  private:
+  void generateStmtSymbolDotEdge(std::ofstream&, SgNode* node,VariableId id);
+  string generateDotSgSymbol(SgSymbol* sym);
   typedef pair<string,SgSymbol*> MapPair;
   set<MapPair> checkSet;
   typedef pair<VariableId,VariableName> PairOfVarIdAndVarName;

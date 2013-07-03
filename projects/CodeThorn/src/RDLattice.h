@@ -6,6 +6,7 @@
 
 using CodeThorn::Label;
 using CodeThorn::VariableId;
+using CodeThorn::VariableIdMapping;
 
 class RDLattice {
  public:
@@ -14,11 +15,12 @@ class RDLattice {
   iterator end();
   void insertPair(Label,VariableId);
   void erasePair(Label,VariableId);
+  void eraseAllPairsWithVariableId(VariableId var);
   bool isBot();
-  void toStream(ostream& os);
+  void toStream(ostream& os, VariableIdMapping* vim=0);
   bool exists(pair<Label,VariableId>);
 #if 1
-  RDLattice& combine(RDLattice& b);
+  void combine(RDLattice& b);
   bool approximatedBy(RDLattice& b);
 #endif
  private:

@@ -1,8 +1,5 @@
+// Author: Markus Schordan, 2013.
 // Example AstMatcher : used for demonstrating and testing the matcher mechanism
-
-/*
- * TODO: OR-operator not working yet (iterator runs past-the-end)
- */
 
 #include <iostream>
 #include <fstream>
@@ -28,10 +25,9 @@ void write_file(std::string filename, std::string data) {
 
 int main( int argc, char * argv[] ) {
 
-  char matchexpression[80];
-  printf("Enter match-expression: ");
-  int numScanned=scanf("%s",matchexpression);
-  assert(numScanned==1);
+  std::string matchexpression;
+  std::cout<<"Enter match-expression: ";
+  std::getline(std::cin, matchexpression);
 
   bool measurementmode=false;
   if(matchexpression[0]=='.') measurementmode=true;
@@ -47,10 +43,11 @@ int main( int argc, char * argv[] ) {
   SgNode* root;
   //root=sageProject->get_traversalSuccessorByIndex(0)->get_traversalSuccessorByIndex(0)->get_traversalSuccessorByIndex(0)->get_traversalSuccessorByIndex(0);
   root=sageProject;
-
+#if 0
   std::cout << "TERM INFO OUTPUT: START\n";
   std::cout << astTermToMultiLineString(root,0);
   std::cout << "TERM INFO OUTPUT: END\n";
+#endif
   RoseAst ast(root);
 
 #if 0
@@ -142,7 +139,7 @@ int main( int argc, char * argv[] ) {
 	timer.stop();
 	double matchingMeasurementTime=timer.getElapsedTimeInMilliSec();
 	// print result in readable form for demo purposes
-	std::cout << "Number of matched patterns: " << r.size() << std::endl;
+	std::cout << "Number of matched patterns with bound variables: " << r.size() << std::endl;
 	for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
 	  std::cout << "MATCH: \n"; 
 	  //SgNode* n=(*i)["X"];

@@ -384,7 +384,7 @@ LabelSet CFAnalyzer::finalLabels(SgNode* node) {
     set<SgNode*> breakNodes=SgNodeHelper::LoopRelevantBreakStmtNodes(node);
 	LabelSet lset=labeler->getLabelSet(breakNodes);
 	finalSet+=lset;
-	cout << finalSet.toString() << endl;
+	//cout << finalSet.toString() << endl;
 	return finalSet;
   }
   case V_SgBasicBlock: {

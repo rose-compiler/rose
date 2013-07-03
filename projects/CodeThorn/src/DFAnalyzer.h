@@ -4,36 +4,46 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-#ifndef MFANALYSIS_H
-#define MFANALYSIS_H
+#ifndef DFANALYZER_H
+#define DFANALYZER_H
 
 #include "Labeler.h"
 #include "CFAnalyzer.h"
-#include "WorkList.h"
+#include "WorkListSeq.h"
+#include <set>
+
 
 namespace CodeThorn {
 
+  using std::set;
+
 template<typename LatticeType>
-class MFAnalyzer {
+class DFAnalyzer {
  public:
   void setExtremalLabels(set<Label> extremalLabels);
-  MFAnalyzer(CFAnalyzer* cfanalyzer);
-  void initialize();
+  DFAnalyzer();
+  void initialize(SgProject*);
+  void determineExtremalLabels(SgNode*);
   void run();
  protected:
-  virtual LatticeType transfer(Edge edge, LatticeType element);
+  virtual LatticeType transfer(Label label, LatticeType element);
   virtual void solve();
+  VariableIdMapping* getVariableIdMapping();
+  VariableIdMapping _variableIdMapping;
   Labeler* _labeler;
   CFAnalyzer* _cfanalyzer;
-  Label _extremalLabels;
+  set<Label> _extremalLabels;
+  Flow _flow;
 
   // following members are initialized by function initialize()
   long _numberOfLabels; 
   vector<LatticeType> _analyzerData;
-  WorkList<Edge> workList;
+  WorkListSeq<Label> _workList;
 };
 
-#include "MFAnalyzer.C"
+} // end of namespace
 
-}
+// template implementation code
+#include "DFAnalyzer.C"
+
 #endif

@@ -11,6 +11,7 @@
 #include "StateRepresentations.h"
 #include "Analyzer.h"
 #include "LanguageRestrictor.h"
+#include "LanguageRestrictorCollection.h"
 #include "Timer.h"
 #include "LTLCheckerFixpoint.h"
 #include "LTLCheckerUnified.h"
@@ -78,6 +79,8 @@ void attachPointerExprLists(SgNode* node) {
   }
 }
 
+// OBSOLETE
+#if 0
 bool CodeThornLanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
@@ -164,6 +167,7 @@ void checkProgram(SgNode* root) {
 	exit(1);
   }
 }
+#endif
 
 void generateAssertsCsvFile(Analyzer& analyzer, SgProject* sageProject, string filename) {
   ofstream* csv = NULL;
@@ -668,7 +672,8 @@ int main( int argc, char * argv[] ) {
   if(!boolOptions["skip-analysis"])
   {
 	cout << "INIT: Checking input program."<<endl;
-  checkProgram(root);
+	CodeThornLanguageRestrictor lr;
+  lr.checkProgram(root);
   timer.start();
 
   cout << "INIT: Running variable<->symbol mapping check."<<endl;

@@ -46,8 +46,8 @@ class ExprAnalyzer {
   //! Evaluates an expression using ConstIntLattice and returns a list of all evaluation-results.
   //! There can be multiple results if one of the variables was bound to top as we generate
   //! two different states and corresponding constraints in this case, one representing the
-  //! true-case the other one repreenting the false-case.
-  //! When the option useConstraints is set to false constraints are not used when determing the
+  //! true-case the other one representing the false-case.
+  //! When the option useConstraints is set to false constraints are not used when determining the
   //! values of top-variables. 
   list<SingleEvalResultConstInt> evalConstInt(SgNode* node,EState estate, bool useConstraints, bool safeConstraintPropagation);
   //! returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".

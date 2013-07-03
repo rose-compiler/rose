@@ -30,7 +30,8 @@ MatchResult AstMatching::getResult() {
 
 void AstMatching::performMatching() {
   generateMatchOperationsSequence();
-  printMatchOperationsSequence();
+  if(_status.debug)
+	printMatchOperationsSequence();
   performMatchingOnAst(_root);
 }
 void AstMatching::generateMatchOperationsSequence() {
@@ -75,40 +76,24 @@ void AstMatching::printMarkedLocations() {
 
 bool
 AstMatching::performSingleMatch(SgNode* node, MatchOperationList* matchOperationSequence) {
-  if(_status.debug) 
-    std::cout << "perform-single-match:"<<std::endl;    
-  SingleMatchResult smr; // we intentionally avoid dynamic allocation for var-bindings of a single pattern
-  if(_status.debug) 
-    std::cout << "perform-single-match2:"<<std::endl;    
-  RoseAst ast(node);
-  if(_status.debug) 
-    std::cout << "perform-single-match3:"<<std::endl;    
-  RoseAst::iterator pattern_ast_iter=ast.begin().withNullValues();
-  if(_status.debug) 
-    std::cout << "single-match-start:"<<std::endl;    
   if(matchOperationSequence==0) {
     std::cerr << "matchOperationSequence==0. Bailing out." <<std::endl;
     exit(1);
   }
+  if(_status.debug) 
+    std::cout << "perform-single-match:"<<std::endl;    
+  SingleMatchResult smr; // we intentionally avoid dynamic allocation for var-bindings of a single pattern
+  RoseAst ast(node);
+  RoseAst::iterator pattern_ast_iter=ast.begin().withNullValues();
+  if(_status.debug) 
+    std::cout << "single-match-start:"<<std::endl;    
   bool tmpresult=matchOperationSequence->performOperation(_status, pattern_ast_iter, smr);
   if(_status.debug) 
     std::cout << "single-match-end"<<std::endl;    
+  if(tmpresult)
+	_status.mergeSingleMatchResult(smr);
   return tmpresult;
-#if 0
-  for(MatchOperationList::iterator match_op_iter=matchOperationSequence->begin();
-      match_op_iter!=_matchOperationsSequence->end();
-      match_op_iter++) {
-    bool tmpresult=(*match_op_iter)->performOperation(_status, pattern_ast_iter, smr);
-    // matchVarBindings and matchRegisteredIterators is automatically deleted if we return with false
-    if(!tmpresult) {return false;}
-  }
-  if(!tmpresult) {return false;}
-  // pattern has been successfully matched
-  _status._allMatchVarBindings->push_back(smr.singleMatchVarBindings);
-  // move elements (instead of copy)
-  _status._allMatchMarkedLocations.splice(_status._allMatchMarkedLocations.end(),smr.singleMatchMarkedLocations);
-  return true;
-#endif
+
 }
 
 void 
@@ -118,14 +103,23 @@ AstMatching::performMatchingOnAst(SgNode* root) {
   for(RoseAst::iterator ast_iter=ast.begin().withNullValues();
       ast_iter!=ast.end();
       ++ast_iter) {
-    if(_status.isMarkedLocation(ast_iter)) {
-      //std::cout << "\nMARKED LOCATION @ " << *ast_iter << " ... skipped." << std::endl;
+	if(_status.debug) std::cout<<"----------------------------------------------------------------------------------------------"<<std::endl;
+    if(_status.isMarkedLocationAddress(ast_iter)) {
+	  if(_status.debug) std::cout << "DEBUG: MARKED LOCATION @ " << *ast_iter << " ... skipped." << std::endl;
       ast_iter.skipChildrenOnForward();
     } else {
       result=performSingleMatch(*ast_iter,_matchOperationsSequence);
-      //if(result) std::cout << "\nFOUND MATCH at node" << *ast_iter << std::endl;
+      if(result && _status.debug) {
+		std::cout << "DEBUG: FOUND MATCH at node" << *ast_iter << std::endl;
+		printMarkedLocations();
+	  }
+	  if(_status.isMarkedLocationAddress(ast_iter)) {
+		if(_status.debug) std::cout << "DEBUG: MARKED CURRENT LOCATION @ " << *ast_iter << " ... skipping subtree." << std::endl;
+		ast_iter.skipChildrenOnForward();
+	  }
     }
   }
   if(_status.debug)
     std::cout << "Matching on AST finished." << std::endl;
 }
+
