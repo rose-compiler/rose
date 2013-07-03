@@ -2387,10 +2387,19 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
        // DQ (7/13/2011): OSX can have types that are about 2487 characters long (see test2004_35.C).
        // This is symptematic of an error which causes the whole class to be included with the class 
        // definition.  This was fixed by calling unparseInfoPointer->set_SkipClassDefinition() above.
-          if (typeNameString.length() > 2000)
+          if (typeNameString.length() > 4000)
              {
                printf ("Warning: type names should not be this long... typeNameString.length() = %zu \n",typeNameString.length());
-
+#if 0
+            // DQ (6/30/2013): Allow the output of an example so that we can verify that this make 
+            // sense (and that it is not a result of some comment output from the unparsing of types).
+               static bool outputOneExample = true;
+               if (outputOneExample == true)
+                  {
+                    printf ("   --- example typeNameString = %s \n",typeNameString.c_str());
+                    outputOneExample = false;
+                  }
+#endif
             // DQ (1/30/2013): Increased already too long limit for string lengths for typenames.  This 
             // test fails for ROSE compiling ROSE with a type name that is 17807 characters long.  I have
             // increased the max allowable typename lengtt to over twice that for good measure.
@@ -2500,9 +2509,11 @@ NameQualificationTraversal::traverseTemplatedFunction(SgFunctionRefExp* function
 #if 0
           printf ("++++++++++++++++ functionNameString (globalUnparseToString()) = %s \n",functionNameString.c_str());
 #endif
+       // DQ (6/24/2013): Increased upper bound to support ROSE compiling ROSE.
        // This is symptematic of an error which causes the whole class to be included with the class 
        // definition.  This was fixed by calling unparseInfoPointer->set_SkipClassDefinition() above.
-          if (functionNameString.length() > 2000)
+       // if (functionNameString.length() > 2000)
+          if (functionNameString.length() > 5000)
              {
                printf ("Error: function names should not be this long... functionNameString.length() = %zu \n",functionNameString.length());
 #if 1
@@ -4189,7 +4200,15 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("@@@@@@@@@@@@@ Recursive call to the originalExpressionTree = %p = %s \n",originalExpressionTree,originalExpressionTree->class_name().c_str());
 #endif
-               generateNameQualificationSupport(originalExpressionTree,referencedNameSet);
+            // DQ (6/30/2013): Added to support using generateNestedTraversalWithExplicitScope() instead of generateNameQualificationSupport().
+               SgStatement* currentStatement = TransformationSupport::getStatement(n);
+               ROSE_ASSERT(currentStatement != NULL);
+               SgScopeStatement* currentScope = currentStatement->get_scope();
+               ROSE_ASSERT(currentScope != NULL);
+
+            // DQ (6/30/2013): For the recursive call use generateNestedTraversalWithExplicitScope() instead of generateNameQualificationSupport().
+            // generateNameQualificationSupport(originalExpressionTree,referencedNameSet);
+               generateNestedTraversalWithExplicitScope(originalExpressionTree,currentScope);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("@@@@@@@@@@@@@ DONE: Recursive call to the originalExpressionTree = %p = %s \n",originalExpressionTree,originalExpressionTree->class_name().c_str());

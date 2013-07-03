@@ -331,6 +331,9 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      file->display("file: Unparser::unparseFile");
 #endif
 
+  // DQ (6/30/2013): Added support to time the unparsing of the file (name qualification will be nested in this time).
+     TimingPerformance timer ("Unparse File:");
+
   // DQ (5/15/2011): Moved this to be called in the postProcessingSupport() (before resetTemplateNames() else template names will not be set properly).
 
   // DQ (11/10/2007): Moved computation of hidden list from astPostProcessing.C to unparseFile so that 
@@ -390,11 +393,16 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
   // Use the information in the SgFile object to control which unparser is called.
      if ( ( (file->get_Fortran_only() == true) && (file->get_outputLanguage() == SgFile::e_default_output_language) ) || (file->get_outputLanguage() == SgFile::e_Fortran_output_language) )
         {
+       // DQ (6/30/2013): Added support to time the unparsing of the file.
+          TimingPerformance timer ("Source code generation from AST (Fortran):");
+
        // Unparse using the new Fortran unparser!
           u_fortran_locatedNode->unparseStatement(globalScope, info);
         }
        else
         {
+       // DQ (6/30/2013): Added support to time the unparsing of the file.
+          TimingPerformance timer ("Source code generation from AST:");
 #if 0
           printf ("This is not a Fortran file! \n");
 #endif

@@ -18,6 +18,8 @@ UnparseLanguageIndependentConstructs::resBool(bool val) const
      return val ? "True" : "False" ;
    }
 
+#if 0
+// DQ (7/1/2013): This needs to be defined in the header file, else the GNU 4.5 and 4.6 compilers will have undefined references at link time.
 // DQ (8/13/2007): This function was implemented by Thomas
 template<typename T>
 std::string
@@ -27,6 +29,7 @@ UnparseLanguageIndependentConstructs::tostring(T t) const
      myStream << std::showpoint << t << std::flush; // Distinguish integer and floating-point numbers
      return myStream.str(); //returns the string form of the stringstream object
    }
+#endif
 
 // TODO: This code is identical to 'FortranCodeGeneration_locatedNode::curprint'. Factor this!
 void
