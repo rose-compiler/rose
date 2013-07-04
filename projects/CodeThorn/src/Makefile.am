@@ -100,6 +100,8 @@ faketarget:
 	ast_demo.C
 	ShowSeq.h
 	iterator_test.C
+	WorkListOMP.h
+	WorkListOMP.C
 
 #      matcherparser_decls.h
 
