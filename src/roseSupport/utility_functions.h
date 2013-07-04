@@ -22,6 +22,11 @@ std::string rose_scm_version_id();
 //! SCM version date-identifier for ROSE (Unix timestamp)
 time_t rose_scm_version_date();
 
+// DQ (7/3/2013): Added support to output pre-defined macro settings.
+//! Output at least some of the predefined macro settings.
+void outputPredefinedMacros();
+
+
 // Simple interface for ROSE (error codes are in SgProject.frontendErrorCode(), backendErrorCode() )
 // tps : Need to make this function (DLL) public 
 ROSE_DLL_API SgProject* frontend ( int argc, char** argv, bool frontendConstantFolding = false );

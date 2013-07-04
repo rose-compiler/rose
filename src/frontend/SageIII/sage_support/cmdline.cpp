@@ -1233,7 +1233,9 @@ SgFile::usage ( int status )
 "     -rose:C99_only, -rose:C99\n"
 "                             follow C99 standard, disable C++\n"
 "     -rose:Cxx_only, -rose:Cxx\n"
-"                             follow C++ 89 standard\n"
+"                             follow C++89 standard\n"
+"     -rose:Cxx11_only, -rose:Cxx11\n"
+"                             follow C++11 standard\n"
 "     -rose:Java, -rose:java, -rose:J, -rose:j\n"
 "                             compile Java code (work in progress)\n"
 "     -rose:java:cp, -rose:java:classpath\n"
@@ -1811,7 +1813,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 
   //
-  // C++11 only option (turns on EDG c++0x option currently.
+  // C++11 only option (turns on EDG --c++11 option currently).
   //
      set_Cxx11_only(false);
      set_Cxx0x_only(false);
@@ -1820,8 +1822,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         {
           if ( SgProject::get_verbose() >= 1 )
                printf ("Cxx11 mode ON \n");
-#if 0
-          set_C11_only(true);
+#if 1
+       // DQ (7/2/2013): Turn on the C++11 version of the option now that we have moved to EDG 4.7.
+       // set_C11_only(true);
+          set_Cxx11_only(true);
 #else
           set_Cxx0x_only(true);
 #endif
@@ -3258,12 +3262,36 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      ROSE_ABORT();
 #endif
 
+  // const char* alternativeCxx_Spec_Def[]          = CXX_SPEC_DEF;
+  // printf ("alternativeCxx_Spec_Def = %s \n",CXX_SPEC_DEF);
+  // string alternativeCxx_Spec_Def = CXX_SPEC_DEF;
+  // printf ("alternativeCxx_Spec_Def = %s \n",*alternativeCxx_Spec_Def);
+
      const char* configDefsArray[]          = CXX_SPEC_DEF;
      const char* Cxx_ConfigIncludeDirsRaw[] = CXX_INCLUDE_STRING;
      const char* C_ConfigIncludeDirsRaw[]   = C_INCLUDE_STRING;
      Rose_STL_Container<string> configDefs(configDefsArray, configDefsArray + sizeof(configDefsArray) / sizeof(*configDefsArray));
      Rose_STL_Container<string> Cxx_ConfigIncludeDirs(Cxx_ConfigIncludeDirsRaw, Cxx_ConfigIncludeDirsRaw + sizeof(Cxx_ConfigIncludeDirsRaw) / sizeof(const char*));
      Rose_STL_Container<string> C_ConfigIncludeDirs(C_ConfigIncludeDirsRaw, C_ConfigIncludeDirsRaw + sizeof(C_ConfigIncludeDirsRaw) / sizeof(const char*));
+
+#if 0
+     for (size_t i=0; i < configDefs.size(); i++)
+        {
+          printf ("configDefs[%zu] = %s \n",i,configDefs[i].c_str());
+        }
+#endif
+
+// DQ (7/3/2013): This is a work around to support a bug in EDG 4.7 which causes test2013_246.C to fail (boost example code).
+#if __GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ > 3 || (__GNUC_MINOR__ == 3 && __GNUC_PATCHLEVEL__ >= 0)))
+  // DQ (7/3/2013): For this to let EDG think we have a GNU 4.2 compiler.
+     ROSE_ASSERT(configDefs.size() >= 3);
+     configDefs[0] = "-D__GNUG__=4";
+     configDefs[1] = "-D__GNUC__=4";
+     configDefs[2] = "-D__GNUC_MINOR__=2";
+
+//  DQ (7/3/2013): This macro is used in rose_edg_required_macros_and_functions.h.in (temporary work about for EDG 4.7).
+#define LIE_ABOUT_GNU_VERSION_TO_EDG
+#endif
 
   // const char* boostPath[] = ROSE_BOOST_PATH;
 
@@ -3287,19 +3315,39 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      ROSE_ASSERT(Cxx_ConfigIncludeDirs.empty() == false);
      ROSE_ASSERT(C_ConfigIncludeDirs.empty() == false);
 
-  // printf ("configDefsString = %s \n",configDefsString);
 #if 0
-     printf ("Cxx_ConfigIncludeString = %s \n",Cxx_ConfigIncludeString.c_str());
-     printf ("C_ConfigIncludeString   = %s \n",C_ConfigIncludeString.c_str());
+     printf ("configDefsString = %s \n",CommandlineProcessing::generateStringFromArgList(configDefs).c_str());
+  // printf ("Cxx_ConfigIncludeString = %s \n",Cxx_ConfigIncludeString.c_str());
+  // printf ("C_ConfigIncludeString   = %s \n",C_ConfigIncludeString.c_str());
 #endif
 
-  // JJW (12/11/2008):  add --edg_base_dir as a new ROSE-set flag
      vector<string> commandLine;
+
+  // DQ (7/3/2013): We don't have to lie to EDG about the version of GNU that it should emulate 
+  // (only to the parts of Boost the read the GNU compiler version number information).
+  // DQ (7/3/2013): Adding option to specify the version of GNU to emulate.
+     int emulate_gnu_version_number = __GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__;
+  // printf ("emulate_gnu_version_number = %d \n",emulate_gnu_version_number);
+     commandLine.push_back("--gnu_version");
+     commandLine.push_back(StringUtility::numberToString(emulate_gnu_version_number));
+
+#ifdef LIE_ABOUT_GNU_VERSION_TO_EDG
+  // DQ (7/3/2013): define this so that the rose_edg_required_macros_and_functions.h header file can make
+  // some builtin function available (required to compile test2013_246.C).
+     commandLine.push_back("-DLIE_ABOUT_GNU_VERSION_TO_EDG");
+#endif
+
+#if 0
+     printf ("commandLine = %s \n",CommandlineProcessing::generateStringFromArgList(commandLine).c_str());
+#endif
+#if 0
+     printf ("Exiting after output of configDefs \n");
+     ROSE_ASSERT(false);
+#endif
 
   // DQ (11/1/2011): This is not enough to support C++ code (e.g. "limits" header file).
 
-
-
+  // JJW (12/11/2008):  add --edg_base_dir as a new ROSE-set flag
     //--------------------------------------------------------------------------
     // TOO (11/12/2012) - Refactor to use generic EDG version.
     // DQ  (11/1/2011)  - Fix to use EDG 4.3
@@ -3614,10 +3662,14 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           ROSE_ASSERT(false);
         }
 
+  // DQ (7/2/2013): This should not be used any more.
      if (get_Cxx0x_only() == true)
         {
        // Add option to indicate use of C++0x code to EDG frontend
           inputCommandLine.push_back("--c++0x");
+
+          printf ("This Cxx0x option should not be used any more. \n");
+          ROSE_ASSERT(false);
         }
 
      if (get_Cxx11_only() == true)
@@ -3627,8 +3679,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
        // DQ (7/21/2012): Until we use a newer EDG 2012 release, I think the option name is: --c++0x
        // Hopefull we don't have the turn on lamda support (using: "--lamdas") explicitly.
 
-       // inputCommandLine.push_back("--c++11");
-          inputCommandLine.push_back("--c++0x");
+          inputCommandLine.push_back("--c++11");
+       // inputCommandLine.push_back("--c++0x");
         }
 
      if (get_strict_language_handling() == true)
@@ -3820,6 +3872,9 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           inputCommandLine.push_back("-I" + *i);
         }
 
+  // DQ (7/3/2013): Where are we in the command line.
+  // inputCommandLine.push_back("--XXXXX");
+
   // *******************************************************************
   // Handle general edg options (-xxx)
   // *******************************************************************
@@ -3830,6 +3885,9 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      Rose_STL_Container<string> edgOptionList = CommandlineProcessing::generateOptionList (argv,"-edg:");
      CommandlineProcessing::addListToCommandLine(inputCommandLine,"-",edgOptionList);
 
+  // DQ (7/3/2013): Where are we in the command line.
+  // inputCommandLine.push_back("--AAA");
+
   // *******************************************************************
   // Handle general edg options (--xxx)
   // *******************************************************************
@@ -3838,6 +3896,9 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
   // Resets modifiedArgc and allocates memory to modifiedArgv
      edgOptionList = CommandlineProcessing::generateOptionList (argv,"--edg:");
+
+  // DQ (7/3/2013): Where are we in the command line.
+  // inputCommandLine.push_back("--BBB");
 
   // DQ (8/6/2006): there are a number of options that when specified in their EDG forms
   // should turn on ROSE mechanisms.  "--edg:c" should turn on C mode in ROSE.
@@ -3867,7 +3928,14 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           i++;
         }
 
+  // DQ (7/3/2013): Where are we in the command line.
+  // inputCommandLine.push_back("--CCC");
+
+  // Note: this is where options such as "--no_warnings --restrict" are added.
      CommandlineProcessing::addListToCommandLine(inputCommandLine,"--",edgOptionList);
+
+  // DQ (7/3/2013): Where are we in the command line.
+  // inputCommandLine.push_back("--DDD");
 
   // *******************************************************************
   // Handle general edg options (-xxx abc)
@@ -3939,6 +4007,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           inputCommandLine.push_back(ss.str());
         }
 
+  // DQ (7/3/2013): Where are we in the command line.
+  // inputCommandLine.push_back("--YYYYY");
 
   // *******************************************************************
   // Some EDG options have to turn on mechanism in ROSE
@@ -4034,6 +4104,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                instantiateAll = false;
              }
 
+#if 1
+       // DQ (7/3/2013): COMMENTED OUT: Trying to debug Boost handling when EDG is configured to support GNU g++ version 4.4.5.
           if (instantiateAll == true)
              {
             // printf ("In build_EDG_CommandLine(): autoInstantiation = true adding --auto_instantiation -tlocal ... \n");
@@ -4044,6 +4116,9 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                additionalOptions_b.push_back("tlocal");
                CommandlineProcessing::addListToCommandLine(inputCommandLine, "-",additionalOptions_b);
              }
+#else
+          printf ("In build_EDG_CommandLine(): ######### TURNED OFF autoInstantiation ########## \n");
+#endif
         }
 
 #if 0
