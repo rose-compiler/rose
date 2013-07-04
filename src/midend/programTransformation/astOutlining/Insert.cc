@@ -802,7 +802,7 @@ Outliner::insert (SgFunctionDeclaration* func,
      // No forward declaration is needed for Fortran functions, Liao, 3/11/2009
      //if (SageInterface::is_Fortran_language() != true)
        ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
-   }
+   } // end Outliner::insert()
 
 
 // eof

@@ -13,14 +13,20 @@
 namespace OmpSupport
 {
 
+  // OpenMP version info.
+  extern bool enable_accelerator;  
+
   //! makeDataSharingExplicit() can call some of existing functions for some work in OmpSupport namespace by Hongyi 07/16/2012
- //! TODO: add a function within the OmpSupport namespace, the function should transform the AST, so all variables' data-sharing attributes are explicitied represented in the AST. ROSE has dedicated AST nodes for OpenMP directives and the associated clauses, such as private, shared, reduction.
-
- int makeDataSharingExplicit( SgFile* );   
+  //! TODO: add a function within the OmpSupport namespace, the function should transform the AST, so all variables' data-sharing attributes are explicitied represented in the AST. ROSE has dedicated AST nodes for OpenMP directives and the associated clauses, such as private, shared, reduction.
 
 
-// last edited by Hongyi on 07/16/2012. 
-  
+  int patchUpSharedVariables(SgFile* );
+  // TODO:  patchUpDefaultVariables(SgFile* );
+
+  int makeDataSharingExplicit( SgFile* );   
+
+  // last edited by Hongyi on 07/24/2012. 
+
   //! The type of target runtime libraries (not yet in use)
   // We support both Omni and GCC OpenMP runtime libraries
   enum omp_rtl_enum 
@@ -57,6 +63,9 @@ namespace OmpSupport
   //! Translate omp parallel
   void transOmpParallel(SgNode* node);
 
+  //! Translate omp parallel under "omp target"
+  void transOmpTargetParallel(SgNode* node);
+
   //! Translate omp sections 
   void transOmpSections(SgNode* node);
 
@@ -66,8 +75,17 @@ namespace OmpSupport
   //! Translate omp for or omp do loops
   void transOmpLoop(SgNode* node);
 
+  //! Translate omp for or omp do loops affected by the "omp target" directive, Liao 1/28/2013
+  void transOmpTargetLoop(SgNode* node);
+
   //! Translate Fortran omp do
   //void transOmpDo(SgNode* node);
+
+  //! Translate "omp target"
+  void transOmpTarget(SgNode* node);
+
+  //! Translate "omp target data"
+  void transOmpTargetData(SgNode* node);
 
 
   //! Translate omp barrier
@@ -93,12 +111,12 @@ namespace OmpSupport
   //! Translate omp single 
   void transOmpSingle(SgNode* node);
 
- //! A helper function to generate implicit or explicit task for either omp parallel or omp task
- // It calls the ROSE AST outliner internally. 
- SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_name, std::set<SgVariableSymbol*>& syms, std::set<SgInitializedName*>& readOnlyVars);
- 
-  //! Translate OpenMP variables associated with an OpenMP pragma, such as private, firstprivate, lastprivate, reduction, etc. bb1 is the translation generated code block in which the variable handling statements will be inserted. Original loop upper bound is needed for implementing lastprivate (check if it is the last iteration) 
-  void transOmpVariables(SgStatement * ompStmt, SgBasicBlock* bb1, SgExpression* orig_loop_upper = NULL);
+  //! A helper function to generate implicit or explicit task for either omp parallel or omp task
+  // It calls the ROSE AST outliner internally. 
+  SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_name, std::set<SgVariableSymbol*>& syms);
+
+  //! Translate OpenMP variables associated with an OpenMP pragma, such as private, firstprivate, lastprivate, reduction, etc. bb1 is the translation generated code block in which the variable handling statements will be inserted. Original loop upper bound is needed for implementing lastprivate (check if it is the last iteration). withinAcceleratorModel means if we only translate private() variables, used to support accelerator model
+  void transOmpVariables(SgStatement * ompStmt, SgBasicBlock* bb1, SgExpression* orig_loop_upper = NULL, bool withinAcceleratorModel= false);
 
   //! Collect all variables from OpenMP clauses associated with an omp statement: private, reduction, etc 
   SgInitializedNamePtrList collectAllClauseVariables (SgOmpClauseBodyStatement * clause_stmt);
@@ -122,7 +140,7 @@ namespace OmpSupport
   int replaceVariableReferences(SgNode* root,  VariableSymbolMap_t varRemap);
   // I decided to reuse the existing Outliner work instead of coding a new one
   //SgFunctionDeclaration* generateOutlinedFunction(SgNode* node);
-  
+
   //! Add a variable into a non-reduction clause of an OpenMP statement, create the clause transparently if it does not exist
   void addClauseVariable(SgInitializedName* var, SgOmpClauseBodyStatement * clause_stmt, const VariantT& vt);
 
