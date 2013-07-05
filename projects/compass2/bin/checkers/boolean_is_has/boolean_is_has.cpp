@@ -77,8 +77,8 @@ namespace CompassAnalyses
  namespace BooleanIsHas
  {
   const string checker_name      = "BooleanIsHas";
-  const string short_description = "";
-  const string long_description  = "";
+  const string short_description = "Bool function or variable doesn't start with is_ or has_";
+  const string long_description  = "Looks for any functions or variables that return boolean values whose names do not begin with is_ or has_";
   string source_directory = "/";
  }
 }
