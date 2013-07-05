@@ -76,6 +76,7 @@ bin_compass2_LDADD=\
 	bin/checkers/no_rand/libnorand.la \
 	bin/checkers/boolean_is_has/libbooleanishas.la \
 	bin/checkers/global_variables/libglobalvariables.la \
+	bin/checkers/no_overload_ampersand/libnooverloadampersand.la \
 	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS) \
@@ -92,6 +93,7 @@ bin_compass2_LDADD=\
 # ------------------------------------------------------------------------------
 
 noinst_LTLIBRARIES=\
+	bin/checkers/no_overload_ampersand/libnooverloadampersand.la \
 	bin/checkers/global_variables/libglobalvariables.la \
 	bin/checkers/boolean_is_has/libbooleanishas.la \
 	bin/checkers/no_rand/libnorand.la \
@@ -149,6 +151,9 @@ bin_checkers_boolean_is_has_libbooleanishas_la_SOURCES=\
 
 bin_checkers_global_variables_libglobalvariables_la_SOURCES=\
 	bin/checkers/global_variables/global_variables.cpp
+
+bin_checkers_no_overload_ampersand_libnooverloadampersand_la_SOURCES=\
+	bin/checkers/no_overload_ampersand/no_overload_ampersand.cpp
 
 #PLACEHOLDER
 
