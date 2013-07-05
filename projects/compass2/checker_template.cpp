@@ -4,6 +4,8 @@
  * \date
  */
 
+#include <boost/foreach.hpp>
+
 #include "rose.h"
 #include "compass2/compass.h"
 
@@ -93,7 +95,6 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
       
       // Use the pre-built ROSE AST
       SgProject* sageProject = Compass::projectPrerequisite.getProject();
-      SgNode* root_node = (SgNode*) sageProject;
       
       // perform AST matching here
       
