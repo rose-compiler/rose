@@ -24,6 +24,7 @@
     <parameter name="enabled_checker">noRand</parameter>
     <parameter name="enabled_checker">booleanIsHas</parameter>
     <parameter name="enabled_checker">globalVariables</parameter>
+    <parameter name="enabled_checker">noOverloadAmpersand</parameter>
     <!--PLACEHOLDER-->
   </general>
 
