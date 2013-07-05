@@ -1,11 +1,18 @@
 /**
- * \file
- * \author
- * \date
+ * \file   boolean_is_has.cpp
+ * \author Mike Roup <roup1@llnl.gov>
+ * \date   July 7, 2013
  */
+
+#include <iostream>
+
+#include <boost/foreach.hpp>
+#include <boost/regex.hpp>
 
 #include "rose.h"
 #include "compass2/compass.h"
+#include "CodeThorn/src/AstMatching.h"
+#include "CodeThorn/src/AstTerm.h"
 
 using std::string;
 using namespace StringUtility;
@@ -93,10 +100,31 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
       
       // Use the pre-built ROSE AST
       SgProject* sageProject = Compass::projectPrerequisite.getProject();
-      SgNode* root_node = (SgNode*) sageProject;
       
       // perform AST matching here
+      CodeThorn::AstMatching function_decls;
+      MatchResult func_matches = function_decls.performMatching("$r = SgFunctionDeclaration", sageProject);
+      BOOST_FOREACH(SingleMatchVarBindings match, func_matches)
+	{
+	  SgFunctionDeclaration* decl = (SgFunctionDeclaration*)match["$r"];
+	  string func_name = decl->get_name().getString();
+	  if (isSgTypeBool(decl->get_type()->get_return_type()) && func_name.find("is_") & func_name.find("has_"))
+	    {
+	      output->addOutput(new CompassAnalyses::BooleanIsHas::CheckerOutput(decl));
+	    }
+	}
       
+      CodeThorn::AstMatching var_init;
+      MatchResult var_matches = var_init.performMatching("$r = SgInitializedName", sageProject);
+      BOOST_FOREACH(SingleMatchVarBindings match, var_matches)
+	{
+	  SgInitializedName* variable = (SgInitializedName*)match["$r"];
+	  string var_name = variable->get_name().getString();
+	  if (isSgTypeBool(variable->get_type()) && var_name.find("is_") & var_name.find("has_"))
+	    {
+	      output->addOutput(new CompassAnalyses::BooleanIsHas::CheckerOutput(variable));
+	    }
+	}
   }
 
 // Remove this function if your checker is not an AST traversal
