@@ -82,12 +82,38 @@ struct Code {
 typedef BinaryAnalysis::DwarfLineMapper::SrcInfo SourcePosition;
 typedef std::map<SourcePosition, Code> Listing;
 
+struct OutputEventKey {
+    int igroup_id;
+    rose_addr_t mem_addr;
+    OutputEventKey(): igroup_id(-1), mem_addr(0) {}
+    OutputEventKey(int igroup_id, rose_addr_t mem_addr): igroup_id(igroup_id), mem_addr(mem_addr) {}
+    bool operator<(const OutputEventKey &other) const {
+        return igroup_id < other.igroup_id || (igroup_id==other.igroup_id && mem_addr<other.mem_addr);
+    }
+};
+
+struct OutputEventValue {
+    int pos; // event index
+    unsigned value; // output value
+    OutputEventValue(): pos(-1), value(0) {}
+    OutputEventValue(int pos, unsigned value): pos(pos), value(value) {}
+};
+
+// Associates an input_id and memory address pair with the last output event number for that pair.  This allows us to
+// determine whether an particular output event is the final write to this address.
+typedef std::map<OutputEventKey, OutputEventValue> FinalOutputEvents;
+FinalOutputEvents final_output_events;
+
+// Events for a single address. */
 struct Event {
     typedef std::map<int64_t/*input*/, size_t/*count*/> Inputs;
     typedef std::vector<Inputs> InputQueues; // indexed by queue number
     typedef std::map<CloneDetection::AnalysisFault::Fault, size_t/*count*/> Faults;
     typedef std::map<rose_addr_t/*target*/, size_t/*count*/> Branches;
+    typedef std::vector<std::pair<OutputEventKey, OutputEventValue> > Outputs;
+
     Event(): nexecuted(0), ninputs(0), nfaults(0), nbranches(0) {}
+
     int func_id;                // function for event address (not the analyzed function that emitted the event)
     size_t nexecuted;           // number of times this basic block was executed
     size_t ninputs;             // number of inputs consumed here
@@ -96,6 +122,7 @@ struct Event {
     Faults faults;              // fault distribution
     size_t nbranches;           // number of times we branched
     Branches branches;          // branch target distribution
+    Outputs outputs;            // output values, saving only the last one for each memory address
 };
 
 typedef std::map<rose_addr_t/*va*/, Event> Events;
@@ -269,7 +296,9 @@ load_events(const SqlDatabase::TransactionPtr &tx, int func_id, Events &events/*
                       ->bind(0, func_id)->execute_int();
     SqlDatabase::StatementPtr stmt = tx->statement("select"
                                                    // 0          1               2            3          4
-                                                   " event.addr, event.event_id, event.minor, event.val, func.id"
+                                                   " event.addr, event.event_id, event.minor, event.val, func.id,"
+                                                   // 5               6
+                                                   " event.igroup_id, event.pos"
                                                    " from tmp_events as event"
                                                    " join semantic_instructions as insn on event.addr = insn.address"
                                                    " join semantic_functions as func on insn.func_id = func.id"
@@ -282,26 +311,39 @@ load_events(const SqlDatabase::TransactionPtr &tx, int func_id, Events &events/*
         int minor = row.get<int>(2);
         int64_t val = row.get<int64_t>(3);
         events[addr].func_id = row.get<int>(4); // the hard-to-get ID, not the one stored in the events func_id column.
+        int igroup_id = row.get<int>(5);
+        int pos = row.get<int>(6);
         switch (event_id) {
-            case CloneDetection::Tracer::EV_REACHED:
+            case CloneDetection::Tracer::EV_REACHED: {
                 ++events[addr].nexecuted;
                 break;
-            case CloneDetection::Tracer::EV_BRANCHED:
+            }
+            case CloneDetection::Tracer::EV_BRANCHED: {
                 ++events[addr].nbranches;
                 ++events[addr].branches[val];
                 break;
-            case CloneDetection::Tracer::EV_CONSUME_INPUT:
+            }
+            case CloneDetection::Tracer::EV_CONSUME_INPUT: {
                 ++events[addr].ninputs;
                 assert(minor>=0);
                 if ((size_t)minor>=events[addr].inputs.size())
                     events[addr].inputs.resize(minor+1);
                 ++events[addr].inputs[minor][val];
                 break;
+            }
             case CloneDetection::Tracer::EV_FAULT: {
                 CloneDetection::AnalysisFault::Fault fault = (CloneDetection::AnalysisFault::Fault)minor;
                 ++events[addr].nfaults;
                 ++events[addr].faults[fault];
                 break;
+            }
+            case CloneDetection::Tracer::EV_MEM_WRITE: {
+                OutputEventKey output_key(igroup_id, val);
+                OutputEventValue output_val(pos, minor);
+                // Track final writes to each address
+                final_output_events[output_key] = output_val;
+                // Append event to the appropriate instruction
+                events[addr].outputs.push_back(std::make_pair(output_key, output_val));
             }
             default:
                 /*void*/
@@ -325,15 +367,12 @@ gather_instructions(const SqlDatabase::TransactionPtr tx, int func_id, const Eve
     tx->execute(sql);
 }
 
-    
-    
-
 static void
 show_events(const Event &e)
 {
     // Subsequent lines for inputs consumed
     if (e.ninputs>0) {
-        std::cout <<std::setw(9) <<std::right <<e.ninputs <<"> |   ";
+        std::cout <<std::setw(9) <<std::right <<e.ninputs <<"< |   ";
         size_t nlines=0;
         for (size_t q=0; q<e.inputs.size(); ++q) {
             if (e.inputs[q].empty())
@@ -370,6 +409,41 @@ show_events(const Event &e)
         }
     }
 
+    // Subsequent lines for outputs produced
+    if (!e.outputs.empty()) {
+        std::cout <<std::setw(9) <<std::right <<e.outputs.size() <<"> |   ";
+        int prev_igroup_id = -1;
+        size_t col = 0;
+        for (Event::Outputs::const_iterator oi=e.outputs.begin(); oi!=e.outputs.end(); ++oi) {
+            const OutputEventKey &output_key = oi->first;
+            const OutputEventValue &output_val = oi->second;
+            std::ostringstream ss;
+            if (output_key.igroup_id!=prev_igroup_id) {
+                if (1!=opt.traces.size() && oi!=e.outputs.begin()) {
+                    std::cout <<" }";
+                    col += 2;
+                }
+                if (1==opt.traces.size()) {
+                    ss <<" outputs:";
+                } else {
+                    ss <<" test " <<output_key.igroup_id <<" outputs:";
+                }
+                prev_igroup_id = output_key.igroup_id;
+            }
+            BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::ValueType<32> val(output_val.value);
+            ss <<" mem[" <<StringUtility::addrToString(output_key.mem_addr) <<"]=" <<val;
+            if (output_val.pos==final_output_events[output_key].pos)
+                ss <<" (final)";
+            if (col > 90) {
+                std::cout <<"\n" <<std::string(11, ' ') <<"|   ";
+                col = 0;
+            }
+            std::cout <<ss.str();
+            col += ss.str().size();
+        }
+        std::cout <<"\n";
+    }
+    
     // Subsequent lines for control flow branches
     if (e.nbranches>0) {
         size_t col=0;
@@ -515,9 +589,14 @@ list_combined(const SqlDatabase::TransactionPtr &tx, int func_id, bool show_asse
                   <<"             if the trace contains EV_REACHED events.  Lack of an Nx notation\n"
                   <<"             doesn't necessarily mean that the basic block was not reached, it\n"
                   <<"             only means that there is no EV_REACHED event for that block.\n"
-                  <<"           * \"N>\" where N is an integer indicates that the instruction\n"
+                  <<"           * \"N<\" where N is an integer indicates that the instruction\n"
                   <<"             on the previous line consumed N inputs. Information about the\n"
                   <<"             inputs is listed on the right side of this line.\n"
+                  <<"           * \"N>\" where N is an integer indicates that the instruction\n"
+                  <<"             on the previous line produced N memory outputs. Information about the\n"
+                  <<"             outputs is listed on the right side of this line. Only the final\n"
+                  <<"             write to a memory address is considered a true output, and such\n"
+                  <<"             writes will be marked with the string \"final\".\n"
                   <<"           * \"BR\" indicates that the instruction on the previous line is a\n"
                   <<"             control flow branch point. The right side of the line shows more\n"
                   <<"             detailed information about how many times the branch was taken.\n"

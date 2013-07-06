@@ -205,7 +205,7 @@ database server as well.  Here are some examples:
 The source tree also has a few SQL queries stored in various *.sql
 files. These are typically run like this:
 
-    $ psql example <failure-rate.sql 2>&1 |less
+    $ psql -f failure-rate.sql example 2>&1 |less
 
 
 ---------------------------------------------------------------------------

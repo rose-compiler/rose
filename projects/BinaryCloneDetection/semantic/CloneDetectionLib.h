@@ -91,6 +91,7 @@ public:
         EV_BRANCHED             = 0x00000002,   /**< Branch taken. */
         EV_FAULT                = 0x00000004,   /**< Test failed; minor number is the fault ID */
         EV_CONSUME_INPUT        = 0x00000008,   /**< Consumed an input. Minor number is the queue. */
+        EV_MEM_WRITE            = 0x00000010,   /**< Data written to non-stack memory. Value is address written */
         // Masks
         CONTROL_FLOW            = 0x00000003,   /**< Control flow events. */
         ALL_EVENTS              = 0xffffffff    /**< All possible events. */
@@ -750,10 +751,14 @@ struct ReadWriteState {
 
 /** One value stored in memory. */
 struct MemoryValue {
-    MemoryValue(): val(PartialSymbolicSemantics::ValueType<8>(0)), rw_state(NO_ACCESS) {}
-    MemoryValue(const PartialSymbolicSemantics::ValueType<8> &val, unsigned rw_state): val(val), rw_state(rw_state) {}
-    PartialSymbolicSemantics::ValueType<8> val;
+    MemoryValue()
+        : val(0), rw_state(NO_ACCESS), first_of_n(0), segreg(x86_segreg_none) {}
+    MemoryValue(uint8_t val, unsigned rw_state, size_t first_of_n, X86SegmentRegister sr)
+        : val(val), rw_state(rw_state), first_of_n(first_of_n), segreg(sr) {}
+    uint8_t val;
     unsigned rw_state;
+    size_t first_of_n;          // number of bytes written if this is the first byte of a multi-byte write
+    X86SegmentRegister segreg;  // segment register last used to write to this memory
 };
 
 /** Analysis machine state. We override some of the memory operations. All values are concrete (we're using
@@ -763,30 +768,23 @@ template <template <size_t> class ValueType>
 class State: public PartialSymbolicSemantics::State<ValueType> {
 public:
     typedef std::map<uint32_t, MemoryValue> MemoryCells;        // memory cells indexed by address
-    MemoryCells stack_cells;                                    // memory state for stack memory (accessed via SS register)
-    MemoryCells data_cells;                                     // memory state for anything that non-stack (e.g., DS register)
+    MemoryCells memory;                                         // memory state
     BaseSemantics::RegisterStateX86<ValueType> registers;
     BaseSemantics::RegisterStateX86<ReadWriteState> register_rw_state;
     OutputGroup output_group;                                  // output values filled in as we run a function
 
     // Write a single byte to memory. The rw_state are the HAS_BEEN_READ and/or HAS_BEEN_WRITTEN bits.
-    void mem_write_byte(X86SegmentRegister sr, const ValueType<32> &addr, const ValueType<8> &value,
+    void mem_write_byte(X86SegmentRegister sr, const ValueType<32> &addr, const ValueType<8> &value, size_t first_of_n,
                         unsigned rw_state=HAS_BEEN_WRITTEN) {
-        MemoryCells &cells = x86_segreg_ss==sr ? stack_cells : data_cells;
-        cells[addr.known_value()] = MemoryValue(value, rw_state);
+        memory[addr.known_value()] = MemoryValue(value.known_value(), rw_state, first_of_n, sr);
     }
         
     // Read a single byte from memory.  If the read operation cannot find an appropriate memory cell, then @p
     // uninitialized_read is set (it is not cleared in the counter case).
     ValueType<8> mem_read_byte(X86SegmentRegister sr, const ValueType<32> &addr, bool *uninitialized_read/*out*/) {
-        MemoryCells &cells = x86_segreg_ss==sr ? stack_cells : data_cells;
-
-        std::vector<ValueType<8> > found;
-        typename MemoryCells::iterator ci = cells.find(addr.known_value());
-        if (ci!=cells.end())
-            found.push_back(ci->second.val);
-        if (!found.empty())
-            return found[rand()%found.size()];
+        typename MemoryCells::iterator ci = memory.find(addr.known_value());
+        if (ci!=memory.end())
+            return ValueType<8>(ci->second.val);
         *uninitialized_read = true;
         return ValueType<8>(rand()%256);
     }
@@ -803,61 +801,55 @@ public:
 
     // Reset the analysis state by clearing all memory and by resetting the read/written status of all registers.
     void reset_for_analysis() {
-        stack_cells.clear();
-        data_cells.clear();
+        memory.clear();
         registers.clear();
         register_rw_state.clear();
         output_group.clear();
     }
 
+    // Determines whether the specified address is the location of an output value. If so, then this returns the number of
+    // bytes in that output value, otherwise it return zero.  The output value might not be known yet since we only use the
+    // last value written to an address (this might not be the last one).  The addr must be the first address of a multi-byte
+    // write in order to be an output.
+    size_t is_memory_output(rose_addr_t addr) {
+        MemoryCells::const_iterator ci = memory.find(addr);
+        return ci==memory.end() ? 0 : is_memory_output(addr, ci->second);
+    }
+    size_t is_memory_output(rose_addr_t addr, const MemoryValue &mval) {
+        return 0!=(mval.rw_state & HAS_BEEN_WRITTEN) && x86_segreg_ss!=mval.segreg ? mval.first_of_n : 0;
+    }
+
     // Return output values.  These are the interesting general-purpose registers to which a value has been written, and the
-    // memory locations to which a value has been written.  The returned object can be deleted when no longer needed.  The EIP,
-    // ESP, and EBP registers are not considered to be interesting.  Memory addresses that are less than or equal to the @p
-    // stack_frame_top but larger than @p stack_frame_top - @p frame_size are not considered to be outputs (they are the
-    // function's local variables). The @p stack_frame_top is usually the address of the function's return EIP, the address
-    // that was pushed onto the stack by the CALL instruction.
-    //
-    // Even though we're operating in the concrete domain, it is possible for a register or memory location to contain a
-    // non-concrete value.  This can happen if only a sub-part of the register was written (e.g., writing a concrete value to
-    // AX will result in EAX still having a non-concrete value.
-    OutputGroup get_outputs(uint32_t stack_frame_top, size_t frame_size, Verbosity verbosity) {
+    // memory locations to which a value has been written.  The returned object can be deleted when no longer needed.
+    OutputGroup get_outputs(Verbosity verbosity) {
         OutputGroup outputs = this->output_group;
 
         // Function return value is EAX, but only if it has been written to and is concrete
-        if (0 != (register_rw_state.gpr[x86_gpr_ax].state & HAS_BEEN_WRITTEN) && registers.gpr[x86_gpr_ax].is_known()) {
+        if (0 != (register_rw_state.gpr[x86_gpr_ax].state & HAS_BEEN_WRITTEN)) {
             if (verbosity>=EFFUSIVE)
                 std::cerr <<"output for ax = " <<registers.gpr[x86_gpr_ax].known_value() <<"\n";
             outputs.insert_value(registers.gpr[x86_gpr_ax].known_value());
         }
 
-        // Add to the outputs the memory cells that are outside the local stack frame (estimated) and are concrete
-        for (MemoryCells::iterator ci=stack_cells.begin(); ci!=stack_cells.end(); ++ci) {
-            uint32_t addr = ci->first;
-            MemoryValue &mval = ci->second;
-#if 1
-            // ignore all writes to memory that occur through the ss segment register.
-            bool cell_in_frame = true;
-#else
-            // ignore writes through the ss segment register if they seem to be in our original stack frame
-            bool cell_in_frame = (addr <= stack_frame_top && addr > stack_frame_top-frame_size);
-#endif
-            if (0 != (mval.rw_state & HAS_BEEN_WRITTEN) && mval.val.is_known()) {
-                if (verbosity>=EFFUSIVE)
-                    std::cerr <<"output for stack address " <<StringUtility::addrToString(addr) <<": "
-                              <<mval.val <<(cell_in_frame?" (IGNORED)":"") <<"\n";
-                if (!cell_in_frame)
-                    outputs.insert_value(mval.val.known_value(), addr);
-            }
-        }
-
-        // Add to the outputs the non-stack memory cells
-        for (MemoryCells::iterator ci=data_cells.begin(); ci!=data_cells.end(); ++ci) {
-            uint32_t addr = ci->first;
-            MemoryValue &mval = ci->second;
-            if (0 != (mval.rw_state & HAS_BEEN_WRITTEN) && mval.val.is_known()) {
-                if (verbosity>=EFFUSIVE)
-                    std::cerr <<"output for data address " <<addr <<": " <<mval.val <<"\n";
-                outputs.insert_value(mval.val.known_value(), addr);
+        // Memory outputs
+        for (MemoryCells::const_iterator ci=memory.begin(); ci!=memory.end(); ++ci) {
+            rose_addr_t addr = ci->first;
+            const MemoryValue &mval = ci->second;
+            if (is_memory_output(addr, mval)) {
+                assert(mval.first_of_n<=4);
+                OutputGroup::value_type value = 0;
+                MemoryCells::const_iterator ci2=ci;
+                for (size_t i=0; i<mval.first_of_n && ci2!=memory.end(); ++i, ++ci2) {
+                    if (ci2->first != addr+i)
+                        break;
+                    value |= IntegerOps::shiftLeft2<OutputGroup::value_type>(ci2->second.val, 8*i); // little endian
+                }
+                if (verbosity>=EFFUSIVE) {
+                    char buf[32];
+                    snprintf(buf, sizeof buf, "%0*"PRIx64, 2*(int)mval.first_of_n, (uint64_t)value);
+                    std::cerr <<"output for mem[" <<StringUtility::addrToString(addr) <<"] = " <<buf <<"\n";
+                }
+                outputs.insert_value(value, addr);
             }
         }
 
@@ -868,28 +860,25 @@ public:
     void print(std::ostream &o, unsigned domain_mask=0x07) const {
         BaseSemantics::SEMANTIC_NO_PRINT_HELPER *helper = NULL;
         this->registers.print(o, "   ", helper);
-        for (size_t i=0; i<2; ++i) {
-            size_t ncells=0, max_ncells=100;
-            const MemoryCells &cells = 0==i ? stack_cells : data_cells;
-            o <<"== Memory (" <<(0==i?"stack":"data") <<" segment) ==\n";
-            for (typename MemoryCells::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
-                uint32_t addr = ci->first;
-                const MemoryValue &mval = ci->second;
-                if (++ncells>max_ncells) {
-                    o <<"    skipping " <<cells.size()-(ncells-1) <<" more memory cells for brevity's sake...\n";
-                    break;
-                }
-                o <<"         cell access:"
-                  <<(0==(mval.rw_state & HAS_BEEN_READ)?"":" read")
-                  <<(0==(mval.rw_state & HAS_BEEN_WRITTEN)?"":" written")
-                  <<(0==(mval.rw_state & (HAS_BEEN_READ|HAS_BEEN_WRITTEN))?" none":"")
-                  <<"\n"
-                  <<"    address symbolic: " <<addr <<"\n";
-                o <<"        value " <<mval.val <<"\n";
+        size_t ncells=0, max_ncells=100;
+        o <<"== Memory ==\n";
+        for (typename MemoryCells::const_iterator ci=memory.begin(); ci!=memory.end(); ++ci) {
+            uint32_t addr = ci->first;
+            const MemoryValue &mval = ci->second;
+            if (++ncells>max_ncells) {
+                o <<"    skipping " <<memory.size()-(ncells-1) <<" more memory cells for brevity's sake...\n";
+                break;
             }
+            o <<"         cell access:"
+              <<(0==(mval.rw_state & HAS_BEEN_READ)?"":" read")
+              <<(0==(mval.rw_state & HAS_BEEN_WRITTEN)?"":" written")
+              <<(0==(mval.rw_state & (HAS_BEEN_READ|HAS_BEEN_WRITTEN))?" none":"")
+              <<"\n"
+              <<"    address " <<addr <<"\n";
+            o <<"      value " <<mval.val <<"\n";
         }
     }
-        
+
     friend std::ostream& operator<<(std::ostream &o, const State &state) {
         state.print(o);
         return o;
@@ -982,7 +971,7 @@ public:
 
     // Return output values. These include the return value, certain memory writes, function calls, system calls, etc.
     OutputGroup get_outputs() {
-        return state.get_outputs(params.initial_stack, 8192, params.verbosity);
+        return state.get_outputs(params.verbosity);
     }
     
     // Sets up the machine state to start the analysis of one function.
@@ -1378,22 +1367,28 @@ public:
 
         // Add the address/value pair to the memory state one byte at a time in little-endian order.
         assert(8==nBits || 16==nBits || 32==nBits);
+        size_t nbytes = nBits / 8;
         ValueType<8> b0 = this->template extract<0, 8>(data);
-        state.mem_write_byte(sr, a0, b0, rw_state);
+        state.mem_write_byte(sr, a0, b0, nbytes, rw_state);
         if (nBits>=16) {
             ValueType<32> a1 = this->add(a0, ValueType<32>(1));
             ValueType<8> b1 = this->template extract<8, 16>(data);
-            state.mem_write_byte(sr, a1, b1, rw_state);
+            state.mem_write_byte(sr, a1, b1, 0, rw_state);
         }
         if (nBits>=24) {
             ValueType<32> a2 = this->add(a0, ValueType<32>(2));
             ValueType<8> b2 = this->template extract<16, 24>(data);
-            state.mem_write_byte(sr, a2, b2, rw_state);
+            state.mem_write_byte(sr, a2, b2, 0, rw_state);
         }
         if (nBits>=32) {
             ValueType<32> a3 = this->add(a0, ValueType<32>(3));
             ValueType<8> b3 = this->template extract<24, 32>(data);
-            state.mem_write_byte(sr, a3, b3, rw_state);
+            state.mem_write_byte(sr, a3, b3, 0, rw_state);
+        }
+        if (state.is_memory_output(a0.known_value())) {
+            if (params.verbosity>=EFFUSIVE)
+                std::cerr <<"CloneDetection: potential output value mem[" <<a0 <<"]=" <<data <<"\n";
+            tracer.emit(this->get_insn()->get_address(), Tracer::EV_MEM_WRITE, a0.known_value(), data.known_value());
         }
     }
 

@@ -236,7 +236,8 @@ detect_pointers(SgAsmFunction *func, const FunctionIdMap &function_ids, const Sw
 // memory map that serves up values when needed by memory-reading instructions.  For ELF, we replace the .got.plt section; for
 // PE we replace the "Import Address Table" section.
 static void
-overmap_dynlink_addresses(SgAsmInterpretation *interp, MemoryMap *ro_map, rose_addr_t special_value)
+overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor &insns,
+                          MemoryMap *ro_map/*in,out*/, rose_addr_t special_value)
 {
     const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
     for (SgAsmGenericHeaderPtrList::const_iterator hi=hdrs.begin(); hi!=hdrs.end(); ++hi) {
@@ -247,12 +248,23 @@ overmap_dynlink_addresses(SgAsmInterpretation *interp, MemoryMap *ro_map, rose_a
                 size_t nbytes = (*si)->get_mapped_size();
                 size_t nwords = nbytes / 4;
                 if (nwords>0) {
+                    size_t nchanges = 0;
                     uint32_t *buf = new uint32_t[nwords];
-                    for (size_t i=0; i<nwords; ++i)
-                        buf[i] = special_value;
-                    MemoryMap::BufferPtr mmbuf = MemoryMap::ByteBuffer::create(buf, nbytes);
-                    ro_map->insert(Extent((*si)->get_mapped_actual_va(), nbytes),
-                                   MemoryMap::Segment(mmbuf, 0, MemoryMap::MM_PROT_READ, "analysis-mapped dynlink addresses"));
+                    (*si)->read_content_local(0, buf, nbytes, false);
+                    for (size_t i=0; i<nwords; ++i) {
+                        if (NULL==insns.get_instruction(ByteOrder::le_to_host(buf[i]))) {
+                            buf[i] = special_value;
+                            ++nchanges;
+                        }
+                    }
+                    if (nchanges>0) {
+                        MemoryMap::BufferPtr mmbuf = MemoryMap::ByteBuffer::create(buf, nbytes);
+                        ro_map->insert(Extent((*si)->get_mapped_actual_va(), nbytes),
+                                       MemoryMap::Segment(mmbuf, 0, MemoryMap::MM_PROT_READ,
+                                                          "analysis-mapped dynlink addresses"));
+                    } else {
+                        delete[] buf;
+                    }
                 }
             }
         }
@@ -272,7 +284,7 @@ fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inpu
     assert(interp->get_map()!=NULL);
     MemoryMap ro_map = *interp->get_map();
     ro_map.prune(MemoryMap::MM_PROT_READ, MemoryMap::MM_PROT_WRITE);
-    overmap_dynlink_addresses(interp, &ro_map, policy.GOTPLT_VALUE);
+    overmap_dynlink_addresses(interp, insns, &ro_map, policy.GOTPLT_VALUE);
     policy.set_map(&ro_map);
 
     AnalysisFault::Fault fault = AnalysisFault::NONE;
