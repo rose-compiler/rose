@@ -8,7 +8,7 @@
 
 using namespace CodeThorn;
 
-AstMatching::AstMatching():_matchExpression(""),_root(0) { 
+AstMatching::AstMatching():_matchExpression(""),_root(0),_keepMarkedLocations(false) { 
   //_allMatchVarBindings=new std::list<SingleMatchVarBindings>; 
 }
 AstMatching::~AstMatching() {
@@ -39,6 +39,12 @@ void AstMatching::generateMatchOperationsSequence() {
   extern MatchOperationList* matchOperationsSequence;
   InitializeParser(_matchExpression);
   matcherparserparse();
+  // clean up possibly existing match operations sequence
+#if 0
+  // TODO: proper destruction not finished yet
+  if(_matchOperationsSequence)
+	delete _matchOperationsSequence;
+#endif
   _matchOperationsSequence=matchOperationsSequence;
   FinishParser();
 }
@@ -93,11 +99,15 @@ AstMatching::performSingleMatch(SgNode* node, MatchOperationList* matchOperation
   if(tmpresult)
 	_status.mergeSingleMatchResult(smr);
   return tmpresult;
-
 }
 
 void 
 AstMatching::performMatchingOnAst(SgNode* root) {
+  // reset match status (taking care of reuse of object)
+  if(!_keepMarkedLocations)
+	_status.resetAllMarkedLocations();
+  _status.resetAllMatchVarBindings();
+  // start matching
   RoseAst ast(root);
   bool result;
   for(RoseAst::iterator ast_iter=ast.begin().withNullValues();
@@ -123,3 +133,6 @@ AstMatching::performMatchingOnAst(SgNode* root) {
     std::cout << "Matching on AST finished." << std::endl;
 }
 
+void AstMatching::setKeepMarkedLocations(bool keepMarked) {
+  _keepMarkedLocations=keepMarked;
+}

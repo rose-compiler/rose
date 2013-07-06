@@ -400,3 +400,14 @@ void MatchStatus::commitSingleMatchResult() {
 void SingleMatchResult::clear() {
   
 }
+
+void MatchStatus::resetAllMatchVarBindings() {
+  if(_allMatchVarBindings)
+	delete _allMatchVarBindings;
+  _allMatchVarBindings=new std::list<SingleMatchVarBindings>;
+}
+
+void MatchStatus::resetAllMarkedLocations() {
+  while(!_allMatchMarkedLocations.empty())
+	_allMatchMarkedLocations.pop_front();
+}
