@@ -71,6 +71,8 @@ class VariableIdMapping {
   void toStream(ostream& os);
   void generateDot(string filename,SgNode* astRoot);
 
+  set<VariableId> getVariableIdSet();
+
  private:
   void generateStmtSymbolDotEdge(std::ofstream&, SgNode* node,VariableId id);
   string generateDotSgSymbol(SgSymbol* sym);

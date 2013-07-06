@@ -6,8 +6,11 @@
 
 #include "VariableIdMapping.h"
 #include "RoseAst.h"
+#include <set>
 
+using std::set;
 using namespace CodeThorn;
+
 
 void VariableIdMapping::toStream(ostream& os) {
   for(size_t i=0;i<mappingVarIdToSym.size();++i) {
@@ -18,6 +21,17 @@ void VariableIdMapping::toStream(ostream& os) {
 	  <<")"<<endl;
 	assert(mappingSymToVarId[mappingVarIdToSym[i]]==i);
   }
+}
+
+set<VariableId> VariableIdMapping::getVariableIdSet() {
+  set<VariableId> set;
+  for(map<SgSymbol*,size_t>::iterator i=mappingSymToVarId.begin();i!=mappingSymToVarId.end();++i) {
+	size_t t=(*i).second;
+	VariableId id;
+	id.setIdCode(t);
+	set.insert(id);
+  }
+  return set;
 }
 
 VariableId VariableIdMapping::variableIdFromCode(int i) {
