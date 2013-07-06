@@ -230,36 +230,42 @@ void AddressTakenAnalysis::printAddressTakenSet()
 /*************************************************
  ************* PointerTypeAnalysis ***************
  *************************************************/
-class PointerTypeAnalysis
+class PointerArrayTypeAnalysis
 {
-  SgNode* root;
   VariableIdMapping& vidm;
   VariableIdSet pointerTypeSet;
+
 public:
-  PointerTypeAnalysis(SgNode* _root, VariableIdMapping& _vidm) : root(_root), vidm(_vidm) { }
+  PointerTypeAnalysis(VariableIdMapping& _vidm) : vidm(_vidm) { }
   void collectPointerTypes();
+  void printPointerTypeSet(); 
 };
 
 
 void PointerTypeAnalysis::collectPointerTypes()
 {
-  // query AST
-  ProcessQuery procQueryAST;
-  // Note: do we need to do compound assign op for pointers ?
-  MatchResult matches = procQueryAST("$X=SgAssignOp($L=SgVarRefExp,_,_)", root);
-  for(MatchResult::iterator it = matches.begin(); it != matches.end(); it++)
+  std::set<VariableId> set = vidm.getVariableIdSet();
+  for(std::set<VariableId>::iterator it = set.begin(); it != set.end(); ++it)
   {
-    SgVarRefExp* lhs = (*it)["$L"];
-    if(isSgPointerType(lhs->get_type()))
-    {
-      // lhs is a pointer variable
-      std::cout << "<" << lhs->unparseToString() << "\n";
-    }
+    SgSymbol* v_symbol = vidm.getSymbol(*it);
+    SgType* v_type = v_symbol->get_type();
+    if(isSgPointerType(v_type))
+      pointerTypeSet.insert(*it);
   }
+}
 
-  matches.clear();
-  matches = procQueryAST("$FP=SgFunctionParameterList");
-
+void PointerTypeAnalysis::printPointerTypeSet()
+{
+  VariableIdSetIterator pts_it = pointerTypeSet.begin();
+  std::cout << "pointerTypeSet: [";
+  for (; pts_it != pointerTypeSet.end(); )
+  {
+    std::cout << vidm.variableName(*pts_it);
+    pts_it++;
+    if(pts_it != pointerTypeSet.end())
+      std::cout << ", ";
+  }
+  std::cout << "]\n";
 }
 
 /*************************************************
@@ -281,8 +287,9 @@ int main(int argc, char* argv[])
   addrTakenAnalysis.computeAddressTakenSet();
   addrTakenAnalysis.printAddressTakenSet();
 
-  PointerTypeAnalysis ptrTypeAnalysis(root, vidm);
+  PointerTypeAnalysis ptrTypeAnalysis(vidm);
   ptrTypeAnalysis.collectPointerTypes();
+  ptrTypeAnalysis.printPointerTypeSet();
 
   // ExprTypeCycleDetect etcd;
   // if(!etcd(root))
