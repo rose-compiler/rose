@@ -16,6 +16,7 @@ combined: simple001 simple002 sorting
 # Binaries where each optimization level is its own executable
 simple001_progs = $(addprefix simple001-, $(OPT_LEVELS))
 simple002_progs = $(addprefix simple002-, $(OPT_LEVELS))
+simple003_progs = $(addprefix simple003-, $(OPT_LEVELS))
 externalsort_progs = $(addprefix externalsort-, $(OPT_LEVELS))
 insertsort_progs   = $(addprefix   insertsort-, $(OPT_LEVELS))
 qsort_progs        = $(addprefix        qsort-, $(OPT_LEVELS))
@@ -23,7 +24,7 @@ quicksort_progs    = $(addprefix    quicksort-, $(OPT_LEVELS))
 shellsort_progs    = $(addprefix    shellsort-, $(OPT_LEVELS))
 sort_progs = $(externalsort_progs) $(insertsort_progs) $(qsort_progs) $(quicksort_progs) $(shellsort_progs)
 .PHONY: separate
-separate: $(simple001_progs) $(simple002_progs) $(sort_progs)
+separate: $(simple001_progs) $(simple002_progs) $(simple003_progs) $(sort_progs)
 
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -55,6 +56,13 @@ CLEANFILES += simple002
 $(simple002_progs): simple002-%: simple002.C main.o
 	$(CXX) $(CXXFLAGS) -o $@ -UNAMESPACE -O$* $^
 MOSTLYCLEANFILES += $(simple002_progs)
+
+#------------------------------------------------------------------------------------------------------------------------
+# More simple specimens that gcc -O3 does a good job of optimizing.
+# These are always compiled separately
+$(simple003_progs): simple003-%: simple003.c
+	$(CC) $(CFLAGS) -o $@ -O$* $^
+MOSTLYCLEANFILSE += $(simple003_progs)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Some complex examples of sorting algorithms
