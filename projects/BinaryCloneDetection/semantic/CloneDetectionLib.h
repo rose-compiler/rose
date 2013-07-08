@@ -367,10 +367,6 @@ public:
     std::vector<T> get_vector() const {
         std::vector<std::pair<T, rose_addr_t> > tmp(values_.begin(), values_.end());
         std::sort(tmp.begin(), tmp.end(), OutputGroupValueAddrSetLessp<T>());
-#if 1 /*DEBUGGING [Robb P. Matzke 2013-06-27]*/
-        for (size_t i=1; i<tmp.size(); ++i)
-            ROSE_ASSERT(tmp[i-1].second <= tmp[i].second);
-#endif
         std::vector<T> retval;
         retval.reserve(tmp.size());
         for (size_t i=0; i<tmp.size(); ++i)
@@ -1191,13 +1187,20 @@ public:
     }
     
     // Virtually in-line functions that the compiler could have inlined because they're built into the compiler. Returns true
-    // if the function was handled here.
-    bool handle_builtin_call(SgAsmInstruction *insn) {
+    // if the function was handled here.  Most of these functions only approximately model the real function for reasons of
+    // simplicity--the model is sometimes inaccurate in exceptional cases.
+    bool inline_builtin_call(SgAsmInstruction *insn) {
         SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
         if (!func)
             return false;
         std::string func_name = func->get_name();
-#if 1 /*DEBUGGING [Robb P. Matzke 2013-07-06]*/
+
+        // This is often a good place to emit tracing info when trying to compare optimized vs. unoptimized specimens
+        // because the compiler will generally not optimize much across function calls.  However, some of these calls
+        // (like memset()) can be inlined because the system include files conditionally provide definitions at certain
+        // optimization levels or call GCC-builtin functions.  Also, various function attribute specifiers, like
+        // __attribute__((pure)), allow the optimizer more freedom around the call.
+#if 0
         if (params.verbosity>=EFFUSIVE) {
             std::cerr <<"CloneDetection: DEBUG: in " <<func_name <<"\n"
                       <<"                arguments: " <<inputs->queue(IQ_ARGUMENT).nconsumed() <<"\n"
@@ -1207,13 +1210,14 @@ public:
                       <<"                integers:  " <<inputs->queue(IQ_INTEGER).nconsumed() <<"\n";
         }
 #endif
+
         if (0==func_name.compare("abort@plt") || 0==func_name.compare("__assert_fail@plt")) {
             // These functions abort rather than return. We need to fix up the EIP for event handling
             state.registers.ip = ValueType<32>(insn->get_address());
             throw FaultException(AnalysisFault::HALT);
         } else if (0==func_name.compare("memset@plt")) {
             if (params.verbosity>=EFFUSIVE)
-                std::cerr <<"CloneDetection: virtually inlining memset@plt\n";
+                std::cerr <<"CloneDetection: virtually inlining " <<func_name <<"\n";
             rose_addr_t dst = stack(0);
             uint32_t val = stack(1);
             size_t i = 0, size = stack(2);
@@ -1223,6 +1227,61 @@ public:
                 writeMemory(x86_segreg_ds, ValueType<32>(dst+i), ValueType<8>(val), this->true_());
             state.registers.gpr[x86_gpr_ax] = dst;
             return true;
+        } else if (0==func_name.compare("memcpy@plt") || 0==func_name.compare("memmove@plt")) {
+            size_t size = stack(2);
+            if (size<=4096) { // arbitrary
+                if (params.verbosity>=EFFUSIVE)
+                    std::cerr <<"CloneDetection: virtually inlining " <<func_name <<"\n";
+                rose_addr_t dst=stack(0), src=stack(1);
+                uint8_t buf[size];
+                for (size_t i=0; i<size; ++i)
+                    buf[i] = readMemory<8>(x86_segreg_ds, ValueType<32>(src+i), this->true_()).known_value();
+                for (size_t i=0; i<size; ++i)
+                    writeMemory(x86_segreg_ds, ValueType<32>(dst+i), ValueType<8>(buf[i]), this->true_());
+                state.registers.gpr[x86_gpr_ax] = dst;
+                return true;
+            }
+        } else if (0==func_name.compare("strcpy@plt") || 0==func_name.compare("strncpy@plt") ||
+                   0==func_name.compare("strpncpy@plt")) {
+            if (params.verbosity>=EFFUSIVE)
+                std::cerr <<"CloneDetection: virtually inlining " <<func_name <<"\n";
+            rose_addr_t dst=stack(0), src=stack(1);
+            size_t nbytes = 0==func_name.compare("strcpy@plt") ? (size_t)(-1) : stack(2);
+            rose_addr_t retval = 0==func_name.compare("strpncpy@plt") ? dst+nbytes : dst;
+            size_t i = 0;
+            for (/*void*/; i<nbytes; ++i) {
+                ValueType<8> byte = readMemory<8>(x86_segreg_ds, ValueType<32>(src+i), this->true_());
+                writeMemory(x86_segreg_ds, ValueType<32>(dst+i), byte, this->true_());
+                if (0==byte.known_value()) {
+                    if (retval==dst+nbytes)
+                        retval = dst+i;
+                    ++i;
+                    break;
+                }
+            }
+            if ((size_t)-1!=nbytes) {
+                for (/*void*/; i<nbytes; ++i)
+                    writeMemory(x86_segreg_ds, ValueType<32>(dst+i), ValueType<8>(0), this->true_());
+            }
+            state.registers.gpr[x86_gpr_ax] = retval;
+            return true;
+        } else if (0==func_name.compare("strcat@plt") || 0==func_name.compare("strncat@plt")) {
+            if (params.verbosity>=EFFUSIVE)
+                std::cerr <<"CloneDetection: virtually inlining " <<func_name <<"\n";
+            rose_addr_t dst=stack(0), src=stack(1);
+            size_t nbytes = 0==func_name.compare("strcat@plt") ? (size_t)(-1) : stack(2);
+            size_t src_i=0, dst_i=0;
+            while (0!=readMemory<8>(x86_segreg_ds, ValueType<32>(dst+dst_i), this->true_()).known_value())
+                ++dst_i;
+            for (/*void*/; src_i<nbytes; ++src_i, ++dst_i) {
+                ValueType<8> byte = readMemory<8>(x86_segreg_ds, ValueType<32>(src+src_i), this->true_());
+                if (0==byte.known_value())
+                    break;
+                writeMemory(x86_segreg_ds, ValueType<32>(dst+dst_i), byte, this->true_());
+            }
+            writeMemory(x86_segreg_ds, ValueType<32>(dst+dst_i), ValueType<8>(0), this->true_());
+            state.registers.gpr[x86_gpr_ax] = dst;
+
         } else if (0==func_name.compare("__ctype_b_loc@plt")) {
             static const rose_addr_t retval = 0x81000000; // arbitrary return address
             state.registers.gpr[x86_gpr_ax] = readMemory<32>(x86_segreg_ds, ValueType<32>(retval), this->true_());
@@ -1248,7 +1307,7 @@ public:
         if (GOTPLT_VALUE==next_eip && !has_returned) {
             if (params.verbosity>=EFFUSIVE)
                 std::cerr <<"CloneDetection: special handling for non-linked dynamic function\n";
-            if (!handle_builtin_call(insn)) {
+            if (!inline_builtin_call(insn)) {
                 this->writeRegister("eax", next_input_value<32>(IQ_FUNCTION));
                 if (params.verbosity>=EFFUSIVE)
                     std::cerr <<"CloneDetection: consumed function input; EAX = " <<state.registers.gpr[x86_gpr_ax] <<"\n";
