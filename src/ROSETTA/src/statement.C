@@ -261,12 +261,17 @@ Grammar::setUpStatements ()
     NEW_TERMINAL_MACRO (OmpForStatement,       "OmpForStatement",        "OMP_FOR_STMT" );
     NEW_TERMINAL_MACRO (OmpDoStatement,        "OmpDoStatement",         "OMP_DO_STMT" );
     NEW_TERMINAL_MACRO (OmpSectionsStatement,  "OmpSectionsStatement",   "OMP_SECTIONS_STMT" );
+ 
+     // experimental omp target directive, Liao 1/22/2012
+     // use for testing OpenMP accelerator model
+    NEW_TERMINAL_MACRO (OmpTargetStatement,  "OmpTargetStatement",   "OMP_TARGET_STMT" );
+    NEW_TERMINAL_MACRO (OmpTargetDataStatement,  "OmpTargetDataStatement",   "OMP_TARGET_DATA_STMT" );
 
     // A base class for the most commonly formed directives with both clauses and a structured body
     // We treat OmpSectionsStatement separatedly by move the body to a list of SgOmpSectionStatement
     // sensitive to 
     NEW_NONTERMINAL_MACRO (OmpClauseBodyStatement,  OmpParallelStatement | OmpSingleStatement |
-              OmpTaskStatement| OmpForStatement| OmpDoStatement | OmpSectionsStatement ,
+              OmpTaskStatement| OmpForStatement| OmpDoStatement | OmpSectionsStatement | OmpTargetStatement| OmpTargetDataStatement ,
         "OmpClauseBodyStatement",   "OMP_CLAUSEBODY_STMT", false );
 
     // + a statement / block 
@@ -550,8 +555,10 @@ Grammar::setUpStatements ()
      ScopeStatement.setAutomaticGenerationOfConstructor(false);
 
   // Switch between inlcuding the SgSymbolTable as a pointer or as a data member
+  // ScopeStatement.setDataPrototype    ( "SgSymbolTable*","symbol_table","= NULL",
+  //                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
      ScopeStatement.setDataPrototype    ( "SgSymbolTable*","symbol_table","= NULL",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
+                                          NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
 
   // DQ (7/23/2010): Build a local type table because during construction of the AST we can't yet build the global type table.
   // After construction of the AST it might be that we can build a global type table and then perhaps not use this local one at each scope.
@@ -1613,7 +1620,19 @@ Grammar::setUpStatements ()
                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateFunctionDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#if 0
+  // DQ (6/28/2013): The template arguments should not always be output where the function is used in a SgTemplateFunctionRefExp 
+  // and so we need to record this.  This does not handle where individual function reference expression may or may not explicitly
+  // specify the template argument list, but only where some do or all do not explicitly specify the template argument list.
+  // See test2013_242.C for an example of where this is required (a boost graph example test code).
+     TemplateFunctionDeclaration.setDataPrototype ( "bool", "template_argument_list_is_explicit", "= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 #else
+
+#error "DEAD CODE!"
+
      TemplateFunctionDeclaration.editSubstitute   ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
      TemplateFunctionDeclaration.editSubstitute   ( "LIST_DATA_TYPE", "SgInitializedNamePtrList" );
      TemplateFunctionDeclaration.editSubstitute   ( "LIST_NAME", "args" );
@@ -1708,7 +1727,18 @@ Grammar::setUpStatements ()
                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateMemberFunctionDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#if 0
+  // DQ (6/28/2013): The template arguments should not always be output where the function is used in a SgTemplateMemberFunctionRefExp 
+  // and so we need to record this.  This does not handle where individual function reference expression may or may not explicitly
+  // specify the template argument list, but only where some do or all do not explicitly specify the template argument list.
+     TemplateMemberFunctionDeclaration.setDataPrototype ( "bool", "template_argument_list_is_explicit", "= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 #else
+
+#error "DEAD CODE!"
+
      TemplateMemberFunctionDeclaration.editSubstitute      ( "LIST_DATA_TYPE", "SgInitializedNamePtrList" );
      TemplateMemberFunctionDeclaration.editSubstitute      ( "LIST_NAME", "ctors" );
      TemplateMemberFunctionDeclaration.editSubstitute      ( "LIST_FUNCTION_RETURN_TYPE", "void" );
@@ -1846,6 +1876,14 @@ Grammar::setUpStatements ()
   // if the name has been reset or not to avoid using mangled names in the unparsed (generated) code.
      TemplateInstantiationFunctionDecl.setDataPrototype ( "bool", "nameResetFromMangledForm", "= false",
                                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 1
+  // DQ (6/28/2013): The template arguments should not always be output where the function is used in a SgTemplateFunctionRefExp 
+  // and so we need to record this.  This does not handle where individual function reference expression may or may not explicitly
+  // specify the template argument list, but only where some do or all do not explicitly specify the template argument list.
+  // See test2013_242.C for an example of where this is required (a boost graph example test code).
+     TemplateInstantiationFunctionDecl.setDataPrototype ( "bool", "template_argument_list_is_explicit", "= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
   // DQ (3/22/2004): Support for template member functions
      TemplateInstantiationMemberFunctionDecl.setFunctionPrototype ( 
@@ -1883,6 +1921,14 @@ Grammar::setUpStatements ()
   // if the name has been reset or not to avoid using mangled names in the unparsed (generated) code.
      TemplateInstantiationMemberFunctionDecl.setDataPrototype ( "bool", "nameResetFromMangledForm", "= false",
                                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 1
+  // DQ (6/28/2013): The template arguments should not always be output where the function is used in a SgTemplateMemberFunctionRefExp 
+  // and so we need to record this.  This does not handle where individual function reference expression may or may not explicitly
+  // specify the template argument list, but only where some do or all do not explicitly specify the template argument list.
+     TemplateInstantiationMemberFunctionDecl.setDataPrototype ( "bool", "template_argument_list_is_explicit", "= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
 
 
 #if 0
@@ -2466,9 +2512,18 @@ Grammar::setUpStatements ()
                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (7/23/2011): Pointers to previous and next matching namespace definitions (C++ namespaces are reintrant).
-     NamespaceDefinitionStatement.setDataPrototype ( "SgNamespaceDefinitionStatement*", "previousNamepaceDefinition", "= NULL",
+     NamespaceDefinitionStatement.setDataPrototype ( "SgNamespaceDefinitionStatement*", "previousNamespaceDefinition", "= NULL",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     NamespaceDefinitionStatement.setDataPrototype ( "SgNamespaceDefinitionStatement*", "nextNamepaceDefinition", "= NULL",
+     NamespaceDefinitionStatement.setDataPrototype ( "SgNamespaceDefinitionStatement*", "nextNamespaceDefinition", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/16/2013): This is where we put the union of all of the symbols for all of the namespace definitions that
+  // are logically the same namespace, but seperated structurally because C++ namespaces can be re-entrant.
+  // Note that only SgAliasSymbols are put here and that the original symbol is placed into the namespace definition
+  // associated with its declaration.  
+     NamespaceDefinitionStatement.setDataPrototype ( "SgNamespaceDefinitionStatement*", "global_definition", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     NamespaceDefinitionStatement.setDataPrototype ( "bool", "isUnionOfReentrantNamespaceDefinitions", "= false",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      UsingDeclarationStatement.setFunctionPrototype ( "HEADER_USING_DECLARATION_STATEMENT",
@@ -3500,8 +3555,10 @@ Grammar::setUpStatements ()
 
      NamespaceDefinitionStatement.setFunctionSource (
           "SOURCE_NAMESPACE_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
+#if 0
      NamespaceDefinitionStatement.setFunctionSource (
           "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
+#endif
 
      UsingDirectiveStatement.setFunctionSource (
           "SOURCE_USING_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
@@ -3670,6 +3727,8 @@ Grammar::setUpStatements ()
     OmpOrderedStatement.setFunctionSource            ("SOURCE_OMP_ORDERED_STATEMENT", "../Grammar/Statement.code" );
     OmpTaskwaitStatement.setFunctionSource            ("SOURCE_OMP_TASKWAIT_STATEMENT", "../Grammar/Statement.code" );
 
+    OmpTargetStatement.setFunctionSource            ("SOURCE_OMP_TARGET_STATEMENT", "../Grammar/Statement.code" );
+    OmpTargetDataStatement.setFunctionSource            ("SOURCE_OMP_TARGET_DATA_STATEMENT", "../Grammar/Statement.code" );
    // sections {section, section} // `containerSuccessors >1 is not allowed in ROSETTA's traversal
    // We hack the code to handle this special case
 //    OmpSectionsStatement.setDataPrototype("SgOmpSectionStatementPtrList", "sections", "",

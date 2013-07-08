@@ -220,12 +220,18 @@ class AstPerformance
 
 class TimingPerformance : public AstPerformance
    {
+     private:
           RoseTimeType timer;
 
   // Used for timing compilation within ROSE
      public:
           TimingPerformance ( std::string s , bool outputReport = false );
           virtual ~TimingPerformance();
+
+       // DQ (6/30/2013): Refactored this function to be something that can be called from the 
+       // destructor and also in the scope of the outer most scope timer before report generation 
+       // (so we can compute total elapsed time).
+          void endTimer();
 
        // virtual double performanceResolution();
           static double performanceResolution();

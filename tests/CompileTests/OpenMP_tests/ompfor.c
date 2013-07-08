@@ -22,5 +22,6 @@ int main(void)
           i, omp_get_thread_num());
     }
   }
+  return 0;
 }
 

@@ -1,6 +1,5 @@
-#ifndef ATERMTRANSLATION_H
-#define ATERMTRANSLATION_H
-
+#ifndef ATERM_TRANSLATION_H
+#define ATERM_TRANSLATION_H
 
 #include "aterm1.h"
 #include <iostream>
@@ -10,8 +9,7 @@
 // From astToAtermImpl.C:
 ATerm convertFileInfoToAterm(Sg_File_Info* fi);
 ATerm convertNodeToAterm(SgNode* n);
-ATerm convertVectorToAterm(const vector<ATerm>& v,
-                           int start = 0, int len = -1);
+ATerm convertVectorToAterm(const std::vector<ATerm>& v, int start = 0, int len = -1);
 
 inline std::string intToHex(unsigned int x) {
   std::ostringstream s;
@@ -20,7 +18,8 @@ inline std::string intToHex(unsigned int x) {
 }
 
 inline std::string intToHex(void* x) {
-  return intToHex((unsigned int)x);
+//return intToHex((unsigned int)x);
+  return intToHex((unsigned long)x);
 }
 
 inline ATerm pointerAsAterm(SgNode* n) {
@@ -42,4 +41,6 @@ void cleanAstMadeFromAterm(SgNode* n);
 Sg_File_Info* getAtermFileInfo(ATerm term);
 SgNode* convertAtermToNode(ATerm term);
 std::vector<ATerm> getAtermList(ATerm ls);
-#endif // ATERMTRANSLATION_H
+
+ // endif for ATERM_TRANSLATION_H
+#endif

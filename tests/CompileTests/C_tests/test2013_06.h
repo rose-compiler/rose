@@ -1,0 +1,2 @@
+bool lock_file();
+

@@ -364,7 +364,10 @@ SgScopeStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
      ROSE_ASSERT(copyScopeStatement->variantT() == this->variantT());
 
   // The symbol table should not have been setup yet!
-     if (copyScopeStatement->get_symbol_table()->size() != 0)
+
+  // DQ (5/21/2013): Restrict direct access to the symbol table.
+  // if (copyScopeStatement->get_symbol_table()->size() != 0)
+     if (copyScopeStatement->symbol_table_size() != 0)
         {
           printf ("copy = %p = %s = %s \n",copy,copy->class_name().c_str(),SageInterface::get_name(copy).c_str());
           copyScopeStatement->get_file_info()->display("In SgScopeStatement::fixupCopy_scopes()");
@@ -1688,20 +1691,26 @@ SgIfStmt::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 
      ROSE_ASSERT(this->get_true_body() != NULL);
      ROSE_ASSERT(ifStatement_copy->get_true_body() != NULL);
-     if (isSgScopeStatement(ifStatement_copy->get_true_body())) {
-       ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_true_body())->get_symbol_table() != NULL);
-       ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_true_body())->get_symbol_table()->size()  == 0);
-     }
+     if (isSgScopeStatement(ifStatement_copy->get_true_body())) 
+        {
+       // DQ (5/21/2013): Restrict direct access to the symbol table.
+       // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_true_body())->get_symbol_table() != NULL);
+       // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_true_body())->get_symbol_table()->size()  == 0);
+          ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_true_body())->symbol_table_size() == 0);
+        }
 
   // printf ("\nProcess the TRUE body of the SgIfStmt \n\n");
 
      this->get_true_body()->fixupCopy_scopes(ifStatement_copy->get_true_body(),help);
 
      ROSE_ASSERT((this->get_false_body() != NULL) == (ifStatement_copy->get_false_body() != NULL));
-     if (isSgScopeStatement(ifStatement_copy->get_false_body())) {
-       ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_false_body())->get_symbol_table()->size() == 0);
-       ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_false_body())->get_symbol_table() != NULL);
-     }
+     if (isSgScopeStatement(ifStatement_copy->get_false_body())) 
+        {
+       // DQ (5/21/2013): Restrict direct access to the symbol table.
+       // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_false_body())->get_symbol_table()->size() == 0);
+       // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_false_body())->get_symbol_table() != NULL);
+          ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_false_body())->symbol_table_size() == 0);
+        }
 
   // printf ("\nProcess the FALSE body of the SgIfStmt \n\n");
 

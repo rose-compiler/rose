@@ -186,15 +186,32 @@ AttributeMechanism<Key,Value>::set(Key name, Value data) {
 
 template<class Key, class Value>
 Value 
-AttributeMechanism<Key,Value>::operator[](Key name) {
-  if(exists(name)) {
-    return MapType::operator[](name);
-  } else {
-    std::cerr << "Error: access [" << name << "] failed. Attribute: " << name 
-	 << " does not exist. Please check if it exists before getting it." << std::endl;
-    assert(false);
-  }
-}
+AttributeMechanism<Key,Value>::operator[](Key name) 
+   {
+#if 0
+  // Original version of code (generated compiler warnings with -NDEBUG).
+     if(exists(name)) 
+        {
+          return MapType::operator[](name);
+        } 
+       else 
+        {
+          std::cerr << "Error: access [" << name << "] failed. Attribute: " << name 
+	                 << " does not exist. Please check if it exists before getting it." << std::endl;
+          assert(false);
+        }
+#else
+  // DQ (6/30/2013): Rewrote this to avoid compiler warnings when compiling with -NDEBUG.
+     if (!exists(name)) 
+        {
+          std::cerr << "Error: access [" << name << "] failed. Attribute: " << name 
+	                 << " does not exist. Please check if it exists before getting it." << std::endl;
+          assert(false);
+        }
+
+     return MapType::operator[](name);
+#endif
+   }
 
 template<class Key, class Value>
 typename AttributeMechanism<Key,Value>::AttributeIdentifiers
