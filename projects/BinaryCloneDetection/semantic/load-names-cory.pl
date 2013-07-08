@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-my $mode = 'syntactic';
+my $mode = 'semantic';
 
 die "usage: $0 SPECIMEN_ID SPECIMEN_MD5 CSV_FILE" unless @ARGV==3;
 my $specimen_id = shift;
