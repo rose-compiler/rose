@@ -253,17 +253,19 @@ show_source_names(const SqlDatabase::TransactionPtr &tx, int func_id)
 static void
 show_tests(const SqlDatabase::TransactionPtr &tx, int func_id)
 {
-    SqlDatabase::Table<int, size_t, size_t, size_t, size_t, size_t, size_t, int64_t, std::string, double, double, int64_t> fio;
+    SqlDatabase::Table<int, size_t, size_t, size_t, size_t, size_t, size_t, size_t, int64_t,
+                       std::string, double, double, int64_t> fio;
     fio.insert(tx->statement("select"
-                             " fio.igroup_id, fio.arguments_consumed, fio.locals_consumed, fio.globals_consumed,"
-                             " fio.integers_consumed, fio.pointers_consumed, fio.instructions_executed, fio.ogroup_id,"
-                             " fault.name, fio.elapsed_time, fio.cpu_time, fio.cmd"
+                             "   fio.igroup_id, fio.arguments_consumed, fio.locals_consumed, fio.globals_consumed,"
+                             "   fio.functions_consumed, fio.integers_consumed, fio.pointers_consumed,"
+                             "   fio.instructions_executed, fio.ogroup_id,"
+                             "   fault.name, fio.elapsed_time, fio.cpu_time, fio.cmd"
                              " from semantic_fio as fio"
                              " join semantic_faults as fault on fio.status = fault.id"
                              " where func_id = ?"
                              " order by igroup_id")->bind(0, func_id));
     std::cout <<"Tests run for this function:\n";
-    fio.headers("IGroup", "Args", "Locals", "Globals", "Ints", "Ptrs", "Insns", "OGroup", "Status", "Elapsed Time",
+    fio.headers("IGroup", "Args", "Locals", "Globals", "Funcs", "Ints", "Ptrs", "Insns", "OGroup", "Status", "Elapsed Time",
                 "CPU Time", "Command");
     fio.line_prefix("    ");
     fio.print(std::cout);
