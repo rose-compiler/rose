@@ -77,6 +77,8 @@ bin_compass2_LDADD=\
 	bin/checkers/boolean_is_has/libbooleanishas.la \
 	bin/checkers/global_variables/libglobalvariables.la \
 	bin/checkers/no_overload_ampersand/libnooverloadampersand.la \
+	bin/checkers/magic_number/libmagicnumber.la \
+	bin/checkers/allocate_and_free_in_the_same_module/liballocateandfreeinthesamemodule.la \
 	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS) \
@@ -93,6 +95,8 @@ bin_compass2_LDADD=\
 # ------------------------------------------------------------------------------
 
 noinst_LTLIBRARIES=\
+	bin/checkers/allocate_and_free_in_the_same_module/liballocateandfreeinthesamemodule.la \
+	bin/checkers/magic_number/libmagicnumber.la \
 	bin/checkers/no_overload_ampersand/libnooverloadampersand.la \
 	bin/checkers/global_variables/libglobalvariables.la \
 	bin/checkers/boolean_is_has/libbooleanishas.la \
@@ -154,6 +158,12 @@ bin_checkers_global_variables_libglobalvariables_la_SOURCES=\
 
 bin_checkers_no_overload_ampersand_libnooverloadampersand_la_SOURCES=\
 	bin/checkers/no_overload_ampersand/no_overload_ampersand.cpp
+
+bin_checkers_magic_number_libmagicnumber_la_SOURCES=\
+	bin/checkers/magic_number/magic_number.cpp
+
+bin_checkers_allocate_and_free_in_the_same_module_liballocateandfreeinthesamemodule_la_SOURCES=\
+	bin/checkers/allocate_and_free_in_the_same_module/allocate_and_free_in_the_same_module.cpp
 
 #PLACEHOLDER
 

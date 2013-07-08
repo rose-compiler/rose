@@ -25,11 +25,17 @@
     <parameter name="enabled_checker">booleanIsHas</parameter>
     <parameter name="enabled_checker">globalVariables</parameter>
     <parameter name="enabled_checker">noOverloadAmpersand</parameter>
+    <parameter name="enabled_checker">magicNumber</parameter>
+    <parameter name="enabled_checker">allocateAndFreeInTheSameModule</parameter>
     <!--PLACEHOLDER-->
   </general>
 
   <!-- Checker-specific Compass Parameters //-->
   <checkers>
+    <checker name="magicNumbers">
+      <parameter name="allowed number">0</parameter>
+    </checker>
+
     <checker name="allowedFunctions">
       <parameter name="boost">join</parameter>
       <parameter name="std">push</parameter>
