@@ -1181,15 +1181,63 @@ public:
 
         Super::startInstruction(insn_);
     }
-        
 
+    // Return the word at the specified stack location as if the specimen had read the stack.  The argno is the 32-bit word
+    // offset from the current ESP value.
+    uint32_t stack(size_t argno) {
+        rose_addr_t stack_va = readRegister<32>("esp").known_value() + 4*argno;
+        ValueType<32> word = readMemory<32>(x86_segreg_ss, ValueType<32>(stack_va), this->true_());
+        return word.known_value();
+    }
+    
+    // Virtually in-line functions that the compiler could have inlined because they're built into the compiler. Returns true
+    // if the function was handled here.
+    bool handle_builtin_call(SgAsmInstruction *insn) {
+        SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
+        if (!func)
+            return false;
+        std::string func_name = func->get_name();
+#if 1 /*DEBUGGING [Robb P. Matzke 2013-07-06]*/
+        if (params.verbosity>=EFFUSIVE) {
+            std::cerr <<"CloneDetection: DEBUG: in " <<func_name <<"\n"
+                      <<"                arguments: " <<inputs->queue(IQ_ARGUMENT).nconsumed() <<"\n"
+                      <<"                locals:    " <<inputs->queue(IQ_LOCAL).nconsumed() <<"\n"
+                      <<"                globals:   " <<inputs->queue(IQ_GLOBAL).nconsumed() <<"\n"
+                      <<"                functions: " <<inputs->queue(IQ_FUNCTION).nconsumed() <<"\n"
+                      <<"                integers:  " <<inputs->queue(IQ_INTEGER).nconsumed() <<"\n";
+        }
+#endif
+        if (0==func_name.compare("abort@plt") || 0==func_name.compare("__assert_fail@plt")) {
+            // These functions abort rather than return. We need to fix up the EIP for event handling
+            state.registers.ip = ValueType<32>(insn->get_address());
+            throw FaultException(AnalysisFault::HALT);
+        } else if (0==func_name.compare("memset@plt")) {
+            if (params.verbosity>=EFFUSIVE)
+                std::cerr <<"CloneDetection: virtually inlining memset@plt\n";
+            rose_addr_t dst = stack(0);
+            uint32_t val = stack(1);
+            size_t i = 0, size = stack(2);
+            for (/*void*/; i+4<size; i+=4)
+                writeMemory(x86_segreg_ds, ValueType<32>(dst+i), ValueType<32>(val), this->true_());
+            for (/*void*/; i<size; ++i)
+                writeMemory(x86_segreg_ds, ValueType<32>(dst+i), ValueType<8>(val), this->true_());
+            state.registers.gpr[x86_gpr_ax] = dst;
+            return true;
+        } else if (0==func_name.compare("__ctype_b_loc@plt")) {
+            static const rose_addr_t retval = 0x81000000; // arbitrary return address
+            state.registers.gpr[x86_gpr_ax] = readMemory<32>(x86_segreg_ds, ValueType<32>(retval), this->true_());
+            return true;
+        }
+        return false;
+    }
+    
     // Special handling for some instructions. Like CALL, which does not call the function but rather consumes an input value.
     void finishInstruction(SgAsmInstruction *insn) /*override*/ {
         SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
         assert(insn_x86!=NULL);
         ++state.output_group.ninsns;
         rose_addr_t next_eip = state.registers.ip.known_value();
-        bool call_skipped = false;
+        bool has_returned = false;
 
         // If the test branches (via CALL or JMP or other) to a dynamically-loaded function that has not been linked into the
         // address space, then we need to do something about it or we'll likely get a disassemble failure on the next
@@ -1197,19 +1245,16 @@ public:
         // initialized the .got.plt with the GOTPLT_VALUE that we recognize here.  When we detect that the next instruction is
         // at the GOTPLT_VALUE address, we consume an input value and place it in EAX (the return value), then pop the return
         // address off the stack and load it into EIP.
-        if (GOTPLT_VALUE==next_eip && !call_skipped) {
+        if (GOTPLT_VALUE==next_eip && !has_returned) {
             if (params.verbosity>=EFFUSIVE)
                 std::cerr <<"CloneDetection: special handling for non-linked dynamic function\n";
-            // Don't return if abort@plt is the thing that just tried to branch to GOTPLT_VALUE
-            if (SgAsmFunction *cur_func=SageInterface::getEnclosingNode<SgAsmFunction>(insn)) {
-                std::string func_name = cur_func->get_name();
-                if (0==func_name.compare("abort@plt") || 0==func_name.compare("__assert_fail@plt")) {
-                    state.registers.ip = ValueType<32>(insn->get_address());
-                    throw FaultException(AnalysisFault::HALT);
-                }
+            if (!handle_builtin_call(insn)) {
+                this->writeRegister("eax", next_input_value<32>(IQ_FUNCTION));
+                if (params.verbosity>=EFFUSIVE)
+                    std::cerr <<"CloneDetection: consumed function input; EAX = " <<state.registers.gpr[x86_gpr_ax] <<"\n";
             }
             next_eip = skip_call(insn);
-            this->writeRegister("eax", next_input_value<32>(IQ_FUNCTION));
+            has_returned = true;
         }
 
         // Special handling for function calls.  Optionally, instead of calling the function, we treat the function as
@@ -1219,7 +1264,7 @@ public:
         //    * The called function's return value is in the EAX register
         //    * The caller cleans up any arguments that were passed via stack
         //    * The function's return value is an integer (non-pointer) type
-        if (x86_call==insn_x86->get_kind() && !call_skipped) {
+        if (x86_call==insn_x86->get_kind() && !has_returned) {
             if (!params.follow_calls) {
                 if (params.verbosity>=EFFUSIVE)
                     std::cerr <<"CloneDetection: special handling for function call (fall through and return via EAX)\n";
@@ -1229,19 +1274,21 @@ public:
                     state.output_group.callee_ids.push_back(found->second);
 #endif
                 next_eip = skip_call(insn);
+                has_returned = true;
                 this->writeRegister("eax", next_input_value<32>(IQ_FUNCTION));
             }
         }
 
         // Special handling for indirect calls whose target is not a valid instruction.  Treat the call as if it were to a
         // black box function, skipping the call.
-        if (x86_call==insn_x86->get_kind() && !call_skipped) {
+        if (x86_call==insn_x86->get_kind() && !has_returned) {
             const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
             SgAsmInstruction *target_insn = insns->get_instruction(next_eip);
             if (args.size()==1 && NULL==isSgAsmValueExpression(args[0]) && NULL==target_insn) {
                 if (params.verbosity>=EFFUSIVE)
                     std::cerr <<"CloneDetection: special handling for invalid indirect function call\n";
                 next_eip = skip_call(insn);
+                has_returned = true;
                 this->writeRegister("eax", next_input_value<32>(IQ_FUNCTION));
             }
         }
