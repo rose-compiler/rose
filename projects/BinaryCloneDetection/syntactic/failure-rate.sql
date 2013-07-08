@@ -62,6 +62,13 @@ create table fr_clone_pairs as
         from cluster_pairs
         where ratio_1 > 0.95 and ratio_2 > 0.95;
 
+select 'pairs detected as similar' as x, count(*) from fr_clone_pairs;
+select 'pairs from two files' as x, count(*)
+    from fr_clone_pairs as pair
+    join function_ids as func1 on pair.func1_id = func1.row_number
+    join function_ids as func2 on pair.func2_id = func2.row_number
+    where func1.file <> func2.file;
+
 -- Table of false negative pairs.  These are pairs of functions that were not determined to be similar but which are present
 -- in the fr_positives_pairs table.
 create table fr_false_negatives as
@@ -88,20 +95,20 @@ create table fr_results as
 
 select * from fr_results;
 
-select 'The following table contains all the functions of interest: functions that
-* appear in all specimens exactly once each
-* have a certain number of instructions, and
-* didn''t try to consume too many inputs, and
-* are defined in a specimen, not a dynamic library' as "Notice";
-select * from fr_functions order by function_name, file;
+-- select 'The following table contains all the functions of interest: functions that
+-- * appear in all specimens exactly once each
+-- * have a certain number of instructions, and
+-- * didn''t try to consume too many inputs, and
+-- * are defined in a specimen, not a dynamic library' as "Notice";
+-- select * from fr_functions order by function_name, file;
 
-select 'The following table shows the false negative function pairs.
-Both functions of the pair always have the same name.' as "Notice";
-select
-	func1.function_name as name,
-	func1.file as file1,
-	func2.file as file2
-    from fr_false_negatives as falseneg
-    join fr_functions as func1 on falseneg.func1_id = func1.row_number
-    join fr_functions as func2 on falseneg.func2_id = func2.row_number
-    order by func1.function_name, func2.function_name;
+-- select 'The following table shows the false negative function pairs.
+-- Both functions of the pair always have the same name.' as "Notice";
+-- select
+-- 	func1.function_name as name,
+-- 	func1.file as file1,
+-- 	func2.file as file2
+--     from fr_false_negatives as falseneg
+--     join fr_functions as func1 on falseneg.func1_id = func1.row_number
+--     join fr_functions as func2 on falseneg.func2_id = func2.row_number
+--     order by func1.function_name, func2.function_name;

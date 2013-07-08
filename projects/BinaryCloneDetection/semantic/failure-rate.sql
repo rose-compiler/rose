@@ -47,9 +47,13 @@ create table fr_funcnames as
 
 -- Functions that have a name and which appear once per specimen by that name.
 create table fr_functions as
-    select func.*
+    select distinct func.*
         from fr_funcnames as named
-        join semantic_functions as func on named.name = func.name;
+        join semantic_functions as func on named.name = func.name
+
+	-- uncomment the following lines to consider only those functions that passed at least once
+--	join semantic_fio as test on func.id=test.func_id and test.status=0
+;
 
 -- Tests that we want to consider
 create table fr_fio as
@@ -63,11 +67,13 @@ create table fr_function_pairs as
     select distinct f1.id as func1_id, f2.id as func2_id
         from fr_functions as f1
 	join fr_functions as f2 on f1.id < f2.id and f1.specimen_id <> f2.specimen_id
+
         -- Uncomment the following lines to consider only those pairs of functions where both functions passed for
-        -- at least one of their input groups
+        -- at least one of the same input groups
 	join fr_fio as test1 on f1.id = test1.func_id
 	join fr_fio as test2 on f2.id = test2.func_id and test1.igroup_id = test2.igroup_id
 	where test1.status = 0 and test2.status = 0
+
         -- Uncomment the following lines to consider only those pairs of functions where all tests were successful
 --      except
 --          select  f1.id as func1_id, f2.id as func2_id
@@ -77,6 +83,8 @@ create table fr_function_pairs as
 --          join fr_fio as test2 on f2.id = test2.func_id
 --          where test1.status <> 0 or test2.status <> 0
 ;
+
+
 
 -- Pairs of functions that should have been detected as being similar.  We're assuming that any pair of binary functions that
 -- have the same name are in fact the same function at the source level and should therefore be similar.
@@ -149,14 +157,12 @@ select 'The following table shows the false negative function pairs.
 Both functions of the pair always have the same name.' as "Notice";
 select
         func1.name as name,
-        func1.file_id as file1_id,
-        func2.file_id as file2_id,
-        sim.*
+	sim.func1_id, sim.func2_id, sim.similarity, sim.ncompares
     from fr_false_negatives as falseneg
     join fr_functions as func1 on falseneg.func1_id = func1.id
     join fr_functions as func2 on falseneg.func2_id = func2.id
     join semantic_funcsim as sim on falseneg.func1_id=sim.func1_id and falseneg.func2_id=sim.func2_id
-    order by func1.name, func2.name;
+    order by func1.name;
 
 select 'The following table shows the status breakdown for tests
 that were performed on each function of interest.' as "Notice";
