@@ -36,6 +36,8 @@ extern const Compass::Checker* const noRandChecker;
 extern const Compass::Checker* const booleanIsHasChecker;
 extern const Compass::Checker* const globalVariablesChecker;
 extern const Compass::Checker* const noOverloadAmpersandChecker;
+extern const Compass::Checker* const magicNumberChecker;
+extern const Compass::Checker* const allocateAndFreeInTheSameModuleChecker;
 //PLACEHOLDER1
 /*-----------------------------------------------------------------------------
  * Main program
@@ -152,6 +154,10 @@ int main (int argc, char** argv)
                 traversals.push_back (globalVariablesChecker);
             else if ("noOverloadAmpersand" == checker_name)
                 traversals.push_back (noOverloadAmpersandChecker);
+            else if ("magicNumber" == checker_name)
+                traversals.push_back (magicNumberChecker);
+            else if ("allocateAndFreeInTheSameModule" == checker_name)
+                traversals.push_back (allocateAndFreeInTheSameModuleChecker);
             //PLACEHOLDER2
             else
             {
