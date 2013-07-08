@@ -137,7 +137,7 @@ FixupSelfReferentialMacrosInAST::visit ( SgNode* node )
 
 
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
+#ifndef ROSE_USE_CLANG_FRONTEND
 
 // The definition of this variable is only available to the EDG 4.x work.
 extern std::set<SgVariableDeclaration*> nodesAddedWithinFieldUseSet;
