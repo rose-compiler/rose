@@ -8,9 +8,6 @@
 
 using namespace CodeThorn;
 
-typedef std::set<VariableId> VariableIdSet;
-typedef std::set<VariableId>::iterator VariableIdSetIterator;
-
 class ExprTypeCycleDetect
 {
   // pointer based '<' comparison
@@ -147,37 +144,37 @@ MatchResult ProcessQuery::operator()(std::string query, SgNode* root)
   return match_result;
 }
 
-/*************************************************
- **************** OperandToVarID  ****************
- *************************************************/
-
-// Visitor pattern to process the operands of SgAddressOfOp
-// SgAddressOfOp can be applied to anything that is an r-value
-// TODO: handle expressions that can be r-values
+// wrapper for set<VariableId> with pretty printing
 // 
-class OperandToVarID : public ROSE_VisitorPatternDefaultBase
+class VariableIdSet
 {
-  // store the reference to address taken set
-  VariableIdSet& addressTakenSet;
-  // store the reference to VariableId mappings
+  // required to get the variable name for the VariableId
   VariableIdMapping& vidm;
-  
+  std::set<VariableId> vset;
 public:
-  OperandToVarID(VariableIdSet& _addrTakenSet, VariableIdMapping& _vidm) : addressTakenSet(_addrTakenSet), vidm(_vidm)  { }                                                                                                                                                                                                                                                    
-  void visit(SgVarRefExp* sgn)
+  VariableIdSet(VariableIdMapping& _vidm) : vidm(_vidm) { }
+  VariableIdSet(VariableIdMapping& _vidm, std::set<VariableId> _vset) : vidm(_vidm), vset(_vset) { }
+
+  void insert(VariableId _vid)
   {
-    // get the VariableId for SgVarRefExp
-    addressTakenSet.insert(vidm.variableId(sgn));
+    vset.insert(_vid);
   }
 
-  void visit(SgDotExp* sgn)
-  {    
-  }
-
-  void visit(SgArrowExp* sgn)
+  std::string str() const
   {
+    std::ostringstream ostr;
+    ostr << "[";
+    std::set<VariableId>::iterator it = vset.begin();
+    for( ; it != vset.end(); )
+    {
+      ostr << "<" << (*it).toString() << ", " << vidm.variableName(*it)  << ">";
+      it++;
+      if(it != vset.end())
+        ostr << ", ";
+    }
+    ostr << "]";
+    return ostr.str();
   }
-
 };
 
 /*************************************************
@@ -187,15 +184,85 @@ class AddressTakenAnalysis
 {
   // head of the AST on which the analysis should be performed
   SgNode* root;
+  // required to compute VariableId
+  VariableIdMapping& vidm;
   // result to be computed by this analysis
   VariableIdSet addressTakenSet;
-  // required to compute VariableId
-  VariableIdMapping& vidMapping;
+
+  // address can be taken for any expression that is lvalue
+  // The purpose of this class is to traverse the arbitrary
+  // expressions that are operands of SgAddressOfOp and find the
+  // variable whose address is actually taken.
+  // For example in expression &(a.(b->c)),  'c' address is
+  // actually taken. This class simply traverses the rhs_operand
+  // of SgDotExp or SgArrowExp to identify the variable whose address
+  // is taken
+  class OperandToVariableId : public ROSE_VisitorPatternDefaultBase
+  {
+    AddressTakenAnalysis& ata;
+  public:
+    OperandToVariableId(AddressTakenAnalysis& _ata) : ata(_ata) { }
+    void visit(SgVarRefExp*);
+    void visit(SgDotExp*);
+    void visit(SgArrowExp*);
+    void visit(SgPointerDerefExp*);
+    void visit(SgPntrArrRefExp*);
+    void visit(SgNode* sgn);
+  };
 public:
-  AddressTakenAnalysis(SgNode* _root, VariableIdMapping& _vidMapping) : root(_root), vidMapping(_vidMapping) { }
+  AddressTakenAnalysis(SgNode* _root, VariableIdMapping& _vidm) : root(_root), vidm(_vidm), addressTakenSet(_vidm) { }
   void computeAddressTakenSet();
   void printAddressTakenSet();
 };
+
+void AddressTakenAnalysis::OperandToVariableId::visit(SgVarRefExp *sgn)
+{
+  ata.addressTakenSet.insert(ata.vidm.variableId(sgn));
+}
+
+void AddressTakenAnalysis::OperandToVariableId::visit(SgDotExp* sgn)
+{
+  SgNode* rhs_op = sgn->get_rhs_operand();
+  rhs_op->accept(*this);
+}
+
+void AddressTakenAnalysis::OperandToVariableId::visit(SgArrowExp* sgn)
+{
+  SgNode* rhs_op = sgn->get_rhs_operand();
+  rhs_op->accept(*this);
+}
+
+// For example q = &(*p) where both q and p are pointer types
+// In the example, q can potentially modify all variables pointed to by p
+// same as writing q = p.
+// Since we dont know anything about p, q can potentially modify all 
+// the elements in addressTakenSet as result of the above expression 
+// As a result, the variables whose addresses can be taken is the entire 
+// set as we dont have any idea about p
+// We dont need to add any new variable to addressTakenSet 
+// as a consequence of the expressions similar to above.
+void AddressTakenAnalysis::OperandToVariableId::visit(SgPointerDerefExp* sgn)
+{
+  // we dont do anything here
+}
+
+// For example &(A[B[C[..]]])
+// any pointer can that takes this address can modify
+// contents of only A. The inner index expressions are r-values
+// it is sufficient to add A to addressTakenSet
+// 
+void AddressTakenAnalysis::OperandToVariableId::visit(SgPntrArrRefExp* sgn)
+{
+  SgNode* arr_op = sgn->get_lhs_operand();
+  SgVarRefExp* arr_name = isSgVarRefExp(arr_op); ROSE_ASSERT(arr_name != NULL);
+  ata.addressTakenSet.insert(ata.vidm.variableId(arr_name));
+}
+
+void AddressTakenAnalysis::OperandToVariableId::visit(SgNode* sgn)
+{
+  std::cerr << "unhandled operand of SgAddressOfOp in AddressTakenAnalysis\n";
+  ROSE_ASSERT(0);
+}
 
 void AddressTakenAnalysis::computeAddressTakenSet()
 {
@@ -204,45 +271,38 @@ void AddressTakenAnalysis::computeAddressTakenSet()
   ProcessQuery procQuery;
   // TODO: not sufficient to pick up address taken by function pointers
   MatchResult matches = procQuery("$HEAD=SgAddressOfOp($OP)", root);
-  OperandToVarID opToVarId(addressTakenSet, vidMapping);
   for(MatchResult::iterator it = matches.begin(); it != matches.end(); it++)
   {
     SgNode* matchedOperand = (*it)["$OP"];
-    matchedOperand->accept(opToVarId);
+    OperandToVariableId optovid(*this);
+    matchedOperand->accept(optovid);
   }
 }
 
 // pretty print
 void AddressTakenAnalysis::printAddressTakenSet()
-{
-  VariableIdSetIterator vidsIt = addressTakenSet.begin();
-  std::cout << "addressTakenSet: [";
-  for( ; vidsIt != addressTakenSet.end(); )
-  {
-    std::cout << vidMapping.variableName(*vidsIt);
-    vidsIt++;
-    if(vidsIt != addressTakenSet.end())
-      std::cout << ", ";
-  }
-  std::cout << "]\n";  
+{  
+  std::cout << "addressTakenSet: " << addressTakenSet.str() << "\n";
 }
 
 /*************************************************
- ************* PointerTypeAnalysis ***************
+ **************** TypeAnalysis *******************
  *************************************************/
-class PointerArrayTypeAnalysis
+class TypeAnalysis
 {
   VariableIdMapping& vidm;
   VariableIdSet pointerTypeSet;
+  VariableIdSet arrayTypeSet;
 
 public:
-  PointerTypeAnalysis(VariableIdMapping& _vidm) : vidm(_vidm) { }
-  void collectPointerTypes();
-  void printPointerTypeSet(); 
+  TypeAnalysis(VariableIdMapping& _vidm) : vidm(_vidm), pointerTypeSet(_vidm), arrayTypeSet(_vidm) { }
+  void collectTypes();
+  void printPointerTypeSet();
+  void printArrayTypeSet();
 };
 
 
-void PointerTypeAnalysis::collectPointerTypes()
+void TypeAnalysis::collectTypes()
 {
   std::set<VariableId> set = vidm.getVariableIdSet();
   for(std::set<VariableId>::iterator it = set.begin(); it != set.end(); ++it)
@@ -251,21 +311,19 @@ void PointerTypeAnalysis::collectPointerTypes()
     SgType* v_type = v_symbol->get_type();
     if(isSgPointerType(v_type))
       pointerTypeSet.insert(*it);
+    else if(isSgArrayType(v_type))
+      arrayTypeSet.insert(*it);
   }
 }
 
-void PointerTypeAnalysis::printPointerTypeSet()
+void TypeAnalysis::printPointerTypeSet()
 {
-  VariableIdSetIterator pts_it = pointerTypeSet.begin();
-  std::cout << "pointerTypeSet: [";
-  for (; pts_it != pointerTypeSet.end(); )
-  {
-    std::cout << vidm.variableName(*pts_it);
-    pts_it++;
-    if(pts_it != pointerTypeSet.end())
-      std::cout << ", ";
-  }
-  std::cout << "]\n";
+  std::cout << "pointerTypeSet: " << pointerTypeSet.str() << "\n";
+}
+
+void TypeAnalysis::printArrayTypeSet()
+{
+  std::cout << "arrayTypeSet: " << arrayTypeSet.str() << "\n";
 }
 
 /*************************************************
@@ -287,9 +345,10 @@ int main(int argc, char* argv[])
   addrTakenAnalysis.computeAddressTakenSet();
   addrTakenAnalysis.printAddressTakenSet();
 
-  PointerTypeAnalysis ptrTypeAnalysis(vidm);
-  ptrTypeAnalysis.collectPointerTypes();
-  ptrTypeAnalysis.printPointerTypeSet();
+  TypeAnalysis typeAnalysis(vidm);
+  typeAnalysis.collectTypes();
+  typeAnalysis.printPointerTypeSet();
+  typeAnalysis.printArrayTypeSet();
 
   // ExprTypeCycleDetect etcd;
   // if(!etcd(root))
