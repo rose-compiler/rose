@@ -50,19 +50,25 @@ DFAnalyzer<LatticeType>::initialize(SgProject* root) {
   cout << "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
   _cfanalyzer->intraInterFlow(_flow,interFlow);
   cout << "INIT: IntraInter-CFG OK. (size: " << _flow.size() << " edges)"<<endl;
-  
-  for(long l=0;l<_labeler->numberOfLabels();++l) {
+  for(size_t l=0;l<_labeler->numberOfLabels();++l) {
 	LatticeType le;
 	_analyzerData.push_back(le);
   }
-  
   cout << "STATUS: initialized monotone data flow analyzer for "<<_analyzerData.size()<< " labels."<<endl;
 #if 0
+  std::string functionToStartAt="main";
   std::string funtofind=functionToStartAt;
   RoseAst completeast(root);
-  startFunRoot=completeast.findFunctionByName(funtofind);
+  SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
   if(startFunRoot==0) { 
-    std::cerr << "Function '"<<funtofind<<"' not found.\n"; exit(1);
+    std::cerr << "Function '"<<funtofind<<"' not found.\n"; 
+	exit(1);
+  } else {
+	// determine label of function
+	Label startlab=_labeler->getLabel(startFunRoot);
+	set<Label> elab;
+	elab.insert(startlab);
+	setExtremalLabels(elab);
   }
 #endif
 
@@ -112,6 +118,7 @@ DFAnalyzer<LatticeType>::determineExtremalLabels(SgNode* startFunRoot=0) {
 	Label startLabel=_cfanalyzer->getLabel(startFunRoot);
 	_extremalLabels.insert(startLabel);
   } else {
+	// naive way of initializing all labels
 	for(Label i=0;i<_labeler->numberOfLabels();++i) {
 	  _extremalLabels.insert(i);
 	}
@@ -122,9 +129,11 @@ DFAnalyzer<LatticeType>::determineExtremalLabels(SgNode* startFunRoot=0) {
 template<typename LatticeType>
 void
 DFAnalyzer<LatticeType>::solve() {
+  cout<<"INFO: solver started."<<endl;
+  ROSE_ASSERT(!_workList.isEmpty());
   while(!_workList.isEmpty()) {
 	Label lab=_workList.take();
-
+	//cout<<"INFO: worklist size: "<<_workList.size()<<endl;
 	//_analyzerData[lab]=_analyzerData comb transfer(lab,combined(Pred));
 	LabelSet pred=_flow.pred(lab);
 	LatticeType inInfo;
@@ -133,6 +142,7 @@ DFAnalyzer<LatticeType>::solve() {
 	}
 	
 	LatticeType newInfo=transfer(lab,inInfo);
+	//cout<<"NewInfo: ";newInfo.toStream(cout);cout<<endl;
 	if(!newInfo.approximatedBy(_analyzerData[lab])) {
 	  _analyzerData[lab].combine(newInfo);
 	  LabelSet succ=_flow.succ(lab);
@@ -141,6 +151,7 @@ DFAnalyzer<LatticeType>::solve() {
 	  // no new information was computed. Nothing to do.
 	}
   }
+  cout<<"INFO: solver finished."<<endl;
 }
 // runs until worklist is empty
 template<typename LatticeType>
@@ -158,6 +169,46 @@ template<typename LatticeType>
 LatticeType
 DFAnalyzer<LatticeType>::transfer(Label lab, LatticeType element) {
   return element;
+}
+
+template<typename LatticeType>
+typename DFAnalyzer<LatticeType>::ResultAccess&
+DFAnalyzer<LatticeType>::getResultAccess() {
+  return _analyzerData;
+}
+
+#include <iostream>
+
+#include "AttributeAnnotator.h"
+#include <string>
+
+using std::string;
+
+class GeneralResultAttribute : public AnalysisResultAttribute {
+public:
+  GeneralResultAttribute(string postinfo) { _postinfo="// "+postinfo;}
+  string getPreInfoString() { return ""; }
+  string getPostInfoString() { return _postinfo; }
+private:
+  string _postinfo;
+};
+
+#include <sstream>
+
+template<typename LatticeType>
+void DFAnalyzer<LatticeType>::attachResultsToAst() {
+  size_t lab=0;
+  for(typename std::vector<LatticeType>::iterator i=_analyzerData.begin();
+	  i!=_analyzerData.end();
+	  ++i) {
+	std::stringstream ss;
+	(&(*i))->toStream(ss);
+	//std::cout<<ss.str();
+	// TODO: need to add a solution for nodes with multiple associated labels (e.g. functio call)
+	_labeler->getNode(lab)->setAttribute("rd-analysis",new GeneralResultAttribute(ss.str()));
+	lab++;
+  }
+
 }
 
 #endif

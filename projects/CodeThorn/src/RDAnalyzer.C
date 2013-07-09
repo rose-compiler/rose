@@ -5,23 +5,64 @@
 using namespace std;
 using namespace CodeThorn;
 
+#include "CollectionOperators.h"
+
 RDAnalyzer::RDAnalyzer() {
 }
 
+RDAnalyzer::iterator RDAnalyzer::begin() {
+  return _analyzerData.begin();
+}
+  
+RDAnalyzer::iterator RDAnalyzer::end() {
+  return _analyzerData.end();
+}
+size_t RDAnalyzer::size() {
+  return _analyzerData.size();
+}
+
+// TODO: refactor in separate functions
 RDLattice RDAnalyzer::transfer(Label lab, RDLattice element) {
+  if(element.isBot())
+	element.setEmptySet();
   SgNode* node=_labeler->getNode(lab);
-  cout<<"Analyzing:"<<node->class_name()<<endl;
+  //cout<<"Analyzing:"<<node->class_name()<<endl;
+
+  ///////////////////////////////////////////
+  // remove undeclared variable at function exit
+  if(_labeler->isFunctionExitLabel(lab)) {
+	if(SgFunctionDefinition* funDef=isSgFunctionDefinition(_labeler->getNode(lab))) {
+	  // 1) determine all local variables (including formal parameters) of function
+	  // 2) delete all local variables from state
+	  // 2a) remove variable from state
+	  
+	  // ad 1)
+	  set<SgVariableDeclaration*> varDecls=SgNodeHelper::localVariableDeclarationsOfFunction(funDef);
+	  // ad 2)
+	  set<VariableId> localVars=_variableIdMapping.determineVariableIdsOfVariableDeclarations(varDecls);
+	  SgInitializedNamePtrList& formalParamInitNames=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
+	  set<VariableId> formalParams=_variableIdMapping.determineVariableIdsOfSgInitializedNames(formalParamInitNames);
+	  set<VariableId> vars=localVars+formalParams;
+	  for(set<VariableId>::iterator i=vars.begin();i!=vars.end();++i) {
+		VariableId varId=*i;
+		element.eraseAllPairsWithVariableId(varId);
+	  }
+	  return element;
+	}
+  }
+  ///////////////////////////////////////////
+  
   if(isSgExprStatement(node))
 	node=SgNodeHelper::getExprStmtChild(node);
 
   if(SgAssignOp* assignOp=isSgAssignOp(node)) {
 	transfer_assignment(assignOp,lab,element);
   }
-
+#if 0
   cout << "RDAnalyzer: called transfer function. result: ";
   element.toStream(cout,&_variableIdMapping);
   cout<<endl;
-  
+#endif
   return element;
 }
 
