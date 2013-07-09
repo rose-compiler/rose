@@ -190,13 +190,14 @@ class AddressTakenAnalysis
   VariableIdSet addressTakenSet;
 
   // address can be taken for any expression that is lvalue
-  // The purpose of this class is to traverse the arbitrary
+  // The purpose of this class is to traverse arbitrary
   // expressions that are operands of SgAddressOfOp and find the
   // variable whose address is actually taken.
-  // For example in expression &(a.(b->c)),  'c' address is
+  // For example in expression &(a.b->c),  'c' address is
   // actually taken. This class simply traverses the rhs_operand
-  // of SgDotExp or SgArrowExp to identify the variable whose address
-  // is taken
+  // of SgDotExp/SgArrowExp or other expressions to identify 
+  // the variable whose address is taken
+  // 
   class OperandToVariableId : public ROSE_VisitorPatternDefaultBase
   {
     AddressTakenAnalysis& ata;
@@ -216,7 +217,7 @@ public:
 };
 
 void AddressTakenAnalysis::OperandToVariableId::visit(SgVarRefExp *sgn)
-{
+{  
   ata.addressTakenSet.insert(ata.vidm.variableId(sgn));
 }
 
@@ -309,10 +310,28 @@ void TypeAnalysis::collectTypes()
   {
     SgSymbol* v_symbol = vidm.getSymbol(*it);
     SgType* v_type = v_symbol->get_type();
+    // Note on function pointer types
+    // function pointer can modify any variable
+    // not just the variables in the addressTakenSet
+    // answering function pointer derefence requires side
+    // effect analysis to determine the list of variables
+    // can modify. Currenty we ignore function pointers as
+    // the goal of this analysis is supposed to be simple.
     if(isSgPointerType(v_type))
-      pointerTypeSet.insert(*it);
+    {
+      SgType* baseType = v_type->findBaseType();
+      // perhaps its worthwile to keep them in
+      // a separte set and not support any dereferencing
+      // queries rather than not adding them
+      if(!isSgFunctionType(baseType))
+      {
+        pointerTypeSet.insert(*it);
+      }
+    }
     else if(isSgArrayType(v_type))
+    {
       arrayTypeSet.insert(*it);
+    }
   }
 }
 
