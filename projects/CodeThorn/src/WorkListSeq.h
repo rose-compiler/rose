@@ -22,6 +22,7 @@ template <typename Element>
   void add(std::set<Element>& elemSet);
   Element take();
   Element examine();
+  size_t size() { return workList.size(); }
  private:
   std::list<Element> workList;
 };

@@ -336,6 +336,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
   }
 }
 
+// this function has been moved to VariableIdMapping: TODO eliminate this function here
 set<VariableId> Analyzer::determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls) {
   set<VariableId> resultSet;
   for(set<SgVariableDeclaration*>::iterator i=varDecls.begin();i!=varDecls.end();++i) {
@@ -347,6 +348,7 @@ set<VariableId> Analyzer::determineVariableIdsOfVariableDeclarations(set<SgVaria
   return resultSet;
 }
 
+// this function has been moved to VariableIdMapping: TODO eliminate this function here
 set<VariableId> Analyzer::determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList) {
   set<VariableId> resultSet;
   for(SgInitializedNamePtrList::iterator i=namePtrList.begin();i!=namePtrList.end();++i) {

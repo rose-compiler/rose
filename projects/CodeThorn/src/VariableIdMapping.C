@@ -394,3 +394,28 @@ bool CodeThorn::operator==(VariableId id1, VariableId id2) {
 bool CodeThorn::operator!=(VariableId id1, VariableId id2) {
   return !(id1==id2);
 }
+
+
+
+set<VariableId> VariableIdMapping::determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls) {
+  set<VariableId> resultSet;
+  for(set<SgVariableDeclaration*>::iterator i=varDecls.begin();i!=varDecls.end();++i) {
+	SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(*i);
+	if(sym) {
+	  resultSet.insert(variableId(sym));
+	}
+  }
+  return resultSet;
+}
+
+set<VariableId> VariableIdMapping::determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList) {
+  set<VariableId> resultSet;
+  for(SgInitializedNamePtrList::iterator i=namePtrList.begin();i!=namePtrList.end();++i) {
+	assert(*i);
+	SgSymbol* sym=SgNodeHelper::getSymbolOfInitializedName(*i);
+	if(sym) {
+	  resultSet.insert(variableId(sym));
+	}
+  }
+  return resultSet;
+}

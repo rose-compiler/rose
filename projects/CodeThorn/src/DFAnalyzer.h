@@ -16,6 +16,7 @@
 namespace CodeThorn {
 
   using std::set;
+  using std::vector;
 
 template<typename LatticeType>
 class DFAnalyzer {
@@ -25,6 +26,12 @@ class DFAnalyzer {
   void initialize(SgProject*);
   void determineExtremalLabels(SgNode*);
   void run();
+
+  // results are accessible through begin/end and iterator.
+  typedef vector<LatticeType> AnalyzerData;
+  typedef vector<LatticeType> ResultAccess;
+  ResultAccess& getResultAccess();
+  void attachResultsToAst();
  protected:
   virtual LatticeType transfer(Label label, LatticeType element);
   virtual void solve();

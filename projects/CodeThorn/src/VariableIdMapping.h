@@ -73,6 +73,9 @@ class VariableIdMapping {
 
   set<VariableId> getVariableIdSet();
 
+  set<VariableId> determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls);
+  set<VariableId> determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
+
  private:
   void generateStmtSymbolDotEdge(std::ofstream&, SgNode* node,VariableId id);
   string generateDotSgSymbol(SgSymbol* sym);
