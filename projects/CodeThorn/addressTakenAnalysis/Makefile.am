@@ -5,6 +5,8 @@ AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH)
 
 noinst_PROGRAMS = addressTakenAnalysis
 
+EXTRA_DISTS = tests
+
 INCLUDES = \
 	$(ROSE_INCLUDES) \
 	-I$(srcdir) \
@@ -29,6 +31,28 @@ addressTakenAnalysis_SOURCES = \
 	addressTakenAnalysis.C
 
 addressTakenAnalysis_LDADD = -lrose
+
+ADDRESSTAKENANALYSIS_TESTS = $(ADDRESSTAKENANALYSIS_TESTS_PASSING)
+
+ADDRESSTAKENANALYSIS_TESTS_PASSING = \
+	$(srcdir)/tests/test1.cpp \
+	$(srcdir)/tests/test2.cpp \
+	$(srcdir)/tests/test3.cpp \
+	$(srcdir)/tests/test4.cpp \
+	$(srcdir)/tests/test5.cpp \
+	$(srcdir)/tests/test8.cpp \
+	$(srcdir)/tests/test9.cpp
+
+ADDRESSTAKENANALYSIS_TESTS_FAILING = \
+	$(srcdir)/tests/test6.cpp \ # has r-value references
+	$(srcdir)/tests/test7.cpp
+
+ADDRESSTAKENANALYSIS_CHECKS = ${ADDRESSTAKENANALYSIS_TESTS:.cpp=.cpp-o}
+
+$(ADDRESSTAKENANALYSIS_CHECKS): addressTakenAnalysis $(srcdir)/tests/$(@:.cpp=.cpp-o)
+	./addressTakenAnalysis -c --edg:no_warnings $(@:.cpp-o=.cpp)
+
+check-local: $(ADDRESSTAKENANALYSIS_CHECKS)
 
 clean-local:
 	rm -f matcher*
