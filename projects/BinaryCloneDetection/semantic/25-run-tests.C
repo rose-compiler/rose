@@ -11,6 +11,7 @@
 using namespace CloneDetection;
 typedef CloneDetection::Policy<State, PartialSymbolicSemantics::ValueType> ClonePolicy;
 typedef X86InstructionSemantics<ClonePolicy, PartialSymbolicSemantics::ValueType> CloneSemantics;
+typedef std::set<std::string> NameSet;
 std::string argv0;
 
 static void
@@ -33,11 +34,14 @@ usage(int exit_status)
               <<"    --file=NAME\n"
               <<"            Load the FUNC_INPUT_PAIRS work list from this file rather than standard input.\n"
               <<"    --[no-]follow-calls\n"
-              <<"            If --follow-calls is specified, then x86 CALL instructions are treated the same as any other\n"
-              <<"            instruction, resulting in the analysis of the called function in-line with the caller if possible,\n"
-              <<"            otherwise that particular call is treated as for the --no-follow-calls case.  If --no-follow-calls\n"
-              <<"            is specified (the default) then all x86 CALL instructions are skipped and the EAX register is\n"
-              <<"            loaded with the next integer input value.\n"
+              <<"    --follow-calls=none|all|builtin\n"
+              <<"            Indicates which function calls (x86 CALL instructions) should be followed rather than skipped.\n"
+              <<"            A value of \"all\" causes calls for which the call target is a known, disassembled, instruction\n"
+              <<"            to be followed.  For functions that are skipped, an input value is consumed from the \"integer\"\n"
+              <<"            queue and placed in the EAX register as the function's return value.  If \"builtin\" is specified\n"
+              <<"            then all calls are followed unless the call is to a dynamically-loaded function which is not\n"
+              <<"            on a white-list of built-in functions.  The \"--no-follow-calls\" is the same as specifying\n"
+              <<"            \"--follow-calls=none\", and \"--follow-calls\" is the same as \"--follow-calls=all\".\n"
               <<"    --[no-]interactive\n"
               <<"            With the \"--interactive\" switch, pressing control-C (or otherwise sending SIGINT to the\n"
               <<"            process) will cause the process to finish executing the current test and then prompt the user\n"
@@ -87,10 +91,6 @@ struct Switches {
     Switches()
         : verbosity(SILENT), progress(false), pointers(false), interactive(false), trace_events(0), dry_run(false) {
         checkpoint = 300 + LinearCongruentialGenerator()()%600;
-        params.timeout = 5000;
-        params.verbosity = SILENT;
-        params.follow_calls = false;
-        params.initial_stack = 0x80000000;
     }
     Verbosity verbosity;                        // semantic policy has a separate verbosity
     bool progress;
@@ -231,13 +231,83 @@ detect_pointers(SgAsmFunction *func, const FunctionIdMap &function_ids, const Sw
     return pd;
 }
 
-// Scan the probject to find all the locations that contain addresses of dynamically linked functions and replace them with
-// a special address that can be recognized by the fetch-execute loop in fuzz_test().  We do this by adding some entries to the
-// memory map that serves up values when needed by memory-reading instructions.  For ELF, we replace the .got.plt section; for
-// PE we replace the "Import Address Table" section.
+// Returns (via argument) the names of functions built into the compiler.
 static void
-overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor &insns,
-                          MemoryMap *ro_map/*in,out*/, rose_addr_t special_value)
+add_builtin_functions(NameSet &names/*in,out*/)
+{
+    names.insert("abs@plt");
+    names.insert("labs@plt");
+    names.insert("memcmp@plt");
+    names.insert("memcpy@plt");
+    names.insert("strcmp@plt");
+    names.insert("strlen@plt");
+    names.insert("strncmp@plt");
+    names.insert("abort@plt");
+    names.insert("memset@plt");
+    names.insert("strcat@plt");
+    names.insert("strcpy@plt");
+    names.insert("strncpy@plt");
+    names.insert("strchr@plt");
+    names.insert("strspn@plt");
+    names.insert("strcspn@plt");
+    names.insert("strstr@plt");
+    names.insert("strpbrk@plt");
+    names.insert("strrchr@plt");
+    names.insert("strncat@plt");
+    names.insert("alloca@plt");
+    names.insert("ffs@plt");
+    names.insert("index@plt");
+    names.insert("rindex@plt");
+    names.insert("bcmp@plt");
+    names.insert("bzero@plt");
+}
+
+// Find all functions whose first instruction is an indirect jump, and store the memory address through which the jump occurs.
+// Most of these will be dynamically-linked functions whose only instruction is the JMP and whose address is in the .got.plt or
+// IAT.  Return the set of addresses for only those functions whose name appears in the specified set.
+static Disassembler::AddressSet
+whitelist_imports(SgAsmInterpretation *interp, const NameSet &whitelist_names)
+{
+    struct T1: AstSimpleProcessing {
+        std::map<SgAsmFunction*, rose_addr_t> gotplt_addr;      // return value; address in .got.plt for each function
+        SgAsmFunction *func;    // current function, but only if we haven't seen it's entry instruction yet
+
+        T1(): func(NULL) {}
+
+        void visit(SgNode *node) {
+            if (SgAsmFunction *f = isSgAsmFunction(node)) {
+                func = f;
+            } else if (SgAsmx86Instruction *insn = isSgAsmx86Instruction(node)) {
+                SgAsmFunction *f = func; func = NULL;
+                const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
+                if (f && x86_jmp==insn->get_kind() && args.size()==1) {
+                    SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(args[0]);
+                    SgAsmIntegerValueExpression *val = isSgAsmIntegerValueExpression(mre ? mre->get_address() : NULL);
+                    if (val)
+                        gotplt_addr[f] = val->get_absolute_value();
+                }
+            }
+        }
+    } t1;
+    t1.traverse(interp, preorder);
+
+    Disassembler::AddressSet retval;
+    for (std::map<SgAsmFunction*, rose_addr_t>::iterator i=t1.gotplt_addr.begin(); i!=t1.gotplt_addr.end(); ++i) {
+        if (whitelist_names.find(i->first->get_name())!=whitelist_names.end())
+            retval.insert(i->second);
+    }
+    return retval;
+}
+
+// Scan the interpretation to find all the locations that contain addresses of dynamically linked functions and replace them
+// with a special address that can be recognized by the fetch-execute loop in fuzz_test().  We do this by adding some entries
+// to the memory map that serves up values when needed by memory-reading instructions.  For ELF, we replace the .got.plt
+// section; for PE we replace the "Import Address Table" section.  We always replace addresses that don't correspond to a valid
+// instruction. On the other hand, when the address is valid, we replace it if either follow-calls is CALL_NONE or follow-calls
+// is CALL_BUILTIN and the function is not builtin.
+static void
+overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor &insns, FollowCalls follow_calls,
+                          const Disassembler::AddressSet &whitelist, MemoryMap *ro_map/*in,out*/, rose_addr_t special_value)
 {
     const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
     for (SgAsmGenericHeaderPtrList::const_iterator hi=hdrs.begin(); hi!=hdrs.end(); ++hi) {
@@ -245,6 +315,7 @@ overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor
         for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si) {
             std::string name = (*si)->get_name()->get_string();
             if ((*si)->is_mapped() && (0==name.compare(".got.plt") || 0==name.compare("Import Address Table"))) {
+                rose_addr_t base_va = (*si)->get_mapped_actual_va();
                 size_t nbytes = (*si)->get_mapped_size();
                 size_t nwords = nbytes / 4;
                 if (nwords>0) {
@@ -252,16 +323,17 @@ overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor
                     uint32_t *buf = new uint32_t[nwords];
                     (*si)->read_content_local(0, buf, nbytes, false);
                     for (size_t i=0; i<nwords; ++i) {
-                        if (NULL==insns.get_instruction(ByteOrder::le_to_host(buf[i]))) {
+                        rose_addr_t va = ByteOrder::le_to_host(buf[i]);
+                        if (NULL==insns.get_instruction(va) || CALL_NONE==follow_calls ||
+                            (CALL_BUILTIN==follow_calls && whitelist.find(va)==whitelist.end())) {
                             buf[i] = special_value;
                             ++nchanges;
                         }
                     }
                     if (nchanges>0) {
                         MemoryMap::BufferPtr mmbuf = MemoryMap::ByteBuffer::create(buf, nbytes);
-                        ro_map->insert(Extent((*si)->get_mapped_actual_va(), nbytes),
-                                       MemoryMap::Segment(mmbuf, 0, MemoryMap::MM_PROT_READ,
-                                                          "analysis-mapped dynlink addresses"));
+                        ro_map->insert(Extent(base_va, nbytes), MemoryMap::Segment(mmbuf, 0, MemoryMap::MM_PROT_READ,
+                                                                                   "analysis-mapped dynlink addresses"));
                     } else {
                         delete[] buf;
                     }
@@ -274,19 +346,12 @@ overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor
 // Analyze a single function by running it with the specified inputs and collecting its outputs. */
 static OutputGroup
 fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inputs, Tracer &tracer,
-          const InstructionProvidor &insns, const PointerDetector *pointers, const Switches &opt,
+          const InstructionProvidor &insns, MemoryMap *ro_map, const PointerDetector *pointers, const Switches &opt,
           const AddressIdMap &entry2id)
 {
     ClonePolicy policy(opt.params, entry2id, tracer);
+    policy.set_map(ro_map);
     CloneSemantics semantics(policy);
-
-    // Initialize non-writable memory.
-    assert(interp->get_map()!=NULL);
-    MemoryMap ro_map = *interp->get_map();
-    ro_map.prune(MemoryMap::MM_PROT_READ, MemoryMap::MM_PROT_WRITE);
-    overmap_dynlink_addresses(interp, insns, &ro_map, policy.GOTPLT_VALUE);
-    policy.set_map(&ro_map);
-
     AnalysisFault::Fault fault = AnalysisFault::NONE;
     policy.reset(interp, function, &inputs, &insns, pointers);
     rose_addr_t last_good_va = 0;
@@ -442,10 +507,12 @@ main(int argc, char *argv[])
             opt.dry_run = true;
         } else if (!strncmp(argv[argno], "--file=", 7)) {
             opt.input_file_name = argv[argno]+7;
-        } else if (!strcmp(argv[argno], "--follow-calls")) {
-            opt.params.follow_calls = true;
-        } else if (!strcmp(argv[argno], "--no-follow-calls")) {
-            opt.params.follow_calls = false;
+        } else if (!strcmp(argv[argno], "--follow-calls") || !strcmp(argv[argno], "--follow-calls=all")) {
+            opt.params.follow_calls = CALL_ALL;
+        } else if (!strcmp(argv[argno], "--no-follow-calls") || !strcmp(argv[argno], "--follow-calls=none")) {
+            opt.params.follow_calls = CALL_NONE;
+        } else if (!strcmp(argv[argno], "--follow-calls=builtin")) {
+            opt.params.follow_calls = CALL_BUILTIN;
         } else if (!strcmp(argv[argno], "--interactive")) {
             opt.interactive = true;
         } else if (!strcmp(argv[argno], "--no-interactive")) {
@@ -547,6 +614,8 @@ main(int argc, char *argv[])
     Progress progress(worklist.size());
     progress.force_output(opt.progress);
     OutputGroups ogroups; // do not load from database (that might take a very long time)
+    NameSet builtin_function_names;
+    add_builtin_functions(builtin_function_names/*out*/);
     
     // Set up the interrupt handler
     if (opt.interactive) {
@@ -566,6 +635,8 @@ main(int argc, char *argv[])
     FunctionIdMap function_ids;
     InputGroup igroup;
     InstructionProvidor insns;
+    SgAsmInterpretation *prev_interp = NULL;
+    MemoryMap ro_map;
     AddressIdMap entry2id;                      // maps function entry address to function ID
     Tracer tracer;
     time_t last_checkpoint = time(NULL);
@@ -642,6 +713,16 @@ main(int argc, char *argv[])
         SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(func);
         assert(interp!=NULL);
 
+        // Do per-interpretation stuff
+        if (interp!=prev_interp) {
+            prev_interp = interp;
+            assert(interp->get_map()!=NULL);
+            ro_map = *interp->get_map();
+            ro_map.prune(MemoryMap::MM_PROT_READ, MemoryMap::MM_PROT_WRITE);
+            Disassembler::AddressSet whitelist = whitelist_imports(interp, builtin_function_names);
+            overmap_dynlink_addresses(interp, insns, opt.params.follow_calls, whitelist, &ro_map, GOTPLT_VALUE);
+        }
+        
         // Get the results of pointer analysis.  We could have done this before any fuzz testing started, but by doing
         // it here we only need to do it for functions that are actually tested.
         PointerDetectors::iterator ip = pointers.find(func);
@@ -654,7 +735,7 @@ main(int argc, char *argv[])
         timeval start_time, stop_time;
         clock_t start_ticks = clock();
         gettimeofday(&start_time, NULL);
-        OutputGroup ogroup = fuzz_test(interp, func, igroup, tracer, insns, ip->second, opt, entry2id);
+        OutputGroup ogroup = fuzz_test(interp, func, igroup, tracer, insns, &ro_map, ip->second, opt, entry2id);
         gettimeofday(&stop_time, NULL);
         clock_t stop_ticks = clock();
         double elapsed_time = (stop_time.tv_sec - start_time.tv_sec) +

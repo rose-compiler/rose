@@ -26,6 +26,8 @@ typedef std::map<rose_addr_t, int> AddressIdMap;
 typedef BinaryAnalysis::FunctionCall::Graph CG;
 typedef boost::graph_traits<CG>::vertex_descriptor CG_Vertex;
 enum Verbosity { SILENT, LACONIC, EFFUSIVE };
+enum FollowCalls { CALL_NONE, CALL_ALL, CALL_BUILTIN };
+extern const rose_addr_t GOTPLT_VALUE; /**< Address of all dynamic functions that are not loaded. */
 
 /*******************************************************************************************************************************
  *                                      Progress bars
@@ -273,7 +275,7 @@ public:
 typedef std::map<int, uint64_t> IdVa;
 typedef std::map<uint64_t, int> VaId;
 
-// How to store values.  Define this to be OutputGroupValueVector, OutputGroupValueSet, or OutputGroupValueAddrSet. See their
+// How to store values.  Define this to be OutputgroupValueVector, OutputGroupValueSet, or OutputGroupValueAddrSet. See their
 // definitions below.  They all store values, just in different orders and cardinalities.
 #define OUTPUTGROUP_VALUE_CONTAINER OutputGroupValueAddrSet
 
@@ -716,10 +718,10 @@ protected:
 
 struct PolicyParams {
     PolicyParams()
-        : timeout(5000), verbosity(SILENT), follow_calls(false), initial_stack(0x80000000) {}
+        : timeout(5000), verbosity(SILENT), follow_calls(CALL_NONE), initial_stack(0x80000000) {}
     size_t timeout;                     /**< Maximum number of instrutions per fuzz test before giving up. */
     Verbosity verbosity;                /**< Produce lots of output?  Traces each instruction as it is simulated. */
-    bool follow_calls;                  /**< Follow CALL instructions if possible rather than consuming an input? */
+    FollowCalls follow_calls;           /**< Follow CALL instructions if possible rather than consuming an input? */
     rose_addr_t initial_stack;          /**< Initial values for ESP and EBP. */
 };
 
@@ -910,7 +912,6 @@ public:
 
     State<ValueType> state;
     static const rose_addr_t FUNC_RET_ADDR = 4083;      // Special return address to mark end of analysis
-    static const rose_addr_t GOTPLT_VALUE = 0x09110911; // Address of all dynamic functions that are not loaded
     InputGroup *inputs;                                 // Input values to use when reading a never-before-written variable
     const PointerDetector *pointers;                    // Addresses of pointer variables, or null if not analyzed
     SgAsmInterpretation *interp;                        // Interpretation in which we're executing
@@ -1316,31 +1317,27 @@ public:
             has_returned = true;
         }
 
-        // Special handling for function calls.  Optionally, instead of calling the function, we treat the function as
-        // returning a newly consumed input value to the caller via EAX.  We make the following assumptions:
-        //    * Function calls are via CALL instruction
-        //    * The called function always returns
-        //    * The called function's return value is in the EAX register
-        //    * The caller cleans up any arguments that were passed via stack
-        //    * The function's return value is an integer (non-pointer) type
-        if (x86_call==insn_x86->get_kind() && !has_returned) {
-            if (!params.follow_calls) {
-                if (params.verbosity>=EFFUSIVE)
-                    std::cerr <<"CloneDetection: special handling for function call (fall through and return via EAX)\n";
+        // If we're supposed to be skiping over calls and we've entered another function, then immediately return.  This
+        // implementation (rather than looking for CALL instructions) handles more cases since functions are not always called
+        // via x86 CALL instruction -- sometimes the compiler will call using JMP, allowing the "jumpee" function to inherit
+        // the stack frame (and in particular, the return address) of the jumper.
+        if (!has_returned && CALL_NONE==params.follow_calls && stack_frames.size()>1 &&
+            next_eip==stack_frames.back().func->get_entry_va()) {
+            if (params.verbosity>=EFFUSIVE)
+                std::cerr <<"CloneDetection: special handling for function call (fall through and return via EAX)\n";
 #ifdef OUTPUTGROUP_SAVE_CALLGRAPH
-                AddressIdMap::const_iterator found = entry2id.find(next_eip);
-                if (found!=entry2id.end())
-                    state.output_group.callee_ids.push_back(found->second);
+            AddressIdMap::const_iterator found = entry2id.find(next_eip);
+            if (found!=entry2id.end())
+                state.output_group.callee_ids.push_back(found->second);
 #endif
-                next_eip = skip_call(insn);
-                has_returned = true;
-                this->writeRegister("eax", next_input_value<32>(IQ_FUNCTION));
-            }
+            next_eip = skip_call(insn);
+            has_returned = true;
+            this->writeRegister("eax", next_input_value<32>(IQ_FUNCTION));
         }
 
         // Special handling for indirect calls whose target is not a valid instruction.  Treat the call as if it were to a
         // black box function, skipping the call.
-        if (x86_call==insn_x86->get_kind() && !has_returned) {
+        if (!has_returned && x86_call==insn_x86->get_kind()) {
             const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
             SgAsmInstruction *target_insn = insns->get_instruction(next_eip);
             if (args.size()==1 && NULL==isSgAsmValueExpression(args[0]) && NULL==target_insn) {
