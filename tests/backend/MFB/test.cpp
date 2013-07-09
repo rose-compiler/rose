@@ -1,5 +1,8 @@
 
-#include "MFB/Sage/mfb-sage.hpp"
+#include "MFB/Sage/driver.hpp"
+#include "MFB/Sage/function-declaration.hpp"
+#include "MFB/Sage/member-function-declaration.hpp"
+#include "MFB/Sage/class-declaration.hpp"
 
 #include "sage3basic.h"
 

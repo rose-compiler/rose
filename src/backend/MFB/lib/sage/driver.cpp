@@ -1,16 +1,15 @@
 
-#ifdef NO_TEMPLATE_DEFINITION
-#error "This is a template definition file and NO_TEMPLATE_DEFINITION is define..."
-#endif
+#include "MFB/Sage/driver.hpp"
 
 #include "sage3basic.h"
 
+#ifndef PATCHING_SAGE_BUILDER_ISSUES
+#  define PATCHING_SAGE_BUILDER_ISSUES 1
+#endif
+
 namespace MultiFileBuilder {
-  
-// Driver Ctor for Sage
-  
-template <template <typename T> class Model>
-Driver<Model>::Driver(SgProject * project_) :
+
+Driver<Sage>::Driver(SgProject * project_) :
   file_id_counter(1), // 0 is reserved for no file
   id_to_name_map(),
   file_pair_map(),
@@ -32,9 +31,8 @@ Driver<Model>::Driver(SgProject * project_) :
   if (!CommandlineProcessing::isCppFileNameSuffix("hpp"))
     CommandlineProcessing::extraCppSourceFileSuffixes.push_back("hpp");
 }
-  
-template <template <typename T> class Model>
-unsigned long Driver<Model>::createPairOfFiles(const std::string & name) {
+
+unsigned long Driver<Sage>::createPairOfFiles(const std::string & name) {
   std::map<std::string, unsigned long>::iterator it_pair_file_name = file_pair_name_map.find(name);
   std::map<std::string, unsigned long>::iterator it_standalone_source_file_name = standalone_source_file_name_map.find(name);
 
@@ -82,8 +80,7 @@ unsigned long Driver<Model>::createPairOfFiles(const std::string & name) {
   return id;
 }
 
-template <template <typename T> class Model>
-unsigned long Driver<Model>::createStandaloneSourceFile(const std::string & name) {
+unsigned long Driver<Sage>::createStandaloneSourceFile(const std::string & name) {
   std::map<std::string, unsigned long>::iterator it_pair_file_name = file_pair_name_map.find(name);
   std::map<std::string, unsigned long>::iterator it_standalone_source_file_name = standalone_source_file_name_map.find(name);
 
@@ -116,8 +113,7 @@ unsigned long Driver<Model>::createStandaloneSourceFile(const std::string & name
   return id;
 }
 
-template <template <typename T> class Model>
-unsigned long Driver<Model>::addStandaloneSourceFile(SgSourceFile * source_file) {
+unsigned long Driver<Sage>::addStandaloneSourceFile(SgSourceFile * source_file) {
   std::string name = source_file->getFileName();
 
   std::map<std::string, unsigned long>::iterator it_pair_file_name = file_pair_name_map.find(name);
@@ -148,8 +144,7 @@ unsigned long Driver<Model>::addStandaloneSourceFile(SgSourceFile * source_file)
   return id;
 }
 
-template <template <typename T> class Model>
-void  Driver<Model>::addIncludeDirectives(SgSourceFile * target_file, unsigned long to_be_included_file_id) {
+void Driver<Sage>::addIncludeDirectives(SgSourceFile * target_file, unsigned long to_be_included_file_id) {
   std::string to_be_included_file_name;
 
   std::map<unsigned long, std::pair<SgSourceFile *, SgSourceFile *> >::iterator it_file_pair = file_pair_map.find(to_be_included_file_id);

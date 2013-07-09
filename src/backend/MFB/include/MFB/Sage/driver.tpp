@@ -8,7 +8,6 @@
 
 namespace MultiFileBuilder {
 
-template <>
 template <typename Object>
 typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::symbol_t symbol, SgSourceFile * file, bool need_forward_only) {
   std::map<SgSymbol *, unsigned long>::iterator it_sym_decl_file_id = symbol_to_file_id_map.find(symbol);
@@ -40,7 +39,6 @@ typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::s
   return symbol;
 }
 
-template <>
 template <typename Object>
 typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::symbol_t symbol, unsigned long file_id, bool needed_in_header, bool need_forward_only) {
   SgSourceFile * target_file = NULL;
@@ -63,7 +61,6 @@ typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::s
   return useSymbol<Object>(symbol, target_file, need_forward_only);
 }
 
-template <>
 template <typename Object>
 typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::symbol_t symbol, SgScopeStatement * scope, bool need_forward_only) {
   SgFile * enclosing_file = SageInterface::getEnclosingFileNode(scope);
@@ -75,7 +72,6 @@ typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::s
   return useSymbol<Object>(symbol, enclosing_source_file, need_forward_only);
 }
 
-template <>
 template <typename Object>
 void Driver<Sage>::createForwardDeclaration(typename Sage<Object>::symbol_t symbol, SgSourceFile * target_file) {
   assert(false);
