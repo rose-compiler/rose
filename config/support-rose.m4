@@ -1824,6 +1824,15 @@ src/backend/KLT/lib/Makefile
 src/backend/KLT/lib/core/Makefile
 src/backend/KLT/lib/sequential/Makefile
 src/backend/KLT/lib/opencl/Makefile
+src/backend/MFB/Makefile
+src/backend/MFB/docs/Makefile
+src/backend/MFB/docs/doxygen/Makefile
+src/backend/MFB/docs/doxygen/doxy.conf
+src/backend/MFB/include/Makefile
+src/backend/MFB/include/MFB/Makefile
+src/backend/MFB/include/MFB/Sage/Makefile
+src/backend/MFB/lib/Makefile
+src/backend/MFB/lib/sage/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile
 src/roseExtensions/sqlite3x/Makefile
@@ -2187,7 +2196,7 @@ tests/roseTests/mergeTraversal_tests/Makefile
 tests/translatorTests/Makefile
 tests/backend/Makefile
 tests/backend/KLT/Makefile
-tests/backend/SCSM/Makefile
+tests/backend/MFB/Makefile
 tutorial/Makefile
 tutorial/exampleMakefile
 tutorial/roseHPCT/Makefile
