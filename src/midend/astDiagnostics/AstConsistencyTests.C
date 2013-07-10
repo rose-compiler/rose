@@ -206,7 +206,12 @@ AstTests::runAllTests(SgProject* sageProject)
   // This is because when building AST bottom-up, some temporary symbol may be generated to be referenced
   // by those variable references generated just using names. When all variable references are fixed,
   // those symbols are not used any more and then should be removed from memory pool.
-     SageInterface::clearUnusedVariableSymbols();
+  //
+  // Liao 1/24/2013: I have to comment this out
+  // for #define N 1000, when N is used in OpenMP directives, the OmpSupport::attachOmpAttributeInfo() will try to generate a 
+  // variable reference to N, But N cannot be found in AST, so unknownType is used.  But symbols with unknowntype will be removed
+  // by this clearUnusedVariableSymbols()
+     //SageInterface::clearUnusedVariableSymbols();
 
   // printf ("Inside of AstTests::runAllTests(sageProject = %p) \n",sageProject);
 

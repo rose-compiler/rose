@@ -216,9 +216,9 @@ struct hash_nodeptr
    // DQ (9/28/2005):
    void rebuildSymbolTable (SgScopeStatement * scope);
 
-   /*! \brief Clear those variable symbols (together with initialized names) which are not referenced by any variable references or declarations.
+   /*! \brief Clear those variable symbols with unknown type (together with initialized names) which are also not referenced by any variable references or declarations under root. If root is NULL, all symbols with unknown type will be deleted.
     */
-   void clearUnusedVariableSymbols ();
+   void clearUnusedVariableSymbols (SgNode* root = NULL);
 
    // DQ (3/1/2009):
    //! All the symbol table references in the copied AST need to be reset after rebuilding the copied scope's symbol table.
@@ -1118,6 +1118,7 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
   template <typename T>
   T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
   {
+    bool found = false;
     if (!root) return 0;
     T* decl = dynamic_cast<T*>(root);
     if (decl!=NULL)
@@ -1126,14 +1127,29 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
       {
         if ((decl->get_scope() == scope)&&
             (decl->search_for_symbol_from_symbol_table()->get_name()==name))
-          return decl;
+        { 
+          found = true;
+        }
       }
       else // Liao 2/9/2010. We should allow NULL scope
       {
         if(decl->search_for_symbol_from_symbol_table()->get_name()==name)
-          return decl;
+        {
+          found = true;
+       }
       }
     }
+
+   if (found)
+   {
+     if (isDefining)
+     {
+       ROSE_ASSERT (decl->get_definingDeclaration() != NULL);
+       return dynamic_cast<T*> (decl->get_definingDeclaration()); 
+     }
+     else 
+       return decl;
+   }
 
     std::vector<SgNode*> children = root->get_traversalSuccessorContainer();
     for (std::vector<SgNode*>::const_iterator i = children.begin();
