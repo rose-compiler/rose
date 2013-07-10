@@ -80,6 +80,8 @@ bin_compass2_LDADD=\
 	bin/checkers/magic_number/libmagicnumber.la \
 	bin/checkers/allocate_and_free_in_the_same_module/liballocateandfreeinthesamemodule.la \
 	bin/checkers/forbidden_functions/libforbiddenfunctions.la \
+	bin/checkers/comma_operator/libcommaoperator.la \
+	bin/checkers/unary_minus/libunaryminus.la \
 	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS) \
@@ -96,6 +98,8 @@ bin_compass2_LDADD=\
 # ------------------------------------------------------------------------------
 
 noinst_LTLIBRARIES=\
+	bin/checkers/unary_minus/libunaryminus.la \
+	bin/checkers/comma_operator/libcommaoperator.la \
 	bin/checkers/forbidden_functions/libforbiddenfunctions.la \
 	bin/checkers/allocate_and_free_in_the_same_module/liballocateandfreeinthesamemodule.la \
 	bin/checkers/magic_number/libmagicnumber.la \
@@ -169,6 +173,12 @@ bin_checkers_allocate_and_free_in_the_same_module_liballocateandfreeinthesamemod
 
 bin_checkers_forbidden_functions_libforbiddenfunctions_la_SOURCES=\
 	bin/checkers/forbidden_functions/forbidden_functions.cpp
+
+bin_checkers_comma_operator_libcommaoperator_la_SOURCES=\
+	bin/checkers/comma_operator/comma_operator.cpp
+
+bin_checkers_unary_minus_libunaryminus_la_SOURCES=\
+	bin/checkers/unary_minus/unary_minus.cpp
 
 #PLACEHOLDER
 

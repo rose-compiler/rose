@@ -28,6 +28,8 @@
     <parameter name="enabled_checker">magicNumber</parameter>
     <parameter name="enabled_checker">allocateAndFreeInTheSameModule</parameter>
     <parameter name="enabled_checker">forbiddenFunctions</parameter>
+    <parameter name="enabled_checker">commaOperator</parameter>
+    <parameter name="enabled_checker">unaryMinus</parameter>
     <!--PLACEHOLDER-->
   </general>
 
