@@ -1,6 +1,5 @@
 #include "Labeler.h"
 #include "VariableIdMapping.h"
-#include "HSet.h"
 
 #ifndef RD_LATTICE_H
 #define RD_LATTICE_H
@@ -23,11 +22,10 @@ class RDLattice {
   void setBot();
   void toStream(ostream& os, VariableIdMapping* vim=0);
   bool exists(pair<Label,VariableId>);
-  void setEmptySet() {_bot=false;rdSet.clear();}
-#if 1
+  void setEmptySet();
   void combine(RDLattice& b);
   bool approximatedBy(RDLattice& b);
-#endif
+
  private:
   set<pair<Label,VariableId> > rdSet;
   bool _bot;

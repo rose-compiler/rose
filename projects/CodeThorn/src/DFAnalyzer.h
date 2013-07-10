@@ -32,10 +32,11 @@ class DFAnalyzer {
   typedef vector<LatticeType> ResultAccess;
   ResultAccess& getResultAccess();
   void attachResultsToAst();
+  Labeler* getLabeler();
+  VariableIdMapping* getVariableIdMapping();
  protected:
   virtual LatticeType transfer(Label label, LatticeType element);
   virtual void solve();
-  VariableIdMapping* getVariableIdMapping();
   VariableIdMapping _variableIdMapping;
   Labeler* _labeler;
   CFAnalyzer* _cfanalyzer;
