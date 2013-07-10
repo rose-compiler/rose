@@ -21,12 +21,22 @@ class Sage<SgVariableDeclaration> {
       SgType * type;
       SgInitializer * initializer;
 
-      bool is_static;
-
       SgSymbol * parent;
       unsigned long file_id; // if parent is a class and it is a static: only used for definition scope (declaration scope depends on parent)
 
+      bool is_static;
+
       bool create_definition; // for static field (valid if is_static && isSgClassSymbol(parent))
+
+      object_desc_t(
+        std::string name_,
+        SgType * type_,
+        SgInitializer * initializer_ = NULL,
+        SgSymbol * parent_ = NULL,
+        unsigned long file_id_ = 0,
+        bool is_static_ = false,
+        bool create_definition_ = true
+      );
     };
 
     struct build_result_t {

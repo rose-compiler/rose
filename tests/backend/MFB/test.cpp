@@ -1,8 +1,10 @@
 
 #include "MFB/Sage/driver.hpp"
+
 #include "MFB/Sage/function-declaration.hpp"
 #include "MFB/Sage/member-function-declaration.hpp"
 #include "MFB/Sage/class-declaration.hpp"
+#include "MFB/Sage/variable-declaration.hpp"
 
 #include "sage3basic.h"
 
@@ -57,10 +59,15 @@ int main(int argc, char ** argv) {
     // MultiFileBuilder::Sage<SgClassDeclaration>::build_result_t result = driver.build<SgClassDeclaration>(desc);
     class_B_symbol = driver.build<SgClassDeclaration>(desc).symbol;
 
-  // Constructor B::B()
+  // Reference type to class A in file B...
     SgType * class_A_ref_type = SageBuilder::buildReferenceType(driver.useSymbol<SgClassDeclaration>(class_A_symbol, lib_B_file_id, true, true)->get_type());
 
-    SgInitializedName * param_init_name = SageBuilder::buildInitializedName("a", class_A_ref_type);
+  // Field: A & B::a
+    MultiFileBuilder::Sage<SgVariableDeclaration>::object_desc_t desc_var("a", class_A_ref_type, NULL, class_B_symbol, lib_B_file_id);
+    MultiFileBuilder::Sage<SgVariableDeclaration>::build_result_t result_var = driver.build<SgVariableDeclaration>(desc_var);
+
+  // Constructor B::B(A & a_)
+    SgInitializedName * param_init_name = SageBuilder::buildInitializedName("a_", class_A_ref_type);
     MultiFileBuilder::Sage<SgMemberFunctionDeclaration>::object_desc_t desc_ctor(
       "B",
       SageBuilder::buildVoidType(),
@@ -80,7 +87,7 @@ int main(int argc, char ** argv) {
     SgBasicBlock * ctor_body = result.definition->get_body();
     assert(ctor_body != NULL);
 
-    SgVariableSymbol * var_symbol = result.definition->lookup_variable_symbol("a");
+    SgVariableSymbol * var_symbol = result.definition->lookup_variable_symbol("a_");
     assert(var_symbol != NULL);
 
     SgExprStatement * expr_stmt = SageBuilder::buildExprStatement(

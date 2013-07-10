@@ -10,6 +10,25 @@
 
 namespace MultiFileBuilder {
 
+Sage<SgVariableDeclaration>::object_desc_t::object_desc_t(
+  std::string name_,
+  SgType * type_,
+  SgInitializer * initializer_,
+  SgSymbol * parent_,
+  unsigned long file_id_,
+  bool is_static_,
+  bool create_definition_
+) :
+  name(name_),
+  type(type_),
+  initializer(initializer_),
+  parent(parent_),
+  file_id(file_id_),
+  is_static(is_static_),
+  create_definition(create_definition_)
+{}
+
+
 template <>
 Sage<SgVariableDeclaration>::build_result_t Driver<Sage>::build<SgVariableDeclaration>(const Sage<SgVariableDeclaration>::object_desc_t & desc) {
   Sage<SgVariableDeclaration>::build_result_t result;
@@ -19,6 +38,7 @@ Sage<SgVariableDeclaration>::build_result_t Driver<Sage>::build<SgVariableDeclar
   SgScopeStatement * decl_scope = scopes.scope;
 
   SgVariableDeclaration * var_decl = SageBuilder::buildVariableDeclaration(desc.name, desc.type, desc.initializer, decl_scope);
+  SageInterface::appendStatement(var_decl, decl_scope);
 
   result.symbol = decl_scope->lookup_variable_symbol(desc.name);
   assert(result.symbol != NULL);
@@ -33,11 +53,8 @@ template <>
 Sage<SgVariableDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgVariableDeclaration>(const Sage<SgVariableDeclaration>::object_desc_t & desc) {
   Sage<SgVariableDeclaration>::build_scopes_t result;
 
-  assert(false);
-/*
   if (desc.parent == NULL) {
-    assert(header_files.size() == 1);
-    result.scope = (*header_files.begin())->get_globalScope();
+    assert(false);
   }
   else {
     SgClassSymbol * class_symbol = isSgClassSymbol(desc.parent);
@@ -48,13 +65,12 @@ Sage<SgVariableDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgVaria
     if (class_symbol != NULL) {
       result.scope = ((SgClassDeclaration *)class_symbol->get_declaration()->get_definingDeclaration())->get_definition();
     }
-    if (namespace_symbol != NULL) {
+    else if (namespace_symbol != NULL) {
       assert(false);
     }
-    
-    assert(result.scope != NULL);
+    else assert(false); 
   }
-*/
+
   return result;
 }
 
