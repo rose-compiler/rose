@@ -1182,7 +1182,7 @@ public:
     // Return the word at the specified stack location as if the specimen had read the stack.  The argno is the 32-bit word
     // offset from the current ESP value.
     uint32_t stack(size_t argno) {
-        rose_addr_t stack_va = readRegister<32>("esp").known_value() + 4*argno;
+        rose_addr_t stack_va = readRegister<32>("esp").known_value() + 4 + 4*argno; // avoid return value
         ValueType<32> word = readMemory<32>(x86_segreg_ss, ValueType<32>(stack_va), this->true_());
         return word.known_value();
     }
@@ -1234,11 +1234,18 @@ public:
                 if (params.verbosity>=EFFUSIVE)
                     std::cerr <<"CloneDetection: virtually inlining " <<func_name <<"\n";
                 rose_addr_t dst=stack(0), src=stack(1);
-                uint8_t buf[size];
-                for (size_t i=0; i<size; ++i)
-                    buf[i] = readMemory<8>(x86_segreg_ds, ValueType<32>(src+i), this->true_()).known_value();
-                for (size_t i=0; i<size; ++i)
-                    writeMemory(x86_segreg_ds, ValueType<32>(dst+i), ValueType<8>(buf[i]), this->true_());
+                std::vector<uint32_t> buf_words;
+                std::vector<uint8_t> buf_bytes;
+                size_t i;
+                for (i=0; i+4<size; i+=4)
+                    buf_words.push_back(readMemory<32>(x86_segreg_ds, ValueType<32>(src+i), this->true_()).known_value());
+                for (/*void*/; i<size; ++i)
+                    buf_bytes.push_back(readMemory<8>(x86_segreg_ds, ValueType<32>(src+i), this->true_()).known_value());
+                for (i=0; i<buf_words.size(); ++i)
+                    writeMemory(x86_segreg_ds, ValueType<32>(dst+4*i), ValueType<32>(buf_words[i]), this->true_());
+                for (i=0; i<buf_bytes.size(); ++i)
+                    writeMemory(x86_segreg_ds, ValueType<8>(dst+4*buf_words.size()+i), ValueType<8>(buf_bytes[i]),
+                                this->true_());
                 state.registers.gpr[x86_gpr_ax] = dst;
                 return true;
             }
