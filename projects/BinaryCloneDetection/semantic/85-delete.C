@@ -44,8 +44,8 @@ parse_id_list(std::list<std::string> &input/*in,out*/)
                 return retval;
             }
             retval.push_back(id);
-            input.pop_front();
         }
+        input.pop_front();
     }
     return retval;
 }
