@@ -79,6 +79,7 @@ bin_compass2_LDADD=\
 	bin/checkers/no_overload_ampersand/libnooverloadampersand.la \
 	bin/checkers/magic_number/libmagicnumber.la \
 	bin/checkers/allocate_and_free_in_the_same_module/liballocateandfreeinthesamemodule.la \
+	bin/checkers/forbidden_functions/libforbiddenfunctions.la \
 	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS) \
@@ -95,6 +96,7 @@ bin_compass2_LDADD=\
 # ------------------------------------------------------------------------------
 
 noinst_LTLIBRARIES=\
+	bin/checkers/forbidden_functions/libforbiddenfunctions.la \
 	bin/checkers/allocate_and_free_in_the_same_module/liballocateandfreeinthesamemodule.la \
 	bin/checkers/magic_number/libmagicnumber.la \
 	bin/checkers/no_overload_ampersand/libnooverloadampersand.la \
@@ -164,6 +166,9 @@ bin_checkers_magic_number_libmagicnumber_la_SOURCES=\
 
 bin_checkers_allocate_and_free_in_the_same_module_liballocateandfreeinthesamemodule_la_SOURCES=\
 	bin/checkers/allocate_and_free_in_the_same_module/allocate_and_free_in_the_same_module.cpp
+
+bin_checkers_forbidden_functions_libforbiddenfunctions_la_SOURCES=\
+	bin/checkers/forbidden_functions/forbidden_functions.cpp
 
 #PLACEHOLDER
 

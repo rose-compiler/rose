@@ -1,10 +1,8 @@
 /**
- * \file   magic_number.cpp
+ * \file   forbidden_functions.cpp
  * \author Mike Roup <roup1@llnl.gov>
- * \date   July 8, 2013
+ * \date   July 10, 2013
  */
-
-#include <iostream>
 
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
@@ -17,21 +15,21 @@
 using std::string;
 using namespace StringUtility;
 
-extern const Compass::Checker* const magicNumberChecker;
+extern const Compass::Checker* const forbiddenFunctionsChecker;
 
 /*-----------------------------------------------------------------------------
  * Interface
  *---------------------------------------------------------------------------*/
 
-#ifndef COMPASS_MAGIC_NUMBER_H
-#define COMPASS_MAGIC_NUMBER_H
+#ifndef COMPASS_FORBIDDEN_FUNCTIONS_H
+#define COMPASS_FORBIDDEN_FUNCTIONS_H
 
 namespace CompassAnalyses
 {
 /**
  * \brief Description of checker
  */
-namespace MagicNumber
+namespace ForbiddenFunctions
 {
   extern const string checker_name;
   extern const string short_description;
@@ -56,7 +54,7 @@ namespace MagicNumber
       {
           return ! Compass::IsNodeInUserLocation(
                       located_node,
-                      MagicNumber::source_directory);
+                      ForbiddenFunctions::source_directory);
       }
       else
       {
@@ -65,8 +63,8 @@ namespace MagicNumber
   };
 
 } // ::CompassAnalyses
-} // ::MagicNumber
-#endif // COMPASS_MAGIC_NUMBER_H
+} // ::ForbiddenFunctions
+#endif // COMPASS_FORBIDDEN_FUNCTIONS_H
 
 /*-----------------------------------------------------------------------------
  * Implementation
@@ -74,39 +72,38 @@ namespace MagicNumber
 
 namespace CompassAnalyses
 {
- namespace MagicNumber
+ namespace ForbiddenFunctions
  {
-  const string checker_name      = "MagicNumber";
-  const string short_description = "Magic number found";
-  const string long_description  = "Looks for floating point or integer constants that are not in init expressions.";
+  const string checker_name      = "ForbiddenFunctions";
+  const string short_description = "forbidden function found";
+  const string long_description  = "Checks for usage of blacklisted functions.";
   string source_directory = "/";
  }
 }
 
-CompassAnalyses::MagicNumber::
+CompassAnalyses::ForbiddenFunctions::
 CheckerOutput::CheckerOutput(SgNode *const node)
     : OutputViolationBase(node,
-                          ::magicNumberChecker->checkerName,
-                          ::magicNumberChecker->shortDescription) {}
+                          ::forbiddenFunctionsChecker->checkerName,
+                          ::forbiddenFunctionsChecker->shortDescription) {}
 
 static void
 run(Compass::Parameters parameters, Compass::OutputObject* output)
   {
-    typedef std::map<string, string> ExpectedValuesMap;
-    ExpectedValuesMap magic_;
+    std::map<string, string> blacklist;
       // We only care about source code in the user's space, not,
       // for example, Boost or system files.
       string target_directory =
           parameters["general::target_directory"].front();
-      CompassAnalyses::MagicNumber::source_directory.assign(target_directory);
-
-      Compass::ParametersMap things = parameters[boost::regex("^magicNumbers::.*$")];
-      BOOST_FOREACH(const Compass::ParametersMap::value_type& pair, things)
+      CompassAnalyses::ForbiddenFunctions::source_directory.assign(target_directory);
+      
+      Compass::ParametersMap forbidden = parameters[boost::regex("forbiddenFunctions::.*$")];
+      BOOST_FOREACH(const Compass::ParametersMap::value_type& pair, forbidden)
 	{
 	  Compass::ParameterValues values = pair.second;
-	  BOOST_FOREACH(string keyword, values)
+	  BOOST_FOREACH(string func, values)
 	    {
-	      magic_[keyword] = keyword;
+	      blacklist[func] = func;
 	    }
 	}
 
@@ -114,26 +111,15 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
       SgProject* sageProject = Compass::projectPrerequisite.getProject();
       
       // perform AST matching here
-      CodeThorn::AstMatching match_val_exps;
-      MatchResult val_exps_result = match_val_exps.performMatching("$r = SgIntVal | $r = SgDoubleVal", sageProject);
-      BOOST_FOREACH(SingleMatchVarBindings match, val_exps_result)
+      CodeThorn::AstMatching match_func_ref;
+      MatchResult res_function_refs = match_func_ref.performMatching("$r = SgFunctionRefExp", sageProject);
+      BOOST_FOREACH(SingleMatchVarBindings match, res_function_refs)
 	{
-	  SgValueExp* val = (SgValueExp*)match["$r"];
-	  if (val->get_originalExpressionTree() == NULL)
+	  SgFunctionRefExp* reference = (SgFunctionRefExp*)match["$r"];
+	  string function_name = reference->get_symbol()->get_name().getString();
+	  if(blacklist[function_name] == function_name)
 	    {
-	      SgNode* p = val->get_parent();
-	      while (isSgExpression(p) && !isSgInitializer(p))
-		{
-		  p = p->get_parent();
-		}
-	      if (!isSgInitializer(p) || isSgConstructorInitializer(p))
-		{
-		  string number = val->get_constant_folded_value_as_string();
-		  if (magic_[number] == "")
-		    {
-		      output->addOutput(new CompassAnalyses::MagicNumber::CheckerOutput(val));
-		    }
-		}
+	      output->addOutput(new CompassAnalyses::ForbiddenFunctions::CheckerOutput(reference));
 	    }
 	}
   }
@@ -145,12 +131,12 @@ createTraversal(Compass::Parameters params, Compass::OutputObject* output)
     return NULL;
   }
 
-extern const Compass::Checker* const magicNumberChecker =
+extern const Compass::Checker* const forbiddenFunctionsChecker =
   new Compass::CheckerUsingAstSimpleProcessing(
-      CompassAnalyses::MagicNumber::checker_name,
+      CompassAnalyses::ForbiddenFunctions::checker_name,
     // Descriptions should not include the newline character "\n".
-      CompassAnalyses::MagicNumber::short_description,
-      CompassAnalyses::MagicNumber::long_description,
+      CompassAnalyses::ForbiddenFunctions::short_description,
+      CompassAnalyses::ForbiddenFunctions::long_description,
       Compass::C | Compass::Cpp,
       Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
       run,
