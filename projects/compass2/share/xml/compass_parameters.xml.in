@@ -27,6 +27,7 @@
     <parameter name="enabled_checker">noOverloadAmpersand</parameter>
     <parameter name="enabled_checker">magicNumber</parameter>
     <parameter name="enabled_checker">allocateAndFreeInTheSameModule</parameter>
+    <parameter name="enabled_checker">forbiddenFunctions</parameter>
     <!--PLACEHOLDER-->
   </general>
 
@@ -34,6 +35,10 @@
   <checkers>
     <checker name="magicNumbers">
       <parameter name="allowed number">0</parameter>
+    </checker>
+
+    <checker name="forbiddenFunctions">
+      <parameter name="blacklist">rand</parameter>
     </checker>
 
     <checker name="allowedFunctions">
