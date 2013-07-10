@@ -64,21 +64,16 @@ int main(int argc, char * argv[])
     return 0;
   }
 
-  // Unroll it
   //--------------------------------------------------
  if (isSgForStatement(stmt))
   {
     bool result=false;
-//    result = SageInterface::loopUnrolling(isSgForStatement(stmt),factor);
     result = SageInterface::loopCollapsing(isSgForStatement(stmt),factor);
     ROSE_ASSERT(result != false);
   }
-// Qing's loop processor does not pass postprocessing and runAllTests
 //  AstPostProcessing(project);
 
-  // generateWholeGraphOfAST("WholeAST");
-
-  // run all tests
+// run all tests
 //  AstTests::runAllTests(project);
 
   // Generate source code from AST and call the vendor's compiler

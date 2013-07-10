@@ -16590,7 +16590,41 @@ SageInterface::collectSourceSequenceNumbers( SgNode* astNode )
     
   }
 
-//Winnie, loop collapse
+/*Winnie, loop collapse, collapse nested for loops into one large for loop
+*
+ * 
+ *  Loop is normalized to [lb,ub,step], ub is inclusive (<=, >=)
+ *  
+ *  to collapse two level of loops:
+ *  iteration_loop_one= (ub1-lb1+1)%step1 ==0?(ub1-lb1+1)/step1: (ub1-lb1+1)/step1+1
+ *  iteration_loop_two= (ub2-lb2+1)%step2 ==0?(ub2-lb2+1)/step2: (ub2-lb2+1)/step2+1
+ *  total iteration count = iteration_loop_two * iteration_loop_two
+ *
+ *  Decide incremental/decremental loop by checking operator of test statement(ub), <=/>=
+ *
+ * e.g:
+ * // collapse the following two level of for loops:
+ *       for (i=1; i<=9; i+=1)      //incremental for loop
+ *       {
+            for(j=10; j>=1; j+=-2)    //decremental for loop
+ *         {
+                a[i]=j;
+           }
+ *       }
+ * // it becomes
+ *     // total iteration count = ((9 - 1 + 1)/1) * ((10 - 1 + 1)/2) = 45
+ *     // ub = 45
+ *     // lb = 0
+ *        
+ *     for (z=0; z<=44; z+=1)
+ *     {
+ *       i = z / 6 + 1;
+ *       j = -(z % 6) + 10;
+ *       a[i]=j;
+ *     }
+ **
+*/
+
 #ifndef USE_ROSE
 bool SageInterface::loopCollapsing(SgForStatement* target_loop, size_t collapsing_factor)
 {
