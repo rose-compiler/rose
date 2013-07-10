@@ -9382,7 +9382,8 @@ SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgSco
        // printf ("In appendStatementList(): stmts[i = %zu]->get_parent() = %p \n",i,stmts[i]->get_parent());
 #endif
 #endif
-       // appendStatement(stmts[i], scope);
+        appendStatement(stmts[i], scope); // Liao 5/15/2013, defer the logic of checking parent pointers to appendStatement()
+#if 0        
           if (stmts[i]->get_parent() != NULL)
              {
 #if 0
@@ -9396,6 +9397,7 @@ SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgSco
              {
                printf ("   --- WARNING: In appendStatementList(): stmts[i = %zu] not added to scope (because stmts[i]->get_parent() == NULL) \n",i);
              }
+#endif        
         }
    }
 
@@ -10343,7 +10345,7 @@ int SageInterface::fixVariableReferences(SgNode* root)
     ROSE_ASSERT(varRef->get_symbol());
     SgInitializedName* initname= varRef->get_symbol()->get_declaration();
 
-
+    ROSE_ASSERT (initname != NULL);
     if (initname->get_type()==SgTypeUnknown::createType())
       //    if ((initname->get_scope()==NULL) && (initname->get_type()==SgTypeUnknown::createType()))
     {
@@ -10461,10 +10463,12 @@ int SageInterface::fixVariableReferences(SgNode* root)
       }
     }
   } // end for
+  // Liao 2/1/2013: delete unused initname and symbol, considering possible use by the current subtree from root node
+  clearUnusedVariableSymbols(root); 
   return counter;
 }
 
-void SageInterface::clearUnusedVariableSymbols()
+void SageInterface::clearUnusedVariableSymbols(SgNode* root /*= NULL */)
 {
     Rose_STL_Container<SgNode*> symbolList;
     VariantVector sym_vv(V_SgVariableSymbol);
@@ -10472,7 +10476,11 @@ void SageInterface::clearUnusedVariableSymbols()
 
     Rose_STL_Container<SgNode*> varList;
     VariantVector var_vv(V_SgVarRefExp);
-    varList = NodeQuery::queryMemoryPool(var_vv);
+    //varList = NodeQuery::queryMemoryPool(var_vv);
+    if (root != NULL)
+    {
+      varList = NodeQuery::querySubTree(root, V_SgVarRefExp);
+    }
 
     for (Rose_STL_Container<SgNode*>::iterator i = symbolList.begin();
             i != symbolList.end(); ++i)
@@ -10481,23 +10489,24 @@ void SageInterface::clearUnusedVariableSymbols()
         ROSE_ASSERT(symbolToDelete);
         if (symbolToDelete->get_declaration()->get_type() != SgTypeUnknown::createType())
             continue;
-
+        // symbol with a declaration of SgTypeUnknown will be deleted
         bool toDelete = true;
 
-#if 0
-        for (Rose_STL_Container<SgNode*>::iterator j = varList.begin();
-                j != varList.end(); ++j)
+        if (root != NULL) // if root is specified. We further check if the symbol is referenced by any nodes of the tree rooted at "root"
         {
+          for (Rose_STL_Container<SgNode*>::iterator j = varList.begin();
+              j != varList.end(); ++j)
+          {
             SgVarRefExp* var = isSgVarRefExp(*j);
             ROSE_ASSERT(var);
 
             if (var->get_symbol() == symbolToDelete)
             {
-                toDelete = false;
-                break;
+              toDelete = false;
+              break;
             }
+          }
         }
-#endif
 
         if (toDelete)
         {

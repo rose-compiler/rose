@@ -1328,6 +1328,9 @@ test2013_239.C \
 test2013_240.C \
 test2013_241.C \
 test2013_242.C \
+test2013_243.C \
+test2013_244.C \
+test2013_246.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1364,6 +1367,9 @@ endif
 CURRENTLY_FAILING_TESTS = \
 test2013_195.C \
 test2013_197.C
+
+# DQ (7/3/2013): This is a failing Qt example code (unparsed code is not correct).
+# test2013_245.C 
 
 
 # DQ (5/23/2013): This is a failing test because we fixup the symbol tables and then compute 
