@@ -6,22 +6,26 @@ test_loop_trees_SOURCES = test-loop-trees.cpp
 test_loop_trees_CXXFLAGS = \
   -g \
   -I$(top_srcdir)/src/backend/KLT/include \
+  -I$(top_srcdir)/src/backend/MFB/include \
   $(ROSE_INCLUDES)
 test_loop_trees_LDADD= \
   $(top_builddir)/src/backend/KLT/lib/core/libKLT-core.la \
   $(top_builddir)/src/backend/KLT/lib/sequential/libKLT-sequential.la \
   $(top_builddir)/src/backend/KLT/lib/opencl/libKLT-opencl.la \
+  $(top_builddir)/src/backend/MFB/lib/sage/libMFB-sage.la \
   $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 test_sequential_generator_SOURCES = test-sequential-generator.cpp
 test_sequential_generator_CXXFLAGS = \
   -g \
   -I$(top_srcdir)/src/backend/KLT/include \
+  -I$(top_srcdir)/src/backend/MFB/include \
   $(ROSE_INCLUDES)
 test_sequential_generator_LDADD = \
   $(top_builddir)/src/backend/KLT/lib/core/libKLT-core.la \
   $(top_builddir)/src/backend/KLT/lib/sequential/libKLT-sequential.la \
   $(top_builddir)/src/backend/KLT/lib/opencl/libKLT-opencl.la \
+  $(top_builddir)/src/backend/MFB/lib/sage/libMFB-sage.la \
   $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 LOOP_TREES_INPUTS = \
@@ -39,6 +43,18 @@ SEQUENTIAL_KERNEL_TARGETS = ${LOOP_TREES_INPUTS:.lt.in=.kernel.cpp}
 
 %.kernel.cpp: %.lt.in test-sequential-generator
 	./test-sequential-generator $< ${@:.kernel.cpp=.kernel}
+	@echo
+	@echo "$< :"
+	@echo
+	@cat $< 
+	@echo
+	@echo "${@:.kernel.cpp=.kernel.hpp} :"
+	@echo
+	@cat ${@:.kernel.cpp=.kernel.hpp}
+	@echo
+	@echo "$@ :"
+	@echo
+	@cat $@
 
 check-local: test-loop-trees
 	$(MAKE) $(LOOP_TREES_TARGETS)

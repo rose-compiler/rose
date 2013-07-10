@@ -34,7 +34,7 @@ int main(int argc, char ** argv) {
 
   // TODO
 
-  generator.unparse();
+  project->unparse();
 
   return 0;
 }

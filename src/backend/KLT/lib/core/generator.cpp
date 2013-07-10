@@ -109,8 +109,12 @@ void Generator::generate(
 }
 
 Generator::Generator(SgProject * project) :
-  p_project(project)
-{}
+  p_driver(project),
+  p_klt_driver(p_driver),
+  p_sage_driver(p_driver)
+{
+  
+}
 
 Generator::~Generator() {}
 
@@ -123,7 +127,6 @@ void Generator::generate(const LoopTrees & loop_trees, std::list<Kernel *> & ker
   for (it_kernel = kernels.begin(); it_kernel != kernels.end(); it_kernel++)
     doCodeGeneration(*it_kernel, cg_config);
 }
-
 
 }
 

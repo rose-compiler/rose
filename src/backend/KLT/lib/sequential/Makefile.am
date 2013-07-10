@@ -5,9 +5,12 @@ lib_LTLIBRARIES=libKLT-sequential.la
 
 libKLT_sequential_la_SOURCES= \
   kernel.cpp \
+  mfb-klt.cpp \
   generator.cpp
 libKLT_sequential_la_CXXFLAGS= \
-  -g -I$(srcdir)/../../include \
+  -g \
+  -I$(top_srcdir)/src/backend/KLT/include \
+  -I$(top_srcdir)/src/backend/MFB/include \
   $(ROSE_INCLUDES)
 libKLT_sequential_la_includedir=$(prefix)/include/KLT
 libKLT_sequential_la_include_HEADERS= \

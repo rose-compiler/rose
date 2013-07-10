@@ -71,12 +71,21 @@ const std::list<Data *> & Kernel::getDatasArguments() const {
   return p_datas_argument_order;
 }
 
+const std::list<SgVariableSymbol *> & Kernel::getCoefficientsArguments() const {
+  assert(p_arguments_done);
+  return p_coefficients_argument_order;
+}
+
 const std::list<SgVariableSymbol *> & Kernel::getParametersArguments() const {
   assert(p_arguments_done);
   return p_parameters_argument_order;
 }
 
 bool Kernel::isContentDone() const { return p_content_done; }
+
+const std::list<LoopTrees::loop_t *> & Kernel::getPerfectlyNestedLoops() const { return p_perfectly_nested_loops; }
+
+const std::list<LoopTrees::node_t *> & Kernel::getBodyBranches() const { return p_body_branches; }
 
 }
 

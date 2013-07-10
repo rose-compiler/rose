@@ -3868,6 +3868,9 @@ SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType
      ctor->set_definingDeclaration(ctor);
      ctor->set_firstNondefiningDeclaration(ctor);
 
+//     if (result->get_associatedClassDeclaration() == NULL && first_nondefining_declaration != NULL && first_nondefining_declaration->get_associatedClassDeclaration() != NULL)
+//       result->set_associatedClassDeclaration(first_nondefining_declaration->get_associatedClassDeclaration());
+
   // DQ (1/4/2009): Error checking
      ROSE_ASSERT(result->get_associatedClassDeclaration() != NULL);
 #if 0

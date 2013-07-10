@@ -8,9 +8,12 @@ endif
 
 libKLT_opencl_la_SOURCES= \
   kernel.cpp \
+  mfb-klt.cpp \
   generator.cpp
 libKLT_opencl_la_CXXFLAGS= \
-  -g -I$(srcdir)/../../include \
+  -g \
+  -I$(top_srcdir)/src/backend/KLT/include \
+  -I$(top_srcdir)/src/backend/MFB/include \
   $(ROSE_INCLUDES)
 libKLT_opencl_la_includedir=$(prefix)/include/KLT
 libKLT_opencl_la_include_HEADERS= \

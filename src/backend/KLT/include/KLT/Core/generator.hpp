@@ -7,7 +7,8 @@
 #include <list>
 #include <string>
 
-#include <KLT/Core/loop-trees.hpp>
+#include "KLT/Core/loop-trees.hpp"
+#include "KLT/Core/mfb-klt.hpp"
 
 class SgProject;
 class SgSourceFile;
@@ -25,13 +26,14 @@ class LoopSelector;
 class DataFlow;
 
 class Generator {
-  public:
+  protected:
+    ::MultiFileBuilder::KLT_Driver p_driver;
+
+    ::MultiFileBuilder::Driver< ::MultiFileBuilder::KLT>  & p_klt_driver;
+    ::MultiFileBuilder::Driver< ::MultiFileBuilder::Sage> & p_sage_driver;
 
   protected:
-    SgProject * p_project;
-
-  protected:
-    Generator(SgProject * project);
+    Generator(SgProject * project = NULL);
 
     virtual void buildArgumentLists(
       const std::map<Kernel *, LoopTrees::node_t *> & kernels_map,

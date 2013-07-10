@@ -9,11 +9,19 @@ namespace KLT {
 namespace OpenCL {
 
 class Generator : public virtual Core::Generator {
+  protected:
+    std::string p_filename;
+    
+  protected:
+    virtual void doCodeGeneration(Core::Kernel * kernel, const Core::CG_Config & cg_config);
+    
   public:
-    Generator();
+    Generator(SgProject * project, const std::string & filename_);
     virtual ~Generator();
 
-    virtual bool generate(const Core::LoopTrees & loop_trees, std::set<Core::Kernel *> & kernels, std::map<unsigned long, std::set<unsigned long> > & kernel_deps);
+    virtual void init();
+
+    virtual Core::Kernel * makeKernel() const;
 };
 
 }

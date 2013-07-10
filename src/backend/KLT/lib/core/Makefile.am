@@ -11,9 +11,12 @@ libKLT_core_la_SOURCES= \
   cg-config.cpp \
   data-flow.cpp \
   loop-selector.cpp \
+  mfb-klt.cpp \
   utils.cpp
 libKLT_core_la_CXXFLAGS= \
-  -g -I$(srcdir)/../../include \
+  -g \
+  -I$(top_srcdir)/src/backend/KLT/include \
+  -I$(top_srcdir)/src/backend/MFB/include \
   $(ROSE_INCLUDES)
 libKLT_core_la_includedir=$(prefix)/include/KLT
 libKLT_core_la_include_HEADERS= \

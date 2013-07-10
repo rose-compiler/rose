@@ -2,6 +2,10 @@
 #include "KLT/Sequential/generator.hpp"
 #include "KLT/Sequential/kernel.hpp"
 
+#include "KLT/Sequential/mfb-klt.hpp"
+
+#include "KLT/Core/data.hpp"
+
 #include "sage3basic.h"
 
 #include <sstream>
@@ -12,6 +16,7 @@ namespace KLT {
 
 namespace Sequential {
 
+#if 0
 /*
 template <typename Symbol, typename Defn>
 std::pair<Symbol *, Defn *> buildDeclAndDefn(
@@ -21,24 +26,23 @@ std::pair<Symbol *, Defn *> buildDeclAndDefn(
 );
 */
 
-std::pair<SgClassSymbol *, SgClassDefinition *> buildClassDeclAndDefn(
+std::pair<SgClassSymbol *, SgClassDefinition *> buildClassDecl(
   const std::string & name,
   SgClassDeclaration::class_types kind,
-  SgScopeStatement * decl_scope,
-  SgScopeStatement * defn_scope
+  SgScopeStatement * decl_scope
 ) {
-  assert(decl_scope != NULL && defn_scope != NULL);
+  assert(decl_scope != NULL);
 
   std::pair<SgClassSymbol *, SgClassDefinition *> result(NULL, NULL);
 
   SgClassDeclaration * class_decl = SageBuilder::buildNondefiningClassDeclaration_nfi(name, kind, decl_scope, false, NULL);
-  SageInterface::appendStatement(class_decl, decl_scope);
+//SageInterface::appendStatement(class_decl, decl_scope);
 
   result.first = decl_scope->lookup_class_symbol(name);
   assert(result.first != NULL);
  
-  SgClassDeclaration * class_defn = SageBuilder::buildNondefiningClassDeclaration_nfi(name, kind, defn_scope, false, NULL);
-  SageInterface::appendStatement(class_defn, defn_scope);
+  SgClassDeclaration * class_defn = SageBuilder::buildNondefiningClassDeclaration_nfi(name, kind, decl_scope, false, NULL);
+  SageInterface::appendStatement(class_defn, decl_scope);
 
   result.second = SageBuilder::buildClassDefinition_nfi(class_defn, false);
   class_defn->set_definition(result.second);
@@ -64,7 +68,7 @@ std::pair<SgFunctionSymbol *, SgFunctionDefinition *> buildFunctionDeclAndDefn(
   SgScopeStatement * decl_scope,
   SgScopeStatement * defn_scope
 ) {
-  assert(decl_scope != NULL && defn_scope != NULL);
+  assert(decl_scope != NULL && defn_scope != NULL && decl_scope != defn_scope);
  
   std::pair<SgFunctionSymbol *, SgFunctionDefinition *> result(NULL, NULL);
  
@@ -73,13 +77,10 @@ std::pair<SgFunctionSymbol *, SgFunctionDefinition *> buildFunctionDeclAndDefn(
  
   assert(func_decl->get_definition() == NULL);
  
-  // result.first = SageInterface::lookupClassSymbolInParentScopes(name, decl_scope);
   result.first = decl_scope->lookup_function_symbol(name);
   assert(result.first != NULL);
  
-  SgFunctionDeclaration * func_defn = SageBuilder::buildDefiningFunctionDeclaration(
-    name, return_type, params, defn_scope, NULL, false, func_decl, NULL
-  );
+  SgFunctionDeclaration * func_defn = SageBuilder::buildDefiningFunctionDeclaration(name, return_type, params, defn_scope, NULL, false, func_decl, NULL);
   SageInterface::appendStatement(func_defn, defn_scope);
  
   result.second = func_defn->get_definition();
@@ -94,7 +95,49 @@ std::pair<SgFunctionSymbol *, SgFunctionDefinition *> buildFunctionDeclAndDefn(
   return result;
 }
 
-Kernel * Generator::makeKernel() const {
+std::pair<SgMemberFunctionSymbol *, SgFunctionDefinition *> buildMemberFunctionDeclAndDefn(
+  const std::string & name,
+  SgType * return_type,
+  SgFunctionParameterList * params,
+  const std::pair<SgClassSymbol *, SgClassDefinition *> & class_desc,
+  SgScopeStatement * defn_scope
+) {
+  assert(defn_scope != NULL);
+  assert(class_desc.first != NULL && class_desc.second != NULL);
+
+  SgScopeStatement * decl_scope = class_desc.second;
+
+  std::pair<SgMemberFunctionSymbol *, SgFunctionDefinition *> result(NULL, NULL);
+
+  SgMemberFunctionDeclaration * mfunc_decl = SageBuilder::buildNondefiningMemberFunctionDeclaration(name, return_type, params, decl_scope, NULL, 0, false, NULL);
+  SageInterface::appendStatement(mfunc_decl, decl_scope);
+
+  assert(mfunc_decl->get_definition() == NULL);
+  assert(mfunc_decl->get_associatedClassDeclaration() != NULL);
+
+  result.first = isSgMemberFunctionSymbol(decl_scope->lookup_function_symbol(name));
+  assert(result.first != NULL);
+
+  SgMemberFunctionDeclaration * mfunc_defn = SageBuilder::buildDefiningMemberFunctionDeclaration(name, return_type, params, decl_scope, NULL, 0, false, mfunc_decl, NULL);
+  SageInterface::appendStatement(mfunc_defn, defn_scope);
+
+  assert(mfunc_defn->get_associatedClassDeclaration() != NULL);
+
+  result.second = mfunc_defn->get_definition();
+  assert(result.second != NULL);
+
+  mfunc_decl->set_definingDeclaration(mfunc_defn);
+  mfunc_decl->set_firstNondefiningDeclaration(mfunc_decl);
+
+  mfunc_defn->set_definingDeclaration(mfunc_defn);
+  mfunc_defn->set_firstNondefiningDeclaration(mfunc_decl);
+
+  return result;
+}
+
+#endif
+
+Core::Kernel * Generator::makeKernel() const {
   return new Kernel();
 }
 
@@ -106,66 +149,21 @@ void Generator::doCodeGeneration(Core::Kernel * kernel_, const Core::CG_Config &
   assert(kernel->isArgumentDone());
   assert(kernel->isContentDone());
 
-  SgScopeStatement * decl_scope = p_decl_file->get_globalScope();
-  SgScopeStatement * defn_scope = p_defn_file->get_globalScope();
+  ::MultiFileBuilder::KLT<Kernel>::object_desc_t kernel_desc(kernel, p_file_id);
 
-  std::ostringstream arguments_packer_name;
-  arguments_packer_name << "arguments_packer_" << kernel->id << "_" << kernel;
+  ::MultiFileBuilder::KLT<Kernel>::build_result_t result = p_klt_driver.build<Kernel>(kernel_desc);
 
-  std::pair<SgClassSymbol *, SgClassDefinition *> arguments_packer =
-    buildClassDeclAndDefn(arguments_packer_name.str(), SgClassDeclaration::e_class, decl_scope, defn_scope);
-
-  // TODO fill arguments_packer.second
-
-  kernel->setArgumentPacker(arguments_packer.first);
-
-  std::ostringstream kernel_function_name;
-  kernel_function_name << "kernel_function_" << kernel->id << "_" << kernel;
-
-  SgType * return_type = SageBuilder::buildVoidType();
-
-  SgFunctionParameterList * params = SageBuilder::buildFunctionParameterList(
-    SageBuilder::buildInitializedName("arg_", arguments_packer.first->get_type())
-  );
-
-  std::pair<SgFunctionSymbol *, SgFunctionDefinition *> kernel_function =
-    buildFunctionDeclAndDefn(kernel_function_name.str(), return_type, params, decl_scope, defn_scope);
-
-  // TODO fill kernel_function.second
-
-  kernel->setKernelSymbol(kernel_function.first);
+  kernel->setKernelSymbol(result.kernel);
+  kernel->setArgumentPacker(result.arguments_packer);
 }
 
-Generator::Generator(SgProject * project, std::string filename_) :
+Generator::Generator(SgProject * project, const std::string & filename_) :
   Core::Generator(project),
-  p_decl_file(NULL),
-  p_defn_file(NULL)
-{
-  if (!CommandlineProcessing::isCppFileNameSuffix("hpp"))
-    CommandlineProcessing::extraCppSourceFileSuffixes.push_back("hpp");
-
-  std::string filename;
-
-  filename = filename_ + ".hpp";
-  p_decl_file = isSgSourceFile(SageBuilder::buildFile(filename, filename, p_project));
-  SageInterface::attachComment(p_decl_file, "/* File generated by KLT::Sequential::Generator */");
-
-  filename = filename_ + ".cpp";
-  p_defn_file = isSgSourceFile(SageBuilder::buildFile(filename, filename, p_project));
-  SageInterface::attachComment(p_defn_file, "/* File generated by KLT::Sequential::Generator */");
-  SageInterface::insertHeader(p_defn_file, filename_ + ".hpp");
-}
+  p_filename(filename_),
+  p_file_id(p_sage_driver.createPairOfFiles(p_filename))
+{}
 
 Generator::~Generator() {}
-
-void Generator::unparse() {
-  assert(p_decl_file != NULL && p_defn_file != NULL);
-
-//SageInterface::setSourcePositionForTransformation(p_decl_file);
-
-  p_decl_file->unparse();  
-  p_defn_file->unparse();
-}
 
 }
 
