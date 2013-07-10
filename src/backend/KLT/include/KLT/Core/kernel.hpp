@@ -65,7 +65,7 @@ class Kernel {
 
 
     /// Set the result of the Argument Analysis (called only once), set flag p_arguments_done
-    void setArgument(const std::list<Data *> &datas_argument_order, const std::list<SgVariableSymbol *> & parameters_argument_order, const std::list<SgVariableSymbol *> & coefficients_argument_order);
+    void setArgument(const std::list<Data *> & datas_argument_order, const std::list<SgVariableSymbol *> & parameters_argument_order, const std::list<SgVariableSymbol *> & coefficients_argument_order);
 
     /// \return true if the argument have been processed
     bool isArgumentDone() const;

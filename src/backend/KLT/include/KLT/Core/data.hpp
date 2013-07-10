@@ -10,6 +10,7 @@
 
 class SgExpression;
 class SgVariableSymbol;
+class SgType;
 
 namespace KLT {
 
@@ -21,6 +22,8 @@ class Data {
 
   protected:
     SgVariableSymbol * p_variable_symbol;
+
+    SgType * p_base_type;
 
     std::vector<section_t> p_sections;
 
@@ -42,6 +45,9 @@ class Data {
 
     SgVariableSymbol * getVariableSymbol() const;
 
+    SgType * getBaseType();
+//  SgType * getBaseType() const;
+
     const std::vector<section_t> & getSections() const;
 
     void toText(std::ostream & out) const;
@@ -50,6 +56,9 @@ class Data {
   static void set_intersection  (std::set<Data *> & result_, const std::set<Data *> & datas_1_, const std::set<Data *> & datas_2_);
   static void set_remove        (std::set<Data *> & result_, const std::set<Data *> & datas_);
 };
+
+void collectBoundExpressions(const std::set<Data *> & datas, std::set<SgExpression *> & exprs);
+void collectReferencedSymbols(const std::set<Data *> & datas, std::set<SgVariableSymbol *> & symbols);
 
 }
 

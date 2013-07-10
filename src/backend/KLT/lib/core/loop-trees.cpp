@@ -426,6 +426,185 @@ void LoopTrees::read(std::ifstream & in_file) {
   SageBuilder::popScopeStack();
 }
 
+SgExpression * translateConstExpression(
+  SgExpression * expr,
+  const std::map<SgVariableSymbol *, SgVariableSymbol *> & param_to_local,
+  const std::map<SgVariableSymbol *, SgVariableSymbol *> & iter_to_local
+) {
+  SgExpression * result = SageInterface::copyExpression(expr);
+
+  std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator it_sym_to_local;
+
+  std::vector<SgVarRefExp *> var_refs = SageInterface::querySubTree<SgVarRefExp>(result);
+  std::vector<SgVarRefExp *>::const_iterator it_var_ref;
+  for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
+    SgVarRefExp * var_ref = *it_var_ref;
+    SgVariableSymbol * var_sym = var_ref->get_symbol();
+
+    SgVariableSymbol * local_sym = NULL;
+
+    it_sym_to_local = param_to_local.find(var_sym);
+    if (it_sym_to_local != param_to_local.end())
+      local_sym = it_sym_to_local->second;
+
+    it_sym_to_local = iter_to_local.find(var_sym);
+    if (it_sym_to_local != iter_to_local.end()) {
+      assert(local_sym == NULL); // implies VarRef to a variable symbol which is both parameter and iterator... It does not make sense!
+
+      local_sym = it_sym_to_local->second;
+    }
+
+    assert(local_sym != NULL); // implies VarRef to an unknown variable symbol (neither parameter or iterator)
+
+    SageInterface::replaceExpression(var_ref, SageBuilder::buildVarRefExp(local_sym));
+  }
+
+  return result;
+}
+
+SgStatement * generateStatement(
+  LoopTrees::node_t * node, 
+  const std::map<SgVariableSymbol *, SgVariableSymbol *> & param_to_local,
+  const std::map<SgVariableSymbol *, SgVariableSymbol *> & coef_to_local,
+  const std::map<Data *, SgVariableSymbol *>             & data_to_local,
+  const std::map<SgVariableSymbol *, SgVariableSymbol *> & iter_to_local,
+  bool generate_in_depth,
+  bool flatten_array_ref
+) {
+  SgStatement * result = NULL;
+
+  LoopTrees::loop_t * loop = dynamic_cast<LoopTrees::loop_t *>(node);
+  LoopTrees::stmt_t * stmt = dynamic_cast<LoopTrees::stmt_t *>(node);
+
+  assert((loop != NULL) xor (stmt != NULL));
+
+  std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator it_sym_to_local;
+  std::map<Data *, SgVariableSymbol *>::const_iterator it_data_to_local;
+
+  if (loop != NULL) {
+    it_sym_to_local = iter_to_local.find(loop->iterator);
+    assert(it_sym_to_local != iter_to_local.end());
+    SgVariableSymbol * local_it_sym = it_sym_to_local->second;
+
+    SgExpression * lower_bound = translateConstExpression(loop->lower_bound, param_to_local, iter_to_local);
+    SgExpression * upper_bound = translateConstExpression(loop->upper_bound, param_to_local, iter_to_local);
+
+    SgExprStatement * init_stmt = SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(SageBuilder::buildVarRefExp(local_it_sym), lower_bound));
+    SgExprStatement * test_stmt  = SageBuilder::buildExprStatement(SageBuilder::buildLessOrEqualOp(SageBuilder::buildVarRefExp(local_it_sym), upper_bound));;
+    SgExpression * inc_expr = SageBuilder::buildPlusPlusOp(SageBuilder::buildVarRefExp(local_it_sym));
+
+    SgBasicBlock * for_body = SageBuilder::buildBasicBlock();
+    SgForStatement * for_stmt = SageBuilder::buildForStatement(init_stmt, test_stmt, inc_expr, for_body);
+
+    if (generate_in_depth) {
+      std::list<LoopTrees::node_t * >::const_iterator it_child;
+      for (it_child = loop->children.begin(); it_child != loop->children.end(); it_child++) {
+        SgStatement * child_stmt = generateStatement(*it_child, param_to_local, coef_to_local, data_to_local, iter_to_local, generate_in_depth, flatten_array_ref);
+        SageInterface::appendStatement(child_stmt, for_body);
+      }
+    }
+
+    result = for_stmt;
+  }
+
+  if (stmt != NULL) {
+    result = SageInterface::copyStatement(stmt->statement);
+
+    std::map<SgVariableSymbol *, SgVariableSymbol *> data_sym_to_local;
+    std::map<SgVariableSymbol *, Data *> data_sym_to_data;
+    std::map<Data *, SgVariableSymbol *>::const_iterator it_data_to_local;
+    for (it_data_to_local = data_to_local.begin(); it_data_to_local != data_to_local.end(); it_data_to_local++) {
+      Data * data = it_data_to_local->first;
+      SgVariableSymbol * data_sym = it_data_to_local->first->getVariableSymbol();
+      SgVariableSymbol * local_sym = it_data_to_local->second;
+
+      data_sym_to_local.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(data_sym, local_sym));
+      data_sym_to_data.insert(std::pair<SgVariableSymbol *, Data *>(data_sym, data));
+    }
+
+    std::vector<SgVarRefExp *> var_refs = SageInterface::querySubTree<SgVarRefExp>(result);
+    std::vector<SgVarRefExp *>::const_iterator it_var_ref;
+
+    if (flatten_array_ref) {
+      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
+        SgVarRefExp * var_ref = *it_var_ref;
+        SgVariableSymbol * var_sym = var_ref->get_symbol();
+
+        std::map<SgVariableSymbol *, Data *>::const_iterator it_data_sym_to_data = data_sym_to_data.find(var_sym);
+        if (it_data_sym_to_data == data_sym_to_data.end()) continue; // Not a variable reference to a Data
+
+        Data * data = it_data_sym_to_data->second;
+
+        if (data->getSections().size() <= 1) continue; // No need for flattening
+
+        SgPntrArrRefExp * arr_ref = isSgPntrArrRefExp(var_ref->get_parent());
+        SgPntrArrRefExp * top_arr_ref = NULL;
+        std::list<SgExpression *> subscripts;
+        while (arr_ref != NULL) {
+          top_arr_ref = arr_ref;
+          subscripts.push_back(arr_ref->get_rhs_operand_i());
+          arr_ref = isSgPntrArrRefExp(arr_ref->get_parent());
+        }
+        assert(top_arr_ref != NULL);
+        assert(subscripts.size() == data->getSections().size());
+
+        std::list<SgExpression *>::const_iterator it_subscript;
+        SgExpression * subscript = SageInterface::copyExpression(subscripts.front());
+        subscripts.pop_front();
+        unsigned int cnt = 0;
+        for (it_subscript = subscripts.begin(); it_subscript != subscripts.end(); it_subscript++) {
+          SgExpression * dim_size = SageInterface::copyExpression(data->getSections()[cnt++].second);
+          subscript = SageBuilder::buildMultiplyOp(subscript, dim_size);
+          subscript = SageBuilder::buildAddOp(subscript, SageInterface::copyExpression(*it_subscript));
+        }
+
+        SageInterface::replaceExpression(top_arr_ref, SageBuilder::buildPntrArrRefExp(SageInterface::copyExpression(var_ref), subscript));
+      }
+    }
+
+    var_refs = SageInterface::querySubTree<SgVarRefExp>(result);
+    for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
+      SgVarRefExp * var_ref = *it_var_ref;
+      SgVariableSymbol * var_sym = var_ref->get_symbol();
+
+      SgVariableSymbol * local_sym = NULL;
+
+      it_sym_to_local = param_to_local.find(var_sym);
+      if (it_sym_to_local != param_to_local.end())
+        local_sym = it_sym_to_local->second;
+
+      it_sym_to_local = coef_to_local.find(var_sym);
+      if (it_sym_to_local != coef_to_local.end()) {
+        assert(local_sym == NULL); // implies VarRef to a variable symbol which is both parameter and iterator... It does not make sense!
+
+        local_sym = it_sym_to_local->second;
+      }
+
+      it_sym_to_local = data_sym_to_local.find(var_sym);
+      if (it_sym_to_local != data_sym_to_local.end()) {
+        assert(local_sym == NULL); // implies VarRef to a variable symbol which is both parameter and iterator... It does not make sense!
+
+        local_sym = it_sym_to_local->second;
+      }
+
+      it_sym_to_local = iter_to_local.find(var_sym);
+      if (it_sym_to_local != iter_to_local.end()) {
+        assert(local_sym == NULL); // implies VarRef to a variable symbol which is both parameter and iterator... It does not make sense!
+
+        local_sym = it_sym_to_local->second;
+      }
+
+      assert(local_sym != NULL); // implies VarRef to an unknown variable symbol (neither parameter or iterator)
+
+      SageInterface::replaceExpression(var_ref, SageBuilder::buildVarRefExp(local_sym));
+    }
+  }
+
+  assert(result != NULL);
+
+  return result;
+}
+
 void collectLeaves(LoopTrees::node_t * tree, std::set<SgStatement *> & leaves) {
   LoopTrees::loop_t * loop = dynamic_cast<LoopTrees::loop_t *>(tree);
   if (loop != NULL) {
@@ -441,6 +620,68 @@ void collectLeaves(LoopTrees::node_t * tree, std::set<SgStatement *> & leaves) {
   leaves.insert(stmt->statement);
 }
 
+void collectExpressions(LoopTrees::node_t * tree, std::set<SgExpression *> & exprs) {
+  LoopTrees::loop_t * loop = dynamic_cast<LoopTrees::loop_t *>(tree);
+  if (loop == NULL) return;
+
+  exprs.insert(loop->lower_bound);
+  exprs.insert(loop->upper_bound);
+  if (loop->reduction_lhs != NULL)
+    exprs.insert(loop->reduction_lhs);
+
+  std::list<LoopTrees::node_t * >::const_iterator it_child;
+  for (it_child = loop->children.begin(); it_child != loop->children.end(); it_child++)
+    collectExpressions(*it_child, exprs);
+}
+
+void collectIteratorSymbols(LoopTrees::node_t * tree, std::set<SgVariableSymbol *> & symbols) {
+  LoopTrees::loop_t * loop = dynamic_cast<LoopTrees::loop_t *>(tree);
+  if (loop == NULL) return;
+
+  symbols.insert(loop->iterator);
+
+  std::list<LoopTrees::node_t * >::const_iterator it_child;
+  for (it_child = loop->children.begin(); it_child != loop->children.end(); it_child++)
+    collectIteratorSymbols(*it_child, symbols);
+}
+
+void collectReferencedSymbols(LoopTrees::node_t * tree, std::set<SgVariableSymbol *> & symbols) {
+  std::vector<SgVarRefExp *> var_refs;
+  std::vector<SgVarRefExp *>::const_iterator it_var_ref;
+
+  LoopTrees::loop_t * loop = dynamic_cast<LoopTrees::loop_t *>(tree);
+  if (loop != NULL) {
+
+    var_refs = SageInterface::querySubTree<SgVarRefExp>(loop->lower_bound);
+    for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
+      symbols.insert((*it_var_ref)->get_symbol());
+
+    var_refs = SageInterface::querySubTree<SgVarRefExp>(loop->upper_bound);
+    for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) 
+      symbols.insert((*it_var_ref)->get_symbol());
+
+    if (loop->reduction_lhs != NULL) {
+      var_refs = SageInterface::querySubTree<SgVarRefExp>(loop->reduction_lhs);
+      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
+        symbols.insert((*it_var_ref)->get_symbol());
+    }
+
+    std::list<LoopTrees::node_t * >::const_iterator it_child;
+    for (it_child = loop->children.begin(); it_child != loop->children.end(); it_child++)
+      collectReferencedSymbols(*it_child, symbols);
+    
+  }
+  else {
+    LoopTrees::stmt_t * stmt = dynamic_cast<LoopTrees::stmt_t *>(tree);
+    assert(stmt != NULL);
+
+    var_refs = SageInterface::querySubTree<SgVarRefExp>(stmt->statement);
+    for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
+      symbols.insert((*it_var_ref)->get_symbol());
+  }
 }
 
 }
+
+}
+

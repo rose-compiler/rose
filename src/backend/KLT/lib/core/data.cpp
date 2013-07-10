@@ -15,8 +15,34 @@ namespace Core {
 
 Data::Data(SgVariableSymbol * variable) :
   p_variable_symbol(variable),
+  p_base_type(NULL),
   p_sections()
 {}
+
+// SgType * Data::getBaseType() const { return p_base_type; }
+
+SgType * Data::getBaseType() {
+  if (p_base_type != NULL) return p_base_type;
+
+  p_base_type = p_variable_symbol->get_type();
+
+  unsigned int nbr_dims = p_sections.size();
+
+  assert(nbr_dims > 0); // FIXME artificial limitation for debugging
+
+  SgPointerType * ptr_type = isSgPointerType(p_base_type);
+  unsigned int cnt = 0;
+
+  while (ptr_type != NULL && cnt < nbr_dims) {
+    p_base_type = ptr_type->get_base_type();
+    ptr_type = isSgPointerType(p_base_type);
+    cnt++;
+  }
+  assert(cnt == nbr_dims);
+  assert(isSgPointerType(p_base_type) == NULL); // FIXME artificial limitation for debugging
+
+  return p_base_type;
+}
 
 Data::~Data() {}
 
@@ -126,6 +152,41 @@ void Data::set_remove(std::set<Data *> & result_, const std::set<Data *> & datas
   }
 
   // TODO minimize result_
+}
+
+void collectBoundExpressions(const std::set<Data *> & datas, std::set<SgExpression *> & exprs) {
+  std::vector<SgVarRefExp *> var_refs;
+  std::vector<SgVarRefExp *>::const_iterator it_var_ref;
+
+  std::set<Data *>::const_iterator it_data;
+  for (it_data = datas.begin(); it_data != datas.end(); it_data++) {
+    const std::vector<Data::section_t> & sections = (*it_data)->getSections();
+    std::vector<Data::section_t>::const_iterator it_section;
+    for (it_section = sections.begin(); it_section != sections.end(); it_section++) {
+      exprs.insert(it_section->first);
+      exprs.insert(it_section->second);
+    }
+  }
+}
+
+void collectReferencedSymbols(const std::set<Data *> & datas, std::set<SgVariableSymbol *> & symbols) {
+  std::vector<SgVarRefExp *> var_refs;
+  std::vector<SgVarRefExp *>::const_iterator it_var_ref;
+  
+  std::set<Data *>::const_iterator it_data;
+  for (it_data = datas.begin(); it_data != datas.end(); it_data++) {
+    const std::vector<Data::section_t> & sections = (*it_data)->getSections();
+    std::vector<Data::section_t>::const_iterator it_section;
+    for (it_section = sections.begin(); it_section != sections.end(); it_section++) {
+      var_refs = SageInterface::querySubTree<SgVarRefExp>(it_section->first);
+      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
+        symbols.insert((*it_var_ref)->get_symbol());
+
+      var_refs = SageInterface::querySubTree<SgVarRefExp>(it_section->second);
+      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
+        symbols.insert((*it_var_ref)->get_symbol());
+    }
+  }
 }
 
 }

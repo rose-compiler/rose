@@ -3,6 +3,7 @@
 #define __LOOP_TREES_HPP__
 
 #include <set>
+#include <map>
 #include <list>
 #include <utility>
 
@@ -129,10 +130,33 @@ class LoopTrees {
     /// Write a lisp like text
     void toText(std::ostream & out) const;
 
+
   friend class Generator;
 };
 
+SgExpression * translateConstExpression(
+  SgExpression * expr, 
+  const std::map<SgVariableSymbol *, SgVariableSymbol *> & param_to_local,
+  const std::map<SgVariableSymbol *, SgVariableSymbol *> & iter_to_local
+);
+
+SgStatement * generateStatement(
+  LoopTrees::node_t * node,
+  const std::map<SgVariableSymbol *, SgVariableSymbol *> & param_to_local,
+  const std::map<SgVariableSymbol *, SgVariableSymbol *> & coef_to_local,
+  const std::map<Data *, SgVariableSymbol *>             & data_to_local,
+  const std::map<SgVariableSymbol *, SgVariableSymbol *> & iter_to_local,
+  bool generate_in_depth = false,
+  bool flatten_array_ref = true
+);
+
 void collectLeaves(LoopTrees::node_t * tree, std::set<SgStatement *> & leaves);
+
+void collectExpressions(LoopTrees::node_t * tree, std::set<SgExpression *> & exprs);
+
+void collectIteratorSymbols(LoopTrees::node_t * tree, std::set<SgVariableSymbol *> & symbols);
+
+void collectReferencedSymbols(LoopTrees::node_t * tree, std::set<SgVariableSymbol *> & symbols);
 
 }
 

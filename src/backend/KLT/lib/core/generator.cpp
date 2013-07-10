@@ -36,18 +36,8 @@ void Generator::buildArgumentLists(
     LoopTrees::node_t * node = it_kernel->second;
 
     std::set<SgVariableSymbol *> sym_var_refs;
-    {
-      std::set<SgStatement *> leaves;
-      collectLeaves(node, leaves);
-      std::set<SgStatement *>::const_iterator it_leave;
-      for (it_leave = leaves.begin(); it_leave != leaves.end(); it_leave++) {
-        std::vector<SgVarRefExp *> var_refs = SageInterface::querySubTree<SgVarRefExp>(*it_leave);
-        std::vector<SgVarRefExp *>::const_iterator it_var_ref;
-        for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
-          sym_var_refs.insert((*it_var_ref)->get_symbol());
-        }
-      } 
-    }
+    collectReferencedSymbols(node, sym_var_refs);
+    collectReferencedSymbols(datas, sym_var_refs);
 
     std::list<SgVariableSymbol *> parameters_argument_order;
     std::set<SgVariableSymbol *>::const_iterator it_parameter;
@@ -79,7 +69,7 @@ void Generator::buildArgumentLists(
 
       if (used) datas_argument_order.push_back(data); // If it is referenced (SgVarRefExp) then it is needed
     }
-    // FIXME with partial data we might end up referencing multiple time the same variable...
+    // FIXME with partial data we might end up referencing multiple time the same variable..
 
     kernel->setArgument(datas_argument_order, parameters_argument_order, coefficients_argument_order);
   }
@@ -124,8 +114,9 @@ void Generator::generate(const LoopTrees & loop_trees, std::list<Kernel *> & ker
   generate(loop_trees, kernels, cg_config.getDataFlow(), cg_config.getLoopSelector());
 
   std::list<Kernel *>::iterator it_kernel;
-  for (it_kernel = kernels.begin(); it_kernel != kernels.end(); it_kernel++)
+  for (it_kernel = kernels.begin(); it_kernel != kernels.end(); it_kernel++) {
     doCodeGeneration(*it_kernel, cg_config);
+  }
 }
 
 }
