@@ -611,6 +611,8 @@ main(int argc, char *argv[])
         fclose(f);
     }
     std::cerr <<argv0 <<": " <<worklist.size() <<(1==worklist.size()?" test needs":" tests need") <<" to be run\n";
+    if (worklist.empty())
+        return 0;
     Progress progress(worklist.size());
     progress.force_output(opt.progress);
     OutputGroups ogroups; // do not load from database (that might take a very long time)
