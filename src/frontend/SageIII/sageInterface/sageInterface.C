@@ -16818,18 +16818,18 @@ bool SageInterface::loopCollapsing(SgForStatement* target_loop, size_t collapsin
 
 //Winnie, no need to modify these index ref exp any more, since we've already assign them correct value.
             /*
-        	std::vector<SgVarRefExp*> refs = querySubTree<SgVarRefExp> (body, V_SgVarRefExp);
+                std::vector<SgVarRefExp*> refs = querySubTree<SgVarRefExp> (body, V_SgVarRefExp);
             for (std::vector<SgVarRefExp*>::iterator iter = refs.begin(); iter !=refs.end(); iter++)
             {
                 SgVarRefExp* refexp = *iter;
-	            if (refexp->get_symbol()==ivar[i]->get_symbol_from_symbol_table())
+                    if (refexp->get_symbol()==ivar[i]->get_symbol_from_symbol_table())
                 {
                     // replace it with the right one
                     replaceExpression(refexp, copyExpression(new_exp));
                 }
             }
             */
-	        new_exp = NULL;
+                new_exp = NULL;
      }
 
 //Winnie, the inner most loop, iter

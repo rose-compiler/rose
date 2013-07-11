@@ -83,7 +83,6 @@ insertBeforeUsingCommaOp_SOURCES         = insertBeforeUsingCommaOp.C
 insertAfterUsingCommaOp_SOURCES          = insertAfterUsingCommaOp.C
 deepCopy_SOURCES                         = deepCopy.C
 buildJavaPackage_SOURCES                 = buildJavaPackage.C           
-
 loopCollapsing_SOURCES                    = loopCollapsing.C
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -144,13 +143,9 @@ generatedCodeExamples = \
   rose_inputreplaceWithPattern.C \
   rose_inputinsertBeforeUsingCommaOp.C \
   rose_inputinsertAfterUsingCommaOp.C \
-<<<<<<< HEAD
   rose_inputdeepCopy.C\
-  rose_inputloopCollapsing.C 
-=======
-  rose_inputdeepCopy.C \
+  rose_inputloopCollapsing.C\
   rose_inputbuildJavaPackage.C
->>>>>>> e23b1a22814ee8357fcb60dd6478f4d458b0ef00
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -310,15 +305,17 @@ endif
 
 if ROSE_USE_INDENT
 rose_inputloopCollapsing.C:loopCollapsing
-	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopcollapse:abstract_handle "Statement<position,5>" -rose:loopcollapse:factor 3 && indent rose_inputloopCollapsing.C
-	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopcollapse:abstract_handle "Statement<position,6>" -rose:loopcollapse:factor 5 -rose:output rose_inputloopCollapsing1.C && indent rose_inputloopCollapsing1.C 
-	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopcollapse:abstract_handle "Statement<position,6>" -rose:loopcollapse:factor 3 -rose:output rose_inputloopCollapsing2.C && indent rose_inputloopCollapsing2.C
+	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing_2.C -rose:loopcollapse:abstract_handle "Statement<position,5>" -rose:loopcollapse:factor 2 && indent rose_inputloopCollapsing_2.C
+	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing_3.C -rose:loopcollapse:abstract_handle "Statement<position,9>" -rose:loopcollapse:factor 3 -rose:output rose_inputloopCollapsing_3.C && indent rose_inputloopCollapsing_3.C 
+	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing_4.C -rose:loopcollapse:abstract_handle "Statement<position,9>" -rose:loopcollapse:factor 4 -rose:output rose_inputloopCollapsing_4.C && indent rose_inputloopCollapsing_4.C
+	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing_5.C -rose:loopcollapse:abstract_handle "Statement<position,9>" -rose:loopcollapse:factor 5 -rose:output rose_inputloopCollapsing_5.C && indent rose_inputloopCollapsing_5.C
 else
 # This case is required for platforms where we test ROSE, and which sometimes don't have "indent" available.
 rose_inputloopCollapsing.C:loopCollapsing
-	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopcollapse:abstract_handle "Statement<position,5>" -rose:loopcollapse:factor 3
-	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopcollapse:abstract_handle "Statement<position,6>" -rose:loopcollapse:factor 5 -rose:output rose_inputloopCollapsing1.C
-	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing.C -rose:loopcollapse:abstract_handle "Statement<position,6>" -rose:loopcollapse:factor 3 -rose:output rose_inputloopCollapsing2.C
+	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing_2.C -rose:loopcollapse:abstract_handle "Statement<position,5>" -rose:loopcollapse:factor 2 
+	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing_3.C -rose:loopcollapse:abstract_handle "Statement<position,9>" -rose:loopcollapse:factor 3 -rose:output rose_inputloopCollapsing_3.C 
+	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing_4.C -rose:loopcollapse:abstract_handle "Statement<position,9>" -rose:loopcollapse:factor 4 -rose:output rose_inputloopCollapsing_4.C
+	./loopCollapsing$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopCollapsing_5.C -rose:loopcollapse:abstract_handle "Statement<position,9>" -rose:loopcollapse:factor 5 -rose:output rose_inputloopCollapsing_5.C
 endif
 
 
