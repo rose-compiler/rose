@@ -1037,16 +1037,6 @@ public:
         state.register_rw_state.gpr[x86_gpr_si].state = HAS_BEEN_INITIALIZED;
         state.registers.gpr[x86_gpr_di] = rval;
         state.register_rw_state.gpr[x86_gpr_di].state = HAS_BEEN_INITIALIZED;
-
-        // Initialize some additional registers.  GCC optimization sometimes preserves a register's value as part of a code
-        // path that's shared between points when the register has been initialized and when it hasn't.  Non-optimized code
-        // (apparently) never does this.  Therefore, we need to also initialize registers used this way.
-        state.registers.gpr[x86_gpr_ax] = rval;
-        state.register_rw_state.gpr[x86_gpr_ax].state = HAS_BEEN_INITIALIZED;
-        state.registers.gpr[x86_gpr_cx] = rval;
-        state.register_rw_state.gpr[x86_gpr_cx].state = HAS_BEEN_INITIALIZED;
-        state.registers.gpr[x86_gpr_dx] = rval;
-        state.register_rw_state.gpr[x86_gpr_dx].state = HAS_BEEN_INITIALIZED;
     }
 
     // Tries to figure out where the function call arguments start for functions called by this function.  This is important
@@ -1106,7 +1096,7 @@ public:
         assert(!stack_frames.empty());
         StackFrame &caller_frame = stack_frames.back();
         rose_addr_t esp = state.registers.gpr[x86_gpr_sp].known_value(); // stack address of the return address
-        assert(caller_frame.entry_esp>esp);
+        assert(caller_frame.entry_esp>=esp);
         rose_addr_t ret_va = this->template readMemory<32>(x86_segreg_ss, ValueType<32>(esp), ValueType<1>(1)).known_value();
         if (!uses_stdcall) {
             state.registers.gpr[x86_gpr_sp] = ValueType<32>(esp+4);
@@ -1627,8 +1617,23 @@ public:
                             throw Exception("register not implemented in semantic policy");
                         bool never_accessed = 0==state.register_rw_state.gpr[reg.get_minor()].state;
                         state.register_rw_state.gpr[reg.get_minor()].state |= HAS_BEEN_READ;
-                        if (never_accessed)
-                            state.registers.gpr[reg.get_minor()] = next_input_value<32>(IQ_INTEGER);
+                        if (never_accessed) {
+                            rose_addr_t fake_arg_addr = 0;
+                            if (1==stack_frames.size()) {
+                                // This function might be using a different calling convention where arguments are passed
+                                // in registers.  So pretend we're reading an argument from the stack instead of a register.
+                                switch (reg.get_minor()) {
+                                    case x86_gpr_ax: fake_arg_addr = stack_frames.back().entry_esp + 4; break; // first arg
+                                    case x86_gpr_dx: fake_arg_addr = stack_frames.back().entry_esp + 8; break; // second
+                                    case x86_gpr_cx: fake_arg_addr = stack_frames.back().entry_esp + 0xc; break; // third
+                                }
+                            }
+                            if (fake_arg_addr!=0) {
+                                state.registers.gpr[reg.get_minor()] = next_input_value<32>(IQ_ARGUMENT, fake_arg_addr);
+                            } else {
+                                state.registers.gpr[reg.get_minor()] = next_input_value<32>(IQ_INTEGER);
+                            }
+                        }
                         retval = this->template unsignedExtend<32, nBits>(state.registers.gpr[reg.get_minor()]);
                         break;
                     }
