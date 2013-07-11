@@ -31,33 +31,33 @@ namespace CompassAnalyses
  */
 namespace NoGoto
 {
-  extern const string checker_name;
-  extern const string short_description;
-  extern const string long_description;
-  extern       string source_directory;
+extern const string checker_name;
+extern const string short_description;
+extern const string long_description;
+extern       string source_directory;
 
-  class CheckerOutput: public Compass::OutputViolationBase {
-   public:
-    explicit CheckerOutput(SgNode *const node);
+class CheckerOutput: public Compass::OutputViolationBase {
+ public:
+  explicit CheckerOutput(SgNode *const node);
 
-   private:
-    DISALLOW_COPY_AND_ASSIGN(CheckerOutput);
-  };
+ private:
+  DISALLOW_COPY_AND_ASSIGN(CheckerOutput);
+};
 
-  bool IsNodeNotInUserLocation(const SgNode* node)
+bool IsNodeNotInUserLocation(const SgNode* node)
+{
+  const SgLocatedNode* located_node = isSgLocatedNode(node);
+  if (located_node != NULL)
   {
-      const SgLocatedNode* located_node = isSgLocatedNode(node);
-      if (located_node != NULL)
-      {
-          return ! Compass::IsNodeInUserLocation(
-                      located_node,
-                      NoGoto::source_directory);
-      }
-      else
-      {
-          return true;
-      }
-  };
+    return ! Compass::IsNodeInUserLocation(
+        located_node,
+        NoGoto::source_directory);
+  }
+  else
+  {
+    return true;
+  }
+};
 
 } // ::CompassAnalyses
 } // ::NoGoto
@@ -69,57 +69,59 @@ namespace NoGoto
 
 namespace CompassAnalyses
 {
- namespace NoGoto
- {
-  const string checker_name      = "NoGoto";
-  const string short_description = "GOTO Statement Found";
-  const string long_description  = "Finds Goto Statements";
-  string source_directory = "/";
- }
+namespace NoGoto
+{
+const string checker_name      = "NoGoto";
+const string short_description = "GOTO Statement Found";
+const string long_description  = "Finds Goto Statements";
+string source_directory = "/";
+}
 }
 
 CompassAnalyses::NoGoto::
 CheckerOutput::CheckerOutput(SgNode *const node)
-    : OutputViolationBase(node,
-                          ::noGotoChecker->checkerName,
-                          ::noGotoChecker->shortDescription) {}
+: OutputViolationBase(node,
+                      ::noGotoChecker->checkerName,
+                       ::noGotoChecker->shortDescription) {}
 
 static void
 run(Compass::Parameters parameters, Compass::OutputObject* output)
+{
+  // We only care about source code in the user's space, not,
+  // for example, Boost or system files.
+  string target_directory =
+      parameters["general::target_directory"].front();
+  CompassAnalyses::NoGoto::source_directory.assign(target_directory);
+
+  // Use the pre-built ROSE AST
+  SgProject* sageProject = Compass::projectPrerequisite.getProject();
+  SgNode* root_node = (SgNode*) sageProject;
+
+
+
+  // search for SgGotoStatements
+  AstMatching matcher;
+  MatchResult matches = matcher
+      .performMatching("$r = SgGotoStatement", root_node);
+
+  BOOST_FOREACH(SingleMatchVarBindings match, matches)
   {
-      // We only care about source code in the user's space, not,
-      // for example, Boost or system files.
-      string target_directory =
-          parameters["general::target_directory"].front();
-      CompassAnalyses::NoGoto::source_directory.assign(target_directory);
-      
-      // Use the pre-built ROSE AST
-      SgProject* sageProject = Compass::projectPrerequisite.getProject();
-      SgNode* root_node = (SgNode*) sageProject;
-      
-      // search for SgGotoStatements
-      AstMatching matcher;
-      MatchResult matches = matcher
-          .performMatching("$r = SgGotoStatement", root_node);
-
-      BOOST_FOREACH(SingleMatchVarBindings match, matches)
-      {
-        SgGotoStatement *goto_statement = (SgGotoStatement *)match["$r"];
-        output->addOutput(
-            new CompassAnalyses::NoGoto::
-            CheckerOutput(goto_statement));
-      }
-
+    SgGotoStatement *goto_statement = (SgGotoStatement *)match["$r"];
+    output->addOutput(
+        new CompassAnalyses::NoGoto::
+        CheckerOutput(goto_statement));
   }
 
+}
+
 extern const Compass::Checker* const noGotoChecker =
-  new Compass::CheckerUsingAstSimpleProcessing(
-      CompassAnalyses::NoGoto::checker_name,
-    // Descriptions should not include the newline character "\n".
-      CompassAnalyses::NoGoto::short_description,
-      CompassAnalyses::NoGoto::long_description,
-      Compass::C | Compass::Cpp,
-      Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
-      run,
-      NULL);
+    new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::NoGoto::checker_name,
+        // Descriptions should not include the newline character "\n".
+        CompassAnalyses::NoGoto::short_description,
+        CompassAnalyses::NoGoto::long_description,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        NULL);
 

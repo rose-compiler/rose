@@ -13,7 +13,6 @@
 #include <boost/foreach.hpp>
 
 #include "rose.h"
-#include "string_functions.h"
 #include "CodeThorn/src/AstMatching.h"
 #include "CodeThorn/src/AstTerm.h"
 #include "compass2/compass.h"
