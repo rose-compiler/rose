@@ -51,8 +51,8 @@ create table fr_functions as
         from fr_funcnames as named
         join semantic_functions as func on named.name = func.name
 
-	-- uncomment the following lines to consider only those functions that passed at least once
---	join semantic_fio as test on func.id=test.func_id and test.status=0
+        -- uncomment the following lines to consider only those functions that passed at least once
+--      join semantic_fio as test on func.id=test.func_id and test.status=0
 ;
 
 -- Tests that we want to consider
@@ -66,13 +66,13 @@ create index fr_fio_func_id on fr_fio(func_id);
 create table fr_function_pairs as
     select distinct f1.id as func1_id, f2.id as func2_id
         from fr_functions as f1
-	join fr_functions as f2 on f1.id < f2.id and f1.specimen_id <> f2.specimen_id
+        join fr_functions as f2 on f1.id < f2.id and f1.specimen_id <> f2.specimen_id
 
         -- Uncomment the following lines to consider only those pairs of functions where both functions passed for
         -- at least one of the same input groups
-	join fr_fio as test1 on f1.id = test1.func_id
-	join fr_fio as test2 on f2.id = test2.func_id and test1.igroup_id = test2.igroup_id
-	where test1.status = 0 and test2.status = 0
+        join fr_fio as test1 on f1.id = test1.func_id
+        join fr_fio as test2 on f2.id = test2.func_id and test1.igroup_id = test2.igroup_id
+        where test1.status = 0 and test2.status = 0
 
         -- Uncomment the following lines to consider only those pairs of functions where all tests were successful
 --      except
@@ -91,9 +91,9 @@ create table fr_function_pairs as
 create table fr_positive_pairs as
     select pair.*
         from fr_function_pairs as pair
-	join fr_functions as f1 on pair.func1_id = f1.id
-	join fr_functions as f2 on pair.func2_id = f2.id
-	where f1.name = f2.name;
+        join fr_functions as f1 on pair.func1_id = f1.id
+        join fr_functions as f2 on pair.func2_id = f2.id
+        where f1.name = f2.name;
 
 -- Pairs of functions that should not have been detected as being similar.  We're assuming that if the two functions have
 -- different names then they are different functions in the source code, and that no two functions in source code are similar.
@@ -101,9 +101,9 @@ create table fr_positive_pairs as
 create table fr_negative_pairs as
     select pair.*
         from fr_function_pairs as pair
-	join fr_functions as f1 on pair.func1_id = f1.id
-	join fr_functions as f2 on pair.func2_id = f2.id
-	where f1.name <> f2.name;
+        join fr_functions as f1 on pair.func1_id = f1.id
+        join fr_functions as f2 on pair.func2_id = f2.id
+        where f1.name <> f2.name;
 
 -- Pairs of functions that were _detected_ as being similar.
 create table fr_clone_pairs as
@@ -157,7 +157,7 @@ select 'The following table shows the false negative function pairs.
 Both functions of the pair always have the same name.' as "Notice";
 select
         func1.name as name,
-	sim.func1_id, sim.func2_id, sim.similarity, sim.ncompares
+        sim.func1_id, sim.func2_id, sim.similarity, sim.ncompares
     from fr_false_negatives as falseneg
     join fr_functions as func1 on falseneg.func1_id = func1.id
     join fr_functions as func2 on falseneg.func2_id = func2.id
@@ -179,6 +179,19 @@ select
     group by func.id, func.name, func.file_id, fault.name
     order by func.name, func.file_id;
 
-                        
+select 'The following table shows a list of function names that are
+false negatives, and the average number of instructions executed by
+tests on this name.' as "Notice";
+select
+        func.name, func.id, func.file_id,
+	count(*) as npass,
+        sum(fio.instructions_executed)/count(*) as ave_insns_exec
+    from fr_fio as fio
+    join fr_functions as func on fio.func_id = func.id
+    join fr_false_negatives as neg on fio.func_id=neg.func1_id or fio.func_id=neg.func2_id
+    where fio.status = 0
+    group by func.name, func.id, func.file_id
+    order by ave_insns_exec;
+
 
 rollback;
