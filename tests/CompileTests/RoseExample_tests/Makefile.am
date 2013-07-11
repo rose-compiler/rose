@@ -105,6 +105,9 @@ test6: $(srcdir)/testRoseHeaders_06.C
 test7: $(srcdir)/testRoseHeaders_07.C
 	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_07.C
 
+test8: $(srcdir)/testRoseHeaders_08.C
+	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_08.C
+
 buildCompiledFile_3:
 	g++ -E -DUSE_ROSE -D_GLIBCXX__PTHREADS=1 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C > $(srcdir)/testRoseHeaders_03_combined.C
 
