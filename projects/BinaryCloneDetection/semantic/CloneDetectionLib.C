@@ -446,8 +446,6 @@ OutputGroup::operator<(const OutputGroup &other) const
     if (ii.first!=syscalls.end())
         return *(ii.first) < *(ii.second);
 
-    // They must be equal
-    assert(*this==other);
     return false;
 }
 
