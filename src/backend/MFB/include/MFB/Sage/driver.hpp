@@ -70,7 +70,7 @@ class Driver<Sage> {
 
     unsigned long createPairOfFiles(const std::string & name);
 
-    unsigned long createStandaloneSourceFile(const std::string & name);
+    unsigned long createStandaloneSourceFile(const std::string & name, std::string suffix = "cpp");
     unsigned long addStandaloneSourceFile(SgSourceFile * source_file);
 
     template <typename Object>
