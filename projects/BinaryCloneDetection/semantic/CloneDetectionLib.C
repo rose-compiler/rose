@@ -753,16 +753,19 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
         return NULL;
     }
     SgAsmInterpretation *interp = interps.back();
+    SgAsmGenericHeader *spec_header = interp->get_headers()->get_headers().back();
 
     // Get the shared libraries, map them, and apply relocation fixups. We have to do the mapping step even if we're not
     // linking with shared libraries, because that's what gets the various file sections lined up in memory for the
     // disassembler.
+    SgAsmGenericHeader *builtin_header = NULL;
     if (do_link)
         std::cerr <<argv0 <<": loading shared libraries\n";
     if (BinaryLoader *loader = BinaryLoader::lookup(interp)) {
         try {
             loader = loader->clone(); // so our settings are private
             if (do_link) {
+                // Link with the standard libraries
                 loader->add_directory("/lib32");
                 loader->add_directory("/usr/lib32");
                 loader->add_directory("/lib");
@@ -773,6 +776,25 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
                     loader->add_directories(paths);
                 }
                 loader->link(interp);
+            } else {
+                // If we didn't link with the standard C library, then link with our own library.  Our own library is much
+                // smaller and is intended to provide the same semantics as the C library for those few functions that GCC
+                // occassionally inlines because the function is built into GCC.  This allows us to compare non-optimized
+                // code (without these functions having been inlined) with optimized code (where these functions are inlined)
+                // because the unoptimized code will traverse into the definitions we provide.
+                //
+                // Note: Using BinaryLoader to link our builtins.so does not actually resolve the imports in the specimen.
+                // I'm not sure why, but we work around this by calling link_builtins() below. [Robb P. Matzke 2013-07-11]
+                std::string subdir = "/projects/BinaryCloneDetection/semantic";
+                loader->add_directory(ROSE_AUTOMAKE_TOP_BUILDDIR + subdir);
+                loader->add_directory(ROSE_AUTOMAKE_TOP_SRCDIR + subdir);
+                loader->add_directory(ROSE_AUTOMAKE_LIBDIR);
+                std::string builtin_name = loader->find_so_file("builtins.so");
+                SgBinaryComposite *binary = SageInterface::getEnclosingNode<SgBinaryComposite>(interp);
+                assert(binary!=NULL);
+                SgAsmGenericFile *builtin_file = loader->createAsmAST(binary, builtin_name);
+                assert(builtin_file!=NULL);
+                builtin_header = builtin_file->get_headers()->get_headers().back();
             }
             loader->remap(interp);
             BinaryLoader::FixupErrors fixup_errors;
@@ -791,12 +813,13 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
         std::cerr <<argv0 <<": ERROR: no suitable loader/linker found\n";
         return NULL;
     }
+    assert(interp->get_map()!=NULL);
+    MemoryMap map = *interp->get_map();
+    link_builtins(spec_header, builtin_header, &map);
 
     // Figure out what to disassemble.  If we did dynamic linking then we can mark the .got and .got.plt sections as read-only
     // because we've already filled them in with the addresses of the dynamically linked entities.  This will allow the
     // disassembler to know the successors for the indirect JMP instruction in the .plt section (the dynamic function thunks).
-    assert(interp->get_map()!=NULL);
-    MemoryMap map = *interp->get_map();
     if (do_link) {
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
         for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
@@ -831,6 +854,72 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
         return NULL;
     }
     return interp;
+}
+
+void
+link_builtins(SgAsmGenericHeader *imports_header, SgAsmGenericHeader *exports_header, MemoryMap *map)
+{
+    // Find the addresses for the exported functions
+    struct Exports: AstSimpleProcessing {
+        std::map<std::string, rose_addr_t> address;
+        Exports(SgAsmGenericHeader *hdr) {
+            if (hdr)
+                traverse(hdr, preorder);
+        }
+        void visit(SgNode *node) {
+            if (SgAsmElfSymbol *sym = isSgAsmElfSymbol(node)) {
+                if (sym->get_def_state()==SgAsmGenericSymbol::SYM_DEFINED &&
+                    sym->get_binding()==SgAsmGenericSymbol::SYM_GLOBAL &&
+                    sym->get_type()==SgAsmGenericSymbol::SYM_FUNC &&
+                    sym->get_bound()!=NULL &&
+                    sym->get_bound()->get_name()->get_string().compare(".text")==0) {
+                    std::string name = sym->get_name()->get_string();
+                    rose_addr_t va = sym->get_bound()->get_mapped_actual_va() + sym->get_value();
+                    address[name] = va;
+                }
+            }
+        }
+        rose_addr_t get_address(const std::string &name) const {
+            std::map<std::string, rose_addr_t>::const_iterator found = address.find(name);
+            return found==address.end() ? 0 : found->second;
+        }
+    } exports(exports_header);
+
+    // Link the exports into the importer.  For ELF, this means processing R_386_JMP_SLOT relocations.
+    struct Fixup: AstSimpleProcessing {
+        SgAsmElfSymbolPtrList imports;
+        const Exports &exports;
+        MemoryMap *map;
+        Fixup(SgAsmGenericHeader *imports_header, const Exports &exports, MemoryMap *map)
+            : exports(exports), map(map) {
+            if (SgAsmElfSymbolSection *symsec = isSgAsmElfSymbolSection(imports_header->get_section_by_name(".dynsym"))) {
+                imports = symsec->get_symbols()->get_symbols();
+                traverse(imports_header, preorder);
+            }
+        }
+        void visit(SgNode *node) {
+            if (SgAsmElfRelocEntry *reloc = isSgAsmElfRelocEntry(node)) {
+                if (reloc->get_type()==SgAsmElfRelocEntry::R_386_JMP_SLOT && reloc->get_sym()<imports.size()) {
+                    SgAsmElfSymbol *import_symbol = imports[reloc->get_sym()];
+                    std::string name = import_symbol->get_name()->get_string();
+                    rose_addr_t import_addr = reloc->get_r_offset();
+                    if (rose_addr_t export_addr = exports.get_address(name)) {
+                        uint32_t export_addr_le;
+                        ByteOrder::host_to_le(export_addr, &export_addr_le);
+                        map->write(&export_addr_le, import_addr, 4);
+#if 1 /*DEBUGGING [Robb P. Matzke 2013-07-10]*/
+                        std::cerr <<"ROBB: fixup"
+                                  <<" offset=" <<StringUtility::addrToString(reloc->get_r_offset())
+                                  <<" addend=" <<StringUtility::addrToString(reloc->get_r_addend())
+                                  <<" sym=" <<reloc->get_sym() <<" " <<name
+                                  <<" addr=" <<StringUtility::addrToString(exports.get_address(name))
+                                  <<"\n";
+#endif
+                    }
+                }
+            }
+        }
+    } fixer_upper(imports_header, exports, map);
 }
 
 int64_t
