@@ -274,6 +274,9 @@ main(int argc, char *argv[])
     // Parse the binary specimen
     int specimen_id = files.insert(specimen_name);
     SgAsmInterpretation *interp = open_specimen(specimen_name, argv0, opt.link);
+#if 1 /*DEBUGGING [Robb P. Matzke 2013-07-10]*/
+    backend(SageInterface::getProject());
+#endif
     SgBinaryComposite *binfile = SageInterface::getEnclosingNode<SgBinaryComposite>(interp);
     assert(interp!=NULL && binfile!=NULL);
 
@@ -368,13 +371,15 @@ main(int argc, char *argv[])
             : tx(tx), files(files), cmd_id(cmd_id), specimen_id(specimen_id) {}
         void visit(SgNode *node) {
             if (SgAsmGenericFile *file = isSgAsmGenericFile(node)) {
-                int file_id = files.id(file->get_name());
-                files.add_content(tx, cmd_id, file_id);
-                if (file_id!=specimen_id) {
-                    tx->statement("insert into semantic_specfiles (specimen_id, file_id) values (?, ?)")
-                        ->bind(0, specimen_id)
-                        ->bind(1, file_id)
-                        ->execute();
+                if (files.exists(file->get_name())) {
+                    int file_id = files.id(file->get_name());
+                    files.add_content(tx, cmd_id, file_id);
+                    if (file_id!=specimen_id) {
+                        tx->statement("insert into semantic_specfiles (specimen_id, file_id) values (?, ?)")
+                            ->bind(0, specimen_id)
+                            ->bind(1, file_id)
+                            ->execute();
+                    }
                 }
             }
         }
