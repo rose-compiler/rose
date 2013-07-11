@@ -255,12 +255,16 @@ public:
     /** Add (or update) file content to the database. Returns the SHA1 digest for the file. */
     std::string add_content(const SqlDatabase::TransactionPtr&, int64_t cmd_id, int file_id);
 
+    /** Print the files table. */
+    void print(std::ostream&) const;
+
     void clear() {
         rows.clear();
         name_idx.clear();
         next_id = 0;
     }
 
+    bool exists(const std::string &name) const;
     int insert(const std::string &name);
     int id(const std::string &name) const;
     std::string name(int id) const;

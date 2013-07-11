@@ -213,6 +213,12 @@ FilesTable::save(const SqlDatabase::TransactionPtr &tx)
 #endif
 }
 
+bool
+FilesTable::exists(const std::string &name) const
+{
+    return name_idx.find(name)!=name_idx.end();
+}
+
 int
 FilesTable::insert(const std::string &name)
 {
@@ -283,6 +289,13 @@ FilesTable::name(int id) const
     Rows::const_iterator found = rows.find(id);
     assert(found!=rows.end());
     return found->second.name;
+}
+
+void
+FilesTable::print(std::ostream &o) const
+{
+    for (NameIdx::const_iterator ni=name_idx.begin(); ni!=name_idx.end(); ++ni)
+        o <<std::setw(4) <<ni->second <<" " <<ni->first <<"\n";
 }
 
 /*******************************************************************************************************************************
