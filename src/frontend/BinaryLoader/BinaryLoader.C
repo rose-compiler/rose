@@ -134,6 +134,8 @@ std::string
 BinaryLoader::find_so_file(const std::string &libname) const
 {
     if (debug) fprintf(debug, "BinaryLoader: find library=%s...\n", libname.c_str());
+    if (!libname.empty() && '/'==libname[0])
+        return libname;
     for (std::vector<std::string>::const_iterator di=directories.begin(); di!=directories.end(); ++di) {
         if (debug) fprintf(debug, "BinaryLoader:   looking in %s...\n", di->c_str());
         std::string libpath = *di + "/" + libname;
