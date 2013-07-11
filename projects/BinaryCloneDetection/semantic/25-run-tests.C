@@ -66,9 +66,10 @@ usage(int exit_status)
               <<"            integer bit vector.  The following event names are recognized:\n"
               <<"                reached: events indicating that a basic block has been reached\n"
               <<"                branched: events indicating that a branch has been taken, as opposed to falling through.\n"
+              <<"                returned: events indicating that the inner-most function was forced to return early.\n"
               <<"                fault: events indicating that the test terminated abnormally.\n"
               <<"                consumed: events indicating that input was consumed.\n"
-              <<"                cfg: short-hand for both \"reached\" and \"branched\" together.\n"
+              <<"                cfg: short-hand for \"reached,branched,returned\".\n"
               <<"                all: all event types.\n"
               <<"    --verbose\n"
               <<"    --verbosity=(silent|laconic|effusive)\n"
@@ -549,6 +550,8 @@ main(int argc, char *argv[])
                     events = Tracer::EV_REACHED;
                 } else if (0==words[i].compare("branched")) {
                     events = Tracer::EV_BRANCHED;
+                } else if (0==words[i].compare("returned")) {
+                    events = Tracer::EV_RETURNED;
                 } else if (0==words[i].compare("fault") || 0==words[i].compare("faults")) {
                     events = Tracer::EV_FAULT;
                 } else if (0==words[i].compare("consume") || 0==words[i].compare("consumed")) {

@@ -112,10 +112,11 @@ struct Event {
     typedef std::map<rose_addr_t/*target*/, size_t/*count*/> Branches;
     typedef std::vector<std::pair<OutputEventKey, OutputEventValue> > Outputs;
 
-    Event(): nexecuted(0), ninputs(0), nfaults(0), nbranches(0) {}
+    Event(): nexecuted(0), nreturns(0), ninputs(0), nfaults(0), nbranches(0) {}
 
     int func_id;                // function for event address (not the analyzed function that emitted the event)
     size_t nexecuted;           // number of times this basic block was executed
+    size_t nreturns;            // number of times the inner-most function was forced to return early
     size_t ninputs;             // number of inputs consumed here
     InputQueues inputs;         // input value distribution per queue
     size_t nfaults;             // 0 or 1 unless we've accumulated multiple tests
@@ -325,6 +326,10 @@ load_events(const SqlDatabase::TransactionPtr &tx, int func_id, Events &events/*
                 ++events[addr].branches[val];
                 break;
             }
+            case CloneDetection::Tracer::EV_RETURNED: {
+                ++events[addr].nreturns;
+                break;
+            }
             case CloneDetection::Tracer::EV_CONSUME_INPUT: {
                 ++events[addr].ninputs;
                 assert(minor>=0);
@@ -372,6 +377,12 @@ gather_instructions(const SqlDatabase::TransactionPtr tx, int func_id, const Eve
 static void
 show_events(const Event &e)
 {
+    // Subsequent lines for early returns
+    if (e.nreturns>0) {
+        std::cout <<std::setw(11) <<std::right <<"RET " <<"|   forced early return "
+                  <<e.nreturns <<" time" <<(1==e.nreturns?"":"s") <<"\n";
+    }
+    
     // Subsequent lines for inputs consumed
     if (e.ninputs>0) {
         std::cout <<std::setw(9) <<std::right <<e.ninputs <<"< |   ";

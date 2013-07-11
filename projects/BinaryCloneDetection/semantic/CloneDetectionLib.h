@@ -87,15 +87,22 @@ public:
 
 class Tracer {
 public:
+    /** Types of events that are emitted to the database during tracing. */
     enum Event {
+        // note: don't change the numbering, because these numbers appear in databases.
+        // note: update the analysis to emit the event
+        // note: update the --trace switch in 25-run-tests
+        // note: update 00-create-schema to insert the new event into the semantic_fio_events table
+        // note: update 90-list-function so the event is shown in the listing
         EV_NONE                 = 0x00000000,   /**< No event. */
         EV_REACHED              = 0x00000001,   /**< Basic block executed. */
         EV_BRANCHED             = 0x00000002,   /**< Branch taken. */
         EV_FAULT                = 0x00000004,   /**< Test failed; minor number is the fault ID */
         EV_CONSUME_INPUT        = 0x00000008,   /**< Consumed an input. Minor number is the queue. */
-        EV_MEM_WRITE            = 0x00000010,   /**< Data written to non-stack memory. Value is address written */
+        EV_MEM_WRITE            = 0x00000010,   /**< Data written to non-stack memory. Value is address written. */
+        EV_RETURNED             = 0x00000020,   /**< Forced immediate return of inner-most function. */
         // Masks
-        CONTROL_FLOW            = 0x00000003,   /**< Control flow events. */
+        CONTROL_FLOW            = 0x00000023,   /**< Control flow events. */
         ALL_EVENTS              = 0xffffffff    /**< All possible events. */
     };
 
@@ -1127,6 +1134,7 @@ public:
             }
         }
         state.registers.ip = ValueType<32>(ret_va);
+        tracer.emit(insn->get_address(), Tracer::EV_RETURNED);
         return ret_va;
     }
 
