@@ -282,6 +282,9 @@ void TypeAnalysis::printArrayTypeSet()
   std::cout << "arrayTypeSet: " << VariableIdSetPrettyPrint::str(arrayTypeSet, vidm) << "\n";
 }
 
+/*************************************************
+ ******** FlowInsensitivePointerAnalysis  ********
+ *************************************************/
 class FlowInsensitivePointerAnalysis
 {
   SgNode* root;
@@ -327,20 +330,86 @@ void FlowInsensitivePointerAnalysis::printAnalysisSets()
   typeAnalysis.printArrayTypeSet();
 }
 
-// MemLocs getDefMemLocs(SgNode* node, const FlowInsensitivePointerAnalysis& fipa)
-// {
-//   std::set<VariableId> vset;
-//   ProcessQuery procQuery;
-//   MatchResult matches = procQuery("SgAssignOp", node);
-//   if(matches.size() > 0)
-//   {
-    
-//   }
-// }
+/*************************************************
+ ******************** MemObj *********************
+ *************************************************/
+class MemObj
+{
+  std::set<VariableId> set;
+  bool pointerAccessed;
+public:
+  MemObj() : pointerAccessed(false) { }
+  bool isAccessedByPointer();
+  void insert(VariableId _vid);
+  void setVariableIdSet(std::set<VariableId> that);
+};
 
-// MemLocs getUsedMemLocs(SgNode* node, const FlowInsensitivePointerAnalysis& fipa)
-// {
-// }
+bool MemObj::isAccessedByPointer() 
+{ 
+  return pointerAccessed; 
+}
+
+void MemObj::insert(VariableId _vid)
+{
+  set.insert(_vid);
+}
+
+void MemObj::setVariableIdSet(std::set<VariableId> that)
+{
+  set = that;
+}
+
+MemObj getDefMemObj(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa)
+{
+  MemObj rMemObj;
+  // handle only expressions for now
+  try 
+  {
+    if(!isSgExpression(sgn))
+      throw;
+  }
+  catch(...)
+  {
+    std::cerr <<  "error: argument is not an expression\n";
+  }
+
+  ProcessQuery pq;
+  // how should we handle function call expression here ?
+  MatchResult matches = pq("$OP=SgAssignOp|$F=SgFunctionCallExp", sgn);
+
+  // return empty object if no writes happening
+  if(matches.size() == 0)
+    return rMemObj;
+
+  for(MatchResult::iterator it = matches.begin(); it != matches.end(); ++it)
+  {
+    // get lhs_operand
+    // apply visitor pattern on lhs to identify memory location assigned
+
+    // what do we do if the expression involves function call ?
+    // as we do not know anything about the function it can modify any memory location
+    // for now throw exception
+    // exception handling may not be the ideal case here
+    try
+    {
+      SgNode* fn_call = (*it)["$F"];
+      if(fn_call != 0)
+        throw;
+    }
+    catch(...)
+    {
+      std::cerr << "error: not handling function call inside an expression\n";
+    }
+  }
+
+  return rMemObj;  
+}
+
+MemObj getUseMemObj(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa)
+{
+  MemObj rMemObj;
+  return rMemObj;
+}
 
 
 /*************************************************
