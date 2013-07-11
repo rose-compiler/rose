@@ -8,88 +8,6 @@
 
 using namespace CodeThorn;
 
-class ExprTypeCycleDetect
-{
-  // pointer based '<' comparison
-  // will do to detect if there is any cycle
-  // we only go to type from SgExpression
-  // NOTE: identify top of class hierarchy that defines get_type() interface
-  // 
-  std::set<SgNode*> visited;
-
-public:
-  ExprTypeCycleDetect() { }
-  bool isVisited(SgNode* node)
-  {
-    if(visited.find(node) == visited.end())
-      return false;
-    return true;
-  }
-
-  void printVisitedSet()
-  {
-    std::set<SgNode*>::iterator it;
-    std::cout << "<VisitedSet:\n";
-    for(it = visited.begin(); it != visited.end(); it++)
-    {
-      std::cout << "<" << (*it)->unparseToString() << ", " << astTermToMultiLineString(*it) << "\n";
-    }
-    std::cout << ">\n";
-  }
-
-  bool operator()(SgNode* root)
-  {
-    // ignore the root
-    RoseAst ast(root);
-    for(RoseAst::iterator it = ast.begin(); it != ast.end(); it++)
-    {
-      if(isVisited(*it))
-      {
-        std::cout << "CYCLE!CYCLE!CYCLE!CYCLE!\n";
-        return false;
-      }
-
-      visited.insert(*it);
-
-      if(isSgExpression(*it))
-      {
-        // if already visited a expression -- cycle
-        // std::cout << "Visit <" << *it << ", " << (*it)->unparseToString() << ">\n";
-
-        SgType* type = isSgExpression(*it)->get_type();      
-        RoseAst type_ast(type);
-
-        for(RoseAst::iterator tIt = type_ast.begin(); tIt != type_ast.end(); tIt++)
-        {
-          // if its SgTypeDefType
-          // skip the children
-          if(isSgTypedefType(*tIt) || isSgEnumType(*tIt) || isSgClassType(*tIt))
-            tIt.skipChildrenOnForward();
-
-          // if already visited the children of a type
-          if(isVisited(*tIt)) 
-          {
-            std::cout << "SUBTYPE: CYCLE!CYCLE!CYCLE!CYCLE!\n";            
-            // write_file(type->class_name()+"_type_ast.dot", astTermToDot(type_ast.begin().withNullValues(), type_ast.end()));
-            // write_file((*tIt)->class_name()+"_under_type_ast.dot", astTermWithNullValuesToDot(*tIt));
-            // write_file((*it)->class_name() + "_ast.dot", astTermWithNullValuesToDot(*it));
-            std::cout << "<Type AST: " << astTermToMultiLineString(type) << ">\n";
-            std::cout << "<" << (*it)->unparseToString() << ", " << astTermToMultiLineString(*it) << ">\n";
-            std::cout << "<" << (*tIt)->unparseToString() << ", " << astTermToMultiLineString(*tIt) << "\n";
-            // printVisitedSet();
-            return false;
-          }
-          // if not a typedefseq or SgType insert it to visited
-          // if(!isSgTypedefSeq(*tIt) && !isSgType(*tIt))
-          //   visited.insert(*tIt);
-        }
-      }
-    }
-    return true;
-  }
-};
-
-
 // AST Query Processor
 // common functor to process any query and build match result
 // NOTE: extend it to accept a functor to apply on each element of match result
@@ -146,21 +64,10 @@ MatchResult ProcessQuery::operator()(std::string query, SgNode* root)
 
 // wrapper for set<VariableId> with pretty printing
 // 
-class VariableIdSet
+class VariableIdSetPrettyPrint
 {
-  // required to get the variable name for the VariableId
-  VariableIdMapping& vidm;
-  std::set<VariableId> vset;
 public:
-  VariableIdSet(VariableIdMapping& _vidm) : vidm(_vidm) { }
-  VariableIdSet(VariableIdMapping& _vidm, std::set<VariableId> _vset) : vidm(_vidm), vset(_vset) { }
-
-  void insert(VariableId _vid)
-  {
-    vset.insert(_vid);
-  }
-
-  std::string str() const
+  std::string static str(std::set<VariableId>& vset, VariableIdMapping& vidm)
   {
     std::ostringstream ostr;
     ostr << "[";
@@ -182,12 +89,10 @@ public:
  *************************************************/
 class AddressTakenAnalysis
 {
-  // head of the AST on which the analysis should be performed
-  SgNode* root;
-  // required to compute VariableId
   VariableIdMapping& vidm;
   // result to be computed by this analysis
-  VariableIdSet addressTakenSet;
+  std::set<VariableId> addressTakenSet;
+  bool initialized;
 
   // address can be taken for any expression that is lvalue
   // The purpose of this class is to traverse arbitrary
@@ -211,10 +116,24 @@ class AddressTakenAnalysis
     void visit(SgNode* sgn);
   };
 public:
-  AddressTakenAnalysis(SgNode* _root, VariableIdMapping& _vidm) : root(_root), vidm(_vidm), addressTakenSet(_vidm) { }
-  void computeAddressTakenSet();
+  AddressTakenAnalysis(VariableIdMapping& _vidm) : vidm(_vidm), initialized(true) {}
+  void throwIfUnInitException();
+  void computeAddressTakenSet(SgNode* root);
   void printAddressTakenSet();
 };
+
+void AddressTakenAnalysis::throwIfUnInitException()
+{
+  try
+  {
+    if(!vidm.isUniqueVariableSymbolMapping())
+      throw;
+  }
+  catch(...)
+  {
+    std::cerr << "Analysis Not initialized: Variable symbol mapping not computed\n";
+  }
+}
 
 void AddressTakenAnalysis::OperandToVariableId::visit(SgVarRefExp *sgn)
 {  
@@ -265,8 +184,9 @@ void AddressTakenAnalysis::OperandToVariableId::visit(SgNode* sgn)
   ROSE_ASSERT(0);
 }
 
-void AddressTakenAnalysis::computeAddressTakenSet()
+void AddressTakenAnalysis::computeAddressTakenSet(SgNode* root)
 {
+  throwIfUnInitException();
   // query to match all SgAddressOfOp subtrees
   // process query
   ProcessQuery procQuery;
@@ -282,8 +202,9 @@ void AddressTakenAnalysis::computeAddressTakenSet()
 
 // pretty print
 void AddressTakenAnalysis::printAddressTakenSet()
-{  
-  std::cout << "addressTakenSet: " << addressTakenSet.str() << "\n";
+{
+  throwIfUnInitException();
+  std::cout << "addressTakenSet: " << VariableIdSetPrettyPrint::str(addressTakenSet, vidm) << "\n";
 }
 
 /*************************************************
@@ -292,19 +213,36 @@ void AddressTakenAnalysis::printAddressTakenSet()
 class TypeAnalysis
 {
   VariableIdMapping& vidm;
-  VariableIdSet pointerTypeSet;
-  VariableIdSet arrayTypeSet;
+  std::set<VariableId> pointerTypeSet;
+  std::set<VariableId> arrayTypeSet;
+  bool initialized;
 
 public:
-  TypeAnalysis(VariableIdMapping& _vidm) : vidm(_vidm), pointerTypeSet(_vidm), arrayTypeSet(_vidm) { }
+  TypeAnalysis(VariableIdMapping& _vidm) : vidm(_vidm) { }
+  void initialize(VariableIdMapping& vidm);
   void collectTypes();
   void printPointerTypeSet();
   void printArrayTypeSet();
+  void throwIfUnInitException();
 };
+
+void TypeAnalysis::throwIfUnInitException()
+{
+  try
+  {
+    if(!vidm.isUniqueVariableSymbolMapping())
+      throw;
+  }
+  catch(...)
+  {
+    std::cerr << "Analysis Not initialized: Variable symbol mapping not computed\n";
+  }
+}
 
 
 void TypeAnalysis::collectTypes()
 {
+  throwIfUnInitException();
   std::set<VariableId> set = vidm.getVariableIdSet();
   for(std::set<VariableId>::iterator it = set.begin(); it != set.end(); ++it)
   {
@@ -337,13 +275,76 @@ void TypeAnalysis::collectTypes()
 
 void TypeAnalysis::printPointerTypeSet()
 {
-  std::cout << "pointerTypeSet: " << pointerTypeSet.str() << "\n";
+  throwIfUnInitException();
+  std::cout << "pointerTypeSet: " << VariableIdSetPrettyPrint::str(pointerTypeSet, vidm) << "\n";
 }
 
 void TypeAnalysis::printArrayTypeSet()
 {
-  std::cout << "arrayTypeSet: " << arrayTypeSet.str() << "\n";
+  throwIfUnInitException();
+  std::cout << "arrayTypeSet: " << VariableIdSetPrettyPrint::str(arrayTypeSet, vidm) << "\n";
 }
+
+class FlowInsensitivePointerAnalysis
+{
+  SgNode* root;
+  VariableIdMapping vidm;
+  AddressTakenAnalysis addrTakenAnalysis;
+  TypeAnalysis typeAnalysis;
+  bool initialized;
+
+public:
+  FlowInsensitivePointerAnalysis(SgProject* project) : root(project), addrTakenAnalysis(vidm), typeAnalysis(vidm)
+  { 
+    initialize();
+  }
+
+  FlowInsensitivePointerAnalysis(SgProject* project, VariableIdMapping& _vidm) : root(project), 
+                                                                                 vidm(_vidm),
+                                                                                 addrTakenAnalysis(vidm),
+                                                                                 typeAnalysis(vidm)
+  { 
+    initialized = true; 
+  }
+  void initialize();
+  void runAnalysis();
+  void printAnalysisSets();
+};
+
+void FlowInsensitivePointerAnalysis::initialize()
+{
+  ROSE_ASSERT(isSgProject(root) != NULL);
+  vidm.computeVariableSymbolMapping(isSgProject(root));
+}
+
+void FlowInsensitivePointerAnalysis::runAnalysis()
+{
+  addrTakenAnalysis.computeAddressTakenSet(root);
+  typeAnalysis.collectTypes();
+}
+
+void FlowInsensitivePointerAnalysis::printAnalysisSets()
+{
+  addrTakenAnalysis.printAddressTakenSet();
+  typeAnalysis.printPointerTypeSet();
+  typeAnalysis.printArrayTypeSet();
+}
+
+// MemLocs getDefMemLocs(SgNode* node, const FlowInsensitivePointerAnalysis& fipa)
+// {
+//   std::set<VariableId> vset;
+//   ProcessQuery procQuery;
+//   MatchResult matches = procQuery("SgAssignOp", node);
+//   if(matches.size() > 0)
+//   {
+    
+//   }
+// }
+
+// MemLocs getUsedMemLocs(SgNode* node, const FlowInsensitivePointerAnalysis& fipa)
+// {
+// }
+
 
 /*************************************************
  ******************* main ************************
@@ -357,21 +358,9 @@ int main(int argc, char* argv[])
   RoseAst ast(root);
 
   // compute variableId mappings
-  VariableIdMapping vidm;
-  vidm.computeVariableSymbolMapping(project);
-
-  AddressTakenAnalysis addrTakenAnalysis(root, vidm);
-  addrTakenAnalysis.computeAddressTakenSet();
-  addrTakenAnalysis.printAddressTakenSet();
-
-  TypeAnalysis typeAnalysis(vidm);
-  typeAnalysis.collectTypes();
-  typeAnalysis.printPointerTypeSet();
-  typeAnalysis.printArrayTypeSet();
-
-  // ExprTypeCycleDetect etcd;
-  // if(!etcd(root))
-  //   return -1;
+  FlowInsensitivePointerAnalysis fipa(project);
+  fipa.runAnalysis();
+  //fipa.printAnalysisSets();
 
   return 0;
 }
