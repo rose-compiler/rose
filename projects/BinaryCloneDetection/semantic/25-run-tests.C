@@ -668,6 +668,7 @@ main(int argc, char *argv[])
 #else
                 AST_FILE_IO::clearAllMemoryPools();
 #endif
+                prev_interp = NULL;
             }
 
             progress.message("loading AST");
