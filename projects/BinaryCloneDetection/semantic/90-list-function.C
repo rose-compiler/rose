@@ -485,6 +485,7 @@ static void
 list_assembly(const SqlDatabase::TransactionPtr &tx, int func_id)
 {
     Events events;
+    gather_events(tx, func_id);
     load_events(tx, func_id, events);
 
     SqlDatabase::StatementPtr stmt = tx->statement("select address, assembly from semantic_instructions where func_id = ?"
