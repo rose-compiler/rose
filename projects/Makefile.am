@@ -14,6 +14,7 @@ SUBDIRS = \
 	C_to_Promela \
 	CertSecureCodeProject \
 	CloneDetection \
+	CodeThorn \
 	DataFaultTolerance \
 	DatalogAnalysis \
 	DocumentationGenerator \

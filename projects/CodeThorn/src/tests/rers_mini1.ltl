@@ -1,0 +1,132 @@
+SYNTAX: every line not starting with '(' is a comment
+NOTE:   tests for rers_mini.C 
+        All of these should be true!
+
+1
+(!(F oW))
+output W will never occur
+----------------------------------------
+
+2
+(F oX)
+output X will occur
+----------------------------------------
+
+3
+(F oY)
+output Y will occur
+----------------------------------------
+
+4
+(!(G ! oY))
+Y is not the only output
+----------------------------------------
+
+5
+(G ! (oX & oY))
+U and W happen not at the same time
+----------------------------------------
+
+6
+(G (oY | oX))
+it's always either X or Y
+----------------------------------------
+
+7
+( ( (oX WU (oY & ! oX))))
+output Y does not occur before output X
+----------------------------------------
+
+8
+(oY WU (oX & ! oY))
+output X occurs before output Y
+
+9
+(F (oY WU (oX & ! oY)))
+weaker version of the above.
+----------------------------------------
+
+10
+(! oY WU oX)
+output Y does never occur before output X
+----------------------------------------
+
+11, 12, 13, 14
+(    F (oY WU oX))
+must be true at the very end
+(   (F (oY U oX)))
+must be true at oX.
+(    F (oY WU oZ))
+trivially true
+(  !(F (oY U oZ)))
+difference between U and WU.
+
+15
+(F (oX U oY))
+at some point Y follows X
+----------------------------------------
+
+16
+(!(F (oY R oX)))
+X does never follow after Y
+----------------------------------------
+
+17
+(!(G ! iX))
+input X is never handled. Although it is never tested for, it is still part of the catch-all case.
+----------------------------------------
+
+18
+(F iA)
+input A will be handled
+----------------------------------------
+
+19
+(G ! (oX & oW))
+X and W happen not at the same time
+----------------------------------------
+
+20 base case for the following
+(oX U oY)
+
+21
+Checking for equivalence: A == B === A&B | (!A & !B)
+(G ((! (X oY) & X (! oY)) | (!(! (X oY)) & !(X (! oY)))))
+equivalence !X A == X !A, for A=oY
+
+22
+(G ((! (F oY) & G (! oY)) | (!(! (F oY)) & !(G (! oY)))))
+equivalence !F A == G !A, for A=oY
+
+23
+(G ((! (G oY) & F (! oY)) | (!(! (G oY)) & !(F (! oY)))))
+equivalence !G A == F !A, for A=oY
+
+24
+(G (((! (oY U oX)) & (!oY R !oX)) | ((!!(oY U oX)) & !(!oY R !oX))))
+equivalence ! A U B == !A R !B
+
+25
+(G (((! (oY R oX)) & (!oY U !oX)) | ((!!(oY R oX)) & !(!oY U !oX))))
+equivalence ! A R B == !A U !B
+
+26
+(G (((oY R oX) & (!(!oY U !oX))) | ((!(oY R oX)) & !!(!oY U !oX))))
+equivalence A R B == !(!A U !B)
+
+27
+(G !oW)
+output W will never occur
+
+28
+((G ! oX) | (F (oX & (F oY))))
+output Y occurs after output X
+
+29
+(!((G ! oY) | (F (oY & (F oX)))))
+NOT: output X occurs after output Y
+
+30
+(G (! iA | (F oY)))
+output Y responds to input A
+----------------------------------------

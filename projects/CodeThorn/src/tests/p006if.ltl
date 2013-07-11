@@ -1,0 +1,37 @@
+----------------------------------------
+(G ! oA)
+output A does never occur
+----------------------------------------
+(G ! oB)
+output B does never occur
+----------------------------------------
+(G ! oC)
+output D does never occur
+----------------------------------------
+(G ! oD)
+output D does never occur
+----------------------------------------
+(!(G ! oE))
+output E does not never occur
+----------------------------------------
+(!(G ! oF))
+output F does not never occur
+----------------------------------------
+(!(G ! oG))
+output G does not never occur
+----------------------------------------
+(G ! oH)
+output H does never occur
+----------------------------------------
+(!(!((G ! oH))))
+output G does not not responds to input G (just checking for double not)
+----------------------------------------
+(G (! iC | (F oF)))
+output F responds to input C
+----------------------------------------
+(G (! iG | (F oG)))
+output G responds to input G
+----------------------------------------
+(!(!(G (! iG | (F oG)))))
+output G does not not respond to input G
+----------------------------------------
