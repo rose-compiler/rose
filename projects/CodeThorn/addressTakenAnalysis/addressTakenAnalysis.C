@@ -203,7 +203,6 @@ void AddressTakenAnalysis::computeAddressTakenSet(SgNode* root)
 // pretty print
 void AddressTakenAnalysis::printAddressTakenSet()
 {
-  throwIfUnInitException();
   std::cout << "addressTakenSet: " << VariableIdSetPrettyPrint::str(addressTakenSet, vidm) << "\n";
 }
 
@@ -275,13 +274,11 @@ void TypeAnalysis::collectTypes()
 
 void TypeAnalysis::printPointerTypeSet()
 {
-  throwIfUnInitException();
   std::cout << "pointerTypeSet: " << VariableIdSetPrettyPrint::str(pointerTypeSet, vidm) << "\n";
 }
 
 void TypeAnalysis::printArrayTypeSet()
 {
-  throwIfUnInitException();
   std::cout << "arrayTypeSet: " << VariableIdSetPrettyPrint::str(arrayTypeSet, vidm) << "\n";
 }
 
