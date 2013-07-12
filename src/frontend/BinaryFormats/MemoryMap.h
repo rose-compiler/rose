@@ -598,6 +598,20 @@ public:
      *  the return value indicates that number of bytes that were read (i.e., the return value is not zero-filled). */
     SgUnsignedCharList read(rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_READ) const;
 
+    /** Reads a NUL-terminated string from the memory map.  Reads data beginning at @p start_va in the memory map and
+     *  continuing until one of the following conditions:
+     *    <ul>
+     *      <li>The return value contains the @p desired number of characters.</li>
+     *      <li>The next character to be read is a NUL character.</li>
+     *      <li>A @p valid_char function is specified but the next character causes it to return zero.</li>
+     *      <li>An @p invalid_char function is specified and the next character causes it to return non-zero.</li>
+     *    </ul>
+     *
+     *  The @p valid_char and @p invalid_char take an integer argument and return an integer value so that the C character
+     *  classification functions from <ctype.h> can be used directly. */
+    std::string read_string(rose_addr_t start_va, size_t desired, int(*valid_char)(int)=NULL, int(*invalid_char)(int)=NULL,
+                            unsigned req_perms=MM_PROT_READ) const;
+
     /** Copies data from a supplied buffer into the specified virtual addresses.  If part of the destination address space is
      *  not mapped, then all bytes up to that location are copied and no additional bytes are copied.  The write is also
      *  aborted early if a segment lacks the MM_PROT_WRITE bit (or specified bits) or its buffer is marked as read-only.  The

@@ -758,6 +758,26 @@ MemoryMap::read(rose_addr_t va, size_t desired, unsigned req_perms) const
     return retval;
 }
 
+std::string
+MemoryMap::read_string(rose_addr_t va, size_t desired, int(*valid_char)(int), int(*invalid_char)(int), unsigned req_perms) const
+{
+    std::string retval;
+    while (desired>0) {
+        unsigned char buf[4096];
+        size_t nread = read1(buf, va, desired, req_perms);
+        if (0==nread)
+            return retval;
+        for (size_t i=0; i<nread; ++i) {
+            if (buf[i]=='\0' || (NULL!=valid_char && !valid_char(buf[i])) || (NULL!=invalid_char && invalid_char(buf[i])))
+                return retval;
+            retval += buf[i];
+        }
+        va += nread;
+        desired -= nread;
+    }
+    return retval;
+}
+
 size_t
 MemoryMap::write1(const void *src_buf/*=NULL*/, rose_addr_t start_va, size_t desired, unsigned req_perms)
 {
