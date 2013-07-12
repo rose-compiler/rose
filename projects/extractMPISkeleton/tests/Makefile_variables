@@ -30,14 +30,8 @@ EXTRA_DIST = \
 	ring/files \
 	ring/ring.c \
 	ring/rose_ring.c.expected \
-	sample1/files \
-	sample1/sample1.cc \
-	sample2/files \
-	sample2/sample2.cc \
 	sample3/files \
 	sample3/sample3.c \
-	sample4/files \
-	sample4/sample4.cc \
 	sample5/files \
 	sample5/sample5.c \
 	sample7/files \
@@ -151,6 +145,13 @@ EXTRA_DIST = \
 	ifdef/rose_ifdef.c.expected \
   ifdef/ifdef.c
 
+#	sample1/files \
+#	sample1/sample1.cc \
+#	sample2/files \
+#	sample2/sample2.cc \
+#	sample4/files \
+#	sample4/sample4.cc \
+#
 DIRS=$(foreach file, ${EXTRA_DIST}, $(dir ${file}))
 
 # These, we expect to fail, in anti-tests/ for now:
@@ -170,8 +171,8 @@ ALL_OBJS=$(addsuffix .o, $(basename ${ALL_OUTS}))
 SKFLAGS=-I$(asrcdir)/../mpi-fakeheader -skel:spec $(asrcdir)/../apis.coll
 
 %/testmark: %/files
-	(cd $* && ../../generateSignatures -I$(asrcdir)/../mpi-fakeheader -signature:o $*.sig `cat files`)
-	(cd $* && ../../summarizeSignatures -I$(asrcdir)/../mpi-fakeheader -summarize:spec $(asrcdir)/../apis.coll -summarize:o $*.sig.tc -- *.sig)
+	(cd $* && ../../src/generateSignatures -I$(asrcdir)/../mpi-fakeheader -signature:o $*.sig `cat files`)
+	(cd $* && ../../src/summarizeSignatures -I$(asrcdir)/../mpi-fakeheader -summarize:spec $(asrcdir)/../apis.coll -summarize:o $*.sig.tc -- *.sig)
 	(cd $* && ${EXEC} ${SKFLAGS} -skel:g *.sig.tc `cat files` && touch $(@F))
 
 %/testmark-outline: %/files

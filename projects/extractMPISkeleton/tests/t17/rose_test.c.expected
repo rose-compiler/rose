@@ -8,7 +8,7 @@ int main(int argc,char *argv[])
   int k;
   MPI_Init(&argc,&argv);
   
-#pragma skel loop iterate exactly ( 10 )
+#pragma skel loop iterate exactly (10)
 {
     unsigned long _k_1 = 0UL;
     for (i = 0; (x < 100 , _k_1 < 10); _k_1++) {{
@@ -21,9 +21,10 @@ int main(int argc,char *argv[])
   
 #pragma skel preserve
   for (i = 0; x < 100; i++) {
-    x = (i + 1);
-    if ((x % 2) != 0) 
+    x = i + 1;
+    if (x % 2) {
       x += 5;
+    }
     int j;
     
 #pragma skel remove
@@ -31,7 +32,7 @@ int main(int argc,char *argv[])
 /* -code removed here- */
   }
   
-#pragma skel condition prob ( 9 / 10 )
+#pragma skel condition prob(9/10)
   if ((k == 0 , ((double )(rand())) / RAND_MAX < 9 / 10)) {
     x += 5;
   }

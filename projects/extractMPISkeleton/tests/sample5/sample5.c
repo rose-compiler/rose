@@ -18,7 +18,7 @@ void f1(int x)
   #pragma def
   int y = 5;
 
-  #pragma skel initializer repeat(0x55)
+  #pragma skel initializer repeat(85)
   int foobar_c [x*2];
 }
 
@@ -29,7 +29,7 @@ void f2(int x) {
 
 void f3(int x) {
 
-  #pragma skel initializer repeat('C')
+  #pragma skel initializer repeat(67)
   char foobar_e [20];
 }
 

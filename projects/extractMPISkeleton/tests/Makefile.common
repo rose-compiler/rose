@@ -170,8 +170,8 @@ ALL_OBJS=$(addsuffix .o, $(basename ${ALL_OUTS}))
 SKFLAGS=-I$(asrcdir)/../mpi-fakeheader -skel:spec $(asrcdir)/../apis.coll
 
 %/testmark: %/files
-	(cd $* && ../../src/generateSignatures -I$(asrcdir)/../mpi-fakeheader -signature:o $*.sig `cat files`)
-	(cd $* && ../../src/summarizeSignatures -I$(asrcdir)/../mpi-fakeheader -summarize:spec $(asrcdir)/../apis.coll -summarize:o $*.sig.tc -- *.sig)
+	(cd $* && ../src/generateSignatures -I$(asrcdir)/../mpi-fakeheader -signature:o $*.sig `cat files`)
+	(cd $* && ../src/summarizeSignatures -I$(asrcdir)/../mpi-fakeheader -summarize:spec $(asrcdir)/../apis.coll -summarize:o $*.sig.tc -- *.sig)
 	(cd $* && ${EXEC} ${SKFLAGS} -skel:g *.sig.tc `cat files` && touch $(@F))
 
 %/testmark-outline: %/files

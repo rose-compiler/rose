@@ -9,8 +9,8 @@ int main(int argc,char *argv[])
   MPI_Comm_size(MPI_COMM_WORLD,&size);
   int x;
   int y;
-  MPI_Send((&x),1,MPI_INT,(rank + 1),0,MPI_COMM_WORLD);
-  MPI_Send((&y),1,MPI_INT,(rank + 1),0,MPI_COMM_WORLD);
+  MPI_Send((&x),1,MPI_INT,rank + 1,0,MPI_COMM_WORLD);
+  MPI_Send((&y),1,MPI_INT,rank + 1,0,MPI_COMM_WORLD);
   MPI_Finalize();
   return 0;
 }
