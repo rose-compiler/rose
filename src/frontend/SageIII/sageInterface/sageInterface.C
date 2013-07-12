@@ -16682,6 +16682,7 @@ bool SageInterface::loopCollapsing(SgForStatement* target_loop, size_t collapsin
 
         // normalize the target loop first  // adjust to numbering starting from 0
         forLoopNormalization(temp_target_loop);  
+ 
 
         if (!isCanonicalForLoop(temp_target_loop, &ivar[i], &lb[i], &ub[i], &step[i], &orig_body[i]))
         {
@@ -16692,7 +16693,6 @@ bool SageInterface::loopCollapsing(SgForStatement* target_loop, size_t collapsin
         
         ROSE_ASSERT(ivar[i]&& lb[i] && ub[i] && step[i]);
    
-       // cout << "step:" << step[i]->unparseToString() << endl;
        /*
         * Winnie, we can start dealing with incremental or decremental here, get the flag first
         */
