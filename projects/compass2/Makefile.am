@@ -16,6 +16,7 @@ INCLUDES=\
 
 LDADD = \
 	libcompass2.la \
+	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS)
 
@@ -31,6 +32,9 @@ compass2_datadir=${exec_prefix}/share
 libcompass2_la_includedir = ${exec_prefix}/include/compass2
 
 lib_LTLIBRARIES = libcompass2.la
+
+#libcompass2_YFLAGS = -p ltl_ # yacc flags for LTL parser
+libcompass2_CXXFLAGS = $(KNOBS) -fopenmp -Wall # -O3 -march=native -ftree-vectorize
 
 libcompass2_la_SOURCES=\
 	compass.cpp
@@ -50,6 +54,8 @@ BUILT_SOURCES = generate-matcherparser.h
 generate-matcherparser.h:
 	make matcher_demo -C $(top_builddir)/projects/CodeThorn/src
 
+
+
 # ------------------------------------------------------------------------------
 #  Compass2 main executable
 # ------------------------------------------------------------------------------
@@ -57,7 +63,7 @@ generate-matcherparser.h:
 bin_PROGRAMS = bin/compass2
 
 bin_compass2_SOURCES=\
-	bin/compass_main.cpp
+    bin/compass_main.cpp
 
 bin_compass2_LDADD=\
 	libcompass2.la \
@@ -93,6 +99,7 @@ bin_compass2_LDADD=\
 	$(top_builddir)/projects/CodeThorn/src/RoseAst.o \
 	$(top_builddir)/projects/CodeThorn/src/SgNodeHelper.o
 
+
 # ------------------------------------------------------------------------------
 #  Checkers
 # ------------------------------------------------------------------------------
@@ -113,7 +120,6 @@ noinst_LTLIBRARIES=\
 	bin/checkers/floating_point_exact_comparison/libfloatingpointexactcomparison.la \
 	bin/checkers/function_pointer/libfunctionpointer.la \
 	bin/checkers/function_prototype/libfunctionprototype.la \
-	bin/checkers/floating_point_exact_comparison/libfloating_point_exact_comparison.la \
 	bin/checkers/function_with_multiple_returns/libfunctionwithmultiplereturns.la \
 	bin/checkers/keyword_macro/libkeywordmacro.la \
 	bin/checkers/non_global_cpp_directive/libnonglobalcppdirective.la \
@@ -123,6 +129,9 @@ noinst_LTLIBRARIES=\
 bin_checkers_dead_function_libdeadfunction_la_SOURCES=\
 	bin/checkers/dead_function/dead_function.cpp
 
+bin_checkers_floating_point_exact_comparison_libfloatingpointexactcomparison_la_SOURCES=\
+  bin/checkers/floating_point_exact_comparison/floating_point_exact_comparison.cpp
+
 bin_checkers_default_argument_libdefaultargument_la_SOURCES=\
 	bin/checkers/default_argument/default_argument.cpp
 
@@ -131,9 +140,6 @@ bin_checkers_function_pointer_libfunctionpointer_la_SOURCES=\
 
 bin_checkers_function_prototype_libfunctionprototype_la_SOURCES=\
 	bin/checkers/function_prototype/function_prototype.cpp
-
-bin_checkers_floating_point_exact_comparison_la_SOURCES=\
-	bin/checkers/floating_point_exact_comparison/floating_point_exact_comparison.cpp
 
 bin_checkers_function_with_multiple_returns_libfunctionwithmultiplereturns_la_SOURCES=\
 	bin/checkers/function_with_multiple_returns/function_with_multiple_returns.cpp

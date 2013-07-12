@@ -82,52 +82,12 @@ namespace CompassAnalyses
   const string short_description = "Global Variable found";
   const string long_description  = "Finds all variable declarations that occur outside of a method body";
   string source_directory = "/";
-} // ::CompassAnalyses
-} // ::GlobalVariables
-
-CompassAnalyses::GlobalVariables::
-CheckerOutput::CheckerOutput(SgNode *const node, std::string variable_name)
-    : OutputViolationBase(
-        node,
-        ::globalVariablesChecker->checkerName,
-        ::globalVariablesChecker->shortDescription +
-        ": " + variable_name)
-{}
-
-
-CompassAnalyses::GlobalVariables::Traversal::
-Traversal(Compass::Parameters a_parameters, Compass::OutputObject *output)
-    : output_(output)
-{
-    try
-    {
-        string target_directory =
-            a_parameters["general::target_directory"].front();
-        source_directory_.assign(target_directory);
-
-        // Save list of permitted variables in map for faster lookups.
-        Compass::ParametersMap parameters =
-            a_parameters[boost::regex("globalVariables::.*")];
-        BOOST_FOREACH(const Compass::ParametersMap::value_type& pair, parameters)
-        {
-            Compass::ParameterValues values = pair.second;
-            BOOST_FOREACH(std::string variable_name, values)
-            {
-                white_list_[variable_name] = true; // true => permitted
-            }
-        }
-    }
-    catch (Compass::ParameterNotFoundException e)
-    {
-        std::cout << "ParameterNotFoundException: " << e.what() << std::endl;
-        homeDir(source_directory_);
-    }
  }
 }
 
 CompassAnalyses::GlobalVariables::
 CheckerOutput::CheckerOutput(SgNode *const node)
-    : OutputViolationBase(node,
+:OutputViolationBase(node,
                           ::globalVariablesChecker->checkerName,
                           ::globalVariablesChecker->shortDescription) {}
 
