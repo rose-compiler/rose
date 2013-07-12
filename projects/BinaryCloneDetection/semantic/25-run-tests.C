@@ -825,7 +825,7 @@ fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inpu
     
     // Gather the function's outputs before restoring machine state.
     OutputGroup outputs = policy.get_outputs();
-    outputs.fault = fault;
+    outputs.set_fault(fault);
     return outputs;
 }
 
@@ -1185,9 +1185,9 @@ main(int argc, char *argv[])
         stmt->bind(5, igroup.queue(IQ_FUNCTION).nconsumed());
         stmt->bind(6, igroup.queue(IQ_POINTER).nconsumed());
         stmt->bind(7, igroup.queue(IQ_INTEGER).nconsumed());
-        stmt->bind(8, ogroup.ninsns);
+        stmt->bind(8, ogroup.get_ninsns());
         stmt->bind(9, ogroup_id);
-        stmt->bind(10, ogroup.fault);
+        stmt->bind(10, ogroup.get_fault());
         stmt->bind(11, elapsed_time);
         stmt->bind(12, cpu_time);
         stmt->bind(13, cmd_id);

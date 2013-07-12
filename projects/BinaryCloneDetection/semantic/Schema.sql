@@ -55,7 +55,7 @@ create table semantic_inputvalues (
 -- sets.
 create table semantic_outputvalues (
        hashkey bigint,                          -- output set to which this value belongs; non-unique
-       vtype character,                         -- V=>value, F=>fault, C=>function call, S=>syscall
+       vtype character,                         -- V=>value, R=retval, F=>fault, C=>function call, S=>syscall
        pos integer,                             -- position of value within its output group and vtype pair
        val bigint                               -- value, fault ID, or function ID depending on vtype
        -- command ID is not stored here because this table is already HUGE! One has a reasonably high chance of

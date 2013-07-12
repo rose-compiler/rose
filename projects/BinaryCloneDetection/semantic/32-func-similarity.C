@@ -164,7 +164,7 @@ public:
     }
 };
 
-// Treat output values as a set and compare them using set equality.
+// Treat output values and return value as a set and compare them using set equality.
 class ValuesetEquality: public CachedOutput {
 public:
     typedef std::set<CloneDetection::OutputGroup::value_type> VSet;
@@ -176,7 +176,9 @@ public:
         std::vector<VSet::value_type> vvec = ogroup->get_values();
         for (size_t i=0; i<vvec.size(); ++i)
             values.insert(vvec[i]);
-        fault = ogroup->fault;
+        fault = ogroup->get_fault();
+        if (ogroup->get_retval().first)
+            values.insert(ogroup->get_retval().second);
     }
 
     virtual double similarity(const CachedOutput *other_) const /*override*/ {
@@ -196,7 +198,7 @@ public:
     }
 };
 
-// Treat output values as vectors and use the Damerau-Levenshtein edit distance to calculate similarity.
+// Treat return value and output values as vectors and use the Damerau-Levenshtein edit distance to calculate similarity.
 class ValuesDamerauLevenshtein: public CachedOutput {
 public:
     typedef CloneDetection::OutputGroup::value_type VType;
@@ -205,6 +207,8 @@ public:
 
     ValuesDamerauLevenshtein(const CloneDetection::OutputGroup *ogroup) {
         values = ogroup->get_values();
+        if (ogroup->get_retval().first)
+            values.insert(values.begin(), ogroup->get_retval().second);
     }
 
     virtual double similarity(const CachedOutput *other_) const /*override*/ {
@@ -226,8 +230,8 @@ public:
     }
 };
 
-// Treat output values as sets and use the Jaccard index to measure similarity. Use a penalty for failed tests.
-// The Jaccard index of two empty sets is 1.
+// Treat output values and return value as a and use the Jaccard index to measure similarity. Use a penalty for failed
+// tests.  The Jaccard index of two empty sets is 1.
 class ValuesetJaccard: public ValuesetEquality {
 public:
     ValuesetJaccard(const CloneDetection::OutputGroup *ogroup): ValuesetEquality(ogroup) {}
@@ -249,8 +253,6 @@ public:
         return multiplier*jaccard;
     }
 };
-
-// Treat output values as vectors and use
 
 typedef std::map<int/*igroup_id*/, CloneDetection::InputGroup*> InputGroups;
 static InputGroups igroup_cache;

@@ -419,7 +419,7 @@ public:
 class OutputGroup {
 public:
     typedef uint32_t value_type;
-    OutputGroup(): fault(AnalysisFault::NONE), ninsns(0) {}
+    OutputGroup(): fault(AnalysisFault::NONE), ninsns(0), retval(0), has_retval(false) {}
     bool operator<(const OutputGroup &other) const;
     bool operator==(const OutputGroup &other) const;
     void clear();
@@ -430,16 +430,59 @@ public:
         return o;
     }
     void add_param(const std::string vtype, int pos, int64_t value); // used by OutputGroups
-    void insert_value(int64_t value, rose_addr_t where=0) {
-        values.insert(value, where);
+
+    /** Add another value to the output. */
+    void insert_value(int64_t value, rose_addr_t va) {
+        values.insert(value, va);
     }
+
+    /** Return all the output values. */
     std::vector<value_type> get_values() const { return values.get_vector(); }
 
+    /** Add a return value to this output group. */
+    void insert_retval(uint64_t retval) {
+        this->retval = retval;
+        has_retval = true;
+    }
+
+    /** Returns the return value and whether the return value is the default or explicitly set. */
+    std::pair<bool, value_type> get_retval() const {
+        return std::make_pair(has_retval, retval);
+    }
+
+    /** Accessor for the fault value.
+     * @{ */
+    AnalysisFault::Fault get_fault() const { return fault; }
+    void set_fault(AnalysisFault::Fault &fault) { this->fault = fault; }
+    /** @} */
+
+    /** Add another function ID for a called function. */
+    void insert_callee_id(int id) { callee_ids.push_back(id); }
+
+    /** Return the list of all function call IDs. */
+    const std::vector<int>& get_callee_ids() const { return callee_ids; }
+
+    /** Add another system call to the list of system calls. */
+    void insert_syscall(int syscall_number) { syscalls.push_back(syscall_number); }
+
+    /** Return the list of all system calls in the order they occurred. */
+    const std::vector<int>& get_syscalls() const { return syscalls; }
+
+    /** Accessor for number of instructions executed.
+     * @{ */
+    void set_ninsns(size_t ninsns) { this->ninsns = ninsns; }
+    size_t get_ninsns() const { return ninsns; }
+    /** @} */
+    
+
+protected:
     OUTPUTGROUP_VALUE_CONTAINER<value_type> values;
     std::vector<int> callee_ids;                // IDs for called functions
     std::vector<int> syscalls;                  // system call numbers in the order they occur
-    AnalysisFault::Fault fault;
+    AnalysisFault::Fault fault;                 // reason for test failure (or FAULT_NONE)
     size_t ninsns;                              // number of instructions executed
+    value_type retval;                          // return value from function
+    bool has_retval;                            // true if 'retval' is initialized
 };
 
 // Used internally by OutputGroups so that we don't have to store OutputGroup objects in std::map. OutputGroup objects can be
@@ -859,7 +902,7 @@ public:
                     std::cerr <<" (hash of string at " <<StringUtility::addrToString(v1) <<")";
                 std::cerr <<"\n";
             }
-            outputs.insert_value(v2);
+            outputs.insert_retval(v2);
         }
 
         // Memory outputs
@@ -1296,7 +1339,7 @@ public:
     void finishInstruction(SgAsmInstruction *insn) /*override*/ {
         SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
         assert(insn_x86!=NULL);
-        ++state.output_group.ninsns;
+        state.output_group.set_ninsns(1+state.output_group.get_ninsns());
         rose_addr_t next_eip = state.registers.ip.known_value();
         SgAsmInstruction *next_insn = insns->get_instruction(next_eip);
         SgAsmFunction *next_func = SageInterface::getEnclosingNode<SgAsmFunction>(next_insn);

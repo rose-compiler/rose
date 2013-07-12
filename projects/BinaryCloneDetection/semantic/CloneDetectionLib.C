@@ -427,6 +427,10 @@ OutputGroup::operator<(const OutputGroup &other) const
         return fault < other.fault;
     if (ninsns != other.ninsns)
         return ninsns < other.ninsns;
+    if (has_retval != other.has_retval)
+        return !has_retval;
+    if (has_retval && retval!=other.retval)
+        return retval < other.retval;
 
     // Values
     if (values < other.values)
@@ -458,7 +462,9 @@ OutputGroup::operator==(const OutputGroup &other) const
             syscalls.size()==other.syscalls.size() &&
             std::equal(syscalls.begin(), syscalls.end(), other.syscalls.begin()) &&
             fault == other.fault &&
-            ninsns == other.ninsns);
+            ninsns == other.ninsns &&
+            has_retval == other.has_retval &&
+            (!has_retval || retval==other.retval));
 }
 
 void
@@ -469,6 +475,8 @@ OutputGroup::clear()
     syscalls.clear();
     fault = AnalysisFault::NONE;
     ninsns = 0;
+    retval = 0;
+    has_retval = false;
 }
 
 void
@@ -491,6 +499,8 @@ OutputGroup::print(std::ostream &o, const std::string &title, const std::string 
     }
     o <<"\n";
 
+    if (has_retval)
+        o <<prefix <<"retval " <<retval <<"\n";
     for (size_t i=0; i<callee_ids.size(); ++i)
         o <<prefix <<"fcall " <<callee_ids[i] <<"\n";
     for (size_t i=0; i<syscalls.size(); ++i)
@@ -543,6 +553,9 @@ OutputGroup::add_param(const std::string vtype, int pos, int64_t value)
         case 'V':
             insert_value(value, pos);
             break;
+        case 'R':
+            insert_retval(value);
+            break;
         case 'F':
             assert(fault == AnalysisFault::NONE);
             fault = (AnalysisFault::Fault)value;
@@ -591,18 +604,22 @@ OutputGroups::insert(const OutputGroup &ogroup, int64_t hashkey)
             filename = tpl;
         }
         int status = 0; // sign bit will be set on failure; other bits are meaningless
-        std::vector<OutputGroup::value_type> valvec = ogroup.values.get_vector();
+        std::vector<OutputGroup::value_type> valvec = ogroup.get_values();
         for (size_t i=0; i<valvec.size(); ++i) {
             unsigned val = valvec[i];
             status |= fprintf(file, "%"PRId64",V,%zu,%u\n", hashkey, i, val);
         }
-        for (size_t i=0; i<ogroup.callee_ids.size(); ++i)
-            status |= fprintf(file, "%"PRId64",C,%zu,%d\n", hashkey, i, ogroup.callee_ids[i]);
-        for (size_t i=0; i<ogroup.syscalls.size(); ++i)
-            status |= fprintf(file, "%"PRId64",S,%zu,%d\n", hashkey, i, ogroup.syscalls[i]);
-        if (ogroup.fault!=AnalysisFault::NONE)
-            status |= fprintf(file, "%"PRId64",F,0,%d\n", hashkey, (int)ogroup.fault);
-        status |= fprintf(file, "%"PRId64",I,0,%zu\n", hashkey, ogroup.ninsns);
+        const std::vector<int> &callee_ids = ogroup.get_callee_ids();
+        for (size_t i=0; i<callee_ids.size(); ++i)
+            status |= fprintf(file, "%"PRId64",C,%zu,%"PRIu64"\n", hashkey, i, (uint64_t)callee_ids[i]);
+        const std::vector<int> &syscalls = ogroup.get_syscalls();
+        for (size_t i=0; i<syscalls.size(); ++i)
+            status |= fprintf(file, "%"PRId64",S,%zu,%d\n", hashkey, i, syscalls[i]);
+        if (ogroup.get_fault()!=AnalysisFault::NONE)
+            status |= fprintf(file, "%"PRId64",F,0,%d\n", hashkey, (int)ogroup.get_fault());
+        if (ogroup.get_retval().first)
+            status |= fprintf(file, "%"PRId64",R,0,%"PRIu64"\n", hashkey, (uint64_t)ogroup.get_retval().second);
+        status |= fprintf(file, "%"PRId64",I,0,%zu\n", hashkey, ogroup.get_ninsns());
         if (status<0) {
             std::cerr <<"CloneDetection::OutputGroups::insert: write failed for " <<filename <<"\n";
             abort();
