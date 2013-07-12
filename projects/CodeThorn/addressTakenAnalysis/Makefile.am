@@ -28,7 +28,9 @@ addressTakenAnalysis_SOURCES = \
 	$(CODETHORN_SRC_ROOT)/VariableIdMapping.C \
 	$(CODETHORN_SRC_ROOT)/Miscellaneous.C \
 	$(CODETHORN_SRC_ROOT)/CommandLineOptions.C \
-	addressTakenAnalysis.C
+	addressTakenAnalysis.C \
+	defUseQuery.C \
+	addressTakenAnalysisDriver.C
 
 addressTakenAnalysis_LDADD = -lrose
 

@@ -1,33 +1,11 @@
 #include <iostream>
 #include <fstream>
-#include "rose.h"
-#include "AstTerm.h"
-#include "AstMatching.h"
-#include "VariableIdMapping.h"
-#include "Miscellaneous.h"
-
-using namespace CodeThorn;
-
-// AST Query Processor
-// common functor to process any query and build match result
-// NOTE: extend it to accept a functor to apply on each element of match result
+#include <algorithm>
+#include "addressTakenAnalysis.h"
 
 /*************************************************
  ***************** ProcessQuery  *****************
  *************************************************/
-class ProcessQuery
-{
-  // the root node on which the AST matching needs to be performed
-  MatchResult match_result;
-
-public:
-  ProcessQuery() { }
-  // functor to operate on the given query
-  MatchResult operator()(std::string query, SgNode* root);
-  MatchResult getMatchResult();
-  void printMatchResult();
-  void clearMatchResult();
-};
 
 MatchResult ProcessQuery::getMatchResult()
 {
@@ -62,65 +40,14 @@ MatchResult ProcessQuery::operator()(std::string query, SgNode* root)
   return match_result;
 }
 
-// wrapper for set<VariableId> with pretty printing
-// 
-class VariableIdSetPrettyPrint
-{
-public:
-  std::string static str(std::set<VariableId>& vset, VariableIdMapping& vidm)
-  {
-    std::ostringstream ostr;
-    ostr << "[";
-    std::set<VariableId>::iterator it = vset.begin();
-    for( ; it != vset.end(); )
-    {
-      ostr << "<" << (*it).toString() << ", " << vidm.variableName(*it)  << ">";
-      it++;
-      if(it != vset.end())
-        ostr << ", ";
-    }
-    ostr << "]";
-    return ostr.str();
-  }
-};
-
 /*************************************************
  ************** AddressTakenAnalysis  ************
  *************************************************/
-class AddressTakenAnalysis
-{
-  VariableIdMapping& vidm;
-  // result to be computed by this analysis
-  std::set<VariableId> addressTakenSet;
-  bool initialized;
 
-  // address can be taken for any expression that is lvalue
-  // The purpose of this class is to traverse arbitrary
-  // expressions that are operands of SgAddressOfOp and find the
-  // variable whose address is actually taken.
-  // For example in expression &(a.b->c),  'c' address is
-  // actually taken. This class simply traverses the rhs_operand
-  // of SgDotExp/SgArrowExp or other expressions to identify 
-  // the variable whose address is taken
-  // 
-  class OperandToVariableId : public ROSE_VisitorPatternDefaultBase
-  {
-    AddressTakenAnalysis& ata;
-  public:
-    OperandToVariableId(AddressTakenAnalysis& _ata) : ata(_ata) { }
-    void visit(SgVarRefExp*);
-    void visit(SgDotExp*);
-    void visit(SgArrowExp*);
-    void visit(SgPointerDerefExp*);
-    void visit(SgPntrArrRefExp*);
-    void visit(SgNode* sgn);
-  };
-public:
-  AddressTakenAnalysis(VariableIdMapping& _vidm) : vidm(_vidm), initialized(true) {}
-  void throwIfUnInitException();
-  void computeAddressTakenSet(SgNode* root);
-  void printAddressTakenSet();
-};
+VariableIdSet AddressTakenAnalysis::getAddressTakenSet()
+{
+  return addressTakenSet;
+}
 
 void AddressTakenAnalysis::throwIfUnInitException()
 {
@@ -209,21 +136,6 @@ void AddressTakenAnalysis::printAddressTakenSet()
 /*************************************************
  **************** TypeAnalysis *******************
  *************************************************/
-class TypeAnalysis
-{
-  VariableIdMapping& vidm;
-  std::set<VariableId> pointerTypeSet;
-  std::set<VariableId> arrayTypeSet;
-  bool initialized;
-
-public:
-  TypeAnalysis(VariableIdMapping& _vidm) : vidm(_vidm) { }
-  void initialize(VariableIdMapping& vidm);
-  void collectTypes();
-  void printPointerTypeSet();
-  void printArrayTypeSet();
-  void throwIfUnInitException();
-};
 
 void TypeAnalysis::throwIfUnInitException()
 {
@@ -238,12 +150,22 @@ void TypeAnalysis::throwIfUnInitException()
   }
 }
 
+VariableIdSet TypeAnalysis::getPointerTypeSet()
+{
+  return pointerTypeSet;
+}
+
+VariableIdSet TypeAnalysis::getArrayTypeSet()
+{
+  return arrayTypeSet;
+}
+
 
 void TypeAnalysis::collectTypes()
 {
   throwIfUnInitException();
-  std::set<VariableId> set = vidm.getVariableIdSet();
-  for(std::set<VariableId>::iterator it = set.begin(); it != set.end(); ++it)
+  VariableIdSet set = vidm.getVariableIdSet();
+  for(VariableIdSet::iterator it = set.begin(); it != set.end(); ++it)
   {
     SgSymbol* v_symbol = vidm.getSymbol(*it);
     SgType* v_type = v_symbol->get_type();
@@ -285,31 +207,6 @@ void TypeAnalysis::printArrayTypeSet()
 /*************************************************
  ******** FlowInsensitivePointerAnalysis  ********
  *************************************************/
-class FlowInsensitivePointerAnalysis
-{
-  SgNode* root;
-  VariableIdMapping vidm;
-  AddressTakenAnalysis addrTakenAnalysis;
-  TypeAnalysis typeAnalysis;
-  bool initialized;
-
-public:
-  FlowInsensitivePointerAnalysis(SgProject* project) : root(project), addrTakenAnalysis(vidm), typeAnalysis(vidm)
-  { 
-    initialize();
-  }
-
-  FlowInsensitivePointerAnalysis(SgProject* project, VariableIdMapping& _vidm) : root(project), 
-                                                                                 vidm(_vidm),
-                                                                                 addrTakenAnalysis(vidm),
-                                                                                 typeAnalysis(vidm)
-  { 
-    initialized = true; 
-  }
-  void initialize();
-  void runAnalysis();
-  void printAnalysisSets();
-};
 
 void FlowInsensitivePointerAnalysis::initialize()
 {
@@ -330,103 +227,55 @@ void FlowInsensitivePointerAnalysis::printAnalysisSets()
   typeAnalysis.printArrayTypeSet();
 }
 
-/*************************************************
- ******************** MemObj *********************
- *************************************************/
-class MemObj
+VariableIdMapping& FlowInsensitivePointerAnalysis::getVariableIdMapping()
 {
-  std::set<VariableId> set;
-  bool pointerAccessed;
-public:
-  MemObj() : pointerAccessed(false) { }
-  bool isAccessedByPointer();
-  void insert(VariableId _vid);
-  void setVariableIdSet(std::set<VariableId> that);
-};
-
-bool MemObj::isAccessedByPointer() 
-{ 
-  return pointerAccessed; 
+  return vidm;
 }
 
-void MemObj::insert(VariableId _vid)
+VariableIdSet FlowInsensitivePointerAnalysis::getMemModByPointer()
 {
-  set.insert(_vid);
-}
+  VariableIdSet unionSet;
+  const VariableIdSet addrTakenSet = addrTakenAnalysis.getAddressTakenSet();
+  const VariableIdSet arrayTypeSet = typeAnalysis.getArrayTypeSet();
+  
+  // std::set_union(addrTakenSet.begin(), addrTakenSet.end(),
+  //                       arrayTypeSet.begin(), arrayTypeSet.end(),
+  //                       unionSet.begin());
 
-void MemObj::setVariableIdSet(std::set<VariableId> that)
-{
-  set = that;
-}
-
-MemObj getDefMemObj(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa)
-{
-  MemObj rMemObj;
-  // handle only expressions for now
-  try 
+  VariableIdSet::const_iterator it1 = addrTakenSet.begin();
+  VariableIdSet::const_iterator it2 = arrayTypeSet.begin();
+  VariableIdSet::iterator result = unionSet.begin();
+  
+  // re-implementation of set-union
+  while(true)
   {
-    if(!isSgExpression(sgn))
-      throw;
-  }
-  catch(...)
-  {
-    std::cerr <<  "error: argument is not an expression\n";
-  }
-
-  ProcessQuery pq;
-  // how should we handle function call expression here ?
-  MatchResult matches = pq("$OP=SgAssignOp|$F=SgFunctionCallExp", sgn);
-
-  // return empty object if no writes happening
-  if(matches.size() == 0)
-    return rMemObj;
-
-  for(MatchResult::iterator it = matches.begin(); it != matches.end(); ++it)
-  {
-    // get lhs_operand
-    // apply visitor pattern on lhs to identify memory location assigned
-
-    // what do we do if the expression involves function call ?
-    // as we do not know anything about the function it can modify any memory location
-    // for now throw exception
-    // exception handling may not be the ideal case here
-    try
+    if(it1 == addrTakenSet.end())
     {
-      SgNode* fn_call = (*it)["$F"];
-      if(fn_call != 0)
-        throw;
+      unionSet.insert(it2, arrayTypeSet.end());
+      break;
     }
-    catch(...)
+    if(it2 == arrayTypeSet.end())
     {
-      std::cerr << "error: not handling function call inside an expression\n";
+      unionSet.insert(it1, addrTakenSet.end());
+      break;
+    }
+    
+    if(*it1 < *it2)
+    {
+      unionSet.insert(result, *it1); ++it1; ++result;
+    }
+    else if(*it2 < *it1)
+    {
+      unionSet.insert(result, *it2); ++it2; ++result;
+    }
+    else
+    {
+      unionSet.insert(result, *it1); ++it1; ++it2; ++result;
     }
   }
 
-  return rMemObj;  
-}
 
-MemObj getUseMemObj(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa)
-{
-  MemObj rMemObj;
-  return rMemObj;
-}
+  ROSE_ASSERT(unionSet.size() == arrayTypeSet.size() + addrTakenSet.size());
 
-
-/*************************************************
- ******************* main ************************
- *************************************************/
-int main(int argc, char* argv[])
-{
-  // Build the AST used by ROSE
-  SgProject* project = frontend(argc,argv);
-  SgNode* root = project;
-
-  RoseAst ast(root);
-
-  // compute variableId mappings
-  FlowInsensitivePointerAnalysis fipa(project);
-  fipa.runAnalysis();
-  //fipa.printAnalysisSets();
-
-  return 0;
+  return unionSet;
 }
