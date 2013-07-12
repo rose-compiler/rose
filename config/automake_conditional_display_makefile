@@ -144,11 +144,6 @@ if ROSE_BUILD_C_LANGUAGE_SUPPORT
 else
 	@echo "Automake conditional ROSE_BUILD_C_LANGUAGE_SUPPORT: NOT defined"
 endif
-if ROSE_BUILD_CUDA_LANGUAGE_SUPPORT
-	@echo "Automake conditional ROSE_BUILD_CUDA_LANGUAGE_SUPPORT: DEFINED"
-else
-	@echo "Automake conditional ROSE_BUILD_CUDA_LANGUAGE_SUPPORT: NOT defined"
-endif
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	@echo "Automake conditional ROSE_BUILD_CXX_LANGUAGE_SUPPORT: DEFINED"
 else
@@ -249,11 +244,6 @@ if ROSE_USE_BOOST_WAVE
 else
 	@echo "Automake conditional ROSE_USE_BOOST_WAVE: NOT defined"
 endif
-if ROSE_USE_CUDA_SUPPORT
-	@echo "Automake conditional ROSE_USE_CUDA_SUPPORT: DEFINED"
-else
-	@echo "Automake conditional ROSE_USE_CUDA_SUPPORT: NOT defined"
-endif
 if ROSE_USE_DWARF
 	@echo "Automake conditional ROSE_USE_DWARF: DEFINED"
 else
@@ -319,11 +309,6 @@ if ROSE_USE_MYSQL
 else
 	@echo "Automake conditional ROSE_USE_MYSQL: NOT defined"
 endif
-if ROSE_USE_NEW_EDG_INTERFACE
-	@echo "Automake conditional ROSE_USE_NEW_EDG_INTERFACE: DEFINED"
-else
-	@echo "Automake conditional ROSE_USE_NEW_EDG_INTERFACE: NOT defined"
-endif
 if ROSE_USE_OBJDUMP
 	@echo "Automake conditional ROSE_USE_OBJDUMP: DEFINED"
 else
@@ -333,11 +318,6 @@ if ROSE_USE_OMNI_OPENMP
 	@echo "Automake conditional ROSE_USE_OMNI_OPENMP: DEFINED"
 else
 	@echo "Automake conditional ROSE_USE_OMNI_OPENMP: NOT defined"
-endif
-if ROSE_USE_OPENCL_SUPPORT
-	@echo "Automake conditional ROSE_USE_OPENCL_SUPPORT: DEFINED"
-else
-	@echo "Automake conditional ROSE_USE_OPENCL_SUPPORT: NOT defined"
 endif
 #if ROSE_USE_OPEN_FORTRAN_PARSER
 #	@echo "Automake conditional ROSE_USE_OPEN_FORTRAN_PARSER: DEFINED"

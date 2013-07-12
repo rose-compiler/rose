@@ -51,13 +51,20 @@ class Unparse_Type
        // DQ (11/20/2011): Adding support for template declarations in the AST.
           virtual void unparseTemplateType(SgType* type, SgUnparse_Info& info);
 
-          virtual void unparseQualifiedNameType(SgType* type, SgUnparse_Info& info );
+       // DQ (5/3/2013): This approach is no longer supported, as I recall.
+       // virtual void unparseQualifiedNameType(SgType* type, SgUnparse_Info& info );
 
        // DQ (6/6/2007): Test for if types should be elaborated
           bool generateElaboratedType(SgDeclarationStatement* declarationStatement, const SgUnparse_Info & info );
 
        // DQ (12/11/2012): Refactored function to control output of "restrict" keyword (different for several backend compilers).
           static std::string unparseRestrictKeyword();
+
+       // DQ (5/5/2013): Refactored code to support unparsing name qualified types.
+          template <class T>
+          void outputType(T* referenceNode, SgType* referenceNodeType, SgUnparse_Info & info);
+
+          void foobar( SgUnparse_Info & info );
    };
 
 #endif
