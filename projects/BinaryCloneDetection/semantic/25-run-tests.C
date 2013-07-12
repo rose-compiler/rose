@@ -236,38 +236,428 @@ detect_pointers(SgAsmFunction *func, const FunctionIdMap &function_ids, const Sw
 static void
 add_builtin_functions(NameSet &names/*in,out*/)
 {
-    names.insert("abs@plt");
-    names.insert("labs@plt");
-    names.insert("memcmp@plt");
-    names.insert("memcpy@plt");
-    names.insert("strcmp@plt");
-    names.insert("strlen@plt");
-    names.insert("strncmp@plt");
-    names.insert("abort@plt");
-    names.insert("memset@plt");
-    names.insert("strcat@plt");
-    names.insert("strcpy@plt");
-    names.insert("strncpy@plt");
-    names.insert("strchr@plt");
-    names.insert("strspn@plt");
-    names.insert("strcspn@plt");
-    names.insert("strstr@plt");
-    names.insert("strpbrk@plt");
-    names.insert("strrchr@plt");
-    names.insert("strncat@plt");
-    names.insert("alloca@plt");
-    names.insert("ffs@plt");
-    names.insert("index@plt");
-    names.insert("rindex@plt");
-    names.insert("bcmp@plt");
-    names.insert("bzero@plt");
+    // small list from personal experience
+    names.insert("abort");
+    names.insert("abs");
+    names.insert("alloca");
+    names.insert("bcmp");
+    names.insert("bzero");
+    names.insert("ffs");
+    names.insert("fputc_unlocked");
+    names.insert("index");
+    names.insert("labs");
+    names.insert("memcmp");
+    names.insert("memcpy");
+    names.insert("memset");
+    names.insert("rindex");
+    names.insert("strcat");
+    names.insert("strchr");
+    names.insert("strcmp");
+    names.insert("strcpy");
+    names.insert("strcspn");
+    names.insert("strlen");
+    names.insert("strncat");
+    names.insert("strncmp");
+    names.insert("strncpy");
+    names.insert("strpbrk");
+    names.insert("strrchr");
+    names.insert("strspn");
+    names.insert("strstr");
+
+    // all from http://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html, but incomplete
+    names.insert("_Exit");
+    names.insert("abort");
+    names.insert("abs");
+    names.insert("acos");
+    names.insert("acosf");
+    names.insert("acosh");
+    names.insert("acoshf");
+    names.insert("acoshl");
+    names.insert("acosl");
+    names.insert("alloca");
+    names.insert("asin");
+    names.insert("asinf");
+    names.insert("asinh");
+    names.insert("asinhf");
+    names.insert("asinhl");
+    names.insert("asinl");
+    names.insert("atan");
+    names.insert("atan2");
+    names.insert("atan2f");
+    names.insert("atan2l");
+    names.insert("atanf");
+    names.insert("atanh");
+    names.insert("atanhf");
+    names.insert("atanhl");
+    names.insert("atanl");
+    names.insert("bcmp");
+    names.insert("bzero");
+    names.insert("cabs");
+    names.insert("cabsf");
+    names.insert("cabsl");
+    names.insert("cacos");
+    names.insert("cacosf");
+    names.insert("cacosh");
+    names.insert("cacoshf");
+    names.insert("cacoshl");
+    names.insert("cacosl");
+    names.insert("calloc");
+    names.insert("carg");
+    names.insert("cargf");
+    names.insert("cargl");
+    names.insert("casin");
+    names.insert("casinf");
+    names.insert("casinh");
+    names.insert("casinhf");
+    names.insert("casinhl");
+    names.insert("casinl");
+    names.insert("catan");
+    names.insert("catanf");
+    names.insert("catanh");
+    names.insert("catanhf");
+    names.insert("catanhl");
+    names.insert("catanl");
+    names.insert("cbrt");
+    names.insert("cbrtf");
+    names.insert("cbrtl");
+    names.insert("ccos");
+    names.insert("ccosf");
+    names.insert("ccosh");
+    names.insert("ccoshf");
+    names.insert("ccoshl");
+    names.insert("ccosl");
+    names.insert("ceil");
+    names.insert("ceilf");
+    names.insert("ceill");
+    names.insert("cexp");
+    names.insert("cexpf");
+    names.insert("cexpl");
+    names.insert("cimag");
+    names.insert("cimagf");
+    names.insert("cimagl");
+    names.insert("clog");
+    names.insert("clogf");
+    names.insert("clogl");
+    names.insert("conj");
+    names.insert("conjf");
+    names.insert("conjl");
+    names.insert("copysign");
+    names.insert("copysignf");
+    names.insert("copysignl");
+    names.insert("cos");
+    names.insert("cosf");
+    names.insert("cosh");
+    names.insert("coshf");
+    names.insert("coshl");
+    names.insert("cosl");
+    names.insert("cpow");
+    names.insert("cpowf");
+    names.insert("cpowl");
+    names.insert("cproj");
+    names.insert("cprojf");
+    names.insert("cprojl");
+    names.insert("creal");
+    names.insert("crealf");
+    names.insert("creall");
+    names.insert("csin");
+    names.insert("csinf");
+    names.insert("csinh");
+    names.insert("csinhf");
+    names.insert("csinhl");
+    names.insert("csinl");
+    names.insert("csqrt");
+    names.insert("csqrtf");
+    names.insert("csqrtl");
+    names.insert("ctan");
+    names.insert("ctanf");
+    names.insert("ctanh");
+    names.insert("ctanhf");
+    names.insert("ctanhl");
+    names.insert("ctanl");
+    names.insert("dcgettext");
+    names.insert("dgettext");
+    names.insert("drem");
+    names.insert("dremf");
+    names.insert("dreml");
+    names.insert("erf");
+    names.insert("erfc");
+    names.insert("erfcf");
+    names.insert("erfcl");
+    names.insert("erff");
+    names.insert("erfl");
+    names.insert("exit");
+    names.insert("exit");
+    names.insert("exp");
+    names.insert("exp10");
+    names.insert("exp10f");
+    names.insert("exp10l");
+    names.insert("exp2");
+    names.insert("exp2f");
+    names.insert("exp2l");
+    names.insert("expf");
+    names.insert("expl");
+    names.insert("expm1");
+    names.insert("expm1f");
+    names.insert("expm1l");
+    names.insert("fabs");
+    names.insert("fabsf");
+    names.insert("fabsl");
+    names.insert("fdim");
+    names.insert("fdimf");
+    names.insert("fdiml");
+    names.insert("ffs");
+    names.insert("ffsl");
+    names.insert("ffsll");
+    names.insert("floor");
+    names.insert("floorf");
+    names.insert("floorl");
+    names.insert("fma");
+    names.insert("fmaf");
+    names.insert("fmal");
+    names.insert("fmax");
+    names.insert("fmaxf");
+    names.insert("fmaxl");
+    names.insert("fmin");
+    names.insert("fminf");
+    names.insert("fminl");
+    names.insert("fmod");
+    names.insert("fmodf");
+    names.insert("fmodl");
+    names.insert("fprintf");
+    names.insert("fprintf_unlocked");
+    names.insert("fputs");
+    names.insert("fputs_unlocked");
+    names.insert("frexp");
+    names.insert("frexpf");
+    names.insert("frexpl");
+    names.insert("fscanf");
+    names.insert("gamma");
+    names.insert("gamma_r");
+    names.insert("gammaf");
+    names.insert("gammaf_r");
+    names.insert("gammal");
+    names.insert("gammal_r");
+    names.insert("gettext");
+    names.insert("hypot");
+    names.insert("hypotf");
+    names.insert("hypotl");
+    names.insert("ilogb");
+    names.insert("ilogbf");
+    names.insert("ilogbl");
+    names.insert("imaxabs");
+    names.insert("index");
+    names.insert("isalnum");
+    names.insert("isalpha");
+    names.insert("isascii");
+    names.insert("isblank");
+    names.insert("iscntrl");
+    names.insert("isdigit");
+    names.insert("isgraph");
+    names.insert("islower");
+    names.insert("isprint");
+    names.insert("ispunct");
+    names.insert("isspace");
+    names.insert("isupper");
+    names.insert("iswalnum");
+    names.insert("iswalpha");
+    names.insert("iswblank");
+    names.insert("iswcntrl");
+    names.insert("iswdigit");
+    names.insert("iswgraph");
+    names.insert("iswlower");
+    names.insert("iswprint");
+    names.insert("iswpunct");
+    names.insert("iswspace");
+    names.insert("iswupper");
+    names.insert("iswxdigit");
+    names.insert("isxdigit");
+    names.insert("j0");
+    names.insert("j0f");
+    names.insert("j0l");
+    names.insert("j1");
+    names.insert("j1f");
+    names.insert("j1l");
+    names.insert("jn");
+    names.insert("jnf");
+    names.insert("jnl");
+    names.insert("labs");
+    names.insert("ldexp");
+    names.insert("ldexpf");
+    names.insert("ldexpl");
+    names.insert("lgamma");
+    names.insert("lgamma_r");
+    names.insert("lgammaf");
+    names.insert("lgammaf_r");
+    names.insert("lgammal");
+    names.insert("lgammal_r");
+    names.insert("llabs");
+    names.insert("llrint");
+    names.insert("llrintf");
+    names.insert("llrintl");
+    names.insert("llround");
+    names.insert("llroundf");
+    names.insert("llroundl");
+    names.insert("log");
+    names.insert("log10");
+    names.insert("log10f");
+    names.insert("log10l");
+    names.insert("log1p");
+    names.insert("log1pf");
+    names.insert("log1pl");
+    names.insert("log2");
+    names.insert("log2f");
+    names.insert("log2l");
+    names.insert("logb");
+    names.insert("logbf");
+    names.insert("logbl");
+    names.insert("logf");
+    names.insert("logl");
+    names.insert("lrint");
+    names.insert("lrintf");
+    names.insert("lrintl");
+    names.insert("lround");
+    names.insert("lroundf");
+    names.insert("lroundl");
+    names.insert("malloc");
+    names.insert("memchr");
+    names.insert("memcmp");
+    names.insert("memcpy");
+    names.insert("mempcpy");
+    names.insert("memset");
+    names.insert("modf");
+    names.insert("modf");
+    names.insert("modfl");
+    names.insert("nearbyint");
+    names.insert("nearbyintf");
+    names.insert("nearbyintl");
+    names.insert("nextafter");
+    names.insert("nextafterf");
+    names.insert("nextafterl");
+    names.insert("nexttoward");
+    names.insert("nexttowardf");
+    names.insert("nexttowardl");
+    names.insert("pow");
+    names.insert("pow10");
+    names.insert("pow10f");
+    names.insert("pow10l");
+    names.insert("powf");
+    names.insert("powl");
+    names.insert("printf");
+    names.insert("printf_unlocked");
+    names.insert("putchar");
+    names.insert("puts");
+    names.insert("remainder");
+    names.insert("remainderf");
+    names.insert("remainderl");
+    names.insert("remquo");
+    names.insert("remquof");
+    names.insert("remquol");
+    names.insert("rindex");
+    names.insert("rint");
+    names.insert("rintf");
+    names.insert("rintl");
+    names.insert("round");
+    names.insert("roundf");
+    names.insert("roundl");
+    names.insert("scalb");
+    names.insert("scalbf");
+    names.insert("scalbl");
+    names.insert("scalbln");
+    names.insert("scalblnf");
+    names.insert("scalblnl");
+    names.insert("scalbn");
+    names.insert("scalbnf");
+    names.insert("scalbnl");
+    names.insert("scanf");
+    names.insert("signbit");
+    names.insert("signbitd128");
+    names.insert("signbitd32");
+    names.insert("signbitd64");
+    names.insert("signbitf");
+    names.insert("signbitl");
+    names.insert("significand");
+    names.insert("significandf");
+    names.insert("significandl");
+    names.insert("sin");
+    names.insert("sincos");
+    names.insert("sincosf");
+    names.insert("sincosl");
+    names.insert("sinf");
+    names.insert("sinh");
+    names.insert("sinhf");
+    names.insert("sinhl");
+    names.insert("sinl");
+    names.insert("snprintf");
+    names.insert("snprintf");
+    names.insert("sprintf");
+    names.insert("sqrt");
+    names.insert("sqrtf");
+    names.insert("sqrtl");
+    names.insert("sscanf");
+    names.insert("stpcpy");
+    names.insert("stpncpy");
+    names.insert("strcasecmp");
+    names.insert("strcat");
+    names.insert("strchr");
+    names.insert("strcmp");
+    names.insert("strcpy");
+    names.insert("strcspn");
+    names.insert("strdup");
+    names.insert("strfmon");
+    names.insert("strlen");
+    names.insert("strncasecmp");
+    names.insert("strncat");
+    names.insert("strncmp");
+    names.insert("strncpy");
+    names.insert("strndup");
+    names.insert("strpbrk");
+    names.insert("strrchr");
+    names.insert("strspn");
+    names.insert("strstr");
+    names.insert("tan");
+    names.insert("tanf");
+    names.insert("tanh");
+    names.insert("tanhf");
+    names.insert("tanhl");
+    names.insert("tanl");
+    names.insert("tgamma");
+    names.insert("tgammaf");
+    names.insert("tgammal");
+    names.insert("toascii");
+    names.insert("tolower");
+    names.insert("toupper");
+    names.insert("towlower");
+    names.insert("towupper");
+    names.insert("trunc");
+    names.insert("truncf");
+    names.insert("truncl");
+    names.insert("vfprintf");
+    names.insert("vfscanf");
+    names.insert("vprintf");
+    names.insert("vscanf");
+    names.insert("vsnprintf");
+    names.insert("vsprintf");
+    names.insert("vsscanf");
+    names.insert("y0");
+    names.insert("y0f");
+    names.insert("y0l");
+    names.insert("y1");
+    names.insert("y1f");
+    names.insert("y1l");
+    names.insert("yn");
+    names.insert("ynf");
+    names.insert("ynl");
 }
 
-// Find all functions whose first instruction is an indirect jump, and store the memory address through which the jump occurs.
-// Most of these will be dynamically-linked functions whose only instruction is the JMP and whose address is in the .got.plt or
-// IAT.  Return the set of addresses for only those functions whose name appears in the specified set.
+// Returns (mostly) virtual addresses in the .got.plt (ELF) or IAT (PE) sections.
+//
+// Finds all functions whose first instruction is an indirect jump, and returns the memory address through which the jump
+// occurs.  Most of these will be dynamically-linked functions whose only instruction is the JMP and whose address is in the
+// .got.plt or IAT.  Return the set of addresses for only those functions whose name appears in the specified set.
+//
+// Note: we could have also looked in the .dynamic and .dynsym sections, but that would have been ELF-specific
 static Disassembler::AddressSet
-whitelist_imports(SgAsmInterpretation *interp, const NameSet &whitelist_names)
+get_import_addresses(SgAsmInterpretation *interp, const NameSet &whitelist_names)
 {
     struct T1: AstSimpleProcessing {
         std::map<SgAsmFunction*, rose_addr_t> gotplt_addr;      // return value; address in .got.plt for each function
@@ -294,7 +684,9 @@ whitelist_imports(SgAsmInterpretation *interp, const NameSet &whitelist_names)
 
     Disassembler::AddressSet retval;
     for (std::map<SgAsmFunction*, rose_addr_t>::iterator i=t1.gotplt_addr.begin(); i!=t1.gotplt_addr.end(); ++i) {
-        if (whitelist_names.find(i->first->get_name())!=whitelist_names.end())
+        std::string name = i->first->get_name();
+        name = StringUtility::split("@", name, 2)[0];
+        if (whitelist_names.find(name)!=whitelist_names.end())
             retval.insert(i->second);
     }
     return retval;
@@ -305,10 +697,14 @@ whitelist_imports(SgAsmInterpretation *interp, const NameSet &whitelist_names)
 // to the memory map that serves up values when needed by memory-reading instructions.  For ELF, we replace the .got.plt
 // section; for PE we replace the "Import Address Table" section.  We always replace addresses that don't correspond to a valid
 // instruction. On the other hand, when the address is valid, we replace it if either follow-calls is CALL_NONE or follow-calls
-// is CALL_BUILTIN and the function is not builtin.
+// is CALL_BUILTIN and the entry is not whitelisted.
+//
+// The whitelist_imports are addresses of slots in the import table (ELF .got.plt or PE IAT) that should not be affected.  The
+// whitelist_exports is the set of function addresses from import table slots that were whitelisted and not modified.
 static void
 overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor &insns, FollowCalls follow_calls,
-                          const Disassembler::AddressSet &whitelist, MemoryMap *ro_map/*in,out*/, rose_addr_t special_value)
+                          MemoryMap *ro_map/*in,out*/, rose_addr_t special_value,
+                          const Disassembler::AddressSet &whitelist_imports, Disassembler::AddressSet &whitelist_exports/*out*/)
 {
     const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
     for (SgAsmGenericHeaderPtrList::const_iterator hi=hdrs.begin(); hi!=hdrs.end(); ++hi) {
@@ -324,9 +720,17 @@ overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor
                     uint32_t *buf = new uint32_t[nwords];
                     (*si)->read_content_local(0, buf, nbytes, false);
                     for (size_t i=0; i<nwords; ++i) {
-                        rose_addr_t va = ByteOrder::le_to_host(buf[i]);
-                        if (NULL==insns.get_instruction(va) || CALL_NONE==follow_calls ||
-                            (CALL_BUILTIN==follow_calls && whitelist.find(va)==whitelist.end())) {
+                        rose_addr_t entry_va = base_va + 4*i;
+                        rose_addr_t call_va = ByteOrder::le_to_host(buf[i]);
+                        if (NULL==insns.get_instruction(call_va) || CALL_NONE==follow_calls) {
+                            // Never try to call a function if there's no instruction there
+                            buf[i] = special_value;
+                            ++nchanges;
+                        } else if (whitelist_imports.find(entry_va)!=whitelist_imports.end()) {
+                            // Allow white-listed functions to be called (and remember their addresses)
+                            whitelist_exports.insert(call_va);
+                        } else if (CALL_BUILTIN==follow_calls) {
+                            // Don't call dynamically-linked functions that are not white-listed
                             buf[i] = special_value;
                             ++nchanges;
                         }
@@ -348,13 +752,13 @@ overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor
 static OutputGroup
 fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inputs, Tracer &tracer,
           const InstructionProvidor &insns, MemoryMap *ro_map, const PointerDetector *pointers, const Switches &opt,
-          const AddressIdMap &entry2id)
+          const AddressIdMap &entry2id, const Disassembler::AddressSet &whitelist_exports)
 {
     ClonePolicy policy(opt.params, entry2id, tracer);
     policy.set_map(ro_map);
     CloneSemantics semantics(policy);
     AnalysisFault::Fault fault = AnalysisFault::NONE;
-    policy.reset(interp, function, &inputs, &insns, pointers);
+    policy.reset(interp, function, &inputs, &insns, pointers, whitelist_exports);
     rose_addr_t last_good_va = 0;
     try {
         while (1) {
@@ -638,6 +1042,7 @@ main(int argc, char *argv[])
     WorkItem prev_work;
     IdFunctionMap functions;
     FunctionIdMap function_ids;
+    Disassembler::AddressSet whitelist_exports;         // dynamic functions that should be called
     InputGroup igroup;
     InstructionProvidor insns;
     SgAsmInterpretation *prev_interp = NULL;
@@ -725,8 +1130,10 @@ main(int argc, char *argv[])
             assert(interp->get_map()!=NULL);
             ro_map = *interp->get_map();
             ro_map.prune(MemoryMap::MM_PROT_READ, MemoryMap::MM_PROT_WRITE);
-            Disassembler::AddressSet whitelist = whitelist_imports(interp, builtin_function_names);
-            overmap_dynlink_addresses(interp, insns, opt.params.follow_calls, whitelist, &ro_map, GOTPLT_VALUE);
+            Disassembler::AddressSet whitelist_imports = get_import_addresses(interp, builtin_function_names);
+            whitelist_exports.clear(); // imports are addresses of import table slots; exports are functions
+            overmap_dynlink_addresses(interp, insns, opt.params.follow_calls, &ro_map, GOTPLT_VALUE,
+                                      whitelist_imports, whitelist_exports/*out*/);
         }
         
         // Get the results of pointer analysis.  We could have done this before any fuzz testing started, but by doing
@@ -741,7 +1148,8 @@ main(int argc, char *argv[])
         timeval start_time, stop_time;
         clock_t start_ticks = clock();
         gettimeofday(&start_time, NULL);
-        OutputGroup ogroup = fuzz_test(interp, func, igroup, tracer, insns, &ro_map, ip->second, opt, entry2id);
+        OutputGroup ogroup = fuzz_test(interp, func, igroup, tracer, insns, &ro_map, ip->second, opt, entry2id,
+                                       whitelist_exports);
         gettimeofday(&stop_time, NULL);
         clock_t stop_ticks = clock();
         double elapsed_time = (stop_time.tv_sec - start_time.tv_sec) +

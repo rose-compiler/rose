@@ -23,6 +23,7 @@ typedef std::set<SgAsmFunction*> Functions;
 typedef std::map<SgAsmFunction*, int> FunctionIdMap;
 typedef std::map<int, SgAsmFunction*> IdFunctionMap;
 typedef std::map<rose_addr_t, int> AddressIdMap;
+typedef std::map<std::string, rose_addr_t> NameAddress;
 typedef BinaryAnalysis::FunctionCall::Graph CG;
 typedef boost::graph_traits<CG>::vertex_descriptor CG_Vertex;
 enum Verbosity { SILENT, LACONIC, EFFUSIVE };
@@ -895,6 +896,64 @@ public:
 };
 
 /*******************************************************************************************************************************
+ *                                      Stack frames
+ *******************************************************************************************************************************/
+
+/** Information about a function call. */
+struct StackFrame {
+    StackFrame(SgAsmFunction *func, rose_addr_t esp)
+        : func(func), entry_esp(esp), monitoring_stdcall(true), stdcall_args_va(0), follow_calls(false) {}
+    SgAsmFunction *func;                        // Function that is called
+    rose_addr_t entry_esp;                      // ESP when this function was first entered
+    bool monitoring_stdcall;                    // True for a little while when we enter a new function
+    rose_addr_t stdcall_args_va;                // ESP where stdcall arguments will be pushed
+    bool follow_calls;                          // Traverse into called functions
+};
+
+/** Information about all pending function calls.  This is the stack of functions that have not yet returned. */
+class StackFrames {
+    typedef std::vector<StackFrame> Stack;
+    Stack stack_frames;
+public:
+    /** Clear the stack. */
+    void clear() { stack_frames.clear(); }
+
+    /** Returns true if the call stack is empty. Normally, the function being analyzed would be on the stack. */
+    bool empty() const { return stack_frames.empty(); }
+
+    /** Returns the number of stack frames on the call stack. */
+    size_t size() const { return stack_frames.size(); }
+
+    /** Returns the stack frame for the most recently called function that has not yet returned.
+     * @{ */
+    const StackFrame& top() const { return (*this)[0]; }
+          StackFrame& top()       { return (*this)[0]; }
+    /** @} */
+    
+    /** Returns the Nth frame from the top. The top frame is N=0.
+     * @{ */
+    const StackFrame& operator[](size_t n) const { assert(n<size()); return stack_frames[size()-(n+1)]; }
+          StackFrame& operator[](size_t n)       { assert(n<size()); return stack_frames[size()-(n+1)]; }
+    /** @} */
+
+    /** Pop one frame from the stack.  The stack must not be empty. */
+    void pop() { assert(!empty()); stack_frames.pop_back(); }
+
+    /** Pop frames from the stack until @p esp is valid for the top frame. */
+    void pop_to(rose_addr_t esp) { while (!empty() && top().entry_esp<esp) pop(); }
+
+    /** Push a new frame if @p insn is the entry instruction for a function. Returns true if a new frame is pushed. */
+    bool push_if(SgAsmInstruction *insn, rose_addr_t esp) {
+        SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
+        if (func && insn->get_address()==func->get_entry_va()) {
+            stack_frames.push_back(StackFrame(func, esp));
+            return true;
+        }
+        return false;
+    }
+};
+
+/*******************************************************************************************************************************
  *                                      Analysis Semantic Policy
  *******************************************************************************************************************************/
 
@@ -911,16 +970,6 @@ class Policy: public PartialSymbolicSemantics::Policy<State, ValueType> {
 public:
     typedef          PartialSymbolicSemantics::Policy<State, ValueType> Super;
 
-    struct StackFrame {
-        StackFrame(SgAsmFunction *func, rose_addr_t esp)
-            : func(func), entry_esp(esp), monitoring_stdcall(true), stdcall_args_va(0) {}
-        SgAsmFunction *func;                            // Function that is called
-        rose_addr_t entry_esp;                          // ESP when this function was first entered
-        bool monitoring_stdcall;                        // True for a little while when we enter a new function
-        rose_addr_t stdcall_args_va;                    // ESP where stdcall arguments will be pushed
-    };
-    typedef std::vector<StackFrame> StackFrames;
-
     State<ValueType> state;
     static const rose_addr_t FUNC_RET_ADDR = 4083;      // Special return address to mark end of analysis
     InputGroup *inputs;                                 // Input values to use when reading a never-before-written variable
@@ -936,6 +985,7 @@ public:
     Tracer &tracer;                                     // Responsible for emitting rows for semantic_fio_trace
     bool uses_stdcall;                                  // True if this executable uses the stdcall calling convention
     StackFrames stack_frames;                           // Stack frames ordered by decreasing entry_esp values
+    Disassembler::AddressSet whitelist_exports;         // Dynamic functions that can be called when follow_calls==CALL_BUILTIN
 
     Policy(const PolicyParams &params, const AddressIdMap &entry2id, Tracer &tracer)
         : inputs(NULL), pointers(NULL), interp(NULL), ninsns(0), address_hasher(0, 255, 0),
@@ -984,13 +1034,14 @@ public:
     
     // Sets up the machine state to start the analysis of one function.
     void reset(SgAsmInterpretation *interp, SgAsmFunction *func, InputGroup *inputs, const InstructionProvidor *insns,
-               const PointerDetector *pointers/*=NULL*/) {
+               const PointerDetector *pointers/*=NULL*/, const Disassembler::AddressSet &whitelist_exports) {
         inputs->reset();
         this->inputs = inputs;
         this->insns = insns;
         this->pointers = pointers;
         this->ninsns = 0;
         this->interp = interp;
+        this->whitelist_exports = whitelist_exports;
         stack_frames.clear();
         state.reset_for_analysis();
 
@@ -1037,7 +1088,7 @@ public:
         // Therefore, we must consistently initialize all possible callee-saved registers.  We are assuming cdecl calling
         // convention (i.e., GCC's default for C/C++).  Registers are marked as HAS_BEEN_INITIALIZED so that an input isn't
         // consumed when they're read during the test.
-        ValueType<32> rval(inputs->queue(IQ_INTEGER).next());
+        ValueType<32> rval(inputs->queue(IQ_INTEGER).has(0) ? inputs->queue(IQ_INTEGER).get(0) : 0);
         state.registers.gpr[x86_gpr_bx] = rval;
         state.register_rw_state.gpr[x86_gpr_bx].state = HAS_BEEN_INITIALIZED;
         state.registers.gpr[x86_gpr_si] = rval;
@@ -1101,7 +1152,7 @@ public:
     // callee's code, we might be able to figure something out by looking at how the caller manipulates its stack.
     rose_addr_t skip_call(SgAsmInstruction *insn) {
         assert(!stack_frames.empty());
-        StackFrame &caller_frame = stack_frames.back();
+        StackFrame &caller_frame = stack_frames.top();
         rose_addr_t esp = state.registers.gpr[x86_gpr_sp].known_value(); // stack address of the return address
         assert(caller_frame.entry_esp>=esp);
         rose_addr_t ret_va = this->template readMemory<32>(x86_segreg_ss, ValueType<32>(esp), ValueType<1>(1)).known_value();
@@ -1138,6 +1189,15 @@ public:
         return ret_va;
     }
 
+    // Return the word at the specified stack location as if the specimen had read the stack.  The argno is the 32-bit word
+    // offset from the current ESP value.
+    uint32_t stack(size_t argno) {
+        rose_addr_t stack_va = readRegister<32>("esp").known_value() + 4 + 4*argno; // avoid return value
+        ValueType<32> word = readMemory<32>(x86_segreg_ss, ValueType<32>(stack_va), this->true_());
+        return word.known_value();
+    }
+
+    // Called by instruction semantics before each instruction is executed
     void startInstruction(SgAsmInstruction *insn_) /*override*/ {
         if (ninsns++ >= params.timeout)
             throw FaultException(AnalysisFault::INSN_LIMIT);
@@ -1148,13 +1208,11 @@ public:
 
         // Adjust stack frames, popping stale frames and adding new ones
         rose_addr_t esp = state.registers.gpr[x86_gpr_sp].known_value();
-        while (!stack_frames.empty() && stack_frames.back().entry_esp<esp)
-            stack_frames.pop_back();
-        if (insn->get_address()==func->get_entry_va())
-            stack_frames.push_back(StackFrame(func, esp));
+        stack_frames.pop_to(esp);
+        bool entered_function = stack_frames.push_if(insn, esp);
         if (stack_frames.empty())
             throw FaultException(AnalysisFault::BAD_STACK);
-        StackFrame &stack_frame = stack_frames.back();
+        StackFrame &stack_frame = stack_frames.top();
 
         // Debugging
         if (params.verbosity>=EFFUSIVE) {
@@ -1168,6 +1226,32 @@ public:
                       <<" - " <<(stack_frame.entry_esp-esp) <<" = " <<StringUtility::addrToString(esp) <<"\n";
         }
 
+        // Decide whether this function is allowed to call (via CALL, JMP, fall-through, etc) other functions.
+        if (entered_function) {
+            switch (params.follow_calls) {
+                case CALL_ALL:
+                    stack_frame.follow_calls = true;
+                    break;
+                case CALL_NONE:
+                    stack_frame.follow_calls = false;
+                    break;
+                case CALL_BUILTIN:
+                    // If the called function is whitelisted, then it should not call anything except other whitelisted
+                    // functions; otherwise it can call other stuff.  The logic here works in conjunction with the logic
+                    // in finishInstruction().
+                    if (whitelist_exports.find(insn->get_address())!=whitelist_exports.end()) {
+                        stack_frame.follow_calls = false;
+                        if (params.verbosity>=EFFUSIVE) {
+                            std::cerr <<"CloneDetection: turning off follow-calls for the duration of this"
+                                      <<" white-listed function\n";
+                        }
+                    } else {
+                        stack_frame.follow_calls = true;
+                    }
+                    break;
+            }
+        }
+        
         // Update some necessary things
         state.registers.ip = ValueType<32>(insn->get_address());
         monitor_esp(insn, stack_frame);
@@ -1181,20 +1265,15 @@ public:
         Super::startInstruction(insn_);
     }
 
-    // Return the word at the specified stack location as if the specimen had read the stack.  The argno is the 32-bit word
-    // offset from the current ESP value.
-    uint32_t stack(size_t argno) {
-        rose_addr_t stack_va = readRegister<32>("esp").known_value() + 4 + 4*argno; // avoid return value
-        ValueType<32> word = readMemory<32>(x86_segreg_ss, ValueType<32>(stack_va), this->true_());
-        return word.known_value();
-    }
-    
-    // Special handling for some instructions. Like CALL, which does not call the function but rather consumes an input value.
+    // Called by instruction semantics after each instruction is executed. Stack frames are not updated until the next
+    // call to startInstruction().
     void finishInstruction(SgAsmInstruction *insn) /*override*/ {
         SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
         assert(insn_x86!=NULL);
         ++state.output_group.ninsns;
         rose_addr_t next_eip = state.registers.ip.known_value();
+        SgAsmInstruction *next_insn = insns->get_instruction(next_eip);
+        SgAsmFunction *next_func = SageInterface::getEnclosingNode<SgAsmFunction>(next_insn);
         bool has_returned = false;
 
         // If the test branches (via CALL or JMP or other) to a dynamically-loaded function that has not been linked into the
@@ -1203,7 +1282,7 @@ public:
         // initialized the .got.plt with the GOTPLT_VALUE that we recognize here.  When we detect that the next instruction is
         // at the GOTPLT_VALUE address, we consume an input value and place it in EAX (the return value), then pop the return
         // address off the stack and load it into EIP.
-        if (GOTPLT_VALUE==next_eip && !has_returned) {
+        if (!has_returned && GOTPLT_VALUE==next_eip) {
             if (params.verbosity>=EFFUSIVE)
                 std::cerr <<"CloneDetection: special handling for non-linked dynamic function\n";
             this->writeRegister("eax", next_input_value<32>(IQ_FUNCTION));
@@ -1213,12 +1292,13 @@ public:
             has_returned = true;
         }
 
-        // If we're supposed to be skiping over calls and we've entered another function, then immediately return.  This
-        // implementation (rather than looking for CALL instructions) handles more cases since functions are not always called
-        // via x86 CALL instruction -- sometimes the compiler will call using JMP, allowing the "jumpee" function to inherit
-        // the stack frame (and in particular, the return address) of the jumper.
-        if (!has_returned && CALL_NONE==params.follow_calls && stack_frames.size()>1 &&
-            next_eip==stack_frames.back().func->get_entry_va()) {
+        // If we're supposed to be skiping over calls and we've entered another function (which is not whitelisted), then
+        // immediately return.  This implementation (rather than looking for CALL instructions) handles more cases since
+        // functions are not always called via x86 CALL instruction -- sometimes the compiler will call using JMP, allowing the
+        // "jumpee" function to inherit the stack frame (and in particular, the return address) of the jumper.  This also
+        // avoids the problem where a CALL instruction is used to obtain the EIP value in position-independent code.
+        const StackFrame &caller_frame = stack_frames.top(); // we haven't pushed the callee's frame yet (see startInstruction)
+        if (!has_returned && !caller_frame.follow_calls && next_func && next_func->get_entry_va()==next_eip) {
             if (params.verbosity>=EFFUSIVE)
                 std::cerr <<"CloneDetection: special handling for function call (fall through and return via EAX)\n";
 #ifdef OUTPUTGROUP_SAVE_CALLGRAPH
@@ -1235,8 +1315,7 @@ public:
         // black box function, skipping the call.
         if (!has_returned && x86_call==insn_x86->get_kind()) {
             const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
-            SgAsmInstruction *target_insn = insns->get_instruction(next_eip);
-            if (args.size()==1 && NULL==isSgAsmValueExpression(args[0]) && NULL==target_insn) {
+            if (args.size()==1 && NULL==isSgAsmValueExpression(args[0]) && NULL==next_insn) {
                 if (params.verbosity>=EFFUSIVE)
                     std::cerr <<"CloneDetection: special handling for invalid indirect function call\n";
                 next_eip = skip_call(insn);
@@ -1251,8 +1330,8 @@ public:
             const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
             if (args.size()==1 && isSgAsmIntegerValueExpression(args[0])) {
                 rose_addr_t esp = state.registers.gpr[x86_gpr_sp].known_value(); // after the RET has executed
-                for (size_t i=stack_frames.size(); i>0; --i) {
-                    StackFrame &sf = stack_frames[i-1];
+                for (size_t i=0; i<stack_frames.size(); ++i) {
+                    StackFrame &sf = stack_frames[i];
                     if (sf.entry_esp>=esp && sf.stdcall_args_va!=esp) {
                         sf.stdcall_args_va = esp;
                         if (params.verbosity>=EFFUSIVE) {
@@ -1518,9 +1597,9 @@ public:
                                 // This function might be using a different calling convention where arguments are passed
                                 // in registers.  So pretend we're reading an argument from the stack instead of a register.
                                 switch (reg.get_minor()) {
-                                    case x86_gpr_ax: fake_arg_addr = stack_frames.back().entry_esp + 4; break; // first arg
-                                    case x86_gpr_dx: fake_arg_addr = stack_frames.back().entry_esp + 8; break; // second
-                                    case x86_gpr_cx: fake_arg_addr = stack_frames.back().entry_esp + 0xc; break; // third
+                                    case x86_gpr_ax: fake_arg_addr = stack_frames.top().entry_esp + 4; break; // first arg
+                                    case x86_gpr_dx: fake_arg_addr = stack_frames.top().entry_esp + 8; break; // second
+                                    case x86_gpr_cx: fake_arg_addr = stack_frames.top().entry_esp + 0xc; break; // third
                                 }
                             }
                             if (fake_arg_addr!=0) {

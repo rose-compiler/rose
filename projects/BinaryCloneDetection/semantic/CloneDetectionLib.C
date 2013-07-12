@@ -861,7 +861,7 @@ link_builtins(SgAsmGenericHeader *imports_header, SgAsmGenericHeader *exports_he
 {
     // Find the addresses for the exported functions
     struct Exports: AstSimpleProcessing {
-        std::map<std::string, rose_addr_t> address;
+        NameAddress address;
         Exports(SgAsmGenericHeader *hdr) {
             if (hdr)
                 traverse(hdr, preorder);
