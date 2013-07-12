@@ -13,7 +13,7 @@ void TestDefUseMemObjTraversal::visit(SgNode* sgn)
 {
   if(isSgExpression(sgn))
   {
-    MemObj memobj = getDefMemObj(sgn, fipa);
+    DefUseMemObj memobj = getDefUseMemObj(sgn, fipa);
   }
 }
 
@@ -30,7 +30,10 @@ int main(int argc, char* argv[])
   RoseAst ast(root);
 
   // compute variableId mappings
-  FlowInsensitivePointerAnalysis fipa(project);
+  VariableIdMapping vidm;
+  vidm.computeVariableSymbolMapping(project);
+
+  FlowInsensitivePointerAnalysis fipa(project, vidm);
   fipa.runAnalysis();
   //fipa.printAnalysisSets();
 

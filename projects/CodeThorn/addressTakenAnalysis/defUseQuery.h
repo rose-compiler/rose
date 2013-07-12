@@ -3,21 +3,24 @@
 
 #include "addressTakenAnalysis.h"
 
-typedef std::pair<VariableIdSet, bool> MemObj;
+//typedef std::pair<VariableIdSet, bool> MemObj;
 
 /*************************************************
- ******************** MemObj *********************
+ ***************** DefUseMemObj ******************
  *************************************************/
-// class MemObj
-// {
-//   VariableIdSet set;
-//   bool pointerAccessed;
-// public:
-//   MemObj() : pointerAccessed(false) { }
-//   bool isAccessedByPointer();
-//   void insert(VariableId _vid);
-//   void setVariableIdSet(VariableIdSet that);
-// };
+
+// determined completely based on syntactic information
+// def_set consists of VariableIds which is written by the expression
+// use_set consists of VariableIds which are read but not modified by this expression
+class DefUseMemObj
+{
+  VariableIdSet def_set;
+  VariableIdSet use_set;
+  bool ptrAcess;
+  bool fptrPresent;
+public:
+  DefUseMemObj() : ptrAcess(false), fptrPresent(false) { }
+};
 
 // class to identify sets of memory involved in 
 class ProcessOperands : public ROSE_VisitorPatternDefaultBase
@@ -34,8 +37,10 @@ public:
 };
 
 
-MemObj getDefMemObj(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa);
-MemObj getUseMemObj(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa);
+DefUseMemObj getDefUseMemObj(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa);
+DefUseMemObj getDefUseMemObjLHS(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa);
+DefUseMemObj getDefUseMemObjRHS(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa);
 
 
 #endif
+

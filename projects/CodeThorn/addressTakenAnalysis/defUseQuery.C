@@ -32,9 +32,9 @@ void ProcessOperands::visit(SgPointerDerefExp* sgn)
   set = fipa.getMemModByPointer();
 }
 
-MemObj getDefMemObj(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa)
+DefUseMemObj getDefUseMemObj(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa)
 {
-  MemObj rMemObj;
+  DefUseMemObj rMemObj;
   // handle only expressions for now
   try 
   {

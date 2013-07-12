@@ -126,18 +126,12 @@ class FlowInsensitivePointerAnalysis
   TypeAnalysis typeAnalysis;
 
 public:
-  FlowInsensitivePointerAnalysis(SgProject* project) : root(project), addrTakenAnalysis(vidm), typeAnalysis(vidm)
-  { 
-    initialize();
-  }
-
   FlowInsensitivePointerAnalysis(SgProject* project, VariableIdMapping& _vidm) : root(project), 
                                                                                  vidm(_vidm),
                                                                                  addrTakenAnalysis(vidm),
                                                                                  typeAnalysis(vidm)
   { 
   }
-  void initialize();
   void runAnalysis();
   void printAnalysisSets();
   VariableIdSet getMemModByPointer();

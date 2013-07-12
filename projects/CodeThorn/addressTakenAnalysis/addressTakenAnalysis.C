@@ -208,12 +208,6 @@ void TypeAnalysis::printArrayTypeSet()
  ******** FlowInsensitivePointerAnalysis  ********
  *************************************************/
 
-void FlowInsensitivePointerAnalysis::initialize()
-{
-  ROSE_ASSERT(isSgProject(root) != NULL);
-  vidm.computeVariableSymbolMapping(isSgProject(root));
-}
-
 void FlowInsensitivePointerAnalysis::runAnalysis()
 {
   addrTakenAnalysis.computeAddressTakenSet(root);
