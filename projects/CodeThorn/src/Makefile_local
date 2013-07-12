@@ -1,0 +1,302 @@
+# MS: makefile for local development with installed version of ROSE.
+
+# for building the reference implementation use:
+
+TOOLNAME3 = codethorn
+TOOLNAME2 = ast_demo
+TOOLNAME4 = rdmain
+
+MYDATE = `date +%Y_%m_%d`
+
+CC                    = gcc-4.4
+CXX                   = g++-4.4
+BISON                 = bison
+FLEX                  = flex
+
+# Location of include directory after "make install" (set as environment variable)
+#ROSE_INCLUDE_DIR = 
+
+# Location of Boost include directory (set as environment variable)
+#BOOST_CPPFLAGS = 
+
+# Location of library directory after "make install" (set as environment variable)
+#ROSE_LIB_DIR = 
+ROSE_LIBS = -Wl,-rpath -Wl,$(ROSE_LIB_DIR) -L $(ROSE_LIB_DIR) -lrose
+
+# Location of ROSE's libtool (it's only in the compilation path)
+
+#KNOBS = -DPSTATE_MAINTAINER_LIST -DESTATE_MAINTAINER_LIST -DCSET_MAINTAINER_LIST
+#KNOBS = -DPSTATE_MAINTAINER_SET -DESTATE_MAINTAINER_SET -DCSET_MAINTAINER_SET
+#KNOBS = -DPSTATE_MAINTAINER_HSET -DESTATE_MAINTAINER_HSET -DCSET_MAINTAINER_HSET
+KNOBS = 
+
+CPPFLAGS              = $(KNOBS) -O3 -march=native -ftree-vectorize -ggdb $(EXTRA_INCLUDES) -fopenmp 
+#CXXCPPFLAGS           = @CXXCPPFLAGS@
+CXXFLAGS              = -Wno-deprecated -Wall
+LDFLAGS               = 
+YACC                  = bison
+
+OBJECT_FILES=RoseAst.o AstTerm.o Labeler.o SgNodeHelper.o VariableIdMapping.o CFAnalyzer.o AType.o ExprAnalyzer.o ConstraintRepresentation.o StateRepresentations.o Analyzer.o Visualizer.o Timer.o LanguageRestrictor.o LTLParser.o LTLCheckerFixpoint.o LTLCheckerUnified.o CommandLineOptions.o InternalChecks.o Miscellaneous.o MatchOperation.o AstMatching.o matcherparser.o matcherlexer.o RDLattice.o
+
+REGRESSION_DATA_DIR=regressiondata
+
+OBJECT_FILES_EXPERIMENTAL=BoostGraphIntegration.o
+
+# Default make rule to use
+all: $(TOOLNAME3) $(TOOLNAME2) matcher_demo
+	@if [ x$${ROSE_IN_BUILD_TREE:+present} = xpresent ]; then echo "ROSE_IN_BUILD_TREE should not be set" >&2; exit 1; fi
+
+
+.PHONY: check dist viz clean distclean bsps docs
+
+# Example suffix rule for more experienced makefile users
+# .C.o:
+#	g++ -c -I$(ROSE_INCLUDE_DIR) -o $@ $(@:.o=.C)
+
+ltlparser: LTLParser.y++ LTL.h
+	$(BISON) -p ltl_ $<
+	$(CXX) -DLTL_PARSER_DEBUG -o $@ $(CXXFLAGS) $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) LTLParser.tab.c++
+
+LTLParser.o: LTLParser.y++ LTL.h
+	$(BISON) -p ltl_ $<
+	$(CXX) -o $@ $(CXXFLAGS) $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) LTLParser.tab.c++ -c
+
+matcherparser.h: matcherparser.yxx
+	$(BISON) -p matcher --defines=matcherparser.h matcherparser.yxx
+matcherparser.C: matcherparser.yxx
+	$(BISON) -p matcher matcherparser.yxx -omatcherparser.C
+matcherparser.o: matcherparser.h matcherparser.C
+	$(CXX) -o $@ $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -I. matcherparser.C -c
+
+matcherlexer.o: matcherlexer.lxx matcherparser.h
+#	$(FLEX) -Pmatcher -omatcherlexer.C matcherlexer.lxx
+	$(FLEX) -Pmatcher -t matcherlexer.lxx > matcherlexer.C # flex 2.5.35 bug workaround
+	$(CXX) -o $@ $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -I. matcherlexer.C -c
+
+MatchOperation.o : matcherparser_decls.h MatchOperation.h MatchOperation.C matcherparser.h
+
+AstMatching.o : matcherparser_decls.h MatchOperation.h RoseAst.h AstMatching.h AstMatching.C
+
+Analyzer.o : CollectionOperators.h Analyzer.h AstTerm.h Labeler.h CFAnalyzer.h RoseAst.h SgNodeHelper.h ExprAnalyzer.h StateRepresentations.h Analyzer.C
+
+codethorn.o: codethorn.C codethorn.h LTL.h
+LTLChecker.o: LTLChecker.C LTLChecker.h LTL.h
+
+%.o: %.C %.h
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $< -c 
+
+$(TOOLNAME3): $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_empty_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3) RERS_empty_specialization.o
+
+$(TOOLNAME3)_rers1: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem1_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers1 RERS_Problem1_specialization.o
+
+$(TOOLNAME3)_rers2: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem2_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers2 RERS_Problem2_specialization.o
+
+$(TOOLNAME3)_rers3: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem3_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers3 RERS_Problem3_specialization.o
+
+$(TOOLNAME3)_rers4: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem4_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers4 RERS_Problem4_specialization.o
+
+$(TOOLNAME3)_rers5: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem5_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers5 RERS_Problem5_specialization.o
+
+$(TOOLNAME3)_rers6: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem6_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers6 RERS_Problem6_specialization.o
+
+$(TOOLNAME3)_rers7: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem7_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers7 RERS_Problem7_specialization.o
+
+$(TOOLNAME3)_rers8: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem8_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers8 RERS_Problem8_specialization.o
+
+$(TOOLNAME3)_rers9: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem9_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers9 RERS_Problem9_specialization.o
+
+$(TOOLNAME3)_rers10: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem10_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers10 RERS_Problem10_specialization.o
+
+$(TOOLNAME2): $(TOOLNAME2).C $(OBJECT_FILES) RERS_empty_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME2).C RERS_empty_specialization.o -o$(TOOLNAME2) 
+
+$(TOOLNAME4): $(TOOLNAME4).C $(OBJECT_FILES) RERS_empty_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME4).C -o$(TOOLNAME4) RERS_empty_specialization.o
+
+xxtest: xxtest.C $(OBJECT_FILES)
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) xxtest.C -oxxtest
+
+#MS: not finished yet
+matcher_demo: matcher_demo.C $(OBJECT_FILES) matcherparser.o matcherlexer.o RERS_empty_specialization.o
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) matcher_demo.C RERS_empty_specialization.o -omatcher_demo
+
+check: $(TOOLNAME3)
+	./$(TOOLNAME3) --internal-checks
+	@echo ================================================================
+	@echo CHECK: all of the following formulae should evaluate to "YES"!
+	@echo ================================================================
+	./$(TOOLNAME3) --edg:no_warnings tests/rers_mini1.c    --verify tests/rers_mini1.ltl
+
+checkdemos: matcher_demo ast_demo
+	./matcher_demo tests/basictest5.C < tests/matchexpressions/test1.mat
+	./ast_demo tests/basictest5.C
+
+checkall: check regressiontest checkdemos
+	@echo
+	@echo "=================="
+	@echo "All checks passed."
+	@echo "=================="
+	@echo
+
+test: $(TOOLNAME3)
+	./$(TOOLNAME3) --edg:no_warnings tests/rers/Problem1.c \
+	               --verify tests/rers/properties1.txt \
+	               --csv-assert Problem1-assert.csv \
+	               --csv-ltl Problem1-ltl.csv
+
+RERS=$(patsubst %,Problem%.log, $(shell seq 13))
+rers: $(RERS)
+
+# parallel tests with make -j<N> test
+%.log: tests/rers/%.c $(TOOLNAME3) Makefile
+	./$(TOOLNAME3) --edg:no_warnings --colors=no $< \
+	     --verify $(patsubst tests/rers/Problem%.c,tests/rers/properties%.txt,$<) \
+	     --csv-ltl $(patsubst tests/rers/Problem%.c,Problem%-ltl.csv,$<) \
+	     --csv-assert $(patsubst tests/rers/Problem%.c,Problem%-assert.csv,$<) >$@
+
+
+validate:
+	cd regressiondata && python validate.py --log Problem1.log --csv rers_Problem1_ltl_csv.txt
+
+docs:
+	doxygen Doxyfile
+
+vizps: transitiongraph1.dot transitiongraph2.dot cfg.dot ast.dot
+	dot -Tps transitiongraph1.dot -oviz/transitiongraph1.ps
+	dot -Tps transitiongraph2.dot -oviz/transitiongraph2.ps
+	dot -Tps cfg.dot -oviz/cfg.ps
+	dot -Gordering=out -Tps ast.dot -oviz/ast.ps
+
+vizjpg: transitiongraph1.dot transitiongraph2.dot cfg.dot ast.dot
+	dot -Tjpg transitiongraph1.dot -oviz/transitiongraph1.jpg
+	dot -Tjpg transitiongraph2.dot -oviz/transitiongraph2.jpg
+	dot -Tjpg cfg.dot -oviz/cfg.jpg
+	dot -Gordering=out -Tjpg ast.dot -oviz/ast.jpg
+
+clean:
+	rm -f testCode.o
+	rm -f rose_testCode.o
+	rm -f rose_testCode.C
+	rm -f *.o
+	rm -f $(TOOLNAME3)
+	rm -f $(TOOLNAME3)_rers*
+	rm -f RERS_Problem*_mod.C
+	rm -f *.dot
+	rm -f *.ps
+	rm -f viz/*
+	rm -f bsps/*
+	rm -f LTLParser.tab.c++
+	rm -f tmp*
+	rm -f matcherparser.C
+	rm -f matcherlexer.C
+	rm -f matcherparser.tab.cxx
+
+distclean: clean
+	rm -f *.tgz
+	rm -f *~
+	rm -rf ../docs/doxygen
+	rm -f $(TOOLNAME3)ref
+
+bsps: codethorn
+
+	./codethorn tests/basictest10f.C --viz=yes && make -f Makefile_local vizps && make -f Makefile_local vizjpg
+	cp tests/basictest10f.C bsps
+	cp viz/cfg.ps bsps/basictest10f_cfg.ps
+	cp viz/transitiongraph1.ps bsps/basictest10f_transitiongraph1.ps
+	cp viz/transitiongraph2.ps bsps/basictest10f_transitiongraph2.ps
+	cp viz/ast.jpg bsps/basictest10f_ast.jpg
+	cp viz/cfg.jpg bsps/basictest10f_cfg.jpg
+	cp viz/transitiongraph1.jpg bsps/basictest10f_transitiongraph1.jpg
+	cp viz/transitiongraph2.jpg bsps/basictest10f_transitiongraph2.jpg
+	ps2pdf bsps/basictest10f_transitiongraph2.ps bsps/basictest10f_transitiongraph2.pdf
+
+	./codethorn tests/basictest15.C && make -f Makefile_local vizps && make -f Makefile_local vizjpg
+	cp tests/basictest15.C bsps
+	cp viz/cfg.ps bsps/basictest15_cfg.ps
+	cp viz/transitiongraph1.ps bsps/basictest15_transitiongraph1.ps
+	cp viz/transitiongraph2.ps bsps/basictest15_transitiongraph2.ps
+	cp viz/ast.jpg bsps/basictest15_ast.jpg
+	cp viz/cfg.jpg bsps/basictest15_cfg.jpg
+	cp viz/transitiongraph1.jpg bsps/basictest15_transitiongraph1.jpg
+	cp viz/transitiongraph2.jpg bsps/basictest15_transitiongraph2.jpg
+	ps2pdf bsps/basictest15_transitiongraph2.ps bsps/basictest15_transitiongraph2.pdf
+
+	./codethorn tests/rers_mini8.c --viz=yes && make -f Makefile_local vizps && make -f Makefile_local vizjpg
+	cp tests/rers_mini8.c bsps
+	cp viz/cfg.ps bsps/rers_mini8_cfg.ps
+	cp viz/transitiongraph1.ps bsps/rers_mini8_transitiongraph1.ps
+	cp viz/transitiongraph2.ps bsps/rers_mini8_transitiongraph2.ps
+	cp viz/ast.jpg bsps/rers_mini8_ast.jpg
+	cp viz/cfg.jpg bsps/rers_mini8_cfg.jpg
+	cp viz/transitiongraph1.jpg bsps/rers_mini8_transitiongraph1.jpg
+	cp viz/transitiongraph2.jpg bsps/rers_mini8_transitiongraph2.jpg
+	ps2pdf bsps/rers_mini8_transitiongraph2.ps bsps/rers_mini8_transitiongraph2.pdf
+
+	./codethorn tests/rers/Problem1.c --viz=yes
+	cp tests/rers/Problem1.c bsps
+	dot -Tjpg transitiongraph2.dot -oviz/transitiongraph2.jpg
+	cp viz/transitiongraph2.jpg bsps/rers1_transitiongraph2.jpg
+
+dist:
+	tar cvzf codethorn_$(MYDATE).tgz *.C *cpp *.h *.lxx *.yxx tests/*.C tests/*.c Makefile*
+
+
+asserttest: $(TOOLNAME3)
+	./$(TOOLNAME3) --edg:no_warnings tests/asserttest2.c --csv-assert assert_csv.txt
+
+regressiontest: $(TOOLNAME3)
+	@./$(TOOLNAME3) --csv-assert tmp_rers_mini1_assert_csv.txt --csv-ltl tmp_rers_mini1_ltl_csv.txt --verify tests/rers_mini1.ltl --viz=yes tests/rers_mini1.c
+	@echo "----------------------------------------"
+	@sort -u tmp_rers_mini1_assert_csv.txt > tmp2_rers_mini1_assert_csv.txt 
+	@diff tmp2_rers_mini1_assert_csv.txt $(REGRESSION_DATA_DIR)/rers_mini1_assert_csv.txt
+	@echo "Regression assert test PASSED."
+	@diff tmp_rers_mini1_ltl_csv.txt $(REGRESSION_DATA_DIR)/rers_mini1_ltl_csv.txt
+	@echo "Regression LTL test PASSED."
+	@sort -u transitiongraph1.dat > rg1.dat
+	@sort -u $(REGRESSION_DATA_DIR)/rers_mini1_transitiongraph1.dat > rg2.dat
+	@diff rg1.dat rg2.dat
+	@echo "Regression transition graph test PASSED."
+	@echo "----------------------------------------"
+	@echo "All regression tests PASSED."
+	@echo "----------------------------------------"
+
+# use with caution
+generateregressiondata:
+	./$(TOOLNAME3) --csv-assert $(REGRESSION_DATA_DIR)/rers_mini1_assert_csv.txt --csv-ltl $(REGRESSION_DATA_DIR)/rers_mini1_ltl_csv.txt --verify tests/rers_mini1.ltl --viz=yes tests/rers_mini1.c 
+	sort -u transitiongraph1.dat > tmp_transitiongraph1.dat
+	cp tmp_transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_mini1_transitiongraph1.dat
+
+projectsize:
+	@echo -n "Number of lines: "
+	@wc -l `ls *.h *.C -1 | grep -v parser |  grep -v scanner | grep -v RERS | tr '\n' ' '` *.l?? *.y?? RERS_Problem*_specialization*.C | grep total 
+
+
+%.o: %.C
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $< -c 
+
+RERS_BINARY: transform_rers_problems codethorn_rers1 codethorn_rers2 codethorn_rers3 codethorn_rers4 codethorn_rers5 codethorn_rers6 codethorn_rers7 codethorn_rers8 codethorn_rers9 codethorn_rers10
+		
+		
+
+transform_rers_problems:
+		./transform_rers_problem Problem1
+		./transform_rers_problem Problem2
+		./transform_rers_problem Problem3
+		./transform_rers_problem Problem4
+		./transform_rers_problem Problem5
+		./transform_rers_problem Problem6
+		./transform_rers_problem Problem7
+		./transform_rers_problem Problem8
+		./transform_rers_problem Problem9
+		./transform_rers_problem Problem10
