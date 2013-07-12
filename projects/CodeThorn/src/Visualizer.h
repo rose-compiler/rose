@@ -13,6 +13,30 @@
 #include "Analyzer.h"
 #include "CommandLineOptions.h"
 
+using CodeThorn::Analyzer;
+using CodeThorn::Labeler;
+using CodeThorn::VariableIdMapping;
+using CodeThorn::PStateSet;
+using CodeThorn::EStateSet;
+
+class AssertionExtractor {
+ public:
+  AssertionExtractor(Analyzer* analyzer);
+  void computeLabelVectorOfEStates();
+  void annotateAst();
+  void setLabeler(Labeler* x);
+  void setVariableIdMapping(VariableIdMapping* x);
+  void setPStateSet(PStateSet* x);
+  void setEStateSet(EStateSet* x);
+
+ private:
+  CodeThorn::Labeler* labeler;
+  CodeThorn::VariableIdMapping* variableIdMapping;
+  CodeThorn::PStateSet* pstateSet;
+  CodeThorn::EStateSet* estateSet;
+  vector<string> assertions;
+};
+
 class Visualizer {
  public:
   Visualizer();

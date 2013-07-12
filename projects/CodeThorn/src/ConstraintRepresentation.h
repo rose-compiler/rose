@@ -47,6 +47,7 @@ class Constraint {
   CppCapsuleAValue rhsValCppCapsule() const;
   string toString() const;
   string toString(VariableIdMapping*) const;
+  string toAssertionString(VariableIdMapping*) const;
   string operatorStringFromStream(istream& is);
   void fromStream(istream& is);
   void toStream(ostream& os);
@@ -90,6 +91,7 @@ class ConstraintSet : public set<Constraint> {
 
   string toString() const;
   string toString(VariableIdMapping* vim) const;
+  string toAssertionString(VariableIdMapping* vim) const;
 
   //! returns concrete int-value if equality exists, otherwise Top.
   AType::ConstIntLattice varConstIntLatticeValue(const VariableId varId) const;
