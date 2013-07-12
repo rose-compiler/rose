@@ -1,20 +1,59 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- <!DOCTYPE parameters SYSTEM "compass_parameters.dtd"> //-->
 <parameters xmlns="http://www.rosecompiler.org"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xsi:schemaLocation="http://www.rosecompiler.org @ABS_COMPASS2_XML_SRCDIR@/compass_parameters.xsd">
+            <!-- xsi:schemaLocation="http://www.rosecompiler.org compass_parameters.xsd"> //-->
 
   <!-- General Compass Parameters for all checkers //-->
-
   <general>
     <parameter name="target_directory">
       @res_top_src@
     </parameter>
+    <parameter name="enabled_checker">deadFunction</parameter>
+    <parameter name="enabled_checker">defaultArgument</parameter>
+    <parameter name="enabled_checker">functionPointer</parameter>
+    <parameter name="enabled_checker">functionPrototype</parameter>
+    <parameter name="enabled_checker">functionWithMultipleReturns</parameter>
+    <parameter name="enabled_checker">keywordMacro</parameter>
     <parameter name="enabled_checker">keywordMacros</parameter>
+    <parameter name="enabled_checker">nonGlobalCppDirective</parameter>
+    <parameter name="enabled_checker">nonStaticArraySize</parameter>
+    <parameter name="enabled_checker">variableNameSimilarity</parameter>
+    <parameter name="enabled_checker">noGoto</parameter>
+    <parameter name="enabled_checker">noRand</parameter>
+    <parameter name="enabled_checker">booleanIsHas</parameter>
+    <parameter name="enabled_checker">globalVariables</parameter>
+    <parameter name="enabled_checker">noOverloadAmpersand</parameter>
+    <parameter name="enabled_checker">magicNumber</parameter>
+    <parameter name="enabled_checker">allocateAndFreeInTheSameModule</parameter>
+    <parameter name="enabled_checker">forbiddenFunctions</parameter>
+    <parameter name="enabled_checker">commaOperator</parameter>
+    <parameter name="enabled_checker">unaryMinus</parameter>
+    <!--PLACEHOLDER-->
   </general>
 
   <!-- Checker-specific Compass Parameters //-->
-
   <checkers>
+    <checker name="magicNumbers">
+      <parameter name="allowed number">0</parameter>
+    </checker>
+
+    <checker name="forbiddenFunctions">
+      <parameter name="blacklist">rand</parameter>
+    </checker>
+
+    <checker name="allowedFunctions">
+      <parameter name="boost">join</parameter>
+      <parameter name="std">push</parameter>
+    </checker>
+
+    <checker name="allowedVariableNames">
+      <parameter name="variable1">foo</parameter>
+      <parameter name="variable1">bar</parameter>
+      <parameter name="variable2">xyz</parameter>
+    </checker>
+
     <checker name="keywordMacros">
       <parameter name="ROSE">SgProject</parameter>
       <parameter name="ROSE">SgNode</parameter>

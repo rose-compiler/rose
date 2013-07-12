@@ -4,9 +4,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #  Globals
 # ------------------------------------------------------------------------------
 
-COMPASS2=$(top_builddir)/projects/compass2/compass2/compass2
+COMPASS2=$(top_builddir)/projects/compass2/bin/compass2
 CHECKER=$(COMPASS2)
-COMPASS_PARAMETERS_XSD=$(top_srcdir)/projects/compass2/compass2/xml/compass_parameters.xsd
+COMPASS_PARAMETERS_XSD=$(top_srcdir)/projects/compass2/share/xml/compass_parameters.xsd
 TEST_SCRIPT=$(top_srcdir)/projects/compass2/tests/checkers/test_checker.sh
 
 TESTCODES=\
@@ -24,6 +24,7 @@ TESTCODES=\
 #  Test rules
 # ------------------------------------------------------------------------------
 
+.PHONY: $(TESTCODES:.C=.o)
 $(TESTCODES:.C=.o): $(TESTCODES)
 	$(TEST_SCRIPT) \
 		$(CHECKER) \

@@ -10,7 +10,7 @@ COMPASS_PARAMETERS_XSD=$(top_srcdir)/projects/compass2/share/xml/compass_paramet
 TEST_SCRIPT=$(top_srcdir)/projects/compass2/tests/checkers/test_checker.sh
 
 TESTCODES=\
-	keyword_macro_test_1.cpp
+	non_global_cpp_directive_test_1.cpp
 
 # ------------------------------------------------------------------------------
 #  Test rules
@@ -21,7 +21,7 @@ $(TESTCODES:.cpp=.o): $(TESTCODES)
 	$(TEST_SCRIPT) \
 		$(CHECKER) \
 		$(srcdir)/$(@:.o=.cpp) \
-		"Keyword macro detected."
+		"Non-global CPP directive detected"
 
 $(COMPASS2):
 	$(MAKE) -C $(top_builddir)/projects/compass2

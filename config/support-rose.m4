@@ -1515,6 +1515,10 @@ AC_SUBST(absolute_path_srcdir)
 res_top_src=$(cd "$srcdir" && pwd -P)
 AC_DEFINE_UNQUOTED([ROSE_SOURCE_TREE_PATH],"$res_top_src",[Location of ROSE Source Tree.])
 
+# kelly64 (6/26/2013): Compass2 xml configuration files require fully-resolved
+#                      absolute paths.
+AC_SUBST(res_top_src)
+
 # This is silly, but it is done to hide an include command (in
 # projects/compass/Makefile.am, including compass-makefile.inc in the build
 # tree) from Automake because the needed include file does not exist when
@@ -2226,12 +2230,29 @@ projects/compass2/docs/Makefile
 projects/compass2/docs/asciidoc/Makefile
 projects/compass2/docs/doxygen/doxygen.config
 projects/compass2/docs/doxygen/Makefile
+projects/compass2/share/xml/compass_parameters.xml
 projects/compass2/tests/Makefile
 projects/compass2/tests/checkers/Makefile
+projects/compass2/tests/checkers/dead_function/Makefile
+projects/compass2/tests/checkers/dead_function/compass_parameters.xml
+projects/compass2/tests/checkers/default_argument/Makefile
+projects/compass2/tests/checkers/default_argument/compass_parameters.xml
 projects/compass2/tests/checkers/function_pointer/Makefile
 projects/compass2/tests/checkers/function_pointer/compass_parameters.xml
+projects/compass2/tests/checkers/function_prototype/Makefile
+projects/compass2/tests/checkers/function_prototype/compass_parameters.xml
+projects/compass2/tests/checkers/function_with_multiple_returns/Makefile
+projects/compass2/tests/checkers/function_with_multiple_returns/compass_parameters.xml
+projects/compass2/tests/checkers/global_variables/Makefile
+projects/compass2/tests/checkers/global_variables/compass_parameters.xml
 projects/compass2/tests/checkers/keyword_macro/Makefile
 projects/compass2/tests/checkers/keyword_macro/compass_parameters.xml
+projects/compass2/tests/checkers/non_global_cpp_directive/Makefile
+projects/compass2/tests/checkers/non_global_cpp_directive/compass_parameters.xml
+projects/compass2/tests/checkers/non_static_array_size/Makefile
+projects/compass2/tests/checkers/non_static_array_size/compass_parameters.xml
+projects/compass2/tests/checkers/variable_name_similarity/Makefile
+projects/compass2/tests/checkers/variable_name_similarity/compass_parameters.xml
 projects/compass2/tests/core/Makefile
 projects/compass2/tests/core/compass_parameters.xml
 ])

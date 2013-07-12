@@ -36,6 +36,11 @@ Makefile.in
 /config/lt~obsolete.m4
 /config/support-projects.m4
 
+# Eclipse project files
+.cproject
+.project
+.settings
+
 # OS X Finder files
 .DS_Store
 

@@ -10,7 +10,8 @@ COMPASS_PARAMETERS_XSD=$(top_srcdir)/projects/compass2/share/xml/compass_paramet
 TEST_SCRIPT=$(top_srcdir)/projects/compass2/tests/checkers/test_checker.sh
 
 TESTCODES=\
-	keyword_macro_test_1.cpp
+	variable_name_similarity_test_1.cpp \
+	variable_name_similarity_test_2.cpp
 
 # ------------------------------------------------------------------------------
 #  Test rules
@@ -21,7 +22,7 @@ $(TESTCODES:.cpp=.o): $(TESTCODES)
 	$(TEST_SCRIPT) \
 		$(CHECKER) \
 		$(srcdir)/$(@:.o=.cpp) \
-		"Keyword macro detected."
+		"Similar variable name detected"
 
 $(COMPASS2):
 	$(MAKE) -C $(top_builddir)/projects/compass2
