@@ -29,7 +29,8 @@ libroseSupport_la_SOURCES =			\
 	threadSupport.C				\
 	IncludeDirective.C			\
 	SqlDatabase.C				\
-	LinearCongruentialGenerator.C
+	LinearCongruentialGenerator.C		\
+	Combinatorics.C
 
 nodist_libroseSupport_la_SOURCES =		\
 	stringify.C
