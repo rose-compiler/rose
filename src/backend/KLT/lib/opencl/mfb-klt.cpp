@@ -303,7 +303,14 @@ KLT< ::KLT::OpenCL::Kernel>::build_result_t Driver<KLT>::build< ::KLT::OpenCL::K
     }
 
     if (iterator_bounds.second == NULL) {
-      SgExprStatement * expr_stmt = SageBuilder::buildAssignStatement(SageBuilder::buildVarRefExp((*it_nested_loop)->iterator), iterator_bounds.first);
+      it_sym_to_local = iter_to_local_map.find((*it_nested_loop)->iterator);
+      assert(it_sym_to_local != iter_to_local_map.end());
+      SgVariableSymbol * local_iterator = it_sym_to_local->second;
+      
+      SgExprStatement * expr_stmt = SageBuilder::buildAssignStatement(
+        SageBuilder::buildVarRefExp(local_iterator),
+        iterator_bounds.first
+      );
       SageInterface::appendStatement(expr_stmt, body);
     }
     else {

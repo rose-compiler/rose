@@ -5,6 +5,7 @@
 #include "KLT/Core/cg-config.hpp"
 
 #include "KLT/Sequential/generator.hpp"
+#include "KLT/Sequential/kernel.hpp"
 
 #include "KLT/Core/data-flow.hpp"
 #include "KLT/Core/loop-selector.hpp"
@@ -35,8 +36,14 @@ int main(int argc, char ** argv) {
 
   generator.generate(loop_trees, kernels, cg_config);
 
-  // TODO
+  std::list<KLT::Core::Kernel *>::const_iterator it_kernel;
+  std::vector<SgExpression *>::const_iterator it_expr;
+  for (it_kernel = kernels.begin(); it_kernel != kernels.end(); it_kernel++) {
+    KLT::Sequential::Kernel * kernel = dynamic_cast<KLT::Sequential::Kernel *>(*it_kernel);
+    assert(kernel != NULL);
 
+    // TODO
+  }
   project->unparse();
 
   return 0;

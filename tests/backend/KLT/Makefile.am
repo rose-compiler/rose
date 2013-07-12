@@ -50,6 +50,8 @@ LOOP_TREES_INPUTS = \
   matrix-vector.lt.in \
   matrix-matrix.lt.in
 
+LOOP_TREES_PROBLEMATIC_INPUTS =
+
 LOOP_TREES_TARGETS = ${LOOP_TREES_INPUTS:.in=.out}
 
 SEQUENTIAL_KERNEL_TARGETS = ${LOOP_TREES_INPUTS:.lt.in=.kernel.cpp}

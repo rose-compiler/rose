@@ -30,6 +30,7 @@ class Kernel : public virtual Core::Kernel {
 
       bool have_local_work_size;
     };
+
   protected:
     std::set<a_kernel *> p_kernels;
 
