@@ -236,6 +236,7 @@ set(rose_support_src
       ${CMAKE_SOURCE_DIR}/src/roseSupport/IncludeDirective.C
       ${CMAKE_SOURCE_DIR}/src/roseSupport/SqlDatabase.C
       ${CMAKE_SOURCE_DIR}/src/roseSupport/LinearCongruentialGenerator.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/Combinatorics.C
      )
 
 

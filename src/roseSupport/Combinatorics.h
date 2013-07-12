@@ -1,9 +1,13 @@
 #ifndef ROSE_Combinatorics_H
 #define ROSE_Combinatorics_H
 
+#include "LinearCongruentialGenerator.h"
+
 #include <algorithm>
 #include <cassert>
+#include <list>
 #include <stdint.h>
+#include <string>
 #include <vector>
 
 namespace Combinatorics {
@@ -60,6 +64,24 @@ shuffle(std::vector<T> &vector, size_t nitems=(size_t)(-1), size_t limit=(size_t
     for (size_t i=0; i<limit; ++i)
         std::swap(vector[i], vector[lcg->next()%nitems]);
 }
+
+/** Compute a SHA1 digest.  The returned vector will contain 20 bytes and can be converted to a string of 40 hexadecimal
+ *  characters via digest_to_string().  If called when a SHA1 algorithm is not available (due to ROSE configuration) an
+ *  empty vector is returned.
+ * @{ */
+std::vector<uint8_t> sha1_digest(const uint8_t *data, size_t size);
+std::vector<uint8_t> sha1_digest(const std::vector<uint8_t> &data);
+std::vector<uint8_t> sha1_digest(const std::string &data);
+/** @} */
+
+/** Converts a binary digest to a string of hexadecimal characters.  The input can actually be any type of data and any
+ *  length. The output will be twice as long as the input.  If you're using this to convert binary data to a printable format
+ *  you're doing it wrong--use StringUtility::encode_base64() instead.
+ * @{ */
+std::string digest_to_string(const uint8_t *data, size_t size);
+std::string digest_to_string(const std::vector<uint8_t> &digest);
+std::string digest_to_string(const std::string &data);
+/** @} */
 
 // Stack for Damerau-Levenshtein distance
 template<typename T>
@@ -135,7 +157,6 @@ damerau_levenshtein_distance(const std::vector<T> &src, const std::vector<T> &tg
 
     return score[x+1][y+1];
 }
-
 
 } // namespace
 #endif
