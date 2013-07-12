@@ -17,8 +17,8 @@ class CG_Config {
     LoopSelector * p_loop_selector;
 
   public:
-    CG_Config(DataFlow * data_flow = NULL, LoopSelector * loop_selector = NULL);
-    ~CG_Config();
+    CG_Config(DataFlow * data_flow, LoopSelector * loop_selector);
+    virtual ~CG_Config();
 
     const DataFlow & getDataFlow() const;
     const LoopSelector & getLoopSelector() const;

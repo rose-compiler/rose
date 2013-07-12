@@ -1,24 +1,15 @@
 
 #include "KLT/Sequential/generator.hpp"
+
 #include "KLT/Sequential/kernel.hpp"
 
 #include "KLT/Sequential/mfb-klt.hpp"
-
-#include "KLT/Core/data.hpp"
-
-#include "sage3basic.h"
-
-#include <sstream>
 
 #include <cassert>
 
 namespace KLT {
 
 namespace Sequential {
-
-Core::Kernel * Generator::makeKernel() const {
-  return new Kernel();
-}
 
 void Generator::doCodeGeneration(Core::Kernel * kernel_, const Core::CG_Config & cg_config) {
   Kernel * kernel = dynamic_cast<Kernel *>(kernel_);
@@ -34,6 +25,10 @@ void Generator::doCodeGeneration(Core::Kernel * kernel_, const Core::CG_Config &
 
   kernel->setKernelSymbol(result.kernel);
   kernel->setArgumentPacker(result.arguments_packer);
+}
+
+Core::Kernel * Generator::makeKernel() const {
+  return new Kernel();
 }
 
 Generator::Generator(SgProject * project, const std::string & filename_) :

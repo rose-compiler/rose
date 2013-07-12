@@ -560,6 +560,7 @@ bool isIndexOperator( SgExpression* exp );
   bool is_PHP_language();
   bool is_Python_language();
   bool is_Cuda_language();
+  bool is_OpenCL_language();
   bool is_X10_language();
   bool is_binary_executable();
   bool is_mixed_C_and_Cxx_language ();

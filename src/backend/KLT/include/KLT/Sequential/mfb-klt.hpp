@@ -4,8 +4,6 @@
 
 #include "KLT/Core/mfb-klt.hpp"
 
-//#include "KLT/Sequential/kernel.hpp"
-
 namespace KLT {
 namespace Sequential {
 class Kernel;

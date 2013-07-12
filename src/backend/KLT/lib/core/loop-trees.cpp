@@ -575,26 +575,26 @@ SgStatement * generateStatement(
 
       it_sym_to_local = coef_to_local.find(var_sym);
       if (it_sym_to_local != coef_to_local.end()) {
-        assert(local_sym == NULL); // implies VarRef to a variable symbol which is both parameter and iterator... It does not make sense!
+        assert(local_sym == NULL);
 
         local_sym = it_sym_to_local->second;
       }
 
       it_sym_to_local = data_sym_to_local.find(var_sym);
       if (it_sym_to_local != data_sym_to_local.end()) {
-        assert(local_sym == NULL); // implies VarRef to a variable symbol which is both parameter and iterator... It does not make sense!
+        assert(local_sym == NULL);
 
         local_sym = it_sym_to_local->second;
       }
 
       it_sym_to_local = iter_to_local.find(var_sym);
       if (it_sym_to_local != iter_to_local.end()) {
-        assert(local_sym == NULL); // implies VarRef to a variable symbol which is both parameter and iterator... It does not make sense!
+        assert(local_sym == NULL);
 
         local_sym = it_sym_to_local->second;
       }
 
-      assert(local_sym != NULL); // implies VarRef to an unknown variable symbol (neither parameter or iterator)
+      assert(local_sym != NULL); // implies VarRef to an unknown variable symbol
 
       SageInterface::replaceExpression(var_ref, SageBuilder::buildVarRefExp(local_sym));
     }

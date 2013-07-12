@@ -2,12 +2,13 @@
 #include "KLT/Core/loop-trees.hpp"
 #include "KLT/Core/data.hpp"
 
-#include "KLT/Core/cg-config.hpp"
+#include "KLT/OpenCL/cg-config.hpp"
 
-#include "KLT/Sequential/generator.hpp"
+#include "KLT/OpenCL/generator.hpp"
 
 #include "KLT/Core/data-flow.hpp"
 #include "KLT/Core/loop-selector.hpp"
+#include "KLT/OpenCL/work-size-shaper.hpp"
 
 #include <cassert>
 
@@ -29,9 +30,9 @@ int main(int argc, char ** argv) {
   
   loop_trees.read(argv[1]);
 
-  KLT::Sequential::Generator generator(project, argv[2]);
+  KLT::OpenCL::Generator generator(project, argv[2]);
   std::list<KLT::Core::Kernel *> kernels;
-  KLT::Core::CG_Config cg_config(new KLT::Core::DataFlow(), new KLT::Core::Dummy_LoopSelector());
+  KLT::OpenCL::CG_Config cg_config(new KLT::Core::DataFlow(), new KLT::Core::Dummy_LoopSelector(), new KLT::OpenCL::Dummy_WorkSizeShaper());
 
   generator.generate(loop_trees, kernels, cg_config);
 

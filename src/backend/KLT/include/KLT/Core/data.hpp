@@ -3,6 +3,7 @@
 #define __DATA_HPP__
 
 #include <set>
+#include <list>
 #include <vector>
 #include <utility>
 
@@ -11,6 +12,8 @@
 class SgExpression;
 class SgVariableSymbol;
 class SgType;
+class SgFunctionParameterList;
+class SgTypeModifier;
 
 namespace KLT {
 
@@ -59,6 +62,22 @@ class Data {
 
 void collectBoundExpressions(const std::set<Data *> & datas, std::set<SgExpression *> & exprs);
 void collectReferencedSymbols(const std::set<Data *> & datas, std::set<SgVariableSymbol *> & symbols);
+
+/** Generate a parameter list for a kernel (the 3 lists of symbols/datas)
+ *    \param  params List of parameters as variable symbol pointers
+ *    \param  coefs List of Coefficients as variable symbol pointers
+ *    \param  datas List of Datas as Data pointers
+ *    \param  data_type_modifer_ an enumeration value to will cast to SgTypeModifier::type_modifier_enum
+ *    \param  suffix add a suffix to the default generated name (kind + "_" + name : where kind is param/coef/data and name the name of the associated symbol)
+ *    \return a Function Parameter List
+ */
+SgFunctionParameterList * createParameterList(
+  const std::list<SgVariableSymbol *>   & params,
+  const std::list<SgVariableSymbol *>   & coefs,
+  const std::list<Data *> & datas,
+  unsigned long data_type_modifer_,
+  std::string suffix
+);
 
 }
 

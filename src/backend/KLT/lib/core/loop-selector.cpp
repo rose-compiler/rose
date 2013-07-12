@@ -11,7 +11,7 @@ namespace KLT {
 
 namespace Core {
 
-void LoopSelector::createKernels(
+void Dummy_LoopSelector::createKernels(
   const LoopTrees & loop_trees,
   std::list<Kernel *> & kernels,
   std::map<Kernel *, LoopTrees::node_t *> & kernels_map,
@@ -34,7 +34,7 @@ void LoopSelector::createKernels(
   }
 }
 
-void LoopSelector::extractNestedLoops(const std::map<Kernel *, LoopTrees::node_t *> & kernels_map) const {
+void Dummy_LoopSelector::extractNestedLoops(const std::map<Kernel *, LoopTrees::node_t *> & kernels_map) const {
   std::map<Kernel *, LoopTrees::node_t *>::const_iterator it_kernel;
   for (it_kernel = kernels_map.begin() ; it_kernel != kernels_map.end(); it_kernel++) {
     Kernel * kernel = it_kernel->first;
