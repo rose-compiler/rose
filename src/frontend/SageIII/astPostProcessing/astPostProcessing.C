@@ -159,14 +159,21 @@ void postProcessingSupport (SgNode* node)
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("Postprocessing AST build using new EDG/Sage Translation Interface. \n");
 #endif
+#if 0
+       // DQ (4/26/2013): Debugging code.
+          printf ("In postProcessingSupport: Test 1: Calling postProcessingTestFunctionCallArguments() \n");
+          postProcessingTestFunctionCallArguments(node);
+#endif
+#ifndef ROSE_USE_CLANG_FRONTEND
        // DQ (10/31/2012): Added fixup for EDG bug which drops variable declarations of some source sequence lists.
           fixupEdgBugDuplicateVariablesInAST();
+#endif
 
        // DQ (5/1/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
        // Liao 11/21/2012. AstPostProcessing() is called within both Frontend and Midend
        // so we have to detect the mode first before asserting no transformation generated file info objects
-       if (SageBuilder::SourcePositionClassificationMode !=SageBuilder::e_sourcePositionTransformation)
-          detectTransformations(node);
+          if (SageBuilder::SourcePositionClassificationMode != SageBuilder::e_sourcePositionTransformation)
+               detectTransformations(node);
 
        // DQ (8/12/2012): reset all of the type references (to intermediately generated types).
           fixupTypeReferences();
@@ -186,6 +193,10 @@ void postProcessingSupport (SgNode* node)
        // of a non-defining declaration appearing before a defining declaration and requiring a fixup of the
        // non-defining declaration reference to the defining declaration.
           fixupAstDefiningAndNondefiningDeclarations(node);
+
+       // DQ (6/11/2013): This corrects where EDG can set the scope of a friend declaration to be different from the defining declaration.
+       // We need it to be a rule in ROSE that the scope of the declarations are consistant between defining and all non-defining declaration).
+          fixupAstDeclarationScope(node);
 
        // Fixup the symbol tables (in each scope) and the global function type 
        // symbol table. This is less important for C, but required for C++.
@@ -208,6 +219,12 @@ void postProcessingSupport (SgNode* node)
        // This is required to make them pass the unparser and the phase where comments are attached.  Some fixup of filenames
        // and line numbers might also be required.
           fixupTemplateInstantiations(node);
+
+#if 0
+       // DQ (4/26/2013): Debugging code.
+          printf ("In postProcessingSupport: Test 2: Calling postProcessingTestFunctionCallArguments() \n");
+          postProcessingTestFunctionCallArguments(node);
+#endif
 
        // DQ (8/19/2005): Mark any template specialization (C++ specializations are template instantiations 
        // that are explicit in the source code).  Such template specializations are marked for output only
@@ -232,6 +249,12 @@ void postProcessingSupport (SgNode* node)
        // DQ (10/27/2007): Setup any endOfConstruct Sg_File_Info objects (report on where they occur)
           fixupSourcePositionConstructs();
 
+#if 0
+       // DQ (4/26/2013): Debugging code.
+          printf ("In postProcessingSupport: Test 3: Calling postProcessingTestFunctionCallArguments() \n");
+          postProcessingTestFunctionCallArguments(node);
+#endif
+
        // DQ (2/12/2012): This is a problem for test2004_35.C (debugging this issue).
        // printf ("Exiting after calling resetTemplateNames() \n");
        // ROSE_ASSERT(false);
@@ -247,6 +270,12 @@ void postProcessingSupport (SgNode* node)
 #else
        // DQ (10/11/2012): This is helpful to allow us to see both expression trees in the AST for debugging.
           printf ("Skipping AST Postprocessing resetConstantFoldedValues() \n");
+#endif
+
+#if 0
+       // DQ (4/26/2013): Debugging code.
+          printf ("In postProcessingSupport: Test 4: Calling postProcessingTestFunctionCallArguments() \n");
+          postProcessingTestFunctionCallArguments(node);
 #endif
 
        // DQ (10/5/2012): Fixup known macros that might expand into a recursive mess in the unparsed code.
@@ -268,6 +297,16 @@ void postProcessingSupport (SgNode* node)
        // so we have to detect the mode first before asserting no transformation generated file info objects
           if (SageBuilder::SourcePositionClassificationMode !=SageBuilder::e_sourcePositionTransformation)
                detectTransformations(node);
+
+#if 0
+       // DQ (4/26/2013): Debugging code.
+          printf ("In postProcessingSupport: Test 10: Calling postProcessingTestFunctionCallArguments() \n");
+          postProcessingTestFunctionCallArguments(node);
+#endif
+
+       // DQ (4/24/2013): Detect the correct function declaration to declare the use of default arguments.
+       // This can only be a single function and it can't be any function (this is a moderately complex issue).
+          fixupFunctionDefaultArguments(node);
 
        // DQ (12/20/2012): We now store the logical and physical source position information.
        // Although they are frequently the same, the use of #line directives causes them to be different.
@@ -717,3 +756,37 @@ void postProcessingSupport (SgNode* node)
         }
 
    }
+
+
+#if 0
+void
+PostProcessingTestFunctionCallArguments::visit (SgNode* node)
+   {
+     ROSE_ASSERT(node != NULL);
+#if 1
+  // DQ (4/26/2013): Debugging code ot chase down function call argument errors in the default expressions 
+  // constructed and the default arguments that we see in the final AST.
+     SgFunctionCallExp* functionCallExpression = isSgFunctionCallExp(node);
+     if (functionCallExpression != NULL)
+        {
+          printf ("================= Found SgFunctionCallExp \n");
+          SgExpressionPtrList & expList = functionCallExpression->get_args()->get_expressions();
+          SgExpressionPtrList::iterator i = expList.begin();
+          while (i != expList.end())
+             {
+               printf ("################ function call argument expression = %p = %s \n",*i,(*i)->class_name().c_str());
+               (*i)->get_file_info()->display("function call argument expression");
+               i++;
+             }
+        }
+#endif
+     
+   }
+
+void postProcessingTestFunctionCallArguments(SgNode* node)
+   {
+     PostProcessingTestFunctionCallArguments traversal;
+
+     traversal.traverse(node,preorder);
+   }
+#endif

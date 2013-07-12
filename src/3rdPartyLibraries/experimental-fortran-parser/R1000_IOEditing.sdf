@@ -1,0 +1,155 @@
+      
+%%%%%%%%%
+%% Fortran ISO/IEC 1539:1991 section R10xx Input/Output Editing
+%%%%%%%%%
+
+%% module languages/fortran/syntax/R1000_IOEditing
+module R1000_IOEditing
+
+%%  languages/fortran/syntax/FortranLex
+%%  languages/fortran/syntax/R400DataTypes
+
+imports  FortranLex
+imports R400DataTypes
+
+exports
+
+sorts
+
+%% 10.2 Explicit format specification methods
+
+  FormatStmt                          %% R1001
+  FormatSpecification                 %% R1002
+
+%% 10.3 Form of a format item list
+
+  FormatItems                         %% R1003
+  FormatItem                          %% R1004
+  UnlimitedFormatItem                 %% R1005
+  REditDesc                           %% R1006
+  DataEditDesc                        %% R1007
+  WEditDesc                           %% R1008
+  MEditDesc                           %% R1009
+  DEditDesc                           %% R1010
+  EEditDesc                           %% R1011
+  VEditDesc                           %% R1012
+  ControlEditDesc                     %% R1013
+  KEditDesc                           %% R1014
+  PositionEditDesc                    %% R1015
+  NEditDesc                           %% R1016
+  SignEditDesc                        %% R1017
+  BlankInterpEditDesc                 %% R1018
+  RoundEditDesc                       %% R1019
+  DecimalEditDesc                     %% R1020
+  CharStringEditDesc                  %% R1021
+
+
+context-free syntax
+
+
+%% 10.2 Explicit format specification methods
+%%
+
+%%R1001
+  LblDef 'FORMAT' FormatSpecification           EOS -> FormatStmt           {cons("format-stmt")}
+
+%%R1002
+  '(' ( FormatItems    )?                     ')'   -> FormatSpecification  {cons("format-specification_alt1")}
+  '(' ( FormatItems ',')? UnlimitedFormatItem ')'   -> FormatSpecification  {cons("format-specification_alt2")}
+
+
+%% 10.3 Form of a format item list
+%%
+
+%%R1003
+  FormatItem (OptComma FormatItem)*                 -> FormatItems          {cons("format-items")}
+
+%%R1004
+  REditDesc? DataEditDesc                           -> FormatItem           {cons("format-item_alt1")}
+  ControlEditDesc                                   -> FormatItem           {cons("format-item_alt2")}
+  CharStringEditDesc                                -> FormatItem           {cons("format-item_alt3")}
+  REditDesc? '(' FormatItems ')'                    -> FormatItem           {cons("format-item_alt4")}
+
+%%R1005
+  '*' '(' FormatItems ')'                           -> UnlimitedFormatItem  {cons("unlimited-format-item")}
+
+%%R1006
+  Icon                                              -> REditDesc            {cons("r")}
+
+%%R1007
+%% Scon substituted for char-literal-constant
+%%
+  'I'  WEditDesc ('.' MEditDesc)?                   -> DataEditDesc       {cons("data-edit-desc_I")}
+  'B'  WEditDesc ('.' MEditDesc)?                   -> DataEditDesc       {cons("data-edit-desc_B")}
+  'O'  WEditDesc ('.' MEditDesc)?                   -> DataEditDesc       {cons("data-edit-desc_O")}
+  'Z'  WEditDesc ('.' MEditDesc)?                   -> DataEditDesc       {cons("data-edit-desc_Z")}
+  'F'  WEditDesc  '.' DEditDesc                     -> DataEditDesc       {cons("data-edit-desc_F")}
+  'E'  WEditDesc  '.' DEditDesc ('E' EEditDesc)?    -> DataEditDesc       {cons("data-edit-desc_E")}
+  'EN' WEditDesc  '.' DEditDesc ('E' EEditDesc)?    -> DataEditDesc       {cons("data-edit-desc_EN")}
+  'ES' WEditDesc  '.' DEditDesc ('E' EEditDesc)?    -> DataEditDesc       {cons("data-edit-desc_ES")}
+  'G'  WEditDesc ('.' DEditDesc ('E' EEditDesc)?)?  -> DataEditDesc       {cons("data-edit-desc_G")}
+  'L'  WEditDesc                                    -> DataEditDesc       {cons("data-edit-desc_L")}
+  'A'  WEditDesc?                                   -> DataEditDesc       {cons("data-edit-desc_A")}
+  'D'  WEditDesc  '.' DEditDesc                     -> DataEditDesc       {cons("data-edit-desc_D")}
+  'DT' Scon? ( '('   {VEditDesc ','}+ ')' )?        -> DataEditDesc       {cons("data-edit-desc_DT")}
+
+%%R1008
+  Icon                                  -> WEditDesc            {cons("w")}
+
+%%R1009
+  Icon                                  -> MEditDesc            {cons("m")}
+
+%%R1010
+  Icon                                  -> DEditDesc            {cons("d")}
+
+%%R1011
+  Icon                                  -> EEditDesc            {cons("e")}
+
+%%R1012
+  Icon                                  -> VEditDesc            {cons("v")}
+
+%%R1013
+  PositionEditDesc                      -> ControlEditDesc      {cons("control-edit-desc_alt1")}
+  REditDesc? '/'                        -> ControlEditDesc      {cons("control-edit-desc_alt2")}
+  ':'                                   -> ControlEditDesc      {cons("control-edit-desc_alt3")}
+  SignEditDesc                          -> ControlEditDesc      {cons("control-edit-desc_alt4")}
+  KEditDesc 'P'                         -> ControlEditDesc      {cons("control-edit-desc_alt5")}
+  BlankInterpEditDesc                   -> ControlEditDesc      {cons("control-edit-desc_alt6")}
+  RoundEditDesc                         -> ControlEditDesc      {cons("control-edit-desc_alt7")}
+  DecimalEditDesc                       -> ControlEditDesc      {cons("control-edit-desc_alt8")}
+
+%%R1014
+  SignedIntLiteralConstant              -> KEditDesc            {cons("k")}
+
+%%R1015
+  'T'  NEditDesc                        -> PositionEditDesc     {cons("position-edit-desc_T")}
+  'TL' NEditDesc                        -> PositionEditDesc     {cons("position-edit-desc_TL")}
+  'TR' NEditDesc                        -> PositionEditDesc     {cons("position-edit-desc_TR")}
+       NEditDesc 'X'                    -> PositionEditDesc     {cons("position-edit-desc_X")}
+
+%%R1016
+  Icon                                  -> NEditDesc            {cons("n")}
+
+%%R1017
+  'SS'                                  -> SignEditDesc         {cons("sign-edit-desc_SS")}
+  'SP'                                  -> SignEditDesc         {cons("sign-edit-desc_SP")}
+  'S'                                   -> SignEditDesc         {cons("sign-edit-desc_S")}
+
+%%R1018
+  'BN'                                  -> BlankInterpEditDesc  {cons("blank-interp-edit-desc_BN")}
+  'BZ'                                  -> BlankInterpEditDesc  {cons("blank-interp-edit-desc_BZ")}
+
+%%R1019
+  'RU'                                  -> RoundEditDesc        {cons("round-edit-desc_RU")}
+  'RD'                                  -> RoundEditDesc        {cons("round-edit-desc_RD")}
+  'RZ'                                  -> RoundEditDesc        {cons("round-edit-desc_RZ")}
+  'RN'                                  -> RoundEditDesc        {cons("round-edit-desc_RN")}
+  'RC'                                  -> RoundEditDesc        {cons("round-edit-desc_RC")}
+  'RP'                                  -> RoundEditDesc        {cons("round-edit-desc_RP")}
+
+%%R1020
+  'DC'                                  -> DecimalEditDesc      {cons("decimal-edit-desc_DC")}
+  'DP'                                  -> DecimalEditDesc      {cons("decimal-edit-desc_DP")}
+
+%%R1021
+  Scon                                  -> CharStringEditDesc   {cons("char-string-edit-desc")}

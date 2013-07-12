@@ -766,6 +766,18 @@ HEADER_SIZEOF_OPERATOR_START
 HEADER_SIZEOF_OPERATOR_END
 
 
+HEADER_ALIGNOF_OPERATOR_START
+          int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+HEADER_ALIGNOF_OPERATOR_END
+
+
 HEADER_JAVA_INSTANCEOF_OPERATOR_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
@@ -1393,7 +1405,6 @@ HEADER_CUDA_KERNEL_EXEC_CONFIG_START
 HEADER_CUDA_KERNEL_EXEC_CONFIG_END
 
 HEADER_CUDA_KERNEL_CALL_EXPRESSION_START
-HEADER_LIST_DECLARATIONS
 HEADER_CUDA_KERNEL_CALL_EXPRESSION_END
 
 // #########################################################
@@ -3015,6 +3026,14 @@ SgTemplateParameterVal::get_template_parameter_name() const
      if (templateDeclaration == NULL)
         {
           printf ("Error: In SgTemplateParameterVal::get_template_parameter_name(): templateDeclaration == NULL: this = %p = %s \n",this,this->class_name().c_str());
+
+       // DQ (6/6/2013): If the template parameter is used as a template argument, then we just return a simple name.
+       // Nowever, maybe the constant should have been shared so that it would be correctly associated with a template declaration.
+          SgName name = "__template_parameter_used_as_template_argument__";
+#if 1
+          printf ("In SgTemplateParameterVal::get_template_parameter_name(): template_parameter_position = %d I think this is the case of a template parameter used as an argument to another template (see test2013_198.C) \n",template_parameter_position);
+#endif
+          return name;
         }
      ROSE_ASSERT(templateDeclaration != NULL);
 
@@ -3806,6 +3825,45 @@ SgSizeOfOp::replace_expression (SgExpression *o, SgExpression *n)
 
 SOURCE_SIZE_OF_OPERATOR_EXPRESSION_END
 
+SOURCE_ALIGN_OF_OPERATOR_EXPRESSION_START
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // This function returns an unsigned integer representing the size of type 
+  // (the unsigned int should match size_t, which may or may not be defined).
+
+     ROSE_ASSERT(p_operand_expr != NULL || p_operand_type != NULL);
+     SgType* returnType = SgTypeUnsignedInt::createType();
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+// DQ (6/20/2013): Added alignment operator.
+int
+SgAlignOfOp::replace_expression (SgExpression *o, SgExpression *n)
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if (get_operand_expr() == o)
+        {
+          set_operand_expr(n);
+          return 1;
+        }
+       else
+        {
+          printf ("Warning: inside of SgAlignOfOp::replace_expression original SgExpression unidentified \n");
+          return 0;
+        }
+   } 
+
+SOURCE_ALIGN_OF_OPERATOR_EXPRESSION_END
+
 SOURCE_JAVA_INSTANCEOF_OPERATOR_EXPRESSION_START
 
 SgType*
@@ -4058,15 +4116,6 @@ SgPointerDerefExp::get_type() const
                break;
              }
 
-       // DQ (6/18/2007): The dereference of a function type is a function call so the type is it's return type (I think)
-          case V_SgFunctionType:
-             {
-               SgFunctionType* functionType = isSgFunctionType(someType);
-            // returnType = functionType->get_return_type();
-               returnType = functionType;
-               break;
-             }
-
        // DQ (12/30/2008): Added case to support EDG 4.0 (see test2001_03.C)
           case V_SgTypeString:
              {
@@ -4116,6 +4165,23 @@ SgPointerDerefExp::get_type() const
                break;
              }
 
+       // DQ (5/25/2013): Added this for the case of the new EDG interface.
+       // DQ (6/18/2007): The dereference of a function type is a function call so the type is it's return type (I think)
+          case V_SgFunctionType:
+             {
+               SgFunctionType* functionType = isSgFunctionType(someType);
+            // returnType = functionType->get_return_type();
+               returnType = functionType;
+               break;
+             }
+
+       // DQ (5/25/2013): Added this for the case of the new EDG interface.
+          case V_SgClassType:
+             {
+               SgClassType* classType = isSgClassType(someType);
+               returnType = classType;
+               break;
+             }
 
 #if 0
        // DQ (10/3/2006): I think this is no longer required, since we fixed the case of sizeof taking an 
@@ -6539,75 +6605,6 @@ SgCudaKernelCallExp::post_construction_initialization()
      // TODO : exec_config
    }
 
-void
-SgCudaKernelCallExp::append_arg(SgExpression* what)
-   {
-     assert(this != NULL);
+SgType * SgCudaKernelCallExp::get_type() const { return SgFunctionCallExp::get_type(); }
 
-  // DQ (11/15/2006): avoid setting newArgs this late in the process.
-     ROSE_ASSERT(p_args != NULL);
-     if (p_args == NULL)
-        {
-       // set_args(new SgExprListExp(this->get_file_info()));
-          SgExprListExp* newArgs = new SgExprListExp ( this->get_file_info() );
-          assert(newArgs != NULL);
-          newArgs->set_endOfConstruct( this->get_file_info() );
-          set_args(newArgs);
-        }
-
-    // insert_arg(p_args->end(),what);
-       p_args->append_expression(what);
-   }
-   
-SgType* SgCudaKernelCallExp::get_type() const
-   {
-	SgType* returnType = NULL;
-
-     ROSE_ASSERT(p_function != NULL);
-  // printf ("In SgFunctionCallExp::get_type(): calling get_type() on p_function = %p = %s \n",p_function,p_function->class_name().c_str());
-     SgType* likelyFunctionType = p_function->get_type();
-     ROSE_ASSERT(likelyFunctionType != NULL);
-     while (likelyFunctionType && isSgTypedefType(likelyFunctionType))
-        {
-          likelyFunctionType = isSgTypedefType(likelyFunctionType)->get_base_type();
-          ROSE_ASSERT(likelyFunctionType != NULL);
-        }
-
-     SgFunctionType* functionType = isSgFunctionType(likelyFunctionType);
-     if (functionType == NULL)
-        {
-          printf ("Error: unexpected type found for likelyFunctionType = %p = %s \n",likelyFunctionType,likelyFunctionType->class_name().c_str());
-       // get_file_info()->display("Location of call to SgFunctionCallExp::get_type(): debug");
-
-       // DQ (7/15/2007): Handle case of typedef of function type
-          likelyFunctionType = likelyFunctionType->stripType(SgType::STRIP_TYPEDEF_TYPE);
-
-          printf ("After calling stripType(SgType::STRIP_TYPEDEF_TYPE): likelyFunctionType = %p = %s \n",likelyFunctionType,likelyFunctionType->class_name().c_str());
-
-          functionType = isSgFunctionType(likelyFunctionType);
-
-#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
-       // DQ (12/31/2008): EDG version 4.0 has a simpler representation which translates a bit differently.
-       // I think this is an improvement to this functionality of this function.
-          if (functionType == NULL)
-               returnType = likelyFunctionType;
-#else
-          ROSE_ASSERT(functionType != NULL);
-#endif
-        }
-
-#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
-  // if not already set
-     if (returnType == NULL)
-          returnType = functionType->get_return_type();
-#else
-     ROSE_ASSERT(functionType != NULL);
-     returnType = functionType->get_return_type();
-#endif
-     ROSE_ASSERT(returnType != NULL);
-
-     return returnType;
-   }
-
-   
 SOURCE_CUDA_KERNEL_CALL_EXPRESSION_END

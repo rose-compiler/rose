@@ -54,7 +54,9 @@ TESTCODES_REQUIRED_TO_PASS = \
    static_upc_all_gather_all_ex.upc \
    static_upc_all_gather_ex.upc \
    static_test2011_12.upc \
-   static_test2011_13.upc
+   static_test2011_13.upc \
+   test2013_01.upc \
+   test2013_02.upc
 
 # upc_XXXsizeof() has two issues:
 # 1. They are evaluated by EDG, operators are not preserved in EDG's IL
@@ -75,26 +77,7 @@ ALL_TESTCODES = \
 	 $(TESTCODE_CURRENTLY_FAILING)
 
 # Liao (6/11/2008) --edg:upc and --edg:restrict are not required since ROSE can add them internally based on the file suffix (.upc) , no backend compilation since GCC does not recognize UPC .
-if ROSE_USE_NEW_EDG_INTERFACE
-# JJW (12/15/2008): Force C99 mode so we can have declarations in the initializers of forall statements
-# ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep --edg:upc --edg:c99
-# ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:exit_after_parser -rose:skipfinalCompileStep -rose:upc_threads 1
-# ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:exit_after_parser -rose:skipfinalCompileStep
-
-# DQ (2/17/2011): Use "-rose:exit_after_parser" option to isolate the testing to just EDG
-# (avoids ROSE bugs using new EDG 4.0 frontent (which is unfinished work)).  Use "--edg:c99"
-# so that we can have declarations in the initializers of forall statements.
-# Note that only upc_all_gather_ex.upc, upc_all_gather_all_ex.upc, and upc_all_exchange_ex.upc require the "-rose:upc_threads 1" option.
-# ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings --edg:c99 -rose:exit_after_parser -rose:skipfinalCompileStep -rose:upc_threads 1
-# ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings --edg:c99 -rose:exit_after_parser -rose:skipfinalCompileStep
 ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings --edg:c99 -rose:skipfinalCompileStep
-else
-# ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep --edg:upc
-# ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:exit_after_parser -rose:skipfinalCompileStep -rose:upc_threads 1
-# ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:exit_after_parser -rose:skipfinalCompileStep
-ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:skipfinalCompileStep
-endif
-#ROSE_FLAGS = --edg:no_warnings -w --edg:restrict --edg:upc -rose:verbose 3
 
 PASSING_TEST_Output = $(addprefix rose_,${TESTCODES})
 TEST_Output = $(addprefix rose_,${ALL_TESTCODES})
@@ -176,12 +159,8 @@ check-local:
 	@echo "Tests for UPC examples."
 	@$(MAKE) $(PASSING_TEST_Output)
 	@$(MAKE) rose_shared.upc.aa
-if !ROSE_USE_NEW_EDG_INTERFACE
-	@echo "Tests for UPC++ examples."
-	@$(MAKE) $(UPCXX_TEST_Objects)
-else
-	@echo "Skipping testing UPC++ test codes with new EDG (--upc++ mode not yet added in EDG 4.0; ROSE specific feature)."
-endif
+#	@echo "Tests for UPC++ examples."
+#	@$(MAKE) $(UPCXX_TEST_Objects)
 #	DQ (2/5/2011): This failed for a very few Hudson tests, but they are not critical
 #	tests so I will eliminate them for now. I don't know why they failed.
 #	@$(MAKE) testForUpcThreadsKeywordInGeneratedCode

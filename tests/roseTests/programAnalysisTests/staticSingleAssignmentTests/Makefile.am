@@ -143,7 +143,6 @@ test2003_30.C \
 test2003_31.C \
 test2003_32.C \
 test2003_35.C \
-test2003_36.C \
 test2003_37.C \
 test2003_38.C \
 test2004_01.C \
@@ -155,14 +154,12 @@ test2004_07.C \
 test2004_08.C \
 test2004_09.C \
 test2004_10.C \
-test2004_11.C \
 test2004_12.C \
 test2004_13.C \
 test2004_14.C \
 test2004_15.C \
 test2004_16.C \
 test2004_17.C \
-test2004_18.C \
 test2004_19.C \
 test2004_23.C \
 test2004_24.C \
@@ -170,14 +167,10 @@ test2004_26.C \
 test2004_27.C \
 test2004_28.C \
 test2004_29.C \
-test2004_30.C \
 test2004_31.C \
-test2004_32.C \
 test2004_33.C \
 test2004_34.C \
 test2004_35.C \
-test2004_36.C \
-test2004_37.C \
 test2004_38.C \
 test2004_39.C \
 test2004_40.C \
@@ -210,9 +203,6 @@ test2004_71.C \
 test2004_72.C \
 test2004_73.C \
 test2004_74.C \
-test2004_75.C \
-test2004_76.C \
-test2004_77.C \
 test2004_78.C \
 test2004_79.C \
 test2004_80.C \
@@ -253,16 +243,12 @@ test2004_116.C \
 test2004_117.C \
 test2004_118.C \
 test2004_119.C \
-test2004_120.C \
 test2004_121.C \
 test2004_122.C \
 test2004_123.C \
 test2004_124.C \
 test2004_125.C \
-test2004_127.C \
 test2004_128.C \
-test2004_129.C \
-test2004_130.C \
 test2004_131.C \
 test2004_132.C \
 test2004_133.C \
@@ -275,13 +261,11 @@ test2004_139.C \
 test2004_140.C \
 test2004_141.C \
 test2004_142.C \
-test2004_143.C \
 test2004_144.C \
 test2004_145.C \
 test2004_146.C \
 test2004_147.C \
 test2004_148.C \
-test2004_149.C \
 test2004_150.C \
 test2004_151.C \
 test2004_152.C \
@@ -293,27 +277,22 @@ test2004_157.C \
 test2004_158.C \
 test2004_160.C \
 test2004_159.C \
-test2004_161.C \
 test2004_162.C \
 test2004_163.C \
 test2004_164.C \
 test2005_01.C \
-test2005_02.C \
 test2005_03.C \
 test2005_04.C \
 test2005_05.C \
-test2005_06.C \
 test2005_07.C \
 test2005_08.C \
 test2005_09.C \
-test2005_10.C \
 test2005_11.C \
 test2005_12.C \
 test2005_13.C \
 test2005_14.C \
 test2005_15.C \
 test2005_16.C \
-test2005_17.C \
 test2005_19.C \
 test2005_20.C \
 test2005_21.C \
@@ -323,21 +302,15 @@ test2005_24.C \
 test2005_25.C \
 test2005_26.C \
 test2005_27.C \
-test2005_28.C \
-test2005_29.C \
 test2005_30.C \
 test2005_31.C \
 test2005_32.C \
 test2005_33.C \
-test2005_34.C \
-test2005_35.C \
 test2005_36.C \
 test2005_37.C \
 test2005_38.C \
-test2005_39.C \
 test2005_40.C \
 test2005_41.C \
-test2005_42.C \
 test2005_43.C \
 test2005_44.C \
 test2005_45.C \
@@ -347,16 +320,11 @@ test2005_48.C \
 test2005_50.C \
 test2005_51.C \
 test2005_52.C \
-test2005_53.C \
 test2005_55.C \
-test2005_57.C \
-test2005_58.C \
-test2005_59.C \
 test2005_60.C \
 test2005_61.C \
 test2005_62.C \
 test2005_63.C \
-test2005_64.C \
 test2005_65.C \
 test2005_66.C \
 test2005_67.C \
@@ -364,16 +332,9 @@ test2005_68.C \
 test2005_70.C \
 test2005_71.C \
 test2005_72.C \
-test2005_73.C \
-test2005_74.C \
-test2005_75a.C \
-test2005_75b.C \
-test2005_76.C \
 test2005_77.C \
 test2005_78.C \
-test2005_79.C \
 test2005_80.C \
-test2005_81.C \
 test2005_82.C \
 test2005_83.C \
 test2005_84.C \
@@ -392,9 +353,6 @@ test2005_98.C \
 test2005_99.C \
 test2005_100.C \
 test2005_101.C \
-test2005_102.C \
-test2005_103.C \
-test2005_104.C \
 test2005_105.C \
 test2005_106.C \
 test2005_107.C \
@@ -417,20 +375,10 @@ test2005_125.C \
 test2005_126.C \
 test2005_127.C \
 test2005_128.C \
-test2005_129.C \
-test2005_130.C \
-test2005_131.C \
-test2005_132.C \
-test2005_133.C \
 test2005_134.C \
-test2005_135.C \
 test2005_136.C \
-test2005_137.C \
-test2005_138.C \
-test2005_139.C \
 test2005_140.C \
 test2005_141.C \
-test2005_142.C \
 test2005_143.C \
 test2005_144.C \
 test2005_145.C \
@@ -438,17 +386,13 @@ test2005_146.C \
 test2005_147.C \
 test2005_148.C \
 test2005_149.C \
-test2005_150.C \
-test2005_152.C \
 test2005_153.C \
 test2005_154.C \
-test2005_155.C \
 test2005_156.C \
 test2005_157.C \
 test2005_158.C \
 test2005_159.C \
 test2005_160.C \
-test2005_161.C \
 test2005_162.C \
 test2005_163.C \
 test2005_164.C \
@@ -459,13 +403,11 @@ test2005_169.C \
 test2005_170.C \
 test2005_171.C \
 test2005_173.C \
-test2005_174.C \
 test2005_175.C \
 test2005_176.C \
 test2005_177.C \
 test2005_178.C \
 test2005_180.C \
-test2005_181.C \
 test2005_182.C \
 test2005_183.C \
 test2005_184.C \
@@ -490,11 +432,9 @@ test2005_209.C \
 test2006_01.C \
 test2006_02.C \
 test2006_03.C \
-test2006_04.C \
 test2006_05.C \
 test2006_06.C \
 test2006_07.C \
-test2006_08.C \
 test2006_10.C \
 test2006_12.C \
 test2006_13.C \
@@ -510,7 +450,6 @@ test2006_25.C \
 test2006_26.C \
 test2006_28.C \
 test2006_34.C \
-test2006_37.C \
 test2006_38.C \
 test2006_39.C \
 test2006_40.C \
@@ -536,12 +475,10 @@ test2006_70.C \
 test2006_71.C \
 test2006_72.C \
 test2006_73.C \
-test2006_74.C \
 test2006_75.C \
 test2006_76.C \
 test2006_77.C \
 test2006_78.C \
-test2006_79.C \
 test2006_80.C \
 test2006_81.C \
 test2006_82.C \
@@ -581,7 +518,6 @@ test2006_120.C \
 test2006_121.C \
 test2006_122.C \
 test2006_123.C \
-test2006_124.C \
 test2006_125.C \
 test2006_126.C \
 test2006_129.C \
@@ -630,7 +566,6 @@ test2007_12.C \
 test2007_13.C \
 test2007_14.C \
 test2007_16.C \
-test2007_17.C \
 test2007_21.C \
 test2007_23.C \
 test2007_24.C \
@@ -638,7 +573,6 @@ test2007_25.C \
 test2007_26.C \
 test2007_28.C \
 test2007_29.C \
-test2007_38.C \
 test2007_40.C \
 test2007_41.C \
 test2007_43.C \
@@ -664,7 +598,6 @@ test2007_81.C \
 test2007_82.C \
 test2007_83.C \
 test2007_85.C \
-test2007_90.C \
 test2007_94.C \
 test2007_98.C \
 test2007_102.C \
@@ -689,7 +622,6 @@ test2007_161.C \
 test2007_162.C \
 test2007_163.C \
 test2007_164.C \
-test2007_165.C \
 test2007_166.C \
 test2007_167.C \
 test2007_170.C \
@@ -713,8 +645,6 @@ test2009_12.C \
 test2009_15.C \
 test2009_20.C \
 test2009_39.C \
-test2009_40.C \
-test2009_41.C \
 test2009_42.C \
 test2010_03.C \
 test2010_04.C \
@@ -727,9 +657,75 @@ test_wchars.C \
 lexPhase2003_01.C \
 math.C \
 inputForLoopLocator.C \
-X.C \
-inputBug317.C 
+X.C
 
+NEW_FAIL_EDG47= \
+   test2003_36.C \
+   test2004_127.C \
+   test2004_130.C \
+   test2004_129.C \
+   test2004_143.C \
+   test2004_120.C \
+   test2004_161.C \
+   test2004_149.C \
+   test2005_10.C \
+   test2005_02.C \
+   test2005_06.C \
+   test2005_17.C \
+   inputBug317.C \
+   test2005_102.C \
+   test2005_103.C \
+   test2005_104.C \
+   test2005_135.C \
+   test2005_137.C \
+   test2005_138.C \
+   test2005_139.C \
+   test2005_150.C \
+   test2005_152.C \
+   test2005_155.C \
+   test2005_161.C \
+   test2005_174.C \
+   test2005_181.C \
+   test2005_28.C \
+   test2005_29.C \
+   test2005_34.C \
+   test2005_35.C \
+   test2005_39.C \
+   test2005_53.C \
+   test2005_57.C \
+   test2005_58.C \
+   test2005_59.C \
+   test2005_64.C \
+   test2005_73.C \
+   test2005_74.C \
+   test2005_75a.C \
+   test2005_75b.C \
+   test2005_76.C \
+   test2005_79.C \
+   test2005_81.C \
+   test2006_04.C \
+   test2006_08.C \
+   test2006_124.C \
+   test2006_37.C \
+   test2006_74.C \
+   test2006_79.C \
+   test2007_165.C \
+   test2007_17.C \
+   test2007_38.C \
+   test2007_90.C \
+   test2009_40.C \
+   test2009_41.C
+
+FAIL_BECAUSE_TPL_MEMBER_FUNCTION_ARE_NOT_HANDLE = \
+   test2004_11.C \
+   test2004_18.C \
+   test2004_30.C \
+   test2004_37.C \
+   test2004_36.C \
+   test2004_32.C \
+   test2004_75.C \
+   test2004_76.C \
+   test2004_77.C
 
 # These are currently failing testcodes that should be fixed
 # (as opposed to testcodes that are expected to fail)
@@ -743,7 +739,16 @@ test2004_44.C \
 --> Variables declared inside switch statements are not visited by the virtual CFG (not SSA bug)\
 test2005_187.C \
 test2005_114.C \
-test2006_47.C 
+test2006_47.C
+
+FAIL_WITH_EDG_47_AND_GCC_4_2_4_NOT_GCC_4_4_5 = \
+ test2005_42.C \
+ test2005_142.C \
+ test2005_132.C \
+ test2005_129.C \
+ test2005_130.C \
+ test2005_131.C \
+ test2005_133.C
 
 TEST_INCLUDES = \
 	-I$(top_srcdir)/tests/CompileTests/A++Code \
@@ -769,12 +774,11 @@ TEST_CXX:
 .PHONY: $(CXX_TESTCODES_REQUIRED_TO_PASS)
 $(CXX_TESTCODES_REQUIRED_TO_PASS): ssaTestHarness
 	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 $(TEST_INCLUDES) -c $@
+	
 
 check-local:
 	@$(MAKE) TEST_C
-if !ROSE_USE_EDG_VERSION_4
 	@$(MAKE) TEST_CXX
-endif
 	@echo "*********************************************************************************************************"
 	@echo "****** ROSE/projects/backstroke/ssa: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************"

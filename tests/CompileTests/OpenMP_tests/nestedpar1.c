@@ -25,6 +25,7 @@ int main(void)
 #pragma omp parallel
     printf("after single.\n");
   }
+  return 0;
 }
 
 

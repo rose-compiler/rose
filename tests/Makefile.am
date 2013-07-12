@@ -38,7 +38,7 @@ bin_PROGRAMS = \
    parallelASTMerge \
    testGraphGeneration \
    testTokenGeneration \
-   KeepGoingTranslator
+   KeepGoingTranslator 
 
 # DQ (1/16/2012): This test code is not supported when compiling for simple front-end testing (smallest subset of ROSE that can be built).
 if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -97,6 +97,10 @@ testTokenGeneration_SOURCES = testTokenGeneration.C
 
 # Ignores internal ROSE failures, see `rose --help` for info on `-rose:keep_going`
 KeepGoingTranslator_SOURCES = KeepGoingTranslator.cpp
+
+# DQ (7/3/2013): Added support to output some pre-defined macro values.
+# Program to output predefined relevant macros.
+# predefinedMacros_SOURCES = predefinedMacros.C
 
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES)
@@ -281,6 +285,13 @@ endif
 
 testKeepGoingTranslator: KeepGoingTranslator
 	./KeepGoingTranslator $(__minimal_input_code)
+
+# This appears to be a bug, in that the executable is not build (ROSE assumes an implicit -c for compile only mode).
+#predefinedMacros: testTranslator
+#	./testTranslator $(srcdir)/predefinedMacros.C
+
+#testPredefinedMacros: predefinedMacros
+#	./predefinedMacros
 
 # Make check rule
 check-local: test

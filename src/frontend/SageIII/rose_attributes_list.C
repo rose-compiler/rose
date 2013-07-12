@@ -1224,15 +1224,21 @@ ROSEAttributesList::display ( const string & label )
        // printf("LineNumber: %5d: %s\n",(*j)->getLineNumber(),(*j)->getString().c_str());
           printf("-----------------------\n"); 
           if ( *j != NULL )
+             {
                printf("Directive Type: %s; Relative position: %s; \nLine:%5d; Column:%5d; String: %s\n",
-               PreprocessingInfo::directiveTypeName ((*j)->getTypeOfDirective ()).c_str (),
-               PreprocessingInfo::relativePositionName((*j)->getRelativePosition()).c_str (),
-               (*j)->getLineNumber(),
-               (*j)->getColumnNumber(), 
-               (*j)->getString().c_str());
+                    PreprocessingInfo::directiveTypeName ((*j)->getTypeOfDirective ()).c_str (),
+                    PreprocessingInfo::relativePositionName((*j)->getRelativePosition()).c_str (),
+                    (*j)->getLineNumber(),
+                    (*j)->getColumnNumber(), 
+                    (*j)->getString().c_str());
+             }
             else
+             {
                printf ("Warning: PreprocessingInfo *j == NULL \n");
+             }
         }
+
+     printf ("END: ROSEAttributesList::display (label = %s) \n",label.c_str());
    }
 
 void
@@ -1581,7 +1587,7 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
         }
 
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
-     printf ("i = %d positionofHashCharacter = %d \n",i,positionofHashCharacter);
+     printf ("i = %zu positionofHashCharacter = %d \n",i,positionofHashCharacter);
 #endif
      bool hasLineContinuation = false;
 
@@ -1613,7 +1619,7 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
           while ((i < lineLength && (firstNonBlankCharacter == ' ' || firstNonBlankCharacter == '\t')) || firstNonBlankCharacter == '#')
              {
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
-               printf ("Looping over # or white space between # and CPP directive i = %d \n",i);
+               printf ("Looping over # or white space between # and CPP directive i = %zu \n",i);
 #endif
                firstNonBlankCharacter = line[i];
                if (spaceAfterHash == false)
@@ -1637,13 +1643,13 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
              {
                nonBlankCharacter = line[i];
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
-               printf ("In loop: i = %d lineLength = %d nonBlankCharacter = %c \n",i,lineLength,isprint(nonBlankCharacter) ? nonBlankCharacter : '.');
+               printf ("In loop: i = %zu lineLength = %zu nonBlankCharacter = %c \n",i,lineLength,isprint(nonBlankCharacter) ? nonBlankCharacter : '.');
 #endif
                i++;
              }
 
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
-          printf ("i = %d \n",i);
+          printf ("i = %zu \n",i);
 #endif
 
        // Need to backup two (for example if this is the end of the line, as in "#endif")
@@ -1920,7 +1926,6 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
                  // printf ("After processing continuation lines: line.length() = %zu line = %s \n",line.length(),line.c_str());
                   }
 
-#if 1
             // DQ (11/17/2008): Refactored the code to make it simpler to add here!
             // If this is not a CPP directive, then check if it is a comment (note 
             // that for Fortran (for fixed format), a CPP directive could be identified 
@@ -1960,13 +1965,11 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
                          cppDeclarationKind = PreprocessingInfo::FortranStyleComment;
                        }
                   }
-#endif
 
 #if 0
             // printf ("Before lineCounter = %d \n",lineCounter);
                printf ("cppDeclarationKind = %s \n",PreprocessingInfo::directiveTypeName(cppDeclarationKind).c_str());
 #endif
-
             // Note that #pragma maps to CpreprocessorUnknownDeclaration so ignore that case!
                if (cppDeclarationKind != PreprocessingInfo::CpreprocessorUnknownDeclaration)
                   {
@@ -1974,7 +1977,9 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
                                                                             lineCounter,0,numberOfLines,PreprocessingInfo::before);
                     ROSE_ASSERT(cppDirective != NULL);
                     attributeList.push_back(cppDirective);
-
+#if 0
+                    printf ("attributeList.size() = %zu \n",attributeList.size());
+#endif
                  // DQ (11/28/2008): Gather additional data for specific directives (CPP generated linemarkers (e.g. "# <line number> <filename> <flags>").
                     if (cppDeclarationKind == PreprocessingInfo::CpreprocessorCompilerGeneratedLinemarker)
                        {
@@ -1993,20 +1998,20 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
                                  {
                                    nonBlankCharacter = restOfTheLine[i];
 #if 0
-                                   printf ("In loop: i = %d lineLength = %d nonBlankCharacter = %c \n",i,lineLength,isprint(nonBlankCharacter) ? nonBlankCharacter : '.');
+                                   printf ("In loop: i = %zu lineLength = %zu nonBlankCharacter = %c \n",i,lineLength,isprint(nonBlankCharacter) ? nonBlankCharacter : '.');
 #endif
                                    i++;
                                  }
 
 #if 0
-                         printf ("i = %d \n",i);
+                         printf ("In ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST: i = %zu \n",i);
 #endif
 
                       // Need to backup two (for example if this is the end of the line, as in "#endif")
                          size_t positionOfLastCharacterOfIntegerValue = i-2;
 
 #if 0
-                         printf ("positionOfLastCharacterOfIntegerValue = %d \n",positionOfLastCharacterOfIntegerValue);
+                         printf ("positionOfLastCharacterOfIntegerValue = %zu \n",positionOfLastCharacterOfIntegerValue);
 #endif
                          int lineNumberLength = (positionOfLastCharacterOfIntegerValue - positionOfFirstCharacterOfIntegerValue) + 1;
                          string cppIndentifier = restOfTheLine.substr(positionOfFirstCharacterOfIntegerValue,lineNumberLength);
@@ -2019,6 +2024,9 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
 #if 0
                       // The atoi() function is not supposed to be used any more.
                          integerValue = atoi(cppIndentifier.c_str());
+
+#error "DEAD CODE!"
+
 #else
                       // The modern way to handle conversion of string to integer value is to 
                       // use strtol(), and not atoi().  But atoi() is simpler.
@@ -2035,8 +2043,8 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
                          size_t remainingLineLength   = (lineLength - positionOfLastCharacterOfIntegerValue) - 1;
                          string remainingLine = restOfTheLine.substr(positionOfLastCharacterOfIntegerValue+1,remainingLineLength);
 #if 0
-                         printf ("lineLength    = %d positionOfLastCharacterOfIntegerValue = %d \n",lineLength,positionOfLastCharacterOfIntegerValue);
-                         printf ("remainingLineLength = %d remainingLine = %s \n",remainingLineLength,remainingLine.c_str());
+                         printf ("lineLength    = %zu positionOfLastCharacterOfIntegerValue = %zu \n",lineLength,positionOfLastCharacterOfIntegerValue);
+                         printf ("remainingLineLength = %zu remainingLine = %s \n",remainingLineLength,remainingLine.c_str());
 #endif
                          size_t positionOfFirstQuote = remainingLine.find('"');
 
@@ -2046,13 +2054,19 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
                          // We should allow to skip this line as tested in tests/CompileTests/C_tests/test2009_02.c
 #if 0                     
                          ROSE_ASSERT(positionOfFirstQuote != string::npos);
+
+#error "DEAD CODE!"
+
 #else                         
                          if (positionOfFirstQuote == string::npos ) 
-                         {
-                           //rollback and skip to the next line
-                           delete cppDirective;
-                           continue;
-                         }
+                            {
+                           // rollback and skip to the next line
+#if 0
+                              printf ("In ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST: rollback and skip to the next line \n");
+#endif
+                              delete cppDirective;
+                              continue;
+                            }
 #endif                           
 
                          size_t positionOfLastQuote = remainingLine.rfind('"');
@@ -2062,7 +2076,7 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
 #endif
                          int filenameLength = (positionOfLastQuote - positionOfFirstQuote) + 1;
 #if 0
-                         printf ("filenameLength = %zu \n",filenameLength);
+                         printf ("filenameLength = %d \n",filenameLength);
 #endif
                          string filename = remainingLine.substr(positionOfFirstQuote,filenameLength);
 
@@ -2098,6 +2112,9 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
                lineCounter++;
 
             // printf ("increment lineCounter = %d \n",lineCounter);
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+               printf ("At bottom of loop over lines in the file ... incremented lineCounter = %d attributeList.size() = %zu \n",lineCounter,attributeList.size());
+#endif
              }
 
        // printf ("Closing file \n");
@@ -2109,7 +2126,12 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
        // ROSE_ASSERT(false);
         }
 
-  // printf ("Leaving collectPreprocessorDirectivesAndCommentsForAST() \n");
+#if 0
+     display("Leaving collectPreprocessorDirectivesAndCommentsForAST(): debug");
+#endif
+#if 0
+     printf ("Leaving collectPreprocessorDirectivesAndCommentsForAST(): attributeList.size() = %zu \n",attributeList.size());
+#endif
    }
 
 
@@ -2119,14 +2141,17 @@ ROSEAttributesList::generateFileIdListFromLineDirectives()
   // This function generates a list of fileId numbers associated with each of the different names specified in #line directives.
 
 #if 0
-     printf ("In ROSEAttributesList::generateFileIdListFromLineDirectives() \n");
+     printf ("In ROSEAttributesList::generateFileIdListFromLineDirectives() attributeList.size() = %zu \n",attributeList.size());
+#endif
+#if 0
+     display("In ROSEAttributesList::generateFileIdListFromLineDirectives()");
 #endif
 #if 0
      Sg_File_Info::display_static_data("At TOP of ROSEAttributesList::generateFileIdListFromLineDirectives()");
 #endif
-
 #if 0
-     printf ("In ROSEAttributesList::generateFileIdListFromLineDirectives(): Sg_File_Info::get_nametofileid_map().size() = %zu Sg_File_Info::get_fileidtoname_map().size() = %zu \n",Sg_File_Info::get_nametofileid_map().size(),Sg_File_Info::get_fileidtoname_map().size());
+     printf ("In ROSEAttributesList::generateFileIdListFromLineDirectives(): Sg_File_Info::get_nametofileid_map().size() = %zu Sg_File_Info::get_fileidtoname_map().size() = %zu \n",
+          Sg_File_Info::get_nametofileid_map().size(),Sg_File_Info::get_fileidtoname_map().size());
 #endif
 
   // DQ (12/17/2012): Added assertion.
@@ -2141,12 +2166,16 @@ ROSEAttributesList::generateFileIdListFromLineDirectives()
 #if 0
           printf("-----------------------\n"); 
           if (*i != NULL)
+             {
                printf("Directive Type: %s; Relative position: %s; \nLine:%5d; Column:%5d; String: %s\n",
-               PreprocessingInfo::directiveTypeName ((*i)->getTypeOfDirective ()).c_str (),
-               PreprocessingInfo::relativePositionName((*i)->getRelativePosition()).c_str (),
-               (*i)->getLineNumber(), (*i)->getColumnNumber(), (*i)->getString().c_str());
+                    PreprocessingInfo::directiveTypeName ((*i)->getTypeOfDirective ()).c_str (),
+                    PreprocessingInfo::relativePositionName((*i)->getRelativePosition()).c_str (),
+                    (*i)->getLineNumber(), (*i)->getColumnNumber(), (*i)->getString().c_str());
+             }
             else
+             {
                printf ("Warning: PreprocessingInfo *i == NULL \n");
+             }
 #endif
 
           if ( (*i)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorLineDeclaration )
@@ -2211,7 +2240,9 @@ ROSEAttributesList::generateFileIdListFromLineDirectives()
                int fileId = Sg_File_Info::getIDFromFilename(filename);
 
                if (SgProject::get_verbose() > 1)
+                  {
                     printf ("In ROSEAttributesList::generateFileIdListFromLineDirectives(): line = %d fileId = %d quotedFilename = %s filename = %s \n",line,fileId,quotedFilename.c_str(),filename.c_str());
+                  }
 
                if (filenameIdSet.find(fileId) == filenameIdSet.end())
                   {
@@ -2226,6 +2257,11 @@ ROSEAttributesList::generateFileIdListFromLineDirectives()
 
 #if 0
      printf ("Leaving ROSEAttributesList::generateFileIdListFromLineDirectives() \n");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
    }
 
