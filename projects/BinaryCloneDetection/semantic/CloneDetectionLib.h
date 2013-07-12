@@ -7,6 +7,7 @@
 #include "BinaryPointerDetection.h"
 #include "SqlDatabase.h"
 #include "LinearCongruentialGenerator.h"
+#include "Combinatorics.h"
 
 #include <stdint.h>
 #include <vector>
@@ -829,16 +830,36 @@ public:
         return 0!=(mval.rw_state & HAS_BEEN_WRITTEN) && x86_segreg_ss!=mval.segreg ? mval.first_of_n : 0;
     }
 
+    // If the specified address looks like it points to a string in the memory map then return a hash of that string, otherwise
+    // return the address.
+    rose_addr_t hash_if_string(rose_addr_t va, const MemoryMap *map) {
+        rose_addr_t retval = va;
+        static const size_t limit = 4096; // arbitrary
+        std::string str = map->read_string(va, limit, isascii);
+        if (str.size()>=5 && str.size()<4096) {
+            std::vector<uint8_t> digest = Combinatorics::sha1_digest(str);
+            assert(20==digest.size());
+            retval = *(rose_addr_t*)&digest[0];
+        }
+        return retval;
+    }
+
     // Return output values.  These are the interesting general-purpose registers to which a value has been written, and the
     // memory locations to which a value has been written.  The returned object can be deleted when no longer needed.
-    OutputGroup get_outputs(Verbosity verbosity) {
+    OutputGroup get_outputs(Verbosity verbosity, const MemoryMap *map) {
         OutputGroup outputs = this->output_group;
 
-        // Function return value is EAX, but only if it has been written to and is concrete
+        // Function return value is EAX, but only if it has been written to
         if (0 != (register_rw_state.gpr[x86_gpr_ax].state & HAS_BEEN_WRITTEN)) {
-            if (verbosity>=EFFUSIVE)
-                std::cerr <<"output for ax = " <<registers.gpr[x86_gpr_ax].known_value() <<"\n";
-            outputs.insert_value(registers.gpr[x86_gpr_ax].known_value());
+            rose_addr_t v1 = registers.gpr[x86_gpr_ax].known_value();
+            rose_addr_t v2 = hash_if_string(v1, map);
+            if (verbosity>=EFFUSIVE) {
+                std::cerr <<"output for ax = " <<ValueType<32>(v2);
+                if (v1!=v2)
+                    std::cerr <<" (hash of string at " <<StringUtility::addrToString(v1) <<")";
+                std::cerr <<"\n";
+            }
+            outputs.insert_value(v2);
         }
 
         // Memory outputs
@@ -847,19 +868,24 @@ public:
             const MemoryValue &mval = ci->second;
             if (is_memory_output(addr, mval)) {
                 assert(mval.first_of_n<=4);
-                OutputGroup::value_type value = 0;
+                OutputGroup::value_type v1 = 0;
                 MemoryCells::const_iterator ci2=ci;
                 for (size_t i=0; i<mval.first_of_n && ci2!=memory.end(); ++i, ++ci2) {
                     if (ci2->first != addr+i)
                         break;
-                    value |= IntegerOps::shiftLeft2<OutputGroup::value_type>(ci2->second.val, 8*i); // little endian
+                    v1 |= IntegerOps::shiftLeft2<OutputGroup::value_type>(ci2->second.val, 8*i); // little endian
                 }
+                OutputGroup::value_type v2 = hash_if_string(v1, map);
                 if (verbosity>=EFFUSIVE) {
+                    int nbytes = v1==v2 ? (int)mval.first_of_n : 4;
                     char buf[32];
-                    snprintf(buf, sizeof buf, "%0*"PRIx64, 2*(int)mval.first_of_n, (uint64_t)value);
-                    std::cerr <<"output for mem[" <<StringUtility::addrToString(addr) <<"] = " <<buf <<"\n";
+                    snprintf(buf, sizeof buf, "%0*"PRIx64, 2*nbytes, (uint64_t)v2);
+                    std::cerr <<"output for mem[" <<StringUtility::addrToString(addr) <<"] = " <<buf;
+                    if (v1!=v2)
+                        std::cerr <<" (hash of string at " <<StringUtility::addrToString(v1) <<")";
+                    std::cerr <<"\n";
                 }
-                outputs.insert_value(value, addr);
+                outputs.insert_value(v2, addr);
             }
         }
 
@@ -1029,7 +1055,7 @@ public:
 
     // Return output values. These include the return value, certain memory writes, function calls, system calls, etc.
     OutputGroup get_outputs() {
-        return state.get_outputs(params.verbosity);
+        return state.get_outputs(params.verbosity, interp->get_map());
     }
     
     // Sets up the machine state to start the analysis of one function.
@@ -1464,8 +1490,12 @@ public:
             state.mem_write_byte(sr, a3, b3, 0, rw_state);
         }
         if (state.is_memory_output(a0.known_value())) {
-            if (params.verbosity>=EFFUSIVE)
+            if (params.verbosity>=EFFUSIVE) {
                 std::cerr <<"CloneDetection: potential output value mem[" <<a0 <<"]=" <<data <<"\n";
+                rose_addr_t v2 = state.hash_if_string(data.known_value(), interp->get_map());
+                if (v2!=data.known_value())
+                    std::cerr <<"CloneDetection: output value is a string pointer; hash="<<StringUtility::addrToString(v2)<<"\n";
+            }
             tracer.emit(this->get_insn()->get_address(), Tracer::EV_MEM_WRITE, a0.known_value(), data.known_value());
         }
     }
@@ -1916,12 +1946,6 @@ SgProject *load_ast(const SqlDatabase::TransactionPtr&, const std::string &hashk
 /** Identifying string for function.  Includes function address, and in angle brackets, the database function ID if known, the
  *  function name if known, and file name if known. */
 std::string function_to_str(SgAsmFunction*, const FunctionIdMap&);
-
-/** Compute a SHA1 digest from a buffer. */
-std::string compute_digest(const uint8_t *data, size_t size);
-
-/** Convert a 20-byte array to a hexadecimal string. */
-std::string digest_to_str(const unsigned char digest[20]);
 
 } // namespace
 #endif

@@ -1048,36 +1048,6 @@ existing_functions(const SqlDatabase::TransactionPtr &tx, CloneDetection::FilesT
 }
 
 std::string
-digest_to_str(const unsigned char digest[20])
-{
-    std::string digest_str;
-    for (size_t i=0; i<20; ++i) {
-        digest_str += "0123456789abcdef"[(digest[i] >> 4) & 0xf];
-        digest_str += "0123456789abcdef"[digest[i] & 0xf];
-    }
-    return digest_str;
-}
-
-std::string
-compute_digest(const uint8_t *data, size_t size)
-{
-#ifndef ROSE_HAVE_GCRYPT_H
-#error "libgcrypt is required"
-#endif
-    gcry_md_hd_t md; // message digest
-    gcry_error_t error __attribute__((unused)) = gcry_md_open(&md, GCRY_MD_SHA1, 0);
-    assert(GPG_ERR_NO_ERROR==error);
-    gcry_md_write(md, data, size);
-    assert(gcry_md_get_algo_dlen(GCRY_MD_SHA1)==20);
-    gcry_md_final(md);
-    unsigned char *d = gcry_md_read(md, GCRY_MD_SHA1);
-    assert(d!=NULL);
-    std::string hex = digest_to_str(d);
-    gcry_md_close(md);
-    return hex;
-}
-
-std::string
 save_binary_data(const SqlDatabase::TransactionPtr &tx, int64_t cmd_id, const std::string &filename)
 {
     int fd = open(filename.c_str(), O_RDONLY);
@@ -1096,7 +1066,7 @@ save_binary_data(const SqlDatabase::TransactionPtr &tx, int64_t cmd_id, const st
 std::string
 save_binary_data(const SqlDatabase::TransactionPtr &tx, int64_t cmd_id, const uint8_t *data, size_t size)
 {
-    std::string hashkey = compute_digest(data, size);
+    std::string hashkey = Combinatorics::digest_to_string(Combinatorics::sha1_digest(data, size));
     if (tx->statement("select count(*) from semantic_binaries where hashkey = ?")->bind(0, hashkey)->execute_int())
         return hashkey; // already saved
 
@@ -1151,7 +1121,7 @@ load_binary_data(const SqlDatabase::TransactionPtr &tx, const std::string &hashk
     assert(status>=0);
     const uint8_t *data = (const uint8_t*)mmap(NULL, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
     assert(data!=MAP_FAILED);
-    std::string digest = compute_digest(data, sb.st_size);
+    std::string digest = Combinatorics::digest_to_string(Combinatorics::sha1_digest(data, sb.st_size));
     munmap((void*)data, sb.st_size);
     assert(0==digest.compare(hashkey));
     close(fd);

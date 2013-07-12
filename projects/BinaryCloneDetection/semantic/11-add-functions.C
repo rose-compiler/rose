@@ -319,7 +319,7 @@ main(int argc, char *argv[])
         func->get_extent(&e_total);
         uint8_t digest[20];
         func->get_sha1(digest);
-        std::string digest_str = digest_to_str(digest);
+        std::string digest_str = Combinatorics::digest_to_string(std::vector<uint8_t>(digest, digest+20));
         stmt1->bind(0, fi->first);
         stmt1->bind(1, func->get_entry_va());
         stmt1->bind(2, func->get_name());
