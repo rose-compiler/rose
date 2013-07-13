@@ -6,8 +6,11 @@
 
 #include "VariableIdMapping.h"
 #include "RoseAst.h"
+#include <set>
 
+using std::set;
 using namespace CodeThorn;
+
 
 void VariableIdMapping::toStream(ostream& os) {
   for(size_t i=0;i<mappingVarIdToSym.size();++i) {
@@ -18,6 +21,17 @@ void VariableIdMapping::toStream(ostream& os) {
 	  <<")"<<endl;
 	assert(mappingSymToVarId[mappingVarIdToSym[i]]==i);
   }
+}
+
+set<VariableId> VariableIdMapping::getVariableIdSet() {
+  set<VariableId> set;
+  for(map<SgSymbol*,size_t>::iterator i=mappingSymToVarId.begin();i!=mappingSymToVarId.end();++i) {
+	size_t t=(*i).second;
+	VariableId id;
+	id.setIdCode(t);
+	set.insert(id);
+  }
+  return set;
 }
 
 VariableId VariableIdMapping::variableIdFromCode(int i) {
@@ -379,4 +393,29 @@ bool CodeThorn::operator==(VariableId id1, VariableId id2) {
 }
 bool CodeThorn::operator!=(VariableId id1, VariableId id2) {
   return !(id1==id2);
+}
+
+
+
+set<VariableId> VariableIdMapping::determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls) {
+  set<VariableId> resultSet;
+  for(set<SgVariableDeclaration*>::iterator i=varDecls.begin();i!=varDecls.end();++i) {
+	SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(*i);
+	if(sym) {
+	  resultSet.insert(variableId(sym));
+	}
+  }
+  return resultSet;
+}
+
+set<VariableId> VariableIdMapping::determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList) {
+  set<VariableId> resultSet;
+  for(SgInitializedNamePtrList::iterator i=namePtrList.begin();i!=namePtrList.end();++i) {
+	assert(*i);
+	SgSymbol* sym=SgNodeHelper::getSymbolOfInitializedName(*i);
+	if(sym) {
+	  resultSet.insert(variableId(sym));
+	}
+  }
+  return resultSet;
 }

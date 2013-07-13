@@ -28,20 +28,23 @@ struct SingleMatchResult {
   SingleMatchMarkedLocations singleMatchMarkedLocations;
   bool success;
   void clear();
+  bool isSMRMarkedLocation(RoseAst::iterator& i);
 };
 
 class MatchStatus {
  public:
-  MatchStatus():debug(false){
-    _allMatchVarBindings=new std::list<SingleMatchVarBindings>; 
+  MatchStatus():debug(false),_allMatchVarBindings(0){
+	resetAllMatchVarBindings();
+	resetAllMarkedLocations();
   }
   ~MatchStatus() {
     delete _allMatchVarBindings; 
   }
   enum PatternMatchMode {MATCHMODE_SHALLOW, MATCHMODE_DEEP, MATCHMODE_SINGLE};
   enum CheckNodeMode {NODECHECKMODE_TYPEID,NODECHECKMODE_VARIANT};
-  bool isMarkedLocation(RoseAst::iterator& i);
-
+  bool isMarkedLocationAddress(RoseAst::iterator& i);
+  void resetAllMatchVarBindings();
+  void resetAllMarkedLocations();
  public:
   bool debug;
   void mergeOtherStatus(MatchStatus& other);
@@ -59,7 +62,7 @@ class MatchStatus {
   void commitSingleMatchResult();
  private:
   SingleMatchResult current_smr;
-
+  bool _keepMarkedLocations;
 };  
 
 class MatchOperation {

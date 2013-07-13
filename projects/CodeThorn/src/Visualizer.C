@@ -7,12 +7,92 @@
 #include "Visualizer.h"
 #include "SgNodeHelper.h"
 #include "CommandLineOptions.h"
+#include "AttributeAnnotator.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // BEGIN OF VISUALIZER
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 using namespace CodeThorn;
+
+class AssertionAttribute : public AnalysisResultAttribute {
+public:
+  AssertionAttribute(string preCondition):_precond(preCondition) {}
+  string getPreInfoString() { return _precond; }
+  string getPostInfoString() { return ""; }
+private:
+  string _precond;
+};
+
+AssertionExtractor::AssertionExtractor(Analyzer* analyzer)
+{
+  setLabeler(analyzer->getLabeler());
+  setVariableIdMapping(analyzer->getVariableIdMapping());
+  setPStateSet(analyzer->getPStateSet());
+  setEStateSet(analyzer->getEStateSet());
+  long num=labeler->numberOfLabels();
+  assertions.resize(num);
+}
+
+void AssertionExtractor::setLabeler(Labeler* x) { labeler=x; }
+void AssertionExtractor::setVariableIdMapping(VariableIdMapping* x) { variableIdMapping=x; }
+void AssertionExtractor::setPStateSet(PStateSet* x) { pstateSet=x; }
+void AssertionExtractor::setEStateSet(EStateSet* x) { estateSet=x; }
+
+void AssertionExtractor::computeLabelVectorOfEStates() {
+  for(EStateSet::iterator i=estateSet->begin();i!=estateSet->end();++i) {
+	Label lab=(*i).label();
+	const PState* p=(*i).pstate();
+	if(assertions[lab]!="")
+	  assertions[lab]+="||";
+	assertions[lab]+="(";
+	{
+	  bool isFirst=true;
+	  for(PState::const_iterator j=p->begin();j!=p->end();++j) {
+		// iterating on the map
+		VariableId varId=(*j).first;
+		if(p->varIsConst(varId)) {
+		  if(!isFirst) {
+			assertions[lab]+=" && ";
+		  } else {
+			isFirst=false;
+		  }
+		  assertions[lab]+=variableIdMapping->variableName(varId)+"=="+p->varValueToString(varId);
+		}
+	  }
+	  const ConstraintSet* cset=(*i).constraints();
+	  string constraintstring=cset->toAssertionString(variableIdMapping);
+	  if(!isFirst && constraintstring!="") {
+		assertions[lab]+=" && ";
+	  } else {
+		isFirst=false;
+	  }
+	  assertions[lab]+=constraintstring;
+	  assertions[lab]+=")";
+	}
+  }
+#if 0
+  std::cout<<"Computed Assertions:"<<endl;
+  for(size_t i=0;i<assertions[i].size();++i) {
+	std::cout<<"@"<<Labeler::labelToString(i)<<": "<<assertions[i]<<std::endl;
+  }
+#endif
+}
+
+void AssertionExtractor::annotateAst() {
+  for(size_t i=0;i<assertions.size();i++) {
+	if(!labeler->isBlockEndLabel(i)&&!labeler->isFunctionCallReturnLabel(i)&&!labeler->isFunctionExitLabel(i)) {
+	  SgNode* node=labeler->getNode(i);
+	  if(node->attributeExists("ctgen-pre-condition"))
+		cout << "WARNING: pre-condition already exists. skipping."<<endl;
+	  else {
+		if(assertions[i]!="") {
+		  node->setAttribute("ctgen-pre-condition",new AssertionAttribute("GENERATED_ASSERT("+assertions[i]+")"));
+		}
+	  }
+	}
+  }
+}
 
 Visualizer::Visualizer():
   labeler(0),

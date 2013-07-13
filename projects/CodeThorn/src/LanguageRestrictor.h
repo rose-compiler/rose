@@ -34,6 +34,9 @@ class LanguageRestrictor {
   bool isAllowedAstNodeVariant(VariantT variant);
   bool isAllowedAstNodeVariantSet(VariantSet variants);
   VariantSet getAllowedAstNodeVariantSet();
+  virtual bool checkProgram(SgNode* node);
+ protected:
+  virtual void initialize();
   virtual bool checkIfAstIsAllowed(SgNode* node); 
  private:
   void ensureVariantIsValid(VariantT variant);

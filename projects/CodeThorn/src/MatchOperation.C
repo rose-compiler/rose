@@ -6,6 +6,23 @@
 
 #include "MatchOperation.h"
 
+using namespace std;
+
+bool 
+SingleMatchResult::isSMRMarkedLocation(RoseAst::iterator& i) {
+  // TODO: use find and make it more efficient (right now we have O(n))
+  // we cannot use ordered sets because no operator< is defined on 
+  // forward-iterators
+  for(SingleMatchMarkedLocations::iterator j=singleMatchMarkedLocations.begin();
+      j!=singleMatchMarkedLocations.end();
+      ++j) {
+    if(*i==**j) // this only works for iterators working on the same subtree (with same root node)
+      return true;
+  }
+  return false;
+}
+
+
 bool
 MatchOperation::performOperation(MatchStatus&  status, RoseAst::iterator& i, SingleMatchResult& smr) {
   std::cout<<"performing default operation.\n";
@@ -31,33 +48,72 @@ MatchOpOr::toString() {
 }
 bool
 MatchOpOr::performOperation(MatchStatus& status, RoseAst::iterator& i, SingleMatchResult& smr) {
+  if(status.debug) {
+	std::cout<<"performing OR-match operation."<<std::endl;
+  }
+
+  /* match-operations are performed left to right, using
+   short-circuit. marked nodes are propagated through subexpressions
+  */
+
+#if 1
+  RoseAst::iterator tmp_iter_left=i;
+  RoseAst::iterator tmp_iter_right=i;
+  SingleMatchResult left_smr;
+  bool left_match=_left->performOperation(status,tmp_iter_left,left_smr);
+  if(left_match) {
+	i=tmp_iter_left;
+	smr=left_smr;
+    return true;
+  } else {
+	if(left_smr.isSMRMarkedLocation(tmp_iter_right)||status.isMarkedLocationAddress(tmp_iter_right)) {
+	  i=tmp_iter_left;
+	  smr=left_smr;
+	  return false;
+	} else {
+	  SingleMatchResult right_smr=left_smr;
+	  if(_right->performOperation(status,tmp_iter_right,right_smr)) {
+		i=tmp_iter_right;
+		smr=right_smr;
+		return true;
+	  } else {
+		// nothing changed
+		return false;
+	  }
+	}
+  }
+  
+#else
+  // alternate semantics (without short-circuit evaluation)
   RoseAst::iterator tmp_iter_left=i;
   RoseAst::iterator tmp_iter_right=i;
   SingleMatchResult left_smr;
   SingleMatchResult right_smr;
-  if(status.debug) {
-	std::cout<<"performing OR-match operation."<<std::endl;
-  }
   bool left_result=_left->performOperation(status,tmp_iter_left,left_smr);
-  bool right_result=_right->performOperation(status,tmp_iter_right,right_smr);
+  
+  bool right_result=false;
+  // check if locations which have been marked in the lhs-match would exclude the current node
+  if(!left_smr.isSMRMarkedLocation(tmp_iter_right))
+	right_result=_right->performOperation(status,tmp_iter_right,right_smr);
+
   if(left_result && right_result) {
-    //    status.mergeSingleMatchResult(left_smr);
-    //status.mergeSingleMatchResult(right_smr);
-    // we do not assign tmp_iter_left (both are correct)
+	status.mergeSingleMatchResult(left_smr);
+    status.mergeSingleMatchResult(right_smr);
+    // both tmp_iter_left and tmp_iter_right are correct
+	assert(tmp_iter_left==tmp_iter_right);
     i=tmp_iter_right;
     return true;
-  }
-  if(left_result) {
+  } else if(left_result) {
     i=tmp_iter_left;
     status.mergeSingleMatchResult(left_smr);
     return true;
-  }
-  if(right_result) {
+  } else if(right_result) {
     i=tmp_iter_right;
     status.mergeSingleMatchResult(right_smr);
     return true;
   }
   return false;
+#endif
 }
 
 MatchOpVariableAssignment::MatchOpVariableAssignment(std::string varName):_varName(varName){}
@@ -91,18 +147,20 @@ MatchOpCheckNode::toString() {
 
 bool
 MatchOpCheckNode::performOperation(MatchStatus&  status, RoseAst::iterator& i, SingleMatchResult& smr) {
-  if(status.debug)
-    std::cout << "CheckNode: ";
+  if(status.debug) {
+    std::cout << "check_node: ";
+	std::cout << "smr::num"<<smr.singleMatchMarkedLocations.size()<<"@"<<&smr<<" ";
+  }
   SgNode* node=*i;
   if(node!=0) {
     // determine type name of node
     std::string nodeTypeName=typeid(*node).name();
     if(status.debug)
-      std::cout << "(" << _nodename << "," << nodeTypeName <<")";
+      std::cout << "(patternnode " << _nodename << ":" << nodeTypeName <<")";
     return nodeTypeName==_nodename;
   } else {
     if(status.debug)
-      std::cout << "(" << _nodename << "," << "null" <<")";
+      std::cout << "(patternnode " << _nodename << ":" << "null" <<")";
     return false;
   }
 }
@@ -134,6 +192,7 @@ MatchOpCheckNodeSet::performOperation(MatchStatus&  status, RoseAst::iterator& i
       std::cout << "(" << _nodenameset << "," << "null" <<")";
     return false;
   }
+  assert(0);
 }
 
 
@@ -155,7 +214,7 @@ MatchOpArityCheck::toString() {
 bool
 MatchOpArityCheck::performOperation(MatchStatus&  status, RoseAst::iterator& i, SingleMatchResult& smr) {
   if(status.debug)
-    std::cout << "ArityCheck: ";
+    std::cout << "arity_check: ";
   SgNode* node=*i;
   if(node!=0) {
     size_t nodeArity=node->get_numberOfTraversalSuccessors();
@@ -214,6 +273,9 @@ bool MatchOpMarkNode::performOperation(MatchStatus& status, RoseAst::iterator& i
   if(status.debug)
     std::cout << "mark_node("<<node<<")";
   smr.singleMatchMarkedLocations.push_front(i);
+  if(status.debug) {
+	std::cout << "MARK:num"<<smr.singleMatchMarkedLocations.size()<<"@"<<&smr<<endl;
+  }
   return true;
 }
 
@@ -257,7 +319,8 @@ bool MatchOpSequence::performOperation(MatchStatus& status, RoseAst::iterator& i
       match_op_iter!=this->end();
       match_op_iter++) {
     bool tmpresult=(*match_op_iter)->performOperation(status, tmp_pattern_ast_iter, smr);
-    if(!tmpresult) {
+
+   if(!tmpresult) {
       // matchVarBindings and matchRegisteredIterators is automatically deleted if we return with false
       if(status.debug)
 		std::cout << "not matched;"<<std::endl;
@@ -268,12 +331,14 @@ bool MatchOpSequence::performOperation(MatchStatus& status, RoseAst::iterator& i
   // pattern has been successfully matched
   // on a successful match we need to update the ast-iterator now
   i=tmp_pattern_ast_iter;
-  // not tested yet: we do not do vb=smr because of merging marked locs?
-  status.mergeSingleMatchResult(smr);
+  // we propagate results of matched subpattern to overallresult
+  //status.mergeSingleMatchResult(smr);
+  // since this was a successful match, we keep the matchresult alive (only relevant to '|' and marked locs)
+  vb=smr;
   //status._allMatchVarBindings->push_back(smr.singleMatchVarBindings);
   //status._allMatchMarkedLocations.splice(status._allMatchMarkedLocations.end(),smr.singleMatchMarkedLocations); // move elements (instead of copy)
   if(status.debug)
-    std::cout << "sucessfully matched;";
+    std::cout << "sucessfully matched;"<<std::endl;
   return true;
 }
 
@@ -291,7 +356,9 @@ void MatchStatus::mergeOtherStatus(MatchStatus& other) {
 }
 
 void MatchStatus::mergeSingleMatchResult(SingleMatchResult& other) {
-  _allMatchVarBindings->push_back(other.singleMatchVarBindings);
+  // only add a match-result if a variable was bound. if no variable was bound the match-result is not added.
+  if(other.singleMatchVarBindings.size()>0)
+	_allMatchVarBindings->push_back(other.singleMatchVarBindings);
   for(SingleMatchMarkedLocations::iterator i=other.singleMatchMarkedLocations.begin();
       i!=other.singleMatchMarkedLocations.end();
       ++i) {
@@ -299,15 +366,17 @@ void MatchStatus::mergeSingleMatchResult(SingleMatchResult& other) {
   }
 }
 
+
+
 bool 
-MatchStatus::isMarkedLocation(RoseAst::iterator& i) {
+MatchStatus::isMarkedLocationAddress(RoseAst::iterator& i) {
   // TODO: use find and make it more efficient (right now we have O(n))
   // we cannot use ordered sets because no operator< is defined on 
   // forward-iterators
   for(SingleMatchMarkedLocations::iterator j=_allMatchMarkedLocations.begin();
       j!=_allMatchMarkedLocations.end();
       ++j) {
-    if(i==*j)
+    if(*i==**j) // i==*j does not work for iterators operating on different subtrees, we therefore need to compare the address
       return true;
   }
   return false;
@@ -330,4 +399,15 @@ void MatchStatus::commitSingleMatchResult() {
 
 void SingleMatchResult::clear() {
   
+}
+
+void MatchStatus::resetAllMatchVarBindings() {
+  if(_allMatchVarBindings)
+	delete _allMatchVarBindings;
+  _allMatchVarBindings=new std::list<SingleMatchVarBindings>;
+}
+
+void MatchStatus::resetAllMarkedLocations() {
+  while(!_allMatchMarkedLocations.empty())
+	_allMatchMarkedLocations.pop_front();
 }

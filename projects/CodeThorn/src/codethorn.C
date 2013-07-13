@@ -11,6 +11,7 @@
 #include "StateRepresentations.h"
 #include "Analyzer.h"
 #include "LanguageRestrictor.h"
+#include "LanguageRestrictorCollection.h"
 #include "Timer.h"
 #include "LTLCheckerFixpoint.h"
 #include "LTLCheckerUnified.h"
@@ -78,6 +79,8 @@ void attachPointerExprLists(SgNode* node) {
   }
 }
 
+// OBSOLETE
+#if 0
 bool CodeThornLanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
@@ -164,6 +167,7 @@ void checkProgram(SgNode* root) {
 	exit(1);
   }
 }
+#endif
 
 void generateAssertsCsvFile(Analyzer& analyzer, SgProject* sageProject, string filename) {
   ofstream* csv = NULL;
@@ -497,6 +501,7 @@ int main( int argc, char * argv[] ) {
     ("rers-binary",po::value< string >(),"Call rers binary functions in analysis. Use [=yes|no]")
 	("print-all-options",po::value< string >(),"print all yes/no command line options.")
 	("annotate-results",po::value< string >(),"annotate results in program and output program (using ROSE unparser).")
+	("generate-assertions",po::value< string >(),"generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
 	("skip-analysis",po::value< string >(),"Run without performing any analysis (only used for testing).")
     ;
 
@@ -544,6 +549,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("reduce-cfg",true);
   boolOptions.registerOption("print-all-options",false);
   boolOptions.registerOption("annotate-results",false);
+  boolOptions.registerOption("generate-assertions",false);
   boolOptions.registerOption("skip-analysis",false);
 
   boolOptions.registerOption("ltl-output-dot",false);
@@ -668,7 +674,8 @@ int main( int argc, char * argv[] ) {
   if(!boolOptions["skip-analysis"])
   {
 	cout << "INIT: Checking input program."<<endl;
-  checkProgram(root);
+	CodeThornLanguageRestrictor lr;
+  lr.checkProgram(root);
   timer.start();
 
   cout << "INIT: Running variable<->symbol mapping check."<<endl;
@@ -812,6 +819,15 @@ int main( int argc, char * argv[] ) {
     cout << "generated "<<filename<<endl;
   }
   
+  // TEST
+  if (boolOptions["generate-assertions"]) {
+	AssertionExtractor assertionExtractor(&analyzer);
+	assertionExtractor.computeLabelVectorOfEStates();
+	assertionExtractor.annotateAst();
+	AnalysisResultAnnotator ara;
+	ara.annotateAnalysisResultAttributesAsComments(sageProject,"ctgen-pre-condition");
+	cout << "STATUS: Generated assertions."<<endl;
+  }
 
   if(boolOptions["viz"]) {
     Visualizer visualizer(analyzer.getLabeler(),analyzer.getVariableIdMapping(),analyzer.getFlow(),analyzer.getPStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
@@ -877,11 +893,13 @@ int main( int argc, char * argv[] ) {
 	AnalysisResultAnnotator ara;
 	ara.annotateAnalysisResultAttributesAsComments(sageProject,"codethorn-term-representation");
 	ara.annotateAnalysisResultAttributesAsComments(sageProject,"codethorn-pointer-expr-lists");
+  }
+
+  if (boolOptions["annotate-results"]||boolOptions["generate-assertions"]) {
 	cout << "INFO: Generating annotated program."<<endl;
 	//backend(sageProject);
 	sageProject->unparse(0,0);
   }
-
   // reset terminal
   cout<<color("normal")<<"done."<<endl;
   

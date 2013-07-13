@@ -50,6 +50,8 @@ codethorn_SOURCES = \
   Labeler.h                        \
   LanguageRestrictor.C             \
   LanguageRestrictor.h             \
+  LanguageRestrictorCollection.C   \
+  LanguageRestrictorCollection.h   \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
   RoseAst.C                        \
@@ -98,6 +100,8 @@ faketarget:
 	ast_demo.C
 	ShowSeq.h
 	iterator_test.C
+	WorkListOMP.h
+	WorkListOMP.C
 
 #      matcherparser_decls.h
 
@@ -118,7 +122,8 @@ varwatch_LDADD = -lrose
 varwatch_SOURCES = varwatch.C VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C RoseAst.h RoseAst.C
 
 rdmain_LDADD = -lrose
-rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C RoseAst.h RoseAst.C Labeler.h Labeler.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C rdmain.C RDAnalyzer.h RDAnalyzer.C
+rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C RoseAst.h RoseAst.C Labeler.h Labeler.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C AttributeAnnotator.h AttributeAnnotator.C DataDependenceVisualizer.h DataDependenceVisualizer.C
+
 
 
 #MS: iterator_test not ingegrated yet

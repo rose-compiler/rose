@@ -1,8 +1,5 @@
+// Author: Markus Schordan, 2013.
 // Example AstMatcher : used for demonstrating and testing the matcher mechanism
-
-/*
- * TODO: OR-operator not working yet (iterator runs past-the-end)
- */
 
 #include <iostream>
 #include <fstream>
@@ -142,7 +139,7 @@ int main( int argc, char * argv[] ) {
 	timer.stop();
 	double matchingMeasurementTime=timer.getElapsedTimeInMilliSec();
 	// print result in readable form for demo purposes
-	std::cout << "Number of matched patterns: " << r.size() << std::endl;
+	std::cout << "Number of matched patterns with bound variables: " << r.size() << std::endl;
 	for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
 	  std::cout << "MATCH: \n"; 
 	  //SgNode* n=(*i)["X"];

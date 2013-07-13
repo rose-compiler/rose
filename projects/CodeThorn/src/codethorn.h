@@ -19,15 +19,15 @@
 #include "Analyzer.h"
 #include "Visualizer.h"
 #include "LanguageRestrictor.h"
+#include "LanguageRestrictorCollection.h"
 #include "Miscellaneous.h"
 
 using namespace std;
 
 namespace CodeThorn {
 
-class CodeThornLanguageRestrictor : public LanguageRestrictor {
+class CodeThornLanguageRestrictor : public LanguageRestrictorCppSubset1 {
 public:
-  bool checkIfAstIsAllowed(SgNode* node);
 };
 
 } // end of namespace CodeThorn
