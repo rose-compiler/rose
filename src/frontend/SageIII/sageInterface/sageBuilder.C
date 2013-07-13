@@ -6564,6 +6564,19 @@ SageBuilder::buildFunctionCallStmt(SgExpression* function_exp, SgExprListExp* pa
   return expStmt;
 }
 
+SgTypeTraitBuiltinFunctionCallExp*
+SageBuilder::buildTypeTraitBuiltinFunctionCallExp(SgName functionName, SgNodePtrList parameters)
+   {
+     SgTypeTraitBuiltinFunctionCallExp * builtin_func_call_expr = new SgTypeTraitBuiltinFunctionCallExp(functionName);
+     ROSE_ASSERT(builtin_func_call_expr != NULL);
+
+  // Note that this is copy by value...
+     builtin_func_call_expr->get_builtin_function_operands() = parameters;
+
+     return builtin_func_call_expr;
+   }
+
+
 //! Build a CUDA kernel call expression (kernel<<<config>>>(parameters))
 SgCudaKernelCallExp * SageBuilder::buildCudaKernelCallExp_nfi(SgExpression * kernel, SgExprListExp* parameters, SgCudaKernelExecConfig * config) {
   ROSE_ASSERT(kernel);

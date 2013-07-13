@@ -618,6 +618,9 @@ SgFunctionCallExp*
 buildFunctionCallExp(const SgName& name, SgType* return_type, \
                 SgExprListExp* parameters=NULL, SgScopeStatement* scope=NULL);
 
+SgTypeTraitBuiltinFunctionCallExp*
+buildTypeTraitBuiltinFunctionCallExp(SgName functionName, SgNodePtrList parameters);
+
 //! Build a CUDA kernel call expression (kernel<<<config>>>(parameters))
 SgCudaKernelCallExp * buildCudaKernelCallExp_nfi(
   SgExpression * kernel,

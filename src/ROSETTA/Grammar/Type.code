@@ -5336,12 +5336,20 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
   // DQ (3/22/2012): Added assertions.
      if (returnType->get_declaration() != cd)
         {
+#if 0
           printf ("In SgClassType::createType(): returnType = %p = %s \n",returnType,returnType->class_name().c_str());
-          printf ("In SgClassType::createType(): returnType->get_declaration() = %p = %s cd = %p = %s \n",returnType->get_declaration(),returnType->get_declaration()->class_name().c_str(),cd,cd->class_name().c_str());
-          printf ("In SgClassType::createType(): returnType->get_declaration() = %p = %s cd = %p = %s \n",returnType->get_declaration(),isSgClassDeclaration(returnType->get_declaration())->get_name().str(),classDeclaration,classDeclaration->get_name().str());
+          printf ("In SgClassType::createType(): returnType->get_declaration() = %p = %s cd = %p = %s \n",returnType->get_declaration(),
+               returnType->get_declaration()->class_name().c_str(),cd,cd->class_name().c_str());
+          printf ("In SgClassType::createType(): returnType->get_declaration() = %p = %s cd = %p = %s \n",returnType->get_declaration(),
+               isSgClassDeclaration(returnType->get_declaration())->get_name().str(),classDeclaration,classDeclaration->get_name().str());
+#endif
           ROSE_ASSERT(returnType->get_declaration()->get_firstNondefiningDeclaration() != NULL);
           ROSE_ASSERT(cd->get_firstNondefiningDeclaration() != NULL);
-          printf ("In SgClassType::createType(): returnType->get_declaration()->get_firstNondefiningDeclaration() = %p = %s cd->get_firstNondefiningDeclaration() = %p = %s \n",returnType->get_declaration()->get_firstNondefiningDeclaration(),returnType->get_declaration()->get_firstNondefiningDeclaration()->class_name().c_str(),cd->get_firstNondefiningDeclaration(),cd->get_firstNondefiningDeclaration()->class_name().c_str());
+#if 0
+          printf ("In SgClassType::createType(): returnType->get_declaration()->get_firstNondefiningDeclaration() = %p = %s cd->get_firstNondefiningDeclaration() = %p = %s \n",
+               returnType->get_declaration()->get_firstNondefiningDeclaration(),returnType->get_declaration()->get_firstNondefiningDeclaration()->class_name().c_str(),
+               cd->get_firstNondefiningDeclaration(),cd->get_firstNondefiningDeclaration()->class_name().c_str());
+#endif
         }
 #if 0
   // DQ (1/22/2013): We can't assert this when we have complex template handling as in Boost.

@@ -2000,8 +2000,10 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
                     printf ("This template argument is not an SgType OR an SgExpression: templateArgument = %p \n",templateArgument);
                     ROSE_ASSERT(false);
 #else
-                 // DQ (6/23/2013): Output thetemplate argument type so that we can evaluate this (might be template template argument that requires name qualificaion).
+                 // DQ (6/23/2013): Output the template argument type so that we can evaluate this (might be template template argument that requires name qualificaion).
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("WARNING: This template argument is not an SgType OR an SgExpression: templateArgument = %p argumentType = %d \n",templateArgument,(int)templateArgument->get_argumentType());
+#endif
 #endif
                   }
              }
@@ -2387,9 +2389,9 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
        // DQ (7/13/2011): OSX can have types that are about 2487 characters long (see test2004_35.C).
        // This is symptematic of an error which causes the whole class to be included with the class 
        // definition.  This was fixed by calling unparseInfoPointer->set_SkipClassDefinition() above.
-          if (typeNameString.length() > 4000)
+          if (typeNameString.length() > 6000)
              {
-               printf ("Warning: type names should not be this long... typeNameString.length() = %zu \n",typeNameString.length());
+               printf ("Warning: type names should not be this long...(unless this is boost) typeNameString.length() = %zu \n",typeNameString.length());
 #if 0
             // DQ (6/30/2013): Allow the output of an example so that we can verify that this make 
             // sense (and that it is not a result of some comment output from the unparsing of types).
@@ -2410,7 +2412,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
             // if (typeNameString.length() > 10000)
                if (typeNameString.length() > 40000)
                   {
-                    printf ("Error: type names should not be this long... typeNameString.length() = %zu \n",typeNameString.length());
+                    printf ("Error: type names should not be this long... (even in boost, I think) typeNameString.length() = %zu \n",typeNameString.length());
                     ROSE_ASSERT(false);
                   }
 #if 0
@@ -3035,8 +3037,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              {
                if (currentScope != NULL && inheritedAttribute.get_currentScope() != NULL)
                   {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 1)
                     printf ("WARNING: currentScope != inheritedAttribute.get_currentScope(): currentScope = %p = %s inheritedAttribute.get_currentScope() = %p = %s \n",
                          currentScope,currentScope->class_name().c_str(),inheritedAttribute.get_currentScope(),inheritedAttribute.get_currentScope()->class_name().c_str());
+#endif
                   }
              }
        // ROSE_ASSERT(currentScope == inheritedAttribute.get_currentScope());

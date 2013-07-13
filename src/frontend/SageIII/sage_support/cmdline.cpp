@@ -3288,6 +3288,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         }
 #endif
 
+#if 0
 // DQ (7/3/2013): This is a work around to support a bug in EDG 4.7 which causes test2013_246.C to fail (boost example code).
 #if __GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ > 3 || (__GNUC_MINOR__ == 3 && __GNUC_PATCHLEVEL__ >= 0)))
   // DQ (7/3/2013): For this to let EDG think we have a GNU 4.2 compiler.
@@ -3298,6 +3299,9 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
 //  DQ (7/3/2013): This macro is used in rose_edg_required_macros_and_functions.h.in (temporary work about for EDG 4.7).
 #define LIE_ABOUT_GNU_VERSION_TO_EDG
+#endif
+#else
+//   printf ("In SgFile::build_EDG_CommandLine(): TURNED OFF MACRO LIE_ABOUT_GNU_VERSION_TO_EDG \n");
 #endif
 
   // const char* boostPath[] = ROSE_BOOST_PATH;
@@ -3377,10 +3381,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
         std::string edg_version(sstream.str());
 
-        commandLine.push_back(
-            findRoseSupportPathFromSource(
-                "src/frontend/CxxFrontend/EDG/EDG_" + edg_version + "/lib",
-                "share"));
+     // DQ (7/11/2013): Had to put this back after adding the more macros from rose_host_envir.h to defined.h.rose.
+     // DQ (7/10/2013): base lib was configured to be the "src/frontend/CxxFrontend/EDG/EDG_" + edg_version 
+     // (maybe it should be "src/frontend/CxxFrontend/EDG/EDG_" + edg_version + "/lib").
+     // commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_" + edg_version + "/lib","share"));
+     // commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_" + edg_version,"share"));
+        commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_" + edg_version + "/lib","share"));
     }
 
 
@@ -4247,7 +4253,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // DQ (1/17/2006): test this
   // ROSE_ASSERT(get_fileInfo() != NULL);
 
-#if 1
+#if 0
   // display("SgFile::buildCompilerCommandLineOptions()");
      printf ("C   compiler              = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
      printf ("C++ compiler              = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);

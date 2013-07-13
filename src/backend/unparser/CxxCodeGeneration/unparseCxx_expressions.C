@@ -170,6 +170,9 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
        // This can be demonstrated on test2012_133.C (any maybe many other places too).
           case TEMPLATE_PARAMETER_VAL:  { unparseTemplateParameterValue(expr, info); break; }
 
+       // DQ (7/12/2013): Added support for unparsing teyp trait builtin expressions (operators).
+          case TYPE_TRAIT_BUILTIN_FUNCTION_CALL: { unparseTypeTraitBuiltinExp(expr, info); break; }
+
           default:
              {
             // printf ("Default reached in switch statement for unparsing expressions! expr = %p = %s \n",expr,expr->class_name().c_str());
@@ -2969,6 +2972,81 @@ Unparse_ExprStmt::unparseUpcMythread(SgExpression* expr, SgUnparse_Info& info)
 
      curprint ("MYTHREAD ");
    }
+
+
+void
+Unparse_ExprStmt::unparseTypeTraitBuiltinExp(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgTypeTraitBuiltinFunctionCallExp* operatorExp = isSgTypeTraitBuiltinFunctionCallExp(expr);
+     ROSE_ASSERT(operatorExp != NULL);
+
+     string functionNameString = operatorExp->get_builtin_function_name();
+     curprint(functionNameString);
+
+     ROSE_ASSERT(operatorExp->get_builtin_function_operands().empty() == false);
+#if 0
+     printf ("In unparseTypeTraitBuiltinExp(): functionNameString = %s expr = %p = %s \n",functionNameString.c_str(),expr,expr->class_name().c_str());
+#endif
+     SgNodePtrList& list = operatorExp->get_builtin_function_operands();
+     SgNodePtrList::iterator operand = list.begin();
+     curprint("(");
+     while (operand != list.end())
+        {
+#if 0
+          (*arg)->get_file_info()->display("function call argument");
+#endif
+#if 0
+          printf ("func_call->get_args() = %p = %s arg = %p = %s \n",func_call->get_args(),func_call->get_args()->class_name().c_str(),*arg,(*arg)->class_name().c_str());
+#endif
+       // DQ (4/24/2013): Moved this to be ahead so that the unparseArg value would be associated with the current argument.
+          if (operand != list.begin())
+             {
+               curprint(","); 
+             }
+
+          SgType*       type       = isSgType(*operand);
+          SgExpression* expression = isSgExpression(*operand);
+#if 0
+          printf ("   --- operand = %p = %s \n",*operand,(*operand)->class_name().c_str());
+#endif
+       // DQ (7/13/2013): Build a new SgUnparse_Info so that we can skip passing on any existing referenceNode for name qualification.
+       // We need to debug name qualification seperately, if it is required, likely it could be fore any referenced types.
+          SgUnparse_Info newinfo(info);
+          newinfo.set_reference_node_for_qualification(operatorExp);
+          ROSE_ASSERT(newinfo.get_reference_node_for_qualification() != NULL);
+
+          if (type != NULL)
+             {
+#if 0
+               curprint("\n/* unp->u_sage->unparseOneElemConInit in unparseFuncCall */ \n"); 
+#endif
+#if 1
+               unp->u_type->unparseType(type,newinfo);
+#else
+            // DQ (7/13/2013): Temporary ebugging code
+               curprint ("(unparseTypeTraitBuiltinExp skipped type)");
+#endif
+
+            // curprint ( "\n/* DONE: unp->u_sage->unparseOneElemConInit in unparseFuncCall */ \n"); 
+             }
+            else
+             {
+#if 0
+               curprint("\n/* unparseExpression in args processing in unparseFuncCall */ \n");
+#endif
+            // printf ("unparseExpression in args processing in unparseFuncCall \n");
+            // newinfo.display("newinfo in unparseFuncCall()");
+               unparseExpression(expression,info);
+            // curprint("\n/* DONE: unparseExpression in args processing in unparseFuncCall */ \n");
+             }
+
+          operand++;
+        }
+
+     curprint(")");
+   }
+
+
 
 
 // DQ (8/13/2007): Moved to common (language independent) base class
