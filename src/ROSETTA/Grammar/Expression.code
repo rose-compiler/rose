@@ -556,13 +556,12 @@ HEADER_FUNCTION_CALL_EXPRESSION_END
 
 HEADER_TYPE_TRAIT_BUILTIN_FUNCTION_CALL_EXPRESSION_START
 
-#if 0
+       // DQ (7/13/2013): I have verified that we need implementations of these functions for the CFG support.
        // DQ (7/12/2013): Not clear if we need these functions since the buildin functions are all pure and lack definitions.
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
-#endif
 #endif
 
        // DQ (7/12/2013): Not clear if we need these functions since the buildin functions are all pure.
