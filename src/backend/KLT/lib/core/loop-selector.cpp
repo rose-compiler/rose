@@ -38,36 +38,38 @@ void Dummy_LoopSelector::extractNestedLoops(const std::map<Kernel *, LoopTrees::
   std::map<Kernel *, LoopTrees::node_t *>::const_iterator it_kernel;
   for (it_kernel = kernels_map.begin() ; it_kernel != kernels_map.end(); it_kernel++) {
     Kernel * kernel = it_kernel->first;
-
-    std::list<LoopTrees::loop_t *> perfectly_nested_loops;
-
     LoopTrees::node_t * node = it_kernel->second;
-    LoopTrees::loop_t * loop = dynamic_cast<LoopTrees::loop_t *>(node);
-    assert(node != NULL);
 
-    while (loop != NULL && loop->parallel_pattern == LoopTrees::loop_t::parfor) {
-      perfectly_nested_loops.push_back(loop); // cond: loop != NULL && loop->parallel_pattern == LoopTrees::parfor
-      if (loop->children.size() == 1) {
-        node = loop->children.front();               // cond: 
-        loop = dynamic_cast<LoopTrees::loop_t *>(node);
+    std::set<Kernel::loop_distribution_t *> loop_distributions;
+    {
+      Kernel::loop_distribution_t * loop_distribution = new Kernel::loop_distribution_t();
+        loop_distributions.insert(loop_distribution);
+
+      LoopTrees::loop_t * loop = dynamic_cast<LoopTrees::loop_t *>(node);
+      assert(node != NULL);
+
+      while (loop != NULL && loop->parallel_pattern == LoopTrees::loop_t::parfor) {
+        loop_distribution->loop_nest.push_back(loop); // cond: loop != NULL && loop->parallel_pattern == LoopTrees::parfor
+        if (loop->children.size() == 1) {
+          node = loop->children.front();               // cond: 
+          loop = dynamic_cast<LoopTrees::loop_t *>(node);
+        }
+        else break;
       }
-      else break;
+
+      if (loop == NULL)
+        loop_distribution->body.push_back(node);
+      else if (loop->parallel_pattern != LoopTrees::loop_t::parfor)
+        loop_distribution->body.push_back(loop);
+      else {
+        assert(loop != NULL && loop->parallel_pattern == LoopTrees::loop_t::parfor);
+        loop_distribution->body.insert(loop_distribution->body.end(), loop->children.begin(), loop->children.end());
+      }
+
+      assert(!loop_distribution->body.empty());
     }
 
-    std::list<LoopTrees::node_t *> body_branches;
-
-    if (loop == NULL)
-      body_branches.push_back(node);
-    else if (loop->parallel_pattern != LoopTrees::loop_t::parfor)
-      body_branches.push_back(loop);
-    else {
-      assert(loop != NULL && loop->parallel_pattern == LoopTrees::loop_t::parfor);
-      body_branches.insert(body_branches.end(), loop->children.begin(), loop->children.end());
-    }
-
-    assert(!body_branches.empty());
-
-    kernel->setContent(perfectly_nested_loops, body_branches);
+    kernel->setLoopDistributions(loop_distributions);
   }
 }
 

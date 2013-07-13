@@ -7,14 +7,16 @@ namespace OpenCL {
 
 Kernel::Kernel() :
   Core::Kernel(),
-  p_kernels()
+  p_opencl_iteration_maps_done(false),
+  p_opencl_iteration_maps(),
+  p_kernels_done(false),
+  p_opencl_kernel_map(),
+  p_opencl_kernels()
 {}
 
-Kernel::~Kernel() {}
-
-const std::set<Kernel::a_kernel *> & Kernel::getKernels() const { return p_kernels; }
-
-void Kernel::addKernel(Kernel::a_kernel * kernel) { p_kernels.insert(kernel); }
+Kernel::~Kernel() {
+  // TODO std::set<a_opencl_kernel *> p_opencl_kernels
+}
 
 }
 

@@ -10,8 +10,8 @@
 #include "KLT/OpenCL/kernel.hpp"
 
 namespace KLT {
-namespace OpenCL {
-class WorkSizeShape;
+namespace Core {
+template <typename Kernel> class IterationMap;
 }
 }
 
@@ -22,13 +22,19 @@ class KLT< ::KLT::OpenCL::Kernel> {
   public:
     struct object_desc_t {
       ::KLT::OpenCL::Kernel * kernel;
-      ::KLT::OpenCL::WorkSizeShape * work_size_shape;
+      ::KLT::OpenCL::Kernel::loop_distribution_t * loop_distribution;
+      ::KLT::Core::IterationMap< ::KLT::OpenCL::Kernel> * iteration_map;
       unsigned long file_id;
 
-      object_desc_t(::KLT::OpenCL::Kernel * kernel_, ::KLT::OpenCL::WorkSizeShape * work_size_shape_, unsigned long file_id_);
+      object_desc_t(
+        ::KLT::OpenCL::Kernel * kernel_,
+        ::KLT::OpenCL::Kernel::loop_distribution_t * loop_distribution_,
+        ::KLT::Core::IterationMap< ::KLT::OpenCL::Kernel> * iteration_map_,
+        unsigned long file_id_
+      );
     };
 
-    typedef ::KLT::OpenCL::Kernel::a_kernel * build_result_t;
+    typedef ::KLT::OpenCL::Kernel::an_opencl_kernel * build_result_t;
 
 };
 

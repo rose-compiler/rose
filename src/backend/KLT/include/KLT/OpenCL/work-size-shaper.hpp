@@ -20,8 +20,8 @@ class WorkSizeShape {
   protected:
     unsigned int p_number_dims;
     
-    std::map<SgVariableSymbol *, unsigned int> p_iterator_to_seq_map;
-    std::map<SgVariableSymbol *, Core::LoopTrees::loop_t *> p_iterator_to_loop_map;
+    const std::map<SgVariableSymbol *, unsigned int> & p_iterator_to_seq_map;
+    const std::map<SgVariableSymbol *, Core::LoopTrees::loop_t *> & p_iterator_to_loop_map;
 
     std::vector<SgExpression *> p_global_dims;
     std::vector<SgExpression *> p_local_dims;
@@ -60,13 +60,13 @@ class WorkSizeShape {
 class WorkSizeShaper {
   public:
     virtual void generateShapes(
-      const std::list< Core::LoopTrees::loop_t *> & nested_loops,
+      const std::list<Core::LoopTrees::loop_t *> & nested_loops,
       const std::list<SgVariableSymbol *> & params,
       std::set<WorkSizeShape *> & shapes
     ) const;
 
     virtual void generateShapes(
-      const std::list< Core::LoopTrees::loop_t *> & nested_loops,
+      const std::list<Core::LoopTrees::loop_t *> & nested_loops,
       const std::list<SgVariableSymbol *> & params,
       const std::map<SgVariableSymbol *, unsigned int> & iterator_to_seq_map,
       const std::map<SgVariableSymbol *, Core::LoopTrees::loop_t *> & iterator_to_loop_map,
@@ -74,11 +74,13 @@ class WorkSizeShaper {
     ) const = 0;
 };
 
+// Dummy implementation
+
 class Dummy_WorkSizeShape : public WorkSizeShape {
 
   public:
     Dummy_WorkSizeShape(
-      const std::list< Core::LoopTrees::loop_t *> & nested_loops,
+      const std::list<Core::LoopTrees::loop_t *> & nested_loops,
       const std::map<SgVariableSymbol *, unsigned int> & iterator_to_seq_map,
       const std::map<SgVariableSymbol *, Core::LoopTrees::loop_t *> & iterator_to_loop_map
     );
@@ -98,7 +100,7 @@ class Dummy_WorkSizeShaper : public WorkSizeShaper {
   public:
     /// Generate only one Dummy_WorkSizeShape : it maps each loop to a different dimension
     virtual void generateShapes(
-      const std::list< Core::LoopTrees::loop_t *> & nested_loops,
+      const std::list<Core::LoopTrees::loop_t *> & nested_loops,
       const std::list<SgVariableSymbol *> & params,
       const std::map<SgVariableSymbol *, unsigned int> & iterator_to_seq_map,
       const std::map<SgVariableSymbol *, Core::LoopTrees::loop_t *> & iterator_to_loop_map,

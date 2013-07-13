@@ -7,28 +7,22 @@ namespace KLT {
 
 namespace Sequential {
 
-void Kernel::setKernelSymbol(SgFunctionSymbol * kernel_symbol) {
-  assert(p_kernel_symbol ==NULL);
-  p_kernel_symbol = kernel_symbol;
-}
-
-void Kernel::setArgumentPacker(SgClassSymbol * arguments_packer) {
-  assert(p_arguments_packer == NULL);
-  p_arguments_packer = arguments_packer;
-}
-
 Kernel::Kernel() :
   Core::Kernel(),
-  p_kernel_symbol(NULL),
-  p_arguments_packer(NULL)
+  p_sequential_iteration_maps_done(false),
+  p_sequential_iteration_maps(),
+  p_sequential_kernels_done(false),
+  p_sequential_kernel_map(),
+  p_sequential_kernels()
 {}
 
-Kernel::~Kernel() {}
+Kernel::~Kernel() {
+  // TODO std::set<a_sequential_kernel *> p_sequential_kernels
+}
 
-SgFunctionSymbol * Kernel::getKernelSymbol() const { return p_kernel_symbol; }
+bool Kernel::isIterationMapDone() const { return p_sequential_iteration_maps_done; }
 
-SgClassSymbol * Kernel::getArgumentsPacker() const { return p_arguments_packer; }
-
+bool Kernel::areKernelsDone() const { return p_sequential_kernels_done; }
 
 }
 

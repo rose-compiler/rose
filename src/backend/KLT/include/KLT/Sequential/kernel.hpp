@@ -6,34 +6,57 @@
 
 class SgClassSymbol;
 class SgFunctionSymbol;
+class SgMemberFunctionSymbol;
 
 namespace KLT {
+
+namespace Core {
+template <typename Kernel> class IterationMap;
+}
 
 namespace Sequential {
 
 class Kernel : public virtual Core::Kernel {
-  protected:
-    /// Symbol associated to the generated kernel
-    SgFunctionSymbol * p_kernel_symbol;
+  public:
+    struct argument_symbol_maps_t {
+      std::map<SgVariableSymbol *, SgVariableSymbol *> param_to_args;
+      std::map<SgVariableSymbol *, SgVariableSymbol *> coef_to_args;
+      std::map<Core::Data *, SgVariableSymbol *> data_to_args;
+    };
 
-    /// Symbol associated to the "arguments packer", a struct used to be pass the arguments as one void pointer
-    SgClassSymbol * p_arguments_packer;
+    struct coordinate_symbols_t {};
+
+    struct a_sequential_kernel {
+      /// Symbol associated to the generated kernel
+      SgFunctionSymbol * kernel;
+
+      /// Symbol associated to the "arguments packer", a struct used to be pass the arguments as one void pointer
+      SgClassSymbol * arguments_packer;
+
+      /// Symbol for the constructor of the argument packer
+      SgMemberFunctionSymbol * arguments_packer_ctor;
+    };
 
   protected:
-    void setKernelSymbol(SgFunctionSymbol * kernel_symbol);
-    void setArgumentPacker(SgClassSymbol * arguments_packer);
+    /// Set true when the diferent iteration mapping have been produced
+    bool p_sequential_iteration_maps_done;
+    /// A set of iteration mapping for each loop distribution
+    std::map<loop_distribution_t *, std::set<Core::IterationMap<Kernel> *> > p_sequential_iteration_maps;
+
+    /// Set true when the kernel (code/AST) have been produced
+    bool p_sequential_kernels_done;
+    /// A map between the different iteration mapping and the produced kernel for each loop distribution
+    std::map<loop_distribution_t *, std::map<Core::IterationMap<Kernel> *, a_sequential_kernel *> > p_sequential_kernel_map;
+    /// All the sequential kernel that have been generated
+    std::set<a_sequential_kernel *> p_sequential_kernels;
 
   public:
     Kernel();
     virtual ~Kernel();
 
-    /// \return Symbol associated to the generated kernel
-    SgFunctionSymbol * getKernelSymbol() const;
-
-    /// \return Symbol associated to the "arguments packer", a struct used to be pass the arguments as one void pointer
-    SgClassSymbol * getArgumentsPacker() const;
-
-  friend class Generator;
+    virtual bool isIterationMapDone() const;
+    
+    virtual bool areKernelsDone() const;
 };
 
 }

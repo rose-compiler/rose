@@ -15,11 +15,11 @@ Kernel::Kernel() :
   p_data_in(),
   p_data_out(),
   p_arguments_done(false),
-  p_datas_argument_order(),
   p_parameters_argument_order(),
-  p_content_done(false),
-  p_perfectly_nested_loops(),
-  p_body_branches()
+  p_coefficients_argument_order(),
+  p_datas_argument_order(),
+  p_loop_distribution_done(false),
+  p_loop_distributions()
 {}
 
 void Kernel::setDataflow(const std::set<Data *> & data_in, const std::set<Data *> & data_out) {
@@ -31,23 +31,24 @@ void Kernel::setDataflow(const std::set<Data *> & data_in, const std::set<Data *
   p_dataflow_done = true;
 }
 
-void Kernel::setArgument(const std::list<Data *> & datas_argument_order, const std::list<SgVariableSymbol *> & parameters_argument_order, const std::list<SgVariableSymbol *> & coefficients_argument_order) {
+void Kernel::setArgument(
+  const std::list<SgVariableSymbol *> & parameters_argument_order,
+  const std::list<SgVariableSymbol *> & coefficients_argument_order,
+  const std::list<Data *> & datas_argument_order
+) {
   assert(!p_arguments_done);
 
-  p_datas_argument_order = datas_argument_order;
   p_parameters_argument_order = parameters_argument_order;
   p_coefficients_argument_order = coefficients_argument_order;
+  p_datas_argument_order = datas_argument_order;
 
   p_arguments_done = true;
 }
 
-void Kernel::setContent(const std::list<LoopTrees::loop_t *> & perfectly_nested_loops, const std::list<LoopTrees::node_t *> & body_branches) {
-  assert(!p_content_done);
+void Kernel::setLoopDistributions(const std::set<loop_distribution_t *> & loop_distributions) {
+  p_loop_distributions = loop_distributions;
 
-  p_perfectly_nested_loops = perfectly_nested_loops;
-  p_body_branches = body_branches;
-
-  p_content_done = true;
+  p_loop_distribution_done = true;
 }
 
 Kernel::~Kernel() {}
@@ -66,11 +67,6 @@ const std::set<Data *> & Kernel::getFlowingOut() const {
 
 bool Kernel::isArgumentDone() const { return p_arguments_done; }
 
-const std::list<Data *> & Kernel::getDatasArguments() const {
-  assert(p_arguments_done);
-  return p_datas_argument_order;
-}
-
 const std::list<SgVariableSymbol *> & Kernel::getCoefficientsArguments() const {
   assert(p_arguments_done);
   return p_coefficients_argument_order;
@@ -81,11 +77,17 @@ const std::list<SgVariableSymbol *> & Kernel::getParametersArguments() const {
   return p_parameters_argument_order;
 }
 
-bool Kernel::isContentDone() const { return p_content_done; }
+const std::list<Data *> & Kernel::getDatasArguments() const {
+  assert(p_arguments_done);
+  return p_datas_argument_order;
+}
 
-const std::list<LoopTrees::loop_t *> & Kernel::getPerfectlyNestedLoops() const { return p_perfectly_nested_loops; }
+bool Kernel::isLoopDistributionDone() const { return p_loop_distribution_done; }
 
-const std::list<LoopTrees::node_t *> & Kernel::getBodyBranches() const { return p_body_branches; }
+const std::set<Kernel::loop_distribution_t *> & Kernel::getLoopDistributions() const {
+  assert(p_loop_distribution_done);
+  return p_loop_distributions;
+}
 
 }
 

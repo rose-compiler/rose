@@ -18,13 +18,10 @@ void Generator::doCodeGeneration(Core::Kernel * kernel_, const Core::CG_Config &
   Kernel * kernel = dynamic_cast<Kernel *>(kernel_);
   assert(kernel != NULL);
 
-  const OpenCL::CG_Config & cg_config = dynamic_cast<const OpenCL::CG_Config &>(cg_config_); // can throw an exception of type std::bad_cast
-
-  const WorkSizeShaper & work_size_shaper = cg_config.getWorkSizeShaper();
-
   assert(kernel->isDataflowDone());
   assert(kernel->isArgumentDone());
-  assert(kernel->isContentDone());
+  assert(kernel->isLoopDistributionDone());
+  assert(kernel->isIterationMapDone());
 
   std::set<WorkSizeShape *> shapes;
   work_size_shaper.generateShapes(kernel->getPerfectlyNestedLoops(), kernel->getParametersArguments(), shapes);

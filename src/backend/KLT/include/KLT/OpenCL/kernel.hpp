@@ -6,16 +6,32 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 class SgExpression;
 
 namespace KLT {
 
+namespace Core {
+template <typename Kernel> class IterationMap;
+}
+
 namespace OpenCL {
 
 class Kernel : public virtual Core::Kernel {
   public:
-    struct a_kernel {
+    struct argument_symbol_maps_t {
+      std::map<SgVariableSymbol *, SgVariableSymbol *> param_to_args;
+      std::map<SgVariableSymbol *, SgVariableSymbol *> coef_to_args;
+      std::map<Core::Data *, SgVariableSymbol *> data_to_args;
+    };
+
+    struct coordinate_symbols_t {
+      std::list<SgVariableSymbol *> global_ids;
+      std::list<SgVariableSymbol *> local_ids;
+    };
+
+    struct an_opencl_kernel {
       /// Name of the OpenCL kernel
       std::string kernel_name;
 
@@ -32,14 +48,21 @@ class Kernel : public virtual Core::Kernel {
     };
 
   protected:
-    std::set<a_kernel *> p_kernels;
+    /// Set true when the diferent iteration mapping have been produced
+    bool p_opencl_iteration_maps_done;
+    /// A set of iteration mapping for each loop distribution
+    std::map<loop_distribution_t *, std::set<Core::IterationMap<Kernel> *> > p_opencl_iteration_maps;
+
+    /// Set true when the kernel (code/AST) have been produced
+    bool p_kernels_done;
+    /// A map between the different iteration mapping and the produced kernel for each loop distribution
+    std::map<loop_distribution_t *, std::map<Core::IterationMap<Kernel> *, an_opencl_kernel *> > p_opencl_kernel_map;
+    /// All the OpenCL kernel that have been generated
+    std::set<an_opencl_kernel *> p_opencl_kernels;
 
   public:
     Kernel();
     virtual ~Kernel();
-
-    void addKernel(a_kernel * kernel);
-    const std::set<a_kernel *> & getKernels() const;
 };
 
 }

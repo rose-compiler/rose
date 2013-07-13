@@ -17,14 +17,17 @@ void Generator::doCodeGeneration(Core::Kernel * kernel_, const Core::CG_Config &
 
   assert(kernel->isDataflowDone());
   assert(kernel->isArgumentDone());
-  assert(kernel->isContentDone());
-
+  assert(kernel->isLoopDistributionDone());
+  assert(kernel->isIterationMapDone());
+  
+/*
   ::MultiFileBuilder::KLT<Kernel>::object_desc_t kernel_desc(kernel, p_file_id);
 
   ::MultiFileBuilder::KLT<Kernel>::build_result_t result = p_klt_driver.build<Kernel>(kernel_desc);
 
   kernel->setKernelSymbol(result.kernel);
   kernel->setArgumentPacker(result.arguments_packer);
+*/
 }
 
 Core::Kernel * Generator::makeKernel() const {

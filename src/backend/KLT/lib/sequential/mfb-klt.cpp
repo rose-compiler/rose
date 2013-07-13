@@ -301,8 +301,15 @@ SgBasicBlock * createLocalDeclarations(
   return kernel_body;
 }
 
-KLT< ::KLT::Sequential::Kernel>::object_desc_t::object_desc_t(::KLT::Sequential::Kernel * kernel_, unsigned long file_id_) :
+KLT< ::KLT::Sequential::Kernel>::object_desc_t::object_desc_t(
+  ::KLT::Sequential::Kernel * kernel_,
+  ::KLT::Sequential::Kernel::loop_distribution_t * loop_distribution_,
+  ::KLT::Core::IterationMap< ::KLT::Sequential::Kernel> * iteration_map_,
+  unsigned long file_id_
+) :
   kernel(kernel_),
+  loop_distribution(loop_distribution_),
+  iteration_map(iteration_map_),
   file_id(file_id_)
 {}
 
@@ -317,9 +324,6 @@ KLT< ::KLT::Sequential::Kernel>::build_result_t Driver<KLT>::build< ::KLT::Seque
   const std::list<SgVariableSymbol *>   & coefs  = kernel->getCoefficientsArguments();
   const std::list< ::KLT::Core::Data *> & datas   = kernel->getDatasArguments();
 
-  const std::list< ::KLT::Core::LoopTrees::loop_t *>  & nested_loops  = kernel->getPerfectlyNestedLoops();
-  const std::list< ::KLT::Core::LoopTrees::node_t *>  & body_branches = kernel->getBodyBranches();
-
   std::map<SgVariableSymbol *, SgVariableSymbol *>   param_to_field_map;
   std::map<SgVariableSymbol *, SgVariableSymbol *>   coef_to_field_map;
   std::map< ::KLT::Core::Data *, SgVariableSymbol *> data_to_field_map;
@@ -330,10 +334,10 @@ KLT< ::KLT::Sequential::Kernel>::build_result_t Driver<KLT>::build< ::KLT::Seque
   // * Build Iterator Set *
 
   std::set<SgVariableSymbol *> iterators;
-  if (nested_loops.size() > 0)
-    collectIteratorSymbols(nested_loops.front(), iterators);
+  if (desc.loop_distribution->loop_nest.size() > 0)
+    collectIteratorSymbols(desc.loop_distribution->loop_nest.front(), iterators);
   else
-    for (it_body_branch = body_branches.begin(); it_body_branch != body_branches.end(); it_body_branch++)
+    for (it_body_branch = desc.loop_distribution->body.begin(); it_body_branch != desc.loop_distribution->body.end(); it_body_branch++)
       collectIteratorSymbols(*it_body_branch, iterators);
 
   // * Argument Packer Declaration *
@@ -432,7 +436,7 @@ KLT< ::KLT::Sequential::Kernel>::build_result_t Driver<KLT>::build< ::KLT::Seque
 
   // * Create the perfectly nested loops *
 
-  for (it_nested_loop = nested_loops.begin(); it_nested_loop != nested_loops.end(); it_nested_loop++) {
+  for (it_nested_loop = desc.loop_distribution->loop_nest.begin(); it_nested_loop != desc.loop_distribution->loop_nest.end(); it_nested_loop++) {
     SgForStatement * for_stmt = isSgForStatement(::KLT::Core::generateStatement(
       *it_nested_loop,
       param_to_local_map,
@@ -450,7 +454,7 @@ KLT< ::KLT::Sequential::Kernel>::build_result_t Driver<KLT>::build< ::KLT::Seque
 
   // * Create the content of the loop nest *
 
-  for (it_body_branch = body_branches.begin(); it_body_branch != body_branches.end(); it_body_branch++) {
+  for (it_body_branch = desc.loop_distribution->body.begin(); it_body_branch != desc.loop_distribution->body.end(); it_body_branch++) {
     SgStatement * stmt = ::KLT::Core::generateStatement(
       *it_body_branch, 
       param_to_local_map,

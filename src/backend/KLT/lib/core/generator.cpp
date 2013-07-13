@@ -71,7 +71,7 @@ void Generator::buildArgumentLists(
     }
     // FIXME with partial data we might end up referencing multiple time the same variable..
 
-    kernel->setArgument(datas_argument_order, parameters_argument_order, coefficients_argument_order);
+    kernel->setArgument(parameters_argument_order, coefficients_argument_order, datas_argument_order);
   }
 }
 
