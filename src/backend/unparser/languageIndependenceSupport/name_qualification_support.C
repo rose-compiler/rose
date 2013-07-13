@@ -132,7 +132,6 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
             // printf ("WARNING: Note that qualified types in typedef types are not yet supported... \n");
                break;
              }
-
 #if 0
           case V_:
              {

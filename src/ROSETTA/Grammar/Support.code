@@ -33,7 +33,7 @@ HEADER_OMP_CLAUSE_START
 
        // Liao (5/30/2009): Added support for reduction clauses within an OpenMP directive
 	enum omp_default_option_enum{
-	  e_omp_default_unkown =0,
+	  e_omp_default_unknown =0,
 	  //4 values for default clause
 	  //C/C++ default values
 	  e_omp_default_none,
@@ -45,7 +45,7 @@ HEADER_OMP_CLAUSE_START
 	};
 
         enum omp_schedule_kind_enum{
-          e_omp_schedule_unkown=0,
+          e_omp_schedule_unknown=0,
           e_omp_schedule_static,
           e_omp_schedule_dynamic,
           e_omp_schedule_guided,
@@ -56,7 +56,7 @@ HEADER_OMP_CLAUSE_START
 
         enum omp_reduction_operator_enum
         {
-            e_omp_reduction_unkown,
+            e_omp_reduction_unknown,
             // reduction operations
             //8 operand for C/C++
              //  shared 3 common operators for both C and Fortran
@@ -80,6 +80,17 @@ HEADER_OMP_CLAUSE_START
             e_omp_reduction_ior,
             e_omp_reduction_ieor,
             e_omp_reduction_last
+        };
+
+        // Liao 1/22/2012: experimental support for OpenMP Accelerator model 
+        enum omp_map_operator_enum
+        {
+          e_omp_map_unknown,
+          e_omp_map_alloc,
+          e_omp_map_in,
+          e_omp_map_out,
+          e_omp_map_inout,
+          e_omp_map_last,
         };
 
 
@@ -10216,7 +10227,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                               default:
                                  {
                                 // This is likely an error, I think
-                                   nameOfType = "unkown type name (likely a possible error!)";
+                                   nameOfType = "unknown type name (likely a possible error!)";
                                    break;
                                  }
                             }

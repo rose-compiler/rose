@@ -30,11 +30,12 @@ void error_check(void);
 *
 * Modified: Sanjiv Shah,       Kuck and Associates, Inc. (KAI), 1998
 * Author:   Joseph Robicheaux, Kuck and Associates, Inc. (KAI), 1998
+*
 * This c version program is translated by 
 * Chunhua Liao, University of Houston, Jan, 2005 
 * 
-* Directives are used in this code to achieve paralleism. 
-* All do loops are parallized with default 'static' scheduling.
+* Directives are used in this code to achieve parallelism. 
+* All do loops are parallelized with default 'static' scheduling.
 * 
 * Input :  n - grid dimension in x direction 
 *          m - grid dimension in y direction
@@ -48,15 +49,16 @@ void error_check(void);
 *       : f(n,m) - Right hand side function 
 *************************************************************/
 
- #define MSIZE 500
- int n,m,mits; 
- double tol,relax=1.0,alpha=0.0543; 
- double u[MSIZE][MSIZE],f[MSIZE][MSIZE],uold[MSIZE][MSIZE];
- double dx,dy;
+#define MSIZE 512
+int n,m,mits; 
+#define REAL float // flexible between float and double
+REAL tol,relax=1.0,alpha=0.0543; 
+REAL u[MSIZE][MSIZE],f[MSIZE][MSIZE],uold[MSIZE][MSIZE];
+REAL dx,dy;
 
 int main (void) 
 {
-  float toler;
+//  float toler;
   /*      printf("Input n,m (< %d) - grid dimension in x,y direction:\n",MSIZE); 
           scanf ("%d",&n);
           scanf ("%d",&m);
@@ -70,6 +72,7 @@ int main (void)
   m=MSIZE;
   tol=0.0000000001;
   mits=5000;
+#if 0 // Not yet support concurrent CPU and GPU threads  
 #ifdef _OPENMP
 #pragma omp parallel
   {
@@ -77,15 +80,16 @@ int main (void)
     printf("Running using %d threads...\n",omp_get_num_threads());
   }
 #endif
+#endif  
   driver ( ) ;
   return 0;
 }
 
 /*************************************************************
 * Subroutine driver () 
-* This is where the arrays are allocated and initialized. 
+* This is where the arrays are allocated and initialzed. 
 *
-* Working variables/arrays 
+* Working varaibles/arrays 
 *     dx  - grid spacing in x direction 
 *     dy  - grid spacing in y direction 
 *************************************************************/
@@ -124,7 +128,7 @@ void initialize( )
 
 /* Initialize initial condition and RHS */
 
-#pragma omp parallel for private(xx,yy,j,i)
+//#pragma omp parallel for private(xx,yy,j,i)
        for (i=0;i<n;i++)
          for (j=0;j<m;j++)      
            {
@@ -160,9 +164,9 @@ void initialize( )
 
 void jacobi( )
 {
-  double omega;
+  REAL omega;
   int i,j,k;
-  double  error,resid,ax,ay,b;
+  REAL error,resid,ax,ay,b;
   //      double  error_local;
 
   //      float ta,tb,tc,td,te,ta1,ta2,tb1,tb2,tc1,tc2,td1,td2;
@@ -185,14 +189,19 @@ void jacobi( )
     error = 0.0;    
 
     /* Copy new solution into old */
-#pragma omp parallel
-    {
-#pragma omp for private(j,i)
+// Must split the omp for into two parallel for regions since the translation focuses on parallel to generate the outlined kernel
+// We need two CUDA kernels for implementing global synchronization so we have to have two omp parallel directives!!
+//#pragma omp target map(in:n, m, omega, ax, ay, u[0:n][0:m],f[0:n][0:m]) map(alloc:uold[0:n][0:m])
+//#pragma omp parallel
+//    {
+#pragma omp target map(in:n, m, u[0:n][0:m]) map(out:uold[0:n][0:m])
+#pragma omp parallel for private(j,i)
       for(i=0;i<n;i++)   
-        for(j=0;j<m;j++)   
+        for(j=0;j<m;j++)
           uold[i][j] = u[i][j]; 
 
-#pragma omp for private(resid,j,i) reduction(+:error) nowait
+#pragma omp target map(in:n, m, omega, ax, ay, b, f[0:n][0:m], uold[0:n][0:m]) map(out:u[0:n][0:m])
+#pragma omp parallel for private(resid,j,i) reduction(+:error) // nowait
       for (i=1;i<(n-1);i++)  
         for (j=1;j<(m-1);j++)   
         { 
@@ -203,22 +212,23 @@ void jacobi( )
           error = error + resid*resid ;   
         }
 
-    }
+//    }
     /*  omp end parallel */
 
     /* Error check */
 
-    k = k + 1;
-    if (k%500==0) 
-      printf("Finished %d iteration.\n",k);
+    if (k%500==0)
+      printf("Finished %d iteration with error =%f\n",k, error);
     error = sqrt(error)/(n*m);
 
+    k = k + 1;
   }          /*  End iteration loop */
 
   printf("Total Number of Iterations:%d\n",k); 
   printf("Residual:%E\n", error); 
 
 }
+
 /*      subroutine error_check (n,m,alpha,dx,dy,u,f) 
       implicit none 
 ************************************************************
@@ -228,13 +238,13 @@ void jacobi( )
 void error_check ( )
 { 
   int i,j;
-  double xx,yy,temp,error; 
+  REAL xx,yy,temp,error; 
 
   dx = 2.0 / (n-1);
   dy = 2.0 / (m-1);
   error = 0.0 ;
 
-#pragma omp parallel for private(xx,yy,temp,j,i) reduction(+:error)
+//#pragma omp parallel for private(xx,yy,temp,j,i) reduction(+:error)
   for (i=0;i<n;i++)
     for (j=0;j<m;j++)
     { 
@@ -246,4 +256,5 @@ void error_check ( )
   error = sqrt(error)/(n*m);
   printf("Solution Error :%E \n",error);
 }
+
 
