@@ -93,6 +93,10 @@ EDG/libroseEDG.la: download-$(EDGBIN_BEST_NAME).tar.gz
 	rmdir $(EDGBIN_BEST_NAME)
 	touch EDG/libroseEDG.la
 
+installdir = ${datadir}
+install_DATA = \
+	EDG/EDG_@ROSE_EDG_MAJOR_VERSION_NUMBER@.@ROSE_EDG_MINOR_VERSION_NUMBER@/lib/predefined_macros.txt
+
 endif
 ###############################################################################################################################
 # Stuff that's common to both uploading and downloading EDG tarballs

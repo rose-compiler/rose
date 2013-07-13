@@ -109,7 +109,7 @@ template <typename K, typename V>
 static std::string toStringForRTI(const std::map<K, V>& x) {
   std::ostringstream ss;
   ss << "[";
-  for (typename std::map<K, V>::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << i->first << "->" << i->second;}
+  for (typename std::map<K, V>::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << i->first << "->" << toStringForRTI(i->second);}
   ss << "]";
   return ss.str();
 }
