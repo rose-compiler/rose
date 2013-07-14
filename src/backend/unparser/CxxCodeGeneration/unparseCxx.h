@@ -454,7 +454,7 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // void unparseGeneratedTemplateArgumentsList (SgName unqualifiedName, SgName qualifiedName, SgLocatedNode* locatedNode, SgUnparse_Info& info);
 
        // DQ (7/12/2013): Added support for type trait builtin functions.
-          void unparseTypeTraitBuiltinExp(SgExpression* expr, SgUnparse_Info& info);
+          void unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_Info& info);
    };
 
 #endif

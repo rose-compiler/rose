@@ -301,10 +301,10 @@ Grammar::setUpExpressions ()
   // noticed problem).  These builtin functions take types as parameters and sometimes return types as well.  They will 
   // require an implementation in ROSE to support analysis.
      NEW_NONTERMINAL_MACRO (CallExpression,FunctionCallExp,"CallExpression","CALL_EXPRESSION", true);
-     NEW_TERMINAL_MACRO (TypeTraitBuiltinFunctionCallExp, "TypeTraitBuiltinFunctionCallExp", "TYPE_TRAIT_BUILTIN_FUNCTION_CALL");
-  // NEW_NONTERMINAL_MACRO (CallExpression,FunctionCallExp | TypeTraitBuiltinFunctionCallExp,"CallExpression","CALL_EXPRESSION", true);
+     NEW_TERMINAL_MACRO (TypeTraitBuiltinOperator, "TypeTraitBuiltinOperator", "TYPE_TRAIT_BUILTIN_OPERATOR");
+  // NEW_NONTERMINAL_MACRO (CallExpression,FunctionCallExp | TypeTraitBuiltinOperator,"CallExpression","CALL_EXPRESSION", true);
 
-  // DQ (7/12/2013): Moved the TypeTraitBuiltinFunctionCallExp to be derived from Expression.
+  // DQ (7/12/2013): Moved the TypeTraitBuiltinOperator to be derived from Expression.
      NEW_NONTERMINAL_MACRO (Expression,
           UnaryOp                  | BinaryOp                 | ExprListExp             | VarRefExp           | ClassNameRefExp          |
           FunctionRefExp           | MemberFunctionRefExp     | ValueExp                | CallExpression      | SizeOfOp                 |
@@ -319,7 +319,7 @@ Grammar::setUpExpressions ()
           LambdaRefExp        | DictionaryExp           | KeyDatumPair             |
           Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension  | NaryOp |
           StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp | AlignOfOp |
-          TypeTraitBuiltinFunctionCallExp,
+          TypeTraitBuiltinOperator,
           "Expression","ExpressionTag", false);
 
   // ***********************************************************************
@@ -1410,12 +1410,11 @@ Grammar::setUpExpressions ()
 #endif
 
   // DQ (7/12/2013): Added type-trait builtin function support.
-     TypeTraitBuiltinFunctionCallExp.setFunctionPrototype ( "HEADER_TYPE_TRAIT_BUILTIN_FUNCTION_CALL_EXPRESSION", "../Grammar/Expression.code" );
-     TypeTraitBuiltinFunctionCallExp.setDataPrototype ( "SgName", "builtin_function_name", "= \"\"",
+     TypeTraitBuiltinOperator.setFunctionPrototype ( "HEADER_TYPE_TRAIT_BUILTIN_OPERATOR", "../Grammar/Expression.code" );
+     TypeTraitBuiltinOperator.setDataPrototype ( "SgName", "name", "= \"\"",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     TypeTraitBuiltinFunctionCallExp.setDataPrototype ("SgNodePtrList", "builtin_function_operands", "",
+     TypeTraitBuiltinOperator.setDataPrototype ("SgNodePtrList", "args", "",
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
 
      ArrowExp.setFunctionPrototype ( "HEADER_ARROW_EXPRESSION", "../Grammar/Expression.code" );
 
@@ -2212,7 +2211,7 @@ Grammar::setUpExpressions ()
      FunctionCallExp.setFunctionSource ( "SOURCE_FUNCTION_CALL_EXPRESSION","../Grammar/Expression.code" );
 
   // DQ (7/12/2013): Added type-trait builtin function support.
-     TypeTraitBuiltinFunctionCallExp.setFunctionSource( "SOURCE_TYPE_TRAIT_BUILTIN_FUNCTION_CALL_EXPRESSION", "../Grammar/Expression.code" );
+     TypeTraitBuiltinOperator.setFunctionSource( "SOURCE_TYPE_TRAIT_BUILTIN_OPERATOR", "../Grammar/Expression.code" );
 
      ArrowExp.setFunctionSource ( "SOURCE_ARROW_EXPRESSION","../Grammar/Expression.code" );
      DotExp.setFunctionSource ( "SOURCE_DOT_EXPRESSION","../Grammar/Expression.code" );

@@ -6565,14 +6565,19 @@ SageBuilder::buildFunctionCallStmt(SgExpression* function_exp, SgExprListExp* pa
   return expStmt;
 }
 
-SgTypeTraitBuiltinFunctionCallExp*
-SageBuilder::buildTypeTraitBuiltinFunctionCallExp(SgName functionName, SgNodePtrList parameters)
+SgTypeTraitBuiltinOperator*
+SageBuilder::buildTypeTraitBuiltinOperator(SgName functionName, SgNodePtrList parameters)
    {
-     SgTypeTraitBuiltinFunctionCallExp * builtin_func_call_expr = new SgTypeTraitBuiltinFunctionCallExp(functionName);
+  // DQ (7/14/2013): This is supporting compiler extensions that are required to support type traits in C++.
+  // These operators are used increasingly in newer versions of GNU and other compilers.  They are builtin
+  // compiler extensions that typically take types as arguments.
+
+     SgTypeTraitBuiltinOperator * builtin_func_call_expr = new SgTypeTraitBuiltinOperator(functionName);
      ROSE_ASSERT(builtin_func_call_expr != NULL);
 
-  // Note that this is copy by value...
-     builtin_func_call_expr->get_builtin_function_operands() = parameters;
+  // Note that this is copy by value...on SgNodePtrList (because we have to support both SgExpression and SgType IR nodes as arguments).
+  // In this way this is implemented differently from a SgCallExpression ro SgFunctionCallExp (which uses a SgExprListExp).
+     builtin_func_call_expr->get_args() = parameters;
 
      return builtin_func_call_expr;
    }

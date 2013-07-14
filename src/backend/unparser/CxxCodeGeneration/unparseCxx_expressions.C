@@ -171,7 +171,7 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case TEMPLATE_PARAMETER_VAL:  { unparseTemplateParameterValue(expr, info); break; }
 
        // DQ (7/12/2013): Added support for unparsing teyp trait builtin expressions (operators).
-          case TYPE_TRAIT_BUILTIN_FUNCTION_CALL: { unparseTypeTraitBuiltinExp(expr, info); break; }
+          case TYPE_TRAIT_BUILTIN_OPERATOR: { unparseTypeTraitBuiltinOperator(expr, info); break; }
 
           default:
              {
@@ -2975,28 +2975,27 @@ Unparse_ExprStmt::unparseUpcMythread(SgExpression* expr, SgUnparse_Info& info)
 
 
 void
-Unparse_ExprStmt::unparseTypeTraitBuiltinExp(SgExpression* expr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_Info& info)
    {
-     SgTypeTraitBuiltinFunctionCallExp* operatorExp = isSgTypeTraitBuiltinFunctionCallExp(expr);
+     SgTypeTraitBuiltinOperator* operatorExp = isSgTypeTraitBuiltinOperator(expr);
      ROSE_ASSERT(operatorExp != NULL);
 
-     string functionNameString = operatorExp->get_builtin_function_name();
+     string functionNameString = operatorExp->get_name();
      curprint(functionNameString);
 
-     ROSE_ASSERT(operatorExp->get_builtin_function_operands().empty() == false);
 #if 0
      printf ("In unparseTypeTraitBuiltinExp(): functionNameString = %s expr = %p = %s \n",functionNameString.c_str(),expr,expr->class_name().c_str());
 #endif
-     SgNodePtrList& list = operatorExp->get_builtin_function_operands();
+
+     ROSE_ASSERT(operatorExp->get_args().empty() == false);
+
+     SgNodePtrList& list = operatorExp->get_args();
      SgNodePtrList::iterator operand = list.begin();
      curprint("(");
      while (operand != list.end())
         {
 #if 0
-          (*arg)->get_file_info()->display("function call argument");
-#endif
-#if 0
-          printf ("func_call->get_args() = %p = %s arg = %p = %s \n",func_call->get_args(),func_call->get_args()->class_name().c_str(),*arg,(*arg)->class_name().c_str());
+          (*operand)->get_file_info()->display("opertor argument");
 #endif
        // DQ (4/24/2013): Moved this to be ahead so that the unparseArg value would be associated with the current argument.
           if (operand != list.begin())
@@ -3017,27 +3016,11 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinExp(SgExpression* expr, SgUnparse_Info&
 
           if (type != NULL)
              {
-#if 0
-               curprint("\n/* unp->u_sage->unparseOneElemConInit in unparseFuncCall */ \n"); 
-#endif
-#if 1
                unp->u_type->unparseType(type,newinfo);
-#else
-            // DQ (7/13/2013): Temporary ebugging code
-               curprint ("(unparseTypeTraitBuiltinExp skipped type)");
-#endif
-
-            // curprint ( "\n/* DONE: unp->u_sage->unparseOneElemConInit in unparseFuncCall */ \n"); 
              }
             else
              {
-#if 0
-               curprint("\n/* unparseExpression in args processing in unparseFuncCall */ \n");
-#endif
-            // printf ("unparseExpression in args processing in unparseFuncCall \n");
-            // newinfo.display("newinfo in unparseFuncCall()");
                unparseExpression(expression,info);
-            // curprint("\n/* DONE: unparseExpression in args processing in unparseFuncCall */ \n");
              }
 
           operand++;

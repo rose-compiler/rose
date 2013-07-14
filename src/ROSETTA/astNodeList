@@ -623,7 +623,7 @@ SgTemplateParameterList
 SgTemplateSymbol
 SgTemplateType
 SgThisExp
-SgTypeTraitBuiltinFunctionCallExp
+SgTypeTraitBuiltinOperator
 SgSuperExp
 SgThrowOp
 SgToken
