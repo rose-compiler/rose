@@ -554,7 +554,7 @@ HEADER_FUNCTION_CALL_EXPRESSION_START
 
 HEADER_FUNCTION_CALL_EXPRESSION_END
 
-HEADER_TYPE_TRAIT_BUILTIN_FUNCTION_CALL_EXPRESSION_START
+HEADER_TYPE_TRAIT_BUILTIN_OPERATOR_START
 
        // DQ (7/13/2013): I have verified that we need implementations of these functions for the CFG support.
        // DQ (7/12/2013): Not clear if we need these functions since the buildin functions are all pure and lack definitions.
@@ -569,7 +569,7 @@ HEADER_TYPE_TRAIT_BUILTIN_FUNCTION_CALL_EXPRESSION_START
        // virtual bool isLValue() const;
        // virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
-HEADER_TYPE_TRAIT_BUILTIN_FUNCTION_CALL_EXPRESSION_END
+HEADER_TYPE_TRAIT_BUILTIN_OPERATOR_END
 
 HEADER_ARROW_EXPRESSION_START
           SgType* get_type() const;
@@ -3335,22 +3335,22 @@ SgFunctionCallExp::get_type() const
 SOURCE_FUNCTION_CALL_EXPRESSION_END
 
 // DQ (7/12/2013): Added support for type trait specific builtin functions.
-SOURCE_TYPE_TRAIT_BUILTIN_FUNCTION_CALL_EXPRESSION_START
+SOURCE_TYPE_TRAIT_BUILTIN_OPERATOR_START
 
 void
-SgTypeTraitBuiltinFunctionCallExp::post_construction_initialization()
+SgTypeTraitBuiltinOperator::post_construction_initialization()
    {
   // SgCallExpression::post_construction_initialization();
    }
 
 SgType*
-SgTypeTraitBuiltinFunctionCallExp::get_type() const
+SgTypeTraitBuiltinOperator::get_type() const
    {
   // DQ (7/12/2013): These functions will almost always return a boolean type, but not always.
 
      SgType* returnType = NULL;
 
-     if (get_builtin_function_name() == "__underlying_type")
+     if (get_name() == "__underlying_type")
         {
        // This returns an actual type and it is not clear now to handle this.
           returnType = SgTypeDefault::createType();
@@ -3361,10 +3361,11 @@ SgTypeTraitBuiltinFunctionCallExp::get_type() const
           returnType = SgTypeBool::createType();
         }
 
+     ROSE_ASSERT(returnType != NULL);
      return returnType;
    }
 
-SOURCE_TYPE_TRAIT_BUILTIN_FUNCTION_CALL_EXPRESSION_END
+SOURCE_TYPE_TRAIT_BUILTIN_OPERATOR_END
 
 
 SOURCE_ARROW_EXPRESSION_START

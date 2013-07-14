@@ -3424,13 +3424,13 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
 
 // DQ (7/13/2013): Added support for new IR node in CFG (similar to SgSizeOfOp).
 unsigned int
-SgTypeTraitBuiltinFunctionCallExp::cfgIndexForEnd() const {
+SgTypeTraitBuiltinOperator::cfgIndexForEnd() const {
      return 1;
 }
 
 // DQ (7/13/2013): Added support for new IR node in CFG (similar to SgSizeOfOp).
 std::vector<CFGEdge>
-SgTypeTraitBuiltinFunctionCallExp::cfgOutEdges(unsigned int idx) {
+SgTypeTraitBuiltinOperator::cfgOutEdges(unsigned int idx) {
         std::vector<CFGEdge> result;
 
         switch (idx) {
@@ -3448,14 +3448,14 @@ SgTypeTraitBuiltinFunctionCallExp::cfgOutEdges(unsigned int idx) {
                         makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
                         break;
                 default: 
-                        ROSE_ASSERT (!"Bad index for SgUnaryOp");
+                        ROSE_ASSERT (!"Bad index for SgTypeTraitBuiltinOperator");
         }
         return result;
 }
 
 // DQ (7/13/2013): Added support for new IR node in CFG (similar to SgSizeOfOp).
 std::vector<CFGEdge>
-SgTypeTraitBuiltinFunctionCallExp::cfgInEdges(unsigned int idx) {
+SgTypeTraitBuiltinOperator::cfgInEdges(unsigned int idx) {
         std::vector<CFGEdge> result;
         switch (idx) {
                 case 0: 
@@ -3472,65 +3472,11 @@ SgTypeTraitBuiltinFunctionCallExp::cfgInEdges(unsigned int idx) {
                         break;
 
                 default: 
-                        ROSE_ASSERT (!"Bad index for SgTypeTraitBuiltinFunctionCallExp");
+                        ROSE_ASSERT (!"Bad index for SgTypeTraitBuiltinOperator");
         }
         return result;
 }
 
-#if 0
-  unsigned int SgTypeTraitBuiltinFunctionCallExp::cfgIndexForEnd() const {
-    return 3;
-  }
-
-  std::vector<CFGEdge> SgTypeTraitBuiltinFunctionCallExp::cfgOutEdges(unsigned int idx) {
-    ROSE_ASSERT(this);
-    std::vector<CFGEdge> result;
-    switch (idx) {
-      case 0: makeEdge(CFGNode(this, idx), this->get_function()->cfgForBeginning(), result); break;
-      case 1: makeEdge(CFGNode(this, idx), this->get_args()->cfgForBeginning(), result); break;
-      case SGFUNCTIONCALLEXP_INTERPROCEDURAL_INDEX: {
-                if (virtualInterproceduralControlFlowGraphs) {
-                  ClassHierarchyWrapper classHierarchy( SageInterface::getProject() );
-                  Rose_STL_Container<SgFunctionDefinition*> defs;
-                  CallTargetSet::getDefinitionsForExpression(this, &classHierarchy, defs);
-                  foreach (SgFunctionDefinition* def, defs) 
-                    makeEdge(CFGNode(this, idx), def->cfgForBeginning(), result);
-                }
-                else {
-                  makeEdge(CFGNode(this, idx), CFGNode(this, idx+1), result);
-                }
-                break;
-      }
-      case 3: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
-      default: ROSE_ASSERT (!"Bad index for SgFunctionCallExp");
-    }
-    return result;
-  }
-
-  std::vector<CFGEdge> SgTypeTraitBuiltinFunctionCallExp::cfgInEdges(unsigned int idx) {
-    ROSE_ASSERT(this);
-    std::vector<CFGEdge> result;
-    switch (idx) {
-      case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
-      case 1: makeEdge(this->get_function()->cfgForEnd(), CFGNode(this, idx), result); break;
-      case 2: makeEdge(this->get_args()->cfgForEnd(), CFGNode(this, idx), result); break;
-      case 3: {
-                if (virtualInterproceduralControlFlowGraphs) {
-                  ClassHierarchyWrapper classHierarchy( SageInterface::getProject() );
-                  Rose_STL_Container<SgFunctionDefinition*> defs;
-                  CallTargetSet::getDefinitionsForExpression(this, &classHierarchy, defs);
-                  foreach (SgFunctionDefinition* def, defs) 
-                    makeEdge(def->cfgForEnd(), CFGNode(this, idx), result);
-                }
-                else
-                  makeEdge(CFGNode(this, idx-1), CFGNode(this, idx), result);
-                break;
-      }
-      default: ROSE_ASSERT (!"Bad index for SgFunctionCallExp");
-    }
-    return result;
-  }
-#endif
 
 bool
 SgAndOp::cfgIsIndexInteresting(unsigned int idx) const

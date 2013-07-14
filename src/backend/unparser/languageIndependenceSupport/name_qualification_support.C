@@ -93,7 +93,7 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
        // DQ (7/13/2013): I think we need this here, but wait until we generate the error to drive it to be introduced.
        // Also this does not permit handling of multiple types requiring different name qualification (same as for throw support).
        // DQ (7/12/2013): Added support to type trait builtin functions 
-          case V_SgTypeTraitBuiltinFunctionCallExp:
+          case V_SgTypeTraitBuiltinOperator:
 
           case V_SgTypeIdOp:
           case V_SgSizeOfOp:
