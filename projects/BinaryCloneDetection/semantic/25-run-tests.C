@@ -752,9 +752,14 @@ overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor
 static OutputGroup
 fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inputs, Tracer &tracer,
           const InstructionProvidor &insns, MemoryMap *ro_map, const PointerDetector *pointers, const Switches &opt,
-          const AddressIdMap &entry2id, const Disassembler::AddressSet &whitelist_exports)
+          const AddressIdMap &entry2id, const Disassembler::AddressSet &whitelist_exports, FuncAnalyses &funcinfo)
 {
-    ClonePolicy policy(opt.params, entry2id, tracer);
+    AddressIdMap::const_iterator id_found = entry2id.find(function->get_entry_va());
+    assert(id_found!=entry2id.end());
+    int func_id = id_found->second;
+    FuncAnalysis &finfo = funcinfo[func_id];
+    ++finfo.ntests;
+    ClonePolicy policy(opt.params, entry2id, tracer, funcinfo);
     policy.set_map(ro_map);
     CloneSemantics semantics(policy);
     AnalysisFault::Fault fault = AnalysisFault::NONE;
@@ -826,6 +831,8 @@ fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inpu
     // Gather the function's outputs before restoring machine state.
     OutputGroup outputs = policy.get_outputs();
     outputs.set_fault(fault);
+    if (!outputs.get_retval().first)
+        ++finfo.nvoids;
     return outputs;
 }
 
@@ -1047,10 +1054,11 @@ main(int argc, char *argv[])
     InstructionProvidor insns;
     SgAsmInterpretation *prev_interp = NULL;
     MemoryMap ro_map;
-    AddressIdMap entry2id;                      // maps function entry address to function ID
+    AddressIdMap entry2id;                              // maps function entry address to function ID
     Tracer tracer;
     time_t last_checkpoint = time(NULL);
     size_t ntests_ran=0;
+    FuncAnalyses funcinfo;
     while (!worklist.empty()) {
         ++progress;
         WorkItem work = worklist.shift();
@@ -1149,7 +1157,7 @@ main(int argc, char *argv[])
         clock_t start_ticks = clock();
         gettimeofday(&start_time, NULL);
         OutputGroup ogroup = fuzz_test(interp, func, igroup, tracer, insns, &ro_map, ip->second, opt, entry2id,
-                                       whitelist_exports);
+                                       whitelist_exports, funcinfo);
         gettimeofday(&stop_time, NULL);
         clock_t stop_ticks = clock();
         double elapsed_time = (stop_time.tv_sec - start_time.tv_sec) +
@@ -1241,6 +1249,21 @@ main(int argc, char *argv[])
         }
         
         prev_work = work;
+    }
+
+    // Store results for the analysis that tries to determine whether a function returns a value.
+    if (!tx->is_terminated()) {
+        SqlDatabase::StatementPtr stmt = tx->statement("insert into semantic_funcpartials"
+                                                       " (func_id, ncalls, nretused, ntests, nvoids) values"
+                                                       " (?,       ?,      ?,        ?,      ?)");
+        for (FuncAnalyses::iterator fi=funcinfo.begin(); fi!=funcinfo.end(); ++fi) {
+            stmt->bind(0, fi->first);
+            stmt->bind(1, fi->second.ncalls);
+            stmt->bind(2, fi->second.nretused);
+            stmt->bind(3, fi->second.ntests);
+            stmt->bind(4, fi->second.nvoids);
+            stmt->execute();
+        }
     }
 
     // Cleanup

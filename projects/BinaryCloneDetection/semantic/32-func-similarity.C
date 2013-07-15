@@ -134,14 +134,21 @@ static SqlDatabase::TransactionPtr transaction;
 
 typedef WorkList< std::pair<int/*func1_id*/, int/*func2_id*/> > FunctionPairs;
 
+struct FuncInfo {
+    bool returns_value;         // true if the function returns a value; false if the function is void
+};
+
+typedef std::map<int/*func_id*/, FuncInfo> FuncInfos;
+static FuncInfos func_infos;
+
 // Abstract base class for various methods of computing similarity between two output groups.  The class not only provides
 // the similarity() operator, but also can cache any other information that makes computing the similarity faster. The cached
 // info can sometimes be substantially smaller than the output group stored in the database.
 class CachedOutput {
 public:
     virtual ~CachedOutput() {}
-    // Similarity of two objects as a value between zero and one (one being identical)
-    virtual double similarity(const CachedOutput *other) const = 0;
+    // Similarity of two objects as a value between zero and one (one being identical).
+    virtual double similarity(const CachedOutput *other, const FuncInfo &finfo1, const FuncInfo &finfo2) const = 0;
     virtual void print(std::ostream&, const std::string &prefix) const = 0;
 };
 
@@ -155,7 +162,7 @@ public:
     FullEquality(const CloneDetection::OutputGroup *ogroup) {
         ogroup = new CloneDetection::OutputGroup(*ogroup); // because caller is about to delete it
     }
-    virtual double similarity(const CachedOutput *other_) const /*override*/ {
+    virtual double similarity(const CachedOutput *other_, const FuncInfo &finfo1, const FuncInfo &finfo2) const /*override*/ {
         const FullEquality *other = dynamic_cast<const FullEquality*>(other_);
         return *ogroup == *other->ogroup ? 1.0 : 0.0;
     }
@@ -170,6 +177,7 @@ public:
     typedef std::set<CloneDetection::OutputGroup::value_type> VSet;
     typedef std::pair<VSet::const_iterator, VSet::const_iterator> IterPair;
     VSet values;
+    std::pair<bool, CloneDetection::OutputGroup::value_type> retval;
     CloneDetection::AnalysisFault::Fault fault;
 
     ValuesetEquality(const CloneDetection::OutputGroup *ogroup) {
@@ -177,15 +185,18 @@ public:
         for (size_t i=0; i<vvec.size(); ++i)
             values.insert(vvec[i]);
         fault = ogroup->get_fault();
-        if (ogroup->get_retval().first)
-            values.insert(ogroup->get_retval().second);
+        retval = ogroup->get_retval();
     }
 
-    virtual double similarity(const CachedOutput *other_) const /*override*/ {
+    virtual double similarity(const CachedOutput *other_, const FuncInfo &finfo1, const FuncInfo &finfo2) const /*override*/ {
         const ValuesetEquality *other = dynamic_cast<const ValuesetEquality*>(other_);
+        bool has_retval1 = finfo1.returns_value && retval.first;
+        bool has_retval2 = finfo2.returns_value && other->retval.first;
         if (fault==CloneDetection::AnalysisFault::NONE && other->fault==CloneDetection::AnalysisFault::NONE &&
             values.size()==other->values.size() &&
-            std::equal(values.begin(), values.end(), other->values.begin()))
+            std::equal(values.begin(), values.end(), other->values.begin()) &&
+            has_retval1==has_retval2 &&
+            (!has_retval1 || retval.second==other->retval.second))
             return 1.0;
         return 0.0;
     }
@@ -194,6 +205,8 @@ public:
         o <<prefix <<"values:";
         for (VSet::const_iterator vi=values.begin(); vi!=values.end(); ++vi)
             o <<" " <<*vi;
+        if (retval.first)
+            o <<"\n" <<prefix <<"retval: " <<retval.second;
         o <<"\n" <<prefix <<"fault: " <<CloneDetection::AnalysisFault::fault_name(fault) <<"\n";
     }
 };
@@ -204,19 +217,27 @@ public:
     typedef CloneDetection::OutputGroup::value_type VType;
     typedef std::vector<VType> ValVector;
     ValVector values;
+    std::pair<bool, CloneDetection::OutputGroup::value_type> retval;
 
     ValuesDamerauLevenshtein(const CloneDetection::OutputGroup *ogroup) {
         values = ogroup->get_values();
-        if (ogroup->get_retval().first)
-            values.insert(values.begin(), ogroup->get_retval().second);
+        retval = ogroup->get_retval();
     }
 
-    virtual double similarity(const CachedOutput *other_) const /*override*/ {
+    virtual double similarity(const CachedOutput *other_, const FuncInfo &finfo1, const FuncInfo &finfo2) const /*override*/ {
         const ValuesDamerauLevenshtein *other = dynamic_cast<const ValuesDamerauLevenshtein*>(other_);
-        size_t dl = Combinatorics::damerau_levenshtein_distance(values, other->values);
-        size_t dl_max = std::max(values.size(), other->values.size());
+        ValVector vv1, vv2;
+        if (finfo1.returns_value && retval.first)
+            vv1.push_back(retval.second);
+        if (finfo2.returns_value && other->retval.first)
+            vv2.push_back(other->retval.second);
+        vv1.insert(vv1.end(), values.begin(), values.end());
+        vv2.insert(vv2.end(), other->values.begin(), other->values.end());
+
+        size_t dl = Combinatorics::damerau_levenshtein_distance(vv1, vv2);
+        size_t dl_max = std::max(vv1.size(), vv2.size());
         if (0==dl && 0==dl_max) {
-            assert(values.empty() && other->values.empty());
+            assert(vv1.empty() && vv2.empty());
             return 1;
         }
         return 1.0 - (double)dl / dl_max;
@@ -226,6 +247,8 @@ public:
         o <<prefix <<"values:";
         for (ValVector::const_iterator vi=values.begin(); vi!=values.end(); ++vi)
             o <<" " <<*vi;
+        if (retval.first)
+            o <<"\n" <<prefix <<"retval: " <<retval.second;
         o <<"\n";
     }
 };
@@ -235,18 +258,24 @@ public:
 class ValuesetJaccard: public ValuesetEquality {
 public:
     ValuesetJaccard(const CloneDetection::OutputGroup *ogroup): ValuesetEquality(ogroup) {}
-    virtual double similarity(const CachedOutput *other_) const /*override*/ {
+    virtual double similarity(const CachedOutput *other_, const FuncInfo &finfo1, const FuncInfo &finfo2) const /*override*/ {
         const ValuesetJaccard *other = dynamic_cast<const ValuesetJaccard*>(other_);
+        VSet vs1, vs2;
+        if (finfo1.returns_value && retval.first)
+            vs1.insert(retval.second);
+        if (finfo2.returns_value && other->retval.first)
+            vs2.insert(other->retval.second);
+        vs1.insert(values.begin(), values.end());
+        vs2.insert(other->values.begin(), other->values.end());
+
         double multiplier = 1.0;
         if (fault!=CloneDetection::AnalysisFault::NONE || other->fault!=CloneDetection::AnalysisFault::NONE)
             multiplier = 0.25; // penalty for having failed
         typedef std::vector<CloneDetection::OutputGroup::value_type> Vector;
-        Vector sunion(values.size()+other->values.size(), 0);
-        Vector sinter(std::max(values.size(), other->values.size()));
-        Vector::iterator ui = std::set_union(values.begin(), values.end(),
-                                             other->values.begin(), other->values.end(), sunion.begin());
-        Vector::iterator ii = std::set_intersection(values.begin(), values.end(),
-                                                    other->values.begin(), other->values.end(), sinter.begin());
+        Vector sunion(vs1.size()+vs2.size(), 0);
+        Vector sinter(std::max(vs1.size(), vs2.size()));
+        Vector::iterator ui = std::set_union(vs1.begin(), vs1.end(), vs2.begin(), vs2.end(), sunion.begin());
+        Vector::iterator ii = std::set_intersection(vs1.begin(), vs1.end(), vs2.begin(), vs2.end(), sinter.begin());
         size_t usize = ui-sunion.begin();
         size_t isize = ii-sinter.begin();
         double jaccard = usize ? (double)isize/usize : 1.0;
@@ -304,6 +333,16 @@ load_output(CachedOutputs &all_outputs, int64_t ogroup_id)
     return output;
 }
 
+// Load all the function info from the database.  It's probably faster to load it all than to load only the functions
+// we need, but we can change this later if it proves to be a problem.
+static void
+load_function_infos()
+{
+    std::map<int, double> returns_value = CloneDetection::function_returns_value(transaction);
+    for (std::map<int, double>::iterator ri=returns_value.begin(); ri!=returns_value.end(); ++ri)
+        func_infos[ri->first].returns_value = ri->second >= 0.25;
+}
+
 // Load all outputs for the specified function if they're not in memory already
 static void
 load_function_outputs(CachedOutputs &all_outputs, FunctionOutputs &function_outputs, int func_id)
@@ -335,7 +374,8 @@ find_outputs(const FunctionOutputs &func_outputs, int func_id)
 }
 
 static double
-similarity(const CachedOutputs &f1_outs, const CachedOutputs &f2_outs,
+similarity(const FuncInfo &func1_info, const FuncInfo &func2_info,
+           const CachedOutputs &f1_outs, const CachedOutputs &f2_outs,
            size_t &ncompares/*out*/, size_t &maxcompares/*out*/)
 {
     // Create buckets of output. Each bucket contains the output groups that are all part of the same collection.
@@ -380,7 +420,7 @@ similarity(const CachedOutputs &f1_outs, const CachedOutputs &f2_outs,
                 const CachedOutput *f1_ogroup = f1_outs.find(f1_bucket[i])->second;
                 for (size_t j=0; j<nsel2; ++j) {
                     const CachedOutput *f2_ogroup = f2_outs.find(f2_bucket[j])->second;
-                    double sim = f1_ogroup->similarity(f2_ogroup);
+                    double sim = f1_ogroup->similarity(f2_ogroup, func1_info, func2_info);
                     total_sim += sim;
                     max_sim = std::max(max_sim, sim);
                     min_sim = std::min(min_sim, sim);
@@ -611,6 +651,7 @@ main(int argc, char *argv[])
                                                             " values (?, ?, ?, ?, ?, ?, ?)");
     CachedOutputs all_outputs;
     FunctionOutputs func_outputs;
+    load_function_infos();
     while (!worklist.empty()) {
         ++progress;
         int func1_id, func2_id;
@@ -623,7 +664,8 @@ main(int argc, char *argv[])
         const CachedOutputs &f1_outs = find_outputs(func_outputs, func1_id);
         const CachedOutputs &f2_outs = find_outputs(func_outputs, func2_id);
         size_t ncompares, maxcompares;
-        double sim = similarity(f1_outs, f2_outs, ncompares/*out*/, maxcompares/*out*/);
+        double sim = similarity(func_infos[func1_id], func_infos[func2_id], f1_outs, f2_outs,
+                                ncompares/*out*/, maxcompares/*out*/);
         stmt->bind(0, func1_id);
         stmt->bind(1, func2_id);
         stmt->bind(2, sim);

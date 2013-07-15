@@ -1201,4 +1201,50 @@ function_to_str(SgAsmFunction *function, const FunctionIdMap &ids)
     return ss.str();
 }
 
+static double
+function_returns_value(size_t ncalls, size_t nretused, size_t ntests, size_t nvoids)
+{
+    assert(nretused<=ncalls);
+    assert(nvoids<=ntests);
+    if (0==ncalls && 0==ntests)
+        return 0.5;
+
+    double p1 = ntests>0 ? 1.0-(double)nvoids/ntests : 0.5;
+    double p2 = ncalls>0 ? (double)nretused/ncalls : 0.5;
+    return (p1+p2)/2.0;
+}
+
+double
+function_returns_value(const SqlDatabase::TransactionPtr &tx, int func_id)
+{
+    SqlDatabase::StatementPtr stmt = tx->statement("select sum(ncalls), sum(nretused), sum(ntests), sum(nvoids)"
+                                                   " from semantic_funcpartials where func_id = ?")->bind(0, func_id);
+    SqlDatabase::Statement::iterator row = stmt->begin();
+    if (row==stmt->end())
+        return 0.5; // we know nothing about this function
+    return function_returns_value(row.get<size_t>(0), row.get<size_t>(1),
+                                  row.get<size_t>(2), row.get<size_t>(3));
+}
+
+std::map<int, double>
+function_returns_value(const SqlDatabase::TransactionPtr &tx)
+{
+    std::map<int, double> retval;
+    SqlDatabase::StatementPtr stmt = tx->statement("select sum(ncalls), sum(nretused), sum(ntests), sum(nvoids), func_id"
+                                                   " from semantic_funcpartials group by func_id");
+    for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
+        double p = function_returns_value(row.get<size_t>(0), row.get<size_t>(1),
+                                          row.get<size_t>(2), row.get<size_t>(3));
+        int func_id = row.get<int>(4);
+        retval[func_id] = p;
+    }
+    return retval;
+}
+
+bool
+function_returns_value_p(const SqlDatabase::TransactionPtr &tx, int func_id, double threshold)
+{
+    return function_returns_value(tx, func_id) >= threshold;
+}
+
 } // namespace

@@ -280,6 +280,20 @@ public:
 
 };
 
+/*******************************************************************************************************************************
+ *                                      Per-function analyses
+ *******************************************************************************************************************************/
+
+// Results from various kinds of analyses run on functions
+struct FuncAnalysis {
+    FuncAnalysis(): ncalls(0), nretused(0), ntests(0), nvoids(0) {}
+    size_t ncalls;                      // number of times this function was called
+    size_t nretused;                    // number of ncalls where the caller read EAX after the call
+    size_t ntests;                      // number of times this function was tested
+    size_t nvoids;                      // number of ntests where this function didn't write to EAX
+};
+
+typedef std::map<int/*func_id*/, FuncAnalysis> FuncAnalyses;
 
 /*******************************************************************************************************************************
  *                                      Output groups
@@ -445,6 +459,12 @@ public:
         has_retval = true;
     }
 
+    /** Remove the return value, if any. */
+    void remove_retval() {
+        this->retval = 0;
+        has_retval = false;
+    }
+    
     /** Returns the return value and whether the return value is the default or explicitly set. */
     std::pair<bool, value_type> get_retval() const {
         return std::make_pair(has_retval, retval);
@@ -971,12 +991,13 @@ public:
 /** Information about a function call. */
 struct StackFrame {
     StackFrame(SgAsmFunction *func, rose_addr_t esp)
-        : func(func), entry_esp(esp), monitoring_stdcall(true), stdcall_args_va(0), follow_calls(false) {}
+        : func(func), entry_esp(esp), monitoring_stdcall(true), stdcall_args_va(0), follow_calls(false), last_call(NULL) {}
     SgAsmFunction *func;                        // Function that is called
     rose_addr_t entry_esp;                      // ESP when this function was first entered
     bool monitoring_stdcall;                    // True for a little while when we enter a new function
     rose_addr_t stdcall_args_va;                // ESP where stdcall arguments will be pushed
     bool follow_calls;                          // Traverse into called functions
+    SgAsmFunction *last_call;                   // Address of last called function, reset as soon as EAX is read/written
 };
 
 /** Information about all pending function calls.  This is the stack of functions that have not yet returned. */
@@ -1006,7 +1027,13 @@ public:
     /** @} */
 
     /** Pop one frame from the stack.  The stack must not be empty. */
-    void pop() { assert(!empty()); stack_frames.pop_back(); }
+    void pop() {
+        assert(!empty());
+        SgAsmFunction *func = top().func;
+        stack_frames.pop_back();
+        if (!empty())
+            top().last_call = func;
+    }
 
     /** Pop frames from the stack until @p esp is valid for the top frame. */
     void pop_to(rose_addr_t esp) { while (!empty() && top().entry_esp<esp) pop(); }
@@ -1055,11 +1082,12 @@ public:
     bool uses_stdcall;                                  // True if this executable uses the stdcall calling convention
     StackFrames stack_frames;                           // Stack frames ordered by decreasing entry_esp values
     Disassembler::AddressSet whitelist_exports;         // Dynamic functions that can be called when follow_calls==CALL_BUILTIN
+    FuncAnalyses &funcinfo;                             // Partial results of various kinds of function analyses
 
-    Policy(const PolicyParams &params, const AddressIdMap &entry2id, Tracer &tracer)
+    Policy(const PolicyParams &params, const AddressIdMap &entry2id, Tracer &tracer, FuncAnalyses &funcinfo)
         : inputs(NULL), pointers(NULL), interp(NULL), ninsns(0), address_hasher(0, 255, 0),
           address_hasher_initialized(false), insns(0), params(params), entry2id(entry2id), prev_bb(NULL),
-          tracer(tracer), uses_stdcall(false) {}
+          tracer(tracer), uses_stdcall(false), funcinfo(funcinfo) {}
 
     // Consume and return an input value.  An argument is needed only when the memhash queue is being used.
     template <size_t nBits>
@@ -1282,6 +1310,11 @@ public:
         if (stack_frames.empty())
             throw FaultException(AnalysisFault::BAD_STACK);
         StackFrame &stack_frame = stack_frames.top();
+        if (entered_function) {
+            AddressIdMap::const_iterator id_found = entry2id.find(insn->get_address());
+            if (id_found!=entry2id.end())
+                ++funcinfo[id_found->second].ncalls;
+        }
 
         // Debugging
         if (params.verbosity>=EFFUSIVE) {
@@ -1290,7 +1323,7 @@ public:
                 funcname = " <" + funcname + ">";
             std::cerr <<"CloneDetection: " <<std::string(80, '-') <<"\n"
                       <<"CloneDetection: in function " <<StringUtility::addrToString(func->get_entry_va()) <<funcname
-                      <<" at call level " <<stack_frames.size() <<"\n"
+                      <<" at level " <<stack_frames.size() <<"\n"
                       <<"CloneDetection: stack ptr: " <<StringUtility::addrToString(stack_frame.entry_esp)
                       <<" - " <<(stack_frame.entry_esp-esp) <<" = " <<StringUtility::addrToString(esp) <<"\n";
         }
@@ -1552,6 +1585,24 @@ public:
 
     template<size_t nBits>
     ValueType<nBits> readRegister(const RegisterDescriptor &reg) {
+        // If we're reading the EAX register since the last return from a function call and before we write to EAX, then
+        // that function must have returned a value.
+        if (reg.get_major()==x86_regclass_gpr && reg.get_minor()==x86_gpr_ax && !stack_frames.empty()) {
+            if (SgAsmFunction *last_call = stack_frames.top().last_call) {
+                AddressIdMap::const_iterator found = entry2id.find(last_call->get_entry_va());
+                if (found!=entry2id.end()) {
+                    ++funcinfo[found->second].nretused;
+                    if (params.verbosity>=EFFUSIVE) {
+                        std::cerr <<"CloneDetection: function #" <<found->second
+                                  <<" " <<StringUtility::addrToString(last_call->get_entry_va())
+                                  <<" <" <<last_call->get_name() <<"> returns a value\n";
+                    }
+                }
+                stack_frames.top().last_call = NULL; // end of function return value analysis
+            }
+        }
+
+        // Now the real work of reading a register...
         ValueType<nBits> retval;
         switch (nBits) {
             case 1: {
@@ -1769,6 +1820,8 @@ public:
 
     template<size_t nBits>
     void writeRegister(const RegisterDescriptor &reg, const ValueType<nBits> &value, unsigned update_access=HAS_BEEN_WRITTEN) {
+        if (reg.get_major()==x86_regclass_gpr && reg.get_minor()==x86_gpr_ax && !stack_frames.empty())
+            stack_frames.top().last_call = NULL; // end of function return value analysis
         switch (nBits) {
             case 1: {
                 // Only FLAGS/EFLAGS bits have a size of one.  Other registers cannot be accessed at this granularity.
@@ -1989,6 +2042,17 @@ SgProject *load_ast(const SqlDatabase::TransactionPtr&, const std::string &hashk
 /** Identifying string for function.  Includes function address, and in angle brackets, the database function ID if known, the
  *  function name if known, and file name if known. */
 std::string function_to_str(SgAsmFunction*, const FunctionIdMap&);
+
+/** Returns the true if this function probably returns a value (rather than void).  If a function never writes to the EAX
+ * register, then it has a zero probability of returning a value.  If a caller reads EAX after calling the function but before
+ * writing to EAX, then the function has a probability of one that it returned a value.  This function computes the average of
+ * all the return value analysis results, normalizes it to a probability [0,1], and compares it to the user-supplied
+ * threshold.
+ * @{ */
+double function_returns_value(const SqlDatabase::TransactionPtr&, int func_id);
+std::map<int/*func_id*/, double/*probability*/> function_returns_value(const SqlDatabase::TransactionPtr&);
+bool function_returns_value_p(const SqlDatabase::TransactionPtr &tx, int func_id, double threshold=0.51);
+/** @} */
 
 } // namespace
 #endif
