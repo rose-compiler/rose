@@ -41,6 +41,8 @@ extern const Compass::Checker* const allocateAndFreeInTheSameModuleChecker;
 extern const Compass::Checker* const forbiddenFunctionsChecker;
 extern const Compass::Checker* const commaOperatorChecker;
 extern const Compass::Checker* const unaryMinusChecker;
+extern const Compass::Checker* const dataMemberAccessChecker;
+extern const Compass::Checker* const floatForLoopCounterChecker;
 //PLACEHOLDER1
 /*-----------------------------------------------------------------------------
  * Main program
@@ -167,6 +169,10 @@ int main (int argc, char** argv)
                 traversals.push_back (commaOperatorChecker);
             else if ("unaryMinus" == checker_name)
                 traversals.push_back (unaryMinusChecker);
+            else if ("dataMemberAccess" == checker_name)
+                traversals.push_back (dataMemberAccessChecker);
+            else if ("floatForLoopCounter" == checker_name)
+                traversals.push_back (floatForLoopCounterChecker);
             //PLACEHOLDER2
             else
             {

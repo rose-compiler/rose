@@ -30,6 +30,8 @@
     <parameter name="enabled_checker">forbiddenFunctions</parameter>
     <parameter name="enabled_checker">commaOperator</parameter>
     <parameter name="enabled_checker">unaryMinus</parameter>
+    <parameter name="enabled_checker">dataMemberAccess</parameter>
+    <parameter name="enabled_checker">floatForLoopCounter</parameter>
     <!--PLACEHOLDER-->
   </general>
 

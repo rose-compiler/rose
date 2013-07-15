@@ -88,6 +88,8 @@ bin_compass2_LDADD=\
 	bin/checkers/forbidden_functions/libforbiddenfunctions.la \
 	bin/checkers/comma_operator/libcommaoperator.la \
 	bin/checkers/unary_minus/libunaryminus.la \
+	bin/checkers/data_member_access/libdatamemberaccess.la \
+	bin/checkers/float_for_loop_counter/libfloatforloopcounter.la \
 	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS) \
@@ -105,6 +107,8 @@ bin_compass2_LDADD=\
 # ------------------------------------------------------------------------------
 
 noinst_LTLIBRARIES=\
+	bin/checkers/float_for_loop_counter/libfloatforloopcounter.la \
+	bin/checkers/data_member_access/libdatamemberaccess.la \
 	bin/checkers/unary_minus/libunaryminus.la \
 	bin/checkers/comma_operator/libcommaoperator.la \
 	bin/checkers/forbidden_functions/libforbiddenfunctions.la \
@@ -185,6 +189,12 @@ bin_checkers_comma_operator_libcommaoperator_la_SOURCES=\
 
 bin_checkers_unary_minus_libunaryminus_la_SOURCES=\
 	bin/checkers/unary_minus/unary_minus.cpp
+
+bin_checkers_data_member_access_libdatamemberaccess_la_SOURCES=\
+	bin/checkers/data_member_access/data_member_access.cpp
+
+bin_checkers_float_for_loop_counter_libfloatforloopcounter_la_SOURCES=\
+	bin/checkers/float_for_loop_counter/float_for_loop_counter.cpp
 
 #PLACEHOLDER
 
