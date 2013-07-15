@@ -12,10 +12,26 @@ usage(int exit_status)
 {
     std::cerr <<"usage: " <<argv0 <<" DATABASE [SPECIFICATION...]\n"
               <<"    SPECIFICATIONS\n"
-              <<"       tests [IGROUP_IDS...] [[for] functions FUNCTION_IDS\n"
+              <<"       tests [IGROUP_IDS...] [[for] functions FUNCTION_IDS]\n"
               <<"            Delete tests for the specified input groups (or all input groups if none are specified) for\n"
               <<"            only the functions whose IDs are specified (or all functions if the \"for functions\" clause\n"
-              <<"            is not specified.\n"
+              <<"            is not specified). This does not delete results that depend on multiple tests, such as partial\n"
+              <<"            analysis results or function similarities.\n"
+              <<"       partials [[for] functions FUNCTION_IDS]\n"
+              <<"            Remove the partial analysis results for all functions (or the specified functions). Partial\n"
+              <<"            results are the analyses that run during 25-run-tests but which are not stored in their final\n"
+              <<"            form in the database.  For example, the analysis that tries to determine the likelihood that\n"
+              <<"            a function returns a value is based on tests of the call sites for that function, and those\n"
+              <<"            call sites could be tested in (many) other instances of 25-run-tests; the final answer\n"
+              <<"            depends on the results from all those tests and is therefore not stored in the database.\n"
+              <<"       inputs [IGROUP_IDS...]\n"
+              <<"            Deletes the specified input groups and all tests that depended on those input groups.  This does\n"
+              <<"            not delete subsquent results that depend on multiple inputs (such as function similarities).\n"
+              <<"       results [[for] function FUNCTION_IDS]\n"
+              <<"            Delete all testing results (or results for the specified functions). This the tests, the outputs\n"
+              <<"            and traces produced by those tests, the partial analysis results, and function similarity.\n"
+              <<"            Basically, everything that depends on results from 25-run-tests, but nothing that depends\n"
+              <<"            only on the lower-numbered commands.\n"
               <<"\n"
               <<"    DATABASE\n"
               <<"            The name of the database to which we are connecting.  For SQLite3 databases this is just a local\n"
@@ -114,6 +130,55 @@ main(int argc, char *argv[])
         tx->execute("delete from semantic_fio_trace" + cond);
         tx->execute("delete from semantic_fio" + cond);
 
+    } else if (0==what.compare("partials")) {
+        std::vector<int> func_ids;
+        if (!input.empty() && 0==input.front().compare("for"))
+            input.pop_front();
+        if (!input.empty() && (0==input.front().compare("function") || 0==input.front().compare("functions"))) {
+            input.pop_front();
+            func_ids = parse_id_list(input);
+        }
+        if (!input.empty()) {
+            std::cerr <<argv0 <<": syntax error in command: " <<cmd <<"\n";
+            exit(1);
+        }
+
+        std::string sql = "delete from semantic_funcpartials";
+        if (!func_ids.empty())
+            sql += " where func_id " + SqlDatabase::in(func_ids);
+        tx->execute(sql);
+
+    } else if (0==what.compare("input") || 0==what.compare("inputs") || 0==what.compare("igroup") || 0==what.compare("igroups")) {
+        std::vector<int> igroup_ids = parse_id_list(input);
+        if (!input.empty()) {
+            std::cerr <<argv0 <<": syntax error in command: " <<cmd <<"\n";
+            exit(1);
+        }
+
+        std::string cond = igroup_ids.empty() ? std::string() : " where igroup_id " + SqlDatabase::in(igroup_ids);
+        tx->execute("delete from semantic_fio_trace" + cond);
+        tx->execute("delete from semantic_fio" + cond);
+        tx->execute("delete from semantic_inputvalues" + cond);
+
+    } else if (0==what.compare("result") || 0==what.compare("results")) {
+        std::vector<int> func_ids;
+        if (!input.empty() && 0==input.front().compare("for"))
+            input.pop_front();
+        if (!input.empty() && (0==input.front().compare("function") || 0==input.front().compare("functions"))) {
+            input.pop_front();
+            func_ids = parse_id_list(input);
+        }
+        if (!input.empty()) {
+            std::cerr <<argv0 <<": syntax error in command: " <<cmd <<"\n";
+            exit(1);
+        }
+
+        std::string funcs = func_ids.empty() ? std::string("is not null") : SqlDatabase::in(func_ids);
+        tx->execute("delete from semantic_funcsim where func1_id "+funcs+" or func2_id "+funcs);
+        tx->execute("delete from semantic_funcpartials where func_id "+funcs);
+        tx->execute("delete from semantic_fio_trace where func_id "+funcs);
+        tx->execute("delete from semantic_fio where func_id "+funcs);
+        
     } else {
         std::cerr <<argv0 <<": unknown command: " <<cmd <<"\n";
         exit(1);

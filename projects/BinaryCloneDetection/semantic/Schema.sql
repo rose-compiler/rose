@@ -3,12 +3,12 @@
 
 -- Clean up. Tables need to be dropped in the opposite order they're created.
 drop table if exists semantic_funcsim;
+drop table if exists semantic_funcpartials;
 drop table if exists semantic_fio_trace;
 drop table if exists semantic_fio_events;
 drop table if exists semantic_fio;
 drop table if exists semantic_sources;
 drop table if exists semantic_instructions;
-drop table if exists semantic_funcpartials;
 drop table if exists semantic_cg;
 drop table if exists semantic_binaries;
 drop table if exists semantic_functions;
@@ -109,17 +109,6 @@ create table semantic_cg (
        cmd bigint references semantic_history(hashkey) -- Command that created this row
 );
 
--- Results of various kinds of function analyses.  A function might be represented more than once in this table because
--- some of these analyses occur when the function is called by another function rather than when the function is tested
--- by 25-run-tests.
-create table semantic_funcpartials (
-       func_id integer references semantic_functions(id),
-       ncalls integer,				-- Number of times this function was called by another function
-       nretused integer,			-- Number of ncalls where a return value was used in the caller
-       ntests integer,				-- Number of times this function was tested
-       nvoids integer				-- Number of ntests where the function did not write to EAX
-);
-
 -- This is the list of instructions for each function.  Functions need not be contiguous in memory, and two instructions
 -- might overlap, which is why we have to store each instruction individually.  Every instruction belongs to exactly one
 -- function.
@@ -188,6 +177,17 @@ create table semantic_fio_trace (
        event_id integer, --(need for speed) references semantic_fio_events(id),
        minor integer,				-- event minor number (usually zero)
        val bigint				-- event value, interpretation depends on event_id
+);
+
+-- Results of various kinds of function analyses.  A function might be represented more than once in this table because
+-- some of these analyses occur when the function is called by another function rather than when the function is tested
+-- by 25-run-tests.
+create table semantic_funcpartials (
+       func_id integer references semantic_functions(id),
+       ncalls integer,				-- Number of times this function was called by another function
+       nretused integer,			-- Number of ncalls where a return value was used in the caller
+       ntests integer,				-- Number of times this function was tested
+       nvoids integer				-- Number of ntests where the function did not write to EAX
 );
 
 -- Function similarity--how similar are pairs of functions.  The relation_id allows us to store multiple function similarity
