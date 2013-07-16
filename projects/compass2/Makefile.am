@@ -92,6 +92,7 @@ bin_compass2_LDADD=\
 	bin/checkers/float_for_loop_counter/libfloatforloopcounter.la \
 	bin/checkers/ternary_operator/libternaryoperator.la \
 	bin/checkers/explicit_test_for_non_boolean_value/libexplicittestfornonbooleanvalue.la \
+	bin/checkers/byte_by_byte_structure_comparison/libbytebybytestructurecomparison.la \
 	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS) \
@@ -109,6 +110,7 @@ bin_compass2_LDADD=\
 # ------------------------------------------------------------------------------
 
 noinst_LTLIBRARIES=\
+	bin/checkers/byte_by_byte_structure_comparison/libbytebybytestructurecomparison.la \
 	bin/checkers/explicit_test_for_non_boolean_value/libexplicittestfornonbooleanvalue.la \
 	bin/checkers/ternary_operator/libternaryoperator.la \
 	bin/checkers/float_for_loop_counter/libfloatforloopcounter.la \
@@ -205,6 +207,9 @@ bin_checkers_ternary_operator_libternaryoperator_la_SOURCES=\
 
 bin_checkers_explicit_test_for_non_boolean_value_libexplicittestfornonbooleanvalue_la_SOURCES=\
 	bin/checkers/explicit_test_for_non_boolean_value/explicit_test_for_non_boolean_value.cpp
+
+bin_checkers_byte_by_byte_structure_comparison_libbytebybytestructurecomparison_la_SOURCES=\
+	bin/checkers/byte_by_byte_structure_comparison/byte_by_byte_structure_comparison.cpp
 
 #PLACEHOLDER
 
