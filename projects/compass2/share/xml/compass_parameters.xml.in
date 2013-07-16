@@ -33,6 +33,7 @@
     <parameter name="enabled_checker">dataMemberAccess</parameter>
     <parameter name="enabled_checker">floatForLoopCounter</parameter>
     <parameter name="enabled_checker">ternaryOperator</parameter>
+    <parameter name="enabled_checker">explicitTestForNonBooleanValue</parameter>
     <!--PLACEHOLDER-->
   </general>
 
