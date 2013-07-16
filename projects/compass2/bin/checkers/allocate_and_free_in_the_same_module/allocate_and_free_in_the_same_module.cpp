@@ -128,7 +128,7 @@ namespace CompassAnalyses
 namespace AllocateAndFreeInTheSameModule
 {
 const string checker_name      = "AllocateAndFreeInTheSameModule";
-const string short_description = "malloc() or calloc() without matching free() found!";
+const string short_description = "malloc() or calloc() might be missing a matching free!";
 const string long_description  = "malloc() and calloc() should always have a matching free()";
 
 string source_directory = "/";
@@ -234,7 +234,7 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
             LHS_matcher.performMatching("$r=SgVarRefExp", lhs_operand);
         ROSE_ASSERT (var_ref_matches.size() > 0);
 
-        SgVarRefExp *LHS = (SgVarRefExp*)(var_ref_matches.front()["$r"]);
+        SgVarRefExp *LHS = (SgVarRefExp*)(var_ref_matches.back()["$r"]);
         ROSE_ASSERT(LHS != NULL);
 
         LHS_symbol = LHS->get_symbol();
@@ -263,7 +263,7 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
             RHS_var_matcher.performMatching("$r=SgVarRefExp", assign_op);
         if(RHS_var_matches.size() > 0)
           SgSymbol *RHS_symbol =
-              ((SgVarRefExp*)RHS_var_matches.front()["$r"])->get_symbol();
+              ((SgVarRefExp*)RHS_var_matches.back()["$r"])->get_symbol();
       } else {
         RHS_symbol = RHS_var_ref->get_symbol();
       }
@@ -319,14 +319,70 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
         AstMatching var_matcher;
         SgVarRefExp *var_ref = isSgVarRefExp(var_matcher
                                              .performMatching("$r=SgVarRefExp", func_call)
-                                             .front()["$r"]);
+                                             .back()["$r"]);
         if(var_ref)
         {
           SgSymbol *var_ref_symbol = var_ref->get_symbol();
           //freed.push_back(var_ref_symbol);
           freed.insert(var_ref_symbol);
         }
+      } else {
+
+        SgExprListExp *expr_list = func_call->get_args();
+
+        for(int i = 0; i < expr_list->get_numberOfTraversalSuccessors(); i++)
+        {
+          SgNode* param = expr_list->get_traversalSuccessorByIndex(i);
+
+          SgFunctionParameterList *func_params = func_call
+              ->getAssociatedFunctionDeclaration()->get_parameterList();
+          SgInitializedName* func_param =
+              isSgInitializedName(func_params->get_traversalSuccessorByIndex(i));
+          //if(func_param == NULL) break;
+          SgSymbol *func_param_sym = NULL;
+          std::cout << " HAHAHAHA" << std::endl;
+         // std::cout << func_param_sym << std::endl;
+          SgVarRefExp* param_var = isSgVarRefExp(param);
+          if(param_var != NULL)
+          {
+
+            // handles inter function mappings of variables here
+            SgSymbol *param_sym = param_var->get_symbol();
+            // now we must add var mappings from the inner parameter of the function
+            // to the original passed variable
+            //if(func_param_sym == param_sym) break;
+            if(func_param_sym == NULL) std::cout << " OH NO " << std::endl;
+            var_mappings[func_param_sym].insert(param_sym);
+            //std::cout << func_param_sym << " = " << param_sym << std::endl;
+            //std::cout << func_param_sym->get_name() << " = " << param_sym->get_name() << std::endl;
+          } else {
+            //TODO: handle case of malloc being passed as function parameter
+            AstMatching func_ref_matcher;
+            MatchResult found_func_matches =
+                func_ref_matcher.performMatching("$r=SgFunctionRefExp", param);
+            if(found_func_matches.size() > 0)
+            {
+              SgFunctionRefExp *found_func = isSgFunctionRefExp(
+                  found_func_matches.front()["$r"]);
+              std::string found_func_str = found_func->get_symbol()
+                  ->get_name().getString();
+              std::cout << "found function call in function param!" << std::endl;
+              if(found_func_str.compare("malloc") == 0)
+              {
+                // found a malloc call within a function parameter
+                // we must map this to whatever variable it would be assigned in the
+                // parent function
+                //var_free_status[func_param_sym] = false;
+                //malloc_nodes[func_param_sym] = found_func->get_symbol();
+                //unfreed.push_back(func_param_sym);
+
+              }
+            }
+          }
+        }
       }
+    } else {
+      //TODO: handle case of malloc in an SgReturnStmt
     }
   }
 
@@ -395,7 +451,7 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
   {
     if(var_free_status[var_symbol] == false)
     {
-      std::cout << var_symbol->get_name() << " NOT FREE!" << std::endl;
+      std::cout << "MARKING " << var_symbol->get_name() << " [NOT FREE]!" << std::endl;
       output->addOutput(
           new CompassAnalyses::AllocateAndFreeInTheSameModule::
           CheckerOutput(malloc_nodes[var_symbol]));
