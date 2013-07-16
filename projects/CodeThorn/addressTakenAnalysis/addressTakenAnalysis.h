@@ -12,6 +12,10 @@ using namespace CodeThorn;
 
 typedef std::set<VariableId> VariableIdSet;
 
+// temporary utility function
+// will be replaced by set_union from algorithm
+void set_union(const VariableIdSet& set1, const VariableIdSet& set2, VariableIdSet& rset);
+
 // AST Query Processor
 // common functor to process any query and build match result
 // NOTE: extend it to accept a functor to apply on each element of match result
@@ -46,6 +50,21 @@ public:
     for( ; it != vset.end(); )
     {
       ostr << "<" << (*it).toString() << ", " << vidm.variableName(*it)  << ">";
+      it++;
+      if(it != vset.end())
+        ostr << ", ";
+    }
+    ostr << "]";
+    return ostr.str();
+  }
+  std::string static str(VariableIdSet& vset)
+  {
+    std::ostringstream ostr;
+    ostr << "[";
+    VariableIdSet::iterator it = vset.begin();
+    for( ; it != vset.end(); )
+    {
+      ostr << (*it).toString();
       it++;
       if(it != vset.end())
         ostr << ", ";

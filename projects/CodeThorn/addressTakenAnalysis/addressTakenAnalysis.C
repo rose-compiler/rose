@@ -3,6 +3,43 @@
 #include <algorithm>
 #include "addressTakenAnalysis.h"
 
+// utility functions
+void set_union(const VariableIdSet& set1, const VariableIdSet& set2, VariableIdSet& rset)
+{
+  VariableIdSet::const_iterator it1 = set1.begin();
+  VariableIdSet::const_iterator it2 = set2.begin();
+  VariableIdSet::iterator rit = rset.begin();
+  
+  // // re-implementation of set-union
+  while(true)
+  {
+    if(it1 == set1.end())
+    {
+      rset.insert(it2, set2.end());
+      break;
+    }
+    if(it2 == set2.end())
+    {
+      rset.insert(it1, set1.end());
+      break;
+    }
+    
+    if(*it1 < *it2)
+    {
+      rset.insert(rit, *it1); ++it1; ++rit;
+    }
+    else if(*it2 < *it1)
+    {
+      rset.insert(rit, *it2); ++it2; ++rit;
+    }
+    else
+    {
+      rset.insert(rit, *it1); ++it1; ++it2; ++rit;
+    }
+  }
+  ROSE_ASSERT(rset.size() == set2.size() + set1.size());
+}
+
 /*************************************************
  ***************** ProcessQuery  *****************
  *************************************************/
@@ -229,47 +266,14 @@ VariableIdMapping& FlowInsensitivePointerAnalysis::getVariableIdMapping()
 VariableIdSet FlowInsensitivePointerAnalysis::getMemModByPointer()
 {
   VariableIdSet unionSet;
-  const VariableIdSet addrTakenSet = addrTakenAnalysis.getAddressTakenSet();
-  const VariableIdSet arrayTypeSet = typeAnalysis.getArrayTypeSet();
+  VariableIdSet addrTakenSet = addrTakenAnalysis.getAddressTakenSet();
+  VariableIdSet arrayTypeSet = typeAnalysis.getArrayTypeSet();
   
   // std::set_union(addrTakenSet.begin(), addrTakenSet.end(),
   //                       arrayTypeSet.begin(), arrayTypeSet.end(),
   //                       unionSet.begin());
 
-  VariableIdSet::const_iterator it1 = addrTakenSet.begin();
-  VariableIdSet::const_iterator it2 = arrayTypeSet.begin();
-  VariableIdSet::iterator result = unionSet.begin();
-  
-  // re-implementation of set-union
-  while(true)
-  {
-    if(it1 == addrTakenSet.end())
-    {
-      unionSet.insert(it2, arrayTypeSet.end());
-      break;
-    }
-    if(it2 == arrayTypeSet.end())
-    {
-      unionSet.insert(it1, addrTakenSet.end());
-      break;
-    }
-    
-    if(*it1 < *it2)
-    {
-      unionSet.insert(result, *it1); ++it1; ++result;
-    }
-    else if(*it2 < *it1)
-    {
-      unionSet.insert(result, *it2); ++it2; ++result;
-    }
-    else
-    {
-      unionSet.insert(result, *it1); ++it1; ++it2; ++result;
-    }
-  }
-
-
-  ROSE_ASSERT(unionSet.size() == arrayTypeSet.size() + addrTakenSet.size());
+  set_union(addrTakenSet, arrayTypeSet, unionSet);
 
   return unionSet;
 }
