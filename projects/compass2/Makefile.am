@@ -90,6 +90,7 @@ bin_compass2_LDADD=\
 	bin/checkers/unary_minus/libunaryminus.la \
 	bin/checkers/data_member_access/libdatamemberaccess.la \
 	bin/checkers/float_for_loop_counter/libfloatforloopcounter.la \
+	bin/checkers/ternary_operator/libternaryoperator.la \
 	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS) \
@@ -107,6 +108,7 @@ bin_compass2_LDADD=\
 # ------------------------------------------------------------------------------
 
 noinst_LTLIBRARIES=\
+	bin/checkers/ternary_operator/libternaryoperator.la \
 	bin/checkers/float_for_loop_counter/libfloatforloopcounter.la \
 	bin/checkers/data_member_access/libdatamemberaccess.la \
 	bin/checkers/unary_minus/libunaryminus.la \
@@ -195,6 +197,9 @@ bin_checkers_data_member_access_libdatamemberaccess_la_SOURCES=\
 
 bin_checkers_float_for_loop_counter_libfloatforloopcounter_la_SOURCES=\
 	bin/checkers/float_for_loop_counter/float_for_loop_counter.cpp
+
+bin_checkers_ternary_operator_libternaryoperator_la_SOURCES=\
+	bin/checkers/ternary_operator/ternary_operator.cpp
 
 #PLACEHOLDER
 
