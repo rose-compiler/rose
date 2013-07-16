@@ -44,6 +44,7 @@ extern const Compass::Checker* const unaryMinusChecker;
 extern const Compass::Checker* const dataMemberAccessChecker;
 extern const Compass::Checker* const floatForLoopCounterChecker;
 extern const Compass::Checker* const ternaryOperatorChecker;
+extern const Compass::Checker* const explicitTestForNonBooleanValueChecker;
 //PLACEHOLDER1
 /*-----------------------------------------------------------------------------
  * Main program
@@ -176,6 +177,8 @@ int main (int argc, char** argv)
                 traversals.push_back (floatForLoopCounterChecker);
             else if ("ternaryOperator" == checker_name)
                 traversals.push_back (ternaryOperatorChecker);
+            else if ("explicitTestForNonBooleanValue" == checker_name)
+                traversals.push_back (explicitTestForNonBooleanValueChecker);
             //PLACEHOLDER2
             else
             {
