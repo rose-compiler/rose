@@ -106,7 +106,7 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
 
       AstMatching matcher;
       MatchResult matches = matcher
-          .performMatching("#SgBasicBlock|$r=SgVariableDeclaration", root_node);
+          .performMatching("#SgClassDefinition|#SgBasicBlock|$r=SgVariableDeclaration", root_node);
 
       BOOST_FOREACH(SingleMatchVarBindings match, matches)
       {
