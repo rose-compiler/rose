@@ -168,7 +168,7 @@ void ExprVisitorPattern::visit(SgVarRefExp* sgn)
 {
   // recursion base case
   DefUseMemObj rdumo = getDefUseMemObjLvalue(sgn, fipa, dumo, isModExpr);
-  dumo = dumo + rdumo;
+  dumo = rdumo;
 }
 
 void ExprVisitorPattern::visit(SgPntrArrRefExp* sgn)
@@ -179,7 +179,7 @@ void ExprVisitorPattern::visit(SgPntrArrRefExp* sgn)
   {
     rdumo.copyDefToUseSet();
   }
-  dumo = dumo + rdumo;
+  dumo = rdumo;
 }
 
 void ExprVisitorPattern::visit(SgPointerDerefExp* sgn)
