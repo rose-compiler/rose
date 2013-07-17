@@ -72,8 +72,8 @@ void collectReferencedSymbols(const std::set<Data *> & datas, std::set<SgVariabl
  *    \return a Function Parameter List
  */
 SgFunctionParameterList * createParameterList(
-  const std::list<SgVariableSymbol *>   & params,
-  const std::list<SgVariableSymbol *>   & coefs,
+  const std::list<SgVariableSymbol *> & params,
+  const std::list<SgVariableSymbol *> & coefs,
   const std::list<Data *> & datas,
   unsigned long data_type_modifer_,
   std::string suffix

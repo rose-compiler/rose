@@ -9,8 +9,7 @@ endif
 libKLT_opencl_la_SOURCES= \
   kernel.cpp \
   mfb-klt.cpp \
-  cg-config.cpp \
-  work-size-shaper.cpp \
+  iteration-mapper.cpp \
   generator.cpp
 libKLT_opencl_la_CXXFLAGS= \
   -g \
@@ -20,9 +19,6 @@ libKLT_opencl_la_CXXFLAGS= \
 libKLT_opencl_la_includedir=$(prefix)/include/KLT
 libKLT_opencl_la_include_HEADERS= \
   $(srcdir)/../../include/KLT/OpenCL/kernel.hpp \
-  $(srcdir)/../../include/KLT/OpenCL/mfb-klt.hpp \
-  $(srcdir)/../../include/KLT/OpenCL/cg-config.hpp \
-  $(srcdir)/../../include/KLT/OpenCL/work-size-shaper.hpp \
-  $(srcdir)/../../include/KLT/OpenCL/generator.hpp
+  $(srcdir)/../../include/KLT/OpenCL/mfb-klt.hpp
 
 

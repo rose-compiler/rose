@@ -7,10 +7,7 @@ libKLT_core_la_SOURCES= \
   loop-trees.cpp \
   kernel.cpp \
   data.cpp \
-  generator.cpp \
-  cg-config.cpp \
   data-flow.cpp \
-  loop-selector.cpp \
   mfb-klt.cpp \
   utils.cpp
 libKLT_core_la_CXXFLAGS= \

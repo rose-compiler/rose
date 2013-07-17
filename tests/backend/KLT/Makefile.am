@@ -10,8 +10,6 @@ test_loop_trees_CXXFLAGS = \
   $(ROSE_INCLUDES)
 test_loop_trees_LDADD= \
   $(top_builddir)/src/backend/KLT/lib/core/libKLT-core.la \
-  $(top_builddir)/src/backend/KLT/lib/sequential/libKLT-sequential.la \
-  $(top_builddir)/src/backend/KLT/lib/opencl/libKLT-opencl.la \
   $(top_builddir)/src/backend/MFB/lib/sage/libMFB-sage.la \
   $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
@@ -39,6 +37,15 @@ test_opencl_generator_LDADD = \
   $(top_builddir)/src/backend/MFB/lib/sage/libMFB-sage.la \
   $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+$(top_builddir)/src/backend/KLT/lib/core/libKLT-core.la:
+	$(MAKE) -C $(top_builddir)/src/backend/KLT/lib/core/ libKLT-core.la
+
+$(top_builddir)/src/backend/KLT/lib/sequential/libKLT-sequential.la:
+	$(MAKE) -C $(top_builddir)/src/backend/KLT/lib/sequential/ libKLT-sequential.la
+
+$(top_builddir)/src/backend/KLT/lib/opencl/libKLT-opencl.la:
+	$(MAKE) -C $(top_builddir)/src/backend/KLT/lib/opencl/ libKLT-opencl.la
+
 $(top_builddir)/src/backend/MFB/lib/sage/libMFB-sage.la:
 	$(MAKE) -C $(top_builddir)/src/backend/MFB/lib/sage/ libMFB-sage.la
 
@@ -63,36 +70,23 @@ OPENCL_KERNEL_TARGETS = ${LOOP_TREES_INPUTS:.lt.in=.kernel.cl}
 	rm -f $@ ${@:.kernel.cpp=.kernel.hpp} ${@:.kernel.cpp=.main.cpp}
 	./test-sequential-generator $< ${@:.kernel.cpp=.kernel}
 
-#	@echo
-#	@echo "$< :"
-#	@echo
-#	@cat $< 
-#	@echo
-#	@echo "${@:.kernel.cpp=.kernel.hpp} :"
-#	@echo
-#	@cat ${@:.kernel.cpp=.kernel.hpp}
-#	@echo
-#	@echo "$@ :"
-#	@echo
-#	@cat $@
-
 %.kernel.cl: %.lt.in test-opencl-generator
 	rm -f $@  ${@:.kernel.cl=.main.cpp}
 	./test-opencl-generator $< ${@:.kernel.cl=.kernel}
 
-#	@echo
-#	@echo "$< :"
-#	@echo
-#	@cat $< 
-#	@echo
-#	@echo "$@ :"
-#	@echo
-#	@cat $@
-
-check-local: test-loop-trees
+check-lt-read:
 	$(MAKE) $(LOOP_TREES_TARGETS)
+
+check-sequential:
 	$(MAKE) $(SEQUENTIAL_KERNEL_TARGETS)
+
+check-opencl:
 	$(MAKE) $(OPENCL_KERNEL_TARGETS)
+
+check-local:
+	$(MAKE) check-lt-read
+	$(MAKE) check-sequential
+	$(MAKE) check-opencl
 
 clean-local:
 	rm -f *.lt.out *.kernel.*

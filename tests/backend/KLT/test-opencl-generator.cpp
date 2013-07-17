@@ -2,21 +2,21 @@
 #include "KLT/Core/loop-trees.hpp"
 #include "KLT/Core/data.hpp"
 
-#include "KLT/OpenCL/cg-config.hpp"
-
-#include "KLT/OpenCL/generator.hpp"
 #include "KLT/OpenCL/kernel.hpp"
 
+#include "KLT/Core/generator.hpp"
+#include "KLT/Core/cg-config.hpp"
 #include "KLT/Core/data-flow.hpp"
-#include "KLT/Core/loop-selector.hpp"
-#include "KLT/OpenCL/work-size-shaper.hpp"
+#include "KLT/Core/loop-mapper.hpp"
+#include "KLT/Core/iteration-mapper.hpp"
+
+#include "KLT/OpenCL/mfb-klt.hpp"
 
 #include <cassert>
 
 #include "sage3basic.h"
 
 int main(int argc, char ** argv) {
-
   SgProject * project = new SgProject::SgProject();
   { // Add default command line to an empty project
     std::vector<std::string> arglist;
@@ -31,12 +31,17 @@ int main(int argc, char ** argv) {
   
   loop_trees.read(argv[1]);
 
-  KLT::OpenCL::Generator generator(project, argv[2]);
-  std::list<KLT::Core::Kernel *> kernels_;
-  KLT::OpenCL::CG_Config cg_config(new KLT::Core::DataFlow(), new KLT::Core::Dummy_LoopSelector(), new KLT::OpenCL::Dummy_WorkSizeShaper());
+  ::MultiFileBuilder::KLT_Driver driver(project);
+  KLT::Core::Generator<KLT::OpenCL::Kernel, ::MultiFileBuilder::KLT_Driver> generator(driver, argv[2]);
 
-  generator.generate(loop_trees, kernels_, cg_config);
-
+  std::set<std::list<KLT::OpenCL::Kernel *> > kernel_lists;
+  KLT::Core::CG_Config<KLT::OpenCL::Kernel> cg_config(
+    new KLT::Core::LoopMapper<KLT::OpenCL::Kernel>(),
+    new KLT::Core::IterationMapper<KLT::OpenCL::Kernel>(),
+    new KLT::Core::DataFlow<KLT::OpenCL::Kernel>()
+  );
+  generator.generate(loop_trees, kernel_lists, cg_config);
+/*
   std::list<KLT::Core::Kernel *>::const_iterator it_kernel_;
   std::vector<SgExpression *>::const_iterator it_expr;
   for (it_kernel_ = kernels_.begin(); it_kernel_ != kernels_.end(); it_kernel_++) {
@@ -61,6 +66,7 @@ int main(int argc, char ** argv) {
     }
     std::cout << std::endl;
   }
+*/
 
   project->unparse();
 

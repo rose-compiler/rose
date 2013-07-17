@@ -396,6 +396,8 @@ void LoopTrees::read(char * filename) {
   assert(in_file.is_open());
 
   read(in_file);
+
+  in_file.close();
 }
 
 void LoopTrees::read(std::ifstream & in_file) {
@@ -495,6 +497,7 @@ SgStatement * generateStatement(
 
     SgBasicBlock * for_body = SageBuilder::buildBasicBlock();
     SgForStatement * for_stmt = SageBuilder::buildForStatement(init_stmt, test_stmt, inc_expr, for_body);
+    assert(for_body->get_parent() != NULL);
 
     if (generate_in_depth) {
       std::list<LoopTrees::node_t * >::const_iterator it_child;
@@ -645,7 +648,7 @@ void collectIteratorSymbols(LoopTrees::node_t * tree, std::set<SgVariableSymbol 
     collectIteratorSymbols(*it_child, symbols);
 }
 
-void collectReferencedSymbols(LoopTrees::node_t * tree, std::set<SgVariableSymbol *> & symbols) {
+void collectReferencedSymbols(LoopTrees::node_t * tree, std::set<SgVariableSymbol *> & symbols, bool go_down_children) {
   std::vector<SgVarRefExp *> var_refs;
   std::vector<SgVarRefExp *>::const_iterator it_var_ref;
 
@@ -666,9 +669,11 @@ void collectReferencedSymbols(LoopTrees::node_t * tree, std::set<SgVariableSymbo
         symbols.insert((*it_var_ref)->get_symbol());
     }
 
-    std::list<LoopTrees::node_t * >::const_iterator it_child;
-    for (it_child = loop->children.begin(); it_child != loop->children.end(); it_child++)
-      collectReferencedSymbols(*it_child, symbols);
+    if (go_down_children) {
+      std::list<LoopTrees::node_t * >::const_iterator it_child;
+      for (it_child = loop->children.begin(); it_child != loop->children.end(); it_child++)
+        collectReferencedSymbols(*it_child, symbols);
+    }
     
   }
   else {

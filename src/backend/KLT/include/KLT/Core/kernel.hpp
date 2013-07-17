@@ -19,97 +19,76 @@ class Kernel {
   public:
     const unsigned long id;
 
-    struct loop_distribution_t {
+  public:
+    struct loop_mapping_t {
       /// the loop nest to be distributed over threads/work-item/processor/...
       std::list<LoopTrees::loop_t *> loop_nest;
       /// remaining statement to be put in the body of the kernel (inside the loop nest)
       std::list<LoopTrees::node_t *> body;
     };
 
-    struct descriptor_t {
+    struct dataflow_t {
+      /// All datas
+      std::set<Data *> datas;
+
+      /// Read datas
+      std::set<Data *> read;
+      /// Write datas
+      std::set<Data *> write;
+
+      /// Datas flowing in this kernel  (earlier values might be used)
+      std::set<Data *> flow_in;
+      /// Datas flowing out this kernel (produced values might be consumme later)
+      std::set<Data *> flow_out;
+      /// Only used by this kernel (still need an allocation)
+      std::set<Data *> local;
+    };
+
+    struct arguments_t {
       /// Parameters : reference order for call argument
-      const std::list<SgVariableSymbol *> & parameters_argument_order; 
+      std::list<SgVariableSymbol *> parameters; 
       /// Coefficients : reference order for call argument
-      const std::list<SgVariableSymbol *> & coefficients_argument_order;
+      std::list<SgVariableSymbol *> coefficients;
       /// Datas : reference order for call argument
-      const std::list<Data *> & datas_argument_order;
-
-      /// Loop Distribution
-      const loop_distribution_t & loop_distribution;
-
-      descriptor_t(const Kernel & kernel_, const loop_distribution_t & loop_distribution_);
+      std::list<Data *> datas;
     };
 
   protected:
-    /// Set true when the data flow analysis have been performed
-    bool p_dataflow_done;
-    /// Datas flowing in this kernel/task
-    std::set<Data *> p_data_in;
-    /// Datas flowing out this kernel/task
-    std::set<Data *> p_data_out;
+    /// Root loop-tree
+    LoopTrees::node_t * p_root;
 
-    /// Set true when the ordered symbol list have been produced. 
-    bool p_arguments_done;
-    /// Parameters : reference order for call argument
-    std::list<SgVariableSymbol *> p_parameters_argument_order;
-    /// Coefficients : reference order for call argument
-    std::list<SgVariableSymbol *> p_coefficients_argument_order;
-    /// Datas : reference order for call argument
-    std::list<Data *> p_datas_argument_order;
+    /// Set of data sorted accordingly to how they flow through the kernel
+    dataflow_t p_data_flow;
 
-    ///
-    bool p_loop_distribution_done;
+    /// ordered symbol lists
+    arguments_t p_argument_order;
+
     /// Set of possible loop distributions
-    std::set<loop_distribution_t *> p_loop_distributions;
+    std::set<loop_mapping_t *> p_loop_mappings;
 
   protected:
-    Kernel();
+    Kernel(LoopTrees::node_t * root);
 
   public:
     virtual ~Kernel();
 
-    /// Set the result of the Data Flow Analysis (called only once), set flag p_dataflow_done
-    void setDataflow(const std::set<Data *> & data_in, const std::set<Data *> & data_out);
-    /// \return true if the dataflow analysis results are available
-    bool isDataflowDone() const;
-    /// \return Datas flowing in this kernel/task
-    const std::set<Data *> & getFlowingIn() const;
-    /// \return Datas flowing out of this kernel/task
-    const std::set<Data *> & getFlowingOut() const;
+    void setRoot(LoopTrees::node_t * root);
+    LoopTrees::node_t * getRoot() const;
 
-    /// Set the result of the Argument Analysis (called only once), set flag p_arguments_done
-    void setArgument(
-      const std::list<SgVariableSymbol *> & parameters_argument_order,
-      const std::list<SgVariableSymbol *> & coefficients_argument_order,
-      const std::list<Data *> & datas_argument_order
-    );
-    /// \return true if the reference argument order have been generated
-    bool isArgumentDone() const;
-    /// \return Parameters reference order
-    const std::list<SgVariableSymbol *> & getParametersArguments() const;
-    /// \return Coefficients reference oreder
-    const std::list<SgVariableSymbol *> & getCoefficientsArguments() const;
-    /// \return Datas reference order
-    const std::list<Data *> & getDatasArguments() const;
+    dataflow_t & getDataflow();
+    const dataflow_t & getDataflow() const;
 
-    /// set the different loop distributions
-    void setLoopDistributions(const std::set<loop_distribution_t *> & loop_distributions);
-    /// \return true if the loop distribution have been done
-    bool isLoopDistributionDone() const;
-    /// \return OAthe different loop distributions
-    const std::set<loop_distribution_t *> & getLoopDistributions() const;
+    arguments_t & getArguments();
+    const arguments_t & getArguments() const;
 
-    // \return true if the Iteration Maps have been produced
-    virtual bool isIterationMapDone() const = 0;
-
-    // \return true if the Kernels have been produced
-    virtual bool areKernelsDone() const = 0;
+    std::set<loop_mapping_t *> & getLoopMappings();
+    const std::set<loop_mapping_t *> & getLoopMappings() const;
 
   private:
     static unsigned long id_cnt;
-
-  friend class Generator;
 };
+
+void collectReferencedSymbols(Kernel * kernel, std::set<SgVariableSymbol *> & symbols);
 
 }
 

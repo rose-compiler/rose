@@ -8,6 +8,7 @@ namespace Core {
 
 void initAstFromString(std::ifstream & in_file) {
   SgScopeStatement * scope = SageBuilder::buildBasicBlock();
+
   AstFromString::c_sgnode = scope;
   SageBuilder::pushScopeStack(scope);
 

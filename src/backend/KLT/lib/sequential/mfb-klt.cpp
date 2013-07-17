@@ -6,6 +6,8 @@
 
 #include "KLT/Sequential/kernel.hpp"
 
+#include "KLT/Core/iteration-mapper.hpp"
+
 #include "MFB/Sage/function-declaration.hpp"
 #include "MFB/Sage/member-function-declaration.hpp"
 #include "MFB/Sage/class-declaration.hpp"
@@ -19,9 +21,7 @@ void createFields(
   std::map<SgVariableSymbol *, SgVariableSymbol *>   & param_to_field_map,
   std::map<SgVariableSymbol *, SgVariableSymbol *>   & coef_to_field_map,
   std::map< ::KLT::Core::Data *, SgVariableSymbol *> & data_to_field_map,
-  const std::list<SgVariableSymbol *>   & params,
-  const std::list<SgVariableSymbol *>   & coefs,
-  const std::list< ::KLT::Core::Data *> & datas,
+  const ::KLT::Core::Kernel::arguments_t & arguments,
   unsigned long file_id
 ) {
   std::list<SgVariableSymbol *>::const_iterator it_var_sym;
@@ -29,7 +29,7 @@ void createFields(
 
   // ******************
 
-  for (it_var_sym = params.begin(); it_var_sym != params.end(); it_var_sym++) {
+  for (it_var_sym = arguments.parameters.begin(); it_var_sym != arguments.parameters.end(); it_var_sym++) {
     SgVariableSymbol * param_sym = *it_var_sym;
     std::string param_name = param_sym->get_name().getString();
     SgType * param_type =  param_sym->get_type();
@@ -42,7 +42,7 @@ void createFields(
 
   // ******************
 
-  for (it_var_sym = coefs.begin(); it_var_sym != coefs.end(); it_var_sym++) {
+  for (it_var_sym = arguments.coefficients.begin(); it_var_sym != arguments.coefficients.end(); it_var_sym++) {
     SgVariableSymbol * coef_sym = *it_var_sym;
     std::string coef_name = coef_sym->get_name().getString();
     SgType * coef_type = coef_sym->get_type();
@@ -57,7 +57,7 @@ void createFields(
 
   // ******************
 
-  for (it_data = datas.begin(); it_data != datas.end(); it_data++) {
+  for (it_data = arguments.datas.begin(); it_data != arguments.datas.end(); it_data++) {
     ::KLT::Core::Data * data = *it_data;
     SgVariableSymbol * data_sym = data->getVariableSymbol();
     std::string data_name = data_sym->get_name();
@@ -77,9 +77,7 @@ void createFields(
 void createConstructorInitializerList(
   Driver<Sage> & driver,
   SgMemberFunctionDeclaration * ctor_decl,
-  const std::list<SgVariableSymbol *>   & params,
-  const std::list<SgVariableSymbol *>   & coefs,
-  const std::list< ::KLT::Core::Data *> & datas
+  const ::KLT::Core::Kernel::arguments_t & arguments
 ) {
   std::list<SgVariableSymbol *>::const_iterator it_var_sym;
   std::list< ::KLT::Core::Data *>::const_iterator it_data;
@@ -91,7 +89,7 @@ void createConstructorInitializerList(
 
   // ******************
 
-  for (it_var_sym = params.begin(); it_var_sym != params.end(); it_var_sym++) {
+  for (it_var_sym = arguments.parameters.begin(); it_var_sym != arguments.parameters.end(); it_var_sym++) {
     SgVariableSymbol * param_sym = *it_var_sym;
     std::string param_name = param_sym->get_name().getString();
     SgType * param_type =  param_sym->get_type();
@@ -107,7 +105,7 @@ void createConstructorInitializerList(
 
   // ******************
   
-  for (it_var_sym = coefs.begin(); it_var_sym != coefs.end(); it_var_sym++) {
+  for (it_var_sym = arguments.coefficients.begin(); it_var_sym != arguments.coefficients.end(); it_var_sym++) {
     SgVariableSymbol * coef_sym = *it_var_sym;
     std::string coef_name = coef_sym->get_name().getString();
     SgType * coef_type = coef_sym->get_type();
@@ -123,7 +121,7 @@ void createConstructorInitializerList(
 
   // ******************
   
-  for (it_data = datas.begin(); it_data != datas.end(); it_data++) {
+  for (it_data = arguments.datas.begin(); it_data != arguments.datas.end(); it_data++) {
     ::KLT::Core::Data * data = *it_data;
     SgVariableSymbol * data_sym = data->getVariableSymbol();
     std::string data_name = data_sym->get_name();
@@ -145,17 +143,12 @@ SgBasicBlock * createLocalDeclarations(
   Driver<Sage> & driver,
   SgFunctionDefinition * kernel_defn,
   SgClassSymbol * arguments_packer,
-  std::map<SgVariableSymbol *, SgVariableSymbol *>   & param_to_local_map,
-  std::map<SgVariableSymbol *, SgVariableSymbol *>   & coef_to_local_map,
-  std::map< ::KLT::Core::Data *, SgVariableSymbol *> & data_to_local_map,
-  std::map<SgVariableSymbol *, SgVariableSymbol *>   & iter_to_local_map,
+  ::KLT::Sequential::Kernel::local_symbol_maps_t & local_symbol_maps,
   const std::map<SgVariableSymbol *, SgVariableSymbol *>   & param_to_field_map,
   const std::map<SgVariableSymbol *, SgVariableSymbol *>   & coef_to_field_map,
   const std::map< ::KLT::Core::Data *, SgVariableSymbol *> & data_to_field_map,
-  const std::list<SgVariableSymbol *>   & params,
-  const std::list<SgVariableSymbol *>   & coefs,
-  const std::list< ::KLT::Core::Data *> & datas,
-  const std::set<SgVariableSymbol *>   & iterators
+  const ::KLT::Core::Kernel::arguments_t & arguments,
+  const std::set<SgVariableSymbol *> & iterators
 ) {
   std::list<SgVariableSymbol *>::const_iterator it_var_sym;
   std::list< ::KLT::Core::Data *>::const_iterator it_data;
@@ -191,7 +184,7 @@ SgBasicBlock * createLocalDeclarations(
 
   // ***************
 
-  for (it_var_sym = params.begin(); it_var_sym != params.end(); it_var_sym++) {
+  for (it_var_sym = arguments.parameters.begin(); it_var_sym != arguments.parameters.end(); it_var_sym++) {
     SgVariableSymbol * param_sym = *it_var_sym;
     std::string param_name = param_sym->get_name().getString();
     SgType * param_type = param_sym->get_type();
@@ -213,12 +206,12 @@ SgBasicBlock * createLocalDeclarations(
 
     SgVariableSymbol * local_sym = kernel_body->lookup_variable_symbol("local_param_" + param_name);
     assert(local_sym != NULL);
-    param_to_local_map.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(param_sym, local_sym));
+    local_symbol_maps.parameters.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(param_sym, local_sym));
   }
 
   // ***************
 
-  for (it_var_sym = coefs.begin(); it_var_sym != coefs.end(); it_var_sym++) {
+  for (it_var_sym = arguments.coefficients.begin(); it_var_sym != arguments.coefficients.end(); it_var_sym++) {
     SgVariableSymbol * coef_sym = *it_var_sym;
     std::string coef_name = coef_sym->get_name().getString();
     SgType * coef_type = coef_sym->get_type();
@@ -240,12 +233,12 @@ SgBasicBlock * createLocalDeclarations(
 
     SgVariableSymbol * local_sym = kernel_body->lookup_variable_symbol("local_coef_" + coef_name);
     assert(local_sym != NULL);
-    coef_to_local_map.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(coef_sym, local_sym));
+    local_symbol_maps.coefficients.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(coef_sym, local_sym));
   }
 
   // ***************
 
-  for (it_data = datas.begin(); it_data != datas.end(); it_data++) {
+  for (it_data = arguments.datas.begin(); it_data != arguments.datas.end(); it_data++) {
     ::KLT::Core::Data * data = *it_data;
     SgVariableSymbol * data_sym = data->getVariableSymbol();;
     std::string data_name = data_sym->get_name().getString();
@@ -270,30 +263,28 @@ SgBasicBlock * createLocalDeclarations(
 
     SgVariableSymbol * local_sym = kernel_body->lookup_variable_symbol("local_data_" + data_name);
     assert(local_sym != NULL);
-    data_to_local_map.insert(std::pair< ::KLT::Core::Data *, SgVariableSymbol *>(data, local_sym));
+    local_symbol_maps.datas.insert(std::pair< ::KLT::Core::Data *, SgVariableSymbol *>(data, local_sym));
   }
 
   // ***************
 
-  std::set<SgVariableSymbol *>::const_iterator it_iterator;
-  for (it_iterator = iterators.begin(); it_iterator != iterators.end(); it_iterator++) {
-    SgVariableSymbol * iterator_sym = *it_iterator;
-    std::string iterator_name = iterator_sym->get_name().getString();
-    SgType * iterator_type = iterator_sym->get_type();
+  std::set<SgVariableSymbol *>::const_iterator it_iter_sym;
+  for (it_iter_sym = iterators.begin(); it_iter_sym != iterators.end(); it_iter_sym++) {
+    SgVariableSymbol * iter_sym = *it_iter_sym;
+    std::string iter_name = iter_sym->get_name().getString();
+    SgType * iter_type = iter_sym->get_type();
 
-    assert(isSgTypeUnsignedLong(iterator_type) != NULL); // FIXME artificial constraint for debug
-
-    SgVariableDeclaration * iterator_decl = SageBuilder::buildVariableDeclaration(
-      "local_it_" + iterator_name,
-      iterator_type,
+    SgVariableDeclaration * iter_decl = SageBuilder::buildVariableDeclaration(
+      "local_it_" + iter_name,
+      iter_type,
       NULL,
       kernel_body
     );
-    SageInterface::appendStatement(iterator_decl, kernel_body);
+    SageInterface::appendStatement(iter_decl, kernel_body);
 
-    SgVariableSymbol * local_sym = kernel_body->lookup_variable_symbol("local_it_" + iterator_name);
+    SgVariableSymbol * local_sym = kernel_body->lookup_variable_symbol("local_it_" + iter_name);
     assert(local_sym != NULL);
-    iter_to_local_map.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(iterator_sym, local_sym));
+    local_symbol_maps.iterators.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(iter_sym, local_sym));
   }
 
   // ***************
@@ -303,26 +294,24 @@ SgBasicBlock * createLocalDeclarations(
 
 KLT< ::KLT::Sequential::Kernel>::object_desc_t::object_desc_t(
   ::KLT::Sequential::Kernel * kernel_,
-  ::KLT::Sequential::Kernel::loop_distribution_t * loop_distribution_,
+  ::KLT::Sequential::Kernel::loop_mapping_t * loop_mapping_,
   ::KLT::Core::IterationMap< ::KLT::Sequential::Kernel> * iteration_map_,
   unsigned long file_id_
 ) :
   kernel(kernel_),
-  loop_distribution(loop_distribution_),
+  loop_mapping(loop_mapping_),
   iteration_map(iteration_map_),
   file_id(file_id_)
 {}
 
 template <>
 KLT< ::KLT::Sequential::Kernel>::build_result_t Driver<KLT>::build< ::KLT::Sequential::Kernel>(const KLT< ::KLT::Sequential::Kernel>::object_desc_t & desc) {
-  KLT< ::KLT::Sequential::Kernel>::build_result_t result;
+  KLT< ::KLT::Sequential::Kernel>::build_result_t result = new ::KLT::Sequential::Kernel::a_kernel();
 
   ::KLT::Sequential::Kernel * kernel = desc.kernel;
   unsigned long file_id = desc.file_id;
-
-  const std::list<SgVariableSymbol *>   & params = kernel->getParametersArguments();
-  const std::list<SgVariableSymbol *>   & coefs  = kernel->getCoefficientsArguments();
-  const std::list< ::KLT::Core::Data *> & datas   = kernel->getDatasArguments();
+  
+  const ::KLT::Core::Kernel::arguments_t & arguments = kernel->getArguments();
 
   std::map<SgVariableSymbol *, SgVariableSymbol *>   param_to_field_map;
   std::map<SgVariableSymbol *, SgVariableSymbol *>   coef_to_field_map;
@@ -334,11 +323,7 @@ KLT< ::KLT::Sequential::Kernel>::build_result_t Driver<KLT>::build< ::KLT::Seque
   // * Build Iterator Set *
 
   std::set<SgVariableSymbol *> iterators;
-  if (desc.loop_distribution->loop_nest.size() > 0)
-    collectIteratorSymbols(desc.loop_distribution->loop_nest.front(), iterators);
-  else
-    for (it_body_branch = desc.loop_distribution->body.begin(); it_body_branch != desc.loop_distribution->body.end(); it_body_branch++)
-      collectIteratorSymbols(*it_body_branch, iterators);
+    collectIteratorSymbols(desc.kernel->getRoot(), iterators);
 
   // * Argument Packer Declaration *
 
@@ -355,27 +340,32 @@ KLT< ::KLT::Sequential::Kernel>::build_result_t Driver<KLT>::build< ::KLT::Seque
 
   Sage<SgClassDeclaration>::build_result_t arguments_packer_result = ((Driver<Sage> *)this)->build<SgClassDeclaration>(arguments_packer_desc);
 
-  result.arguments_packer = arguments_packer_result.symbol;
+  result->arguments_packer = arguments_packer_result.symbol;
 
   // * Argument Packer Fields *
   
   createFields(
     *(Driver<Sage> *)this,
-    result.arguments_packer,
+    result->arguments_packer,
     param_to_field_map, coef_to_field_map, data_to_field_map,
-    params, coefs, datas,
+    kernel->getArguments(),
     file_id
   );
 
   // * Argument Packer Ctor. Declaration *
 
-  SgFunctionParameterList * ctor_param_list = ::KLT::Core::createParameterList(params, coefs, datas, SgTypeModifier::e_default, "_");
+  SgFunctionParameterList * ctor_param_list = ::KLT::Core::createParameterList(
+    kernel->getArguments().parameters,
+    kernel->getArguments().coefficients,
+    kernel->getArguments().datas,
+    SgTypeModifier::e_default, "_"
+  );
 
   MultiFileBuilder::Sage<SgMemberFunctionDeclaration>::object_desc_t ctor_arguments_packer_desc(
     arguments_packer_name.str(),
     SageBuilder::buildVoidType(),
     ctor_param_list,
-    result.arguments_packer,
+    result->arguments_packer,
     file_id,
     false,
     false,
@@ -394,7 +384,7 @@ KLT< ::KLT::Sequential::Kernel>::build_result_t Driver<KLT>::build< ::KLT::Seque
 
   // * Constructor Init. List *
 
-  createConstructorInitializerList(*(Driver<Sage> *)this, ctor_defn_decl, params, coefs, datas);
+  createConstructorInitializerList(*(Driver<Sage> *)this, ctor_defn_decl, kernel->getArguments());
 
   // * Function Declaration *
 
@@ -416,51 +406,34 @@ KLT< ::KLT::Sequential::Kernel>::build_result_t Driver<KLT>::build< ::KLT::Seque
   MultiFileBuilder::Sage<SgFunctionDeclaration>::build_result_t kernel_result = 
     ((Driver<Sage> *)this)->build<SgFunctionDeclaration>(kernel_function_desc);
 
-  result.kernel = kernel_result.symbol;
+  result->kernel = kernel_result.symbol;
 
   // * Local Declarations *
 
-  std::map<SgVariableSymbol *, SgVariableSymbol *>   param_to_local_map;
-  std::map<SgVariableSymbol *, SgVariableSymbol *>   coef_to_local_map;
-  std::map< ::KLT::Core::Data *, SgVariableSymbol *> data_to_local_map;
-  std::map<SgVariableSymbol *, SgVariableSymbol *>   iter_to_local_map;
+  ::KLT::Sequential::Kernel::local_symbol_maps_t local_symbol_maps;
 
   SgBasicBlock * body = createLocalDeclarations(
     *(Driver<Sage> *)this,
     kernel_result.definition,
-    result.arguments_packer,
-    param_to_local_map, coef_to_local_map, data_to_local_map, iter_to_local_map,
+    result->arguments_packer,
+    local_symbol_maps,
     param_to_field_map, coef_to_field_map, data_to_field_map,
-    params, coefs, datas, iterators
+    kernel->getArguments(), iterators
   );
 
-  // * Create the perfectly nested loops *
+  desc.iteration_map->generateDimensions(local_symbol_maps, result->dimensions);
 
-  for (it_nested_loop = desc.loop_distribution->loop_nest.begin(); it_nested_loop != desc.loop_distribution->loop_nest.end(); it_nested_loop++) {
-    SgForStatement * for_stmt = isSgForStatement(::KLT::Core::generateStatement(
-      *it_nested_loop,
-      param_to_local_map,
-      coef_to_local_map,
-      data_to_local_map,
-      iter_to_local_map,
-      false, // We only want the given loop to be transform
-      false // no in_depth and assume loop => no array flattening. No data dependent loop (Not in the perfectly nested loops)
-     ));
-    assert(for_stmt != NULL);
-    SageInterface::appendStatement(for_stmt, body);
-    body = isSgBasicBlock(for_stmt->get_loop_body());
-    assert(body != NULL);
-  }
+  body = desc.iteration_map->generateBodyForMappedIterationDomain(local_symbol_maps, body,  result->dimensions);
 
   // * Create the content of the loop nest *
 
-  for (it_body_branch = desc.loop_distribution->body.begin(); it_body_branch != desc.loop_distribution->body.end(); it_body_branch++) {
+  for (it_body_branch = desc.loop_mapping->body.begin(); it_body_branch != desc.loop_mapping->body.end(); it_body_branch++) {
     SgStatement * stmt = ::KLT::Core::generateStatement(
       *it_body_branch, 
-      param_to_local_map,
-      coef_to_local_map,
-      data_to_local_map,
-      iter_to_local_map,
+      local_symbol_maps.parameters,
+      local_symbol_maps.coefficients,
+      local_symbol_maps.datas,
+      local_symbol_maps.iterators,
       true, // generate statement for the whole tree not only the top node
       true  // flatten array reference
     );

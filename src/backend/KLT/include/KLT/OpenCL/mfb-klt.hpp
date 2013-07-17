@@ -22,19 +22,19 @@ class KLT< ::KLT::OpenCL::Kernel> {
   public:
     struct object_desc_t {
       ::KLT::OpenCL::Kernel * kernel;
-      ::KLT::OpenCL::Kernel::loop_distribution_t * loop_distribution;
+      ::KLT::OpenCL::Kernel::loop_mapping_t * loop_mapping;
       ::KLT::Core::IterationMap< ::KLT::OpenCL::Kernel> * iteration_map;
       unsigned long file_id;
 
       object_desc_t(
         ::KLT::OpenCL::Kernel * kernel_,
-        ::KLT::OpenCL::Kernel::loop_distribution_t * loop_distribution_,
+        ::KLT::OpenCL::Kernel::loop_mapping_t * loop_mapping_,
         ::KLT::Core::IterationMap< ::KLT::OpenCL::Kernel> * iteration_map_,
         unsigned long file_id_
       );
     };
 
-    typedef ::KLT::OpenCL::Kernel::an_opencl_kernel * build_result_t;
+    typedef ::KLT::OpenCL::Kernel::a_kernel * build_result_t;
 
 };
 

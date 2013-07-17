@@ -9,6 +9,7 @@
 
 #include <iostream>
 
+class SgProject;
 class SgExpression;
 class SgStatement;
 class SgVariableSymbol;
@@ -129,9 +130,6 @@ class LoopTrees {
     
     /// Write a lisp like text
     void toText(std::ostream & out) const;
-
-
-  friend class Generator;
 };
 
 SgExpression * translateConstExpression(
@@ -156,7 +154,7 @@ void collectExpressions(LoopTrees::node_t * tree, std::set<SgExpression *> & exp
 
 void collectIteratorSymbols(LoopTrees::node_t * tree, std::set<SgVariableSymbol *> & symbols);
 
-void collectReferencedSymbols(LoopTrees::node_t * tree, std::set<SgVariableSymbol *> & symbols);
+void collectReferencedSymbols(LoopTrees::node_t * tree, std::set<SgVariableSymbol *> & symbols, bool go_down_children = true);
 
 }
 

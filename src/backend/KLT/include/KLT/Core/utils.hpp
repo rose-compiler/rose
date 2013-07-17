@@ -5,6 +5,8 @@
 #include <iostream>
 #include <fstream>
 
+class SgProject;
+
 namespace KLT {
 
 namespace Core {

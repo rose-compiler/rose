@@ -22,22 +22,19 @@ class KLT< ::KLT::Sequential::Kernel> {
   public:
     struct object_desc_t {
       ::KLT::Sequential::Kernel * kernel;
-      ::KLT::Sequential::Kernel::loop_distribution_t * loop_distribution;
+      ::KLT::Sequential::Kernel::loop_mapping_t * loop_mapping;
       ::KLT::Core::IterationMap< ::KLT::Sequential::Kernel> * iteration_map;
       unsigned long file_id;
 
       object_desc_t(
         ::KLT::Sequential::Kernel * kernel_,
-        ::KLT::Sequential::Kernel::loop_distribution_t * loop_distribution_,
+        ::KLT::Sequential::Kernel::loop_mapping_t * loop_mapping_,
         ::KLT::Core::IterationMap< ::KLT::Sequential::Kernel> * iteration_map_,
         unsigned long file_id_
       );
     };
 
-    struct build_result_t {
-      SgFunctionSymbol * kernel;
-      SgClassSymbol *    arguments_packer;
-    };
+    typedef ::KLT::Sequential::Kernel::a_kernel * build_result_t;
 
 };
 
