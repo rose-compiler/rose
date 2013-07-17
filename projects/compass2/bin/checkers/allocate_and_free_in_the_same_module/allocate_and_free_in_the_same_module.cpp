@@ -10,6 +10,7 @@
 #include "rose.h"
 #include "CodeThorn/src/AstMatching.h"
 #include "CodeThorn/src/AstTerm.h"
+#include "CodeThorn/src/VariableIdMapping.h"
 #include "compass2/compass.h"
 
 using std::string;
@@ -228,6 +229,9 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
   boost::unordered_map<SgSymbol*, boost::unordered_set<SgSymbol*> > var_mappings;
   std::vector<SgSymbol*> var_mappings_list;
 
+  VariableIdMapping var_ids;
+  var_ids.computeVariableSymbolMapping(sageProject);
+
   boost::unordered_map<SgInitializedName*, SgSymbol*> param_syms;
   boost::unordered_set<SgSymbol*> seen_syms;
 
@@ -238,6 +242,8 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
     SgSymbol *sym = (SgSymbol*)match["$s"];
     seen_syms.insert(sym);
   }
+
+
 
   AstMatching param_matcher;
   MatchResult param_matches = param_matcher.performMatching("$p=SgInitializedName", root_node);
@@ -252,6 +258,8 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
     SgFunctionDefinition *func_def = isSgFunctionDefinition(func_dec->get_definition());
     if(func_def == NULL) continue;
     AstMatching matcher;
+    VariableId id1 = var_ids.variableId(param);
+
     MatchResult matches = matcher.performMatching("$v=SgVarRefExp", func_def);
     BOOST_FOREACH(SingleMatchVarBindings match, matches)
     {
