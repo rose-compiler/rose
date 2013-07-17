@@ -88,6 +88,12 @@ bin_compass2_LDADD=\
 	bin/checkers/forbidden_functions/libforbiddenfunctions.la \
 	bin/checkers/comma_operator/libcommaoperator.la \
 	bin/checkers/unary_minus/libunaryminus.la \
+	bin/checkers/data_member_access/libdatamemberaccess.la \
+	bin/checkers/float_for_loop_counter/libfloatforloopcounter.la \
+	bin/checkers/ternary_operator/libternaryoperator.la \
+	bin/checkers/explicit_test_for_non_boolean_value/libexplicittestfornonbooleanvalue.la \
+	bin/checkers/byte_by_byte_structure_comparison/libbytebybytestructurecomparison.la \
+	bin/checkers/size_of_pointer/libsizeofpointer.la \
 	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS) \
@@ -105,6 +111,12 @@ bin_compass2_LDADD=\
 # ------------------------------------------------------------------------------
 
 noinst_LTLIBRARIES=\
+	bin/checkers/size_of_pointer/libsizeofpointer.la \
+	bin/checkers/byte_by_byte_structure_comparison/libbytebybytestructurecomparison.la \
+	bin/checkers/explicit_test_for_non_boolean_value/libexplicittestfornonbooleanvalue.la \
+	bin/checkers/ternary_operator/libternaryoperator.la \
+	bin/checkers/float_for_loop_counter/libfloatforloopcounter.la \
+	bin/checkers/data_member_access/libdatamemberaccess.la \
 	bin/checkers/unary_minus/libunaryminus.la \
 	bin/checkers/comma_operator/libcommaoperator.la \
 	bin/checkers/forbidden_functions/libforbiddenfunctions.la \
@@ -185,6 +197,24 @@ bin_checkers_comma_operator_libcommaoperator_la_SOURCES=\
 
 bin_checkers_unary_minus_libunaryminus_la_SOURCES=\
 	bin/checkers/unary_minus/unary_minus.cpp
+
+bin_checkers_data_member_access_libdatamemberaccess_la_SOURCES=\
+	bin/checkers/data_member_access/data_member_access.cpp
+
+bin_checkers_float_for_loop_counter_libfloatforloopcounter_la_SOURCES=\
+	bin/checkers/float_for_loop_counter/float_for_loop_counter.cpp
+
+bin_checkers_ternary_operator_libternaryoperator_la_SOURCES=\
+	bin/checkers/ternary_operator/ternary_operator.cpp
+
+bin_checkers_explicit_test_for_non_boolean_value_libexplicittestfornonbooleanvalue_la_SOURCES=\
+	bin/checkers/explicit_test_for_non_boolean_value/explicit_test_for_non_boolean_value.cpp
+
+bin_checkers_byte_by_byte_structure_comparison_libbytebybytestructurecomparison_la_SOURCES=\
+	bin/checkers/byte_by_byte_structure_comparison/byte_by_byte_structure_comparison.cpp
+
+bin_checkers_size_of_pointer_libsizeofpointer_la_SOURCES=\
+	bin/checkers/size_of_pointer/size_of_pointer.cpp
 
 #PLACEHOLDER
 
