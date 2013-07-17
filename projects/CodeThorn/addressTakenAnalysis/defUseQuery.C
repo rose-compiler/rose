@@ -98,8 +98,8 @@ std::string DefUseMemObj::str(VariableIdMapping& vidm)
 }
 
 
-ExprVisitorPattern::ExprVisitorPattern(FlowInsensitivePointerAnalysis& _fipa, DefUseMemObj _dumo, bool _isModExpr) :
-  fipa(_fipa), dumo(_dumo), isModExpr(_isModExpr)
+ExprVisitorPattern::ExprVisitorPattern(FlowInsensitivePointerAnalysis& _fipa, bool _isModExpr) :
+  fipa(_fipa), isModExpr(_isModExpr)
 {
   // default constructor
 }
@@ -108,8 +108,8 @@ void ExprVisitorPattern::visit(SgAssignOp* sgn)
 {
   SgNode* lhs = sgn->get_lhs_operand();
   SgNode* rhs = sgn->get_rhs_operand();
-  DefUseMemObj ldumo = getDefUseMemObj_rec(lhs, fipa, dumo, true);
-  DefUseMemObj rdumo = getDefUseMemObj_rec(rhs, fipa, dumo, false);
+  DefUseMemObj ldumo = getDefUseMemObj_rec(lhs, fipa, true);
+  DefUseMemObj rdumo = getDefUseMemObj_rec(rhs, fipa, false);
   // if the rhs writes to a memory (i.e sideffect)
   // add to the def_set to be unioned in next step
   if(!rdumo.isDefSetEmpty())
@@ -124,8 +124,8 @@ void ExprVisitorPattern::visit(SgCompoundAssignOp* sgn)
 {
   SgNode* lhs = sgn->get_lhs_operand();
   SgNode* rhs = sgn->get_rhs_operand();
-  DefUseMemObj ldumo = getDefUseMemObj_rec(lhs, fipa, dumo, true);
-  DefUseMemObj rdumo = getDefUseMemObj_rec(rhs, fipa, dumo, false);
+  DefUseMemObj ldumo = getDefUseMemObj_rec(lhs, fipa, true);
+  DefUseMemObj rdumo = getDefUseMemObj_rec(rhs, fipa, false);
   // if the rhs writes to a memory (i.e side-effect)
   // add to the def_set to be unioned later
   if(!rdumo.isDefSetEmpty())
@@ -139,7 +139,14 @@ void ExprVisitorPattern::visit(SgCompoundAssignOp* sgn)
 void ExprVisitorPattern::visit(SgCastExp* sgn)
 {
   SgNode* operand = sgn->get_operand();
-  DefUseMemObj opdumo = getDefUseMemObj_rec(operand, fipa, dumo, false);
+  DefUseMemObj opdumo = getDefUseMemObj_rec(operand, fipa, false);
+  dumo = opdumo;
+}
+
+void ExprVisitorPattern::visit(SgAddressOfOp* sgn)
+{
+  SgNode* operand = sgn->get_operand();
+  DefUseMemObj opdumo = getDefUseMemObj_rec(operand, fipa, false);
   dumo = opdumo;
 }
 
@@ -147,8 +154,8 @@ void ExprVisitorPattern::visit(SgBinaryOp* sgn)
 {
   SgNode* lhs = sgn->get_lhs_operand();
   SgNode* rhs = sgn->get_rhs_operand();
-  DefUseMemObj ldumo = getDefUseMemObj_rec(lhs, fipa, dumo, false);
-  DefUseMemObj rdumo = getDefUseMemObj_rec(rhs, fipa, dumo, false);
+  DefUseMemObj ldumo = getDefUseMemObj_rec(lhs, fipa, false);
+  DefUseMemObj rdumo = getDefUseMemObj_rec(rhs, fipa, false);
   // both operands are uses
   // if they write to any memory location as side-effect
   // copy the defs to uses
@@ -167,13 +174,13 @@ void ExprVisitorPattern::visit(SgBinaryOp* sgn)
 void ExprVisitorPattern::visit(SgVarRefExp* sgn)
 {
   // recursion base case
-  DefUseMemObj rdumo = getDefUseMemObjLvalue(sgn, fipa, dumo, isModExpr);
+  DefUseMemObj rdumo = getDefUseMemObjLvalue(sgn, fipa, isModExpr);
   dumo = rdumo;
 }
 
 void ExprVisitorPattern::visit(SgPntrArrRefExp* sgn)
 {
-  DefUseMemObj rdumo = getDefUseMemObjLvalue(sgn, fipa, dumo, isModExpr);
+  DefUseMemObj rdumo = getDefUseMemObjLvalue(sgn, fipa, isModExpr);
   // if there are side-effects copy them to use
   if(!rdumo.isDefSetEmpty())
   {
@@ -185,19 +192,19 @@ void ExprVisitorPattern::visit(SgPntrArrRefExp* sgn)
 void ExprVisitorPattern::visit(SgPointerDerefExp* sgn)
 {
   // *p + i++ ??
-  DefUseMemObj rdumo = getDefUseMemObjLvalue(sgn, fipa, dumo, isModExpr);
+  DefUseMemObj rdumo = getDefUseMemObjLvalue(sgn, fipa, isModExpr);
   dumo = rdumo;
 }
 
 void ExprVisitorPattern::visit(SgArrowExp* sgn)
 {
-  DefUseMemObj rdumo = getDefUseMemObjLvalue(sgn, fipa, dumo, isModExpr);
+  DefUseMemObj rdumo = getDefUseMemObjLvalue(sgn, fipa, isModExpr);
   dumo = rdumo;
 }
 
 void ExprVisitorPattern::visit(SgDotExp *sgn)
 {
-  DefUseMemObj rdumo = getDefUseMemObjLvalue(sgn, fipa, dumo, isModExpr);
+  DefUseMemObj rdumo = getDefUseMemObjLvalue(sgn, fipa, isModExpr);
   dumo = rdumo;
 }
 
@@ -206,8 +213,8 @@ DefUseMemObj ExprVisitorPattern::getDefUseMemObj()
   return dumo;
 }
 
-LvalueVisitorPattern::LvalueVisitorPattern(FlowInsensitivePointerAnalysis& _fipa, VariableIdMapping& _vidm, DefUseMemObj _dumo, bool _isModExpr)
-  : fipa(_fipa), vidm(_vidm), dumo(_dumo), isModExpr(_isModExpr)
+LvalueVisitorPattern::LvalueVisitorPattern(FlowInsensitivePointerAnalysis& _fipa, VariableIdMapping& _vidm, bool _isModExpr)
+  : fipa(_fipa), vidm(_vidm), isModExpr(_isModExpr)
 {
 }
 
@@ -233,6 +240,16 @@ void LvalueVisitorPattern::visit(SgPointerDerefExp* sgn)
   VariableIdSet& use_set = dumo.getUseSetRefMod();
   VariableIdSet modbyptr = fipa.getMemModByPointer();
 
+  // process the operand recursively
+  // to find out the used/def
+  // now insert the objects that can be
+  // accessed by pointer to def/use set
+  SgNode* operand = sgn->get_operand();
+  DefUseMemObj rdumo = getDefUseMemObj_rec(operand, fipa, false);
+
+  if(!rdumo.isDefSetEmpty())
+    rdumo.copyDefToUseSet();
+
   if(isModExpr)
   {
     def_set.insert(modbyptr.begin(), modbyptr.end());
@@ -240,12 +257,9 @@ void LvalueVisitorPattern::visit(SgPointerDerefExp* sgn)
   else
   {
     use_set.insert(modbyptr.begin(), modbyptr.end());
-    DefUseMemObj rdumo = getDefUseMemObj_rec(sgn->get_operand(), fipa, dumo, false);
-    // if there are side-effects copy them over
-    if(!rdumo.isDefSetEmpty())
-      rdumo.copyDefToUseSet();
-    dumo = dumo + rdumo;
   }
+  // update the results
+  dumo = rdumo + dumo;
 }
 
 void LvalueVisitorPattern::visit(SgPntrArrRefExp* sgn)
@@ -271,20 +285,20 @@ DefUseMemObj LvalueVisitorPattern::getDefUseMemObj()
 // interface function
 DefUseMemObj getDefUseMemObj(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa)
 {
-  return getDefUseMemObj_rec(sgn, fipa, DefUseMemObj(), false);  
+  return getDefUseMemObj_rec(sgn, fipa, false);  
 }
 
 // main implementation
-DefUseMemObj getDefUseMemObj_rec(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa, DefUseMemObj dumo, bool isModExpr)
+DefUseMemObj getDefUseMemObj_rec(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa, bool isModExpr)
 {
-  ExprVisitorPattern expvp(fipa, dumo, isModExpr);
+  ExprVisitorPattern expvp(fipa, isModExpr);
   sgn->accept(expvp);
   return expvp.getDefUseMemObj();
 }
 
-DefUseMemObj getDefUseMemObjLvalue(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa, DefUseMemObj dumo, bool isModExpr)
+DefUseMemObj getDefUseMemObjLvalue(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa, bool isModExpr)
 {
-  LvalueVisitorPattern lvalvp(fipa, fipa.getVariableIdMapping(), dumo, isModExpr);
+  LvalueVisitorPattern lvalvp(fipa, fipa.getVariableIdMapping(), isModExpr);
   sgn->accept(lvalvp);
   return lvalvp.getDefUseMemObj();
 }
