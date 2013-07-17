@@ -141,6 +141,42 @@ CheckerOutput::CheckerOutput(SgNode *const node)
                       ::allocateAndFreeInTheSameModuleChecker->checkerName,
                        ::allocateAndFreeInTheSameModuleChecker->shortDescription) {}
 
+static SgSymbol* getVarSymbolFromForwardDeclaration(SgInitializedName* var)
+{
+  SgFunctionParameterList *param_list = isSgFunctionParameterList(var->get_parent());
+  if(param_list == NULL)
+  {
+    std::cout << "NULL 1" << std::endl;
+    return NULL;
+  }
+  SgFunctionDeclaration *func_dec = isSgFunctionDeclaration(param_list->get_parent());
+  if(func_dec == NULL)
+  {
+    std::cout << "NULL 2" << std::endl;
+    return NULL;
+  }
+  SgFunctionDefinition *func_def = isSgFunctionDefinition(func_dec->get_definition());
+  std::cout << func_dec->get_name() <<  ":" << func_dec->get_definition() << std::endl;
+  if(func_def == NULL)
+  {
+
+    std::cout << "NULL 3" << std::endl;
+    return NULL;
+  }
+  AstMatching matcher;
+  MatchResult matches = matcher.performMatching("$v=SgVarRefExp", func_def);
+  BOOST_FOREACH(SingleMatchVarBindings match, matches)
+  {
+    SgVarRefExp *var_ref = (SgVarRefExp *)match["$v"];
+    if(var_ref->get_symbol()->get_declaration() == var)
+    {
+      return var_ref->get_symbol();
+    }
+  }
+  std::cout << "NULL 4" << std::endl;
+  return NULL;
+}
+
 static void
 run(Compass::Parameters parameters, Compass::OutputObject* output)
 {
@@ -156,6 +192,16 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
 
   SgNode* root_node = (SgNode*) sageProject;
   ROSE_ASSERT(root_node != NULL);
+/*
+  AstMatching test_matcher;
+  MatchResult test_matches = test_matcher.performMatching("$r=SgInitializedName", root_node);
+  BOOST_FOREACH(SingleMatchVarBindings match, test_matches)
+  {
+    if(getVarSymbolFromForwardDeclaration((SgInitializedName *)match["$r"]) != NULL)
+    {
+      std::cout << "SUCCESS!" << std::endl;
+    }
+  }*/
 
   // maps variables in the symbol table to a boolean
   // determining whether that variable has been freed
@@ -181,6 +227,47 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
   // associated with) this pointer variable
   boost::unordered_map<SgSymbol*, boost::unordered_set<SgSymbol*> > var_mappings;
   std::vector<SgSymbol*> var_mappings_list;
+
+  boost::unordered_map<SgInitializedName*, SgSymbol*> param_syms;
+  boost::unordered_set<SgSymbol*> seen_syms;
+
+  AstMatching sym_matcher;
+  MatchResult sym_matches = sym_matcher.performMatching("$s=SgSymbol", root_node);
+  BOOST_FOREACH(SingleMatchVarBindings match, sym_matches)
+  {
+    SgSymbol *sym = (SgSymbol*)match["$s"];
+    seen_syms.insert(sym);
+  }
+
+  AstMatching param_matcher;
+  MatchResult param_matches = param_matcher.performMatching("$p=SgInitializedName", root_node);
+  BOOST_FOREACH(SingleMatchVarBindings match, param_matches)
+  {
+    SgInitializedName *param = (SgInitializedName *)match["$p"];
+    //std::cout << param->get_name() << " = " << param->get_scope() << std::endl;
+    SgFunctionParameterList *param_lst = isSgFunctionParameterList(param->get_parent());
+    if(param_lst == NULL) continue;
+    SgFunctionDeclaration *func_dec = isSgFunctionDeclaration(param_lst->get_parent());
+    if(func_dec == NULL) continue;
+    SgFunctionDefinition *func_def = isSgFunctionDefinition(func_dec->get_definition());
+    if(func_def == NULL) continue;
+    AstMatching matcher;
+    MatchResult matches = matcher.performMatching("$v=SgVarRefExp", func_def);
+    BOOST_FOREACH(SingleMatchVarBindings match, matches)
+    {
+      SgVarRefExp *var_ref = (SgVarRefExp *)match["$v"];
+
+      if(!SageInterface::isPointerType(var_ref->get_type())) continue;
+      if(var_ref->get_symbol()->get_declaration() == param)
+      {
+        //return var_ref->get_symbol();
+        param_syms[param] = var_ref->get_symbol();
+        //std::cout << "PARAM SYMS: " << param->get_name() << " (" << param << ") -> " << var_ref->get_symbol() << std::endl;
+      } else {
+        //std::cout << " DEAD SYMS: " << param->get_name() << " (" << param << ") -> " << var_ref->get_symbol() << std::endl;
+      }
+    }
+  }
 
   AstMatching main_matcher;
   // do a global search for SgAssignOp's and SgFunctionRefExp's
@@ -272,13 +359,13 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
           && SageInterface::isPointerType(LHS_symbol->get_type()))
       {
 
-        /*// defensive -- should never actually happen
+        // defensive -- should never actually happen
         if(var_mappings.find(RHS_symbol) == var_mappings.end())
         {
           boost::unordered_set<SgSymbol*> new_set;
           var_mappings[RHS_symbol] = new_set;
           var_mappings_list.push_back(RHS_symbol);
-        }*/
+        }
         // add the LHS to the associated list for the RHS
         var_mappings[RHS_symbol].insert(LHS_symbol);
       }
@@ -338,9 +425,18 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
               ->getAssociatedFunctionDeclaration()->get_parameterList();
           SgInitializedName* func_param =
               isSgInitializedName(func_params->get_traversalSuccessorByIndex(i));
+
+         // std::cout << "sym:" << func_param->get_definition()->get_symbol_from_symbol_table() << std::endl;
+
           //if(func_param == NULL) break;
-          SgSymbol *func_param_sym = NULL;
-          std::cout << " HAHAHAHA" << std::endl;
+          //SgSymbol *func_param_sym = getVarSymbolFromForwardDeclaration(func_param);
+          //std::cout << "TRYING TO FIND MATCH FOR: " << func_param->get_name() << " (" << func_param << ")" << std::endl;
+          SgSymbol *func_param_sym = param_syms[func_param];
+          //SgSymbol *func_param_sym = func_param->get_definition()->get_symbol_from_symbol_table();
+          if(func_param_sym == NULL)
+          {
+            //std::cout <<" turned up NULL :(((" << std::endl;
+          }
          // std::cout << func_param_sym << std::endl;
           SgVarRefExp* param_var = isSgVarRefExp(param);
           if(param_var != NULL)
@@ -351,8 +447,8 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
             // now we must add var mappings from the inner parameter of the function
             // to the original passed variable
             //if(func_param_sym == param_sym) break;
-            if(func_param_sym == NULL) std::cout << " OH NO " << std::endl;
-            var_mappings[func_param_sym].insert(param_sym);
+            //if(func_param_sym == NULL) std::cout << " OH NO " << std::endl;
+            var_mappings[param_sym].insert(func_param_sym);
             //std::cout << func_param_sym << " = " << param_sym << std::endl;
             //std::cout << func_param_sym->get_name() << " = " << param_sym->get_name() << std::endl;
           } else {
@@ -366,7 +462,7 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
                   found_func_matches.front()["$r"]);
               std::string found_func_str = found_func->get_symbol()
                   ->get_name().getString();
-              std::cout << "found function call in function param!" << std::endl;
+              //std::cout << "found function call in function param!" << std::endl;
               if(found_func_str.compare("malloc") == 0)
               {
                 // found a malloc call within a function parameter
@@ -413,25 +509,25 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
   } while(changed);
 
   // useful for debugging -- maps out variable dependency list
-  /*BOOST_FOREACH(SgSymbol *key_sym, var_mappings_list)
+  BOOST_FOREACH(SgSymbol *key_sym, var_mappings_list)
   {
-    std::string RHS_name = key_sym->get_name();
-    std::cout << "RHS_NAME:" << RHS_name << std::endl;
+    //std::string RHS_name = key_sym->get_name();
+    //std::cout << "RHS_NAME:" << RHS_name << std::endl;
     for(boost::unordered_set<SgSymbol*>::iterator itr = var_mappings[key_sym].begin();
         itr != var_mappings[key_sym].end(); ++itr)
     {
       SgSymbol* val_sym = *itr;
-      std::string LHS_name = val_sym->get_name();
-      std::cout << " |--" << LHS_name << std::endl;
+      //std::string LHS_name = val_sym->get_name();
+      //std::cout << " |--" << LHS_name << std::endl;
     }
-  }*/
+  }
 
   BOOST_FOREACH(SgSymbol *key_sym, unfreed)
   {
     std::string key_sym_name = key_sym->get_name();
     if(freed.find(key_sym) != freed.end())
     {
-      std::cout << "MARKING "<< key_sym_name << " [ALMOST DEFINITELY FREE]" << std::endl;
+      //std::cout << "MARKING "<< key_sym_name << " [ALMOST DEFINITELY FREE]" << std::endl;
       var_free_status[key_sym] = true;
     }
     for(boost::unordered_set<SgSymbol*>::iterator itr = var_mappings[key_sym].begin();
@@ -441,8 +537,8 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
       if(freed.find(val_sym) != freed.end())
       {
         var_free_status[key_sym] = true;
-        std::cout << "MARKING "<< key_sym_name << " [PROBABLY FREE] (associated variable "
-            << val_sym->get_name() << " marked as FREE)" << std::endl;
+        /*std::cout << "MARKING "<< key_sym_name << " [PROBABLY FREE] (associated variable "
+            << val_sym->get_name() << " marked as FREE)" << std::endl;*/
       }
     }
   }
@@ -451,7 +547,7 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
   {
     if(var_free_status[var_symbol] == false)
     {
-      std::cout << "MARKING " << var_symbol->get_name() << " [NOT FREE]!" << std::endl;
+      //std::cout << "MARKING " << var_symbol->get_name() << " [NOT FREE]!" << std::endl;
       output->addOutput(
           new CompassAnalyses::AllocateAndFreeInTheSameModule::
           CheckerOutput(malloc_nodes[var_symbol]));
