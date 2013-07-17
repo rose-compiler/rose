@@ -35,6 +35,7 @@
     <parameter name="enabled_checker">ternaryOperator</parameter>
     <parameter name="enabled_checker">explicitTestForNonBooleanValue</parameter>
     <parameter name="enabled_checker">byteByByteStructureComparison</parameter>
+    <parameter name="enabled_checker">sizeOfPointer</parameter>
     <!--PLACEHOLDER-->
   </general>
 
