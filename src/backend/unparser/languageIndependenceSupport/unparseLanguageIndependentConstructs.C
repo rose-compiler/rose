@@ -18,6 +18,8 @@ UnparseLanguageIndependentConstructs::resBool(bool val) const
      return val ? "True" : "False" ;
    }
 
+#if 0
+// DQ (7/1/2013): This needs to be defined in the header file, else the GNU 4.5 and 4.6 compilers will have undefined references at link time.
 // DQ (8/13/2007): This function was implemented by Thomas
 template<typename T>
 std::string
@@ -27,6 +29,7 @@ UnparseLanguageIndependentConstructs::tostring(T t) const
      myStream << std::showpoint << t << std::flush; // Distinguish integer and floating-point numbers
      return myStream.str(); //returns the string form of the stringstream object
    }
+#endif
 
 // TODO: This code is identical to 'FortranCodeGeneration_locatedNode::curprint'. Factor this!
 void
@@ -776,6 +779,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                case V_SgOmpOrderedStatement:
                case V_SgOmpSectionsStatement:
                case V_SgOmpParallelStatement:
+               case V_SgOmpTargetStatement:
+               case V_SgOmpTargetDataStatement:
                case V_SgOmpWorkshareStatement:
                case V_SgOmpSingleStatement:
                case V_SgOmpTaskStatement:
@@ -1865,6 +1870,7 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
   // if (unary_op->get_mode() != SgUnaryOp::postfix && !arrow_op)
      if (unary_op->get_mode() != SgUnaryOp::postfix)
 #else
+#error "DEAD CODE!"
      if (unary_op->get_mode() != SgUnaryOp::postfix && !arrow_op && !isFunctionType)
 #endif
         {
@@ -1880,6 +1886,9 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
           curprint ( info.get_operator_name());
         }
 
+#if 0
+     printf ("In unparseUnaryExpr(): info.isPrefixOperator() = %s \n",info.isPrefixOperator() ? "true" : "false");
+#endif
 #if 0
      curprint ("\n /* Calling unparseExpression from unparseUnaryExpr */ \n");
 #endif
@@ -2635,12 +2644,23 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                       else 
                        {
                       // Prefix unary operator.
-                      // printf ("Handle prefix operator ... \n");
-                      // printf ("Prefix unary operator: Output the RHS operand ... = %s \n",binary_op->get_rhs_operand()->sage_class_name());
-                      // curprint ( "\n /* Prefix unary operator: Output the RHS operand ... */ \n";
-
 #if DEBUG_BINARY_OPERATORS
                          printf ("In unparseBinaryExp(): Case 1.1.1.2 \n");
+#endif
+#if DEBUG_BINARY_OPERATORS
+                      // printf ("Handle prefix operator ... \n");
+                         printf ("Prefix unary operator: Output the RHS operand ... = %s \n",binary_op->get_rhs_operand()->sage_class_name());
+                         curprint("\n /* Prefix unary operator: Output the RHS operand ... */ \n");
+#endif
+                         if (info.isPrefixOperator() == false)
+                            {
+#if 1
+                              printf ("In unparseBinaryExp(): info.isPrefixOperator() == false: reset to be true! \n");
+#endif
+                              info.set_prefixOperator();
+                            }
+#if DEBUG_BINARY_OPERATORS
+                         printf ("In unparseBinaryExpr(): info.isPrefixOperator() = %s \n",info.isPrefixOperator() ? "true" : "false");
 #endif
                          unparseExpression(binary_op->get_rhs_operand(), info);
                        }
@@ -3413,7 +3433,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
 
 #if 0
      printf ("In Unparse_ExprStmt::unparseEnumVal: info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
-     curprint("\n/* In Unparse_ExprStmt::unparseEnumVal() */\n");
+  // curprint("\n/* In Unparse_ExprStmt::unparseEnumVal() */\n");
 #endif
 
   // todo: optimize this so that the qualified name is only printed when necessary.
@@ -3441,13 +3461,20 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                if (SageInterface::is_Cxx_language() == true)
                   {
                  // SgScopeStatement* parentScope = decl_item->get_scope();
-#if 1
+#if 0
+                 // DQ (6/15/2013): Added in name qualification support for enum values.
+                 // SgName nameQualifier = "NEED_QUALIFIED_NAME_for_unparseEnumVal::";
+                 // DQ (5/29/2011): Newest refactored support for name qualification.
+                 // printf ("In unparseFuncRef(): Looking for name qualification for SgFunctionRefExp = %p \n",func_ref);
+                    SgName nameQualifier = enum_val->get_qualified_name_prefix();
+#else
                  // DQ (12/22/2006): This is use the information that qualification is required. This will trigger the use of 
                  // global qualification even if it is not required with normal qualification.  That is that the specification 
                  // of qualification triggers possible (likely) over qualification.  Overqualification is generally the default
                  // this flag is sometime taken to mean that the "::" is required as well.
-
-                 // printf ("enum_val->get_requiresNameQualification() = %s \n",enum_val->get_requiresNameQualification() ? "true" : "false");
+#if 0
+                    printf ("enum_val->get_requiresNameQualification() = %s \n",enum_val->get_requiresNameQualification() ? "true" : "false");
+#endif
                  // cur << "\n/* funcdecl_stmt->get_requiresNameQualificationOnReturnType() = " << (funcdecl_stmt->get_requiresNameQualificationOnReturnType() ? "true" : "false") << " */ \n";
                     if (enum_val->get_requiresNameQualification() == true)
                        {
@@ -3455,11 +3482,13 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                       // info.set_forceQualifiedNames();
                          info.set_requiresGlobalNameQualification();
                        }
-#endif
+
                  // DQ (6/9/2011): Newest refactored support for name qualification.
                  // SgName nameQualifier = unp->u_name->generateNameQualifier(enum_val->get_declaration(),info);
                     SgName nameQualifier = enum_val->get_qualified_name_prefix();
-
+#if 0
+                    printf ("In Unparse_ExprStmt::unparseEnumVal: nameQualifier = %s \n",nameQualifier.str());
+#endif
                  // DQ (8/31/2012): If we are going to NOT output a name, then we had better not out any name qualification.
                     if (enum_val->get_name().is_null() == true)
                        {
@@ -3467,8 +3496,10 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                          nameQualifier = "";
                          ROSE_ASSERT(nameQualifier.is_null() == true);
                        }
-
-                 // printf ("variable's nameQualifier = %s \n",(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
+#endif
+#if 0
+                    printf ("enum value's nameQualifier = %s \n",(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
+#endif
                  // ROSE_ASSERT (nameQualifier.is_null() == false);
                     if (nameQualifier.is_null() == false)
                        {
@@ -3519,7 +3550,12 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
 
 #if 0
      printf ("Leaving Unparse_ExprStmt::unparseEnumVal: info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
-     curprint("\n/* Leaving Unparse_ExprStmt::unparseEnumVal() */\n");
+  // curprint("\n/* Leaving Unparse_ExprStmt::unparseEnumVal() */\n");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
    }
 
@@ -4246,12 +4282,47 @@ static std::string reductionOperatorToString(SgOmpClause::omp_reduction_operator
       }
     default:
       {
-        cerr<<"Error: unhandled operator type ReductionOperatorToString():"<< ro <<endl;
+        cerr<<"Error: unhandled operator type reductionOperatorToString():"<< ro <<endl;
         ROSE_ASSERT(false);
       }
   }
   return result;
 }
+
+static std::string mapOperatorToString(SgOmpClause::omp_map_operator_enum ro)
+{
+  string result;
+  switch (ro)
+  {
+    case SgOmpClause::e_omp_map_inout: 
+      {
+        result = "inout";
+        break;
+      }
+    case SgOmpClause::e_omp_map_in: 
+      {
+        result = "in";
+        break;
+      }
+    case SgOmpClause::e_omp_map_out:   
+      {
+        result = "out";
+        break;
+      }
+    case SgOmpClause::e_omp_map_alloc:  
+      {
+        result = "alloc";
+        break;
+      }
+   default:
+      {
+        cerr<<"Error: unhandled operator type MapOperatorToString():"<< ro <<endl;
+        ROSE_ASSERT(false);
+      }
+  }
+  return result;
+}
+
 #endif
 
 //! Unparse an OpenMP clause with a variable list
@@ -4260,6 +4331,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
   ROSE_ASSERT(clause != NULL);
   SgOmpVariablesClause* c= isSgOmpVariablesClause (clause);  
   ROSE_ASSERT(c!= NULL);
+  bool is_map = false;
   // unparse the  clause name first
   switch (c->variantT())
   {
@@ -4286,6 +4358,15 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
         curprint(string(" : "));
       break;
       }
+    case V_SgOmpMapClause:
+      {
+        is_map = true;
+        curprint(string(" map("));
+        curprint(mapOperatorToString(isSgOmpMapClause(c)->get_operation()));
+        curprint(string(" : "));
+      break;
+      }
+ 
     case V_SgOmpSharedClause:
       curprint(string(" shared("));
       break;
@@ -4295,6 +4376,16 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
       break;
   }
 
+  // prepare array dimension info for map variables
+  std::map<SgSymbol*, std::vector<std::pair<SgExpression*, SgExpression*> > > dims;
+  if (is_map)
+  {
+    SgOmpMapClause * m_clause = isSgOmpMapClause (clause);
+    ROSE_ASSERT (m_clause != NULL);
+    dims = m_clause->get_array_dimensions();
+  }  
+
+
   //unparse variable list then
   SgVarRefExpPtrList::iterator p = c->get_variables().begin();
   while ( p != c->get_variables().end() )
@@ -4302,7 +4393,35 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
     SgInitializedName* init_name = (*p)->get_symbol()->get_declaration();           
     SgName tmp_name  = init_name->get_name();
     curprint( tmp_name.str());
+    SgVariableSymbol * sym  = (*p)->get_symbol();
+    ROSE_ASSERT (sym != NULL);
+    if (is_map)
+    {
+      std::vector<std::pair<SgExpression*, SgExpression*> > bounds = dims[sym];
+      if (bounds.size() >0)
+      {
+        std::vector<std::pair<SgExpression*, SgExpression*> >:: const_iterator iter;
+        for (iter = bounds.begin(); iter != bounds.end(); iter ++)
+        {
+          SgUnparse_Info ninfo(info);
+          std::pair<SgExpression*, SgExpression*> bound  = (*iter);
+          SgExpression* lower = bound.first;
+          SgExpression* upper = bound.second;
+          ROSE_ASSERT (lower != NULL);
+          ROSE_ASSERT (upper != NULL);
 
+          curprint(string("["));
+//          curprint(lower->unparseToString());
+          unparseExpression(lower, ninfo);
+          curprint(string(":"));
+//          curprint(upper->unparseToString());
+          unparseExpression(upper, ninfo);
+          curprint(string("]"));
+        } // end for
+      } // end if has bounds
+    } // end if map 
+
+    // output the optional dimension info for map() variable 
     // Move to the next argument
     p++;
 
@@ -4329,6 +4448,8 @@ void UnparseLanguageIndependentConstructs::unparseOmpExpressionClause(SgOmpClaus
     curprint(string(" if("));
   else if (isSgOmpNumThreadsClause(c))
     curprint(string(" num_threads("));
+  else if (isSgOmpDeviceClause(c))
+    curprint(string(" device("));
   else {
     cerr<<"Error: unacceptable clause type within unparseOmpExpressionClause():"<< clause->class_name()<<endl;
     ROSE_ASSERT(false);
@@ -4378,6 +4499,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
         unparseOmpScheduleClause(isSgOmpScheduleClause(clause), info);
         break;
       }
+    case V_SgOmpDeviceClause:
     case V_SgOmpCollapseClause:
     case V_SgOmpIfClause:  
     case V_SgOmpNumThreadsClause:  
@@ -4392,6 +4514,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
     case V_SgOmpLastprivateClause:
     case V_SgOmpPrivateClause:
     case V_SgOmpReductionClause:
+    case V_SgOmpMapClause:
     case V_SgOmpSharedClause:
       {     
         unparseOmpVariablesClause(isSgOmpVariablesClause(clause), info);
@@ -4551,6 +4674,18 @@ void UnparseLanguageIndependentConstructs::unparseOmpDirectivePrefixAndName (SgS
       {
         unparseOmpPrefix(info);
         curprint(string ("parallel "));
+        break;
+      }
+    case V_SgOmpTargetStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("target "));
+        break;
+      }
+    case V_SgOmpTargetDataStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("target data "));
         break;
       }
      case V_SgOmpCriticalStatement:
@@ -4755,6 +4890,9 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgAddressOfOp:
           case V_SgUpcLocalsizeofExpression:   // \pp 03/03/11
           case V_SgSizeOfOp:         return 15;
+
+       // DQ (6/20/2013): Added support for __alignof__ operator.
+          case V_SgAlignOfOp:        return 15;
 
           case V_SgFunctionCallExp:
              {

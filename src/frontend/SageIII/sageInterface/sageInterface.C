@@ -9251,19 +9251,37 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
           skipAddingStatement = (classDeclaration->get_isAutonomousDeclaration() == false) || (classDeclaration->get_parent() != NULL);
 #endif
 
+       // DQ (6/26/2013): Don't just check for SgTemplateInstantiationDecl, but also for SgClassDeclaration.
        // DQ (6/9/2013): Check if this is a SgTemplateInstantiationDecl, since it might be appearing 
        // twice as a result of a template argument being instantiated and we only want to add it into 
        // the scope once.  This happens for test2013_198.C and I can't find a better solution.
-          if (isSgTemplateInstantiationDecl(classDeclaration) != NULL && scope->containsOnlyDeclarations() == true)
+       // if (isSgTemplateInstantiationDecl(classDeclaration) != NULL && scope->containsOnlyDeclarations() == true)
+          if (classDeclaration != NULL && scope->containsOnlyDeclarations() == true)
              {
             // Check if this instnatiated template has already been added to the scope.
-               const SgDeclarationStatementPtrList & declarationList = scope->getDeclarationList();
-               SgDeclarationStatementPtrList::const_iterator existingDeclaration = find(declarationList.begin(),declarationList.end(),classDeclaration);
-               if (existingDeclaration != declarationList.end())
+
+            // DQ (6/26/2013): This is a newer alternative to test for an existing statement in a scope.
+            // const SgDeclarationStatementPtrList & declarationList = scope->getDeclarationList();
+            // SgDeclarationStatementPtrList::const_iterator existingDeclaration = find(declarationList.begin(),declarationList.end(),classDeclaration);
+            // if (existingDeclaration != declarationList.end())
+               bool statementAlreadyExistsInScope = scope->statementExistsInScope(classDeclaration);
+               if (statementAlreadyExistsInScope == true)
                   {
+                    if (isSgTemplateInstantiationDecl(classDeclaration) != NULL)
+                       {
 #if 1
-                    printf ("RARE ISSUE: In SageInterface::appendStatement(): This template instantiation has previously been added to the scope, so avoid doing so again (see test2013_198.C): classDeclaration = %p = %s scope = %p = %s \n",
-                         classDeclaration,classDeclaration->class_name().c_str(),scope,scope->class_name().c_str());
+                         printf ("RARE ISSUE #1: In SageInterface::appendStatement(): This template instantiation has previously been added to the scope, so avoid doing so again (see test2013_198.C): classDeclaration = %p = %s scope = %p = %s \n",
+                              classDeclaration,classDeclaration->class_name().c_str(),scope,scope->class_name().c_str());
+#endif
+                       }
+#if 1
+                      else
+                       {
+#if 1
+                         printf ("RARE ISSUE #2: In SageInterface::appendStatement(): This statement has previously been added to the scope, so avoid doing so again (see rose.h): stmt = %p = %s scope = %p = %s \n",
+                              stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+#endif
+                       }
 #endif
                     skipAddingStatement = true;
                   }
@@ -9278,6 +9296,25 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
                skipAddingStatement = (enumDeclaration->get_isAutonomousDeclaration() == false);
              }
         }
+
+#if 0
+  // DQ (6/26/2013): This is an attempt to support better testing of possible redundant statements 
+  // that would be inserted into the current scope. This is however a bit expensive so we are using
+  // this as a way to also debug the new cases where this happens.
+     bool statementAlreadyExistsInScope = scope->statementExistsInScope(stmt);
+     if (skipAddingStatement == false && statementAlreadyExistsInScope == true)
+        {
+#if 1
+          printf ("RARE ISSUE #2: In SageInterface::appendStatement(): This statement has previously been added to the scope, so avoid doing so again (see rose.h): stmt = %p = %s scope = %p = %s \n",
+               stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+#endif
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+          skipAddingStatement = true;
+        }
+#endif
 
 #if 0
      printf ("   --- skipAddingStatement = %s \n",skipAddingStatement ? "true" : "false");
@@ -9320,6 +9357,9 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
         }
 
 #if 0
+  // DQ (6/26/2013): Turn on this test for debugging ROSE compiling rose.h header file.
+  // Note that this is a stronger AST subtree test and not the weaker test for a redundant 
+  // statement in a single scope.
   // DQ (9/1/2012): this is a debugging mode that we need to more easily turn on and off.
   // DQ (4/3/2012): Added test to make sure that the pointers are unique.
      testAstForUniqueNodes(scope);
@@ -9340,7 +9380,8 @@ SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgSco
        // printf ("In appendStatementList(): stmts[i = %zu]->get_parent() = %p \n",i,stmts[i]->get_parent());
 #endif
 #endif
-       // appendStatement(stmts[i], scope);
+        appendStatement(stmts[i], scope); // Liao 5/15/2013, defer the logic of checking parent pointers to appendStatement()
+#if 0        
           if (stmts[i]->get_parent() != NULL)
              {
 #if 0
@@ -9354,6 +9395,7 @@ SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgSco
              {
                printf ("   --- WARNING: In appendStatementList(): stmts[i = %zu] not added to scope (because stmts[i]->get_parent() == NULL) \n",i);
              }
+#endif        
         }
    }
 
@@ -10301,7 +10343,7 @@ int SageInterface::fixVariableReferences(SgNode* root)
     ROSE_ASSERT(varRef->get_symbol());
     SgInitializedName* initname= varRef->get_symbol()->get_declaration();
 
-
+    ROSE_ASSERT (initname != NULL);
     if (initname->get_type()==SgTypeUnknown::createType())
       //    if ((initname->get_scope()==NULL) && (initname->get_type()==SgTypeUnknown::createType()))
     {
@@ -10419,10 +10461,12 @@ int SageInterface::fixVariableReferences(SgNode* root)
       }
     }
   } // end for
+  // Liao 2/1/2013: delete unused initname and symbol, considering possible use by the current subtree from root node
+  clearUnusedVariableSymbols(root); 
   return counter;
 }
 
-void SageInterface::clearUnusedVariableSymbols()
+void SageInterface::clearUnusedVariableSymbols(SgNode* root /*= NULL */)
 {
     Rose_STL_Container<SgNode*> symbolList;
     VariantVector sym_vv(V_SgVariableSymbol);
@@ -10430,7 +10474,11 @@ void SageInterface::clearUnusedVariableSymbols()
 
     Rose_STL_Container<SgNode*> varList;
     VariantVector var_vv(V_SgVarRefExp);
-    varList = NodeQuery::queryMemoryPool(var_vv);
+    //varList = NodeQuery::queryMemoryPool(var_vv);
+    if (root != NULL)
+    {
+      varList = NodeQuery::querySubTree(root, V_SgVarRefExp);
+    }
 
     for (Rose_STL_Container<SgNode*>::iterator i = symbolList.begin();
             i != symbolList.end(); ++i)
@@ -10439,23 +10487,24 @@ void SageInterface::clearUnusedVariableSymbols()
         ROSE_ASSERT(symbolToDelete);
         if (symbolToDelete->get_declaration()->get_type() != SgTypeUnknown::createType())
             continue;
-
+        // symbol with a declaration of SgTypeUnknown will be deleted
         bool toDelete = true;
 
-#if 0
-        for (Rose_STL_Container<SgNode*>::iterator j = varList.begin();
-                j != varList.end(); ++j)
+        if (root != NULL) // if root is specified. We further check if the symbol is referenced by any nodes of the tree rooted at "root"
         {
+          for (Rose_STL_Container<SgNode*>::iterator j = varList.begin();
+              j != varList.end(); ++j)
+          {
             SgVarRefExp* var = isSgVarRefExp(*j);
             ROSE_ASSERT(var);
 
             if (var->get_symbol() == symbolToDelete)
             {
-                toDelete = false;
-                break;
+              toDelete = false;
+              break;
             }
+          }
         }
-#endif
 
         if (toDelete)
         {

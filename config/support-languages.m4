@@ -386,6 +386,7 @@ c++)
 cuda)
 	support_cuda_frontend=yes
 	AC_DEFINE([ROSE_BUILD_CUDA_LANGUAGE_SUPPORT], [], [Build ROSE to support the CUDA langauge])
+        GENERATE_CUDA_SPECIFIC_HEADERS
 	;;
 fortran)
 	if test "x$USE_JAVA" = x1; then
@@ -423,6 +424,7 @@ python)
 opencl)
 	support_opencl_frontend=yes
 	AC_DEFINE([ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT], [], [Build ROSE to support the OpenCL langauge])
+        GENERATE_OPENCL_SPECIFIC_HEADERS
 	;;
 *)
 	AC_MSG_FAILURE([unrecognized language '$a_language'])

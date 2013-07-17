@@ -657,6 +657,14 @@ SgSizeOfOp* buildSizeOfOp_nfi(SgExpression* exp);
 SgSizeOfOp* buildSizeOfOp(SgType* type = NULL);
 SgSizeOfOp* buildSizeOfOp_nfi(SgType* type);
 
+//! Build __alignof__() expression with an expression parameter
+SgAlignOfOp* buildAlignOfOp(SgExpression* exp= NULL);
+SgAlignOfOp* buildAlignOfOp_nfi(SgExpression* exp);
+
+//! Build __alignof__() expression with a type parameter
+SgAlignOfOp* buildAlignOfOp(SgType* type = NULL);
+SgAlignOfOp* buildAlignOfOp_nfi(SgType* type);
+
 // DQ (7/18/2011): Added support for SgJavaInstanceOfOp
 //! This is part of Java specific operator support.
 SgJavaInstanceOfOp* buildJavaInstanceOfOp(SgExpression* exp = NULL, SgType* type = NULL);
