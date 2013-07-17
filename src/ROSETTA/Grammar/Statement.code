@@ -441,6 +441,10 @@ HEADER_SCOPE_STATEMENT_START
       //! to be a read only list.
           const SgStatementPtrList generateStatementList() const;
 
+       // DQ (6/26/2013): Added function to test for existence of statement in scope.
+      //! Test for existence of statement is scope.
+          bool statementExistsInScope ( SgStatement* statement );
+
        // DQ (5/22/2006): Added function here so that it could be defined for all scopes (instead of just a few)
        // virtual SgName get_mangled_name (void) const;
 
@@ -5378,6 +5382,30 @@ SgScopeStatement::supportsDefiningFunctionDeclaration()
    }
 
 
+bool
+SgScopeStatement::statementExistsInScope ( SgStatement* statement )
+   {
+  // DQ (6/26/2013): Added test for if this statement already exists in the current scope.
+     ROSE_ASSERT(statement != NULL);
+
+     bool result = false;
+     if (containsOnlyDeclarations() == true)
+        {
+          SgDeclarationStatementPtrList & declarationList = getDeclarationList();
+          SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(statement);
+          ROSE_ASSERT(declarationStatement != NULL);
+          result = (find(declarationList.begin(),declarationList.end(),declarationStatement) != declarationList.end());
+        }
+       else
+        {
+          SgStatementPtrList & statementList = getStatementList();
+          result = (find(statementList.begin(),statementList.end(),statement) != statementList.end());
+        }
+
+     return result;
+   }
+
+
 // DQ (7/17/2002) Added to support rewrite mechanism some scopes can only contain
 // SgDeclarationStmt while others can contain any kind of SgStatement
 void
@@ -5400,6 +5428,9 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
                SgDeclarationStatement* newDeclarationStatement = isSgDeclarationStatement(newTransformationStatement);
 
                ROSE_ASSERT(newDeclarationStatement != NULL);
+
+            // DQ (6/26/2013): Added test for if this statement already exists in the current scope (declaration list).
+               ROSE_ASSERT(find(declarationList.begin(),declarationList.end(),newDeclarationStatement) == declarationList.end());
 
                unsigned oldSize = declarationList.size();
             // if (declarationList.size() == 0)
@@ -5435,6 +5466,9 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
              {
                SgStatementPtrList & statementList = currentScope->getStatementList();
                SgStatementPtrList::iterator statement = statementList.begin();
+
+            // DQ (6/26/2013): Added test for if this statement already exists in the current scope (declaration list).
+               ROSE_ASSERT(find(statementList.begin(),statementList.end(),newTransformationStatement) == statementList.end());
 
             // if (statementList.size() == 0)
                if (statementList.empty() == true)
@@ -5473,6 +5507,9 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
 
                ROSE_ASSERT(newDeclarationStatement != NULL);
 
+            // DQ (6/26/2013): Added test for if this statement already exists in the current scope (declaration list).
+               ROSE_ASSERT(find(declarationList.begin(),declarationList.end(),newDeclarationStatement) == declarationList.end());
+
                unsigned oldSize = declarationList.size();
             // if (declarationList.size() == 0)
                if (declarationList.empty() == true)
@@ -5509,6 +5546,9 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
              {
                SgStatementPtrList & statementList = currentScope->getStatementList();
                SgStatementPtrList::reverse_iterator statement = statementList.rbegin();
+
+            // DQ (6/26/2013): Added test for if this statement already exists in the current scope (declaration list).
+               ROSE_ASSERT(find(statementList.begin(),statementList.end(),newTransformationStatement) == statementList.end());
 
             // if (statementList.size() == 0)
                if (statementList.empty() == true)
@@ -16535,6 +16575,18 @@ void
 SgOmpSectionsStatement::post_construction_initialization()
    {}
 SOURCE_OMP_SECTIONS_STATEMENT_END
+
+SOURCE_OMP_TARGET_STATEMENT_START
+void
+SgOmpTargetStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_TARGET_STATEMENT_END
+
+SOURCE_OMP_TARGET_DATA_STATEMENT_START
+void
+SgOmpTargetDataStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_TARGET_DATA_STATEMENT_END
 
 
 SOURCE_OMP_TASKWAIT_STATEMENT_START

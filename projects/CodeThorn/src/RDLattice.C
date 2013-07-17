@@ -84,4 +84,10 @@ bool RDLattice::approximatedBy(RDLattice& b) {
 bool RDLattice::exists(pair<Label,VariableId> p) {
   return rdSet.find(p)!=end();
 }
+
+void RDLattice::setEmptySet() {
+  _bot=false;
+  rdSet.clear();
+}
+
 #endif

@@ -412,7 +412,8 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
                SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(declaration);
                ROSE_ASSERT(templateInstantiationDeclaration != NULL);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("$$$$$$$$$ --- templateInstantiationDeclaration = %p \n",templateInstantiationDeclaration);
+            // printf ("$$$$$$$$$ --- templateInstantiationDeclaration = %p \n",templateInstantiationDeclaration);
+               printf ("$$$$$$$$$ --- templateInstantiationDeclaration = %p templateInstantiationDeclaration->get_templateArguments().size() = %zu \n",templateInstantiationDeclaration,templateInstantiationDeclaration->get_templateArguments().size());
 #endif
             // Evaluate all template arguments.
                evaluateNameQualificationForTemplateArgumentList (templateInstantiationDeclaration->get_templateArguments(),currentScope,positionStatement);
@@ -1091,6 +1092,41 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                            // Reset the symbol to one that will match the declaration.
                               symbol = SageInterface::lookupFunctionSymbolInParentScopes(name,currentScope);
 
+                           // DQ (6/23/2013): Fixing test2013_223.C (function hiding template function instantiation).
+                              SgName templateFunctionNameWithoutTemplateArguments = templateFunction->get_templateName();
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              printf ("   --- templateFunctionNameWithoutTemplateArguments = %s \n",templateFunctionNameWithoutTemplateArguments.str());
+#endif
+                              SgSymbol* symbolHiddingTemplateSymbol = SageInterface::lookupFunctionSymbolInParentScopes(templateFunctionNameWithoutTemplateArguments,currentScope);
+                              if (symbolHiddingTemplateSymbol != NULL && symbolHiddingTemplateSymbol != symbol)
+                                 {
+                                   SgScopeStatement* symbolScope = isSgScopeStatement(symbolHiddingTemplateSymbol->get_parent()->get_parent());
+                                   ROSE_ASSERT(symbolScope != NULL);
+                                   SgScopeStatement* functionScope = templateFunction->get_scope();
+                                   ROSE_ASSERT(functionScope != NULL);
+
+                                // SgScopeStatement* temp_symbolScope = symbolScope;
+                                   SgScopeStatement* temp_scope = currentScope;
+                                   while (isSgGlobal(temp_scope) == NULL && temp_scope != symbolScope)
+                                      {
+                                        temp_scope = temp_scope->get_scope();
+                                      }
+
+                                // If we visit the scope with the function hidding our template function then we will need some name qualification.
+                                   if (temp_scope == symbolScope)
+                                      {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                        printf ("WARNING: Some qualification is required to get past the non-template function hidding the template function = %p = %s \n",templateFunction,templateFunction->get_name().str());
+                                        printf ("   --- Resetting the recorded symbol to NULL \n");
+#endif
+                                        symbol = NULL;
+                                      }
+#if 0
+                                   printf ("ERROR: declaration from symbolHiddingTemplateSymbol = %p hides SgTemplateInstantiationFunctionDecl \n",symbolHiddingTemplateSymbol);
+                                   ROSE_ASSERT(false);
+#endif
+                                 }
+
                            // DQ (7/24/2011): The symbol is NULL for test2011_121.C
                            // ROSE_ASSERT(symbol != NULL);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -1561,7 +1597,6 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                    printf ("Found a valid function with get_firstNondefiningDeclaration() == NULL (not a problem, just a special case)\n");
                                  }
 #endif
-
                            // if (associatedFunctionDeclaration->get_firstNondefiningDeclaration() == functionDeclaration->get_firstNondefiningDeclaration())
                               if (associatedFunctionDeclarationFromSymbol == functionDeclarationFromSymbol)
                                  {
@@ -1569,6 +1604,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                 // This function is visible from where it is referenced. 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                                    printf ("This function or member function IS visible from where it is referenced (but there could still be ambiguity if this was just the first of several symbols found in the current scope) \n");
+                                   printf ("   --- currentScope        = %p = %s \n",currentScope,currentScope->class_name().c_str());
+                                   printf ("   --- functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
 
                                 // But we need to check if there is another such symbol in the same scope that would trigger qualification.
                                 // SgScopeStatement* associatedScope = associatedFunctionDeclaration->get_scope();
@@ -1585,6 +1622,15 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                         printf ("numberOfSymbolsWithMatchingName = %d \n",numberOfSymbolsWithMatchingName);
 
                                      // ROSE_ASSERT(numberOfSymbolsWithMatchingName == 1);
+                                      }
+#endif
+#if 0
+                                // DQ (6/23/2013): Fixing test2013_223.C (function hiding template function instantiation).
+                                   SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration = isSgTemplateInstantiationFunctionDecl(functionDeclaration);
+                                   if (templateInstantiationFunctionDeclaration != NULL)
+                                      {
+                                        SgName templateFunctionNameWithoutTemplateArguments = templateInstantiationFunctionDeclaration->get_templateName();
+                                        printf ("   --- templateFunctionNameWithoutTemplateArguments = %s \n",templateFunctionNameWithoutTemplateArguments.str());
                                       }
 #endif
                                  }
@@ -1819,18 +1865,19 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
   // DQ (9/24/2012): Track the recursive depth in computing name qualification for template arguments of template instantiations used as template arguments.
      static int recursiveDepth = 0;
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
   // Used for debugging...
      int counter = 0;
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      printf ("\n\n*********************************************************************************************************************\n");
-     printf ("Inside of NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %zu recursiveDepth = %d \n",templateArgumentList.size(),recursiveDepth);
+     printf ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %zu recursiveDepth = %d \n",templateArgumentList.size(),recursiveDepth);
      printf ("*********************************************************************************************************************\n");
 
-     printf ("Inside of NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): currentScope = %p = %s positionStatement = %p = %s \n",
+     printf ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): currentScope = %p = %s positionStatement = %p = %s \n",
           currentScope,currentScope->class_name().c_str(),positionStatement,positionStatement->class_name().c_str());
 
      ROSE_ASSERT(positionStatement != NULL);
-     positionStatement->get_file_info()->display("Inside of NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList()");
+     positionStatement->get_file_info()->display("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList()");
 #endif
 
      SgTemplateArgumentPtrList::iterator i = templateArgumentList.begin();
@@ -1840,7 +1887,9 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
           ROSE_ASSERT(templateArgument != NULL);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-          printf ("*** Processing template argument #%d templateArgument = %p \n",counter++,templateArgument);
+          printf ("*** Processing template argument #%d templateArgument = %p \n",counter,templateArgument);
+       // SgName testNameInMap = templateArgument->get_qualified_name_prefix();
+          printf ("===== Before being finished with evaluation of templateArgument name qualification: testNameInMap = %s \n",templateArgument->unparseToString().c_str());
 #endif
           SgType* type = templateArgument->get_type();
           if (type != NULL)
@@ -1870,12 +1919,14 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                          printf ("xxxxxx --- Making a RECURSIVE call to nameQualificationDepth() on the template argument recursiveDepth = %d \n",recursiveDepth);
                       // DQ (9/24/2012): I think this is the way to make the recursive call to handle name qualification of template arguments in nexted template instantiations.
-                         printf ("Need to call evaluateNameQualificationForTemplateArgumentList() on any possible template argument list for type in templateArgument = %p (namely namedType = %p) \n",templateArgument,namedType);
+                         printf ("Need to call evaluateNameQualificationForTemplateArgumentList() on any possible template argument list for type in templateArgument = %p (namely namedType = %p = %s) \n",
+                              templateArgument,namedType,namedType->class_name().c_str());
 #endif
 
                          SgClassType* classType = isSgClassType(namedType);
                          if (classType != NULL)
                             {
+                           // If this is a class then it should be relative to it's declaration.
                               SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
                               ROSE_ASSERT(classDeclaration != NULL);
 
@@ -1890,11 +1941,19 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
                                    recursiveDepth--;
                                  }
                             }
+                           else
+                            {
+                           // If not a class then (e.g. typedef) then it is relative to the typedef declaration, but we don't have to recursively evaluate the type.
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              printf ("This is not a SgClassType, so we don't have to recursively evaluate for template arguments. \n");
+#endif
+                            }
 
                          int amountOfNameQualificationRequiredForTemplateArgument = nameQualificationDepth(namedType,currentScope,positionStatement);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                         printf ("xxxxxx --- amountOfNameQualificationRequiredForTemplateArgument = %d \n",amountOfNameQualificationRequiredForTemplateArgument);
+                         printf ("xxxxxx --- amountOfNameQualificationRequiredForTemplateArgument = %d (for type = %p = %s) (counter = %d recursiveDepth = %d) \n",
+                              amountOfNameQualificationRequiredForTemplateArgument,namedType,namedType->class_name().c_str(),counter,recursiveDepth);
                          printf ("xxxxxx --- Must call a function to set the name qualification data in the SgTemplateArgument = %p \n",templateArgument);
 #endif
                          setNameQualification(templateArgument,templateArgumentTypeDeclaration,amountOfNameQualificationRequiredForTemplateArgument);
@@ -1933,9 +1992,28 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
                     printf ("DONE: Recursive call to generateNameQualificationSupport() with expression = %p = %s \n",expression,expression->class_name().c_str());
 #endif
                   }
+                 else
+                  {
+                 // DQ (6/23/2013): Make it an error to detect a SgTemplateArgument that is neither a type or expression (should not exist, I think; or is at least not handled).
+#if 0
+                 // This fails for test2006_122.C.
+                    printf ("This template argument is not an SgType OR an SgExpression: templateArgument = %p \n",templateArgument);
+                    ROSE_ASSERT(false);
+#else
+                 // DQ (6/23/2013): Output thetemplate argument type so that we can evaluate this (might be template template argument that requires name qualificaion).
+                    printf ("WARNING: This template argument is not an SgType OR an SgExpression: templateArgument = %p argumentType = %d \n",templateArgument,(int)templateArgument->get_argumentType());
+#endif
+                  }
              }
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("===== After finishing with evaluation of templateArgument name qualification: testNameInMap = %s \n",templateArgument->unparseToString().c_str());
+#endif
+
           i++;
+
+       // Used for debugging...
+          counter++;
         }
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -1952,8 +2030,9 @@ NameQualificationTraversal::nameQualificationDepth ( SgType* type, SgScopeStatem
      int amountOfNameQualificationRequired = 0;
 
      ROSE_ASSERT(type != NULL);
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-     printf ("In nameQualificationDepth(SgType*): type = %s \n",type->class_name().c_str());
+     printf ("In nameQualificationDepth(SgType*): type = %p = %s \n",type,type->class_name().c_str());
 #endif
 
   // DQ (7/23/2011): Test if we see array types here (looking for way to process all array types).
@@ -1983,6 +2062,16 @@ NameQualificationTraversal::nameQualificationDepth ( SgType* type, SgScopeStatem
             // ROSE_ASSERT(false);
              }
         }
+       else
+        {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("ERROR: In nameQualificationDepth(SgType*): declaration NOT found for type = %p = %s\n",type,type->class_name().c_str());
+#endif
+        }
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("Leaving nameQualificationDepth(SgType*): type = %p = %s amountOfNameQualificationRequired = %d \n",type,type->class_name().c_str(),amountOfNameQualificationRequired);
+#endif
 
      return amountOfNameQualificationRequired;
    }
@@ -2204,8 +2293,8 @@ NameQualificationTraversal::addToNameMap ( SgNode* nodeReference, string typeNam
                ROSE_ASSERT (i != typeNameMap.end());
 
                string previousTypeName = i->second.c_str();
-// #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-#if 1
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+// #if 1
                printf ("WARNING: replacing previousTypeName = %s with new typeNameString = %s for nodeReference = %p = %s \n",previousTypeName.c_str(),typeNameString.c_str(),nodeReference,nodeReference->class_name().c_str());
 #endif
                if (i->second != typeNameString)
@@ -2298,10 +2387,19 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
        // DQ (7/13/2011): OSX can have types that are about 2487 characters long (see test2004_35.C).
        // This is symptematic of an error which causes the whole class to be included with the class 
        // definition.  This was fixed by calling unparseInfoPointer->set_SkipClassDefinition() above.
-          if (typeNameString.length() > 2000)
+          if (typeNameString.length() > 4000)
              {
                printf ("Warning: type names should not be this long... typeNameString.length() = %zu \n",typeNameString.length());
-
+#if 0
+            // DQ (6/30/2013): Allow the output of an example so that we can verify that this make 
+            // sense (and that it is not a result of some comment output from the unparsing of types).
+               static bool outputOneExample = true;
+               if (outputOneExample == true)
+                  {
+                    printf ("   --- example typeNameString = %s \n",typeNameString.c_str());
+                    outputOneExample = false;
+                  }
+#endif
             // DQ (1/30/2013): Increased already too long limit for string lengths for typenames.  This 
             // test fails for ROSE compiling ROSE with a type name that is 17807 characters long.  I have
             // increased the max allowable typename lengtt to over twice that for good measure.
@@ -2392,12 +2490,18 @@ NameQualificationTraversal::traverseTemplatedFunction(SgFunctionRefExp* function
        // Avoid unpasing the class definition when unparseing the type.
           unparseInfoPointer->set_SkipClassDefinition();
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("nodeReference = %p = %s \n",nodeReference,nodeReference->class_name().c_str());
+#endif
        // Associate the unparsing of this type with the statement or scope where it occures.
        // This is the key to use in the lookup of the qualified name. But this is the correct key....
        // unparseInfoPointer->set_reference_node_for_qualification(positionStatement);
        // unparseInfoPointer->set_reference_node_for_qualification(currentScope);
           unparseInfoPointer->set_reference_node_for_qualification(nodeReference);
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("Calling globalUnparseToString() \n");
+#endif
           string functionNameString = globalUnparseToString(functionRefExp,unparseInfoPointer);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("++++++++++++++++ functionNameString (globalUnparseToString()) = %s \n",functionNameString.c_str());
@@ -2405,9 +2509,11 @@ NameQualificationTraversal::traverseTemplatedFunction(SgFunctionRefExp* function
 #if 0
           printf ("++++++++++++++++ functionNameString (globalUnparseToString()) = %s \n",functionNameString.c_str());
 #endif
+       // DQ (6/24/2013): Increased upper bound to support ROSE compiling ROSE.
        // This is symptematic of an error which causes the whole class to be included with the class 
        // definition.  This was fixed by calling unparseInfoPointer->set_SkipClassDefinition() above.
-          if (functionNameString.length() > 2000)
+       // if (functionNameString.length() > 2000)
+          if (functionNameString.length() > 5000)
              {
                printf ("Error: function names should not be this long... functionNameString.length() = %zu \n",functionNameString.length());
 #if 1
@@ -2464,12 +2570,18 @@ NameQualificationTraversal::traverseTemplatedMemberFunction(SgMemberFunctionRefE
        // Avoid unpasing the class definition when unparseing the type.
           unparseInfoPointer->set_SkipClassDefinition();
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("nodeReference = %p = %s \n",nodeReference,nodeReference->class_name().c_str());
+#endif
        // Associate the unparsing of this type with the statement or scope where it occures.
        // This is the key to use in the lookup of the qualified name. But this is the correct key....
        // unparseInfoPointer->set_reference_node_for_qualification(positionStatement);
        // unparseInfoPointer->set_reference_node_for_qualification(currentScope);
           unparseInfoPointer->set_reference_node_for_qualification(nodeReference);
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("Calling globalUnparseToString() \n");
+#endif
           string memberFunctionNameString = globalUnparseToString(memberFunctionRefExp,unparseInfoPointer);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("++++++++++++++++ memberFunctionNameString (globalUnparseToString()) = %s \n",memberFunctionNameString.c_str());
@@ -2923,7 +3035,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              {
                if (currentScope != NULL && inheritedAttribute.get_currentScope() != NULL)
                   {
-                    printf ("WARNING: currentScope != inheritedAttribute.get_currentScope(): inheritedAttribute.get_currentScope() = %p = %s \n",
+                    printf ("WARNING: currentScope != inheritedAttribute.get_currentScope(): currentScope = %p = %s inheritedAttribute.get_currentScope() = %p = %s \n",
                          currentScope,currentScope->class_name().c_str(),inheritedAttribute.get_currentScope(),inheritedAttribute.get_currentScope()->class_name().c_str());
                   }
              }
@@ -3643,6 +3755,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
         {
           SgMemberFunctionDeclaration* memberFunctionDeclaration = memberFunctionRefExp->getAssociatedMemberFunctionDeclaration();
        // ROSE_ASSERT(functionDeclaration != NULL);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("case of SgMemberFunctionRefExp: memberFunctionDeclaration = %p \n",memberFunctionDeclaration);
+#endif
           if (memberFunctionDeclaration != NULL)
              {
                SgStatement* currentStatement = TransformationSupport::getStatement(memberFunctionRefExp);
@@ -3654,11 +3770,19 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   }
                ROSE_ASSERT(currentStatement != NULL);
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("case of SgMemberFunctionRefExp: currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
+#endif
                SgScopeStatement* currentScope = currentStatement->get_scope();
                ROSE_ASSERT(currentScope != NULL);
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("case of SgMemberFunctionRefExp: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+               printf ("***** case of SgMemberFunctionRefExp: Calling nameQualificationDepth() ***** \n");
+#endif
                int amountOfNameQualificationRequired = nameQualificationDepth(memberFunctionDeclaration,currentScope,currentStatement);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("***** case of SgMemberFunctionRefExp: DONE: Calling nameQualificationDepth() ***** \n");
                printf ("SgMemberFunctionCallExp's member function name: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
             // DQ (6/5/2011): test2005_112.C demonstrates a case where this special case applies.
@@ -3701,9 +3825,19 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                SgScopeStatement* currentScope = currentStatement->get_scope();
                ROSE_ASSERT(currentScope != NULL);
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("case of SgMemberFunctionRefExp: currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
+               printf ("case of SgMemberFunctionRefExp: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+               printf ("***** calling traverseTemplatedMemberFunction() \n");
+#endif
+
             // traverseTemplatedFunction(functionRefExp,templateInstantiationFunctionDeclaration,currentScope,currentStatement);
             // traverseTemplatedFunction(functionRefExp,functionRefExp,currentScope,currentStatement);
                traverseTemplatedMemberFunction(memberFunctionRefExp,memberFunctionRefExp,currentScope,currentStatement);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("***** DONE: calling traverseTemplatedMemberFunction() \n");
+#endif
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
@@ -3893,6 +4027,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
           SgStatement* currentStatement = TransformationSupport::getStatement(enumVal);
        // ROSE_ASSERT(currentStatement != NULL);
+#if 0
+          printf ("case of SgEnumVal: currentStatement = %p \n",currentStatement);
+#endif
           if (currentStatement != NULL)
              {
                currentScope = isSgScopeStatement(currentStatement);
@@ -3939,6 +4076,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // DQ (9/17/2011): this is the original case we waant to restore later...
                ROSE_ASSERT(currentScope != NULL);
                int amountOfNameQualificationRequired = nameQualificationDepth(enumDeclaration,currentScope,currentStatement);
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("SgEnumVal: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
@@ -4062,7 +4200,15 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("@@@@@@@@@@@@@ Recursive call to the originalExpressionTree = %p = %s \n",originalExpressionTree,originalExpressionTree->class_name().c_str());
 #endif
-               generateNameQualificationSupport(originalExpressionTree,referencedNameSet);
+            // DQ (6/30/2013): Added to support using generateNestedTraversalWithExplicitScope() instead of generateNameQualificationSupport().
+               SgStatement* currentStatement = TransformationSupport::getStatement(n);
+               ROSE_ASSERT(currentStatement != NULL);
+               SgScopeStatement* currentScope = currentStatement->get_scope();
+               ROSE_ASSERT(currentScope != NULL);
+
+            // DQ (6/30/2013): For the recursive call use generateNestedTraversalWithExplicitScope() instead of generateNameQualificationSupport().
+            // generateNameQualificationSupport(originalExpressionTree,referencedNameSet);
+               generateNestedTraversalWithExplicitScope(originalExpressionTree,currentScope);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("@@@@@@@@@@@@@ DONE: Recursive call to the originalExpressionTree = %p = %s \n",originalExpressionTree,originalExpressionTree->class_name().c_str());
@@ -4220,6 +4366,33 @@ NameQualificationTraversal::evaluateSynthesizedAttribute(SgNode* n, NameQualific
    {
   // This is not used now but will likely be used later.
      NameQualificationSynthesizedAttribute returnAttribute;
+
+// #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if 0
+     printf ("\n\n****************************************************** \n");
+     printf ("****************************************************** \n");
+     printf ("Inside of NameQualificationTraversal::evaluateSynthesizedAttribute(): node = %p = %s = %s \n",n,n->class_name().c_str(),SageInterface::get_name(n).c_str());
+     printf ("****************************************************** \n");
+#endif
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+  // DQ (6/23/2013): Output the generated name with required name qualification for debugging.
+     switch(n->variantT())
+        {
+          case V_SgMemberFunctionRefExp:
+             {
+               printf ("************************************************************************************** \n");
+               printf ("In evaluateSynthesizedAttribute(): node = %p = %s node->unparseToString() = %s \n",n,n->class_name().c_str(),n->unparseToString().c_str());              
+               printf ("************************************************************************************** \n");
+               break;
+             }
+     
+          default:
+             {
+            // do nothing
+             }
+        }
+#endif
 
      return returnAttribute;
    }
@@ -4787,7 +4960,32 @@ NameQualificationTraversal::setNameQualification ( SgBaseClass* baseClass, SgCla
         }
        else
         {
+       // DQ (6/17/2013): I think it is reasonable that this might have been previously set and 
+       // we have to overwrite the last value as we handle it again in a different context.
+
+       // If it already existes then overwrite the existing information.
+          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(baseClass);
+          ROSE_ASSERT (i != qualifiedNameMapForNames.end());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          string previousQualifier = i->second.c_str();
+          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+#endif
+       // I think I can do this!
+       // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
+          if (i->second != qualifier)
+             {
+               i->second = qualifier;
 #if 1
+            // DQ (6/17/2013): Commented out this assertion.
+               printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
+               ROSE_ASSERT(false);
+#else
+            // DQ (6/17/2013): I think this is OK, but I'm not certain (see test2012_57.C).
+               printf ("WARNING: name in qualifiedNameMapForNames already exists and is different... (reset) \n");
+#endif
+             }
+#if 0
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
           ROSE_ASSERT(false);
 #endif

@@ -381,6 +381,14 @@ SgScopeStatement::find_symbol_by_type_of_function (const SgName & name, const Sg
    }
 
 
+// explicit instantiation of find_symbol_by_type_of_function
+template SgFunctionSymbol* SgScopeStatement::find_symbol_by_type_of_function<SgTemplateFunctionDeclaration>(SgName const&, SgType const*);
+template SgFunctionSymbol* SgScopeStatement::find_symbol_by_type_of_function<SgTemplateInstantiationMemberFunctionDecl>(SgName const&, SgType const*);
+template SgFunctionSymbol* SgScopeStatement::find_symbol_by_type_of_function<SgTemplateInstantiationFunctionDecl>(SgName const&, SgType const*);
+template SgFunctionSymbol* SgScopeStatement::find_symbol_by_type_of_function<SgMemberFunctionDeclaration>(SgName const&, SgType const*);
+template SgFunctionSymbol* SgScopeStatement::find_symbol_by_type_of_function<SgTemplateMemberFunctionDeclaration>(SgName const&, SgType const*);
+template SgFunctionSymbol* SgScopeStatement::find_symbol_by_type_of_function<SgFunctionDeclaration>(SgName const&, SgType const*);
+
 void SageBuilder::pushScopeStack (SgScopeStatement* stmt)
 {
   ROSE_ASSERT(stmt != NULL);
@@ -5822,6 +5830,60 @@ SgSizeOfOp* SageBuilder::buildSizeOfOp_nfi(SgType* type /* = NULL*/)
   return result;
 }
 
+
+//! Build __alignof__() expression with an expression parameter
+SgAlignOfOp* SageBuilder::buildAlignOfOp(SgExpression* exp/*= NULL*/)
+{
+  SgType* exp_type =NULL;
+  if (exp) exp_type = exp->get_type();
+
+  SgAlignOfOp* result = new SgAlignOfOp(exp,NULL, NULL);
+  ROSE_ASSERT(result);
+  if (exp)
+  {
+    exp->set_parent(result);
+    markLhsValues(result);
+  }
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+//! Build __alignof__() expression with an expression parameter
+SgAlignOfOp* SageBuilder::buildAlignOfOp_nfi(SgExpression* exp/*= NULL*/)
+{
+  SgType* exp_type =NULL;
+  if (exp) exp_type = exp->get_type();
+
+  SgAlignOfOp* result = new SgAlignOfOp(exp,NULL, NULL);
+  ROSE_ASSERT(result);
+  if (exp)
+  {
+    exp->set_parent(result);
+    markLhsValues(result);
+  }
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+//! Build __alignof__() expression with a type parameter
+SgAlignOfOp* SageBuilder::buildAlignOfOp(SgType* type /* = NULL*/)
+{
+  SgAlignOfOp* result = new SgAlignOfOp((SgExpression*)NULL,type,NULL);
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+//! Build __alignof__() expression with a type parameter
+SgAlignOfOp* SageBuilder::buildAlignOfOp_nfi(SgType* type /* = NULL*/)
+{
+  SgAlignOfOp* result = new SgAlignOfOp((SgExpression*)NULL,type,NULL);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+
 SgExprListExp * SageBuilder::buildExprListExp(SgExpression * expr1, SgExpression* expr2, SgExpression* expr3, SgExpression* expr4, SgExpression* expr5, SgExpression* expr6, SgExpression* expr7, SgExpression* expr8, SgExpression* expr9, SgExpression* expr10)
 {
   SgExprListExp* expList = new SgExprListExp();
@@ -5990,6 +6052,7 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
           SgInitializedName * name1 = buildInitializedName(name,SgTypeUnknown::createType());
           name1->set_scope(scope);  // buildInitializedName() does not set scope for various reasons
           varSymbol = new SgVariableSymbol(name1);
+          varSymbol->set_parent(scope);
 
        // DQ (4/2/2012): Output a warning:
 #if 0
@@ -6518,7 +6581,7 @@ SgCudaKernelCallExp * SageBuilder::buildCudaKernelCallExp_nfi(SgExpression * ker
     ROSE_ASSERT(false);
   }
 
-  SgCudaKernelCallExp * kernel_call_expr = new SgCudaKernelCallExp(kernel, parameters, config);
+  SgCudaKernelCallExp * kernel_call_expr = new SgCudaKernelCallExp(kernel, parameters, kernel->get_type(), config);
 
   kernel->set_parent(kernel_call_expr);
   parameters->set_parent(kernel_call_expr);
@@ -7411,11 +7474,9 @@ SageBuilder::buildComprehension_nfi(SgExpression *target, SgExpression *iter, Sg
     ROSE_ASSERT(iter != NULL);
     SgComprehension *result = new SgComprehension(target, iter, ifs);
     ROSE_ASSERT(result);
-
     target->set_parent(result);
     iter->set_parent(result);
     if (ifs != NULL) ifs->set_parent(result);
-
     setOneSourcePositionNull(result);
     return result;
 }
@@ -10882,7 +10943,7 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
      ROSE_ASSERT (nondefdecl->get_type()->get_declaration() == isSgDeclarationStatement(nondefdecl));
      defdecl->set_type(nondefdecl->get_type());
 #else
-  // printf ("========== We might need to force the types used for defining and non-defining SgTemplateClassDeclaration to be the same! \n");
+  // printf ("We might need to force the types used for defining and non-defining SgTemplateClassDeclaration to be the same! \n");
      ROSE_ASSERT(nondefdecl->get_type() != NULL);
 #endif
 

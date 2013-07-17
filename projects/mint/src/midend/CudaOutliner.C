@@ -183,7 +183,7 @@ SgStatement* CudaOutliner::generateCall (SgFunctionDeclaration* out_func,
   ROSE_ASSERT(kernel_config);
 
   SgCudaKernelCallExp * cuda_call_site = 
-    new SgCudaKernelCallExp(sourceLocation, func_ref, exp_list_exp, kernel_config); 
+    new SgCudaKernelCallExp(sourceLocation, func_ref, exp_list_exp, func_ref->get_type(), kernel_config); 
 			    
 
   SgExprStatement *kernel_call_stmt = SageBuilder::buildExprStatement (cuda_call_site);

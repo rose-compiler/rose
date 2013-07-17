@@ -6,9 +6,6 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #
 
 
-
-if ROSE_USE_EDG_VERSION_4
-
 # EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 #  $(TESTCODE_CURRENTLY_FAILING)
 
@@ -913,7 +910,6 @@ test2012_64.C \
 test2012_65.C \
 test2012_66.C \
 test2012_67.C \
-test2012_68.C \
 test2012_69.C \
 test2012_70.C \
 test2012_71.C \
@@ -1297,6 +1293,44 @@ test2013_202.C \
 test2013_203.C \
 test2013_204.C \
 test2013_205.C \
+test2013_206.C \
+test2013_207.C \
+test2013_208.C \
+test2013_209.C \
+test2013_210.C \
+test2013_211.C \
+test2013_212.C \
+test2013_213.C \
+test2013_214.C \
+test2013_215.C \
+test2013_216.C \
+test2013_217.C \
+test2013_218.C \
+test2013_219.C \
+test2013_220.C \
+test2013_221.C \
+test2013_222.C \
+test2013_223.C \
+test2013_225.C \
+test2013_226.C \
+test2013_227.C \
+test2013_228.C \
+test2013_229.C \
+test2013_230.C \
+test2013_231.C \
+test2013_232.C \
+test2013_234.C \
+test2013_235.C \
+test2013_236.C \
+test2013_237.C \
+test2013_238.C \
+test2013_239.C \
+test2013_240.C \
+test2013_241.C \
+test2013_242.C \
+test2013_243.C \
+test2013_244.C \
+test2013_246.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1323,10 +1357,19 @@ TESTCODE_CURRENTLY_FAILING_ON_OSX = \
 test2011_06.C \
 test2004_35.C 
 
+if !ROSE_USE_EDG_VERSION_4_7
+# DQ (6/12/2013): This fails to compile with EDG 4.7 (EDG complains: line 13: error: constructor or destructor may not have its address taken)
+# Skip this test code while we report the problem to EDG (and investigate more in internally).
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += test2012_68.C
+endif
+
 # DQ (5/26/2013): Currently faling tests:
 CURRENTLY_FAILING_TESTS = \
 test2013_195.C \
 test2013_197.C
+
+# DQ (7/3/2013): This is a failing Qt example code (unparsed code is not correct).
+# test2013_245.C 
 
 
 # DQ (5/23/2013): This is a failing test because we fixup the symbol tables and then compute 
@@ -1378,12 +1421,8 @@ test2013_197.C
 # test2012_57.C
 # test2012_59.C
 
-
-
-
-else
-include $(srcdir)/Makefile-pass.inc
-endif
+# TV (06/17/13): [TODO] This was used for EDG 3.3. We now have the long list in this file...
+# include $(srcdir)/Makefile-pass.inc
 
 
 # TV (08/02/12): Added a list of none previously referenced test codes, code to be sorted
@@ -1406,7 +1445,6 @@ test2012_79.C
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
 #
-if ROSE_USE_EDG_VERSION_4
 TESTCODE_CURRENTLY_FAILING = 
 
 # DQ (8/12/2012): This test code appears to demonstrate a loss of the template arguments in the name qualification.
@@ -1785,10 +1823,8 @@ math.C
 NEW_FAILING_TESTS = \
 test2012_86.C
 
-
-else
-include $(srcdir)/Makefile-fail.inc
-endif
+# TV (06/17/13): [TODO] This was used for EDG 3.3. We now have the long list in this file...
+# include $(srcdir)/Makefile-fail.inc
 
 # Configure-time automake conditional
 if ROSE_USE_LONG_MAKE_CHECK_RULE
@@ -1907,6 +1943,15 @@ cpp_test2010_07: $(TEST_TRANSLATOR)
 	echo "Running boost specific test."
 	g++ -E -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_07.C
 
+test2013_235.o: $(TEST_TRANSLATOR)
+	echo "Running boost specific test."
+	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2013_235.C -o test2013_235.o
+
+test2013_236.o: $(TEST_TRANSLATOR)
+	echo "Running boost specific test."
+	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2013_236.C -o test2013_236.o
+
+
 $(TEST_TRANSLATOR):
 	cd ../..; $(MAKE) testTranslator
 
@@ -1994,25 +2039,7 @@ hpctoolkit:
 
 
 check-local:
-if !ROSE_USE_NEW_EDG_INTERFACE
-#	@$(MAKE) testUsingBadCommandline
-	@$(MAKE) testBuildUsingNoPath
-	@$(MAKE) testBuildUsingRelativePath
-	@$(MAKE) testBuildUsingAbsolutePath
-	@echo "Tests of C++."
-	@$(MAKE) failingAST_IO_tests
-endif
 	@$(MAKE) $(PASSING_TEST_Objects)
-if !ROSE_USE_NEW_EDG_INTERFACE
-#	DQ (9/18/2011): Added tests for folded constant option.
-	@$(MAKE) $(TEST_Objects_FoldedConstants)
-#	DQ (4/6/2010): This fails on Hudson, but I don't know why!
-#	@$(MAKE) testParser
-#	DQ (5/8/2011): Special tests are now moved to the end.
-	@$(MAKE) test2005_56.o
-	@$(MAKE) test2010_07.o
-	@$(MAKE) test_multiple_files
-endif
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Cxx_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
@@ -2067,7 +2094,15 @@ clean-local:
 #  TIMEOUT              Maximum time limit for the compilation of a <testcode>
 #  TIMEOUT_TOLERANCE    $gnu_time * $TIMEOUT_TOLERANCE (threshold tests only)
 #------------------------------------------------------------------------------
-TIMEOUT            ?= 60  # Default timeout value
+
+# DQ (6/30/2013): Increased this to support compiling Boost example tests. We 
+# need to rethink how we want to handl this. I suggest restricting this to a 
+# few tests instead of each test. Compiling with optimization also makes about
+# a factor of four difference for test2013_241.C (boost example test code).
+# Since Jenkins testing is currently done without optimization we need the 
+# larger timeout value just to handle the newer boost test codes.
+# TIMEOUT            ?= 60  # Default timeout value
+TIMEOUT            ?= 420  # Default timeout value
 TIMEOUT_TOLERANCE  ?= 20  # Default timeout tolerance value for threshold
                           # tests = $gnu_time * $TIMEOUT_TOLERANCE
 

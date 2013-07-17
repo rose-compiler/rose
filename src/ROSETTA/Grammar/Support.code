@@ -33,7 +33,7 @@ HEADER_OMP_CLAUSE_START
 
        // Liao (5/30/2009): Added support for reduction clauses within an OpenMP directive
 	enum omp_default_option_enum{
-	  e_omp_default_unkown =0,
+	  e_omp_default_unknown =0,
 	  //4 values for default clause
 	  //C/C++ default values
 	  e_omp_default_none,
@@ -45,7 +45,7 @@ HEADER_OMP_CLAUSE_START
 	};
 
         enum omp_schedule_kind_enum{
-          e_omp_schedule_unkown=0,
+          e_omp_schedule_unknown=0,
           e_omp_schedule_static,
           e_omp_schedule_dynamic,
           e_omp_schedule_guided,
@@ -56,7 +56,7 @@ HEADER_OMP_CLAUSE_START
 
         enum omp_reduction_operator_enum
         {
-            e_omp_reduction_unkown,
+            e_omp_reduction_unknown,
             // reduction operations
             //8 operand for C/C++
              //  shared 3 common operators for both C and Fortran
@@ -80,6 +80,17 @@ HEADER_OMP_CLAUSE_START
             e_omp_reduction_ior,
             e_omp_reduction_ieor,
             e_omp_reduction_last
+        };
+
+        // Liao 1/22/2012: experimental support for OpenMP Accelerator model 
+        enum omp_map_operator_enum
+        {
+          e_omp_map_unknown,
+          e_omp_map_alloc,
+          e_omp_map_in,
+          e_omp_map_out,
+          e_omp_map_inout,
+          e_omp_map_last,
         };
 
 
@@ -7298,6 +7309,7 @@ SgSymbolTable::find_any(const SgName & nm)
 
      return NULL;
 #else
+  // DQ (6/24/2013): This special case requires some special support in find_symbol_support.
      return find_symbol_support<SgSymbol>(nm);
 #endif
    }
@@ -7572,6 +7584,8 @@ SgSymbolTable::find_class(const SgName & nm)
    }
 
 
+#define DEBUG_MATCHING_TEMPLATE_ARGUMENTS 0
+
 bool
 SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgumentPtrList* templateArgumentsList, SgClassSymbol* classSymbol)
    {
@@ -7583,7 +7597,7 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
 
      ROSE_ASSERT(classSymbol != NULL);
 
-#if 0
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
      printf ("\nIn SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): templateArgumentsList = %p \n",templateArgumentsList);
 #endif
 
@@ -7598,7 +7612,7 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
                ROSE_ASSERT(templateArgumentsList->size() == templateClassInstantiation->get_templateArguments().size());
 
             // Check if they are the same size...
-#if 0
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
                printf ("In SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): classSymbol = %p = %s templateArgumentsList->size() = %zu templateClassInstantiation->get_templateArguments().size() = %zu \n",
                        classSymbol,classSymbol->class_name().c_str(),templateArgumentsList->size(),templateClassInstantiation->get_templateArguments().size());
                for (size_t i = 0; i < templateArgumentsList->size(); i++)
@@ -7611,7 +7625,7 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
                  // Check if they are the same STL vector values...
                     if (*templateArgumentsList == templateClassInstantiation->get_templateArguments())
                        {
-#if 0
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
                          printf ("In SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): The template argument vectors are equal \n");
 #endif
                          returnValue = true;
@@ -7623,13 +7637,13 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
                  // if they are all SgTemplateType template arguments.
                     if (returnValue == false)
                        {
-#if 0
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
                          printf ("SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): Double check if we had set returnValue to false based on SgTemplateType template arguments (if so, then return true) \n");
 #endif
                          bool isTemplateType = true;
                          for (size_t i = 0; i < templateArgumentsList->size(); i++)
                             {
-#if 0
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
                               printf ("----- (*templateArgumentsList)[%zu] = %p = %s templateClassInstantiation->get_templateArguments()[%zu] = %p = %s \n",
                                    i,(*templateArgumentsList)[i],(*templateArgumentsList)[i]->class_name().c_str(),
                                    i,templateClassInstantiation->get_templateArguments()[i],templateClassInstantiation->get_templateArguments()[i]->class_name().c_str());
@@ -7639,16 +7653,19 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
                               SgTemplateArgument* templateArgumentFromSymbol = isSgTemplateArgument(templateClassInstantiation->get_templateArguments()[i]);
                               ROSE_ASSERT(templateArgumentLocal != NULL);
                               ROSE_ASSERT(templateArgumentFromSymbol != NULL);
-#if 0
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
                               printf ("----- templateArgumentLocal->get_argumentType() = %d templateArgumentFromSymbol->get_argumentType() = %d \n",templateArgumentLocal->get_argumentType(),templateArgumentFromSymbol->get_argumentType());
 #endif
-                           // if (templateArgumentLocal->get_argumentType() == SgTemplateArgument::type_argument && templateArgumentFromSymbol->get_argumentType() == SgTemplateArgument::type_argument)
+                           // DQ (6/17/2013): The get_argumentType() can be either of these.
+                           //    type_argument               = 1, /*!< type parameter */
+                           //    nontype_argument            = 2, /*!< nontype parameter */
+                           //    template_template_argument  = 3  /*!< template template parameter */
                               if (templateArgumentLocal->get_argumentType() == SgTemplateArgument::type_argument && templateArgumentFromSymbol->get_argumentType() == SgTemplateArgument::type_argument)
                                  {
-#if 0
-                                   printf ("Template arguments match in argument type: \n");
-                                   printf ("   templateArgumentLocal->get_type()      = %p = %s \n",templateArgumentLocal->get_type(),     templateArgumentLocal->get_type()->class_name().c_str());
-                                   printf ("   templateArgumentFromSymbol->get_type() = %p = %s \n",templateArgumentFromSymbol->get_type(),templateArgumentFromSymbol->get_type()->class_name().c_str());
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                   printf ("----- Template arguments match in argument type: \n");
+                                   printf ("-----    --- templateArgumentLocal->get_type()      = %p = %s \n",templateArgumentLocal->get_type(),     templateArgumentLocal->get_type()->class_name().c_str());
+                                   printf ("-----    --- templateArgumentFromSymbol->get_type() = %p = %s \n",templateArgumentFromSymbol->get_type(),templateArgumentFromSymbol->get_type()->class_name().c_str());
 #endif
 
                                    SgTypedefType*   typedefTypeLocal        = isSgTypedefType(templateArgumentLocal->get_type());
@@ -7668,9 +7685,9 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
                                      // Process this as a typedef (strip to base type and re-evaluate).
                                         SgType* typeLocal      = templateArgumentLocal->get_type()->stripType();
                                         SgType* typeFromSymbol = templateArgumentFromSymbol->get_type()->stripType();
-#if 0
-                                        printf ("typeLocal      = %p = %s \n",typeLocal,     (typeLocal      != NULL) ? typeLocal->class_name().c_str()      : "null");
-                                        printf ("typeFromSymbol = %p = %s \n",typeFromSymbol,(typeFromSymbol != NULL) ? typeFromSymbol->class_name().c_str() : "null");
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                        printf ("-----    --- typeLocal      = %p = %s \n",typeLocal,     (typeLocal      != NULL) ? typeLocal->class_name().c_str()      : "null");
+                                        printf ("-----    --- typeFromSymbol = %p = %s \n",typeFromSymbol,(typeFromSymbol != NULL) ? typeFromSymbol->class_name().c_str() : "null");
 #endif
 
                                      // DQ (9/4/2012): Check if this is a class (debugging ROSE compiling ROSE).
@@ -7678,14 +7695,30 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
                                         SgClassType* classTypeFromSymbol = isSgClassType(typeFromSymbol);
                                         if (classTypeLocal != NULL && classTypeFromSymbol != NULL)
                                            {
-#if 0
-                                             printf ("classTypeLocal      = %p = %s = %s \n",classTypeLocal,classTypeLocal->class_name().c_str(),classTypeLocal->get_name().str());
-                                             printf ("classTypeFromSymbol = %p = %s = %s \n",classTypeFromSymbol,classTypeFromSymbol->class_name().c_str(),classTypeFromSymbol->get_name().str());
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                             printf ("-----    --- classTypeLocal      = %p = %s = %s \n",classTypeLocal,classTypeLocal->class_name().c_str(),classTypeLocal->get_name().str());
+                                             printf ("-----    --- classTypeFromSymbol = %p = %s = %s \n",classTypeFromSymbol,classTypeFromSymbol->class_name().c_str(),classTypeFromSymbol->get_name().str());
 #endif
                                              if (classTypeLocal->get_name() == classTypeFromSymbol->get_name())
                                                 {
+                                               // DQ (6/17/2013): Implemented a better test based on equal type pointer values.
                                                // Assign one to the other so that they will be equal and isTemplateType will evaluate to be "true".
-                                                  typeLocal = typeFromSymbol;
+                                               // typeLocal = typeFromSymbol;
+                                                  if (classTypeLocal == classTypeFromSymbol)
+                                                     {
+                                                    // Same valued pointers to types.
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                                       printf ("-----    --- These ARE the same class type \n");
+#endif
+                                                       typeLocal = typeFromSymbol;
+                                                     }
+                                                    else
+                                                     {
+                                                    // Different pointer values mean different types (I hope this is always true).
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                                       printf ("-----    --- These are NOT the same type and should have resolved to be the same pointer value if there were the same type! \n");
+#endif
+                                                     }
                                                 }
                                            }
 
@@ -7696,33 +7729,109 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
                                       }
                                      else
                                       {
+                                     // Check for template types.
                                         SgTemplateType* templateArgumentTypeLocal      = isSgTemplateType(templateArgumentLocal->get_type());
                                         SgTemplateType* templateArgumentTypeFromSymbol = isSgTemplateType(templateArgumentFromSymbol->get_type());
-#if 0
-                                        printf ("templateArgumentTypeLocal      = %p = %s \n",templateArgumentTypeLocal,     templateArgumentTypeLocal      ? templateArgumentTypeLocal->get_name().str() : "null");
-                                        printf ("templateArgumentTypeFromSymbol = %p = %s \n",templateArgumentTypeFromSymbol,templateArgumentTypeFromSymbol ? templateArgumentTypeFromSymbol->get_name().str() : "null");
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                        printf ("-----    --- templateArgumentTypeLocal      = %p = %s \n",templateArgumentTypeLocal,     templateArgumentTypeLocal      ? templateArgumentTypeLocal->get_name().str() : "null");
+                                        printf ("-----    --- templateArgumentTypeFromSymbol = %p = %s \n",templateArgumentTypeFromSymbol,templateArgumentTypeFromSymbol ? templateArgumentTypeFromSymbol->get_name().str() : "null");
 #endif
-                                     // if (isTemplateType == true && templateArgumentLocal != NULL && templateArgumentFromSymbol != NULL)
-                                        if (isTemplateType == true)
+                                        if (templateArgumentTypeLocal != NULL && templateArgumentTypeFromSymbol != NULL)
                                            {
-                                          // If these are pointers or references to SgTypeType IR nodes then we might have to strip off the type modifiers.
-                                          // isTemplateType = (templateArgumentTypeLocal != NULL && templateArgumentTypeFromSymbol != NULL);
-                                             isTemplateType = ( (templateArgumentLocal->get_type() == templateArgumentFromSymbol->get_type()) || (templateArgumentTypeLocal != NULL && templateArgumentTypeFromSymbol != NULL) );
-#if 0
-                                             printf ("isTemplateType = %s \n",isTemplateType ? "true" : "false");
+                                          // if (isTemplateType == true && templateArgumentLocal != NULL && templateArgumentFromSymbol != NULL)
+                                             if (isTemplateType == true)
+                                                {
+                                               // If these are pointers or references to SgTypeType IR nodes then we might have to strip off the type modifiers.
+                                               // isTemplateType = (templateArgumentTypeLocal != NULL && templateArgumentTypeFromSymbol != NULL);
+                                                  isTemplateType = ( (templateArgumentLocal->get_type() == templateArgumentFromSymbol->get_type()) || (templateArgumentTypeLocal != NULL && templateArgumentTypeFromSymbol != NULL) );
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                                  printf ("-----    --- isTemplateType = %s \n",isTemplateType ? "true" : "false");
 #endif
+                                                }
+                                           }
+                                          else
+                                           {
+                                          // Check if these are the same type.
+                                             if (templateArgumentLocal->get_type() == templateArgumentFromSymbol->get_type())
+                                                {
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                                  printf ("-----    --- --- These are the same type = %p = %s \n",templateArgumentLocal->get_type(),templateArgumentLocal->get_type()->class_name().c_str());
+#endif
+                                                }
                                            }
                                       }
                                  }
                                 else
                                  {
+#if 1
+                                // DQ (6/17/2013): This newer code does a better job of resolving if template arguments are equivalent (more can be done still).
+                                   if (templateArgumentLocal->get_argumentType() == SgTemplateArgument::nontype_argument && templateArgumentFromSymbol->get_argumentType() == SgTemplateArgument::nontype_argument)
+                                      {
+                                     // Test for equivalence of nontype arguments (e.g. values).
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                        printf ("WARNING: These are both nontype template arguments (which we are considering to be the same withouth enough testing \n");
+#endif
+                                        ROSE_ASSERT(templateArgumentLocal->get_expression() != NULL);
+                                        ROSE_ASSERT(templateArgumentFromSymbol->get_expression() != NULL);
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                        printf ("-----    --- templateArgumentLocal->get_expression()      = %p \n",templateArgumentLocal->get_expression());
+                                        printf ("-----    --- templateArgumentFromSymbol->get_expression() = %p \n",templateArgumentFromSymbol->get_expression());
+#endif
+                                        if (templateArgumentLocal->get_expression() == templateArgumentFromSymbol->get_expression())
+                                           {
+                                             isTemplateType = true;
+                                           }
+                                          else
+                                           {
+                                          // Different pointer values mean different expressions (I hope this is always true).
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                             printf ("-----    --- --- These are NOT the same expresion values and should have resolved to be the same pointer value if there were the same expression! (really?) \n");
+
+                                             printf ("WARNING: value associated with same different expressions was not checked... (might be different constants with the same value) \n");
+#endif
+                                           }
+                                      }
+                                     else
+                                      {
+                                        if (templateArgumentLocal->get_argumentType() == SgTemplateArgument::template_template_argument && templateArgumentFromSymbol->get_argumentType() == SgTemplateArgument::template_template_argument)
+                                           {
+                                          // Test for equivalence of template_template arguments.
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                             printf ("WARNING: These are both template template template arguments (which we are considering to be the same without enough testing \n");
+#endif
+                                             ROSE_ASSERT(templateArgumentLocal->get_templateDeclaration() != NULL);
+                                             ROSE_ASSERT(templateArgumentFromSymbol->get_templateDeclaration() != NULL);
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                             printf ("-----    --- templateArgumentLocal->get_templateDeclaration()      = %p \n",templateArgumentLocal->get_templateDeclaration());
+                                             printf ("-----    --- templateArgumentFromSymbol->get_templateDeclaration() = %p \n",templateArgumentFromSymbol->get_templateDeclaration());
+#endif
+                                             if (templateArgumentLocal->get_templateDeclaration() == templateArgumentFromSymbol->get_templateDeclaration())
+                                                {
+                                                  isTemplateType = true;
+                                                }
+                                               else
+                                                {
+                                               // Different pointer values mean different expressions (I hope this is always true).
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                                  printf ("-----    --- --- These are NOT the same template declaration values and should have resolved to be the same pointer value if there were the same template template declaration argument value \n");
+#endif
+                                                }
+                                           }
+                                          else
+                                           {
+                                             ROSE_ASSERT(templateArgumentLocal->get_argumentType() != templateArgumentFromSymbol->get_argumentType());
+                                          // These are not the same type: so return false.
+                                             isTemplateType = false;
+                                           }
+                                      }
+#else
                                 // DQ (8/23/2012): This still might not be precise enough since but this is a test.
                                 // Note that both might for example be a value type, but we don't know that they are 
                                 // the same value (e.g. a boolean value used as a template argument could be true or false).
                                    if (templateArgumentLocal->get_argumentType() == templateArgumentFromSymbol->get_argumentType())
                                       {
-#if 0
-                                        printf ("SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): argumentTypes match: Depending on the type we may have to test that the internal expressions are the same templateArgumentLocal->get_argumentType() = %d \n",
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                        printf ("----- SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): argumentTypes match: Depending on the type we may have to test that the internal expressions are the same templateArgumentLocal->get_argumentType() = %d \n",
                                              templateArgumentLocal->get_argumentType());
 #endif
                                         isTemplateType = true;
@@ -7732,9 +7841,10 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
                                      // These are not the same type: so return false.
                                         isTemplateType = false;
                                       }
+#endif
                                  }
                             }
-#if 0
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
                          printf ("WARNING: SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): we are relying on only the existence of all SgTemplateType template arguments to decide that this is a match isTemplateType = %s \n",
                               isTemplateType ? "true" : "false");
 #endif
@@ -7750,7 +7860,7 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
             else
              {
             // DQ (8/22/2012): Consider if this make sense...yes, if it is not a template instantiation then matching is based on name in a specific scope only.
-#if 0
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
                printf ("WARNING: SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): templateClassInstantiation == NULL (return true) \n");
 #endif
                returnValue = true;
@@ -8605,6 +8715,20 @@ SgSymbolTable::find_symbol_support (const SgName & nm)
 #if 0
           printf ("In loop over target symbols associated with nm = %s p_iterator->second = %p = %s \n",nm.str(),p_iterator->second,p_iterator->second->class_name().c_str());
 #endif
+
+       // DQ (6/24/2013): We catch the case of SgAliasSymbol in the tailing test of the symbol table, 
+       // there we properly resolve it to its base symbol.  When this template is instatiated using 
+       // SgSymbol we have to worry about this detail, else the initialization of symbol above can never
+       // result in a SgAliasSymbol. So this is a result of writting very general code. Not sure how to
+       // make this a compile-time test so that we could avoid the overhead of using this dynamic cast.
+       // One performance alternative would be to have a specialization of this template for the general
+       // case of SgSymbol, but that should be considered later when we are sure that this is the final 
+       // working implementation (so we will leave the code it is most re-factored state for now).
+          if (isSgAliasSymbol(symbol) != NULL)
+             {
+               symbol = NULL;
+             }
+
        // if (isSgFunctionSymbol(p_iterator->second) && (*p_iterator).first==nm)
        // if (isSgFunctionSymbol(p_iterator->second) && get_table()->key_eq()((*p_iterator).first,nm))
           if (symbol != NULL && get_table()->key_eq()((*p_iterator).first,nm))
@@ -8852,6 +8976,8 @@ SgSymbolTable::find_symbol_with_type_support (const SgName & nm, const SgType* t
    }
 
 
+#define DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS 0
+
 // SgClassSymbol* SgSymbolTable::find_nontemplate_class (const SgName & nm, SgTemplateArgumentPtrList* templateArgumentsList)
 template<class ReturnType>
 ReturnType*
@@ -8859,7 +8985,7 @@ SgSymbolTable::find_symbol_with_template_args_support ( const SgName & nm, SgTem
    {
      ReturnType* s = NULL;
 
-#if 0
+#if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
      printf ("In SgSymbolTable::find_symbol_with_template_args_support(nm = %s, templateArgumentsList = %p) \n",nm.str(),templateArgumentsList);
 #endif
 
@@ -8871,7 +8997,7 @@ SgSymbolTable::find_symbol_with_template_args_support ( const SgName & nm, SgTem
   // Iterate through the list that match the name to find the one that is a SgTemplateSymbol and has a matching SgType pointer.
      for (hash_iterator i = range.first; i != range.second; ++i)
         {
-#if 0
+#if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
           printf ("In SgSymbolTable::find_symbol_with_template_args_support(): Found a possible symbol with correct name = %s: symbol = %p = %s (%s) \n",
                nm.str(),i->second,i->second->class_name().c_str(),isSgAliasSymbol(i->second) != NULL ? "alias symbol ignored" : "consider this symbol");
 #endif
@@ -8883,7 +9009,7 @@ SgSymbolTable::find_symbol_with_template_args_support ( const SgName & nm, SgTem
           if (isSgTemplateClassSymbol(i->second) != NULL)
              {
             // If this is a SgTemplateClassSymbol then reset sym == NULL, this is not the symbol you are looking for...
-#if 0
+#if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
                printf ("In SgSymbolTable::find_symbol_with_template_args_support(): Found SgTemplateClassSymbol: this is not the symbol you are looking for... \n");
 #endif
                sym = NULL;
@@ -8911,7 +9037,7 @@ SgSymbolTable::find_symbol_with_template_args_support ( const SgName & nm, SgTem
                if (hasMatchingTemplateArgumentsOrNoTemplateArguments(templateArgumentsList,sym) == true)
                   {
                  // return classSymbol;
-#if 0
+#if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
                     printf ("In SgSymbolTable::find_symbol_with_template_args_support(): Found a match: s = %p = %s nm = %s \n",s,s->class_name().c_str(),nm.str());
 #endif
                  // DQ (9/9/2012): We could either call "break" to get out of the loop, or directly "return s".
@@ -8919,7 +9045,7 @@ SgSymbolTable::find_symbol_with_template_args_support ( const SgName & nm, SgTem
                   }
                  else
                   {
-#if 0
+#if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
                     printf ("In SgSymbolTable::find_symbol_with_template_args_support(): The template arguments are NOT the same for s = %p = %s (keep searching) nm = %s \n",s,s->class_name().c_str(),nm.str());
 #endif
                  // DQ (9/9/2012): If this is not a match, then we have to set s == NULL so that we will not accidentally returning the WRONG sysmbol at the end of the loop.
@@ -8942,7 +9068,7 @@ SgSymbolTable::find_symbol_with_template_args_support ( const SgName & nm, SgTem
   // Iterate through the list that match the name to find the one that is a SgTemplateSymbol and has a matching SgType pointer.
      for (hash_iterator i = range.first; i != range.second; ++i)
         {
-#if 0
+#if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
           printf ("In SgSymbolTable::find_symbol_with_template_args_support(): Found a possible symbol with correct name = %s: symbol = %p = %s \n",nm.str(),i->second,i->second->class_name().c_str());
 #endif
        // SgClassSymbol* sym = isSgClassSymbol(i->second);
@@ -8953,7 +9079,7 @@ SgSymbolTable::find_symbol_with_template_args_support ( const SgName & nm, SgTem
           if (isSgTemplateClassSymbol(sym) != NULL)
              {
             // If this is a SgTemplateClassSymbol then reset sym == NULL, this is not the symbol you are looking for...
-#if 0
+#if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
                printf ("In SgSymbolTable::find_symbol_with_template_args_support(): Found SgTemplateClassSymbol: this is not the symbol you are looking for... \n");
 #endif
                sym = NULL;
@@ -8981,7 +9107,7 @@ SgSymbolTable::find_symbol_with_template_args_support ( const SgName & nm, SgTem
                if (hasMatchingTemplateArgumentsOrNoTemplateArguments(templateArgumentsList,sym) == true)
                   {
                  // return classSymbol;
-#if 0
+#if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
                     printf ("In SgSymbolTable::find_symbol_with_template_args_support(): Found a match: s = %p = %s nm = %s \n",s,s->class_name().c_str(),nm.str());
 #endif
                  // DQ (9/9/2012): We could either call "break" to get out of the loop, or directly "return s".
@@ -8989,7 +9115,7 @@ SgSymbolTable::find_symbol_with_template_args_support ( const SgName & nm, SgTem
                   }
                  else
                   {
-#if 0
+#if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
                     printf ("In SgSymbolTable::find_symbol_with_template_args_support(): The template arguments are NOT the same for s = %p = %s (keep searching) nm = %s \n",s,s->class_name().c_str(),nm.str());
 #endif
                  // DQ (9/9/2012): If this is not a match, then we have to set s == NULL so that we will not accidentally returning the WRONG sysmbol at the end of the loop.
@@ -9003,7 +9129,7 @@ SgSymbolTable::find_symbol_with_template_args_support ( const SgName & nm, SgTem
           ROSE_ASSERT(s->get_name() == nm);
         }
 
-#if 0
+#if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
      printf ("In SgSymbolTable::find_symbol_with_template_args_support(): returning symbol = %p = %s \n",s,(s != NULL) ? s->class_name().c_str() : "null");
 #endif
 
@@ -9034,7 +9160,11 @@ SgSymbolTable::find_template_symbol_support ( const SgName & nm, SgTemplateParam
      for (hash_iterator i = range.first; i != range.second; ++i)
         {
 #if 0
-          printf ("Check for SgAliasSymbol in SgSymbolTable::find_template_symbol_support(const SgName & nm,SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) \n");
+          printf ("Check for symbol in template function SgSymbolTable::find_template_symbol_support<%s>(const SgName & nm,SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) \n",
+               Cxx_GrammarTerminalNames[ReturnType::static_variant].name.c_str());
+          printf ("   --- name (key)                                = %s \n",nm.str());
+          printf ("   --- templateParameterList.size()              = %d \n",(templateParameterList != NULL)              ? (int)(templateParameterList->size()) : -1);
+          printf ("   --- templateSpecializationArgumentList.size() = %d \n",(templateSpecializationArgumentList != NULL) ? (int)(templateSpecializationArgumentList->size()) : -1);
 #endif
           ReturnType* sym = dynamic_cast<ReturnType*>(i->second);
 
@@ -9118,7 +9248,10 @@ SgSymbolTable::find_template_symbol_support ( const SgName & nm, SgTemplateParam
 #if 0
                     printf ("NOTE: In SgSymbolTable::find_template_symbol_support(): template parameters only used for SgTemplateClassSymbol: this is a sym = %p = %s \n",sym,sym->class_name().c_str());
 #endif
-                    break;
+                    printf ("Skipping break in loop over looking for non-SgAliasSymbols: i->second = %p \n",i->second);
+
+                 // DQ (6/26/2013): We can't break out of the loop here we must evaluate the next symbol.
+                 // break;
                   }
             // break;
              }
@@ -9165,7 +9298,9 @@ SgSymbolTable::find_template_symbol_support ( const SgName & nm, SgTemplateParam
                p_name    = nm;
                p_no_name = false;
                s         = dynamic_cast<ReturnType*>(aliasSymbol->get_alias());
-
+#if 0
+               printf ("Processing aliasSymbol to find base symbol = %p = %s s = %p \n",aliasSymbol->get_alias(),aliasSymbol->get_alias()->class_name().c_str(),s);
+#endif
             // DQ (9/9/2012): Note that for template declarations we cna't match just on names, we have to include the template parameters (both number and type).
             // SgTemplateClassSymbol* templateClassSymbol = isSgTemplateClassSymbol(sym);
                ReturnType* templateClassSymbol = isSgTemplateClassSymbol(s);
@@ -9192,7 +9327,7 @@ SgSymbolTable::find_template_symbol_support ( const SgName & nm, SgTemplateParam
                                  {
                                 // This is, I think, the correct sysmbol (since I don't think we have the treat the template parameter names as significant (or a I need a test code for this detail).
 #if 0
-                                   printf ("In SgSymbolTable::find_template_symbol_support(): This appears to be the matching symbol: sym = %p = %s \n",sym,sym->class_name().c_str());
+                                   printf ("In SgSymbolTable::find_template_symbol_support(): This appears to be the matching symbol: sym = %p = %s \n",s,s->class_name().c_str());
 #endif
                                    break;
                                  }
@@ -9200,7 +9335,7 @@ SgSymbolTable::find_template_symbol_support ( const SgName & nm, SgTemplateParam
                                  {
                                 // This is not the template declaration symbol you are looking for...
 #if 0
-                                   printf ("In SgSymbolTable::find_template_symbol_support(): This is NOT the correct symbol sym = %p = %s \n",sym,sym->class_name().c_str());
+                                   printf ("In SgSymbolTable::find_template_symbol_support(): This is NOT the correct symbol sym = %p = %s \n",s,s->class_name().c_str());
 #endif
                                    s = NULL;
                                  }
@@ -9223,9 +9358,12 @@ SgSymbolTable::find_template_symbol_support ( const SgName & nm, SgTemplateParam
                   {
                  // Since this is not for a SgTemplateClassSymbol, we don't use the template parameter list (likely I need to handle this next).
 #if 0
-                    printf ("NOTE: In SgSymbolTable::find_template_symbol_support(): template parameters only used for SgTemplateClassSymbol: this is a sym = %p = %s \n",sym,sym->class_name().c_str());
+                    printf ("NOTE: In SgSymbolTable::find_template_symbol_support(): template parameters only used for SgTemplateClassSymbol: this is a aliasSymbol->get_alias() = %p = %s \n",aliasSymbol->get_alias(),aliasSymbol->get_alias()->class_name().c_str());
 #endif
-                    break;
+                    printf ("Skipping break in loop over looking for SgAliasSymbols: i->second = %p \n",i->second);
+
+                 // DQ (6/26/2013): We can't break out of the loop here we must evaluate the next symbol.
+                 // break;
                   }
             // break;
              }
@@ -10085,7 +10223,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                               default:
                                  {
                                 // This is likely an error, I think
-                                   nameOfType = "unkown type name (likely a possible error!)";
+                                   nameOfType = "unknown type name (likely a possible error!)";
                                    break;
                                  }
                             }

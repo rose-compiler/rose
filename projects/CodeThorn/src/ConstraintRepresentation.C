@@ -167,6 +167,21 @@ string Constraint::toString(VariableIdMapping* variableIdMapping) const {
   return ss.str();
 }
 
+string Constraint::toAssertionString(VariableIdMapping* variableIdMapping) const {
+  stringstream ss;
+  if(isDisequation())
+	return "false";
+  if(isVarVarOp())
+	ss<<variableIdMapping->uniqueLongVariableName(lhsVar())<<(*this).opToString()<<variableIdMapping->uniqueLongVariableName(rhsVar());
+  else {
+	if(isVarValOp())
+	  ss<<variableIdMapping->uniqueLongVariableName(lhsVar())<<(*this).opToString()<<rhsVal().toString();
+	else
+	  throw "Error: Constraint::toString: unknown operator.";
+  }
+  return ss.str();
+}
+
 void Constraint::toStreamAsTuple(ostream& os) {
   os<<"(";
   os<<_op;
@@ -697,6 +712,16 @@ string ConstraintSet::toString(VariableIdMapping* vim) const {
 	ss<<(*i).toString(vim);
   }
   ss<<"}";
+  return ss.str();
+}
+
+string ConstraintSet::toAssertionString(VariableIdMapping* vim) const {
+  stringstream ss;
+  for(set<Constraint>::iterator i=begin();i!=end();++i) {
+	if(i!=begin()) 
+	  ss<<" && ";
+	ss<<(*i).toAssertionString(vim);
+  }
   return ss.str();
 }
 

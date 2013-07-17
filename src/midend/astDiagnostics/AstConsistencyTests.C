@@ -174,6 +174,15 @@ AstTests::runAllTests(SgProject* sageProject)
   // DQ (3/30/2004): This function is called by the 
   //      ROSE/src/roseTranslator.C RoseTestTranslator class
 
+#ifdef NDEBUG
+  // DQ (6/30/20133): If we have compiled with NDEBUG then nothing identified in this function 
+  // will be cause because every place we detect a problem we expect to end with ROSE_ASSERT() 
+  // which is disabled when ROSE is compiled with NDEBUG.  So more approriate (and equvalent) 
+  // semantics is that if ROSE is compiled with NDEBUG then we should just exit directly.
+     TimingPerformance ndebug_timer ("AST Consistency Tests (disabled by NDEBUG):");
+     return;
+#endif
+
   // It is a proper place to put any tests of the AST that must always pass!
 
   // Possible future tests: 
@@ -197,7 +206,12 @@ AstTests::runAllTests(SgProject* sageProject)
   // This is because when building AST bottom-up, some temporary symbol may be generated to be referenced
   // by those variable references generated just using names. When all variable references are fixed,
   // those symbols are not used any more and then should be removed from memory pool.
-     SageInterface::clearUnusedVariableSymbols();
+  //
+  // Liao 1/24/2013: I have to comment this out
+  // for #define N 1000, when N is used in OpenMP directives, the OmpSupport::attachOmpAttributeInfo() will try to generate a 
+  // variable reference to N, But N cannot be found in AST, so unknownType is used.  But symbols with unknowntype will be removed
+  // by this clearUnusedVariableSymbols()
+     //SageInterface::clearUnusedVariableSymbols();
 
   // printf ("Inside of AstTests::runAllTests(sageProject = %p) \n",sageProject);
 
@@ -2310,6 +2324,16 @@ TestAstForUniqueStatementsInScopes::visit ( SgNode* node )
                        {
                          SgStatement * currDuplicate = *j;
                          ROSE_ASSERT(currDuplicate != NULL);
+
+                      // DQ (6/26/2016): Debugging a special case that appears with ROSE compiles "rose.h" header file.
+                         SgTemplateInstantiationDefn* templateInstantiationDefn = isSgTemplateInstantiationDefn(node);
+                         if (templateInstantiationDefn != NULL)
+                            {
+                              SgTemplateInstantiationDecl* templateInstantiationDecl = isSgTemplateInstantiationDecl(templateInstantiationDefn->get_declaration());
+                              ROSE_ASSERT(templateInstantiationDecl != NULL);
+                              printf ("ERROR: problem declaration: templateInstantiationDecl = %p = %s \n",templateInstantiationDecl,templateInstantiationDecl->get_name().str());
+                            }
+
                          Sg_File_Info * location = currDuplicate->get_file_info();
                          ROSE_ASSERT(location != NULL);
                          printf ("Error: node (%d/%d) = %p = %s at: \n",counter,numberOfDuplicates,currDuplicate,currDuplicate->sage_class_name());
@@ -2388,6 +2412,15 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
              }
 
           printf ("Error: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
+          SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(node);
+          if (declarationStatement != NULL)
+             {
+               printf ("*** declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
+               ROSE_ASSERT(declarationStatement->get_parent() != NULL);
+               printf ("       --- declarationStatement->get_parent() = %p = %s \n",declarationStatement->get_parent(),declarationStatement->get_parent()->class_name().c_str());
+               printf ("       --- declarationStatement->get_firstNondefiningDeclaration() = %p \n",declarationStatement->get_firstNondefiningDeclaration());
+               printf ("       --- declarationStatement->get_definingDeclaration()         = %p \n",declarationStatement->get_definingDeclaration());
+             }
 
 #if 0
        // DQ (10/19/2012): This fails for a collection of C++ codes only:

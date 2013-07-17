@@ -23,10 +23,6 @@ DFAnalyzer<LatticeType>::DFAnalyzer()
 {}
 
 template<typename LatticeType>
-VariableIdMapping* DFAnalyzer<LatticeType>::getVariableIdMapping() {
-  return &_variableIdMapping;
-}
-template<typename LatticeType>
 void
 DFAnalyzer<LatticeType>::initialize(SgProject* root) {
   cout << "INIT: Creating VariableIdMapping."<<endl;
@@ -209,6 +205,16 @@ void DFAnalyzer<LatticeType>::attachResultsToAst() {
 	lab++;
   }
 
+}
+
+template<typename LatticeType>
+Labeler* DFAnalyzer<LatticeType>::getLabeler() {
+  return _labeler;
+}
+
+template<typename LatticeType>
+VariableIdMapping* DFAnalyzer<LatticeType>::getVariableIdMapping() {
+  return &_variableIdMapping;
 }
 
 #endif

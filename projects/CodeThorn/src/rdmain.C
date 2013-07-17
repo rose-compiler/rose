@@ -9,6 +9,7 @@
 #include "WorkList.h"
 #include "RDAnalyzer.h"
 #include "AttributeAnnotator.h"
+#include "DataDependenceVisualizer.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -25,25 +26,16 @@ int main(int argc, char* argv[]) {
   RoseAst completeast(root);
   SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
   rdAnalyzer->determineExtremalLabels(startFunRoot);
-
   rdAnalyzer->run();
   rdAnalyzer->attachResultsToAst();
+
+  DataDependenceVisualizer ddvis(rdAnalyzer->getLabeler(),
+								 rdAnalyzer->getVariableIdMapping());
+  ddvis.generateDot(root,"data_dependence_graph.dot");
+
   AnalysisResultAnnotator ara;
   ara.annotateAnalysisResultAttributesAsComments(root, "rd-analysis");
   backend(root);
-#if 0
-  // print results
-  int loc=0;
-  for(RDAnalyzer::iterator i=rdAnalyzer->begin();
-	  i!=rdAnalyzer->end();
-	  ++i) {
-	cout<<"At location "<<loc<<": ";
-	//(*i).toStream(cout,rdAnalyzer->getVariableIdMapping());
-	(*i).toStream(cout);
-	cout<<endl;
-	
-	loc++;
-  }
-#endif
+
   return 0;
 }
