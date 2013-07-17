@@ -1761,6 +1761,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
                printf ("C only mode ON \n");
           set_C_only(true);
 
+       // DQ (7/4/2013): Added default behavior to be C99 to make this consistant with EDG default 
+       // behavior (changed to be C99 in March of 2013), (but we need to discuss this).
+          set_C99_only(true);
+
        // I think that explicit specificiation of C mode should turn off C++ mode!
           set_Cxx_only(false);
 
@@ -1789,7 +1793,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   //
      set_C99_only(false);
      ROSE_ASSERT (get_C99_only() == false);
-     if ( CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",true) == true )
+  // DQ (7/4/2013): Added support for -std=c99 and -std=gnu99 options to specify C99 behavior.
+  // if ( CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",true) == true )
+     if ( (CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",true) == true) || 
+          (CommandlineProcessing::isOption(argv,"-std=","(c99|gnu99)",true) == true) )
         {
           if ( SgProject::get_verbose() >= 1 )
                printf ("C99 mode ON \n");
@@ -3281,6 +3288,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         }
 #endif
 
+#if 0
 // DQ (7/3/2013): This is a work around to support a bug in EDG 4.7 which causes test2013_246.C to fail (boost example code).
 #if __GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ > 3 || (__GNUC_MINOR__ == 3 && __GNUC_PATCHLEVEL__ >= 0)))
   // DQ (7/3/2013): For this to let EDG think we have a GNU 4.2 compiler.
@@ -3291,6 +3299,9 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
 //  DQ (7/3/2013): This macro is used in rose_edg_required_macros_and_functions.h.in (temporary work about for EDG 4.7).
 #define LIE_ABOUT_GNU_VERSION_TO_EDG
+#endif
+#else
+//   printf ("In SgFile::build_EDG_CommandLine(): TURNED OFF MACRO LIE_ABOUT_GNU_VERSION_TO_EDG \n");
 #endif
 
   // const char* boostPath[] = ROSE_BOOST_PATH;
@@ -3345,6 +3356,10 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      ROSE_ASSERT(false);
 #endif
 
+#if 0
+     commandLine.push_back("--dump_configuration");
+#endif
+
   // DQ (11/1/2011): This is not enough to support C++ code (e.g. "limits" header file).
 
   // JJW (12/11/2008):  add --edg_base_dir as a new ROSE-set flag
@@ -3366,10 +3381,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
         std::string edg_version(sstream.str());
 
-        commandLine.push_back(
-            findRoseSupportPathFromSource(
-                "src/frontend/CxxFrontend/EDG/EDG_" + edg_version + "/lib",
-                "share"));
+     // DQ (7/11/2013): Had to put this back after adding the more macros from rose_host_envir.h to defined.h.rose.
+     // DQ (7/10/2013): base lib was configured to be the "src/frontend/CxxFrontend/EDG/EDG_" + edg_version 
+     // (maybe it should be "src/frontend/CxxFrontend/EDG/EDG_" + edg_version + "/lib").
+     // commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_" + edg_version + "/lib","share"));
+     // commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_" + edg_version,"share"));
+        commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_" + edg_version + "/lib","share"));
     }
 
 

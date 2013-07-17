@@ -995,7 +995,15 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                            // Liao 6/6/2008  Set the newly introduced p_UPC_only flag.
                               if (CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true)
+                                 {
                                    file->set_UPC_only(true);
+                                 }
+                                else
+                                 {
+                                // DQ (7/4/2013): Added default behavior to be C99 to make this consistant with EDG default 
+                                // behavior (changed to be C99 in March of 2013), (but we need to discuss this).
+                                   file->set_C99_only(true);
+                                 }
 
                            // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
                            // Note that file->get_requires_C_preprocessor() should be false.
