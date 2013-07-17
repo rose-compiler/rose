@@ -37,7 +37,6 @@ void set_union(const VariableIdSet& set1, const VariableIdSet& set2, VariableIdS
       rset.insert(rit, *it1); ++it1; ++it2; ++rit;
     }
   }
-  ROSE_ASSERT(rset.size() == set2.size() + set1.size());
 }
 
 /*************************************************
@@ -273,6 +272,8 @@ VariableIdSet FlowInsensitivePointerAnalysis::getMemModByPointer()
   //                       arrayTypeSet.begin(), arrayTypeSet.end(),
   //                       unionSet.begin());
 
+  // we can perhaps cache this for efficiency
+  // to answer queries for multiple dereferencing queries
   set_union(addrTakenSet, arrayTypeSet, unionSet);
 
   return unionSet;

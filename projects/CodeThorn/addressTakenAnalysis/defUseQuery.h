@@ -54,9 +54,11 @@ class ExprVisitorPattern : public ROSE_VisitorPatternDefaultBase
 {
   FlowInsensitivePointerAnalysis& fipa;
   DefUseMemObj dumo;
+  // if set then we are processing an expression that modifies memory
+  bool isModExpr;
 
 public:
-  ExprVisitorPattern(FlowInsensitivePointerAnalysis& _fipa, DefUseMemObj _dumo);
+  ExprVisitorPattern(FlowInsensitivePointerAnalysis& _fipa, DefUseMemObj _dumo, bool isModExpr);
   // lhs of assignment operator are always lvalues
   // process them 
   void visit(SgAssignOp* sgn);
@@ -83,9 +85,9 @@ class LvalueVisitorPattern : public ROSE_VisitorPatternDefaultBase
   FlowInsensitivePointerAnalysis& fipa;
   VariableIdMapping& vidm;
   DefUseMemObj dumo;
-  bool isOnLHS;
+  bool isModExpr;
 public:
-  LvalueVisitorPattern(FlowInsensitivePointerAnalysis& _fipa, VariableIdMapping& _vidm, DefUseMemObj _dumo, bool _isOnLHS);
+  LvalueVisitorPattern(FlowInsensitivePointerAnalysis& _fipa, VariableIdMapping& _vidm, DefUseMemObj _dumo, bool _isModExpr);
   void visit(SgVarRefExp* sgn);
   void visit(SgPntrArrRefExp* sgn);
   void visit(SgPointerDerefExp* sgn);
@@ -105,21 +107,17 @@ public:
 // potentially modify everything
 DefUseMemObj getDefUseMemObj(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa);
 
-// breaks the expression based on '=' and calls the appropriate
-// functions for LHS and RHS
-DefUseMemObj getDefUseMemObj_rec(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa, DefUseMemObj dumo);
+// internal implementation
+// @sgn: root node
+// @fipa: required to answer dereferencing queries
+// @dumo: the defuse object that will be build
+// @isModExpr: set to true if the expression is modifying a memory location
+DefUseMemObj getDefUseMemObj_rec(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa, DefUseMemObj dumo, bool isModExpr);
 
 // used to process the lhs of assignment operator
 // invokes a visitor pattern and adds the modified variables
 // to def_set and used variables to use_set of dumo object
-DefUseMemObj getDefUseMemObjLHS(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa, DefUseMemObj dumo);
-
-// used to process the rhs of assignment operator
-// invokes a visitor pattern that adds used variables
-// to use_set and the modified variables such as sideffects
-// through expressions to def_set of dumo object
-DefUseMemObj getDefUseMemObjRHS(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa, DefUseMemObj dumo);
-
+DefUseMemObj getDefUseMemObjLvalue(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa, DefUseMemObj dumo, bool isModExpr);
 
 #endif
 
