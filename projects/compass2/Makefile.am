@@ -68,7 +68,6 @@ bin_compass2_SOURCES=\
 bin_compass2_LDADD=\
 	libcompass2.la \
 	bin/checkers/dead_function/libdeadfunction.la \
-	bin/checkers/default_argument/libdefaultargument.la \
 	bin/checkers/floating_point_exact_comparison/libfloatingpointexactcomparison.la \
 	bin/checkers/function_pointer/libfunctionpointer.la \
 	bin/checkers/function_prototype/libfunctionprototype.la \
@@ -94,6 +93,7 @@ bin_compass2_LDADD=\
 	bin/checkers/explicit_test_for_non_boolean_value/libexplicittestfornonbooleanvalue.la \
 	bin/checkers/byte_by_byte_structure_comparison/libbytebybytestructurecomparison.la \
 	bin/checkers/size_of_pointer/libsizeofpointer.la \
+	bin/checkers/default_argument/libdefaultargument.la \
 	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS) \
@@ -111,6 +111,7 @@ bin_compass2_LDADD=\
 # ------------------------------------------------------------------------------
 
 noinst_LTLIBRARIES=\
+	bin/checkers/default_argument/libdefaultargument.la \
 	bin/checkers/size_of_pointer/libsizeofpointer.la \
 	bin/checkers/byte_by_byte_structure_comparison/libbytebybytestructurecomparison.la \
 	bin/checkers/explicit_test_for_non_boolean_value/libexplicittestfornonbooleanvalue.la \
@@ -128,7 +129,6 @@ noinst_LTLIBRARIES=\
 	bin/checkers/no_rand/libnorand.la \
 	bin/checkers/no_goto/libnogoto.la \
 	bin/checkers/dead_function/libdeadfunction.la \
-	bin/checkers/default_argument/libdefaultargument.la \
 	bin/checkers/floating_point_exact_comparison/libfloatingpointexactcomparison.la \
 	bin/checkers/function_pointer/libfunctionpointer.la \
 	bin/checkers/function_prototype/libfunctionprototype.la \
@@ -143,9 +143,6 @@ bin_checkers_dead_function_libdeadfunction_la_SOURCES=\
 
 bin_checkers_floating_point_exact_comparison_libfloatingpointexactcomparison_la_SOURCES=\
   bin/checkers/floating_point_exact_comparison/floating_point_exact_comparison.cpp
-
-bin_checkers_default_argument_libdefaultargument_la_SOURCES=\
-	bin/checkers/default_argument/default_argument.cpp
 
 bin_checkers_function_pointer_libfunctionpointer_la_SOURCES=\
 	bin/checkers/function_pointer/function_pointer.cpp
@@ -215,6 +212,9 @@ bin_checkers_byte_by_byte_structure_comparison_libbytebybytestructurecomparison_
 
 bin_checkers_size_of_pointer_libsizeofpointer_la_SOURCES=\
 	bin/checkers/size_of_pointer/size_of_pointer.cpp
+
+bin_checkers_default_argument_libdefaultargument_la_SOURCES=\
+	bin/checkers/default_argument/default_argument.cpp
 
 #PLACEHOLDER
 
