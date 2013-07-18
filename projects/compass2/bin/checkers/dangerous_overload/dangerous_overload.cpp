@@ -107,7 +107,7 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
           string name = decl->get_name().getString();
           if (name == "operator&" || name == "operator&&" || name == "operator||" || name == "operator,")
             {
-              output->addOutput(new CompassAnalyses::NoOverloadAmpersand::CheckerOutput(decl));
+              output->addOutput(new CompassAnalyses::DangerousOverload::CheckerOutput(decl));
             }
         }
   }

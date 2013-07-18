@@ -80,7 +80,6 @@ bin_compass2_LDADD=\
 	bin/checkers/no_rand/libnorand.la \
 	bin/checkers/boolean_is_has/libbooleanishas.la \
 	bin/checkers/global_variables/libglobalvariables.la \
-	bin/checkers/no_overload_ampersand/libnooverloadampersand.la \
 	bin/checkers/magic_number/libmagicnumber.la \
 	bin/checkers/allocate_and_free_in_the_same_module/liballocateandfreeinthesamemodule.la \
 	bin/checkers/forbidden_functions/libforbiddenfunctions.la \
@@ -128,7 +127,6 @@ noinst_LTLIBRARIES=\
 	bin/checkers/forbidden_functions/libforbiddenfunctions.la \
 	bin/checkers/allocate_and_free_in_the_same_module/liballocateandfreeinthesamemodule.la \
 	bin/checkers/magic_number/libmagicnumber.la \
-	bin/checkers/no_overload_ampersand/libnooverloadampersand.la \
 	bin/checkers/global_variables/libglobalvariables.la \
 	bin/checkers/boolean_is_has/libbooleanishas.la \
 	bin/checkers/no_rand/libnorand.la \
@@ -177,9 +175,6 @@ bin_checkers_boolean_is_has_libbooleanishas_la_SOURCES=\
 
 bin_checkers_global_variables_libglobalvariables_la_SOURCES=\
 	bin/checkers/global_variables/global_variables.cpp
-
-bin_checkers_no_overload_ampersand_libnooverloadampersand_la_SOURCES=\
-	bin/checkers/no_overload_ampersand/no_overload_ampersand.cpp
 
 bin_checkers_magic_number_libmagicnumber_la_SOURCES=\
 	bin/checkers/magic_number/magic_number.cpp

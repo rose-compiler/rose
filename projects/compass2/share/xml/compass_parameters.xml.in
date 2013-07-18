@@ -22,7 +22,6 @@
     <parameter name="enabled_checker">noRand</parameter>
     <parameter name="enabled_checker">booleanIsHas</parameter>
     <parameter name="enabled_checker">globalVariables</parameter>
-    <parameter name="enabled_checker">noOverloadAmpersand</parameter>
     <parameter name="enabled_checker">magicNumber</parameter>
     <parameter name="enabled_checker">allocateAndFreeInTheSameModule</parameter>
     <parameter name="enabled_checker">forbiddenFunctions</parameter>
