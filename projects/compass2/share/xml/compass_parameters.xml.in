@@ -36,6 +36,7 @@
     <parameter name="enabled_checker">sizeOfPointer</parameter>
     <parameter name="enabled_checker">defaultArgument</parameter>
     <parameter name="enabled_checker">functionPrototype</parameter>
+    <parameter name="enabled_checker">doNotDeleteThis</parameter>
     <!--PLACEHOLDER-->
   </general>
 
