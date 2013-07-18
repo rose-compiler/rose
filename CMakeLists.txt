@@ -382,23 +382,6 @@ if (enable-cuda)
   set(ROSE_BUILD_CUDA_LANGUAGE_SUPPORT 1)
 endif()
 
-option(enable-fortran "Enable Fortran support in ROSE." ON)
-if (enable-fortran)
-  set(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT 1)
-  enable_language(Fortran)
-  # check if gfortran was found
-  if(CMAKE_COMPILER_IS_GNUG77)
-    set(USE_GFORTRAN_IN_ROSE 1)
-    # query gfortran version
-    execute_process(
-      COMMAND ${CMAKE_Fortran_COMPILER} -dumpversion
-      OUTPUT_VARIABLE gfortran_version_output)
-    string(REGEX MATCH "([0-9]+\\.[0-9]+\\.[0-9]+)"
-      gfortran_version "${gfortran_version_output}")
-    message(STATUS "gfortran version ${gfortran_version} detected")
-  endif()
-endif()
-
 option(enable-java "Enable Java support in ROSE." ON)
 if (enable-java)
   message(Status "Looking for JAVA ...")
@@ -416,6 +399,26 @@ if (enable-opencl)
   find_path(with-opencl-inc NAMES cl.h
     DOC "For OpenCL runtime library")
   find_library(with-opencl-lib OpenCL DOC "OpenCL library for runtime examples")
+endif()
+
+option(enable-fortran "Enable Fortran support in ROSE." ON)
+if (enable-fortran)
+  if (NOT enable-java)
+    message(FATAL_ERROR "Fortran support also requires Java support.  Either turn enable-java ON, or enable-fortran OFF")
+  endif()
+  set(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT 1)
+  enable_language(Fortran)
+  # check if gfortran was found
+  if(CMAKE_COMPILER_IS_GNUG77)
+    set(USE_GFORTRAN_IN_ROSE 1)
+    # query gfortran version
+    execute_process(
+      COMMAND ${CMAKE_Fortran_COMPILER} -dumpversion
+      OUTPUT_VARIABLE gfortran_version_output)
+    string(REGEX MATCH "([0-9]+\\.[0-9]+\\.[0-9]+)"
+      gfortran_version "${gfortran_version_output}")
+    message(STATUS "gfortran version ${gfortran_version} detected")
+  endif()
 endif()
 
 option(enable-php "Enable PHP support in ROSE." ON)
