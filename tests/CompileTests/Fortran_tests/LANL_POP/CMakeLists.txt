@@ -3,11 +3,10 @@ set(ROSE_FLAGS -rose:verbose 0)
 function(LANL_POP_test file_to_compile)
   add_test(
     NAME ${file_to_compile}
-    COMMAND testAnalysis ${ROSE_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND testAnalysis ${ROSE_FLAGS}
+            -I${CMAKE_CURRENT_SOURCE_DIR} -I${CMAKE_CURRENT_BINARY_DIR}
             -c ${CMAKE_CURRENT_SOURCE_DIR}/${file_to_compile})
 endfunction()
-
-# Main file to compile (includes all other files as modules)
 
 set(files_to_compile
   advection.F90
