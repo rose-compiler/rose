@@ -70,6 +70,10 @@ void fixupAstDeclarationScope( SgNode* node )
 
           i++;
         }
+
+#if 0
+     printf ("Leaving fixupAstDeclarationScope() node = %p = %s \n",node,node->class_name().c_str());
+#endif
    }
 
 void
