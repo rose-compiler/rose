@@ -47,6 +47,7 @@ extern const Compass::Checker* const byteByByteStructureComparisonChecker;
 extern const Compass::Checker* const sizeOfPointerChecker;
 extern const Compass::Checker* const defaultArgumentChecker;
 extern const Compass::Checker* const functionPrototypeChecker;
+extern const Compass::Checker* const doNotDeleteThisChecker;
 //PLACEHOLDER1
 /*-----------------------------------------------------------------------------
  * Main program
@@ -185,6 +186,8 @@ int main (int argc, char** argv)
                 traversals.push_back (defaultArgumentChecker);
             else if ("functionPrototype" == checker_name)
                 traversals.push_back (functionPrototypeChecker);
+            else if ("doNotDeleteThis" == checker_name)
+                traversals.push_back (doNotDeleteThisChecker);
             //PLACEHOLDER2
             else
             {
