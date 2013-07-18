@@ -37,6 +37,7 @@
     <parameter name="enabled_checker">defaultArgument</parameter>
     <parameter name="enabled_checker">functionPrototype</parameter>
     <parameter name="enabled_checker">doNotDeleteThis</parameter>
+    <parameter name="enabled_checker">dangerousOverload</parameter>
     <!--PLACEHOLDER-->
   </general>
 

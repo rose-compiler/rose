@@ -99,6 +99,7 @@ bin_compass2_LDADD=\
 	bin/checkers/default_argument/libdefaultargument.la \
 	bin/checkers/function_prototype/libfunctionprototype.la \
 	bin/checkers/do_not_delete_this/libdonotdeletethis.la \
+	bin/checkers/dangerous_overload/libdangerousoverload.la \
 	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS) \
@@ -117,6 +118,7 @@ bin_compass2_LDADD=\
 # ------------------------------------------------------------------------------
 
 noinst_LTLIBRARIES=\
+	bin/checkers/dangerous_overload/libdangerousoverload.la \
 	bin/checkers/do_not_delete_this/libdonotdeletethis.la \
 	bin/checkers/function_prototype/libfunctionprototype.la \
 	bin/checkers/default_argument/libdefaultargument.la \
@@ -225,6 +227,9 @@ bin_checkers_function_prototype_libfunctionprototype_la_SOURCES=\
 
 bin_checkers_do_not_delete_this_libdonotdeletethis_la_SOURCES=\
 	bin/checkers/do_not_delete_this/do_not_delete_this.cpp
+
+bin_checkers_dangerous_overload_libdangerousoverload_la_SOURCES=\
+	bin/checkers/dangerous_overload/dangerous_overload.cpp
 
 #PLACEHOLDER
 
