@@ -12,7 +12,6 @@
     </parameter>
     <parameter name="enabled_checker">deadFunction</parameter>
     <parameter name="enabled_checker">functionPointer</parameter>
-    <parameter name="enabled_checker">functionPrototype</parameter>
     <parameter name="enabled_checker">functionWithMultipleReturns</parameter>
     <parameter name="enabled_checker">keywordMacro</parameter>
     <parameter name="enabled_checker">keywordMacros</parameter>
@@ -36,6 +35,7 @@
     <parameter name="enabled_checker">byteByByteStructureComparison</parameter>
     <parameter name="enabled_checker">sizeOfPointer</parameter>
     <parameter name="enabled_checker">defaultArgument</parameter>
+    <parameter name="enabled_checker">functionPrototype</parameter>
     <!--PLACEHOLDER-->
   </general>
 
