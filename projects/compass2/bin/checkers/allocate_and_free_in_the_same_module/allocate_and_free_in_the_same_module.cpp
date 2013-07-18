@@ -1,7 +1,7 @@
 /**
  * \file allocate_and_free_in_the_same_module.cpp
  * \author Sam Kelly
- * \date Tuesday, July 9, 2013
+ * \date Tuesday, July 18, 2013
  */
 
 #include "rose.h"
@@ -69,60 +69,69 @@ bool IsNodeNotInUserLocation(const SgNode* node)
 #endif // COMPASS_ALLOCATE_AND_FREE_IN_THE_SAME_MODULE_H
 
 /*-----------------------------------------------------------------------------
- * Implementation
+ * Description
  *
- * 1. Performs an AST matching search for all SgAssignOp's, SgFunctionRefExp's
- *    and SgAssignInitializer's.
+ * This checker checks that for each malloc() or calloc() call, there exists
+ * at least one place in the source code where (it has been determined) a
+ * variable that COULD be holding the memory address originally returned by
+ * the malloc() or calloc() call has been freed. Thus cascading assignments
+ * of variables, even across function and scope boundaries, are supported.
+ * In general, when this checker says that a free is missing, this is a
+ * very reliable result, however there are certain scenarios where this
+ * checker will NOT detect that a free is missing. This is especially true
+ * in cases where a variable is used to house multiple dynamically allocated
+ * objects over the course of its lifetime. This is because this checker
+ * does not take execution order into account, so once a variable has been
+ * marked as free, this checker will not be able to figure out that later
+ * in the code it houses an additional malloc that must be freed, because
+ * this checker has no notion of "later in the code".
  *
- * 2. For the SgAssignOps and SgAssignInitializers, examines the original
- *    variable, and the value being assigned to it, and checks to see if
- *    a malloc() or calloc() function call is being made in the value
- *    being assigned.
  *
- * 3. Examines all pointer assignment statements, to detect scenarios where
- *    a pointer value is passed on to another pointer, so the original pointer
- *    could then be freed from the second pointer. An adjacency list is
- *    constructed (using the var_mappings hash table) to keep track of
- *    this.
+ * The verbose output provides some very useful debugging information,
+ * including the dependency graph used to resolve relationships between
+ * variables and across function and scope boundaries. The verbose output
+ * also indicates the checker's degree oconfidence that variables it has
+ * marked as free are in fact free (values of "PROBABLY" and
+ * "ALMOST DEFINITELY" are possible.
  *
- * 4. If a malloc() or calloc() is found, marks the associated symbol table
- *    reference in the var_free_status hash table as false, meaning that
- *    symbol table reference has not been freed yet.
  *
- * 5. For the SgFunctionRefExp's, checks to see if a free() call is being
- *    made, and if so, adds the associated symbol table entry to the
- *    freed hash set.
+ * This checker uses a custom algorithm written by Sam Kelly
+ * (kelly64@llnl.gov or kellys@dickinson.edu), and is able to provide
+ * the maximal amount of information possible about the lifetime of
+ * each dynamic memory allocation WITHOUT relying on flow analysis or
+ * other slower, more advanced techniques that are able to take into
+ * account the program execution order. The basic concept of this
+ * algorithm is to generate an adjacency list that tracks all
+ * assignment statements and chains of assignments that originally
+ * resulted from a variable or function return statement containing
+ * a malloc or calloc call. Thus for each malloc or calloc call in
+ * the program, we generate a list of variables where a free() call
+ * on any of these variables probably indicates that the original
+ * malloc or calloc has been successfully freed.
  *
- * 6. Iterates through the unfreed vector. For each variable, we check to see
- *    if it is in the free hash set (if so we mark its var_free_status as true).
- *    Then we iterate over all variables that might share pointer values with
- *    our current variable by looking at our current variable's entry in the
- *    var_mappings hash table (the inner data type is a hash set). If any of
- *    these is marked as freed in the var_free_status hash table, then we mark
- *    the original variable as also freed.
  *
- *    Structure
- *    -----------------------------------------------------------------------
- *    This checker was organized in such a way that only one global match
- *    on the entire AST is required. Thus the outer-most for-each loop
- *    is actually tri-purpose: it is responsible for handling SgAssignOp's,
- *    SgAssignInitializer's, and SgFunctionRefExp's, which can make the code
- *    a little bit confusing to follow.
+ * NOTE ON TERMINOLOGY: the following diagram may be helpful in
+ * understanding what is meant by the inner/outer function var
+ * mappings, because this is somewhat non obvious:
  *
- *    Technical Considerations:
- *    -----------------------------------------------------------------------
- *    This approach will catch the vast majority of cases where a programmer
- *    fails to free a malloc()'ed variable. Because of the nature of this
- *    approach, there shouldn't be any false positives (the checker should
- *    never report a failure that is not in fact a legitimate failure),
- *    however, there is one known (and very rare) scenario where this approach
- *    will miss. For now, this checker also does not properly handle cases
- *    where a malloc or free occurs during a separate function call, or in
- *    a different scope.
+ * int *function1(int *var1)
+ * {
+ *    return var1;
+ * }
+ *
+ * var2 = function(malloc(..));
+ *
+ * In the above code, the SgSymbol of var1 is the INNER VAR,
+ * and the SgSymbol of var2 is the OUTER VAR, thus inner/outer
+ * mappings are used when we are trying to trace a variable's
+ * progress as it moves from the inside of a function, outside
+ * through the return statement
  *---------------------------------------------------------------------------*/
 
-// TODO: add additional processing to detect if malloc'ed pointers are ever
-//       assigned to different variables and then freed from those variables
+//FIXME: doesn't correctly resolve container variable references
+// fix this in all places that SgVarRefExp's are handled
+// should always be an AST match, and should always take
+// LAST item in the match
 
 namespace CompassAnalyses
 {
@@ -142,45 +151,12 @@ CheckerOutput::CheckerOutput(SgNode *const node)
                       ::allocateAndFreeInTheSameModuleChecker->checkerName,
                        ::allocateAndFreeInTheSameModuleChecker->shortDescription) {}
 
-static SgSymbol* getVarSymbolFromForwardDeclaration(SgInitializedName* var)
-{
-  SgFunctionParameterList *param_list = isSgFunctionParameterList(var->get_parent());
-  if(param_list == NULL)
-  {
-    std::cout << "NULL 1" << std::endl;
-    return NULL;
-  }
-  SgFunctionDeclaration *func_dec = isSgFunctionDeclaration(param_list->get_parent());
-  if(func_dec == NULL)
-  {
-    std::cout << "NULL 2" << std::endl;
-    return NULL;
-  }
-  SgFunctionDefinition *func_def = isSgFunctionDefinition(func_dec->get_definition());
-  std::cout << func_dec->get_name() <<  ":" << func_dec->get_definition() << std::endl;
-  if(func_def == NULL)
-  {
-
-    std::cout << "NULL 3" << std::endl;
-    return NULL;
-  }
-  AstMatching matcher;
-  MatchResult matches = matcher.performMatching("$v=SgVarRefExp", func_def);
-  BOOST_FOREACH(SingleMatchVarBindings match, matches)
-  {
-    SgVarRefExp *var_ref = (SgVarRefExp *)match["$v"];
-    if(var_ref->get_symbol()->get_declaration() == var)
-    {
-      return var_ref->get_symbol();
-    }
-  }
-  std::cout << "NULL 4" << std::endl;
-  return NULL;
-}
 
 static void
 run(Compass::Parameters parameters, Compass::OutputObject* output)
 {
+  bool verbose = false;
+
   // We only care about source code in the user's space, not,
   // for example, Boost or system files.
   string target_directory =
@@ -193,16 +169,6 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
 
   SgNode* root_node = (SgNode*) sageProject;
   ROSE_ASSERT(root_node != NULL);
-/*
-  AstMatching test_matcher;
-  MatchResult test_matches = test_matcher.performMatching("$r=SgInitializedName", root_node);
-  BOOST_FOREACH(SingleMatchVarBindings match, test_matches)
-  {
-    if(getVarSymbolFromForwardDeclaration((SgInitializedName *)match["$r"]) != NULL)
-    {
-      std::cout << "SUCCESS!" << std::endl;
-    }
-  }*/
 
   // maps variables in the symbol table to a boolean
   // determining whether that variable has been freed
@@ -223,6 +189,21 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
   // symbol table
   std::vector<SgSymbol*> unfreed;
 
+  // tracks function calls that explicitly return a malloc (e.g. return malloc()...)
+  boost::unordered_set<SgFunctionCallExp*> explicit_malloc_func_calls;
+
+  // keeps track of the inner variable being returned by a pointer function
+  // e.g. return var1; appearing in the function func1 would map func1 to var1
+  boost::unordered_map<SgFunctionCallExp*, SgSymbol*> func_inner_var_mappings;
+
+  // keeps track of the outer variable that receives the value of a pointer function
+  // e.g. var2 = func1(); would map func1 to var2
+  boost::unordered_map<SgFunctionCallExp*, SgSymbol*> func_outer_var_mappings;
+
+  // keeps a list of all functions added to either of the above two hash maps
+  boost::unordered_set<SgFunctionCallExp*> tracked_functions;
+
+
   // for each pointer variable, tracks the list of all other pointer
   // variables in the program that are ever set to the value (and are thus
   // associated with) this pointer variable
@@ -232,61 +213,147 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
   VariableIdMapping var_ids;
   var_ids.computeVariableSymbolMapping(sageProject);
 
-  boost::unordered_map<SgInitializedName*, SgSymbol*> param_syms;
-  boost::unordered_set<SgSymbol*> seen_syms;
-
-  AstMatching sym_matcher;
-  MatchResult sym_matches = sym_matcher.performMatching("$s=SgSymbol", root_node);
-  BOOST_FOREACH(SingleMatchVarBindings match, sym_matches)
+  // we have to do SgFunctionCallExp's first because the inner/outer
+  // variable mappings require this to be pre-processed
+  AstMatching func_call_matcher;
+  MatchResult func_call_matches = func_call_matcher
+      .performMatching("$f=SgFunctionCallExp", root_node);
+  BOOST_FOREACH(SingleMatchVarBindings match, func_call_matches)
   {
-    SgSymbol *sym = (SgSymbol*)match["$s"];
-    seen_syms.insert(sym);
-  }
-
-
-
-  AstMatching param_matcher;
-  MatchResult param_matches = param_matcher.performMatching("$p=SgInitializedName", root_node);
-  BOOST_FOREACH(SingleMatchVarBindings match, param_matches)
-  {
-    SgInitializedName *param = (SgInitializedName *)match["$p"];
-    //std::cout << param->get_name() << " = " << param->get_scope() << std::endl;
-    SgFunctionParameterList *param_lst = isSgFunctionParameterList(param->get_parent());
-    if(param_lst == NULL) continue;
-    SgFunctionDeclaration *func_dec = isSgFunctionDeclaration(param_lst->get_parent());
-    if(func_dec == NULL) continue;
-    SgFunctionDefinition *func_def = isSgFunctionDefinition(func_dec->get_definition());
-    if(func_def == NULL) continue;
-    AstMatching matcher;
-    VariableId id1 = var_ids.variableId(param);
-
-    MatchResult matches = matcher.performMatching("$v=SgVarRefExp", func_def);
-    BOOST_FOREACH(SingleMatchVarBindings match, matches)
+    SgFunctionCallExp *func_call = (SgFunctionCallExp *)match["$f"];
+    SgFunctionRefExp *func_ref = isSgFunctionRefExp(func_call->get_traversalSuccessorByIndex(0));
+    std::string func_str = func_ref->get_symbol()->get_name().getString();
+    if(func_str.compare("free") == 0)
     {
-      SgVarRefExp *var_ref = (SgVarRefExp *)match["$v"];
-
-      if(!SageInterface::isPointerType(var_ref->get_type())) continue;
-      if(var_ref->get_symbol()->get_declaration() == param)
+      AstMatching var_matcher;
+      SgVarRefExp *var_ref = isSgVarRefExp(var_matcher
+                                           .performMatching("$r=SgVarRefExp", func_call)
+                                           .back()["$r"]);
+      if(var_ref)
       {
-        //return var_ref->get_symbol();
-        param_syms[param] = var_ref->get_symbol();
-        //std::cout << "PARAM SYMS: " << param->get_name() << " (" << param << ") -> " << var_ref->get_symbol() << std::endl;
-      } else {
-        //std::cout << " DEAD SYMS: " << param->get_name() << " (" << param << ") -> " << var_ref->get_symbol() << std::endl;
+        SgSymbol *var_ref_symbol = var_ref->get_symbol();
+        if(verbose)
+          std::cout << "FREE FOUND ON:" << var_ref_symbol->get_name() << std::endl;
+        freed.insert(var_ref_symbol);
+      }
+    } else {
+
+      SgExprListExp *expr_list = func_call->get_args();
+      SgFunctionDefinition *func_def = SgNodeHelper::determineFunctionDefinition(func_call);
+      if(func_def == NULL) continue;
+      SgFunctionDeclaration *func_dec = func_def->get_declaration();
+      if(func_dec == NULL) continue;
+      SgFunctionParameterList *func_params = func_dec->get_parameterList();
+      for(int i = 0; i < expr_list->get_numberOfTraversalSuccessors(); i++)
+      {
+        SgNode* param = expr_list->get_traversalSuccessorByIndex(i);
+        SgInitializedName* func_param =
+            isSgInitializedName(func_params->get_traversalSuccessorByIndex(i));
+
+        VariableId func_param_id = var_ids.variableId(func_param);
+        SgSymbol *func_param_sym = var_ids.getSymbol(func_param_id);
+
+        ROSE_ASSERT(func_param != NULL);
+        ROSE_ASSERT(func_param_sym != NULL);
+
+        SgVarRefExp* param_var = isSgVarRefExp(param);
+        if(param_var != NULL)
+        {
+          SgSymbol *param_sym = param_var->get_symbol();
+          // now we must add var mappings from the inner parameter of the function
+
+          if(var_mappings.find(param_sym) == var_mappings.end())
+          {
+            var_mappings_list.push_back(param_sym);
+            boost::unordered_set<SgSymbol*> set;
+            set.insert(func_param_sym);
+            var_mappings[param_sym] = set;
+          } else {
+            var_mappings[param_sym].insert(func_param_sym);
+          }
+
+        } else {
+          // handle the case of malloc() or calloc() being passed as a function parameter
+          AstMatching func_ref_matcher;
+          MatchResult found_func_matches =
+              func_ref_matcher.performMatching("$r=SgFunctionRefExp", param);
+          if(found_func_matches.size() > 0)
+          {
+            SgFunctionRefExp *found_func = isSgFunctionRefExp(
+                found_func_matches.front()["$r"]);
+            std::string found_func_str = found_func->get_symbol()
+                                             ->get_name().getString();
+            if(found_func_str.compare("malloc") == 0
+                || found_func_str.compare("calloc" == 0))
+            {
+              // found a malloc call within a function parameter
+              // we must map this to whatever variable it would be assigned in the
+              // parent function
+              var_free_status[func_param_sym] = false;
+              malloc_nodes[func_param_sym] = found_func->get_symbol();
+              unfreed.push_back(func_param_sym);
+            }
+          }
+        }
+      }
+
+      // figure out if a malloc is returned (directly) by this function
+      AstMatching return_matcher;
+      MatchResult return_matches = return_matcher
+          .performMatching("$r=SgReturnStmt", func_def);
+      BOOST_FOREACH(SingleMatchVarBindings return_match, return_matches)
+      {
+        SgReturnStmt *func_ret = (SgReturnStmt *)return_match["$r"];
+
+        // map MALLOCS & CALLOC out
+        AstMatching return_func_matcher;
+        MatchResult return_func_matches = return_func_matcher
+            .performMatching("$f=SgFunctionRefExp", func_ret);
+        BOOST_FOREACH(SingleMatchVarBindings return_func_match, return_func_matches)
+        {
+          SgFunctionRefExp *return_func_ref = (SgFunctionRefExp *)return_func_match["$f"];
+          SgFunctionCallExp *return_func_call = isSgFunctionCallExp(return_func_ref->get_parent());
+          if(return_func_call == NULL) continue;
+          std::string return_func_str = return_func_ref->get_symbol()->get_name().getString();
+
+          if(return_func_str.compare("malloc") == 0 || return_func_str.compare("calloc") == 0)
+          {
+            if(verbose)
+              std::cout << "MALLOC FOUND ON: " << func_str << " return statement" << std::endl;
+            explicit_malloc_func_calls.insert(func_call);
+            // once we have one malloc we can ignore the rest of the return statement
+            break;
+          }
+        }
+
+        // do inner var mappings
+        AstMatching return_var_matcher;
+        MatchResult return_var_matches = return_var_matcher
+            .performMatching("$v=SgVarRefExp", func_ret);
+        BOOST_FOREACH(SingleMatchVarBindings return_var_match, return_var_matches)
+        {
+          SgVarRefExp *return_var = (SgVarRefExp *)return_var_match["$v"];
+          if(!SageInterface::isPointerType(return_var->get_type())) continue;
+          SgSymbol *return_var_sym = return_var->get_symbol();
+          if(return_var_sym == NULL) continue;
+          func_inner_var_mappings[func_call] = return_var_sym;
+          tracked_functions.insert(func_call);
+          if(verbose)
+            std::cout << "INNER VAR MAPPING: " << func_str << " returns " << return_var_sym->get_name() << std::endl;
+        }
       }
     }
   }
 
   AstMatching main_matcher;
-  // do a global search for SgAssignOp's and SgFunctionRefExp's
+  // do a global search for SgAssignOp's
   MatchResult main_matches = main_matcher
-      .performMatching("$a=SgAssignOp|$f=SgFunctionRefExp|$i=SgAssignInitializer", root_node);
+      .performMatching("$a=SgAssignOp|$i=SgAssignInitializer", root_node);
 
   BOOST_FOREACH(SingleMatchVarBindings match, main_matches)
   {
     SgAssignOp *assign_op = isSgAssignOp(match["$a"]);
     SgAssignInitializer *assign_init = isSgAssignInitializer(match["$i"]);
-    SgFunctionRefExp *func_ref = isSgFunctionRefExp(match["$f"]);
 
     SgNode *assign_RHS = NULL;
     SgNode *assign_LHS = NULL;
@@ -302,11 +369,8 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
         // we will try to get the symbol from the parent
         SgInitializedName *var_name =
             isSgInitializedName(assign_init->get_parent());
-        if(var_name == NULL)
+        if(var_name != NULL)
         {
-          // skip if there is no SgInitializedName parent
-          continue;
-        } else {
           LHS_symbol = var_name->get_symbol_from_symbol_table();
           ROSE_ASSERT(LHS_symbol != NULL);
         }
@@ -336,15 +400,16 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
         ROSE_ASSERT(LHS_symbol != NULL);
       }
 
+      // ignore non pointer variables
+      if(!SageInterface::isPointerType(LHS_symbol->get_type())) continue;
+
       // build initial variable mappings
-      if(SageInterface::isPointerType(LHS_symbol->get_type())
-      && var_mappings.find(LHS_symbol) == var_mappings.end())
+      if(var_mappings.find(LHS_symbol) == var_mappings.end())
       {
         boost::unordered_set<SgSymbol*> new_set;
         var_mappings[LHS_symbol] = new_set;
         var_mappings_list.push_back(LHS_symbol);
       }
-
 
       // handle pointer->pointer assignments
       SgVarRefExp *RHS_var_ref = isSgVarRefExp(assign_RHS);
@@ -363,8 +428,7 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
         RHS_symbol = RHS_var_ref->get_symbol();
       }
       if(RHS_symbol != NULL && LHS_symbol != NULL && LHS_symbol != RHS_symbol
-          && SageInterface::isPointerType(RHS_symbol->get_type())
-          && SageInterface::isPointerType(LHS_symbol->get_type()))
+          && SageInterface::isPointerType(RHS_symbol->get_type()))
       {
 
         // defensive -- should never actually happen
@@ -378,115 +442,60 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
         var_mappings[RHS_symbol].insert(LHS_symbol);
       }
 
-
-      AstMatching malloc_matcher;
-      MatchResult malloc_matches = malloc_matcher
-          .performMatching("$m=SgFunctionRefExp", assign_RHS);
-
-      if(malloc_matches.size() > 0)
+      // we do a search for SgFunctionCallExp's on the RHS
+      // because it could be nested inside of a cast expression
+      AstMatching RHS_func_matcher;
+      MatchResult RHS_func_matches = RHS_func_matcher
+          .performMatching("$f=SgFunctionCallExp", assign_RHS);
+      BOOST_FOREACH(SingleMatchVarBindings RHS_func_match, RHS_func_matches)
       {
-        SgFunctionRefExp *matched_func_ref =
-            isSgFunctionRefExp(malloc_matches.front()["$m"]);
-        ROSE_ASSERT(matched_func_ref != NULL);
-
-        SgSymbol* symbol = matched_func_ref->get_symbol();
-        ROSE_ASSERT(symbol != NULL);
-
-        std::string func_str = symbol->get_name().getString();
+        // do outer var mappings
+        SgFunctionCallExp *func_call = (SgFunctionCallExp *)RHS_func_match["$f"];
+        std::string func_str = func_call->getAssociatedFunctionSymbol()->get_name();
+        // if the function is a malloc or a calloc or a function that is known
+        // to explicitly return a malloc or calloc
         if(func_str.compare("malloc") == 0 || func_str.compare("calloc") == 0)
         {
-          // mark LHS as not freed
           var_free_status[LHS_symbol] = false;
-          malloc_nodes[LHS_symbol] = matched_func_ref;
+          malloc_nodes[LHS_symbol] = func_call;
           unfreed.push_back(LHS_symbol);
+        } else {
+          if(verbose)
+            std::cout << "OUTER VAR MAPPING: " << func_call
+            ->getAssociatedFunctionSymbol()->get_name() << " maps to "
+            << LHS_symbol->get_name() << std::endl;
+          func_outer_var_mappings[func_call] = LHS_symbol;
+          tracked_functions.insert(func_call);
+          if(explicit_malloc_func_calls.find(func_call) != explicit_malloc_func_calls.end())
+          {
+            var_free_status[LHS_symbol] = false;
+            malloc_nodes[LHS_symbol] = func_call;
+            unfreed.push_back(LHS_symbol);
+          }
         }
-      } else {
-        continue;
       }
     }
-    else if(func_ref)
+  }
+
+  // process function var mappings (inner var -> return statement -> outer var)
+  for(boost::unordered_set<SgFunctionCallExp*>::iterator itr
+      = tracked_functions.begin();
+      itr != tracked_functions.end(); ++itr)
+  {
+    SgFunctionCallExp *func_call = (SgFunctionCallExp *)(*itr);
+    SgSymbol *inner_var = func_inner_var_mappings[func_call];
+    SgSymbol *outer_var = func_outer_var_mappings[func_call];
+    if(inner_var != NULL && outer_var != NULL)
     {
-      // handle SgFunctionRefExp
-      std::string func_str = func_ref->get_symbol()->get_name().getString();
-      SgFunctionCallExp* func_call = (SgFunctionCallExp*)func_ref->get_parent();
-      if(func_str.compare("free") == 0)
+      if(var_mappings.find(inner_var) == var_mappings.end())
       {
-        AstMatching var_matcher;
-        SgVarRefExp *var_ref = isSgVarRefExp(var_matcher
-                                             .performMatching("$r=SgVarRefExp", func_call)
-                                             .back()["$r"]);
-        if(var_ref)
-        {
-          SgSymbol *var_ref_symbol = var_ref->get_symbol();
-          //freed.push_back(var_ref_symbol);
-          freed.insert(var_ref_symbol);
-        }
+        var_mappings_list.push_back(inner_var);
+        boost::unordered_set<SgSymbol*> set;
+        set.insert(outer_var);
+        var_mappings[inner_var] = set;
       } else {
-
-        SgExprListExp *expr_list = func_call->get_args();
-
-        for(int i = 0; i < expr_list->get_numberOfTraversalSuccessors(); i++)
-        {
-          SgNode* param = expr_list->get_traversalSuccessorByIndex(i);
-
-          SgFunctionParameterList *func_params = func_call
-              ->getAssociatedFunctionDeclaration()->get_parameterList();
-          SgInitializedName* func_param =
-              isSgInitializedName(func_params->get_traversalSuccessorByIndex(i));
-
-         // std::cout << "sym:" << func_param->get_definition()->get_symbol_from_symbol_table() << std::endl;
-
-          //if(func_param == NULL) break;
-          //SgSymbol *func_param_sym = getVarSymbolFromForwardDeclaration(func_param);
-          //std::cout << "TRYING TO FIND MATCH FOR: " << func_param->get_name() << " (" << func_param << ")" << std::endl;
-          SgSymbol *func_param_sym = param_syms[func_param];
-          //SgSymbol *func_param_sym = func_param->get_definition()->get_symbol_from_symbol_table();
-          if(func_param_sym == NULL)
-          {
-            //std::cout <<" turned up NULL :(((" << std::endl;
-          }
-         // std::cout << func_param_sym << std::endl;
-          SgVarRefExp* param_var = isSgVarRefExp(param);
-          if(param_var != NULL)
-          {
-
-            // handles inter function mappings of variables here
-            SgSymbol *param_sym = param_var->get_symbol();
-            // now we must add var mappings from the inner parameter of the function
-            // to the original passed variable
-            //if(func_param_sym == param_sym) break;
-            //if(func_param_sym == NULL) std::cout << " OH NO " << std::endl;
-            var_mappings[param_sym].insert(func_param_sym);
-            //std::cout << func_param_sym << " = " << param_sym << std::endl;
-            //std::cout << func_param_sym->get_name() << " = " << param_sym->get_name() << std::endl;
-          } else {
-            //TODO: handle case of malloc being passed as function parameter
-            AstMatching func_ref_matcher;
-            MatchResult found_func_matches =
-                func_ref_matcher.performMatching("$r=SgFunctionRefExp", param);
-            if(found_func_matches.size() > 0)
-            {
-              SgFunctionRefExp *found_func = isSgFunctionRefExp(
-                  found_func_matches.front()["$r"]);
-              std::string found_func_str = found_func->get_symbol()
-                  ->get_name().getString();
-              //std::cout << "found function call in function param!" << std::endl;
-              if(found_func_str.compare("malloc") == 0)
-              {
-                // found a malloc call within a function parameter
-                // we must map this to whatever variable it would be assigned in the
-                // parent function
-                //var_free_status[func_param_sym] = false;
-                //malloc_nodes[func_param_sym] = found_func->get_symbol();
-                //unfreed.push_back(func_param_sym);
-
-              }
-            }
-          }
-        }
+        var_mappings[inner_var].insert(outer_var);
       }
-    } else {
-      //TODO: handle case of malloc in an SgReturnStmt
     }
   }
 
@@ -498,7 +507,8 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
     changed = false;
     BOOST_FOREACH(SgSymbol *key_sym, var_mappings_list)
     {
-      for(boost::unordered_set<SgSymbol*>::iterator itr = var_mappings[key_sym].begin();
+      for(boost::unordered_set<SgSymbol*>::iterator itr
+          = var_mappings[key_sym].begin();
           itr != var_mappings[key_sym].end(); ++itr)
       {
         SgSymbol* current = *itr;
@@ -517,36 +527,46 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
   } while(changed);
 
   // useful for debugging -- maps out variable dependency list
-  BOOST_FOREACH(SgSymbol *key_sym, var_mappings_list)
+  if(verbose)
   {
-    //std::string RHS_name = key_sym->get_name();
-    //std::cout << "RHS_NAME:" << RHS_name << std::endl;
-    for(boost::unordered_set<SgSymbol*>::iterator itr = var_mappings[key_sym].begin();
-        itr != var_mappings[key_sym].end(); ++itr)
+    BOOST_FOREACH(SgSymbol *key_sym, var_mappings_list)
     {
-      SgSymbol* val_sym = *itr;
-      //std::string LHS_name = val_sym->get_name();
-      //std::cout << " |--" << LHS_name << std::endl;
+      std::string RHS_name = key_sym->get_name();
+      std::cout << RHS_name << std::endl;
+      for(boost::unordered_set<SgSymbol*>::iterator itr
+          = var_mappings[key_sym].begin();
+          itr != var_mappings[key_sym].end(); ++itr)
+      {
+        SgSymbol* val_sym = *itr;
+        std::string LHS_name = val_sym->get_name();
+        std::cout << " |-" << LHS_name << std::endl;
+      }
     }
   }
+
 
   BOOST_FOREACH(SgSymbol *key_sym, unfreed)
   {
     std::string key_sym_name = key_sym->get_name();
     if(freed.find(key_sym) != freed.end())
     {
-      //std::cout << "MARKING "<< key_sym_name << " [ALMOST DEFINITELY FREE]" << std::endl;
+      if(verbose)
+        std::cout << "MARKING "<< key_sym_name <<
+        " [ALMOST DEFINITELY FREE]" << std::endl;
       var_free_status[key_sym] = true;
     }
-    for(boost::unordered_set<SgSymbol*>::iterator itr = var_mappings[key_sym].begin();
+    for(boost::unordered_set<SgSymbol*>::iterator itr
+        = var_mappings[key_sym].begin();
         itr != var_mappings[key_sym].end(); ++itr)
     {
       SgSymbol* val_sym = *itr;
       if(freed.find(val_sym) != freed.end())
       {
         var_free_status[key_sym] = true;
-        /*std::cout << "MARKING "<< key_sym_name << " [PROBABLY FREE] (associated variable "
-            << val_sym->get_name() << " marked as FREE)" << std::endl;*/
+        if(verbose)
+          std::cout << "MARKING "<< key_sym_name <<
+          " [PROBABLY FREE] (associated variable "
+            << val_sym->get_name() << " marked as FREE)" << std::endl;
       }
     }
   }
@@ -555,7 +575,9 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
   {
     if(var_free_status[var_symbol] == false)
     {
-      //std::cout << "MARKING " << var_symbol->get_name() << " [NOT FREE]!" << std::endl;
+      if(verbose)
+        std::cout << "MARKING " << var_symbol->get_name()
+        << " [NOT FREE]!" << std::endl;
       output->addOutput(
           new CompassAnalyses::AllocateAndFreeInTheSameModule::
           CheckerOutput(malloc_nodes[var_symbol]));
