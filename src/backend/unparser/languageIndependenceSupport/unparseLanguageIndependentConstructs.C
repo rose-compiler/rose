@@ -5036,6 +5036,9 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                return 0;
              }
 
+       // DQ (7/13/2013): Added support to support this kind of value (I think this is correct, but not sure).
+          case V_SgTemplateParameterVal: return 0;
+
           case V_SgBoolValExp:       return 0;
           case V_SgIntVal:           return 0;
           case V_SgThrowOp:          return 0;
@@ -5099,17 +5102,21 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
 
        // DQ (10/8/2012): Unclear if this is the correct precedence for this GNU specific feature.
        // Note that this setting is equivalent to what was being returned, so I expect it is fine since it represents no change.
-          case V_SgStatementExpression: return 0;
+          case V_SgStatementExpression:      return 0;
 
        // DQ (10/8/2012): Unclear if this is the correct precedence for this GNU specific feature.
        // Note that this setting is equivalent to what was being returned, so I expect it is fine since it represents no change.
-          case V_SgVarRefExp:           return 0;
+          case V_SgVarRefExp:                return 0;
 
        // DQ (10/17/2012): Added support for SgDesignatedInitializer.
-          case V_SgDesignatedInitializer: return 0;
+          case V_SgDesignatedInitializer:    return 0;
 
        // DQ (1/26/2013): This case needs to be supported (see test2013_42.C).
-          case V_SgTypeIdOp:         return 16;
+          case V_SgTypeIdOp:                 return 16;
+
+       // DQ (7/13/2013): Added support to type trait builtin functions (not clear if this is the correct value).
+       // Make this the same precedence as a SgFunctionCallExp.
+          case V_SgTypeTraitBuiltinOperator: return 16;
 
           default:
              {
