@@ -181,11 +181,6 @@ void ExprVisitorPattern::visit(SgVarRefExp* sgn)
 void ExprVisitorPattern::visit(SgPntrArrRefExp* sgn)
 {
   DefUseMemObj rdumo = getDefUseMemObjLvalue(sgn, fipa, isModExpr);
-  // if there are side-effects copy them to use
-  if(!rdumo.isDefSetEmpty())
-  {
-    rdumo.copyDefToUseSet();
-  }
   dumo = rdumo;
 }
 
@@ -242,14 +237,16 @@ void LvalueVisitorPattern::visit(SgPointerDerefExp* sgn)
 
   // process the operand recursively
   // to find out the used/def
-  // now insert the objects that can be
-  // accessed by pointer to def/use set
   SgNode* operand = sgn->get_operand();
   DefUseMemObj rdumo = getDefUseMemObj_rec(operand, fipa, false);
 
   if(!rdumo.isDefSetEmpty())
     rdumo.copyDefToUseSet();
 
+  // now insert the objects that can be
+  // accessed by pointer to def/use set
+  // inserting these sets multiple times
+  // should handle this cleanly
   if(isModExpr)
   {
     def_set.insert(modbyptr.begin(), modbyptr.end());
@@ -264,17 +261,73 @@ void LvalueVisitorPattern::visit(SgPointerDerefExp* sgn)
 
 void LvalueVisitorPattern::visit(SgPntrArrRefExp* sgn)
 {
-  ROSE_ASSERT(0);
+  SgNode* lhs_addr = sgn->get_lhs_operand();
+  SgNode* rhs_expr = sgn->get_rhs_operand();
+  DefUseMemObj ldumo, rdumo;
+  if(isModExpr)
+  {
+    ldumo = getDefUseMemObj_rec(lhs_addr, fipa, true);
+  }
+  else
+  {
+    ldumo = getDefUseMemObj_rec(lhs_addr, fipa, false); 
+  }
+  rdumo = getDefUseMemObj_rec(rhs_expr, fipa, false);
+  // if we have side-effects copy them over
+  if(!rdumo.isDefSetEmpty())
+    rdumo.copyDefToUseSet();
+  // update the values
+  dumo = ldumo + rdumo;
 }
 
 void LvalueVisitorPattern::visit(SgArrowExp* sgn)
 {
-  ROSE_ASSERT(0);
+  SgNode* lhs_addr = sgn->get_lhs_operand();
+  SgNode* rhs_expr = sgn->get_rhs_operand();
+  DefUseMemObj ldumo, rdumo;
+  // only right op is modified
+  if(isModExpr)
+  {
+    rdumo = getDefUseMemObj_rec(rhs_expr, fipa, true);
+  }
+  else
+  {
+    rdumo = getDefUseMemObj_rec(rhs_expr, fipa, false); 
+  }
+  // left is only used
+  ldumo = getDefUseMemObj_rec(lhs_addr, fipa, false);
+
+  // if we have side-effects from left, copy them
+  if(!ldumo.isDefSetEmpty())
+    ldumo.copyDefToUseSet();
+
+  // update the values
+  dumo = ldumo + rdumo;
 }
 
 void LvalueVisitorPattern::visit(SgDotExp* sgn)
 {
-  ROSE_ASSERT(0);
+  SgNode* lhs_addr = sgn->get_lhs_operand();
+  SgNode* rhs_expr = sgn->get_rhs_operand();
+  DefUseMemObj ldumo, rdumo;
+  // only right op is modified
+  if(isModExpr)
+  {
+    rdumo = getDefUseMemObj_rec(rhs_expr, fipa, true);
+  }
+  else
+  {
+    rdumo = getDefUseMemObj_rec(rhs_expr, fipa, false); 
+  }
+  // left is only used
+  ldumo = getDefUseMemObj_rec(lhs_addr, fipa, false);
+
+  // if we have side-effects from left, copy them
+  if(!ldumo.isDefSetEmpty())
+    ldumo.copyDefToUseSet();
+
+  // update the values
+  dumo = ldumo + rdumo;
 }
 
 DefUseMemObj LvalueVisitorPattern::getDefUseMemObj()
