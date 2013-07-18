@@ -14,5 +14,5 @@ int foo1()
     fp = &f;
     p = &sA.a;
     q = &p;
-    return 0;
+    return *p;
 }
