@@ -1,15 +1,17 @@
 /**
- * \file    function_has_prototype.cpp
- * \author  Justin Too <too1@llnl.gov>
- * \date    August 15, 2012
+ * \file   function_prototype.cpp
+ * \author Mike Roup <roup1@llnl.gov>
+ * \date   July 17, 2013
  */
 
-#include "rose.h"
-#include "string_functions.h"
+#include <map>
 
 #include <boost/foreach.hpp>
 
+#include "rose.h"
 #include "compass2/compass.h"
+#include "CodeThorn/src/AstMatching.h"
+#include "CodeThorn/src/AstTerm.h"
 
 using std::string;
 using namespace StringUtility;
@@ -26,14 +28,14 @@ extern const Compass::Checker* const functionPrototypeChecker;
 namespace CompassAnalyses
 {
 /**
- * \brief Detect functions that have or don't have a
- *        prototype sizes (configurable).
+ * \brief Description of checker
  */
 namespace FunctionPrototype
 {
   extern const string checker_name;
   extern const string short_description;
   extern const string long_description;
+  extern       string source_directory;
 
   /**
    * \brief Specificaiton of checker results.
@@ -46,64 +48,21 @@ namespace FunctionPrototype
     DISALLOW_COPY_AND_ASSIGN(CheckerOutput);
   };
 
-  /**
-   * \brief Specification of AST traversal.
-   */
-  class Traversal : public Compass::AstSimpleProcessingWithRunFunction {
-   public:
-    Traversal(Compass::Parameters inputParameters,
-              Compass::OutputObject *output);
-
-    /**
-     * \brief Get inherited attribute for traversal.
-     *
-     * We are not using an inherited attribute for this checker.
-     *
-     * \returns NULL
-     */
-    void* initialInheritedAttribute() const
+  bool IsNodeNotInUserLocation(const SgNode* node)
+  {
+      const SgLocatedNode* located_node = isSgLocatedNode(node);
+      if (located_node != NULL)
       {
-        return NULL;
+          return ! Compass::IsNodeInUserLocation(
+                      located_node,
+                      FunctionPrototype::source_directory);
       }
-
-    void run(SgNode *n)
+      else
       {
-        this->traverse(n, preorder);
+          return true;
       }
-
-    void visit(SgNode *n);
-
-    /*-----------------------------------------------------------------------
-     * Utilities
-     *---------------------------------------------------------------------*/
-
-    /*-----------------------------------------------------------------------
-     * Accessors / Mutators
-     *---------------------------------------------------------------------*/
-    string source_directory() const { return source_directory_; }
-    void set_source_directory(const string &source_directory)
-      {
-        source_directory_ = source_directory;
-      }
-
-    Compass::OutputObject* output() const { return output_; }
-    void set_output(Compass::OutputObject *const output)
-      {
-        output_ = output;
-      }
-
-   private:
-    /*-----------------------------------------------------------------------
-     * Attributes
-     *---------------------------------------------------------------------*/
-    string source_directory_; ///< Restrict analysis to user input files.
-    Compass::OutputObject* output_;
-
-    /*-----------------------------------------------------------------------
-     * Utilities
-     *---------------------------------------------------------------------*/
-    DISALLOW_COPY_AND_ASSIGN(Traversal);
   };
+
 } // ::CompassAnalyses
 } // ::FunctionPrototype
 #endif // COMPASS_FUNCTION_PROTOTYPE_H
@@ -117,9 +76,9 @@ namespace CompassAnalyses
  namespace FunctionPrototype
  {
   const string checker_name      = "FunctionPrototype";
-  const string short_description = "No function prototype detected";
-  const string long_description  = "This analysis looks for functions \
-      that don't have a prototype (forward + defining declarations)";
+  const string short_description = "function doesn't have a prototype";
+  const string long_description  = "Use function prototypes.";
+  string source_directory = "/";
  }
 }
 
@@ -129,90 +88,55 @@ CheckerOutput::CheckerOutput(SgNode *const node)
                           ::functionPrototypeChecker->checkerName,
                           ::functionPrototypeChecker->shortDescription) {}
 
-CompassAnalyses::FunctionPrototype::Traversal::
-Traversal(Compass::Parameters a_parameters, Compass::OutputObject* output)
-    : output_(output)
-  {
-    try
-    {
-        string target_directory = a_parameters["general::target_directory"].front();
-        source_directory_.assign(target_directory);
-    }
-    catch (Compass::ParameterNotFoundException e)
-    {
-        std::cout << "ParameterNotFoundException: " << e.what() << std::endl;
-        homeDir(source_directory_);
-    }
-  }
-
-//////////////////////////////////////////////////////////////////////////////
-
-/** visit(SgNode *node)
- *
- *  Purpose
- *  ========
- *
- *  Search for functions that don't have a prototype,
- *  i.e. forward function definition.  For example:
- *
- *      void function_def_and_decl()
- *      {
- *      }
- *
- *  Target AST
- *  ==========
- *              (1)
- *      SgFunctionDeclaration
- *               |
- *           search for
- *  first non-defining declaration
- *               |
- *         ------------
- *        |            |
- *       YES           NO
- *        |            |
- *    prototype  (2) <target: does not have prototype>
- */
-void
-CompassAnalyses::FunctionPrototype::Traversal::
-visit(SgNode *node)
-{
-    SgLocatedNode* located_node = isSgLocatedNode(node);
-    if (located_node != NULL &&
-        Compass::IsNodeInUserLocation(located_node, source_directory_))
-    {
-        // (1)
-        SgFunctionDeclaration* function_decl =
-            isSgFunctionDeclaration(node);
-        if (function_decl != NULL)
-        {
-            // (2)
-            SgDeclarationStatement* first_defining_decl =
-                function_decl->get_firstNondefiningDeclaration();
-            // No forward declaration (i.e. function prototype)
-            if (first_defining_decl == NULL)
-            {
-                output_->addOutput(
-                  new CheckerOutput(node));
-            }
-        }
-    }
-}// end of the visit function.
-
-// Checker main run function and metadata
-
 static void
-run(Compass::Parameters params, Compass::OutputObject* output)
+run(Compass::Parameters parameters, Compass::OutputObject* output)
   {
-    CompassAnalyses::FunctionPrototype::Traversal(params, output).run(
-      Compass::projectPrerequisite.getProject());
+      // We only care about source code in the user's space, not,
+      // for example, Boost or system files.
+      string target_directory =
+          parameters["general::target_directory"].front();
+      CompassAnalyses::FunctionPrototype::source_directory.assign(target_directory);
+      
+      // Use the pre-built ROSE AST
+      SgProject* sageProject = Compass::projectPrerequisite.getProject();
+      
+      // perform AST matching here
+      CodeThorn::AstMatching match_func_decl;
+      MatchResult result_func_decl = match_func_decl.performMatching
+	("$r = SgFunctionDeclaration", sageProject);
+      std::map<string, bool> has_prototype;
+
+      BOOST_FOREACH(SingleMatchVarBindings match, result_func_decl)
+	{
+	  SgFunctionDeclaration* function_decl = (SgFunctionDeclaration*)match["$r"];
+	  string function_name = function_decl->get_name().getString();
+	  has_prototype[function_name] = false;
+	}
+      BOOST_FOREACH(SingleMatchVarBindings match, result_func_decl)
+	{
+	  SgFunctionDeclaration* function_decl = (SgFunctionDeclaration*)match["$r"];
+	  string function_name = function_decl->get_name().getString();
+	  if (function_decl->isForward())
+	    {
+	      has_prototype[function_name] = true;
+	    }
+	}
+      BOOST_FOREACH(SingleMatchVarBindings match, result_func_decl)
+	{
+	  SgFunctionDeclaration* function_decl = (SgFunctionDeclaration*)match["$r"];
+	  string function_name = function_decl->get_name().getString();
+	  if (has_prototype[function_name] == false)
+	    {
+	      output->addOutput(new CompassAnalyses::FunctionPrototype::CheckerOutput(function_decl));
+	    }
+	}
   }
 
 // Remove this function if your checker is not an AST traversal
 static Compass::AstSimpleProcessingWithRunFunction*
 createTraversal(Compass::Parameters params, Compass::OutputObject* output)
   {
-    return new CompassAnalyses::FunctionPrototype::Traversal(params, output);
+    return NULL;
   }
 
 extern const Compass::Checker* const functionPrototypeChecker =

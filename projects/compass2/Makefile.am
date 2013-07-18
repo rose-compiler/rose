@@ -70,7 +70,6 @@ bin_compass2_LDADD=\
 	bin/checkers/dead_function/libdeadfunction.la \
 	bin/checkers/floating_point_exact_comparison/libfloatingpointexactcomparison.la \
 	bin/checkers/function_pointer/libfunctionpointer.la \
-	bin/checkers/function_prototype/libfunctionprototype.la \
 	bin/checkers/function_with_multiple_returns/libfunctionwithmultiplereturns.la \
 	bin/checkers/keyword_macro/libkeywordmacro.la \
 	bin/checkers/keyword_macro/libkeywordmacro.la \
@@ -94,6 +93,7 @@ bin_compass2_LDADD=\
 	bin/checkers/byte_by_byte_structure_comparison/libbytebybytestructurecomparison.la \
 	bin/checkers/size_of_pointer/libsizeofpointer.la \
 	bin/checkers/default_argument/libdefaultargument.la \
+	bin/checkers/function_prototype/libfunctionprototype.la \
 	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS) \
@@ -111,6 +111,7 @@ bin_compass2_LDADD=\
 # ------------------------------------------------------------------------------
 
 noinst_LTLIBRARIES=\
+	bin/checkers/function_prototype/libfunctionprototype.la \
 	bin/checkers/default_argument/libdefaultargument.la \
 	bin/checkers/size_of_pointer/libsizeofpointer.la \
 	bin/checkers/byte_by_byte_structure_comparison/libbytebybytestructurecomparison.la \
@@ -131,7 +132,6 @@ noinst_LTLIBRARIES=\
 	bin/checkers/dead_function/libdeadfunction.la \
 	bin/checkers/floating_point_exact_comparison/libfloatingpointexactcomparison.la \
 	bin/checkers/function_pointer/libfunctionpointer.la \
-	bin/checkers/function_prototype/libfunctionprototype.la \
 	bin/checkers/function_with_multiple_returns/libfunctionwithmultiplereturns.la \
 	bin/checkers/keyword_macro/libkeywordmacro.la \
 	bin/checkers/non_global_cpp_directive/libnonglobalcppdirective.la \
@@ -146,9 +146,6 @@ bin_checkers_floating_point_exact_comparison_libfloatingpointexactcomparison_la_
 
 bin_checkers_function_pointer_libfunctionpointer_la_SOURCES=\
 	bin/checkers/function_pointer/function_pointer.cpp
-
-bin_checkers_function_prototype_libfunctionprototype_la_SOURCES=\
-	bin/checkers/function_prototype/function_prototype.cpp
 
 bin_checkers_function_with_multiple_returns_libfunctionwithmultiplereturns_la_SOURCES=\
 	bin/checkers/function_with_multiple_returns/function_with_multiple_returns.cpp
@@ -215,6 +212,9 @@ bin_checkers_size_of_pointer_libsizeofpointer_la_SOURCES=\
 
 bin_checkers_default_argument_libdefaultargument_la_SOURCES=\
 	bin/checkers/default_argument/default_argument.cpp
+
+bin_checkers_function_prototype_libfunctionprototype_la_SOURCES=\
+	bin/checkers/function_prototype/function_prototype.cpp
 
 #PLACEHOLDER
 
