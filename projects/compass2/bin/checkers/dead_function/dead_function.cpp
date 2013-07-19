@@ -1,7 +1,7 @@
 /**
  * \file dead_function.cpp
  * \author Sam Kelly <kelly64@llnl.gov, kellys@dickinson.edu>
- * \date Friday, July 19 2013
+ * \date Friday, July 19, 2013
  */
 
 #include <boost/foreach.hpp>
@@ -119,6 +119,7 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
       BOOST_FOREACH(SingleMatchVarBindings match, func_ref_matches)
       {
         SgFunctionCallExp *func_call = (SgFunctionCallExp *)match["$f"];
+        if(!func_call->isDefinable()) continue;
         SgFunctionDefinition *func_def
         = SgNodeHelper::determineFunctionDefinition(func_call);
         called_functions.insert(func_def);
