@@ -128,11 +128,6 @@ bool IsNodeNotInUserLocation(const SgNode* node)
  * through the return statement
  *---------------------------------------------------------------------------*/
 
-//FIXME: doesn't correctly resolve container variable references
-// fix this in all places that SgVarRefExp's are handled
-// should always be an AST match, and should always take
-// LAST item in the match
-
 namespace CompassAnalyses
 {
 namespace AllocateAndFreeInTheSameModule
@@ -256,7 +251,16 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
         ROSE_ASSERT(func_param != NULL);
         ROSE_ASSERT(func_param_sym != NULL);
 
-        SgVarRefExp* param_var = isSgVarRefExp(param);
+        // we use an AST match in case this is a container type
+        // the last match will be a reference to the actual variable
+        SgVarRefExp *param_var = NULL;
+        AstMatching param_var_matcher;
+        MatchResult param_var_matches = param_var_matcher
+            .performMatching("$v=SgVarRefExp", param);
+        if(param_var_matches.size() > 0)
+        {
+          param_var = (SgVarRefExp *)param_var_matches.back()["$v"];
+        }
         if(param_var != NULL)
         {
           SgSymbol *param_sym = param_var->get_symbol();
