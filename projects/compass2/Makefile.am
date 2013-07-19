@@ -100,6 +100,7 @@ bin_compass2_LDADD=\
 	bin/checkers/do_not_delete_this/libdonotdeletethis.la \
 	bin/checkers/dangerous_overload/libdangerousoverload.la \
 	bin/checkers/discard_assignment/libdiscardassignment.la \
+	bin/checkers/no_vfork/libnovfork.la \
 	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS) \
@@ -123,6 +124,7 @@ noinst_LTLIBRARIES=\
 	bin/checkers/do_not_delete_this/libdonotdeletethis.la \
 	bin/checkers/function_prototype/libfunctionprototype.la \
 	bin/checkers/default_argument/libdefaultargument.la \
+	bin/checkers/no_vfork/libnovfork.la \
 	bin/checkers/size_of_pointer/libsizeofpointer.la \
 	bin/checkers/byte_by_byte_structure_comparison/libbytebybytestructurecomparison.la \
 	bin/checkers/explicit_test_for_non_boolean_value/libexplicittestfornonbooleanvalue.la \
@@ -230,6 +232,9 @@ bin_checkers_dangerous_overload_libdangerousoverload_la_SOURCES=\
 
 bin_checkers_discard_assignment_libdiscardassignment_la_SOURCES=\
 	bin/checkers/discard_assignment/discard_assignment.cpp
+
+bin_checkers_no_vfork_libnovfork_la_SOURCES=\
+	bin/checkers/no_vfork/no_vfork.cpp
 
 #PLACEHOLDER
 
