@@ -84,8 +84,8 @@ namespace CompassAnalyses
  namespace DeadFunction
  {
   const string checker_name      = "DeadFunction";
-  const string short_description = "";
-  const string long_description  = "";
+  const string short_description = "Dead/unreachable function detected!";
+  const string long_description  = "Detects dead/unreachable functions and methods";
   string source_directory = "/";
  }
 }
