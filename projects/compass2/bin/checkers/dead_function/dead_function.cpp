@@ -1,21 +1,20 @@
 /**
- * \file    dead_function.cpp
- * \author  Justin Too <too1@llnl.gov>
- * \date    August 16, 2012
+ * \file dead_function.cpp
+ * \author Sam Kelly <kelly64@llnl.gov, kellys@dickinson.edu>
+ * \date Friday, July 19 2013
  */
-
-#include "rose.h"
-#include "string_functions.h"
-
-#include <algorithm>
-#include <map>
 
 #include <boost/foreach.hpp>
 
+#include "rose.h"
 #include "compass2/compass.h"
+#include "CodeThorn/src/AstMatching.h"
+#include "CodeThorn/src/AstTerm.h"
+#include "CodeThorn/src/SgNodeHelper.h"
 
 using std::string;
 using namespace StringUtility;
+using namespace CodeThorn;
 
 extern const Compass::Checker* const deadFunctionChecker;
 
@@ -23,14 +22,14 @@ extern const Compass::Checker* const deadFunctionChecker;
  * Interface
  *---------------------------------------------------------------------------*/
 
-#ifndef COMPASS_FUNCTION_CALL_COVERAGE_H
-#define COMPASS_FUNCTION_CALL_COVERAGE_H
+#ifndef COMPASS_DEAD_FUNCTION_H
+#define COMPASS_DEAD_FUNCTION_H
 
 namespace CompassAnalyses
 {
 /**
- * \brief Detect functions that are never called,
- *        sometimes called "unreachable" or "dead".
+ * \brief Detects dead or "unreachable" functions or methods. These are functions
+ * and methods that are never called
  */
 namespace DeadFunction
 {
@@ -67,10 +66,17 @@ namespace DeadFunction
 
 } // ::CompassAnalyses
 } // ::DeadFunction
-#endif // COMPASS_FUNCTION_CALL_COVERAGE_H
+#endif // COMPASS_DEAD_FUNCTION_H
 
 /*-----------------------------------------------------------------------------
  * Implementation
+ *
+ * 1. Build a hash set of all called functions by doing an AST match
+ *    for all SgFunctionCallExp nodes
+ *
+ * 2. Do an AST match for all SgFunctionDefinitions. If there are any
+ *    that aren't contained in the called_functions hash set, then these
+ *    are dead functions
  *---------------------------------------------------------------------------*/
 
 namespace CompassAnalyses
@@ -78,9 +84,8 @@ namespace CompassAnalyses
  namespace DeadFunction
  {
   const string checker_name      = "DeadFunction";
-  const string short_description = "Dead function detected";
-  const string long_description  = "This analysis looks for functions \
-      that are never invoked (dead functions).";
+  const string short_description = "";
+  const string long_description  = "";
   string source_directory = "/";
  }
 }
@@ -91,31 +96,6 @@ CheckerOutput::CheckerOutput(SgNode *const node)
                           ::deadFunctionChecker->checkerName,
                           ::deadFunctionChecker->shortDescription) {}
 
-//////////////////////////////////////////////////////////////////////////////
-
-// Checker main run function and metadata
-
-/** run(Compass::Parameters parameters, Compass::OutputObject* output)
- *
- *  Purpose
- *  ========
- *
- *  Search for functions that are "dead", or "unreachable":
- *    1. Never called: `foo();`
- *    2. Never defined `void foo() { ... } // definition`
- *
- *
- *  Algorithm
- *  ==========
- *
- *  1. Collect all function declarations (SgFunctionDeclaration) within
- *     the user-configurable location.
- *
- *  2. Collect all function calls (SgFunctionCallExp) within the
- *     user-configurable location.
- *
- *  3. Cross-check the function declarations against the function calls
- */
 static void
 run(Compass::Parameters parameters, Compass::OutputObject* output)
   {
@@ -125,141 +105,47 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
           parameters["general::target_directory"].front();
       CompassAnalyses::DeadFunction::source_directory.assign(target_directory);
 
-      // (1)
-      // Collect all SgFunctionDeclarations in the
-      // user-configurable location:
+      // Use the pre-built ROSE AST
+      SgProject* sageProject = Compass::projectPrerequisite.getProject();
 
-      // Keep a collection of the target SgFunctionDeclarations.
-      // Use a map to eliminate duplicates and for O(1) access:
-      std::map<std::string, SgFunctionDeclaration*> function_decl_map;
+      SgNode *root_node = (SgNode*)sageProject;
 
-      // Get the SgFunctionDeclarations
-      Rose_STL_Container<SgNode*> function_decls =
-          NodeQuery::querySubTree(Compass::projectPrerequisite.getProject(),
-                                  V_SgFunctionDeclaration);
+      // maintains a hash set of all functions that have been called
+      boost::unordered_set<SgFunctionDefinition*> called_functions;
 
-     // Create some iterators for the SgFunctionDeclaration collection:
-      Rose_STL_Container<SgNode*>::iterator ibegin_function_decls =
-          function_decls.begin();
-      Rose_STL_Container<SgNode*>::iterator iend_function_decls =
-          function_decls.end();
-
-      // Remove the SgFunctionDeclarations that the user doesn't care about:
-      iend_function_decls =
-          remove_if(ibegin_function_decls,
-                    iend_function_decls,
-                    CompassAnalyses::DeadFunction::IsNodeNotInUserLocation);
-
-      // Add the SgFunctionDeclarations to the map collection.
-      // Map `unparsed SgFunctionDeclaration string`
-      //  to `SgFunctionDeclaration`
-      for ( ;
-            ibegin_function_decls != iend_function_decls;
-            ++ibegin_function_decls)
+      AstMatching func_ref_matcher;
+      MatchResult func_ref_matches = func_ref_matcher
+          .performMatching("$f=SgFunctionCallExp", root_node);
+      BOOST_FOREACH(SingleMatchVarBindings match, func_ref_matches)
       {
-          SgFunctionDeclaration* function_decl =
-              isSgFunctionDeclaration(*ibegin_function_decls);
-          ROSE_ASSERT(function_decl != NULL);
-
-          // Remove duplicates by using the function prototype
-          // (first non-defining declaration) if it is available.
-          SgDeclarationStatement* decl_statement =
-              function_decl->get_firstNondefiningDeclaration();
-          if (decl_statement != NULL)
-          {
-              function_decl = isSgFunctionDeclaration(decl_statement);
-              ROSE_ASSERT(function_decl != NULL);
-          }
-
-          std::string function_decl_unparsed =
-              function_decl->unparseToString();
-          ROSE_ASSERT(function_decl_unparsed.size() > 0);
-
-          // Add to map
-          function_decl_map[function_decl_unparsed] =
-              function_decl;
+        SgFunctionCallExp *func_call = (SgFunctionCallExp *)match["$f"];
+        SgFunctionDefinition *func_def
+        = SgNodeHelper::determineFunctionDefinition(func_call);
+        called_functions.insert(func_def);
       }
 
-      // (2)
-      // Collect all SgFunctionCallExp in the
-      // user-configurable location:
-
-      // Keep a map of all SgFunctionCallExp's associated
-      // SgFunctionDeclarations (unparsed as strings) for O(1) access:
-      // [SgFunctionCallExp -> SgFunctionDeclaration unparsed] =>
-      //      SgFunctionDeclaration object
-      std::map<std::string, SgFunctionDeclaration*> function_call_map;
-
-      // Get the SgFunctionDeclarations
-      Rose_STL_Container<SgNode*> function_call_decls =
-          NodeQuery::querySubTree(Compass::projectPrerequisite.getProject(),
-                                  V_SgFunctionCallExp);
-
-     // Create some iterators for the SgFunctionDeclaration collection:
-      Rose_STL_Container<SgNode*>::iterator ibegin_function_call_decls =
-          function_call_decls.begin();
-      Rose_STL_Container<SgNode*>::iterator iend_function_call_decls =
-          function_call_decls.end();
-
-      // Remove the SgFunctionDeclarations that the user doesn't care about:
-      iend_function_call_decls =
-          remove_if(ibegin_function_call_decls,
-                    iend_function_call_decls,
-                    CompassAnalyses::DeadFunction::IsNodeNotInUserLocation);
-
-      // Add the SgFunctionDeclarations to the map collection.
-      // Map `unparsed SgFunctionDeclaration string`
-      //  to `SgFunctionDeclaration`
-      for ( ;
-            ibegin_function_call_decls != iend_function_call_decls;
-            ++ibegin_function_call_decls)
+      // if a function isn't in the called_functions hash set
+      // then it is a dead function
+      AstMatching func_def_matcher;
+      MatchResult func_def_matches = func_def_matcher
+          .performMatching("$f=SgFunctionDefinition", root_node);
+      BOOST_FOREACH(SingleMatchVarBindings match, func_def_matches)
       {
-          SgFunctionCallExp* function_call_exp =
-              isSgFunctionCallExp(*ibegin_function_call_decls);
-          ROSE_ASSERT(function_call_exp != NULL);
+        SgFunctionDefinition *func_def = (SgFunctionDefinition *)match["$f"];
+        if(called_functions.find(func_def) == called_functions.end())
+        {
+          // function definition was found that is never called
 
-          SgFunctionDeclaration* function_decl =
-              function_call_exp->getAssociatedFunctionDeclaration();
-// TODO: SQlite3 has xCallBack callback function with no associated decl
-          ROSE_ASSERT(function_decl != NULL);
-//          if (function_decl != NULL)
-//          {
-              std::string function_decl_unparsed =
-                  function_decl->unparseToString();
-              ROSE_ASSERT(function_decl_unparsed.size() > 0);
-
-              // Add to map
-              function_call_map[function_decl_unparsed] =
-                  function_decl;
-          //}
-// ^^^^^^
+          // ignore main()
+          std::string func_name = func_def->get_declaration()->get_name().getString();
+          if(func_name.compare("main") == 0) continue;
+          output->addOutput(
+              new CompassAnalyses::DeadFunction::
+              CheckerOutput(func_def));
+        }
       }
 
-      // (3)
-      // Cross-check the function declarations against the function calls
-      // 1. Iterate over our collection of SgFunctionDeclarations
-      // 2. Check if there is a corresponding SgFunctionCallExp
 
-      std::map<std::string, SgFunctionDeclaration*>::iterator map_it;
-      typedef std::map<std::string, SgFunctionDeclaration*> map_type;
-
-      // 1.
-      BOOST_FOREACH(
-          map_type::value_type& function_decl_map_pair,
-          function_decl_map)
-      {
-          std::string function_decl_unparsed = function_decl_map_pair.first;
-          SgFunctionDeclaration* function_decl = function_decl_map_pair.second;
-
-          // 2.
-          map_it = function_call_map.find(function_decl_unparsed);
-          if (map_it == function_call_map.end())
-          {
-              output->addOutput(
-                new CompassAnalyses::DeadFunction::CheckerOutput(
-                    function_decl));
-          }
-      }
   }
 
 // Remove this function if your checker is not an AST traversal
