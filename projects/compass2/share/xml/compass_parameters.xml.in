@@ -39,6 +39,7 @@
     <parameter name="enabled_checker">dangerousOverload</parameter>
     <parameter name="enabled_checker">discardAssignment</parameter>
     <parameter name="enabled_checker">noVfork</parameter>
+    <parameter name="enabled_checker">pointerComparison</parameter>
     <!--PLACEHOLDER-->
   </general>
 

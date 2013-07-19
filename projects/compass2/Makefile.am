@@ -101,6 +101,7 @@ bin_compass2_LDADD=\
 	bin/checkers/dangerous_overload/libdangerousoverload.la \
 	bin/checkers/discard_assignment/libdiscardassignment.la \
 	bin/checkers/no_vfork/libnovfork.la \
+	bin/checkers/pointer_comparison/libpointercomparison.la \
 	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS) \
@@ -119,6 +120,7 @@ bin_compass2_LDADD=\
 # ------------------------------------------------------------------------------
 
 noinst_LTLIBRARIES=\
+	bin/checkers/pointer_comparison/libpointercomparison.la \
 	bin/checkers/discard_assignment/libdiscardassignment.la \
 	bin/checkers/dangerous_overload/libdangerousoverload.la \
 	bin/checkers/do_not_delete_this/libdonotdeletethis.la \
@@ -235,6 +237,9 @@ bin_checkers_discard_assignment_libdiscardassignment_la_SOURCES=\
 
 bin_checkers_no_vfork_libnovfork_la_SOURCES=\
 	bin/checkers/no_vfork/no_vfork.cpp
+
+bin_checkers_pointer_comparison_libpointercomparison_la_SOURCES=\
+	bin/checkers/pointer_comparison/pointer_comparison.cpp
 
 #PLACEHOLDER
 
