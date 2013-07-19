@@ -51,6 +51,7 @@ extern const Compass::Checker* const dangerousOverloadChecker;
 extern const Compass::Checker* const discardAssignmentChecker;
 extern const Compass::Checker* const noVforkChecker;
 extern const Compass::Checker* const pointerComparisonChecker;
+extern const Compass::Checker* const noVariadicFunctionsChecker;
 //PLACEHOLDER1
 /*-----------------------------------------------------------------------------
  * Main program
@@ -197,6 +198,8 @@ int main (int argc, char** argv)
                 traversals.push_back (noVforkChecker);
             else if ("pointerComparison" == checker_name)
                 traversals.push_back (pointerComparisonChecker);
+            else if ("noVariadicFunctions" == checker_name)
+                traversals.push_back (noVariadicFunctionsChecker);
             //PLACEHOLDER2
             else
             {
