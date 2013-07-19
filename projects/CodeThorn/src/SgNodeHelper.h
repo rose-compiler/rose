@@ -280,6 +280,16 @@ namespace SgNodeHelper {
 	//! tests pattern SgFunctionCall(...) where the name of the function is fprintf with 3 params
 	SgVarRefExp* matchSingleVarFPrintf(SgNode* node);
 
+	struct OutputTarget {
+	  bool isKnown();
+	  enum OType { VAR,INT,UNKNOWNPRINTF,UNKNOWNOPERATION};
+	  OutputTarget():varRef(0),intVal(0),outType(UNKNOWNOPERATION){}
+	  SgVarRefExp* varRef;
+	  int intVal;
+	  OType outType;
+	};
+	OutputTarget matchSingleVarOrValuePrintf(SgNode* node);
+
 	//! tests pattern for an assert
 	bool matchAssertExpr(SgNode* node);
 
