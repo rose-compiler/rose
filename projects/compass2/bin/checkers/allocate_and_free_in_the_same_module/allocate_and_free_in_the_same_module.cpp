@@ -217,6 +217,7 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
   {
     SgFunctionCallExp *func_call = (SgFunctionCallExp *)match["$f"];
     SgFunctionRefExp *func_ref = isSgFunctionRefExp(func_call->get_traversalSuccessorByIndex(0));
+    if(func_ref == NULL) continue;
     std::string func_str = func_ref->get_symbol()->get_name().getString();
     if(func_str.compare("free") == 0)
     {
@@ -239,8 +240,10 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
       SgFunctionDeclaration *func_dec = func_def->get_declaration();
       if(func_dec == NULL) continue;
       SgFunctionParameterList *func_params = func_dec->get_parameterList();
+      if(func_params == NULL) continue;
       for(int i = 0; i < expr_list->get_numberOfTraversalSuccessors(); i++)
       {
+        if(i >= func_params->get_numberOfTraversalSuccessors()) break;
         SgNode* param = expr_list->get_traversalSuccessorByIndex(i);
         SgInitializedName* func_param =
             isSgInitializedName(func_params->get_traversalSuccessorByIndex(i));
@@ -285,6 +288,7 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
           {
             SgFunctionRefExp *found_func = isSgFunctionRefExp(
                 found_func_matches.front()["$r"]);
+            if(!found_func->isDefinable()) continue;
             std::string found_func_str = found_func->get_symbol()
                                              ->get_name().getString();
             if(found_func_str.compare("malloc") == 0
@@ -376,7 +380,7 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
         if(var_name != NULL)
         {
           LHS_symbol = var_name->get_symbol_from_symbol_table();
-          ROSE_ASSERT(LHS_symbol != NULL);
+          if(LHS_symbol == NULL) continue;
         }
       } else {
         assign_RHS = assign_op->get_rhs_operand();
@@ -395,7 +399,9 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
         AstMatching LHS_matcher;
         MatchResult var_ref_matches =
             LHS_matcher.performMatching("$r=SgVarRefExp", lhs_operand);
-        ROSE_ASSERT (var_ref_matches.size() > 0);
+
+        // give up to avoid assertion fails
+        if(var_ref_matches.size() == 0) continue;
 
         SgVarRefExp *LHS = (SgVarRefExp*)(var_ref_matches.back()["$r"]);
         ROSE_ASSERT(LHS != NULL);
@@ -455,6 +461,7 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
       {
         // do outer var mappings
         SgFunctionCallExp *func_call = (SgFunctionCallExp *)RHS_func_match["$f"];
+        if(func_call->getAssociatedFunctionSymbol() == NULL) continue;
         std::string func_str = func_call->getAssociatedFunctionSymbol()->get_name();
         // if the function is a malloc or a calloc or a function that is known
         // to explicitly return a malloc or calloc
