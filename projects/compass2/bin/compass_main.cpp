@@ -48,6 +48,7 @@ extern const Compass::Checker* const explicitTestForNonBooleanValueChecker;
 extern const Compass::Checker* const byteByByteStructureComparisonChecker;
 extern const Compass::Checker* const sizeOfPointerChecker;
 extern const Compass::Checker* const noVforkChecker;
+extern const Compass::Checker* const noVariadicFunctionsChecker;
 //PLACEHOLDER1
 /*-----------------------------------------------------------------------------
  * Main program
@@ -188,6 +189,8 @@ int main (int argc, char** argv)
                 traversals.push_back (sizeOfPointerChecker);
             else if ("noVfork" == checker_name)
                 traversals.push_back (noVforkChecker);
+            else if ("noVariadicFunctions" == checker_name)
+                traversals.push_back (noVariadicFunctionsChecker);
             //PLACEHOLDER2
             else
             {
