@@ -98,6 +98,7 @@ bin_compass2_LDADD=\
 	bin/checkers/explicit_test_for_non_boolean_value/libexplicittestfornonbooleanvalue.la \
 	bin/checkers/byte_by_byte_structure_comparison/libbytebybytestructurecomparison.la \
 	bin/checkers/size_of_pointer/libsizeofpointer.la \
+	bin/checkers/no_vfork/libnovfork.la \
 	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS) \
@@ -116,6 +117,7 @@ bin_compass2_LDADD=\
 # ------------------------------------------------------------------------------
 
 noinst_LTLIBRARIES=\
+	bin/checkers/no_vfork/libnovfork.la \
 	bin/checkers/size_of_pointer/libsizeofpointer.la \
 	bin/checkers/byte_by_byte_structure_comparison/libbytebybytestructurecomparison.la \
 	bin/checkers/explicit_test_for_non_boolean_value/libexplicittestfornonbooleanvalue.la \
@@ -220,6 +222,9 @@ bin_checkers_byte_by_byte_structure_comparison_libbytebybytestructurecomparison_
 
 bin_checkers_size_of_pointer_libsizeofpointer_la_SOURCES=\
 	bin/checkers/size_of_pointer/size_of_pointer.cpp
+
+bin_checkers_no_vfork_libnovfork_la_SOURCES=\
+	bin/checkers/no_vfork/no_vfork.cpp
 
 #PLACEHOLDER
 

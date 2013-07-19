@@ -36,6 +36,7 @@
     <parameter name="enabled_checker">explicitTestForNonBooleanValue</parameter>
     <parameter name="enabled_checker">byteByByteStructureComparison</parameter>
     <parameter name="enabled_checker">sizeOfPointer</parameter>
+    <parameter name="enabled_checker">noVfork</parameter>
     <!--PLACEHOLDER-->
   </general>
 
