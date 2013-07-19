@@ -49,6 +49,7 @@ extern const Compass::Checker* const functionPrototypeChecker;
 extern const Compass::Checker* const doNotDeleteThisChecker;
 extern const Compass::Checker* const dangerousOverloadChecker;
 extern const Compass::Checker* const discardAssignmentChecker;
+extern const Compass::Checker* const pointerComparisonChecker;
 //PLACEHOLDER1
 /*-----------------------------------------------------------------------------
  * Main program
@@ -191,6 +192,8 @@ int main (int argc, char** argv)
                 traversals.push_back (dangerousOverloadChecker);
             else if ("discardAssignment" == checker_name)
                 traversals.push_back (discardAssignmentChecker);
+            else if ("pointerComparison" == checker_name)
+                traversals.push_back (pointerComparisonChecker);
             //PLACEHOLDER2
             else
             {
