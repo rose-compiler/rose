@@ -5,6 +5,7 @@ bin_PROGRAMS = codethorn matcher_demo varwatch rdmain
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 BUILT_SOURCES = 
 CLEANFILES = 
+SUBDIRS = addressTakenAnalysis
 
 AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH)
 
