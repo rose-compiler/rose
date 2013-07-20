@@ -49,11 +49,13 @@ ADDRESSTAKENANALYSIS_TESTS_PASSING = \
 	$(srcdir)/tests/test12.cpp \
 	$(srcdir)/tests/du_test1.cpp \
 	$(srcdir)/tests/du_test2.cpp \
-	$(srcdir)/tests/du_test3.cpp
+	$(srcdir)/tests/du_test3.cpp \
+	$(srcdir)/tests/du_test4.cpp
 
 ADDRESSTAKENANALYSIS_TESTS_FAILING = \
 	$(srcdir)/tests/test6.cpp \ # has r-value references
-	$(srcdir)/tests/test7.cpp
+	$(srcdir)/tests/test7.cpp \
+	$(srcdir)/tests/arrow_test.cpp
 
 ADDRESSTAKENANALYSIS_CHECKS = ${ADDRESSTAKENANALYSIS_TESTS:.cpp=.cpp-o}
 
