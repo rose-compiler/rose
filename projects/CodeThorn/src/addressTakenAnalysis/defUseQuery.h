@@ -1,6 +1,13 @@
 #ifndef _DEFUSEQUERY_H
 #define _DEFUSEQUERY_H
 
+/*************************************************************
+ * Copyright: (C) 2013 by Sriram Aananthakrishnan            *
+ * Author   : Sriram Aananthakrishnan                        *
+ * email    : aananthakris1@llnl.gov                         *
+ *************************************************************/
+
+
 #include "addressTakenAnalysis.h"
 
 //typedef std::pair<VariableIdSet, bool> MemObj;

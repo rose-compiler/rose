@@ -1,6 +1,12 @@
 #include "addressTakenAnalysis.h"
 #include "defUseQuery.h"
 
+/*************************************************************
+ * Copyright: (C) 2013 by Sriram Aananthakrishnan            *
+ * Author   : Sriram Aananthakrishnan                        *
+ * email    : aananthakris1@llnl.gov                         *
+ *************************************************************/
+
 class TestDefUseMemObjTraversal : public AstSimpleProcessing
 {
   FlowInsensitivePointerAnalysis& fipa;

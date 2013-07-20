@@ -1,6 +1,12 @@
 #ifndef _ADDRESSTAKENANALYSIS_H
 #define _ADDRESSTAKENANALYSIS_H
 
+/*************************************************************
+ * Copyright: (C) 2013 by Sriram Aananthakrishnan            *
+ * Author   : Sriram Aananthakrishnan                        *
+ * email    : aananthakris1@llnl.gov                         *
+ *************************************************************/
+
 #include "rose.h"
 #include "AstTerm.h"
 #include "AstMatching.h"
