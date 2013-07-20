@@ -111,6 +111,37 @@ SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarScanf(SgNode* node) {
   return 0;
 }
 
+bool SgNodeHelper::Pattern::OutputTarget::isKnown() {
+  return outType!=SgNodeHelper::Pattern::OutputTarget::UNKNOWNOPERATION && outType!=SgNodeHelper::Pattern::OutputTarget::UNKNOWNPRINTF;
+}
+
+SgNodeHelper::Pattern::OutputTarget SgNodeHelper::Pattern::matchSingleVarOrValuePrintf(SgNode* node) {
+  OutputTarget outputTarget;
+  SgNode* nextNodeToAnalyze1=node;
+  if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1) ) {
+	string fName=SgNodeHelper::getFunctionName(funCall);
+	SgExpressionPtrList& actualParams=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+	if(fName=="printf") {
+	  if(actualParams.size()==2) {
+		if(SgVarRefExp* varRefExp=isSgVarRefExp(actualParams[1])) {
+		  outputTarget.outType=SgNodeHelper::Pattern::OutputTarget::VAR;
+		  outputTarget.varRef=varRefExp;
+		  return outputTarget;
+		}		   
+		if(SgIntVal* intValNode=isSgIntVal(actualParams[1])) {
+		  outputTarget.outType=SgNodeHelper::Pattern::OutputTarget::INT;
+		  outputTarget.intVal=intValNode->get_value();
+		  return outputTarget;
+		}
+	  }
+	  outputTarget.outType=SgNodeHelper::Pattern::OutputTarget::UNKNOWNPRINTF;
+	  return outputTarget;
+	}
+  }	
+  outputTarget.outType=SgNodeHelper::Pattern::OutputTarget::UNKNOWNOPERATION;
+  return outputTarget;
+}
+
 SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarPrintf(SgNode* node) {
   SgNode* nextNodeToAnalyze1=node;
   if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1) ) {
@@ -121,6 +152,7 @@ SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarPrintf(SgNode* node) {
 		SgVarRefExp* varRefExp=isSgVarRefExp(actualParams[1]);
 		if(!varRefExp) {
 		  cerr<<"Error: unsupported print argument #2 (no variable found). Currently printf with exactly one variable of the form printf(\"...%d...\",v) is supported."<<endl;
+		  cerr<<"Source: "<<node->unparseToString()<<endl;
 		  exit(1);
 		}
 		return varRefExp;
