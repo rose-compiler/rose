@@ -11,6 +11,71 @@
 
 namespace MultiFileBuilder {
 
+bool ignore(const std::string & name);
+bool ignore(SgScopeStatement * scope);
+
+template <>
+bool Driver<Sage>::resolveValidParent<SgMemberFunctionSymbol>(SgMemberFunctionSymbol * symbol) {
+  SgClassSymbol * parent = NULL;
+  
+  if (p_valid_symbols.find(symbol) != p_valid_symbols.end()) return true;
+
+  SgClassDefinition * class_scope = isSgClassDefinition(symbol->get_scope());
+  if (class_scope != NULL) {
+    SgClassDeclaration * parent_decl = class_scope->get_declaration();
+    assert(parent_decl != NULL);
+    parent = SageInterface::lookupClassSymbolInParentScopes(parent_decl->get_name(), parent_decl->get_scope());
+    assert(parent != NULL);
+
+    if (!resolveValidParent<SgClassSymbol>((SgClassSymbol *)parent)) return false;
+    assert(p_valid_symbols.find(parent) != p_valid_symbols.end());
+  }
+
+  p_valid_symbols.insert(symbol);
+  p_parent_map.insert(std::pair<SgSymbol *, SgSymbol *>(symbol, parent));
+  p_member_function_symbols.insert(symbol);
+
+  return true;
+}
+
+template <>
+void  Driver<Sage>::loadSymbolsFromPair<SgMemberFunctionDeclaration>(unsigned long file_id, SgSourceFile * header_file, SgSourceFile * source_file) {
+  std::vector<SgMemberFunctionDeclaration *> header_member_function_decl = SageInterface::querySubTree<SgMemberFunctionDeclaration>(header_file);
+  std::vector<SgMemberFunctionDeclaration *> source_member_function_decl = SageInterface::querySubTree<SgMemberFunctionDeclaration>(source_file);
+
+  std::set<SgMemberFunctionSymbol *> member_function_symbols;
+  std::vector<SgMemberFunctionDeclaration *>::const_iterator it_member_function_decl;
+  for (it_member_function_decl = header_member_function_decl.begin(); it_member_function_decl != header_member_function_decl.end(); it_member_function_decl++) {
+    SgMemberFunctionDeclaration * member_function_decl = *it_member_function_decl;
+
+    if (ignore(member_function_decl->get_scope())) continue;
+    if (ignore(member_function_decl->get_name().getString())) continue;
+
+    SgMemberFunctionSymbol * member_function_sym = (SgMemberFunctionSymbol *)SageInterface::lookupFunctionSymbolInParentScopes(member_function_decl->get_name(), member_function_decl->get_scope());
+    assert(member_function_sym != NULL);
+
+    member_function_symbols.insert(member_function_sym);
+  }
+  for (it_member_function_decl = source_member_function_decl.begin(); it_member_function_decl != source_member_function_decl.end(); it_member_function_decl++) {
+    SgMemberFunctionDeclaration * member_function_decl = *it_member_function_decl;
+
+    if (ignore(member_function_decl->get_scope())) continue;
+    if (ignore(member_function_decl->get_name().getString())) continue;
+
+    SgMemberFunctionSymbol * member_function_sym = (SgMemberFunctionSymbol *)SageInterface::lookupFunctionSymbolInParentScopes(member_function_decl->get_name(), member_function_decl->get_scope());
+    assert(member_function_sym != NULL);
+
+    member_function_symbols.insert(member_function_sym);
+  }
+
+  std::set<SgMemberFunctionSymbol *>::iterator it;
+  for (it = member_function_symbols.begin(); it != member_function_symbols.end(); it++)
+    if (resolveValidParent<SgMemberFunctionSymbol>(*it)) {
+      p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, unsigned long>(*it, file_id));
+//    std::cout << "   Method Symbol : " << (*it) << ", name = " << (*it)->get_name().getString() << ", scope = " << (*it)->get_scope() << "(" << (*it)->get_scope()->class_name() << ")" << std::endl;
+    }
+}
+
 Sage<SgMemberFunctionDeclaration>::object_desc_t::object_desc_t(
   std::string name_,
   SgType * return_type_,
@@ -79,12 +144,13 @@ Sage<SgMemberFunctionDeclaration>::build_result_t Driver<Sage>::build<SgMemberFu
     result.symbol = isSgMemberFunctionSymbol(decl_scope->lookup_function_symbol(desc.name));
     assert(result.symbol != NULL);
 
-    std::map<SgSymbol *, unsigned long>::iterator it_symbol_to_file_id = symbol_to_file_id_map.find(desc.parent);
-    assert(it_symbol_to_file_id != symbol_to_file_id_map.end());
+    std::map<SgSymbol *, unsigned long>::iterator it_symbol_to_file_id = p_symbol_to_file_id_map.find(desc.parent);
+    assert(it_symbol_to_file_id != p_symbol_to_file_id_map.end());
+    p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, unsigned long>(result.symbol, it_symbol_to_file_id->second));
 
-    symbol_to_file_id_map.insert(std::pair<SgSymbol *, unsigned long>(result.symbol, it_symbol_to_file_id->second));
-
-    parent_map.insert(std::pair<SgSymbol *, SgSymbol *>(result.symbol, desc.parent));
+    p_valid_symbols.insert(result.symbol);
+    p_parent_map.insert(std::pair<SgSymbol *, SgSymbol *>(result.symbol, desc.parent));
+    p_member_function_symbols.insert(result.symbol);
   }
 
 #if PATCHING_SAGE_BUILDER_ISSUES
@@ -121,8 +187,8 @@ Sage<SgMemberFunctionDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<S
     unsigned long file_id = desc.file_id;
 
     if (file_id == 0) {
-      std::map<SgSymbol *, unsigned long>::iterator it_symbol_to_file_id = symbol_to_file_id_map.find(desc.parent);
-      assert(it_symbol_to_file_id != symbol_to_file_id_map.end());
+      std::map<SgSymbol *, unsigned long>::iterator it_symbol_to_file_id = p_symbol_to_file_id_map.find(desc.parent);
+      assert(it_symbol_to_file_id != p_symbol_to_file_id_map.end());
 
       file_id = it_symbol_to_file_id->second;
     }

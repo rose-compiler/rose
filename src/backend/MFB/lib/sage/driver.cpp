@@ -9,21 +9,45 @@
 
 namespace MultiFileBuilder {
 
+bool ignore(const std::string & name) {
+  return name.find("__builtin") == 0;
+}
+
+bool ignore(SgScopeStatement * scope) {
+  return isSgBasicBlock(scope);
+}
+
+template <>
+void Driver<Sage>::loadSymbolsFromPair<SgDeclarationStatement>(unsigned long file_id, SgSourceFile * header_file, SgSourceFile * source_file) {
+  loadSymbolsFromPair<SgNamespaceDeclarationStatement>(file_id, header_file, source_file);
+  loadSymbolsFromPair<SgFunctionDeclaration>(file_id, header_file, source_file);
+  loadSymbolsFromPair<SgClassDeclaration>(file_id, header_file, source_file);
+  loadSymbolsFromPair<SgVariableDeclaration>(file_id, header_file, source_file);
+  loadSymbolsFromPair<SgMemberFunctionDeclaration>(file_id, header_file, source_file);
+}
+
 Driver<Sage>::Driver(SgProject * project_) :
-  file_id_counter(1), // 0 is reserved for no file
+  project(project_ == NULL ? new SgProject::SgProject() : project_),
+  file_id_counter(1), // 0 is reserved
   id_to_name_map(),
   file_pair_map(),
   file_pair_name_map(),
   standalone_source_file_map(),
   standalone_source_file_name_map(),
   file_to_id_map(),
-  symbol_to_file_id_map(),
-  parent_map(),
-  project(project_ == NULL ? new SgProject::SgProject() : project_)
+  p_symbol_to_file_id_map(),
+  p_valid_symbols(),
+  p_parent_map(),
+  p_namespace_symbols(),
+  p_function_symbols(),
+  p_class_symbols(),
+  p_variable_symbols(),
+  p_member_function_symbols()
 { 
   if (project_ == NULL) {
     std::vector<std::string> arglist;
       arglist.push_back("c++");
+      arglist.push_back("-DSKIP_ROSE_BUILTIN_DECLARATIONS");
       arglist.push_back("-c");
     project->set_originalCommandLineArgumentList (arglist);
   }
@@ -76,6 +100,56 @@ unsigned long Driver<Sage>::createPairOfFiles(const std::string & name) {
   // Create the set of accesible files from these files. Add this file pair.
   file_id_to_accessible_file_id_map.insert(std::pair<SgSourceFile *, std::set<unsigned long> >(files.first,  std::set<unsigned long>())).first->second.insert(id);
   file_id_to_accessible_file_id_map.insert(std::pair<SgSourceFile *, std::set<unsigned long> >(files.second, std::set<unsigned long>())).first->second.insert(id);
+
+  return id;
+}
+
+unsigned long Driver<Sage>::loadPairOfFiles(const std::string & name) {
+  std::map<std::string, unsigned long>::iterator it_pair_file_name = file_pair_name_map.find(name);
+  std::map<std::string, unsigned long>::iterator it_standalone_source_file_name = standalone_source_file_name_map.find(name);
+
+  if (it_standalone_source_file_name != standalone_source_file_name_map.end()) {
+    std::cerr << "{ERROR} [Driver::createPairOfFiles] Asked to build a file pair when a standalone source file exists." << std::endl;
+    assert(false);
+  }
+
+  if (it_pair_file_name != file_pair_name_map.end()) {
+    std::cerr << "{ERROR} [Driver::createPairOfFiles] Asked to build a file pair that already exists." << std::endl;
+    assert(false);
+  }
+
+  unsigned long id = file_id_counter++;
+
+  std::pair<SgSourceFile *, SgSourceFile *> files(NULL, NULL);
+
+  std::string filename;
+
+  {
+    filename = name + ".hpp";
+    SgSourceFile * decl_file = isSgSourceFile(SageBuilder::buildFile(filename, filename, project));
+    files.first = decl_file;
+
+    filename = name + ".cpp";
+    SgSourceFile * defn_file = isSgSourceFile(SageBuilder::buildFile(filename, filename, project));
+    files.second = defn_file;
+  }
+
+  id_to_name_map.insert(std::pair<unsigned long, std::string>(id, name));
+
+  file_pair_map.insert(std::pair<unsigned long, std::pair<SgSourceFile *, SgSourceFile *> >(id, files));
+  file_pair_name_map.insert(std::pair<std::string, unsigned long>(name, id));
+
+  file_to_id_map.insert(std::pair<SgSourceFile *, unsigned long>(files.first,  id));
+  file_to_id_map.insert(std::pair<SgSourceFile *, unsigned long>(files.second, id));
+
+  // Create the set of accesible files from these files. Add this file pair.
+  file_id_to_accessible_file_id_map.insert(std::pair<SgSourceFile *, std::set<unsigned long> >(files.first,  std::set<unsigned long>())).first->second.insert(id);
+  file_id_to_accessible_file_id_map.insert(std::pair<SgSourceFile *, std::set<unsigned long> >(files.second, std::set<unsigned long>())).first->second.insert(id);
+
+//std::cout << "Header : " << files.first  << " , scope = " << files.first->get_globalScope()  << std::endl;
+//std::cout << "Source : " << files.second << " , scope = " << files.second->get_globalScope() << std::endl;
+
+  loadSymbolsFromPair<SgDeclarationStatement>(id, files.first, files.second);
 
   return id;
 }

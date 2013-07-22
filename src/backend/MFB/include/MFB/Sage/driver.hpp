@@ -37,7 +37,13 @@ class Sage {};
 
 template <>
 class Driver<Sage> {
+  public:
+    SgProject * project;
+
   private:
+
+  // Files management
+
     unsigned long file_id_counter;
 
     std::map<unsigned long, std::string> id_to_name_map;
@@ -52,9 +58,19 @@ class Driver<Sage> {
 
     std::map<SgSourceFile *, std::set<unsigned long> > file_id_to_accessible_file_id_map;
 
-    std::map<SgSymbol *, unsigned long> symbol_to_file_id_map;
+  // Symbols management
 
-    std::map<SgSymbol *, SgSymbol *> parent_map;
+    std::map<SgSymbol *, unsigned long> p_symbol_to_file_id_map;
+
+    std::set<SgSymbol *> p_valid_symbols;
+
+    std::map<SgSymbol *, SgSymbol *> p_parent_map;
+
+    std::set<SgNamespaceSymbol *>      p_namespace_symbols;
+    std::set<SgFunctionSymbol *>       p_function_symbols;
+    std::set<SgClassSymbol *>          p_class_symbols;
+    std::set<SgVariableSymbol *>       p_variable_symbols;
+    std::set<SgMemberFunctionSymbol *> p_member_function_symbols;
 
   private:
     void addIncludeDirectives(SgSourceFile * target_file, unsigned long to_be_included_file_id);
@@ -62,16 +78,21 @@ class Driver<Sage> {
     template <typename Object>
     void createForwardDeclaration(typename Sage<Object>::symbol_t symbol, SgSourceFile * target_file);
 
-  public:
-    SgProject * project;
+    template <typename Object>
+    void loadSymbolsFromPair(unsigned long file_id, SgSourceFile * header_file, SgSourceFile * source_file);
+
+    template <typename Symbol>
+    bool resolveValidParent(Symbol * symbol);
 
   public:
     Driver(SgProject * project_ = NULL);
 
     unsigned long createPairOfFiles(const std::string & name);
+    unsigned long   loadPairOfFiles(const std::string & name);
 
     unsigned long createStandaloneSourceFile(const std::string & name, std::string suffix = "cpp");
-    unsigned long addStandaloneSourceFile(SgSourceFile * source_file);
+//  unsigned long   loadStandaloneSourceFile(const std::string & name, std::string suffix = "cpp");
+    unsigned long    addStandaloneSourceFile(SgSourceFile * source_file);
 
     template <typename Object>
     typename Sage<Object>::symbol_t useSymbol(typename Sage<Object>::symbol_t symbol, SgSourceFile * file, bool need_forward_only = false);

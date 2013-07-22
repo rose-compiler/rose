@@ -14952,6 +14952,9 @@ SgProject::initialization()
 
   // DQ (9/18/2011): Added support for using more constant AST to select to use or not use frontend specific constant folding.
      p_frontendConstantFolding = false;
+
+  // TV (07/18/2013): Initialise the global GlobalScope for multiple flie handeling
+     p_globalScopeAcrossFiles = new SgGlobal(Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode());
    }
 
 // DQ (2/1/2007): Added new operator so that w could depricate the inconsistant usage of 

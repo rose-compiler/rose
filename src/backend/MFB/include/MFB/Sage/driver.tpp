@@ -10,8 +10,8 @@ namespace MultiFileBuilder {
 
 template <typename Object>
 typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::symbol_t symbol, SgSourceFile * file, bool need_forward_only) {
-  std::map<SgSymbol *, unsigned long>::iterator it_sym_decl_file_id = symbol_to_file_id_map.find(symbol);
-  assert(it_sym_decl_file_id != symbol_to_file_id_map.end());
+  std::map<SgSymbol *, unsigned long>::iterator it_sym_decl_file_id = p_symbol_to_file_id_map.find(symbol);
+  assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
 
   unsigned long sym_decl_file_id = it_sym_decl_file_id->second;
 
