@@ -20,9 +20,9 @@ Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOf
   }
 }
 
-set<string> Analyzer::variableIdsToVariableNames(set<VariableId> s) {
+set<string> Analyzer::variableIdsToVariableNames(VariableIdMapping::VariableIdSet s) {
   set<string> res;
-  for(set<VariableId>::iterator i=s.begin();i!=s.end();++i) {
+  for(VariableIdMapping::VariableIdSet::iterator i=s.begin();i!=s.end();++i) {
 	res.insert(variableIdMapping.uniqueLongVariableName(*i));
   }
   return res;
@@ -337,8 +337,8 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
 }
 
 // this function has been moved to VariableIdMapping: TODO eliminate this function here
-set<VariableId> Analyzer::determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls) {
-  set<VariableId> resultSet;
+VariableIdMapping::VariableIdSet Analyzer::determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls) {
+  VariableIdMapping::VariableIdSet resultSet;
   for(set<SgVariableDeclaration*>::iterator i=varDecls.begin();i!=varDecls.end();++i) {
 	SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(*i);
 	if(sym) {
@@ -349,8 +349,8 @@ set<VariableId> Analyzer::determineVariableIdsOfVariableDeclarations(set<SgVaria
 }
 
 // this function has been moved to VariableIdMapping: TODO eliminate this function here
-set<VariableId> Analyzer::determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList) {
-  set<VariableId> resultSet;
+VariableIdMapping::VariableIdSet Analyzer::determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList) {
+  VariableIdMapping::VariableIdSet resultSet;
   for(SgInitializedNamePtrList::iterator i=namePtrList.begin();i!=namePtrList.end();++i) {
 	assert(*i);
 	SgSymbol* sym=SgNodeHelper::getSymbolOfInitializedName(*i);
@@ -694,13 +694,13 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  // ad 2)
 	  ConstraintSet cset=*currentEState.constraints();
 	  PState newPState=*(currentEState.pstate());
-	  set<VariableId> localVars=determineVariableIdsOfVariableDeclarations(varDecls);
+	  VariableIdMapping::VariableIdSet localVars=determineVariableIdsOfVariableDeclarations(varDecls);
 	  SgInitializedNamePtrList& formalParamInitNames=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
-	  set<VariableId> formalParams=determineVariableIdsOfSgInitializedNames(formalParamInitNames);
-	  set<VariableId> vars=localVars+formalParams;
+	  VariableIdMapping::VariableIdSet formalParams=determineVariableIdsOfSgInitializedNames(formalParamInitNames);
+	  VariableIdMapping::VariableIdSet vars=localVars+formalParams;
 	  set<string> names=variableIdsToVariableNames(vars);
 
-	  for(set<VariableId>::iterator i=vars.begin();i!=vars.end();++i) {
+	  for(VariableIdMapping::VariableIdSet::iterator i=vars.begin();i!=vars.end();++i) {
 		VariableId varId=*i;
 		newPState.deleteVar(varId);
 		cset.removeAllConstraintsOfVar(varId);
@@ -1036,7 +1036,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
 	
 	list<SgVarRefExp*> varRefExpList=SgNodeHelper::listOfUsedVarsInFunctions(project);
 	// compute set of varIds (it is a set because we want multiple uses of the same var to be represented by one id)
-	set<VariableId> setOfUsedVars;
+	VariableIdMapping::VariableIdSet setOfUsedVars;
 	for(list<SgVarRefExp*>::iterator i=varRefExpList.begin();i!=varRefExpList.end();++i) {
 	  setOfUsedVars.insert(variableIdMapping.variableId(*i));
 	}

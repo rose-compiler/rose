@@ -19,7 +19,7 @@ class RDAnalyzer : public DFAnalyzer<RDLattice> {
   RDAnalyzer();
   RDLattice transfer(Label lab, RDLattice element);
   // this function assumes that a pointer to an AST subtree representing a LHS of an assignment has been passed
-  set<VariableId> determineLValueVariableIdSet(SgNode* node);
+  VariableIdMapping::VariableIdSet determineLValueVariableIdSet(SgNode* node);
   typedef AnalyzerData::iterator iterator;
   iterator begin();
   iterator end();

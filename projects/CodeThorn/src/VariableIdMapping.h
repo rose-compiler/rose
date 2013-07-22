@@ -12,6 +12,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <boost/unordered_set.hpp>
 
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
@@ -20,12 +21,14 @@ using namespace std;
 
 namespace CodeThorn {
 
-class VariableId;
-typedef string VariableName;
-
+  class VariableId;
+  typedef string VariableName;
 class VariableIdMapping {
 
  public:
+  //typedef boost::unordered_set<VariableId> VariableIdSet;
+  typedef set<VariableId> VariableIdSet;
+
   // the computation of the CodeThorn-defined ROSE-based variable-symbol mapping
   // creates a mapping of variableNames and its computed UniqueVariableSymbol
   void computeVariableSymbolMapping(SgProject* project);
@@ -71,10 +74,10 @@ class VariableIdMapping {
   void toStream(ostream& os);
   void generateDot(string filename,SgNode* astRoot);
 
-  set<VariableId> getVariableIdSet();
+  VariableIdSet getVariableIdSet();
 
-  set<VariableId> determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls);
-  set<VariableId> determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
+  VariableIdSet determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls);
+  VariableIdSet determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
 
  private:
   void generateStmtSymbolDotEdge(std::ofstream&, SgNode* node,VariableId id);
@@ -95,6 +98,7 @@ class VariableId {
   friend bool operator<(VariableId id1, VariableId id2);
   friend bool operator==(VariableId id1, VariableId id2);
   friend class ConstraintSetHashFun; // TODO: investigate why getSymbol needs to be public
+  //friend size_t hash_value(const CodeThorn::VariableId&);
  public:
   VariableId();
   string toString() const;
@@ -113,6 +117,7 @@ class VariableId {
   int _id;
 };
 
+ size_t hash_value(const CodeThorn::VariableId& vid);
 
 bool operator<(VariableId id1, VariableId id2);
 bool operator==(VariableId id1, VariableId id2);
