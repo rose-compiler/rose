@@ -20,8 +20,6 @@ using namespace std;
 //    7) What about base class qualification? I might have forgotten this one! No, this works, 
 //       but might not generate the minimum length qualified name.
 
-
-
 SgName
 Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
    {
@@ -92,6 +90,11 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
                break;
              }
 
+       // DQ (7/13/2013): I think we need this here, but wait until we generate the error to drive it to be introduced.
+       // Also this does not permit handling of multiple types requiring different name qualification (same as for throw support).
+       // DQ (7/12/2013): Added support to type trait builtin functions 
+          case V_SgTypeTraitBuiltinOperator:
+
           case V_SgTypeIdOp:
           case V_SgSizeOfOp:
           case V_SgNewExp:
@@ -139,7 +142,7 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
 #endif
           default:
              {
-               printf ("Warning: In unparseClassType: Sorry not implemented case of name qualification for info.get_reference_node_for_qualification() = %s \n",referencedNode->class_name().c_str());
+               printf ("In Unparser_Nameq::lookup_generated_qualified_name(): Sorry not implemented case of name qualification for info.get_reference_node_for_qualification() = %s \n",referencedNode->class_name().c_str());
                ROSE_ASSERT(false);
              }
         }
