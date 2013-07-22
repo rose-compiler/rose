@@ -43,7 +43,7 @@ public:
   void clearMatchResult();
 };
 
-// wrapper for set<VariableId> with pretty printing
+// set<VariableId> with pretty printing
 // 
 class VariableIdSetPrettyPrint
 {
@@ -81,14 +81,13 @@ public:
 };
 
 /*************************************************
- ************** AddressTakenAnalysis  ************
+ ************* ComputeAddressTakenInfo  **********
  *************************************************/
-class AddressTakenAnalysis
+class ComputeAddressTakenInfo
 {
   VariableIdMapping& vidm;
   // result to be computed by this analysis
   VariableIdSet addressTakenSet;
-  bool initialized;
 
   // address can be taken for any expression that is lvalue
   // The purpose of this class is to traverse arbitrary
@@ -101,9 +100,9 @@ class AddressTakenAnalysis
   // 
   class OperandToVariableId : public ROSE_VisitorPatternDefaultBase
   {
-    AddressTakenAnalysis& ata;
+    ComputeAddressTakenInfo& cati;
   public:
-    OperandToVariableId(AddressTakenAnalysis& _ata) : ata(_ata) { }
+    OperandToVariableId(ComputeAddressTakenInfo& _cati) : cati(_cati) { }
     void visit(SgVarRefExp*);
     void visit(SgDotExp*);
     void visit(SgArrowExp*);
@@ -112,7 +111,7 @@ class AddressTakenAnalysis
     void visit(SgNode* sgn);
   };
 public:
-  AddressTakenAnalysis(VariableIdMapping& _vidm) : vidm(_vidm), initialized(true) {}
+  ComputeAddressTakenInfo(VariableIdMapping& _vidm) : vidm(_vidm) {}
   void throwIfUnInitException();
   void computeAddressTakenSet(SgNode* root);
   void printAddressTakenSet();
@@ -120,9 +119,9 @@ public:
 };
 
 /*************************************************
- **************** TypeAnalysis *******************
+ *************** CollectTypeInfo *****************
  *************************************************/
-class TypeAnalysis
+class CollectTypeInfo
 {
   VariableIdMapping& vidm;
   VariableIdSet pointerTypeSet;
@@ -130,7 +129,7 @@ class TypeAnalysis
   bool initialized;
 
 public:
-  TypeAnalysis(VariableIdMapping& _vidm) : vidm(_vidm) { }
+  CollectTypeInfo(VariableIdMapping& _vidm) : vidm(_vidm) { }
   void initialize(VariableIdMapping& vidm);
   void collectTypes();
   void printPointerTypeSet();
@@ -141,24 +140,24 @@ public:
 };
 
 /*************************************************
- ******** FlowInsensitivePointerAnalysis  ********
+ ********** FlowInsensitivePointerInfo  **********
  *************************************************/
-class FlowInsensitivePointerAnalysis
+class FlowInsensitivePointerInfo
 {
   SgNode* root;
   VariableIdMapping vidm;
-  AddressTakenAnalysis addrTakenAnalysis;
-  TypeAnalysis typeAnalysis;
+  ComputeAddressTakenInfo compAddrTakenInfo;
+  CollectTypeInfo collTypeInfo;
 
 public:
-  FlowInsensitivePointerAnalysis(SgProject* project, VariableIdMapping& _vidm) : root(project), 
-                                                                                 vidm(_vidm),
-                                                                                 addrTakenAnalysis(vidm),
-                                                                                 typeAnalysis(vidm)
+  FlowInsensitivePointerInfo(SgProject* project, VariableIdMapping& _vidm) : root(project), 
+    vidm(_vidm),
+    compAddrTakenInfo(_vidm),
+    collTypeInfo(_vidm)
   { 
   }
-  void runAnalysis();
-  void printAnalysisSets();
+  void collectInfo();
+  void printInfoSets();
   VariableIdSet getMemModByPointer();
   VariableIdMapping& getVariableIdMapping();
 };

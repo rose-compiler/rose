@@ -77,15 +77,15 @@ MatchResult ProcessQuery::operator()(std::string query, SgNode* root)
 }
 
 /*************************************************
- ************** AddressTakenAnalysis  ************
+ ************* ComputeAddressTakenInfo  **********
  *************************************************/
 
-VariableIdSet AddressTakenAnalysis::getAddressTakenSet()
+VariableIdSet ComputeAddressTakenInfo::getAddressTakenSet()
 {
   return addressTakenSet;
 }
 
-void AddressTakenAnalysis::throwIfUnInitException()
+void ComputeAddressTakenInfo::throwIfUnInitException()
 {
   try
   {
@@ -98,18 +98,18 @@ void AddressTakenAnalysis::throwIfUnInitException()
   }
 }
 
-void AddressTakenAnalysis::OperandToVariableId::visit(SgVarRefExp *sgn)
+void ComputeAddressTakenInfo::OperandToVariableId::visit(SgVarRefExp *sgn)
 {  
-  ata.addressTakenSet.insert(ata.vidm.variableId(sgn));
+  cati.addressTakenSet.insert(cati.vidm.variableId(sgn));
 }
 
-void AddressTakenAnalysis::OperandToVariableId::visit(SgDotExp* sgn)
+void ComputeAddressTakenInfo::OperandToVariableId::visit(SgDotExp* sgn)
 {
   SgNode* rhs_op = sgn->get_rhs_operand();
   rhs_op->accept(*this);
 }
 
-void AddressTakenAnalysis::OperandToVariableId::visit(SgArrowExp* sgn)
+void ComputeAddressTakenInfo::OperandToVariableId::visit(SgArrowExp* sgn)
 {
   SgNode* rhs_op = sgn->get_rhs_operand();
   rhs_op->accept(*this);
@@ -124,7 +124,7 @@ void AddressTakenAnalysis::OperandToVariableId::visit(SgArrowExp* sgn)
 // set as we dont have any idea about p
 // We dont need to add any new variable to addressTakenSet 
 // as a consequence of the expressions similar to above.
-void AddressTakenAnalysis::OperandToVariableId::visit(SgPointerDerefExp* sgn)
+void ComputeAddressTakenInfo::OperandToVariableId::visit(SgPointerDerefExp* sgn)
 {
   // we dont do anything here
 }
@@ -134,20 +134,20 @@ void AddressTakenAnalysis::OperandToVariableId::visit(SgPointerDerefExp* sgn)
 // contents of only A. The inner index expressions are r-values
 // it is sufficient to add A to addressTakenSet
 // 
-void AddressTakenAnalysis::OperandToVariableId::visit(SgPntrArrRefExp* sgn)
+void ComputeAddressTakenInfo::OperandToVariableId::visit(SgPntrArrRefExp* sgn)
 {
   SgNode* arr_op = sgn->get_lhs_operand();
   SgVarRefExp* arr_name = isSgVarRefExp(arr_op); ROSE_ASSERT(arr_name != NULL);
-  ata.addressTakenSet.insert(ata.vidm.variableId(arr_name));
+  cati.addressTakenSet.insert(cati.vidm.variableId(arr_name));
 }
 
-void AddressTakenAnalysis::OperandToVariableId::visit(SgNode* sgn)
+void ComputeAddressTakenInfo::OperandToVariableId::visit(SgNode* sgn)
 {
   std::cerr << "unhandled operand of SgAddressOfOp in AddressTakenAnalysis\n";
   ROSE_ASSERT(0);
 }
 
-void AddressTakenAnalysis::computeAddressTakenSet(SgNode* root)
+void ComputeAddressTakenInfo::computeAddressTakenSet(SgNode* root)
 {
   throwIfUnInitException();
   // query to match all SgAddressOfOp subtrees
@@ -164,7 +164,7 @@ void AddressTakenAnalysis::computeAddressTakenSet(SgNode* root)
 }
 
 // pretty print
-void AddressTakenAnalysis::printAddressTakenSet()
+void ComputeAddressTakenInfo::printAddressTakenSet()
 {
   std::cout << "addressTakenSet: " << VariableIdSetPrettyPrint::str(addressTakenSet, vidm) << "\n";
 }
@@ -173,7 +173,7 @@ void AddressTakenAnalysis::printAddressTakenSet()
  **************** TypeAnalysis *******************
  *************************************************/
 
-void TypeAnalysis::throwIfUnInitException()
+void CollectTypeInfo::throwIfUnInitException()
 {
   try
   {
@@ -186,18 +186,18 @@ void TypeAnalysis::throwIfUnInitException()
   }
 }
 
-VariableIdSet TypeAnalysis::getPointerTypeSet()
+VariableIdSet CollectTypeInfo::getPointerTypeSet()
 {
   return pointerTypeSet;
 }
 
-VariableIdSet TypeAnalysis::getArrayTypeSet()
+VariableIdSet CollectTypeInfo::getArrayTypeSet()
 {
   return arrayTypeSet;
 }
 
 
-void TypeAnalysis::collectTypes()
+void CollectTypeInfo::collectTypes()
 {
   throwIfUnInitException();
   VariableIdSet set = vidm.getVariableIdSet();
@@ -230,43 +230,43 @@ void TypeAnalysis::collectTypes()
   }
 }
 
-void TypeAnalysis::printPointerTypeSet()
+void CollectTypeInfo::printPointerTypeSet()
 {
   std::cout << "pointerTypeSet: " << VariableIdSetPrettyPrint::str(pointerTypeSet, vidm) << "\n";
 }
 
-void TypeAnalysis::printArrayTypeSet()
+void CollectTypeInfo::printArrayTypeSet()
 {
   std::cout << "arrayTypeSet: " << VariableIdSetPrettyPrint::str(arrayTypeSet, vidm) << "\n";
 }
 
 /*************************************************
- ******** FlowInsensitivePointerAnalysis  ********
+ ********** FlowInsensitivePointerInfo  **********
  *************************************************/
 
-void FlowInsensitivePointerAnalysis::runAnalysis()
+void FlowInsensitivePointerInfo::collectInfo()
 {
-  addrTakenAnalysis.computeAddressTakenSet(root);
-  typeAnalysis.collectTypes();
+  compAddrTakenInfo.computeAddressTakenSet(root);
+  collTypeInfo.collectTypes();
 }
 
-void FlowInsensitivePointerAnalysis::printAnalysisSets()
+void FlowInsensitivePointerInfo::printInfoSets()
 {
-  addrTakenAnalysis.printAddressTakenSet();
-  typeAnalysis.printPointerTypeSet();
-  typeAnalysis.printArrayTypeSet();
+  compAddrTakenInfo.printAddressTakenSet();
+  collTypeInfo.printPointerTypeSet();
+  collTypeInfo.printArrayTypeSet();
 }
 
-VariableIdMapping& FlowInsensitivePointerAnalysis::getVariableIdMapping()
+VariableIdMapping& FlowInsensitivePointerInfo::getVariableIdMapping()
 {
   return vidm;
 }
 
-VariableIdSet FlowInsensitivePointerAnalysis::getMemModByPointer()
+VariableIdSet FlowInsensitivePointerInfo::getMemModByPointer()
 {
   VariableIdSet unionSet;
-  VariableIdSet addrTakenSet = addrTakenAnalysis.getAddressTakenSet();
-  VariableIdSet arrayTypeSet = typeAnalysis.getArrayTypeSet();
+  VariableIdSet addrTakenSet = compAddrTakenInfo.getAddressTakenSet();
+  VariableIdSet arrayTypeSet = collTypeInfo.getArrayTypeSet();
   
   // std::set_union(addrTakenSet.begin(), addrTakenSet.end(),
   //                       arrayTypeSet.begin(), arrayTypeSet.end(),

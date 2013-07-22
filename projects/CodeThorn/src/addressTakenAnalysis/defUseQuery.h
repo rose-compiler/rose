@@ -13,14 +13,14 @@
 //typedef std::pair<VariableIdSet, bool> MemObj;
 
 /*************************************************
- ***************** DefUseMemObj ******************
+ *************** DefUseMemObjInfo ****************
  *************************************************/
 
 // determined completely based on syntactic information
 // def_set consists of VariableIds which is written by the expression
 // use_set consists of VariableIds which are read but not modified by this expression
 // consider using references for efficiency
-class DefUseMemObj
+class DefUseMemObjInfo
 {
   VariableIdSet def_set;
   VariableIdSet use_set;
@@ -28,8 +28,8 @@ class DefUseMemObj
   bool func_modify;
 
 public:
-  DefUseMemObj() : ptr_modify(false), func_modify(false) { }
-  DefUseMemObj(const VariableIdSet& _def_set, const VariableIdSet& _use_set);
+  DefUseMemObjInfo() : ptr_modify(false), func_modify(false) { }
+  DefUseMemObjInfo(const VariableIdSet& _def_set, const VariableIdSet& _use_set);
   VariableIdSet getDefSet();
   VariableIdSet getUseSet();
   
@@ -47,25 +47,25 @@ public:
 
   void copyDefToUseSet();
   void copyUseToDefSet();
-  DefUseMemObj operator+(const DefUseMemObj& dumo1);
+  DefUseMemObjInfo operator+(const DefUseMemObjInfo& dumo1);
 
   std::string str();
   // for more readability
   std::string str(VariableIdMapping& vidm);
 };
 
-// used by the getDefUseMemObj_rec to traverse the 
+// used by the getDefUseMemObjInfo_rec to traverse the 
 // structure of the expression and call the appropriate
 // getDefUseLHS/RHS functions
 class ExprVisitorPattern : public ROSE_VisitorPatternDefaultBase
 {
-  FlowInsensitivePointerAnalysis& fipa;
+  FlowInsensitivePointerInfo& fipi;
   // if set then we are processing an expression that modifies memory
   bool isModExpr;
-  DefUseMemObj dumo;
+  DefUseMemObjInfo dumo;
 
 public:
-  ExprVisitorPattern(FlowInsensitivePointerAnalysis& _fipa, bool isModExpr);
+  ExprVisitorPattern(FlowInsensitivePointerInfo& _fipi, bool isModExpr);
   // lhs of assignment operator are always lvalues
   // process them 
   void visit(SgAssignOp* sgn);
@@ -85,24 +85,24 @@ public:
   void visit(SgDotExp* sgn);
   void visit(SgArrowExp* sgn);
 
-  DefUseMemObj getDefUseMemObj();
+  DefUseMemObjInfo getDefUseMemObjInfo();
 };
 
 class LvalueVisitorPattern : public ROSE_VisitorPatternDefaultBase
 {
-  FlowInsensitivePointerAnalysis& fipa;
+  FlowInsensitivePointerInfo& fipi;
   VariableIdMapping& vidm;
   bool isModExpr;
-  DefUseMemObj dumo;
+  DefUseMemObjInfo dumo;
 public:
-  LvalueVisitorPattern(FlowInsensitivePointerAnalysis& _fipa, VariableIdMapping& _vidm, bool _isModExpr);
+  LvalueVisitorPattern(FlowInsensitivePointerInfo& _fipi, VariableIdMapping& _vidm, bool _isModExpr);
   void visit(SgVarRefExp* sgn);
   void visit(SgPntrArrRefExp* sgn);
   void visit(SgPointerDerefExp* sgn);
   void visit(SgDotExp* sgn);
   void visit(SgArrowExp* sgn);
 
-  DefUseMemObj getDefUseMemObj();
+  DefUseMemObjInfo getDefUseMemObjInfo();
 };
 
 
@@ -113,19 +113,19 @@ public:
 // the locations that are modified involve all arrays and variables in addressTakenSet
 // if the expression involve functions or function pointers it can 
 // potentially modify everything
-DefUseMemObj getDefUseMemObj(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa);
+DefUseMemObjInfo getDefUseMemObjInfo(SgNode* sgn, FlowInsensitivePointerInfo& fipi);
 
 // internal implementation
 // @sgn: root node
-// @fipa: required to answer dereferencing queries
-// @dumo: the defuse object that will be build
+// @fipi: required to answer dereferencing queries
+// @dumo: the defuse object that will be built
 // @isModExpr: set to true if the expression is modifying a memory location
-DefUseMemObj getDefUseMemObj_rec(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa, bool isModExpr);
+DefUseMemObjInfo getDefUseMemObjInfo_rec(SgNode* sgn, FlowInsensitivePointerInfo& fipi, bool isModExpr);
 
 // used to process the lhs of assignment operator
 // invokes a visitor pattern and adds the modified variables
 // to def_set and used variables to use_set of dumo object
-DefUseMemObj getDefUseMemObjLvalue(SgNode* sgn, FlowInsensitivePointerAnalysis& fipa, bool isModExpr);
+DefUseMemObjInfo getDefUseMemObjInfoLvalue(SgNode* sgn, FlowInsensitivePointerInfo& fipi, bool isModExpr);
 
 #endif
 

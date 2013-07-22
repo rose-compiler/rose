@@ -7,21 +7,21 @@
  * email    : aananthakris1@llnl.gov                         *
  *************************************************************/
 
-class TestDefUseMemObjTraversal : public AstSimpleProcessing
+class TestDefUseMemObjInfoTraversal : public AstSimpleProcessing
 {
-  FlowInsensitivePointerAnalysis& fipa;
+  FlowInsensitivePointerInfo& fipi;
   VariableIdMapping& vidm;
 public:
-  TestDefUseMemObjTraversal(FlowInsensitivePointerAnalysis& _fipa, VariableIdMapping& _vidm) 
-    : fipa(_fipa), vidm(_vidm)  { }
+  TestDefUseMemObjInfoTraversal(FlowInsensitivePointerInfo& _fipi, VariableIdMapping& _vidm) 
+    : fipi(_fipi), vidm(_vidm)  { }
   void visit(SgNode*);
 };
 
-void TestDefUseMemObjTraversal::visit(SgNode* sgn)
+void TestDefUseMemObjInfoTraversal::visit(SgNode* sgn)
 {
   if(isSgExpression(sgn))
   {
-    DefUseMemObj memobj = getDefUseMemObj(sgn, fipa);
+    DefUseMemObjInfo memobj = getDefUseMemObjInfo(sgn, fipi);
     if(!memobj.isDefSetEmpty() || !memobj.isUseSetEmpty())
     {
       std::cout << "<" << sgn->class_name() << ", " << sgn->unparseToString() << "\n" 
@@ -46,11 +46,11 @@ int main(int argc, char* argv[])
   VariableIdMapping vidm;
   vidm.computeVariableSymbolMapping(project);
 
-  FlowInsensitivePointerAnalysis fipa(project, vidm);
-  fipa.runAnalysis();
-  //fipa.printAnalysisSets();
+  FlowInsensitivePointerInfo fipi(project, vidm);
+  fipi.collectInfo();
+  //fipi.printAnalysisSets();
 
-  TestDefUseMemObjTraversal tt(fipa, vidm);
+  TestDefUseMemObjInfoTraversal tt(fipi, vidm);
   tt.traverseInputFiles(project, preorder);
 
   return 0;
