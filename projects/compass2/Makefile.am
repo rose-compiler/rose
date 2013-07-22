@@ -103,6 +103,7 @@ bin_compass2_LDADD=\
 	bin/checkers/no_vfork/libnovfork.la \
 	bin/checkers/pointer_comparison/libpointercomparison.la \
 	bin/checkers/no_variadic_functions/libnovariadicfunctions.la \
+	bin/checkers/asynchronous_signal_handler/libasynchronoussignalhandler.la \
 	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS) \
@@ -127,6 +128,7 @@ noinst_LTLIBRARIES=\
 	bin/checkers/do_not_delete_this/libdonotdeletethis.la \
 	bin/checkers/function_prototype/libfunctionprototype.la \
 	bin/checkers/default_argument/libdefaultargument.la \
+	bin/checkers/asynchronous_signal_handler/libasynchronoussignalhandler.la \
 	bin/checkers/no_variadic_functions/libnovariadicfunctions.la \
 	bin/checkers/no_vfork/libnovfork.la \
 	bin/checkers/size_of_pointer/libsizeofpointer.la \
@@ -245,6 +247,9 @@ bin_checkers_pointer_comparison_libpointercomparison_la_SOURCES=\
 
 bin_checkers_no_variadic_functions_libnovariadicfunctions_la_SOURCES=\
 	bin/checkers/no_variadic_functions/no_variadic_functions.cpp
+
+bin_checkers_asynchronous_signal_handler_libasynchronoussignalhandler_la_SOURCES=\
+	bin/checkers/asynchronous_signal_handler/asynchronous_signal_handler.cpp
 
 #PLACEHOLDER
 

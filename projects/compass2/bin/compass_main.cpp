@@ -52,6 +52,7 @@ extern const Compass::Checker* const discardAssignmentChecker;
 extern const Compass::Checker* const noVforkChecker;
 extern const Compass::Checker* const pointerComparisonChecker;
 extern const Compass::Checker* const noVariadicFunctionsChecker;
+extern const Compass::Checker* const asynchronousSignalHandlerChecker;
 //PLACEHOLDER1
 /*-----------------------------------------------------------------------------
  * Main program
@@ -200,6 +201,8 @@ int main (int argc, char** argv)
                 traversals.push_back (pointerComparisonChecker);
             else if ("noVariadicFunctions" == checker_name)
                 traversals.push_back (noVariadicFunctionsChecker);
+            else if ("asynchronousSignalHandler" == checker_name)
+                traversals.push_back (asynchronousSignalHandlerChecker);
             //PLACEHOLDER2
             else
             {
