@@ -166,6 +166,8 @@ Sage<SgClassDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgClassDec
     assert(false); // NIY
   }
   else {
+    assert(desc.file_id != 0);
+
     std::map<unsigned long, std::pair<SgSourceFile *, SgSourceFile *> >::iterator it_file_pair = file_pair_map.find(desc.file_id);
     std::map<unsigned long, SgSourceFile *>::iterator it_standalone_source_file = standalone_source_file_map.find(desc.file_id);
 

@@ -46,13 +46,9 @@ class Driver<Sage> {
 
     unsigned long file_id_counter;
 
-    std::map<unsigned long, std::string> id_to_name_map;
-
     std::map<unsigned long, std::pair<SgSourceFile *, SgSourceFile *> > file_pair_map;
-    std::map<std::string, unsigned long> file_pair_name_map;
 
     std::map<unsigned long, SgSourceFile *> standalone_source_file_map;
-    std::map<std::string, unsigned long> standalone_source_file_name_map;
 
     std::map<SgSourceFile *, unsigned long> file_to_id_map;
 
@@ -88,11 +84,13 @@ class Driver<Sage> {
     Driver(SgProject * project_ = NULL);
 
     unsigned long createPairOfFiles(const std::string & name);
-    unsigned long   loadPairOfFiles(const std::string & name);
+    unsigned long   loadPairOfFiles(const std::string & name, const std::string & header_path, const std::string & source_path);
 
     unsigned long createStandaloneSourceFile(const std::string & name, std::string suffix = "cpp");
 //  unsigned long   loadStandaloneSourceFile(const std::string & name, std::string suffix = "cpp");
-    unsigned long    addStandaloneSourceFile(SgSourceFile * source_file);
+
+    unsigned long addPairOfFiles(SgSourceFile * header_file, SgSourceFile * source_file);
+    unsigned long addStandaloneSourceFile(SgSourceFile * source_file);
 
     template <typename Object>
     typename Sage<Object>::symbol_t useSymbol(typename Sage<Object>::symbol_t symbol, SgSourceFile * file, bool need_forward_only = false);
