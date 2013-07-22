@@ -98,13 +98,13 @@ std::string DefUseMemObjInfo::str(VariableIdMapping& vidm)
 }
 
 
-ExprVisitorPattern::ExprVisitorPattern(FlowInsensitivePointerInfo& _fipi, bool _isModExpr) :
+ExprWalker::ExprWalker(FlowInsensitivePointerInfo& _fipi, bool _isModExpr) :
   fipi(_fipi), isModExpr(_isModExpr)
 {
   // default constructor
 }
 
-void ExprVisitorPattern::visit(SgAssignOp* sgn)
+void ExprWalker::visit(SgAssignOp* sgn)
 {
   SgNode* lhs = sgn->get_lhs_operand();
   SgNode* rhs = sgn->get_rhs_operand();
@@ -120,7 +120,7 @@ void ExprVisitorPattern::visit(SgAssignOp* sgn)
   dumo = ldumo + rdumo;
 }
 
-void ExprVisitorPattern::visit(SgCompoundAssignOp* sgn)
+void ExprWalker::visit(SgCompoundAssignOp* sgn)
 {
   SgNode* lhs = sgn->get_lhs_operand();
   SgNode* rhs = sgn->get_rhs_operand();
@@ -136,21 +136,21 @@ void ExprVisitorPattern::visit(SgCompoundAssignOp* sgn)
   dumo = ldumo + rdumo;
 }
 
-void ExprVisitorPattern::visit(SgCastExp* sgn)
+void ExprWalker::visit(SgCastExp* sgn)
 {
   SgNode* operand = sgn->get_operand();
   DefUseMemObjInfo opdumo = getDefUseMemObjInfo_rec(operand, fipi, false);
   dumo = opdumo;
 }
 
-void ExprVisitorPattern::visit(SgAddressOfOp* sgn)
+void ExprWalker::visit(SgAddressOfOp* sgn)
 {
   SgNode* operand = sgn->get_operand();
   DefUseMemObjInfo opdumo = getDefUseMemObjInfo_rec(operand, fipi, false);
   dumo = opdumo;
 }
 
-void ExprVisitorPattern::visit(SgBinaryOp* sgn)
+void ExprWalker::visit(SgBinaryOp* sgn)
 {
   SgNode* lhs = sgn->get_lhs_operand();
   SgNode* rhs = sgn->get_rhs_operand();
@@ -171,49 +171,49 @@ void ExprVisitorPattern::visit(SgBinaryOp* sgn)
   dumo = ldumo + rdumo;
 }
 
-void ExprVisitorPattern::visit(SgVarRefExp* sgn)
+void ExprWalker::visit(SgVarRefExp* sgn)
 {
   // recursion base case
   DefUseMemObjInfo rdumo = getDefUseMemObjInfoLvalue(sgn, fipi, isModExpr);
   dumo = rdumo;
 }
 
-void ExprVisitorPattern::visit(SgPntrArrRefExp* sgn)
+void ExprWalker::visit(SgPntrArrRefExp* sgn)
 {
   DefUseMemObjInfo rdumo = getDefUseMemObjInfoLvalue(sgn, fipi, isModExpr);
   dumo = rdumo;
 }
 
-void ExprVisitorPattern::visit(SgPointerDerefExp* sgn)
+void ExprWalker::visit(SgPointerDerefExp* sgn)
 {
   // *p + i++ ??
   DefUseMemObjInfo rdumo = getDefUseMemObjInfoLvalue(sgn, fipi, isModExpr);
   dumo = rdumo;
 }
 
-void ExprVisitorPattern::visit(SgArrowExp* sgn)
+void ExprWalker::visit(SgArrowExp* sgn)
 {
   DefUseMemObjInfo rdumo = getDefUseMemObjInfoLvalue(sgn, fipi, isModExpr);
   dumo = rdumo;
 }
 
-void ExprVisitorPattern::visit(SgDotExp *sgn)
+void ExprWalker::visit(SgDotExp *sgn)
 {
   DefUseMemObjInfo rdumo = getDefUseMemObjInfoLvalue(sgn, fipi, isModExpr);
   dumo = rdumo;
 }
 
-DefUseMemObjInfo ExprVisitorPattern::getDefUseMemObjInfo()
+DefUseMemObjInfo ExprWalker::getDefUseMemObjInfo()
 {
   return dumo;
 }
 
-LvalueVisitorPattern::LvalueVisitorPattern(FlowInsensitivePointerInfo& _fipi, VariableIdMapping& _vidm, bool _isModExpr)
+LvalueExprWalker::LvalueExprWalker(FlowInsensitivePointerInfo& _fipi, VariableIdMapping& _vidm, bool _isModExpr)
   : fipi(_fipi), vidm(_vidm), isModExpr(_isModExpr)
 {
 }
 
-void LvalueVisitorPattern::visit(SgVarRefExp* sgn)
+void LvalueExprWalker::visit(SgVarRefExp* sgn)
 {
   VariableIdSet& def_set = dumo.getDefSetRefMod();
   VariableIdSet& use_set = dumo.getUseSetRefMod();
@@ -229,7 +229,7 @@ void LvalueVisitorPattern::visit(SgVarRefExp* sgn)
   }
 }
 
-void LvalueVisitorPattern::visit(SgPointerDerefExp* sgn)
+void LvalueExprWalker::visit(SgPointerDerefExp* sgn)
 {
   VariableIdSet& def_set = dumo.getDefSetRefMod();
   VariableIdSet& use_set = dumo.getUseSetRefMod();
@@ -259,7 +259,7 @@ void LvalueVisitorPattern::visit(SgPointerDerefExp* sgn)
   dumo = rdumo + dumo;
 }
 
-void LvalueVisitorPattern::visit(SgPntrArrRefExp* sgn)
+void LvalueExprWalker::visit(SgPntrArrRefExp* sgn)
 {
   SgNode* lhs_addr = sgn->get_lhs_operand();
   SgNode* rhs_expr = sgn->get_rhs_operand();
@@ -280,7 +280,7 @@ void LvalueVisitorPattern::visit(SgPntrArrRefExp* sgn)
   dumo = ldumo + rdumo;
 }
 
-void LvalueVisitorPattern::visit(SgArrowExp* sgn)
+void LvalueExprWalker::visit(SgArrowExp* sgn)
 {
   SgNode* lhs_addr = sgn->get_lhs_operand();
   SgNode* rhs_expr = sgn->get_rhs_operand();
@@ -305,7 +305,7 @@ void LvalueVisitorPattern::visit(SgArrowExp* sgn)
   dumo = ldumo + rdumo;
 }
 
-void LvalueVisitorPattern::visit(SgDotExp* sgn)
+void LvalueExprWalker::visit(SgDotExp* sgn)
 {
   SgNode* lhs_addr = sgn->get_lhs_operand();
   SgNode* rhs_expr = sgn->get_rhs_operand();
@@ -330,7 +330,7 @@ void LvalueVisitorPattern::visit(SgDotExp* sgn)
   dumo = ldumo + rdumo;
 }
 
-DefUseMemObjInfo LvalueVisitorPattern::getDefUseMemObjInfo()
+DefUseMemObjInfo LvalueExprWalker::getDefUseMemObjInfo()
 {
   return dumo;
 }
@@ -344,14 +344,14 @@ DefUseMemObjInfo getDefUseMemObjInfo(SgNode* sgn, FlowInsensitivePointerInfo& fi
 // main implementation
 DefUseMemObjInfo getDefUseMemObjInfo_rec(SgNode* sgn, FlowInsensitivePointerInfo& fipi, bool isModExpr)
 {
-  ExprVisitorPattern expvp(fipi, isModExpr);
-  sgn->accept(expvp);
-  return expvp.getDefUseMemObjInfo();
+  ExprWalker exprw(fipi, isModExpr);
+  sgn->accept(exprw);
+  return exprw.getDefUseMemObjInfo();
 }
 
 DefUseMemObjInfo getDefUseMemObjInfoLvalue(SgNode* sgn, FlowInsensitivePointerInfo& fipi, bool isModExpr)
 {
-  LvalueVisitorPattern lvalvp(fipi, fipi.getVariableIdMapping(), isModExpr);
-  sgn->accept(lvalvp);
-  return lvalvp.getDefUseMemObjInfo();
+  LvalueExprWalker lvalw(fipi, fipi.getVariableIdMapping(), isModExpr);
+  sgn->accept(lvalw);
+  return lvalw.getDefUseMemObjInfo();
 }

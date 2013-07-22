@@ -57,7 +57,7 @@ public:
 // used by the getDefUseMemObjInfo_rec to traverse the 
 // structure of the expression and call the appropriate
 // getDefUseLHS/RHS functions
-class ExprVisitorPattern : public ROSE_VisitorPatternDefaultBase
+class ExprWalker : public ROSE_VisitorPatternDefaultBase
 {
   FlowInsensitivePointerInfo& fipi;
   // if set then we are processing an expression that modifies memory
@@ -65,7 +65,7 @@ class ExprVisitorPattern : public ROSE_VisitorPatternDefaultBase
   DefUseMemObjInfo dumo;
 
 public:
-  ExprVisitorPattern(FlowInsensitivePointerInfo& _fipi, bool isModExpr);
+  ExprWalker(FlowInsensitivePointerInfo& _fipi, bool isModExpr);
   // lhs of assignment operator are always lvalues
   // process them 
   void visit(SgAssignOp* sgn);
@@ -88,14 +88,14 @@ public:
   DefUseMemObjInfo getDefUseMemObjInfo();
 };
 
-class LvalueVisitorPattern : public ROSE_VisitorPatternDefaultBase
+class LvalueExprWalker : public ROSE_VisitorPatternDefaultBase
 {
   FlowInsensitivePointerInfo& fipi;
   VariableIdMapping& vidm;
   bool isModExpr;
   DefUseMemObjInfo dumo;
 public:
-  LvalueVisitorPattern(FlowInsensitivePointerInfo& _fipi, VariableIdMapping& _vidm, bool _isModExpr);
+  LvalueExprWalker(FlowInsensitivePointerInfo& _fipi, VariableIdMapping& _vidm, bool _isModExpr);
   void visit(SgVarRefExp* sgn);
   void visit(SgPntrArrRefExp* sgn);
   void visit(SgPointerDerefExp* sgn);
