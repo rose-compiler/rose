@@ -16596,11 +16596,11 @@ SageInterface::collectSourceSequenceNumbers( SgNode* astNode )
  *  Loop is normalized to [lb,ub,step], ub is inclusive (<=, >=)
  *  
  *  to collapse two level of loops:
- *  iteration_loop_one= (ub1-lb1+1)%step1 ==0?(ub1-lb1+1)/step1: (ub1-lb1+1)/step1+1
- *  iteration_loop_two= (ub2-lb2+1)%step2 ==0?(ub2-lb2+1)/step2: (ub2-lb2+1)/step2+1
- *  total iteration count = iteration_loop_two * iteration_loop_two
+ *  iteration_count_one= (ub1-lb1+1)%step1 ==0?(ub1-lb1+1)/step1: (ub1-lb1+1)/step1+1
+ *  iteration_count_two= (ub2-lb2+1)%step2 ==0?(ub2-lb2+1)/step2: (ub2-lb2+1)/step2+1
+ *  total_iteration_count = iteration_count_one * iteration_count_two
  *
- *  Decide incremental/decremental loop by checking operator of test statement(ub), <=/>=
+ *  Decide incremental/decremental loop by checking operator of test statement(ub), <=/>=, this is done in isCanonicalForLoop()
  *
  * e.g:
  * // collapse the following two level of for loops:
@@ -16684,7 +16684,7 @@ bool SageInterface::loopCollapsing(SgForStatement* target_loop, size_t collapsin
         forLoopNormalization(temp_target_loop);  
  
 
-        if (!isCanonicalForLoop(temp_target_loop, &ivar[i], &lb[i], &ub[i], &step[i], &orig_body[i]))
+        if (!isCanonicalForLoop(temp_target_loop, &ivar[i], &lb[i], &ub[i], &step[i], &orig_body[i], &isPlus[i]))
         {
             cerr<<"Error in SageInterface::loopCollapsing(): target loop is not canonical."<<endl;
             dumpInfo(target_loop);
@@ -16694,10 +16694,11 @@ bool SageInterface::loopCollapsing(SgForStatement* target_loop, size_t collapsin
         ROSE_ASSERT(ivar[i]&& lb[i] && ub[i] && step[i]);
    
        /*
-        * Winnie, we can start dealing with incremental or decremental here, get the flag first
+        * Winnie, we can start dealing with incremental or decremental here, get the flag first, this could be done in isCanonicalForLoop()
+        * therefore, this part of code can be removed.
         */
     //Winnie, step isPlus flag, decide incremental or decremental by the conditional statement operator <= or >=
-     isPlus[i] = false;
+/*     isPlus[i] = false;
     SgBinaryOp* ub_bin_op = isSgBinaryOp(ub[i]->get_parent());
     if (ub_bin_op == NULL)
         return false;
@@ -16712,7 +16713,7 @@ bool SageInterface::loopCollapsing(SgForStatement* target_loop, size_t collapsin
         default:
             return false;
   }
- 
+ */
   
 //Winnie, (ub[i]-lb[i]+1)%step[i] ==0?(ub[i]-lb[i]+1)/step[i]: (ub[i]-lb[i]+1)/step[i]+1; (need ceiling) total number of iterations in this level (ub[i] - lb[i] + 1)/step[i]
         if(isPlus[i] == true)

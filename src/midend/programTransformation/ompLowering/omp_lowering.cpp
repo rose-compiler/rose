@@ -4747,6 +4747,12 @@ void lower_omp(SgSourceFile* file)
           if (is_target_loop)
             transOmpTargetLoop (node);
           else  
+            /*
+            *Winnie, do loop collapse before the invoke transOmpLoop(node), 
+            *        grab information about loop collapse factor and target_loop
+            *        may need to modify SageInterface::loopCollapsing(SgForStatement *target_loop, size_t collapsing_factor) to 
+            *            make sure that no statements are inserted in between of for directive and the target_loop
+            */
             transOmpLoop(node);
           break;
         }
