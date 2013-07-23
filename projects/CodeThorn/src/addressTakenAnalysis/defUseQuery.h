@@ -10,8 +10,6 @@
 
 #include "addressTakenAnalysis.h"
 
-//typedef std::pair<VariableIdSet, bool> MemObj;
-
 /*************************************************
  *************** DefUseMemObjInfo ****************
  *************************************************/
@@ -59,13 +57,13 @@ public:
 // getDefUseLHS/RHS functions
 class ExprWalker : public ROSE_VisitorPatternDefaultBase
 {
-  FlowInsensitivePointerInfo& fipi;
+  VariableIdMapping& vidm;
   // if set then we are processing an expression that modifies memory
   bool isModExpr;
   DefUseMemObjInfo dumo;
 
 public:
-  ExprWalker(FlowInsensitivePointerInfo& _fipi, bool isModExpr);
+  ExprWalker(VariableIdMapping& _vidm, bool isModExpr);
   // lhs of assignment operator are always lvalues
   // process them 
   void visit(SgAssignOp* sgn);
@@ -90,12 +88,11 @@ public:
 
 class LvalueExprWalker : public ROSE_VisitorPatternDefaultBase
 {
-  FlowInsensitivePointerInfo& fipi;
   VariableIdMapping& vidm;
   bool isModExpr;
   DefUseMemObjInfo dumo;
 public:
-  LvalueExprWalker(FlowInsensitivePointerInfo& _fipi, VariableIdMapping& _vidm, bool _isModExpr);
+  LvalueExprWalker(VariableIdMapping& _vidm, bool _isModExpr);
   void visit(SgVarRefExp* sgn);
   void visit(SgPntrArrRefExp* sgn);
   void visit(SgPointerDerefExp* sgn);
@@ -113,19 +110,19 @@ public:
 // the locations that are modified involve all arrays and variables in addressTakenSet
 // if the expression involve functions or function pointers it can 
 // potentially modify everything
-DefUseMemObjInfo getDefUseMemObjInfo(SgNode* sgn, FlowInsensitivePointerInfo& fipi);
+DefUseMemObjInfo getDefUseMemObjInfo(SgNode* sgn, VariableIdMapping& vidm);
 
 // internal implementation
 // @sgn: root node
 // @fipi: required to answer dereferencing queries
 // @dumo: the defuse object that will be built
 // @isModExpr: set to true if the expression is modifying a memory location
-DefUseMemObjInfo getDefUseMemObjInfo_rec(SgNode* sgn, FlowInsensitivePointerInfo& fipi, bool isModExpr);
+DefUseMemObjInfo getDefUseMemObjInfo_rec(SgNode* sgn, VariableIdMapping& vidm, bool isModExpr);
 
 // used to process the lhs of assignment operator
 // invokes a visitor pattern and adds the modified variables
 // to def_set and used variables to use_set of dumo object
-DefUseMemObjInfo getDefUseMemObjInfoLvalue(SgNode* sgn, FlowInsensitivePointerInfo& fipi, bool isModExpr);
+DefUseMemObjInfo getDefUseMemObjInfoLvalue(SgNode* sgn, VariableIdMapping& vidm, bool isModExpr);
 
 #endif
 

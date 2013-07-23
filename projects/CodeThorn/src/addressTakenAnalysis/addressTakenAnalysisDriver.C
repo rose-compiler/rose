@@ -9,11 +9,10 @@
 
 class TestDefUseMemObjInfoTraversal : public AstSimpleProcessing
 {
-  FlowInsensitivePointerInfo& fipi;
   VariableIdMapping& vidm;
 public:
-  TestDefUseMemObjInfoTraversal(FlowInsensitivePointerInfo& _fipi, VariableIdMapping& _vidm) 
-    : fipi(_fipi), vidm(_vidm)  { }
+  TestDefUseMemObjInfoTraversal(VariableIdMapping& _vidm) 
+    : vidm(_vidm)  { }
   void visit(SgNode*);
 };
 
@@ -21,7 +20,7 @@ void TestDefUseMemObjInfoTraversal::visit(SgNode* sgn)
 {
   if(isSgExpression(sgn))
   {
-    DefUseMemObjInfo memobj = getDefUseMemObjInfo(sgn, fipi);
+    DefUseMemObjInfo memobj = getDefUseMemObjInfo(sgn, vidm);
     if(!memobj.isDefSetEmpty() || !memobj.isUseSetEmpty())
     {
       std::cout << "<" << sgn->class_name() << ", " << sgn->unparseToString() << "\n" 
@@ -50,7 +49,7 @@ int main(int argc, char* argv[])
   fipi.collectInfo();
   //fipi.printAnalysisSets();
 
-  TestDefUseMemObjInfoTraversal tt(fipi, vidm);
+  TestDefUseMemObjInfoTraversal tt(vidm);
   tt.traverseInputFiles(project, preorder);
 
   return 0;

@@ -98,8 +98,8 @@ std::string DefUseMemObjInfo::str(VariableIdMapping& vidm)
 }
 
 
-ExprWalker::ExprWalker(FlowInsensitivePointerInfo& _fipi, bool _isModExpr) :
-  fipi(_fipi), isModExpr(_isModExpr)
+ExprWalker::ExprWalker(VariableIdMapping& _vidm, bool _isModExpr) :
+  vidm(_vidm), isModExpr(_isModExpr)
 {
   // default constructor
 }
@@ -108,8 +108,8 @@ void ExprWalker::visit(SgAssignOp* sgn)
 {
   SgNode* lhs = sgn->get_lhs_operand();
   SgNode* rhs = sgn->get_rhs_operand();
-  DefUseMemObjInfo ldumo = getDefUseMemObjInfo_rec(lhs, fipi, true);
-  DefUseMemObjInfo rdumo = getDefUseMemObjInfo_rec(rhs, fipi, false);
+  DefUseMemObjInfo ldumo = getDefUseMemObjInfo_rec(lhs, vidm, true);
+  DefUseMemObjInfo rdumo = getDefUseMemObjInfo_rec(rhs, vidm, false);
   // if the rhs writes to a memory (i.e sideffect)
   // add to the def_set to be unioned in next step
   if(!rdumo.isDefSetEmpty())
@@ -124,8 +124,8 @@ void ExprWalker::visit(SgCompoundAssignOp* sgn)
 {
   SgNode* lhs = sgn->get_lhs_operand();
   SgNode* rhs = sgn->get_rhs_operand();
-  DefUseMemObjInfo ldumo = getDefUseMemObjInfo_rec(lhs, fipi, true);
-  DefUseMemObjInfo rdumo = getDefUseMemObjInfo_rec(rhs, fipi, false);
+  DefUseMemObjInfo ldumo = getDefUseMemObjInfo_rec(lhs, vidm, true);
+  DefUseMemObjInfo rdumo = getDefUseMemObjInfo_rec(rhs, vidm, false);
   // if the rhs writes to a memory (i.e side-effect)
   // add to the def_set to be unioned later
   if(!rdumo.isDefSetEmpty())
@@ -139,14 +139,14 @@ void ExprWalker::visit(SgCompoundAssignOp* sgn)
 void ExprWalker::visit(SgCastExp* sgn)
 {
   SgNode* operand = sgn->get_operand();
-  DefUseMemObjInfo opdumo = getDefUseMemObjInfo_rec(operand, fipi, false);
+  DefUseMemObjInfo opdumo = getDefUseMemObjInfo_rec(operand, vidm, false);
   dumo = opdumo;
 }
 
 void ExprWalker::visit(SgAddressOfOp* sgn)
 {
   SgNode* operand = sgn->get_operand();
-  DefUseMemObjInfo opdumo = getDefUseMemObjInfo_rec(operand, fipi, false);
+  DefUseMemObjInfo opdumo = getDefUseMemObjInfo_rec(operand, vidm, false);
   dumo = opdumo;
 }
 
@@ -154,8 +154,8 @@ void ExprWalker::visit(SgBinaryOp* sgn)
 {
   SgNode* lhs = sgn->get_lhs_operand();
   SgNode* rhs = sgn->get_rhs_operand();
-  DefUseMemObjInfo ldumo = getDefUseMemObjInfo_rec(lhs, fipi, false);
-  DefUseMemObjInfo rdumo = getDefUseMemObjInfo_rec(rhs, fipi, false);
+  DefUseMemObjInfo ldumo = getDefUseMemObjInfo_rec(lhs, vidm, false);
+  DefUseMemObjInfo rdumo = getDefUseMemObjInfo_rec(rhs, vidm, false);
   // both operands are uses
   // if they write to any memory location as side-effect
   // copy the defs to uses
@@ -174,32 +174,32 @@ void ExprWalker::visit(SgBinaryOp* sgn)
 void ExprWalker::visit(SgVarRefExp* sgn)
 {
   // recursion base case
-  DefUseMemObjInfo rdumo = getDefUseMemObjInfoLvalue(sgn, fipi, isModExpr);
+  DefUseMemObjInfo rdumo = getDefUseMemObjInfoLvalue(sgn, vidm, isModExpr);
   dumo = rdumo;
 }
 
 void ExprWalker::visit(SgPntrArrRefExp* sgn)
 {
-  DefUseMemObjInfo rdumo = getDefUseMemObjInfoLvalue(sgn, fipi, isModExpr);
+  DefUseMemObjInfo rdumo = getDefUseMemObjInfoLvalue(sgn, vidm, isModExpr);
   dumo = rdumo;
 }
 
 void ExprWalker::visit(SgPointerDerefExp* sgn)
 {
   // *p + i++ ??
-  DefUseMemObjInfo rdumo = getDefUseMemObjInfoLvalue(sgn, fipi, isModExpr);
+  DefUseMemObjInfo rdumo = getDefUseMemObjInfoLvalue(sgn, vidm, isModExpr);
   dumo = rdumo;
 }
 
 void ExprWalker::visit(SgArrowExp* sgn)
 {
-  DefUseMemObjInfo rdumo = getDefUseMemObjInfoLvalue(sgn, fipi, isModExpr);
+  DefUseMemObjInfo rdumo = getDefUseMemObjInfoLvalue(sgn, vidm, isModExpr);
   dumo = rdumo;
 }
 
 void ExprWalker::visit(SgDotExp *sgn)
 {
-  DefUseMemObjInfo rdumo = getDefUseMemObjInfoLvalue(sgn, fipi, isModExpr);
+  DefUseMemObjInfo rdumo = getDefUseMemObjInfoLvalue(sgn, vidm, isModExpr);
   dumo = rdumo;
 }
 
@@ -208,8 +208,8 @@ DefUseMemObjInfo ExprWalker::getDefUseMemObjInfo()
   return dumo;
 }
 
-LvalueExprWalker::LvalueExprWalker(FlowInsensitivePointerInfo& _fipi, VariableIdMapping& _vidm, bool _isModExpr)
-  : fipi(_fipi), vidm(_vidm), isModExpr(_isModExpr)
+LvalueExprWalker::LvalueExprWalker(VariableIdMapping& _vidm, bool _isModExpr)
+  : vidm(_vidm), isModExpr(_isModExpr)
 {
 }
 
@@ -231,30 +231,28 @@ void LvalueExprWalker::visit(SgVarRefExp* sgn)
 
 void LvalueExprWalker::visit(SgPointerDerefExp* sgn)
 {
-  VariableIdSet& def_set = dumo.getDefSetRefMod();
-  VariableIdSet& use_set = dumo.getUseSetRefMod();
-  VariableIdSet modbyptr = fipi.getMemModByPointer();
+  // VariableIdSet modbyptr = fipi.getMemModByPointer();
 
   // process the operand recursively
   // to find out the used/def
   SgNode* operand = sgn->get_operand();
-  DefUseMemObjInfo rdumo = getDefUseMemObjInfo_rec(operand, fipi, false);
+  DefUseMemObjInfo rdumo = getDefUseMemObjInfo_rec(operand, vidm, false);
 
-  if(!rdumo.isDefSetEmpty())
-    rdumo.copyDefToUseSet();
+  // if(!rdumo.isDefSetEmpty())
+  //   rdumo.copyDefToUseSet();
 
-  // now insert the objects that can be
-  // accessed by pointer to def/use set
-  // inserting these sets multiple times
-  // should handle this cleanly
-  if(isModExpr)
-  {
-    def_set.insert(modbyptr.begin(), modbyptr.end());
-  }
-  else
-  {
-    use_set.insert(modbyptr.begin(), modbyptr.end());
-  }
+  // // now insert the objects that can be
+  // // accessed by pointer to def/use set
+  // // inserting these sets multiple times
+  // // should handle this cleanly
+  // if(isModExpr)
+  // {
+  //   def_set.insert(modbyptr.begin(), modbyptr.end());
+  // }
+  // else
+  // {
+  //   use_set.insert(modbyptr.begin(), modbyptr.end());
+  // }
   // update the results
   dumo = rdumo + dumo;
 }
@@ -266,13 +264,13 @@ void LvalueExprWalker::visit(SgPntrArrRefExp* sgn)
   DefUseMemObjInfo ldumo, rdumo;
   if(isModExpr)
   {
-    ldumo = getDefUseMemObjInfo_rec(lhs_addr, fipi, true);
+    ldumo = getDefUseMemObjInfo_rec(lhs_addr, vidm, true);
   }
   else
   {
-    ldumo = getDefUseMemObjInfo_rec(lhs_addr, fipi, false); 
+    ldumo = getDefUseMemObjInfo_rec(lhs_addr, vidm, false); 
   }
-  rdumo = getDefUseMemObjInfo_rec(rhs_expr, fipi, false);
+  rdumo = getDefUseMemObjInfo_rec(rhs_expr, vidm, false);
   // if we have side-effects copy them over
   if(!rdumo.isDefSetEmpty())
     rdumo.copyDefToUseSet();
@@ -288,14 +286,14 @@ void LvalueExprWalker::visit(SgArrowExp* sgn)
   // only right op is modified
   if(isModExpr)
   {
-    rdumo = getDefUseMemObjInfo_rec(rhs_expr, fipi, true);
+    rdumo = getDefUseMemObjInfo_rec(rhs_expr, vidm, true);
   }
   else
   {
-    rdumo = getDefUseMemObjInfo_rec(rhs_expr, fipi, false); 
+    rdumo = getDefUseMemObjInfo_rec(rhs_expr, vidm, false); 
   }
   // left is only used
-  ldumo = getDefUseMemObjInfo_rec(lhs_addr, fipi, false);
+  ldumo = getDefUseMemObjInfo_rec(lhs_addr, vidm, false);
 
   // if we have side-effects from left, copy them
   if(!ldumo.isDefSetEmpty())
@@ -313,14 +311,14 @@ void LvalueExprWalker::visit(SgDotExp* sgn)
   // only right op is modified
   if(isModExpr)
   {
-    rdumo = getDefUseMemObjInfo_rec(rhs_expr, fipi, true);
+    rdumo = getDefUseMemObjInfo_rec(rhs_expr, vidm, true);
   }
   else
   {
-    rdumo = getDefUseMemObjInfo_rec(rhs_expr, fipi, false); 
+    rdumo = getDefUseMemObjInfo_rec(rhs_expr, vidm, false); 
   }
   // left is only used
-  ldumo = getDefUseMemObjInfo_rec(lhs_addr, fipi, false);
+  ldumo = getDefUseMemObjInfo_rec(lhs_addr, vidm, false);
 
   // if we have side-effects from left, copy them
   if(!ldumo.isDefSetEmpty())
@@ -336,22 +334,22 @@ DefUseMemObjInfo LvalueExprWalker::getDefUseMemObjInfo()
 }
 
 // interface function
-DefUseMemObjInfo getDefUseMemObjInfo(SgNode* sgn, FlowInsensitivePointerInfo& fipi)
+DefUseMemObjInfo getDefUseMemObjInfo(SgNode* sgn, VariableIdMapping& vidm)
 {
-  return getDefUseMemObjInfo_rec(sgn, fipi, false);  
+  return getDefUseMemObjInfo_rec(sgn, vidm, false);  
 }
 
 // main implementation
-DefUseMemObjInfo getDefUseMemObjInfo_rec(SgNode* sgn, FlowInsensitivePointerInfo& fipi, bool isModExpr)
+DefUseMemObjInfo getDefUseMemObjInfo_rec(SgNode* sgn, VariableIdMapping& vidm, bool isModExpr)
 {
-  ExprWalker exprw(fipi, isModExpr);
+  ExprWalker exprw(vidm, isModExpr);
   sgn->accept(exprw);
   return exprw.getDefUseMemObjInfo();
 }
 
-DefUseMemObjInfo getDefUseMemObjInfoLvalue(SgNode* sgn, FlowInsensitivePointerInfo& fipi, bool isModExpr)
+DefUseMemObjInfo getDefUseMemObjInfoLvalue(SgNode* sgn, VariableIdMapping& vidm, bool isModExpr)
 {
-  LvalueExprWalker lvalw(fipi, fipi.getVariableIdMapping(), isModExpr);
+  LvalueExprWalker lvalw(vidm, isModExpr);
   sgn->accept(lvalw);
   return lvalw.getDefUseMemObjInfo();
 }
