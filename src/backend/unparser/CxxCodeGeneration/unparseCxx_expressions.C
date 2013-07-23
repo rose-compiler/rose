@@ -5434,9 +5434,138 @@ Unparse_ExprStmt::unparseVarArgCopyOp(SgExpression* expr, SgUnparse_Info& info)
    }
 
 
+static bool 
+subTreeContainsDesignatedInitializer ( SgExpression* exp )
+   {
+  // DQ (7/22/2013): This function traverses the AST and detects any SgDesignatedInitializer IR node.
+
+     class ContainsDesignatedInitializer : public AstSimpleProcessing
+        {
+          public:
+              bool hasDesignatedInitializer;
+
+              ContainsDesignatedInitializer() : hasDesignatedInitializer(false) {}
+
+              void visit ( SgNode* astNode )
+                 {
+                   if (isSgDesignatedInitializer(astNode) != NULL)
+                      {
+                        hasDesignatedInitializer = true;
+                      }
+                 }
+        };
+
+      ContainsDesignatedInitializer traversal;
+
+      traversal.traverse(exp,preorder);
+
+      printf ("traversal.hasDesignatedInitializer = %s \n",traversal.hasDesignatedInitializer ? "treu" : "false");
+
+      return traversal.hasDesignatedInitializer;
+   }
+
+
+
 void
 Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Info & info)
    {
+#if 0
+     printf ("In unparseDesignatedInitializer: expr = %p expr->startOfConstruct(): \n",expr);
+     expr->get_startOfConstruct()->display("In unparseDesignatedInitializer: debug");
+#endif
+
+#if 1
+  // DQ (7/22/2013): New version of unparser code for this IR node. I think this is now
+  // organized differently (required for C support of more complex designator cases).
+     SgDesignatedInitializer* di = isSgDesignatedInitializer(expr);
+
+     ROSE_ASSERT(di->get_designatorList()->get_expressions().empty() == false);
+
+     SgExpression*  designator  = di->get_designatorList()->get_expressions()[0];
+     SgInitializer* initializer = di->get_memberInit();
+
+     SgVarRefExp* varRefExp = isSgVarRefExp(designator);
+
+     bool isDataMemberDesignator   = (varRefExp != NULL);
+     bool isArrayElementDesignator = (isSgUnsignedLongVal(designator) != NULL);
+
+  // DQ (7/23/2013): These are relatively rare cases that we want to detect and allow.
+     bool isCastDesignator         = (isSgCastExp(designator) != NULL);
+     bool isAggregateInitializer   = (isSgAggregateInitializer(designator) != NULL);
+
+  // bool outputDesignatedInitializer                   = (isDataMemberDesignator == true && varRefExp->get_symbol() != NULL);
+  // bool outputDesignatedInitializerAssignmentOperator = (subTreeContainsDesignatedInitializer(initializer) == false && isCastDesignator == false);
+     bool outputDesignatedInitializerAssignmentOperator = (subTreeContainsDesignatedInitializer(initializer) == false && isCastDesignator == false && isAggregateInitializer == false);
+
+#if 0
+     printf ("In unparseDesignatedInitializer: designator  = %p = %s \n",designator,designator->class_name().c_str());
+     printf ("In unparseDesignatedInitializer: initializer = %p = %s \n",initializer,initializer->class_name().c_str());
+#endif
+
+     if (isDataMemberDesignator == true)
+        {
+       // We need to check if this is a designator that is associated with a union (does it have to be an un-named union).
+          SgVariableSymbol* variableSymbol = isSgVariableSymbol(varRefExp->get_symbol());
+          SgClassDefinition* classDefinition = isSgClassDefinition(variableSymbol->get_declaration()->get_scope());
+          SgClassDeclaration* classDeclaration = NULL;
+          if (classDefinition != NULL)
+             {
+               classDeclaration = classDefinition->get_declaration();
+             }
+
+          bool isInUnion = (classDeclaration != NULL && classDeclaration->get_class_type() == SgClassDeclaration::e_union);
+
+          if (isInUnion == false)
+             {
+            // A struct field
+               curprint (".");
+               unparseVarRef(designator, info);
+             }
+            else
+             {
+               outputDesignatedInitializerAssignmentOperator = false;
+             }
+        }
+       else
+        {
+          if (isArrayElementDesignator == true)
+             {
+               curprint ("[");
+               unparseValue(designator, info);
+               curprint ("]");
+               isArrayElementDesignator = true;
+             }
+            else
+             {
+            // if (isCastDesignator == true)
+               if (isCastDesignator == true || isAggregateInitializer == true)
+                  {
+                    printf ("WARNING: designator might be an inappropriate expression (expected SgVarRefExp or SgUnsignedLongVal, but this case might be OK): designator = %p = %s \n",designator,designator->class_name().c_str());
+                  }
+                 else
+                  {
+                    printf ("ERROR: designator is an inappropriate expression (should be SgVarRefExp or SgUnsignedLongVal): designator = %p = %s \n",designator,designator->class_name().c_str());
+                    ROSE_ASSERT(false);
+                  }
+             }
+        }
+
+#if 0
+     printf ("In unparseDesignatedInitializer: di->get_memberInit() = %p = %s \n",di->get_memberInit(),di->get_memberInit()->class_name().c_str());
+#endif
+
+  // Only unparse the "=" if this is not another in a chain of SgAggregateInitializer IR nodes.
+  // if (isSgAggregateInitializer(di->get_memberInit()) == NULL)
+  // if (subTreeContainsDesignatedInitializer(initializer) == false)
+  // if (subTreeContainsDesignatedInitializer(initializer) == false && isCastDesignator == false)
+     if (outputDesignatedInitializerAssignmentOperator == true)
+        {
+          curprint (" = ");
+        }
+
+     unparseExpression(initializer, info);
+
+#else
   // Liao, fixing bug 355, 6/16/2009
   // for multidimensional array's designated initializer, don't emit '=' until it reaches the last dimension
   // TODO this is not the ultimate fix: EDG uses nested tree for multidimensional array's designated initializer
@@ -5445,17 +5574,20 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
      bool lastDesignator           = true; 
      bool isArrayElementDesignator = false;
 
-#if 0
-     printf ("In unparseDesignatedInitializer: expr = %p expr->startOfConstruct(): \n",expr);
-     expr->get_startOfConstruct()->display("In unparseDesignatedInitializer: debug");
-#endif
+#error "DEAD CODE!"
 
   // DQ (10/22/2012): Only output the SgDesignatedInitializer if it is not compiler generated or if it is compiler generated, only if it is marked to be output.
      bool outputDesignatedInitializer = (expr->get_startOfConstruct()->isCompilerGenerated() == false);
      if (expr->get_startOfConstruct()->isCompilerGenerated() == true && expr->get_startOfConstruct()->isOutputInCodeGeneration() == false)
-        outputDesignatedInitializer = false;
+        {
+          outputDesignatedInitializer = false;
+        }
 
-#if 0
+  // DQ (7/20/2013): Reset this.
+     printf ("Always output the designated initializer: outputDesignatedInitializer = %s (will be reset) \n",outputDesignatedInitializer ? "true" : "false");
+     outputDesignatedInitializer = true;
+
+#if 1
      printf ("In unparseDesignatedInitializer: outputDesignatedInitializer = %s \n",outputDesignatedInitializer ? "true" : "false");
 #endif
 
@@ -5467,6 +5599,19 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
           for (size_t i = 0; i < designators.size(); ++i)
              {
                SgExpression* designator = designators[i];
+
+               printf ("In loop: designator = %p = %s \n",designator,designator->class_name().c_str());
+
+            // DQ (7/20/2013): Make up for incorrect handling of SgDesignatedInitializer in AST (as a test, then fix it properly if this works).
+               if (isSgExprListExp(designator) != NULL)
+                  {
+                    SgExprListExp* designatorList = isSgExprListExp(designator);
+                    ROSE_ASSERT(designatorList->get_expressions().size() == 1);
+                    designator = designatorList->get_expressions()[0];
+
+                    printf ("In loop (reset): designator = %p = %s \n",designator,designator->class_name().c_str());
+                  }
+
                if (isSgVarRefExp(designator))
                   {
                  // A struct field
@@ -5516,6 +5661,7 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
           SgDesignatedInitializer* di = isSgDesignatedInitializer(expr);
           unparseExpression(di->get_memberInit(), info);
         }
+#endif
    }
 
 

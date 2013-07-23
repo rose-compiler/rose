@@ -45,7 +45,9 @@ endif
 
 # DQ (7/25/2010): These should not be at the end, but it is easier to split out Fortran support this way.
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-   SUBDIRS += Fortran_tests CAF2_tests
+# DQ (7/14/2013): Temporarily commented out this test to evaluate progress on tests/CompileTests directory.
+#  SUBDIRS += Fortran_tests CAF2_tests
+   SUBDIRS += Fortran_tests
 endif
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT

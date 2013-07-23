@@ -4513,8 +4513,17 @@ SageBuilder::buildProcedureHeaderStatement(const SgName& name, SgType* return_ty
 
 //! Build a Fortran subroutine or procedure
 SgProcedureHeaderStatement*
-SageBuilder::buildProcedureHeaderStatement(const char* name, SgType* return_type, SgFunctionParameterList * paralist, SgProcedureHeaderStatement::subprogram_kind_enum kind, SgScopeStatement* scope/*=NULL*/,SgProcedureHeaderStatement* first_nondefining_declaration)
+SageBuilder::buildProcedureHeaderStatement( const char* name, SgType* return_type, SgFunctionParameterList * paralist, 
+                                            SgProcedureHeaderStatement::subprogram_kind_enum kind, SgScopeStatement* scope/*=NULL*/,
+                                            SgProcedureHeaderStatement* first_nondefining_declaration)
    {
+  // DQ (7/14/2013): We would like to insist that a nondefining declaration has been built at this point.
+     ROSE_ASSERT(first_nondefining_declaration != NULL);
+
+  // We will want to call: SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgType* return_type, SgFunctionParameterList * paralist, 
+  //                                                                           bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, 
+  //                                                                           unsigned int functionConstVolatileFlags, SgTemplateArgumentPtrList* templateArgumentsList)
+
      if (kind == SgProcedureHeaderStatement::e_subroutine_subprogram_kind)
         {
           ROSE_ASSERT(return_type == buildVoidType());

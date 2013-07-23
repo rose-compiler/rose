@@ -1,16 +1,15 @@
 
-typedef struct AVClass {
-      const char* class_name;
-      int version;
-      const char* (*item_name)(void* ctx);
-      int version_A;
-   } AVClass;
+struct AVClass
+   {
+     const char* class_name;
+     int version;
+   };
 
-static const AVClass alsa_demuxer_class = {
-    .class_name     = "ALSA demuxer",
-    .version = 42,
-    .version_A = 7,
-//  .item_name      = av_default_item_name,
-//  .option         = options,
-//  .version        = LIBAVUTIL_VERSION_INT,
-};
+struct AVClass alsa_demuxer_class = 
+   {
+  // The bug is the component initialization is not unparsed properly.
+  // We need to fix the SgDesignatedInitializer IR node to not use a SgExprListExp (which would be for a SgDesignatedInitializerList that we don't currently support).
+  // We also need to find and set the initializer source position information.
+      .version = 42,
+     .class_name     = "ALSA demuxer",
+   };
