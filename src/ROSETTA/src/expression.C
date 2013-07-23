@@ -2072,13 +2072,19 @@ Grammar::setUpExpressions ()
 #endif
 
      DesignatedInitializer.setFunctionPrototype ( "HEADER_DESIGNATED_INITIALIZER", "../Grammar/Expression.code" );
+
+  // DQ (7/21/2013): I may have been too quick to not consider multi-deminsional array references (so move back to support SgExprListExp*).
+  // DQ (7/21/2013): I think that the use of a SgExprListExp* for the data member of this SgDesignatedInitializer is incorrect, unless we wanted it 
+  // to be a DesignatedInitializerList in which case we would at least need a list of SgInitializer pointers.  So we should have the first data
+  // member be a SgVarRefExp or SgValueExp (so make it a SgExpression) and the second data member can be the SgInitializer* (as it is).
+  // Note that the SgAggregateInitializer holds the list and should reference the associated type.
   // Each of these fields is either a SgValueExp for an array index or an SgVarRefExp for a struct field name -- they are chained to form the actual designator
      DesignatedInitializer.setDataPrototype("SgExprListExp*", "designatorList", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // DesignatedInitializer.setDataPrototype("SgExpression*" , "designator", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      DesignatedInitializer.setDataPrototype("SgInitializer*", "memberInit", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
  // TV (04/22/2010): CUDA support
- 
      CudaKernelExecConfig.setFunctionPrototype ( "HEADER_CUDA_KERNEL_EXEC_CONFIG", "../Grammar/Expression.code" );
      
      CudaKernelExecConfig.setDataPrototype ( "SgExpression*", "grid",   "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
