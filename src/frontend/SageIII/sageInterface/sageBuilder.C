@@ -464,6 +464,27 @@ SageBuilder::getGlobalScopeFromScopeStack()
      return tempScope;
    }
 
+bool SageBuilder::isInScopeStack(SgScopeStatement * scope) {
+  std::list<SgScopeStatement *>::const_iterator it_scope_stack = ScopeStack.begin();
+  while (it_scope_stack != ScopeStack.end()) {
+    if (*it_scope_stack == scope) return true;
+    it_scope_stack++;
+  }
+  return false;
+}
+
+std::string SageBuilder::stringFromScopeStack() {
+  std::ostringstream res;
+
+  std::list<SgScopeStatement *>::const_iterator it_scope_stack = ScopeStack.begin();
+  while (it_scope_stack != ScopeStack.end()) {
+    res << *it_scope_stack << " = " << (*it_scope_stack)->class_name() << std::endl;
+    it_scope_stack++;
+  }
+
+  return res.str();
+}
+
 bool SageBuilder::emptyScopeStack()
    {
      return ScopeStack.empty();
