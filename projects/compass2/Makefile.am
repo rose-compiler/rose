@@ -46,13 +46,17 @@ libcompass2_la_include_HEADERS=\
 	$(top_srcdir)/projects/CodeThorn/src/matcherparser_decls.h \
 	$(top_srcdir)/projects/CodeThorn/src/AstMatching.h \
 	$(top_srcdir)/projects/CodeThorn/src/MatchOperation.h \
-	$(top_srcdir)/projects/CodeThorn/src/SgNodeHelper.h
+	$(top_srcdir)/projects/CodeThorn/src/SgNodeHelper.h \
+	$(top_srcdir)/projects/CodeThorn/src/VariableIdMapping.h
 
-BUILT_SOURCES = generate-matcherparser.h
+BUILT_SOURCES = generate-matcherparser.h generate-VariableIdMapping.h
 
 #make matcherparser.h -C $(top_builddir)/projects/CodeThorn/src
 generate-matcherparser.h:
 	make matcher_demo -C $(top_builddir)/projects/CodeThorn/src
+
+generate-VariableIdMapping.h:
+	make varwatch -C $(top_builddir)/projects/CodeThorn/src
 
 
 
@@ -97,6 +101,9 @@ bin_compass2_LDADD=\
 	bin/checkers/dangerous_overload/libdangerousoverload.la \
 	bin/checkers/discard_assignment/libdiscardassignment.la \
 	bin/checkers/pointer_comparison/libpointercomparison.la \
+	bin/checkers/no_vfork/libnovfork.la \
+	bin/checkers/no_variadic_functions/libnovariadicfunctions.la \
+	bin/checkers/asynchronous_signal_handler/libasynchronoussignalhandler.la \
 	$(BOOST_LDFLAGS) \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS) \
@@ -106,7 +113,8 @@ bin_compass2_LDADD=\
 	$(top_builddir)/projects/CodeThorn/src/matcherparser.o \
 	$(top_builddir)/projects/CodeThorn/src/MatchOperation.o \
 	$(top_builddir)/projects/CodeThorn/src/RoseAst.o \
-	$(top_builddir)/projects/CodeThorn/src/SgNodeHelper.o
+	$(top_builddir)/projects/CodeThorn/src/SgNodeHelper.o \
+	$(top_builddir)/projects/CodeThorn/src/VariableIdMapping.o
 
 
 # ------------------------------------------------------------------------------
@@ -120,6 +128,9 @@ noinst_LTLIBRARIES=\
 	bin/checkers/do_not_delete_this/libdonotdeletethis.la \
 	bin/checkers/function_prototype/libfunctionprototype.la \
 	bin/checkers/default_argument/libdefaultargument.la \
+	bin/checkers/asynchronous_signal_handler/libasynchronoussignalhandler.la \
+	bin/checkers/no_variadic_functions/libnovariadicfunctions.la \
+	bin/checkers/no_vfork/libnovfork.la \
 	bin/checkers/size_of_pointer/libsizeofpointer.la \
 	bin/checkers/byte_by_byte_structure_comparison/libbytebybytestructurecomparison.la \
 	bin/checkers/explicit_test_for_non_boolean_value/libexplicittestfornonbooleanvalue.la \
@@ -230,6 +241,15 @@ bin_checkers_discard_assignment_libdiscardassignment_la_SOURCES=\
 
 bin_checkers_pointer_comparison_libpointercomparison_la_SOURCES=\
 	bin/checkers/pointer_comparison/pointer_comparison.cpp
+
+bin_checkers_no_vfork_libnovfork_la_SOURCES=\
+	bin/checkers/no_vfork/no_vfork.cpp
+
+bin_checkers_no_variadic_functions_libnovariadicfunctions_la_SOURCES=\
+	bin/checkers/no_variadic_functions/no_variadic_functions.cpp
+
+bin_checkers_asynchronous_signal_handler_libasynchronoussignalhandler_la_SOURCES=\
+	bin/checkers/asynchronous_signal_handler/asynchronous_signal_handler.cpp
 
 #PLACEHOLDER
 

@@ -79,96 +79,6 @@ void attachPointerExprLists(SgNode* node) {
   }
 }
 
-// OBSOLETE
-#if 0
-bool CodeThornLanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
-  RoseAst ast(node);
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-	if(!isAllowedAstNode(*i)) {
-	  cerr << "Language-Restrictor: excluded language construct found: " << (*i)->sage_class_name() << endl;
-	  // report first error and return
-	  if((*i)->variantT()==V_SgContinueStmt) {
-		cerr << "cfg construction for continue-statement not supported yet."<<endl; break;
-	  }
-	  return false;
-	}
-  }
-  return true;
-}
-
-void checkProgram(SgNode* root) {
-  LanguageRestrictor lr;
-  lr.allowAstNodesRequiredForEmptyProgram();
-  LanguageRestrictor::VariantSet vs;
-  vs.insert(V_SgIntVal);
-  vs.insert(V_SgAssignOp);
-  vs.insert(V_SgCastExp);
-  vs.insert(V_SgVarRefExp);
-  vs.insert(V_SgExprStatement);
-  vs.insert(V_SgIfStmt);
-  vs.insert(V_SgWhileStmt);
-  vs.insert(V_SgDoWhileStmt);
-
-  vs.insert(V_SgForInitStatement);
-  vs.insert(V_SgForStatement);
-
-  vs.insert(V_SgBreakStmt);
-  vs.insert(V_SgAndOp);
-  vs.insert(V_SgOrOp);
-  vs.insert(V_SgNotOp);
-  vs.insert(V_SgNotEqualOp);
-  vs.insert(V_SgEqualityOp);
-  vs.insert(V_SgIntVal);
-  vs.insert(V_SgVariableDeclaration);
-  vs.insert(V_SgReturnStmt);
-  vs.insert(V_SgAssignInitializer);
-  vs.insert(V_SgBoolValExp);
-  vs.insert(V_SgLabelStatement);
-  vs.insert(V_SgNullStatement);
-  vs.insert(V_SgConditionalExp); // TODO: case if inside expressions
-  vs.insert(V_SgMinusOp);
-
-  vs.insert(V_SgPlusPlusOp);
-  vs.insert(V_SgMinusMinusOp);
-
-  // inter-procedural
-  vs.insert(V_SgFunctionCallExp);
-  vs.insert(V_SgFunctionRefExp);
-  vs.insert(V_SgExprListExp);
-
-  // rers Problems
-  vs.insert(V_SgTypedefDeclaration);
-  vs.insert(V_SgClassDeclaration);
-  vs.insert(V_SgClassDefinition);
-  vs.insert(V_SgEnumDeclaration);
-  vs.insert(V_SgStringVal);
-  vs.insert(V_SgAddressOfOp);
-
-  // rers Problems 10-13
-  // arithmetic operators
-  vs.insert(V_SgAddOp);
-  vs.insert(V_SgSubtractOp);
-  vs.insert(V_SgMultiplyOp);
-  vs.insert(V_SgDivideOp);
-  vs.insert(V_SgModOp);
-  vs.insert(V_SgGreaterOrEqualOp);
-  vs.insert(V_SgLessThanOp);
-  vs.insert(V_SgGreaterThanOp);
-  vs.insert(V_SgLessOrEqualOp);
-
-  // temporary: is used inside asserts (on some systems), but no handled yet in general. It is ignored in assert, because __fail is called before.
-  vs.insert(V_SgCommaOpExp);
-
-  lr.setAstNodeVariantSet(vs,true);
-  cout << "INIT: Running CodeThorn language restrictor."<<endl;
-  bool valid=lr.checkIfAstIsAllowed(root);
-  if(!valid) {
-	cout << "INIT FAILED: Input program not valid. No analysis performed."<<endl;
-	exit(1);
-  }
-}
-#endif
-
 void generateAssertsCsvFile(Analyzer& analyzer, SgProject* sageProject, string filename) {
   ofstream* csv = NULL;
   csv = new ofstream();
@@ -675,8 +585,8 @@ int main( int argc, char * argv[] ) {
   {
 	cout << "INIT: Checking input program."<<endl;
 	CodeThornLanguageRestrictor lr;
-  lr.checkProgram(root);
-  timer.start();
+	lr.checkProgram(root);
+	timer.start();
 
   cout << "INIT: Running variable<->symbol mapping check."<<endl;
   //VariableIdMapping varIdMap;

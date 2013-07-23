@@ -27,12 +27,26 @@ void LabelProperty::initialize(VariableIdMapping* variableIdMapping) {
   _isValid=true; // to be able to use access functions in initialization
   SgVarRefExp* varRefExp=0;
   _ioType=LABELIO_NONE;
-  if((varRefExp=SgNodeHelper::Pattern::matchSingleVarPrintf(_node))) {
-	_ioType=LABELIO_STDOUT;
-  } else if((varRefExp=SgNodeHelper::Pattern::matchSingleVarScanf(_node))) {
+  if((varRefExp=SgNodeHelper::Pattern::matchSingleVarScanf(_node))) {
 	_ioType=LABELIO_STDIN;
   } else if((varRefExp=SgNodeHelper::Pattern::matchSingleVarFPrintf(_node))) {
 	_ioType=LABELIO_STDERR;
+  } else {
+	SgNodeHelper::Pattern::OutputTarget ot=SgNodeHelper::Pattern::matchSingleVarOrValuePrintf(_node);
+	switch(ot.outType) {
+	case SgNodeHelper::Pattern::OutputTarget::VAR:
+	  varRefExp=ot.varRef;
+	  _ioType=LABELIO_STDOUT;
+	  break;
+	case SgNodeHelper::Pattern::OutputTarget::INT:
+	  _ioType=LABELIO_STDOUT;
+	  break;
+	case SgNodeHelper::Pattern::OutputTarget::UNKNOWNPRINTF:
+	  cout<<"WARNING: non-supported output operation:"<<_node->unparseToString()<<endl;
+	  break;
+	case SgNodeHelper::Pattern::OutputTarget::UNKNOWNOPERATION:
+	  ;//intentionally ignored (filtered)
+	} // END SWITCH
   }
   if(varRefExp) {
 	SgSymbol* sym=SgNodeHelper::getSymbolOfVariable(varRefExp);

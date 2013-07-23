@@ -1,5 +1,5 @@
 /**
- * \file dead_function.cpp
+ * \file no_vfork.cpp
  * \author Sam Kelly <kelly64@llnl.gov, kellys@dickinson.edu>
  * \date Friday, July 19, 2013
  */
@@ -10,28 +10,29 @@
 #include "compass2/compass.h"
 #include "CodeThorn/src/AstMatching.h"
 #include "CodeThorn/src/AstTerm.h"
-#include "CodeThorn/src/SgNodeHelper.h"
 
 using std::string;
 using namespace StringUtility;
 using namespace CodeThorn;
 
-extern const Compass::Checker* const deadFunctionChecker;
+extern const Compass::Checker* const noVforkChecker;
 
 /*-----------------------------------------------------------------------------
  * Interface
+ *
+ * Performs basic AST match for function calls, then checks that none of the
+ * names of functions are vfork.
  *---------------------------------------------------------------------------*/
 
-#ifndef COMPASS_DEAD_FUNCTION_H
-#define COMPASS_DEAD_FUNCTION_H
+#ifndef COMPASS_NO_VFORK_H
+#define COMPASS_NO_VFORK_H
 
 namespace CompassAnalyses
 {
 /**
- * \brief Detects dead or "unreachable" functions or methods. These are functions
- * and methods that are never called
+ * \brief Checks that vfork() hasn't been used
  */
-namespace DeadFunction
+namespace NoVfork
 {
   extern const string checker_name;
   extern const string short_description;
@@ -56,7 +57,7 @@ namespace DeadFunction
       {
           return ! Compass::IsNodeInUserLocation(
                       located_node,
-                      DeadFunction::source_directory);
+                      NoVfork::source_directory);
       }
       else
       {
@@ -65,36 +66,29 @@ namespace DeadFunction
   };
 
 } // ::CompassAnalyses
-} // ::DeadFunction
-#endif // COMPASS_DEAD_FUNCTION_H
+} // ::NoVfork
+#endif // COMPASS_NO_VFORK_H
 
 /*-----------------------------------------------------------------------------
  * Implementation
- *
- * 1. Build a hash set of all called functions by doing an AST match
- *    for all SgFunctionCallExp nodes
- *
- * 2. Do an AST match for all SgFunctionDefinitions. If there are any
- *    that aren't contained in the called_functions hash set, then these
- *    are dead functions
  *---------------------------------------------------------------------------*/
 
 namespace CompassAnalyses
 {
- namespace DeadFunction
+ namespace NoVfork
  {
-  const string checker_name      = "DeadFunction";
-  const string short_description = "Dead/unreachable function detected!";
-  const string long_description  = "Detects dead/unreachable functions and methods";
+  const string checker_name      = "NoVfork";
+  const string short_description = "vfork() call detected!";
+  const string long_description  = "Checks that vfork() hasn't been used. The vfork() function has the same effect as fork(), except that the behavior is undefined if the process created by vfork() either modifies any data other than a variable of type pid_t used to store the return value from vfork(), or returns from the function in which vfork() was called, or calls any other function before successfully calling _exit() or one of the exec family of functions.";
   string source_directory = "/";
  }
 }
 
-CompassAnalyses::DeadFunction::
+CompassAnalyses::NoVfork::
 CheckerOutput::CheckerOutput(SgNode *const node)
     : OutputViolationBase(node,
-                          ::deadFunctionChecker->checkerName,
-                          ::deadFunctionChecker->shortDescription) {}
+                          ::noVforkChecker->checkerName,
+                          ::noVforkChecker->shortDescription) {}
 
 static void
 run(Compass::Parameters parameters, Compass::OutputObject* output)
@@ -103,50 +97,28 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
       // for example, Boost or system files.
       string target_directory =
           parameters["general::target_directory"].front();
-      CompassAnalyses::DeadFunction::source_directory.assign(target_directory);
-
+      CompassAnalyses::NoVfork::source_directory.assign(target_directory);
+      
       // Use the pre-built ROSE AST
       SgProject* sageProject = Compass::projectPrerequisite.getProject();
-
+      
       SgNode *root_node = (SgNode*)sageProject;
-
-      // maintains a hash set of all functions that have been called
-      boost::unordered_set<SgFunctionDefinition*> called_functions;
 
       AstMatching func_ref_matcher;
       MatchResult func_ref_matches = func_ref_matcher
-          .performMatching("$f=SgFunctionCallExp", root_node);
+          .performMatching("$f=SgFunctionRefExp", root_node);
       BOOST_FOREACH(SingleMatchVarBindings match, func_ref_matches)
       {
-        SgFunctionCallExp *func_call = (SgFunctionCallExp *)match["$f"];
-        if(!func_call->isDefinable()) continue;
-        SgFunctionDefinition *func_def
-        = SgNodeHelper::determineFunctionDefinition(func_call);
-        called_functions.insert(func_def);
-      }
-
-      // if a function isn't in the called_functions hash set
-      // then it is a dead function
-      AstMatching func_def_matcher;
-      MatchResult func_def_matches = func_def_matcher
-          .performMatching("$f=SgFunctionDefinition", root_node);
-      BOOST_FOREACH(SingleMatchVarBindings match, func_def_matches)
-      {
-        SgFunctionDefinition *func_def = (SgFunctionDefinition *)match["$f"];
-        if(called_functions.find(func_def) == called_functions.end())
+        SgFunctionRefExp *func_ref = (SgFunctionRefExp *)match["$f"];
+        std::string func_str = func_ref->get_symbol()->get_name().getString();
+        if(func_str.compare("vfork") == 0)
         {
-          // function definition was found that is never called
-
-          // ignore main()
-          std::string func_name = func_def->get_declaration()->get_name().getString();
-          if(func_name.compare("main") == 0) continue;
           output->addOutput(
-              new CompassAnalyses::DeadFunction::
-              CheckerOutput(func_def));
+              new CompassAnalyses::NoVfork::
+              CheckerOutput(func_ref));
         }
       }
-
-
+      
   }
 
 // Remove this function if your checker is not an AST traversal
@@ -156,12 +128,12 @@ createTraversal(Compass::Parameters params, Compass::OutputObject* output)
     return NULL;
   }
 
-extern const Compass::Checker* const deadFunctionChecker =
+extern const Compass::Checker* const noVforkChecker =
   new Compass::CheckerUsingAstSimpleProcessing(
-      CompassAnalyses::DeadFunction::checker_name,
+      CompassAnalyses::NoVfork::checker_name,
     // Descriptions should not include the newline character "\n".
-      CompassAnalyses::DeadFunction::short_description,
-      CompassAnalyses::DeadFunction::long_description,
+      CompassAnalyses::NoVfork::short_description,
+      CompassAnalyses::NoVfork::long_description,
       Compass::C | Compass::Cpp,
       Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
       run,
