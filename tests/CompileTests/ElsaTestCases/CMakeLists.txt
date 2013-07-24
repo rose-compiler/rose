@@ -1,7 +1,7 @@
-#add_subdirectory(ctests)
-#add_subdirectory(gnu)
-#add_subdirectory(kandr)
-#add_subdirectory(std)
+add_subdirectory(ctests)
+add_subdirectory(gnu)
+add_subdirectory(kandr)
+add_subdirectory(std)
 
 set(TESTCODES
   t0001.cc t0002.cc t0003.cc t0004.cc t0005.cc t0008.cc t0009.cc t0010.cc
