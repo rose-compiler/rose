@@ -667,6 +667,9 @@ find_path(with-smt-solver smt-solver
        Used only for testing.")
 
 find_path(with-wine "bin/wine" DOC "Specify the prefix where Wine is installed")
+if (with-wine)
+  set(ROSE_WINE_INCLUDES -I${with-wine}/include)
+endif()
 
 # tps (01/04/2010) : added verbose output 
 # ------------------------- Begin Generic CMake Variable Logging ------------------
