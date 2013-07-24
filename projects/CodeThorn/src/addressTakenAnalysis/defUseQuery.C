@@ -1,99 +1,152 @@
 #include "defUseQuery.h"
+#include <algorithm>
+#include <iterator>
+#include <set>
 
 /*************************************************
- ***************** DefUseMemObjInfo ******************
+ *************** DefUseMemObjInfo ****************
  *************************************************/
 
-DefUseMemObjInfo::DefUseMemObjInfo(const VariableIdSet& _def_set, const VariableIdSet& _use_set) :
-  def_set(_def_set), use_set(_use_set)
+DefUseMemObjInfo::DefUseMemObjInfo(const MemObjInfo& _dset, const MemObjInfo& _uset, const FunctionCallExpInfo& _fset) :
+  def_set(_dset), use_set(_uset), func_set(_fset)
 {
-  ptr_modify = false;
-  func_modify = false;
 }
 
-VariableIdSet DefUseMemObjInfo::getDefSet()
+MemObjInfo DefUseMemObjInfo::getDefMemObjInfo()
 {
   return def_set;
 }
 
-VariableIdSet DefUseMemObjInfo::getUseSet()
+MemObjInfo DefUseMemObjInfo::getUseMemObjInfo()
 {
   return use_set;
 }
 
-const VariableIdSet& DefUseMemObjInfo::getDefSetRef() const
+MemObjInfo& DefUseMemObjInfo::getDefMemObjInfoMod()
 {
   return def_set;
 }
 
-const VariableIdSet& DefUseMemObjInfo::getUseSetRef() const
+MemObjInfo& DefUseMemObjInfo::getUseMemObjInfoMod()
 {
   return use_set;
 }
 
-VariableIdSet& DefUseMemObjInfo::getDefSetRefMod()
+const MemObjInfo& DefUseMemObjInfo::getDefMemObjInfoRef() const
 {
   return def_set;
 }
 
-VariableIdSet& DefUseMemObjInfo::getUseSetRefMod()
+const MemObjInfo& DefUseMemObjInfo::getUseMemObjInfoRef() const
 {
   return use_set;
 }
 
-bool DefUseMemObjInfo::isModByPointer()
+FunctionCallExpInfo DefUseMemObjInfo::getFunctionCallExpInfo()
 {
-  return ptr_modify;
+  return func_set;
+}
+
+FunctionCallExpInfo& DefUseMemObjInfo::getFunctionCallExpInfoMod()
+{
+  return func_set;
+}
+
+const FunctionCallExpInfo& DefUseMemObjInfo::getFunctionCallExpInfoRef() const
+{
+  return func_set;
 }
 
 bool DefUseMemObjInfo::isModByFunction()
 {
-  return func_modify;
+  return func_set.second;
+}
+
+bool DefUseMemObjInfo::isDefSetModByPointer()
+{
+  return def_set.second;
+}
+
+bool DefUseMemObjInfo::isUseSetModByPointer()
+{
+  return use_set.second;
 }
 
 bool DefUseMemObjInfo::isDefSetEmpty()
 {
-  return def_set.size() == 0;
+  return def_set.first.size() == 0;
 }
 
 bool DefUseMemObjInfo::isUseSetEmpty()
 {
-  return use_set.size() == 0;
+  return use_set.first.size() == 0;
 }
 
-void DefUseMemObjInfo::copyDefToUseSet()
+void DefUseMemObjInfo::copyDefToUse()
 {
-  use_set.insert(def_set.begin(), def_set.end());
+  use_set.first.insert(def_set.first.begin(), def_set.first.end());
+  use_set.second = use_set.second || def_set.second;
 }
 
-void DefUseMemObjInfo::copyUseToDefSet()
-{
-  def_set.insert(use_set.begin(), use_set.end());
-}
+// not really used
+// void DefUseMemObjInfo::copyUseToDef()
+// {
+//   def_set.first.insert(use_set.first.begin(), use_set.first.end());
+//   def_set.second = def_set.second || use_set.second;
+// }
 
 DefUseMemObjInfo DefUseMemObjInfo::operator+(const DefUseMemObjInfo& dumo1)
-{
-  const VariableIdSet& d1_def_set = dumo1.getDefSetRef();
-  const VariableIdSet& d1_use_set = dumo1.getUseSetRef();
-  VariableIdSet rdef_set, ruse_set;
-  set_union(def_set, d1_def_set, rdef_set);
-  set_union(use_set, d1_use_set, ruse_set);
-  return DefUseMemObjInfo(rdef_set, ruse_set);  
+{  
+  const MemObjInfo& d1_def_set = dumo1.getDefMemObjInfoRef();
+  const MemObjInfo& d1_use_set = dumo1.getUseMemObjInfoRef();
+  const FunctionCallExpInfo& d1_func_set = dumo1.getFunctionCallExpInfoRef();
+
+  MemObjInfo rdef_set, ruse_set;
+  FunctionCallExpInfo rfunc_set;
+  
+  set_union(def_set.first, d1_def_set.first, rdef_set.first);
+  set_union(use_set.first, d1_use_set.first, ruse_set.first);
+  set_union(func_set.first.begin(), func_set.first.end(),
+            d1_func_set.first.begin(), d1_func_set.first.end(),
+            std::inserter(rfunc_set.first, rfunc_set.first.begin()));
+
+  rdef_set.second = def_set.second || d1_def_set.second;
+  ruse_set.second = use_set.second || d1_use_set.second;
+  rfunc_set.second = func_set.second || d1_func_set.second;
+
+  return DefUseMemObjInfo(rdef_set, ruse_set, rfunc_set);
 }
 
 std::string DefUseMemObjInfo::str()
 {
   std::ostringstream oss;
-  oss << "def_set:<" << VariableIdSetPrettyPrint::str(def_set) << ">\n";
-  oss << "use_set:<" << VariableIdSetPrettyPrint::str(use_set) << ">\n";
+  oss << "def_set:<" << VariableIdSetPrettyPrint::str(def_set.first) << ">\n";
+  oss << "use_set:<" << VariableIdSetPrettyPrint::str(use_set.first) << ">\n";
+  return oss.str();
+}
+
+std::string DefUseMemObjInfo::funcCallExpSetPrettyPrint()
+{
+  std::ostringstream oss;
+  FunctionCallExpSet::iterator it = func_set.first.begin(); 
+  oss << "[";
+  for( ;it != func_set.first.end(); )
+  {
+    oss << (*it)->unparseToString();
+    it++;
+    if(it != func_set.first.end())
+      oss << ", ";
+  }
+  oss << "]";
   return oss.str();
 }
 
 std::string DefUseMemObjInfo::str(VariableIdMapping& vidm)
 {
   std::ostringstream oss;
-  oss << "def_set:<" << VariableIdSetPrettyPrint::str(def_set, vidm) << ">\n";
-  oss << "use_set:<" << VariableIdSetPrettyPrint::str(use_set, vidm) << ">\n";
+  oss << "def_set:<" << def_set.second << "," << VariableIdSetPrettyPrint::str(def_set.first, vidm) << ">\n";
+  oss << "use_set:<" << use_set.second << ", "<< VariableIdSetPrettyPrint::str(use_set.first, vidm) << ">\n";
+  oss << "func_set:<" << func_set.second << ", " << funcCallExpSetPrettyPrint() << ">\n";
   return oss.str();
 }
 
@@ -114,7 +167,7 @@ void ExprWalker::visit(SgAssignOp* sgn)
   // add to the def_set to be unioned in next step
   if(!rdumo.isDefSetEmpty())
   {
-    rdumo.copyDefToUseSet();
+    rdumo.copyDefToUse();
   }
   // union ldumo and rdumo
   dumo = ldumo + rdumo;
@@ -130,7 +183,7 @@ void ExprWalker::visit(SgCompoundAssignOp* sgn)
   // add to the def_set to be unioned later
   if(!rdumo.isDefSetEmpty())
   {
-    rdumo.copyDefToUseSet();
+    rdumo.copyDefToUse();
   }
   // union ldumo and rdumo
   dumo = ldumo + rdumo;
@@ -161,14 +214,21 @@ void ExprWalker::visit(SgBinaryOp* sgn)
   // copy the defs to uses
   if(!ldumo.isDefSetEmpty())
   {
-    ldumo.copyDefToUseSet();
+    ldumo.copyDefToUse();
   }
   if(!rdumo.isDefSetEmpty())
   {
-    rdumo.copyDefToUseSet();
+    rdumo.copyDefToUse();
   }
   // union ldumo and rdumo
   dumo = ldumo + rdumo;
+}
+
+void ExprWalker::visit(SgFunctionCallExp* sgn)
+{
+  FunctionCallExpInfo& func_set = dumo.getFunctionCallExpInfoMod();
+  func_set.first.insert(sgn);
+  func_set.second = true;
 }
 
 void ExprWalker::visit(SgVarRefExp* sgn)
@@ -215,17 +275,17 @@ LvalueExprWalker::LvalueExprWalker(VariableIdMapping& _vidm, bool _isModExpr)
 
 void LvalueExprWalker::visit(SgVarRefExp* sgn)
 {
-  VariableIdSet& def_set = dumo.getDefSetRefMod();
-  VariableIdSet& use_set = dumo.getUseSetRefMod();
+  MemObjInfo& def_set = dumo.getDefMemObjInfoMod();
+  MemObjInfo& use_set = dumo.getUseMemObjInfoMod();
   // insert into def_set if on lhs
   if(isModExpr)
   {
-    def_set.insert(vidm.variableId(sgn));
+    def_set.first.insert(vidm.variableId(sgn));
   }
   // insert into use_set otherwise
   else
   {
-    use_set.insert(vidm.variableId(sgn));
+    use_set.first.insert(vidm.variableId(sgn));
   }
 }
 
@@ -273,7 +333,7 @@ void LvalueExprWalker::visit(SgPntrArrRefExp* sgn)
   rdumo = getDefUseMemObjInfo_rec(rhs_expr, vidm, false);
   // if we have side-effects copy them over
   if(!rdumo.isDefSetEmpty())
-    rdumo.copyDefToUseSet();
+    rdumo.copyDefToUse();
   // update the values
   dumo = ldumo + rdumo;
 }
@@ -297,7 +357,7 @@ void LvalueExprWalker::visit(SgArrowExp* sgn)
 
   // if we have side-effects from left, copy them
   if(!ldumo.isDefSetEmpty())
-    ldumo.copyDefToUseSet();
+    ldumo.copyDefToUse();
 
   // update the values
   dumo = ldumo + rdumo;
@@ -322,7 +382,7 @@ void LvalueExprWalker::visit(SgDotExp* sgn)
 
   // if we have side-effects from left, copy them
   if(!ldumo.isDefSetEmpty())
-    ldumo.copyDefToUseSet();
+    ldumo.copyDefToUse();
 
   // update the values
   dumo = ldumo + rdumo;

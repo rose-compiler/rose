@@ -32,6 +32,8 @@ addressTakenAnalysis_SOURCES = \
 	addressTakenAnalysis.h \
 	defUseQuery.C \
 	defUseQuery.h \
+	VariableIdUtils.C \
+	VariableIdUtils.h \
 	addressTakenAnalysisDriver.C
 
 addressTakenAnalysis_LDADD = -lrose
