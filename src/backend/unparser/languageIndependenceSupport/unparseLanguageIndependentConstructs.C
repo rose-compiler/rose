@@ -5151,7 +5151,7 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
              {
                if (expr->get_file_info()->isCompilerGenerated() == true)
                   {
-#if 1
+#if 0
                     printf ("WARNING: In getAssociativity(): We should not be calling getAssociativity(SgExpression* expr) if this is a compiler generated (implicit) cast (returing e_assoc_none) \n");
 #endif
                     return e_assoc_none;
@@ -5162,20 +5162,34 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
                     return e_assoc_right;
                   }
              }
-           
-          case V_SgPlusAssignOp:
-          case V_SgMinusAssignOp:
+
+          case V_SgPlusPlusOp:
+          case V_SgMinusMinusOp:
              {
             // DQ (7/23/2013): The associativity of these operators depends upon if they are pre or post operators (assuming post-fix).
             // Note: post-fix is left associative, and pre-fix is right associative.
 
-               return e_assoc_left;
+               AssociativitySpecifier associativitySpecifier = e_assoc_none;
+
+               SgUnaryOp* unaryOp = isSgUnaryOp(expr);
+               if (unaryOp->get_mode() == SgUnaryOp::prefix)
+                  {
+                    associativitySpecifier = e_assoc_right;
+                  }
+                 else
+                  {
+                    ROSE_ASSERT(unaryOp->get_mode() == SgUnaryOp::postfix);
+                    associativitySpecifier = e_assoc_left;
+                  }
+
+               return associativitySpecifier;
              }
            
           case V_SgNotOp:
              {
+#if 0
                printf ("WARNING: In getAssociativity(): I think that the logical not operator should be right associative! \n");
-
+#endif
             // This has forever been marked as left associative in ROSE.
                return e_assoc_left;
              }
@@ -5189,6 +5203,8 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
           case V_SgXorAssignOp:
           case V_SgLshiftAssignOp:
           case V_SgRshiftAssignOp:
+          case V_SgPlusAssignOp:
+          case V_SgMinusAssignOp:
           case V_SgConditionalExp:
           case V_SgBitComplementOp:
           case V_SgPointerDerefExp:
@@ -5252,7 +5268,7 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 
 #define DEBUG_PARENTHESIS_PLACEMENT 0
 
-#if DEBUG_PARENTHESIS_PLACEMENT && 1
+#if DEBUG_PARENTHESIS_PLACEMENT
      printf ("\n\n***** In requiresParentheses() \n");
      printf ("In requiresParentheses(): expr = %p = %s need_paren = %s \n",expr,expr->class_name().c_str(),expr->get_need_paren() ? "true" : "false");
      printf ("In requiresParentheses(): isOverloadedArrowOperator(expr) = %s \n",(unp->u_sage->isOverloadedArrowOperator(expr) == true) ? "true" : "false");
@@ -5465,8 +5481,8 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
                       // DQ (7/22/2013): It appears that in many cases this is not handled in the getAssociativity() function.
                          if (assoc == e_assoc_none)
                             {
-#if DEBUG_PARENTHESIS_PLACEMENT | 1
-                              printf ("WARNING: In requiresParentheses(): assoc == e_assoc_none (not clear what to return, returning false) \n");
+#if DEBUG_PARENTHESIS_PLACEMENT
+                              printf ("WARNING: In requiresParentheses(): assoc == e_assoc_none (not clear what to return, returning true is required to pass regression tests) \n");
 #endif
                            // DQ (7/23/2013): This is required to be true for test2012_104.c to pass.
                            // return false;

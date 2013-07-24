@@ -292,6 +292,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_22.c \
      test2013_23.c \
      test2013_24.c \
+     test2013_25.c \
      math.c \
      complex_01.c \
      constants.c
