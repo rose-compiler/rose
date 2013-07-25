@@ -2,16 +2,26 @@
 #include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <functionEvaluationOrderTraversal.h>
+#include "SingleStatementToBlockNormalization.h"
 
 #define foreach BOOST_FOREACH
 
 using namespace std;
 using namespace boost;
 
+
 /** Perform the function argument extraction on all function calls in the given subtree of the AST.
  * Returns true on sucess, false on failure (unsupported code). */
 void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 {
+    // First Normalize each single statememnt body into a block body
+    // This transformation is necessary to provide scope to newly created temporaries
+    // Note: if this transofrmation is already done, it is benign to rerun it
+    // and this would act as a NOP transformation.
+    
+    SingleStatementToBlockNormalizer singleStatementToBlockNormalizer;
+    singleStatementToBlockNormalizer.Normalize(tree);
+    
     //Get all functions in function evaluation order
     vector<FunctionCallInfo> functionCalls = FunctionEvaluationOrderTraversal::GetFunctionCalls(tree);
 
@@ -33,8 +43,19 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
     SgExpressionPtrList argumentList = functionArgs->get_expressions();
 
     // We also normalize the caller if the function called is a member function.
-    if (SgBinaryOp * binExp = isSgBinaryOp(functionCall->get_function()))
+    if (SgBinaryOp * binExp = isSgBinaryOp(functionCall->get_function())) {
         argumentList.push_back(binExp->get_lhs_operand());
+        
+        // If the called function is an overloaded -> operator, then we must ensure that
+        // we unparse it w/o the operator syntax. (even if the user had not asked for it)
+        if(isSgArrowExp(binExp)) {
+            SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(binExp->get_lhs_operand());
+            if (functionCallExp != NULL) {
+                functionCallExp->set_uses_operator_syntax(false);
+            }
+        }
+        
+    }
 
     //Go over all the function arguments, pull them out
 
@@ -47,24 +68,17 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 
         //Build a declaration for the temporary variable
         SgScopeStatement* scope = functionCallInfo.tempVarDeclarationLocation->get_scope();
-
         SgVariableDeclaration* tempVarDeclaration;
         SgAssignOp* tempVarAssignment;
         SgExpression* tempVarReference;
-        tie(tempVarDeclaration, tempVarReference) = SageInterface::createTempVariableForExpression(arg, scope, false, &tempVarAssignment);
+        tie(tempVarDeclaration, tempVarReference) = SageInterface::createTempVariableForExpression(arg, scope, true,  &tempVarAssignment);
+        delete tempVarAssignment;
 
         //Insert the temporary variable declaration
         InsertStatement(tempVarDeclaration, functionCallInfo.tempVarDeclarationLocation, functionCallInfo);
-
+        
         //Replace the argument with the new temporary variable
         SageInterface::replaceExpression(arg, tempVarReference);
-
-        //Build a CommaOp that evaluates the temporary variable and proceeds to the original function call expression
-        SgExpression* placeholderExp = SageBuilder::buildIntVal(7);
-        SgCommaOpExp* comma = SageBuilder::buildCommaOpExp(tempVarAssignment, placeholderExp);
-        SageInterface::replaceExpression(functionCall, comma, true);
-        ROSE_ASSERT(functionCall->get_parent() == NULL);
-        SageInterface::replaceExpression(placeholderExp, functionCall);
     }
 }
 

@@ -306,6 +306,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/prepostTransformation \
      -I$(top_srcdir)/src/midend/programTransformation/ompLowering \
      -I$(top_srcdir)/src/midend/programTransformation/extractFunctionArgumentsNormalization \
+     -I$(top_srcdir)/src/midend/programTransformation/singleStatementToBlockNormalization \
      -I$(top_srcdir)/src/midend/programAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/annotationLanguageParser \
      -I$(top_srcdir)/src/midend/programAnalysis/CFG \
