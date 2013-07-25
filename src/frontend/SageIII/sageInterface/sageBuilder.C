@@ -2957,11 +2957,13 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
        // func->set_firstNondefiningDeclaration(prevDecl->get_firstNondefiningDeclaration());
           func->set_firstNondefiningDeclaration(nondefiningDeclaration);
           func->set_definingDeclaration(prevDecl->get_definingDeclaration());
+
 #if 0
           printf ("In buildNondefiningFunctionDeclaration_T(): Setting new function (func = %p) to have firstNondefiningDeclaration = %p definingDeclaration = %p \n",func,func->get_firstNondefiningDeclaration(),func->get_definingDeclaration());
 #endif
        // DQ (3/8/2012): Added assertion.
           ROSE_ASSERT(nondefiningDeclaration->get_symbol_from_symbol_table() != NULL);
+          assert(func->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
 
        // DQ (3/8/2012): If this is the redundant function prototype then we have to look
        // at the first defining declaration since only it will have an associated symbol.
@@ -2970,7 +2972,6 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
              {
                ROSE_ASSERT(nondefiningDeclaration != NULL);
                ROSE_ASSERT(func->get_firstNondefiningDeclaration() == nondefiningDeclaration);
-               ROSE_ASSERT(nondefiningDeclaration->get_symbol_from_symbol_table() != NULL);
              }
 
        // DQ (12/14/2011): Added test.
@@ -3214,8 +3215,6 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* f
   {
     // ROSE_ASSERT(returnFunction->get_parent() != NULL);
     ROSE_ASSERT(returnFunction->get_firstNondefiningDeclaration() != NULL);
-    ROSE_ASSERT(TransformationSupport::getSourceFile(returnFunction) == TransformationSupport::getSourceFile(returnFunction->get_firstNondefiningDeclaration()));
-    ROSE_ASSERT(TransformationSupport::getSourceFile(returnFunction->get_scope()) == TransformationSupport::getSourceFile(returnFunction->get_firstNondefiningDeclaration()));
   }
 
   return returnFunction;

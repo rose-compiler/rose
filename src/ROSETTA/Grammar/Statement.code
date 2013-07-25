@@ -4426,7 +4426,7 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
      if (global_scope != NULL) {
        // TODO check that this symbol does not have a scope limited to one file
        SgAliasSymbol* aliasSymbol = new SgAliasSymbol(s);
-       SgProject * project = SageInterface::getProject();
+       SgProject * project = SageInterface::getProject(global_scope);
        assert(project != NULL);
        SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
        assert(globalScopeAcrossFiles != NULL);
@@ -4518,7 +4518,7 @@ SgScopeStatement::remove_symbol ( SgSymbol* s )
   // TV (7/18/2013): If this is a Global Scope then remove the alias symbol in the project wide Global Scope
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject();
+       SgProject * project = SageInterface::getProject(global_scope);
        assert(project != NULL);
        SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
        assert(globalScopeAcrossFiles != NULL);
@@ -4554,7 +4554,7 @@ SgScopeStatement::lookup_symbol(const SgName& n, SgSymbol *s) const
   // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject();
+       SgProject * project = SageInterface::getProject(global_scope);
        assert(project != NULL);
        SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
        assert(globalScopeAcrossFiles != NULL);
@@ -4584,7 +4584,7 @@ SgScopeStatement::lookup_symbol(const SgName& n) const
   // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject();
+       SgProject * project = SageInterface::getProject(global_scope);
        assert(project != NULL);
        SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
        assert(globalScopeAcrossFiles != NULL);
@@ -4618,7 +4618,7 @@ SgScopeStatement::lookup_typedef_symbol(const SgName& n) const
   // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject();
+       SgProject * project = SageInterface::getProject(global_scope);
        assert(project != NULL);
        SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
        assert(globalScopeAcrossFiles != NULL);
@@ -4652,7 +4652,7 @@ SgScopeStatement::lookup_enum_symbol(const SgName& n) const
   // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject();
+       SgProject * project = SageInterface::getProject(global_scope);
        assert(project != NULL);
        SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
        assert(globalScopeAcrossFiles != NULL);
@@ -4686,7 +4686,7 @@ SgScopeStatement::lookup_enum_field_symbol(const SgName& n) const
   // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject();
+       SgProject * project = SageInterface::getProject(global_scope);
        assert(project != NULL);
        SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
        assert(globalScopeAcrossFiles != NULL);
@@ -4727,7 +4727,7 @@ SgScopeStatement::lookup_variable_symbol(const SgName& n) const
   // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject();
+       SgProject * project = SageInterface::getProject(global_scope);
        assert(project != NULL);
        SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
        assert(globalScopeAcrossFiles != NULL);
@@ -4759,7 +4759,7 @@ SgScopeStatement::lookup_class_symbol(const SgName& n) const
   // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject();
+       SgProject * project = SageInterface::getProject(global_scope);
        assert(project != NULL);
        SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
        assert(globalScopeAcrossFiles != NULL);
@@ -4792,7 +4792,7 @@ SgScopeStatement::lookup_class_symbol(const SgName& n, SgTemplateArgumentPtrList
   // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject();
+       SgProject * project = SageInterface::getProject(global_scope);
        assert(project != NULL);
        SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
        assert(globalScopeAcrossFiles != NULL);
@@ -4824,7 +4824,7 @@ SgScopeStatement::lookup_label_symbol(const SgName& n) const
   // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject();
+       SgProject * project = SageInterface::getProject(global_scope);
        assert(project != NULL);
        SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
        assert(globalScopeAcrossFiles != NULL);
@@ -4868,7 +4868,7 @@ SgScopeStatement::lookup_function_symbol(const SgName& n, const SgType* t) const
   // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject();
+       SgProject * project = SageInterface::getProject(global_scope);
        assert(project != NULL);
        SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
        assert(globalScopeAcrossFiles != NULL);
@@ -4900,7 +4900,7 @@ SgScopeStatement::lookup_function_symbol(const SgName& n) const
   // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject();
+       SgProject * project = SageInterface::getProject(global_scope);
        assert(project != NULL);
        SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
        assert(globalScopeAcrossFiles != NULL);
@@ -4932,7 +4932,7 @@ SgScopeStatement::lookup_namespace_symbol ( const SgName & n ) const
   // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject();
+       SgProject * project = SageInterface::getProject(global_scope);
        assert(project != NULL);
        SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
        assert(globalScopeAcrossFiles != NULL);
@@ -4962,7 +4962,7 @@ SgScopeStatement::lookup_template_symbol (const SgName& n) const
   // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject();
+       SgProject * project = SageInterface::getProject(global_scope);
        assert(project != NULL);
        SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
        assert(globalScopeAcrossFiles != NULL);
@@ -4995,7 +4995,7 @@ SgScopeStatement::lookup_template_class_symbol (const SgName& n, SgTemplateParam
   // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject();
+       SgProject * project = SageInterface::getProject(global_scope);
        assert(project != NULL);
        SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
        assert(globalScopeAcrossFiles != NULL);
@@ -5031,7 +5031,7 @@ SgScopeStatement::lookup_nontemplate_class_symbol (const SgName& n, SgTemplateAr
   // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject();
+       SgProject * project = SageInterface::getProject(global_scope);
        assert(project != NULL);
        SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
        assert(globalScopeAcrossFiles != NULL);
@@ -5060,7 +5060,7 @@ SgScopeStatement::lookup_template_function_symbol (const SgName& n, const SgType
   // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject();
+       SgProject * project = SageInterface::getProject(global_scope);
        assert(project != NULL);
        SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
        assert(globalScopeAcrossFiles != NULL);
@@ -5089,7 +5089,7 @@ SgScopeStatement::lookup_nontemplate_function_symbol (const SgName& n, const SgT
   // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject();
+       SgProject * project = SageInterface::getProject(global_scope);
        assert(project != NULL);
        SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
        assert(globalScopeAcrossFiles != NULL);
@@ -5118,7 +5118,7 @@ SgScopeStatement::lookup_template_member_function_symbol (const SgName& n, const
   // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject();
+       SgProject * project = SageInterface::getProject(global_scope);
        assert(project != NULL);
        SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
        assert(globalScopeAcrossFiles != NULL);
@@ -5148,7 +5148,7 @@ SgScopeStatement::lookup_nontemplate_member_function_symbol (const SgName& n, co
   // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject();
+       SgProject * project = SageInterface::getProject(global_scope);
        assert(project != NULL);
        SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
        assert(globalScopeAcrossFiles != NULL);
@@ -5168,7 +5168,6 @@ SgScopeStatement::find_symbol_from_declaration(const T* node) const
      assert (p_symbol_table != NULL);
      return p_symbol_table->find(node);
    }
-
 
 // DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
 // DQ (5/22/2006): I would like to restrict support of a number of functions that I 

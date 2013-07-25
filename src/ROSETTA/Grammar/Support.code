@@ -14955,6 +14955,7 @@ SgProject::initialization()
 
   // TV (07/18/2013): Initialise the global GlobalScope for multiple flie handeling
      p_globalScopeAcrossFiles = new SgGlobal(Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode());
+     p_globalScopeAcrossFiles->set_parent(this);
    }
 
 // DQ (2/1/2007): Added new operator so that w could depricate the inconsistant usage of 
