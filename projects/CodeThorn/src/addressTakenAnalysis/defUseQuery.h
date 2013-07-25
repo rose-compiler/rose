@@ -143,6 +143,8 @@ public:
   void visit(SgDotExp* sgn);
   void visit(SgArrowExp* sgn);
 
+  void visit(SgInitializedName* sgn);
+
   DefUseMemObjInfo getDefUseMemObjInfo();
 };
 
@@ -158,6 +160,7 @@ public:
   void visit(SgPointerDerefExp* sgn);
   void visit(SgDotExp* sgn);
   void visit(SgArrowExp* sgn);
+  void visit(SgInitializedName* sgn);
 
   DefUseMemObjInfo getDefUseMemObjInfo();
 };

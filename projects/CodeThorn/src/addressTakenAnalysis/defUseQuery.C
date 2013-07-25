@@ -263,6 +263,23 @@ void ExprWalker::visit(SgDotExp *sgn)
   dumo = rdumo;
 }
 
+void ExprWalker::visit(SgInitializedName* sgn)
+{
+  SgInitializer* initializer = sgn->get_initializer();
+  
+  // only then we process
+  if(isSgAssignInitializer(initializer))
+  {
+    DefUseMemObjInfo ldumo = getDefUseMemObjInfoLvalue(sgn, vidm, true);
+    DefUseMemObjInfo rdumo = getDefUseMemObjInfo_rec(isSgAssignInitializer(initializer)->get_operand(),
+                                                     vidm,
+                                                     false);
+    if(! rdumo.isDefSetEmpty())
+      rdumo.copyDefToUse();
+    dumo = ldumo + rdumo;
+  }  
+}
+
 DefUseMemObjInfo ExprWalker::getDefUseMemObjInfo()
 {
   return dumo;
@@ -271,6 +288,16 @@ DefUseMemObjInfo ExprWalker::getDefUseMemObjInfo()
 LvalueExprWalker::LvalueExprWalker(VariableIdMapping& _vidm, bool _isModExpr)
   : vidm(_vidm), isModExpr(_isModExpr)
 {
+}
+
+void LvalueExprWalker::visit(SgInitializedName* sgn)
+{
+  MemObjInfo& def_set = dumo.getDefMemObjInfoMod();
+  MemObjInfo& use_set = dumo.getUseMemObjInfoMod();
+  if(isModExpr)
+    def_set.first.insert(vidm.variableId(sgn));
+  else
+    use_set.first.insert(vidm.variableId(sgn));
 }
 
 void LvalueExprWalker::visit(SgVarRefExp* sgn)
@@ -291,28 +318,28 @@ void LvalueExprWalker::visit(SgVarRefExp* sgn)
 
 void LvalueExprWalker::visit(SgPointerDerefExp* sgn)
 {
-  // VariableIdSet modbyptr = fipi.getMemModByPointer();
+  // set the flag for the def/use set
+  // based on what we are processing
+
+  if(isModExpr)
+  {
+    MemObjInfo& def_s = dumo.getDefMemObjInfoMod();
+    def_s.second = true;
+  }
+  else 
+  {
+    MemObjInfo& use_s = dumo.getUseMemObjInfoMod();
+    use_s.second = true;
+  }
 
   // process the operand recursively
   // to find out the used/def
   SgNode* operand = sgn->get_operand();
   DefUseMemObjInfo rdumo = getDefUseMemObjInfo_rec(operand, vidm, false);
 
-  // if(!rdumo.isDefSetEmpty())
-  //   rdumo.copyDefToUseSet();
+  if(!rdumo.isDefSetEmpty())
+    rdumo.copyDefToUse();
 
-  // // now insert the objects that can be
-  // // accessed by pointer to def/use set
-  // // inserting these sets multiple times
-  // // should handle this cleanly
-  // if(isModExpr)
-  // {
-  //   def_set.insert(modbyptr.begin(), modbyptr.end());
-  // }
-  // else
-  // {
-  //   use_set.insert(modbyptr.begin(), modbyptr.end());
-  // }
   // update the results
   dumo = rdumo + dumo;
 }

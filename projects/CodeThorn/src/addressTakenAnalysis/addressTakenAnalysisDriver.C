@@ -18,7 +18,7 @@ public:
 
 void TestDefUseMemObjInfoTraversal::visit(SgNode* sgn)
 {
-  if(isSgExpression(sgn))
+  if(isSgExpression(sgn) || isSgInitializedName(sgn))
   {
     DefUseMemObjInfo memobj = getDefUseMemObjInfo(sgn, vidm);
     if(!memobj.isDefSetEmpty() || !memobj.isUseSetEmpty())
@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
 
   FlowInsensitivePointerInfo fipi(project, vidm);
   fipi.collectInfo();
-  //fipi.printAnalysisSets();
+  fipi.printInfoSets();
 
   TestDefUseMemObjInfoTraversal tt(vidm);
   tt.traverseInputFiles(project, preorder);
