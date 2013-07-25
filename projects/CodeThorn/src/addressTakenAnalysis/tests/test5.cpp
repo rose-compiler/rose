@@ -13,5 +13,6 @@ int foo1()
     sA.b = 4.0;
     sAp = 0;
     sA.next = sAp;
+    ((sA.next)+1)->next = sAp;
     return 0;
 }
