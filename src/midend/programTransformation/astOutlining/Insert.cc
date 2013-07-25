@@ -62,11 +62,6 @@ generatePrototype (const SgFunctionDeclaration* full_decl, SgScopeStatement* sco
      SgFunctionDeclaration* proto = SageBuilder::buildNondefiningFunctionDeclaration(full_decl,scope);
      ROSE_ASSERT(proto != NULL);
 
-     if (Outliner::useNewFile == true)
-        {
-          ROSE_ASSERT(proto->get_definingDeclaration() == NULL);
-        }
-
   // This should be the defining declaration (check it).
      ROSE_ASSERT(full_decl->get_definition() != NULL);
 
@@ -95,9 +90,6 @@ generatePrototype (const SgFunctionDeclaration* full_decl, SgScopeStatement* sco
 
      ROSE_ASSERT(TransformationSupport::getSourceFile(proto->get_firstNondefiningDeclaration()) != NULL);
   // printf ("TransformationSupport::getSourceFile(proto->get_firstNondefiningDeclaration())->getFileName() = %s \n",TransformationSupport::getSourceFile(proto->get_firstNondefiningDeclaration())->getFileName().c_str());
-
-     ROSE_ASSERT(TransformationSupport::getSourceFile(scope) == TransformationSupport::getSourceFile(proto->get_firstNondefiningDeclaration()));
-     ROSE_ASSERT(TransformationSupport::getSourceFile(proto->get_scope()) == TransformationSupport::getSourceFile(proto->get_firstNondefiningDeclaration()));
 
      return proto;
    }
@@ -313,13 +305,9 @@ insertGlobalPrototype (SgFunctionDeclaration* def,
       }
       else
          prototype = GlobalProtoInserter::insertManually (def,scope,default_target);
-      // printf ("In insertGlobalPrototype(): Calling GlobalProtoInserter::insertManually(): prototype = %p = %s \n",prototype,prototype->class_name().c_str());
-         if (Outliner::useNewFile == true)
-            {
-              ROSE_ASSERT(prototype->get_definingDeclaration() == NULL);
             }
        }
-  }
+ 
 
       // The friend function declarations are linked to the global declarations via first non-defining declaration links.
   // Fix-up remaining prototypes.
@@ -370,12 +358,7 @@ insertGlobalPrototype (SgFunctionDeclaration* def,
           ROSE_ASSERT(prototype->get_parent() != NULL);
           ROSE_ASSERT(prototype->get_firstNondefiningDeclaration() != NULL);
 
-       // DQ (2/23/2009): After change in generatePrototype() to use build functions this is now NULL (OK for now)
-       // ROSE_ASSERT(proto->get_definingDeclaration() != NULL);
-          if (Outliner::useNewFile == true)
-             {
-               ROSE_ASSERT(prototype->get_definingDeclaration() == NULL);
-             }
+          ROSE_ASSERT(prototype->get_definingDeclaration() != NULL);
         }
 
   // printf ("In insertGlobalPrototype(): Returning global SgFunctionDeclaration prototype = %p \n",prototype);
@@ -756,8 +739,6 @@ Outliner::insert (SgFunctionDeclaration* func,
           // This is no longer true when a prototype is created when a defining one is created.
           //ROSE_ASSERT(outlinedFileFunctionPrototypeSymbol->get_declaration() == outlinedFileFunctionPrototype);
 
-       // DQ (2/27/2009): Assert this as a test!
-       // TV (04/18/2011): replace '== NULL' by '== func' as this is enforced by the builder (also comment the next statement)
           ROSE_ASSERT(outlinedFileFunctionPrototype->get_definingDeclaration() == func);
 
        // DQ (2/20/2009): ASK LIAO: If func is a defining declaration then shouldn't the 
@@ -775,10 +756,6 @@ Outliner::insert (SgFunctionDeclaration* func,
           ROSE_ASSERT(outlinedFileFunctionPrototype->get_parent() != NULL);
           ROSE_ASSERT(outlinedFileFunctionPrototype->get_firstNondefiningDeclaration() != NULL);
           ROSE_ASSERT(outlinedFileFunctionPrototype->get_definingDeclaration() != NULL);
-
-       // Since the outlined function has been moved to a new file we can't have a pointer to the defining declaration.
-      //  if (!use_dlopen) // no source function prototype if dlopen is used
-          ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() == NULL);
 
        // Add a message to the top of the outlined function that has been added
           SageInterface::addMessageStatement(outlinedFileFunctionPrototype,"/* OUTLINED FUNCTION PROTOTYPE */");
