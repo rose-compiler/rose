@@ -117,6 +117,7 @@ libroseLibraries = \
    $(top_builddir)/src/midend/programAnalysis/libprogramAnalysis.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/libLoopProcessing.la \
    $(top_builddir)/src/midend/programTransformation/extractFunctionArgumentsNormalization/libExtractFunctionArgumentsNormalization.la \
+   $(top_builddir)/src/midend/programTransformation/singleStatementToBlockNormalization/libSingleStatementToBlockNormalization.la \
    $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
    $(top_builddir)/src/midend/libmidend.la \
    $(top_builddir)/src/roseSupport/libroseSupport.la \

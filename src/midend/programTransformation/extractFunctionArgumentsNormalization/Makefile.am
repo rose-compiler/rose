@@ -6,7 +6,8 @@ INCLUDES = $(ROSE_INCLUDES)
 # noinst_LTLIBRARIES lists all the libraries that should be built, but not installed
 noinst_LTLIBRARIES =  libExtractFunctionArgumentsNormalization.la
 
-libExtractFunctionArgumentsNormalization_la_DEPENDENCIES = 
+libExtractFunctionArgumentsNormalization_la_DEPENDENCIES = $(srcdir)/../singleStatementToBlockNormalization/SingleStatementToBlockNormalization.h
+libExtractFunctionArgumentsNormalization_la_CXXFLAGS = -I$(srcdir)/../singleStatementToBlockNormalization
 libExtractFunctionArgumentsNormalization_la_SOURCES = ExtractFunctionArguments.C functionEvaluationOrderTraversal.C
 include_HEADERS = ExtractFunctionArguments.h functionEvaluationOrderTraversal.h
 
