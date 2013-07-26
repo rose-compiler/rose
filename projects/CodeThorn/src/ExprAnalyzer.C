@@ -423,7 +423,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 	  return listify(res);
 	} else {
 	  res.result=AType::Top();
-	  cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueLongVariableName(varId)<<"). Initialized with top."<<endl;
+	  //cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueLongVariableName(varId)<<"). Initialized with top."<<endl;
 	  return listify(res);
 	}
 	break;
@@ -567,7 +567,7 @@ AValue ExprAnalyzer::pureEvalConstInt(SgNode* node,EState& estate) {
 	  return res;
 	} else {
 	  res=AType::Top();
-	  cerr << "WARNING: variable not in State (var="<<_variableIdMapping->uniqueLongVariableName(varId)<<"). Initialized with top."<<endl;
+	  //cerr << "WARNING: variable not in State (var="<<_variableIdMapping->uniqueLongVariableName(varId)<<"). Initialized with top."<<endl;
 	  return res;
 	}
 	break;

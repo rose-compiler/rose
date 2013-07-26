@@ -195,6 +195,7 @@ namespace CodeThorn {
 	int _numberOfThreadsToUse;
 	int _ltlVerifier;
 	int _semanticFoldThreshold;
+	VariableIdMapping::VariableIdSet _variablesToIgnore;
   };
   
 } // end of namespace CodeThorn

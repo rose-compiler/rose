@@ -53,6 +53,8 @@ class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
   void toStream(ostream& os) const;
   string toString() const;
   string toString(VariableIdMapping* variableIdMapping) const;
+  void setAllVariablesToTop();
+  void setAllVariablesToValue(CodeThorn::CppCapsuleAValue val);
 };
 
   ostream& operator<<(ostream& os, const PState& value);
