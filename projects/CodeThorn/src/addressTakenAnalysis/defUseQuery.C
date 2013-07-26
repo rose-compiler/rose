@@ -357,10 +357,8 @@ void LvalueExprWalker::visit(SgPointerDerefExp* sgn)
   // of SgArrayType while p in *p is SgPointerType. However arr
   // can appear deep in the operand expression *(i + b[j]+.. + arr) = exp.
   // We would need to walk this operand expression and extract arr.
-  // We cannot use ExprWalker for this purpose as the flag has to
-  // passed to its children different from ExprWalker i.e if the
-  // sub-expression is of SgArrayType, we should process it with true
-  // and false otherwise. In expressions like *(*(arr + i) + j), *(arr + i)
+  // If the sub-expression is of SgArrayType, we should add it to def_set.
+  // In expressions like *(*(arr + i) + j), *(arr + i)
   // is of SgArrayType and adds more complications to the walker. Here we
   // are conservative and just raise the flag when we don't know what
   // exactly is modified.  
