@@ -1028,6 +1028,39 @@ static void insert_libxompf_h(SgNode* startNode)
     SgStatement* loop = (for_loop!=NULL?(SgStatement*)for_loop:(SgStatement*)do_loop);
     ROSE_ASSERT (loop != NULL);
 
+    /*
+    *Winnie, do loop collapse before the invoke transOmpLoop(node), 
+    *        grab information about loop collapse factor and target_loop
+    *        may need to modify SageInterface::loopCollapsing(SgForStatement *target_loop, size_t collapsing_factor) to 
+    *            make sure that no statements are inserted in between of for directive and the target_loop
+    */
+
+    bool hasCollapse = false;
+    if (hasClause(target, V_SgOmpCollapseClause))
+    // {
+      //   printf("Target %s has collapse clause\n", target->unparseToString().c_str() );
+          hasCollapse = true;
+    //}
+    if(for_loop && hasCollapse)
+    {
+//        ROSE_ASSERT(getScope(for_loop)->get_parent()->get_parent() != NULL);
+        
+//        printf("parent of grandparent scope classname is %s\n", getScope(for_loop)->get_parent()->get_parent()->get_parent()->class_name().c_str() );
+    //    printf("before loopCollapsing: %s\n", for_loop->unparseToString().c_str() );
+    //    cerr<<"going to connect loopCollapsing here"<<endl;
+        SageInterface::loopCollapsing(&for_loop, 2);
+    //    printf("after loopCollapsing: %s\n", for_loop->unparseToString().c_str() );
+        loop = for_loop;
+   /*     printf("after loopCollapsing: the loop %s\n", loop->unparseToString().c_str() );
+        printf("after loopCollapsing: parent of the loop %s\n", loop->get_parent()->unparseToString().c_str() );
+        printf("after loopCollapsing: grandparent of the loop %s\n", loop->get_parent()->get_parent()->unparseToString().c_str() );
+        printf("after loopCollapsing: parent of grandparent of the loop %s\n", loop->get_parent()->get_parent()->get_parent()->unparseToString().c_str() );
+        printf("after loopCollapsing: grandparent of grandparent of the loop %s\n", loop->get_parent()->get_parent()->get_parent()->get_parent()->unparseToString().c_str() );
+*/
+    }
+
+    //Winnie, end of loop collapse
+
     // Step 1. Loop normalization
     // we reuse the normalization from SageInterface, though it is different from what gomp expects.
     // the point is to have a consistent loop form. We can adjust the difference later on.
@@ -1057,7 +1090,39 @@ static void insert_libxompf_h(SgNode* startNode)
     // step 2. Insert a basic block to replace SgOmpForStatement
     // This newly introduced scope is used to hold loop variables, private variables ,etc
     SgBasicBlock * bb1 = SageBuilder::buildBasicBlock(); 
+
+
+ //   fprintf(stderr, "target: %s\n", target->unparseToString().c_str() );
+
     replaceStatement(target, bb1, true);
+/*
+*Winnie, for directive with collapse clause, there are several statements inserted in between of target1 and for_loop
+*        insert these statements into bb1
+*/
+/*    if(hasCollapse)
+    {
+        SgScopeStatement * scope_bb1 = isSgScopeStatement(bb1);
+        SgVariableDeclaration *insrted_stmts = isSgVariableDeclaration(getPreviousStatement(for_loop));   //Winnie, statement inserted in SageInterface::loopCollapsing()
+        while(isSgStatement(insrted_stmts) != NULL)
+        //while(isSgStatement(insrted_stmts) != isSgStatement(target))
+        {
+            fprintf(stderr, "insrted_stmt is %s\n", insrted_stmts->unparseToString().c_str());
+            SgInitializedNamePtrList list_temp =insrted_stmts->get_variables();
+
+//            fprintf(stderr, "p_scope_temp %s\n\n", p_scope_temp->unparseToString().c_str());
+//            fprintf(stderr, "p_scope_temp %s\n\n", p_scope_temp->unparseToString().c_str());
+            
+            SgVariableDeclaration *new_stmts = buildVariableDeclaration(list_temp[0]->get_name().getString(), buildIntType(), list_temp[0]->get_initializer(), scope_bb1); 
+
+            
+            insrted_stmts = isSgVariableDeclaration(getPreviousStatement(insrted_stmts));
+            prependStatement(new_stmts, isSgScopeStatement(bb1));        
+            fprintf(stderr, "bb1 %s\n\n", bb1->unparseToString().c_str());
+        }
+    }*/
+//Winnie, end of insert statements for collapse clause
+
+
     //TODO handle preprocessing information
     // Save some preprocessing information for later restoration. 
     //  AttachedPreprocessingInfoType ppi_before, ppi_after;
@@ -4747,12 +4812,7 @@ void lower_omp(SgSourceFile* file)
           if (is_target_loop)
             transOmpTargetLoop (node);
           else  
-            /*
-            *Winnie, do loop collapse before the invoke transOmpLoop(node), 
-            *        grab information about loop collapse factor and target_loop
-            *        may need to modify SageInterface::loopCollapsing(SgForStatement *target_loop, size_t collapsing_factor) to 
-            *            make sure that no statements are inserted in between of for directive and the target_loop
-            */
+            
             transOmpLoop(node);
           break;
         }

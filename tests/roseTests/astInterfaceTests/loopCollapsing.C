@@ -68,7 +68,8 @@ int main(int argc, char * argv[])
  if (isSgForStatement(stmt))
   {
     bool result=false;
-    result = SageInterface::loopCollapsing(isSgForStatement(stmt),factor);
+    SgForStatement *target_loop = isSgForStatement(stmt);
+    result = SageInterface::loopCollapsing(&target_loop, factor);
     ROSE_ASSERT(result != false);
   }
 //  AstPostProcessing(project);
