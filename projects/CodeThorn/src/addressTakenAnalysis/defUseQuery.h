@@ -90,8 +90,7 @@ public:
   
   // copy sets to handle side-effects
   void copyDefToUse();
-  // probably not needed
-  //void copyUseToDef();
+  void copyUseToDef();
   
   bool isDefSetEmpty();
   bool isUseSetEmpty();
@@ -131,8 +130,14 @@ public:
 
   // recurse on sub-expressions
   void visit(SgBinaryOp* sgn);
+
   void visit(SgCastExp* sgn);
   void visit(SgAddressOfOp* sgn);
+  void visit(SgMinusMinusOp* sgn);
+  void visit(SgMinusOp* sgn);
+  void visit(SgNotOp* sgn);
+  void visit(SgPlusPlusOp* sgn);
+
   void visit(SgFunctionCallExp* sgn);
   void visit(SgExprListExp* sgn);
 

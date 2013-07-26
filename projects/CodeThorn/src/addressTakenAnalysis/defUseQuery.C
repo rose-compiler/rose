@@ -93,12 +93,11 @@ void DefUseMemObjInfo::copyDefToUse()
   use_set.second = use_set.second || def_set.second;
 }
 
-// not really used
-// void DefUseMemObjInfo::copyUseToDef()
-// {
-//   def_set.first.insert(use_set.first.begin(), use_set.first.end());
-//   def_set.second = def_set.second || use_set.second;
-// }
+void DefUseMemObjInfo::copyUseToDef()
+{
+  def_set.first.insert(use_set.first.begin(), use_set.first.end());
+  def_set.second = def_set.second || use_set.second;
+}
 
 // combine the two DefUseMemObjInfo functions
 DefUseMemObjInfo DefUseMemObjInfo::operator+(const DefUseMemObjInfo& dumo1)
@@ -207,6 +206,39 @@ void ExprWalker::visit(SgAddressOfOp* sgn)
   SgNode* operand = sgn->get_operand();
   DefUseMemObjInfo opdumo = getDefUseMemObjInfo_rec(operand, vidm, false);
   dumo = opdumo;
+}
+
+void ExprWalker::visit(SgMinusMinusOp* sgn)
+{
+  DefUseMemObjInfo udumo = getDefUseMemObjInfo_rec(sgn->get_operand(), vidm, false);
+  // all the side-effects and the variable are also used by this expression
+  udumo.copyUseToDef();
+  dumo = udumo;
+}
+void ExprWalker::visit(SgMinusOp* sgn)
+{
+  // its only used
+  DefUseMemObjInfo rdumo = getDefUseMemObjInfo_rec(sgn->get_operand(), vidm, false);
+  if(!rdumo.isDefSetEmpty())
+    rdumo.copyDefToUse();
+  dumo = rdumo;
+}
+
+void ExprWalker::visit(SgNotOp* sgn)
+{
+  // its only used
+  DefUseMemObjInfo rdumo = getDefUseMemObjInfo_rec(sgn->get_operand(), vidm, false);
+  if(!rdumo.isDefSetEmpty())
+    rdumo.copyDefToUse();
+  dumo = rdumo;
+}
+  
+void ExprWalker::visit(SgPlusPlusOp* sgn)
+{
+  DefUseMemObjInfo udumo = getDefUseMemObjInfo_rec(sgn->get_operand(), vidm, false);
+  // all the side-effects are also used by this expression
+  udumo.copyUseToDef();
+  dumo = udumo;
 }
 
 void ExprWalker::visit(SgBinaryOp* sgn)
