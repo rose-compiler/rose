@@ -135,6 +135,7 @@ public:
   void visit(SgAddressOfOp* sgn);
   void visit(SgMinusMinusOp* sgn);
   void visit(SgMinusOp* sgn);
+  void visit(SgUnaryAddOp* sgn);
   void visit(SgNotOp* sgn);
   void visit(SgPlusPlusOp* sgn);
 

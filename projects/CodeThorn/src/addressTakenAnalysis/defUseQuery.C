@@ -224,6 +224,15 @@ void ExprWalker::visit(SgMinusOp* sgn)
   dumo = rdumo;
 }
 
+void ExprWalker::visit(SgUnaryAddOp *sgn)
+{
+  // its only used
+  DefUseMemObjInfo rdumo = getDefUseMemObjInfo_rec(sgn->get_operand(), vidm, false);
+  if(!rdumo.isDefSetEmpty())
+    rdumo.copyDefToUse();
+  dumo = rdumo;
+}
+
 void ExprWalker::visit(SgNotOp* sgn)
 {
   // its only used
