@@ -7011,6 +7011,36 @@ std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariab
     return std::make_pair(tempVarDeclaration, varRefExpression);
 }
 
+
+std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariableOrReferenceForExpression
+(SgExpression* expression, SgScopeStatement* scope)
+{
+    SgType* expressionType = expression->get_type();
+    SgType* variableType = expressionType;
+    
+    // If the expression is a dereferenced pointer, use a reference to hold it.
+    if (isSgPointerDerefExp(expression))
+        variableType = SageBuilder::buildReferenceType(variableType);
+    
+    //Generate a unique variable name
+    string name = generateUniqueVariableName(scope);
+    
+    //initialize the variable in its declaration
+    SgAssignInitializer* initializer = NULL;
+    SgExpression* initExpressionCopy = SageInterface::copyExpression(expression);
+    initializer = SageBuilder::buildAssignInitializer(initExpressionCopy);
+    
+    SgVariableDeclaration* tempVarDeclaration = SageBuilder::buildVariableDeclaration(name, variableType, initializer, scope);
+    ROSE_ASSERT(tempVarDeclaration != NULL);
+    
+    SgVarRefExp* tempVarReference = SageBuilder::buildVarRefExp(tempVarDeclaration);
+    
+    //Build the variable reference expression that can be used in place of the original expression
+    SgExpression* varRefExpression = SageBuilder::buildVarRefExp(tempVarDeclaration);    
+    return std::make_pair(tempVarDeclaration, varRefExpression);
+}
+
+
 // This code is based on OpenMP translator's ASTtools::replaceVarRefExp() and astInling's replaceExpressionWithExpression()
 // Motivation: It involves the parent node to replace a VarRefExp with a new node
 // Used to replace shared variables with the dereference expression of their addresses
