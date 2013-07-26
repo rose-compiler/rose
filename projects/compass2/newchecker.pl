@@ -21,7 +21,7 @@ if (scalar @ARGV == 0) {
 
 my $main_path     = "./bin/compass_main.cpp";
 my $makefile_path = "./Makefile.am";
-my $template_path = "./checker_template.cpp";
+my $template_path = "./templates/checker_template";
 my $xml_path      = "./share/xml/compass_parameters.xml.in";
 
 
