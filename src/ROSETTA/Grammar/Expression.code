@@ -3970,6 +3970,7 @@ SgTypeIdOp::set_type( SgType* type )
 SgType*
 SgTypeIdOp::get_type() const
    {
+#if 0
   // DQ (7/20/2006): The typeid operator returns an lvalue of type const std::type_info that represents the 
   // type of expression expr. You must include the standard template library header <typeinfo> to use the 
   // typeid operator (obtained from IBM C++ web page).  So it seems that the correct return type is a 
@@ -3997,6 +3998,34 @@ SgTypeIdOp::get_type() const
      ROSE_ASSERT(returnType != NULL);
 
      return returnType;
+#else
+    // get_type on SgTypeIdOp must always retuen a const referene to "std::type_info"
+
+     SgType* returnType = NULL;
+     // If we call get_type() on a node that is not fully build then this will break.
+     SgGlobal* globalScope = SageInterface::getGlobalScope(this);
+     ROSE_ASSERT(globalScope && "globalScope is NULL");
+
+     SgNamespaceSymbol* stdNamespaceSymbol = globalScope->lookup_namespace_symbol(SgName("std"));
+     ROSE_ASSERT(stdNamespaceSymbol && "lookup_namespace_symbol did not found std symbol");
+
+     SgNamespaceDeclarationStatement *  namespaceDeclarationStatement   = stdNamespaceSymbol->get_declaration ();
+     SgNamespaceDefinitionStatement * namespaceDefinitionStatement = namespaceDeclarationStatement->get_definition();
+     ROSE_ASSERT(namespaceDefinitionStatement && "get_definition() retured NULL");
+
+     SgClassSymbol * typeInfoClassSymbol = namespaceDefinitionStatement->lookup_class_symbol(SgName("type_info"));
+     ROSE_ASSERT(typeInfoClassSymbol && "lookup_class_symbol did not found type_info symbol");
+
+     //returnType = SageInterface::deepCopy(typeInfoClassSymbol->get_type());
+     returnType = typeInfoClassSymbol->get_type();
+     ROSE_ASSERT(isSgClassType(returnType));
+
+
+     SgModifierType* constType =  SageBuilder::buildConstType(returnType);
+     ROSE_ASSERT (constType);
+     SgReferenceType * constRefType = SageBuilder::buildReferenceType(constType);
+     return constRefType;
+#endif
    }
 
 SOURCE_TYPE_ID_OPERATOR_EXPRESSION_END

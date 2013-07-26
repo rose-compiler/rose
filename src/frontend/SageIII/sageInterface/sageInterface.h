@@ -1561,6 +1561,10 @@ SgNode* replaceWithPattern (SgNode * anchor, SgNode* new_pattern);
 std::pair<SgVariableDeclaration*, SgExpression* > createTempVariableForExpression(SgExpression* expression,
         SgScopeStatement* scope, bool initializeInDeclaration, SgAssignOp** reEvaluate = NULL);
 
+    
+std::pair<SgVariableDeclaration*, SgExpression*> createTempVariableOrReferenceForExpression
+    (SgExpression* expression, SgScopeStatement* scope);
+    
 //! Append an argument to SgFunctionParameterList, transparently set parent,scope, and symbols for arguments when possible
 /*! We recommend to build SgFunctionParameterList before building a function declaration
  However, it is still allowed to append new arguments for existing function declarations.
