@@ -344,7 +344,8 @@ void LvalueExprWalker::visit(SgPointerDerefExp* sgn)
 
   // Process the operand recursively
   // The operand is viewed only as an expression
-  // that will only be used. The operand expression
+  // that will only be used. The operand expression can
+  // have side-effects that will be captured.
   // For simplicity, we process the operand as non-modifying
   // expression by passing false to the recursive function.
   // It is conservative as we raise the flag and do not
