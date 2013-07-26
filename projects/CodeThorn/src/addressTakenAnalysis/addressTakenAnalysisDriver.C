@@ -21,7 +21,7 @@ void TestDefUseMemObjInfoTraversal::visit(SgNode* sgn)
   if(isSgExpression(sgn) || isSgInitializedName(sgn))
   {
     DefUseMemObjInfo memobj = getDefUseMemObjInfo(sgn, vidm);
-    if(!memobj.isDefSetEmpty() || !memobj.isUseSetEmpty())
+    if(!memobj.isDefSetEmpty() || !memobj.isUseSetEmpty() || !memobj.isFunctionCallExpInfoEmpty())
     {
       std::cout << "<" << sgn->class_name() << ", " << sgn->unparseToString() << "\n" 
                 << memobj.str(vidm) << ">\n";

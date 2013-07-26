@@ -77,6 +77,11 @@ bool DefUseMemObjInfo::isDefSetEmpty()
   return def_set.first.size() == 0;
 }
 
+bool DefUseMemObjInfo::isFunctionCallExpInfoEmpty()
+{
+  return func_set.first.size() == 0;
+}
+
 bool DefUseMemObjInfo::isUseSetEmpty()
 {
   return use_set.first.size() == 0;
@@ -95,6 +100,7 @@ void DefUseMemObjInfo::copyDefToUse()
 //   def_set.second = def_set.second || use_set.second;
 // }
 
+// combine the two DefUseMemObjInfo functions
 DefUseMemObjInfo DefUseMemObjInfo::operator+(const DefUseMemObjInfo& dumo1)
 {  
   const MemObjInfo& d1_def_set = dumo1.getDefMemObjInfoRef();
@@ -321,6 +327,10 @@ void LvalueExprWalker::visit(SgPointerDerefExp* sgn)
   // set the flag for the def/use set
   // based on what we are processing
 
+  // we raise the flag
+  // we don't know what memory this dereferencing expression is pointing to
+  // if this flag is set, then the expression is modifying/using something
+  // other than what appears in the expression.
   if(isModExpr)
   {
     MemObjInfo& def_s = dumo.getDefMemObjInfoMod();
@@ -332,8 +342,28 @@ void LvalueExprWalker::visit(SgPointerDerefExp* sgn)
     use_s.second = true;
   }
 
-  // process the operand recursively
-  // to find out the used/def
+  // Process the operand recursively
+  // The operand is viewed only as an expression
+  // that will only be used. The operand expression
+  // For simplicity, we process the operand as non-modifying
+  // expression by passing false to the recursive function.
+  // It is conservative as we raise the flag and do not
+  // give any guarantee about what is used/modfied.
+  // In some cases it is possible to find out what is modified
+  // in a dereferencing expression. Arrays can also be modified
+  // using dereferencing expression. Consider *(arr + 10), it
+  // is different from other dereferencing expression as arr is
+  // of SgArrayType while p in *p is SgPointerType. However arr
+  // can appear deep in the operand expression *(i + b[j]+.. + arr) = exp.
+  // We would need to walk this operand expression and extract arr.
+  // We cannot use ExprWalker for this purpose as the flag has to
+  // passed to its children different from ExprWalker i.e if the
+  // sub-expression is of SgArrayType, we should process it with true
+  // and false otherwise. In expressions like *(*(arr + i) + j), *(arr + i)
+  // is of SgArrayType and adds more complications to the walker. Here we
+  // are conservative and just raise the flag when we don't know what
+  // exactly is modified.  
+  
   SgNode* operand = sgn->get_operand();
   DefUseMemObjInfo rdumo = getDefUseMemObjInfo_rec(operand, vidm, false);
 

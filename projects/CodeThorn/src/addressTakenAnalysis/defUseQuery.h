@@ -95,6 +95,7 @@ public:
   
   bool isDefSetEmpty();
   bool isUseSetEmpty();
+  bool isFunctionCallExpInfoEmpty();
 
   // returns the flag func_modify
   bool isModByFunction();
