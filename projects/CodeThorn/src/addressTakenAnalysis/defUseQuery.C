@@ -237,6 +237,20 @@ void ExprWalker::visit(SgFunctionCallExp* sgn)
   func_set.second = true;
 }
 
+void ExprWalker::visit(SgExprListExp* sgn)
+{
+  SgExpressionPtrList expr_list = sgn->get_expressions();
+  SgExpressionPtrList::iterator it = expr_list.begin();
+  for( ; it != expr_list.end(); ++it)
+  {
+    // if they have side-effects we can copy them over
+    DefUseMemObjInfo rdumo = getDefUseMemObjInfo_rec(*it, vidm, false);
+    if(!rdumo.isDefSetEmpty())
+      rdumo.copyDefToUse();
+    dumo = dumo + rdumo;
+  }
+}
+
 void ExprWalker::visit(SgVarRefExp* sgn)
 {
   // recursion base case
@@ -284,6 +298,46 @@ void ExprWalker::visit(SgInitializedName* sgn)
       rdumo.copyDefToUse();
     dumo = ldumo + rdumo;
   }  
+}
+
+void ExprWalker::visit(SgAssignInitializer *sgn)
+{
+  // operand is only used
+  DefUseMemObjInfo rdumo = getDefUseMemObjInfo_rec(sgn->get_operand(), vidm, false);
+  if(!rdumo.isDefSetEmpty())
+    rdumo.copyDefToUse();
+  dumo = rdumo;
+}
+
+void ExprWalker::visit(SgValueExp* sgn)
+{
+  // dont need to do anything
+}
+
+void ExprWalker::visit(SgFunctionRefExp* sgn)
+{
+  // not sure
+  // does not have any def/use semantics
+}
+
+void ExprWalker::visit(SgMemberFunctionRefExp* sgn)
+{
+  // not sure
+  // does not have any def/use semantics
+}
+
+void ExprWalker::visit(SgExpression* sgn)
+{
+  try {
+    std::ostringstream oss;
+    oss << "Not handling " << sgn->class_name() << " expression \n";
+    throw oss.str();
+  }
+  catch(std::string exp)
+  {
+    std::cerr << exp << "\n";
+    abort();
+  }
 }
 
 DefUseMemObjInfo ExprWalker::getDefUseMemObjInfo()

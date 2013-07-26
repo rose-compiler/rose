@@ -134,6 +134,8 @@ public:
   void visit(SgCastExp* sgn);
   void visit(SgAddressOfOp* sgn);
   void visit(SgFunctionCallExp* sgn);
+  void visit(SgExprListExp* sgn);
+
   
   // recursion undwinds on basic expressions
   // that represent memory
@@ -145,6 +147,13 @@ public:
   void visit(SgArrowExp* sgn);
 
   void visit(SgInitializedName* sgn);
+  void visit(SgAssignInitializer* sgn);
+
+  void visit(SgValueExp* sgn);
+  void visit(SgFunctionRefExp* sgn);
+  void visit(SgMemberFunctionRefExp* sgn);
+
+  void visit(SgExpression* sgn);
 
   DefUseMemObjInfo getDefUseMemObjInfo();
 };
