@@ -39,11 +39,11 @@ RDLattice RDAnalyzer::transfer(Label lab, RDLattice element) {
 	  // ad 1)
 	  set<SgVariableDeclaration*> varDecls=SgNodeHelper::localVariableDeclarationsOfFunction(funDef);
 	  // ad 2)
-	  set<VariableId> localVars=_variableIdMapping.determineVariableIdsOfVariableDeclarations(varDecls);
+	  VariableIdMapping::VariableIdSet localVars=_variableIdMapping.determineVariableIdsOfVariableDeclarations(varDecls);
 	  SgInitializedNamePtrList& formalParamInitNames=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
-	  set<VariableId> formalParams=_variableIdMapping.determineVariableIdsOfSgInitializedNames(formalParamInitNames);
-	  set<VariableId> vars=localVars+formalParams;
-	  for(set<VariableId>::iterator i=vars.begin();i!=vars.end();++i) {
+	  VariableIdMapping::VariableIdSet formalParams=_variableIdMapping.determineVariableIdsOfSgInitializedNames(formalParamInitNames);
+	  VariableIdMapping::VariableIdSet vars=localVars+formalParams;
+	  for(VariableIdMapping::VariableIdSet::iterator i=vars.begin();i!=vars.end();++i) {
 		VariableId varId=*i;
 		element.eraseAllPairsWithVariableId(varId);
 	  }
@@ -73,10 +73,10 @@ void RDAnalyzer::transfer_assignment(SgAssignOp* node, Label& lab, RDLattice& el
 	// 2) add (lab,lhs.varid)
 	
 	// (for programs with pointers we require a set here)
-	set<VariableId> lhsVarIds=determineLValueVariableIdSet(SgNodeHelper::getLhs(node));
+	VariableIdMapping::VariableIdSet lhsVarIds=determineLValueVariableIdSet(SgNodeHelper::getLhs(node));
 	if(lhsVarIds.size()>1) {
 	  // since multiple memory locations may be modified, we cannot know which one will be updated and can only add information
-	  for(set<VariableId>::iterator i=lhsVarIds.begin();i!=lhsVarIds.end();++i) {
+	  for(VariableIdMapping::VariableIdSet::iterator i=lhsVarIds.begin();i!=lhsVarIds.end();++i) {
 		element.insertPair(lab,*i);
 	  }
 	} else if(lhsVarIds.size()==1) {
@@ -88,8 +88,8 @@ void RDAnalyzer::transfer_assignment(SgAssignOp* node, Label& lab, RDLattice& el
 }
 
 // this function assumes that a pointer to an AST subtree representing a LHS of an assignment has been passed
-set<VariableId> RDAnalyzer::determineLValueVariableIdSet(SgNode* node) {
-  set<VariableId> resultSet;
+VariableIdMapping::VariableIdSet RDAnalyzer::determineLValueVariableIdSet(SgNode* node) {
+  VariableIdMapping::VariableIdSet resultSet;
   // only x=... is supported yet
   if(SgVarRefExp* lhsVar=isSgVarRefExp(node)) {
 	resultSet.insert(_variableIdMapping.variableId(lhsVar));

@@ -85,7 +85,7 @@ DFAnalyzer<LatticeType>::initialize(SgProject* root) {
 	
 	list<SgVarRefExp*> varRefExpList=SgNodeHelper::listOfUsedVarsInFunctions(project);
 	// compute set of varIds (it is a set because we want multiple uses of the same var to be represented by one id)
-	set<VariableId> setOfUsedVars;
+	VariableIdMapping::VariableIdSet setOfUsedVars;
 	for(list<SgVarRefExp*>::iterator i=varRefExpList.begin();i!=varRefExpList.end();++i) {
 	  setOfUsedVars.insert(variableIdMapping.variableId(*i));
 	}

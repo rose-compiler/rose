@@ -13,11 +13,11 @@ DataDependenceVisualizer::DataDependenceVisualizer(Labeler* labeler, VariableIdM
 {
 }
 
-set<VariableId> DataDependenceVisualizer::useVars(SgNode* expr){
+VariableIdMapping::VariableIdSet DataDependenceVisualizer::useVars(SgNode* expr){
   return getAstAttributeVariableIdSet(expr,"use-variableid-set");
 }
 
-set<VariableId> DataDependenceVisualizer::defVars(SgNode* expr){
+VariableIdMapping::VariableIdSet DataDependenceVisualizer::defVars(SgNode* expr){
   return getAstAttributeVariableIdSet(expr,"def-variableid-set");
 }
 
@@ -34,12 +34,12 @@ void DataDependenceVisualizer::generateDot(SgNode* root, string fileName){
 
 // private
 
-set<VariableId> DataDependenceVisualizer::getAstAttributeVariableIdSet(SgNode* expr,string attributeName){
+VariableIdMapping::VariableIdSet DataDependenceVisualizer::getAstAttributeVariableIdSet(SgNode* expr,string attributeName){
   if(expr->attributeExists(attributeName)) {
 	VariableIdSetAttribute* varsAttr=dynamic_cast<VariableIdSetAttribute*>(expr->getAttribute(attributeName));
 	return varsAttr->getVariableIdSet();
   } else {
-	set<VariableId> empty;
+	VariableIdMapping::VariableIdSet empty;
 	return empty;
   }
 }

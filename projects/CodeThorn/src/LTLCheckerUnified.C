@@ -396,7 +396,7 @@ class UVerifier {
   
   /// To avoid recomputing I/O LTL-leafs, we keep track of common subexpressions
   vector< pair<LTL::NodeType, char> > stack_contents;
-  set<VariableId> input_vars;
+  VariableIdMapping::VariableIdSet input_vars;
 
 public:
   LTLStateTransitionGraph stg;
@@ -434,7 +434,7 @@ public:
 
   }
 
-  static void updateInputVar(const EState* estate, set<VariableId>& input_vars) {
+  static void updateInputVar(const EState* estate, VariableIdMapping::VariableIdSet& input_vars) {
     if (estate->io.op == InputOutput::STDIN_VAR) {
       input_vars.insert(estate->io.var);
     }
@@ -758,13 +758,13 @@ public:
   struct LTLVisitor: public BottomUpVisitor {
     const LTLState& s;
     const LTLState& succ; 
-    const set<VariableId>& input_vars;
+    const VariableIdMapping::VariableIdSet& input_vars;
     bool verbose;
     bool endpoint;
     LTLState result;
     LTLVisitor(const LTLState& _s, const LTLState& _succ, 
 	       bool _verbose, bool _endpoint, 
-	       const set<VariableId>& _input_vars)
+	       const VariableIdMapping::VariableIdSet& _input_vars)
       : s(_s), succ(_succ),
 	input_vars(_input_vars),
 	verbose(_verbose), endpoint(_endpoint),
@@ -783,7 +783,7 @@ public:
    
     /// return True iff that state is an Oc operation
     static BoolLattice isInputState(const EState* estate,
-				    const set<VariableId>& input_vars,
+				    const VariableIdMapping::VariableIdSet& input_vars,
 				    char c, BoolLattice succ_val) {
       if (input_vars.empty())
         return Bot();
@@ -792,7 +792,7 @@ public:
       assert(estate);
       assert(estate->constraints());
       ConstraintSet constraints = *estate->constraints();
-      for (set<VariableId>::const_iterator ivar = input_vars.begin();
+      for (VariableIdMapping::VariableIdSet::const_iterator ivar = input_vars.begin();
    	 ivar != input_vars.end();
    	 ++ivar) {
         // main input variable
@@ -842,7 +842,7 @@ public:
    
     /// return True iff that state is an !Ic operation
     static BoolLattice isNegInputState(const EState* estate,
-				       const set<VariableId>& input_vars,
+				       const VariableIdMapping::VariableIdSet& input_vars,
 				       char c, BoolLattice succ_val) {
       if (input_vars.empty())
         return Bot();
@@ -853,7 +853,7 @@ public:
       assert(estate);
       assert(estate->constraints());
       ConstraintSet constraints = *estate->constraints();
-      for (set<VariableId>::const_iterator ivar = input_vars.begin();
+      for (VariableIdMapping::VariableIdSet::const_iterator ivar = input_vars.begin();
    		 ivar != input_vars.end();
    		 ++ivar) {
         // This will really only work with one input variable (that one may be aliased, though)
