@@ -14,7 +14,8 @@ using namespace CodeThorn;
 
 // NOTE: should change across other files
 // if we change the underlying set container
-typedef std::set<VariableId> VariableIdSet;
+// defined in VariableIdMapping
+typedef VariableIdMapping::VariableIdSet VariableIdSet;
 
 // some utility functions for sets of VariableId
 // 
