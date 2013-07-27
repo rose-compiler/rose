@@ -4836,6 +4836,129 @@ SgScopeStatement::lookup_function_symbol(const SgName& n) const
      return p_symbol_table->find_function(n);
 #endif
    }
+/*
+SgMemberFunctionSymbol*
+SgScopeStatement::lookup_member_function_symbol(const SgName& n, const SgType* t) const
+   {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
+  // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
+     const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
+     if (namespaceDefinitionStatement != NULL)
+        {
+          ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
+          const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
+          return globalNamespaceDefinitionStatement->get_symbol_table()->find_nontemplate_member_function(n,t);
+        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       assert(project != NULL);
+       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+       assert(globalScopeAcrossFiles != NULL);
+       SgMemberFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_nontemplate_member_function(n,t);
+       if (symbol != NULL) return symbol;
+     }
+
+     return p_symbol_table->find_nontemplate_member_function(n,t);
+   }
+
+// DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
+// DQ (5/22/2006): I would like to restrict support of a number of functions that I 
+// think are redundant with the simple lookup_symbol(const SgName& n) (above).
+SgMemberFunctionSymbol*
+SgScopeStatement::lookup_member_function_symbol(const SgName& n) const
+   {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
+  // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
+     const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
+     if (namespaceDefinitionStatement != NULL)
+        {
+          ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
+          const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
+          return globalNamespaceDefinitionStatement->get_symbol_table()->find_nontemplate_member_function(n);
+        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       assert(project != NULL);
+       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+       assert(globalScopeAcrossFiles != NULL);
+       SgFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_nontemplate_member_function(n);
+       if (symbol != NULL) return symbol;
+     }
+
+     return p_symbol_table->find_nontemplate_member_function(n);
+   }
+
+SgTemplateMemberFunctionSymbol*
+SgScopeStatement::lookup_member_function_symbol(const SgName& n, const SgType* t) const
+   {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
+  // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
+     const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
+     if (namespaceDefinitionStatement != NULL)
+        {
+          ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
+          const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
+          return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_member_function(n,t);
+        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       assert(project != NULL);
+       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+       assert(globalScopeAcrossFiles != NULL);
+       SgTemplateMemberFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_template_member_function(n,t);
+       if (symbol != NULL) return symbol;
+     }
+
+     return p_symbol_table->find_template_member_function(n,t);
+   }
+
+// DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
+// DQ (5/22/2006): I would like to restrict support of a number of functions that I 
+// think are redundant with the simple lookup_symbol(const SgName& n) (above).
+SgTemplateMemberFunctionSymbol*
+SgScopeStatement::lookup_member_function_symbol(const SgName& n) const
+   {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
+  // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
+     const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
+     if (namespaceDefinitionStatement != NULL)
+        {
+          ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
+          const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
+          return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_member_function(n);
+        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       assert(project != NULL);
+       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+       assert(globalScopeAcrossFiles != NULL);
+       SgTemplateFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_template_member_function(n);
+       if (symbol != NULL) return symbol;
+     }
+
+     return p_symbol_table->find_template_member_function(n);
+   }
+*/
 
 // DQ (1/30/2007): Added these back into ROSE.
 // DQ (5/22/2006): I would like to restrict support of a number of functions that I 

@@ -1783,6 +1783,8 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
   // for the case of a SgMemberFunctionType (or at least not without more work).
      SgName typeName = SgFunctionType::get_mangled(return_type, typeList);
 
+     printf("[SageBuilder::buildFunctionType] return_type = %p (%s), mangled name = %s\n", return_type, return_type->class_name().c_str(), typeName.getString().c_str());
+
      SgFunctionType* funcType = isSgFunctionType(fTable->lookup_function_type(typeName));
 
 #if 0
@@ -2487,17 +2489,10 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
           printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): scope = %p func_symbol = %p = %s \n",scope,func_symbol,func_symbol->class_name().c_str());
 #endif
 #if 0
-       // if (actualFunction::get_variantT() == V_SgFunctionDeclaration)
-       // if (actualFunction::variantT() == V_SgFunctionDeclaration)
-       // if (SgNode::variantT(actualFunction::static_variant) == V_SgTemplateMemberFunctionDeclaration)
           if ((VariantT)actualFunction::static_variant == V_SgTemplateMemberFunctionDeclaration)
-             {
-               printf ("This is a SgTemplateMemberFunctionDeclaration function \n");
-             }
-            else
-             {
-               printf ("variantT(actualFunction::static_variant) = %d \n",actualFunction::static_variant);
-             }
+            printf ("This is a SgTemplateMemberFunctionDeclaration function \n");
+          else
+            printf ("variantT(actualFunction::static_variant) = %d \n",actualFunction::static_variant);
 #endif
           switch((VariantT)actualFunction::static_variant)
              {
@@ -2569,43 +2564,9 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
        // DQ (12/14/2011): Moved this from lower in this function.
           func->set_scope(scope);
 
-#if 1
        // DQ (12/15/2011): Added test.
           checkThatNoTemplateInstantiationIsDeclaredInTemplateDefinitionScope(func,scope);
-#else
-       // DQ (12/14/2011): We need the parent to be set so that we can call some of the test functions 
-       // (e.g assert that get_class_scope() for member functions).  So we set the parent to the scope
-       // by default and see if this will work, else we could disable to assertion that the parent is 
-       // non-null in the get_class_scope() member function.
-          if (isSgMemberFunctionDeclaration(func) != NULL)
-             {
-               printf ("WARNING: setting parent of function to match scope by default \n");
-               func->set_parent(scope);
 
-#error "DEAD CODE!"
-
-               ROSE_ASSERT(scope != NULL);
-
-               if (isSgTemplateInstantiationMemberFunctionDecl(func) != NULL)
-                  {
-                 // DQ (12/14/2011): We should not have a member function template instantiation in a template class definition.
-                    ROSE_ASSERT(isSgTemplateClassDefinition(scope) == NULL);
-                  }
-             }
-            else
-             {
-
-#error "DEAD CODE!"
-
-               if (isSgTemplateFunctionDeclaration(func) != NULL)
-                  {
-                    if (isSgTemplateInstantiationMemberFunctionDecl(func) != NULL)
-                       {
-                         ROSE_ASSERT(isSgTemplateClassDefinition(scope) != NULL);
-                       }
-                  }
-             }
-#endif
        // This fails below for a SgTemplateFunctionDeclaration, so test it here.
           ROSE_ASSERT(func->get_parameterList() != NULL);
 
@@ -2621,23 +2582,13 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
                  // not decided if template declarations should cause symbols to be generated for functions and member functions.
                  // func_symbol = new SgMemberFunctionSymbol(func);
                     if (isSgTemplateMemberFunctionDeclaration(func) != NULL)
-                       {
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
-                         func_symbol = new SgTemplateMemberFunctionSymbol(isSgTemplateMemberFunctionDeclaration(func));
-#else
-                         printf ("Error: This functionality is not yet been made backwardly compatable to EDG 3.3 template design \n");
-                         func_symbol = new SgMemberFunctionSymbol(isSgMemberFunctionDeclaration(func));
-
-                         printf ("Exiting to avoid further errors \n");
-                         ROSE_ASSERT(false);
-#endif
-                       }
-                      else
-                       {
-                         SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(func);
-                         ROSE_ASSERT(memberFunctionDeclaration != NULL);
-                         func_symbol = new SgMemberFunctionSymbol(memberFunctionDeclaration);
-                       }
+                       func_symbol = new SgTemplateMemberFunctionSymbol(isSgTemplateMemberFunctionDeclaration(func));
+                    else
+                     {
+                       SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(func);
+                       ROSE_ASSERT(memberFunctionDeclaration != NULL);
+                       func_symbol = new SgMemberFunctionSymbol(memberFunctionDeclaration);
+                     }
 
                     ROSE_ASSERT(func_symbol != NULL);
                     ROSE_ASSERT(func_symbol->get_symbol_basis() != NULL);
@@ -2987,8 +2938,9 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
      ROSE_ASSERT(func->get_file_info() == NULL);
 
   // DQ (3/8/2012): Added assertion.
-  // ROSE_ASSERT(func->get_symbol_from_symbol_table() != NULL);
      ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
+     assert(func_symbol != NULL);
+     assert(func_symbol->get_symbol_basis() == func->get_firstNondefiningDeclaration());
      ROSE_ASSERT(func->get_symbol_from_symbol_table() != NULL || func->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
 
   // DQ (2/24/2009): Delete the old parameter list build by the actualFunction (template argument) constructor.
@@ -3153,6 +3105,8 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
           func->get_declarationModifier().get_typeModifier().setRestrict();
         }
 
+     printf ("[Build Non-defining Funct Tpl] decl = %p, name = %s, type = %p, scope = %p\n", func, func->get_name().getString().c_str(), func->get_type(), scope);
+
      return func;  
    }
 
@@ -3306,6 +3260,8 @@ SgTemplateMemberFunctionDeclaration*
 SageBuilder::buildDefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, SgTemplateMemberFunctionDeclaration* first_nondefining_declaration)
    {
   // DQ (12/1/2011): Adding support for template declarations in the AST.
+
+     assert(first_nondefining_declaration->get_firstNondefiningDeclaration() == first_nondefining_declaration);
 
       SgTemplateMemberFunctionDeclaration* result = buildDefiningFunctionDeclaration_T <SgTemplateMemberFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ true, scope, decoratorList, functionConstVolatileFlags, first_nondefining_declaration, NULL);
      ROSE_ASSERT(result != NULL);
@@ -3897,6 +3853,10 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
      printf ("WARNING: This function for building defining function declarations has different semantics from that of the function to build defining class declarations. \n");
 #endif
 
+     assert(first_nondefining_declaration != NULL);
+     assert(first_nondefining_declaration->get_firstNondefiningDeclaration() != NULL);
+     assert(first_nondefining_declaration->get_firstNondefiningDeclaration() == first_nondefining_declaration);
+
      if (scope == NULL)
         {
           scope = SageBuilder::topScopeStack();
@@ -4337,6 +4297,8 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
         {
           defining_func->get_declarationModifier().get_typeModifier().setRestrict();
         }
+
+     printf ("[Build Defining Funct Tpl] decl = %p, name = %s, type = %p, scope = %p\n", defining_func, defining_func->get_name().getString().c_str(), defining_func->get_type(), scope);
 
      return defining_func;
    }
