@@ -63,9 +63,8 @@ bool FunctionEvaluationOrderTraversal::evaluateSynthesizedAttribute(SgNode* astN
 
     //Handle for loops (being inside the body of a for loop doesn't need special handling)
     if (parentAttribute.loopStatus == FunctionCallInheritedAttribute::INSIDE_FOR_INIT
-/* Unsafe to lifet calls from here
  || parentAttribute.loopStatus == FunctionCallInheritedAttribute::INSIDE_FOR_TEST
-            || parentAttribute.loopStatus == FunctionCallInheritedAttribute::INSIDE_FOR_INCREMENT */)
+            || parentAttribute.loopStatus == FunctionCallInheritedAttribute::INSIDE_FOR_INCREMENT )
     {
         SgForStatement* forLoop = isSgForStatement(parentAttribute.currentLoop);
         ROSE_ASSERT(forLoop != NULL);
@@ -73,7 +72,6 @@ bool FunctionEvaluationOrderTraversal::evaluateSynthesizedAttribute(SgNode* astN
         functionCallInfo.tempVarDeclarationLocation = forLoop;
         functionCallInfo.tempVarDeclarationInsertionMode = FunctionCallInfo::INSERT_BEFORE;
     }
-    /* Unsafe to lifet calls from here
     else if (parentAttribute.loopStatus == FunctionCallInheritedAttribute::INSIDE_WHILE_CONDITION)
     {
         SgWhileStmt* whileLoop = isSgWhileStmt(parentAttribute.currentLoop);
@@ -89,10 +87,7 @@ bool FunctionEvaluationOrderTraversal::evaluateSynthesizedAttribute(SgNode* astN
         //Temporary variables should be declared before the loop
         functionCallInfo.tempVarDeclarationLocation = doWhileLoop;
         functionCallInfo.tempVarDeclarationInsertionMode = FunctionCallInfo::INSERT_BEFORE;
-    } */
-    else if (parentAttribute.loopStatus == FunctionCallInheritedAttribute::NOT_IN_LOOP) {
-        
-    }
+    } 
     else if (parentAttribute.loopStatus == FunctionCallInheritedAttribute::NOT_IN_LOOP)
     {
         //Assume we're in a basic block. Then just insert right before the current statement
