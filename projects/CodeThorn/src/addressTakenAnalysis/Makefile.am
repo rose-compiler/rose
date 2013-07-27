@@ -53,6 +53,7 @@ ADDRESSTAKENANALYSIS_TESTS_PASSING = \
 	$(srcdir)/tests/test12.cpp \
 	$(srcdir)/tests/test14.cpp \
 	$(srcdir)/tests/test15.cpp \
+	$(srcdir)/tests/test16.cpp \
 	$(srcdir)/tests/test18.cpp \
 	$(srcdir)/tests/test20.cpp \
 	$(srcdir)/tests/test21.cpp \
@@ -63,8 +64,7 @@ ADDRESSTAKENANALYSIS_TESTS_PASSING = \
 ADDRESSTAKENANALYSIS_TESTS_FAILING = \
 	$(srcdir)/tests/test6.cpp \     # has r-value references
 	$(srcdir)/tests/test13.cpp \    # not handling SgConditionalExp
-	$(srcdir)/tests/test19.cpp \    # not handling SgConditionalExp
-	$(srcdir)/tests/test16.cpp \    # not handling SgConstructorInitializer
+	$(srcdir)/tests/test19.cpp \    # not handling SgConditionalExp	
 	$(srcdir)/tests/test17.cpp \    # not handling SgThisExp
 	$(srcdir)/tests/test7.cpp \
 	$(srcdir)/tests/arrow_test.cpp

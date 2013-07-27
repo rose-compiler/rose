@@ -138,9 +138,11 @@ public:
   void visit(SgUnaryAddOp* sgn);
   void visit(SgNotOp* sgn);
   void visit(SgPlusPlusOp* sgn);
+  void visit(SgSizeOfOp* sgn);
 
   void visit(SgFunctionCallExp* sgn);
   void visit(SgExprListExp* sgn);
+  void visit(SgConditionalExp* sgn);
 
   
   // recursion undwinds on basic expressions
@@ -154,6 +156,7 @@ public:
 
   void visit(SgInitializedName* sgn);
   void visit(SgAssignInitializer* sgn);
+  void visit(SgConstructorInitializer* sgn);
 
   void visit(SgValueExp* sgn);
   void visit(SgFunctionRefExp* sgn);

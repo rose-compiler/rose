@@ -250,6 +250,20 @@ void ExprWalker::visit(SgPlusPlusOp* sgn)
   dumo = udumo;
 }
 
+void ExprWalker::visit(SgSizeOfOp* sgn)
+{
+  DefUseMemObjInfo rdumo;
+  // we only need to process if the operand is an expression
+  SgExpression* expr = sgn->get_operand_expr();
+  // expr can be null if the sizeof operand is a type
+  if(expr) {
+    rdumo = getDefUseMemObjInfo_rec(expr, vidm, false);
+    if(!rdumo.isDefSetEmpty())
+      rdumo.copyDefToUse();
+  }
+  dumo = rdumo;
+}
+
 void ExprWalker::visit(SgBinaryOp* sgn)
 {
   SgNode* lhs = sgn->get_lhs_operand();
@@ -292,6 +306,35 @@ void ExprWalker::visit(SgExprListExp* sgn)
   }
 }
 
+void ExprWalker::visit(SgConditionalExp* sgn)
+{
+  SgExpression* cond_exp = sgn->get_conditional_exp();
+  SgExpression* true_exp = sgn->get_true_exp();
+  SgExpression* false_exp = sgn->get_false_exp();
+
+  DefUseMemObjInfo cdumo = getDefUseMemObjInfo_rec(cond_exp, vidm, false);
+  if(!cdumo.isDefSetEmpty()) {
+    cdumo.copyDefToUse();
+  }
+
+  DefUseMemObjInfo tdumo, fdumo;
+
+  if(isModExpr) {
+    tdumo = getDefUseMemObjInfo_rec(true_exp, vidm, true);
+    fdumo = getDefUseMemObjInfo_rec(false_exp, vidm, true);
+    
+  }
+  else {
+    tdumo = getDefUseMemObjInfo_rec(true_exp, vidm, false);
+    fdumo = getDefUseMemObjInfo_rec(false_exp, vidm, false);
+    if(!tdumo.isDefSetEmpty())
+      tdumo.copyDefToUse();
+    if(!fdumo.isDefSetEmpty())
+      fdumo.copyDefToUse();
+  }
+  dumo = cdumo + tdumo + fdumo;
+}
+
 void ExprWalker::visit(SgVarRefExp* sgn)
 {
   // recursion base case
@@ -327,24 +370,28 @@ void ExprWalker::visit(SgDotExp *sgn)
 void ExprWalker::visit(SgInitializedName* sgn)
 {
   SgInitializer* initializer = sgn->get_initializer();
-  
-  // only then we process
-  if(isSgAssignInitializer(initializer))
-  {
+  if(initializer) {
     DefUseMemObjInfo ldumo = getDefUseMemObjInfoLvalue(sgn, vidm, true);
-    DefUseMemObjInfo rdumo = getDefUseMemObjInfo_rec(isSgAssignInitializer(initializer)->get_operand(),
-                                                     vidm,
-                                                     false);
+    DefUseMemObjInfo rdumo = getDefUseMemObjInfo_rec(initializer, vidm, false);
+
     if(! rdumo.isDefSetEmpty())
       rdumo.copyDefToUse();
     dumo = ldumo + rdumo;
-  }  
+  }
 }
 
 void ExprWalker::visit(SgAssignInitializer *sgn)
 {
   // operand is only used
   DefUseMemObjInfo rdumo = getDefUseMemObjInfo_rec(sgn->get_operand(), vidm, false);
+  if(!rdumo.isDefSetEmpty())
+    rdumo.copyDefToUse();
+  dumo = rdumo;
+}
+
+void ExprWalker::visit(SgConstructorInitializer *sgn)
+{
+  DefUseMemObjInfo rdumo = getDefUseMemObjInfo_rec(sgn->get_args(), vidm, false);
   if(!rdumo.isDefSetEmpty())
     rdumo.copyDefToUse();
   dumo = rdumo;
@@ -474,8 +521,27 @@ void LvalueExprWalker::visit(SgPntrArrRefExp* sgn)
   SgNode* rhs_expr = sgn->get_rhs_operand();
   DefUseMemObjInfo ldumo, rdumo;
   if(isModExpr)
-  {
-    ldumo = getDefUseMemObjInfo_rec(lhs_addr, vidm, true);
+  { 
+    // consider moving this to ExprWalker instead
+    // prune out the sub-tree that is difficult to handle
+    if(isSgPntrArrRefExp(lhs_addr) || // for multi-dimensional pointers
+       isSgVarRefExp(lhs_addr))       // for array type its variable reference exp
+    {
+      // we can handle these
+      ldumo = getDefUseMemObjInfo_rec(lhs_addr, vidm, true);
+    }
+    else 
+    { 
+      // otherwise some crazy arithmetic is going on to determine
+      // the address of the array
+      ldumo = getDefUseMemObjInfo_rec(lhs_addr, vidm, false);
+      // copy side-effects and set the flag
+      if(!ldumo.isDefSetEmpty())
+        ldumo.copyDefToUse();
+      
+      ldumo.getDefMemObjInfoMod().second = true;
+    }
+    
   }
   else
   {
