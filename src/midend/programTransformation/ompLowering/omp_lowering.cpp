@@ -1048,7 +1048,13 @@ static void insert_libxompf_h(SgNode* startNode)
 //        printf("parent of grandparent scope classname is %s\n", getScope(for_loop)->get_parent()->get_parent()->get_parent()->class_name().c_str() );
     //    printf("before loopCollapsing: %s\n", for_loop->unparseToString().c_str() );
     //    cerr<<"going to connect loopCollapsing here"<<endl;
-        SageInterface::loopCollapsing(&for_loop, 2);
+
+        
+        Rose_STL_Container<SgOmpClause*> collapse_clauses = getClause(target, V_SgOmpCollapseClause);
+        
+        fprintf(stderr, "expression: %s\n\n", isSgOmpCollapseClause(collapse_clauses[0])->get_expression()->unparseToString().c_str());
+        int collapse_factor = atoi(isSgOmpCollapseClause(collapse_clauses[0])->get_expression()->unparseToString().c_str());
+        SageInterface::loopCollapsing(&for_loop, collapse_factor);
     //    printf("after loopCollapsing: %s\n", for_loop->unparseToString().c_str() );
         loop = for_loop;
    /*     printf("after loopCollapsing: the loop %s\n", loop->unparseToString().c_str() );
