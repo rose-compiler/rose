@@ -16760,7 +16760,10 @@ bool SageInterface::loopCollapsing(SgForStatement** loop, size_t collapsing_fact
 
         //Winnie, declare and initialize the variable
         string iter_var_name= "_total_iters";
-        iter_var_name = ivar[i]->get_name().getString() + iter_var_name;  //Winnie, create var name
+        iter_var_name = ivar[i]->get_name().getString() + iter_var_name + generateUniqueName(temp_total_iter, false);  //Winnie, create var name
+        //SgInitializer * initializer = buildAssignInitializer(temp_total_iter, buildIntType());
+//        fprintf(stderr, "get a unique name %s\n\n", generateUniqueName(temp_total_iter, false));
+
         SgVariableDeclaration* total_iter = buildVariableDeclaration(iter_var_name, buildIntType(), buildAssignInitializer(temp_total_iter, buildIntType()), scope);  
         total_iters[i] = buildVarRefExp(iter_var_name, scope);
 
@@ -16774,7 +16777,8 @@ bool SageInterface::loopCollapsing(SgForStatement** loop, size_t collapsing_fact
     /*
     *Winnie, build another variable to store final total iteration counter of the loop after collapsing
     */
-    string final_iter_counter_name = "final_total_iters";
+    string final_iter_counter_name = "final_total_iters" + generateUniqueName(ub_exp, false);
+    fprintf(stderr, "ub_exp %s\n", ub_exp->unparseToString().c_str());
     SgVariableDeclaration * final_total_iter = buildVariableDeclaration(final_iter_counter_name, buildIntType(), buildAssignInitializer(copyExpression(ub_exp), buildIntType()), scope);
     //prependStatement(final_total_iter, scope );
     insertStatementBefore(insert_target, final_total_iter);
@@ -16791,7 +16795,7 @@ bool SageInterface::loopCollapsing(SgForStatement** loop, size_t collapsing_fact
         {
             interval[i] = buildMultiplyOp(total_iters[j], interval[i]); 
         }
-        string interval_name = ivar[i]->get_name().getString() + "_interval";
+        string interval_name = ivar[i]->get_name().getString() + "_interval" + generateUniqueName(interval[i], false);
         SgVariableDeclaration* temp_interval = buildVariableDeclaration(interval_name, buildIntType(), buildAssignInitializer(copyExpression(interval[i]), buildIntType()), scope);
         //prependStatement(temp_interval,scope);
         insertStatementBefore(insert_target, temp_interval);
@@ -16799,19 +16803,15 @@ bool SageInterface::loopCollapsing(SgForStatement** loop, size_t collapsing_fact
         interval[i] = buildVarRefExp(interval_name, scope);
     }
 
-    //Winnie, declare a brand new var as the new index
-      string ivar_name = "new_index";
-      SgVariableDeclaration* loop_index_decl = buildVariableDeclaration(ivar_name, buildIntType(),NULL, scope);
-      //prependStatement(loop_index_decl, scope);
-      insertStatementBefore(insert_target, loop_index_decl);
-      //insertStatementBefore(target_loop, loop_index_decl);
-
 
 //Winnie, starting from here, we are dealing with variables inside loop, update scope
       scope = getScope(target_loop);
 
    //Winnie, init statement of the loop header, copy the lower bound, we are dealing with a range, the lower bound should always be "0"
-      SgStatement* init_stmt = buildAssignStatement(buildVarRefExp(ivar_name,scope), buildIntVal(0));  
+    //Winnie, declare a brand new var as the new index
+
+      string ivar_name = "new_index";
+      SgVariableDeclaration* init_stmt = buildVariableDeclaration(ivar_name, buildIntType(), buildAssignInitializer(buildIntVal(0), buildIntType()), scope);  
   
   
      SgBasicBlock* body = isSgBasicBlock(deepCopy(temp_target_loop->get_loop_body())); // normalized loop has a BB body
@@ -16907,8 +16907,8 @@ bool SageInterface::loopCollapsing(SgForStatement** loop, size_t collapsing_fact
    // constant folding for the transformed AST
    ConstantFolding::constantFoldingOptimization(scope->get_parent(),false);   //Winnie, "scope" is the scope that contains new_loop, this is the scope where we insert some new variables to store interation count and intervals
 
-     fprintf(stderr, "sageInterface::loop_collapsing(): after loopCollapsing, new_loop %s\n", new_loop->unparseToString().c_str());
-     fprintf(stderr, "sageInterface::loop_collapsing(): after loopCollapsing, target_loop %s\n", target_loop->unparseToString().c_str());
+//     fprintf(stderr, "sageInterface::loop_collapsing(): after loopCollapsing, new_loop %s\n", new_loop->unparseToString().c_str());
+//     fprintf(stderr, "sageInterface::loop_collapsing(): after loopCollapsing, target_loop %s\n", target_loop->unparseToString().c_str());
     #endif
 
     return true;
