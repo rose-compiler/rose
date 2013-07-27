@@ -10632,8 +10632,20 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
 
   // Liao 4/23/2010,  Fix function symbol
   // This could happen when users copy a function, then rename it (func->set_name()), and finally insert it to a scope
-     SgFunctionDeclaration*       func        = isSgFunctionDeclaration(stmt);
-     SgMemberFunctionDeclaration* mfunc       = isSgMemberFunctionDeclaration(stmt); 
+     SgFunctionDeclaration               * func         = isSgFunctionDeclaration(stmt);
+     SgMemberFunctionDeclaration         * mfunc        = isSgMemberFunctionDeclaration(stmt);
+     SgTemplateFunctionDeclaration       * tfunc        = isSgTemplateFunctionDeclaration(stmt);
+     SgTemplateMemberFunctionDeclaration * tmfunc       = isSgTemplateMemberFunctionDeclaration(stmt);
+
+     if (tmfunc != NULL)
+       assert(tmfunc->variantT() == V_SgTemplateMemberFunctionDeclaration);
+     else if (mfunc != NULL)
+       assert(mfunc->variantT() == V_SgMemberFunctionDeclaration || mfunc->variantT() == V_SgTemplateInstantiationMemberFunctionDecl);
+     else if (tfunc != NULL)
+       assert(tfunc->variantT() == V_SgTemplateFunctionDeclaration);
+     else if (func != NULL)
+       assert(func->variantT() == V_SgFunctionDeclaration || func->variantT() == V_SgTemplateInstantiationFunctionDecl);
+     else assert(false);
 
 #if 0
      printf ("In SageInterface::fixStatement(): scope = %p = %s \n",scope,scope->class_name().c_str());
@@ -10651,51 +10663,26 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
 #if 0
           printf ("Looking up the function symbol using name = %s and type = %p = %s \n",func->get_name().str(),func->get_type(),func->get_type()->class_name().c_str());
 #endif
-          SgFunctionSymbol* func_symbol = scope->lookup_function_symbol (func->get_name(), func->get_type());
+          printf ("[SageInterface::fixFunctionDeclaration] Lookup Function func = %p, name = %s, type = %p, scope = %p\n", func, func->get_name().getString().c_str(), func->get_type(), scope);
+          SgFunctionSymbol* func_symbol = NULL;
+          if (tmfunc != NULL)
+            func_symbol = scope->lookup_template_member_function_symbol (func->get_name(), func->get_type());
+          else if (mfunc != NULL)
+            func_symbol = scope->lookup_nontemplate_member_function_symbol (func->get_name(), func->get_type());
+          else if (tfunc != NULL)
+            func_symbol = scope->lookup_template_function_symbol (func->get_name(), func->get_type());
+          else if (func != NULL)
+            func_symbol = scope->lookup_function_symbol (func->get_name(), func->get_type());
+          else assert(false);
+
+
+          printf("[SageInterface::fixFunctionDeclaration]     -> func = %p, mfunc = %p, tmfunc = %p\n", func, mfunc, tmfunc);
+
 #if 0
           printf ("In SageInterface::fixStatement(): func_symbol = %p \n",func_symbol);
 #endif
-          if (func_symbol == NULL)
-             {
-            // DQ (12/3/2011): Added support for C++ member functions.
-            // func_symbol = new SgFunctionSymbol (func);
-               if (mfunc != NULL)
-                  {
-                    func_symbol = new SgMemberFunctionSymbol (func);
-                  }
-                 else
-                  {
-                    func_symbol = new SgFunctionSymbol (func);
-                  }
-               ROSE_ASSERT (func_symbol != NULL);
-
-               scope->insert_symbol(func->get_name(), func_symbol);
-             }
-            else
-             {
-#if 0
-               printf ("In SageInterface::fixStatement(): found a valid function so no need to insert new symbol \n");
-#endif
-             }
+          assert(func_symbol != NULL);
         }
-#if 0
-  // Fix local symbol, a symbol directly refer to this function declaration
-  // This could happen when a non-defining func decl is copied, the corresonding symbol will point to the original source func
-  // symbolTable->find(this) used inside get_symbol_from_symbol_table()  won't find the copied decl 
-     SgSymbol* local_symbol = func ->get_symbol_from_symbol_table();
-     if (local_symbol == NULL) // 
-        {
-          if (func->get_definingDeclaration() == NULL) // prototype function
-             {
-               SgFunctionDeclaration * src_func = func_symbol->get_declaration();
-               if (func != src_func )
-                  {
-                    ROSE_ASSERT (src_func->get_firstNondefiningDeclaration () == src_func);
-                    func->set_firstNondefiningDeclaration (func_symbol->get_declaration());
-                  }
-             }
-        }
-#endif
    }
 
 //! fixup symbol table for SgFunctionDeclaration (and template instantiations, member functions, and member function template instantiations). Used Internally when the function is built without knowing its target scope. Both parameters cannot be NULL.
