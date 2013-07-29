@@ -7,20 +7,20 @@
  * email    : aananthakris1@llnl.gov                         *
  *************************************************************/
 
-class TestDefUseMemObjInfoTraversal : public AstSimpleProcessing
+class TestDefUseVarsInfoTraversal : public AstSimpleProcessing
 {
   VariableIdMapping& vidm;
 public:
-  TestDefUseMemObjInfoTraversal(VariableIdMapping& _vidm) 
+  TestDefUseVarsInfoTraversal(VariableIdMapping& _vidm) 
     : vidm(_vidm)  { }
   void visit(SgNode*);
 };
 
-void TestDefUseMemObjInfoTraversal::visit(SgNode* sgn)
+void TestDefUseVarsInfoTraversal::visit(SgNode* sgn)
 {
   if(isSgExpression(sgn) || isSgInitializedName(sgn))
   {
-    DefUseMemObjInfo memobj = getDefUseMemObjInfo(sgn, vidm);
+    DefUseVarsInfo memobj = getDefUseVarsInfo(sgn, vidm);
     if(!memobj.isDefSetEmpty() || !memobj.isUseSetEmpty() || !memobj.isFunctionCallExpInfoEmpty())
     {
       std::cout << "<" << sgn->class_name() << ", " << sgn->unparseToString() << "\n" 
@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
   fipi.collectInfo();
   fipi.printInfoSets();
 
-  TestDefUseMemObjInfoTraversal tt(vidm);
+  TestDefUseVarsInfoTraversal tt(vidm);
   tt.traverseInputFiles(project, preorder);
 
   return 0;

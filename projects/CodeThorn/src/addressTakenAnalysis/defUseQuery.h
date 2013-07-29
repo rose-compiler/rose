@@ -30,21 +30,21 @@ using namespace CodeThorn;
 
 // typedef std::set<VariableId> VariableIdSet;
 
-// MemObjInfo is used to represent the result
+// VarsInfo is used to represent the result
 // of def/use query on expressions. The result
-// represents a set of locations that are
+// represents a set of variables that are
 // modified/used by any given expression.
-// MemObjInfo is a pair <VariableIdSet, bool>
-// @VariableIdSet: set of memory locations 
-// represented by their VariableId. 
-// @bool: flag is set if the memory locations
-// that may be used/modified this expression
+// VarsInfo is a pair <VariableIdSet, bool>
+// @VariableIdSet: set of named memory locations 
+// (variables) represented by their VariableId. 
+// @bool: flag is set if the named memory locations
+// (variables) that may be used/modified this expression
 // are different from those appearing on the
 // expression itself (example: *p or array + 5)
 // flag is an indicator for requiring more
 // sophisticated pointer analysis to answer the
 // def/use query on this expression
-typedef std::pair<VariableIdSet, bool> MemObjInfo;
+typedef std::pair<VariableIdSet, bool> VarsInfo;
 
 typedef std::set<SgFunctionCallExp*> FunctionCallExpSet;
 // it is expensive to answer def/use queries on demand
@@ -59,30 +59,30 @@ typedef std::set<SgFunctionCallExp*> FunctionCallExpSet;
 typedef std::pair<FunctionCallExpSet, bool> FunctionCallExpInfo;
 
 /*************************************************
- *************** DefUseMemObjInfo ****************
+ *************** DefUseVarsInfo ****************
  *************************************************/
 
 // determined completely based on syntactic information
-// def_set consists of VariableIds which is written by the expression
+// def_set consists of VariableIds which are written by the expression
 // use_set consists of VariableIds which are read but not modified by this expression
 // func_set consists of all SgFunctionCallExps that are invoked by this expression
-class DefUseMemObjInfo
+class DefUseVarsInfo
 {
-  MemObjInfo def_set;
-  MemObjInfo use_set;
+  VarsInfo def_set;
+  VarsInfo use_set;
   FunctionCallExpInfo func_set;
    
 public:
-  DefUseMemObjInfo() { }
-  DefUseMemObjInfo(const MemObjInfo& _dset, const MemObjInfo& _uset, const FunctionCallExpInfo& _fset);
+  DefUseVarsInfo() { }
+  DefUseVarsInfo(const VarsInfo& _dset, const VarsInfo& _uset, const FunctionCallExpInfo& _fset);
   
   // returns the corresponding info about the memory locations
-  MemObjInfo getDefMemObjInfo();
-  MemObjInfo getUseMemObjInfo();
-  MemObjInfo& getDefMemObjInfoMod(); 
-  MemObjInfo& getUseMemObjInfoMod();
-  const MemObjInfo& getDefMemObjInfoRef() const;
-  const MemObjInfo& getUseMemObjInfoRef() const;
+  VarsInfo getDefVarsInfo();
+  VarsInfo getUseVarsInfo();
+  VarsInfo& getDefVarsInfoMod(); 
+  VarsInfo& getUseVarsInfoMod();
+  const VarsInfo& getDefVarsInfoRef() const;
+  const VarsInfo& getUseVarsInfoRef() const;
 
   FunctionCallExpInfo getFunctionCallExpInfo();
   FunctionCallExpInfo& getFunctionCallExpInfoMod();
@@ -99,11 +99,11 @@ public:
   // returns the flag func_modify
   bool isModByFunction();
 
-  // returns the flag of MemObjInfo
+  // returns the flag of VarsInfo
   bool isDefSetModByPointer();
   bool isUseSetModByPointer();
 
-  DefUseMemObjInfo operator+(const DefUseMemObjInfo& dumo1);
+  DefUseVarsInfo operator+(const DefUseVarsInfo& duvi1);
 
   std::string str();
   // for more readability
@@ -111,7 +111,7 @@ public:
   std::string funcCallExpSetPrettyPrint();
 };
 
-// used by the getDefUseMemObjInfo_rec to traverse the 
+// used by the getDefUseVarsInfo_rec to traverse the 
 // structure of the expression and call the appropriate
 // getDefUseLHS/RHS functions
 class ExprWalker : public ROSE_VisitorPatternDefaultBase
@@ -119,7 +119,7 @@ class ExprWalker : public ROSE_VisitorPatternDefaultBase
   VariableIdMapping& vidm;
   // if set then we are processing an expression on lhs of assignment
   bool isModExpr;
-  DefUseMemObjInfo dumo;
+  DefUseVarsInfo duvi;
 
 public:
   ExprWalker(VariableIdMapping& _vidm, bool isModExpr);
@@ -164,14 +164,14 @@ public:
 
   void visit(SgExpression* sgn);
 
-  DefUseMemObjInfo getDefUseMemObjInfo();
+  DefUseVarsInfo getDefUseVarsInfo();
 };
 
 class LvalueExprWalker : public ROSE_VisitorPatternDefaultBase
 {
   VariableIdMapping& vidm;
   bool isModExpr;
-  DefUseMemObjInfo dumo;
+  DefUseVarsInfo duvi;
 public:
   LvalueExprWalker(VariableIdMapping& _vidm, bool _isModExpr);
   void visit(SgVarRefExp* sgn);
@@ -181,7 +181,7 @@ public:
   void visit(SgArrowExp* sgn);
   void visit(SgInitializedName* sgn);
 
-  DefUseMemObjInfo getDefUseMemObjInfo();
+  DefUseVarsInfo getDefUseVarsInfo();
 };
 
 
@@ -192,19 +192,19 @@ public:
 // the locations that are modified involve all arrays and variables in addressTakenSet
 // if the expression involve functions or function pointers it can 
 // potentially modify everything
-DefUseMemObjInfo getDefUseMemObjInfo(SgNode* sgn, VariableIdMapping& vidm);
+DefUseVarsInfo getDefUseVarsInfo(SgNode* sgn, VariableIdMapping& vidm);
 
 // internal implementation
 // @sgn: root node
 // @fipi: required to answer dereferencing queries
-// @dumo: the defuse object that will be built
+// @duvi: the defuse object that will be built
 // @isModExpr: set to true if the expression is modifying a memory location
-DefUseMemObjInfo getDefUseMemObjInfo_rec(SgNode* sgn, VariableIdMapping& vidm, bool isModExpr);
+DefUseVarsInfo getDefUseVarsInfo_rec(SgNode* sgn, VariableIdMapping& vidm, bool isModExpr);
 
 // used to process the lhs of assignment operator
 // invokes a visitor pattern and adds the modified variables
-// to def_set and used variables to use_set of dumo object
-DefUseMemObjInfo getDefUseMemObjInfoLvalue(SgNode* sgn, VariableIdMapping& vidm, bool isModExpr);
+// to def_set and used variables to use_set of duvi object
+DefUseVarsInfo getDefUseVarsInfoLvalue(SgNode* sgn, VariableIdMapping& vidm, bool isModExpr);
 
 #endif
 
