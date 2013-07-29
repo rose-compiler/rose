@@ -76,7 +76,7 @@ namespace CompassAnalyses
  namespace FunctionPrototype
  {
   const string checker_name      = "FunctionPrototype";
-  const string short_description = "function doesn't have a prototype";
+  const string short_description = "No function prototype detected";
   const string long_description  = "Use function prototypes.";
   string source_directory = "/";
  }
