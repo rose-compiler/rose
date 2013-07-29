@@ -2159,6 +2159,8 @@ projects/compass2/docs/doxygen/Makefile
 projects/compass2/share/xml/compass_parameters.xml
 projects/compass2/tests/Makefile
 projects/compass2/tests/checkers/Makefile
+projects/compass2/tests/checkers/comma_operator/Makefile
+projects/compass2/tests/checkers/comma_operator/compass_parameters.xml
 projects/compass2/tests/checkers/byte_by_byte_structure_comparison/Makefile
 projects/compass2/tests/checkers/byte_by_byte_structure_comparison/compass_parameters.xml
 projects/compass2/tests/checkers/boolean_is_has/Makefile
