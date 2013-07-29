@@ -13,6 +13,7 @@ if (scalar @ARGV == 0) {
 my $makefile_path = "./tests/checkers/Makefile.am";
 my $makefile_template = "./templates/makefile_template";
 my $parameters_template = "./templates/parameters_template";
+my $support_path = "../../config/support-rose.m4";
 my $file_label = lc(join "_", @ARGV);
 my $test_source = $file_label . "_test_1.cpp";
 
@@ -24,6 +25,9 @@ if (! defined -e $makefile_template) {
 }
 if (! defined -e $parameters_template) {
     die "Compass parameters template was not at $parameters_template\n";
+}
+if (! defined -e $support_path) {
+    die "support-rose.m4 was not at $support_path\n";
 }
 
 #make sure the checker exists
@@ -82,3 +86,19 @@ close INFILE;
 close OUTFILE;
 
 system("touch", "./tests/checkers/$file_label/$test_source");
+
+system("mv", $support_path, $support_path . "~");
+
+open INFILE, $support_path."~" or die "Could not open support-rose.m4\n";
+open OUTFILE, ">", $support_path or die "Cou;d not open new file\n";
+
+while (<INFILE>) {
+    print OUTFILE;
+    if (/^projects\/compass2\/tests\/checkers\/Makefile/) {
+	print OUTFILE "projects/compass2/tests/checkers/$file_label/Makefile\n";
+	print OUTFILE "projects/compass2/tests/checkers/$file_label/compass_parameters.xml\n";
+    }
+}
+
+close INFILE;
+close OUTFILE;
