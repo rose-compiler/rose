@@ -2233,6 +2233,8 @@ projects/compass2/docs/doxygen/Makefile
 projects/compass2/share/xml/compass_parameters.xml
 projects/compass2/tests/Makefile
 projects/compass2/tests/checkers/Makefile
+projects/compass2/tests/checkers/float_for_loop_counter/Makefile
+projects/compass2/tests/checkers/float_for_loop_counter/compass_parameters.xml
 projects/compass2/tests/checkers/ternary_operator/Makefile
 projects/compass2/tests/checkers/ternary_operator/compass_parameters.xml
 projects/compass2/tests/checkers/forbidden_functions/Makefile

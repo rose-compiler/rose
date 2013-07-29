@@ -5,6 +5,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AUTOMAKE_OPTIONS = subdir-objects
 
 SUBDIRS=\
+	float_for_loop_counter \
 	ternary_operator \
 	forbidden_functions \
 	magic_number \
