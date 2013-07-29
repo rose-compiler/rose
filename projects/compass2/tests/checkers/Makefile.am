@@ -5,6 +5,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AUTOMAKE_OPTIONS = subdir-objects
 
 SUBDIRS=\
+	dangerous_overload \
 	comma_operator \
 	byte_by_byte_structure_comparison \
 	boolean_is_has \
