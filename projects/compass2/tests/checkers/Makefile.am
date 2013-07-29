@@ -5,6 +5,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AUTOMAKE_OPTIONS = subdir-objects
 
 SUBDIRS=\
+	boolean_is_has \
 	dead_function \
 	default_argument \
 	function_pointer \
