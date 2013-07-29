@@ -68,6 +68,7 @@ class ComputeAddressTakenInfo
     void visit(SgArrowExp*);
     void visit(SgPointerDerefExp*);
     void visit(SgPntrArrRefExp*);
+    void visit(SgAssignOp* sgn);
     void visit(SgNode* sgn);
   };
 public:

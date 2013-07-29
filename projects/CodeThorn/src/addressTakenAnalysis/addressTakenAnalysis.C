@@ -105,6 +105,15 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgPntrArrRefExp* sgn)
   cati.addressTakenSet.insert(cati.vidm.variableId(arr_name));
 }
 
+// &(a = expr)
+// a's address is taken here
+// process the lhs recursively
+void ComputeAddressTakenInfo::OperandToVariableId::visit(SgAssignOp* sgn)
+{
+  SgNode* lhs_op = sgn->get_lhs_operand();
+  lhs_op->accept(*this);
+}
+
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgNode* sgn)
 {
   std::cerr << "unhandled operand of SgAddressOfOp in AddressTakenAnalysis\n";
