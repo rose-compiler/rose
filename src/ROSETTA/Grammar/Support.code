@@ -6091,10 +6091,11 @@ HEADER_TEMPLATE_ARGUMENT_START
       /*! Different uses of a template argument */
           enum template_argument_enum
              {
-               argument_undefined          = 0, /*!< undefined (error) */
-               type_argument               = 1, /*!< type parameter */
-               nontype_argument            = 2, /*!< nontype parameter */
-               template_template_argument  = 3  /*!< template template parameter */
+               argument_undefined               = 0, /*!< undefined (error) */
+               type_argument                    = 1, /*!< type parameter */
+               nontype_argument                 = 2, /*!< nontype parameter */
+               template_template_argument       = 3, /*!< template template parameter */
+               start_of_pack_expansion_argument = 4  /*!< start of pack expansion parameter */
              };
 
           void post_construction_initialization();
@@ -6104,6 +6105,9 @@ HEADER_TEMPLATE_ARGUMENT_START
           SgTemplateArgument ( SgExpression*                parameter, bool explicitlySpecified );
        // SgTemplateArgument ( SgTemplateInstantiationDecl* parameter, bool explicitlySpecified );
           SgTemplateArgument ( SgTemplateDeclaration*       parameter, bool explicitlySpecified );
+
+       // DQ (7/3/2013): Added new type of template argument type to support varadic template arguments.
+          SgTemplateArgument ( bool explicitlySpecified );
 
        // RV (2/2/2006): Added mangling for template arguments.
       //! Returns the template argument in mangled form.
@@ -17345,11 +17349,32 @@ SgTemplateArgument::SgTemplateArgument ( SgTemplateDeclaration* argument, bool e
 #endif
    }
 
+// DQ (7/3/2013): Added new type of template argument type to support varadic template arguments.
+SgTemplateArgument::SgTemplateArgument ( bool explicitlySpecified )
+   {
+     post_construction_initialization();
+
+     p_argumentType        = start_of_pack_expansion_argument;
+     p_expression          = NULL;
+     p_explicitlySpecified = explicitlySpecified;
+
+     p_type                = NULL;
+
+  // DQ (11/22/2011): This is no longer set in the post_construction_initialization() function.
+     p_templateDeclaration = NULL;
+
+  // DQ (8/24/2006): Set the parent
+  // argument->set_parent(this);
+   }
+
+
 
 // RV (2/2/2006): Added mangling of template arguments.
 SgName
 SgTemplateArgument::get_mangled_name (void) const
    {
+     ROSE_ASSERT(this != NULL);
+
 #if 0
      printf ("In SgTemplateArgument::get_mangled_name(): get_argumentType() = %d \n",get_argumentType());
 #endif
@@ -17504,6 +17529,19 @@ SgTemplateArgument::get_mangled_name (void) const
                printf ("Mangling of template template argument to template type not well tested yet mangled name = %s \n",mangled_templateDeclaration.str());
 #endif
                mangled_name << mangled_templateDeclaration.str();
+               break;
+             }
+
+          case SgTemplateArgument::start_of_pack_expansion_argument:
+             {
+            // DQ (7/4/2013): Added support for additional template argument type.
+               const SgExpression* expr = get_expression();
+               assert(expr != NULL);
+
+               printf ("WARNING: In SgTemplateArgument::get_mangled_name(): handling of mangled name for varadic template argument is incomplete! \n");
+
+            // mangled_name << mangleExpression(expr);
+               mangled_name << "varadic_template_argument";
                break;
              }
 
