@@ -74,7 +74,7 @@ namespace CompassAnalyses
  namespace DefaultArgument
  {
   const string checker_name      = "DefaultArgument";
-  const string short_description = "Default funciton argument detected.";
+  const string short_description = "Default function argument detected";
   const string long_description  = "This analysis looks for functions with default arguments in their parameter list.";
   string source_directory = "/";
  }
