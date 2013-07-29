@@ -2159,6 +2159,8 @@ projects/compass2/docs/doxygen/Makefile
 projects/compass2/share/xml/compass_parameters.xml
 projects/compass2/tests/Makefile
 projects/compass2/tests/checkers/Makefile
+projects/compass2/tests/checkers/forbidden_functions/Makefile
+projects/compass2/tests/checkers/forbidden_functions/compass_parameters.xml
 projects/compass2/tests/checkers/magic_number/Makefile
 projects/compass2/tests/checkers/magic_number/compass_parameters.xml
 projects/compass2/tests/checkers/dangerous_overload/Makefile
