@@ -210,6 +210,7 @@ void build_SIMD_CommandLine(vector<string> & inputCommandLine, vector<string> & 
 
 int main( int argc, char * argv[] )
 {
+/*
   Rose_STL_Container<std::string> localCopy_argv = CommandlineProcessing::generateArgListFromArgcArgv(argc, argv);
   vector<string> argList = localCopy_argv;
   build_SIMD_CommandLine(argList,localCopy_argv);
@@ -218,6 +219,8 @@ int main( int argc, char * argv[] )
   CommandlineProcessing::generateArgcArgvFromList(argList,newArgc, newArgv);
 // Build the AST used by ROSE
   SgProject* project = frontend(newArgc,newArgv);
+*/
+  SgProject* project = frontend(argc,argv);
   AstTests::runAllTests(project);   
   if (SgProject::get_verbose() > 2)
     generateAstGraph(project,8000,"_orig");

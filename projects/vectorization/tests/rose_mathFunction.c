@@ -8,9 +8,9 @@ int main()
 {
   int i_nom_1_strip_10;
   int i_nom_1;
-  float a[16UL];
+  float a[16];
   __SIMD *a_SIMD = (__SIMD *)a;
-  float b[16UL];
+  float b[16];
   __SIMD *b_SIMD = (__SIMD *)b;
   int n = 16;
   __SIMDi n_SIMD;
@@ -26,5 +26,5 @@ int main()
     b_SIMD[i_nom_1_strip_10] = _SIMD_max_ps(a_SIMD[i_nom_1_strip_10],b_SIMD[i_nom_1_strip_10]);
     b_SIMD[i_nom_1_strip_10] = _SIMD_min_ps(a_SIMD[i_nom_1_strip_10],b_SIMD[i_nom_1_strip_10]);
   }
-  return 0;
+  n = _SIMD_extract_epi32(n_SIMD,3);
 }

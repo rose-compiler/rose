@@ -7,7 +7,7 @@ int main()
 {
   int i_nom_1_strip_9;
   int i_nom_1;
-  float a[16UL];
+  float a[16];
   __SIMD *a_SIMD = (__SIMD *)a;
   float tmp;
   __SIMD tmp_SIMD;
@@ -24,5 +24,6 @@ int main()
     _SIMD_cmpeq_ps(tmp_SIMD,__constant0__,&cmpReturn_11);
     a_SIMD[i_nom_1_strip_9] = _SIMD_sel_ps(a_SIMD[i_nom_1_strip_9],__constant0__,&cmpReturn_11);
   }
-  return 0;
+  n = _SIMD_extract_epi32(n_SIMD,3);
+  tmp = _SIMD_extract_ps(tmp_SIMD,3);
 }

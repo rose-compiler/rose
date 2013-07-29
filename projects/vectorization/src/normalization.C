@@ -89,3 +89,89 @@ void SIMDNormalization::normalizeExpression(SgProject* project)
   traversal.traverse(project, postorder); 
 }
 
+/******************************************************************************************************************************/
+/*
+  Normalize the CompoundAssignOp:
+  a += b ==> a = a + b
+  a -= b ==> a = a - b
+  a *= b ==> a = a * b
+  a /= b ==> a = a / b
+  a &= b ==> a = a & b
+  a |= b ==> a = a | b
+  a ^= b ==> a = a ^ b
+*/
+/******************************************************************************************************************************/
+void SIMDNormalization::normalizeCompoundAssignOp(SgForStatement* forStatement)
+{
+
+  SgStatement* loopBody = forStatement->get_loop_body();
+  ROSE_ASSERT(loopBody);
+  Rose_STL_Container<SgNode*> compoundAssignOpList = NodeQuery::querySubTree (loopBody,V_SgCompoundAssignOp);
+  for (Rose_STL_Container<SgNode*>::iterator i = compoundAssignOpList.begin(); i != compoundAssignOpList.end(); i++)
+  {
+    SgCompoundAssignOp* compoundAssignOp = isSgCompoundAssignOp(*i);
+    switch(compoundAssignOp->variantT())
+    {
+      case V_SgPlusAssignOp:
+        {
+          SgAddOp* addOp = buildAddOp(deepCopy(compoundAssignOp->get_lhs_operand()), deepCopy(compoundAssignOp->get_rhs_operand()));
+          replaceExpression(compoundAssignOp,
+                            buildAssignOp(deepCopy(compoundAssignOp->get_lhs_operand()),addOp),
+                            false);
+        }
+        break;
+      case V_SgMinusAssignOp:
+        {
+          SgSubtractOp* subtractOp = buildSubtractOp(deepCopy(compoundAssignOp->get_lhs_operand()), deepCopy(compoundAssignOp->get_rhs_operand()));
+          replaceExpression(compoundAssignOp,
+                            buildAssignOp(deepCopy(compoundAssignOp->get_lhs_operand()),subtractOp),
+                            false);
+        }
+        break;
+      case V_SgMultAssignOp:
+        {
+          SgMultiplyOp* multiplyOp = buildMultiplyOp(deepCopy(compoundAssignOp->get_lhs_operand()), deepCopy(compoundAssignOp->get_rhs_operand()));
+          replaceExpression(compoundAssignOp,
+                            buildAssignOp(deepCopy(compoundAssignOp->get_lhs_operand()),multiplyOp),
+                            false);
+        }
+        break;
+      case V_SgDivAssignOp:
+        {
+          SgDivideOp* divideOp = buildDivideOp(deepCopy(compoundAssignOp->get_lhs_operand()), deepCopy(compoundAssignOp->get_rhs_operand()));
+          replaceExpression(compoundAssignOp,
+                            buildAssignOp(deepCopy(compoundAssignOp->get_lhs_operand()),divideOp),
+                            false);
+        }
+        break;
+      case V_SgAndAssignOp:
+        {
+          SgBitAndOp* bitAndOp = buildBitAndOp(deepCopy(compoundAssignOp->get_lhs_operand()), deepCopy(compoundAssignOp->get_rhs_operand()));
+          replaceExpression(compoundAssignOp,
+                            buildAssignOp(deepCopy(compoundAssignOp->get_lhs_operand()),bitAndOp),
+                            false);
+        }
+        break;
+      case V_SgIorAssignOp:
+        {
+          SgBitOrOp* bitOrOp = buildBitOrOp(deepCopy(compoundAssignOp->get_lhs_operand()), deepCopy(compoundAssignOp->get_rhs_operand()));
+          replaceExpression(compoundAssignOp,
+                            buildAssignOp(deepCopy(compoundAssignOp->get_lhs_operand()),bitOrOp),
+                            false);
+        }
+        break;
+      case V_SgXorAssignOp:
+        {
+          SgBitXorOp* bitXorOp = buildBitXorOp(deepCopy(compoundAssignOp->get_lhs_operand()), deepCopy(compoundAssignOp->get_rhs_operand()));
+          replaceExpression(compoundAssignOp,
+                            buildAssignOp(deepCopy(compoundAssignOp->get_lhs_operand()),bitXorOp),
+                            false);
+        }
+        break;
+      default:
+        {
+          cerr<<"warning, unhandled CompoundAssignOp: "<< compoundAssignOp->class_name()<<endl;
+        }
+    }
+  }
+}

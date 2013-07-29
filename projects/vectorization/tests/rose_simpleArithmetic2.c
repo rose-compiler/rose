@@ -4,7 +4,7 @@ int s272(float t)
 {
   int i_nom_1_strip_5;
   int i_nom_1;
-  float a[16UL];
+  float a[16];
   __SIMD *a_SIMD = (__SIMD *)a;
   
 #pragma SIMD

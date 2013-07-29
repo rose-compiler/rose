@@ -7,11 +7,11 @@ int main()
 {
   int i_nom_1_strip_10;
   int i_nom_1;
-  int a[16UL];
+  int a[16];
   __SIMDi *a_SIMD = (__SIMDi *)a;
-  int b[16UL];
+  int b[16];
   __SIMDi *b_SIMD = (__SIMDi *)b;
-  int c[16UL];
+  int c[16];
   __SIMDi *c_SIMD = (__SIMDi *)c;
   int n = 16;
   __SIMDi n_SIMD;
@@ -23,5 +23,5 @@ int main()
     c_SIMD[i_nom_1_strip_10] = _SIMD_sub_epi32(a_SIMD[i_nom_1_strip_10],b_SIMD[i_nom_1_strip_10]);
     c_SIMD[i_nom_1_strip_10] = _SIMD_mul_epi32(a_SIMD[i_nom_1_strip_10],b_SIMD[i_nom_1_strip_10]);
   }
-  return 0;
+  n = _SIMD_extract_epi32(n_SIMD,3);
 }

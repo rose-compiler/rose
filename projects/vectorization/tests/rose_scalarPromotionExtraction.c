@@ -8,9 +8,9 @@ int main()
   int i_nom_1;
   float d = 5.f;
   __SIMD d_SIMD;
-  float dim[16UL];
+  float dim[16];
   __SIMD *dim_SIMD = (__SIMD *)dim;
-  float dim2[16UL];
+  float dim2[16];
   __SIMD *dim2_SIMD = (__SIMD *)dim2;
   
 #pragma SIMD
@@ -26,6 +26,5 @@ int main()
     dim2_SIMD[i_nom_2_strip_11] = d_SIMD;
   }
   d = _SIMD_extract_ps(d_SIMD,3);
-  d = (d + 1);
-  return 0;
+  d = d + 1;
 }

@@ -7,11 +7,11 @@ int main()
 {
   int i_nom_1_strip_10;
   int i_nom_1;
-  float a[16UL];
+  float a[16];
   __SIMD *a_SIMD = (__SIMD *)a;
-  float b[16UL];
+  float b[16];
   __SIMD *b_SIMD = (__SIMD *)b;
-  float c[16UL];
+  float c[16];
   __SIMD *c_SIMD = (__SIMD *)c;
   int n = 16;
   __SIMDi n_SIMD;
@@ -23,7 +23,6 @@ int main()
   }
   n = _SIMD_extract_epi32(n_SIMD,3);
   for (int i = 0; i < n; i++) {
-    c[i] = (a[i] + b[i]);
+    c[i] = a[i] + b[i];
   }
-  return 0;
 }

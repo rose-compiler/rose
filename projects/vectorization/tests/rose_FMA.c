@@ -8,11 +8,11 @@ int main()
 {
   int i_nom_1_strip_12;
   int i_nom_1;
-  float a[16UL];
+  float a[16];
   __SIMD *a_SIMD = (__SIMD *)a;
-  float b[16UL];
+  float b[16];
   __SIMD *b_SIMD = (__SIMD *)b;
-  float c[16UL];
+  float c[16];
   __SIMD *c_SIMD = (__SIMD *)c;
   int n = 16;
   __SIMDi n_SIMD;
@@ -35,5 +35,7 @@ int main()
     a_SIMD[i_nom_1_strip_12] = _SIMD_neg_ps(_SIMD_msub_ps(a_SIMD[i_nom_1_strip_12],b_SIMD[i_nom_1_strip_12],c_SIMD[i_nom_1_strip_12]));
     cs_SIMD = _SIMD_madd_ps(as_SIMD,bs_SIMD,__constant0__);
   }
-  return 0;
+  bs = _SIMD_extract_ps(bs_SIMD,3);
+  as = _SIMD_extract_ps(as_SIMD,3);
+  n = _SIMD_extract_epi32(n_SIMD,3);
 }
