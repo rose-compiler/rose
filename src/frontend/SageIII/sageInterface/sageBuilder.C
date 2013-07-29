@@ -5379,9 +5379,9 @@ SgMinusOp *SageBuilder::buildMinusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mo
   return result;
 }
 
-SgMinusMinusOp *SageBuilder::buildMinusMinusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode)
+SgMinusOp *SageBuilder::buildMinusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode)
 {
-  SgMinusMinusOp* result = buildUnaryExpression<SgMinusMinusOp>(operand_i);
+  SgMinusOp* result = buildUnaryExpression_nfi<SgMinusOp>(operand_i);
   ROSE_ASSERT(result);
   result->set_mode(a_mode);
   return result;
