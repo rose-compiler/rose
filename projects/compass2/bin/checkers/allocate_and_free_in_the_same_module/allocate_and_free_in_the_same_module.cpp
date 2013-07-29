@@ -150,7 +150,7 @@ CheckerOutput::CheckerOutput(SgNode *const node)
 static void
 run(Compass::Parameters parameters, Compass::OutputObject* output)
 {
-  bool verbose = false;
+
 
   // We only care about source code in the user's space, not,
   // for example, Boost or system files.
@@ -164,6 +164,8 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
 
   SgNode* root_node = (SgNode*) sageProject;
   ROSE_ASSERT(root_node != NULL);
+
+  bool verbose = sageProject->get_verbose();
 
   // maps variables in the symbol table to a boolean
   // determining whether that variable has been freed
@@ -229,7 +231,7 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
       {
         SgSymbol *var_ref_symbol = var_ref->get_symbol();
         if(verbose)
-          std::cout << "FREE FOUND ON:" << var_ref_symbol->get_name() << std::endl;
+          std::cout << "FREE FOUND ON: " << var_ref_symbol->get_name() << std::endl;
         freed.insert(var_ref_symbol);
       }
     } else {
@@ -326,8 +328,11 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
 
           if(return_func_str.compare("malloc") == 0 || return_func_str.compare("calloc") == 0)
           {
-            if(verbose)
-              std::cout << "MALLOC FOUND ON: " << func_str << " return statement" << std::endl;
+            if(verbose && explicit_malloc_func_calls.find(func_call)
+                == explicit_malloc_func_calls.end())
+            {
+              std::cout << "MALLOC FOUND ON: \"" << func_str << "\" return statement" << std::endl;
+            }
             explicit_malloc_func_calls.insert(func_call);
             // once we have one malloc we can ignore the rest of the return statement
             break;
@@ -347,7 +352,7 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
           func_inner_var_mappings[func_call] = return_var_sym;
           tracked_functions.insert(func_call);
           if(verbose)
-            std::cout << "INNER VAR MAPPING: " << func_str << " returns " << return_var_sym->get_name() << std::endl;
+            std::cout << "INNER VARIABLE MAPPING: " << func_str << " returns " << return_var_sym->get_name() << std::endl;
         }
       }
     }
@@ -472,8 +477,8 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
           unfreed.push_back(LHS_symbol);
         } else {
           if(verbose)
-            std::cout << "OUTER VAR MAPPING: " << func_call
-            ->getAssociatedFunctionSymbol()->get_name() << " maps to "
+            std::cout << "OUTER VARIABLE MAPPING: " << func_call
+            ->getAssociatedFunctionSymbol()->get_name() << " => "
             << LHS_symbol->get_name() << std::endl;
           func_outer_var_mappings[func_call] = LHS_symbol;
           tracked_functions.insert(func_call);
