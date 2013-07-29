@@ -169,7 +169,7 @@ void ExprWalker::visit(SgAssignOp* sgn)
   DefUseVarsInfo lduvi = getDefUseVarsInfo_rec(lhs, vidm, true);
   DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(rhs, vidm, false);
   // if the rhs writes to a memory (i.e sideffect)
-  // add to the def_set to be unioned in next step
+  // add to the use_set to be unioned in next step
   if(!rduvi.isDefSetEmpty())
   {
     rduvi.copyDefToUse();
