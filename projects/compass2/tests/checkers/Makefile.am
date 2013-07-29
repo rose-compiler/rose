@@ -5,6 +5,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AUTOMAKE_OPTIONS = subdir-objects
 
 SUBDIRS=\
+	do_not_delete_this \
 	size_of_pointer \
 	float_for_loop_counter \
 	ternary_operator \
