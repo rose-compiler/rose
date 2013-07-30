@@ -54,17 +54,14 @@ typedef std::map<VariableId, VariableIdTypeInfo> VariableIdInfoMap;
 // def/use query on this expression
 typedef std::pair<VariableIdInfoMap, bool> VarsInfo;
 
-typedef std::set<SgFunctionCallExp*> FunctionCallExpSet;
-
 // it is expensive to answer def/use queries on demand
 // for expressions that involve function calls
 // as it would mean walking all the expressions
 // in the function and the functions that it may call
+// we simply collect all the function calls in the expression
 // @FunctionCallExpSet: consitsts of all the functions
 // that this expression is calling
-// @bool: flag is an indicator that the 
-// expression involves function calls
-typedef std::pair<FunctionCallExpSet, bool> FunctionCallExpInfo;
+typedef std::set<SgFunctionCallExp*> FunctionCallExpSet;
 
 /*************************************************
  *************** DefUseVarsInfo ****************
@@ -78,11 +75,11 @@ class DefUseVarsInfo
 {
   VarsInfo def_vars_info;
   VarsInfo use_vars_info;
-  FunctionCallExpInfo func_set;
+  FunctionCallExpSet func_set;
    
 public:
   DefUseVarsInfo() { }
-  DefUseVarsInfo(const VarsInfo& _def_info, const VarsInfo& _use_info, const FunctionCallExpInfo& _fset);
+  DefUseVarsInfo(const VarsInfo& _def_info, const VarsInfo& _use_info, const FunctionCallExpSet& _fset);
   
   // returns the corresponding info about the memory locations
   VarsInfo getDefVarsInfo();
@@ -92,9 +89,9 @@ public:
   const VarsInfo& getDefVarsInfoRef() const;
   const VarsInfo& getUseVarsInfoRef() const;
 
-  FunctionCallExpInfo getFunctionCallExpInfo();
-  FunctionCallExpInfo& getFunctionCallExpInfoMod();
-  const FunctionCallExpInfo& getFunctionCallExpInfoRef() const;
+  FunctionCallExpSet getFunctionCallExpSet();
+  FunctionCallExpSet& getFunctionCallExpSetMod();
+  const FunctionCallExpSet& getFunctionCallExpSetRef() const;
   
   // copy sets to handle side-effects
   void copyDefToUse();
@@ -102,7 +99,7 @@ public:
   
   bool isDefSetEmpty();
   bool isUseSetEmpty();
-  bool isFunctionCallExpInfoEmpty();
+  bool isFunctionCallExpSetEmpty();
 
   // returns the flag func_modify
   bool isModByFunction();
@@ -113,8 +110,8 @@ public:
 
   DefUseVarsInfo operator+(const DefUseVarsInfo& duvi1);
 
-  std::string VarsInfoPrettyPrint(VarsInfo& vars_info, VariableIdMapping& vidm);
-  std::string funcCallExpSetPrettyPrint();
+  std::string varsInfoPrettyPrint(VarsInfo& vars_info, VariableIdMapping& vidm);
+  std::string functionCallExpSetPrettyPrint(FunctionCallExpSet& func_calls_info);
 
   // for more readability
   std::string str(VariableIdMapping& vidm);  
@@ -205,7 +202,6 @@ DefUseVarsInfo getDefUseVarsInfo(SgNode* sgn, VariableIdMapping& vidm);
 
 // internal implementation
 // @sgn: root node
-// @fipi: required to answer dereferencing queries
 // @duvi: the defuse object that will be built
 // @isModExpr: set to true if the expression is modifying a memory location
 DefUseVarsInfo getDefUseVarsInfo_rec(SgNode* sgn, VariableIdMapping& vidm, bool isModExpr);

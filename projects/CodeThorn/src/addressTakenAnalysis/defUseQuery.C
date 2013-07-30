@@ -7,7 +7,7 @@
  *************** DefUseVarsInfo ****************
  *************************************************/
 
-DefUseVarsInfo::DefUseVarsInfo(const VarsInfo& _def_info, const VarsInfo& _use_info, const FunctionCallExpInfo& _fset) :
+DefUseVarsInfo::DefUseVarsInfo(const VarsInfo& _def_info, const VarsInfo& _use_info, const FunctionCallExpSet& _fset) :
   def_vars_info(_def_info), use_vars_info(_use_info), func_set(_fset)
 {
 }
@@ -42,24 +42,24 @@ const VarsInfo& DefUseVarsInfo::getUseVarsInfoRef() const
   return use_vars_info;
 }
 
-FunctionCallExpInfo DefUseVarsInfo::getFunctionCallExpInfo()
+FunctionCallExpSet DefUseVarsInfo::getFunctionCallExpSet()
 {
   return func_set;
 }
 
-FunctionCallExpInfo& DefUseVarsInfo::getFunctionCallExpInfoMod()
+FunctionCallExpSet& DefUseVarsInfo::getFunctionCallExpSetMod()
 {
   return func_set;
 }
 
-const FunctionCallExpInfo& DefUseVarsInfo::getFunctionCallExpInfoRef() const
+const FunctionCallExpSet& DefUseVarsInfo::getFunctionCallExpSetRef() const
 {
   return func_set;
 }
 
 bool DefUseVarsInfo::isModByFunction()
 {
-  return func_set.second;
+  return (func_set.size() > 0);
 }
 
 bool DefUseVarsInfo::isDefSetModByPointer()
@@ -77,9 +77,9 @@ bool DefUseVarsInfo::isDefSetEmpty()
   return def_vars_info.first.size() == 0;
 }
 
-bool DefUseVarsInfo::isFunctionCallExpInfoEmpty()
+bool DefUseVarsInfo::isFunctionCallExpSetEmpty()
 {
-  return func_set.first.size() == 0;
+  return func_set.size() == 0;
 }
 
 bool DefUseVarsInfo::isUseSetEmpty()
@@ -104,10 +104,10 @@ DefUseVarsInfo DefUseVarsInfo::operator+(const DefUseVarsInfo& duvi1)
 {  
   const VarsInfo& d1_def_vars_info = duvi1.getDefVarsInfoRef();
   const VarsInfo& d1_use_vars_info = duvi1.getUseVarsInfoRef();
-  const FunctionCallExpInfo& d1_func_set = duvi1.getFunctionCallExpInfoRef();
+  const FunctionCallExpSet& d1_func_set = duvi1.getFunctionCallExpSetRef();
 
   VarsInfo rdef_vars_info, ruse_vars_info;
-  FunctionCallExpInfo rfunc_set;
+  FunctionCallExpSet rfunc_set;
   
   // not efficient way to merge the maps
   // the keys don't change
@@ -120,34 +120,34 @@ DefUseVarsInfo DefUseVarsInfo::operator+(const DefUseVarsInfo& duvi1)
   
   // set_union(def_set.first, d1_def_set.first, rdef_set.first);
   // set_union(use_set.first, d1_use_set.first, ruse_set.first);
-  set_union(func_set.first.begin(), func_set.first.end(),
-            d1_func_set.first.begin(), d1_func_set.first.end(),
-            std::inserter(rfunc_set.first, rfunc_set.first.begin()));
+  set_union(func_set.begin(), func_set.end(),
+            d1_func_set.begin(), d1_func_set.end(),
+            std::inserter(rfunc_set, rfunc_set.begin()));
 
   rdef_vars_info.second = def_vars_info.second || d1_def_vars_info.second;
   ruse_vars_info.second = use_vars_info.second || d1_use_vars_info.second;
-  rfunc_set.second = func_set.second || d1_func_set.second;
+  // rfunc_set.second = func_set.second || d1_func_set.second;
 
   return DefUseVarsInfo(rdef_vars_info, ruse_vars_info, rfunc_set);
 }
 
-std::string DefUseVarsInfo::funcCallExpSetPrettyPrint()
+std::string DefUseVarsInfo::functionCallExpSetPrettyPrint(FunctionCallExpSet& func_set)
 {
   std::ostringstream oss;
-  FunctionCallExpSet::iterator it = func_set.first.begin(); 
-  oss << "[";
-  for( ;it != func_set.first.end(); )
+  FunctionCallExpSet::iterator it = func_set.begin(); 
+  oss << "{";
+  for( ;it != func_set.end(); )
   {
     oss << (*it)->unparseToString();
     it++;
-    if(it != func_set.first.end())
+    if(it != func_set.end())
       oss << ", ";
   }
-  oss << "]";
+  oss << "}";
   return oss.str();
 }
 
-std::string DefUseVarsInfo::VarsInfoPrettyPrint(VarsInfo& vars_info, VariableIdMapping& vidm)
+std::string DefUseVarsInfo::varsInfoPrettyPrint(VarsInfo& vars_info, VariableIdMapping& vidm)
 {
   std::ostringstream oss;
   oss << "[" << (vars_info.second? "true" : "false") << ", ";
@@ -184,10 +184,9 @@ std::string DefUseVarsInfo::VarsInfoPrettyPrint(VarsInfo& vars_info, VariableIdM
 std::string DefUseVarsInfo::str(VariableIdMapping& vidm)
 {
   std::ostringstream oss;
-  oss << "def_vars_info: " << VarsInfoPrettyPrint(def_vars_info, vidm) << "\n";
-  oss << "use_vars_info: " << VarsInfoPrettyPrint(use_vars_info, vidm) << "\n";
-  oss << "func_set:<" << (func_set.second? "true" : "false")
-      << ", " << funcCallExpSetPrettyPrint() << ">\n";
+  oss << "def_vars_info: " << varsInfoPrettyPrint(def_vars_info, vidm) << "\n";
+  oss << "use_vars_info: " << varsInfoPrettyPrint(use_vars_info, vidm) << "\n";
+  oss << "func_set: " << functionCallExpSetPrettyPrint(func_set) << ">\n";
   return oss.str();
 }
 
@@ -323,9 +322,8 @@ void ExprWalker::visit(SgBinaryOp* sgn)
 
 void ExprWalker::visit(SgFunctionCallExp* sgn)
 {
-  FunctionCallExpInfo& func_set = duvi.getFunctionCallExpInfoMod();
-  func_set.first.insert(sgn);
-  func_set.second = true;
+  FunctionCallExpSet& func_set = duvi.getFunctionCallExpSetMod();
+  func_set.insert(sgn);
 }
 
 void ExprWalker::visit(SgExprListExp* sgn)

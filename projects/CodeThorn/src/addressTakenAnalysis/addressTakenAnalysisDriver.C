@@ -21,7 +21,7 @@ void TestDefUseVarsInfoTraversal::visit(SgNode* sgn)
   if(isSgExpression(sgn) || isSgInitializedName(sgn))
   {
     DefUseVarsInfo memobj = getDefUseVarsInfo(sgn, vidm);
-    if(!memobj.isDefSetEmpty() || !memobj.isUseSetEmpty() || !memobj.isFunctionCallExpInfoEmpty())
+    if(!memobj.isDefSetEmpty() || !memobj.isUseSetEmpty() || !memobj.isFunctionCallExpSetEmpty())
     {
       std::cout << "<" << sgn->class_name() << ", " << sgn->unparseToString() << "\n" 
                 << memobj.str(vidm) << ">\n";
