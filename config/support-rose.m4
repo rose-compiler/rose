@@ -2159,6 +2159,8 @@ projects/compass2/docs/doxygen/Makefile
 projects/compass2/share/xml/compass_parameters.xml
 projects/compass2/tests/Makefile
 projects/compass2/tests/checkers/Makefile
+projects/compass2/tests/checkers/discard_assignment/Makefile
+projects/compass2/tests/checkers/discard_assignment/compass_parameters.xml
 projects/compass2/tests/checkers/explicit_test_for_non_boolean_value/Makefile
 projects/compass2/tests/checkers/explicit_test_for_non_boolean_value/compass_parameters.xml
 projects/compass2/tests/checkers/data_member_access/Makefile
