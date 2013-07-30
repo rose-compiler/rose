@@ -215,3 +215,76 @@ bool SIMDAnalysis::isLoopIndexVariable(SgInitializedName* ivar, SgNode* subtree_
   }
   return result;
 }
+
+#ifdef _WIN32
+
+//  Windows
+#define cpuid    __cpuid
+
+#else
+
+//  GCC Inline Assembly
+void cpuid(int CPUInfo[4],int InfoType){
+    __asm__ __volatile__ (
+        "cpuid":
+        "=a" (CPUInfo[0]),
+        "=b" (CPUInfo[1]),
+        "=c" (CPUInfo[2]),
+        "=d" (CPUInfo[3]) :
+        "a" (InfoType)
+    );
+}
+#endif
+
+int SIMDAnalysis::getVF()
+{
+  int VF = 0;
+  int x64     = 0;
+  int MMX     = 0;
+  int SSE     = 0;
+  int SSE2    = 0;
+  int SSE3    = 0;
+  int SSSE3   = 0;
+  int SSE41   = 0;
+  int SSE42   = 0;
+  int SSE4a   = 0;
+  int AVX     = 0;
+  int XOP     = 0;
+  int FMA3    = 0;
+  int FMA4    = 0;
+  
+  int info[4];
+  cpuid(info, 0);
+  int nIds = info[0];
+  
+  cpuid(info, 0x80000000);
+  int nExIds = info[0];
+  
+  //  Detect Instruction Set
+  if (nIds >= 1){
+      cpuid(info,0x00000001);
+      MMX   = (info[3] & ((int)1 << 23)) != 0;
+      SSE   = (info[3] & ((int)1 << 25)) != 0;
+      SSE2  = (info[3] & ((int)1 << 26)) != 0;
+      SSE3  = (info[2] & ((int)1 <<  0)) != 0;
+  
+      SSSE3 = (info[2] & ((int)1 <<  9)) != 0;
+      SSE41 = (info[2] & ((int)1 << 19)) != 0;
+      SSE42 = (info[2] & ((int)1 << 20)) != 0;
+      AVX   = (info[2] & ((int)1 << 28)) != 0;
+      FMA3  = (info[2] & ((int)1 << 12)) != 0;
+  }
+  if (nExIds >= 0x80000001){
+      cpuid(info,0x80000001);
+      x64   = (info[3] & ((int)1 << 29)) != 0;
+      SSE4a = (info[2] & ((int)1 <<  6)) != 0;
+      FMA4  = (info[2] & ((int)1 << 16)) != 0;
+      XOP   = (info[2] & ((int)1 << 11)) != 0;
+  }
+  if(MMX || SSE || SSE2 || SSE3 || SSSE3 || SSE41 || SSE42 || SSE4a)
+    VF = 4;
+  else if(AVX || FMA3 || FMA4)
+    VF = 8;
+
+  return VF;
+}

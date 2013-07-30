@@ -14,6 +14,8 @@ namespace SIMDAnalysis
 
   std::vector<SgInitializedName*> getLoopIndexVariable(SgNode*);
   bool isLoopIndexVariable(SgInitializedName*, SgNode*);
+
+  int getVF();
 }
 
 #endif // _SIMD_ANALYSIS_H

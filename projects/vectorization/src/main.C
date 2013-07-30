@@ -39,7 +39,7 @@ std::map<std::string, std::string> constantValMap;
   VF is the vector factor, usually is the SIMD width.  
   We set it up here for the ealy stage development.
 */
-int VF = 4;
+int VF;
 
 bool isSIMDDirectiveAttached(SgStatement* stmt)
 {
@@ -220,6 +220,7 @@ int main( int argc, char * argv[] )
 // Build the AST used by ROSE
   SgProject* project = frontend(newArgc,newArgv);
 */
+  VF = getVF();
   SgProject* project = frontend(argc,argv);
   AstTests::runAllTests(project);   
   if (SgProject::get_verbose() > 2)
