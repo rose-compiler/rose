@@ -5,6 +5,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AUTOMAKE_OPTIONS = subdir-objects
 
 SUBDIRS=\
+	explicit_test_for_non_boolean_value \
 	data_member_access \
 	unary_minus \
 	pointer_comparison \
