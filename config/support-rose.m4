@@ -2233,6 +2233,8 @@ projects/compass2/docs/doxygen/Makefile
 projects/compass2/share/xml/compass_parameters.xml
 projects/compass2/tests/Makefile
 projects/compass2/tests/checkers/Makefile
+projects/compass2/tests/checkers/data_member_access/Makefile
+projects/compass2/tests/checkers/data_member_access/compass_parameters.xml
 projects/compass2/tests/checkers/unary_minus/Makefile
 projects/compass2/tests/checkers/unary_minus/compass_parameters.xml
 projects/compass2/tests/checkers/pointer_comparison/Makefile
