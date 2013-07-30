@@ -50,6 +50,7 @@ int main(int argc, char* argv[])
   fipi.printInfoSets();
 
   TestDefUseVarsInfoTraversal tt(vidm);
+  // change to traverse for entire project
   tt.traverseInputFiles(project, preorder);
 
   return 0;
