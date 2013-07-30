@@ -99,14 +99,17 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
       SgProject* sageProject = Compass::projectPrerequisite.getProject();
       
       // perform AST matching here
-      CodeThorn::AstMatching match_minus;
-      MatchResult result_minus = match_minus.performMatching("$r = SgMinusOp", sageProject);
-      BOOST_FOREACH(SingleMatchVarBindings match, result_minus)
+      CodeThorn::AstMatching match_var;
+      MatchResult result_var = match_var.performMatching
+	("SgMinusOp($r=SgVarRefExp)\
+        | SgMinusOp(SgCastExp($r=SgVarRefExp))"\
+        , sageProject);
+      BOOST_FOREACH(SingleMatchVarBindings match, result_var)
 	{
-	  SgMinusOp* minus = (SgMinusOp*)match["$r"];
-	  if (minus->get_operand()->get_type()->isUnsignedType())
+	  SgVarRefExp* var = (SgVarRefExp*)match["$r"];
+	  if (var->get_type()->isUnsignedType())
 	    {
-	      output->addOutput(new CompassAnalyses::UnaryMinus::CheckerOutput(minus));
+	      output->addOutput(new CompassAnalyses::UnaryMinus::CheckerOutput(var));
 	    }
 	}
   }
