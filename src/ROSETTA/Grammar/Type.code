@@ -1468,6 +1468,8 @@ SgType::isUnsignedType() const
           case T_UNSIGNED_CHAR:
           case T_UNSIGNED_SHORT:
           case T_UNSIGNED_INT:
+          case T_UNSIGNED_LONG:
+          case T_UNSIGNED_LONG_LONG:
                return 1;
                break;
           default:
