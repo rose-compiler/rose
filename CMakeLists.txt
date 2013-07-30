@@ -317,7 +317,7 @@ set(ROSE_TOP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 # --------- please do all system, platform, software tests here --------------
 
 # Setup EDG version
-set(EDG_VERSION "3.3" CACHE STRING
+set(EDG_VERSION "4.7" CACHE STRING
   "major.minor version number for EDG (e.g. 3.3, 3.10, 4.0, 4.1).")
 string(SUBSTRING ${EDG_VERSION} 0 1 EDG_MAJOR_VERSION)
 string(SUBSTRING ${EDG_VERSION} 2 1 EDG_MINOR_VERSION)
