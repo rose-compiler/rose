@@ -2159,6 +2159,8 @@ projects/compass2/docs/doxygen/Makefile
 projects/compass2/share/xml/compass_parameters.xml
 projects/compass2/tests/Makefile
 projects/compass2/tests/checkers/Makefile
+projects/compass2/tests/checkers/pointer_comparison/Makefile
+projects/compass2/tests/checkers/pointer_comparison/compass_parameters.xml
 projects/compass2/tests/checkers/do_not_delete_this/Makefile
 projects/compass2/tests/checkers/do_not_delete_this/compass_parameters.xml
 projects/compass2/tests/checkers/size_of_pointer/Makefile
