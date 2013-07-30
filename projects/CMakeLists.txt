@@ -21,7 +21,6 @@ add_subdirectory(pragmaParsing)
 add_subdirectory(RTC)
 add_subdirectory(taintcheck)
 add_subdirectory(UpcTranslation)
-add_subdirectory(vectorization)
 
 
 if(OPENSSL_FOUND)
