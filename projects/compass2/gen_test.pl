@@ -40,6 +40,21 @@ if (-e "./tests/checkers/$file_label") {
     die "This checker already has tests\n";
 }
 
+
+
+#get the short description from the checker
+open INFILE, "./bin/checkers/$file_label/$file_label.cpp" or die "Couldn't open the checker source file\n";
+my $short_description;
+
+while (<INFILE>) {
+    if (/const string short_description = "(.*)"/) {
+	$short_description = $1;
+	last;
+    }
+}
+
+close INFILE;
+
 #edit the makefile in tests/checkers
 system("mv", $makefile_path, $makefile_path . "~");
 open INFILE, $makefile_path."~" or die "Could not open Makefile.am~\n";
@@ -50,6 +65,7 @@ while (<INFILE>) {
     if (/^SUBDIRS/) {
 	print OUTFILE "\t$file_label \\\n";
     }
+    
 }
 
 close INFILE;
@@ -62,6 +78,7 @@ open OUTFILE, ">", "./tests/checkers/$file_label/Makefile.am" or die "Could not 
 
 while (<INFILE>) {
     s/PLACEHOLDER/$test_source/;
+    s/editToMatchShortDescription/$short_description/;
     print OUTFILE;
 }
 
