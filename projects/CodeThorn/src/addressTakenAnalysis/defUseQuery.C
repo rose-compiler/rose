@@ -7,39 +7,39 @@
  *************** DefUseVarsInfo ****************
  *************************************************/
 
-DefUseVarsInfo::DefUseVarsInfo(const VarsInfo& _dset, const VarsInfo& _uset, const FunctionCallExpInfo& _fset) :
-  def_set(_dset), use_set(_uset), func_set(_fset)
+DefUseVarsInfo::DefUseVarsInfo(const VarsInfo& _def_info, const VarsInfo& _use_info, const FunctionCallExpInfo& _fset) :
+  def_vars_info(_def_info), use_vars_info(_use_info), func_set(_fset)
 {
 }
 
 VarsInfo DefUseVarsInfo::getDefVarsInfo()
 {
-  return def_set;
+  return def_vars_info;
 }
 
 VarsInfo DefUseVarsInfo::getUseVarsInfo()
 {
-  return use_set;
+  return use_vars_info;
 }
 
 VarsInfo& DefUseVarsInfo::getDefVarsInfoMod()
 {
-  return def_set;
+  return def_vars_info;
 }
 
 VarsInfo& DefUseVarsInfo::getUseVarsInfoMod()
 {
-  return use_set;
+  return use_vars_info;
 }
 
 const VarsInfo& DefUseVarsInfo::getDefVarsInfoRef() const
 {
-  return def_set;
+  return def_vars_info;
 }
 
 const VarsInfo& DefUseVarsInfo::getUseVarsInfoRef() const
 {
-  return use_set;
+  return use_vars_info;
 }
 
 FunctionCallExpInfo DefUseVarsInfo::getFunctionCallExpInfo()
@@ -64,17 +64,17 @@ bool DefUseVarsInfo::isModByFunction()
 
 bool DefUseVarsInfo::isDefSetModByPointer()
 {
-  return def_set.second;
+  return def_vars_info.second;
 }
 
 bool DefUseVarsInfo::isUseSetModByPointer()
 {
-  return use_set.second;
+  return use_vars_info.second;
 }
 
 bool DefUseVarsInfo::isDefSetEmpty()
 {
-  return def_set.first.size() == 0;
+  return def_vars_info.first.size() == 0;
 }
 
 bool DefUseVarsInfo::isFunctionCallExpInfoEmpty()
@@ -84,50 +84,51 @@ bool DefUseVarsInfo::isFunctionCallExpInfoEmpty()
 
 bool DefUseVarsInfo::isUseSetEmpty()
 {
-  return use_set.first.size() == 0;
+  return use_vars_info.first.size() == 0;
 }
 
 void DefUseVarsInfo::copyDefToUse()
 {
-  use_set.first.insert(def_set.first.begin(), def_set.first.end());
-  use_set.second = use_set.second || def_set.second;
+  use_vars_info.first.insert(def_vars_info.first.begin(), def_vars_info.first.end());
+  use_vars_info.second = use_vars_info.second || def_vars_info.second;
 }
 
 void DefUseVarsInfo::copyUseToDef()
 {
-  def_set.first.insert(use_set.first.begin(), use_set.first.end());
-  def_set.second = def_set.second || use_set.second;
+  def_vars_info.first.insert(use_vars_info.first.begin(), use_vars_info.first.end());
+  def_vars_info.second = def_vars_info.second || use_vars_info.second;
 }
 
 // combine the two DefUseVarsInfo functions
 DefUseVarsInfo DefUseVarsInfo::operator+(const DefUseVarsInfo& duvi1)
 {  
-  const VarsInfo& d1_def_set = duvi1.getDefVarsInfoRef();
-  const VarsInfo& d1_use_set = duvi1.getUseVarsInfoRef();
+  const VarsInfo& d1_def_vars_info = duvi1.getDefVarsInfoRef();
+  const VarsInfo& d1_use_vars_info = duvi1.getUseVarsInfoRef();
   const FunctionCallExpInfo& d1_func_set = duvi1.getFunctionCallExpInfoRef();
 
-  VarsInfo rdef_set, ruse_set;
+  VarsInfo rdef_vars_info, ruse_vars_info;
   FunctionCallExpInfo rfunc_set;
   
-  set_union(def_set.first, d1_def_set.first, rdef_set.first);
-  set_union(use_set.first, d1_use_set.first, ruse_set.first);
+  // not efficient way to merge the maps
+  // the keys don't change
+  // the types also don't change
+  // inserting into new map to avoid side-effects on this object
+  rdef_vars_info.first.insert(def_vars_info.first.begin(), def_vars_info.first.end());
+  rdef_vars_info.first.insert(d1_def_vars_info.first.begin(), d1_def_vars_info.first.end());
+  ruse_vars_info.first.insert(use_vars_info.first.begin(), use_vars_info.first.end());
+  ruse_vars_info.first.insert(d1_use_vars_info.first.begin(), d1_use_vars_info.first.end());
+  
+  // set_union(def_set.first, d1_def_set.first, rdef_set.first);
+  // set_union(use_set.first, d1_use_set.first, ruse_set.first);
   set_union(func_set.first.begin(), func_set.first.end(),
             d1_func_set.first.begin(), d1_func_set.first.end(),
             std::inserter(rfunc_set.first, rfunc_set.first.begin()));
 
-  rdef_set.second = def_set.second || d1_def_set.second;
-  ruse_set.second = use_set.second || d1_use_set.second;
+  rdef_vars_info.second = def_vars_info.second || d1_def_vars_info.second;
+  ruse_vars_info.second = use_vars_info.second || d1_use_vars_info.second;
   rfunc_set.second = func_set.second || d1_func_set.second;
 
-  return DefUseVarsInfo(rdef_set, ruse_set, rfunc_set);
-}
-
-std::string DefUseVarsInfo::str()
-{
-  std::ostringstream oss;
-  oss << "def_set:<" << VariableIdSetPrettyPrint::str(def_set.first) << ">\n";
-  oss << "use_set:<" << VariableIdSetPrettyPrint::str(use_set.first) << ">\n";
-  return oss.str();
+  return DefUseVarsInfo(rdef_vars_info, ruse_vars_info, rfunc_set);
 }
 
 std::string DefUseVarsInfo::funcCallExpSetPrettyPrint()
@@ -146,12 +147,47 @@ std::string DefUseVarsInfo::funcCallExpSetPrettyPrint()
   return oss.str();
 }
 
+std::string DefUseVarsInfo::VarsInfoPrettyPrint(VarsInfo& vars_info, VariableIdMapping& vidm)
+{
+  std::ostringstream oss;
+  oss << "[" << (vars_info.second? "true" : "false") << ", ";
+  oss << "{";
+  VariableIdInfoMap::iterator it = vars_info.first.begin();
+  for( ; it != vars_info.first.end();  )
+  {
+    // oss << "<" << (*it).first.toString() << ", " << vidm.variableName((*it).first) << ", ";
+    oss << "<" << vidm.variableName((*it).first) << ", ";
+    switch((*it).second) {
+    case VARIABLE:
+      oss << "var";
+      break;
+    case ARRAY:
+      oss << "array";
+      break;
+    case POINTER:
+      oss << "ptr";
+      break;
+    case REFERENCE:
+      oss << "ref";
+      break;
+    }
+    oss <<">";
+    it++;
+    if(it != vars_info.first.end())
+      oss << ", ";
+  }
+  oss << "}";
+  oss <<"]";
+  return oss.str();
+}
+
 std::string DefUseVarsInfo::str(VariableIdMapping& vidm)
 {
   std::ostringstream oss;
-  oss << "def_set:<" << def_set.second << "," << VariableIdSetPrettyPrint::str(def_set.first, vidm) << ">\n";
-  oss << "use_set:<" << use_set.second << ", "<< VariableIdSetPrettyPrint::str(use_set.first, vidm) << ">\n";
-  oss << "func_set:<" << func_set.second << ", " << funcCallExpSetPrettyPrint() << ">\n";
+  oss << "def_vars_info: " << VarsInfoPrettyPrint(def_vars_info, vidm) << "\n";
+  oss << "use_vars_info: " << VarsInfoPrettyPrint(use_vars_info, vidm) << "\n";
+  oss << "func_set:<" << (func_set.second? "true" : "false")
+      << ", " << funcCallExpSetPrettyPrint() << ">\n";
   return oss.str();
 }
 
@@ -440,28 +476,48 @@ LvalueExprWalker::LvalueExprWalker(VariableIdMapping& _vidm, bool _isModExpr)
 
 void LvalueExprWalker::visit(SgInitializedName* sgn)
 {
-  VarsInfo& def_set = duvi.getDefVarsInfoMod();
-  VarsInfo& use_set = duvi.getUseVarsInfoMod();
-  if(isModExpr)
-    def_set.first.insert(vidm.variableId(sgn));
+  VarsInfo& def_vars_info = duvi.getDefVarsInfoMod();
+  VarsInfo& use_vars_info = duvi.getUseVarsInfoMod();
+  // determine the type
+  SgType* sgn_type = sgn->get_type();
+  VariableIdTypeInfo sgn_type_info;
+
+  if(isSgArrayType(sgn_type))
+    sgn_type_info = ARRAY;
+  else if(isSgPointerType(sgn_type))
+    sgn_type_info = POINTER;
+  else if(isSgReferenceType(sgn_type))
+    sgn_type_info = REFERENCE;
   else
-    use_set.first.insert(vidm.variableId(sgn));
+    sgn_type_info = VARIABLE;
+
+  if(isModExpr)
+    def_vars_info.first.insert(VariableIdInfo(vidm.variableId(sgn), sgn_type_info));
+  else
+    use_vars_info.first.insert(VariableIdInfo(vidm.variableId(sgn), sgn_type_info));
 }
 
 void LvalueExprWalker::visit(SgVarRefExp* sgn)
 {
-  VarsInfo& def_set = duvi.getDefVarsInfoMod();
-  VarsInfo& use_set = duvi.getUseVarsInfoMod();
-  // insert into def_set if on lhs
-  if(isModExpr)
-  {
-    def_set.first.insert(vidm.variableId(sgn));
-  }
-  // insert into use_set otherwise
+  VarsInfo& def_vars_info = duvi.getDefVarsInfoMod();
+  VarsInfo& use_vars_info = duvi.getUseVarsInfoMod();
+
+  SgType* sgn_type = sgn->get_type();
+  VariableIdTypeInfo sgn_type_info;
+
+  if(isSgArrayType(sgn_type))
+    sgn_type_info = ARRAY;
+  else if(isSgPointerType(sgn_type))
+    sgn_type_info = POINTER;
+  else if(isSgReferenceType(sgn_type))
+    sgn_type_info = REFERENCE;
   else
-  {
-    use_set.first.insert(vidm.variableId(sgn));
-  }
+    sgn_type_info = VARIABLE;
+
+  if(isModExpr)
+    def_vars_info.first.insert(VariableIdInfo(vidm.variableId(sgn), sgn_type_info));
+  else
+    use_vars_info.first.insert(VariableIdInfo(vidm.variableId(sgn), sgn_type_info));
 }
 
 void LvalueExprWalker::visit(SgPointerDerefExp* sgn)

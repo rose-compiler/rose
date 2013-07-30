@@ -20,33 +20,42 @@
 
 using namespace CodeThorn;
 
-// VariableId:
-// numbers all variable symbols in the program 
-// with a unique number. It is not used to
-// represent a location within an array or heap
-// region. With VariableId, we can only reason
-// about entire region (for example arr in arr[i])
-// and not individual locations in the region
+// VariableId is short hand for named memory
+// locations
 
-// typedef std::set<VariableId> VariableIdSet;
+// basic type info to describe some type
+// information about the variable
+// type info is associated with the respective VariableId
+enum VariableIdTypeInfo {
+  VARIABLE,
+  ARRAY,
+  POINTER,
+  REFERENCE
+};
+
+typedef std::pair<VariableId, VariableIdTypeInfo> VariableIdInfo;
+
+// map with VariableId as the key
+//
+typedef std::map<VariableId, VariableIdTypeInfo> VariableIdInfoMap;
 
 // VarsInfo is used to represent the result
-// of def/use query on expressions. The result
-// represents a set of variables that are
-// modified/used by any given expression.
-// VarsInfo is a pair <VariableIdSet, bool>
-// @VariableIdSet: set of named memory locations 
-// (variables) represented by their VariableId. 
-// @bool: flag is set if the named memory locations
-// (variables) that may be used/modified this expression
-// are different from those appearing on the
+// of def/use query on expressions. 
+// VarsInfo is a pair <VariableIdInfoMap, bool>
+// @VariableIdInfoMap: set of named memory locations 
+// (variables) represented by their VariableId and their
+// associated VariableIdTypeInfo
+// @bool: flag is set if the expression modifies/uses
+// memory locations that are different from 
+// the named memory locations appearing on the
 // expression itself (example: *p or array + 5)
 // flag is an indicator for requiring more
 // sophisticated pointer analysis to answer the
 // def/use query on this expression
-typedef std::pair<VariableIdSet, bool> VarsInfo;
+typedef std::pair<VariableIdInfoMap, bool> VarsInfo;
 
 typedef std::set<SgFunctionCallExp*> FunctionCallExpSet;
+
 // it is expensive to answer def/use queries on demand
 // for expressions that involve function calls
 // as it would mean walking all the expressions
@@ -54,8 +63,7 @@ typedef std::set<SgFunctionCallExp*> FunctionCallExpSet;
 // @FunctionCallExpSet: consitsts of all the functions
 // that this expression is calling
 // @bool: flag is an indicator that the 
-// expression alone is not sufficient to
-// answer the def/use query
+// expression involves function calls
 typedef std::pair<FunctionCallExpSet, bool> FunctionCallExpInfo;
 
 /*************************************************
@@ -63,18 +71,18 @@ typedef std::pair<FunctionCallExpSet, bool> FunctionCallExpInfo;
  *************************************************/
 
 // determined completely based on syntactic information
-// def_set consists of VariableIds which are written by the expression
-// use_set consists of VariableIds which are read but not modified by this expression
+// def_vars_info consists of VariableIds which are written by the expression
+// use_vars_info consists of VariableIds which are read but not modified by this expression
 // func_set consists of all SgFunctionCallExps that are invoked by this expression
 class DefUseVarsInfo
 {
-  VarsInfo def_set;
-  VarsInfo use_set;
+  VarsInfo def_vars_info;
+  VarsInfo use_vars_info;
   FunctionCallExpInfo func_set;
    
 public:
   DefUseVarsInfo() { }
-  DefUseVarsInfo(const VarsInfo& _dset, const VarsInfo& _uset, const FunctionCallExpInfo& _fset);
+  DefUseVarsInfo(const VarsInfo& _def_info, const VarsInfo& _use_info, const FunctionCallExpInfo& _fset);
   
   // returns the corresponding info about the memory locations
   VarsInfo getDefVarsInfo();
@@ -105,10 +113,11 @@ public:
 
   DefUseVarsInfo operator+(const DefUseVarsInfo& duvi1);
 
-  std::string str();
-  // for more readability
-  std::string str(VariableIdMapping& vidm);
+  std::string VarsInfoPrettyPrint(VarsInfo& vars_info, VariableIdMapping& vidm);
   std::string funcCallExpSetPrettyPrint();
+
+  // for more readability
+  std::string str(VariableIdMapping& vidm);  
 };
 
 // used by the getDefUseVarsInfo_rec to traverse the 
@@ -203,7 +212,7 @@ DefUseVarsInfo getDefUseVarsInfo_rec(SgNode* sgn, VariableIdMapping& vidm, bool 
 
 // used to process the lhs of assignment operator
 // invokes a visitor pattern and adds the modified variables
-// to def_set and used variables to use_set of duvi object
+// to def_vars_info and used variables to use_vars_info of duvi object
 DefUseVarsInfo getDefUseVarsInfoLvalue(SgNode* sgn, VariableIdMapping& vidm, bool isModExpr);
 
 #endif
