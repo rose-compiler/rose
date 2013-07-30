@@ -295,10 +295,16 @@ Grammar::setUpExpressions ()
           CudaKernelCallExp,
           "FunctionCallExp","FUNC_CALL", true);
 
-     NEW_NONTERMINAL_MACRO (CallExpression,
-          FunctionCallExp,
-          "CallExpression","CALL_EXPRESSION", true);
+  // DQ (7/12/2013): Added new IR nodes to support new type of function call (builtin functions used for type trait support 
+  // in later versions of GNU and other compilers).  For more details see: http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html
+  // These are required to be supported as part of bug fix for proper handling of Boost (but also some STL that was never a 
+  // noticed problem).  These builtin functions take types as parameters and sometimes return types as well.  They will 
+  // require an implementation in ROSE to support analysis.
+     NEW_NONTERMINAL_MACRO (CallExpression,FunctionCallExp,"CallExpression","CALL_EXPRESSION", true);
+     NEW_TERMINAL_MACRO (TypeTraitBuiltinOperator, "TypeTraitBuiltinOperator", "TYPE_TRAIT_BUILTIN_OPERATOR");
+  // NEW_NONTERMINAL_MACRO (CallExpression,FunctionCallExp | TypeTraitBuiltinOperator,"CallExpression","CALL_EXPRESSION", true);
 
+  // DQ (7/12/2013): Moved the TypeTraitBuiltinOperator to be derived from Expression.
      NEW_NONTERMINAL_MACRO (Expression,
           UnaryOp                  | BinaryOp                 | ExprListExp             | VarRefExp           | ClassNameRefExp          |
           FunctionRefExp           | MemberFunctionRefExp     | ValueExp                | CallExpression      | SizeOfOp                 |
@@ -312,7 +318,8 @@ Grammar::setUpExpressions ()
           CudaKernelExecConfig    |  /* TV (04/22/2010): CUDA support */
           LambdaRefExp        | DictionaryExp           | KeyDatumPair             |
           Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension  | NaryOp |
-          StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp     | AlignOfOp,
+          StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp | AlignOfOp |
+          TypeTraitBuiltinOperator,
           "Expression","ExpressionTag", false);
 
   // ***********************************************************************
@@ -1402,6 +1409,13 @@ Grammar::setUpExpressions ()
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+  // DQ (7/12/2013): Added type-trait builtin function support.
+     TypeTraitBuiltinOperator.setFunctionPrototype ( "HEADER_TYPE_TRAIT_BUILTIN_OPERATOR", "../Grammar/Expression.code" );
+     TypeTraitBuiltinOperator.setDataPrototype ( "SgName", "name", "= \"\"",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TypeTraitBuiltinOperator.setDataPrototype ("SgNodePtrList", "args", "",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      ArrowExp.setFunctionPrototype ( "HEADER_ARROW_EXPRESSION", "../Grammar/Expression.code" );
 
      DotExp.setFunctionPrototype ( "HEADER_DOT_EXPRESSION", "../Grammar/Expression.code" );
@@ -2193,7 +2207,12 @@ Grammar::setUpExpressions ()
 
      ComplexVal.setFunctionSource ( "SOURCE_COMPLEX_VALUE_EXPRESSION","../Grammar/Expression.code" );
      CallExpression.setFunctionSource ( "SOURCE_CALL_EXPRESSION","../Grammar/Expression.code" );
+
      FunctionCallExp.setFunctionSource ( "SOURCE_FUNCTION_CALL_EXPRESSION","../Grammar/Expression.code" );
+
+  // DQ (7/12/2013): Added type-trait builtin function support.
+     TypeTraitBuiltinOperator.setFunctionSource( "SOURCE_TYPE_TRAIT_BUILTIN_OPERATOR", "../Grammar/Expression.code" );
+
      ArrowExp.setFunctionSource ( "SOURCE_ARROW_EXPRESSION","../Grammar/Expression.code" );
      DotExp.setFunctionSource ( "SOURCE_DOT_EXPRESSION","../Grammar/Expression.code" );
      DotStarOp.setFunctionSource ( "SOURCE_DOT_STAR_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
