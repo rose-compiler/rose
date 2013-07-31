@@ -21,7 +21,6 @@ typedef std::set<VariableId> VariableIdSet;
 
 // AST Query Processor
 // common functor to process any query and build match result
-// NOTE: extend it to accept a functor to apply on each element of match result
 
 /*************************************************
  ***************** ProcessQuery  *****************
@@ -54,8 +53,8 @@ class ComputeAddressTakenInfo
   // expressions that are operands of SgAddressOfOp and find the
   // variable whose address is actually taken.
   // For example in expression &(a.b->c),  'c' address is
-  // actually taken. This class simply traverses the rhs_operand
-  // of SgDotExp/SgArrowExp or other expressions to identify 
+  // actually taken. This class simply traverses the operand
+  // of SgAddressOfOp to identify 
   // the variable whose address is taken
   // 
   class OperandToVariableId : public ROSE_VisitorPatternDefaultBase
