@@ -5504,10 +5504,13 @@ Unparse_ExprStmt::unparseVarArgCopyOp(SgExpression* expr, SgUnparse_Info& info)
    }
 
 
+#if 0
 static bool 
 subTreeContainsDesignatedInitializer ( SgExpression* exp )
    {
   // DQ (7/22/2013): This function traverses the AST and detects any SgDesignatedInitializer IR node.
+  // The goal more specifically is to detect the use of array initializers that don't require the "=" 
+  // in ther unparsed syntax.
 
      class ContainsDesignatedInitializer : public AstSimpleProcessing
         {
@@ -5518,9 +5521,14 @@ subTreeContainsDesignatedInitializer ( SgExpression* exp )
 
               void visit ( SgNode* astNode )
                  {
-                   if (isSgDesignatedInitializer(astNode) != NULL)
+                   SgDesignatedInitializer* designatedInitializer = isSgDesignatedInitializer(astNode);
+                   if (designatedInitializer != NULL)
                       {
-                        hasDesignatedInitializer = true;
+                     // This depends on the implemantation to have a SgExprListExp (which I would like to eliminate in the IR node design).
+                        if ( isSgUnsignedLongVal(designatedInitializer->get_designatorList()->get_expressions()[0]) != NULL)
+                           {
+                             hasDesignatedInitializer = true;
+                           }
                       }
                  }
         };
@@ -5535,14 +5543,16 @@ subTreeContainsDesignatedInitializer ( SgExpression* exp )
 
       return traversal.hasDesignatedInitializer;
    }
-
+#endif
 
 
 void
 Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Info & info)
    {
 #if 0
-     printf ("In unparseDesignatedInitializer: expr = %p expr->startOfConstruct(): \n",expr);
+     printf ("In unparseDesignatedInitializer: expr = %p \n",expr);
+#endif
+#if 0
      expr->get_startOfConstruct()->display("In unparseDesignatedInitializer: debug");
 #endif
 
@@ -5565,14 +5575,25 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
      bool isCastDesignator         = (isSgCastExp(designator) != NULL);
      bool isAggregateInitializer   = (isSgAggregateInitializer(designator) != NULL);
 
+     bool isAssignInitializer      = (isSgAssignInitializer(initializer) != NULL);
+
   // bool outputDesignatedInitializer                   = (isDataMemberDesignator == true && varRefExp->get_symbol() != NULL);
   // bool outputDesignatedInitializerAssignmentOperator = (subTreeContainsDesignatedInitializer(initializer) == false && isCastDesignator == false);
-     bool outputDesignatedInitializerAssignmentOperator = (subTreeContainsDesignatedInitializer(initializer) == false && isCastDesignator == false && isAggregateInitializer == false);
+  // bool outputDesignatedInitializerAssignmentOperator = (subTreeContainsDesignatedInitializer(initializer) == false && isCastDesignator == false && isAggregateInitializer == false);
+  // bool outputDesignatedInitializerAssignmentOperator = true;
+  // bool outputDesignatedInitializerAssignmentOperator = (subTreeContainsDesignatedInitializer(initializer) == false);
+  // bool outputDesignatedInitializerAssignmentOperator = (isArrayElementDesignator == false);
+  // bool outputDesignatedInitializerAssignmentOperator = (subTreeContainsDesignatedInitializer(initializer) == false) && (isArrayElementDesignator == false);
+     bool outputDesignatedInitializerAssignmentOperator = (isArrayElementDesignator == false) || (isAssignInitializer == true);
 
 #if 0
      printf ("In unparseDesignatedInitializer: designator  = %p = %s \n",designator,designator->class_name().c_str());
      printf ("In unparseDesignatedInitializer: initializer = %p = %s \n",initializer,initializer->class_name().c_str());
+
+     printf ("In unparseDesignatedInitializer: isArrayElementDesignator = %s \n",isArrayElementDesignator ? "true" : "false");
+     printf ("In unparseDesignatedInitializer: outputDesignatedInitializerAssignmentOperator = %s \n",outputDesignatedInitializerAssignmentOperator ? "true" : "false");
 #endif
+
 #if 0
      info.display("In unparseDesignatedInitializer()");
 #endif
@@ -5630,6 +5651,9 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
              }
             else
              {
+#if 0
+               printf ("Reset outputDesignatedInitializerAssignmentOperator = false \n");
+#endif
                outputDesignatedInitializerAssignmentOperator = false;
              }
         }
@@ -5658,7 +5682,8 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
         }
 
 #if 0
-     printf ("In unparseDesignatedInitializer: di->get_memberInit() = %p = %s \n",di->get_memberInit(),di->get_memberInit()->class_name().c_str());
+     printf ("In unparseDesignatedInitializer: outputDesignatedInitializerAssignmentOperator = %s \n",outputDesignatedInitializerAssignmentOperator ? "true" : "false");
+     printf ("In unparseDesignatedInitializer: di->get_memberInit()                          = %p = %s \n",di->get_memberInit(),di->get_memberInit()->class_name().c_str());
 #endif
 
   // Only unparse the "=" if this is not another in a chain of SgAggregateInitializer IR nodes.
