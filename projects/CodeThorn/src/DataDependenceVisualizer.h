@@ -13,22 +13,22 @@ using namespace CodeThorn;
 
 class VariableIdSetAttribute : public AstSgNodeAttribute {
  public:
-  VariableIdSetAttribute(set<VariableId> set):_variableIdSet(set){}
-  set<VariableId> getVariableIdSet() { return _variableIdSet; }
+  VariableIdSetAttribute(VariableIdMapping::VariableIdSet set):_variableIdSet(set){}
+  VariableIdMapping::VariableIdSet getVariableIdSet() { return _variableIdSet; }
  private:
-  set<VariableId> _variableIdSet;
+  VariableIdMapping::VariableIdSet _variableIdSet;
 };
 
 class DataDependenceVisualizer {
  public:
   DataDependenceVisualizer(Labeler* labeler, VariableIdMapping* varIdMapping);
-  set<VariableId> useVars(SgNode* expr);
-  set<VariableId> defVars(SgNode* expr);
+  VariableIdMapping::VariableIdSet useVars(SgNode* expr);
+  VariableIdMapping::VariableIdSet defVars(SgNode* expr);
   Label getLabel(SgNode* stmt);
   SgNode* getNode(Label lab);
   void generateDot(SgNode* root, string fileName);
  private:
-  set<VariableId> getAstAttributeVariableIdSet(SgNode*, string);
+  VariableIdMapping::VariableIdSet getAstAttributeVariableIdSet(SgNode*, string);
   Labeler* _labeler;
   VariableIdMapping* _variableIdMapping;
 };

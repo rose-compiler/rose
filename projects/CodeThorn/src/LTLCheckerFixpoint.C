@@ -368,7 +368,7 @@ public:
     return c+'A'-1;
   }
 
-  static void updateInputVar(const EState* estate, set<VariableId>& input_vars) {
+  static void updateInputVar(const EState* estate, VariableIdMapping::VariableIdSet& input_vars) {
     if (estate->io.op == InputOutput::STDIN_VAR) {
       input_vars.insert(estate->io.var);
     }
@@ -376,7 +376,7 @@ public:
 
   /// return True iff that state is an Oc operation
   static BoolLattice isInputState(const EState* estate, 
-				  set<VariableId>& input_vars,
+				  VariableIdMapping::VariableIdSet& input_vars,
 				  int c, BoolLattice joined_preds) {
     updateInputVar(estate, input_vars);
     if (input_vars.empty())
@@ -386,7 +386,7 @@ public:
     assert(estate);
     assert(estate->constraints());
     ConstraintSet constraints = *estate->constraints();
-    for (set<VariableId>::const_iterator ivar = input_vars.begin();
+    for (VariableIdMapping::VariableIdSet::const_iterator ivar = input_vars.begin();
 	 ivar != input_vars.end();
 	 ++ivar) {
       // main input variable
@@ -419,7 +419,7 @@ public:
   // NOTE: This is extremely taylored to the RERS challenge benchmarks.
   void visit(const InputSymbol* expr) {
     short e = expr->label;
-    set<VariableId> input_vars;
+    VariableIdMapping::VariableIdSet input_vars;
 
     fixpoint(Bot(),                                                 // init
 	     &&,                                                    // join
@@ -430,7 +430,7 @@ public:
 
   /// return True iff that state is an !Ic operation
   static BoolLattice isNegInputState(const EState* estate, 
-				     set<VariableId>& input_vars,
+				     VariableIdMapping::VariableIdSet& input_vars,
 				     int c, BoolLattice joined_preds) {
     updateInputVar(estate, input_vars);
     if (input_vars.empty())
@@ -440,7 +440,7 @@ public:
     assert(estate);
     assert(estate->constraints());
     ConstraintSet constraints = *estate->constraints();
-    for (set<VariableId>::const_iterator ivar = input_vars.begin();
+    for (VariableIdMapping::VariableIdSet::const_iterator ivar = input_vars.begin();
 		 ivar != input_vars.end(); 
 		 ++ivar) {
       // This will really only work with one input variable (that one may be aliased, though)
@@ -478,7 +478,7 @@ public:
   // NOTE: This is extremely taylored to the RERS challenge benchmarks.
   void visit(const NegInputSymbol* expr) {
     short e = expr->label;
-    set<VariableId> input_vars;
+    VariableIdMapping::VariableIdSet input_vars;
 
     fixpoint(Bot(),                                                 // init
 	     &&,                                                    // join

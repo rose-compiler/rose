@@ -23,8 +23,8 @@ void VariableIdMapping::toStream(ostream& os) {
   }
 }
 
-set<VariableId> VariableIdMapping::getVariableIdSet() {
-  set<VariableId> set;
+VariableIdMapping::VariableIdSet VariableIdMapping::getVariableIdSet() {
+  VariableIdSet set;
   for(map<SgSymbol*,size_t>::iterator i=mappingSymToVarId.begin();i!=mappingSymToVarId.end();++i) {
 	size_t t=(*i).second;
 	VariableId id;
@@ -395,10 +395,12 @@ bool CodeThorn::operator!=(VariableId id1, VariableId id2) {
   return !(id1==id2);
 }
 
+size_t hash_value(const CodeThorn::VariableId& vid) {
+  return vid.getIdCode();
+}
 
-
-set<VariableId> VariableIdMapping::determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls) {
-  set<VariableId> resultSet;
+VariableIdMapping::VariableIdSet VariableIdMapping::determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls) {
+  VariableIdMapping::VariableIdSet resultSet;
   for(set<SgVariableDeclaration*>::iterator i=varDecls.begin();i!=varDecls.end();++i) {
 	SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(*i);
 	if(sym) {
@@ -408,8 +410,8 @@ set<VariableId> VariableIdMapping::determineVariableIdsOfVariableDeclarations(se
   return resultSet;
 }
 
-set<VariableId> VariableIdMapping::determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList) {
-  set<VariableId> resultSet;
+VariableIdMapping::VariableIdSet VariableIdMapping::determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList) {
+  VariableIdMapping::VariableIdSet resultSet;
   for(SgInitializedNamePtrList::iterator i=namePtrList.begin();i!=namePtrList.end();++i) {
 	assert(*i);
 	SgSymbol* sym=SgNodeHelper::getSymbolOfInitializedName(*i);

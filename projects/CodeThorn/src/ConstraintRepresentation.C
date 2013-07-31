@@ -663,10 +663,10 @@ void ConstraintSet::removeAllConstraintsOfVar(VariableId varId) {
   // => simply remove all (we do not loose information)
 
   bool isDedicatedVar=(equalityMaintainer.determineDedicatedElement(varId)==varId);
-  set<VariableId> equalVars=equalityMaintainer.equalElements(varId);
+  VariableIdMapping::VariableIdSet equalVars=equalityMaintainer.equalElements(varId);
   if(isDedicatedVar && (equalVars.size()>=2)) {
 	// find an element different to the dedicated var (the 2nd element must be correct)
-	set<VariableId>::iterator i=equalVars.begin();
+	VariableIdMapping::VariableIdSet::iterator i=equalVars.begin();
 	++i;
 	assert(i!=equalVars.end());
 	VariableId someOtherVar=*i;

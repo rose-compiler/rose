@@ -61,6 +61,7 @@ class Flow : public set<Edge> {
   LabelSet succ(Label label);
   Flow inEdges(Label label);
   Flow outEdges(Label label);
+  Flow outEdgesOfType(Label label, EdgeType edgeType);
   void setDotOptionDisplayLabel(bool opt);
   void setDotOptionDisplayStmt(bool opt);
   void setTextOptionPrintType(bool opt) { _stringNoType=!opt;}

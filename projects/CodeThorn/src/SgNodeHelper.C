@@ -509,37 +509,37 @@ bool SgNodeHelper::isForwardFunctionDeclaration(SgNode* node) {
 }
 
 SgFunctionDefinition* SgNodeHelper::determineFunctionDefinition(SgFunctionCallExp* funCall) {
-  SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration();
-  assert(funDecl);
-  SgFunctionDefinition* funDef=funDecl->get_definition();
-  if(funDef==0) {
-	// forward declaration (we have not found the function definition yet)
-	// 1) use parent pointers and search for Root node (likely to be SgProject node)
-	SgNode* root=funDecl;
-	SgNode* parent=0;
-	while(!SgNodeHelper::isAstRoot(root)) {
-	  parent=SgNodeHelper::getParent(root);
-	  root=parent;
-	}
-	assert(root);
-	// 2) search in AST for the right definition now
-	RoseAst ast(root);
-	for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-	  if(SgFunctionDeclaration* funDecl2=isSgFunctionDeclaration(*i)) {
-		if(!SgNodeHelper::isForwardFunctionDeclaration(funDecl2)) {
-		  if(funDecl2->search_for_symbol_from_symbol_table()
-			 ==funDecl->search_for_symbol_from_symbol_table()) {
-			SgFunctionDefinition* fundef2=funDecl2->get_definition();
-			assert(fundef2);
-			return fundef2;
+  if(SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration()) {
+	if(SgFunctionDefinition* funDef=funDecl->get_definition()) {
+	  return funDef;
+	} else {
+	  // forward declaration (we have not found the function definition yet)
+	  // 1) use parent pointers and search for Root node (likely to be SgProject node)
+	  SgNode* root=funDecl;
+	  SgNode* parent=0;
+	  while(!SgNodeHelper::isAstRoot(root)) {
+		parent=SgNodeHelper::getParent(root);
+		root=parent;
+	  }
+	  assert(root);
+	  // 2) search in AST for the function's definition now
+	  RoseAst ast(root);
+	  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+		if(SgFunctionDeclaration* funDecl2=isSgFunctionDeclaration(*i)) {
+		  if(!SgNodeHelper::isForwardFunctionDeclaration(funDecl2)) {
+			SgSymbol* sym2=funDecl2->search_for_symbol_from_symbol_table();
+			SgSymbol* sym1=funDecl->search_for_symbol_from_symbol_table();
+			if(sym1!=0 && sym1==sym2) {
+			  SgFunctionDefinition* fundef2=funDecl2->get_definition();
+			  assert(fundef2);
+			  return fundef2;
+			}
 		  }
 		}
 	  }
 	}
-	return 0;
   }
-  assert(funDef!=0);
-  return funDef;
+  return 0;
 }
 
 string SgNodeHelper::getLabelName(SgNode* node) {

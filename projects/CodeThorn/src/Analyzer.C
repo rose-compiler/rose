@@ -20,9 +20,9 @@ Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOf
   }
 }
 
-set<string> Analyzer::variableIdsToVariableNames(set<VariableId> s) {
+set<string> Analyzer::variableIdsToVariableNames(VariableIdMapping::VariableIdSet s) {
   set<string> res;
-  for(set<VariableId>::iterator i=s.begin();i!=s.end();++i) {
+  for(VariableIdMapping::VariableIdSet::iterator i=s.begin();i!=s.end();++i) {
 	res.insert(variableIdMapping.uniqueLongVariableName(*i));
   }
   return res;
@@ -337,8 +337,8 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
 }
 
 // this function has been moved to VariableIdMapping: TODO eliminate this function here
-set<VariableId> Analyzer::determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls) {
-  set<VariableId> resultSet;
+VariableIdMapping::VariableIdSet Analyzer::determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls) {
+  VariableIdMapping::VariableIdSet resultSet;
   for(set<SgVariableDeclaration*>::iterator i=varDecls.begin();i!=varDecls.end();++i) {
 	SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(*i);
 	if(sym) {
@@ -349,8 +349,8 @@ set<VariableId> Analyzer::determineVariableIdsOfVariableDeclarations(set<SgVaria
 }
 
 // this function has been moved to VariableIdMapping: TODO eliminate this function here
-set<VariableId> Analyzer::determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList) {
-  set<VariableId> resultSet;
+VariableIdMapping::VariableIdSet Analyzer::determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList) {
+  VariableIdMapping::VariableIdSet resultSet;
   for(SgInitializedNamePtrList::iterator i=namePtrList.begin();i!=namePtrList.end();++i) {
 	assert(*i);
 	SgSymbol* sym=SgNodeHelper::getSymbolOfInitializedName(*i);
@@ -442,7 +442,7 @@ const EState* Analyzer::processNew(EState& s) {
 
 const EState* Analyzer::processNewOrExisting(EState& estate) {
   if(boolOptions["tg-ltl-reduced"]) {
-	// experimental passing of params (we can avoid the copying)
+	// experimental: passing of params (we can avoid the copying)
 	EStateSet::ProcessingResult res=process(estate.label(),*estate.pstate(),*estate.constraints(),estate.io);
 	assert(res.second);
 	return res.second;
@@ -694,13 +694,13 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 	  // ad 2)
 	  ConstraintSet cset=*currentEState.constraints();
 	  PState newPState=*(currentEState.pstate());
-	  set<VariableId> localVars=determineVariableIdsOfVariableDeclarations(varDecls);
+	  VariableIdMapping::VariableIdSet localVars=determineVariableIdsOfVariableDeclarations(varDecls);
 	  SgInitializedNamePtrList& formalParamInitNames=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
-	  set<VariableId> formalParams=determineVariableIdsOfSgInitializedNames(formalParamInitNames);
-	  set<VariableId> vars=localVars+formalParams;
+	  VariableIdMapping::VariableIdSet formalParams=determineVariableIdsOfSgInitializedNames(formalParamInitNames);
+	  VariableIdMapping::VariableIdSet vars=localVars+formalParams;
 	  set<string> names=variableIdsToVariableNames(vars);
 
-	  for(set<VariableId>::iterator i=vars.begin();i!=vars.end();++i) {
+	  for(VariableIdMapping::VariableIdSet::iterator i=vars.begin();i!=vars.end();++i) {
 		VariableId varId=*i;
 		newPState.deleteVar(varId);
 		cset.removeAllConstraintsOfVar(varId);
@@ -805,6 +805,11 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 		  if(boolOptions["update-input-var"]) {
 			newCSet.removeAllConstraintsOfVar(varId);
 			newPState[varId]=AType::Top();
+		  }
+		  if(boolOptions["reset-state-on-input"]) {
+			newPState.setAllVariablesToTop();
+			ConstraintSet emptyCSet;
+			newCSet=emptyCSet;
 		  }
 		}
 		newio.recordVariable(InputOutput::STDIN_VAR,varId);
@@ -1036,7 +1041,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
 	
 	list<SgVarRefExp*> varRefExpList=SgNodeHelper::listOfUsedVarsInFunctions(project);
 	// compute set of varIds (it is a set because we want multiple uses of the same var to be represented by one id)
-	set<VariableId> setOfUsedVars;
+	VariableIdMapping::VariableIdSet setOfUsedVars;
 	for(list<SgVarRefExp*>::iterator i=varRefExpList.begin();i!=varRefExpList.end();++i) {
 	  setOfUsedVars.insert(variableIdMapping.variableId(*i));
 	}
@@ -1044,14 +1049,17 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
 
 	int filteredVars=0;
 	for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
-	  if(setOfUsedVars.find(variableIdMapping.variableId(*i))!=setOfUsedVars.end()) {
+	  VariableId globalVarId=variableIdMapping.variableId(*i);
+	  if(setOfUsedVars.find(globalVarId)!=setOfUsedVars.end() && _variablesToIgnore.find(globalVarId)==_variablesToIgnore.end()) {
 		globalVarName2VarIdMapping[variableIdMapping.variableName(variableIdMapping.variableId(*i))]=variableIdMapping.variableId(*i);
 		estate=analyzeVariableDeclaration(*i,estate,estate.label());
-	  }
-	  else
+	  } else {
 		filteredVars++;
+	  }
 	}
 	cout << "STATUS: Number of filtered variables for initial pstate: "<<filteredVars<<endl;
+	if(_variablesToIgnore.size()>0)
+	  cout << "STATUS: Number of ignored variables for initial pstate: "<<_variablesToIgnore.size()<<endl;
   } else {
 	cout << "INIT: no global scope.";
   }	
@@ -1082,6 +1090,13 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
   bool isRhsIntVal=false;
   bool isRhsVar=false;
 
+  if(boolOptions["assign-top"]) {
+	PState newPState=currentPState;
+	cset.removeAllConstraintsOfVar(lhsVar);
+	newPState[lhsVar]=AType::Top();
+	return newPState;
+  }
+
   // TODO: -1 is OK, but not -(-1); yet.
   if(SgMinusOp* minusOp=isSgMinusOp(rhs)) {
 	if(SgIntVal* intValNode=isSgIntVal(SgNodeHelper::getFirstChild(minusOp))) {
@@ -1109,7 +1124,8 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
 	if(currentPState.varExists(rhsVarId)) {
 	  rhsIntVal=currentPState[rhsVarId].getValue();
 	} else {
-	  cerr << "WARNING: access to variable "<<variableIdMapping.uniqueLongVariableName(rhsVarId)<< "on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
+	  if(_variablesToIgnore.size()==0)
+		cerr << "WARNING: access to variable "<<variableIdMapping.uniqueLongVariableName(rhsVarId)<< "on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
 	  rhsIntVal=AType::Top();
 	  isRhsIntVal=true;
 	}
@@ -1133,8 +1149,12 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
 	  return newPState;
 	}
   } else {
-	// new variable with new value
-	newPState[lhsVar]=rhsIntVal;
+	if(_variablesToIgnore.size()>0 && (_variablesToIgnore.find(lhsVar)!=_variablesToIgnore.end())) {
+	  // nothing to do because variable is ignored
+	} else {
+	  // new variable with new value
+	  newPState[lhsVar]=rhsIntVal;
+	}
 	// no update of constraints because no constraints can exist for a new variable
 	return newPState;
   }

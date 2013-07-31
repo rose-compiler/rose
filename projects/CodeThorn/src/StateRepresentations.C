@@ -188,7 +188,9 @@ bool PState::varIsConst(VariableId varId) const {
 	AValue val=(*i).second.getValue();
 	return val.isConstInt();
   } else {
-	throw "Error: PState::varIsConst : variable does not exist.";
+	// TODO: this allows variables (intentionally) not to be in PState but still to analyze
+	// however, this check will have to be reinstated once this mode is fully supported
+	return false; // throw "Error: PState::varIsConst : variable does not exist.";
   }
 }
 
@@ -196,6 +198,17 @@ string PState::varValueToString(VariableId varId) const {
   stringstream ss;
   AValue val=((*(const_cast<PState*>(this)))[varId]).getValue();
   return val.toString();
+}
+
+void PState::setAllVariablesToTop() {
+  setAllVariablesToValue(CodeThorn::CppCapsuleAValue(AType::Top()));
+}
+
+void PState::setAllVariablesToValue(CodeThorn::CppCapsuleAValue val) {
+  for(PState::iterator i=begin();i!=end();++i) {
+	VariableId varId=(*i).first;
+	operator[](varId)=val;
+  }
 }
 
 PStateId PStateSet::pstateId(const PState* pstate) {

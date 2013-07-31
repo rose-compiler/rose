@@ -95,42 +95,14 @@ CodeThorn is a tool for analyzing C/C++ programs, combining approaches
 from data flow analysis, constraint-based analysis, and model
 checking. The main focus in the development of CodeThorn is the
 exploration of program analysis algorithms in combining above
-approaches for its application in analyzing and optimizing
-high-performance applications (HPC) and embedded systems
-applications. When analyzing HPC applications one important aspect is
-the analysis of parallelism in programs. For embedded systems timing
-behaviour, e.g. wort-case execution time, is of equal
-importance. Since processors, as they are used in embedded systems,
-are becoming increasingly parallel, parallelism at the application
-level is also becoming increasingly important. However, many HPC
-applications are massively parallel and as such have no complicated
-control structure, in difference to embedded systems control software
-which usually shows complex control patterns which would not be
-suitable for executing on massively parallel hardware (such as modern
-GPUs).
+approaches and to explore methods for combining static analsyis
+with methods for verification of software.
 
-CodeThorn has grown out of both those application areas, from
-analyzing and optimizing source-to-source HPC applications \cite{MS-QSMK04CPA} with
-ROSE-based tools \cite{RoseWWW,MS-SCAM05} and analysing embedded systems
-software with SATIrE \cite{SatireWWW} (which integrates ROSE and PAG \cite{martin-pag}) and
-which has been applied in performing loop bound analysis (TuBound \cite{Prantl:SK08}, \cite{Kirner:SOSYM2010}) timiing
-analysis (e.g. WCET challenge 2008/9 \cite{Prantl:WCET2009}).
-
-Since verification of software is becoming increasingly important in
-all areas where software analysis can be applied to aid the proper
-development of software, we have recently begun the development of
-CodeThorn to investige approaches that allow to combine approaches
-from different areas and which may become suitable in different areas
-of HPC and embedded systems.
-
-We currently restrict the input language to a small subset of C as we
+We currently restrict the input language to a small subset of C++ as we
 are also using it when normalizing compute intensive code for
-optimizations. The RERS 2012 subset is therefore well suited for our
-initial version. Future work will include porting our analyses from
-SATIrE to CodeThorn (e.g. shape analysis \cite{scam2011},
-points-to analysis, interval analysis).
+optimizations. 
 
-In CodeThorn (in its present version 1.1) we integrate three approaches:
+In CodeThorn (in its present version 1.2) we integrate three approaches:
 
 \begin{itemize}
 \item Data-flow analysis (inter-procedural flow-senstive analysis, computing property states) 
@@ -139,15 +111,10 @@ In CodeThorn (in its present version 1.1) we integrate three approaches:
 \end{itemize}
 
 In the following sections we will describe briefly each approach and
-how we combine them in analyzing the RERS challenge-problems. We have
-found the RERS-challenge problems being an excellent guidence in
-crafting this early version of the tool and investigating the impact
-and performance of each of the approaches on the overall results, and
-in particular the opportunities we see emerge and limitations we
-currently face in respect to verfication. We believe that insights
-gained in the work on the RERS challenge-problems will transfer to
-analyses as we shall use them in above mentioned areas of analyzing HPC and
-embedded systems applications.
+how we combine them in analyzing programs. 
+
+We have found the RERS-challenge
+problems \footnote{http://www.rers-challenge.org} being an excellent guidence in crafting this early version of the tool and investigating the impact and performance of each of the approaches on the overall results, and in particular the opportunities we see emerge and limitations we currently face in respect to verfication.
 
 \input{stg}
 \input{ltl}

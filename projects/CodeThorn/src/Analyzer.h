@@ -137,11 +137,11 @@ namespace CodeThorn {
 	CFAnalyzer* cfanalyzer;
 	
 	//! compute the VariableIds of variable declarations
-	set<VariableId> determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> decls);
+	VariableIdMapping::VariableIdSet determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> decls);
 	//! compute the VariableIds of SgInitializedNamePtrList
-	set<VariableId> determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
+	VariableIdMapping::VariableIdSet determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
 	
-	set<string> variableIdsToVariableNames(set<VariableId>);
+	set<string> variableIdsToVariableNames(VariableIdMapping::VariableIdSet);
 	
 	//bool isAssertExpr(SgNode* node);
 	bool isFailedAssertEState(const EState* estate);
@@ -195,6 +195,7 @@ namespace CodeThorn {
 	int _numberOfThreadsToUse;
 	int _ltlVerifier;
 	int _semanticFoldThreshold;
+	VariableIdMapping::VariableIdSet _variablesToIgnore;
   };
   
 } // end of namespace CodeThorn

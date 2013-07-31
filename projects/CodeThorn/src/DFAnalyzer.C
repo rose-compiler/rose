@@ -85,7 +85,7 @@ DFAnalyzer<LatticeType>::initialize(SgProject* root) {
 	
 	list<SgVarRefExp*> varRefExpList=SgNodeHelper::listOfUsedVarsInFunctions(project);
 	// compute set of varIds (it is a set because we want multiple uses of the same var to be represented by one id)
-	set<VariableId> setOfUsedVars;
+	VariableIdMapping::VariableIdSet setOfUsedVars;
 	for(list<SgVarRefExp*>::iterator i=varRefExpList.begin();i!=varRefExpList.end();++i) {
 	  setOfUsedVars.insert(variableIdMapping.variableId(*i));
 	}
@@ -139,12 +139,27 @@ DFAnalyzer<LatticeType>::solve() {
 	
 	LatticeType newInfo=transfer(lab,inInfo);
 	//cout<<"NewInfo: ";newInfo.toStream(cout);cout<<endl;
+	bool isLoopCondition=SgNodeHelper::isLoopCond(_labeler->getNode(lab));
 	if(!newInfo.approximatedBy(_analyzerData[lab])) {
 	  _analyzerData[lab].combine(newInfo);
-	  LabelSet succ=_flow.succ(lab);
+	  // semantic propagation: if node[l] is a condition of a loop only propagate on the true branch
+	  LabelSet succ;
+	  {
+		if(isLoopCondition) {
+		  succ=_flow.outEdgesOfType(lab,EDGE_TRUE).targetLabels();
+		} else {
+		  succ=_flow.succ(lab);
+		}
+	  }
 	  _workList.add(succ);
 	} else {
-	  // no new information was computed. Nothing to do.
+	  // no new information was computed. Nothing to do (except for the case it is a loop-condition of a loop for which we may have found a fix-point)
+	  if(isLoopCondition) {
+		LabelSet succ=_flow.outEdgesOfType(lab,EDGE_FALSE).targetLabels();
+		_workList.add(succ);
+	  } else {
+		// nothing to add
+	  }
 	}
   }
   cout<<"INFO: solver finished."<<endl;

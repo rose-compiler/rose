@@ -24,7 +24,7 @@ using namespace std;
 namespace CodeThorn {
 
 typedef list<AValue> ListOfAValue;
-typedef set<VariableId> SetOfVariableId;
+ typedef VariableIdMapping::VariableIdSet SetOfVariableId;
 
 /*
   EQ_VAR_CONST : equal (==)
