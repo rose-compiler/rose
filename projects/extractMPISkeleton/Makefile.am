@@ -6,7 +6,7 @@ SUBDIRS=\
 	tests
 
 EXTRA_DIST=apis.coll mpi_api.spec stdio_input.spec \
-           doc/user-manual.txt mpi-fakeheader/mpi.h
+           doc/user-manual.tex mpi-fakeheader/mpi.h
 
 check-local:
 	@echo "***********************************************************************************************"

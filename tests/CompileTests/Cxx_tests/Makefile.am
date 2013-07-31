@@ -1331,6 +1331,7 @@ test2013_242.C \
 test2013_243.C \
 test2013_244.C \
 test2013_246.C \
+test2013_249.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
