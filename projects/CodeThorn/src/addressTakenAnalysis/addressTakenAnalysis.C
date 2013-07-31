@@ -62,17 +62,22 @@ void ComputeAddressTakenInfo::throwIfUnInitException()
   }
 }
 
+// base case for the recursion
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgVarRefExp *sgn)
 {  
   cati.addressTakenSet.insert(cati.vidm.variableId(sgn));
 }
 
+// only the rhs_op of SgDotExp is modified
+// recurse on rhs_op
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgDotExp* sgn)
 {
   SgNode* rhs_op = sgn->get_rhs_operand();
   rhs_op->accept(*this);
 }
 
+// only the rhs_op of SgDotExp is modified
+// recurse on rhs_op
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgArrowExp* sgn)
 {
   SgNode* rhs_op = sgn->get_rhs_operand();
@@ -93,16 +98,17 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgPointerDerefExp* sgn)
   // we dont do anything here
 }
 
-// For example &(A[B[C[..]]])
+// For example &(A[B[C[..]]]) or &(A[x][x][x])
 // any pointer can that takes this address can modify
 // contents of only A. The inner index expressions are r-values
 // it is sufficient to add A to addressTakenSet
-// 
+// keep recursing on the lhs until we find A
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgPntrArrRefExp* sgn)
 {
   SgNode* arr_op = sgn->get_lhs_operand();
-  SgVarRefExp* arr_name = isSgVarRefExp(arr_op); ROSE_ASSERT(arr_name != NULL);
-  cati.addressTakenSet.insert(cati.vidm.variableId(arr_name));
+  // SgVarRefExp* arr_name = isSgVarRefExp(arr_op); ROSE_ASSERT(arr_name != NULL);
+  // cati.addressTakenSet.insert(cati.vidm.variableId(arr_name));
+  arr_op->accept(*this);
 }
 
 // &(a = expr)
@@ -114,9 +120,48 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgAssignOp* sgn)
   lhs_op->accept(*this);
 }
 
+// &(a+1, b)
+// b's address is taken
+// keep recursing on the rhs_op
+void ComputeAddressTakenInfo::OperandToVariableId::visit(SgCommaOpExp* sgn)
+{
+  SgNode* rhs_op = sgn->get_rhs_operand();
+  rhs_op->accept(*this);
+}
+
+// if we see SgConditionalExp as operand of &
+// both true and false branch are lvalues
+// recurse on both of them to pick up the lvalues
+void ComputeAddressTakenInfo::OperandToVariableId::visit(SgConditionalExp* sgn)
+{
+  SgNode* true_exp = sgn->get_true_exp();
+  SgNode* false_exp = sgn->get_false_exp();
+  true_exp->accept(*this);
+  false_exp->accept(*this);
+}
+
+// void f() { }
+// void (*f_ptr)() = &f;
+// & on SgFunctionRefExp is redundant as the functions
+// are implicity converted to function pointer
+//
+void ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionRefExp* sgn)
+{
+  // not sure what do to do here
+  // we dont have VariabldId for SgFunctionRefExp
+}
+
+// A& foo() { return A(); }
+// &(foo())
+// if foo() returns a reference then foo() returns a lvalue
+void ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallExp* sgn)
+{
+  // we can look at its defintion and process the return expression ?
+}
+
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgNode* sgn)
 {
-  std::cerr << "unhandled operand of SgAddressOfOp in AddressTakenAnalysis\n";
+  std::cerr << "unhandled operand " << sgn->class_name() << " of SgAddressOfOp in AddressTakenAnalysis\n";
   ROSE_ASSERT(0);
 }
 

@@ -68,7 +68,11 @@ class ComputeAddressTakenInfo
     void visit(SgPointerDerefExp*);
     void visit(SgPntrArrRefExp*);
     void visit(SgAssignOp* sgn);
-    void visit(SgNode* sgn);
+    void visit(SgCommaOpExp* sgn);
+    void visit(SgConditionalExp* sgn);
+    void visit(SgFunctionRefExp* sgn);
+    void visit(SgFunctionCallExp* sgn);
+    void visit(SgNode* sgn);    
   };
 public:
   ComputeAddressTakenInfo(VariableIdMapping& _vidm) : vidm(_vidm) {}
