@@ -6,6 +6,21 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 SUBDIRS=\
 	asynchronous_signal_handler \
+	discard_assignment \
+	explicit_test_for_non_boolean_value \
+	data_member_access \
+	unary_minus \
+	pointer_comparison \
+	do_not_delete_this \
+	size_of_pointer \
+	float_for_loop_counter \
+	ternary_operator \
+	forbidden_functions \
+	magic_number \
+	dangerous_overload \
+	comma_operator \
+	byte_by_byte_structure_comparison \
+	boolean_is_has \
 	dead_function \
 	default_argument \
 	function_pointer \

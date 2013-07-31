@@ -10,7 +10,7 @@ COMPASS_PARAMETERS_XSD=$(top_srcdir)/projects/compass2/share/xml/compass_paramet
 TEST_SCRIPT=$(top_srcdir)/projects/compass2/tests/checkers/test_checker.sh
 
 TESTCODES=\
-	PLACEHOLDER
+	explicit_test_for_non_boolean_value_test_1.cpp
 
 # ------------------------------------------------------------------------------
 #  Test rules
@@ -21,7 +21,7 @@ $(TESTCODES:.cpp=.o): $(TESTCODES)
 	$(TEST_SCRIPT) \
 		$(CHECKER) \
 		$(srcdir)/$(@:.o=.cpp) \
-		"editToMatchShortDescription"
+		"found implicit test for non-bool value"
 
 $(COMPASS2):
 	$(MAKE) -C $(top_builddir)/projects/compass2
