@@ -115,8 +115,9 @@ DFAnalyzer<LatticeType>::determineExtremalLabels(SgNode* startFunRoot=0) {
 	_extremalLabels.insert(startLabel);
   } else {
 	// naive way of initializing all labels
-	for(Label i=0;i<_labeler->numberOfLabels();++i) {
-	  _extremalLabels.insert(i);
+	for(long i=0;i<_labeler->numberOfLabels();++i) {
+	  Label lab=i;
+	  _extremalLabels.insert(lab);
 	}
   }
   cout<<"STATUS: Number of extremal labels: "<<_extremalLabels.size()<<endl;

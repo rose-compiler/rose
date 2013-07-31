@@ -244,6 +244,7 @@ Label Labeler::getLabel(SgNode* node) {
 long Labeler::numberOfLabels() {
   return mappingLabelToNode.size();
 }
+
 Label Labeler::functionCallLabel(SgNode* node) {
   assert(SgNodeHelper::Pattern::matchFunctionCall(node));
   return getLabel(node);
