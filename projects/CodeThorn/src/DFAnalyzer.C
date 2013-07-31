@@ -46,7 +46,7 @@ DFAnalyzer<LatticeType>::initialize(SgProject* root) {
   cout << "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
   _cfanalyzer->intraInterFlow(_flow,interFlow);
   cout << "INIT: IntraInter-CFG OK. (size: " << _flow.size() << " edges)"<<endl;
-  for(size_t l=0;l<_labeler->numberOfLabels();++l) {
+  for(long l=0;l<_labeler->numberOfLabels();++l) {
 	LatticeType le;
 	_analyzerData.push_back(le);
   }
