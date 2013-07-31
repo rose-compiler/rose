@@ -10684,7 +10684,6 @@ SgInitializedName::get_symbol_from_symbol_table() const
 SgSymbol*
 SgInitializedName::search_for_symbol_from_symbol_table() const
    {
-     SgSymbol *symbol;
      SgInitializedName* aPrevDeclItem = p_prev_decl_item;
      while(aPrevDeclItem != NULL && aPrevDeclItem->p_prev_decl_item != NULL)
         {
@@ -10696,12 +10695,15 @@ SgInitializedName::search_for_symbol_from_symbol_table() const
           aPrevDeclItem = aPrevDeclItem->p_prev_decl_item;
         }
 
+     SgSymbol* symbol=0;
      if (aPrevDeclItem != NULL)
           symbol = aPrevDeclItem->get_symbol_from_symbol_table();
-       else
+     else
           symbol = get_symbol_from_symbol_table();
 
-     assert(symbol != NULL);
+ 	 // MS: for SgInitializedName in a forward declaration this always fails because no symbol exists. Therefore
+	 // this assert can be put back, once symbols for such variables are available.
+     // assert(symbol != NULL);
      return symbol;
    }
 
