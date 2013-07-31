@@ -110,7 +110,6 @@ bin_compass2_LDADD=\
 	$(ROSE_LIBS) \
 	$(top_builddir)/projects/CodeThorn/src/AstMatching.o \
 	$(top_builddir)/projects/CodeThorn/src/AstTerm.o \
-	$(top_builddir)/projects/CodeThorn/src/matcherlexer.o \
 	$(top_builddir)/projects/CodeThorn/src/matcherparser.o \
 	$(top_builddir)/projects/CodeThorn/src/MatchOperation.o \
 	$(top_builddir)/projects/CodeThorn/src/RoseAst.o \
