@@ -123,7 +123,6 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
             SgNodeHelper::determineFunctionDefinition(func_call);
         if(func_def == NULL) continue;
         called_functions.insert(func_def);
-        std::cout << "1: " << func_def << std::endl;
       }
 
       // if a function isn't in the called_functions hash set
@@ -134,7 +133,6 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
       BOOST_FOREACH(SingleMatchVarBindings match, func_def_matches)
       {
         SgFunctionDefinition *func_def = (SgFunctionDefinition *)match["$f"];
-        std::cout << "2: " << func_def << std::endl;
         if(called_functions.find(func_def) == called_functions.end())
         {
           // function definition was found that is never called
