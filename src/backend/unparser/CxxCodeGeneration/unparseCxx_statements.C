@@ -2105,8 +2105,10 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           if ( (tmp_stmt = if_stmt->get_true_body()) ) 
              {
-            // printf ("Unparse the if true body \n");
-            // curprint ( string("\n/* Unparse the if true body */ \n") );
+#if 0
+               printf ("Unparse the if true body \n");
+               curprint("\n/* Unparse the if true body */ \n");
+#endif
                unp->cur.format(tmp_stmt, info, FORMAT_BEFORE_NESTED_STATEMENT);
 
             // Unparse using base class function so we get any required comments and CPP directives.
@@ -2114,7 +2116,9 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
                UnparseLanguageIndependentConstructs::unparseStatement(tmp_stmt, info);
 
                unp->cur.format(tmp_stmt, info, FORMAT_AFTER_NESTED_STATEMENT);
-            // curprint ( string("\n/* DONE: Unparse the if true body */ \n") );
+#if 0
+               curprint("\n/* DONE: Unparse the if true body */ \n");
+#endif
              }
 
           if ( (tmp_stmt = if_stmt->get_false_body()) )
@@ -2127,17 +2131,20 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
                unp->cur.format(if_stmt, info, FORMAT_BEFORE_STMT);
                curprint ( string("else "));
                if_stmt = isSgIfStmt(tmp_stmt);
-               if (if_stmt == NULL) {
+               if (if_stmt == NULL) 
+                  {
                     unp->cur.format(tmp_stmt, info, FORMAT_BEFORE_NESTED_STATEMENT);
-
-              // curprint ( string("\n/* Unparse the if false body */ \n") );
-              // Unparse using base class function so we get any required comments and CPP directives.
-              // unparseStatement(tmp_stmt, info);
-                 UnparseLanguageIndependentConstructs::unparseStatement(tmp_stmt, info);
-              // curprint ( string("\n/* DONE: Unparse the if false body */ \n") );
-
-                 unp->cur.format(tmp_stmt, info, FORMAT_AFTER_NESTED_STATEMENT);
-               }
+#if 0
+                    curprint("\n/* Unparse the if false body */ \n");
+#endif
+                 // Unparse using base class function so we get any required comments and CPP directives.
+                 // unparseStatement(tmp_stmt, info);
+                    UnparseLanguageIndependentConstructs::unparseStatement(tmp_stmt, info);
+#if 0
+                    curprint("\n/* DONE: Unparse the if false body */ \n");
+#endif
+                    unp->cur.format(tmp_stmt, info, FORMAT_AFTER_NESTED_STATEMENT);
+                  }
              }
             else
              {
@@ -2146,9 +2153,12 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
 
        // DQ (12/16/2008): Need to process any associated CPP directives and comments
           if (if_stmt != NULL)
+             {
                unparseAttachedPreprocessingInfo(if_stmt, info, PreprocessingInfo::before);
+             }
         }
    }
+
 
 #if 1
 // DQ (8/13/2007): This is no longer used, I think, however it might be required for the A++/P++ array optimizer.
@@ -5510,10 +5520,11 @@ void Unparse_ExprStmt::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
 
   // DQ (1/14/2013): However, we want it to be unparsed by the function unparsing the statement list (typically SgBasicBlock) instead of here.
-  // The stat4ement associated with the SgLabelStatement was not previously being inserted into the list of the current scope and this is a 
+  // The statement associated with the SgLabelStatement was not previously being inserted into the list of the current scope and this is a 
   // problem for the data flow analysis (bug reported by Robb).  Also we don't want to have a mechanism for hidding statements behind 
   // SgLabelStatements in general, so it makes more sense (and is consistant with ROSE based on EDG 3.3) to not unparse the associated 
-  // statement here.  Even though we do not correctly reference the lable's associated statement correctly in this version of ROSE based on EDG 4.x).
+  // statement here.  Even though we do not correctly reference the label's associated statement correctly in this version of ROSE based on EDG 4.x).
+
 #if 0
   // DQ (10/27/2012): Unparse the associated statement to the label.
   // Note that in the edg33 version of ROSE this was always a SgNullStatement, this is corrected in the design with the edg4x work.
