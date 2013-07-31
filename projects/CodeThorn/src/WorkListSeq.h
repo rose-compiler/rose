@@ -15,7 +15,7 @@
 namespace CodeThorn {
 template <typename Element>
   class WorkListSeq  {
- public:	
+ public:    
   bool isEmpty();
   bool exists(Element elem);
   void add(Element elem);

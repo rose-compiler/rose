@@ -31,7 +31,7 @@ MatchResult AstMatching::getResult() {
 void AstMatching::performMatching() {
   generateMatchOperationsSequence();
   if(_status.debug)
-	printMatchOperationsSequence();
+    printMatchOperationsSequence();
   performMatchingOnAst(_root);
 }
 void AstMatching::generateMatchOperationsSequence() {
@@ -43,7 +43,7 @@ void AstMatching::generateMatchOperationsSequence() {
 #if 0
   // TODO: proper destruction not finished yet
   if(_matchOperationsSequence)
-	delete _matchOperationsSequence;
+    delete _matchOperationsSequence;
 #endif
   _matchOperationsSequence=matchOperationsSequence;
   FinishParser();
@@ -55,8 +55,8 @@ void AstMatching::printMatchOperationsSequence() {
     std::cout << _matchOperationsSequence->toString()<<std::endl;
 #if 0
     for(MatchOperationList::iterator i=_matchOperationsSequence->begin();
-	i!=_matchOperationsSequence->end();
-	++i) {
+    i!=_matchOperationsSequence->end();
+    ++i) {
       std::cout << (*i)->toString() << std::endl;
     }
 #endif
@@ -70,8 +70,8 @@ void AstMatching::printMarkedLocations() {
   std::cout << "\nMarked Locations: START" << std::endl;
   if(!_status._allMatchMarkedLocations.empty()) {
     for(SingleMatchMarkedLocations::iterator i=_status._allMatchMarkedLocations.begin();
-	i!=_status._allMatchMarkedLocations.end();
-	++i) {
+    i!=_status._allMatchMarkedLocations.end();
+    ++i) {
       std::cout << (**i) << "," << std::endl;
     }
   } else {
@@ -97,7 +97,7 @@ AstMatching::performSingleMatch(SgNode* node, MatchOperationList* matchOperation
   if(_status.debug) 
     std::cout << "single-match-end"<<std::endl;    
   if(tmpresult)
-	_status.mergeSingleMatchResult(smr);
+    _status.mergeSingleMatchResult(smr);
   return tmpresult;
 }
 
@@ -105,7 +105,7 @@ void
 AstMatching::performMatchingOnAst(SgNode* root) {
   // reset match status (taking care of reuse of object)
   if(!_keepMarkedLocations)
-	_status.resetAllMarkedLocations();
+    _status.resetAllMarkedLocations();
   _status.resetAllMatchVarBindings();
   // start matching
   RoseAst ast(root);
@@ -113,20 +113,20 @@ AstMatching::performMatchingOnAst(SgNode* root) {
   for(RoseAst::iterator ast_iter=ast.begin().withNullValues();
       ast_iter!=ast.end();
       ++ast_iter) {
-	if(_status.debug) std::cout<<"----------------------------------------------------------------------------------------------"<<std::endl;
+    if(_status.debug) std::cout<<"----------------------------------------------------------------------------------------------"<<std::endl;
     if(_status.isMarkedLocationAddress(ast_iter)) {
-	  if(_status.debug) std::cout << "DEBUG: MARKED LOCATION @ " << *ast_iter << " ... skipped." << std::endl;
+      if(_status.debug) std::cout << "DEBUG: MARKED LOCATION @ " << *ast_iter << " ... skipped." << std::endl;
       ast_iter.skipChildrenOnForward();
     } else {
       result=performSingleMatch(*ast_iter,_matchOperationsSequence);
       if(result && _status.debug) {
-		std::cout << "DEBUG: FOUND MATCH at node" << *ast_iter << std::endl;
-		printMarkedLocations();
-	  }
-	  if(_status.isMarkedLocationAddress(ast_iter)) {
-		if(_status.debug) std::cout << "DEBUG: MARKED CURRENT LOCATION @ " << *ast_iter << " ... skipping subtree." << std::endl;
-		ast_iter.skipChildrenOnForward();
-	  }
+        std::cout << "DEBUG: FOUND MATCH at node" << *ast_iter << std::endl;
+        printMarkedLocations();
+      }
+      if(_status.isMarkedLocationAddress(ast_iter)) {
+        if(_status.debug) std::cout << "DEBUG: MARKED CURRENT LOCATION @ " << *ast_iter << " ... skipping subtree." << std::endl;
+        ast_iter.skipChildrenOnForward();
+      }
     }
   }
   if(_status.debug)

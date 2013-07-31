@@ -48,8 +48,8 @@ namespace SgNodeHelper {
   std::string sourceLineColumnToString(SgNode* node);
 
   /*! computes a list representing the nesting structure of classes (including structs and unions). 
-	It traverses the AST upwards and collects SgClassDeclaration(s) only. This covers nested classes, nested structs, and nested unions,
-	and combinations of those. 
+    It traverses the AST upwards and collects SgClassDeclaration(s) only. This covers nested classes, nested structs, and nested unions,
+    and combinations of those. 
   */
   list<SgClassDeclaration*> classDeclarationNestingSequence(SgDeclarationStatement*);
 
@@ -60,8 +60,8 @@ namespace SgNodeHelper {
   int scopeSequenceNumber(SgNode* node);
 
   /*! computes for a given node the index number of it from the parent.
-	e.g. node1(node2,node3,node4) : node4 has index 2 (starting at 0)
-	For the root node of an AST (e.g. SgProject) this function returns -1.
+    e.g. node1(node2,node3,node4) : node4 has index 2 (starting at 0)
+    For the root node of an AST (e.g. SgProject) this function returns -1.
    */
   size_t determineChildIndex(SgNode* node);
 
@@ -103,22 +103,22 @@ namespace SgNodeHelper {
   string getFunctionName(SgNode* node);
 
   /*! This is a lookup function currently not available in ROSE: It
-	 determines for a given function-call-expression its corresponding
-	 function-definition if available in the AST. There are three cases:
+     determines for a given function-call-expression its corresponding
+     function-definition if available in the AST. There are three cases:
 
-	 case 1: the associated declaration is a defining declaration. In
-	 this case this directly referenced definition is returned
-	 (available in ROSE).  
+     case 1: the associated declaration is a defining declaration. In
+     this case this directly referenced definition is returned
+     (available in ROSE).  
 
-	 case 2: the associated declaration is a forward declaration. In
-	 this case the entire AST is searched for the correct function
-	 definition (this lookup is currently not available in
-	 ROSE).
+     case 2: the associated declaration is a forward declaration. In
+     this case the entire AST is searched for the correct function
+     definition (this lookup is currently not available in
+     ROSE).
 
-	 case 3: no definition is available.  (e.g. this is the case for
-	 linked stdlib functions). In this case a null-pointer is
-	 returned. This is determined after case 2 has been
-	 checked.
+     case 3: no definition is available.  (e.g. this is the case for
+     linked stdlib functions). In this case a null-pointer is
+     returned. This is determined after case 2 has been
+     checked.
   */
   SgFunctionDefinition* determineFunctionDefinition(SgFunctionCallExp* fCall);
 
@@ -126,11 +126,11 @@ namespace SgNodeHelper {
   bool isForwardFunctionDeclaration(SgNode* declaration);  
 
   /*! this function should only be called for a node in the subtree of
-	 a SgFunctionDefinition node. For a given 'node' it determines the
-	 correspondnig functionDefinition node when searching upwards
-	 in the AST for such a SgFunctionDefinition node. It is useful as a
-	 simple lookup function from inside the AST subtree of a
-	 SgFunctionDefinition.  Returns 0 if no SgFunctionDefinition is found (e.g. global scope).
+     a SgFunctionDefinition node. For a given 'node' it determines the
+     correspondnig functionDefinition node when searching upwards
+     in the AST for such a SgFunctionDefinition node. It is useful as a
+     simple lookup function from inside the AST subtree of a
+     SgFunctionDefinition.  Returns 0 if no SgFunctionDefinition is found (e.g. global scope).
   */
   SgFunctionDefinition* correspondingSgFunctionDefinition(SgNode* node);
 
@@ -163,27 +163,27 @@ namespace SgNodeHelper {
 
   /*! \brief Creates a long unique variable name for a given node of type SgVariableDeclaration or SgVarRefExp
 
-	 If node is not one of those two types an exception is thrown
-	 The long variable name consists $functionName$scopeLevel$varName
-	 In case of global scope functionName is empty, giving a string: $$scopeLevel$varName 
-	 Note: this function only considers C-functions. Classes are recognized.
+     If node is not one of those two types an exception is thrown
+     The long variable name consists $functionName$scopeLevel$varName
+     In case of global scope functionName is empty, giving a string: $$scopeLevel$varName 
+     Note: this function only considers C-functions. Classes are recognized.
   */
   string uniqueLongVariableName(SgNode* node);
 
   /*! \brief returns a set of SgNode where each node is a break node, but
-	 properly excludes all nested loops. 
+     properly excludes all nested loops. 
 
-	 @param [in] node can point directly to the AST construct (e.g. SgIfStatement) or a basic block of the respective loop construct. 
+     @param [in] node can point directly to the AST construct (e.g. SgIfStatement) or a basic block of the respective loop construct. 
 
      The only property this function maintains during traversal of the
-	 AST is that it does not collect break nodes from nested loops but
-	 only from the current scope. Only those breaks are loop-relevant,
-	 meaning only those can force an exit of the loop. Break
-	 statements inside if statements or Conditional Expressions inside
-	 the loop are handled properly. Excluded are only constructs where
-	 a break statement refers to that nested loop but not the current
-	 (=relevant) loop. This function can be used for:
-	 SgWhile,SgDoWhile,SgForStatement, SgSwitch.
+     AST is that it does not collect break nodes from nested loops but
+     only from the current scope. Only those breaks are loop-relevant,
+     meaning only those can force an exit of the loop. Break
+     statements inside if statements or Conditional Expressions inside
+     the loop are handled properly. Excluded are only constructs where
+     a break statement refers to that nested loop but not the current
+     (=relevant) loop. This function can be used for:
+     SgWhile,SgDoWhile,SgForStatement, SgSwitch.
   */
   set<SgNode*> LoopRelevantBreakStmtNodes(SgNode* node);
 
@@ -209,7 +209,7 @@ namespace SgNodeHelper {
   SgNode* getUnaryOpChild(SgNode* node);
 
   /*! returns the number of children as int (intentionally not as t_size)
-	 ensures that the number of children fits into an int, otherwise throws exception.
+     ensures that the number of children fits into an int, otherwise throws exception.
   */
   int numChildren(SgNode* node);
 
@@ -236,7 +236,7 @@ namespace SgNodeHelper {
   SgNode* getRhs(SgNode* node);
   
   /*! returns the parent of a node. Essentially a wrapper function of the ROSE get_parent() function, but throws
-	 an exception if no parent exists. For SgProject node  no exception is thrown if no parent exists because it is the root node of a ROSE AST. 
+     an exception if no parent exists. For SgProject node  no exception is thrown if no parent exists because it is the root node of a ROSE AST. 
   */
   SgNode* getParent(SgNode* node);
 
@@ -244,11 +244,11 @@ namespace SgNodeHelper {
   list<SgGlobal*> listOfSgGlobal(SgProject* project);
 
   /*! identifies the list of global variables
-	 Note: static/external can be resolved by further processing those objects
+     Note: static/external can be resolved by further processing those objects
    */
   list<SgVariableDeclaration*> listOfGlobalVars(SgProject* project);
   /*! identifies the list of global variables
-	 Note: static/external can be resolved by further processing those objects
+     Note: static/external can be resolved by further processing those objects
    */
   list<SgVariableDeclaration*> listOfGlobalVars(SgGlobal* global);
 
@@ -257,40 +257,40 @@ namespace SgNodeHelper {
 
   /*! identifies the list of SgFunctionDefinitions in global scope
      Functions/methods of classes are NOT included in this list.
-	 Note: static/external can be resolved by further processing those objects
+     Note: static/external can be resolved by further processing those objects
   */
   list<SgFunctionDefinition*> listOfGlobalFunctionDefinitions(SgGlobal* global);
 
   //! Provides functions which match a certain AST pattern and return a pointer to a node of interest inside that pattern.
   namespace Pattern {
-	//! tests several patterns and returns pointer to FunctionCallExp inside that matched pattern, otherwise 0.
-	SgFunctionCallExp* matchFunctionCall(SgNode *);
-	//! tests pattern SgReturnStmt(FunctionCallExp) and returns pointer to FunctionCallExp, otherwise 0.
-	SgFunctionCallExp* matchReturnStmtFunctionCallExp(SgNode *);
-	//! tests pattern SgExprStatement(FunctionCallExp) and returns pointer to FunctionCallExp, otherwise 0.
-	SgFunctionCallExp* matchExprStmtFunctionCallExp(SgNode *);
-	//! tests pattern SgExprStatement(SgAssignOp(VarRefExp,FunctionCallExp)) and returns pointer to FunctionCallExp, otherwise 0.
-	SgFunctionCallExp* matchExprStmtAssignOpVarRefExpFunctionCallExp(SgNode *);
+    //! tests several patterns and returns pointer to FunctionCallExp inside that matched pattern, otherwise 0.
+    SgFunctionCallExp* matchFunctionCall(SgNode *);
+    //! tests pattern SgReturnStmt(FunctionCallExp) and returns pointer to FunctionCallExp, otherwise 0.
+    SgFunctionCallExp* matchReturnStmtFunctionCallExp(SgNode *);
+    //! tests pattern SgExprStatement(FunctionCallExp) and returns pointer to FunctionCallExp, otherwise 0.
+    SgFunctionCallExp* matchExprStmtFunctionCallExp(SgNode *);
+    //! tests pattern SgExprStatement(SgAssignOp(VarRefExp,FunctionCallExp)) and returns pointer to FunctionCallExp, otherwise 0.
+    SgFunctionCallExp* matchExprStmtAssignOpVarRefExpFunctionCallExp(SgNode *);
 
-	//! tests pattern SgFunctionCall(...) where the name of the function is scanf with 2 params
-	SgVarRefExp* matchSingleVarScanf(SgNode* node);
-	//! tests pattern SgFunctionCall(...) where the name of the function is printf with 2 params
-	SgVarRefExp* matchSingleVarPrintf(SgNode* node);
-	//! tests pattern SgFunctionCall(...) where the name of the function is fprintf with 3 params
-	SgVarRefExp* matchSingleVarFPrintf(SgNode* node);
+    //! tests pattern SgFunctionCall(...) where the name of the function is scanf with 2 params
+    SgVarRefExp* matchSingleVarScanf(SgNode* node);
+    //! tests pattern SgFunctionCall(...) where the name of the function is printf with 2 params
+    SgVarRefExp* matchSingleVarPrintf(SgNode* node);
+    //! tests pattern SgFunctionCall(...) where the name of the function is fprintf with 3 params
+    SgVarRefExp* matchSingleVarFPrintf(SgNode* node);
 
-	struct OutputTarget {
-	  bool isKnown();
-	  enum OType { VAR,INT,UNKNOWNPRINTF,UNKNOWNOPERATION};
-	  OutputTarget():varRef(0),intVal(0),outType(UNKNOWNOPERATION){}
-	  SgVarRefExp* varRef;
-	  int intVal;
-	  OType outType;
-	};
-	OutputTarget matchSingleVarOrValuePrintf(SgNode* node);
+    struct OutputTarget {
+      bool isKnown();
+      enum OType { VAR,INT,UNKNOWNPRINTF,UNKNOWNOPERATION};
+      OutputTarget():varRef(0),intVal(0),outType(UNKNOWNOPERATION){}
+      SgVarRefExp* varRef;
+      int intVal;
+      OType outType;
+    };
+    OutputTarget matchSingleVarOrValuePrintf(SgNode* node);
 
-	//! tests pattern for an assert
-	bool matchAssertExpr(SgNode* node);
+    //! tests pattern for an assert
+    bool matchAssertExpr(SgNode* node);
 
   } // end of namespace Pattern
 

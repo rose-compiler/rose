@@ -7,22 +7,22 @@ int f= 6;
 
 int calculate_output2(int input2) {
   if(input2==21) {
-	return 23;
+    return 23;
   }
   else 
-	if(input2==22) {
-	  if(f==7) {
-		return 24;
-	  }
-	}
+    if(input2==22) {
+      if(f==7) {
+        return 24;
+      }
+    }
   return 21;
 }
 
 int calculate_output(int input1) {
   if(input1==21) {
-	if(f==6) {
-	  f=7;
-	}
+    if(f==6) {
+      f=7;
+    }
   }
   return calculate_output2(input1);
 }
@@ -43,8 +43,8 @@ int main()
         output = calculate_output(input);
 
         if(output == -2)
-		  fprintf(stderr, "Invalid input: %d\n", input);
+          fprintf(stderr, "Invalid input: %d\n", input);
         else if(output != -1)
-		  printf("%d\n", output);
+          printf("%d\n", output);
     }
 }

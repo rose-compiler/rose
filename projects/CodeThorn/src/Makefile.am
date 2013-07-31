@@ -72,7 +72,9 @@ codethorn_SOURCES = \
   AttributeAnnotator.C             \
   RERS_empty_specialization.C      \
   codethorn.C                      \
-  codethorn.h
+  codethorn.h                      \
+  WorkListSeq.h                    \
+  DFAnalyzer.h
 
 # used only in specialized analyzer
 faketarget:
@@ -101,7 +103,8 @@ faketarget:
 	iterator_test.C
 	WorkListOMP.h
 	WorkListOMP.C
-
+	WorkListSeq.C
+	DFAnalyzer.C
 #      matcherparser_decls.h
 
 REGRESSION_DATA_DIR=regressiondata

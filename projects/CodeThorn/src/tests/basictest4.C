@@ -4,7 +4,7 @@ int main() {
   if(x==1)
     x=2;
   else {
-	// intentionally empty
+    // intentionally empty
   }
   x=3;
   return 0;

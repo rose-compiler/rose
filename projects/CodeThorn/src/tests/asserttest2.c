@@ -7,9 +7,9 @@ int main() {
   error_1: assert(0);
   }
   if(!x) {
-	// do nothing
+    // do nothing
   } else {
-	// not reachable
+    // not reachable
   error_4: assert(0);
   }
   printf("%d",x);

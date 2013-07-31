@@ -8,11 +8,11 @@ by the analysis (if not calling context is used).
 */
 int f1(int x) {
   if(x==1) {
-	x=2;
-	return x;
+    x=2;
+    return x;
   } else {
-	x=3;
-	return x+1;
+    x=3;
+    return x+1;
   }
 }
 int f2(int x) {

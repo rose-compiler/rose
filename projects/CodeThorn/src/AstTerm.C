@@ -70,80 +70,80 @@ std::string pointerExprToString(SgNode* node) {
 #if 0
   // does not work anymore in new branch
   if(SgNodeHelper::isCond(node)) {
-	return string("COND ")+pointerExprToString(SgNodeHelper::getFirstChild(node));
+    return string("COND ")+pointerExprToString(SgNodeHelper::getFirstChild(node));
   }
 #endif
 
   if(isSgExprListExp(node)) {
-	return string("EXPRLIST ")+"["+pointerExprToString(SgNodeHelper::getFirstChild(node))+"]"; 
+    return string("EXPRLIST ")+"["+pointerExprToString(SgNodeHelper::getFirstChild(node))+"]"; 
   }
   if(isSgDeleteExp(node)) {
-	return string("DELETE ")+"["+pointerExprToString(SgNodeHelper::getFirstChild(node))+"]"; 
+    return string("DELETE ")+"["+pointerExprToString(SgNodeHelper::getFirstChild(node))+"]"; 
   }
   if(isSgReturnStmt(node)) {
-	return string("RETURN ")+"["+pointerExprToString(SgNodeHelper::getFirstChild(node))+"]"; 
+    return string("RETURN ")+"["+pointerExprToString(SgNodeHelper::getFirstChild(node))+"]"; 
   }
   if(dynamic_cast<SgBinaryOp*>(node)) {
-	string lhs=pointerExprToString(SgNodeHelper::getLhs(node));
-	string rhs=pointerExprToString(SgNodeHelper::getRhs(node));
-	string result="["+lhs+"]["+rhs+"]";
-	if(isSgEqualityOp(node))
-	  return string("CMPEQ ")+result;
-	else if(isSgNotEqualOp(node))
-	  return string("CMPNEQ ")+result;
-	else if(isSgLessOrEqualOp(node))
-	  return string("CMPLEQ ")+result;
-	else if(isSgLessThanOp(node))
-	  return string("CMPLT ")+result;
-	else if(isSgGreaterOrEqualOp(node))
-	  return string("CMPGEQ ")+result;
-	else if(isSgGreaterThanOp(node))
-	  return string("CMPGT ")+result;
+    string lhs=pointerExprToString(SgNodeHelper::getLhs(node));
+    string rhs=pointerExprToString(SgNodeHelper::getRhs(node));
+    string result="["+lhs+"]["+rhs+"]";
+    if(isSgEqualityOp(node))
+      return string("CMPEQ ")+result;
+    else if(isSgNotEqualOp(node))
+      return string("CMPNEQ ")+result;
+    else if(isSgLessOrEqualOp(node))
+      return string("CMPLEQ ")+result;
+    else if(isSgLessThanOp(node))
+      return string("CMPLT ")+result;
+    else if(isSgGreaterOrEqualOp(node))
+      return string("CMPGEQ ")+result;
+    else if(isSgGreaterThanOp(node))
+      return string("CMPGT ")+result;
   }
 
   if(node==0)
     return ""; // null
   if(isSgNewExp(node))
-	return "\"new\"";
+    return "\"new\"";
   if(SgIntVal* intVal=isSgIntVal(node)) {
-	if(intVal->get_value()==0)
-	  return "\"null\"";
-	else
-	  return "";
+    if(intVal->get_value()==0)
+      return "\"null\"";
+    else
+      return "";
   }
   if(isSgReturnStmt(node)) {
-	pointerExprToString(SgNodeHelper::getFirstChild(node));
+    pointerExprToString(SgNodeHelper::getFirstChild(node));
   }
   if(SgVarRefExp* varRefExp=isSgVarRefExp(node))
-	return "\""+SgNodeHelper::symbolToString(SgNodeHelper::getSymbolOfVariable(varRefExp))+"\" ";
+    return "\""+SgNodeHelper::symbolToString(SgNodeHelper::getSymbolOfVariable(varRefExp))+"\" ";
 
   string s;
   if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
-	SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
-	string lhs="\""+SgNodeHelper::symbolToString(SgNodeHelper::getSymbolOfInitializedName(initName))+"\"";
-	
+    SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
+    string lhs="\""+SgNodeHelper::symbolToString(SgNodeHelper::getSymbolOfInitializedName(initName))+"\"";
+    
 #if 1
-	string rhs=pointerExprToString(SgNodeHelper::getFirstChild(initName));
+    string rhs=pointerExprToString(SgNodeHelper::getFirstChild(initName));
 #else
-	// this fails in new branch (but should not?)
-	assert(initName->get_initializer());
-	SgExpression* initExp=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(varDecl);
-	string rhs=pointerExprToString(initExp);
+    // this fails in new branch (but should not?)
+    assert(initName->get_initializer());
+    SgExpression* initExp=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(varDecl);
+    string rhs=pointerExprToString(initExp);
 #endif
-	return string("DECLINIT ")+"["+lhs+"]["+rhs+"]";
+    return string("DECLINIT ")+"["+lhs+"]["+rhs+"]";
   }
 
   int arity=node->get_numberOfTraversalSuccessors();
   if(arity>0) {
-	if(isSgAssignOp(node)) {
-	  string lhs=pointerExprToString(SgNodeHelper::getLhs(node));
-	  string rhs=pointerExprToString(SgNodeHelper::getRhs(node));
-	  return string("ASSIGN ")+"["+lhs+"]["+rhs+"]";
-	}
+    if(isSgAssignOp(node)) {
+      string lhs=pointerExprToString(SgNodeHelper::getLhs(node));
+      string rhs=pointerExprToString(SgNodeHelper::getRhs(node));
+      return string("ASSIGN ")+"["+lhs+"]["+rhs+"]";
+    }
     for(int i=0; i<arity;i++) {
       SgNode* child = node->get_traversalSuccessorByIndex(i);   
       //if(i!=0) 
-	  //	s+=",";
+      //    s+=",";
       s+=pointerExprToString(child);
     }
   }
@@ -168,9 +168,9 @@ std::string functionAstTermsWithNullValuesToDot(SgNode* root) {
   RoseAst ast(root);
   string fragments;
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-	if(isSgFunctionDefinition(*i)) {
-	  fragments+=astTermWithNullValuesToDotFragment(*i);
-	}
+    if(isSgFunctionDefinition(*i)) {
+      fragments+=astTermWithNullValuesToDotFragment(*i);
+    }
   }
   return dotFragmentToDot(fragments);
 }
@@ -195,15 +195,15 @@ std::string astTermWithNullValuesToDotFragment(SgNode* root) {
   std::stringstream ss;
   for(RoseAst::iterator i=ast.begin().withNullValues();i!=ast.end();++i) {
     ss << "\"" << *i <<"\""
-	   << "[label=\"" << nodeTypeName(*i);
-	if(*i && (*i)->attributeExists("info")) {
-	  AstAttribute* attr=(*i)->getAttribute("info");
-	  ss<<attr->toString();
-	  ss << "\""<<" style=filled color=lightblue ";
-	} else {
-	  ss << "\"";
-	}
-	ss<< "];"<<std::endl;
+       << "[label=\"" << nodeTypeName(*i);
+    if(*i && (*i)->attributeExists("info")) {
+      AstAttribute* attr=(*i)->getAttribute("info");
+      ss<<attr->toString();
+      ss << "\""<<" style=filled color=lightblue ";
+    } else {
+      ss << "\"";
+    }
+    ss<< "];"<<std::endl;
     if(*i!=root) {
       ss << "\""<<i.parent() << "\"" << " -> " << "\"" << *i << "\""<<";" << std::endl; 
     }

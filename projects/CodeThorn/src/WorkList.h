@@ -13,7 +13,7 @@
 namespace CodeThorn {
 template <typename Element>
 class WorkList {
- public:	
+ public:    
   virtual bool isEmpty()=0;
   virtual bool exists(Element elem)=0;
   virtual void add(Element elem)=0;

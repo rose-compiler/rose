@@ -134,52 +134,52 @@ int main( int argc, char * argv[] ) {
 #if 1
   AstMatching m;
   if(!measurementmode) {
-	timer.start();
-	MatchResult r=m.performMatching(matchexpression,root);
-	timer.stop();
-	double matchingMeasurementTime=timer.getElapsedTimeInMilliSec();
-	// print result in readable form for demo purposes
-	std::cout << "Number of matched patterns with bound variables: " << r.size() << std::endl;
-	for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
-	  std::cout << "MATCH: \n"; 
-	  //SgNode* n=(*i)["X"];
-	  for(SingleMatchVarBindings::iterator vars_iter=(*i).begin();vars_iter!=(*i).end();++vars_iter) {
-		SgNode* matchedTerm=(*vars_iter).second;
-		std::cout << "  VAR: " << (*vars_iter).first << "=" << astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
-	  }
-	  std::cout << std::endl;
-	  std::cout << "Matching time: "<<matchingMeasurementTime<<endl;
-	}
-	m.printMarkedLocations();
-	m.printMatchOperationsSequence();
-	write_file("astterm.txt",astTermToMultiLineString(root,2));
-	write_file("astterm.dot",astTermWithNullValuesToDot(root));
+    timer.start();
+    MatchResult r=m.performMatching(matchexpression,root);
+    timer.stop();
+    double matchingMeasurementTime=timer.getElapsedTimeInMilliSec();
+    // print result in readable form for demo purposes
+    std::cout << "Number of matched patterns with bound variables: " << r.size() << std::endl;
+    for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
+      std::cout << "MATCH: \n"; 
+      //SgNode* n=(*i)["X"];
+      for(SingleMatchVarBindings::iterator vars_iter=(*i).begin();vars_iter!=(*i).end();++vars_iter) {
+        SgNode* matchedTerm=(*vars_iter).second;
+        std::cout << "  VAR: " << (*vars_iter).first << "=" << astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
+      }
+      std::cout << std::endl;
+      std::cout << "Matching time: "<<matchingMeasurementTime<<endl;
+    }
+    m.printMarkedLocations();
+    m.printMatchOperationsSequence();
+    write_file("astterm.txt",astTermToMultiLineString(root,2));
+    write_file("astterm.dot",astTermWithNullValuesToDot(root));
   } else {
     std::string measurement_matchexpressions[]={"SgAssignOp","$X=SgAssignOp","_(_,_)","null","$X=SgAssignOp($Y,$Z=SgAddOp)","_($X,..)","_(#$X,..)"};
-	int measurement_test_cases_num=7;
-	double measurementTimes[7];
+    int measurement_test_cases_num=7;
+    double measurementTimes[7];
 
-	for(int i=0;i<measurement_test_cases_num;i++) {
-	  timer.start();
-	  m.performMatching(measurement_matchexpressions[i],root);
-	  timer.stop();
-	  measurementTimes[i]=timer.getElapsedTimeInMilliSec();
-	}
+    for(int i=0;i<measurement_test_cases_num;i++) {
+      timer.start();
+      m.performMatching(measurement_matchexpressions[i],root);
+      timer.stop();
+      measurementTimes[i]=timer.getElapsedTimeInMilliSec();
+    }
 
-	TestTraversal tt;
-	timer.start();
-	tt.traverse(root, preorder);
-	timer.stop();
-	double ttm=timer.getElapsedTimeInMilliSec();
-	std::cout << "Measurement:\n";
-	std::cout << "Trav:"<<ttm << ";";
-	std::cout << "iter:"<<iteratorMeasurementTime << ";";
-	std::cout << "iter0:"<<iteratorMeasurementTimeWithoutNull << ";";
-	for(int i=0;i<measurement_test_cases_num;i++) {
-	  //measurement_matchexpressions[i]
-	  std::cout << measurementTimes[i] << ";";
-	}
-	std::cout << std::endl;
+    TestTraversal tt;
+    timer.start();
+    tt.traverse(root, preorder);
+    timer.stop();
+    double ttm=timer.getElapsedTimeInMilliSec();
+    std::cout << "Measurement:\n";
+    std::cout << "Trav:"<<ttm << ";";
+    std::cout << "iter:"<<iteratorMeasurementTime << ";";
+    std::cout << "iter0:"<<iteratorMeasurementTimeWithoutNull << ";";
+    for(int i=0;i<measurement_test_cases_num;i++) {
+      //measurement_matchexpressions[i]
+      std::cout << measurementTimes[i] << ";";
+    }
+    std::cout << std::endl;
   }
 #endif
 }

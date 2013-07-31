@@ -23,10 +23,10 @@ class HSet {
     typedef Key value_type;
 
 #ifdef USE_SET_CHAINS
-	 //MS:2012
-	typedef std::set<value_type> chain_type;
+     //MS:2012
+    typedef std::set<value_type> chain_type;
 #else
-	typedef std::list<value_type> chain_type;
+    typedef std::list<value_type> chain_type;
 #endif
 
     typedef std::vector<chain_type*> vector_type;
@@ -104,9 +104,9 @@ class HSet {
           equal: */
 
        bool operator==(const iterator& x) const {
-		 return (pVec && x.pVec && (current == x.current)) || (!pVec && !x.pVec);
+         return (pVec && x.pVec && (current == x.current)) || (!pVec && !x.pVec);
        }  
-	   
+       
        bool operator!=(const iterator& x) const {
           return !operator==(x);
        }
@@ -142,9 +142,9 @@ class HSet {
 
     HSet(hashFun f = hashFun())
     : v(f.tableSize(),0), hf(f), count(0) {
-	  for(long i=0;i<f.tableSize();++i) {
-		v[i]=0;
-	  }
+      for(long i=0;i<f.tableSize();++i) {
+        v[i]=0;
+      }
     }
 
     HSet(const HSet& S) {
@@ -197,11 +197,11 @@ class HSet {
 
 
 #ifdef USE_SET_CHAINS
-		typename chain_type::iterator temp =  v[address]->find(k);
-		if(temp!=v[address]->end())
-		  return iterator(temp,address,&v); //found
-		else
-		  return iterator();
+        typename chain_type::iterator temp =  v[address]->find(k);
+        if(temp!=v[address]->end())
+          return iterator(temp,address,&v); //found
+        else
+          return iterator();
 #else
         typename chain_type::iterator temp =  v[address]->begin();
         // find k in the list
@@ -350,19 +350,19 @@ class HSet {
         return *this;
      }
 
-	 //MS:2012
-	 size_type max_collisions() {
-	   size_type max=0;
-	   for(typename vector_type::iterator i=v.begin();i!=v.end();++i) {
-		 if((*i)&&(*i)->size()>max)
-		   max=(*i)->size();
-	   }
-	   return max;
-	 }
-	 //MS:2012
-	 double load_factor() {
-	   return (double)count/(double)v.size();
-	 }
+     //MS:2012
+     size_type max_collisions() {
+       size_type max=0;
+       for(typename vector_type::iterator i=v.begin();i!=v.end();++i) {
+         if((*i)&&(*i)->size()>max)
+           max=(*i)->size();
+       }
+       return max;
+     }
+     //MS:2012
+     double load_factor() {
+       return (double)count/(double)v.size();
+     }
 };
 
 // binary operators

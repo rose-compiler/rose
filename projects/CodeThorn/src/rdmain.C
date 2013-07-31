@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
   rdAnalyzer->attachResultsToAst();
 
   DataDependenceVisualizer ddvis(rdAnalyzer->getLabeler(),
-								 rdAnalyzer->getVariableIdMapping());
+                                 rdAnalyzer->getVariableIdMapping());
   ddvis.generateDot(root,"data_dependence_graph.dot");
 
   AnalysisResultAnnotator ara;

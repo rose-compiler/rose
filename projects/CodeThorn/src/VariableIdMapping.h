@@ -39,8 +39,8 @@ class VariableIdMapping {
   void reportUniqueVariableSymbolMappingViolations();
 
   /* create a new unique variable symbol (should be used together with deleteUniqueVariableSymbol)
-	 this is useful if additional (e.g. temporary) variables are introduced in an analysis
-	 this function does NOT insert this new symbol in any symbol table
+     this is useful if additional (e.g. temporary) variables are introduced in an analysis
+     this function does NOT insert this new symbol in any symbol table
    */
   VariableId createUniqueTemporaryVariableId(string name);
 
@@ -49,14 +49,14 @@ class VariableIdMapping {
 
   class UniqueTemporaryVariableSymbol : public SgVariableSymbol {
   public:
-	// Constructor: we only allow this single constructor
-	UniqueTemporaryVariableSymbol(string name);
-	// Destructor: default is sufficient
-	
-	// overrides inherited get_name (we do not use a declaration)
-	SgName get_name() const;
+    // Constructor: we only allow this single constructor
+    UniqueTemporaryVariableSymbol(string name);
+    // Destructor: default is sufficient
+    
+    // overrides inherited get_name (we do not use a declaration)
+    SgName get_name() const;
   private:
-	string _tmpName;
+    string _tmpName;
   };
 
   typedef size_t VarId;

@@ -21,9 +21,9 @@ int main() {
   int y;
   int a;
   if(y==1) {
-	f(y);
+    f(y);
   } else {
-	z=g(y);
+    z=g(y);
   }
   a=z;
   //z=z; -- TODO

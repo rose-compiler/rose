@@ -49,7 +49,7 @@ MatchOpOr::toString() {
 bool
 MatchOpOr::performOperation(MatchStatus& status, RoseAst::iterator& i, SingleMatchResult& smr) {
   if(status.debug) {
-	std::cout<<"performing OR-match operation."<<std::endl;
+    std::cout<<"performing OR-match operation."<<std::endl;
   }
 
   /* match-operations are performed left to right, using
@@ -62,25 +62,25 @@ MatchOpOr::performOperation(MatchStatus& status, RoseAst::iterator& i, SingleMat
   SingleMatchResult left_smr;
   bool left_match=_left->performOperation(status,tmp_iter_left,left_smr);
   if(left_match) {
-	i=tmp_iter_left;
-	smr=left_smr;
+    i=tmp_iter_left;
+    smr=left_smr;
     return true;
   } else {
-	if(left_smr.isSMRMarkedLocation(tmp_iter_right)||status.isMarkedLocationAddress(tmp_iter_right)) {
-	  i=tmp_iter_left;
-	  smr=left_smr;
-	  return false;
-	} else {
-	  SingleMatchResult right_smr=left_smr;
-	  if(_right->performOperation(status,tmp_iter_right,right_smr)) {
-		i=tmp_iter_right;
-		smr=right_smr;
-		return true;
-	  } else {
-		// nothing changed
-		return false;
-	  }
-	}
+    if(left_smr.isSMRMarkedLocation(tmp_iter_right)||status.isMarkedLocationAddress(tmp_iter_right)) {
+      i=tmp_iter_left;
+      smr=left_smr;
+      return false;
+    } else {
+      SingleMatchResult right_smr=left_smr;
+      if(_right->performOperation(status,tmp_iter_right,right_smr)) {
+        i=tmp_iter_right;
+        smr=right_smr;
+        return true;
+      } else {
+        // nothing changed
+        return false;
+      }
+    }
   }
   
 #else
@@ -94,13 +94,13 @@ MatchOpOr::performOperation(MatchStatus& status, RoseAst::iterator& i, SingleMat
   bool right_result=false;
   // check if locations which have been marked in the lhs-match would exclude the current node
   if(!left_smr.isSMRMarkedLocation(tmp_iter_right))
-	right_result=_right->performOperation(status,tmp_iter_right,right_smr);
+    right_result=_right->performOperation(status,tmp_iter_right,right_smr);
 
   if(left_result && right_result) {
-	status.mergeSingleMatchResult(left_smr);
+    status.mergeSingleMatchResult(left_smr);
     status.mergeSingleMatchResult(right_smr);
     // both tmp_iter_left and tmp_iter_right are correct
-	assert(tmp_iter_left==tmp_iter_right);
+    assert(tmp_iter_left==tmp_iter_right);
     i=tmp_iter_right;
     return true;
   } else if(left_result) {
@@ -149,7 +149,7 @@ bool
 MatchOpCheckNode::performOperation(MatchStatus&  status, RoseAst::iterator& i, SingleMatchResult& smr) {
   if(status.debug) {
     std::cout << "check_node: ";
-	std::cout << "smr::num"<<smr.singleMatchMarkedLocations.size()<<"@"<<&smr<<" ";
+    std::cout << "smr::num"<<smr.singleMatchMarkedLocations.size()<<"@"<<&smr<<" ";
   }
   SgNode* node=*i;
   if(node!=0) {
@@ -274,7 +274,7 @@ bool MatchOpMarkNode::performOperation(MatchStatus& status, RoseAst::iterator& i
     std::cout << "mark_node("<<node<<")";
   smr.singleMatchMarkedLocations.push_front(i);
   if(status.debug) {
-	std::cout << "MARK:num"<<smr.singleMatchMarkedLocations.size()<<"@"<<&smr<<endl;
+    std::cout << "MARK:num"<<smr.singleMatchMarkedLocations.size()<<"@"<<&smr<<endl;
   }
   return true;
 }
@@ -323,7 +323,7 @@ bool MatchOpSequence::performOperation(MatchStatus& status, RoseAst::iterator& i
    if(!tmpresult) {
       // matchVarBindings and matchRegisteredIterators is automatically deleted if we return with false
       if(status.debug)
-		std::cout << "not matched;"<<std::endl;
+        std::cout << "not matched;"<<std::endl;
       return false;
     }
   }
@@ -358,7 +358,7 @@ void MatchStatus::mergeOtherStatus(MatchStatus& other) {
 void MatchStatus::mergeSingleMatchResult(SingleMatchResult& other) {
   // only add a match-result if a variable was bound. if no variable was bound the match-result is not added.
   if(other.singleMatchVarBindings.size()>0)
-	_allMatchVarBindings->push_back(other.singleMatchVarBindings);
+    _allMatchVarBindings->push_back(other.singleMatchVarBindings);
   for(SingleMatchMarkedLocations::iterator i=other.singleMatchMarkedLocations.begin();
       i!=other.singleMatchMarkedLocations.end();
       ++i) {
@@ -403,11 +403,11 @@ void SingleMatchResult::clear() {
 
 void MatchStatus::resetAllMatchVarBindings() {
   if(_allMatchVarBindings)
-	delete _allMatchVarBindings;
+    delete _allMatchVarBindings;
   _allMatchVarBindings=new std::list<SingleMatchVarBindings>;
 }
 
 void MatchStatus::resetAllMarkedLocations() {
   while(!_allMatchMarkedLocations.empty())
-	_allMatchMarkedLocations.pop_front();
+    _allMatchMarkedLocations.pop_front();
 }

@@ -10,7 +10,7 @@ LanguageRestrictor::VariantSet LanguageRestrictor::computeVariantSetOfProvidedAs
   LanguageRestrictor::VariantSet vset;
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-	vset.insert((*i)->variantT());
+    vset.insert((*i)->variantT());
   }
   return vset;
 }
@@ -21,8 +21,8 @@ extern TerminalNamesType Cxx_GrammarTerminalNames[V_SgNumVariants+1];
 std::string LanguageRestrictor::variantToString(VariantT variant) {
   assert(variant>=0 && variant<V_SgNumVariants);
   for(int i=0;i<V_SgNumVariants+1;++i) {
-	if(Cxx_GrammarTerminalNames[i].variant==variant)
-	  return Cxx_GrammarTerminalNames[i].name;
+    if(Cxx_GrammarTerminalNames[i].variant==variant)
+      return Cxx_GrammarTerminalNames[i].name;
   }
 
   // we must have found a provided variant in array 'Cxx_GrammarTerminalNames'
@@ -35,21 +35,21 @@ void LanguageRestrictor::ensureVariantIsValid(VariantT variant)  {
 
 void LanguageRestrictor::allowAllAstNodes() {
   for(int i=0; i<V_SgNumVariants;++i) {
-	variants[i]=true;
+    variants[i]=true;
   }
 }
 
 void LanguageRestrictor::disallowAllAstNodes() {
   for(int i=0; i<V_SgNumVariants;++i) {
-	variants[i]=false;
+    variants[i]=false;
   }
 }
 
 LanguageRestrictor::VariantSet LanguageRestrictor::getAllowedAstNodeVariantSet() {
   LanguageRestrictor::VariantSet vs;
   for(int i=0; i<V_SgNumVariants;++i) {
-	if(variants[i]) 
-	  vs.insert((VariantT)i); // MS: this conversion is guaranteed to be correct.
+    if(variants[i]) 
+      vs.insert((VariantT)i); // MS: this conversion is guaranteed to be correct.
   }
   return vs;
 }
@@ -76,7 +76,7 @@ void LanguageRestrictor::setAstNodeVariant(VariantT variant, bool allowed) {
 
 void LanguageRestrictor::setAstNodeVariantSet(VariantSet variants, bool allowed) {
   for(LanguageRestrictor::VariantSet::iterator i=variants.begin();i!=variants.end();++i) {
-	setAstNodeVariant(*i,allowed);
+    setAstNodeVariant(*i,allowed);
   }
 }
 
@@ -86,8 +86,8 @@ bool LanguageRestrictor::isAllowedAstNodeVariant(VariantT variant) {
 
 bool LanguageRestrictor::isAllowedAstNodeVariantSet(VariantSet variants) {
   for(LanguageRestrictor::VariantSet::iterator i=variants.begin();i!=variants.end();++i) {
-	if(!isAllowedAstNodeVariant(*i))
-	  return false;
+    if(!isAllowedAstNodeVariant(*i))
+      return false;
   }
   return true;
 }
@@ -102,8 +102,8 @@ void LanguageRestrictor::initialize() {
 bool LanguageRestrictor::checkProgram(SgNode* root) {
   initialize();
   if(!checkIfAstIsAllowed(root)) {
-	cerr << "INIT FAILED: Input program not valid."<<endl;
-	exit(1);
+    cerr << "INIT FAILED: Input program not valid."<<endl;
+    exit(1);
   }
   return true;
 }
@@ -111,14 +111,14 @@ bool LanguageRestrictor::checkProgram(SgNode* root) {
 bool LanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-	if(!isAllowedAstNode(*i)) {
-	  cerr << "Language-Restrictor: excluded language construct found: " << (*i)->sage_class_name() << endl;
-	  // report first error and return
-	  if((*i)->variantT()==V_SgContinueStmt) {
-		cerr << "cfg construction for continue-statement not supported yet."<<endl; break;
-	  }
-	  return false;
-	}
+    if(!isAllowedAstNode(*i)) {
+      cerr << "Language-Restrictor: excluded language construct found: " << (*i)->sage_class_name() << endl;
+      // report first error and return
+      if((*i)->variantT()==V_SgContinueStmt) {
+        cerr << "cfg construction for continue-statement not supported yet."<<endl; break;
+      }
+      return false;
+    }
   }
   return true;
 }

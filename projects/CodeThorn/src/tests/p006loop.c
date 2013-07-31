@@ -15,17 +15,17 @@ int c=1;
 int f(int input2) {
   int y;
   if(x==1 || input2==2)
-	a=1;
+    a=1;
   else
-	a=2;
+    a=2;
   if(x!=1 || input2==3)
-	b=3;
+    b=3;
   else
-	b=4;
+    b=4;
   if(input2!=3||input2==2)
-	c=5;
+    c=5;
   else
-	c=6;
+    c=6;
   return c;
 }
 
@@ -33,12 +33,12 @@ int main() {
   int input;
   int output;
   while(1) {
-	scanf("%d",&input);
-	if(input!=7)
-	  output=f(input);
-	else
-	  output=7;
-	printf("%d",output);
+    scanf("%d",&input);
+    if(input!=7)
+      output=f(input);
+    else
+      output=7;
+    printf("%d",output);
   }
   return 0;
 }

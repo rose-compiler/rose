@@ -6,21 +6,21 @@ RDLattice::RDLattice() {
 }
 void RDLattice::toStream(ostream& os, VariableIdMapping* vim) {
   if(isBot()) {
-	os<<"bot";
+    os<<"bot";
   } else {
-	os<<"{";
-	for(RDLattice::iterator i=begin();i!=end();++i) {
-	  if(i!=begin())
-		os<<",";
-	  os<<"(";
-	  os<<(*i).first;
-	  os<<",";
-	  if(vim)
-		os<<vim->variableName((*i).second)<<"_";
-	  os<<(*i).second.toString();
-	  os<<")";
-	}
-	os<<"}";
+    os<<"{";
+    for(RDLattice::iterator i=begin();i!=end();++i) {
+      if(i!=begin())
+        os<<",";
+      os<<"(";
+      os<<(*i).first;
+      os<<",";
+      if(vim)
+        os<<vim->variableName((*i).second)<<"_";
+      os<<(*i).second.toString();
+      os<<")";
+    }
+    os<<"}";
   }
 }
 
@@ -44,8 +44,8 @@ void RDLattice::erasePair(Label lab,VariableId var) {
 }
 void RDLattice::eraseAllPairsWithVariableId(VariableId var) {
   for(RDLattice::iterator i=rdSet.begin();i!=rdSet.end();++i) {
-	if(var==(*i).second)
-	  rdSet.erase(*i);
+    if(var==(*i).second)
+      rdSet.erase(*i);
   }
 }
 bool RDLattice::isBot() {
@@ -58,26 +58,26 @@ void RDLattice::setBot() {
 #if 1
 void RDLattice::combine(RDLattice& b) {
   if(b.isBot())
-	return;
+    return;
   for(RDLattice::iterator i=b.begin();i!=b.end();++i) {
-	rdSet.insert(*i);
+    rdSet.insert(*i);
   }
   _bot=false;
 }
 bool RDLattice::approximatedBy(RDLattice& b) {
   if(isBot()) {
-	return true;
+    return true;
   } else {
-	if(b.isBot()) {
-	  return false;
-	}
+    if(b.isBot()) {
+      return false;
+    }
   }
   assert(!isBot()&&!b.isBot());
   if(size()>b.size())
-	 return false;
+     return false;
   for(RDLattice::iterator i=begin();i!=end();++i) {
-	if(!b.exists(*i))
-	  return false;
+    if(!b.exists(*i))
+      return false;
   }
   return true;
 }

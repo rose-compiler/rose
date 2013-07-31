@@ -34,8 +34,8 @@ struct SingleMatchResult {
 class MatchStatus {
  public:
   MatchStatus():debug(false),_allMatchVarBindings(0){
-	resetAllMatchVarBindings();
-	resetAllMarkedLocations();
+    resetAllMatchVarBindings();
+    resetAllMarkedLocations();
   }
   ~MatchStatus() {
     delete _allMatchVarBindings; 
