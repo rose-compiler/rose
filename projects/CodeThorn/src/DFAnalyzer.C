@@ -142,8 +142,8 @@ DFAnalyzer<LatticeType>::solve() {
 	bool isLoopCondition=SgNodeHelper::isLoopCond(_labeler->getNode(lab));
 	if(!newInfo.approximatedBy(_analyzerData[lab])) {
 	  _analyzerData[lab].combine(newInfo);
-	  LabelSet succ;
 	  // semantic propagation: if node[l] is a condition of a loop only propagate on the true branch
+	  LabelSet succ;
 	  {
 		if(isLoopCondition) {
 		  succ=_flow.outEdgesOfType(lab,EDGE_TRUE).targetLabels();
@@ -155,7 +155,7 @@ DFAnalyzer<LatticeType>::solve() {
 	} else {
 	  // no new information was computed. Nothing to do (except for the case it is a loop-condition of a loop for which we may have found a fix-point)
 	  if(isLoopCondition) {
-		succ=_flow.outEdgesOfType(lab,EDGE_FALSE).targetLabels();
+		LabelSet succ=_flow.outEdgesOfType(lab,EDGE_FALSE).targetLabels();
 		_workList.add(succ);
 	  } else {
 		// nothing to add
