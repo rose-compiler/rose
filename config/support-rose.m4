@@ -2157,6 +2157,8 @@ projects/compass2/docs/asciidoc/Makefile
 projects/compass2/docs/doxygen/doxygen.config
 projects/compass2/docs/doxygen/Makefile
 projects/compass2/share/xml/compass_parameters.xml
+projects/compass2/tests/checkers/asynchronous_signal_handler/compass_parameters.xml
+projects/compass2/tests/checkers/asynchronous_signal_handler/Makefile
 projects/compass2/tests/Makefile
 projects/compass2/tests/checkers/Makefile
 projects/compass2/tests/checkers/discard_assignment/Makefile

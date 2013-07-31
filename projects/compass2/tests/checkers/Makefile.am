@@ -20,6 +20,7 @@ SUBDIRS=\
 	comma_operator \
 	byte_by_byte_structure_comparison \
 	boolean_is_has \
+	asynchronous_signal_handler \
 	dead_function \
 	default_argument \
 	function_pointer \
