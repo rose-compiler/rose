@@ -38,10 +38,12 @@ void foobar()
   // Unparsed as:   getsockname(ls[i] . fd,.__sockaddr__ = ls[i] . sockaddr);
   // We might think that we want:   getsockname(ls[i] . fd,{.__sockaddr__ = ls[i] . sockaddr});
   // But I think that we can't unparse the initializer as a designated initializer in a function argument list.
-     getsockname(ls[i].fd,ls[i].sockaddr);
+  // getsockname(ls[i].fd,ls[i].sockaddr);
+
+  // __SOCKADDR_ARG __addr = ls[i].sockaddr;
+     __SOCKADDR_ARG __addr = { .__sockaddr__ = ls[i] . sockaddr };
+
    }
-
-
 
 
 

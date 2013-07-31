@@ -1797,6 +1797,12 @@ Grammar::setUpExpressions ()
      AggregateInitializer.setDataPrototype     ( "bool", "need_explicit_braces", "= true",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (7/26/2013): This is required for initializers using compound literals (it triggers the output of syntax that 
+  // makes the aggregate initializer look like a cast, but a SgCastExp should not be used to wrap the SgAggregateInitializer).
+  // This fix is important for test2013_27.c and it related to the support for designated initializers.
+     AggregateInitializer.setDataPrototype     ( "bool", "uses_compound_literal", "= false",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // TV (03/04/2012) Compound initializer: for OpenCL (Vector type initializer): float4 a = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
      CompoundInitializer.setFunctionPrototype ( "HEADER_COMPOUND_INITIALIZER_EXPRESSION", "../Grammar/Expression.code" );
      CompoundInitializer.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );

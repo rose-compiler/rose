@@ -1751,36 +1751,55 @@ SgType::stripType(unsigned char bit_array) const
 #endif
           if ( (bit_array & STRIP_MODIFIER_TYPE) && (modType = isSgModifierType(currentType)) )
              {
+#if 0
+               printf ("In loop of SgType::stripType(): found SgModifierType \n");
+#endif
                currentType = modType->get_base_type();
              }
             else
              {
                if ( (bit_array & STRIP_REFERENCE_TYPE) &&  (refType = isSgReferenceType(currentType)) )
                   {
+#if 0
+                    printf ("In loop of SgType::stripType(): found SgReferenceType \n");
+#endif
                     currentType = refType->get_base_type();
                   }
                  else
                   {
                     if ( (bit_array & STRIP_POINTER_TYPE) && (pointType = isSgPointerType(currentType)) )
                        {
+#if 0
+                         printf ("In loop of SgType::stripType(): found SgPointerType \n");
+#endif
                          currentType = pointType->get_base_type();
                        }
                       else
                        {
                          if ( (bit_array & STRIP_ARRAY_TYPE) && (arrayType = isSgArrayType(currentType)) )
                             {
+#if 0
+                              printf ("In loop of SgType::stripType(): found SgArrayType \n");
+#endif
                               currentType = arrayType->get_base_type();
                             }
                            else
                             {
                               if ( (bit_array & STRIP_TYPEDEF_TYPE) && (typedefType = isSgTypedefType(currentType)) )
                                  {
+#if 0
+                                   printf ("In loop of SgType::stripType(): found SgTypedefType \n");
+#endif
                                 // DQ (6/21/2005): Added support for typedef types to be uncovered by findBaseType()
                                    currentType = typedefType->get_base_type();
                                  }
                                 else
                                  {
                                 // Exit the while(true){} loop!
+                                   ROSE_ASSERT(currentType != NULL);
+#if 0
+                                   printf ("In loop of SgType::stripType(): exiting loop: currentType = %p = %s \n",currentType,currentType->class_name().c_str());
+#endif
                                    break;
                                  }
                             }
@@ -1797,13 +1816,20 @@ SgType::stripType(unsigned char bit_array) const
              {
             // Exit loop and return the currentType... 
                printf ("In loop of SgType::stripType(bit_array = %u): exiting loop using currentType (counter = %zu) this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
-
+#if 0
                break;
+#endif
              }
           ROSE_ASSERT(counter < 100);
 
           counter++;
         }
+
+     ROSE_ASSERT(currentType != NULL);
+
+#if 0
+     printf ("Leaving SgType::stripType(): currentType = %p = %s \n",currentType,currentType->class_name().c_str());
+#endif
 
      return currentType;
    }
