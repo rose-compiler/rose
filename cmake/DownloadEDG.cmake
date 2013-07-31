@@ -51,7 +51,7 @@ endif()
 
 # Get binary compatibility signature
 execute_process(
-  COMMAND "${PROJECT_SOURCE_DIR}/scripts/edg-generate-sig"
+  COMMAND "${PROJECT_SOURCE_DIR}/scripts/edg-generate-sig" "--find" "--progress"
   OUTPUT_VARIABLE signature)
 string(STRIP ${signature} signature)
 
