@@ -149,6 +149,7 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionRefExp* sgn)
 {
   // not sure what do to do here
   // we dont have VariabldId for SgFunctionRefExp
+  ROSE_ASSERT(0);
 }
 
 // A& foo() { return A(); }
@@ -157,6 +158,7 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionRefExp* sgn)
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallExp* sgn)
 {
   // we can look at its defintion and process the return expression ?
+  ROSE_ASSERT(0);
 }
 
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgNode* sgn)
