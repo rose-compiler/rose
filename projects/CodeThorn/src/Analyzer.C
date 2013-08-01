@@ -200,7 +200,7 @@ void Analyzer::runSolver1() {
       printStatusMessage(true);
       prevStateSetSize=estateSet.size();
     }
-#pragma omp parallel for private(threadNum),shared(workVector)
+#pragma omp parallel for private(threadNum) shared(workVector)
     for(int j=0;j<workers;++j) {
       threadNum=omp_get_thread_num();
       const EState* currentEStatePtr=workVector[j];
