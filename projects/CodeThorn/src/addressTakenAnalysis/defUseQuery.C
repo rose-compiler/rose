@@ -1,3 +1,5 @@
+#include "sage3basic.h"
+
 #include "defUseQuery.h"
 #include <algorithm>
 #include <iterator>

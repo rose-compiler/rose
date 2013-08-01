@@ -8,7 +8,6 @@
  *************************************************************/
 
 
-#include "rose.h"
 #include "AstTerm.h"
 #include "AstMatching.h"
 #include "VariableIdMapping.h"

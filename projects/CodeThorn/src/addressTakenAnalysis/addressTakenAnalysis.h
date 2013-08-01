@@ -7,7 +7,6 @@
  * email    : aananthakris1@llnl.gov                         *
  *************************************************************/
 
-#include "rose.h"
 #include "AstTerm.h"
 #include "AstMatching.h"
 #include "VariableIdMapping.h"

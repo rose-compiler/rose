@@ -1,5 +1,8 @@
+#include "sage3basic.h"
+
 #include "addressTakenAnalysis.h"
 #include "defUseQuery.h"
+
 
 /*************************************************************
  * Copyright: (C) 2013 by Sriram Aananthakrishnan            *

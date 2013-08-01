@@ -12,13 +12,10 @@ INCLUDES = \
 	-I$(srcdir) \
 	-I$(CODETHORN_SRC_ROOT)
 
-BUILT_SOURCES = matcherparser.h
-AM_YFLAGS = -d -p matcherparser
-AM_LFLAGS = -Pmatcherparser -o$(LEX_OUTPUT_ROOT).c
+# AM_YFLAGS = -d -p matcherparser
+# AM_LFLAGS = -Pmatcherparser -o$(LEX_OUTPUT_ROOT).c
 
 addressTakenAnalysis_SOURCES = \
-	$(CODETHORN_SRC_ROOT)/matcherparser.yy \
-	$(CODETHORN_SRC_ROOT)/matcherlexer.ll \
 	$(CODETHORN_SRC_ROOT)/Timer.cpp \
 	$(CODETHORN_SRC_ROOT)/RoseAst.C \
 	$(CODETHORN_SRC_ROOT)/AstTerm.C \
@@ -28,6 +25,7 @@ addressTakenAnalysis_SOURCES = \
 	$(CODETHORN_SRC_ROOT)/VariableIdMapping.C \
 	$(CODETHORN_SRC_ROOT)/Miscellaneous.C \
 	$(CODETHORN_SRC_ROOT)/CommandLineOptions.C \
+	matcherparser.C \
 	addressTakenAnalysis.C \
 	addressTakenAnalysis.h \
 	defUseQuery.C \
@@ -35,6 +33,8 @@ addressTakenAnalysis_SOURCES = \
 	VariableIdUtils.C \
 	VariableIdUtils.h \
 	addressTakenAnalysisDriver.C
+
+BUILT_SOURCES = matcherparser.C
 
 addressTakenAnalysis_LDADD = -lrose
 
@@ -73,6 +73,13 @@ ADDRESSTAKENANALYSIS_CHECKS = ${ADDRESSTAKENANALYSIS_TESTS:.cpp=.cpp-o}
 
 $(ADDRESSTAKENANALYSIS_CHECKS): addressTakenAnalysis $(srcdir)/tests/$(@:.cpp=.cpp-o)
 	./addressTakenAnalysis -c --edg:no_warnings $(@:.cpp-o=.cpp)
+# explicit rules because of multiple bison parser
+matcherparser.C: $(CODETHORN_SRC_ROOT)/matcherlexer.ll $(CODETHORN_SRC_ROOT)/matcherparser.yy
+	$(YACC) $(YFLAGS) -d -p matcherparser $(CODETHORN_SRC_ROOT)/matcherparser.yy # generates y.tab.h/c
+	$(LEX) $(LFLAGS) $(AM_LFLAGS) -Pmatcherparser $(CODETHORN_SRC_ROOT)/matcherlexer.ll
+	mv y.tab.h matcherparser.h
+	cat lex.yy.c y.tab.c > matcherparser.C
+	rm lex.yy.c y.tab.c
 
 check-local: $(ADDRESSTAKENANALYSIS_CHECKS)
 

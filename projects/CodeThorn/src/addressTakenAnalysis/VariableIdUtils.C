@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "VariableIdUtils.h"
 
 std::string VariableIdSetPrettyPrint::str(VariableIdSet& vset, VariableIdMapping& vidm)
