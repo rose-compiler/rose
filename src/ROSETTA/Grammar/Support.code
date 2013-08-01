@@ -3905,7 +3905,7 @@ HEADER_SYMBOL_TABLE_START
        // These function search first against the name and then iteratively continue through 
        // the internal STL container to look for an entry that match the name and the type of
        // the SgSymbol.  This is optimially fast only for the case where there are unique names.
-          SgSymbol*          find_any(const SgName & name);                    //! Complexity O(log n) for first match against name, then O(n)
+          SgSymbol*          find_any(const SgName & name);                   //! Complexity O(log n) for first match against name, then O(n)
 
           SgVariableSymbol*  find_variable(const SgName & name);               //! Complexity O(log n) for first match against name, then O(n)
 
@@ -3914,7 +3914,8 @@ HEADER_SYMBOL_TABLE_START
        // DQ (3/10/2013): These functions are left undefined in the final link step for SWIG support, so remove it from SWIG processing for now.
 
        // DQ (12/27/2011): Added support for template declarations in the AST.
-          SgTemplateVariableSymbol* find_template_variable(const SgName & name);    //! Complexity O(log n) for first match against name, then O(n)
+       // SgTemplateVariableSymbol* find_template_variable(const SgName & name);
+          SgTemplateVariableSymbol* find_template_variable(const SgName & name, SgTemplateParameterPtrList* templateList, SgTemplateArgumentPtrList* templateSpecializationArgumentList);
           SgVariableSymbol*         find_nontemplate_variable(const SgName & name); //! Complexity O(log n) for first match against name, then O(n)
 #endif
           SgClassSymbol*     find_class(const SgName & name); //! Complexity O(log n) for first match against name, then O(n)
@@ -3969,11 +3970,15 @@ HEADER_SYMBOL_TABLE_START
 
        // DQ (12/27/2011): Added support for template declarations in the AST.
        // DQ (12/12/2011): New functions to support template declarations in the AST.
-          SgTemplateFunctionSymbol* find_template_function(const SgName& name, const SgType* type); //! Complexity O(log n) for first match against name, then O(n)
+       // SgTemplateFunctionSymbol* find_template_function(const SgName& name, const SgType* type);
+      //! Complexity O(log n) for first match against name, then O(n)
+          SgTemplateFunctionSymbol* find_template_function(const SgName& name, const SgType* type, SgTemplateParameterPtrList* templateList, SgTemplateArgumentPtrList* templateSpecializationArgumentList);
           SgFunctionSymbol*         find_nontemplate_function(const SgName& name, const SgType* type); //! Complexity O(log n) for first match against name, then O(n)
 
        // DQ (12/27/2011): Added support for template declarations in the AST.
-          SgTemplateMemberFunctionSymbol* find_template_member_function(const SgName& name, const SgType* type); //! Complexity O(log n) for first match against name, then O(n)
+      //! Complexity O(log n) for first match against name, then O(n)
+       // SgTemplateMemberFunctionSymbol* find_template_member_function(const SgName& name, const SgType* type);
+          SgTemplateMemberFunctionSymbol* find_template_member_function(const SgName& name, const SgType* type, SgTemplateParameterPtrList* templateList, SgTemplateArgumentPtrList* templateSpecializationArgumentList);
           SgMemberFunctionSymbol*         find_nontemplate_member_function(const SgName& name, const SgType* type); //! Complexity O(log n) for first match against name, then O(n)
 
        // DQ (9/9/2012): We need to pass the template parameters to help disambiguate the symblos using more than just the names.
@@ -4069,7 +4074,8 @@ HEADER_SYMBOL_TABLE_START
           template<class ReturnType,class ReturnTypeDeclaration> ReturnType* find_template_symbol_support (const SgName & nm, SgTemplateParameterPtrList* templateParameters, SgTemplateArgumentPtrList* templateSpecializationArgumentList);
 
        // DQ (5/20/2013): Added refactoring of symbol lookup support so that we can handle new namespace support for symbols.
-          template<class ReturnType> ReturnType* find_symbol_with_type_support (const SgName & nm, const SgType* type);
+       // template<class ReturnType> ReturnType* find_symbol_with_type_support (const SgName & nm, const SgType* type);
+          template<class ReturnType> ReturnType* find_symbol_with_type_support (const SgName & nm, const SgType* type, SgTemplateParameterPtrList* templateParameters, SgTemplateArgumentPtrList* templateSpecializationArgumentList);
 
        // DQ (5/20/2013): Added refactoring of symbol lookup support so that we can handle new namespace support for symbols.
           template<class ReturnType> ReturnType* find_symbol_with_template_args_support ( const SgName & nm, SgTemplateArgumentPtrList* templateArgumentsList );
@@ -8189,7 +8195,7 @@ SgSymbolTable::find_function (const SgName & nm, const SgType* t)
           ROSE_ASSERT(s->get_declaration()->get_type() == t);
         }
 #else
-     s = find_symbol_with_type_support<SgFunctionSymbol>(nm,t);
+     s = find_symbol_with_type_support<SgFunctionSymbol>(nm,t,NULL,NULL);
 #endif
 
   // printf ("In SgSymbolTable::find_function(): returning symbol = %p = %s \n",s,(s != NULL) ? s->class_name().c_str() : "null");
@@ -8249,7 +8255,7 @@ SgSymbolTable::find_nontemplate_function(const SgName& nm, const SgType* t)
           ROSE_ASSERT(s->get_declaration()->get_type() == t);
         }
 #else
-     s = find_symbol_with_type_support<SgFunctionSymbol>(nm,t);
+     s = find_symbol_with_type_support<SgFunctionSymbol>(nm,t,NULL,NULL);
 
   // DQ (5/23/2013): Added assertion on retuned symbol.
      ROSE_ASSERT(isSgTemplateFunctionSymbol(s) == NULL && isSgTemplateMemberFunctionSymbol(s) == NULL);
@@ -8262,9 +8268,10 @@ SgSymbolTable::find_nontemplate_function(const SgName& nm, const SgType* t)
      return s;
    }
 
-
+// DQ (7/31/2013): Adding support for template parameters and template specialization.
+// SgTemplateFunctionSymbol* SgSymbolTable::find_template_function(const SgName& nm, const SgType* t)
 SgTemplateFunctionSymbol*
-SgSymbolTable::find_template_function(const SgName& nm, const SgType* t)
+SgSymbolTable::find_template_function(const SgName& nm, const SgType* t, SgTemplateParameterPtrList* templateList, SgTemplateArgumentPtrList* templateSpecializationArgumentList)
    {
      SgTemplateFunctionSymbol *s = NULL;
      ROSE_ASSERT(p_table != NULL);
@@ -8304,7 +8311,8 @@ SgSymbolTable::find_template_function(const SgName& nm, const SgType* t)
           ROSE_ASSERT(s->get_declaration()->get_type() == t);
         }
 #else
-     s = find_symbol_with_type_support<SgTemplateFunctionSymbol>(nm,t);
+  // s = find_symbol_with_type_support<SgTemplateFunctionSymbol>(nm,t);
+     s = find_symbol_with_type_support<SgTemplateFunctionSymbol>(nm,t,templateList,templateSpecializationArgumentList);
 #endif
 
   // printf ("In SgSymbolTable::find_template_function(): returning symbol = %p = %s \n",s,(s != NULL) ? s->class_name().c_str() : "null");
@@ -8363,7 +8371,7 @@ SgSymbolTable::find_nontemplate_member_function(const SgName& nm, const SgType* 
           ROSE_ASSERT(s->get_declaration()->get_type() == t);
         }
 #else
-     s = find_symbol_with_type_support<SgMemberFunctionSymbol>(nm,t);
+     s = find_symbol_with_type_support<SgMemberFunctionSymbol>(nm,t,NULL,NULL);
 #endif
 
   // printf ("In SgSymbolTable::find_nontemplate_function(): returning symbol = %p = %s \n",s,(s != NULL) ? s->class_name().c_str() : "null");
@@ -8372,8 +8380,9 @@ SgSymbolTable::find_nontemplate_member_function(const SgName& nm, const SgType* 
    }
 
 
+// SgTemplateMemberFunctionSymbol* SgSymbolTable::find_template_member_function(const SgName& nm, const SgType* t)
 SgTemplateMemberFunctionSymbol*
-SgSymbolTable::find_template_member_function(const SgName& nm, const SgType* t)
+SgSymbolTable::find_template_member_function(const SgName& nm, const SgType* t, SgTemplateParameterPtrList* templateList, SgTemplateArgumentPtrList* templateSpecializationArgumentList)
    {
      SgTemplateMemberFunctionSymbol *s = NULL;
      ROSE_ASSERT(p_table != NULL);
@@ -8457,7 +8466,8 @@ SgSymbolTable::find_template_member_function(const SgName& nm, const SgType* t)
           ROSE_ASSERT(s->get_declaration()->get_type() == t);
         }
 #else
-     s = find_symbol_with_type_support<SgTemplateMemberFunctionSymbol>(nm,t);
+  // s = find_symbol_with_type_support<SgTemplateMemberFunctionSymbol>(nm,t);
+     s = find_symbol_with_type_support<SgTemplateMemberFunctionSymbol>(nm,t,templateList,templateSpecializationArgumentList);
 #endif
 
 #if 0
@@ -8828,9 +8838,11 @@ SgSymbolTable::find_symbol_support (const SgName & nm)
    }
 
 
+// DQ (7/31/2013): Added support for template parameters and template specialization.
+// template<class ReturnType> ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, const SgType* type)
 template<class ReturnType>
 ReturnType*
-SgSymbolTable::find_symbol_with_type_support (const SgName & nm, const SgType* type)
+SgSymbolTable::find_symbol_with_type_support (const SgName & nm, const SgType* type, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList)
    {
   // Templated function to support retrival of different types of symbols from the symbol table.
   // This refactors a lot of code (some now and more later).
@@ -8842,6 +8854,15 @@ SgSymbolTable::find_symbol_with_type_support (const SgName & nm, const SgType* t
 #if 0
      printf ("---------------------------------------------------------------------------------- \n");
      printf ("In SgSymbolTable::find_symbol_with_type_support(): name = %s type = %p = %s \n",nm.str(),type,type->class_name().c_str());
+#endif
+
+#if 1
+  // DQ (7/31/2013): We are adding support for template parameters and template specialization to disambiguate the lookup of symbols.
+     if (templateParameterList != NULL || templateSpecializationArgumentList != NULL)
+        {
+          printf ("ERROR: In SgSymbolTable::find_symbol_with_type_support(): (templateParameterList != NULL || templateSpecializationArgumentList != NULL) not supported \n");
+          ROSE_ASSERT(false);
+        }
 #endif
 
      bool restrictToSpecificType = true;
@@ -9155,6 +9176,15 @@ SgSymbolTable::find_template_symbol_support ( const SgName & nm, SgTemplateParam
   // This refactors a lot of code (some now and more later).
 
      ReturnType* s = NULL;
+
+#if 0
+  // DQ (7/31/2013): We are adding support for template parameters and template specialization to disambiguate the lookup of symbols.
+     if (templateParameterList != NULL || templateSpecializationArgumentList != NULL)
+        {
+          printf ("ERROR: In SgSymbolTable::find_template_symbol_support(): (templateParameterList != NULL || templateSpecializationArgumentList != NULL) not supported \n");
+          ROSE_ASSERT(false);
+        }
+#endif
 
   // Find the sublist that match the name.
      std::pair<hash_iterator, hash_iterator> range = p_table->equal_range(nm);

@@ -2878,7 +2878,11 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
                               SgDeclarationStatement* templateDeclaration = derivedDeclaration->get_templateDeclaration();
                               ROSE_ASSERT(templateDeclaration != NULL);
                            // SgTemplateSymbol* templateSymbol = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_name());
-                              SgTemplateSymbol* templateSymbol = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_template_name());
+
+                           // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+                           // In this case these are unavailable from this point.
+                           // SgTemplateSymbol* templateSymbol = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_template_name());
+                              SgTemplateSymbol* templateSymbol = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_template_name(),NULL,NULL);
                               if (templateSymbol != NULL)
                                  {
                                 // The symbol is not present, so we have to build one and add it.
@@ -4939,8 +4943,11 @@ SageInterface::lookupTemplateSymbolInParentScopes (const SgName &  name, SgScope
 
      while ((cscope != NULL) && (symbol == NULL))
         {
+       // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+       // In this case these are unavailable from this point.
        // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
-          symbol = cscope->lookup_template_symbol(name);
+       // symbol = cscope->lookup_template_symbol(name);
+          symbol = cscope->lookup_template_symbol(name,NULL,NULL);
 #if 0
           printf ("In lookupTemplateSymbolInParentScopes(): Searching scope = %p = %s name = %s symbol = %p \n",cscope,cscope->class_name().c_str(),name.str(),symbol);
 #endif
@@ -10665,15 +10672,29 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
 #endif
           printf ("[SageInterface::fixFunctionDeclaration] Lookup Function func = %p, name = %s, type = %p, scope = %p\n", func, func->get_name().getString().c_str(), func->get_type(), scope);
           SgFunctionSymbol* func_symbol = NULL;
+
+       // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+       // In this case these are unavailable from this point.
           if (tmfunc != NULL)
-            func_symbol = scope->lookup_template_member_function_symbol (func->get_name(), func->get_type());
+          {
+         // func_symbol = scope->lookup_template_member_function_symbol (func->get_name(), func->get_type());
+            func_symbol = scope->lookup_template_member_function_symbol (func->get_name(), func->get_type(),NULL,NULL);
+          }
           else if (mfunc != NULL)
+          {
             func_symbol = scope->lookup_nontemplate_member_function_symbol (func->get_name(), func->get_type());
+          }
           else if (tfunc != NULL)
-            func_symbol = scope->lookup_template_function_symbol (func->get_name(), func->get_type());
+          {
+         // func_symbol = scope->lookup_template_function_symbol (func->get_name(), func->get_type());
+            func_symbol = scope->lookup_template_function_symbol (func->get_name(), func->get_type(),NULL,NULL);
+          }
           else if (func != NULL)
+          {
             func_symbol = scope->lookup_function_symbol (func->get_name(), func->get_type());
-          else assert(false);
+          }
+          else 
+            assert(false);
 
 
           printf("[SageInterface::fixFunctionDeclaration]     -> func = %p, mfunc = %p, tmfunc = %p\n", func, mfunc, tmfunc);

@@ -335,7 +335,8 @@ HEADER_SCOPE_STATEMENT_START
           SgLabelSymbol*     lookup_label_symbol      (const SgName& n) const;
           SgJavaLabelSymbol* lookup_java_label_symbol (const SgName& n) const; // charles4: added 09/12/2011
           SgNamespaceSymbol* lookup_namespace_symbol  (const SgName& n) const;
-          SgTemplateSymbol*  lookup_template_symbol   (const SgName& n) const;
+       // SgTemplateSymbol*  lookup_template_symbol   (const SgName& n) const;
+          SgTemplateSymbol*  lookup_template_symbol   (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const;
 
        // DQ (12/12/2011): Added support for template declarations in the AST.
        // SgTemplateClassSymbol* lookup_template_class_symbol    (const SgName& n) const;
@@ -346,9 +347,12 @@ HEADER_SCOPE_STATEMENT_START
           SgClassSymbol*     lookup_nontemplate_class_symbol (const SgName& n, SgTemplateArgumentPtrList* templateArgumentsList) const;
 
        // DQ (12/27/2011): Added support for template declarations in the AST.
-          SgTemplateFunctionSymbol*       lookup_template_function_symbol (const SgName& n, const SgType* t) const;
+       // SgTemplateFunctionSymbol*       lookup_template_function_symbol (const SgName& n, const SgType* t) const;
+          SgTemplateFunctionSymbol*       lookup_template_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const;
+
           SgFunctionSymbol*               lookup_nontemplate_function_symbol (const SgName& n, const SgType* t) const;
-          SgTemplateMemberFunctionSymbol* lookup_template_member_function_symbol (const SgName& n, const SgType* t) const;
+       // SgTemplateMemberFunctionSymbol* lookup_template_member_function_symbol (const SgName& n, const SgType* t) const;
+          SgTemplateMemberFunctionSymbol* lookup_template_member_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const;
 
        // DQ (5/23/2013): Added API function so that we would not have to access the symbol tabel directly.
           SgMemberFunctionSymbol* lookup_nontemplate_member_function_symbol (const SgName& n, const SgType* t) const;
@@ -4988,7 +4992,7 @@ SgScopeStatement::lookup_namespace_symbol ( const SgName & n ) const
 
 
 SgTemplateSymbol*
-SgScopeStatement::lookup_template_symbol (const SgName& n) const
+SgScopeStatement::lookup_template_symbol (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const
    {
 #if 1
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
@@ -5006,7 +5010,8 @@ SgScopeStatement::lookup_template_symbol (const SgName& n) const
         }
 #else
      assert (p_symbol_table != NULL);
-     return p_symbol_table->find_template(n);
+  // return p_symbol_table->find_template(n);
+     return p_symbol_table->find_template(n, templateParameterList, templateSpecializationArgumentList);
 #endif
    }
 
@@ -5071,7 +5076,7 @@ SgScopeStatement::lookup_nontemplate_class_symbol (const SgName& n, SgTemplateAr
    }
 
 SgTemplateFunctionSymbol*
-SgScopeStatement::lookup_template_function_symbol (const SgName& n, const SgType* t) const
+SgScopeStatement::lookup_template_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const
    {
 #if 1
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
@@ -5080,16 +5085,19 @@ SgScopeStatement::lookup_template_function_symbol (const SgName& n, const SgType
         {
           ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
           const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
-          return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_function(n,t);
+       // return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_function(n,t);
+          return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_function(n,t,templateParameterList,templateSpecializationArgumentList);
         }
        else
         {
           assert (p_symbol_table != NULL);
-          return p_symbol_table->find_template_function(n,t);
+       // return p_symbol_table->find_template_function(n,t);
+          return p_symbol_table->find_template_function(n,t,templateParameterList,templateSpecializationArgumentList);
         }
 #else
      assert (p_symbol_table != NULL);
-     return p_symbol_table->find_template_function(n,t);
+  // return p_symbol_table->find_template_function(n,t);
+     return p_symbol_table->find_template_function(n,t,templateParameterList,templateSpecializationArgumentList);
 #endif
    }
 
@@ -5117,7 +5125,7 @@ SgScopeStatement::lookup_nontemplate_function_symbol (const SgName& n, const SgT
    }
 
 SgTemplateMemberFunctionSymbol*
-SgScopeStatement::lookup_template_member_function_symbol (const SgName& n, const SgType* t) const
+SgScopeStatement::lookup_template_member_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const
    {
 #if 1
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
@@ -5126,16 +5134,19 @@ SgScopeStatement::lookup_template_member_function_symbol (const SgName& n, const
         {
           ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
           const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
-          return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_member_function(n,t);
+       // return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_member_function(n,t);
+          return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_member_function(n,t,templateParameterList,templateSpecializationArgumentList);
         }
        else
         {
           assert (p_symbol_table != NULL);
-          return p_symbol_table->find_template_member_function(n,t);
+       // return p_symbol_table->find_template_member_function(n,t);
+          return p_symbol_table->find_template_member_function(n,t,templateParameterList,templateSpecializationArgumentList);
         }
 #else
      assert (p_symbol_table != NULL);
-     return p_symbol_table->find_template_member_function(n,t);
+  // return p_symbol_table->find_template_member_function(n,t);
+     return p_symbol_table->find_template_member_function(n,t,templateParameterList,templateSpecializationArgumentList);
 #endif
    }
 
