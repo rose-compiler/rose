@@ -16,7 +16,7 @@ void foo()
     int a, b;
     int (* arr_p)[10];
     int arr[10][10];
-    p = &(a+1, b);
+    p = &(a+1, (a+1, b));
     p = &(arr[2][3]);
     arr_p = &(arr[2]);
     void (*f)() = &foo;
