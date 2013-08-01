@@ -7011,17 +7011,18 @@ std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariab
     return std::make_pair(tempVarDeclaration, varRefExpression);
 }
 
+// This function creates a temporary variable for a given expression in the given scope
+// This is different from SageInterface::createTempVariableForExpression in that it does not
+// try to be smart to create pointers to reference types and so on. The tempt is initialized to expression.
+// The caller is responsible for setting the parent of SgVariableDeclaration since buildVariableDeclaration
+// may not set_parent() when the scope stack is empty. See programTransformation/extractFunctionArgumentsNormalization/ExtractFunctionArguments.C for sample usage.
 
-std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariableOrReferenceForExpression
+std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariableAndReferenceForExpression
 (SgExpression* expression, SgScopeStatement* scope)
 {
     SgType* expressionType = expression->get_type();
     SgType* variableType = expressionType;
-    
-    // If the expression is a dereferenced pointer, use a reference to hold it.
-    if (isSgPointerDerefExp(expression))
-        variableType = SageBuilder::buildReferenceType(variableType);
-    
+
     //Generate a unique variable name
     string name = generateUniqueVariableName(scope);
     
@@ -7032,8 +7033,6 @@ std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariab
     
     SgVariableDeclaration* tempVarDeclaration = SageBuilder::buildVariableDeclaration(name, variableType, initializer, scope);
     ROSE_ASSERT(tempVarDeclaration != NULL);
-    
-    SgVarRefExp* tempVarReference = SageBuilder::buildVarRefExp(tempVarDeclaration);
     
     //Build the variable reference expression that can be used in place of the original expression
     SgExpression* varRefExpression = SageBuilder::buildVarRefExp(tempVarDeclaration);    
