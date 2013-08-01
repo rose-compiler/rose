@@ -54,15 +54,15 @@ namespace UnifiedLTL {
 
     inline bool operator==(const LTLState& other) const { 
       //cerr<<"?  "<<*this<<"\n== "<<other<<"\n=> "
-      // 	  << (estate == other.estate)<<" && "
-      // 	  <<(valstack == other.valstack)<<" && "
-      // 	  <<(val == other.val)<<endl;
+      //       << (estate == other.estate)<<" && "
+      //       <<(valstack == other.valstack)<<" && "
+      //       <<(val == other.val)<<endl;
       return (estate == other.estate) && (valstack == other.valstack);
     }
     bool operator<(const LTLState& other) const {
       if (estate  < other.estate) return true;
       if (estate == other.estate)
-	return (valstack  < other.valstack);
+    return (valstack  < other.valstack);
       return false;
     }
     friend ostream& operator<<(ostream& os, const LTLState& s);

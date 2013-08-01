@@ -11,7 +11,9 @@
 #include <string>
 #include <sstream>
 
-using namespace std;
+using std::string;
+using std::istream;
+using std::ostream;
 
 namespace CodeThorn {
 
@@ -25,9 +27,9 @@ namespace CodeThorn {
 namespace AType {
 
   /*!
-	\brief Serves as top value in analysis.
-	\date 2012
-	\author Markus Schordan
+    \brief Serves as top value in analysis.
+    \date 2012
+    \author Markus Schordan
   */
   class Top {
   };
@@ -140,11 +142,11 @@ class ConstIntLattice {
  istream& operator>>(istream& is, ConstIntLattice& value);
 
   /*! \brief Comparison class, allowing to use ConstIntLattice in ordered containers (e.g. set)
-	\date 2012
-	\author Markus Schordan
+    \date 2012
+    \author Markus Schordan
   */
   struct ConstIntLatticeCmp {
-	bool operator()(const AType::ConstIntLattice& c1, const AType::ConstIntLattice& c2) const;
+    bool operator()(const AType::ConstIntLattice& c1, const AType::ConstIntLattice& c2) const;
   };
 
  class CppCapsuleConstIntLattice {
@@ -161,7 +163,7 @@ class ConstIntLattice {
    ConstIntLattice value;
  };
   struct CppCapsuleConstIntLatticeLessComparator {
-	bool operator()(const AType::CppCapsuleConstIntLattice& c1, const AType::CppCapsuleConstIntLattice& c2) const;
+    bool operator()(const AType::CppCapsuleConstIntLattice& c1, const AType::CppCapsuleConstIntLattice& c2) const;
   };
 
 } // end of namespace AType

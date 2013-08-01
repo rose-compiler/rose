@@ -8,7 +8,6 @@
  *************************************************************/
 
 #include <set>
-#include "rose.h"
 #include "RoseAst.h"
 #include "VariableIdMapping.h"
 #include "Miscellaneous.h"
@@ -25,9 +24,9 @@ typedef size_t Label;
  class LabelProperty {
  public:
    enum LabelType { LABEL_UNDEF=1, LABEL_OTHER=2, 
-					LABEL_FUNCTIONCALL=100, LABEL_FUNCTIONCALLRETURN,
-					LABEL_FUNCTIONENTRY, LABEL_FUNCTIONEXIT,
-					LABEL_BLOCKBEGIN, LABEL_BLOCKEND
+                    LABEL_FUNCTIONCALL=100, LABEL_FUNCTIONCALLRETURN,
+                    LABEL_FUNCTIONENTRY, LABEL_FUNCTIONEXIT,
+                    LABEL_BLOCKBEGIN, LABEL_BLOCKEND
    };
    enum IOType { LABELIO_NONE, LABELIO_STDIN, LABELIO_STDOUT, LABELIO_STDERR
    };
@@ -69,22 +68,22 @@ LabelSet operator+(LabelSet& s2) {
   LabelSet result;
   result=*this;
   for(LabelSet::iterator i2=s2.begin();i2!=s2.end();++i2)
-	result.insert(*i2);
+    result.insert(*i2);
   return result;
 }
 
 LabelSet& operator+=(LabelSet& s2) {
   for(LabelSet::iterator i2=s2.begin();i2!=s2.end();++i2)
-	insert(*i2);
+    insert(*i2);
   return *this;
  }
  std::string toString() {
    std::stringstream ss;
    ss<<"{";
    for(LabelSet::iterator i=begin();i!=end();++i) {
-	 if(i!=begin())
-	   ss<<",";
-	 ss<<*i;
+     if(i!=begin())
+       ss<<",";
+     ss<<*i;
    }
    ss<<"}";
    return ss.str();
@@ -101,13 +100,13 @@ class Labeler {
   void createLabels(SgNode* node);
 
   /* Labels are numbered 0..n-1 where n is the number of labeled nodes (not all nodes are labeled).
-	 A return value of NO_LABEL means that this node has no label.
+     A return value of NO_LABEL means that this node has no label.
   */
   Label getLabel(SgNode* node);
   LabelSet getLabelSet(set<SgNode*>& nodeSet);
-  
+
   /* Returns the node with the label 'label'. If the return value is 0 then no node exists for this label -
-	 this can only be the case if label is errornously higher than the number of labeled nodes or NO_LABEL.
+     this can only be the case if label is errornously higher than the number of labeled nodes or NO_LABEL.
   */
   SgNode* getNode(Label label);
   long numberOfLabels();

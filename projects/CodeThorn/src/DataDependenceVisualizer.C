@@ -9,7 +9,7 @@ class VariableIdSetAttribute;
 
 DataDependenceVisualizer::DataDependenceVisualizer(Labeler* labeler, VariableIdMapping* varIdMapping)
   : _labeler(labeler),
-	_variableIdMapping(varIdMapping)
+    _variableIdMapping(varIdMapping)
 {
 }
 
@@ -36,10 +36,10 @@ void DataDependenceVisualizer::generateDot(SgNode* root, string fileName){
 
 VariableIdMapping::VariableIdSet DataDependenceVisualizer::getAstAttributeVariableIdSet(SgNode* expr,string attributeName){
   if(expr->attributeExists(attributeName)) {
-	VariableIdSetAttribute* varsAttr=dynamic_cast<VariableIdSetAttribute*>(expr->getAttribute(attributeName));
-	return varsAttr->getVariableIdSet();
+    VariableIdSetAttribute* varsAttr=dynamic_cast<VariableIdSetAttribute*>(expr->getAttribute(attributeName));
+    return varsAttr->getVariableIdSet();
   } else {
-	VariableIdMapping::VariableIdSet empty;
-	return empty;
+    VariableIdMapping::VariableIdSet empty;
+    return empty;
   }
 }

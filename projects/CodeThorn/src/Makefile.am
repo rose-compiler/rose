@@ -3,7 +3,6 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 bin_PROGRAMS = codethorn matcher_demo varwatch rdmain
 #ast_demo matcher_demo iterator_test
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
-BUILT_SOURCES = 
 CLEANFILES = 
 SUBDIRS = addressTakenAnalysis
 
@@ -74,7 +73,9 @@ codethorn_SOURCES = \
   AttributeAnnotator.C             \
   RERS_empty_specialization.C      \
   codethorn.C                      \
-  codethorn.h
+  codethorn.h                      \
+  WorkListSeq.h                    \
+  DFAnalyzer.h
 
 # used only in specialized analyzer
 faketarget:
@@ -103,7 +104,8 @@ faketarget:
 	iterator_test.C
 	WorkListOMP.h
 	WorkListOMP.C
-
+	WorkListSeq.C
+	DFAnalyzer.C
 #      matcherparser_decls.h
 
 REGRESSION_DATA_DIR=regressiondata
@@ -112,12 +114,13 @@ REGRESSION_DATA_DIR=regressiondata
 
 # MS: matcher_demo
 matcher_demo_LDADD = -lrose
-matcher_demo_SOURCES = matcherparser.yy matcherlexer.ll Timer.cpp RoseAst.C AstTerm.C matcherparser_decls.h AstMatching.C AstMatching.h MatchOperation.C MatchOperation.h SgNodeHelper.h SgNodeHelper.C matcher_demo.C
+#matcher_demo_SOURCES = matcherparser.yy matcherlexer.ll Timer.cpp RoseAst.C AstTerm.C matcherparser_decls.h AstMatching.C AstMatching.h MatchOperation.C MatchOperation.h SgNodeHelper.h SgNodeHelper.C matcher_demo.C
+matcher_demo_SOURCES = matcherparser.C Timer.cpp RoseAst.C AstTerm.C matcherparser_decls.h AstMatching.C AstMatching.h MatchOperation.C MatchOperation.h SgNodeHelper.h SgNodeHelper.C matcher_demo.C
 #matcher_demo_AM_YFLAGS = -d -p matcherparser
 #matcher_demo_AM_LFLAGS = -Pmatcherparser -o$(LEX_OUTPUT_ROOT).c
-BUILT_SOURCES = matcherparser.h
-AM_YFLAGS = -d -p matcherparser
-AM_LFLAGS = -Pmatcherparser -o$(LEX_OUTPUT_ROOT).c
+BUILT_SOURCES = matcherparser.C
+AM_YFLAGS =
+AM_LFLAGS =
 
 varwatch_LDADD = -lrose
 varwatch_SOURCES = varwatch.C VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C RoseAst.h RoseAst.C
@@ -125,7 +128,13 @@ varwatch_SOURCES = varwatch.C VariableIdMapping.h VariableIdMapping.C CommandLin
 rdmain_LDADD = -lrose
 rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C RoseAst.h RoseAst.C Labeler.h Labeler.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C AttributeAnnotator.h AttributeAnnotator.C DataDependenceVisualizer.h DataDependenceVisualizer.C
 
-
+# explicit rules because of multiple bison parser
+matcherparser.C: $(srcdir)/matcherlexer.ll $(srcdir)/matcherparser.yy
+	$(YACC) $(YFLAGS) -d -p matcherparser $(srcdir)/matcherparser.yy # generates y.tab.h/c
+	$(LEX) $(LFLAGS) $(AM_LFLAGS) -Pmatcherparser $(srcdir)/matcherlexer.ll
+	mv y.tab.h matcherparser.h
+	cat lex.yy.c y.tab.c > matcherparser.C
+	rm lex.yy.c y.tab.c
 
 #MS: iterator_test not ingegrated yet
 #iterator_test_SOURCES = iterator_test.C ShowSeq.h
@@ -231,6 +240,9 @@ clean-local:
 	rm -f viz/*
 	rm -f bsps/*
 	rm -f *.consistent Problem*.[0-9].csv
+	rm -f codethorn-LTLParser.c++
+	rm -f matcherparser.h
+	rm -f matcherparser.C
 
 distclean-local: clean
 	rm -f *.tgz
@@ -327,10 +339,10 @@ CODETHORN_TESTS= \
     tests/basictest9.C \
     tests/basictest_globalvars.C \
     tests/checkp006if \
-    tests/funccalltest2.c \
-    tests/funccalltest2.C \
-    tests/funccalltest.c \
-    tests/funccalltest.C \
+    tests/funccalltest2a.c \
+    tests/funccalltest2b.C \
+    tests/funccalltest1a.c \
+    tests/funccalltest1b.C \
     tests/inputtest1.c \
     tests/inputtest2.c \
     tests/intertest10.C \

@@ -35,17 +35,17 @@ class RoseAst {
 
   /*! \brief AST iterator: STL-compliant forward-iterator for traversing AST nodes
      in preorder. 
-	 \author Markus Schordan
-	 \date 2012
-	 \details For the iterator it can be selected whether null values should be traversed
+     \author Markus Schordan
+     \date 2012
+     \details For the iterator it can be selected whether null values should be traversed
      or not (by using the function withoutNullValues/withNullValues). By
      default null values are traversed.
      The iterator also provides a number of auxiliary functions for querying
      some structural properties of the AST w.r.t. to the position in the
      traversal (e.g. is_at_first_child, is_at_last_child, is_at_root, 
      parent, etc.)
-	 Subtrees can be exluded from traversal with the function skipSubtreeOnForward.
-	 \note Comparison of iterators is also correct for null values. Only if two iterators refer to the same (identical) null value, they are equal, otherwise they are not. If they refer to different null values they are different. Hence, different null values in the AST are treated like different nodes. This is necessary to allow STL algorithms to work properly on the AST.
+     Subtrees can be exluded from traversal with the function skipSubtreeOnForward.
+     \note Comparison of iterators is also correct for null values. Only if two iterators refer to the same (identical) null value, they are equal, otherwise they are not. If they refer to different null values they are different. Hence, different null values in the AST are treated like different nodes. This is necessary to allow STL algorithms to work properly on the AST.
 
   */
   class iterator {
@@ -60,17 +60,17 @@ class RoseAst {
     iterator operator++(int); // postfix
 
     /*! 
-	  \brief Allows to skip children on a forward iteration 
-	  with operator++. 
-	  
-	  \details The children are skipped only for the immediate next
-	  forward iteration (this is useful when used in the iterator idiom).
-	  This function is specific to tree iteration and allows to take tree
-	  structure into account although we are traversing the tree nodes as a sequence
-	  
-	  \date 2012
-	  \author Markus Schordan
-	*/
+      \brief Allows to skip children on a forward iteration 
+      with operator++. 
+      
+      \details The children are skipped only for the immediate next
+      forward iteration (this is useful when used in the iterator idiom).
+      This function is specific to tree iteration and allows to take tree
+      structure into account although we are traversing the tree nodes as a sequence
+      
+      \date 2012
+      \author Markus Schordan
+    */
     void skipChildrenOnForward();
 
     /*! \brief This function allows to filter null values, such that a dereferenced
@@ -78,9 +78,9 @@ class RoseAst {
 
      \details By default this mode is OFF. The function returns the iterator itself and can therefore
       be called together with begin (e.g. Ast::iterator i=myast.begin().withoutNullValues();)
-	  \author Markus Schordan
-	  \date 2012
-	*/
+      \author Markus Schordan
+      \date 2012
+    */
     iterator& withoutNullValues();
     iterator& withNullValues();
 
@@ -89,21 +89,21 @@ class RoseAst {
     //! true if iterator is pointing to root node of AST to be traversed.
     bool is_at_root() const;
     /*! \brief true if iterator is at first child of parent node.
-	  \details We need this function for example if we want to print the iterated AST as term (with braces). This allows to query whether we are at the first child node and need to print a "(".
-	*/
+      \details We need this function for example if we want to print the iterated AST as term (with braces). This allows to query whether we are at the first child node and need to print a "(".
+    */
     bool is_at_first_child() const;
     /*! \brief true if iterator is at last child of parent node.
-	  \details We need this function for example if we want to print the iterated AST as term (with braces). This allows to query whether we are at the last child node (and need to print a ")" )
-	*/
+      \details We need this function for example if we want to print the iterated AST as term (with braces). This allows to query whether we are at the last child node (and need to print a ")" )
+    */
     bool is_at_last_child() const;
 
-	//! \internal
+    //! \internal
     bool is_past_the_end() const;
-	//! \internal
+    //! \internal
     std::string current_node_id() const;
-	//! \internal
+    //! \internal
     std::string parent_node_id() const;
-	//! \internal
+    //! \internal
     void print_top_element() const;
 
     //! info function

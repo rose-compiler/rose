@@ -6,7 +6,6 @@
  * Author: Markus Schordan, 2012 *
  *********************************/
 
-#include "rose.h"
 #include "RoseAst.h"
 #include <typeinfo>
 

@@ -1,5 +1,7 @@
 // Author: Markus Schordan, 2013.
 
+#include "rose.h"
+
 #include <iostream>
 #include "VariableIdMapping.h"
 #include "Labeler.h"
@@ -30,7 +32,7 @@ int main(int argc, char* argv[]) {
   rdAnalyzer->attachResultsToAst();
 
   DataDependenceVisualizer ddvis(rdAnalyzer->getLabeler(),
-								 rdAnalyzer->getVariableIdMapping());
+                                 rdAnalyzer->getVariableIdMapping());
   ddvis.generateDot(root,"data_dependence_graph.dot");
 
   AnalysisResultAnnotator ara;

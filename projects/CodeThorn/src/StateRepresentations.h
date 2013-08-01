@@ -40,8 +40,8 @@ namespace CodeThorn {
 
 class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
  public:
-	PState() {
-	}
+    PState() {
+    }
   friend ostream& operator<<(ostream& os, const PState& value);
   friend istream& operator>>(istream& os, PState& value);
   bool varExists(VariableId varname) const;
@@ -53,6 +53,8 @@ class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
   void toStream(ostream& os) const;
   string toString() const;
   string toString(VariableIdMapping* variableIdMapping) const;
+  void setAllVariablesToTop();
+  void setAllVariablesToValue(CodeThorn::CppCapsuleAValue val);
 };
 
   ostream& operator<<(ostream& os, const PState& value);
@@ -64,13 +66,13 @@ class PStateHashFun {
    public:
     PStateHashFun(long prime=9999991) : tabSize(prime) {}
     long operator()(PState s) const {
-	  unsigned int hash=1;
-	  for(PState::iterator i=s.begin();i!=s.end();++i) {
-		hash=((hash<<8)+((long)(*i).second.getValue().hash()))^hash;
-	  }
-	  return long(hash) % tabSize;
-	}
-	  long tableSize() const { return tabSize;}
+      unsigned int hash=1;
+      for(PState::iterator i=s.begin();i!=s.end();++i) {
+        hash=((hash<<8)+((long)(*i).second.getValue().hash()))^hash;
+      }
+      return long(hash) % tabSize;
+    }
+      long tableSize() const { return tabSize;}
    private:
     long tabSize;
 };
@@ -151,7 +153,7 @@ bool operator!=(const EState& c1, const EState& c2);
 
 struct EStateLessComp {
   bool operator()(const EState& c1, const EState& c2) {
-	return c1<c2;
+    return c1<c2;
   }
 };
 
@@ -159,11 +161,11 @@ class EStateHashFun {
    public:
     EStateHashFun(long prime=9999991) : tabSize(prime) {}
     long operator()(EState s) const {
-	  unsigned int hash=1;
-	  hash=(long)s.label()*(((long)s.pstate())+1)*(((long)s.constraints())+1);
-	  return long(hash) % tabSize;
-	}
-	long tableSize() const { return tabSize;}
+      unsigned int hash=1;
+      hash=(long)s.label()*(((long)s.pstate())+1)*(((long)s.constraints())+1);
+      return long(hash) % tabSize;
+    }
+    long tableSize() const { return tabSize;}
    private:
     long tabSize;
 };
@@ -197,12 +199,12 @@ class TransitionHashFun {
    public:
     TransitionHashFun(long prime=99991) : tabSize(prime) {}
     long operator()(Transition s) const {
-	  unsigned int hash=1;
-	  hash=((((long)s.source)+1)<<8)+(long)s.target*(long)s.edge.hash();
-	  return long(hash) % tabSize;
-	}
-	  long tableSize() const { return tabSize;}
-	  private:
+      unsigned int hash=1;
+      hash=((((long)s.source)+1)<<8)+(long)s.target*(long)s.edge.hash();
+      return long(hash) % tabSize;
+    }
+      long tableSize() const { return tabSize;}
+      private:
     long tabSize;
 };
 

@@ -7,7 +7,6 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-#include "rose.h"
 #include "SgNodeHelper.h"
 #include "Labeler.h"
 #include "CommandLineOptions.h"
@@ -61,6 +60,7 @@ class Flow : public set<Edge> {
   LabelSet succ(Label label);
   Flow inEdges(Label label);
   Flow outEdges(Label label);
+  Flow outEdgesOfType(Label label, EdgeType edgeType);
   void setDotOptionDisplayLabel(bool opt);
   void setDotOptionDisplayStmt(bool opt);
   void setTextOptionPrintType(bool opt) { _stringNoType=!opt;}
@@ -108,7 +108,7 @@ class CFAnalyzer {
  private:
   Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);
   Labeler* labeler;
-};	
+};    
 
 } // end of namespace CodeThorn
 

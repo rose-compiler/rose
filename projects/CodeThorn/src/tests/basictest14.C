@@ -4,9 +4,9 @@ int main() {
   x=1;
   y=0;
   if(true)
-	y=1;
+    y=1;
   if(100)
-	y=2;
+    y=2;
   if(x==1) {
   pos1: y=3;
   }

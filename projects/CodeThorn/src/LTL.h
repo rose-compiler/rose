@@ -88,42 +88,42 @@ namespace LTL {
    */
   class TopDownVisitor {
   public:
-    virtual IAttr visit(InputSymbol* e,	    IAttr a) { return a; }
+    virtual IAttr visit(InputSymbol* e,        IAttr a) { return a; }
     virtual IAttr visit(OutputSymbol* e,    IAttr a) { return a; }
     virtual IAttr visit(NegInputSymbol* e,  IAttr a) { return a; }
     virtual IAttr visit(NegOutputSymbol* e, IAttr a) { return a; }
-    virtual IAttr visit(Not* e,		    IAttr a) { return a; }
-    virtual IAttr visit(Next* e,	    IAttr a) { return a; }
-    virtual IAttr visit(Eventually* e,	    IAttr a) { return a; }
-    virtual IAttr visit(Globally* e,	    IAttr a) { return a; }
-    virtual IAttr visit(And* e,		    IAttr a) { return a; }
-    virtual IAttr visit(Or* e,		    IAttr a) { return a; }
-    virtual IAttr visit(Until* e,	    IAttr a) { return a; }
-    virtual IAttr visit(WeakUntil* e,	    IAttr a) { return a; }
-    virtual IAttr visit(Release* e,	    IAttr a) { return a; }
+    virtual IAttr visit(Not* e,            IAttr a) { return a; }
+    virtual IAttr visit(Next* e,        IAttr a) { return a; }
+    virtual IAttr visit(Eventually* e,        IAttr a) { return a; }
+    virtual IAttr visit(Globally* e,        IAttr a) { return a; }
+    virtual IAttr visit(And* e,            IAttr a) { return a; }
+    virtual IAttr visit(Or* e,            IAttr a) { return a; }
+    virtual IAttr visit(Until* e,        IAttr a) { return a; }
+    virtual IAttr visit(WeakUntil* e,        IAttr a) { return a; }
+    virtual IAttr visit(Release* e,        IAttr a) { return a; }
   };
 
-#define LTL_ATOMIC_VISITOR						\
-  void accept(BottomUpVisitor& v)         const { v.visit(this); }	\
+#define LTL_ATOMIC_VISITOR                        \
+  void accept(BottomUpVisitor& v)         const { v.visit(this); }    \
   void accept(TopDownVisitor& v, IAttr a)       { v.visit(this, a); }
 
-#define LTL_UNARY_VISITOR						\
+#define LTL_UNARY_VISITOR                        \
   void accept(BottomUpVisitor& v)         const { expr1->accept(v); v.visit(this); } \
   void accept(TopDownVisitor& v, IAttr a)       { expr1->accept(v, v.visit(this, a)); }
 
-#define LTL_BINARY_VISITOR					\
-  void accept(BottomUpVisitor& v) const					\
-  {								\
-    expr1->accept(v);						\
-    expr2->accept(v);						\
-    v.visit(this);						\
-  }								\
-								\
-  void accept(TopDownVisitor& v, IAttr a)			\
-  {								\
-    IAttr a1 = v.visit(this, a);				\
-    expr1->accept(v, a1);					\
-    expr2->accept(v, a1);					\
+#define LTL_BINARY_VISITOR                    \
+  void accept(BottomUpVisitor& v) const                    \
+  {                                \
+    expr1->accept(v);                        \
+    expr2->accept(v);                        \
+    v.visit(this);                        \
+  }                                \
+                                \
+  void accept(TopDownVisitor& v, IAttr a)            \
+  {                                \
+    IAttr a1 = v.visit(this, a);                \
+    expr1->accept(v, a1);                    \
+    expr2->accept(v, a1);                    \
   }
 
 
@@ -310,28 +310,28 @@ namespace LTL {
           bool quantified; 
         };
 
-	// FIXME: is there a less ugly way to implement generic attributes?
-	// MS: needed to remove the shared ptr
+    // FIXME: is there a less ugly way to implement generic attributes?
+    // MS: needed to remove the shared ptr
         static Attr* getAttr(IAttr a) { return static_cast<Attr*>(a); }
         static IAttr newAttr(bool b)  { return new Attr(b); }
 
         IAttr visit(InputSymbol* e, IAttr a) {
-	  e->quantified=getAttr(a)->quantified; 
+      e->quantified=getAttr(a)->quantified; 
           if (!getAttr(a)->quantified) throw "unquantified input operation"; 
           return a;
         }
         IAttr visit(OutputSymbol* e, IAttr a) {
-	  e->quantified=getAttr(a)->quantified; 
+      e->quantified=getAttr(a)->quantified; 
           if (!getAttr(a)->quantified) throw "unquantified output operation";
           return a;
         }
         IAttr visit(NegInputSymbol* e, IAttr a) {
-	  e->quantified=getAttr(a)->quantified; 
+      e->quantified=getAttr(a)->quantified; 
           if (!getAttr(a)->quantified) throw "unquantified input operation"; 
           return a;
         }
         IAttr visit(NegOutputSymbol* e, IAttr a) {
-	  e->quantified=getAttr(a)->quantified; 
+      e->quantified=getAttr(a)->quantified; 
           if (!getAttr(a)->quantified) throw "unquantified output operation";
           return a;
         }

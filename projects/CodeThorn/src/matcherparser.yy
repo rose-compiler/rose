@@ -19,7 +19,7 @@ MatchOperationList* matchOperationsSequence;
 void MSG(char* s)
 {
 #ifdef TEST 
-	printf("%s",s);
+    printf("%s",s);
 #endif
 }
 
@@ -66,197 +66,197 @@ int length; /* #elements */
 
 %%
 
-start		: match_expression opt_where_clause
-		{
-			matchOperationsSequence=$1;
-		}
-		;
+start        : match_expression opt_where_clause
+        {
+            matchOperationsSequence=$1;
+        }
+        ;
 
 opt_where_clause: /* eps */
-		| where_clause
-		;
+        | where_clause
+        ;
 
 where_clause: WHERE where_expression
-	      ;
+          ;
 
 where_expression:
-		where_expression_operand C_EQ where_expression_operand
-		{ $$=new MatchOpBinaryOp((int)C_EQ,$1,$3); }
-		| where_expression_operand C_NEQ where_expression_operand 
-		{ $$=new MatchOpBinaryOp((int)C_NEQ,$1,$3); }
-		| where_expression_operand EQ where_expression_operand
-		{ $$=new MatchOpBinaryOp((int)EQ,$1,$3); }
-		| where_expression_operand NEQ where_expression_operand
-		{ $$=new MatchOpBinaryOp((int)NEQ,$1,$3); }
-		| where_expression_operand AND where_expression_operand
-		{ $$=new MatchOpBinaryOp((int)AND,$1,$3); }
-		| where_expression_operand OR where_expression_operand
-		{ $$=new MatchOpBinaryOp((int)OR,$1,$3); }
-		| where_expression_operand XOR where_expression_operand
-		{ $$=new MatchOpBinaryOp((int)XOR,$1,$3); }
-		| NOT where_expression_operand
-		{ $$=new MatchOpUnaryOp((int)NOT,$2); }
-		| '(' where_expression ')'
-		{ $$=$2; }
-		| TRUE
-		{ $$=new MatchOpConstant((int)TRUE); }
-		| FALSE
-		{ $$=new MatchOpConstant((int)FALSE); }
-		;
+        where_expression_operand C_EQ where_expression_operand
+        { $$=new MatchOpBinaryOp((int)C_EQ,$1,$3); }
+        | where_expression_operand C_NEQ where_expression_operand 
+        { $$=new MatchOpBinaryOp((int)C_NEQ,$1,$3); }
+        | where_expression_operand EQ where_expression_operand
+        { $$=new MatchOpBinaryOp((int)EQ,$1,$3); }
+        | where_expression_operand NEQ where_expression_operand
+        { $$=new MatchOpBinaryOp((int)NEQ,$1,$3); }
+        | where_expression_operand AND where_expression_operand
+        { $$=new MatchOpBinaryOp((int)AND,$1,$3); }
+        | where_expression_operand OR where_expression_operand
+        { $$=new MatchOpBinaryOp((int)OR,$1,$3); }
+        | where_expression_operand XOR where_expression_operand
+        { $$=new MatchOpBinaryOp((int)XOR,$1,$3); }
+        | NOT where_expression_operand
+        { $$=new MatchOpUnaryOp((int)NOT,$2); }
+        | '(' where_expression ')'
+        { $$=$2; }
+        | TRUE
+        { $$=new MatchOpConstant((int)TRUE); }
+        | FALSE
+        { $$=new MatchOpConstant((int)FALSE); }
+        ;
 
 where_expression_operand:
-		NULL_NODE
-		{ $$=new MatchOpConstant((int)NULL_NODE); }
-		| VARIABLE
-		{ $$=new MatchOpAccessVariable($1); }
-		| VARIABLE '.' IDENT
-		{ $$=new MatchOpAccessRoseAstAttribute($1,$3); }
-		| VARIABLE '[' IDENT ']'
-		{ $$=new MatchOpAccessUserAstAttribute($1,$3); }
-		| where_expression
-		{ $$=$1; }
-		;
+        NULL_NODE
+        { $$=new MatchOpConstant((int)NULL_NODE); }
+        | VARIABLE
+        { $$=new MatchOpAccessVariable($1); }
+        | VARIABLE '.' IDENT
+        { $$=new MatchOpAccessRoseAstAttribute($1,$3); }
+        | VARIABLE '[' IDENT ']'
+        { $$=new MatchOpAccessUserAstAttribute($1,$3); }
+        | where_expression
+        { $$=$1; }
+        ;
 
 match_expression: term 
-		{
-			$$=$1;
-		}		| match_expression ALTERNATION match_expression
-		{ 
-			$$=new MatchOperationList();
-			$$->push_back(new MatchOpOr($1,$3));
-		}
-		| VARIABLE '=' IDENT
-		{
-			$$=new MatchOperationList();
-			$$->push_front(new MatchOpVariableAssignment($1));
-			$$->push_back(new MatchOpCheckNode($3));
-			$$->push_back(new MatchOpSkipChildOnForward());
-		}
-		| VARIABLE '=' term
-		{
-			$$=$3;
-			$$->push_front(new MatchOpVariableAssignment($1));
-		}
-		| simple_expression
-		{
-			$$=$1;
-		}
-		| '#' simple_expression
-		{
-			$$=$2;
-			$$->push_front(new MatchOpMarkNode());
-		}
-		| NULL_NODE /* for this node the '#' operator cannot be applied (it could make sense too?)*/
-		{
-			$$=new MatchOperationList();
-			$$->push_back(new MatchOpCheckNull());
-			$$->push_back(new MatchOpForward());
-		}
-		| '(' match_expression ')'
-		{
-				$$=$2;
-		}
-		;
+        {
+            $$=$1;
+        }        | match_expression ALTERNATION match_expression
+        { 
+            $$=new MatchOperationList();
+            $$->push_back(new MatchOpOr($1,$3));
+        }
+        | VARIABLE '=' IDENT
+        {
+            $$=new MatchOperationList();
+            $$->push_front(new MatchOpVariableAssignment($1));
+            $$->push_back(new MatchOpCheckNode($3));
+            $$->push_back(new MatchOpSkipChildOnForward());
+        }
+        | VARIABLE '=' term
+        {
+            $$=$3;
+            $$->push_front(new MatchOpVariableAssignment($1));
+        }
+        | simple_expression
+        {
+            $$=$1;
+        }
+        | '#' simple_expression
+        {
+            $$=$2;
+            $$->push_front(new MatchOpMarkNode());
+        }
+        | NULL_NODE /* for this node the '#' operator cannot be applied (it could make sense too?)*/
+        {
+            $$=new MatchOperationList();
+            $$->push_back(new MatchOpCheckNull());
+            $$->push_back(new MatchOpForward());
+        }
+        | '(' match_expression ')'
+        {
+                $$=$2;
+        }
+        ;
 
 simple_expression:
-		VARIABLE
-		{
-			$$=new MatchOperationList();
-			$$->push_back(new MatchOpVariableAssignment($1));
-			$$->push_back(new MatchOpSkipChildOnForward());
-		}
-		| IDENT
-		{
-			$$=new MatchOperationList();
-			$$->push_back(new MatchOpCheckNode($1));
-			$$->push_back(new MatchOpSkipChildOnForward());
-		}
-		| '^' IDENT
-		{
-			$$=new MatchOperationList();
-			$$->push_back(new MatchOpCheckNodeSet($2));
-		}
-		| '_'
-		{
-			$$=new MatchOperationList();
-			$$->push_back(new MatchOpSkipChildOnForward());
-		}
-		| DOTDOT
-		{
-			$$=new MatchOperationList();
-			$$->push_back(new MatchOpDotDot());
-		}
-		;
+        VARIABLE
+        {
+            $$=new MatchOperationList();
+            $$->push_back(new MatchOpVariableAssignment($1));
+            $$->push_back(new MatchOpSkipChildOnForward());
+        }
+        | IDENT
+        {
+            $$=new MatchOperationList();
+            $$->push_back(new MatchOpCheckNode($1));
+            $$->push_back(new MatchOpSkipChildOnForward());
+        }
+        | '^' IDENT
+        {
+            $$=new MatchOperationList();
+            $$->push_back(new MatchOpCheckNodeSet($2));
+        }
+        | '_'
+        {
+            $$=new MatchOperationList();
+            $$->push_back(new MatchOpSkipChildOnForward());
+        }
+        | DOTDOT
+        {
+            $$=new MatchOperationList();
+            $$->push_back(new MatchOpDotDot());
+        }
+        ;
 
-ident_or_any	: IDENT
-		{
-			$$=new MatchOperationList();
-			$$->push_back(new MatchOpCheckNode($1));
-		}
-		| '^' IDENT
-		{
-			$$=new MatchOperationList();
-			$$->push_back(new MatchOpCheckNodeSet($2));
-		}
-		| '_'
-		{
-			$$=new MatchOperationList();
-		}
-		;
+ident_or_any    : IDENT
+        {
+            $$=new MatchOperationList();
+            $$->push_back(new MatchOpCheckNode($1));
+        }
+        | '^' IDENT
+        {
+            $$=new MatchOperationList();
+            $$->push_back(new MatchOpCheckNodeSet($2));
+        }
+        | '_'
+        {
+            $$=new MatchOperationList();
+        }
+        ;
 
-term		: ident_or_any '(' expression_list ')'
-		{
-			size_t arity=$3->size();
-			size_t minarity=arity;
-			size_t maxarity=arity;
-			$$=$1;
+term        : ident_or_any '(' expression_list ')'
+        {
+            size_t arity=$3->size();
+            size_t minarity=arity;
+            size_t maxarity=arity;
+            $$=$1;
 
-			// search for MatchOpDotDot
-			size_t dotdot_pos=0;
-			for(MatchOperationListList::iterator i=$3->begin();i!=$3->end();++i) {
-			  for(MatchOperationList::iterator j=(*i)->begin();j!=(*i)->end();++j) {
-			    if(dynamic_cast<MatchOpDotDot*>(*j)) {
-			      minarity=dotdot_pos; // 
-			      maxarity=(size_t)-1; // gives max value 					  // error checking
-			      if(arity>dotdot_pos+1) {
-			        throw "Error: Matcher: no arguments allowed after operator '..'\n";
-			      }
+            // search for MatchOpDotDot
+            size_t dotdot_pos=0;
+            for(MatchOperationListList::iterator i=$3->begin();i!=$3->end();++i) {
+              for(MatchOperationList::iterator j=(*i)->begin();j!=(*i)->end();++j) {
+                if(dynamic_cast<MatchOpDotDot*>(*j)) {
+                  minarity=dotdot_pos; // 
+                  maxarity=(size_t)-1; // gives max value                       // error checking
+                  if(arity>dotdot_pos+1) {
+                    throw "Error: Matcher: no arguments allowed after operator '..'\n";
+                  }
                             }
-			  }
-			  dotdot_pos++;
-			}
-			$$->push_back(new MatchOpArityCheck(minarity,maxarity));
-			$$->push_back(new MatchOpForward());
-			for(MatchOperationListList::iterator i=$3->begin(); i!=$3->end(); ++i) 
-			{
-			   // append list destructively: using splice moves elements efficiently
-			   $$->splice($$->end(),**i);
-			   delete *i; // delete aux-list
-			}
-			delete $3; // delete list
-		}
-		;
+              }
+              dotdot_pos++;
+            }
+            $$->push_back(new MatchOpArityCheck(minarity,maxarity));
+            $$->push_back(new MatchOpForward());
+            for(MatchOperationListList::iterator i=$3->begin(); i!=$3->end(); ++i) 
+            {
+               // append list destructively: using splice moves elements efficiently
+               $$->splice($$->end(),**i);
+               delete *i; // delete aux-list
+            }
+            delete $3; // delete list
+        }
+        ;
 
-expression_list	: match_expression
-		{
-			$$=new MatchOperationListList();
-			$$->push_back($1);
-		}
-		| expression_list ',' match_expression
-		{
-			
-			$$=$1;
-			$$->push_back($3);	
-		}
-		; 
+expression_list    : match_expression
+        {
+            $$=new MatchOperationListList();
+            $$->push_back($1);
+        }
+        | expression_list ',' match_expression
+        {
+            
+            $$=$1;
+            $$->push_back($3);    
+        }
+        ; 
 
 %%
 
 void InitializeParser(const std::string& inString) {
-	InitializeLexer(inString);
+    InitializeLexer(inString);
 }
 void FinishParser() {
-	FinishLexer();
+    FinishLexer();
 }
 
 void

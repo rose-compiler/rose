@@ -23,9 +23,9 @@ RoseAst::findFunctionByName(std::string name) {
   for(RoseAst::iterator i=begin();i!=end();++i) {
     if(SgFunctionDefinition* fundef=isSgFunctionDefinition(*i)) {
       if(SgFunctionDeclaration* fundecl=fundef->get_declaration()) {
-	SgName fname=fundecl->get_name();
-	if(fname.getString()==name)
-	  return fundef;
+    SgName fname=fundecl->get_name();
+    if(fname.getString()==name)
+      return fundef;
       }
     }
   }
@@ -186,18 +186,18 @@ RoseAst::iterator::operator++() {
       new_e.node=new_node;
       new_e.index=new_index;
       if(new_e.node!=0) {
-	if(_withNullValues) {
-	  // if we visit null-nodes we can push anything
-	  _stack.push(new_e);
-	} else {
-	  if(access_node_by_parent_and_index(new_e.node,new_e.index)!=0) {
-	    _stack.push(new_e);
-	  } else {
-	    // we are not visiting null nodes therefore we do not push null nodes on the stack
-	  }
-	}
+    if(_withNullValues) {
+      // if we visit null-nodes we can push anything
+      _stack.push(new_e);
+    } else {
+      if(access_node_by_parent_and_index(new_e.node,new_e.index)!=0) {
+        _stack.push(new_e);
       } else {
-	// a null node has no children: nothing to do.
+        // we are not visiting null nodes therefore we do not push null nodes on the stack
+      }
+    }
+      } else {
+    // a null node has no children: nothing to do.
       }
     }
   } else {

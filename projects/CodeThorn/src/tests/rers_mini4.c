@@ -7,7 +7,7 @@ int f= 6;
 
 int calculate_output2(int input) {
   if(input==21) {
-	return 23;
+    return 23;
   } 
   if(f==6 && input==22) {
   error_1: assert(0);
@@ -38,8 +38,8 @@ int main()
         output = calculate_output(input);
 
         if(output == -2)
-		  fprintf(stderr, "Invalid input: %d\n", input);
+          fprintf(stderr, "Invalid input: %d\n", input);
         else if(output != -1)
-		  printf("%d\n", output);
+          printf("%d\n", output);
     }
 }

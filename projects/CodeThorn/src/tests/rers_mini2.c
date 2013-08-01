@@ -6,7 +6,7 @@ int f=5;
 
 int calculate_output(int input) {
   if(f==5)
-	assert(0);
+    assert(0);
   return 6;
 }
 
