@@ -554,6 +554,22 @@ HEADER_FUNCTION_CALL_EXPRESSION_START
 
 HEADER_FUNCTION_CALL_EXPRESSION_END
 
+HEADER_TYPE_TRAIT_BUILTIN_OPERATOR_START
+
+       // DQ (7/13/2013): I have verified that we need implementations of these functions for the CFG support.
+       // DQ (7/12/2013): Not clear if we need these functions since the buildin functions are all pure and lack definitions.
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+       // DQ (7/12/2013): Not clear if we need these functions since the buildin functions are all pure.
+       // get lvalue
+       // virtual bool isLValue() const;
+       // virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
+HEADER_TYPE_TRAIT_BUILTIN_OPERATOR_END
 
 HEADER_ARROW_EXPRESSION_START
           SgType* get_type() const;
@@ -3318,6 +3334,39 @@ SgFunctionCallExp::get_type() const
 
 SOURCE_FUNCTION_CALL_EXPRESSION_END
 
+// DQ (7/12/2013): Added support for type trait specific builtin functions.
+SOURCE_TYPE_TRAIT_BUILTIN_OPERATOR_START
+
+void
+SgTypeTraitBuiltinOperator::post_construction_initialization()
+   {
+  // SgCallExpression::post_construction_initialization();
+   }
+
+SgType*
+SgTypeTraitBuiltinOperator::get_type() const
+   {
+  // DQ (7/12/2013): These functions will almost always return a boolean type, but not always.
+
+     SgType* returnType = NULL;
+
+     if (get_name() == "__underlying_type")
+        {
+       // This returns an actual type and it is not clear now to handle this.
+          returnType = SgTypeDefault::createType();
+        }
+       else
+        {
+       // return boolean type.
+          returnType = SgTypeBool::createType();
+        }
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+SOURCE_TYPE_TRAIT_BUILTIN_OPERATOR_END
+
 
 SOURCE_ARROW_EXPRESSION_START
 
@@ -4139,7 +4188,7 @@ SgPointerDerefExp::get_type() const
                break;
              }
 
-       // Liao, 8/28/2009      
+       // Liao, 8/28/2009
           case V_SgTypeFloat:
              {
             // DQ (8/17/2010): I think that this is the correct handling of the return value generation.
@@ -4183,6 +4232,13 @@ SgPointerDerefExp::get_type() const
                break;
              }
 
+       // DQ (7/13/2013): Added this for the case of the new EDG interface.
+          case V_SgTypeVoid:
+             {
+               SgTypeVoid* voidType = isSgTypeVoid(someType);
+               returnType = voidType;
+               break;
+             }
 #if 0
        // DQ (10/3/2006): I think this is no longer required, since we fixed the case of sizeof taking an 
        // expression (not required to be an lvalue)!
