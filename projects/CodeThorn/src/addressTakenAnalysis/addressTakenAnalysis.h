@@ -16,8 +16,6 @@
 
 using namespace CodeThorn;
 
-typedef std::set<VariableId> VariableIdSet;
-
 // AST Query Processor
 // common functor to process any query and build match result
 
@@ -89,17 +87,19 @@ class CollectTypeInfo
   VariableIdMapping& vidm;
   VariableIdSet pointerTypeSet;
   VariableIdSet arrayTypeSet;
+  VariableIdSet referenceTypeSet;
   bool initialized;
 
 public:
   CollectTypeInfo(VariableIdMapping& _vidm) : vidm(_vidm) { }
-  void initialize(VariableIdMapping& vidm);
   void collectTypes();
   void printPointerTypeSet();
   void printArrayTypeSet();
+  void printReferenceTypeSet();
   void throwIfUnInitException();
   VariableIdSet getPointerTypeSet();
   VariableIdSet getArrayTypeSet();
+  VariableIdSet getReferenceTypeSet();
 };
 
 /*************************************************

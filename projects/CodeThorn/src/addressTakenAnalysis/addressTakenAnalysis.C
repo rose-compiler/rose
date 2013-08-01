@@ -217,6 +217,11 @@ VariableIdSet CollectTypeInfo::getArrayTypeSet()
   return arrayTypeSet;
 }
 
+VariableIdSet CollectTypeInfo::getReferenceTypeSet()
+{
+  return referenceTypeSet;
+}
+
 
 void CollectTypeInfo::collectTypes()
 {
@@ -248,6 +253,10 @@ void CollectTypeInfo::collectTypes()
     {
       arrayTypeSet.insert(*it);
     }
+    else if(isSgReferenceType(v_type))
+    {
+      referenceTypeSet.insert(*it);
+    }
   }
 }
 
@@ -259,6 +268,11 @@ void CollectTypeInfo::printPointerTypeSet()
 void CollectTypeInfo::printArrayTypeSet()
 {
   std::cout << "arrayTypeSet: " << VariableIdSetPrettyPrint::str(arrayTypeSet, vidm) << "\n";
+}
+
+void CollectTypeInfo::printReferenceTypeSet()
+{
+  std::cout << "referenceTypeSet: " << VariableIdSetPrettyPrint::str(referenceTypeSet, vidm) << "\n";
 }
 
 /*************************************************
@@ -276,6 +290,7 @@ void FlowInsensitivePointerInfo::printInfoSets()
   compAddrTakenInfo.printAddressTakenSet();
   collTypeInfo.printPointerTypeSet();
   collTypeInfo.printArrayTypeSet();
+  collTypeInfo.printReferenceTypeSet();
 }
 
 VariableIdMapping& FlowInsensitivePointerInfo::getVariableIdMapping()
