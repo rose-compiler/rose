@@ -1561,8 +1561,16 @@ SgNode* replaceWithPattern (SgNode * anchor, SgNode* new_pattern);
 std::pair<SgVariableDeclaration*, SgExpression* > createTempVariableForExpression(SgExpression* expression,
         SgScopeStatement* scope, bool initializeInDeclaration, SgAssignOp** reEvaluate = NULL);
 
+/*  This function creates a temporary variable for a given expression in the given scope
+   This is different from SageInterface::createTempVariableForExpression in that it does not
+   try to be smart to create pointers to reference types and so on. The tempt is initialized to expression.
+   The caller is responsible for setting the parent of SgVariableDeclaration since buildVariableDeclaration
+   may not set_parent() when the scope stack is empty. See programTransformation/extractFunctionArgumentsNormalization/ExtractFunctionArguments.C for sample usage.
+   @param expression Expression which will be replaced by a variable
+   @param scope scope in which the temporary variable will be generated
+*/
     
-std::pair<SgVariableDeclaration*, SgExpression*> createTempVariableOrReferenceForExpression
+std::pair<SgVariableDeclaration*, SgExpression*> createTempVariableAndReferenceForExpression
     (SgExpression* expression, SgScopeStatement* scope);
     
 //! Append an argument to SgFunctionParameterList, transparently set parent,scope, and symbols for arguments when possible

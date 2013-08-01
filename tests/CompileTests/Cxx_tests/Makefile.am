@@ -1347,6 +1347,7 @@ test2005_06.C \
 test2005_08.C \
 test2012_57.C \
 test2012_59.C \
+test2013_milind_01.C \
 $(NEW_PASSING_FILES)
 
 # DQ (3/23/2012): New passing files

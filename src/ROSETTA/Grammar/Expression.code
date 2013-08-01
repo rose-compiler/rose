@@ -3303,32 +3303,25 @@ SgFunctionCallExp::get_type() const
        // get_file_info()->display("Location of call to SgFunctionCallExp::get_type(): debug");
 
        // DQ (7/15/2007): Handle case of typedef of function type
-          likelyFunctionType = likelyFunctionType->stripType(SgType::STRIP_TYPEDEF_TYPE);
+       // Milind Chabbi, after discussing with DQ (7/29/2013), we need to strip all. See test: CompileTests/Cxx_tests/test2013_milind_01.C
+          likelyFunctionType = likelyFunctionType->stripType(SgType::STRIP_MODIFIER_TYPE | 
+                                                             SgType::STRIP_REFERENCE_TYPE | 
+                                                             SgType::STRIP_POINTER_TYPE | 
+                                                             SgType::STRIP_ARRAY_TYPE | 
+                                                             SgType::STRIP_TYPEDEF_TYPE);
 
        // printf ("After calling stripType(SgType::STRIP_TYPEDEF_TYPE): likelyFunctionType = %p = %s \n",likelyFunctionType,likelyFunctionType->class_name().c_str());
-
           functionType = isSgFunctionType(likelyFunctionType);
 
-#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
-       // DQ (12/31/2008): EDG version 4.0 has a simpler representation which translates a bit differently.
-       // I think this is an improvement to this functionality of this function.
-          if (functionType == NULL)
-               returnType = likelyFunctionType;
-#else
-          ROSE_ASSERT(functionType != NULL);
-#endif
+       // if functionType is NULL (e.g SgTemplateType or SgClassType) we have no idea what the return type is, so we will return SgTypeUnknown
+          if (functionType == NULL) {
+              //printf ("Warning: Unable to infer the return type of %s in SgFunctionCallExp\n", likelyFunctionType->class_name().c_str());
+              return SgTypeUnknown::createType();
+          } 
         }
-
-#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
-  // if not already set
-     if (returnType == NULL)
-          returnType = functionType->get_return_type();
-#else
-     ROSE_ASSERT(functionType != NULL);
+     ROSE_ASSERT(functionType);
      returnType = functionType->get_return_type();
-#endif
      ROSE_ASSERT(returnType != NULL);
-
      return returnType;
    }
 
@@ -4352,7 +4345,10 @@ $CLASSNAME::get_type() const
         }
        else
         {
-          returnType = SgPointerType::createType(baseType);
+          // Milind Chabbi (8/1/2013) We must strip the reference else we will get pointer to a reference. 
+          // See CompileTests/Cxx_tests/test2004_157.C run under extractFunctionArgumentsNormalization
+          // TODO: should we strip STRIP_TYPEDEF_TYPE? Not sure, need to talk to Dan.
+          returnType = SgPointerType::createType(baseType->stripType(SgType::STRIP_REFERENCE_TYPE));
         }
 
    //  ROSE_ASSERT(returnType != NULL);
@@ -4671,7 +4667,6 @@ SgPntrArrRefExp::get_type() const
                break;
              }
 
-#ifndef ROSE_USE_NEW_EDG_INTERFACE
        // DQ (10/3/2006): Added case of array reference of string type (assume it returns a char).
        // Once we have a wcharString type then we have to add that case to this list as well!
           case V_SgTypeString:
@@ -4681,6 +4676,7 @@ SgPntrArrRefExp::get_type() const
                returnType = SgTypeChar::createType();
                break;
              }
+#ifndef ROSE_USE_NEW_EDG_INTERFACE
      // Liao (1/25/2008) SgTypeUnknown is used to specify a temporary symbol generated 
      //during translation when the corresponding variable declaration is not yet declared.
           case V_SgTypeUnknown:

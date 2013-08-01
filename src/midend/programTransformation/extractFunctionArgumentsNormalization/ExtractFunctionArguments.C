@@ -24,7 +24,7 @@ void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
     
     //Get all functions in function evaluation order
     vector<FunctionCallInfo> functionCalls = FunctionEvaluationOrderTraversal::GetFunctionCalls(tree);
-
+    
     foreach(const FunctionCallInfo& functionCallInfo, functionCalls)
     {
         RewriteFunctionCallArguments(functionCallInfo);
@@ -37,28 +37,22 @@ void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallInfo& functionCallInfo)
 {
     SgFunctionCallExp* functionCall = functionCallInfo.functionCall;
+    
+    // Force the function call to NOT use operator syntax
+    functionCall->set_uses_operator_syntax(false);
+    
     SgExprListExp* functionArgs = functionCall->get_args();
     ROSE_ASSERT(functionArgs != NULL);
-
+    
     SgExpressionPtrList argumentList = functionArgs->get_expressions();
-
+    
     // We also normalize the caller if the function called is a member function.
     if (SgBinaryOp * binExp = isSgBinaryOp(functionCall->get_function())) {
         argumentList.push_back(binExp->get_lhs_operand());
-        
-        // If the called function is an overloaded -> operator, then we must ensure that
-        // we unparse it w/o the operator syntax. (even if the user had not asked for it)
-        if(isSgArrowExp(binExp)) {
-            SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(binExp->get_lhs_operand());
-            if (functionCallExp != NULL) {
-                functionCallExp->set_uses_operator_syntax(false);
-            }
-        }
-        
     }
-
+    
     //Go over all the function arguments, pull them out
-
+    
     foreach(SgExpression* arg, argumentList)
     {
         //No need to pull out parameters that are not complex expressions and
@@ -68,10 +62,23 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 
         //Build a declaration for the temporary variable
         SgScopeStatement* scope = functionCallInfo.tempVarDeclarationLocation->get_scope();
+        ROSE_ASSERT(scope != NULL );
         SgVariableDeclaration* tempVarDeclaration;
         SgExpression* tempVarReference;
-        tie(tempVarDeclaration, tempVarReference) = SageInterface::createTempVariableOrReferenceForExpression(arg, scope);
-
+        tie(tempVarDeclaration, tempVarReference) = SageInterface::createTempVariableAndReferenceForExpression(arg, scope);
+        
+        // createTempVariableOrReferenceForExpression does not set the parent if the scope stack is empty. Hence set it manually to the currect scope.
+        tempVarDeclaration->set_parent(scope);
+#if 0
+        {
+            std::cout<<"\n"<<functionCall->get_file_info()->get_filenameString () << ":" << functionCall->get_file_info()->get_line () << ":" << functionCall->get_file_info()->get_col ();
+            std::cout<<"\n Name = "<< tempVarDeclaration->get_mangled_name().getString()<< ":type :"<<arg->get_type()->class_name() << "Expr class :"<<arg->class_name();
+        }
+#endif
+        ROSE_ASSERT(tempVarDeclaration != NULL );
+        ROSE_ASSERT(tempVarDeclaration->get_definition(0) != NULL);
+        ROSE_ASSERT(isSgVariableDefinition(tempVarDeclaration->get_definition()) != NULL);
+        
         //Insert the temporary variable declaration
         InsertStatement(tempVarDeclaration, functionCallInfo.tempVarDeclarationLocation, functionCallInfo);
         
@@ -97,13 +104,13 @@ bool isVariableReference(SgExpression* expression)
     {
         SgDotExp* dotExpression = isSgDotExp(expression);
         return isVariableReference(dotExpression->get_lhs_operand()) &&
-                isVariableReference(dotExpression->get_rhs_operand());
+        isVariableReference(dotExpression->get_rhs_operand());
     }
     else if (isSgArrowExp(expression))
     {
         SgArrowExp* arrowExpression = isSgArrowExp(expression);
         return isVariableReference(arrowExpression->get_lhs_operand()) &&
-                isVariableReference(arrowExpression->get_rhs_operand());
+        isVariableReference(arrowExpression->get_rhs_operand());
     }
     else if (isSgCommaOpExp(expression))
     {
@@ -111,7 +118,7 @@ bool isVariableReference(SgExpression* expression)
         //The lhs would be semantically meaningless since it doesn't have any side effects
         SgCommaOpExp* commaOp = isSgCommaOpExp(expression);
         return isVariableReference(commaOp->get_lhs_operand()) &&
-                isVariableReference(commaOp->get_rhs_operand());
+        isVariableReference(commaOp->get_rhs_operand());
     }
     else if (isSgPointerDerefExp(expression) || isSgCastExp(expression) || isSgAddressOfOp(expression))
     {
@@ -127,24 +134,34 @@ bool isVariableReference(SgExpression* expression)
  * expression should be pulled out into a temporary variable on a separate line.
  * E.g. if the expression contains a function call, it needs to be normalized, while if it
  * is a constant, there is no need to change it. */
-bool ExtractFunctionArguments::FunctionArgumentNeedsNormalization(SgExpression*& argument)
+
+bool ExtractFunctionArguments::FunctionArgumentNeedsNormalization(SgExpression* argument)
 {
+
     while ((isSgPointerDerefExp(argument) || isSgCastExp(argument) || isSgAddressOfOp(argument)))
     {
         argument = isSgUnaryOp(argument)->get_operand();
     }
-
+    
     SgArrowExp* arrowExp = isSgArrowExp(argument);
     if (arrowExp && isSgThisExp(arrowExp->get_lhs_operand()))
-        argument = arrowExp->get_rhs_operand();
-
-    //For right now, move everything but a constant value or an explicit variable access
-    if (isVariableReference(argument) || isSgValueExp(argument) || isSgFunctionRefExp(argument)
-            || isSgMemberFunctionRefExp(argument))
         return false;
+    
+    //For right now, move everything but a constant value or an explicit variable access
+    // Don't include SgConstructorInitializer since it will be called even on the temporary, so avoid double copy.
+    if (isVariableReference(argument) || isSgValueExp(argument) || isSgFunctionRefExp(argument)
+        || isSgMemberFunctionRefExp(argument) || isSgConstructorInitializer(argument))
+        return false;
+
+    // Unknow Template type expressions can't be normalized.
+    if (isSgTypeUnknown(argument->get_type()) || isSgMemberFunctionType(argument->get_type())) {
+        //printf("\n Skipping over SgTypeUnknown/SgMemberFunctionType  expr");
+        return false;
+    }
 
     return true;
 }
+
 
 /** Returns true if any of the arguments of the given function call will need to
  * be extracted. */
@@ -152,7 +169,7 @@ bool ExtractFunctionArguments::FunctionArgsNeedNormalization(SgExprListExp* func
 {
     ROSE_ASSERT(functionArgs != NULL);
     SgExpressionPtrList& argumentList = functionArgs->get_expressions();
-
+    
     foreach(SgExpression* functionArgument, argumentList)
     {
         if (FunctionArgumentNeedsNormalization(functionArgument))
@@ -174,7 +191,7 @@ bool ExtractFunctionArguments::SubtreeNeedsNormalization(SgNode* top)
         if (FunctionArgumentNeedsNormalization(functionCall))
             return true;
     }
-
+    
     return false;
 }
 
@@ -194,12 +211,12 @@ void ExtractFunctionArguments::InsertStatement(SgStatement* newStatement, SgStat
             {
                 //scopeStatement = isSgScopeStatement(SageInterface::ensureBasicBlockAsParent(location));
                 if (SageInterface::isBodyStatement(location)) // if the location is a single body statement (not a basic block) at this point
-                  scopeStatement = SageInterface::makeSingleStatementBodyToBlock (location);
-                else  
-                 scopeStatement = isSgScopeStatement(location->get_parent());
+                    scopeStatement = SageInterface::makeSingleStatementBodyToBlock (location);
+                else
+                    scopeStatement = isSgScopeStatement(location->get_parent());
             }
             ROSE_ASSERT(scopeStatement != NULL);
-
+            
             SageInterface::appendStatement(newStatement, scopeStatement);
             break;
         }
@@ -216,6 +233,6 @@ void ExtractFunctionArguments::InsertStatement(SgStatement* newStatement, SgStat
     FunctionEvaluationOrderTraversal t;
     FunctionCallInheritedAttribute rootAttribute;
     t.traverse(root, rootAttribute);
-
+    
     return t.functionCalls;
 }
