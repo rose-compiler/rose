@@ -10,6 +10,9 @@
 
 #include <string>
 #include <cstring>
+
+#include "sage3basic.h"
+
 #include "matcherparser_decls.h"
 #include "matcherparser.h"
 

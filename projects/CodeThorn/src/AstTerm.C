@@ -2,8 +2,11 @@
  * Author: Markus Schordan, 2012 *
  *********************************/
 
-#include "AstTerm.h"
+#include "sage3basic.h"
+
 #include <iostream>
+
+#include "AstTerm.h"
 #include "SgNodeHelper.h"
 
 using namespace CodeThorn;

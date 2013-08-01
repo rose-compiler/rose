@@ -239,6 +239,9 @@ clean-local:
 	rm -f viz/*
 	rm -f bsps/*
 	rm -f *.consistent Problem*.[0-9].csv
+	rm -f codethorn-LTLParser.c++
+	rm -f matcherparser.h
+	rm -f matcherparser.C
 
 distclean-local: clean
 	rm -f *.tgz
@@ -335,10 +338,10 @@ CODETHORN_TESTS= \
     tests/basictest9.C \
     tests/basictest_globalvars.C \
     tests/checkp006if \
-    tests/funccalltest2.c \
-    tests/funccalltest2.C \
-    tests/funccalltest.c \
-    tests/funccalltest.C \
+    tests/funccalltest2a.c \
+    tests/funccalltest2b.C \
+    tests/funccalltest1a.c \
+    tests/funccalltest1b.C \
     tests/inputtest1.c \
     tests/inputtest2.c \
     tests/intertest10.C \

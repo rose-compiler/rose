@@ -11,7 +11,9 @@
 #include <string>
 #include <sstream>
 
-using namespace std;
+using std::string;
+using std::istream;
+using std::ostream;
 
 namespace CodeThorn {
 

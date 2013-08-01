@@ -4,6 +4,8 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
+#include "sage3basic.h"
+
 #include "LanguageRestrictor.h"
 
 LanguageRestrictor::VariantSet LanguageRestrictor::computeVariantSetOfProvidedAst(SgNode* node) {

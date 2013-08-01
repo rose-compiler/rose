@@ -4,14 +4,13 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
+#include "rose.h"
+
 #include "codethorn.h"
 #include "SgNodeHelper.h"
 #include "Labeler.h"
 #include "VariableIdMapping.h"
 #include "StateRepresentations.h"
-#include "Analyzer.h"
-#include "LanguageRestrictor.h"
-#include "LanguageRestrictorCollection.h"
 #include "Timer.h"
 #include "LTLCheckerFixpoint.h"
 #include "LTLCheckerUnified.h"
@@ -20,11 +19,9 @@
 #include <boost/program_options.hpp>
 #include <map>
 #include "InternalChecks.h"
-#include "Miscellaneous.h"
 #include "AttributeAnnotator.h"
 #include "AstTerm.h"
 #include "SgNodeHelper.h"
-#include "rose.h"
 
 namespace po = boost::program_options;
 using namespace CodeThorn;

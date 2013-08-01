@@ -2,6 +2,8 @@
  * Author: Markus Schordan, 2012 *
  *********************************/
 
+#include "sage3basic.h"
+
 #include "SgNodeHelper.h"
 #include "limits.h"
 #include "RoseAst.h"

@@ -4,6 +4,8 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
+#include "sage3basic.h"
+
 #include "CFAnalyzer.h"
 #include "Labeler.h"
 #include "AstTerm.h"

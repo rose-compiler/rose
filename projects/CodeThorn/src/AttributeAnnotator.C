@@ -1,8 +1,11 @@
 // Author: Markus Schordan, 2013.
 
+#include "sage3basic.h"
+
+#include <iostream>
+
 #include "AttributeAnnotator.h"
 #include "RoseAst.h"
-#include <iostream>
 
 // default behavior
 string AnalysisResultAttribute::getPreInfoString() { return "pre-info: none";}

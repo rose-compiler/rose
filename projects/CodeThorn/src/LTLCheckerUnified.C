@@ -1,3 +1,5 @@
+#include "sage3basic.h"
+
 #include "LTL.h"
 #include "LTLCheckerUnified.h"
 #include "AType.h"

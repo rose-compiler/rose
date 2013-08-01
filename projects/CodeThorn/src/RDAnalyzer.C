@@ -1,5 +1,7 @@
 // Author: Markus Schordan, 2013.
 
+#include "sage3basic.h"
+
 #include "RDAnalyzer.h"
 
 using namespace std;

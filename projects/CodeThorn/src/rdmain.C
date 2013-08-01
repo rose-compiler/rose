@@ -1,5 +1,7 @@
 // Author: Markus Schordan, 2013.
 
+#include "rose.h"
+
 #include <iostream>
 #include "VariableIdMapping.h"
 #include "Labeler.h"

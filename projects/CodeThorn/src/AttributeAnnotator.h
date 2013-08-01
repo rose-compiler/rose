@@ -3,7 +3,6 @@
 #ifndef ATTRIBUTEANNOTATIONMECHANISM_H
 #define ATTRIBUTEANNOTATIONMECHANISM_H
 
-#include "rose.h"
 #include <string>
 
 using std::string;

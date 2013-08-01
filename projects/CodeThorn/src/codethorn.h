@@ -13,8 +13,6 @@
 #include <string>
 #include <sstream>
 
-#include "rose.h"
-
 #include "CFAnalyzer.h"
 #include "Analyzer.h"
 #include "Visualizer.h"

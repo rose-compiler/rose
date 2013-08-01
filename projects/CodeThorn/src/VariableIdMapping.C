@@ -4,6 +4,8 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
+#include "sage3basic.h"
+
 #include "VariableIdMapping.h"
 #include "RoseAst.h"
 #include <set>

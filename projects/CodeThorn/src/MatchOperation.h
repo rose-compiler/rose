@@ -7,7 +7,6 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-#include "rose.h"
 #include <string>
 #include <list>
 #include <sstream>

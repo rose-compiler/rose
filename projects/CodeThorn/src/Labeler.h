@@ -8,7 +8,6 @@
  *************************************************************/
 
 #include <set>
-#include "rose.h"
 #include "RoseAst.h"
 #include "VariableIdMapping.h"
 #include "Miscellaneous.h"

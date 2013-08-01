@@ -4,6 +4,7 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  ****X*********************************************************/
 
+#include "sage3basic.h"
 #include "ExprAnalyzer.h"
 
 using namespace CodeThorn;

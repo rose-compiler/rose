@@ -1,6 +1,9 @@
 // Author: Markus Schordan, 2013.
 
 #include <boost/program_options.hpp>
+
+#include "rose.h"
+
 #include "VariableIdMapping.h"
 #include "CommandLineOptions.h"
 #include <iostream>
@@ -15,7 +18,7 @@ int main( int argc, char *argv[] ) {
   try {
   // Command line option handling.
   po::options_description desc
-    ("varwatch 1.0\n"
+    ("varwatch 0.1\n"
      "Written by Markus Schordan 2013\n"
      "Supported options");
   desc.add_options()

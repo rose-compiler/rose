@@ -15,8 +15,6 @@
 
 #include <omp.h>
 
-#include "rose.h"
-
 #include "AstTerm.h"
 #include "Labeler.h"
 #include "CFAnalyzer.h"
