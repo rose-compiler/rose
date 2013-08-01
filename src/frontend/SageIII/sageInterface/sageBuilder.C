@@ -341,9 +341,12 @@ SgScopeStatement::find_symbol_by_type_of_function (const SgName & name, const Sg
 #if 0
                     printf ("In SgScopeStatement::find_symbol_by_type_of_function(): This is a SgTemplateFunctionDeclaration function \n");
 #endif
+                 // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+                 // In this case these are unavailable from this point.
                  // DQ (5/21/2013): Calling the SgScopeStatement API.
                  // func_symbol = find_template_function(name,func_type);
-                    func_symbol = lookup_template_function_symbol(name,func_type);
+                 // func_symbol = lookup_template_function_symbol(name,func_type);
+                    func_symbol = lookup_template_function_symbol(name,func_type,NULL,NULL);
 
                     break;
                   }
@@ -353,9 +356,12 @@ SgScopeStatement::find_symbol_by_type_of_function (const SgName & name, const Sg
 #if 0
                     printf ("In SgScopeStatement::find_symbol_by_type_of_function(): This is a SgTemplateMemberFunctionDeclaration function \n");
 #endif
+                 // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+                 // In this case these are unavailable from this point.
                  // DQ (5/21/2013): Calling the SgScopeStatement API.
                  // func_symbol = find_template_member_function(name,func_type);
-                    func_symbol = lookup_template_member_function_symbol(name,func_type);
+                 // func_symbol = lookup_template_member_function_symbol(name,func_type);
+                    func_symbol = lookup_template_member_function_symbol(name,func_type,NULL,NULL);
                     break;
                   }
 
@@ -2660,21 +2666,29 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 #if 0
                     printf ("In buildNondefiningFunctionDeclaration_T(): Looking up name = %s in scope = %p = %s \n",name.str(),scope,scope->class_name().c_str());
 #endif
+                 // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+                 // In this case these are unavailable from this point.
                  // ROSE_ASSERT(scope->lookup_template_symbol(name) != NULL);
-                    ROSE_ASSERT(scope->lookup_template_symbol(nameWithTemplateArguments) != NULL);
+                 // ROSE_ASSERT(scope->lookup_template_symbol(nameWithTemplateArguments) != NULL);
+                    ROSE_ASSERT(scope->lookup_template_symbol(nameWithTemplateArguments,NULL,NULL) != NULL);
                   }
 
             // ROSE_ASSERT(scope->lookup_function_symbol(name,func_type) != NULL);
 
+            // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+            // In this case these are unavailable from this point.
             // DQ (11/25/2011): Added support for template functions.
             // DQ (2/26/2009): uncommented assertion.
             // ROSE_ASSERT(scope->lookup_function_symbol(name) != NULL); // Did not pass for member function? Should we have used the mangled name?
             // ROSE_ASSERT(scope->lookup_function_symbol(name) != NULL || scope->lookup_template_symbol(name) != NULL); // Did not pass for member function? Should we have used the mangled name?
-               ROSE_ASSERT(scope->lookup_function_symbol(nameWithTemplateArguments) != NULL || scope->lookup_template_symbol(nameWithTemplateArguments) != NULL); // Did not pass for member function? Should we have used the mangled name?
+            // ROSE_ASSERT(scope->lookup_function_symbol(nameWithTemplateArguments) != NULL || scope->lookup_template_symbol(nameWithTemplateArguments) != NULL); // Did not pass for member function? Should we have used the mangled name?
+            // Did not pass for member function? Should we have used the mangled name?
+               ROSE_ASSERT(scope->lookup_function_symbol(nameWithTemplateArguments) != NULL || scope->lookup_template_symbol(nameWithTemplateArguments,NULL,NULL) != NULL);
 
 #if BUILDER_MAKE_REDUNDANT_CALLS_TO_SYMBOL_TABLE_LOOKUP
             // if (scope->lookup_function_symbol(name) == NULL || scope->lookup_template_symbol(name) != NULL)
-               if (scope->lookup_function_symbol(nameWithTemplateArguments) == NULL || scope->lookup_template_symbol(nameWithTemplateArguments) != NULL)
+            // if (scope->lookup_function_symbol(nameWithTemplateArguments) == NULL || scope->lookup_template_symbol(nameWithTemplateArguments) != NULL)
+               if (scope->lookup_function_symbol(nameWithTemplateArguments) == NULL || scope->lookup_template_symbol(nameWithTemplateArguments,NULL,NULL) != NULL)
                   {
                  // Make sure this is a template function declaration...
                     printf ("Need to make sure this is a template function declaration... \n");
@@ -2691,8 +2705,11 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 #if 0
                printf ("In buildNondefiningFunctionDeclaration_T(): Looking up name = %s in scope = %p = %s \n",name.str(),scope,scope->class_name().c_str());
 #endif
+            // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+            // In this case these are unavailable from this point.
             // ROSE_ASSERT(scope->lookup_template_symbol(name) != NULL);
-               ROSE_ASSERT(scope->lookup_template_symbol(nameWithTemplateArguments) != NULL);
+            // ROSE_ASSERT(scope->lookup_template_symbol(nameWithTemplateArguments) != NULL);
+               ROSE_ASSERT(scope->lookup_template_symbol(nameWithTemplateArguments,NULL,NULL) != NULL);
              }
 
           func->set_firstNondefiningDeclaration(func);
@@ -2923,13 +2940,16 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 #if 0
                printf ("In buildNondefiningFunctionDeclaration_T(): Looking up name = %s in scope = %p = %s \n",name.str(),scope,scope->class_name().c_str());
 #endif
+            // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+            // In this case these are unavailable from this point.
             // DQ (12/18/2011): This fails because the first use of the function causes a non-defining function declaration 
             // to be built and it is built as a template instantiation instead of a template declaration.  So the symbol for
             // the non-defining declaration is put into the correct scope, but as a SgMemberFunctionSymbol instead of as a 
             // SgTemplateSymbol (if it were built as a SgTemplateMemberFunctionDeclaration).  So of course we can't find it 
             // using lookup_template_symbol().
             // ROSE_ASSERT(scope->lookup_template_symbol(name) != NULL);
-               ROSE_ASSERT(scope->lookup_template_symbol(nameWithTemplateArguments) != NULL);
+            // ROSE_ASSERT(scope->lookup_template_symbol(nameWithTemplateArguments) != NULL);
+               ROSE_ASSERT(scope->lookup_template_symbol(nameWithTemplateArguments,NULL,NULL) != NULL);
              }
         }
 
@@ -3078,8 +3098,11 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 #if 0
           printf ("In buildNondefiningFunctionDeclaration_T(): Looking up name = %s in scope = %p = %s \n",name.str(),scope,scope->class_name().c_str());
 #endif
+       // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+       // In this case these are unavailable from this point.
        // ROSE_ASSERT(scope->lookup_template_symbol(name) != NULL);
-          ROSE_ASSERT(scope->lookup_template_symbol(nameWithTemplateArguments) != NULL);
+       // ROSE_ASSERT(scope->lookup_template_symbol(nameWithTemplateArguments) != NULL);
+          ROSE_ASSERT(scope->lookup_template_symbol(nameWithTemplateArguments,NULL,NULL) != NULL);
         }
 
   // DQ (2/11/2012): If this is a template instantiation then we have to set the template name (seperate from the name of the function which can include template parameters)).
@@ -3245,6 +3268,11 @@ SageBuilder::buildDefiningTemplateFunctionDeclaration (const SgName & name, SgTy
    {
   // DQ (12/1/2011): Adding support for template declarations in the AST.
 
+  // DQ (7/31/2013): Added assertions earlier before calling buildDefiningFunctionDeclaration_T<>().
+     ROSE_ASSERT(first_nondefining_declaration != NULL);
+     ROSE_ASSERT(first_nondefining_declaration->get_firstNondefiningDeclaration() != NULL);
+     ROSE_ASSERT(first_nondefining_declaration->get_firstNondefiningDeclaration() == first_nondefining_declaration);
+
   // template <class actualFunction> actualFunction * buildDefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
   // SgTemplateFunctionDeclaration* result = buildDefiningFunctionDeclaration_T <SgTemplateFunctionDeclaration> (name,return_type,paralist,/* isMemberFunction = */ false, scope, decoratorList,functionConstVolatileFlags);
   // SgTemplateFunctionDeclaration* result = buildDefiningFunctionDeclaration_T <SgTemplateFunctionDeclaration> (name,return_type,paralist,/* isMemberFunction = */ false, scope, decoratorList, 0, first_nondefining_declaration);
@@ -3386,7 +3414,7 @@ SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & n
 
 #if BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS
   // DQ (5/1/2012): Make sure that we don't have IR nodes marked as translformations.
-     if (SourcePositionClassificationMode !=e_sourcePositionTransformation) 
+     if (SourcePositionClassificationMode != e_sourcePositionTransformation) 
         {
           detectTransformations_local(result);
         }
@@ -3396,7 +3424,10 @@ SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & n
      printf ("After calling buildNondefiningFunctionDeclaration_T <SgTemplateMemberFunctionDeclaration>: result = %p = %s \n",result,result->class_name().c_str());
 #endif
 
-     SgSymbol* associatedSymbol = scope->lookup_template_member_function_symbol(name,result->get_type());
+  // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+  // In this case these are unavailable from this point.
+  // SgSymbol* associatedSymbol = scope->lookup_template_member_function_symbol(name,result->get_type());
+     SgSymbol* associatedSymbol = scope->lookup_template_member_function_symbol(name,result->get_type(),NULL,NULL);
      if (associatedSymbol == NULL)
         {
           printf ("ERROR: associatedSymbol == NULL \n");
@@ -3459,15 +3490,19 @@ SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & n
 #endif
 
 #if BUILDER_MAKE_REDUNDANT_CALLS_TO_SYMBOL_TABLE_LOOKUP
+  // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+  // In this case these are unavailable from this point.
   // ROSE_ASSERT(scope->lookup_template_symbol(name) != NULL);
-     if (scope->lookup_template_member_function_symbol(name,result->get_type()) == NULL)
+  // if (scope->lookup_template_member_function_symbol(name,result->get_type()) == NULL)
+     if (scope->lookup_template_member_function_symbol(name,result->get_type(),NULL,NULL) == NULL)
         {
           printf ("Error: scope->lookup_template_member_function_symbol(name,result->get_type()) == NULL (investigate this) \n");
           printf ("--- function name = %s in scope = %p = %s result->get_type() = %p = %s \n",name.str(),scope,scope->class_name().c_str(),result->get_type(),result->get_type()->class_name().c_str());
           scope->get_symbol_table()->print("Error: scope->lookup_template_member_function_symbol(name,result->get_type()) == NULL (investigate this)");
         }
 #endif
-     ROSE_ASSERT(scope->lookup_template_member_function_symbol(name,result->get_type()) != NULL);
+  // ROSE_ASSERT(scope->lookup_template_member_function_symbol(name,result->get_type()) != NULL);
+     ROSE_ASSERT(scope->lookup_template_member_function_symbol(name,result->get_type(),NULL,NULL) != NULL);
 
 #if BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS
   // DQ (5/1/2012): Make sure that we don't have IR nodes marked as transformations.
