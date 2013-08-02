@@ -52,7 +52,9 @@ mProgramTransformationPath=programTransformation#
 #
 SUBDIRS = \
 	binaryAnalyses \
-	programTransformation/extractFunctionArgumentsNormalization
+	programTransformation/extractFunctionArgumentsNormalization \
+	programTransformation/singleStatementToBlockNormalization
+
 if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 SUBDIRS += \
 	programAnalysis \
