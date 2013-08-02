@@ -14,8 +14,6 @@
 #include <set>
 #include "VariableIdUtils.h"
 
-using namespace CodeThorn;
-
 // AST Query Processor
 // common functor to process any query and build match result
 
@@ -41,7 +39,7 @@ public:
  *************************************************/
 class ComputeAddressTakenInfo
 {
-  VariableIdMapping& vidm;
+  CodeThorn::VariableIdMapping& vidm;
   // result to be computed by this analysis
   VariableIdSet addressTakenSet;
 
@@ -72,7 +70,7 @@ class ComputeAddressTakenInfo
     void visit(SgNode* sgn);    
   };
 public:
-  ComputeAddressTakenInfo(VariableIdMapping& _vidm) : vidm(_vidm) {}
+  ComputeAddressTakenInfo(CodeThorn::VariableIdMapping& _vidm) : vidm(_vidm) {}
   void throwIfUnInitException();
   void computeAddressTakenSet(SgNode* root);
   void printAddressTakenSet();
@@ -84,14 +82,14 @@ public:
  *************************************************/
 class CollectTypeInfo
 {
-  VariableIdMapping& vidm;
+  CodeThorn::VariableIdMapping& vidm;
   VariableIdSet pointerTypeSet;
   VariableIdSet arrayTypeSet;
   VariableIdSet referenceTypeSet;
   bool initialized;
 
 public:
-  CollectTypeInfo(VariableIdMapping& _vidm) : vidm(_vidm) { }
+  CollectTypeInfo(CodeThorn::VariableIdMapping& _vidm) : vidm(_vidm) { }
   void collectTypes();
   void printPointerTypeSet();
   void printArrayTypeSet();
@@ -108,12 +106,12 @@ public:
 class FlowInsensitivePointerInfo
 {
   SgNode* root;
-  VariableIdMapping vidm;
+  CodeThorn::VariableIdMapping& vidm;
   ComputeAddressTakenInfo compAddrTakenInfo;
   CollectTypeInfo collTypeInfo;
 
 public:
-  FlowInsensitivePointerInfo(SgProject* project, VariableIdMapping& _vidm) : root(project), 
+  FlowInsensitivePointerInfo(SgProject* project, CodeThorn::VariableIdMapping& _vidm) : root(project), 
     vidm(_vidm),
     compAddrTakenInfo(_vidm),
     collTypeInfo(_vidm)
@@ -122,7 +120,7 @@ public:
   void collectInfo();
   void printInfoSets();
   VariableIdSet getMemModByPointer();
-  VariableIdMapping& getVariableIdMapping();
+  CodeThorn::VariableIdMapping& getVariableIdMapping();
 };
 
 #endif

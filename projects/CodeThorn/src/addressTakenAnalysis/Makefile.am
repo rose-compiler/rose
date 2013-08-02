@@ -67,6 +67,11 @@ ADDRESSTAKENANALYSIS_TESTS_FAILING = \
 	$(srcdir)/tests/test19.cpp \    # not handling SgConditionalExp	
 	$(srcdir)/tests/test17.cpp \    # not handling SgThisExp
 	$(srcdir)/tests/test7.cpp \
+	$(srcdir)/tests/test25.cpp \
+	$(srcdir)/tests/test26.cpp \
+	$(srcdir)/tests/test27.cpp \
+	$(srcdir)/tests/test28.cpp \
+	$(srcdir)/tests/test29.cpp \
 	$(srcdir)/tests/arrow_test.cpp
 
 ADDRESSTAKENANALYSIS_CHECKS = ${ADDRESSTAKENANALYSIS_TESTS:.cpp=.cpp-o}

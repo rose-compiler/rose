@@ -17,14 +17,12 @@
 
 #include "VariableIdUtils.h"
 
-using namespace CodeThorn;
-
-// VariableId is short hand for named memory
+// CodeThorn::VariableId is short hand for named memory
 // locations
 
 // basic type info to describe some type
 // information about the variable
-// type info is associated with the respective VariableId
+// type info is associated with the respective CodeThorn::VariableId
 enum VariableIdTypeInfo {
   VARIABLE,
   ARRAY,
@@ -32,18 +30,18 @@ enum VariableIdTypeInfo {
   REFERENCE
 };
 
-typedef std::pair<VariableId, VariableIdTypeInfo> VariableIdInfo;
+typedef std::pair<CodeThorn::VariableId, VariableIdTypeInfo> VariableIdInfo;
 
-// map with VariableId as the key
+// map with CodeThorn::VariableId as the key
 //
-typedef std::map<VariableId, VariableIdTypeInfo> VariableIdInfoMap;
+typedef std::map<CodeThorn::VariableId, VariableIdTypeInfo> VariableIdInfoMap;
 
 // VarsInfo is used to represent the result
 // of def/use query on expressions. 
-// VarsInfo is a pair <VariableIdInfoMap, bool>
-// @VariableIdInfoMap: set of named memory locations 
-// (variables) represented by their VariableId and their
-// associated VariableIdTypeInfo
+// VarsInfo is a pair <CodeThorn::VariableIdInfoMap, bool>
+// @CodeThorn::VariableIdInfoMap: set of named memory locations 
+// (variables) represented by their CodeThorn::VariableId and their
+// associated CodeThorn::VariableIdTypeInfo
 // @bool: flag is set if the expression modifies/uses
 // memory locations that are different from 
 // the named memory locations appearing on the
@@ -67,8 +65,8 @@ typedef std::set<SgFunctionCallExp*> FunctionCallExpSet;
  *************************************************/
 
 // determined completely based on syntactic information
-// def_vars_info consists of VariableIds which are written by the expression
-// use_vars_info consists of VariableIds which are read but not modified by this expression
+// def_vars_info consists of CodeThorn::VariableIds which are written by the expression
+// use_vars_info consists of CodeThorn::VariableIds which are read but not modified by this expression
 // func_set consists of all SgFunctionCallExps that are invoked by this expression
 class DefUseVarsInfo
 {
@@ -109,11 +107,11 @@ public:
 
   DefUseVarsInfo operator+(const DefUseVarsInfo& duvi1);
 
-  std::string varsInfoPrettyPrint(VarsInfo& vars_info, VariableIdMapping& vidm);
+  std::string varsInfoPrettyPrint(VarsInfo& vars_info, CodeThorn::VariableIdMapping& vidm);
   std::string functionCallExpSetPrettyPrint(FunctionCallExpSet& func_calls_info);
 
   // for more readability
-  std::string str(VariableIdMapping& vidm);  
+  std::string str(CodeThorn::VariableIdMapping& vidm);  
 };
 
 // used by the getDefUseVarsInfo_rec to traverse the 
@@ -121,13 +119,13 @@ public:
 // getDefUseLHS/RHS functions
 class ExprWalker : public ROSE_VisitorPatternDefaultBase
 {
-  VariableIdMapping& vidm;
+  CodeThorn::VariableIdMapping& vidm;
   // if set then we are processing an expression on lhs of assignment
   bool isModExpr;
   DefUseVarsInfo duvi;
 
 public:
-  ExprWalker(VariableIdMapping& _vidm, bool isModExpr);
+  ExprWalker(CodeThorn::VariableIdMapping& _vidm, bool isModExpr);
   // lhs of assignment operator are always lvalues
   // process them 
   void visit(SgAssignOp* sgn);
@@ -174,11 +172,11 @@ public:
 
 class LvalueExprWalker : public ROSE_VisitorPatternDefaultBase
 {
-  VariableIdMapping& vidm;
+  CodeThorn::VariableIdMapping& vidm;
   bool isModExpr;
   DefUseVarsInfo duvi;
 public:
-  LvalueExprWalker(VariableIdMapping& _vidm, bool _isModExpr);
+  LvalueExprWalker(CodeThorn::VariableIdMapping& _vidm, bool _isModExpr);
   void visit(SgVarRefExp* sgn);
   void visit(SgPntrArrRefExp* sgn);
   void visit(SgPointerDerefExp* sgn);
@@ -197,18 +195,18 @@ public:
 // the locations that are modified involve all arrays and variables in addressTakenSet
 // if the expression involve functions or function pointers it can 
 // potentially modify everything
-DefUseVarsInfo getDefUseVarsInfo(SgNode* sgn, VariableIdMapping& vidm);
+DefUseVarsInfo getDefUseVarsInfo(SgNode* sgn, CodeThorn::VariableIdMapping& vidm);
 
 // internal implementation
 // @sgn: root node
 // @duvi: the defuse object that will be built
 // @isModExpr: set to true if the expression is modifying a memory location
-DefUseVarsInfo getDefUseVarsInfo_rec(SgNode* sgn, VariableIdMapping& vidm, bool isModExpr);
+DefUseVarsInfo getDefUseVarsInfo_rec(SgNode* sgn, CodeThorn::VariableIdMapping& vidm, bool isModExpr);
 
 // used to process the lhs of assignment operator
 // invokes a visitor pattern and adds the modified variables
 // to def_vars_info and used variables to use_vars_info of duvi object
-DefUseVarsInfo getDefUseVarsInfoLvalue(SgNode* sgn, VariableIdMapping& vidm, bool isModExpr);
+DefUseVarsInfo getDefUseVarsInfoLvalue(SgNode* sgn, CodeThorn::VariableIdMapping& vidm, bool isModExpr);
 
 #endif
 

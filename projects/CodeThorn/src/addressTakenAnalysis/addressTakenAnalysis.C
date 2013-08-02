@@ -4,6 +4,8 @@
 #include <algorithm>
 #include "addressTakenAnalysis.h"
 
+using namespace CodeThorn;
+
 /*************************************************
  ***************** ProcessQuery  *****************
  *************************************************/
@@ -24,7 +26,8 @@ void ProcessQuery::printMatchResult()
       std::cout << "MATCH=";
       SgNode* matchedTerm = (*smbIt).second;
       ROSE_ASSERT(matchedTerm != NULL);
-      std::cout << "  VAR: " << (*smbIt).first << "=" << astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
+      std::cout << "  VAR: " << (*smbIt).first << "=" << 
+        astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
     }
   }
 }

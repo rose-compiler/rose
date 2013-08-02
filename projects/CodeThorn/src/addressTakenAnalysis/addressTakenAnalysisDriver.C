@@ -10,6 +10,8 @@
  * email    : aananthakris1@llnl.gov                         *
  *************************************************************/
 
+using namespace CodeThorn;
+
 class TestDefUseVarsInfoTraversal : public AstSimpleProcessing
 {
   VariableIdMapping& vidm;

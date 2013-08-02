@@ -1,6 +1,8 @@
 #include "sage3basic.h"
 #include "VariableIdUtils.h"
 
+using namespace CodeThorn;
+
 std::string VariableIdSetPrettyPrint::str(VariableIdSet& vset, VariableIdMapping& vidm)
 {
   std::ostringstream ostr;
