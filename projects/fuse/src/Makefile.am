@@ -2,12 +2,19 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 bin_PROGRAMS = fuse
 
-AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH)
-
-INCLUDES = $(ROSE_INCLUDES)
-
 fuse_CXXFLAGS =
 fuse_LDADD = -lrose
+fuse_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH)
+
+INCLUDES = \
+	$(ROSE_INCLUDES) \
+	-I$(srcdir)/analysis \
+	-I$(srcdir)/cfgUtils \
+	-I$(srcdir)/dbglog \
+	-I$(srcdir)/dbglog/widgets \
+	-I$(srcdir)/lattice \
+	-I$(srcdir)/simpleAnalyses \
+	-I$(srcdir)/state
 
 fuse_SOURCES = \
 	analysis/abstract_object.C \
@@ -41,7 +48,7 @@ fuse_SOURCES = \
 	state/nodeState.C \
 	compositionalTestAnalysis.C
 
-fuse_include_HEADERS =\
+include_HEADERS =\
 	analysis/abstract_object.h \
 	analysis/abstract_object_map.h \
 	analysis/abstract_object_set.h \
