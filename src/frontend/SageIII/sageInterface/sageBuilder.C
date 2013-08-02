@@ -2503,6 +2503,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
           switch((VariantT)actualFunction::static_variant)
              {
                case V_SgFunctionDeclaration:
+               case V_SgProcedureHeaderStatement:
                case V_SgTemplateInstantiationFunctionDecl:
                   {
 #if 0
@@ -6217,9 +6218,12 @@ SageBuilder::buildFunctionRefExp(const SgName& name,const SgType* funcType, SgSc
     SgGlobal* globalscope = getGlobalScope(scope);
 
     ROSE_ASSERT (isMemberFunc == false);  // Liao, 11/21/2012. We assume only regular functions can go into this if-body so we can insert them into global scope by default
-    //TODO: consider C++ template functions and Fortran functions
-    //SgFunctionDeclaration * funcDecl= buildNondefiningFunctionDeclaration(name,return_type,parList,globalscope);
-    SgFunctionDeclaration * funcDecl = buildNondefiningFunctionDeclaration_T <SgFunctionDeclaration>(name,return_type,parList,false,globalscope,NULL, false, NULL);
+    //TODO: consider C++ template functions 
+    SgFunctionDeclaration * funcDecl = NULL; 
+    if (SageInterface::is_Fortran_language ())
+      funcDecl = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement>(name,return_type,parList,false,globalscope,NULL, false, NULL);
+    else
+      funcDecl = buildNondefiningFunctionDeclaration_T <SgFunctionDeclaration>(name,return_type,parList,false,globalscope,NULL, false, NULL);
 
     funcDecl->get_declarationModifier().get_storageModifier().setExtern();
 
