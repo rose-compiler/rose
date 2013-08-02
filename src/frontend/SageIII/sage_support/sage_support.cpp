@@ -4752,7 +4752,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   {
                     itInput++;
                     string destDirName = *itInput;
-                    if(!boost::filesystem::create_directory(destDirName.c_str())) {
+                    if(!boost::filesystem::create_directory(destDirName.c_str()))
                        {
                          if(errno != EEXIST) 
                             {

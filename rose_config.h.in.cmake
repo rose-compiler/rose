@@ -278,6 +278,9 @@
 /* Name of backend Python interpreter including path */
 #define BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH "${BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH}"
 
+/* Name of backend X10 compiler, including path */
+#define BACKEND_X10_COMPILER_NAME_WITH_PATH "${BACKEND_X10_COMPILER_NAME_WITH_PATH}"
+
 /* Internal EDG specific consistency tests. */
 //AS FIXME
 #define CHECKING 1
@@ -532,12 +535,16 @@
 #define ROSE_SHLIBPATH_VAR "${ROSE_SHLIBPATH_VAR}"
 
 /* Whether to use the new EDG version 4.x */
-//AS Don't know what to do with this
-#undef ROSE_USE_EDG_VERSION_4
+#cmakedefine ROSE_USE_EDG_VERSION_4
+
+/* Whether to use the new EDG version 4.4 */
+#cmakedefine ROSE_USE_EDG_VERSION_4_4
+
+/* Whether to use the new EDG version 4.7 */
+#cmakedefine ROSE_USE_EDG_VERSION_4_7
 
 /* Whether to use the new interface to EDG */
-//AS Don't know what to do with this
-#undef ROSE_USE_NEW_EDG_INTERFACE
+#cmakedefine ROSE_USE_NEW_EDG_INTERFACE
 
 /* Use Valgrind calls in ROSE */
 //AS Don't know what to do with this
@@ -741,3 +748,56 @@
 #define ROSE_OFP_MAJOR_VERSION_NUMBER 0
 #define ROSE_OFP_MINOR_VERSION_NUMBER 8
 #define ROSE_OFP_PATCH_VERSION_NUMBER 3
+
+/* Boost filesystem version to use */
+#define BOOST_FILESYSTEM_VERSION @BOOST_FILESYSTEM_VERSION@
+
+/* EDG major version number */
+#define ROSE_EDG_MAJOR_VERSION_NUMBER @EDG_MAJOR_VERSION@
+
+/* EDG minor version number */
+#define ROSE_EDG_MINOR_VERSION_NUMBER @EDG_MINOR_VERSION@
+
+/* Defined if we're building using CMake */
+#cmakedefine USE_CMAKE
+
+/* Defined if we're using a prebuilt EDG library */
+#cmakedefine BINARY_EDG
+
+/* Controls design of internal template declaration support within the ROSE
+   AST. */
+#cmakedefine TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+
+/* Build ROSE to support the Binary Analysis */
+#cmakedefine ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
+/* Build ROSE to support the Cuda langauge */
+#cmakedefine ROSE_BUILD_CUDA_LANGUAGE_SUPPORT
+
+/* Build ROSE to support the C++ langauge */
+#cmakedefine ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+
+/* Build ROSE to support the C langauge */
+#cmakedefine ROSE_BUILD_C_LANGUAGE_SUPPORT
+
+/* Build ROSE to support the Fortran langauge */
+#cmakedefine ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+
+/* Build ROSE to support the Java langauge */
+#cmakedefine ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+
+/* Build ROSE to support the OpenCL langauge */
+#cmakedefine ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT
+
+/* Build ROSE to support the PHP langauge */
+#cmakedefine ROSE_BUILD_PHP_LANGUAGE_SUPPORT
+
+/* Build ROSE to support the Python langauge */
+#cmakedefine ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
+
+/* Support for an advanced uniform warning level for ROSE development */
+#cmakedefine ROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT
+
+#cmakedefine ROSE_SUPPORT_GNU_EXTENSIONS
+#cmakedefine ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+#cmakedefine ROSE_SUPPORT_MICROSOFT_EXTENSIONS
