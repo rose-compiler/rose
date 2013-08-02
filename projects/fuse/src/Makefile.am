@@ -82,6 +82,33 @@ include_HEADERS =\
 	simpleAnalyses/VariableStateTransfer.h \
 	state/nodeState.h
 
+FUSE_TESTS_DIR = $(top_srcdir)/projects/fuse/src/tests
+
+FUSE_TESTS = \
+	$(FUSE_TESTS_DIR)/compositionalTestInput1.C \
+	$(FUSE_TESTS_DIR)/compositionalTestInput1b.C \
+	$(FUSE_TESTS_DIR)/compositionalTestInput2.C \
+	$(FUSE_TESTS_DIR)/compositionalTestInput2b.C \
+	$(FUSE_TESTS_DIR)/compositionalTestInput3.C \
+	$(FUSE_TESTS_DIR)/compositionalTestInput4.C \
+	$(FUSE_TESTS_DIR)/compositionalTestInput5b.C \
+	$(FUSE_TESTS_DIR)/compositionalTestInput6.C \
+	$(FUSE_TESTS_DIR)/compositionalTestInput7.C \
+	$(FUSE_TESTS_DIR)/compositionalTestInput.jisheng.C \
+	$(FUSE_TESTS_DIR)/cp_test1.C \
+	$(FUSE_TESTS_DIR)/simplePtrTest.cpp \
+	$(FUSE_TESTS_DIR)/sas13FigExample.cpp
+
+FUSE_CHECKS = ${FUSE_TESTS:.C=.C-o}
+
+$(FUSE_CHECKS): fuse $(FUSE_TESTS_DIR)/$(@:.C=.C-o)
+	./fuse -c --edg:no_warnings $(@:.C-o=.C)
+
+check-local: $(FUSE_CHECKS)
+
+clean-local:
+	rm -rf *.dot *.png dbg/
+
 EXTRA_DIST = \
 	img/divDL.gif \
 	img/divGO.gif
