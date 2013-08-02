@@ -1197,8 +1197,8 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
           delete (default_initName); // must delete the old one to pass AST consistency test
 
        // DQ (12/13/2011): Is this executed...
-          printf ("Is this executed \n");
-          ROSE_ASSERT(false);
+          //printf ("Is this executed \n");
+          //ROSE_ASSERT(false);
 
           isFortranParameter = true;
         }
