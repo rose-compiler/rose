@@ -313,6 +313,9 @@ set (unparser_SRC
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/languageIndependenceSupport/name_qualification_support.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/languageIndependenceSupport/unparse_debug.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/languageIndependenceSupport/unparseLanguageIndependentConstructs.C
+      ${CMAKE_SOURCE_DIR}/src/backend/unparser/X10CodeGeneration/unparseX10_expressions.C
+      ${CMAKE_SOURCE_DIR}/src/backend/unparser/X10CodeGeneration/unparseX10_statements.C
+      ${CMAKE_SOURCE_DIR}/src/backend/unparser/X10CodeGeneration/unparseX10_types.C
 )
 
 set(roseBinaryFormats_fileList_part0
@@ -806,6 +809,7 @@ ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/astPostProcessing.C
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/fixupNullPointers.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/fixupNames.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/fixupTypes.C 
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/fixupTypeReferences.C
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/fixupConstructorPreinitializationLists.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/propagateHiddenListData.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/resolveFortranReferences.C 
@@ -816,6 +820,11 @@ ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/astPostProcessing.C
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/fixupCxxSymbolTablesToSupportAliasingSymbols.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/normalizeTypedefSequenceLists.C
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/fixupConstantFoldedValues.C
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/detectTransformations.C
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/fixupFunctionDefaultArguments.C
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/fixupSelfReferentialMacros.C
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/fixupDeclarationScope.C
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/checkPhysicalSourcePosition.C
    )
 
 if(enable-rosehpct)

@@ -240,7 +240,7 @@ if(NOT Boost_FOUND)
     message(FATAL_ERROR "Could not find Boost version 1.35.0 or newer command")
 endif(NOT Boost_FOUND)
 include_directories(${Boost_INCLUDE_DIRS})
-add_definitions(-DBOOST_FILESYSTEM_VERSION=2)
+set(BOOST_FILESYSTEM_VERSION 2)
 
 
 
@@ -257,8 +257,8 @@ set(INSTALL_TARGETS_DEFAULT_ARGS  RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
                                                                         COMPONENT
                                                                         Devel
                                                                         )
-# a new definition to tweak code for cmake 
-add_definitions (-DUSE_CMAKE)
+# a new definition to tweak code for cmake
+set(USE_CMAKE 1)
 
 
 if (NOT WIN32)
@@ -321,15 +321,28 @@ set(EDG_VERSION "4.7" CACHE STRING
   "major.minor version number for EDG (e.g. 3.3, 3.10, 4.0, 4.1).")
 string(SUBSTRING ${EDG_VERSION} 0 1 EDG_MAJOR_VERSION)
 string(SUBSTRING ${EDG_VERSION} 2 1 EDG_MINOR_VERSION)
-add_definitions(-DROSE_EDG_MAJOR_VERSION_NUMBER=${EDG_MAJOR_VERSION})
-add_definitions(-DROSE_EDG_MINOR_VERSION_NUMBER=${EDG_MINOR_VERSION})
+set(ROSE_EDG_MAJOR_VERSION_NUMBER ${EDG_MAJOR_VERSION})
+set(ROSE_EDG_MINOR_VERSION_NUMBER ${EDG_MINOR_VERSION})
+if ("${EDG_MAJOR_VERSION}" VERSION_EQUAL "4")
+  set(ROSE_USE_EDG_VERSION_4 1)
+  set(ROSE_USE_NEW_EDG_INTERFACE 1)
+  if ("${EDG_MINOR_VERSION}" VERSION_GREATER "3")
+    set(TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS 1)
+  endif()
+  if ("${EDG_MINOR_VERSION}" VERSION_EQUAL "4")
+    set(ROSE_USE_EDG_VERSION_4_4 1)
+  endif()
+  if ("${EDG_MINOR_VERSION}" VERSION_EQUAL "7")
+    set(ROSE_USE_EDG_VERSION_4_7 1)
+  endif()
+endif()
 
 # Check if we need to download the EDG binary tarball
 if(EXISTS "${PROJECT_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/CMakeLists.txt")
   set(have_EDG_source TRUE)
 else()
   set(have_EDG_source FALSE)
-  add_definitions(-DBINARY_EDG)
+  set(BINARY_EDG 1)
   if (NOT WIN32)
   # no need to display this message after the file has been downloaded
   if(NOT EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs")
@@ -363,19 +376,19 @@ find_package(OpenSSL)
 
 option(enable-c "Enable C/C++ language support in ROSE." ON)
 if (enable-c)
-  add_definitions(-DROSE_BUILD_CXX_LANGUAGE_SUPPORT)
-  add_definitions(-DROSE_BUILD_C_LANGUAGE_SUPPORT)
+  set(ROSE_BUILD_CXX_LANGUAGE_SUPPORT 1)
+  set(ROSE_BUILD_C_LANGUAGE_SUPPORT 1)
 endif()
 
 option(enable-cuda "Enable cuda support in ROSE." ON)
 if (enable-cuda)
   find_package(CUDA REQUIRED)
-  add_definitions(-DROSE_BUILD_CUDA_LANGUAGE_SUPPORT)
+  set(ROSE_BUILD_CUDA_LANGUAGE_SUPPORT 1)
 endif()
 
 option(enable-fortran "Enable Fortran support in ROSE." ON)
 if (enable-fortran)
-  add_definitions(-DROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT)
+  set(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT 1)
 endif()
 
 option(enable-java "Enable Java support in ROSE." ON)
@@ -385,12 +398,12 @@ if (enable-java)
   find_program(GCJ gcj)
   find_program(GCJH gcjh)
   find_package(JNI)
-  add_definitions(-DROSE_BUILD_JAVA_LANGUAGE_SUPPORT)
+  set(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT 1)
 endif()
 
 option(enable-opencl "Enable OpenCL support in ROSE." ON)
 if (enable-opencl)
-  add_definitions(-DROSE_BUILD_OPENCL_LANGUAGE_SUPPORT)
+  set(ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT 1)
   find_path(with-opencl-inc NAMES cl.h
     DOC "For OpenCL runtime library")
   find_library(with-opencl-lib OpenCL DOC "OpenCL library for runtime examples")
@@ -398,14 +411,14 @@ endif()
 
 option(enable-php "Enable PHP support in ROSE." ON)
 if (enable-php)
-  add_definitions(-DROSE_BUILD_PHP_LANGUAGE_SUPPORT)
+  set(ROSE_BUILD_PHP_LANGUAGE_SUPPORT 1)
   find_path(with-php php
     DOC "Specify the prefix where PHP (and phc) is installed")
 endif()
 
 option(enable-python "Enable Python support in ROSE." OFF)
 if (enable-python)
-  add_definitions(-DROSE_BUILD_PYTHON_LANGUAGE_SUPPORT)
+  set(ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT 1)
   find_package(PythonLibs REQUIRED)
   option(with-python "Build code that requires a Python interpreter" ON)
   if(with-python)
@@ -432,7 +445,7 @@ option(enable-advanced-warnings
 if (enable-advanced-warnings)
   message(WARNING
     "Using an advanced uniform warning level for ROSE development.")
-  add_definitions(-DROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT)
+  set(ROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT 1)
 endif()
 
 option(enable-assembly-semantics
@@ -440,7 +453,7 @@ option(enable-assembly-semantics
 
 option(enable-binary-analysis "Enable binary analysis support in ROSE." ON)
 if (enable-binary-analysis)
-  add_definitions(-DROSE_BUILD_BINARY_ANALYSIS_SUPPORT)
+  set(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT 1)
 endif()
 
 option(enable-candl "Support for ScopLib" OFF)
@@ -475,20 +488,20 @@ endif()
 option(enable-gnu-extensions
   "Enable internal support in ROSE for GNU language extensions" OFF)
 if(enable-gnu-extensions)
-  add_definitions(-DROSE_SUPPORT_GNU_EXTENSIONS="TRUE")
+  set(ROSE_SUPPORT_GNU_EXTENSIONS TRUE)
 endif()
 
 option(enable-internalFrontendDevelopment
   "Enable development mode to reduce files required to support work on
   language frontends" OFF)
 if (enable-internalFrontendDevelopment)
-  add_definitions(-DROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT)
+  set(ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT 1)
 endif()
 
 option(enable-microsoft-extensions
   "Enable internal support in ROSE for GNU language extensions" OFF)
 if(enable-microsoft-extensions)
-  add_definitions(-DROSE_SUPPORT_MICROSOFT_EXTENSIONS="TRUE")
+  set(ROSE_SUPPORT_MICROSOFT_EXTENSIONS TRUE)
 endif()
 
 set(enable-ofp-version "0.8.3" CACHE STRING "version number for OFP")
@@ -896,6 +909,7 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/JavaCodeGeneration 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PHPCodeGeneration 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PythonCodeGeneration 
+     ${ROSE_TOP_SRC_DIR}/src/backend/unparser/X10CodeGeneration
      ${ROSE_TOP_SRC_DIR}/src/backend/asmUnparser 
      ${ROSE_TOP_SRC_DIR}/src/util 
      ${ROSE_TOP_SRC_DIR}/src/util/support 
