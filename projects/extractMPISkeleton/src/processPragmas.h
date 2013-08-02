@@ -3,7 +3,12 @@
 
 #include "rose.h"
 
-void processPragmas (SgProject *project, bool outline);
+typedef std::set<SgSymbol*> SgSymbols;
+
+void processPragmas ( SgProject *project
+                    , bool outline
+                    , SgSymbols *pivots
+                    );
 
 #endif
 

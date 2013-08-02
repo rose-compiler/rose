@@ -16,6 +16,7 @@ class B<int> {
 };
 */
 
+// The bug in ROSE is that only a single "template <>" is unparsed, instead of a pair of them.
 template <>
 template <>
 void A<B>::foo<int>(/*B<int>::type_t & arg*/) {}

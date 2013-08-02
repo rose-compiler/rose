@@ -1809,6 +1809,7 @@ src/midend/programAnalysis/staticSingleAssignment/Makefile
 src/midend/programAnalysis/ssaUnfilteredCfg/Makefile
 src/midend/programAnalysis/systemDependenceGraph/Makefile
 src/midend/programTransformation/extractFunctionArgumentsNormalization/Makefile
+src/midend/programTransformation/singleStatementToBlockNormalization/Makefile
 src/midend/programTransformation/loopProcessing/Makefile
 src/backend/Makefile
 src/roseSupport/Makefile
@@ -2157,6 +2158,7 @@ tests/roseTests/programAnalysisTests/generalDataFlowAnalysisTests/Makefile
 tests/roseTests/programAnalysisTests/systemDependenceGraphTests/Makefile
 tests/roseTests/programTransformationTests/Makefile
 tests/roseTests/programTransformationTests/extractFunctionArgumentsTest/Makefile
+tests/roseTests/programTransformationTests/singleStatementToBlockNormalization/Makefile
 tests/roseTests/roseHPCToolkitTests/Makefile
 tests/roseTests/roseHPCToolkitTests/data/01/ANALYSIS/Makefile
 tests/roseTests/roseHPCToolkitTests/data/01/Makefile
