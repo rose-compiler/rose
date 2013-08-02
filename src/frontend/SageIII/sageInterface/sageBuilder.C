@@ -389,20 +389,34 @@ template SgFunctionSymbol* SgScopeStatement::find_symbol_by_type_of_function<SgM
 template SgFunctionSymbol* SgScopeStatement::find_symbol_by_type_of_function<SgTemplateMemberFunctionDeclaration>(SgName const&, SgType const*);
 template SgFunctionSymbol* SgScopeStatement::find_symbol_by_type_of_function<SgFunctionDeclaration>(SgName const&, SgType const*);
 
-void SageBuilder::pushScopeStack (SgScopeStatement* stmt)
-{
-  ROSE_ASSERT(stmt != NULL);
+void 
+SageBuilder::pushScopeStack (SgScopeStatement* stmt)
+   {
+     ROSE_ASSERT(stmt != NULL);
 
-// DQ (9/28/2009): This is part of testing for GNU 4.0.x (other versions of g++ work fine).
-  ROSE_ASSERT(stmt != NULL);
-  if (stmt != NULL)
-     {
-    // Calling any member function is a way to test the pointer.
-       stmt->class_name();
-     }
+#if 0
+  // DQ (9/28/2009): This is part of testing for GNU 4.0.x (other versions of g++ work fine).
+     ROSE_ASSERT(stmt != NULL);
+     if (stmt != NULL)
+        {
+       // Calling any member function is a way to test the pointer.
+          stmt->class_name();
+        }
+#endif
 
-  ScopeStack.push_back(stmt); 
-}
+     ScopeStack.push_back(stmt);
+
+#if 0
+  // Debugging code to output the scope stack.
+     printf ("SageBuilder::pushScopeStack(): Scope stack: \n");
+     int counter = 0;
+     for (std::list<SgScopeStatement*>::iterator i = ScopeStack.begin(); i != ScopeStack.end(); i++)
+        {
+          printf ("   --- i = %d: %p = %s \n",counter,*i,(*i)->class_name().c_str());
+          counter++;
+        }
+#endif
+   }
 
 void SageBuilder::pushScopeStack (SgNode* node)
    {
@@ -424,11 +438,25 @@ void SageBuilder::popScopeStack()
   // we want to warning users  double freeing happens
   // if (!ScopeStack.empty())
 
+  // DQ (7/30/2013): Added assertion.
+     ROSE_ASSERT(ScopeStack.empty() == false);
+
 #if 0
-     printf ("Inside of SageBuilder::popScopeStack() \n");
+     printf ("Inside of SageBuilder::popScopeStack(): ScopeStack.back() = %p = %s \n",ScopeStack.back(),ScopeStack.back()->class_name().c_str());
 #endif
 
      ScopeStack.pop_back();
+
+#if 0
+  // Debugging code to output the scope stack.
+     printf ("SageBuilder::popScopeStack(): Scope stack: \n");
+     int counter = 0;
+     for (std::list<SgScopeStatement*>::iterator i = ScopeStack.begin(); i != ScopeStack.end(); i++)
+        {
+          printf ("   --- i = %d: %p = %s \n",counter,*i,(*i)->class_name().c_str());
+          counter++;
+        }
+#endif
    }
 
 SgScopeStatement* SageBuilder::topScopeStack()
@@ -4513,8 +4541,17 @@ SageBuilder::buildProcedureHeaderStatement(const SgName& name, SgType* return_ty
 
 //! Build a Fortran subroutine or procedure
 SgProcedureHeaderStatement*
-SageBuilder::buildProcedureHeaderStatement(const char* name, SgType* return_type, SgFunctionParameterList * paralist, SgProcedureHeaderStatement::subprogram_kind_enum kind, SgScopeStatement* scope/*=NULL*/,SgProcedureHeaderStatement* first_nondefining_declaration)
+SageBuilder::buildProcedureHeaderStatement( const char* name, SgType* return_type, SgFunctionParameterList * paralist, 
+                                            SgProcedureHeaderStatement::subprogram_kind_enum kind, SgScopeStatement* scope/*=NULL*/,
+                                            SgProcedureHeaderStatement* first_nondefining_declaration)
    {
+  // DQ (7/14/2013): We would like to insist that a nondefining declaration has been built at this point.
+     ROSE_ASSERT(first_nondefining_declaration != NULL);
+
+  // We will want to call: SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgType* return_type, SgFunctionParameterList * paralist, 
+  //                                                                           bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, 
+  //                                                                           unsigned int functionConstVolatileFlags, SgTemplateArgumentPtrList* templateArgumentsList)
+
      if (kind == SgProcedureHeaderStatement::e_subroutine_subprogram_kind)
         {
           ROSE_ASSERT(return_type == buildVoidType());
@@ -7664,27 +7701,46 @@ SgBasicBlock * SageBuilder::buildBasicBlock(SgStatement * stmt1, SgStatement* st
   if (stmt8) SageInterface::appendStatement(stmt8, result);
   if (stmt9) SageInterface::appendStatement(stmt9, result);
   if (stmt10) SageInterface::appendStatement(stmt10, result);
+
   return result;
 }
 
 SgBasicBlock * SageBuilder::buildBasicBlock_nfi()
-{
-  SgBasicBlock* result = new SgBasicBlock();
-  ROSE_ASSERT(result);
+   {
+     SgBasicBlock* result = new SgBasicBlock();
+     ROSE_ASSERT(result);
 
-// DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-  if (symbol_table_case_insensitive_semantics == true)
-       result->setCaseInsensitive(true);
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     if (symbol_table_case_insensitive_semantics == true)
+        {
+          result->setCaseInsensitive(true);
+        }
 
-  setOneSourcePositionNull(result);
-  return result;
-}
+     setOneSourcePositionNull(result);
 
-SgBasicBlock* SageBuilder::buildBasicBlock_nfi(const vector<SgStatement*>& stmts) {
-  SgBasicBlock* result = buildBasicBlock_nfi();
-  appendStatementList(stmts, result);
-  return result;
-}
+#if 0
+     printf ("In buildBasicBlock_nfi(): returning result = %p \n",result);
+#endif
+
+     return result;
+   }
+
+SgBasicBlock* SageBuilder::buildBasicBlock_nfi(const vector<SgStatement*>& stmts) 
+   {
+     SgBasicBlock* result = buildBasicBlock_nfi();
+     appendStatementList(stmts, result);
+
+#if 0
+     printf ("In buildBasicBlock_nfi(const vector<SgStatement*>& stmts): returning result = %p \n",result);
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return result;
+   }
 
 SgGotoStatement * 
 SageBuilder::buildGotoStatement(SgLabelStatement *  label)

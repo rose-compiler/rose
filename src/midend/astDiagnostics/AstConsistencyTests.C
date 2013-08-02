@@ -2960,6 +2960,9 @@ TestAstSymbolTables::visit ( SgNode* node )
             // if (declarationStatement != NULL)
                if (declarationStatement != NULL && isSgLabelSymbol(symbol) == NULL)
                   {
+                 // DQ (7/25/2013): Tristan reports that this assertion is false for test2001_06.C.
+                 // ROSE_ASSERT(declarationStatement->get_firstNondefiningDeclaration() == declarationStatement);
+
                     SgSymbol* local_symbol = declarationStatement->get_symbol_from_symbol_table();
 #if 0
                     if (local_symbol == NULL)
