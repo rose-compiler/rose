@@ -254,33 +254,7 @@ void ExprWalker::visit(SgMinusMinusOp* sgn)
   uduvi.copyUseToDef();
   duvi = uduvi;
 }
-void ExprWalker::visit(SgMinusOp* sgn)
-{
-  // its only used
-  DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(sgn->get_operand(), vidm, false);
-  if(!rduvi.isDefSetEmpty())
-    rduvi.copyDefToUse();
-  duvi = rduvi;
-}
 
-void ExprWalker::visit(SgUnaryAddOp *sgn)
-{
-  // its only used
-  DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(sgn->get_operand(), vidm, false);
-  if(!rduvi.isDefSetEmpty())
-    rduvi.copyDefToUse();
-  duvi = rduvi;
-}
-
-void ExprWalker::visit(SgNotOp* sgn)
-{
-  // its only used
-  DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(sgn->get_operand(), vidm, false);
-  if(!rduvi.isDefSetEmpty())
-    rduvi.copyDefToUse();
-  duvi = rduvi;
-}
-  
 void ExprWalker::visit(SgPlusPlusOp* sgn)
 {
   DefUseVarsInfo uduvi = getDefUseVarsInfo_rec(sgn->get_operand(), vidm, false);
@@ -289,6 +263,34 @@ void ExprWalker::visit(SgPlusPlusOp* sgn)
   duvi = uduvi;
 }
 
+void ExprWalker::visitSgUnaryOpNoMod(SgUnaryOp* sgn)
+{
+   // its only used
+  DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(sgn->get_operand(), vidm, false);
+  if(!rduvi.isDefSetEmpty())
+    rduvi.copyDefToUse();
+  duvi = rduvi;
+}
+void ExprWalker::visit(SgMinusOp* sgn)
+{
+  visitSgUnaryOpNoMod(sgn);
+}
+
+void ExprWalker::visit(SgUnaryAddOp *sgn)
+{
+  visitSgUnaryOpNoMod(sgn);
+}
+
+void ExprWalker::visit(SgNotOp* sgn)
+{
+  visitSgUnaryOpNoMod(sgn);
+}
+
+void ExprWalker::visit(SgBitComplementOp* sgn)
+{
+  visitSgUnaryOpNoMod(sgn);
+}
+ 
 void ExprWalker::visit(SgSizeOfOp* sgn)
 {
   DefUseVarsInfo rduvi;
@@ -430,6 +432,15 @@ void ExprWalker::visit(SgAssignInitializer *sgn)
 void ExprWalker::visit(SgConstructorInitializer *sgn)
 {
   DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(sgn->get_args(), vidm, false);
+  if(!rduvi.isDefSetEmpty())
+    rduvi.copyDefToUse();
+  duvi = rduvi;
+}
+
+void ExprWalker::visit(SgAggregateInitializer* sgn)
+{
+  SgExprListExp* initializers = sgn->get_initializers();
+  DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(initializers, vidm, false);
   if(!rduvi.isDefSetEmpty())
     rduvi.copyDefToUse();
   duvi = rduvi;

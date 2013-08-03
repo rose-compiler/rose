@@ -142,6 +142,7 @@ public:
   void visit(SgNotOp* sgn);
   void visit(SgPlusPlusOp* sgn);
   void visit(SgSizeOfOp* sgn);
+  void visit(SgBitComplementOp* sgn);
 
   void visit(SgFunctionCallExp* sgn);
   void visit(SgExprListExp* sgn);
@@ -160,12 +161,17 @@ public:
   void visit(SgInitializedName* sgn);
   void visit(SgAssignInitializer* sgn);
   void visit(SgConstructorInitializer* sgn);
+  void visit(SgAggregateInitializer* sgn);
 
   void visit(SgValueExp* sgn);
   void visit(SgFunctionRefExp* sgn);
   void visit(SgMemberFunctionRefExp* sgn);
 
   void visit(SgExpression* sgn);
+
+  // helper methods
+  void visitSgUnaryOpNoMod(SgUnaryOp* sgn);
+
 
   DefUseVarsInfo getDefUseVarsInfo();
 };
