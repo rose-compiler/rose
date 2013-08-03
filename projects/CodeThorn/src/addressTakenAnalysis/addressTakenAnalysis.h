@@ -14,6 +14,8 @@
 #include <set>
 #include "VariableIdUtils.h"
 
+using namespace CodeThorn;
+
 // AST Query Processor
 // common functor to process any query and build match result
 
@@ -39,7 +41,7 @@ public:
  *************************************************/
 class ComputeAddressTakenInfo
 {
-  CodeThorn::VariableIdMapping& vidm;
+  VariableIdMapping& vidm;
   // result to be computed by this analysis
   VariableIdSet addressTakenSet;
 
@@ -70,7 +72,7 @@ class ComputeAddressTakenInfo
     void visit(SgNode* sgn);    
   };
 public:
-  ComputeAddressTakenInfo(CodeThorn::VariableIdMapping& _vidm) : vidm(_vidm) {}
+  ComputeAddressTakenInfo(VariableIdMapping& _vidm) : vidm(_vidm) {}
   void throwIfUnInitException();
   void computeAddressTakenSet(SgNode* root);
   void printAddressTakenSet();
@@ -82,7 +84,7 @@ public:
  *************************************************/
 class CollectTypeInfo
 {
-  CodeThorn::VariableIdMapping& vidm;
+  VariableIdMapping& vidm;
   std::list<SgVarRefExp*> usedVarsInProgram;
   VariableIdSet pointerTypeSet;
   VariableIdSet arrayTypeSet;
@@ -90,8 +92,8 @@ class CollectTypeInfo
   bool initialized;
 
 public:
-  CollectTypeInfo(CodeThorn::VariableIdMapping& _vidm) : vidm(_vidm) { }
-  CollectTypeInfo(CodeThorn::VariableIdMapping& _vidm,
+  CollectTypeInfo(VariableIdMapping& _vidm) : vidm(_vidm) { }
+  CollectTypeInfo(VariableIdMapping& _vidm,
                   std::list<SgVarRefExp*> _usedVarsInProgram) 
     : vidm(_vidm),
     usedVarsInProgram(_usedVarsInProgram) { }
@@ -112,12 +114,12 @@ public:
 class FlowInsensitivePointerInfo
 {
   SgNode* root;
-  CodeThorn::VariableIdMapping& vidm;
+  VariableIdMapping& vidm;
   ComputeAddressTakenInfo compAddrTakenInfo;
   CollectTypeInfo collTypeInfo;
 
 public:
-  FlowInsensitivePointerInfo(SgProject* project, CodeThorn::VariableIdMapping& _vidm) : root(project), 
+  FlowInsensitivePointerInfo(SgProject* project, VariableIdMapping& _vidm) : root(project), 
     vidm(_vidm),
     compAddrTakenInfo(_vidm),
     collTypeInfo(_vidm)
@@ -125,7 +127,7 @@ public:
   }
 
   FlowInsensitivePointerInfo(SgProject* project, 
-                             CodeThorn::VariableIdMapping& _vidm, 
+                             VariableIdMapping& _vidm, 
                              std::list<SgVarRefExp*> usedVarsInProgram) : root(project),
     vidm(_vidm),
     compAddrTakenInfo(_vidm),
@@ -135,7 +137,7 @@ public:
   void collectInfo();
   void printInfoSets();
   VariableIdSet getMemModByPointer();
-  CodeThorn::VariableIdMapping& getVariableIdMapping();
+  VariableIdMapping& getVariableIdMapping();
 };
 
 #endif

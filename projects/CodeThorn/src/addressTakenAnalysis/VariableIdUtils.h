@@ -10,10 +10,7 @@
 #include "VariableIdMapping.h"
 #include <set>
 
-// NOTE: should change across other files
-// if we change the underlying set container
-// defined in VariableIdMapping
-typedef CodeThorn::VariableIdMapping::VariableIdSet VariableIdSet;
+using namespace CodeThorn;
 
 // some utility functions for sets of VariableId
 // 
