@@ -383,20 +383,28 @@ SageInterface::isPrototypeInScope ( SgScopeStatement* scope, SgFunctionDeclarati
 
 bool
 SageInterface::isAncestor (SgNode* node1, SgNode* node2)
-{
-  ROSE_ASSERT(node1&&node2);
-  SgNode* curnode= node2;
-  if (node1==node2)
-    return false;
-  do {
-      curnode= curnode->get_parent();
-  } while( (curnode!=NULL)&&(curnode!=node1));
+   {
+     ROSE_ASSERT(node1 && node2);
 
-  if (curnode==node1)
-   return true;
-  else
-    return false;
-}
+     SgNode* curnode = node2;
+     if (node1==node2)
+        {
+         return false;
+        }
+
+     do {
+          curnode= curnode->get_parent();
+        } while( (curnode!=NULL)&&(curnode!=node1));
+
+     if (curnode==node1)
+        {
+          return true;
+        }
+       else
+        {
+          return false;
+        }
+   }
 
 std::vector<SgNode*>
 SageInterface::astIntersection ( SgNode* original, SgNode* copy, SgCopyHelp* help )
@@ -11482,6 +11490,30 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfFor(SgForStatement* fs)
   return isSgBasicBlock(b);
 }
 
+SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfCaseOption(SgCaseOptionStmt* cs)
+{
+  SgStatement* b = cs->get_body();
+  if (!isSgBasicBlock(b)) {
+    b = SageBuilder::buildBasicBlock(b);
+    cs->set_body(b);
+    b->set_parent(cs);
+  }
+  ROSE_ASSERT (isSgBasicBlock(b));
+  return isSgBasicBlock(b);
+}
+
+SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfDefaultOption(SgDefaultOptionStmt * cs)
+{
+  SgStatement* b = cs->get_body();
+  if (!isSgBasicBlock(b)) {
+    b = SageBuilder::buildBasicBlock(b);
+    cs->set_body(b);
+    b->set_parent(cs);
+  }
+  ROSE_ASSERT (isSgBasicBlock(b));
+  return isSgBasicBlock(b);
+}
+
 SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfUpcForAll(SgUpcForAllStatement* fs)
 {
   ROSE_ASSERT (fs != NULL);
@@ -11607,6 +11639,18 @@ bool SageInterface::isBodyStatement (SgStatement* s)
           rt = true;
         break;
       }
+    case V_SgCaseOptionStmt:
+      {
+          if (isSgCaseOptionStmt(p)->get_body() == s)
+              rt = true;
+          break;
+      }
+    case V_SgDefaultOptionStmt:
+      {
+          if (isSgDefaultOptionStmt(p)->get_body() == s)
+              rt = true;
+          break;
+      }
     case V_SgCatchOptionStmt:
       {
         if (isSgCatchOptionStmt(p)->get_body() == s)
@@ -11680,6 +11724,18 @@ SgBasicBlock * SageInterface::makeSingleStatementBodyToBlock(SgStatement* single
           rt = ensureBasicBlockAsBodyOfSwitch(isSgSwitchStatement(p));
         break;
       }
+    case V_SgCaseOptionStmt:
+      {
+          if (isSgCaseOptionStmt(p)->get_body() == s)
+            rt = ensureBasicBlockAsBodyOfCaseOption(isSgCaseOptionStmt(p));
+          break;
+      }
+    case V_SgDefaultOptionStmt:
+      {
+          if (isSgDefaultOptionStmt(p)->get_body() == s)
+            rt = ensureBasicBlockAsBodyOfDefaultOption(isSgDefaultOptionStmt(p));
+          break;
+      }          
     case V_SgCatchOptionStmt:
       {
         if (isSgCatchOptionStmt(p)->get_body() == s)
