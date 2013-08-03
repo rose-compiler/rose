@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
   // collect all the variables that are used in functions in
   // the code we are analyzing
   // collect type information only about these variables
-  std::list<SgVarRefExp*> usedVarsInProgram = SgNodeHelper::listOfUsedVarsInFunctions(project);
+  VariableIdSet usedVarsInProgram = AstVariableIdInterface::usedVariablesInsideFunctions(project, &vidm);
 
   FlowInsensitivePointerInfo fipi(project, vidm, usedVarsInProgram);
   fipi.collectInfo();

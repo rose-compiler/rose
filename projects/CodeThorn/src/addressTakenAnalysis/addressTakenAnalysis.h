@@ -13,6 +13,7 @@
 #include "Miscellaneous.h"
 #include <set>
 #include "VariableIdUtils.h"
+#include "AstVariableIdInterface.h"
 
 using namespace CodeThorn;
 
@@ -85,18 +86,20 @@ public:
 class CollectTypeInfo
 {
   VariableIdMapping& vidm;
-  std::list<SgVarRefExp*> usedVarsInProgram;
   VariableIdSet pointerTypeSet;
   VariableIdSet arrayTypeSet;
   VariableIdSet referenceTypeSet;
   bool initialized;
 
+  // collect type info for only these if set by constructor
+  VariableIdSet varsUsed;
+
 public:
   CollectTypeInfo(VariableIdMapping& _vidm) : vidm(_vidm) { }
   CollectTypeInfo(VariableIdMapping& _vidm,
-                  std::list<SgVarRefExp*> _usedVarsInProgram) 
+                  VariableIdSet _usedVarsInFunctions) 
     : vidm(_vidm),
-    usedVarsInProgram(_usedVarsInProgram) { }
+    varsUsed(_usedVarsInFunctions) { }
 
   void collectTypes();
   void printPointerTypeSet();
@@ -128,7 +131,7 @@ public:
 
   FlowInsensitivePointerInfo(SgProject* project, 
                              VariableIdMapping& _vidm, 
-                             std::list<SgVarRefExp*> usedVarsInProgram) : root(project),
+                             VariableIdSet usedVarsInProgram) : root(project),
     vidm(_vidm),
     compAddrTakenInfo(_vidm),
     collTypeInfo(_vidm, usedVarsInProgram)
