@@ -34,10 +34,12 @@ string createDir(string workDir, string dirName) {
 string copyDir(string workDir, string dirName) {
   ostringstream fullDirName; fullDirName << workDir << "/" << dirName;
   
-  ostringstream cmd; cmd << "cp -fr "<<ROSE_SOURCE_TREE_PATH<<"/src/midend/programAnalysis/genericDataflow/dbglog/"<<dirName<<" "<<workDir;
+  ostringstream cmd; 
+  cmd << "cp -fr "<<ROSE_SOURCE_TREE_PATH<<"/projects/fuse/src/dbglog/"<<dirName<<" "<<workDir;
+  // cmd << "cp -fr "<<ROSE_SOURCE_TREE_PATH<<"/src/midend/programAnalysis/genericDataflow/dbglog/"<<dirName<<" "<<workDir;
   //cout << "Command \""<<cmd.str()<<"\"\n";
   int ret = system(cmd.str().c_str());
-  if(ret == -1) { cout << "ERROR copying files from directory \""<<ROSE_SOURCE_TREE_PATH<<"/src/midend/programAnalysis/genericDataflow/dbglog/"<<dirName<<"\" directory \""<<fullDirName.str()<<"\"!"; exit(-1); }
+  if(ret == -1) { cout << "ERROR copying files from directory \""<<ROSE_SOURCE_TREE_PATH<<"/projects/fuse/src/dbglog/"<<dirName<<"\" directory \""<<fullDirName.str()<<"\"!"; exit(-1); }
     
   return fullDirName.str();
 }
@@ -760,7 +762,13 @@ void dbgStream::widgetScriptCommand(std::string command) {
 void dbgStream::includeFile(std::string path) {
   // If we have not yet included this file, do so now
   if(includedFiles.find(path) == includedFiles.end()) {
-    ostringstream cmd; cmd << "cp -fr "<<ROSE_SOURCE_TREE_PATH<<"/src/midend/programAnalysis/genericDataflow/dbglog/widgets/"<<path<<" "<<workDir<<"/html/widgets/"<<path;
+    ostringstream cmd; 
+    cmd << "cp -fr "<<ROSE_SOURCE_TREE_PATH<<
+      "/projects/fuse/src/dbglog/widgets/"
+        <<path<<" "<<workDir<<"/html/widgets/"<<path;
+    // cmd << "cp -fr "<<ROSE_SOURCE_TREE_PATH<<
+    //   "/src/midend/programAnalysis/genericDataflow/dbglog/widgets/"
+    //     <<path<<" "<<workDir<<"/html/widgets/"<<path;
     system(cmd.str().c_str());
   }
 }
