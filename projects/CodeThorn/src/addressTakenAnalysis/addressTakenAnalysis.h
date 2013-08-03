@@ -83,6 +83,7 @@ public:
 class CollectTypeInfo
 {
   CodeThorn::VariableIdMapping& vidm;
+  std::list<SgVarRefExp*> usedVarsInProgram;
   VariableIdSet pointerTypeSet;
   VariableIdSet arrayTypeSet;
   VariableIdSet referenceTypeSet;
@@ -90,6 +91,11 @@ class CollectTypeInfo
 
 public:
   CollectTypeInfo(CodeThorn::VariableIdMapping& _vidm) : vidm(_vidm) { }
+  CollectTypeInfo(CodeThorn::VariableIdMapping& _vidm,
+                  std::list<SgVarRefExp*> _usedVarsInProgram) 
+    : vidm(_vidm),
+    usedVarsInProgram(_usedVarsInProgram) { }
+
   void collectTypes();
   void printPointerTypeSet();
   void printArrayTypeSet();
@@ -117,6 +123,15 @@ public:
     collTypeInfo(_vidm)
   { 
   }
+
+  FlowInsensitivePointerInfo(SgProject* project, 
+                             CodeThorn::VariableIdMapping& _vidm, 
+                             std::list<SgVarRefExp*> usedVarsInProgram) : root(project),
+    vidm(_vidm),
+    compAddrTakenInfo(_vidm),
+    collTypeInfo(_vidm, usedVarsInProgram)
+    {
+    }
   void collectInfo();
   void printInfoSets();
   VariableIdSet getMemModByPointer();

@@ -229,7 +229,19 @@ VariableIdSet CollectTypeInfo::getReferenceTypeSet()
 void CollectTypeInfo::collectTypes()
 {
   throwIfUnInitException();
-  VariableIdSet set = vidm.getVariableIdSet();
+  VariableIdSet set;
+  if(usedVarsInProgram.size() > 0) {
+    for(std::list<SgVarRefExp*>::iterator it = usedVarsInProgram.begin();
+        it != usedVarsInProgram.end();
+        ++it)
+    {
+      set.insert(vidm.variableId(*it));
+    }
+  }
+  else {
+    set = vidm.getVariableIdSet();
+  }
+
   for(VariableIdSet::iterator it = set.begin(); it != set.end(); ++it)
   {
     SgSymbol* v_symbol = vidm.getSymbol(*it);

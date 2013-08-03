@@ -15,23 +15,43 @@ using namespace CodeThorn;
 class TestDefUseVarsInfoTraversal : public AstSimpleProcessing
 {
   VariableIdMapping& vidm;
+  long flagRaisedDefSet;
+  long flagRaisedUseSet;
+  long n_expr;
 public:
   TestDefUseVarsInfoTraversal(VariableIdMapping& _vidm) 
-    : vidm(_vidm)  { }
+  : vidm(_vidm), flagRaisedDefSet(0), flagRaisedUseSet(0), n_expr(0) { }
   void visit(SgNode*);
+  void atTraversalEnd();
 };
 
 void TestDefUseVarsInfoTraversal::visit(SgNode* sgn)
 {
   if(isSgExpression(sgn) || isSgInitializedName(sgn))
   {
+    n_expr++;
     DefUseVarsInfo memobj = getDefUseVarsInfo(sgn, vidm);
-    if(!memobj.isDefSetEmpty() || !memobj.isUseSetEmpty() || !memobj.isFunctionCallExpSetEmpty())
-    {
-      std::cout << "<" << sgn->class_name() << ", " << sgn->unparseToString() << "\n" 
-                << memobj.str(vidm) << ">\n";
+    if(memobj.isDefSetModByPointer()) {
+      // std::cout << "def_set flag raised\n";
+      ++flagRaisedDefSet;
     }
+    if(memobj.isUseSetModByPointer()) {
+      // std::cout << "use_set flag raised\n";
+      ++flagRaisedUseSet;
+    }
+    // if(!memobj.isDefSetEmpty() || !memobj.isUseSetEmpty() || !memobj.isFunctionCallExpSetEmpty())
+    // {
+    //   std::cout << "<" << sgn->class_name() << ", " << sgn->unparseToString() << "\n" 
+    //             << memobj.str(vidm) << ">\n";
+    // }
   }
+}
+
+void TestDefUseVarsInfoTraversal::atTraversalEnd()
+{
+  std::cout << "DefSetModByPtr: " << flagRaisedDefSet << "\n";
+  std::cout << "UseSetModByPtr: " << flagRaisedUseSet << "\n";
+  std::cout << "n_expr: " << n_expr << "\n";
 }
 
 
@@ -50,13 +70,18 @@ int main(int argc, char* argv[])
   VariableIdMapping vidm;
   vidm.computeVariableSymbolMapping(project);
 
-  FlowInsensitivePointerInfo fipi(project, vidm);
+  // collect all the variables that are used in functions in
+  // the code we are analyzing
+  // collect type information only about these variables
+  std::list<SgVarRefExp*> usedVarsInProgram = SgNodeHelper::listOfUsedVarsInFunctions(project);
+
+  FlowInsensitivePointerInfo fipi(project, vidm, usedVarsInProgram);
   fipi.collectInfo();
   fipi.printInfoSets();
 
   TestDefUseVarsInfoTraversal tt(vidm);
   // change to traverse for entire project
-  tt.traverseInputFiles(project, preorder);
+  tt.traverse(project, preorder);
 
   return 0;
 }
