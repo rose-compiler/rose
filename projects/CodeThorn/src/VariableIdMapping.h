@@ -91,6 +91,8 @@ class VariableIdMapping {
   map<SgSymbol*,size_t> mappingSymToVarId;
 }; // end of class VariableIdMapping
 
+ typedef VariableIdMapping::VariableIdSet VariableIdSet;
+
 class VariableId {
   friend class VariableIdMapping;
   friend bool operator<(VariableId id1, VariableId id2);
