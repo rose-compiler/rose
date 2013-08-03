@@ -84,7 +84,8 @@ include_HEADERS =\
 
 FUSE_TESTS_DIR = $(top_srcdir)/projects/fuse/src/tests
 
-FUSE_TESTS = \
+# for .C files
+FUSE_C_TESTS = \
 	$(FUSE_TESTS_DIR)/compositionalTestInput1.C \
 	$(FUSE_TESTS_DIR)/compositionalTestInput1b.C \
 	$(FUSE_TESTS_DIR)/compositionalTestInput2.C \
@@ -95,16 +96,23 @@ FUSE_TESTS = \
 	$(FUSE_TESTS_DIR)/compositionalTestInput6.C \
 	$(FUSE_TESTS_DIR)/compositionalTestInput7.C \
 	$(FUSE_TESTS_DIR)/compositionalTestInput.jisheng.C \
-	$(FUSE_TESTS_DIR)/cp_test1.C \
+	$(FUSE_TESTS_DIR)/cp_test1.C 
+
+# for .cpp files
+FUSE_CPP_TESTS = \
 	$(FUSE_TESTS_DIR)/simplePtrTest.cpp \
-	$(FUSE_TESTS_DIR)/sas13FigExample.cpp
+	$(FUSE_TESTS_DIR)/sas13Fig1Example.cpp
 
-FUSE_CHECKS = ${FUSE_TESTS:.C=.C-o}
+FUSE_C_CHECKS = ${FUSE_C_TESTS:.C=.C-o}
+FUSE_CPP_CHECKS = ${FUSE_CPP_TESTS:.cpp=.cpp-o}
 
-$(FUSE_CHECKS): fuse $(FUSE_TESTS_DIR)/$(@:.C=.C-o)
+$(FUSE_C_CHECKS): fuse $(FUSE_TESTS_DIR)/$(@:.C=.C-o)
 	./fuse -c --edg:no_warnings $(@:.C-o=.C)
 
-check-local: $(FUSE_CHECKS)
+$(FUSE_CPP_CHECKS):fuse $(FUSE_TESTS_DIR)/$(@:.cpp=.cpp-o)
+	./fuse -c --edg:no_warnings $(@:.cpp-o=.cpp)
+
+check-local: $(FUSE_C_CHECKS) $(FUSE_CPP_CHECKS)
 
 clean-local:
 	rm -rf *.dot *.png dbg/
