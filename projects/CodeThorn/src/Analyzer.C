@@ -11,6 +11,7 @@
 #include <fstream>
 #include <unistd.h>
 #include "Miscellaneous.h"
+#include "AstVariableIdInterface.h"
 
 using namespace CodeThorn;
 
@@ -200,7 +201,7 @@ void Analyzer::runSolver1() {
       printStatusMessage(true);
       prevStateSetSize=estateSet.size();
     }
-#pragma omp parallel for private(threadNum),shared(workVector)
+#pragma omp parallel for private(threadNum) shared(workVector)
     for(int j=0;j<workers;++j) {
       threadNum=omp_get_thread_num();
       const EState* currentEStatePtr=workVector[j];
@@ -1040,13 +1041,9 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
     cout << "STATUS: Number of global variables: ";
     list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
     cout << globalVars.size()<<endl;
-    
-    list<SgVarRefExp*> varRefExpList=SgNodeHelper::listOfUsedVarsInFunctions(project);
-    // compute set of varIds (it is a set because we want multiple uses of the same var to be represented by one id)
-    VariableIdMapping::VariableIdSet setOfUsedVars;
-    for(list<SgVarRefExp*>::iterator i=varRefExpList.begin();i!=varRefExpList.end();++i) {
-      setOfUsedVars.insert(variableIdMapping.variableId(*i));
-    }
+
+	VariableIdSet setOfUsedVars=AstVariableIdInterface::usedVariablesInsideFunctions(project,&variableIdMapping);
+
     cout << "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
 
     int filteredVars=0;

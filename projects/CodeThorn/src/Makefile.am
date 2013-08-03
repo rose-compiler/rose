@@ -75,7 +75,9 @@ codethorn_SOURCES = \
   codethorn.C                      \
   codethorn.h                      \
   WorkListSeq.h                    \
-  DFAnalyzer.h
+  DFAnalyzer.h                     \
+  AstVariableIdInterface.h         \
+  AstVariableIdInterface.C         
 
 # used only in specialized analyzer
 faketarget:
