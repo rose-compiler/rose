@@ -26,6 +26,19 @@
 namespace po = boost::program_options;
 using namespace CodeThorn;
 
+void CodeThornLanguageRestrictor::initialize() {
+  LanguageRestrictorCppSubset1::initialize();
+  // RERS 2013 (required for some system headers)
+  setAstNodeVariant(V_SgBitOrOp, true);
+  setAstNodeVariant(V_SgBitAndOp, true);
+  setAstNodeVariant(V_SgBitComplementOp, true);
+  setAstNodeVariant(V_SgRshiftOp, true);
+  setAstNodeVariant(V_SgLshiftOp, true);
+  setAstNodeVariant(V_SgAggregateInitializer, true);
+
+}
+
+
 class TermRepresentation : public AnalysisResultAttribute {
 public:
   TermRepresentation(SgNode* node) : _node(node) {}
