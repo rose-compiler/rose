@@ -73,6 +73,7 @@ ADDRESSTAKENANALYSIS_TESTS_FAILING = \
 	$(srcdir)/tests/test27.cpp \
 	$(srcdir)/tests/test28.cpp \
 	$(srcdir)/tests/test29.cpp \
+	$(srcdir)/tests/test30.cpp \
 	$(srcdir)/tests/arrow_test.cpp
 
 ADDRESSTAKENANALYSIS_CHECKS = ${ADDRESSTAKENANALYSIS_TESTS:.cpp=.cpp-o}
