@@ -233,20 +233,6 @@ void ExprWalker::visit(SgCompoundAssignOp* sgn)
   duvi = lduvi + rduvi;
 }
 
-void ExprWalker::visit(SgCastExp* sgn)
-{
-  SgNode* operand = sgn->get_operand();
-  DefUseVarsInfo opduvi = getDefUseVarsInfo_rec(operand, vidm, false);
-  duvi = opduvi;
-}
-
-void ExprWalker::visit(SgAddressOfOp* sgn)
-{
-  SgNode* operand = sgn->get_operand();
-  DefUseVarsInfo opduvi = getDefUseVarsInfo_rec(operand, vidm, false);
-  duvi = opduvi;
-}
-
 void ExprWalker::visit(SgMinusMinusOp* sgn)
 {
   DefUseVarsInfo uduvi = getDefUseVarsInfo_rec(sgn->get_operand(), vidm, false);
@@ -271,6 +257,18 @@ void ExprWalker::visitSgUnaryOpNoMod(SgUnaryOp* sgn)
     rduvi.copyDefToUse();
   duvi = rduvi;
 }
+
+void ExprWalker::visit(SgCastExp* sgn)
+{
+  // cast has modifying semantics?
+  visitSgUnaryOpNoMod(sgn);
+}
+
+void ExprWalker::visit(SgAddressOfOp* sgn)
+{
+  visitSgUnaryOpNoMod(sgn);
+}
+
 void ExprWalker::visit(SgMinusOp* sgn)
 {
   visitSgUnaryOpNoMod(sgn);
@@ -589,33 +587,46 @@ void LvalueExprWalker::visit(SgPntrArrRefExp* sgn)
   SgNode* lhs_addr = sgn->get_lhs_operand();
   SgNode* rhs_expr = sgn->get_rhs_operand();
   DefUseVarsInfo lduvi, rduvi;
-  if(isModExpr)
-  { 
+  if(isModExpr) { 
     // consider moving this to ExprWalker instead
     // prune out the sub-tree that is difficult to handle
-    if(isSgPntrArrRefExp(lhs_addr) || // for multi-dimensional pointers
-       isSgVarRefExp(lhs_addr))       // for array type its variable reference exp
-    {
-      // we can handle these
+    
+    if(isSgVarRefExp(lhs_addr)) { // for array type
+      SgType* lhs_type_info = isSgVarRefExp(lhs_addr)->get_type();
+      
+      // if p is pointer type p[expr] could
+      // be on the heap - raise the flag (unknown location)
+      if(isSgPointerType(lhs_type_info)) {        
+        lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, false);
+        VarsInfo& def_vars_info = lduvi.getDefVarsInfoMod();
+        def_vars_info.second = true;
+      }
+      else {
+        // lhs_address is of array type
+        // recurse and collect the info
+        lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, true);
+      }
+    }
+    else if(isSgPntrArrRefExp(lhs_addr)) { // for multi-dimensional pointers
       lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, true);
     }
-    else 
-    { 
+    else { 
       // otherwise some crazy arithmetic is going on to determine
       // the address of the array
+      // raise the flag
+      lduvi.getDefVarsInfoMod().second = true;
       lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, false);
       // copy side-effects and set the flag
       if(!lduvi.isDefSetEmpty())
-        lduvi.copyDefToUse();
-      
-      lduvi.getDefVarsInfoMod().second = true;
+        lduvi.copyDefToUse();      
     }
-    
-  }
-  else
-  {
+  } // end if(isModExpr)
+  else { // array is on the rhs
     lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, false); 
+    if(!lduvi.isDefSetEmpty())
+      lduvi.copyDefToUse();
   }
+  // rhs_op of the array is always used
   rduvi = getDefUseVarsInfo_rec(rhs_expr, vidm, false);
   // if we have side-effects copy them over
   if(!rduvi.isDefSetEmpty())
