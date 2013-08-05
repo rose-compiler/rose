@@ -3744,6 +3744,10 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 int
 SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLine )
    {
+     if (this -> get_package() != NULL) { // Has this file been processed already? If so, ignore it.
+        return 0;
+     }
+
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
   // This is how we pass the pointer to the SgFile created in ROSE before the Open
   // Fortran Parser is called to the Open Fortran Parser.  In the case of C/C++ using
@@ -3869,10 +3873,13 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
              {
                printf ("Syntax errors detected in input java program ... status = %d \n",returnValueForSyntaxCheckUsingBackendCompiler);
 
-            // We should define some convention for error codes returned by ROSE
-               throw std::exception();
+// TODO: Remove this!  PC 07/03/2013
+//            // We should define some convention for error codes returned by ROSE
+//               throw std::exception();
+                 return returnValueForSyntaxCheckUsingBackendCompiler;
              }
-          ROSE_ASSERT(returnValueForSyntaxCheckUsingBackendCompiler == 0);
+// TODO: Remove this!  PC 07/03/2013
+//          ROSE_ASSERT(returnValueForSyntaxCheckUsingBackendCompiler == 0);
 
           if ( get_verbose() > 2 )
              {
@@ -4451,7 +4458,10 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                   {
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
                     frontendErrorLevel = build_Java_AST(argv,inputCommandLine);
-                    frontend_failed = (frontendErrorLevel > 0);
+// TODO: Remove this!  PC 07/03/2013
+//                    frontend_failed = (frontendErrorLevel > 0);
+                    this -> set_frontendErrorCode(frontendErrorLevel);
+                    frontendErrorLevel = 0; // PC: Always keep going for Java!
 #else
                     ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Java] "
                                    "ROSE was not configured to support the Java frontend.");
@@ -4645,7 +4655,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   {
                   // nothing to do...
                   }
-                 else
+               else if ((! get_Java_only()) || this -> get_frontendErrorCode() == 0)
                   {
                  // DQ (7/14/2013): This is the branch taken when processing the -H option (which outputs the 
                  // header file list, and is required to be supported in ROSE as part of some application 
@@ -4697,7 +4707,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
         }
 #endif
 
-     ROSE_ASSERT (get_unparse_output_filename().empty() == false);
+     ROSE_ASSERT (get_unparse_output_filename().empty() == false); // TODO: may need to add condition:  "&& (! get_Java_only())"  here
 
   // Now call the compiler that rose is replacing
   // if (get_useBackendOnly() == false)
@@ -4800,7 +4810,45 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                        }
                   }
              }
-        }
+          //
+          // If we are processing Java, ...
+          //
+          if (get_Java_only() == true)
+             {
+              //
+              // Report if an error detected only while compilng the output file?
+              //
+              if (this -> get_frontendErrorCode()                == 0 &&
+                  this -> get_project() -> get_midendErrorCode() == 0 &&
+                  this -> get_unparserErrorCode()                == 0 &&
+                  this -> get_backendCompilerErrorCode()         != 0) {
+                  cout << "ERROR found in output file: "
+                       << get_unparse_output_filename()
+                       << endl;
+              }
+
+              //
+              // Report Error or Success of this translation.
+              //
+              if (this -> get_frontendErrorCode()                != 0 ||
+                  this -> get_project() -> get_midendErrorCode() != 0 ||
+                  this -> get_unparserErrorCode()                != 0 ||
+                  this -> get_backendCompilerErrorCode()         != 0)
+                 {
+                  cout << "ERROR compiling "
+                       << this -> getFileName()
+                       << endl;
+                  cout.flush();
+                 }
+              else
+                 {
+                  cout << "SUCCESS compiling "
+                       << this -> getFileName()
+                       << endl;
+                  cout.flush();
+                 }
+             }
+          }
        else
         {
           if ( get_verbose() > 1 )
