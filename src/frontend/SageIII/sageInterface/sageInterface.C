@@ -383,20 +383,28 @@ SageInterface::isPrototypeInScope ( SgScopeStatement* scope, SgFunctionDeclarati
 
 bool
 SageInterface::isAncestor (SgNode* node1, SgNode* node2)
-{
-  ROSE_ASSERT(node1&&node2);
-  SgNode* curnode= node2;
-  if (node1==node2)
-    return false;
-  do {
-      curnode= curnode->get_parent();
-  } while( (curnode!=NULL)&&(curnode!=node1));
+   {
+     ROSE_ASSERT(node1 && node2);
 
-  if (curnode==node1)
-   return true;
-  else
-    return false;
-}
+     SgNode* curnode = node2;
+     if (node1==node2)
+        {
+         return false;
+        }
+
+     do {
+          curnode= curnode->get_parent();
+        } while( (curnode!=NULL)&&(curnode!=node1));
+
+     if (curnode==node1)
+        {
+          return true;
+        }
+       else
+        {
+          return false;
+        }
+   }
 
 std::vector<SgNode*>
 SageInterface::astIntersection ( SgNode* original, SgNode* copy, SgCopyHelp* help )
@@ -5381,7 +5389,8 @@ SageInterface::setSourcePositionForTransformation(SgNode *root)
   // DQ (5/2/2012): This is a test to replace the support we have to mark every thing as a transformation with the new mechanism using source position modes.
   // setSourcePosition(root);
   // Liao 11/21/2012. This function should only be called when the mode is transformation
-     ROSE_ASSERT(SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionTransformation);
+  // Liao 8/2/2013. It can actually be called inside frontend by OmpSupport::lower_omp().
+     //ROSE_ASSERT(SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionTransformation);
      setSourcePositionAtRootAndAllChildren(root);
 #else
      Rose_STL_Container <SgNode*> nodeList = NodeQuery::querySubTree(root,V_SgNode);
@@ -7622,10 +7631,11 @@ bool SageInterface::doLoopNormalization(SgFortranDo* loop)
   SgExpression* e_3 = loop->get_increment();
   if (isSgNullExpression(e_3))
   {
-    loop->set_increment(buildIntVal(1));
+    SgIntVal* iv = buildIntVal(1);
+    loop->set_increment(iv);
+    iv->set_parent(loop);
     delete (e_3);
   }
-
   return true;
 }
 
