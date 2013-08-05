@@ -2,6 +2,7 @@
 
 #include "addressTakenAnalysis.h"
 #include "defUseQuery.h"
+#include "Timer.h"
 
 
 /*************************************************************
@@ -66,6 +67,10 @@ int main(int argc, char* argv[])
 
   RoseAst ast(root);
 
+  Timer timer;
+
+  timer.start();
+
   // compute variableId mappings
   VariableIdMapping vidm;
   vidm.computeVariableSymbolMapping(project);
@@ -79,9 +84,19 @@ int main(int argc, char* argv[])
   fipi.collectInfo();
   fipi.printInfoSets();
 
+  timer.stop();
+  double fipaMeasuredTime=timer.getElapsedTimeInMilliSec();
+
   TestDefUseVarsInfoTraversal tt(vidm);
   // change to traverse for entire project
+  timer.start();
   tt.traverse(project, preorder);
+  timer.stop();
+
+  double duMeasuredTime = timer.getElapsedTimeInMilliSec();
+
+  std::cout << "fipa : " << fipaMeasuredTime << "\n";
+  std::cout << "du : " << duMeasuredTime << "\n";
 
   return 0;
 }
