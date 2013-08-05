@@ -618,6 +618,7 @@ SageBuilder::getTemplateArgumentList( SgDeclarationStatement* decl )
      switch(decl->variantT())
         {
        // I forget why we needed this case...
+          case V_SgJavaPackageDeclaration:
           case V_SgClassDeclaration:
              {
                templateArgumentsList = NULL;
@@ -699,6 +700,7 @@ SageBuilder::getTemplateParameterList( SgDeclarationStatement* decl )
         {
 #if 0
        // DQ (9/16/2012): I think it should be an error to call this function for a SgClassDeclaration.
+          case V_SgJavaPackageDeclaration:
           case V_SgClassDeclaration:
              {
                templateParameterList = NULL;

@@ -732,9 +732,14 @@ Grammar::setUpSupport ()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
-  // DQ (6/12/2013): Added Java support for reference to SgJavaPackageStatement.
-     SourceFile.setDataPrototype   ( "SgJavaPackageStatement*", "package", "= NULL",
+  // DQ (6/12/2013): Added Java support for reference to Java package, imports and type declarations.
+     SourceFile.setDataPrototype   ( "SgJavaPackageStatement *", "package", "= NULL",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
+     SourceFile.setDataPrototype   ( "SgJavaImportStatementList*", "import_list", "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
+     SourceFile.setDataPrototype   ( "SgJavaClassDeclarationList*", "class_list", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
+
 #if 0
      SourceFile.setDataPrototype   ( "SgJavaImportStatementPtrList", "import_list", "",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
