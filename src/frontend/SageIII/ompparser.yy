@@ -88,6 +88,7 @@ corresponding C type is union name defaults to YYSTYPE.
         FOR MASTER CRITICAL BARRIER ATOMIC FLUSH TARGET UPDATE
         THREADPRIVATE PRIVATE COPYPRIVATE FIRSTPRIVATE LASTPRIVATE SHARED DEFAULT NONE REDUCTION COPYIN 
         TASK TASKWAIT UNTIED COLLAPSE AUTO DECLARE DATA DEVICE MAP ALLOC IN OUT INOUT
+        SIMD SAFELEN ALIGNED LINEAR INBRANCH
         '(' ')' ',' ':' '+' '*' '-' '&' '^' '|' LOGAND LOGOR SHLEFT SHRIGHT PLUSPLUS MINUSMINUS PTR_TO '.'
         LE_OP2 GE_OP2 EQ_OP2 NE_OP2 RIGHT_ASSIGN2 LEFT_ASSIGN2 ADD_ASSIGN2
         SUB_ASSIGN2 MUL_ASSIGN2 DIV_ASSIGN2 MOD_ASSIGN2 AND_ASSIGN2 
@@ -106,6 +107,7 @@ corresponding C type is union name defaults to YYSTYPE.
               shift_expr additive_expr multiplicative_expr 
               primary_expr incr_expr unary_expr
               device_clause if_clause num_threads_clause
+              simd_clause
 
 %type <itype> schedule_kind
 
@@ -137,6 +139,7 @@ openmp_directive : parallel_directive
                  | section_directive
                  | target_directive
                  | target_data_directive
+                 | simd_directive
                  ;
 
 parallel_directive
@@ -590,6 +593,31 @@ map_clause_optseq: /* empty, default to be inout */ { ompattribute->setMapVarian
                     | INOUT  ':' { ompattribute->setMapVariant(e_map_inout); omptype = e_map_inout; } 
                     ;
 
+simd_directive: /* # pragma */ OMP SIMD
+                  { ompattribute = buildOmpAttribute(e_simd,gNode,true); 
+                    omptype = e_simd; }
+                   simd_clause_optseq
+                ;
+
+simd_clause_optseq
+                : /* empty*/
+                | simd_clause_seq
+                ;
+
+simd_clause_seq
+                : simd_clause
+                | simd_clause_seq simd_clause
+                | simd_clause_seq ',' simd_clause
+                ;
+
+simd_clause : SAFELEN {
+                        ompattribute->addClause(e_safelen);
+                        omptype = e_safelen;
+                      } '(' expression ')' {
+                        addExpression("");
+                      }
+                | data_reduction_clause
+              ;
 /* parsing real expressions here, Liao, 10/12/2008
    */       
 /* expression: { omp_parse_expr(); } EXPRESSION { if (!addExpression((const char*)$2)) YYABORT; }

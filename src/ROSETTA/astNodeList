@@ -508,6 +508,7 @@ SgOmpThreadprivateStatement
 SgOmpWorkshareStatement
 SgOmpTargetStatement
 SgOmpTargetDataStatement
+SgOmpSimdStatement
 SgOmpClause
 SgOmpCollapseClause
 SgOmpCopyinClause
@@ -528,6 +529,7 @@ SgOmpSharedClause
 SgOmpUntiedClause
 SgOmpVariablesClause
 SgOmpMapClause
+SgOmpSafelenClause
 SgOpenclAccessModeModifier
 SgOpenStatement
 SgOptions

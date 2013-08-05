@@ -146,8 +146,13 @@ namespace OmpSupport
     e_map_out,
     e_map_inout,
 
+    // experimental SIMD directive, phlin 8/5/2013
+    e_simd,
+    e_safelen,
+
     // not an OpenMP construct
     e_not_omp
+
   }; //end omp_construct_enum
 
   //-------------------------------------------------------------------
