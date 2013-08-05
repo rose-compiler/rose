@@ -462,7 +462,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                       // info.set_outputCompilerGeneratedStatements();
 
                          Unparse_Java unparser(this, file->getFileName());
-                         unparser.unparseStatement(globalScope, info);
+                         unparser.unparseJavaFile(file, info);
                        }
                       else
                        {
@@ -1712,6 +1712,8 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                outputFilename += ".s";
         }
         // DQ (4/2/2011): Added Java support which requires that the filename for Java match the input file.
+// TODO: Remove this !!!
+/*
         else if (file->get_Java_only() == true)
         {
                 // We try to get the package information back to output the translated source file
@@ -1751,6 +1753,33 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                    int status = system (mkdirCommand.c_str());
                    ROSE_ASSERT(status == 0);
                    outputFilename = outFolder + file->get_sourceFileNameWithoutPath();
+        }
+*/
+        else if (file -> get_Java_only() == true) {
+            // We try to get the package information back to output the translated source file
+            // in the correct folder structure.
+            SgSourceFile *sourcefile = isSgSourceFile(file);
+            ROSE_ASSERT(sourcefile && "Try to unparse an SgFile not being an SgSourceFile using the java unparser");
+            SgJavaPackageStatement *package_statement = sourcefile -> get_package();
+            string package_name = package_statement -> get_name().getString();
+            //NOTE: Default package equals the empty string ""
+            //ROSE_ASSERT((packageDecl != NULL) && "Couldn't find the package definition of the java source file");
+            string outFolder = "";
+            SgProject *project = sourcefile -> get_project();
+            string ds = project -> get_Java_source_destdir();
+            if (ds != "") {
+                outFolder = ds;
+                outFolder += "/";
+            }
+            outFolder += "rose-output/";
+            boost::replace_all(package_name, ".", "/");
+            outFolder += package_name;
+            outFolder += (package_name.size() > 0 ? "/" : "");
+            // Create package folder structure
+            string mkdirCommand = string("mkdir -p ") + outFolder;
+            int status = system (mkdirCommand.c_str());
+            ROSE_ASSERT(status == 0);
+            outputFilename = outFolder + file -> get_sourceFileNameWithoutPath();
         }
         // Liao 12/29/2010, generate cuda source files
         else if (file->get_Cuda_only() == true)
@@ -2096,7 +2125,7 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
   // for (int i=0; i < fileList->numberOfFiles(); ++i)
   for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
   {
-      SgFile* file = fileList->get_listOfFiles()[i];
+      SgSourceFile *file = isSgSourceFile(fileList->get_listOfFiles()[i]);
 
       if ( SgProject::get_verbose() > 1 )
            printf ("Unparsing each file... file = %p = %s \n",file,file->class_name().c_str());
@@ -2119,7 +2148,7 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
               << std::endl;
           file->set_unparserErrorCode(-1);
       }
-      else
+      else if (file -> get_frontendErrorCode() == 0)
       {
           unparseFile(file, unparseFormatHelp, unparseDelegate);
       }
