@@ -268,6 +268,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:java:ds" ||
           argument == "-rose:java:source" ||
           argument == "-rose:java:target" ||
+          argument == "-rose:java:encoding" ||
 
        // negara1 (08/16/2011)
           argument == "-rose:unparseHeaderFilesRootFolder" ||
@@ -1250,6 +1251,8 @@ SgFile::usage ( int status )
 "                             Specifies java sources version\n"
 "     -rose:java:target\n"
 "                             Specifies java classes target version\n"
+"     -rose:java:encoding\n"
+"                             Specifies the character encoding\n"
 "     -rose:Python, -rose:python, -rose:py\n"
 "                             compile Python code\n"
 "     -rose:OpenMP, -rose:openmp\n"
