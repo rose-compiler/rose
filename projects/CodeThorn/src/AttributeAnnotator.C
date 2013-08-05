@@ -7,14 +7,6 @@
 #include "AttributeAnnotator.h"
 #include "RoseAst.h"
 
-// default behavior
-string AnalysisResultAttribute::getPreInfoString() { return "pre-info: none";}
-string AnalysisResultAttribute::getPostInfoString() { return "post-info: none";}
-
-AnalysisResultAttribute::~AnalysisResultAttribute() {
-  // virtual destructor intentionally empty
-}
-
 void AnalysisResultAnnotator::annotateAnalysisResultAttributesAsComments(SgNode* node, string attributeName) {
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {

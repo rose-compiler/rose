@@ -29,12 +29,14 @@ int main(int argc, char* argv[]) {
   SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
   rdAnalyzer->determineExtremalLabels(startFunRoot);
   rdAnalyzer->run();
+  cout << "INFO: attaching results to AST."<<endl;
   rdAnalyzer->attachResultsToAst();
-
+  cout << "INFO: generating visualization data."<<endl;
   DataDependenceVisualizer ddvis(rdAnalyzer->getLabeler(),
                                  rdAnalyzer->getVariableIdMapping());
   ddvis.generateDot(root,"data_dependence_graph.dot");
 
+  cout << "INFO: annotating analysis results as comments."<<endl;
   AnalysisResultAnnotator ara;
   ara.annotateAnalysisResultAttributesAsComments(root, "rd-analysis");
   backend(root);
