@@ -1331,7 +1331,9 @@ test2013_242.C \
 test2013_243.C \
 test2013_244.C \
 test2013_246.C \
-test2013_249.C \
+test2013_250.C \
+test2013_251.C \
+test2013_252.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1348,6 +1350,9 @@ test2005_08.C \
 test2012_57.C \
 test2012_59.C \
 $(NEW_PASSING_FILES)
+
+# DQ (7/31/2013): This is a failing test code for operator->().
+# test2013_249.C 
 
 # DQ (3/23/2012): New passing files
 NEW_PASSING_FILES = 

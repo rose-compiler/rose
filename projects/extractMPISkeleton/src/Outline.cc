@@ -1,3 +1,5 @@
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
 #include <string>
 #include <iostream>
 
@@ -15,6 +17,8 @@ using namespace SageBuilder;
 using namespace SageInterface;
 
 static const string filletAttrib = "FILLET";
+
+SgStatement * getPreviousStatementForOutline( SgStatement * targetStmt );
 
 /******************************************************************************
  A FILLET attribute and unitary class.
@@ -48,8 +52,12 @@ bool isFillet(SgNode *s) {
  shouldOmit - determine if attributes consider this statement skeleton or not
  */
 bool shouldOmitGivenAPI(APISpec *spec, SgStatement *s) {
-    AstAttribute *attr = s->getAttribute("APIDep");
-    return attr ? spec->shouldOmit((GenericDepAttribute*)attr) : true;
+    if( s->getAttribute("APIDep") != NULL ){
+      GenericDepAttribute *attr = dynamic_cast<GenericDepAttribute*>(s->getAttribute("APIDep"));
+      ROSE_ASSERT( attr != NULL );
+      return spec->shouldOmit(attr);
+    }
+    return true;
 }
 
 // FIXME: ADHOC: For debugging!
@@ -81,7 +89,7 @@ void ifNotSkeletonAddFilletAttrib (APISpecs *specs, SgProject *proj) {
 
       bool stdOmit = false;
       APISpecs::iterator it;
-      for(it = specs->begin(); it != specs->end(); it++) {
+      for(it = specs->begin(); it != specs->end(); ++it) {
           if(shouldOmitGivenAPI(*it, s)) {
               stdOmit = true;
           }
@@ -105,7 +113,7 @@ void ifNotSkeletonAddFilletAttrib (APISpecs *specs, SgProject *proj) {
   }
 
   std::set< SgStatement* >::iterator si = toremove.begin();
-  for(; si != toremove.end(); si++) {
+  for(; si != toremove.end(); ++si) {
       SgStatement *s = *si;
       SgStatement *parStmt = isSgStatement(s->get_parent());
 
@@ -145,7 +153,7 @@ void blockifySpansOfFillets (SgBasicBlock *block) {
     //   j == ss.end() or +1 past the 'span',
     SgStatementPtrList::iterator j = i+1;
     while (j != ss.end() && isFillet(*j))
-      j++;
+      ++j;
 
     // Move FILLET span to new basic block, if length > 1:
     if (j > i+1) {
@@ -162,7 +170,7 @@ void blockifySpansOfFillets (SgBasicBlock *block) {
 
       // Add the statements to it, updated accordingly:
       newss.assign (i,j);
-      for (SgStatementPtrList::iterator k = newss.begin(); k < newss.end(); k++)
+      for (SgStatementPtrList::iterator k = newss.begin(); k < newss.end(); ++k)
       {
         (*k)->set_parent(newblock);
         (*k)->removeAttribute(filletAttrib);
@@ -172,7 +180,7 @@ void blockifySpansOfFillets (SgBasicBlock *block) {
       i = ss.erase(i,j);
       i = ss.insert(i,newblock);
     }
-    i++;
+    ++i;
   }
 }
 
@@ -245,15 +253,100 @@ void outlineStatementsWithFilletAttrib (SgProject *proj, bool outline) {
       } else if (isSgStatement(s->get_parent())) {
           // FIXME: above condition needed, but not sure if there's
           //        a more elegant way?
+        // JED: TODO this looks like the place where we want to check for preprocessing info
+        // and if it's there move it to a nearby (next?) AST node
+        SgStatement * const previousStatement = getPreviousStatementForOutline(s);
+        ROSE_ASSERT( previousStatement != NULL );
+        if( SgBasicBlock * const block = isSgBasicBlock(s) ){
+          foreach(SgStatement * stmt, block->get_statements()){
+            ROSE_ASSERT( stmt != NULL );
+            if( AttachedPreprocessingInfoType* comments = stmt->getAttachedPreprocessingInfo() ){
+              std::vector<int> captureList;
+              int commentIndex = 0;
+              if (debug) std::cout << "stmt is '"              << stmt->unparseToString()              << "'" << std::endl;
+              if (debug) std::cout << "previousStatement is '" << previousStatement->unparseToString() << "'" << std::endl;
+              for(AttachedPreprocessingInfoType::iterator i = comments->begin(); i != comments->end(); ++i){
+                captureList.push_back(commentIndex);
+                commentIndex++;
+              }
+              moveCommentsToNewStatement(stmt,captureList,previousStatement,true);
+              //removeStatement(stmt); // JED: should be fine to remove the whole block below instead of the individual statements
+                                       // as the previousStatement was chosen relative to the block.
+            }
+          }
+        }
         removeStatement(s);
-        if(debug)
-          std::cout << "Replacing "
+        if(debug) {
+          const std::string action = outline ? "Replacing " : "Removing ";
+          std::cout << action
                     << s->class_name() << " "
                     << "(" << s->unparseToString() << ")@"
                     << s->getFilenameString()
                     << std::endl;
+        }
       }
     }
+  }
+}
+
+/*
+
+This function exists to workaround the way ROSE's builtin getPreviousStatement
+works.  Specificaly, getPreviousStatement on an SgBasicBlock (or the first
+statement of a scope) returns the surrounding scope. Instead, we want to find
+the previous program statement in those cases. In the case of an SgBasicBlock
+this function will search through the statements of the surrounding scope and
+return the statement before the basic block. In the case where that is also a
+scope it will recursively go up a level.
+
+Note: This function is not very well tested.
+
+*/
+SgStatement * getPreviousStatementForOutline( SgStatement * const targetStmt )
+{
+  if( SgBasicBlock * const block = isSgBasicBlock(targetStmt) ){
+    // Find the statement before the basic block, we can't simply call getPreviousStatement for basic blocks
+    // because that actually returns a scope statement. The best we can do is to then scan that scope for
+    // the statement before the basic block.
+    SgStatement * previousStatement = NULL;
+    if( SgScopeStatement * const scope = block->get_scope() ){
+      // TODO: look at the rose code for getPreviousStatement for an example of how to write this search
+      if (isSgIfStmt(scope)) {
+         // TODO: I believe this is wrong. Write a test case...
+         previousStatement = isSgStatement(targetStmt->get_parent());
+         ROSE_ASSERT (isSgIfStmt(previousStatement) != NULL);
+         if( previousStatement == NULL ){
+           if (debug) std::cout << "previousStatement is null, and statement is " << targetStmt->unparseToString() << std::endl;
+         }
+         ROSE_ASSERT( previousStatement != NULL );
+      } else {
+        // refactor this search to a separate function
+        SgStatementPtrList & statementList = scope->getStatementList();
+        Rose_STL_Container<SgStatement*>::iterator i = statementList.begin();
+        Rose_STL_Container<SgStatement*>::iterator previousStatementIterator =  statementList.end();
+        while ( ( i != statementList.end() ) && ( (*i) != targetStmt ) ){
+          previousStatementIterator = i++;
+        }
+        
+        if ( previousStatementIterator != statementList.end() ){
+          previousStatement = *previousStatementIterator;
+        }
+        if( previousStatement == NULL ){
+          if (debug) std::cout << "previousStatement is null, and statement is " << targetStmt->unparseToString() << std::endl;
+          previousStatement = getPreviousStatementForOutline(scope);
+        }
+        ROSE_ASSERT( previousStatement != NULL );
+      }
+    } else {
+      ROSE_ASSERT( false ); // What does it mean if the block has no scope?
+    }
+    // JED: What TODO when previousStatement is null?
+    if( previousStatement == NULL ){
+      if (debug) std::cout << "previousStatement is null, and statement is " << targetStmt->unparseToString() << std::endl;
+    }
+    return previousStatement;
+  } else {
+    return getPreviousStatement(targetStmt);
   }
 }
 

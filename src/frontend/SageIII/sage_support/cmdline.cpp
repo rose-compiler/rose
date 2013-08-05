@@ -1761,6 +1761,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
                printf ("C only mode ON \n");
           set_C_only(true);
 
+       // DQ (7/31/2013): Since C99 is not yet the default for GNU we need to use the -std=c99 option 
+       // in the generation of the command line for the backend.
        // DQ (7/4/2013): Added default behavior to be C99 to make this consistant with EDG default 
        // behavior (changed to be C99 in March of 2013), (but we need to discuss this).
           set_C99_only(true);
@@ -1786,13 +1788,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           if ( SgProject::get_verbose() >= 1 )
                printf ("C89 mode ON \n");
           set_C89_only(true);
+
+       // DQ (7/31/2013): If we turn on C89, then turn off C99.
+          set_C99_only(false);
         }
 
   //
   // C99 only option (turns on EDG "--c" option and g++ "-xc" option)
   //
-     set_C99_only(false);
-     ROSE_ASSERT (get_C99_only() == false);
+
+  // DQ (7/31/2013): We don't want to reset this to false.
+  // set_C99_only(false);
+  // ROSE_ASSERT (get_C99_only() == false);
+
   // DQ (7/4/2013): Added support for -std=c99 and -std=gnu99 options to specify C99 behavior.
   // if ( CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",true) == true )
      if ( (CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",true) == true) || 
@@ -1801,6 +1809,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           if ( SgProject::get_verbose() >= 1 )
                printf ("C99 mode ON \n");
           set_C99_only(true);
+
+       // DQ (7/31/2013): If we turn on C99, then turn off C89.
+          set_C89_only(false);
         }
 
   //
@@ -1813,10 +1824,14 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           if ( SgProject::get_verbose() >= 1 )
                printf ("C11 mode ON \n");
 
-          printf ("Specification of C11 on command line not yet supported \n");
+          printf ("Specification of C11 on command line not yet supported on the command line \n");
           ROSE_ASSERT(false);
 
           set_C11_only(true);
+
+       // DQ (7/31/2013): If we turn on C11, then turn off both C89 and C99.
+          set_C89_only(false);
+          set_C99_only(false);
         }
 
   //
@@ -4281,15 +4296,15 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // case the -rose:C_only option is used.
     if (get_C_only() == true || get_C99_only() == true)
     {
-        // compilerNameString = "gcc ";
-        compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
+       // compilerNameString = "gcc ";
+          compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
 
-        // DQ (6/4/2008): Added support to trigger use of C99 for older
-        //                versions of GNU that don't use use C99 as the default.
-        if (get_C99_only() == true)
-        {
-            compilerNameString.push_back("-std=gnu99");
-        }
+       // DQ (6/4/2008): Added support to trigger use of C99 for older
+       //                versions of GNU that don't use use C99 as the default.
+          if (get_C99_only() == true)
+          {
+               compilerNameString.push_back("-std=gnu99");
+          }
     }
     else if (get_Cxx_only())
     {
