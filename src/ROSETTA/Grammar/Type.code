@@ -2861,6 +2861,8 @@ $CLASSNAME::get_mangled(void) const
   // if (get_name().get_length() != 0) // not anonymous
      if (get_name().is_null() == false) // not anonymous
         {
+ // TODO: Remove this !
+ /*
           const SgClassDeclaration* class_decl = isSgClassDeclaration(get_declaration());
        // printf ("In $CLASSNAME::get_mangled(): class_decl = %p = %s \n",class_decl, ((class_decl == NULL) ? "NULL" : class_decl->class_name().c_str()) );
           if (class_decl != NULL)
@@ -2884,6 +2886,13 @@ $CLASSNAME::get_mangled(void) const
                     mangled_name = class_decl->get_mangled_name();
                  // printf ("In $CLASSNAME::get_mangled(): SgClassDeclaration mangled_name = %s \n",mangled_name.str());
                   }
+             }
+*/
+             mangled_name = get_raw_type() -> get_mangled();
+             SgTemplateParameterPtrList templateParameters = get_type_list() -> get_args();
+             for (SgTemplateParameterPtrList::iterator i = templateParameters.begin(); i != templateParameters.end(); i++) {
+                 mangled_name += "_";
+                 mangled_name += (*i) -> get_type() -> get_mangled();
              }
         }
 
