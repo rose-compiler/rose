@@ -39,6 +39,7 @@ int main(int argc, char* argv[]) {
   cout << "INFO: annotating analysis results as comments."<<endl;
   AnalysisResultAnnotator ara;
   ara.annotateAnalysisResultAttributesAsComments(root, "rd-analysis");
+  cout << "INFO: generating annotated source code."<<endl;
   backend(root);
 
   return 0;
