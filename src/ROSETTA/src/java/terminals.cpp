@@ -130,25 +130,42 @@
   }
 
   //============================================================================
+  // SgJavaPackageDeclaration
+  //============================================================================
+  NEW_TERMINAL_MACRO (JavaPackageDeclaration, "JavaPackageDeclaration", "TEMP_JavaPackageDeclaration" );
+  {
+      JavaPackageDeclaration.setFunctionPrototype(
+          "HEADER_JAVA_PACKAGE_DECLARATION",
+          "../Grammar/Statement.code" );
+
+      JavaPackageDeclaration.setFunctionSource(
+          "SOURCE_JAVA_PACKAGE_DECLARATION",
+          "../Grammar/Statement.code");
+
+      // SgJavaPackageDeclaration Attributes, format:
+      //
+      //     JavaPackageDeclaration.setDataPrototype(
+      //         "<data type>", "<name>", "= <default initialization>",
+      //         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+      //
+  }//JavaPackageDeclaration
+
+  //============================================================================
   // SgJavaPackageStatement
   //============================================================================
   NEW_TERMINAL_MACRO (JavaPackageStatement, "JavaPackageStatement", "TEMP_JavaPackageStatement" );
   {
       JavaPackageStatement.setFunctionPrototype(
           "HEADER_JAVA_PACKAGE_STATEMENT",
-          "../Grammar/Statement.code" );
+          "../Grammar/Statement.code");
 
       JavaPackageStatement.setFunctionSource(
           "SOURCE_JAVA_PACKAGE_STATEMENT",
           "../Grammar/Statement.code");
 
-      // SgJavaPackageStatement Attributes, format:
-      //
-      //     JavaPackageStatement.setDataPrototype(
-      //         "<data type>", "<name>", "= <default initialization>",
-      //         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-      //
-  }//JavaPackageStatement
-
+      JavaPackageStatement.setDataPrototype(
+          "SgName", "name", "= \"\"",
+          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  }
 #endif
 

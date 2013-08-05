@@ -3544,7 +3544,12 @@ HEADER_JAVA_IMPORT_STATEMENT_START
 
 HEADER_JAVA_IMPORT_STATEMENT_END
 
+HEADER_JAVA_PACKAGE_DECLARATION_START
+          virtual SgName get_mangled_name() const;
+HEADER_JAVA_PACKAGE_DECLARATION_END
+
 HEADER_JAVA_PACKAGE_STATEMENT_START
+          virtual SgName get_mangled_name() const;
 HEADER_JAVA_PACKAGE_STATEMENT_END
 
 // #########################################################
@@ -16733,12 +16738,40 @@ SgJavaImportStatement::get_mangled_name(void) const
 
 SOURCE_JAVA_IMPORT_STATEMENT_END
 
+SOURCE_JAVA_PACKAGE_DECLARATION_START
+void
+SgJavaPackageDeclaration::post_construction_initialization()
+   {
+     // Nothing to setup here.
+   }
+
+SgName
+SgJavaPackageDeclaration::get_mangled_name() const
+   {
+     return SgName("_package_" + SgClassDeclaration::get_mangled_name()); // PC: 06/21/2013
+   }
+SOURCE_JAVA_PACKAGE_DECLARATION_END
+
 SOURCE_JAVA_PACKAGE_STATEMENT_START
 void
 SgJavaPackageStatement::post_construction_initialization()
-{
-  // Nothing to setup here.
-}
+   {
+     // Nothing to setup here.
+   }
+
+// DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
+SgName
+SgJavaPackageStatement::get_mangled_name(void) const
+   {
+  // The semantics of get_scope is that it can never be NULL (SgGlobal returns itself as its scope!)
+     SgScopeStatement* scope = get_scope();
+     ROSE_ASSERT(scope != NULL);
+
+     SgName returnName = SgName("_java_package_stmt_") + get_name();
+
+     return returnName;
+   }
+
 SOURCE_JAVA_PACKAGE_STATEMENT_END
 
 
