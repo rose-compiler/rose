@@ -3,6 +3,7 @@
 #include "addressTakenAnalysis.h"
 #include "defUseQuery.h"
 #include "Timer.h"
+#include "AnalysisAbstractionLayer.h"
 
 
 /*************************************************************
@@ -12,6 +13,7 @@
  *************************************************************/
 
 using namespace CodeThorn;
+using namespace AnalysisAbstractionLayer;
 
 class TestDefUseVarsInfoTraversal : public AstSimpleProcessing
 {
@@ -78,7 +80,7 @@ int main(int argc, char* argv[])
   // collect all the variables that are used in functions in
   // the code we are analyzing
   // collect type information only about these variables
-  VariableIdSet usedVarsInProgram = AstVariableIdInterface::usedVariablesInsideFunctions(project, &vidm);
+  VariableIdSet usedVarsInProgram = usedVariablesInsideFunctions(project, &vidm);
 
   FlowInsensitivePointerInfo fipi(project, vidm, usedVarsInProgram);
   fipi.collectInfo();

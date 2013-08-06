@@ -13,7 +13,6 @@
 #include "Miscellaneous.h"
 #include <set>
 #include "VariableIdUtils.h"
-#include "AstVariableIdInterface.h"
 
 using namespace CodeThorn;
 

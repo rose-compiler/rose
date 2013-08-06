@@ -20,7 +20,7 @@ addressTakenAnalysis_SOURCES = \
 	$(CODETHORN_SRC_ROOT)/RoseAst.C \
 	$(CODETHORN_SRC_ROOT)/AstTerm.C \
 	$(CODETHORN_SRC_ROOT)/AstMatching.C \
-	$(CODETHORN_SRC_ROOT)/AstVariableIdInterface.C \
+	$(CODETHORN_SRC_ROOT)/AnalysisAbstractionLayer.C \
 	$(CODETHORN_SRC_ROOT)/MatchOperation.C \
 	$(CODETHORN_SRC_ROOT)/SgNodeHelper.C \
 	$(CODETHORN_SRC_ROOT)/VariableIdMapping.C \
