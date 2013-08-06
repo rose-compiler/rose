@@ -392,6 +392,7 @@ int __sync_lock_release( int & v );
 /* DQ and Liao (7/11/2009) Added macros to define away new GNU C++ extension (not required for newer EDG 4.0 use 
 // Only for GCC 4.3.0 and above
 */
+#if 0
 /* DQ (7/3/2013): Implemented mechanism to lie to Boost about what version of GNU we are emulating.
    This is required to fix a bug in EDG 4.7 which is being reported to EDG.
 Original code:
@@ -435,6 +436,7 @@ int __builtin_memcmp ( const void * ptr1, const void * ptr2, __SIZE_TYPE__ num )
 // changed it in edg 3.3/src/sys_predef.c instead since va_list is not declared here
 //int __builtin_vsnprintf(char *str, unsigned long long size, const char *format, va_list ap);
 
+#endif
 #endif
 /*
 Target specific builtin functions are available at:

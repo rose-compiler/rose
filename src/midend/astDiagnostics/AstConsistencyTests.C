@@ -2960,6 +2960,9 @@ TestAstSymbolTables::visit ( SgNode* node )
             // if (declarationStatement != NULL)
                if (declarationStatement != NULL && isSgLabelSymbol(symbol) == NULL)
                   {
+                    printf ("declarationStatement = %p\n", declarationStatement);
+                    assert(declarationStatement->get_firstNondefiningDeclaration() != NULL);
+                    assert(declarationStatement->get_firstNondefiningDeclaration() == declarationStatement); // FIXME In some cases the declaration associated with the symbol is not the first non-defining declaration -> it is incorrect
                     SgSymbol* local_symbol = declarationStatement->get_symbol_from_symbol_table();
 #if 0
                     if (local_symbol == NULL)

@@ -55,6 +55,7 @@ void fixupAstDeclarationScope( SgNode* node )
 
             // DQ (6/11/2013): This is triggered by namespace definition scopes that are different 
             // due to re-entrant namespace declarations.  We should maybe fix this.
+            // TV (7/22/13): This is also triggered when for global scope accross files.
                if (associatedScope != correctScope)
                   {
                     printf ("WARNING: This is the wrong scope (declaration = %p = %s): associatedScope = %p = %s correctScope = %p = %s \n",
@@ -70,6 +71,10 @@ void fixupAstDeclarationScope( SgNode* node )
 
           i++;
         }
+
+#if 0
+     printf ("Leaving fixupAstDeclarationScope() node = %p = %s \n",node,node->class_name().c_str());
+#endif
    }
 
 void

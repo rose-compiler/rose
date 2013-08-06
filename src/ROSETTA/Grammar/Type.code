@@ -1734,7 +1734,7 @@ SgType::stripType(unsigned char bit_array) const
      SgType* currentType = (SgType*) this;
 
 #if 0
-     printf ("Inside of SgType::stripType(bit_array = %u) this = %p = %s \n",bit_array,currentType,currentType->class_name().c_str());
+     printf ("Inside of SgType::stripType(bit_array = %u): this = %p = %s \n",bit_array,currentType,currentType->class_name().c_str());
 #endif
 
      SgModifierType*  modType     = NULL;
@@ -1743,8 +1743,12 @@ SgType::stripType(unsigned char bit_array) const
      SgArrayType*     arrayType   = NULL;
      SgTypedefType*   typedefType = NULL;
 
+     size_t counter = 0;
      while (true)
         {
+#if 0
+          printf ("In loop of SgType::stripType(bit_array = %u): counter = %zu this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
+#endif
           if ( (bit_array & STRIP_MODIFIER_TYPE) && (modType = isSgModifierType(currentType)) )
              {
                currentType = modType->get_base_type();
@@ -1783,6 +1787,22 @@ SgType::stripType(unsigned char bit_array) const
                        }
                   }
              }
+
+       // DQ (7/4/2013): This should be a reasonable limit.
+          if (counter >= 80)
+             {
+               printf ("In loop of SgType::stripType(bit_array = %u): counter = %zu this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
+             }
+          if (counter >= 100)
+             {
+            // Exit loop and return the currentType... 
+               printf ("In loop of SgType::stripType(bit_array = %u): exiting loop using currentType (counter = %zu) this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
+
+               break;
+             }
+          ROSE_ASSERT(counter < 100);
+
+          counter++;
         }
 
      return currentType;
@@ -2895,6 +2915,7 @@ SgTemplateType::get_mangled(void) const
   // We need to asspciate template template arguments with their associated declarations and not just there name.
   // See test2012_217.C (return types of functions should be different, have different mangled names, for each function).
   // mangled_name += StringUtility::numberToString(this->get_declaration());
+     mangled_name += StringUtility::numberToString(this);
 
 #if 0
     printf ("In SgTemplateType::get_mangled(): this = %p mangled_name = %s \n",this,mangled_name.str());
@@ -5316,12 +5337,20 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
   // DQ (3/22/2012): Added assertions.
      if (returnType->get_declaration() != cd)
         {
+#if 0
           printf ("In SgClassType::createType(): returnType = %p = %s \n",returnType,returnType->class_name().c_str());
-          printf ("In SgClassType::createType(): returnType->get_declaration() = %p = %s cd = %p = %s \n",returnType->get_declaration(),returnType->get_declaration()->class_name().c_str(),cd,cd->class_name().c_str());
-          printf ("In SgClassType::createType(): returnType->get_declaration() = %p = %s cd = %p = %s \n",returnType->get_declaration(),isSgClassDeclaration(returnType->get_declaration())->get_name().str(),classDeclaration,classDeclaration->get_name().str());
+          printf ("In SgClassType::createType(): returnType->get_declaration() = %p = %s cd = %p = %s \n",returnType->get_declaration(),
+               returnType->get_declaration()->class_name().c_str(),cd,cd->class_name().c_str());
+          printf ("In SgClassType::createType(): returnType->get_declaration() = %p = %s cd = %p = %s \n",returnType->get_declaration(),
+               isSgClassDeclaration(returnType->get_declaration())->get_name().str(),classDeclaration,classDeclaration->get_name().str());
+#endif
           ROSE_ASSERT(returnType->get_declaration()->get_firstNondefiningDeclaration() != NULL);
           ROSE_ASSERT(cd->get_firstNondefiningDeclaration() != NULL);
-          printf ("In SgClassType::createType(): returnType->get_declaration()->get_firstNondefiningDeclaration() = %p = %s cd->get_firstNondefiningDeclaration() = %p = %s \n",returnType->get_declaration()->get_firstNondefiningDeclaration(),returnType->get_declaration()->get_firstNondefiningDeclaration()->class_name().c_str(),cd->get_firstNondefiningDeclaration(),cd->get_firstNondefiningDeclaration()->class_name().c_str());
+#if 0
+          printf ("In SgClassType::createType(): returnType->get_declaration()->get_firstNondefiningDeclaration() = %p = %s cd->get_firstNondefiningDeclaration() = %p = %s \n",
+               returnType->get_declaration()->get_firstNondefiningDeclaration(),returnType->get_declaration()->get_firstNondefiningDeclaration()->class_name().c_str(),
+               cd->get_firstNondefiningDeclaration(),cd->get_firstNondefiningDeclaration()->class_name().c_str());
+#endif
         }
 #if 0
   // DQ (1/22/2013): We can't assert this when we have complex template handling as in Boost.
