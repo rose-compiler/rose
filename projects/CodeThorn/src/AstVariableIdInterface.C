@@ -4,7 +4,7 @@
 #include "AstVariableIdInterface.h"
 
 VariableIdMapping::VariableIdSet
-AstVariableIdInterface::globalVariables(SgProject* project, VariableIdMapping* variableIdMapping) {
+AstAbstractionLayer::globalVariables(SgProject* project, VariableIdMapping* variableIdMapping) {
   list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
   VariableIdMapping::VariableIdSet globalVarsIdSet;
   for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
@@ -15,7 +15,7 @@ AstVariableIdInterface::globalVariables(SgProject* project, VariableIdMapping* v
 }
 
 VariableIdMapping::VariableIdSet 
-AstVariableIdInterface::usedVariablesInsideFunctions(SgProject* project, VariableIdMapping* variableIdMapping) {
+AstAbstractionLayer::usedVariablesInsideFunctions(SgProject* project, VariableIdMapping* variableIdMapping) {
   list<SgVarRefExp*> varRefExpList=SgNodeHelper::listOfUsedVarsInFunctions(project);
   VariableIdMapping::VariableIdSet setOfUsedVars;
   for(list<SgVarRefExp*>::iterator i=varRefExpList.begin();i!=varRefExpList.end();++i) {

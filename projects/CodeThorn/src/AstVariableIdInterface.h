@@ -7,7 +7,7 @@
 
 using namespace CodeThorn;
 
-namespace AstVariableIdInterface {
+namespace AstAbstractionLayer {
   VariableIdSet globalVariables(SgProject* project, VariableIdMapping* variableIdMapping);
   VariableIdSet usedVariablesInsideFunctions(SgProject* project, VariableIdMapping* variableIdMapping);
 }
