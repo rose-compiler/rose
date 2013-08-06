@@ -75,8 +75,13 @@ void RDAnalyzer::transfer_assignment(SgAssignOp* node, Label& lab, RDLattice& el
     // 2) add (lab,lhs.varid)
     
     // (for programs with pointers we require a set here)
-    VariableIdMapping::VariableIdSet lhsVarIds=determineLValueVariableIdSet(SgNodeHelper::getLhs(node));
-    if(lhsVarIds.size()>1) {
+#if 0
+  // TODO: USEDEF FUNCTIONS HERE (ACTIVATE)
+	VariableIdSet lhsVarIds=AnalysisAbstractionLayer::defVariablesInExpression(node);  
+#else
+    VariableIdSet lhsVarIds=determineLValueVariableIdSet(SgNodeHelper::getLhs(node));
+#endif
+  if(lhsVarIds.size()>1) {
       // since multiple memory locations may be modified, we cannot know which one will be updated and can only add information
       for(VariableIdMapping::VariableIdSet::iterator i=lhsVarIds.begin();i!=lhsVarIds.end();++i) {
         element.insertPair(lab,*i);
@@ -89,6 +94,7 @@ void RDAnalyzer::transfer_assignment(SgAssignOp* node, Label& lab, RDLattice& el
     }
 }
 
+// TODO: USEDEF FUNCTIONS : ELIMINATE THIS FUNCTION
 // this function assumes that a pointer to an AST subtree representing a LHS of an assignment has been passed
 VariableIdMapping::VariableIdSet RDAnalyzer::determineLValueVariableIdSet(SgNode* node) {
   VariableIdMapping::VariableIdSet resultSet;
@@ -96,7 +102,6 @@ VariableIdMapping::VariableIdSet RDAnalyzer::determineLValueVariableIdSet(SgNode
   if(SgVarRefExp* lhsVar=isSgVarRefExp(node)) {
     resultSet.insert(_variableIdMapping.variableId(lhsVar));
   } else {
-    // TODO
     cout<<"WARNING: unsupported lhs of assignment: "<<SgNodeHelper::nodeToString(node)<<" ... grabbing all variables."<<std::endl;
     RoseAst ast(node);
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {

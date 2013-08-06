@@ -1,5 +1,5 @@
-#ifndef ASTVARIABLEIDINTERFACE_H
-#define ASTVARIABLEIDINTERFACE_H
+#ifndef ANALYSISABSTRACTIONLAYER_H
+#define ANALYSISABSTRACTIONLAYER_H
 
 // Author: Markus Schordan, 2013.
 
@@ -7,8 +7,10 @@
 
 using namespace CodeThorn;
 
-namespace AstAbstractionLayer {
+namespace AnalysisAbstractionLayer {
   VariableIdSet globalVariables(SgProject* project, VariableIdMapping* variableIdMapping);
   VariableIdSet usedVariablesInsideFunctions(SgProject* project, VariableIdMapping* variableIdMapping);
+  VariableIdSet useVariablesInExpression(SgNode* expr);
+  VariableIdSet defVariablesInExpression(SgNode* expr);
 }
 #endif

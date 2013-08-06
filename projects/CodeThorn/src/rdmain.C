@@ -17,6 +17,16 @@
 using namespace std;
 using namespace CodeThorn;
 
+void createDefUseAttributeFromRDAttribute(Labeler* labeler, string rdAttributeName, string udAttributeName) {
+  long labelNum=labeler->numberOfLabels();
+  for(long i=0;i<labelNum;++i) {
+	Label lab=i;
+	SgNode* node=labeler->getNode(i);
+	RDAnalysisAstAttribute* rdAttr=dynamic_cast<RDAnalysisAstAttribute*>(node->getAttribute(rdAttributeName));
+	node->addNewAttribute(udAttributeName,new UseDefInfoAttribute(rdAttr, node));
+  }
+}
+
 int main(int argc, char* argv[]) {
   cout << "INIT: Parsing and creating AST."<<endl;
   boolOptions.registerOption("semantic-fold",false); // temporary
@@ -33,9 +43,11 @@ int main(int argc, char* argv[]) {
   cout << "INFO: attaching results to AST."<<endl;
   rdAnalyzer->attachResultsToAst();
   cout << "INFO: generating visualization data."<<endl;
+  createDefUseAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis", "ud-analysis");
   DataDependenceVisualizer ddvis(rdAnalyzer->getLabeler(),
-                                 rdAnalyzer->getVariableIdMapping());
-  ddvis.generateDot(root,"data_dependence_graph.dot");
+                                 rdAnalyzer->getVariableIdMapping(),
+								 "ud-analysis");
+  ddvis.generateDot(root,"datadependencegraph.dot");
 
   // simple test
   RDLattice elem;
