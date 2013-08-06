@@ -1,5 +1,8 @@
-#include "sage3basic.h"
+/*****************************************
+ * Author: Sriram Aananthakrishnan, 2013 *
+ *****************************************/
 
+#include "sage3basic.h"
 #include "defUseQuery.h"
 #include <algorithm>
 #include <iterator>
