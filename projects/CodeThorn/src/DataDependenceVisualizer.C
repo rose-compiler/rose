@@ -13,33 +13,37 @@ DataDependenceVisualizer::DataDependenceVisualizer(Labeler* labeler, VariableIdM
 {
 }
 
-VariableIdMapping::VariableIdSet DataDependenceVisualizer::useVars(SgNode* expr){
-  return getAstAttributeVariableIdSet(expr,"use-variableid-set");
+VariableIdSet DataDependenceVisualizer::useVars(SgNode* expr) {
+  VariableIdSet set;
+  // TODO
+  return set;
 }
 
-VariableIdMapping::VariableIdSet DataDependenceVisualizer::defVars(SgNode* expr){
-  return getAstAttributeVariableIdSet(expr,"def-variableid-set");
+VariableIdSet DataDependenceVisualizer::defVars(SgNode* expr) {
+  VariableIdSet set;
+  // TODO
+  return set;
 }
 
-Label DataDependenceVisualizer::getLabel(SgNode* stmt){
+Label DataDependenceVisualizer::getLabel(SgNode* stmt) {
   return _labeler->getLabel(stmt);
 }
 
-SgNode* DataDependenceVisualizer::getNode(Label label){
+SgNode* DataDependenceVisualizer::getNode(Label label) {
   return _labeler->getNode(label);
 }
 
-void DataDependenceVisualizer::generateDot(SgNode* root, string fileName){
+void DataDependenceVisualizer::generateDot(SgNode* root, string fileName) {
+  // TODO
 }
 
 // private
 
-VariableIdMapping::VariableIdSet DataDependenceVisualizer::getAstAttributeVariableIdSet(SgNode* expr,string attributeName){
+UseDefInfoAttribute* DataDependenceVisualizer::getUseDefInfoAttribute(SgNode* expr,string attributeName){
   if(expr->attributeExists(attributeName)) {
-    VariableIdSetAttribute* varsAttr=dynamic_cast<VariableIdSetAttribute*>(expr->getAttribute(attributeName));
-    return varsAttr->getVariableIdSet();
+    UseDefInfoAttribute* udAttr=dynamic_cast<UseDefInfoAttribute*>(expr->getAttribute(attributeName));
+    return udAttr;
   } else {
-    VariableIdMapping::VariableIdSet empty;
-    return empty;
+    return 0;
   }
 }
