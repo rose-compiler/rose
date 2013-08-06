@@ -12,9 +12,7 @@ class Sage<SgVariableDeclaration> {
     typedef SgScopeStatement * scope_t;
     typedef SgVariableSymbol * symbol_t;
 
-    struct build_scopes_t {
-      SgScopeStatement * scope;
-    };
+    typedef SgScopeStatement * build_scopes_t;
 
     struct object_desc_t {
       std::string name;

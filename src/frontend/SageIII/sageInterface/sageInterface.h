@@ -1056,8 +1056,11 @@ std::vector<NodeType*> querySubTree(SgNode* top, VariantT variant = (VariantT)No
    */
     std::vector < SgFile * >generateFileList ();
 
-  //! Get the current SgProject IR Node
+  //! Get the current SgProject IR Node, it fails if project have not be kept a singleton
   SgProject * getProject();
+
+  //! \return the project associated with a node
+  SgProject * getProject(const SgNode * node);
 
 //! Query memory pools to grab SgNode of a specified type
 template <typename NodeType>
@@ -1081,7 +1084,7 @@ static std::vector<NodeType*> getSgNodeListFromMemoryPool()
   };
 
   MyTraversal my_traversal;
-  NodeType::visitRepresentativeNode(my_traversal);
+  NodeType::traverseMemoryPoolNodes(my_traversal);
   return my_traversal.resultlist;
 }
 

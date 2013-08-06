@@ -78,7 +78,12 @@ void clearScopeStack();
 //! Support to retrive the SgGlobal from the internal scope stack (error if not present in a non-empty list, return null for empty list).
 SgScopeStatement* getGlobalScopeFromScopeStack();
 
+bool isInScopeStack(SgScopeStatement * scope);
+
 bool inSwitchScope();
+
+// TV: for debug purpose
+std::string stringFromScopeStack();
 
    
 //@} 
@@ -617,6 +622,9 @@ SgFunctionCallExp* buildFunctionCallExp(SgExpression* f, SgExprListExp* paramete
 SgFunctionCallExp* 
 buildFunctionCallExp(const SgName& name, SgType* return_type, \
                 SgExprListExp* parameters=NULL, SgScopeStatement* scope=NULL);
+
+SgTypeTraitBuiltinOperator*
+buildTypeTraitBuiltinOperator(SgName functionName, SgNodePtrList parameters);
 
 //! Build a CUDA kernel call expression (kernel<<<config>>>(parameters))
 SgCudaKernelCallExp * buildCudaKernelCallExp_nfi(

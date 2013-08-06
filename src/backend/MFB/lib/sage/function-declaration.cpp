@@ -10,6 +10,71 @@
 
 namespace MultiFileBuilder {
 
+bool ignore(const std::string & name);
+bool ignore(SgScopeStatement * scope);
+
+template <>
+bool Driver<Sage>::resolveValidParent<SgFunctionSymbol>(SgFunctionSymbol * symbol) {
+  SgNamespaceSymbol * parent = NULL;
+  
+  if (p_valid_symbols.find(symbol) != p_valid_symbols.end()) return true;
+
+  SgNamespaceDefinitionStatement * namespace_scope = isSgNamespaceDefinitionStatement(symbol->get_scope());
+  if (namespace_scope != NULL) {
+    SgNamespaceDeclarationStatement * parent_decl = namespace_scope->get_namespaceDeclaration();
+    assert(parent_decl != NULL);
+    parent = SageInterface::lookupNamespaceSymbolInParentScopes(parent_decl->get_name(), parent_decl->get_scope());
+    assert(parent != NULL);
+
+    if (!resolveValidParent<SgNamespaceSymbol>(parent)) return false;
+    assert(p_valid_symbols.find(parent) != p_valid_symbols.end());
+  }
+
+  p_valid_symbols.insert(symbol);
+  p_parent_map.insert(std::pair<SgSymbol *, SgSymbol *>(symbol, parent));
+  p_function_symbols.insert(symbol);
+
+  return true;
+}
+
+template <>
+void  Driver<Sage>::loadSymbolsFromPair<SgFunctionDeclaration>(unsigned long file_id, SgSourceFile * header_file, SgSourceFile * source_file) {
+  std::vector<SgFunctionDeclaration *> header_function_decl = SageInterface::querySubTree<SgFunctionDeclaration>(header_file);
+  std::vector<SgFunctionDeclaration *> source_function_decl = SageInterface::querySubTree<SgFunctionDeclaration>(source_file);
+
+  std::set<SgFunctionSymbol *> function_symbols;
+  std::vector<SgFunctionDeclaration *>::const_iterator it_function_decl;
+  for (it_function_decl = header_function_decl.begin(); it_function_decl != header_function_decl.end(); it_function_decl++) {
+    SgFunctionDeclaration * function_decl = *it_function_decl;
+
+    if (ignore(function_decl->get_scope())) continue;
+    if (ignore(function_decl->get_name().getString())) continue;
+
+    SgFunctionSymbol * function_sym = SageInterface::lookupFunctionSymbolInParentScopes(function_decl->get_name(), function_decl->get_scope());
+    assert(function_sym != NULL);
+
+    function_symbols.insert(function_sym);
+  }
+  for (it_function_decl = source_function_decl.begin(); it_function_decl != source_function_decl.end(); it_function_decl++) {
+    SgFunctionDeclaration * function_decl = *it_function_decl;
+
+    if (ignore(function_decl->get_scope())) continue;
+    if (ignore(function_decl->get_name().getString())) continue;
+
+    SgFunctionSymbol * function_sym = SageInterface::lookupFunctionSymbolInParentScopes(function_decl->get_name(), function_decl->get_scope());
+    assert(function_sym != NULL);
+
+    function_symbols.insert(function_sym);
+  }
+
+  std::set<SgFunctionSymbol *>::iterator it;
+  for (it = function_symbols.begin(); it != function_symbols.end(); it++)
+    if (resolveValidParent<SgFunctionSymbol>(*it)) {
+      p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, unsigned long>(*it, file_id));
+//    std::cout << " Function Symbol : " << (*it) << ", name = " << (*it)->get_name().getString() << ", scope = " << (*it)->get_scope() << "(" << (*it)->get_scope()->class_name() << ")" << std::endl;
+    }
+}
+
 Sage<SgFunctionDeclaration>::object_desc_t::object_desc_t(
   std::string name_,
   SgType * return_type_,
@@ -58,9 +123,10 @@ Sage<SgFunctionDeclaration>::build_result_t Driver<Sage>::build<SgFunctionDeclar
     result.symbol = decl_scope->lookup_function_symbol(desc.name);
     assert(result.symbol != NULL);
 
-    symbol_to_file_id_map.insert(std::pair<SgSymbol *, unsigned long>(result.symbol, desc.file_id));
-
-    parent_map.insert(std::pair<SgSymbol *, SgSymbol *>(result.symbol, desc.parent));
+    p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, unsigned long>(result.symbol, desc.file_id));
+    p_valid_symbols.insert(result.symbol);
+    p_parent_map.insert(std::pair<SgSymbol *, SgSymbol *>(result.symbol, desc.parent));
+    p_function_symbols.insert(result.symbol);
   }
 
 #if PATCHING_SAGE_BUILDER_ISSUES

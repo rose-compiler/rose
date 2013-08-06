@@ -11,7 +11,13 @@
 #include "AstConsistencyTests.h"
 
 int main(int argc, char ** argv) {
-  MultiFileBuilder::Driver<MultiFileBuilder::Sage> driver;
+  SgProject * project = new SgProject();
+  std::vector<std::string> arglist;
+    arglist.push_back("c++");
+    arglist.push_back("-c");
+  project->set_originalCommandLineArgumentList (arglist);
+
+  MultiFileBuilder::Driver<MultiFileBuilder::Sage> driver(project);
 
 // Create class A in files A.hpp and A.cpp
   unsigned long lib_A_file_id = driver.createPairOfFiles("A");
