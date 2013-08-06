@@ -5362,10 +5362,10 @@ SgDeleteExp* SageBuilder::buildDeleteExp(SgExpression* variable,
 }
 
 SgTypeIdOp*
-SageBuilder::buildTypeIdOp(SgExpression *operand_expr, SgType *operand_type, SgType *expression_type)
+SageBuilder::buildTypeIdOp(SgExpression *operand_expr, SgType *operand_type)
    {
   // DQ (1/25/2013): Added support for typeId operators.
-     SgTypeIdOp* result = new SgTypeIdOp(operand_expr,operand_type,expression_type);
+     SgTypeIdOp* result = new SgTypeIdOp(operand_expr,operand_type);
      ROSE_ASSERT(result != NULL);
      setOneSourcePositionForTransformation(result);
      return result;
