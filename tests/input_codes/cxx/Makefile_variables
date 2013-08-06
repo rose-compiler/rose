@@ -1,5 +1,6 @@
 
-ROSE__CXX_TESTS = $(addprefix $(top_srcdir)/tests/CompileTests/Cxx_tests/,\
+ROSE__CXX_TESTS_DIR = $(top_srcdir)/tests/CompileTests/Cxx_tests
+ROSE__CXX_TESTS = $(addprefix $(ROSE__CXX_TESTS_DIR)/,\
 	test_CplusplusMacro_Cpp.C \
 	test2001_01.C \
 	test2001_02.C \
@@ -1100,7 +1101,6 @@ ROSE__CXX_TESTS = $(addprefix $(top_srcdir)/tests/CompileTests/Cxx_tests/,\
 	test2013_06.C \
 	test2013_07.C \
 	test2013_08.C \
-	test2013_09.C \
 	test2013_10.C \
 	test2013_11.C \
 	test2013_12.C \
@@ -1308,8 +1308,6 @@ ROSE__CXX_TESTS = $(addprefix $(top_srcdir)/tests/CompileTests/Cxx_tests/,\
 	test2013_231.C \
 	test2013_232.C \
 	test2013_234.C \
-	test2013_235.C \
-	test2013_236.C \
 	test2013_237.C \
 	test2013_238.C \
 	test2013_239.C \
@@ -1337,3 +1335,8 @@ ROSE__CXX_TESTS = $(addprefix $(top_srcdir)/tests/CompileTests/Cxx_tests/,\
 	test2005_08.C \
 	test2012_57.C \
 	test2012_59.C)
+
+ROSE__CXX_TESTS__BOOST = $(addprefix $(ROSE__CXX_TESTS_DIR)/,\
+	test2013_09.C \
+	test2013_235.C \
+	test2013_236.C)
