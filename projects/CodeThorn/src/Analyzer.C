@@ -11,7 +11,7 @@
 #include <fstream>
 #include <unistd.h>
 #include "Miscellaneous.h"
-#include "AstVariableIdInterface.h"
+#include "AnalysisAbstractionLayer.h"
 
 using namespace CodeThorn;
 
@@ -1042,7 +1042,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
     list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
     cout << globalVars.size()<<endl;
 
-	VariableIdSet setOfUsedVars=AstVariableIdInterface::usedVariablesInsideFunctions(project,&variableIdMapping);
+	VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
 
     cout << "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
 

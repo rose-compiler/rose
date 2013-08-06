@@ -10,6 +10,7 @@
 #include "RDLattice.h"
 #include "DFAnalyzer.h"
 #include "WorkList.h"
+#include "AnalysisAbstractionLayer.h"
 
 using namespace std;
 using namespace CodeThorn;

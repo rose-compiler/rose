@@ -67,6 +67,7 @@ class VariableIdMapping {
   bool isTemporaryVariableId(VariableId varId);
   string variableName(VariableId varId);
   string uniqueLongVariableName(VariableId varId);
+  string uniqueShortVariableName(VariableId varId);
 
   void registerNewSymbol(SgSymbol* sym);
   void toStream(ostream& os);

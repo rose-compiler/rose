@@ -283,6 +283,15 @@ string VariableIdMapping::uniqueLongVariableName(VariableId varId) {
   }
 }
 
+string VariableIdMapping::uniqueShortVariableName(VariableId varId) {
+  if(!isTemporaryVariableId(varId)) {
+    return varId.toString()+"_"+variableName(varId);
+    //return SgNodeHelper::uniqueLongVariableName(getSymbol(varId));
+  } else {
+    return string("__tmp")+"_"+variableName(varId);
+  }
+}
+
 VariableId VariableIdMapping::variableId(SgVariableDeclaration* decl) {
   return variableId(SgNodeHelper::getSymbolOfVariableDeclaration(decl));
 }
