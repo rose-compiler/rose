@@ -78,6 +78,8 @@ codethorn_SOURCES = \
   AstVariableIdInterface.C         \
   AnalysisAstAttribute.h           \
   AnalysisAstAttribute.C           \
+  RDAnalysisAbstractAstAttribute.h \
+  RDAnalysisAbstractAstAttribute.C \
   RDAnalysisAstAttribute.h         \
   RDAnalysisAstAttribute.C         \
   RERS_empty_specialization.C      
@@ -134,9 +136,10 @@ rdmain_LDADD = -lrose
 rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C RoseAst.h RoseAst.C Labeler.h Labeler.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C AttributeAnnotator.h AttributeAnnotator.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
   AnalysisAstAttribute.h           \
   AnalysisAstAttribute.C           \
+  RDAnalysisAbstractAstAttribute.h \
+  RDAnalysisAbstractAstAttribute.C \
   RDAnalysisAstAttribute.h         \
   RDAnalysisAstAttribute.C         
-
 
 # explicit rules because of multiple bison parser
 matcherparser.C: $(srcdir)/matcherlexer.ll $(srcdir)/matcherparser.yy

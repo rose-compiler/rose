@@ -5,20 +5,24 @@
 
 #include "Labeler.h"
 #include "VariableIdMapping.h"
+#include "RDAnalysisAbstractAstAttribute.h"
+#include "RDLattice.h"
 
 using namespace CodeThorn;
 
-class RDAnalysisAstAttribute : public AstAttribute {
+class RDAnalysisAstAttribute : public RDAnalysisAbstractAstAttribute {
  public:
-  typedef pair<Label,VariableId> RDPair;
-  typedef set<RDPair> RDPairSet;
+  RDAnalysisAstAttribute(RDLattice* elem);
   bool isBottomElement();
-  bool isTopElement();
   VariableIdSet allVariableIds();
   LabelSet allLabels();
   LabelSet definitionsOfVariableId(VariableId varId);
   VariableIdSet variableIdsOfDefinition(Label def);
-  typedef RDPairSet::iterator iterator;
+  iterator begin();
+  iterator end();
+  virtual ~RDAnalysisAstAttribute();
+ private:
+  RDLattice* _elem;
 };
 
 #endif

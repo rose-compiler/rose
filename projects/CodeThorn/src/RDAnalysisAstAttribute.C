@@ -1,14 +1,13 @@
 #include "sage3basic.h"
 #include "RDAnalysisAstAttribute.h"
-
-bool RDAnalysisAstAttribute::isBottomElement() {
-  return false;
+RDAnalysisAstAttribute::RDAnalysisAstAttribute(RDLattice* elem):_elem(elem) {
 }
-bool RDAnalysisAstAttribute::isTopElement() {
-  return false;
+bool RDAnalysisAstAttribute::isBottomElement() {
+  return _elem->isBot();
 }
 VariableIdSet RDAnalysisAstAttribute::allVariableIds() {
   VariableIdSet set;
+  
   return set;
 }
 LabelSet RDAnalysisAstAttribute::allLabels() {
@@ -23,4 +22,13 @@ VariableIdSet RDAnalysisAstAttribute::variableIdsOfDefinition(Label def) {
   VariableIdSet set;
   return set;
 }
-
+RDAnalysisAstAttribute::iterator
+RDAnalysisAstAttribute::begin() {
+  return _elem->begin();
+}
+RDAnalysisAstAttribute::iterator
+RDAnalysisAstAttribute::end() {
+  return _elem->end();
+}
+RDAnalysisAstAttribute::~RDAnalysisAstAttribute() {
+}

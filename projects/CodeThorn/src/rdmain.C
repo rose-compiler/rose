@@ -10,6 +10,7 @@
 #include "DFAnalyzer.h"
 #include "WorkList.h"
 #include "RDAnalyzer.h"
+#include "RDAnalysisAstAttribute.h"
 #include "AttributeAnnotator.h"
 #include "DataDependenceVisualizer.h"
 
@@ -35,6 +36,11 @@ int main(int argc, char* argv[]) {
   DataDependenceVisualizer ddvis(rdAnalyzer->getLabeler(),
                                  rdAnalyzer->getVariableIdMapping());
   ddvis.generateDot(root,"data_dependence_graph.dot");
+
+  // simple test
+  RDLattice elem;
+  RDAnalysisAstAttribute* rda=new RDAnalysisAstAttribute(&elem);
+  delete rda;
 
   cout << "INFO: annotating analysis results as comments."<<endl;
   AnalysisResultAnnotator ara;
