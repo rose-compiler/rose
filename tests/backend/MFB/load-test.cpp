@@ -15,6 +15,7 @@ int main(int argc, char ** argv) {
   SgProject * project = new SgProject();
   std::vector<std::string> arglist;
     arglist.push_back("c++");
+    arglist.push_back("-DSKIP_ROSE_BUILTIN_DECLARATIONS");
     arglist.push_back("-c");
   project->set_originalCommandLineArgumentList (arglist);
 
