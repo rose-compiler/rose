@@ -5,24 +5,33 @@
 #include "Utils.h"
 #include "APIDepFinder.h"
 
+static const std::string APIDep("APIDep");
+
 /** Is node @n@ marked with an attribute that contains @attr@? */
 static bool marked(SgNode *n, const APIDepAttribute *attr) {
-    APIDepAttribute *t = (APIDepAttribute *)n->getAttribute("APIDep");
-    return t ? t->contains(attr) : false;
+    if( n->getAttribute(APIDep) != NULL ){
+      const APIDepAttribute * const t = dynamic_cast<const APIDepAttribute * const>(n->getAttribute(APIDep));
+      ROSE_ASSERT( t != NULL );
+      return t->contains(attr);
+    }
+    return false;
 }
 
 /** Create a new attribute similar to @attr@ but with dependence form
  * including @depForm@. */
 static APIDepAttribute *copyDep(const APIDepAttribute *attr,
                                 APIDepAttribute::DependenceForm depForm) {
-    APIDepAttribute *tData;
-    APIDepAttribute *tCopy = (APIDepAttribute *) attr;
+    APIDepAttribute * tData;
+    const APIDepAttribute * const tCopy = dynamic_cast<const APIDepAttribute * const>(attr);
+    ROSE_ASSERT( tCopy != NULL );
     if(tCopy->getDepForm() != depForm) {
         // NB: throwing away 'const' info to work w/ copy.
-        tData = (APIDepAttribute *)tCopy->copy();
+        tData = const_cast<APIDepAttribute *>(tCopy->copy());
+        ROSE_ASSERT( tData != NULL );
         tData->joinForm(depForm);
     } else {
-        tData = tCopy;
+        // NB: throwing away 'const' info to work w/ copy.
+        tData = const_cast<APIDepAttribute *>(tCopy);
     }
     return tData;
 }
@@ -44,22 +53,25 @@ static APIDepAttribute *ctrlDep(const APIDepAttribute *attr) {
  * along with the parents of @n@, to approximate control
  * dependencies. */
 void APIDepFinder::mark(SgNode *n, const APIDepAttribute *attr) {
-    APIDepAttribute *oldAttr = (APIDepAttribute *)n->getAttribute("APIDep");
     APIDepAttribute *newAttr;
-    if(oldAttr) {
-        if(oldAttr->matches(attr)) return;
-        newAttr = oldAttr->copy();
-        newAttr->join(attr);
+    if( n->getAttribute(APIDep) != NULL ){
+      const APIDepAttribute * const oldAttr = dynamic_cast<const APIDepAttribute *>(n->getAttribute(APIDep));
+      ROSE_ASSERT( oldAttr != NULL );
+      if(oldAttr->matches(attr)) return;
+      newAttr = oldAttr->copy();
+      newAttr->join(attr);
     } else {
-        newAttr = (APIDepAttribute *) attr;
+        newAttr = attr->copy(); // Make a copy to avoid throwing away const
     }
     if(debug) {
-        std::cout << "Marking: " << n->unparseToString()
-                  << " (" <<  newAttr->toString() << ")" << std::endl;
+        std::cout << "Marking: "
+                  << n->unparseToString()
+                  << " (" <<  newAttr->toString() << ")"
+                  << std::endl;
     }
-    n->setAttribute("APIDep", newAttr);
+    n->setAttribute(APIDep, newAttr);
 
-    APIDepAttribute *attrCtrl = ctrlDep(newAttr);
+    APIDepAttribute * const attrCtrl = ctrlDep(newAttr);
     markNeededChildren(n, attrCtrl);
     markParents(n, attrCtrl);
 }
@@ -69,20 +81,20 @@ void APIDepFinder::mark(SgNode *n, const APIDepAttribute *attr) {
 void APIDepFinder::markNeededChildren ( SgNode *n
                                       , const APIDepAttribute *attr)
 {
-    SgForStatement *fs = isSgForStatement(n);
-    SgWhileStmt *ws = isSgWhileStmt(n);
-    SgDoWhileStmt *ds = isSgDoWhileStmt(n);
-    SgIfStmt *is = isSgIfStmt(n);
-    SgSwitchStatement *ss = isSgSwitchStatement(n);
+    SgForStatement    * const fs = isSgForStatement(n);
+    SgWhileStmt       * const ws = isSgWhileStmt(n);
+    SgDoWhileStmt     * const ds = isSgDoWhileStmt(n);
+    SgIfStmt          * const is = isSgIfStmt(n);
+    SgSwitchStatement * const ss = isSgSwitchStatement(n);
 
     if(fs) {
-        SgForInitStatement *init = fs->get_for_init_stmt();
+        SgForInitStatement * const init = fs->get_for_init_stmt();
         mark(init, attr);
         SgStatementPtrList inits = init->get_init_stmt();
         SgStatementPtrList::iterator ii = inits.begin();
         while(ii != inits.end()) {
             mark(*ii, attr);
-            ii++;
+            ++ii;
         }
         mark(fs->get_test(), attr);
         mark(fs->get_increment(), attr);
@@ -99,7 +111,8 @@ void APIDepFinder::markNeededChildren ( SgNode *n
         mark(ss->get_item_selector(), attr);
     } else {
         if(debug) {
-            std::cout << "No needed children for " << n->unparseToString()
+            std::cout << "No needed children for "
+                      << n->unparseToString()
                       << std::endl;
         }
     }
@@ -121,16 +134,16 @@ void APIDepFinder::markParents(SgNode *n, const APIDepAttribute *attr) {
 /** Does @n@ represent an API call, as defined by the @APISpecs@ for
  * this instance? */
 APISpec *APIDepFinder::isAPICall(SgNode *n) {
-    SgFunctionCallExp *fc = isSgFunctionCallExp(n);
-    SgFunctionRefExp *f =
-        fc ? isSgFunctionRefExp(fc->get_function()) : NULL;
-    if(f) {
-        SgFunctionSymbol *sym = f->get_symbol_i();
-        SgName name = sym->get_name();
-        APISpec *spec = lookupFunction(apiSpecs, name.str());
-        if(spec) return spec;
+    SgSymbol *fsym = findFunctionHead(n);
+    if(fsym) {
+        return isAPICall(fsym->get_name());
     }
     return NULL;
+}
+
+APISpec *APIDepFinder::isAPICall(const std::string & name) const {
+    APISpec *spec = lookupFunction(apiSpecs, name);
+    return spec;
 }
 
 /** Perform a bottom-up traversal of the AST rooted at @n@,
@@ -140,18 +153,19 @@ APISpec *APIDepFinder::isAPICall(SgNode *n) {
 /* TODO: replace this with something that just looks for
  * calls and propagates attributes from them? */
 bool APIDepFinder::evaluateSynthesizedAttribute(SgNode *n,
-    SynthesizedAttributesList childAttrs)
-{
+    SynthesizedAttributesList childAttrs) {
+
     bool localResult =
         std::accumulate(childAttrs.begin(), childAttrs.end(),
                         false, std::logical_or<bool>());
-    SgFunctionCallExp *fc = isSgFunctionCallExp(n);
+    SgFunctionCallExp *fc = isFunctionCall(n);
+
     /* If this is a function call and we haven't already processed it,
      * then go ahead and process it. */
-    if(fc && argTable.find(getEnclosingSym(fc)) == argTable.end()) {
+    if(fc && argTable.find(fc->getAssociatedFunctionSymbol()) == argTable.end()) {
         APISpec *spec = isAPICall(n);
         if(spec) {
-            recordFuncDefStmts(0, spec->callType(), isSgFunctionCallExp(n));
+            recordFuncDefStmts(0, spec->callType(), fc);
             localResult = true;
         } else {
             localResult = handleOtherCall(fc);
@@ -160,79 +174,42 @@ bool APIDepFinder::evaluateSynthesizedAttribute(SgNode *n,
     return localResult;
 }
 
+/** "other call" means non-API call */
 bool APIDepFinder::handleOtherCall(SgFunctionCallExp *fc) {
     Rose_STL_Container<SgFunctionDeclaration *> decls;
     CallTargetSet::getPropertiesForExpression(isSgExpression(fc), chw, decls);
     bool hasAPICalls = false;
     foreach(SgFunctionDeclaration *decl, decls) {
-        SgSymbol *sym = decl->search_for_symbol_from_symbol_table();
-        if(debug)
-            std::cout << "Found declaration for call to "
-                      << sym->get_name().getString() << std::endl;
-        std::vector<APIDepAttribute *> *argAttrs = NULL;
-        SgExprListExp *args = fc->get_args();
-        SgExpressionPtrList exps = args->get_expressions();
-        if(defTable.find(sym) == defTable.end()) {
-            if(debug)
-                std::cout << "No def for "
-                          << sym->get_name().getString()
-                          << std::endl;
-            continue;
-        } else if(argTable.find(sym) == argTable.end()) {
-            followCall(sym);
-        }
-        argAttrs = argTable[sym];
-        /* TODO: better sharing with recordFuncDefStmts */
-        /* TODO: check that argAttrs and exps are the same size? */
-        for (size_t j = 0; j < argAttrs->size(); j++) {
-            APIDepAttribute *at = (*argAttrs)[j];
-            if(at) {
-                if(debug)
-                    std::cout << "Marking argument "
-                              << exps[j]->unparseToString()
-                              << std::endl;
-                mark(exps[j], at);
-                APIDepAttribute *tData = dataDep(at);
-                recordDefStmts(2, tData, exps[j]);
-                APIDepAttribute *tCtrl = ctrlDep(at);
-                mark(fc, tCtrl);
+       // 1. Look in the transitive call graph for decl
+       if( transitiveCalls == NULL ) return hasAPICalls;
+       // FIXME: this should use a qualified name, possibly with mangling
+       // The reason is that, now that we are considering the full call graph we
+       // need names to be unique across the program -- not just across the compilation unit.
+       Signatures::const_iterator c = transitiveCalls->find(decl->get_name());
+       if( c != transitiveCalls->end() ){
+          // 2. Look for API calls in the list of calls
+          if(debug) std::cout << c->first << ": " << c->second << std::endl; 
+          foreach(const std::string & callee, c->second.calls){
+             const APISpec * const spec = isAPICall(callee);
+             if(spec) {
+                // 3. We found an API call inside the function so we record fc as
+                // as having the same callType as the API call.
+                recordFuncDefStmts(0, spec->callType(), fc);
                 hasAPICalls = true;
-            }
-        }
+             }
+          }
+       }
     }
     return hasAPICalls;
-}
-
-void APIDepFinder::followCall(SgSymbol *sym) {
-    SgFunctionDefinition *def = defTable[sym];
-    SgFunctionDeclaration *decl = def->get_declaration();
-    std::vector<APIDepAttribute *> *attrs = new std::vector<APIDepAttribute *>;
-    APIDepFinder *subFinder = new APIDepFinder(ssa, defTable, chw, apiSpecs);
-    subFinder->setArgTable(argTable);
-    if(debug)
-        std::cout << "Following call to "
-                  << sym->get_name().getString()
-                  << std::endl;
-    subFinder->traverse(def);
-    foreach(SgInitializedName *n, decl->get_args()) {
-        APIDepAttribute *t = (APIDepAttribute *)n->getAttribute("APIDep");
-        attrs->push_back(t);
-    }
-    std::map<SgSymbol *, std::vector<APIDepAttribute *> *> args = subFinder->getArgTable();
-    argTable.insert(args.begin(), args.end());
-    argTable[sym] = attrs;
-    delete subFinder;
 }
 
 /** Record data and control dependencies for a function call. */
 void APIDepFinder::recordFuncDefStmts( int indent
                                      , const APIDepAttribute *t
                                      , SgFunctionCallExp *fc) {
-    SgFunctionRefExp *f = fc ? isSgFunctionRefExp(fc->get_function()) : NULL;
-    if(f) {
-        SgFunctionSymbol *sym = f->get_symbol_i();
-        SgName name = sym->get_name();
-        SgExprListExp *args = fc->get_args();
+    SgFunctionSymbol *fsym = fc ? fc->getAssociatedFunctionSymbol() : NULL;
+    if ( fsym ) {
+        SgExprListExp *args       = fc->get_args();
         mark(fc, t);
 
         // FIXME[C1]: is the following mark really necessary? Won't it
@@ -240,23 +217,29 @@ void APIDepFinder::recordFuncDefStmts( int indent
         //SgStatement *enclosing = SageInterface::getEnclosingStatement(fc);
         //mark(enclosing, t);
 
-        if(isAPICall(fc)) {
+        if ( isAPICall(fc) ) {
             if (debug) {
-                for (int c = 0; c < indent; c++) std::cout << " ";
-                std::cout << "API call: " << name.str() << std::endl;
+                for (int c = 0; c < indent; c++)
+                    std::cout << " ";
+                std::cout << "API call: " << fsym->get_name().str()
+                                                                << std::endl;
             }
 
-            APISpec *spec = lookupFunction(apiSpecs, name.str());
-            ArgTreatments *treatments = spec->getFunction(name.str());
-            SgExpressionPtrList exps = args->get_expressions();
-            for (size_t j = 0; j < exps.size(); j++) {
+            APISpec *spec             = lookupFunction(apiSpecs, fsym->get_name());
+            ArgTreatments *treatments = spec->getFunction(fsym->get_name());
+
+            SgExpressionPtrList exps  = args->get_expressions();
+
+            for ( size_t j = 0 ; j < exps.size() ; j++ ) {
                 if(debug) {
-                    for (int c = 0; c < indent; c++) std::cout << " ";
+                    for (int c = 0; c < indent; c++)
+                        std::cout << " ";
                     std::cout << "Processing argument "
                               << exps[j]->unparseToString()
                               << std::endl;
                 }
-                APIDepAttribute *at = (APIDepAttribute *)(*treatments)[j];
+                ROSE_ASSERT( j < treatments->size() );
+                APIDepAttribute *at = (APIDepAttribute *) (*treatments)[j];
                 mark(exps[j], at);
                 APIDepAttribute *tData = dataDep(at);
                 recordDefStmts(indent + 2, tData, exps[j]);
@@ -272,7 +255,7 @@ void APIDepFinder::recordFuncDefStmts( int indent
 void APIDepFinder::recordDefStmts( int indent
                                  , const APIDepAttribute *t
                                  , SgNode *n) {
-    SgFunctionCallExp *fc = isSgFunctionCallExp(n);
+    SgFunctionCallExp *fc = isFunctionCall(n);
     if(fc) {
         if(!isAPICall(n)) {
             recordFuncDefStmts(indent, t, fc);
@@ -289,7 +272,7 @@ void APIDepFinder::recordDefStmts( int indent
         std::cout << "Recording defining statements for "
                   << n->unparseToString() << std::endl;
     }
-    for(; di != defs.end(); di++) {
+    for(; di != defs.end(); ++di) {
         if(!marked(*di, t) && *di != n) {
             mark(*di, t);
             if (debug) {
@@ -308,3 +291,4 @@ void APIDepFinder::recordDefStmts( int indent
         }
     }
 }
+

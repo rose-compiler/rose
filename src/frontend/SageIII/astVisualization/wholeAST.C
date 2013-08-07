@@ -1564,6 +1564,8 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
              {
             // DQ (6/5/2011): Output if this is an implicit (compiler generated) or explicit case (non-compiler generated).
                ROSE_ASSERT(castExp->get_startOfConstruct() != NULL);
+            // DQ (7/24/2013): Added support to have more debugging information.
+               labelWithSourceCode += string("\\n castContainsBaseTypeDefiningDeclaration: ") + ((castExp->get_castContainsBaseTypeDefiningDeclaration() == true) ? "true" : "false") + "  ";
                labelWithSourceCode += string("\\n cast is: ") + ((castExp->get_startOfConstruct()->isCompilerGenerated() == true) ? "implicit" : "explicit") + "  ";
              }
 

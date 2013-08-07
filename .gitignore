@@ -35,6 +35,7 @@ Makefile.in
 /config/ltversion.m4
 /config/lt~obsolete.m4
 /config/support-projects.m4
+/config/test-driver
 
 # OS X Finder files
 .DS_Store

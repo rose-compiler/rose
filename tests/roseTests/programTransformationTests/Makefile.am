@@ -1,5 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-SUBDIRS = extractFunctionArgumentsTest
+
+# SUBDIRS = extractFunctionArgumentsTest
+SUBDIRS = extractFunctionArgumentsTest  singleStatementToBlockNormalization
 
 noinst_PROGRAMS =
 TEST_TARGETS =
