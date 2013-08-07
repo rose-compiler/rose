@@ -16,33 +16,7 @@ using std::string;
 
 using namespace CodeThorn;
 
-typedef pair<VariableId,LabelSet> VariableIdLabelSetPair;
-typedef set<VariableIdLabelSetPair> UseDefInfo;
-
-class UseDefInfoAttribute : public AstSgNodeAttribute {
- public:
- UseDefInfoAttribute(RDAnalysisAstAttribute* rdAttr, SgNode* nodeForUseVarQuery)
-   :_rdAttr(rdAttr),
-	_node(nodeForUseVarQuery)
- {
-  }
-  VariableIdSet useVariables(VariableIdMapping& vidm) {
-	// labels are associated with statements.
-	SgNode* exprNode=_node;
-	if(isSgExprStatement(exprNode))
-	  exprNode=SgNodeHelper::getExprStmtChild(exprNode);
-	return AnalysisAbstractionLayer::useVariablesInExpression(exprNode,vidm);
-  }
-  LabelSet definitionsOfVariable(VariableId var) {
-	return _rdAttr->definitionsOfVariableId(var);
-  }
-  void toStream(ostream& os, VariableIdMapping* vim) {
-	os<<"@"<<_node<<"{#UseVars:"<<useVariables(*vim).size()<<"}"<<endl;
-  }
- private:
-  RDAnalysisAstAttribute* _rdAttr;
-  SgNode* _node;
-};
+#include "UDAstAttribute.h"
 
 class DataDependenceVisualizer {
  public:
@@ -54,7 +28,7 @@ class DataDependenceVisualizer {
   void generateDot(SgNode* root, string fileName);
   bool _showSourceCode;
  private:
-  UseDefInfoAttribute* getUseDefInfoAttribute(SgNode* expr,string attributeName);
+  UDAstAttribute* getUDAstAttribute(SgNode* expr,string attributeName);
   Labeler* _labeler;
   VariableIdMapping* _variableIdMapping;
   string  _useDefAttributeName;

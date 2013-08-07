@@ -148,6 +148,8 @@ rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h Co
   RDAnalysisAbstractAstAttribute.C \
   RDAnalysisAstAttribute.h         \
   RDAnalysisAstAttribute.C         \
+  UDAstAttribute.h                 \
+  UDAstAttribute.C                 \
   AstTerm.h                        \
   AstTerm.C                        \
   matcherparser.C RoseAst.h RoseAst.C matcherparser_decls.h AstMatching.C AstMatching.h MatchOperation.C MatchOperation.h \

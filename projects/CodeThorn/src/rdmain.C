@@ -17,13 +17,13 @@
 using namespace std;
 using namespace CodeThorn;
 
-void createDefUseAttributeFromRDAttribute(Labeler* labeler, string rdAttributeName, string udAttributeName) {
+void createUDAstAttributeFromRDAttribute(Labeler* labeler, string rdAttributeName, string udAttributeName) {
   long labelNum=labeler->numberOfLabels();
   for(long i=0;i<labelNum;++i) {
 	Label lab=i;
-	SgNode* node=labeler->getNode(i);
+	SgNode* node=labeler->getNode(lab);
 	RDAnalysisAstAttribute* rdAttr=dynamic_cast<RDAnalysisAstAttribute*>(node->getAttribute(rdAttributeName));
-	node->setAttribute(udAttributeName,new UseDefInfoAttribute(rdAttr, node));
+	node->setAttribute(udAttributeName,new UDAstAttribute(rdAttr, node));
   }
 }
 
@@ -55,11 +55,11 @@ int main(int argc, char* argv[]) {
   rdAnalyzer->attachResultsToAst("rd-analysis");
   cout << "INFO: generating visualization data."<<endl;
   printAttributes<RDAnalysisAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"rd-analysis");
-  createDefUseAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis", "ud-analysis");
+  createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis", "ud-analysis");
   DataDependenceVisualizer ddvis(rdAnalyzer->getLabeler(),
                                  rdAnalyzer->getVariableIdMapping(),
 								 "ud-analysis");
-  printAttributes<UseDefInfoAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"ud-analysis");
+  printAttributes<UDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"ud-analysis");
   //ddvis._showSourceCode=false; // for large programs
   ddvis.generateDot(root,"datadependencegraph.dot");
 
