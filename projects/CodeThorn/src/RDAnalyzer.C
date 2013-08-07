@@ -3,13 +3,24 @@
 #include "sage3basic.h"
 
 #include "RDAnalyzer.h"
-
+#include "RDAnalysisAstAttribute.h"
 using namespace std;
 using namespace CodeThorn;
 
 #include "CollectionOperators.h"
 
 RDAnalyzer::RDAnalyzer() {
+}
+
+void RDAnalyzer::attachResultsToAst(string attributeName) {
+  size_t lab=0;
+  for(std::vector<RDLattice>::iterator i=_analyzerData.begin();
+      i!=_analyzerData.end();
+      ++i) {
+    // TODO: need to add a solution for nodes with multiple associated labels (e.g. functio call)
+    _labeler->getNode(lab)->setAttribute(attributeName,new RDAnalysisAstAttribute(&(*i)));
+    lab++;
+  }
 }
 
 RDAnalyzer::iterator RDAnalyzer::begin() {

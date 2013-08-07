@@ -208,7 +208,7 @@ private:
 #include <sstream>
 
 template<typename LatticeType>
-void DFAnalyzer<LatticeType>::attachResultsToAst() {
+void DFAnalyzer<LatticeType>::attachResultsToAst(string attributeName) {
   size_t lab=0;
   for(typename std::vector<LatticeType>::iterator i=_analyzerData.begin();
       i!=_analyzerData.end();
@@ -217,7 +217,7 @@ void DFAnalyzer<LatticeType>::attachResultsToAst() {
     (&(*i))->toStream(ss);
     //std::cout<<ss.str();
     // TODO: need to add a solution for nodes with multiple associated labels (e.g. functio call)
-    _labeler->getNode(lab)->setAttribute("rd-analysis",new GeneralResultAttribute(ss.str()));
+    _labeler->getNode(lab)->setAttribute(attributeName,new GeneralResultAttribute(ss.str()));
     lab++;
   }
 

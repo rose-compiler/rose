@@ -18,9 +18,10 @@ using namespace CodeThorn;
 class RDAnalyzer : public DFAnalyzer<RDLattice> {
  public:
   RDAnalyzer();
+  void attachResultsToAst(string attributeName);
   RDLattice transfer(Label lab, RDLattice element);
   // this function assumes that a pointer to an AST subtree representing a LHS of an assignment has been passed
-  VariableIdMapping::VariableIdSet determineLValueVariableIdSet(SgNode* node);
+  VariableIdSet determineLValueVariableIdSet(SgNode* node);
   typedef AnalyzerData::iterator iterator;
   iterator begin();
   iterator end();

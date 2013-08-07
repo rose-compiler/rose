@@ -23,7 +23,7 @@ void createDefUseAttributeFromRDAttribute(Labeler* labeler, string rdAttributeNa
 	Label lab=i;
 	SgNode* node=labeler->getNode(i);
 	RDAnalysisAstAttribute* rdAttr=dynamic_cast<RDAnalysisAstAttribute*>(node->getAttribute(rdAttributeName));
-	node->addNewAttribute(udAttributeName,new UseDefInfoAttribute(rdAttr, node));
+	node->setAttribute(udAttributeName,new UseDefInfoAttribute(rdAttr, node));
   }
 }
 
@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
   rdAnalyzer->determineExtremalLabels(startFunRoot);
   rdAnalyzer->run();
   cout << "INFO: attaching results to AST."<<endl;
-  rdAnalyzer->attachResultsToAst();
+  rdAnalyzer->attachResultsToAst("rd-analysis");
   cout << "INFO: generating visualization data."<<endl;
   createDefUseAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis", "ud-analysis");
   DataDependenceVisualizer ddvis(rdAnalyzer->getLabeler(),
