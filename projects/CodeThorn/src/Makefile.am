@@ -134,7 +134,7 @@ varwatch_LDADD = -lrose
 varwatch_SOURCES = varwatch.C VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C RoseAst.h RoseAst.C
 
 rdmain_LDADD = -lrose
-rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C RoseAst.h RoseAst.C Labeler.h Labeler.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C AttributeAnnotator.h AttributeAnnotator.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
+rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C Labeler.h Labeler.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C AttributeAnnotator.h AttributeAnnotator.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
   AnalysisAbstractionLayer.h       \
   AnalysisAbstractionLayer.C       \
   AnalysisAstAttribute.h           \
@@ -142,7 +142,16 @@ rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h Co
   RDAnalysisAbstractAstAttribute.h \
   RDAnalysisAbstractAstAttribute.C \
   RDAnalysisAstAttribute.h         \
-  RDAnalysisAstAttribute.C         
+  RDAnalysisAstAttribute.C         \
+  AstTerm.h                        \
+  AstTerm.C                        \
+  matcherparser.C RoseAst.h RoseAst.C matcherparser_decls.h AstMatching.C AstMatching.h MatchOperation.C MatchOperation.h \
+  addressTakenAnalysis/defUseQuery.C \
+  addressTakenAnalysis/defUseQuery.h \
+  addressTakenAnalysis/VariableIdUtils.C \
+  addressTakenAnalysis/VariableIdUtils.h \
+  addressTakenAnalysis/addressTakenAnalysis.C \
+  addressTakenAnalysis/addressTakenAnalysis.h
 
 # explicit rules because of multiple bison parser
 matcherparser.C: $(srcdir)/matcherlexer.ll $(srcdir)/matcherparser.yy
