@@ -8,10 +8,10 @@ class VariableIdSetAttribute;
 // public
 
 DataDependenceVisualizer::DataDependenceVisualizer(Labeler* labeler, VariableIdMapping* varIdMapping, string useDefAttributeName)
-  : _labeler(labeler),
+  : _showSourceCode(true),
+    _labeler(labeler),
     _variableIdMapping(varIdMapping),
-	_useDefAttributeName(useDefAttributeName),
-	_showSourceCode(true)
+	_useDefAttributeName(useDefAttributeName)
 {
 }
 
