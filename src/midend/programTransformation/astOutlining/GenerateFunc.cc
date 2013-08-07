@@ -55,7 +55,8 @@ createFuncSkeleton (const string& name, SgType* ret_type,
   // Liao 12/13/2007, generate SgProcedureHeaderStatement for Fortran code
      if (SageInterface::is_Fortran_language()) 
         {
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+//#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+#if 0
        // DQ (8/28/2012): Generate a NULL pointer for now and fix that later.
           fortranRoutine = NULL;
 

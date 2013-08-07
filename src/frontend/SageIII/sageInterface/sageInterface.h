@@ -1834,6 +1834,12 @@ SgBasicBlock* ensureBasicBlockAsBodyOfDoWhile(SgDoWhileStmt* ws);
 //! Check if the body of a 'switch' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsBodyOfSwitch(SgSwitchStatement* ws);
 
+//! Check if the body of a 'case option' statement is a SgBasicBlock, create one if not.
+SgBasicBlock* ensureBasicBlockAsBodyOfCaseOption(SgCaseOptionStmt* cs);
+
+//! Check if the body of a 'default option' statement is a SgBasicBlock, create one if not.
+SgBasicBlock* ensureBasicBlockAsBodyOfDefaultOption(SgDefaultOptionStmt * cs);
+    
 //! Check if the true body of a 'if' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsTrueBodyOfIf(SgIfStmt* ifs);
 
