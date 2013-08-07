@@ -27,10 +27,17 @@ class UseDefInfoAttribute : public AstSgNodeAttribute {
  {
   }
   VariableIdSet useVariables(VariableIdMapping& vidm) {
-	return AnalysisAbstractionLayer::useVariablesInExpression(_node,vidm);
+	// labels are associated with statements.
+	SgNode* exprNode=_node;
+	if(isSgExprStatement(exprNode))
+	  exprNode=SgNodeHelper::getExprStmtChild(exprNode);
+	return AnalysisAbstractionLayer::useVariablesInExpression(exprNode,vidm);
   }
   LabelSet definitionsOfVariable(VariableId var) {
 	return _rdAttr->definitionsOfVariableId(var);
+  }
+  void toStream(ostream& os, VariableIdMapping* vim) {
+	os<<"@"<<_node<<"{#UseVars:"<<useVariables(*vim).size()<<"}"<<endl;
   }
  private:
   RDAnalysisAstAttribute* _rdAttr;
@@ -45,6 +52,7 @@ class DataDependenceVisualizer {
   Label getLabel(SgNode* stmt);
   SgNode* getNode(Label lab);
   void generateDot(SgNode* root, string fileName);
+  bool _showSourceCode;
  private:
   UseDefInfoAttribute* getUseDefInfoAttribute(SgNode* expr,string attributeName);
   Labeler* _labeler;

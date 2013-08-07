@@ -27,6 +27,17 @@ void createDefUseAttributeFromRDAttribute(Labeler* labeler, string rdAttributeNa
   }
 }
 
+template<typename T>
+void printAttributes(Labeler* labeler, VariableIdMapping* vim, string attributeName) {
+  long labelNum=labeler->numberOfLabels();
+  for(long i=0;i<labelNum;++i) {
+	Label lab=i;
+	SgNode* node=labeler->getNode(i);
+	cout<<"@Label "<<lab<<":";
+	dynamic_cast<T*>(node->getAttribute(attributeName))->toStream(cout,vim);
+	cout<<endl;
+  }
+}
 int main(int argc, char* argv[]) {
   cout << "INIT: Parsing and creating AST."<<endl;
   boolOptions.registerOption("semantic-fold",false); // temporary
@@ -43,10 +54,13 @@ int main(int argc, char* argv[]) {
   cout << "INFO: attaching results to AST."<<endl;
   rdAnalyzer->attachResultsToAst("rd-analysis");
   cout << "INFO: generating visualization data."<<endl;
+  printAttributes<RDAnalysisAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"rd-analysis");
   createDefUseAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis", "ud-analysis");
   DataDependenceVisualizer ddvis(rdAnalyzer->getLabeler(),
                                  rdAnalyzer->getVariableIdMapping(),
 								 "ud-analysis");
+  printAttributes<UseDefInfoAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"ud-analysis");
+  //ddvis._showSourceCode=false; // for large programs
   ddvis.generateDot(root,"datadependencegraph.dot");
 
   // simple test

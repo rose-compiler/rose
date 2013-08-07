@@ -285,10 +285,10 @@ string VariableIdMapping::uniqueLongVariableName(VariableId varId) {
 
 string VariableIdMapping::uniqueShortVariableName(VariableId varId) {
   if(!isTemporaryVariableId(varId)) {
-    return varId.toString()+"_"+variableName(varId);
+    return variableName(varId)+"_"+varId.toString().substr(1);
     //return SgNodeHelper::uniqueLongVariableName(getSymbol(varId));
   } else {
-    return string("__tmp")+"_"+variableName(varId);
+    return string("tmp")+"_"+varId.toString().substr(1);
   }
 }
 

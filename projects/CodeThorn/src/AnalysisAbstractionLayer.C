@@ -30,6 +30,7 @@ AnalysisAbstractionLayer::usedVariablesInsideFunctions(SgProject* project, Varia
 // TODO: this function ignores all reported memory access to unnamed memory cells
 void extractVariableIdSetFromVarsInfo(VariableIdSet& varIdSet, VarsInfo& varsInfo) {
 	VariableIdInfoMap& vim=varsInfo.first;
+	cout<<"VariableIdInfoMap-size:"<<vim.size()<<endl;
 	for(VariableIdInfoMap::iterator i=vim.begin();i!=vim.end();++i) {
 	  varIdSet.insert((*i).first);
 	}

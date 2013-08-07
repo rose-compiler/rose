@@ -10,7 +10,8 @@ class VariableIdSetAttribute;
 DataDependenceVisualizer::DataDependenceVisualizer(Labeler* labeler, VariableIdMapping* varIdMapping, string useDefAttributeName)
   : _labeler(labeler),
     _variableIdMapping(varIdMapping),
-	_useDefAttributeName(useDefAttributeName)
+	_useDefAttributeName(useDefAttributeName),
+	_showSourceCode(true)
 {
 }
 
@@ -50,7 +51,18 @@ void DataDependenceVisualizer::generateDot(SgNode* root, string fileName) {
 		Label targetNode=*i;
 		VariableId edgeAnnotation=useVar;
 		string edgeAnnotationString=_variableIdMapping->uniqueShortVariableName(useVar);
-		myfile<<sourceNode<<" -> "<<targetNode<<"[label=\""<<edgeAnnotation.toString()<<"\"];"<<endl;
+
+		myfile<<sourceNode<<" -> "<<targetNode;
+		if(_showSourceCode) {
+		  myfile<<"[label=\""<<edgeAnnotationString<<"\" color=red];";
+		}
+		myfile<<endl;
+
+		if(_showSourceCode) {
+		  myfile<<sourceNode<<" [label=\""<<sourceNode<<":"<<getNode(sourceNode)->unparseToString()<<"\"];"<<endl;
+		  myfile<<targetNode<<" [label=\""<<targetNode<<":"<<getNode(targetNode)->unparseToString()<<"\"];"<<endl;
+		}
+
 	  }
 	}
   }
