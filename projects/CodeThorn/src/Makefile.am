@@ -54,8 +54,6 @@ codethorn_SOURCES = \
   LanguageRestrictorCollection.h   \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
-  RoseAst.C                        \
-  RoseAst.h                        \
   SetAlgo.h                        \
   SgNodeHelper.C                   \
   SgNodeHelper.h                   \
@@ -83,7 +81,14 @@ codethorn_SOURCES = \
   RDAnalysisAbstractAstAttribute.C \
   RDAnalysisAstAttribute.h         \
   RDAnalysisAstAttribute.C         \
-  RERS_empty_specialization.C      
+  RERS_empty_specialization.C      \
+  matcherparser.C RoseAst.h RoseAst.C matcherparser_decls.h AstMatching.C AstMatching.h MatchOperation.C MatchOperation.h \
+  addressTakenAnalysis/defUseQuery.C \
+  addressTakenAnalysis/defUseQuery.h \
+  addressTakenAnalysis/VariableIdUtils.C \
+  addressTakenAnalysis/VariableIdUtils.h \
+  addressTakenAnalysis/addressTakenAnalysis.C \
+  addressTakenAnalysis/addressTakenAnalysis.h
 
 # used only in specialized analyzer
 faketarget:

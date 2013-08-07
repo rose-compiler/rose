@@ -10,7 +10,7 @@ using namespace CodeThorn;
 namespace AnalysisAbstractionLayer {
   VariableIdSet globalVariables(SgProject* project, VariableIdMapping* variableIdMapping);
   VariableIdSet usedVariablesInsideFunctions(SgProject* project, VariableIdMapping* variableIdMapping);
-  VariableIdSet useVariablesInExpression(SgNode* expr);
-  VariableIdSet defVariablesInExpression(SgNode* expr);
+  VariableIdSet useVariablesInExpression(SgNode* expr, VariableIdMapping& vidm);
+  VariableIdSet defVariablesInExpression(SgNode* expr, VariableIdMapping& vidm);
 }
 #endif

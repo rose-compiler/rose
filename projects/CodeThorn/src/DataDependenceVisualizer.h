@@ -26,8 +26,8 @@ class UseDefInfoAttribute : public AstSgNodeAttribute {
 	_node(nodeForUseVarQuery)
  {
   }
-  VariableIdSet useVariables() {
-	return AnalysisAbstractionLayer::useVariablesInExpression(_node);
+  VariableIdSet useVariables(VariableIdMapping& vidm) {
+	return AnalysisAbstractionLayer::useVariablesInExpression(_node,vidm);
   }
   LabelSet definitionsOfVariable(VariableId var) {
 	return _rdAttr->definitionsOfVariableId(var);

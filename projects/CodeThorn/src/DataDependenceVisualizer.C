@@ -16,7 +16,7 @@ DataDependenceVisualizer::DataDependenceVisualizer(Labeler* labeler, VariableIdM
 
 VariableIdSet DataDependenceVisualizer::useVars(SgNode* expr) {
   UseDefInfoAttribute* useDefAttribute=getUseDefInfoAttribute(expr,_useDefAttributeName);
-  return useDefAttribute->useVariables();
+  return useDefAttribute->useVariables(*_variableIdMapping);
 }
 
 LabelSet DataDependenceVisualizer::defLabels(SgNode* expr, VariableId useVar) {

@@ -75,9 +75,9 @@ void RDAnalyzer::transfer_assignment(SgAssignOp* node, Label& lab, RDLattice& el
     // 2) add (lab,lhs.varid)
     
     // (for programs with pointers we require a set here)
-#if 0
+#if 1
   // TODO: USEDEF FUNCTIONS HERE (ACTIVATE)
-	VariableIdSet lhsVarIds=AnalysisAbstractionLayer::defVariablesInExpression(node);  
+  VariableIdSet lhsVarIds=AnalysisAbstractionLayer::defVariablesInExpression(node,_variableIdMapping);  
 #else
     VariableIdSet lhsVarIds=determineLValueVariableIdSet(SgNodeHelper::getLhs(node));
 #endif
