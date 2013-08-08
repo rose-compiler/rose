@@ -1,4 +1,4 @@
-// 3 matches
+// 4 matches
 
 int allowed_global_variable;
 
