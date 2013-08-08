@@ -24,7 +24,6 @@ SUBDIRS=\
 	asynchronous_signal_handler \
 	dead_function \
 	default_argument \
-	function_pointer \
 	function_prototype \
 	function_with_multiple_returns \
 	global_variables \

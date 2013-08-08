@@ -21,7 +21,7 @@ $(TESTCODES:.cpp=.o): $(TESTCODES)
 	$(TEST_SCRIPT) \
 		$(CHECKER) \
 		$(srcdir)/$(@:.o=.cpp) \
-		"Dead function detected"
+		"Dead/unreachable function detected!"
 
 $(COMPASS2):
 	$(MAKE) -C $(top_builddir)/projects/compass2
