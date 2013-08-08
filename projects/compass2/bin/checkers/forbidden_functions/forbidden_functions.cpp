@@ -10,7 +10,6 @@
 #include "rose.h"
 #include "compass2/compass.h"
 #include "CodeThorn/src/AstMatching.h"
-#include "CodeThorn/src/AstTerm.h"
 
 using std::string;
 using namespace StringUtility;

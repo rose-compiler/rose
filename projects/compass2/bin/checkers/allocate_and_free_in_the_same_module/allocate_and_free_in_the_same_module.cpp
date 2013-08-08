@@ -9,7 +9,6 @@
 
 #include "rose.h"
 #include "CodeThorn/src/AstMatching.h"
-#include "CodeThorn/src/AstTerm.h"
 #include "CodeThorn/src/VariableIdMapping.h"
 #include "compass2/compass.h"
 
@@ -90,9 +89,9 @@ bool IsNodeNotInUserLocation(const SgNode* node)
  * The verbose output provides some very useful debugging information,
  * including the dependency graph used to resolve relationships between
  * variables and across function and scope boundaries. The verbose output
- * also indicates the checker's degree oconfidence that variables it has
+ * also indicates the checker's degree of confidence that variables it has
  * marked as free are in fact free (values of "PROBABLY" and
- * "ALMOST DEFINITELY" are possible.
+ * "ALMOST DEFINITELY" are possible.)
  *
  *
  * This checker uses a custom algorithm written by Sam Kelly
@@ -127,6 +126,33 @@ bool IsNodeNotInUserLocation(const SgNode* node)
  * progress as it moves from the inside of a function, outside
  * through the return statement
  *---------------------------------------------------------------------------*/
+
+//TODO: use flow analysis
+//TODO: differentiate between different instances of structs / container objects
+//      that contain a pointer.. right now the following will not be caught, but
+//      can be caught without flow analysis:
+/*
+ * struct pointer_container
+ * {
+ *   int *contained_ptr;
+ * };
+ *
+ * int main()
+ * {
+ *   pointer_container ctr1;
+ *   ctr1.contained_ptr = (int*)malloc(sizeof(int));
+ *   free(ctr1.contained_ptr);
+ *   pointer_container ctr2;
+ *   ctr2.contained_ptr = (int*)malloc(sizeof(int)); // not detected because
+ *   // the variable id for pointer_container.contained_ptr has already been
+ *   // marked as free
+ * }
+ *
+ * TODO: handle cases where malloc or calloc is called, but the return value
+ *       is not stored in a variable. Make sure that if the malloc or calloc
+ *       call is contained within a free(), that this isn't marked as missing
+ *       a free, even though such a scenario is superflous
+ */
 
 namespace CompassAnalyses
 {
@@ -179,7 +205,6 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
 
   // keeps track of the dynamically allocated variables in the
   // symbol table that were freed
-  //std::vector<SgSymbol*> freed;
   boost::unordered_set<SgSymbol*> freed;
 
   // keeps track of the dynamically allocated variables in the
@@ -346,6 +371,7 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
         BOOST_FOREACH(SingleMatchVarBindings return_var_match, return_var_matches)
         {
           SgVarRefExp *return_var = (SgVarRefExp *)return_var_match["$v"];
+          // skip non pointer variables
           if(!SageInterface::isPointerType(return_var->get_type())) continue;
           SgSymbol *return_var_sym = return_var->get_symbol();
           if(return_var_sym == NULL) continue;
@@ -358,11 +384,10 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
     }
   }
 
+  // do a global search for assignment operations
   AstMatching main_matcher;
-  // do a global search for SgAssignOp's
   MatchResult main_matches = main_matcher
       .performMatching("$a=SgAssignOp|$i=SgAssignInitializer", root_node);
-
   BOOST_FOREACH(SingleMatchVarBindings match, main_matches)
   {
     SgAssignOp *assign_op = isSgAssignOp(match["$a"]);
@@ -437,8 +462,7 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
         MatchResult RHS_var_matches =
             RHS_var_matcher.performMatching("$r=SgVarRefExp", assign_op);
         if(RHS_var_matches.size() > 0)
-          SgSymbol *RHS_symbol =
-              ((SgVarRefExp*)RHS_var_matches.back()["$r"])->get_symbol();
+          RHS_symbol = ((SgVarRefExp*)RHS_var_matches.back()["$r"])->get_symbol();
       } else {
         RHS_symbol = RHS_var_ref->get_symbol();
       }
