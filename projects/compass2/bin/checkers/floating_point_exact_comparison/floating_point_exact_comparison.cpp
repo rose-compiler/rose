@@ -9,7 +9,6 @@
 #include "rose.h"
 #include "string_functions.h"
 #include "CodeThorn/src/AstMatching.h"
-#include "CodeThorn/src/AstTerm.h"
 
 #include <boost/foreach.hpp>
 

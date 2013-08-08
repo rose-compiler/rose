@@ -8,7 +8,6 @@
 #include "compass2/compass.h"
 #include <boost/foreach.hpp>
 #include "CodeThorn/src/AstMatching.h"
-#include "CodeThorn/src/AstTerm.h"
 
 
 using std::string;

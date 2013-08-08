@@ -9,7 +9,6 @@
 #include "rose.h"
 #include "compass2/compass.h"
 #include "CodeThorn/src/AstMatching.h"
-#include "CodeThorn/src/AstTerm.h"
 #include "CodeThorn/src/SgNodeHelper.h"
 
 using std::string;
@@ -127,25 +126,30 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
 
       // if a function isn't in the called_functions hash set
       // then it is a dead function
-      AstMatching func_def_matcher;
-      MatchResult func_def_matches = func_def_matcher
-          .performMatching("$f=SgFunctionDefinition", root_node);
-      BOOST_FOREACH(SingleMatchVarBindings match, func_def_matches)
+      AstMatching func_dec_matcher;
+      MatchResult func_dec_matches = func_dec_matcher
+          .performMatching("$f=SgFunctionDeclaration", root_node);
+      BOOST_FOREACH(SingleMatchVarBindings match, func_dec_matches)
       {
-        SgFunctionDefinition *func_def = (SgFunctionDefinition *)match["$f"];
-        if(called_functions.find(func_def) == called_functions.end())
+        SgFunctionDeclaration *func_dec = (SgFunctionDeclaration *)match["$f"];
+        SgFunctionDefinition *func_def = isSgFunctionDefinition(func_dec->get_definition());
+        bool report = false;
+        if(func_def != NULL)
         {
-          // function definition was found that is never called
-
-          // ignore main()
-          std::string func_name = func_def->get_declaration()->get_name().getString();
-          if(func_name.compare("main") == 0) continue;
+          if(called_functions.find(func_def) == called_functions.end())
+          {
+            // function definition was found that is never called
+            // ignore main()
+            std::string func_name = func_def->get_declaration()->get_name().getString();
+            if(func_name.compare("main") == 0) continue;
+            report = true;
+          }
+        } else report = true; // functions without a definition are dead
+        if(report)
           output->addOutput(
               new CompassAnalyses::DeadFunction::
-              CheckerOutput(func_def));
-        }
+              CheckerOutput(func_dec));
       }
-
 
   }
 
