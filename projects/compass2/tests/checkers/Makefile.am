@@ -5,6 +5,12 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AUTOMAKE_OPTIONS = subdir-objects
 
 SUBDIRS=\
+	no_vfork \
+	no_variadic_functions \
+	no_goto \
+	floating_point_exact_comparison \
+	no_rand \
+	allocate_and_free_in_the_same_module \
 	asynchronous_signal_handler \
 	discard_assignment \
 	explicit_test_for_non_boolean_value \
