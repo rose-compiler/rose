@@ -82,9 +82,13 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (OmpReductionClause, "OmpReductionClause", "OmpReductionClauseTag" );
 
      NEW_TERMINAL_MACRO (OmpMapClause, "OmpMapClause", "OmpMapClauseTag" );
+     NEW_TERMINAL_MACRO (OmpLinearClause, "OmpLinearClause", "OmpLinearClauseTag" );
+     NEW_TERMINAL_MACRO (OmpUniformClause, "OmpUniformClause", "OmpUniformClauseTag" );
+     NEW_TERMINAL_MACRO (OmpAlignedClause, "OmpAlignedClause", "OmpAlignedClauseTag" );
 
      NEW_NONTERMINAL_MACRO (OmpVariablesClause, OmpCopyprivateClause| OmpPrivateClause |OmpFirstprivateClause|
-         OmpSharedClause |OmpCopyinClause| OmpLastprivateClause| OmpReductionClause | OmpMapClause,
+         OmpSharedClause |OmpCopyinClause| OmpLastprivateClause| OmpReductionClause | OmpMapClause | OmpLinearClause |
+         OmpUniformClause | OmpAlignedClause,
          "OmpVariablesClause", "OmpVariablesClauseTag", false);
 
      NEW_TERMINAL_MACRO (OmpScheduleClause, "OmpScheduleClause", "OmpScheduleClauseTag" );
