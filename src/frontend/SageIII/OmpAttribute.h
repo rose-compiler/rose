@@ -149,6 +149,9 @@ namespace OmpSupport
     // experimental SIMD directive, phlin 8/5/2013
     e_simd,
     e_safelen,
+    e_uniform,
+    e_aligned,
+    e_linear,
 
     // not an OpenMP construct
     e_not_omp

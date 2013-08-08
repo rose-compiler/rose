@@ -88,7 +88,7 @@ corresponding C type is union name defaults to YYSTYPE.
         FOR MASTER CRITICAL BARRIER ATOMIC FLUSH TARGET UPDATE
         THREADPRIVATE PRIVATE COPYPRIVATE FIRSTPRIVATE LASTPRIVATE SHARED DEFAULT NONE REDUCTION COPYIN 
         TASK TASKWAIT UNTIED COLLAPSE AUTO DECLARE DATA DEVICE MAP ALLOC IN OUT INOUT
-        SIMD SAFELEN ALIGNED LINEAR INBRANCH
+        SIMD SAFELEN ALIGNED LINEAR UNIFORM ALIGNED INBRANCH NOTINBRANCH 
         '(' ')' ',' ':' '+' '*' '-' '&' '^' '|' LOGAND LOGOR SHLEFT SHRIGHT PLUSPLUS MINUSMINUS PTR_TO '.'
         LE_OP2 GE_OP2 EQ_OP2 NE_OP2 RIGHT_ASSIGN2 LEFT_ASSIGN2 ADD_ASSIGN2
         SUB_ASSIGN2 MUL_ASSIGN2 DIV_ASSIGN2 MOD_ASSIGN2 AND_ASSIGN2 
@@ -617,7 +617,37 @@ simd_clause : SAFELEN {
                         addExpression("");
                       }
                 | data_reduction_clause
+                | uniform_clause
+                | aligned_clause
+                | linear_clause
               ;
+
+uniform_clause : UNIFORM { 
+                         ompattribute->addClause(e_uniform);
+                         omptype = e_uniform; 
+                       }
+                       '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
+		;
+
+aligned_clause : ALIGNED { 
+                         ompattribute->addClause(e_aligned);
+                         omptype = e_aligned; 
+                       }
+                       '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
+		| ALIGNED
+                  { ompattribute->addClause(e_reduction);}
+                  '(' reduction_operator ':' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
+		;
+
+linear_clause : LINEAR { 
+                         ompattribute->addClause(e_linear);
+                         omptype = e_linear; 
+                       }
+                       '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
+		| LINEAR
+                  { ompattribute->addClause(e_reduction);}
+                  '(' reduction_operator ':' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
+		;
 /* parsing real expressions here, Liao, 10/12/2008
    */       
 /* expression: { omp_parse_expr(); } EXPRESSION { if (!addExpression((const char*)$2)) YYABORT; }

@@ -530,6 +530,9 @@ SgOmpUntiedClause
 SgOmpVariablesClause
 SgOmpMapClause
 SgOmpSafelenClause
+SgOmpLinearClause
+SgOmpUniformClause
+SgOmpAlignedClause
 SgOpenclAccessModeModifier
 SgOpenStatement
 SgOptions

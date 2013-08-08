@@ -591,10 +591,12 @@ namespace OmpSupport
 
       case e_simd: result = "simd"; break;
       case e_safelen: result = "safelen"; break;
+      case e_linear: result = "linear"; break;
+      case e_uniform: result = "uniform"; break;
+      case e_aligned: result = "aligned"; break;
 
       case e_not_omp: result = "not_omp"; break;
     }
-
     // Not true for Fortran!!
     //    if (isDirective(omp_type))
     //      result= "omp " + result;
@@ -911,6 +913,9 @@ namespace OmpSupport
       case e_map:
       case e_device:
       case e_safelen:
+      case e_linear:
+      case e_uniform:
+      case e_aligned:
 
         result = true; 
         break;
@@ -1070,6 +1075,9 @@ namespace OmpSupport
           (omp_type == e_firstprivate)||
           (omp_type == e_shared)||
           (omp_type == e_copyin)||
+          (omp_type == e_linear)||
+          (omp_type == e_uniform)||
+          (omp_type == e_aligned)||
           (omp_type == e_lastprivate)
           )
       {
