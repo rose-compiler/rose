@@ -8,29 +8,30 @@
 
 #include <set>
 using std::set;
+#include <string>
+using std::string;
+
+#include "RDAnalysisAstAttribute.h"
+#include "AnalysisAbstractionLayer.h"
 
 using namespace CodeThorn;
 
-class VariableIdSetAttribute : public AstSgNodeAttribute {
- public:
-  VariableIdSetAttribute(VariableIdMapping::VariableIdSet set):_variableIdSet(set){}
-  VariableIdMapping::VariableIdSet getVariableIdSet() { return _variableIdSet; }
- private:
-  VariableIdMapping::VariableIdSet _variableIdSet;
-};
+#include "UDAstAttribute.h"
 
 class DataDependenceVisualizer {
  public:
-  DataDependenceVisualizer(Labeler* labeler, VariableIdMapping* varIdMapping);
-  VariableIdMapping::VariableIdSet useVars(SgNode* expr);
-  VariableIdMapping::VariableIdSet defVars(SgNode* expr);
+  DataDependenceVisualizer(Labeler* labeler, VariableIdMapping* varIdMapping, string useDefAttributeName);
+  VariableIdSet useVars(SgNode* expr);
+  LabelSet defLabels(SgNode* expr, VariableId useVar);
   Label getLabel(SgNode* stmt);
   SgNode* getNode(Label lab);
   void generateDot(SgNode* root, string fileName);
+  bool _showSourceCode;
  private:
-  VariableIdMapping::VariableIdSet getAstAttributeVariableIdSet(SgNode*, string);
+  UDAstAttribute* getUDAstAttribute(SgNode* expr,string attributeName);
   Labeler* _labeler;
   VariableIdMapping* _variableIdMapping;
+  string  _useDefAttributeName;
 };
 
 #endif

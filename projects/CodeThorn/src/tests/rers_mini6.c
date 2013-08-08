@@ -23,9 +23,9 @@ int main() {
         int input;
         scanf("%d", &input);        
         output = calculate_output(input);
-		printf("%d\n", output);
+        printf("%d\n", output);
         // State={(a1,1), (output,22), (input,top)}, constraints={input!=2,input!=3}
         // State={(a1,1), (output,22), (input,top)}, constraints={input==2}
     }
-	return 0;
+    return 0;
 }

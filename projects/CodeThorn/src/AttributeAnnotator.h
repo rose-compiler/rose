@@ -3,17 +3,10 @@
 #ifndef ATTRIBUTEANNOTATIONMECHANISM_H
 #define ATTRIBUTEANNOTATIONMECHANISM_H
 
-#include "rose.h"
 #include <string>
-
 using std::string;
 
-class AnalysisResultAttribute : public AstAttribute {
- public:
-  virtual string getPreInfoString();
-  virtual string getPostInfoString();
-  virtual ~AnalysisResultAttribute();
-};
+#include "AnalysisAstAttribute.h"
 
 class AnalysisResultAnnotator {
  public:

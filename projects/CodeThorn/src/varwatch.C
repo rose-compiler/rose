@@ -1,6 +1,9 @@
 // Author: Markus Schordan, 2013.
 
 #include <boost/program_options.hpp>
+
+#include "rose.h"
+
 #include "VariableIdMapping.h"
 #include "CommandLineOptions.h"
 #include <iostream>
@@ -15,17 +18,17 @@ int main( int argc, char *argv[] ) {
   try {
   // Command line option handling.
   po::options_description desc
-    ("varwatch 1.0\n"
+    ("varwatch 0.1\n"
      "Written by Markus Schordan 2013\n"
      "Supported options");
   desc.add_options()
     ("help,h", "produce this help message")
     ("rose-help", "show help for compiler frontend options")
     ("version,v", "display the version")
-	;
+    ;
 
   po::store(po::command_line_parser(argc, argv).
-			options(desc).allow_unregistered().run(), args);
+            options(desc).allow_unregistered().run(), args);
   po::notify(args);
   
   if (args.count("version")) {
@@ -51,24 +54,24 @@ int main( int argc, char *argv[] ) {
   check? cout << "YES":cout<<"NO";
   cout << endl;
   if(!check)
-	variableIdMapping.reportUniqueVariableSymbolMappingViolations();
+    variableIdMapping.reportUniqueVariableSymbolMappingViolations();
   //  else
   {
-	cout<<"MAPPING:\n";
-	variableIdMapping.toStream(cout);
-	cout<<"-------------------------------------- OK --------------------------------------"<<endl;
+    cout<<"MAPPING:\n";
+    variableIdMapping.toStream(cout);
+    cout<<"-------------------------------------- OK --------------------------------------"<<endl;
   }
   variableIdMapping.generateDot("vidmapping.dot",astRoot);
 
   } catch(char* str) {
-	cerr << "*Exception raised: " << str << endl;
-	return 1;
+    cerr << "*Exception raised: " << str << endl;
+    return 1;
   } catch(const char* str) {
-	cerr << "Exception raised: " << str << endl;
-	return 1;
+    cerr << "Exception raised: " << str << endl;
+    return 1;
   } catch(string str) {
-	cerr << "Exception raised: " << str << endl;
-	return 1;
+    cerr << "Exception raised: " << str << endl;
+    return 1;
  }
 
   return 0;

@@ -15,11 +15,11 @@ int main()
     int output = -1;
 
     // main i/o-loop
-	//   while(1)
+    //   while(1)
     {
         // read input
         int input;
         // operate eca engine
-		output = calculate_output(input);
+        output = calculate_output(input);
     }
 }

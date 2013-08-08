@@ -7,39 +7,76 @@ class VariableIdSetAttribute;
 
 // public
 
-DataDependenceVisualizer::DataDependenceVisualizer(Labeler* labeler, VariableIdMapping* varIdMapping)
-  : _labeler(labeler),
-	_variableIdMapping(varIdMapping)
+DataDependenceVisualizer::DataDependenceVisualizer(Labeler* labeler, VariableIdMapping* varIdMapping, string useDefAttributeName)
+  : _showSourceCode(true),
+    _labeler(labeler),
+    _variableIdMapping(varIdMapping),
+	_useDefAttributeName(useDefAttributeName)
 {
 }
 
-VariableIdMapping::VariableIdSet DataDependenceVisualizer::useVars(SgNode* expr){
-  return getAstAttributeVariableIdSet(expr,"use-variableid-set");
+VariableIdSet DataDependenceVisualizer::useVars(SgNode* expr) {
+  UDAstAttribute* useDefAttribute=getUDAstAttribute(expr,_useDefAttributeName);
+  return useDefAttribute->useVariables(*_variableIdMapping);
 }
 
-VariableIdMapping::VariableIdSet DataDependenceVisualizer::defVars(SgNode* expr){
-  return getAstAttributeVariableIdSet(expr,"def-variableid-set");
+LabelSet DataDependenceVisualizer::defLabels(SgNode* expr, VariableId useVar) {
+  UDAstAttribute* useDefAttribute=getUDAstAttribute(expr,_useDefAttributeName);
+  return useDefAttribute->definitionsOfVariable(useVar);
 }
 
-Label DataDependenceVisualizer::getLabel(SgNode* stmt){
+Label DataDependenceVisualizer::getLabel(SgNode* stmt) {
   return _labeler->getLabel(stmt);
 }
 
-SgNode* DataDependenceVisualizer::getNode(Label label){
+SgNode* DataDependenceVisualizer::getNode(Label label) {
   return _labeler->getNode(label);
 }
 
-void DataDependenceVisualizer::generateDot(SgNode* root, string fileName){
+void DataDependenceVisualizer::generateDot(SgNode* root, string fileName) {
+  std::ofstream myfile;
+  myfile.open(fileName.c_str(),std::ios::out);
+  myfile<<"digraph DataDependence {"<<endl;
+  stringstream ss;
+  long labelNum=_labeler->numberOfLabels();
+  for(long i=0;i<labelNum;++i) {
+	Label lab=i;
+	SgNode* node=_labeler->getNode(i);
+	VariableIdSet useVarSet=useVars(node);
+	for(VariableIdSet::iterator i=useVarSet.begin();i!=useVarSet.end();++i) {
+	  VariableId useVar=*i;
+	  LabelSet defLabSet=defLabels(node,useVar);
+	  for(LabelSet::iterator i=defLabSet.begin();i!=defLabSet.end();++i) {
+		Label sourceNode=lab;
+		Label targetNode=*i;
+		VariableId edgeAnnotation=useVar;
+		string edgeAnnotationString=_variableIdMapping->uniqueShortVariableName(useVar);
+
+		myfile<<sourceNode<<" -> "<<targetNode;
+		if(_showSourceCode) {
+		  myfile<<"[label=\""<<edgeAnnotationString<<"\" color=red];";
+		}
+		myfile<<endl;
+
+		if(_showSourceCode) {
+		  myfile<<sourceNode<<" [label=\""<<sourceNode<<":"<<getNode(sourceNode)->unparseToString()<<"\"];"<<endl;
+		  myfile<<targetNode<<" [label=\""<<targetNode<<":"<<getNode(targetNode)->unparseToString()<<"\"];"<<endl;
+		}
+
+	  }
+	}
+  }
+  myfile<<"}"<<endl;
+  myfile.close();
 }
 
 // private
 
-VariableIdMapping::VariableIdSet DataDependenceVisualizer::getAstAttributeVariableIdSet(SgNode* expr,string attributeName){
+UDAstAttribute* DataDependenceVisualizer::getUDAstAttribute(SgNode* expr,string attributeName){
   if(expr->attributeExists(attributeName)) {
-	VariableIdSetAttribute* varsAttr=dynamic_cast<VariableIdSetAttribute*>(expr->getAttribute(attributeName));
-	return varsAttr->getVariableIdSet();
+    UDAstAttribute* udAttr=dynamic_cast<UDAstAttribute*>(expr->getAttribute(attributeName));
+    return udAttr;
   } else {
-	VariableIdMapping::VariableIdSet empty;
-	return empty;
+    return 0;
   }
 }

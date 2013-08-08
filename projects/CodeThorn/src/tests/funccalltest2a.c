@@ -6,10 +6,10 @@ int main() {
   char* p;
   char port;
   while(isdigit(*p) && (port<65535))
-	{
-	  port = port*10+(*p) - '0';
-	  p++;
-	}
+    {
+      port = port*10+(*p) - '0';
+      p++;
+    }
   
   return 0;
 }

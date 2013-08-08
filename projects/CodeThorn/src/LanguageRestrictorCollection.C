@@ -1,4 +1,6 @@
 
+#include "sage3basic.h"
+
 #include "LanguageRestrictorCollection.h"
 
 using namespace CodeThorn;

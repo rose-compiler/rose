@@ -32,26 +32,26 @@ int x=0;
 
 int f2(int input2) {
   if(input2==2)
-	return 3;
+    return 3;
   else
-	return 4;
+    return 4;
 }
 
 int f1(int input1) {
   if(input1==1)
-	return 1;
+    return 1;
   else
-	return 2;
+    return 2;
 }
 
 #ifndef BUG
 int f3(int input3) {
   if(input3==2)
-	return f1(input3);
+    return f1(input3);
   if(input3==1)
-	return f2(input3);
+    return f2(input3);
   else
-	return 5;
+    return 5;
 }
 #endif 
 
@@ -60,19 +60,19 @@ int main() {
   scanf("%d",&input);
   output=6;
   if(input==1)
-	output=f1(input);
+    output=f1(input);
   else if(input==2)
-	output=f2(input);
+    output=f2(input);
 #ifndef BUG
   else if(input==3)
-	output=f3(1);
+    output=f3(1);
   else if(input==4)
-	output=f3(2);
+    output=f3(2);
   else
-	output=f3(input);
+    output=f3(input);
 #endif
   if(output != -1)
-	printf("%d",output);
+    printf("%d",output);
   return 0;
 }
 

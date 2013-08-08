@@ -14,9 +14,9 @@ class EqualityMaintainer {
   bool removeEquality(T var1, T var2);
   bool removeEqualities(T var1);
   /* according to normalization criterion: the dedicated element is
-	 the element which binds all associated constraints of equal
-	 elements. Equal elements are those for which an equality
-	 constraint exists (transitive closure).
+     the element which binds all associated constraints of equal
+     elements. Equal elements are those for which an equality
+     constraint exists (transitive closure).
   */
   T determineDedicatedElement(const T var) const;
   bool equalityExists(const T var1, const T var2) const;

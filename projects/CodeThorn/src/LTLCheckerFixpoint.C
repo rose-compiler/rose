@@ -1,3 +1,6 @@
+
+#include "sage3basic.h"
+
 #include "LTL.h"
 #include "LTLCheckerFixpoint.h"
 #include "AType.h"
@@ -19,24 +22,24 @@ using namespace CodeThorn;
 using namespace LTL;
 using namespace FixpointLTL;
 
-#define FOR_EACH_TRANSITION(TRANSITION)				     \
+#define FOR_EACH_TRANSITION(TRANSITION)                     \
   for (TransitionGraph::const_iterator TRANSITION=transitionGraph.begin(); \
-       TRANSITION != transitionGraph.end();				\
+       TRANSITION != transitionGraph.end();                \
        ++TRANSITION)
 
-#define FOR_EACH_ESTATE(STATE, LABEL)				     \
+#define FOR_EACH_ESTATE(STATE, LABEL)                     \
   Label LABEL=0;                                                     \
-  for (EStateSet::const_iterator STATE=eStateSet.begin();	     \
-       STATE != eStateSet.end();				     \
+  for (EStateSet::const_iterator STATE=eStateSet.begin();         \
+       STATE != eStateSet.end();                     \
        ++STATE, ++LABEL)
 
-#define FOR_EACH_STATE(STATE, LABEL)					\
-  GraphTraits::vertex_iterator vi, vi_end;				\
-  Label LABEL;								\
-  const EState* STATE;							\
-  for (tie(vi, vi_end) = vertices(g), LABEL=*vi, STATE=g[LABEL];	\
-       vi != vi_end; ++vi,						\
-       LABEL=(vi!=vi_end)?*vi:NULL, STATE=g[LABEL])			\
+#define FOR_EACH_STATE(STATE, LABEL)                    \
+  GraphTraits::vertex_iterator vi, vi_end;                \
+  Label LABEL;                                \
+  const EState* STATE;                            \
+  for (tie(vi, vi_end) = vertices(g), LABEL=*vi, STATE=g[LABEL];    \
+       vi != vi_end; ++vi,                        \
+       LABEL=(vi!=vi_end)?*vi:NULL, STATE=g[LABEL])            \
 
 #define props ltl_properties[label]
 
@@ -154,7 +157,7 @@ public:
      <<" = "<<props[e1]<<" | "<<props[e2]<<")\"];\n  ";
     return newAttr(node);
   }
-  IAttr visit(Until* expr, IAttr a)	{
+  IAttr visit(Until* expr, IAttr a)    {
     short e = expr->label;
     short e1 = expr->expr1->label;
     short e2 = expr->expr2->label;
@@ -210,7 +213,7 @@ public:
   LTLProperties ltl_properties;
 
   Verifier(EStateSet& ess, BoostTransitionGraph& btg, deque<Label>& exits,
-	   Label start_label, Label max_label, short expr_size)
+       Label start_label, Label max_label, short expr_size)
     : eStateSet(ess), g(btg), endpoints(exits), start(start_label) {
     // reserve a result map for each label
     // it maps an analysis result to each sub-expression of the ltl formula
@@ -229,49 +232,49 @@ public:
    *
    * FIXME: rewrite this as a template
    */
-# define fixpoint(INIT, JOIN, TRANSFER) {				\
-    FOR_EACH_STATE(state, label)					\
-      props[e] = INIT;							\
-									\
-    queue<Label> workset;						\
-    workset.push(start);						\
-									\
-    while (!workset.empty()) {						\
-      Label label = workset.front(); workset.pop();			\
-      /*cerr<<"Visiting state "<<label<<endl;*/				\
-      const EState* state = g[label];					\
-      assert(state);							\
-									\
-      /* Merge result of incoming edges */				\
-      BoolLattice joined_preds = Bot();					\
-      /* for each predecessor */					\
-      GraphTraits::in_edge_iterator in_i, in_end;			\
+# define fixpoint(INIT, JOIN, TRANSFER) {                \
+    FOR_EACH_STATE(state, label)                    \
+      props[e] = INIT;                            \
+                                    \
+    queue<Label> workset;                        \
+    workset.push(start);                        \
+                                    \
+    while (!workset.empty()) {                        \
+      Label label = workset.front(); workset.pop();            \
+      /*cerr<<"Visiting state "<<label<<endl;*/                \
+      const EState* state = g[label];                    \
+      assert(state);                            \
+                                    \
+      /* Merge result of incoming edges */                \
+      BoolLattice joined_preds = Bot();                    \
+      /* for each predecessor */                    \
+      GraphTraits::in_edge_iterator in_i, in_end;            \
       for (tie(in_i, in_end) = in_edges(label, g); in_i != in_end; ++in_i) { \
-	Label pred = source(*in_i, g);					\
-	BoolLattice pred_prop = ltl_properties[pred][e];		\
-	/*cerr<<"  pred: "<<pred<<" = "<<pred_prop<<endl;*/		\
-									\
-	joined_preds = (joined_preds JOIN pred_prop);			\
-      }									\
-									\
-      /* Calculate property for this node */				\
-      /*assert(props.find(e->expr1) != props.end());*/			\
-      BoolLattice old_val = props[e];					\
-      props[e] = (old_val JOIN ( TRANSFER ));				\
-      /* cerr<<"  "<<label<<" <- "<<props[e]<<endl; */			\
-      bool no_fixpoint = (old_val == INIT || old_val != props[e]);	\
-      if (no_fixpoint) {						\
-	/* for each successor */					\
-	GraphTraits::out_edge_iterator out_i, out_end;			\
-	for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) { \
-	  Label succ = target(*out_i, g);				\
-	  /*cerr<<"  succ: "<<succ<<endl;*/				\
-	  workset.push(succ);					\
-	}								\
-      } else {								\
-	/*cerr<<"FIX!"<<endl;*/						\
-      }									\
-    }									\
+    Label pred = source(*in_i, g);                    \
+    BoolLattice pred_prop = ltl_properties[pred][e];        \
+    /*cerr<<"  pred: "<<pred<<" = "<<pred_prop<<endl;*/        \
+                                    \
+    joined_preds = (joined_preds JOIN pred_prop);            \
+      }                                    \
+                                    \
+      /* Calculate property for this node */                \
+      /*assert(props.find(e->expr1) != props.end());*/            \
+      BoolLattice old_val = props[e];                    \
+      props[e] = (old_val JOIN ( TRANSFER ));                \
+      /* cerr<<"  "<<label<<" <- "<<props[e]<<endl; */            \
+      bool no_fixpoint = (old_val == INIT || old_val != props[e]);    \
+      if (no_fixpoint) {                        \
+    /* for each successor */                    \
+    GraphTraits::out_edge_iterator out_i, out_end;            \
+    for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) { \
+      Label succ = target(*out_i, g);                \
+      /*cerr<<"  succ: "<<succ<<endl;*/                \
+      workset.push(succ);                    \
+    }                                \
+      } else {                                \
+    /*cerr<<"FIX!"<<endl;*/                        \
+      }                                    \
+    }                                    \
   }
 
 # define NOP do{} while(0)
@@ -293,66 +296,66 @@ public:
    *
    * FIXME: rewrite this as a template
    */
-# define bw_fixpoint(INIT, JOIN, TRANSFER, DEBUG) {			\
-    /* ensure that INIT is the neutral element */			\
-    assert((BoolLattice(true)  JOIN INIT) == true);			\
-    assert((BoolLattice(false) JOIN INIT) == false);			\
-    assert((BoolLattice(Bot()) JOIN INIT) == Bot());			\
-    assert((BoolLattice(Top()) JOIN INIT) == Top());			\
-									\
-									\
-    queue<Label> workset(endpoints);					\
-    FOR_EACH_STATE(state, label) {					\
-      props[e] = INIT;							\
-    }									\
-									\
-    while (!workset.empty()) {						\
-      Label label = workset.front(); workset.pop();			\
-      /*cerr<<"Visiting state "<<label<<endl;*/				\
-      const EState* state = g[label];					\
-      assert(state);							\
-									\
-      /* Merge result of incoming edges */				\
-      /* init to neutral element in lattice */				\
-      BoolLattice joined_succs = INIT;					\
-      /* for each successor */						\
-      GraphTraits::out_edge_iterator out_i, out_end;			\
+# define bw_fixpoint(INIT, JOIN, TRANSFER, DEBUG) {            \
+    /* ensure that INIT is the neutral element */            \
+    assert((BoolLattice(true)  JOIN INIT) == true);            \
+    assert((BoolLattice(false) JOIN INIT) == false);            \
+    assert((BoolLattice(Bot()) JOIN INIT) == Bot());            \
+    assert((BoolLattice(Top()) JOIN INIT) == Top());            \
+                                    \
+                                    \
+    queue<Label> workset(endpoints);                    \
+    FOR_EACH_STATE(state, label) {                    \
+      props[e] = INIT;                            \
+    }                                    \
+                                    \
+    while (!workset.empty()) {                        \
+      Label label = workset.front(); workset.pop();            \
+      /*cerr<<"Visiting state "<<label<<endl;*/                \
+      const EState* state = g[label];                    \
+      assert(state);                            \
+                                    \
+      /* Merge result of incoming edges */                \
+      /* init to neutral element in lattice */                \
+      BoolLattice joined_succs = INIT;                    \
+      /* for each successor */                        \
+      GraphTraits::out_edge_iterator out_i, out_end;            \
       for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) { \
-	Label succ = target(*out_i, g);					\
-	BoolLattice succ_prop = ltl_properties[succ][e];		\
-	/*cerr<<"  succ: "<<succ<<" = "<<succ_prop<<endl;*/		\
-	joined_succs = (joined_succs JOIN succ_prop);			\
-      }									\
-									\
-      /* Calculate property for this node */				\
-      /*assert(props.find(e->expr1) != props.end());*/			\
-      BoolLattice old_val = props[e];					\
-									\
-      props[e] = (old_val JOIN TRANSFER);				\
-									\
-      DEBUG;								\
-									\
-      /*cerr<<"  "<<label<<" <- "<<props[e]<<" was: "<<old_val<<endl;*/	\
-      bool no_fixpoint = (old_val != props[e]);				\
-      if (no_fixpoint) {						\
-	/*cerr<<"NO FIX!"<<endl;*/					\
-	/* for each predecessor */					\
-	GraphTraits::in_edge_iterator in_i, in_end;			\
-	for (tie(in_i, in_end) = in_edges(label, g); in_i != in_end; ++in_i) { \
-	  Label pred = source(*in_i, g);				\
-	  /*cerr<<"  pred: "<<pred<<endl;*/				\
-	  workset.push(pred);					\
-	}								\
-      } else {								\
-	/*cerr<<"FIX!"<<endl;*/						\
-      }									\
-    }									\
+    Label succ = target(*out_i, g);                    \
+    BoolLattice succ_prop = ltl_properties[succ][e];        \
+    /*cerr<<"  succ: "<<succ<<" = "<<succ_prop<<endl;*/        \
+    joined_succs = (joined_succs JOIN succ_prop);            \
+      }                                    \
+                                    \
+      /* Calculate property for this node */                \
+      /*assert(props.find(e->expr1) != props.end());*/            \
+      BoolLattice old_val = props[e];                    \
+                                    \
+      props[e] = (old_val JOIN TRANSFER);                \
+                                    \
+      DEBUG;                                \
+                                    \
+      /*cerr<<"  "<<label<<" <- "<<props[e]<<" was: "<<old_val<<endl;*/    \
+      bool no_fixpoint = (old_val != props[e]);                \
+      if (no_fixpoint) {                        \
+    /*cerr<<"NO FIX!"<<endl;*/                    \
+    /* for each predecessor */                    \
+    GraphTraits::in_edge_iterator in_i, in_end;            \
+    for (tie(in_i, in_end) = in_edges(label, g); in_i != in_end; ++in_i) { \
+      Label pred = source(*in_i, g);                \
+      /*cerr<<"  pred: "<<pred<<endl;*/                \
+      workset.push(pred);                    \
+    }                                \
+      } else {                                \
+    /*cerr<<"FIX!"<<endl;*/                        \
+      }                                    \
+    }                                    \
   }
 
   /// tell if a state is an exit node
   bool isEndpoint(Label l) {
     for (deque<Label>::iterator i = endpoints.begin();
-	 i != endpoints.end(); ++i)
+     i != endpoints.end(); ++i)
       if (*i == l) return true;
     return false;
   }
@@ -376,8 +379,8 @@ public:
 
   /// return True iff that state is an Oc operation
   static BoolLattice isInputState(const EState* estate, 
-				  VariableIdMapping::VariableIdSet& input_vars,
-				  int c, BoolLattice joined_preds) {
+                  VariableIdMapping::VariableIdSet& input_vars,
+                  int c, BoolLattice joined_preds) {
     updateInputVar(estate, input_vars);
     if (input_vars.empty())
       return Bot();
@@ -387,8 +390,8 @@ public:
     assert(estate->constraints());
     ConstraintSet constraints = *estate->constraints();
     for (VariableIdMapping::VariableIdSet::const_iterator ivar = input_vars.begin();
-	 ivar != input_vars.end();
-	 ++ivar) {
+     ivar != input_vars.end();
+     ++ivar) {
       // main input variable
       BoolLattice r1 = is_eq(constraints, *ivar, c);
       assert(consistent(r, r1));
@@ -398,17 +401,17 @@ public:
   }
 
   static BoolLattice is_eq(const ConstraintSet& constraints, 
-			   const VariableId& v, 
-			   int c) {
+               const VariableId& v, 
+               int c) {
     ListOfAValue l = constraints.getEqVarConst(v);
     for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
       //cerr<<endl<<"ivar == "<<v.variableName()<<endl;
       //cerr<<constraints.toString()<<endl;
       if (lval->isConstInt()) {
-	// A=1, B=2
-	//cerr<<(char)c<<" == "<<(char)(rersChar(lval->getIntValue()))<<"? "
-	//    <<(bool)(c == rersChar(lval->getIntValue()))<<endl;
-	return c == rersChar(lval->getIntValue());
+    // A=1, B=2
+    //cerr<<(char)c<<" == "<<(char)(rersChar(lval->getIntValue()))<<"? "
+    //    <<(bool)(c == rersChar(lval->getIntValue()))<<endl;
+    return c == rersChar(lval->getIntValue());
       }
     }
     // In ConstIntLattice, Top means ALL values
@@ -422,16 +425,16 @@ public:
     VariableIdMapping::VariableIdSet input_vars;
 
     fixpoint(Bot(),                                                 // init
-	     &&,                                                    // join
-	     isInputState(state, input_vars, expr->c, joined_preds) // transfer
-	     );
+         &&,                                                    // join
+         isInputState(state, input_vars, expr->c, joined_preds) // transfer
+         );
 
   }
 
   /// return True iff that state is an !Ic operation
   static BoolLattice isNegInputState(const EState* estate, 
-				     VariableIdMapping::VariableIdSet& input_vars,
-				     int c, BoolLattice joined_preds) {
+                     VariableIdMapping::VariableIdSet& input_vars,
+                     int c, BoolLattice joined_preds) {
     updateInputVar(estate, input_vars);
     if (input_vars.empty())
       return Bot();
@@ -441,8 +444,8 @@ public:
     assert(estate->constraints());
     ConstraintSet constraints = *estate->constraints();
     for (VariableIdMapping::VariableIdSet::const_iterator ivar = input_vars.begin();
-		 ivar != input_vars.end(); 
-		 ++ivar) {
+         ivar != input_vars.end(); 
+         ++ivar) {
       // This will really only work with one input variable (that one may be aliased, though)
       BoolLattice r1 = is_neq(constraints, *ivar, c);
       assert(consistent(r, r1));
@@ -452,22 +455,22 @@ public:
   }
 
   static BoolLattice is_neq(const ConstraintSet& constraints, 
-			    const VariableId& v, 
-			    int c) {
+                const VariableId& v, 
+                int c) {
     // var == c
     ListOfAValue l = constraints.getEqVarConst(v);
     for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
       if (lval->isConstInt()) {
-	// A=1, B=2
-	return c != rersChar(lval->getIntValue());
+    // A=1, B=2
+    return c != rersChar(lval->getIntValue());
       }
     }
     // var != c
     l = constraints.getNeqVarConst(v);
     for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
       if (lval->isConstInt())
-	if (c == rersChar(lval->getIntValue()))
-	  return true;
+    if (c == rersChar(lval->getIntValue()))
+      return true;
     }
     
     // In ConstIntLattice, Top means ALL values
@@ -481,14 +484,14 @@ public:
     VariableIdMapping::VariableIdSet input_vars;
 
     fixpoint(Bot(),                                                 // init
-	     &&,                                                    // join
-	     isNegInputState(state, input_vars, expr->c, joined_preds) // transfer
-	     );
+         &&,                                                    // join
+         isNegInputState(state, input_vars, expr->c, joined_preds) // transfer
+         );
   }
 
   /// return True iff that state is an Oc operation
   static BoolLattice isOutputState(const EState* estate, int c, bool endpoint,
-				   BoolLattice joined_succs) {
+                   BoolLattice joined_succs) {
     switch (estate->io.op) {
     case InputOutput::STDOUT_CONST: {
       const AType::ConstIntLattice& lval = estate->io.val;
@@ -509,7 +512,7 @@ public:
     default:
       // Make sure that dead ends with no I/O show up as false
       if (endpoint)
-	return false;
+    return false;
 
       return joined_succs;
     }
@@ -529,15 +532,15 @@ public:
   void visit(const OutputSymbol* expr) {
     short e = expr->label;
     bw_fixpoint(/* init */     Bot(),
-		///* start */    state->io.op != InputOutput::NONE,
-		/* join */     LUB,
-		/* transfer */ isOutputState(state, expr->c, isEndpoint(label), joined_succs),
-		/* debug */    NOP/*cerr<<"out("<<string(1,expr->c)<<")"<<endl*/);
+        ///* start */    state->io.op != InputOutput::NONE,
+        /* join */     LUB,
+        /* transfer */ isOutputState(state, expr->c, isEndpoint(label), joined_succs),
+        /* debug */    NOP/*cerr<<"out("<<string(1,expr->c)<<")"<<endl*/);
   }
 
   /// return True iff that state is a !Oc operation
   static BoolLattice isNegOutputState(const EState* estate, int c, bool endpoint,
-				      BoolLattice joined_succs) {
+                      BoolLattice joined_succs) {
     switch (estate->io.op) {
     case InputOutput::STDOUT_CONST: {
       const AType::ConstIntLattice& lval = estate->io.val;
@@ -552,11 +555,11 @@ public:
       // var != c
       ListOfAValue l = estate->constraints()->getNeqVarConst(estate->io.var);
       for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
-	if (lval->isConstInt())
-	  if (c == rersChar(lval->getIntValue()))
-	    return true;
+    if (lval->isConstInt())
+      if (c == rersChar(lval->getIntValue()))
+        return true;
       }
-	  
+      
       // output == c constraint?
       const PState& prop_state = *estate->pstate();
       assert(prop_state.varIsConst(estate->io.var));
@@ -565,7 +568,7 @@ public:
     }
     default:
       if (endpoint)
-	return true;
+    return true;
 
       return joined_succs;
     }
@@ -579,10 +582,10 @@ public:
   void visit(const NegOutputSymbol* expr) {
     short e = expr->label;
     bw_fixpoint(/* init */     Bot(),
-		///* start */    state->io.op != InputOutput::NONE,
-		/* join */     LUB,
-		/* transfer */ isNegOutputState(state, expr->c, isEndpoint(label), joined_succs),
-		/* debug */    NOP/*cerr<<"neg_out("<<string(1,expr->c)<<")"<<endl*/);
+        ///* start */    state->io.op != InputOutput::NONE,
+        /* join */     LUB,
+        /* transfer */ isNegOutputState(state, expr->c, isEndpoint(label), joined_succs),
+        /* debug */    NOP/*cerr<<"neg_out("<<string(1,expr->c)<<")"<<endl*/);
   }
 
   /**
@@ -602,7 +605,7 @@ public:
    *
    * I'm interpreting Next as follows
    *
-   *  a	    N A is true at a.
+   *  a        N A is true at a.
    *  |\
    * Ab Ac
    *
@@ -620,8 +623,8 @@ public:
       /* for each successor */
       GraphTraits::out_edge_iterator out_i, out_end;
       for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) {
-	//Label succ = target(*out_i, g);
-	joined_succs = (joined_succs LUB ltl_properties[label][e1]);
+    //Label succ = target(*out_i, g);
+    joined_succs = (joined_succs LUB ltl_properties[label][e1]);
       }
       props[e] = joined_succs;
     }
@@ -633,7 +636,7 @@ public:
    *
    * I'm interpreting Eventually to be a backward problem
    *
-   *  a	    if p(b) then F p(a) and F p(b) but not F p(c)
+   *  a        if p(b) then F p(a) and F p(b) but not F p(c)
    *  |\
    *  b c
    *
@@ -646,11 +649,11 @@ public:
     short e1 = expr->expr1->label;
 
     bw_fixpoint(/* init */      Bot(),
-		///* start */     !props[e1].isBot(),
-		/* join */      LUB,
-		/* transfer  */ props[e1] || joined_succs,
-		/* debug */     NOP //cerr<<props[e1]<<" || "<<joined_succs<<endl;
-		);
+        ///* start */     !props[e1].isBot(),
+        /* join */      LUB,
+        /* transfer  */ props[e1] || joined_succs,
+        /* debug */     NOP //cerr<<props[e1]<<" || "<<joined_succs<<endl;
+        );
   }
 
   /**
@@ -668,18 +671,18 @@ public:
     
     if (expr->quantified) {
       bw_fixpoint(/* init */      Bot(),
-		  ///* start */     !props[e1].isBot(),
-		  /* join */      LUB,
-		  /* transfer  */ props[e1] && joined_succs,
-		  /* debug */     NOP //cerr<<props[e1]<<" && "<<joined_succs<<endl;
-		  );
+          ///* start */     !props[e1].isBot(),
+          /* join */      LUB,
+          /* transfer  */ props[e1] && joined_succs,
+          /* debug */     NOP //cerr<<props[e1]<<" && "<<joined_succs<<endl;
+          );
     } else {
       bw_fixpoint(/* init */      Bot(),
-		  ///* start */     !props[e1].isBot(),
-		  /* join */      AND, // this allows for improved precision in the case of an All-quantified G node, which is, by, default, any outermost G node
-		  /* transfer  */ props[e1] && joined_succs,
-		  /* debug */     NOP //cerr<<props[e1]<<" && "<<joined_succs<<endl;
-		  );
+          ///* start */     !props[e1].isBot(),
+          /* join */      AND, // this allows for improved precision in the case of an All-quantified G node, which is, by, default, any outermost G node
+          /* transfer  */ props[e1] && joined_succs,
+          /* debug */     NOP //cerr<<props[e1]<<" && "<<joined_succs<<endl;
+          );
     };
   }
 
@@ -726,12 +729,12 @@ public:
     short e2 = expr->expr2->label;
 
     bw_fixpoint(/* init */      Bot(),
-		///* start */     (!props[e1].isBot() || !props[e2].isBot()),
-		/* join */      LUB,
-		/* transfer */  (props[e2] || (props[e1] && joined_succs)) || false,
-		/* debug */     NOP
-		//cerr<<label<<": "<<((props[e2] || (props[e1] && joined_succs)) || false).toString()<<" == "<<props[e2]<<" || ("<<props[e1]<<" && "<<joined_succs<<")"<<endl
-		);
+        ///* start */     (!props[e1].isBot() || !props[e2].isBot()),
+        /* join */      LUB,
+        /* transfer */  (props[e2] || (props[e1] && joined_succs)) || false,
+        /* debug */     NOP
+        //cerr<<label<<": "<<((props[e2] || (props[e1] && joined_succs)) || false).toString()<<" == "<<props[e2]<<" || ("<<props[e1]<<" && "<<joined_succs<<")"<<endl
+        );
   }
 
   /**
@@ -745,8 +748,8 @@ public:
    *  |\
    * Ab \    A WU B is valid at b and c and f
    *  | Ad
-   * Ac	 |\
-   *	 e Bf
+   * Ac     |\
+   *     e Bf
    *
    * Implementation status: DONE
    */
@@ -757,12 +760,12 @@ public:
     short e1 = expr->expr1->label;
     short e2 = expr->expr2->label;
 
-    bw_fixpoint(/* init */	Bot(),
-		///* start */	!props[e2].isBot(),
-		/* join */	LUB,
-		/* transfer */	props[e2] || (props[e1] && joined_succs),
-		/* debug */     NOP
-		);
+    bw_fixpoint(/* init */    Bot(),
+        ///* start */    !props[e2].isBot(),
+        /* join */    LUB,
+        /* transfer */    props[e2] || (props[e1] && joined_succs),
+        /* debug */     NOP
+        );
 
     //FOR_EACH_STATE(state, label)
     //  if (props[e].isBot()) props[e] = false;
@@ -782,11 +785,11 @@ public:
     short e2 = expr->expr2->label;
 
     bw_fixpoint(/* init */      Bot(),
-		///* start */     (!props[e1].isBot() || !props[e2].isBot()),
-		/* join */      LUB,
-		/* transfer */  props[e2] && (props[e1] || joined_succs),
-		/* debug */     NOP
-		);
+        ///* start */     (!props[e1].isBot() || !props[e2].isBot()),
+        /* join */      LUB,
+        /* transfer */  props[e2] && (props[e1] || joined_succs),
+        /* debug */     NOP
+        );
   }
 };
 
@@ -846,7 +849,7 @@ Checker::Checker(EStateSet& ess, TransitionGraph& _tg)
  * Creates reduced_eStateSet
  */
 Label Checker::collapse_transition_graph(BoostTransitionGraph& g, 
-					 BoostTransitionGraph& reduced) const {
+                     BoostTransitionGraph& reduced) const {
   Label n = 0;
   vector<Label> renumbered(num_vertices(g));
 
@@ -854,23 +857,23 @@ Label Checker::collapse_transition_graph(BoostTransitionGraph& g,
     //cerr<<label<<endl;
     assert(g[label]);
     if (( in_degree(label, g) >= 1) && // keep start
-	(out_degree(label, g) >= 0) && // DO NOT keep exits
-	(g[label]->io.op == InputOutput::NONE ||
-	 g[label]->io.op == InputOutput::FAILED_ASSERT)) {
+    (out_degree(label, g) >= 0) && // DO NOT keep exits
+    (g[label]->io.op == InputOutput::NONE ||
+     g[label]->io.op == InputOutput::FAILED_ASSERT)) {
       //cerr<<"-- removing "<<label <<endl;//g[label]->toString()<<endl;
 
       // patch pred <--> succ
-      GraphTraits::in_edge_iterator in_i, in_end;			
+      GraphTraits::in_edge_iterator in_i, in_end;            
       for (tie(in_i, in_end) = in_edges(label, g); in_i != in_end; ++in_i) { 
-	Label pred = source(*in_i, g);
+    Label pred = source(*in_i, g);
 
-	GraphTraits::out_edge_iterator out_i, out_end;
-	for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) {
-	  Label succ = target(*out_i, g);
-	
-	  //cerr<<"-- connecting "<<pred<<" and "<<succ<<endl;
-	  add_edge(pred, succ, g);
-	}
+    GraphTraits::out_edge_iterator out_i, out_end;
+    for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) {
+      Label succ = target(*out_i, g);
+    
+      //cerr<<"-- connecting "<<pred<<" and "<<succ<<endl;
+      add_edge(pred, succ, g);
+    }
       }
       // remove state
       clear_vertex(label, g);
@@ -933,12 +936,12 @@ Checker::verify(const Formula& f)
       Label tgt = target(*ei, g);
       switch (g[src]->io.op) {
       case InputOutput::STDIN_VAR:
-	s<<src<<" [shape=rectangle, color=gold, style=filled];\n  ";
-	break;
+    s<<src<<" [shape=rectangle, color=gold, style=filled];\n  ";
+    break;
       case InputOutput::STDOUT_VAR:
       case InputOutput::STDOUT_CONST:
-	s<<src<<" [shape=rectangle, color=indigo, style=filled];\n  ";
-	break;
+    s<<src<<" [shape=rectangle, color=indigo, style=filled];\n  ";
+    break;
       default: break;
       }
       s<<src<<" -> "<<tgt<<";\n";
@@ -948,10 +951,10 @@ Checker::verify(const Formula& f)
       const_cast<Expr&>(e).accept(viz, Visualizer::newAttr(l));
       s<<l<<" [label=\""<<l;
       if (show_node_detail) {
-	s<<":";
-	if (collapsed_graph) {
+    s<<":";
+    if (collapsed_graph) {
 
-	} else s<<state->toString();
+    } else s<<state->toString();
       }
       s<<"\"] ;\n";
       s<<"subgraph ltl_"<<l<<" {\n";

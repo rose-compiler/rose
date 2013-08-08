@@ -4,20 +4,20 @@ int main() {
   x=0;
   y=1;
   while(x!=6) {
-	while(x!=5) {
-	  if(x==2 && y==2)
-		break;
-	  if(x==2 && y==1)
-		y=2;
-	  if(x==1 && y==1)
-		x=2;
-	  if(x==0)
-		x=1;
-	}
-	if(x==5)
-	  break;
-	if(x==2)
-	  x=5;
+    while(x!=5) {
+      if(x==2 && y==2)
+        break;
+      if(x==2 && y==1)
+        y=2;
+      if(x==1 && y==1)
+        x=2;
+      if(x==0)
+        x=1;
+    }
+    if(x==5)
+      break;
+    if(x==2)
+      x=5;
   }
   x=3;
   x=x+1;

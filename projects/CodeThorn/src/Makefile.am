@@ -4,6 +4,7 @@ bin_PROGRAMS = codethorn matcher_demo varwatch rdmain
 #ast_demo matcher_demo iterator_test
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 CLEANFILES = 
+SUBDIRS = addressTakenAnalysis
 
 AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH)
 
@@ -53,8 +54,6 @@ codethorn_SOURCES = \
   LanguageRestrictorCollection.h   \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
-  RoseAst.C                        \
-  RoseAst.h                        \
   SetAlgo.h                        \
   SgNodeHelper.C                   \
   SgNodeHelper.h                   \
@@ -70,9 +69,26 @@ codethorn_SOURCES = \
   RDLattice.C                      \
   AttributeAnnotator.h             \
   AttributeAnnotator.C             \
-  RERS_empty_specialization.C      \
   codethorn.C                      \
-  codethorn.h
+  codethorn.h                      \
+  WorkListSeq.h                    \
+  DFAnalyzer.h                     \
+  AnalysisAbstractionLayer.h       \
+  AnalysisAbstractionLayer.C       \
+  AnalysisAstAttribute.h           \
+  AnalysisAstAttribute.C           \
+  RDAnalysisAbstractAstAttribute.h \
+  RDAnalysisAbstractAstAttribute.C \
+  RDAnalysisAstAttribute.h         \
+  RDAnalysisAstAttribute.C         \
+  RERS_empty_specialization.C      \
+  matcherparser.C RoseAst.h RoseAst.C matcherparser_decls.h AstMatching.C AstMatching.h MatchOperation.C MatchOperation.h \
+  addressTakenAnalysis/defUseQuery.C \
+  addressTakenAnalysis/defUseQuery.h \
+  addressTakenAnalysis/VariableIdUtils.C \
+  addressTakenAnalysis/VariableIdUtils.h \
+  addressTakenAnalysis/addressTakenAnalysis.C \
+  addressTakenAnalysis/addressTakenAnalysis.h
 
 # used only in specialized analyzer
 faketarget:
@@ -101,7 +117,8 @@ faketarget:
 	iterator_test.C
 	WorkListOMP.h
 	WorkListOMP.C
-
+	WorkListSeq.C
+	DFAnalyzer.C
 #      matcherparser_decls.h
 
 REGRESSION_DATA_DIR=regressiondata
@@ -122,7 +139,26 @@ varwatch_LDADD = -lrose
 varwatch_SOURCES = varwatch.C VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C RoseAst.h RoseAst.C
 
 rdmain_LDADD = -lrose
-rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C RoseAst.h RoseAst.C Labeler.h Labeler.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C AttributeAnnotator.h AttributeAnnotator.C DataDependenceVisualizer.h DataDependenceVisualizer.C
+rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C Labeler.h Labeler.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C AttributeAnnotator.h AttributeAnnotator.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
+  AnalysisAbstractionLayer.h       \
+  AnalysisAbstractionLayer.C       \
+  AnalysisAstAttribute.h           \
+  AnalysisAstAttribute.C           \
+  RDAnalysisAbstractAstAttribute.h \
+  RDAnalysisAbstractAstAttribute.C \
+  RDAnalysisAstAttribute.h         \
+  RDAnalysisAstAttribute.C         \
+  UDAstAttribute.h                 \
+  UDAstAttribute.C                 \
+  AstTerm.h                        \
+  AstTerm.C                        \
+  matcherparser.C RoseAst.h RoseAst.C matcherparser_decls.h AstMatching.C AstMatching.h MatchOperation.C MatchOperation.h \
+  addressTakenAnalysis/defUseQuery.C \
+  addressTakenAnalysis/defUseQuery.h \
+  addressTakenAnalysis/VariableIdUtils.C \
+  addressTakenAnalysis/VariableIdUtils.h \
+  addressTakenAnalysis/addressTakenAnalysis.C \
+  addressTakenAnalysis/addressTakenAnalysis.h
 
 # explicit rules because of multiple bison parser
 matcherparser.C: $(srcdir)/matcherlexer.ll $(srcdir)/matcherparser.yy
@@ -236,6 +272,9 @@ clean-local:
 	rm -f viz/*
 	rm -f bsps/*
 	rm -f *.consistent Problem*.[0-9].csv
+	rm -f codethorn-LTLParser.c++
+	rm -f matcherparser.h
+	rm -f matcherparser.C
 
 distclean-local: clean
 	rm -f *.tgz
@@ -332,10 +371,10 @@ CODETHORN_TESTS= \
     tests/basictest9.C \
     tests/basictest_globalvars.C \
     tests/checkp006if \
-    tests/funccalltest2.c \
-    tests/funccalltest2.C \
-    tests/funccalltest.c \
-    tests/funccalltest.C \
+    tests/funccalltest2a.c \
+    tests/funccalltest2b.C \
+    tests/funccalltest1a.c \
+    tests/funccalltest1b.C \
     tests/inputtest1.c \
     tests/inputtest2.c \
     tests/intertest10.C \

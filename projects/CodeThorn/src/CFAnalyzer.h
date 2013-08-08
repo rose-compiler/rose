@@ -7,7 +7,6 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-#include "rose.h"
 #include "SgNodeHelper.h"
 #include "Labeler.h"
 #include "CommandLineOptions.h"
@@ -109,7 +108,7 @@ class CFAnalyzer {
  private:
   Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);
   Labeler* labeler;
-};	
+};    
 
 } // end of namespace CodeThorn
 

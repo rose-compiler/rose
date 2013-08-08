@@ -23,7 +23,7 @@ string CodeThorn::int_to_string(int x) {
 
 string CodeThorn::color(string name) {
   if(!boolOptions["colors"]) 
-	return "";
+    return "";
   string c="\33[";
   if(name=="normal") return c+"0m";
   if(name=="bold") return c+"1m";
@@ -37,24 +37,24 @@ string CodeThorn::color(string name) {
   string prefix="bg-";
   size_t pos=name.find(prefix);
   if(pos==0) {
-	bgcolor=true;
-	name=name.substr(prefix.size(),name.size()-prefix.size());
+    bgcolor=true;
+    name=name.substr(prefix.size(),name.size()-prefix.size());
   }
   string colors[]={"black","red","green","yellow","blue","magenta","cyan","white"};
   int i;
   for(i=0;i<8;i++) {
-	if(name==colors[i]) {
-	  break;
-	}
+    if(name==colors[i]) {
+      break;
+    }
   }
   if(i<8) {
-	if(bgcolor)
-	  return c+"4"+int_to_string(i)+"m";
-	else
-	  return c+"3"+int_to_string(i)+"m";
+    if(bgcolor)
+      return c+"4"+int_to_string(i)+"m";
+    else
+      return c+"3"+int_to_string(i)+"m";
   }
   else
-	throw "Error: unknown color code.";
+    throw "Error: unknown color code.";
 }
 
 
@@ -67,21 +67,21 @@ bool
 CodeThorn::Parse::checkWord(string w,istream& is) {
   size_t i;
   for(i=0;i<w.size();i++) {
-	if(is.peek()==w[i]) {
-	  is.get();
-	} else {
-	  break;
-	}
+    if(is.peek()==w[i]) {
+      is.get();
+    } else {
+      break;
+    }
   }
   // ensure that the word is followed either by anychar or some char not in [a-zA-Z]
   if(i==w.size() && !std::isalpha(is.peek())) {
-	return true;
+    return true;
   }
   if(i==0) return false;
   --i; // was peeked
   // putback all chars that were read
   while(i>0) {
-	is.putback(w[i--]);
+    is.putback(w[i--]);
   }
   is.putback(w[0]); // note: i is unsigned
   return false;
@@ -96,31 +96,31 @@ CodeThorn::Parse::parseString(string w,istream& is) {
   size_t i;
   char c;
   for(i=0;i<w.size();i++) {
-	if(is.peek()==w[i]) {
-	  is >> c;
-	} else {
-	  break;
-	}
+    if(is.peek()==w[i]) {
+      is >> c;
+    } else {
+      break;
+    }
   }
   // check that string was sucessfully parsed
   if(i==w.size()) {
-	return;
+    return;
   } else {
-	cerr<< "Error: parsing of \""<<w<<"\" failed."<<endl;
-	string s;
-	is>>s;
-	cerr<< "Parsed "<<i<<"characters. Remaining input: "<<s<<"..."<<endl;
-	throw "Parser Error.";
+    cerr<< "Error: parsing of \""<<w<<"\" failed."<<endl;
+    string s;
+    is>>s;
+    cerr<< "Parsed "<<i<<"characters. Remaining input: "<<s<<"..."<<endl;
+    throw "Parser Error.";
   }
 }
 
 bool
 CodeThorn::Parse::integer(istream& is, int& num) {
   if(std::isdigit(is.peek())) {
-	is>>num;
-	return true;
+    is>>num;
+    return true;
   } else {
-	return false;
+    return false;
   }
 }
 
@@ -128,8 +128,8 @@ int
 CodeThorn::Parse::spaces(istream& is) {
   int num=0;
   while(is.peek()==' ') {
-	is.get();
-	num++;
+    is.get();
+    num++;
   }
   return num;
 }
@@ -138,8 +138,8 @@ int
 CodeThorn::Parse::whitespaces(istream& is) {
   int num=0;
   while(std::isspace(is.peek())) {
-	is.get();
-	num++;
+    is.get();
+    num++;
   }
   return num;
 }

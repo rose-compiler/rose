@@ -7,8 +7,6 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-#include "rose.h"
-
 #include <string>
 #include <map>
 #include <vector>
@@ -39,8 +37,8 @@ class VariableIdMapping {
   void reportUniqueVariableSymbolMappingViolations();
 
   /* create a new unique variable symbol (should be used together with deleteUniqueVariableSymbol)
-	 this is useful if additional (e.g. temporary) variables are introduced in an analysis
-	 this function does NOT insert this new symbol in any symbol table
+     this is useful if additional (e.g. temporary) variables are introduced in an analysis
+     this function does NOT insert this new symbol in any symbol table
    */
   VariableId createUniqueTemporaryVariableId(string name);
 
@@ -49,14 +47,14 @@ class VariableIdMapping {
 
   class UniqueTemporaryVariableSymbol : public SgVariableSymbol {
   public:
-	// Constructor: we only allow this single constructor
-	UniqueTemporaryVariableSymbol(string name);
-	// Destructor: default is sufficient
-	
-	// overrides inherited get_name (we do not use a declaration)
-	SgName get_name() const;
+    // Constructor: we only allow this single constructor
+    UniqueTemporaryVariableSymbol(string name);
+    // Destructor: default is sufficient
+    
+    // overrides inherited get_name (we do not use a declaration)
+    SgName get_name() const;
   private:
-	string _tmpName;
+    string _tmpName;
   };
 
   typedef size_t VarId;
@@ -69,6 +67,7 @@ class VariableIdMapping {
   bool isTemporaryVariableId(VariableId varId);
   string variableName(VariableId varId);
   string uniqueLongVariableName(VariableId varId);
+  string uniqueShortVariableName(VariableId varId);
 
   void registerNewSymbol(SgSymbol* sym);
   void toStream(ostream& os);
@@ -92,6 +91,8 @@ class VariableIdMapping {
   vector<SgSymbol*> mappingVarIdToSym;
   map<SgSymbol*,size_t> mappingSymToVarId;
 }; // end of class VariableIdMapping
+
+ typedef VariableIdMapping::VariableIdSet VariableIdSet;
 
 class VariableId {
   friend class VariableIdMapping;
