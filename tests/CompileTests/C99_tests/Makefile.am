@@ -4,11 +4,12 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # These are C99 testcodes targeting aspects of C99 that might not be a subset of C or C++ #
 ###########################################################################################
 
-if ROSE_USE_EDG_VERSION_4_4
+# if ROSE_USE_EDG_VERSION_4_4
 TESTCODES_REQUIRED_TO_PASS = \
      test2005_186.c \
      test2006_127.c \
      test2006_143.c \
+     test2008_01.c \
      test2012_20.c \
      test2012_23.c \
      test2012_25.c \
@@ -17,26 +18,26 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_104.c \
      test2012_105.c \
      test2013_01.c \
+     test2013_02.c \
+     test2013_03.c \
      complex_01.c \
      complex_03.c \
      bool.c \
      constants.c 
 
+# DQ (7/31/2013): I think this is a C89 test code.
 # DQ (10/6/2012): This is a failing test for the new edg 4.x work.
-# test2008_01.c 
 # test2012_106.c
 
-else
-TESTCODES_REQUIRED_TO_PASS = \
-     test2005_186.c \
-     test2006_127.c \
-     test2006_143.c \
-     test2008_01.c \
-     complex_01.c \
-     complex_03.c \
-     bool.c \
-     constants.c 
-endif
+# TESTCODES_REQUIRED_TO_PASS = \
+#     test2005_186.c \
+#     test2006_127.c \
+#     test2006_143.c \
+#     test2008_01.c \
+#     complex_01.c \
+#     complex_03.c \
+#     bool.c \
+#     constants.c 
 
 TESTCODE_CURRENTLY_FAILING = \
      complex_02.c \

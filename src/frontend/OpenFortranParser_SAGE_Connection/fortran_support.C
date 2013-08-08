@@ -3177,7 +3177,7 @@ initialize_global_scope_if_required()
    {
   // First we have to get the global scope initialized (and pushed onto the stack).
 
-  // DQ (2/25/2013): Set the default for source position generation to be consistant with other languages (e.g. C/C++).
+  // DQ (2/25/2013): Set the default for source position generation to be consistent with other languages (e.g. C/C++).
      SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionFrontendConstruction);
 
   // printf ("In initialize_global_scope_if_required(): astScopeStack.empty() = %s \n",astScopeStack.empty() ? "true" : "false");
