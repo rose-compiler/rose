@@ -54,7 +54,7 @@ BUILT_SOURCES = generate-matcherparser.h generate-VariableIdMapping.h
 #make matcherparser.h -C $(top_builddir)/projects/CodeThorn/src
 generate-matcherparser.h:
 	make matcher_demo -C $(top_builddir)/projects/CodeThorn/src
-	
+
 generate-VariableIdMapping.h:
 	make varwatch -C $(top_builddir)/projects/CodeThorn/src
 
@@ -100,6 +100,7 @@ bin_compass2_LDADD=\
 	bin/checkers/do_not_delete_this/libdonotdeletethis.la \
 	bin/checkers/dangerous_overload/libdangerousoverload.la \
 	bin/checkers/discard_assignment/libdiscardassignment.la \
+	bin/checkers/pointer_comparison/libpointercomparison.la \
 	bin/checkers/no_vfork/libnovfork.la \
 	bin/checkers/pointer_comparison/libpointercomparison.la \
 	bin/checkers/no_variadic_functions/libnovariadicfunctions.la \
@@ -238,6 +239,9 @@ bin_checkers_dangerous_overload_libdangerousoverload_la_SOURCES=\
 
 bin_checkers_discard_assignment_libdiscardassignment_la_SOURCES=\
 	bin/checkers/discard_assignment/discard_assignment.cpp
+
+bin_checkers_pointer_comparison_libpointercomparison_la_SOURCES=\
+	bin/checkers/pointer_comparison/pointer_comparison.cpp
 
 bin_checkers_no_vfork_libnovfork_la_SOURCES=\
 	bin/checkers/no_vfork/no_vfork.cpp

@@ -38,6 +38,7 @@
     <parameter name="enabled_checker">doNotDeleteThis</parameter>
     <parameter name="enabled_checker">dangerousOverload</parameter>
     <parameter name="enabled_checker">discardAssignment</parameter>
+    <parameter name="enabled_checker">pointerComparison</parameter>
     <parameter name="enabled_checker">noVfork</parameter>
     <parameter name="enabled_checker">pointerComparison</parameter>
     <parameter name="enabled_checker">noVariadicFunctions</parameter>

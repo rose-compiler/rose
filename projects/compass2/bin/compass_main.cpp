@@ -49,6 +49,7 @@ extern const Compass::Checker* const functionPrototypeChecker;
 extern const Compass::Checker* const doNotDeleteThisChecker;
 extern const Compass::Checker* const dangerousOverloadChecker;
 extern const Compass::Checker* const discardAssignmentChecker;
+extern const Compass::Checker* const pointerComparisonChecker;
 extern const Compass::Checker* const noVforkChecker;
 extern const Compass::Checker* const pointerComparisonChecker;
 extern const Compass::Checker* const noVariadicFunctionsChecker;
@@ -195,6 +196,7 @@ int main (int argc, char** argv)
                 traversals.push_back (dangerousOverloadChecker);
             else if ("discardAssignment" == checker_name)
                 traversals.push_back (discardAssignmentChecker);
+            else if ("pointerComparison" == checker_name)
             else if ("noVfork" == checker_name)
                 traversals.push_back (noVforkChecker);
             else if ("pointerComparison" == checker_name)
