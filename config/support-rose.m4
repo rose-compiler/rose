@@ -409,88 +409,11 @@ AC_SUBST(ROSE_HOME)
 #AM_CONDITIONAL(ROSE_USE_QROSE,test "$with_qrose" = true)
 
 AC_LANG(C++)
-AX_BOOST_BASE([1.36.0], [], [echo "Boost 1.36.0 or above is required for ROSE" 1>&2; exit 1])
-AC_SUBST(ac_boost_path) dnl Hack using an internal variable from AX_BOOST_BASE -- this path should only be used to set --with-boost in distcheck
 
-# Requested boost version
-echo "Requested minimum boost version: boost_lib_version_req_major     = $boost_lib_version_req_major"
-echo "Requested minimum boost version: boost_lib_version_req_minor     = $boost_lib_version_req_minor"
-echo "Requested minimum boost version: boost_lib_version_req_sub_minor = $boost_lib_version_req_sub_minor"
-
-# Actual boost version (version 1.42 will not set "_version", but version 1.37 will).
-echo "Boost version being used is: $_version"
-
-rose_boost_version=`grep "#define BOOST_VERSION " ${ac_boost_path}/include/boost/version.hpp | cut -d" " -f 3 | tr -d '\r'`
-echo "rose_boost_version = $rose_boost_version"
-
-# Define macros for conditional compilation of parts of ROSE based on version of boost
-# (this ONLY happens for the tests in tests/CompilerOptionsTests/testWave)
-#
-# !! We don't want conditional compilation or code in ROSE based on version numbers of Boost. !!
-#
-
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_35,test "x$rose_boost_version" = "x103500" -o "x$_version" = "x1.35")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_36,test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_37,test "x$rose_boost_version" = "x103700" -o "x$_version" = "x1.37")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_38,test "x$rose_boost_version" = "x103800" -o "x$_version" = "x1.38")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_39,test "x$rose_boost_version" = "x103900" -o "x$_version" = "x1.39")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_40,test "x$rose_boost_version" = "x104000" -o "x$_version" = "x1.40")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_41,test "x$rose_boost_version" = "x104100" -o "x$_version" = "x1.41")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_42,test "x$rose_boost_version" = "x104200" -o "x$_version" = "x1.42")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_43,test "x$rose_boost_version" = "x104300" -o "x$_version" = "x1.43")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_44,test "x$rose_boost_version" = "x104400" -o "x$_version" = "x1.44")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_45,test "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_47,test "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47")
-# not ready
-#AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_48,test "x$rose_boost_version" = "x104800" -o "x$_version" = "x1.48")
-
-# DQ (10/18/2010): Error checking for Boost version.
-if test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36" \
-   -o "x$rose_boost_version" = "x103700" -o "x$_version" = "x1.37" \
-   -o "x$rose_boost_version" = "x103800" -o "x$_version" = "x1.38" \
-   -o "x$rose_boost_version" = "x103900" -o "x$_version" = "x1.39" \
-   -o "x$rose_boost_version" = "x104000" -o "x$_version" = "x1.40" \
-   -o "x$rose_boost_version" = "x104100" -o "x$_version" = "x1.41" \
-   -o "x$rose_boost_version" = "x104200" -o "x$_version" = "x1.42" \
-   -o "x$rose_boost_version" = "x104300" -o "x$_version" = "x1.43" \
-   -o "x$rose_boost_version" = "x104400" -o "x$_version" = "x1.44" \
-   -o "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45" \
-   -o "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46" \
-   -o "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46" \
-   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47" 
-# Not ready   
-#   -o "x$rose_boost_version" = "x104800" -o "x$_version" = "x1.48"
-then
-    echo "Reasonable version of Boost found!"
-else
-    ROSE_MSG_ERROR([Unsupported version of Boost: '$_version' ('$rose_boost_version'). Only 1.36 to 1.47 is supported now.])
-fi
-
-# DQ (12/22/2008): Fix boost configure to handle OS with older version of Boost that will
-# not work with ROSE, and use the newer version specified by the user on the configure line.
-echo "In ROSE/configure: ac_boost_path = $ac_boost_path"
-#AC_DEFINE([ROSE_BOOST_PATH],"$ac_boost_path",[Location of Boost specified on configure line.])
-AC_DEFINE_UNQUOTED([ROSE_BOOST_PATH],"$ac_boost_path",[Location (unquoted) of Boost specified on configure line.])
-#AC_DEFINE([ROSE_WAVE_PATH],"$ac_boost_path/wave",[Location of Wave specified on configure line.])
-AC_DEFINE_UNQUOTED([ROSE_WAVE_PATH],"$ac_boost_path/wave",[Location (unquoted) of Wave specified on configure line.])
+ROSE_SUPPORT_BOOST
 
 # DQ (11/5/2009): Added test for GraphViz's ``dot'' program
 ROSE_SUPPORT_GRAPHVIZ
-AX_BOOST_THREAD
-AX_BOOST_DATE_TIME
-AX_BOOST_REGEX
-AX_BOOST_PROGRAM_OPTIONS
-#AX_BOOST_SERIALIZATION
-#AX_BOOST_ASIO
-#AX_BOOST_SIGNALS
-#AX_BOOST_TEST_EXEC_MONITOR
-AX_BOOST_SYSTEM
-AX_BOOST_FILESYSTEM
-AX_BOOST_WAVE
-
-# AM_CONDITIONAL(ROSE_USE_BOOST_WAVE,test "$with_wave" = true)
 
 AX_LIB_SQLITE3
 AX_LIB_MYSQL
@@ -1880,6 +1803,9 @@ projects/BinaryCloneDetection/gui/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
+projects/CodeThorn/Makefile
+projects/CodeThorn/src/Makefile
+projects/CodeThorn/src/addressTakenAnalysis/Makefile
 projects/DataFaultTolerance/Makefile
 projects/DataFaultTolerance/src/Makefile
 projects/DataFaultTolerance/test/Makefile
