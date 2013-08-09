@@ -104,6 +104,8 @@ class Driver<Sage> {
     template <typename Object>
     typename Sage<Object>::build_result_t build(const typename Sage<Object>::object_desc_t & desc);
 
+    void addExternalHeader(unsigned long file_id, std::string header_name, bool is_system_header = true);
+
   protected:
     template <typename Object>
     typename Sage<Object>::build_scopes_t getBuildScopes(const typename Sage<Object>::object_desc_t & desc);

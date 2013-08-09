@@ -12,15 +12,18 @@
 
 #include "KLT/Sequential/mfb-klt.hpp"
 
-#include <cassert>
+#include "build-main.hpp"
 
 #include "sage3basic.h"
+
+#include <cassert>
 
 int main(int argc, char ** argv) {
   SgProject * project = new SgProject::SgProject();
   { // Add default command line to an empty project
     std::vector<std::string> arglist;
       arglist.push_back("c++");
+      arglist.push_back("-DSKIP_ROSE_BUILTIN_DECLARATIONS");
       arglist.push_back("-c");
     project->set_originalCommandLineArgumentList (arglist);
   }
@@ -28,11 +31,12 @@ int main(int argc, char ** argv) {
   assert(argc == 3);
 
   KLT::Core::LoopTrees loop_trees;
-  
-  loop_trees.read(argv[1]);
+  std::list<SgVariableSymbol *> parameter_order;
+  std::pair<std::list<KLT::Core::Data *>, std::list<KLT::Core::Data *> > inout_data_order;
+  loop_trees.read(argv[1], parameter_order, inout_data_order);
 
-  ::MultiFileBuilder::KLT_Driver driver(project);
-  KLT::Core::Generator<KLT::Sequential::Kernel, ::MultiFileBuilder::KLT_Driver> generator(driver, argv[2]);
+  MultiFileBuilder::KLT_Driver driver(project);
+  KLT::Core::Generator<KLT::Sequential::Kernel, MultiFileBuilder::KLT_Driver> generator(driver, std::string(argv[2]) + ".kernel");
 
   std::set<std::list<KLT::Sequential::Kernel *> > kernel_lists;
   KLT::Core::CG_Config<KLT::Sequential::Kernel> cg_config(
@@ -42,16 +46,9 @@ int main(int argc, char ** argv) {
   );
   generator.generate(loop_trees, kernel_lists, cg_config);
 
-/*
-  std::list<KLT::Core::Kernel *>::const_iterator it_kernel;
-  std::vector<SgExpression *>::const_iterator it_expr;
-  for (it_kernel = kernels.begin(); it_kernel != kernels.end(); it_kernel++) {
-    KLT::Sequential::Kernel * kernel = dynamic_cast<KLT::Sequential::Kernel *>(*it_kernel);
-    assert(kernel != NULL);
+  assert(kernel_lists.size() == 1); // FIXME should be true for some time (versionning due to the loop distribution in the Loop-Mapper)
 
-    // TODO
-  }
-*/
+  createMain(driver, std::string(argv[2]) + ".main", loop_trees, *kernel_lists.begin(), parameter_order, inout_data_order);
 
   project->unparse();
 

@@ -183,7 +183,7 @@ void LoopTrees::toText(std::ostream & out) const {
   out << std::endl << ")" << std::endl;
 }
 
-void parseParams(LoopTrees & loop_trees) {
+void parseParams(LoopTrees & loop_trees, std::list<SgVariableSymbol *> & parameter_order) {
   if (AstFromString::afs_match_substr("params")) {
     SgType * param_type = SageBuilder::buildUnsignedLongType();
 
@@ -201,6 +201,7 @@ void parseParams(LoopTrees & loop_trees) {
       assert(var_sym != NULL);
 
       loop_trees.addParameter(var_sym);
+      parameter_order.push_back(var_sym);
 
       AstFromString::afs_skip_whitespace();
     } while (AstFromString::afs_match_char(','));
@@ -237,7 +238,7 @@ void parseCoefs(LoopTrees & loop_trees) {
   AstFromString::afs_skip_whitespace();
 }
 
-void parseDatas(LoopTrees & loop_trees) {
+void parseDatas(LoopTrees & loop_trees, std::pair<std::list<KLT::Core::Data *>, std::list<KLT::Core::Data *> > & inout_data_order) {
   while (AstFromString::afs_match_substr("data")) {
 
     ensure('(');
@@ -291,9 +292,11 @@ void parseDatas(LoopTrees & loop_trees) {
 
     if (AstFromString::afs_match_substr("flow-in")) {
       loop_trees.addDataIn(data);
+      inout_data_order.first.push_back(data);
     }
     else if (AstFromString::afs_match_substr("flow-out")) {
       loop_trees.addDataOut(data);
+      inout_data_order.second.push_back(data);
     }
     else if (AstFromString::afs_match_substr("local")) {
       loop_trees.addDataLocal(data);
@@ -389,25 +392,25 @@ LoopTrees::node_t * parseLoopTreesNode() {
   return lt_node;
 }
 
-void LoopTrees::read(char * filename) {
+void LoopTrees::read(char * filename, std::list<SgVariableSymbol *> & parameter_order, std::pair<std::list<KLT::Core::Data *>, std::list<KLT::Core::Data *> > & inout_data_order) {
   std::ifstream in_file;
   in_file.open(filename);
 
   assert(in_file.is_open());
 
-  read(in_file);
+  read(in_file, parameter_order, inout_data_order);
 
   in_file.close();
 }
 
-void LoopTrees::read(std::ifstream & in_file) {
+void LoopTrees::read(std::ifstream & in_file, std::list<SgVariableSymbol *> & parameter_order, std::pair<std::list<KLT::Core::Data *>, std::list<KLT::Core::Data *> > & inout_data_order) {
   initAstFromString(in_file);
 
-  parseParams(*this);
+  parseParams(*this, parameter_order);
 
   parseCoefs(*this);
 
-  parseDatas(*this);
+  parseDatas(*this, inout_data_order);
 
   if (AstFromString::afs_match_substr("loop-trees")) {
 

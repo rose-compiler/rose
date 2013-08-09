@@ -120,10 +120,10 @@ class LoopTrees {
     void addParameter(SgVariableSymbol * var_sym);
 
     /// Read from a lisp like text file
-    void read(char * filename);
+    void read(char * filename, std::list<SgVariableSymbol *> & parameter_order, std::pair<std::list<KLT::Core::Data *>, std::list<KLT::Core::Data *> > & inout_data_order);
 
     /// Read from a lisp like text file
-    void read(std::ifstream & in_file);
+    void read(std::ifstream & in_file, std::list<SgVariableSymbol *> & parameter_order, std::pair<std::list<KLT::Core::Data *>, std::list<KLT::Core::Data *> > & inout_data_order);
 
     /// Write a lisp like text
     void toText(char * filename) const;

@@ -13,11 +13,12 @@ test_loop_trees_LDADD= \
   $(top_builddir)/src/backend/MFB/lib/sage/libMFB-sage.la \
   $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-test_sequential_generator_SOURCES = test-sequential-generator.cpp
+test_sequential_generator_SOURCES = test-sequential-generator.cpp build-main.cpp
 test_sequential_generator_CXXFLAGS = \
   -g \
   -I$(top_srcdir)/src/backend/KLT/include \
   -I$(top_srcdir)/src/backend/MFB/include \
+  -DSRCDIR=\"$(abs_srcdir)/\" \
   $(ROSE_INCLUDES)
 test_sequential_generator_LDADD = \
   $(top_builddir)/src/backend/KLT/lib/core/libKLT-core.la \
@@ -25,11 +26,12 @@ test_sequential_generator_LDADD = \
   $(top_builddir)/src/backend/MFB/lib/sage/libMFB-sage.la \
   $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-test_opencl_generator_SOURCES = test-opencl-generator.cpp
+test_opencl_generator_SOURCES = test-opencl-generator.cpp #build-main.cpp
 test_opencl_generator_CXXFLAGS = \
   -g \
   -I$(top_srcdir)/src/backend/KLT/include \
   -I$(top_srcdir)/src/backend/MFB/include \
+  -DSRCDIR=\"$(abs_srcdir)/\" \
   $(ROSE_INCLUDES)
 test_opencl_generator_LDADD = \
   $(top_builddir)/src/backend/KLT/lib/core/libKLT-core.la \
@@ -68,11 +70,11 @@ OPENCL_KERNEL_TARGETS = ${LOOP_TREES_INPUTS:.lt.in=.kernel.cl}
 
 %.kernel.cpp: %.lt.in test-sequential-generator
 	rm -f $@ ${@:.kernel.cpp=.kernel.hpp} ${@:.kernel.cpp=.main.cpp}
-	./test-sequential-generator $< ${@:.kernel.cpp=.kernel}
+	./test-sequential-generator $< ${@:.kernel.cpp=}
 
 %.kernel.cl: %.lt.in test-opencl-generator
 	rm -f $@  ${@:.kernel.cl=.main.cpp}
-	./test-opencl-generator $< ${@:.kernel.cl=.kernel}
+	./test-opencl-generator $< ${@:.kernel.cl=}
 
 check-lt-read:
 	$(MAKE) $(LOOP_TREES_TARGETS)
@@ -89,5 +91,5 @@ check-local:
 	$(MAKE) check-opencl
 
 clean-local:
-	rm -f *.lt.out *.kernel.*
+	rm -f *.lt.out *.kernel.* *.main.cpp
 

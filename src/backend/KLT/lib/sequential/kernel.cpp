@@ -48,7 +48,7 @@ void Kernel::setKernel(loop_mapping_t * loop_mapping, Core::IterationMap<Kernel>
 
 Kernel::a_kernel * Kernel::getKernel(loop_mapping_t * loop_mapping, Core::IterationMap<Kernel> * iteration_map) const {
   std::map<loop_mapping_t *, std::map<Core::IterationMap<Kernel> *, a_kernel *> >::const_iterator it_iter_to_kernel_map = p_kernel_map.find(loop_mapping);
-  assert(it_iter_to_kernel_map == p_kernel_map.end());
+  assert(it_iter_to_kernel_map != p_kernel_map.end());
 
   const std::map<Core::IterationMap<Kernel> *, a_kernel *> & iter_to_kernel_map = it_iter_to_kernel_map->second;
   std::map<Core::IterationMap<Kernel> *, a_kernel *>::const_iterator it_kernel = iter_to_kernel_map.find(iteration_map);

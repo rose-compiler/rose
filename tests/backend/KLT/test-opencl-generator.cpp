@@ -12,9 +12,11 @@
 
 #include "KLT/OpenCL/mfb-klt.hpp"
 
-#include <cassert>
+//#include "build-main.hpp"
 
 #include "sage3basic.h"
+
+#include <cassert>
 
 int main(int argc, char ** argv) {
   SgProject * project = new SgProject::SgProject();
@@ -28,11 +30,12 @@ int main(int argc, char ** argv) {
   assert(argc == 3);
 
   KLT::Core::LoopTrees loop_trees;
-  
-  loop_trees.read(argv[1]);
+  std::list<SgVariableSymbol *> parameter_order;
+  std::pair<std::list<KLT::Core::Data *>, std::list<KLT::Core::Data *> > inout_data_order;  
+  loop_trees.read(argv[1], parameter_order, inout_data_order);
 
   ::MultiFileBuilder::KLT_Driver driver(project);
-  KLT::Core::Generator<KLT::OpenCL::Kernel, ::MultiFileBuilder::KLT_Driver> generator(driver, argv[2]);
+  KLT::Core::Generator<KLT::OpenCL::Kernel, ::MultiFileBuilder::KLT_Driver> generator(driver, std::string(argv[2]) + ".kernel");
 
   std::set<std::list<KLT::OpenCL::Kernel *> > kernel_lists;
   KLT::Core::CG_Config<KLT::OpenCL::Kernel> cg_config(
