@@ -5,6 +5,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AUTOMAKE_OPTIONS = subdir-objects
 
 SUBDIRS=\
+	asynchronous_signal_handler \
 	discard_assignment \
 	explicit_test_for_non_boolean_value \
 	data_member_access \
