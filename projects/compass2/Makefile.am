@@ -102,7 +102,6 @@ bin_compass2_LDADD=\
 	bin/checkers/discard_assignment/libdiscardassignment.la \
 	bin/checkers/pointer_comparison/libpointercomparison.la \
 	bin/checkers/no_vfork/libnovfork.la \
-	bin/checkers/pointer_comparison/libpointercomparison.la \
 	bin/checkers/no_variadic_functions/libnovariadicfunctions.la \
 	bin/checkers/asynchronous_signal_handler/libasynchronoussignalhandler.la \
 	$(BOOST_LDFLAGS) \
@@ -244,9 +243,6 @@ bin_checkers_pointer_comparison_libpointercomparison_la_SOURCES=\
 
 bin_checkers_no_vfork_libnovfork_la_SOURCES=\
 	bin/checkers/no_vfork/no_vfork.cpp
-
-bin_checkers_pointer_comparison_libpointercomparison_la_SOURCES=\
-	bin/checkers/pointer_comparison/pointer_comparison.cpp
 
 bin_checkers_no_variadic_functions_libnovariadicfunctions_la_SOURCES=\
 	bin/checkers/no_variadic_functions/no_variadic_functions.cpp

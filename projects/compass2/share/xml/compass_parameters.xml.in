@@ -31,7 +31,7 @@
     <parameter name="enabled_checker">floatForLoopCounter</parameter>
     <parameter name="enabled_checker">ternaryOperator</parameter>
     <parameter name="enabled_checker">explicitTestForNonBooleanValue</parameter>
-    <parameter name="enabled_gitchecker">byteByByteStructureComparison</parameter>
+    <parameter name="enabled_checker">byteByByteStructureComparison</parameter>
     <parameter name="enabled_checker">sizeOfPointer</parameter>
     <parameter name="enabled_checker">defaultArgument</parameter>
     <parameter name="enabled_checker">functionPrototype</parameter>
@@ -40,7 +40,6 @@
     <parameter name="enabled_checker">discardAssignment</parameter>
     <parameter name="enabled_checker">pointerComparison</parameter>
     <parameter name="enabled_checker">noVfork</parameter>
-    <parameter name="enabled_checker">pointerComparison</parameter>
     <parameter name="enabled_checker">noVariadicFunctions</parameter>
     <parameter name="enabled_checker">asynchronousSignalHandler</parameter>
     <!--PLACEHOLDER-->

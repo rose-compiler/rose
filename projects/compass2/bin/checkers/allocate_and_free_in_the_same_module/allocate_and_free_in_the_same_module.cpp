@@ -319,7 +319,7 @@ run(Compass::Parameters parameters, Compass::OutputObject* output)
             std::string found_func_str = found_func->get_symbol()
                                              ->get_name().getString();
             if(found_func_str.compare("malloc") == 0
-                || found_func_str.compare("calloc" == 0))
+                || found_func_str.compare("calloc") == 0)
             {
               // found a malloc call within a function parameter
               // we must map this to whatever variable it would be assigned in the
