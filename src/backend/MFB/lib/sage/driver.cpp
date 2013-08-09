@@ -76,10 +76,10 @@ unsigned long Driver<Sage>::loadPairOfFiles(const std::string & name, const std:
   std::string filename;
 
   filename = name + ".hpp";
-  SgSourceFile * header_file = isSgSourceFile(SageBuilder::buildFile(header_path + filename, filename, project)); // FIXME could extract the header from the source file...
+  SgSourceFile * header_file = isSgSourceFile(SageBuilder::buildFile(header_path + filename, std::string("rose_") + filename, project)); // FIXME could extract the header from the source file...
 
   filename = name + ".cpp";
-  SgSourceFile * source_file = isSgSourceFile(SageBuilder::buildFile(source_path + filename, filename, project));
+  SgSourceFile * source_file = isSgSourceFile(SageBuilder::buildFile(source_path + filename, std::string("rose_") + filename, project));
 
   unsigned long id = addPairOfFiles(header_file, source_file);
 
@@ -136,6 +136,39 @@ void Driver<Sage>::addIncludeDirectives(SgSourceFile * target_file, unsigned lon
   to_be_included_file_name = header_file->getFileName(); // FIXME path??
 
   SageInterface::insertHeader(target_file, to_be_included_file_name);
+}
+
+void Driver<Sage>::addPointerToTopParentDeclaration(SgSymbol * symbol, SgSourceFile * file) {
+  SgSymbol * parent = symbol;
+  std::map<SgSymbol *, SgSymbol *>::const_iterator it_parent = p_parent_map.find(symbol);
+  assert(it_parent != p_parent_map.end());
+  while (it_parent->second != NULL) {
+    parent = it_parent->second;
+    it_parent = p_parent_map.find(parent);
+    assert(it_parent != p_parent_map.end());
+  }
+  assert(parent != NULL);
+
+  SgDeclarationStatement * decl_to_add = NULL;
+  SgVariableSymbol * var_sym = isSgVariableSymbol(parent);
+  if (var_sym != NULL) {
+    assert(var_sym == symbol);
+
+    SgInitializedName * init_name = isSgInitializedName(var_sym->get_symbol_basis());
+    assert(init_name != NULL);
+
+    // TODO
+  }
+  else
+    decl_to_add = isSgDeclarationStatement(parent->get_symbol_basis());
+  assert(decl_to_add != NULL);
+
+  SgGlobal * global_scope = file->get_globalScope();
+  assert(global_scope != NULL);
+
+  const std::vector<SgDeclarationStatement *> & declaration_list = global_scope->getDeclarationList();
+  if (find(declaration_list.begin(), declaration_list.end(), decl_to_add) == declaration_list.end())
+    SageInterface::prependStatement(decl_to_add, global_scope);
 }
 
 }
