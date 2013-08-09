@@ -1292,7 +1292,7 @@ void Analyzer::runSolver2() {
     if(workers==0)
       break; // we are done
 
-#pragma omp parallel for private(threadNum),shared(workVector,analyzedSemanticFoldingNode)
+#pragma omp parallel for private(threadNum) shared(workVector,analyzedSemanticFoldingNode)
     for(int j=0;j<workers;++j) {
 #ifdef _OPENMP
       threadNum=omp_get_thread_num();
