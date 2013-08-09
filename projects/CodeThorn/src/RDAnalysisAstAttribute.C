@@ -1,5 +1,10 @@
 #include "sage3basic.h"
 #include "RDAnalysisAstAttribute.h"
+
+void RDAnalysisAstAttribute::toStream(ostream& os, VariableIdMapping* vim) {
+  _elem->toStream(os,vim);
+}
+
 RDAnalysisAstAttribute::RDAnalysisAstAttribute(RDLattice* elem):_elem(elem) {
 }
 bool RDAnalysisAstAttribute::isBottomElement() {

@@ -16,26 +16,7 @@ using std::string;
 
 using namespace CodeThorn;
 
-typedef pair<VariableId,LabelSet> VariableIdLabelSetPair;
-typedef set<VariableIdLabelSetPair> UseDefInfo;
-
-class UseDefInfoAttribute : public AstSgNodeAttribute {
- public:
- UseDefInfoAttribute(RDAnalysisAstAttribute* rdAttr, SgNode* nodeForUseVarQuery)
-   :_rdAttr(rdAttr),
-	_node(nodeForUseVarQuery)
- {
-  }
-  VariableIdSet useVariables() {
-	return AnalysisAbstractionLayer::useVariablesInExpression(_node);
-  }
-  LabelSet definitionsOfVariable(VariableId var) {
-	return _rdAttr->definitionsOfVariableId(var);
-  }
- private:
-  RDAnalysisAstAttribute* _rdAttr;
-  SgNode* _node;
-};
+#include "UDAstAttribute.h"
 
 class DataDependenceVisualizer {
  public:
@@ -45,8 +26,9 @@ class DataDependenceVisualizer {
   Label getLabel(SgNode* stmt);
   SgNode* getNode(Label lab);
   void generateDot(SgNode* root, string fileName);
+  bool _showSourceCode;
  private:
-  UseDefInfoAttribute* getUseDefInfoAttribute(SgNode* expr,string attributeName);
+  UDAstAttribute* getUDAstAttribute(SgNode* expr,string attributeName);
   Labeler* _labeler;
   VariableIdMapping* _variableIdMapping;
   string  _useDefAttributeName;

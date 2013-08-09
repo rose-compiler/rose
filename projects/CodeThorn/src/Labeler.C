@@ -132,6 +132,7 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgLabelStatement:
   case V_SgFunctionDeclaration:
   case V_SgNullStatement:
+  case V_SgPragmaDeclaration:
   case V_SgReturnStmt:
     if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(node)) {
       //cout << "DEBUG: Labeler: assigning 3 labels for SgReturnStmt(SgFunctionCallExp)"<<endl;

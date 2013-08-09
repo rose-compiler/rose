@@ -279,6 +279,7 @@ Label CFAnalyzer::initialLabel(SgNode* node) {
   switch (node->variantT()) {
   case V_SgFunctionDeclaration:
   case V_SgNullStatement:
+  case V_SgPragmaDeclaration:
   case V_SgLabelStatement:
     return labeler->getLabel(node);
   case V_SgFunctionDefinition:
@@ -354,6 +355,7 @@ LabelSet CFAnalyzer::finalLabels(SgNode* node) {
   case V_SgReturnStmt:
     return finalSet;
   case V_SgNullStatement:
+  case V_SgPragmaDeclaration:
   case V_SgLabelStatement:
   case V_SgInitializedName:
   case V_SgVariableDeclaration:
@@ -777,6 +779,7 @@ Flow CFAnalyzer::flow(SgNode* node) {
   case V_SgInitializedName:
   case V_SgVariableDeclaration:
   case V_SgNullStatement:
+  case V_SgPragmaDeclaration:
   case V_SgLabelStatement:
   case V_SgExprStatement:
     return edgeSet;
@@ -896,7 +899,6 @@ Flow CFAnalyzer::flow(SgNode* node) {
     }
     return edgeSet;
   }
-    
   default:
     cerr << "Error: Unknown node in CodeThorn::CFAnalyzer::flow: "<<node->sage_class_name()<<endl; 
     cerr << "Problemnode: "<<node->unparseToString()<<endl;

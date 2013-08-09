@@ -3,13 +3,24 @@
 #include "sage3basic.h"
 
 #include "RDAnalyzer.h"
-
+#include "RDAnalysisAstAttribute.h"
 using namespace std;
 using namespace CodeThorn;
 
 #include "CollectionOperators.h"
 
 RDAnalyzer::RDAnalyzer() {
+}
+
+void RDAnalyzer::attachResultsToAst(string attributeName) {
+  size_t lab=0;
+  for(std::vector<RDLattice>::iterator i=_analyzerData.begin();
+      i!=_analyzerData.end();
+      ++i) {
+    // TODO: need to add a solution for nodes with multiple associated labels (e.g. functio call)
+    _labeler->getNode(lab)->setAttribute(attributeName,new RDAnalysisAstAttribute(&(*i)));
+    lab++;
+  }
 }
 
 RDAnalyzer::iterator RDAnalyzer::begin() {
@@ -75,9 +86,9 @@ void RDAnalyzer::transfer_assignment(SgAssignOp* node, Label& lab, RDLattice& el
     // 2) add (lab,lhs.varid)
     
     // (for programs with pointers we require a set here)
-#if 0
+#if 1
   // TODO: USEDEF FUNCTIONS HERE (ACTIVATE)
-	VariableIdSet lhsVarIds=AnalysisAbstractionLayer::defVariablesInExpression(node);  
+  VariableIdSet lhsVarIds=AnalysisAbstractionLayer::defVariablesInExpression(node,_variableIdMapping);  
 #else
     VariableIdSet lhsVarIds=determineLValueVariableIdSet(SgNodeHelper::getLhs(node));
 #endif

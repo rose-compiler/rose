@@ -11,12 +11,13 @@
 #include "CFAnalyzer.h"
 #include "WorkListSeq.h"
 #include <set>
-
+#include <string>
 
 namespace CodeThorn {
 
   using std::set;
   using std::vector;
+  using std::string;
 
 template<typename LatticeType>
 class DFAnalyzer {
@@ -31,7 +32,7 @@ class DFAnalyzer {
   typedef vector<LatticeType> AnalyzerData;
   typedef vector<LatticeType> ResultAccess;
   ResultAccess& getResultAccess();
-  void attachResultsToAst();
+  void attachResultsToAst(string);
   Labeler* getLabeler();
   VariableIdMapping* getVariableIdMapping();
  protected:

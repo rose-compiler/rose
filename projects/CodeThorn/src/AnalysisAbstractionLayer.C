@@ -3,6 +3,9 @@
 #include "sage3basic.h"
 #include "AnalysisAbstractionLayer.h"
 
+#include "addressTakenAnalysis/addressTakenAnalysis.h"
+#include "addressTakenAnalysis/defUseQuery.h"
+
 VariableIdSet
 AnalysisAbstractionLayer::globalVariables(SgProject* project, VariableIdMapping* variableIdMapping) {
   list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
@@ -24,15 +27,26 @@ AnalysisAbstractionLayer::usedVariablesInsideFunctions(SgProject* project, Varia
   return setOfUsedVars;
 }
 
-VariableIdSet AnalysisAbstractionLayer::useVariablesInExpression(SgNode* node) {
+// TODO: this function ignores all reported memory access to unnamed memory cells
+void extractVariableIdSetFromVarsInfo(VariableIdSet& varIdSet, VarsInfo& varsInfo) {
+	VariableIdInfoMap& vim=varsInfo.first;
+	cout<<"VariableIdInfoMap-size:"<<vim.size()<<endl;
+	for(VariableIdInfoMap::iterator i=vim.begin();i!=vim.end();++i) {
+	  varIdSet.insert((*i).first);
+	}
+}
+
+VariableIdSet AnalysisAbstractionLayer::useVariablesInExpression(SgNode* node, VariableIdMapping& vidm) {
   VariableIdSet resultSet;
-  // TODO: USEDEF FUNCTIONS HERE (USE)
+  VarsInfo useVarsInfo=getDefUseVarsInfo(node, vidm).getUseVarsInfo();
+  extractVariableIdSetFromVarsInfo(resultSet,useVarsInfo);
   return resultSet;
 }
 
-VariableIdSet AnalysisAbstractionLayer::defVariablesInExpression(SgNode* node) {
+VariableIdSet AnalysisAbstractionLayer::defVariablesInExpression(SgNode* node, VariableIdMapping& vidm) {
   VariableIdSet resultSet;
-  // TODO: USEDEF FUNCTIONS HERE (DEF)
+  VarsInfo defVarsInfo=getDefUseVarsInfo(node, vidm).getDefVarsInfo();
+  extractVariableIdSetFromVarsInfo(resultSet,defVarsInfo);
   return resultSet;
 }
 

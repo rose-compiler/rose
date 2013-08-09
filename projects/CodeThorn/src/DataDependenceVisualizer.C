@@ -8,19 +8,20 @@ class VariableIdSetAttribute;
 // public
 
 DataDependenceVisualizer::DataDependenceVisualizer(Labeler* labeler, VariableIdMapping* varIdMapping, string useDefAttributeName)
-  : _labeler(labeler),
+  : _showSourceCode(true),
+    _labeler(labeler),
     _variableIdMapping(varIdMapping),
 	_useDefAttributeName(useDefAttributeName)
 {
 }
 
 VariableIdSet DataDependenceVisualizer::useVars(SgNode* expr) {
-  UseDefInfoAttribute* useDefAttribute=getUseDefInfoAttribute(expr,_useDefAttributeName);
-  return useDefAttribute->useVariables();
+  UDAstAttribute* useDefAttribute=getUDAstAttribute(expr,_useDefAttributeName);
+  return useDefAttribute->useVariables(*_variableIdMapping);
 }
 
 LabelSet DataDependenceVisualizer::defLabels(SgNode* expr, VariableId useVar) {
-  UseDefInfoAttribute* useDefAttribute=getUseDefInfoAttribute(expr,_useDefAttributeName);
+  UDAstAttribute* useDefAttribute=getUDAstAttribute(expr,_useDefAttributeName);
   return useDefAttribute->definitionsOfVariable(useVar);
 }
 
@@ -50,7 +51,18 @@ void DataDependenceVisualizer::generateDot(SgNode* root, string fileName) {
 		Label targetNode=*i;
 		VariableId edgeAnnotation=useVar;
 		string edgeAnnotationString=_variableIdMapping->uniqueShortVariableName(useVar);
-		myfile<<sourceNode<<" -> "<<targetNode<<"[label=\""<<edgeAnnotation.toString()<<"\"];"<<endl;
+
+		myfile<<sourceNode<<" -> "<<targetNode;
+		if(_showSourceCode) {
+		  myfile<<"[label=\""<<edgeAnnotationString<<"\" color=red];";
+		}
+		myfile<<endl;
+
+		if(_showSourceCode) {
+		  myfile<<sourceNode<<" [label=\""<<sourceNode<<":"<<getNode(sourceNode)->unparseToString()<<"\"];"<<endl;
+		  myfile<<targetNode<<" [label=\""<<targetNode<<":"<<getNode(targetNode)->unparseToString()<<"\"];"<<endl;
+		}
+
 	  }
 	}
   }
@@ -60,9 +72,9 @@ void DataDependenceVisualizer::generateDot(SgNode* root, string fileName) {
 
 // private
 
-UseDefInfoAttribute* DataDependenceVisualizer::getUseDefInfoAttribute(SgNode* expr,string attributeName){
+UDAstAttribute* DataDependenceVisualizer::getUDAstAttribute(SgNode* expr,string attributeName){
   if(expr->attributeExists(attributeName)) {
-    UseDefInfoAttribute* udAttr=dynamic_cast<UseDefInfoAttribute*>(expr->getAttribute(attributeName));
+    UDAstAttribute* udAttr=dynamic_cast<UDAstAttribute*>(expr->getAttribute(attributeName));
     return udAttr;
   } else {
     return 0;

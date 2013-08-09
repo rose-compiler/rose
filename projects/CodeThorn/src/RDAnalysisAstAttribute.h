@@ -21,6 +21,7 @@ class RDAnalysisAstAttribute : public RDAnalysisAbstractAstAttribute {
   iterator begin();
   iterator end();
   virtual ~RDAnalysisAstAttribute();
+  void toStream(ostream& os, VariableIdMapping* vim);
  private:
   RDLattice* _elem;
 };

@@ -17,16 +17,27 @@
 using namespace std;
 using namespace CodeThorn;
 
-void createDefUseAttributeFromRDAttribute(Labeler* labeler, string rdAttributeName, string udAttributeName) {
+void createUDAstAttributeFromRDAttribute(Labeler* labeler, string rdAttributeName, string udAttributeName) {
+  long labelNum=labeler->numberOfLabels();
+  for(long i=0;i<labelNum;++i) {
+	Label lab=i;
+	SgNode* node=labeler->getNode(lab);
+	RDAnalysisAstAttribute* rdAttr=dynamic_cast<RDAnalysisAstAttribute*>(node->getAttribute(rdAttributeName));
+	node->setAttribute(udAttributeName,new UDAstAttribute(rdAttr, node));
+  }
+}
+
+template<typename T>
+void printAttributes(Labeler* labeler, VariableIdMapping* vim, string attributeName) {
   long labelNum=labeler->numberOfLabels();
   for(long i=0;i<labelNum;++i) {
 	Label lab=i;
 	SgNode* node=labeler->getNode(i);
-	RDAnalysisAstAttribute* rdAttr=dynamic_cast<RDAnalysisAstAttribute*>(node->getAttribute(rdAttributeName));
-	node->addNewAttribute(udAttributeName,new UseDefInfoAttribute(rdAttr, node));
+	cout<<"@Label "<<lab<<":";
+	dynamic_cast<T*>(node->getAttribute(attributeName))->toStream(cout,vim);
+	cout<<endl;
   }
 }
-
 int main(int argc, char* argv[]) {
   cout << "INIT: Parsing and creating AST."<<endl;
   boolOptions.registerOption("semantic-fold",false); // temporary
@@ -41,12 +52,15 @@ int main(int argc, char* argv[]) {
   rdAnalyzer->determineExtremalLabels(startFunRoot);
   rdAnalyzer->run();
   cout << "INFO: attaching results to AST."<<endl;
-  rdAnalyzer->attachResultsToAst();
+  rdAnalyzer->attachResultsToAst("rd-analysis");
   cout << "INFO: generating visualization data."<<endl;
-  createDefUseAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis", "ud-analysis");
+  printAttributes<RDAnalysisAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"rd-analysis");
+  createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis", "ud-analysis");
   DataDependenceVisualizer ddvis(rdAnalyzer->getLabeler(),
                                  rdAnalyzer->getVariableIdMapping(),
 								 "ud-analysis");
+  printAttributes<UDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"ud-analysis");
+  //ddvis._showSourceCode=false; // for large programs
   ddvis.generateDot(root,"datadependencegraph.dot");
 
   // simple test
