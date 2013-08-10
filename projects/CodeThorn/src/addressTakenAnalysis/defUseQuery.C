@@ -195,7 +195,7 @@ std::string DefUseVarsInfo::str(VariableIdMapping& vidm)
   std::ostringstream oss;
   oss << "def_vars_info: " << varsInfoPrettyPrint(def_vars_info, vidm) << "\n";
   oss << "use_vars_info: " << varsInfoPrettyPrint(use_vars_info, vidm) << "\n";
-  oss << "func_set: " << functionCallExpSetPrettyPrint(func_set) << ">\n";
+  oss << "func_set: " << functionCallExpSetPrettyPrint(func_set) << "\n";
   return oss.str();
 }
 
