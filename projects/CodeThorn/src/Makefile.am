@@ -82,13 +82,14 @@ codethorn_SOURCES = \
   RDAnalysisAstAttribute.h         \
   RDAnalysisAstAttribute.C         \
   RERS_empty_specialization.C      \
-  matcherparser.C RoseAst.h RoseAst.C matcherparser_decls.h AstMatching.C AstMatching.h MatchOperation.C MatchOperation.h \
   addressTakenAnalysis/defUseQuery.C \
   addressTakenAnalysis/defUseQuery.h \
   addressTakenAnalysis/VariableIdUtils.C \
   addressTakenAnalysis/VariableIdUtils.h \
   addressTakenAnalysis/addressTakenAnalysis.C \
   addressTakenAnalysis/addressTakenAnalysis.h
+
+#  matcherparser.C RoseAst.h RoseAst.C matcherparser_decls.h AstMatching.C AstMatching.h MatchOperation.C MatchOperation.h
 
 # used only in specialized analyzer
 faketarget:
@@ -111,7 +112,6 @@ faketarget:
 	WorkList.h
 	WorkList.C
 	SetAlgo.h
-	AstMatching.C
 	ast_demo.C
 	ShowSeq.h
 	iterator_test.C
@@ -128,10 +128,10 @@ REGRESSION_DATA_DIR=regressiondata
 # MS: matcher_demo
 matcher_demo_LDADD = -lrose
 #matcher_demo_SOURCES = matcherparser.yy matcherlexer.ll Timer.cpp RoseAst.C AstTerm.C matcherparser_decls.h AstMatching.C AstMatching.h MatchOperation.C MatchOperation.h SgNodeHelper.h SgNodeHelper.C matcher_demo.C
-matcher_demo_SOURCES = matcherparser.C Timer.cpp RoseAst.C AstTerm.C matcherparser_decls.h AstMatching.C AstMatching.h MatchOperation.C MatchOperation.h SgNodeHelper.h SgNodeHelper.C matcher_demo.C
+matcher_demo_SOURCES = Timer.cpp AstTerm.C SgNodeHelper.h SgNodeHelper.C matcher_demo.C
 #matcher_demo_AM_YFLAGS = -d -p matcherparser
 #matcher_demo_AM_LFLAGS = -Pmatcherparser -o$(LEX_OUTPUT_ROOT).c
-BUILT_SOURCES = matcherparser.C
+BUILT_SOURCES = 
 AM_YFLAGS =
 AM_LFLAGS =
 
@@ -160,13 +160,14 @@ rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h Co
   addressTakenAnalysis/addressTakenAnalysis.C \
   addressTakenAnalysis/addressTakenAnalysis.h
 
+# obsolete since integration into ROSE
 # explicit rules because of multiple bison parser
-matcherparser.C: $(srcdir)/matcherlexer.ll $(srcdir)/matcherparser.yy
-	$(YACC) $(YFLAGS) -d -p matcherparser $(srcdir)/matcherparser.yy # generates y.tab.h/c
-	$(LEX) $(LFLAGS) $(AM_LFLAGS) -Pmatcherparser $(srcdir)/matcherlexer.ll
-	mv y.tab.h matcherparser.h
-	cat lex.yy.c y.tab.c > matcherparser.C
-	rm lex.yy.c y.tab.c
+#matcherparser.C: $(srcdir)/matcherlexer.ll $(srcdir)/matcherparser.yy
+#	$(YACC) $(YFLAGS) -d -p matcherparser $(srcdir)/matcherparser.yy # generates y.tab.h/c
+#	$(LEX) $(LFLAGS) $(AM_LFLAGS) -Pmatcherparser $(srcdir)/matcherlexer.ll
+#	mv y.tab.h matcherparser.h
+#	cat lex.yy.c y.tab.c > matcherparser.C
+#	rm lex.yy.c y.tab.c
 
 #MS: iterator_test not ingegrated yet
 #iterator_test_SOURCES = iterator_test.C ShowSeq.h
