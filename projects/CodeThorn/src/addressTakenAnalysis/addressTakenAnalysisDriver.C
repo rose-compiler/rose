@@ -42,11 +42,11 @@ void TestDefUseVarsInfoTraversal::visit(SgNode* sgn)
       // std::cout << "use_set flag raised\n";
       ++flagRaisedUseSet;
     }
-    // if(!memobj.isDefSetEmpty() || !memobj.isUseSetEmpty() || !memobj.isFunctionCallExpSetEmpty())
-    // {
-    //   std::cout << "<" << sgn->class_name() << ", " << sgn->unparseToString() << "\n" 
-    //             << memobj.str(vidm) << ">\n";
-    // }
+    if(!memobj.isDefSetEmpty() || !memobj.isUseSetEmpty() || !memobj.isFunctionCallExpSetEmpty())
+    {
+      std::cout << "<" << sgn->class_name() << ", " << sgn->unparseToString() << "\n" 
+                << memobj.str(vidm) << ">\n";
+    }
   }
 }
 

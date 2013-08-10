@@ -1,5 +1,8 @@
-#include "sage3basic.h"
+/*****************************************
+ * Author: Sriram Aananthakrishnan, 2013 *
+ *****************************************/
 
+#include "sage3basic.h"
 #include "defUseQuery.h"
 #include <algorithm>
 #include <iterator>
@@ -113,9 +116,11 @@ DefUseVarsInfo DefUseVarsInfo::operator+(const DefUseVarsInfo& duvi1)
   VarsInfo rdef_vars_info, ruse_vars_info;
   FunctionCallExpSet rfunc_set;
   
-  // not efficient way to merge the maps
-  // the keys don't change
-  // the types also don't change
+  // we are merging two maps
+  // <VariableId, type> entry should not be different if present in two maps
+  // maps are really small and therefore its ok to
+  // insert the map into another and there will should be no collision on the item for the same key
+
   // inserting into new map to avoid side-effects on this object
   rdef_vars_info.first.insert(def_vars_info.first.begin(), def_vars_info.first.end());
   rdef_vars_info.first.insert(d1_def_vars_info.first.begin(), d1_def_vars_info.first.end());
@@ -160,7 +165,7 @@ std::string DefUseVarsInfo::varsInfoPrettyPrint(VarsInfo& vars_info, VariableIdM
   for( ; it != vars_info.first.end();  )
   {
     // oss << "<" << (*it).first.toString() << ", " << vidm.variableName((*it).first) << ", ";
-    oss << "<" << vidm.variableName((*it).first) << ", ";
+    oss << "<" << vidm.uniqueShortVariableName((*it).first) << ", ";
     switch((*it).second) {
     case VARIABLE:
       oss << "var";
@@ -190,7 +195,7 @@ std::string DefUseVarsInfo::str(VariableIdMapping& vidm)
   std::ostringstream oss;
   oss << "def_vars_info: " << varsInfoPrettyPrint(def_vars_info, vidm) << "\n";
   oss << "use_vars_info: " << varsInfoPrettyPrint(use_vars_info, vidm) << "\n";
-  oss << "func_set: " << functionCallExpSetPrettyPrint(func_set) << ">\n";
+  oss << "func_set: " << functionCallExpSetPrettyPrint(func_set) << "\n";
   return oss.str();
 }
 
@@ -373,51 +378,6 @@ void ExprWalker::visit(SgConditionalExp* sgn)
   duvi = cduvi + tduvi + fduvi;
 }
 
-void ExprWalker::visit(SgVarRefExp* sgn)
-{
-  // recursion base case
-  DefUseVarsInfo rduvi = getDefUseVarsInfoLvalue(sgn, vidm, isModExpr);
-  duvi = rduvi;
-}
-
-void ExprWalker::visit(SgPntrArrRefExp* sgn)
-{
-  DefUseVarsInfo rduvi = getDefUseVarsInfoLvalue(sgn, vidm, isModExpr);
-  duvi = rduvi;
-}
-
-void ExprWalker::visit(SgPointerDerefExp* sgn)
-{
-  // *p + i++ ??
-  DefUseVarsInfo rduvi = getDefUseVarsInfoLvalue(sgn, vidm, isModExpr);
-  duvi = rduvi;
-}
-
-void ExprWalker::visit(SgArrowExp* sgn)
-{
-  DefUseVarsInfo rduvi = getDefUseVarsInfoLvalue(sgn, vidm, isModExpr);
-  duvi = rduvi;
-}
-
-void ExprWalker::visit(SgDotExp *sgn)
-{
-  DefUseVarsInfo rduvi = getDefUseVarsInfoLvalue(sgn, vidm, isModExpr);
-  duvi = rduvi;
-}
-
-void ExprWalker::visit(SgInitializedName* sgn)
-{
-  SgInitializer* initializer = sgn->get_initializer();
-  if(initializer) {
-    DefUseVarsInfo lduvi = getDefUseVarsInfoLvalue(sgn, vidm, true);
-    DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(initializer, vidm, false);
-
-    if(! rduvi.isDefSetEmpty())
-      rduvi.copyDefToUse();
-    duvi = lduvi + rduvi;
-  }
-}
-
 void ExprWalker::visit(SgAssignInitializer *sgn)
 {
   // operand is only used
@@ -444,52 +404,14 @@ void ExprWalker::visit(SgAggregateInitializer* sgn)
   duvi = rduvi;
 }
 
-void ExprWalker::visit(SgValueExp* sgn)
+void ExprWalker::visit(SgVarRefExp* sgn)
 {
-  // dont need to do anything
-}
+  // get the VariableId
+  VariableId vid = vidm.variableId(sgn);
+  
+  ROSE_ASSERT(vid.getIdCode() != -1);
 
-void ExprWalker::visit(SgFunctionRefExp* sgn)
-{
-  // not sure
-  // does not have any def/use semantics
-}
-
-void ExprWalker::visit(SgMemberFunctionRefExp* sgn)
-{
-  // not sure
-  // does not have any def/use semantics
-}
-
-void ExprWalker::visit(SgExpression* sgn)
-{
-  try {
-    std::ostringstream oss;
-    oss << "Not handling " << sgn->class_name() << " expression \n";
-    throw oss.str();
-  }
-  catch(std::string exp)
-  {
-    std::cerr << exp << "\n";
-    abort();
-  }
-}
-
-DefUseVarsInfo ExprWalker::getDefUseVarsInfo()
-{
-  return duvi;
-}
-
-LvalueExprWalker::LvalueExprWalker(VariableIdMapping& _vidm, bool _isModExpr)
-  : vidm(_vidm), isModExpr(_isModExpr)
-{
-}
-
-void LvalueExprWalker::visit(SgInitializedName* sgn)
-{
-  VarsInfo& def_vars_info = duvi.getDefVarsInfoMod();
-  VarsInfo& use_vars_info = duvi.getUseVarsInfoMod();
-  // determine the type
+  // determine type info
   SgType* sgn_type = sgn->get_type();
   VariableIdTypeInfo sgn_type_info;
 
@@ -502,36 +424,72 @@ void LvalueExprWalker::visit(SgInitializedName* sgn)
   else
     sgn_type_info = VARIABLE;
 
-  if(isModExpr)
-    def_vars_info.first.insert(VariableIdInfo(vidm.variableId(sgn), sgn_type_info));
-  else
-    use_vars_info.first.insert(VariableIdInfo(vidm.variableId(sgn), sgn_type_info));
-}
-
-void LvalueExprWalker::visit(SgVarRefExp* sgn)
-{
   VarsInfo& def_vars_info = duvi.getDefVarsInfoMod();
   VarsInfo& use_vars_info = duvi.getUseVarsInfoMod();
 
-  SgType* sgn_type = sgn->get_type();
-  VariableIdTypeInfo sgn_type_info;
-
-  if(isSgArrayType(sgn_type))
-    sgn_type_info = ARRAY;
-  else if(isSgPointerType(sgn_type))
-    sgn_type_info = POINTER;
-  else if(isSgReferenceType(sgn_type))
-    sgn_type_info = REFERENCE;
-  else
-    sgn_type_info = VARIABLE;
-
-  if(isModExpr)
-    def_vars_info.first.insert(VariableIdInfo(vidm.variableId(sgn), sgn_type_info));
-  else
-    use_vars_info.first.insert(VariableIdInfo(vidm.variableId(sgn), sgn_type_info));
+  if(isModExpr) {
+    def_vars_info.first.insert(VariableIdInfo(vid, sgn_type_info));
+  }
+  else {
+    use_vars_info.first.insert(VariableIdInfo(vid, sgn_type_info));
+  }
 }
 
-void LvalueExprWalker::visit(SgPointerDerefExp* sgn)
+void ExprWalker::visit(SgPntrArrRefExp* sgn)
+{
+  SgNode* lhs_addr = sgn->get_lhs_operand(); // get the address computation expr of the array
+  SgNode* rhs_expr = sgn->get_rhs_operand(); // get the index expression
+  DefUseVarsInfo lduvi, rduvi;
+
+  if(isModExpr) {
+    // check for the type of address computation expr
+    // if p is pointer type in p[expr]
+    // raise the flag (unknown location)
+    if(isSgVarRefExp(lhs_addr)) {
+      SgType* lhs_type_info = isSgVarRefExp(lhs_addr)->get_type();           
+      if(isSgPointerType(lhs_type_info)) {        
+        lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, false);
+        VarsInfo& ldef_vars_info = lduvi.getDefVarsInfoMod();
+        ldef_vars_info.second = true;
+      }
+      else {
+        // lhs_address is a SgVarRefExp of array type
+        lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, true);
+      }
+    }
+    // for multi-dimensional pointers
+    // recurse and collect info
+    else if(isSgPntrArrRefExp(lhs_addr)) {
+      lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, true);
+    }
+    else { 
+      // otherwise some arithmetic involved to calculate
+      // the address of the array
+      // for example: (true? a_ptr1 = arrA : a_ptr1 = arrB)[2] = 2;
+      // raise the flag and collect with use semantics
+      lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, false);
+      lduvi.getDefVarsInfoMod().second = true;
+      // copy side-effects
+      if(!lduvi.isDefSetEmpty())
+        lduvi.copyDefToUse();      
+    }
+  } 
+  else { // isModExpr = false
+    lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, false); 
+    if(!lduvi.isDefSetEmpty())
+      lduvi.copyDefToUse();
+  }
+
+  // rhs_op of the array is always used
+  rduvi = getDefUseVarsInfo_rec(rhs_expr, vidm, false);
+  // if we have side-effects copy them over
+  if(!rduvi.isDefSetEmpty())
+    rduvi.copyDefToUse();
+  // update the values
+  duvi = lduvi + rduvi;
+}
+
+void ExprWalker::visit(SgPointerDerefExp* sgn)
 {
   // set the flag for the def/use set
   // based on what we are processing
@@ -582,60 +540,7 @@ void LvalueExprWalker::visit(SgPointerDerefExp* sgn)
   duvi = rduvi + duvi;
 }
 
-void LvalueExprWalker::visit(SgPntrArrRefExp* sgn)
-{
-  SgNode* lhs_addr = sgn->get_lhs_operand();
-  SgNode* rhs_expr = sgn->get_rhs_operand();
-  DefUseVarsInfo lduvi, rduvi;
-  if(isModExpr) { 
-    // consider moving this to ExprWalker instead
-    // prune out the sub-tree that is difficult to handle
-    
-    if(isSgVarRefExp(lhs_addr)) { // for array type
-      SgType* lhs_type_info = isSgVarRefExp(lhs_addr)->get_type();
-      
-      // if p is pointer type p[expr] could
-      // be on the heap - raise the flag (unknown location)
-      if(isSgPointerType(lhs_type_info)) {        
-        lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, false);
-        VarsInfo& def_vars_info = lduvi.getDefVarsInfoMod();
-        def_vars_info.second = true;
-      }
-      else {
-        // lhs_address is of array type
-        // recurse and collect the info
-        lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, true);
-      }
-    }
-    else if(isSgPntrArrRefExp(lhs_addr)) { // for multi-dimensional pointers
-      lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, true);
-    }
-    else { 
-      // otherwise some crazy arithmetic is going on to determine
-      // the address of the array
-      // raise the flag
-      lduvi.getDefVarsInfoMod().second = true;
-      lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, false);
-      // copy side-effects and set the flag
-      if(!lduvi.isDefSetEmpty())
-        lduvi.copyDefToUse();      
-    }
-  } // end if(isModExpr)
-  else { // array is on the rhs
-    lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, false); 
-    if(!lduvi.isDefSetEmpty())
-      lduvi.copyDefToUse();
-  }
-  // rhs_op of the array is always used
-  rduvi = getDefUseVarsInfo_rec(rhs_expr, vidm, false);
-  // if we have side-effects copy them over
-  if(!rduvi.isDefSetEmpty())
-    rduvi.copyDefToUse();
-  // update the values
-  duvi = lduvi + rduvi;
-}
-
-void LvalueExprWalker::visit(SgArrowExp* sgn)
+void ExprWalker::visit(SgArrowExp* sgn)
 {
   SgNode* lhs_addr = sgn->get_lhs_operand();
   SgNode* rhs_expr = sgn->get_rhs_operand();
@@ -660,7 +565,7 @@ void LvalueExprWalker::visit(SgArrowExp* sgn)
   duvi = lduvi + rduvi;
 }
 
-void LvalueExprWalker::visit(SgDotExp* sgn)
+void ExprWalker::visit(SgDotExp* sgn)
 {
   SgNode* lhs_addr = sgn->get_lhs_operand();
   SgNode* rhs_expr = sgn->get_rhs_operand();
@@ -685,7 +590,94 @@ void LvalueExprWalker::visit(SgDotExp* sgn)
   duvi = lduvi + rduvi;
 }
 
-DefUseVarsInfo LvalueExprWalker::getDefUseVarsInfo()
+void ExprWalker::visit(SgInitializedName* sgn)
+{
+  VariableId vid = vidm.variableId(sgn);
+  
+  // some SgInitializedName do not have symbols
+  // VariableId is not created for such SgInitializedName
+  // check and return if we are processing such SgInitializedName
+  if(vid.getIdCode() == -1) {
+    cerr << "WARNING: Skipping SgInitializedName sgn->get_name() = " << sgn->get_name() << " with no symbol\n";
+    return;
+  }
+
+  DefUseVarsInfo rduvi;
+  SgInitializer* initializer = sgn->get_initializer();
+  if(initializer) {
+    rduvi = getDefUseVarsInfo_rec(initializer, vidm, false);
+  }
+
+  // SgInitializedName always define a variable
+  // it should always be in def_set
+  VarsInfo& def_vars_info = duvi.getDefVarsInfoMod();
+  
+  // determine the type
+  SgType* sgn_type = sgn->get_type();
+  VariableIdTypeInfo sgn_type_info;
+
+  if(isSgArrayType(sgn_type))
+    sgn_type_info = ARRAY;
+  else if(isSgPointerType(sgn_type))
+    sgn_type_info = POINTER;
+  else if(isSgReferenceType(sgn_type))
+    sgn_type_info = REFERENCE;
+  else
+    sgn_type_info = VARIABLE;
+
+  def_vars_info.first.insert(VariableIdInfo(vid, sgn_type_info));
+
+  duvi = duvi + rduvi;
+}
+
+void ExprWalker::visit(SgValueExp* sgn)
+{
+  // dont need to do anything
+}
+
+void ExprWalker::visit(SgFunctionRefExp* sgn)
+{
+  // not sure
+  // does not have any def/use semantics
+}
+
+void ExprWalker::visit(SgMemberFunctionRefExp* sgn)
+{
+  // not sure
+  // does not have any def/use semantics
+}
+
+void ExprWalker::visit(SgThisExp* sgn)
+{
+  // we dont know anything about the 'this' exp
+  // 'this' cannot be modified
+  // it will always be used
+  // if we construct VariableId, we can add it to use set
+  try {
+    std::ostringstream oss;
+    oss << "WARNING: Skipping VariableId for 'this' expr\n";
+    throw oss.str();
+  }
+  catch(std::string excep) {
+    std::cerr << excep;
+  }
+}
+
+void ExprWalker::visit(SgExpression* sgn)
+{
+  try {
+    std::ostringstream oss;
+    oss << "Not handling " << sgn->class_name() << " expression \n";
+    throw oss.str();
+  }
+  catch(std::string exp)
+  {
+    std::cerr << exp << "\n";
+    abort();
+  }
+}
+
+DefUseVarsInfo ExprWalker::getDefUseVarsInfo()
 {
   return duvi;
 }
@@ -702,11 +694,4 @@ DefUseVarsInfo getDefUseVarsInfo_rec(SgNode* sgn, VariableIdMapping& vidm, bool 
   ExprWalker exprw(vidm, isModExpr);
   sgn->accept(exprw);
   return exprw.getDefUseVarsInfo();
-}
-
-DefUseVarsInfo getDefUseVarsInfoLvalue(SgNode* sgn, VariableIdMapping& vidm, bool isModExpr)
-{
-  LvalueExprWalker lvalw(vidm, isModExpr);
-  sgn->accept(lvalw);
-  return lvalw.getDefUseVarsInfo();
 }
