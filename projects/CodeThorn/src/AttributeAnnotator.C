@@ -29,7 +29,6 @@ void AnalysisResultAnnotator::annotateAnalysisResultAttributesAsComments(SgNode*
 
 // posSpecifier: PreprocessingInfo::before, PreprocessingInfo::after
 void AnalysisResultAnnotator::insertComment(std::string comment, PreprocessingInfo::RelativePositionType posSpecifier, SgStatement* node) {
-  static int num=0;
   assert(posSpecifier==PreprocessingInfo::before || posSpecifier==PreprocessingInfo::after);
   PreprocessingInfo* commentInfo = 
     new PreprocessingInfo(PreprocessingInfo::CplusplusStyleComment, 

@@ -598,7 +598,7 @@ void ExprWalker::visit(SgInitializedName* sgn)
   // VariableId is not created for such SgInitializedName
   // check and return if we are processing such SgInitializedName
   if(vid.getIdCode() == -1) {
-    cerr << "WARNING: Skipping SgInitializedName sgn->get_name() = " << sgn->get_name() << " with no symbol\n";
+    //cerr << "WARNING: Skipping SgInitializedName sgn->get_name() = " << sgn->get_name() << " with no symbol\n";
     return;
   }
 
@@ -653,28 +653,16 @@ void ExprWalker::visit(SgThisExp* sgn)
   // 'this' cannot be modified
   // it will always be used
   // if we construct VariableId, we can add it to use set
-  try {
-    std::ostringstream oss;
-    oss << "WARNING: Skipping VariableId for 'this' expr\n";
-    throw oss.str();
-  }
-  catch(std::string excep) {
-    std::cerr << excep;
-  }
+  //std::ostringstream oss;
+  //oss << "WARNING: Skipping VariableId for 'this' expr\n";
+  //throw oss.str();
 }
 
 void ExprWalker::visit(SgExpression* sgn)
 {
-  try {
-    std::ostringstream oss;
-    oss << "Not handling " << sgn->class_name() << " expression \n";
-    throw oss.str();
-  }
-  catch(std::string exp)
-  {
-    std::cerr << exp << "\n";
-    abort();
-  }
+  std::ostringstream oss;
+  oss << "Not handling " << sgn->class_name() << " expression \n";
+  throw oss.str();
 }
 
 DefUseVarsInfo ExprWalker::getDefUseVarsInfo()

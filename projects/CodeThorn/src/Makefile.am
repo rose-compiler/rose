@@ -136,7 +136,7 @@ AM_YFLAGS =
 AM_LFLAGS =
 
 varwatch_LDADD = -lrose
-varwatch_SOURCES = varwatch.C VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C RoseAst.h RoseAst.C
+varwatch_SOURCES = varwatch.C VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C
 
 rdmain_LDADD = -lrose
 rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C Labeler.h Labeler.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C AttributeAnnotator.h AttributeAnnotator.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
@@ -152,7 +152,6 @@ rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h Co
   UDAstAttribute.C                 \
   AstTerm.h                        \
   AstTerm.C                        \
-  matcherparser.C RoseAst.h RoseAst.C matcherparser_decls.h AstMatching.C AstMatching.h MatchOperation.C MatchOperation.h \
   addressTakenAnalysis/defUseQuery.C \
   addressTakenAnalysis/defUseQuery.h \
   addressTakenAnalysis/VariableIdUtils.C \
@@ -274,8 +273,6 @@ clean-local:
 	rm -f bsps/*
 	rm -f *.consistent Problem*.[0-9].csv
 	rm -f codethorn-LTLParser.c++
-	rm -f matcherparser.h
-	rm -f matcherparser.C
 
 distclean-local: clean
 	rm -f *.tgz

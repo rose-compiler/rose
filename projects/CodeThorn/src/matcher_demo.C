@@ -9,8 +9,6 @@
 
 #include "Timer.h"
 
-using namespace CodeThorn;
-
 class TestTraversal : public AstSimpleProcessing {
 public:
   virtual void visit(SgNode* node) { /* do nothing */ };
