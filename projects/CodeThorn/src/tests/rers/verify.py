@@ -36,6 +36,8 @@ if __name__ == '__main__':
         elif my_result == 'unknown':
             unknown += 1
         else:
+            if args.verbose:
+                print '** LTL %d:'%n, line, 'should be', result
             inconsistent += 1
 
     print correct,inconsistent,unknown,n
