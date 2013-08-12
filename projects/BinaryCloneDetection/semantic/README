@@ -43,6 +43,30 @@ library can be installed on Debian-based systems (like Ubuntu) with:
     $ sudo apt-get install libpqxx3-dev
 
 ---------------------------------------------------------------------------
+                     Configuring the PostgreSQL server
+
+Note: the server does not need to be running on the same machine as the
+analysis, so this step is optional.  Install the server with:
+
+    $ sudo apt-get install postgresql
+
+If necessary, shutdown the server, edit the /etc/postgresql config files,
+move data files to a file system with more space, and restart the server.
+Debian puts the server's data directory under /var, which is often too small.
+
+Create a database role which is the same as your user name:
+
+    $ su
+    # su postgres
+    $ createuser
+
+Test that things work by creating and then dropping a database as the
+normal user (not postgres or root):
+
+    $ createdb checking
+    $ dropdb checking
+
+---------------------------------------------------------------------------
 			     The Database
 
 The schema is described in Schema.sql, which is compiled into the
@@ -265,6 +289,90 @@ on any ROSE-supported host.  This means, for example, that Windows PE
 specimens can be analyzed on a Linux host, further protecting the host
 from a malicious specimen.
 
+
+---------------------------------------------------------------------------
+			What makes this hard?
+
+In a few words: time, size, details, and debugging.  And the fact that
+optimizing compilers tend to be good adversaries.  Here are some of
+the things we needed to overcome:
+
+1.  (Size) Each specimen typically contains hundres of instructions
+    (thousands when dynamically linked).  Each function is fuzz tested
+    hundreds of times.  Each test needs reproducible sequences of
+    inputs, and each sequence can contain thousands of values. Each
+    test produces an output group, each of which contains potentially
+    thousands of values. (One of our runs tested each function more
+    than 40,000 times.)
+
+2.  (Size) The similarity of two functions is based on the similarity
+    of the output groups they created for each time they were tested
+    on a common input group.  This computation is too complex to be
+    carried out on the database server, thus output data needs to be
+    downloaded to processors written in C/C++.
+
+3.  (Size) We currently compute similarity for all pairs of functions
+    and similarity for any single pair is calculated over all their
+    outputs.  (One of our tests computed similarity for 1.6x10^9 pairs
+    of output groups.)
+
+3b. (Size) Presenting the output as a linear text file became
+    unreasonable due to the size and the types of questions we wanted
+    to answer.  Each query required either writing custom C/C++ code
+    to accumulate and present the results from a subsequent run, or
+    Perl code to parse the output of a previous run.  Therefore we
+    began using an SQLite3 database.
+
+4.  (Time) Functions are tested by interpreting each machine
+    instruction. The first version of clone detection used ROSE's x86
+    simulator patched to perform mixed interpretation.  This turned
+    out to be overkill and slow.  We moved everything to use ROSE's
+    API1 instruction semantics (the template-based stuff) and were
+    able to obtain close to 1 million instructions/second.
+
+5.  (Time) Running at 1 million instructions/second still didn't fully
+    utilize a modern mutli-core desktop machine, so we parallelized
+    the testing.  Robb's office machine runs at an aggregate rate of
+    around 10 million instructions/second.
+
+6.  (Time) Our original design used SQLite3 as the underlying
+    database.  This turned out to be a problem because of missing
+    functionality in SQLite3 and very poor performance in a parallel
+    work load.  We added support for PostgreSQL for performance
+    reasons, but kept the SQLite3 support for users that don't want to
+    deal with setting up a PostgreSQL server.
+
+7.  (Size) Testing produces a large number of table records for the
+    output values and the optional tracing information. Special
+    considerations needed to be made to get these uploaded to the
+    database server in an efficient manner.
+
+8.  (Detail) We needed a way to track (within the database) what
+    commands were used to create the data.
+
+9.  (Detail) We need to be able to incrementally build the database as
+    new specimens become available.  We also needed a way to re-run
+    individual tests for debugging purposes without requiring that all
+    tests be rerun.
+
+10. (Time) A specimen should not have to be re-disassembled every time
+    we need to access it.  Therefore, we disassemble once and then
+    store the binary AST in the database.  We also store instructions,
+    the binary itself, the call graph, etc.
+
+11. (Debug) Since most users program in a high-level language and are
+    not accustomed to looking at x86 assembly language, we also need
+    to store the source code and build custom ways of producing
+    listings that contain both source and assembly.
+
+12. (Debug) Resulting datasets quickly became too large to upload over
+    a slow network. They can now be posted on Internet-facing
+    PostgreSQL servers.  In fact, the analysis can update the server
+    directly if desired.  Access can be controlled through the usual
+    PostgreSQL mechanisms (authentication and roles).
+
+
+   
 
 ---------------------------------------------------------------------------
 		    History, Acknowledgments, etc.
