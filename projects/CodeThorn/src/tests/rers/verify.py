@@ -33,7 +33,7 @@ if __name__ == '__main__':
         assert(idx == my_idx)
         if my_result == result:
             correct += 1
-        elif my_result == unknown:
+        elif my_result == 'unknown':
             unknown += 1
         else:
             inconsistent += 1
