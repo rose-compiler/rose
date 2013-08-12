@@ -142,7 +142,7 @@ int main(int ac, char* av[])
 
   try{
     //    std::string selectClusters ="SELECT cluster, file_id from postprocessed_clusters_joined order by cluster";
-    std::string selectClusters ="SELECT cluster, file, end_index_within_function_A - begin_index_within_function_A + ? from largest_clusters, function_ids where largest_clusters.function_id = function_ids.row_number order by cluster";
+    std::string selectClusters ="SELECT cluster, file, end_index_within_function_A - begin_index_within_function_A + ? from largest_clusters, functions where largest_clusters.function_id = functions.id order by cluster";
     
     cerr << selectClusters << endl;
     sqlite3_command cmd(con, selectClusters.c_str());

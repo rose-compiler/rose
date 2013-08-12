@@ -210,6 +210,8 @@ if [ "$syntactic_skip" = "" ]; then
     echo "================================================================================"
     echo "                           SYNTACTIC ANALYSIS"
 
+    $SYNTACTIC_BLD/createSchema "$syntactic_dbname"
+
     # Syntactic analysis must be run serially
     for specimen in "$@"; do
 	$SYNTACTIC_BLD/createVectorsBinary \

@@ -13,20 +13,20 @@ drop table if exists fr_specimens;
 
 -- Files that are binary specimens; i.e., not shared libraries, etc.
 create table fr_specimens as
-    select distinct file as name from function_ids;
+    select distinct file as name from functions;
 
 -- Function names that are present exactly once in each specimen
 -- And which contain a certain number of instruction bytes
 create table fr_funcnames as
     select func1.function_name as name
         from fr_specimens as file
-        join function_ids as func1 on func1.file = file.name
-        left join function_ids as func2
-            on func1.row_number<>func2.row_number
+        join functions as func1 on func1.file = file.name
+        left join functions as func2
+            on func1.id <> func2.id
             and func1.function_name <> ''
 	    and func1.function_name = func2.function_name
 	    and func1.file = func2.file
-        where func2.row_number is null and func1.isize >= 7 -- bytes
+        where func2.id is null and func1.isize >= 7 -- bytes
         group by func1.function_name
         having count(*) = (select count(*) from fr_specimens);
 
@@ -35,7 +35,7 @@ create table fr_funcnames as
 create table fr_functions as
     select func.*
         from fr_funcnames as named
-        join function_ids as func on named.name = func.function_name;
+        join functions as func on named.name = func.function_name;
 
 
 -- Pairs of functions that should have been detected as being similar.  We're assuming that any pair of binary functions that
@@ -65,8 +65,8 @@ create table fr_clone_pairs as
 select 'pairs detected as similar' as x, count(*) from fr_clone_pairs;
 select 'pairs from two files' as x, count(*)
     from fr_clone_pairs as pair
-    join function_ids as func1 on pair.func1_id = func1.row_number
-    join function_ids as func2 on pair.func2_id = func2.row_number
+    join functions as func1 on pair.func1_id = func1.id
+    join functions as func2 on pair.func2_id = func2.id
     where func1.file <> func2.file;
 
 -- Table of false negative pairs.  These are pairs of functions that were not determined to be similar but which are present

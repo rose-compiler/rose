@@ -16,6 +16,6 @@
 bool createVectorsForAllInstructions(SgNode* top, const std::string& filename, const std::string& functionName, int functionId, size_t windowSize, size_t stride, sqlite3x::sqlite3_connection& con); // Ignores function boundaries
 void createVectorsRespectingFunctionBoundaries(SgNode* top, const std::string& filename, size_t windowSize, size_t stride, sqlite3x::sqlite3_connection& con);
 void createVectorsNotRespectingFunctionBoundaries(SgNode* top, const std::string& filename, size_t windowSize, size_t stride, sqlite3x::sqlite3_connection& con);
-void createDatabases(sqlite3x::sqlite3_connection& con);
+void createDatabases(const SqlDatabase::TransactionPtr&);
 
 #endif // CREATE_CLONE_DETECTION_VECTORS_BINARY

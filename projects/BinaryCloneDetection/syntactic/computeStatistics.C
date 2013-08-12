@@ -213,7 +213,7 @@ calculate_result_statistics(sqlite3_connection& con)
   }
 
   int num_false_positive_elts = sqlite3_command(con, "select sum(num_false_positive_elements) from clusters_with_false_positives").executeint();
-  int total = sqlite3_command(con, "select count(row_number) from postprocessed_clusters").executeint();
+  int total = sqlite3_command(con, "select count(*) from postprocessed_clusters").executeint();
   double false_positive_rate = (double)num_false_positive_elts / total;
   std::cout << "Total:" <<  total<< std::endl;
 

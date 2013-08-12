@@ -145,14 +145,14 @@ int main(int argc, char* argv[])
   try{
 
 #if test_gml
-    std::string selectSeparateDatasets ="select cluster, file, count(row_number) from clusters where cluster<";
+    std::string selectSeparateDatasets ="select cluster, file, count(*) from clusters where cluster<";
     string maxs = toDOT::tostring(max);
     selectSeparateDatasets.append(maxs+"  GROUP BY cluster, file;") ;
     cerr << selectSeparateDatasets << endl;
     cerr << selectSeparateDatasets << endl;
 #else
-	// std::string selectSeparateDatasets ="select cluster, file, count(row_number) from clusters where cluster < 1000 GROUP BY cluster, file;" ;
-	std::string selectSeparateDatasets ="select cluster, file, count(row_number) from clusters GROUP BY cluster, file;" ;
+	// std::string selectSeparateDatasets ="select cluster, file, count(*) from clusters where cluster < 1000 GROUP BY cluster, file;" ;
+	std::string selectSeparateDatasets ="select cluster, file, count(*) from clusters GROUP BY cluster, file;" ;
 #endif
  	sqlite3_command cmd(con, selectSeparateDatasets.c_str());
 	sqlite3_reader datasets=cmd.executereader();

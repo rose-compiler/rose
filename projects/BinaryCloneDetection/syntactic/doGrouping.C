@@ -90,8 +90,8 @@ int main(int argc, char* argv[])
   for (size_t i = 0; i < ranges.size(); ++i) {
     try {
       sqlite3_command cmd(con,
-          ranges[i].high == -1 ? "SELECT count(row_number) from vectors where sum_of_counts >= ?"
-          : "SELECT count(row_number) from vectors where sum_of_counts >= ? and sum_of_counts <= ?");
+          ranges[i].high == -1 ? "SELECT count(*) from vectors where sum_of_counts >= ?"
+          : "SELECT count(*) from vectors where sum_of_counts >= ? and sum_of_counts <= ?");
       cmd.bind(1, boost::lexical_cast<string>(ranges[i].low));
       if (ranges[i].high != -1) cmd.bind(2, boost::lexical_cast<string>(ranges[i].high));
       int numElementsInGroup = cmd.executeint();

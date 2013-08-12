@@ -116,7 +116,7 @@ int main(int argc, char* argv[])
   //Create set of clone pairs
   try{
     std::string databaseTable =(similarity == 1.0 ) ?" postprocessed_clusters " : " clusters " ;
-    std::string selectSeparateDatasets ="select c.cluster, vec.row_number, fid.row_number, fid.file, fid.function_name, vec.line, vec.offset  from vectors vec join "+ databaseTable +  " c  on c.vectors_row = vec.row_number join function_ids fid  on c.function_id = fid.row_number ORDER BY c.cluster;";
+    std::string selectSeparateDatasets ="select c.cluster, vec.id, fuction.id, function.file, function.function_name, vec.line, vec.offset from vectors as vec join "+ databaseTable +" as c  on c.vectors_row = vec.id join functions as function on c.function_id = function.id order by c.cluster;";
 
     sqlite3_command cmd(con, selectSeparateDatasets.c_str());
     sqlite3_reader datasets=cmd.executereader();

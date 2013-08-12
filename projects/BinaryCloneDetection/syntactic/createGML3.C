@@ -117,7 +117,7 @@ int main(int ac, char* av[])
   map<vector<string>, vector<size_t> > clusters; // Map from file names in cluster (a vector with unique elements sorted by filename) to list of cluster numbers with those files
   try{
     //    std::string selectClusters ="SELECT cluster, file_id from postprocessed_clusters_joined order by cluster";
-    std::string selectClusters ="SELECT cluster, file from postprocessed_clusters, function_ids where postprocessed_clusters.function_id = function_ids.row_number order by cluster";
+    std::string selectClusters ="SELECT cluster, file from postprocessed_clusters, functions where postprocessed_clusters.function_id = function.id order by cluster";
     
     cerr << selectClusters << endl;
     sqlite3_command cmd(con, selectClusters.c_str());

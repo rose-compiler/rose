@@ -148,7 +148,7 @@ int main(int argc, char* argv[])
     size_t eltCount = 0;
 
     try {
-      eltCount = boost::lexical_cast<size_t>(con.executestring("select count(row_number) from largest_clones"));
+      eltCount = boost::lexical_cast<size_t>(con.executestring("select count(*) from largest_clones"));
     } catch (exception& e) {cerr << "Exception: " << e.what() << endl;}
 
     if (eltCount == 0) {

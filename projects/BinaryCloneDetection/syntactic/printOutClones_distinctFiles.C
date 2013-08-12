@@ -204,8 +204,8 @@ int main(int argc, char* argv[])
   vectorOfClusters.allocate(eltCount);
   //Create set of clone pairs
   try{
-    std::string selectSeparateDatasets ="select c.cluster,  fid.row_number, fid.file, fid.function_name, c.begin_index_within_function, c.end_index_within_function  from "  
-      " largest_clusters c join function_ids fid  on c.function_id = fid.row_number ORDER BY c.cluster;";
+    std::string selectSeparateDatasets ="select c.cluster, function.id, function.file, function.function_name, c.begin_index_within_function, c.end_index_within_function  from "  
+      " largest_clusters c join functions as function on c.function_id = function.id order by c.cluster;";
 
     sqlite3_command cmd(con, selectSeparateDatasets.c_str());
     sqlite3_reader datasets=cmd.executereader();

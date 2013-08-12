@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 SUBDIRS =  gui
 bin_PROGRAMS =
+MOSTLYCLEANFILES =
 
 if ROSE_USE_SQLITE_DATABASE
 
@@ -11,15 +12,26 @@ if ROSE_USE_SSL_SUPPORT
 INCLUDES = $(ROSE_INCLUDES)  $(SQLITE_DATABASE_INCLUDE)
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 
+MOSTLYCLEANFILES += SyntacticSchema.C
+SyntacticSchema.C: Schema.sql
+	@echo "  GEN     $@"
+	@echo "const char *syntactic_schema =" 			 >$@
+	@perl -pe 's/"/\\"/g; s/(.*)/    "$$1\\n"/' <$< 	>>$@
+	@echo ';' 						>>$@
+
+# (Re)creates the tables for syntactic clone detection
+bin_PROGRAMS += createSchema
+createSchema_SOURCES = createSignatureVectors.C SyntacticSchema.C createSchema.C vectorCompression.C
+
 # Scans the specimen with sliding windows and populates the "vectors" and "function_ids" tables.
 bin_PROGRAMS += createVectorsBinary
-createVectorsBinary_SOURCES = createSignatureVectors.C createVectorsBinary.C vectorCompression.C
+createVectorsBinary_SOURCES = createSignatureVectors.C SyntacticSchema.C createVectorsBinary.C vectorCompression.C
 
 # Reads the database created by createVectorsBinary and finds windows that are similar, inserting them into the "clusters" table.
 bin_PROGRAMS += findClones
 findClones_SOURCES = \
 	findClones.C callLSH.C computerangesFunc.h computerangesFunc.C vectorCompression.h vectorCompression.C \
-	lsh.C lsh.h lshParameterFinding.h
+	lsh.C lsh.h lshParameterFinding2.C
 ABS_BUILDDIR = @abs_builddir@
 findClones_CPPFLAGS = -DABS_BUILDDIR="\"$(ABS_BUILDDIR)\""
 
@@ -59,7 +71,7 @@ findLargestClones_SOURCES = findLargestClones.C
 
 # undocumented
 bin_PROGRAMS += lshCloneDetection
-lshCloneDetection_SOURCES = lsh.C lshCloneDetection.C lsh.h vectorCompression.h vectorCompression.C
+lshCloneDetection_SOURCES = lsh.C lshCloneDetection.C lsh.h vectorCompression.h vectorCompression.C findExactClones2.C
 
 # undocumented
 bin_PROGRAMS += lshParameterFinding
