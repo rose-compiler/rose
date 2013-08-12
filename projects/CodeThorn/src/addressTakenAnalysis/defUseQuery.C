@@ -10,9 +10,56 @@
 
 using namespace CodeThorn;
 
-/*************************************************
- *************** DefUseVarsInfo ****************
- *************************************************/
+/*********************
+ * utility functions *
+ *********************/
+
+VariableIdTypeInfo getVariableIdTypeInfo(VariableId vid, VariableIdMapping& vidm)
+{
+  SgSymbol* symb = vidm.getSymbol(vid); ROSE_ASSERT(symb);
+  SgType* sgn_type = symb->get_type();
+  VariableIdTypeInfo sgn_type_info;
+
+  if(isSgArrayType(sgn_type))
+    sgn_type_info = arrayType;
+  else if(isSgPointerType(sgn_type))
+    sgn_type_info = pointerType;
+  else if(isSgReferenceType(sgn_type))
+    sgn_type_info = referenceType;
+  else if(isSgClassType(sgn_type))
+    sgn_type_info = classType;
+  else
+    sgn_type_info = variableType;
+
+  return sgn_type_info;
+}
+
+std::string variableIdTypeInfoToString(VariableIdTypeInfo vid_type_info)
+{
+  std::ostringstream oss;
+  switch(vid_type_info) {
+  case variableType:
+    oss << "var";
+    break;
+  case arrayType:
+    oss << "array";
+    break;
+  case pointerType:
+    oss << "ptr";
+    break;
+  case classType:
+    oss << "class";
+    break;
+  case referenceType:
+    oss << "ref";
+    break;
+  }
+  return oss.str();
+}
+
+/******************
+ * DefUseVarsInfo *
+ ******************/
 
 DefUseVarsInfo::DefUseVarsInfo(const VarsInfo& _def_info, const VarsInfo& _use_info, const FunctionCallExpSet& _fset) :
   def_vars_info(_def_info), use_vars_info(_use_info), func_set(_fset)
@@ -165,21 +212,7 @@ std::string DefUseVarsInfo::varsInfoPrettyPrint(VarsInfo& vars_info, VariableIdM
   for( ; it != vars_info.first.end();  )
   {
     // oss << "<" << (*it).first.toString() << ", " << vidm.variableName((*it).first) << ", ";
-    oss << "<" << vidm.uniqueShortVariableName((*it).first) << ", ";
-    switch((*it).second) {
-    case VARIABLE:
-      oss << "var";
-      break;
-    case ARRAY:
-      oss << "array";
-      break;
-    case POINTER:
-      oss << "ptr";
-      break;
-    case REFERENCE:
-      oss << "ref";
-      break;
-    }
+    oss << "<" << vidm.uniqueShortVariableName((*it).first) << ", " << variableIdTypeInfoToString((*it).second);
     oss <<">";
     it++;
     if(it != vars_info.first.end())
@@ -199,6 +232,9 @@ std::string DefUseVarsInfo::str(VariableIdMapping& vidm)
   return oss.str();
 }
 
+/**************
+ * ExprWalker *
+ **************/
 
 ExprWalker::ExprWalker(VariableIdMapping& _vidm, bool _isModExpr) :
   vidm(_vidm), isModExpr(_isModExpr)
@@ -412,17 +448,7 @@ void ExprWalker::visit(SgVarRefExp* sgn)
   ROSE_ASSERT(vid.getIdCode() != -1);
 
   // determine type info
-  SgType* sgn_type = sgn->get_type();
-  VariableIdTypeInfo sgn_type_info;
-
-  if(isSgArrayType(sgn_type))
-    sgn_type_info = ARRAY;
-  else if(isSgPointerType(sgn_type))
-    sgn_type_info = POINTER;
-  else if(isSgReferenceType(sgn_type))
-    sgn_type_info = REFERENCE;
-  else
-    sgn_type_info = VARIABLE;
+  VariableIdTypeInfo sgn_type_info = getVariableIdTypeInfo(vid, vidm); 
 
   VarsInfo& def_vars_info = duvi.getDefVarsInfoMod();
   VarsInfo& use_vars_info = duvi.getUseVarsInfoMod();
@@ -612,18 +638,8 @@ void ExprWalker::visit(SgInitializedName* sgn)
   // it should always be in def_set
   VarsInfo& def_vars_info = duvi.getDefVarsInfoMod();
   
-  // determine the type
-  SgType* sgn_type = sgn->get_type();
-  VariableIdTypeInfo sgn_type_info;
-
-  if(isSgArrayType(sgn_type))
-    sgn_type_info = ARRAY;
-  else if(isSgPointerType(sgn_type))
-    sgn_type_info = POINTER;
-  else if(isSgReferenceType(sgn_type))
-    sgn_type_info = REFERENCE;
-  else
-    sgn_type_info = VARIABLE;
+  // determine the type info
+  VariableIdTypeInfo sgn_type_info = getVariableIdTypeInfo(vid, vidm);
 
   def_vars_info.first.insert(VariableIdInfo(vid, sgn_type_info));
 
@@ -670,7 +686,10 @@ DefUseVarsInfo ExprWalker::getDefUseVarsInfo()
   return duvi;
 }
 
-// interface function
+/**************************************
+ * DefUseVarsInfo Interface Functions *
+ **************************************/
+
 DefUseVarsInfo getDefUseVarsInfo(SgNode* sgn, VariableIdMapping& vidm)
 {
   return getDefUseVarsInfo_rec(sgn, vidm, false);  

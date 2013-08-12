@@ -26,11 +26,18 @@ using namespace CodeThorn;
 // information about the variable
 // type info is associated with the respective VariableId
 enum VariableIdTypeInfo {
-  VARIABLE,
-  ARRAY,
-  POINTER,
-  REFERENCE
+  variableType,
+  arrayType,
+  pointerType,
+  referenceType,
+  classType
 };
+
+// determines VariableIdTypeInfo given a VariableId and the VariableIdMapping
+VariableIdTypeInfo getVariableIdTypeInfo(VariableId vid, VariableIdMapping& vidm);
+
+// stringify the type info
+std::string variableIdTypeInfoToString(VariableIdTypeInfo vidTypeInfo);
 
 typedef std::pair<VariableId, VariableIdTypeInfo> VariableIdInfo;
 
