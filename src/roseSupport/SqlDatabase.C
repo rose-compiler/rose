@@ -346,7 +346,25 @@ ConnectionImpl::dec_driver_connection(size_t idx)
         case POSTGRESQL: {
             // Once a transaction is committed or rolled back the connection is no good for anything else; we can't
             // create more transactions on that connection.
+            
+            // Also, libpqxx3 has a bug in the pqxx::transaction<> destructor: if the transaction commit() method is called,
+            // then the d'tor executes a conditional jump or move that depends on unitialized values (according to valgrind).
+            // This occurs in:
+            //     pqxx::basic_connection<pqxx::connect_direct>::~basic_connection() (basic_connection.hxx:73)
+            //     pqxx::connection_base::~connection_base() (connection_base.hxx:164)
+            //     std::map<std::string, pqxx::prepare::internal::prepared_def, ...>::~map() (map.h:103)
+            // And eventually leads to a segmentation fault.  This appears to only happen when the debugging versions of
+            // std::map are used--so we work around the bug buy not calling the destructor in that case.
+#ifdef _GLIBCXX_DEBUG
+            static bool reached;
+            if (!reached) {
+                std::cerr <<"SqlDatabase::ConnectionImpl::dec_driver_connection(): avoiding pqxx::transaction() d'tor"
+                          <<" due to bugs when compiled with _GLIBCXX_DEBUG defined.\n";
+                reached = true;
+            }
+#else
             delete dconn.postgres_connection;
+#endif
             dconn.postgres_connection = NULL;
             break;
         }
