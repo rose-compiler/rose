@@ -59,15 +59,8 @@ VariableIdSet ComputeAddressTakenInfo::getAddressTakenSet()
 
 void ComputeAddressTakenInfo::throwIfUnInitException()
 {
-  try
-  {
     if(!vidm.isUniqueVariableSymbolMapping())
-      throw;
-  }
-  catch(...)
-  {
-    std::cerr << "Analysis Not initialized: Variable symbol mapping not computed\n";
-  }
+      throw std::runtime_error("Variable symbol mapping not computed\n");
 }
 
 // base case for the recursion
@@ -203,15 +196,8 @@ void ComputeAddressTakenInfo::printAddressTakenSet()
 
 void CollectTypeInfo::throwIfUnInitException()
 {
-  try
-  {
     if(!vidm.isUniqueVariableSymbolMapping())
-      throw;
-  }
-  catch(...)
-  {
-    std::cerr << "Analysis Not initialized: Variable symbol mapping not computed\n";
-  }
+      throw std::runtime_error("Variable symbol mapping not computed\n");
 }
 
 VariableIdSet CollectTypeInfo::getPointerTypeSet()
