@@ -1,4 +1,6 @@
--- Computes statistics about false negatives in a database populated with two or more specimens compiled in different ways.
+-- Computes statistics about syntactic false negatives in a database
+-- populated with two or more specimens compiled in different ways.
+begin transaction;
 
 drop table if exists fr_results;
 drop table if exists fr_false_positives;
@@ -6,68 +8,82 @@ drop table if exists fr_false_negatives;
 drop table if exists fr_clone_pairs;
 drop table if exists fr_negative_pairs;
 drop table if exists fr_positive_pairs;
-drop table if exists fr_fio;
+drop table if exists fr_function_pairs;
+
+drop table if exists fr_cluster_pairs;
 drop table if exists fr_functions;
 drop table if exists fr_funcnames;
 drop table if exists fr_specimens;
+drop table if exists fr_settings;
+
+create table fr_settings as
+    select 0.75 as similarity_threshold;
 
 -- Files that are binary specimens; i.e., not shared libraries, etc.
 create table fr_specimens as
-    select distinct file as name from functions;
+    select distinct specimen_id as id
+    from semantic_functions;
 
 -- Function names that are present exactly once in each specimen
--- And which contain a certain number of instruction bytes
+-- And which contain a certain number of instructions                                           !!FIXME: should be a parameter
+-- And which come from the specimen, not from a dynamic library
 create table fr_funcnames as
-    select func1.function_name as name
+    select func1.name as name
         from fr_specimens as file
-        join functions as func1 on func1.file = file.name
-        left join functions as func2
-            on func1.id <> func2.id
-            and func1.function_name <> ''
-	    and func1.function_name = func2.function_name
-	    and func1.file = func2.file
-        where func2.id is null and func1.isize >= 7 -- bytes
-        group by func1.function_name
+        join semantic_functions as func1 on func1.file_id = file.id
+        left join semantic_functions as func2
+            on func1.id<>func2.id and func1.name <> '' and func1.name=func2.name and func1.file_id=func2.file_id
+        where func2.id is null and func1.ninsns >= 2                                            -- !!FIXME
+        group by func1.name
         having count(*) = (select count(*) from fr_specimens);
 
 
 -- Functions that have a name and which appear once per specimen by that name.
 create table fr_functions as
-    select func.*
+    select distinct func.*
         from fr_funcnames as named
-        join functions as func on named.name = func.function_name;
+        join semantic_functions as func on named.name = func.name
 
+        -- uncomment the following lines to consider only those functions that passed at least once
+--      join semantic_fio as test on func.id=test.func_id and test.status=0
+;
+
+-- Pairs of functions that we want to consider
+create table fr_cluster_pairs as
+    select pair.*
+        from cluster_pairs as pair
+        join fr_functions as func1 on pair.function_id_1 = func1.id
+	join fr_functions as func2 on pair.function_id_2 = func2.id;
+
+-- Select all pairs of functions from two different specimens
+create table fr_function_pairs as
+    select distinct f1.id as func1_id, f2.id as func2_id
+        from fr_functions as f1
+        join fr_functions as f2 on f1.id < f2.id and f1.specimen_id <> f2.specimen_id;
 
 -- Pairs of functions that should have been detected as being similar.  We're assuming that any pair of binary functions that
 -- have the same name are in fact the same function at the source level and should therefore be similar.
 create table fr_positive_pairs as
-    select f1.row_number as func1_id, f2.row_number as func2_id
-        from fr_functions as f1
-        join fr_functions as f2
-            on f1.function_name = f2.function_name
-            and f1.row_number < f2.row_number
-            and f1.file <> f2.file;
+    select pair.*
+        from fr_function_pairs as pair
+        join fr_functions as f1 on pair.func1_id = f1.id
+        join fr_functions as f2 on pair.func2_id = f2.id
+        where f1.name = f2.name;
 
 -- Pairs of functions that should not have been detected as being similar.  We're assuming that if the two functions have
 -- different names then they are different functions in the source code, and that no two functions in source code are similar.
 -- That second assumption almost certainly doesn't hold water!
 create table fr_negative_pairs as
-    select f1.row_number as func1_id, f2.row_number as func2_id
-        from fr_functions as f1
-        join fr_functions as f2 on f1.function_name <> f2.function_name and f1.file < f2.file;
+    select pair.*
+        from fr_function_pairs as pair
+        join fr_functions as f1 on pair.func1_id = f1.id
+        join fr_functions as f2 on pair.func2_id = f2.id
+        where f1.name <> f2.name;
 
 -- Pairs of functions that were _detected_ as being similar.
 create table fr_clone_pairs as
-    select function_id_1 as func1_id, function_id_2 as func2_id
-        from cluster_pairs
-        where ratio_1 > 0.95 and ratio_2 > 0.95;
-
-select 'pairs detected as similar' as x, count(*) from fr_clone_pairs;
-select 'pairs from two files' as x, count(*)
-    from fr_clone_pairs as pair
-    join functions as func1 on pair.func1_id = func1.id
-    join functions as func2 on pair.func2_id = func2.id
-    where func1.file <> func2.file;
+    select distinct function_id_1 as func1_id, function_id_2 as func2_id
+        from fr_cluster_pairs;
 
 -- Table of false negative pairs.  These are pairs of functions that were not determined to be similar but which are present
 -- in the fr_positives_pairs table.
@@ -95,20 +111,14 @@ create table fr_results as
 
 select * from fr_results;
 
--- select 'The following table contains all the functions of interest: functions that
--- * appear in all specimens exactly once each
--- * have a certain number of instructions, and
--- * didn''t try to consume too many inputs, and
--- * are defined in a specimen, not a dynamic library' as "Notice";
--- select * from fr_functions order by function_name, file;
-
 -- select 'The following table shows the false negative function pairs.
 -- Both functions of the pair always have the same name.' as "Notice";
 -- select
--- 	func1.function_name as name,
--- 	func1.file as file1,
--- 	func2.file as file2
+--         func1.name as name,
+--         falseneg.func1_id, falseneg.func2_id
 --     from fr_false_negatives as falseneg
---     join fr_functions as func1 on falseneg.func1_id = func1.row_number
---     join fr_functions as func2 on falseneg.func2_id = func2.row_number
---     order by func1.function_name, func2.function_name;
+--     join fr_functions as func1 on falseneg.func1_id = func1.id
+--     join fr_functions as func2 on falseneg.func2_id = func2.id
+--     order by func1.name;
+
+rollback;
