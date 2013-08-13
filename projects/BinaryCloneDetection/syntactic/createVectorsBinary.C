@@ -6,6 +6,7 @@
 
 #include "rose.h"
 #include "SqlDatabase.h"
+#include "../semantic/CloneDetectionLib.h"
 
 #include <stdio.h>
 #include <sys/time.h>
@@ -59,13 +60,11 @@ main(int argc, char* argv[])
     //Default stride and windowSize
     size_t stride=1;
     size_t windowSize=80; 
-    bool respectFunctionBoundaries = true;
 
     try {
 	options_description desc("Allowed options");
 	desc.add_options()
             ("help", "produce a help message")
-            ("ignoreBoundaries,i", "ignore function boundaries")
             ("database", value< string >()->composing(), 
              "the sqlite database that we are to use")
             ("tsv-directory", value< string >()->composing(), 
@@ -83,9 +82,6 @@ main(int argc, char* argv[])
             cout << desc;           
             exit(0);
 	}
-
-        if (vm.count("ignoreBoundaries"))
-            respectFunctionBoundaries = false;
 
 	if (vm.count("database")!=1 || vm.count("tsv-directory")!=1 || vm.count("stride")!=1 ||  vm.count("windowSize")!=1  ) {
             std::cerr << "usage: createVectorsBinary --stride <stride> --windowSize <window-size> --database <database-name>"
@@ -168,11 +164,7 @@ main(int argc, char* argv[])
     struct rusage ru_before, ru_after;
     gettimeofday(&before, NULL);
     getrusage(RUSAGE_SELF, &ru_before);
-    if (respectFunctionBoundaries) {
-        createVectorsRespectingFunctionBoundaries(globalBlock, tsv_directory, windowSize, stride, tx);
-    } else {
-        createVectorsNotRespectingFunctionBoundaries(globalBlock, tsv_directory, windowSize, stride, tx);
-    }
+    createVectorsRespectingFunctionBoundaries(globalBlock, tsv_directory, windowSize, stride, tx);
     gettimeofday(&after, NULL);
     getrusage(RUSAGE_SELF, &ru_after);
     cerr << "Time: " << (tvToDouble(after) - tvToDouble(before)) << " wall, "
