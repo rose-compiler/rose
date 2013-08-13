@@ -65,6 +65,8 @@ class ComputeAddressTakenInfo
     void visit(SgPointerDerefExp*);
     void visit(SgPntrArrRefExp*);
     void visit(SgAssignOp* sgn);
+    void visit(SgPlusPlusOp* sgn);
+    void visit(SgMinusMinusOp* sgn);
     void visit(SgCommaOpExp* sgn);
     void visit(SgConditionalExp* sgn);
     void visit(SgFunctionRefExp* sgn);

@@ -121,6 +121,25 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgAssignOp* sgn)
   lhs_op->accept(*this);
 }
 
+// &(++i)
+// prefix increments first and the result can be used as lvalue (in C++)
+// postfix uses the operand as lvalue and increments later and therefore
+// postfix increment cannot be lvalue
+// both prefix/postfix are illeagal in C
+void ComputeAddressTakenInfo::OperandToVariableId::visit(SgPlusPlusOp* sgn)
+{
+  SgNode* operand = sgn->get_operand();
+  operand->accept(*this);
+}
+
+// same as prefix increment
+// &(--i)
+void ComputeAddressTakenInfo::OperandToVariableId::visit(SgMinusMinusOp* sgn)
+{
+  SgNode* operand = sgn->get_operand();
+  operand->accept(*this);
+}
+
 // &(a+1, b)
 // b's address is taken
 // keep recursing on the rhs_op
