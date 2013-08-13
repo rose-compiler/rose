@@ -114,7 +114,7 @@ public:
   bool isDefSetModByPointer();
   bool isUseSetModByPointer();
 
-  DefUseVarsInfo operator+(const DefUseVarsInfo& duvi1);
+  friend DefUseVarsInfo operator+(const DefUseVarsInfo& duvi1, const DefUseVarsInfo& duvi2);
 
   std::string varsInfoPrettyPrint(VarsInfo& vars_info, VariableIdMapping& vidm);
   std::string functionCallExpSetPrettyPrint(FunctionCallExpSet& func_calls_info);

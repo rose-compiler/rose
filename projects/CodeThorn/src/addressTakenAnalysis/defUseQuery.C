@@ -154,37 +154,49 @@ void DefUseVarsInfo::copyUseToDef()
 }
 
 // combine the two DefUseVarsInfo functions
-DefUseVarsInfo DefUseVarsInfo::operator+(const DefUseVarsInfo& duvi1)
+DefUseVarsInfo operator+(const DefUseVarsInfo& duvi1, const DefUseVarsInfo& duvi2)
 {  
-  const VarsInfo& d1_def_vars_info = duvi1.getDefVarsInfoRef();
-  const VarsInfo& d1_use_vars_info = duvi1.getUseVarsInfoRef();
-  const FunctionCallExpSet& d1_func_set = duvi1.getFunctionCallExpSetRef();
+  const VarsInfo& duvi1DefVarsInfo = duvi1.getDefVarsInfoRef();
+  const VariableIdInfoMap& duvi1DefVarsInfoMap = duvi1DefVarsInfo.first;
 
-  VarsInfo rdef_vars_info, ruse_vars_info;
-  FunctionCallExpSet rfunc_set;
+  const VarsInfo& duvi1UseVarsInfo = duvi1.getUseVarsInfoRef();
+  const VariableIdInfoMap& duvi1UseVarsInfoMap = duvi1UseVarsInfo.first;
+
+  const FunctionCallExpSet& duvi1FuncSet = duvi1.getFunctionCallExpSetRef();
+
+  const VarsInfo& duvi2DefVarsInfo = duvi2.getDefVarsInfoRef();
+  const VariableIdInfoMap& duvi2DefVarsInfoMap = duvi2DefVarsInfo.first;
+
+  const VarsInfo& duvi2UseVarsInfo = duvi2.getUseVarsInfoRef();
+  const VariableIdInfoMap& duvi2UseVarsInfoMap = duvi2UseVarsInfo.first;
+
+  const FunctionCallExpSet& duvi2FuncSet = duvi2.getFunctionCallExpSetRef();
+
+  VarsInfo rduviDefVarsInfo, rduviUseVarsInfo;
+  VariableIdInfoMap& rduviDefVarsInfoMap = rduviDefVarsInfo.first;
+  VariableIdInfoMap& rduviUseVarsInfoMap = rduviUseVarsInfo.first;
+  FunctionCallExpSet rduviFuncSet;
   
   // we are merging two maps
   // <VariableId, type> entry should not be different if present in two maps
   // maps are really small and therefore its ok to
   // insert the map into another and there will should be no collision on the item for the same key
 
-  // inserting into new map to avoid side-effects on this object
-  rdef_vars_info.first.insert(def_vars_info.first.begin(), def_vars_info.first.end());
-  rdef_vars_info.first.insert(d1_def_vars_info.first.begin(), d1_def_vars_info.first.end());
-  ruse_vars_info.first.insert(use_vars_info.first.begin(), use_vars_info.first.end());
-  ruse_vars_info.first.insert(d1_use_vars_info.first.begin(), d1_use_vars_info.first.end());
+  rduviDefVarsInfoMap.insert(duvi1DefVarsInfoMap.begin(), duvi1DefVarsInfoMap.end());
+  rduviDefVarsInfoMap.insert(duvi2DefVarsInfoMap.begin(), duvi2DefVarsInfoMap.end());
+
+  rduviUseVarsInfoMap.insert(duvi1UseVarsInfoMap.begin(), duvi1UseVarsInfoMap.end());
+  rduviUseVarsInfoMap.insert(duvi2UseVarsInfoMap.begin(), duvi2UseVarsInfoMap.end());
   
-  // set_union(def_set.first, d1_def_set.first, rdef_set.first);
-  // set_union(use_set.first, d1_use_set.first, ruse_set.first);
-  set_union(func_set.begin(), func_set.end(),
-            d1_func_set.begin(), d1_func_set.end(),
-            std::inserter(rfunc_set, rfunc_set.begin()));
+  set_union(duvi1FuncSet.begin(), duvi1FuncSet.end(),
+            duvi2FuncSet.begin(), duvi2FuncSet.end(),
+            std::inserter(rduviFuncSet, rduviFuncSet.begin()));
 
-  rdef_vars_info.second = def_vars_info.second || d1_def_vars_info.second;
-  ruse_vars_info.second = use_vars_info.second || d1_use_vars_info.second;
-  // rfunc_set.second = func_set.second || d1_func_set.second;
+  rduviDefVarsInfo.second = duvi1DefVarsInfo.second || duvi2DefVarsInfo.second;
+  rduviUseVarsInfo.second = duvi1UseVarsInfo.second || duvi2UseVarsInfo.second;
 
-  return DefUseVarsInfo(rdef_vars_info, ruse_vars_info, rfunc_set);
+
+  return DefUseVarsInfo(rduviDefVarsInfo, rduviUseVarsInfo, rduviFuncSet);
 }
 
 std::string DefUseVarsInfo::functionCallExpSetPrettyPrint(FunctionCallExpSet& func_set)
