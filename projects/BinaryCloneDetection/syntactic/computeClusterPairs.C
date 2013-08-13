@@ -52,16 +52,12 @@ static void
 compute_function_sizes(const SqlDatabase::TransactionPtr &tx, FunctionSizes &function_sizes/*out*/)
 {
     std::cerr <<argv0 <<": pre-computing function sizes...\n";
-    FunctionExtents extents;
-    SqlDatabase::StatementPtr cmd1 = tx->statement("select function_id, address, size from instructions");
+    SqlDatabase::StatementPtr cmd1 = tx->statement("select id, isize from semantic_functions");
     for (SqlDatabase::Statement::iterator c1=cmd1->begin(); c1!=cmd1->end(); ++c1) {
         int func_id = c1.get<int>(0);
-        rose_addr_t va = c1.get<int>(1);
-        rose_addr_t sz = c1.get<int>(2);
-        extents[func_id].insert(Extent(va, sz));
+        size_t sz = c1.get<int>(1);
+        function_sizes[func_id] = sz;
     }
-    for (FunctionExtents::iterator ei=extents.begin(); ei!=extents.end(); ++ei)
-        function_sizes[ei->first] = ei->second.size();
 }
 
 // Compute an ExtentMap for each vector.
@@ -69,10 +65,12 @@ static void
 compute_vector_extents(const SqlDatabase::TransactionPtr &tx, int window_size, VectorExtents &vector_extents/*out*/)
 {
     std::cerr <<argv0 <<": counting vectors... ";
-    SqlDatabase::StatementPtr cmd0 = tx->statement("select count(*) from vectors as vector join instructions as insn"
-                                                   " on vector.function_id = insn.function_id and"
-                                                   " insn.index_within_function >= vector.index_within_function and"
-                                                   " insn.index_within_function < vector.index_within_function + ?");
+    SqlDatabase::StatementPtr cmd0 = tx->statement("select count(*)"
+                                                   " from vectors as vector"
+                                                   " join semantic_instructions as insn"
+                                                   "   on vector.function_id = insn.func_id and"
+                                                   " insn.position >= vector.index_within_function and"
+                                                   " insn.position < vector.index_within_function + ?");
     cmd0->bind(0, window_size);
     int nrows = cmd0->execute_int();
     if (verbose)
@@ -82,10 +80,10 @@ compute_vector_extents(const SqlDatabase::TransactionPtr &tx, int window_size, V
     SqlDatabase::StatementPtr cmd1 = tx->statement(//      0          1             2
                                                    "select vector.id, insn.address, insn.size"
                                                    " from vectors as vector"
-                                                   " join instructions as insn"
-                                                   "   on vector.function_id = insn.function_id and"
-                                                   "      insn.index_within_function >= vector.index_within_function and"
-                                                   "      insn.index_within_function <  vector.index_within_function + ?");
+                                                   " join semantic_instructions as insn"
+                                                   "   on vector.function_id = insn.func_id and"
+                                                   "      insn.position >= vector.index_within_function and"
+                                                   "      insn.position <  vector.index_within_function + ?");
     cmd1->bind(0, window_size);
     size_t row = 0;
     for (SqlDatabase::Statement::iterator c1=cmd1->begin(); c1!=cmd1->end(); ++c1, ++row) {

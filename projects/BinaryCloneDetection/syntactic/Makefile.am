@@ -13,19 +13,24 @@ INCLUDES = $(ROSE_INCLUDES)  $(SQLITE_DATABASE_INCLUDE)
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 
 MOSTLYCLEANFILES += SyntacticSchema.C
-SyntacticSchema.C: Schema.sql
+SyntacticSchema.C: SchemaDrop.sql SchemaCreate.sql
 	@echo "  GEN     $@"
-	@echo "const char *syntactic_schema =" 			 >$@
-	@perl -pe 's/"/\\"/g; s/(.*)/    "$$1\\n"/' <$< 	>>$@
-	@echo ';' 						>>$@
+	@echo "const char *syntactic_schema_drop ="				 >$@
+	@perl -pe 's/"/\\"/g; s/(.*)/    "$$1\\n"/' <$(srcdir)/SchemaDrop.sql	>>$@
+	@echo ';'								>>$@
+	@echo "const char *syntactic_schema_create ="				>>$@
+	@perl -pe 's/"/\\"/g; s/(.*)/    "$$1\\n"/' <$(srcdir)/SchemaCreate.sql	>>$@
+	@echo ';'								>>$@
 
 # (Re)creates the tables for syntactic clone detection
 bin_PROGRAMS += createSchema
 createSchema_SOURCES = createSignatureVectors.C SyntacticSchema.C createSchema.C vectorCompression.C
+createSchema_LDADD = $(BOOST_LDFLAGS) ../semantic/libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Scans the specimen with sliding windows and populates the "vectors" and "function_ids" tables.
 bin_PROGRAMS += createVectorsBinary
 createVectorsBinary_SOURCES = createSignatureVectors.C SyntacticSchema.C createVectorsBinary.C vectorCompression.C
+createVectorsBinary_LDADD = $(BOOST_LDFLAGS) ../semantic/libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Reads the database created by createVectorsBinary and finds windows that are similar, inserting them into the "clusters" table.
 bin_PROGRAMS += findClones

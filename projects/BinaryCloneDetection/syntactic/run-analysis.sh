@@ -64,6 +64,9 @@ dbname='$dbname'
 # Should the database tables be dropped and recreated?
 recreate='$recreate'
 
+# Switches for adding specimens to the database
+add_functions_flags='$add_functions_flags'
+
 # Switches for the createVectorsBinary command
 create_vectors_flags='$create_vectors_flags'
 
@@ -128,7 +131,8 @@ fi
 
 # Make sure everything we need is built.  We run make here for explicitly specified targets because "make all"
 # often fails in this directory.
-make -C $BLDDIR createSchema createVectorsBinary findClones lshCloneDetection computeClusterPairs || exit 1
+make -j16 -C $BLDDIR/../semantic || exit 1
+make -j16 -C $BLDDIR createSchema createVectorsBinary findClones lshCloneDetection computeClusterPairs || exit 1
 
 if [ "$interactive" = "yes" ]; then
     echo "=================================================================================================="
@@ -153,6 +157,8 @@ if [ "$interactive" = "yes" ]; then
     save_settings
 fi
 if [ "$recreate" = "yes" ]; then
+    execute $BLDDIR/createSchema --drop "$dbname" || exit 1
+    execute $BLDDIR/../semantic/00-create-schema "$dbname" || exit 1
     execute $BLDDIR/createSchema "$dbname" || exit 1
 fi
 
@@ -160,17 +166,28 @@ if [ "$#" -gt 0 ]; then
     if [ "$interactive" = "yes" ]; then
 	echo
 	echo "=================================================================================================="
-	echo "These are the flags for the createVectorsBinary command, which parses a specimen and adds its"
-	echo "functions to the database.  You will be able to select which functions to test in the next step."
-	echo "You do not need to specify the --database or --tsv-directory switches."
-	$BLDDIR/createVectorsBinary --help 2>&1
-	read -e -p "Switches for creating vectors: " -i "$create_vectors_flags" create_vectors_flags
+	echo "These are the flags for the 11-add-functions command, which parses a specimen and adds its"
+	echo "functions to the database."
+	$BLDDIR/../semantic/11-add-functions --help 2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
+	read -e -p "Switches for adding specimens: " -i "$add_functions_flags" add_functions_flags
 	save_settings
     fi
     for specimen in "$@"; do
-	execute $BLDDIR/createVectorsBinary --database "$dbname" $create_vectors_flags --tsv-directory "$specimen" || exit 1
+	export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$BLDDIR/../semantic"
+	execute $BLDDIR/../semantic/11-add-functions $add_functions_flags "$dbname" "$specimen" || exit 1
     done
 fi
+
+if [ "$interactive" = "yes" ]; then
+    echo
+    echo "=================================================================================================="
+    echo "These are the flags for the createVectorsBinary command, creates syntax vectors for each of the"
+    echo "functions to the database."
+    $BLDDIR/createVectorsBinary --help 2>&1
+    read -e -p "Switches for creating vectors: " -i "$create_vectors_flags" create_vectors_flags
+    save_settings
+fi
+execute $BLDDIR/createVectorsBinary --database "$dbname" $create_vectors_flags || exit 1
 
 if [ "$interactive" ]; then
     echo

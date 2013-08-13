@@ -1,74 +1,47 @@
-/****************************************************
- * RoseBin :: Binary Analysis for ROSE
- * Author : tps
- * Date : 3Apr07
- ****************************************************/
+// Consults the database to get a list of specimen executables and their functions, then generates syntax vectors
+// for each of them, populating the "vectors" table.
 
 #include "rose.h"
 #include "SqlDatabase.h"
+#include "AST_FILE_IO.h"
+
 #include "../semantic/CloneDetectionLib.h"
-
-#include <stdio.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <iostream>
-
-
 #include "createCloneDetectionVectorsBinary.h"
 
 #include <boost/program_options.hpp>
+#include <iostream>
+#include <stdio.h>
+#include <sys/resource.h>
+#include <sys/time.h>
 
-#include "boost/filesystem/operations.hpp"
-#include "boost/filesystem/path.hpp"
-#include "boost/progress.hpp"
-
-using namespace boost::filesystem;
-using namespace std;
 using namespace boost::program_options;
 
-inline double tvToDouble(const timeval& tv) {
-    return tv.tv_sec + tv.tv_usec * 1.e-6;
-}
-
-
-class MyTraversal : public SgSimpleProcessing {
-public:
-    SgAsmGenericFile* file;
-    int counter;
-    void visit(SgNode *astNode);
-};
-
-void
-MyTraversal::visit(SgNode* astNode)
-{
-    SgAsmGenericFile *asmFile = isSgAsmGenericFile(astNode);
-    if (isSgAsmInstruction(astNode) != NULL)
-        counter++;
-    if (asmFile)
-        file = asmFile;
-}
-
+static std::string argv0;
 
 int
 main(int argc, char* argv[])
 {
+    std::ios::sync_with_stdio();
+    argv0 = argv[0];
+    {
+        size_t slash = argv0.rfind('/');
+        argv0 = slash==std::string::npos ? argv0 : argv0.substr(slash+1);
+        if (0==argv0.substr(0, 3).compare("lt-"))
+            argv0 = argv0.substr(3);
+    }
+
     struct timeval start;
     gettimeofday(&start, NULL);
 
     std::string database;
-    std::string tsv_directory;
-    //Default stride and windowSize
-    size_t stride=1;
-    size_t windowSize=80; 
+    size_t stride = (size_t)(-1);
+    size_t windowSize = (size_t)(-1);
 
     try {
 	options_description desc("Allowed options");
 	desc.add_options()
             ("help", "produce a help message")
-            ("database", value< string >()->composing(), 
-             "the sqlite database that we are to use")
-            ("tsv-directory", value< string >()->composing(), 
-             "the input tsv directory or binary file")
+            ("database", value< std::string >()->composing(), "the sqlite database that we are to use")
             ("stride", value< size_t>()->composing(), "stride to use" )
             ("windowSize", value< size_t >()->composing(), "sliding window size" )
             ;
@@ -79,118 +52,91 @@ main(int argc, char* argv[])
         notify(vm);
 
 	if (vm.count("help")) {
-            cout << desc;           
+            std::cout << desc;           
             exit(0);
 	}
 
-	if (vm.count("database")!=1 || vm.count("tsv-directory")!=1 || vm.count("stride")!=1 ||  vm.count("windowSize")!=1  ) {
-            std::cerr << "usage: createVectorsBinary --stride <stride> --windowSize <window-size> --database <database-name>"
-                      << " --tsv-directory <tsv-directory>" << std::endl;
+	if (vm.count("database")!=1) {
+            std::cerr << "usage: createVectorsBinary --database <database-name>\n";
             exit(1);
 	}
 
-	tsv_directory = vm["tsv-directory"].as< string >();
-	cout << "tsv-directory: " << tsv_directory << std::endl;
-
-	database = vm["database"].as<string >();
-	cout << "database: " << database << std::endl;
-
-	stride = vm["stride"].as<size_t>();
-	cout << "stride: " << stride << std::endl;
-
-	windowSize = vm["windowSize"].as<size_t>();
-	cout << "windowSize: " << windowSize << std::endl;
-    } catch (exception& e) {
-	cout << e.what() << "\n";
-    }
-  
-    // binary code analysis *******************************************************
-    cerr << " Starting binary analysis ... " << endl;
-    std::cout << "Done reading options" << std::endl;
-
-    SgNode* globalBlock;
-    if (is_directory(tsv_directory)) {
-        RoseBin_Def::RoseAssemblyLanguage=RoseBin_Def::x86;
-        RoseBin_Arch::arch=RoseBin_Arch::bit32;
-        RoseBin_OS::os_sys=RoseBin_OS::linux_op;
-        RoseBin_OS_VER::os_ver=RoseBin_OS_VER::linux_26;
-
-        RoseFile* roseBin = new RoseFile( (char*)tsv_directory.c_str() );
-
-        cerr << " ASSEMBLY LANGUAGE :: " << RoseBin_Def::RoseAssemblyLanguage << endl;
-        // query the DB to retrieve all data
-        globalBlock = roseBin->retrieve_DB();
-
-        // traverse the AST and test it
-        roseBin->test();
-    } else {
-        vector<char*> args;
-        args.push_back(strdup(""));
-        args.push_back(strdup(tsv_directory.c_str()));
-
-        ostringstream outStr; 
-        for (vector<char*>::iterator iItr = args.begin(); iItr != args.end(); ++iItr)
-            outStr << *iItr << " ";
-        std::cout << "Calling " << outStr.str() << std::endl;
-
-        globalBlock =  frontend(args.size(),&args[0]);
-
-        MyTraversal myTraversal;
-        myTraversal.counter=0;
-        myTraversal.traverseInputFiles((SgProject*)globalBlock, postorder);
-        std::cout << "The number of instructions is: " << myTraversal.counter << std::endl;
+	database = vm["database"].as<std::string >();
+        if (vm.count("stride")==1)
+            stride = vm["stride"].as<size_t>();
+        if (vm.count("windowSize")==1)
+            windowSize = vm["windowSize"].as<size_t>();
+    } catch (std::exception& e) {
+        std::cout << e.what() << "\n";
     }
 
     SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(database)->transaction();
+    int64_t cmd_id = CloneDetection::start_command(tx, argc, argv, "creating syntax vectors");
+    CloneDetection::FilesTable files(tx);
 
-    if (tx->statement("select count(*) from run_parameters")->execute_int() >= 1) {
-        size_t oldWindowSize = tx->statement("select window_size from run_parameters")->begin().get<size_t>(0);
-        size_t oldStride = tx->statement("select stride from run_parameters")->begin().get<size_t>(0);
+    // Save parameters in the database; or check against existing parameters
+    if (0 == tx->statement("select count(*) from run_parameters")->execute_int()) {
+        if ((size_t)-1 == stride || (size_t)-1 == windowSize) {
+            std::cerr <<argv0 <<": stride and window size must be specified\n";
+            exit(1);
+        }
+        tx->statement("insert into run_parameters (window_size, stride) values (?, ?)")
+            ->bind(0, windowSize)->bind(1, stride)->execute();
+    } else {
+        SqlDatabase::Statement::iterator params = tx->statement("select window_size, stride from run_parameters")->begin();
+        size_t oldWindowSize = params.get<size_t>(0);
+        size_t oldStride = params.get<size_t>(1);
+        if ((size_t)-1==stride)
+            stride = oldStride;
+        if ((size_t)-1==windowSize)
+            windowSize = oldWindowSize;
         if (oldWindowSize != windowSize || oldStride != stride) {
-            cerr << "Window size and stride do not match those already in database"
-                 <<" -- please remove the database and try again" << endl;
-            cerr << "Old window size is " << oldWindowSize << endl;
-            cerr << "Old stride is " << oldStride << endl;
+            std::cerr <<argv0 <<": window size (" <<windowSize <<") and stride (" <<stride <<") do not match"
+                      <<" existing window size (" <<oldWindowSize <<") and stride (" <<oldStride <<")\n";
             exit (1);
         }
-    } else {
-        tx->statement("insert into run_parameters(window_size, stride) values (?, ?)")
-            ->bind(0, windowSize)
-            ->bind(1, stride)
-            ->execute();
     }
 
-    struct timeval before, after;
-    struct rusage ru_before, ru_after;
-    gettimeofday(&before, NULL);
-    getrusage(RUSAGE_SELF, &ru_before);
-    createVectorsRespectingFunctionBoundaries(globalBlock, tsv_directory, windowSize, stride, tx);
-    gettimeofday(&after, NULL);
-    getrusage(RUSAGE_SELF, &ru_after);
-    cerr << "Time: " << (tvToDouble(after) - tvToDouble(before)) << " wall, "
-         << (tvToDouble(ru_after.ru_utime) - tvToDouble(ru_before.ru_utime)) << " user, "
-         << (tvToDouble(ru_after.ru_stime) - tvToDouble(ru_before.ru_stime)) << " sys" << endl
-         << "Total time: " << (tvToDouble(after) - tvToDouble(start)) << " wall, "
-         << tvToDouble(ru_after.ru_utime) << " user, "
-         << tvToDouble(ru_after.ru_stime) << " sys" << endl
-         << "Pre-vecgen time: " << (tvToDouble(before) - tvToDouble(start)) << " wall, "
-         << tvToDouble(ru_before.ru_utime) << " user, "
-         << tvToDouble(ru_before.ru_stime) << " sys" << endl;
-    SqlDatabase::StatementPtr stmt = tx->statement("insert into vector_generator_timing"
-                                                   // 0     1                2               3
-                                                   " (file, total_wallclock, total_usertime, total_systime,"
-                                                   // 4                5                6
-                                                   " vecgen_wallclock, vecgen_usertime, vecgen_systime)"
-                                                   " values (?,?,?,?,?,?,?)");
-    stmt->bind(0, tsv_directory);
-    stmt->bind(1, (tvToDouble(after) - tvToDouble(start)));
-    stmt->bind(2, tvToDouble(ru_after.ru_utime));
-    stmt->bind(3, tvToDouble(ru_after.ru_stime));
-    stmt->bind(4, (tvToDouble(after) - tvToDouble(before)));
-    stmt->bind(5, (tvToDouble(ru_after.ru_utime) - tvToDouble(ru_before.ru_utime)));
-    stmt->bind(6, (tvToDouble(ru_after.ru_stime) - tvToDouble(ru_before.ru_stime)));
-    stmt->execute();
+    CloneDetection::Progress progress(tx->statement("select count(*) from semantic_functions")->execute_int());
 
+    // Process each specimen file that's in the database
+    size_t nspecimens = 0, nfunctions = 0;
+    SqlDatabase::StatementPtr stmt1 = tx->statement("select distinct specimen_id from semantic_functions");
+    for (SqlDatabase::Statement::iterator specfiles=stmt1->begin(); specfiles!=stmt1->end(); ++specfiles, ++nspecimens) {
+        
+        // Obtain the AST for this specimen
+        progress.clear();
+        int specimen_id = specfiles.get<int>(0);
+        std::string specimen_name = files.name(specimen_id);
+        SgProject *project = files.load_ast(tx, specimen_id);
+        if (!project)
+            project = CloneDetection::open_specimen(tx, files, specimen_id, argv0);
+
+        // Get list of functions for this specimen that are in the database
+        std::vector<SgAsmFunction*> all_functions = SageInterface::querySubTree<SgAsmFunction>(project);
+        CloneDetection::IdFunctionMap functions = CloneDetection::existing_functions(tx, files, all_functions);
+
+        // Create vectors for each of these functions
+        std::cerr <<argv0 <<": generating syntax vectors for " <<specimen_name <<"\n";
+        for (CloneDetection::IdFunctionMap::iterator fi=functions.begin(); fi!=functions.end(); ++fi, ++nfunctions, ++progress) {
+            int func_id = fi->first;
+            SgAsmFunction *func = fi->second;
+            createVectorsForAllInstructions(func, specimen_name, func->get_name(), func_id, windowSize, stride, tx);
+        }
+
+        // Clean up the AST before we process the next file.  It does not currently work to call
+        // SageInterface::deleteAST(project) because we get a failed assertion: idx < p_sections.size(). Therefore, we use the
+        // method implemented for AST_FILE_IO. This is probably faster anyway. [Robb P. Matzke 2013-08-13]
+        AST_FILE_IO::clearAllMemoryPools();
+    }
+
+    progress.clear();
+    std::ostringstream mesg;
+    mesg <<"added vectors for " <<nfunctions <<" function" <<(1==nfunctions?"":"s")
+         <<" in " <<nspecimens <<" specimen" <<(1==nspecimens?"":"s");
+    std::cerr <<argv0 <<": " <<mesg.str() <<"\n";
+
+    CloneDetection::finish_command(tx, cmd_id, mesg.str());
     tx->commit();
     return 0;
 } 

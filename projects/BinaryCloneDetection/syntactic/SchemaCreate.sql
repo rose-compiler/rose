@@ -1,28 +1,6 @@
 -- Schema for syntactic binary clone detection
 -- SQL contained herein should be written portably for either SQLite3 or PostgreSQL
-
--- Clean up. Objects need to be dropped in the opposte order they're created.
-drop table if exists cluster_pairs;
-drop table if exists group_timing;
-drop index if exists postprocessed_clusters_by_function;
-drop index if exists clusters_index_by_cluster;
-drop index if exists function_statistics_by_function;
-drop index if exists postprocessed_clusters_by_function;
-drop index if exists clusters_by_function;
-drop table if exists total_coverage;
-drop table if exists function_coverage;
-drop table if exists postprocessed_clusters;
-drop table if exists clusters;
-drop index if exists vectors_sum_of_counts_index;
-drop table if exists vectors;
-drop table if exists instructions;
-drop table if exists function_statistics;
-drop table if exists functions;
-drop table if exists results;
-drop table if exists timing;
-drop table if exists vector_generator_timing;
-drop table if exists detection_parameters;
-drop table if exists run_parameters;
+-- See also, SchemaDrop.sql
 
 create table run_parameters (
        window_size integer,                     -- the --windowSize argument for createVectorsBinary
@@ -63,36 +41,14 @@ create table results (
         false_positive_rate float
 );
 
--- Note, the isize, dsize, and size columns do not double-count overlapping functions or data: isize is not necessarily equal
--- to the sum of the size of all the function's instructions, dsize is not necessarily the sum of the size of each datum, and
--- "size" is not necessarily the sum of isize and dsize.
-create table functions (
-    id integer primary key,
-    file text,                                  -- name of specimen in which function appears
-    function_name text,                         -- name of function if known
-    entry_va integer,                           -- function entry virtual address
-    isize integer,                              -- size of function instructions in bytes, non-overlapping
-    dsize integer,                              -- size of function data in bytes, non-overlapping
-    size integer                                -- total size of function in bytes, non-overlapping
-);
-
 create table function_statistics (
-        -- FIXME: function_id should reference functions(id), but the tables are populated in the wrong order.
-        function_id integer, -- references functions(id),
+        function_id integer references semantic_functions(id),
         num_instructions integer
 );
 
-create table instructions (
-        address integer,                        -- starting address of instruction
-        size integer,                           -- size of instruction in bytes
-        function_id integer references functions(id),
-        index_within_function integer,          -- zero-origin index of instruction within function
-        assembly text                           -- disassembled instruction
-);
-  
 create table vectors (
         id integer primary key,                 -- once called "row_number"
-        function_id integer, -- references functions(id), --FIXME: foreign key is not present due to wrong order of writes
+        function_id integer references semantic_functions(id),
         index_within_function integer,          -- zero-origin index of starting instruction within function
         line integer,                           -- starting virtual address of first instruction
         last_insn_va integer,                   -- virtual address of last instruction (not very useful; use "size" instead)
@@ -108,7 +64,7 @@ create index vectors_sum_of_counts_index on vectors(sum_of_counts);
 create table clusters (
        id integer primary key,                  -- used to be called "row_num"; 1-origin
        cluster integer,
-       function_id integer,
+       function_id integer references semantic_functions(id),
        index_within_function integer,
        vectors_row integer,
        dist integer
@@ -117,14 +73,14 @@ create table clusters (
 create table postprocessed_clusters (
        row_number integer primary key,
        cluster integer,
-       function_id integer,
+       function_id integer references semantic_functions(id),
        index_within_function integer,
        vectors_row integer,
        dist integer
 );
 
 create table function_coverage (
-       function_id integer,
+       function_id integer references semantic_functions(id),
        num_instructions_covered_not_postprocessed integer,
        fraction_instructions_covered_not_postprocessed float,
        num_instructions_covered_postprocessed integer,
@@ -161,8 +117,8 @@ create table group_timing (
 
 create table cluster_pairs (
         cluster_id integer,
-        function_id_1 integer references functions(id),
-        function_id_2 integer references functions(id),
+        function_id_1 integer references semantic_functions(id),
+        function_id_2 integer references semantic_functions(id),
         nbytes_1 integer,     -- number of function_id_1 bytes that are similar to function_id_2
         nbytes_2 integer,     -- number of function_id_2 bytes that are similar to function_id_1
         ratio_1 real,         -- ratio nbytes_1 to total size of function_id_1

@@ -191,7 +191,6 @@ createVectorsForAllInstructions(SgNode* top, const std::string& filename, const 
     vector<SgAsmx86Instruction*> insns;
     FindInstructionsVisitor vis;
     AstQueryNamespace::querySubTree(top, std::bind2nd( vis, &insns ));
-    std::cout << "Number of instructions: " << insns.size() << std::endl;
     size_t insnCount = insns.size();
 
     for (size_t windowStart = 0; windowStart + windowSize <= insnCount; windowStart += stride) {
@@ -374,8 +373,15 @@ addVectorToDatabase(const SqlDatabase::TransactionPtr &tx, const SignatureVector
 }
 
 void
+dropDatabases(const SqlDatabase::TransactionPtr &tx)
+{
+    extern const char *syntactic_schema_drop; // defined in machine-generated SyntacticSchema.C
+    tx->execute(syntactic_schema_drop);
+}
+
+void
 createDatabases(const SqlDatabase::TransactionPtr &tx)
 {
-    extern const char *syntactic_schema; // defined in machine-generated SyntacticSchema.C
-    tx->execute(syntactic_schema);
+    extern const char *syntactic_schema_create; // defined in machine-generated SyntacticSchema.C
+    tx->execute(syntactic_schema_create);
 }
