@@ -8,8 +8,6 @@ using namespace SageBuilder;
 using namespace Fortran_to_C;
 
 
-<<<<<<< HEAD
-=======
 void Fortran_to_C::translateDoubleVal(SgFloatVal* floatVal)
 {
   string valString = floatVal->get_valueString();
@@ -43,7 +41,6 @@ void Fortran_to_C::translateExponentiationOp(SgExponentiationOp* expOp)
   replaceExpression(expOp,powerFunctionCall,false);
 }
 
->>>>>>> dd05ede... (09/25/2012) support double value representation
 void Fortran_to_C::translateImplicitFunctionCallExp(SgFunctionCallExp* funcCallExp)
 {
   SgScopeStatement* scope = getScope(funcCallExp);

@@ -23,6 +23,7 @@ using namespace Fortran_to_C;
 
 bool isLinearlizeArray = false;
 vector<SgArrayType*> arrayTypeList;
+vector<SgVarRefExp*> parameterRefList;
 vector<SgVariableDeclaration*> variableDeclList;
 vector<SgPntrArrRefExp*> pntrArrRefList;
 vector<SgEquivalenceStatement*> equivalenceList;
@@ -30,6 +31,7 @@ map<SgVariableSymbol*,SgExpression*> parameterSymbolList;
 vector<SgStatement*> statementList;
 vector<SgNode*> removeList;
 
+// memory pool traversal for variable declaration
 class variableDeclTraversal : public ROSE_VisitorPattern
 {
   public:
@@ -41,6 +43,7 @@ void variableDeclTraversal::visit(SgVariableDeclaration* varDecl)
   variableDeclList.push_back(varDecl);
 }
 
+// memory pool traversal for pointer Array Reference 
 class pntrArrRefTraversal : public ROSE_VisitorPattern
 {
   public:
@@ -52,6 +55,7 @@ void pntrArrRefTraversal::visit(SgPntrArrRefExp* pntrArrRefExp)
   pntrArrRefList.push_back(pntrArrRefExp);
 }
 
+// memory pool traversal for equivalence 
 class equivalencelTraversal : public ROSE_VisitorPattern
 {
   public:
@@ -63,6 +67,7 @@ void equivalencelTraversal::visit(SgEquivalenceStatement* equivalence)
   equivalenceList.push_back(equivalence);
 }
 
+// memory pool traversal for arrayType 
 class arrayTypeTraversal : public ROSE_VisitorPattern
 {
   public:
@@ -74,6 +79,19 @@ void arrayTypeTraversal::visit(SgArrayType* type)
   arrayTypeList.push_back(type);
 }
 
+// memory pool traversal for parameter 
+class parameterTraversal : public ROSE_VisitorPattern
+{
+  public:
+    void visit(SgVarRefExp* parameterRef);
+};
+
+void parameterTraversal::visit(SgVarRefExp* parameterRef)
+{
+  parameterRefList.push_back(parameterRef);
+}
+
+// simple traversal for general translation
 class f2cTraversal : public AstSimpleProcessing
 {
   public:
@@ -124,15 +142,6 @@ void f2cTraversal::visit(SgNode* n)
         removeList.push_back(fortranDo);
         break;
       }
-//    case V_SgAttributeSpecificationStatement:
-//      {
-//        SgAttributeSpecificationStatement* attributeSpecificationStatement = isSgAttributeSpecificationStatement(n);
-//        ROSE_ASSERT(attributeSpecificationStatement);
-//        translateAttributeSpecificationStatement(attributeSpecificationStatement);
-//        statementList.push_back(attributeSpecificationStatement);
-//        removeList.push_back(attributeSpecificationStatement);
-//        break;
-//      }
     case V_SgFunctionCallExp:
       {
         SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(n);
@@ -140,8 +149,6 @@ void f2cTraversal::visit(SgNode* n)
         translateImplicitFunctionCallExp(functionCallExp);
         break;
       }
-<<<<<<< HEAD
-=======
     case V_SgExponentiationOp:
       {
         SgExponentiationOp* expOp = isSgExponentiationOp(n);
@@ -156,7 +163,6 @@ void f2cTraversal::visit(SgNode* n)
         translateDoubleVal(floatVal);
         break;
       }
->>>>>>> dd05ede... (09/25/2012) support double value representation
     case V_SgCommonBlock:
       {
         SgCommonBlock* commonBlock = isSgCommonBlock(n);
@@ -169,18 +175,18 @@ void f2cTraversal::visit(SgNode* n)
         SgGlobal* global = isSgGlobal(n);
         ROSE_ASSERT(global);
         removeFortranMaxMinFunction(global);
-//        PreprocessingInfo* defMaxInfo = new PreprocessingInfo(PreprocessingInfo::CpreprocessorDefineDeclaration,
-//                                                              "#define max(a,b) (((a)>(b))?(a):(b))", 
-//                                                              "Transformation generated",
-//                                                              0, 0, 0, PreprocessingInfo::before);
-//        defMaxInfo->set_file_info(global->get_file_info());
-//        global->addToAttachedPreprocessingInfo(defMaxInfo,PreprocessingInfo::before);
-//        PreprocessingInfo* defMinInfo = new PreprocessingInfo(PreprocessingInfo::CpreprocessorDefineDeclaration,
-//                                                              "#define min(a,b) (((a)<(b))?(a):(b))", 
-//                                                              "Transformation generated",
-//                                                              0, 0, 0, PreprocessingInfo::before);
-//        defMinInfo->set_file_info(global->get_file_info());
-//        global->addToAttachedPreprocessingInfo(defMinInfo,PreprocessingInfo::before);
+        PreprocessingInfo* defMaxInfo = new PreprocessingInfo(PreprocessingInfo::CpreprocessorDefineDeclaration,
+                                                              "#define max(a,b) (((a)>(b))?(a):(b))", 
+                                                              "Transformation generated",
+                                                              0, 0, 0, PreprocessingInfo::before);
+        defMaxInfo->set_file_info(global->get_file_info());
+        global->addToAttachedPreprocessingInfo(defMaxInfo,PreprocessingInfo::before);
+        PreprocessingInfo* defMinInfo = new PreprocessingInfo(PreprocessingInfo::CpreprocessorDefineDeclaration,
+                                                              "#define min(a,b) (((a)<(b))?(a):(b))", 
+                                                              "Transformation generated",
+                                                              0, 0, 0, PreprocessingInfo::before);
+        defMinInfo->set_file_info(global->get_file_info());
+        global->addToAttachedPreprocessingInfo(defMinInfo,PreprocessingInfo::before);
         break;
       }
     default:
@@ -296,7 +302,6 @@ int main( int argc, char * argv[] )
     removeList.push_back(decl);
   }
 
-    generateAstGraph(project,8000);
 
   // Traversal with Memory Pool to search for arrayType
   arrayTypeTraversal translateArrayType;

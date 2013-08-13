@@ -72,11 +72,8 @@ namespace Fortran_to_C
     void linearizeArraySubscript(SgPntrArrRefExp*);
   
     void translateImplicitFunctionCallExp(SgFunctionCallExp*);
-<<<<<<< HEAD
-=======
     void translateExponentiationOp(SgExponentiationOp*);
     void translateDoubleVal(SgFloatVal*);
->>>>>>> dd05ede... (09/25/2012) support double value representation
     void insertSystemHeader(const std::string&,SgScopeStatement*);
     bool convertMathFunctionName(SgName, SgName*, SgType*);
     bool isMaxMinFunctionName(SgName, SgType*);
