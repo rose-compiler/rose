@@ -303,6 +303,10 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_33.c \
      test2013_34.c \
      test2013_35.c \
+     test2013_36.c \
+     test2013_37.c \
+     test2013_38.c \
+     test2013_39.c \
      math.c \
      complex_01.c \
      constants.c
