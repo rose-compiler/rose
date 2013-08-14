@@ -254,37 +254,9 @@ ExprWalker::ExprWalker(VariableIdMapping& _vidm, bool _isModExpr) :
   // default constructor
 }
 
-void ExprWalker::visit(SgAssignOp* sgn)
-{
-  SgNode* lhs = sgn->get_lhs_operand();
-  SgNode* rhs = sgn->get_rhs_operand();
-  DefUseVarsInfo lduvi = getDefUseVarsInfo_rec(lhs, vidm, true);
-  DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(rhs, vidm, false);
-  // if the rhs writes to a memory (i.e sideffect)
-  // add to the use_set to be unioned in next step
-  if(!rduvi.isDefSetEmpty())
-  {
-    rduvi.copyDefToUse();
-  }
-  // union lduvi and rduvi
-  duvi = lduvi + rduvi;
-}
-
-void ExprWalker::visit(SgCompoundAssignOp* sgn)
-{
-  SgNode* lhs = sgn->get_lhs_operand();
-  SgNode* rhs = sgn->get_rhs_operand();
-  DefUseVarsInfo lduvi = getDefUseVarsInfo_rec(lhs, vidm, true);
-  DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(rhs, vidm, false);
-  // if the rhs writes to a memory (i.e side-effect)
-  // add to the def_set to be unioned later
-  if(!rduvi.isDefSetEmpty())
-  {
-    rduvi.copyDefToUse();
-  }
-  // union lduvi and rduvi
-  duvi = lduvi + rduvi;
-}
+/*****************************************************
+ * ExprWalker for SgUnaryOp with modifying semantics *
+ *****************************************************/
 
 void ExprWalker::visit(SgMinusMinusOp* sgn)
 {
@@ -301,6 +273,10 @@ void ExprWalker::visit(SgPlusPlusOp* sgn)
   uduvi.copyUseToDef();
   duvi = uduvi;
 }
+
+/*********************************************************
+ * ExprWalker for SgUnaryOp with non-modifying semantics *
+ *********************************************************/
 
 void ExprWalker::visitSgUnaryOpNoMod(SgUnaryOp* sgn)
 {
@@ -341,34 +317,32 @@ void ExprWalker::visit(SgBitComplementOp* sgn)
 {
   visitSgUnaryOpNoMod(sgn);
 }
- 
-void ExprWalker::visit(SgSizeOfOp* sgn)
+
+void ExprWalker::visit(SgThrowOp* sgn)
 {
+  SgNode* operand = sgn->get_operand();
   DefUseVarsInfo rduvi;
-  // we only need to process if the operand is an expression
-  SgExpression* expr = sgn->get_operand_expr();
-  // expr can be null if the sizeof operand is a type
-  if(expr) {
-    rduvi = getDefUseVarsInfo_rec(expr, vidm, false);
+  // operand can be empty
+  if(operand) {
+    rduvi = getDefUseVarsInfo_rec(operand, vidm, false);
     if(!rduvi.isDefSetEmpty())
       rduvi.copyDefToUse();
   }
   duvi = rduvi;
 }
 
-void ExprWalker::visit(SgBinaryOp* sgn)
+/******************************************************
+ * ExprWalker for SgBinaryOp with modifying semantics *
+ ******************************************************/
+
+void ExprWalker::visit(SgAssignOp* sgn)
 {
   SgNode* lhs = sgn->get_lhs_operand();
   SgNode* rhs = sgn->get_rhs_operand();
-  DefUseVarsInfo lduvi = getDefUseVarsInfo_rec(lhs, vidm, false);
+  DefUseVarsInfo lduvi = getDefUseVarsInfo_rec(lhs, vidm, true);
   DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(rhs, vidm, false);
-  // both operands are uses
-  // if they write to any memory location as side-effect
-  // copy the defs to uses
-  if(!lduvi.isDefSetEmpty())
-  {
-    lduvi.copyDefToUse();
-  }
+  // if the rhs writes to a memory (i.e sideffect)
+  // add to the use_set to be unioned in next step
   if(!rduvi.isDefSetEmpty())
   {
     rduvi.copyDefToUse();
@@ -377,101 +351,25 @@ void ExprWalker::visit(SgBinaryOp* sgn)
   duvi = lduvi + rduvi;
 }
 
-void ExprWalker::visit(SgFunctionCallExp* sgn)
+void ExprWalker::visit(SgCompoundAssignOp* sgn)
 {
-  FunctionCallExpSet& func_set = duvi.getFunctionCallExpSetMod();
-  func_set.insert(sgn);
-}
-
-void ExprWalker::visit(SgExprListExp* sgn)
-{
-  SgExpressionPtrList expr_list = sgn->get_expressions();
-  SgExpressionPtrList::iterator it = expr_list.begin();
-  for( ; it != expr_list.end(); ++it)
+  SgNode* lhs = sgn->get_lhs_operand();
+  SgNode* rhs = sgn->get_rhs_operand();
+  DefUseVarsInfo lduvi = getDefUseVarsInfo_rec(lhs, vidm, true);
+  DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(rhs, vidm, false);
+  // if the rhs writes to a memory (i.e side-effect)
+  // add to the def_set to be unioned later
+  if(!rduvi.isDefSetEmpty())
   {
-    // if they have side-effects we can copy them over
-    DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(*it, vidm, false);
-    if(!rduvi.isDefSetEmpty())
-      rduvi.copyDefToUse();
-    duvi = duvi + rduvi;
-  }
-}
-
-void ExprWalker::visit(SgConditionalExp* sgn)
-{
-  SgExpression* cond_exp = sgn->get_conditional_exp();
-  SgExpression* true_exp = sgn->get_true_exp();
-  SgExpression* false_exp = sgn->get_false_exp();
-
-  DefUseVarsInfo cduvi = getDefUseVarsInfo_rec(cond_exp, vidm, false);
-  if(!cduvi.isDefSetEmpty()) {
-    cduvi.copyDefToUse();
-  }
-
-  DefUseVarsInfo tduvi, fduvi;
-
-  if(isModExpr) {
-    tduvi = getDefUseVarsInfo_rec(true_exp, vidm, true);
-    fduvi = getDefUseVarsInfo_rec(false_exp, vidm, true);
-    
-  }
-  else {
-    tduvi = getDefUseVarsInfo_rec(true_exp, vidm, false);
-    fduvi = getDefUseVarsInfo_rec(false_exp, vidm, false);
-    if(!tduvi.isDefSetEmpty())
-      tduvi.copyDefToUse();
-    if(!fduvi.isDefSetEmpty())
-      fduvi.copyDefToUse();
-  }
-  duvi = cduvi + tduvi + fduvi;
-}
-
-void ExprWalker::visit(SgAssignInitializer *sgn)
-{
-  // operand is only used
-  DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(sgn->get_operand(), vidm, false);
-  if(!rduvi.isDefSetEmpty())
     rduvi.copyDefToUse();
-  duvi = rduvi;
-}
-
-void ExprWalker::visit(SgConstructorInitializer *sgn)
-{
-  DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(sgn->get_args(), vidm, false);
-  if(!rduvi.isDefSetEmpty())
-    rduvi.copyDefToUse();
-  duvi = rduvi;
-}
-
-void ExprWalker::visit(SgAggregateInitializer* sgn)
-{
-  SgExprListExp* initializers = sgn->get_initializers();
-  DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(initializers, vidm, false);
-  if(!rduvi.isDefSetEmpty())
-    rduvi.copyDefToUse();
-  duvi = rduvi;
-}
-
-void ExprWalker::visit(SgVarRefExp* sgn)
-{
-  // get the VariableId
-  VariableId vid = vidm.variableId(sgn);
-  
-  ROSE_ASSERT(vid.getIdCode() != -1);
-
-  // determine type info
-  VariableIdTypeInfo sgn_type_info = getVariableIdTypeInfo(vid, vidm); 
-
-  VarsInfo& def_vars_info = duvi.getDefVarsInfoMod();
-  VarsInfo& use_vars_info = duvi.getUseVarsInfoMod();
-
-  if(isModExpr) {
-    def_vars_info.first.insert(VariableIdInfo(vid, sgn_type_info));
   }
-  else {
-    use_vars_info.first.insert(VariableIdInfo(vid, sgn_type_info));
-  }
+  // union lduvi and rduvi
+  duvi = lduvi + rduvi;
 }
+
+/*************************************************
+ * ExprWalker for SgBinaryOp that can be lvalues *
+ *************************************************/
 
 void ExprWalker::visit(SgPntrArrRefExp* sgn)
 {
@@ -628,6 +526,268 @@ void ExprWalker::visit(SgDotExp* sgn)
   duvi = lduvi + rduvi;
 }
 
+void ExprWalker::visit(SgCommaOpExp* sgn)
+{
+  std::ostringstream oss;
+  oss << sgn->class_name() << "not imeplemented\n";
+  throw std::runtime_error(oss.str());
+}
+
+/**********************************************************
+ * ExprWalker for SgBinaryOp with non-modifying semantics *
+ **********************************************************/
+
+void ExprWalker::visitSgBinaryOpNoMod(SgBinaryOp* sgn)
+{
+  SgNode* lhs = sgn->get_lhs_operand();
+  SgNode* rhs = sgn->get_rhs_operand();
+  DefUseVarsInfo lduvi = getDefUseVarsInfo_rec(lhs, vidm, false);
+  DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(rhs, vidm, false);
+  // both operands are uses
+  // if they write to any memory location as side-effect
+  // copy the defs to uses
+  if(!lduvi.isDefSetEmpty())
+  {
+    lduvi.copyDefToUse();
+  }
+  if(!rduvi.isDefSetEmpty())
+  {
+    rduvi.copyDefToUse();
+  }
+  // union lduvi and rduvi
+  duvi = lduvi + rduvi;
+}
+
+void ExprWalker::visit(SgAddOp* sgn)
+{
+  visitSgBinaryOpNoMod(sgn);
+}
+
+void ExprWalker::visit(SgAndOp* sgn)
+{
+  visitSgBinaryOpNoMod(sgn);
+}
+
+void ExprWalker::visit(SgArrowStarOp* sgn)
+{
+  std::ostringstream oss;
+  oss << sgn->class_name() << "not imeplemented\n";
+  throw std::runtime_error(oss.str());
+}
+
+void ExprWalker::visit(SgBitAndOp* sgn)
+{
+  visitSgBinaryOpNoMod(sgn);
+}
+
+void ExprWalker::visit(SgBitOrOp* sgn)
+{
+  visitSgBinaryOpNoMod(sgn);
+}
+
+void ExprWalker::visit(SgBitXorOp* sgn)
+{
+  visitSgBinaryOpNoMod(sgn);
+}
+
+void ExprWalker::visit(SgDivideOp* sgn)
+{
+  visitSgBinaryOpNoMod(sgn);
+}
+
+void ExprWalker::visit(SgDotStarOp* sgn)
+{
+  std::ostringstream oss;
+  oss << sgn->class_name() << "not imeplemented\n";
+  throw std::runtime_error(oss.str());
+}
+
+void ExprWalker::visit(SgEqualityOp* sgn)
+{
+  visitSgBinaryOpNoMod(sgn);
+}
+
+void ExprWalker::visit(SgGreaterOrEqualOp* sgn)
+{
+  visitSgBinaryOpNoMod(sgn);
+}
+
+void ExprWalker::visit(SgGreaterThanOp* sgn)
+{
+  visitSgBinaryOpNoMod(sgn);
+}
+
+void ExprWalker::visit(SgLessOrEqualOp* sgn)
+{
+  visitSgBinaryOpNoMod(sgn);
+}
+
+void ExprWalker::visit(SgLessThanOp* sgn)
+{
+  visitSgBinaryOpNoMod(sgn);
+}
+
+void ExprWalker::visit(SgLshiftOp* sgn)
+{
+  visitSgBinaryOpNoMod(sgn);
+}
+
+void ExprWalker::visit(SgModOp* sgn)
+{
+  visitSgBinaryOpNoMod(sgn);
+}
+
+void ExprWalker::visit(SgMultiplyOp* sgn)
+{
+  visitSgBinaryOpNoMod(sgn);
+}
+
+void ExprWalker::visit(SgNotEqualOp* sgn)
+{
+  visitSgBinaryOpNoMod(sgn);
+}
+
+void ExprWalker::visit(SgOrOp* sgn)
+{
+  visitSgBinaryOpNoMod(sgn);
+}
+
+void ExprWalker::visit(SgRshiftOp* sgn)
+{
+  visitSgBinaryOpNoMod(sgn);
+}
+
+void ExprWalker::visit(SgSubtractOp* sgn)
+{
+  visitSgBinaryOpNoMod(sgn);
+}
+
+/****************************************
+ * ExprWalker for expr that can lvalues *
+ ****************************************/
+
+void ExprWalker::visit(SgFunctionCallExp* sgn)
+{
+  FunctionCallExpSet& func_set = duvi.getFunctionCallExpSetMod();
+  func_set.insert(sgn);
+}
+
+void ExprWalker::visit(SgConditionalExp* sgn)
+{
+  SgExpression* cond_exp = sgn->get_conditional_exp();
+  SgExpression* true_exp = sgn->get_true_exp();
+  SgExpression* false_exp = sgn->get_false_exp();
+
+  DefUseVarsInfo cduvi = getDefUseVarsInfo_rec(cond_exp, vidm, false);
+  if(!cduvi.isDefSetEmpty()) {
+    cduvi.copyDefToUse();
+  }
+
+  DefUseVarsInfo tduvi, fduvi;
+
+  if(isModExpr) {
+    tduvi = getDefUseVarsInfo_rec(true_exp, vidm, true);
+    fduvi = getDefUseVarsInfo_rec(false_exp, vidm, true);
+    
+  }
+  else {
+    tduvi = getDefUseVarsInfo_rec(true_exp, vidm, false);
+    fduvi = getDefUseVarsInfo_rec(false_exp, vidm, false);
+    if(!tduvi.isDefSetEmpty())
+      tduvi.copyDefToUse();
+    if(!fduvi.isDefSetEmpty())
+      fduvi.copyDefToUse();
+  }
+  duvi = cduvi + tduvi + fduvi;
+}
+
+/************************************************
+ * ExprWalker for expr that can only be rvalues *
+ ************************************************/
+
+void ExprWalker::visit(SgExprListExp* sgn)
+{
+  SgExpressionPtrList expr_list = sgn->get_expressions();
+  SgExpressionPtrList::iterator it = expr_list.begin();
+  for( ; it != expr_list.end(); ++it)
+  {
+    // if they have side-effects we can copy them over
+    DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(*it, vidm, false);
+    if(!rduvi.isDefSetEmpty())
+      rduvi.copyDefToUse();
+    duvi = duvi + rduvi;
+  }
+}
+
+void ExprWalker::visit(SgSizeOfOp* sgn)
+{
+  DefUseVarsInfo rduvi;
+  // we only need to process if the operand is an expression
+  SgExpression* expr = sgn->get_operand_expr();
+  // expr can be null if the sizeof operand is a type
+  if(expr) {
+    rduvi = getDefUseVarsInfo_rec(expr, vidm, false);
+    if(!rduvi.isDefSetEmpty())
+      rduvi.copyDefToUse();
+  }
+  duvi = rduvi;
+}
+
+/***************************************************
+ * ExprWalker for different intializer expressions *
+ ***************************************************/
+
+void ExprWalker::visit(SgAssignInitializer *sgn)
+{
+  // operand is only used
+  DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(sgn->get_operand(), vidm, false);
+  if(!rduvi.isDefSetEmpty())
+    rduvi.copyDefToUse();
+  duvi = rduvi;
+}
+
+void ExprWalker::visit(SgConstructorInitializer *sgn)
+{
+  DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(sgn->get_args(), vidm, false);
+  if(!rduvi.isDefSetEmpty())
+    rduvi.copyDefToUse();
+  duvi = rduvi;
+}
+
+void ExprWalker::visit(SgAggregateInitializer* sgn)
+{
+  SgExprListExp* initializers = sgn->get_initializers();
+  DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(initializers, vidm, false);
+  if(!rduvi.isDefSetEmpty())
+    rduvi.copyDefToUse();
+  duvi = rduvi;
+}
+
+/****************************
+ * ExprWalker for basic cases
+ ****************************/
+
+void ExprWalker::visit(SgVarRefExp* sgn)
+{
+  // get the VariableId
+  VariableId vid = vidm.variableId(sgn);
+  
+  ROSE_ASSERT(vid.getIdCode() != -1);
+
+  // determine type info
+  VariableIdTypeInfo sgn_type_info = getVariableIdTypeInfo(vid, vidm); 
+
+  VarsInfo& def_vars_info = duvi.getDefVarsInfoMod();
+  VarsInfo& use_vars_info = duvi.getUseVarsInfoMod();
+
+  if(isModExpr) {
+    def_vars_info.first.insert(VariableIdInfo(vid, sgn_type_info));
+  }
+  else {
+    use_vars_info.first.insert(VariableIdInfo(vid, sgn_type_info));
+  }
+}
+
 void ExprWalker::visit(SgInitializedName* sgn)
 {
   VariableId vid = vidm.variableId(sgn);
@@ -663,6 +823,11 @@ void ExprWalker::visit(SgValueExp* sgn)
   // dont need to do anything
 }
 
+void ExprWalker::visit(SgNullExpression* sgn)
+{
+  // dont need to do anything
+}
+
 void ExprWalker::visit(SgFunctionRefExp* sgn)
 {
   // not sure
@@ -686,6 +851,7 @@ void ExprWalker::visit(SgThisExp* sgn)
   //throw oss.str();
 }
 
+// we should not reach here
 void ExprWalker::visit(SgExpression* sgn)
 {
   std::ostringstream oss;

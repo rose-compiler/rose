@@ -125,7 +125,7 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgAssignOp* sgn)
 // prefix increments first and the result can be used as lvalue (in C++)
 // postfix uses the operand as lvalue and increments later and therefore
 // postfix increment cannot be lvalue
-// both prefix/postfix are illeagal in C
+// both prefix/postfix are illegal in C
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgPlusPlusOp* sgn)
 {
   SgNode* operand = sgn->get_operand();
