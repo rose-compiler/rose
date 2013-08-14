@@ -15,9 +15,9 @@ target_link_libraries(attachMetrics
 ########### install files ###############
 
 # TODO: verify DESTINATION, was previosuly blank
-install(
-  FILES profiled.out is-static.tex command-line.tex	profiled-p93.pdf
-  DESTINATION include)
+#install(
+#  FILES profiled.out is-static.tex command-line.tex	profiled-p93.pdf
+#  DESTINATION include)
 
 
 
