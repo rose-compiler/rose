@@ -497,6 +497,21 @@ bool roseInstallPrefix(std::string& result) {
     if (prefixCS == NULL) {free(libroseName); goto default_check;}
     string prefix = prefixCS;
     free(libdirCopy2); 
+
+    // Zack Galbreath, June 2013
+    // When building with CMake, detect build directory by searching
+    // for the presence of a CMakeCache.txt file.  If this cannot
+    // be found, then assume we are running from within an install tree.
+    #ifdef USE_CMAKE
+    std::string pathToCache = libdir;
+    pathToCache += "/../CMakeCache.txt";
+    if (boost::filesystem::exists(pathToCache)) {
+      return false;
+    } else {
+      return true;
+    }
+    #endif
+
     free(libroseName);
 // Liao, 12/2/2009
 // Check the librose's parent directory name to tell if it is within a build or installation tree
