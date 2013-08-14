@@ -2058,7 +2058,6 @@ projects/BinFuncDetect/Makefile
 projects/BinQ/Makefile
 projects/BinaryCloneDetection/Makefile
 projects/BinaryCloneDetection/semantic/Makefile
-projects/BinaryCloneDetection/semantic/queries.sql
 projects/BinaryCloneDetection/syntactic/Makefile
 projects/BinaryCloneDetection/syntactic/gui/Makefile
 projects/C_to_Promela/Makefile
