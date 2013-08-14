@@ -1025,48 +1025,23 @@ static void insert_libxompf_h(SgNode* startNode)
     // The OpenMP syntax requires that the omp for pragma is immediately followed by the for loop.
     SgForStatement * for_loop = isSgForStatement(body);
     SgFortranDo * do_loop = isSgFortranDo(body);
-    SgStatement* loop = (for_loop!=NULL?(SgStatement*)for_loop:(SgStatement*)do_loop);
-    ROSE_ASSERT (loop != NULL);
 
     /*
-    *Winnie, do loop collapse before the invoke transOmpLoop(node), 
-    *        grab information about loop collapse factor and target_loop
-    *        may need to modify SageInterface::loopCollapsing(SgForStatement *target_loop, size_t collapsing_factor) to 
-    *            make sure that no statements are inserted in between of for directive and the target_loop
+    *Winnie, loop collapse is handled before invoke transOmpLoop(node), 
+    *        in SageInterface::loopCollapsing(SgForStatement *target_loop, size_t collapsing_factor) 
+    *                a new loop is inserted before remove the original nested loop. As a result, a new block/scope 
+    *                is created and inserted (because of the insertStatement() function) in between of #pragma omp for 
+    *                and the target for loop.
+    *                So, grab the first statement (that is the target for loop) of the new scope here. 
     */
 
-    bool hasCollapse = false;
-    if (hasClause(target, V_SgOmpCollapseClause))
-    // {
-      //   printf("Target %s has collapse clause\n", target->unparseToString().c_str() );
-          hasCollapse = true;
-    //}
-    if(for_loop && hasCollapse)
-    {
-//        ROSE_ASSERT(getScope(for_loop)->get_parent()->get_parent() != NULL);
-        
-//        printf("parent of grandparent scope classname is %s\n", getScope(for_loop)->get_parent()->get_parent()->get_parent()->class_name().c_str() );
-    //    printf("before loopCollapsing: %s\n", for_loop->unparseToString().c_str() );
-    //    cerr<<"going to connect loopCollapsing here"<<endl;
+    if(for_loop == NULL && isSgScopeStatement(body) && hasClause(target, V_SgOmpCollapseClause))
+        for_loop = isSgForStatement(getFirstStatement(isSgScopeStatement(body)));
+    
+    /*Winnie, end here*/
 
-        
-        Rose_STL_Container<SgOmpClause*> collapse_clauses = getClause(target, V_SgOmpCollapseClause);
-        
-        fprintf(stderr, "expression: %s\n\n", isSgOmpCollapseClause(collapse_clauses[0])->get_expression()->unparseToString().c_str());
-        int collapse_factor = atoi(isSgOmpCollapseClause(collapse_clauses[0])->get_expression()->unparseToString().c_str());
-        SageInterface::loopCollapsing(&for_loop, collapse_factor);
-    //    printf("after loopCollapsing: %s\n", for_loop->unparseToString().c_str() );
-        loop = for_loop;
-   /*     printf("after loopCollapsing: the loop %s\n", loop->unparseToString().c_str() );
-        printf("after loopCollapsing: parent of the loop %s\n", loop->get_parent()->unparseToString().c_str() );
-        printf("after loopCollapsing: grandparent of the loop %s\n", loop->get_parent()->get_parent()->unparseToString().c_str() );
-        printf("after loopCollapsing: parent of grandparent of the loop %s\n", loop->get_parent()->get_parent()->get_parent()->unparseToString().c_str() );
-        printf("after loopCollapsing: grandparent of grandparent of the loop %s\n", loop->get_parent()->get_parent()->get_parent()->get_parent()->unparseToString().c_str() );
-*/
-    }
-
-    //Winnie, end of loop collapse
-
+    SgStatement* loop = (for_loop!=NULL?(SgStatement*)for_loop:(SgStatement*)do_loop);
+    ROSE_ASSERT (loop != NULL);
     // Step 1. Loop normalization
     // we reuse the normalization from SageInterface, though it is different from what gomp expects.
     // the point is to have a consistent loop form. We can adjust the difference later on.
@@ -1101,33 +1076,6 @@ static void insert_libxompf_h(SgNode* startNode)
  //   fprintf(stderr, "target: %s\n", target->unparseToString().c_str() );
 
     replaceStatement(target, bb1, true);
-/*
-*Winnie, for directive with collapse clause, there are several statements inserted in between of target1 and for_loop
-*        insert these statements into bb1
-*/
-/*    if(hasCollapse)
-    {
-        SgScopeStatement * scope_bb1 = isSgScopeStatement(bb1);
-        SgVariableDeclaration *insrted_stmts = isSgVariableDeclaration(getPreviousStatement(for_loop));   //Winnie, statement inserted in SageInterface::loopCollapsing()
-        while(isSgStatement(insrted_stmts) != NULL)
-        //while(isSgStatement(insrted_stmts) != isSgStatement(target))
-        {
-            fprintf(stderr, "insrted_stmt is %s\n", insrted_stmts->unparseToString().c_str());
-            SgInitializedNamePtrList list_temp =insrted_stmts->get_variables();
-
-//            fprintf(stderr, "p_scope_temp %s\n\n", p_scope_temp->unparseToString().c_str());
-//            fprintf(stderr, "p_scope_temp %s\n\n", p_scope_temp->unparseToString().c_str());
-            
-            SgVariableDeclaration *new_stmts = buildVariableDeclaration(list_temp[0]->get_name().getString(), buildIntType(), list_temp[0]->get_initializer(), scope_bb1); 
-
-            
-            insrted_stmts = isSgVariableDeclaration(getPreviousStatement(insrted_stmts));
-            prependStatement(new_stmts, isSgScopeStatement(bb1));        
-            fprintf(stderr, "bb1 %s\n\n", bb1->unparseToString().c_str());
-        }
-    }*/
-//Winnie, end of insert statements for collapse clause
-
 
     //TODO handle preprocessing information
     // Save some preprocessing information for later restoration. 
@@ -1299,6 +1247,21 @@ static void insert_libxompf_h(SgNode* startNode)
   // The OpenMP syntax requires that the omp for pragma is immediately followed by the for loop.
   SgForStatement * for_loop = isSgForStatement(body);
   SgFortranDo * do_loop = isSgFortranDo(body);
+    
+    /*
+    *Winnie, loop collapse is handled before invoke transOmpTargetLoop(node), 
+    *        in SageInterface::loopCollapsing(SgForStatement *target_loop, size_t collapsing_factor) 
+    *                a new loop is inserted before remove the original nested loop. As a result, a new block/scope 
+    *                is created and inserted (because of the insertStatement(...) function) in between of #pragma omp for 
+    *                and the target for loop.
+    *                So, grab the first statement (that is the target for loop) of the new scope here. 
+    */
+
+    if(for_loop == NULL && isSgScopeStatement(body) && hasClause(target, V_SgOmpCollapseClause))
+        for_loop = isSgForStatement(getFirstStatement(isSgScopeStatement(body)));
+    /*Winnie, end here*/
+
+
   SgStatement* loop = (for_loop!=NULL?(SgStatement*)for_loop:(SgStatement*)do_loop);
   ROSE_ASSERT (loop != NULL);
 
@@ -1314,7 +1277,6 @@ static void insert_libxompf_h(SgNode* startNode)
   SgOmpTargetStatement* grand_target = isSgOmpTargetStatement(grand_parent);
   ROSE_ASSERT (parent_parallel !=NULL); 
   ROSE_ASSERT (grand_target !=NULL); 
-
 
   // Step 1. Loop normalization
   // For the init statement: for (int i=0;... ) becomes int i; for (i=0;..) 
@@ -2319,6 +2281,9 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
        }
      }  // end for
 
+/*Winnie debug*/
+    cerr << endl << "map_in " << map_in_clause->unparseToString() << endl;
+/*debug*/
     
     std::set<SgSymbol*> array_syms; // store clause variable symbols which are array types (explicit or as a pointer)
     std::set<SgSymbol*> atom_syms; // store clause variable symbols which are non-aggregate types: scalar, pointer, etc
@@ -4733,6 +4698,57 @@ int patchUpFirstprivateVariables(SgFile*  file)
   return result;
 } // end patchUpFirstprivateVariables()
 
+
+/*
+*Winnie, Handle collapse clause before openmp and openmp accelerator
+*/
+void lower_collapse(SgOmpClauseBodyStatement * node)
+{
+    fprintf(stderr, "-----collapse clause handler--------\n");   
+
+      //  printf("before loopCollapsing: node is %s\n", node->unparseToString().c_str() );
+
+    SgStatement * body =  node->get_body();
+    ROSE_ASSERT(body != NULL);
+    // The OpenMP syntax requires that the omp for pragma is immediately followed by the for loop.
+    SgForStatement * for_loop = isSgForStatement(body);
+    SgStatement * loop = for_loop;
+
+    if(for_loop)
+    {
+        ROSE_ASSERT(getScope(for_loop)->get_parent()->get_parent() != NULL);
+        
+        printf("parent of grandparent scope classname is %s\n", getScope(for_loop)->get_parent()->get_parent()->get_parent()->class_name().c_str() );
+        printf("before loopCollapsing: %s\n", for_loop->unparseToString().c_str() );
+    //    cerr<<"going to connect loopCollapsing here"<<endl;
+
+        
+        Rose_STL_Container<SgOmpClause*> collapse_clauses = getClause(node, V_SgOmpCollapseClause);
+        
+        fprintf(stderr, "expression: %s\n\n", isSgOmpCollapseClause(collapse_clauses[0])->get_expression()->unparseToString().c_str());
+        int collapse_factor = atoi(isSgOmpCollapseClause(collapse_clauses[0])->get_expression()->unparseToString().c_str());
+        SageInterface::loopCollapsing(&for_loop, collapse_factor);
+        printf("after loopCollapsing: %s\n", for_loop->unparseToString().c_str() );
+        loop = for_loop;
+   /*     printf("after loopCollapsing: the loop %s\n", loop->unparseToString().c_str() );
+        printf("after loopCollapsing: parent of the loop %s\n", loop->get_parent()->unparseToString().c_str() );
+        printf("after loopCollapsing: grandparent of the loop %s\n", loop->get_parent()->get_parent()->unparseToString().c_str() );
+        printf("after loopCollapsing: parent of grandparent of the loop %s\n", loop->get_parent()->get_parent()->get_parent()->unparseToString().c_str() );
+        printf("after loopCollapsing: grandparent of grandparent of the loop %s\n", loop->get_parent()->get_parent()->get_parent()->get_parent()->unparseToString().c_str() );
+*/
+    }
+
+        printf("\nafter loopCollapsing: node is %s\n", node->unparseToString().c_str() );
+        //printf("\nafter loopCollapsing: parent of node is %s\n", node->get_parent()->unparseToString().c_str() );
+        //printf("\nafter loopCollapsing: grandparent of node is %s\n", node->get_parent()->get_parent()->unparseToString().c_str() );
+    //Winnie, end of loop collapse
+
+
+}
+
+
+
+
 //! Bottom-up processing AST tree to translate all OpenMP constructs
 // the major interface of omp_lowering
 // We now operation on scoped OpenMP regions and blocks
@@ -4772,6 +4788,10 @@ void lower_omp(SgSourceFile* file)
     ROSE_ASSERT(node != NULL);
     //debug the order of the statements
 //    cout<<"Debug lower_omp(). stmt:"<<node<<" "<<node->class_name() <<" "<< node->get_file_info()->get_line()<<endl;
+
+    if(  isSgOmpClauseBodyStatement(node) != NULL && hasClause(isSgOmpClauseBodyStatement(node), V_SgOmpCollapseClause))
+        lower_collapse(isSgOmpClauseBodyStatement(node));
+
     switch (node->variantT())
     {
       case V_SgOmpParallelStatement:
@@ -4816,10 +4836,16 @@ void lower_omp(SgSourceFile* file)
             is_target_loop = true;
             
           if (is_target_loop)
+          {
+//            fprintf(stderr, "is_target_loop, grand_parent %s\n", grand_parent->unparseToString().c_str());
             transOmpTargetLoop (node);
+          }
           else  
-            
+           { 
+//            fprintf(stderr, "not target_loop, grand_parent %s\n", grand_parent->unparseToString().c_str());
+//            fprintf(stderr, "not target_loop, parent%s\n", parent->unparseToString().c_str());
             transOmpLoop(node);
+           }
           break;
         }
         //          {
