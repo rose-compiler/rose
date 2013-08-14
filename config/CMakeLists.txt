@@ -7,13 +7,13 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 ########### install files ###############
 
-install(
-  FILES
-    include-staging/rose_stdarg.h
-    include-staging/rose_varargs.h
-    include-staging/rose-g++-headerfilefixup.h
-    include-staging/rose_specific_cdefs.h
-  DESTINATION ${INCLUDE_INSTALL_DIR})
+#install(
+#  FILES
+#    include-staging/rose_stdarg.h
+#    include-staging/rose_varargs.h
+#    include-staging/rose-g++-headerfilefixup.h
+#    include-staging/rose_specific_cdefs.h
+#  DESTINATION ${INCLUDE_INSTALL_DIR})
 
 
 
