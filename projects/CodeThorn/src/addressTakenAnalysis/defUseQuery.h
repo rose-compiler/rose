@@ -190,6 +190,9 @@ public:
   // expr that can only be rvalues
   void visit(SgExprListExp* sgn);
   void visit(SgSizeOfOp* sgn);
+  void visit(SgDeleteExp* sgn);
+  void visit(SgNewExp* sgn);
+  void visit(SgTypeIdOp* sgn);
   
   // different intializers
   void visit(SgAssignInitializer* sgn);
@@ -207,7 +210,9 @@ public:
   void visit(SgFunctionRefExp* sgn);
   void visit(SgMemberFunctionRefExp* sgn);
   void visit(SgThisExp* sgn);
-
+  void visit(SgClassNameRefExp* sgn);
+  void visit(SgLabelRefExp* sgn);
+  
   void visit(SgExpression* sgn);
 
   // helper methods

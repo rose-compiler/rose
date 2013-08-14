@@ -733,6 +733,60 @@ void ExprWalker::visit(SgSizeOfOp* sgn)
   duvi = rduvi;
 }
 
+void ExprWalker::visit(SgDeleteExp* sgn)
+{
+  DefUseVarsInfo rduvi;
+  SgExpression* expr = sgn->get_variable();
+  rduvi = getDefUseVarsInfo_rec(expr, vidm, false);
+  if(!rduvi.isDefSetEmpty())
+    rduvi.copyDefToUse();
+  duvi = rduvi;
+}
+
+void ExprWalker::visit(SgNewExp* sgn)
+{
+  DefUseVarsInfo pduvi, bduvi, cduvi;
+  SgExprListExp* expr_list = sgn->get_placement_args();
+  if(expr_list) {
+    pduvi = getDefUseVarsInfo_rec(expr_list, vidm, false);
+    if(!pduvi.isDefSetEmpty()) {
+      pduvi.copyDefToUse();
+    }
+  }
+
+  SgConstructorInitializer* c_initializer = sgn->get_constructor_args();
+  if(c_initializer) {
+    cduvi = getDefUseVarsInfo_rec(c_initializer, vidm, false);
+    if(!cduvi.isDefSetEmpty()) {
+      cduvi.copyDefToUse();
+    }
+  }
+
+  SgExpression* builtin_args = sgn->get_builtin_args();
+  if(builtin_args) {
+    bduvi = getDefUseVarsInfo_rec(builtin_args, vidm, false);
+    if(!bduvi.isDefSetEmpty()) {
+      bduvi.copyDefToUse();
+    }
+  }
+
+  duvi = pduvi + cduvi + bduvi;
+}
+
+void ExprWalker::visit(SgTypeIdOp* sgn)
+{
+  DefUseVarsInfo rduvi;
+  SgExpression* expr = sgn->get_operand_expr();
+  // expr can be empty for types
+  if(expr) {
+    rduvi = getDefUseVarsInfo_rec(expr, vidm, false);
+    if(!rduvi.isDefSetEmpty()) {
+      rduvi.copyDefToUse();
+    }
+    duvi = rduvi;
+  }
+}
+
 /***************************************************
  * ExprWalker for different intializer expressions *
  ***************************************************/
@@ -849,6 +903,16 @@ void ExprWalker::visit(SgThisExp* sgn)
   //std::ostringstream oss;
   //oss << "WARNING: Skipping VariableId for 'this' expr\n";
   //throw oss.str();
+}
+
+void ExprWalker::visit(SgClassNameRefExp* sgn)
+{
+  // no variableid
+}
+
+void ExprWalker::visit(SgLabelRefExp* sgn)
+{
+  // no variableid
 }
 
 // we should not reach here
