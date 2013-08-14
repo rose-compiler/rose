@@ -627,27 +627,27 @@ uniform_clause : UNIFORM {
                          omptype = e_uniform; 
                        }
                        '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
-		;
+                ;
 
 aligned_clause : ALIGNED { 
                          ompattribute->addClause(e_aligned);
                          omptype = e_aligned; 
                        }
                        '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
-		| ALIGNED
+                | ALIGNED
                   { ompattribute->addClause(e_reduction);}
                   '(' reduction_operator ':' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
-		;
+                ;
 
 linear_clause : LINEAR { 
                          ompattribute->addClause(e_linear);
                          omptype = e_linear; 
                        }
                        '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
-		| LINEAR
+                | LINEAR
                   { ompattribute->addClause(e_reduction);}
                   '(' reduction_operator ':' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
-		;
+                ;
 /* parsing real expressions here, Liao, 10/12/2008
    */       
 /* expression: { omp_parse_expr(); } EXPRESSION { if (!addExpression((const char*)$2)) YYABORT; }
