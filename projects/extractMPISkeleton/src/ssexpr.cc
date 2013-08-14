@@ -105,7 +105,7 @@ SExpr *SExpr::parse_inner(SExprParserState *st) {
 
 // todo: refactor this to parse off the ifstream directly instead
 //       of reading it into a string and then parsing off that.
-SExpr *SExpr::parse_file(string fname) {
+SExpr *SExpr::parse_file(const string & fname) {
   ifstream file;
 
   file.open(fname.c_str(), ifstream::in);
@@ -125,7 +125,7 @@ SExpr *SExpr::parse_file(string fname) {
   return sx;
 }
 
-SExpr *SExpr::parse(string s) {
+SExpr *SExpr::parse(const string & s) {
   SExprParserState *st = new SExprParserState(s);
   SExpr *sx = parse_inner(st);
   delete(st);
@@ -133,3 +133,22 @@ SExpr *SExpr::parse(string s) {
   return sx;
 }
 
+std::ostream& operator<<(std::ostream & os, const SExpr & s){
+  if(s.getType() == SExpr::SX_LIST){
+    if (s.getList() == NULL) {
+      os << "()";
+    } else {
+      os << "(" << *s.getList() << ")";
+    }
+  } else {
+    // We don't have to use quotes here, but this way
+    // there won't be any ambiguity when parsing
+    // this output later.
+    os << "\"" << s.getValue() << "\"";
+  }
+  const SExpr * const next = s.getNext();
+  if( next != NULL ){
+    os << " " << *next;
+  }
+  return os;
+}
