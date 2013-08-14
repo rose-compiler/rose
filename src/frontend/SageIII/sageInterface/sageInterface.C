@@ -16628,11 +16628,13 @@ SageInterface::collectSourceSequenceNumbers( SgNode* astNode )
 #ifndef USE_ROSE
 bool SageInterface::loopCollapsing(SgForStatement** loop, size_t collapsing_factor)
 {
+    fprintf(stderr, "------start loop collapse handling-------\n");
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
   //Handle 0 and 1, which means no collapsing at all
     if (collapsing_factor <= 1)
         return true;
     // grab the target loop's essential header information
+
 
     SgForStatement *target_loop = *loop;
 
@@ -16670,26 +16672,72 @@ bool SageInterface::loopCollapsing(SgForStatement** loop, size_t collapsing_fact
     SgScopeStatement* scope;  //=  isSgScopeStatement(parent);        //Winnie, the scope that include target_loop
     SgStatement* insert_target;
 
-    if(isSgOmpForStatement(parent))
+    if(isSgOmpClauseBodyStatement(parent))
+    //if(isSgOmpForStatement(parent))
     {
+        fprintf(stderr, "omp for statement\n");
         parent = isSgStatement(parent->get_parent());
-        insert_target = parent;
-        if(isSgOmpParallelStatement(parent))
+        insert_target = parent; 
+        while(isSgOmpParallelStatement(parent) || isSgOmpTargetStatement(parent) || isSgOmpParallelStatement(parent->get_parent()) || isSgOmpTargetStatement(parent->get_parent()) )
+        {
+            insert_target = parent;
+    //        fprintf(stderr, "sageInterface::loop_collapsing(): parent is %s\n", parent->unparseToString().c_str());
             parent = isSgStatement(parent->get_parent());
+        }
     }
     else
     {
+        fprintf(stderr, "not omp for statement\n");
         insert_target = target_loop;
     }
+
+    /*
+    *Winnie, we need to add the new variables into the map in list, if there is a SgOmpTargetStatement
+    */
+
+    bool ompacc = false;
+    Rose_STL_Container<SgOmpClause*> map_clauses;
+    SgOmpMapClause * map_in;
+    if(isSgOmpTargetStatement(insert_target))
+    {
+        ompacc = true; 
+        fprintf(stderr, "\nsageInterface::loop_collapsing(): insert_target is\n %s\n", insert_target->unparseToString().c_str());
+//        map_clauses = get_clauses(isSgOmpClauseBodyStatement(insert_target), V_SgOmpMapClause);
+        SgOmpClauseBodyStatement * temp_clause_body = isSgOmpClauseBodyStatement(insert_target);
+        map_clauses = temp_clause_body->get_clauses();
+        for(Rose_STL_Container<SgOmpClause*>::const_iterator iter = map_clauses.begin(); iter != map_clauses.end(); iter++)
+         {
+             SgOmpMapClause * temp_map_clause = isSgOmpMapClause(*iter);
+             if(temp_map_clause != NULL)
+             {
+                 SgOmpClause::omp_map_operator_enum map_operator = temp_map_clause->get_operation();
+                 if(map_operator == SgOmpClause::e_omp_map_in || map_operator == SgOmpClause::e_omp_map_inout)
+                 {
+                     map_in = temp_map_clause;
+                     break;
+                 }
+             }
+         }
+         if(map_in != NULL)
+         {
+             fprintf(stderr, "\nmap_in\n %s\n", map_in->unparseToString().c_str());
+//             var_list = map_in->get_variables();
+//             var_list.insert();
+             
+         }
+    }
+
+    SgVarRefExpPtrList & var_list = map_in->get_variables(); 
 
 //        SgBasicBlock * new_scope = SageBuilder::buildBasicBlock();
 //        replaceStatement(target_loop, new_scope, true);
 //        scope = isSgScopeStatement(new_scope);
-        scope = isSgScopeStatement(parent);
+    //fprintf(stderr, "scope may be null\n");
+    scope = isSgScopeStatement(parent);
 
-//    fprintf(stderr, "sageInterface::loop_collapsing(): parent is %s\n", parent->unparseToString().c_str());
-//    fprintf(stderr, "sageInterface::loop_collapsing(): scope is %s\n", scope->unparseToString().c_str());
-//    fprintf(stderr, "sageInterface::loop_collapsing(): insert_target is %s\n", insert_target->unparseToString().c_str());
+    //fprintf(stderr, "sageInterface::loop_collapsing(): grandparent is %s\n", parent->get_parent()->unparseToString().c_str());
+    //fprintf(stderr, "sageInterface::loop_collapsing(): scope is %s\n", scope->unparseToString().c_str());
+    //fprintf(stderr, "sageInterface::loop_collapsing(): insert_target is %s\n", insert_target->unparseToString().c_str());
     ROSE_ASSERT(scope != NULL); //Winnie, why this assert fail here, but not fail in the omp_lowering.cpp?
 
 
@@ -16761,8 +16809,6 @@ bool SageInterface::loopCollapsing(SgForStatement** loop, size_t collapsing_fact
         //Winnie, declare and initialize the variable
         string iter_var_name= "_total_iters";
         iter_var_name = ivar[i]->get_name().getString() + iter_var_name + generateUniqueName(temp_total_iter, false);  //Winnie, create var name
-        //SgInitializer * initializer = buildAssignInitializer(temp_total_iter, buildIntType());
-//        fprintf(stderr, "get a unique name %s\n\n", generateUniqueName(temp_total_iter, false));
 
         SgVariableDeclaration* total_iter = buildVariableDeclaration(iter_var_name, buildIntType(), buildAssignInitializer(temp_total_iter, buildIntType()), scope);  
         total_iters[i] = buildVarRefExp(iter_var_name, scope);
@@ -16771,6 +16817,15 @@ bool SageInterface::loopCollapsing(SgForStatement** loop, size_t collapsing_fact
 
         //prependStatement(total_iter, scope);     //Winnie, insert the new variable (store real iteration number of each level of the loop) before the target loop
         insertStatementBefore(insert_target, total_iter);     //Winnie, insert the new variable (store real iteration number of each level of the loop) before the target loop
+      /*  if(ompacc == true)
+        {
+        var_list.push_back(isSgVarRefExp(total_iters[i]));
+        fprintf(stderr, "\nmap_in\n %s\n", map_in->unparseToString().c_str());
+        for(int i = 0;  i < var_list.size(); i ++)
+        {
+            fprintf(stderr, "var_list%d %s\n", i, var_list[i]->unparseToString().c_str());
+        }
+        }*/
         //insertStatementBefore(target_loop, total_iter);     //Winnie, insert the new variable (store real iteration number of each level of the loop) before the target loop
     }
 
@@ -16778,12 +16833,25 @@ bool SageInterface::loopCollapsing(SgForStatement** loop, size_t collapsing_fact
     *Winnie, build another variable to store final total iteration counter of the loop after collapsing
     */
     string final_iter_counter_name = "final_total_iters" + generateUniqueName(ub_exp, false);
-    fprintf(stderr, "ub_exp %s\n", ub_exp->unparseToString().c_str());
+  //  fprintf(stderr, "ub_exp %s\n", ub_exp->unparseToString().c_str());
     SgVariableDeclaration * final_total_iter = buildVariableDeclaration(final_iter_counter_name, buildIntType(), buildAssignInitializer(copyExpression(ub_exp), buildIntType()), scope);
     //prependStatement(final_total_iter, scope );
     insertStatementBefore(insert_target, final_total_iter);
+   
+    //var_list.push_back(isSgVarRefExp(total_iters[i]));
     //insertStatementBefore(target_loop, final_total_iter);
     ub_exp = buildVarRefExp(final_iter_counter_name, scope);
+   
+    if(ompacc == true)
+    {
+            var_list.push_back(isSgVarRefExp(ub_exp));
+            //var_list.push_back(buildVarRefExp(final_iter_counter_name));
+            fprintf(stderr, "\nmap_in\n %s\n", map_in->unparseToString().c_str());
+            for(int i = 0;  i < var_list.size(); i ++)
+            {
+                fprintf(stderr, "var_list%d %s\n", i, var_list[i]->unparseToString().c_str());
+            }
+    }
 
     /*
     *Winnie, interval[i] will make the calculation of remainders simpler
@@ -16801,6 +16869,17 @@ bool SageInterface::loopCollapsing(SgForStatement** loop, size_t collapsing_fact
         insertStatementBefore(insert_target, temp_interval);
         //insertStatementBefore(target_loop, temp_interval);
         interval[i] = buildVarRefExp(interval_name, scope);
+
+        if(ompacc == true)
+        {
+            var_list.push_back(isSgVarRefExp(interval[i]));
+            fprintf(stderr, "\nmap_in\n %s\n", map_in->unparseToString().c_str());
+            for(int i = 0;  i < var_list.size(); i ++)
+            {
+                fprintf(stderr, "var_list%d %s\n", i, var_list[i]->unparseToString().c_str());
+            }
+        }
+
     }
 
 
@@ -16915,5 +16994,3 @@ bool SageInterface::loopCollapsing(SgForStatement** loop, size_t collapsing_fact
 }
 
 #endif
-
-
