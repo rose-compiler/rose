@@ -78,7 +78,7 @@ unparseAndIntern(SgAsmExpression* e)
  
 class SignatureVector {
 public:
-    static const size_t Size = numberOfInstructionKinds * 4 + 300 + 9 + 3;
+    static const size_t Size = numberOfInstructionKinds ;
     typedef uint16_t ElementType;
 
 private:
@@ -101,7 +101,7 @@ public:
 
     ElementType& totalForVariant(size_t var) {
         assert(var < numberOfInstructionKinds);
-        return values[var * 4];
+        return values[var];
     }
 
     ElementType& opsForVariant(ExpressionCategory cat, size_t var) {
@@ -187,70 +187,129 @@ bool
 createVectorsForAllInstructions(SgNode* top, const std::string& filename, const std::string& functionName, int functionId,
                                 size_t windowSize, size_t stride, const SqlDatabase::TransactionPtr &tx)
 {
-    bool retVal = false;
-    vector<SgAsmx86Instruction*> insns;
-    FindInstructionsVisitor vis;
-    AstQueryNamespace::querySubTree(top, std::bind2nd( vis, &insns ));
-    size_t insnCount = insns.size();
+  bool retVal = false;
+  vector<SgAsmx86Instruction*> insns;
+  FindInstructionsVisitor vis;
+  AstQueryNamespace::querySubTree(top, std::bind2nd( vis, &insns ));
+  std::cout << "Number of instructions: " << insns.size() << std::endl;
+  size_t insnCount = insns.size();
 
-    for (size_t windowStart = 0; windowStart + windowSize <= insnCount; windowStart += stride) {
-        static SignatureVector vec;
-        vec.clear();
-        hash_map<SgAsmExpression*, size_t> valueNumbers[3];
-        numberOperands(&insns[windowStart], windowSize, valueNumbers);
-        string normalizedUnparsedInstructions;
-        // Unparse the normalized forms of the instructions
-        for (size_t insnNumber = 0; insnNumber < windowSize; ++insnNumber) {
-            SgAsmx86Instruction* insn = insns[windowStart + insnNumber];
-            size_t var = getInstructionKind(insn);
-#ifdef NORMALIZED_UNPARSED_INSTRUCTIONS
-            string mne = insn->get_mnemonic();
-            boost::to_lower(mne);
-            normalizedUnparsedInstructions += mne;
-#endif
-            const SgAsmExpressionPtrList& operands = getOperands(insn);
-            size_t operandCount = operands.size();
-            // Add to total for this variant
-            ++vec.totalForVariant(var);
-            // Add to total for each kind of operand
-            for (size_t i = 0; i < operandCount; ++i) {
-                SgAsmExpression* operand = operands[i];
-                ExpressionCategory cat = getCategory(operand);
-                ++vec.opsForVariant(cat, var);
-                // Add to total for this unique operand number (for this window)
-                hash_map<SgAsmExpression*, size_t>::const_iterator numIter = valueNumbers[(int)cat].find(operand);
-                assert (numIter != valueNumbers[(int)cat].end());
-                size_t num = numIter->second;
-                ++vec.specificOp(cat, num);
-                // Add to total for this kind of operand
-                ++vec.operandTotal(cat);
-#ifdef NORMALIZED_UNPARSED_INSTRUCTIONS
-                normalizedUnparsedInstructions += (cat == ec_reg ? "R" : cat == ec_mem ? "M" : "V") +
-                                                  boost::lexical_cast<string>(num);
-#endif
-            }
+   static SignatureVector vec;
+    vec.clear();
+    
+    string normalizedUnparsedInstructions;
+    
+    // Unparse the normalized forms of the instructions
+    for (size_t insnNumber = 0; insnNumber < insnCount; ++insnNumber) {
+      SgAsmx86Instruction* insn = insns[insnNumber];
+      size_t var = getInstructionKind(insn);
 
-            // Add to total for this pair of operand kinds
-            if (operandCount >= 2) {
-                ExpressionCategory cat1 = getCategory(operands[0]);
-                ExpressionCategory cat2 = getCategory(operands[1]);
-                ++vec.operandPair(cat1, cat2);
-            }
-#ifdef NORMALIZED_UNPARSED_INSTRUCTIONS
-            if (insnNumber + 1 < windowSize) {
-                normalizedUnparsedInstructions += ";";
-            }
-#endif
-        }
+      // Add to total for this variant
+      
+      switch(var){
+	      case x86_mov:                     
+	      case x86_movapd:                  
+	      case x86_movaps:                  
+	      case x86_movbe:                   
+	      case x86_movd:                    
+	      case x86_movddup:                 
+	      case x86_movdq2q:                 
+	      case x86_movdqa:                  
+	      case x86_movdqu:                  
+	      case x86_movhlps:                 
+	      case x86_movhpd:                  
+	      case x86_movhps:                  
+	      case x86_movlhps:                 
+	      case x86_movlpd:                  
+	      case x86_movlps:                  
+	      case x86_movmskpd:                
+	      case x86_movmskps:                
+	      case x86_movntdq:                 
+	      case x86_movntdqa:                
+	      case x86_movnti:                  
+	      case x86_movntpd:                 
+	      case x86_movntps:                 
+	      case x86_movntq:                  
+	      case x86_movntsd:                 
+	      case x86_movntss:                 
+	      case x86_movq:                    
+	      case x86_movq2dq:                 
+	      case x86_movsb:                   
+	      case x86_movsd:                   
+	      case x86_movsd_sse:               
+	      case x86_movshdup:                
+	      case x86_movsldup:                
+	      case x86_movsq:                   
+	      case x86_movss:                   
+	      case x86_movsw:                   
+	      case x86_movsx:                   
+	      case x86_movsxd:                  
+	      case x86_movupd:                  
+	      case x86_movups:                  
+	      case x86_movzx:                   
 
-        // Add vector to database
-        addVectorToDatabase(tx, vec, functionName, functionId, windowStart/stride, normalizedUnparsedInstructions,
-                            &insns[windowStart], filename, windowSize, stride);
-	retVal = true;
+
+	      case x86_xor:
+	      case x86_push:
+	      case x86_pop:
+	      case x86_lea:
+		      var = x86_mov;
+		      break;
+	      case x86_inc:
+		      var = x86_add;
+		      break;
+	      case x86_dec:
+		      var = x86_sub;
+		      break;
+	      case x86_ja:              
+	      case x86_jae:             
+	      case x86_jb:             
+	      case x86_jbe:            
+	      case x86_jcxz:           
+	      case x86_je:             
+	      case x86_jecxz:          
+	      case x86_jg:             
+	      case x86_jge:            
+	      case x86_jl:             
+	      case x86_jle:            
+	      case x86_jmpe:           
+	      case x86_jne:            
+	      case x86_jno:            
+	      case x86_jns:            
+	      case x86_jo:             
+	      case x86_jpe:            
+	      case x86_jpo:            
+	      case x86_jrcxz:          
+	      case x86_js: 
+		      var = x86_jb;
+		      break;
+	      case x86_ret:
+	      case x86_retf:
+		      var = x86_ret;
+                      break;
+	      case x86_test:
+	      case x86_neg:
+		      //case x86_comp:
+		      var = x86_cmp;  
+		      break;       
+	      default:
+		      break;
+
+      };
+
+      if(var != x86_nop) ++vec.totalForVariant(var);
     }
+
+    addVectorToDatabase(tx, vec, functionName, functionId, 0, normalizedUnparsedInstructions,
+		    &insns[0], filename, insnCount, 1);
+
     addFunctionStatistics(tx, filename, functionName, functionId, insnCount);
     return retVal;
 }
+
+
+
+
 
 void
 createVectorsNotRespectingFunctionBoundaries(SgNode* top, const std::string& filename, size_t windowSize, size_t stride,
