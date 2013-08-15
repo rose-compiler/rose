@@ -221,14 +221,22 @@ CXX_TESTS_FAILING =											\
 CXX_TESTS_HANGING = \
 	test2005_114.C
 
-FUSE_CXX_TESTS_REQUIRED_TO_PASS = ${CXX_TESTS_REQUIRED_TO_PASS:.C=.C-o}
+#FUSE_CXX_TESTS_REQUIRED_TO_PASS = ${CXX_TESTS_REQUIRED_TO_PASS:.C=.C-o}
 
-FUSE_FLAGS = -fuse:"lc(cp)"
+#$(FUSE_CXX_TESTS_REQUIRED_TO_PASS): fuse $(CXX_TESTDIR)/$(@:.C=.C-o)
+#	./fuse -c --edg:no_warnings $(ROSE_FLAGS) $(FUSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests $(CXX_TESTDIR)/$(@:.C-o=.C)
 
-$(FUSE_CXX_TESTS_REQUIRED_TO_PASS): fuse $(CXX_TESTDIR)/$(@:.C=.C-o)
-	./fuse -c --edg:no_warnings $(ROSE_FLAGS) $(FUSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests $(CXX_TESTDIR)/$(@:.C-o=.C)
 
-check-cxx: $(FUSE_CXX_TESTS_REQUIRED_TO_PASS)
+TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
+FUSE_FLAGS = "-fuse:\"lc(cp)\""
+FUSE = ./fuse
+
+CXX_FUSE_TESTS = $(addprefix cxx_, $(addsuffix .passed, $(CXX_TESTS_REQUIRED_TO_PASS)))
+$(CXX_FUSE_TESTS): cxx_%.passed: $(CXX_TESTDIR)/% $(TEST_EXIT_STATUS) $(FUSE)
+	@$(RTH_RUN) CMD="./fuse -fuse:\"lc(cp)\" -I$(CXX_TESTDIR) -c $<" $(TEST_EXIT_STATUS) $@
+
+.PHONY: check-cxx
+check-cxx: $(CXX_FUSE_TESTS)
 
 clean-local:
 	rm -rf *.dot *.png dbg/
