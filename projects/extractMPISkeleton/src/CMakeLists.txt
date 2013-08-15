@@ -6,8 +6,25 @@ include_directories(
 )
 
 add_executable(extractMPISkeleton
-  APIDepFinder.cc APIReader.cc APISpec.cc Outline.cc Utils.cc
-  extractMPISkeleton.cc ssexpr.cc processPragmas.cc annotatePragmas.cc
-)
+  extractMPISkeleton.cc APIReader.cc APIReader.h APISpec.cc APISpec.h
+  GenericDepAttrib.cc GenericDepAttrib.h APIDepAttrib.h APIDepFinder.cc
+  APIDepFinder.h SignatureReader.cc SignatureReader.h ssexpr.cc ssexpr.h
+  DangerousOperationFinder.h Utils.cc Utils.h APIDepChecker.h Outline.cc
+  Outline.h processPragmas.cc processPragmas.h annotatePragmas.cc
+  annotatePragmas.h)
 target_link_libraries(extractMPISkeleton ROSE_DLL ${Boost_LIBRARIES})
 
+
+add_executable(generateSignatures
+  generateSignatures.cc APISpec.cc APISpec.h GenericDepAttrib.cc
+  GenericDepAttrib.h APIDepAttrib.h APIReader.cc APIReader.h APIDepFinder.cc
+  APIDepFinder.h SignatureReader.cc SignatureReader.h ssexpr.cc ssexpr.h
+  DangerousOperationFinder.h Utils.cc Utils.h APIDepChecker.h processPragmas.cc
+  processPragmas.h annotatePragmas.cc annotatePragmas.h)
+target_link_libraries(generateSignatures ROSE_DLL ${Boost_LIBRARIES})
+
+add_executable(summarizeSignatures
+  summarizeSignatures.cc ssexpr.cc ssexpr.h APISpec.cc APISpec.h
+  GenericDepAttrib.cc GenericDepAttrib.h APIDepAttrib.h APIReader.cc
+  APIReader.h SignatureReader.cc SignatureReader.h)
+target_link_libraries(summarizeSignatures ROSE_DLL ${Boost_LIBRARIES})

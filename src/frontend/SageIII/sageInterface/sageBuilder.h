@@ -790,12 +790,7 @@ buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type,
 
 //! Build a prototype for a function, handle function type, symbol etc transparently
 // DQ (7/26/2012): Changing the API to include template arguments so that we can generate names with and without template arguments (to support name mangiling).
-<<<<<<< HEAD
-// SgFunctionDeclaration* buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, bool buildTemplateInstantiation = false);
 ROSE_DLL_API SgFunctionDeclaration*
-=======
-SgFunctionDeclaration*
->>>>>>> origin/master
 buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
 
 // DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
@@ -865,12 +860,7 @@ buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionTyp
 
 //! Build a prototype for an existing member function declaration (defining or nondefining is fine) 
 // SgMemberFunctionDeclaration*
-<<<<<<< HEAD
-// buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 ROSE_DLL_API SgMemberFunctionDeclaration*
-=======
-SgMemberFunctionDeclaration*
->>>>>>> origin/master
 buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
 
 // DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
@@ -1095,22 +1085,11 @@ SgTemplateClassDefinition* buildTemplateClassDefinition(SgTemplateClassDeclarati
 
 //! Build a structure first nondefining declaration, without file info
 // DQ (6/6/2012): Added support to get the template arguments into place before computing the type.
-<<<<<<< HEAD
-// SgClassDeclaration* buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope);
-// SgClassDeclaration* buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, bool buildTemplateInstantiation = false);
    ROSE_DLL_API SgClassDeclaration* buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
 
 // #ifdef ROSE_USE_NEW_EDG_INTERFACE
 // DQ (11/29/2011): Adding template declaration support to the AST.
-// SgTemplateClassDeclaration* buildNondefiningTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope);
 ROSE_DLL_API SgTemplateClassDeclaration* buildNondefiningTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, 
-=======
-   SgClassDeclaration* buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
-
-// #ifdef ROSE_USE_NEW_EDG_INTERFACE
-// DQ (11/29/2011): Adding template declaration support to the AST.
-SgTemplateClassDeclaration* buildNondefiningTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, 
->>>>>>> origin/master
                                                                          SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList);
 // #endif
 
