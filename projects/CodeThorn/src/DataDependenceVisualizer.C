@@ -33,6 +33,15 @@ SgNode* DataDependenceVisualizer::getNode(Label label) {
   return _labeler->getNode(label);
 }
 
+string DataDependenceVisualizer::nodeSourceCode(Label lab) {
+  if(_labeler->isFunctionEntryLabel(lab))
+	return "FunctionEntry";
+  if(_labeler->isFunctionExitLabel(lab))
+	return "FunctionExit";
+  // all other cases
+  return getNode(lab)->unparseToString();
+}
+
 void DataDependenceVisualizer::generateDot(SgNode* root, string fileName) {
   std::ofstream myfile;
   myfile.open(fileName.c_str(),std::ios::out);
@@ -59,8 +68,8 @@ void DataDependenceVisualizer::generateDot(SgNode* root, string fileName) {
 		myfile<<endl;
 
 		if(_showSourceCode) {
-		  myfile<<sourceNode<<" [label=\""<<sourceNode<<":"<<getNode(sourceNode)->unparseToString()<<"\"];"<<endl;
-		  myfile<<targetNode<<" [label=\""<<targetNode<<":"<<getNode(targetNode)->unparseToString()<<"\"];"<<endl;
+		  myfile<<sourceNode<<" [label=\""<<sourceNode<<":"<<nodeSourceCode(sourceNode)<<"\"];"<<endl;
+		  myfile<<targetNode<<" [label=\""<<targetNode<<":"<<nodeSourceCode(targetNode)<<"\"];"<<endl;
 		}
 
 	  }

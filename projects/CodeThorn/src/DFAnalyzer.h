@@ -35,6 +35,7 @@ class DFAnalyzer {
   void attachResultsToAst(string);
   Labeler* getLabeler();
   VariableIdMapping* getVariableIdMapping();
+  Flow* getFlow() { return &_flow; }
  protected:
   virtual LatticeType transfer(Label label, LatticeType element);
   virtual void solve();

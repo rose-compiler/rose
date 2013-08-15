@@ -26,6 +26,7 @@ class DataDependenceVisualizer {
   Label getLabel(SgNode* stmt);
   SgNode* getNode(Label lab);
   void generateDot(SgNode* root, string fileName);
+  string nodeSourceCode(Label lab);
   bool _showSourceCode;
  private:
   UDAstAttribute* getUDAstAttribute(SgNode* expr,string attributeName);

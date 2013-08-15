@@ -13,6 +13,7 @@
 #include "RDAnalysisAstAttribute.h"
 #include "AttributeAnnotator.h"
 #include "DataDependenceVisualizer.h"
+#include "Miscellaneous.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -62,6 +63,10 @@ int main(int argc, char* argv[]) {
   printAttributes<UDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"ud-analysis");
   //ddvis._showSourceCode=false; // for large programs
   ddvis.generateDot(root,"datadependencegraph.dot");
+
+  // generate ICFG visualization
+  write_file("cfg.dot", rdAnalyzer->getFlow()->toDot(rdAnalyzer->getLabeler()));
+  cout << "generated cfg.dot."<<endl;
 
   // simple test
   RDLattice elem;

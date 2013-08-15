@@ -43,6 +43,26 @@ RDLattice RDAnalyzer::transfer(Label lab, RDLattice element) {
 
   ///////////////////////////////////////////
   // remove undeclared variable at function exit
+  if(_labeler->isFunctionEntryLabel(lab)) {
+    if(SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(lab))) {
+	  // 1) obtain formal parameters
+	  // 2) generate RDs for each parameter variable
+	  SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
+	  assert(funDef);
+	  for(SgInitializedNamePtrList::iterator i=formalParameters.begin();
+		  i!=formalParameters.end();
+		  ++i) {
+		SgInitializedName* formalParameterName=*i;
+		assert(formalParameterName);
+		VariableId formalParameterVarId=_variableIdMapping.variableId(formalParameterName);
+		// it must hold that this VarId does not exist in the RD-element
+		// TODO: when local variables go out of scope in a function call (transfer-call can clear those)
+		//assert
+		element.insertPair(lab,formalParameterVarId);
+	  }
+	}
+  }
+
   if(_labeler->isFunctionExitLabel(lab)) {
     if(SgFunctionDefinition* funDef=isSgFunctionDefinition(_labeler->getNode(lab))) {
       // 1) determine all local variables (including formal parameters) of function
