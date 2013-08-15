@@ -4643,47 +4643,41 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
   //    Warning: Apparently, a frontend error code <= 3 indicates an EDG
   //    frontend warning; however, existing logic says nothing about the
   //    other language frontends' exit statuses.
-  bool use_original_input_file = false;
-  use_original_input_file =
-      (get_unparse_output_filename().empty() == true) ||
-      (
-          (
-              this->get_frontendErrorCode()               != 0 ||
-              this->get_project()->get_midendErrorCode()  != 0 ||
-              this->get_unparserErrorCode()               != 0 ||
-              this->get_backendCompilerErrorCode()        != 0
-          ) &&
-          (
-              get_project()->get_keep_going()
-          )
-      );
+     bool use_original_input_file = false;
+     use_original_input_file = ( get_unparse_output_filename().empty() == true) || 
+                               ( ( this->get_frontendErrorCode() != 0 || this->get_project()->get_midendErrorCode() != 0 || 
+                                   this->get_unparserErrorCode() != 0 || this->get_backendCompilerErrorCode() != 0 ) && 
+                                 ( get_project()->get_keep_going() ) );
 
-    // TOO1 (05/14/2013): Handling for -rose:keep_going
-    // Replace the unparsed file with the original input file.
-    if (use_original_input_file)
-    {
-          //ROSE_ASSERT(get_skip_unparse() == true);
+  // TOO1 (05/14/2013): Handling for -rose:keep_going
+  // Replace the unparsed file with the original input file.
+     if (use_original_input_file)
+        {
+       // ROSE_ASSERT(get_skip_unparse() == true);
           string outputFilename = get_sourceFileNameWithPath();
 
           if (get_unparse_output_filename().empty())
-          {
-              if (get_skipfinalCompileStep())
-              {
+             {
+               if (get_skipfinalCompileStep())
+                  {
                   // nothing to do...
-              }
-              else
-              {
-                  ROSE_ASSERT(! "Not implemented yet");
-              }
-          }
-          else
-          {
-              boost::filesystem::path original_file = outputFilename;
-              boost::filesystem::path unparsed_file = get_unparse_output_filename();
-              ROSE_ASSERT(original_file.string() != unparsed_file.string());
-              if (SgProject::get_verbose() >= 2)
-              {
-                  std::cout
+                  }
+                 else
+                  {
+                 // DQ (7/14/2013): This is the branch taken when processing the -H option (which outputs the 
+                 // header file list, and is required to be supported in ROSE as part of some application 
+                 // specific configuration testing (when configure tests ROSE translators)).
+                    ROSE_ASSERT(! "Not implemented yet");
+                  }
+             }
+            else
+             {
+               boost::filesystem::path original_file = outputFilename;
+               boost::filesystem::path unparsed_file = get_unparse_output_filename();
+               ROSE_ASSERT(original_file.string() != unparsed_file.string());
+               if (SgProject::get_verbose() >= 2)
+                  {
+                    std::cout
                       << "[DEBUG] "
                       << "unparsed_file "
                       << "'" << unparsed_file << "' "
@@ -4691,35 +4685,33 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                       << std::boolalpha
                       << boost::filesystem::exists(unparsed_file)
                       << std::endl;
-              }
+                  }
               // Don't replace the original input file with itself
-              if (original_file.string() != unparsed_file.string())
-              {
-                  if (SgProject::get_verbose() >= 1)
+               if (original_file.string() != unparsed_file.string())
                   {
-                      std::cout
+                    if (SgProject::get_verbose() >= 1)
+                       {
+                         std::cout
                           << "[INFO] "
                           << "Replacing "
                           << "'" << unparsed_file << "' "
                           << "with "
                           << "'" << original_file << "'"
                           << std::endl;
-                  }
+                       }
 
                   // copy_file will only completely override the existing file in Boost 1.46+
                   // http://stackoverflow.com/questions/14628836/boost-copy-file-has-inconsistent-behavior-when-overwrite-if-exists-is-used
-                  if (boost::filesystem::exists(unparsed_file))
-                  {
-                      boost::filesystem::remove(unparsed_file);
+                    if (boost::filesystem::exists(unparsed_file))
+                       {
+                         boost::filesystem::remove(unparsed_file);
+                       }
+
+                    boost::filesystem::copy_file(original_file,unparsed_file,boost::filesystem::copy_option::overwrite_if_exists);
                   }
-                  boost::filesystem::copy_file(
-                      original_file,
-                      unparsed_file,
-                      boost::filesystem::copy_option::overwrite_if_exists);
-              }
-          }
+             }
           set_unparse_output_filename(outputFilename);
-    }
+        }
 #endif
 
      ROSE_ASSERT (get_unparse_output_filename().empty() == false);

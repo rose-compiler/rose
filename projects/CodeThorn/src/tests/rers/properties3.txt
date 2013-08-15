@@ -1,0 +1,400 @@
+(F oU)
+output U occurs eventually
+----------------------------------------
+
+(! oY WU (oY WU (! oY WU (oY WU (G ! oY)))))
+output Y occurs at most twice
+----------------------------------------
+
+(G (! (oX & ! oZ) | (! oV WU oZ)))
+output V does never occur after output X until output Z
+----------------------------------------
+
+(! (F iA) | (! oU U (oY | iA)))
+output Y precedes output U before input A
+----------------------------------------
+
+((G ! iF) | (F (iF & (F oY))))
+output Y occurs after input F
+----------------------------------------
+
+(G (! oZ | (F oX)))
+output X responds to output Z
+----------------------------------------
+
+(! (F iD) | (! oV U (oX | iD)))
+output X precedes output V before input D
+----------------------------------------
+
+(G (! ((oY & ! oU) & (F oU)) | (! oW U oU)))
+output W does never occur between output Y and output U
+----------------------------------------
+
+(G (! oU | (F oY)))
+output Y responds to output U
+----------------------------------------
+
+(G (! (iA & ! oV) | (! oY WU oV)))
+output Y does never occur after input A until output V
+----------------------------------------
+
+(G (! iD | (F oU)))
+output U responds to input D
+----------------------------------------
+
+(! oV WU oY)
+output Y precedes output V
+----------------------------------------
+
+(G (! ((oV & ! iD) & (F iD)) | (! oW U iD)))
+output W does never occur between output V and input D
+----------------------------------------
+
+(G (! oU | (F oW)))
+output W responds to output U
+----------------------------------------
+
+(! oU WU (oU WU (! oU WU (oU WU (G ! oU)))))
+output U occurs at most twice
+----------------------------------------
+
+(G (! (iA & ! iB) | (! iB U (oY & ! iB))))
+output Y occurs after input A until input B
+----------------------------------------
+
+(! oX WU iF)
+output X does never occur before input F
+----------------------------------------
+
+(! oX WU iD)
+input D precedes output X
+----------------------------------------
+
+(G (! (iD & ! oU) | (! oV WU oU)))
+output V does never occur after input D until output U
+----------------------------------------
+
+(G (! (oZ & ! oW) | (! oW WU (oY & ! oW))))
+output Y occurs between output Z and output W
+----------------------------------------
+
+(! (F oY) | ((! oU & ! oY) U (oY | ((oU & ! oY) U (oY | ((! oU & ! oY) U (oY | ((oU & ! oY) U (oY | (! oU U oY))))))))))
+output U occurs at most twice before output Y
+----------------------------------------
+
+(! oY WU oZ)
+output Y does never occur before output Z
+----------------------------------------
+
+(! (F oW) | ((! oY & ! oW) U (oW | ((oY & ! oW) U (oW | ((! oY & ! oW) U (oW | ((oY & ! oW) U (oW | (! oY U oW))))))))))
+output Y occurs at most twice before output W
+----------------------------------------
+
+(G (! iB | (G ! oZ)))
+output Z does never occur after input B
+----------------------------------------
+
+(G (! (oZ & ! iE) | (! oW WU iE)))
+output W does never occur after output Z until input E
+----------------------------------------
+
+(! oY WU oX)
+output X precedes output Y
+----------------------------------------
+
+(! (F oV) | ((! oW & ! oV) U (oV | ((oW & ! oV) U (oV | ((! oW & ! oV) U (oV | ((oW & ! oV) U (oV | (! oW U oV))))))))))
+output W occurs at most twice before output V
+----------------------------------------
+
+(! (F iA) | (! oZ U (iB | iA)))
+input B precedes output Z before input A
+----------------------------------------
+
+(G (! (oZ & ! iD) | (! iD U (oV & ! iD))))
+output V occurs after output Z until input D
+----------------------------------------
+
+(! (F iC) | (! oU U (oX | iC)))
+output X precedes output U before input C
+----------------------------------------
+
+(! oV WU iF)
+input F precedes output V
+----------------------------------------
+
+(! (F iA) | (! oY U (oX | iA)))
+output X precedes output Y before input A
+----------------------------------------
+
+(F oY)
+output Y occurs eventually
+----------------------------------------
+
+(! iD WU (oV & ! iD))
+output V occurs before input D
+----------------------------------------
+
+(! oY WU iE)
+output Y does never occur before input E
+----------------------------------------
+
+((G ! oX) | (F (oX & (F oU))))
+output U occurs after output X
+----------------------------------------
+
+(G (! ((oY & ! iB) & (F iB)) | (! oZ U iB)))
+output Z does never occur between output Y and input B
+----------------------------------------
+
+(G (! oU | (G ! oZ)))
+output Z does never occur after output U
+----------------------------------------
+
+(F oY)
+output Y occurs eventually
+----------------------------------------
+
+(G (! ((oY & ! iB) & (F iB)) | (! oZ U iB)))
+output Z does never occur between output Y and input B
+----------------------------------------
+
+(G (! ((iC & ! iA) & (F iA)) | (! oX U iA)))
+output X does never occur between input C and input A
+----------------------------------------
+
+(G (! ((oY & ! iE) & (F iE)) | (! oX U iE)))
+output X does never occur between output Y and input E
+----------------------------------------
+
+(! oX WU (oX WU (! oX WU (oX WU (G ! oX)))))
+output X occurs at most twice
+----------------------------------------
+
+(! (F iA) | (! oX U (iC | iA)))
+input C precedes output X before input A
+----------------------------------------
+
+(F oZ)
+output Z occurs eventually
+----------------------------------------
+
+((G ! iB) | (F (iB & (F oZ))))
+output Z occurs after input B
+----------------------------------------
+
+(G (! oU | (F oV)))
+output V responds to output U
+----------------------------------------
+
+(G (! iB | (G ! oW)))
+output W does never occur after input B
+----------------------------------------
+
+(! oV WU iC)
+input C precedes output V
+----------------------------------------
+
+(G (! (oY & ! oW) | (! oW U (oZ & ! oW))))
+output Z occurs after output Y until output W
+----------------------------------------
+
+(G (! (iA & ! oY) | (! oU WU oY)))
+output U does never occur after input A until output Y
+----------------------------------------
+
+((G ! oU) | (F (oU & (F oX))))
+output X occurs after output U
+----------------------------------------
+
+(G ! oV)
+output V does never occur
+----------------------------------------
+
+((G ! oU) | (F (oU & (F oX))))
+output X occurs after output U
+----------------------------------------
+
+(G (! (oU & ! iA) | (! iA WU (oX & ! iA))))
+output X occurs between output U and input A
+----------------------------------------
+
+(! oW WU (oW WU (! oW WU (oW WU (G ! oW)))))
+output W occurs at most twice
+----------------------------------------
+
+(F oZ)
+output Z occurs eventually
+----------------------------------------
+
+(G (! ((iE & ! iA) & (F iA)) | (! oV U iA)))
+output V does never occur between input E and input A
+----------------------------------------
+
+(! (F iD) | ((! oY & ! iD) U (iD | ((oY & ! iD) U (iD | ((! oY & ! iD) U (iD | ((oY & ! iD) U (iD | (! oY U iD))))))))))
+output Y occurs at most twice before input D
+----------------------------------------
+
+(! (F oY) | ((! oW & ! oY) U (oY | ((oW & ! oY) U (oY | ((! oW & ! oY) U (oY | ((oW & ! oY) U (oY | (! oW U oY))))))))))
+output W occurs at most twice before output Y
+----------------------------------------
+
+(! (F oU) | (! oW U (iE | oU)))
+input E precedes output W before output U
+----------------------------------------
+
+(G ! oV)
+output V does never occur
+----------------------------------------
+
+(! oU WU iE)
+output U does never occur before input E
+----------------------------------------
+
+(G (! oX | (G ! oV)))
+output V does never occur after output X
+----------------------------------------
+
+(! iF WU (oY & ! iF))
+output Y occurs before input F
+----------------------------------------
+
+((G ! oY) | (F (oY & (F oW))))
+output W occurs after output Y
+----------------------------------------
+
+(G (! iC | (F oV)))
+output V responds to input C
+----------------------------------------
+
+(! oX WU iC)
+input C precedes output X
+----------------------------------------
+
+(! oY WU oW)
+output Y does never occur before output W
+----------------------------------------
+
+(! oV WU oY)
+output V does never occur before output Y
+----------------------------------------
+
+(F oU)
+output U occurs eventually
+----------------------------------------
+
+(F oZ)
+output Z occurs eventually
+----------------------------------------
+
+(! (F iA) | ((! oU & ! iA) U (iA | ((oU & ! iA) U (iA | ((! oU & ! iA) U (iA | ((oU & ! iA) U (iA | (! oU U iA))))))))))
+output U occurs at most twice before input A
+----------------------------------------
+
+(G (! iB | (G ! oW)))
+output W does never occur after input B
+----------------------------------------
+
+(G (! (iB & ! oZ) | (! oV WU oZ)))
+output V does never occur after input B until output Z
+----------------------------------------
+
+(F oU)
+output U occurs eventually
+----------------------------------------
+
+(G (! (oW & ! oU) | (! oU U (oY & ! oU))))
+output Y occurs after output W until output U
+----------------------------------------
+
+(G (! ((oY & ! oX) & (F oX)) | (! oU U oX)))
+output U does never occur between output Y and output X
+----------------------------------------
+
+(! oU WU oY)
+output Y precedes output U
+----------------------------------------
+
+(G (! oY | (G ! oV)))
+output V does never occur after output Y
+----------------------------------------
+
+(G (! ((oY & ! oX) & (F oX)) | (! oV U oX)))
+output V does never occur between output Y and output X
+----------------------------------------
+
+(G ! oX)
+output X does never occur
+----------------------------------------
+
+((G ! iC) | (F (iC & (F oY))))
+output Y occurs after input C
+----------------------------------------
+
+(! (F oY) | (! oW U (oU | oY)))
+output U precedes output W before output Y
+----------------------------------------
+
+(! (F iC) | ((! oZ & ! iC) U (iC | ((oZ & ! iC) U (iC | ((! oZ & ! iC) U (iC | ((oZ & ! iC) U (iC | (! oZ U iC))))))))))
+output Z occurs at most twice before input C
+----------------------------------------
+
+(! oU WU iC)
+output U does never occur before input C
+----------------------------------------
+
+(! oU WU iE)
+output U does never occur before input E
+----------------------------------------
+
+(G (! (oX & ! iF) | (! oY WU iF)))
+output Y does never occur after output X until input F
+----------------------------------------
+
+(! (F oY) | (! oW U (iB | oY)))
+input B precedes output W before output Y
+----------------------------------------
+
+(G (! oZ | (F oU)))
+output U responds to output Z
+----------------------------------------
+
+(! oV WU iC)
+output V does never occur before input C
+----------------------------------------
+
+((G ! iE) | (F (iE & (F oZ))))
+output Z occurs after input E
+----------------------------------------
+
+(! iE WU (oU & ! iE))
+output U occurs before input E
+----------------------------------------
+
+(! oW WU oY)
+output W does never occur before output Y
+----------------------------------------
+
+(! iC WU (oZ & ! iC))
+output Z occurs before input C
+----------------------------------------
+
+(! oZ WU iC)
+input C precedes output Z
+----------------------------------------
+
+(G (! ((oZ & ! oY) & (F oY)) | (! oW U oY)))
+output W does never occur between output Z and output Y
+----------------------------------------
+
+(! (F iC) | ((! oV & ! iC) U (iC | ((oV & ! iC) U (iC | ((! oV & ! iC) U (iC | ((oV & ! iC) U (iC | (! oV U iC))))))))))
+output V occurs at most twice before input C
+----------------------------------------
+
+(G (! (iF & ! oX) | (! oX WU (oY & ! oX))))
+output Y occurs between input F and output X
+----------------------------------------
+
+(G (! (oV & ! iE) | (! iE U (oY & ! iE))))
+output Y occurs after output V until input E
+----------------------------------------
+

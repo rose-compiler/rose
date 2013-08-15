@@ -2,6 +2,7 @@
 #include <iostream>
 #include "rose.h"
 #include "Utils.h"
+#include "processPragmas.h"
 
 using namespace std;
 using namespace SageBuilder;
@@ -11,7 +12,7 @@ using namespace SageInterface;
 
 typedef enum {i_max, i_min, i_const} IterationType;
 
-static bool debugpp = false;
+static bool debugpp = true;
 
 // Utilities ///////////////////////////////////////////////////////////////////
 
@@ -326,13 +327,11 @@ int match (const char *input, const char *prefix) {
   return i;
 }
 
-bool supportedFileType (SgFile *f) {
-  const string s = f->getFileName();
-  bool cfile = s.find(".c", s.length() - 2) != string::npos;
-  return (cfile || f->get_sourceFileUsesCppFileExtension());
-
-  // FIXME: Ad hoc!  What's the recommended way to test for C?
-  //   - appears to be recursing over the whole structure!
+bool supportedFileType () {
+  return ( SageInterface::is_C_language()
+        || SageInterface::is_Cxx_language()
+        || SageInterface::is_mixed_C_and_Cxx_language()
+        );
 }
 
 // parseExpr - parse an expression surrounded by parentheses.
@@ -369,6 +368,8 @@ void processRemovePragma (SgStatement *s, bool outline) {
   if (debugpp) printf ("processRemovePragma\n");
 
   if (outline) {
+    // What is the intention of this code? Comment the code out, then remove it
+    // as well?
     const string comment("pragma applied:\n * #pragma skel remove\n");
 
     (void) buildComment(s,
@@ -394,11 +395,15 @@ void processRemovePragma (SgStatement *s, bool outline) {
 
 // pragma parse & process //////////////////////////////////////////////////////
 
-void process1pragma(SgPragmaDeclaration *p, bool outline) {
-  static const char parseErrorMsg[] = "error in parsing expression";
+void process1pragma( SgPragmaDeclaration *p
+                   , bool outline
+                   , SgSymbols *pivots
+                   ) {
+
+  static const char parseErrorMsg[] = "error in parsing pragma expression";
 
   string pragmaText = p->get_pragma()->get_pragma();
-  SgStatement *stmt = SageInterface::getNextStatement((SgStatement*) p);
+  SgStatement *stmt = SageInterface::getNextStatement(p);
 
   const char *s = pragmaText.c_str();
   if (debugpp) printf("visit: %s\n", s);
@@ -412,13 +417,15 @@ void process1pragma(SgPragmaDeclaration *p, bool outline) {
     s += i;    // point past "skel"
   }
 
-  if (debugpp)
+  if (debugpp) {
+    const std::string target = stmt ? stmt->unparseToString() : "null";
     cout << "#pragma skel:\n"
          << "  parameter:\n"
          << "   " << s << endl
          << "  target:\n"
-         << "    " << stmt->unparseToString()
+         << "    " << target
          << endl;
+  }
 
   int j;     // store result of match.
   if ((j = match(s,"loop iterate atmost")) != 0) {
@@ -456,7 +463,23 @@ void process1pragma(SgPragmaDeclaration *p, bool outline) {
       exitWithMsg(stmt, s, parseErrorMsg);
     else
       arrayInitializer (p, s, stmt, e);
-  } else {
+  } else if (match(s, "memory") != 0) {
+    SgDeclarationStatement *decl = isSgDeclarationStatement(stmt);
+
+    if ( decl ) {
+      SgSymbol *sym = decl->search_for_symbol_from_symbol_table();
+      assert(sym); // Every declaration has an associated symbol
+
+      if ( pivots ) {
+          if ( debugpp )
+            cout << "pragmas: noting name '"
+                 << (sym->get_name()).str()
+                 << "'"
+                 << endl;
+          pivots->insert(sym);
+      }
+    }
+  } else { /* not a recognized pragma skel: */
       exitWithMsg (stmt, s, "unrecognized arguments");
   }
 }
@@ -491,14 +514,15 @@ private:
 
 // Main entry point ////////////////////////////////////////////////////////////
 
-void processPragmas (SgProject *project, bool outline) {
+void processPragmas ( SgProject *project
+                    , bool outline
+                    , SgSymbols *pivots
+                    ) {
 
-  // Check that file types are supported:
-  for (int i=0; i < project->numberOfFiles(); i++)
-    if (!supportedFileType((*project)[i])) {
-      printf("ERROR: Only C and C++ files are supported.\n");
-      exit(1);
-    }
+  if ( ! supportedFileType() ) {
+    printf("ERROR: Only C and C++ files are supported.\n");
+    exit(1);
+  }
 
   // Build a set of pragma targets.
   CollectPragmaTargets::TgtList_t ts;
@@ -508,5 +532,5 @@ void processPragmas (SgProject *project, bool outline) {
   for (CollectPragmaTargets::TgtList_t::iterator i = ts.begin ();
        i != ts.end ();
        ++i)
-    process1pragma(*i, outline);
+    process1pragma(*i, outline, pivots);
 }
