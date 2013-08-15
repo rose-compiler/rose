@@ -69,3 +69,8 @@ ExternalProject_Add("EDG_tarball"
 add_library(edg33 STATIC IMPORTED)
 set_property(TARGET edg33 PROPERTY IMPORTED_LOCATION
   ${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs/libroseEDG.a)
+
+execute_process(
+  COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/EDG_4.7/lib
+  COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/EDG_4.7/lib/predefined_macros.txt
+)
