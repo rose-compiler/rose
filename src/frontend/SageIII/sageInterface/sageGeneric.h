@@ -680,6 +680,10 @@ namespace sg
         Dispatcher::dispatch(rv, assume_sage_type<SgOmpSingleStatement>(*n));
         break;
 
+      case V_SgOmpSimdStatement:
+        Dispatcher::dispatch(rv, assume_sage_type<SgOmpSimdStatement>(*n));
+        break;
+
       case V_SgOmpTaskStatement:
         Dispatcher::dispatch(rv, assume_sage_type<SgOmpTaskStatement>(*n));
         break;

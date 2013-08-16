@@ -5404,6 +5404,22 @@ SgMinusMinusOp *SageBuilder::buildMinusMinusOp_nfi(SgExpression* operand_i, SgUn
   return result;
 }
 
+SgMinusOp *SageBuilder::buildMinusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode)
+{
+  SgMinusOp* result = buildUnaryExpression<SgMinusOp>(operand_i);
+  ROSE_ASSERT(result);
+  result->set_mode(a_mode);
+  return result;
+}
+
+SgMinusOp *SageBuilder::buildMinusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode)
+{
+  SgMinusOp* result = buildUnaryExpression_nfi<SgMinusOp>(operand_i);
+  ROSE_ASSERT(result);
+  result->set_mode(a_mode);
+  return result;
+}
+
 SgPlusPlusOp *SageBuilder::buildPlusPlusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode)
 {
   SgPlusPlusOp* result = buildUnaryExpression<SgPlusPlusOp>(operand_i);
