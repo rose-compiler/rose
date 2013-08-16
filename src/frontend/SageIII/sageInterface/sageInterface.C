@@ -16739,7 +16739,8 @@ bool SageInterface::loopCollapsing(SgForStatement** loop, size_t collapsing_fact
         while(isSgOmpParallelStatement(parent) || isSgOmpTargetStatement(parent) || isSgOmpParallelStatement(parent->get_parent()) || isSgOmpTargetStatement(parent->get_parent()) )
         {
             insert_target = parent;
-    //        fprintf(stderr, "sageInterface::loop_collapsing(): parent is %s\n", parent->unparseToString().c_str());
+            fprintf(stderr, "sageInterface::loop_collapsing(): parent->get_parent() is %s\n", parent->get_parent()->unparseToString().c_str());
+            fprintf(stderr, "sageInterface::loop_collapsing(): parent is %s\n", parent->unparseToString().c_str());
             parent = isSgStatement(parent->get_parent());
         }
     }
@@ -16751,41 +16752,84 @@ bool SageInterface::loopCollapsing(SgForStatement** loop, size_t collapsing_fact
 
     /*
     *Winnie, we need to add the new variables into the map in list, if there is a SgOmpTargetStatement
+    * This part is not stable because the grammar of mapin and mapinout. 
+    * Important factors: place of the clause (jacobi-ompacc-opt1.c)
+    *                    mapinout (jacobi-ompacc-opt1.c)
+    *                    ? any other possible factor ?
     */
 
     bool ompacc = false;
     Rose_STL_Container<SgOmpClause*> map_clauses;
     SgOmpMapClause * map_in;
+
+    /*For OmpTarget case, we need to create SgOmpMapClause if there is no such clause in the original code.
+    *   insert_target, #pragma omp target
+    *                or, #pragma omp parallel, when is not OmpTarget
+    *   inside this if condition, ompacc=false means there is no map clause, we need to create one
+    *   outside this if condition, ompacc=false means, no need to add new variables in the map in clause
+    */
     if(isSgOmpTargetStatement(insert_target))
     {
-        ompacc = true; 
         fprintf(stderr, "\nsageInterface::loop_collapsing(): insert_target is\n %s\n", insert_target->unparseToString().c_str());
-//        map_clauses = get_clauses(isSgOmpClauseBodyStatement(insert_target), V_SgOmpMapClause);
-        SgOmpClauseBodyStatement * temp_clause_body = isSgOmpClauseBodyStatement(insert_target);
-        map_clauses = temp_clause_body->get_clauses();
-        for(Rose_STL_Container<SgOmpClause*>::const_iterator iter = map_clauses.begin(); iter != map_clauses.end(); iter++)
-         {
-             SgOmpMapClause * temp_map_clause = isSgOmpMapClause(*iter);
-             if(temp_map_clause != NULL)
-             {
-                 SgOmpClause::omp_map_operator_enum map_operator = temp_map_clause->get_operation();
-                 if(map_operator == SgOmpClause::e_omp_map_in || map_operator == SgOmpClause::e_omp_map_inout)
+        
+        /*get the data clause of this target statement*/
+        SgOmpClauseBodyStatement * target_data_stmt = isSgOmpClauseBodyStatement(insert_target); 
+        //SgOmpTargetDataStatement * target_data_stmt = isSgOmpClauseBodyStatement(insert_target); 
+        if(target_data_stmt == NULL)
+        {
+            target_data_stmt = getEnclosingNode<SgOmpTargetDataStatement>(insert_target);
+        }
+
+        if(target_data_stmt == NULL)
+        {
+            ompacc = false;
+        }
+        else
+        {
+            cerr << "target_data_stmt: " << target_data_stmt->unparseToString() << endl;
+//        map_clauses = get_clauses(isSgOmpClauseBodyStatement(target_data_stmt), V_SgOmpMapClause);
+            SgOmpClauseBodyStatement * temp_clause_body = isSgOmpClauseBodyStatement(target_data_stmt);
+            if(temp_clause_body != NULL)
+            {
+                map_clauses = temp_clause_body->get_clauses();
+                for(Rose_STL_Container<SgOmpClause*>::const_iterator iter = map_clauses.begin(); iter != map_clauses.end(); iter++)
                  {
-                     map_in = temp_map_clause;
-                     break;
+                     SgOmpMapClause * temp_map_clause = isSgOmpMapClause(*iter);
+                     if(temp_map_clause != NULL) //Winnie, find the map(in) or map(inout) clause
+                     {
+                         ompacc = true;
+                         cerr << endl << "OmpMapClause :" << temp_map_clause->unparseToString() << endl;
+                         SgOmpClause::omp_map_operator_enum map_operator = temp_map_clause->get_operation();
+                         if(map_operator == SgOmpClause::e_omp_map_in || map_operator == SgOmpClause::e_omp_map_inout)
+                         {
+                             map_in = temp_map_clause;
+                             break;
+                         }
+                     }
                  }
-             }
-         }
-         if(map_in != NULL)
-         {
+            }  
+            assert(map_in != NULL);
+/*            if(map_in != NULL)
+            {
              fprintf(stderr, "\nmap_in\n %s\n", map_in->unparseToString().c_str());
 //             var_list = map_in->get_variables();
 //             var_list.insert();
-             
-         }
+            }
+*/          
+        }
+
+        if(ompacc == false)
+        {
+            cerr <<"prepare to create a map in clause" << endl;
+            ompacc = true;
+        }
+    }
+    else
+    {
+        ompacc = false;
+        cerr << "not a omp target code, no need to handle map in\n" << endl;
     }
 
-    SgVarRefExpPtrList & var_list = map_in->get_variables(); 
 
 //        SgBasicBlock * new_scope = SageBuilder::buildBasicBlock();
 //        replaceStatement(target_loop, new_scope, true);
@@ -16887,6 +16931,9 @@ bool SageInterface::loopCollapsing(SgForStatement** loop, size_t collapsing_fact
         //insertStatementBefore(target_loop, total_iter);     //Winnie, insert the new variable (store real iteration number of each level of the loop) before the target loop
     }
 
+
+   // cerr << "debug" <<endl <<endl;
+
     /*
     *Winnie, build another variable to store final total iteration counter of the loop after collapsing
     */
@@ -16902,6 +16949,7 @@ bool SageInterface::loopCollapsing(SgForStatement** loop, size_t collapsing_fact
    
     if(ompacc == true)
     {
+    SgVarRefExpPtrList & var_list = map_in->get_variables(); 
             var_list.push_back(isSgVarRefExp(ub_exp));
             //var_list.push_back(buildVarRefExp(final_iter_counter_name));
             fprintf(stderr, "\nmap_in\n %s\n", map_in->unparseToString().c_str());
@@ -16930,6 +16978,7 @@ bool SageInterface::loopCollapsing(SgForStatement** loop, size_t collapsing_fact
 
         if(ompacc == true)
         {
+    SgVarRefExpPtrList & var_list = map_in->get_variables(); 
             var_list.push_back(isSgVarRefExp(interval[i]));
             fprintf(stderr, "\nmap_in\n %s\n", map_in->unparseToString().c_str());
             for(int i = 0;  i < var_list.size(); i ++)
