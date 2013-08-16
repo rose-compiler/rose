@@ -2059,7 +2059,7 @@ static void linearizeArrayAccess(SgPntrArrRefExp* top_array_ref)
   getArrayDimensionSizes (array_type, dimensions);
   
   ROSE_ASSERT ((*subscripts).size() == dimensions.size());
-  ROSE_ASSERT ((*subscripts).size()>1); // we only accept 2-D or above for processing. Caller should check this in advance
+  //ROSE_ASSERT ((*subscripts).size()>1); // we only accept 2-D or above for processing. Caller should check this in advance
 
   // left hand operand
   SgExpression* new_lhs = buildVarRefExp(i_name);
@@ -2120,7 +2120,10 @@ static void rewriteArraySubscripts(SgBasicBlock* body_block, const std::set<SgSy
 
   // To be safe, we use reverse order iteration when changing them
   for (std::vector<SgPntrArrRefExp* >::reverse_iterator riter = candidate_refs.rbegin(); riter != candidate_refs.rend(); riter ++)
+  { 
+      cerr << "before linearizeArrayAccess: " << endl;
     linearizeArrayAccess (*riter);
+  }
 }
 
 // Liao, 2/28/2013
@@ -2581,6 +2584,9 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
     SgFunctionDeclaration* result_decl = isSgFunctionDeclaration(result->get_firstNondefiningDeclaration());
     ROSE_ASSERT (result_decl != NULL);
     result_decl->get_functionModifier().setCudaKernel(); // add __global__ modifier
+/*Winnie, debug, the __global__modifier does not appear in the output source code*/
+    result->get_functionModifier().setCudaKernel();
+//    prependStatement(result_decl, getGlobalScope(target));
 
      // This one is not desired. It inserts the function to the end and prepend a prototype
     // Outliner::insert(result, g_scope, body_block); 
@@ -4789,6 +4795,9 @@ void lower_omp(SgSourceFile* file)
     //debug the order of the statements
 //    cout<<"Debug lower_omp(). stmt:"<<node<<" "<<node->class_name() <<" "<< node->get_file_info()->get_line()<<endl;
 
+    /*
+    *Winnie, handle Collapse clause.
+    */
     if(  isSgOmpClauseBodyStatement(node) != NULL && hasClause(isSgOmpClauseBodyStatement(node), V_SgOmpCollapseClause))
         lower_collapse(isSgOmpClauseBodyStatement(node));
 

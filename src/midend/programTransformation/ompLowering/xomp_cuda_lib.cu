@@ -10,6 +10,8 @@ Liao 4/11/2012
 //----------------------------------------------------
 // Device xomp_cuda_property retrieving functions
 
+struct DDE_data * DDE_head;
+struct DDE_data * DDE_tail;
 
 cudaDeviceProp* xomp_cuda_prop = NULL; 
 bool xomp_verbose = false;
