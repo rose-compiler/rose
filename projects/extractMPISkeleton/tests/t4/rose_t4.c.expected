@@ -9,8 +9,9 @@ int main(int argc,char *argv[])
   MPI_Comm_size(MPI_COMM_WORLD,&size);
   int abortarg;
   abortarg = 1;
-  if (size != 4) 
+  if (size != 4) {
     MPI_Abort(MPI_COMM_WORLD,abortarg);
+  }
   MPI_Finalize();
   return 0;
 }
