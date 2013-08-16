@@ -784,6 +784,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                case V_SgOmpWorkshareStatement:
                case V_SgOmpSingleStatement:
                case V_SgOmpTaskStatement:
+               case V_SgOmpSimdStatement:
                     unparseOmpGenericStatement (stmt, info); 
                     break;
 
@@ -4350,12 +4351,21 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
     case V_SgOmpPrivateClause:
       curprint(string(" private("));
       break;
+    case V_SgOmpUniformClause:
+      curprint(string(" uniform("));
+      break;
+    case V_SgOmpAlignedClause:
+      curprint(string(" aligned("));
+      break;
     case V_SgOmpReductionClause:
       {
         curprint(string(" reduction("));
         //reductionOperatorToString() will handle language specific issues 
         curprint(reductionOperatorToString(isSgOmpReductionClause(c)->get_operation()));
         curprint(string(" : "));
+      break;
+    case V_SgOmpLinearClause:
+      curprint(string(" linear("));
       break;
       }
     case V_SgOmpMapClause:
@@ -4516,6 +4526,9 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
     case V_SgOmpReductionClause:
     case V_SgOmpMapClause:
     case V_SgOmpSharedClause:
+    case V_SgOmpLinearClause:
+    case V_SgOmpUniformClause:
+    case V_SgOmpAlignedClause:
       {     
         unparseOmpVariablesClause(isSgOmpVariablesClause(clause), info);
         break;
@@ -4734,6 +4747,12 @@ void UnparseLanguageIndependentConstructs::unparseOmpDirectivePrefixAndName (SgS
       {
         unparseOmpPrefix(info);
         curprint(string ("single "));
+        break;
+      }
+      case V_SgOmpSimdStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("simd "));
         break;
       }
      case V_SgOmpSectionsStatement:
@@ -5037,42 +5056,42 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
              }
 
        // DQ (7/13/2013): Added support to support this kind of value (I think this is correct, but not sure).
-          case V_SgTemplateParameterVal: return 0;
+          case V_SgTemplateParameterVal:   return 0;
 
-          case V_SgBoolValExp:       return 0;
-          case V_SgIntVal:           return 0;
-          case V_SgThrowOp:          return 0;
-          case V_SgDoubleVal:        return 0;
-          case V_SgUnsignedIntVal:   return 0;
-          case V_SgAssignInitializer: return 0;
-          case V_SgFloatVal:         return 0;
-          case V_SgVarArgOp:         return 0;
-          case V_SgLongDoubleVal:    return 0;
-          case V_SgLongIntVal:       return 0;
-          case V_SgLongLongIntVal:   return 0;
-          case V_SgVarArgStartOp:    return 0;
-          case V_SgNewExp:           return 0;
-          case V_SgDeleteExp:        return 0;
-          case V_SgStringVal:        return 0;
-          case V_SgCharVal:          return 0;
+          case V_SgBoolValExp:             return 0;
+          case V_SgIntVal:                 return 0;
+          case V_SgThrowOp:                return 0;
+          case V_SgDoubleVal:              return 0;
+          case V_SgUnsignedIntVal:         return 0;
+          case V_SgAssignInitializer:      return 0;
+          case V_SgFloatVal:               return 0;
+          case V_SgVarArgOp:               return 0;
+          case V_SgLongDoubleVal:          return 0;
+          case V_SgLongIntVal:             return 0;
+          case V_SgLongLongIntVal:         return 0;
+          case V_SgVarArgStartOp:          return 0;
+          case V_SgNewExp:                 return 0;
+          case V_SgDeleteExp:              return 0;
+          case V_SgStringVal:              return 0;
+          case V_SgCharVal:                return 0;
           case V_SgUnsignedLongLongIntVal: return 0;
-          case V_SgUnsignedLongVal:  return 0;
-          case V_SgComplexVal:       return 0;
-          case V_SgCAFCoExpression:  return 16;
+          case V_SgUnsignedLongVal:        return 0;
+          case V_SgComplexVal:             return 0;
+          case V_SgCAFCoExpression:        return 16;
 
-     // Liao, 7/15/2009, UPC nodes
-          case V_SgUpcThreads:       return 0;
-          case V_SgUpcMythread:       return 0;
-          case V_SgNullExpression:    return 0;
-    // TV (04/26/2010): CUDA nodes
-          case V_SgCudaKernelExecConfig: return 0;
-          case V_SgCudaKernelCallExp:    return 0;
+       // Liao, 7/15/2009, UPC nodes
+          case V_SgUpcThreads:             return 0;
+          case V_SgUpcMythread:            return 0;
+          case V_SgNullExpression:         return 0;
+       // TV (04/26/2010): CUDA nodes
+          case V_SgCudaKernelExecConfig:   return 0;
+          case V_SgCudaKernelCallExp:      return 0;
 
-    // TV (04/24/2011): Add FunctionRefExp to avoid the following Warning. It occurs
-    //        after my modification for a more generic support of the original
-    //        expression tree field (especially the case of FunctionRefExp used for
-    //        function pointers initialisation).
-    //    case V_SgFunctionRefExp:    return 0;
+       // TV (04/24/2011): Add FunctionRefExp to avoid the following Warning. It occurs
+       //     after my modification for a more generic support of the original
+       //     expression tree field (especially the case of FunctionRefExp used for
+       //     function pointers initialisation).
+       // case V_SgFunctionRefExp:    return 0;
           case V_SgFunctionRefExp:
              {
 #if 0
@@ -5108,7 +5127,10 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
        // Note that this setting is equivalent to what was being returned, so I expect it is fine since it represents no change.
           case V_SgVarRefExp:                return 0;
 
+       // DQ (7/22/2013): I think this needs to be set so that we never output parenthesis for this case.
        // DQ (10/17/2012): Added support for SgDesignatedInitializer.
+       // case V_SgDesignatedInitializer:    return 0;
+       // case V_SgDesignatedInitializer:    return 16;
           case V_SgDesignatedInitializer:    return 0;
 
        // DQ (1/26/2013): This case needs to be supported (see test2013_42.C).
@@ -5121,7 +5143,7 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           default:
              {
 #if PRINT_DEVELOPER_WARNINGS | 1
-               printf ("Warning: GetPrecedence() in unparseLanguageIndependentConstructs.C: Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
+               printf ("Warning: getPrecedence() in unparseLanguageIndependentConstructs.C: Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
 #endif
              }
         }
@@ -5131,13 +5153,67 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
 
 
 AssociativitySpecifier
-UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr) {
+UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr) 
+   {
+  // DQ (7/23/2013): This should match the table in: http://en.wikipedia.org/wiki/Operators_in_C_and_C%2B%2B#Operator_precedence
+  // Note also that this table has the precedence in the wrong order compared to how we have listed it in ROSE.
+
+  // I have added the case for SgCastExp, but noticed that there appear to be many incorrect entries for associativity for the 
+  // other operators.  This function is called in the evaluation for added "()" using the operator precedence (obtained from
+  // the function: getPrecedence()).
+
      int variant = GetOperatorVariant(expr);
      switch (variant)
         {
+       // DQ (7/23/2013): Added cast operator.
+          case V_SgCastExp:
+             {
+               if (expr->get_file_info()->isCompilerGenerated() == true)
+                  {
+#if 0
+                    printf ("WARNING: In getAssociativity(): We should not be calling getAssociativity(SgExpression* expr) if this is a compiler generated (implicit) cast (returing e_assoc_none) \n");
+#endif
+                    return e_assoc_none;
+                  }
+                 else
+                  {
+                 // The cast is right associative.
+                    return e_assoc_right;
+                  }
+             }
+
+          case V_SgPlusPlusOp:
+          case V_SgMinusMinusOp:
+             {
+            // DQ (7/23/2013): The associativity of these operators depends upon if they are pre or post operators (assuming post-fix).
+            // Note: post-fix is left associative, and pre-fix is right associative.
+
+               AssociativitySpecifier associativitySpecifier = e_assoc_none;
+
+               SgUnaryOp* unaryOp = isSgUnaryOp(expr);
+               if (unaryOp->get_mode() == SgUnaryOp::prefix)
+                  {
+                    associativitySpecifier = e_assoc_right;
+                  }
+                 else
+                  {
+                    ROSE_ASSERT(unaryOp->get_mode() == SgUnaryOp::postfix);
+                    associativitySpecifier = e_assoc_left;
+                  }
+
+               return associativitySpecifier;
+             }
+           
+          case V_SgNotOp:
+             {
+#if 0
+               printf ("WARNING: In getAssociativity(): I think that the logical not operator should be right associative! \n");
+#endif
+            // This has forever been marked as left associative in ROSE.
+               return e_assoc_left;
+             }
+
           case V_SgAssignOp:
-          case V_SgPlusAssignOp:
-          case V_SgMinusAssignOp:
           case V_SgAndAssignOp:
           case V_SgIorAssignOp:
           case V_SgMultAssignOp:
@@ -5146,9 +5222,10 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr) {
           case V_SgXorAssignOp:
           case V_SgLshiftAssignOp:
           case V_SgRshiftAssignOp:
+          case V_SgPlusAssignOp:
+          case V_SgMinusAssignOp:
           case V_SgConditionalExp:
           case V_SgBitComplementOp:
-          case V_SgNotOp:
           case V_SgPointerDerefExp:
           case V_SgAddressOfOp:
           case V_SgSizeOfOp:
@@ -5185,14 +5262,14 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr) {
           default:
              {
             // The implementation of this function assumes unhandled cases are not associative.
-#if PRINT_DEVELOPER_WARNINGS
+// #if PRINT_DEVELOPER_WARNINGS
                printf ("getAssociativity(): Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
-#endif
+// #endif
              }
         }
 
      return e_assoc_none;
-}
+   }
 
 bool
 UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, SgUnparse_Info& info) 
@@ -5210,7 +5287,7 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 
 #define DEBUG_PARENTHESIS_PLACEMENT 0
 
-#if DEBUG_PARENTHESIS_PLACEMENT && 1
+#if DEBUG_PARENTHESIS_PLACEMENT
      printf ("\n\n***** In requiresParentheses() \n");
      printf ("In requiresParentheses(): expr = %p = %s need_paren = %s \n",expr,expr->class_name().c_str(),expr->get_need_paren() ? "true" : "false");
      printf ("In requiresParentheses(): isOverloadedArrowOperator(expr) = %s \n",(unp->u_sage->isOverloadedArrowOperator(expr) == true) ? "true" : "false");
@@ -5343,9 +5420,9 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 
           default:
              {
-               int parentVariant = GetOperatorVariant(parentExpr);
+               int parentVariant   = GetOperatorVariant(parentExpr);
                SgExpression* first = GetFirstOperand(parentExpr);
-               if (parentVariant  == V_SgPntrArrRefExp && first != expr)
+               if (parentVariant == V_SgPntrArrRefExp && first != expr)
                   {
                  // This case avoids redundent parenthesis within array substripts.
 #if DEBUG_PARENTHESIS_PLACEMENT
@@ -5359,6 +5436,17 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 #if DEBUG_PARENTHESIS_PLACEMENT
                printf ("parentVariant = %d  parentPrecedence = %d \n",parentVariant,parentPrecedence);
 #endif
+
+            // DQ (7/22/2013): Don't return true if this is a SgDesignatedInitializer.
+               if (parentPrecedence == 0 && isSgDesignatedInitializer(parentExpr) != NULL)
+                  {
+#if DEBUG_PARENTHESIS_PLACEMENT
+                    printf ("     case of SgDesignatedInitializer: parentPrecedence == 0 return true \n");
+                    curprint(string("/* case of SgDesignatedInitializer parentPrecedence == 0 return false parentExpr = ") + parentExpr->class_name() + " */ \n");
+#endif
+                    return false;
+                  }
+
                if (parentPrecedence == 0)
                   {
 #if DEBUG_PARENTHESIS_PLACEMENT
@@ -5386,14 +5474,14 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
                   {
                     if (exprPrecedence == parentPrecedence)
                        {
-                         if (first == 0)
+                         if (first == NULL)
                             {
 #if DEBUG_PARENTHESIS_PLACEMENT
                               printf ("     exprPrecedence == parentPrecedence return true \n");
 #endif
                               return true;
                             }
-                         AssociativitySpecifier assoc =  getAssociativity(parentExpr);
+                         AssociativitySpecifier assoc = getAssociativity(parentExpr);
                          if (assoc == e_assoc_left && first != expr)
                             {
 #if DEBUG_PARENTHESIS_PLACEMENT
@@ -5407,6 +5495,17 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
                               printf ("     assoc < 0 && first == expr return false \n");
 #endif
                               return false;
+                            }
+
+                      // DQ (7/22/2013): It appears that in many cases this is not handled in the getAssociativity() function.
+                         if (assoc == e_assoc_none)
+                            {
+#if DEBUG_PARENTHESIS_PLACEMENT
+                              printf ("WARNING: In requiresParentheses(): assoc == e_assoc_none (not clear what to return, returning true is required to pass regression tests) \n");
+#endif
+                           // DQ (7/23/2013): This is required to be true for test2012_104.c to pass.
+                           // return false;
+                              return true;
                             }
                        }
                       else
