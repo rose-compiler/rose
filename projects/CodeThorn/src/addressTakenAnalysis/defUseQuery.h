@@ -26,11 +26,18 @@ using namespace CodeThorn;
 // information about the variable
 // type info is associated with the respective VariableId
 enum VariableIdTypeInfo {
-  VARIABLE,
-  ARRAY,
-  POINTER,
-  REFERENCE
+  variableType,
+  arrayType,
+  pointerType,
+  referenceType,
+  classType
 };
+
+// determines VariableIdTypeInfo given a VariableId and the VariableIdMapping
+VariableIdTypeInfo getVariableIdTypeInfo(VariableId vid, VariableIdMapping& vidm);
+
+// stringify the type info
+std::string variableIdTypeInfoToString(VariableIdTypeInfo vidTypeInfo);
 
 typedef std::pair<VariableId, VariableIdTypeInfo> VariableIdInfo;
 
@@ -107,7 +114,7 @@ public:
   bool isDefSetModByPointer();
   bool isUseSetModByPointer();
 
-  DefUseVarsInfo operator+(const DefUseVarsInfo& duvi1);
+  friend DefUseVarsInfo operator+(const DefUseVarsInfo& duvi1, const DefUseVarsInfo& duvi2);
 
   std::string varsInfoPrettyPrint(VarsInfo& vars_info, VariableIdMapping& vidm);
   std::string functionCallExpSetPrettyPrint(FunctionCallExpSet& func_calls_info);
@@ -128,53 +135,95 @@ class ExprWalker : public ROSE_VisitorPatternDefaultBase
 
 public:
   ExprWalker(VariableIdMapping& _vidm, bool isModExpr);
-  // lhs of assignment operator are always lvalues
-  // process them 
-  void visit(SgAssignOp* sgn);
-  void visit(SgCompoundAssignOp* sgn);
-
-  // recurse on sub-expressions
-  void visit(SgBinaryOp* sgn);
-
-  void visit(SgCastExp* sgn);
-  void visit(SgAddressOfOp* sgn);
+   
+  // unary op with modifying semantics
   void visit(SgMinusMinusOp* sgn);
+  void visit(SgPlusPlusOp* sgn);
+
+  // unary op with non-modifying semantics
+  void visit(SgCastExp* sgn);
+  void visit(SgAddressOfOp* sgn); 
   void visit(SgMinusOp* sgn);
   void visit(SgUnaryAddOp* sgn);
   void visit(SgNotOp* sgn);
-  void visit(SgPlusPlusOp* sgn);
-  void visit(SgSizeOfOp* sgn);
   void visit(SgBitComplementOp* sgn);
+  void visit(SgThrowOp* sgn);
 
-  void visit(SgFunctionCallExp* sgn);
-  void visit(SgExprListExp* sgn);
-  void visit(SgConditionalExp* sgn);
-  
-  void visit(SgAssignInitializer* sgn);
-  void visit(SgConstructorInitializer* sgn);
-  void visit(SgAggregateInitializer* sgn);
+ 
+  // binary op with modifying semantics
+  void visit(SgAssignOp* sgn);
+  void visit(SgCompoundAssignOp* sgn);
 
-  // recursion undwinds on basic expressions
-  // that represent memory
-  //  
-  void visit(SgVarRefExp* sgn);
+  // binary op that can be lvalues
+  void visit(SgCommaOpExp* sgn);
   void visit(SgPntrArrRefExp* sgn);
   void visit(SgPointerDerefExp* sgn);
   void visit(SgDotExp* sgn);
   void visit(SgArrowExp* sgn);
+
+  // binary op that can only be rvalues
+  void visit(SgAddOp* sgn);
+  void visit(SgAndOp* sgn);
+  void visit(SgArrowStarOp* sgn);
+  void visit(SgBitAndOp* sgn);
+  void visit(SgBitOrOp* sgn);
+  void visit(SgBitXorOp* sgn);
+  void visit(SgDivideOp* sgn);
+  void visit(SgDotStarOp* sgn);
+  void visit(SgEqualityOp* sgn);
+  void visit(SgGreaterOrEqualOp* sgn);
+  void visit(SgGreaterThanOp* sgn);
+  void visit(SgLessOrEqualOp* sgn);
+  void visit(SgLessThanOp* sgn);
+  void visit(SgLshiftOp* sgn);
+  void visit(SgModOp* sgn);
+  void visit(SgMultiplyOp* sgn);
+  void visit(SgNotEqualOp* sgn);
+  void visit(SgOrOp* sgn);
+  void visit(SgRshiftOp* sgn);
+  void visit(SgSubtractOp* sgn);
+
+  // expr that can be lvalues
+  void visit(SgFunctionCallExp* sgn);
+  void visit(SgConditionalExp* sgn);
+
+  // expr that can only be rvalues
+  void visit(SgExprListExp* sgn);
+  void visit(SgSizeOfOp* sgn);
+  void visit(SgDeleteExp* sgn);
+  void visit(SgNewExp* sgn);
+  void visit(SgTypeIdOp* sgn);
+  void visit(SgVarArgOp* sgn);
+  void visit(SgVarArgStartOp* sgn);
+  void visit(SgVarArgStartOneOperandOp* sgn);
+  void visit(SgVarArgEndOp* sgn);
+  void visit(SgVarArgCopyOp* sgn);
+
+  
+  // different intializers
+  void visit(SgAssignInitializer* sgn);
+  void visit(SgConstructorInitializer* sgn);
+  void visit(SgAggregateInitializer* sgn);
+
+  // basic cases for the recursive function
+  // that represent variables
+  void visit(SgVarRefExp* sgn);
   void visit(SgInitializedName* sgn);
 
   // no processing required
   void visit(SgValueExp* sgn);
+  void visit(SgNullExpression* sgn);
   void visit(SgFunctionRefExp* sgn);
   void visit(SgMemberFunctionRefExp* sgn);
   void visit(SgThisExp* sgn);
-
+  void visit(SgClassNameRefExp* sgn);
+  void visit(SgLabelRefExp* sgn);
+  
   void visit(SgExpression* sgn);
 
   // helper methods
   void visitSgUnaryOpNoMod(SgUnaryOp* sgn);
-
+  void visitSgBinaryOpNoMod(SgBinaryOp* sgn);
 
   DefUseVarsInfo getDefUseVarsInfo();
 };
