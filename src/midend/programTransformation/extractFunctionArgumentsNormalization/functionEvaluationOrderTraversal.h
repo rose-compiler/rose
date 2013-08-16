@@ -15,12 +15,12 @@ struct FunctionCallInheritedAttribute
     enum
     {
         INSIDE_FOR_INIT, INSIDE_FOR_TEST, INSIDE_FOR_INCREMENT, INSIDE_WHILE_CONDITION,
-        INSIDE_DO_WHILE_CONDITION, NOT_IN_LOOP_OR_CONDITIONAL, INSIDE_CONDITIONAL_EXP_TRUE_ARM, INSIDE_CONDITIONAL_EXP_FALSE_ARM
+        INSIDE_DO_WHILE_CONDITION, IN_SAFE_PLACE, INSIDE_CONDITIONAL_EXP_TRUE_ARM, INSIDE_CONDITIONAL_EXP_FALSE_ARM, INSIDE_SHORT_CIRCUIT_EXP_RHS
     }
     scopeStatus;
 
     /** Default constructor. Initializes everything to NULL. */
-    FunctionCallInheritedAttribute() : currentScope(NULL), lastStatement(NULL), scopeStatus(NOT_IN_LOOP_OR_CONDITIONAL) { }
+    FunctionCallInheritedAttribute() : currentScope(NULL), lastStatement(NULL), scopeStatus(IN_SAFE_PLACE) { }
 };
 
 /** Stores a function call expression, along with associated information about its context. */
@@ -61,7 +61,7 @@ class FunctionEvaluationOrderTraversal : public AstTopDownBottomUpProcessing<Fun
 public:
     /** Traverses the subtree of the given AST node and finds all function calls in
      * function-evaluation order. */
-    static std::vector<FunctionCallInfo> GetFunctionCalls(SgNode* root);
+    static std::pair< std::vector<FunctionCallInfo>, std::vector<FunctionCallInfo> > GetFunctionCalls(SgNode* root);
 
     /** Visits AST nodes in pre-order */
     FunctionCallInheritedAttribute evaluateInheritedAttribute(SgNode* astNode, FunctionCallInheritedAttribute parentAttribute);
@@ -69,13 +69,18 @@ public:
     /** Visits AST nodes in post-order. This is function-evaluation order. */
     bool evaluateSynthesizedAttribute(SgNode* astNode, FunctionCallInheritedAttribute parentAttribute, SynthesizedAttributesList);
 
+    /// Returns true if the function call has no side effects.
+    virtual bool IsFunctionCallSideEffectFree(SgFunctionCallExp* functionCall);
+
 private:
 
     //! Private constructor. Use the static method to access the functionality of this class.
 
     FunctionEvaluationOrderTraversal() { }
 
-    /** All the function calls seen so far. */
-    std::vector<FunctionCallInfo> functionCalls;
+    /** All the function calls seen so far that can be normalized. */
+    std::vector<FunctionCallInfo> normalizableFunctionCalls;
+    /** All the function calls seen so far that can't be normalized. */
+    std::vector<FunctionCallInfo> nonNormalizableFunctionCalls;
 };
 

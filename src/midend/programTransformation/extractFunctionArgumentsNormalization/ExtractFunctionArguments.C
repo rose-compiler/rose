@@ -10,10 +10,10 @@ using namespace std;
 using namespace boost;
 
 
-/** Perform the function argument extraction on all function calls in the given subtree of the AST.
- * Returns true on sucess, false on failure (unsupported code). */
-void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
-{
+/** Performs the function argument extraction on all function calls in the given subtree of the AST. */
+/** It does not do transofrmations in places where it is not safe. If you pass doUnsafeNormalization= true, we will normalize all callsites ignoring the safety (Suggested by Markus Schordan) */
+
+void ExtractFunctionArguments::NormalizeTree(SgNode* tree, bool doUnsafeNormalization) {
     // First Normalize each single statememnt body into a block body
     // This transformation is necessary to provide scope to newly created temporaries
     // Note: if this transofrmation is already done, it is benign to rerun it
@@ -22,14 +22,171 @@ void ExtractFunctionArguments::NormalizeTree(SgNode* tree)
     SingleStatementToBlockNormalizer singleStatementToBlockNormalizer;
     singleStatementToBlockNormalizer.Normalize(tree);
     
-    //Get all functions in function evaluation order
-    vector<FunctionCallInfo> functionCalls = FunctionEvaluationOrderTraversal::GetFunctionCalls(tree);
+
     
-    foreach(const FunctionCallInfo& functionCallInfo, functionCalls)
-    {
+    // Obtain functions that are candidates for normalizing (first) and those which are not condidates (second)
+    // non candidates are those which are present in places from where it is unsafe to lift: e.g., : while(Foo(Bar())){}
+    this->functionCalls = FunctionEvaluationOrderTraversal::GetFunctionCalls(tree);
+    
+    // Normalize each function from safe place
+    foreach(const FunctionCallInfo& functionCallInfo, this->functionCalls.first) {
         RewriteFunctionCallArguments(functionCallInfo);
     }
+    
+    // if doUnsafeNormalization is true, we will normalize calls which are not safe
+    if(doUnsafeNormalization){
+        foreach(const FunctionCallInfo& functionCallInfo, this->functionCalls.second) {
+            RewriteFunctionCallArguments(functionCallInfo);
+        }        
+    }
+    
 }
+
+
+/*
+    return a vector of temporaries introduced during the translation process
+ */
+std::vector<SgVariableDeclaration*> ExtractFunctionArguments::GetTemporariesIntroduced() {
+    return this->temporariesIntroduced;
+}
+
+/** Returns true if the given expression refers to a variable. This could include using the
+ * dot and arrow operator to access member variables. A comma op counts as a variable references
+ * if all its members are variable references (not just the last expression in the list). */
+bool isVariableReference(SgExpression* expression)
+{
+    if (isSgVarRefExp(expression))
+    {
+        return true;
+    }
+    else if (isSgThisExp(expression))
+    {
+        return true;
+    }
+    else if (isSgDotExp(expression))
+    {
+        SgDotExp* dotExpression = isSgDotExp(expression);
+        return isVariableReference(dotExpression->get_lhs_operand()) &&
+        isVariableReference(dotExpression->get_rhs_operand());
+    }
+    else if (isSgArrowExp(expression))
+    {
+        SgArrowExp* arrowExpression = isSgArrowExp(expression);
+        return isVariableReference(arrowExpression->get_lhs_operand()) &&
+        isVariableReference(arrowExpression->get_rhs_operand());
+    }
+    else if (isSgCommaOpExp(expression))
+    {
+        //Comma op where both the lhs and th rhs are variable references.
+        //The lhs would be semantically meaningless since it doesn't have any side effects
+        SgCommaOpExp* commaOp = isSgCommaOpExp(expression);
+        return isVariableReference(commaOp->get_lhs_operand()) &&
+        isVariableReference(commaOp->get_rhs_operand());
+    }
+    else if (isSgPointerDerefExp(expression) || isSgCastExp(expression) || isSgAddressOfOp(expression))
+    {
+        return isVariableReference(isSgUnaryOp(expression)->get_operand());
+    }
+    else
+    {
+        return false;
+    }
+}
+
+/* Given the expression which is the argument to a function call, returns true if that
+    expression is trivial. Trivial expressions are those which are simple variable references or constants.
+ */
+
+bool ExtractFunctionArguments::IsFunctionArgumentTrivial(SgExpression* argument) {
+    while ((isSgPointerDerefExp(argument) || isSgCastExp(argument) || isSgAddressOfOp(argument))) {
+        argument = isSgUnaryOp(argument)->get_operand();
+    }
+    
+    SgArrowExp* arrowExp = isSgArrowExp(argument);
+    if (arrowExp && isSgThisExp(arrowExp->get_lhs_operand()))
+        return true;
+    
+    // We don't lift these simple types
+    if (isVariableReference(argument) || isSgValueExp(argument))
+        return true;
+    
+    return false;
+}
+
+
+/* Given a vector of function call sites returns true if every argument of every function call is a trivial expression
+    (IsFunctionArgumentTrivial). Such functions don't need to be normalized.
+ */
+bool ExtractFunctionArguments::AreAllFunctionCallsTrivial(std::vector<FunctionCallInfo> functions){
+    foreach(FunctionCallInfo functionCallInfo, functions){
+        foreach(SgExpression* arg, functionCallInfo.functionCall->get_args()->get_expressions()){
+            if (!IsFunctionArgumentTrivial(arg)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+/* Given a vector of function call sites, returns true if every argument 
+   at every function call site is either trivial (IsFunctionArgumentTrivial) or can be normalized (FunctionArgumentCanBeNormalized).
+ */
+bool ExtractFunctionArguments::AreAllFunctionCallsNormalizable(std::vector<FunctionCallInfo> functions){
+    foreach(FunctionCallInfo functionCallInfo, functions){
+        foreach(SgExpression* arg, functionCallInfo.functionCall->get_args()->get_expressions()){
+            if (!IsFunctionArgumentTrivial(arg) && !FunctionArgumentCanBeNormalized(arg)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+
+/*
+    IsNormalized: Given a subtree, returns true if every argument of every function call is a trivial arguemnt.
+*/
+
+bool ExtractFunctionArguments::IsNormalized(SgNode* tree){
+    // Obtain functions that are candidates for normalizing (first) and those which are not condidates (second)
+    // non candidates are those which are present in places from where it is unsafe to lift: e.g., : while(Foo(Bar())){}
+    pair< std::vector<FunctionCallInfo>, std::vector<FunctionCallInfo> > fCalls = FunctionEvaluationOrderTraversal::GetFunctionCalls(tree);
+
+    //Make sure all arguemnts of all SAFE place functions calls are trivial
+    if(!AreAllFunctionCallsTrivial(fCalls.first))
+       return false;
+
+    //Make sure all arguemnts of all NON-SAFE place functions calls are also trivial
+    if(!AreAllFunctionCallsTrivial(fCalls.second))
+        return false;
+
+    // All are trivial
+    return true;
+}
+
+
+/*
+    IsNormalizable: Given a subtree, returns true if every argument of every function call is a either trivial arguemnt or
+    present in a SAFE place from where lifting is possible. 
+*/
+
+bool ExtractFunctionArguments::IsNormalizable(SgNode* tree){
+    // Obtain functions that are candidates for normalizing (first) and those which are not condidates (second)
+    // non candidates are those which are present in places from where it is unsafe to lift: e.g., : while(Foo(Bar())){}
+    pair< std::vector<FunctionCallInfo>, std::vector<FunctionCallInfo> > fCalls = FunctionEvaluationOrderTraversal::GetFunctionCalls(tree);
+
+    //Make sure all arguemnts of all SAFE place functions calls are either trivial or normalizable
+    if(!AreAllFunctionCallsNormalizable(fCalls.first))
+        return false;
+    
+    // Must be trivail in NON SAFE places
+    if(!AreAllFunctionCallsTrivial(fCalls.second))
+        return false;
+    
+    // We can normalize
+    return true;
+}
+
 
 /** Given the information about a function call (obtained through a traversal), extract its arguments
  * into temporary variables where it is necessary.
@@ -82,53 +239,36 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
         //Insert the temporary variable declaration
         InsertStatement(tempVarDeclaration, functionCallInfo.tempVarDeclarationLocation, functionCallInfo);
         
+        // remember the introduced temp so that it can be queried
+        temporariesIntroduced.push_back(tempVarDeclaration);
+        
         //Replace the argument with the new temporary variable
         SageInterface::replaceExpression(arg, tempVarReference);
     }
 }
 
-/** Returns true if the given expression refers to a variable. This could include using the
- * dot and arrow operator to access member variables. A comma op counts as a variable references
- * if all its members are variable references (not just the last expression in the list). */
-bool isVariableReference(SgExpression* expression)
+
+// If we have a limitation in normalizing the function return false
+bool ExtractFunctionArguments::FunctionArgumentCanBeNormalized(SgExpression* argument)
 {
-    if (isSgVarRefExp(expression))
+    while ((isSgPointerDerefExp(argument) || isSgCastExp(argument) || isSgAddressOfOp(argument)))
     {
-        return true;
+        argument = isSgUnaryOp(argument)->get_operand();
     }
-    else if (isSgThisExp(expression))
-    {
-        return true;
-    }
-    else if (isSgDotExp(expression))
-    {
-        SgDotExp* dotExpression = isSgDotExp(expression);
-        return isVariableReference(dotExpression->get_lhs_operand()) &&
-        isVariableReference(dotExpression->get_rhs_operand());
-    }
-    else if (isSgArrowExp(expression))
-    {
-        SgArrowExp* arrowExpression = isSgArrowExp(expression);
-        return isVariableReference(arrowExpression->get_lhs_operand()) &&
-        isVariableReference(arrowExpression->get_rhs_operand());
-    }
-    else if (isSgCommaOpExp(expression))
-    {
-        //Comma op where both the lhs and th rhs are variable references.
-        //The lhs would be semantically meaningless since it doesn't have any side effects
-        SgCommaOpExp* commaOp = isSgCommaOpExp(expression);
-        return isVariableReference(commaOp->get_lhs_operand()) &&
-        isVariableReference(commaOp->get_rhs_operand());
-    }
-    else if (isSgPointerDerefExp(expression) || isSgCastExp(expression) || isSgAddressOfOp(expression))
-    {
-        return isVariableReference(isSgUnaryOp(expression)->get_operand());
-    }
-    else
-    {
+    // Don't include SgConstructorInitializer since it will be called even on the temporary, so avoid double copy.
+    if (isSgFunctionRefExp(argument) || isSgMemberFunctionRefExp(argument) || isSgConstructorInitializer(argument))
+        return false;
+    
+    // Unknow Template type expressions can't be normalized.
+    if (isSgTypeUnknown(argument->get_type()) || isSgMemberFunctionType(argument->get_type())) {
+        //printf("\n Skipping over SgTypeUnknown/SgMemberFunctionType  expr");
         return false;
     }
+    
+    return true;
 }
+
+
 
 /** Given the expression which is the argument to a function call, returns true if that
  * expression should be pulled out into a temporary variable on a separate line.
@@ -137,29 +277,13 @@ bool isVariableReference(SgExpression* expression)
 
 bool ExtractFunctionArguments::FunctionArgumentNeedsNormalization(SgExpression* argument)
 {
-
-    while ((isSgPointerDerefExp(argument) || isSgCastExp(argument) || isSgAddressOfOp(argument)))
-    {
-        argument = isSgUnaryOp(argument)->get_operand();
-    }
+    // Trivial argument don't need to be listed
     
-    SgArrowExp* arrowExp = isSgArrowExp(argument);
-    if (arrowExp && isSgThisExp(arrowExp->get_lhs_operand()))
-        return false;
-    
-    //For right now, move everything but a constant value or an explicit variable access
-    // Don't include SgConstructorInitializer since it will be called even on the temporary, so avoid double copy.
-    if (isVariableReference(argument) || isSgValueExp(argument) || isSgFunctionRefExp(argument)
-        || isSgMemberFunctionRefExp(argument) || isSgConstructorInitializer(argument))
+    if (IsFunctionArgumentTrivial(argument))
         return false;
 
-    // Unknow Template type expressions can't be normalized.
-    if (isSgTypeUnknown(argument->get_type()) || isSgMemberFunctionType(argument->get_type())) {
-        //printf("\n Skipping over SgTypeUnknown/SgMemberFunctionType  expr");
-        return false;
-    }
-
-    return true;
+    // true/false based on our ability to normalize the argument
+    return FunctionArgumentCanBeNormalized(argument);
 }
 
 
@@ -228,11 +352,11 @@ void ExtractFunctionArguments::InsertStatement(SgStatement* newStatement, SgStat
 
 /** Traverses the subtree of the given AST node and finds all function calls in
  * function-evaluation order. */
-/*static*/std::vector<FunctionCallInfo> FunctionEvaluationOrderTraversal::GetFunctionCalls(SgNode* root)
+/*static*/pair< std::vector<FunctionCallInfo>, std::vector<FunctionCallInfo> > FunctionEvaluationOrderTraversal::GetFunctionCalls(SgNode* root)
 {
     FunctionEvaluationOrderTraversal t;
     FunctionCallInheritedAttribute rootAttribute;
     t.traverse(root, rootAttribute);
     
-    return t.functionCalls;
+    return pair< std::vector<FunctionCallInfo>, std::vector<FunctionCallInfo> > (t.normalizableFunctionCalls, t.nonNormalizableFunctionCalls);
 }
