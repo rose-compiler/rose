@@ -144,7 +144,7 @@ create table fr_results_precision_recall as
         ( (select 1.0*true_positives from fr_results limit 1) / ( ( select true_positives from fr_results  limit 1 ) + (select false_negatives from fr_results limit 1) )  ) as sensitivity,
         ( (select 1.0*true_negatives from fr_results limit 1) / ( ( select true_negatives from fr_results  limit 1) + (select false_positives from fr_results limit 1)) ) as specificity,
         ( (select 1.0*true_positives from fr_results limit 1) / ( ( select true_positives from fr_results  limit 1) + (select false_positives from fr_results  limit 1 ))) as precision,
-        ( (select 1.0*true_positives from fr_results limit 1) / (   select count(*) from fr_clone_pairs) ) as recall;
+        ( (select 1.0*true_positives from fr_results limit 1) / (   select expected_positives from fr_results limit 1) ) as recall;
 
 -------------------------------------------------------------------------------------------------------------------------------
 -- Some queries to show the results
