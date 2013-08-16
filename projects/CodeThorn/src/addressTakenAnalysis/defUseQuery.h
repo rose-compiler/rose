@@ -193,6 +193,12 @@ public:
   void visit(SgDeleteExp* sgn);
   void visit(SgNewExp* sgn);
   void visit(SgTypeIdOp* sgn);
+  void visit(SgVarArgOp* sgn);
+  void visit(SgVarArgStartOp* sgn);
+  void visit(SgVarArgStartOneOperandOp* sgn);
+  void visit(SgVarArgEndOp* sgn);
+  void visit(SgVarArgCopyOp* sgn);
+
   
   // different intializers
   void visit(SgAssignInitializer* sgn);

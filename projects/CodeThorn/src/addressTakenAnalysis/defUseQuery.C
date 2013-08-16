@@ -526,11 +526,17 @@ void ExprWalker::visit(SgDotExp* sgn)
   duvi = lduvi + rduvi;
 }
 
+// (a, b) = 10 is legal
+// b is modified
+// we process first operand with no-mod semantics
+// second operand is processed with mod semantics if the flag is true
 void ExprWalker::visit(SgCommaOpExp* sgn)
 {
+  // SgNode* lhs_op = sgn->get_lhs_operand();
+  // SgNode* rhs_op = sgn->get_rhs_operand();
   std::ostringstream oss;
-  oss << sgn->class_name() << "not imeplemented\n";
-  throw std::runtime_error(oss.str());
+  oss << "Expression " << sgn->class_name() << " not imeplemented\n";
+  throw std::runtime_error(oss.str());  
 }
 
 /**********************************************************
@@ -787,6 +793,67 @@ void ExprWalker::visit(SgTypeIdOp* sgn)
   }
 }
 
+void ExprWalker::visit(SgVarArgOp* sgn)
+{
+  SgNode* operand = sgn->get_operand_expr();
+  DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(operand, vidm, false);
+  if(!rduvi.isDefSetEmpty()) {
+    rduvi.copyDefToUse();
+  }
+  duvi = rduvi;
+}
+
+void ExprWalker::visit(SgVarArgStartOp* sgn)
+{
+  SgNode* first_op = sgn->get_lhs_operand();
+  SgNode* second_op = sgn->get_rhs_operand();
+  DefUseVarsInfo lduvi, rduvi;
+  lduvi = getDefUseVarsInfo_rec(first_op, vidm, false);
+  rduvi = getDefUseVarsInfo_rec(second_op, vidm, false);
+  if(!lduvi.isDefSetEmpty())
+    lduvi.copyDefToUse();
+  if(!rduvi.isDefSetEmpty())
+    rduvi.isDefSetEmpty();
+  duvi = lduvi + rduvi;
+}
+
+void ExprWalker::visit(SgVarArgStartOneOperandOp* sgn)
+{
+  SgNode* operand = sgn->get_operand_expr();
+  DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(operand, vidm, false);
+  if(!rduvi.isDefSetEmpty()) {
+    rduvi.copyDefToUse();
+  }
+  duvi = rduvi;
+}
+
+void ExprWalker::visit(SgVarArgEndOp* sgn)
+{
+  SgNode* operand = sgn->get_operand_expr();
+  DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(operand, vidm, false);
+  // not sure if assignment to arguments of t
+  // these macros is possible
+  // checking for side-effects anyway
+  if(!rduvi.isDefSetEmpty()) {
+    rduvi.copyDefToUse();
+  }
+  duvi = rduvi;
+}
+
+void ExprWalker::visit(SgVarArgCopyOp* sgn)
+{
+  SgNode* first_op = sgn->get_lhs_operand();
+  SgNode* second_op = sgn->get_rhs_operand();
+  DefUseVarsInfo lduvi, rduvi;
+  lduvi = getDefUseVarsInfo_rec(first_op, vidm, false);
+  rduvi = getDefUseVarsInfo_rec(second_op, vidm, false);
+  if(!lduvi.isDefSetEmpty())
+    lduvi.copyDefToUse();
+  if(!rduvi.isDefSetEmpty())
+    rduvi.isDefSetEmpty();
+  duvi = lduvi + rduvi;
+}
+
 /***************************************************
  * ExprWalker for different intializer expressions *
  ***************************************************/
@@ -920,7 +987,7 @@ void ExprWalker::visit(SgExpression* sgn)
 {
   std::ostringstream oss;
   oss << "Not handling " << sgn->class_name() << " expression \n";
-  throw oss.str();
+  throw std::runtime_error(oss.str());
 }
 
 DefUseVarsInfo ExprWalker::getDefUseVarsInfo()
