@@ -70,9 +70,9 @@ create table fr_function_pairs as
 
         -- Uncomment the following lines to consider only those pairs of functions where both functions passed for
         -- at least one of the same input groups
-        join fr_fio as test1 on f1.id = test1.func_id
-        join fr_fio as test2 on f2.id = test2.func_id and test1.igroup_id = test2.igroup_id
-        where test1.status = 0 and test2.status = 0
+        -- join fr_fio as test1 on f1.id = test1.func_id
+        --join fr_fio as test2 on f2.id = test2.func_id and test1.igroup_id = test2.igroup_id
+        --where test1.status = 0 and test2.status = 0
 
         -- Uncomment the following lines to consider only those pairs of functions where all tests were successful
 --      except
@@ -120,21 +120,44 @@ create table fr_false_negatives as
 create table fr_false_positives as
     select * from fr_negative_pairs intersect select func1_id, func2_id from fr_clone_pairs;
 
+create temporary table fr_results_tmp as
+    select
+        (select count(*) from fr_positive_pairs) as expected_positives,
+        (select count(*) from fr_negative_pairs) as expected_negatives,
+        (select count(*) from fr_false_negatives) as false_negatives,
+        (select count(*) from fr_false_positives) as false_positives,
+        ((select count(*) from fr_clone_pairs) - (select count(*) from fr_false_positives)) as true_positives,
+        ( (select count(*) from fr_negative_pairs) - (select count(*) from fr_false_negatives) ) as true_negatives,
+        ((select 100.0*count(*) from fr_false_negatives) / (select count(*) from fr_positive_pairs)) as fn_percent,
+        ((select 100.0*count(*) from fr_false_positives) / (select count(*) from fr_negative_pairs)) as fp_percent,
+        (((select count(*) from fr_clone_pairs) - (select count(*) from fr_false_positives)) / (select count(*) from fr_positive_pairs)) as tp_percent;
+
 -- False negative rate is the ratio of false negatives to expected positives
 -- False positive rate is the ratio of false positives to expected negatives
 create table fr_results as
     select
-        (select count(*) from fr_positive_pairs) as "Expected Positives",
-        (select count(*) from fr_negative_pairs) as "Expected Negatives",
-        (select count(*) from fr_false_negatives) as "False Negatives",
-        (select count(*) from fr_false_positives) as "False Positives",
-        ((select 100.0*count(*) from fr_false_negatives) / (select count(*) from fr_positive_pairs)) as "FN Percent",
-        ((select 100.0*count(*) from fr_false_positives) / (select count(*) from fr_negative_pairs)) as "FP Percent";
+        (select expected_positives from fr_results_tmp limit 1) as expected_positives,
+        (select expected_negatives from fr_results_tmp limit 1) as expected_negatives,
+        (select false_negatives from fr_results_tmp limit 1) as false_negatives,
+        (select false_positives from fr_results_tmp limit 1) as false_positives,
+        (select true_positives  from fr_results_tmp limit 1) as true_positives,
+        (select fn_percent from fr_results_tmp limit 1) as fn_percent,
+        (select fp_percent from fr_results_tmp limit 1) as fp_percent,
+        (select tp_percent from fr_results_tmp limit 1) as tp_percent;
+
+create table fr_results_precision_recall as
+    select
+        ( (select 1.0*true_positives from fr_results_tmp limit 1) / ( ( select true_positives from fr_results_tmp  limit 1 ) + (select false_negatives from fr_results_tmp limit 1) )  ) as sensitivity,
+        ( (select 1.0*true_negatives from fr_results_tmp limit 1) / ( ( select true_negatives from fr_results_tmp  limit 1) + (select false_positives from fr_results_tmp limit 1)) ) as specificity,
+        ( (select 1.0*true_positives from fr_results_tmp limit 1) / ( ( select true_positives from fr_results_tmp  limit 1) + (select false_positives from fr_results_tmp  limit 1 ))) as precision,
+        ( (select 1.0*true_positives from fr_results_tmp limit 1) / (   select count(*) from fr_clone_pairs) ) as recall;
 
 -------------------------------------------------------------------------------------------------------------------------------
 -- Some queries to show the results
 
 select * from fr_results;
+select * from fr_results_precision_recall;
+
 
 -- select 'The following table contains all the functions of interest: functions that
 -- * appear in all specimens exactly once each
