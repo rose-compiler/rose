@@ -320,7 +320,6 @@ kindToInteger(size_t kind){
 		case x86_sysenter: vk = 50; break;
 
 		default: {
-				 vk = -1; break;
 			 }
 	}
         return vk;
@@ -444,23 +443,25 @@ createVectorsForAllInstructions(SgNode* top, const std::string& filename, const 
   std::cout << "Number of instructions: " << insns.size() << std::endl;
   size_t insnCount = insns.size();
 
-   static SignatureVector vec;
-    vec.clear();
-    
-    string normalizedUnparsedInstructions;
-    
-    // Unparse the normalized forms of the instructions
-    for (size_t insnNumber = 0; insnNumber < insnCount; ++insnNumber) {
-      SgAsmx86Instruction* insn = insns[insnNumber];
-      size_t var = getInstructionKind(insn);
-      var = kindToInteger(var);
 
-      if(var != x86_nop) ++vec.totalForVariant(var);
-    }
+  if(insnCount >= windowSize){
+	  static SignatureVector vec;
+	  vec.clear();
 
-    addVectorToDatabase(tx, vec, functionName, functionId, 0, normalizedUnparsedInstructions,
-		    &insns[0], filename, insnCount, 1);
+	  string normalizedUnparsedInstructions;
 
+	  // Unparse the normalized forms of the instructions
+	  for (size_t insnNumber = 0; insnNumber < insnCount; ++insnNumber) {
+		  SgAsmx86Instruction* insn = insns[insnNumber];
+		  size_t var = getInstructionKind(insn);
+		  var = kindToInteger(var);
+
+		  if(var >= 0) ++vec.totalForVariant(var);
+	  }
+
+	  addVectorToDatabase(tx, vec, functionName, functionId, 0, normalizedUnparsedInstructions,
+			  &insns[0], filename, insnCount, 1);
+  }
     addFunctionStatistics(tx, filename, functionName, functionId, insnCount);
     return retVal;
 }
