@@ -1,0 +1,45 @@
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+SUBDIRS =
+
+INCLUDES = $(ROSE_INCLUDES) -I$(top_builddir)
+
+## The grammar generator (ROSETTA) should use its own template repository
+CXX_TEMPLATE_REPOSITORY_PATH = .
+
+libastmatchingSources = \
+    matcherparser.C RoseAst.C AstMatching.C MatchOperation.C
+
+noinst_LTLIBRARIES = libastmatching.la
+libastprocessing_la_SOURCES = $(libastmatchingSources)
+libastprocessing_la_LIBADD = $(CXX_TEMPLATE_OBJECTS)
+libastprocessing_la_DEPENDENCIES = $(libastmatching_a_SOURCES)
+
+clean-local:
+	rm -rf matcherparser.h matcherparser.C Templates.DB ii_files ti_files cxx_templates
+
+distclean-local:
+	rm -rf Templates.DB
+
+include_HEADERS = \
+   RoseAst.h matcherparser_decls.h AstMatching.h MatchOperation.h
+
+if HAVE_YICES
+include_HEADERS += yicesParserLib.h
+endif
+
+EXTRA_DIST = astmatching_documentation.txt CMakeLists.txt
+# AstMatching.docs
+
+test_code_size:
+	g++ -E -I$(top_builddir) -I. $(ROSE_INCLUDES) $(srcdir)/AstNodeVisitMapping.C | wc -l
+
+BUILT_SOURCES = matcherparser.C
+
+# explicit rules because of multiple bison parser
+matcherparser.C: $(srcdir)/matcherlexer.ll $(srcdir)/matcherparser.yy
+	$(YACC) $(YFLAGS) -d -p matcherparser $(srcdir)/matcherparser.yy # generates y.tab.h/c
+	$(LEX) $(LFLAGS) $(AM_LFLAGS) -Pmatcherparser $(srcdir)/matcherlexer.ll
+	mv y.tab.h matcherparser.h
+	cat lex.yy.c y.tab.c > matcherparser.C
+	rm lex.yy.c y.tab.c
