@@ -25,14 +25,21 @@ class DataDependenceVisualizer {
   LabelSet defLabels(SgNode* expr, VariableId useVar);
   Label getLabel(SgNode* stmt);
   SgNode* getNode(Label lab);
-  void generateDot(SgNode* root, string fileName);
+  //! requires UDAstAttribute
+  void generateDefUseDotGraph(SgNode* root, string fileName);
+  //! requires UDAstAttribute
+  void generateUseDefDotGraph(SgNode* root, string fileName);
   string nodeSourceCode(Label lab);
   bool _showSourceCode;
  private:
+  enum DDVMode { DDVMODE_USEDEF, DDVMODE_DEFUSE };
+  void generateDot(SgNode* root, string fileName);
   UDAstAttribute* getUDAstAttribute(SgNode* expr,string attributeName);
+  bool existsUDAstAttribute(SgNode* expr,string attributeName);
   Labeler* _labeler;
   VariableIdMapping* _variableIdMapping;
   string  _useDefAttributeName;
+  int _mode;
 };
 
 #endif

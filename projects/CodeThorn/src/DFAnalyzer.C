@@ -12,15 +12,13 @@
 using namespace CodeThorn;
 
 template<typename LatticeType>
+DFAnalyzer<LatticeType>::DFAnalyzer():_labeler(0), _cfanalyzer(0),_numberOfLabels(0),_solverMode(DFAnalyzer<LatticeType>::SOLVERMODE_STANDARD) {
+}
+
+template<typename LatticeType>
 void DFAnalyzer<LatticeType>::setExtremalLabels(set<Label> extremalLabels) {
   _extremalLabels=extremalLabels;
 }
-template<typename LatticeType>
-DFAnalyzer<LatticeType>::DFAnalyzer()
-  :
-   _labeler(0),
-   _cfanalyzer(0)
-{}
 
 template<typename LatticeType>
 void
@@ -38,8 +36,8 @@ DFAnalyzer<LatticeType>::initialize(SgProject* root) {
   _flow=_cfanalyzer->flow(root);
   cout << "STATUS: Building CFGs finished."<<endl;
   //  if(boolOptions["reduce-cfg"]) {
-  //    int cnt=cfanalyzer->reduceBlockBeginNodes(flow);
-  //    cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
+  int cnt=_cfanalyzer->reduceBlockBeginNodes(_flow);
+  cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
   //}
   cout << "INIT: Intra-Flow OK. (size: " << _flow.size() << " edges)"<<endl;
   InterFlow interFlow=_cfanalyzer->interFlow(_flow);
@@ -122,10 +120,52 @@ DFAnalyzer<LatticeType>::determineExtremalLabels(SgNode* startFunRoot=0) {
   }
   cout<<"STATUS: Number of extremal labels: "<<_extremalLabels.size()<<endl;
 }
+
+// runs until worklist is empty
+template<typename LatticeType>
+void
+DFAnalyzer<LatticeType>::solveAlgorithm1() {
+  cout<<"INFO: solver (algorithm1) started."<<endl;
+  ROSE_ASSERT(!_workList.isEmpty());
+  while(!_workList.isEmpty()) {
+    Label lab=_workList.take();
+    //cout<<"INFO: worklist size: "<<_workList.size()<<endl;
+    //_analyzerData[lab]=_analyzerData comb transfer(lab,combined(Pred));
+    LabelSet pred=_flow.pred(lab);
+    LatticeType inInfo;
+    for(LabelSet::iterator i=pred.begin();i!=pred.end();++i) {
+      inInfo.combine(_analyzerData[*i]);
+    }
+    
+    LatticeType newInfo=transfer(lab,inInfo);
+    //cout<<"NewInfo: ";newInfo.toStream(cout);cout<<endl;
+    if(!newInfo.approximatedBy(_analyzerData[lab])) {
+      _analyzerData[lab].combine(newInfo);
+      LabelSet succ;
+	  succ=_flow.succ(lab);
+	  _workList.add(succ);
+    } else {
+      // no new information was computed. Nothing to do.
+    }
+  }
+  cout<<"INFO: solver (algorithm1) finished."<<endl;
+}
+
 // runs until worklist is empty
 template<typename LatticeType>
 void
 DFAnalyzer<LatticeType>::solve() {
+  switch(_solverMode) {
+  case SOLVERMODE_STANDARD: solveAlgorithm1();break;
+  case SOLVERMODE_DYNAMICLOOPFIXPOINTS: solveAlgorithm2();break;
+  default: cerr<<"Error: improper solver mode."<<endl; 
+	exit(1);
+  }
+}
+// runs until worklist is empty
+template<typename LatticeType>
+void
+DFAnalyzer<LatticeType>::solveAlgorithm2() {
   cout<<"INFO: solver started."<<endl;
   ROSE_ASSERT(!_workList.isEmpty());
   while(!_workList.isEmpty()) {

@@ -748,7 +748,7 @@ int main( int argc, char * argv[] ) {
     AssertionExtractor assertionExtractor(&analyzer);
     assertionExtractor.computeLabelVectorOfEStates();
     assertionExtractor.annotateAst();
-    AnalysisResultAnnotator ara;
+    AnalysisResultAnnotator ara(analyzer.getLabeler());
     ara.annotateAnalysisResultAttributesAsComments(sageProject,"ctgen-pre-condition");
     cout << "STATUS: Generated assertions."<<endl;
   }
@@ -814,7 +814,7 @@ int main( int argc, char * argv[] ) {
     cout << "INFO: Annotating analysis results."<<endl;
     attachTermRepresentation(sageProject);
     attachPointerExprLists(sageProject);
-    AnalysisResultAnnotator ara;
+    AnalysisResultAnnotator ara(analyzer.getLabeler());
     ara.annotateAnalysisResultAttributesAsComments(sageProject,"codethorn-term-representation");
     ara.annotateAnalysisResultAttributesAsComments(sageProject,"codethorn-pointer-expr-lists");
   }

@@ -13,6 +13,8 @@ RDAnalyzer::RDAnalyzer() {
 }
 
 void RDAnalyzer::attachResultsToAst(string attributeName) {
+  
+#if 0
   size_t lab=0;
   for(std::vector<RDLattice>::iterator i=_analyzerData.begin();
       i!=_analyzerData.end();
@@ -21,6 +23,22 @@ void RDAnalyzer::attachResultsToAst(string attributeName) {
     _labeler->getNode(lab)->setAttribute(attributeName,new RDAnalysisAstAttribute(&(*i)));
     lab++;
   }
+#else
+  LabelSet labelSet=_flow.nodeLabels();
+  for(LabelSet::iterator i=labelSet.begin();
+      i!=labelSet.end();
+      ++i) {
+	ROSE_ASSERT(*i<_analyzerData.size());
+    // TODO: need to add a solution for nodes with multiple associated labels (e.g. functio call)
+	if(!_labeler->isFunctionExitLabel(*i) /* && !_labeler->isCallReturnLabel(lab)*/)
+	  if(*i >=0 ) {
+		_labeler->getNode(*i)->setAttribute(attributeName,new RDAnalysisAstAttribute(&_analyzerData[*i]));
+		cout << "ATTACHED RD DATA: "<<(dynamic_cast<RDAnalysisAstAttribute*>(_labeler->getNode(*i)->getAttribute(attributeName)))->getPostInfoString()<<endl;
+	  }
+	
+  }
+
+#endif
 }
 
 RDAnalyzer::iterator RDAnalyzer::begin() {
@@ -60,6 +78,8 @@ RDLattice RDAnalyzer::transfer(Label lab, RDLattice element) {
 		//assert
 		element.insertPair(lab,formalParameterVarId);
 	  }
+	} else {
+	  ROSE_ASSERT(0);
 	}
   }
 
@@ -81,7 +101,9 @@ RDLattice RDAnalyzer::transfer(Label lab, RDLattice element) {
         element.eraseAllPairsWithVariableId(varId);
       }
       return element;
-    }
+	} else {
+	  ROSE_ASSERT(0);
+	}
   }
   ///////////////////////////////////////////
   
@@ -100,45 +122,23 @@ RDLattice RDAnalyzer::transfer(Label lab, RDLattice element) {
 }
 
 void RDAnalyzer::transfer_assignment(SgAssignOp* node, Label& lab, RDLattice& element) {
-    // update analysis information
-    // this is only correct for RERS12-C programs
-    // 1) remove all pairs with lhs-variableid
-    // 2) add (lab,lhs.varid)
-    
-    // (for programs with pointers we require a set here)
-#if 1
-  // TODO: USEDEF FUNCTIONS HERE (ACTIVATE)
+  // update analysis information
+  // this is only correct for RERS12-C programs
+  // 1) remove all pairs with lhs-variableid
+  // 2) add (lab,lhs.varid)
+  
+  // (for programs with pointers we require a set here)
   VariableIdSet lhsVarIds=AnalysisAbstractionLayer::defVariablesInExpression(node,_variableIdMapping);  
-#else
-    VariableIdSet lhsVarIds=determineLValueVariableIdSet(SgNodeHelper::getLhs(node));
-#endif
   if(lhsVarIds.size()>1) {
-      // since multiple memory locations may be modified, we cannot know which one will be updated and can only add information
-      for(VariableIdMapping::VariableIdSet::iterator i=lhsVarIds.begin();i!=lhsVarIds.end();++i) {
-        element.insertPair(lab,*i);
-      }
-    } else if(lhsVarIds.size()==1) {
-      // one unique memory location (variable). We can remove all pairs with this variable
-      VariableId var=*lhsVarIds.begin();
-      element.eraseAllPairsWithVariableId(var);
-      element.insertPair(lab,var);
-    }
+	// since multiple memory locations may be modified, we cannot know which one will be updated and can only add information
+	for(VariableIdMapping::VariableIdSet::iterator i=lhsVarIds.begin();i!=lhsVarIds.end();++i) {
+	  element.insertPair(lab,*i);
+	}
+  } else if(lhsVarIds.size()==1) {
+	// one unique memory location (variable). We can remove all pairs with this variable
+	VariableId var=*lhsVarIds.begin();
+	element.eraseAllPairsWithVariableId(var);
+	element.insertPair(lab,var);
+  }
 }
 
-// TODO: USEDEF FUNCTIONS : ELIMINATE THIS FUNCTION
-// this function assumes that a pointer to an AST subtree representing a LHS of an assignment has been passed
-VariableIdMapping::VariableIdSet RDAnalyzer::determineLValueVariableIdSet(SgNode* node) {
-  VariableIdMapping::VariableIdSet resultSet;
-  // only x=... is supported yet
-  if(SgVarRefExp* lhsVar=isSgVarRefExp(node)) {
-    resultSet.insert(_variableIdMapping.variableId(lhsVar));
-  } else {
-    cout<<"WARNING: unsupported lhs of assignment: "<<SgNodeHelper::nodeToString(node)<<" ... grabbing all variables."<<std::endl;
-    RoseAst ast(node);
-    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-      if(SgVarRefExp* lhsVar_i=isSgVarRefExp(node))
-        resultSet.insert(_variableIdMapping.variableId(lhsVar_i));
-    }
-  }
-  return resultSet;
-}

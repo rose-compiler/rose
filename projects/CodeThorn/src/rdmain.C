@@ -22,9 +22,13 @@ void createUDAstAttributeFromRDAttribute(Labeler* labeler, string rdAttributeNam
   long labelNum=labeler->numberOfLabels();
   for(long i=0;i<labelNum;++i) {
 	Label lab=i;
+	cout <<"X1"<<endl;
 	SgNode* node=labeler->getNode(lab);
 	RDAnalysisAstAttribute* rdAttr=dynamic_cast<RDAnalysisAstAttribute*>(node->getAttribute(rdAttributeName));
-	node->setAttribute(udAttributeName,new UDAstAttribute(rdAttr, node));
+	cout <<"X2"<<endl;
+	if(rdAttr)
+	  node->setAttribute(udAttributeName,new UDAstAttribute(rdAttr, node));
+	cout <<"X3"<<endl;
   }
 }
 
@@ -35,7 +39,11 @@ void printAttributes(Labeler* labeler, VariableIdMapping* vim, string attributeN
 	Label lab=i;
 	SgNode* node=labeler->getNode(i);
 	cout<<"@Label "<<lab<<":";
-	dynamic_cast<T*>(node->getAttribute(attributeName))->toStream(cout,vim);
+	T* node0=dynamic_cast<T*>(node->getAttribute(attributeName));
+	if(node0)
+	  node0->toStream(cout,vim);
+	else
+	  cout<<" none.";
 	cout<<endl;
   }
 }
@@ -52,17 +60,18 @@ int main(int argc, char* argv[]) {
   SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
   rdAnalyzer->determineExtremalLabels(startFunRoot);
   rdAnalyzer->run();
-  cout << "INFO: attaching results to AST."<<endl;
+  cout << "INFO: attaching RD-data to AST."<<endl;
   rdAnalyzer->attachResultsToAst("rd-analysis");
-  cout << "INFO: generating visualization data."<<endl;
   printAttributes<RDAnalysisAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"rd-analysis");
+  cout << "INFO: generating and attaching UD-data to AST."<<endl;
   createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis", "ud-analysis");
+  cout << "INFO: generating visualization data."<<endl;
   DataDependenceVisualizer ddvis(rdAnalyzer->getLabeler(),
                                  rdAnalyzer->getVariableIdMapping(),
 								 "ud-analysis");
   printAttributes<UDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"ud-analysis");
   //ddvis._showSourceCode=false; // for large programs
-  ddvis.generateDot(root,"datadependencegraph.dot");
+  ddvis.generateDefUseDotGraph(root,"datadependencegraph.dot");
 
   // generate ICFG visualization
   write_file("cfg.dot", rdAnalyzer->getFlow()->toDot(rdAnalyzer->getLabeler()));
@@ -74,7 +83,7 @@ int main(int argc, char* argv[]) {
   delete rda;
 
   cout << "INFO: annotating analysis results as comments."<<endl;
-  AnalysisResultAnnotator ara;
+  AnalysisResultAnnotator ara(rdAnalyzer->getLabeler());
   ara.annotateAnalysisResultAttributesAsComments(root, "rd-analysis");
   cout << "INFO: generating annotated source code."<<endl;
   backend(root);

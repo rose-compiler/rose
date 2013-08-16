@@ -19,8 +19,9 @@ void RDLattice::toStream(ostream& os, VariableIdMapping* vim) {
       os<<(*i).first;
       os<<",";
       if(vim)
-        os<<vim->variableName((*i).second)<<"_";
-      os<<(*i).second.toString();
+        os<<vim->uniqueShortVariableName((*i).second);
+	  else
+		os<<(*i).second.toString();
       os<<")";
     }
     os<<"}";

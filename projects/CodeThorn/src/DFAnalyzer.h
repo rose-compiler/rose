@@ -22,8 +22,9 @@ namespace CodeThorn {
 template<typename LatticeType>
 class DFAnalyzer {
  public:
-  void setExtremalLabels(set<Label> extremalLabels);
   DFAnalyzer();
+  enum SolverMode { SOLVERMODE_STANDARD, SOLVERMODE_DYNAMICLOOPFIXPOINTS };
+  void setExtremalLabels(set<Label> extremalLabels);
   void initialize(SgProject*);
   void determineExtremalLabels(SgNode*);
   void run();
@@ -36,6 +37,7 @@ class DFAnalyzer {
   Labeler* getLabeler();
   VariableIdMapping* getVariableIdMapping();
   Flow* getFlow() { return &_flow; }
+  void setSolverMode(SolverMode);
  protected:
   virtual LatticeType transfer(Label label, LatticeType element);
   virtual void solve();
@@ -44,11 +46,14 @@ class DFAnalyzer {
   CFAnalyzer* _cfanalyzer;
   set<Label> _extremalLabels;
   Flow _flow;
-
   // following members are initialized by function initialize()
   long _numberOfLabels; 
   vector<LatticeType> _analyzerData;
   WorkListSeq<Label> _workList;
+ private:
+  SolverMode _solverMode;
+  void solveAlgorithm1();
+  void solveAlgorithm2();
 };
 
 } // end of namespace

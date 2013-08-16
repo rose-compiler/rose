@@ -5,10 +5,11 @@
 
 #include "Labeler.h"
 #include "VariableIdMapping.h"
+#include "AnalysisAstAttribute.h"
 
 using namespace CodeThorn;
 
-class RDAnalysisAbstractAstAttribute : public AstAttribute {
+class RDAnalysisAbstractAstAttribute : public AnalysisResultAttribute {
  public:
   typedef pair<Label,VariableId> RDPair;
   typedef set<RDPair> RDPairSet;

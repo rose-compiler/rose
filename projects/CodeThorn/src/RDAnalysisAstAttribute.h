@@ -7,8 +7,10 @@
 #include "VariableIdMapping.h"
 #include "RDAnalysisAbstractAstAttribute.h"
 #include "RDLattice.h"
+#include <string>
 
 using namespace CodeThorn;
+using std::string;
 
 class RDAnalysisAstAttribute : public RDAnalysisAbstractAstAttribute {
  public:
@@ -22,6 +24,8 @@ class RDAnalysisAstAttribute : public RDAnalysisAbstractAstAttribute {
   iterator end();
   virtual ~RDAnalysisAstAttribute();
   void toStream(ostream& os, VariableIdMapping* vim);
+  string getPreInfoString();
+  string getPostInfoString();
  private:
   RDLattice* _elem;
 };
