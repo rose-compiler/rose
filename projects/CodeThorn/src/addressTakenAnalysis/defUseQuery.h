@@ -116,8 +116,8 @@ public:
 
   friend DefUseVarsInfo operator+(const DefUseVarsInfo& duvi1, const DefUseVarsInfo& duvi2);
 
-  std::string varsInfoPrettyPrint(VarsInfo& vars_info, VariableIdMapping& vidm);
-  std::string functionCallExpSetPrettyPrint(FunctionCallExpSet& func_calls_info);
+  static std::string varsInfoPrettyPrint(VarsInfo& vars_info, VariableIdMapping& vidm);
+  static std::string functionCallExpSetPrettyPrint(FunctionCallExpSet& func_calls_info);
 
   // for more readability
   std::string str(VariableIdMapping& vidm);  

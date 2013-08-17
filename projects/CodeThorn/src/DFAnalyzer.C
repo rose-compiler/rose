@@ -12,7 +12,36 @@
 using namespace CodeThorn;
 
 template<typename LatticeType>
-DFAnalyzer<LatticeType>::DFAnalyzer():_labeler(0), _cfanalyzer(0),_numberOfLabels(0),_solverMode(DFAnalyzer<LatticeType>::SOLVERMODE_STANDARD) {
+DFAnalyzer<LatticeType>::DFAnalyzer():
+  _labeler(0),
+  _cfanalyzer(0),
+  _numberOfLabels(0),
+  _preInfoIsValid(false),
+  _solverMode(DFAnalyzer<LatticeType>::SOLVERMODE_STANDARD)
+{}
+
+template<typename LatticeType>
+LatticeType DFAnalyzer<LatticeType>::getPreInfo(Label lab) {
+  if(!_preInfoIsValid) {
+	computeAllPreInfo();
+	ROSE_ASSERT(_preInfoIsValid==true);
+  }
+  return *_analyzerDataPreInfo[lab];
+}
+
+template<typename LatticeType>
+LatticeType DFAnalyzer<LatticeType>::getPostInfo(Label lab) {
+  return *_analyzerData[lab];
+}
+
+template<typename LatticeType>
+void DFAnalyzer<LatticeType>::computeAllPreInfo() {
+  for(long lab=0;lab<_labeler->numberOfLabels();++lab) {
+    LatticeType le;
+	computePreInfo(lab,le);
+    _analyzerDataPreInfo[lab]=le;
+  }
+  _preInfoIsValid=true;
 }
 
 template<typename LatticeType>
@@ -46,6 +75,7 @@ DFAnalyzer<LatticeType>::initialize(SgProject* root) {
   cout << "INIT: IntraInter-CFG OK. (size: " << _flow.size() << " edges)"<<endl;
   for(long l=0;l<_labeler->numberOfLabels();++l) {
     LatticeType le;
+    _analyzerDataPreInfo.push_back(le);
     _analyzerData.push_back(le);
   }
   cout << "STATUS: initialized monotone data flow analyzer for "<<_analyzerData.size()<< " labels."<<endl;
@@ -131,11 +161,8 @@ DFAnalyzer<LatticeType>::solveAlgorithm1() {
     Label lab=_workList.take();
     //cout<<"INFO: worklist size: "<<_workList.size()<<endl;
     //_analyzerData[lab]=_analyzerData comb transfer(lab,combined(Pred));
-    LabelSet pred=_flow.pred(lab);
-    LatticeType inInfo;
-    for(LabelSet::iterator i=pred.begin();i!=pred.end();++i) {
-      inInfo.combine(_analyzerData[*i]);
-    }
+	LatticeType inInfo;
+	computePreInfo(lab,inInfo);
     
     LatticeType newInfo=transfer(lab,inInfo);
     //cout<<"NewInfo: ";newInfo.toStream(cout);cout<<endl;
@@ -161,7 +188,18 @@ DFAnalyzer<LatticeType>::solve() {
   default: cerr<<"Error: improper solver mode."<<endl; 
 	exit(1);
   }
+  _preInfoIsValid=false;
 }
+template<typename LatticeType>
+
+void
+DFAnalyzer<LatticeType>::computePreInfo(Label lab,LatticeType& inInfo) {
+  LabelSet pred=_flow.pred(lab);
+  for(LabelSet::iterator i=pred.begin();i!=pred.end();++i) {
+	inInfo.combine(_analyzerData[*i]);
+  }
+}
+
 // runs until worklist is empty
 template<typename LatticeType>
 void
@@ -172,12 +210,9 @@ DFAnalyzer<LatticeType>::solveAlgorithm2() {
     Label lab=_workList.take();
     //cout<<"INFO: worklist size: "<<_workList.size()<<endl;
     //_analyzerData[lab]=_analyzerData comb transfer(lab,combined(Pred));
-    LabelSet pred=_flow.pred(lab);
-    LatticeType inInfo;
-    for(LabelSet::iterator i=pred.begin();i!=pred.end();++i) {
-      inInfo.combine(_analyzerData[*i]);
-    }
-    
+
+	LatticeType inInfo;
+	computePreInfo(lab,inInfo);
     LatticeType newInfo=transfer(lab,inInfo);
     //cout<<"NewInfo: ";newInfo.toStream(cout);cout<<endl;
     bool isLoopCondition=SgNodeHelper::isLoopCond(_labeler->getNode(lab));

@@ -22,13 +22,10 @@ void createUDAstAttributeFromRDAttribute(Labeler* labeler, string rdAttributeNam
   long labelNum=labeler->numberOfLabels();
   for(long i=0;i<labelNum;++i) {
 	Label lab=i;
-	cout <<"X1"<<endl;
 	SgNode* node=labeler->getNode(lab);
 	RDAnalysisAstAttribute* rdAttr=dynamic_cast<RDAnalysisAstAttribute*>(node->getAttribute(rdAttributeName));
-	cout <<"X2"<<endl;
 	if(rdAttr)
 	  node->setAttribute(udAttributeName,new UDAstAttribute(rdAttr, node));
-	cout <<"X3"<<endl;
   }
 }
 
@@ -64,7 +61,7 @@ int main(int argc, char* argv[]) {
   rdAnalyzer->attachResultsToAst("rd-analysis");
   printAttributes<RDAnalysisAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"rd-analysis");
   cout << "INFO: generating and attaching UD-data to AST."<<endl;
-  createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis", "ud-analysis");
+  createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis-pre-info", "ud-analysis");
   cout << "INFO: generating visualization data."<<endl;
   DataDependenceVisualizer ddvis(rdAnalyzer->getLabeler(),
                                  rdAnalyzer->getVariableIdMapping(),
@@ -84,7 +81,7 @@ int main(int argc, char* argv[]) {
 
   cout << "INFO: annotating analysis results as comments."<<endl;
   AnalysisResultAnnotator ara(rdAnalyzer->getLabeler());
-  ara.annotateAnalysisResultAttributesAsComments(root, "rd-analysis");
+  ara.annotateAnalysisResultAttributesAsComments(root, "rd-analysis-post-info");
   cout << "INFO: generating annotated source code."<<endl;
   backend(root);
 

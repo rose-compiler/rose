@@ -24,16 +24,23 @@ void RDAnalyzer::attachResultsToAst(string attributeName) {
     lab++;
   }
 #else
+  cout << "STATUS: STARTING PRE-INFO COMPUTATION."<<endl;
+  if(!_preInfoIsValid)
+	computeAllPreInfo();
+  cout << "STATUS: ALL PRE-INFO-COMPUTED."<<endl;
+
   LabelSet labelSet=_flow.nodeLabels();
   for(LabelSet::iterator i=labelSet.begin();
       i!=labelSet.end();
       ++i) {
 	ROSE_ASSERT(*i<_analyzerData.size());
-    // TODO: need to add a solution for nodes with multiple associated labels (e.g. functio call)
+    // TODO: need to add a solution for nodes with multiple associated labels (e.g. function call)
 	if(!_labeler->isFunctionExitLabel(*i) /* && !_labeler->isCallReturnLabel(lab)*/)
 	  if(*i >=0 ) {
-		_labeler->getNode(*i)->setAttribute(attributeName,new RDAnalysisAstAttribute(&_analyzerData[*i]));
-		cout << "ATTACHED RD DATA: "<<(dynamic_cast<RDAnalysisAstAttribute*>(_labeler->getNode(*i)->getAttribute(attributeName)))->getPostInfoString()<<endl;
+		_labeler->getNode(*i)->setAttribute(attributeName+"-pre-info",new RDAnalysisAstAttribute(&_analyzerDataPreInfo[*i]));
+		_labeler->getNode(*i)->setAttribute(attributeName+"-post-info",new RDAnalysisAstAttribute(&_analyzerData[*i]));
+		cout << "ATTACHED RD DATA-PRE: "<<(dynamic_cast<RDAnalysisAstAttribute*>(_labeler->getNode(*i)->getAttribute(attributeName+"-pre-info")))->getPostInfoString()<<endl;
+		cout << "ATTACHED RD DATA-POST: "<<(dynamic_cast<RDAnalysisAstAttribute*>(_labeler->getNode(*i)->getAttribute(attributeName+"-post-info")))->getPostInfoString()<<endl;
 	  }
 	
   }
@@ -110,8 +117,8 @@ RDLattice RDAnalyzer::transfer(Label lab, RDLattice element) {
   if(isSgExprStatement(node))
     node=SgNodeHelper::getExprStmtChild(node);
 
-  if(SgAssignOp* assignOp=isSgAssignOp(node)) {
-    transfer_assignment(assignOp,lab,element);
+  if(SgExpression* expr=isSgExpression(node)) {
+    transferExpression(expr,lab,element);
   }
 #if 0
   cout << "RDAnalyzer: called transfer function. result: ";
@@ -121,24 +128,28 @@ RDLattice RDAnalyzer::transfer(Label lab, RDLattice element) {
   return element;
 }
 
-void RDAnalyzer::transfer_assignment(SgAssignOp* node, Label& lab, RDLattice& element) {
+void RDAnalyzer::transferExpression(SgExpression* node, Label& lab, RDLattice& element) {
   // update analysis information
   // this is only correct for RERS12-C programs
   // 1) remove all pairs with lhs-variableid
   // 2) add (lab,lhs.varid)
   
   // (for programs with pointers we require a set here)
-  VariableIdSet lhsVarIds=AnalysisAbstractionLayer::defVariablesInExpression(node,_variableIdMapping);  
-  if(lhsVarIds.size()>1) {
+  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariablesInExpression(node,_variableIdMapping);  
+  if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
 	// since multiple memory locations may be modified, we cannot know which one will be updated and can only add information
-	for(VariableIdMapping::VariableIdSet::iterator i=lhsVarIds.begin();i!=lhsVarIds.end();++i) {
+	for(VariableIdMapping::VariableIdSet::iterator i=defVarIds.begin();i!=defVarIds.end();++i) {
 	  element.insertPair(lab,*i);
 	}
-  } else if(lhsVarIds.size()==1) {
+	assert(0);
+  } else if(defVarIds.size()==1) {
 	// one unique memory location (variable). We can remove all pairs with this variable
-	VariableId var=*lhsVarIds.begin();
+	VariableId var=*defVarIds.begin();
 	element.eraseAllPairsWithVariableId(var);
 	element.insertPair(lab,var);
   }
 }
 
+void RDAnalyzer::transferDeclaration(SgDeclarationStatement* node, Label& lab, RDLattice& element) {
+  // TODO
+}

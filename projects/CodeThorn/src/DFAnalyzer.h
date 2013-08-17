@@ -38,6 +38,8 @@ class DFAnalyzer {
   VariableIdMapping* getVariableIdMapping();
   Flow* getFlow() { return &_flow; }
   void setSolverMode(SolverMode);
+  LatticeType getPreInfo(Label lab);
+  LatticeType getPostInfo(Label lab);
  protected:
   virtual LatticeType transfer(Label label, LatticeType element);
   virtual void solve();
@@ -48,12 +50,17 @@ class DFAnalyzer {
   Flow _flow;
   // following members are initialized by function initialize()
   long _numberOfLabels; 
+  vector<LatticeType> _analyzerDataPreInfo;
   vector<LatticeType> _analyzerData;
   WorkListSeq<Label> _workList;
+ protected:
+  bool _preInfoIsValid;
+  void computeAllPreInfo();
  private:
-  SolverMode _solverMode;
   void solveAlgorithm1();
   void solveAlgorithm2();
+  void computePreInfo(Label lab,LatticeType& info);
+  SolverMode _solverMode;
 };
 
 } // end of namespace
