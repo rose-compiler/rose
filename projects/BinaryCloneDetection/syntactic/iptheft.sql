@@ -36,16 +36,26 @@ create table ipt_combined_pairs as
 begin transaction;
 
 drop table if exists fr_results;
+drop table if exists fr_results_precision_recall;
 drop table if exists fr_false_positives;
 drop table if exists fr_false_negatives;
+drop table if exists fr_true_positives;
+drop table if exists fr_true_negatives;
 drop table if exists fr_clone_pairs;
 drop table if exists fr_negative_pairs;
 drop table if exists fr_positive_pairs;
+drop table if exists fr_true_negatives;
+drop table if exists fr_true_positives;
 drop table if exists fr_function_pairs;
-drop table if exists fr_cluster_pairs;
+drop index if exists fr_fio_func_id;
+drop table if exists fr_fio;
 drop table if exists fr_functions;
 drop table if exists fr_funcnames;
 drop table if exists fr_specimens;
+drop table if exists fr_settings;
+
+
+
 
 -- Files that are binary specimens; i.e., not shared libraries, etc.
 create table fr_specimens as
@@ -122,29 +132,34 @@ create table fr_false_positives as
 create table fr_true_positives as
     select * from fr_positive_pairs intersect select func1_id, func2_id from fr_clone_pairs;
 
+create table fr_true_negatives as
+    select * from fr_negative_pairs except select func1_id, func2_id from fr_clone_pairs;
+
+
 -- False negative rate is the ratio of false negatives to expected positives
 -- False positive rate is the ratio of false positives to expected negatives
 create table fr_results as
     select
         (select count(*) from fr_positive_pairs)  as expected_positives,
         (select count(*) from fr_negative_pairs)  as expected_negatives,
-        (select count(*) from fr_false_negatives) as false_negatives,
-        (select count(*) from fr_false_positives) as false_positives,
+        ((select count(*) from fr_true_positives ) + (select count(*) from fr_false_positives) ) as positives,
+        ((select count(*) from fr_true_negatives ) + (select count(*) from fr_false_negatives) ) as negatives,
         (select count(*) from fr_true_positives ) as true_positives,
-        ((select count(*) from fr_negative_pairs ) - (select count(*) from fr_false_negatives) ) as true_negatives,
-        ((select 100.0*count(*) from fr_false_negatives) / (select count(*) from fr_positive_pairs)) as fn_percent,
-        ((select 100.0*count(*) from fr_false_positives) / (select count(*) from fr_negative_pairs)) as fp_percent,
-        (((select count(*) from fr_clone_pairs) - (select count(*) from fr_false_positives)) / (select count(*) from fr_positive_pairs)) as tp_percent;
-
+        (select count(*) from fr_true_negatives ) as true_negatives,
+        (select count(*) from fr_false_positives) as false_positives,
+        (select count(*) from fr_false_negatives) as false_negatives,
+        ((select 100.0*count(*) from fr_true_positives ) / ((select count(*) from fr_true_positives ) + (select count(*) from fr_false_positives))) as tp_percent,
+        (100.0*((select 1.0*count(*) from fr_negative_pairs ) - (select 1.0*count(*) from fr_false_negatives) ) / (select count(*) from fr_negative_pairs)) as tn_percent,
+        ((select 100.0*count(*) from fr_false_positives) / ((select count(*) from fr_true_positives ) + (select count(*) from fr_false_positives) )) as fp_percent,
+        ((select 100.0*count(*) from fr_false_negatives) / (select count(*) from fr_negative_pairs)) as fn_percent
+;
+ 
 create table fr_results_precision_recall as
     select
-        ( (select 1.0*true_positives from fr_results limit 1) / ( ( select true_positives from fr_results  limit 1 ) + (select false_negatives from fr_results limit 1) )  ) as sensitivity,
-        ( (select 1.0*true_negatives from fr_results limit 1) / ( ( select true_negatives from fr_results  limit 1) + (select false_positives from fr_results limit 1)) ) as specificity,
-        ( (select 1.0*true_positives from fr_results limit 1) / ( ( select true_positives from fr_results  limit 1) + (select false_positives from fr_results  limit 1 ))) as precision,
-        ( (select 1.0*true_positives from fr_results limit 1) / (   select expected_positives from fr_results limit 1) ) as recall;
-
-
-
+        ( (select 100.0*true_positives from fr_results limit 1) / ( ( select true_positives from fr_results  limit 1 ) + (select false_negatives from fr_results limit 1) )  ) as recall,
+        ( (select 100.0*true_negatives from fr_results limit 1) / ( ( select true_negatives from fr_results  limit 1) + (select false_positives from fr_results limit 1)) ) as specificity,
+        ( (select 100.0*true_positives from fr_results limit 1) / ( ( select true_positives from fr_results  limit 1) + (select false_positives from fr_results  limit 1 ))) as precision
+;
 
 -------------------------------------------------------------------------------------------------------------------------------
 -- Some queries to show the results
