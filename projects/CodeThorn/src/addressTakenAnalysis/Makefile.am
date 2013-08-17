@@ -38,33 +38,45 @@ ADDRESSTAKENANALYSIS_TESTS_PASSING = \
 	$(srcdir)/tests/test3.cpp \
 	$(srcdir)/tests/test4.cpp \
 	$(srcdir)/tests/test5.cpp \
+	$(srcdir)/tests/test6.cpp \
 	$(srcdir)/tests/test8.cpp \
 	$(srcdir)/tests/test9.cpp \
 	$(srcdir)/tests/test10.cpp \
 	$(srcdir)/tests/test11.cpp \
 	$(srcdir)/tests/test12.cpp \
+	$(srcdir)/tests/test13.cpp \
 	$(srcdir)/tests/test14.cpp \
 	$(srcdir)/tests/test15.cpp \
 	$(srcdir)/tests/test16.cpp \
+	$(srcdir)/tests/test17.cpp \
 	$(srcdir)/tests/test18.cpp \
+	$(srcdir)/tests/test19.cpp \
 	$(srcdir)/tests/test20.cpp \
 	$(srcdir)/tests/test21.cpp \
 	$(srcdir)/tests/test22.cpp \
 	$(srcdir)/tests/test23.cpp \
-	$(srcdir)/tests/test24.cpp
-
-ADDRESSTAKENANALYSIS_TESTS_FAILING = \
-	$(srcdir)/tests/test6.cpp \     # has r-value references
-	$(srcdir)/tests/test13.cpp \    # not handling SgConditionalExp
-	$(srcdir)/tests/test19.cpp \    # not handling SgConditionalExp	
-	$(srcdir)/tests/test17.cpp \    # not handling SgThisExp
-	$(srcdir)/tests/test7.cpp \
+	$(srcdir)/tests/test24.cpp \
 	$(srcdir)/tests/test25.cpp \
-	$(srcdir)/tests/test26.cpp \
 	$(srcdir)/tests/test27.cpp \
 	$(srcdir)/tests/test28.cpp \
 	$(srcdir)/tests/test29.cpp \
 	$(srcdir)/tests/test30.cpp \
+	$(srcdir)/tests/test31.cpp \
+	$(srcdir)/tests/test33.cpp \
+	$(srcdir)/tests/test34.cpp \
+	$(srcdir)/tests/test35.cpp \
+	$(srcdir)/tests/test36.cpp \
+	$(srcdir)/tests/test37.cpp \
+	$(srcdir)/tests/test38.cpp \
+	$(srcdir)/tests/test39.cpp \
+	$(srcdir)/tests/test41.c
+
+
+ADDRESSTAKENANALYSIS_TESTS_FAILING = \
+	$(srcdir)/tests/test7.cpp \ # has r-value references
+	$(srcdir)/tests/test26.cpp \ # comma op
+	$(srcdir)/tests/test40.cpp \ # comma op
+	$(srcdir)/tests/test32.cpp \
 	$(srcdir)/tests/arrow_test.cpp
 
 ADDRESSTAKENANALYSIS_CHECKS = ${ADDRESSTAKENANALYSIS_TESTS:.cpp=.cpp-o}
