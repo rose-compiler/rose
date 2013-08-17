@@ -40,8 +40,8 @@ static int anim_i = 0;
 #endif
 
 ////////////////////////////////////////////////////////////////////////
-// Convenience loop macros for dealing with boost graphs
-// Hopefully, they increase the readability of the algorithms
+// Convenience loop macros for dealing with boost graphs.
+// Hopefully they increase the readability of the algorithms.
 ////////////////////////////////////////////////////////////////////////
 #define FOR_EACH_TRANSITION(TRANSITION)                              \
   for (TransitionGraph::const_iterator TRANSITION=transitionGraph.begin(); \
@@ -815,15 +815,16 @@ public:
       ListOfAValue l = constraints.getEqVarConst(v);
       for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
         if (lval->isConstInt()) {
-       // A=1, B=2
-       return c == rersChar(lval->getIntValue());
+	  // A=1, B=2
+	  return c == rersChar(lval->getIntValue());
         }
       }
       // var != c
       l = constraints.getNeqVarConst(v);
       for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
         if (lval->isConstInt()) {
-       return (c != rersChar(lval->getIntValue()));
+	  if (c == rersChar(lval->getIntValue()))
+	    return false;
         }
       }
    
