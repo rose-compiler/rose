@@ -204,6 +204,8 @@ public:
   void visit(SgAssignInitializer* sgn);
   void visit(SgConstructorInitializer* sgn);
   void visit(SgAggregateInitializer* sgn);
+  void visit(SgCompoundInitializer* sgn);
+  void visit(SgDesignatedInitializer* sgn);
 
   // basic cases for the recursive function
   // that represent variables

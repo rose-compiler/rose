@@ -884,6 +884,37 @@ void ExprWalker::visit(SgAggregateInitializer* sgn)
   duvi = rduvi;
 }
 
+void ExprWalker::visit(SgCompoundInitializer* sgn)
+{
+  SgExprListExp* initializers = sgn->get_initializers();
+  DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(initializers, vidm, false);
+  if(!rduvi.isDefSetEmpty())
+    rduvi.copyDefToUse();
+  duvi = rduvi;
+}
+
+void ExprWalker::visit(SgDesignatedInitializer* sgn)
+{
+  // only applicable to C
+  // designated initializer assigns members of variables, struct and union
+  // entire struct/array/union is initialized by a parent initializer
+  // SgDesignatedInitializer only initializes individual members
+  // array example: int arr[4] = { 1, [2] = 4, [3] = 5}; 
+  // SgDesignatedInitializer is used to initialize element [2] and [3]
+  // No VariableId for arr[2] or arr[3]
+  // struct example; struct { int a; }; struct A sA = { .a = 0};
+  // here member 'a' is initalized using SgDesignatedInitializer
+  // In the struct example 'a' has a VariableId whereas in the array example
+  // we don't have any VariableId
+  // we cannot be always consistent on what is defined
+  // simply collect all the variables that can be used
+  
+  SgInitializer* initializer = sgn->get_memberInit();
+  duvi = getDefUseVarsInfo_rec(initializer, vidm, false);
+  if(!duvi.isDefSetEmpty())
+    duvi.copyDefToUse();
+}
+
 /****************************
  * ExprWalker for basic cases
  ****************************/
