@@ -168,8 +168,14 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgConditionalExp* sgn)
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionRefExp* sgn)
 {
   // not sure what do to do here
-  // we dont have VariabldId for SgFunctionRefExp
-  ROSE_ASSERT(0);
+  // functions can potentially modify anything
+  // ROSE_ASSERT(0);
+}
+
+void ComputeAddressTakenInfo::OperandToVariableId::visit(SgMemberFunctionRefExp* sgn)
+{
+  // do nothing
+  // functions can potentially modify anything
 }
 
 // A& foo() { return A(); }
@@ -178,7 +184,9 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionRefExp* sgn)
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallExp* sgn)
 {
   // we can look at its defintion and process the return expression ?
-  ROSE_ASSERT(0);
+  // function calls can modify anything
+  // do nothing
+  // ROSE_ASSERT(0);
 }
 
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgNode* sgn)
