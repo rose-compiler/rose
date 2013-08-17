@@ -539,6 +539,65 @@ void ExprWalker::visit(SgCommaOpExp* sgn)
   throw std::runtime_error(oss.str());  
 }
 
+void ExprWalker::visit(SgDotStarOp* sgn)
+{
+  // dot star operator has implicit dereferencing semantics
+  // flag is raised depending on whether we are on lhs or rhs
+  // operands are collected with use semantics
+  SgNode* lhs_op = sgn->get_lhs_operand();
+  SgNode* rhs_op = sgn->get_rhs_operand();  
+  DefUseVarsInfo lduvi, rduvi;
+  lduvi = getDefUseVarsInfo_rec(lhs_op, vidm, false);
+  rduvi = getDefUseVarsInfo_rec(rhs_op, vidm, false);
+  if(!lduvi.isDefSetEmpty()) {
+    lduvi.copyDefToUse();
+  }
+  if(!rduvi.isDefSetEmpty()) {
+    rduvi.copyDefToUse();
+  }
+  duvi = lduvi + rduvi;
+  
+  // raise flag based on which side of SgAssignOp
+  if(isModExpr) {
+    VarsInfo& def_vars_info = duvi.getDefVarsInfoMod();
+    def_vars_info.second = true;
+  }
+  else {
+    VarsInfo& use_vars_info = duvi.getUseVarsInfoMod();
+    use_vars_info.second = true;
+  }   
+}
+
+void ExprWalker::visit(SgArrowStarOp* sgn)
+{
+  // arrow star operator has implicit dereferencing semantics
+  // raise the flag on both def and use
+  // flag is raised depending on whether we are on lhs or rhs
+  // operands are collected with use semantics
+  SgNode* lhs_op = sgn->get_lhs_operand();
+  SgNode* rhs_op = sgn->get_rhs_operand();  
+  DefUseVarsInfo lduvi, rduvi;
+  lduvi = getDefUseVarsInfo_rec(lhs_op, vidm, false);
+  rduvi = getDefUseVarsInfo_rec(rhs_op, vidm, false);
+  if(!lduvi.isDefSetEmpty()) {
+    lduvi.copyDefToUse();
+  }
+  if(!rduvi.isDefSetEmpty()) {
+    rduvi.copyDefToUse();
+  }
+  duvi = lduvi + rduvi;
+  
+  // raise flag based on which side of SgAssignOp
+  if(isModExpr) {
+    VarsInfo& def_vars_info = duvi.getDefVarsInfoMod();
+    def_vars_info.second = true;
+  }
+  else {
+    VarsInfo& use_vars_info = duvi.getUseVarsInfoMod();
+    use_vars_info.second = true;
+  }   
+}
+
 /**********************************************************
  * ExprWalker for SgBinaryOp with non-modifying semantics *
  **********************************************************/
@@ -574,13 +633,6 @@ void ExprWalker::visit(SgAndOp* sgn)
   visitSgBinaryOpNoMod(sgn);
 }
 
-void ExprWalker::visit(SgArrowStarOp* sgn)
-{
-  std::ostringstream oss;
-  oss << sgn->class_name() << "not imeplemented\n";
-  throw std::runtime_error(oss.str());
-}
-
 void ExprWalker::visit(SgBitAndOp* sgn)
 {
   visitSgBinaryOpNoMod(sgn);
@@ -599,13 +651,6 @@ void ExprWalker::visit(SgBitXorOp* sgn)
 void ExprWalker::visit(SgDivideOp* sgn)
 {
   visitSgBinaryOpNoMod(sgn);
-}
-
-void ExprWalker::visit(SgDotStarOp* sgn)
-{
-  std::ostringstream oss;
-  oss << sgn->class_name() << "not imeplemented\n";
-  throw std::runtime_error(oss.str());
 }
 
 void ExprWalker::visit(SgEqualityOp* sgn)
