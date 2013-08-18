@@ -58,15 +58,16 @@ int main(int argc, char* argv[]) {
   rdAnalyzer->determineExtremalLabels(startFunRoot);
   rdAnalyzer->run();
   cout << "INFO: attaching RD-data to AST."<<endl;
-  rdAnalyzer->attachResultsToAst("rd-analysis");
-  printAttributes<RDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"rd-analysis");
+  rdAnalyzer->attachInInfoToAst("rd-analysis-in");
+  rdAnalyzer->attachOutInfoToAst("rd-analysis-out");
+  printAttributes<RDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"rd-analysis-in");
   cout << "INFO: generating and attaching UD-data to AST."<<endl;
-  createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis-pre-info", "ud-analysis");
+  createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis-in", "ud-analysis");
   cout << "INFO: generating visualization data."<<endl;
   DataDependenceVisualizer ddvis(rdAnalyzer->getLabeler(),
                                  rdAnalyzer->getVariableIdMapping(),
 								 "ud-analysis");
-  printAttributes<UDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"ud-analysis");
+  //printAttributes<UDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"ud-analysis");
   //ddvis._showSourceCode=false; // for large programs
   ddvis.generateDefUseDotGraph(root,"datadependencegraph.dot");
 
@@ -74,16 +75,11 @@ int main(int argc, char* argv[]) {
   write_file("cfg.dot", rdAnalyzer->getFlow()->toDot(rdAnalyzer->getLabeler()));
   cout << "generated cfg.dot."<<endl;
 
-  // simple test
-  RDLattice elem;
-  RDAstAttribute* rda=new RDAstAttribute(&elem);
-  delete rda;
-
   cout << "INFO: annotating analysis results as comments."<<endl;
   AnalysisResultAnnotator ara(rdAnalyzer->getLabeler());
-  ara.annotateAnalysisResultAttributesAsComments(root, "rd-analysis-post-info");
+  ara.annotateAstAttributesAsCommentsBeforeStatements(root, "rd-analysis-in");
+  ara.annotateAstAttributesAsCommentsAfterStatements(root, "rd-analysis-out");
   cout << "INFO: generating annotated source code."<<endl;
-  backend(root);
-
+  root->unparse(0,0);
   return 0;
 }

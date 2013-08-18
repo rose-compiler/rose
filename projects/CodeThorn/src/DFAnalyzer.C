@@ -273,11 +273,10 @@ using std::string;
 
 class GeneralResultAttribute : public DFAstAttribute {
 public:
-  GeneralResultAttribute(string postinfo) { _postinfo="// "+postinfo;}
-  string getPreInfoString() { return ""; }
-  string getPostInfoString() { return _postinfo; }
+  GeneralResultAttribute(string info) { _info="// "+info;}
+  string toString() { return _info; }
 private:
-  string _postinfo;
+  string _info;
 };
 
 #include <sstream>

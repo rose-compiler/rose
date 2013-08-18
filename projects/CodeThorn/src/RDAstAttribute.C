@@ -9,8 +9,7 @@ void RDAstAttribute::toStream(ostream& os, VariableIdMapping* vim) {
   _elem->toStream(os,vim);
 }
 
-string RDAstAttribute::getPreInfoString() { return ""; }
-string RDAstAttribute::getPostInfoString() {
+string RDAstAttribute::toString() {
   stringstream ss; 
   toStream(ss,0);
   return ss.str();

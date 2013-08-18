@@ -20,8 +20,7 @@ using namespace CodeThorn;
 class AssertionAttribute : public DFAstAttribute {
 public:
   AssertionAttribute(string preCondition):_precond(preCondition) {}
-  string getPreInfoString() { return _precond; }
-  string getPostInfoString() { return ""; }
+  string toString() { return _precond; }
 private:
   string _precond;
 };

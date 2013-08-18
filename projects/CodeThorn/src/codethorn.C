@@ -42,8 +42,7 @@ void CodeThornLanguageRestrictor::initialize() {
 class TermRepresentation : public DFAstAttribute {
 public:
   TermRepresentation(SgNode* node) : _node(node) {}
-  string getPreInfoString() { return "// AST: "+astTermWithNullValuesToString(_node); }
-  string getPostInfoString() { return ""; }
+  string toString() { return "AstTerm: "+astTermWithNullValuesToString(_node); }
 private:
   SgNode* _node;
 };
@@ -53,13 +52,9 @@ public:
   PointerExprListAnnotation(SgNode* node) : _node(node) {
     //std::cout<<"DEBUG:generated: "+pointerExprToString(node)+"\n";
   }
-  string getPreInfoString() { 
-    if(true||isSgAssignOp(_node))
-      return "// POINTEREXPR: "+pointerExprToString(_node);
-    else
-      return "x";
+  string toString() { 
+	return "// POINTEREXPR: "+pointerExprToString(_node);
   }
-  string getPostInfoString() { return ""; }
 private:
   SgNode* _node;
 };
@@ -751,7 +746,7 @@ int main( int argc, char * argv[] ) {
     assertionExtractor.computeLabelVectorOfEStates();
     assertionExtractor.annotateAst();
     AnalysisResultAnnotator ara(analyzer.getLabeler());
-    ara.annotateAnalysisResultAttributesAsComments(sageProject,"ctgen-pre-condition");
+    ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"ctgen-pre-condition");
     cout << "STATUS: Generated assertions."<<endl;
   }
 
@@ -817,8 +812,8 @@ int main( int argc, char * argv[] ) {
     attachTermRepresentation(sageProject);
     attachPointerExprLists(sageProject);
     AnalysisResultAnnotator ara(analyzer.getLabeler());
-    ara.annotateAnalysisResultAttributesAsComments(sageProject,"codethorn-term-representation");
-    ara.annotateAnalysisResultAttributesAsComments(sageProject,"codethorn-pointer-expr-lists");
+    ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-term-representation");
+    ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-pointer-expr-lists");
   }
 
   if (boolOptions["annotate-results"]||boolOptions["generate-assertions"]) {

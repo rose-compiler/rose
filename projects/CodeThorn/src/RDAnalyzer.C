@@ -12,8 +12,17 @@ using namespace CodeThorn;
 RDAnalyzer::RDAnalyzer() {
 }
 
-void RDAnalyzer::attachResultsToAst(string attributeName) {
-  
+void RDAnalyzer::attachInInfoToAst(string attributeName) {
+  if(!_preInfoIsValid)
+	computeAllPreInfo();
+  attachInfoToAst(attributeName,true);
+}
+
+void RDAnalyzer::attachOutInfoToAst(string attributeName) {
+  attachInfoToAst(attributeName,false);
+}
+
+void RDAnalyzer::attachInfoToAst(string attributeName,bool inInfo) {
 #if 0
   size_t lab=0;
   for(std::vector<RDLattice>::iterator i=_analyzerData.begin();
@@ -24,11 +33,8 @@ void RDAnalyzer::attachResultsToAst(string attributeName) {
     lab++;
   }
 #else
-  cout << "STATUS: STARTING PRE-INFO COMPUTATION."<<endl;
-  if(!_preInfoIsValid)
+  if(inInfo && !_preInfoIsValid)
 	computeAllPreInfo();
-  cout << "STATUS: ALL PRE-INFO-COMPUTED."<<endl;
-
   LabelSet labelSet=_flow.nodeLabels();
   for(LabelSet::iterator i=labelSet.begin();
       i!=labelSet.end();
@@ -37,10 +43,10 @@ void RDAnalyzer::attachResultsToAst(string attributeName) {
     // TODO: need to add a solution for nodes with multiple associated labels (e.g. function call)
 	if(!_labeler->isFunctionExitLabel(*i) /* && !_labeler->isCallReturnLabel(lab)*/)
 	  if(*i >=0 ) {
-		_labeler->getNode(*i)->setAttribute(attributeName+"-pre-info",new RDAstAttribute(&_analyzerDataPreInfo[*i]));
-		_labeler->getNode(*i)->setAttribute(attributeName+"-post-info",new RDAstAttribute(&_analyzerData[*i]));
-		cout << "ATTACHED RD DATA-PRE: "<<(dynamic_cast<RDAstAttribute*>(_labeler->getNode(*i)->getAttribute(attributeName+"-pre-info")))->getPostInfoString()<<endl;
-		cout << "ATTACHED RD DATA-POST: "<<(dynamic_cast<RDAstAttribute*>(_labeler->getNode(*i)->getAttribute(attributeName+"-post-info")))->getPostInfoString()<<endl;
+		if(inInfo)
+		  _labeler->getNode(*i)->setAttribute(attributeName,new RDAstAttribute(&_analyzerDataPreInfo[*i]));
+		else
+		  _labeler->getNode(*i)->setAttribute(attributeName,new RDAstAttribute(&_analyzerData[*i]));
 	  }
 	
   }

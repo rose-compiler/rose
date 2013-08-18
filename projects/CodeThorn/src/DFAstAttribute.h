@@ -7,8 +7,7 @@ using std::string;
 class DFAstAttribute : public AstAttribute {
  public:
   // preInfoToString();
-  string virtual getPreInfoString();
-  string virtual getPostInfoString();
+  string virtual toString();
   ~DFAstAttribute();
 };
 

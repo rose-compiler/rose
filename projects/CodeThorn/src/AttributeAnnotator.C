@@ -12,7 +12,14 @@ using namespace std;
 AnalysisResultAnnotator::AnalysisResultAnnotator(Labeler* labeler):_labeler(labeler) {
 }
 
-void AnalysisResultAnnotator::annotateAnalysisResultAttributesAsComments(SgNode* node, string attributeName) {
+void AnalysisResultAnnotator::annotateAstAttributesAsCommentsBeforeStatements(SgNode* node, string attributeName) {
+  annotateAstAttributesAsComments(node,attributeName,PreprocessingInfo::before);
+}
+void AnalysisResultAnnotator::annotateAstAttributesAsCommentsAfterStatements(SgNode* node, string attributeName) {
+  annotateAstAttributesAsComments(node,attributeName,PreprocessingInfo::after);
+}
+
+void AnalysisResultAnnotator::annotateAstAttributesAsComments(SgNode* node, string attributeName,PreprocessingInfo::RelativePositionType posSpecifier) {
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
     if(SgStatement* stmt=dynamic_cast<SgStatement*>(*i)) {
@@ -24,12 +31,10 @@ void AnalysisResultAnnotator::annotateAnalysisResultAttributesAsComments(SgNode*
       // if this fails, no attribute was attached
       if(artAttribute) {
 		ROSE_ASSERT(_labeler);
-		cout << "@"<<stmt<<" "<<stmt->class_name()<<" FOUND LABEL: "<<_labeler->getLabel(stmt)<<endl;
-
+		//cout << "@"<<stmt<<" "<<stmt->class_name()<<" FOUND LABEL: "<<_labeler->getLabel(stmt)<<endl;
 		string labelString=_labeler->labelToString(_labeler->getLabel(stmt));
 		string commentStart="// ";
-        insertComment(commentStart+labelString+" "+"pre : "+artAttribute->getPreInfoString(),PreprocessingInfo::before,stmt);
-        insertComment(commentStart+labelString+" "+"post: "+artAttribute->getPostInfoString(),PreprocessingInfo::after,stmt);
+        insertComment(commentStart+labelString+": "+artAttribute->toString(),posSpecifier,stmt);
       }
     }
   }

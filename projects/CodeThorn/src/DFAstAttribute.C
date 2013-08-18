@@ -2,8 +2,7 @@
 #include "DFAstAttribute.h"
 
 // default behavior
-string DFAstAttribute::getPreInfoString() { return "pre-info: undefined";}
-string DFAstAttribute::getPostInfoString() { return "post-info: undefined";}
+string DFAstAttribute::toString() { return "undefined";}
 
 DFAstAttribute::~DFAstAttribute() {
   // virtual destructor intentionally empty

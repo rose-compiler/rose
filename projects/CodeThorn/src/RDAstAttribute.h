@@ -24,8 +24,7 @@ class RDAstAttribute : public RDAstAttributeInterface {
   iterator end();
   virtual ~RDAstAttribute();
   void toStream(ostream& os, VariableIdMapping* vim);
-  string getPreInfoString();
-  string getPostInfoString();
+  string toString();
  private:
   RDLattice* _elem;
 };
