@@ -77,8 +77,8 @@ codethorn_SOURCES = \
   AnalysisAbstractionLayer.C       \
   DFAstAttribute.h           \
   DFAstAttribute.C           \
-  RDAnalysisAbstractAstAttribute.h \
-  RDAnalysisAbstractAstAttribute.C \
+  RDAstAttributeInterface.h \
+  RDAstAttributeInterface.C \
   RDAnalysisAstAttribute.h         \
   RDAnalysisAstAttribute.C         \
   RERS_empty_specialization.C      \
@@ -144,8 +144,8 @@ rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h Co
   AnalysisAbstractionLayer.C       \
   DFAstAttribute.h           \
   DFAstAttribute.C           \
-  RDAnalysisAbstractAstAttribute.h \
-  RDAnalysisAbstractAstAttribute.C \
+  RDAstAttributeInterface.h \
+  RDAstAttributeInterface.C \
   RDAnalysisAstAttribute.h         \
   RDAnalysisAstAttribute.C         \
   UDAstAttribute.h                 \

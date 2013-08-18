@@ -7,7 +7,7 @@
 #include <string>
 using std::string;
 
-#include "AnalysisAstAttribute.h"
+#include "DFAstAttribute.h"
 #include "Labeler.h"
 
 using namespace CodeThorn;
