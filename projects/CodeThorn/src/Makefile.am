@@ -75,8 +75,8 @@ codethorn_SOURCES = \
   DFAnalyzer.h                     \
   AnalysisAbstractionLayer.h       \
   AnalysisAbstractionLayer.C       \
-  AnalysisAstAttribute.h           \
-  AnalysisAstAttribute.C           \
+  DFAstAttribute.h           \
+  DFAstAttribute.C           \
   RDAnalysisAbstractAstAttribute.h \
   RDAnalysisAbstractAstAttribute.C \
   RDAnalysisAstAttribute.h         \
@@ -142,8 +142,8 @@ rdmain_LDADD = -lrose
 rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C Labeler.h Labeler.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C AttributeAnnotator.h AttributeAnnotator.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
   AnalysisAbstractionLayer.h       \
   AnalysisAbstractionLayer.C       \
-  AnalysisAstAttribute.h           \
-  AnalysisAstAttribute.C           \
+  DFAstAttribute.h           \
+  DFAstAttribute.C           \
   RDAnalysisAbstractAstAttribute.h \
   RDAnalysisAbstractAstAttribute.C \
   RDAnalysisAstAttribute.h         \

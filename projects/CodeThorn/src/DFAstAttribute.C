@@ -1,11 +1,11 @@
 #include "sage3basic.h"
-#include "AnalysisAstAttribute.h"
+#include "DFAstAttribute.h"
 
 // default behavior
-string AnalysisResultAttribute::getPreInfoString() { return "pre-info: undefined";}
-string AnalysisResultAttribute::getPostInfoString() { return "post-info: undefined";}
+string DFAstAttribute::getPreInfoString() { return "pre-info: undefined";}
+string DFAstAttribute::getPostInfoString() { return "post-info: undefined";}
 
-AnalysisResultAttribute::~AnalysisResultAttribute() {
+DFAstAttribute::~DFAstAttribute() {
   // virtual destructor intentionally empty
 }
 

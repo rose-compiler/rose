@@ -17,7 +17,7 @@
 
 using namespace CodeThorn;
 
-class AssertionAttribute : public AnalysisResultAttribute {
+class AssertionAttribute : public DFAstAttribute {
 public:
   AssertionAttribute(string preCondition):_precond(preCondition) {}
   string getPreInfoString() { return _precond; }

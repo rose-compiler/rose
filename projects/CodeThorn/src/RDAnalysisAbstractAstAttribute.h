@@ -9,7 +9,7 @@
 
 using namespace CodeThorn;
 
-class RDAnalysisAbstractAstAttribute : public AnalysisResultAttribute {
+class RDAnalysisAbstractAstAttribute : public DFAstAttribute {
  public:
   typedef pair<Label,VariableId> RDPair;
   typedef set<RDPair> RDPairSet;

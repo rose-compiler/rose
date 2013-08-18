@@ -15,7 +15,7 @@ using namespace CodeThorn;
 class AnalysisResultAnnotator {
  public:
   AnalysisResultAnnotator(Labeler* labeler);
-  // annotates attributes of Type AnalysisResultAttribute of name 'attributeName' as comment for all nodes in the AST subtree of  node 'node'.
+  // annotates attributes of Type DFAstAttribute of name 'attributeName' as comment for all nodes in the AST subtree of  node 'node'.
   void annotateAnalysisResultAttributesAsComments(SgNode* node, string attributeName);
   //MS: planned: void annotateAttributeAsPragma(string attributeName);
  private:

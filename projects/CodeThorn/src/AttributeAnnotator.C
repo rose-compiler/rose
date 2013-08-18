@@ -20,7 +20,7 @@ void AnalysisResultAnnotator::annotateAnalysisResultAttributesAsComments(SgNode*
         //std::cerr << "WARNING: attaching comments to AST nodes of type SgCtorInitializerList not possible. We are skipping this annotation and continue."<<std::endl;
         continue;
       }
-      AnalysisResultAttribute* artAttribute=dynamic_cast<AnalysisResultAttribute*>(stmt->getAttribute(attributeName));
+      DFAstAttribute* artAttribute=dynamic_cast<DFAstAttribute*>(stmt->getAttribute(attributeName));
       // if this fails, no attribute was attached
       if(artAttribute) {
 		ROSE_ASSERT(_labeler);

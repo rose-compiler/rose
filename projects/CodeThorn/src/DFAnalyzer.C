@@ -271,7 +271,7 @@ DFAnalyzer<LatticeType>::getResultAccess() {
 
 using std::string;
 
-class GeneralResultAttribute : public AnalysisResultAttribute {
+class GeneralResultAttribute : public DFAstAttribute {
 public:
   GeneralResultAttribute(string postinfo) { _postinfo="// "+postinfo;}
   string getPreInfoString() { return ""; }

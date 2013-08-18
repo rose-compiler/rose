@@ -39,7 +39,7 @@ void CodeThornLanguageRestrictor::initialize() {
 }
 
 
-class TermRepresentation : public AnalysisResultAttribute {
+class TermRepresentation : public DFAstAttribute {
 public:
   TermRepresentation(SgNode* node) : _node(node) {}
   string getPreInfoString() { return "// AST: "+astTermWithNullValuesToString(_node); }
@@ -48,7 +48,7 @@ private:
   SgNode* _node;
 };
 
-class PointerExprListAnnotation : public AnalysisResultAttribute {
+class PointerExprListAnnotation : public DFAstAttribute {
 public:
   PointerExprListAnnotation(SgNode* node) : _node(node) {
     //std::cout<<"DEBUG:generated: "+pointerExprToString(node)+"\n";
