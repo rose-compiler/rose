@@ -11,7 +11,7 @@ using std::set;
 #include <string>
 using std::string;
 
-#include "RDAnalysisAstAttribute.h"
+#include "RDAstAttribute.h"
 #include "AnalysisAbstractionLayer.h"
 
 using namespace CodeThorn;

@@ -79,8 +79,8 @@ codethorn_SOURCES = \
   DFAstAttribute.C           \
   RDAstAttributeInterface.h \
   RDAstAttributeInterface.C \
-  RDAnalysisAstAttribute.h         \
-  RDAnalysisAstAttribute.C         \
+  RDAstAttribute.h         \
+  RDAstAttribute.C         \
   RERS_empty_specialization.C      \
   addressTakenAnalysis/defUseQuery.C \
   addressTakenAnalysis/defUseQuery.h \
@@ -146,8 +146,8 @@ rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h Co
   DFAstAttribute.C           \
   RDAstAttributeInterface.h \
   RDAstAttributeInterface.C \
-  RDAnalysisAstAttribute.h         \
-  RDAnalysisAstAttribute.C         \
+  RDAstAttribute.h         \
+  RDAstAttribute.C         \
   UDAstAttribute.h                 \
   UDAstAttribute.C                 \
   AstTerm.h                        \

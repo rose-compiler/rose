@@ -3,7 +3,7 @@
 #include "sage3basic.h"
 
 #include "RDAnalyzer.h"
-#include "RDAnalysisAstAttribute.h"
+#include "RDAstAttribute.h"
 using namespace std;
 using namespace CodeThorn;
 
@@ -20,7 +20,7 @@ void RDAnalyzer::attachResultsToAst(string attributeName) {
       i!=_analyzerData.end();
       ++i) {
     // TODO: need to add a solution for nodes with multiple associated labels (e.g. functio call)
-    _labeler->getNode(lab)->setAttribute(attributeName,new RDAnalysisAstAttribute(&(*i)));
+    _labeler->getNode(lab)->setAttribute(attributeName,new RDAstAttribute(&(*i)));
     lab++;
   }
 #else
@@ -37,10 +37,10 @@ void RDAnalyzer::attachResultsToAst(string attributeName) {
     // TODO: need to add a solution for nodes with multiple associated labels (e.g. function call)
 	if(!_labeler->isFunctionExitLabel(*i) /* && !_labeler->isCallReturnLabel(lab)*/)
 	  if(*i >=0 ) {
-		_labeler->getNode(*i)->setAttribute(attributeName+"-pre-info",new RDAnalysisAstAttribute(&_analyzerDataPreInfo[*i]));
-		_labeler->getNode(*i)->setAttribute(attributeName+"-post-info",new RDAnalysisAstAttribute(&_analyzerData[*i]));
-		cout << "ATTACHED RD DATA-PRE: "<<(dynamic_cast<RDAnalysisAstAttribute*>(_labeler->getNode(*i)->getAttribute(attributeName+"-pre-info")))->getPostInfoString()<<endl;
-		cout << "ATTACHED RD DATA-POST: "<<(dynamic_cast<RDAnalysisAstAttribute*>(_labeler->getNode(*i)->getAttribute(attributeName+"-post-info")))->getPostInfoString()<<endl;
+		_labeler->getNode(*i)->setAttribute(attributeName+"-pre-info",new RDAstAttribute(&_analyzerDataPreInfo[*i]));
+		_labeler->getNode(*i)->setAttribute(attributeName+"-post-info",new RDAstAttribute(&_analyzerData[*i]));
+		cout << "ATTACHED RD DATA-PRE: "<<(dynamic_cast<RDAstAttribute*>(_labeler->getNode(*i)->getAttribute(attributeName+"-pre-info")))->getPostInfoString()<<endl;
+		cout << "ATTACHED RD DATA-POST: "<<(dynamic_cast<RDAstAttribute*>(_labeler->getNode(*i)->getAttribute(attributeName+"-post-info")))->getPostInfoString()<<endl;
 	  }
 	
   }

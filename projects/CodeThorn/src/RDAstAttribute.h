@@ -12,9 +12,9 @@
 using namespace CodeThorn;
 using std::string;
 
-class RDAnalysisAstAttribute : public RDAstAttributeInterface {
+class RDAstAttribute : public RDAstAttributeInterface {
  public:
-  RDAnalysisAstAttribute(RDLattice* elem);
+  RDAstAttribute(RDLattice* elem);
   bool isBottomElement();
   VariableIdSet allVariableIds();
   LabelSet allLabels();
@@ -22,7 +22,7 @@ class RDAnalysisAstAttribute : public RDAstAttributeInterface {
   VariableIdSet variableIdsOfDefinition(Label def);
   iterator begin();
   iterator end();
-  virtual ~RDAnalysisAstAttribute();
+  virtual ~RDAstAttribute();
   void toStream(ostream& os, VariableIdMapping* vim);
   string getPreInfoString();
   string getPostInfoString();

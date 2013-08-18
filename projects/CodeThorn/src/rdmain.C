@@ -10,7 +10,7 @@
 #include "DFAnalyzer.h"
 #include "WorkList.h"
 #include "RDAnalyzer.h"
-#include "RDAnalysisAstAttribute.h"
+#include "RDAstAttribute.h"
 #include "AttributeAnnotator.h"
 #include "DataDependenceVisualizer.h"
 #include "Miscellaneous.h"
@@ -23,7 +23,7 @@ void createUDAstAttributeFromRDAttribute(Labeler* labeler, string rdAttributeNam
   for(long i=0;i<labelNum;++i) {
 	Label lab=i;
 	SgNode* node=labeler->getNode(lab);
-	RDAnalysisAstAttribute* rdAttr=dynamic_cast<RDAnalysisAstAttribute*>(node->getAttribute(rdAttributeName));
+	RDAstAttribute* rdAttr=dynamic_cast<RDAstAttribute*>(node->getAttribute(rdAttributeName));
 	if(rdAttr)
 	  node->setAttribute(udAttributeName,new UDAstAttribute(rdAttr, node));
   }
@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
   rdAnalyzer->run();
   cout << "INFO: attaching RD-data to AST."<<endl;
   rdAnalyzer->attachResultsToAst("rd-analysis");
-  printAttributes<RDAnalysisAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"rd-analysis");
+  printAttributes<RDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"rd-analysis");
   cout << "INFO: generating and attaching UD-data to AST."<<endl;
   createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis-pre-info", "ud-analysis");
   cout << "INFO: generating visualization data."<<endl;
@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
 
   // simple test
   RDLattice elem;
-  RDAnalysisAstAttribute* rda=new RDAnalysisAstAttribute(&elem);
+  RDAstAttribute* rda=new RDAstAttribute(&elem);
   delete rda;
 
   cout << "INFO: annotating analysis results as comments."<<endl;
