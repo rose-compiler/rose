@@ -1,7 +1,7 @@
 // Author: Markus Schordan, 2013.
 
-#ifndef ATTRIBUTEANNOTATIONMECHANISM_H
-#define ATTRIBUTEANNOTATIONMECHANISM_H
+#ifndef ASTANNOTATOR_H
+#define ASTANNOTATOR_H
 
 
 #include <string>
@@ -12,9 +12,9 @@ using std::string;
 
 using namespace CodeThorn;
 
-class AnalysisResultAnnotator {
+class AstAnnotator {
  public:
-  AnalysisResultAnnotator(Labeler* labeler);
+  AstAnnotator(Labeler* labeler);
   // annotates attributes of Type DFAstAttribute of name 'attributeName' as comment for all nodes in the AST subtree of  node 'node'.
   void annotateAstAttributesAsCommentsBeforeStatements(SgNode* node, string attributeName);
   void annotateAstAttributesAsCommentsAfterStatements(SgNode* node, string attributeName);

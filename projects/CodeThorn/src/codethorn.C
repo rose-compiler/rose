@@ -19,7 +19,7 @@
 #include <boost/program_options.hpp>
 #include <map>
 #include "InternalChecks.h"
-#include "AttributeAnnotator.h"
+#include "AstAnnotator.h"
 #include "AstTerm.h"
 #include "SgNodeHelper.h"
 
@@ -745,7 +745,7 @@ int main( int argc, char * argv[] ) {
     AssertionExtractor assertionExtractor(&analyzer);
     assertionExtractor.computeLabelVectorOfEStates();
     assertionExtractor.annotateAst();
-    AnalysisResultAnnotator ara(analyzer.getLabeler());
+    AstAnnotator ara(analyzer.getLabeler());
     ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"ctgen-pre-condition");
     cout << "STATUS: Generated assertions."<<endl;
   }
@@ -811,7 +811,7 @@ int main( int argc, char * argv[] ) {
     cout << "INFO: Annotating analysis results."<<endl;
     attachTermRepresentation(sageProject);
     attachPointerExprLists(sageProject);
-    AnalysisResultAnnotator ara(analyzer.getLabeler());
+    AstAnnotator ara(analyzer.getLabeler());
     ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-term-representation");
     ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-pointer-expr-lists");
   }

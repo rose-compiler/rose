@@ -11,7 +11,7 @@
 #include "WorkList.h"
 #include "RDAnalyzer.h"
 #include "RDAstAttribute.h"
-#include "AttributeAnnotator.h"
+#include "AstAnnotator.h"
 #include "DataDependenceVisualizer.h"
 #include "Miscellaneous.h"
 
@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
   cout << "generated cfg.dot."<<endl;
 
   cout << "INFO: annotating analysis results as comments."<<endl;
-  AnalysisResultAnnotator ara(rdAnalyzer->getLabeler());
+  AstAnnotator ara(rdAnalyzer->getLabeler());
   ara.annotateAstAttributesAsCommentsBeforeStatements(root, "rd-analysis-in");
   ara.annotateAstAttributesAsCommentsAfterStatements(root, "rd-analysis-out");
   cout << "INFO: generating annotated source code."<<endl;

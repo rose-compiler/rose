@@ -9,7 +9,7 @@
 #include "Visualizer.h"
 #include "SgNodeHelper.h"
 #include "CommandLineOptions.h"
-#include "AttributeAnnotator.h"
+#include "AstAnnotator.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // BEGIN OF VISUALIZER

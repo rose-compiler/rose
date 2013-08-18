@@ -4,22 +4,22 @@
 
 #include <iostream>
 
-#include "AttributeAnnotator.h"
+#include "AstAnnotator.h"
 #include "RoseAst.h"
 #include <iostream>
 using namespace std;
 
-AnalysisResultAnnotator::AnalysisResultAnnotator(Labeler* labeler):_labeler(labeler) {
+AstAnnotator::AstAnnotator(Labeler* labeler):_labeler(labeler) {
 }
 
-void AnalysisResultAnnotator::annotateAstAttributesAsCommentsBeforeStatements(SgNode* node, string attributeName) {
+void AstAnnotator::annotateAstAttributesAsCommentsBeforeStatements(SgNode* node, string attributeName) {
   annotateAstAttributesAsComments(node,attributeName,PreprocessingInfo::before);
 }
-void AnalysisResultAnnotator::annotateAstAttributesAsCommentsAfterStatements(SgNode* node, string attributeName) {
+void AstAnnotator::annotateAstAttributesAsCommentsAfterStatements(SgNode* node, string attributeName) {
   annotateAstAttributesAsComments(node,attributeName,PreprocessingInfo::after);
 }
 
-void AnalysisResultAnnotator::annotateAstAttributesAsComments(SgNode* node, string attributeName,PreprocessingInfo::RelativePositionType posSpecifier) {
+void AstAnnotator::annotateAstAttributesAsComments(SgNode* node, string attributeName,PreprocessingInfo::RelativePositionType posSpecifier) {
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
     if(SgStatement* stmt=dynamic_cast<SgStatement*>(*i)) {
@@ -41,7 +41,7 @@ void AnalysisResultAnnotator::annotateAstAttributesAsComments(SgNode* node, stri
 }
 
 // posSpecifier: PreprocessingInfo::before, PreprocessingInfo::after
-void AnalysisResultAnnotator::insertComment(std::string comment, PreprocessingInfo::RelativePositionType posSpecifier, SgStatement* node) {
+void AstAnnotator::insertComment(std::string comment, PreprocessingInfo::RelativePositionType posSpecifier, SgStatement* node) {
   assert(posSpecifier==PreprocessingInfo::before || posSpecifier==PreprocessingInfo::after);
   PreprocessingInfo* commentInfo = 
     new PreprocessingInfo(PreprocessingInfo::CplusplusStyleComment, 

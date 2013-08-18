@@ -266,7 +266,7 @@ DFAnalyzer<LatticeType>::getResultAccess() {
 
 #include <iostream>
 
-#include "AttributeAnnotator.h"
+#include "AstAnnotator.h"
 #include <string>
 
 using std::string;
