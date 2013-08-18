@@ -54,13 +54,13 @@ static int anim_i = 0;
        STATE != eStateSet.end();                                     \
        ++STATE, ++LABEL)
 
-#define FOR_EACH_STATE(STATE, LABEL)                    \
-  GraphTraits::vertex_iterator vi, vi_end;                \
-  Label LABEL;                                \
-  const EState* STATE;                            \
+#define FOR_EACH_STATE(STATE, LABEL) {				    \
+  Label LABEL;							    \
+  const EState* STATE;						    \
+  GraphTraits::vertex_iterator vi, vi_end;			    \
   for (tie(vi, vi_end) = vertices(g), LABEL=*vi, STATE=g[LABEL];    \
-       vi != vi_end; ++vi,                        \
-       LABEL=(vi!=vi_end)?*vi:NULL, STATE=g[LABEL])            \
+       vi != vi_end; ++vi,					    \
+	 LABEL=(vi!=vi_end)?*vi:NULL, STATE=g[LABEL]) {
 
 #define END_FOR }}
 
@@ -83,20 +83,22 @@ static int anim_i = 0;
 /**
  * is there an edge v->v?
  */
-template<class Vertex, class Graph>
-bool selfcycle(Vertex v, Graph& g) {
+bool selfcycle(LTLVertex v, LTLTransitionGraph& g) {
   LTLGraphTraits::out_edge_iterator out_i, out_end;
   for (tie(out_i, out_end) = out_edges(v, g); out_i != out_end; ++out_i) {
     LTLVertex succ = target(*out_i, g);
     if (succ == v)
       return true;
+  }
 
-    //    LTLGraphTraits::in_edge_iterator in_i, in_end;
-    //for (tie(in_i, in_end) = in_edges(v, g); in_i != in_end; ++in_i) {
-    //  LTLVertex pred = source(*in_i, g);
-    //  if (pred == succ)
-    //	return true;
-    //}
+  return false;
+}
+bool selfcycle(Label v, BoostTransitionGraph& g) {
+  GraphTraits::out_edge_iterator out_i, out_end;
+  for (tie(out_i, out_end) = out_edges(v, g); out_i != out_end; ++out_i) {
+    Label succ = target(*out_i, g);
+    if (succ == v)
+      return true;
   }
 
   return false;
@@ -108,8 +110,7 @@ bool selfcycle(Vertex v, Graph& g) {
 template<class Vertex, class Graph>
 bool is_leaf(Vertex v, Graph& g) {
   int outd = out_degree(v, g);
-  int ind = in_degree(v, g);
-  return outd==0 || (outd==1 && ind==1 && selfcycle(v, g));
+  return outd==0 || (outd==1 && selfcycle(v, g));
 }
 
 
@@ -124,7 +125,6 @@ LTLWorklist predecessors(const LTLVertex& v, const LTLTransitionGraph& g) {
   } END_FOR
   return preds;
 }
-
 
 
 /**
@@ -553,7 +553,10 @@ public:
       }
 
       // scan the entire STG for input vars
-      updateInputVar(state.estate, input_vars);
+      if (degree(v, stg.g) != 0) {
+	assert(state.estate);
+	updateInputVar(state.estate, input_vars);
+      }
 
       worklist.push(stg.vertex[state]);
     } END_FOR;
@@ -1162,9 +1165,9 @@ UChecker::UChecker(EStateSet& ess, TransitionGraph& _tg)
   }
 
   if(option_debug_mode==201) {
-    FOR_EACH_STATE(state, label) {
+    FOR_EACH_STATE(state, label)
       cerr<<"DEBUG: "<<label<<": "<<state->toString()<<endl;
-    }
+    END_FOR;
   }
 }
 
@@ -1182,10 +1185,51 @@ Label UChecker::collapse_transition_graph(BoostTransitionGraph& g,
   FOR_EACH_STATE(state, label) {
     //cerr<<label<<endl;
     assert(g[label]);
+
+    // Completele eradicate error states. This is part of the RERS rules.
+    if (g[label]->io.op == InputOutput::STDERR_VAR ||
+	g[label]->io.op == InputOutput::STDERR_CONST ||
+	g[label]->io.op == InputOutput::FAILED_ASSERT) {
+      vector<Label> preds, succs;
+      GraphTraits::in_edge_iterator in_i, in_end;
+      for (tie(in_i, in_end) = in_edges(label, g); in_i != in_end; ++in_i)
+        preds.push_back(source(*in_i, g));
+
+      GraphTraits::out_edge_iterator out_i, out_end;
+      for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i)
+        succs.push_back(target(*out_i, g));
+      
+      clear_vertex(label, g);
+
+      while (!preds.empty()) {
+	  // Remove all input nodes that only lead to this error state
+	  Label v = preds.back(); preds.pop_back();
+	  if (/*g[v]->io.op == InputOutput::STDIN_VAR &&*/ is_leaf(v, g)) {
+	    for (tie(in_i, in_end) = in_edges(v, g); in_i != in_end; ++in_i)
+	      preds.push_back(source(*in_i, g));
+	    clear_vertex(v, g);
+	  }
+      } 
+      while (!succs.empty()) {
+	Label v = succs.back(); succs.pop_back();
+	if (/*g[v]->io.op == InputOutput::STDIN_VAR &&*/ in_degree(v, g) == 0) {
+	  for (tie(out_i, out_end) = out_edges(v, g); out_i != out_end; ++out_i)
+	    succs.push_back(target(*out_i, g));
+	  clear_vertex(v, g);
+	}
+      }
+
+    }
+  } END_FOR;
+
+  FOR_EACH_STATE(state, label) {
+    //cerr<<label<<endl;
+    assert(g[label]);
+
     if (( in_degree(label, g) >= 1) && // keep start
 	(out_degree(label, g) >= 0) && // DO NOT keep exits
-	(g[label]->io.op == InputOutput::NONE ||
-	 g[label]->io.op == InputOutput::FAILED_ASSERT)) {
+	(g[label]->io.op == InputOutput::NONE /*||
+						g[label]->io.op == InputOutput::FAILED_ASSERT*/)) {
       //cerr<<"-- removing "<<label <<endl;//g[label]->toString()<<endl;
 
       // patch pred <--> succ
@@ -1205,13 +1249,13 @@ Label UChecker::collapse_transition_graph(BoostTransitionGraph& g,
       clear_vertex(label, g);
       // but don't remove_vertex(label, g), since we don't want the
       // boost graph to reassign numerical labels!
-    } else {
+    } else if (degree(label, g)) {
       //cerr<<"-- keeping "<<label<<": "<<g[label]->toString()<<endl;
       renumbered[label] = n++;
       add_vertex(reduced);
     }
     //cerr<<"-- done "<<endl<<endl;
-  }
+  } END_FOR;
 
   // Build a copy of the graph without the orphaned states
   //cerr<<"digraph g {"<<endl;
