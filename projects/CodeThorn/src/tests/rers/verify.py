@@ -16,7 +16,6 @@ if __name__ == '__main__':
     if not args.ref: print 'no reference input specified!'; exit(1)
     if not args.mine: print 'no codethorn input specified!'; exit(1)
 
-    next_counterexample = -1
     correct      = 0
     inconsistent = 0
     unknown      = 0
@@ -37,7 +36,7 @@ if __name__ == '__main__':
             unknown += 1
         else:
             if args.verbose:
-                print '** LTL %d:'%n, line, 'should be', result
+                print '** LTL %d:'%(n-1), line, 'should be', result
             inconsistent += 1
 
     print correct,inconsistent,unknown,n
