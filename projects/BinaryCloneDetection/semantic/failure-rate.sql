@@ -38,7 +38,7 @@ create table fr_funcnames as
         join semantic_functions as func1 on func1.file_id = file.id
         left join semantic_functions as func2
             on func1.id<>func2.id and func1.name <> '' and func1.name=func2.name and func1.file_id=func2.file_id
-        where func2.id is null and func1.ninsns >= 100                                            -- !!FIXME
+        where func2.id is null and func1.ninsns >= 20                                            -- !!FIXME
         group by func1.name
         having count(*) = (select count(*) from fr_specimens)
 --     except (
@@ -144,17 +144,17 @@ create table fr_results as
         (select count(*) from fr_true_negatives ) as true_negatives,
         (select count(*) from fr_false_positives) as false_positives,
         (select count(*) from fr_false_negatives) as false_negatives,
-        ((select 100.0*count(*) from fr_true_positives ) / ((select count(*) from fr_true_positives ) + (select count(*) from fr_false_positives))) as tp_percent,
-        (100.0*((select 1.0*count(*) from fr_negative_pairs ) - (select 1.0*count(*) from fr_false_negatives) ) / (select count(*) from fr_negative_pairs)) as tn_percent,
-        ((select 100.0*count(*) from fr_false_positives) / ((select count(*) from fr_true_positives ) + (select count(*) from fr_false_positives) )) as fp_percent,
-        ((select 100.0*count(*) from fr_false_negatives) / (select count(*) from fr_negative_pairs)) as fn_percent
+        ((select 100.0*count(*) from fr_true_positives ) / (0.001+((select count(*) from fr_true_positives ) + (select count(*) from fr_false_positives)))) as tp_percent,
+        (100.0*((select 1.0*count(*) from fr_negative_pairs ) - (select 1.0*count(*) from fr_false_negatives) ) / (0.001+(select count(*) from fr_negative_pairs))) as tn_percent,
+        ((select 100.0*count(*) from fr_false_positives) / (0.001+((select count(*) from fr_true_positives ) + (select count(*) from fr_false_positives) ))) as fp_percent,
+        ((select 100.0*count(*) from fr_false_negatives) / (0.001+(select count(*) from fr_negative_pairs))) as fn_percent
 ;
  
 create table fr_results_precision_recall as
     select
-        ( (select 100.0*true_positives from fr_results limit 1) / ( ( select true_positives from fr_results  limit 1 ) + (select false_negatives from fr_results limit 1) )  ) as recall,
-        ( (select 100.0*true_negatives from fr_results limit 1) / ( ( select true_negatives from fr_results  limit 1) + (select false_positives from fr_results limit 1)) ) as specificity,
-        ( (select 100.0*true_positives from fr_results limit 1) / ( ( select true_positives from fr_results  limit 1) + (select false_positives from fr_results  limit 1 ))) as precision
+        ( (select 100.0*true_positives from fr_results limit 1) / (0.001+( ( select true_positives from fr_results  limit 1 ) + (select false_negatives from fr_results limit 1) ))  ) as recall,
+        ( (select 100.0*true_negatives from fr_results limit 1) / (0.001+( ( select true_negatives from fr_results  limit 1) + (select false_positives from fr_results limit 1)) )) as specificity,
+        ( (select 100.0*true_positives from fr_results limit 1) / (0.001+( ( select true_positives from fr_results  limit 1) + (select false_positives from fr_results  limit 1 )))) as precision
 ;
 -------------------------------------------------------------------------------------------------------------------------------
 -- Some queries to show the results
