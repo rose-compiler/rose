@@ -518,12 +518,12 @@ public:
    *
    * transfer(a, next)
    */
-  void analyze()  {
+  void analyze(bool verbose)  {
     LTLWorklist worklist;
     unordered_set<LTLVertex> endpoints;
     boost::unordered_set< pair<LTLVertex, LTLVertex> > dead_edges;
 
-    // dumme exit state with all lattice values set to bot
+    // dummy exit state with all lattice values set to bot
     LTLState end_state(NULL, f.size());
 
     //cerr<<"\n-------------------------------------------"<<endl;
@@ -562,7 +562,6 @@ public:
       cerr<<worklist.size()<<"\r";
 #endif
       LTLVertex succ = worklist.pop();
-      bool verbose = false;
 
       // Endpoint handling
       if (is_leaf(succ, stg.g)) {
@@ -787,7 +786,7 @@ public:
       return c+'A'-1;
     }
 
-    /// return True iff that state is an Oc operation
+    /// return True iff that state is an Ic operation
     static BoolLattice isInputState(const EState* estate,
 		    const VariableIdMapping::VariableIdSet& input_vars,
 		    char c, BoolLattice succ_val) {
@@ -806,6 +805,7 @@ public:
 	assert(consistent(r, r1));
 	r = r1;
       }
+
       if (r.isBot())
 	return succ_val;
       else
@@ -842,7 +842,6 @@ public:
       BoolLattice succ_val = succ.valstack[expr->label];
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice new_val = isInputState(s.estate, input_vars, expr->c, succ_val);
-      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       if (verbose) cerr<<"  I(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
@@ -1233,7 +1232,7 @@ UChecker::verify(const Formula& f)
   // Verify!
   const Expr& e = f;
   UVerifier v(eStateSet, g, start, num_vertices(g), f);
-  v.analyze();
+  v.analyze(boolOptions["ltl-verbose-verifier"]);
 
   // Visualization:
   bool ltl_output_dot = boolOptions["ltl-output-dot"];//  true;
