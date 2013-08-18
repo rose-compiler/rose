@@ -900,19 +900,31 @@ public:
 	return c == rersChar(lval.getIntValue());
       }
       case InputOutput::STDOUT_VAR: {
+	// output == c constraint?
 	const PState& prop_state = *estate->pstate();
 	//cerr<<estate->toString()<<endl;
 	//cerr<<prop_state.varValueToString(estate->io.var)<<" lval="<<lval.toString()<<endl;
-	assert(prop_state.varIsConst(estate->io.var));
-	AValue aval = const_cast<PState&>(prop_state)[estate->io.var].getValue();
-	//cerr<<aval<<endl;
-	return c == rersChar(aval.getIntValue());
+	if (prop_state.varIsConst(estate->io.var)) {
+	  AValue aval = const_cast<PState&>(prop_state)[estate->io.var].getValue();
+	  //cerr<<aval<<endl;
+	  return c == rersChar(aval.getIntValue());
+	}
+
+	// Is there an output != c constraint?
+	// var != c
+	ListOfAValue l = estate->constraints()->getNeqVarConst(estate->io.var);
+	for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
+	  if (lval->isConstInt())
+	    if (c == rersChar(lval->getIntValue()))
+	      return false;
+	}
+
       }
       default:
     return false;
 	// Make sure that dead ends with no I/O show up as false
 	if (endpoint)
-      return false;
+	  return false;
 
 	return succ_val;
       }
@@ -929,44 +941,6 @@ public:
 
     }
 
-
-    /// return True iff that state is a !Oc operation
-    static BoolLattice isNegOutputState(const EState* estate, char c, bool endpoint,
-		    BoolLattice succ_val) {
-      switch (estate->io.op) {
-      case InputOutput::STDOUT_CONST: {
-	const AType::ConstIntLattice& lval = estate->io.val;
-	//cerr<<lval.toString()<<endl;
-	assert(lval.isConstInt());
-	// U=21, Z=26
-	return c != rersChar(lval.getIntValue());
-      }
-      case InputOutput::STDOUT_VAR: {
-	// is there an output != c constraint?
-
-	// var != c
-	ListOfAValue l = estate->constraints()->getNeqVarConst(estate->io.var);
-	for (ListOfAValue::iterator lval = l.begin(); lval != l.end(); ++lval) {
-       if (lval->isConstInt())
-	 if (c == rersChar(lval->getIntValue()))
-	   return true;
-	}
-
-	// output == c constraint?
-	const PState& prop_state = *estate->pstate();
-	assert(prop_state.varIsConst(estate->io.var));
-	AValue aval = const_cast<PState&>(prop_state)[estate->io.var].getValue();
-	return c != rersChar(aval.getIntValue());
-      }
-      default:
-	return true;
-	if (endpoint)
-      return true;
-
-	return succ_val;
-      }
-    }
-
     /**
      * Negated version of OutputSymbol
      *
@@ -974,7 +948,7 @@ public:
     void visit(const NegOutputSymbol* expr) {
       BoolLattice succ_val = succ.valstack[expr->label];
       BoolLattice old_val  = result.valstack[expr->label];
-      BoolLattice new_val  = isNegOutputState(s.estate, expr->c, endpoint, succ_val);
+      BoolLattice new_val  = !isOutputState(s.estate, expr->c, endpoint, succ_val);
       if (verbose) cerr<<"  ¬O(old="<<old_val<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
@@ -987,7 +961,6 @@ public:
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
       BoolLattice new_val  = /*old_val.lub(*/!e1/*)*/;
-      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       if (verbose) cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
@@ -1001,7 +974,6 @@ public:
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
       BoolLattice new_val  = old_val.lub(succ_val);
-      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       if (verbose) cerr<<"  X(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
@@ -1015,7 +987,6 @@ public:
       BoolLattice old_val  = result.valstack[expr->label];
       BoolLattice e1       = result.valstack[expr->expr1->label];
       BoolLattice new_val  = /*old_val ||*/ e1 || succ_val;
-      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       if (verbose) cerr<<"  F(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
@@ -1037,7 +1008,6 @@ public:
       // And my current intuition is that it is safe to ignore it, since it
       // will be propagated back to this node, if we have a loop, anyway.
       BoolLattice new_val = /*old_val &&*/ e1 && succ_val;
-      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       if (verbose) cerr<<"  G(old="<<old_val<<", e1="<<e1<<", succ="<<succ_val<<") = "<<new_val<<endl;
       result.valstack[expr->label] = new_val;
     }
@@ -1048,7 +1018,6 @@ public:
       BoolLattice e1       = result.valstack[expr->expr1->label];
       BoolLattice e2       = result.valstack[expr->expr2->label];
       BoolLattice new_val = /*old_val &&*/ e1 && e2;
-      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       if (verbose) cerr<<"  And(old="<<old_val
 		  <<", e1="<<e1<<", e2="<<e1
 		  <<", succ="<<succ_val<<") = "<<new_val<<endl;
@@ -1062,7 +1031,6 @@ public:
       BoolLattice e1       = result.valstack[expr->expr1->label];
       BoolLattice e2       = result.valstack[expr->expr2->label];
       BoolLattice new_val = /*old_val ||*/ e1 || e2;
-      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       if (verbose) cerr<<"  Or(old="<<old_val
 		<<", e1="<<e1<<", e2="<<e1
 		<<", succ="<<succ_val<<") = "<<new_val<<endl;
@@ -1092,7 +1060,6 @@ public:
       BoolLattice e1       = result.valstack[expr->expr1->label];
       BoolLattice e2       = result.valstack[expr->expr2->label];
       BoolLattice new_val = /*old_val &&*/ (e2 || (e1 && succ_val));
-      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       if (verbose) cerr<<"  Until(old="<<old_val
 		<<", e1="<<e1<<", e2="<<e1
 		<<", succ="<<succ_val<<") = "<<new_val<<endl;
@@ -1132,7 +1099,6 @@ public:
       BoolLattice e1       = result.valstack[expr->expr1->label];
       BoolLattice e2       = result.valstack[expr->expr2->label];
       BoolLattice new_val = /*old_val ||*/ (e2 && (e1 || succ_val));
-      //assert(new_val.lub(old_val) == new_val); // only move up in the lattice!
       if (verbose) cerr<<"  Release(old="<<old_val
 		<<", e1="<<e1<<", e2="<<e1
 		<<", succ="<<succ_val<<") = "<<new_val<<endl;
