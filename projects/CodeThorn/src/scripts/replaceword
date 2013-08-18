@@ -17,14 +17,13 @@ for file in $allargs; do
   if [ $i -ge 2 ]; then
     if [ -e $file ]; then
 
-      echo -n "$file .. "
       sed "s/\<$oldidentifier\>/$newidentifier/g" < $file > /tmp/$file.tmp;
 	  changed=`diff $file /tmp/$file.tmp | wc -l`
       if [ $changed -ge 1 ]; then
         mv /tmp/$file.tmp $file
-        echo "changed."
+        echo "$file: replaced $oldidentifier with $newidentifier."
       else
-        echo "unchanged."
+        #echo "unchanged."
         rm /tmp/$file.tmp
       fi
     else
