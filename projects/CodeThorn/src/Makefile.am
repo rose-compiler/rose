@@ -238,6 +238,21 @@ CONSISTENCY_CHECKS=$(patsubst %,Problem%.consistent, $(shell seq 1))
 	python $(srcdir)/regressiondata/validate.py \
 	  --csv $(patsubst $(srcdir)/tests/rers/%.c,%.3.csv,$<) \
 	  --log $(patsubst $(srcdir)/tests/rers/%.c,$(srcdir)/regressiondata/%.log,$<)
+        # Finally, compare with reference solutions
+	python $(srcdir)/tests/rers/verify.py \
+	  --ref  $(patsubst %.c,%.csv,$<) \
+	  --mine $(patsubst $(srcdir)/tests/rers/%.c,%.0.csv,$<) || echo "** XFAIL"
+	python $(srcdir)/tests/rers/verify.py \
+	  --ref  $(patsubst %.c,%.csv,$<) \
+	  --mine $(patsubst $(srcdir)/tests/rers/%.c,%.1.csv,$<) || echo "** XFAIL"
+	python $(srcdir)/tests/rers/verify.py \
+	  --ref  $(patsubst %.c,%.csv,$<) \
+	  --mine $(patsubst $(srcdir)/tests/rers/%.c,%.2.csv,$<) || echo "** XFAIL"
+	python $(srcdir)/tests/rers/verify.py \
+	  --ref  $(patsubst %.c,%.csv,$<) \
+	  --mine $(patsubst $(srcdir)/tests/rers/%.c,%.3.csv,$<) || echo "** XFAIL"
+
+
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
