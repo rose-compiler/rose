@@ -725,6 +725,14 @@ public:
 
     } END_FOR;
     */
+
+    // Prune dead ends
+    // This is a purely cosmetic change, since these states are unreachable.
+    FOR_EACH_VERTEX(v, stg.g)
+      if (is_leaf(v, stg.g) && !(endpoints.count(v) == 0))
+ 	clear_vertex(v, stg.g);
+    END_FOR;
+
     // remove orphaned vertices
     LTLWorklist orphans;
     FOR_EACH_VERTEX(v, stg.g)
