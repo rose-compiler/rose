@@ -464,12 +464,12 @@ public:
     if (i == stg.vertex.end()) {
 #ifdef EXTRA_ASSERTS
       for (i=stg.vertex.begin(); i != stg.vertex.end(); ++i) {
-    LTLState s = (*i).first;
-    assert(! (s == new_state));
+	LTLState s = (*i).first;
+	assert(! (s == new_state));
       }
       FOR_EACH_VERTEX(x, stg.g)
-    assert(!(stg.g[x] == new_state));
-      END_FOR
+	assert(!(stg.g[x] == new_state));
+      END_FOR;
 #endif
       // Create a new vertex
       v = add_vertex(stg.g);
@@ -482,33 +482,33 @@ public:
 
 #ifdef MERGE_TOP_STATES
       if (new_state.val.isTrue() || new_state.val.isFalse()) {
-    // If there is both A and !A, create a single A=Top instead
-    LTLState neg_state = new_state;
-    neg_state.val = !new_state.val;
-    LTLStateMap::iterator j = stg.vertex.find(neg_state);
-    if (j != stg.vertex.end()) {
-      LTLState top_state = new_state;
-      top_state.val = Top();
-      v = add_state_if_new(top_state, stg, worklist);
+	// If there is both A and !A, create a single A=Top instead
+	LTLState neg_state = new_state;
+	neg_state.val = !new_state.val;
+	LTLStateMap::iterator j = stg.vertex.find(neg_state);
+	if (j != stg.vertex.end()) {
+	  LTLState top_state = new_state;
+	  top_state.val = Top();
+	  v = add_state_if_new(top_state, stg, worklist);
+	  
+	  FOR_EACH_PREDECESSOR(pred, (*i).second, stg.g)
+	    add_edge(pred, v, stg.g);
+	  END_FOR;
+	  FOR_EACH_SUCCESSOR(succ, (*i).second, stg.g)
+	    add_edge(v, succ, stg.g);
+	  END_FOR;
+	  clear_vertex((*i).second, stg.g);
 
-      FOR_EACH_PREDECESSOR(pred, (*i).second, stg.g)
-	add_edge(pred, v, stg.g);
-      END_FOR;
-      FOR_EACH_SUCCESSOR(succ, (*i).second, stg.g)
-	add_edge(v, succ, stg.g);
-      END_FOR;
-      clear_vertex((*i).second, stg.g);
+	  FOR_EACH_PREDECESSOR(pred, (*j).second, stg.g)
+	    add_edge(pred, v, stg.g);
+	  END_FOR;
+	  FOR_EACH_SUCCESSOR(succ, (*j).second, stg.g)
+	    add_edge(v, succ, stg.g);
+	  END_FOR;
+	  clear_vertex((*j).second, stg.g);
 
-      FOR_EACH_PREDECESSOR(pred, (*j).second, stg.g)
-	add_edge(pred, v, stg.g);
-      END_FOR;
-      FOR_EACH_SUCCESSOR(succ, (*j).second, stg.g)
-	add_edge(v, succ, stg.g);
-      END_FOR;
-      clear_vertex((*j).second, stg.g);
-
-      //cerr<<"** 3-way merged states "<<top_state<<endl;
-    }
+	  //cerr<<"** 3-way merged states "<<top_state<<endl;
+	}
       }
 #endif
       //cerr<<"** merged states "<<new_state<<endl;
@@ -734,7 +734,6 @@ public:
     } END_FOR;
     */
 
-    // Prune dead ends
     // This is a purely cosmetic change, since these states are unreachable.
     FOR_EACH_VERTEX(v, stg.g)
       if (is_leaf(v, stg.g) && !(endpoints.count(v) == 0))
@@ -880,7 +879,7 @@ public:
       }
 
       if (r.isBot())
-	return succ_val;
+ 	return succ_val;
       else
 	return r;
     }
@@ -1184,23 +1183,23 @@ Label UChecker::collapse_transition_graph(BoostTransitionGraph& g,
     //cerr<<label<<endl;
     assert(g[label]);
     if (( in_degree(label, g) >= 1) && // keep start
-    (out_degree(label, g) >= 0) && // DO NOT keep exits
-    (g[label]->io.op == InputOutput::NONE ||
-     g[label]->io.op == InputOutput::FAILED_ASSERT)) {
+	(out_degree(label, g) >= 0) && // DO NOT keep exits
+	(g[label]->io.op == InputOutput::NONE ||
+	 g[label]->io.op == InputOutput::FAILED_ASSERT)) {
       //cerr<<"-- removing "<<label <<endl;//g[label]->toString()<<endl;
 
       // patch pred <--> succ
       GraphTraits::in_edge_iterator in_i, in_end;
       for (tie(in_i, in_end) = in_edges(label, g); in_i != in_end; ++in_i) {
-    Label pred = source(*in_i, g);
+	Label pred = source(*in_i, g);
 
-    GraphTraits::out_edge_iterator out_i, out_end;
-    for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) {
-      Label succ = target(*out_i, g);
+	GraphTraits::out_edge_iterator out_i, out_end;
+	for (tie(out_i, out_end) = out_edges(label, g); out_i != out_end; ++out_i) {
+	  Label succ = target(*out_i, g);
 
-      //cerr<<"-- connecting "<<pred<<" and "<<succ<<endl;
-      add_edge(pred, succ, g);
-    }
+	  //cerr<<"-- connecting "<<pred<<" and "<<succ<<endl;
+	  add_edge(pred, succ, g);
+	}
       }
       // remove state
       clear_vertex(label, g);
