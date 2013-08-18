@@ -87,10 +87,18 @@ template<class Vertex, class Graph>
 bool selfcycle(Vertex v, Graph& g) {
   LTLGraphTraits::out_edge_iterator out_i, out_end;
   for (tie(out_i, out_end) = out_edges(v, g); out_i != out_end; ++out_i) {
-      LTLVertex succ = target(*out_i, g);
-      if (succ == v)
-    return true;
+    LTLVertex succ = target(*out_i, g);
+    if (succ == v)
+      return true;
+
+    //    LTLGraphTraits::in_edge_iterator in_i, in_end;
+    //for (tie(in_i, in_end) = in_edges(v, g); in_i != in_end; ++in_i) {
+    //  LTLVertex pred = source(*in_i, g);
+    //  if (pred == succ)
+    //	return true;
+    //}
   }
+
   return false;
 }
 
@@ -100,7 +108,8 @@ bool selfcycle(Vertex v, Graph& g) {
 template<class Vertex, class Graph>
 bool is_leaf(Vertex v, Graph& g) {
   int outd = out_degree(v, g);
-  return outd==0 || (outd==1 && selfcycle(v, g));
+  int ind = in_degree(v, g);
+  return outd==0 || (outd==1 && ind==1 && selfcycle(v, g));
 }
 
 
@@ -1232,7 +1241,7 @@ UChecker::verify(const Formula& f)
   // Verify!
   const Expr& e = f;
   UVerifier v(eStateSet, g, start, num_vertices(g), f);
-  v.analyze(boolOptions["ltl-verbose-verifier"]);
+  v.analyze(boolOptions["ltl-verbose"]);
 
   // Visualization:
   bool ltl_output_dot = boolOptions["ltl-output-dot"];//  true;

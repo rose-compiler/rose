@@ -411,7 +411,7 @@ int main( int argc, char * argv[] ) {
     ("reduce-cfg",po::value< string >(),"Reduce CFG nodes which are not relevant for the analysis. [=yes|no]")
     ("threads",po::value< int >(),"Run analyzer in parallel using <arg> threads (experimental)")
     ("display-diff",po::value< int >(),"Print statistics every <arg> computed estates.")
-    ("ltl-verbose-verifier","LTL verifier: print log of all derivations.")
+    ("ltl-verbose",po::value< string >(),"LTL verifier: print log of all derivations.")
     ("ltl-output-dot",po::value< string >(),"LTL visualization: generate dot output.")
     ("ltl-show-derivation",po::value< string >(),"LTL visualization: show derivation in dot output.")
     ("ltl-show-node-detail",po::value< string >(),"LTL visualization: show node detail in dot output.")
@@ -477,7 +477,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("skip-analysis",false);
 
   boolOptions.registerOption("ltl-output-dot",false);
-  boolOptions.registerOption("ltl-verbose-verifier",false);
+  boolOptions.registerOption("ltl-verbose",false);
   boolOptions.registerOption("ltl-show-derivation",true);
   boolOptions.registerOption("ltl-show-node-detail",true);
   boolOptions.registerOption("ltl-collapsed-graph",false);
