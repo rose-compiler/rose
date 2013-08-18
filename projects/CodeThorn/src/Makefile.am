@@ -240,16 +240,16 @@ CONSISTENCY_CHECKS=$(patsubst %,Problem%.consistent, $(shell seq 1))
 	  --log $(patsubst $(srcdir)/tests/rers/%.c,$(srcdir)/regressiondata/%.log,$<)
         # Finally, compare with reference solutions
 	python $(srcdir)/tests/rers/verify.py \
-	  --ref  $(patsubst %.c,%.csv,$<) \
+	  --ref  $(patsubst %.c,%-solutions.csv,$<) \
 	  --mine $(patsubst $(srcdir)/tests/rers/%.c,%.0.csv,$<) || echo "** XFAIL"
 	python $(srcdir)/tests/rers/verify.py \
 	  --ref  $(patsubst %.c,%-solutions.csv,$<) \
 	  --mine $(patsubst $(srcdir)/tests/rers/%.c,%.1.csv,$<) || echo "** XFAIL"
 	python $(srcdir)/tests/rers/verify.py \
-	  --ref  $(patsubst %.c,%.csv,$<) \
+	  --ref  $(patsubst %.c,%-solutions.csv,$<) \
 	  --mine $(patsubst $(srcdir)/tests/rers/%.c,%.2.csv,$<) || echo "** XFAIL"
 	python $(srcdir)/tests/rers/verify.py \
-	  --ref  $(patsubst %.c,%.csv,$<) \
+	  --ref  $(patsubst %.c,%-solutions.csv,$<) \
 	  --mine $(patsubst $(srcdir)/tests/rers/%.c,%.3.csv,$<) || echo "** XFAIL"
 
 
