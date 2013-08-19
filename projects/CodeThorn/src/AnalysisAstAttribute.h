@@ -6,6 +6,7 @@ using std::string;
 
 class AnalysisResultAttribute : public AstAttribute {
  public:
+  // preInfoToString();
   string virtual getPreInfoString();
   string virtual getPostInfoString();
   ~AnalysisResultAttribute();

@@ -152,6 +152,8 @@ rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h Co
   UDAstAttribute.C                 \
   AstTerm.h                        \
   AstTerm.C                        \
+  Miscellaneous.C                  \
+  Miscellaneous.h                  \
   addressTakenAnalysis/defUseQuery.C \
   addressTakenAnalysis/defUseQuery.h \
   addressTakenAnalysis/VariableIdUtils.C \

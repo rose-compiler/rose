@@ -30,7 +30,6 @@ AnalysisAbstractionLayer::usedVariablesInsideFunctions(SgProject* project, Varia
 // TODO: this function ignores all reported memory access to unnamed memory cells
 void extractVariableIdSetFromVarsInfo(VariableIdSet& varIdSet, VarsInfo& varsInfo) {
 	VariableIdInfoMap& vim=varsInfo.first;
-	cout<<"VariableIdInfoMap-size:"<<vim.size()<<endl;
 	for(VariableIdInfoMap::iterator i=vim.begin();i!=vim.end();++i) {
 	  varIdSet.insert((*i).first);
 	}
@@ -46,7 +45,11 @@ VariableIdSet AnalysisAbstractionLayer::useVariablesInExpression(SgNode* node, V
 VariableIdSet AnalysisAbstractionLayer::defVariablesInExpression(SgNode* node, VariableIdMapping& vidm) {
   VariableIdSet resultSet;
   VarsInfo defVarsInfo=getDefUseVarsInfo(node, vidm).getDefVarsInfo();
+  cout<<"DEFISEVARSINFO: "<<DefUseVarsInfo::varsInfoPrettyPrint(defVarsInfo,vidm)<<endl;
+  cout<<"VariableIdInfoMap-size:"<<defVarsInfo.first.size()<<endl;
   extractVariableIdSetFromVarsInfo(resultSet,defVarsInfo);
+  ROSE_ASSERT(defVarsInfo.first.size()==resultSet.size());
+  ROSE_ASSERT(defVarsInfo.first.size()<=1);
   return resultSet;
 }
 

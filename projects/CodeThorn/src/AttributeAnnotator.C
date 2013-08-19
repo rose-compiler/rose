@@ -9,6 +9,9 @@
 #include <iostream>
 using namespace std;
 
+AnalysisResultAnnotator::AnalysisResultAnnotator(Labeler* labeler):_labeler(labeler) {
+}
+
 void AnalysisResultAnnotator::annotateAnalysisResultAttributesAsComments(SgNode* node, string attributeName) {
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
@@ -20,8 +23,13 @@ void AnalysisResultAnnotator::annotateAnalysisResultAttributesAsComments(SgNode*
       AnalysisResultAttribute* artAttribute=dynamic_cast<AnalysisResultAttribute*>(stmt->getAttribute(attributeName));
       // if this fails, no attribute was attached
       if(artAttribute) {
-        insertComment(artAttribute->getPreInfoString(),PreprocessingInfo::before,stmt);
-        insertComment(artAttribute->getPostInfoString(),PreprocessingInfo::after,stmt);
+		ROSE_ASSERT(_labeler);
+		cout << "@"<<stmt<<" "<<stmt->class_name()<<" FOUND LABEL: "<<_labeler->getLabel(stmt)<<endl;
+
+		string labelString=_labeler->labelToString(_labeler->getLabel(stmt));
+		string commentStart="// ";
+        insertComment(commentStart+labelString+" "+"pre : "+artAttribute->getPreInfoString(),PreprocessingInfo::before,stmt);
+        insertComment(commentStart+labelString+" "+"post: "+artAttribute->getPostInfoString(),PreprocessingInfo::after,stmt);
       }
     }
   }

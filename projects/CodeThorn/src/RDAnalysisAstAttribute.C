@@ -1,8 +1,19 @@
 #include "sage3basic.h"
 #include "RDAnalysisAstAttribute.h"
 
+#include <sstream>
+
+using namespace std;
+
 void RDAnalysisAstAttribute::toStream(ostream& os, VariableIdMapping* vim) {
   _elem->toStream(os,vim);
+}
+
+string RDAnalysisAstAttribute::getPreInfoString() { return ""; }
+string RDAnalysisAstAttribute::getPostInfoString() {
+  stringstream ss; 
+  toStream(ss,0);
+  return ss.str();
 }
 
 RDAnalysisAstAttribute::RDAnalysisAstAttribute(RDLattice* elem):_elem(elem) {
