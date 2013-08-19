@@ -1202,17 +1202,22 @@ Label UChecker::collapse_transition_graph(BoostTransitionGraph& g,
       clear_vertex(label, g);
 
       while (!preds.empty()) {
-	  // Remove all input nodes that only lead to this error state
-	  Label v = preds.back(); preds.pop_back();
-	  if (/*g[v]->io.op == InputOutput::STDIN_VAR &&*/ is_leaf(v, g)) {
-	    for (tie(in_i, in_end) = in_edges(v, g); in_i != in_end; ++in_i)
-	      preds.push_back(source(*in_i, g));
-	    clear_vertex(v, g);
-	  }
+	// Remove all nodes that only lead to this error state.
+	Label v = preds.back(); preds.pop_back();
+	if (is_leaf(v, g)) {
+	  for (tie(in_i, in_end) = in_edges(v, g); in_i != in_end; ++in_i)
+	    preds.push_back(source(*in_i, g));
+	  for (tie(out_i, out_end) = out_edges(v, g); out_i != out_end; ++out_i)
+	    succs.push_back(target(*out_i, g));
+	  clear_vertex(v, g);
+	}
       } 
       while (!succs.empty()) {
+	// Remove all nodes that only follow an error state.
 	Label v = succs.back(); succs.pop_back();
-	if (/*g[v]->io.op == InputOutput::STDIN_VAR &&*/ in_degree(v, g) == 0) {
+	if (in_degree(v, g) == 0) {
+	  for (tie(in_i, in_end) = in_edges(v, g); in_i != in_end; ++in_i)
+	    preds.push_back(source(*in_i, g));
 	  for (tie(out_i, out_end) = out_edges(v, g); out_i != out_end; ++out_i)
 	    succs.push_back(target(*out_i, g));
 	  clear_vertex(v, g);
