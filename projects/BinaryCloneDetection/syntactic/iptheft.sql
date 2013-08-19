@@ -71,7 +71,7 @@ create table fr_funcnames as
         join semantic_functions as func1 on func1.file_id = file.id
         left join semantic_functions as func2
             on func1.id<>func2.id and func1.name <> '' and func1.name=func2.name and func1.file_id=func2.file_id
-        where func2.id is null and func1.ninsns >= 20                                            -- !!FIXME
+        where func2.id is null and func1.ninsns >= 100                                            -- !!FIXME
         group by func1.name
         having count(*) = (select count(*) from fr_specimens);
 
