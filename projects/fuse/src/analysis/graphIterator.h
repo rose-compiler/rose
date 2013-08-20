@@ -84,7 +84,7 @@ class graphEdgeIterator
   bool operator!=(const graphEdgeIterator& it) const;
           
   virtual GraphEdgePtr operator * ();
-  virtual PartEdge* operator -> ();
+  // virtual PartEdge* operator -> ();
   
   // Get the PartEdge that the iterator is currently is referring to
   GraphEdgePtr getPartEdge() const;
@@ -121,7 +121,7 @@ class graphEdgeIterator
   
   std::string str(std::string indent="");
 };
-extern template class graphEdgeIterator<PartEdgePtr, PartPtr>;
+
 typedef graphEdgeIterator<PartEdgePtr, PartPtr> partEdgeIterator;
 
 // Iterates over PartEdges in a Partition, respecting dependences in the graph.
@@ -155,7 +155,7 @@ class fw_graphEdgeIterator : public virtual graphEdgeIterator<GraphEdgePtr, Grap
   // Returns a fresh iterator that starts at node n
   static fw_graphEdgeIterator begin(const GraphNodePtr n);
 };
-extern template class fw_graphEdgeIterator<PartEdgePtr, PartPtr>;
+
 typedef fw_graphEdgeIterator<PartEdgePtr, PartPtr> fw_partEdgeIterator;
 
 template <class GraphEdgePtr, class GraphNodePtr>
@@ -262,7 +262,7 @@ class dataflowGraphEdgeIterator : public virtual graphEdgeIterator<GraphEdgePtr,
   
   std::string str(std::string indent="");
 };
-extern template class dataflowGraphEdgeIterator<PartEdgePtr, PartPtr>;
+
 typedef dataflowGraphEdgeIterator<PartEdgePtr, PartPtr> dataflowPartEdgeIterator;
 
 template <class GraphEdgePtr, class GraphNodePtr>
@@ -280,7 +280,7 @@ class fw_dataflowGraphEdgeIterator: public virtual dataflowGraphEdgeIterator<Gra
   
   //std::string str(std::string indent="");
 };
-extern template class fw_dataflowGraphEdgeIterator<PartEdgePtr, PartPtr>;
+
 typedef fw_dataflowGraphEdgeIterator<PartEdgePtr, PartPtr> fw_dataflowPartEdgeIterator;
 
 template <class GraphEdgePtr, class GraphNodePtr>
@@ -298,7 +298,7 @@ class bw_dataflowGraphEdgeIterator: public virtual dataflowGraphEdgeIterator<Gra
   
   //std::string str(std::string indent="");
 };
-extern template class bw_dataflowGraphEdgeIterator<PartEdgePtr, PartPtr>;
+
 typedef bw_dataflowGraphEdgeIterator<PartEdgePtr, PartPtr> bw_dataflowPartEdgeIterator;
 
 
@@ -346,5 +346,13 @@ std::map<GraphNodePtr, std::set<GraphNodePtr> > computeDominators() {
       }
     } 
   }*/
+
+extern template class graphEdgeIterator<PartEdgePtr, PartPtr>;
+extern template class fw_graphEdgeIterator<PartEdgePtr, PartPtr>;
+extern template class bw_graphEdgeIterator<PartEdgePtr, PartPtr>;
+extern template class dataflowGraphEdgeIterator<PartEdgePtr, PartPtr>;
+extern template class fw_dataflowGraphEdgeIterator<PartEdgePtr, PartPtr>;
+extern template class bw_dataflowGraphEdgeIterator<PartEdgePtr, PartPtr>;
+
 
 }; // namespace fuse

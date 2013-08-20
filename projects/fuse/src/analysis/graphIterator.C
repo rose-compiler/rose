@@ -276,12 +276,12 @@ GraphEdgePtr graphEdgeIterator<GraphEdgePtr, GraphNodePtr>::operator * ()
   return remainingNodes.front();
 }
 
-template <class GraphEdgePtr, class GraphNodePtr>
-PartEdge* graphEdgeIterator<GraphEdgePtr, GraphNodePtr>::operator -> ()
-{
-  assert(initialized);
-  return (*(*this)).get();
-}
+// template <class GraphEdgePtr, class GraphNodePtr>
+// PartEdge* graphEdgeIterator<GraphEdgePtr, GraphNodePtr>::operator -> ()
+// {
+//   assert(initialized);
+//   return (*(*this)).get();
+// }
 
 // Get the PartEdge that the iterator is currently is referring to
 template <class GraphEdgePtr, class GraphNodePtr>
@@ -312,10 +312,6 @@ graphEdgeIterator<GraphEdgePtr, GraphNodePtr> graphEdgeIterator<GraphEdgePtr, Gr
   blank.initialized = true;
   return blank;
 }
-
-// Sriram: gcc 4.1.2 complains of undefined references to unused to template functions
-// fix: explicit template instantiation
-template graphEdgeIterator<PartEdgePtr, PartPtr> graphEdgeIterator<PartEdgePtr, PartPtr>::end();
 
 template <class GraphEdgePtr, class GraphNodePtr>
 graphEdgeIterator<GraphEdgePtr, GraphNodePtr>::checkpoint::checkpoint(const list<GraphEdgePtr>& remainingNodes, const set<GraphEdgePtr>& visited)
@@ -416,10 +412,6 @@ fw_graphEdgeIterator<GraphEdgePtr, GraphNodePtr>
   return fw_graphEdgeIterator(n);
 }
 
-// Sriram: gcc 4.1.2 complains of undefined references to unused to template functions
-// fix: explicit template instantiation
-template fw_graphEdgeIterator<PartEdgePtr, PartPtr> fw_graphEdgeIterator<PartEdgePtr, PartPtr>::begin(const PartPtr n);
-
 /**********************************
  ******* bw_EDGE_ITERATOR *******
  *********************************/
@@ -473,10 +465,6 @@ bw_graphEdgeIterator<GraphEdgePtr, GraphNodePtr>
 {
   return bw_graphEdgeIterator(n);
 }
-
-// Sriram: gcc 4.1.2 complains of undefined references to unused to template functions
-// fix: explicit template instantiation
-template bw_graphEdgeIterator<PartEdgePtr, PartPtr> bw_graphEdgeIterator<PartEdgePtr, PartPtr>::begin(const PartPtr n);
 
 /*
 template <class GraphEdgePtr, class GraphNodePtr>
@@ -780,7 +768,6 @@ bw_dataflowGraphEdgeIterator<GraphEdgePtr, GraphNodePtr>::bw_dataflowGraphEdgeIt
 template class graphEdgeIterator<PartEdgePtr, PartPtr>;
 template class fw_graphEdgeIterator<PartEdgePtr, PartPtr>;
 template class bw_graphEdgeIterator<PartEdgePtr, PartPtr>;
-
 template class dataflowGraphEdgeIterator<PartEdgePtr, PartPtr>;
 template class fw_dataflowGraphEdgeIterator<PartEdgePtr, PartPtr>;
 template class bw_dataflowGraphEdgeIterator<PartEdgePtr, PartPtr>;
