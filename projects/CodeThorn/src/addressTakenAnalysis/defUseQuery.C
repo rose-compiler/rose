@@ -1038,9 +1038,11 @@ void ExprWalker::visit(SgLabelRefExp* sgn)
 // we should not reach here
 void ExprWalker::visit(SgExpression* sgn)
 {
+#if 0
   std::ostringstream oss;
   oss << "Not handling " << sgn->class_name() << " expression \n";
   throw std::runtime_error(oss.str());
+#endif
 }
 
 DefUseVarsInfo ExprWalker::getDefUseVarsInfo()
