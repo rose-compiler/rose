@@ -1803,7 +1803,7 @@ if (!sgClassType) { \
         SgType *type = inputType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_ARRAY_TYPE | SgType::STRIP_MODIFIER_TYPE);
 
         // Scalars, Pointers and Reference are literal
-        if (isScalarType(type) || isReferenceType(type) || isPointerType(types)) {
+        if (isScalarType(type) || isReferenceType(type) || isPointerType(type)) {
             return true;
         }
         
