@@ -70,6 +70,7 @@ class ComputeAddressTakenInfo
     void visit(SgCommaOpExp* sgn);
     void visit(SgConditionalExp* sgn);
     void visit(SgFunctionRefExp* sgn);
+    void visit(SgMemberFunctionRefExp* sgn);
     void visit(SgFunctionCallExp* sgn);
     void visit(SgNode* sgn);    
   };
