@@ -1016,7 +1016,7 @@ bool loopInterchange(SgForStatement* loop, size_t depth, size_t lexicoOrder);
 bool loopTiling(SgForStatement* loopNest, size_t targetLevel, size_t tileSize);
 
 //Winnie Loop Collapsing
-bool loopCollapsing(SgForStatement** target_loop, size_t collapsing_factor);
+SgExprListExp * loopCollapsing(SgForStatement* target_loop, size_t collapsing_factor);
 
 //@}
 

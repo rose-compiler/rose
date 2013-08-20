@@ -74,7 +74,7 @@ int main(int argc, char * argv[])
     bool result=false;
     SgForStatement *target_loop = isSgForStatement(stmt);
       fprintf(stderr, "loopCollapsing.C: after get target_loop\n");
-    result = SageInterface::loopCollapsing(&target_loop, factor);
+    result = SageInterface::loopCollapsing(target_loop, factor);
     ROSE_ASSERT(result != false);
   }
 //  AstPostProcessing(project);
