@@ -82,37 +82,83 @@ class DefUseVarsInfo
   VarsInfo def_vars_info;
   VarsInfo use_vars_info;
   FunctionCallExpSet func_set;
+  // flag is set if the variables in def_vars_info are
+  // used after their definition in the same expression
+  // or in other words has side-effects in the expression
+  // example: a = b + (c = 0) or a = i++
+  bool useAfterDef;
    
 public:
-  DefUseVarsInfo() { }
-  DefUseVarsInfo(const VarsInfo& _def_info, const VarsInfo& _use_info, const FunctionCallExpSet& _fset);
-  
+  DefUseVarsInfo() : useAfterDef(false) { }
+DefUseVarsInfo(const VarsInfo& _def_info, const VarsInfo& _use_info, const FunctionCallExpSet& _fset, bool _useAfterDef)
+  : def_vars_info(_def_info),
+    use_vars_info(_use_info),
+    func_set(_fset),
+    useAfterDef(_useAfterDef) { }
+    
   // returns the corresponding info about the memory locations
-  VarsInfo getDefVarsInfo();
-  VarsInfo getUseVarsInfo();
-  VarsInfo& getDefVarsInfoMod(); 
-  VarsInfo& getUseVarsInfoMod();
-  const VarsInfo& getDefVarsInfoRef() const;
-  const VarsInfo& getUseVarsInfoRef() const;
-
-  FunctionCallExpSet getFunctionCallExpSet();
-  FunctionCallExpSet& getFunctionCallExpSetMod();
-  const FunctionCallExpSet& getFunctionCallExpSetRef() const;
-  
-  // copy sets to handle side-effects
-  void copyDefToUse();
-  void copyUseToDef();
-  
-  bool isDefSetEmpty();
-  bool isUseSetEmpty();
-  bool isFunctionCallExpSetEmpty();
-
-  // returns the flag func_modify
-  bool isModByFunction();
-
+  VarsInfo getDefVarsInfo() {
+    return def_vars_info;
+  }
+  VarsInfo getUseVarsInfo() {
+    return use_vars_info;
+  }
+  VarsInfo& getDefVarsInfoMod() {
+    return def_vars_info;
+  }
+  VarsInfo& getUseVarsInfoMod() {
+    return use_vars_info;
+  }
+  const VarsInfo& getDefVarsInfoRef() const {
+    return def_vars_info;
+  }
+  const VarsInfo& getUseVarsInfoRef() const {
+    return use_vars_info;
+  }
+  FunctionCallExpSet getFunctionCallExpSet() {
+    return func_set;
+  }
+  FunctionCallExpSet& getFunctionCallExpSetMod() {
+    return func_set;
+  }
+  const FunctionCallExpSet& getFunctionCallExpSetRef() const {
+    return func_set;
+  }
+  bool isDefSetEmpty() {
+    return def_vars_info.first.size() == 0;
+  }
+  bool isUseSetEmpty() {
+    return use_vars_info.first.size() == 0;
+  }
+  bool isFunctionCallExpSetEmpty() {
+    return func_set.size() == 0;
+  }
   // returns the flag of VarsInfo
-  bool isDefSetModByPointer();
-  bool isUseSetModByPointer();
+  bool isDefSetModByPointer() {
+    return def_vars_info.second;
+  }
+  bool isUseSetModByPointer() {
+    return use_vars_info.second;
+  }
+  bool getUseAfterDef() const {
+    return useAfterDef;
+  }
+  // raise the flag to handle side-effects
+  void setUseAfterDef() {
+    useAfterDef = true;
+  }
+  // helpful to determine if the useAfterDef flag needs to be raised
+  // called on object of expr which is not expected to have side-effetcs
+  // function inspects all possible defs info of the object
+  // should only be called on expression with non-modifying semantics
+  bool isUseAfterDefCandidate() {
+    return (!isDefSetEmpty() ||
+            isDefSetModByPointer() ||
+            !isFunctionCallExpSetEmpty());
+  }
+  void copyUseToDef();
+  // copy the def_vars_info from that to this
+  void copyDefToDef(const DefUseVarsInfo& that);
 
   friend DefUseVarsInfo operator+(const DefUseVarsInfo& duvi1, const DefUseVarsInfo& duvi2);
 
