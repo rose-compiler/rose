@@ -239,7 +239,7 @@ $(CXX_FUSE_TESTS): cxx_%.passed: $(CXX_TESTDIR)/% $(TEST_EXIT_STATUS) $(FUSE)
 check-cxx: $(CXX_FUSE_TESTS)
 
 clean-local:
-	rm -rf *.dot *.png dbg/
+	rm -rf *.dot *.png dbg/ *.passed *.failed *.out *.err
 
 EXTRA_DIST = \
 	img/divDL.gif \
