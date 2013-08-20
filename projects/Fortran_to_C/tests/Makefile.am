@@ -14,8 +14,32 @@ TESTCODES_REQUIRED_TO_PASS = \
 							   array2.F \
 							   array3.F \
 							   array4.F \
+							   array5.F \
+							   declarationList.F \
+							   dimension1.F \
+							   dimension2.F \
+							   equivalence1.F \
+							   equivalence2.F \
+							   equivalence3.F \
+							   equivalence4.F \
+							   equivalence5.F \
+							   equivalence6.F \
+							   equivalence7.F \
+							   equivalence8.F \
 							   program1.F \
 							   subroutine1.F \
+							   implicitFunctionCall1.F \
+							   implicitFunctionCall2.F \
+							   functionArgs1.F \
+							   functionArgs2.F \
+							   functionArgs3.F \
+							   label.F \
+							   loopWithLabel.F \
+							   parameter1.F \
+							   parameter2.F \
+							   parameter3.F \
+							   type.F \
+							   doubleValue.F \
 							   function1.F
 
 
