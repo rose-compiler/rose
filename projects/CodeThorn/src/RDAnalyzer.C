@@ -126,6 +126,9 @@ RDLattice RDAnalyzer::transfer(Label lab, RDLattice element) {
   if(SgExpression* expr=isSgExpression(node)) {
     transferExpression(expr,lab,element);
   }
+  if(SgVariableDeclaration* vardecl=isSgVariableDeclaration(node)) {
+	transferDeclaration(vardecl,lab,element);
+  }
 #if 0
   cout << "RDAnalyzer: called transfer function. result: ";
   element.toStream(cout,&_variableIdMapping);
@@ -156,6 +159,23 @@ void RDAnalyzer::transferExpression(SgExpression* node, Label& lab, RDLattice& e
   }
 }
 
-void RDAnalyzer::transferDeclaration(SgDeclarationStatement* node, Label& lab, RDLattice& element) {
-  // TODO
+void RDAnalyzer::transferDeclaration(SgVariableDeclaration* declnode, Label& lab, RDLattice& element) {
+  cout<<"Calling transferDeclaration1."<<endl;
+  SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
+  ROSE_ASSERT(node);
+  // same as in transferExpression ... needs to be refined
+  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariablesInExpression(node,_variableIdMapping);  
+  if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
+	// since multiple memory locations may be modified, we cannot know which one will be updated and can only add information
+	for(VariableIdMapping::VariableIdSet::iterator i=defVarIds.begin();i!=defVarIds.end();++i) {
+	  element.insertPair(lab,*i);
+	}
+	assert(0);
+  } else if(defVarIds.size()==1) {
+	// one unique memory location (variable). We can remove all pairs with this variable
+	cout<<"Calling transferDeclaration2."<<endl;
+	VariableId var=*defVarIds.begin();
+	element.eraseAllPairsWithVariableId(var);
+	element.insertPair(lab,var);
+  }
 }
