@@ -13,6 +13,7 @@ using std::string;
 
 #include "RDAstAttribute.h"
 #include "AnalysisAbstractionLayer.h"
+#include "CFAnalyzer.h"
 
 using namespace CodeThorn;
 
@@ -29,6 +30,7 @@ class DataDependenceVisualizer {
   void generateDefUseDotGraph(SgNode* root, string fileName);
   //! requires UDAstAttribute
   void generateUseDefDotGraph(SgNode* root, string fileName);
+  void includeFlowGraphEdges(Flow* flow) { _flow=flow; }
   string nodeSourceCode(Label lab);
   bool _showSourceCode;
  private:
@@ -40,6 +42,7 @@ class DataDependenceVisualizer {
   VariableIdMapping* _variableIdMapping;
   string  _useDefAttributeName;
   int _mode;
+  Flow* _flow;
 };
 
 #endif

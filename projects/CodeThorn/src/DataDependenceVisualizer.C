@@ -82,7 +82,7 @@ void DataDependenceVisualizer::generateDot(SgNode* root, string fileName) {
 			exit(1);
 		  }
 		  if(_showSourceCode) {
-			myfile<<"[label=\""<<edgeAnnotationString<<"\" color=red];";
+			myfile<<"[label=\""<<edgeAnnotationString<<"\" color=darkgoldenrod4];";
 		  }
 		  myfile<<endl;
 		  
@@ -94,6 +94,13 @@ void DataDependenceVisualizer::generateDot(SgNode* root, string fileName) {
 		}
 	  }
 	}
+  }
+  if(_flow) {
+	_flow->setDotOptionHeaderFooter(false);
+	//_flow->setDotOptionDisplayLabel(true);
+	//_flow->setDotOptionDisplayStmt(true);
+	//_flow->setDotOptionFixedColor(true);
+    myfile<<_flow->toDot(_labeler);
   }
   myfile<<"}"<<endl;
   myfile.close();
