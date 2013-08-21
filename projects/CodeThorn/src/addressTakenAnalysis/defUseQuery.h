@@ -124,20 +124,20 @@ DefUseVarsInfo(const VarsInfo& _def_info, const VarsInfo& _use_info, const Funct
   const FunctionCallExpSet& getFunctionCallExpSetRef() const {
     return func_set;
   }
-  bool isDefSetEmpty() {
+  bool isDefSetEmpty() const {
     return def_vars_info.first.size() == 0;
   }
-  bool isUseSetEmpty() {
+  bool isUseSetEmpty() const {
     return use_vars_info.first.size() == 0;
   }
-  bool isFunctionCallExpSetEmpty() {
+  bool isFunctionCallExpSetEmpty() const {
     return func_set.size() == 0;
   }
   // returns the flag of VarsInfo
-  bool isDefSetModByPointer() {
+  bool isDefSetModByPointer() const {
     return def_vars_info.second;
   }
-  bool isUseSetModByPointer() {
+  bool isUseSetModByPointer() const {
     return use_vars_info.second;
   }
   bool getUseAfterDef() const {
@@ -147,11 +147,15 @@ DefUseVarsInfo(const VarsInfo& _def_info, const VarsInfo& _use_info, const Funct
   void setUseAfterDef() {
     useAfterDef = true;
   }
+  // access method to know if the expr has side-effect
+  bool isUseAfterDef() const {
+    return useAfterDef;
+  }
   // helpful to determine if the useAfterDef flag needs to be raised
   // called on object of expr which is not expected to have side-effetcs
   // function inspects all possible defs info of the object
   // should only be called on expression with non-modifying semantics
-  bool isUseAfterDefCandidate() {
+  bool isUseAfterDefCandidate() const {
     return (!isDefSetEmpty() ||
             isDefSetModByPointer() ||
             !isFunctionCallExpSetEmpty());
@@ -277,13 +281,14 @@ public:
 };
 
 // interface function to
-// identify modified and used locations based on syntax
-//  a[i] = expr; a is modified and i, expr are used 
-// *p = expr; since we dont know anything about p
-// the locations that are modified involve all arrays and variables in addressTakenSet
-// if the expression involve functions or function pointers it can 
-// potentially modify everything
+// collect defined and used variables based on the semantics of the expressions
+// flag is raised for pointer dereferencing as we dont know what is defined/used
+// function calls in expressions are treated as black boxes and are simply collected
+// main interface function
 DefUseVarsInfo getDefUseVarsInfo(SgNode* sgn, VariableIdMapping& vidm);
+DefUseVarsInfo getDefUseVarsInfoExpr(SgExpression* sgn, VariableIdMapping& vidm);
+DefUseVarsInfo getDefUseVarsInfoInitializedName(SgInitializedName* sgn, VariableIdMapping& vidm);
+DefUseVarsInfo getDefUseVarsInfoVariableDeclaration(SgVariableDeclaration* sgn, VariableIdMapping& vidm);
 
 // internal implementation
 // @sgn: root node

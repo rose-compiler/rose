@@ -1038,11 +1038,9 @@ void ExprWalker::visit(SgLabelRefExp* sgn)
 // we should not reach here
 void ExprWalker::visit(SgExpression* sgn)
 {
-#if 0
   std::ostringstream oss;
   oss << "Not handling " << sgn->class_name() << " expression \n";
   throw std::runtime_error(oss.str());
-#endif
 }
 
 DefUseVarsInfo ExprWalker::getDefUseVarsInfo()
@@ -1056,7 +1054,43 @@ DefUseVarsInfo ExprWalker::getDefUseVarsInfo()
 
 DefUseVarsInfo getDefUseVarsInfo(SgNode* sgn, VariableIdMapping& vidm)
 {
+  ROSE_ASSERT(sgn);
+  if(SgExpression* expr = isSgExpression(sgn)) {
+    return getDefUseVarsInfoExpr(expr, vidm);
+  }
+  else if(SgInitializedName* initName = isSgInitializedName(sgn)) {
+    return getDefUseVarsInfoInitializedName(initName, vidm);
+  }
+  else if(SgVariableDeclaration* varDecl = isSgVariableDeclaration(sgn)) {
+    return getDefUseVarsInfoVariableDeclaration(varDecl, vidm);
+  }
+  else {
+    std::ostringstream oss;
+    oss << "getDefUseVarsInfo() query can only be called on SgExpression/SgInitializedName/SgVariableDeclaration\n";
+    throw std::runtime_error(oss.str());
+  }
+}
+
+DefUseVarsInfo getDefUseVarsInfoExpr(SgExpression* sgn, VariableIdMapping& vidm)
+{
   return getDefUseVarsInfo_rec(sgn, vidm, false);  
+}
+
+DefUseVarsInfo getDefUseVarsInfoInitializedName(SgInitializedName* sgn, VariableIdMapping& vidm)
+{
+  return getDefUseVarsInfo_rec(sgn, vidm, false);  
+}
+
+DefUseVarsInfo getDefUseVarsInfoVariableDeclaration(SgVariableDeclaration* sgn, VariableIdMapping& vidm)
+{
+  SgInitializedNamePtrList variables = sgn->get_variables();
+  DefUseVarsInfo duvi, tduvi;
+  SgInitializedNamePtrList::const_iterator it = variables.begin();
+  for( ; it != variables.end(); ++it) {
+    tduvi = getDefUseVarsInfo_rec(*it, vidm, false);
+    duvi = duvi + tduvi;
+  }
+  return duvi;
 }
 
 // main implementation
