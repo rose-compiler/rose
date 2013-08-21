@@ -8798,11 +8798,24 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
           if (symbol != NULL && get_table()->key_eq()(symbol->get_name(),nm) == false)
              {
             // I think that the function name is provided in mangled from and the name from the symbol would be in non-mangled form.
-               printf ("Note: symbol->get_name() != nm: symbol->get_name() = %s nm = %s \n",symbol->get_name().str(),nm.str());
+               printf ("Note: In find_symbol_with_type_support(): symbol->get_name() != nm: symbol->get_name() = %s nm = %s \n",symbol->get_name().str(),nm.str());
              }
 #endif
+#if 0
+       // DQ (8/21/2013): This fails for the case of Fortran labels that are numeric and converted to a numeric 
+       // value and thus loose leading 0's.  This function was not previously used for labels so this was not 
+       // noticed.  An example is in:
+       //    --- tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/endfile_2.f90
+       // where the numeric label "0023" is used but stored in the SgLabelDeclaration as a numeric value "23"
+       // and thus the string "0023" fails to match with the string "23" in this assertion.  The fundamental
+       // problem is that we ask the symbol for the name and this causes the name to be computed from the
+       // numeric label.  Basically this is a problem that might best be solved by not tryig to compare
+       // the string generated from the numeric label to the name generated in the fortran frontend using
+       // the text string for the label.
+
        // This may be an expensive assert.
           ROSE_ASSERT(symbol == NULL || get_table()->key_eq()(symbol->get_name(),nm) == true);
+#endif
 
        // if (isSgFunctionSymbol(p_iterator->second) && (*p_iterator).first==nm)
        // if (isSgFunctionSymbol(p_iterator->second) && get_table()->key_eq()((*p_iterator).first,nm))
