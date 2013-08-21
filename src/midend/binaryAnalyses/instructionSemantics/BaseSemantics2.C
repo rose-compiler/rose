@@ -788,7 +788,11 @@ Dispatcher::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*=0*/
         assert(!"not implemented");
         abort();
     }
-    assert(retval!=NULL && retval->get_width()==value_nbits);
+
+    // Make sure the return value is the requested width. The unsignedExtend() can expand or shrink values.
+    assert(retval!=NULL);
+    if (retval->get_width()!=value_nbits)
+        retval = operators->unsignedExtend(retval, value_nbits);
     return retval;
 }
 
