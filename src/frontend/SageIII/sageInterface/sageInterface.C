@@ -16734,7 +16734,9 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
 
     SgExprListExp * new_var_list = buildExprListExp();  //expression list contains all the SgVarRefExp * to variables that need to be added in the mapin clause
 
-    // grab the target loop's essential header information 
+    /* 
+     *step 1: grab the target loops' header information
+     */
     SgForStatement *& target_loop = loop;
 
     SgInitializedName* ivar[collapsing_factor];
@@ -16786,16 +16788,7 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
 
 
     for(size_t i = 0; i < collapsing_factor; i ++)
-    {
-/*        ivar[i] = NULL;
-        lb[i] = NULL;
-        ub[i] = NULL;
-        step[i] = NULL;
-        orig_body[i] = NULL;
-
-        total_iters[i] = NULL; 
-        interval[i] = NULL;
-  */       
+    {     
         temp_target_loop = loops[i]; 
 
         // normalize the target loop first  // adjust to numbering starting from 0
@@ -16824,28 +16817,29 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
 
         temp_total_iter = buildConditionalExp(temp_condition_1,temp_range_d_step_exp, buildAddOp(copyExpression(temp_range_d_step_exp),buildIntVal(1)));
 
-        //Winnie, declare and initialize the variable
+        //build variables to store iteration numbers in each loop, simplify the calculation of "final_total_iters"
+        //insert the new variable (store real iteration number of each level of the loop) before the target loop
         string iter_var_name= "_total_iters";
-        iter_var_name = ivar[i]->get_name().getString() + iter_var_name + generateUniqueName(temp_total_iter, false);  //Winnie, create var name
-
+        iter_var_name = ivar[i]->get_name().getString() + iter_var_name + generateUniqueName(temp_total_iter, false);  
         SgVariableDeclaration* total_iter = buildVariableDeclaration(iter_var_name, buildIntType(), buildAssignInitializer(temp_total_iter, buildIntType()), scope);  
-        insertStatementBefore(insert_target, total_iter);     //Winnie, insert the new variable (store real iteration number of each level of the loop) before the target loop
+        insertStatementBefore(insert_target, total_iter);    
         total_iters[i] = buildVarRefExp(iter_var_name, scope);
         ub_exp = buildMultiplyOp(ub_exp, total_iters[i]);    //Winnie, build up the final iteration range 
     }
 
+
     /*
-    *Winnie, build another variable to store final total iteration counter of the loop after collapsing
+    * step 2: build new variables (new_index, final_total_iters, remainders...) for the new loop
     */
+
+    /*Winnie, build another variable to store final total iteration counter of the loop after collapsing*/
     string final_iter_counter_name = "final_total_iters" + generateUniqueName(ub_exp, false);
     SgVariableDeclaration * final_total_iter = buildVariableDeclaration(final_iter_counter_name, buildIntType(), buildAssignInitializer(copyExpression(ub_exp), buildIntType()), scope);
     insertStatementBefore(insert_target, final_total_iter);
     ub_exp = buildVarRefExp(final_iter_counter_name, scope);
     new_var_list->append_expression(isSgVarRefExp(ub_exp));
   
-    /*
-    *Winnie, interval[i] will make the calculation of remainders simpler
-    */
+    /*Winnie, interval[i] will make the calculation of remainders simpler*/
     for(unsigned int i = 0; i < collapsing_factor; i++)
     {
         interval[i] = buildIntVal(1);
@@ -16861,7 +16855,7 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
     }
 
 
-//Winnie, starting from here, we are dealing with variables inside loop, update scope
+   //Winnie, starting from here, we are dealing with variables inside loop, update scope
       scope = getScope(target_loop);
 
    //Winnie, init statement of the loop header, copy the lower bound, we are dealing with a range, the lower bound should always be "0"
@@ -16884,27 +16878,24 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
      *   i_nom_1 = (_new_index / interval[0])*step[0] + lb[0] 
      *   i_nom_1_remain_value = (_new_index % interval[0])*step[0] + lb[0], create a new var to store remain value
      *   create a new var to store total_iters[i]
-     *
      */ 
      for(unsigned int i = 0; i < collapsing_factor - 1; i ++)  
      {  
-                //Winnie, add in a new variable, and a new declaration and initialization statement for new_exp
          if(isPlus[i] == true)
              new_exp = buildAddOp(buildMultiplyOp(buildDivideOp(copyExpression(remain_exp_temp), copyExpression(interval[i])), step[i]), copyExpression(lb[i]));  //Winnie, (i_remain/interval[i])*step[i] + lb[i]
          else
              new_exp = buildAddOp(buildMinusOp(buildMultiplyOp(buildDivideOp(copyExpression(remain_exp_temp), copyExpression(interval[i])), step[i])), copyExpression(lb[i]));  //Winnie, -(i_remain/interval[i])*step[i] + lb[i], for decremental loop
 
          assign_stmt = buildAssignStatement(buildVarRefExp(ivar[i], scope), copyExpression(new_exp));   
-         new_stmt_list.push_back(assign_stmt); //Winnie, add new statement at the end of the new statement list
-         remain_exp_temp = buildModOp((remain_exp_temp), copyExpression(interval[i]));  //Winnie, remain value after div op of the new_exp stmt, we cannot add lb[i] to remain_exp_temp, because range of each level of the loop is not affected by the starting value of the loop or the end value of the loop, it is (ub[i] - lb[i] + 1)
+         new_stmt_list.push_back(assign_stmt); 
+         remain_exp_temp = buildModOp((remain_exp_temp), copyExpression(interval[i])); 
 
          if(i != collapsing_factor - 2){ //Winnie, if this is the second last level of loop, no need to create new variable to hold the remain_value, or remove the original index variable declaration
-         //Winnie, declare and initialize the variable
              string remain_var_name= "_remainder";
-             remain_var_name = ivar[i]->get_name().getString() + remain_var_name;  //Winnie, create var name
+             remain_var_name = ivar[i]->get_name().getString() + remain_var_name;  
              SgVariableDeclaration* loop_index_decl = buildVariableDeclaration(remain_var_name, buildIntType(), buildAssignInitializer(remain_exp_temp, buildIntType()), scope);  
              remain_exp_temp = buildVarRefExp(remain_var_name, scope);
-             new_stmt_list.push_back(loop_index_decl); //Winnie, add new statement at the end of the new statement list
+             new_stmt_list.push_back(loop_index_decl); 
          }
          new_exp = NULL;
      }
@@ -16917,10 +16908,12 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
      new_stmt_list.push_back(assign_stmt);
      prependStatementList(new_stmt_list, body);
 
-    //Winnie, build the new step expression, normalize it, so new step is always 1, disregard value of step[i]
+    /*
+    * step 3: build the new loop, new step is always 1, disregard value of step[i]
+    */
     SgExpression* incr_exp = buildPlusAssignOp(buildVarRefExp(ivar_name, scope), buildIntVal(1)); 
 
-   //Winnie, build the new conditional expression/ub
+    //Winnie, build the new conditional expression/ub
     SgExprStatement* cond_stmt = NULL;
     ub_exp = buildSubtractOp(ub_exp, buildIntVal(1));
     cond_stmt = buildExprStatement(buildLessOrEqualOp(buildVarRefExp(ivar_name,scope),copyExpression(ub_exp)));
