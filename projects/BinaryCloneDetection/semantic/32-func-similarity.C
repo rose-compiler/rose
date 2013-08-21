@@ -7,6 +7,8 @@
 
 #include <cerrno>
 
+#include "lsh.h"
+
 std::string argv0;
 
 static void
@@ -529,6 +531,59 @@ load_worklist(const std::string &input_name, FILE *f)
     return worklist;
 }
 
+void
+read_vector_data(const SqlDatabase::TransactionPtr &tx, scoped_array_with_size<VectorEntry>& vectors, std::map<int, VectorEntry*>& id_to_vec)
+{
+    size_t eltCount = 0;
+    SqlDatabase::StatementPtr cmd1 = tx->statement("select count(*) from vectors");
+    eltCount = cmd1->execute_int();
+
+
+    if (eltCount == 0) {
+        std::cerr << "No vectors found -- invalid database?" << std::endl;
+        exit (1);
+    }
+
+
+    vectors.allocate(eltCount);
+    SqlDatabase::StatementPtr cmd2 = tx->statement( "select id, function_id, index_within_function, line, counts_b64, instr_seq_b64 from vectors");
+
+    size_t indexInVectors=0;
+    for (SqlDatabase::Statement::iterator r=cmd2->begin(); r!=cmd2->end(); ++r) {
+        long long rowNumber = r.get<int64_t>(0);
+        int functionId = r.get<int>(1);
+        int indexWithinFunction = r.get<int>(2);
+        long long line = r.get<int64_t>(3);
+        std::vector<uint8_t> counts = StringUtility::decode_base64(r.get<std::string>(4));
+        std::string compressedCounts(&counts[0], &counts[0]+counts.size());
+        std::vector<uint8_t> md5 = StringUtility::decode_base64(r.get<std::string>(5));
+        std::string instrSeqMD5(&md5[0], &md5[0]+md5.size());
+        VectorEntry& ve = vectors[indexInVectors];
+        ve.functionId = functionId;
+        ve.indexWithinFunction = indexWithinFunction;
+        ve.line = line;
+        ve.offset = 0;
+        ve.compressedCounts.allocate(compressedCounts.size());
+        ve.rowNumber = rowNumber;
+        memcpy(ve.compressedCounts.get(), compressedCounts.data(), compressedCounts.size());
+        //if (instrSeqMD5.size() != 16) {
+        //    if (debug_messages)
+        //        std::cout << "Found MD5 with length other than 16" << std::endl;
+        //    abort();
+        //}
+        memcpy(ve.instrSeqMD5, instrSeqMD5.data(), 16);
+        if (rowNumber % 100000 == 0)
+            std::cerr << "Got row " << rowNumber << std::endl;
+
+        id_to_vec.insert(std::pair<int, VectorEntry*>(functionId,&ve));
+
+        indexInVectors++;
+    }
+}
+
+
+
+
 int
 main(int argc, char *argv[])
 {
@@ -643,12 +698,20 @@ main(int argc, char *argv[])
     // Process each function pair
     CloneDetection::Progress progress(npairs);
     progress.force_output(opt.show_progress);
+
+
+    scoped_array_with_size<VectorEntry> allVectors;
+    std::map<int, VectorEntry* > id_to_vec;
+ 
+    read_vector_data(transaction, allVectors, id_to_vec);
+
+
     SqlDatabase::StatementPtr stmt = transaction->statement("insert into semantic_funcsim"
                                                             // 0        1         2           3          4
                                                             "(func1_id, func2_id, similarity, ncompares, maxcompares,"
                                                             // 5           6
-                                                            " relation_id, cmd)"
-                                                            " values (?, ?, ?, ?, ?, ?, ?)");
+                                                            " relation_id, cmd, hamming_d, euclidean_d)"
+                                                            " values (?,?, ?, ?, ?, ?, ?, ?,?)");
     CachedOutputs all_outputs;
     FunctionOutputs func_outputs;
     load_function_infos();
@@ -666,6 +729,38 @@ main(int argc, char *argv[])
         size_t ncompares, maxcompares;
         double sim = similarity(func_infos[func1_id], func_infos[func2_id], f1_outs, f2_outs,
                                 ncompares/*out*/, maxcompares/*out*/);
+ 
+        VectorEntry* f1_compressed = id_to_vec[func1_id];
+        VectorEntry* f2_compressed = id_to_vec[func2_id];  
+
+        int vec_length = 51;
+ 
+        boost::scoped_array<uint16_t> f1_uncompressed(new uint16_t[vec_length]);
+        decompressVector(f1_compressed->compressedCounts.get(), f1_compressed->compressedCounts.size(), f1_uncompressed.get());
+ 
+        boost::scoped_array<uint16_t> f2_uncompressed(new uint16_t[vec_length]);
+        decompressVector(f2_compressed->compressedCounts.get(), f2_compressed->compressedCounts.size(), f2_uncompressed.get());
+ 
+        int hamming_d   = 0;
+        int euclidean_d = 0;
+
+ 
+        int f1_v=0;
+        int f2_v=0;
+        for(int i = 0; i < vec_length; i++){
+          f1_v = f1_uncompressed[i]; 
+          f2_v = f2_uncompressed[i];
+
+          if ( f1_v != f2_v ) hamming_d++;
+          euclidean_d += (f1_v - f2_v)*(f1_v - f2_v);
+
+        }
+      
+        hamming_d = sqrt(hamming_d);
+        euclidean_d = sqrt(euclidean_d);
+
+       
+
         stmt->bind(0, func1_id);
         stmt->bind(1, func2_id);
         stmt->bind(2, sim);
@@ -673,6 +768,8 @@ main(int argc, char *argv[])
         stmt->bind(4, maxcompares);
         stmt->bind(5, opt.relation_id);
         stmt->bind(6, cmd_id);
+        stmt->bind(7, hamming_d);
+        stmt->bind(8, euclidean_d);
         stmt->execute();
     }
     

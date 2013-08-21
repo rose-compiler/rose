@@ -200,5 +200,7 @@ create table semantic_funcsim (
        ncompares integer,                       -- number of output groups compared to reach this value
        maxcompares integer,                     -- potential number of comparisons possible (ncompares is a random sample)
        relation_id int,                         -- Identying number for this set of function similarity values (default is zero)
+       hamming_d integer,                       -- Hamming distance
+       euclidean_d integer,                     -- Euclidean distance
        cmd bigint references semantic_history(hashkey) -- command that set the precision on this row
 );
