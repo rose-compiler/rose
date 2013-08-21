@@ -383,20 +383,28 @@ SageInterface::isPrototypeInScope ( SgScopeStatement* scope, SgFunctionDeclarati
 
 bool
 SageInterface::isAncestor (SgNode* node1, SgNode* node2)
-{
-  ROSE_ASSERT(node1&&node2);
-  SgNode* curnode= node2;
-  if (node1==node2)
-    return false;
-  do {
-      curnode= curnode->get_parent();
-  } while( (curnode!=NULL)&&(curnode!=node1));
+   {
+     ROSE_ASSERT(node1 && node2);
 
-  if (curnode==node1)
-   return true;
-  else
-    return false;
-}
+     SgNode* curnode = node2;
+     if (node1==node2)
+        {
+         return false;
+        }
+
+     do {
+          curnode= curnode->get_parent();
+        } while( (curnode!=NULL)&&(curnode!=node1));
+
+     if (curnode==node1)
+        {
+          return true;
+        }
+       else
+        {
+          return false;
+        }
+   }
 
 std::vector<SgNode*>
 SageInterface::astIntersection ( SgNode* original, SgNode* copy, SgCopyHelp* help )
