@@ -317,7 +317,9 @@ HEADER_SCOPE_STATEMENT_START
 
        //! get the first symbol with name (note that "" is a valid name and is used for unnamed declarations)
        //! the input name is stored as internal state to support the use of next_XXX_symbol() member function.
-          SgSymbol*          lookup_symbol            (const SgName& n) const;
+       // SgSymbol*          lookup_symbol            (const SgName& n) const;
+          SgSymbol*          lookup_symbol            (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList) const;
+
           SgVariableSymbol*  lookup_var_symbol        (const SgName& n) const ROSE_DEPRECATED_FUNCTION;
           SgVariableSymbol*  lookup_variable_symbol   (const SgName& n) const;
 
@@ -327,7 +329,11 @@ HEADER_SCOPE_STATEMENT_START
           SgClassSymbol*     lookup_class_symbol      (const SgName& n, SgTemplateArgumentPtrList* templateArgumentsList) const;
 
           SgFunctionSymbol*  lookup_function_symbol   (const SgName& n) const;
-          SgFunctionSymbol*  lookup_function_symbol   (const SgName& n, const SgType* t) const;
+
+       // DQ (8/10/2013): Added to support function symbol lookup for template instantiations that would only be disambiguated by their template arguments.
+       // SgFunctionSymbol*  lookup_function_symbol   (const SgName& n, const SgType* t) const;
+          SgFunctionSymbol*  lookup_function_symbol   (const SgName& n, const SgType* t, SgTemplateArgumentPtrList* templateArgumentsList = NULL) const;
+
           SgTypedefSymbol*   lookup_typedef_symbol    (const SgName& n) const;
           SgEnumSymbol*      lookup_enum_symbol       (const SgName& n) const;
        // SgEnumFieldSymbol* lookup_enumfield_symbol  (const SgName& n) const ROSE_DEPRECATED_FUNCTION;
@@ -335,27 +341,45 @@ HEADER_SCOPE_STATEMENT_START
           SgLabelSymbol*     lookup_label_symbol      (const SgName& n) const;
           SgJavaLabelSymbol* lookup_java_label_symbol (const SgName& n) const; // charles4: added 09/12/2011
           SgNamespaceSymbol* lookup_namespace_symbol  (const SgName& n) const;
+
+#if 0
+       // DQ (8/13/2013): Since function templates, member function templates, and class templates are symbols not derived from SgTemplateSymbol, 
+       // this function is not very useful since it returns a SgTemplateSymbol.  This was a part of the older pre-EDG4x API.
+
+       // A class template can have partial specialization, so we need to support both template parameter list and the 
+       // template argument list used for specialization as part of looking up symbols for template that could include 
+       // class templates, however, a template function can not have template partial specialization, so the template
+       // argument list for partial specialization will not be used here (since specializations of template functions
+       // are template instantiations, not templates and should use another symbol lookup function.
        // SgTemplateSymbol*  lookup_template_symbol   (const SgName& n) const;
           SgTemplateSymbol*  lookup_template_symbol   (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const;
+#endif
 
        // DQ (12/12/2011): Added support for template declarations in the AST.
        // SgTemplateClassSymbol* lookup_template_class_symbol    (const SgName& n) const;
           SgTemplateClassSymbol* lookup_template_class_symbol    (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const;
- 
+
        // DQ (8/22/2012): If we have template arguments then we have a chance to disambiguate SgTemplateInstantiationDecl IR nodes based on the
        // arguments which would otherwise require qulified names (which are difficult to robustly support using as the AST is being constructed).
           SgClassSymbol*     lookup_nontemplate_class_symbol (const SgName& n, SgTemplateArgumentPtrList* templateArgumentsList) const;
 
+       // DQ (8/9/2013): Note that template functions can't be specialized, so we need to only handle SgTemplateParameterPtrList
        // DQ (12/27/2011): Added support for template declarations in the AST.
        // SgTemplateFunctionSymbol*       lookup_template_function_symbol (const SgName& n, const SgType* t) const;
-          SgTemplateFunctionSymbol*       lookup_template_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const;
+          SgTemplateFunctionSymbol*       lookup_template_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList) const;
 
-          SgFunctionSymbol*               lookup_nontemplate_function_symbol (const SgName& n, const SgType* t) const;
+       // DQ (8/10/2013): If there are template arguments then they are used to disambiguate template instantiations that might match existing non-template instantiations (normal functions).
+       // SgFunctionSymbol*               lookup_nontemplate_function_symbol (const SgName& n, const SgType* t) const;
+          SgFunctionSymbol*               lookup_nontemplate_function_symbol (const SgName& n, const SgType* t, SgTemplateArgumentPtrList* templateArgumentsList = NULL) const;
+
        // SgTemplateMemberFunctionSymbol* lookup_template_member_function_symbol (const SgName& n, const SgType* t) const;
-          SgTemplateMemberFunctionSymbol* lookup_template_member_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const;
+       // SgTemplateMemberFunctionSymbol* lookup_template_member_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const;
+          SgTemplateMemberFunctionSymbol* lookup_template_member_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList) const;
 
+       // DQ (8/10/2013): If there are template arguments then they are used to disambiguate template instantiations that might match existing non-template instantiations (normal functions).
        // DQ (5/23/2013): Added API function so that we would not have to access the symbol tabel directly.
-          SgMemberFunctionSymbol* lookup_nontemplate_member_function_symbol (const SgName& n, const SgType* t) const;
+       // SgMemberFunctionSymbol* lookup_nontemplate_member_function_symbol (const SgName& n, const SgType* t) const;
+          SgMemberFunctionSymbol* lookup_nontemplate_member_function_symbol (const SgName& n, const SgType* t, SgTemplateArgumentPtrList* templateArgumentsList = NULL) const;
 
        //! get the first symbol independent of name (lack of name is stored as internal state)
           SgSymbol*          first_any_symbol        () const;
@@ -542,10 +566,14 @@ HEADER_SCOPE_STATEMENT_START
           void set_symbol_table ( SgSymbolTable* symbol_table );
 
      public:
+       // DQ (8/7/2013): Adding support for template function overloading using template parameters (info passed as template arguments for specialization).
        // DQ (5/21/2013): Added support for organizing how we match function declarations with function symbols.
        // This function was moved from the symbol table to the SgScopeStatement so that we could make the 
        // symbol table access functions private as part of the new namespace symbol table handling.
-          template<class T> SgFunctionSymbol* find_symbol_by_type_of_function (const SgName & name, const SgType* func_type);
+       // template<class T> SgFunctionSymbol* find_symbol_by_type_of_function (const SgName & name, const SgType* func_type);
+       // template<class T> SgFunctionSymbol* find_symbol_by_type_of_function (const SgName & name, const SgType* func_type, SgTemplateArgumentPtrList* templateArgumentList);
+       // template<class T> SgFunctionSymbol* find_symbol_by_type_of_function (const SgName & name, const SgType* func_type, SgTemplateArgumentPtrList* templateArgumentList, SgTemplateParameterPtrList* templateParameterList);
+          template<class T> SgFunctionSymbol* find_symbol_by_type_of_function (const SgName & name, const SgType* func_type, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList);
 
        // DQ (5/21/2013): This function is used by the get_symbol_from_symbol_table() functions.
           template<class T> SgSymbol* find_symbol_from_declaration(const T* node) const;
@@ -855,6 +883,12 @@ HEADER_DECLARATION_STATEMENT_START
           void set_definingDeclaration(SgDeclarationStatement* definingDeclaration);
           SgDeclarationStatement* get_firstNondefiningDeclaration() const;
           void set_firstNondefiningDeclaration(SgDeclarationStatement* firstNondefiningDeclaration);
+
+       // DQ (8/21/2013): Added function to support calling get_type() from a SgDeclarationStatement so that the 
+       // template low-level symbol table support function would compile cleanly.  Note that it is an error to 
+       // call this function and it is not a virtual function that will cause derived class versions to be called
+       // where appropriate (and it is not always appropriate, e.g a SgNamespaceDeclaration has no assocated SgType).
+          SgType* get_type() const;
 
 HEADER_DECLARATION_STATEMENT_END
 
@@ -2035,6 +2069,12 @@ HEADER_LABEL_STATEMENT_START
       //! Support for where the scope is explicitly required
           virtual bool hasExplicitScope() const;
 
+       // DQ (8/21/2013): Added function to support calling get_type() from a SgDeclarationStatement so that the 
+       // template low-level symbol table support function would compile cleanly.  Note that it is an error to 
+       // call this function and it is not a virtual function that will cause derived class versions to be called
+       // where appropriate (and it is not always appropriate, e.g a SgNamespaceDeclaration has no assocated SgType).
+          SgType* get_type() const;
+
 HEADER_LABEL_STATEMENT_END
 
 
@@ -2060,6 +2100,12 @@ HEADER_JAVA_LABEL_STATEMENT_START
 */
       // charles4: 09/13/2011 added to support Java (DQ (2/10/2007): Marked as virtual to be consistent)
           virtual SgSymbol* get_symbol_from_symbol_table() const;
+
+       // DQ (8/21/2013): Added function to support calling get_type() from a SgDeclarationStatement so that the 
+       // template low-level symbol table support function would compile cleanly.  Note that it is an error to 
+       // call this function and it is not a virtual function that will cause derived class versions to be called
+       // where appropriate (and it is not always appropriate, e.g a SgNamespaceDeclaration has no assocated SgType).
+          SgType* get_type() const;
 
 HEADER_JAVA_LABEL_STATEMENT_END
 
@@ -4514,7 +4560,6 @@ SgScopeStatement::remove_symbol ( SgSymbol* s )
 int
 SgScopeStatement::lookup_symbol(const SgName& n, SgSymbol *s) const
    {
-#if 1
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -4529,45 +4574,30 @@ SgScopeStatement::lookup_symbol(const SgName& n, SgSymbol *s) const
           assert (p_symbol_table != NULL);
           return p_symbol_table->find(n,s);
         }
-#else
-     assert (p_symbol_table != NULL);
-     return p_symbol_table->find(n,s);
-#endif
    }
 
   // first symbol with n
+// SgSymbol* SgScopeStatement::lookup_symbol(const SgName& n) const
 SgSymbol*
-SgScopeStatement::lookup_symbol(const SgName& n) const
+SgScopeStatement::lookup_symbol(const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList) const
    {
-#if 1
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
         {
           ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
           const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
-#if 1
-          SgSymbol* symbol = globalNamespaceDefinitionStatement->get_symbol_table()->find_any(n);
+
+       // SgSymbol* symbol = globalNamespaceDefinitionStatement->get_symbol_table()->find_any(n);
+          SgSymbol* symbol = globalNamespaceDefinitionStatement->get_symbol_table()->find_any(n,templateParameterList,templateArgumentList);
           return symbol;
-#else
-          SgSymbol* symbol = globalNamespaceDefinitionStatement->get_symbol_table()->find_any(n);
-          SgAliasSymbol* aliasSymbol = isSgAliasSymbol(symbol);
-          ROSE_ASSERT(aliasSymbol != NULL);
-          SgSymbol* returnSymbol = aliasSymbol->get_alias();
-          ROSE_ASSERT(returnSymbol != NULL);
-          ROSE_ASSERT(isSgAliasSymbol(returnSymbol) == NULL);
-          return returnSymbol;
-#endif
         }
        else
         {
           assert (p_symbol_table != NULL);
-          return p_symbol_table->find_any(n);
+       // return p_symbol_table->find_any(n);
+          return p_symbol_table->find_any(n,templateParameterList,templateArgumentList);
         }
-#else
-     assert (p_symbol_table != NULL);
-     return p_symbol_table->find_any(n);
-#endif
    }
 
 // DQ (1/30/2007): Added these back into ROSE.
@@ -4576,7 +4606,6 @@ SgScopeStatement::lookup_symbol(const SgName& n) const
 SgTypedefSymbol*
 SgScopeStatement::lookup_typedef_symbol(const SgName& n) const
    {
-#if 1
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -4585,26 +4614,13 @@ SgScopeStatement::lookup_typedef_symbol(const SgName& n) const
           const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
 
           SgTypedefSymbol* symbol = globalNamespaceDefinitionStatement->get_symbol_table()->find_typedef(n);
-#if 1
           return symbol;
-#else
-          SgAliasSymbol* aliasSymbol = isSgAliasSymbol(symbol);
-          ROSE_ASSERT(aliasSymbol != NULL);
-          SgTypedefSymbol* returnSymbol = isSgTypedefSymbol(aliasSymbol->get_alias());
-          ROSE_ASSERT(returnSymbol != NULL);
-
-          return returnSymbol;
-#endif
         }
        else
         {
           assert (p_symbol_table != NULL);
           return p_symbol_table->find_typedef(n);
         }
-#else
-     assert (p_symbol_table != NULL);
-     return p_symbol_table->find_typedef(n);
-#endif
    }
 
 // DQ (1/30/2007): Added these back into ROSE.
@@ -4789,30 +4805,29 @@ SgScopeStatement::lookup_java_label_symbol(const SgName& n) const
      return p_symbol_table->find_java_label(n);
    }
 
+// DQ (8/10/2013): Modified API to support functions that are template instantiations to be disambiguated based on template arguments.
 // DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
 // DQ (5/22/2006): I would like to restrict support of a number of functions that I 
 // think are redundant with the simple lookup_symbol(const SgName& n) (above).
+// SgFunctionSymbol* SgScopeStatement::lookup_function_symbol(const SgName& n, const SgType* t) const
 SgFunctionSymbol*
-SgScopeStatement::lookup_function_symbol(const SgName& n, const SgType* t) const
+SgScopeStatement::lookup_function_symbol(const SgName& n, const SgType* t, SgTemplateArgumentPtrList* templateArgumentsList) const
    {
-#if 1
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
         {
           ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
           const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
-          return globalNamespaceDefinitionStatement->get_symbol_table()->find_function(n,t);
+       // return globalNamespaceDefinitionStatement->get_symbol_table()->find_function(n,t);
+          return globalNamespaceDefinitionStatement->get_symbol_table()->find_function(n,t,templateArgumentsList);
         }
        else
         {
           assert (p_symbol_table != NULL);
-          return p_symbol_table->find_function(n,t);
+       // return p_symbol_table->find_function(n,t);
+          return p_symbol_table->find_function(n,t,templateArgumentsList);
         }
-#else
-     assert (p_symbol_table != NULL);
-     return p_symbol_table->find_function(n,t);
-#endif
    }
 
 // DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
@@ -4821,7 +4836,6 @@ SgScopeStatement::lookup_function_symbol(const SgName& n, const SgType* t) const
 SgFunctionSymbol*
 SgScopeStatement::lookup_function_symbol(const SgName& n) const
    {
-#if 1
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -4835,10 +4849,6 @@ SgScopeStatement::lookup_function_symbol(const SgName& n) const
           assert (p_symbol_table != NULL);
           return p_symbol_table->find_function(n);
         }
-#else
-     assert (p_symbol_table != NULL);
-     return p_symbol_table->find_function(n);
-#endif
    }
 /*
 SgMemberFunctionSymbol*
@@ -4991,35 +5001,32 @@ SgScopeStatement::lookup_namespace_symbol ( const SgName & n ) const
    }
 
 
+#if 0
+// DQ (8/13/2013): Since function templates, member function templates, and class templates are symbols not derived from SgTemplateSymbol, 
+// this function is not very useful since it returns a SgTemplateSymbol.  This was a part of the older pre-EDG4x API.
 SgTemplateSymbol*
 SgScopeStatement::lookup_template_symbol (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const
    {
-#if 1
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
         {
           ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
           const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
-          return globalNamespaceDefinitionStatement->get_symbol_table()->find_template(n);
+          return globalNamespaceDefinitionStatement->get_symbol_table()->find_template(n,templateParameterList,templateSpecializationArgumentList);
         }
        else
         {
           assert (p_symbol_table != NULL);
-          return p_symbol_table->find_template(n);
+          return p_symbol_table->find_template(n,templateParameterList,templateSpecializationArgumentList);
         }
-#else
-     assert (p_symbol_table != NULL);
-  // return p_symbol_table->find_template(n);
-     return p_symbol_table->find_template(n, templateParameterList, templateSpecializationArgumentList);
-#endif
    }
+#endif
 
 // DQ (12/12/2011): Added support for template declarations in the AST.
 SgTemplateClassSymbol*
 SgScopeStatement::lookup_template_class_symbol (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList ) const
    {
-#if 1
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -5036,13 +5043,6 @@ SgScopeStatement::lookup_template_class_symbol (const SgName& n, SgTemplateParam
           assert (p_symbol_table != NULL);
           return p_symbol_table->find_template_class(n, templateParameterList, templateSpecializationArgumentList);
         }
-#else
-     assert (p_symbol_table != NULL);
-
-  // DQ (9/9/2012): Added template parameter list 
-  // return p_symbol_table->find_template_class(n);
-     return p_symbol_table->find_template_class(n, templateParameterList, templateSpecializationArgumentList);
-#endif
    }
 
 // DQ (8/22/2012): If we have template arguments then we have a chance to disambiguate SgTemplateInstantiationDecl IR nodes based on the
@@ -5051,7 +5051,6 @@ SgScopeStatement::lookup_template_class_symbol (const SgName& n, SgTemplateParam
 SgClassSymbol*
 SgScopeStatement::lookup_nontemplate_class_symbol (const SgName& n, SgTemplateArgumentPtrList* templateArgumentsList) const
    {
-#if 1
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -5069,16 +5068,12 @@ SgScopeStatement::lookup_nontemplate_class_symbol (const SgName& n, SgTemplateAr
           assert (p_symbol_table != NULL);
           return p_symbol_table->find_nontemplate_class(n,templateArgumentsList);
         }
-#else
-     assert (p_symbol_table != NULL);
-     return p_symbol_table->find_nontemplate_class(n,templateArgumentsList);
-#endif
    }
 
+// SgTemplateFunctionSymbol* SgScopeStatement::lookup_template_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const
 SgTemplateFunctionSymbol*
-SgScopeStatement::lookup_template_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const
+SgScopeStatement::lookup_template_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList) const
    {
-#if 1
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -5086,48 +5081,42 @@ SgScopeStatement::lookup_template_function_symbol (const SgName& n, const SgType
           ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
           const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
        // return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_function(n,t);
-          return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_function(n,t,templateParameterList,templateSpecializationArgumentList);
+       // return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_function(n,t,templateParameterList,templateSpecializationArgumentList);
+          return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_function(n,t,templateParameterList);
         }
        else
         {
           assert (p_symbol_table != NULL);
        // return p_symbol_table->find_template_function(n,t);
-          return p_symbol_table->find_template_function(n,t,templateParameterList,templateSpecializationArgumentList);
+       // return p_symbol_table->find_template_function(n,t,templateParameterList,templateSpecializationArgumentList);
+          return p_symbol_table->find_template_function(n,t,templateParameterList);
         }
-#else
-     assert (p_symbol_table != NULL);
-  // return p_symbol_table->find_template_function(n,t);
-     return p_symbol_table->find_template_function(n,t,templateParameterList,templateSpecializationArgumentList);
-#endif
    }
 
+// DQ (8/10/2013): Modified version of function to support template arguments (where used).
+// SgFunctionSymbol* SgScopeStatement::lookup_nontemplate_function_symbol (const SgName& n, const SgType* t) const
 SgFunctionSymbol*
-SgScopeStatement::lookup_nontemplate_function_symbol (const SgName& n, const SgType* t) const
+SgScopeStatement::lookup_nontemplate_function_symbol (const SgName& n, const SgType* t, SgTemplateArgumentPtrList* templateArgumentsList) const
    {
-#if 1
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
         {
           ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
           const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
-          return globalNamespaceDefinitionStatement->get_symbol_table()->find_nontemplate_function(n,t);
+          return globalNamespaceDefinitionStatement->get_symbol_table()->find_nontemplate_function(n,t,templateArgumentsList);
         }
        else
         {
           assert (p_symbol_table != NULL);
-          return p_symbol_table->find_nontemplate_function(n,t);
+          return p_symbol_table->find_nontemplate_function(n,t,templateArgumentsList);
         }
-#else
-     assert (p_symbol_table != NULL);
-     return p_symbol_table->find_nontemplate_function(n,t);
-#endif
    }
 
+// SgTemplateMemberFunctionSymbol* SgScopeStatement::lookup_template_member_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const
 SgTemplateMemberFunctionSymbol*
-SgScopeStatement::lookup_template_member_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const
+SgScopeStatement::lookup_template_member_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList) const
    {
-#if 1
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -5135,43 +5124,38 @@ SgScopeStatement::lookup_template_member_function_symbol (const SgName& n, const
           ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
           const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
        // return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_member_function(n,t);
-          return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_member_function(n,t,templateParameterList,templateSpecializationArgumentList);
+       // return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_member_function(n,t,templateParameterList,templateSpecializationArgumentList);
+          return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_member_function(n,t,templateParameterList);
         }
        else
         {
           assert (p_symbol_table != NULL);
        // return p_symbol_table->find_template_member_function(n,t);
-          return p_symbol_table->find_template_member_function(n,t,templateParameterList,templateSpecializationArgumentList);
+       // return p_symbol_table->find_template_member_function(n,t,templateParameterList,templateSpecializationArgumentList);
+          return p_symbol_table->find_template_member_function(n,t,templateParameterList);
         }
-#else
-     assert (p_symbol_table != NULL);
-  // return p_symbol_table->find_template_member_function(n,t);
-     return p_symbol_table->find_template_member_function(n,t,templateParameterList,templateSpecializationArgumentList);
-#endif
    }
 
 
+// SgMemberFunctionSymbol* SgScopeStatement::lookup_nontemplate_member_function_symbol (const SgName& n, const SgType* t) const
 SgMemberFunctionSymbol*
-SgScopeStatement::lookup_nontemplate_member_function_symbol (const SgName& n, const SgType* t) const
+SgScopeStatement::lookup_nontemplate_member_function_symbol (const SgName& n, const SgType* t, SgTemplateArgumentPtrList* templateArgumentsList) const
    {
-#if 1
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
         {
           ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
           const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
-          return globalNamespaceDefinitionStatement->get_symbol_table()->find_nontemplate_member_function(n,t);
+       // return globalNamespaceDefinitionStatement->get_symbol_table()->find_nontemplate_member_function(n,t);
+          return globalNamespaceDefinitionStatement->get_symbol_table()->find_nontemplate_member_function(n,t,templateArgumentsList);
         }
        else
         {
           assert (p_symbol_table != NULL);
-          return p_symbol_table->find_nontemplate_member_function(n,t);
+       // return p_symbol_table->find_nontemplate_member_function(n,t);
+          return p_symbol_table->find_nontemplate_member_function(n,t,templateArgumentsList);
         }
-#else
-     assert (p_symbol_table != NULL);
-     return p_symbol_table->find_nontemplate_member_function(n,t);
-#endif
    }
 
 
@@ -5264,6 +5248,9 @@ SgScopeStatement::first_namespace_symbol() const
      return p_symbol_table->find_namespace();
    }
 
+#if 0
+// DQ (8/13/2013): Since function templates, member function templates, and class templates are symbols not derived from SgTemplateSymbol, 
+// this function is not very useful since it returns a SgTemplateSymbol.  This was a part of the older pre-EDG4x API.
 // DQ (2/4/2007): Added to ROSE to make the interface consistent.
 SgTemplateSymbol*
 SgScopeStatement::first_template_symbol() const
@@ -5271,7 +5258,7 @@ SgScopeStatement::first_template_symbol() const
      ROSE_ASSERT (p_symbol_table != NULL);
      return p_symbol_table->find_template();
    }
-
+#endif
 
 
 
@@ -7990,11 +7977,25 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                               case SgTemplateArgument::nontype_argument:
                                  {
                                 // These can be boolean or integer values, for example.
-                                   ROSE_ASSERT((*i)->get_expression() != NULL);
+                                // ROSE_ASSERT((*i)->get_expression() != NULL);
+                                   ROSE_ASSERT((*i)->get_expression() != NULL || (*i)->get_initializedName() != NULL);
+                                   ROSE_ASSERT((*i)->get_expression() == NULL || (*i)->get_initializedName() == NULL);
+
+                                   if ((*i)->get_expression() != NULL)
+                                      {
 #if 0
-                                   SgExpression* argumentExpression = (*i)->get_expression();
-                                   printf ("SgTemplateArgument::nontype_argument: argumentExpression = %p = %s \n",argumentExpression,argumentExpression->sage_class_name());
+                                        SgExpression* argumentExpression = (*i)->get_expression();
+                                        printf ("In SgDeclarationStatement::resetTemplateNameSupport(): case SgTemplateArgument::nontype_argument: argumentExpression = %p = %s \n",argumentExpression,argumentExpression->class_name().c_str());
 #endif
+                                      }
+                                     else
+                                      {
+#if 0
+                                        SgInitializedName* argumentInitializedName = (*i)->get_initializedName();
+                                        printf ("In SgDeclarationStatement::resetTemplateNameSupport(): case SgTemplateArgument::nontype_argument: argumentInitializedName = %p = %s \n",argumentInitializedName,argumentInitializedName->get_name().str());
+#endif
+                                      }
+                                   
                                    break;
                                  }
 
@@ -8228,7 +8229,8 @@ stringSupport ( string & sourceString, const string & targetString, const string
 
 // SgName $CLASSNAME::fixupTemplateNameForMangledNameSupport( const SgName & name) const
 // static SgName fixupTemplateNameForMangledNameSupport( const SgName & name)
-SgName SgDeclarationStatement::fixupTemplateNameForMangledNameSupport( const SgName & name) const
+SgName
+SgDeclarationStatement::fixupTemplateNameForMangledNameSupport( const SgName & name) const
    {
   // Where template names are reset to the form "foo < int >" we can look for just
   // the " < " and " > " substrings which are guaranteed to exist by construction!
@@ -8974,6 +8976,15 @@ SgDeclarationStatement::set_firstNondefiningDeclaration ( SgDeclarationStatement
      ROSE_ASSERT(firstNondefiningDeclaration == NULL || this->variantT() == firstNondefiningDeclaration->variantT());
    }
 
+SgType* 
+SgDeclarationStatement::get_type() const
+   {
+  // DQ (8/21/2013): Added function to support calling get_type() from a SgDeclarationStatement so that the 
+  // template low-level symbol table support function would compile cleanly.  Note that it is an error to 
+  // call this function and it is not a virtual function that will cause derived class versions to be called
+  // where appropriate (and it is not always appropriate, e.g a SgNamespaceDeclaration has no assocated SgType).
+     return NULL;
+   }
 
 SOURCE_DECLARATION_STATEMENT_END
 
@@ -13712,6 +13723,16 @@ SgLabelStatement::get_symbol_from_symbol_table() const
 #endif
    }
 
+SgType* 
+SgLabelStatement::get_type() const
+   {
+  // DQ (8/21/2013): Added function to support calling get_type() from a SgDeclarationStatement so that the 
+  // template low-level symbol table support function would compile cleanly.  Note that it is an error to 
+  // call this function and it is not a virtual function that will cause derived class versions to be called
+  // where appropriate (and it is not always appropriate, e.g a SgNamespaceDeclaration has no assocated SgType).
+     return NULL;
+   }
+
 SOURCE_LABEL_STATEMENT_END
 
 
@@ -13735,6 +13756,16 @@ SgJavaLabelStatement::get_symbol_from_symbol_table() const
   // return this -> get_symbol_table() -> find(this);
      return this->find_symbol_from_declaration(this);
 #endif
+   }
+
+SgType* 
+SgJavaLabelStatement::get_type() const
+   {
+  // DQ (8/21/2013): Added function to support calling get_type() from a SgDeclarationStatement so that the 
+  // template low-level symbol table support function would compile cleanly.  Note that it is an error to 
+  // call this function and it is not a virtual function that will cause derived class versions to be called
+  // where appropriate (and it is not always appropriate, e.g a SgNamespaceDeclaration has no assocated SgType).
+     return NULL;
    }
 
 SOURCE_JAVA_LABEL_STATEMENT_END
