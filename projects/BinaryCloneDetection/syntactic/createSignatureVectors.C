@@ -61,26 +61,6 @@ intern(const std::string& s)
     }
 }
 
-static hash_map<SgAsmExpression*, void*> unparseAndInternTable;
-
-inline void*
-unparseAndIntern(SgAsmExpression* e)
-{
-    hash_map<SgAsmExpression*, void*>::const_iterator i = unparseAndInternTable.find(e);
-    if (i == unparseAndInternTable.end()) {
-        void* sPtr = intern(unparseX86Expression(e, NULL, NULL));
-        unparseAndInternTable.insert(std::make_pair(e, sPtr));
-        return sPtr;
-    } else {
-        return i->second;
-    }
-}
-
-/*
-
-
-*/
-
 inline size_t
 kindToInteger(size_t kind){
         int vk = -1;
@@ -129,13 +109,13 @@ kindToInteger(size_t kind){
 		case x86_push:
 		case x86_pop:
 		case x86_lea: 
-			vk = 0; break;
+			vk = x86_mov; break;
 		case x86_add:
 		case x86_inc:
-			vk = 1; break;
+			vk = x86_add; break;
 		case x86_sub:
 		case x86_dec:
-			vk = 2; break;
+			vk = x86_sub; break;
 		case x86_ja:              
 		case x86_jae:             
 		case x86_jb:             
@@ -156,11 +136,11 @@ kindToInteger(size_t kind){
 		case x86_jpo:            
 		case x86_jrcxz:          
 		case x86_js: 
-			vk = 3; break;
+			vk = x86_ja; break;
 
 		case x86_ret:
 		case x86_retf:
-			vk = 4; break;
+			vk = x86_ret; break;
 			break;
 
 		case x86_test:
@@ -170,10 +150,7 @@ kindToInteger(size_t kind){
 		case x86_cmpsw: 
 		case x86_cmpsd:
 		case x86_cmp:
-			vk = 5; break;
-
-		case x86_xchg: 
-                        vk = 6; break;
+			vk = x86_test; break;
 
 		case x86_cbw: 
 		case x86_cwde: 
@@ -185,47 +162,13 @@ kindToInteger(size_t kind){
 		case x86_xadd: 
 		case x86_adc: 
 		case x86_sbb: 
-                       vk = 7; break;
+                       vk = x86_or; break;
 
 
 		case x86_shl:       // fall through
 		case x86_sar:       // fall through
 		case x86_shr: 
-			      vk = 8; break;
-		case x86_rol: vk = 9; break;
-		case x86_ror: vk = 10; break;
-		case x86_shrd: vk = 11; break;
-		case x86_bsf: vk = 12; break;
-		case x86_bt: vk = 13; break;
-		case x86_btr: vk = 14; break;
-		case x86_bts: vk = 15; break;
-		case x86_imul:vk = 16; break;
-
-		case x86_mul: vk = 17; break;
-
-		case x86_idiv: vk = 18; break;
-
-		case x86_div: vk = 19; break;
-
-		case x86_aaa: vk = 20; break;
-
-		case x86_aas: vk = 21; break;
-
-		case x86_aam: vk = 22; break;
-
-		case x86_aad: vk = 23; break;
-
-
-		case x86_leave: vk = 24; break;
-
-		case x86_call: vk = 25; break;
-
-
-		case x86_loop: vk = 26; break;
-		case x86_loopnz: vk = 27; break;
-
-		case x86_jmp: vk = 28; break;
-
+			      vk = x86_shr; break;
 		case x86_setne: 
 		case x86_sete:  
 		case x86_setno: 
@@ -242,7 +185,7 @@ kindToInteger(size_t kind){
 		case x86_setg:  
 		case x86_setge: 
 		case x86_setl:  
-			      vk = 29;
+			      vk = x86_setb;
 			      break;
 		case x86_cmovne:  
 		case x86_cmove:     
@@ -260,16 +203,7 @@ kindToInteger(size_t kind){
 		case x86_cmovg:   
 		case x86_cmovge:   
 		case x86_cmovl:     
-			      vk = 30; break;
-		case x86_cld: vk = 31; break; 
-
-		case x86_std: vk = 32; break;
-
-		case x86_clc: vk = 33; break;
-
-		case x86_stc: vk = 34; break;
-
-		case x86_cmc: vk = 35; break;
+			      vk = x86_cmovb; break;
 
 		case x86_repne_scasb: 
 		case x86_repne_scasw: 
@@ -277,57 +211,62 @@ kindToInteger(size_t kind){
 		case x86_repe_scasb:  
 		case x86_repe_scasw:  
 		case x86_repe_scasd:  
-			      vk = 36; break;
+			      vk = x86_repe_scasw; break;
 		case x86_scasb: 
 		case x86_scasw: 
 		case x86_scasd: 
-			      vk = 37; break;
+			      vk = x86_scasw; break;
 		case x86_repne_cmpsb: 
 		case x86_repne_cmpsw: 
 		case x86_repne_cmpsd: 
 		case x86_repe_cmpsb:  
 		case x86_repe_cmpsw:  
 		case x86_repe_cmpsd:  
-			      vk = 38; break;
+			      vk = x86_repe_cmpsb; break;
 		case x86_rep_movsb: 
 		case x86_rep_movsw: 
 		case x86_rep_movsd: 
-			      vk = 39; break;
+			      vk = x86_rep_movsd; break;
 		case x86_stosb:
 		case x86_stosw: 
 		case x86_stosd: 
-			      vk = 40; break;
+			      vk = x86_stosb; break;
 		case x86_rep_stosb: 
 		case x86_rep_stosw: 
 		case x86_rep_stosd: 
-			      vk = 41; break;
+			      vk = x86_rep_stosw; break;
 		case x86_lodsb: 
 		case x86_lodsw: 
 		case x86_lodsd: 
-			      vk = 42; break;
-		case x86_hlt: vk = 43; break;
-
-		case x86_cpuid: vk = 44; break;
-
-		case x86_rdtsc: vk = 45; break;
-
-		case x86_int: vk = 46; break;
-
-		case x86_fnstcw: vk = 48; break;
-
-		case x86_fldcw: vk = 49; break;
-
-		case x86_sysenter: vk = 50; break;
+			      vk = x86_lodsb; break;
 
 		default: {
+                    vk = kind;
 			 }
 	}
         return vk;
 }
+
+
+
+static hash_map<SgAsmExpression*, void*> unparseAndInternTable;
+
+inline void*
+unparseAndIntern(SgAsmExpression* e)
+{
+    hash_map<SgAsmExpression*, void*>::const_iterator i = unparseAndInternTable.find(e);
+    if (i == unparseAndInternTable.end()) {
+        void* sPtr = intern(unparseX86Expression(e, NULL, NULL));
+        unparseAndInternTable.insert(std::make_pair(e, sPtr));
+        return sPtr;
+    } else {
+        return i->second;
+    }
+}
  
 class SignatureVector {
 public:
-    static const size_t Size = 51 ;
+    static const size_t Size = numberOfInstructionKinds * 4 + 300 + 9 + 3;
     typedef uint16_t ElementType;
 
 private:
@@ -349,8 +288,8 @@ public:
     }
 
     ElementType& totalForVariant(size_t var) {
-        assert(var < Size);
-        return values[var];
+        assert(var < numberOfInstructionKinds);
+        return values[var * 4];
     }
 
     ElementType& opsForVariant(ExpressionCategory cat, size_t var) {
@@ -436,39 +375,72 @@ bool
 createVectorsForAllInstructions(SgNode* top, const std::string& filename, const std::string& functionName, int functionId,
                                 size_t windowSize, size_t stride, const SqlDatabase::TransactionPtr &tx)
 {
-  bool retVal = false;
-  vector<SgAsmx86Instruction*> insns;
-  FindInstructionsVisitor vis;
-  AstQueryNamespace::querySubTree(top, std::bind2nd( vis, &insns ));
-  std::cout << "Number of instructions: " << insns.size() << std::endl;
-  size_t insnCount = insns.size();
+    bool retVal = false;
+    vector<SgAsmx86Instruction*> insns;
+    FindInstructionsVisitor vis;
+    AstQueryNamespace::querySubTree(top, std::bind2nd( vis, &insns ));
+    size_t insnCount = insns.size();
 
+    if(insnCount >= windowSize ){
+        static SignatureVector vec;
+        vec.clear();
+        hash_map<SgAsmExpression*, size_t> valueNumbers[3];
+        numberOperands(&insns[0], insnCount, valueNumbers);
+        string normalizedUnparsedInstructions;
+        // Unparse the normalized forms of the instructions
+        for (size_t insnNumber = 0; insnNumber < insnCount; ++insnNumber) {
+            SgAsmx86Instruction* insn = insns[insnNumber];
+            size_t var = getInstructionKind(insn);
+            //var = kindToInteger(var);
 
-  if(insnCount >= windowSize){
-	  static SignatureVector vec;
-	  vec.clear();
+#ifdef NORMALIZED_UNPARSED_INSTRUCTIONS
+            string mne = insn->get_mnemonic();
+            boost::to_lower(mne);
+            normalizedUnparsedInstructions += mne;
+#endif
+            const SgAsmExpressionPtrList& operands = getOperands(insn);
+            size_t operandCount = operands.size();
+            // Add to total for this variant
+            ++vec.totalForVariant(var);
+            // Add to total for each kind of operand
+            for (size_t i = 0; i < operandCount; ++i) {
+                SgAsmExpression* operand = operands[i];
+                ExpressionCategory cat = getCategory(operand);
+                ++vec.opsForVariant(cat, var);
+                // Add to total for this unique operand number (for this window)
+                hash_map<SgAsmExpression*, size_t>::const_iterator numIter = valueNumbers[(int)cat].find(operand);
+                assert (numIter != valueNumbers[(int)cat].end());
+                size_t num = numIter->second;
+                ++vec.specificOp(cat, num);
+                // Add to total for this kind of operand
+                ++vec.operandTotal(cat);
+#ifdef NORMALIZED_UNPARSED_INSTRUCTIONS
+                normalizedUnparsedInstructions += (cat == ec_reg ? "R" : cat == ec_mem ? "M" : "V") +
+                                                  boost::lexical_cast<string>(num);
+#endif
+            }
 
-	  string normalizedUnparsedInstructions;
+            // Add to total for this pair of operand kinds
+            if (operandCount >= 2) {
+                ExpressionCategory cat1 = getCategory(operands[0]);
+                ExpressionCategory cat2 = getCategory(operands[1]);
+                ++vec.operandPair(cat1, cat2);
+            }
+#ifdef NORMALIZED_UNPARSED_INSTRUCTIONS
+            if (insnNumber + 1 < windowSize) {
+                normalizedUnparsedInstructions += ";";
+            }
+#endif
+        }
 
-	  // Unparse the normalized forms of the instructions
-	  for (size_t insnNumber = 0; insnNumber < insnCount; ++insnNumber) {
-		  SgAsmx86Instruction* insn = insns[insnNumber];
-		  size_t var = getInstructionKind(insn);
-		  var = kindToInteger(var);
-
-		  if(var >= 0) ++vec.totalForVariant(var);
-	  }
-
-	  addVectorToDatabase(tx, vec, functionName, functionId, 0, normalizedUnparsedInstructions,
-			  &insns[0], filename, insnCount, 1);
-  }
+        // Add vector to database
+        addVectorToDatabase(tx, vec, functionName, functionId, 0, normalizedUnparsedInstructions,
+                            0, filename, insnCount, stride);
+	retVal = true;
+    }
     addFunctionStatistics(tx, filename, functionName, functionId, insnCount);
     return retVal;
 }
-
-
-
-
 
 void
 createVectorsNotRespectingFunctionBoundaries(SgNode* top, const std::string& filename, size_t windowSize, size_t stride,
