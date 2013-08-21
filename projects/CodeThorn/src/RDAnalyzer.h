@@ -18,7 +18,8 @@ using namespace CodeThorn;
 class RDAnalyzer : public DFAnalyzer<RDLattice> {
  public:
   RDAnalyzer();
-  void attachResultsToAst(string attributeName);
+  void attachInInfoToAst(string attributeName);
+  void attachOutInfoToAst(string attributeName);
   RDLattice transfer(Label lab, RDLattice element);
 
   typedef AnalyzerData::iterator iterator;
@@ -27,8 +28,9 @@ class RDAnalyzer : public DFAnalyzer<RDLattice> {
   size_t size();
 
  private:
+  void attachInfoToAst(string attributeName,bool isInInfo);
   void transferExpression(SgExpression* expr, Label& label, RDLattice& element);
-  void transferDeclaration(SgDeclarationStatement* decl, Label& label, RDLattice& element);
+  void transferDeclaration(SgVariableDeclaration* decl, Label& label, RDLattice& element);
 };
 
 #endif

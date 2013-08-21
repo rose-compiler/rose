@@ -2,7 +2,7 @@
 #include "sage3basic.h"
 #include "UDAstAttribute.h"
 
-UDAstAttribute::UDAstAttribute(RDAnalysisAstAttribute* rdAttr, SgNode* nodeForUseVarQuery)
+UDAstAttribute::UDAstAttribute(RDAstAttribute* rdAttr, SgNode* nodeForUseVarQuery)
   :_rdAttr(rdAttr),
    _node(nodeForUseVarQuery)
 {

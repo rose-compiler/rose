@@ -10,8 +10,8 @@
 #include "DFAnalyzer.h"
 #include "WorkList.h"
 #include "RDAnalyzer.h"
-#include "RDAnalysisAstAttribute.h"
-#include "AttributeAnnotator.h"
+#include "RDAstAttribute.h"
+#include "AstAnnotator.h"
 #include "DataDependenceVisualizer.h"
 #include "Miscellaneous.h"
 
@@ -23,7 +23,7 @@ void createUDAstAttributeFromRDAttribute(Labeler* labeler, string rdAttributeNam
   for(long i=0;i<labelNum;++i) {
 	Label lab=i;
 	SgNode* node=labeler->getNode(lab);
-	RDAnalysisAstAttribute* rdAttr=dynamic_cast<RDAnalysisAstAttribute*>(node->getAttribute(rdAttributeName));
+	RDAstAttribute* rdAttr=dynamic_cast<RDAstAttribute*>(node->getAttribute(rdAttributeName));
 	if(rdAttr)
 	  node->setAttribute(udAttributeName,new UDAstAttribute(rdAttr, node));
   }
@@ -58,32 +58,39 @@ int main(int argc, char* argv[]) {
   rdAnalyzer->determineExtremalLabels(startFunRoot);
   rdAnalyzer->run();
   cout << "INFO: attaching RD-data to AST."<<endl;
-  rdAnalyzer->attachResultsToAst("rd-analysis");
-  printAttributes<RDAnalysisAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"rd-analysis");
+  rdAnalyzer->attachInInfoToAst("rd-analysis-in");
+  rdAnalyzer->attachOutInfoToAst("rd-analysis-out");
+  printAttributes<RDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"rd-analysis-in");
   cout << "INFO: generating and attaching UD-data to AST."<<endl;
-  createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis-pre-info", "ud-analysis");
+  createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis-in", "ud-analysis");
   cout << "INFO: generating visualization data."<<endl;
-  DataDependenceVisualizer ddvis(rdAnalyzer->getLabeler(),
+  // generate ICFG visualization
+  cout << "generating cfg.dot."<<endl;
+  Flow* flow=rdAnalyzer->getFlow();
+  write_file("cfg.dot", flow->toDot(rdAnalyzer->getLabeler()));
+  cout << "generating datadependencegraph.dot."<<endl;
+  DataDependenceVisualizer ddvis0(rdAnalyzer->getLabeler(),
                                  rdAnalyzer->getVariableIdMapping(),
 								 "ud-analysis");
-  printAttributes<UDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"ud-analysis");
+  //printAttributes<UDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"ud-analysis");
   //ddvis._showSourceCode=false; // for large programs
-  ddvis.generateDefUseDotGraph(root,"datadependencegraph.dot");
+  ddvis0.generateDefUseDotGraph(root,"datadependencegraph.dot");
+  flow->resetDotOptions();
 
-  // generate ICFG visualization
-  write_file("cfg.dot", rdAnalyzer->getFlow()->toDot(rdAnalyzer->getLabeler()));
-  cout << "generated cfg.dot."<<endl;
+  cout << "generating icfgdatadependencegraph.dot."<<endl;
+  DataDependenceVisualizer ddvis1(rdAnalyzer->getLabeler(),
+                                 rdAnalyzer->getVariableIdMapping(),
+								 "ud-analysis");
 
-  // simple test
-  RDLattice elem;
-  RDAnalysisAstAttribute* rda=new RDAnalysisAstAttribute(&elem);
-  delete rda;
+  ddvis1.includeFlowGraphEdges(flow);
+  ddvis1.generateDefUseDotGraph(root,"icfgdatadependencegraph1.dot");
+  flow->resetDotOptions();
 
   cout << "INFO: annotating analysis results as comments."<<endl;
-  AnalysisResultAnnotator ara(rdAnalyzer->getLabeler());
-  ara.annotateAnalysisResultAttributesAsComments(root, "rd-analysis-post-info");
+  AstAnnotator ara(rdAnalyzer->getLabeler());
+  ara.annotateAstAttributesAsCommentsBeforeStatements(root, "rd-analysis-in");
+  ara.annotateAstAttributesAsCommentsAfterStatements(root, "rd-analysis-out");
   cout << "INFO: generating annotated source code."<<endl;
-  backend(root);
-
+  root->unparse(0,0);
   return 0;
 }

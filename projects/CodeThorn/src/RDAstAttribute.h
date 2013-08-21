@@ -5,16 +5,16 @@
 
 #include "Labeler.h"
 #include "VariableIdMapping.h"
-#include "RDAnalysisAbstractAstAttribute.h"
+#include "RDAstAttributeInterface.h"
 #include "RDLattice.h"
 #include <string>
 
 using namespace CodeThorn;
 using std::string;
 
-class RDAnalysisAstAttribute : public RDAnalysisAbstractAstAttribute {
+class RDAstAttribute : public RDAstAttributeInterface {
  public:
-  RDAnalysisAstAttribute(RDLattice* elem);
+  RDAstAttribute(RDLattice* elem);
   bool isBottomElement();
   VariableIdSet allVariableIds();
   LabelSet allLabels();
@@ -22,10 +22,9 @@ class RDAnalysisAstAttribute : public RDAnalysisAbstractAstAttribute {
   VariableIdSet variableIdsOfDefinition(Label def);
   iterator begin();
   iterator end();
-  virtual ~RDAnalysisAstAttribute();
+  virtual ~RDAstAttribute();
   void toStream(ostream& os, VariableIdMapping* vim);
-  string getPreInfoString();
-  string getPostInfoString();
+  string toString();
  private:
   RDLattice* _elem;
 };

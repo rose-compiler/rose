@@ -19,7 +19,7 @@
 #include <boost/program_options.hpp>
 #include <map>
 #include "InternalChecks.h"
-#include "AttributeAnnotator.h"
+#include "AstAnnotator.h"
 #include "AstTerm.h"
 #include "SgNodeHelper.h"
 
@@ -39,27 +39,22 @@ void CodeThornLanguageRestrictor::initialize() {
 }
 
 
-class TermRepresentation : public AnalysisResultAttribute {
+class TermRepresentation : public DFAstAttribute {
 public:
   TermRepresentation(SgNode* node) : _node(node) {}
-  string getPreInfoString() { return "// AST: "+astTermWithNullValuesToString(_node); }
-  string getPostInfoString() { return ""; }
+  string toString() { return "AstTerm: "+astTermWithNullValuesToString(_node); }
 private:
   SgNode* _node;
 };
 
-class PointerExprListAnnotation : public AnalysisResultAttribute {
+class PointerExprListAnnotation : public DFAstAttribute {
 public:
   PointerExprListAnnotation(SgNode* node) : _node(node) {
     //std::cout<<"DEBUG:generated: "+pointerExprToString(node)+"\n";
   }
-  string getPreInfoString() { 
-    if(true||isSgAssignOp(_node))
-      return "// POINTEREXPR: "+pointerExprToString(_node);
-    else
-      return "x";
+  string toString() { 
+	return "// POINTEREXPR: "+pointerExprToString(_node);
   }
-  string getPostInfoString() { return ""; }
 private:
   SgNode* _node;
 };
@@ -411,6 +406,7 @@ int main( int argc, char * argv[] ) {
     ("reduce-cfg",po::value< string >(),"Reduce CFG nodes which are not relevant for the analysis. [=yes|no]")
     ("threads",po::value< int >(),"Run analyzer in parallel using <arg> threads (experimental)")
     ("display-diff",po::value< int >(),"Print statistics every <arg> computed estates.")
+    ("ltl-verbose",po::value< string >(),"LTL verifier: print log of all derivations.")
     ("ltl-output-dot",po::value< string >(),"LTL visualization: generate dot output.")
     ("ltl-show-derivation",po::value< string >(),"LTL visualization: show derivation in dot output.")
     ("ltl-show-node-detail",po::value< string >(),"LTL visualization: show node detail in dot output.")
@@ -442,7 +438,7 @@ int main( int argc, char * argv[] ) {
 
   if (args.count("version")) {
     cout << "CodeThorn version 1.2\n";
-    cout << "Written by Markus Schordan and Adrian Prantl 2012\n";
+    cout << "Written by Markus Schordan and Adrian Prantl 2012-2013\n";
     return 0;
   }
 
@@ -476,6 +472,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("skip-analysis",false);
 
   boolOptions.registerOption("ltl-output-dot",false);
+  boolOptions.registerOption("ltl-verbose",false);
   boolOptions.registerOption("ltl-show-derivation",true);
   boolOptions.registerOption("ltl-show-node-detail",true);
   boolOptions.registerOption("ltl-collapsed-graph",false);
@@ -748,8 +745,8 @@ int main( int argc, char * argv[] ) {
     AssertionExtractor assertionExtractor(&analyzer);
     assertionExtractor.computeLabelVectorOfEStates();
     assertionExtractor.annotateAst();
-    AnalysisResultAnnotator ara(analyzer.getLabeler());
-    ara.annotateAnalysisResultAttributesAsComments(sageProject,"ctgen-pre-condition");
+    AstAnnotator ara(analyzer.getLabeler());
+    ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"ctgen-pre-condition");
     cout << "STATUS: Generated assertions."<<endl;
   }
 
@@ -814,9 +811,9 @@ int main( int argc, char * argv[] ) {
     cout << "INFO: Annotating analysis results."<<endl;
     attachTermRepresentation(sageProject);
     attachPointerExprLists(sageProject);
-    AnalysisResultAnnotator ara(analyzer.getLabeler());
-    ara.annotateAnalysisResultAttributesAsComments(sageProject,"codethorn-term-representation");
-    ara.annotateAnalysisResultAttributesAsComments(sageProject,"codethorn-pointer-expr-lists");
+    AstAnnotator ara(analyzer.getLabeler());
+    ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-term-representation");
+    ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-pointer-expr-lists");
   }
 
   if (boolOptions["annotate-results"]||boolOptions["generate-assertions"]) {

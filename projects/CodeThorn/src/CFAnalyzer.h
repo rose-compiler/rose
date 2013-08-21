@@ -23,7 +23,8 @@ class Edge {
   Edge(Label source0,set<EdgeType> type0,Label target0);
   string toString() const;
   string toStringNoType() const;
-  string toDot() const;
+  string toDotColored() const;
+  string toDotFixedColor(string) const;
   //string typeToString() const;
   string typesToString() const;
   static string typeToString(EdgeType et);
@@ -63,12 +64,19 @@ class Flow : public set<Edge> {
   Flow outEdgesOfType(Label label, EdgeType edgeType);
   void setDotOptionDisplayLabel(bool opt);
   void setDotOptionDisplayStmt(bool opt);
-  void setTextOptionPrintType(bool opt) { _stringNoType=!opt;}
+  void setDotOptionFixedColor(bool opt);
+  void setDotFixedColor(string color);
+  void setDotOptionHeaderFooter(bool opt);
+  void setTextOptionPrintType(bool opt);
+  void resetDotOptions();
   string toString();
  private:
   bool _dotOptionDisplayLabel;
   bool _dotOptionDisplayStmt;
   bool _stringNoType;
+  bool _dotOptionFixedColor;
+  string _fixedColor;
+  bool _dotOptionHeaderFooter;
 };
 
 class InterEdge {

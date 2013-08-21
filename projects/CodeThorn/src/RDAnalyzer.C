@@ -3,7 +3,7 @@
 #include "sage3basic.h"
 
 #include "RDAnalyzer.h"
-#include "RDAnalysisAstAttribute.h"
+#include "RDAstAttribute.h"
 using namespace std;
 using namespace CodeThorn;
 
@@ -12,23 +12,29 @@ using namespace CodeThorn;
 RDAnalyzer::RDAnalyzer() {
 }
 
-void RDAnalyzer::attachResultsToAst(string attributeName) {
-  
+void RDAnalyzer::attachInInfoToAst(string attributeName) {
+  if(!_preInfoIsValid)
+	computeAllPreInfo();
+  attachInfoToAst(attributeName,true);
+}
+
+void RDAnalyzer::attachOutInfoToAst(string attributeName) {
+  attachInfoToAst(attributeName,false);
+}
+
+void RDAnalyzer::attachInfoToAst(string attributeName,bool inInfo) {
 #if 0
   size_t lab=0;
   for(std::vector<RDLattice>::iterator i=_analyzerData.begin();
       i!=_analyzerData.end();
       ++i) {
     // TODO: need to add a solution for nodes with multiple associated labels (e.g. functio call)
-    _labeler->getNode(lab)->setAttribute(attributeName,new RDAnalysisAstAttribute(&(*i)));
+    _labeler->getNode(lab)->setAttribute(attributeName,new RDAstAttribute(&(*i)));
     lab++;
   }
 #else
-  cout << "STATUS: STARTING PRE-INFO COMPUTATION."<<endl;
-  if(!_preInfoIsValid)
+  if(inInfo && !_preInfoIsValid)
 	computeAllPreInfo();
-  cout << "STATUS: ALL PRE-INFO-COMPUTED."<<endl;
-
   LabelSet labelSet=_flow.nodeLabels();
   for(LabelSet::iterator i=labelSet.begin();
       i!=labelSet.end();
@@ -37,10 +43,10 @@ void RDAnalyzer::attachResultsToAst(string attributeName) {
     // TODO: need to add a solution for nodes with multiple associated labels (e.g. function call)
 	if(!_labeler->isFunctionExitLabel(*i) /* && !_labeler->isCallReturnLabel(lab)*/)
 	  if(*i >=0 ) {
-		_labeler->getNode(*i)->setAttribute(attributeName+"-pre-info",new RDAnalysisAstAttribute(&_analyzerDataPreInfo[*i]));
-		_labeler->getNode(*i)->setAttribute(attributeName+"-post-info",new RDAnalysisAstAttribute(&_analyzerData[*i]));
-		cout << "ATTACHED RD DATA-PRE: "<<(dynamic_cast<RDAnalysisAstAttribute*>(_labeler->getNode(*i)->getAttribute(attributeName+"-pre-info")))->getPostInfoString()<<endl;
-		cout << "ATTACHED RD DATA-POST: "<<(dynamic_cast<RDAnalysisAstAttribute*>(_labeler->getNode(*i)->getAttribute(attributeName+"-post-info")))->getPostInfoString()<<endl;
+		if(inInfo)
+		  _labeler->getNode(*i)->setAttribute(attributeName,new RDAstAttribute(&_analyzerDataPreInfo[*i]));
+		else
+		  _labeler->getNode(*i)->setAttribute(attributeName,new RDAstAttribute(&_analyzerData[*i]));
 	  }
 	
   }
@@ -120,6 +126,9 @@ RDLattice RDAnalyzer::transfer(Label lab, RDLattice element) {
   if(SgExpression* expr=isSgExpression(node)) {
     transferExpression(expr,lab,element);
   }
+  if(SgVariableDeclaration* vardecl=isSgVariableDeclaration(node)) {
+	transferDeclaration(vardecl,lab,element);
+  }
 #if 0
   cout << "RDAnalyzer: called transfer function. result: ";
   element.toStream(cout,&_variableIdMapping);
@@ -150,6 +159,23 @@ void RDAnalyzer::transferExpression(SgExpression* node, Label& lab, RDLattice& e
   }
 }
 
-void RDAnalyzer::transferDeclaration(SgDeclarationStatement* node, Label& lab, RDLattice& element) {
-  // TODO
+void RDAnalyzer::transferDeclaration(SgVariableDeclaration* declnode, Label& lab, RDLattice& element) {
+  cout<<"Calling transferDeclaration1."<<endl;
+  SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
+  ROSE_ASSERT(node);
+  // same as in transferExpression ... needs to be refined
+  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariablesInExpression(node,_variableIdMapping);  
+  if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
+	// since multiple memory locations may be modified, we cannot know which one will be updated and can only add information
+	for(VariableIdMapping::VariableIdSet::iterator i=defVarIds.begin();i!=defVarIds.end();++i) {
+	  element.insertPair(lab,*i);
+	}
+	assert(0);
+  } else if(defVarIds.size()==1) {
+	// one unique memory location (variable). We can remove all pairs with this variable
+	cout<<"Calling transferDeclaration2."<<endl;
+	VariableId var=*defVarIds.begin();
+	element.eraseAllPairsWithVariableId(var);
+	element.insertPair(lab,var);
+  }
 }
