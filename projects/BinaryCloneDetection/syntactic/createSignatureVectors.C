@@ -435,7 +435,7 @@ createVectorsForAllInstructions(SgNode* top, const std::string& filename, const 
 
         // Add vector to database
         addVectorToDatabase(tx, vec, functionName, functionId, 0, normalizedUnparsedInstructions,
-                            0, filename, insnCount, stride);
+                            &insns[0], filename, insnCount, stride);
 	retVal = true;
     }
     addFunctionStatistics(tx, filename, functionName, functionId, insnCount);
