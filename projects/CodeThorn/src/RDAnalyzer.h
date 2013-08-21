@@ -29,8 +29,12 @@ class RDAnalyzer : public DFAnalyzer<RDLattice> {
 
  private:
   void attachInfoToAst(string attributeName,bool isInInfo);
-  void transferExpression(SgExpression* expr, Label& label, RDLattice& element);
-  void transferDeclaration(SgVariableDeclaration* decl, Label& label, RDLattice& element);
+  void transferExpression(Label label, SgExpression* expr, RDLattice& element);
+  void transferDeclaration(Label label, SgVariableDeclaration* decl, RDLattice& element);
+  void transferFunctionCall(Label lab, SgFunctionCallExp* callExp, RDLattice& element);
+  void transferFunctionCallReturn(Label lab, SgFunctionCallExp* callExp, RDLattice& element);
+  void transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, RDLattice& element);
+  void transferFunctionExit(Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, RDLattice& element);
 };
 
 #endif

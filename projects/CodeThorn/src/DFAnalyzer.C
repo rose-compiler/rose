@@ -84,13 +84,9 @@ DFAnalyzer<LatticeType>::initialize(SgProject* root) {
   cout << "INIT: Creating CFAnalyzer."<<endl;
   _cfanalyzer=new CFAnalyzer(_labeler);
   //cout<< "DEBUG: mappingLabelToNode: "<<endl<<getLabeler()->toString()<<endl;
-  cout << "INIT: Building CFGs."<<endl;
+  cout << "INIT: Building CFG for each function."<<endl;
   _flow=_cfanalyzer->flow(root);
   cout << "STATUS: Building CFGs finished."<<endl;
-  //  if(boolOptions["reduce-cfg"]) {
-  int cnt=_cfanalyzer->reduceBlockBeginNodes(_flow);
-  cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
-  //}
   cout << "INIT: Intra-Flow OK. (size: " << _flow.size() << " edges)"<<endl;
   InterFlow interFlow=_cfanalyzer->interFlow(_flow);
   cout << "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
@@ -100,6 +96,12 @@ DFAnalyzer<LatticeType>::initialize(SgProject* root) {
     LatticeType le;
     _analyzerDataPreInfo.push_back(le);
     _analyzerData.push_back(le);
+  }
+  cout << "INIT: Optimizing CFGs for label-out-info solver 1."<<endl;
+  {
+	size_t numDeletedEdges=_cfanalyzer->deleteFunctioncCallLocalEdges(_flow);
+	int numReducedNodes=_cfanalyzer->reduceBlockBeginNodes(_flow);
+	cout << "INIT: Optimization finished (educed nodes: "<<numReducedNodes<<" deleted edges: "<<numDeletedEdges<<")"<<endl;
   }
   cout << "STATUS: initialized monotone data flow analyzer for "<<_analyzerData.size()<< " labels."<<endl;
 
