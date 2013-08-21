@@ -57,8 +57,8 @@ noinst_PROGRAMS += 31-func-similarity-worklist
 31_func_similarity_worklist_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 noinst_PROGRAMS += 32-func-similarity
-32_func_similarity_SOURCES = 32-func-similarity.C
-32_func_similarity_CPPFLAGS = $(ROSE_INCLUDES)
+32_func_similarity_SOURCES = 32-func-similarity.C $(top_srcdir)/projects/BinaryCloneDetection/syntactic/vectorCompression.C
+32_func_similarity_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/BinaryCloneDetection/syntactic/
 32_func_similarity_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #-----------------------------------------------------------------------------------------------------------------------------
