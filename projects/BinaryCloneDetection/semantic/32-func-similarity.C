@@ -733,7 +733,7 @@ main(int argc, char *argv[])
         VectorEntry* f1_compressed = id_to_vec[func1_id];
         VectorEntry* f2_compressed = id_to_vec[func2_id];  
 
-        int vec_length = 51;
+        int vec_length = x86_last_instruction* 4 + 300 + 9 + 3;
  
         boost::scoped_array<uint16_t> f1_uncompressed(new uint16_t[vec_length]);
         decompressVector(f1_compressed->compressedCounts.get(), f1_compressed->compressedCounts.size(), f1_uncompressed.get());
@@ -756,7 +756,7 @@ main(int argc, char *argv[])
 
         }
       
-        hamming_d = sqrt(hamming_d);
+        hamming_d = hamming_d;
         euclidean_d = sqrt(euclidean_d);
 
        
