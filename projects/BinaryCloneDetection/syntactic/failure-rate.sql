@@ -108,6 +108,12 @@ create table fr_true_positives as
 create table fr_true_negatives as
     select * from fr_negative_pairs except select func1_id, func2_id from fr_clone_pairs;
 
+select func1.name, func2.name
+ from ipt_combined_pairs as pair
+ join semantic_functions as func1 on pair.func1_id=func1.id
+ join semantic_functions as func2 on pair.func2_id=func2.id
+;
+
 
 -- False negative rate is the ratio of false negatives to expected positives
 -- False positive rate is the ratio of false positives to expected negatives

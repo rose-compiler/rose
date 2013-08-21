@@ -391,7 +391,7 @@ createVectorsForAllInstructions(SgNode* top, const std::string& filename, const 
         for (size_t insnNumber = 0; insnNumber < insnCount; ++insnNumber) {
             SgAsmx86Instruction* insn = insns[insnNumber];
             size_t var = getInstructionKind(insn);
-            //var = kindToInteger(var);
+            var = kindToInteger(var);
 
 #ifdef NORMALIZED_UNPARSED_INSTRUCTIONS
             string mne = insn->get_mnemonic();

@@ -8,7 +8,7 @@ drop table if exists ipt_parameters;
 
 -- Change these values to whatever you want
 create table ipt_parameters as select
-  0.7 as semantic_similarity,		-- min similarity for two functions to be considered semantic clones
+  0.3 as semantic_similarity,		-- min similarity for two functions to be considered semantic clones
   0.1 as syntactic_overlap;             -- min vector overlap for two functions to be considered syntactic clones
 
 -- Pairs of syntactic clones (func1_id < func2_id)
@@ -30,6 +30,18 @@ create table ipt_combined_pairs as
   intersect
   select * from ipt_semantic_pairs;
 
+
+select func1.name, func2.name
+ from ipt_combined_pairs as pair
+ join semantic_functions as func1 on pair.func1_id=func1.id
+ join semantic_functions as func2 on pair.func2_id=func2.id
+;
+
+select func1.name, func2.name
+ from ipt_semantic_pairs as pair
+ join semantic_functions as func1 on pair.func1_id=func1.id
+ join semantic_functions as func2 on pair.func2_id=func2.id
+;
 
 -- False negative/positive rates (cut-n-pasted from failure-rate.sql and changed the name of a table
 
@@ -166,6 +178,67 @@ create table fr_results_precision_recall as
 
 select * from fr_results;
 select * from fr_results_precision_recall;
+
+
+select func1.name, func2.name
+ from ipt_semantic_pairs as pair
+ join semantic_functions as func1 on pair.func1_id=func1.id
+ join semantic_functions as func2 on pair.func2_id=func2.id
+;
+
+
+-- Tests that we want to consider
+create table fr_fio as
+    select fio.*
+        from fr_functions as func
+        join semantic_fio as fio on func.id = fio.func_id;
+create index fr_fio_func_id on fr_fio(func_id);
+
+
+
+select 'The following table shows a list of function names that are
+true positives, and the average number of instructions executed by
+tests on this name.' as "Notice";
+select
+        func.name, func.id, func.file_id,
+        count(*) as npass,
+        sum(fio.instructions_executed)/count(*) as ave_insns_exec
+    from fr_fio as fio
+    join fr_functions as func on fio.func_id = func.id
+    join fr_true_positives as neg on fio.func_id=neg.func1_id or fio.func_id=neg.func2_id
+    where fio.status = 0
+    group by func.name, func.id, func.file_id
+    order by ave_insns_exec;
+
+select 'The following table shows a list of function names that are
+false positives, and the average number of instructions executed by
+tests on this name.' as "Notice";
+select
+        func.name, func.id, func.file_id,
+        count(*) as npass,
+        sum(fio.instructions_executed)/count(*) as ave_insns_exec
+    from fr_fio as fio
+    join fr_functions as func on fio.func_id = func.id
+    join fr_false_positives as neg on fio.func_id=neg.func1_id or fio.func_id=neg.func2_id
+    where fio.status = 0
+    group by func.name, func.id, func.file_id
+    order by ave_insns_exec;
+
+
+select 'The following table shows a list of function names that are
+false negatives, and the average number of instructions executed by
+tests on this name.' as "Notice";
+select
+        func.name, func.id, func.file_id,
+        count(*) as npass,
+        sum(fio.instructions_executed)/count(*) as ave_insns_exec
+    from fr_fio as fio
+    join fr_functions as func on fio.func_id = func.id
+    join fr_false_negatives as neg on fio.func_id=neg.func1_id or fio.func_id=neg.func2_id
+    where fio.status = 0
+    group by func.name, func.id, func.file_id
+    order by ave_insns_exec;
+
 
 -- select 'The following table shows the false negative function pairs.
 -- Both functions of the pair always have the same name.' as "Notice";

@@ -21,7 +21,7 @@ drop table if exists fr_specimens;
 drop table if exists fr_settings;
 
 create table fr_settings as
-    select 0.75 as similarity_threshold;
+    select 0.70 as similarity_threshold;
 
 -- Files that are binary specimens; i.e., not shared libraries, etc.
 create table fr_specimens as
@@ -38,7 +38,7 @@ create table fr_funcnames as
         join semantic_functions as func1 on func1.file_id = file.id
         left join semantic_functions as func2
             on func1.id<>func2.id and func1.name <> '' and func1.name=func2.name and func1.file_id=func2.file_id
-        where func2.id is null and func1.ninsns >= 20                                            -- !!FIXME
+        where func2.id is null and func1.ninsns >= 100                                            -- !!FIXME
         group by func1.name
         having count(*) = (select count(*) from fr_specimens)
 --     except (
@@ -113,7 +113,7 @@ create table fr_negative_pairs as
 -- Pairs of functions that were _detected_ as being similar.
 create table fr_clone_pairs as
     select func1_id, func2_id
-        from semantic_funcsim where similarity >= (select similarity_threshold from fr_settings);
+        from semantic_funcsim where similarity >= (select similarity_threshold from fr_settings) ;
 
 -- Table of false negative pairs.  These are pairs of functions that were not determined to be similar but which are present
 -- in the fr_positives_pairs table.
@@ -130,6 +130,31 @@ create table fr_true_positives as
 
 create table fr_true_negatives as
     select * from fr_negative_pairs except select func1_id, func2_id from fr_clone_pairs;
+
+
+select 'The following table shows the true positives function pairs.
+Both functions of the pair always have the same name.' as "Notice";
+select
+        func1.name as name,
+        sim.func1_id, sim.func2_id, sim.similarity, sim.hamming_d, sim.euclidean_d, sim.combined_d, sim.ncompares
+    from fr_true_positives as falseneg
+    join fr_functions as func1 on falseneg.func1_id = func1.id
+    join fr_functions as func2 on falseneg.func2_id = func2.id
+    join semantic_funcsim as sim on falseneg.func1_id=sim.func1_id and falseneg.func2_id=sim.func2_id
+    order by func1.name;
+
+
+select 'The following table shows the false positives function pairs.
+Both functions of the pair always have the same name.' as "Notice";
+select
+        func1.name as name,
+        sim.func1_id, sim.func2_id, sim.similarity, sim.hamming_d, sim.euclidean_d, sim.combined_d, sim.ncompares
+    from fr_false_positives as falseneg
+    join fr_functions as func1 on falseneg.func1_id = func1.id
+    join fr_functions as func2 on falseneg.func2_id = func2.id
+    join semantic_funcsim as sim on falseneg.func1_id=sim.func1_id and falseneg.func2_id=sim.func2_id
+    order by func1.name;
+
 
 
 -- False negative rate is the ratio of false negatives to expected positives
@@ -184,12 +209,15 @@ select 'The following table shows the false negative function pairs.
 Both functions of the pair always have the same name.' as "Notice";
 select
         func1.name as name,
-        sim.func1_id, sim.func2_id, sim.similarity, sim.ncompares
+        sim.func1_id, sim.func2_id, sim.similarity,  sim.ncompares
     from fr_false_negatives as falseneg
     join fr_functions as func1 on falseneg.func1_id = func1.id
     join fr_functions as func2 on falseneg.func2_id = func2.id
     join semantic_funcsim as sim on falseneg.func1_id=sim.func1_id and falseneg.func2_id=sim.func2_id
     order by func1.name;
+
+
+
 
 select 'The following table shows the status breakdown for tests
 that were performed on each function of interest.' as "Notice";
@@ -219,6 +247,22 @@ select
     where fio.status = 0
     group by func.name, func.id, func.file_id
     order by ave_insns_exec;
+
+
+select 'The following table shows a list of function names that are
+true_positives, and the average number of instructions executed by
+tests on this name.' as "Notice";
+select
+        func.name, func.id, func.file_id,
+	count(*) as npass,
+        sum(fio.instructions_executed)/count(*) as ave_insns_exec
+    from fr_fio as fio
+    join fr_functions as func on fio.func_id = func.id
+    join fr_false_positives as neg on fio.func_id=neg.func1_id or fio.func_id=neg.func2_id
+    where fio.status = 0
+    group by func.name, func.id, func.file_id
+    order by ave_insns_exec;
+
 
 
 rollback;
