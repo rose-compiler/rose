@@ -710,8 +710,8 @@ main(int argc, char *argv[])
                                                             // 0        1         2           3          4
                                                             "(func1_id, func2_id, similarity, ncompares, maxcompares,"
                                                             // 5           6
-                                                            " relation_id, cmd, hamming_d, euclidean_d)"
-                                                            " values (?,?, ?, ?, ?, ?, ?, ?,?)");
+                                                            " relation_id, cmd, hamming_d, euclidean_d, combined_d)"
+                                                            " values (?,?, ?, ?, ?, ?, ?, ?,?,?)");
     CachedOutputs all_outputs;
     FunctionOutputs func_outputs;
     load_function_infos();
@@ -770,6 +770,7 @@ main(int argc, char *argv[])
         stmt->bind(6, cmd_id);
         stmt->bind(7, hamming_d);
         stmt->bind(8, euclidean_d);
+        stmt->bind(9, hamming_d + euclidean_d);
         stmt->execute();
     }
     
