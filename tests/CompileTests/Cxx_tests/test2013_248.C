@@ -14,6 +14,8 @@ class B {};
 template <template <typename V> class U>
 class C {};
 
+
+// The bug in ROSE is that only a single "template <>" is unparsed, instead of three of them.
 template <>
 template <>
 template <>
