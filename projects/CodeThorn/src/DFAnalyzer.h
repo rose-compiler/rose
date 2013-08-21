@@ -10,6 +10,7 @@
 #include "Labeler.h"
 #include "CFAnalyzer.h"
 #include "WorkListSeq.h"
+#include "CollectionOperators.h"
 #include <set>
 #include <string>
 
@@ -26,6 +27,7 @@ class DFAnalyzer {
   enum SolverMode { SOLVERMODE_STANDARD, SOLVERMODE_DYNAMICLOOPFIXPOINTS };
   void setExtremalLabels(set<Label> extremalLabels);
   void initialize(SgProject*);
+  virtual LatticeType initializeGlobalVariables(SgProject* root);
   void determineExtremalLabels(SgNode*);
   void run();
 
@@ -53,6 +55,7 @@ class DFAnalyzer {
   vector<LatticeType> _analyzerDataPreInfo;
   vector<LatticeType> _analyzerData;
   WorkListSeq<Label> _workList;
+  LatticeType _initialElement;
  protected:
   bool _preInfoIsValid;
   void computeAllPreInfo();

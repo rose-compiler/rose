@@ -51,6 +51,7 @@ int main(int argc, char* argv[]) {
   SgProject* root = frontend(argc,argv);
   RDAnalyzer* rdAnalyzer=new RDAnalyzer();
   rdAnalyzer->initialize(root);
+  rdAnalyzer->initializeGlobalVariables(root);
 
   std::string funtofind="main";
   RoseAst completeast(root);
