@@ -161,8 +161,6 @@ DefUseVarsInfo(const VarsInfo& _def_info, const VarsInfo& _use_info, const Funct
             !isFunctionCallExpSetEmpty());
   }
   void copyUseToDef();
-  // copy the def_vars_info from that to this
-  void copyDefToDef(const DefUseVarsInfo& that);
 
   friend DefUseVarsInfo operator+(const DefUseVarsInfo& duvi1, const DefUseVarsInfo& duvi2);
 

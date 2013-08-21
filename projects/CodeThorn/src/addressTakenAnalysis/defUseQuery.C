@@ -61,24 +61,10 @@ std::string variableIdTypeInfoToString(VariableIdTypeInfo vid_type_info)
  * DefUseVarsInfo *
  ******************/
 
-// void DefUseVarsInfo::copyDefToUse()
-// {
-//   use_vars_info.first.insert(def_vars_info.first.begin(), def_vars_info.first.end());
-//   use_vars_info.second = use_vars_info.second || def_vars_info.second;
-// }
-
 void DefUseVarsInfo::copyUseToDef()
 {
   def_vars_info.first.insert(use_vars_info.first.begin(), use_vars_info.first.end());
   def_vars_info.second = def_vars_info.second || use_vars_info.second;
-}
-
-void DefUseVarsInfo::copyDefToDef(const DefUseVarsInfo& that)
-{
-  const VarsInfo& thatDefVarsInfo = that.getDefVarsInfoRef();
-  def_vars_info.first.insert(thatDefVarsInfo.first.begin(), 
-                             thatDefVarsInfo.first.end());
-  def_vars_info.second = def_vars_info.second || thatDefVarsInfo.second;
 }
 
 // combine the two DefUseVarsInfo functions
