@@ -153,11 +153,12 @@ struct hash_nodeptr
  */
    // Liao 1/22/2008, used for get symbols for generating variable reference nodes
    // ! Find a variable symbol in current and ancestor scopes for a given name
-   SgVariableSymbol *lookupVariableSymbolInParentScopes (const SgName & name,
-                                                         SgScopeStatement *currentScope=NULL);
+   SgVariableSymbol *lookupVariableSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope=NULL);
+   
+// DQ (8/16/2013): For now we want to remove the use of default parameters and add the support for template parameters and template arguments.
    //! Find a symbol in current and ancestor scopes for a given variable name, starting from top of ScopeStack if currentscope is not given or NULL.
-   SgSymbol *lookupSymbolInParentScopes (const SgName & name,
-                                                         SgScopeStatement *currentScope=NULL);
+// SgSymbol *lookupSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope=NULL);
+   SgSymbol *lookupSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList);
 
    // DQ (11/24/2007): Functions moved from the Fortran support so that they could be called from within astPostProcessing.
    //!look up the first matched function symbol in parent scopes given only a function name, starting from top of ScopeStack if currentscope is not given or NULL
@@ -170,10 +171,31 @@ struct hash_nodeptr
                                                          const SgType* t,
                                                          SgScopeStatement *currentScope=NULL);
 
+// DQ (8/16/2013): For now we want to remove the use of default parameters and add the support for template parameters and template arguments.
 // DQ (5/7/2011): Added support for SgClassSymbol (used in name qualification support).
-   SgClassSymbol*     lookupClassSymbolInParentScopes    (const SgName & name, SgScopeStatement *currentScope = NULL);
+// SgClassSymbol*     lookupClassSymbolInParentScopes    (const SgName & name, SgScopeStatement *currentScope = NULL);
+   SgClassSymbol*     lookupClassSymbolInParentScopes    (const SgName & name, SgScopeStatement *currentScope, SgTemplateArgumentPtrList* templateArgumentList);
    SgTypedefSymbol*   lookupTypedefSymbolInParentScopes  (const SgName & name, SgScopeStatement *currentScope = NULL);
+
+#if 0
+ // DQ (8/13/2013): This function does not make since any more, now that we have make the symbol
+ // table handling more precise and we have to provide template parameters for any template lookup.
+ // We also have to know if we want to lookup template classes, template functions, or template 
+ // member functions (since each have specific requirements).
    SgTemplateSymbol*  lookupTemplateSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope = NULL);
+#endif
+#if 0
+// DQ (8/13/2013): I am not sure if we want this functions in place of lookupTemplateSymbolInParentScopes.
+// Where these are called we might not know enough information about the template parameters or function 
+// types, for example.
+   SgTemplateClassSymbol*           lookupTemplateClassSymbolInParentScopes          (const SgName & name, SgScopeStatement *currentScope = NULL);
+   SgTemplateFunctionSymbol*        lookupTemplateFunctionSymbolInParentScopes       (const SgName & name, SgScopeStatement *currentScope = NULL);
+   SgTemplateMemberFunctionSymbol*  lookupTemplateMemberFunctionSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope = NULL);
+#endif
+
+// DQ (8/13/2013): I am not sure if we want this functions in place of lookupTemplateSymbolInParentScopes.
+   SgTemplateClassSymbol* lookupTemplateClassSymbolInParentScopes (const SgName &  name, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList, SgScopeStatement *cscope);
+
    SgEnumSymbol*      lookupEnumSymbolInParentScopes     (const SgName & name, SgScopeStatement *currentScope = NULL);
    SgNamespaceSymbol* lookupNamespaceSymbolInParentScopes(const SgName & name, SgScopeStatement *currentScope = NULL);
 

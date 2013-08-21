@@ -5843,7 +5843,9 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
 
             // DQ (2/24/2013): Added assertion.
                ROSE_ASSERT(dotExp->get_rhs_operand() != NULL);
-
+#if 0
+               printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case V_SgDotExp: dotExp->get_rhs_operand() = %p = %s \n",dotExp->get_rhs_operand(),dotExp->get_rhs_operand()->class_name().c_str());
+#endif
             // There are four different types of function call reference expression in ROSE.
                SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
                if (memberFunctionRefExp == NULL)
@@ -5858,14 +5860,28 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                               SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(dotExp->get_rhs_operand());
                               if (functionRefExp == NULL)
                                  {
-                                   dotExp->get_rhs_operand()->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: templateMemberFunctionRefExp == NULL: debug");
-                                   printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: dotExp->get_rhs_operand() = %p = %s \n",dotExp->get_rhs_operand(),dotExp->get_rhs_operand()->class_name().c_str());
+                                   SgVarRefExp* varRefExp = isSgVarRefExp(dotExp->get_rhs_operand());
+                                   if (varRefExp == NULL)
+                                      {
+                                        dotExp->get_rhs_operand()->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: templateMemberFunctionRefExp == NULL: debug");
+                                        printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: dotExp->get_rhs_operand() = %p = %s \n",dotExp->get_rhs_operand(),dotExp->get_rhs_operand()->class_name().c_str());
+                                      }
+                                     else
+                                      {
+                                        ROSE_ASSERT(varRefExp != NULL);
+
+                                     // DQ (8/20/2013): This is not a SgFunctionSymbol so we can't return a valid symbol from this case of a function call from a pointer to a function.
+                                     // returnSymbol = varRefExp->get_symbol();
+                                      }
                                  }
                                 else
                                  {
                                 // I am unclear when this is possible, but STL code exercises it.
                                    ROSE_ASSERT(functionRefExp != NULL);
                                    returnSymbol = functionRefExp->get_symbol();
+
+                                // DQ (8/20/2013): Add assertion to the specific valide cases.
+                                   ROSE_ASSERT(returnSymbol != NULL);
                                  }
                             }
                            else
@@ -5873,22 +5889,32 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                            // I am unclear when this is possible, but STL code exercises it.
                               ROSE_ASSERT(templateFunctionRefExp != NULL);
                               returnSymbol = templateFunctionRefExp->get_symbol();
+
+                           // DQ (8/20/2013): Add assertion to the specific valide cases.
+                              ROSE_ASSERT(returnSymbol != NULL);
                             }
                        }
                       else
                        {
                          ROSE_ASSERT(templateMemberFunctionRefExp != NULL);
                          returnSymbol = templateMemberFunctionRefExp->get_symbol();
+
+                      // DQ (8/20/2013): Add assertion to the specific valide cases.
+                         ROSE_ASSERT(returnSymbol != NULL);
                        }
                   }
                  else
                   {
                     ROSE_ASSERT(memberFunctionRefExp != NULL);
                     returnSymbol = memberFunctionRefExp->get_symbol();
+
+                 // DQ (8/20/2013): Add assertion to the specific valide cases.
+                    ROSE_ASSERT(returnSymbol != NULL);
                   }
 
+            // DQ (8/20/2013): Function pointers don't allow us to generate a proper valid SgFunctionSymbol.
             // DQ (2/8/2009): Can we assert this! What about pointers to functions?
-               ROSE_ASSERT(returnSymbol != NULL);
+            // ROSE_ASSERT(returnSymbol != NULL);
 
            // Virtual functions called through the dot operator are resolved statically if they are not
            // called on reference types.

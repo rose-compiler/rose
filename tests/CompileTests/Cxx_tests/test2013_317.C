@@ -5,7 +5,19 @@
 #define MAKE_SAGE_FAIL 1
 #define ALTERNATE_FIX 0
 
-class GenericGridData
+class GenericGridData_baseA
+   {
+     public:
+          int computedGeometry;
+   };
+
+class GenericGridData_baseB
+   {
+     public:
+          int computedGeometry;
+   };
+
+class GenericGridData : public GenericGridData_baseA, public GenericGridData_baseB
    {
      public:
           int computedGeometry;
@@ -16,7 +28,11 @@ class GenericGrid
      public:
 #if !ALTERNATE_FIX
           void computedGeometry()
-             { rcData->computedGeometry = 0; }
+             {
+               rcData->computedGeometry = 0;
+               rcData->GenericGridData_baseA::computedGeometry = 0;
+               rcData->GenericGridData_baseB::computedGeometry = 0;
+             }
 #endif
 
           typedef GenericGridData RCData;

@@ -1332,6 +1332,26 @@ test2013_243.C \
 test2013_244.C \
 test2013_246.C \
 test2013_249.C \
+test2013_300.C \
+test2013_301.C \
+test2013_302.C \
+test2013_303.C \
+test2013_304.C \
+test2013_305.C \
+test2013_306.C \
+test2013_307.C \
+test2013_308.C \
+test2013_310.C \
+test2013_311.C \
+test2013_312.C \
+test2013_313.C \
+test2013_314.C \
+test2013_315.C \
+test2013_316.C \
+test2013_317.C \
+test2013_318.C \
+test2013_319.C \
+test2013_320.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -1351,6 +1371,11 @@ $(NEW_PASSING_FILES)
 
 # DQ (3/23/2012): New passing files
 NEW_PASSING_FILES = 
+
+# DQ (8/12/2013): these tests are currently failing:
+# test2013_309.C (something wrong in the output of "template<>" when the function is a new function to a specialized class rather than an new instantiation of an existing function in a new class instantiation).
+
+
 
 # $(TESTCODE_CURRENTLY_FAILING)
 # DQ (2/15/2012): These test codes fail on OSX only.
