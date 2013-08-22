@@ -292,7 +292,6 @@ void ExprWalker::visit(SgPntrArrRefExp* sgn)
   SgNode* lhs_addr = sgn->get_lhs_operand(); // get the address computation expr of the array
   SgNode* rhs_expr = sgn->get_rhs_operand(); // get the index expression
   DefUseVarsInfo lduvi, rduvi;
-
   if(isModExpr) {
     // check for the type of address computation expr
     // if p is pointer type in p[expr]
@@ -1020,6 +1019,17 @@ void ExprWalker::visit(SgLabelRefExp* sgn)
 {
   // no variableid
 }
+
+void ExprWalker::visit(SgTemplateFunctionRefExp* sgn)
+{
+}
+void ExprWalker::visit(SgTemplateMemberFunctionRefExp* sgn)
+{
+}
+void ExprWalker::visit(SgTypeTraitBuiltinOperator* sgn)
+{
+}
+
 
 // we should not reach here
 void ExprWalker::visit(SgExpression* sgn)

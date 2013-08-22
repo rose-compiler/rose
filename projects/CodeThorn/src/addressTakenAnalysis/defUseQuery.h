@@ -268,6 +268,9 @@ public:
   void visit(SgThisExp* sgn);
   void visit(SgClassNameRefExp* sgn);
   void visit(SgLabelRefExp* sgn);
+  void visit(SgTemplateFunctionRefExp* sgn);
+  void visit(SgTemplateMemberFunctionRefExp* sgn);
+  void visit(SgTypeTraitBuiltinOperator* sgn);
   
   void visit(SgExpression* sgn);
 
