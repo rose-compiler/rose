@@ -540,7 +540,7 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENT
 TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -DBOOST_REGEX_MATCH_EXTRA
 APP_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 
-PASSING_TEST_Objects = ${TESTCODES:.C=.o} ${ROSE__CXX_TESTS__BOOST:.C=.o}
+PASSING_TEST_Objects = $(notdir ${TESTCODES:.C=.o} ${ROSE__CXX_TESTS__BOOST:.C=.o})
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
 # DQ (9/18/2011): Added testing for new option to use folded constants or the original express trees.
