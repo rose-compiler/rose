@@ -57,12 +57,6 @@ VariableIdSet ComputeAddressTakenInfo::getAddressTakenSet()
   return addressTakenSet;
 }
 
-void ComputeAddressTakenInfo::throwIfUnInitException()
-{
-    if(!vidm.isUniqueVariableSymbolMapping())
-      throw std::runtime_error("Variable symbol mapping not computed\n");
-}
-
 // base case for the recursion
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgVarRefExp *sgn)
 {  
@@ -197,7 +191,6 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgNode* sgn)
 
 void ComputeAddressTakenInfo::computeAddressTakenSet(SgNode* root)
 {
-  throwIfUnInitException();
   // query to match all SgAddressOfOp subtrees
   // process query
   ProcessQuery procQuery;
@@ -221,12 +214,6 @@ void ComputeAddressTakenInfo::printAddressTakenSet()
  **************** TypeAnalysis *******************
  *************************************************/
 
-void CollectTypeInfo::throwIfUnInitException()
-{
-    if(!vidm.isUniqueVariableSymbolMapping())
-      throw std::runtime_error("Variable symbol mapping not computed\n");
-}
-
 VariableIdSet CollectTypeInfo::getPointerTypeSet()
 {
   return pointerTypeSet;
@@ -245,7 +232,6 @@ VariableIdSet CollectTypeInfo::getReferenceTypeSet()
 
 void CollectTypeInfo::collectTypes()
 {
-  throwIfUnInitException();
   if(varsUsed.size() == 0) {
     // get the entire set from VariableIdMapping
     varsUsed = vidm.getVariableIdSet();
