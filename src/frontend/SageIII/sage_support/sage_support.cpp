@@ -746,6 +746,7 @@ SgSourceFile::initializeGlobalScope()
         }
    }
 
+#ifndef _MSC_VER
 // TOO1 (05/14/2013): Signal handling for -rose:keep_going
 sigjmp_buf rose__sgproject_parse_mark;
 static void HandleFrontendSignal(int sig)
@@ -753,6 +754,7 @@ static void HandleFrontendSignal(int sig)
   std::cout << "[WARN] Caught frontend signal='" << sig << "'" << std::endl;
   siglongjmp(rose__sgproject_parse_mark, -1);
 }
+#endif
 
 SgFile*
 #if 0
@@ -1439,6 +1441,7 @@ SgFile::runFrontend(int & nextErrorCode)
         {
        // printf ("Calling file->callFrontEnd() \n");
 
+#ifndef _MSC_VER
        // TOO1 (05/14/2013): Signal handling for -rose:keep_going
           if (this->get_project()->get_keep_going())
              {
@@ -1458,6 +1461,9 @@ SgFile::runFrontend(int & nextErrorCode)
                     << std::endl;
                this->set_frontendErrorCode(-1);
              }
+#else
+if (0) {}
+#endif
             else
              {
                try

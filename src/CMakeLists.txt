@@ -974,6 +974,7 @@ set(LINK_FILES
    libhpdf
 #   libdl
    ${CMAKE_DL_LIBS}
+   libX10Traversal
 )
 
 if (have_EDG_source OR NOT WIN32)

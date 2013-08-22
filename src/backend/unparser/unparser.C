@@ -37,6 +37,7 @@
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
+#ifndef _MSC_VER
 // TOO1 (05/14/2013): Signal handling for -rose:keep_going
 static sigjmp_buf rose__sgproject_unparse_mark;
 static void HandleUnparserSignal(int sig)
@@ -44,6 +45,7 @@ static void HandleUnparserSignal(int sig)
   std::cout << "[WARN] Caught unparser signal='" << sig << "'" << std::endl;
   siglongjmp(rose__sgproject_unparse_mark, -1);
 }
+#endif
 
 // extern ROSEAttributesList *getPreprocessorDirectives( char *fileName); // [DT] 3/16/2000
 
@@ -2483,6 +2485,7 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
       if ( SgProject::get_verbose() > 1 )
            printf ("Unparsing each file... file = %p = %s \n",file,file->class_name().c_str());
 
+#ifndef _MSC_VER
       // TOO1 (05/14/2013): Signal handling for -rose:keep_going
       if (file->get_project()->get_keep_going())
       {
@@ -2501,6 +2504,9 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
               << std::endl;
           file->set_unparserErrorCode(-1);
       }
+#else
+if (0) {}
+#endif
       else
       {
           unparseFile(file, unparseFormatHelp, unparseDelegate);
