@@ -1405,10 +1405,8 @@ SgClassSymbol *lookupSymbolFromQualifiedName(string className) {
                     if (functionSymbol != NULL) {
                         // printf ("This could/should the constructor for the class we want, we just want the class... \n");
 
-                     // DQ (8/16/2013): The API for this function has changed slightly to address added requirements in C++ to handle template parameters and template arguments.
                      // Get the class directly since it is likely a parent class of the current scope.
-                     // classSymbol = SageInterface::lookupClassSymbolInParentScopes(*i, previousClassScope);
-                        classSymbol = SageInterface::lookupClassSymbolInParentScopes(*i, previousClassScope,NULL);
+                        classSymbol = SageInterface::lookupClassSymbolInParentScopes(*i, previousClassScope);
                         ROSE_ASSERT(classSymbol != NULL);
                     }
 

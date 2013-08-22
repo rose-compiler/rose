@@ -6080,9 +6080,7 @@ fixup_forward_type_declarations()
 #if 0
                     printf ("Reset the base type in parentType = %p = %s to nameOfIntendedType = %s \n",parentType,parentType->class_name().c_str(),nameOfIntendedType.c_str());
 #endif
-                 // DQ (8/16/2013): Modified to reflect new API.
-                 // SgSymbol* symbolOfIntendedType = currentScope->lookup_symbol(nameOfIntendedType);
-                    SgSymbol* symbolOfIntendedType = currentScope->lookup_symbol(nameOfIntendedType,NULL,NULL);
+                    SgSymbol* symbolOfIntendedType = currentScope->lookup_symbol(nameOfIntendedType);
 #if 0
                  // DQ (1/30/2011): This is a bug in OFP that is being fixed by Craig.
                     ROSE_ASSERT(symbolOfIntendedType != NULL);

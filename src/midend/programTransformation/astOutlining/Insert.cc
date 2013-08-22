@@ -120,7 +120,6 @@ generateFriendPrototype (const SgFunctionDeclaration* full_decl, SgScopeStatemen
   // Set the 'friend' modifier
      proto->get_declarationModifier ().setFriend ();
 
-  // DQ (8/16/2013): Modified API for symbol lookup.
   // DQ (2/26/2009): Remove the SgFunctionSymbol since this is a "friend" function.
   // Since this is a friend we don't want to have the SgFunctionSymbol in "scope" 
   // so remove the symbol.  The SageBuilder function generated the SgFunctionSymbol
@@ -130,8 +129,7 @@ generateFriendPrototype (const SgFunctionDeclaration* full_decl, SgScopeStatemen
   // required, this would then suppress the construction of the symbol in the scope's
   // symbol table (and the scope of the function is not the same as the class scope 
   // in this case as well.
-  // SgFunctionSymbol* friendFunctionSymbol = isSgFunctionSymbol(scope->lookup_symbol(full_decl->get_name()));
-     SgFunctionSymbol* friendFunctionSymbol = isSgFunctionSymbol(scope->lookup_symbol(full_decl->get_name(),NULL,NULL));
+     SgFunctionSymbol* friendFunctionSymbol = isSgFunctionSymbol(scope->lookup_symbol(full_decl->get_name()));
      ROSE_ASSERT(friendFunctionSymbol != NULL);
   // printf ("@@@@@@@@@@@@ In generateFriendPrototype(): removing SgFunctionSymbol = %p with friendFunctionSymbol->get_declaration() = %p \n",friendFunctionSymbol,friendFunctionSymbol->get_declaration());
      scope->remove_symbol(friendFunctionSymbol);
@@ -714,9 +712,7 @@ Outliner::insert (SgFunctionDeclaration* func,
      // insertGlobalPrototype (func, protos, src_global, target_func);
      sourceFileFunctionPrototype = insertGlobalPrototype (func, friendFunctionPrototypeList, src_global, target_func);
 
-  // DQ (8/16/2013): Modified API for symbol lookup.
-  // SgFunctionSymbol* sourceFileFunctionPrototypeSymbol = isSgFunctionSymbol(src_global->lookup_symbol(func->get_name()));
-     SgFunctionSymbol* sourceFileFunctionPrototypeSymbol = isSgFunctionSymbol(src_global->lookup_symbol(func->get_name(),NULL,NULL));
+     SgFunctionSymbol* sourceFileFunctionPrototypeSymbol = isSgFunctionSymbol(src_global->lookup_symbol(func->get_name()));
      ROSE_ASSERT(sourceFileFunctionPrototypeSymbol != NULL);
      // Liao 12/6/2012. The assumption now is changed. A hidden nondefining declaration is always created when a defining declaration is created.
      // So the hidden one is the first_nondefining decl associated with the function symbol.
@@ -754,10 +750,8 @@ Outliner::insert (SgFunctionDeclaration* func,
           printf ("In Outliner::insert(): outlinedFileFunctionPrototype = %p \n",outlinedFileFunctionPrototype);
 #endif
 
-       // DQ (8/16/2013): Modified API for symbol lookup.
        // The build function should have build symbol for the symbol table.
-       // SgFunctionSymbol* outlinedFileFunctionPrototypeSymbol = isSgFunctionSymbol(scope->lookup_symbol(func->get_name()));
-          SgFunctionSymbol* outlinedFileFunctionPrototypeSymbol = isSgFunctionSymbol(scope->lookup_symbol(func->get_name(),NULL,NULL));
+          SgFunctionSymbol* outlinedFileFunctionPrototypeSymbol = isSgFunctionSymbol(scope->lookup_symbol(func->get_name()));
           ROSE_ASSERT(outlinedFileFunctionPrototypeSymbol != NULL);
           // This is no longer true when a prototype is created when a defining one is created.
           //ROSE_ASSERT(outlinedFileFunctionPrototypeSymbol->get_declaration() == outlinedFileFunctionPrototype);

@@ -318,15 +318,17 @@ HEADER_SCOPE_STATEMENT_START
        //! get the first symbol with name (note that "" is a valid name and is used for unnamed declarations)
        //! the input name is stored as internal state to support the use of next_XXX_symbol() member function.
        // SgSymbol*          lookup_symbol            (const SgName& n) const;
-          SgSymbol*          lookup_symbol            (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList) const;
+       // SgSymbol*          lookup_symbol            (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList) const;
+          SgSymbol*          lookup_symbol            (const SgName& n, SgTemplateParameterPtrList* templateParameterList = NULL, SgTemplateArgumentPtrList* templateArgumentList = NULL) const;
 
           SgVariableSymbol*  lookup_var_symbol        (const SgName& n) const ROSE_DEPRECATED_FUNCTION;
           SgVariableSymbol*  lookup_variable_symbol   (const SgName& n) const;
 
-          SgClassSymbol*     lookup_class_symbol      (const SgName& n) const;
+       // DQ (8/21/2013): Nw that we permit the default parameter, this version of the function is ambiguous.
+       // SgClassSymbol*     lookup_class_symbol      (const SgName& n) const;
 
        // DQ (8/22/2012): We need more information to disambiguate where template argument name qualification would be important. See test2012_195.C.
-          SgClassSymbol*     lookup_class_symbol      (const SgName& n, SgTemplateArgumentPtrList* templateArgumentsList) const;
+          SgClassSymbol*     lookup_class_symbol      (const SgName& n, SgTemplateArgumentPtrList* templateArgumentsList = NULL) const;
 
           SgFunctionSymbol*  lookup_function_symbol   (const SgName& n) const;
 
@@ -4718,13 +4720,15 @@ SgScopeStatement::lookup_variable_symbol(const SgName& n) const
 #endif
    }
 
+
+#if 0
+// DQ (8/21/2013): Nw that we permit the default parameter, this version of the function is ambiguous.
 // DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
 // DQ (5/22/2006): I would like to restrict support of a number of functions that I 
 // think are redundant with the simple lookup_symbol(const SgName& n) (above).
 SgClassSymbol*
 SgScopeStatement::lookup_class_symbol(const SgName& n) const
    {
-#if 1
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -4738,18 +4742,14 @@ SgScopeStatement::lookup_class_symbol(const SgName& n) const
           assert (p_symbol_table != NULL);
           return p_symbol_table->find_class(n);
         }
-#else
-     assert (p_symbol_table != NULL);
-     return p_symbol_table->find_class(n);
-#endif
    }
+#endif
 
 SgClassSymbol*
 SgScopeStatement::lookup_class_symbol(const SgName& n, SgTemplateArgumentPtrList* templateArgumentsList) const
    {
   // DQ (8/22/2012): We need more information to disambiguate where template argument name qualification would be important. See test2012_195.C.
 
-#if 1
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -4763,10 +4763,6 @@ SgScopeStatement::lookup_class_symbol(const SgName& n, SgTemplateArgumentPtrList
           assert (p_symbol_table != NULL);
           return p_symbol_table->find_class(n,templateArgumentsList);
         }
-#else
-     assert (p_symbol_table != NULL);
-     return p_symbol_table->find_class(n,templateArgumentsList);
-#endif
    }
 
 // DQ (1/30/2007): Added these back into ROSE.
@@ -4775,7 +4771,6 @@ SgScopeStatement::lookup_class_symbol(const SgName& n, SgTemplateArgumentPtrList
 SgLabelSymbol*
 SgScopeStatement::lookup_label_symbol(const SgName& n) const
    {
-#if 1
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -4789,10 +4784,6 @@ SgScopeStatement::lookup_label_symbol(const SgName& n) const
           assert (p_symbol_table != NULL);
           return p_symbol_table->find_label(n);
         }
-#else
-     assert (p_symbol_table != NULL);
-     return p_symbol_table->find_label(n);
-#endif
    }
 
 //
