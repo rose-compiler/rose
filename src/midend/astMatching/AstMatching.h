@@ -15,8 +15,6 @@
 
 class SgNode;
 
-namespace CodeThorn {
-
 class MatchOperation;
 
 class AstMatching {
@@ -55,7 +53,5 @@ class AstMatching {
   MatchStatus _status;
   bool _keepMarkedLocations;
 };
-
-} // namespace CodeThorn
 
 #endif

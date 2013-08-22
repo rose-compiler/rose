@@ -13,7 +13,8 @@ SUBDIRS = 					\
 	staticSingleAssignmentTests		\
 	ssa_UnfilteredCfg_Test			\
 	generalDataFlowAnalysisTests		\
-	systemDependenceGraphTests
+	systemDependenceGraphTests		\
+	typeTraitTests
 
 
 # ROSE Test Harness scripts

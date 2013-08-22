@@ -331,6 +331,8 @@ struct hash_nodeptr
 
    //! Check if a SgNode is a declaration for a structure
    bool isStructDeclaration(SgNode * node);
+   //! Check if a SgNode is a declaration for a union
+   bool isUnionDeclaration(SgNode * node);
  #if 0
  // DQ (8/28/2005): This is already a member function of the SgFunctionDeclaration
  // (so that it can handle template functions and member functions)
@@ -2182,7 +2184,28 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
 
 // DQ (1/23/2013): Added support for generated a set of source sequence entries.
    std::set<unsigned int> collectSourceSequenceNumbers( SgNode* astNode );
-
+      
+//--------------------------------Type Traits (C++)---------------------------
+      bool HasNoThrowAssign(const SgType * const inputType);
+      bool HasNoThrowCopy(const SgType * const inputType);
+      bool HasNoThrowConstructor(const SgType * const inputType);
+      bool HasTrivialAssign(const SgType * const inputType);
+      bool HasTrivialCopy(const SgType * const inputType);
+      bool HasTrivialConstructor(const SgType * const inputType);
+      bool HasTrivialDestructor(const SgType * const inputType);
+      bool HasVirtualDestructor(const SgType * const inputType);
+      bool IsBaseOf(const SgType * const inputBaseType, const SgType * const inputDerivedType);
+      bool IsAbstract(const SgType * const inputType);
+      bool IsClass(const SgType * const inputType);
+      bool IsEmpty(const SgType * const inputType);
+      bool IsEnum(const SgType * const inputType);
+      bool IsPod(const SgType * const inputType);
+      bool IsPolymorphic(const SgType * const inputType);
+      bool IsStandardLayout(const SgType * const inputType);
+      bool IsLiteralType(const SgType * const inputType);
+      bool IsTrivial(const SgType * const inputType);
+      bool IsUnion(const SgType * const inputType);
+      SgType *  UnderlyingType(SgType *type);
 }// end of namespace
 
 #endif

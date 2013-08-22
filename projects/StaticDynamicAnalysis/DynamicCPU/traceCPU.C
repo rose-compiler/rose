@@ -72,8 +72,9 @@ publicly.
 
 #include "rose.h"
 #include "sageBuilder.h"
-using namespace SageBuilder ;
+
 using namespace std ;
+using namespace SageBuilder ;
 
 static const char *dumpFunc ;
 static SgType *ETtype ;
@@ -82,8 +83,6 @@ static bool countIters        = true ;
 static bool instrumentWhile   = true ;
 static bool instrumentDoWhile = true ;
 static bool fullLoopStat      = true ;
-
-#define ANCHOR Sg_File_Info::generateDefaultFileInfoForTransformationNode()
 
 /*****************************************************************************/
 /* if (<var> == 0) <var> = <registerFuncName>(__FILE__, __FUNC__, __LINE__)  */
@@ -106,12 +105,16 @@ static void RegisterItem(SgFunctionDeclaration *funcDecl, SgBasicBlock *funcBody
                  stmt->get_startOfConstruct() : stmt->get_endOfConstruct()) ;
    }
 
-   SgExprListExp *args = new SgExprListExp(ANCHOR) ;
-   args->append_expression(buildStringVal(fileInfo->get_filenameString())) ;
-   args->append_expression(buildStringVal(funcDecl->get_name().str())) ;
-   args->append_expression(buildIntVal(fileInfo->get_line())) ;
    SgFunctionCallExp *registerCall = buildFunctionCallExp(
-      SgName(registerFuncName), varType, args, funcBody) ;
+      SgName(registerFuncName),
+      varType,
+      buildExprListExp(
+         buildStringVal(fileInfo->get_filenameString()),
+         buildStringVal(funcDecl->get_name().str()),
+         buildIntVal(fileInfo->get_line())
+      ),
+      funcBody
+   ) ;
           
    SgExprStatement *varAssign =
       buildExprStatement(buildAssignOp(buildVarRefExp(var), registerCall)) ;
@@ -133,13 +136,10 @@ static void HandleItem(SgBasicBlock *funcBody, SgStatement *stmt,
                        const char *stopSeqFuncName, SgExpression *expr,
                        bool beforeStmt)
 {
-   SgExprListExp *args = new SgExprListExp(ANCHOR) ;
-   if (expr != 0)
-   {
-      args->append_expression(expr) ;
-   }
+   SgExprListExp *args = buildExprListExp(expr) ;
+
    SgExprStatement *statement = buildFunctionCallStmt(
-      SgName(stopSeqFuncName), new SgTypeVoid(), args, funcBody) ;
+      SgName(stopSeqFuncName), buildVoidType(), args, funcBody) ;
    stmt->get_scope()->insert_statement(stmt, statement, beforeStmt) ;
 
    return ;
@@ -185,14 +185,9 @@ static SgType *GetTypedef(SgGlobal *globalScope, const char *name,
 
       /* Note that typeDecl is not added to AST */
       typeDecl =
-         new SgTypedefDeclaration(ANCHOR, SgName(name), surrogateType) ;
+         buildTypedefDeclaration(name, surrogateType, globalScope) ;
       ROSE_ASSERT(typeDecl) ;
       typeDecl->get_file_info()->unsetOutputInCodeGeneration() ;
-      typeDecl->set_parent(globalScope) ;
-      typeDecl->set_scope(globalScope) ;
-      typeDecl->set_definingDeclaration(typeDecl);
-      typedefSymbol = new SgTypedefSymbol(typeDecl);
-      globalScope->insert_symbol(typeDecl->get_name(), typedefSymbol);
    }
    else
    {
@@ -201,7 +196,7 @@ static SgType *GetTypedef(SgGlobal *globalScope, const char *name,
      typeDecl = ts->get_declaration() ;
      ROSE_ASSERT(typeDecl) ;
    }
-   type = isSgType(new SgTypedefType(typeDecl)) ;
+   type = isSgType(typeDecl->get_type()) ;
    ROSE_ASSERT(type) ;
 
    return type ;
@@ -823,9 +818,7 @@ int main (int argc, char *argv[])
      /* set up some needed typedefs for runtime support */
 
      SgGlobal *globalScope = SageInterface::getFirstGlobalScope(project) ;
-     pushScopeStack(isSgScopeStatement(globalScope)) ;
-     ETtype = GetTypedef(globalScope, "ET_Idx_t", new SgTypeShort() ) ;
-     popScopeStack();   /* pop globalScope */
+     ETtype = buildTypedefDeclaration("ET_Idx_t", buildShortType(), globalScope)->get_type() ;
 
      /* insert probes into each function in this file */
 
@@ -923,9 +916,8 @@ int main (int argc, char *argv[])
               if (isSgDeclarationStatement(stmt))
                  continue ;
 
-              SgExprListExp *papiArgs = new SgExprListExp(ANCHOR) ;
               SgExprStatement *initCall = buildFunctionCallStmt(
-                 SgName("ET_Init"), new SgTypeVoid(), papiArgs,
+                 SgName("ET_Init"), buildVoidType(), buildExprListExp(),
                  mainFuncDef->get_body()) ;
               stmt->get_scope()->insert_statement(stmt, initCall) ;
 
@@ -945,30 +937,26 @@ int main (int argc, char *argv[])
               SgReturnStmt *ret = isSgReturnStmt(*r_itr) ;
               ROSE_ASSERT(ret);
 
-              SgExprListExp *sanityArgs = new SgExprListExp(ANCHOR) ;
               SgExprStatement *sanityCall = buildFunctionCallStmt(
-                 SgName("ET_SanityCheck"), new SgTypeVoid(), sanityArgs,
+                 SgName("ET_SanityCheck"), buildVoidType(), buildExprListExp(),
                  mainFuncDef->get_body()) ;
               ret->get_scope()->insert_statement(ret, sanityCall) ;
 
-              SgExprListExp *logStatArgs = new SgExprListExp(ANCHOR) ;
               SgExprStatement *logStatCall = buildFunctionCallStmt(
-                 SgName(dumpFunc), new SgTypeVoid(), logStatArgs,
+                 SgName(dumpFunc), buildVoidType(), buildExprListExp(),
                  mainFuncDef->get_body()) ;
               ret->get_scope()->insert_statement(ret, logStatCall) ;
            }
         }
         else
         {
-           SgExprListExp *sanityArgs = new SgExprListExp(ANCHOR) ;
            SgExprStatement *sanityCall = buildFunctionCallStmt(
-              SgName("ET_SanityCheck"), new SgTypeVoid(), sanityArgs,
+              SgName("ET_SanityCheck"), buildVoidType(), buildExprListExp(),
               mainFuncDef->get_body()) ;
            mainFuncDef->get_body()->append_statement(sanityCall) ;
 
-           SgExprListExp *logStatArgs = new SgExprListExp(ANCHOR) ;
            SgExprStatement *logStatCall = buildFunctionCallStmt(
-              SgName(dumpFunc), new SgTypeVoid(), logStatArgs,
+              SgName(dumpFunc), buildVoidType(), buildExprListExp(),
               mainFuncDef->get_body()) ;
            mainFuncDef->get_body()->append_statement(logStatCall) ;
         }
