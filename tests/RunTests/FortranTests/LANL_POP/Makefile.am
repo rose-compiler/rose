@@ -49,6 +49,9 @@ netcdf_lib=$(netcdf_prefix)/lib/libnetcdf.a
 translator = $(top_builddir)/tests/testTranslator
 translator_flags = -rose:verbose 0 -rose:skip_syntax_check -rose:skipfinalCompileStep
 
+$(translator):
+	@$(MAKE) -C $(top_builddir)/tests/ "$$(basename $(translator))"
+
 
 # Shell code to set up the environment.  If any of these environment variables are already set then that value
 # will be kept, otherwise we'll use a sane default.  We generate this as a file because it's used by a bunch of
@@ -85,7 +88,7 @@ netcdf: $(netcdf_lib)
 $(netcdf_lib): hudson-environment.sh
 	@set -e $(SETX);						\
 	echo "  BUILD   NetCDF";					\
-	source hudson-environment.sh;					\
+	source $(builddir)/hudson-environment.sh;					\
 	cp -pPR $(netcdf_srcdir) $(netcdf_blddir);			\
 	chmod -R u+w $(netcdf_blddir);					\
 	cd $(netcdf_blddir);						\
@@ -122,7 +125,7 @@ $(netcdf_prefix)/include/netcdf.rmod: $(netcdf_lib) $(netcdf_prefix)/include/typ
 # if necessary).
 hudson.gnu: hudson-environment.sh
 	@set -e $(SETX);			     \
-	source hudson-environment.sh;		     \
+	source $(builddir)/hudson-environment.sh;		     \
 	sed < $(srcdir)/hudson.template >hudson.gnu  \
 	    -e "s%_HUDSON_FC_%$$HUDSON_FC%"	     \
 	    -e "s%_HUDSON_FFLAGS_%$$HUDSON_FFLAGS%"  \
@@ -139,7 +142,7 @@ hudson.gnu: hudson-environment.sh
 # source files through a translator.
 pop_pristine_blddir_stamp pop_modified_blddir_stamp pop_modified_srcdir_stamp: hudson-environment.sh hudson.gnu
 	@set -e $(SETX);							\
-	source hudson-environment.sh;						\
+	source $(builddir)/hudson-environment.sh;						\
 	blddir=$(patsubst %_stamp,%,$@);					\
 	cp -pPR $(pop_srcdir) $$blddir;						\
 	chmod -R u+w $$blddir;							\
@@ -245,14 +248,14 @@ pop_pristine_blddir/run/pop pop_modified_blddir/run/pop: \
 	@set -e $(SETX);							 \
 	type=$(patsubst pop_%_blddir/run/pop,%,$@);				 \
 	echo "  BUILD   LANL POP ($$type)";					 \
-	source hudson-environment.sh;						 \
+	source $(builddir)/hudson-environment.sh;						 \
 	cd $(dir $@);								 \
 	ARCHDIR=hudson NETCDF=$(netcdf_prefix) $$HUDSON_MAKE -j$$HUDSON_NUM_JOBS
 
 # Run the "pop" executables
 pristine.ans modified.ans: %.ans: pop_%_blddir/run/pop
 	@set -e $(SETX);				       \
-	source hudson-environment.sh;			       \
+	source $(builddir)/hudson-environment.sh;			       \
 	type=$(patsubst %.ans,%,$@);			       \
 	echo "  RUN     LANL POP ($$type)";		       \
 	(cd pop_$${type}_blddir/run && ./pop) > $@.unfiltered; \

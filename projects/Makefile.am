@@ -14,6 +14,7 @@ SUBDIRS = \
 	C_to_Promela \
 	CertSecureCodeProject \
 	CloneDetection \
+	CodeThorn \
 	DataFaultTolerance \
 	DatalogAnalysis \
 	DocumentationGenerator \
@@ -43,6 +44,7 @@ SUBDIRS = \
 	ManyCoreRuntime \
 	Fortran_to_C \
 	mint \
+	vectorization \
 	extractMPISkeleton \
 	$(OPTIONAL_PROJECTS)
 

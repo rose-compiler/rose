@@ -205,6 +205,7 @@ SgScopeStatement::find_symbol_by_type_of_function (const SgName & name, const Sg
           switch((VariantT)T::static_variant)
              {
                case V_SgFunctionDeclaration:
+               case V_SgProcedureHeaderStatement:
                case V_SgTemplateInstantiationFunctionDecl:
                   {
 #if 0
@@ -1179,8 +1180,8 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
           delete (default_initName); // must delete the old one to pass AST consistency test
 
        // DQ (12/13/2011): Is this executed...
-          printf ("Is this executed \n");
-          ROSE_ASSERT(false);
+          //printf ("Is this executed \n");
+          //ROSE_ASSERT(false);
 
           isFortranParameter = true;
         }
@@ -2576,6 +2577,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
           switch((VariantT)actualFunction::static_variant)
              {
                case V_SgFunctionDeclaration:
+               case V_SgProcedureHeaderStatement:
                case V_SgTemplateInstantiationFunctionDecl:
                   {
 #if 0
@@ -3409,8 +3411,6 @@ SageBuilder::buildNondefiningTemplateFunctionDeclaration (const SgName & name, S
      return result;
    }
 
-// SgTemplateFunctionDeclaration* SageBuilder::buildDefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags)
-// SgTemplateFunctionDeclaration* SageBuilder::buildDefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList)
 SgTemplateFunctionDeclaration*
 SageBuilder::buildDefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, SgTemplateFunctionDeclaration* first_nondefining_declaration)
    {
@@ -3430,7 +3430,6 @@ SageBuilder::buildDefiningTemplateFunctionDeclaration (const SgName & name, SgTy
    }
 
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
-// SgTemplateMemberFunctionDeclaration* SageBuilder::buildDefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags)
 SgTemplateMemberFunctionDeclaration*
 SageBuilder::buildDefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, SgTemplateMemberFunctionDeclaration* first_nondefining_declaration)
    {
@@ -4002,7 +4001,6 @@ SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType
         {
           ROSE_ASSERT(first_nondefining_declaration != NULL);
 
-       // result = buildDefiningFunctionDeclaration_T <SgMemberFunctionDeclaration> (name,return_type,paralist,/* isMemberFunction = */ true,scope,decoratorList,functionConstVolatileFlags,first_nondefining_declaration);
           result = buildDefiningFunctionDeclaration_T <SgMemberFunctionDeclaration> (name,return_type,paralist,/* isMemberFunction = */ true,scope,decoratorList,functionConstVolatileFlags,first_nondefining_declaration, NULL);
         }
 #endif
@@ -4035,7 +4033,6 @@ SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType
 
 template <class actualFunction>
 actualFunction*
-// SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* return_type, SgFunctionParameterList* paralist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, actualFunction* first_nondefining_declaration)
 SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType* return_type, SgFunctionParameterList* paralist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, actualFunction* first_nondefining_declaration, SgTemplateArgumentPtrList* templateArgumentsList)
    {
   // Note that the semantics of this function now differs from that of the buildDefiningClassDeclaration().
@@ -4731,7 +4728,16 @@ SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return
 SgProcedureHeaderStatement*
 SageBuilder::buildProcedureHeaderStatement(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgProcedureHeaderStatement::subprogram_kind_enum kind, SgScopeStatement* scope)
    {
-     return buildProcedureHeaderStatement(name.str(),return_type,parameter_list,kind,scope,NULL);
+  // Function prototype: buildNondefiningFunctionDeclaration_T (
+  //      const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, 
+  //      unsigned int functionConstVolatileFlags, SgTemplateArgumentPtrList* templateArgumentsList, SgTemplateParameterPtrList* templateParameterList);
+
+  // DQ (8/21/2013): Fixed number of parameters in buildNondefiningFunctionDeclaration_T() function call.
+  // SgProcedureHeaderStatement* non_def_decl = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement> (name,return_type,parameter_list, /* isMemberFunction = */ false, scope, NULL, false, NULL);
+     SgProcedureHeaderStatement* non_def_decl = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement> (name,return_type,parameter_list, /* isMemberFunction = */ false, scope, NULL, 0, NULL, NULL);
+
+  // return buildProcedureHeaderStatement(name.str(),return_type,parameter_list,kind,scope,NULL);
+     return buildProcedureHeaderStatement(name.str(),return_type,parameter_list,kind,scope, non_def_decl);
    }
 
 
@@ -5606,6 +5612,22 @@ SgMinusMinusOp *SageBuilder::buildMinusMinusOp_nfi(SgExpression* operand_i, SgUn
   return result;
 }
 
+SgMinusOp *SageBuilder::buildMinusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode)
+{
+  SgMinusOp* result = buildUnaryExpression<SgMinusOp>(operand_i);
+  ROSE_ASSERT(result);
+  result->set_mode(a_mode);
+  return result;
+}
+
+SgMinusOp *SageBuilder::buildMinusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode)
+{
+  SgMinusOp* result = buildUnaryExpression_nfi<SgMinusOp>(operand_i);
+  ROSE_ASSERT(result);
+  result->set_mode(a_mode);
+  return result;
+}
+
 SgPlusPlusOp *SageBuilder::buildPlusPlusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode)
 {
   SgPlusPlusOp* result = buildUnaryExpression<SgPlusPlusOp>(operand_i);
@@ -6465,9 +6487,24 @@ SageBuilder::buildFunctionRefExp(const SgName& name,const SgType* funcType, SgSc
     SgGlobal* globalscope = getGlobalScope(scope);
 
     ROSE_ASSERT (isMemberFunc == false);  // Liao, 11/21/2012. We assume only regular functions can go into this if-body so we can insert them into global scope by default
-    //TODO: consider C++ template functions and Fortran functions
-    //SgFunctionDeclaration * funcDecl= buildNondefiningFunctionDeclaration(name,return_type,parList,globalscope);
-    SgFunctionDeclaration * funcDecl = buildNondefiningFunctionDeclaration_T <SgFunctionDeclaration>(name,return_type,parList,false,globalscope,NULL, false, NULL, NULL);
+ // TODO: consider C++ template functions and Fortran functions
+ // SgFunctionDeclaration * funcDecl= buildNondefiningFunctionDeclaration(name,return_type,parList,globalscope);
+ // SgFunctionDeclaration * funcDecl = buildNondefiningFunctionDeclaration_T <SgFunctionDeclaration>(name,return_type,parList,false,globalscope,NULL, false, NULL, NULL);
+
+ // TODO: consider C++ template functions 
+    SgFunctionDeclaration * funcDecl = NULL; 
+    if (SageInterface::is_Fortran_language ())
+       {
+      // DQ (8/21/2013): Fixed number of parameters in buildNondefiningFunctionDeclaration_T() function call.
+      // funcDecl = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement>(name,return_type,parList,false,globalscope,NULL, false, NULL);
+         funcDecl = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement>(name,return_type,parList,false,globalscope,NULL, false, NULL, NULL);
+       }
+      else
+       {
+      // DQ (8/21/2013): Fixed number of parameters in buildNondefiningFunctionDeclaration_T() function call.
+      // funcDecl = buildNondefiningFunctionDeclaration_T <SgFunctionDeclaration>(name,return_type,parList,false,globalscope,NULL, false, NULL);
+          funcDecl = buildNondefiningFunctionDeclaration_T <SgFunctionDeclaration>(name,return_type,parList,false,globalscope,NULL, false, NULL, NULL);
+       }
 
     funcDecl->get_declarationModifier().get_storageModifier().setExtern();
 
