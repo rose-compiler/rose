@@ -6,7 +6,7 @@ int j;
 int main() {
   int n;
   n=nglobal;
-  int z;
+  int z=n;
   int s=sinit;
   for(i=1;i<n;i++) {
 	s=s+1;
