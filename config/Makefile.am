@@ -8,8 +8,18 @@ include_HEADERS = \
      rose-g++-headerfilefixup.h \
      rose_specific_cdefs.h \
      rose_specific_emmintrin.h \
+     rose_specific_ammintrin.h \
+     rose_specific_nmmintrin.h \
+     rose_specific_pmmintrin.h \
+     rose_specific_smmintrin.h \
+     rose_specific_tmmintrin.h \
      rose_specific_xmmintrin.h
 
+# Phlin (8/22/2012): GCC 4.6+ starts to support AVX.
+if ROSE_USING_GCC_VERSION_LATER_4_6
+include_HEADERS += \
+     rose_specific_avxintrin.h 
+endif
 # DQ (9/15/2010): Added UPC header files.
 # DQ (8/14/2010): Added modified header file iomanip-gnu-4.5 to fix code in new 4.5 header files 
 # that ROSE can't compile and which appear to be C++0X specific code included by mistake.
