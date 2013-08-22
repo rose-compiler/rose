@@ -194,7 +194,7 @@ show_summary(const SqlDatabase::TransactionPtr &tx, int func_id)
                                                              " join semantic_files as file2 on func.file_id = file2.id"
                                                              " join semantic_history as cmd on func.cmd = cmd.hashkey"
                                                              " where func.id = ?")->bind(0, func_id)->begin();
-    double returns_value = CloneDetection::function_returns_value_p(tx, func_id);
+    double returns_value = CloneDetection::function_returns_value(tx, func_id);
 
     std::cout <<"Function ID:                      " <<func_id <<"\n"
               <<"Entry virtual address:            " <<StringUtility::addrToString(geninfo.get<rose_addr_t>(0)) <<"\n"
@@ -206,7 +206,7 @@ show_summary(const SqlDatabase::TransactionPtr &tx, int func_id)
               <<"Number of bytes for instructions: " <<geninfo.get<size_t>(5) <<"\n"
               <<"Number of bytes for static data:  " <<geninfo.get<size_t>(6) <<"\n"
               <<"Total number of bytes:            " <<geninfo.get<size_t>(7) <<"\n" // not necessarily the sum isize + dsize
-              <<"Function returns a value:         " <<round(returns_value) <<"% probability\n"
+              <<"Function returns a value:         " <<round(100.0*returns_value) <<"% probability\n"
               <<"Function static digest:           " <<geninfo.get<std::string>(8) <<"\n"
               <<"Command that inserted function:   " <<geninfo.get<int64_t>(9) <<" (command hashkey)\n"
               <<"Time that function was inserted:  " <<SqlDatabase::humanTimeRenderer(geninfo.get<time_t>(10), 0) <<"\n";
