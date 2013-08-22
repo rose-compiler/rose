@@ -396,11 +396,12 @@ ConcatSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterato
     for (TreeNodes::const_iterator ti=begin; ti!=end; ++ti)
         nbits += (*ti)->get_nbits();
 
-    for (/*void*/; begin!=end; ++begin) {
+    for (size_t sa=nbits; begin!=end; ++begin) {
         LeafNodePtr leaf = (*begin)->isLeafNode();
-        nbits -= leaf->get_nbits();
-        result |= IntegerOps::shiftLeft2(leaf->get_value(), nbits);
+        sa -= leaf->get_nbits();
+        result |= IntegerOps::shiftLeft2(leaf->get_value(), sa);
     }
+
     assert(nbits>0 && nbits<=8*sizeof result);
     return LeafNode::create_integer(nbits, result);
 }
