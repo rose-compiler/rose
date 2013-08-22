@@ -931,7 +931,7 @@ void ExprWalker::visit(SgVarRefExp* sgn)
   // get the VariableId
   VariableId vid = vidm.variableId(sgn);
   
-  ROSE_ASSERT(vid.getIdCode() != -1);
+  ROSE_ASSERT(vid.isValid());
 
   // determine type info
   VariableIdTypeInfo sgn_type_info = getVariableIdTypeInfo(vid, vidm); 
@@ -954,7 +954,7 @@ void ExprWalker::visit(SgInitializedName* sgn)
   // some SgInitializedName do not have symbols
   // VariableId is not created for such SgInitializedName
   // check and return if we are processing such SgInitializedName
-  if(vid.getIdCode() == -1) {
+  if(!vid.isValid()) {
     //cerr << "WARNING: Skipping SgInitializedName sgn->get_name() = " << sgn->get_name() << " with no symbol\n";
     return;
   }
