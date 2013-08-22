@@ -2,7 +2,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 INCLUDES = $(ROSE_INCLUDES)
 
-noinst_PROGRAMS  = typeTraitExerciseWithRetCode typeTraitExerciseWithoutRetCode
+bindir = ${exec_prefix}/bin/testsuite
+bin_PROGRAMS  = typeTraitExerciseWithRetCode typeTraitExerciseWithoutRetCode
 
 typeTraitExerciseWithRetCode_SOURCES = typeTraitExerciseWithRetCode.C
 typeTraitExerciseWithRetCode_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
