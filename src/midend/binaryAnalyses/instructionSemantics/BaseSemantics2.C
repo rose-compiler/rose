@@ -112,10 +112,11 @@ RegisterStateGeneric::get_nonoverlapping_parts(const Extent &overlap, const RegP
         pairs->push_back(RegPair(nonoverlap_desc, nonoverlap_val));
     }
     if (overlap.last()+1 < rp.desc.get_offset() + rp.desc.get_nbits()) { // MSB part of existing reg does not overlap
-        size_t nonoverlap_first = overlap.last() + 1;
+        size_t nonoverlap_first = overlap.last() + 1; // bit offset for register
         size_t nonoverlap_nbits = (rp.desc.get_offset() + rp.desc.get_nbits()) - (overlap.last() + 1);
         RegisterDescriptor nonoverlap_desc(rp.desc.get_major(), rp.desc.get_minor(), nonoverlap_first, nonoverlap_nbits);
-        SValuePtr nonoverlap_val = ops->extract(rp.value, nonoverlap_first-rp.desc.get_offset(), nonoverlap_nbits);
+        size_t lo_bit = nonoverlap_first - rp.desc.get_offset(); // lo bit of value to extract
+        SValuePtr nonoverlap_val = ops->extract(rp.value, lo_bit, lo_bit+nonoverlap_nbits);
         pairs->push_back(RegPair(nonoverlap_desc, nonoverlap_val));
     }
 }
@@ -133,22 +134,34 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
     }
 
     // Get a list of all the (parts of) registers that might overlap with this register.
-    Extent reg_extent(reg.get_offset(), reg.get_nbits());
+    Extent need_extent(reg.get_offset(), reg.get_nbits());
     std::vector<SValuePtr> overlaps(reg.get_nbits()); // overlapping parts of other registers by bit offset
     std::vector<RegPair> nonoverlaps; // non-overlapping parts of overlapping registers
     for (RegPairs::iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
-        Extent overlap = reg_extent.intersect(Extent(rvi->desc.get_offset(), rvi->desc.get_nbits()));
-        if (overlap==reg_extent) {
-            return rvi->value; // found exact match; no other overlaps are possible.
-        } else if (!overlap.empty()) {
-            SValuePtr overlap_val = ops->extract(rvi->value, overlap.first()-rvi->desc.get_offset(), overlap.size());
-            overlaps[overlap.first()] = overlap_val;
+        Extent have_extent(rvi->desc.get_offset(), rvi->desc.get_nbits());
+        if (need_extent==have_extent) {
+            // exact match; no need to traverse further because a RegisterStateGeneric never stores overlapping values
+            assert(nonoverlaps.empty());
+            return rvi->value;
+        } else {
+            Extent overlap = need_extent.intersect(have_extent);
+            if (overlap==need_extent) {
+                // The stored register contains all the bits we need to read, and then some.  Extract only what we need.
+                // No need to traverse further because we never store overlapping values.
+                assert(nonoverlaps.empty());
+                size_t lo_bit = need_extent.first() - have_extent.first();
+                return ops->extract(rvi->value, lo_bit, lo_bit+need_extent.size());
+            } else if (!overlap.empty()) {
+                SValuePtr overlap_val = ops->extract(rvi->value, overlap.first()-have_extent.first(), overlap.size());
+                overlaps[overlap.first()] = overlap_val;
 
-            // If any part of the existing register is not represented by the register being read, then we need to save that part.
-            get_nonoverlapping_parts(overlap, *rvi, ops, &nonoverlaps);
+                // If any part of the existing register is not represented by the register being read, then we need to save
+                // that part.
+                get_nonoverlapping_parts(overlap, *rvi, ops, &nonoverlaps);
 
-            // Mark the overlapping register by setting it to null so we can remove it later.
-            rvi->value = SValuePtr();
+                // Mark the overlapping register by setting it to null so we can remove it later.
+                rvi->value = SValuePtr();
+            }
         }
     }
 
@@ -191,15 +204,20 @@ RegisterStateGeneric::writeRegister(const RegisterDescriptor &reg, const SValueP
     // Look for existing registers that overlap with this register and remove them.  If the overlap was only partial, then we
     // need to eventually add the non-overlapping part back into the list.
     RegPairs nonoverlaps; // the non-overlapping parts of overlapping registers
-    Extent reg_extent(reg.get_offset(), reg.get_nbits());
+    Extent need_extent(reg.get_offset(), reg.get_nbits());
     for (RegPairs::iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
-        Extent overlap = reg_extent.intersect(Extent(rvi->desc.get_offset(), rvi->desc.get_nbits()));
-        if (overlap==reg_extent) {
-            rvi->value = value; // found exact match; no other overlaps are possible
+        Extent have_extent(rvi->desc.get_offset(), rvi->desc.get_nbits());
+        if (need_extent==have_extent) {
+            // found exact match. No need to traverse further because a RegisterStateGeneric never stores overlapping values.
+            assert(nonoverlaps.empty());
+            rvi->value = value;
             return;
-        } else if (!overlap.empty()) {
-            get_nonoverlapping_parts(overlap, *rvi, ops, &nonoverlaps);
-            rvi->value = SValuePtr(); // mark pair for removal by setting it to null
+        } else {
+            Extent overlap = need_extent.intersect(have_extent);
+            if (!overlap.empty()) {
+                get_nonoverlapping_parts(overlap, *rvi, ops, &nonoverlaps);
+                rvi->value = SValuePtr(); // mark pair for removal by setting it to null
+            }
         }
     }
 
