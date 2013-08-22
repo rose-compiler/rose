@@ -5524,7 +5524,8 @@ SageInterface::setSourcePositionForTransformation(SgNode *root)
   // DQ (5/2/2012): This is a test to replace the support we have to mark every thing as a transformation with the new mechanism using source position modes.
   // setSourcePosition(root);
   // Liao 11/21/2012. This function should only be called when the mode is transformation
-     ROSE_ASSERT(SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionTransformation);
+  // Liao 8/2/2013. It can actually be called inside frontend by OmpSupport::lower_omp().
+     //ROSE_ASSERT(SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionTransformation);
      setSourcePositionAtRootAndAllChildren(root);
 #else
      Rose_STL_Container <SgNode*> nodeList = NodeQuery::querySubTree(root,V_SgNode);
@@ -7249,6 +7250,26 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
                   ROSE_ASSERT(false);
           }
   }
+  else if (isSgFortranDo(parent))
+  {
+    SgFortranDo* fortranDo = isSgFortranDo(parent);
+    if(oldExp == fortranDo->get_initialization())
+    {
+      fortranDo->set_initialization(newExp);
+    }
+    else if(oldExp == fortranDo->get_bound())
+    {
+      fortranDo->set_bound(newExp);
+    }
+    else if(oldExp == fortranDo->get_increment())
+    {
+      fortranDo->set_increment(newExp);
+    }
+    else
+    {
+      ROSE_ASSERT(false);
+    }
+  }
  else{
   cerr<<"SageInterface::replaceExpression(). Unhandled parent expression type of SageIII enum value: " <<parent->class_name()<<endl;
   ROSE_ASSERT(false);
@@ -7771,10 +7792,11 @@ bool SageInterface::doLoopNormalization(SgFortranDo* loop)
   SgExpression* e_3 = loop->get_increment();
   if (isSgNullExpression(e_3))
   {
-    loop->set_increment(buildIntVal(1));
+    SgIntVal* iv = buildIntVal(1);
+    loop->set_increment(iv);
+    iv->set_parent(loop);
     delete (e_3);
   }
-
   return true;
 }
 
@@ -11405,6 +11427,17 @@ StringUtility::numberToString(++breakLabelCounter),
     else
        return (decl->get_class_type() == SgClassDeclaration::e_struct)? true:false;
   }
+
+  bool SageInterface::isUnionDeclaration(SgNode* node)
+  {
+    ROSE_ASSERT(node!=NULL);
+    SgClassDeclaration *decl = isSgClassDeclaration(node);
+    if (decl==NULL)
+      return false;
+    else
+       return (decl->get_class_type() == SgClassDeclaration::e_union)? true:false;
+  }
+
 
 void  SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_dst, PreprocessingInfo::RelativePositionType src_position/* =PreprocessingInfo::undef */,
                             PreprocessingInfo::RelativePositionType dst_position/* =PreprocessingInfo::undef */, bool usePrepend /*= false */)

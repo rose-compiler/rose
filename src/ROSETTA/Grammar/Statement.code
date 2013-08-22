@@ -16906,4 +16906,10 @@ SgJavaPackageStatement::post_construction_initialization()
 }
 SOURCE_JAVA_PACKAGE_STATEMENT_END
 
+SOURCE_OMP_SIMD_STATEMENT_START
+void
+SgOmpSimdStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_SIMD_STATEMENT_END
+
 

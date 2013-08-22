@@ -214,7 +214,9 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
 
      /* Make sure the isModified boolean is clear for all newly-parsed nodes. */
      checkIsModifiedFlag(project);
-
+     // set the mode to be transformation, mostly for Fortran. Liao 8/1/2013
+     if (SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionFrontendConstruction);
+       SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionTransformation);
      return project;
    }
 

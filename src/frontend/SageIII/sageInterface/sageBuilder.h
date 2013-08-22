@@ -407,6 +407,8 @@ SgCastExp * buildCastExp_nfi(SgExpression *  operand_i,
 SgVarArgOp * buildVarArgOp_nfi(SgExpression *  operand_i, SgType * expression_type);
 
 //! Build -- expression, Sgop_mode is a value of either SgUnaryOp::prefix or SgUnaryOp::postfix
+SgMinusOp *buildMinusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
+SgMinusOp *buildMinusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
 SgMinusMinusOp *buildMinusMinusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
 SgMinusMinusOp *buildMinusMinusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
 
@@ -615,8 +617,7 @@ SgFunctionCallExp* buildFunctionCallExp(SgExpression* f, SgExprListExp* paramete
 
 //! Build a function call expression,it will automatically search for function symbols internally to build a right function reference etc. It tolerates the lack of the function symbol to support generating calls to library functions whose headers have not yet been inserted.
 SgFunctionCallExp* 
-buildFunctionCallExp(const SgName& name, SgType* return_type, \
-                SgExprListExp* parameters=NULL, SgScopeStatement* scope=NULL);
+buildFunctionCallExp(const SgName& name, SgType* return_type, SgExprListExp* parameters=NULL, SgScopeStatement* scope=NULL);
 
 SgTypeTraitBuiltinOperator*
 buildTypeTraitBuiltinOperator(SgName functionName, SgNodePtrList parameters);
@@ -788,7 +789,6 @@ buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type,
 
 //! Build a prototype for a function, handle function type, symbol etc transparently
 // DQ (7/26/2012): Changing the API to include template arguments so that we can generate names with and without template arguments (to support name mangiling).
-// SgFunctionDeclaration* buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, bool buildTemplateInstantiation = false);
 SgFunctionDeclaration*
 buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
 
@@ -855,7 +855,6 @@ buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionTyp
 
 //! Build a prototype for an existing member function declaration (defining or nondefining is fine) 
 // SgMemberFunctionDeclaration*
-// buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 SgMemberFunctionDeclaration*
 buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
 
@@ -894,11 +893,11 @@ SgFunctionDeclaration*
 buildDefiningFunctionDeclaration (const char* name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, SgFunctionDeclaration* first_nondefinng_declaration);
 #endif
 
-// DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
+// DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficient).
 // We need to decide if the SageBuilder API should include these sorts of functions.
 SgFunctionDeclaration* buildDefiningFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgScopeStatement* scope = NULL);
 
-// DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
+// DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficient).
 // We need to decide if the SageBuilder API should include these sorts of functions.
 SgProcedureHeaderStatement* buildProcedureHeaderStatement(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgProcedureHeaderStatement::subprogram_kind_enum, SgScopeStatement* scope = NULL);
 
