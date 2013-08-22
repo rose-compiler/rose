@@ -72,25 +72,26 @@ RDLattice RDAnalyzer::transfer(Label lab, RDLattice element) {
   SgNode* node=_labeler->getNode(lab);
   //cout<<"Analyzing:"<<node->class_name()<<endl;
 
-  ///////////////////////////////////////////
-  // remove undeclared variable at function exit
+  if(_labeler->isFunctionCallLabel(lab)) {
+	if(SgFunctionCallExp* funCall=isSgFunctionCallExp(getLabeler()->getNode(lab))) {
+	  SgExpressionPtrList& arguments=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+	  transferFunctionCall(lab, funCall, arguments, element);
+	  return element;
+	}
+  }
+  if(_labeler->isFunctionCallReturnLabel(lab)) {
+	if(SgFunctionCallExp* funCall=isSgFunctionCallExp(getLabeler()->getNode(lab))) {
+	  transferFunctionCallReturn(lab, funCall, element);
+	  return element;
+	}
+  }
   if(_labeler->isFunctionEntryLabel(lab)) {
     if(SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(lab))) {
 	  // 1) obtain formal parameters
-	  // 2) generate RDs for each parameter variable
-	  SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
 	  assert(funDef);
-	  for(SgInitializedNamePtrList::iterator i=formalParameters.begin();
-		  i!=formalParameters.end();
-		  ++i) {
-		SgInitializedName* formalParameterName=*i;
-		assert(formalParameterName);
-		VariableId formalParameterVarId=_variableIdMapping.variableId(formalParameterName);
-		// it must hold that this VarId does not exist in the RD-element
-		// TODO: when local variables go out of scope in a function call (transfer-call can clear those)
-		//assert
-		element.insertPair(lab,formalParameterVarId);
-	  }
+	  SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
+	  transferFunctionEntry(lab, funDef, formalParameters, element);
+	  return element;
 	} else {
 	  ROSE_ASSERT(0);
 	}
@@ -109,25 +110,21 @@ RDLattice RDAnalyzer::transfer(Label lab, RDLattice element) {
       SgInitializedNamePtrList& formalParamInitNames=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
       VariableIdMapping::VariableIdSet formalParams=_variableIdMapping.determineVariableIdsOfSgInitializedNames(formalParamInitNames);
       VariableIdMapping::VariableIdSet vars=localVars+formalParams;
-      for(VariableIdMapping::VariableIdSet::iterator i=vars.begin();i!=vars.end();++i) {
-        VariableId varId=*i;
-        element.eraseAllPairsWithVariableId(varId);
-      }
+	  transferFunctionExit(lab,funDef,vars,element); // TEST ONLY
       return element;
 	} else {
 	  ROSE_ASSERT(0);
 	}
   }
-  ///////////////////////////////////////////
   
   if(isSgExprStatement(node))
     node=SgNodeHelper::getExprStmtChild(node);
 
   if(SgExpression* expr=isSgExpression(node)) {
-    transferExpression(expr,lab,element);
+    transferExpression(lab,expr,element);
   }
   if(SgVariableDeclaration* vardecl=isSgVariableDeclaration(node)) {
-	transferDeclaration(vardecl,lab,element);
+	transferDeclaration(lab,vardecl,element);
   }
 #if 0
   cout << "RDAnalyzer: called transfer function. result: ";
@@ -137,7 +134,7 @@ RDLattice RDAnalyzer::transfer(Label lab, RDLattice element) {
   return element;
 }
 
-void RDAnalyzer::transferExpression(SgExpression* node, Label& lab, RDLattice& element) {
+void RDAnalyzer::transferExpression(Label lab, SgExpression* node, RDLattice& element) {
   // update analysis information
   // this is only correct for RERS12-C programs
   // 1) remove all pairs with lhs-variableid
@@ -159,7 +156,8 @@ void RDAnalyzer::transferExpression(SgExpression* node, Label& lab, RDLattice& e
   }
 }
 
-void RDAnalyzer::transferDeclaration(SgVariableDeclaration* declnode, Label& lab, RDLattice& element) {
+//NOTE: missing: UD must take uses in initializers into account
+void RDAnalyzer::transferDeclaration(Label lab, SgVariableDeclaration* declnode, RDLattice& element) {
   cout<<"Calling transferDeclaration1."<<endl;
   SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
   ROSE_ASSERT(node);
@@ -178,4 +176,37 @@ void RDAnalyzer::transferDeclaration(SgVariableDeclaration* declnode, Label& lab
 	element.eraseAllPairsWithVariableId(var);
 	element.insertPair(lab,var);
   }
+}
+
+void RDAnalyzer::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,RDLattice& element) {
+  // uses and defs in argument-expressions
+  for(SgExpressionPtrList::iterator i=arguments.begin();i!=arguments.end();++i) {
+	transferExpression(lab,*i,element);
+  }
+}
+void RDAnalyzer::transferFunctionCallReturn(Label lab, SgFunctionCallExp* callExp, RDLattice& element) {
+  //TODO: def in x=f(...) (not seen as assignment)
+}
+//NOTE: UD analysis must take uses of function-call arguments into account
+void RDAnalyzer::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, RDLattice& element) {
+  // generate RDs for each parameter variable
+  for(SgInitializedNamePtrList::iterator i=formalParameters.begin();
+	  i!=formalParameters.end();
+	  ++i) {
+	SgInitializedName* formalParameterName=*i;
+	assert(formalParameterName);
+	VariableId formalParameterVarId=_variableIdMapping.variableId(formalParameterName);
+	// it must hold that this VarId does not exist in the RD-element
+	//assert
+	element.insertPair(lab,formalParameterVarId);
+  }
+}
+
+void RDAnalyzer::transferFunctionExit(Label lab, SgFunctionDefinition* callExp, VariableIdSet& localVariablesInFunction, RDLattice& element) {
+  // remove all declared variable at function exit (including function parameter variables)
+  for(VariableIdSet::iterator i=localVariablesInFunction.begin();i!=localVariablesInFunction.end();++i) {
+	VariableId varId=*i;
+	element.eraseAllPairsWithVariableId(varId);
+  }
+  // TODO:: return variable $r
 }

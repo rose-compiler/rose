@@ -8,6 +8,7 @@
 #define DFANALYZER_C
 
 #include "DFAnalyzer.h"
+#include "AnalysisAbstractionLayer.h"
 
 using namespace CodeThorn;
 
@@ -48,6 +49,28 @@ template<typename LatticeType>
 void DFAnalyzer<LatticeType>::setExtremalLabels(set<Label> extremalLabels) {
   _extremalLabels=extremalLabels;
 }
+template<typename LatticeType>
+LatticeType DFAnalyzer<LatticeType>::initializeGlobalVariables(SgProject* root) {
+  ROSE_ASSERT(root);
+  cout << "INFO: Initializing property state with global variables."<<endl;
+  VariableIdSet globalVars=AnalysisAbstractionLayer::globalVariables(root,&_variableIdMapping);
+  VariableIdSet usedVarsInFuncs=AnalysisAbstractionLayer::usedVariablesInsideFunctions(root,&_variableIdMapping);
+  VariableIdSet usedGlobalVarIds=globalVars*usedVarsInFuncs;
+  cout <<"INFO: global variables: "<<globalVars.size()<<endl;
+  cout <<"INFO: used variables in functions: "<<usedVarsInFuncs.size()<<endl;
+  cout <<"INFO: used global vars: "<<usedGlobalVarIds.size()<<endl;
+  LatticeType elem;
+  list<SgVariableDeclaration*> usedGlobalVarDecls=SgNodeHelper::listOfGlobalVars(root);
+  for(list<SgVariableDeclaration*>::iterator i=usedGlobalVarDecls.begin();i!=usedGlobalVarDecls.end();++i) {
+	if(usedGlobalVarIds.find(_variableIdMapping.variableId(*i))!=usedGlobalVarIds.end())
+	  elem=transfer(_labeler->getLabel(*i),elem);
+  }
+  cout << "INIT: initial element: ";
+  elem.toStream(cout,&_variableIdMapping);
+  cout<<endl;
+  _initialElement=elem;
+  return elem;
+}
 
 template<typename LatticeType>
 void
@@ -61,13 +84,9 @@ DFAnalyzer<LatticeType>::initialize(SgProject* root) {
   cout << "INIT: Creating CFAnalyzer."<<endl;
   _cfanalyzer=new CFAnalyzer(_labeler);
   //cout<< "DEBUG: mappingLabelToNode: "<<endl<<getLabeler()->toString()<<endl;
-  cout << "INIT: Building CFGs."<<endl;
+  cout << "INIT: Building CFG for each function."<<endl;
   _flow=_cfanalyzer->flow(root);
   cout << "STATUS: Building CFGs finished."<<endl;
-  //  if(boolOptions["reduce-cfg"]) {
-  int cnt=_cfanalyzer->reduceBlockBeginNodes(_flow);
-  cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
-  //}
   cout << "INIT: Intra-Flow OK. (size: " << _flow.size() << " edges)"<<endl;
   InterFlow interFlow=_cfanalyzer->interFlow(_flow);
   cout << "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
@@ -78,7 +97,14 @@ DFAnalyzer<LatticeType>::initialize(SgProject* root) {
     _analyzerDataPreInfo.push_back(le);
     _analyzerData.push_back(le);
   }
+  cout << "INIT: Optimizing CFGs for label-out-info solver 1."<<endl;
+  {
+	size_t numDeletedEdges=_cfanalyzer->deleteFunctioncCallLocalEdges(_flow);
+	int numReducedNodes=_cfanalyzer->reduceBlockBeginNodes(_flow);
+	cout << "INIT: Optimization finished (educed nodes: "<<numReducedNodes<<" deleted edges: "<<numDeletedEdges<<")"<<endl;
+  }
   cout << "STATUS: initialized monotone data flow analyzer for "<<_analyzerData.size()<< " labels."<<endl;
+
 #if 0
   std::string functionToStartAt="main";
   std::string funtofind=functionToStartAt;
@@ -93,9 +119,11 @@ DFAnalyzer<LatticeType>::initialize(SgProject* root) {
     set<Label> elab;
     elab.insert(startlab);
     setExtremalLabels(elab);
+	_analyzerData[startlab]=initializeGlobalVariables(root);
+	cout << "STATUS: Initial info established at label "<<startlab<<endl;
   }
 #endif
-
+  
   // create empty state
 #if 0
   PState emptyPState;
@@ -246,7 +274,14 @@ void
 DFAnalyzer<LatticeType>::run() {
   // initialize work list with extremal labels
   for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
-    _workList.add(*i);
+	cout << "Initializing "<<*i<<" with ";
+	_analyzerData[*i]=transfer(*i,_initialElement);
+	_analyzerData[*i].toStream(cout,&_variableIdMapping);
+	cout<<endl;
+	LabelSet initsucc=_flow.succ(*i);
+	for(LabelSet::iterator i=initsucc.begin();i!=initsucc.end();++i) {
+	  _workList.add(*i);
+	}
   }
   solve();
 }

@@ -173,6 +173,10 @@ string InterEdge::toString() const {
 CFAnalyzer::CFAnalyzer(Labeler* l):labeler(l){
 }
 
+size_t CFAnalyzer::deleteFunctioncCallLocalEdges(Flow& flow) {
+  flow.deleteEdges(EDGE_LOCAL);
+}
+
 LabelSet CFAnalyzer::functionCallLabels(Flow& flow) {
   LabelSet resultSet;
   LabelSet nodeLabels;
@@ -559,6 +563,20 @@ string Flow::toDot(Labeler* labeler) {
   if(_dotOptionHeaderFooter)
 	ss<<"}";
   return ss.str();
+}
+
+size_t Flow::deleteEdges(EdgeType edgeType) {
+  Flow::iterator i=begin();
+  size_t numDeleted=0;
+  while(i!=end()) {
+	if((*i).isType(edgeType)) {
+	  erase(i++);
+	  numDeleted++;
+	} else {
+	  ++i;
+	}
+  }
+  return numDeleted;
 }
 
 Flow Flow::inEdges(Label label) {

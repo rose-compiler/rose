@@ -15,6 +15,9 @@ namespace CodeThorn {
 
   enum EdgeType { EDGE_UNKNOWN=0, EDGE_FORWARD, EDGE_BACKWARD, EDGE_TRUE, EDGE_FALSE, EDGE_LOCAL, EDGE_CALL, EDGE_CALLRETURN, EDGE_EXTERNAL, EDGE_PATH };
 
+  class Edge;
+  typedef set<Edge> EdgeSet;
+
 class Edge {
  public:
   Edge();
@@ -44,11 +47,11 @@ class Edge {
   set<EdgeType> _types;
 };
 
-bool operator==(const Edge& e1, const Edge& e2);
-bool operator!=(const Edge& e1, const Edge& e2);
-bool operator<(const Edge& e1, const Edge& e2);
+ bool operator==(const Edge& e1, const Edge& e2);
+ bool operator!=(const Edge& e1, const Edge& e2);
+ bool operator<(const Edge& e1, const Edge& e2);
 
-class Flow : public set<Edge> {
+ class Flow : public set<Edge> {
  public:  
   Flow();
   Flow operator+(Flow& s2);
@@ -70,6 +73,8 @@ class Flow : public set<Edge> {
   void setTextOptionPrintType(bool opt);
   void resetDotOptions();
   string toString();
+  // deletes all Edges of type edgeType. The return value is the number of deleted edges.
+  size_t deleteEdges(EdgeType edgeType);
  private:
   bool _dotOptionDisplayLabel;
   bool _dotOptionDisplayStmt;
@@ -77,6 +82,7 @@ class Flow : public set<Edge> {
   bool _dotOptionFixedColor;
   string _fixedColor;
   bool _dotOptionHeaderFooter;
+  EdgeSet _hiddenFCLocalEdges;
 };
 
 class InterEdge {
@@ -113,6 +119,7 @@ class CFAnalyzer {
   InterFlow interFlow(Flow& flow); 
   void intraInterFlow(Flow&, InterFlow&);
   int reduceBlockBeginNodes(Flow& flow);
+  size_t deleteFunctioncCallLocalEdges(Flow& flow);
  private:
   Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);
   Labeler* labeler;

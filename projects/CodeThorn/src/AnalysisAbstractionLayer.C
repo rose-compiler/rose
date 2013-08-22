@@ -45,8 +45,8 @@ VariableIdSet AnalysisAbstractionLayer::useVariablesInExpression(SgNode* node, V
 VariableIdSet AnalysisAbstractionLayer::defVariablesInExpression(SgNode* node, VariableIdMapping& vidm) {
   VariableIdSet resultSet;
   VarsInfo defVarsInfo=getDefUseVarsInfo(node, vidm).getDefVarsInfo();
-  cout<<"DEFISEVARSINFO: "<<DefUseVarsInfo::varsInfoPrettyPrint(defVarsInfo,vidm)<<endl;
-  cout<<"VariableIdInfoMap-size:"<<defVarsInfo.first.size()<<endl;
+  //cout<<"DEFISEVARSINFO: "<<DefUseVarsInfo::varsInfoPrettyPrint(defVarsInfo,vidm)<<endl;
+  //cout<<"VariableIdInfoMap-size:"<<defVarsInfo.first.size()<<endl;
   extractVariableIdSetFromVarsInfo(resultSet,defVarsInfo);
   ROSE_ASSERT(defVarsInfo.first.size()==resultSet.size());
   ROSE_ASSERT(defVarsInfo.first.size()<=1);
