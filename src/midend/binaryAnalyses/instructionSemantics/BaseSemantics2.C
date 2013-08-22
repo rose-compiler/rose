@@ -601,7 +601,13 @@ MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, size_t 
         cells.push_front(protocell->create(addr, dflt));
     } else {
         retval = found.front()->get_value();
+        if (retval->get_width()!=nbits) {
+            assert(!byte_restricted); // can't happen if memory state stores only byte values
+            retval = ops->unsignedExtend(retval, nbits); // extend or truncate
+        }
     }
+
+    assert(retval->get_width()==nbits);
     return retval;
 }
 

@@ -233,7 +233,7 @@ public:
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
         BaseSemantics::MemoryCellListPtr memory = BaseSemantics::MemoryCellList::instance(protoval);
-        memory->set_byte_restricted(false);
+        memory->set_byte_restricted(false); // because extracting bytes from a word results in new variables for this domain
         BaseSemantics::StatePtr state = State::instance(registers, memory);
         SMTSolver *solver = NULL;
         return RiscOperatorsPtr(new RiscOperators(state, solver));
