@@ -77,6 +77,8 @@ usage(int exit_status)
               <<"              * \"minimum\" takes the minimum of the individual output group similarities.\n"
               <<"\n"
               <<"  Other switches and arguments:\n"
+              <<"    --dry-run\n"
+              <<"            Don't modify the database, but do everything else.\n"
               <<"    --file=NAME\n"
               <<"            Read pairs from this file instead of standard input.\n"
               <<"    --relation=ID\n"
@@ -119,7 +121,7 @@ static struct Switches {
     Switches()
         : recreate(false), show_progress(false), ignore_faults(false),
           collection_ratio(1.0, 1.0), collection_limit((size_t)-1, (size_t)-1),
-          output_cmp(OC_VALUESET_JACCARD), aggregation(AG_AVERAGE), relation_id(0), verbose(false) {}
+          output_cmp(OC_VALUESET_JACCARD), aggregation(AG_AVERAGE), relation_id(0), verbose(false), dry_run(false) {}
     bool recreate;                      // recreate the database
     bool show_progress;                 // the --show-progress switch
     bool ignore_faults;                 // ignore tests that failed
@@ -130,6 +132,7 @@ static struct Switches {
     int relation_id;
     bool verbose;
     std::string input_file_name;
+    bool dry_run;
 } opt;
 
 static SqlDatabase::TransactionPtr transaction;
@@ -666,6 +669,8 @@ main(int argc, char *argv[])
             opt.show_progress = true;
         } else if (!strcmp(argv[argno], "--verbose")) {
             opt.verbose = true;
+        } else if (!strcmp(argv[argno], "--dry-run")) {
+            opt.dry_run = true;
         } else {
             std::cerr <<argv0 <<": unknown switch: " <<argv[argno] <<"\n"
                       <<argv0 <<": see --help for more info\n";
@@ -761,6 +766,8 @@ main(int argc, char *argv[])
 
        
 
+        if (opt.verbose)
+            std::cerr <<argv0 <<": similarity(func1=" <<func1_id <<", func2=" <<func2_id <<") = " <<sim <<"\n";
         stmt->bind(0, func1_id);
         stmt->bind(1, func2_id);
         stmt->bind(2, sim);
@@ -778,7 +785,12 @@ main(int argc, char *argv[])
     std::string mesg = "calculated similarity relationship #"+StringUtility::numberToString(opt.relation_id)+
                        " for "+StringUtility::numberToString(npairs)+" function pair"+(1==npairs?"":"s");
     CloneDetection::finish_command(transaction, cmd_id, mesg);
-    transaction->commit();
+
+    if (opt.dry_run) {
+        transaction->rollback();
+    } else {
+        transaction->commit();
+    }
     progress.clear();
     return 0;
 }

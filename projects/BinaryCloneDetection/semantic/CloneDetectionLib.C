@@ -1210,8 +1210,44 @@ function_returns_value(size_t ncalls, size_t nretused, size_t ntests, size_t nvo
         return 0.5;
 
     double p1 = ntests>0 ? 1.0-(double)nvoids/ntests : 0.5;
+    double p1_weight = ntests>0 ? 1.0 : 0.0;
     double p2 = ncalls>0 ? (double)nretused/ncalls : 0.5;
-    return (p1+p2)/2.0;
+    double p2_weight = ncalls>0 ? 1.0 : 0.0;
+
+    if (ntests>0 && nvoids==ntests) {
+        if (nretused>0) {
+            // The function was tested but never wrote to EAX, but callers read a return value. Something bizarre is going on
+            // here! Maybe the function has a logic error?  Give weight to the callers with the assumption that something in
+            // our testing may have prevented writing to EAX.
+            p1_weight = 0.0;
+            p2_weight = 1.0;
+        } else {
+            // Never wrote to EAX, and no caller read from EAX (or there were no callers).
+            return 0.0;
+        }
+    } else if (0==ntests) {
+        // The function was never tested, so we don't know if it would write to EAX.  Our only choice is to rely entirely
+        // on whether the callers read a return value.  If there were no callers then we know nothing.
+        if (0==ncalls)
+            return 0.5;
+        p1_weight = 0.0;
+        p2_weight = 1.0;
+    } else if (0==ncalls) {
+        // The function was never called.  Even functions that write to EAX might only be using it as a temporary. If some of
+        // the tests don't write to EAX then EAX is probably not a return value.
+        if (nvoids>0)
+            p1 *= 0.25;
+        p1_weight = 1.0;
+        p2_weight = 0.0;
+    } else {
+        // The function was tested (and writes to EAX at least once), and it was called. Since even void functions can write
+        // to EAX as a temporary, we give more weight to whether the callers read a return value.
+        p1_weight = 1.0;
+        p2_weight = 5.0;
+    }
+
+    assert(p1_weight+p2_weight > 0);
+    return (p1*p1_weight+p2*p2_weight)/(p1_weight+p2_weight);
 }
 
 double
