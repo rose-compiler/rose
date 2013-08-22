@@ -4937,8 +4937,7 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
 #endif
 
 SgVariableSymbol *
-SageInterface::lookupVariableSymbolInParentScopes (const SgName &  name,
-                                                        SgScopeStatement *cscope)
+SageInterface::lookupVariableSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
    {
   // DQ (1/24/2011): This function is inconsistant with an implementation that would correctly handle SgAliasSymbols.
   // Also this function might get a SgClassSymbol instead of a SgVariableSymbol when both names are used.
