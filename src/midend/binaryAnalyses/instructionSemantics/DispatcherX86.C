@@ -470,9 +470,9 @@ struct IP_divide: P {
         RegisterDescriptor regD = d->REG_DX; regD.set_nbits(8==nbits ? 16 : nbits);
         BaseSemantics::SValuePtr op0;
         if (8==nbits) {
-            ops->readRegister(regA);
+            op0 = ops->readRegister(regA);
         } else {
-            ops->concat(ops->readRegister(regA), ops->readRegister(regD));
+            op0 = ops->concat(ops->readRegister(regA), ops->readRegister(regD));
         }
         BaseSemantics::SValuePtr op1 = d->read(args[0], nbits);
         BaseSemantics::SValuePtr divResult, modResult;
