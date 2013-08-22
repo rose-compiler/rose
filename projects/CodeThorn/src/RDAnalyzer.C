@@ -74,7 +74,8 @@ RDLattice RDAnalyzer::transfer(Label lab, RDLattice element) {
 
   if(_labeler->isFunctionCallLabel(lab)) {
 	if(SgFunctionCallExp* funCall=isSgFunctionCallExp(getLabeler()->getNode(lab))) {
-	  transferFunctionCall(lab, funCall, element);
+	  SgExpressionPtrList& arguments=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+	  transferFunctionCall(lab, funCall, arguments, element);
 	  return element;
 	}
   }
@@ -177,8 +178,11 @@ void RDAnalyzer::transferDeclaration(Label lab, SgVariableDeclaration* declnode,
   }
 }
 
-void RDAnalyzer::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, RDLattice& element) {
-  //TODO: uses and defs in argument-expressions
+void RDAnalyzer::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,RDLattice& element) {
+  // uses and defs in argument-expressions
+  for(SgExpressionPtrList::iterator i=arguments.begin();i!=arguments.end();++i) {
+	transferExpression(lab,*i,element);
+  }
 }
 void RDAnalyzer::transferFunctionCallReturn(Label lab, SgFunctionCallExp* callExp, RDLattice& element) {
   //TODO: def in x=f(...) (not seen as assignment)
