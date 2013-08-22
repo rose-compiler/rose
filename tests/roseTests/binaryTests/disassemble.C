@@ -1221,7 +1221,7 @@ main(int argc, char *argv[])
                 typedef ControlFlow::Graph CFG;
                 typedef boost::graph_traits<CFG>::vertex_descriptor CFG_Vertex;
                 SgAsmFunction *func = isSgAsmFunction(node);
-                if (func) {
+                if (func && func->get_entry_block()) {
                     CFG cfg = cfg_analysis.build_cfg_from_ast<CFG>(func);
                     CFG_Vertex entry = 0; /* see build_cfg_from_ast() */
                     assert(get(boost::vertex_name, cfg, entry) == func->get_entry_block());
