@@ -76,7 +76,6 @@ class ComputeAddressTakenInfo
   };
 public:
   ComputeAddressTakenInfo(VariableIdMapping& _vidm) : vidm(_vidm) {}
-  void throwIfUnInitException();
   void computeAddressTakenSet(SgNode* root);
   void printAddressTakenSet();
   VariableIdSet getAddressTakenSet();
@@ -107,7 +106,6 @@ public:
   void printPointerTypeSet();
   void printArrayTypeSet();
   void printReferenceTypeSet();
-  void throwIfUnInitException();
   VariableIdSet getPointerTypeSet();
   VariableIdSet getArrayTypeSet();
   VariableIdSet getReferenceTypeSet();

@@ -61,24 +61,10 @@ std::string variableIdTypeInfoToString(VariableIdTypeInfo vid_type_info)
  * DefUseVarsInfo *
  ******************/
 
-// void DefUseVarsInfo::copyDefToUse()
-// {
-//   use_vars_info.first.insert(def_vars_info.first.begin(), def_vars_info.first.end());
-//   use_vars_info.second = use_vars_info.second || def_vars_info.second;
-// }
-
 void DefUseVarsInfo::copyUseToDef()
 {
   def_vars_info.first.insert(use_vars_info.first.begin(), use_vars_info.first.end());
   def_vars_info.second = def_vars_info.second || use_vars_info.second;
-}
-
-void DefUseVarsInfo::copyDefToDef(const DefUseVarsInfo& that)
-{
-  const VarsInfo& thatDefVarsInfo = that.getDefVarsInfoRef();
-  def_vars_info.first.insert(thatDefVarsInfo.first.begin(), 
-                             thatDefVarsInfo.first.end());
-  def_vars_info.second = def_vars_info.second || thatDefVarsInfo.second;
 }
 
 // combine the two DefUseVarsInfo functions
@@ -306,7 +292,6 @@ void ExprWalker::visit(SgPntrArrRefExp* sgn)
   SgNode* lhs_addr = sgn->get_lhs_operand(); // get the address computation expr of the array
   SgNode* rhs_expr = sgn->get_rhs_operand(); // get the index expression
   DefUseVarsInfo lduvi, rduvi;
-
   if(isModExpr) {
     // check for the type of address computation expr
     // if p is pointer type in p[expr]
@@ -946,7 +931,7 @@ void ExprWalker::visit(SgVarRefExp* sgn)
   // get the VariableId
   VariableId vid = vidm.variableId(sgn);
   
-  ROSE_ASSERT(vid.getIdCode() != -1);
+  ROSE_ASSERT(vid.isValid());
 
   // determine type info
   VariableIdTypeInfo sgn_type_info = getVariableIdTypeInfo(vid, vidm); 
@@ -969,7 +954,7 @@ void ExprWalker::visit(SgInitializedName* sgn)
   // some SgInitializedName do not have symbols
   // VariableId is not created for such SgInitializedName
   // check and return if we are processing such SgInitializedName
-  if(vid.getIdCode() == -1) {
+  if(!vid.isValid()) {
     //cerr << "WARNING: Skipping SgInitializedName sgn->get_name() = " << sgn->get_name() << " with no symbol\n";
     return;
   }
@@ -1035,14 +1020,23 @@ void ExprWalker::visit(SgLabelRefExp* sgn)
   // no variableid
 }
 
+void ExprWalker::visit(SgTemplateFunctionRefExp* sgn)
+{
+}
+void ExprWalker::visit(SgTemplateMemberFunctionRefExp* sgn)
+{
+}
+void ExprWalker::visit(SgTypeTraitBuiltinOperator* sgn)
+{
+}
+
+
 // we should not reach here
 void ExprWalker::visit(SgExpression* sgn)
 {
-#if 0
   std::ostringstream oss;
   oss << "Not handling " << sgn->class_name() << " expression \n";
   throw std::runtime_error(oss.str());
-#endif
 }
 
 DefUseVarsInfo ExprWalker::getDefUseVarsInfo()
@@ -1056,7 +1050,43 @@ DefUseVarsInfo ExprWalker::getDefUseVarsInfo()
 
 DefUseVarsInfo getDefUseVarsInfo(SgNode* sgn, VariableIdMapping& vidm)
 {
+  ROSE_ASSERT(sgn);
+  if(SgExpression* expr = isSgExpression(sgn)) {
+    return getDefUseVarsInfoExpr(expr, vidm);
+  }
+  else if(SgInitializedName* initName = isSgInitializedName(sgn)) {
+    return getDefUseVarsInfoInitializedName(initName, vidm);
+  }
+  else if(SgVariableDeclaration* varDecl = isSgVariableDeclaration(sgn)) {
+    return getDefUseVarsInfoVariableDeclaration(varDecl, vidm);
+  }
+  else {
+    std::ostringstream oss;
+    oss << "getDefUseVarsInfo() query can only be called on SgExpression/SgInitializedName/SgVariableDeclaration\n";
+    throw std::runtime_error(oss.str());
+  }
+}
+
+DefUseVarsInfo getDefUseVarsInfoExpr(SgExpression* sgn, VariableIdMapping& vidm)
+{
   return getDefUseVarsInfo_rec(sgn, vidm, false);  
+}
+
+DefUseVarsInfo getDefUseVarsInfoInitializedName(SgInitializedName* sgn, VariableIdMapping& vidm)
+{
+  return getDefUseVarsInfo_rec(sgn, vidm, false);  
+}
+
+DefUseVarsInfo getDefUseVarsInfoVariableDeclaration(SgVariableDeclaration* sgn, VariableIdMapping& vidm)
+{
+  SgInitializedNamePtrList variables = sgn->get_variables();
+  DefUseVarsInfo duvi, tduvi;
+  SgInitializedNamePtrList::const_iterator it = variables.begin();
+  for( ; it != variables.end(); ++it) {
+    tduvi = getDefUseVarsInfo_rec(*it, vidm, false);
+    duvi = duvi + tduvi;
+  }
+  return duvi;
 }
 
 // main implementation

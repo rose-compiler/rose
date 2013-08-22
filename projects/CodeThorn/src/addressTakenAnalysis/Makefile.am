@@ -3,7 +3,11 @@ CODETHORN_SRC_ROOT = $(top_srcdir)/projects/CodeThorn/src/
 
 AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH)
 
-noinst_PROGRAMS = addressTakenAnalysis
+noinst_PROGRAMS = addressTakenAnalysis 
+#arrRefExpLhsTypeCheck
+
+#arrRefExpLhsTypeCheck_SOURCES = arrRefExpLhsTypeCheck.C
+#arrRefExpLhsTypeCheck_LDADD = -lrose
 
 EXTRA_DISTS = tests
 
@@ -85,4 +89,28 @@ $(ADDRESSTAKENANALYSIS_CHECKS): addressTakenAnalysis $(srcdir)/tests/$(@:.cpp=.c
 	./addressTakenAnalysis -c --edg:no_warnings $(@:.cpp-o=.cpp)
 
 check-local: $(ADDRESSTAKENANALYSIS_CHECKS)
+
+# Files that represent header files from ROSE that we can now compilie with ROSE.
+#TESTCODES_REQUIRED_TO_PASS = \
+testRoseHeaders_00.C \
+testRoseHeaders_01.C \
+testRoseHeaders_02.C \
+testRoseHeaders_04.C \
+testRoseHeaders_05.C \
+testRoseHeaders_06.C \
+testRoseHeaders_07.C \
+testRoseHeaders_08.C
+
+
+#testRoseHeaders_03.C
+
+#TEST_OBJECTS = $(TESTCODES_REQUIRED_TO_PASS:.C=.o)
+#ROSE_EXAMPLE_TESTS_DIR=$(top_srcdir)/tests/CompileTests/RoseExample_tests
+
+#ROSE_FLAGS = --edg:no_warnings -w --edg:restrict
+
+#$(TEST_OBJECTS): arrRefExpLhsTypeCheck $(ROSE_EXAMPLE_TESTS_DIR)/$(@:.o=.C)
+#	./arrRefExpLhsTypeCheck $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(ROSE_EXAMPLE_TESTS_DIR)/$(@:.o=.C)
+
+#check-arrRefExpLhsTypeCheck: $(TEST_OBJECTS)
 
