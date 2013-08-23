@@ -8210,14 +8210,17 @@ SgSymbolTable::findfunc(const SgName & nm, const SgType* t)
 
 // SgFunctionSymbol* SgSymbolTable::find_function (const SgName & nm, const SgType* t)
 SgFunctionSymbol*
-SgSymbolTable::find_function (const SgName & nm, const SgType* t, SgTemplateArgumentPtrList* templateArgumentList)
+SgSymbolTable::find_function (const SgName & nm, const SgType* type, SgTemplateArgumentPtrList* templateArgumentList)
    {
-     ROSE_ASSERT(t != NULL);
+  // DQ (8/22/2013): We need to allow for functions to be searched for by name if the type is unavailable.
+  // ROSE_ASSERT(type != NULL);
 
-     SgFunctionSymbol *s = find_symbol_with_type_support<SgFunctionSymbol>(nm,t,NULL,templateArgumentList);
+     SgFunctionSymbol *s = find_symbol_with_type_support<SgFunctionSymbol>(nm,type,NULL,templateArgumentList);
 
+  // DQ (8/22/2013): We have to allow this function to return either SgTemplateFunctionSymbol or 
+  // SgTemplateMemberFunctionSymbol when not enough information (type == NULL or templateArgumentList == NULL).
   // DQ (8/13/2013): We should not be returning a template symbol from this function (verify this).
-     ROSE_ASSERT(isSgTemplateFunctionSymbol(s) == NULL && isSgTemplateMemberFunctionSymbol(s) == NULL);
+  // ROSE_ASSERT(isSgTemplateFunctionSymbol(s) == NULL && isSgTemplateMemberFunctionSymbol(s) == NULL);
 
      return s;
    }
@@ -8228,12 +8231,15 @@ SgSymbolTable::find_function (const SgName & nm, const SgType* t, SgTemplateArgu
 SgFunctionSymbol*
 SgSymbolTable::find_nontemplate_function(const SgName& nm, const SgType* t, SgTemplateArgumentPtrList* templateArgumentList)
    {
-     ROSE_ASSERT(t != NULL);
+  // DQ (8/22/2013): We need to allow for functions to be searched for by name if the type is unavailable.
+  // ROSE_ASSERT(t != NULL);
 
      SgFunctionSymbol *s = find_symbol_with_type_support<SgFunctionSymbol>(nm,t,NULL,templateArgumentList);
 
+  // DQ (8/22/2013): We have to allow this function to return either SgTemplateFunctionSymbol or 
+  // SgTemplateMemberFunctionSymbol when not enough information (type == NULL or templateArgumentList == NULL).
   // DQ (5/23/2013): Added assertion on retuned symbol.
-     ROSE_ASSERT(isSgTemplateFunctionSymbol(s) == NULL && isSgTemplateMemberFunctionSymbol(s) == NULL);
+  // ROSE_ASSERT(isSgTemplateFunctionSymbol(s) == NULL && isSgTemplateMemberFunctionSymbol(s) == NULL);
 
      return s;
    }
@@ -8244,7 +8250,8 @@ SgSymbolTable::find_nontemplate_function(const SgName& nm, const SgType* t, SgTe
 SgTemplateFunctionSymbol*
 SgSymbolTable::find_template_function(const SgName& nm, const SgType* t, SgTemplateParameterPtrList* templateParameterList)
    {
-     ROSE_ASSERT(t != NULL);
+  // DQ (8/22/2013): We need to allow for functions to be searched for by name if the type is unavailable.
+  // ROSE_ASSERT(t != NULL);
 
      SgTemplateFunctionSymbol *s = find_symbol_with_type_support<SgTemplateFunctionSymbol>(nm,t,templateParameterList,NULL);
 
@@ -8259,12 +8266,15 @@ SgSymbolTable::find_nontemplate_member_function(const SgName& nm, const SgType* 
    {
      SgMemberFunctionSymbol *s = NULL;
 
-     ROSE_ASSERT(t != NULL);
+  // DQ (8/22/2013): We need to allow for functions to be searched for by name if the type is unavailable.
+  // ROSE_ASSERT(t != NULL);
 
      s = find_symbol_with_type_support<SgMemberFunctionSymbol>(nm,t,NULL,templateArgumentList);
 
+  // DQ (8/22/2013): We have to allow this function to return either SgTemplateFunctionSymbol or 
+  // SgTemplateMemberFunctionSymbol when not enough information (type == NULL or templateArgumentList == NULL).
   // DQ (8/13/2013): We should not be returning a template symbol from this function (verify this).
-     ROSE_ASSERT(isSgTemplateFunctionSymbol(s) == NULL && isSgTemplateMemberFunctionSymbol(s) == NULL);
+  // ROSE_ASSERT(isSgTemplateFunctionSymbol(s) == NULL && isSgTemplateMemberFunctionSymbol(s) == NULL);
 
      return s;
    }
@@ -8275,7 +8285,8 @@ SgSymbolTable::find_nontemplate_member_function(const SgName& nm, const SgType* 
 SgTemplateMemberFunctionSymbol*
 SgSymbolTable::find_template_member_function(const SgName& nm, const SgType* t, SgTemplateParameterPtrList* templateParameterList)
    {
-     ROSE_ASSERT(t != NULL);
+  // DQ (8/22/2013): We need to allow for functions to be searched for by name if the type is unavailable.
+  // ROSE_ASSERT(t != NULL);
 
      SgTemplateMemberFunctionSymbol *s = find_symbol_with_type_support<SgTemplateMemberFunctionSymbol>(nm,t,templateParameterList,NULL);
 
@@ -8329,8 +8340,10 @@ SgSymbolTable::find_function(const SgName & nm)
    {
      SgFunctionSymbol* s = find_symbol_with_type_support<SgFunctionSymbol>(nm,NULL,NULL,NULL);
 
+  // DQ (8/22/2013): We have to allow this function to return either SgTemplateFunctionSymbol or 
+  // SgTemplateMemberFunctionSymbol when not enough information (type == NULL or templateArgumentList == NULL).
   // DQ (8/13/2013): We should not be returning a template symbol from this function (verify this).
-     ROSE_ASSERT(isSgTemplateFunctionSymbol(s) == NULL && isSgTemplateMemberFunctionSymbol(s) == NULL);
+  // ROSE_ASSERT(isSgTemplateFunctionSymbol(s) == NULL && isSgTemplateMemberFunctionSymbol(s) == NULL);
 
      return s;
    }
@@ -8462,16 +8475,29 @@ symbolFilter(ReturnSymbolType* symbol, SgTemplateParameterPtrList* templateParam
              }
             else
              {
-            // DQ (8/13/2013): If a template parameter list was NOT provided then we only want to find non-templates, 
-            // so if this IS a template reset it to NULL.
-               if ( symbolVariant == V_SgTemplateFunctionSymbol || symbolVariant == V_SgTemplateMemberFunctionSymbol || symbolVariant == V_SgTemplateClassSymbol )
+               if (templateArgumentList != NULL)
                   {
-                 // This can't be a template since there is no templateParameterList
+                 // DQ (8/13/2013): If a template parameter list was NOT provided then we only want to find non-templates, 
+                 // so if this IS a template reset it to NULL.
+                    if ( symbolVariant == V_SgTemplateFunctionSymbol || symbolVariant == V_SgTemplateMemberFunctionSymbol || symbolVariant == V_SgTemplateClassSymbol )
+                       {
+                      // This can't be a template since there is no templateParameterList
 #if DEBUG_SYMBOL_FILTER
-                    printf ("Reset symbol to NULL: (templateParameterList == NULL): V_SgTemplateFunctionSymbol = %d V_SgTemplateMemberFunctionSymbol = %d V_SgTemplateClassSymbol = %d \n",
-                         (int)V_SgTemplateFunctionSymbol,(int)V_SgTemplateMemberFunctionSymbol,(int)V_SgTemplateClassSymbol);
+                         printf ("Reset symbol to NULL: (templateParameterList == NULL): V_SgTemplateFunctionSymbol = %d V_SgTemplateMemberFunctionSymbol = %d V_SgTemplateClassSymbol = %d \n",
+                              (int)V_SgTemplateFunctionSymbol,(int)V_SgTemplateMemberFunctionSymbol,(int)V_SgTemplateClassSymbol);
 #endif
-                    symbol = NULL;
+                         symbol = NULL;
+                       }
+                  }
+                 else
+                  {
+                 // If both templateParameterList == NULL and templateArgumentList == NULL, then we have not provided enough 
+                 // information and are looking up symbols based only on name (and maybe type) and need to find the first match 
+                 // based on only this limited information.  Basically, we want to provide the best possible match when less
+                 // than enough information is available to make a precise match.
+#if DEBUG_SYMBOL_FILTER
+                    printf ("DO NOT Reset symbol to NULL: (templateParameterList == NULL && templateArgumentList == NULL): not enough information provided for a precise match \n");
+#endif
                   }
              }
         }
@@ -8720,9 +8746,8 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
      assert(p_table != NULL);
 
 #if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
-  // printf ("---------------------------------------------------------------------------------- \n");
-  // printf ("In SgSymbolTable::find_symbol_with_type_support(): name = %s type = %p = %s \n",nm.str(),type,type->class_name().c_str());
-     printf ("In find_symbol_with_type_support(nm = %s, type = %p = %s, templateParameterList = %p, templateArgumentList = %p) \n",nm.str(),type,type->class_name().c_str(),templateParameterList,templateArgumentList);
+     printf ("---------------------------------------------------------------------------------- \n");
+     printf ("In find_symbol_with_type_support(nm = %s, type = %p = %s, templateParameterList = %p, templateArgumentList = %p) \n",nm.str(),type,(type != NULL) ? type->class_name().c_str() : "null",templateParameterList,templateArgumentList);
 #endif
 
      ROSE_ASSERT(templateParameterAndArgumentErrorChecking<ReturnType>(templateParameterList,templateArgumentList) == true);
@@ -8828,7 +8853,7 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
                p_no_name = false;
             // return (SgFunctionSymbol *) p_iterator->second;
 #if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
-               printf ("In SgSymbolTable::find_symbol_with_type_support(): name = %s type = %p = %s symbol = %p = %s \n",nm.str(),type,type->class_name().c_str(),symbol,symbol->class_name().c_str());
+               printf ("In SgSymbolTable::find_symbol_with_type_support(): name = %s type = %p = %s symbol = %p = %s \n",nm.str(),type,(type != NULL) ? type->class_name().c_str() : "null",symbol,symbol->class_name().c_str());
 #endif
 
             // DQ (8/7/2013): Added support for template function overloading using template parameters.
@@ -8846,7 +8871,7 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
                   {
                  // return classSymbol;
 #if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
-                    printf ("In SgSymbolTable::find_symbol_with_type_support(): Found a match: symbol = %p = %s nm = %s \n",symbol,symbol->class_name().c_str(),nm.str());
+                    printf ("In SgSymbolTable::find_symbol_with_type_support(): Found a match: return symbol = %p = %s nm = %s \n",symbol,symbol->class_name().c_str(),nm.str());
 #endif
                  // DQ (8/8/2013): I think we should return the symbol rather than break.
                  // DQ (9/9/2012): We could either call "break" to get out of the loop, or directly "return s".
@@ -8960,7 +8985,7 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
                        {
                       // return classSymbol;
 #if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
-                         printf ("In SgSymbolTable::find_symbol_with_type_support(): Found a match: original_aliased_symbol = %p = %s nm = %s \n",original_aliased_symbol,original_aliased_symbol->class_name().c_str(),nm.str());
+                         printf ("In SgSymbolTable::find_symbol_with_type_support(): Found a match: return original_aliased_symbol = %p = %s nm = %s \n",original_aliased_symbol,original_aliased_symbol->class_name().c_str(),nm.str());
 #endif
                       // DQ (8/8/2013): I think we should return the symbol rather than break.
                       // DQ (9/9/2012): We could either call "break" to get out of the loop, or directly "return s".
