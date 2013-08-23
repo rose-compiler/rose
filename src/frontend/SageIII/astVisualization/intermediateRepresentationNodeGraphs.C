@@ -53,6 +53,10 @@ IntermediateRepresentationNodeGraph::IntermediateRepresentationNodeGraph(ofstrea
 
   // include_nodeSet.insert(functionDeclarationList.begin(),functionDeclarationList.end());
 
+     int maxNumberOfNodes = 5000;
+     int numberOfNodes = (int)functionDeclarationList.size();
+     printf ("Number of IR nodes in IntermediateRepresentationNodeGraph = %d \n",numberOfNodes);
+
 #if 1
      int counter = 0;
      for (Rose_STL_Container<SgNode*>::iterator i = functionDeclarationList.begin(); i != functionDeclarationList.end(); i++)
@@ -101,29 +105,36 @@ IntermediateRepresentationNodeGraph::IntermediateRepresentationNodeGraph(ofstrea
         }
 #endif
 
-  // Ouput nodes.
-     for (std::set<SgNode*>::iterator i = include_nodeSet.begin(); i != include_nodeSet.end(); i++)
+     if (numberOfNodes <= maxNumberOfNodes)
         {
-          SgNode* node = *i;
-          file << "\"" << StringUtility::numberToString(node) << "\"[" << "label=\"" << node->class_name() << "\\n" << StringUtility::numberToString(node) << "\"];" << endl;
-        }
-
-  // Output edges
-     for (std::set<SgNode*>::iterator i = include_nodeSet.begin(); i != include_nodeSet.end(); i++)
-        {
-          SgNode* node = *i;
-
-          std::vector<std::pair<SgNode*,std::string> > listOfIRnodes = node->returnDataMemberPointers();
-          std::vector<std::pair<SgNode*,std::string> >::iterator j = listOfIRnodes.begin();
-          while (j != listOfIRnodes.end())
+       // Ouput nodes.
+          for (std::set<SgNode*>::iterator i = include_nodeSet.begin(); i != include_nodeSet.end(); i++)
              {
-               if (include_nodeSet.find(j->first) != include_nodeSet.end())
-                  {
-                    file << "\"" << StringUtility::numberToString(node) << "\" -> \"" << StringUtility::numberToString(j->first) << "\"[label=\"" << j->second << "\"];" << endl;
-                  }
-
-               j++;
+               SgNode* node = *i;
+               file << "\"" << StringUtility::numberToString(node) << "\"[" << "label=\"" << node->class_name() << "\\n" << StringUtility::numberToString(node) << "\"];" << endl;
              }
+
+       // Output edges
+          for (std::set<SgNode*>::iterator i = include_nodeSet.begin(); i != include_nodeSet.end(); i++)
+             {
+               SgNode* node = *i;
+
+               std::vector<std::pair<SgNode*,std::string> > listOfIRnodes = node->returnDataMemberPointers();
+               std::vector<std::pair<SgNode*,std::string> >::iterator j = listOfIRnodes.begin();
+               while (j != listOfIRnodes.end())
+                  {
+                    if (include_nodeSet.find(j->first) != include_nodeSet.end())
+                       {
+                         file << "\"" << StringUtility::numberToString(node) << "\" -> \"" << StringUtility::numberToString(j->first) << "\"[label=\"" << j->second << "\"];" << endl;
+                       }
+
+                    j++;
+                  }
+             }
+        }
+       else
+        {
+          printf ("WARNING: IntermediateRepresentationNodeGraph is too large to generate: numberOfNodes = %d (max size = %d) \n",numberOfNodes,maxNumberOfNodes);
         }
    }
 

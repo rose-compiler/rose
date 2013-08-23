@@ -24,7 +24,7 @@ int main( int argc, char * argv[] )
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
 
-#if 1
+#if 0
   // DQ (8/20/2013): Added initial support for IR node specific DOT graphs.
   // std::vector<VariantT> nodeKindList = {V_SgTemplateFunctionDeclaration,V_SgTemplateMemberFunctionDeclaration};
   // VariantT initializationArray[3] = {V_SgInitializedName,V_SgTemplateFunctionDeclaration,V_SgTemplateMemberFunctionDeclaration};

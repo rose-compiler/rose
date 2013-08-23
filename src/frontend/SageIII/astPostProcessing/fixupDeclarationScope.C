@@ -54,7 +54,7 @@ void fixupAstDeclarationScope( SgNode* node )
                ROSE_ASSERT(associatedScope != NULL);
 
             // DQ (6/11/2013): This is triggered by namespace definition scopes that are different 
-            // due to re-entrant namespace declarations.  We should maybe fix this.
+            // due to re-entrant namespace declarations.  We should maybe be fix this.
                if (associatedScope != correctScope)
                   {
                     printf ("WARNING: This is the wrong scope (declaration = %p = %s): associatedScope = %p = %s correctScope = %p = %s \n",
@@ -89,7 +89,7 @@ FixupAstDeclarationScope::visit ( SgNode* node )
      SgDeclarationStatement* declaration = isSgDeclarationStatement(node);
      if (declaration != NULL)
         {
-          SgDeclarationStatement* definingDeclaration         = declaration->get_definingDeclaration();
+       // SgDeclarationStatement* definingDeclaration         = declaration->get_definingDeclaration();
           SgDeclarationStatement* firstNondefiningDeclaration = declaration->get_firstNondefiningDeclaration();
 
        // Note that these declarations don't follow the same rules (namely the get_firstNondefiningDeclaration() can be NULL).
