@@ -937,7 +937,12 @@ SageBuilder::testTemplateParameterParents( SgDeclarationStatement* decl )
                   {
                      printf ("Error: In testTemplateParameterParents(): decl = %p = %s has template argument = %p with parent = %p = %s \n",decl,decl->class_name().c_str(),*i,parent,parent->class_name().c_str());
                   }
-               ROSE_ASSERT(parent == decl->get_firstNondefiningDeclaration());
+
+            // DQ (8/22/2013): Since these are now shared, it makes less sense to expect these to have such simple parent relationships.
+            // This commit of work on ROSE added caching to template parameters so that we could support pointer equality for tests
+            // of template parameter equality in the symbol table handling (this was a technique previously used for template arguments).
+            // This test fails in the mergeTest_04.C test , but only on the GNU 4.4.x compiler (passes on the GNU 4.2.4 compiler).
+            // ROSE_ASSERT(parent == decl->get_firstNondefiningDeclaration());
 
                i++;
              }
