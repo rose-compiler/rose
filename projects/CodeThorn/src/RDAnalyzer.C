@@ -141,7 +141,7 @@ void RDAnalyzer::transferExpression(Label lab, SgExpression* node, RDLattice& el
   // 2) add (lab,lhs.varid)
   
   // (for programs with pointers we require a set here)
-  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariablesInExpression(node,_variableIdMapping);  
+  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,_variableIdMapping);  
   if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
 	// since multiple memory locations may be modified, we cannot know which one will be updated and can only add information
 	for(VariableIdMapping::VariableIdSet::iterator i=defVarIds.begin();i!=defVarIds.end();++i) {
@@ -158,11 +158,10 @@ void RDAnalyzer::transferExpression(Label lab, SgExpression* node, RDLattice& el
 
 //NOTE: missing: UD must take uses in initializers into account
 void RDAnalyzer::transferDeclaration(Label lab, SgVariableDeclaration* declnode, RDLattice& element) {
-  cout<<"Calling transferDeclaration1."<<endl;
   SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
   ROSE_ASSERT(node);
   // same as in transferExpression ... needs to be refined
-  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariablesInExpression(node,_variableIdMapping);  
+  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,_variableIdMapping);  
   if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
 	// since multiple memory locations may be modified, we cannot know which one will be updated and can only add information
 	for(VariableIdMapping::VariableIdSet::iterator i=defVarIds.begin();i!=defVarIds.end();++i) {
@@ -171,7 +170,6 @@ void RDAnalyzer::transferDeclaration(Label lab, SgVariableDeclaration* declnode,
 	assert(0);
   } else if(defVarIds.size()==1) {
 	// one unique memory location (variable). We can remove all pairs with this variable
-	cout<<"Calling transferDeclaration2."<<endl;
 	VariableId var=*defVarIds.begin();
 	element.eraseAllPairsWithVariableId(var);
 	element.insertPair(lab,var);

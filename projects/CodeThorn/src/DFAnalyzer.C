@@ -183,7 +183,7 @@ DFAnalyzer<LatticeType>::determineExtremalLabels(SgNode* startFunRoot=0) {
 template<typename LatticeType>
 void
 DFAnalyzer<LatticeType>::solveAlgorithm1() {
-  cout<<"INFO: solver (algorithm1) started."<<endl;
+  cout<<"INFO: solver (label-out-algorithm1) started."<<endl;
   ROSE_ASSERT(!_workList.isEmpty());
   while(!_workList.isEmpty()) {
     Label lab=_workList.take();
@@ -203,7 +203,7 @@ DFAnalyzer<LatticeType>::solveAlgorithm1() {
       // no new information was computed. Nothing to do.
     }
   }
-  cout<<"INFO: solver (algorithm1) finished."<<endl;
+  cout<<"INFO: solver (label-out-algorithm1) finished."<<endl;
 }
 
 // runs until worklist is empty

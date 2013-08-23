@@ -13,7 +13,14 @@ VariableIdSet UDAstAttribute::useVariables(VariableIdMapping& vidm) {
   SgNode* exprNode=_node;
   if(isSgExprStatement(exprNode))
 	exprNode=SgNodeHelper::getExprStmtChild(exprNode);
-  return AnalysisAbstractionLayer::useVariablesInExpression(exprNode,vidm);
+  if(SgFunctionCallExp* callExp=isSgFunctionCallExp(exprNode)) {
+	return AnalysisAbstractionLayer::useVariables(callExp->get_args(),vidm);
+  }
+  if(!isSgExpression(exprNode)&&!isSgInitializedName(exprNode)&&!isSgVariableDeclaration(exprNode)) {
+	//cerr<<"HELLO:"<<exprNode->class_name()<<":"<<exprNode->unparseToString()<<endl;
+	return VariableIdSet();
+  }
+  return AnalysisAbstractionLayer::useVariables(exprNode,vidm);
 }
 
 LabelSet UDAstAttribute::definitionsOfVariable(VariableId var) {

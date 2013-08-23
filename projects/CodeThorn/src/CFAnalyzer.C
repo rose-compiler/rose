@@ -174,7 +174,7 @@ CFAnalyzer::CFAnalyzer(Labeler* l):labeler(l){
 }
 
 size_t CFAnalyzer::deleteFunctioncCallLocalEdges(Flow& flow) {
-  flow.deleteEdges(EDGE_LOCAL);
+  return flow.deleteEdges(EDGE_LOCAL);
 }
 
 LabelSet CFAnalyzer::functionCallLabels(Flow& flow) {

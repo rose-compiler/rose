@@ -2,6 +2,7 @@
 
 #include "rose.h"
 #include "DataDependenceVisualizer.h"
+#include "addressTakenAnalysis/VariableIdUtils.h"
 
 class VariableIdSetAttribute;
 
@@ -41,7 +42,7 @@ string DataDependenceVisualizer::nodeSourceCode(Label lab) {
   if(_labeler->isFunctionExitLabel(lab))
 	return "FunctionExit";
   // all other cases
-  return getNode(lab)->unparseToString();
+  return SgNodeHelper::doubleQuotedEscapedString(getNode(lab)->unparseToString());
 }
 
 void DataDependenceVisualizer::generateDefUseDotGraph(SgNode* root, string fileName) {

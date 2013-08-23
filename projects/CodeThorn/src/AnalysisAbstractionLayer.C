@@ -35,14 +35,14 @@ void extractVariableIdSetFromVarsInfo(VariableIdSet& varIdSet, VarsInfo& varsInf
 	}
 }
 
-VariableIdSet AnalysisAbstractionLayer::useVariablesInExpression(SgNode* node, VariableIdMapping& vidm) {
+VariableIdSet AnalysisAbstractionLayer::useVariables(SgNode* node, VariableIdMapping& vidm) {
   VariableIdSet resultSet;
   VarsInfo useVarsInfo=getDefUseVarsInfo(node, vidm).getUseVarsInfo();
   extractVariableIdSetFromVarsInfo(resultSet,useVarsInfo);
   return resultSet;
 }
 
-VariableIdSet AnalysisAbstractionLayer::defVariablesInExpression(SgNode* node, VariableIdMapping& vidm) {
+VariableIdSet AnalysisAbstractionLayer::defVariables(SgNode* node, VariableIdMapping& vidm) {
   VariableIdSet resultSet;
   VarsInfo defVarsInfo=getDefUseVarsInfo(node, vidm).getDefVarsInfo();
   //cout<<"DEFISEVARSINFO: "<<DefUseVarsInfo::varsInfoPrettyPrint(defVarsInfo,vidm)<<endl;

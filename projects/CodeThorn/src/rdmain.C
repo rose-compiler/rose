@@ -14,9 +14,11 @@
 #include "AstAnnotator.h"
 #include "DataDependenceVisualizer.h"
 #include "Miscellaneous.h"
+#include "ProgramStats.h"
 
 using namespace std;
 using namespace CodeThorn;
+
 
 void createUDAstAttributeFromRDAttribute(Labeler* labeler, string rdAttributeName, string udAttributeName) {
   long labelNum=labeler->numberOfLabels();
@@ -44,6 +46,7 @@ void printAttributes(Labeler* labeler, VariableIdMapping* vim, string attributeN
 	cout<<endl;
   }
 }
+
 int main(int argc, char* argv[]) {
   cout << "INIT: Parsing and creating AST."<<endl;
   boolOptions.registerOption("semantic-fold",false); // temporary
@@ -64,6 +67,14 @@ int main(int argc, char* argv[]) {
   printAttributes<RDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"rd-analysis-in");
   cout << "INFO: generating and attaching UD-data to AST."<<endl;
   createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis-in", "ud-analysis");
+
+#if 0
+  cout << "INFO: computing program statistics."<<endl;
+  computeStatistics(rdAnalyzer->getVariableIdMapping(),
+					rdAnalyzer->getLabeler(), 
+					rdAnalyzer->getFlow(),
+					"ud-analysis");
+#endif
   cout << "INFO: generating visualization data."<<endl;
   // generate ICFG visualization
   cout << "generating cfg.dot."<<endl;
