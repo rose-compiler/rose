@@ -30,8 +30,8 @@ class ProcessQuery
 public:
   ProcessQuery() { }
   // functor to operate on the given query
-  MatchResult operator()(std::string query, SgNode* root);
-  MatchResult getMatchResult();
+  MatchResult& operator()(std::string query, SgNode* root);
+  MatchResult& getMatchResult();
   void printMatchResult();
   void clearMatchResult();
 };
@@ -69,16 +69,20 @@ class ComputeAddressTakenInfo
     void visit(SgMinusMinusOp* sgn);
     void visit(SgCommaOpExp* sgn);
     void visit(SgConditionalExp* sgn);
+    void visit(SgCastExp* sgn);
     void visit(SgFunctionRefExp* sgn);
     void visit(SgMemberFunctionRefExp* sgn);
+    void visit(SgTemplateFunctionRefExp* sgn);
+    void visit(SgTemplateMemberFunctionRefExp* sgn);
     void visit(SgFunctionCallExp* sgn);
-    void visit(SgNode* sgn);    
+    void visit(SgNode* sgn);
   };
 public:
   ComputeAddressTakenInfo(VariableIdMapping& _vidm) : vidm(_vidm) {}
   void computeAddressTakenSet(SgNode* root);
   void printAddressTakenSet();
   VariableIdSet getAddressTakenSet();
+  void debugPrint(SgNode* sgn);
 };
 
 /*************************************************

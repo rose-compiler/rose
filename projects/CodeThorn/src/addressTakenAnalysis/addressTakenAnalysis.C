@@ -14,7 +14,7 @@ using namespace CodeThorn;
  ***************** ProcessQuery  *****************
  *************************************************/
 
-MatchResult ProcessQuery::getMatchResult()
+MatchResult& ProcessQuery::getMatchResult()
 {
   return match_result;
 }
@@ -41,7 +41,7 @@ void ProcessQuery::clearMatchResult()
   match_result.clear();
 }
 
-MatchResult ProcessQuery::operator()(std::string query, SgNode* root)
+MatchResult& ProcessQuery::operator()(std::string query, SgNode* root)
 {
   AstMatching m;
   match_result = m.performMatching(query, root);
@@ -57,16 +57,29 @@ VariableIdSet ComputeAddressTakenInfo::getAddressTakenSet()
   return addressTakenSet;
 }
 
+void ComputeAddressTakenInfo::debugPrint(SgNode* sgn)
+{
+  std::cerr << sgn->class_name() << ": " << astTermWithNullValuesToString(sgn) << ", " \
+  << sgn->unparseToString() << ", " \
+  << sgn->get_file_info()->get_filenameString() << ", " \
+  << sgn->get_file_info()->get_line() << ", " \
+  << endl;
+}
+
 // base case for the recursion
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgVarRefExp *sgn)
-{  
-  cati.addressTakenSet.insert(cati.vidm.variableId(sgn));
+{ 
+  // cati.debugPrint(sgn);
+  VariableId id = cati.vidm.variableId(sgn);
+  ROSE_ASSERT(id.isValid());
+  cati.addressTakenSet.insert(id);
 }
 
 // only the rhs_op of SgDotExp is modified
 // recurse on rhs_op
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgDotExp* sgn)
 {
+  // cati.debugPrint(sgn);
   SgNode* rhs_op = sgn->get_rhs_operand();
   rhs_op->accept(*this);
 }
@@ -75,6 +88,7 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgDotExp* sgn)
 // recurse on rhs_op
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgArrowExp* sgn)
 {
+  // cati.debugPrint(sgn);
   SgNode* rhs_op = sgn->get_rhs_operand();
   rhs_op->accept(*this);
 }
@@ -90,6 +104,7 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgArrowExp* sgn)
 // as a consequence of the expressions similar to above.
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgPointerDerefExp* sgn)
 {
+  // cati.debugPrint(sgn);
   // we dont do anything here
 }
 
@@ -100,10 +115,13 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgPointerDerefExp* sgn)
 // keep recursing on the lhs until we find A
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgPntrArrRefExp* sgn)
 {
+  // cati.debugPrint(sgn);
+  // collect the info only if its array type
+  // otherwise some pointer arithmetic is going on to compute the address of the array
   SgNode* arr_op = sgn->get_lhs_operand();
-  // SgVarRefExp* arr_name = isSgVarRefExp(arr_op); ROSE_ASSERT(arr_name != NULL);
-  // cati.addressTakenSet.insert(cati.vidm.variableId(arr_name));
-  arr_op->accept(*this);
+  if(isSgArrayType(arr_op)) {    
+    arr_op->accept(*this);
+    }
 }
 
 // &(a = expr)
@@ -111,6 +129,7 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgPntrArrRefExp* sgn)
 // process the lhs recursively
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgAssignOp* sgn)
 {
+  // cati.debugPrint(sgn);
   SgNode* lhs_op = sgn->get_lhs_operand();
   lhs_op->accept(*this);
 }
@@ -122,6 +141,7 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgAssignOp* sgn)
 // both prefix/postfix are illegal in C
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgPlusPlusOp* sgn)
 {
+  // cati.debugPrint(sgn);
   SgNode* operand = sgn->get_operand();
   operand->accept(*this);
 }
@@ -130,6 +150,7 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgPlusPlusOp* sgn)
 // &(--i)
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgMinusMinusOp* sgn)
 {
+  // cati.debugPrint(sgn);
   SgNode* operand = sgn->get_operand();
   operand->accept(*this);
 }
@@ -139,6 +160,7 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgMinusMinusOp* sgn)
 // keep recursing on the rhs_op
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgCommaOpExp* sgn)
 {
+  // cati.debugPrint(sgn);
   SgNode* rhs_op = sgn->get_rhs_operand();
   rhs_op->accept(*this);
 }
@@ -148,10 +170,19 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgCommaOpExp* sgn)
 // recurse on both of them to pick up the lvalues
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgConditionalExp* sgn)
 {
+  // cati.debugPrint(sgn);
   SgNode* true_exp = sgn->get_true_exp();
   SgNode* false_exp = sgn->get_false_exp();
   true_exp->accept(*this);
   false_exp->accept(*this);
+}
+
+// cast can be lvalue
+// example :  &((struct _Rep *)((this) -> _M_data()))[-1] expr from stl_list
+void ComputeAddressTakenInfo::OperandToVariableId::visit(SgCastExp* sgn)
+{
+  SgNode* operand = sgn->get_operand();
+  operand->accept(*this);
 }
 
 // void f() { }
@@ -161,6 +192,7 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgConditionalExp* sgn)
 //
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionRefExp* sgn)
 {
+  // cati.debugPrint(sgn);
   // not sure what do to do here
   // functions can potentially modify anything
   // ROSE_ASSERT(0);
@@ -168,6 +200,20 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionRefExp* sgn)
 
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgMemberFunctionRefExp* sgn)
 {
+  // cati.debugPrint(sgn);
+  // do nothing
+  // functions can potentially modify anything
+}
+
+void ComputeAddressTakenInfo::OperandToVariableId::visit(SgTemplateFunctionRefExp* sgn)
+{
+  // cati.debugPrint(sgn);
+  // do nothing
+  // functions can potentially modify anything
+}
+void ComputeAddressTakenInfo::OperandToVariableId::visit(SgTemplateMemberFunctionRefExp* sgn)
+{
+  // cati.debugPrint(sgn);
   // do nothing
   // functions can potentially modify anything
 }
@@ -177,6 +223,7 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgMemberFunctionRefExp*
 // if foo() returns a reference then foo() returns a lvalue
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallExp* sgn)
 {
+  // cati.debugPrint(sgn);
   // we can look at its defintion and process the return expression ?
   // function calls can modify anything
   // do nothing
@@ -185,7 +232,9 @@ void ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallExp* sgn)
 
 void ComputeAddressTakenInfo::OperandToVariableId::visit(SgNode* sgn)
 {
+  // cati.debugPrint(sgn);
   std::cerr << "unhandled operand " << sgn->class_name() << " of SgAddressOfOp in AddressTakenAnalysis\n";
+  std::cerr << sgn->unparseToString() << std::endl;
   ROSE_ASSERT(0);
 }
 
@@ -193,15 +242,35 @@ void ComputeAddressTakenInfo::computeAddressTakenSet(SgNode* root)
 {
   // query to match all SgAddressOfOp subtrees
   // process query
-  ProcessQuery procQuery;
+  ProcessQuery collectSgAddressOfOp;
   // TODO: not sufficient to pick up address taken by function pointers
-  MatchResult matches = procQuery("$HEAD=SgAddressOfOp($OP)", root);
-  for(MatchResult::iterator it = matches.begin(); it != matches.end(); it++)
-  {
+  std::string matchquery;
+
+// "#SgTemplateArgument|"
+// "#SgTemplateArgumentList|"
+// "#SgTemplateParameter|"
+// "#SgTemplateParameterVal|"
+// "#SgTemplateParamterList|"
+  
+  // skipping all template declaration specific nodes as they dont have any symbols
+  // we still traverse SgTemplateInstatiation*
+  matchquery = \
+    "#SgTemplateClassDeclaration|"\
+    "#SgTemplateFunctionDeclaration|"\
+    "#SgTemplateMemberFunctionDeclaration|"\
+    "#SgTemplateVariableDeclaration|" \
+    "#SgTemplateClassDefinition|"\
+    "#SgTemplateFunctionDefinition|"\
+    "$HEAD=SgAddressOfOp($OP)";
+    
+  MatchResult& matches = collectSgAddressOfOp(matchquery, root);
+  for(MatchResult::iterator it = matches.begin(); it != matches.end(); ++it) {
     SgNode* matchedOperand = (*it)["$OP"];
+    SgNode* head = (*it)["$HEAD"];
+    // debugPrint(head); debugPrint(matchedOperand);
     OperandToVariableId optovid(*this);
     matchedOperand->accept(optovid);
-  }
+  }              
 }
 
 // pretty print
