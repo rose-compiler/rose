@@ -16766,6 +16766,7 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
     *    ub_exp is the final iterantion range(starting from 0) after loop collapsing
     *    total_iters[i], = (ub[i] - lb[i] + 1)/step[i]  is the total iter num in each level of loop before loop collapsing   
     */
+
     SgStatement* parent =  isSgStatement(getScope(target_loop)->get_parent());        //Winnie, the scope that include target_loop
     ROSE_ASSERT(getScope(target_loop)->get_parent()!= NULL);
     

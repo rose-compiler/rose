@@ -46,7 +46,6 @@ int main(int argc, char * argv[])
       std::string cur_handle = handle;
       abstract_handle * shandle = new abstract_handle (fhandle,cur_handle);
       // it is possible that a handle is created but no matching IR node is found
-      fprintf(stderr, "loopCollapsing.C: after get abstract_handle\n");
       if (shandle != NULL)
       {
         if (shandle->getNode() != NULL)
@@ -65,22 +64,14 @@ int main(int argc, char * argv[])
     return 0;
   }
 
-      fprintf(stderr, "loopCollapsing.C: before get target_loop\n");
-      fprintf(stderr, "stmt %s\n", stmt->unparseToString().c_str());
-      fprintf(stderr, "stmt->parent() %s\n", stmt->get_parent()->unparseToString().c_str());
   //--------------------------------------------------
  if (isSgForStatement(stmt))
   {
     bool result=false;
     SgForStatement *target_loop = isSgForStatement(stmt);
-      fprintf(stderr, "loopCollapsing.C: after get target_loop\n");
     result = SageInterface::loopCollapsing(target_loop, factor);
     ROSE_ASSERT(result != false);
   }
-//  AstPostProcessing(project);
-
-// run all tests
-//  AstTests::runAllTests(project);
 
   // Generate source code from AST and call the vendor's compiler
   return backend(project);

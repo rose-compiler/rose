@@ -23,7 +23,7 @@ int n = 10;
   }
  
 
-#pragma omp target map(in: m, n) map(out:a[0:11][0:11])
+#pragma omp target map(in: m, n) map(inout:a[0:11][0:11])
 #pragma omp parallel for collapse(2) private(j,i)// nowait    
   
   for (i=1;i<m;i+=1)
@@ -36,7 +36,7 @@ int n = 10;
 		    a[i][j]=i+j+l+k+z;	
 	 }
   }
-
+/*
   for(i = 0; i < 11; i ++)
   {
      for(j = 0; j < 11; j ++)
@@ -45,7 +45,7 @@ int n = 10;
 
      }
   }
- 
+ */
     return 0;
 }
 

@@ -45,9 +45,10 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
 	task_untied4.c \
 	twoRegions.c
 
+#        axpy_ompacc2.c 
 OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
+        collapse_2.c\
         axpy_ompacc.c \
-        axpy_ompacc2.c \
         matrixmultiply-ompacc.c \
         jacobi-ompacc.c \
         jacobi-ompacc-opt1.c
