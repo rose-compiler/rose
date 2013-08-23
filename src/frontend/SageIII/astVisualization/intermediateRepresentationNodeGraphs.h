@@ -15,9 +15,13 @@ class IntermediateRepresentationNodeGraph : public ROSE_VisitTraversal
           std::ofstream & file;
           std::vector<VariantT> nodeKindList;
 
-          std::set<VariantT> nodeKindSet;
+          std::set<VariantT> include_nodeKindSet;
+          std::set<VariantT> exclude_nodeKindSet;
 
-          IntermediateRepresentationNodeGraph(std::ofstream & file, const std::vector<VariantT> & nodeKindList);
+          std::set<SgNode*> include_nodeSet;
+          std::set<SgNode*> exclude_nodeSet;
+
+          IntermediateRepresentationNodeGraph(std::ofstream & file, SgProject* project, const std::vector<VariantT> & nodeKindList);
 
           virtual ~IntermediateRepresentationNodeGraph() {};
 
@@ -25,7 +29,7 @@ class IntermediateRepresentationNodeGraph : public ROSE_VisitTraversal
           void visit (SgNode* node);
    };
 
-void intermediateRepresentationNodeGraph(const std::vector<VariantT> & nodeKindList);
+void intermediateRepresentationNodeGraph(SgProject* project, const std::vector<VariantT> & nodeKindList);
 
 // endif for IR_NODE_GRAPH_H
 #endif
