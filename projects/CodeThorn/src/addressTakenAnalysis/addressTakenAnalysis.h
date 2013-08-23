@@ -44,6 +44,9 @@ class ComputeAddressTakenInfo
   typedef std::pair<bool, VariableIdSet> AddressTakenInfo;
   VariableIdMapping& vidm;
   // result to be computed by this analysis
+  // bool is set to true when operand of SgAddressOfExp is a complicated
+  // expression for which VariableId cannot be determined
+  // example: &(*p)
   AddressTakenInfo addressTakenInfo;
 
   // address can be taken for any expression that is lvalue
