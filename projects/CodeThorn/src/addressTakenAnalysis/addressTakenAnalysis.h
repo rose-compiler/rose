@@ -41,9 +41,10 @@ public:
  *************************************************/
 class ComputeAddressTakenInfo
 {
+  typedef std::pair<bool, VariableIdSet> AddressTakenInfo;
   VariableIdMapping& vidm;
   // result to be computed by this analysis
-  VariableIdSet addressTakenSet;
+  AddressTakenInfo addressTakenInfo;
 
   // address can be taken for any expression that is lvalue
   // The purpose of this class is to traverse arbitrary
@@ -57,8 +58,9 @@ class ComputeAddressTakenInfo
   class OperandToVariableId : public ROSE_VisitorPatternDefaultBase
   {
     ComputeAddressTakenInfo& cati;
+    int debuglevel;
   public:
-    OperandToVariableId(ComputeAddressTakenInfo& _cati) : cati(_cati) { }
+  OperandToVariableId(ComputeAddressTakenInfo& _cati) : cati(_cati), debuglevel(0) { }
     void visit(SgVarRefExp*);
     void visit(SgDotExp*);
     void visit(SgArrowExp*);
@@ -76,13 +78,16 @@ class ComputeAddressTakenInfo
     void visit(SgTemplateMemberFunctionRefExp* sgn);
     void visit(SgFunctionCallExp* sgn);
     void visit(SgNode* sgn);
+    void debugPrint(SgNode* sgn);
   };
 public:
-  ComputeAddressTakenInfo(VariableIdMapping& _vidm) : vidm(_vidm) {}
-  void computeAddressTakenSet(SgNode* root);
-  void printAddressTakenSet();
-  VariableIdSet getAddressTakenSet();
-  void debugPrint(SgNode* sgn);
+  ComputeAddressTakenInfo(VariableIdMapping& _vidm) : vidm(_vidm)
+  {
+    addressTakenInfo.first = false;
+  }
+  void computeAddressTakenInfo(SgNode* root);
+  void printAddressTakenInfo();
+  AddressTakenInfo getAddressTakenInfo();  
 };
 
 /*************************************************
