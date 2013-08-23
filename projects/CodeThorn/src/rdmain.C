@@ -44,6 +44,35 @@ void printAttributes(Labeler* labeler, VariableIdMapping* vim, string attributeN
 	cout<<endl;
   }
 }
+
+// stats test
+#if 1
+class ComputationInfo {
+
+};
+
+ComputationInfo computeComputationInfo(SgNode* node) {
+  ComputationInfo ci;
+  return ci;
+}
+
+void computeStatistics(Labeler* labeler, Flow* icfg, string useDefAstAttributeName) {
+  LabelSet labSet=icfg->nodeLabels();
+  long labelNum=labeler->numberOfLabels();
+  vector<ComputationInfo> computationInfo(labelNum);
+  for(long i=0;i<labelNum;++i) {
+	Label lab=i;
+	SgNode* node=labeler->getNode(i);
+	computationInfo[i]=computeComputationInfo(node);
+#if 0
+	cout<<"@Label "<<lab<<":";
+	UDAstAttribute* node0=dynamic_cast<UDAstAttribute*>(node->getAttribute(useDefAstAttributeName));
+	cout<<endl;
+#endif
+  }
+}
+#endif
+
 int main(int argc, char* argv[]) {
   cout << "INIT: Parsing and creating AST."<<endl;
   boolOptions.registerOption("semantic-fold",false); // temporary
