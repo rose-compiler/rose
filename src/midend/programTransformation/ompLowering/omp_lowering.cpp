@@ -1271,6 +1271,7 @@ static void insert_libxompf_h(SgNode* startNode)
   bool isIncremental = true; // if the loop iteration space is incremental
   // grab the original loop 's controlling information
   bool is_canonical = false;
+
   if (for_loop)
     is_canonical = isCanonicalForLoop (for_loop, &orig_index, & orig_lower, &orig_upper, &orig_stride, NULL, &isIncremental);
   else if (do_loop)
@@ -1280,6 +1281,7 @@ static void insert_libxompf_h(SgNode* startNode)
   // loop iteration space: upper - lower + 1
   // This expression will be later used to help generate xomp_get_max1DBlock(VEC_LEN), which needs iteration count to calculate max thread block numbers
   cuda_loop_iter_count_1 = buildAddOp(buildSubtractOp(deepCopy(orig_upper), deepCopy(orig_lower)), buildIntVal(1));
+
   // also make sure the loop body is a block
   // TODO: we consider peeling off 1 level loop control only, need to be conditional on what the spec. can provide at pragma level
   // TODO: Fortran support later on

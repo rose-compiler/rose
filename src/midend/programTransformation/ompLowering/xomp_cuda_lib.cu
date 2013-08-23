@@ -82,7 +82,10 @@ size_t xomp_get_maxThreadsPerBlock()
   return xomp_getCudaDeviceProp()->maxThreadsPerMultiProcessor / xomp_get_maxThreadBlocksPerMultiprocessor();
 }
 
-
+/*
+* In order to ensure best performance, we setup max_block limitation here, so that each core in the GPU works on only one threads.
+* Use XOMP_accelerator_loop_default() runtime to support input data size that exceeds max_block*xomp_get_maxThreadsPerBlock().  
+*/
 size_t xomp_get_max1DBlock(size_t s)
 {
 #if 1  
@@ -90,7 +93,9 @@ size_t xomp_get_max1DBlock(size_t s)
   if (s % xomp_get_maxThreadsPerBlock()!= 0)
      block_num ++;
   //return block_num;     
+
   size_t max_block = xomp_getCudaDeviceProp()->multiProcessorCount* xomp_get_maxThreadBlocksPerMultiprocessor();
+
   return block_num<max_block? block_num: max_block; 
 
   /* max threads per multiprocessor / threads-per-block  * num_multiprocessor */
