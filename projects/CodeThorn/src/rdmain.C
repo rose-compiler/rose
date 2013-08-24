@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
   cout << "INFO: attaching RD-data to AST."<<endl;
   rdAnalyzer->attachInInfoToAst("rd-analysis-in");
   rdAnalyzer->attachOutInfoToAst("rd-analysis-out");
-  printAttributes<RDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"rd-analysis-in");
+  //printAttributes<RDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"rd-analysis-in");
   cout << "INFO: generating and attaching UD-data to AST."<<endl;
   createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis-in", "ud-analysis");
 
@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
 								 "ud-analysis");
 
   ddvis1.includeFlowGraphEdges(flow);
-  ddvis1.generateDefUseDotGraph(root,"icfgdatadependencegraph1.dot");
+  ddvis1.generateDefUseDotGraph(root,"icfgdatadependencegraph.dot");
   flow->resetDotOptions();
 
   cout << "INFO: annotating analysis results as comments."<<endl;

@@ -12,7 +12,10 @@ DataDependenceVisualizer::DataDependenceVisualizer(Labeler* labeler, VariableIdM
   : _showSourceCode(true),
     _labeler(labeler),
     _variableIdMapping(varIdMapping),
-	_useDefAttributeName(useDefAttributeName)
+	_useDefAttributeName(useDefAttributeName),
+	_mode(DDVMODE_DEFUSE),
+	_flow(0),
+	_dotFunctionClusters("")
 {
 }
 
