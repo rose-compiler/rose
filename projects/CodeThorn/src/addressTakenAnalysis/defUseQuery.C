@@ -289,53 +289,48 @@ void ExprWalker::visit(SgCompoundAssignOp* sgn)
 
 void ExprWalker::visit(SgPntrArrRefExp* sgn)
 {
-  SgNode* lhs_addr = sgn->get_lhs_operand(); // get the address computation expr of the array
-  SgNode* rhs_expr = sgn->get_rhs_operand(); // get the index expression
+  SgExpression* lhs_addr = sgn->get_lhs_operand(); // get the address computation expr of the array
+  SgExpression* rhs_expr = sgn->get_rhs_operand(); // get the index expression
   DefUseVarsInfo lduvi, rduvi;
-  if(isModExpr) {
-    // check for the type of address computation expr
-    // if p is pointer type in p[expr]
-    // raise the flag (unknown location)
-    if(isSgVarRefExp(lhs_addr)) {
-      SgType* lhs_type_info = isSgVarRefExp(lhs_addr)->get_type();           
-      if(isSgPointerType(lhs_type_info)) {        
-        lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, false);
-        VarsInfo& ldef_vars_info = lduvi.getDefVarsInfoMod();
-        ldef_vars_info.second = true;
-      }
-      else {
-        // lhs_address is a SgVarRefExp of array type
-        lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, true);
-      }
-    }
-    // for multi-dimensional pointers
-    // recurse and collect info
-    else if(isSgPntrArrRefExp(lhs_addr)) {
+  // check for the type of address computation expr
+  // if p is pointer type in p[expr]
+  // raise the flag (unknown location)
+  SgType* lhs_type_info = lhs_addr->get_type();
+  // process with use semantics only if the address computation
+  // expression is of SgArrayType
+  if(isSgArrayType(lhs_type_info)) {
+    if(isModExpr) { // for def case
       lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, true);
     }
-    else { 
-      // otherwise some arithmetic involved to calculate
-      // the address of the array
-      // for example: (true? a_ptr1 = arrA : a_ptr1 = arrB)[2] = 2;
-      // raise the flag and collect with use semantics
+    else { // for the use case
       lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, false);
-      lduvi.getDefVarsInfoMod().second = true;
-      // copy side-effects
+      // check for expression side-effect
       if(lduvi.isUseAfterDefCandidate()) {
         lduvi.setUseAfterDef();
-      } 
+      }
     }
   }
-  else { // isModExpr = false
-    lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, false); 
+  else {
+    // otherwise we dont know what exactly is modified
+    // collect it with use semantics
+    lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, false);
+    // check for expression side-effect
     if(lduvi.isUseAfterDefCandidate()) {
       lduvi.setUseAfterDef();
+    }
+    // raise the appropriate flag
+    // since the operand is no longer array
+    if(isModExpr) {      
+    lduvi.getDefVarsInfoMod().second = true;
+    }
+    else {
+      lduvi.getUseVarsInfoMod().second = true;
     }
   }
 
   // rhs_op of the array is always used
   rduvi = getDefUseVarsInfo_rec(rhs_expr, vidm, false);
-  // if we have side-effects copy them over
+  // check for expression side-effects
   if(rduvi.isUseAfterDefCandidate()) {
     rduvi.setUseAfterDef();
   }
@@ -1030,6 +1025,23 @@ void ExprWalker::visit(SgTypeTraitBuiltinOperator* sgn)
 {
 }
 
+void ExprWalker::visit(SgPseudoDestructorRefExp* sgn)
+{
+}
+
+void ExprWalker::visit(SgStatementExpression* sgn)
+{
+  // not C++
+  // gnu extension
+  // this would require to get the statement
+  // and perform the query on all expressions in the statement
+  // can support this when the interface can take statement nodes
+}
+
+void ExprWalker::visit(SgAsmOp* sgn)
+{
+  // these are extensions
+}
 
 // we should not reach here
 void ExprWalker::visit(SgExpression* sgn)

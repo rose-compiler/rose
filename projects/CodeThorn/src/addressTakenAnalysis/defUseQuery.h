@@ -271,6 +271,9 @@ public:
   void visit(SgTemplateFunctionRefExp* sgn);
   void visit(SgTemplateMemberFunctionRefExp* sgn);
   void visit(SgTypeTraitBuiltinOperator* sgn);
+  void visit(SgPseudoDestructorRefExp* sgn);
+  void visit(SgStatementExpression* sgn);
+  void visit(SgAsmOp* sgn);
   
   void visit(SgExpression* sgn);
 
