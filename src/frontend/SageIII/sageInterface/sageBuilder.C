@@ -4719,12 +4719,40 @@ SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return
    {
   // DQ (11/12/2012): Note that this function is not used in the AST construction in the EDG/ROSE interface.
 
+  // DQ (8/23/2013): Added assertions.
+     ROSE_ASSERT(return_type != NULL);
+     ROSE_ASSERT(parameter_list != NULL);
+
+  // DQ (8/23/2013): We need to provide the buildDefiningFunctionDeclaration() function with a pointer to the first non-defining declaration.
+  // So we need to find it, and if it does not exist we need to build one so that we have a simple API for building defining declarations.
   // DQ (11/12/2012): Building a defining declaration from scratch now requires a non-defining declaration to exist.
-     SgFunctionDeclaration* nondefininfDeclaration = buildNondefiningFunctionDeclaration(name,return_type,parameter_list,scope,NULL);
-  // appendStatement (nondefininfDeclaration, scope);
+  // SgFunctionDeclaration* nondefininfDeclaration = buildNondefiningFunctionDeclaration(name,return_type,parameter_list,scope,NULL);
+
+     if (scope == NULL)
+        {
+          scope = SageBuilder::topScopeStack();
+        }
+
+     SgFunctionDeclaration* nondefiningDeclaration = NULL;
+
+     SgFunctionType* func_type = buildFunctionType(return_type,parameter_list);
+     SgFunctionSymbol* func_symbol = scope->find_symbol_by_type_of_function<SgFunctionDeclaration>(name,func_type,NULL,NULL);
+     if (func_symbol != NULL)
+        {
+          nondefiningDeclaration = func_symbol->get_declaration();
+        }
+       else
+        {
+          nondefiningDeclaration = buildNondefiningFunctionDeclaration(name,return_type,parameter_list,scope,NULL);
+        }
+
+  // DQ (8/23/2013): Added assertions.
+     assert(nondefiningDeclaration != NULL);
+     assert(nondefiningDeclaration->get_firstNondefiningDeclaration() != NULL);
+     assert(nondefiningDeclaration->get_firstNondefiningDeclaration() == nondefiningDeclaration);
 
   // return buildDefiningFunctionDeclaration (name,return_type,parameter_list,scope,NULL,false,NULL,NULL);
-     return buildDefiningFunctionDeclaration (name,return_type,parameter_list,scope,NULL,false,nondefininfDeclaration,NULL);
+     return buildDefiningFunctionDeclaration (name,return_type,parameter_list,scope,NULL,false,nondefiningDeclaration,NULL);
    }
 
 
@@ -4733,6 +4761,40 @@ SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return
 SgProcedureHeaderStatement*
 SageBuilder::buildProcedureHeaderStatement(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgProcedureHeaderStatement::subprogram_kind_enum kind, SgScopeStatement* scope)
    {
+  // DQ (8/23/2013): Added assertions.
+     ROSE_ASSERT(return_type != NULL);
+     ROSE_ASSERT(parameter_list != NULL);
+
+  // DQ (8/23/2013): We need to provide the buildDefiningFunctionDeclaration() function with a pointer to the first non-defining declaration.
+  // So we need to find it, and if it does not exist we need to build one so that we have a simple API for building defining declarations.
+  // DQ (11/12/2012): Building a defining declaration from scratch now requires a non-defining declaration to exist.
+  // SgFunctionDeclaration* nondefininfDeclaration = buildNondefiningFunctionDeclaration(name,return_type,parameter_list,scope,NULL);
+
+     if (scope == NULL)
+        {
+          scope = SageBuilder::topScopeStack();
+        }
+
+  // SgProcedureHeaderStatement* nondefiningDeclaration = NULL;
+     SgFunctionDeclaration* nondefiningDeclaration = NULL;
+
+     SgFunctionType* func_type = buildFunctionType(return_type,parameter_list);
+     SgFunctionSymbol* func_symbol = scope->find_symbol_by_type_of_function<SgProcedureHeaderStatement>(name,func_type,NULL,NULL);
+     if (func_symbol != NULL)
+        {
+          nondefiningDeclaration = func_symbol->get_declaration();
+        }
+       else
+        {
+          nondefiningDeclaration = buildNondefiningFunctionDeclaration(name,return_type,parameter_list,scope,NULL);
+        }
+
+  // DQ (8/23/2013): Added assertions.
+     assert(nondefiningDeclaration != NULL);
+     assert(nondefiningDeclaration->get_firstNondefiningDeclaration() != NULL);
+     assert(nondefiningDeclaration->get_firstNondefiningDeclaration() == nondefiningDeclaration);
+
+#if 0
   // Function prototype: buildNondefiningFunctionDeclaration_T (
   //      const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, 
   //      unsigned int functionConstVolatileFlags, SgTemplateArgumentPtrList* templateArgumentsList, SgTemplateParameterPtrList* templateParameterList);
@@ -4740,9 +4802,11 @@ SageBuilder::buildProcedureHeaderStatement(const SgName& name, SgType* return_ty
   // DQ (8/21/2013): Fixed number of parameters in buildNondefiningFunctionDeclaration_T() function call.
   // SgProcedureHeaderStatement* non_def_decl = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement> (name,return_type,parameter_list, /* isMemberFunction = */ false, scope, NULL, false, NULL);
      SgProcedureHeaderStatement* non_def_decl = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement> (name,return_type,parameter_list, /* isMemberFunction = */ false, scope, NULL, 0, NULL, NULL);
+#endif
 
   // return buildProcedureHeaderStatement(name.str(),return_type,parameter_list,kind,scope,NULL);
-     return buildProcedureHeaderStatement(name.str(),return_type,parameter_list,kind,scope, non_def_decl);
+  // return buildProcedureHeaderStatement(name.str(),return_type,parameter_list,kind,scope, non_def_decl);
+     return buildProcedureHeaderStatement(name.str(),return_type,parameter_list,kind,scope, isSgProcedureHeaderStatement(nondefiningDeclaration));
    }
 
 
@@ -9830,6 +9894,11 @@ SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednames
           global_definition_namespaceDef->set_global_definition(global_definition_namespaceDef);
 
           global_definition_namespaceDef->set_isUnionOfReentrantNamespaceDefinitions(true);
+
+       // DQ (8/23/2013): Set the parent of the global_definition_namespaceDef.
+          ROSE_ASSERT(global_definition_namespaceDef->get_parent() == NULL);
+          global_definition_namespaceDef->set_parent(defdecl);
+          ROSE_ASSERT(global_definition_namespaceDef->get_parent() != NULL);
 
        // DQ (5/16/2013): Added tests and setting of the associated declaration.
           ROSE_ASSERT(global_definition_namespaceDef->get_namespaceDeclaration() == NULL);
