@@ -21,8 +21,7 @@ singleStatementToBlockNormalization_SWITCHES = \
 
 $(singleStatementToBlockNormalization_TEST_TARGETS): \
 	%.passed:  % singleStatementToBlockNormalization $(TEST_EXIT_STATUS)
-	cp "$$(echo "$@" | sed 's/\.passed$$//g')" "$$(basename "$@")"
-	@$(RTH_RUN) CMD="./singleStatementToBlockNormalization $(singleStatementToBlockNormalization_SWITCHES) -c $<" $(TEST_EXIT_STATUS) "$(builddir)/$$(basename "$@")"
+	@$(RTH_RUN) CMD="./singleStatementToBlockNormalization $(singleStatementToBlockNormalization_SWITCHES) -c $<" $(TEST_EXIT_STATUS) "./$$(basename "$@")"
 
 check-local: $(singleStatementToBlockNormalization_TEST_TARGETS)
 
