@@ -1,0 +1,3 @@
+dot -Tjpg cfg.dot -ocfg.jpg
+dot -Tjpg datadependencegraph.dot -odatadependencegraph.jpg
+dot -Tjpg icfgdatadependencegraph.dot -oicfgdatadependencegraph.jpg

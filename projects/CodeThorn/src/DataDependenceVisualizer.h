@@ -42,7 +42,7 @@ class DataDependenceVisualizer {
   Labeler* _labeler;
   VariableIdMapping* _variableIdMapping;
   string  _useDefAttributeName;
-  int _mode;
+  DDVMode _mode;
   Flow* _flow;
   string _dotFunctionClusters;
 };
