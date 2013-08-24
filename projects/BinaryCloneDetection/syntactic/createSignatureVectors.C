@@ -187,6 +187,7 @@ kindToInteger(size_t kind){
 		case x86_setl:  
 			      vk = x86_setb;
 			      break;
+
 		case x86_cmovne:  
 		case x86_cmove:     
 		case x86_cmovno:   
@@ -406,14 +407,14 @@ createVectorsForAllInstructions(SgNode* top, const std::string& filename, const 
             for (size_t i = 0; i < operandCount; ++i) {
                 SgAsmExpression* operand = operands[i];
                 ExpressionCategory cat = getCategory(operand);
-                ++vec.opsForVariant(cat, var);
+                //++vec.opsForVariant(cat, var);
                 // Add to total for this unique operand number (for this window)
                 hash_map<SgAsmExpression*, size_t>::const_iterator numIter = valueNumbers[(int)cat].find(operand);
                 assert (numIter != valueNumbers[(int)cat].end());
                 size_t num = numIter->second;
-                ++vec.specificOp(cat, num);
+                //++vec.specificOp(cat, num);
                 // Add to total for this kind of operand
-                ++vec.operandTotal(cat);
+                //++vec.operandTotal(cat);
 #ifdef NORMALIZED_UNPARSED_INSTRUCTIONS
                 normalizedUnparsedInstructions += (cat == ec_reg ? "R" : cat == ec_mem ? "M" : "V") +
                                                   boost::lexical_cast<string>(num);
@@ -424,7 +425,7 @@ createVectorsForAllInstructions(SgNode* top, const std::string& filename, const 
             if (operandCount >= 2) {
                 ExpressionCategory cat1 = getCategory(operands[0]);
                 ExpressionCategory cat2 = getCategory(operands[1]);
-                ++vec.operandPair(cat1, cat2);
+                //++vec.operandPair(cat1, cat2);
             }
 #ifdef NORMALIZED_UNPARSED_INSTRUCTIONS
             if (insnNumber + 1 < windowSize) {
@@ -433,6 +434,15 @@ createVectorsForAllInstructions(SgNode* top, const std::string& filename, const 
 #endif
         }
 
+        int tmp; 
+        for(int i = 0 ; i < x86_last_instruction; i++){
+           tmp = vec.totalForVariant(i); 
+           if ( tmp != 0  ){ 
+             vec.totalForVariant(i) = 10*round(log10(vec.totalForVariant(i)/log(2)));
+           }
+        }
+
+        //vec.totalForVariant(x86_mov) = 0;
         // Add vector to database
         addVectorToDatabase(tx, vec, functionName, functionId, 0, normalizedUnparsedInstructions,
                             &insns[0], filename, insnCount, stride);

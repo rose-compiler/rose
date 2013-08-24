@@ -747,7 +747,7 @@ main(int argc, char *argv[])
         decompressVector(f2_compressed->compressedCounts.get(), f2_compressed->compressedCounts.size(), f2_uncompressed.get());
  
         int hamming_d   = 0;
-        int euclidean_d = 0;
+        double euclidean_d = 0;
 
  
         int f1_v=0;
@@ -777,7 +777,7 @@ main(int argc, char *argv[])
         stmt->bind(6, cmd_id);
         stmt->bind(7, hamming_d);
         stmt->bind(8, euclidean_d);
-        stmt->bind(9, hamming_d + euclidean_d);
+        stmt->bind(9, hamming_d + (int)euclidean_d);
         stmt->execute();
     }
     
