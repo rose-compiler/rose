@@ -58,10 +58,20 @@ class Edge {
   Flow& operator+=(Flow& s2);
   string toDot(Labeler *labeler);
   LabelSet nodeLabels();
+  LabelSet functionEntryLabels();
   LabelSet sourceLabels();
   LabelSet targetLabels();
   LabelSet pred(Label label);
   LabelSet succ(Label label);
+  LabelSet reachableNodes(Label start);
+
+  //LabelSet reachableNodesOnPath(Label start, Label target);
+  /* computes all nodes which are reachable in the graph from the start node. A path is terminated by either the target node 
+	or by a node without successors. The start node is not included in the result set, except
+     it is reachable on some path starting from the start node.
+  */
+  LabelSet reachableNodesButNotBeyondTargetNode(Label start, Label target);
+
   Flow inEdges(Label label);
   Flow outEdges(Label label);
   Flow outEdgesOfType(Label label, EdgeType edgeType);
@@ -82,7 +92,6 @@ class Edge {
   bool _dotOptionFixedColor;
   string _fixedColor;
   bool _dotOptionHeaderFooter;
-  EdgeSet _hiddenFCLocalEdges;
 };
 
 class InterEdge {
@@ -112,6 +121,9 @@ class CFAnalyzer {
   Label initialLabel(SgNode* node);
   LabelSet finalLabels(SgNode* node);
   LabelSet functionCallLabels(Flow& flow);
+  LabelSet functionEntryLabels(Flow& flow);
+  Label correspondingFunctionExitLabel(Label entryLabel);
+  LabelSetSet functionLabelSetSets(Flow& flow);
   Flow flow(SgNode* node);
   Flow flow(SgNode* s1, SgNode* s2);
   Labeler* getLabeler();

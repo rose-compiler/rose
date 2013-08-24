@@ -31,6 +31,7 @@ class DataDependenceVisualizer {
   //! requires UDAstAttribute
   void generateUseDefDotGraph(SgNode* root, string fileName);
   void includeFlowGraphEdges(Flow* flow) { _flow=flow; }
+  void generateDotFunctionClusters(LabelSetSet functionLabelSetSet);
   string nodeSourceCode(Label lab);
   bool _showSourceCode;
  private:
@@ -43,6 +44,7 @@ class DataDependenceVisualizer {
   string  _useDefAttributeName;
   int _mode;
   Flow* _flow;
+  string _dotFunctionClusters;
 };
 
 #endif

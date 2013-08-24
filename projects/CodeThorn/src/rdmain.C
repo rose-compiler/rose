@@ -37,7 +37,7 @@ void printAttributes(Labeler* labeler, VariableIdMapping* vim, string attributeN
   for(long i=0;i<labelNum;++i) {
 	Label lab=i;
 	SgNode* node=labeler->getNode(i);
-	cout<<"@Label "<<lab<<":";
+	//	cout<<"@Label "<<lab<<":";
 	T* node0=dynamic_cast<T*>(node->getAttribute(attributeName));
 	if(node0)
 	  node0->toStream(cout,vim);

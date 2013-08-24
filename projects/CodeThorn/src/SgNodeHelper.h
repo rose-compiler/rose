@@ -189,7 +189,7 @@ namespace SgNodeHelper {
   //! returns the first child of an arbitrary AST node (throws exception if numChildren==0)
   SgNode* getFirstChild(SgNode* node);
 
-  //! return a function-call's list of actual parameters
+  //! return a function-call's argument list
   SgExpressionPtrList& getFunctionCallActualParameterList(SgNode* node);
 
   //! return a function-definition's list of formal paramters

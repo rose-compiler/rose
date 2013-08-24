@@ -58,11 +58,17 @@ void DataDependenceVisualizer::generateDot(SgNode* root, string fileName) {
   std::ofstream myfile;
   myfile.open(fileName.c_str(),std::ios::out);
   myfile<<"digraph DataDependence {"<<endl;
-  stringstream ss;
+  myfile<<_dotFunctionClusters;
+#if 1
+  long labelNum=_labeler->numberOfLabels(); // may change this to Flow. (make it dependent, whether _flow exists)
+#else
   long labelNum=_labeler->numberOfLabels();
+#endif
   for(long i=0;i<labelNum;++i) {
 	Label lab=i;
 	SgNode* node=_labeler->getNode(i);
+	if(!node)
+	  continue;
 	if(existsUDAstAttribute(node,_useDefAttributeName)) {
 	  VariableIdSet useVarSet=useVars(node);
 	  for(VariableIdSet::iterator i=useVarSet.begin();i!=useVarSet.end();++i) {
@@ -119,4 +125,15 @@ UDAstAttribute* DataDependenceVisualizer::getUDAstAttribute(SgNode* expr,string 
 }
 bool DataDependenceVisualizer::existsUDAstAttribute(SgNode* expr,string attributeName){
   return expr->attributeExists(attributeName);
+}
+void DataDependenceVisualizer::generateDotFunctionClusters(LabelSetSet functionLabelSetSet) {
+  string result;
+  for(LabelSetSet::iterator i=functionLabelSetSet.begin();i!=functionLabelSetSet.end();++i) {
+	result+="{ ";
+	for(LabelSet::iterator j=(*i).begin();j!=(*i).end();++j) {
+	  // xxx TODO
+	}
+	result+="}\n";
+  }
+  _dotFunctionClusters=result;
 }
