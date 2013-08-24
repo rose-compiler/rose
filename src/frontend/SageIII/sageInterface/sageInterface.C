@@ -10816,12 +10816,17 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
          fTable->set_parent(getGlobalScope(scope));
        }
 
+#if 0
+     printf ("In SageInterface::fixStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+
   // Liao 4/23/2010,  Fix function symbol
   // This could happen when users copy a function, then rename it (func->set_name()), and finally insert it to a scope
      SgFunctionDeclaration               * func         = isSgFunctionDeclaration(stmt);
      SgMemberFunctionDeclaration         * mfunc        = isSgMemberFunctionDeclaration(stmt);
      SgTemplateFunctionDeclaration       * tfunc        = isSgTemplateFunctionDeclaration(stmt);
      SgTemplateMemberFunctionDeclaration * tmfunc       = isSgTemplateMemberFunctionDeclaration(stmt);
+     SgProcedureHeaderStatement          * procfunc     = isSgProcedureHeaderStatement(stmt);
 
      if (tmfunc != NULL)
        assert(tmfunc->variantT() == V_SgTemplateMemberFunctionDeclaration);
@@ -10829,6 +10834,8 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
        assert(mfunc->variantT() == V_SgMemberFunctionDeclaration || mfunc->variantT() == V_SgTemplateInstantiationMemberFunctionDecl);
      else if (tfunc != NULL)
        assert(tfunc->variantT() == V_SgTemplateFunctionDeclaration);
+     else if (procfunc != NULL)
+        assert(procfunc->variantT() == V_SgProcedureHeaderStatement);
      else if (func != NULL)
        assert(func->variantT() == V_SgFunctionDeclaration || func->variantT() == V_SgTemplateInstantiationFunctionDecl);
      else assert(false);
@@ -10880,12 +10887,33 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
          // func_symbol = scope->lookup_template_function_symbol (func->get_name(), func->get_type(),NULL);
             func_symbol = scope->lookup_template_function_symbol (func->get_name(), func->get_type(),&templateParameterList);
           }
+          else if (procfunc != NULL)
+          {
+#if 1
+            printf ("In SageInterface::fixStatement(): procfunc->get_name() = %s calling lookup_function_symbol() \n",procfunc->get_name().str());
+#endif
+            func_symbol = scope->lookup_function_symbol (procfunc->get_name(), procfunc->get_type());
+            assert(func_symbol != NULL);
+          }
           else if (func != NULL)
           {
+#if 0
+            printf ("In SageInterface::fixStatement(): func->get_name() = %s calling lookup_function_symbol() \n",func->get_name().str());
+#endif
             SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(func);
             SgTemplateArgumentPtrList* templateArgumentList = (templateInstantiationFunctionDecl != NULL) ? &(templateInstantiationFunctionDecl->get_templateArguments()) : NULL;
          // func_symbol = scope->lookup_function_symbol (func->get_name(), func->get_type(),NULL);
             func_symbol = scope->lookup_function_symbol (func->get_name(), func->get_type(),templateArgumentList);
+
+         // DQ (8/23/2013): Adding support for when the symbol is not present.  This can happen when building a new function as a copy of an existing
+         // function the symantics of the copy is that it will not add the symbol (since it does not know the scope). So this function is the first
+         // opportunity to fixup the function to have a symbol in the scope's symbol table.
+            if (func_symbol == NULL)
+               {
+              // scope->print_symboltable("In SageInterface::fixStatement()");
+                 func_symbol = new SgFunctionSymbol(func);
+                 scope->insert_symbol(func->get_name(), func_symbol);
+               }
           }
           else 
           {
@@ -10897,6 +10925,7 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
 #if 0
           printf ("In SageInterface::fixStatement(): func_symbol = %p \n",func_symbol);
 #endif
+
           assert(func_symbol != NULL);
         }
    }
