@@ -37,6 +37,7 @@ class DFAnalyzer {
   ResultAccess& getResultAccess();
   void attachResultsToAst(string);
   Labeler* getLabeler();
+  CFAnalyzer* getCFAnalyzer();
   VariableIdMapping* getVariableIdMapping();
   Flow* getFlow() { return &_flow; }
   void setSolverMode(SolverMode);

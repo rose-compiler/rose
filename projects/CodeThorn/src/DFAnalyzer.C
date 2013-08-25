@@ -333,6 +333,11 @@ void DFAnalyzer<LatticeType>::attachResultsToAst(string attributeName) {
 }
 
 template<typename LatticeType>
+CFAnalyzer* DFAnalyzer<LatticeType>::getCFAnalyzer() {
+  return _cfanalyzer;
+}
+
+template<typename LatticeType>
 Labeler* DFAnalyzer<LatticeType>::getLabeler() {
   return _labeler;
 }

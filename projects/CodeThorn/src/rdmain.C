@@ -77,9 +77,9 @@ int main(int argc, char* argv[]) {
 #endif
   cout << "INFO: generating visualization data."<<endl;
   // generate ICFG visualization
-  cout << "generating cfg.dot."<<endl;
+  cout << "generating icfg.dot."<<endl;
   Flow* flow=rdAnalyzer->getFlow();
-  write_file("cfg.dot", flow->toDot(rdAnalyzer->getLabeler()));
+  write_file("icfg.dot", flow->toDot(rdAnalyzer->getLabeler()));
   cout << "generating datadependencegraph.dot."<<endl;
   DataDependenceVisualizer ddvis0(rdAnalyzer->getLabeler(),
                                  rdAnalyzer->getVariableIdMapping(),
@@ -93,10 +93,21 @@ int main(int argc, char* argv[]) {
   DataDependenceVisualizer ddvis1(rdAnalyzer->getLabeler(),
                                  rdAnalyzer->getVariableIdMapping(),
 								 "ud-analysis");
-
   ddvis1.includeFlowGraphEdges(flow);
   ddvis1.generateDefUseDotGraph(root,"icfgdatadependencegraph.dot");
   flow->resetDotOptions();
+
+  cout << "generating icfgdatadependencegraph_clustered.dot."<<endl;
+  DataDependenceVisualizer ddvis2(rdAnalyzer->getLabeler(),
+                                 rdAnalyzer->getVariableIdMapping(),
+								 "ud-analysis");
+  ddvis2.generateDotFunctionClusters(root,rdAnalyzer->getCFAnalyzer(),"icfgdatadependencegraph_clustered.dot",true);
+
+  cout << "generating icfg_clustered.dot."<<endl;
+  DataDependenceVisualizer ddvis3(rdAnalyzer->getLabeler(),
+                                 rdAnalyzer->getVariableIdMapping(),
+								 "ud-analysis");
+  ddvis3.generateDotFunctionClusters(root,rdAnalyzer->getCFAnalyzer(),"icfg_clustered.dot",false);
 
   cout << "INFO: annotating analysis results as comments."<<endl;
   AstAnnotator ara(rdAnalyzer->getLabeler());

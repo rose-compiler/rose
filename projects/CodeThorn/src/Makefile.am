@@ -288,6 +288,7 @@ vizjpg: transitiongraph1.dot transitiongraph2.dot cfg.dot ast.dot
 clean-local:
 	rm -f *.dot
 	rm -f *.ps
+	rm -f *.jpg
 	rm -f viz/*
 	rm -f bsps/*
 	rm -f *.consistent Problem*.[0-9].csv

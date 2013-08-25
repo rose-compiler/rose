@@ -58,7 +58,6 @@ class Edge {
   Flow& operator+=(Flow& s2);
   string toDot(Labeler *labeler);
   LabelSet nodeLabels();
-  LabelSet functionEntryLabels();
   LabelSet sourceLabels();
   LabelSet targetLabels();
   LabelSet pred(Label label);
@@ -124,6 +123,7 @@ class CFAnalyzer {
   LabelSet functionEntryLabels(Flow& flow);
   Label correspondingFunctionExitLabel(Label entryLabel);
   LabelSetSet functionLabelSetSets(Flow& flow);
+  LabelSet functionLabelSet(Label entryLabel, Flow& flow);
   Flow flow(SgNode* node);
   Flow flow(SgNode* s1, SgNode* s2);
   Labeler* getLabeler();

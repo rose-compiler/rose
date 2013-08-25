@@ -92,6 +92,9 @@ LabelSet& operator+=(LabelSet& s2) {
    ss<<"}";
    return ss.str();
  }
+ bool isElement(Label lab) {
+   return find(lab)!=end();
+ }
 };
 
  typedef std::set<LabelSet> LabelSetSet;

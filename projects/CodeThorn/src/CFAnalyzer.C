@@ -212,11 +212,16 @@ LabelSetSet CFAnalyzer::functionLabelSetSets(Flow& flow) {
   LabelSet feLabels=functionEntryLabels(flow);
   for(LabelSet::iterator i=feLabels.begin();i!=feLabels.end();++i) {
 	Label entryLabel=*i;
-	Label exitLabel=correspondingFunctionExitLabel(entryLabel);
-	LabelSet fLabels=flow.reachableNodesButNotBeyondTargetNode(entryLabel,exitLabel);
+	LabelSet fLabels=functionLabelSet(entryLabel, flow);
 	result.insert(fLabels);
   }
   return result;
+}
+
+LabelSet CFAnalyzer::functionLabelSet(Label entryLabel, Flow& flow) {
+	Label exitLabel=correspondingFunctionExitLabel(entryLabel);
+	LabelSet fLabels=flow.reachableNodesButNotBeyondTargetNode(entryLabel,exitLabel);
+	return fLabels;
 }
 
 string InterFlow::toString() const {
@@ -797,8 +802,8 @@ LabelSet Flow::reachableNodesButNotBeyondTargetNode(Label start, Label target) {
 	for(LabelSet::iterator i=toVisitSet.begin();i!=toVisitSet.end();++i) {
 	  LabelSet succSet=succ(*i);
 	  for(LabelSet::iterator j=succSet.begin();j!=succSet.end();++j) {
-		if(reachableNodes.find(*j)!=reachableNodes.end())
-		  newToVisitSet+=succSet;
+		if(reachableNodes.find(*j)==reachableNodes.end())
+		  newToVisitSet.insert(*j);
 	  }
 	}
 	toVisitSet=newToVisitSet;
