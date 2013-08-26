@@ -589,9 +589,14 @@ namespace OmpSupport
       case e_map_out: result = "out"; break;
       case e_map_inout: result = "inout"; break;
 
+      case e_simd: result = "simd"; break;
+      case e_safelen: result = "safelen"; break;
+      case e_linear: result = "linear"; break;
+      case e_uniform: result = "uniform"; break;
+      case e_aligned: result = "aligned"; break;
+
       case e_not_omp: result = "not_omp"; break;
     }
-
     // Not true for Fortran!!
     //    if (isDirective(omp_type))
     //      result= "omp " + result;
@@ -646,6 +651,7 @@ namespace OmpSupport
       case e_target_declare:
       case e_target_data:
       case e_target_update: //TODO more later
+      case e_simd:
 
         result = true;
         break;
@@ -853,6 +859,8 @@ namespace OmpSupport
 
       case e_ordered_directive:
 
+      case e_simd:
+
         // Fortran only end directives
         //      case e_end_critical:
         //      case e_end_do:
@@ -904,6 +912,10 @@ namespace OmpSupport
      // experimental accelerator clauses 
       case e_map:
       case e_device:
+      case e_safelen:
+      case e_linear:
+      case e_uniform:
+      case e_aligned:
 
         result = true; 
         break;
@@ -1043,6 +1055,7 @@ namespace OmpSupport
       if((omp_type == e_if)||
           (omp_type ==e_num_threads)||
           (omp_type ==e_device)||
+          (omp_type ==e_safelen)||
           (omp_type == e_collapse)
         )
       {
@@ -1062,6 +1075,9 @@ namespace OmpSupport
           (omp_type == e_firstprivate)||
           (omp_type == e_shared)||
           (omp_type == e_copyin)||
+          (omp_type == e_linear)||
+          (omp_type == e_uniform)||
+          (omp_type == e_aligned)||
           (omp_type == e_lastprivate)
           )
       {

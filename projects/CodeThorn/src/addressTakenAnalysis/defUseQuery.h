@@ -149,8 +149,11 @@ public:
   void visit(SgFunctionCallExp* sgn);
   void visit(SgExprListExp* sgn);
   void visit(SgConditionalExp* sgn);
-
   
+  void visit(SgAssignInitializer* sgn);
+  void visit(SgConstructorInitializer* sgn);
+  void visit(SgAggregateInitializer* sgn);
+
   // recursion undwinds on basic expressions
   // that represent memory
   //  
@@ -159,15 +162,13 @@ public:
   void visit(SgPointerDerefExp* sgn);
   void visit(SgDotExp* sgn);
   void visit(SgArrowExp* sgn);
-
   void visit(SgInitializedName* sgn);
-  void visit(SgAssignInitializer* sgn);
-  void visit(SgConstructorInitializer* sgn);
-  void visit(SgAggregateInitializer* sgn);
 
+  // no processing required
   void visit(SgValueExp* sgn);
   void visit(SgFunctionRefExp* sgn);
   void visit(SgMemberFunctionRefExp* sgn);
+  void visit(SgThisExp* sgn);
 
   void visit(SgExpression* sgn);
 
@@ -177,24 +178,6 @@ public:
 
   DefUseVarsInfo getDefUseVarsInfo();
 };
-
-class LvalueExprWalker : public ROSE_VisitorPatternDefaultBase
-{
-  VariableIdMapping& vidm;
-  bool isModExpr;
-  DefUseVarsInfo duvi;
-public:
-  LvalueExprWalker(VariableIdMapping& _vidm, bool _isModExpr);
-  void visit(SgVarRefExp* sgn);
-  void visit(SgPntrArrRefExp* sgn);
-  void visit(SgPointerDerefExp* sgn);
-  void visit(SgDotExp* sgn);
-  void visit(SgArrowExp* sgn);
-  void visit(SgInitializedName* sgn);
-
-  DefUseVarsInfo getDefUseVarsInfo();
-};
-
 
 // interface function to
 // identify modified and used locations based on syntax
@@ -210,11 +193,6 @@ DefUseVarsInfo getDefUseVarsInfo(SgNode* sgn, VariableIdMapping& vidm);
 // @duvi: the defuse object that will be built
 // @isModExpr: set to true if the expression is modifying a memory location
 DefUseVarsInfo getDefUseVarsInfo_rec(SgNode* sgn, VariableIdMapping& vidm, bool isModExpr);
-
-// used to process the lhs of assignment operator
-// invokes a visitor pattern and adds the modified variables
-// to def_vars_info and used variables to use_vars_info of duvi object
-DefUseVarsInfo getDefUseVarsInfoLvalue(SgNode* sgn, VariableIdMapping& vidm, bool isModExpr);
 
 #endif
 

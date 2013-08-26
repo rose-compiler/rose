@@ -22,9 +22,7 @@ int main (int argc, char *argv[])
   SgFunctionParameterList * paraList = buildFunctionParameterList();
 
 	  // build a Fortran subroutine declaration 
-  SgProcedureHeaderStatement* func1 = buildProcedureHeaderStatement\
-     ("TEST1",buildVoidType(),paraList, 
-     SgProcedureHeaderStatement::e_subroutine_subprogram_kind);
+  SgProcedureHeaderStatement* func1 = buildProcedureHeaderStatement("TEST1",buildVoidType(),paraList,SgProcedureHeaderStatement::e_subroutine_subprogram_kind);
 
 	  // build a statement inside the function body
   SgBasicBlock *func_body = func1->get_definition ()->get_body ();
@@ -43,9 +41,7 @@ int main (int argc, char *argv[])
   SgFunctionParameterList * paraList2 = buildFunctionParameterList();
 
 	  // build a Fortran subroutine declaration 
-  SgProcedureHeaderStatement* func2 = buildProcedureHeaderStatement\
-     ("TEST2",buildVoidType(),paraList2, 
-     SgProcedureHeaderStatement::e_subroutine_subprogram_kind);
+  SgProcedureHeaderStatement* func2 = buildProcedureHeaderStatement("TEST2",buildVoidType(),paraList2,SgProcedureHeaderStatement::e_subroutine_subprogram_kind);
 
 	  // build a statement inside the function body
   SgBasicBlock *func_body2 = func2->get_definition ()->get_body ();

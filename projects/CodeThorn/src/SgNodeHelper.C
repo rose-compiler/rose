@@ -338,10 +338,10 @@ SgNodeHelper::getSymbolOfVariable(SgVarRefExp* varRefExp) {
 
 SgSymbol*
 SgNodeHelper::getSymbolOfInitializedName(SgInitializedName* initName) {
-  if(initName->get_prev_decl_item()==0 && initName->get_symbol_from_symbol_table()==0) {
-    cerr<<"WARNING: SgInitializedName: symbol-look-up would fail: get_name()=="<<initName->get_name()<< " .. skipping."<<endl;
-    return 0;
-  }
+  //if(initName->get_prev_decl_item()==0 && initName->get_symbol_from_symbol_table()==0) {
+    //cerr<<"WARNING: SgInitializedName: symbol-look-up would fail: get_name()=="<<initName->get_name()<< " .. skipping."<<endl;
+    //return 0;
+	//}
   SgSymbol* varsym=initName->search_for_symbol_from_symbol_table();
   return varsym;
 }
