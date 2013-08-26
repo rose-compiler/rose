@@ -784,6 +784,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                case V_SgOmpWorkshareStatement:
                case V_SgOmpSingleStatement:
                case V_SgOmpTaskStatement:
+               case V_SgOmpSimdStatement:
                     unparseOmpGenericStatement (stmt, info); 
                     break;
 
@@ -4350,12 +4351,21 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
     case V_SgOmpPrivateClause:
       curprint(string(" private("));
       break;
+    case V_SgOmpUniformClause:
+      curprint(string(" uniform("));
+      break;
+    case V_SgOmpAlignedClause:
+      curprint(string(" aligned("));
+      break;
     case V_SgOmpReductionClause:
       {
         curprint(string(" reduction("));
         //reductionOperatorToString() will handle language specific issues 
         curprint(reductionOperatorToString(isSgOmpReductionClause(c)->get_operation()));
         curprint(string(" : "));
+      break;
+    case V_SgOmpLinearClause:
+      curprint(string(" linear("));
       break;
       }
     case V_SgOmpMapClause:
@@ -4516,6 +4526,9 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
     case V_SgOmpReductionClause:
     case V_SgOmpMapClause:
     case V_SgOmpSharedClause:
+    case V_SgOmpLinearClause:
+    case V_SgOmpUniformClause:
+    case V_SgOmpAlignedClause:
       {     
         unparseOmpVariablesClause(isSgOmpVariablesClause(clause), info);
         break;
@@ -4734,6 +4747,12 @@ void UnparseLanguageIndependentConstructs::unparseOmpDirectivePrefixAndName (SgS
       {
         unparseOmpPrefix(info);
         curprint(string ("single "));
+        break;
+      }
+      case V_SgOmpSimdStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("simd "));
         break;
       }
      case V_SgOmpSectionsStatement:
