@@ -56,6 +56,7 @@ include_HEADERS =\
 	analysis/analysis_tester.h \
 	analysis/compose.h \
 	analysis/composed_analysis.h \
+	analysis/comp_shared_ptr.h \
         analysis/data_structures.h \
 	analysis/factor_trans_system.h \
 	analysis/graphIterator.h \
@@ -82,6 +83,14 @@ include_HEADERS =\
 	simpleAnalyses/VariableStateTransfer.h \
 	state/nodeState.h
 
+EXTRA_DIST = \
+	dbglog/dbgLogGraphTester.C \
+	dbglog/dbgLogTester.C \
+	dbglog/index.html \ # used by the dbglog system
+	src/factor_trans_systemTest.C \
+	img/divDL.gif \
+	img/divGO.gif
+
 FUSE_TESTS_DIR = $(top_srcdir)/projects/fuse/src/tests
 
 # for .C files
@@ -92,6 +101,7 @@ FUSE_C_TESTS = \
 	$(FUSE_TESTS_DIR)/compositionalTestInput2b.C \
 	$(FUSE_TESTS_DIR)/compositionalTestInput3.C \
 	$(FUSE_TESTS_DIR)/compositionalTestInput4.C \
+	$(FUSE_TESTS_DIR)/compositionalTestInput5.C \
 	$(FUSE_TESTS_DIR)/compositionalTestInput5b.C \
 	$(FUSE_TESTS_DIR)/compositionalTestInput6.C \
 	$(FUSE_TESTS_DIR)/compositionalTestInput7.C \
@@ -240,7 +250,3 @@ check-cxx: $(CXX_FUSE_TESTS)
 
 clean-local:
 	rm -rf *.dot *.png dbg/ *.passed *.failed *.out *.err
-
-EXTRA_DIST = \
-	img/divDL.gif \
-	img/divGO.gif
