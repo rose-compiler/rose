@@ -7,7 +7,7 @@ void CompDebugAssert(bool);
 
 int square(int arg)
 {
-	return arg*arg;
+  return arg*arg;
 }
 
 void main(int argc, char** argv)

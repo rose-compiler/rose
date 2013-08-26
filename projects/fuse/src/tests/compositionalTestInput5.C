@@ -11,8 +11,8 @@ int inc(int x)
 
 int foo(int a)
 {
-	if(a<=1) return 1;
-	else return foo(100) + foo(200);
+  if(a<=1) return 1;
+  else return foo(100) + foo(200);
 }
 
 int main(int argc, char** argv)

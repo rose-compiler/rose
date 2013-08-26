@@ -3,29 +3,29 @@ void CompDebugAssert(bool);
 int global;
 
 int noProp(int q) {
-	q = 101;
-	return 102;
+  q = 101;
+  return 102;
 }
 int PropThroughArg(int& q) {
-	q += 201;
-	int dummyToTestForNoProp;
-	return 202;
+  q += 201;
+  int dummyToTestForNoProp;
+  return 202;
 }
 int PropThroughRet1(int q) {
-	q += 301;
-	return q;
+  q += 301;
+  return q;
 }
 int PropThroughRet2(int q) {
-	q += 401;
-	return q;
+  q += 401;
+  return q;
 }
 int PropThroughRet3(int q) {
-	q += 501;
-	return q;
+  q += 501;
+  return q;
 }
 int PropThroughRet4(int q) {
-	q += 601;
-	return q;
+  q += 601;
+  return q;
 }
 
 int main()

@@ -7,12 +7,12 @@ void CompDebugAssert(bool);
 int global;
 
 /*int inc(int x)
-{ return x+1; }*/
+  { return x+1; }*/
 
 int foo(int a)
 {
-	if(a<=1) return 1;
-	else return foo(100);
+  if(a<=1) return 1;
+  else return foo(100);
 }
 
 int main(int argc, char** argv)

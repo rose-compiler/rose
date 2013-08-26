@@ -5,8 +5,8 @@ int global;
 // ConstProp:
 // LiveDead: 
 int noLDProp(int& q) {
-	q = 101;
-	return 102;
+  q = 101;
+  return 102;
 }
 // ConstProp:
 // LiveDead: 
@@ -14,8 +14,8 @@ int noLDProp(int& q) {
 // ConstProp:
 // LiveDead: 
 int LDPropThroughArg(int& q) {
-	q += 201;
-	return 202;
+  q += 201;
+  return 202;
 }
 // ConstProp: returned 202
 // LiveDead: 
@@ -23,8 +23,8 @@ int LDPropThroughArg(int& q) {
 // ConstProp: q=0
 // LiveDead: q
 int LDPropThroughArgAndRet0(int& q) {
-	q += 301;
-	return q;
+  q += 301;
+  return q;
 }
 // ConstProp: q=301, returned 301
 // LiveDead: q
@@ -32,8 +32,8 @@ int LDPropThroughArgAndRet0(int& q) {
 // ConstProp: q=105
 // LiveDead: q
 int LDPropThroughArgAndRet1(int& q) {
-	q += 401;
-	return q;
+  q += 401;
+  return q;
 }
 // ConstProp: q=506, returned 506
 // LiveDead: q
@@ -41,8 +41,8 @@ int LDPropThroughArgAndRet1(int& q) {
 // ConstProp: q=top
 // LiveDead: q
 int LDPropThroughArgAndRet2(int& q) {
-	q += 501;
-	return q;
+  q += 501;
+  return q;
 }
 // ConstProp: q=top, returned top
 // LiveDead: q
