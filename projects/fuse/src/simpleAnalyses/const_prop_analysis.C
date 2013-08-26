@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "const_prop_analysis.h"
 
 #include <boost/bind.hpp>

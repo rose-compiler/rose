@@ -1,7 +1,6 @@
 #ifndef ABSTRACT_OBJECT_H
 #define ABSTRACT_OBJECT_H
 
-#include "rose.h"
 #include "widgets.h"
 #include "partitions.h"
 #include "CallGraphTraverse.h"

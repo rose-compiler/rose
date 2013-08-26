@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "ortho_array_analysis.h"
 #include "compose.h"
 #include <boost/make_shared.hpp>

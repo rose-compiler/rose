@@ -1,6 +1,5 @@
 #pragma once
 #include "compose.h"
-#include <rose.h>
 #include <string>
 #include <map>
 #include <list>

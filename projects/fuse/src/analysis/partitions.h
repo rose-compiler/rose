@@ -1,6 +1,5 @@
 #pragma once
 
-#include "rose.h"
 #include <boost/function.hpp>
 //#include <boost/lambda/lambda.hpp>
 //#include <boost/lambda/bind.hpp>

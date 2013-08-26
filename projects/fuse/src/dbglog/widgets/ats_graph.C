@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "widgets.h"
 #include "ats_graph.h"
 #include "saveDotAnalysis.h"

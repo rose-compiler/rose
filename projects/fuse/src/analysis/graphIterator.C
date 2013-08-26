@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "graphIterator.h"
 #include <boost/make_shared.hpp>
 

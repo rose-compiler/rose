@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "nodeState.h"
 #include "compose.h"
 

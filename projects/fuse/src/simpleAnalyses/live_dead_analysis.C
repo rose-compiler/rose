@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "live_dead_analysis.h"
 #include "compose.h"
 #include <boost/make_shared.hpp>

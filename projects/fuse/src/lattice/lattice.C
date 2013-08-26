@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "latticeFull.h"
 
 #include <sstream>

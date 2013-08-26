@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "partitions.h"
 #include "abstract_object.h"
 #include "compose.h"

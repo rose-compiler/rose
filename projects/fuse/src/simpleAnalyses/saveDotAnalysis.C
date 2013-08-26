@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "saveDotAnalysis.h"
 #include "partitions.h"
 #include <fstream>

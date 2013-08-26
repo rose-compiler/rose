@@ -1,7 +1,6 @@
 #ifndef DATAFLOW_CFG_H
 #define DATAFLOW_CFG_H
 
-#include "rose.h"
 #include <map>
 #include <string>
 #include <vector>

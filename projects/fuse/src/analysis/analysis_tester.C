@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "analysis_tester.h"
 #include "factor_trans_system.h"
 

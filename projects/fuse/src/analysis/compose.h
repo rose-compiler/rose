@@ -1,7 +1,6 @@
 #ifndef COMPOSE_H
 #define COMPOSE_H
 
-#include "rose.h"
 #include "analysis.h"
 #include "abstract_object.h"
 #include "partitions.h"

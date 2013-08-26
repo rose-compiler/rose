@@ -1,5 +1,5 @@
 //#include "variables.h"
-#include "virtualCFG.h"
+#include "sage3basic.h"
 #include "VirtualCFGIterator.h"
 #include <boost/make_shared.hpp>
 

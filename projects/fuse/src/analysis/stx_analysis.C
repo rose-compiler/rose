@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "stx_analysis.h"
 #include <map>
 #include <typeinfo>

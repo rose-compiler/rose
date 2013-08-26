@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include <iostream>
 #include "abstract_object_map.h"
 #include "nodeState.h"

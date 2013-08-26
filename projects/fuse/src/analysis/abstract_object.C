@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "abstract_object.h"
 #include "stx_analysis.h"
 #include <iostream>

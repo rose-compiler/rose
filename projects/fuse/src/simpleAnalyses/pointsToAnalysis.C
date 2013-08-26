@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "pointsToAnalysis.h"
 
 using namespace dbglog;

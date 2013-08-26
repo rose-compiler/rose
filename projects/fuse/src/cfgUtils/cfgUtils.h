@@ -3,8 +3,8 @@
 
 #include <set>
 #include <string>
-#include "rose.h"
 #include "widgets.h"
+
 namespace fuse
 {
   // Returns whether a given AST node that represents a constant is an integer and

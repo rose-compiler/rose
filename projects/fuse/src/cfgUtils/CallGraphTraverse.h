@@ -1,7 +1,6 @@
 #ifndef CALL_GRAPH_TRAVERSE_H
 #define CALL_GRAPH_TRAVERSE_H
 
-#include <sage3.h>
 #include "CallGraph.h"
 #include <map>
 #include <set>

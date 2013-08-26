@@ -1,4 +1,5 @@
 #define ANALYSIS_C
+#include "sage3basic.h"
 #include "VirtualCFGIterator.h"
 #include "cfgUtils.h"
 #include "CallGraphTraverse.h"

@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "dead_path_elim_analysis.h"
 
 using namespace std;

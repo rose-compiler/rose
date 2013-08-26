@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "abstract_object_set.h"
 #include <ostream>
 #include <typeinfo>

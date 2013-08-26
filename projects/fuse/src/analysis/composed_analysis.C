@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "analysis.h"
 #include "composed_analysis.h"
 #include "compose.h"
