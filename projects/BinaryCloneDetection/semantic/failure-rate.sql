@@ -113,7 +113,7 @@ create table fr_negative_pairs as
 -- Pairs of functions that were _detected_ as being similar.
 create table fr_clone_pairs as
     select func1_id, func2_id
-        from semantic_funcsim where similarity >= (select similarity_threshold from fr_settings) ;
+        from semantic_funcsim where ((euclidean_d < 14) OR (euclidean_d <= 20 AND euclidean_d >= 14 AND euclidean_d_ratio <= 0.08)  ) AND similarity >= (select similarity_threshold from fr_settings) ;
 
 -- Table of false negative pairs.  These are pairs of functions that were not determined to be similar but which are present
 -- in the fr_positives_pairs table.
