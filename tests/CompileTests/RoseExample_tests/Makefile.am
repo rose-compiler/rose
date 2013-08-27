@@ -89,6 +89,10 @@ test2: $(srcdir)/testRoseHeaders_02.C
 test3: $(srcdir)/testRoseHeaders_03.C
 	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C
 
+# This tests compiling: rose.h
+test3_debug: $(srcdir)/testRoseHeaders_03.C
+	libtool gdb --args ../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C
+
 # Same compilation but with optimization (which only effects the g++ compilation performance)
 test3_O2: $(srcdir)/testRoseHeaders_03.C
 	../../testGraphGeneration $(ROSE_FLAGS) -O2 -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C
