@@ -113,7 +113,7 @@ create table fr_negative_pairs as
 -- Pairs of functions that were _detected_ as being similar.
 create table fr_clone_pairs as
     select func1_id, func2_id
-        from semantic_funcsim where ((euclidean_d < 14) OR (euclidean_d <= 20 AND euclidean_d >= 14 AND euclidean_d_ratio <= 0.08)  ) AND similarity >= (select similarity_threshold from fr_settings) ;
+        from semantic_funcsim where ((euclidean_d < 14) OR (euclidean_d <= 20 AND euclidean_d >= 14 AND euclidean_d_ratio < 5)  ) AND similarity >= (select similarity_threshold from fr_settings) ;
 
 -- Table of false negative pairs.  These are pairs of functions that were not determined to be similar but which are present
 -- in the fr_positives_pairs table.
@@ -136,7 +136,7 @@ select 'The following table shows the true positives function pairs.
 Both functions of the pair always have the same name.' as "Notice";
 select
         func1.name as name,
-        sim.func1_id, sim.func2_id, sim.similarity, sim.hamming_d, sim.euclidean_d, sim.ncompares
+        sim.func1_id, sim.func2_id, sim.similarity, sim.hamming_d, sim.euclidean_d, sim.euclidean_d_ratio, sim.ncompares
     from fr_true_positives as falseneg
     join fr_functions as func1 on falseneg.func1_id = func1.id
     join fr_functions as func2 on falseneg.func2_id = func2.id
@@ -148,7 +148,7 @@ select 'The following table shows the false positives function pairs.
 Both functions of the pair always have the same name.' as "Notice";
 select
         func1.name as name,
-        sim.func1_id, sim.func2_id, sim.similarity, sim.hamming_d, sim.euclidean_d, sim.ncompares
+        sim.func1_id, sim.func2_id, sim.similarity, sim.hamming_d, sim.euclidean_d, sim.euclidean_d_ratio, sim.ncompares
     from fr_false_positives as falseneg
     join fr_functions as func1 on falseneg.func1_id = func1.id
     join fr_functions as func2 on falseneg.func2_id = func2.id
