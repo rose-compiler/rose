@@ -356,7 +356,7 @@ load_function_outputs(CachedOutputs &all_outputs, FunctionOutputs &function_outp
     if (found==function_outputs.end()) {
         SqlDatabase::StatementPtr stmt = transaction->statement("select igroup_id, ogroup_id"
                                                                 " from semantic_fio"
-                                                                " where func_id = ?"+
+                                                                " where func_id = ? AND (arguments_consumed > 0 OR globals_consumed > 0 OR pointers_consumed > 0 OR integers_consumed > 0)"+
                                                                 std::string(opt.ignore_faults?" and status = 0":""));
         stmt->bind(0, func_id);
         CachedOutputs outputs;
