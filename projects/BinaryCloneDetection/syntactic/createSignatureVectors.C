@@ -438,7 +438,7 @@ createVectorsForAllInstructions(SgNode* top, const std::string& filename, const 
         for(int i = 0 ; i < x86_last_instruction; i++){
            tmp = vec.totalForVariant(i); 
            if ( tmp != 0  ){ 
-             vec.totalForVariant(i) = 10*round(log10(vec.totalForVariant(i)/log(2)));
+             vec.totalForVariant(i) = round(log10(vec.totalForVariant(i)/log(2)));
            }
         }
 
