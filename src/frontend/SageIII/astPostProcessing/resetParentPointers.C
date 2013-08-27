@@ -632,19 +632,37 @@ ResetParentPointers::resetParentPointersInTemplateArgumentList ( const SgTemplat
                case SgTemplateArgument::nontype_argument:
                   {
                  // These can be boolean or integer values, for example.
-                    ROSE_ASSERT((*i)->get_expression() != NULL);
-                    SgExpression* argumentExpression = (*i)->get_expression();
-#if 0
-                    printf ("SgTemplateArgument::nontype_argument: argumentExpression = %p = %s \n",
-                         argumentExpression,argumentExpression->sage_class_name());
-#endif
-                    if (argumentExpression->get_parent() == NULL)
+
+                 // DQ (8/13/2013): Added support for nontype template arguments to be either an expression
+                 // (SgExpression) or a variable declaration (SgInitializedName)
+                 // ROSE_ASSERT((*i)->get_expression() != NULL);
+                    if ((*i)->get_expression() != NULL)
                        {
-#if DEBUG_PARENT_INITIALIZATION
-                         printf ("Setting parent in SgTemplateArgument::nontype_argument = %p = %s \n",
-                              argumentExpression,argumentExpression->sage_class_name());
+                         ROSE_ASSERT((*i)->get_initializedName() == NULL);
+                         SgExpression* argumentExpression = (*i)->get_expression();
+#if 0
+                         printf ("SgTemplateArgument::nontype_argument: argumentExpression = %p = %s \n",argumentExpression,argumentExpression->class_name().c_str());
 #endif
-                         argumentExpression->set_parent(*i);
+                         if (argumentExpression->get_parent() == NULL)
+                            {
+#if DEBUG_PARENT_INITIALIZATION
+                               printf ("Setting parent in SgTemplateArgument::nontype_argument = %p = %s \n",argumentExpression,argumentExpression->class_name().c_str());
+#endif
+                              argumentExpression->set_parent(*i);
+                            }
+                       }
+                      else
+                       {
+                         ROSE_ASSERT((*i)->get_initializedName() != NULL);
+                         SgInitializedName* argumentInitializedName = (*i)->get_initializedName();
+
+                         if (argumentInitializedName->get_parent() == NULL)
+                            {
+#if DEBUG_PARENT_INITIALIZATION
+                               printf ("Setting parent in SgTemplateArgument::nontype_argument = %p = %s \n",argumentInitializedName,argumentInitializedName->class_name().c_str());
+#endif
+                              argumentInitializedName->set_parent(*i);
+                            }
                        }
 
                  // printf ("Error: SgTemplateArgument::nontype_argument not implemented \n");
