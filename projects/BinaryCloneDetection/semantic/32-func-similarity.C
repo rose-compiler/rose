@@ -582,6 +582,18 @@ read_vector_data(const SqlDatabase::TransactionPtr &tx, scoped_array_with_size<V
 
         indexInVectors++;
     }
+
+    SqlDatabase::StatementPtr cmd3 = tx->statement( "select id, ninsns from semantic_functions");
+
+    for (SqlDatabase::Statement::iterator r=cmd3->begin(); r!=cmd3->end(); ++r) {
+        int functionId = r.get<int64_t>(0);
+        int ninsns     = r.get<int>(1);
+        if ( id_to_vec[functionId] != 0){
+          id_to_vec[functionId]->ninsns = ninsns;
+        }
+    }
+
+
 }
 
 
@@ -715,7 +727,7 @@ main(int argc, char *argv[])
                                                             // 0        1         2           3          4
                                                             "(func1_id, func2_id, similarity, ncompares, maxcompares,"
                                                             // 5           6
-                                                            " relation_id, cmd, hamming_d, euclidean_d, combined_d)"
+                                                            " relation_id, cmd, hamming_d, euclidean_d, euclidean_d_ratio)"
                                                             " values (?,?, ?, ?, ?, ?, ?, ?,?,?)");
     CachedOutputs all_outputs;
     FunctionOutputs func_outputs;
@@ -745,9 +757,11 @@ main(int argc, char *argv[])
  
         boost::scoped_array<uint16_t> f2_uncompressed(new uint16_t[vec_length]);
         decompressVector(f2_compressed->compressedCounts.get(), f2_compressed->compressedCounts.size(), f2_uncompressed.get());
+
  
-        int hamming_d   = 0;
-        double euclidean_d = 0;
+        int hamming_d            = 0;
+        double euclidean_d       = 0;
+        double euclidean_d_ratio = 0;
 
  
         int f1_v=0;
@@ -764,7 +778,11 @@ main(int argc, char *argv[])
         hamming_d = hamming_d;
         euclidean_d = sqrt(euclidean_d);
 
-       
+        int difference = abs(f1_compressed->ninsns-f2_compressed->ninsns);
+        if ( difference != 0  ){
+          euclidean_d_ratio = 100.0*euclidean_d/(abs(f1_compressed->ninsns+f2_compressed->ninsns));
+        }
+      
 
         if (opt.verbose)
             std::cerr <<argv0 <<": similarity(func1=" <<func1_id <<", func2=" <<func2_id <<") = " <<sim <<"\n";
@@ -777,7 +795,7 @@ main(int argc, char *argv[])
         stmt->bind(6, cmd_id);
         stmt->bind(7, hamming_d);
         stmt->bind(8, euclidean_d);
-        stmt->bind(9, hamming_d + (int)euclidean_d);
+        stmt->bind(9, euclidean_d_ratio);
         stmt->execute();
     }
     
