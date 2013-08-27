@@ -95,9 +95,7 @@ FUSE_TESTS_DIR = $(top_srcdir)/projects/fuse/src/tests
 
 # for .C files
 FUSE_C_TESTS = \
-	compositionalTestInput1.C \
 	compositionalTestInput1b.C \
-	compositionalTestInput2.C \
 	compositionalTestInput2b.C \
 	compositionalTestInput3.C \
 	compositionalTestInput4.C \
@@ -107,6 +105,10 @@ FUSE_C_TESTS = \
 	compositionalTestInput7.C \
 	compositionalTestInput.jisheng.C \
 	cp_test1.C 
+
+FUSE_C_TESTS_TIMING_OUT=\
+	compositionalTestInput1.C \
+	compositionalTestInput2.C
 
 # for .cpp files
 FUSE_CPP_TESTS = \
