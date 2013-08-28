@@ -5,7 +5,7 @@ void fixupAstDeclarationScope( SgNode* node )
    {
   // This function was designed to fixup what I thought were inconsistancies in how the 
   // defining and some non-defining declarations associated with friend declarations had 
-  // their scope set.  I now this this was not a problem, but it is helpful to enforce the
+  // their scope set.  I now know this this was not a problem, but it is helpful to enforce the
   // consistancy.  It might also be useful to process declarations with scopes set to 
   // namespace definitions, so that the namespace definition can be normalized to be 
   // consistant across all of the different re-entrant namespace definitions.  This is 
@@ -90,7 +90,7 @@ FixupAstDeclarationScope::visit ( SgNode* node )
      SgDeclarationStatement* declaration = isSgDeclarationStatement(node);
      if (declaration != NULL)
         {
-          SgDeclarationStatement* definingDeclaration         = declaration->get_definingDeclaration();
+       // SgDeclarationStatement* definingDeclaration         = declaration->get_definingDeclaration();
           SgDeclarationStatement* firstNondefiningDeclaration = declaration->get_firstNondefiningDeclaration();
 
        // Note that these declarations don't follow the same rules (namely the get_firstNondefiningDeclaration() can be NULL).

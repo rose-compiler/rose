@@ -404,6 +404,12 @@ namespace OmpSupport
           result = new SgOmpDeviceClause(param);
           break;
         }
+      case e_safelen:
+        {
+          SgExpression* param = checkOmpExpressionClause( att->getExpression(e_safelen).second, file );
+          result = new SgOmpDeviceClause(param);
+          break;
+        }
  
       default:
         {
@@ -797,6 +803,7 @@ namespace OmpSupport
       case e_collapse:
       case e_num_threads:
       case e_device:
+      case e_safelen:
         {
           result = buildOmpExpressionClause(att, c_clause_type);
           break;
@@ -875,6 +882,7 @@ namespace OmpSupport
         c_clause_type == e_critical||
         c_clause_type == e_parallel_for||
         c_clause_type == e_parallel_do||
+        c_clause_type == e_simd||
         c_clause_type == e_atomic
        )
     {
@@ -996,6 +1004,10 @@ namespace OmpSupport
         break;
        case e_target_data:
         result = new SgOmpTargetDataStatement(NULL, body); 
+        ROSE_ASSERT (result != NULL);
+        break;
+      case e_simd:
+        result = new SgOmpSimdStatement(NULL, body); 
         ROSE_ASSERT (result != NULL);
         break;
  
@@ -1372,6 +1384,7 @@ This is no perfect solution until we handle preprocessing information as structu
           case e_sections: 
           case e_target: // OMP-ACC directive
           case e_target_data: 
+          case e_simd:  // OMP 4.0 SIMD directive
             //fortran
           case e_do:
           case e_workshare:

@@ -388,7 +388,7 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
 #endif
 
 #if 0
-     printf ("Inside of unparseType(): info.SkipBaseType() = %s \n",info.SkipBaseType() ? "true" : "false");
+     printf ("In unparseType(): info.SkipBaseType() = %s \n",info.SkipBaseType() ? "true" : "false");
   // curprint ("\n /* In unparseType(): info.SkipBaseType() = " + string(info.SkipBaseType() ? "true" : "false") + " */ \n");
 #endif
 
@@ -401,6 +401,11 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
   // DQ (6/4/2011): Support for output of generated string for type (used where name 
   // qualification is required for subtypes (e.g. template arguments)).
      SgNode* nodeReferenceToType = info.get_reference_node_for_qualification();
+
+#if 0
+     printf ("In unparseType(): nodeReferenceToType = %p = %s \n",nodeReferenceToType,(nodeReferenceToType != NULL) ? nodeReferenceToType->class_name().c_str() : "null");
+#endif
+
      if (nodeReferenceToType != NULL)
         {
 #if 0
@@ -547,6 +552,9 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                          curprint ("/* In unparseType(): Skipping output of SgClassType */ \n");
 #endif
                        }
+
+#error "DEAD CODE!"
+
                       else
                        {
                          unparseClassType(type, info);
@@ -565,6 +573,8 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                   {
                  // if ( ( info.isWithType() && info.SkipBaseType() ) || info.isTypeSecondPart() )
                     if ( info.SkipBaseType() == true )
+#error "DEAD CODE!"
+
                        {
                       /* do nothing */
 #if 0
@@ -582,6 +592,8 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
 #endif
                          unparseTypedefType(type, info);
                        }
+#error "DEAD CODE!"
+
                     break;
                   }
 #endif
