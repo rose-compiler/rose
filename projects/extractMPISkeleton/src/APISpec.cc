@@ -1,7 +1,8 @@
 #include "APISpec.h"
+#include <iostream>
 
-GenericDepAttribute *APISpec::registerType(std::string type) {
-    std::map<std::string, GenericDepAttribute *>::iterator it =
+GenericDepAttribute *APISpec::registerType(const std::string & type) {
+    std::map<std::string, GenericDepAttribute *>::const_iterator it =
         types.find(type);
     if(it != types.end()) {
         std::cerr << "Type already registered: " << type << std::endl;
@@ -20,8 +21,8 @@ GenericDepAttribute *APISpec::registerType(std::string type) {
     return attr;
 }
 
-GenericDepAttribute *APISpec::lookupType(std::string type) {
-    std::map<std::string, GenericDepAttribute *>::iterator it =
+GenericDepAttribute *APISpec::lookupType(const std::string & type) const {
+    std::map<std::string, GenericDepAttribute *>::const_iterator it =
         types.find(type);
     if(it != types.end()) {
         return it->second;
@@ -31,41 +32,42 @@ GenericDepAttribute *APISpec::lookupType(std::string type) {
     }
 }
 
-GenericDepAttribute *APISpec::callType() {
+GenericDepAttribute *APISpec::callType() const {
     return callAttr;
 }
 
-uint32_t APISpec::nextTypeCode() {
+uint32_t APISpec::nextTypeCode() const {
     return mask;
 }
 
-ArgTreatments* APISpec::addFunction(std::string name,
+ArgTreatments* APISpec::addFunction(const std::string & name,
                                     int argCount,
-                                    GenericDepAttribute* defType) {
+                                    const GenericDepAttribute* defType) {
     argSpecs[name] = new ArgTreatments(argCount, defType);
     return argSpecs[name];
 }
 
-ArgTreatments* APISpec::getFunction(std::string name) {
-    return argSpecs[name];
+ArgTreatments* APISpec::getFunction(const std::string & name) const {
+    APIArgSpec::const_iterator it = argSpecs.find(name); 
+    return it != argSpecs.end() ? it->second : NULL;
 }
 
-bool APISpec::hasFunction(std::string name) {
+bool APISpec::hasFunction(const std::string & name) const {
     return argSpecs.find(name) != argSpecs.end();
 }
 
-bool APISpec::shouldOmit(GenericDepAttribute *attr) {
+bool APISpec::shouldOmit(const GenericDepAttribute *attr) const {
     bool omit = omitAttr->contains(attr) && attr->getDepType() != 0;
     return omit;
 }
 
-void APISpec::addOmitType(GenericDepAttribute *attr) {
+void APISpec::addOmitType(const GenericDepAttribute *attr) {
     omitAttr->join(attr);
 }
 
-APISpec *lookupFunction(APISpecs *specs, std::string name) {
-    APISpecs::iterator it;
-    for(it = specs->begin(); it != specs->end(); it++) {
+APISpec *lookupFunction(const APISpecs *specs, const std::string & name) {
+    APISpecs::const_iterator it;
+    for(it = specs->begin(); it != specs->end(); ++it) {
         APISpec *spec = *it;
         if(spec->hasFunction(name)) {
             return spec;

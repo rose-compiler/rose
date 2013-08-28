@@ -1,0 +1,440 @@
+===================================================
+checking F (Out 'U')
+[  [33mG[39m[33mD[39m[33mB[39m[35mY[39m[33mD[39m [33mC[39m[33mB[39m[35mV[39m[33mC[39m[35mY[39m[33mC[39m[35mY[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking WU (Not (Out 'Y')) (WU (Out 'Y') (WU (Not (Out 'Y')) (WU (Out 'Y') (G (Not (Out 'Y'))))))
+[  [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mA[39m[33mG[39m [33mG[39m[33mD[39m[33mA[39m[35mY[39m[33mB[39m [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m[33mD[39m[35mW[39m[33mA[39m[33mA[39m[33mB[39m[35mW[39m[33mC[39m[35mW[39m[33mD[39m[35mW[39m [33mG[39m[33mG[39m[33mG[39m[33mA[39m [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m[33mC[39m[35mW[39m[33mD[39m[35mW[39m[33mG[39m[33mA[39m[33mB[39m[35mW[39m[33mD[39m[35mW[39m[33mE[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (And (Out 'X') (Not (Out 'Z')))) (WU (Not (Out 'V')) (Out 'Z')))
+[  [33mE[39m[35mZ[39m[33mB[39m[33mA[39m [33mG[39m[33mC[39m[35mV[39m[33mC[39m[33mA[39m [33mG[39m[33mD[39m[35mY[39m[33mG[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m[33mD[39m[35mW[39m[33mD[39m[35mW[39m[33mC[39m[35mW[39m [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mC[39m[35mW[39m[33mF[39m[35mW[39m[33mD[39m[35mW[39m[33mC[39m[35mW[39m [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mC[39m[35mU[39m[33mA[39m [33mG[39m[33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mC[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking Or (Not (F (In 'A'))) (U (Not (Out 'U')) (Or (Out 'Y') (In 'A')))
+[  [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mC[39m[35mU[39m[33mE[39m[33mF[39m [33mC[39m[35mV[39m[33mG[39m[33mD[39m[33mA[39m [33mG[39m[33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mD[39m[35mU[39m[33mB[39m[33mG[39m[33mF[39m[33mF[39m[33mG[39m[33mG[39m[33mG[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking Or (G (Not (In 'F'))) (F (And (In 'F') (F (Out 'Y'))))
+[  [33mE[39m[33mF[39m[35mZ[39m[33mE[39m[35mY[39m[33mA[39m [33mG[39m[33mE[39m[33mG[39m[35mZ[39m[33mB[39m[33mD[39m [33mE[39m[33mF[39m[35mZ[39m[33mG[39m[35mY[39m[33mG[39m[33mG[39m[33mE[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (Out 'Z')) (F (Out 'X')))
+[  [33mE[39m[33mF[39m[35mZ[39m[33mF[39m[35mY[39m [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mG[39m[35mW[39m[33mG[39m[33mE[39m[33mB[39m[35mW[39m[33mF[39m[35mW[39m[33mB[39m[35mW[39m[33mF[39m[35mW[39m[33mB[39m[35mW[39m[33mC[39m[35mW[39m [33mG[39m[33mC[39m[35mV[39m[33mG[39m[33mC[39m[33mB[39m [33mG[39m[33mC[39m[35mV[39m[33mB[39m[35mY[39m[33mC[39m[35mY[39m[33mD[39m [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mB[39m[33mC[39m [33mG[39m[33mE[39m[35mZ[39m[33mG[39m[33mF[39m[35mY[39m[33mC[39m[35mU[39m[33mF[39m [33mC[39m[33mG[39m[35mV[39m[33mC[39m[33mD[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking Or (Not (F (In 'D'))) (U (Not (Out 'V')) (Or (Out 'X') (In 'D')))
+[  [33mG[39m[33mA[39m [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mC[39m[35mU[39m[33mG[39m [33mE[39m[35mZ[39m[33mG[39m[33mE[39m[33mE[39m [33mG[39m[33mC[39m[33mG[39m[35mV[39m[33mB[39m[33mG[39m[35mY[39m[33mD[39m*** Failed!  [33mC[39m[35mV[39m[33mG[39m[33mB[39m[35mY[39m[33mG[39m[33mD[39m [33mC[39m[33mB[39m[35mV[39m[33mG[39m[35mY[39m[33mD[39m [33mC[39m[33mG[39m[35mV[39m[33mD[39m [33mG[39m[33mD[39m[35mY[39m [33mC[39m[33mD[39m[35mV[39m [33mD[39m[35mY[39m [33mC[39m[35mV[39mFalsifiable (after 50 tests and 4 shrinks):  
+RersData "CD"
+ ]
+7 FALSE, found counterexample
+===================================================
+checking G (Or (Not (And (And (Out 'Y') (Not (Out 'U'))) (F (Out 'U')))) (U (Not (Out 'W')) (Out 'U')))
+[  [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mB[39m[33mA[39m [33mC[39m[33mB[39m[35mV[39m[33mC[39m[35mY[39m[33mF[39m[35mY[39m[33mG[39m[35mZ[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (Out 'U')) (F (Out 'Y')))
+[  [33mC[39m [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m[33mC[39m[35mW[39m[33mD[39m[35mW[39m[33mD[39m[35mW[39m[33mF[39m[35mW[39m[33mG[39m [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mD[39m[33mE[39m [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mC[39m[35mU[39m[33mE[39m[33mB[39m[35mX[39m[33mD[39m[33mE[39m[35mX[39m[33mB[39m[35mX[39m[33mF[39m[33mD[39m[33mC[39m [33mC[39m[33mB[39m[35mV[39m[33mE[39m[35mY[39m[33mE[39m [33mE[39m[33mF[39m[35mZ[39m[33mD[39m[35mY[39m[33mA[39m [33mG[39m[33mD[39m[33mE[39m[35mY[39m[33mD[39m[35mU[39m[33mG[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (And (In 'A') (Not (Out 'V')))) (WU (Not (Out 'Y')) (Out 'V')))
+[  [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m[33mB[39m[35mW[39m[33mA[39m [33mG[39m[33mG[39m[33mC[39m[33mG[39m[35mV[39m[33mF[39m [33mG[39m[33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mA[39m[35mW[39m[33mD[39m[35mW[39m[33mF[39m[35mW[39m [33mD[39m[33mE[39m[35mY[39m[33mG[39m[35mU[39m[33mC[39m[33mA[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (In 'D')) (F (Out 'U')))
+[  [33mG[39m[33mC[39m[33mB[39m[35mV[39m[33mF[39m[35mY[39m[33mE[39m [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mA[39m[35mW[39m[33mA[39m[33mE[39m[33mF[39m[35mW[39m[33mC[39m[35mW[39m [33mG[39m[33mE[39m[33mA[39m[35mZ[39m[33mC[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking WU (Not (Out 'V')) (Out 'Y')
+[  [33mG[39m [33mG[39m[33mE[39m[35mZ[39m[33mA[39m[33mG[39m [33mC[39m[33mB[39m[35mV[39m[33mE[39m[35mY[39m[33mB[39m*** Failed!  [33mC[39m[33mE[39m[35mV[39m[33mB[39m [33mE[39m[33mB[39m[35mZ[39m [33mC[39m[35mV[39m[33mB[39m [33mB[39m [33mC[39mFalsifiable (after 78 tests and 2 shrinks):  
+RersData "CB"
+ ]
+12 FALSE, found counterexample
+===================================================
+checking G (Or (Not (And (And (Out 'V') (Not (In 'D'))) (F (In 'D')))) (U (Not (Out 'W')) (In 'D')))
+[  [33mG[39m [33mC[39m[33mB[39m[35mV[39m[33mG[39m[35mY[39m[33mC[39m [33mC[39m[33mB[39m[35mV[39m[33mD[39m[35mY[39m[33mG[39m [33mG[39m[33mG[39m[33mG[39m[33mB[39m[33mB[39m [33mE[39m[33mG[39m[35mZ[39m[33mF[39m[33mA[39m[35mY[39m [33mG[39m[33mG[39m[33mG[39m[33mC[39m[35mV[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (Out 'U')) (F (Out 'W')))
+[  [33mC[39m[33mD[39m[35mV[39m [33mC[39m[33mG[39m[35mV[39m[33mG[39m[33mF[39m [33mG[39m[33mE[39m[33mG[39m[35mZ[39m[33mC[39m [33mG[39m[33mG[39m[33mE[39m[33mD[39m[35mZ[39m[33mC[39m [33mG[39m[33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m [33mE[39m[33mC[39m[35mZ[39m[33mE[39m[35mU[39m[33mE[39m[35mX[39m[33mG[39m[33mG[39m[33mB[39m[35mX[39m[33mB[39m[35mX[39m[33mC[39m[33mF[39m [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mB[39m[35mW[39m[33mB[39m[35mW[39m[33mB[39m[35mW[39m[33mE[39m[35mW[39m [33mD[39m[33mE[39m[35mY[39m[33mG[39m[35mU[39m[33mF[39m[33mG[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking WU (Not (Out 'U')) (WU (Out 'U') (WU (Not (Out 'U')) (WU (Out 'U') (G (Not (Out 'U'))))))
+[  [33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mA[39m[35mU[39m[33mD[39m [33mC[39m[33mB[39m[35mV[39m[33mB[39m[35mY[39m[33mC[39m [33mC[39m[33mG[39m[35mV[39m[33mD[39m[33mF[39m [33mG[39m[33mG[39m[33mD[39m[33mB[39m[35mY[39m[33mC[39m [33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mC[39m[35mU[39m[33mF[39m[33mE[39m[33mD[39m[33mC[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (And (In 'A') (Not (In 'B')))) (U (Not (In 'B')) (And (Out 'Y') (Not (In 'B')))))
+[  [33mG[39m[33mD[39m[33mE[39m[35mY[39m[33mG[39m[35mU[39m[33mE[39m[33mA[39m[35mW[39m[33mF[39m[35mW[39m [33mG[39m[33mE[39m[33mG[39m[35mZ[39m[33mA[39m [33mE[39m[33mC[39m[35mZ[39m[33mE[39m[35mU[39m[33mC[39m[35mX[39m[33mC[39m[33mC[39m[33mE[39m[33mG[39m[33mF[39m[33mE[39m[33mD[39m[33mG[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking WU (Not (Out 'X')) (In 'F')
+[  [33mA[39m [33mE[39m[35mZ[39m[33mG[39m[33mG[39m[33mF[39m[35mY[39m[33mC[39m[35mU[39m[33mG[39m [33mC[39m[35mV[39m[33mB[39m[35mY[39m[33mG[39m[33mC[39m[35mY[39m[33mE[39m[33mB[39m [33mG[39m[33mC[39m[33mE[39m[35mV[39m[33mC[39m [33mG[39m[33mC[39m[35mV[39m[33mE[39m[33mF[39m [33mG[39m[33mE[39m[33mE[39m[35mZ[39m[33mE[39m [33mG[39m[33mE[39m[33mF[39m[35mZ[39m[33mG[39m[35mY[39m[33mC[39m[33mG[39m[35mU[39m[33mC[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking WU (Not (Out 'X')) (In 'D')
+[  [33mE[39m [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mF[39m[35mW[39m[33mC[39m[35mW[39m[33mE[39m[35mW[39m[33mD[39m[35mW[39m[33mC[39m[35mW[39m[33mA[39m [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mB[39m[33mA[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (And (In 'D') (Not (Out 'U')))) (WU (Not (Out 'V')) (Out 'U')))
+[  [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mA[39m[35mW[39m[33mC[39m[35mW[39m[33mF[39m[35mW[39m[33mF[39m[35mW[39m[33mD[39m[35mW[39m[33mG[39m[33mD[39m[35mW[39m [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mG[39m[35mW[39m[33mC[39m[33mD[39m[35mW[39m[33mG[39m[35mW[39m[33mF[39m[33mF[39m[35mW[39m[33mD[39m[35mW[39m [33mC[39m[33mB[39m[35mV[39m[33mD[39m[35mY[39m[33mC[39m*** Failed!  [33mC[39m[33mD[39m[35mV[39m[33mC[39m [33mD[39m[33mC[39m[35mY[39m [33mC[39m[35mV[39m[33mC[39m [33mC[39m[33mD[39m[35mV[39m [33mD[39m [33mC[39mFalsifiable (after 68 tests and 2 shrinks):  
+RersData "CD"
+ ]
+19 FALSE, found counterexample
+===================================================
+checking G (Or (Not (And (Out 'Z') (Not (Out 'W')))) (WU (Not (Out 'W')) (And (Out 'Y') (Not (Out 'W')))))
+[  [33mG[39m[33mC[39m[33mD[39m[35mV[39m[33mC[39m [33mD[39m[33mG[39m[35mY[39m[33mB[39m[33mC[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking Or (Not (F (Out 'Y'))) (U (And (Not (Out 'U')) (Not (Out 'Y'))) (Or (Out 'Y') (U (And (Out 'U') (Not (Out 'Y'))) (Or (Out 'Y') (U (And (Not (Out 'U')) (Not (Out 'Y'))) (Or (Out 'Y') (U (And (Out 'U') (Not (Out 'Y'))) (Or (Out 'Y') (U (Not (Out 'U')) (Out 'Y'))))))))))
+[  [33mD[39m[33mG[39m[35mY[39m[33mD[39m[33mB[39m [33mG[39m[33mE[39m[33mE[39m[35mZ[39m[33mF[39m [33mG[39m[33mD[39m[33mF[39m[35mY[39m[33mG[39m [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mC[39m[35mW[39m[33mB[39m[35mW[39m[33mB[39m[35mW[39m[33mE[39m[35mW[39m[33mD[39m[35mW[39m[33mB[39m[35mW[39m[33mE[39m[33mG[39m [33mG[39m[33mD[39m[35mY[39m[33mC[39m[33mF[39m [33mG[39m[33mG[39m[33mG[39m[33mD[39m[33mD[39m[35mY[39m[33mF[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking WU (Not (Out 'Y')) (Out 'Z')
+[  [33mC[39m[33mE[39m[35mV[39m [33mC[39m[33mB[39m[35mV[39m[33mF[39m[35mY[39m*** Failed!  [33mB[39m[33mF[39m [33mC[39m[33mF[39m[35mV[39m [33mC[39m[35mV[39m[33mB[39m[35mY[39m [33mB[39m [33mC[39mFalsifiable (after 2 tests and 1 shrink):  
+RersData "CB"
+ ]
+22 FALSE, found counterexample
+===================================================
+checking Or (Not (F (Out 'W'))) (U (And (Not (Out 'Y')) (Not (Out 'W'))) (Or (Out 'W') (U (And (Out 'Y') (Not (Out 'W'))) (Or (Out 'W') (U (And (Not (Out 'Y')) (Not (Out 'W'))) (Or (Out 'W') (U (And (Out 'Y') (Not (Out 'W'))) (Or (Out 'W') (U (Not (Out 'Y')) (Out 'W'))))))))))
+[  [33mD[39m[33mA[39m[35mY[39m [33mD[39m[33mE[39m[35mY[39m[33mA[39m[35mU[39m[33mB[39m [33mG[39m[33mD[39m[33mG[39m[35mY[39m[33mF[39m[33mF[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (In 'B')) (G (Not (Out 'Z'))))
+[  [33mF[39m [33mG[39m[33mD[39m[35mY[39m[33mG[39m[33mG[39m[33mC[39m[33mC[39m [33mC[39m[33mB[39m[35mV[39m[33mG[39m[35mY[39m[33mC[39m [33mD[39m[33mE[39m[35mY[39m[33mG[39m[35mU[39m[33mE[39m[33mE[39m[35mW[39m[33mA[39m[33mG[39m[33mA[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (And (Out 'Z') (Not (In 'E')))) (WU (Not (Out 'W')) (In 'E')))
+[  [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mE[39m[33mC[39m [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mA[39m[33mF[39m [33mC[39m[33mB[39m[35mV[39m[33mC[39m[35mY[39m[33mD[39m[35mY[39m[33mG[39m [33mD[39m[33mE[39m[35mY[39m[33mF[39m[35mU[39m[33mB[39m [33mE[39m[33mF[39m[35mZ[39m[33mG[39m[35mY[39m[33mC[39m[33mE[39m[35mU[39m [33mD[39m[33mE[39m[35mY[39m[33mB[39m[35mU[39m[33mE[39m [33mG[39m[33mD[39m[33mD[39m[35mY[39m[33mF[39m [33mE[39m[33mF[39m[35mZ[39m[33mD[39m[35mY[39m[33mF[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking WU (Not (Out 'Y')) (Out 'X')
+[  [33mG[39m[33mE[39m[33mC[39m[35mZ[39m[33mE[39m[35mU[39m[33mC[39m[35mX[39m[33mB[39m[35mX[39m[33mC[39m[33mD[39m[33mG[39m[33mG[39m [33mE[39m[33mF[39m[35mZ[39m[33mG[39m[35mY[39m[33mC[39m[33mG[39m[35mU[39m[33mB[39m[33mD[39m[33mE[39m[33mC[39m[33mF[39m[33mA[39m[33mE[39m*** Failed!  [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mC[39m[35mU[39m[33mG[39m[33mB[39m[33mD[39m[33mE[39m[33mC[39m[33mF[39m[33mA[39m[33mE[39m [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mC[39m[35mU[39m[33mB[39m[33mD[39m[33mE[39m[33mC[39m[33mF[39m[33mA[39m[33mE[39m [33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mD[39m[35mU[39m[33mE[39m[33mC[39m[33mF[39m[33mA[39m[33mE[39m [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mC[39m[35mU[39m[33mE[39m[33mC[39m[33mF[39m[33mA[39m[33mE[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mE[39m[35mX[39m[33mC[39m[33mF[39m[33mA[39m[33mE[39m [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mC[39m[35mU[39m[33mC[39m[33mF[39m[33mA[39m[33mE[39m [33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mF[39m[35mU[39m[33mA[39m[33mE[39m [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mC[39m[35mU[39m[33mA[39m[33mE[39m [33mE[39m[33mC[39m[35mZ[39m[33mA[39m[35mU[39m[33mE[39m [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mA[39m[33mE[39m [33mE[39m[35mZ[39m[33mA[39m[33mE[39m [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mE[39m [33mF[39m[33mE[39m [33mE[39m[35mZ[39m[33mE[39m [33mE[39m[35mZ[39m[33mF[39m[35mY[39m [33mF[39m [33mE[39m[35mZ[39mFalsifiable (after 30 tests and 10 shrinks):  
+RersData "EF"
+ ]
+26 FALSE, found counterexample
+===================================================
+checking Or (Not (F (Out 'V'))) (U (And (Not (Out 'W')) (Not (Out 'V'))) (Or (Out 'V') (U (And (Out 'W') (Not (Out 'V'))) (Or (Out 'V') (U (And (Not (Out 'W')) (Not (Out 'V'))) (Or (Out 'V') (U (And (Out 'W') (Not (Out 'V'))) (Or (Out 'V') (U (Not (Out 'W')) (Out 'V'))))))))))
+[  [33mE[39m[33mC[39m[35mZ[39m[33mE[39m[35mU[39m[33mF[39m[35mX[39m[33mC[39m [33mG[39m[33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m[33mD[39m[35mW[39m[33mB[39m[35mW[39m[33mE[39m[33mC[39m[35mW[39m[33mD[39m[35mW[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking Or (Not (F (In 'A'))) (U (Not (Out 'Z')) (Or (In 'B') (In 'A')))
+[  [33mE[39m[33mC[39m[35mZ[39m[33mE[39m[35mU[39m[33mG[39m[35mX[39m[33mE[39m[33mE[39m[33mG[39m[33mE[39m[33mE[39m[33mB[39m[35mX[39m[33mE[39m[33mB[39m[35mX[39m [33mG[39m[33mC[39m[35mV[39m[33mE[39m[33mG[39m [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mB[39m[35mW[39m[33mB[39m[35mW[39m[33mF[39m[35mW[39m[33mG[39m[35mW[39m[33mG[39m [33mG[39m[33mG[39m[33mG[39m[33mC[39m[33mB[39m[35mV[39m[33mC[39m[35mY[39m[33mE[39m[35mY[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (And (Out 'Z') (Not (In 'D')))) (U (Not (In 'D')) (And (Out 'V') (Not (In 'D')))))
+[  [33mC[39m[33mB[39m[35mV[39m[33mE[39m[35mY[39m [33mG[39m[33mE[39m[33mG[39m[35mZ[39m[33mC[39m[33mG[39m[35mU[39m[33mD[39m[33mE[39m*** Failed!  [33mE[39m[33mG[39m[35mZ[39m[33mC[39m[33mG[39m[35mU[39m[33mD[39m[33mE[39m [33mG[39m[33mC[39m[33mG[39m[35mV[39m[33mD[39m[33mE[39m [33mE[39m[33mC[39m[35mZ[39m[33mG[39m[35mU[39m[33mD[39m[33mE[39m [33mC[39m[33mG[39m[35mV[39m[33mD[39m[33mE[39m [33mE[39m[33mG[39m[35mZ[39m[33mD[39m[33mE[39m [33mG[39m[33mD[39m[33mE[39m[35mY[39m [33mE[39m[33mD[39m[35mZ[39m[33mE[39m [33mD[39m[33mE[39m[35mY[39m [33mE[39m[35mZ[39m[33mE[39m [33mE[39m[33mD[39m[35mZ[39m [33mD[39m [33mE[39mFalsifiable (after 47 tests and 5 shrinks):  
+RersData "ED"
+ ]
+29 FALSE, found counterexample
+===================================================
+checking Or (Not (F (In 'C'))) (U (Not (Out 'U')) (Or (Out 'X') (In 'C')))
+[  [33mE[39m[33mE[39m[33mB[39m[33mB[39m[33mF[39m[35mZ[39m[33mB[39m [33mG[39m[33mC[39m[33mG[39m[33mA[39m[35mV[39m[33mA[39m[33mB[39m [33mG[39m[33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mB[39m[35mU[39m[33mD[39m[33mF[39m[33mC[39m[33mA[39m[33mG[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking WU (Not (Out 'V')) (In 'F')
+[  [33mD[39m [33mG[39m[33mC[39m[35mV[39m[33mG[39m*** Failed!  [33mC[39m[35mV[39m[33mG[39m [33mG[39m [33mC[39m[35mV[39mFalsifiable (after 4 tests and 2 shrinks):  
+RersData "C"
+ ]
+31 FALSE, found counterexample
+===================================================
+checking Or (Not (F (In 'A'))) (U (Not (Out 'Y')) (Or (Out 'X') (In 'A')))
+[  [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m[33mE[39m [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mC[39m[35mU[39m[33mE[39m[33mC[39m[33mE[39m[33mF[39m[33mB[39m[35mX[39m[33mE[39m[33mD[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mC[39m[33mC[39m [33mG[39m[33mE[39m[33mD[39m[35mZ[39m[33mF[39m [33mG[39m[33mG[39m[33mF[39m[33mB[39m [33mE[39m[33mC[39m[35mZ[39m[33mE[39m[35mU[39m[33mA[39m[35mX[39m [33mG[39m[33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mD[39m [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mG[39m[33mD[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mG[39m[33mE[39m[35mX[39m[33mG[39m[33mE[39m[33mG[39m[33mB[39m[35mX[39m [33mE[39m[35mZ[39m[33mG[39m[33mE[39m[33mF[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking F (Out 'Y')
+[  [33mF[39m[33mC[39m [33mD[39m[35mY[39m[33mG[39m[33mE[39m[35mU[39m[33mG[39m[33mE[39m[35mW[39m[33mC[39m[35mW[39m[33mF[39m[35mW[39m[33mB[39m[35mW[39m[33mA[39m [33mE[39m[33mC[39m[35mZ[39m[33mF[39m[35mU[39m[33mC[39m [33mE[39m[35mZ[39m[33mG[39m[33mC[39m[35mU[39m[33mG[39m[33mD[39m [33mE[39m[33mG[39m[35mZ[39m[33mC[39m[33mE[39m[35mU[39m[33mD[39m[35mX[39m[33mE[39m[35mX[39m[33mF[39m[33mE[39m[33mE[39m[33mE[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking WU (Not (In 'D')) (And (Out 'V') (Not (In 'D')))
+[  [33mD[39m[33mG[39m[35mY[39m[33mF[39m[33mC[39m*** Failed!  [33mG[39m[33mF[39m[33mC[39m [33mD[39m[33mF[39m[35mY[39m[33mC[39m [33mF[39m[33mC[39m [33mD[39m[33mC[39m[35mY[39m [33mC[39m[35mV[39m [33mD[39mFalsifiable (after 32 tests and 3 shrinks):  
+RersData "D"
+ ]
+34 FALSE, found counterexample
+===================================================
+checking WU (Not (Out 'Y')) (In 'E')
+[  [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m[33mG[39m[33mF[39m[35mW[39m[33mG[39m*** Failed!  [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mG[39m[33mF[39m[33mG[39m [33mE[39m[35mZ[39m[33mG[39m[33mF[39m[35mY[39m[33mG[39m [33mD[39m[33mG[39m[35mY[39m[33mF[39m[33mG[39m [33mG[39m[33mF[39m[33mG[39m [33mD[39m[33mF[39m[35mY[39m[33mG[39m [33mF[39m[33mG[39m [33mD[39m[35mY[39m[33mG[39m [33mG[39m [33mD[39m[35mY[39mFalsifiable (after 38 tests and 5 shrinks):  
+RersData "D"
+ ]
+35 FALSE, found counterexample
+===================================================
+checking Or (G (Not (Out 'X'))) (F (And (Out 'X') (F (Out 'U'))))
+[  [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mC[39m[35mW[39m[33mE[39m[35mW[39m[33mC[39m[35mW[39m[33mB[39m[35mW[39m [33mG[39m[33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mE[39m[35mX[39m [33mG[39m[33mG[39m[33mF[39m[33mD[39m [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mC[39m[35mU[39m[33mD[39m[33mF[39m[33mD[39m [33mC[39m[33mG[39m[35mV[39m[33mG[39m[33mB[39m[33mD[39m[35mY[39m[33mG[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (And (And (Out 'Y') (Not (In 'B'))) (F (In 'B')))) (U (Not (Out 'Z')) (In 'B')))
+[  [33mD[39m[33mC[39m[35mY[39m[33mD[39m [33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mC[39m[35mU[39m[33mD[39m[33mF[39m [33mD[39m[33mE[39m[35mY[39m[33mG[39m[35mU[39m[33mC[39m[33mE[39m [33mC[39m[35mV[39m[33mG[39m[33mB[39m[35mY[39m[33mG[39m[33mB[39m [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mF[39m[35mW[39m[33mD[39m[35mW[39m[33mF[39m[35mW[39m[33mC[39m[35mW[39m[33mG[39m[35mW[39m[33mD[39m[33mD[39m[35mW[39m[33mC[39m[35mW[39m[33mF[39m[35mW[39m [33mE[39m[33mB[39m[33mA[39m[33mA[39m[33mE[39m [33mC[39m[33mG[39m[35mV[39m[33mG[39m[33mF[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (Out 'U')) (G (Not (Out 'Z'))))
+[  [33mC[39m[33mB[39m[35mV[39m[33mG[39m[35mY[39m[33mE[39m[33mG[39m [33mC[39m[35mV[39m[33mG[39m[33mB[39m[35mY[39m[33mC[39m[35mY[39m[33mB[39m [33mE[39m[35mZ[39m[33mG[39m[33mG[39m[33mF[39m[35mY[39m[33mD[39m [33mC[39m[33mB[39m[35mV[39m[33mC[39m[35mY[39m[33mA[39m[35mY[39m [33mE[39m[35mZ[39m[33mG[39m[33mC[39m[35mU[39m[33mE[39m[35mX[39m [33mG[39m[33mC[39m[33mC[39m[35mV[39m[33mA[39m [33mC[39m[33mB[39m[35mV[39m[33mE[39m[35mY[39m[33mE[39m [33mD[39m[35mY[39m[33mG[39m[33mB[39m[33mD[39m [33mC[39m[33mB[39m[35mV[39m[33mA[39m[35mY[39m[33mB[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking F (Out 'Y')
+[  [33mA[39m[33mC[39m [33mE[39m[35mZ[39m[33mA[39m[33mA[39m [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m[33mG[39m[33mG[39m[33mG[39m [33mG[39m[33mC[39m[35mV[39m[33mF[39m[33mB[39m [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mD[39m[33mA[39m [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m[33mF[39m[35mW[39m[33mE[39m[33mA[39m [33mE[39m[33mG[39m[35mZ[39m[33mF[39m[33mC[39m[35mY[39m[33mD[39m[35mU[39m[33mB[39m[33mC[39m[33mB[39m[35mX[39m[33mA[39m [33mE[39m[33mF[39m[35mZ[39m[33mG[39m[35mY[39m[33mG[39m[33mE[39m[33mB[39m [33mE[39m[33mG[39m[35mZ[39m[33mE[39m[33mB[39m [33mG[39m[33mD[39m[33mE[39m[35mY[39m[33mF[39m[35mU[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (And (And (Out 'Y') (Not (In 'B'))) (F (In 'B')))) (U (Not (Out 'Z')) (In 'B')))
+[  [33mA[39m[33mB[39m [33mG[39m[33mG[39m[33mE[39m[33mA[39m[35mZ[39m[33mC[39m [33mC[39m[33mG[39m[35mV[39m[33mC[39m[33mD[39m [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m[33mG[39m [33mC[39m[33mG[39m[35mV[39m[33mB[39m[33mC[39m[35mY[39m [33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mD[39m[35mU[39m[33mF[39m[33mC[39m [33mG[39m[33mE[39m[35mZ[39m[33mB[39m[33mB[39m [33mG[39m[33mG[39m[33mE[39m[35mZ[39m[33mA[39m[33mA[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (And (And (In 'C') (Not (In 'A'))) (F (In 'A')))) (U (Not (Out 'X')) (In 'A')))
+[  [33mG[39m[33mE[39m[35mZ[39m[33mG[39m[33mG[39m[33mC[39m[35mU[39m [33mC[39m[35mV[39m[33mG[39m[33mF[39m[33mA[39m [33mD[39m[35mY[39m[33mG[39m[33mE[39m[35mU[39m[33mA[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (And (And (Out 'Y') (Not (In 'E'))) (F (In 'E')))) (U (Not (Out 'X')) (In 'E')))
+[  [33mA[39m [33mG[39m[33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mF[39m[33mA[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mF[39m[33mA[39m [33mD[39m[35mY[39m[33mG[39m[33mB[39m[33mB[39m [33mE[39m[35mZ[39m[33mG[39m[33mF[39m[35mY[39m[33mC[39m[35mU[39m[33mF[39m[33mF[39m[33mF[39m[33mF[39m[33mE[39m[33mA[39m [33mE[39m[35mZ[39m[33mG[39m[33mC[39m[35mU[39m[33mE[39m[35mX[39m[33mG[39m[33mG[39m[33mG[39m[33mF[39m[33mF[39m[33mF[39m[33mC[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking WU (Not (Out 'X')) (WU (Out 'X') (WU (Not (Out 'X')) (WU (Out 'X') (G (Not (Out 'X'))))))
+[  [33mD[39m[33mG[39m[35mY[39m[33mE[39m [33mC[39m[35mV[39m[33mG[39m[33mF[39m[33mG[39m [33mG[39m[33mE[39m[35mZ[39m[33mG[39m[33mC[39m[35mU[39m[33mG[39m[33mG[39m[33mC[39m [33mG[39m[33mG[39m[33mG[39m[33mD[39m[33mG[39m[35mY[39m[33mA[39m[33mC[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mE[39m[35mX[39m[33mB[39m[35mX[39m[33mB[39m[35mX[39m[33mB[39m[35mX[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking Or (Not (F (In 'A'))) (U (Not (Out 'X')) (Or (In 'C') (In 'A')))
+[  [33mD[39m[35mY[39m[33mD[39m [33mC[39m[33mE[39m[35mV[39m[33mG[39m [33mE[39m[33mC[39m[35mZ[39m[33mC[39m[35mU[39m[33mF[39m [33mG[39m[33mD[39m[35mY[39m[33mG[39m[33mA[39m [33mG[39m[33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m[33mA[39m[33mB[39m[35mW[39m[33mE[39m[33mG[39m[33mC[39m[35mW[39m[33mE[39m [33mG[39m[33mE[39m[35mZ[39m[33mB[39m[33mG[39m [33mE[39m[33mG[39m[35mZ[39m[33mB[39m[33mA[39m [33mC[39m[35mV[39m[33mB[39m[35mY[39m[33mE[39m[33mD[39m [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mB[39m[33mB[39m [33mE[39m[33mG[39m[35mZ[39m[33mA[39m[33mD[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking F (Out 'Z')
+[  [33mE[39m[33mC[39m[35mZ[39m[33mC[39m[35mU[39m[33mG[39m [33mG[39m[33mE[39m[35mZ[39m[33mG[39m[33mB[39m[33mD[39m [33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mB[39m[35mU[39m [33mG[39m[33mD[39m[33mE[39m[35mY[39m[33mA[39m[35mU[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking Or (G (Not (In 'B'))) (F (And (In 'B') (F (Out 'Z'))))
+[  [33mG[39m [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mC[39m[35mU[39m[33mB[39m[33mD[39m[33mE[39m[33mC[39m[33mD[39m [33mG[39m[33mG[39m[33mD[39m[33mC[39m[35mY[39m [33mE[39m[33mC[39m[35mZ[39m[33mE[39m[35mU[39m[33mF[39m[35mX[39m[33mG[39m[33mD[39m[33mF[39m[33mC[39m [33mC[39m[33mB[39m[35mV[39m[33mG[39m[35mY[39m[33mA[39m[33mA[39m [33mD[39m[33mE[39m[35mY[39m[33mA[39m[35mU[39m[33mF[39m [33mE[39m[33mF[39m[35mZ[39m[33mE[39m[35mY[39m[33mA[39m [33mC[39m[33mB[39m[35mV[39m[33mF[39m[35mY[39m[33mC[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (Out 'U')) (F (Out 'V')))
+[  [33mE[39m[33mD[39m[35mZ[39m[33mA[39m [33mD[39m[33mE[39m[35mY[39m[33mB[39m[35mU[39m[33mG[39m [33mD[39m[33mE[39m[35mY[39m[33mB[39m[35mU[39m[33mD[39m [33mD[39m[33mE[39m[35mY[39m[33mC[39m[35mU[39m[33mA[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mE[39m[35mX[39m[33mG[39m[33mC[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (In 'B')) (G (Not (Out 'W'))))
+[  [33mG[39m[33mC[39m[33mB[39m[35mV[39m[33mD[39m[35mY[39m[33mG[39m [33mD[39m[35mY[39m[33mG[39m[33mD[39m[33mD[39m [33mE[39m[33mC[39m[35mZ[39m[33mE[39m[35mU[39m[33mB[39m[35mX[39m[33mF[39m[35mX[39m[33mG[39m[33mG[39m[33mD[39m[33mG[39m [33mE[39m[35mZ[39m[33mG[39m[33mC[39m[35mU[39m[33mE[39m[35mX[39m[33mD[39m[33mF[39m [33mG[39m[33mC[39m[35mV[39m[33mD[39m[33mF[39m [33mG[39m[33mC[39m[35mV[39m[33mC[39m[33mB[39m [33mE[39m[33mC[39m[35mZ[39m[33mE[39m[35mU[39m[33mG[39m[35mX[39m[33mB[39m[33mD[39m[35mX[39m[33mD[39m [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mD[39m[33mC[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking WU (Not (Out 'V')) (In 'C')
+[  [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mE[39m[35mX[39m[33mE[39m[33mD[39m[33mA[39m [33mC[39m[35mV[39m[33mG[39m[33mG[39m[33mC[39m [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mF[39m[33mF[39m [33mC[39m[35mV[39m[33mG[39m[33mE[39m[33mC[39m [33mC[39m[33mB[39m[35mV[39m[33mB[39m[35mY[39m[33mC[39m [33mG[39m[33mC[39m[33mG[39m[35mV[39m[33mG[39m[33mC[39m*** Failed!  [33mC[39m[35mV[39m[33mG[39m[33mG[39m[33mC[39m [33mG[39m[33mG[39m[33mG[39m[33mC[39m[35mV[39m [33mG[39m[33mG[39m[33mC[39m [33mG[39m[33mG[39m[33mC[39m[35mV[39m [33mG[39m[33mC[39m [33mG[39m[33mC[39m[35mV[39m [33mC[39m[35mV[39m [33mG[39mFalsifiable (after 92 tests and 3 shrinks):  
+RersData "GC"
+ ]
+49 FALSE, found counterexample
+===================================================
+checking G (Or (Not (And (Out 'Y') (Not (Out 'W')))) (U (Not (Out 'W')) (And (Out 'Z') (Not (Out 'W')))))
+[  [33mA[39m [33mC[39m[35mV[39m[33mG[39m[33mG[39m[33mA[39m[33mB[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (And (In 'A') (Not (Out 'Y')))) (WU (Not (Out 'U')) (Out 'Y')))
+[  [33mE[39m[35mZ[39m[33mG[39m[33mF[39m[35mY[39m[33mG[39m[33mB[39m[33mB[39m [33mG[39m[33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking Or (G (Not (Out 'U'))) (F (And (Out 'U') (F (Out 'X'))))
+[  [33mC[39m[35mV[39m[33mG[39m[33mC[39m [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m[33mF[39m[35mW[39m[33mG[39m[33mF[39m[35mW[39m[33mA[39m[33mA[39m[33mF[39m[35mW[39m[33mE[39m[33mA[39m [33mE[39m[35mZ[39m[33mG[39m[33mC[39m[35mU[39m[33mC[39m[33mD[39m [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mG[39m[33mE[39m[35mW[39m [33mG[39m[33mG[39m[33mD[39m[33mC[39m[35mY[39m[33mB[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mG[39m[33mE[39m[35mX[39m[33mF[39m[33mD[39m[33mG[39m[33mA[39m[33mA[39m [33mD[39m[33mG[39m[35mY[39m[33mE[39m[33mE[39m[35mU[39m[33mA[39m[35mW[39m[33mB[39m[35mW[39m[33mE[39m[33mA[39m[33mG[39m[33mA[39m[33mE[39m[33mB[39m[35mW[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Not (Out 'V'))
+[  [33mB[39m[33mD[39m [33mD[39m[33mE[39m[35mY[39m[33mD[39m[35mU[39m[33mD[39m [33mG[39m[33mD[39m[33mG[39m[35mY[39m[33mF[39m [33mC[39m[35mV[39m[33mG[39m[33mE[39m[33mG[39m*** Failed!  [33mG[39m[33mE[39m[33mG[39m[35mZ[39m [33mC[39m[35mV[39m[33mE[39m[33mG[39m [33mE[39m[33mG[39m[35mZ[39m [33mC[39m[35mV[39m[33mG[39m [33mG[39m [33mC[39mFalsifiable (after 35 tests and 2 shrinks):  
+RersData "CG"
+ ]
+53 FALSE, found counterexample
+===================================================
+checking Or (G (Not (Out 'U'))) (F (And (Out 'U') (F (Out 'X'))))
+[  [33mG[39m[33mG[39m[33mD[39m[33mC[39m[35mY[39m [33mD[39m[33mG[39m[35mY[39m[33mC[39m[33mG[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (And (Out 'U') (Not (In 'A')))) (WU (Not (In 'A')) (And (Out 'X') (Not (In 'A')))))
+[  [33mC[39m[33mB[39m[35mV[39m[33mB[39m[35mY[39m[33mF[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking WU (Not (Out 'W')) (WU (Out 'W') (WU (Not (Out 'W')) (WU (Out 'W') (G (Not (Out 'W'))))))
+[  [33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mC[39m[35mU[39m[33mG[39m[33mG[39m[33mF[39m[33mG[39m[33mE[39m [33mC[39m[35mV[39m[33mG[39m[33mB[39m[35mY[39m[33mB[39m[33mC[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mE[39m[35mX[39m[33mC[39m [33mG[39m[33mG[39m[33mD[39m[33mG[39m[35mY[39m[33mA[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking F (Out 'Z')
+[  [33mG[39m[33mE[39m[35mZ[39m[33mA[39m[33mE[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mC[39m[33mD[39m [33mC[39m[33mB[39m[35mV[39m[33mC[39m[35mY[39m[33mF[39m[35mY[39m[33mA[39m[35mZ[39m[33mF[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (And (And (In 'E') (Not (In 'A'))) (F (In 'A')))) (U (Not (Out 'V')) (In 'A')))
+[  [33mE[39m[33mF[39m[35mZ[39m[33mG[39m[35mY[39m[33mD[39m [33mG[39m[33mE[39m[35mZ[39m[33mA[39m[33mA[39m [33mC[39m[35mV[39m[33mB[39m[35mY[39m[33mG[39m[33mF[39m [33mE[39m[33mC[39m[35mZ[39m[33mE[39m[35mU[39m[33mA[39m[35mX[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking Or (Not (F (In 'D'))) (U (And (Not (Out 'Y')) (Not (In 'D'))) (Or (In 'D') (U (And (Out 'Y') (Not (In 'D'))) (Or (In 'D') (U (And (Not (Out 'Y')) (Not (In 'D'))) (Or (In 'D') (U (And (Out 'Y') (Not (In 'D'))) (Or (In 'D') (U (Not (Out 'Y')) (In 'D'))))))))))
+[  [33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mB[39m[35mU[39m[33mE[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mF[39m[33mG[39m [33mG[39m[33mC[39m[33mF[39m[35mV[39m[33mB[39m [33mD[39m[35mY[39m[33mG[39m[33mF[39m[33mF[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking Or (Not (F (Out 'Y'))) (U (And (Not (Out 'W')) (Not (Out 'Y'))) (Or (Out 'Y') (U (And (Out 'W') (Not (Out 'Y'))) (Or (Out 'Y') (U (And (Not (Out 'W')) (Not (Out 'Y'))) (Or (Out 'Y') (U (And (Out 'W') (Not (Out 'Y'))) (Or (Out 'Y') (U (Not (Out 'W')) (Out 'Y'))))))))))
+[  [33mG[39m[33mC[39m[33mE[39m[35mV[39m[33mE[39m [33mG[39m[33mG[39m[33mG[39m[33mG[39m[33mE[39m[35mZ[39m [33mC[39m[35mV[39m[33mG[39m[33mG[39m[33mA[39m [33mC[39m[33mB[39m[35mV[39m[33mA[39m[35mY[39m[33mD[39m [33mG[39m[33mD[39m[35mY[39m[33mC[39m[33mA[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking Or (Not (F (Out 'U'))) (U (Not (Out 'W')) (Or (In 'E') (Out 'U')))
+[  [33mG[39m [33mE[39m[35mZ[39m[33mA[39m[33mF[39m [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mC[39m[35mU[39m[33mG[39m[33mC[39m [33mD[39m[33mE[39m[35mY[39m[33mC[39m[35mU[39m[33mE[39m [33mE[39m[35mZ[39m[33mG[39m[33mF[39m[35mY[39m[33mB[39m [33mC[39m[35mV[39m[33mG[39m[33mE[39m[33mD[39m [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m[33mB[39m[35mW[39m[33mG[39m [33mE[39m[33mF[39m[35mZ[39m[33mG[39m[35mY[39m[33mG[39m[33mD[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Not (Out 'V'))
+[  [33mG[39m[33mC[39m[33mG[39m[35mV[39m[33mB[39m*** Failed!  [33mC[39m[35mV[39m[33mG[39m[33mB[39m[35mY[39m [33mG[39m[33mB[39m [33mC[39m[35mV[39m[33mB[39m[35mY[39m [33mB[39m [33mC[39m[35mV[39mFalsifiable (after 15 tests and 3 shrinks):  
+RersData "C"
+ ]
+62 FALSE, found counterexample
+===================================================
+checking WU (Not (Out 'U')) (In 'E')
+[  [33mG[39m[33mG[39m[33mC[39m[33mA[39m[35mV[39m [33mG[39m[33mE[39m[35mZ[39m[33mG[39m[33mD[39m [33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mG[39m[35mU[39m[33mA[39m[33mB[39m [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m[33mE[39m[33mG[39m[33mC[39m[35mW[39m[33mE[39m[33mG[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (Out 'X')) (G (Not (Out 'V'))))
+[  [33mG[39m[33mD[39m[35mY[39m [33mG[39m[33mG[39m[33mG[39m[33mC[39m[33mB[39m[35mV[39m [33mG[39m[33mE[39m[35mZ[39m[33mG[39m[33mG[39m[33mB[39m [33mE[39m[33mG[39m[35mZ[39m[33mG[39m[33mG[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking WU (Not (In 'F')) (And (Out 'Y') (Not (In 'F')))
+[  [33mE[39m [33mB[39m[33mB[39m [33mE[39m[33mG[39m[35mZ[39m[33mG[39m[33mE[39m[33mC[39m [33mG[39m[33mG[39m[33mG[39m[33mA[39m [33mG[39m[33mD[39m[33mC[39m[35mY[39m[33mB[39m [33mC[39m[33mG[39m[35mV[39m[33mB[39m[33mE[39m[35mY[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking Or (G (Not (Out 'Y'))) (F (And (Out 'Y') (F (Out 'W'))))
+[  [33mF[39m[33mB[39m [33mD[39m[33mE[39m[35mY[39m[33mA[39m[35mU[39m [33mE[39m[33mC[39m[35mZ[39m[33mC[39m[35mU[39m[33mB[39m [33mG[39m[33mD[39m[33mE[39m[35mY[39m[33mA[39m[35mU[39m[33mB[39m [33mD[39m[33mG[39m[35mY[39m[33mE[39m[33mE[39m[35mU[39m[33mF[39m[35mW[39m[33mG[39m[35mW[39m[33mB[39m[33mA[39m[35mW[39m[33mD[39m[35mW[39m[33mG[39m[33mC[39m[35mW[39m [33mE[39m[35mZ[39m[33mG[39m[33mB[39m[33mC[39m [33mC[39m[33mB[39m[35mV[39m[33mG[39m[35mY[39m[33mG[39m [33mC[39m[33mG[39m[35mV[39m[33mA[39m[33mA[39m [33mG[39m[33mG[39m[33mG[39m[33mF[39m[33mB[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (In 'C')) (F (Out 'V')))
+[  [33mG[39m[33mB[39m[33mE[39m [33mB[39m[33mA[39m [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mB[39m[33mD[39m [33mG[39m[33mC[39m[33mB[39m[35mV[39m[33mC[39m[35mY[39m[33mC[39m[35mY[39m[33mE[39m [33mC[39m[35mV[39m[33mB[39m[35mY[39m[33mF[39m[33mE[39m [33mE[39m[35mZ[39m[33mG[39m[33mC[39m[35mU[39m[33mG[39m[33mC[39m [33mD[39m[35mY[39m[33mG[39m[33mA[39m[33mG[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking WU (Not (Out 'X')) (In 'C')
+[  [33mE[39m[35mZ[39m[33mG[39m[33mF[39m[35mY[39m[33mA[39m [33mG[39m[33mD[39m[33mD[39m[35mY[39m[33mB[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mE[39m[35mX[39m[33mE[39m[33mD[39m [33mG[39m[33mD[39m[35mY[39m[33mG[39m[33mG[39m[33mG[39m [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mC[39m[35mU[39m[33mG[39m[33mB[39m[33mD[39m[33mC[39m[33mB[39m[35mX[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking WU (Not (Out 'Y')) (Out 'W')
+[  [33mG[39m[33mE[39m[33mB[39m[35mZ[39m[33mF[39m [33mG[39m[33mG[39m[33mE[39m[33mC[39m[35mZ[39m[33mF[39m[35mU[39m[33mF[39m [33mG[39m[33mE[39m[33mG[39m[35mZ[39m[33mF[39m[33mC[39m[35mY[39m*** Failed!  [33mE[39m[33mG[39m[35mZ[39m[33mF[39m[33mC[39m[35mY[39m [33mG[39m[33mF[39m[33mC[39m [33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m [33mF[39m[33mC[39m [33mE[39m[33mC[39m[35mZ[39m [33mE[39m[35mZ[39m[33mF[39m[35mY[39m [33mF[39m [33mE[39m[35mZ[39mFalsifiable (after 54 tests and 3 shrinks):  
+RersData "EF"
+ ]
+69 FALSE, found counterexample
+===================================================
+checking WU (Not (Out 'V')) (Out 'Y')
+[  [33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mF[39m[35mU[39m[33mB[39m[33mF[39m[33mG[39m [33mE[39m[33mC[39m[35mZ[39m[33mD[39m[35mU[39m[33mB[39m [33mE[39m[33mG[39m[35mZ[39m[33mF[39m[33mC[39m[35mY[39m[33mA[39m[35mU[39m[33mC[39m [33mG[39m[33mE[39m[33mE[39m[35mZ[39m[33mG[39m [33mG[39m[33mE[39m[35mZ[39m[33mB[39m[33mD[39m [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mG[39m[33mE[39m[35mW[39m[33mG[39m[33mE[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking F (Out 'U')
+[  [33mF[39m[33mF[39m [33mG[39m[33mE[39m[35mZ[39m[33mG[39m[33mF[39m[35mY[39m [33mC[39m[33mG[39m[35mV[39m[33mB[39m[33mG[39m[35mY[39m [33mD[39m[33mG[39m[35mY[39m[33mE[39m[33mG[39m[35mU[39m [33mG[39m[33mD[39m[33mE[39m[35mY[39m[33mD[39m[35mU[39m[33mA[39m [33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mB[39m[35mU[39m[33mF[39m[33mE[39m[33mA[39m [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mB[39m[35mW[39m[33mA[39m[35mW[39m[33mD[39m[35mW[39m[33mB[39m[35mW[39m[33mE[39m[33mC[39m[35mW[39m[33mG[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking F (Out 'Z')
+[  [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m[33mD[39m[35mW[39m [33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m[33mG[39m[33mF[39m[35mW[39m[33mD[39m[35mW[39m[33mA[39m[33mB[39m[35mW[39m [33mG[39m[33mG[39m[33mD[39m[33mG[39m[35mY[39m[33mA[39m[33mE[39m [33mG[39m[33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mE[39m[35mX[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mF[39m[33mG[39m [33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mC[39m[35mU[39m[33mD[39m[33mE[39m[35mX[39m[33mE[39m[33mB[39m[35mX[39m[33mG[39m [33mC[39m[33mB[39m[35mV[39m[33mG[39m[35mY[39m[33mG[39m[33mF[39m [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mC[39m[35mW[39m [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mG[39m[33mB[39m [33mG[39m[33mC[39m[35mV[39m[33mG[39m[33mC[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking Or (Not (F (In 'A'))) (U (And (Not (Out 'U')) (Not (In 'A'))) (Or (In 'A') (U (And (Out 'U') (Not (In 'A'))) (Or (In 'A') (U (And (Not (Out 'U')) (Not (In 'A'))) (Or (In 'A') (U (And (Out 'U') (Not (In 'A'))) (Or (In 'A') (U (Not (Out 'U')) (In 'A'))))))))))
+[  [33mG[39m [33mE[39m[33mF[39m[35mZ[39m[33mG[39m[35mY[39m[33mA[39m [33mG[39m[33mC[39m[33mB[39m[35mV[39m[33mF[39m[35mY[39m [33mG[39m[33mC[39m[35mV[39m[33mA[39m[33mG[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (In 'B')) (G (Not (Out 'W'))))
+[  [33mE[39m[35mZ[39m [33mD[39m[35mY[39m[33mE[39m[35mU[39m [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mG[39m[35mW[39m[33mD[39m [33mG[39m[33mC[39m[35mV[39m[33mG[39m[33mC[39m[33mC[39m [33mD[39m[35mY[39m[33mG[39m[33mE[39m[35mU[39m[33mG[39m[33mG[39m[33mA[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (And (In 'B') (Not (Out 'Z')))) (WU (Not (Out 'V')) (Out 'Z')))
+[  [33mG[39m[33mE[39m[33mD[39m[35mZ[39m[33mC[39m [33mG[39m[33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m[33mF[39m[35mW[39m[33mD[39m[35mW[39m[33mA[39m[33mF[39m[35mW[39m[33mB[39m[35mW[39m[33mB[39m[35mW[39m [33mG[39m[33mC[39m[33mB[39m[35mV[39m[33mE[39m[35mY[39m*** Failed!  [33mC[39m[33mB[39m[35mV[39m[33mE[39m[35mY[39m [33mB[39m[33mE[39m [33mC[39m[33mE[39m[35mV[39m [33mC[39m[35mV[39m[33mB[39m[35mY[39m [33mB[39m [33mC[39mFalsifiable (after 14 tests and 2 shrinks):  
+RersData "CB"
+ ]
+75 FALSE, found counterexample
+===================================================
+checking F (Out 'U')
+[  [33mG[39m[33mE[39m[33mD[39m[33mB[39m[35mZ[39m [33mC[39m[33mG[39m[35mV[39m[33mD[39m[33mE[39m [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mC[39m[35mW[39m[33mA[39m[35mW[39m[33mB[39m[35mW[39m[33mE[39m [33mG[39m[33mC[39m[33mE[39m[35mV[39m[33mC[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (And (Out 'W') (Not (Out 'U')))) (U (Not (Out 'U')) (And (Out 'Y') (Not (Out 'U')))))
+[  [33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mB[39m[35mU[39m [33mE[39m[33mG[39m[35mZ[39m[33mG[39m[33mE[39m[33mC[39m [33mE[39m[33mG[39m[35mZ[39m[33mC[39m[33mE[39m[35mU[39m[33mF[39m[35mX[39m[33mG[39m[33mC[39m[33mE[39m[33mG[39m [33mC[39m[33mB[39m[35mV[39m[33mC[39m[35mY[39m[33mA[39m[35mY[39m[33mD[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mE[39m[35mX[39m[33mE[39m[33mB[39m[35mX[39m[33mE[39m[33mC[39m[33mG[39m[33mE[39m[33mF[39m[33mB[39m[35mX[39m[33mD[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (And (And (Out 'Y') (Not (Out 'X'))) (F (Out 'X')))) (U (Not (Out 'U')) (Out 'X')))
+[  [33mD[39m [33mE[39m[33mF[39m[35mZ[39m[33mG[39m[35mY[39m[33mE[39m[33mD[39m [33mE[39m[35mZ[39m[33mG[39m[33mD[39m[33mC[39m [33mG[39m[33mG[39m[33mG[39m[33mF[39m[33mA[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking WU (Not (Out 'U')) (Out 'Y')
+[  [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mG[39m[33mG[39m[33mA[39m[33mE[39m*** Failed!  [33mC[39m[33mG[39m[35mV[39m[33mG[39m[33mA[39m[33mE[39m [33mE[39m[35mZ[39m[33mG[39m[33mG[39m[33mA[39m[33mE[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mG[39m[33mA[39m[33mE[39m [33mC[39m[33mG[39m[35mV[39m[33mA[39m[33mE[39m [33mE[39m[35mZ[39m[33mG[39m[33mA[39m[33mE[39m [33mE[39m[33mC[39m[35mZ[39m[33mA[39m[35mU[39m[33mE[39m [33mC[39m[35mV[39m[33mA[39m[33mE[39m [33mE[39m[33mA[39m[35mZ[39m[33mE[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mE[39m[35mX[39m [33mC[39m[33mE[39m[35mV[39m [33mE[39m[35mZ[39m[33mE[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m [33mC[39m [33mE[39m[35mZ[39mFalsifiable (after 3 tests and 4 shrinks):  
+RersData "EC"
+ ]
+79 FALSE, found counterexample
+===================================================
+checking G (Or (Not (Out 'Y')) (G (Not (Out 'V'))))
+[  [33mE[39m[33mG[39m[35mZ[39m[33mF[39m[33mG[39m[35mY[39m[33mD[39m[33mF[39m [33mC[39m[33mB[39m[35mV[39m[33mG[39m[35mY[39m[33mF[39m[33mE[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mG[39m[33mG[39m[33mF[39m [33mE[39m[33mG[39m[35mZ[39m[33mC[39m[33mC[39m[35mU[39m[33mC[39m [33mC[39m[35mV[39m[33mB[39m[35mY[39m[33mG[39m[33mC[39m[35mY[39m [33mE[39m[33mC[39m[35mZ[39m[33mC[39m[35mU[39m[33mF[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mE[39m[35mX[39m[33mF[39m[33mG[39m[33mC[39m[33mE[39m[33mC[39m[33mG[39m [33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mC[39m[35mU[39m[33mE[39m[33mD[39m[33mD[39m [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mC[39m[35mW[39m[33mE[39m[35mW[39m[33mF[39m[35mW[39m[33mA[39m[33mD[39m[35mW[39m[33mB[39m[35mW[39m[33mF[39m[35mW[39m[33mF[39m[35mW[39m[33mE[39m [33mG[39m[33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mG[39m[33mE[39m[35mW[39m[33mB[39m[35mW[39m[33mC[39m[35mW[39m[33mF[39m[35mW[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (And (And (Out 'Y') (Not (Out 'X'))) (F (Out 'X')))) (U (Not (Out 'V')) (Out 'X')))
+[  [33mC[39m[35mV[39m[33mG[39m[33mF[39m[33mG[39m [33mE[39m[35mZ[39m[33mG[39m[33mE[39m[33mA[39m [33mG[39m[33mE[39m[35mZ[39m[33mB[39m[33mD[39m [33mG[39m[33mE[39m[35mZ[39m[33mE[39m[33mF[39m [33mG[39m[33mD[39m[33mE[39m[35mY[39m[33mD[39m[35mU[39m[33mE[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Not (Out 'X'))
+[  [33mD[39m[35mY[39m[33mG[39m[33mE[39m[35mU[39m[33mB[39m[33mB[39m [33mD[39m[33mE[39m[35mY[39m[33mG[39m[35mU[39m[33mE[39m[33mC[39m[35mW[39m[33mA[39m[35mW[39m[33mB[39m[35mW[39m[33mA[39m[33mG[39m [33mG[39m[33mE[39m[33mA[39m[35mZ[39m[33mB[39m [33mE[39m[33mC[39m[35mZ[39m[33mE[39m[35mU[39m[33mD[39m[35mX[39m[33mE[39m[35mX[39m[33mD[39m[33mE[39m[35mX[39m[33mA[39m*** Failed!  [33mE[39m[33mC[39m[35mZ[39m[33mE[39m[35mU[39m[33mE[39m[35mX[39m[33mD[39m[33mE[39m[35mX[39m[33mA[39m [33mE[39m[33mC[39m[35mZ[39m[33mE[39m[35mU[39m[33mD[39m[35mX[39m[33mE[39m[35mX[39m[33mA[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mE[39m[35mX[39m[33mE[39m[33mA[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mE[39m[35mX[39m[33mA[39m [33mC[39m[35mV[39m[33mE[39m[33mA[39m [33mE[39m[35mZ[39m[33mE[39m[33mA[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mA[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mE[39m[35mX[39m [33mC[39m[35mV[39m[33mE[39m [33mE[39m[35mZ[39m[33mE[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39mFalsifiable (after 97 tests and 5 shrinks):  
+RersData "ECE"
+ ]
+82 FALSE, found counterexample
+===================================================
+checking Or (G (Not (In 'C'))) (F (And (In 'C') (F (Out 'Y'))))
+[  [33mE[39m[35mZ[39m[33mG[39m[33mC[39m[35mU[39m[33mG[39m[33mD[39m [33mE[39m[35mZ[39m[33mG[39m[33mD[39m[33mE[39m [33mE[39m[33mF[39m[35mZ[39m[33mB[39m[35mY[39m[33mB[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking Or (Not (F (Out 'Y'))) (U (Not (Out 'W')) (Or (Out 'U') (Out 'Y')))
+[  [33mC[39m[35mV[39m[33mG[39m[33mG[39m[33mG[39m[33mG[39m[33mC[39m [33mC[39m[33mB[39m[35mV[39m[33mF[39m[35mY[39m[33mA[39m [33mG[39m[33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m [33mD[39m[33mG[39m[35mY[39m[33mA[39m[33mB[39m [33mG[39m[33mD[39m[33mC[39m[35mY[39m[33mD[39m [33mC[39m[35mV[39m[33mG[39m[33mB[39m[35mY[39m[33mF[39m [33mC[39m[35mV[39m[33mB[39m[35mY[39m[33mB[39m[33mB[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking Or (Not (F (In 'C'))) (U (And (Not (Out 'Z')) (Not (In 'C'))) (Or (In 'C') (U (And (Out 'Z') (Not (In 'C'))) (Or (In 'C') (U (And (Not (Out 'Z')) (Not (In 'C'))) (Or (In 'C') (U (And (Out 'Z') (Not (In 'C'))) (Or (In 'C') (U (Not (Out 'Z')) (In 'C'))))))))))
+[  [33mE[39m[33mC[39m[35mZ[39m[33mE[39m[35mU[39m[33mD[39m[35mX[39m[33mF[39m[33mB[39m [33mG[39m[33mC[39m[35mV[39m[33mB[39m[35mY[39m[33mG[39m[33mG[39m[33mD[39m[33mB[39m [33mE[39m[35mZ[39m[33mG[39m[33mC[39m[35mU[39m[33mC[39m[33mE[39m [33mD[39m[35mY[39m[33mG[39m[33mG[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m[33mC[39m[35mW[39m[33mG[39m[33mE[39m[33mD[39m[35mW[39m[33mF[39m[35mW[39m [33mC[39m[35mV[39m[33mG[39m[33mB[39m[35mY[39m[33mC[39m[35mY[39m[33mC[39m [33mG[39m[33mE[39m[33mA[39m[35mZ[39m[33mF[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking WU (Not (Out 'U')) (In 'C')
+[  [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mD[39m [33mE[39m[33mE[39m[35mZ[39m[33mC[39m [33mG[39m[33mE[39m[35mZ[39m[33mB[39m[33mD[39m [33mG[39m[33mE[39m[35mZ[39m[33mB[39m[33mD[39m [33mG[39m[33mE[39m[33mC[39m[35mZ[39m[33mF[39m[35mU[39m [33mG[39m[33mD[39m[35mY[39m[33mA[39m[33mB[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking WU (Not (Out 'U')) (In 'E')
+[  [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mE[39m[35mX[39m[33mE[39m[33mF[39m[33mE[39m[33mG[39m[33mE[39m[33mF[39m[33mA[39m [33mE[39m[33mG[39m[35mZ[39m[33mB[39m[33mB[39m [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mA[39m[35mW[39m[33mG[39m[33mG[39m[33mD[39m[35mW[39m [33mC[39m[33mG[39m[35mV[39m[33mG[39m[33mD[39m[33mC[39m [33mG[39m[33mC[39m[33mC[39m[35mV[39m[33mF[39m [33mE[39m[33mF[39m[35mZ[39m[33mE[39m[35mY[39m[33mD[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (And (Out 'X') (Not (In 'F')))) (WU (Not (Out 'Y')) (In 'F')))
+[  [33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mD[39m[35mU[39m[33mE[39m[33mC[39m[33mF[39m[33mG[39m[33mE[39m[33mD[39m[33mG[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking Or (Not (F (Out 'Y'))) (U (Not (Out 'W')) (Or (In 'B') (Out 'Y')))
+[  [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mE[39m[35mX[39m[33mA[39m[33mD[39m [33mG[39m[33mD[39m[35mY[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m[33mF[39m[35mW[39m [33mC[39m[33mB[39m[35mV[39m[33mC[39m[35mY[39m[33mG[39m[35mY[39m [33mG[39m[33mE[39m[35mZ[39m[33mG[39m[33mF[39m[35mY[39m[33mG[39m[33mC[39m[35mU[39m[33mF[39m[33mA[39m[33mB[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mE[39m[35mX[39m[33mE[39m[33mB[39m[35mX[39m[33mG[39m[33mE[39m[33mF[39m [33mC[39m[33mG[39m[35mV[39m[33mE[39m[33mG[39m [33mE[39m[33mG[39m[35mZ[39m[33mG[39m[33mE[39m[33mD[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (Out 'Z')) (F (Out 'U')))
+[  [33mC[39m [33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mD[39m[35mU[39m[33mC[39m [33mC[39m[33mG[39m[35mV[39m[33mA[39m[33mA[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mE[39m[35mX[39m[33mD[39m[33mG[39m[33mG[39m[33mC[39m[33mF[39m [33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mF[39m[35mU[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking WU (Not (Out 'V')) (In 'C')
+[  [33mE[39m[33mG[39m[35mZ[39m[33mG[39m[33mD[39m [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mD[39m[35mW[39m[33mA[39m[35mW[39m[33mD[39m[35mW[39m[33mD[39m[35mW[39m[33mA[39m [33mG[39m[33mE[39m[33mC[39m[35mZ[39m[33mB[39m[35mU[39m[33mA[39m [33mC[39m[33mB[39m[35mV[39m[33mG[39m[35mY[39m[33mG[39m[33mB[39m [33mD[39m[33mE[39m[35mY[39m[33mG[39m[35mU[39m[33mG[39m [33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mD[39m[35mW[39m[33mF[39m[35mW[39m[33mD[39m[35mW[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking Or (G (Not (In 'E'))) (F (And (In 'E') (F (Out 'Z'))))
+[  [33mD[39m[33mF[39m[35mY[39m[33mE[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mB[39m[33mE[39m [33mG[39m[33mG[39m[33mD[39m[33mG[39m[35mY[39m[33mC[39m[33mB[39m [33mE[39m[33mG[39m[35mZ[39m[33mA[39m[33mC[39m [33mG[39m[33mG[39m[33mF[39m[33mD[39m [33mC[39m[33mG[39m[35mV[39m[33mG[39m[33mC[39m[33mG[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking WU (Not (In 'E')) (And (Out 'U') (Not (In 'E')))
+[  [33mE[39m[33mD[39m[35mZ[39m*** Failed!  [33mD[39m[35mY[39m [33mE[39mFalsifiable (after 2 tests and 1 shrink):  
+RersData "E"
+ ]
+93 FALSE, found counterexample
+===================================================
+checking WU (Not (Out 'W')) (Out 'Y')
+[  [33mE[39m[33mG[39m[35mZ[39m[33mG[39m[33mF[39m[33mF[39m[35mY[39m[33mG[39m [33mD[39m[33mG[39m[35mY[39m[33mG[39m[33mF[39m [33mD[39m[33mG[39m[35mY[39m[33mB[39m[33mC[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking WU (Not (In 'C')) (And (Out 'Z') (Not (In 'C')))
+[  [33mG[39m[33mC[39m[33mF[39m[35mV[39m[33mE[39m*** Failed!  [33mC[39m[33mF[39m[35mV[39m[33mE[39m [33mF[39m[33mE[39m [33mC[39m[33mE[39m[35mV[39m [33mE[39m[35mZ[39m [33mC[39mFalsifiable (after 16 tests and 3 shrinks):  
+RersData "C"
+ ]
+95 FALSE, found counterexample
+===================================================
+checking WU (Not (Out 'Z')) (In 'C')
+[  [33mE[39m [33mC[39m[33mG[39m[35mV[39m[33mG[39m[33mB[39m[33mG[39m[35mY[39m [33mC[39m[33mB[39m[35mV[39m[33mA[39m[35mY[39m[33mC[39m [33mE[39m[33mC[39m[35mZ[39m[33mA[39m[35mU[39m[33mD[39m*** Failed!  [33mC[39m[33mA[39m[35mV[39m[33mD[39m [33mE[39m[33mA[39m[35mZ[39m[33mD[39m [33mA[39m[33mD[39m [33mE[39m[33mD[39m[35mZ[39m [33mD[39m [33mE[39mFalsifiable (after 91 tests and 2 shrinks):  
+RersData "ED"
+ ]
+96 FALSE, found counterexample
+===================================================
+checking G (Or (Not (And (And (Out 'Z') (Not (Out 'Y'))) (F (Out 'Y')))) (U (Not (Out 'W')) (Out 'Y')))
+[  [33mF[39m[33mD[39m [33mD[39m[33mE[39m[35mY[39m[33mF[39m[35mU[39m[33mC[39m [33mE[39m[33mF[39m[35mZ[39m[33mG[39m[35mY[39m[33mC[39m[33mA[39m[35mU[39m[33mE[39m [33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mD[39m[35mU[39m[33mG[39m[33mF[39m[33mC[39m[33mF[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking Or (Not (F (In 'C'))) (U (And (Not (Out 'V')) (Not (In 'C'))) (Or (In 'C') (U (And (Out 'V') (Not (In 'C'))) (Or (In 'C') (U (And (Not (Out 'V')) (Not (In 'C'))) (Or (In 'C') (U (And (Out 'V') (Not (In 'C'))) (Or (In 'C') (U (Not (Out 'V')) (In 'C'))))))))))
+[  [33mA[39m[33mA[39m [33mB[39m[33mA[39m [33mD[39m[33mG[39m[35mY[39m[33mE[39m[33mE[39m[35mU[39m[33mB[39m[35mW[39m[33mG[39m[35mW[39m[33mC[39m[33mF[39m[35mW[39m[33mG[39m[35mW[39m[33mG[39m[33mF[39m[33mD[39m[35mW[39m [33mC[39m[33mG[39m[35mV[39m[33mG[39m[33mA[39m[33mE[39m [33mD[39m[33mG[39m[35mY[39m[33mB[39m[33mC[39m [33mE[39m[33mF[39m[35mZ[39m[33mC[39m[35mY[39m[33mD[39m[35mU[39m[33mD[39m[33mG[39m[33mB[39m[33mE[39m[33mE[39m[33mE[39m [33mE[39m[35mZ[39m[33mF[39m[35mY[39m[33mC[39m[35mU[39m[33mD[39m[33mF[39m[33mA[39m[33mB[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (And (In 'F') (Not (Out 'X')))) (WU (Not (Out 'X')) (And (Out 'Y') (Not (Out 'X')))))
+[  [33mB[39m[33mB[39m [33mG[39m[33mE[39m[35mZ[39m[33mB[39m[33mE[39m [33mE[39m[35mZ[39m[33mC[39m[35mU[39m[33mC[39m[33mD[39m [33mG[39m[33mE[39m[35mZ[39m[33mB[39m[33mE[39m [33mC[39m[33mB[39m[35mV[39m[33mF[39m[35mY[39m[33mB[39m [33mG[39m[33mD[39m[33mE[39m[35mY[39m[33mE[39m[35mU[39m[33mE[39m[35mW[39m[33mF[39m[35mW[39m[33mF[39m[35mW[39m[33mA[39m[33mC[39m[35mW[39m[33mB[39m[35mW[39m[33mB[39m[35mW[39m+++ OK, passed 100 tests.
+ ]
+===================================================
+checking G (Or (Not (And (Out 'V') (Not (In 'E')))) (U (Not (In 'E')) (And (Out 'Y') (Not (In 'E')))))
+[  [33mG[39m[33mE[39m[33mA[39m[35mZ[39m[33mD[39m [33mE[39m[33mF[39m[35mZ[39m[33mD[39m[35mY[39m[33mC[39m [33mG[39m[33mC[39m[33mE[39m[35mV[39m[33mA[39m*** Failed!  [33mC[39m[33mE[39m[35mV[39m[33mA[39m [33mE[39m[33mA[39m[35mZ[39m [33mC[39m[35mV[39m[33mA[39m [33mC[39m[33mE[39m[35mV[39m [33mE[39m [33mC[39m[35mV[39mFalsifiable (after 79 tests and 2 shrinks):  
+RersData "CE"
+ ]
+100 FALSE, found counterexample

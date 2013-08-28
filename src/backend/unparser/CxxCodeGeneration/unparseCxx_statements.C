@@ -58,7 +58,6 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
   // So there is an opportunity to refactor this code.
 
      ROSE_ASSERT(con_init != NULL);
-  /* code inserted from specification */
 
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
      printf ("\n\nInside of Unparse_MOD_SAGE::unparseOneElemConInit (%p) \n",con_init);
@@ -66,8 +65,10 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
 #endif
 
 #if 0
-     printf ("\n\nInside of Unparse_MOD_SAGE::unparseOneElemConInit (%p) \n",con_init);
-     curprint("\n /* Inside of Unparse_MOD_SAGE::unparseOneElemConInit */ \n");
+     printf ("\n\nInside of Unparse_ExprStmt::unparseOneElemConInit (%p) \n",con_init);
+#endif
+#if 0
+     curprint("\n /* Inside of Unparse_ExprStmt::unparseOneElemConInit */ \n");
 #endif
 
   // taken from unparseConInit
@@ -86,7 +87,10 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
   // if (con_init->get_need_name() == true)
      if ((con_init->get_need_name() == true) && (con_init->get_is_explicit_cast() == true) )
         {
-          SgName nm;
+          SgName name;
+#if 0
+          printf ("In unparseOneElemConInit(): con_init->get_declaration() = %p \n",con_init->get_declaration());
+#endif
           if(con_init->get_declaration())
              {
             // DQ (11/12/2004)  Use the qualified name always (since get_need_qualifier() does
@@ -103,13 +107,23 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
             // DQ (6/1/2011): Newest refactored support for name qualification.
             // nm = con_init->get_declaration()->get_qualified_name();
                SgName nameQualifier = con_init->get_qualified_name_prefix();
-               nm = nameQualifier + con_init->get_declaration()->get_name();
+               name = nameQualifier + con_init->get_declaration()->get_name();
+
+            // DQ (8/19/2013): I am not sure that this will include name qualification on possible template arguments.
+            // We need an example of this.
+               if ( unp->u_sage->printConstructorName(con_init))
+                  {
+                    curprint( name.str());
+                  }
 #endif
 #endif
              }
             else
              {
 //             ROSE_ASSERT (con_init->get_class_decl() != NULL);
+#if 0
+               printf ("In unparseOneElemConInit(): con_init->get_class_decl() = %p \n",con_init->get_class_decl());
+#endif
                if(con_init->get_class_decl())
                   {
                  // DQ (11/12/2004)  Use the qualified name always (since get_need_qualifier() does
@@ -126,16 +140,50 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
                  // DQ (6/1/2011): Newest refactored support for name qualification.
                  // nm = con_init->get_class_decl()->get_qualified_name();
                     SgName nameQualifier = con_init->get_qualified_name_prefix();
-                    nm = nameQualifier + con_init->get_class_decl()->get_name();
+                 // nm = nameQualifier + con_init->get_class_decl()->get_name();
+
+                 // DQ (8/19/2013): We need to unparse the type using any possible qualification on the type name (e.g. name qualification on template arguments).
+                    if ( unp->u_sage->printConstructorName(con_init))
+                       {
+#if 0
+                         printf ("In unparseOneElemConInit(): Unparse the nameQualifier = %s \n",nameQualifier.str());
+#endif
+                         curprint(nameQualifier.str());
+#if 0
+                         printf ("In unparseOneElemConInit(): set_reference_node_for_qualification(con_init = %p) \n",con_init);
+#endif
+                         newinfo.set_reference_node_for_qualification(con_init);
+
+                      // DQ (8/19/2013): This has no effect if the type string is taken from the type name map and so the "class" needs
+                      // to be eliminated in the generation of the intial string as part of the generation of the name qualification.
+                      // printf ("In unparseOneElemConInit(): calling set_SkipClassSpecifier() \n");
+                      // newinfo.set_SkipClassSpecifier();
+#if 0
+                         printf ("In unparseOneElemConInit(): Unparse the type = %p = %s \n",con_init->get_type(),con_init->get_type()->class_name().c_str());
+#endif
+                         unp->u_type->unparseType(con_init->get_type(),newinfo);
+#if 0
+                         printf ("DONE: In unparseOneElemConInit(): unparseType() \n");
+#endif
+                       }
 #endif
 #endif
                   }
              }
 
+#if 0
+          printf ("In unparseOneElemConInit(): nm = %s \n",name.str());
+          printf ("In unparseOneElemConInit(): get_qualified_name_prefix_for_referenced_type() = %s \n",con_init->get_qualified_name_prefix_for_referenced_type().str());
+          printf ("In unparseOneElemConInit(): get_qualified_name_prefix() = %s \n",con_init->get_qualified_name_prefix().str());
+#endif
+#if 0
+       // DQ (8/19/2013): Removed the refactoring of this code from the two branches above so that we could tailor the 
+       // name qualification to include the handling of template arguments in the type that require qualification.
           if ( unp->u_sage->printConstructorName(con_init))
              {
-               curprint( nm.str());
+               curprint( name.str());
              }
+#endif
         }
 
   // curprint( "\n /* Done with name output in Unparse_MOD_SAGE::unparseOneElemConInit */ \n");
@@ -158,9 +206,9 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
           SgExpressionPtrList::iterator i = expr_list->get_expressions().begin();
           if (i != expr_list->get_expressions().end())
              {
-               SgUnparse_Info newinfo(info);
-               newinfo.set_SkipBaseType();
-               unp->u_exprStmt->unparseExpression(*i, newinfo);
+               SgUnparse_Info arg_newinfo(info);
+               arg_newinfo.set_SkipBaseType();
+               unp->u_exprStmt->unparseExpression(*i, arg_newinfo);
              }
         }
 
@@ -173,6 +221,9 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
      printf ("Leaving of Unparse_MOD_SAGE::unparseOneElemConInit \n\n\n");
      curprint( "\n /* Leaving of Unparse_MOD_SAGE::unparseOneElemConInit */ \n");
+#endif
+#if 0
+     printf ("Leaving of Unparse_MOD_SAGE::unparseOneElemConInit \n\n\n");
 #endif
    }
 
@@ -191,6 +242,9 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      SgType        *tmp_type = initializedName->get_type();
      ROSE_ASSERT (initializedName!= NULL);
 
+  // DQ (8/9/2013): refactored to support additional refactoring to seperate out code to unparse SgInitializedName.
+     bool oldStyleDefinition = funcdecl_stmt->get_oldStyleDefinition();
+
 #if 0
      printf ("unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = %zu \n",funcdecl_stmt->get_args().size());
      curprint( string("\n/* unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = ") + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
@@ -203,7 +257,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
    // Skip duplicated unparsing of the attached information for C function arguments declared in old style.
    // They usually should be unparsed when unparsing the arguments which are outside of the parameter list
    // See example code: tests/CompileTests/C_tests/test2010_10.c
-    if (funcdecl_stmt->get_oldStyleDefinition() == false )
+    if (oldStyleDefinition == false )
        unparseAttachedPreprocessingInfo(initializedName, info, PreprocessingInfo::before);
 #endif
   // printf ("In unparseFunctionParameterDeclaration(): Argument name = %s \n",
@@ -244,7 +298,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
         {
        // DQ (12/10/2007): This is a fix for C_tests/test2007_177.c (this is only an issue if --edg:restrict is used on the commandline).
        // curprint( "register ");
-          if ( (funcdecl_stmt->get_oldStyleDefinition() == false) || (outputParameterDeclaration == true) )
+          if ( (oldStyleDefinition == false) || (outputParameterDeclaration == true) )
              {
                curprint("register ");
              }
@@ -287,7 +341,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
         }
 
   // Error checking, if we are using old style C function parameters, then I hope this is not C++ code!
-     if (funcdecl_stmt->get_oldStyleDefinition() == true)
+     if (oldStyleDefinition == true)
         {
           if (SageInterface::is_Cxx_language() == true)
              {
@@ -296,86 +350,13 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
           ROSE_ASSERT (SageInterface::is_Cxx_language() == false);
         }
 
-     if ( (funcdecl_stmt->get_oldStyleDefinition() == false) || (outputParameterDeclaration == true) )
+     if ( (oldStyleDefinition == false) || (outputParameterDeclaration == true) )
         {
        // output the type name for each argument
           if (tmp_type != NULL)
              {
-#if 0
-            // DQ (10/17/2004): This is now made more uniform and output in the unparseType() function
-               if (isSgNamedType(tmp_type))
-                  {
-                    SgName theName;
-                    theName = isSgNamedType(tmp_type)->get_qualified_name().str();
-                    if (!theName.is_null())
-                       {
-                         curprint( theName.str() << "::");
-                       }
-                  }
-#endif
-#if 1
             // DQ (5/5/2013): Refactored code used here and in the unparseTemplateArgument().
                unp->u_type->outputType<SgInitializedName>(initializedName,tmp_type,info);
-#else
-               info.set_isTypeFirstPart();
-            // curprint( "\n/* unparse_helper(): output the 1st part of the type */ \n");
-
-            // DQ (8/6/2007): Skip forcing the output of qualified names now that we have a hidden list mechanism.
-            // DQ (10/14/2006): Since function can appear anywhere types referenced in function 
-            // declarations have to be fully qualified.  We can't tell from the type if it requires 
-            // qualification we would need the type and the function declaration (and then some 
-            // analysis).  So fully qualify all function parameter types.  This is a special case
-            // (documented in the Unparse_ExprStmt::unp->u_name->generateNameQualifier() member function.
-            // info.set_forceQualifiedNames();
-
-               SgUnparse_Info ninfo_for_type(info);
-
-#if 1
-            // DQ (12/20/2006): This is used to specify global qualification separately from the more general name 
-            // qualification mechanism.  Note that SgVariableDeclarations don't use the requiresGlobalNameQualificationOnType
-            // on the SgInitializedNames in their list since the SgVariableDeclaration IR nodes is marked directly.
-               if (initializedName->get_requiresGlobalNameQualificationOnType() == true)
-                  {
-                 // Output the name qualification for the type in the variable declaration.
-                 // But we have to do so after any modifiers are output, so in unparseType().
-                 // printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): This function parameter type requires a global qualifier \n");
-
-                 // Note that general qualification of types is separated from the use of globl qualification.
-                 // ninfo2.set_forceQualifiedNames();
-                    ninfo_for_type.set_requiresGlobalNameQualification();
-                  }
-#endif
-
-            // DQ (5/12/2011): Added support for newer name qualification implementation.
-               ninfo_for_type.set_name_qualification_length(initializedName->get_name_qualification_length_for_type());
-               ninfo_for_type.set_global_qualification_required(initializedName->get_global_qualification_required_for_type());
-               ninfo_for_type.set_type_elaboration_required(initializedName->get_type_elaboration_required_for_type());
-
-            // DQ (5/29/2011): We have to set the associated reference node so that the type unparser can get the name qualification if required.
-               ninfo_for_type.set_reference_node_for_qualification(initializedName);
-
-            // unparseType(tmp_type, info);
-               unp->u_type->unparseType(tmp_type, ninfo_for_type);
-
-            // curprint( "\n/* DONE - unparse_helper(): output the 1st part of the type */ \n");
-
-            // forward declarations don't necessarily need the name of the argument
-            // so we must check if not NULL before adding to chars_on_line
-            // This is a more consistant way to handle the NULL string case
-            // curprint( "\n/* unparse_helper(): output the name of the type */ \n");
-               curprint(tmp_name.str());
-
-            // output the rest of the type
-               info.set_isTypeSecondPart();
-
-            // info.display("unparse_helper(): output the 2nd part of the type");
-
-            // printf ("unparse_helper(): output the 2nd part of the type \n");
-            // curprint( "\n/* unparse_helper(): output the 2nd part of the type */ \n");
-               unp->u_type->unparseType(tmp_type, info);
-            // printf ("DONE: unparse_helper(): output the 2nd part of the type \n");
-            // curprint( "\n/* DONE: unparse_helper(): output the 2nd part of the type */ \n");
-#endif
              }
             else
              {
@@ -390,40 +371,18 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      SgUnparse_Info ninfo3(info);
      ninfo3.unset_inArgList();
 
-#if 0
-  // DQ (6/16/2005): control output of initializers (should only be output once and never in 
-  // generated declarations for member functions) member function function declaration declared 
-  // outside of the class.  Avoid case of "X { public: X(int i = 0); }; X::X(int i = 0) {}"
-  // see test2005_87.C for example and details.
-     bool outputInitializer = true;
-     if (funcdecl_stmt->get_scope() != funcdecl_stmt->get_parent())
-        {
-       // This function declaration is appearing in a different scope there where it was first 
-       // declared so avoid output of the default initializers of any function parameters!
-       // printf ("Skipping output of initializer since this is not the original declaration! \n");
-          outputInitializer = false;
-        }
-#else
   // DQ (4/27/2013): We now have better support in ROSE to know when to output the default arguments,
   // so we don't want to use this mechanism above.  So now we always output the default arguments for
   // function parameters in a function declaration if they are defined in the AST. It is up to the
   // specification in the AST to have them in the correct locations, consistant with the source code.
      bool outputInitializer = true;
-#endif
 
   // Add an initializer if it exists
      if ( outputInitializer == true && tmp_init != NULL )
         {
-       // DQ (6/14/2005): We only want to avoid the redefinition of function parameters.
-       // DQ (4/20/2005): Removed from_template data member since it is redundant 
-       //                 in design with handling of templates in ROSE.
-       // if(!(funcdecl_stmt->get_from_template() && !funcdecl_stmt->isForward()))
-       // if ( !funcdecl_stmt->isForward() )
-         
        // Cong (6/28/2011): When unparsing an initializer for a function parameter, we should add a space before '='.
        // Or else, foo(const int& = 1) will be unparsed to foo(const int&=1) which contains an operator '&=", which is 
        // incorrect.
-       // curprint("=");
           curprint(" = ");
           unp->u_exprStmt->unparseExpression(tmp_init, ninfo3);
         }
@@ -2105,8 +2064,10 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           if ( (tmp_stmt = if_stmt->get_true_body()) ) 
              {
-            // printf ("Unparse the if true body \n");
-            // curprint ( string("\n/* Unparse the if true body */ \n") );
+#if 0
+               printf ("Unparse the if true body \n");
+               curprint("\n/* Unparse the if true body */ \n");
+#endif
                unp->cur.format(tmp_stmt, info, FORMAT_BEFORE_NESTED_STATEMENT);
 
             // Unparse using base class function so we get any required comments and CPP directives.
@@ -2114,7 +2075,9 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
                UnparseLanguageIndependentConstructs::unparseStatement(tmp_stmt, info);
 
                unp->cur.format(tmp_stmt, info, FORMAT_AFTER_NESTED_STATEMENT);
-            // curprint ( string("\n/* DONE: Unparse the if true body */ \n") );
+#if 0
+               curprint("\n/* DONE: Unparse the if true body */ \n");
+#endif
              }
 
           if ( (tmp_stmt = if_stmt->get_false_body()) )
@@ -2127,17 +2090,20 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
                unp->cur.format(if_stmt, info, FORMAT_BEFORE_STMT);
                curprint ( string("else "));
                if_stmt = isSgIfStmt(tmp_stmt);
-               if (if_stmt == NULL) {
+               if (if_stmt == NULL) 
+                  {
                     unp->cur.format(tmp_stmt, info, FORMAT_BEFORE_NESTED_STATEMENT);
-
-              // curprint ( string("\n/* Unparse the if false body */ \n") );
-              // Unparse using base class function so we get any required comments and CPP directives.
-              // unparseStatement(tmp_stmt, info);
-                 UnparseLanguageIndependentConstructs::unparseStatement(tmp_stmt, info);
-              // curprint ( string("\n/* DONE: Unparse the if false body */ \n") );
-
-                 unp->cur.format(tmp_stmt, info, FORMAT_AFTER_NESTED_STATEMENT);
-               }
+#if 0
+                    curprint("\n/* Unparse the if false body */ \n");
+#endif
+                 // Unparse using base class function so we get any required comments and CPP directives.
+                 // unparseStatement(tmp_stmt, info);
+                    UnparseLanguageIndependentConstructs::unparseStatement(tmp_stmt, info);
+#if 0
+                    curprint("\n/* DONE: Unparse the if false body */ \n");
+#endif
+                    unp->cur.format(tmp_stmt, info, FORMAT_AFTER_NESTED_STATEMENT);
+                  }
              }
             else
              {
@@ -2146,9 +2112,12 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
 
        // DQ (12/16/2008): Need to process any associated CPP directives and comments
           if (if_stmt != NULL)
+             {
                unparseAttachedPreprocessingInfo(if_stmt, info, PreprocessingInfo::before);
+             }
         }
    }
+
 
 #if 1
 // DQ (8/13/2007): This is no longer used, I think, however it might be required for the A++/P++ array optimizer.
@@ -2945,13 +2914,13 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 void
 Unparse_ExprStmt::unparseTemplateFunctionDefnStmt(SgStatement *stmt_, SgUnparse_Info& info)
-{
-    SgTemplateFunctionDefinition *stmt = isSgTemplateFunctionDefinition(stmt_);
-    assert(stmt!=NULL);
-    SgStatement *declstmt = isSgTemplateFunctionDeclaration(stmt->get_declaration());
-    assert(declstmt!=NULL);
-    unparseTemplateFunctionDeclStmt(declstmt, info);
-}
+   {
+     SgTemplateFunctionDefinition *stmt = isSgTemplateFunctionDefinition(stmt_);
+     assert(stmt!=NULL);
+     SgStatement *declstmt = isSgTemplateFunctionDeclaration(stmt->get_declaration());
+     assert(declstmt!=NULL);
+     unparseTemplateFunctionDeclStmt(declstmt, info);
+   }
 
 // NOTE: Bug in Sage: No file information provided for FuncDeclStmt. 
 void
@@ -4392,16 +4361,31 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
             // Unparse the initializers if any exist
 
+#if 0
+               if (tmp_init != NULL)
+                  {
+                    printf ("Initializer tmp_init = %p = %s \n",tmp_init,tmp_init->class_name().c_str());
+#if 0
+                    tmp_init->get_file_info()->display("Initializer tmp_init: debug");
+#endif
+                  }
+#endif
+
+            // DQ (7/23/2013): Added better control over when to output the initializer.
+               bool outputInitializerBasedOnSourcePositionInfo = 
+                    ( (tmp_init != NULL) &&
+                      ( (tmp_init->get_file_info()->isCompilerGenerated() == false) || 
+                        (tmp_init->get_file_info()->isCompilerGenerated() == true && tmp_init->get_file_info()->isOutputInCodeGeneration() == true) ) );
+
+            // DQ (7/23/2013): Modified back to a previously implemented case of checking (tmp_init->get_file_info()->isOutputInCodeGeneration() == true).
+            //     See test2013_250.C for an example.
             // DQ (3/29/2013): Don't output the initializer if it was compiler generated and not meant to be output (see test2013_78.C).
             // This fails for test2007_06.C, so output the initializer if it is available in the AST.
             // if (tmp_init)
-               if ( (tmp_init != NULL) && !ninfo.SkipInitializer())
+            // if ( (tmp_init != NULL) && !ninfo.SkipInitializer())
             // if ( (tmp_init != NULL) && !ninfo.SkipInitializer() && (tmp_init->get_file_info()->isOutputInCodeGeneration() == true))
+               if ( (tmp_init != NULL) && !ninfo.SkipInitializer() && (outputInitializerBasedOnSourcePositionInfo == true))
                   {
-#if 0
-                    printf ("Initializer tmp_init = %s \n",tmp_init->class_name().c_str());
-#endif
-
                  // DQ (8/5/2005): generate more faithful representation of assignment operator!
 #if 0
                     ninfo.display ("In Unparse_ExprStmt::unparseVarDeclStmt --- handling the initializer");
@@ -5498,10 +5482,11 @@ void Unparse_ExprStmt::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
 
   // DQ (1/14/2013): However, we want it to be unparsed by the function unparsing the statement list (typically SgBasicBlock) instead of here.
-  // The stat4ement associated with the SgLabelStatement was not previously being inserted into the list of the current scope and this is a 
+  // The statement associated with the SgLabelStatement was not previously being inserted into the list of the current scope and this is a 
   // problem for the data flow analysis (bug reported by Robb).  Also we don't want to have a mechanism for hidding statements behind 
   // SgLabelStatements in general, so it makes more sense (and is consistant with ROSE based on EDG 3.3) to not unparse the associated 
-  // statement here.  Even though we do not correctly reference the lable's associated statement correctly in this version of ROSE based on EDG 4.x).
+  // statement here.  Even though we do not correctly reference the label's associated statement correctly in this version of ROSE based on EDG 4.x).
+
 #if 0
   // DQ (10/27/2012): Unparse the associated statement to the label.
   // Note that in the edg33 version of ROSE this was always a SgNullStatement, this is corrected in the design with the edg4x work.

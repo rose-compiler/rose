@@ -388,7 +388,7 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
 #endif
 
 #if 0
-     printf ("Inside of unparseType(): info.SkipBaseType() = %s \n",info.SkipBaseType() ? "true" : "false");
+     printf ("In unparseType(): info.SkipBaseType() = %s \n",info.SkipBaseType() ? "true" : "false");
   // curprint ("\n /* In unparseType(): info.SkipBaseType() = " + string(info.SkipBaseType() ? "true" : "false") + " */ \n");
 #endif
 
@@ -401,6 +401,11 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
   // DQ (6/4/2011): Support for output of generated string for type (used where name 
   // qualification is required for subtypes (e.g. template arguments)).
      SgNode* nodeReferenceToType = info.get_reference_node_for_qualification();
+
+#if 0
+     printf ("In unparseType(): nodeReferenceToType = %p = %s \n",nodeReferenceToType,(nodeReferenceToType != NULL) ? nodeReferenceToType->class_name().c_str() : "null");
+#endif
+
      if (nodeReferenceToType != NULL)
         {
 #if 0
@@ -547,6 +552,9 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                          curprint ("/* In unparseType(): Skipping output of SgClassType */ \n");
 #endif
                        }
+
+#error "DEAD CODE!"
+
                       else
                        {
                          unparseClassType(type, info);
@@ -565,6 +573,8 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                   {
                  // if ( ( info.isWithType() && info.SkipBaseType() ) || info.isTypeSecondPart() )
                     if ( info.SkipBaseType() == true )
+#error "DEAD CODE!"
+
                        {
                       /* do nothing */
 #if 0
@@ -582,6 +592,8 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
 #endif
                          unparseTypedefType(type, info);
                        }
+#error "DEAD CODE!"
+
                     break;
                   }
 #endif
@@ -1025,7 +1037,19 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
      SgClassDeclaration *decl = isSgClassDeclaration(class_type->get_declaration());
      ROSE_ASSERT(decl != NULL);
 
+  // DQ (7/28/2013): Added assertion.
+     ROSE_ASSERT(decl == decl->get_firstNondefiningDeclaration());
+
 #if 0
+     printf ("In Unparse_Type::unparseClassType(): class_type->get_autonomous_declaration() = %s \n",class_type->get_autonomous_declaration() ? "true" : "false");
+     printf ("In Unparse_Type::unparseClassType(): decl->get_isAutonomousDeclaration()      = %s \n",decl->get_isAutonomousDeclaration() ? "true" : "false");
+     printf ("In Unparse_Type::unparseClassType(): decl->get_isUnNamed()                    = %s \n",decl->get_isUnNamed() ? "true" : "false");
+
+     SgClassDeclaration *defining_decl = isSgClassDeclaration(class_type->get_declaration()->get_definingDeclaration());
+     printf ("decl = %p defining_decl = %p \n",decl,defining_decl);
+     printf ("In Unparse_Type::unparseClassType(): defining_decl->get_isAutonomousDeclaration() = %s \n",defining_decl->get_isAutonomousDeclaration() ? "true" : "false");
+     printf ("In Unparse_Type::unparseClassType(): defining_decl->get_isUnNamed()               = %s \n",defining_decl->get_isUnNamed() ? "true" : "false");
+
      printf ("In Unparse_Type::unparseClassType(): decl = %p = %s decl->get_definition() = %p \n",decl,decl->class_name().c_str(),decl->get_definition());
 #endif
 
@@ -1046,6 +1070,9 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                ROSE_ASSERT(decl != NULL);
                ROSE_ASSERT(decl->get_definition() != NULL);
 #else
+
+#error "DEAD CODE!"
+
             // DQ (9/23/2012): I think that we want to always using the non-defining declaration, since that is the declaration with name 
             // qualification computed for the possible template arguments. Then again, should the name qualification be attached to the 
             // template arguments (for either the defining or nondefining declaration).
@@ -1060,14 +1087,17 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
              }
         }
 
+  // DQ (7/28/2013): Added assertion.
+     ROSE_ASSERT(decl == decl->get_definingDeclaration() || decl->get_definingDeclaration() == NULL);
+
   // GB (09/19/2007): This is the defining declaration of the class, it might have preprocessing information attached to it.
      SgClassDeclaration *cDefiningDecl = isSgClassDeclaration(decl->get_definingDeclaration());
 
 #if 0
-     printf ("info.isWithType()       = %s \n",(info.isWithType()       == true) ? "true" : "false");
-     printf ("info.SkipBaseType()     = %s \n",(info.SkipBaseType()     == true) ? "true" : "false");
-     printf ("info.isTypeFirstPart()  = %s \n",(info.isTypeFirstPart()  == true) ? "true" : "false");
-     printf ("info.isTypeSecondPart() = %s \n",(info.isTypeSecondPart() == true) ? "true" : "false");
+     printf ("In unparseClassType(): info.isWithType()       = %s \n",(info.isWithType()       == true) ? "true" : "false");
+     printf ("In unparseClassType(): info.SkipBaseType()     = %s \n",(info.SkipBaseType()     == true) ? "true" : "false");
+     printf ("In unparseClassType(): info.isTypeFirstPart()  = %s \n",(info.isTypeFirstPart()  == true) ? "true" : "false");
+     printf ("In unparseClassType(): info.isTypeSecondPart() = %s \n",(info.isTypeSecondPart() == true) ? "true" : "false");
 #endif
 
   // DQ (10/7/2006): In C (and I think C99), we need the "struct" keyword
@@ -1330,11 +1360,20 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
         }
 
 #if 0
-     printf ("info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
-     printf ("decl->isForward()          = %s \n",(decl->isForward()          == true) ? "true" : "false");
+     printf ("In unparseClassType: info.SkipClassDefinition()          = %s \n",(info.SkipClassDefinition()          == true) ? "true" : "false");
+     printf ("In unparseClassType: decl->isForward()                   = %s \n",(decl->isForward()                   == true) ? "true" : "false");
+     printf ("In unparseClassType: decl->get_isUnNamed()               = %s \n",(decl->get_isUnNamed()               == true) ? "true" : "false");
+     printf ("In unparseClassType: decl->get_isAutonomousDeclaration() = %s \n",(decl->get_isAutonomousDeclaration() == true) ? "true" : "false");
 #endif
 
-     if (info.isTypeFirstPart() == true)
+  // DQ (7/28/2013): If this is an un-named class/struct/union then we have to put out the full definition each time (I think).
+  // Note that YardenPragmaPackExample.c requires that (info.isTypeSecondPart() == false) be added.
+  // if (info.isTypeFirstPart() == true)
+  // if (info.isTypeFirstPart() == true || decl->get_isUnNamed() == true)
+  // if (info.isTypeFirstPart() == true)
+  // if ( (info.isTypeFirstPart() == true) || (info.isTypeSecondPart() == false && decl->get_isUnNamed() == true) )
+  // if ( (info.isTypeFirstPart() == true) || (info.isTypeSecondPart() == false && decl->get_isAutonomousDeclaration() == false) )
+     if ( (info.isTypeFirstPart() == true) || (info.isTypeSecondPart() == false && decl->get_isAutonomousDeclaration() == false && info.SkipClassDefinition() == false) )
         {
           if ( !info.SkipClassDefinition() )
              {

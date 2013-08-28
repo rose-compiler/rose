@@ -4626,47 +4626,41 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
   //    Warning: Apparently, a frontend error code <= 3 indicates an EDG
   //    frontend warning; however, existing logic says nothing about the
   //    other language frontends' exit statuses.
-  bool use_original_input_file = false;
-  use_original_input_file =
-      (get_unparse_output_filename().empty() == true) ||
-      (
-          (
-              this->get_frontendErrorCode()               != 0 ||
-              this->get_project()->get_midendErrorCode()  != 0 ||
-              this->get_unparserErrorCode()               != 0 ||
-              this->get_backendCompilerErrorCode()        != 0
-          ) &&
-          (
-              get_project()->get_keep_going()
-          )
-      );
+     bool use_original_input_file = false;
+     use_original_input_file = ( get_unparse_output_filename().empty() == true) || 
+                               ( ( this->get_frontendErrorCode() != 0 || this->get_project()->get_midendErrorCode() != 0 || 
+                                   this->get_unparserErrorCode() != 0 || this->get_backendCompilerErrorCode() != 0 ) && 
+                                 ( get_project()->get_keep_going() ) );
 
-    // TOO1 (05/14/2013): Handling for -rose:keep_going
-    // Replace the unparsed file with the original input file.
-    if (use_original_input_file)
-    {
-          //ROSE_ASSERT(get_skip_unparse() == true);
+  // TOO1 (05/14/2013): Handling for -rose:keep_going
+  // Replace the unparsed file with the original input file.
+     if (use_original_input_file)
+        {
+       // ROSE_ASSERT(get_skip_unparse() == true);
           string outputFilename = get_sourceFileNameWithPath();
 
           if (get_unparse_output_filename().empty())
-          {
-              if (get_skipfinalCompileStep())
-              {
+             {
+               if (get_skipfinalCompileStep())
+                  {
                   // nothing to do...
-              }
-              else
-              {
-                  ROSE_ASSERT(! "Not implemented yet");
-              }
-          }
-          else
-          {
-              boost::filesystem::path original_file = outputFilename;
-              boost::filesystem::path unparsed_file = get_unparse_output_filename();
-              ROSE_ASSERT(original_file.string() != unparsed_file.string());
-              if (SgProject::get_verbose() >= 2)
-              {
-                  std::cout
+                  }
+                 else
+                  {
+                 // DQ (7/14/2013): This is the branch taken when processing the -H option (which outputs the 
+                 // header file list, and is required to be supported in ROSE as part of some application 
+                 // specific configuration testing (when configure tests ROSE translators)).
+                    ROSE_ASSERT(! "Not implemented yet");
+                  }
+             }
+            else
+             {
+               boost::filesystem::path original_file = outputFilename;
+               boost::filesystem::path unparsed_file = get_unparse_output_filename();
+               ROSE_ASSERT(original_file.string() != unparsed_file.string());
+               if (SgProject::get_verbose() >= 2)
+                  {
+                    std::cout
                       << "[DEBUG] "
                       << "unparsed_file "
                       << "'" << unparsed_file << "' "
@@ -4674,35 +4668,33 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                       << std::boolalpha
                       << boost::filesystem::exists(unparsed_file)
                       << std::endl;
-              }
+                  }
               // Don't replace the original input file with itself
-              if (original_file.string() != unparsed_file.string())
-              {
-                  if (SgProject::get_verbose() >= 1)
+               if (original_file.string() != unparsed_file.string())
                   {
-                      std::cout
+                    if (SgProject::get_verbose() >= 1)
+                       {
+                         std::cout
                           << "[INFO] "
                           << "Replacing "
                           << "'" << unparsed_file << "' "
                           << "with "
                           << "'" << original_file << "'"
                           << std::endl;
-                  }
+                       }
 
                   // copy_file will only completely override the existing file in Boost 1.46+
                   // http://stackoverflow.com/questions/14628836/boost-copy-file-has-inconsistent-behavior-when-overwrite-if-exists-is-used
-                  if (boost::filesystem::exists(unparsed_file))
-                  {
-                      boost::filesystem::remove(unparsed_file);
+                    if (boost::filesystem::exists(unparsed_file))
+                       {
+                         boost::filesystem::remove(unparsed_file);
+                       }
+
+                    boost::filesystem::copy_file(original_file,unparsed_file,boost::filesystem::copy_option::overwrite_if_exists);
                   }
-                  boost::filesystem::copy_file(
-                      original_file,
-                      unparsed_file,
-                      boost::filesystem::copy_option::overwrite_if_exists);
-              }
-          }
+             }
           set_unparse_output_filename(outputFilename);
-    }
+        }
 #endif
 
      ROSE_ASSERT (get_unparse_output_filename().empty() == false);
@@ -5843,7 +5835,9 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
 
             // DQ (2/24/2013): Added assertion.
                ROSE_ASSERT(dotExp->get_rhs_operand() != NULL);
-
+#if 0
+               printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case V_SgDotExp: dotExp->get_rhs_operand() = %p = %s \n",dotExp->get_rhs_operand(),dotExp->get_rhs_operand()->class_name().c_str());
+#endif
             // There are four different types of function call reference expression in ROSE.
                SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
                if (memberFunctionRefExp == NULL)
@@ -5858,14 +5852,28 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                               SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(dotExp->get_rhs_operand());
                               if (functionRefExp == NULL)
                                  {
-                                   dotExp->get_rhs_operand()->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: templateMemberFunctionRefExp == NULL: debug");
-                                   printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: dotExp->get_rhs_operand() = %p = %s \n",dotExp->get_rhs_operand(),dotExp->get_rhs_operand()->class_name().c_str());
+                                   SgVarRefExp* varRefExp = isSgVarRefExp(dotExp->get_rhs_operand());
+                                   if (varRefExp == NULL)
+                                      {
+                                        dotExp->get_rhs_operand()->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: templateMemberFunctionRefExp == NULL: debug");
+                                        printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: dotExp->get_rhs_operand() = %p = %s \n",dotExp->get_rhs_operand(),dotExp->get_rhs_operand()->class_name().c_str());
+                                      }
+                                     else
+                                      {
+                                        ROSE_ASSERT(varRefExp != NULL);
+
+                                     // DQ (8/20/2013): This is not a SgFunctionSymbol so we can't return a valid symbol from this case of a function call from a pointer to a function.
+                                     // returnSymbol = varRefExp->get_symbol();
+                                      }
                                  }
                                 else
                                  {
                                 // I am unclear when this is possible, but STL code exercises it.
                                    ROSE_ASSERT(functionRefExp != NULL);
                                    returnSymbol = functionRefExp->get_symbol();
+
+                                // DQ (8/20/2013): Add assertion to the specific valide cases.
+                                   ROSE_ASSERT(returnSymbol != NULL);
                                  }
                             }
                            else
@@ -5873,22 +5881,32 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                            // I am unclear when this is possible, but STL code exercises it.
                               ROSE_ASSERT(templateFunctionRefExp != NULL);
                               returnSymbol = templateFunctionRefExp->get_symbol();
+
+                           // DQ (8/20/2013): Add assertion to the specific valide cases.
+                              ROSE_ASSERT(returnSymbol != NULL);
                             }
                        }
                       else
                        {
                          ROSE_ASSERT(templateMemberFunctionRefExp != NULL);
                          returnSymbol = templateMemberFunctionRefExp->get_symbol();
+
+                      // DQ (8/20/2013): Add assertion to the specific valide cases.
+                         ROSE_ASSERT(returnSymbol != NULL);
                        }
                   }
                  else
                   {
                     ROSE_ASSERT(memberFunctionRefExp != NULL);
                     returnSymbol = memberFunctionRefExp->get_symbol();
+
+                 // DQ (8/20/2013): Add assertion to the specific valide cases.
+                    ROSE_ASSERT(returnSymbol != NULL);
                   }
 
+            // DQ (8/20/2013): Function pointers don't allow us to generate a proper valid SgFunctionSymbol.
             // DQ (2/8/2009): Can we assert this! What about pointers to functions?
-               ROSE_ASSERT(returnSymbol != NULL);
+            // ROSE_ASSERT(returnSymbol != NULL);
 
            // Virtual functions called through the dot operator are resolved statically if they are not
            // called on reference types.

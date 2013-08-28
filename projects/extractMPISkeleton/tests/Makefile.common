@@ -146,7 +146,10 @@ EXTRA_DIST = \
 	t38/test.c \
 	t39/files \
 	t39/rose_test.c.expected \
-	t39/test.c
+	t39/test.c \
+	ifdef/files \
+	ifdef/rose_ifdef.c.expected \
+  ifdef/ifdef.c
 
 DIRS=$(foreach file, ${EXTRA_DIST}, $(dir ${file}))
 
@@ -167,7 +170,9 @@ ALL_OBJS=$(addsuffix .o, $(basename ${ALL_OUTS}))
 SKFLAGS=-I$(asrcdir)/../mpi-fakeheader -skel:spec $(asrcdir)/../apis.coll
 
 %/testmark: %/files
-	(cd $* && ${EXEC} ${SKFLAGS} `cat files` && touch $(@F))
+	(cd $* && ../src/generateSignatures -I$(asrcdir)/../mpi-fakeheader -signature:o $*.sig `cat files`)
+	(cd $* && ../src/summarizeSignatures -I$(asrcdir)/../mpi-fakeheader -summarize:spec $(asrcdir)/../apis.coll -summarize:o $*.sig.tc -- *.sig)
+	(cd $* && ${EXEC} ${SKFLAGS} -skel:g *.sig.tc `cat files` && touch $(@F))
 
 %/testmark-outline: %/files
 	(cd $* && ${EXEC} ${SKFLAGS} -skel:o `cat files` && touch $(@F))
@@ -179,7 +184,7 @@ SKFLAGS=-I$(asrcdir)/../mpi-fakeheader -skel:spec $(asrcdir)/../apis.coll
 	${CXX} -I$(asrcdir)/../mpi-fakeheader -c -o $@ $<
 
 %.comp: % %.expected
-	- diff -w $?
+	- diff -uw $?
 
 show:
 	@echo $($(VALUE))              # note: this expands!

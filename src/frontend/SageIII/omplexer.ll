@@ -116,6 +116,15 @@ alloc           {return cond_return ( ALLOC ); }
 in              {return cond_return ( IN ); }
 out             {return cond_return ( OUT ); }
 inout           {return cond_return ( INOUT ); }
+simd            {return cond_return ( SIMD ); }
+safelen         {return cond_return ( SAFELEN ); }
+aligned         {return cond_return ( ALIGNED ); }
+linear          {return cond_return ( LINEAR ); }
+uniform         {return cond_return ( UNIFORM ); }
+aligned         {return cond_return ( ALIGNED ); }
+inbranch        {return cond_return ( INBRANCH ); }
+notinbranch     {return cond_return ( NOTINBRANCH ); }
+
 
 "="             { return('='); }
 "("             { return ('('); }

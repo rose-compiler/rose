@@ -1593,19 +1593,32 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                            // DQ (3/7/2007): Use the value in the generated name so that it can be shared.
                               SgExpression* subExpression = templateArgument->get_expression();
-                              ROSE_ASSERT(subExpression != NULL);
-                              SgValueExp* valueExpression = isSgValueExp(subExpression);
-                              if (valueExpression != NULL)
+
+                           // DQ (8/22/3013): A nontype template argument can contain a SgInitializedName as a declaration of a variable instead of an expression.
+                           // ROSE_ASSERT(subExpression != NULL);
+                              if (subExpression != NULL)
                                  {
-                                   key += "__" + valueExpression->class_name() + "__" + valueExpression->unparseToString();
+                                   SgValueExp* valueExpression = isSgValueExp(subExpression);
+                                   if (valueExpression != NULL)
+                                      {
+                                        key += "__" + valueExpression->class_name() + "__" + valueExpression->unparseToString();
+                                      }
+                                     else
+                                      {
+                                     // We can maybe do this as well, but also append the pointer value just to make sure this will not be shared
+                                        key += "__" + subExpression->class_name() + "__" + subExpression->unparseToString();
+
+                                     // This will make sure the IR node is unshared
+                                        key += StringUtility::numberToString(node);
+                                      }
                                  }
                                 else
                                  {
-                                // We can maybe do this as well, but also append the pointer value just to make sure this will not be shared
-                                   key += "__" + subExpression->class_name() + "__" + subExpression->unparseToString();
+                                // DQ (8/22/2013): Added branch to support non-expression kinds.
+                                // SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBetweenDefiningAndNondefiningDeclarations )
+                                    ROSE_ASSERT(templateArgument->get_initializedName() != NULL);
+                                    key += "__" + SageInterface::generateUniqueName(templateArgument->get_initializedName(),ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
 
-                                // This will make sure the IR node is unshared
-                                   key += StringUtility::numberToString(node);
                                  }
 #else
                            // printf ("     templateArgument->get_expression() = %s \n",templateArgument->get_expression()->unparseToString().c_str());

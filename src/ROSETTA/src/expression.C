@@ -453,6 +453,9 @@ Grammar::setUpExpressions ()
      RefExp.excludeFunctionPrototype          ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
      Initializer.excludeFunctionPrototype     ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
 
+  // DQ (8/6/2013): We need to implement this member function explicitly and cannot use the default implementation.
+     TemplateParameterVal.excludeFunctionPrototype        ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
+
   // This is the easiest solution, then where any post_construction_initialization() function
   // was ment to call the base class post_construction_initialization() function, we just do 
   // so directly in thederived class post_construction_initialization() function.
@@ -1340,9 +1343,13 @@ Grammar::setUpExpressions ()
   // DQ (11/28/2011): Adding template declaration support in the AST (see test2011_164.C).
      TemplateParameterVal.setFunctionPrototype ( "HEADER_TEMPLATE_PARAMETER_VALUE_EXPRESSION", "../Grammar/Expression.code" );
      TemplateParameterVal.setDataPrototype ( "int", "template_parameter_position", "= -1",
-                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateParameterVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
-                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/6/2013): Added explicit representation for type (required to disambiguate overloaded template functions.
+     TemplateParameterVal.setDataPrototype ( "SgType*", "valueType", "= NULL",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // DQ (8/27/2006): Added support for Complex values (save the values as long doubles internally within the AST)
@@ -1797,6 +1804,12 @@ Grammar::setUpExpressions ()
      AggregateInitializer.setDataPrototype     ( "bool", "need_explicit_braces", "= true",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (7/26/2013): This is required for initializers using compound literals (it triggers the output of syntax that 
+  // makes the aggregate initializer look like a cast, but a SgCastExp should not be used to wrap the SgAggregateInitializer).
+  // This fix is important for test2013_27.c and it related to the support for designated initializers.
+     AggregateInitializer.setDataPrototype     ( "bool", "uses_compound_literal", "= false",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // TV (03/04/2012) Compound initializer: for OpenCL (Vector type initializer): float4 a = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
      CompoundInitializer.setFunctionPrototype ( "HEADER_COMPOUND_INITIALIZER_EXPRESSION", "../Grammar/Expression.code" );
      CompoundInitializer.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
@@ -2072,13 +2085,19 @@ Grammar::setUpExpressions ()
 #endif
 
      DesignatedInitializer.setFunctionPrototype ( "HEADER_DESIGNATED_INITIALIZER", "../Grammar/Expression.code" );
+
+  // DQ (7/21/2013): I may have been too quick to not consider multi-deminsional array references (so move back to support SgExprListExp*).
+  // DQ (7/21/2013): I think that the use of a SgExprListExp* for the data member of this SgDesignatedInitializer is incorrect, unless we wanted it 
+  // to be a DesignatedInitializerList in which case we would at least need a list of SgInitializer pointers.  So we should have the first data
+  // member be a SgVarRefExp or SgValueExp (so make it a SgExpression) and the second data member can be the SgInitializer* (as it is).
+  // Note that the SgAggregateInitializer holds the list and should reference the associated type.
   // Each of these fields is either a SgValueExp for an array index or an SgVarRefExp for a struct field name -- they are chained to form the actual designator
      DesignatedInitializer.setDataPrototype("SgExprListExp*", "designatorList", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // DesignatedInitializer.setDataPrototype("SgExpression*" , "designator", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      DesignatedInitializer.setDataPrototype("SgInitializer*", "memberInit", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
  // TV (04/22/2010): CUDA support
- 
      CudaKernelExecConfig.setFunctionPrototype ( "HEADER_CUDA_KERNEL_EXEC_CONFIG", "../Grammar/Expression.code" );
      
      CudaKernelExecConfig.setDataPrototype ( "SgExpression*", "grid",   "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -2424,8 +2443,11 @@ Grammar::setUpExpressions ()
      LongDoubleVal.setFunctionSource          ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      ComplexVal.setFunctionSource             ( "SOURCE_GET_TYPE_COMPLEX","../Grammar/Expression.code" );
 
+  // DQ (8/6/2013): We need to store the type explicitly and implement this function explicitly to return 
+  // the explicitly stored type.  This is important to resolving functions overloaded on template parameters,
+  // see test2013_303.C for an example.
   // DQ (11/28/2011): Adding template declaration support to the AST.
-     TemplateParameterVal.setFunctionSource   ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+  // TemplateParameterVal.setFunctionSource   ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
 
      UpcThreads.setFunctionSource             ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      UpcMythread.setFunctionSource            ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
@@ -2456,9 +2478,12 @@ Grammar::setUpExpressions ()
      LongDoubleVal.editSubstitute          ( "GENERIC_TYPE", "SgTypeLongDouble" );
      ComplexVal.editSubstitute             ( "GENERIC_TYPE", "SgTypeComplex" );
 
+  // DQ (8/6/2013): We need to store the type explicitly and implement this function explicitly to return 
+  // the explicitly stored type.  This is important to resolving functions overloaded on template parameters,
+  // see test2013_303.C for an example.
   // DQ (11/28/2011): Adding template declaration support to the AST.
   // TemplateParameterVal.editSubstitute   ( "GENERIC_TYPE", "SgTemplateType" );
-     TemplateParameterVal.editSubstitute   ( "GENERIC_TYPE", "SgTypeInt" );
+  // TemplateParameterVal.editSubstitute   ( "GENERIC_TYPE", "SgTypeInt" );
 
      UpcThreads.editSubstitute             ( "GENERIC_TYPE", "SgTypeInt" );
      UpcMythread.editSubstitute            ( "GENERIC_TYPE", "SgTypeInt" );
