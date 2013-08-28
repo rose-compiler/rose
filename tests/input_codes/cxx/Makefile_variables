@@ -1,5 +1,6 @@
 
-ROSE__CXX_TESTS = $(addprefix $(top_srcdir)/tests/CompileTests/Cxx_tests/,\
+ROSE__CXX_TESTS_DIR = $(top_srcdir)/tests/CompileTests/Cxx_tests
+ROSE__CXX_TESTS = \
 	test_CplusplusMacro_Cpp.C \
 	test2001_01.C \
 	test2001_02.C \
@@ -1100,7 +1101,6 @@ ROSE__CXX_TESTS = $(addprefix $(top_srcdir)/tests/CompileTests/Cxx_tests/,\
 	test2013_06.C \
 	test2013_07.C \
 	test2013_08.C \
-	test2013_09.C \
 	test2013_10.C \
 	test2013_11.C \
 	test2013_12.C \
@@ -1308,8 +1308,6 @@ ROSE__CXX_TESTS = $(addprefix $(top_srcdir)/tests/CompileTests/Cxx_tests/,\
 	test2013_231.C \
 	test2013_232.C \
 	test2013_234.C \
-	test2013_235.C \
-	test2013_236.C \
 	test2013_237.C \
 	test2013_238.C \
 	test2013_239.C \
@@ -1322,6 +1320,26 @@ ROSE__CXX_TESTS = $(addprefix $(top_srcdir)/tests/CompileTests/Cxx_tests/,\
 	test2013_250.C \
 	test2013_251.C \
 	test2013_252.C \
+   test2013_300.C \
+   test2013_301.C \
+   test2013_302.C \
+   test2013_303.C \
+   test2013_304.C \
+   test2013_305.C \
+   test2013_306.C \
+   test2013_307.C \
+   test2013_308.C \
+   test2013_310.C \
+   test2013_311.C \
+   test2013_312.C \
+   test2013_313.C \
+   test2013_314.C \
+   test2013_315.C \
+   test2013_316.C \
+   test2013_317.C \
+   test2013_318.C \
+   test2013_319.C \
+   test2013_320.C \
 	test_int_lexemes.C \
 	test_int_lexemes_donot_pass.C \
 	test_simple_int.C \
@@ -1336,4 +1354,9 @@ ROSE__CXX_TESTS = $(addprefix $(top_srcdir)/tests/CompileTests/Cxx_tests/,\
 	test2005_06.C \
 	test2005_08.C \
 	test2012_57.C \
-	test2012_59.C)
+	test2012_59.C
+
+ROSE__CXX_TESTS__BOOST = \
+	test2013_09.C \
+	test2013_235.C \
+	test2013_236.C

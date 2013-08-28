@@ -1353,8 +1353,23 @@ SageInterface::get_name ( const SgSupport* node )
                     case SgTemplateArgument::nontype_argument:
                        {
                          SgExpression* t = templateArgument->get_expression();
-                         ROSE_ASSERT(t != NULL);
-                         name += get_name(t);
+
+                      // DQ (8/11/2013): Adding support for including an initializedName instead of an expression (for template parameters used as expressions).
+                      // ROSE_ASSERT(t != NULL);
+                      // name += get_name(t);
+                         if (t != NULL)
+                            {
+                              ROSE_ASSERT(templateArgument->get_initializedName() == NULL);
+                              name += get_name(t);
+                            }
+                           else
+                            {
+                              ROSE_ASSERT(t == NULL);
+                              SgInitializedName* initializedName = templateArgument->get_initializedName();
+                              ROSE_ASSERT(initializedName != NULL);
+
+                              name += get_name(initializedName);
+                            }
                          break;
                        }
 
@@ -1464,6 +1479,61 @@ SageInterface::get_name ( const SgSupport* node )
                const SgName* name_node = isSgName(node);
                ROSE_ASSERT(name_node != NULL);
                name = "_name_" + name_node->getString();
+               break;
+             }
+
+       // DQ (8/8/2013): Implemented case for SgTemplateParameter
+          case V_SgTemplateParameter:
+             {
+               const SgTemplateParameter* template_parameter_node = isSgTemplateParameter(node);
+               ROSE_ASSERT(template_parameter_node != NULL);
+               name = "_template_parameter_";
+
+               switch(template_parameter_node->get_parameterType())
+                  {
+                    case SgTemplateParameter::type_parameter:
+                       {
+                         name += "type_parameter_";
+                         break;
+                       }
+
+                    case SgTemplateParameter::nontype_parameter:
+                       {
+                         name += "nontype_parameter_";
+#if 1
+                         name += template_parameter_node->unparseToString();
+#else
+                         if (template_parameter_node->get_expression() != NULL)
+                            {
+                              name += template_parameter_node->get_expression()->unparseToString();
+                            }
+                           else
+                            {
+                              ROSE_ASSERT(template_parameter_node->get_initializedName() != NULL);
+
+                           // DQ (8/8/2013): This does not handle the case of "template <void (foo::*M)()> void test() {}"
+                           // since what is unparsed is: "_template_parameter_nontype_parameter_M"
+                           // instead of a string to represent what is in "void (foo::*M)()"
+                           // and differentiate it from: "int foo::*M" in: "template <void (foo::*M)()> void test() {}"
+                              name += template_parameter_node->get_initializedName()->unparseToString();
+                            }
+#endif
+                         break;
+                       }
+
+                    case SgTemplateParameter::template_parameter:
+                       {
+                         name += "template_parameter_";
+                         break;
+                       }
+
+                    default:
+                       {
+                         printf ("Error: default reached \n");
+                         ROSE_ASSERT(false);
+                         break;
+                       }
+                  }
                break;
              }
 
@@ -2883,10 +2953,20 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
                            // If this is a copy then it would be nice to make sure that the scope has been properly set.
                            // Check this by looking for the associated template declaration in the scope.
                            // SgTemplateDeclaration* templateDeclaration = derivedDeclaration->get_templateDeclaration();
-                              SgDeclarationStatement* templateDeclaration = derivedDeclaration->get_templateDeclaration();
+                           // SgDeclarationStatement* templateDeclaration = derivedDeclaration->get_templateDeclaration();
+                              SgTemplateMemberFunctionDeclaration* templateDeclaration = derivedDeclaration->get_templateDeclaration();
                               ROSE_ASSERT(templateDeclaration != NULL);
                            // SgTemplateSymbol* templateSymbol = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_name());
-                              SgTemplateSymbol* templateSymbol = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_template_name());
+
+                           // DQ (8/13/2013): Fixed the interface to avoid use of lookup_template_symbol() (removed).
+                           // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+                           // In this case these are unavailable from this point.
+                           // SgTemplateSymbol* templateSymbol = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_template_name());
+                           // SgTemplateSymbol* templateSymbol = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_template_name(),NULL,NULL);
+                              SgType* functionType                               = templateDeclaration->get_type();
+                              SgTemplateParameterPtrList & templateParameterList = templateDeclaration->get_templateParameters();
+                           // SgTemplateMemberFunctionSymbol* templateSymbol     = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_template_name(),NULL,NULL);
+                              SgTemplateMemberFunctionSymbol* templateSymbol     = derivedDeclarationScope->lookup_template_member_function_symbol(templateDeclaration->get_template_name(),functionType,&templateParameterList);
                               if (templateSymbol != NULL)
                                  {
                                 // The symbol is not present, so we have to build one and add it.
@@ -4748,13 +4828,18 @@ SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeSta
 
 
 SgType* SageInterface::lookupNamedTypeInParentScopes(const std::string& type_name, SgScopeStatement* scope/*=NULL*/)
-{
-  if (scope== NULL)
-          scope= SageBuilder::topScopeStack();
-  SgSymbol* symbol = lookupSymbolInParentScopes (type_name,scope);
-  if (symbol==NULL) return NULL;
-  else return symbol->get_type();
-}
+   {
+     if (scope == NULL)
+          scope = SageBuilder::topScopeStack();
+
+  // DQ (8/16/2013): Added NULL pointers to at least handle the API change.
+     SgSymbol* symbol = lookupSymbolInParentScopes (type_name,scope,NULL,NULL);
+
+     if (symbol == NULL)
+          return NULL;
+       else 
+          return symbol->get_type();
+   }
 
 SgFunctionSymbol *SageInterface::lookupFunctionSymbolInParentScopes (const SgName &functionName,
                                                         const SgType* t,
@@ -4780,7 +4865,9 @@ SgFunctionSymbol *SageInterface::lookupFunctionSymbolInParentScopes (const SgNam
 // SgScopeStatement* SgStatement::get_scope
 // SgScopeStatement* SgStatement::get_scope() assumes all parent pointers are set, which is
 // not always true during translation.
-SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
+// SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
+SgSymbol*
+SageInterface::lookupSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList)
    {
      SgSymbol* symbol = NULL;
      if (cscope == NULL)
@@ -4789,8 +4876,9 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
      ROSE_ASSERT(cscope != NULL);
 
 #if 0
-     printf ("In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s \n",cscope,cscope->class_name().c_str());
+     printf ("In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s (templateParameterList = %p templateArgumentList = %p) \n",cscope,cscope->class_name().c_str(),templateParameterList,templateArgumentList);
 #endif
+
      while ((cscope != NULL) && (symbol == NULL))
         {
 #if 0
@@ -4816,7 +4904,11 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
 #if 0
           printf("   --- In SageInterface:: lookupSymbolInParentScopes(): name = %s cscope = %p = %s \n",name.str(),cscope,cscope->class_name().c_str());
 #endif
-          symbol = cscope->lookup_symbol(name);
+
+       // DQ (8/16/2013): Changed API to support template parameters and template arguments.
+       // symbol = cscope->lookup_symbol(name);
+          symbol = cscope->lookup_symbol(name,templateParameterList,templateArgumentList);
+
 #if 0
        // debug
           printf("   --- In SageInterface:: lookupSymbolInParentScopes(): symbol = %p \n",symbol);
@@ -4827,13 +4919,15 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
             else
                cscope = NULL;
 
-       // printf ("   --- In SageInterface:: lookupSymbolInParentScopes(): symbol = %p \n",symbol);
+#if 0
+          printf ("   --- In SageInterface:: lookupSymbolInParentScopes(): symbol = %p \n",symbol);
+#endif
         }
 
      if (symbol == NULL)
         {
 #if 0
-          printf ("Warning: could not locate the specified name %s in any outer symbol table \n",name.str());
+          printf ("Warning: In SageInterface:: lookupSymbolInParentScopes(): could not locate the specified name %s in any outer symbol table (templateParameterList = %p templateArgumentList = %p) \n",name.str(),templateParameterList,templateArgumentList);
 #endif
        // ROSE_ASSERT(false);
         }
@@ -4873,8 +4967,7 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
 #endif
 
 SgVariableSymbol *
-SageInterface::lookupVariableSymbolInParentScopes (const SgName &  name,
-                                                        SgScopeStatement *cscope)
+SageInterface::lookupVariableSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
    {
   // DQ (1/24/2011): This function is inconsistant with an implementation that would correctly handle SgAliasSymbols.
   // Also this function might get a SgClassSymbol instead of a SgVariableSymbol when both names are used.
@@ -4920,8 +5013,9 @@ SageInterface::lookupVariableSymbolInParentScopes (const SgName &  name,
 #endif
    }
 
-SgClassSymbol *
-SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
+// SgClassSymbol* SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
+SgClassSymbol*
+SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope, SgTemplateArgumentPtrList* templateArgumentList)
    {
   // DQ (5/7/2011): I think this is the better implementation that lookupVariableSymbolInParentScopes() should have.
      SgClassSymbol* symbol = NULL;
@@ -4932,7 +5026,8 @@ SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeSta
      while ((cscope != NULL) && (symbol == NULL))
         {
        // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
-          symbol = cscope->lookup_class_symbol(name,NULL);
+       // symbol = cscope->lookup_class_symbol(name,NULL);
+          symbol = cscope->lookup_class_symbol(name,templateArgumentList);
 
           if (cscope->get_parent() != NULL) // avoid calling get_scope when parent is not set
                cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
@@ -4966,7 +5061,12 @@ SageInterface::lookupTypedefSymbolInParentScopes (const SgName &  name, SgScopeS
      return symbol;
    }
 
-SgTemplateSymbol *
+#if 0
+// DQ (8/13/2013): This function does not make since any more, now that we have make the symbol
+// table handling more precise and we have to provide template parameters for any template lookup.
+// We also have to know if we want to lookup template classes, template functions, or template 
+// member functions (since each have specific requirements).
+SgTemplateSymbol*
 SageInterface::lookupTemplateSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
    {
   // DQ (5/7/2011): This is similar to lookupClassSymbolInParentScopes().
@@ -4977,8 +5077,11 @@ SageInterface::lookupTemplateSymbolInParentScopes (const SgName &  name, SgScope
 
      while ((cscope != NULL) && (symbol == NULL))
         {
+       // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+       // In this case these are unavailable from this point.
        // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
-          symbol = cscope->lookup_template_symbol(name);
+       // symbol = cscope->lookup_template_symbol(name);
+          symbol = cscope->lookup_template_symbol(name,NULL,NULL);
 #if 0
           printf ("In lookupTemplateSymbolInParentScopes(): Searching scope = %p = %s name = %s symbol = %p \n",cscope,cscope->class_name().c_str(),name.str(),symbol);
 #endif
@@ -4990,6 +5093,37 @@ SageInterface::lookupTemplateSymbolInParentScopes (const SgName &  name, SgScope
 
      return symbol;
    }
+#endif
+
+
+SgTemplateClassSymbol*
+SageInterface::lookupTemplateClassSymbolInParentScopes (const SgName &  name, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList, SgScopeStatement *cscope)
+   {
+  // DQ (5/7/2011): This is similar to lookupClassSymbolInParentScopes().
+     SgTemplateClassSymbol* symbol = NULL;
+     if (cscope == NULL)
+          cscope = SageBuilder::topScopeStack();
+     ROSE_ASSERT(cscope != NULL);
+
+     while ((cscope != NULL) && (symbol == NULL))
+        {
+       // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+       // In this case these are unavailable from this point.
+       // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
+       // symbol = cscope->lookup_template_symbol(name);
+          symbol = cscope->lookup_template_class_symbol(name,templateParameterList,templateArgumentList);
+#if 0
+          printf ("In lookupTemplateSymbolInParentScopes(): Searching scope = %p = %s name = %s symbol = %p \n",cscope,cscope->class_name().c_str(),name.str(),symbol);
+#endif
+          if (cscope->get_parent() != NULL) // avoid calling get_scope when parent is not set
+               cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
+            else
+               cscope = NULL;
+        }
+
+     return symbol;
+   }
+
 
 SgEnumSymbol *
 SageInterface::lookupEnumSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
@@ -6969,8 +7103,10 @@ string SageInterface::generateUniqueVariableName(SgScopeStatement* scope, std::s
     {
         name = "__" + baseName + boost::lexical_cast<string > (counter++) + "__";
 
-        //Look up the name in the parent scopes
-        SgSymbol* nameSymbol = SageInterface::lookupSymbolInParentScopes(SgName(name), scope);
+     // DQ (8/16/2013): Modified to reflect new API.
+     // Look up the name in the parent scopes
+     // SgSymbol* nameSymbol = SageInterface::lookupSymbolInParentScopes(SgName(name), scope);
+        SgSymbol* nameSymbol = SageInterface::lookupSymbolInParentScopes(SgName(name), scope,NULL,NULL);
         collision = (nameSymbol != NULL);
 
         //Look up the name in the children scopes
@@ -6979,7 +7115,11 @@ string SageInterface::generateUniqueVariableName(SgScopeStatement* scope, std::s
         BOOST_FOREACH(SgNode* childScope, childScopes)
         {
             SgScopeStatement* childScopeStatement = isSgScopeStatement(childScope);
-            nameSymbol = childScopeStatement->lookup_symbol(SgName(name));
+
+         // DQ (8/16/2013): Modified to reflect new API.
+         // nameSymbol = childScopeStatement->lookup_symbol(SgName(name));
+            nameSymbol = childScopeStatement->lookup_symbol(SgName(name),NULL,NULL);
+
             collision = collision || (nameSymbol != NULL);
         }
     } while (collision);
@@ -7138,6 +7278,26 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
                   //What other expressions can be children of an SgInitializedname?
                   ROSE_ASSERT(false);
           }
+  }
+  else if (isSgFortranDo(parent))
+  {
+    SgFortranDo* fortranDo = isSgFortranDo(parent);
+    if(oldExp == fortranDo->get_initialization())
+    {
+      fortranDo->set_initialization(newExp);
+    }
+    else if(oldExp == fortranDo->get_bound())
+    {
+      fortranDo->set_bound(newExp);
+    }
+    else if(oldExp == fortranDo->get_increment())
+    {
+      fortranDo->set_increment(newExp);
+    }
+    else
+    {
+      ROSE_ASSERT(false);
+    }
   }
  else{
   cerr<<"SageInterface::replaceExpression(). Unhandled parent expression type of SageIII enum value: " <<parent->class_name()<<endl;
@@ -10411,10 +10571,17 @@ int SageInterface::fixVariableReferences(SgNode* root)
             SgClassDeclaration* decl = isSgClassDeclaration(clsType->get_declaration());
             decl = isSgClassDeclaration(decl->get_definingDeclaration());
             ROSE_ASSERT(decl);
-            realSymbol = lookupSymbolInParentScopes(varName, decl->get_definition());
+
+         // DQ (8/16/2013): We want to lookup variable symbols not just any symbol.
+         // realSymbol = lookupSymbolInParentScopes(varName, decl->get_definition());
+            realSymbol = lookupVariableSymbolInParentScopes(varName, decl->get_definition());
         }
         else
-            realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+        {
+         // DQ (8/16/2013): We want to lookup variable symbols not just any symbol.
+         // realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+            realSymbol = lookupVariableSymbolInParentScopes(varName, getScope(varRef));
+        }
       }
       else if (SgDotExp* dotExp = isSgDotExp(varRef->get_parent()))
       {
@@ -10430,14 +10597,23 @@ int SageInterface::fixVariableReferences(SgNode* root)
             SgClassDeclaration* decl = isSgClassDeclaration(clsType->get_declaration());
             decl = isSgClassDeclaration(decl->get_definingDeclaration());
             ROSE_ASSERT(decl);
-            realSymbol = lookupSymbolInParentScopes(varName, decl->get_definition());
+
+         // DQ (8/16/2013): We want to lookup variable symbols not just any symbol.
+         // realSymbol = lookupSymbolInParentScopes(varName, decl->get_definition());
+            realSymbol = lookupVariableSymbolInParentScopes(varName, decl->get_definition());
         }
         else
-            realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+         // DQ (8/16/2013): We want to lookup variable symbols not just any symbol.
+         // realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+            realSymbol = lookupVariableSymbolInParentScopes(varName, getScope(varRef));
       }
       else
 #endif
-          realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+      {
+         // DQ (8/16/2013): We want to lookup variable symbols not just any symbol.
+         // realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+            realSymbol = lookupVariableSymbolInParentScopes(varName, getScope(varRef));
+      }
 
       // should find a real symbol at this final fixing stage!
       // This function can be called any time, not just final fixing stage
@@ -10670,12 +10846,17 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
          fTable->set_parent(getGlobalScope(scope));
        }
 
+#if 0
+     printf ("In SageInterface::fixStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+
   // Liao 4/23/2010,  Fix function symbol
   // This could happen when users copy a function, then rename it (func->set_name()), and finally insert it to a scope
      SgFunctionDeclaration               * func         = isSgFunctionDeclaration(stmt);
      SgMemberFunctionDeclaration         * mfunc        = isSgMemberFunctionDeclaration(stmt);
      SgTemplateFunctionDeclaration       * tfunc        = isSgTemplateFunctionDeclaration(stmt);
      SgTemplateMemberFunctionDeclaration * tmfunc       = isSgTemplateMemberFunctionDeclaration(stmt);
+     SgProcedureHeaderStatement          * procfunc     = isSgProcedureHeaderStatement(stmt);
 
      if (tmfunc != NULL)
        assert(tmfunc->variantT() == V_SgTemplateMemberFunctionDeclaration);
@@ -10683,6 +10864,8 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
        assert(mfunc->variantT() == V_SgMemberFunctionDeclaration || mfunc->variantT() == V_SgTemplateInstantiationMemberFunctionDecl);
      else if (tfunc != NULL)
        assert(tfunc->variantT() == V_SgTemplateFunctionDeclaration);
+     else if (procfunc != NULL)
+        assert(procfunc->variantT() == V_SgProcedureHeaderStatement);
      else if (func != NULL)
        assert(func->variantT() == V_SgFunctionDeclaration || func->variantT() == V_SgTemplateInstantiationFunctionDecl);
      else assert(false);
@@ -10704,16 +10887,65 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
           printf ("Looking up the function symbol using name = %s and type = %p = %s \n",func->get_name().str(),func->get_type(),func->get_type()->class_name().c_str());
 #endif
           SgFunctionSymbol* func_symbol = NULL;
-          if (tmfunc != NULL)
-            func_symbol = scope->lookup_template_member_function_symbol (func->get_name(), func->get_type());
-          else if (mfunc != NULL)
-            func_symbol = scope->lookup_nontemplate_member_function_symbol (func->get_name(), func->get_type());
-          else if (tfunc != NULL)
-            func_symbol = scope->lookup_template_function_symbol (func->get_name(), func->get_type());
-          else if (func != NULL)
-            func_symbol = scope->lookup_function_symbol (func->get_name(), func->get_type());
-          else assert(false);
 
+       // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+       // In this case these are unavailable from this point.
+          if (tmfunc != NULL)
+          {
+            SgTemplateParameterPtrList & templateParameterList = tmfunc->get_templateParameters();
+         // func_symbol = scope->lookup_template_member_function_symbol (func->get_name(), func->get_type());
+         // func_symbol = scope->lookup_template_member_function_symbol (func->get_name(), func->get_type(),NULL);
+            func_symbol = scope->lookup_template_member_function_symbol (func->get_name(), func->get_type(),&templateParameterList);
+          }
+          else if (mfunc != NULL)
+          {
+            SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(mfunc);
+            SgTemplateArgumentPtrList* templateArgumentList = (templateInstantiationMemberFunctionDecl != NULL) ? &(templateInstantiationMemberFunctionDecl->get_templateArguments()) : NULL;
+         // func_symbol = scope->lookup_nontemplate_member_function_symbol (func->get_name(), func->get_type(),NULL);
+            func_symbol = scope->lookup_nontemplate_member_function_symbol (func->get_name(), func->get_type(),templateArgumentList);
+          }
+          else if (tfunc != NULL)
+          {
+            SgTemplateParameterPtrList & templateParameterList = tfunc->get_templateParameters();
+#if 0
+            printf ("In SageInterface::fixStatement(): templateParameterList.size() = %zu \n",templateParameterList.size());
+#endif
+         // func_symbol = scope->lookup_template_function_symbol (func->get_name(), func->get_type());
+         // func_symbol = scope->lookup_template_function_symbol (func->get_name(), func->get_type(),NULL);
+            func_symbol = scope->lookup_template_function_symbol (func->get_name(), func->get_type(),&templateParameterList);
+          }
+          else if (procfunc != NULL)
+          {
+#if 1
+            printf ("In SageInterface::fixStatement(): procfunc->get_name() = %s calling lookup_function_symbol() \n",procfunc->get_name().str());
+#endif
+            func_symbol = scope->lookup_function_symbol (procfunc->get_name(), procfunc->get_type());
+            assert(func_symbol != NULL);
+          }
+          else if (func != NULL)
+          {
+#if 0
+            printf ("In SageInterface::fixStatement(): func->get_name() = %s calling lookup_function_symbol() \n",func->get_name().str());
+#endif
+            SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(func);
+            SgTemplateArgumentPtrList* templateArgumentList = (templateInstantiationFunctionDecl != NULL) ? &(templateInstantiationFunctionDecl->get_templateArguments()) : NULL;
+         // func_symbol = scope->lookup_function_symbol (func->get_name(), func->get_type(),NULL);
+            func_symbol = scope->lookup_function_symbol (func->get_name(), func->get_type(),templateArgumentList);
+
+         // DQ (8/23/2013): Adding support for when the symbol is not present.  This can happen when building a new function as a copy of an existing
+         // function the symantics of the copy is that it will not add the symbol (since it does not know the scope). So this function is the first
+         // opportunity to fixup the function to have a symbol in the scope's symbol table.
+            if (func_symbol == NULL)
+               {
+              // scope->print_symboltable("In SageInterface::fixStatement()");
+                 func_symbol = new SgFunctionSymbol(func);
+                 scope->insert_symbol(func->get_name(), func_symbol);
+               }
+          }
+          else 
+          {
+            assert(false);
+          }
 #if 0
           printf ("In SageInterface::fixStatement(): func_symbol = %p \n",func_symbol);
 #endif
@@ -11279,6 +11511,17 @@ StringUtility::numberToString(++breakLabelCounter),
     else
        return (decl->get_class_type() == SgClassDeclaration::e_struct)? true:false;
   }
+
+  bool SageInterface::isUnionDeclaration(SgNode* node)
+  {
+    ROSE_ASSERT(node!=NULL);
+    SgClassDeclaration *decl = isSgClassDeclaration(node);
+    if (decl==NULL)
+      return false;
+    else
+       return (decl->get_class_type() == SgClassDeclaration::e_union)? true:false;
+  }
+
 
 void  SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_dst, PreprocessingInfo::RelativePositionType src_position/* =PreprocessingInfo::undef */,
                             PreprocessingInfo::RelativePositionType dst_position/* =PreprocessingInfo::undef */, bool usePrepend /*= false */)
@@ -13325,8 +13568,14 @@ generateCopiesOfDependentDeclarations (const  vector<SgDeclarationStatement*>& d
                // and the original enclosing class of the outlined target has been changed already (replaced target with a call to OUT_xxx())
                // Also, getDependentDeclarations() recursively searches for declarations within the dependent class and hits OUT_xxx()
                // Liao, 5/8/2009
-            // TV (07/24/2013): the project wide global scope unified symbol accross files
-               assert(targetScope->lookup_symbol(functionDeclaration->get_name()) != NULL);
+
+               printf ("WARNING: In SageInterface -- generateCopiesOfDependentDeclarations(): I think this is the wrong lookup symbol function that is being used here! \n");
+
+            // DQ (8/16/2013): I think this is the wrong symbol lookup function to be using here, but the API is fixed.
+            // if (targetScope->lookup_symbol(functionDeclaration->get_name()) !=NULL)
+               if (targetScope->lookup_symbol(functionDeclaration->get_name(),NULL,NULL) !=NULL)
+                    continue;
+#endif
 #if 0
                printf ("In generateCopiesOfDependentDeclarations(): Copy mechanism appied to SgFunctionDeclaration functionDeclaration->get_firstNondefiningDeclaration() = %p \n",functionDeclaration->get_firstNondefiningDeclaration());
 
@@ -13695,7 +13944,12 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
      ROSE_ASSERT(outlinedFunctionDeclaration != NULL);
      SgGlobal* originalFileGlobalScope = TransformationSupport::getGlobalScope(original_statement);
      ROSE_ASSERT(originalFileGlobalScope != NULL);
-     SgFunctionSymbol* outlinedFunctionSymbolFromOriginalFile = isSgFunctionSymbol(originalFileGlobalScope->lookup_symbol(outlinedFunctionDeclaration->get_name()));
+
+     printf ("WARNING: In SageInterface::appendStatementWithDependentDeclaration(): I think this is the wrong lookup symbol function that is being used here! \n");
+
+  // DQ (8/16/2013): I think this is the wrong symbol lookup function to be using here, but the API is fixed.
+  // SgFunctionSymbol* outlinedFunctionSymbolFromOriginalFile = isSgFunctionSymbol(originalFileGlobalScope->lookup_symbol(outlinedFunctionDeclaration->get_name()));
+     SgFunctionSymbol* outlinedFunctionSymbolFromOriginalFile = isSgFunctionSymbol(originalFileGlobalScope->lookup_symbol(outlinedFunctionDeclaration->get_name(),NULL,NULL));
 
   // SgSymbol* outlinedFunctionSymbolFromOutlinedFile = scope->lookup_symbol(outlinedFunctionDeclaration->get_name());
      ROSE_ASSERT(decl->get_firstNondefiningDeclaration() != NULL);
@@ -13761,9 +14015,122 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
           switch(d->variantT())
              {
                case V_SgClassDeclaration:
-                  if (declarationContainsDependentDeclarations(d,dependentDeclarationList) == true )
-                    printf ("Warning: This class contains dependent declarations (not implemented) \n");
-                  break;
+                  {
+                 // This is not called, since this function is used to insert functions!
+                    ROSE_ASSERT(d->get_firstNondefiningDeclaration() != NULL);
+                    SgClassDeclaration* classDeclaration = NULL;
+                    if ( declarationContainsDependentDeclarations(d,dependentDeclarationList) == true )
+                       {
+                      // If we need to reference declaration in the class then we need the same defining
+                      // declaration as was in the other file where we outlined the original function from!
+                         printf ("Warning: This class contains dependent declarations (not implemented) \n");
+                      // ROSE_ASSERT(false);
+                         classDeclaration = isSgClassDeclaration(d);
+                         ROSE_ASSERT(classDeclaration != NULL);
+                       }
+                      else
+                       {
+                         classDeclaration = isSgClassDeclaration(d->get_firstNondefiningDeclaration());
+                         ROSE_ASSERT(classDeclaration != NULL);
+                       }
+
+                    ROSE_ASSERT(classDeclaration != NULL);
+
+                 // printf ("$$$$$$$$$$$$$$$$$$$$$  Building a SgClassSymbol %s $$$$$$$$$$$$$$$$$$$$$ \n",classDeclaration->get_name().str());
+                    SgClassSymbol* classSymbol = new SgClassSymbol(classDeclaration);
+                    ROSE_ASSERT(classSymbol != NULL);
+                    scope->insert_symbol(classDeclaration->get_name(),classSymbol);
+                 // ROSE_ASSERT(classDeclaration->get_symbol_from_symbol_table() != NULL);
+
+                 // printf ("Case of SgClassDeclaration implemented but not being tested \n");
+                 // ROSE_ASSERT(false);
+
+                    SgSymbol* symbolInOutlinedFile = classDeclaration->get_symbol_from_symbol_table();
+                 // printf ("$$$$$$$$$$$$$$ originalDeclaration = %p = %s \n",originalDeclaration,originalDeclaration->class_name().c_str());
+                    ROSE_ASSERT(originalDeclaration != NULL);
+                    ROSE_ASSERT(originalDeclaration->get_firstNondefiningDeclaration() != NULL);
+                    SgSymbol* symbolInOriginalFile = originalDeclaration->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table();
+                 // printf ("$$$$$$$$$$$$$$ case V_SgClassDeclaration: symbolInOriginalFile = %p symbolInOutlinedFile = %p \n",symbolInOriginalFile,symbolInOutlinedFile);
+
+                    ROSE_ASSERT(symbolInOriginalFile != NULL);
+                    ROSE_ASSERT(symbolInOutlinedFile != NULL);
+                    ROSE_ASSERT(symbolInOriginalFile != symbolInOutlinedFile);
+
+                    replacementMap.insert(pair<SgNode*,SgNode*>(symbolInOutlinedFile,symbolInOriginalFile));
+                    break;
+                  }
+
+               case V_SgFunctionDeclaration:
+                  {
+                 // ROSE_ASSERT(d->get_firstNondefiningDeclaration() == NULL);
+                    SgFunctionDeclaration* copiedFunctionDeclaration = isSgFunctionDeclaration(d);
+                    ROSE_ASSERT(copiedFunctionDeclaration != NULL);
+#if 0
+                    printf ("$$$$$$$$$$$$$$$$$$$$$  Building a SgFunctionSymbol %s $$$$$$$$$$$$$$$$$$$$$ \n",copiedFunctionDeclaration->get_name().str());
+                    printf ("functionDeclaration                                    = %p \n",copiedFunctionDeclaration);
+                    printf ("functionDeclaration->get_definingDeclaration()         = %p \n",copiedFunctionDeclaration->get_definingDeclaration());
+                    printf ("functionDeclaration->get_firstNondefiningDeclaration() = %p \n",copiedFunctionDeclaration->get_firstNondefiningDeclaration());
+                    printf ("lokup symbol in scope =                                = %p \n",scope);
+#endif
+
+                    printf ("WARNING: In SageInterface::appendStatementWithDependentDeclaration(): I think this is the wrong lookup symbol function that is being used here! \n");
+
+                 // DQ (8/16/2013): I think this is the wrong symbol lookup function to be using here, but the API is fixed.
+                 // if (scope->lookup_symbol(copiedFunctionDeclaration->get_name()) == NULL)
+                    if (scope->lookup_symbol(copiedFunctionDeclaration->get_name(),NULL,NULL) == NULL)
+                       {
+                         SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(copiedFunctionDeclaration);
+                         ROSE_ASSERT(functionSymbol != NULL);
+                      // printf ("copiedFunctionDeclaration = %p Inserting functionSymbol = %p with name = %s \n",copiedFunctionDeclaration,functionSymbol,copiedFunctionDeclaration->get_name().str());
+                         scope->insert_symbol(copiedFunctionDeclaration->get_name(),functionSymbol);
+
+                      // DQ (8/16/2013): I think this is the wrong symbol lookup function to be using here, but the API is fixed.
+                      // ROSE_ASSERT(scope->lookup_symbol(copiedFunctionDeclaration->get_name()) == functionSymbol);
+                         ROSE_ASSERT(scope->lookup_symbol(copiedFunctionDeclaration->get_name(),NULL,NULL) == functionSymbol);
+
+                         ROSE_ASSERT(copiedFunctionDeclaration->get_symbol_from_symbol_table() != NULL);
+                         copiedFunctionDeclaration->set_scope(scope);
+                       }
+                    ROSE_ASSERT(copiedFunctionDeclaration->get_symbol_from_symbol_table() != NULL);
+
+                 // printf ("decl = %p = %s original_statement = %p = %s \n",decl,decl->class_name().c_str(),original_statement,original_statement->class_name().c_str());
+                    printf ("decl = %p = %s originalDeclaration = %p = %s \n",decl,decl->class_name().c_str(),originalDeclaration,originalDeclaration->class_name().c_str());
+
+                 // SgFunctionDeclaration* originalFunctionDeclaration = isSgFunctionDeclaration(decl);
+                    SgFunctionDeclaration* originalFunctionDeclaration = isSgFunctionDeclaration(originalDeclaration);
+                    ROSE_ASSERT(originalFunctionDeclaration != NULL);
+
+                    SgSymbol* symbolInOutlinedFile = originalFunctionDeclaration->get_symbol_from_symbol_table();
+                    SgSymbol* symbolInOriginalFile = copiedFunctionDeclaration->get_symbol_from_symbol_table();
+#if 0
+                    printf ("symbolInOriginalFile = %p symbolInOutlinedFile = %p \n",symbolInOriginalFile,symbolInOutlinedFile);
+#endif
+                    ROSE_ASSERT(symbolInOriginalFile != NULL);
+                    ROSE_ASSERT(symbolInOutlinedFile != NULL);
+                    ROSE_ASSERT(symbolInOriginalFile != symbolInOutlinedFile);
+
+                 // Build up the replacementMap
+                 // replacementMap.insert(pair<SgNode*,SgNode*>(node,duplicateNodeFromOriginalAST));
+                 // replacementMap.insert(pair<SgNode*,SgNode*>(symbolInOriginalFile,symbolInOutlinedFile));
+                    replacementMap.insert(pair<SgNode*,SgNode*>(symbolInOutlinedFile,symbolInOriginalFile));
+
+#if 0
+                 // Not sure if this is a problem (at this point)
+                    SgFunctionType* functionType = functionDeclaration->get_type();
+                    ROSE_ASSERT(functionType != NULL);
+                    string functionTypeName = functionType->get_mangled();
+                    printf ("Testing the function type: functionTypeName = %s \n",functionTypeName.c_str());
+                    if (SgNode::get_globalFunctionTypeTable()->lookup_function_type(functionTypeName) == NULL)
+                       {
+                         printf ("Adding the function type: functionTypeName = %s \n",functionTypeName.c_str());
+                         SgNode::get_globalFunctionTypeTable()->insert_function_type(functionTypeName,functionType);
+                       }
+#endif
+                 // printf ("Case of SgFunctionDeclaration implemented but not being tested \n");
+                 // ROSE_ASSERT(false);
+
+                    break;
+                  }
 
                case V_SgMemberFunctionDeclaration:
                   printf ("Sorry, support for dependent member function declarations not implemented! \n");
@@ -13783,7 +14150,6 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
                     printf ("Warning: This namespace contains dependent declarations (not supported) \n");
                   break;
 
-               case V_SgFunctionDeclaration:
                case V_SgTypedefDeclaration:
                case V_SgEnumDeclaration:
                   break;
@@ -15999,8 +16365,6 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
   // exampleTraversal.traverseInputFiles(project,preorder);
   exampleTraversal.traverse(project, preorder);
 }
-
-#endif
 
 
   //

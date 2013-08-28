@@ -2042,7 +2042,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
      TemplateArgument.setDataPrototype     ( "SgType*", "type", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // Could be an array bound (integer) or some unkown type
+  // Could be an array bound (integer) or some unknown type
      TemplateArgument.setDataPrototype     ( "SgExpression*", "expression", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -2057,7 +2057,15 @@ Specifiers that can have only one value (implemented with a protected enum varia
 #if 1
      TemplateArgument.setDataPrototype     ( "SgDeclarationStatement*", "templateDeclaration", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/10/2013): template arguments can be a SgInitializedName or an expression when it is a non-type (see test2013_303.C).
+  // I think we want to eventually make this a constructor argument, but not at first.
+     TemplateArgument.setDataPrototype     ( "SgInitializedName*", "initializedName", "= NULL",
+                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #else
+
+#error "DEAD CODE!"
+
      TemplateArgument.setDataPrototype     ( "SgTemplateClassDeclaration*", "templateClassDeclaration", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      TemplateArgument.setDataPrototype     ( "SgTemplateFunctionDeclaration*", "templateFunctionDeclaration", "= NULL",
@@ -2068,6 +2076,9 @@ Specifiers that can have only one value (implemented with a protected enum varia
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 #else
+
+#error "DEAD CODE!"
+
      TemplateArgument.setDataPrototype     ( "SgTemplateDeclaration*", "templateDeclaration", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
