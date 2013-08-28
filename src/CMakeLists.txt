@@ -210,13 +210,6 @@ if(enable-binary-analysis)
     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/virtualBinCFG.C)
 endif()
 
-if(have_EDG_source)
-  set(EDG_SAGE_Connection_SRC
-    ${CMAKE_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/sage_gen_be.C
-    ${CMAKE_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/wrapperFunctionsForEDG.C
-     )
-endif()
-
 set( binaryFrontend_SRC 
      ${CMAKE_SOURCE_DIR}/src/frontend/BinaryDisassembly/RoseBin_support.cpp 
      ${CMAKE_SOURCE_DIR}/src/frontend/BinaryDisassembly/instructionDispatch.cpp 
@@ -890,7 +883,6 @@ endif()
 ########### next target ###############
 set(rose_LIB_SRCS dummyCppFileForLibrose.C 
  ${ROSETTA_SRC} 
- ${EDG_SAGE_Connection_SRC}
  ${unparser_SRC}
  ${sage3_SRC}
  ${POET_SRC} 
@@ -968,7 +960,7 @@ add_custom_target(
 add_definitions(-DPOET_VERSION="\\"1.02.06.10\\"")
 
 add_library(ROSE_DLL SHARED ${rose_LIB_SRCS} )
-add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR edg33 libhpdf generate_stringify generate_rosePublicConfig) 
+add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR EDG libhpdf generate_stringify generate_rosePublicConfig) 
 
 # tps : independant Components : ROSE, libhpdf
 set(LINK_FILES
@@ -980,7 +972,7 @@ set(LINK_FILES
 )
 
 if (have_EDG_source OR NOT WIN32)
-  list(APPEND LINK_FILES edg33)
+  list(APPEND LINK_FILES EDG)
 else()
   add_definitions(-DUSE_FAKE_EDG)
 endif()
@@ -1039,7 +1031,7 @@ set(testSharedRoseLib_SRCS testRoseLib.C)
 add_executable(testSharedRoseLib ${testSharedRoseLib_SRCS}  )
 
 
-target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} ROSE_DLL edg33 ${link_with_libraries}
+target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} ROSE_DLL EDG ${link_with_libraries}
     )
 
 ########### install files ###############

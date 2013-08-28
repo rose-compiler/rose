@@ -66,8 +66,8 @@ ExternalProject_Add("EDG_tarball"
   INSTALL_COMMAND ""
   )
 
-add_library(edg33 STATIC IMPORTED)
-set_property(TARGET edg33 PROPERTY IMPORTED_LOCATION
+add_library(EDG STATIC IMPORTED)
+set_property(TARGET EDG PROPERTY IMPORTED_LOCATION
   ${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs/libroseEDG.a)
 
 execute_process(

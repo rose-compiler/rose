@@ -4,7 +4,7 @@ add_executable (bug125 bug125.C)
 add_executable (qualifiedName qualifiedName.C)
 
 target_link_libraries(bug125 ROSE_DLL ${link_with_libraries} )
-target_link_libraries(qualifiedName ROSE_DLL edg33 ${link_with_libraries} )
+target_link_libraries(qualifiedName ROSE_DLL EDG ${link_with_libraries} )
 
 ENABLE_TESTING()
 ADD_TEST(
