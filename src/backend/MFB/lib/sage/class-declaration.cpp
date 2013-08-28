@@ -138,6 +138,8 @@ Sage<SgClassDeclaration>::build_result_t Driver<Sage>::build<SgClassDeclaration>
     assert(!class_defn->isForward());
   }
 
+  assert(class_decl->get_type() == class_defn->get_type());
+
 #if PATCHING_SAGE_BUILDER_ISSUES
   { // connection between decl/defn
     class_decl->set_definingDeclaration(class_defn);

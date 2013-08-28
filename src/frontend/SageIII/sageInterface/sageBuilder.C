@@ -1833,8 +1833,6 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
   // for the case of a SgMemberFunctionType (or at least not without more work).
      SgName typeName = SgFunctionType::get_mangled(return_type, typeList);
 
-     printf("[SageBuilder::buildFunctionType] return_type = %p (%s), mangled name = %s\n", return_type, return_type->class_name().c_str(), typeName.getString().c_str());
-
      SgFunctionType* funcType = isSgFunctionType(fTable->lookup_function_type(typeName));
 
 #if 0
@@ -3157,8 +3155,6 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
           func->get_declarationModifier().get_typeModifier().setRestrict();
         }
 
-     printf ("[Build Non-defining Funct Tpl] decl = %p, name = %s, type = %p, scope = %p\n", func, func->get_name().getString().c_str(), func->get_type(), scope);
-
      return func;  
    }
 
@@ -4347,8 +4343,6 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
         {
           defining_func->get_declarationModifier().get_typeModifier().setRestrict();
         }
-
-     printf ("[Build Defining Funct Tpl] decl = %p, name = %s, type = %p, scope = %p\n", defining_func, defining_func->get_name().getString().c_str(), defining_func->get_type(), scope);
 
      return defining_func;
    }

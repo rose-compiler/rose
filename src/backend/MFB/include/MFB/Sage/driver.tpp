@@ -10,6 +10,8 @@ namespace MultiFileBuilder {
 
 template <typename Object>
 typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::symbol_t symbol, SgSourceFile * file, bool need_forward_only) {
+  // FIXME check that it have not been done before
+
   std::map<SgSymbol *, unsigned long>::iterator it_sym_decl_file_id = p_symbol_to_file_id_map.find(symbol);
   assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
 
@@ -30,6 +32,7 @@ typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::s
       accessible_file_ids.insert(sym_decl_file_id);
     }
 
+    addPointerToTopParentDeclaration(symbol, file);
   }
   else {
     createForwardDeclaration<Object>(symbol, file);

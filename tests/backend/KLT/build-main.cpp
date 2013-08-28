@@ -2,6 +2,8 @@
 #include "build-main.hpp"
 #include "sage3basic.h"
 
+#include "MFB/Sage/class-declaration.hpp"
+
 SgVariableSymbol * buildDimArr(
   const std::vector<KLT::Core::Data::section_t> & sections,
   std::map<SgVariableSymbol *, SgVariableSymbol *> & gen_symbol_map,
@@ -27,7 +29,7 @@ SgVariableSymbol * buildDimArr(
   std::ostringstream oss_dims;
   oss_dims << "dims_" << sections.size();
   SgVariableSymbol * dims_sym = main_body->lookup_variable_symbol(oss_dims.str());
-  SgType * dims_type = SageBuilder::buildArrayType(SageBuilder::buildUnsignedIntType(), SageBuilder::buildIntVal(sections.size()));
+  SgType * dims_type = SageBuilder::buildArrayType(SageBuilder::buildUnsignedLongType(), SageBuilder::buildIntVal(sections.size()));
   if (dims_sym == NULL) {
     SgVariableDeclaration * dims_decl = SageBuilder::buildVariableDeclaration(oss_dims.str(), dims_type, SageBuilder::buildAggregateInitializer(expr_list, dims_type), main_body);
     SageInterface::appendStatement(dims_decl, main_body);
@@ -335,6 +337,7 @@ SgVariableSymbol * buildTargetData(
 }
 
 void buildKernelLaunch(
+  MultiFileBuilder::Driver<MultiFileBuilder::Sage> & driver,
   unsigned int & arg_cnt,
   SgVariableSymbol * argument_counter,
   SgVariableSymbol * argument_values,
@@ -396,6 +399,9 @@ void buildKernelLaunch(
 
       packer_ctor_args->append_expression(SageBuilder::buildVarRefExp(gen_sym));
     }
+
+    driver.useSymbol<SgFunctionDeclaration>(kernel->kernel, main_body);
+    driver.useSymbol<SgClassDeclaration>(kernel->arguments_packer, main_body);
 
     SgType * packer_ctor_type = kernel->arguments_packer->get_type();
 
@@ -484,7 +490,7 @@ void createMain(
 
   buildDataLocal(arg_cnt, argument_counter, argument_values, gen_symbol_map, main_body, data_manager_init_sym, loop_trees.getDatasLocal());
 
-  buildKernelLaunch(arg_cnt, argument_counter, argument_values, gen_symbol_map, main_body, kernel_list);
+  buildKernelLaunch(driver, arg_cnt, argument_counter, argument_values, gen_symbol_map, main_body, kernel_list);
 
   SgVariableSymbol * result_sym = buildTargetData(arg_cnt, argument_counter, argument_values, gen_symbol_map, main_body, data_manager_load_sym, data_manager_compare_sym, inout_data_order.second);
 

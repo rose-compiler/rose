@@ -79,6 +79,8 @@ class Driver<Sage> {
 
     template <typename Symbol>
     bool resolveValidParent(Symbol * symbol);
+    
+    void addPointerToTopParentDeclaration(SgSymbol * symbol, SgSourceFile * file);
 
   public:
     Driver(SgProject * project_ = NULL);
