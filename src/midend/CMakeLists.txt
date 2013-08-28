@@ -4,6 +4,7 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 add_subdirectory(abstractHandle)
 add_subdirectory(astDiagnostics)
 add_subdirectory(astProcessing)
+add_subdirectory(astMatching)
 add_subdirectory(astQuery)
 add_subdirectory(astRewriteMechanism)
 add_subdirectory(astUtil)
@@ -39,6 +40,7 @@ add_subdirectory(programTransformation)
 #        astInlining \
 #        astOutlining \
 #        astProcessing \
+#        astMatching \
 #        astQuery \
 #        astRewriteMechanism \
 #        astUtil \

@@ -71,7 +71,8 @@ else
 # We use the edg-generate-sig script to choose the best version from a list of available versions.  If there's a version
 # number (SHA1) already stored in the bincompat-sig file in the top of the source tree then edg-generate-sig will use
 # that rather than doing a bunch of git commands.
-EDGBIN_BEST_NAME:=$(EDGBIN_NAME_PREFIX)-$(EDGBIN_NAME_SUFFIX)-$(shell $(top_srcdir)/scripts/edg-generate-sig --find --progress)
+EDGBIN_SIGNATURE:=$(shell $(top_srcdir)/scripts/edg-generate-sig --find --progress)
+EDGBIN_BEST_NAME:=$(EDGBIN_NAME_PREFIX)-$(EDGBIN_NAME_SUFFIX)-$(EDGBIN_SIGNATURE)
 
 all-am: EDG/libroseEDG.la
 
@@ -80,8 +81,10 @@ all-am: EDG/libroseEDG.la
 # messages inside the tarball.  Note, we can't have two make targets with the same name even if they are in separate parts
 # of an automake 'if' statement; so we add a 'download-' prefix to this one.
 download-$(EDGBIN_BEST_NAME).tar.gz:
-	cp $(EDGBIN_LOCAL_TARBALLS)/$(EDGBIN_BEST_NAME).tar.gz $@ 2>/dev/null || \
-		wget -O $@ $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_BEST_NAME).tar.gz
+	@test -n "$(EDGBIN_SIGNATURE)" || ( \
+      echo "[FATAL] Invalid EDG binary compatibility signature '$(EDGBIN_SIGNATURE)' in filename '$(EDGBIN_BEST_NAME)'. Please contact rose-public@nersc.gov to troubleshoot this error message." && \
+      exit 1);
+		wget -O "$@" "$(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_BEST_NAME).tar.gz"
 
 # Unpack the EDG tarball. Note: $(am__untar) comes from configure and if it's not set then there's something wrong with configure.
 EDG/libroseEDG.la: download-$(EDGBIN_BEST_NAME).tar.gz
