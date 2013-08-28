@@ -10703,7 +10703,6 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
 #if 0
           printf ("Looking up the function symbol using name = %s and type = %p = %s \n",func->get_name().str(),func->get_type(),func->get_type()->class_name().c_str());
 #endif
-          printf ("[SageInterface::fixFunctionDeclaration] Lookup Function func = %p, name = %s, type = %p, scope = %p\n", func, func->get_name().getString().c_str(), func->get_type(), scope);
           SgFunctionSymbol* func_symbol = NULL;
           if (tmfunc != NULL)
             func_symbol = scope->lookup_template_member_function_symbol (func->get_name(), func->get_type());
@@ -10714,9 +10713,6 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
           else if (func != NULL)
             func_symbol = scope->lookup_function_symbol (func->get_name(), func->get_type());
           else assert(false);
-
-
-          printf("[SageInterface::fixFunctionDeclaration]     -> func = %p, mfunc = %p, tmfunc = %p\n", func, mfunc, tmfunc);
 
 #if 0
           printf ("In SageInterface::fixStatement(): func_symbol = %p \n",func_symbol);
