@@ -77,19 +77,15 @@ bool
 InternalNode::must_equal(const TreeNodePtr &other_, SMTSolver *solver/*NULL*/) const
 {
     bool retval = false;
-    if (solver) {
+    if (this==other_.get()) {
+        retval = true;
+    } else if (equivalent_to(other_)) {
+        // This is probably faster than using an SMT solver. It also serves as the naive approach when an SMT solver
+        // is not available.
+        retval = true;
+    } else if (solver) {
         TreeNodePtr assertion = InternalNode::create(1, OP_NE, shared_from_this(), other_);
         retval = SMTSolver::SAT_NO==solver->satisfiable(assertion); /*equal if there is no solution for inequality*/
-    } else {
-        /* The naive approach uses structural equality */
-        InternalNodePtr other = other_->isInternalNode();
-        if (this==other.get()) {
-            retval = true;
-        } else if (other && op==other->op && children.size()==other->children.size()) {
-            retval = true;
-            for (size_t i=0; i<children.size() && retval; ++i)
-                retval = children[i]->must_equal(other->children[i], NULL);
-        }
     }
     return retval;
 }
@@ -98,12 +94,15 @@ bool
 InternalNode::may_equal(const TreeNodePtr &other, SMTSolver *solver/*NULL*/) const
 {
     bool retval = false;
-    if (solver) {
+    if (this==other.get()) {
+        return true;
+    } else if (equivalent_to(other)) {
+        // This is probably faster than using an SMT solver.  It also serves as the naive approach when an SMT solver
+        // is not available.
+        retval = true;
+    } else if (solver) {
         TreeNodePtr assertion = InternalNode::create(1, OP_EQ, shared_from_this(), other);
         retval = SMTSolver::SAT_YES==solver->satisfiable(assertion);
-    } else {
-        // The naive approach falls back to must_equal.
-        retval = must_equal(other, solver);
     }
     return retval;
 }
@@ -1261,20 +1260,19 @@ bool
 LeafNode::must_equal(const TreeNodePtr &other_, SMTSolver *solver) const
 {
     bool retval = false;
-    if (solver) {
-        TreeNodePtr assertion = InternalNode::create(1, OP_NE, shared_from_this(), other_);
-        retval = SMTSolver::SAT_NO==solver->satisfiable(assertion); /*equal if there is no solution for inequality*/
-    } else {
-        LeafNodePtr other = other_->isLeafNode();
-        if (this==other.get()) {
-            retval = true;
-        } else if (other) {
-            if (is_known()) {
-                retval = other->is_known() && ival==other->ival;
-            } else {
-                retval = !other->is_known() && name==other->name;
-            }
+    LeafNodePtr other = other_->isLeafNode();
+    if (this==other.get()) {
+        retval = true;
+    } else if (other==NULL) {
+        // We need an SMT solver to figure this out.  This handles things like "x must_equal (not (not x))" which is true.
+        if (solver) {
+            TreeNodePtr assertion = InternalNode::create(1, OP_NE, shared_from_this(), other_);
+            retval = SMTSolver::SAT_NO==solver->satisfiable(assertion); // must equal if there is no soln for inequality
         }
+    } else if (is_known()) {
+        retval = other->is_known() && ival==other->ival;
+    } else {
+        retval = !other->is_known() && name==other->name;
     }
     return retval;
 }
@@ -1283,23 +1281,17 @@ bool
 LeafNode::may_equal(const TreeNodePtr &other_, SMTSolver *solver) const
 {
     bool retval = false;
-    if (solver) {
-        TreeNodePtr assertion = InternalNode::create(1, OP_EQ, shared_from_this(), other_);
-        retval = SMTSolver::SAT_YES == solver->satisfiable(assertion);
-    } else {
-        LeafNodePtr other = other_->isLeafNode();
-        if (this==other.get()) {
-            retval = true;
-        } else if (!other) {
-            // 'other' is not a leaf; it might be equal to this, but we can't tell without an SMT solver
-            retval = false;
-        } else if (is_known() && other->is_known()) {
-            // two integers may_equal iff they are equal
-            retval = ival == other->ival;
-        } else {
-            // two variables or a variable-and-integer may be equal in any case
-            retval = true;
+    LeafNodePtr other = other_->isLeafNode();
+    if (this==other.get()) {
+        retval = true;
+    } else if (other==NULL) {
+        // We need an SMT solver to figure out things like "x may_equal (add y 1))", which is true.
+        if (solver) {
+            TreeNodePtr assertion = InternalNode::create(1, OP_EQ, shared_from_this(), other_);
+            retval = SMTSolver::SAT_YES == solver->satisfiable(assertion);
         }
+    } else if (!is_known() || !other->is_known() || ival==other->ival) {
+        retval = true;
     }
     return retval;
 }
