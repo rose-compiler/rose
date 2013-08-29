@@ -30,8 +30,8 @@ class ProcessQuery
 public:
   ProcessQuery() { }
   // functor to operate on the given query
-  MatchResult operator()(std::string query, SgNode* root);
-  MatchResult getMatchResult();
+  MatchResult& operator()(std::string query, SgNode* root);
+  MatchResult& getMatchResult();
   void printMatchResult();
   void clearMatchResult();
 };
@@ -41,9 +41,13 @@ public:
  *************************************************/
 class ComputeAddressTakenInfo
 {
+  typedef std::pair<bool, VariableIdSet> AddressTakenInfo;
   VariableIdMapping& vidm;
   // result to be computed by this analysis
-  VariableIdSet addressTakenSet;
+  // bool is set to true when operand of SgAddressOfExp is a complicated
+  // expression for which VariableId cannot be determined
+  // example: &(*p)
+  AddressTakenInfo addressTakenInfo;
 
   // address can be taken for any expression that is lvalue
   // The purpose of this class is to traverse arbitrary
@@ -57,26 +61,36 @@ class ComputeAddressTakenInfo
   class OperandToVariableId : public ROSE_VisitorPatternDefaultBase
   {
     ComputeAddressTakenInfo& cati;
+    int debuglevel;
   public:
-    OperandToVariableId(ComputeAddressTakenInfo& _cati) : cati(_cati) { }
+  OperandToVariableId(ComputeAddressTakenInfo& _cati) : cati(_cati), debuglevel(0) { }
     void visit(SgVarRefExp*);
     void visit(SgDotExp*);
     void visit(SgArrowExp*);
     void visit(SgPointerDerefExp*);
     void visit(SgPntrArrRefExp*);
     void visit(SgAssignOp* sgn);
+    void visit(SgPlusPlusOp* sgn);
+    void visit(SgMinusMinusOp* sgn);
     void visit(SgCommaOpExp* sgn);
     void visit(SgConditionalExp* sgn);
+    void visit(SgCastExp* sgn);
     void visit(SgFunctionRefExp* sgn);
+    void visit(SgMemberFunctionRefExp* sgn);
+    void visit(SgTemplateFunctionRefExp* sgn);
+    void visit(SgTemplateMemberFunctionRefExp* sgn);
     void visit(SgFunctionCallExp* sgn);
-    void visit(SgNode* sgn);    
+    void visit(SgNode* sgn);
+    void debugPrint(SgNode* sgn);
   };
 public:
-  ComputeAddressTakenInfo(VariableIdMapping& _vidm) : vidm(_vidm) {}
-  void throwIfUnInitException();
-  void computeAddressTakenSet(SgNode* root);
-  void printAddressTakenSet();
-  VariableIdSet getAddressTakenSet();
+  ComputeAddressTakenInfo(VariableIdMapping& _vidm) : vidm(_vidm)
+  {
+    addressTakenInfo.first = false;
+  }
+  void computeAddressTakenInfo(SgNode* root);
+  void printAddressTakenInfo();
+  AddressTakenInfo getAddressTakenInfo();  
 };
 
 /*************************************************
@@ -104,7 +118,6 @@ public:
   void printPointerTypeSet();
   void printArrayTypeSet();
   void printReferenceTypeSet();
-  void throwIfUnInitException();
   VariableIdSet getPointerTypeSet();
   VariableIdSet getArrayTypeSet();
   VariableIdSet getReferenceTypeSet();
