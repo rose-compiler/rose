@@ -61,6 +61,7 @@ ADDRESSTAKENANALYSIS_TESTS_PASSING = \
 	$(srcdir)/tests/test23.cpp \
 	$(srcdir)/tests/test24.cpp \
 	$(srcdir)/tests/test25.cpp \
+	$(srcdir)/tests/test26.cpp \
 	$(srcdir)/tests/test27.cpp \
 	$(srcdir)/tests/test28.cpp \
 	$(srcdir)/tests/test29.cpp \
@@ -73,13 +74,19 @@ ADDRESSTAKENANALYSIS_TESTS_PASSING = \
 	$(srcdir)/tests/test37.cpp \
 	$(srcdir)/tests/test38.cpp \
 	$(srcdir)/tests/test39.cpp \
-	$(srcdir)/tests/test41.c
+	$(srcdir)/tests/test40.cpp \
+	$(srcdir)/tests/test41.c \
+	$(srcdir)/tests/test42.cpp \
+	$(srcdir)/tests/test43.cpp \
+	$(srcdir)/tests/test44.cpp \
+	$(srcdir)/tests/test45.cpp \
+	$(srcdir)/tests/test46.cpp \
+	$(srcdir)/tests/test47.cpp
+
 
 
 ADDRESSTAKENANALYSIS_TESTS_FAILING = \
-	$(srcdir)/tests/test7.cpp \ # has r-value references
-	$(srcdir)/tests/test26.cpp \ # comma op
-	$(srcdir)/tests/test40.cpp \ # comma op
+	$(srcdir)/tests/test7.cpp \ # has r-value references	
 	$(srcdir)/tests/test32.cpp \
 	$(srcdir)/tests/arrow_test.cpp
 
@@ -89,6 +96,9 @@ $(ADDRESSTAKENANALYSIS_CHECKS): addressTakenAnalysis $(srcdir)/tests/$(@:.cpp=.c
 	./addressTakenAnalysis -c --edg:no_warnings $(@:.cpp-o=.cpp)
 
 check-local: $(ADDRESSTAKENANALYSIS_CHECKS)
+	@echo "*********************************************************************************************************"
+	@echo "****** defuse info/address taken info computation: make check rule complete (terminated normally) *******"
+	@echo "*********************************************************************************************************"
 
 CXX_TESTS_DIR = $(top_srcdir)/tests/CompileTests/Cxx_tests
 CXX_TESTS = $(addprefix $(CXX_TESTS_DIR)/,\
