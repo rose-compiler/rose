@@ -86,6 +86,12 @@ usage(int exit_status)
               <<"            are calculated from the maximum output group Jaccard index, while relationship #2 could be\n"
               <<"            similarity values that are calculated using a threshold of output group equality count. The\n"
               <<"            default relation ID is zero.\n"
+              <<"    --return-threshold=R\n"
+              <<"            Threshold for determining when a function returns a value.  The clone detection heuristically\n"
+              <<"            computes the likelihood that a function returns a value; a value between zero and one. However,\n"
+              <<"            the algorithm that computes similarity needs a Boolean and obtains it by comparing the likelihood\n"
+              <<"            with a threshold, R.  If the likelihood of returning a value is less than R then we assume that\n"
+              <<"            the function does not return a value; otherwise we assume it does. The default for R is 0.25.\n"
               <<"    --progress\n"
               <<"            Show progress reports even if stderr is not a tty.\n"
               <<"    --verbose\n"
@@ -118,8 +124,8 @@ enum Aggregation {
 static struct Switches {
     Switches()
         : recreate(false), show_progress(false), ignore_faults(false),
-          collection_ratio(1.0, 1.0), collection_limit((size_t)-1, (size_t)-1),
-          output_cmp(OC_VALUESET_JACCARD), aggregation(AG_AVERAGE), relation_id(0), verbose(false), dry_run(false) {}
+          collection_ratio(1.0, 1.0), collection_limit((size_t)-1, (size_t)-1), output_cmp(OC_VALUESET_JACCARD),
+          aggregation(AG_AVERAGE), relation_id(0), verbose(false), dry_run(false), return_threshold(0.25) {}
     bool recreate;                      // recreate the database
     bool show_progress;                 // the --show-progress switch
     bool ignore_faults;                 // ignore tests that failed
@@ -131,6 +137,7 @@ static struct Switches {
     bool verbose;
     std::string input_file_name;
     bool dry_run;
+    double return_threshold;
 } opt;
 
 static SqlDatabase::TransactionPtr transaction;
@@ -343,7 +350,7 @@ load_function_infos()
 {
     std::map<int, double> returns_value = CloneDetection::function_returns_value(transaction);
     for (std::map<int, double>::iterator ri=returns_value.begin(); ri!=returns_value.end(); ++ri)
-        func_infos[ri->first].returns_value = ri->second >= 0.25;
+        func_infos[ri->first].returns_value = ri->second >= opt.return_threshold;
 }
 
 // Load all outputs for the specified function if they're not in memory already
@@ -612,6 +619,13 @@ main(int argc, char *argv[])
             }
         } else if (!strcmp(argv[argno], "--progress")) {
             opt.show_progress = true;
+        } else if (!strncmp(argv[argno], "--return-threshold=", 19)) {
+            char *rest;
+            opt.return_threshold = strtod(argv[argno]+19, &rest);
+            if (rest==argv[argno]+19 || *rest || opt.return_threshold<0 || opt.return_threshold>1) {
+                std::cerr <<argv0 <<": invalid value for --return-threshold: " <<argv[argno]+19 <<"\n";
+                exit(1);
+            }
         } else if (!strcmp(argv[argno], "--verbose")) {
             opt.verbose = true;
         } else if (!strcmp(argv[argno], "--dry-run")) {
