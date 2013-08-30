@@ -87,7 +87,7 @@
    ElfFileHeader.Header.Format.ABI                                = unspecified
    ElfFileHeader.Header.Format.ABIvers                            = 0
    ElfFileHeader.Header.Format.wordsize                           = 4
-   ElfFileHeader.Header.ins_arch                                  = 0x900
+   ElfFileHeader.Header.ins_arch                                  = 0x900 (ISA_ARM_Family)
    ElfFileHeader.Header.magic                                     = "\177ELF"
    ElfFileHeader.Header.base_va                                   = 0x00000000 (0)
    ElfFileHeader.Header.entry_rva.size                            = 1 entry points
