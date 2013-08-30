@@ -4,6 +4,8 @@
 -- Clean up. Tables need to be dropped in the opposite order they're created.
 drop table if exists semantic_funcsim;
 drop table if exists semantic_funcpartials;
+drop table if exists semantic_fio_calls;
+drop table if exists semantic_fio_coverage;
 drop table if exists semantic_fio_trace;
 drop table if exists semantic_fio_events;
 drop table if exists semantic_fio;
@@ -31,9 +33,9 @@ create table semantic_history (
 
 -- Table of input queue names.
 create table semantic_input_queues (
-       id integer primary key,			-- Queue ID or a special value (see InputGroupName)
-       name varchar(16),  			-- Short name
-       description text				-- Single-line, full description
+       id integer primary key,                  -- Queue ID or a special value (see InputGroupName)
+       name varchar(16),                        -- Short name
+       description text                         -- Single-line, full description
 );
 
 -- This table encodes the set of all input groups.  Each input group consists of an input queue which contains zero or
@@ -46,7 +48,7 @@ create table semantic_inputvalues (
        igroup_id integer,                       -- ID for the input group; non-unique
        queue_id integer references semantic_input_queues(id),
        pos integer,                             -- position of this value within its queue (some positions are special)
-       val bigint,				-- the 64-bit unsigned value
+       val bigint,                              -- the 64-bit unsigned value
        cmd bigint references semantic_history(hashkey) -- command that created this row
 );
 
@@ -145,10 +147,10 @@ create table semantic_sources (
 create table semantic_fio (
        func_id integer references semantic_functions(id),
        igroup_id integer,                       -- references semantic_inputvalues.id
-       arguments_consumed integer,		-- number of inputs consumed from the arguments queue
-       locals_consumed integer,			-- number of inputs consumed form the locals queue
-       globals_consumed integer,		-- number of inputs consumed from the globals queue
-       functions_consumed integer,		-- number of return values from black-box (skipped-over) functions
+       arguments_consumed integer,              -- number of inputs consumed from the arguments queue
+       locals_consumed integer,                 -- number of inputs consumed form the locals queue
+       globals_consumed integer,                -- number of inputs consumed from the globals queue
+       functions_consumed integer,              -- number of return values from black-box (skipped-over) functions
        pointers_consumed integer,               -- number of pointers from the inputgroup consumed by this test
        integers_consumed integer,               -- number of integers from the inputgroup consumed by this test
        instructions_executed integer,           -- number of instructions executed by this test
@@ -175,8 +177,31 @@ create table semantic_fio_trace (
        pos integer,                             -- sequence number of this event within this test
        addr bigint,                             -- specimen virtual address where event occurred
        event_id integer, --(need for speed) references semantic_fio_events(id),
-       minor integer,				-- event minor number (usually zero)
-       val bigint				-- event value, interpretation depends on event_id
+       minor integer,                           -- event minor number (usually zero)
+       val bigint                               -- event value, interpretation depends on event_id
+);
+
+-- Information about instructions that were executed for each test.  This table is only populated when coverage capability is
+-- enabled in the 25-run-tests tool. The (func_id,igroup_id) pair identifies the test for which the coverage info is computed
+-- and the pair can be used to look up test results in the semantic_fio table.  The (func_id,insn_va) pair can be used to find
+-- info about the instruction in the semantic_instructions table.
+create table semantic_fio_coverage (
+        func_id integer,                        -- references semantic_functions(id) [commented out for speed]
+        igroup_id integer,                      -- references semantic_inputvalues(id)
+        insn_va bigint,                         -- the starting address of the instruction; cf. semantic_instructions
+        first_seen_pos integer,                 -- sequence number for when this instruction was first seen in this test
+        nhits integer                           -- number of times this address was executed (regardless of execution order)
+);
+
+-- Function calls that occur while a test runs.  This table is only populated if the run-time function call tracing capability
+-- is enabled in the 25-run-tests tool.  Similar info might be available in the semantic_fio_trace table.
+create table semantic_fio_calls (
+        func_id integer,                        -- references semantic_functions(id) [commented out for speed]
+        igroup_id integer,                      -- references semantic_inputvalues(id)
+        caller_id integer,                      -- ID of the function making the call
+        callee_id integer,                      -- ID of the function being called
+        pos integer,                            -- Relative position of this call w.r.t. the other calls of this test
+        ncalls integer                          -- Number of consecutive calls without intervening calls to/from other functions
 );
 
 -- Results of various kinds of function analyses.  A function might be represented more than once in this table because
@@ -184,10 +209,10 @@ create table semantic_fio_trace (
 -- by 25-run-tests.
 create table semantic_funcpartials (
        func_id integer references semantic_functions(id),
-       ncalls integer,				-- Number of times this function was called by another function
-       nretused integer,			-- Number of ncalls where a return value was used in the caller
-       ntests integer,				-- Number of times this function was tested
-       nvoids integer				-- Number of ntests where the function did not write to EAX
+       ncalls integer,                          -- Number of times this function was called by another function
+       nretused integer,                        -- Number of ncalls where a return value was used in the caller
+       ntests integer,                          -- Number of times this function was tested
+       nvoids integer                           -- Number of ntests where the function did not write to EAX
 );
 
 -- Function similarity--how similar are pairs of functions.  The relation_id allows us to store multiple function similarity
