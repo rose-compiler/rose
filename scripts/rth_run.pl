@@ -96,6 +96,11 @@ When multiple commands are specified on the same line they will be run in a sing
 of the config file will be run in separate shells.  In other words, a variable setting or change of directories applies only to
 a single line.
 
+=item cleanup = SHELL_COMMAND
+
+These commands all run after the "cmd" commands run, regardless of whether the "cmd" commands passed.  The exit status,
+standard output, and standard error from these commands is not saved.
+
 =item diff = DIFF_COMMAND
 
 This property specifies a program (and options) to use when comparing the standard output of a test with a predetermined
@@ -298,7 +303,7 @@ sub help {
 # values are the values or an array of values.
 sub load_config {
   my($file,%vars) = @_;
-  my(%conf) = (answer=>'no', cmd=>[], diff=>'diff -u', disabled=>'no', filter=>'no', lockdir=>undef,
+  my(%conf) = (answer=>'no', cmd=>[], cleanup=>[], diff=>'diff -u', disabled=>'no', filter=>'no', lockdir=>undef,
                may_fail=>'no', promote=>'yes', timeout=>15*60);
   open CONFIG, "<", $file or die "$0: $file: $!\n";
   while (<CONFIG>) {
@@ -474,6 +479,9 @@ if (!$status && $config{answer} ne 'no') {
     $status = system "($config{diff} $answer $cmd_stdout) >>$cmd_stderr 2>&1";
   }
 }
+
+# Run clean-up commands
+run_command("/dev/null", "/dev/null", $config{timeout}, @{$config{cleanup}});
 
 # If the test failed and the "may_fail" property is "yes" then pretend the test was successfull.
 # If the test passed and the "may_fail" property is "promote" then we need to change the property
