@@ -317,11 +317,6 @@ fi
 touch stamp-h.in
 touch stamp-h1.in
 
-# Add some dynamically-generated targets that run tests on various sample binaries. [RPM]
-if [[ -f tests/roseTests/binaryTests/Makefile.in ]]; then
-    (cd $ROSE_DISTRIBUTION && ./scripts/sample_binary_rules.pl) || exit 1
-fi
-
 # When timing is selected, add a "time" command to the front of the compiles.  This must be done before the --quiet
 # handler below is run to get the right output command.
 if [[ -n "$do_timing" ]]; then
