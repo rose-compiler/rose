@@ -1796,6 +1796,13 @@ HEADER_START
        */
           static std::map<SgNode*,std::string> & get_globalQualifiedNameMapForNames();
 
+      /*! \brief Access function for name qualification support (for names).
+
+          This qualified name is stored with reference to where the name is used (as required) instead
+          of with the IR node of what is names (e.g. function declaration, variable declaration, etc.).
+       */
+          static void set_globalQualifiedNameMapForNames ( const std::map<SgNode*,std::string> & X );
+
       /*! \brief Access function for name qualification support (for type).
 
           This qualified name is stored with reference to where the type is used (as required) instead
@@ -1803,13 +1810,6 @@ HEADER_START
           type, variable type, etc.).
        */
           static std::map<SgNode*,std::string> & get_globalQualifiedNameMapForTypes();
-
-      /*! \brief Access function for name qualification support (for names).
-
-          This qualified name is stored with reference to where the name is used (as required) instead
-          of with the IR node of what is names (e.g. function declaration, variable declaration, etc.).
-       */
-          static void set_globalQualifiedNameMapForNames ( const std::map<SgNode*,std::string> & X );
 
       /*! \brief Access function for name qualification support (for type).
 

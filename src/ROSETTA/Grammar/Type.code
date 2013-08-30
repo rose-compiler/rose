@@ -2948,6 +2948,7 @@ SgTemplateType::get_mangled(void) const
   // We need to asspciate template template arguments with their associated declarations and not just there name.
   // See test2012_217.C (return types of functions should be different, have different mangled names, for each function).
   // mangled_name += StringUtility::numberToString(this->get_declaration());
+     mangled_name += StringUtility::numberToString(this);
 
 #if 0
     printf ("In SgTemplateType::get_mangled(): this = %p mangled_name = %s \n",this,mangled_name.str());

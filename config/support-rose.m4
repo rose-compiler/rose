@@ -1823,6 +1823,9 @@ projects/DatalogAnalysis/tests/Makefile
 projects/DistributedMemoryAnalysisCompass/Makefile
 projects/DocumentationGenerator/Makefile
 projects/FiniteStateModelChecker/Makefile
+projects/fuse/Makefile
+projects/fuse/src/Makefile
+projects/fuse/tests/Makefile
 projects/graphColoring/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
@@ -2076,6 +2079,7 @@ tests/roseTests/ompLoweringTests/Makefile
 tests/roseTests/ompLoweringTests/fortran/Makefile
 tests/roseTests/programAnalysisTests/Makefile
 tests/roseTests/programAnalysisTests/defUseAnalysisTests/Makefile
+tests/roseTests/programAnalysisTests/typeTraitTests/Makefile
 tests/roseTests/programAnalysisTests/sideEffectAnalysisTests/Makefile
 tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests/Makefile
 tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile

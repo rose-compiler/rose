@@ -1312,7 +1312,7 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
 
                  // DQ (8/8/2012): This is a valid branch, commented out assert(false).
                  // DQ (8/2/2012): This branch should not be possible so assert false as a test (note that test2005_139.C will demonstrate this branch).
-                    printf ("Error: It should be impossible to reach this code since SgTemplateInstantiationDefn is not a class, function or member function type \n");
+                    printf ("Warning: Rare case: It should be impossible to reach this code since SgTemplateInstantiationDefn is not a class, function or member function type \n");
                  // ROSE_ASSERT(false);
                   }
                  else
