@@ -416,6 +416,10 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
         }
 #endif
 
+#if 0
+     printf ("In unparseTemplateArgumentList(): templateArgListPtr.size() = %zu \n",templateArgListPtr.size());
+#endif
+
      SgUnparse_Info ninfo(info);
 
   // DQ (5/6/2013): This fixes the test2013_153.C test code.
@@ -442,7 +446,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
      if (!templateArgListPtr.empty())
         {
 #if 0
-          printf ("templateArgListPtr.size() = %zu \n",templateArgListPtr.size());
+          printf ("In unparseTemplateArgumentList(): templateArgListPtr.size() = %zu \n",templateArgListPtr.size());
 #endif
        // DQ (4/18/2005): We would like to avoid output of "<>" if possible so verify that there are template arguments
           ROSE_ASSERT(templateArgListPtr.size() > 0);
@@ -483,8 +487,58 @@ void
 Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParameter, SgUnparse_Info& info)
    {
      ROSE_ASSERT(templateParameter != NULL);
+
+     switch(templateParameter->get_parameterType())
+        {
+          case SgTemplateParameter::type_parameter:
+             {
+#if 1
+               printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: Sorry, not implemented! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case SgTemplateParameter::nontype_parameter:
+             {
+               if (templateParameter->get_expression() != NULL)
+                  {
+                    unp->u_exprStmt->unparseExpression(templateParameter->get_expression(),info);
+                  }
+                 else
+                  {
+                    ROSE_ASSERT(templateParameter->get_initializedName() != NULL);
+
+                    SgType* type = templateParameter->get_initializedName()->get_type();
+                    ROSE_ASSERT(type != NULL);
+
+                    unp->u_type->outputType<SgInitializedName>(templateParameter->get_initializedName(),type,info);
+                  }
+
+               break;
+             }
+
+          case SgTemplateParameter::template_parameter:
+             {
+#if 1
+               printf ("unparseTemplateParameter(): case SgTemplateParameter::template_parameter: Sorry, not implemented! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          default:
+             {
+               printf ("Error: default reached \n");
+               ROSE_ASSERT(false);
+               break;
+             }
+        }
+
+#if 0
      printf ("unparseTemplateParameter(): Sorry, not implemented! \n");
      ROSE_ASSERT(false);
+#endif
    }
 
 
@@ -743,7 +797,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
      if (newInfo.SkipBaseType() == true)
         {
-#if 1
+#if 0
           printf ("In unparseTemplateArgument(): unset SkipBaseType() (how was this set? Maybe from the function reference expression?) \n");
 #endif
           newInfo.unset_SkipBaseType();
@@ -1020,21 +1074,47 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
           case SgTemplateArgument::nontype_argument:
              {
-               ROSE_ASSERT (templateArgument->get_expression() != NULL);
+            // DQ (8/12/2013): This can be either an SgExpression or SgInitializedName.
+            // ROSE_ASSERT (templateArgument->get_expression() != NULL);
+               ROSE_ASSERT (templateArgument->get_expression() != NULL || templateArgument->get_initializedName() != NULL);
+               ROSE_ASSERT (templateArgument->get_expression() == NULL || templateArgument->get_initializedName() == NULL);
+               if (templateArgument->get_expression() != NULL)
+                  {
 #if 0
-               printf ("In unparseTemplateArgument(): templateArgument->get_expression() = %s \n",templateArgument->get_expression()->sage_class_name());
+                    printf ("In unparseTemplateArgument(): templateArgument->get_expression() = %s \n",templateArgument->get_expression()->class_name().c_str());
 #endif
 #if OUTPUT_DEBUGGING_INFORMATION
-               printf ("In unparseTemplateArgument(): templateArgument->get_expression() = %s \n",templateArgument->get_expression()->sage_class_name());
-               unp->u_exprStmt->curprint ( "\n /* templateArgument->get_expression() */ \n");
+                    printf ("In unparseTemplateArgument(): templateArgument->get_expression() = %s \n",templateArgument->get_expression()->class_name().c_str());
+                    unp->u_exprStmt->curprint ( "\n /* templateArgument->get_expression() */ \n");
 #endif
-            // curprint ( "\n /* SgTemplateArgument::nontype_argument */ \n");
+                 // curprint ( "\n /* SgTemplateArgument::nontype_argument */ \n");
 
-            // DQ (1/5/2007): test2007_01.C demonstrated where this expression argument requires qualification.
+                 // DQ (8/7/2013): Adding support for template functions overloaded on template parameters.
+                 // This should be present, but we don't use it directly in the name generation. We want 
+                 // to use the template arguments in the symbol table lookup, but not the name generation.
+                    ROSE_ASSERT(templateArgument->get_expression()->get_type() != NULL);
 #if 0
-               printf ("Template argument = %p = %s \n",templateArgument->get_expression(),templateArgument->get_expression()->class_name().c_str());
+                    printf ("Template argument (templateArgument->get_expression()->get_type() (not used in name generation)) = %p = %s \n",templateArgument->get_expression()->get_type(),templateArgument->get_expression()->get_type()->class_name().c_str());
 #endif
-               unp->u_exprStmt->unparseExpression(templateArgument->get_expression(),newInfo);
+                 // unp->u_type->unparseType(templateArgument->get_expression()->get_type(),newInfo);
+
+                 // DQ (1/5/2007): test2007_01.C demonstrated where this expression argument requires qualification.
+#if 0
+                    printf ("Template argument = %p = %s \n",templateArgument->get_expression(),templateArgument->get_expression()->class_name().c_str());
+#endif
+                    unp->u_exprStmt->unparseExpression(templateArgument->get_expression(),newInfo);
+                  }
+                 else
+                  {
+                 // Unparse this case of a SgInitializedName.
+#if 0
+                    printf ("In unparseTemplateArgument(): templateArgument->get_initializedName() = %s \n",templateArgument->get_initializedName()->get_name().str());
+#endif
+                    SgType* type = templateArgument->get_initializedName()->get_type();
+                    ROSE_ASSERT(type != NULL);
+
+                    unp->u_type->outputType<SgInitializedName>(templateArgument->get_initializedName(),type,newInfo);
+                  }
 
             // printf ("Error: nontype_argument case not implemented in Unparse_ExprStmt::unparseTemplateArgument \n");
             // ROSE_ABORT();
@@ -1916,6 +1996,8 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
 
 #if 0
      printf ("In unparseMFuncRefSupport(): uses_operator_syntax = %s \n",uses_operator_syntax ? "true" : "false");
+#endif
+#if 0
      curprint (string("\n /* Inside of unparseMFuncRef: uses_operator_syntax = ") + (uses_operator_syntax ? "true" : "false") + " */ \n");
 #endif
 
@@ -1931,6 +2013,8 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
 
 #if 0
      printf ("In unparseMFuncRefSupport(): expr = %p (name = %s::%s) \n",expr,decl->get_name().str(),mfd->get_name().str());
+#endif
+#if 0
      curprint ("\n /* Inside of unparseMFuncRef */ \n");
 #endif
 #if 0
@@ -1983,6 +2067,8 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                if (i != SgNode::get_globalQualifiedNameMapForNames().end())
                   {
                  // I think this branch supports template member functions (called with explicit template arguments) (see test2013_221.C).
+
+#error "DEAD CODE!"
 
                     printf ("Commented out usingGeneratedNameQualifiedFunctionNameString: Not using the saved generated name from globalQualifiedNameMapForNames() \n");
                  // usingGeneratedNameQualifiedFunctionNameString = true;
@@ -5034,7 +5120,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #error "DEAD CODE!"
 
 #else
- // DQ (5/26/2013): Alternative form of SgConstructorInitializer unparsing.
+  // DQ (5/26/2013): Alternative form of SgConstructorInitializer unparsing.
 
   // DQ (5/26/2013): Combined these predicates so that we could rewrite this to not generate a SgName and ouput it later.  
   // This is required to allow us to call the function that output the member function name (if used), so that we can 
@@ -5093,6 +5179,8 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #if 0
             // DQ (4/15/2013): If there is other debug output turned on then nesting of comments inside of comments can occur in this output (see test2007_17.C).
                printf ("In unparseConInit(): put out func_name = %s \n",func_name.str());
+#endif
+#if 0
                curprint (string("\n /* In unparseConInit(): put out func_name = ") + func_name + " */ \n ");
 #endif
             // If this is a template then the name will include template arguments which require name qualification and the name 
@@ -5131,6 +5219,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
              }
             else
              {
+            // In this case there is no constructor member function to name, and so there is only the name of the class to use as a default constructor call.
 #if 0
                printf ("con_init->get_class_decl() = %s \n",con_init->get_class_decl() ? "true" : "false");
 #endif
@@ -5145,15 +5234,33 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #endif
                  // nm = nameQualifier + con_init->get_class_decl()->get_name();
                     curprint(nameQualifier.str());
+#if 0
                     curprint(con_init->get_class_decl()->get_name().str());
+#else
+                 // DQ (8/19/2013): This handles the case represented by test2013_306.C.
+                    newinfo.set_reference_node_for_qualification(con_init);
+
+                 // DQ (8/19/2013): This is required to handle references to classes in the throw expression (at least), see test2004_150.C.
+                 // DQ (8/19/2013): This has no effect if the type string is taken from the type name map and so the "class" needs
+                 // to be eliminated in the generation of the intial string as part of the generation of the name qualification.
+                 // printf ("In unparseOneElemConInit(): calling set_SkipClassSpecifier() \n");
+                    newinfo.set_SkipClassSpecifier();
+#if 0
+                    printf ("In unparseConInit(): Unparse the type = %p = %s \n",con_init->get_type(),con_init->get_type()->class_name().c_str());
+#endif
+                    unp->u_type->unparseType(con_init->get_type(),newinfo);
+#if 0
+                    printf ("DONE: In unparseConInit(): unparseType() \n");
+#endif
+#endif
                   }
               // DQ (8/4/2012): We need this case to handle tests such as test2012_162.C.
               // DQ (3/29/2012): For EDG 4.x it appear we need a bit more since both con_init->get_declaration() and con_init->get_class_decl() can be NULL (see test2012_52.C).
                  else
                   {
-#if 0
-                    printf ("Need to handle new case for where both con_init->get_declaration() and con_init->get_class_decl() can be NULL \n");
-                    printf ("Get name of type = %p = %s name = %s \n",con_init->get_type(),con_init->get_type()->class_name().c_str(),"NOT EVALUATED YET");
+#if 1
+                    printf ("In unparseConInit(): Need to handle new case for where both con_init->get_declaration() and con_init->get_class_decl() can be NULL \n");
+                    printf ("In unparseConInit(): Get name of type = %p = %s name = %s \n",con_init->get_type(),con_init->get_type()->class_name().c_str(),"NOT EVALUATED YET");
 #endif
                     unp->u_type->unparseType(con_init->get_type(),newinfo);
 
@@ -5227,7 +5334,9 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 
   // DQ (4/1/2005): sometimes con_init->get_args() is NULL (as in test2005_42.C)
      if (outputParenthisis == true)
-          curprint ( "(");
+        {
+          curprint("(");
+        }
 
      if (con_init->get_args() != NULL)
         {
@@ -5251,7 +5360,7 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 
      if (outputParenthisis == true)
         {
-          curprint ( ")");
+          curprint(")");
         }
 
 #if 0

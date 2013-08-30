@@ -7180,8 +7180,8 @@ void c_action_label(Token_t * lbl)
                 {
                     // This is the case that isADerivedType == false.
 
-                    // DQ (1/18/2011): In general everything is a function unless there is a hint that it is an array.
-                    // DQ (1/17/2011): Check if this is supposed to be a function or a variable.
+                 // DQ (1/18/2011): In general everything is a function unless there is a hint that it is an array.
+                 // DQ (1/17/2011): Check if this is supposed to be a function or a variable.
                     SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(variableName, astScopeStack.front());
                     bool interpretAsVariable;
                     if (isSgVariableSymbol(symbol) == NULL)
@@ -18196,13 +18196,12 @@ void c_action_label(Token_t * lbl)
         // concatenate '*' and the label and push it on the astExpressionStack as the actual argument.
         if (label != NULL)
         {
-            // string asteriskArg = "*" + string(label->text);
+         // string asteriskArg = "*" + string(label->text);
             string asteriskArg = label->text;
-            // SgVarRefExp* p_actualArg = SageBuilder::buildOpaqueVarRefExp(asteriskArg, getTopOfScopeStack());
+         // SgVarRefExp* p_actualArg = SageBuilder::buildOpaqueVarRefExp(asteriskArg, getTopOfScopeStack());
 
-            // Get the SgLabelSymbol
-            SgSymbol* temp_symbol = SageInterface::lookupSymbolInParentScopes(
-                    asteriskArg, astScopeStack.front());
+         // Get the SgLabelSymbol
+            SgSymbol* temp_symbol = SageInterface::lookupSymbolInParentScopes(asteriskArg, astScopeStack.front());
             ROSE_ASSERT(temp_symbol != NULL);
 
             SgLabelSymbol* labelSymbol = isSgLabelSymbol(temp_symbol);
