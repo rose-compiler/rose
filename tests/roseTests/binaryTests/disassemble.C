@@ -155,6 +155,9 @@ Description:\n\
     hashes still appear in the function listing (--show-functions) and the\n\
     CFG dot files (--cfg-dot) if they can be computed.\n\
 \n\
+  --skip-disassemble\n\
+    Skip the entire disassembly process; only parse the binary container (if any).\n\
+\n\
   --syscalls=linux32\n\
   --syscalls=none\n\
     Specifies how system calls are to be named in the disassembly output.\n\
@@ -800,6 +803,7 @@ main(int argc, char *argv[])
     bool do_omit_anon = true;                   /* see large_anonymous_region_limit global for actual limit */
     bool do_syscall_names = true;
     bool do_linear = false;                     /* organized output linearly rather than hierarchically */
+    bool do_skip_disassemble = false;
     std::string do_generate_ipd;
 
     Disassembler::AddressSet raw_entries;
@@ -832,6 +836,8 @@ main(int argc, char *argv[])
             do_cfg_dot = false;
         } else if (!strcmp(argv[i], "--disassemble")) {         /* call disassembler explicitly; use a passive partitioner */
             do_call_disassembler = true;
+        } else if (!strcmp(argv[i], "--skip-disassemble")) {
+            do_skip_disassemble = true;
         } else if (!strcmp(argv[i], "--dot")) {                 /* generate all dot files (backward compatibility switch) */
             do_ast_dot = true;
             do_cfg_dot = true;
@@ -1156,8 +1162,6 @@ main(int argc, char *argv[])
     } else {
         map = interp->get_map();
         assert(map!=NULL);
-
-
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
         for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
             /* Seed disassembler work list with entry addresses */
@@ -1187,22 +1191,24 @@ main(int argc, char *argv[])
     Disassembler::BadMap bad;
     Disassembler::InstructionMap insns;
 
-    try {
-        if (do_call_disassembler) {
-            insns = disassembler->disassembleBuffer(map, worklist, NULL, &bad);
-            block = partitioner->partition(interp, insns, map);
-        } else {
-            block = partitioner->partition(interp, disassembler, map);
-            insns = partitioner->get_instructions();
-            bad = partitioner->get_disassembler_errors();
+    if (!do_skip_disassemble) {
+        try {
+            if (do_call_disassembler) {
+                insns = disassembler->disassembleBuffer(map, worklist, NULL, &bad);
+                block = partitioner->partition(interp, insns, map);
+            } else {
+                block = partitioner->partition(interp, disassembler, map);
+                insns = partitioner->get_instructions();
+                bad = partitioner->get_disassembler_errors();
+            }
+        } catch (const Partitioner::Exception &e) {
+            std::cerr <<"partitioner exception: " <<e <<"\n";
+            exit(1);
         }
-    } catch (const Partitioner::Exception &e) {
-        std::cerr <<"partitioner exception: " <<e <<"\n";
-        exit(1);
     }
 
     /* Link instructions into AST if possible */
-    if (interp) {
+    if (interp && block) {
         interp->set_global_block(block);
         block->set_parent(interp);
     }
@@ -1301,10 +1307,10 @@ main(int argc, char *argv[])
         printf("\n");
     }
 
-    if (do_show_functions)
+    if (do_show_functions && block)
         std::cout <<ShowFunctions(block);
 
-    if (!do_quiet) {
+    if (!do_quiet && block) {
         typedef BinaryAnalysis::ControlFlow::Graph CFG;
         CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(block);
         MyAsmUnparser unparser(do_show_hashes, do_syscall_names);
@@ -1330,7 +1336,7 @@ main(int argc, char *argv[])
      * We also calculate the "percentageCoverage", which is the percent of the bytes represented by instructions to the
      * total number of bytes represented in the disassembly memory map. Although we store it in the AST, we don't
      * actually use it anywhere else. */
-    if (do_show_extents || do_show_coverage) {
+    if ((do_show_extents || do_show_coverage) && block) {
         ExtentMap extents=map->va_extents();
         size_t disassembled_map_size = extents.size();
 
@@ -1387,7 +1393,7 @@ main(int argc, char *argv[])
         //generateAstGraph(project, INT_MAX);
     }
         
-    if (do_cfg_dot) {
+    if (do_cfg_dot && block) {
         printf("generating GraphViz dot files for control flow graphs...\n");
         dump_CFG_CG(block);
     }
