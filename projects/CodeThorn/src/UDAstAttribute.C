@@ -8,6 +8,10 @@ UDAstAttribute::UDAstAttribute(RDAstAttribute* rdAttr, SgNode* nodeForUseVarQuer
 {
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 VariableIdSet UDAstAttribute::useVariables(VariableIdMapping& vidm) {
   // labels are associated with statements/exprstatements.
   SgNode* exprNode=_node;
@@ -23,6 +27,10 @@ VariableIdSet UDAstAttribute::useVariables(VariableIdMapping& vidm) {
   return AnalysisAbstractionLayer::useVariables(exprNode,vidm);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 LabelSet UDAstAttribute::definitionsOfVariable(VariableId var) {
   return _rdAttr->definitionsOfVariableId(var);
 }

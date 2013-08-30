@@ -35,6 +35,10 @@ namespace CodeThorn {
 #define DEBUGPRINT_STATEMOD 0x4
 #define DEBUGPRINT_INFO 0x8
   
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
   class AstNodeInfo : public AstAttribute {
   public:
   AstNodeInfo():label(0),initialLabel(0){}
@@ -55,6 +59,10 @@ namespace CodeThorn {
 
   typedef list<const EState*> EStateWorkList;
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
   class Analyzer {
     friend class Visualizer;
 

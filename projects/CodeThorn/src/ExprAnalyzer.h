@@ -17,6 +17,10 @@ using namespace std;
 
 namespace CodeThorn {
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class SingleEvalResult {
  public:
   EState estate;
@@ -27,6 +31,10 @@ class SingleEvalResult {
   bool isBot() {return result.isBot();}
 };
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class SingleEvalResultConstInt {
  public:
   EState estate;
@@ -40,6 +48,10 @@ class SingleEvalResultConstInt {
   bool isBot() {return result.isBot();}
 };
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class ExprAnalyzer {
  public:
   SingleEvalResult eval(SgNode* node,EState estate);

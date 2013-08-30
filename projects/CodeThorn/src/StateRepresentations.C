@@ -19,20 +19,36 @@
 using namespace std;
 using namespace CodeThorn;
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 void InputOutput::recordVariable(OpType op0,VariableId varId) {
   op=op0;
   var=varId;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 void InputOutput::recordFailedAssert() {
   op=FAILED_ASSERT;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 void InputOutput::recordConst(OpType op0,AType::ConstIntLattice val) {
   cerr<<"IO with constants not supported yet."<<endl;
   exit(1);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 string InputOutput::toString() const {
   string str;
   switch(op) {
@@ -50,6 +66,10 @@ string InputOutput::toString() const {
   return str;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 string InputOutput::toString(VariableIdMapping* variableIdMapping) const {
   string str;
   string varName=variableIdMapping->uniqueLongVariableName(var);
@@ -68,6 +88,10 @@ string InputOutput::toString(VariableIdMapping* variableIdMapping) const {
   return str;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 bool CodeThorn::operator<(const InputOutput& c1, const InputOutput& c2) {
   if(c1.op!=c2.op)
     return c1.op<c2.op;
@@ -76,15 +100,27 @@ bool CodeThorn::operator<(const InputOutput& c1, const InputOutput& c2) {
   return AType::strictWeakOrderingIsSmaller(c1.val,c2.val);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 bool CodeThorn::operator==(const InputOutput& c1, const InputOutput& c2) {
   return c1.op==c2.op && c1.var==c2.var && (AType::strictWeakOrderingIsEqual(c1.val,c2.val));
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 bool CodeThorn::operator!=(const InputOutput& c1, const InputOutput& c2) {
   return !(c1==c2);
 }
 
-// read: regexp: '{' ( '('<varId>','<varValue>')' )* '}'
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+  * \brief read: regexp: '{' ( '('<varId>','<varValue>')' )* '}'
+ */
 void PState::fromStream(istream& is) {
   char c;
   string s;
@@ -169,6 +205,10 @@ long EState::memorySize() const {
   return sizeof(*this);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 void PState::deleteVar(VariableId varId) {
   PState::iterator i=begin();
   while(i!=end()) {
@@ -179,11 +219,19 @@ void PState::deleteVar(VariableId varId) {
   }
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 bool PState::varExists(VariableId varId) const {
   PState::const_iterator i=find(varId);
   return !(i==end());
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 bool PState::varIsConst(VariableId varId) const {
   PState::const_iterator i=find(varId);
   if(i!=end()) {
@@ -196,16 +244,28 @@ bool PState::varIsConst(VariableId varId) const {
   }
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 string PState::varValueToString(VariableId varId) const {
   stringstream ss;
   AValue val=((*(const_cast<PState*>(this)))[varId]).getValue();
   return val.toString();
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 void PState::setAllVariablesToTop() {
   setAllVariablesToValue(CodeThorn::CppCapsuleAValue(AType::Top()));
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 void PState::setAllVariablesToValue(CodeThorn::CppCapsuleAValue val) {
   for(PState::iterator i=begin();i!=end();++i) {
     VariableId varId=(*i).first;
@@ -213,10 +273,18 @@ void PState::setAllVariablesToValue(CodeThorn::CppCapsuleAValue val) {
   }
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 PStateId PStateSet::pstateId(const PState* pstate) {
   return pstateId(*pstate);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 PStateId PStateSet::pstateId(const PState pstate) {
   PStateId xid=0;
   // MS: TODO: we may want to use the new function id(pstate) here
@@ -229,12 +297,19 @@ PStateId PStateSet::pstateId(const PState pstate) {
   return NO_STATE;
 }
 
-string PStateSet::pstateIdString(const PState* pstate) {
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */string PStateSet::pstateIdString(const PState* pstate) {
   stringstream ss;
   ss<<pstateId(pstate);
   return ss.str();
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 string PStateSet::toString() {
   stringstream ss;
   ss << "@"<<this<<": PStateSet={";
@@ -248,11 +323,19 @@ string PStateSet::toString() {
   return ss.str();
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 ostream& CodeThorn::operator<<(ostream& os, const PState& pState) {
   pState.toStream(os);
   return os;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 istream& CodeThorn::operator>>(istream& is, PState& pState) {
   pState.fromStream(is);
   return is;
@@ -295,6 +378,10 @@ EStateId EStateSet::estateId(const EState estate) const {
   return NO_ESTATE;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 Transition TransitionGraph::getStartTransition() {
   // we intentionally ensure that only exactly one start transition exists
   TransitionGraph::iterator foundElementIter=end();
@@ -313,12 +400,20 @@ Transition TransitionGraph::getStartTransition() {
     throw "TransitionGraph: no start transition found.";
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 string EStateSet::estateIdString(const EState* estate) const {
   stringstream ss;
   ss<<estateId(estate);
   return ss.str();
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 CodeThorn::InputOutput::OpType EState::ioOp(Labeler* labeler) const {
   Label lab=label();
   if(labeler->isStdInLabel(lab)) return InputOutput::STDIN_VAR;
@@ -327,6 +422,10 @@ CodeThorn::InputOutput::OpType EState::ioOp(Labeler* labeler) const {
   return InputOutput::NONE;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 int EStateSet::numberOfIoTypeEStates(InputOutput::OpType op) const {
   int counter=0;
   for(EStateSet::iterator i=begin();i!=end();++i) {
@@ -336,6 +435,10 @@ int EStateSet::numberOfIoTypeEStates(InputOutput::OpType op) const {
   return counter;
 } 
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 string Transition::toString() const {
   string s1=source->toString();
   string s2=edge.toString();
@@ -343,6 +446,10 @@ string Transition::toString() const {
   return string("(")+s1+", "+s2+", "+s3+")";
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 LabelSet TransitionGraph::labelSetOfIoOperations(InputOutput::OpType op) {
   LabelSet lset;
   // the target node records the effect of the edge-operation on the source node.
@@ -354,12 +461,20 @@ LabelSet TransitionGraph::labelSetOfIoOperations(InputOutput::OpType op) {
   return lset;
 } 
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 void TransitionGraph::reduceEStates(set<const EState*> toReduce) {
   for(set<const EState*>::const_iterator i=toReduce.begin();i!=toReduce.end();++i) { 
     reduceEState(*i);
   }
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 void TransitionGraph::reduceEStates2(set<const EState*> toReduce) {
   size_t todo=toReduce.size();
   if(boolOptions["post-semantic-fold"])
@@ -373,6 +488,10 @@ void TransitionGraph::reduceEStates2(set<const EState*> toReduce) {
   }
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 // MS: we definitely need to cache all the results or use a proper graph structure
 TransitionGraph::TransitionPtrSet TransitionGraph::inEdges(const EState* estate) {
   assert(estate);
@@ -405,6 +524,11 @@ TransitionGraph::TransitionPtrSet TransitionGraph::inEdges(const EState* estate)
 #endif
 }
 
+
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 // MS: we definitely need to cache all the results or use a proper graph structure
 TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(const EState* estate) {
   assert(estate);
@@ -421,6 +545,10 @@ TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(const EState* estate
 #endif
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 void TransitionGraph::reduceEState(const EState* estate) {
   /* description of essential operations:
    *   inedges: (n_i,b)
@@ -444,14 +572,26 @@ void TransitionGraph::reduceEState(const EState* estate) {
   }
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 bool CodeThorn::operator==(const Transition& t1, const Transition& t2) {
   return t1.source==t2.source && t1.edge==t2.edge && t1.target==t2.target;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 bool CodeThorn::operator!=(const Transition& t1, const Transition& t2) {
   return !(t1==t2);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 bool CodeThorn::operator<(const Transition& t1, const Transition& t2) {
   if(t1.source!=t2.source)
     return t1.source<t2.source;
@@ -460,6 +600,10 @@ bool CodeThorn::operator<(const Transition& t1, const Transition& t2) {
   return t1.target<t2.target;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 void TransitionGraph::add(Transition trans) {
   #pragma omp critical
   {
@@ -471,6 +615,10 @@ void TransitionGraph::add(Transition trans) {
   }
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 void TransitionGraph::erase(TransitionGraph::iterator transiter) {
   const Transition* transp=determine(*transiter);
   assert(transp!=0);
@@ -479,6 +627,10 @@ void TransitionGraph::erase(TransitionGraph::iterator transiter) {
   HSetMaintainer<Transition,TransitionHashFun>::erase(transiter);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 void TransitionGraph::erase(const Transition trans) {
   const Transition* transp=determine(trans);
   assert(transp!=0);
@@ -487,6 +639,10 @@ void TransitionGraph::erase(const Transition trans) {
   HSetMaintainer<Transition,TransitionHashFun>::erase(trans);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 long TransitionGraph::removeDuplicates() {
   long cnt=0;
   set<Transition> s;
@@ -502,6 +658,10 @@ long TransitionGraph::removeDuplicates() {
   return cnt;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 string TransitionGraph::toString() const {
   string s;
   size_t cnt=0;
@@ -518,6 +678,10 @@ string TransitionGraph::toString() const {
   return s;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 set<const EState*> TransitionGraph::transitionSourceEStateSetOfLabel(Label lab) {
   set<const EState*> estateSet;
   for(TransitionGraph::iterator j=begin();j!=end();++j) {
@@ -527,6 +691,10 @@ set<const EState*> TransitionGraph::transitionSourceEStateSetOfLabel(Label lab) 
   return estateSet;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 set<const EState*> TransitionGraph::estateSetOfLabel(Label lab) {
   set<const EState*> estateSet;
   for(TransitionGraph::iterator j=begin();j!=end();++j) {
@@ -538,6 +706,10 @@ set<const EState*> TransitionGraph::estateSetOfLabel(Label lab) {
   return estateSet;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 bool TransitionGraph::checkConsistency() {
   bool ok=true;
   size_t cnt=0;
@@ -554,6 +726,10 @@ bool TransitionGraph::checkConsistency() {
   return ok;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 void TransitionGraph::reduceEState2(const EState* estate) {
   /* description of essential operations:
    *   inedges: (n_i,b)
@@ -607,6 +783,10 @@ void TransitionGraph::reduceEState2(const EState* estate) {
   }
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 // later, we may want to maintain this set with every graph-operation (turning the linear access to constant)
 set<const EState*> TransitionGraph::estateSet() {
   set<const EState*> estateSet;
@@ -617,6 +797,10 @@ set<const EState*> TransitionGraph::estateSet() {
   return estateSet;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 string EState::toString() const {
   stringstream ss;
   ss << "EState";
@@ -635,6 +819,10 @@ string EState::toString() const {
   return ss.str();
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 string EState::toString(VariableIdMapping* vim) const {
   stringstream ss;
   ss << "EState";
@@ -653,6 +841,10 @@ string EState::toString(VariableIdMapping* vim) const {
   return ss.str();
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 string EState::toHTML() const {
   stringstream ss;
   string nl = " <BR />\n";
@@ -672,6 +864,10 @@ string EState::toHTML() const {
   return ss.str();
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 string EStateList::toString() {
   stringstream ss;
   ss<<"EStateWorkList=[";
@@ -684,6 +880,10 @@ string EStateList::toString() {
   return ss.str();
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 string EStateSet::toString() const {
   stringstream ss;
   ss<<"EStateSet={";

@@ -4,9 +4,17 @@
 #include "RDLattice.h"
 #include "SetAlgo.h"
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 RDLattice::RDLattice() {
   setBot();
 }
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 void RDLattice::toStream(ostream& os, VariableIdMapping* vim) {
   if(isBot()) {
     os<<"bot";
@@ -28,24 +36,48 @@ void RDLattice::toStream(ostream& os, VariableIdMapping* vim) {
   }
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 RDLattice::iterator RDLattice::begin() {
   return rdSet.begin();
 }
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 RDLattice::iterator RDLattice::end() {
   return rdSet.end();
 }
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 size_t RDLattice::size() {
   return rdSet.size();
 }
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 void RDLattice::insertPair(Label lab,VariableId var) {
   pair<Label,VariableId> p=make_pair(lab,var);
   rdSet.insert(p);
   _bot=false;
 }
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 void RDLattice::erasePair(Label lab,VariableId var) {
   pair<Label,VariableId> p=make_pair(lab,var);
   rdSet.erase(p);
 }
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 void RDLattice::eraseAllPairsWithVariableId(VariableId var) {
   RDLattice::iterator i=rdSet.begin();
   while(i!=rdSet.end()) {
@@ -56,14 +88,26 @@ void RDLattice::eraseAllPairsWithVariableId(VariableId var) {
 	   ++i;
   }
 }
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 bool RDLattice::isBot() {
   return _bot;
 } 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 void RDLattice::setBot() {
   _bot=true;
 } 
 
 #if 1
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 void RDLattice::combine(RDLattice& b) {
   if(b.isBot())
     return;
@@ -72,6 +116,10 @@ void RDLattice::combine(RDLattice& b) {
   }
   _bot=false;
 }
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 bool RDLattice::approximatedBy(RDLattice& b) {
   if(isBot()) {
     return true;
@@ -89,10 +137,18 @@ bool RDLattice::approximatedBy(RDLattice& b) {
   }
   return true;
 }
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 bool RDLattice::exists(pair<Label,VariableId> p) {
   return rdSet.find(p)!=end();
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 void RDLattice::setEmptySet() {
   _bot=false;
   rdSet.clear();

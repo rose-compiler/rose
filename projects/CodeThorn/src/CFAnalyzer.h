@@ -18,6 +18,10 @@ namespace CodeThorn {
   class Edge;
   typedef set<Edge> EdgeSet;
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class Edge {
  public:
   Edge();
@@ -51,6 +55,10 @@ class Edge {
  bool operator!=(const Edge& e1, const Edge& e2);
  bool operator<(const Edge& e1, const Edge& e2);
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
  class Flow : public set<Edge> {
  public:  
   Flow();
@@ -107,11 +115,19 @@ bool operator<(const InterEdge& e1, const InterEdge& e2);
 bool operator==(const InterEdge& e1, const InterEdge& e2);
 bool operator!=(const InterEdge& e1, const InterEdge& e2);
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class InterFlow : public set<InterEdge> {
  public:
   string toString() const;
 };
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class CFAnalyzer {
  public:
   CFAnalyzer(Labeler* l);

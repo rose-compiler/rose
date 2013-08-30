@@ -14,10 +14,12 @@ using namespace std;
 
 namespace CodeThorn {
 
+namespace SgNodeHelper {
+
 /*! \brief Functions for simplifying access to SgNode information
 
   * \author Markus Schordan
-  * \date 2012
+  * \date 2012, 2013.
 
   \details A collection of functions which simplify access to SgNode
   information. All functions are side-effect free and do not store any
@@ -26,7 +28,6 @@ namespace CodeThorn {
 
 
  */
-namespace SgNodeHelper {
 
   //! returns the initializer expression of a variable declaration. If no initializer exists it returns 0.
   SgExpression* getInitializerExpressionOfVariableDeclaration(SgVariableDeclaration* decl);
