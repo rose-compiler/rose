@@ -13,8 +13,6 @@ $CLASSNAME* is$CLASSNAME ( $ROOT_NODE_OF_GRAMMAR* inputDerivedClassPointer )
    }
 
 // DQ (11/8/2003): Added version of functions taking const pointer
-// Milind Chabbi (8/28/2013): is$CLASSNAME has become a macro now. The older function
-// are retained under is$CLASSNAMESlow name 
 const $CLASSNAME* is$CLASSNAME ( const $ROOT_NODE_OF_GRAMMAR* inputDerivedClassPointer )
    {
   // DQ (4/8/2011): This is an issure reported by Insure++ (READ_NULL).
