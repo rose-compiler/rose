@@ -81,7 +81,7 @@ sub next_name {
   my($self) = @_;
   my $retval = shift @{$self->{pending}};
   if ((!$self->{build}      && -d "$retval/include-staging") ||
-      (!$self->{edg}        && $retval =~ /\/EDG_[\d\.]+$/ && -d $retval) ||
+      (!$self->{edg}        && $retval =~ /\/EDG(_[\d\.]+)?$/ && -d $retval) ||
       (!$self->{thirdparty} && is_3rdparty($retval)) ||
       (!$self->{generated}  && is_generated($retval)) ||
       (!$self->{install}    && is_install($retval)) ||
