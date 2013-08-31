@@ -28,6 +28,12 @@ usage(int exit_status)
               <<"            if neither --checkpoint nor --no-checkpoint is specified). A random interval is useful when large\n"
               <<"            output groups and/or traces need to be saved in the database since it makes it more likely that\n"
               <<"            not all instances of a parallel run will hit the database server at the about the same time.\n"
+              <<"    --coverage=no|compute|save\n"
+              <<"            Determines whether instruction coverage information should be computed and/or saved in the\n"
+              <<"            database.  The default \"no\" does not keep track of which instruction addresses were executed;\n"
+              <<"            the value \"compute\" causes coverage to be computed but not saved; the value \"save\" causes\n"
+              <<"            coverage to be computed and saved in the database.  Specifying just \"--coverage\" with no\n"
+              <<"            value is the same as saying \"--coverage=save\".\n"
               <<"    --dry-run\n"
               <<"            Do not modify the database. This is really only useful with the --verbose switch in order to\n"
               <<"            re-run a test for debugging purposes.\n"
@@ -90,7 +96,8 @@ usage(int exit_status)
 
 struct Switches {
     Switches()
-        : verbosity(SILENT), progress(false), pointers(false), interactive(false), trace_events(0), dry_run(false) {
+        : verbosity(SILENT), progress(false), pointers(false), interactive(false), trace_events(0), dry_run(false),
+          save_coverage(false) {
         checkpoint = 300 + LinearCongruentialGenerator()()%600;
     }
     Verbosity verbosity;                        // semantic policy has a separate verbosity
@@ -101,6 +108,7 @@ struct Switches {
     unsigned trace_events;
     bool dry_run;
     std::string input_file_name;
+    bool save_coverage;
     PolicyParams params;
 };
 
@@ -752,14 +760,15 @@ overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor
 static OutputGroup
 fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inputs, Tracer &tracer,
           const InstructionProvidor &insns, MemoryMap *ro_map, const PointerDetector *pointers, const Switches &opt,
-          const AddressIdMap &entry2id, const Disassembler::AddressSet &whitelist_exports, FuncAnalyses &funcinfo)
+          const AddressIdMap &entry2id, const Disassembler::AddressSet &whitelist_exports, FuncAnalyses &funcinfo,
+          InsnCoverage &insn_coverage)
 {
     AddressIdMap::const_iterator id_found = entry2id.find(function->get_entry_va());
     assert(id_found!=entry2id.end());
     int func_id = id_found->second;
     FuncAnalysis &finfo = funcinfo[func_id];
     ++finfo.ntests;
-    ClonePolicy policy(opt.params, entry2id, tracer, funcinfo);
+    ClonePolicy policy(opt.params, entry2id, tracer, funcinfo, insn_coverage);
     policy.set_map(ro_map);
     CloneSemantics semantics(policy);
     AnalysisFault::Fault fault = AnalysisFault::NONE;
@@ -846,7 +855,7 @@ checkpoint(const SqlDatabase::TransactionPtr &tx, OutputGroups &ogroups, Tracer 
     ogroups.save(tx);
     progress.message("checkpoint: saving trace events");
     tracer.save(tx);
-
+    
     progress.message("checkpoint: committing");
     std::string desc = "ran "+StringUtility::numberToString(ntests_ran)+" test"+(1==ntests_ran?"":"s");
     if (ntests_ran>0)
@@ -915,6 +924,13 @@ main(int argc, char *argv[])
                 if (c1 > c2) std::swap(c1, c2);
                 opt.checkpoint = c1 + LinearCongruentialGenerator()() % (c2-c1);
             }
+        } else if (!strcmp(argv[argno], "--coverage") || !strcmp(argv[argno], "--coverage=save")) {
+            opt.params.compute_coverage = opt.save_coverage = true;
+        } else if (!strcmp(argv[argno], "--coverage=compute")) {
+            opt.params.compute_coverage = true;
+            opt.save_coverage = false;
+        } else if (!strcmp(argv[argno], "--coverage=no") || !strcmp(argv[argno], "--no-coverage")) {
+            opt.params.compute_coverage = opt.save_coverage = false;
         } else if (!strcmp(argv[argno], "--dry-run")) {
             opt.dry_run = true;
         } else if (!strncmp(argv[argno], "--file=", 7)) {
@@ -1152,12 +1168,13 @@ main(int argc, char *argv[])
         assert(ip!=pointers.end());
 
         // Run the test
+        InsnCoverage insn_coverage;
         tracer.reset(work.func_id, work.igroup_id, opt.trace_events);
         timeval start_time, stop_time;
         clock_t start_ticks = clock();
         gettimeofday(&start_time, NULL);
         OutputGroup ogroup = fuzz_test(interp, func, igroup, tracer, insns, &ro_map, ip->second, opt, entry2id,
-                                       whitelist_exports, funcinfo);
+                                       whitelist_exports, funcinfo, insn_coverage);
         gettimeofday(&stop_time, NULL);
         clock_t stop_ticks = clock();
         double elapsed_time = (stop_time.tv_sec - start_time.tv_sec) +
@@ -1175,6 +1192,9 @@ main(int argc, char *argv[])
             ogroup_id = ogroups.insert(ogroup);
 
         // Update the database with the test results
+        if (opt.save_coverage && !opt.dry_run)
+            insn_coverage.save(tx, work.func_id, work.igroup_id);
+
         SqlDatabase::StatementPtr stmt = tx->statement("insert into semantic_fio"
                                                        // 0        1          2                   3
                                                        " (func_id, igroup_id, arguments_consumed, locals_consumed,"

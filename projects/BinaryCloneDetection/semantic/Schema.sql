@@ -188,7 +188,7 @@ create table semantic_fio_trace (
 create table semantic_fio_coverage (
         func_id integer,                        -- references semantic_functions(id) [commented out for speed]
         igroup_id integer,                      -- references semantic_inputvalues(id)
-        insn_va bigint,                         -- the starting address of the instruction; cf. semantic_instructions
+        address bigint,                         -- the starting address of the instruction; cf. semantic_instructions
         first_seen_pos integer,                 -- sequence number for when this instruction was first seen in this test
         nhits integer                           -- number of times this address was executed (regardless of execution order)
 );

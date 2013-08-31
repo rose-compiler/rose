@@ -732,6 +732,85 @@ OutputGroups::lookup(int64_t hashkey) const
 }
 
 /*******************************************************************************************************************************
+ *                                      Instruction coverage
+ *******************************************************************************************************************************/
+
+void
+InsnCoverage::execute(SgAsmInstruction *insn)
+{
+    rose_addr_t insn_va = insn->get_address();
+    CoverageMap::iterator found = coverage.find(insn_va);
+    if (found==coverage.end()) {
+        coverage.insert(std::make_pair(insn_va, ExeInfo(coverage.size())));
+    } else {
+        ++found->second.nhits;
+    }
+}
+
+size_t
+InsnCoverage::total_ninsns() const
+{
+    size_t retval = 0;
+    for (CoverageMap::const_iterator ci=coverage.begin(); ci!=coverage.end(); ++ci)
+        retval += ci->second.nhits;
+    return retval;
+}
+
+void
+InsnCoverage::save(const SqlDatabase::TransactionPtr &tx, int func_id, int igroup_id)
+{
+    if (last_save>=coverage.size())
+        return;
+
+    char filename[64];
+    strcpy(filename, "/tmp/roseXXXXXX");
+    int fd = mkstemp(filename);
+    assert(fd>=0);
+    FILE *f = fdopen(fd, "w");
+    assert(f!=NULL);
+
+    // Save only those addresses that have a first_seen value later than what we last saved.
+    for (CoverageMap::const_iterator ci=coverage.begin(); ci!=coverage.end(); ++ci) {
+        assert(ci->second.first_seen < coverage.size());
+        if (ci->second.first_seen >= last_save) {
+            int nprint __attribute__((unused))
+                = fprintf(f, "%d,%d,%"PRIu64",%zu,%zu\n",
+                          func_id, igroup_id, ci->first, ci->second.first_seen, ci->second.nhits);
+            assert(nprint>0);
+        }
+    }
+
+    fclose(f);
+    close(fd);
+    std::ifstream in(filename);
+    tx->bulk_load("semantic_fio_coverage", in);
+    in.close();
+    unlink(filename);
+
+    last_save = coverage.size();
+}
+
+double
+InsnCoverage::get_ratio(SgAsmFunction *func) const
+{
+    struct: AstSimpleProcessing {
+        Disassembler::AddressSet addrs;
+        void visit(SgNode *node) {
+            if (SgAsmInstruction *insn = isSgAsmInstruction(node))
+                addrs.insert(insn->get_address());
+        }
+    } c;
+    c.traverse(func, preorder);
+    if (c.addrs.empty())
+        return 1.0;
+    size_t denominator = c.addrs.size();
+    for (CoverageMap::const_iterator ci=coverage.begin(); ci!=coverage.end(); ++ci)
+        c.addrs.erase(ci->first);
+    return 1.0 - (double)c.addrs.size() / denominator;
+}
+
+
+/*******************************************************************************************************************************
  *                                      Miscellaneous functions
  *******************************************************************************************************************************/
 

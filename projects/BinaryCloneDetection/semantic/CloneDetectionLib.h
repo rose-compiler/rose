@@ -281,6 +281,48 @@ public:
 };
 
 /*******************************************************************************************************************************
+ *                                      Instruction coverage analysis
+ *******************************************************************************************************************************/
+
+class InsnCoverage {
+public:
+    /** Information about an executed address. */
+    struct ExeInfo {
+        ExeInfo(size_t first_seen): first_seen(first_seen), nhits(1) {}
+        size_t first_seen;                      /**< Sequence number for when this address was first executed. */
+        size_t nhits;                           /**< Number of times this address was executed. */
+    };
+
+    InsnCoverage(): last_save(0) {}
+        
+    /** Mark instructions as having been executed. */
+    void execute(SgAsmInstruction*);
+
+    /** Returns true if this instruction coverage object contains no instructions. */
+    bool empty() const { return coverage.empty(); }
+
+    /** Number of unique addresses executed. */
+    size_t nunique() const { return coverage.size(); }
+
+    /** Total number of addresses executed. */
+    size_t total_ninsns() const;
+
+    /** Save coverage info to the database. */
+    void save(const SqlDatabase::TransactionPtr&, int func_id, int igroup_id);
+
+    /** Returns the coverage ratio for a function.  The return value is the number of unique instructions of the function that
+     *  were executed divided by the total number of instructions in the function. This InsnCoverage object may contain
+     *  instructions that belong to other functions also, and they are not counted. */
+    double get_ratio(SgAsmFunction*) const;
+    
+protected:
+    typedef std::map<rose_addr_t, ExeInfo> CoverageMap;
+    CoverageMap coverage;                       // info about addresses that were executed
+    size_t last_save;                           // size of coverage last time it was saved to the database
+};
+
+
+/*******************************************************************************************************************************
  *                                      Per-function analyses
  *******************************************************************************************************************************/
 
@@ -794,11 +836,12 @@ protected:
 
 struct PolicyParams {
     PolicyParams()
-        : timeout(5000), verbosity(SILENT), follow_calls(CALL_NONE), initial_stack(0x80000000) {}
+        : timeout(5000), verbosity(SILENT), follow_calls(CALL_NONE), initial_stack(0x80000000), compute_coverage(false) {}
     size_t timeout;                     /**< Maximum number of instrutions per fuzz test before giving up. */
     Verbosity verbosity;                /**< Produce lots of output?  Traces each instruction as it is simulated. */
     FollowCalls follow_calls;           /**< Follow CALL instructions if possible rather than consuming an input? */
     rose_addr_t initial_stack;          /**< Initial values for ESP and EBP. */
+    bool compute_coverage;              /**< Compute instruction coverage information? */
 };
 
 
@@ -1083,11 +1126,13 @@ public:
     StackFrames stack_frames;                           // Stack frames ordered by decreasing entry_esp values
     Disassembler::AddressSet whitelist_exports;         // Dynamic functions that can be called when follow_calls==CALL_BUILTIN
     FuncAnalyses &funcinfo;                             // Partial results of various kinds of function analyses
+    InsnCoverage &insn_coverage;                        // Information about which instructions were executed
 
-    Policy(const PolicyParams &params, const AddressIdMap &entry2id, Tracer &tracer, FuncAnalyses &funcinfo)
+    Policy(const PolicyParams &params, const AddressIdMap &entry2id, Tracer &tracer, FuncAnalyses &funcinfo,
+           InsnCoverage &insn_coverage)
         : inputs(NULL), pointers(NULL), interp(NULL), ninsns(0), address_hasher(0, 255, 0),
           address_hasher_initialized(false), insns(0), params(params), entry2id(entry2id), prev_bb(NULL),
-          tracer(tracer), uses_stdcall(false), funcinfo(funcinfo) {}
+          tracer(tracer), uses_stdcall(false), funcinfo(funcinfo), insn_coverage(insn_coverage) {}
 
     // Consume and return an input value.  An argument is needed only when the memhash queue is being used.
     template <size_t nBits>
@@ -1302,6 +1347,8 @@ public:
         assert(insn!=NULL);
         SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
         assert(func!=NULL);
+        if (params.compute_coverage)
+            insn_coverage.execute(insn);
 
         // Adjust stack frames, popping stale frames and adding new ones
         rose_addr_t esp = state.registers.gpr[x86_gpr_sp].known_value();
