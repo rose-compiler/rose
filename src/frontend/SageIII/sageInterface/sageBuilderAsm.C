@@ -7,6 +7,31 @@
 
 using namespace std;
 
+SgAsmx86RegisterReferenceExpression *
+SageBuilderAsm::buildSgAsmx86RegisterReferenceExpression(const RegisterDescriptor &desc) 
+{
+    return new SgAsmx86RegisterReferenceExpression(desc);
+}
+
+SgAsmArmRegisterReferenceExpression *
+SageBuilderAsm::buildSgAsmArmRegisterReferenceExpression(const RegisterDescriptor &desc)
+{
+    return new SgAsmArmRegisterReferenceExpression(desc);
+}
+
+SgAsmMipsRegisterReferenceExpression *
+SageBuilderAsm::buildSgAsmMipsRegisterReferenceExpression(const RegisterDescriptor &desc)
+{
+    return new SgAsmMipsRegisterReferenceExpression(desc);
+}
+
+SgAsmPowerpcRegisterReferenceExpression *
+SageBuilderAsm::buildSgAsmPowerpcRegisterReferenceExpression(const RegisterDescriptor &desc)
+{
+    return new SgAsmPowerpcRegisterReferenceExpression(desc);
+}
+
+
 SgAsmx86Instruction* SageBuilderAsm::buildx86Instruction( X86InstructionKind kind )
    {
   // These are the default values used for the construction of new instructions.
