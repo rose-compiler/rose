@@ -2240,10 +2240,10 @@ Grammar::buildForwardDeclarations ()
      returnString.push_back(StringUtility::StringWithLineNumber("// GNU g++ 4.1.0 requires these be declared outside of the class (because the friend declaration in the class is not enough).\n\n", "" /* "<unknown>" */, 2));
 
      returnString.push_back(StringUtility::StringWithLineNumber("\n\n#include \"rosedll.h\"\n", "" /* "<unknown>" */, 1));
-     // Milind Chabbi (8/28/2013): Performance refactoring: make classHierarchyCastTable accessible for IS_SgXXX_FAST_MACRO()s
+     // Milind Chabbi (8/28/2013): Performance refactoring: make rose_ClassHierarchyCastTable accessible for IS_SgXXX_FAST_MACRO()s
      size_t maxRows= getRowsInClassHierarchyCastTable();
      size_t maxCols = getColumnsInClassHierarchyCastTable();
-     string externDeclarationForClassHierarchyCastTable = "\nextern const uint8_t classHierarchyCastTable[" + StringUtility::numberToString(maxRows) + "][" + StringUtility::numberToString(maxCols) + "] ;\n";
+     string externDeclarationForClassHierarchyCastTable = "\nextern const uint8_t rose_ClassHierarchyCastTable[" + StringUtility::numberToString(maxRows) + "][" + StringUtility::numberToString(maxCols) + "] ;\n";
      returnString.push_back(StringUtility::StringWithLineNumber(externDeclarationForClassHierarchyCastTable, "", 1));
      for (unsigned int i=0; i < terminalList.size(); i++)
         {
@@ -2262,8 +2262,8 @@ Grammar::buildForwardDeclarations ()
           string toVariantString = className +"::static_variant";
           string toVariantBytePositionString = toVariantString + " >> 3";
           string toVariantbitMaskPositionString =  "(1 << (" +  toVariantString + " & 7))";
-          string classHierarchyCastTableAccessString = " (classHierarchyCastTable[" + fromVariantString + "][" + toVariantBytePositionString + "] & " + toVariantbitMaskPositionString   + ")";
-          returnString.push_back(StringUtility::StringWithLineNumber("#define IS_" + className + "_FAST_MACRO(node) ( (node) ? ((" + classHierarchyCastTableAccessString + ") ? ((" + className + "*) (node)) : NULL) : NULL)", "" /* "<downcast MACRO for " + className + ">" */, 1));
+          string rose_ClassHierarchyCastTableAccessString = " (rose_ClassHierarchyCastTable[" + fromVariantString + "][" + toVariantBytePositionString + "] & " + toVariantbitMaskPositionString   + ")";
+          returnString.push_back(StringUtility::StringWithLineNumber("#define IS_" + className + "_FAST_MACRO(node) ( (node) ? ((" + rose_ClassHierarchyCastTableAccessString + ") ? ((" + className + "*) (node)) : NULL) : NULL)", "" /* "<downcast MACRO for " + className + ">" */, 1));
           // One can replace all isSgXXX() with IS_SgXXX_FAST_MACRO() by enabling the line below. This exists for possible future use.
           //returnString.push_back(StringUtility::StringWithLineNumber("#define is" + className + "(node) IS_" + className + "_FAST_MACRO(node)", "" /* "<MACRO replacement for " + className + ">" */, 1));
         }
@@ -2477,7 +2477,7 @@ Grammar::generateClassHierarchyCastTable() {
     buildClassHierarchyCastTable(getRootOfGrammar(), myParentsDescendents);
     
     // Output the table as a constant in the generated code
-    string s="\nconst uint8_t classHierarchyCastTable[" + StringUtility::numberToString(maxRows) + "][" + StringUtility::numberToString(maxCols) + "] = {";
+    string s="\nconst uint8_t rose_ClassHierarchyCastTable[" + StringUtility::numberToString(maxRows) + "][" + StringUtility::numberToString(maxCols) + "] = {";
     bool outerLoopFirst = true;
     for(size_t i = 0 ; i < maxRows; i++) {
         if(!outerLoopFirst) {
