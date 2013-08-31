@@ -20,6 +20,11 @@ usage(int exit_status)
     std::cerr <<"usage: " <<argv0 <<" [SWITCHES] [--] DATABASE < FUNC_INPUT_PAIRS\n"
               <<"  This command runs the tests specified on standard input.\n"
               <<"\n"
+              <<"    --call-graph=no|compute|save\n"
+              <<"            Determines whether dynamic function call information should be computed and saved in the\n"
+              <<"            database.  Computing the information makes it available to analyses that might run during or\n"
+              <<"            after a test.  The default is to neither compute nor save. Specifying \"--call-graph\" with\n"
+              <<"            no equal sign is the same as \"--call-graph=save\".\n"
               <<"    --checkpoint[=NSEC,[NSEC2]]\n"
               <<"    --no-checkpoint\n"
               <<"            Commit test results to the database every NSEC seconds.  If NSEC2 is also present then the\n"
@@ -97,7 +102,7 @@ usage(int exit_status)
 struct Switches {
     Switches()
         : verbosity(SILENT), progress(false), pointers(false), interactive(false), trace_events(0), dry_run(false),
-          save_coverage(false) {
+          save_coverage(false), save_callgraph(false) {
         checkpoint = 300 + LinearCongruentialGenerator()()%600;
     }
     Verbosity verbosity;                        // semantic policy has a separate verbosity
@@ -109,6 +114,7 @@ struct Switches {
     bool dry_run;
     std::string input_file_name;
     bool save_coverage;
+    bool save_callgraph;
     PolicyParams params;
 };
 
@@ -761,14 +767,14 @@ static OutputGroup
 fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inputs, Tracer &tracer,
           const InstructionProvidor &insns, MemoryMap *ro_map, const PointerDetector *pointers, const Switches &opt,
           const AddressIdMap &entry2id, const Disassembler::AddressSet &whitelist_exports, FuncAnalyses &funcinfo,
-          InsnCoverage &insn_coverage)
+          InsnCoverage &insn_coverage, DynamicCallGraph &dynamic_cg)
 {
     AddressIdMap::const_iterator id_found = entry2id.find(function->get_entry_va());
     assert(id_found!=entry2id.end());
     int func_id = id_found->second;
     FuncAnalysis &finfo = funcinfo[func_id];
     ++finfo.ntests;
-    ClonePolicy policy(opt.params, entry2id, tracer, funcinfo, insn_coverage);
+    ClonePolicy policy(opt.params, entry2id, tracer, funcinfo, insn_coverage, dynamic_cg);
     policy.set_map(ro_map);
     CloneSemantics semantics(policy);
     AnalysisFault::Fault fault = AnalysisFault::NONE;
@@ -889,6 +895,13 @@ main(int argc, char *argv[])
             break;
         } else if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
             usage(0);
+        } else if (!strcmp(argv[argno], "--call-graph") || !strcmp(argv[argno], "--call-graph=save")) {
+            opt.params.compute_callgraph = opt.save_callgraph = true;
+        } else if (!strcmp(argv[argno], "--call-graph=compute")) {
+            opt.params.compute_callgraph = true;
+            opt.save_callgraph = false;
+        } else if (!strcmp(argv[argno], "--call-graph=no") || !strcmp(argv[argno], "--no-call-graph")) {
+            opt.params.compute_callgraph = opt.save_callgraph = false;
         } else if (!strcmp(argv[argno], "--checkpoint")) {
             opt.checkpoint = 300 + LinearCongruentialGenerator()() % 600; // between 5 and 15 minutes
         } else if (!strcmp(argv[argno], "--no-checkpoint")) {
@@ -1169,12 +1182,13 @@ main(int argc, char *argv[])
 
         // Run the test
         InsnCoverage insn_coverage;
+        DynamicCallGraph dynamic_cg;
         tracer.reset(work.func_id, work.igroup_id, opt.trace_events);
         timeval start_time, stop_time;
         clock_t start_ticks = clock();
         gettimeofday(&start_time, NULL);
         OutputGroup ogroup = fuzz_test(interp, func, igroup, tracer, insns, &ro_map, ip->second, opt, entry2id,
-                                       whitelist_exports, funcinfo, insn_coverage);
+                                       whitelist_exports, funcinfo, insn_coverage, dynamic_cg);
         gettimeofday(&stop_time, NULL);
         clock_t stop_ticks = clock();
         double elapsed_time = (stop_time.tv_sec - start_time.tv_sec) +
@@ -1194,6 +1208,8 @@ main(int argc, char *argv[])
         // Update the database with the test results
         if (opt.save_coverage && !opt.dry_run)
             insn_coverage.save(tx, work.func_id, work.igroup_id);
+        if (opt.save_callgraph && !opt.dry_run)
+            dynamic_cg.save(tx, work.func_id, work.igroup_id);
 
         SqlDatabase::StatementPtr stmt = tx->statement("insert into semantic_fio"
                                                        // 0        1          2                   3

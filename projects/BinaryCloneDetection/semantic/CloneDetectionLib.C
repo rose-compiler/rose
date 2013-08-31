@@ -759,35 +759,28 @@ InsnCoverage::total_ninsns() const
 void
 InsnCoverage::save(const SqlDatabase::TransactionPtr &tx, int func_id, int igroup_id)
 {
-    if (last_save>=coverage.size())
-        return;
+    if (!coverage.empty()) {
+        char filename[64];
+        strcpy(filename, "/tmp/roseXXXXXX");
+        int fd = mkstemp(filename);
+        assert(fd>=0);
+        FILE *f = fdopen(fd, "w");
+        assert(f!=NULL);
 
-    char filename[64];
-    strcpy(filename, "/tmp/roseXXXXXX");
-    int fd = mkstemp(filename);
-    assert(fd>=0);
-    FILE *f = fdopen(fd, "w");
-    assert(f!=NULL);
-
-    // Save only those addresses that have a first_seen value later than what we last saved.
-    for (CoverageMap::const_iterator ci=coverage.begin(); ci!=coverage.end(); ++ci) {
-        assert(ci->second.first_seen < coverage.size());
-        if (ci->second.first_seen >= last_save) {
+        for (CoverageMap::const_iterator ci=coverage.begin(); ci!=coverage.end(); ++ci) {
             int nprint __attribute__((unused))
                 = fprintf(f, "%d,%d,%"PRIu64",%zu,%zu\n",
                           func_id, igroup_id, ci->first, ci->second.first_seen, ci->second.nhits);
             assert(nprint>0);
         }
+
+        fclose(f);
+        close(fd);
+        std::ifstream in(filename);
+        tx->bulk_load("semantic_fio_coverage", in);
+        in.close();
+        unlink(filename);
     }
-
-    fclose(f);
-    close(fd);
-    std::ifstream in(filename);
-    tx->bulk_load("semantic_fio_coverage", in);
-    in.close();
-    unlink(filename);
-
-    last_save = coverage.size();
 }
 
 double
@@ -807,6 +800,48 @@ InsnCoverage::get_ratio(SgAsmFunction *func) const
     for (CoverageMap::const_iterator ci=coverage.begin(); ci!=coverage.end(); ++ci)
         c.addrs.erase(ci->first);
     return 1.0 - (double)c.addrs.size() / denominator;
+}
+
+
+/*******************************************************************************************************************************
+ *                                      Dynamic Call Graph
+ *******************************************************************************************************************************/
+
+void
+DynamicCallGraph::call(const Call &c)
+{
+    if (!calls.empty() && calls.back().caller_id==c.caller_id && calls.back().callee_id==c.callee_id) {
+        calls.back().ncalls += c.ncalls;
+    } else {
+        calls.push_back(c);
+    }
+}
+
+void
+DynamicCallGraph::save(const SqlDatabase::TransactionPtr &tx, int func_id, int igroup_id)
+{
+    if (!calls.empty()) {
+        char filename[64];
+        strcpy(filename, "/tmp/roseXXXXXX");
+        int fd = mkstemp(filename);
+        assert(fd>=0);
+        FILE *f = fdopen(fd, "w");
+        assert(f!=NULL);
+
+        for (size_t i=0; i<calls.size(); ++i) {
+            int nprint __attribute__((unused))
+                = fprintf(f, "%d,%d,%d,%d,%zu,%zu\n",
+                          func_id, igroup_id, calls[i].caller_id, calls[i].callee_id, i, calls[i].ncalls);
+            assert(nprint>0);
+        }
+
+        fclose(f);
+        close(fd);
+        std::ifstream in(filename);
+        tx->bulk_load("semantic_fio_calls", in);
+        in.close();
+        unlink(filename);
+    }
 }
 
 
