@@ -20,11 +20,13 @@ usage(int exit_status)
     std::cerr <<"usage: " <<argv0 <<" [SWITCHES] [--] DATABASE < FUNC_INPUT_PAIRS\n"
               <<"  This command runs the tests specified on standard input.\n"
               <<"\n"
-              <<"    --call-graph=no|compute|save\n"
+              <<"    --call-graph=no|compute|compute-small|save|save-small\n"
               <<"            Determines whether dynamic function call information should be computed and saved in the\n"
               <<"            database.  Computing the information makes it available to analyses that might run during or\n"
               <<"            after a test.  The default is to neither compute nor save. Specifying \"--call-graph\" with\n"
-              <<"            no equal sign is the same as \"--call-graph=save\".\n"
+              <<"            no equal sign is the same as \"--call-graph=save\".  The \"small\" variants compute and save\n"
+              <<"            only the call edges that emanate from the function being tested, exluding edges from other\n"
+              <<"            callers or from recursive calls of the function being tested.\n"
               <<"    --checkpoint[=NSEC,[NSEC2]]\n"
               <<"    --no-checkpoint\n"
               <<"            Commit test results to the database every NSEC seconds.  If NSEC2 is also present then the\n"
@@ -897,11 +899,17 @@ main(int argc, char *argv[])
             usage(0);
         } else if (!strcmp(argv[argno], "--call-graph") || !strcmp(argv[argno], "--call-graph=save")) {
             opt.params.compute_callgraph = opt.save_callgraph = true;
+            opt.params.top_callgraph = false;
+        } else if (!strcmp(argv[argno], "--call-graph=save-small")) {
+            opt.params.compute_callgraph = opt.params.top_callgraph = opt.save_callgraph = true;
         } else if (!strcmp(argv[argno], "--call-graph=compute")) {
             opt.params.compute_callgraph = true;
+            opt.params.top_callgraph = opt.save_callgraph = false;
+        } else if (!strcmp(argv[argno], "--call-graph=compute-small")) {
+            opt.params.compute_callgraph = opt.params.top_callgraph = true;
             opt.save_callgraph = false;
         } else if (!strcmp(argv[argno], "--call-graph=no") || !strcmp(argv[argno], "--no-call-graph")) {
-            opt.params.compute_callgraph = opt.save_callgraph = false;
+            opt.params.compute_callgraph = opt.params.top_callgraph = opt.save_callgraph = false;
         } else if (!strcmp(argv[argno], "--checkpoint")) {
             opt.checkpoint = 300 + LinearCongruentialGenerator()() % 600; // between 5 and 15 minutes
         } else if (!strcmp(argv[argno], "--no-checkpoint")) {

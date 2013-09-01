@@ -892,13 +892,14 @@ protected:
 struct PolicyParams {
     PolicyParams()
         : timeout(5000), verbosity(SILENT), follow_calls(CALL_NONE), initial_stack(0x80000000),
-          compute_coverage(false), compute_callgraph(false) {}
+          compute_coverage(false), compute_callgraph(false), top_callgraph(false) {}
     size_t timeout;                     /**< Maximum number of instrutions per fuzz test before giving up. */
     Verbosity verbosity;                /**< Produce lots of output?  Traces each instruction as it is simulated. */
     FollowCalls follow_calls;           /**< Follow CALL instructions if possible rather than consuming an input? */
     rose_addr_t initial_stack;          /**< Initial values for ESP and EBP. */
     bool compute_coverage;              /**< Compute instruction coverage information? */
     bool compute_callgraph;             /**< Compute dynamic call graph information? */
+    bool top_callgraph;                 /**< Store only function call edges emanating from the top stack frame? */
 };
 
 
@@ -1423,7 +1424,7 @@ public:
             if (id_found!=entry2id.end()) {
                 ++funcinfo[id_found->second].ncalls;
                 // update dynamic callgraph info
-                if (params.compute_callgraph && stack_frames.size()>1) {
+                if (params.compute_callgraph && stack_frames.size()>1 && (!params.top_callgraph || 2==stack_frames.size())) {
                     AddressIdMap::const_iterator caller_id_found = entry2id.find(stack_frames[1].func->get_entry_va());
                     if (caller_id_found!=entry2id.end())
                         dynamic_cg.call(caller_id_found->second, id_found->second);
