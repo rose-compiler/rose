@@ -820,6 +820,7 @@ InsnCoverage::get_instructions(SgNode* top, std::vector<SgAsmx86Instruction*>& i
 
   for(std::vector<SgAsmx86Instruction*>::iterator it = tmp_insns.begin(); it != tmp_insns.end(); ++it) {
     query_insns_addr.push_back((*it)->get_address());
+    addr_to_instruction[(*it)->get_address()] = (*it);
   }
 
   std::sort(query_insns_addr.begin(), query_insns_addr.end());
@@ -827,20 +828,21 @@ InsnCoverage::get_instructions(SgNode* top, std::vector<SgAsmx86Instruction*>& i
   //Addresses of instruction in the trace 
   std::vector<rose_addr_t> trace_insns_addr;
 
-  //for(std::map<rose_addr_t, SgAsmx86Instruction*>::iterator it = coverage.begin(); it != coverage.end(); ++it) {
-  //  trace_insns_addr.push_back(it->first);
-  //}
+  for(CoverageMap::iterator it = coverage.begin(); it != coverage.end(); ++it) {
+    trace_insns_addr.push_back(it->first);
+  }
   
   std::sort(trace_insns_addr.begin(), trace_insns_addr.end());
 
   //Addresses in the intersection of the trace and the subtree of top
   std::vector<rose_addr_t> trace_query_intersection( trace_insns_addr.size() > query_insns_addr.size() ? trace_insns_addr.size() : query_insns_addr.size() );    
-  std::vector<rose_addr_t>::iterator it;
+  std::vector<rose_addr_t>::iterator intersection_end;
   
-  std::set_intersection (query_insns_addr.begin(), query_insns_addr.end(), trace_insns_addr.begin(), trace_insns_addr.end(), trace_query_intersection.begin());
+  intersection_end = std::set_intersection (query_insns_addr.begin(), query_insns_addr.end(), trace_insns_addr.begin(), trace_insns_addr.end(), trace_query_intersection.begin());
+
 
   //Instructions
-  for(it = trace_query_intersection.begin(); it != trace_query_intersection.end(); ++it){
+  for(std::vector<rose_addr_t>::iterator  it = trace_query_intersection.begin(); it != intersection_end; ++it){
     insns.push_back(addr_to_instruction[*it]);
   }
 
