@@ -1,0 +1,3 @@
+
+void addFunctionAnalysisAttributes( SgProject* project );
+
