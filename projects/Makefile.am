@@ -15,6 +15,7 @@ SUBDIRS = \
 	C_to_Promela \
 	CertSecureCodeProject \
 	CloneDetection \
+   CodeThorn \
    ConstructNameSimilarityAnalysis \
 	DataFaultTolerance \
 	DatalogAnalysis \
@@ -43,6 +44,7 @@ SUBDIRS = \
 	roseToLLVM \
 	RTC \
 	PowerAwareCompiler \
+   taintcheck \
 	ManyCoreRuntime \
 	Fortran_to_C \
 	mint \
@@ -51,8 +53,6 @@ SUBDIRS = \
 	$(OPTIONAL_PROJECTS)
 
 # DQ (9/2/2013): This fails to compile (at least with some versions of Boost).
-# CodeThorn
-# taintcheck
 
 if ROSE_WITH_ISL
   SUBDIRS += RosePolly
