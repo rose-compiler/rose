@@ -1,7 +1,6 @@
 #include "rose.h"
 #include "SqlDatabase.h"
 
-#include "createSignatureVectors.h"
 #include "vectorCompression.h"
 
 #include <boost/lexical_cast.hpp>

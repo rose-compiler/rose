@@ -8,7 +8,7 @@ noinst_PROGRAMS=
 
 noinst_LTLIBRARIES = libCloneDetection.la
 libCloneDetection_la_SOURCES = CloneDetectionLib.C
-libCloneDetection_la_CPPFLAGS = $(ROSE_INCLUDES)
+libCloneDetection_la_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/BinaryCloneDetection/syntactic/
 CloneDetectionLib.o: CloneDetectionLib.h
 CloneDetectionLib.lo: CloneDetectionLib.h
 
@@ -46,7 +46,7 @@ noinst_PROGRAMS += 20-get-pending-tests
 
 noinst_PROGRAMS += 25-run-tests
 25_run_tests_SOURCES = 25-run-tests.C
-25_run_tests_CPPFLAGS = $(ROSE_INCLUDES)
+25_run_tests_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/BinaryCloneDetection/syntactic/
 25_run_tests_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #-----------------------------------------------------------------------------------------------------------------------------

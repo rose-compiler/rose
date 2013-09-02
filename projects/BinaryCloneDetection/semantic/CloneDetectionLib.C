@@ -4,6 +4,7 @@
 #include "Combinatorics.h"
 #include "BinaryLoader.h"
 #include "Partitioner.h"
+#include "rose.h"
 
 #include <algorithm>
 #include <cerrno>
@@ -802,6 +803,48 @@ InsnCoverage::get_ratio(SgAsmFunction *func) const
     return 1.0 - (double)c.addrs.size() / denominator;
 }
 
+
+void
+InsnCoverage::get_instructions(SgNode* top, std::vector<SgAsmx86Instruction*>& insns)
+{
+  //Find the instructions 
+  std::vector<SgAsmx86Instruction*> tmp_insns;
+
+  FindInstructionsVisitor vis;
+  AstQueryNamespace::querySubTree(top, std::bind2nd( vis, &tmp_insns ));
+
+
+  //Addresses and map of instructions in the subtree of top
+  std::vector<rose_addr_t> query_insns_addr;
+  std::map<rose_addr_t, SgAsmx86Instruction*> addr_to_instruction;
+
+  for(std::vector<SgAsmx86Instruction*>::iterator it = tmp_insns.begin(); it != tmp_insns.end(); ++it) {
+    query_insns_addr.push_back((*it)->get_address());
+  }
+
+  std::sort(query_insns_addr.begin(), query_insns_addr.end());
+ 
+  //Addresses of instruction in the trace 
+  std::vector<rose_addr_t> trace_insns_addr;
+
+  //for(std::map<rose_addr_t, SgAsmx86Instruction*>::iterator it = coverage.begin(); it != coverage.end(); ++it) {
+  //  trace_insns_addr.push_back(it->first);
+  //}
+  
+  std::sort(trace_insns_addr.begin(), trace_insns_addr.end());
+
+  //Addresses in the intersection of the trace and the subtree of top
+  std::vector<rose_addr_t> trace_query_intersection( trace_insns_addr.size() > query_insns_addr.size() ? trace_insns_addr.size() : query_insns_addr.size() );    
+  std::vector<rose_addr_t>::iterator it;
+  
+  std::set_intersection (query_insns_addr.begin(), query_insns_addr.end(), trace_insns_addr.begin(), trace_insns_addr.end(), trace_query_intersection.begin());
+
+  //Instructions
+  for(it = trace_query_intersection.begin(); it != trace_query_intersection.end(); ++it){
+    insns.push_back(addr_to_instruction[*it]);
+  }
+
+}
 
 /*******************************************************************************************************************************
  *                                      Dynamic Call Graph

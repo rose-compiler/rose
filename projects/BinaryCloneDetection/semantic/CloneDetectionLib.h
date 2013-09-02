@@ -317,6 +317,10 @@ public:
      *  were executed divided by the total number of instructions in the function. This InsnCoverage object may contain
      *  instructions that belong to other functions also, and they are not counted. */
     double get_ratio(SgAsmFunction*) const;
+
+    /** Get instructions covered by trace in the order in which they were encountered.
+     */
+    void get_instructions(SgNode* top, std::vector<SgAsmx86Instruction*>& insns);
     
 protected:
     typedef std::map<rose_addr_t, ExeInfo> CoverageMap;
@@ -523,6 +527,65 @@ public:
     }
 };
 
+enum ExpressionCategory {ec_reg = 0, ec_mem = 1, ec_val = 2};
+
+class SignatureVector {
+public:
+    static const size_t Size = x86_last_instruction * 4 + 300 + 9 + 3;
+    typedef uint16_t ElementType;
+
+private:
+    ElementType values[Size];
+
+public:
+    SignatureVector() {
+        clear();
+    }
+
+    void clear() {
+        for (size_t i = 0; i < Size; ++i)
+            values[i] = 0;
+    }
+
+    ElementType operator[](size_t i) const {
+        assert(i < Size);
+        return values[i];
+    }
+
+    ElementType& totalForVariant(size_t var) {
+        assert(var < x86_last_instruction);
+        return values[var * 4];
+    }
+
+    ElementType& opsForVariant(ExpressionCategory cat, size_t var) {
+        assert(var < x86_last_instruction);
+        return values[var * 4 + (int)cat + 1];
+    }
+
+    ElementType& specificOp(ExpressionCategory cat, size_t num) {
+	static ElementType dummyVariable = 0;
+	if (num < 100) {
+            return values[x86_last_instruction * 4 + 100 * (int)cat + num];
+	} else {
+            return dummyVariable;
+        }
+    }
+
+    ElementType& operandPair(ExpressionCategory a, ExpressionCategory b) {
+        return values[x86_last_instruction * 4 + 300 + (int)a * 3 + (int)b];
+    }
+
+    ElementType& operandTotal(ExpressionCategory a) {
+        return values[x86_last_instruction * 4 + 300 + 9 + (int)a];
+    }
+
+    const ElementType* getBase() const {
+        return values;
+    }
+};
+
+
+
 /** Collection of output values. The output values are gathered from the instruction semantics state after a specimen function
  *  is analyzed.  The outputs consist of those interesting registers that are marked as having been written to by the specimen
  *  function, and the memory values whose memory cells are marked as having been written to.  We omit status flags since they
@@ -590,7 +653,11 @@ public:
     void set_ninsns(size_t ninsns) { this->ninsns = ninsns; }
     size_t get_ninsns() const { return ninsns; }
     /** @} */
-    
+
+    /** Accessor for signature vectors
+     * @{ */
+    SignatureVector& get_signature_vector() { return this->signature_vector; }
+    /** @} */
 
 protected:
     OUTPUTGROUP_VALUE_CONTAINER<value_type> values;
@@ -600,6 +667,8 @@ protected:
     size_t ninsns;                              // number of instructions executed
     value_type retval;                          // return value from function
     bool has_retval;                            // true if 'retval' is initialized
+    SignatureVector signature_vector;           // feature vector
+
 };
 
 // Used internally by OutputGroups so that we don't have to store OutputGroup objects in std::map. OutputGroup objects can be
