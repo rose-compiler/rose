@@ -11,13 +11,16 @@ SUBDIRS = \
 	BinFuncDetect \
 	BinQ \
 	BinaryCloneDetection \
+   BinaryDataStructureRecognition \
 	C_to_Promela \
 	CertSecureCodeProject \
 	CloneDetection \
+   ConstructNameSimilarityAnalysis \
 	CodeThorn \
 	DataFaultTolerance \
 	DatalogAnalysis \
 	DocumentationGenerator \
+   EditDistanceMetric \
 	FiniteStateModelChecker \
 	graphColoring \
 	HeaderFilesInclusion \

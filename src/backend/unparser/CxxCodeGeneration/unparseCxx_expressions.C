@@ -4660,20 +4660,34 @@ static bool isFromAnotherFile (SgLocatedNode* lnode)
         }
 
   // DQ (11/2/2012): This seems like it could be kind of expensive for each expression...
-     SgFile* cur_file = SageInterface::getEnclosingFileNode(lnode);
+     SgStatement* cur_stmt = SageInterface::getEnclosingStatement(lnode);
+     ROSE_ASSERT(cur_stmt != NULL);
+
+  // SgFile* cur_file = SageInterface::getEnclosingFileNode(lnode);
+     SgFile* cur_file = SageInterface::getEnclosingFileNode(cur_stmt);
+
      if (cur_file != NULL)
         {
+       // DQ (9/1/2013): Changed predicate to test for isCompilerGenerated() instead of isOutputInCodeGeneration().
+       // The proper source position is now set for the children of SgAssignInitializer.
+
        // normal file info 
        // if (lnode->get_file_info()->isTransformation() == false && lnode->get_file_info()->isCompilerGenerated() == false)
-          if (lnode->get_file_info()->isTransformation() == false && lnode->get_file_info()->isOutputInCodeGeneration() == false)
+       // if (lnode->get_file_info()->isTransformation() == false && lnode->get_file_info()->isOutputInCodeGeneration() == false)
+          if (lnode->get_file_info()->isTransformation() == false && lnode->get_file_info()->isCompilerGenerated() == false)
              {
-               if (lnode->get_file_info()->get_filenameString() != "" && cur_file->get_file_info()->get_filenameString() != lnode->get_file_info()->get_filenameString())
+            // if (lnode->get_file_info()->get_filenameString() != "" && cur_file->get_file_info()->get_filenameString() != lnode->get_file_info()->get_filenameString())
+               if (lnode->get_file_info()->get_filenameString() != "" && lnode->get_file_info()->get_filenameString() != "NULL_FILE" && cur_file->get_file_info()->get_filenameString() != lnode->get_file_info()->get_filenameString())
                   {
                     result = true;
 #if 0
                     printf ("In isFromAnotherFile(SgLocatedNode* lnode): lnode->get_file_info()        = %p \n",lnode->get_file_info());
                     printf ("In isFromAnotherFile(SgLocatedNode* lnode): lnode->get_startOfConstruct() = %p \n",lnode->get_startOfConstruct());
                     printf ("In isFromAnotherFile(SgLocatedNode* lnode): lnode->get_endOfConstruct()   = %p \n",lnode->get_endOfConstruct());
+                    ROSE_ASSERT(cur_file->get_file_info() != NULL);
+                    ROSE_ASSERT(lnode->get_file_info() != NULL);
+                    printf ("In isFromAnotherFile(SgLocatedNode* lnode): cur_file->get_file_info()->get_filenameString() = %s \n",cur_file->get_file_info()->get_filenameString().c_str());
+                    printf ("In isFromAnotherFile(SgLocatedNode* lnode): lnode->get_file_info()->get_filenameString()    = %s \n",lnode->get_file_info()->get_filenameString().c_str());
                     lnode->get_file_info()->display("In isFromAnotherFile(): get_file_info(): returning TRUE: debug");
                     lnode->get_startOfConstruct()->display("In isFromAnotherFile(): get_startOfConstruct(): returning TRUE: debug");
 #endif
@@ -4681,7 +4695,13 @@ static bool isFromAnotherFile (SgLocatedNode* lnode)
              }
         }
 
-  // DQ (11/4/2012): This is a bit too mcuh trouble to support at the moment. I'm am getting tired of fighting it.
+#if 0
+  // DQ (9/1/2013): Now that we have modified EDG to supported the source position information in constants in the 
+  // SgAssignInitializer (in the case of SgAggregateInitializers), we can use the code above (finally) to suppress 
+  // the unparsing of the aggregate initializers when they were from a different include file (see test2013_05.c 
+  // as an example).
+
+  // DQ (11/4/2012): This is a bit too much trouble to support at the moment. I'm am getting tired of fighting it.
   // This is causing too many things to not be unparsed and needs to be iterated on when we are a bit further along
   // and under less pressure.  this support for expression level selection of what to unparse is only addrressing
   // a narrow part of the unparsing of expressions.  I understand that this is an attempt to support the case where
@@ -4702,6 +4722,7 @@ static bool isFromAnotherFile (SgLocatedNode* lnode)
              }
           result = false;
         }
+#endif
 
 #if 0
      printf ("In isFromAnotherFile(SgLocatedNode* lnode = %p = %s): result = %s \n",lnode,lnode->class_name().c_str(),result ? "true" : "false");
@@ -4888,7 +4909,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
         }
 #endif
 
-     for (size_t index =0; index < list.size(); index ++)
+     for (size_t index = 0; index < list.size(); index ++)
         {
        // bool skipUnparsing = isFromAnotherFile(aggr_init,index);
           bool skipUnparsing = isFromAnotherFile(list[index]);
@@ -4921,18 +4942,20 @@ Unparse_ExprStmt::unparseCompInit(SgExpression* expr, SgUnparse_Info& info)
      SgCompoundInitializer* comp_init = isSgCompoundInitializer(expr);
      ROSE_ASSERT(comp_init != NULL);
 
+#if 0
   // Skip the entire thing if the initializer is from an included file
      if (isFromAnotherFile (expr))
         {
-#if 0
+#if 1
           printf ("In unparseCompInit(): This SgCompoundInitializer (comp_init = %p) is from another file so its subtree will not be output in the generated code \n",comp_init);
 #endif
           return;
         }
+#endif
 
      SgUnparse_Info newinfo(info);
 
-     curprint ( "(");
+     curprint("(");
 
      SgExpressionPtrList& list = comp_init->get_initializers()->get_expressions();
      size_t last_index = list.size() -1;
@@ -4955,7 +4978,7 @@ Unparse_ExprStmt::unparseCompInit(SgExpression* expr, SgUnparse_Info& info)
         }
 
      unparseAttachedPreprocessingInfo(comp_init, info, PreprocessingInfo::inside);
-     curprint ( ")");
+     curprint(")");
    }
 
 

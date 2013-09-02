@@ -273,6 +273,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_01.c \
      test2013_02.c \
      test2013_03.c \
+     test2013_05.c \
      test2013_06.c \
      test2013_07.c \
      test2013_08.c \
@@ -307,6 +308,10 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_37.c \
      test2013_38.c \
      test2013_39.c \
+     test2013_40.c \
+     test2013_41.c \
+     test2013_42.c \
+     test2013_43.c \
      math.c \
      complex_01.c \
      constants.c
@@ -317,6 +322,7 @@ TESTCODES_REQUIRED_TO_PASS = \
 # DQ (5/23/2013): This is a failing case (reported by Sara). Case of "void foo(int N,int a[N]){}"
 # test2013_04.c 
 
+# DQ (9/2/2013): This is now fixed.
 # DQ (6/19/2013): Failing case of include used to initialize array (still working on this case).
 # test2013_05.c 
 

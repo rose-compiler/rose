@@ -1,5 +1,5 @@
 
 const int array[] =
-{
-#include "test2013_05.h"
-};
+   {
+     #include "test2013_05.h"
+   };

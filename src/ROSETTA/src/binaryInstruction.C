@@ -474,11 +474,46 @@ Grammar::setUpBinaryInstructions()
      AsmStaticData.setDataPrototype("SgUnsignedCharList", "raw_bytes", "",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
+#if 1
+#if 1
+  // DQ (8/30/2013): Added back declarations that had been dropped by Robb and which were required for the Data-Structure recognition work.
+     NEW_TERMINAL_MACRO ( AsmDataStructureDeclaration , "AsmDataStructureDeclaration", "AsmDataStructureDeclarationTag" );
 
+  // DQ (8/30/2013): This one is already defined above.
+  // NEW_TERMINAL_MACRO ( AsmFunctionDeclaration      , "AsmFunctionDeclaration",      "AsmFunctionDeclarationTag" );
 
+  // There are several sorts of declarations within a binary
+     AsmDataStructureDeclaration.setFunctionPrototype("HEADER_BINARY_DATA_STRUCTURE", "../Grammar/BinaryInstruction.code");
+     AsmDataStructureDeclaration.setFunctionSource ( "SOURCE_BINARY_DATA_STRUCTURE", "../Grammar/BinaryInstruction.code");
+  // DQ (3/15/2007): I can't seem to get this to compile so I will leave it out for now!
+  // Binaries have some easily resolved data structures so we use this to represent these
+  // AsmDataStructureDeclaration.setDataPrototype("std::list<SgAsmDeclaration*>","declarationList","",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
+
+     NEW_TERMINAL_MACRO ( AsmFieldDeclaration         , "AsmFieldDeclaration",         "AsmFieldDeclarationTag" );
+
+  // These are used as data members in AsmDataStructureDeclaration
+     AsmFieldDeclaration.setDataPrototype("std::string","name","= \"\"",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // Not clear if we want to store the offset explicitly
+     AsmFieldDeclaration.setDataPrototype("uint64_t","offset","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     NEW_NONTERMINAL_MACRO ( AsmDeclaration, AsmDataStructureDeclaration | AsmFunction | AsmFieldDeclaration, "AsmDeclaration", "AsmDeclarationTag", false );
+#else
+  // DQ (8/30/2013): Test this simplified version.
+     NEW_NONTERMINAL_MACRO ( AsmDeclaration, AsmFunction, "AsmDeclaration", "AsmDeclarationTag", false );
+#endif
+
+     AsmDeclaration.setFunctionPrototype("HEADER_BINARY_DECLARATION", "../Grammar/BinaryInstruction.code");
+
+  // NEW_NONTERMINAL_MACRO ( AsmStatement, AsmDeclaration | AsmBlock | AsmInstruction, "AsmStatement", "AsmStatementTag", false );
+     NEW_NONTERMINAL_MACRO ( AsmStatement, AsmDeclaration | AsmBlock | AsmInstruction | AsmStaticData, "AsmStatement", "AsmStatementTag", false);
+#else
      NEW_NONTERMINAL_MACRO(AsmStatement,
                            AsmFunction | AsmBlock | AsmInstruction | AsmStaticData,
                            "AsmStatement", "AsmStatementTag", false);
+#endif
      AsmStatement.setDataPrototype("rose_addr_t", "address", "= 0",
                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
      AsmStatement.setDataPrototype("std::string", "comment", "= \"\"",

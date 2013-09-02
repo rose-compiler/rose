@@ -25,7 +25,7 @@ vectorization_SOURCES=\
 
 include_HEADERS=\
 	rose_simd.h\
-	sse_mathfun.h\ 
+	sse_mathfun.h\
 	avx_mathfun.h
 
 # -msse and -msse2 are enabled for x86-64 compiler by default.

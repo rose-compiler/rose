@@ -1802,9 +1802,11 @@ projects/BinFuncDetect/Makefile
 projects/BinQ/Makefile
 projects/BinaryCloneDetection/Makefile
 projects/BinaryCloneDetection/gui/Makefile
+projects/BinaryDataStructureRecognition/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
+projects/ConstructNameSimilarityAnalysis/Makefile
 projects/CodeThorn/Makefile
 projects/CodeThorn/src/Makefile
 projects/CodeThorn/src/addressTakenAnalysis/Makefile
@@ -1822,6 +1824,7 @@ projects/DatalogAnalysis/src/Makefile
 projects/DatalogAnalysis/tests/Makefile
 projects/DistributedMemoryAnalysisCompass/Makefile
 projects/DocumentationGenerator/Makefile
+projects/EditDistanceMetric/Makefile
 projects/FiniteStateModelChecker/Makefile
 projects/graphColoring/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile

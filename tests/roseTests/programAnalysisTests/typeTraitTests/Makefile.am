@@ -29,8 +29,8 @@ ROSE_HRD_TEST: typeTraitExerciseWithoutRetCode $(srcdir)/tests/roseHeader.C
 
 
 # DQ (8/23/2013): We need to discuss this, EDG is failing on all of the type traits in these tests (at least test1.C)
-# check-local: $(TEST_TARGETS) ROSE_HRD_TEST
-check-local: 
+check-local: $(TEST_TARGETS) ROSE_HRD_TEST
+# check-local: 
 
 clean-local:
 	rm -rf $(MOSTLYCLEANFILES)
