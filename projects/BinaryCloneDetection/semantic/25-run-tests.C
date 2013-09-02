@@ -2,6 +2,9 @@
 
 #include "sage3basic.h"
 #include "CloneDetectionLib.h"
+
+#include "vectorCompression.h"
+
 #include "rose_getline.h"
 #include "AST_FILE_IO.h"        // only for the clearAllMemoryPools() function [Robb P. Matzke 2013-06-17]
 
@@ -1509,7 +1512,8 @@ main(int argc, char *argv[])
         insn_coverage.get_instructions(func_found->second, insns);
 
         createVectorsForAllInstructions( ogroup.get_signature_vector() , insns);
-
+ 
+        std::vector<uint8_t> compressedCounts = compressVector(ogroup.get_signature_vector().getBase(), SignatureVector::Size);
 
         // Find a matching output group, or create a new one
         int64_t ogroup_id = ogroups.find(ogroup);
@@ -1528,10 +1532,11 @@ main(int argc, char *argv[])
                                                        // 4               5                   6
                                                        "globals_consumed, functions_consumed, pointers_consumed,"
                                                        // 7                8                      9          10
-                                                       "integers_consumed, instructions_executed, ogroup_id, status,"
+                                                       "integers_consumed, instructions_executed, ogroup_id,"
+                                                       "counts_b64, status,"
                                                        // 11          12        13
                                                        "elapsed_time, cpu_time, cmd)"
-                                                       " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                                                       " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         stmt->bind(0, work.func_id);
         stmt->bind(1, work.igroup_id);
         stmt->bind(2, igroup.queue(IQ_ARGUMENT).nconsumed());
@@ -1542,10 +1547,11 @@ main(int argc, char *argv[])
         stmt->bind(7, igroup.queue(IQ_INTEGER).nconsumed());
         stmt->bind(8, ogroup.get_ninsns());
         stmt->bind(9, ogroup_id);
-        stmt->bind(10, ogroup.get_fault());
-        stmt->bind(11, elapsed_time);
-        stmt->bind(12, cpu_time);
-        stmt->bind(13, cmd_id);
+        stmt->bind(10, StringUtility::encode_base64(&compressedCounts[0], compressedCounts.size()));
+        stmt->bind(11, ogroup.get_fault());
+        stmt->bind(12, elapsed_time);
+        stmt->bind(13, cpu_time);
+        stmt->bind(14, cmd_id);
         stmt->execute();
         ++ntests_ran;
 

@@ -155,6 +155,8 @@ create table semantic_fio (
        integers_consumed integer,               -- number of integers from the inputgroup consumed by this test
        instructions_executed integer,           -- number of instructions executed by this test
        ogroup_id bigint,                        -- output produced by this function, semantic_outputvalues.hashkey
+       counts_b64 text,                         -- binary blob (not sure what), base64 encoded
+       instr_seq_b64 text,                      -- binary MD5 sum of vector, base64 encoded
        status integer references semantic_faults(id), -- exit status of the test
        elapsed_time double precision,           -- number of seconds elapsed excluding ptr analysis
        cpu_time double precision,               -- number of CPU seconds used excluding ptr analysis
