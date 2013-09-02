@@ -156,6 +156,17 @@ hpctoolkit-test2:
 
 hpctoolkit-postprocess:
 
+# MAKE SURE YOU HAVE SET HPCTOOLKIT_INSTALL=/path/to/hpctoolkit/bin/
+#Some useful events we want to gather
+#These events may not work on all platforms. We picked it on a machine where it worked.
+PAPI_EVENTS=PAPI_TOT_CYC@2000000 PAPI_L1_DCM@50000 PAPI_L2_DCM@50000 PAPI_L1_ICM@50000 PAPI_L2_ICM@50000 PAPI_TLB_DM@10000 PAPI_TLB_IM@10000 PAPI_BR_MSP@50000 PAPI_RES_STL@100000  
+hpctoolkit-test3:
+	rm -rf  database_* measure_*
+	for ev in $(PAPI_EVENTS); do $(HPCTOOLKIT_INSTALL)/hpcrun  -e $${ev} -o measure_$${ev} ../../.libs/testGraphGeneration $(ROSE_FLAGS) -rose:skipfinalCompileStep -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C; done
+	$(HPCTOOLKIT_INSTALL)/hpcstruct  ../../.libs/testGraphGeneration
+	$(HPCTOOLKIT_INSTALL)/hpcprof -S testGraphGeneration.hpcstruct -o database_papi_testRoseHeaders_03 measure_*
+
+
 # Exclude the Cxx_Grammar.C file from being part of the distribution
 EXTRA_DIST = $(TESTCODES)
 

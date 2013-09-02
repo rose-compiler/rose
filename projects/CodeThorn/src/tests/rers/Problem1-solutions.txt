@@ -1,0 +1,632 @@
+Reachability problems:
+===============================
+error_44 reachable via input sequence
+[A, B, C, A]
+---------------
+
+error_50 reachable via input sequence
+[C, D, D, B, A]
+---------------
+
+error_35 reachable via input sequence
+[C, D, D, C, A]
+---------------
+
+error_15 reachable via input sequence
+[C, D, D, D, A]
+---------------
+
+error_38 reachable via input sequence
+[C, D, D, F, A]
+---------------
+
+error_21 reachable via input sequence
+[C, D, D, E, A]
+---------------
+
+error_37 reachable via input sequence
+[C, D, D, A, A, A]
+---------------
+
+error_56 reachable via input sequence
+[C, D, D, A, B, A]
+---------------
+
+error_33 reachable via input sequence
+[C, D, D, A, C, A]
+---------------
+
+error_57 reachable via input sequence
+[C, D, D, A, E, A]
+---------------
+
+error_47 reachable via input sequence
+[C, D, D, A, D, C, A]
+---------------
+
+error_32 reachable via input sequence
+[C, D, D, A, D, F, A]
+---------------
+
+error_20 reachable via input sequence
+[C, D, D, A, F, F, A]
+---------------
+
+All other errors unreachable
+
+
+LTL problems:
+===============================
+Formula: (! oZ WU (oU & ! oZ))
+"output U occurs before output Z"
+Formula is satisfied.
+---------------
+
+Formula: (false R (! iC | (true U oZ)))
+"output Z responds to input C"
+Formula is satisfied.
+---------------
+
+Formula: ((false R ! oW) | (true U (oW & (true U oU))))
+"output U occurs after output W"
+Formula is satisfied.
+---------------
+
+Formula: (false R (! iE | (true U oY)))
+"output Y responds to input E"
+Formula is satisfied.
+---------------
+
+Formula: (false R (! (iB & ! oU) | (! oV WU oU)))
+"output V does never occur after input B until output U"
+Formula is not satisfied! An error path is 
+[iB, oV] ([iA, oX])*
+---------------
+
+Formula: (! oV WU oX)
+"output V does never occur before output X"
+Formula is not satisfied! An error path is 
+[iB, oV] ([iA, oX])*
+---------------
+
+Formula: ((false R ! oW) | (true U (oW & (true U oU))))
+"output U occurs after output W"
+Formula is satisfied.
+---------------
+
+Formula: (! oU WU (oX & ! oU))
+"output X occurs before output U"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU] ([iD, oZ, iA, oZ, iD, oY, iA])*
+---------------
+
+Formula: (false R (! (iD & ! oZ) | (! oZ U (oX & ! oZ))))
+"output X occurs after input D until output Z"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU] ([iD, oZ, iA, oZ, iD, oY, iA])*
+---------------
+
+Formula: (false R (! (oU & ! oW) | (! oW U (oZ & ! oW))))
+"output Z occurs after output U until output W"
+Formula is not satisfied! An error path is 
+[iA, oX, iA, oU] ([iA, oU])*
+---------------
+
+Formula: (false R (! ((iC & ! oV) & (true U oV)) | (! oZ U oV)))
+"output Z does never occur between input C and output V"
+Formula is satisfied.
+---------------
+
+Formula: (false R (! (iF & ! oZ) | (! oZ U (oW & ! oZ))))
+"output W occurs after input F until output Z"
+Formula is not satisfied! An error path is 
+[iA, oX, iF] ([oX, iF])*
+---------------
+
+Formula: (false R ! oU)
+"output U does never occur"
+Formula is not satisfied! An error path is 
+[iA, oX, iA, oU] ([iA, oU])*
+---------------
+
+Formula: (! iC WU (oZ & ! iC))
+"output Z occurs before input C"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU] ([iD, oZ, iA, oZ, iD, oY, iA])*
+---------------
+
+Formula: (! iB WU (oX & ! iB))
+"output X occurs before input B"
+Formula is not satisfied! An error path is 
+[iB, oV] ([iA, oX])*
+---------------
+
+Formula: (false R (! iB | (false R ! oX)))
+"output X does never occur after input B"
+Formula is not satisfied! An error path is 
+[iA, oX, iB, oX] ([iA])*
+---------------
+
+Formula: (false R (! (iD & ! iF) | (! iF U (oZ & ! iF))))
+"output Z occurs after input D until input F"
+Formula is not satisfied! An error path is 
+[iA, oX, iD] ([oX, iD])*
+---------------
+
+Formula: (false R ! oX)
+"output X does never occur"
+Formula is not satisfied! An error path is 
+[iA, oX] ([iA, oU])*
+---------------
+
+Formula: (! oZ WU (oZ WU (! oZ WU (oZ WU (false R ! oZ)))))
+"output Z occurs at most twice"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU, iD, oZ, iA] ([oZ, iD, oY, iD, oZ, iA])*
+---------------
+
+Formula: (! oU WU oZ)
+"output U does never occur before output Z"
+Formula is not satisfied! An error path is 
+[iA, oX, iA, oU] ([iA, oU])*
+---------------
+
+Formula: (! iC WU (oY & ! iC))
+"output Y occurs before input C"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU] ([iD, oZ, iA, oZ, iD, oY, iA])*
+---------------
+
+Formula: (false R (! iA | (false R ! oX)))
+"output X does never occur after input A"
+Formula is not satisfied! An error path is 
+[iA, oX] ([iA, oU])*
+---------------
+
+Formula: (! oU WU (oV & ! oU))
+"output V occurs before output U"
+Formula is not satisfied! An error path is 
+[iA, oX, iA, oU] ([iA, oU])*
+---------------
+
+Formula: (false R (! iA | (true U oV)))
+"output V responds to input A"
+Formula is not satisfied! An error path is 
+[iA, oX] ([iA, oU])*
+---------------
+
+Formula: ((false R ! oZ) | (true U (oZ & (true U oV))))
+"output V occurs after output Z"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU, iD, oZ] ([iA, oZ, iD, oY, iD, oZ])*
+---------------
+
+Formula: ((false R ! iC) | (true U (iC & (true U oW))))
+"output W occurs after input C"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU] ([iD, oZ, iA, oZ, iD, oY, iA])*
+---------------
+
+Formula: (! (true U iF) | (! oY U (iE | iF)))
+"input E precedes output Y before input F"
+Formula is not satisfied! An error path is 
+[iB, oV, iB, oY, iF] ([oV, iF])*
+---------------
+
+Formula: (false R (! (iC & ! iD) | (! oU WU iD)))
+"output U does never occur after input C until input D"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU] ([iD, oZ, iA, oZ, iD, oY, iA])*
+---------------
+
+Formula: (! oU WU oZ)
+"output Z precedes output U"
+Formula is not satisfied! An error path is 
+[iA, oX, iA, oU] ([iA, oU])*
+---------------
+
+Formula: (false R (! ((iA & ! iB) & (true U iB)) | (! oY U iB)))
+"output Y does never occur between input A and input B"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU, iD, oZ, iA, oZ, iD, oY, iB] ([iD, oZ, iA, oZ, iD, oY, iA])*
+---------------
+
+Formula: (! (true U iD) | ((! oX & ! iD) U (iD | ((oX & ! iD) U (iD | ((! oX & ! iD) U (iD | ((oX & ! iD) U (iD | (! oX U iD))))))))))
+"output X occurs at most twice before input D"
+Formula is not satisfied! An error path is 
+[iA, oX, iB, oX, iB, oX, iD] ([oX, iA, oV, iD])*
+---------------
+
+Formula: (false R ! oZ)
+"output Z does never occur"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU, iD, oZ] ([iA, oZ, iD, oY, iD, oZ])*
+---------------
+
+Formula: (false R (! oW | (true U oV)))
+"output V responds to output W"
+Formula is satisfied.
+---------------
+
+Formula: (false R (! (iC & ! oX) | (! oX WU (oZ & ! oX))))
+"output Z occurs between input C and output X"
+Formula is satisfied.
+---------------
+
+Formula: (! oX WU (oX WU (! oX WU (oX WU (false R ! oX)))))
+"output X occurs at most twice"
+Formula is not satisfied! An error path is 
+[iA, oX, iA] ([oU, iD, oX, iA])*
+---------------
+
+Formula: (false R (! ((iF & ! oV) & (true U oV)) | (! oZ U oV)))
+"output Z does never occur between input F and output V"
+Formula is satisfied.
+---------------
+
+Formula: (false R (! iF | (true U oU)))
+"output U responds to input F"
+Formula is not satisfied! An error path is 
+[iA, oX, iF] ([oX, iF])*
+---------------
+
+Formula: (! oW WU (oW WU (! oW WU (oW WU (false R ! oW)))))
+"output W occurs at most twice"
+Formula is satisfied.
+---------------
+
+Formula: (! oU WU (oU WU (! oU WU (oU WU (false R ! oU)))))
+"output U occurs at most twice"
+Formula is not satisfied! An error path is 
+[iA, oX, iA, oU, iA] ([oU, iA])*
+---------------
+
+Formula: (! oX WU oY)
+"output Y precedes output X"
+Formula is not satisfied! An error path is 
+[iA, oX] ([iA, oU])*
+---------------
+
+Formula: ((false R ! oX) | (true U (oX & (true U oU))))
+"output U occurs after output X"
+Formula is not satisfied! An error path is 
+[iA, oX] ([iD, oX])*
+---------------
+
+Formula: (! oW WU (oU & ! oW))
+"output U occurs before output W"
+Formula is satisfied.
+---------------
+
+Formula: (! oY WU iB)
+"output Y does never occur before input B"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU, iD, oZ, iA, oZ, iD, oY] ([iD, oZ, iA, oZ, iD, oY])*
+---------------
+
+Formula: (false R (! (iF & ! iE) | (! oY WU iE)))
+"output Y does never occur after input F until input E"
+Formula is not satisfied! An error path is 
+[iB, oV, iF, oV, iB, oY] ([iA, oX])*
+---------------
+
+Formula: (false R (! (iA & ! oY) | (! oY U (oU & ! oY))))
+"output U occurs after input A until output Y"
+Formula is not satisfied! An error path is 
+[iA, oX] ([iD, oX])*
+---------------
+
+Formula: (false R ! oW)
+"output W does never occur"
+Formula is satisfied.
+---------------
+
+Formula: (true U oW)
+"output W occurs eventually"
+Formula is not satisfied! An error path is 
+[iA, oX] ([iA, oU])*
+---------------
+
+Formula: (false R (! oZ | (true U oX)))
+"output X responds to output Z"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU, iD, oZ] ([iA, oZ, iD, oY, iD, oZ])*
+---------------
+
+Formula: (false R (! (oZ & ! oX) | (! oX U (oU & ! oX))))
+"output U occurs after output Z until output X"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU, iD, oZ] ([iA, oZ, iD, oY, iD, oZ])*
+---------------
+
+Formula: (! (true U oX) | (! oU U (oZ | oX)))
+"output Z precedes output U before output X"
+Formula is satisfied.
+---------------
+
+Formula: (false R (! (oU & ! iD) | (! iD U (oV & ! iD))))
+"output V occurs after output U until input D"
+Formula is not satisfied! An error path is 
+[iA, oX, iA, oU] ([iA, oU])*
+---------------
+
+Formula: (! oX WU iD)
+"output X does never occur before input D"
+Formula is not satisfied! An error path is 
+[iA, oX] ([iA, oU])*
+---------------
+
+Formula: (! iC WU (oU & ! iC))
+"output U occurs before input C"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU] ([iD, oZ, iA, oZ, iD, oY, iA])*
+---------------
+
+Formula: (false R (! (iB & ! oX) | (! oW WU oX)))
+"output W does never occur after input B until output X"
+Formula is satisfied.
+---------------
+
+Formula: (! oW WU (oY & ! oW))
+"output Y occurs before output W"
+Formula is satisfied.
+---------------
+
+Formula: (! oV WU (oX & ! oV))
+"output X occurs before output V"
+Formula is not satisfied! An error path is 
+[iB, oV] ([iA, oX])*
+---------------
+
+Formula: (! (true U iB) | (! oU U (oX | iB)))
+"output X precedes output U before input B"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU, iD, oZ, iA, oZ, iD, oY, iB] ([iD, oZ, iA, oZ, iD, oY, iA])*
+---------------
+
+Formula: (! oW WU iD)
+"input D precedes output W"
+Formula is satisfied.
+---------------
+
+Formula: (true U oZ)
+"output Z occurs eventually"
+Formula is not satisfied! An error path is 
+[iA, oX] ([iA, oU])*
+---------------
+
+Formula: (true U oV)
+"output V occurs eventually"
+Formula is not satisfied! An error path is 
+[iA, oX] ([iA, oU])*
+---------------
+
+Formula: (! iF WU (oZ & ! iF))
+"output Z occurs before input F"
+Formula is not satisfied! An error path is 
+[iA, oX, iF] ([oX, iF])*
+---------------
+
+Formula: (! oY WU (oY WU (! oY WU (oY WU (false R ! oY)))))
+"output Y occurs at most twice"
+Formula is not satisfied! An error path is 
+[iB, oV, iB, oY, iA] ([oX, iB, oY, iA])*
+---------------
+
+Formula: (false R (! ((iD & ! oU) & (true U oU)) | (! oV U oU)))
+"output V does never occur between input D and output U"
+Formula is not satisfied! An error path is 
+[iB, oV, iD, oX, iA, oV, iD, oX, iB, oU] ([iA, oU])*
+---------------
+
+Formula: (false R (! ((oU & ! oX) & (true U oX)) | (! oW U oX)))
+"output W does never occur between output U and output X"
+Formula is satisfied.
+---------------
+
+Formula: ((false R ! oY) | (true U (oY & (true U oW))))
+"output W occurs after output Y"
+Formula is not satisfied! An error path is 
+[iB, oV, iB, oY] ([iA, oX])*
+---------------
+
+Formula: (! (true U oU) | ((! oZ & ! oU) U (oU | ((oZ & ! oU) U (oU | ((! oZ & ! oU) U (oU | ((oZ & ! oU) U (oU | (! oZ U oU))))))))))
+"output Z occurs at most twice before output U"
+Formula is satisfied.
+---------------
+
+Formula: (! (true U oX) | (! oY U (iB | oX)))
+"input B precedes output Y before output X"
+Formula is satisfied.
+---------------
+
+Formula: (! (true U oX) | ((! oV & ! oX) U (oX | ((oV & ! oX) U (oX | ((! oV & ! oX) U (oX | ((oV & ! oX) U (oX | (! oV U oX))))))))))
+"output V occurs at most twice before output X"
+Formula is not satisfied! An error path is 
+[iB, oV, iF, oV, iF, oV, iA, oX] ([iA, oX])*
+---------------
+
+Formula: (false R (! (iB & ! oX) | (! oY WU oX)))
+"output Y does never occur after input B until output X"
+Formula is not satisfied! An error path is 
+[iB, oV, iB, oY] ([iA, oX])*
+---------------
+
+Formula: (false R (! ((oW & ! iE) & (true U iE)) | (! oZ U iE)))
+"output Z does never occur between output W and input E"
+Formula is satisfied.
+---------------
+
+Formula: (false R (! ((oZ & ! iF) & (true U iF)) | (! oU U iF)))
+"output U does never occur between output Z and input F"
+Formula is satisfied.
+---------------
+
+Formula: (! oZ WU (oX & ! oZ))
+"output X occurs before output Z"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU, iD, oZ] ([iA, oZ, iD, oY, iD, oZ])*
+---------------
+
+Formula: (false R (! (iF & ! iD) | (! oX WU iD)))
+"output X does never occur after input F until input D"
+Formula is not satisfied! An error path is 
+[iA, oX, iF, oX] ([iA, oU])*
+---------------
+
+Formula: (! oW WU (oW WU (! oW WU (oW WU (false R ! oW)))))
+"output W occurs at most twice"
+Formula is satisfied.
+---------------
+
+Formula: (false R (! (oZ & ! iD) | (! iD U (oU & ! iD))))
+"output U occurs after output Z until input D"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU, iD, oZ] ([iA, oZ, iD, oY, iD, oZ])*
+---------------
+
+Formula: (false R (! oX | (false R ! oY)))
+"output Y does never occur after output X"
+Formula is not satisfied! An error path is 
+[iB, oV, iA, oX, iB, oY] ([iA, oX])*
+---------------
+
+Formula: (! oW WU iB)
+"output W does never occur before input B"
+Formula is satisfied.
+---------------
+
+Formula: (! iE WU (oV & ! iE))
+"output V occurs before input E"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU, iD, oZ, iA, oZ, iD, oY, iE] ([oZ, iA, oZ, iD, oY, iE])*
+---------------
+
+Formula: ((false R ! iE) | (true U (iE & (true U oU))))
+"output U occurs after input E"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU, iD, oZ, iA, oZ, iD, oY, iE] ([oZ, iA, oZ, iD, oY, iE])*
+---------------
+
+Formula: (! (true U oW) | ((! oX & ! oW) U (oW | ((oX & ! oW) U (oW | ((! oX & ! oW) U (oW | ((oX & ! oW) U (oW | (! oX U oW))))))))))
+"output X occurs at most twice before output W"
+Formula is satisfied.
+---------------
+
+Formula: (! oZ WU iA)
+"input A precedes output Z"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU, iD, oZ] ([iA, oZ, iD, oY, iD, oZ])*
+---------------
+
+Formula: (! oY WU iA)
+"input A precedes output Y"
+Formula is not satisfied! An error path is 
+[iB, oV, iB, oY] ([iA, oX])*
+---------------
+
+Formula: (false R (! (iC & ! oZ) | (! oZ U (oY & ! oZ))))
+"output Y occurs after input C until output Z"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU, iD, oZ] ([iA, oZ, iD, oY, iD, oZ])*
+---------------
+
+Formula: (false R (! (iD & ! oV) | (! oX WU oV)))
+"output X does never occur after input D until output V"
+Formula is not satisfied! An error path is 
+[iA, oX, iD, oX] ([iA, oU])*
+---------------
+
+Formula: (true U oV)
+"output V occurs eventually"
+Formula is not satisfied! An error path is 
+[iA, oX] ([iA, oU])*
+---------------
+
+Formula: (false R (! iE | (true U oU)))
+"output U responds to input E"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU, iD, oZ, iA, oZ, iD, oY, iE] ([oZ, iA, oZ, iD, oY, iE])*
+---------------
+
+Formula: (false R ! oX)
+"output X does never occur"
+Formula is not satisfied! An error path is 
+[iA, oX] ([iA, oU])*
+---------------
+
+Formula: (! oU WU (oZ & ! oU))
+"output Z occurs before output U"
+Formula is not satisfied! An error path is 
+[iA, oX, iA, oU] ([iA, oU])*
+---------------
+
+Formula: (false R (! (oW & ! oV) | (! oV WU (oU & ! oV))))
+"output U occurs between output W and output V"
+Formula is satisfied.
+---------------
+
+Formula: (! oZ WU iE)
+"input E precedes output Z"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU, iD, oZ] ([iA, oZ, iD, oY, iD, oZ])*
+---------------
+
+Formula: (! oX WU oW)
+"output W precedes output X"
+Formula is not satisfied! An error path is 
+[iA, oX] ([iA, oU])*
+---------------
+
+Formula: (false R (! ((oY & ! iC) & (true U iC)) | (! oW U iC)))
+"output W does never occur between output Y and input C"
+Formula is satisfied.
+---------------
+
+Formula: ((false R ! oZ) | (true U (oZ & (true U oY))))
+"output Y occurs after output Z"
+Formula is satisfied.
+---------------
+
+Formula: (false R (! iA | (false R ! oU)))
+"output U does never occur after input A"
+Formula is not satisfied! An error path is 
+[iA, oX, iA, oU] ([iA, oU])*
+---------------
+
+Formula: (false R (! (iB & ! oY) | (! oY WU (oW & ! oY))))
+"output W occurs between input B and output Y"
+Formula is not satisfied! An error path is 
+[iB, oV, iB, oY] ([iA, oX])*
+---------------
+
+Formula: (false R (! ((oW & ! iA) & (true U iA)) | (! oX U iA)))
+"output X does never occur between output W and input A"
+Formula is satisfied.
+---------------
+
+Formula: (false R (! (iF & ! iC) | (! oZ WU iC)))
+"output Z does never occur after input F until input C"
+Formula is not satisfied! An error path is 
+[iC, oU, iD, oU, iD, oZ, iA, oZ, iF, oY, iD, oZ] ([iA, oZ, iD, oY, iD, oZ])*
+---------------
+
+Formula: (false R (! (iD & ! iB) | (! iB WU (oX & ! iB))))
+"output X occurs between input D and input B"
+Formula is not satisfied! An error path is 
+[iB, oV, iD, oX, iD, oU, iB] ([oX, iD, oX, iB])*
+---------------
+
+Formula: (false R (! (oX & ! oZ) | (! oZ WU (oY & ! oZ))))
+"output Y occurs between output X and output Z"
+Formula is satisfied.
+---------------
+
+Formula: (! iA WU (oU & ! iA))
+"output U occurs before input A"
+Formula is not satisfied! An error path is 
+[iA, oX] ([iA, oU])*
+---------------
+
+29 constraints satisfied, 71 unsatisfied.
+

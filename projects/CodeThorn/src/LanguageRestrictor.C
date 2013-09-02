@@ -28,11 +28,11 @@ std::string LanguageRestrictor::variantToString(VariantT variant) {
   }
 
   // we must have found a provided variant in array 'Cxx_GrammarTerminalNames'
-  assert(false);
+  ROSE_ASSERT(false);
 }
 
 void LanguageRestrictor::ensureVariantIsValid(VariantT variant)  {
-  assert(variant>=0 && variant<V_SgNumVariants);
+  ROSE_ASSERT(variant>=0 && variant<V_SgNumVariants);
 }
 
 void LanguageRestrictor::allowAllAstNodes() {
@@ -73,6 +73,7 @@ void LanguageRestrictor::allowAstNodesRequiredForEmptyProgram() {
 }
 
 void LanguageRestrictor::setAstNodeVariant(VariantT variant, bool allowed) {
+  ROSE_ASSERT(variant<V_SgNumVariants);
   variants[variant]=allowed;
 }
 
@@ -83,6 +84,7 @@ void LanguageRestrictor::setAstNodeVariantSet(VariantSet variants, bool allowed)
 }
 
 bool LanguageRestrictor::isAllowedAstNodeVariant(VariantT variant) {
+  ROSE_ASSERT(variant<V_SgNumVariants);
   return variants[variant];
 }
 

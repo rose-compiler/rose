@@ -43,6 +43,8 @@ void LanguageRestrictorCppSubset1::initialize() {
   vs.insert(V_SgFunctionCallExp);
   vs.insert(V_SgFunctionRefExp);
   vs.insert(V_SgExprListExp);
+  //vs.insert(V_SgPragmaDeclaration);
+  //vs.insert(V_SgPragma);
   
   // rers Problems
   vs.insert(V_SgTypedefDeclaration);

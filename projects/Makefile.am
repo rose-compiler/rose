@@ -22,6 +22,7 @@ SUBDIRS = \
 	DocumentationGenerator \
    EditDistanceMetric \
 	FiniteStateModelChecker \
+	fuse \
 	graphColoring \
 	HeaderFilesInclusion \
 	MPI_Tools \

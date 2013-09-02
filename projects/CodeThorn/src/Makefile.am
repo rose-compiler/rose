@@ -67,20 +67,20 @@ codethorn_SOURCES = \
   Visualizer.h                     \
   RDLattice.h                      \
   RDLattice.C                      \
-  AttributeAnnotator.h             \
-  AttributeAnnotator.C             \
+  AstAnnotator.h             \
+  AstAnnotator.C             \
   codethorn.C                      \
   codethorn.h                      \
   WorkListSeq.h                    \
   DFAnalyzer.h                     \
   AnalysisAbstractionLayer.h       \
   AnalysisAbstractionLayer.C       \
-  AnalysisAstAttribute.h           \
-  AnalysisAstAttribute.C           \
-  RDAnalysisAbstractAstAttribute.h \
-  RDAnalysisAbstractAstAttribute.C \
-  RDAnalysisAstAttribute.h         \
-  RDAnalysisAstAttribute.C         \
+  DFAstAttribute.h           \
+  DFAstAttribute.C           \
+  RDAstAttributeInterface.h \
+  RDAstAttributeInterface.C \
+  RDAstAttribute.h         \
+  RDAstAttribute.C         \
   RERS_empty_specialization.C      \
   addressTakenAnalysis/defUseQuery.C \
   addressTakenAnalysis/defUseQuery.h \
@@ -139,19 +139,23 @@ varwatch_LDADD = -lrose
 varwatch_SOURCES = varwatch.C VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C
 
 rdmain_LDADD = -lrose
-rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C Labeler.h Labeler.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C AttributeAnnotator.h AttributeAnnotator.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
+rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C Labeler.h Labeler.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C AstAnnotator.h AstAnnotator.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
   AnalysisAbstractionLayer.h       \
   AnalysisAbstractionLayer.C       \
-  AnalysisAstAttribute.h           \
-  AnalysisAstAttribute.C           \
-  RDAnalysisAbstractAstAttribute.h \
-  RDAnalysisAbstractAstAttribute.C \
-  RDAnalysisAstAttribute.h         \
-  RDAnalysisAstAttribute.C         \
+  DFAstAttribute.h           \
+  DFAstAttribute.C           \
+  RDAstAttributeInterface.h \
+  RDAstAttributeInterface.C \
+  RDAstAttribute.h         \
+  RDAstAttribute.C         \
   UDAstAttribute.h                 \
   UDAstAttribute.C                 \
   AstTerm.h                        \
   AstTerm.C                        \
+  Miscellaneous.C                  \
+  Miscellaneous.h                  \
+  ProgramStats.h                 \
+  ProgramStats.C                 \
   addressTakenAnalysis/defUseQuery.C \
   addressTakenAnalysis/defUseQuery.h \
   addressTakenAnalysis/VariableIdUtils.C \
@@ -236,6 +240,21 @@ CONSISTENCY_CHECKS=$(patsubst %,Problem%.consistent, $(shell seq 1))
 	python $(srcdir)/regressiondata/validate.py \
 	  --csv $(patsubst $(srcdir)/tests/rers/%.c,%.3.csv,$<) \
 	  --log $(patsubst $(srcdir)/tests/rers/%.c,$(srcdir)/regressiondata/%.log,$<)
+        # Finally, compare with reference solutions
+	python $(srcdir)/tests/rers/verify.py \
+	  --ref  $(patsubst %.c,%-solutions.csv,$<) \
+	  --mine $(patsubst $(srcdir)/tests/rers/%.c,%.0.csv,$<) || echo "** XFAIL"
+	python $(srcdir)/tests/rers/verify.py \
+	  --ref  $(patsubst %.c,%-solutions.csv,$<) \
+	  --mine $(patsubst $(srcdir)/tests/rers/%.c,%.1.csv,$<) || echo "** XFAIL"
+	python $(srcdir)/tests/rers/verify.py \
+	  --ref  $(patsubst %.c,%-solutions.csv,$<) \
+	  --mine $(patsubst $(srcdir)/tests/rers/%.c,%.2.csv,$<) || echo "** XFAIL"
+	python $(srcdir)/tests/rers/verify.py \
+	  --ref  $(patsubst %.c,%-solutions.csv,$<) \
+	  --mine $(patsubst $(srcdir)/tests/rers/%.c,%.3.csv,$<) || echo "** XFAIL"
+
+
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
@@ -269,6 +288,7 @@ vizjpg: transitiongraph1.dot transitiongraph2.dot cfg.dot ast.dot
 clean-local:
 	rm -f *.dot
 	rm -f *.ps
+	rm -f *.jpg
 	rm -f viz/*
 	rm -f bsps/*
 	rm -f *.consistent Problem*.[0-9].csv

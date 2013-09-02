@@ -18,36 +18,50 @@ using namespace AnalysisAbstractionLayer;
 class TestDefUseVarsInfoTraversal : public AstSimpleProcessing
 {
   VariableIdMapping& vidm;
+  // some stats
+  long n_sideeffect;
   long flagRaisedDefSet;
   long flagRaisedUseSet;
-  long n_expr;
+  long n_expr, n_decl;
+
 public:
   TestDefUseVarsInfoTraversal(VariableIdMapping& _vidm) 
-  : vidm(_vidm), flagRaisedDefSet(0), flagRaisedUseSet(0), n_expr(0) { }
+  : vidm(_vidm),  n_sideeffect(0), flagRaisedDefSet(0), flagRaisedUseSet(0), n_expr(0), n_decl(0) { }
   void visit(SgNode*);
+  void updateStats(const DefUseVarsInfo& duvi);
   void atTraversalEnd();
 };
 
+void TestDefUseVarsInfoTraversal::updateStats(const DefUseVarsInfo& duvi) {
+  if(duvi.isDefSetModByPointer()) {
+    ++flagRaisedDefSet;
+  }
+  if(duvi.isUseSetModByPointer()) {
+    ++flagRaisedUseSet;
+  }
+  if(duvi.isUseAfterDef()) {
+    ++n_sideeffect;
+  }
+}
+
 void TestDefUseVarsInfoTraversal::visit(SgNode* sgn)
 {
-  if(isSgExpression(sgn) || isSgInitializedName(sgn))
-  {
-    n_expr++;
-    DefUseVarsInfo memobj = getDefUseVarsInfo(sgn, vidm);
-    if(memobj.isDefSetModByPointer()) {
-      // std::cout << "def_set flag raised\n";
-      ++flagRaisedDefSet;
-    }
-    if(memobj.isUseSetModByPointer()) {
-      // std::cout << "use_set flag raised\n";
-      ++flagRaisedUseSet;
-    }
+  DefUseVarsInfo duvi;
+  if(isSgExpression(sgn)) {
+    ++n_expr;
+    duvi = getDefUseVarsInfo(isSgExpression(sgn), vidm);
+  }
+  else if(isSgVariableDeclaration(sgn)) {
+    ++n_decl;
+    duvi = getDefUseVarsInfo(isSgVariableDeclaration(sgn), vidm);
+  }
+  if(!duvi.isDefSetEmpty() ||
+     !duvi.isUseSetEmpty() ||
+     !duvi.isFunctionCallExpSetEmpty()) {
+    updateStats(duvi);
 #if 0
-    if(!memobj.isDefSetEmpty() || !memobj.isUseSetEmpty() || !memobj.isFunctionCallExpSetEmpty())
-    {
-      std::cout << "<" << sgn->class_name() << ", " << sgn->unparseToString() << "\n" 
-                << memobj.str(vidm) << ">\n";
-    }
+    std::cout << "<" << sgn->class_name() << ", " << sgn->unparseToString() << "\n" 
+            << duvi.str(vidm) << ">\n";
 #endif
   }
 }
@@ -57,6 +71,8 @@ void TestDefUseVarsInfoTraversal::atTraversalEnd()
   std::cout << "DefSetModByPtr: " << flagRaisedDefSet << "\n";
   std::cout << "UseSetModByPtr: " << flagRaisedUseSet << "\n";
   std::cout << "n_expr: " << n_expr << "\n";
+  std::cout << "n_decl: " << n_decl << "\n";
+  std::cout << "n_sideeffect: " << n_sideeffect << "\n";
 }
 
 
