@@ -5503,10 +5503,19 @@ HEADER_APPLICATION_PROJECT_START
           bool get_C_only   (void) const;
 
        // DQ (3/28/2013): Added support to specify C89 support, so that default can be C99 support (same as EDG3x branch).
+      //! Support for -std=c89 (default for .
           bool get_C89_only (void) const;
 
+      //! Support for -std=c99.
           bool get_C99_only (void) const;
+
+      //! Support for explicit specification of C++ mode.
           bool get_Cxx_only (void) const;
+
+       // DQ (8/30/2013): Added support for -std=gnu99 seperate from -std-c99 (required for asm statement handling).
+       // Note that this support also sets C99_only to true.
+      //! Support for -std=gnu99.
+          bool get_C99_gnu_only (void) const;
 
        // DQ (7/21/2012): Adding C++ support from the command line.
           bool get_C11_only (void) const;
@@ -13178,6 +13187,7 @@ SgFile::initialization()
      p_C89_only                = false;
   
      p_C99_only                = false;
+     p_C99_gnu_only            = false;
      p_Cxx_only                = false;
 
   // DQ (7/21/2012): Adding C++11 support.
@@ -13892,6 +13902,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_C89_only()                           = %s \n",(p_C89_only == true) ? "true" : "false");
 
      printf ("     p_C99_only()                           = %s \n",(p_C99_only == true) ? "true" : "false");
+     printf ("     p_C99_gnu_only()                       = %s \n",(p_C99_gnu_only == true) ? "true" : "false");
      printf ("     p_Cxx_only()                           = %s \n",(p_Cxx_only == true) ? "true" : "false");
      printf ("     p_C11_only()                           = %s \n",(p_C11_only == true) ? "true" : "false");
      printf ("     p_Cxx0x_only()                         = %s \n",(p_Cxx0x_only == true) ? "true" : "false");
@@ -14887,6 +14898,20 @@ SgProject::get_C99_only (void) const
         {
           SgFile & file = get_file(i);
           result = result || (bool) file.get_C99_only();
+        }
+     return result;
+   }
+
+// DQ (8/30/2013): Added support for -std-gnu99 seperate from -std=c99.
+bool
+SgProject::get_C99_gnu_only (void) const
+   {
+  // look at how the files are set (C99 only)
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_C99_gnu_only();
         }
      return result;
    }
