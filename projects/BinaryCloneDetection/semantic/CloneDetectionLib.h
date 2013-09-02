@@ -281,6 +281,103 @@ public:
 };
 
 /*******************************************************************************************************************************
+ *                                      Instruction coverage analysis
+ *******************************************************************************************************************************/
+
+class InsnCoverage {
+public:
+    /** Information about an executed address. */
+    struct ExeInfo {
+        ExeInfo(size_t first_seen): first_seen(first_seen), nhits(1) {}
+        size_t first_seen;                      /**< Sequence number for when this address was first executed. */
+        size_t nhits;                           /**< Number of times this address was executed. */
+    };
+
+    /** Delete coverage info and reset to initial state. */
+    void clear() { *this = InsnCoverage(); }
+        
+    /** Mark instructions as having been executed. */
+    void execute(SgAsmInstruction*);
+
+    /** Returns true if this instruction coverage object contains no instructions. */
+    bool empty() const { return coverage.empty(); }
+
+    /** Number of unique addresses executed. */
+    size_t nunique() const { return coverage.size(); }
+
+    /** Total number of addresses executed. */
+    size_t total_ninsns() const;
+
+    /** Save coverage info to the database. No attempt is made to not save edges that have already been saved; therefore it is
+     *  best to call this only when the object is about to be cleared or destroyed.  The func_id is the ID number for the
+     * function that is being tested. The func_id and and igroup_id together identify a particular test.*/
+    void save(const SqlDatabase::TransactionPtr&, int func_id, int igroup_id);
+
+    /** Returns the coverage ratio for a function.  The return value is the number of unique instructions of the function that
+     *  were executed divided by the total number of instructions in the function. This InsnCoverage object may contain
+     *  instructions that belong to other functions also, and they are not counted. */
+    double get_ratio(SgAsmFunction*) const;
+    
+protected:
+    typedef std::map<rose_addr_t, ExeInfo> CoverageMap;
+    CoverageMap coverage;                       // info about addresses that were executed
+};
+
+/*******************************************************************************************************************************
+ *                                      Dynamic Function Call Graph
+ *******************************************************************************************************************************/
+
+/** Dynamic call graph information.  This class stores a call graph by storing edges between the caller and callee function
+ * IDs.  The edges are ordered according to when the call occurred. Consecutive parallel edges are stored as a single edge with
+ * an @p ncalls attribute larger than one. */
+class DynamicCallGraph {
+public:
+    /** Information about a single function call. */
+    struct Call {
+        Call(int caller_id, int callee_id): caller_id(caller_id), callee_id(callee_id), ncalls(1) {}
+        int caller_id;                          /**< ID of function that is doing the calling. */
+        int callee_id;                          /**< ID of the function that is being called. */
+        size_t ncalls;                          /**< Number of consecutive calls for this caller and callee pair. */
+    };
+
+    /** Set this call graph back to its empty state. */
+    void clear() { *this = DynamicCallGraph(); }
+
+    /** Append a new call to the list of calls.
+     * @{ */
+    void call(int caller_id, int callee_id) { call(Call(caller_id, callee_id)); }
+    void call(const Call&);
+    /** @} */
+
+    /** Returns true if the graph contains no instructions. */
+    bool empty() const { return calls.empty(); }
+
+    /** Returns the number of calls. Consecutive calls between a specific caller and callee are compressed into a single call
+     *  structure whose ncalls member indicates the number of calls, and which are treated as a single call for the purpose of
+     *  this function. */
+    size_t size() const { return calls.size(); }
+
+    /** Return info for the indicated call number. Consecutive calls from a specific caller to callee are treated as one call
+     * for the purpose of this function; the @p ncalls member indicates how many consecutive calls actually occurred.
+     * @{ */
+    Call& operator[](size_t idx) { return calls[idx]; }
+    const Call& operator[](size_t idx) const { return calls[idx]; }
+    /** @} */
+
+    /** Save all the edges to the database. No attempt is made to not save edges that have already been saved; therefore it is
+     * best to call this only when the object is about to be cleared or destroyed.  The func_id is the ID number for the
+     * function that is being tested; all calls (whether from that function or not) are attributed to that function.  The
+     * function_id and igroup_id together identify a particular test. */
+    void save(const SqlDatabase::TransactionPtr&, int func_id, int igroup_id);
+
+protected:
+    typedef std::vector<Call> Calls;
+    Calls calls;                                // list of calls in the order they occur
+};
+
+
+
+/*******************************************************************************************************************************
  *                                      Per-function analyses
  *******************************************************************************************************************************/
 
@@ -794,11 +891,15 @@ protected:
 
 struct PolicyParams {
     PolicyParams()
-        : timeout(5000), verbosity(SILENT), follow_calls(CALL_NONE), initial_stack(0x80000000) {}
+        : timeout(5000), verbosity(SILENT), follow_calls(CALL_NONE), initial_stack(0x80000000),
+          compute_coverage(false), compute_callgraph(false), top_callgraph(false) {}
     size_t timeout;                     /**< Maximum number of instrutions per fuzz test before giving up. */
     Verbosity verbosity;                /**< Produce lots of output?  Traces each instruction as it is simulated. */
     FollowCalls follow_calls;           /**< Follow CALL instructions if possible rather than consuming an input? */
     rose_addr_t initial_stack;          /**< Initial values for ESP and EBP. */
+    bool compute_coverage;              /**< Compute instruction coverage information? */
+    bool compute_callgraph;             /**< Compute dynamic call graph information? */
+    bool top_callgraph;                 /**< Store only function call edges emanating from the top stack frame? */
 };
 
 
@@ -1083,11 +1184,15 @@ public:
     StackFrames stack_frames;                           // Stack frames ordered by decreasing entry_esp values
     Disassembler::AddressSet whitelist_exports;         // Dynamic functions that can be called when follow_calls==CALL_BUILTIN
     FuncAnalyses &funcinfo;                             // Partial results of various kinds of function analyses
+    InsnCoverage &insn_coverage;                        // Information about which instructions were executed
+    DynamicCallGraph &dynamic_cg;                       // Information about function calls
 
-    Policy(const PolicyParams &params, const AddressIdMap &entry2id, Tracer &tracer, FuncAnalyses &funcinfo)
+    Policy(const PolicyParams &params, const AddressIdMap &entry2id, Tracer &tracer, FuncAnalyses &funcinfo,
+           InsnCoverage &insn_coverage, DynamicCallGraph &dynamic_cg)
         : inputs(NULL), pointers(NULL), interp(NULL), ninsns(0), address_hasher(0, 255, 0),
           address_hasher_initialized(false), insns(0), params(params), entry2id(entry2id), prev_bb(NULL),
-          tracer(tracer), uses_stdcall(false), funcinfo(funcinfo) {}
+          tracer(tracer), uses_stdcall(false), funcinfo(funcinfo), insn_coverage(insn_coverage),
+          dynamic_cg(dynamic_cg) {}
 
     // Consume and return an input value.  An argument is needed only when the memhash queue is being used.
     template <size_t nBits>
@@ -1139,6 +1244,8 @@ public:
         this->ninsns = 0;
         this->interp = interp;
         this->whitelist_exports = whitelist_exports;
+        insn_coverage.clear();
+        dynamic_cg.clear();
         stack_frames.clear();
         state.reset_for_analysis();
 
@@ -1302,6 +1409,8 @@ public:
         assert(insn!=NULL);
         SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
         assert(func!=NULL);
+        if (params.compute_coverage)
+            insn_coverage.execute(insn);
 
         // Adjust stack frames, popping stale frames and adding new ones
         rose_addr_t esp = state.registers.gpr[x86_gpr_sp].known_value();
@@ -1312,8 +1421,15 @@ public:
         StackFrame &stack_frame = stack_frames.top();
         if (entered_function) {
             AddressIdMap::const_iterator id_found = entry2id.find(insn->get_address());
-            if (id_found!=entry2id.end())
+            if (id_found!=entry2id.end()) {
                 ++funcinfo[id_found->second].ncalls;
+                // update dynamic callgraph info
+                if (params.compute_callgraph && stack_frames.size()>1 && (!params.top_callgraph || 2==stack_frames.size())) {
+                    AddressIdMap::const_iterator caller_id_found = entry2id.find(stack_frames[1].func->get_entry_va());
+                    if (caller_id_found!=entry2id.end())
+                        dynamic_cg.call(caller_id_found->second, id_found->second);
+                }
+            }
         }
 
         // Debugging

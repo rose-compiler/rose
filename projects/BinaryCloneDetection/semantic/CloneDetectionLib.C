@@ -732,6 +732,120 @@ OutputGroups::lookup(int64_t hashkey) const
 }
 
 /*******************************************************************************************************************************
+ *                                      Instruction coverage
+ *******************************************************************************************************************************/
+
+void
+InsnCoverage::execute(SgAsmInstruction *insn)
+{
+    rose_addr_t insn_va = insn->get_address();
+    CoverageMap::iterator found = coverage.find(insn_va);
+    if (found==coverage.end()) {
+        coverage.insert(std::make_pair(insn_va, ExeInfo(coverage.size())));
+    } else {
+        ++found->second.nhits;
+    }
+}
+
+size_t
+InsnCoverage::total_ninsns() const
+{
+    size_t retval = 0;
+    for (CoverageMap::const_iterator ci=coverage.begin(); ci!=coverage.end(); ++ci)
+        retval += ci->second.nhits;
+    return retval;
+}
+
+void
+InsnCoverage::save(const SqlDatabase::TransactionPtr &tx, int func_id, int igroup_id)
+{
+    if (!coverage.empty()) {
+        char filename[64];
+        strcpy(filename, "/tmp/roseXXXXXX");
+        int fd = mkstemp(filename);
+        assert(fd>=0);
+        FILE *f = fdopen(fd, "w");
+        assert(f!=NULL);
+
+        for (CoverageMap::const_iterator ci=coverage.begin(); ci!=coverage.end(); ++ci) {
+            int nprint __attribute__((unused))
+                = fprintf(f, "%d,%d,%"PRIu64",%zu,%zu\n",
+                          func_id, igroup_id, ci->first, ci->second.first_seen, ci->second.nhits);
+            assert(nprint>0);
+        }
+
+        fclose(f);
+        close(fd);
+        std::ifstream in(filename);
+        tx->bulk_load("semantic_fio_coverage", in);
+        in.close();
+        unlink(filename);
+    }
+}
+
+double
+InsnCoverage::get_ratio(SgAsmFunction *func) const
+{
+    struct: AstSimpleProcessing {
+        Disassembler::AddressSet addrs;
+        void visit(SgNode *node) {
+            if (SgAsmInstruction *insn = isSgAsmInstruction(node))
+                addrs.insert(insn->get_address());
+        }
+    } c;
+    c.traverse(func, preorder);
+    if (c.addrs.empty())
+        return 1.0;
+    size_t denominator = c.addrs.size();
+    for (CoverageMap::const_iterator ci=coverage.begin(); ci!=coverage.end(); ++ci)
+        c.addrs.erase(ci->first);
+    return 1.0 - (double)c.addrs.size() / denominator;
+}
+
+
+/*******************************************************************************************************************************
+ *                                      Dynamic Call Graph
+ *******************************************************************************************************************************/
+
+void
+DynamicCallGraph::call(const Call &c)
+{
+    if (!calls.empty() && calls.back().caller_id==c.caller_id && calls.back().callee_id==c.callee_id) {
+        calls.back().ncalls += c.ncalls;
+    } else {
+        calls.push_back(c);
+    }
+}
+
+void
+DynamicCallGraph::save(const SqlDatabase::TransactionPtr &tx, int func_id, int igroup_id)
+{
+    if (!calls.empty()) {
+        char filename[64];
+        strcpy(filename, "/tmp/roseXXXXXX");
+        int fd = mkstemp(filename);
+        assert(fd>=0);
+        FILE *f = fdopen(fd, "w");
+        assert(f!=NULL);
+
+        for (size_t i=0; i<calls.size(); ++i) {
+            int nprint __attribute__((unused))
+                = fprintf(f, "%d,%d,%d,%d,%zu,%zu\n",
+                          func_id, igroup_id, calls[i].caller_id, calls[i].callee_id, i, calls[i].ncalls);
+            assert(nprint>0);
+        }
+
+        fclose(f);
+        close(fd);
+        std::ifstream in(filename);
+        tx->bulk_load("semantic_fio_calls", in);
+        in.close();
+        unlink(filename);
+    }
+}
+
+
+/*******************************************************************************************************************************
  *                                      Miscellaneous functions
  *******************************************************************************************************************************/
 
