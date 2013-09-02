@@ -4053,13 +4053,13 @@ HEADER_BINARY_FUNCTION_DECLARATION_END
 
 
 HEADER_BINARY_DATA_STRUCTURE_START
-          void append_declaration( SgAsmDeclaration* declaration );
+          void append_declaration( SgAsmSynthesizedDeclaration* declaration );
 
-       // SgAsmDeclarationPtrList & get_declarationList();
+       // SgAsmSynthesizedDeclarationPtrList & get_declarationList();
 
      protected:
 
-          SgAsmDeclarationPtrList p_declarationList;
+          SgAsmSynthesizedDeclarationPtrList p_declarationList;
 
      public:
 HEADER_BINARY_DATA_STRUCTURE_END
@@ -4473,7 +4473,7 @@ SOURCE_BINARY_OPERAND_LIST_END
 
 SOURCE_BINARY_DATA_STRUCTURE_START
 void
-SgAsmDataStructureDeclaration::append_declaration( SgAsmDeclaration* declaration )
+SgAsmSynthesizedDataStructureDeclaration::append_declaration( SgAsmSynthesizedDeclaration* declaration )
    {
      p_declarationList.push_back(declaration);
    }

@@ -2501,7 +2501,12 @@ CodeLocObjectPtr StxCodeLocObject::copyCL() const
   {
     if(anchor_symbol) {
       // This variable is in-scope if part.getNode() is inside the scope that contains its declaration
-      SgScopeStatement* anchor_scope;
+
+   // DQ (9/2/2013): Added initialization to this variable to clean up compilation (also not a good test for non-null value below).
+   // Value is correctly reported by GNU 4.2 that it can be NULL (and thus fail in the assertion below).
+   // SgScopeStatement* anchor_scope;
+      SgScopeStatement* anchor_scope = NULL;
+
       assert(isSgVariableSymbol(anchor_symbol) || isSgFunctionSymbol(anchor_symbol));
       if(isSgVariableSymbol(anchor_symbol))
         anchor_scope = isSgVariableSymbol(anchor_symbol)->get_declaration()->get_declaration()->get_scope();
