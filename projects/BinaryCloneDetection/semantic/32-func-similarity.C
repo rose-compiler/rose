@@ -431,7 +431,7 @@ class OutputSimilarity{
   double min_semantic_sim;
   double max_semantic_sim;
 
-  int ave_hamming_d;
+  double ave_hamming_d;
   int min_hamming_d;
   int max_hamming_d;
 
@@ -560,13 +560,15 @@ similarity(const FuncInfo &func1_info, const FuncInfo &func2_info,
                   min_hamming_d = std::min(min_hamming_d, cur_hamming_d);
 
 
-                  euclidean_d += sqrt(cur_euclidean_d);
+                  cur_euclidean_d = sqrt(cur_euclidean_d);
+                  euclidean_d    += cur_euclidean_d;
                   max_euclidean_d = std::max(max_euclidean_d, cur_euclidean_d);
                   min_euclidean_d = std::min(min_euclidean_d, cur_euclidean_d);
 
                   int difference = abs(f1_syntactic_ninsns - f2_syntactic_ninsns);
                   if ( difference != 0  ){
                     cur_euclidean_d_ratio = 100.0*cur_euclidean_d/difference;
+                    euclidean_d_ratio    += cur_euclidean_d_ratio;
                     max_euclidean_d_ratio = std::max(cur_euclidean_d_ratio, max_euclidean_d_ratio);
                     min_euclidean_d_ratio = std::min(cur_euclidean_d_ratio, min_euclidean_d_ratio);
                   }else{
@@ -592,7 +594,7 @@ similarity(const FuncInfo &func1_info, const FuncInfo &func2_info,
 
     if (0<ncompares)
     {
-      output_sim.ave_hamming_d = hamming_d / ncompares;
+      output_sim.ave_hamming_d = (1.0*hamming_d) / ncompares;
       output_sim.min_hamming_d = min_hamming_d;
       output_sim.max_hamming_d = max_hamming_d;
       output_sim.ave_euclidean_d   = euclidean_d / ncompares;
