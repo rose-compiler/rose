@@ -29,6 +29,7 @@ typedef BinaryAnalysis::FunctionCall::Graph CG;
 typedef boost::graph_traits<CG>::vertex_descriptor CG_Vertex;
 enum Verbosity { SILENT, LACONIC, EFFUSIVE };
 enum FollowCalls { CALL_NONE, CALL_ALL, CALL_BUILTIN };
+enum PathSyntactic {PATH_SYNTACTIC_NONE, PATH_SYNTACTIC_ALL, PATH_SYNTACTIC_FUNCTION };
 extern const rose_addr_t GOTPLT_VALUE; /**< Address of all dynamic functions that are not loaded. */
 
 /*******************************************************************************************************************************
@@ -960,11 +961,12 @@ protected:
 
 struct PolicyParams {
     PolicyParams()
-        : timeout(5000), verbosity(SILENT), follow_calls(CALL_NONE), initial_stack(0x80000000),
+        : timeout(5000), verbosity(SILENT), follow_calls(CALL_NONE), path_syntactic(PATH_SYNTACTIC_NONE), initial_stack(0x80000000),
           compute_coverage(false), compute_callgraph(false), top_callgraph(false) {}
     size_t timeout;                     /**< Maximum number of instrutions per fuzz test before giving up. */
     Verbosity verbosity;                /**< Produce lots of output?  Traces each instruction as it is simulated. */
     FollowCalls follow_calls;           /**< Follow CALL instructions if possible rather than consuming an input? */
+    PathSyntactic path_syntactic;       /**< How to compute path sensistive syntactic signature */
     rose_addr_t initial_stack;          /**< Initial values for ESP and EBP. */
     bool compute_coverage;              /**< Compute instruction coverage information? */
     bool compute_callgraph;             /**< Compute dynamic call graph information? */

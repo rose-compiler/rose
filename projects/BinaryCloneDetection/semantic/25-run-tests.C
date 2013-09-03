@@ -66,7 +66,10 @@ usage(int exit_status)
               <<"            the value \"compute\" causes coverage to be computed but not saved; the value \"save\" causes\n"
               <<"            coverage to be computed and saved in the database.  Specifying just \"--coverage\" with no\n"
               <<"            value is the same as saying \"--coverage=save\".\n"
-              <<"    --dry-run\n"
+              <<"    --path-syntactic=no|function|all\n"
+              <<"            Determines whether the path sensistive syntactic clone detection should be computed from\n"
+              <<"            all instructions covered, instructions covered in the function scope or not at all.\n" 
+              <<"    --diry-run\n"
               <<"            Do not modify the database. This is really only useful with the --verbose switch in order to\n"
               <<"            re-run a test for debugging purposes.\n"
               <<"    --file=NAME\n"
@@ -1248,6 +1251,10 @@ main(int argc, char *argv[])
             opt.save_coverage = false;
         } else if (!strcmp(argv[argno], "--coverage=no") || !strcmp(argv[argno], "--no-coverage")) {
             opt.params.compute_coverage = opt.save_coverage = false;
+        } else if (!strcmp(argv[argno], "--path-syntactic") || !strcmp(argv[argno], "--path-syntactic=all")){
+          opt.params.path_syntactic = PATH_SYNTACTIC_ALL;
+        } else if (!strcmp(argv[argno], "--path-syntactic=function")){
+          opt.params.path_syntactic = PATH_SYNTACTIC_FUNCTION;
         } else if (!strcmp(argv[argno], "--dry-run")) {
             opt.dry_run = true;
         } else if (!strncmp(argv[argno], "--file=", 7)) {
@@ -1509,7 +1516,12 @@ main(int argc, char *argv[])
         // Create syntactic signature vector 
 
         std::vector<SgAsmx86Instruction*> insns;
-        insn_coverage.get_instructions(func_found->second, insns);
+
+        if ( opt.params.path_syntactic == PATH_SYNTACTIC_ALL ){
+          insn_coverage.get_instructions(interp, insns);
+        }else if(opt.params.path_syntactic == PATH_SYNTACTIC_FUNCTION ){
+          insn_coverage.get_instructions(func_found->second, insns);
+        }
 
         int syntactic_ninsns = insns.size(); 
 
