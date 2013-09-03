@@ -1,6 +1,6 @@
 # Non-recursive Makefile
 
-mAstMatching_BUILT_SOURCES=matcherparser.C
+mAstMatching_built_sources=matcherparser.C
 
 mAstMatching_la_sources=\
 	matcherparser.C \
