@@ -156,6 +156,7 @@ create table semantic_fio (
        instructions_executed integer,           -- number of instructions executed by this test
        ogroup_id bigint,                        -- output produced by this function, semantic_outputvalues.hashkey
        counts_b64 text,                         -- binary blob (not sure what), base64 encoded
+       syntactic_ninsns integer,                -- number of instructions covered by the syntactic signature
        instr_seq_b64 text,                      -- binary MD5 sum of vector, base64 encoded
        status integer references semantic_faults(id), -- exit status of the test
        elapsed_time double precision,           -- number of seconds elapsed excluding ptr analysis

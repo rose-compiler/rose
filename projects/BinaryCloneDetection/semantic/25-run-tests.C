@@ -1511,6 +1511,8 @@ main(int argc, char *argv[])
         std::vector<SgAsmx86Instruction*> insns;
         insn_coverage.get_instructions(func_found->second, insns);
 
+        int syntactic_ninsns = insns.size(); 
+
         createVectorsForAllInstructions( ogroup.get_signature_vector() , insns);
  
         std::vector<uint8_t> compressedCounts = compressVector(ogroup.get_signature_vector().getBase(), SignatureVector::Size);
@@ -1533,10 +1535,10 @@ main(int argc, char *argv[])
                                                        "globals_consumed, functions_consumed, pointers_consumed,"
                                                        // 7                8                      9          10
                                                        "integers_consumed, instructions_executed, ogroup_id,"
-                                                       "counts_b64, status,"
+                                                       "counts_b64, syntactic_ninsns, status,"
                                                        // 11          12        13
                                                        "elapsed_time, cpu_time, cmd)"
-                                                       " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                                                       " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         stmt->bind(0, work.func_id);
         stmt->bind(1, work.igroup_id);
         stmt->bind(2, igroup.queue(IQ_ARGUMENT).nconsumed());
@@ -1548,10 +1550,11 @@ main(int argc, char *argv[])
         stmt->bind(8, ogroup.get_ninsns());
         stmt->bind(9, ogroup_id);
         stmt->bind(10, StringUtility::encode_base64(&compressedCounts[0], compressedCounts.size()));
-        stmt->bind(11, ogroup.get_fault());
-        stmt->bind(12, elapsed_time);
-        stmt->bind(13, cpu_time);
-        stmt->bind(14, cmd_id);
+        stmt->bind(11, syntactic_ninsns);
+        stmt->bind(12, ogroup.get_fault());
+        stmt->bind(13, elapsed_time);
+        stmt->bind(14, cpu_time);
+        stmt->bind(15, cmd_id);
         stmt->execute();
         ++ntests_ran;
 
