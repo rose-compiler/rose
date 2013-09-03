@@ -1003,6 +1003,13 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                 // DQ (7/4/2013): Added default behavior to be C99 to make this consistant with EDG default 
                                 // behavior (changed to be C99 in March of 2013), (but we need to discuss this).
                                    file->set_C99_only(true);
+
+                                // DQ (9/3/2013): Set the default to use gnu99 when defaulting to C mode (this will be reset if the -std=c99 option is used).
+                                // However, it might be better still to check the backend compiler before we default to GNU.
+                                   file->set_C99_gnu_only(true);
+#if 0
+                                   printf ("In determineFileType(): Setting the default mode for detected C cile to C99 (specifically generated code will use: -std=gnu99 option) \n");
+#endif
                                  }
 
                            // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
@@ -3165,7 +3172,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
             //      -Wsurprising -Wunderflow -Wunused-labels -Wline-truncation -Werror -W
             // warnings = "-Wall -Wconversion -Waliasing -Wampersand -Wimplicit-interface -Wline-truncation -Wnonstd-intrinsics -Wsurprising -Wunderflow";
 
-            // If warnings are requested (on the comandline to ROSE translator) then we want to output all possible warnings by defaul (at leas for how)
+            // If warnings are requested (on the comandline to ROSE translator) then we want to output all possible warnings by defaul (at least for how)
 
             // Check if we are using GNU compiler backend (if so then we are using gfortran, though we have no test in place currently for what
             // version of gfortran (as we do for C and C++))

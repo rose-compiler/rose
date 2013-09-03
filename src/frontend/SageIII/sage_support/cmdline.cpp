@@ -1801,17 +1801,46 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // set_C99_only(false);
   // ROSE_ASSERT (get_C99_only() == false);
 
+  // DQ (9/3/2013): We need to seperate support for C99 rose option (which will default to -std=gnu99 for GNU backend compilers.
   // DQ (8/30/2013): We need to distinguish between -std=c99 and -std=gnu99 (see tests using asm command).
   // DQ (7/4/2013): Added support for -std=c99 and -std=gnu99 options to specify C99 behavior.
   // if ( CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",true) == true )
   // if ( (CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",true) == true) || (CommandlineProcessing::isOption(argv,"-std=","(c99|gnu99)",true) == true) )
-     if ( (CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",true) == true) || (CommandlineProcessing::isOption(argv,"-std=","(c99)",true) == true) )
+  // if ( (CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",true) == true) || (CommandlineProcessing::isOption(argv,"-std=","(c99)",true) == true) )
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
                printf ("C99 mode ON \n");
           set_C99_only(true);
 
+       // DQ (9/3/2013): I think we want to default to a GNU mode in this case.
        // DQ (8/30/2013): don't confuse this with -std=gnu99.
+       // set_C99_gnu_only(false);
+          set_C99_gnu_only(true);
+#if 0
+       // DQ (9/3/2013): Check the backend compiler and default to gnu99 for GNU and known GNU like compilers.
+       // However, this is too sensitive to the name of the backend compiler (which could be anything).
+          string backendCompilerSystem = BACKEND_C_COMPILER_NAME_WITHOUT_PATH;
+          if (backendCompilerSystem == "gcc" || backendCompilerSystem == "mpicc" || backendCompilerSystem == "mpicxx")
+             {
+               set_C99_gnu_only(true);
+             }
+#endif
+#if 0
+          printf ("In SgFile::processRoseCommandLineOptions(): get_C99_gnu_only() = %s \n",get_C99_gnu_only() ? "true" : "false");
+#endif
+       // DQ (7/31/2013): If we turn on C99, then turn off C89.
+          set_C89_only(false);
+        }
+
+  // DQ (9/3/2013): We need to support -std=c99 explicitly (makes a difference for asm test codes).
+     if ( CommandlineProcessing::isOption(argv,"-std=","(c99)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("C99 mode ON \n");
+          set_C99_only(true);
+
+       // Set gnu specific level of C99 support to false.
           set_C99_gnu_only(false);
 
        // DQ (7/31/2013): If we turn on C99, then turn off C89.
@@ -4314,12 +4343,17 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      {
        // compilerNameString = "gcc ";
           compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
-
+#if 0
+          printf ("In buildCompilerCommandLineOptions(): get_C99_only() = %s \n",get_C99_only() ? "true" : "false");
+#endif
        // DQ (6/4/2008): Added support to trigger use of C99 for older
        //                versions of GNU that don't use use C99 as the default.
           if (get_C99_only() == true)
              {
             // DQ (8/30/2013): We need to distinguish the usage of c99 vs gnu99.
+#if 0
+               printf ("In buildCompilerCommandLineOptions(): get_C99_gnu_only() = %s \n",get_C99_gnu_only() ? "true" : "false");
+#endif
             // compilerNameString.push_back("-std=gnu99");
                if (get_C99_gnu_only() == true)
                   {
