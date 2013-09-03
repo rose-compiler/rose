@@ -917,11 +917,11 @@ main(int argc, char *argv[])
         // Compute aggreged value for these two functions
         switch (opt.aggregation) {
           case AG_AVERAGE:
-            sim = output_sim.ave_semantic_sim;
+            sim = output_sim.ave_semantic_sim; break;
           case AG_MAXIMUM:
-            sim = output_sim.max_semantic_sim;
+            sim = output_sim.max_semantic_sim; break;
           case AG_MINIMUM:
-            sim = output_sim.min_semantic_sim;
+            sim = output_sim.min_semantic_sim; break;
           default:
             assert(!"not handled");
             abort();
