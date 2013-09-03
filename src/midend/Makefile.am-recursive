@@ -16,6 +16,7 @@ SUBDIRS = \
         abstractMemoryObject \
         astDiagnostics \
         astProcessing \
+        astMatching \
         astQuery \
         astRewriteMechanism \
         astUtil \

@@ -508,6 +508,8 @@ HEADER_TEMPLATE_PARAMETER_VALUE_EXPRESSION_START
        // DQ (11/28/2011): Added to support template declarations in the AST.
           SgName get_template_parameter_name() const;
 
+          SgType* get_type() const;
+
 HEADER_TEMPLATE_PARAMETER_VALUE_EXPRESSION_END
 
 
@@ -554,6 +556,22 @@ HEADER_FUNCTION_CALL_EXPRESSION_START
 
 HEADER_FUNCTION_CALL_EXPRESSION_END
 
+HEADER_TYPE_TRAIT_BUILTIN_OPERATOR_START
+
+       // DQ (7/13/2013): I have verified that we need implementations of these functions for the CFG support.
+       // DQ (7/12/2013): Not clear if we need these functions since the buildin functions are all pure and lack definitions.
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+       // DQ (7/12/2013): Not clear if we need these functions since the buildin functions are all pure.
+       // get lvalue
+       // virtual bool isLValue() const;
+       // virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
+HEADER_TYPE_TRAIT_BUILTIN_OPERATOR_END
 
 HEADER_ARROW_EXPRESSION_START
           SgType* get_type() const;
@@ -764,6 +782,18 @@ HEADER_SIZEOF_OPERATOR_START
 #endif
 
 HEADER_SIZEOF_OPERATOR_END
+
+
+HEADER_ALIGNOF_OPERATOR_START
+          int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+HEADER_ALIGNOF_OPERATOR_END
 
 
 HEADER_JAVA_INSTANCEOF_OPERATOR_START
@@ -1393,7 +1423,6 @@ HEADER_CUDA_KERNEL_EXEC_CONFIG_START
 HEADER_CUDA_KERNEL_EXEC_CONFIG_END
 
 HEADER_CUDA_KERNEL_CALL_EXPRESSION_START
-HEADER_LIST_DECLARATIONS
 HEADER_CUDA_KERNEL_CALL_EXPRESSION_END
 
 // #########################################################
@@ -1454,7 +1483,7 @@ SgExpression::get_qualified_name_prefix() const
   //    SgMemberFunctionRefExp
 
 #if 0
-     printf ("In get_qualified_name_prefix(): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In get_qualified_name_prefix(): search globalQualifiedNameMapForNames: this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
   // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
@@ -1468,13 +1497,13 @@ SgExpression::get_qualified_name_prefix() const
         {
           nameQualifier = i->second;
 #if 0
-          printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+          printf ("In SgExpression::get_qualified_name_prefix(): Found a valid name qualification: nameQualifier = %s \n",nameQualifier.str());
 #endif
         }
        else
         {
 #if 0
-          printf ("Could NOT find a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+          printf ("In SgExpression::get_qualified_name_prefix(): Could NOT find a valid name qualification: nameQualifier = %s \n",nameQualifier.str());
 #endif
         }
 
@@ -1482,13 +1511,28 @@ SgExpression::get_qualified_name_prefix() const
      printf ("nameQualifier for SgExpression = %p = %p = %s = %s \n",this,const_cast<SgExpression*>(this),class_name().c_str(),nameQualifier.str());
 #endif
 
+#if 0
+  // DQ (8/19/2013): Error checking on the globalTypeNameMap...check if there is an entry here that we might have wanted to use instead.
+     std::map<SgNode*,std::string>::iterator j = SgNode::get_globalTypeNameMap().find(const_cast<SgExpression*>(this));
+     if (j != SgNode::get_globalTypeNameMap().end())
+        {
+          SgName debug_nameQualifier = j->second;
+          printf ("In SgExpression::get_qualified_name_prefix(): Found a valid name qualification in the globalTypeNameMap: debug_nameQualifier = %s \n",debug_nameQualifier.str());
+        }
+#endif
+
      return nameQualifier;
    }
  
+
 SgName
 SgExpression::get_qualified_name_prefix_for_referenced_type() const
    {
   // DQ (6/2/2011): Added to support for new qualified name generation.
+
+#if 0
+     printf ("In get_qualified_name_prefix_for_referenced_type(): search globalQualifiedNameMapForNames: this = %p = %s \n",this,this->class_name().c_str());
+#endif
 
   // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
   // different and so it depends upon where the type is referenced.  Thus the qualified name is 
@@ -1499,10 +1543,28 @@ SgExpression::get_qualified_name_prefix_for_referenced_type() const
      if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
         {
           nameQualifier = i->second;
-       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+#if 0
+          printf ("In SgExpression::get_qualified_name_prefix_for_referenced_type(): Found a valid name qualification: nameQualifier = %s \n",nameQualifier.str());
+#endif
+        }
+       else
+        {
+#if 0
+          printf ("In SgExpression::get_qualified_name_prefix_for_referenced_type(): Could NOT find a valid name qualification: nameQualifier = %s \n",nameQualifier.str());
+#endif
         }
 
   // printf ("nameQualifier for SgExpression referenced type = %s = %s \n",class_name().c_str(),nameQualifier.str());
+
+#if 0
+  // DQ (8/19/2013): Error checking on the globalTypeNameMap...check if there is an entry here that we might have wanted to use instead.
+     std::map<SgNode*,std::string>::iterator j = SgNode::get_globalTypeNameMap().find(const_cast<SgExpression*>(this));
+     if (j != SgNode::get_globalTypeNameMap().end())
+        {
+          SgName debug_nameQualifier = j->second;
+          printf ("In SgExpression::get_qualified_name_prefix_for_referenced_type(): Found a valid name qualification in the globalTypeNameMap: debug_nameQualifier = %s \n",debug_nameQualifier.str());
+        }
+#endif
 
      return nameQualifier;
    }
@@ -3015,6 +3077,14 @@ SgTemplateParameterVal::get_template_parameter_name() const
      if (templateDeclaration == NULL)
         {
           printf ("Error: In SgTemplateParameterVal::get_template_parameter_name(): templateDeclaration == NULL: this = %p = %s \n",this,this->class_name().c_str());
+
+       // DQ (6/6/2013): If the template parameter is used as a template argument, then we just return a simple name.
+       // Nowever, maybe the constant should have been shared so that it would be correctly associated with a template declaration.
+          SgName name = "__template_parameter_used_as_template_argument__";
+#if 1
+          printf ("In SgTemplateParameterVal::get_template_parameter_name(): template_parameter_position = %d I think this is the case of a template parameter used as an argument to another template (see test2013_198.C) \n",template_parameter_position);
+#endif
+          return name;
         }
      ROSE_ASSERT(templateDeclaration != NULL);
 
@@ -3059,6 +3129,8 @@ SgTemplateParameterVal::get_template_parameter_name() const
           printf ("In SgTemplateParameterVal::get_template_parameter_name(): numberOfTemplateParameters  = %zu \n",numberOfTemplateParameters);
         }
 
+     printf ("In SgTemplateParameterVal::get_template_parameter_name(): getParameterNameFromTemplateParameterList = %s \n",getParameterNameFromTemplateParameterList ? "true" : "false");
+
      SgName name;
      if (getParameterNameFromTemplateParameterList == true)
         {
@@ -3095,10 +3167,24 @@ SgTemplateParameterVal::get_template_parameter_name() const
         {
        // This is not the favored case since i think it can be problematic to use template parameter names.
           name = get_valueString();
-          printf ("Using the string in the template parameteer value = %s \n",name.str());
+          printf ("In SgTemplateParameterVal::get_template_parameter_name(): Using the string in the template parameteer value = %s \n",name.str());
         }
 
+#if 1
+     printf ("In SgTemplateParameterVal::get_template_parameter_name(): Using the string in the template parameteer value = %s \n",name.str());
+#endif
+
      return name;
+   }
+
+SgType*
+SgTemplateParameterVal::get_type() const
+   {
+  // DQ (8/6/2013): The correct type is now saved explicitly so that it can be used to disambiguate 
+  // template functions overloaded on template parameters. See test2013_303.C for an example.
+     ROSE_ASSERT(this->get_valueType() != NULL);
+
+     return this->get_valueType();
    }
 
 
@@ -3298,6 +3384,39 @@ SgFunctionCallExp::get_type() const
    }
 
 SOURCE_FUNCTION_CALL_EXPRESSION_END
+
+// DQ (7/12/2013): Added support for type trait specific builtin functions.
+SOURCE_TYPE_TRAIT_BUILTIN_OPERATOR_START
+
+void
+SgTypeTraitBuiltinOperator::post_construction_initialization()
+   {
+  // SgCallExpression::post_construction_initialization();
+   }
+
+SgType*
+SgTypeTraitBuiltinOperator::get_type() const
+   {
+  // DQ (7/12/2013): These functions will almost always return a boolean type, but not always.
+
+     SgType* returnType = NULL;
+
+     if (get_name() == "__underlying_type")
+        {
+       // This returns an actual type and it is not clear now to handle this.
+          returnType = SgTypeDefault::createType();
+        }
+       else
+        {
+       // return boolean type.
+          returnType = SgTypeBool::createType();
+        }
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+SOURCE_TYPE_TRAIT_BUILTIN_OPERATOR_END
 
 
 SOURCE_ARROW_EXPRESSION_START
@@ -3806,6 +3925,45 @@ SgSizeOfOp::replace_expression (SgExpression *o, SgExpression *n)
 
 SOURCE_SIZE_OF_OPERATOR_EXPRESSION_END
 
+SOURCE_ALIGN_OF_OPERATOR_EXPRESSION_START
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // This function returns an unsigned integer representing the size of type 
+  // (the unsigned int should match size_t, which may or may not be defined).
+
+     ROSE_ASSERT(p_operand_expr != NULL || p_operand_type != NULL);
+     SgType* returnType = SgTypeUnsignedInt::createType();
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+// DQ (6/20/2013): Added alignment operator.
+int
+SgAlignOfOp::replace_expression (SgExpression *o, SgExpression *n)
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if (get_operand_expr() == o)
+        {
+          set_operand_expr(n);
+          return 1;
+        }
+       else
+        {
+          printf ("Warning: inside of SgAlignOfOp::replace_expression original SgExpression unidentified \n");
+          return 0;
+        }
+   } 
+
+SOURCE_ALIGN_OF_OPERATOR_EXPRESSION_END
+
 SOURCE_JAVA_INSTANCEOF_OPERATOR_EXPRESSION_START
 
 SgType*
@@ -4058,15 +4216,6 @@ SgPointerDerefExp::get_type() const
                break;
              }
 
-       // DQ (6/18/2007): The dereference of a function type is a function call so the type is it's return type (I think)
-          case V_SgFunctionType:
-             {
-               SgFunctionType* functionType = isSgFunctionType(someType);
-            // returnType = functionType->get_return_type();
-               returnType = functionType;
-               break;
-             }
-
        // DQ (12/30/2008): Added case to support EDG 4.0 (see test2001_03.C)
           case V_SgTypeString:
              {
@@ -4090,7 +4239,7 @@ SgPointerDerefExp::get_type() const
                break;
              }
 
-       // Liao, 8/28/2009      
+       // Liao, 8/28/2009
           case V_SgTypeFloat:
              {
             // DQ (8/17/2010): I think that this is the correct handling of the return value generation.
@@ -4116,7 +4265,31 @@ SgPointerDerefExp::get_type() const
                break;
              }
 
+       // DQ (5/25/2013): Added this for the case of the new EDG interface.
+       // DQ (6/18/2007): The dereference of a function type is a function call so the type is it's return type (I think)
+          case V_SgFunctionType:
+             {
+               SgFunctionType* functionType = isSgFunctionType(someType);
+            // returnType = functionType->get_return_type();
+               returnType = functionType;
+               break;
+             }
 
+       // DQ (5/25/2013): Added this for the case of the new EDG interface.
+          case V_SgClassType:
+             {
+               SgClassType* classType = isSgClassType(someType);
+               returnType = classType;
+               break;
+             }
+
+       // DQ (7/13/2013): Added this for the case of the new EDG interface.
+          case V_SgTypeVoid:
+             {
+               SgTypeVoid* voidType = isSgTypeVoid(someType);
+               returnType = voidType;
+               break;
+             }
 #if 0
        // DQ (10/3/2006): I think this is no longer required, since we fixed the case of sizeof taking an 
        // expression (not required to be an lvalue)!
@@ -6287,9 +6460,16 @@ SOURCE_DESIGNATED_INITIALIZER_START
 void
 SgDesignatedInitializer::post_construction_initialization() 
    {
+  // This should be a list of designators to handle the case of multi-deminsional array references.
+     ROSE_ASSERT(p_designatorList != NULL);
      p_designatorList->set_parent(this);
-     if (p_memberInit) // We want to support NULL p_memberInit when building this node
-       p_memberInit->set_parent(this);
+  // ROSE_ASSERT(p_designator != NULL);
+  // p_designator->set_parent(this);
+
+     if (p_memberInit != NULL) // We want to support NULL p_memberInit when building this node
+        {
+          p_memberInit->set_parent(this);
+        }
    }
 
 SgType*
@@ -6300,7 +6480,7 @@ SgDesignatedInitializer::get_type() const
    }
 
 int
-$CLASSNAME::replace_expression(SgExpression *o, SgExpression *n)
+SgDesignatedInitializer::replace_expression(SgExpression *o, SgExpression *n)
    {
   // DQ (12/17/2006): This function should have the semantics that it will represent a  
   // structural change to the AST, thus it is free to set the parent of the new expression.
@@ -6308,29 +6488,41 @@ $CLASSNAME::replace_expression(SgExpression *o, SgExpression *n)
      ROSE_ASSERT(o != NULL);
      ROSE_ASSERT(n != NULL);
 
-     if(get_memberInit()==o)
+     if (get_memberInit() == o)
         {
           ROSE_ASSERT (isSgInitializer(n));
           set_memberInit(isSgInitializer(n));
           n->set_parent(this);
+
+       // Return 1 to indicate sucess.
           return 1;
         }
-     else if (get_designatorList() == o)
+       else if (get_designatorList() == o)
         {
           ROSE_ASSERT (isSgExprListExp(n));
           set_designatorList(isSgExprListExp(n));
+       // set_designator(n);
           n->set_parent(this);
+
+       // Return 1 to indicate sucess.
           return 1;
         }
-     else
-        return 0;
+       else
+        {
+       // Return 0 to indicate failure to match original expression ("o").
+          return 0;
+        }
    }
 
 SgExpression*
-$CLASSNAME::get_next(int& n) const
+SgDesignatedInitializer::get_next(int& n) const
    {
+  // DQ (7/21/2013): This function should not be called and should be removed at some point.
+
+     printf ("This function should not be called and should be removed at some point \n");
      ROSE_ASSERT(false);
-   	// tps (12/9/2009) : MSC requires a return value
+
+  // tps (12/9/2009) : MSC requires a return value
      return NULL;
    }
 
@@ -6539,75 +6731,6 @@ SgCudaKernelCallExp::post_construction_initialization()
      // TODO : exec_config
    }
 
-void
-SgCudaKernelCallExp::append_arg(SgExpression* what)
-   {
-     assert(this != NULL);
+SgType * SgCudaKernelCallExp::get_type() const { return SgFunctionCallExp::get_type(); }
 
-  // DQ (11/15/2006): avoid setting newArgs this late in the process.
-     ROSE_ASSERT(p_args != NULL);
-     if (p_args == NULL)
-        {
-       // set_args(new SgExprListExp(this->get_file_info()));
-          SgExprListExp* newArgs = new SgExprListExp ( this->get_file_info() );
-          assert(newArgs != NULL);
-          newArgs->set_endOfConstruct( this->get_file_info() );
-          set_args(newArgs);
-        }
-
-    // insert_arg(p_args->end(),what);
-       p_args->append_expression(what);
-   }
-   
-SgType* SgCudaKernelCallExp::get_type() const
-   {
-	SgType* returnType = NULL;
-
-     ROSE_ASSERT(p_function != NULL);
-  // printf ("In SgFunctionCallExp::get_type(): calling get_type() on p_function = %p = %s \n",p_function,p_function->class_name().c_str());
-     SgType* likelyFunctionType = p_function->get_type();
-     ROSE_ASSERT(likelyFunctionType != NULL);
-     while (likelyFunctionType && isSgTypedefType(likelyFunctionType))
-        {
-          likelyFunctionType = isSgTypedefType(likelyFunctionType)->get_base_type();
-          ROSE_ASSERT(likelyFunctionType != NULL);
-        }
-
-     SgFunctionType* functionType = isSgFunctionType(likelyFunctionType);
-     if (functionType == NULL)
-        {
-          printf ("Error: unexpected type found for likelyFunctionType = %p = %s \n",likelyFunctionType,likelyFunctionType->class_name().c_str());
-       // get_file_info()->display("Location of call to SgFunctionCallExp::get_type(): debug");
-
-       // DQ (7/15/2007): Handle case of typedef of function type
-          likelyFunctionType = likelyFunctionType->stripType(SgType::STRIP_TYPEDEF_TYPE);
-
-          printf ("After calling stripType(SgType::STRIP_TYPEDEF_TYPE): likelyFunctionType = %p = %s \n",likelyFunctionType,likelyFunctionType->class_name().c_str());
-
-          functionType = isSgFunctionType(likelyFunctionType);
-
-#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
-       // DQ (12/31/2008): EDG version 4.0 has a simpler representation which translates a bit differently.
-       // I think this is an improvement to this functionality of this function.
-          if (functionType == NULL)
-               returnType = likelyFunctionType;
-#else
-          ROSE_ASSERT(functionType != NULL);
-#endif
-        }
-
-#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
-  // if not already set
-     if (returnType == NULL)
-          returnType = functionType->get_return_type();
-#else
-     ROSE_ASSERT(functionType != NULL);
-     returnType = functionType->get_return_type();
-#endif
-     ROSE_ASSERT(returnType != NULL);
-
-     return returnType;
-   }
-
-   
 SOURCE_CUDA_KERNEL_CALL_EXPRESSION_END

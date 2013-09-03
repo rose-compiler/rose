@@ -773,9 +773,7 @@ $(CXX_TESTCODES_REQUIRED_TO_PASS): ssaTestHarness
 
 check-local:
 	@$(MAKE) TEST_C
-if !ROSE_USE_EDG_VERSION_4
 	@$(MAKE) TEST_CXX
-endif
 	@echo "*********************************************************************************************************"
 	@echo "****** ROSE/projects/backstroke/ssa: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************"

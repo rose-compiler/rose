@@ -878,3 +878,13 @@ New smgit commands for any branch (including edg4x):
 
    Push:
       smgit push origin HEAD:refs/heads/dquinlan/dq-edg4x-rc
+
+Installing new compilers:
+   bash
+   source /nfs/casc/overture/ROSE/opt/rhel5/x86_64/boost/1_45_0/gcc/4.4.5/setup.sh
+
+Versions of boost can be found in: 
+    /nfs/casc/overture/ROSE/opt/rhel5/x86_64/boost/*
+and there associated versions of compilers in:
+    /nfs/casc/overture/ROSE/opt/rhel5/x86_64/boost/1_45_0/gcc/*
+

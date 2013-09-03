@@ -1,0 +1,27 @@
+Building aterm library:
+setenv CFLAGS "-m32 -fPIC"
+setenv LDFLAGS "-m32"
+configure --prefix=/home/dquinlan/bin/aterm-2.5-install-32bit
+make
+make check
+make install
+
+Building the sdf tools:
+configure --with-aterm=/home/dquinlan/bin/aterm-2.5-install-32bit --prefix=/home/dquinlan/bin/sdf2-bundle-2.4-install-32bit
+make install
+make check
+
+configure --with-aterm=/home/dquinlan/bin/aterm-2.5-install-32bit --with-sdf=/home/dquinlan/bin/sdf2-bundle-2.4-install-32bit --prefix=/home/dquinlan/bin/strategoxt-0.17-install-32bit
+make install
+make check
+
+
+
+
+
+
+
+
+
+
+

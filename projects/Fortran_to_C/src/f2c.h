@@ -2,6 +2,7 @@
 #define _FORTRANTOC_H
 
 #include "rose.h"
+#include <map>
 #include "sageBuilder.h"
 
 /*
@@ -56,11 +57,32 @@ namespace Fortran_to_C
     void translateFileName(SgFile*);
     void translateProgramHeaderStatement(SgProgramHeaderStatement*);
     void translateProcedureHeaderStatement(SgProcedureHeaderStatement*);
+    void updateVariableDeclarationList(SgVariableDeclaration*);
+    void translateAttributeSpecificationStatement(SgAttributeSpecificationStatement*);
+    void translateCommonBlock(SgCommonBlock*);
+    void translateFunctionParameterList(SgFunctionParameterList*, SgFunctionParameterList*, SgFunctionDefinition*);
+    void translateEquivalenceStatement(SgEquivalenceStatement*);
     void translateFortranDoLoop(SgFortranDo*);
     void fixFortranSymbolTable(SgNode*, bool);
+    std::string emulateParameterValue(SgExpression*, SgExpression**);
 
+    void translateArrayDeclaration(SgArrayType*);
+    void translateArraySubscript(SgPntrArrRefExp*);
     void linearizeArrayDeclaration(SgArrayType*);
     void linearizeArraySubscript(SgPntrArrRefExp*);
+  
+    void translateImplicitFunctionCallExp(SgFunctionCallExp*);
+    void translateExponentiationOp(SgExponentiationOp*);
+    void translateDoubleVal(SgFloatVal*);
+    void insertSystemHeader(const std::string&,SgScopeStatement*);
+    bool convertMathFunctionName(SgName, SgName*, SgType*);
+    bool isMaxMinFunctionName(SgName, SgType*);
+    void removeFortranMaxMinFunction(SgGlobal*);
+
+    SgType* translateType(SgType*);
+
+    SgExpression* getFortranDimensionSize(SgExpression*);
+    SgExpression* get0basedIndex(SgExpression*, SgExpression*);
 }
 
 #endif  //_FORTRANTOC_H

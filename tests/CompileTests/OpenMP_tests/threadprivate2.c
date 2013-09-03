@@ -18,4 +18,5 @@ int main(void)
     counter+=3;
 #pragma omp parallel
   printf("counter=%d\n",counter);
+  return 0;
 }

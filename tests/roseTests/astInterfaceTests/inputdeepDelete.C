@@ -15,13 +15,13 @@ typedef school sch;
 
 
 //test enum declaration
-enum DAY            
+enum DAY
 {
-    saturday,       
-    sunday,      
-    monday,         
+    saturday,
+    sunday,
+    monday,
     tuesday,
-    wednesday,      
+    wednesday,
     thursday,
     friday
 } workday;

@@ -551,6 +551,15 @@ typedef SgUnsignedCharList*                  SgUnsignedCharListPtr;
 typedef Rose_STL_Container<SgModuleStatement*> SgModuleStatementPtrList;
 typedef SgModuleStatementPtrList*              SgModuleStatementPtrListPtr;
 
+// TOO1 (5/16/2013)
+typedef Rose_STL_Container<SgJavaPackageStatement*> SgJavaPackageStatementPtrList;
+
+// DQ (6/12/2013): Added to support use in Java support (in SgSourceFile).
+typedef Rose_STL_Container<SgJavaImportStatement*> SgJavaImportStatementPtrList;
+
+// DQ (6/12/2013): Added to support use in Java support (in SgSourceFile).
+typedef Rose_STL_Container<SgClassDeclaration*> SgClassDeclarationPtrList;
+
 // DQ (10/4/2008): Support for list of names or rename entries for the SgUseStatement (Fortran 90 support)
 typedef Rose_STL_Container<SgRenamePair*> SgRenamePairPtrList;
 typedef SgRenamePairPtrList*              SgRenamePairPtrListPtr;
@@ -1790,6 +1799,13 @@ HEADER_START
        */
           static std::map<SgNode*,std::string> & get_globalQualifiedNameMapForNames();
 
+      /*! \brief Access function for name qualification support (for names).
+
+          This qualified name is stored with reference to where the name is used (as required) instead
+          of with the IR node of what is names (e.g. function declaration, variable declaration, etc.).
+       */
+          static void set_globalQualifiedNameMapForNames ( const std::map<SgNode*,std::string> & X );
+
       /*! \brief Access function for name qualification support (for type).
 
           This qualified name is stored with reference to where the type is used (as required) instead
@@ -1797,13 +1813,6 @@ HEADER_START
           type, variable type, etc.).
        */
           static std::map<SgNode*,std::string> & get_globalQualifiedNameMapForTypes();
-
-      /*! \brief Access function for name qualification support (for names).
-
-          This qualified name is stored with reference to where the name is used (as required) instead
-          of with the IR node of what is names (e.g. function declaration, variable declaration, etc.).
-       */
-          static void set_globalQualifiedNameMapForNames ( const std::map<SgNode*,std::string> & X );
 
       /*! \brief Access function for name qualification support (for type).
 

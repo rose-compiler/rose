@@ -1,8 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 
-if ROSE_USE_EDG_VERSION_4_3
-
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 test2012_01.C \
 test2012_02.C \
@@ -46,8 +44,6 @@ last.C
 
 # Note: last.C just simplifies the Makefile.am it
 # avoids common makefle errors in adding new files.
-
-endif
 
 # This is the long test of ROSE (takes a while!)
 TESTCODES_REQUIRED_TO_PASS = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS)

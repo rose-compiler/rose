@@ -19,5 +19,6 @@ int main(void)
       printf("Iteration %d, by thread %d\n", i, j);
     }
   }
+  return 0;
 }
 

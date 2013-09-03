@@ -75,7 +75,20 @@ class UnparseLanguageIndependentConstructs
           int num_stmt_in_block(SgBasicBlock*);
 
           std::string resBool(bool val) const;
+#if 0
+       // DQ (7/1/2013): This is the older code where the function definition was in the *.C file (now moved to the header file below).
           template<typename T> std::string tostring(T t) const;
+#else
+       // DQ (7/1/2013): This needs to be defined in the header file, else the GNU 4.5 and 4.6 compilers will have undefined references at link time.
+       // Note that the older GNU compilers have not had any problems with the previous version with the function definition in the *.C file.
+          template<typename T>
+          std::string tostring(T t) const
+             {
+               std::ostringstream myStream;                   // Creates an ostringstream object
+               myStream << std::showpoint << t << std::flush; // Distinguish integer and floating-point numbers
+               return myStream.str();                         // Returns the string form of the stringstream object
+             }
+#endif
           void curprint (const std::string & str) const;
           void printOutComments ( SgLocatedNode* locatedNode ) const;
 
@@ -357,6 +370,8 @@ class UnparseLanguageIndependentConstructs
           virtual PrecedenceSpecifier getPrecedence(SgExpression* exp);
           virtual AssociativitySpecifier getAssociativity(SgExpression* exp);
 
-};
+       // DQ (4/14/2013): Added to support the mixed use of both overloaded operator names and operator syntax.
+          bool isRequiredOperator( SgBinaryOp* binary_op, bool current_function_call_uses_operator_syntax, bool parent_function_call_uses_operator_syntax );
+   };
 
 #endif

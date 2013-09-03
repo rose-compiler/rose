@@ -143,6 +143,13 @@ SimpleInstrumentation::visit ( SgNode* astNode )
        // to be the same as that indicated by the parent (see ChangeLog for Spring 2005).
           func->set_scope(globalScope);
 
+       // DQ (6/15/2013): There should be a non-defining declaration (but we need to migrate this example to instead use the AST Builder API).
+       // ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
+          if (func->get_firstNondefiningDeclaration() == NULL)
+             {
+               printf ("WARNING: func->get_firstNondefiningDeclaration() == NULL for case of func = %p = %s (allowed for tutorial example transformations only) \n",func,func->class_name().c_str());
+             }
+
        // ********************************************************
        // Insert the function declaration in the code
        // *******************************************************

@@ -153,11 +153,14 @@ struct hash_nodeptr
  */
    // Liao 1/22/2008, used for get symbols for generating variable reference nodes
    // ! Find a variable symbol in current and ancestor scopes for a given name
-   SgVariableSymbol *lookupVariableSymbolInParentScopes (const SgName & name,
-                                                         SgScopeStatement *currentScope=NULL);
+   SgVariableSymbol *lookupVariableSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope=NULL);
+
+// DQ (8/21/2013): Modified to make newest function parameters be default arguments.
+// DQ (8/16/2013): For now we want to remove the use of default parameters and add the support for template parameters and template arguments.
    //! Find a symbol in current and ancestor scopes for a given variable name, starting from top of ScopeStack if currentscope is not given or NULL.
-   SgSymbol *lookupSymbolInParentScopes (const SgName & name,
-                                                         SgScopeStatement *currentScope=NULL);
+// SgSymbol *lookupSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope=NULL);
+// SgSymbol *lookupSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList);
+   SgSymbol *lookupSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope = NULL, SgTemplateParameterPtrList* templateParameterList = NULL, SgTemplateArgumentPtrList* templateArgumentList = NULL);
 
    // DQ (11/24/2007): Functions moved from the Fortran support so that they could be called from within astPostProcessing.
    //!look up the first matched function symbol in parent scopes given only a function name, starting from top of ScopeStack if currentscope is not given or NULL
@@ -170,10 +173,33 @@ struct hash_nodeptr
                                                          const SgType* t,
                                                          SgScopeStatement *currentScope=NULL);
 
+// DQ (8/21/2013): Modified to make newest function parameters be default arguments.
+// DQ (8/16/2013): For now we want to remove the use of default parameters and add the support for template parameters and template arguments.
 // DQ (5/7/2011): Added support for SgClassSymbol (used in name qualification support).
-   SgClassSymbol*     lookupClassSymbolInParentScopes    (const SgName & name, SgScopeStatement *currentScope = NULL);
+// SgClassSymbol*     lookupClassSymbolInParentScopes    (const SgName & name, SgScopeStatement *currentScope = NULL);
+   SgClassSymbol*     lookupClassSymbolInParentScopes    (const SgName & name, SgScopeStatement *currentScope = NULL, SgTemplateArgumentPtrList* templateArgumentList = NULL);
    SgTypedefSymbol*   lookupTypedefSymbolInParentScopes  (const SgName & name, SgScopeStatement *currentScope = NULL);
+
+#if 0
+ // DQ (8/13/2013): This function does not make since any more, now that we have make the symbol
+ // table handling more precise and we have to provide template parameters for any template lookup.
+ // We also have to know if we want to lookup template classes, template functions, or template 
+ // member functions (since each have specific requirements).
    SgTemplateSymbol*  lookupTemplateSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope = NULL);
+#endif
+#if 0
+// DQ (8/13/2013): I am not sure if we want this functions in place of lookupTemplateSymbolInParentScopes.
+// Where these are called we might not know enough information about the template parameters or function 
+// types, for example.
+   SgTemplateClassSymbol*           lookupTemplateClassSymbolInParentScopes          (const SgName & name, SgScopeStatement *currentScope = NULL, SgTemplateParameterPtrList* templateParameterList = NULL, SgTemplateArgumentPtrList* templateArgumentList = NULL);
+   SgTemplateFunctionSymbol*        lookupTemplateFunctionSymbolInParentScopes       (const SgName & name, SgScopeStatement *currentScope = NULL, SgTemplateParameterPtrList* templateParameterList = NULL);
+   SgTemplateMemberFunctionSymbol*  lookupTemplateMemberFunctionSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope = NULL, SgTemplateParameterPtrList* templateParameterList = NULL);
+#endif
+
+// DQ (8/21/2013): Modified to make some of the newest function parameters be default arguments.
+// DQ (8/13/2013): I am not sure if we want this functions in place of lookupTemplateSymbolInParentScopes.
+   SgTemplateClassSymbol* lookupTemplateClassSymbolInParentScopes (const SgName &  name, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList, SgScopeStatement *cscope = NULL);
+
    SgEnumSymbol*      lookupEnumSymbolInParentScopes     (const SgName & name, SgScopeStatement *currentScope = NULL);
    SgNamespaceSymbol* lookupNamespaceSymbolInParentScopes(const SgName & name, SgScopeStatement *currentScope = NULL);
 
@@ -216,9 +242,9 @@ struct hash_nodeptr
    // DQ (9/28/2005):
    void rebuildSymbolTable (SgScopeStatement * scope);
 
-   /*! \brief Clear those variable symbols (together with initialized names) which are not referenced by any variable references or declarations.
+   /*! \brief Clear those variable symbols with unknown type (together with initialized names) which are also not referenced by any variable references or declarations under root. If root is NULL, all symbols with unknown type will be deleted.
     */
-   void clearUnusedVariableSymbols ();
+   void clearUnusedVariableSymbols (SgNode* root = NULL);
 
    // DQ (3/1/2009):
    //! All the symbol table references in the copied AST need to be reset after rebuilding the copied scope's symbol table.
@@ -331,6 +357,8 @@ struct hash_nodeptr
 
    //! Check if a SgNode is a declaration for a structure
    bool isStructDeclaration(SgNode * node);
+   //! Check if a SgNode is a declaration for a union
+   bool isUnionDeclaration(SgNode * node);
  #if 0
  // DQ (8/28/2005): This is already a member function of the SgFunctionDeclaration
  // (so that it can handle template functions and member functions)
@@ -521,6 +549,20 @@ void dumpInfo(SgNode* node, std::string desc="");
 //! Reorder a list of declaration statements based on their appearance order in source files
 std::vector<SgDeclarationStatement*>
 sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStatement*>& nodevec);
+
+// DQ (4/13/2013): We need these to support the unparing of operators defined by operator syntax or member function names.
+//! Is an overloaded operator a prefix operator (e.g. address operator X * operator&(), dereference operator X & operator*(), unary plus operator X & operator+(), etc.
+// bool isPrefixOperator( const SgMemberFunctionRefExp* memberFunctionRefExp );
+bool isPrefixOperator( SgExpression* exp );
+
+//! Check for proper names of possible prefix operators (used in isPrefixOperator()). 
+bool isPrefixOperatorName( const SgName & functionName );
+
+//! Is an overloaded operator a postfix operator. (e.g. ).
+bool isPostfixOperator( SgExpression* exp );
+
+//! Is an overloaded operator an index operator (also refereded to as call or subscript operators). (e.g. X & operator()() or X & operator[]()).
+bool isIndexOperator( SgExpression* exp );
 
 //@}
 
@@ -1093,6 +1135,7 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
   template <typename T>
   T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
   {
+    bool found = false;
     if (!root) return 0;
     T* decl = dynamic_cast<T*>(root);
     if (decl!=NULL)
@@ -1101,14 +1144,29 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
       {
         if ((decl->get_scope() == scope)&&
             (decl->search_for_symbol_from_symbol_table()->get_name()==name))
-          return decl;
+        { 
+          found = true;
+        }
       }
       else // Liao 2/9/2010. We should allow NULL scope
       {
         if(decl->search_for_symbol_from_symbol_table()->get_name()==name)
-          return decl;
+        {
+          found = true;
+       }
       }
     }
+
+   if (found)
+   {
+     if (isDefining)
+     {
+       ROSE_ASSERT (decl->get_definingDeclaration() != NULL);
+       return dynamic_cast<T*> (decl->get_definingDeclaration()); 
+     }
+     else 
+       return decl;
+   }
 
     std::vector<SgNode*> children = root->get_traversalSuccessorContainer();
     for (std::vector<SgNode*>::const_iterator i = children.begin();
@@ -1789,6 +1847,12 @@ SgBasicBlock* ensureBasicBlockAsBodyOfDoWhile(SgDoWhileStmt* ws);
 //! Check if the body of a 'switch' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsBodyOfSwitch(SgSwitchStatement* ws);
 
+//! Check if the body of a 'case option' statement is a SgBasicBlock, create one if not.
+SgBasicBlock* ensureBasicBlockAsBodyOfCaseOption(SgCaseOptionStmt* cs);
+
+//! Check if the body of a 'default option' statement is a SgBasicBlock, create one if not.
+SgBasicBlock* ensureBasicBlockAsBodyOfDefaultOption(SgDefaultOptionStmt * cs);
+    
 //! Check if the true body of a 'if' statement is a SgBasicBlock, create one if not.
 SgBasicBlock* ensureBasicBlockAsTrueBodyOfIf(SgIfStmt* ifs);
 
@@ -2146,7 +2210,28 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
 
 // DQ (1/23/2013): Added support for generated a set of source sequence entries.
    std::set<unsigned int> collectSourceSequenceNumbers( SgNode* astNode );
-
+      
+//--------------------------------Type Traits (C++)---------------------------
+      bool HasNoThrowAssign(const SgType * const inputType);
+      bool HasNoThrowCopy(const SgType * const inputType);
+      bool HasNoThrowConstructor(const SgType * const inputType);
+      bool HasTrivialAssign(const SgType * const inputType);
+      bool HasTrivialCopy(const SgType * const inputType);
+      bool HasTrivialConstructor(const SgType * const inputType);
+      bool HasTrivialDestructor(const SgType * const inputType);
+      bool HasVirtualDestructor(const SgType * const inputType);
+      bool IsBaseOf(const SgType * const inputBaseType, const SgType * const inputDerivedType);
+      bool IsAbstract(const SgType * const inputType);
+      bool IsClass(const SgType * const inputType);
+      bool IsEmpty(const SgType * const inputType);
+      bool IsEnum(const SgType * const inputType);
+      bool IsPod(const SgType * const inputType);
+      bool IsPolymorphic(const SgType * const inputType);
+      bool IsStandardLayout(const SgType * const inputType);
+      bool IsLiteralType(const SgType * const inputType);
+      bool IsTrivial(const SgType * const inputType);
+      bool IsUnion(const SgType * const inputType);
+      SgType *  UnderlyingType(SgType *type);
 }// end of namespace
 
 #endif

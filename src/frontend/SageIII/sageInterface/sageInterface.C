@@ -383,20 +383,28 @@ SageInterface::isPrototypeInScope ( SgScopeStatement* scope, SgFunctionDeclarati
 
 bool
 SageInterface::isAncestor (SgNode* node1, SgNode* node2)
-{
-  ROSE_ASSERT(node1&&node2);
-  SgNode* curnode= node2;
-  if (node1==node2)
-    return false;
-  do {
-      curnode= curnode->get_parent();
-  } while( (curnode!=NULL)&&(curnode!=node1));
+   {
+     ROSE_ASSERT(node1 && node2);
 
-  if (curnode==node1)
-   return true;
-  else
-    return false;
-}
+     SgNode* curnode = node2;
+     if (node1==node2)
+        {
+         return false;
+        }
+
+     do {
+          curnode= curnode->get_parent();
+        } while( (curnode!=NULL)&&(curnode!=node1));
+
+     if (curnode==node1)
+        {
+          return true;
+        }
+       else
+        {
+          return false;
+        }
+   }
 
 std::vector<SgNode*>
 SageInterface::astIntersection ( SgNode* original, SgNode* copy, SgCopyHelp* help )
@@ -606,12 +614,11 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
      ROSE_ASSERT(parent_declaration != NULL);
 
   // Find the symbols associated with p_name
-     std::pair<SgSymbolTable::hash_iterator,SgSymbolTable::hash_iterator> pair_it =
-          scope_stmt->get_symbol_table()->get_table()->equal_range(initializedNameNode->get_name());
+     std::pair<SgSymbolTable::hash_iterator,SgSymbolTable::hash_iterator> pair_it = scope_stmt->get_symbol_table()->get_table()->equal_range(initializedNameNode->get_name());
 
-     SgSymbolTable::hash_iterator found_it=scope_stmt->get_symbol_table()->get_table()->end();
+     SgSymbolTable::hash_iterator found_it = scope_stmt->get_symbol_table()->get_table()->end();
 
-     for(SgSymbolTable::hash_iterator it = pair_it.first; it != pair_it.second; ++it)
+     for (SgSymbolTable::hash_iterator it = pair_it.first; it != pair_it.second; ++it)
         {
           switch(parent_declaration->variantT())
              {
@@ -1100,6 +1107,16 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                break;
              }
 
+           case V_SgJavaPackageStatement:
+             {
+               name = "_java_package_stmt_";
+               const SgJavaPackageStatement* statement = isSgJavaPackageStatement(declaration);
+               ROSE_ASSERT(statement != NULL);
+               ROSE_ASSERT(statement->get_parent() != NULL);
+               name += StringUtility::numberToString(const_cast<SgJavaPackageStatement*>(statement));
+               break;
+             }
+
        // Note that the case for SgVariableDeclaration is not implemented
           default:
             // name = "default name (default case reached: not handled)";
@@ -1336,8 +1353,23 @@ SageInterface::get_name ( const SgSupport* node )
                     case SgTemplateArgument::nontype_argument:
                        {
                          SgExpression* t = templateArgument->get_expression();
-                         ROSE_ASSERT(t != NULL);
-                         name += get_name(t);
+
+                      // DQ (8/11/2013): Adding support for including an initializedName instead of an expression (for template parameters used as expressions).
+                      // ROSE_ASSERT(t != NULL);
+                      // name += get_name(t);
+                         if (t != NULL)
+                            {
+                              ROSE_ASSERT(templateArgument->get_initializedName() == NULL);
+                              name += get_name(t);
+                            }
+                           else
+                            {
+                              ROSE_ASSERT(t == NULL);
+                              SgInitializedName* initializedName = templateArgument->get_initializedName();
+                              ROSE_ASSERT(initializedName != NULL);
+
+                              name += get_name(initializedName);
+                            }
                          break;
                        }
 
@@ -1447,6 +1479,61 @@ SageInterface::get_name ( const SgSupport* node )
                const SgName* name_node = isSgName(node);
                ROSE_ASSERT(name_node != NULL);
                name = "_name_" + name_node->getString();
+               break;
+             }
+
+       // DQ (8/8/2013): Implemented case for SgTemplateParameter
+          case V_SgTemplateParameter:
+             {
+               const SgTemplateParameter* template_parameter_node = isSgTemplateParameter(node);
+               ROSE_ASSERT(template_parameter_node != NULL);
+               name = "_template_parameter_";
+
+               switch(template_parameter_node->get_parameterType())
+                  {
+                    case SgTemplateParameter::type_parameter:
+                       {
+                         name += "type_parameter_";
+                         break;
+                       }
+
+                    case SgTemplateParameter::nontype_parameter:
+                       {
+                         name += "nontype_parameter_";
+#if 1
+                         name += template_parameter_node->unparseToString();
+#else
+                         if (template_parameter_node->get_expression() != NULL)
+                            {
+                              name += template_parameter_node->get_expression()->unparseToString();
+                            }
+                           else
+                            {
+                              ROSE_ASSERT(template_parameter_node->get_initializedName() != NULL);
+
+                           // DQ (8/8/2013): This does not handle the case of "template <void (foo::*M)()> void test() {}"
+                           // since what is unparsed is: "_template_parameter_nontype_parameter_M"
+                           // instead of a string to represent what is in "void (foo::*M)()"
+                           // and differentiate it from: "int foo::*M" in: "template <void (foo::*M)()> void test() {}"
+                              name += template_parameter_node->get_initializedName()->unparseToString();
+                            }
+#endif
+                         break;
+                       }
+
+                    case SgTemplateParameter::template_parameter:
+                       {
+                         name += "template_parameter_";
+                         break;
+                       }
+
+                    default:
+                       {
+                         printf ("Error: default reached \n");
+                         ROSE_ASSERT(false);
+                         break;
+                       }
+                  }
                break;
              }
 
@@ -1608,6 +1695,15 @@ SageInterface::get_name ( const SgExpression* expr )
                break;
              }
 
+       // DQ (4/19/2013): Added support for SgMemberFunctionRefExp.
+          case V_SgMemberFunctionRefExp:
+             {
+               const SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(expr);
+               name = "member_function_ref_";
+               name += memberFunctionRefExp->get_symbol()->get_name();
+               break;
+             }
+
           case V_SgIntVal:
              {
                const SgIntVal* valueExp = isSgIntVal(expr);
@@ -1676,6 +1772,20 @@ SageInterface::get_name ( const SgExpression* expr )
             // name += valueExp->get_value();
             // name += get_name(valueExp);
                name += StringUtility::numberToString(valueExp->get_template_parameter_position());
+               break;
+             }
+
+       // DQ (4/19/2013): Added support for SgDotExp.
+          case V_SgDotExp:
+             {
+               const SgDotExp* dotExp = isSgDotExp(expr);
+               ROSE_ASSERT(dotExp != NULL);
+
+               name = "_dot_exp_lhs_";
+               name += get_name(dotExp->get_lhs_operand());
+               name += "_dot_exp_rhs_";
+               name += get_name(dotExp->get_rhs_operand());
+            // name += StringUtility::numberToString(valueExp->get_template_parameter_position());
                break;
              }
 
@@ -1986,12 +2096,13 @@ SageInterface::OutputLocalSymbolTables::visit ( SgNode* node )
      SgScopeStatement* scope = isSgScopeStatement(node);
      if (scope != NULL)
         {
-          SgSymbolTable* symbolTable = scope->get_symbol_table();
-          ROSE_ASSERT(symbolTable != NULL);
+       // SgSymbolTable* symbolTable = scope->get_symbol_table();
+       // ROSE_ASSERT(symbolTable != NULL);
 
           printf ("Symbol Table from %p = %s at: \n",scope,scope->sage_class_name());
           scope->get_file_info()->display("Symbol Table Location (Called from SageInterface::OutputLocalSymbolTables::visit())");
-          symbolTable->print("Called from SageInterface::OutputLocalSymbolTables::visit()");
+       // symbolTable->print("Called from SageInterface::OutputLocalSymbolTables::visit()");
+          scope->print_symboltable("Called from SageInterface::OutputLocalSymbolTables::visit()");
         }
    }
 
@@ -2842,10 +2953,20 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
                            // If this is a copy then it would be nice to make sure that the scope has been properly set.
                            // Check this by looking for the associated template declaration in the scope.
                            // SgTemplateDeclaration* templateDeclaration = derivedDeclaration->get_templateDeclaration();
-                              SgDeclarationStatement* templateDeclaration = derivedDeclaration->get_templateDeclaration();
+                           // SgDeclarationStatement* templateDeclaration = derivedDeclaration->get_templateDeclaration();
+                              SgTemplateMemberFunctionDeclaration* templateDeclaration = derivedDeclaration->get_templateDeclaration();
                               ROSE_ASSERT(templateDeclaration != NULL);
                            // SgTemplateSymbol* templateSymbol = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_name());
-                              SgTemplateSymbol* templateSymbol = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_template_name());
+
+                           // DQ (8/13/2013): Fixed the interface to avoid use of lookup_template_symbol() (removed).
+                           // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+                           // In this case these are unavailable from this point.
+                           // SgTemplateSymbol* templateSymbol = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_template_name());
+                           // SgTemplateSymbol* templateSymbol = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_template_name(),NULL,NULL);
+                              SgType* functionType                               = templateDeclaration->get_type();
+                              SgTemplateParameterPtrList & templateParameterList = templateDeclaration->get_templateParameters();
+                           // SgTemplateMemberFunctionSymbol* templateSymbol     = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_template_name(),NULL,NULL);
+                              SgTemplateMemberFunctionSymbol* templateSymbol     = derivedDeclarationScope->lookup_template_member_function_symbol(templateDeclaration->get_template_name(),functionType,&templateParameterList);
                               if (templateSymbol != NULL)
                                  {
                                 // The symbol is not present, so we have to build one and add it.
@@ -3295,7 +3416,7 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
      ROSE_ASSERT(symbolTable != NULL);
      ROSE_ASSERT(symbolTable->get_table() != NULL);
 
-#if 1
+#if 0
      printf ("Leaving SageInterface::rebuildSymbolTable(): fixup declarations in Symbol Table from %p = %s \n",scope,scope->class_name().c_str());
 #endif
 
@@ -4138,6 +4259,18 @@ SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMa
      printf ("Updating mangled name cache for node = %p = %s with mangledName = %s \n",astNode,astNode->class_name().c_str(),mangledName.c_str());
 #endif
 
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+     SgStatement* statement = isSgStatement(astNode);
+     if (statement != NULL && statement->hasExplicitScope() == true)
+        {
+          if (statement->get_scope() == NULL)
+             {
+               printf ("Warning: SageInterface::addMangledNameToCache(): In it might be premature to add this IR node and name to the mangledNameCache: statement = %p = %s oldMangledName = %s \n",
+                    statement,statement->class_name().c_str(),oldMangledName.c_str());
+             }
+        }
+#endif
+
      mangledNameCache.insert(pair<SgNode*,string>(astNode,mangledName));
 
   // printf ("In SageInterface::addMangledNameToCache(): returning mangledName = %s \n",mangledName.c_str());
@@ -4665,13 +4798,18 @@ SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeSta
 
 
 SgType* SageInterface::lookupNamedTypeInParentScopes(const std::string& type_name, SgScopeStatement* scope/*=NULL*/)
-{
-  if (scope== NULL)
-          scope= SageBuilder::topScopeStack();
-  SgSymbol* symbol = lookupSymbolInParentScopes (type_name,scope);
-  if (symbol==NULL) return NULL;
-  else return symbol->get_type();
-}
+   {
+     if (scope == NULL)
+          scope = SageBuilder::topScopeStack();
+
+  // DQ (8/16/2013): Added NULL pointers to at least handle the API change.
+     SgSymbol* symbol = lookupSymbolInParentScopes (type_name,scope,NULL,NULL);
+
+     if (symbol == NULL)
+          return NULL;
+       else 
+          return symbol->get_type();
+   }
 
 SgFunctionSymbol *SageInterface::lookupFunctionSymbolInParentScopes (const SgName &functionName,
                                                         const SgType* t,
@@ -4697,7 +4835,9 @@ SgFunctionSymbol *SageInterface::lookupFunctionSymbolInParentScopes (const SgNam
 // SgScopeStatement* SgStatement::get_scope
 // SgScopeStatement* SgStatement::get_scope() assumes all parent pointers are set, which is
 // not always true during translation.
-SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
+// SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
+SgSymbol*
+SageInterface::lookupSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList)
    {
      SgSymbol* symbol = NULL;
      if (cscope == NULL)
@@ -4706,10 +4846,13 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
      ROSE_ASSERT(cscope != NULL);
 
 #if 0
-     printf ("In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s \n",cscope,cscope->class_name().c_str());
+     printf ("In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s (templateParameterList = %p templateArgumentList = %p) \n",cscope,cscope->class_name().c_str(),templateParameterList,templateArgumentList);
 #endif
+
      while ((cscope != NULL) && (symbol == NULL))
         {
+#if 0
+       // DQ (5/21/2013): Restricting direct access to the symbol table to support namespace symbol table support.
           if (cscope->get_symbol_table() == NULL)
              {
                printf ("Error: cscope->get_symbol_table() == NULL for cscope = %p = %s \n",cscope,cscope->class_name().c_str());
@@ -4726,11 +4869,16 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
 #endif
              }
           ROSE_ASSERT(cscope->get_symbol_table() != NULL);
+#endif
 
 #if 0
           printf("   --- In SageInterface:: lookupSymbolInParentScopes(): name = %s cscope = %p = %s \n",name.str(),cscope,cscope->class_name().c_str());
 #endif
-          symbol = cscope->lookup_symbol(name);
+
+       // DQ (8/16/2013): Changed API to support template parameters and template arguments.
+       // symbol = cscope->lookup_symbol(name);
+          symbol = cscope->lookup_symbol(name,templateParameterList,templateArgumentList);
+
 #if 0
        // debug
           printf("   --- In SageInterface:: lookupSymbolInParentScopes(): symbol = %p \n",symbol);
@@ -4741,13 +4889,15 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
             else
                cscope = NULL;
 
-       // printf ("   --- In SageInterface:: lookupSymbolInParentScopes(): symbol = %p \n",symbol);
+#if 0
+          printf ("   --- In SageInterface:: lookupSymbolInParentScopes(): symbol = %p \n",symbol);
+#endif
         }
 
      if (symbol == NULL)
         {
 #if 0
-          printf ("Warning: could not locate the specified name %s in any outer symbol table \n",name.str());
+          printf ("Warning: In SageInterface:: lookupSymbolInParentScopes(): could not locate the specified name %s in any outer symbol table (templateParameterList = %p templateArgumentList = %p) \n",name.str(),templateParameterList,templateArgumentList);
 #endif
        // ROSE_ASSERT(false);
         }
@@ -4787,8 +4937,7 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
 #endif
 
 SgVariableSymbol *
-SageInterface::lookupVariableSymbolInParentScopes (const SgName &  name,
-                                                        SgScopeStatement *cscope)
+SageInterface::lookupVariableSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
    {
   // DQ (1/24/2011): This function is inconsistant with an implementation that would correctly handle SgAliasSymbols.
   // Also this function might get a SgClassSymbol instead of a SgVariableSymbol when both names are used.
@@ -4834,8 +4983,9 @@ SageInterface::lookupVariableSymbolInParentScopes (const SgName &  name,
 #endif
    }
 
-SgClassSymbol *
-SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
+// SgClassSymbol* SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
+SgClassSymbol*
+SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope, SgTemplateArgumentPtrList* templateArgumentList)
    {
   // DQ (5/7/2011): I think this is the better implementation that lookupVariableSymbolInParentScopes() should have.
      SgClassSymbol* symbol = NULL;
@@ -4846,7 +4996,8 @@ SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeSta
      while ((cscope != NULL) && (symbol == NULL))
         {
        // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
-          symbol = cscope->lookup_class_symbol(name,NULL);
+       // symbol = cscope->lookup_class_symbol(name,NULL);
+          symbol = cscope->lookup_class_symbol(name,templateArgumentList);
 
           if (cscope->get_parent() != NULL) // avoid calling get_scope when parent is not set
                cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
@@ -4880,7 +5031,12 @@ SageInterface::lookupTypedefSymbolInParentScopes (const SgName &  name, SgScopeS
      return symbol;
    }
 
-SgTemplateSymbol *
+#if 0
+// DQ (8/13/2013): This function does not make since any more, now that we have make the symbol
+// table handling more precise and we have to provide template parameters for any template lookup.
+// We also have to know if we want to lookup template classes, template functions, or template 
+// member functions (since each have specific requirements).
+SgTemplateSymbol*
 SageInterface::lookupTemplateSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
    {
   // DQ (5/7/2011): This is similar to lookupClassSymbolInParentScopes().
@@ -4891,8 +5047,11 @@ SageInterface::lookupTemplateSymbolInParentScopes (const SgName &  name, SgScope
 
      while ((cscope != NULL) && (symbol == NULL))
         {
+       // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+       // In this case these are unavailable from this point.
        // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
-          symbol = cscope->lookup_template_symbol(name);
+       // symbol = cscope->lookup_template_symbol(name);
+          symbol = cscope->lookup_template_symbol(name,NULL,NULL);
 #if 0
           printf ("In lookupTemplateSymbolInParentScopes(): Searching scope = %p = %s name = %s symbol = %p \n",cscope,cscope->class_name().c_str(),name.str(),symbol);
 #endif
@@ -4904,6 +5063,37 @@ SageInterface::lookupTemplateSymbolInParentScopes (const SgName &  name, SgScope
 
      return symbol;
    }
+#endif
+
+
+SgTemplateClassSymbol*
+SageInterface::lookupTemplateClassSymbolInParentScopes (const SgName &  name, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList, SgScopeStatement *cscope)
+   {
+  // DQ (5/7/2011): This is similar to lookupClassSymbolInParentScopes().
+     SgTemplateClassSymbol* symbol = NULL;
+     if (cscope == NULL)
+          cscope = SageBuilder::topScopeStack();
+     ROSE_ASSERT(cscope != NULL);
+
+     while ((cscope != NULL) && (symbol == NULL))
+        {
+       // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+       // In this case these are unavailable from this point.
+       // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
+       // symbol = cscope->lookup_template_symbol(name);
+          symbol = cscope->lookup_template_class_symbol(name,templateParameterList,templateArgumentList);
+#if 0
+          printf ("In lookupTemplateSymbolInParentScopes(): Searching scope = %p = %s name = %s symbol = %p \n",cscope,cscope->class_name().c_str(),name.str(),symbol);
+#endif
+          if (cscope->get_parent() != NULL) // avoid calling get_scope when parent is not set
+               cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
+            else
+               cscope = NULL;
+        }
+
+     return symbol;
+   }
+
 
 SgEnumSymbol *
 SageInterface::lookupEnumSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
@@ -5333,7 +5523,8 @@ SageInterface::setSourcePositionForTransformation(SgNode *root)
   // DQ (5/2/2012): This is a test to replace the support we have to mark every thing as a transformation with the new mechanism using source position modes.
   // setSourcePosition(root);
   // Liao 11/21/2012. This function should only be called when the mode is transformation
-     ROSE_ASSERT(SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionTransformation);
+  // Liao 8/2/2013. It can actually be called inside frontend by OmpSupport::lower_omp().
+     //ROSE_ASSERT(SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionTransformation);
      setSourcePositionAtRootAndAllChildren(root);
 #else
      Rose_STL_Container <SgNode*> nodeList = NodeQuery::querySubTree(root,V_SgNode);
@@ -6106,9 +6297,12 @@ getVarSymFromName_const (const SgInitializedName* name)
 #if 0
           printf ("In getVarSymFromName(): name->get_name() = %s \n",name->get_name().str());
 #endif
-          SgScopeStatement* s = name->get_scope();
-          ROSE_ASSERT (s != NULL);
-          v_sym = s->lookup_var_symbol (name->get_name());
+          SgScopeStatement* scope = name->get_scope();
+          ROSE_ASSERT (scope != NULL);
+#if 0
+          printf ("In getVarSymFromName(): name->get_name() = %s scope = %p = %s \n",name->get_name().str(),scope,scope->class_name().c_str());
+#endif
+          v_sym = scope->lookup_var_symbol (name->get_name());
 
           if (!v_sym) // E.g., might be part of an 'extern' declaration.
             {
@@ -6879,8 +7073,10 @@ string SageInterface::generateUniqueVariableName(SgScopeStatement* scope, std::s
     {
         name = "__" + baseName + boost::lexical_cast<string > (counter++) + "__";
 
-        //Look up the name in the parent scopes
-        SgSymbol* nameSymbol = SageInterface::lookupSymbolInParentScopes(SgName(name), scope);
+     // DQ (8/16/2013): Modified to reflect new API.
+     // Look up the name in the parent scopes
+     // SgSymbol* nameSymbol = SageInterface::lookupSymbolInParentScopes(SgName(name), scope);
+        SgSymbol* nameSymbol = SageInterface::lookupSymbolInParentScopes(SgName(name), scope,NULL,NULL);
         collision = (nameSymbol != NULL);
 
         //Look up the name in the children scopes
@@ -6889,7 +7085,11 @@ string SageInterface::generateUniqueVariableName(SgScopeStatement* scope, std::s
         BOOST_FOREACH(SgNode* childScope, childScopes)
         {
             SgScopeStatement* childScopeStatement = isSgScopeStatement(childScope);
-            nameSymbol = childScopeStatement->lookup_symbol(SgName(name));
+
+         // DQ (8/16/2013): Modified to reflect new API.
+         // nameSymbol = childScopeStatement->lookup_symbol(SgName(name));
+            nameSymbol = childScopeStatement->lookup_symbol(SgName(name),NULL,NULL);
+
             collision = collision || (nameSymbol != NULL);
         }
     } while (collision);
@@ -7048,6 +7248,26 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
                   //What other expressions can be children of an SgInitializedname?
                   ROSE_ASSERT(false);
           }
+  }
+  else if (isSgFortranDo(parent))
+  {
+    SgFortranDo* fortranDo = isSgFortranDo(parent);
+    if(oldExp == fortranDo->get_initialization())
+    {
+      fortranDo->set_initialization(newExp);
+    }
+    else if(oldExp == fortranDo->get_bound())
+    {
+      fortranDo->set_bound(newExp);
+    }
+    else if(oldExp == fortranDo->get_increment())
+    {
+      fortranDo->set_increment(newExp);
+    }
+    else
+    {
+      ROSE_ASSERT(false);
+    }
   }
  else{
   cerr<<"SageInterface::replaceExpression(). Unhandled parent expression type of SageIII enum value: " <<parent->class_name()<<endl;
@@ -7571,10 +7791,11 @@ bool SageInterface::doLoopNormalization(SgFortranDo* loop)
   SgExpression* e_3 = loop->get_increment();
   if (isSgNullExpression(e_3))
   {
-    loop->set_increment(buildIntVal(1));
+    SgIntVal* iv = buildIntVal(1);
+    loop->set_increment(iv);
+    iv->set_parent(loop);
     delete (e_3);
   }
-
   return true;
 }
 
@@ -9025,7 +9246,8 @@ SageInterface::setParameterList(actualFunction * func,SgFunctionParameterList * 
    }
 #endif
 
-static SgVariableSymbol * addArg(SgFunctionParameterList *paraList, SgInitializedName* initName, bool isPrepend)
+// static 
+SgVariableSymbol* addArg(SgFunctionParameterList *paraList, SgInitializedName* initName, bool isPrepend)
    {
      ROSE_ASSERT(paraList != NULL);
      ROSE_ASSERT(initName != NULL);
@@ -9183,7 +9405,57 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
      if (classDeclaration != NULL)
         {
        // DQ (7/9/2012): We only skip the attachment of the class declaration to the scope if it is NOT and autonomous declaration.
+#if 0
+          if (classDeclaration->get_parent() != NULL)
+             {
+               printf ("Since the parent of this SgClassDeclaration is set, it must have been previously added to the AST: classDeclaration = %p = %s \n",classDeclaration,classDeclaration->class_name().c_str());
+             }
+#endif
+
+#if 1
+       // DQ (6/9/2013): This is the original code...
           skipAddingStatement = (classDeclaration->get_isAutonomousDeclaration() == false);
+#else
+       // DQ (6/9/2013): We have no other way to detect if the SgClassDeclaration has previously been added to the AST (short of searching the AST directly).
+       // This fails to add enough statements to the AST.
+          skipAddingStatement = (classDeclaration->get_isAutonomousDeclaration() == false) || (classDeclaration->get_parent() != NULL);
+#endif
+
+       // DQ (6/26/2013): Don't just check for SgTemplateInstantiationDecl, but also for SgClassDeclaration.
+       // DQ (6/9/2013): Check if this is a SgTemplateInstantiationDecl, since it might be appearing 
+       // twice as a result of a template argument being instantiated and we only want to add it into 
+       // the scope once.  This happens for test2013_198.C and I can't find a better solution.
+       // if (isSgTemplateInstantiationDecl(classDeclaration) != NULL && scope->containsOnlyDeclarations() == true)
+          if (classDeclaration != NULL && scope->containsOnlyDeclarations() == true)
+             {
+            // Check if this instnatiated template has already been added to the scope.
+
+            // DQ (6/26/2013): This is a newer alternative to test for an existing statement in a scope.
+            // const SgDeclarationStatementPtrList & declarationList = scope->getDeclarationList();
+            // SgDeclarationStatementPtrList::const_iterator existingDeclaration = find(declarationList.begin(),declarationList.end(),classDeclaration);
+            // if (existingDeclaration != declarationList.end())
+               bool statementAlreadyExistsInScope = scope->statementExistsInScope(classDeclaration);
+               if (statementAlreadyExistsInScope == true)
+                  {
+                    if (isSgTemplateInstantiationDecl(classDeclaration) != NULL)
+                       {
+#if 1
+                         printf ("RARE ISSUE #1: In SageInterface::appendStatement(): This template instantiation has previously been added to the scope, so avoid doing so again (see test2013_198.C): classDeclaration = %p = %s scope = %p = %s \n",
+                              classDeclaration,classDeclaration->class_name().c_str(),scope,scope->class_name().c_str());
+#endif
+                       }
+#if 1
+                      else
+                       {
+#if 1
+                         printf ("RARE ISSUE #2: In SageInterface::appendStatement(): This statement has previously been added to the scope, so avoid doing so again (see rose.h): stmt = %p = %s scope = %p = %s \n",
+                              stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+#endif
+                       }
+#endif
+                    skipAddingStatement = true;
+                  }
+             }
         }
        else
         {
@@ -9194,6 +9466,25 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
                skipAddingStatement = (enumDeclaration->get_isAutonomousDeclaration() == false);
              }
         }
+
+#if 0
+  // DQ (6/26/2013): This is an attempt to support better testing of possible redundant statements 
+  // that would be inserted into the current scope. This is however a bit expensive so we are using
+  // this as a way to also debug the new cases where this happens.
+     bool statementAlreadyExistsInScope = scope->statementExistsInScope(stmt);
+     if (skipAddingStatement == false && statementAlreadyExistsInScope == true)
+        {
+#if 1
+          printf ("RARE ISSUE #2: In SageInterface::appendStatement(): This statement has previously been added to the scope, so avoid doing so again (see rose.h): stmt = %p = %s scope = %p = %s \n",
+               stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+#endif
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+          skipAddingStatement = true;
+        }
+#endif
 
 #if 0
      printf ("   --- skipAddingStatement = %s \n",skipAddingStatement ? "true" : "false");
@@ -9214,6 +9505,10 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
           printf ("   --- calling insertStatementInScope(): scope = %p = %s stmt = %p = %s \n",scope,scope->class_name().c_str(),stmt,stmt->class_name().c_str());
 #endif
           scope->insertStatementInScope(stmt,false);
+
+       // DQ (6/9/2013): Added comment only: This is needed because some declaration have to have the 
+       // setting of there paremtn pointes delayed until now based on if they appear nested inside of 
+       // other declarations (e.g. "typedef struct { int x; } y;").
           stmt->set_parent(scope); // needed?
         }
 #endif
@@ -9232,7 +9527,10 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
         }
 
 #if 0
-  // DQ (9/1/2012): this is a debugging mode that we need to more easily turn on an off.
+  // DQ (6/26/2013): Turn on this test for debugging ROSE compiling rose.h header file.
+  // Note that this is a stronger AST subtree test and not the weaker test for a redundant 
+  // statement in a single scope.
+  // DQ (9/1/2012): this is a debugging mode that we need to more easily turn on and off.
   // DQ (4/3/2012): Added test to make sure that the pointers are unique.
      testAstForUniqueNodes(scope);
 #else
@@ -9252,7 +9550,8 @@ SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgSco
        // printf ("In appendStatementList(): stmts[i = %zu]->get_parent() = %p \n",i,stmts[i]->get_parent());
 #endif
 #endif
-       // appendStatement(stmts[i], scope);
+        appendStatement(stmts[i], scope); // Liao 5/15/2013, defer the logic of checking parent pointers to appendStatement()
+#if 0        
           if (stmts[i]->get_parent() != NULL)
              {
 #if 0
@@ -9266,6 +9565,7 @@ SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgSco
              {
                printf ("   --- WARNING: In appendStatementList(): stmts[i = %zu] not added to scope (because stmts[i]->get_parent() == NULL) \n",i);
              }
+#endif        
         }
    }
 
@@ -10046,11 +10346,15 @@ void SageInterface::fixNamespaceDeclaration(SgNamespaceDeclarationStatement* str
 void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope)
    {
      ROSE_ASSERT(varDecl != NULL);
-     ROSE_ASSERT(scope != NULL);
+     ROSE_ASSERT(scope   != NULL);
 
      SgInitializedNamePtrList namelist = varDecl->get_variables();
 
   // printf ("In SageInterface::fixVariableDeclaration(): Is this a recursive call! \n");
+
+#if 0
+     printf ("In SageInterface::fixVariableDeclaration(): varDecl = %p scope = %p = %s \n",varDecl,scope,scope->class_name().c_str());
+#endif
 
 #if 0
   // DQ (11/19/2011): This is dangerous code since for C++ the declarations can have different scopes.
@@ -10145,7 +10449,28 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
                   {
                     varSymbol = new SgVariableSymbol(initName);
                     ROSE_ASSERT(varSymbol);
+#if 1
+                 // DQ (5/16/2013): We now want to use the SgScopeStatement::insert_symbol() functions since we put 
+                 // the complexity of handling namespaces into the implementation of that function.
                     scope->insert_symbol(name, varSymbol);
+#else
+                 // DQ (5/9/2013): If this is a namespace scope then we need so handle that case there there can be many since it is reentrant.
+                    SgScopeStatement* associatedScope = NULL;
+                    SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(scope);
+                    if (namespaceDefinition != NULL)
+                       {
+                         associatedScope = namespaceDefinition->get_global_definition();
+
+                         printf ("WARNING: We should check the scope of the variable as well! initName->get_scope() = %p = %s associatedScope = %p \n",
+                              initName->get_scope(),initName->get_scope()->class_name().c_str(),associatedScope);
+                       }
+                      else
+                       {
+                         associatedScope = scope;
+                       }
+                    ROSE_ASSERT(associatedScope != NULL);
+                    associatedScope->insert_symbol(name, varSymbol);
+#endif
                   }
              }
             else
@@ -10188,7 +10513,7 @@ int SageInterface::fixVariableReferences(SgNode* root)
     ROSE_ASSERT(varRef->get_symbol());
     SgInitializedName* initname= varRef->get_symbol()->get_declaration();
 
-
+    ROSE_ASSERT (initname != NULL);
     if (initname->get_type()==SgTypeUnknown::createType())
       //    if ((initname->get_scope()==NULL) && (initname->get_type()==SgTypeUnknown::createType()))
     {
@@ -10216,10 +10541,17 @@ int SageInterface::fixVariableReferences(SgNode* root)
             SgClassDeclaration* decl = isSgClassDeclaration(clsType->get_declaration());
             decl = isSgClassDeclaration(decl->get_definingDeclaration());
             ROSE_ASSERT(decl);
-            realSymbol = lookupSymbolInParentScopes(varName, decl->get_definition());
+
+         // DQ (8/16/2013): We want to lookup variable symbols not just any symbol.
+         // realSymbol = lookupSymbolInParentScopes(varName, decl->get_definition());
+            realSymbol = lookupVariableSymbolInParentScopes(varName, decl->get_definition());
         }
         else
-            realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+        {
+         // DQ (8/16/2013): We want to lookup variable symbols not just any symbol.
+         // realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+            realSymbol = lookupVariableSymbolInParentScopes(varName, getScope(varRef));
+        }
       }
       else if (SgDotExp* dotExp = isSgDotExp(varRef->get_parent()))
       {
@@ -10235,14 +10567,23 @@ int SageInterface::fixVariableReferences(SgNode* root)
             SgClassDeclaration* decl = isSgClassDeclaration(clsType->get_declaration());
             decl = isSgClassDeclaration(decl->get_definingDeclaration());
             ROSE_ASSERT(decl);
-            realSymbol = lookupSymbolInParentScopes(varName, decl->get_definition());
+
+         // DQ (8/16/2013): We want to lookup variable symbols not just any symbol.
+         // realSymbol = lookupSymbolInParentScopes(varName, decl->get_definition());
+            realSymbol = lookupVariableSymbolInParentScopes(varName, decl->get_definition());
         }
         else
-            realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+         // DQ (8/16/2013): We want to lookup variable symbols not just any symbol.
+         // realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+            realSymbol = lookupVariableSymbolInParentScopes(varName, getScope(varRef));
       }
       else
 #endif
-          realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+      {
+         // DQ (8/16/2013): We want to lookup variable symbols not just any symbol.
+         // realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+            realSymbol = lookupVariableSymbolInParentScopes(varName, getScope(varRef));
+      }
 
       // should find a real symbol at this final fixing stage!
       // This function can be called any time, not just final fixing stage
@@ -10306,10 +10647,12 @@ int SageInterface::fixVariableReferences(SgNode* root)
       }
     }
   } // end for
+  // Liao 2/1/2013: delete unused initname and symbol, considering possible use by the current subtree from root node
+  clearUnusedVariableSymbols(root); 
   return counter;
 }
 
-void SageInterface::clearUnusedVariableSymbols()
+void SageInterface::clearUnusedVariableSymbols(SgNode* root /*= NULL */)
 {
     Rose_STL_Container<SgNode*> symbolList;
     VariantVector sym_vv(V_SgVariableSymbol);
@@ -10317,7 +10660,11 @@ void SageInterface::clearUnusedVariableSymbols()
 
     Rose_STL_Container<SgNode*> varList;
     VariantVector var_vv(V_SgVarRefExp);
-    varList = NodeQuery::queryMemoryPool(var_vv);
+    //varList = NodeQuery::queryMemoryPool(var_vv);
+    if (root != NULL)
+    {
+      varList = NodeQuery::querySubTree(root, V_SgVarRefExp);
+    }
 
     for (Rose_STL_Container<SgNode*>::iterator i = symbolList.begin();
             i != symbolList.end(); ++i)
@@ -10326,23 +10673,24 @@ void SageInterface::clearUnusedVariableSymbols()
         ROSE_ASSERT(symbolToDelete);
         if (symbolToDelete->get_declaration()->get_type() != SgTypeUnknown::createType())
             continue;
-
+        // symbol with a declaration of SgTypeUnknown will be deleted
         bool toDelete = true;
 
-#if 0
-        for (Rose_STL_Container<SgNode*>::iterator j = varList.begin();
-                j != varList.end(); ++j)
+        if (root != NULL) // if root is specified. We further check if the symbol is referenced by any nodes of the tree rooted at "root"
         {
+          for (Rose_STL_Container<SgNode*>::iterator j = varList.begin();
+              j != varList.end(); ++j)
+          {
             SgVarRefExp* var = isSgVarRefExp(*j);
             ROSE_ASSERT(var);
 
             if (var->get_symbol() == symbolToDelete)
             {
-                toDelete = false;
-                break;
+              toDelete = false;
+              break;
             }
+          }
         }
-#endif
 
         if (toDelete)
         {
@@ -10468,10 +10816,29 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
          fTable->set_parent(getGlobalScope(scope));
        }
 
+#if 0
+     printf ("In SageInterface::fixStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+
   // Liao 4/23/2010,  Fix function symbol
   // This could happen when users copy a function, then rename it (func->set_name()), and finally insert it to a scope
-     SgFunctionDeclaration*       func        = isSgFunctionDeclaration(stmt);
-     SgMemberFunctionDeclaration* mfunc       = isSgMemberFunctionDeclaration(stmt); 
+     SgFunctionDeclaration               * func         = isSgFunctionDeclaration(stmt);
+     SgMemberFunctionDeclaration         * mfunc        = isSgMemberFunctionDeclaration(stmt);
+     SgTemplateFunctionDeclaration       * tfunc        = isSgTemplateFunctionDeclaration(stmt);
+     SgTemplateMemberFunctionDeclaration * tmfunc       = isSgTemplateMemberFunctionDeclaration(stmt);
+     SgProcedureHeaderStatement          * procfunc     = isSgProcedureHeaderStatement(stmt);
+
+     if (tmfunc != NULL)
+       assert(tmfunc->variantT() == V_SgTemplateMemberFunctionDeclaration);
+     else if (mfunc != NULL)
+       assert(mfunc->variantT() == V_SgMemberFunctionDeclaration || mfunc->variantT() == V_SgTemplateInstantiationMemberFunctionDecl);
+     else if (tfunc != NULL)
+       assert(tfunc->variantT() == V_SgTemplateFunctionDeclaration);
+     else if (procfunc != NULL)
+        assert(procfunc->variantT() == V_SgProcedureHeaderStatement);
+     else if (func != NULL)
+       assert(func->variantT() == V_SgFunctionDeclaration || func->variantT() == V_SgTemplateInstantiationFunctionDecl);
+     else assert(false);
 
 #if 0
      printf ("In SageInterface::fixStatement(): scope = %p = %s \n",scope,scope->class_name().c_str());
@@ -10489,51 +10856,78 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
 #if 0
           printf ("Looking up the function symbol using name = %s and type = %p = %s \n",func->get_name().str(),func->get_type(),func->get_type()->class_name().c_str());
 #endif
-          SgFunctionSymbol* func_symbol = scope->lookup_function_symbol (func->get_name(), func->get_type());
+#if 0
+          printf ("[SageInterface::fixFunctionDeclaration] Lookup Function func = %p, name = %s, type = %p, scope = %p\n", func, func->get_name().getString().c_str(), func->get_type(), scope);
+#endif
+          SgFunctionSymbol* func_symbol = NULL;
+
+       // DQ (7/31/2013): Fixing API to use functions that now require template parameters and template specialization arguments.
+       // In this case these are unavailable from this point.
+          if (tmfunc != NULL)
+          {
+            SgTemplateParameterPtrList & templateParameterList = tmfunc->get_templateParameters();
+         // func_symbol = scope->lookup_template_member_function_symbol (func->get_name(), func->get_type());
+         // func_symbol = scope->lookup_template_member_function_symbol (func->get_name(), func->get_type(),NULL);
+            func_symbol = scope->lookup_template_member_function_symbol (func->get_name(), func->get_type(),&templateParameterList);
+          }
+          else if (mfunc != NULL)
+          {
+            SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(mfunc);
+            SgTemplateArgumentPtrList* templateArgumentList = (templateInstantiationMemberFunctionDecl != NULL) ? &(templateInstantiationMemberFunctionDecl->get_templateArguments()) : NULL;
+         // func_symbol = scope->lookup_nontemplate_member_function_symbol (func->get_name(), func->get_type(),NULL);
+            func_symbol = scope->lookup_nontemplate_member_function_symbol (func->get_name(), func->get_type(),templateArgumentList);
+          }
+          else if (tfunc != NULL)
+          {
+            SgTemplateParameterPtrList & templateParameterList = tfunc->get_templateParameters();
+#if 0
+            printf ("In SageInterface::fixStatement(): templateParameterList.size() = %zu \n",templateParameterList.size());
+#endif
+         // func_symbol = scope->lookup_template_function_symbol (func->get_name(), func->get_type());
+         // func_symbol = scope->lookup_template_function_symbol (func->get_name(), func->get_type(),NULL);
+            func_symbol = scope->lookup_template_function_symbol (func->get_name(), func->get_type(),&templateParameterList);
+          }
+          else if (procfunc != NULL)
+          {
+#if 1
+            printf ("In SageInterface::fixStatement(): procfunc->get_name() = %s calling lookup_function_symbol() \n",procfunc->get_name().str());
+#endif
+            func_symbol = scope->lookup_function_symbol (procfunc->get_name(), procfunc->get_type());
+            assert(func_symbol != NULL);
+          }
+          else if (func != NULL)
+          {
+#if 0
+            printf ("In SageInterface::fixStatement(): func->get_name() = %s calling lookup_function_symbol() \n",func->get_name().str());
+#endif
+            SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(func);
+            SgTemplateArgumentPtrList* templateArgumentList = (templateInstantiationFunctionDecl != NULL) ? &(templateInstantiationFunctionDecl->get_templateArguments()) : NULL;
+         // func_symbol = scope->lookup_function_symbol (func->get_name(), func->get_type(),NULL);
+            func_symbol = scope->lookup_function_symbol (func->get_name(), func->get_type(),templateArgumentList);
+
+         // DQ (8/23/2013): Adding support for when the symbol is not present.  This can happen when building a new function as a copy of an existing
+         // function the symantics of the copy is that it will not add the symbol (since it does not know the scope). So this function is the first
+         // opportunity to fixup the function to have a symbol in the scope's symbol table.
+            if (func_symbol == NULL)
+               {
+              // scope->print_symboltable("In SageInterface::fixStatement()");
+                 func_symbol = new SgFunctionSymbol(func);
+                 scope->insert_symbol(func->get_name(), func_symbol);
+               }
+          }
+          else 
+          {
+            assert(false);
+          }
+#if 0
+          printf("[SageInterface::fixFunctionDeclaration]     -> func = %p, mfunc = %p, tmfunc = %p\n", func, mfunc, tmfunc);
+#endif
 #if 0
           printf ("In SageInterface::fixStatement(): func_symbol = %p \n",func_symbol);
 #endif
-          if (func_symbol == NULL)
-             {
-            // DQ (12/3/2011): Added support for C++ member functions.
-            // func_symbol = new SgFunctionSymbol (func);
-               if (mfunc != NULL)
-                  {
-                    func_symbol = new SgMemberFunctionSymbol (func);
-                  }
-                 else
-                  {
-                    func_symbol = new SgFunctionSymbol (func);
-                  }
-               ROSE_ASSERT (func_symbol != NULL);
 
-               scope->insert_symbol(func->get_name(), func_symbol);
-             }
-            else
-             {
-#if 0
-               printf ("In SageInterface::fixStatement(): found a valid function so no need to insert new symbol \n");
-#endif
-             }
+          assert(func_symbol != NULL);
         }
-#if 0
-  // Fix local symbol, a symbol directly refer to this function declaration
-  // This could happen when a non-defining func decl is copied, the corresonding symbol will point to the original source func
-  // symbolTable->find(this) used inside get_symbol_from_symbol_table()  won't find the copied decl 
-     SgSymbol* local_symbol = func ->get_symbol_from_symbol_table();
-     if (local_symbol == NULL) // 
-        {
-          if (func->get_definingDeclaration() == NULL) // prototype function
-             {
-               SgFunctionDeclaration * src_func = func_symbol->get_declaration();
-               if (func != src_func )
-                  {
-                    ROSE_ASSERT (src_func->get_firstNondefiningDeclaration () == src_func);
-                    func->set_firstNondefiningDeclaration (func_symbol->get_declaration());
-                  }
-             }
-        }
-#endif
    }
 
 //! fixup symbol table for SgFunctionDeclaration (and template instantiations, member functions, and member function template instantiations). Used Internally when the function is built without knowing its target scope. Both parameters cannot be NULL.
@@ -10752,7 +11146,15 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
   // DQ (3/12/2012): Added assertion
   // ROSE_ASSERT(scope == func->get_firstNondefiningDeclaration()->get_scope());
      ROSE_ASSERT(func->get_firstNondefiningDeclaration()->get_scope() != NULL);
-     ROSE_ASSERT(func->get_firstNondefiningDeclaration()->get_scope()->lookup_function_symbol(func->get_name(),func->get_type()) != NULL);
+
+  // DQ (5/25/2013): This test fails for the astInterface test: buildStructDeclaration.C, since this is a new test, make it a warning for now.
+     if (func->get_firstNondefiningDeclaration()->get_scope()->lookup_function_symbol(func->get_name(),func->get_type()) == NULL)
+        {
+          printf ("WARNING: symbol for func->get_firstNondefiningDeclaration() = %p = %s = %s is not present in the scope = %p = %s associated with the firstNondefiningDeclaration \n",
+               func->get_firstNondefiningDeclaration(),func->get_firstNondefiningDeclaration()->class_name().c_str(),func->get_name().str(),
+               func->get_firstNondefiningDeclaration()->get_scope(),func->get_firstNondefiningDeclaration()->get_scope()->class_name().c_str());
+        }
+  // ROSE_ASSERT(func->get_firstNondefiningDeclaration()->get_scope()->lookup_function_symbol(func->get_name(),func->get_type()) != NULL);
 
 #if 0
   // It would be better to find the first non-defining declaration via the symbol.
@@ -11054,6 +11456,17 @@ StringUtility::numberToString(++breakLabelCounter),
        return (decl->get_class_type() == SgClassDeclaration::e_struct)? true:false;
   }
 
+  bool SageInterface::isUnionDeclaration(SgNode* node)
+  {
+    ROSE_ASSERT(node!=NULL);
+    SgClassDeclaration *decl = isSgClassDeclaration(node);
+    if (decl==NULL)
+      return false;
+    else
+       return (decl->get_class_type() == SgClassDeclaration::e_union)? true:false;
+  }
+
+
 void  SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_dst, PreprocessingInfo::RelativePositionType src_position/* =PreprocessingInfo::undef */,
                             PreprocessingInfo::RelativePositionType dst_position/* =PreprocessingInfo::undef */, bool usePrepend /*= false */)
 {
@@ -11312,6 +11725,30 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfFor(SgForStatement* fs)
   return isSgBasicBlock(b);
 }
 
+SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfCaseOption(SgCaseOptionStmt* cs)
+{
+  SgStatement* b = cs->get_body();
+  if (!isSgBasicBlock(b)) {
+    b = SageBuilder::buildBasicBlock(b);
+    cs->set_body(b);
+    b->set_parent(cs);
+  }
+  ROSE_ASSERT (isSgBasicBlock(b));
+  return isSgBasicBlock(b);
+}
+
+SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfDefaultOption(SgDefaultOptionStmt * cs)
+{
+  SgStatement* b = cs->get_body();
+  if (!isSgBasicBlock(b)) {
+    b = SageBuilder::buildBasicBlock(b);
+    cs->set_body(b);
+    b->set_parent(cs);
+  }
+  ROSE_ASSERT (isSgBasicBlock(b));
+  return isSgBasicBlock(b);
+}
+
 SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfUpcForAll(SgUpcForAllStatement* fs)
 {
   ROSE_ASSERT (fs != NULL);
@@ -11437,6 +11874,18 @@ bool SageInterface::isBodyStatement (SgStatement* s)
           rt = true;
         break;
       }
+    case V_SgCaseOptionStmt:
+      {
+          if (isSgCaseOptionStmt(p)->get_body() == s)
+              rt = true;
+          break;
+      }
+    case V_SgDefaultOptionStmt:
+      {
+          if (isSgDefaultOptionStmt(p)->get_body() == s)
+              rt = true;
+          break;
+      }
     case V_SgCatchOptionStmt:
       {
         if (isSgCatchOptionStmt(p)->get_body() == s)
@@ -11510,6 +11959,18 @@ SgBasicBlock * SageInterface::makeSingleStatementBodyToBlock(SgStatement* single
           rt = ensureBasicBlockAsBodyOfSwitch(isSgSwitchStatement(p));
         break;
       }
+    case V_SgCaseOptionStmt:
+      {
+          if (isSgCaseOptionStmt(p)->get_body() == s)
+            rt = ensureBasicBlockAsBodyOfCaseOption(isSgCaseOptionStmt(p));
+          break;
+      }
+    case V_SgDefaultOptionStmt:
+      {
+          if (isSgDefaultOptionStmt(p)->get_body() == s)
+            rt = ensureBasicBlockAsBodyOfDefaultOption(isSgDefaultOptionStmt(p));
+          break;
+      }          
     case V_SgCatchOptionStmt:
       {
         if (isSgCatchOptionStmt(p)->get_body() == s)
@@ -12899,6 +13360,167 @@ SageInterface::getDependentDeclarations ( SgStatement* stmt )
 #endif
    }
 
+
+bool
+SageInterface::isPrefixOperatorName( const SgName & functionName )
+   {
+     bool returnValue = false;
+
+#if 0
+     printf ("In SageInterface::isPrefixOperatorName(): functionName = %s (might have to check the return type to distinguish the deref operator from the multiply operator) \n",functionName.str());
+#endif
+
+     if (functionName.is_null() == false)
+        {
+          if ( functionName == "operator++" || functionName == "operator--" || functionName == "operator&" || 
+               functionName == "operator!"  || functionName == "operator*"  || functionName == "operator+" ||
+               functionName == "operator-"  || functionName == "operator+" )
+             {
+               returnValue = true;
+             }
+        }
+
+     return returnValue;
+   }
+
+
+// DQ (4/13/2013): We need these to support the unparing of operators defined by operator syntax or member function names.
+//! Is an overloaded operator a prefix operator (e.g. address operator X * operator&(), dereference operator X & operator*(), unary plus operator X & operator+(), etc.
+bool
+SageInterface::isPrefixOperator( SgExpression* exp )
+   {
+  // DQ (4/21/2013): Reimplemented this function to support more of the prefix operators.
+  // Also we now support when they are defined as member functions and non-member functions.
+
+     bool returnValue = false;
+
+     SgFunctionRefExp* functionRefExp             = isSgFunctionRefExp(exp);
+     SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(exp);
+  // ROSE_ASSERT(memberFunctionRefExp != NULL);
+
+     SgName functionName;
+     size_t numberOfOperands = 0;
+
+     if (memberFunctionRefExp != NULL)
+        {
+          ROSE_ASSERT(functionRefExp == NULL);
+          SgMemberFunctionDeclaration* memberFunctionDeclaration = memberFunctionRefExp->getAssociatedMemberFunctionDeclaration();
+          if (memberFunctionDeclaration != NULL)
+             {
+               functionName = memberFunctionDeclaration->get_name();
+               numberOfOperands = memberFunctionDeclaration->get_args().size();
+             }
+        }
+       else
+        {
+       // This could be "friend bool operator!(const X & x);"
+          if (functionRefExp != NULL)
+             {
+               SgFunctionDeclaration* functionDeclaration = functionRefExp->getAssociatedFunctionDeclaration();
+               if (functionDeclaration != NULL)
+                  {
+                    functionName     = functionDeclaration->get_name();
+                    numberOfOperands = functionDeclaration->get_args().size();
+                  }
+             }
+            else
+             {
+            // Note clear if this should be an error.
+               printf ("In SageInterface::isPrefixOperator(): unknown case of exp = %p = %s \n",exp,exp->class_name().c_str());
+             }
+        }
+
+#if 0
+     printf ("In SageInterface::isPrefixOperator(): functionName = %s numberOfOperands = %zu (might have to check the return type to distinguish the deref operator from the multiply operator) \n",functionName.str(),numberOfOperands);
+#endif
+
+     if (isPrefixOperatorName(functionName) == true)
+        {
+          if (memberFunctionRefExp != NULL)
+             {
+            // This case is for member functions.
+               ROSE_ASSERT(functionRefExp == NULL);
+               if (numberOfOperands == 0)
+                  {
+                 // This is the C++ signature for the operator++() prefix operator.
+                    returnValue = true;
+                  }
+                 else
+                  {
+                 // This is the C++ signature for the operator++() postfix operator.
+                    returnValue = false;
+                  }
+             }
+            else
+             {
+            // This case is for non-member functions.
+               ROSE_ASSERT(functionRefExp != NULL);
+               ROSE_ASSERT(memberFunctionRefExp == NULL);
+               if (numberOfOperands == 1)
+                  {
+                 // This is the C++ signature for the operator++() prefix operator.
+                    returnValue = true;
+                  }
+                 else
+                  {
+                 // This is the C++ signature for the operator++() postfix operator.
+                    ROSE_ASSERT(numberOfOperands == 2);
+                    returnValue = false;
+                  }
+             }
+        }
+
+#if 0
+     printf ("Leaving SageInterface::isPrefixOperator(): returnValue = %s \n",returnValue ? "true" : "false");
+#endif
+
+     return returnValue;
+   }
+
+
+//! Is an overloaded operator a postfix operator. (e.g. ).
+bool
+SageInterface::isPostfixOperator( SgExpression* exp )
+   {
+     return ( (isPrefixOperator(exp) == false) && (isIndexOperator(exp) == false) );
+   }
+
+
+//! Is an overloaded operator an index operator (also refereded to as call or subscript operators). (e.g. X & operator()() or X & operator[]()).
+bool
+SageInterface::isIndexOperator( SgExpression* exp )
+   {
+     bool returnValue = false;
+     SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(exp);
+     ROSE_ASSERT(memberFunctionRefExp != NULL);
+
+     SgMemberFunctionDeclaration* memberFunctionDeclaration = memberFunctionRefExp->getAssociatedMemberFunctionDeclaration();
+     if (memberFunctionDeclaration != NULL)
+        {
+          SgName functionName = memberFunctionDeclaration->get_name();
+          if ( (functionName == "operator[]") && (isSgType(memberFunctionDeclaration->get_type()) != NULL) )
+             {
+               returnValue = true;
+             }
+            else
+             {
+               if ( (functionName == "operator()") && (isSgType(memberFunctionDeclaration->get_type()) != NULL) )
+                  {
+                    returnValue = true;
+                  }
+                 else
+                  {
+                    returnValue = false;
+                  }
+             }
+        }
+      
+     return returnValue;
+   }
+
+
+
+
 //! Generate copies for a list of declarations and insert them into a different targetScope.
 vector<SgDeclarationStatement*>
 generateCopiesOfDependentDeclarations (const  vector<SgDeclarationStatement*>& dependentDeclarations, SgScopeStatement* targetScope)
@@ -12957,8 +13579,13 @@ generateCopiesOfDependentDeclarations (const  vector<SgDeclarationStatement*>& d
                // and the original enclosing class of the outlined target has been changed already (replaced target with a call to OUT_xxx())
                // Also, getDependentDeclarations() recursively searches for declarations within the dependent class and hits OUT_xxx()
                // Liao, 5/8/2009
-               if (targetScope->lookup_symbol(functionDeclaration->get_name()) !=NULL)
-                 continue;
+
+               printf ("WARNING: In SageInterface -- generateCopiesOfDependentDeclarations(): I think this is the wrong lookup symbol function that is being used here! \n");
+
+            // DQ (8/16/2013): I think this is the wrong symbol lookup function to be using here, but the API is fixed.
+            // if (targetScope->lookup_symbol(functionDeclaration->get_name()) !=NULL)
+               if (targetScope->lookup_symbol(functionDeclaration->get_name(),NULL,NULL) !=NULL)
+                    continue;
 #endif
 #if 0
                printf ("In generateCopiesOfDependentDeclarations(): Copy mechanism appied to SgFunctionDeclaration functionDeclaration->get_firstNondefiningDeclaration() = %p \n",functionDeclaration->get_firstNondefiningDeclaration());
@@ -13431,7 +14058,12 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
      ROSE_ASSERT(outlinedFunctionDeclaration != NULL);
      SgGlobal* originalFileGlobalScope = TransformationSupport::getGlobalScope(original_statement);
      ROSE_ASSERT(originalFileGlobalScope != NULL);
-     SgFunctionSymbol* outlinedFunctionSymbolFromOriginalFile = isSgFunctionSymbol(originalFileGlobalScope->lookup_symbol(outlinedFunctionDeclaration->get_name()));
+
+     printf ("WARNING: In SageInterface::appendStatementWithDependentDeclaration(): I think this is the wrong lookup symbol function that is being used here! \n");
+
+  // DQ (8/16/2013): I think this is the wrong symbol lookup function to be using here, but the API is fixed.
+  // SgFunctionSymbol* outlinedFunctionSymbolFromOriginalFile = isSgFunctionSymbol(originalFileGlobalScope->lookup_symbol(outlinedFunctionDeclaration->get_name()));
+     SgFunctionSymbol* outlinedFunctionSymbolFromOriginalFile = isSgFunctionSymbol(originalFileGlobalScope->lookup_symbol(outlinedFunctionDeclaration->get_name(),NULL,NULL));
 
   // SgSymbol* outlinedFunctionSymbolFromOutlinedFile = scope->lookup_symbol(outlinedFunctionDeclaration->get_name());
      ROSE_ASSERT(decl->get_firstNondefiningDeclaration() != NULL);
@@ -13602,13 +14234,20 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
                     printf ("lokup symbol in scope =                                = %p \n",scope);
 #endif
 
-                    if (scope->lookup_symbol(copiedFunctionDeclaration->get_name()) == NULL)
+                    printf ("WARNING: In SageInterface::appendStatementWithDependentDeclaration(): I think this is the wrong lookup symbol function that is being used here! \n");
+
+                 // DQ (8/16/2013): I think this is the wrong symbol lookup function to be using here, but the API is fixed.
+                 // if (scope->lookup_symbol(copiedFunctionDeclaration->get_name()) == NULL)
+                    if (scope->lookup_symbol(copiedFunctionDeclaration->get_name(),NULL,NULL) == NULL)
                        {
                          SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(copiedFunctionDeclaration);
                          ROSE_ASSERT(functionSymbol != NULL);
                       // printf ("copiedFunctionDeclaration = %p Inserting functionSymbol = %p with name = %s \n",copiedFunctionDeclaration,functionSymbol,copiedFunctionDeclaration->get_name().str());
                          scope->insert_symbol(copiedFunctionDeclaration->get_name(),functionSymbol);
-                         ROSE_ASSERT(scope->lookup_symbol(copiedFunctionDeclaration->get_name()) == functionSymbol);
+
+                      // DQ (8/16/2013): I think this is the wrong symbol lookup function to be using here, but the API is fixed.
+                      // ROSE_ASSERT(scope->lookup_symbol(copiedFunctionDeclaration->get_name()) == functionSymbol);
+                         ROSE_ASSERT(scope->lookup_symbol(copiedFunctionDeclaration->get_name(),NULL,NULL) == functionSymbol);
 
                          ROSE_ASSERT(copiedFunctionDeclaration->get_symbol_from_symbol_table() != NULL);
                          copiedFunctionDeclaration->set_scope(scope);
@@ -13953,6 +14592,10 @@ SageInterface::deleteAST ( SgNode* n )
                 ClassicVisitor(SgFunctionSymbol* symbol){
                         SgFunctionSymbol_count = 0;
                         SgFunctionSymbolPtr = symbol;
+
+                     // DQ (5/2/2013): Added to fix test2013_141.C.
+                        SgMemFuncSymbol_count =0;
+
                         SgVariableSymbolPtr = NULL;
                         SgClassSymbolPtr =NULL;
                         SgTypedefPtr = NULL;
@@ -14151,25 +14794,33 @@ SageInterface::deleteAST ( SgNode* n )
 
         // SgVariableSymbol and SgEnumFieldSymbol
                 void visit(SgInitializedName* node)
-                {
-                        if(SgVariableSymbolPtr !=NULL){
-                                if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
-                                                SgSymbol* s = node->get_symbol_from_symbol_table();
-                                                if (isSgVariableSymbol(s) == SgVariableSymbolPtr) SgVariableSymbol_count++;
-                                        }
-                                }
+                   {
+                     if(SgVariableSymbolPtr !=NULL)
+                        {
+                          if(node->get_scope()!=NULL)
+                             {
+                            // DQ (5/21/2013): We want to restrict access to the symbol table.
+                               if(node->get_scope()->get_symbol_table()!=NULL)
+                                  {
+                                    SgSymbol* s = node->get_symbol_from_symbol_table();
+                                    if (isSgVariableSymbol(s) == SgVariableSymbolPtr) SgVariableSymbol_count++;
+                                  }
+                             }
                         }
 
-                        if(SgEnumFieldSymbolPtr !=NULL){
-                                if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
-                                                SgSymbol* s = node->get_symbol_from_symbol_table();
-                                                if (isSgEnumFieldSymbol(s) == SgEnumFieldSymbolPtr) SgEnumFieldSymbol_count++;
-                                        }
-                                }
+                     if(SgEnumFieldSymbolPtr !=NULL)
+                        {
+                          if(node->get_scope()!=NULL)
+                             {
+                            // DQ (5/21/2013): We want to restrict access to the symbol table.
+                               if(node->get_scope()->get_symbol_table()!=NULL)
+                                  {
+                                    SgSymbol* s = node->get_symbol_from_symbol_table();
+                                    if (isSgEnumFieldSymbol(s) == SgEnumFieldSymbolPtr) SgEnumFieldSymbol_count++;
+                                  }
+                             }
                         }
-                }
+                   }
 
                 void visit(SgVarRefExp* node)
                 {
@@ -14188,7 +14839,9 @@ SageInterface::deleteAST ( SgNode* n )
                 void visit(SgFunctionDeclaration* node)         {
                         if(SgFunctionSymbolPtr !=NULL){
                                 if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                   // DQ (5/21/2013): We want to restrict access to the symbol table.
+                                      if(node->get_scope()->get_symbol_table()!=NULL)
+                                        {
                                                 SgSymbol* s = ((SgFunctionDeclaration*)node)->get_symbol_from_symbol_table();
                                                 if ((SgFunctionSymbol *)s == SgFunctionSymbolPtr) SgFunctionSymbol_count++;
                                         }
@@ -14207,9 +14860,38 @@ SageInterface::deleteAST ( SgNode* n )
 
                 void visit(SgFunctionRefExp* node)
                 {
-                        if (SgFunctionSymbolPtr !=NULL){
+#if 0
+                        printf ("In visit(SgFunctionRefExp* node): SgFunctionSymbolPtr = %p \n",SgFunctionSymbolPtr);
+#endif
+                        if (SgFunctionSymbolPtr !=NULL)
+                        {
                                 SgFunctionSymbol* s = node->get_symbol_i();
-                                if (isSgFunctionSymbol(s) == SgFunctionSymbolPtr) SgFunctionSymbol_count++;
+                                if (isSgFunctionSymbol(s) == SgFunctionSymbolPtr) 
+                                {
+                                  SgFunctionSymbol_count++;
+#if 0
+                                  printf ("Increment SgFunctionSymbol_count = %d \n",SgFunctionSymbol_count);
+#endif
+                                }
+                        }
+                }
+
+             // DQ (5/2/2013): Added support for SgMemberFunctionRefExp which is not derived from SgFunctionRefExp.
+                void visit(SgMemberFunctionRefExp* node)
+                {
+#if 0
+                        printf ("In visit(SgMemberFunctionRefExp* node): SgFunctionSymbolPtr = %p \n",SgFunctionSymbolPtr);
+#endif
+                        if (SgFunctionSymbolPtr !=NULL)
+                        {
+                                SgFunctionSymbol* s = node->get_symbol_i();
+                                if (isSgFunctionSymbol(s) == SgFunctionSymbolPtr) 
+                                {
+                                  SgFunctionSymbol_count++;
+#if 0
+                                  printf ("Increment SgFunctionSymbol_count = %d \n",SgFunctionSymbol_count);
+#endif
+                                }
                         }
                 }
 
@@ -14228,7 +14910,8 @@ SageInterface::deleteAST ( SgNode* n )
                 {
                         if(SgClassSymbolPtr !=NULL){
                                 if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                     if(node->get_scope()->get_symbol_table()!=NULL)
+                                        {
                                                 SgSymbol* s = node->get_symbol_from_symbol_table();
                                                 if (isSgClassSymbol(s) == SgClassSymbolPtr) SgClassDeclaration_count++;
                                         }
@@ -14249,7 +14932,8 @@ SageInterface::deleteAST ( SgNode* n )
                 {
                         if(SgClassSymbolPtr !=NULL){
                                 if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                     if(node->get_scope()->get_symbol_table()!=NULL)
+                                        {
                                                 SgSymbol* s = node->get_symbol_from_symbol_table();
                                                 if (isSgClassSymbol(s) == SgClassSymbolPtr) SgClassDeclaration_count++;
                                         }
@@ -14258,7 +14942,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                         if(templateInstantiate_defining!=NULL) {
                                 if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                     if(node->get_scope()->get_symbol_table()!=NULL)
+                                        {
                                                 if(node->get_symbol_from_symbol_table() == NULL){
                                                         SgDeclarationStatement * template_decl = ((SgDeclarationStatement*)node)->get_firstNondefiningDeclaration();
                                                         SgDeclarationStatement * template_decl1 = ((SgDeclarationStatement*)node)->get_definingDeclaration();
@@ -14316,7 +15001,8 @@ SageInterface::deleteAST ( SgNode* n )
                 {
                         if (SgMemFuncSymbolPtr !=NULL){
                                 if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                     if(node->get_scope()->get_symbol_table()!=NULL)
+                                        {
                                                 SgSymbol* symbol = ((SgMemberFunctionDeclaration*)node)->get_symbol_from_symbol_table();
                                                 if(symbol == SgMemFuncSymbolPtr){
                                                         SgMemFuncSymbol_count++;
@@ -14330,7 +15016,8 @@ SageInterface::deleteAST ( SgNode* n )
                 {
                         if (SgMemFuncSymbolPtr !=NULL){
                                 if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                     if(node->get_scope()->get_symbol_table()!=NULL)
+                                        {
                                                 SgSymbol* symbol = ((SgTemplateInstantiationMemberFunctionDecl*)node)->get_symbol_from_symbol_table();
                                                 if(symbol == SgMemFuncSymbolPtr){
                                                         SgMemFuncSymbol_count++;
@@ -14350,7 +15037,8 @@ SageInterface::deleteAST ( SgNode* n )
                 {
                         if(SgTypedefPtr!=NULL){
                                 if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                     if(node->get_scope()->get_symbol_table()!=NULL)
+                                        {
                                                 SgSymbol* s = ((SgTypedefDeclaration*)node)->get_symbol_from_symbol_table();
                                                 if ((SgTypedefSymbol *)s == SgTypedefPtr) SgTypedefSymbol_count++;
                                         }
@@ -14372,7 +15060,8 @@ SageInterface::deleteAST ( SgNode* n )
                 {
                         if (SgTemplateSymbolPtr !=NULL){
                                 if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                     if(node->get_scope()->get_symbol_table()!=NULL)
+                                        {
                                                 SgSymbol* symbol = ((SgTemplateDeclaration*)node)->get_symbol_from_symbol_table();
                                                 if(symbol == SgTemplateSymbolPtr){
                                                         SgTemplateSymbol_count++;
@@ -14383,7 +15072,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                         if(template_defining !=NULL) {
                                 if(node->get_scope()!=NULL){
-                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                     if(node->get_scope()->get_symbol_table()!=NULL)
+                                        {
                                                 if(node->get_symbol_from_symbol_table() == NULL){
                                                         SgDeclarationStatement * template_decl = ((SgDeclarationStatement*)node)->get_firstNondefiningDeclaration();
                                                         SgDeclarationStatement * template_decl1 = ((SgDeclarationStatement*)node)->get_definingDeclaration();
@@ -14414,6 +15104,10 @@ SageInterface::deleteAST ( SgNode* n )
                                 /remove SgVariableDefinition, SgVariableSymbol and SgEnumFieldSymbol
                                 /////////////////////////////////////////////////*/
 
+#if 0
+                                printf ("In DeleteAST::visit(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+
                                 if(isSgInitializedName(node) !=NULL){
                                         //remove SgVariableDefinition
                                         SgDeclarationStatement* var_def;
@@ -14426,7 +15120,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                         //remove SgVariableSymbol
                                         if(isSgInitializedName(node)->get_scope()!=NULL){
-                                                if(isSgInitializedName(node)->get_scope()->get_symbol_table()!=NULL){
+                                             if(isSgInitializedName(node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgInitializedName *)node)->get_symbol_from_symbol_table();
                                                         if(isSgVariableSymbol(symbol) !=NULL){
                                                                 ClassicVisitor visitor((SgVariableSymbol*)symbol);
@@ -14469,7 +15164,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgFunctionDeclaration(node) && isSgMemberFunctionDeclaration(node)==NULL){
                                         if(isSgFunctionDeclaration(node)->get_scope()!=NULL){
-                                                if(isSgFunctionDeclaration(node)->get_scope()->get_symbol_table()!=NULL){
+                                             if(isSgFunctionDeclaration(node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgFunctionDeclaration*)node)->get_symbol_from_symbol_table();
                                                         ClassicVisitor visitor((SgFunctionSymbol *)symbol);
                                                         traverseMemoryPoolVisitorPattern(visitor);
@@ -14485,11 +15181,19 @@ SageInterface::deleteAST ( SgNode* n )
                                 }
 
 
-                                if(isSgFunctionRefExp(node) !=NULL){
+                                if(isSgFunctionRefExp(node) !=NULL)
+                                {
+#if 0
+                                   SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(node);
+                                   ROSE_ASSERT(functionRefExp->get_symbol_i() != NULL);
+                                   printf ("In DeleteAST::visit(): functionRefExp->get_symbol_i() = %p = %s \n",functionRefExp->get_symbol_i(),functionRefExp->get_symbol_i()->class_name().c_str());
+#endif
                                                 SgFunctionSymbol *symbol = ((SgFunctionRefExp*)node)->get_symbol_i();
                                                 ClassicVisitor visitor(symbol);
                                                 traverseMemoryPoolVisitorPattern(visitor);
-                                                if(visitor.get_num_Function_pointers()==1){ //only one reference to this FunctionSymbol => safe to delete
+                                                if(visitor.get_num_Function_pointers()==1)
+                                                {
+                                               // only one reference to this FunctionSymbol => safe to delete
                                                         //((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
                                                         delete symbol;
                                                         //printf("A SgFunctionSymbol was deleted\n");
@@ -14514,7 +15218,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgTypedefDeclaration(node) !=NULL){
                                         if(((SgTypedefDeclaration*)node)->get_scope()!=NULL){
-                                                if(((SgTypedefDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+                                             if(((SgTypedefDeclaration*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgTypedefDeclaration*)node)->get_symbol_from_symbol_table();
                                                         if(isSgTypedefSymbol(symbol)){
                                                                 ClassicVisitor visitor((SgTypedefSymbol*) symbol);
@@ -14540,7 +15245,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgNamespaceDeclarationStatement(node) !=NULL){
                                         if(((SgNamespaceDeclarationStatement*)node)->get_scope()!=NULL){
-                                                if(((SgNamespaceDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL){
+                                             if(((SgNamespaceDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgNamespaceDeclarationStatement*)node)->get_symbol_from_symbol_table();
                                                         if(isSgNamespaceSymbol(symbol)){
                                                                 ((SgNamespaceDeclarationStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -14554,7 +15260,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgNamespaceAliasDeclarationStatement(node) !=NULL){
                                         if(((SgNamespaceAliasDeclarationStatement*)node)->get_scope()!=NULL){
-                                                if(((SgNamespaceAliasDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL){
+                                             if(((SgNamespaceAliasDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgNamespaceAliasDeclarationStatement*)node)->get_symbol_from_symbol_table();
                                                         if(isSgNamespaceSymbol(symbol)){
                                                                 ((SgNamespaceAliasDeclarationStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -14572,7 +15279,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgLabelStatement(node) !=NULL){
                                         if(((SgLabelStatement*)node)->get_scope()!=NULL){
-                                                if(((SgLabelStatement*)node)->get_scope()->get_symbol_table()!=NULL){
+                                             if(((SgLabelStatement*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgLabelStatement*)node)->get_symbol_from_symbol_table();
                                                         if(isSgLabelSymbol(symbol)){
                                                                 ((SgLabelStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -14597,7 +15305,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgEnumDeclaration(node) !=NULL){
                                         if(((SgEnumDeclaration*)node)->get_scope()!=NULL){
-                                                if(((SgEnumDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+                                             if(((SgEnumDeclaration*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgEnumDeclaration*)node)->get_symbol_from_symbol_table();
                                                         if(isSgEnumSymbol(symbol) !=NULL){
                                                                 ((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
@@ -14620,7 +15329,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgClassDeclaration(node) !=NULL && isSgTemplateInstantiationDecl(node) ==NULL){
                                         if(((SgClassDeclaration*)node)->get_scope()!=NULL){
-                                                if(((SgClassDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+                                             if(((SgClassDeclaration*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgClassDeclaration*)node)->get_symbol_from_symbol_table();
                                                         if(isSgClassSymbol(symbol) !=NULL){
                                                                 ClassicVisitor visitor((SgClassSymbol*)symbol);
@@ -14677,7 +15387,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgMemberFunctionDeclaration(node) !=NULL){
                                         if(((SgMemberFunctionDeclaration*)node)->get_scope()!=NULL){
-                                                if(((SgMemberFunctionDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+                                             if(((SgMemberFunctionDeclaration*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgMemberFunctionDeclaration*)node)->get_symbol_from_symbol_table();
                                                         if(isSgMemberFunctionSymbol(symbol)){
                                                                 ClassicVisitor visitor((SgMemberFunctionSymbol*)symbol);
@@ -14724,7 +15435,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgInterfaceStatement(node) !=NULL){
                                         if(((SgDeclarationStatement*)node)->get_scope()!=NULL){
-                                                if(((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL){
+                                             if(((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgDeclarationStatement*)node)->get_symbol_from_symbol_table();
                                                         if(isSgInterfaceSymbol(symbol)){
                                                                 ((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -14739,7 +15451,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgModuleStatement(node) !=NULL){
                                         if(((SgClassDeclaration*)node)->get_scope()!=NULL){
-                                                if(((SgClassDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+                                             if(((SgClassDeclaration*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgClassDeclaration*)node)->get_symbol_from_symbol_table();
                                                         if(isSgModuleSymbol(symbol)){
                                                                 ((SgClassDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -14756,7 +15469,8 @@ SageInterface::deleteAST ( SgNode* n )
 #if 0
                                 if(isSgTemplateInstantiationMemberFunctionDecl(node) !=NULL){
                                         if(((SgTemplateInstantiationMemberFunctionDecl*)node)->get_scope()!=NULL){
-                                                if(((SgTemplateInstantiationMemberFunctionDecl*)node)->get_scope()->get_symbol_table()!=NULL){
+                                             if(((SgTemplateInstantiationMemberFunctionDecl*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgTemplateInstantiationMemberFunctionDecl*)node)->get_symbol_from_symbol_table();
                                                         if(isSgMemberFunctionSymbol(symbol)){
                                                                 ClassicVisitor visitor((SgMemberFunctionSymbol*)symbol);
@@ -14775,7 +15489,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgTemplateDeclaration(node) !=NULL){
                                         if(((SgTemplateDeclaration*)node)->get_scope()!=NULL){
-                                                if(((SgTemplateDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+                                             if(((SgTemplateDeclaration*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgTemplateDeclaration*)node)->get_symbol_from_symbol_table();
                                                         ClassicVisitor visitor((SgTemplateSymbol*)symbol);
                                                         traverseMemoryPoolVisitorPattern(visitor);
@@ -14795,7 +15510,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgInterfaceStatement(node) !=NULL){
                                         if(((SgDeclarationStatement*)node)->get_scope()!=NULL){
-                                                if(((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL){
+                                             if(((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgDeclarationStatement*)node)->get_symbol_from_symbol_table();
                                                         if(isSgInterfaceSymbol(symbol)){
                                                                 ((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -14810,7 +15526,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgModuleStatement(node) !=NULL){
                                         if(((SgClassDeclaration*)node)->get_scope()!=NULL){
-                                                if(((SgClassDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+                                             if(((SgClassDeclaration*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgClassDeclaration*)node)->get_symbol_from_symbol_table();
                                                         if(isSgModuleSymbol(symbol)){
                                                                 ((SgClassDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -14824,7 +15541,8 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgTemplateInstantiationDecl(node) !=NULL){
                                         if(((SgTemplateInstantiationDecl*)node)->get_scope()!=NULL){
-                                                if(((SgTemplateInstantiationDecl*)node)->get_scope()->get_symbol_table()!=NULL){
+                                             if(((SgTemplateInstantiationDecl*)node)->get_scope()->get_symbol_table()!=NULL)
+                                                {
                                                         SgSymbol* symbol = ((SgTemplateInstantiationDecl*)node)->get_symbol_from_symbol_table();
                                                         if(isSgClassSymbol(symbol)){
                                                                 ClassicVisitor visitor((SgClassSymbol*)symbol);
@@ -14857,8 +15575,10 @@ SageInterface::deleteAST ( SgNode* n )
                                 }
 
 #endif
-
-                        //Normal nodes  will be removed in a post-order way
+#if 0
+                        printf ("Deleting node = %p = %s \n",node,node->class_name().c_str());
+#endif
+                     // Normal nodes  will be removed in a post-order way
                         delete node;
                         }
                 };

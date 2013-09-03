@@ -18,7 +18,7 @@ void foo (X::private_mode i);
 void foobar()
    {
   // foo((private_mode)0);
-      foo(X::public_mode(0));
+     foo(X::public_mode(0));
    }
 
 

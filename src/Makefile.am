@@ -117,6 +117,7 @@ libroseLibraries = \
    $(top_builddir)/src/midend/programAnalysis/libprogramAnalysis.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/libLoopProcessing.la \
    $(top_builddir)/src/midend/programTransformation/extractFunctionArgumentsNormalization/libExtractFunctionArgumentsNormalization.la \
+   $(top_builddir)/src/midend/programTransformation/singleStatementToBlockNormalization/libSingleStatementToBlockNormalization.la \
    $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
    $(top_builddir)/src/midend/libmidend.la \
    $(top_builddir)/src/roseSupport/libroseSupport.la \
@@ -139,13 +140,13 @@ include_HEADERS = \
      roseInternal.h \
      rose_msvc.h \
      msvc_stdint.h \
-	 roseSupport/utility_functionsImpl.C \
-	 midend/astProcessing/AstDOTGeneration.h \
-	 midend/astProcessing/AstDOTGenerationImpl.C \
-	 frontend/SageIII/sage3basic.h \
-	 frontend/SageIII/sage3basic.hhh \
-	 midend/astDiagnostics/AstConsistencyTests.h \
-	 backend/asmUnparser/AsmUnparser_compat.h
+     roseSupport/utility_functionsImpl.C \
+     midend/astProcessing/AstDOTGeneration.h \
+     midend/astProcessing/AstDOTGenerationImpl.C \
+     frontend/SageIII/sage3basic.h \
+     frontend/SageIII/sage3basic.hhh \
+     midend/astDiagnostics/AstConsistencyTests.h \
+     backend/asmUnparser/AsmUnparser_compat.h
 
 # DQ (9/22/2006): Because we now use libtool, the shared library is a reference to the separate
 # dynamic libraries in each directory and so testMultiRoseLib is redundant with testSharedRoseLib.

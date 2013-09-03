@@ -12,4 +12,5 @@ int main(void)
 #pragma omp ordered 
     printf("%2d,Hello,world.!\n",i);
   }
+  return 0;
 }

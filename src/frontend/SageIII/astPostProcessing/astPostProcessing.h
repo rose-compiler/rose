@@ -62,8 +62,15 @@
 // DQ (10/5/2012): Fixup known macros that might expand into a recursive mess in the unparsed code.
 #include "fixupSelfReferentialMacros.h"
 
+// DQ (4/24/2013): Detect the correct function declaration to declare the use of default arguments.
+// This can only be a single function and it can't be any function (this is a moderately complex issue).
+#include "fixupFunctionDefaultArguments.h"
+
 // DQ (12/20/2012): Added support for testing the physical source position information.
 #include "checkPhysicalSourcePosition.h"
+
+// DQ (6/11/2013): This corrects where EDG can set the scope of a friend declaration to be different from the defining declaration.
+#include "fixupDeclarationScope.h"
 
 
 /*! \brief Postprocessing that is not likely to be handled in the EDG/Sage III translation.
@@ -83,5 +90,17 @@ void postProcessingSupport (SgNode* node);
 
  */
 void AstPostProcessing(SgNode* node);
+
+
+#if 0
+// DQ (4/26/2013): Test constructed to detect problems with where default arguments are marked.
+class PostProcessingTestFunctionCallArguments : public AstSimpleProcessing
+   {
+     public:
+          void visit (SgNode* node);
+   };
+
+void postProcessingTestFunctionCallArguments(SgNode* node);
+#endif
 
 #endif

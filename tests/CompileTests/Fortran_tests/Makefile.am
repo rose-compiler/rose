@@ -2,6 +2,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = LANL_POP gfortranTestSuite
 
+if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
+   SUBDIRS += experimental_frontend_tests
+endif
+
+
 ###########################################################################
 # These are Fortran testcodes targeting aspects F66, F77, F90, F95, F2003 #
 ###########################################################################
@@ -256,9 +261,6 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_funcdecl-1.f90 \
      test2011_Rice_function-implicit-result-1.f90 \
      test2011_Rice_function-implicit-result-2.f90 \
-     test2011_Rice_function-no-result-1.f90 \
-     test2011_Rice_function-no-result-2.f90 \
-     test2011_Rice_function-result-1.f90 \
      test2011_Rice_function-result-2.f90 \
      test2011_Rice_function-where-var-expected.f90 \
      test2011_Rice_ifConstruct.f90 \
@@ -401,13 +403,15 @@ if !ROSE_USING_GFORTRAN_VERSION_4_0
 endif
 
 # DQ (2/1/2011): These test codes will not pass the initial syntax checking with the GNU gfortran version 4.4.x compiler.
-if !ROSE_USING_GFORTRAN_VERSION_4_4
+#if !ROSE_USING_GFORTRAN_VERSION_4_4
+if !ROSE_USING_GFORTRAN_VERSION_LATER_4_4
 #  F90_TESTCODES_REQUIRED_TO_PASS += test2010_164.f90 test2011_37.f90 
    F90_TESTCODES_REQUIRED_TO_PASS += \
      test2010_164.f90 
 
 # DQ (4/10/2011): And if it is not gfortran 4.5, then add this test code.
-if !ROSE_USING_GFORTRAN_VERSION_4_5
+#if !ROSE_USING_GFORTRAN_VERSION_4_5
+if !ROSE_USING_GFORTRAN_VERSION_LATER_4_5
    F90_TESTCODES_REQUIRED_TO_PASS += \
      test2011_37.f90 
 endif
@@ -736,6 +740,12 @@ F90_TESTCODES_REQUIRED_TO_PASS += \
 # test2011_57.f90 
 # test2011_62.f90 
 # test2011_69.f90 
+# phlin (as 08/22/2012):
+# test case for ROSE-bugs #597
+if ROSE_USING_GFORTRAN_VERSION_LATER_4_5
+F90_TESTCODES_REQUIRED_TO_PASS += \
+     test2012_SavedCommonBlock.f90 
+endif
 
 # DQ (9/30/2011): There is a long history of this being a statistical failure on at least OSX systems. 
 # test2010_161.f90 
@@ -763,7 +773,6 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS += \
      test2010_105.f \
      test2010_157.f \
      test2011_94.f 
-
 
 # DXN (as of 08/10/2011):
 F03_TESTCODES_REQUIRED_TO_PASS += \

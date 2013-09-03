@@ -67,6 +67,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           void unparseTemplateFunctionName ( SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration, SgUnparse_Info& info );
           void unparseTemplateArgumentList ( const SgTemplateArgumentPtrList& templateArgListPtr, SgUnparse_Info& info );
 
+       // DQ (5/25/2013): Added support for unparsing the name of the template member function.
+          void unparseTemplateMemberFunctionName ( SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDeclaration, SgUnparse_Info& info );
+
        // DQ (2/16/2004): Added to refactor code and add support for old-style K&R C
           void unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUnparse_Info& info);
           void unparseFunctionParameterDeclaration ( SgFunctionDeclaration* funcdecl_stmt, 
@@ -237,6 +240,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           virtual void unparseUnaryMinusOp            (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseUnaryAddOp              (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseSizeOfOp                (SgExpression* expr, SgUnparse_Info& info);  
+
+       // DQ (6/20/2013): Added support for C/C++ alignment extension __alignof__ operator.
+          virtual void unparseAlignOfOp                (SgExpression* expr, SgUnparse_Info& info);  
 
        // DQ (2/12/2011): Added support for UPC specific sizeof operators.
           virtual void unparseUpcLocalSizeOfOp        (SgExpression* expr, SgUnparse_Info& info);
@@ -442,6 +448,13 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
 
        // DQ (10/5/2012): Added support for GNU type attributes.
           void unparseTypeAttributes ( SgDeclarationStatement* declaration );
+
+       // DQ (5/24/2013): Added to support refactoing of the code to unparse the template arguments when
+       // they are generated seperately for SgFunctionRefExp and SgMemberFunctionRefExp IR nodes.
+       // void unparseGeneratedTemplateArgumentsList (SgName unqualifiedName, SgName qualifiedName, SgLocatedNode* locatedNode, SgUnparse_Info& info);
+
+       // DQ (7/12/2013): Added support for type trait builtin functions.
+          void unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_Info& info);
    };
 
 #endif

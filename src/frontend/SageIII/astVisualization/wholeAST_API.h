@@ -7,6 +7,9 @@
 
 #include "wholeAST.h"
 
+// DQ (8/20/2013): Added initial support for IR node specific graphs.
+#include "intermediateRepresentationNodeGraphs.h"
+
 //! Generate a whole AST graph with a specified filename, using filter_flags to turn on/off builtin node filters and using skippedNodeSet to exclude customized node set.
 void generateWholeGraphOfAST( std::string filename, std::set<SgNode*> & skippedNodeSet, CustomMemoryPoolDOTGeneration::s_Filter_Flags* flags);
 //!Generate a whole AST graph with a specified filename and a set of explicitly excluded nodes
