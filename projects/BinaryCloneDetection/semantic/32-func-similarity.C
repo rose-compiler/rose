@@ -153,11 +153,33 @@ struct FuncInfo {
 typedef std::map<int/*func_id*/, FuncInfo> FuncInfos;
 static FuncInfos func_infos;
 
+// Decompress vectors from database
+boost::scoped_array<uint16_t>*
+decompress_string_to_array(const std::string& array_from_db)
+{
+
+  std::vector<uint8_t> counts = StringUtility::decode_base64( array_from_db );
+  //std::string compressed_counts(&counts[0], &counts[0]+counts.size());
+
+  //scoped_array_with_size<uint8_t> 
+  //memcpy(compressed_counts.get(), compressed_counts.data(), compressed_counts.size());
+
+  int vec_length = x86_last_instruction* 4 + 300 + 9 + 3;
+  boost::scoped_array<uint16_t>* array_uncompressed = new boost::scoped_array<uint16_t>(new uint16_t[vec_length]);
+  
+  decompressVector(counts.data(), counts.size(), array_uncompressed->get());
+
+  return array_uncompressed;
+}
+
+
 // Abstract base class for various methods of computing similarity between two output groups.  The class not only provides
 // the similarity() operator, but also can cache any other information that makes computing the similarity faster. The cached
 // info can sometimes be substantially smaller than the output group stored in the database.
 class CachedOutput {
 public:
+    const boost::scoped_array<uint16_t>* signature_vector;
+ 
     virtual ~CachedOutput() {}
     // Similarity of two objects as a value between zero and one (one being identical).
     virtual double similarity(const CachedOutput *other, const FuncInfo &finfo1, const FuncInfo &finfo2) const = 0;
@@ -171,8 +193,9 @@ typedef std::map<int/*func_id*/, CachedOutputs> FunctionOutputs;
 class FullEquality: public CachedOutput {
 public:
     const CloneDetection::OutputGroup *ogroup;
-    FullEquality(const CloneDetection::OutputGroup *ogroup) {
+    FullEquality(const CloneDetection::OutputGroup *ogroup, const std::string& array_from_db) {
         ogroup = new CloneDetection::OutputGroup(*ogroup); // because caller is about to delete it
+        signature_vector = decompress_string_to_array(array_from_db);
     }
     virtual double similarity(const CachedOutput *other_, const FuncInfo &finfo1, const FuncInfo &finfo2) const /*override*/ {
         const FullEquality *other = dynamic_cast<const FullEquality*>(other_);
@@ -192,12 +215,14 @@ public:
     std::pair<bool, CloneDetection::OutputGroup::value_type> retval;
     CloneDetection::AnalysisFault::Fault fault;
 
-    ValuesetEquality(const CloneDetection::OutputGroup *ogroup) {
+    ValuesetEquality(const CloneDetection::OutputGroup *ogroup, const std::string& array_from_db) {
         std::vector<VSet::value_type> vvec = ogroup->get_values();
         for (size_t i=0; i<vvec.size(); ++i)
             values.insert(vvec[i]);
         fault = ogroup->get_fault();
         retval = ogroup->get_retval();
+        signature_vector = decompress_string_to_array(array_from_db);
+ 
     }
 
     virtual double similarity(const CachedOutput *other_, const FuncInfo &finfo1, const FuncInfo &finfo2) const /*override*/ {
@@ -231,9 +256,11 @@ public:
     ValVector values;
     std::pair<bool, CloneDetection::OutputGroup::value_type> retval;
 
-    ValuesDamerauLevenshtein(const CloneDetection::OutputGroup *ogroup) {
+    ValuesDamerauLevenshtein(const CloneDetection::OutputGroup *ogroup, const std::string& array_from_db) {
         values = ogroup->get_values();
         retval = ogroup->get_retval();
+        signature_vector = decompress_string_to_array(array_from_db);
+
     }
 
     virtual double similarity(const CachedOutput *other_, const FuncInfo &finfo1, const FuncInfo &finfo2) const /*override*/ {
@@ -269,7 +296,7 @@ public:
 // tests.  The Jaccard index of two empty sets is 1.
 class ValuesetJaccard: public ValuesetEquality {
 public:
-    ValuesetJaccard(const CloneDetection::OutputGroup *ogroup): ValuesetEquality(ogroup) {}
+    ValuesetJaccard(const CloneDetection::OutputGroup *ogroup, const std::string& array_from_db): ValuesetEquality(ogroup, array_from_db) {}
     virtual double similarity(const CachedOutput *other_, const FuncInfo &finfo1, const FuncInfo &finfo2) const /*override*/ {
         const ValuesetJaccard *other = dynamic_cast<const ValuesetJaccard*>(other_);
         VSet vs1, vs2;
@@ -320,7 +347,7 @@ igroup(int igroup_id)
 
 // Load output group if it isn't loaded already. Return its pointer in any case.
 static CachedOutput *
-load_output(CachedOutputs &all_outputs, int64_t ogroup_id)
+load_output(CachedOutputs &all_outputs, int64_t ogroup_id, const std::string& array_from_db)
 {
     CachedOutputs::iterator found = all_outputs.find(ogroup_id);
     if (found!=all_outputs.end())
@@ -330,18 +357,21 @@ load_output(CachedOutputs &all_outputs, int64_t ogroup_id)
     CachedOutput *output = NULL;
     switch (opt.output_cmp) {
         case OC_FULL_EQUALITY:
-            output = new FullEquality(ogs.lookup(ogroup_id));
+            output = new FullEquality(ogs.lookup(ogroup_id), array_from_db);
             break;
         case OC_VALUESET_EQUALITY:
-            output = new ValuesetEquality(ogs.lookup(ogroup_id));
+            output = new ValuesetEquality(ogs.lookup(ogroup_id), array_from_db);
             break;
         case OC_VALUESET_JACCARD:
-            output = new ValuesetJaccard(ogs.lookup(ogroup_id));
+            output = new ValuesetJaccard(ogs.lookup(ogroup_id), array_from_db);
             break;
         case OC_DAMERAU_LEVENSHTEIN:
-            output = new ValuesDamerauLevenshtein(ogs.lookup(ogroup_id));
+            output = new ValuesDamerauLevenshtein(ogs.lookup(ogroup_id), array_from_db);
             break;
     }
+
+
+
     return output;
 }
 
@@ -361,7 +391,7 @@ load_function_outputs(CachedOutputs &all_outputs, FunctionOutputs &function_outp
 {
     FunctionOutputs::iterator found = function_outputs.find(func_id);
     if (found==function_outputs.end()) {
-        SqlDatabase::StatementPtr stmt = transaction->statement("select igroup_id, ogroup_id"
+        SqlDatabase::StatementPtr stmt = transaction->statement("select igroup_id, ogroup_id, counts_b64 "
                                                                 " from semantic_fio"
                                                                 " where func_id = ? AND (arguments_consumed > 0 OR globals_consumed > 0 OR pointers_consumed > 0 OR integers_consumed > 0)"+
                                                                 std::string(opt.ignore_faults?" and status = 0":""));
@@ -370,7 +400,8 @@ load_function_outputs(CachedOutputs &all_outputs, FunctionOutputs &function_outp
         for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
             int igroup_id = row.get<int>(0);
             int64_t ogroup_id = row.get<int64_t>(1);
-            CachedOutput *output = load_output(all_outputs, ogroup_id);
+            std::string array_from_db = row.get<std::string>(2);
+            CachedOutput *output = load_output(all_outputs, ogroup_id, array_from_db);
             outputs.insert(std::make_pair(igroup_id, output));
         }
         function_outputs.insert(std::make_pair(func_id, outputs));
@@ -540,6 +571,9 @@ load_worklist(const std::string &input_name, FILE *f)
     }
     return worklist;
 }
+
+
+
 
 void
 read_vector_data(const SqlDatabase::TransactionPtr &tx, scoped_array_with_size<VectorEntry>& vectors, std::map<int, VectorEntry*>& id_to_vec)
