@@ -2,6 +2,7 @@
 #include "SqlDatabase.h"
 
 #include "vectorCompression.h"
+#include "sqlite3x.h"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
