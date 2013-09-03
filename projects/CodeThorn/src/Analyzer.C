@@ -52,7 +52,7 @@ void Analyzer::printStatusMessage(bool forceDisplay) {
   // report we are alife
   stringstream ss;
   if(forceDisplay) {
-    ss <<color("white")<<"Number of pstates/estates/trans/csets: ";
+    ss <<color("white")<<"Number of pstates/estates/trans/csets/wl: ";
     ss <<color("magenta")<<pstateSet.size()
        <<color("white")<<"/"
        <<color("cyan")<<estateSet.size()
@@ -60,7 +60,8 @@ void Analyzer::printStatusMessage(bool forceDisplay) {
        <<color("blue")<<getTransitionGraph()->size()
        <<color("white")<<"/"
        <<color("yellow")<<constraintSetMaintainer.size()
-       <<color("white")<<"";
+       <<color("white")<<"/"
+	   <<estateWorkList.size();
     ss<<endl;
     cout<<ss.str();
   }
