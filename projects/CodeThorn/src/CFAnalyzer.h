@@ -92,6 +92,7 @@ class Edge {
   string toString();
   // deletes all Edges of type edgeType. The return value is the number of deleted edges.
   size_t deleteEdges(EdgeType edgeType);
+  size_t deleteEdges(Flow& flow);
  private:
   bool _dotOptionDisplayLabel;
   bool _dotOptionDisplayStmt;
@@ -137,6 +138,7 @@ class CFAnalyzer {
   LabelSet finalLabels(SgNode* node);
   LabelSet functionCallLabels(Flow& flow);
   LabelSet functionEntryLabels(Flow& flow);
+  LabelSet conditionLabels(Flow& flow);
   Label correspondingFunctionExitLabel(Label entryLabel);
   LabelSetSet functionLabelSetSets(Flow& flow);
   LabelSet functionLabelSet(Label entryLabel, Flow& flow);
@@ -146,7 +148,9 @@ class CFAnalyzer {
   // computes from existing intra-procedural flow graph(s) the inter-procedural call information
   InterFlow interFlow(Flow& flow); 
   void intraInterFlow(Flow&, InterFlow&);
+  int reduceNode(Flow& flow, Label lab);
   int reduceBlockBeginNodes(Flow& flow);
+  int reduceEmptyConditionNodes(Flow& flow);
   size_t deleteFunctioncCallLocalEdges(Flow& flow);
  private:
   Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);

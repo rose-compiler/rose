@@ -1011,13 +1011,16 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   cout << "INIT: Creating CFAnalyzer."<<endl;
   cfanalyzer=new CFAnalyzer(labeler);
-  //cout<< "DEBUG: mappingLabelToNode: "<<endl<<getLabeler()->toString()<<endl;
+  //cout<< "DEBUG: mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
   cout << "INIT: Building CFGs."<<endl;
   flow=cfanalyzer->flow(root);
   cout << "STATUS: Building CFGs finished."<<endl;
   if(boolOptions["reduce-cfg"]) {
-    int cnt=cfanalyzer->reduceBlockBeginNodes(flow);
-    cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
+    int cnt;
+	cnt=cfanalyzer->reduceBlockBeginNodes(flow);
+    cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" block nodes)"<<endl;
+    cnt=cfanalyzer->reduceEmptyConditionNodes(flow);
+    cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" empty condition nodes)"<<endl;
   }
   cout << "INIT: Intra-Flow OK. (size: " << flow.size() << " edges)"<<endl;
   InterFlow interFlow=cfanalyzer->interFlow(flow);

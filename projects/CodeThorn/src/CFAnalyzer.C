@@ -189,6 +189,17 @@ LabelSet CFAnalyzer::functionCallLabels(Flow& flow) {
   return resultSet;
 }
 
+LabelSet CFAnalyzer::conditionLabels(Flow& flow) {
+  LabelSet resultSet;
+  LabelSet nodeLabels;
+  nodeLabels=flow.nodeLabels();
+  for(LabelSet::iterator i=nodeLabels.begin();i!=nodeLabels.end();++i) {
+    if(labeler->isConditionLabel(*i))
+      resultSet.insert(*i);
+  }
+  return resultSet;
+}
+
 LabelSet CFAnalyzer::functionEntryLabels(Flow& flow) {
   LabelSet resultSet;
   LabelSet nodeLabels;
@@ -615,6 +626,22 @@ size_t Flow::deleteEdges(EdgeType edgeType) {
   return numDeleted;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
+size_t Flow::deleteEdges(Flow& edges) {
+  // MS: this function is supposed to allow a subset of edges of the very same graph as parameter
+  // hence, we must be careful about iterator semantics
+  size_t numDeleted=0;
+  Flow::iterator i=edges.begin();
+  while(i!=end()) {
+	erase(i++); // MS: it is paramount to pass a copy of the iterator, and perform a post-increment.
+	  numDeleted++;
+  }
+  return numDeleted;
+}
+
 Flow Flow::inEdges(Label label) {
   Flow flow;
   for(Flow::iterator i=begin();i!=end();++i) {
@@ -708,12 +735,58 @@ Flow CFAnalyzer::flow(SgNode* s1, SgNode* s2) {
   return flow12;
 }
 
+int CFAnalyzer::reduceEmptyConditionNodes(Flow& flow) {
+  LabelSet labs=conditionLabels(flow);
+  int cnt=0;
+  for(LabelSet::iterator i=labs.begin();i!=labs.end();++i) {
+	if(flow.succ(*i).size()==1) {
+      cnt+=reduceNode(flow,*i);
+	}
+  }
+  return cnt;
+}
+
+int CFAnalyzer::reduceNode(Flow& flow, Label lab) {
+  Flow inFlow=flow.inEdges(lab);
+  Flow outFlow=flow.outEdges(lab);
+  /* description of essential operations:
+   *   inedges: (n_i,b)
+   *   outedge: (b,n2) 
+   *   remove(n_i,b)
+   *   remove(b,n2)
+   *   insert(n1,n2)
+   */
+  if(inFlow.size()==0 && outFlow.size()==0)
+	return 0;
+
+  if(inFlow.size()==0 || outFlow.size()==0) {
+	Flow edges=inFlow+outFlow;
+	flow.deleteEdges(edges);
+	return 1;
+  }
+
+  for(Flow::iterator initer=inFlow.begin();initer!=inFlow.end();++initer) {
+	for(Flow::iterator outiter=outFlow.begin();outiter!=outFlow.end();++outiter) {
+	  Edge e1=*initer;
+	  Edge e2=*outiter;
+	  Edge newEdge=Edge(e1.source,e1.types(),e2.target);
+	  flow.erase(e1);
+	  flow.erase(e2);
+	  flow.insert(newEdge);
+	}
+  }
+  return 1;
+}
+
 int CFAnalyzer::reduceBlockBeginNodes(Flow& flow) {
   LabelSet labs=flow.nodeLabels();
   int cnt=0;
   for(LabelSet::iterator i=labs.begin();i!=labs.end();++i) {
     if(isSgBasicBlock(getNode(*i))) {
-      cnt++;
+#if 1
+	  cnt+=reduceNode(flow,*i);
+#else
+	  cnt++;
       Flow inFlow=flow.inEdges(*i);
       Flow outFlow=flow.outEdges(*i);
 
@@ -735,6 +808,7 @@ int CFAnalyzer::reduceBlockBeginNodes(Flow& flow) {
         flow.erase(e2);
         flow.insert(newEdge);
       }
+#endif
     }
   }
   return cnt;

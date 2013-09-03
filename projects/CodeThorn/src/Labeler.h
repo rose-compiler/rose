@@ -147,11 +147,12 @@ class Labeler {
   bool isStdInLabel(Label label, VariableId* id=0);
   bool isStdOutLabel(Label label, VariableId* id=0);
   bool isStdErrLabel(Label label, VariableId* id=0);
+  bool isConditionLabel(Label lab);
 
  private:
   void computeNodeToLabelMapping();
   void registerLabel(LabelProperty);
-  vector<LabelProperty> mappingLabelToNode;
+  vector<LabelProperty> mappingLabelToLabelProperty;
   map<SgNode*,Label> mappingNodeToLabel;
   VariableIdMapping* _variableIdMapping;
   bool _isValidMappingNodeToLabel;
