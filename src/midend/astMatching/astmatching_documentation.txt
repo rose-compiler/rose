@@ -1,6 +1,7 @@
 == DRAFT ==
 == ROSE AST MATCHING MECHANISM DOCUMENTATION ==
 == Markus Schordan, June 2, 2013 ==
+== This documentation will be moved to the doxygen/tutorial documentation. ==
 
 ============
 Introduction
@@ -33,15 +34,16 @@ AstMatchingResult. The matching result is a set of maps where each map
 represents the results for one successful match and holds pairs of a
 variable name and a pointer to the respective AST subtree.
 
-Ignoring subtrees (wildcards)
+Ignoring subtrees (wildcards '_')
 Subtrees can also be specified to be ignored for matching by using '_'
-in the match expression. For examples if we use SgAssignOp(_,_) we can
+in the match expression. For example, if we use SgAssignOp(_,_) we can
 match all assignment nodes in the AST, but ignore the structure of the ASTs
 representing the rhs and lhs.
 
 =========
 Variables
 =========
+
 Variables are used to specify that pointers to matched subtrees are
 stored in the matching result. An arbitrary number of variables can be
 used and two forms of use are supported. A variable is denoted with a
@@ -58,6 +60,14 @@ write $Y as a shorthand, thus we can also use
 $R=SgAssignOp($X=SgVarRef,$Y) instead.  The assignment of variables to
 variables, such as $Z=$Y, is not allowed.
 
+===========
+Null-values
+===========
+
+Null values can be explicitely matched by using "null" in a match
+expression. For example $X=SgForStatement(_,_,_,_,null) would match
+all SgForStatement-terms with the 5th argument being 0.
+
 ============
 Operator '#'
 ============
@@ -68,7 +78,7 @@ $FOR=SgForStatement(_,_,_,#_)
 This matches only the outer for-statements, as the body (4th argument) is excluded from applying the match operator. Without '#' we would also match the inner loops.
 
 =============
-Operator '..' [not completed yet]
+Operator '..'
 =============
 This operator can be used in match expressions to specify that an arbitrary
 number of arguments can follow. For example we can use
@@ -110,17 +120,31 @@ Match all function calls and bind variable $Func to the root of each such expres
 Accessing matching results
 ==============================================================================
 
-The results are collected in a std::list of std::maps. Each map represents on successful match at one location in the AST and contains all the bound variables. The variables can be accessed by name and using the random access operator. The number of elements (=maps) in the list corresponds to the number of matched patterns in the AST.
+The results are collected in a std::list of std::maps. Each map
+represents on successful match at one location in the AST and contains
+all the bound variables. The variables can be accessed by name and
+using the random access operator. The number of elements (=maps) in
+the list corresponds to the number of matched patterns in the AST.
 
 The pointers to matched patterns in the AST can be accessed as follows:
 e.g.
-AstMatching m;
-MatchResult res=m.performMatching("$R=SgInitalizedName($X)",root);
+/* 1 */ AstMatching m;
+/* 2 */ MatchResult res=m.performMatching("$R=SgInitalizedName($X)",root);
+/* 3 */ SgNode* myRvariable=res["$R"];
+/* 4 */ SgNode* myXvariable=res["$X"];
 
-Now the pointer value of the variable $R, pointing to a SgNode, can be accessed in C++ with:
-res["$R"]
+In line 1 the AstMatching object is created. In line 2 the
+match-expression and the root node of the AST is provided to the
+matching mechanism and the results are computed. In line 3 the
+variable $R (and in line 4 variable $X) is accessed. This pointer
+value refers to the node in the AST which was matched successfully in
+the match expression.  The matching can be performed on any AST
+subtree of interest, by letting 'root' point to the respective AST
+subtree when the match operation is started.
 
-Here is a more elaborate code example to perform one match operation on the entire ROSE AST and print all matching results in the map using iterators:
+Here is a more elaborate code example to perform one match operation
+on the entire ROSE AST and print all match results in the map using
+iterators:
 
 // Fragment from the matcher_demo program
 AstMatching m;
@@ -173,40 +197,30 @@ e.g.
 * The where-clause can be implemented by performing the tests of the where-clause on the match-result map. 
 * The access to AST values can be performed on the match-result map.
 
-===================================
-Operator "|" [considered extension]
-===================================
+============
+Operator "|" 
+============
 
-This operator allows to combine multiple match expressions.
+This operator allows to combine multiple match expressions. For example "SgAddOp($L,$R)|SgSubOp($L,$R)"
+will match either a SgAddOp and bind pointers to its two children to $L and $R, or it will match SgSubOp.
+The operator '|' performs a short-circuit evaluation, thus, matching is performed from left to right and the matching
+stops as soon as one of the patterns can be successfully matched.
+
+
 
 
 ==============================================================================
 Extended match expression with where-clause [considered extension]
 ==============================================================================
 
-The where clause allows to compare values with the bound variables:
+A where-clause is considered to be added to allow to "filter" all matched expressions
+and query further information. This may also include a call-back function
+to user-defined behavior, where the bound variables are passed as parameter.
 
-* match("$R=SgInitializedName($X) where $X!=null",astRoot) 
-
-only match those SgInitializedName subtrees which have no null pointer
-as child. Note that many such nodes exist by default in
-ROSE. Filtering them certainly helps. For example, we would then
-match:
-SgInitializedName(SgAssignInitializer(SgIntVal))
-but not SgInitializedName(null).
+Example:
 
 * match("$R=_($X,$Y) where $X==null || $Y==null",astRoot)
 
 Here we match all binary nodes which have at least one null pointer.
 
-================================================
-Accessing AST information [considered extension]
-================================================
-
-* match("$Func=SgFunctionCallExp($FuncRef,$Params) where $FuncRef.name=='main'",astRoot) 
-
-Some information in the ROSE AST (such as names of functions,
-variables, etc.) can be made accessible in a where clause. Access names and syntax
-is defined in the where clause syntax.
-
-
+Furthermore, access to AST attributes and other AST information is considered.

@@ -64,6 +64,9 @@ typedef size_t Label;
 
 class LabelSet : public set<Label> {
  public:
+
+   // temporary until all sets are properly using the std:algorithms for set operations
+#if 1
 LabelSet operator+(LabelSet& s2) {
   LabelSet result;
   result=*this;
@@ -71,6 +74,7 @@ LabelSet operator+(LabelSet& s2) {
     result.insert(*i2);
   return result;
 }
+#endif
 
 LabelSet& operator+=(LabelSet& s2) {
   for(LabelSet::iterator i2=s2.begin();i2!=s2.end();++i2)
@@ -88,7 +92,12 @@ LabelSet& operator+=(LabelSet& s2) {
    ss<<"}";
    return ss.str();
  }
+ bool isElement(Label lab) {
+   return find(lab)!=end();
+ }
 };
+
+ typedef std::set<LabelSet> LabelSetSet;
 
 class Labeler {
  public:
