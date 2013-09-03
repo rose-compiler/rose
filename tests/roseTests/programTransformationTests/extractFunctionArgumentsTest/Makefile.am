@@ -20,9 +20,8 @@ normalizationTranslator_SWITCHES = \
 	--edg:no_warnings -w -rose:verbose 0 -I$(normalizationTranslator_SPECIMENS_DIR) -I$(top_srcdir)/tests/CompileTests/A++Code
 
 $(normalizationTranslator_TEST_TARGETS): \
-	%.passed:  % normalizationTranslator $(TEST_EXIT_STATUS)
-	cp "$$(echo "$@" | sed 's/\.passed$$//g')" "$$(basename "$@")"
-	@$(RTH_RUN) CMD="./normalizationTranslator $(normalizationTranslator_SWITCHES) -c $<" $(TEST_EXIT_STATUS) "$(builddir)/$$(basename "$@")"
+	%.passed: $(ROSE__CXX_TESTS_DIR)/% normalizationTranslator $(TEST_EXIT_STATUS)
+	@$(RTH_RUN) CMD="./normalizationTranslator $(normalizationTranslator_SWITCHES) -c $<" $(TEST_EXIT_STATUS) "$@"
 
 check-local: $(normalizationTranslator_TEST_TARGETS)
 
