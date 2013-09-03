@@ -560,9 +560,9 @@ TEST_TRANSLATOR = ../../testTranslator
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
 # $(TEST_Objects): $(TEST_TRANSLATOR) $(srcdir)/$(@:.o=.C)
 # $(TEST_Objects):
-$(TEST_Objects): ../../testTranslator
+$(TEST_Objects): %.o: $(ROSE__CXX_TESTS_DIR)/%.C ../../testTranslator
 if !ROSE_USE_INSURE
-	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(@:.o=.C)
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c "$<"
 #	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 #	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 else

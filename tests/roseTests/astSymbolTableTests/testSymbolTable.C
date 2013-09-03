@@ -2,7 +2,11 @@
 
 void lookup_named_symbols (SgGlobal* globalScope, const SgName & name)
    {
-     SgSymbol* symbol = globalScope->lookup_symbol(name);
+     SgTemplateParameterPtrList* templateParameterList = NULL;
+     SgTemplateArgumentPtrList*  templateArgumentList  = NULL;
+
+  // DQ (8/21/2013): It does not make sense to NOT know what symbol your looking for...
+     SgSymbol* symbol = globalScope->lookup_symbol(name,templateParameterList,templateArgumentList);
      while (symbol != NULL)
         {
           printf ("symbol = %p = %s \n",symbol,symbol->get_name().str());
@@ -65,12 +69,41 @@ void lookup_named_symbols (SgGlobal* globalScope, const SgName & name)
           namespaceSymbol = globalScope->next_namespace_symbol();
         }
 
+#if 0
+  // DQ (8/21/2013): This function does not make since any more because the latest branch of ROSE (EDG4x) redesigns the template handling).
      SgTemplateSymbol* templateSymbol = globalScope->lookup_template_symbol(name);
      while (templateSymbol != NULL)
         {
           printf ("templateSymbol = %p = %s \n",templateSymbol,templateSymbol->get_name().str());
           templateSymbol = globalScope->next_template_symbol();
         }
+#endif
+#if 0
+  // DQ (8/21/2013): These symbol lookup functions require template parameters and template arguments.
+  // However, there are not next_XXX() versions of these functions yet.
+     SgType* type = NULL;
+
+     SgTemplateClassSymbol* templateClassSymbol = globalScope->lookup_template_class_symbol(name,templateParameterList,templateArgumentList);
+     while (templateClassSymbol != NULL)
+        {
+          printf ("templateClassSymbol = %p = %s \n",templateClassSymbol,templateClassSymbol->get_name().str());
+          templateClassSymbol = globalScope->next_template_class_symbol();
+        }
+
+     SgTemplateFunctionSymbol* templateFunctionSymbol = globalScope->lookup_template_function_symbol(name,type,templateParameterList);
+     while (templateFunctionSymbol != NULL)
+        {
+          printf ("templateFunctionSymbol = %p = %s \n",templateFunctionSymbol,templateFunctionSymbol->get_name().str());
+          templateFunctionSymbol = globalScope->next_template_function_symbol();
+        }
+
+     SgTemplateMemberFunctionSymbol* templateMemberFunctionSymbol = globalScope->lookup_template_member_function_symbol(name,type,templateParameterList);
+     while (templateMemberFunctionSymbol != NULL)
+        {
+          printf ("templateMemberFunctionSymbol = %p = %s \n",templateMemberFunctionSymbol,templateMemberFunctionSymbol->get_name().str());
+          templateMemberFunctionSymbol = globalScope->next_template_member_function_symbol();
+        }
+#endif
    }
 
 
@@ -140,12 +173,15 @@ lookup_all_symbols(SgGlobal* globalScope)
           namespaceSymbol = globalScope->next_namespace_symbol();
         }
 
+#if 0
+  // DQ (8/21/2013): This function does not make since any more because the latest branch of ROSE (EDG4x) redesigns the template handling).
      SgTemplateSymbol* templateSymbol = globalScope->first_template_symbol();
      while (templateSymbol != NULL)
         {
           printf ("templateSymbol = %p = %s \n",templateSymbol,templateSymbol->get_name().str());
           templateSymbol = globalScope->next_template_symbol();
         }
+#endif
    }
 
 

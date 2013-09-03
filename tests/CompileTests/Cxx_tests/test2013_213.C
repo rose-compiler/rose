@@ -163,7 +163,7 @@ void DescriptorBuilder::RecordPublicDependencies(const FileDescriptor* file)
   //    std::pair<std::_Rb_tree_const_iterator<const google::protobuf::FileDescriptor*>, bool>
   // by mistake, and thus call the wrong function.
 
-  // It might be nice to now put out the base class qualifier for the member variable: "second"
+  // It might be nice to not put out the base class qualifier for the member variable: "second"
   // however, it is also a problem (I think) that we might be getting it wrong internally within ROSE.
 
   // g++ generates an error for this code:

@@ -508,6 +508,8 @@ HEADER_TEMPLATE_PARAMETER_VALUE_EXPRESSION_START
        // DQ (11/28/2011): Added to support template declarations in the AST.
           SgName get_template_parameter_name() const;
 
+          SgType* get_type() const;
+
 HEADER_TEMPLATE_PARAMETER_VALUE_EXPRESSION_END
 
 
@@ -1481,7 +1483,7 @@ SgExpression::get_qualified_name_prefix() const
   //    SgMemberFunctionRefExp
 
 #if 0
-     printf ("In get_qualified_name_prefix(): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In get_qualified_name_prefix(): search globalQualifiedNameMapForNames: this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
   // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
@@ -1495,13 +1497,13 @@ SgExpression::get_qualified_name_prefix() const
         {
           nameQualifier = i->second;
 #if 0
-          printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+          printf ("In SgExpression::get_qualified_name_prefix(): Found a valid name qualification: nameQualifier = %s \n",nameQualifier.str());
 #endif
         }
        else
         {
 #if 0
-          printf ("Could NOT find a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+          printf ("In SgExpression::get_qualified_name_prefix(): Could NOT find a valid name qualification: nameQualifier = %s \n",nameQualifier.str());
 #endif
         }
 
@@ -1509,13 +1511,28 @@ SgExpression::get_qualified_name_prefix() const
      printf ("nameQualifier for SgExpression = %p = %p = %s = %s \n",this,const_cast<SgExpression*>(this),class_name().c_str(),nameQualifier.str());
 #endif
 
+#if 0
+  // DQ (8/19/2013): Error checking on the globalTypeNameMap...check if there is an entry here that we might have wanted to use instead.
+     std::map<SgNode*,std::string>::iterator j = SgNode::get_globalTypeNameMap().find(const_cast<SgExpression*>(this));
+     if (j != SgNode::get_globalTypeNameMap().end())
+        {
+          SgName debug_nameQualifier = j->second;
+          printf ("In SgExpression::get_qualified_name_prefix(): Found a valid name qualification in the globalTypeNameMap: debug_nameQualifier = %s \n",debug_nameQualifier.str());
+        }
+#endif
+
      return nameQualifier;
    }
  
+
 SgName
 SgExpression::get_qualified_name_prefix_for_referenced_type() const
    {
   // DQ (6/2/2011): Added to support for new qualified name generation.
+
+#if 0
+     printf ("In get_qualified_name_prefix_for_referenced_type(): search globalQualifiedNameMapForNames: this = %p = %s \n",this,this->class_name().c_str());
+#endif
 
   // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
   // different and so it depends upon where the type is referenced.  Thus the qualified name is 
@@ -1526,10 +1543,28 @@ SgExpression::get_qualified_name_prefix_for_referenced_type() const
      if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
         {
           nameQualifier = i->second;
-       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+#if 0
+          printf ("In SgExpression::get_qualified_name_prefix_for_referenced_type(): Found a valid name qualification: nameQualifier = %s \n",nameQualifier.str());
+#endif
+        }
+       else
+        {
+#if 0
+          printf ("In SgExpression::get_qualified_name_prefix_for_referenced_type(): Could NOT find a valid name qualification: nameQualifier = %s \n",nameQualifier.str());
+#endif
         }
 
   // printf ("nameQualifier for SgExpression referenced type = %s = %s \n",class_name().c_str(),nameQualifier.str());
+
+#if 0
+  // DQ (8/19/2013): Error checking on the globalTypeNameMap...check if there is an entry here that we might have wanted to use instead.
+     std::map<SgNode*,std::string>::iterator j = SgNode::get_globalTypeNameMap().find(const_cast<SgExpression*>(this));
+     if (j != SgNode::get_globalTypeNameMap().end())
+        {
+          SgName debug_nameQualifier = j->second;
+          printf ("In SgExpression::get_qualified_name_prefix_for_referenced_type(): Found a valid name qualification in the globalTypeNameMap: debug_nameQualifier = %s \n",debug_nameQualifier.str());
+        }
+#endif
 
      return nameQualifier;
    }
@@ -3094,6 +3129,8 @@ SgTemplateParameterVal::get_template_parameter_name() const
           printf ("In SgTemplateParameterVal::get_template_parameter_name(): numberOfTemplateParameters  = %zu \n",numberOfTemplateParameters);
         }
 
+     printf ("In SgTemplateParameterVal::get_template_parameter_name(): getParameterNameFromTemplateParameterList = %s \n",getParameterNameFromTemplateParameterList ? "true" : "false");
+
      SgName name;
      if (getParameterNameFromTemplateParameterList == true)
         {
@@ -3130,10 +3167,24 @@ SgTemplateParameterVal::get_template_parameter_name() const
         {
        // This is not the favored case since i think it can be problematic to use template parameter names.
           name = get_valueString();
-          printf ("Using the string in the template parameteer value = %s \n",name.str());
+          printf ("In SgTemplateParameterVal::get_template_parameter_name(): Using the string in the template parameteer value = %s \n",name.str());
         }
 
+#if 1
+     printf ("In SgTemplateParameterVal::get_template_parameter_name(): Using the string in the template parameteer value = %s \n",name.str());
+#endif
+
      return name;
+   }
+
+SgType*
+SgTemplateParameterVal::get_type() const
+   {
+  // DQ (8/6/2013): The correct type is now saved explicitly so that it can be used to disambiguate 
+  // template functions overloaded on template parameters. See test2013_303.C for an example.
+     ROSE_ASSERT(this->get_valueType() != NULL);
+
+     return this->get_valueType();
    }
 
 

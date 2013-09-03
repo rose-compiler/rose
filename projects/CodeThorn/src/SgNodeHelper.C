@@ -94,18 +94,18 @@ SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarScanf(SgNode* node) {
       if(actualParams.size()==2) {
         SgAddressOfOp* addressOp=isSgAddressOfOp(actualParams[1]);
         if(!addressOp) {
-          cerr<<"Error: unsupported scanf argument #2 (no address operator found). Currently only scanf with exactly one variable of the form scanf(\"%d\",&v) is supported."<<endl;
+          cerr<<"Error: unsupported scanf argument #2 (no address operator found). Required form: scanf(\"%d\",&v)."<<endl;
           exit(1);
         }
         SgVarRefExp* varRefExp=isSgVarRefExp(SgNodeHelper::getFirstChild(addressOp));
         if(!varRefExp) {
-          cerr<<"Error: unsupported scanf argument #2 (no variable found). Currently only scanf with exactly one variable of the form scanf(\"%d\",&v) is supported."<<endl;
+          cerr<<"Error: unsupported scanf argument #2 (no variable found). Required form: scanf(\"%d\",&v)."<<endl;
           exit(1);
         }
         // matched: SgAddressOfOp(SgVarRefExp())
         return varRefExp;
       } else {
-          cerr<<"Error: unsupported number of arguments of scanf. Currently only scanf with exactly one variable of the form scanf(\"%d\",&v) is supported."<<endl;
+          cerr<<"Error: unsupported number of arguments of scanf.Exactly one variable of the form scanf(\"%d\",&v) is required."<<endl;
           exit(1);
       }
     }
@@ -153,13 +153,13 @@ SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarPrintf(SgNode* node) {
       if(actualParams.size()==2) {
         SgVarRefExp* varRefExp=isSgVarRefExp(actualParams[1]);
         if(!varRefExp) {
-          cerr<<"Error: unsupported print argument #2 (no variable found). Currently printf with exactly one variable of the form printf(\"...%d...\",v) is supported."<<endl;
+          cerr<<"Error: unsupported print argument #2 (no variable found). Required form of printf(\"...%d...\",v)."<<endl;
           cerr<<"Source: "<<node->unparseToString()<<endl;
           exit(1);
         }
         return varRefExp;
       } else {
-        cerr<<"Error: unsupported number of printf arguments. Currently printf with exactly one variable of the form printf(\"...%d...\",v) is supported."<<endl;
+        cerr<<"Error: unsupported number of printf arguments. Required form of printf(\"...%d...\",v)."<<endl;
         exit(1);
       }
     }
@@ -176,12 +176,12 @@ SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarFPrintf(SgNode* node) {
       if(actualParams.size()==3) {
         SgVarRefExp* varRefExp=isSgVarRefExp(actualParams[2]);
         if(!varRefExp) {
-             cerr<<"Error: unsupported fprint argument #3 (no variable found). Currently printf with exactly one variable of the form fprintf(stream,\"...%d...\",v) is supported."<<endl;
+             cerr<<"Error: unsupported fprint argument #3 (no variable found). Required form of fprintf(stream,\"...%d...\",v)."<<endl;
              exit(1);
         }
         return varRefExp;
       } else {
-        cerr<<"Error: unsupported number of fprintf arguments. Currently printf with exactly one variable of the form fprintf(stream,\"...%d...\",v) is supported."<<endl;
+        cerr<<"Error: unsupported number of fprintf arguments. Required form of fprintf(stream,\"...%d...\",v)."<<endl;
         exit(1);
       }
     }

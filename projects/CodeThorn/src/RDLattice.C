@@ -19,8 +19,9 @@ void RDLattice::toStream(ostream& os, VariableIdMapping* vim) {
       os<<(*i).first;
       os<<",";
       if(vim)
-        os<<vim->variableName((*i).second)<<"_";
-      os<<(*i).second.toString();
+        os<<vim->uniqueShortVariableName((*i).second);
+	  else
+		os<<(*i).second.toString();
       os<<")";
     }
     os<<"}";
@@ -46,9 +47,13 @@ void RDLattice::erasePair(Label lab,VariableId var) {
   rdSet.erase(p);
 }
 void RDLattice::eraseAllPairsWithVariableId(VariableId var) {
-  for(RDLattice::iterator i=rdSet.begin();i!=rdSet.end();++i) {
-    if(var==(*i).second)
-      rdSet.erase(*i);
+  RDLattice::iterator i=rdSet.begin();
+  while(i!=rdSet.end()) {
+	if(var==(*i).second) {
+	   rdSet.erase(i++);
+	}
+	 else
+	   ++i;
   }
 }
 bool RDLattice::isBot() {
