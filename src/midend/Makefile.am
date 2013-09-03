@@ -14,6 +14,7 @@ include $(srcdir)/abstractHandle/Makefile_variables
 include $(srcdir)/abstractMemoryObject/Makefile_variables
 include $(srcdir)/astDiagnostics/Makefile_variables
 include $(srcdir)/astProcessing/Makefile_variables
+include $(srcdir)/astMatching/Makefile_variables
 include $(srcdir)/astRewriteMechanism/Makefile_variables
 include $(srcdir)/astQuery/Makefile_variables
 include $(srcdir)/astUtil/Makefile_variables
@@ -41,6 +42,7 @@ mAbstractHandlePath=abstractHandle#
 mAbstractMemoryObjectPath=abstractMemoryObject#
 mAstDiagnosticsPath=astDiagnostics#
 mAstProcessingPath=astProcessing#
+mAstMatchingPath=astMatching#
 mAstRewriteMechanismPath=astRewriteMechanism#
 mAstQueryPath=astQuery#
 mAstUtilPath=astUtil#
@@ -52,7 +54,9 @@ mProgramTransformationPath=programTransformation#
 #
 SUBDIRS = \
 	binaryAnalyses \
-	programTransformation/extractFunctionArgumentsNormalization
+	programTransformation/extractFunctionArgumentsNormalization \
+	programTransformation/singleStatementToBlockNormalization
+
 if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 SUBDIRS += \
 	programAnalysis \
@@ -82,11 +86,14 @@ noinst_LTLIBRARIES=\
 lib_LTLIBRARIES=\
 	$(mProgramTransformation_lib_ltlibraries)
 
+BUILT_SOURCES = $(mAstMatching_builtSources)
+
 libmidend_la_SOURCES=\
 	$(mAbstractHandle_la_sources) \
 	$(mAbstractMemoryObject_la_sources) \
 	$(mAstDiagnostics_la_sources) \
 	$(mAstProcessing_la_sources) \
+	$(mAstMatching_la_sources) \
 	$(mAstQuery_la_sources)
 if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 libmidend_la_SOURCES+=\
@@ -97,7 +104,8 @@ endif
 
 # astProcessing _la_LIBADD = $(CXX_TEMPLATE_OBJECTS)
 libmidend_la_LIBADD=\
-	$(mAstProcessing_libadd)
+	$(mAstProcessing_libadd) \
+	$(mAstMatching_libadd)
 
 libmidend_la_DEPENDENCIES=\
 	$(mAstQuery_la_dependencies)
@@ -107,6 +115,7 @@ include_HEADERS = \
 	$(mAbstractMemoryObject_includeHeaders) \
 	$(mAstDiagnostics_includeHeaders) \
 	$(mAstProcessing_includeHeaders) \
+	$(mAstMatching_includeHeaders) \
 	$(mAstRewriteMechanism_includeHeaders) \
 	$(mAstQuery_includeHeaders) \
 	$(mAstUtil_includeHeaders) \
@@ -122,6 +131,7 @@ EXTRA_DIST = \
 	$(mAbstractMemoryObject_extraDist) \
 	$(mAstDiagnostics_extraDist) \
 	$(mAstProcessing_extraDist) \
+	$(mAstMatching_extraDist) \
 	$(mAstRewriteMechanism_extraDist) \
 	$(mAstQuery_extraDist) \
 	$(mAstUtil_extraDist) \
@@ -132,6 +142,7 @@ clean-local:
 	$(mAbstractMemoryObject_cleanLocal)
 	$(mAstDiagnostics_cleanLocal)
 	$(mAstProcessing_cleanLocal)
+	$(mAstMatching_cleanLocal)
 	$(mAstRewriteMechanism_cleanLocal)
 	$(mAstQuery_cleanLocal)
 	$(mAstUtil_cleanLocal)
@@ -139,6 +150,7 @@ clean-local:
 
 distclean-local:
 	$(mAstProcessing_distCleanLocal)
+	$(mAstMatching_distCleanLocal)
 	$(mAstQuery_distCleanLocal)
 	$(mAstUtil_distCleanLocal)
 

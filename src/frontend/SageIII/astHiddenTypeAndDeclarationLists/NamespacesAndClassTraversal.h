@@ -1,3 +1,7 @@
+#if 0
+// DQ (5/21/2013): I think that we can and should remove this file.
+// for the moment I will comment out the whole file.
+
 // Header-File for Datastructures needed to compute Hidden-Lists
 // Robert Preissl
 // Last modified : April 16, 2007
@@ -220,4 +224,8 @@ void StringVectorHashMapOutput(StringVectorHashMap &SVHM);
 
 
 #endif /*DEBUG_NAMESPACESANDCLASSTRAVERSAL_H_*/
+
+// DQ (5/21/2013): I think that we can and should remove this file.
+// for the moment I will comment out the whole file.
+#endif
 

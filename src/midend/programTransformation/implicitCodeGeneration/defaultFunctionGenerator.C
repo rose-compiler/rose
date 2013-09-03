@@ -1629,14 +1629,17 @@ static SgClassSymbol* lookupClassSymbol(SgClassDeclaration* classDecl) {
       if (DEBUG_DEFAULT_FUNCTION_GENERATOR) {
           cerr << "Warning: getThisExp doing lookup by name on " << classDecl->get_name().getString() << endl;
       }
-    classSymbol = classDecl->get_scope()->get_symbol_table()->find_class(classDecl->get_name());
+ // DQ (5/21/2013): We want to restrict direct use of the symbol table.
+ // classSymbol = classDecl->get_scope()->get_symbol_table()->find_class(classDecl->get_name());
+    classSymbol = classDecl->get_scope()->lookup_class_symbol(classDecl->get_name());
     if (!classSymbol) {
       cerr << "Class symbol not found " << classDecl->get_name().getString() << endl;
-      classDecl->get_scope()->get_symbol_table()->print("debug");
+   // classDecl->get_scope()->get_symbol_table()->print("debug");
+      classDecl->get_scope()->print_symboltable("debug");
       cerr << "get_symbol_from_symbol_table(): " << (classDecl->get_symbol_from_symbol_table() ? "Not null" : "Null") << endl;
-      cerr << "find_class on OptionDeclaration: " << (classDecl->get_scope()->get_symbol_table()->find_class("OptionDeclaration") ? "Not null" : "Null") << endl;
-      cerr << "find_class on name: " << (classDecl->get_scope()->get_symbol_table()->find_class(classDecl->get_name()) ? "Not null" : "Null") << endl;
-      cerr << "find_any on OptionDeclaration: " << (classDecl->get_scope()->get_symbol_table()->find_any("OptionDeclaration") ? "Not null" : "Null") << endl;
+   // cerr << "find_class on OptionDeclaration: " << (classDecl->get_scope()->get_symbol_table()->find_class("OptionDeclaration") ? "Not null" : "Null") << endl;
+   // cerr << "find_class on name: " << (classDecl->get_scope()->get_symbol_table()->find_class(classDecl->get_name()) ? "Not null" : "Null") << endl;
+   // cerr << "find_any on OptionDeclaration: " << (classDecl->get_scope()->get_symbol_table()->find_any("OptionDeclaration") ? "Not null" : "Null") << endl;
     }
   }
   ROSE_ASSERT (classSymbol != NULL);

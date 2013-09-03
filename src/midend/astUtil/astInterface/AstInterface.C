@@ -649,6 +649,10 @@ SgSymbol* AstInterfaceImpl::CreateDeclarationStmts( const string& _decl)
      SgSourceFile* addDecls = isSgSourceFile(determineFileType(argv,error,0));
   // std::cerr << "Finished generating declaration \n";
 
+  // DQ (6/14/2013): Since we seperated the construction of the SgFile IR nodes from the invocation of the frontend, we have to call the frontend explicitly.
+     ROSE_ASSERT(addDecls != NULL);
+     addDecls->runFrontend(error);
+
      unlink( uniqueFilename );
   // string systemString = string("rm '") + uniqueFilename + "'";
   // system( systemString.c_str() );

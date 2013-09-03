@@ -2,8 +2,8 @@
 /* JH (01/03/2006): This is the class for managing the memory for the EasyStorage classes. 
    The memory is organized in blocks of length blockSize. The basic idea is 
    to store the data in a static memory pool and write this pool to disk. 
-   Threrefore, every memory object contains the position and the size of its 
-   data in resspect of the static memory pool. 
+   Therefore, every memory object contains the position and the size of its 
+   data in respect of the static memory pool. 
 */
 
 #ifndef STORAGE_CLASS_MEMORY_MANAGEMENT_H
@@ -26,7 +26,7 @@ class StorageClassMemoryManagement
      // total amount of data already filled in the static arrays
      static unsigned long filledUpTo;
      /* size of the memory blocks. Remarks:
-        * is acutally set to INITIAL_SIZE_OF_MEMORY_BLOCKS and can be changed above  
+        * is actually set to INITIAL_SIZE_OF_MEMORY_BLOCKS and can be changed above  
         * is not a constant, since we set it to a new value before we rebuild the 
           data stored. Variable is changed by methods
           * arrangeMemoryPoolInOneBlock()
@@ -43,7 +43,7 @@ class StorageClassMemoryManagement
      // pointer to the position that will be filled up next
      static TYPE *actual;
 
-// protected  methods, only used by the derived classes! More commets can be found in 
+// protected  methods, only used by the derived classes! More comments can be found in 
 // StorageClassMemoryManagement.C file 
 
   // method for initializing the working data before adding 
@@ -88,7 +88,7 @@ class StorageClassMemoryManagement
    JH (01/11/2006) EasyStorage classes. These classes represent and declare the storage
    for the non-plain data in IRNodeStroge classes (located in StorageClasses.h/C).
    Remarks:
-   * all class specialtizations have at least two methods
+   * all class specializations have at least two methods
      * storeDataInEasyStorageClass 
      * rebuildDataStoredInEasyStorageClass
      to set and rebuild the data. However, they have the same name, they might have 
@@ -174,7 +174,7 @@ class EasyStorage <std::vector<BASIC_TYPE> >
      std::vector<BASIC_TYPE> rebuildDataStoredInEasyStorageClass() const;
    };
 
-// EasyStorage concerning STL sets, separate imlementation, due to insert insead of push_back ! 
+// EasyStorage concerning STL sets, separate implementation, due to insert instead of push_back ! 
 template <class BASIC_TYPE >
 class EasyStorage <std::set<BASIC_TYPE> > 
    : public StorageClassMemoryManagement<BASIC_TYPE>
@@ -186,7 +186,7 @@ class EasyStorage <std::set<BASIC_TYPE> >
      std::set<BASIC_TYPE> rebuildDataStoredInEasyStorageClass() const;
    };
 
-// EasyStorage concerning STL sets, separate imlementation, due to insert insead of push_back ! 
+// EasyStorage concerning STL sets, separate implementation, due to insert instead of push_back ! 
 template < >
 class EasyStorage <SgBitVector> 
    : public StorageClassMemoryManagement<bool>
@@ -1022,7 +1022,7 @@ class EasyStorage < std::map<SgNode*, int> >
      static void readFromFile (std::istream& in);
    };
 
-// DQ (10/6/2006): Added to support maping of SgNode* to strings (std::string) for name namgling support.
+// DQ (10/6/2006): Added to support mapping of SgNode* to strings (std::string) for name mangling support.
 // EasyStorageMapEntry concerning an SgName and a Type T
 // * it has overloaded methods for arrangeMemoryPoolInOneBlock and deleteMemoryPool
 template < >
@@ -1060,6 +1060,50 @@ class EasyStorage < std::map<SgNode*, std::string> >
 
      static void writeToFile(std::ostream& out);
      static void readFromFile (std::istream& in);
+   };
+
+// Liao 1/23/2013, placeholder for storing std::map <SgSymbol*, std::vector <std::pair <SgExpression*, SgExpression*> > >
+// this is used for representing array dimension information of the map clause.
+// TODO: provide real storage support once the OpenMP Accelerator Model is standardized.
+template < >
+class EasyStorageMapEntry <SgSymbol*, std::vector <std::pair <SgExpression*, SgExpression*> > > 
+   {
+     private:
+          int global_id; // this is the global id for the SgNode*
+          EasyStorage < std::string > nameString; // this is the mangled name
+    public: 
+          EasyStorageMapEntry () { global_id = 0; }
+          void storeDataInEasyStorageClass(const std::pair<SgNode*, const int >& iter) {  };
+          std::pair<SgSymbol*, std::vector <std::pair <SgExpression*, SgExpression*> > >  rebuildDataStoredInEasyStorageClass() const {
+            std::vector <std::pair <SgExpression*, SgExpression*> > vec;
+            SgSymbol* s = NULL; 
+            return std::make_pair (s, vec);
+            };
+          static void arrangeMemoryPoolInOneBlock(){} ;
+          static void deleteMemoryPool(){} ;
+
+          static void writeToFile(std::ostream& out) {};
+          static void readFromFile (std::istream& in) {};
+   };
+
+template <>
+class EasyStorage < std::map< SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > > > 
+   : public StorageClassMemoryManagement< EasyStorageMapEntry< SgSymbol*, std::vector <std::pair <SgExpression*, SgExpression*> > > >
+   {
+     typedef StorageClassMemoryManagement< EasyStorageMapEntry<SgSymbol*, std::vector <std::pair <SgExpression*, SgExpression*> > > > Base;
+    public:
+     void storeDataInEasyStorageClass(const std::map<SgSymbol*, std::vector <std::pair <SgExpression*, SgExpression*> > >& data_) 
+     {  };
+     std::map< SgSymbol*, std::vector <std::pair <SgExpression*, SgExpression*> > > rebuildDataStoredInEasyStorageClass() const
+     {
+       std::map< SgSymbol*, std::vector <std::pair <SgExpression*, SgExpression*> > > rt;
+       return rt;
+     };
+     static void arrangeMemoryPoolInOneBlock() {};
+     static void deleteMemoryPool(){ };
+
+     static void writeToFile(std::ostream& out) { };
+     static void readFromFile (std::istream& in) {};
    };
 
 

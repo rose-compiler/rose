@@ -27,7 +27,7 @@ class FixupTypeReferencesOnMemoryPool
           void visit (SgNode* node);
 
        // This avoids a warning by g++
-         virtual ~FixupTypeReferencesOnMemoryPool() {};         
+         virtual ~FixupTypeReferencesOnMemoryPool(); 
    };
 
 
