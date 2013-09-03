@@ -72,7 +72,7 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
     generate_file(config, exprs, &defns);
     config.close();
     struct stat sb;
-    int status = stat(config_name, &sb);
+    int status __attribute__((unused)) = stat(config_name, &sb);
     assert(status>=0);
     stats.input_size += sb.st_size;
     RTS_MUTEX(class_stats_mutex) {

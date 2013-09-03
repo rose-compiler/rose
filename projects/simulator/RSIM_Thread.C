@@ -771,7 +771,7 @@ RSIM_Thread::main()
              * use a shared semaphore that was created in RSIM_Thread::ctor(). */
             if (cb_status) {
                 process->binary_trace_add(this, insn);
-                int status = TEMP_FAILURE_RETRY(sem_wait(process->get_simulator()->get_semaphore()));
+                int status __attribute__((unused)) = TEMP_FAILURE_RETRY(sem_wait(process->get_simulator()->get_semaphore()));
                 assert(0==status);
                 insn_semaphore_posted = false;
                 semantics.processInstruction(insn);             // blocking syscalls will post, and set insn_semaphore_posted
