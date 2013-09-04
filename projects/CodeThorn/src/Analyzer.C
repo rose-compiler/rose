@@ -243,7 +243,7 @@ void Analyzer::runSolver1() {
               const EState* newEStatePtr=pres.second;
               if(pres.first==true)
                 addToWorkList(newEStatePtr);            
-              recordTransition(currentEStatePtr,e,newEStatePtr);
+			  recordTransition(currentEStatePtr,e,newEStatePtr);
             }
             if((!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {
               // failed-assert end-state: do not add to work list but do add it to the transition graph
@@ -1237,6 +1237,19 @@ bool Analyzer::isConsistentEStatePtrSet(set<const EState*> estatePtrSet)  {
   }
   cout << "INFO: estatePtrSet of size "<<estatePtrSet.size()<<" consistent."<<endl;
   return true;
+}
+
+
+void Analyzer::deleteNonRelevantEStates() {
+  size_t numEStatesBefore=estateSet.size();
+  for(EStateSet::iterator i=estateSet.begin();i!=estateSet.end();++i) {
+	if(isLTLRelevantLabel((*i).label())) {
+	  estateSet.erase(i);
+	}
+  }
+  size_t numEStatesAfter=estateSet.size();
+  if(numEStatesBefore!=numEStatesAfter)
+	cout << "STATUS: Reduced estateSet from "<<numEStatesBefore<<" to "<<numEStatesAfter<<" estates."<<endl;
 }
 
 void Analyzer::semanticFoldingOfTransitionGraph() {

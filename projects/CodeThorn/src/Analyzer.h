@@ -99,6 +99,8 @@ namespace CodeThorn {
     bool checkEStateSet();
     bool isConsistentEStatePtrSet(set<const EState*> estatePtrSet);
     bool checkTransitionGraph();
+	// this function requires that no LTL graph is computed
+	void deleteNonRelevantEStates();
     
   private:
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
