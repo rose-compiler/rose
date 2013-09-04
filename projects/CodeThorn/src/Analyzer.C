@@ -1029,6 +1029,10 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
   cfanalyzer->intraInterFlow(flow,interFlow);
   cout << "INIT: IntraInter-CFG OK. (size: " << flow.size() << " edges)"<<endl;
 
+  if(boolOptions["reduce-cfg"]) {
+    int cnt=cfanalyzer->inlineTrivialFunctions(flow);
+    cout << "INIT: CFG reduction OK. (inlined "<<cnt<<" functions; eliminated "<<cnt*4<<" nodes)"<<endl;
+  }
   // create empty state
   PState emptyPState;
   const PState* emptyPStateStored=processNew(emptyPState);

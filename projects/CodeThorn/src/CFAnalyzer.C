@@ -9,6 +9,7 @@
 #include "CFAnalyzer.h"
 #include "Labeler.h"
 #include "AstTerm.h"
+#include <boost/foreach.hpp>
 
 using namespace CodeThorn;
 
@@ -216,6 +217,21 @@ Label CFAnalyzer::correspondingFunctionExitLabel(Label entryLabel) {
   SgNode* fdefnode=getNode(entryLabel);
   ROSE_ASSERT(fdefnode);
   return getLabeler()->functionExitLabel(fdefnode);
+}
+
+int CFAnalyzer::numberOfFunctionParameters(Label entryLabel) {
+  ROSE_ASSERT(getLabeler()->isFunctionEntryLabel(entryLabel));
+  SgNode* fdefnode=getNode(entryLabel);
+  ROSE_ASSERT(fdefnode);
+  SgInitializedNamePtrList& params=SgNodeHelper::getFunctionDefinitionFormalParameterList(fdefnode);
+  return params.size();
+}
+
+bool CFAnalyzer::isVoidFunction(Label entryLabel) {
+  ROSE_ASSERT(getLabeler()->isFunctionEntryLabel(entryLabel));
+  SgNode* fdefnode=getNode(entryLabel);
+  ROSE_ASSERT(fdefnode);
+  return isSgTypeVoid(SgNodeHelper::getFunctionReturnType(fdefnode));
 }
 
 LabelSetSet CFAnalyzer::functionLabelSetSets(Flow& flow) {
@@ -733,6 +749,44 @@ Flow CFAnalyzer::flow(SgNode* s1, SgNode* s2) {
     flow12.insert(e);
   }
   return flow12;
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
+int CFAnalyzer::inlineTrivialFunctions(Flow& flow) {
+  // 1) compute all functions that are called exactly once (i.e. number of pred in ICFG is 1)
+  //    AND have the number of formal parameters is 0 AND have void return type.
+  // 2) inline function
+  // more advanced version will also clone function-CFGs, but this makes the mapping label<->code loose the 1-1 mapping property.
+  int numInlined=0;
+  LabelSet lnLabs=functionEntryLabels(flow);
+  for(LabelSet::iterator i=lnLabs.begin();i!=lnLabs.end();++i) {
+	LabelSet pred=flow.pred(*i);
+	if(pred.size()==1) {
+	  Label lc=*pred.begin();
+	  ROSE_ASSERT(getLabeler()->isFunctionCallLabel(lc));
+	  // check the number of formal parameters of ln
+	  if(numberOfFunctionParameters(*i)==0 && isVoidFunction(*i)) {
+
+		// reduce all four nodes: lc,ln,lx,lr (this also reduces a possibly existing local edge)
+		Label ln=*i;
+		Label lx=correspondingFunctionExitLabel(ln);
+		LabelSet succ=flow.succ(lx);
+		// since we have exactly one call there must be exactly one return edge
+		ROSE_ASSERT(succ.size()==1);
+		Label lr=*succ.begin();
+		// reduce all four nodes now
+		reduceNode(flow,lc);
+		reduceNode(flow,ln);
+		reduceNode(flow,lx);
+		reduceNode(flow,lr);
+		numInlined++;
+	  }
+	}
+  }
+  return numInlined;
 }
 
 int CFAnalyzer::reduceEmptyConditionNodes(Flow& flow) {

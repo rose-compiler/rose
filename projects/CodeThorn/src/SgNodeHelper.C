@@ -714,6 +714,17 @@ SgInitializedNamePtrList& SgNodeHelper::getFunctionDefinitionFormalParameterList
   return funDecl->get_args();
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
+SgType* SgNodeHelper::getFunctionReturnType(SgNode* node) {
+  SgFunctionDefinition* funDef=isSgFunctionDefinition(node);
+  if(!funDef)
+    throw "SgNodeHelper::getFunctionReturnType: improper node operation.";
+  SgFunctionDeclaration* funDecl=funDef->get_declaration();
+  return funDecl->get_orig_return_type();
+}
 
 /*! 
   * \author Markus Schordan

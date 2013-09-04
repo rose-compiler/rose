@@ -196,6 +196,9 @@ namespace SgNodeHelper {
   //! return a function-definition's list of formal paramters
   SgInitializedNamePtrList& getFunctionDefinitionFormalParameterList(SgNode* node);
 
+  //! return a function-definition's return type
+  SgType* getFunctionReturnType(SgNode* node);
+
   //! returns the set of all local variable-declarations of a function
   set<SgVariableDeclaration*> localVariableDeclarationsOfFunction(SgFunctionDefinition* funDef);
 

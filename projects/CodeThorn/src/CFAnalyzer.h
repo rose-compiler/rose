@@ -140,6 +140,9 @@ class CFAnalyzer {
   LabelSet functionEntryLabels(Flow& flow);
   LabelSet conditionLabels(Flow& flow);
   Label correspondingFunctionExitLabel(Label entryLabel);
+  Label correspondingFunctionCallReturnLabel(Label callLabel);
+  int numberOfFunctionParameters(Label entryNode);
+  bool isVoidFunction(Label entryNode);
   LabelSetSet functionLabelSetSets(Flow& flow);
   LabelSet functionLabelSet(Label entryLabel, Flow& flow);
   Flow flow(SgNode* node);
@@ -151,6 +154,14 @@ class CFAnalyzer {
   int reduceNode(Flow& flow, Label lab);
   int reduceBlockBeginNodes(Flow& flow);
   int reduceEmptyConditionNodes(Flow& flow);
+
+  /*! 
+   * This function performs inlining on the ICFG by reducing
+   * call/entry/exit/callreturn-nodes, if the function being called is
+   * a "trivial" function. A "trivial" function has no formal parameters and
+   * is called exactly once in a program.
+   */
+  int inlineTrivialFunctions(Flow& flow);
   size_t deleteFunctioncCallLocalEdges(Flow& flow);
  private:
   Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);
