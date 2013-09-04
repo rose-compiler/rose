@@ -1095,7 +1095,7 @@ kindToInteger(size_t kind){
 
 
 void
-createVectorsForAllInstructions(SignatureVector& vec, std::vector<SgAsmx86Instruction*>& insns)
+createVectorsForAllInstructions(SignatureVector& vec, std::vector<SgAsmInstruction*>& insns)
 {
   hash_map<SgAsmExpression*, size_t> valueNumbers[3];
   size_t insnCount = insns.size();
@@ -1105,9 +1105,11 @@ createVectorsForAllInstructions(SignatureVector& vec, std::vector<SgAsmx86Instru
   
   std::string normalizedUnparsedInstructions;
   // Unparse the normalized forms of the instructions
-  for (std::vector<SgAsmx86Instruction*>::iterator it = insns.begin(); it != insns.end(); ++it) {
+  for (std::vector<SgAsmInstruction*>::iterator it = insns.begin(); it != insns.end(); ++it) {
 
-    SgAsmx86Instruction* insn = *it;
+    SgAsmx86Instruction* insn = isSgAsmx86Instruction(*it);
+
+    assert(insns != NULL);
 
     size_t var = insn->get_kind();
     var = kindToInteger(var);
@@ -1399,6 +1401,10 @@ main(int argc, char *argv[])
     time_t last_checkpoint = time(NULL);
     size_t ntests_ran=0;
     FuncAnalyses funcinfo;
+
+
+    InstructionMapMap instr_map_map;
+
     while (!worklist.empty()) {
         ++progress;
         WorkItem work = worklist.shift();
@@ -1515,12 +1521,14 @@ main(int argc, char *argv[])
 
         // Create syntactic signature vector 
 
-        std::vector<SgAsmx86Instruction*> insns;
+        std::vector<SgAsmInstruction*> insns;
+
+        Disassembler::InstructionMap* instr_map = get_instr_map(instr_map_map, interp); 
 
         if ( opt.params.path_syntactic == PATH_SYNTACTIC_ALL ){
-          insn_coverage.get_instructions(interp, insns);
+          insn_coverage.get_instructions(insns, *instr_map);
         }else if(opt.params.path_syntactic == PATH_SYNTACTIC_FUNCTION ){
-          insn_coverage.get_instructions(func_found->second, insns);
+          insn_coverage.get_instructions(insns, *instr_map, func );
         }
 
         int syntactic_ninsns = insns.size(); 

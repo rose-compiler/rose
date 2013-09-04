@@ -321,12 +321,17 @@ public:
 
     /** Get instructions covered by trace in the order in which they were encountered.
      */
-    void get_instructions(SgNode* top, std::vector<SgAsmx86Instruction*>& insns);
-    
+    void get_instructions(std::vector<SgAsmInstruction*>& insns, Disassembler::InstructionMap& instr_map, SgAsmFunction* top = NULL);    
 protected:
+
     typedef std::map<rose_addr_t, ExeInfo> CoverageMap;
     CoverageMap coverage;                       // info about addresses that were executed
 };
+
+typedef std::map<SgAsmInterpretation*, Disassembler::InstructionMap*> InstructionMapMap;
+
+Disassembler::InstructionMap*
+get_instr_map(InstructionMapMap& instr_map_map, SgAsmInterpretation* top);
 
 /*******************************************************************************************************************************
  *                                      Dynamic Function Call Graph
