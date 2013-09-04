@@ -973,6 +973,7 @@ struct PolicyParams {
     FollowCalls follow_calls;           /**< Follow CALL instructions if possible rather than consuming an input? */
     PathSyntactic path_syntactic;       /**< How to compute path sensistive syntactic signature */
     rose_addr_t initial_stack;          /**< Initial values for ESP and EBP. */
+    std::vector<std::string> signature_components; /**< How should the signature vectors be computed */
     bool compute_coverage;              /**< Compute instruction coverage information? */
     bool compute_callgraph;             /**< Compute dynamic call graph information? */
     bool top_callgraph;                 /**< Store only function call edges emanating from the top stack frame? */

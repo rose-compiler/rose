@@ -69,6 +69,10 @@ usage(int exit_status)
               <<"    --path-syntactic=no|function|all\n"
               <<"            Determines whether the path sensistive syntactic clone detection should be computed from\n"
               <<"            all instructions covered, instructions covered in the function scope or not at all.\n" 
+              <<"    --signature-components=by_category|total_for_variant|operand_total|ops_for_variant|specific_op|operand_pair|apply_log\n"
+              <<"            Select which, if any, properties should be counted and/or how they should be counted. By default no properties\n"
+              <<"            are counted. By default the instructions are counted by operation kind, but you can optionally choose to count\n"
+              <<"            by instruction category.\n"
               <<"    --diry-run\n"
               <<"            Do not modify the database. This is really only useful with the --verbose switch in order to\n"
               <<"            re-run a test for debugging purposes.\n"
@@ -1257,6 +1261,15 @@ main(int argc, char *argv[])
           opt.params.path_syntactic = PATH_SYNTACTIC_ALL;
         } else if (!strcmp(argv[argno], "--path-syntactic=function")){
           opt.params.path_syntactic = PATH_SYNTACTIC_FUNCTION;
+        } else if (!strcmp(argv[argno], "--signature-components=")){
+
+          std::string comp_opts[7] = {"by_category","total_for_variant","operand_total","ops_for_variant","specific_op","operand_pair","apply_log"};
+          for ( int comp_i = 0; comp_i < 7; comp_i++  )
+          {
+            if (!strcmp(argv[argno], comp_opts[comp_i].c_str()))
+              opt.params.signature_components.push_back(comp_opts[comp_i]);
+          }
+
         } else if (!strcmp(argv[argno], "--dry-run")) {
             opt.dry_run = true;
         } else if (!strncmp(argv[argno], "--file=", 7)) {
