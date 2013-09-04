@@ -81,7 +81,10 @@ void Analyzer::addToWorkList(const EState* estate) {
       cerr<<"INTERNAL ERROR: null pointer added to work list."<<endl;
       exit(1);
     }
-    estateWorkList.push_back(estate); 
+	if(!(estateWorkList.size()>0))
+	  estateWorkList.push_front(estate); // depth first
+	else
+	  estateWorkList.push_back(estate); // breadths first (definitely better for finding reachable)
   }
 }
 
