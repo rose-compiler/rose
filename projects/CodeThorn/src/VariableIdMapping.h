@@ -22,6 +22,11 @@ namespace CodeThorn {
   class VariableId;
   typedef string VariableName;
 class VariableIdMapping {
+  /* TODO: possible workaround: because the AST implementation is not completed for the following cases:
+     1) SgInitializedName in forward declaration (symbol=0)
+     2) CtorInitializerList (symbol=0)
+	 the symbol is missing in both cases, a VariableId can be assign to the passed SgInitializedName pointer.
+  */
 
  public:
   //typedef boost::unordered_set<VariableId> VariableIdSet;
@@ -30,11 +35,6 @@ class VariableIdMapping {
   // the computation of the CodeThorn-defined ROSE-based variable-symbol mapping
   // creates a mapping of variableNames and its computed UniqueVariableSymbol
   void computeVariableSymbolMapping(SgProject* project);
-
-  // checks whether the computed CodeThorn-defined ROSE-based variable-symbol mapping is bijective.
-  bool isUniqueVariableSymbolMapping();
-
-  void reportUniqueVariableSymbolMappingViolations();
 
   /* create a new unique variable symbol (should be used together with deleteUniqueVariableSymbol)
      this is useful if additional (e.g. temporary) variables are introduced in an analysis
@@ -78,7 +78,12 @@ class VariableIdMapping {
   VariableIdSet determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls);
   VariableIdSet determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
 
+  //private: (soon!)
+  // checks whether the computed CodeThorn-defined ROSE-based variable-symbol mapping is bijective.
+  bool isUniqueVariableSymbolMapping();
+  void reportUniqueVariableSymbolMappingViolations();
  private:
+
   void generateStmtSymbolDotEdge(std::ofstream&, SgNode* node,VariableId id);
   string generateDotSgSymbol(SgSymbol* sym);
   typedef pair<string,SgSymbol*> MapPair;
@@ -111,6 +116,7 @@ class VariableId {
   //string variableName() const;
   //string longVariableName() const;
   //VariableId(SgSymbol* sym);
+  bool isValid() { return _id!=-1; }
  public:
   //SgSymbol* getSymbol() const; // only public because of ContraintSetHashFun
  private: 

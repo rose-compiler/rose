@@ -1,14 +1,15 @@
 // Author: Markus Schordan, 2013.
 
-#ifndef RDANALYSISABSTRACTASTATTRIBUTE_H
-#define RDANALYSISABSTRACTASTATTRIBUTE_H
+#ifndef RDASTATTRIBUTEINTERFACE_H
+#define RDASTATTRIBUTEINTERFACE_H
 
 #include "Labeler.h"
 #include "VariableIdMapping.h"
+#include "DFAstAttribute.h"
 
 using namespace CodeThorn;
 
-class RDAnalysisAbstractAstAttribute : public AstAttribute {
+class RDAstAttributeInterface : public DFAstAttribute {
  public:
   typedef pair<Label,VariableId> RDPair;
   typedef set<RDPair> RDPairSet;
@@ -20,7 +21,7 @@ class RDAnalysisAbstractAstAttribute : public AstAttribute {
   virtual VariableIdSet variableIdsOfDefinition(Label def)=0;
   virtual iterator begin()=0;
   virtual iterator end()=0;
-  virtual ~RDAnalysisAbstractAstAttribute();
+  virtual ~RDAstAttributeInterface();
 };
 
 #endif
