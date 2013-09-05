@@ -730,7 +730,8 @@ read_vector_data(const SqlDatabase::TransactionPtr &tx, scoped_array_with_size<V
  
         id_to_vec.insert(std::pair<int, VectorEntry*>(functionId,&ve));
         indexInVectors++;
-    
+
+        std::cout << compressedCounts <<std::endl;
     }
 
 
