@@ -45,7 +45,7 @@ noinst_PROGRAMS += 20-get-pending-tests
 20_get_pending_tests_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 noinst_PROGRAMS += 25-run-tests
-25_run_tests_SOURCES = 25-run-tests.C $(top_srcdir)/projects/BinaryCloneDetection/syntactic/vectorCompression.C
+25_run_tests_SOURCES = 25-run-tests.C compute_signature_vector.C $(top_srcdir)/projects/BinaryCloneDetection/syntactic/vectorCompression.C
 25_run_tests_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/BinaryCloneDetection/syntactic/
 25_run_tests_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
