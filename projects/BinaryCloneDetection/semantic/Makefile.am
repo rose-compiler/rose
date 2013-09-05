@@ -28,8 +28,8 @@ noinst_PROGRAMS += 10-generate-inputs
 10_generate_inputs_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 noinst_PROGRAMS += 11-add-functions
-11_add_functions_SOURCES = 11-add-functions.C
-11_add_functions_CPPFLAGS = $(ROSE_INCLUDES)
+11_add_functions_SOURCES = 11-add-functions.C compute_signature_vector.C
+11_add_functions_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/BinaryCloneDetection/syntactic/
 11_add_functions_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 noinst_PROGRAMS += 14-bulk-load

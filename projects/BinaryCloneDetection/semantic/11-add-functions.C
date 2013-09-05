@@ -24,6 +24,10 @@ usage(int exit_status)
               <<"            AST will be read by other specimen-processing commands rather than reparsing the specimen.\n"
               <<"            The default is to not save the AST in the database because not all necessary binary information\n"
               <<"            is saved (MemoryMaps for instance, are not part of the AST).\n"
+              <<"    --signature-components=by_category|total_for_variant|operand_total|ops_for_variant|specific_op|operand_pair|apply_log\n"
+              <<"            Select which, if any, properties should be counted and/or how they should be counted. By default no properties\n"
+              <<"            are counted. By default the instructions are counted by operation kind, but you can optionally choose to count\n"
+              <<"            by instruction category.\n"
               <<"    DATABASE\n"
               <<"            The name of the database to which we are connecting.  For SQLite3 databases this is just a local\n"
               <<"            file name that will be created if it doesn't exist; for other database drivers this is a URL\n"
@@ -244,6 +248,9 @@ main(int argc, char *argv[])
 
     Switches opt;
     int argno = 1;
+
+    std::vector<std::string> signature_components;
+
     for (/*void*/; argno<argc && '-'==argv[argno][0]; ++argno) {
         if (!strcmp(argv[argno], "--")) {
             ++argno;
@@ -258,6 +265,18 @@ main(int argc, char *argv[])
             opt.save_ast = true;
         } else if (!strcmp(argv[argno], "--no-save-ast")) {
             opt.save_ast = false;
+
+        } else if (!strcmp(argv[argno], "--signature-components=")){
+
+          std::string comp_opts[7] = {"by_category","total_for_variant","operand_total","ops_for_variant","specific_op","operand_pair","apply_log"};
+          for ( int comp_i = 0; comp_i < 7; comp_i++  )
+          {
+            if (!strcmp(argv[argno], comp_opts[comp_i].c_str()))
+              signature_components.push_back(comp_opts[comp_i]);
+          }
+
+ 
+        
         } else {
             std::cerr <<argv0 <<": unrecognized switch: " <<argv[argno] <<"\n"
                       <<"see \"" <<argv0 <<" --help\" for usage info.\n";
