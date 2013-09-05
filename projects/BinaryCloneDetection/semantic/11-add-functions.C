@@ -4,6 +4,8 @@
 #include "CloneDetectionLib.h"
 #include "DwarfLineMapper.h"
 #include "BinaryFunctionCall.h"
+#include "rose.h"
+
 
 using namespace CloneDetection;
 std::string argv0;
@@ -328,7 +330,7 @@ main(int argc, char *argv[])
                                                     // 0        1     2         3        4
                                                     " (address, size, assembly, func_id, position,"
                                                     // 5            6         7
-                                                    "  src_file_id, src_line, cmd) values (?, ?, ?, ?, ?, ?, ?, ?)");
+                                                    "  src_file_id, src_line, counts_b64, cmd) values (?, ?, ?, ?, ?, ?, ?, ?, ?)");
     for (IdFunctionMap::iterator fi=functions_to_add.begin(); fi!=functions_to_add.end(); ++fi) {
         // Save function
         SgAsmFunction *func = fi->second;
@@ -339,6 +341,17 @@ main(int argc, char *argv[])
         uint8_t digest[20];
         func->get_sha1(digest);
         std::string digest_str = Combinatorics::digest_to_string(std::vector<uint8_t>(digest, digest+20));
+       
+        std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(func);
+ 
+
+        SignatureVector vec;
+        createVectorsForAllInstructions( vec , insns, signature_components);
+ 
+        std::vector<uint8_t> compressedCounts = compressVector(vec.getBase(), SignatureVector::Size);
+
+
+        
         stmt1->bind(0, fi->first);
         stmt1->bind(1, func->get_entry_va());
         stmt1->bind(2, func->get_name());
@@ -349,12 +362,12 @@ main(int argc, char *argv[])
         stmt1->bind(7, e_data.size());
         stmt1->bind(8, e_total.size());
         stmt1->bind(9, digest_str);
-        stmt1->bind(10, cmd_id);
+        stmt1->bind(10,StringUtility::encode_base64(&compressedCounts[0], compressedCounts.size()));
+        stmt1->bind(11, cmd_id);
         stmt1->execute();
 
         // Save instructions
-        std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(func);
-        for (size_t i=0; i<insns.size(); ++i) {
+       for (size_t i=0; i<insns.size(); ++i) {
             BinaryAnalysis::DwarfLineMapper::SrcInfo srcinfo = dlm.addr2src(insns[i]->get_address());
             int file_id = srcinfo.file_id < 0 ? -1 : files.id(Sg_File_Info::getFilenameFromID(srcinfo.file_id));
             stmt2->bind(0, insns[i]->get_address());
