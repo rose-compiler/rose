@@ -326,13 +326,13 @@ main(int argc, char *argv[])
                                                     // 0   1         2     3        4            5
                                                     " (id, entry_va, name, file_id, specimen_id, ninsns,"
                                                     // 6      7      8     9       10
-                                                    "  isize, dsize, size, digest, cmd)"
-                                                    " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                                                    "  isize, dsize, size, digest, counts_b64, cmd)"
+                                                    " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     SqlDatabase::StatementPtr stmt2 = tx->statement("insert into semantic_instructions"
                                                     // 0        1     2         3        4
                                                     " (address, size, assembly, func_id, position,"
                                                     // 5            6         7
-                                                    "  src_file_id, src_line, counts_b64, cmd) values (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                                                    "  src_file_id, src_line, cmd) values (?, ?, ?, ?, ?, ?, ?, ?)");
     for (IdFunctionMap::iterator fi=functions_to_add.begin(); fi!=functions_to_add.end(); ++fi) {
         // Save function
         SgAsmFunction *func = fi->second;
