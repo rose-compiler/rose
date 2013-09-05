@@ -213,7 +213,7 @@ select 'The following table shows the false negative function pairs.
 Both functions of the pair always have the same name.' as "Notice";
 select
         func1.name as name,
-        sim.func1_id, sim.func2_id, sim.similarity, sim.euclidean_d, sim.euclidean_d_ratio,  sim.ncompares
+        sim.func1_id, sim.func2_id, sim.similarity, sim.euclidean_d, sim.euclidean_d_ratio,  sim.ncompares,
         sim.path_ave_hamming_d, sim.path_min_hamming_d, sim.path_max_hamming_d,
         sim.path_ave_euclidean_d, sim.path_min_euclidean_d, sim.path_max_euclidean_d
  
