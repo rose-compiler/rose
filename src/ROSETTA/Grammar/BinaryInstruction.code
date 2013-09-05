@@ -72,6 +72,9 @@ HEADER_INTERPRETATION_START
 		void set_registers(const RegisterDictionary*);
 		void set_coverageComputed(bool x) { coverageComputed = x; }
 		void set_percentageCoverage(double x) { percentageCoverage = x; }
+		void insert_instructions(InstructionMap&/*in,out*/);
+		void erase_instructions(InstructionMap&/*in,out*/);
+		InstructionMap get_instruction_map();
 
 	private:
 		void ctor();

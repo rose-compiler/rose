@@ -42,3 +42,41 @@ SgAsmInterpretation::set_registers(const RegisterDictionary *regs)
     p_registers = regs;
 }
 
+/** Populate a map of instructions indexed by their virtual addresses. */
+void
+SgAsmInterpretation::insert_instructions(InstructionMap &imap/*in,out*/)
+{
+    struct T: AstSimpleProcessing {
+        InstructionMap &imap;
+        T(InstructionMap &imap): imap(imap) {}
+        void visit(SgNode *node) {
+            if (SgAsmInstruction *insn = isSgAsmInstruction(node))
+                imap[insn->get_address()] = insn;
+        }
+    } t(imap);
+    t.traverse(this, preorder);
+}
+
+/** Remove some instructions from an instruction map. */
+void
+SgAsmInterpretation::erase_instructions(InstructionMap &imap/*in,out*/)
+{
+    struct T: AstSimpleProcessing {
+        InstructionMap &imap;
+        T(InstructionMap &imap): imap(imap) {}
+        void visit(SgNode *node) {
+            if (SgAsmInstruction *insn = isSgAsmInstruction(node))
+                imap.erase(insn->get_address());
+        }
+    } t(imap);
+    t.traverse(this, preorder);
+}
+
+/** Returns a new InstructionMap by traversing the interpretation.  The insert_instructions() might be more efficient. */
+InstructionMap
+SgAsmInterpretation::get_instruction_map() 
+{
+    InstructionMap retval;
+    insert_instructions(retval);
+    return retval;
+}
