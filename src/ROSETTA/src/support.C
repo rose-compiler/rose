@@ -2113,7 +2113,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // See test2003_01.C for an example of where this is required. Note that for a
   // variable declaration (SgVariableDeclaration) this information is recorded directly
   // on the SgVariableDeclaration node.  This use on the InitializedName is reserved for
-  // function parameters, and I am not sure if it is useful anyhwere else.
+  // function parameters, and I am not sure if it is useful anywhere else.
      TemplateArgument.setDataPrototype("bool", "requiresGlobalNameQualificationOnType", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 

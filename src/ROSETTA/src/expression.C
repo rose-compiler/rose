@@ -14,6 +14,12 @@ Grammar::setUpExpressions ()
 
      NEW_TERMINAL_MACRO (VarRefExp,              "VarRefExp",              "VAR_REF" );
 
+  // DQ (9/4/2013): Adding support for compound literals.  These are not the same as initializers and define
+  // a memory location that is un-named (much like an un-named variable).  When they are const they cannot
+  // be written to and can be unified where they are the same value.  Any expression can be placed into the
+  // list. C90 and C99 define writting to the compound literal as undefined behavior.
+     NEW_TERMINAL_MACRO (CompoundLiteralExp,        "CompoundLiteralExp",        "COMPOUND_LITERAL" );
+
   // DQ (12/30/2007): New IR node to support references to labels (much like references to variables 
   // for the VarRefExp, but with a internal pointer ot a SgLabelSymbol) This IR nodes will eventually 
   // be used in the C/C++ goto, but is introduced to hnadle references to labels in Fortran (e.g. format 
@@ -304,6 +310,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (TypeTraitBuiltinOperator, "TypeTraitBuiltinOperator", "TYPE_TRAIT_BUILTIN_OPERATOR");
   // NEW_NONTERMINAL_MACRO (CallExpression,FunctionCallExp | TypeTraitBuiltinOperator,"CallExpression","CALL_EXPRESSION", true);
 
+  // DQ (9/4/2013): Added compound literal support.
   // DQ (7/12/2013): Moved the TypeTraitBuiltinOperator to be derived from Expression.
      NEW_NONTERMINAL_MACRO (Expression,
           UnaryOp                  | BinaryOp                 | ExprListExp             | VarRefExp           | ClassNameRefExp          |
@@ -319,7 +326,7 @@ Grammar::setUpExpressions ()
           LambdaRefExp        | DictionaryExp           | KeyDatumPair             |
           Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension  | NaryOp |
           StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp | AlignOfOp |
-          TypeTraitBuiltinOperator,
+          TypeTraitBuiltinOperator | CompoundLiteralExp,
           "Expression","ExpressionTag", false);
 
   // ***********************************************************************
@@ -499,6 +506,9 @@ Grammar::setUpExpressions ()
   // function on certain types of expressions (because the type should be computed from the operands 
   // or the value types directly).
      VarRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
+
+     CompoundLiteralExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
 
      LabelRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
@@ -1785,6 +1795,29 @@ Grammar::setUpExpressions ()
 
      ConcatenationOp.setFunctionPrototype ( "HEADER_CONCATENATION_OPERATOR", "../Grammar/Expression.code" );
 
+  // DQ (9/4/2013): Adding support for compound literals.  These are not the same as initializers and define
+  // a memory location that is un-named (much like an un-named variable).  When they are const they cannot
+  // be written to and can be unified where they are the same value.  Any expression can be placed into the
+  // list. C90 and C99 define writting to the compound literal as undefined behavior.
+     CompoundLiteralExp.setFunctionPrototype ( "HEADER_COMPOUND_LITERAL_EXPRESSION", "../Grammar/Expression.code" );
+#if 1
+  // DQ (9/4/2013): This better matches the concept of unnamed variable and folows the design of a variable reference.
+  // Note that a SgVariableSymbol is used which means that the declaration will be a SgInitializedName which will contain 
+  // a internally generated name used as a key to add the SgVariableSymbol to the symbol table.
+     CompoundLiteralExp.setDataPrototype ( "SgVariableSymbol*", "symbol", "= NULL",
+                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#else
+  // DQ (9/4/2013): I think this is not as good of an implementation, does not match concept of unnamed variable.
+     CompoundLiteralExp.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
+     CompoundLiteralExp.editSubstitute       ( "LIST_NAME", "initializer" );
+     CompoundLiteralExp.setDataPrototype     ( "SgExprListExp*", "initializer_list", "= NULL",
+                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // CompoundLiteralExp.setDataPrototype     ( "SgType*", "compound_literal_type", "= NULL",
+  //                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     CompoundLiteralExp.setDataPrototype     ( "SgType*", "type", "= NULL",
+                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
      Initializer.setFunctionPrototype ( "HEADER_INITIALIZER_EXPRESSION", "../Grammar/Expression.code" );
      Initializer.setDataPrototype     ( "bool"               , "is_explicit_cast", "= true",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1810,6 +1843,29 @@ Grammar::setUpExpressions ()
      AggregateInitializer.setDataPrototype     ( "bool", "uses_compound_literal", "= false",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
+     AggregateInitializer.setDataPrototype("bool", "requiresGlobalNameQualificationOnType", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
+     AggregateInitializer.setDataPrototype ( "int", "name_qualification_length_for_type", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
+     AggregateInitializer.setDataPrototype("bool","type_elaboration_required_for_type","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
+     AggregateInitializer.setDataPrototype("bool","global_qualification_required_for_type","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+  // DQ (9/4/2013): This should be replaced by the use of SgCompoundLiteral since it is the concept trying to be expressed here
+  // but SgCompoundLiteral is derived from SgExpression, and there is no such thing as a CompoundInitializer.  This is
+  // a confusing topic and this IR nod represent partial support for where compound literals are used in initializers, but
+  // it is better to support a proper SgCompoundLiteral IR node (just being added today) since it can be used outside of 
+  // the concept of initialization.  This SgCompoundInitializer is not used in the new EDG/ROSE connection, and the use of 
+  // SgCompoundLiteral is being added currently.
   // TV (03/04/2012) Compound initializer: for OpenCL (Vector type initializer): float4 a = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
      CompoundInitializer.setFunctionPrototype ( "HEADER_COMPOUND_INITIALIZER_EXPRESSION", "../Grammar/Expression.code" );
      CompoundInitializer.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
@@ -2192,7 +2248,10 @@ Grammar::setUpExpressions ()
 #endif
 
      ExprListExp.setFunctionSource ( "SOURCE_EXPRESSION_LIST_EXPRESSION","../Grammar/Expression.code" );
+
      VarRefExp.setFunctionSource ( "SOURCE_VARIABLE_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
+     CompoundLiteralExp.setFunctionSource ( "SOURCE_COMPOUND_LITERAL_EXPRESSION","../Grammar/Expression.code" );
+
      LabelRefExp.setFunctionSource ( "SOURCE_LABEL_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
      ClassNameRefExp.setFunctionSource ( "SOURCE_CLASS_NAME_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
 
@@ -2409,7 +2468,12 @@ Grammar::setUpExpressions ()
   // ***************************************
 
      ExprListExp.setFunctionSource            ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
+
      VarRefExp.setFunctionSource              ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
+
+  // DQ (9/4/2013): This follows the design of CompoundLiteralExp to be similar to a variable reference.
+     CompoundLiteralExp.setFunctionSource     ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
+
      LabelRefExp.setFunctionSource            ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
 
      FunctionRefExp.setFunctionSource         ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );

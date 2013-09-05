@@ -173,6 +173,9 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
        // DQ (7/12/2013): Added support for unparsing teyp trait builtin expressions (operators).
           case TYPE_TRAIT_BUILTIN_OPERATOR: { unparseTypeTraitBuiltinOperator(expr, info); break; }
 
+       // DQ (9/4/2013): Added support for compund literals.
+          case COMPOUND_LITERAL:               { unparseCompoundLiteral(expr, info); break; }
+
           default:
              {
             // printf ("Default reached in switch statement for unparsing expressions! expr = %p = %s \n",expr,expr->class_name().c_str());
@@ -1611,6 +1614,36 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
 
 #if 0
      printf ("Leaving Unparse_ExprStmt::unparseVarRef() \n");
+#endif
+   }
+
+
+// DQ (9/4/2013): Added support for compound literals.
+void
+Unparse_ExprStmt::unparseCompoundLiteral (SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgCompoundLiteralExp* compoundLiteral = isSgCompoundLiteralExp(expr);
+     ROSE_ASSERT(compoundLiteral != NULL);
+
+     SgVariableSymbol* variableSymbol = compoundLiteral->get_symbol();
+     ROSE_ASSERT(variableSymbol != NULL);
+
+     SgInitializedName* initializedName = variableSymbol->get_declaration();
+     ROSE_ASSERT(initializedName != NULL);
+     ROSE_ASSERT(initializedName->get_initptr() != NULL);
+
+     SgAggregateInitializer* aggregateInitializer = isSgAggregateInitializer(initializedName->get_initptr());
+     ROSE_ASSERT(aggregateInitializer != NULL);
+     ROSE_ASSERT(aggregateInitializer->get_uses_compound_literal() == true);
+
+     unparseAggrInit(aggregateInitializer,info);
+
+#if 0
+     printf ("unparseCompoundLiteral not implemented yet! \n");
+#endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
    }
 
@@ -4847,7 +4880,11 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
           newinfo.display("In unparseAggrInit(): (aggr_init->get_uses_compound_literal() == true): newinfo");
 #endif
           curprint ("(");
-          unp->u_type->unparseType(aggr_init->get_type(),newinfo);
+
+       // DQ (9/4/2013): We need to unparse the full type (both the first and second parts of the type).
+       // unp->u_type->unparseType(aggr_init->get_type(),newinfo);
+          unp->u_type->outputType<SgAggregateInitializer>(aggr_init,aggr_init->get_type(),newinfo);
+
           curprint (")");
 #if 0
           curprint ("/* DONE: output type in unparseAggrInit() */ ");
