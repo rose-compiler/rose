@@ -2,6 +2,7 @@
 
 #include "sage3basic.h"
 #include "CloneDetectionLib.h"
+#include "vectorCompression.h"
 
 #include "rose_getline.h"
 #include "AST_FILE_IO.h"        // only for the clearAllMemoryPools() function [Robb P. Matzke 2013-06-17]

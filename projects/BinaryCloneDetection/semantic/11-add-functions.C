@@ -6,6 +6,7 @@
 #include "BinaryFunctionCall.h"
 #include "rose.h"
 
+#include "vectorCompression.h"
 
 using namespace CloneDetection;
 std::string argv0;
