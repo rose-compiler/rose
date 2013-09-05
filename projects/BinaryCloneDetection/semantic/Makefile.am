@@ -85,6 +85,11 @@ noinst_PROGRAMS += 90-list-ogroup
 90_list_ogroup_CPPFLAGS = $(ROSE_INCLUDES)
 90_list_ogroup_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+noinst_PROGRAMS += 95-api-similarity
+95_api_similarity_SOURCES = 95-api-similarity.C
+95_api_similarity_CPPFLAGS = $(ROSE_INCLUDES)
+95_api_similarity_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 noinst_PROGRAMS += 99-grants
 99_grants_SOURCES = 99-grants.C
 99_grants_CPPFLAGS = $(ROSE_INCLUDES)
