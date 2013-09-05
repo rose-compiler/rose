@@ -707,32 +707,31 @@ read_vector_data(const SqlDatabase::TransactionPtr &tx, scoped_array_with_size<V
 
     SqlDatabase::StatementPtr cmd3 = tx->statement( "select id, ninsns, counts_b64  from semantic_functions");
 
+
     for (SqlDatabase::Statement::iterator r=cmd3->begin(); r!=cmd3->end(); ++r) {
-        int functionId = r.get<int64_t>(0);
-        int ninsns     = r.get<int>(1);
-        if ( id_to_vec[functionId] != 0){
-          id_to_vec[functionId]->ninsns = ninsns;
-        }
+      //Add feature vectors
+      std::vector<uint8_t> counts = StringUtility::decode_base64(r.get<std::string>(2));
+      std::string compressedCounts(&counts[0], &counts[0]+counts.size());
 
-        //Add feature vectors
-        std::vector<uint8_t> counts = StringUtility::decode_base64(r.get<std::string>(2));
-        std::string compressedCounts(&counts[0], &counts[0]+counts.size());
+      int functionId = r.get<int64_t>(0);
+      int ninsns     = r.get<int>(1);
 
-        VectorEntry& ve = vectors[indexInVectors];
-        ve.functionId = functionId;
-        ve.indexWithinFunction = 0;
-        ve.line = 0;
-        ve.offset = 0;
-        ve.rowNumber = 0;
- 
-        ve.compressedCounts.allocate(compressedCounts.size());
-        memcpy(ve.compressedCounts.get(), compressedCounts.data(), compressedCounts.size());
- 
-        id_to_vec.insert(std::pair<int, VectorEntry*>(functionId,&ve));
-        indexInVectors++;
+      VectorEntry& ve = vectors[indexInVectors];
+      ve.functionId = functionId;
+      ve.indexWithinFunction = 0;
+      ve.line = 0;
+      ve.offset = 0;
+      ve.rowNumber = 0;
+      ve.ninsns = ninsns;
+
+
+      ve.compressedCounts.allocate(compressedCounts.size());
+      memcpy(ve.compressedCounts.get(), compressedCounts.data(), compressedCounts.size());
+
+      id_to_vec.insert(std::pair<int, VectorEntry*>(functionId,&ve));
+      indexInVectors++;
 
     }
-
 
 }
 
