@@ -31,7 +31,10 @@ struct hash<void*> {
 };
 }
 
-
+namespace std
+{
+   using namespace __gnu_cxx;
+}
 
 using namespace CloneDetection;
 typedef CloneDetection::Policy<State, PartialSymbolicSemantics::ValueType> ClonePolicy;
@@ -1096,13 +1099,99 @@ kindToInteger(size_t kind){
 }
 
 
+static std::map<std::string, void*> internTable;
+
+inline void*
+intern(const std::string& s)
+{
+  std::map<std::string, void*>::iterator i = internTable.find(s);
+    if  (i == internTable.end()) {
+        void* sCopy = new std::string(s);
+        internTable.insert(std::make_pair(s, sCopy));
+        return sCopy;
+    } else {
+        return i->second;
+    }
+}
+
+
+static std::hash_map<SgAsmExpression*, void*> unparseAndInternTable;
+
+inline void*
+unparseAndIntern(SgAsmExpression* e)
+{
+  std::hash_map<SgAsmExpression*, void*>::const_iterator i = unparseAndInternTable.find(e);
+    if (i == unparseAndInternTable.end()) {
+        void* sPtr = intern(unparseX86Expression(e, NULL, NULL));
+        unparseAndInternTable.insert(std::make_pair(e, sPtr));
+        return sPtr;
+    } else {
+        return i->second;
+    }
+}
+
+
+inline ExpressionCategory
+getCategory(SgAsmExpression* e)
+{
+    if (isSgAsmValueExpression(e)) {
+        return ec_val;
+    } else if (isSgAsmRegisterReferenceExpression(e)) {
+        return ec_reg;
+    } else if (isSgAsmMemoryReferenceExpression(e)) {
+        return ec_mem;
+    } else {
+        abort();
+    }
+}
+
+SgAsmExpressionPtrList&
+getOperands(SgAsmInstruction* insn)
+{
+    SgAsmOperandList* ol = insn->get_operandList();
+    SgAsmExpressionPtrList& operands = ol->get_operands();
+    return operands;
+}
+
+void
+numberOperands(SgAsmx86Instruction* firstInsn[], size_t insnCount, hash_map<SgAsmExpression*, size_t> numbers[3])
+{
+    hash_map<void*, size_t> stringNumbers[3];
+    for (size_t i = 0; i < insnCount; ++i) {
+        SgAsmx86Instruction* insn = firstInsn[i];
+        const SgAsmExpressionPtrList& operands = getOperands(insn);
+        //size_t operandCount = operands.size();
+        for (size_t j = 0; j < operands.size(); ++j) {
+            SgAsmExpression* e = operands[j];
+            ExpressionCategory cat = getCategory(e);
+            void* str = unparseAndIntern(e);
+            hash_map<void*, size_t>& currentStringNums = stringNumbers[(int)cat];
+            hash_map<void*, size_t>::const_iterator stringNumIter = currentStringNums.find(str);
+            size_t num = (stringNumIter == currentStringNums.end() ? currentStringNums.size() : stringNumIter->second);
+            if (stringNumIter == currentStringNums.end())
+                currentStringNums.insert(std::make_pair(str, num));
+            numbers[(int)cat][e] = num;
+        }
+    }
+}
+
 
 
 void
-createVectorsForAllInstructions(SignatureVector& vec, std::vector<SgAsmInstruction*>& insns)
+createVectorsForAllInstructions(SignatureVector& vec, std::vector<SgAsmInstruction*>& insns, std::vector<std::string> sc)
 {
   hash_map<SgAsmExpression*, size_t> valueNumbers[3];
   size_t insnCount = insns.size();
+
+
+  bool by_category       = (std::find(sc.begin(), sc.end(), "by_category") != sc.end());
+  bool total_for_variant = (std::find(sc.begin(), sc.end(), "total_for_variant") != sc.end());
+  bool operand_total     = (std::find(sc.begin(), sc.end(), "operant_total") != sc.end());
+  bool ops_for_variant   = (std::find(sc.begin(), sc.end(), "ops_for_variant") != sc.end());
+  bool specific_op       = (std::find(sc.begin(), sc.end(), "specific_op") != sc.end());
+  bool operand_pair      = (std::find(sc.begin(), sc.end(), "operand_pair") != sc.end());
+  bool apply_log         = (std::find(sc.begin(), sc.end(), "apply_log") != sc.end());
+
   
   //numberOperands(&insns[0], insnCount, valueNumbers);
 
@@ -1116,18 +1205,21 @@ createVectorsForAllInstructions(SignatureVector& vec, std::vector<SgAsmInstructi
     assert(insns != NULL);
 
     size_t var = insn->get_kind();
-    var = kindToInteger(var);
+
+    if(by_category)
+      var = kindToInteger(var);
 
 #ifdef NORMALIZED_UNPARSED_INSTRUCTIONS
-    string mne = insn->get_mnemonic();
+    std::string mne = insn->get_mnemonic();
     boost::to_lower(mne);
     normalizedUnparsedInstructions += mne;
 #endif
 
     // Add to total for this variant
-    ++vec.totalForVariant(var);
+    if(total_for_variant)
+      ++vec.totalForVariant(var);
 
-    /*
+    
     const SgAsmExpressionPtrList& operands = getOperands(insn);
     size_t operandCount = operands.size();
 
@@ -1142,12 +1234,16 @@ createVectorsForAllInstructions(SignatureVector& vec, std::vector<SgAsmInstructi
       hash_map<SgAsmExpression*, size_t>::const_iterator numIter = valueNumbers[(int)cat].find(operand);
       assert (numIter != valueNumbers[(int)cat].end());
       size_t num = numIter->second;
-      //++vec.specificOp(cat, num);
+      if(specific_op)
+        ++vec.specificOp(cat, num);
+      
       // Add to total for this kind of operand
-      //++vec.operandTotal(cat);
+      if(operand_total)
+        ++vec.operandTotal(cat);
+
 #ifdef NORMALIZED_UNPARSED_INSTRUCTIONS
       normalizedUnparsedInstructions += (cat == ec_reg ? "R" : cat == ec_mem ? "M" : "V") +
-        boost::lexical_cast<string>(num);
+        boost::lexical_cast<std::string>(num);
 #endif
     }
 
@@ -1155,7 +1251,10 @@ createVectorsForAllInstructions(SignatureVector& vec, std::vector<SgAsmInstructi
     if (operandCount >= 2) {
       ExpressionCategory cat1 = getCategory(operands[0]);
       ExpressionCategory cat2 = getCategory(operands[1]);
-      //++vec.operandPair(cat1, cat2);
+      
+      if(operand_pair)
+        ++vec.operandPair(cat1, cat2);
+    
     }
     
 #ifdef NORMALIZED_UNPARSED_INSTRUCTIONS
@@ -1165,14 +1264,16 @@ createVectorsForAllInstructions(SignatureVector& vec, std::vector<SgAsmInstructi
 #endif
 
 
-   */
+   
   }
 
-  int tmp; 
-  for(int i = 0 ; i < x86_last_instruction; i++){
-    tmp = vec.totalForVariant(i); 
-    if ( tmp != 0  ){ 
-      vec.totalForVariant(i) = round(log10(vec.totalForVariant(i)/log(2)));
+  if(apply_log){
+    int tmp; 
+    for(int i = 0 ; i < x86_last_instruction; i++){
+      tmp = vec.totalForVariant(i); 
+      if ( tmp != 0  ){ 
+        vec.totalForVariant(i) = round(log10(vec.totalForVariant(i)/log(2)));
+      }
     }
   }
 
@@ -1546,7 +1647,7 @@ main(int argc, char *argv[])
 
         int syntactic_ninsns = insns.size(); 
 
-        createVectorsForAllInstructions( ogroup.get_signature_vector() , insns);
+        createVectorsForAllInstructions( ogroup.get_signature_vector() , insns, opt.params.signature_components);
  
         std::vector<uint8_t> compressedCounts = compressVector(ogroup.get_signature_vector().getBase(), SignatureVector::Size);
 
