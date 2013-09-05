@@ -909,24 +909,39 @@ main(int argc, char *argv[])
             abort();
         }
 
+        std::map<int, VectorEntry*>::iterator it;
 
-        VectorEntry* f1_compressed = id_to_vec[func1_id];
-        VectorEntry* f2_compressed = id_to_vec[func2_id];  
+        it = id_to_vec.find(func1_id);
 
-        int vec_length = x86_last_instruction* 4 + 300 + 9 + 3;
+        if(it == id_to_vec.end()){
+          assert(!"func 1 not found");
+          exit(1);
+        }
+
+        VectorEntry* f1_compressed = it->second;
+
+        it = id_to_vec.find(func2_id);
+
+        if(it == id_to_vec.end()){
+          assert(!"func 2 not found");
+          exit(1);
+        }
+
+        VectorEntry* f2_compressed = it->second;  
+
  
+        int vec_length = x86_last_instruction* 4 + 300 + 9 + 3;
+
         boost::scoped_array<uint16_t> f1_uncompressed(new uint16_t[vec_length]);
         decompressVector(f1_compressed->compressedCounts.get(), f1_compressed->compressedCounts.size(), f1_uncompressed.get());
- 
+
         boost::scoped_array<uint16_t> f2_uncompressed(new uint16_t[vec_length]);
         decompressVector(f2_compressed->compressedCounts.get(), f2_compressed->compressedCounts.size(), f2_uncompressed.get());
 
- 
         int hamming_d            = 0;
         double euclidean_d       = 0;
         double euclidean_d_ratio = 0;
 
- 
         int f1_v=0;
         int f2_v=0;
         for(int i = 0; i < vec_length; i++){
