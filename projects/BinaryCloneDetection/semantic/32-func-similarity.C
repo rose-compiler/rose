@@ -731,7 +731,6 @@ read_vector_data(const SqlDatabase::TransactionPtr &tx, scoped_array_with_size<V
         id_to_vec.insert(std::pair<int, VectorEntry*>(functionId,&ve));
         indexInVectors++;
 
-        std::cout << compressedCounts <<std::endl;
     }
 
 
@@ -931,7 +930,7 @@ main(int argc, char *argv[])
         VectorEntry* f2_compressed = it->second;  
 
  
-        int vec_length = x86_last_instruction* 4 + 300 + 9 + 3;
+        int vec_length = SignatureVector::Size;
 
         boost::scoped_array<uint16_t> f1_uncompressed(new uint16_t[vec_length]);
         decompressVector(f1_compressed->compressedCounts.get(), f1_compressed->compressedCounts.size(), f1_uncompressed.get());
