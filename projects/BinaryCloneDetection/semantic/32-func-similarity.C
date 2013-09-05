@@ -874,8 +874,9 @@ main(int argc, char *argv[])
                                                             "(func1_id, func2_id, similarity, ncompares, maxcompares,"
                                                             // 5           6
                                                             " relation_id, cmd, hamming_d, euclidean_d, euclidean_d_ratio,"
-                                                            "path_hamming_d, path_euclidean_d)"
-                                                            " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)");
+                                                            "path_ave_hamming_d, path_min_hamming_d, path_max_hamming_d,"
+                                                            "path_ave_euclidean_d, path_min_euclidean_d, path_max_euclidean_d)"
+                                                            " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?,?)");
     CachedOutputs all_outputs;
     FunctionOutputs func_outputs;
     load_function_infos();
@@ -974,7 +975,11 @@ main(int argc, char *argv[])
         stmt->bind(8, euclidean_d);
         stmt->bind(9, euclidean_d_ratio);
         stmt->bind(10, output_sim.ave_hamming_d);
-        stmt->bind(11, output_sim.ave_euclidean_d);
+        stmt->bind(11, output_sim.min_hamming_d);
+        stmt->bind(12, output_sim.max_hamming_d);
+        stmt->bind(13, output_sim.ave_euclidean_d);
+        stmt->bind(14, output_sim.min_euclidean_d);
+        stmt->bind(15, output_sim.max_euclidean_d);
         stmt->execute();
     }
     

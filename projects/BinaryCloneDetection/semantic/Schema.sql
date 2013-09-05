@@ -233,7 +233,11 @@ create table semantic_funcsim (
        euclidean_d double precision,            -- Euclidean distance
        euclidean_d_ratio double precision,      -- Euclidean distance divided by the total number of instructions in both functions
        combined_d integer,                      -- Combined distance
-       path_hamming_d integer,                  -- Path sensistive hamming distance
-       path_euclidean_d double precision,       -- Path sensistive euclidean distance
+       path_ave_hamming_d integer,              -- Path sensistive average hamming distance
+       path_min_hamming_d integer,              -- Path sensistive minimum hamming distance
+       path_max_hamming_d integer,              -- Path sensistive maximum hamming distance
+       path_ave_euclidean_d double precision,   -- Path sensistive average euclidean distance
+       path_min_euclidean_d double precision,   -- Path sensistive minimum euclidean distance
+       path_max_euclidean_d double precision,   -- Path sensistive maximum euclidean distance
        cmd bigint references semantic_history(hashkey) -- command that set the precision on this row
 );

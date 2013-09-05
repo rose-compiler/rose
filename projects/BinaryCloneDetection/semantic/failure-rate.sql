@@ -136,7 +136,9 @@ select 'The following table shows the true positives function pairs.
 Both functions of the pair always have the same name.' as "Notice";
 select
         func1.name as name,
-        sim.func1_id, sim.func2_id, sim.similarity, sim.hamming_d, sim.euclidean_d, sim.euclidean_d_ratio, sim.ncompares, sim.path_hamming_d, sim.path_euclidean_d
+        sim.func1_id, sim.func2_id, sim.similarity, sim.hamming_d, sim.euclidean_d, sim.euclidean_d_ratio, sim.ncompares,
+        sim.path_ave_hamming_d, sim.path_min_hamming_d, sim.path_max_hamming_d,
+        sim.path_ave_euclidean_d, sim.path_min_euclidean_d, sim.path_max_euclidean_d  
     from fr_true_positives as falseneg
     join fr_functions as func1 on falseneg.func1_id = func1.id
     join fr_functions as func2 on falseneg.func2_id = func2.id
@@ -148,7 +150,9 @@ select 'The following table shows the false positives function pairs.
 Both functions of the pair always have the same name.' as "Notice";
 select
         func1.name as name,
-        sim.func1_id, sim.func2_id, sim.similarity, sim.hamming_d, sim.euclidean_d, sim.euclidean_d_ratio, sim.ncompares, sim.path_hamming_d, sim.path_euclidean_d
+        sim.func1_id, sim.func2_id, sim.similarity, sim.hamming_d, sim.euclidean_d, sim.euclidean_d_ratio, sim.ncompares, 
+        sim.path_ave_hamming_d, sim.path_min_hamming_d, sim.path_max_hamming_d,
+        sim.path_ave_euclidean_d, sim.path_min_euclidean_d, sim.path_max_euclidean_d
     from fr_false_positives as falseneg
     join fr_functions as func1 on falseneg.func1_id = func1.id
     join fr_functions as func2 on falseneg.func2_id = func2.id
@@ -210,6 +214,9 @@ Both functions of the pair always have the same name.' as "Notice";
 select
         func1.name as name,
         sim.func1_id, sim.func2_id, sim.similarity, sim.euclidean_d, sim.euclidean_d_ratio,  sim.ncompares
+        sim.path_ave_hamming_d, sim.path_min_hamming_d, sim.path_max_hamming_d,
+        sim.path_ave_euclidean_d, sim.path_min_euclidean_d, sim.path_max_euclidean_d
+ 
     from fr_false_negatives as falseneg
     join fr_functions as func1 on falseneg.func1_id = func1.id
     join fr_functions as func2 on falseneg.func2_id = func2.id
