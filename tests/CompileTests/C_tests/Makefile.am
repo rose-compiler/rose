@@ -312,6 +312,14 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_41.c \
      test2013_42.c \
      test2013_43.c \
+     test2013_44.c \
+     test2013_45.c \
+     test2013_46.c \
+     test2013_47.c \
+     test2013_48.c \
+     test2013_49.c \
+     test2013_50.c \
+     test2013_51.c \
      math.c \
      complex_01.c \
      constants.c

@@ -2640,6 +2640,10 @@ Unparse_Type::foobar( SgUnparse_Info & info )
 // explicit instantiation of Unparse_Type::outputType
 template void Unparse_Type::outputType(SgInitializedName*, SgType* , SgUnparse_Info &);
 template void Unparse_Type::outputType(SgTemplateArgument*, SgType*, SgUnparse_Info &);
+
+// DQ (9/4/2013): We need to support this instantiation as part of new support for SgCompoundLiteralExp 
+// unparsing (via SgAggregateInitializer unparsing).
+template void Unparse_Type::outputType(SgAggregateInitializer*, SgType*, SgUnparse_Info &);
 #endif
 
 template <class T>
@@ -2711,11 +2715,20 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
           SgInitializedName* initializedName = isSgInitializedName(referenceNode);
           if (initializedName != NULL)
              {
+            // We don't have to transfer any data in this case.
              }
             else
              {
-               printf ("ERROR: referenceNode is not a supported type \n");
-               ROSE_ASSERT(false);
+               SgAggregateInitializer* aggregateInitializer = isSgAggregateInitializer(referenceNode);
+               if (aggregateInitializer != NULL)
+                  {
+                 // We don't have to transfer any data in this case.
+                  }
+                 else
+                  {
+                    printf ("ERROR: referenceNode is not a supported type of IR node. referenceNode kind = %s \n",referenceNode->class_name().c_str());
+                    ROSE_ASSERT(false);
+                  }
              }
         }
 

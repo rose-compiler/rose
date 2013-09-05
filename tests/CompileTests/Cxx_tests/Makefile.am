@@ -21,7 +21,10 @@ include $(top_srcdir)/tests/input_codes/cxx/Makefile_variables
 #
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = $(ROSE__CXX_TESTS)
 
-EXAMPLE_TESTCODES_REQUIRED_TO_PASS += lulesh.C luleshTALC.C
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   lulesh.C \
+   luleshTALC.C \
+   test2013_253.C
 
 # DQ (7/31/2013): This is a failing test code for operator->().
 # test2013_249.C 

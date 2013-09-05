@@ -284,6 +284,20 @@ HEADER_VAR_REF_EXPRESSION_START
 HEADER_VAR_REF_EXPRESSION_END
 
 
+HEADER_COMPOUND_LITERAL_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+       // get lvalue
+          virtual bool isDefinable() const;
+          virtual bool isLValue() const;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+HEADER_COMPOUND_LITERAL_EXPRESSION_END
+
+
 HEADER_LABEL_REF_EXPRESSION_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -2599,6 +2613,10 @@ SgVarRefExp::fixupCopy(SgNode* copy, SgCopyHelp & help) const
 #endif
 
 SOURCE_VARIABLE_REFERENCE_EXPRESSION_END
+
+
+SOURCE_COMPOUND_LITERAL_EXPRESSION_START
+SOURCE_COMPOUND_LITERAL_EXPRESSION_END
 
 
 SOURCE_LABEL_REFERENCE_EXPRESSION_START

@@ -308,6 +308,7 @@ SgComprehension
 SgComprehensionList
 SgCompoundAssignOp
 SgCompoundInitializer
+SgCompoundLiteralExp
 SgComputedGotoStatement
 SgConcatenationOp
 SgConditionalExp
