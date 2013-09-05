@@ -255,6 +255,7 @@ main(int argc, char *argv[])
     std::vector<std::string> signature_components;
 
     for (/*void*/; argno<argc && '-'==argv[argno][0]; ++argno) {
+        std::cout << argv[argno] << std::endl;
         if (!strcmp(argv[argno], "--")) {
             ++argno;
             break;
@@ -269,12 +270,12 @@ main(int argc, char *argv[])
         } else if (!strcmp(argv[argno], "--no-save-ast")) {
             opt.save_ast = false;
 
-        } else if (!strcmp(argv[argno], "--signature-components=")){
+        } else if (NULL != strstr(argv[argno], "--signature-components")){
 
           std::string comp_opts[7] = {"by_category","total_for_variant","operand_total","ops_for_variant","specific_op","operand_pair","apply_log"};
           for ( int comp_i = 0; comp_i < 7; comp_i++  )
           {
-            if (!strcmp(argv[argno], comp_opts[comp_i].c_str()))
+            if (NULL != strstr(argv[argno], comp_opts[comp_i].c_str()))
               signature_components.push_back(comp_opts[comp_i]);
           }
 

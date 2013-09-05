@@ -967,12 +967,12 @@ main(int argc, char *argv[])
           opt.params.path_syntactic = PATH_SYNTACTIC_ALL;
         } else if (!strcmp(argv[argno], "--path-syntactic=function")){
           opt.params.path_syntactic = PATH_SYNTACTIC_FUNCTION;
-        } else if (!strcmp(argv[argno], "--signature-components=")){
+        } else if (NULL != strstr(argv[argno], "--signature-components=")){
 
           std::string comp_opts[7] = {"by_category","total_for_variant","operand_total","ops_for_variant","specific_op","operand_pair","apply_log"};
           for ( int comp_i = 0; comp_i < 7; comp_i++  )
           {
-            if (!strcmp(argv[argno], comp_opts[comp_i].c_str()))
+            if (NULL != strstr(argv[argno], comp_opts[comp_i].c_str()))
               opt.params.signature_components.push_back(comp_opts[comp_i]);
           }
 
