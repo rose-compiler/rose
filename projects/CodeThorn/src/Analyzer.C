@@ -17,7 +17,7 @@ using namespace CodeThorn;
 
 #include "CollectionOperators.h"
 
-Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOfThreadsToUse(1),_ltlVerifier(2),_semanticFoldThreshold(5000) {
+Analyzer::Analyzer():startFunRoot(0),cfanalyzer(0),_displayDiff(10000),_numberOfThreadsToUse(1),_ltlVerifier(2),_semanticFoldThreshold(5000),_solver(3) {
   for(int i=0;i<62;i++) {
     binaryBindingAssert.push_back(false);
   }
@@ -1426,4 +1426,88 @@ void Analyzer::runSolver2() {
   printStatusMessage(true);
   cout << "analysis finished (worklist is empty)."<<endl;
   assert(checkTransitionGraph());
+}
+
+void Analyzer::runSolver3() {
+  size_t prevStateSetSize=0; // force immediate report at start
+  int threadNum;
+  vector<const EState*> workVector(_numberOfThreadsToUse);
+  int workers=_numberOfThreadsToUse;
+  omp_set_dynamic(0);     // Explicitly disable dynamic teams
+  omp_set_num_threads(workers);
+  cout <<"STATUS: Running parallel solver 3 with "<<workers<<" threads."<<endl;
+  printStatusMessage(true);
+  while(1) {
+    if(_displayDiff && (estateSet.size()>(prevStateSetSize+_displayDiff))) {
+      printStatusMessage(true);
+      prevStateSetSize=estateSet.size();
+    }
+	if(isEmptyWorkList())
+	  break;
+#pragma omp parallel for private(threadNum)
+    for(int j=0;j<workers;++j) {
+      threadNum=omp_get_thread_num();
+      const EState* currentEStatePtr=popWorkList();
+      if(!currentEStatePtr) {
+        //cerr<<"Thread "<<threadNum<<" found empty worklist. Continue without work. "<<endl;
+        assert(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
+      } else {
+		assert(currentEStatePtr);
+      
+		Flow edgeSet=flow.outEdges(currentEStatePtr->label());
+		//cerr << "DEBUG: edgeSet size:"<<edgeSet.size()<<endl;
+		for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
+		  Edge e=*i;
+		  list<EState> newEStateList;
+		  newEStateList=transferFunction(e,currentEStatePtr);
+		  //cout << "DEBUG: transfer at edge:"<<e.toString()<<" succ="<<newEStateList.size()<< endl;
+		  for(list<EState>::iterator nesListIter=newEStateList.begin();
+			  nesListIter!=newEStateList.end();
+			  ++nesListIter) {
+			EState newEState=*nesListIter;
+			assert(newEState.label()!=Labeler::NO_LABEL);
+			if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
+			  HSetMaintainer<EState,EStateHashFun>::ProcessingResult pres=process(newEState);
+			  const EState* newEStatePtr=pres.second;
+			  if(pres.first==true)
+				addToWorkList(newEStatePtr);            
+			  recordTransition(currentEStatePtr,e,newEStatePtr);
+			}
+			if((!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {
+			  // failed-assert end-state: do not add to work list but do add it to the transition graph
+			  const EState* newEStatePtr;
+			  newEStatePtr=processNewOrExisting(newEState);
+			  recordTransition(currentEStatePtr,e,newEStatePtr);        
+			  
+			  if(boolOptions["report-failed-assert"]) {
+#pragma omp critical
+				{
+				  cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
+				}
+			  }
+			  if(_csv_assert_live_file.size()>0) {
+				string name=labelNameOfAssertLabel(currentEStatePtr->label());
+				if(name=="globalError")
+				  name="error_60";
+				name=name.substr(6,name.size()-6);
+				std::ofstream fout;
+				// csv_assert_live_file is the member-variable of analyzer
+#pragma omp critical
+				{
+				  fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
+				  assert (!fout.fail( ));
+				  fout << name << ",yes,9"<<endl;
+				  //cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
+				  
+				  fout.close(); 
+				}
+			  } // if
+			}
+		  } // end of loop on transfer function return-estates
+		} // just for proper auto-formatting in emacs
+	  } // conditional: test if work is available
+    } // worklist-parallel for
+  } // while
+  printStatusMessage(true);
+  cout << "analysis finished (worklist is empty)."<<endl;
 }

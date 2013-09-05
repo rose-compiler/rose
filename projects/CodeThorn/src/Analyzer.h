@@ -125,6 +125,7 @@ namespace CodeThorn {
     //! requires init
     void runSolver1();
     void runSolver2();
+    void runSolver3();
     
     //! The analyzer requires a CFAnalyzer to obtain the ICFG.
     void setCFAnalyzer(CFAnalyzer* cf) { cfanalyzer=cf; }
@@ -174,6 +175,8 @@ namespace CodeThorn {
     InputOutput::OpType ioOp(const EState* estate) const;
     
     void setDisplayDiff(int diff) { _displayDiff=diff; }
+    void setSolver(int solver) { _solver=solver; ROSE_ASSERT(_solver>=1 && _solver<=3);}
+    int getSolver() { return _solver;}
     void setSemanticFoldThreshold(int t) { _semanticFoldThreshold=t; }
     void setLTLVerifier(int v) { _ltlVerifier=v; }
     int getLTLVerifier() { return _ltlVerifier; }
@@ -204,6 +207,7 @@ namespace CodeThorn {
     int _ltlVerifier;
     int _semanticFoldThreshold;
     VariableIdMapping::VariableIdSet _variablesToIgnore;
+    int _solver;
   };
   
 } // end of namespace CodeThorn
