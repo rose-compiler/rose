@@ -115,7 +115,7 @@ typedef std::vector< std::pair<int,int> > SemanticPairVec;
 using namespace boost;
 
 void
-normalize_vecs(int func1_id, int func2_id, int igroup_id, double similarity, CallVec* func1_vec, CallVec* func2_vec)
+normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarity, CallVec* func1_vec, CallVec* func2_vec)
 {
   std::string _query("select sem.func1_id, sem.func2_id from semantic_funcsim as sem"
       "join tmp_called_functions as tcf_2 on sem.func1_id = tcf_1.callee_id AND ( tcf.func_id IN (?,?)) AND (igroup_id = ?)"
@@ -180,10 +180,6 @@ normalize_vecs(int func1_id, int func2_id, int igroup_id, double similarity, Cal
 
   typedef component_index<VertexIndex> Components;
 
-  // NOTE: Because we're using vecS for the graph type, we're
-  // effectively using identity_property_map for a vertex index map.
-  // If we were to use listS instead, the index map would need to be
-  // explicitly passed to the component_index constructor.
   Components components(parent.begin(), parent.end());
 
   // Iterate through the component indices
@@ -232,59 +228,8 @@ load_api_calls(int func1_id, int func2_id, int igroup_id, CallVec& call_vec, dou
  CallVec* func2_vec = load_api_calls_for(func2_id, igroup_id, ignore_no_compares, call_depth, expand_ncalls);
 
  //Detect and normalize similar function calls
- normalize_vecs(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec);
+ normalize_call_trace(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec);
 
-
-
-
-
-
-
- //Find all connected components
-
-/*
-  //
- 
-  vec = vector of trace
-  for clone in all_clones
-    vec = create vector sorted by pos where callee id is replaced with lookup
-
-  sort vec by pos
-
-  vec_new = all callee_id from vec
-  
-    
-
-  //Find the functions that are similar between the two 
-
-  "create temporary table tmp_tested_funcs as select func1_id, func2_id from semantic_funcsim"
-  " where (func1_id = ? OR func1_id = ?) AND (func2_id = ? OR func2_id = ?) ";
-
-
- 
- transaction->execute("create temporary table tmp_tested_funcs as select distinct func_id from semantic_fio");
- 
- //functions from A that is semantically similar to functions in B
-
-
-SqlDatabase::StatementPtr stmt = tx->statement("select distinct f1.func_id as func1_id, f2.func_id as func2_id"
-     " from tmp_tested_funcs as f1"
-     " join tmp_tested_funcs as f2 on f1.func_id < f2.func_id");
-
- transaction->execute("create temporary table tmp_tested_funcs as select distinct func_id from semantic_fio");
-
-  for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
-    SemanticCalls sem_calls;
-    sem_calls.func_id   = func_id;
-    sem_calls.igroup_id = igroup_id;
-    sem_calls.caller_id = row.get<int>(0);
-    sem_calls.callee_id = row.get<int>(1);
-    sem_calls.pos       = row.get<int>(2);
-    sem_calls.ncalls    = row.get<int>(3);
-
-    call_vec.push_back(sem_calls);
-  }
-*/
 
 };
 
