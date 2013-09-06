@@ -233,6 +233,8 @@ struct IP_bittest: P {
             ops->writeRegister(d->REG_CF, bitval);
             BaseSemantics::SValuePtr result;
             switch (kind) {
+                case x86_bt:
+                    break;
                 case x86_btr:
                     result = ops->and_(val, ops->invert(ops->rotateLeft(ops->number_(8, 1), ops->extract(bitnum, 0, 3))));
                     ops->writeMemory(d->segmentRegister(mre), adjustedAddr, result, ops->boolean_(true));
@@ -250,10 +252,12 @@ struct IP_bittest: P {
             size_t nbits = asm_type_width(args[0]->get_type());
             BaseSemantics::SValuePtr op0 = d->read(args[0], nbits);
             BaseSemantics::SValuePtr bitnum = ops->extract(d->read(args[1], nbits), 0, 32==nbits?5:4);
-            BaseSemantics::SValuePtr bitval = ops->extract(ops->rotateRight(op0, bitnum), 0, 1);
+            BaseSemantics::SValuePtr bitval = ops->extract(ops->shiftRight(op0, bitnum), 0, 1);
             ops->writeRegister(d->REG_CF, bitval);
             BaseSemantics::SValuePtr result;
             switch (kind) {
+                case x86_bt:
+                    break;
                 case x86_btr:
                     result = ops->and_(op0, ops->invert(ops->rotateLeft(ops->number_(nbits, 1), bitnum)));
                     d->write(args[0], result);
