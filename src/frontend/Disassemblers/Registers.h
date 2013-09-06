@@ -47,8 +47,11 @@ public:
     }
 
     /** Class method to choose an appropriate register dictionary for an instruction set architecture. Returns the best
-     *  available register dictionary for any architecture. Returns the null pointer if no dictionary is appropriate. */
+     *  available register dictionary for any architecture. Returns the null pointer if no dictionary is appropriate.
+     * @{ */
     static const RegisterDictionary *dictionary_for_isa(SgAsmExecutableFileFormat::InsSetArchitecture);
+    static const RegisterDictionary *dictionary_for_isa(SgAsmInterpretation*);
+    /** @} */
 
     /** Obtain the name of the dictionary. */
     const std::string &get_architecture_name() const {

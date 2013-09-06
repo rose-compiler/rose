@@ -215,6 +215,14 @@ RegisterDictionary::dictionary_for_isa(SgAsmExecutableFileFormat::InsSetArchitec
     }
 }
 
+// class method
+const RegisterDictionary *
+RegisterDictionary::dictionary_for_isa(SgAsmInterpretation *interp)
+{
+    const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
+    return hdrs.empty() ? NULL : dictionary_for_isa(hdrs.front()->get_isa());
+}
+
 /** Intel 8086 registers.
  *
  *  The Intel 8086 has fourteen 16-bit registers. Four of them (AX, BX, CX, DX) are general registers (although each may have
