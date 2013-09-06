@@ -88,7 +88,7 @@ main(int argc, char *argv[])
         if (algorithm=="A") {
             // Calculate immediate dominator graph from the control flow graph. Do this for each function.
             typedef BinaryAnalysis::Dominance::Graph DG;
-            CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(func);
+            CFG cfg = BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(func);
             CFG_Vertex start = 0;
             assert(get(boost::vertex_name, cfg, start)==func->get_entry_block());
             BinaryAnalysis::Dominance analyzer;
@@ -99,7 +99,7 @@ main(int argc, char *argv[])
             // Calculate immediate dominator graph from dominator relation map. Do this for each function.
             typedef BinaryAnalysis::Dominance::Graph DG;
             typedef BinaryAnalysis::Dominance::RelationMap<CFG> RelMap;
-            CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(func);
+            CFG cfg = BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(func);
             CFG_Vertex start = 0;
             assert(get(boost::vertex_name, cfg, start)==func->get_entry_block());
             BinaryAnalysis::Dominance analyzer;
@@ -110,7 +110,7 @@ main(int argc, char *argv[])
         } else if (algorithm=="C") {
             // Calculate immediate post dominator graph from the control flow graph. Do this for each function.
             typedef BinaryAnalysis::Dominance::Graph DG;
-            CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(func);
+            CFG cfg = BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(func);
             CFG_Vertex start = 0;
             assert(get(boost::vertex_name, cfg, start)==func->get_entry_block());
             BinaryAnalysis::Dominance analyzer;
@@ -121,7 +121,7 @@ main(int argc, char *argv[])
             // Calculate immediate post dominator graph from post dominator relation map. Do this for each function.
             typedef BinaryAnalysis::Dominance::Graph DG;
             typedef BinaryAnalysis::Dominance::RelationMap<CFG> RelMap;
-            CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(func);
+            CFG cfg = BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(func);
             CFG_Vertex start = 0;
             assert(get(boost::vertex_name, cfg, start)==func->get_entry_block());
             BinaryAnalysis::Dominance analyzer;

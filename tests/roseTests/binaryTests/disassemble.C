@@ -718,14 +718,14 @@ dump_CFG_CG(SgNode *ast)
      * "-rose:partitioner_search -unassigned" switch is passed to the disassembler then the unassigned blocks will already
      * have been pruned from the AST anyway. */
     struct UnassignedBlockFilter: public BinaryAnalysis::ControlFlow::VertexFilter {
-        bool operator()(BinaryAnalysis::ControlFlow*, SgAsmBlock *block) {
-            SgAsmFunction *func = block ? block->get_enclosing_function() : NULL;
+        bool operator()(BinaryAnalysis::ControlFlow*, SgAsmNode *node) {
+            SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(node);
             return !func || 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS);
         }
     } unassigned_block_filter;
     BinaryAnalysis::ControlFlow cfg_analyzer;
     cfg_analyzer.set_vertex_filter(&unassigned_block_filter);
-    CFG global_cfg = cfg_analyzer.build_cfg_from_ast<CFG>(ast);
+    CFG global_cfg = cfg_analyzer.build_block_cfg_from_ast<CFG>(ast);
 
     /* Get the base name for the output files. */
     SgFile *srcfile = SageInterface::getEnclosingNode<SgFile>(ast);
@@ -1228,8 +1228,8 @@ main(int argc, char *argv[])
                 typedef boost::graph_traits<CFG>::vertex_descriptor CFG_Vertex;
                 SgAsmFunction *func = isSgAsmFunction(node);
                 if (func && func->get_entry_block()) {
-                    CFG cfg = cfg_analysis.build_cfg_from_ast<CFG>(func);
-                    CFG_Vertex entry = 0; /* see build_cfg_from_ast() */
+                    CFG cfg = cfg_analysis.build_block_cfg_from_ast<CFG>(func);
+                    CFG_Vertex entry = 0; /* see build_block_cfg_from_ast() */
                     assert(get(boost::vertex_name, cfg, entry) == func->get_entry_block());
                     Dominance::Graph dg = dom_analysis.build_idom_graph_from_cfg<Dominance::Graph>(cfg, entry);
                     dom_analysis.clear_ast(func);
@@ -1312,7 +1312,7 @@ main(int argc, char *argv[])
 
     if (!do_quiet && block) {
         typedef BinaryAnalysis::ControlFlow::Graph CFG;
-        CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(block);
+        CFG cfg = BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(block);
         MyAsmUnparser unparser(do_show_hashes, do_syscall_names);
         unparser.add_function_labels(block);
         unparser.set_organization(do_linear ? AsmUnparser::ORGANIZED_BY_ADDRESS : AsmUnparser::ORGANIZED_BY_AST);

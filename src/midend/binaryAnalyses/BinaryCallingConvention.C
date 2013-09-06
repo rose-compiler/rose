@@ -36,7 +36,7 @@ solve_flow_equation_iteratively(SgAsmFunction *func)
     std::cerr <<"ROBB: solving flow equations for function " <<StringUtility::addrToString(func->get_entry_va()) <<"\n";
 #endif
     BinaryAnalysis::ControlFlow cfg_analyzer;
-    CFG cfg = cfg_analyzer.build_cfg_from_ast<CFG>(func);
+    CFG cfg = cfg_analyzer.build_block_cfg_from_ast<CFG>(func);
 
     CFGVertex entry_vertex = 0;
     assert(get(boost::vertex_name, cfg, entry_vertex)==func->get_entry_block());

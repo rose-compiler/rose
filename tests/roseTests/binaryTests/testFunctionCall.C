@@ -56,7 +56,7 @@ main(int argc, char *argv[])
     if (algorithm=="B") {
         typedef BinaryAnalysis::ControlFlow::Graph CFG;
         typedef BinaryAnalysis::FunctionCall::Graph CG;
-        CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(interps.back());
+        CFG cfg = BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(interps.back());
         BinaryAnalysis::FunctionCall cg_analyzer;
         cg_analyzer.set_vertex_filter(&exclude_leftovers);
         CG cg = cg_analyzer.build_cg_from_cfg<CG>(cfg);
