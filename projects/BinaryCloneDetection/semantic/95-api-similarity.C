@@ -115,7 +115,7 @@ typedef std::vector< std::pair<int,int> > SemanticPairVec;
 using namespace boost;
 
 void
-find_semantic_pairs_between(int func1_id, int func2_id, int igroup_id, double similarity)
+normalize_vecs(int func1_id, int func2_id, int igroup_id, double similarity, CallVec* func1_vec, CallVec* func2_vec)
 {
   std::string _query("select sem.func1_id, sem.func2_id from semantic_funcsim as sem"
       "join tmp_called_functions as tcf_2 on sem.func1_id = tcf_1.callee_id AND ( tcf.func_id IN (?,?)) AND (igroup_id = ?)"
@@ -190,12 +190,30 @@ find_semantic_pairs_between(int func1_id, int func2_id, int igroup_id, double si
   BOOST_FOREACH(VertexIndex current_index, components) {
     std::cout << "component " << current_index << " contains: ";
 
-    int foo = components[current_index].first();
+    std::vector<int> component_funcs;
+
     // Iterate through the child vertex indices for [current_index]
     BOOST_FOREACH(VertexIndex child_index,
         components[current_index]) {
+      component_funcs.push_back(child_index);
       std::cout << child_index << " ";
     }
+
+
+    if (component_funcs.size() > 0){
+      for(CallVec::iterator it = func1_vec->begin(); it != func1_vec->end(); ++it )
+        for(std::vector<int>::iterator comp_it; comp_it != component_funcs.end(); ++comp_it)
+          if(*it == *comp_it) 
+            *comp_it = component_funcs[0];
+
+      for(CallVec::iterator it = func2_vec->begin(); it != func2_vec->end(); ++it )
+        for(std::vector<int>::iterator comp_it; comp_it != component_funcs.end(); ++comp_it)
+          if(*it == *comp_it) 
+            *comp_it = component_funcs[0];
+
+
+    }
+
 
     std::cout << std::endl;
   }
@@ -213,8 +231,9 @@ load_api_calls(int func1_id, int func2_id, int igroup_id, CallVec& call_vec, dou
  CallVec* func1_vec = load_api_calls_for(func1_id, igroup_id, ignore_no_compares, call_depth, expand_ncalls);
  CallVec* func2_vec = load_api_calls_for(func2_id, igroup_id, ignore_no_compares, call_depth, expand_ncalls);
 
+ //Detect and normalize similar function calls
+ normalize_vecs(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec);
 
- find_semantic_pairs_between(func1_id, func2_id, igroup_id, similarity);
 
 
 
