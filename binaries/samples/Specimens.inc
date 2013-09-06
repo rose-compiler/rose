@@ -32,6 +32,7 @@ ELF_x86_Specimens =				\
     buffer2.bin					\
     fnord.i386					\
     i386-ctrlaltdel				\
+    i386-fcalls					\
     i386-fsck.cramfs				\
     i386-nologin				\
     i386-pivot_root				\

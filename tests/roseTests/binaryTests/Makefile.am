@@ -389,6 +389,15 @@ $(PointerDetectionTestTargets): tpd_%.passed: testPointerDetection.conf testPoin
 .PHONY: testPointerDetection.passed
 testPointerDetection.passed: $(PointerDetectionTestTargets)
 
+# Test function call detection
+noinst_PROGRAMS += testCallDetection
+testCallDetection_SOURCES = testCallDetection.C
+testCallDetection_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += testCallDetection.passed
+EXTRA_DIST += testCallDetection.ans
+testCallDetection.passed: $(BINARY_SAMPLES)/i386-fcalls testCallDetection
+	@$(RTH_RUN) CMD="./testCallDetection $<" ANS=$(srcdir)/testCallDetection.ans $(top_srcdir)/scripts/test_with_answer $@
+
 
 ###############################################################################################################################
 # Instruction semantics tests.
