@@ -190,6 +190,7 @@ find_semantic_pairs_between(int func1_id, int func2_id, int igroup_id, double si
   BOOST_FOREACH(VertexIndex current_index, components) {
     std::cout << "component " << current_index << " contains: ";
 
+    int foo = components[current_index].first();
     // Iterate through the child vertex indices for [current_index]
     BOOST_FOREACH(VertexIndex child_index,
         components[current_index]) {
