@@ -68,12 +68,16 @@ int main(int argc, char* argv[]) {
   cout << "INFO: generating and attaching UD-data to AST."<<endl;
   createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis-in", "ud-analysis");
 
-#if 0
+#if 1
   cout << "INFO: computing program statistics."<<endl;
-  computeStatistics(rdAnalyzer->getVariableIdMapping(),
-					rdAnalyzer->getLabeler(), 
-					rdAnalyzer->getFlow(),
-					"ud-analysis");
+  ProgramStatistics ps(rdAnalyzer->getVariableIdMapping(),
+					   rdAnalyzer->getLabeler(), 
+					   rdAnalyzer->getFlow(),
+					   "ud-analysis");
+  ps.computeStatistics();
+  ps.printStatistics();
+  cout << "INFO: generating resource usage visualization."<<endl;
+  ps.generateResourceUsageICFGDotFile("resourceusageicfg.dot");
 #endif
   cout << "INFO: generating visualization data."<<endl;
   // generate ICFG visualization

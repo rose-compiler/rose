@@ -64,7 +64,6 @@ class Edge {
   Flow();
   Flow operator+(Flow& s2);
   Flow& operator+=(Flow& s2);
-  string toDot(Labeler *labeler);
   LabelSet nodeLabels();
   LabelSet sourceLabels();
   LabelSet targetLabels();
@@ -81,12 +80,14 @@ class Edge {
 
   Flow inEdges(Label label);
   Flow outEdges(Label label);
+  Flow edgesOfType(EdgeType edgeType);
   Flow outEdgesOfType(Label label, EdgeType edgeType);
   void setDotOptionDisplayLabel(bool opt);
   void setDotOptionDisplayStmt(bool opt);
   void setDotOptionFixedColor(bool opt);
   void setDotFixedColor(string color);
   void setDotOptionHeaderFooter(bool opt);
+  string toDot(Labeler *labeler);
   void setTextOptionPrintType(bool opt);
   void resetDotOptions();
   string toString();

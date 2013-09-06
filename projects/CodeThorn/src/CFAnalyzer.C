@@ -691,6 +691,16 @@ Flow Flow::outEdgesOfType(Label label, EdgeType edgeType) {
   return flow;
 }
 
+Flow Flow::edgesOfType(EdgeType edgeType) {
+  Flow flow;
+  for(Flow::iterator i=begin();i!=end();++i) {
+    if((*i).isType(edgeType))
+      flow.insert(*i);
+  }
+  flow.setDotOptionDisplayLabel(_dotOptionDisplayLabel);
+  flow.setDotOptionDisplayStmt(_dotOptionDisplayStmt);
+  return flow;
+}
 
 LabelSet Flow::nodeLabels() {
   LabelSet s;
