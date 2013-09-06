@@ -58,33 +58,35 @@ HEADER_BINARY_END
 
 
 HEADER_INTERPRETATION_START
-	// NOTE: definitions are in src/frontend/Disassemblers/SgAsmInterpretation.C
-	public:
-		SgAsmInterpretation()
-			: p_map(NULL), p_registers(NULL), coverageComputed(false), percentageCoverage(0.0), p_dwarf_info(NULL),
-			  p_headers(NULL), p_global_block(NULL) {
-			ctor();
-             	}
-          	SgAsmGenericFilePtrList get_files() const; /*files referenced by interpretation*/
-          	MemoryMap *get_map() const {return p_map;}
-          	void set_map(MemoryMap* m) {p_map=m;}
-		const RegisterDictionary *get_registers() const;
-		void set_registers(const RegisterDictionary*);
-		void set_coverageComputed(bool x) { coverageComputed = x; }
-		void set_percentageCoverage(double x) { percentageCoverage = x; }
-		void insert_instructions(InstructionMap&/*in,out*/);
-		void erase_instructions(InstructionMap&/*in,out*/);
-		InstructionMap get_instruction_map();
+        // NOTE: definitions are in src/frontend/Disassemblers/SgAsmInterpretation.C
+        public:
+                SgAsmInterpretation()
+                        : p_map(NULL), p_registers(NULL), coverageComputed(false), percentageCoverage(0.0), p_dwarf_info(NULL),
+                          p_headers(NULL), p_global_block(NULL) {
+                        ctor();
+                }
+                SgAsmGenericFilePtrList get_files() const; /*files referenced by interpretation*/
+                MemoryMap *get_map() const {return p_map;}
+                void set_map(MemoryMap* m) {p_map=m;}
+                const RegisterDictionary *get_registers() const;
+                void set_registers(const RegisterDictionary*);
+                void set_coverageComputed(bool x) { coverageComputed = x; }
+                void set_percentageCoverage(double x) { percentageCoverage = x; }
+                void insert_instructions(InstructionMap&/*in,out*/);
+                void erase_instructions(InstructionMap&/*in,out*/);
+                InstructionMap& get_instruction_map(bool recompute=false);
+                void set_instruction_map(const InstructionMap&);
 
-	private:
-		void ctor();
-          	MemoryMap *p_map;
-		const RegisterDictionary *p_registers;
-          	bool coverageComputed; // true iff percentageCoverage has been computed
+        private:
+                void ctor();
+                MemoryMap *p_map;
+                const RegisterDictionary *p_registers;
+                bool coverageComputed; // true iff percentageCoverage has been computed
+                mutable InstructionMap instruction_map; // cached instruction map
 
-	        //! The percentage of an interpretation where each section is marked as executable and identified for
-		//  disassembly into instructions.
-		double percentageCoverage;
+                //! The percentage of an interpretation where each section is marked as executable and identified for
+                //  disassembly into instructions.
+                double percentageCoverage;
 HEADER_INTERPRETATION_END
 
 
@@ -96,11 +98,11 @@ HEADER_BINARY_INSTRUCTION_START
                 std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info);
                 void append_sources( SgAsmInstruction* instruction );
 
-		// These are documented in SgAsmInstruction.C
+                // These are documented in SgAsmInstruction.C
                 virtual bool terminates_basic_block(); /*subclasses must redefine*/
-                virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target);
+                virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret);
                 virtual bool is_function_return(const std::vector<SgAsmInstruction*>&);
-		virtual bool get_branch_target(rose_addr_t *target/*out*/);
+                virtual bool get_branch_target(rose_addr_t *target/*out*/);
                 virtual bool has_effect();
                 virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
                                         bool relax_stack_semantics=false);
@@ -151,25 +153,25 @@ HEADER_INTEGER_VALUE_EXPRESSION_END
 
 HEADER_BYTE_VALUE_EXPRESSION_START
         public:
-		SgAsmByteValueExpression() { ctor(); }
+                SgAsmByteValueExpression() { ctor(); }
                 explicit SgAsmByteValueExpression(uint8_t n) { ctor(n); }
                 void set_value(uint8_t);
                 uint8_t get_value() const;
-	protected:
-		void ctor();
-		void ctor(uint8_t);
+        protected:
+                void ctor();
+                void ctor(uint8_t);
 HEADER_BYTE_VALUE_EXPRESSION_END
 SOURCE_BYTE_VALUE_EXPRESSION_START
-		void SgAsmByteValueExpression::ctor() {
-			set_significant_bits(8);
-			set_value(0);
-			set_type(SgAsmTypeByte::createType());
-		}
-		void SgAsmByteValueExpression::ctor(uint8_t n) {
-			set_significant_bits(8);
-			set_value(n);
-			set_type(SgAsmTypeByte::createType());
-		}
+                void SgAsmByteValueExpression::ctor() {
+                        set_significant_bits(8);
+                        set_value(0);
+                        set_type(SgAsmTypeByte::createType());
+                }
+                void SgAsmByteValueExpression::ctor(uint8_t n) {
+                        set_significant_bits(8);
+                        set_value(n);
+                        set_type(SgAsmTypeByte::createType());
+                }
 SOURCE_BYTE_VALUE_EXPRESSION_END
 
 
@@ -178,25 +180,25 @@ SOURCE_BYTE_VALUE_EXPRESSION_END
 
 HEADER_WORD_VALUE_EXPRESSION_START
         public:
-		SgAsmWordValueExpression() { ctor(); }
+                SgAsmWordValueExpression() { ctor(); }
                 explicit SgAsmWordValueExpression(uint16_t n) { ctor(n); }
                 void set_value(uint16_t);
                 uint16_t get_value() const;
-	protected:
-		void ctor();
-		void ctor(uint16_t);
+        protected:
+                void ctor();
+                void ctor(uint16_t);
 HEADER_WORD_VALUE_EXPRESSION_END
 SOURCE_WORD_VALUE_EXPRESSION_START
-		void SgAsmWordValueExpression::ctor() {
-			set_significant_bits(16);
-			set_value(0);
-			set_type(SgAsmTypeWord::createType());
-		}
-		void SgAsmWordValueExpression::ctor(uint16_t n) {
-			set_significant_bits(16);
-			set_value(n);
-			set_type(SgAsmTypeWord::createType());
-		}
+                void SgAsmWordValueExpression::ctor() {
+                        set_significant_bits(16);
+                        set_value(0);
+                        set_type(SgAsmTypeWord::createType());
+                }
+                void SgAsmWordValueExpression::ctor(uint16_t n) {
+                        set_significant_bits(16);
+                        set_value(n);
+                        set_type(SgAsmTypeWord::createType());
+                }
 SOURCE_WORD_VALUE_EXPRESSION_END
 
 
@@ -204,25 +206,25 @@ SOURCE_WORD_VALUE_EXPRESSION_END
 
 HEADER_DOUBLE_WORD_VALUE_EXPRESSION_START
         public:
-		SgAsmDoubleWordValueExpression() { ctor(); }
+                SgAsmDoubleWordValueExpression() { ctor(); }
                 explicit SgAsmDoubleWordValueExpression(uint32_t n) { ctor(n); }
                 void set_value(uint32_t);
                 uint32_t get_value() const;
-	protected:
-		void ctor();
-		void ctor(uint32_t);
+        protected:
+                void ctor();
+                void ctor(uint32_t);
 HEADER_DOUBLE_WORD_VALUE_EXPRESSION_END
 SOURCE_DOUBLE_WORD_VALUE_EXPRESSION_START
-		void SgAsmDoubleWordValueExpression::ctor() {
-			set_significant_bits(32);
-			set_value(0);
-			set_type(SgAsmTypeDoubleWord::createType());
-		}
-		void SgAsmDoubleWordValueExpression::ctor(uint32_t n) {
-			set_significant_bits(32);
-			set_value(n);
-			set_type(SgAsmTypeDoubleWord::createType());
-		}
+                void SgAsmDoubleWordValueExpression::ctor() {
+                        set_significant_bits(32);
+                        set_value(0);
+                        set_type(SgAsmTypeDoubleWord::createType());
+                }
+                void SgAsmDoubleWordValueExpression::ctor(uint32_t n) {
+                        set_significant_bits(32);
+                        set_value(n);
+                        set_type(SgAsmTypeDoubleWord::createType());
+                }
 SOURCE_DOUBLE_WORD_VALUE_EXPRESSION_END
 
 
@@ -230,69 +232,69 @@ SOURCE_DOUBLE_WORD_VALUE_EXPRESSION_END
 
 HEADER_QUAD_WORD_VALUE_EXPRESSION_START
         public:
-		SgAsmQuadWordValueExpression() { ctor(); }
+                SgAsmQuadWordValueExpression() { ctor(); }
                 explicit SgAsmQuadWordValueExpression(uint64_t n) { ctor(n); }
                 void set_value(uint64_t);
                 uint64_t get_value() const;
-	protected:
-		void ctor();
-		void ctor(uint64_t);
+        protected:
+                void ctor();
+                void ctor(uint64_t);
 HEADER_QUAD_WORD_VALUE_EXPRESSION_END
 SOURCE_QUAD_WORD_VALUE_EXPRESSION_START
-		void SgAsmQuadWordValueExpression::ctor() {
-			set_significant_bits(64);
-			set_value(0);
-			set_type(SgAsmTypeQuadWord::createType());
-		}
-		void SgAsmQuadWordValueExpression::ctor(uint64_t n) {
-			set_significant_bits(64);
-			set_value(n);
-			set_type(SgAsmTypeQuadWord::createType());
-		}
+                void SgAsmQuadWordValueExpression::ctor() {
+                        set_significant_bits(64);
+                        set_value(0);
+                        set_type(SgAsmTypeQuadWord::createType());
+                }
+                void SgAsmQuadWordValueExpression::ctor(uint64_t n) {
+                        set_significant_bits(64);
+                        set_value(n);
+                        set_type(SgAsmTypeQuadWord::createType());
+                }
 SOURCE_QUAD_WORD_VALUE_EXPRESSION_END
 
 
 
 
 HEADER_SINGLE_FLOAT_VALUE_EXPRESSION_START
-	public:
-		SgAsmSingleFloatValueExpression() { ctor(); }
-		explicit SgAsmSingleFloatValueExpression(double v) { ctor(v); }
-	protected:
-		void ctor();
-		void ctor(double);
+        public:
+                SgAsmSingleFloatValueExpression() { ctor(); }
+                explicit SgAsmSingleFloatValueExpression(double v) { ctor(v); }
+        protected:
+                void ctor();
+                void ctor(double);
 HEADER_SINGLE_FLOAT_VALUE_EXPRESSION_END
 SOURCE_SINGLE_FLOAT_VALUE_EXPRESSION_START
-		void SgAsmSingleFloatValueExpression::ctor() {
-			set_value(0.0);
-			set_type(SgAsmTypeSingleFloat::createType());
-		}
-		void SgAsmSingleFloatValueExpression::ctor(double v) {
-			set_value(v);
-			set_type(SgAsmTypeSingleFloat::createType());
-		}
+                void SgAsmSingleFloatValueExpression::ctor() {
+                        set_value(0.0);
+                        set_type(SgAsmTypeSingleFloat::createType());
+                }
+                void SgAsmSingleFloatValueExpression::ctor(double v) {
+                        set_value(v);
+                        set_type(SgAsmTypeSingleFloat::createType());
+                }
 SOURCE_SINGLE_FLOAT_VALUE_EXPRESSION_END
 
 
 
 
 HEADER_DOUBLE_FLOAT_VALUE_EXPRESSION_START
-	public:
-		SgAsmDoubleFloatValueExpression() { ctor(); }
-		explicit SgAsmDoubleFloatValueExpression(double v) { ctor(v); }
-	protected:
-		void ctor();
-		void ctor(double);
+        public:
+                SgAsmDoubleFloatValueExpression() { ctor(); }
+                explicit SgAsmDoubleFloatValueExpression(double v) { ctor(v); }
+        protected:
+                void ctor();
+                void ctor(double);
 HEADER_DOUBLE_FLOAT_VALUE_EXPRESSION_END
 SOURCE_DOUBLE_FLOAT_VALUE_EXPRESSION_START
-		void SgAsmDoubleFloatValueExpression::ctor() {
-			set_value(0.0);
-			set_type(SgAsmTypeDoubleFloat::createType());
-		}
-		void SgAsmDoubleFloatValueExpression::ctor(double v) {
-			set_value(v);
-			set_type(SgAsmTypeDoubleFloat::createType());
-		}
+                void SgAsmDoubleFloatValueExpression::ctor() {
+                        set_value(0.0);
+                        set_type(SgAsmTypeDoubleFloat::createType());
+                }
+                void SgAsmDoubleFloatValueExpression::ctor(double v) {
+                        set_value(v);
+                        set_type(SgAsmTypeDoubleFloat::createType());
+                }
 SOURCE_DOUBLE_FLOAT_VALUE_EXPRESSION_END
 
 
@@ -710,8 +712,8 @@ HEADER_GENERIC_SECTION_START
                 /* Accessors for private members */
                 SgAsmGenericString *get_name() const;           /* Same as standard ROSETTA accessor */
                 void set_name(SgAsmGenericString *s);           /* Like std accessor but sets parent of 's' */
-		std::string get_short_name() const;		/* Get the abbreviated name, or the real name */
-		void set_short_name(const std::string&);	/* Set the abbreviated name. */
+                std::string get_short_name() const;             /* Get the abbreviated name, or the real name */
+                void set_short_name(const std::string&);        /* Set the abbreviated name. */
 
                 /* Convenience functions */
                 Extent get_file_extent() const;                 /* Returns get_offset() and get_size() */
@@ -3703,9 +3705,10 @@ HEADER_DOS_EXTENDED_HEADER_END
 HEADER_BINARY_X86_INSTRUCTION_START
         public:
                 virtual bool terminates_basic_block() /*override*/;
-                virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target) /*override*/;
+                virtual bool is_function_call(const std::vector<SgAsmInstruction*>&,
+                                              rose_addr_t *target, rose_addr_t *ret) /*override*/;
                 virtual bool is_function_return(const std::vector<SgAsmInstruction*>&) /*override*/;
-		virtual bool get_branch_target(rose_addr_t *target/*out*/) /*override*/;
+                virtual bool get_branch_target(rose_addr_t *target/*out*/) /*override*/;
                 virtual bool has_effect() /*override*/;
                 virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
                                         bool relax_stack_semantics=false) /*override*/;
@@ -3740,14 +3743,14 @@ HEADER_BINARY_ARM_INSTRUCTION_END
 
 
 HEADER_BINARY_MIPS_INSTRUCTION_START
-	public:
+        public:
                 virtual bool terminates_basic_block() /*override*/;
-		virtual bool is_function_call(const std::vector<SgAsmInstruction*> &insns,
-			     		      rose_addr_t *target/*out*/) /*override*/;
-		virtual bool is_function_return(const std::vector<SgAsmInstruction*> &insns) /*override*/;
+                virtual bool is_function_call(const std::vector<SgAsmInstruction*> &insns,
+                                              rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) /*override*/;
+                virtual bool is_function_return(const std::vector<SgAsmInstruction*> &insns) /*override*/;
                 virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
                 virtual bool is_unknown() const /*override*/;
-		virtual bool get_branch_target(rose_addr_t *target) /*override*/;
+                virtual bool get_branch_target(rose_addr_t *target) /*override*/;
 HEADER_BINARY_MIPS_INSTRUCTION_END
 
 
@@ -3794,7 +3797,9 @@ HEADER_BINARY_BLOCK_START
         void remove_children (  );
         rose_addr_t get_fallthrough_va(); /*implemented in Disassembler.C*/
         SgAsmFunction *get_enclosing_function() const;
-	bool has_instructions() const;
+        bool has_instructions() const;
+	bool is_basic_block() const { return has_instructions(); }
+	bool is_function_call(rose_addr_t &target_va/*out*/, rose_addr_t &return_va/*out*/);
 
         /** Returns a very short string describing the reason mask. */
         static std::string reason_key(const std::string &prefix="");
@@ -3819,13 +3824,13 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
         void remove_children();
         SgAsmBlock *get_entry_block() const;
 
-	/** Whether a function returns. */
-	enum MayReturn {
-		RET_UNKNOWN,			/**< It is unknown whether this function ever returns or not. */
-		RET_NEVER,			/**< This function is known to never return. */
-		RET_SOMETIMES,			/**< This function may return or not, depending on how it is called. */
-		RET_ALWAYS,			/**< This function returns each time it is called. */
-	};
+        /** Whether a function returns. */
+        enum MayReturn {
+                RET_UNKNOWN,                    /**< It is unknown whether this function ever returns or not. */
+                RET_NEVER,                      /**< This function is known to never return. */
+                RET_SOMETIMES,                  /**< This function may return or not, depending on how it is called. */
+                RET_ALWAYS,                     /**< This function returns each time it is called. */
+        };
 
         /** Reasons why an instruction might be considered the beginning of a function. These bit flags are also used by
          *  the instruction partitioner (Partitioner class) to determine what heuristics are used when partitioning

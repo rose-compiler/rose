@@ -305,7 +305,7 @@ Partitioner::update_analyses(BasicBlock *bb)
      * to the fall-through address is not a function call. */
     rose_addr_t fallthrough_va = bb->last_insn()->get_address() + bb->last_insn()->get_size();
     rose_addr_t target_va = NO_TARGET;
-    bool looks_like_call = bb->insns.front()->node->is_function_call(inodes, &target_va);
+    bool looks_like_call = bb->insns.front()->node->is_function_call(inodes, &target_va, NULL);
     if (looks_like_call && target_va!=fallthrough_va) {
         bb->cache.is_function_call = true;
         bb->cache.call_target = target_va;
@@ -1530,7 +1530,7 @@ Partitioner::mark_call_insns()
         std::vector<SgAsmInstruction*> iv;
         iv.push_back(ii->second->node);
         rose_addr_t target_va=NO_TARGET;
-        if (ii->second->node->is_function_call(iv, &target_va) && target_va!=NO_TARGET &&
+        if (ii->second->node->is_function_call(iv, &target_va, NULL) && target_va!=NO_TARGET &&
             target_va!=ii->first + ii->second->get_size()) {
             add_function(target_va, SgAsmFunction::FUNC_CALL_TARGET, "");
         }

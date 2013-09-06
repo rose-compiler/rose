@@ -48,7 +48,7 @@ bool SgAsmInstruction::terminates_basic_block() { return false; }
 bool SgAsmInstruction::is_unknown() const { return false; }
 bool SgAsmInstruction::has_effect() { return false; }
 bool SgAsmInstruction::has_effect(const std::vector<SgAsmInstruction*>&, bool, bool) { return false; }
-bool SgAsmInstruction::is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t*) { return false; }
+bool SgAsmInstruction::is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
 bool SgAsmInstruction::is_function_return(const std::vector<SgAsmInstruction*>&) { return false; }
 bool SgAsmInstruction::get_branch_target(rose_addr_t*) { return false; }
 std::set<rose_addr_t> SgAsmInstruction::get_successors(bool* complete) { return std::set<rose_addr_t>();}
@@ -75,7 +75,7 @@ std::set<rose_addr_t> SgAsmArmInstruction::get_successors(bool* complete) { retu
 
 bool SgAsmMipsInstruction::terminates_basic_block() { return false; }
 bool SgAsmMipsInstruction::is_unknown() const { return false; }
-bool SgAsmMipsInstruction::is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t*) { return false; }
+bool SgAsmMipsInstruction::is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
 bool SgAsmMipsInstruction::is_function_return(const std::vector<SgAsmInstruction*>&) { return false; }
 bool SgAsmMipsInstruction::get_branch_target(rose_addr_t*) { return false; }
 std::set<rose_addr_t> SgAsmMipsInstruction::get_successors(bool*) { return std::set<rose_addr_t>();}
@@ -94,7 +94,7 @@ bool SgAsmx86Instruction::terminates_basic_block() { return false; }
 bool SgAsmx86Instruction::is_unknown() const { return false; }
 bool SgAsmx86Instruction::has_effect() { return false; }
 bool SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>&, bool, bool) { return false; }
-bool SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t*) { return false; }
+bool SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
 bool SgAsmx86Instruction::is_function_return(const std::vector<SgAsmInstruction*>&) { return false; }
 bool SgAsmx86Instruction::get_branch_target(rose_addr_t*) { return false; }
 std::set<rose_addr_t> SgAsmx86Instruction::get_successors(bool*) { return std::set<rose_addr_t>();}

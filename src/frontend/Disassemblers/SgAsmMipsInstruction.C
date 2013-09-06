@@ -52,7 +52,7 @@ SgAsmMipsInstruction::terminates_basic_block()
 
 // see base class
 bool
-SgAsmMipsInstruction::is_function_call(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target)
+SgAsmMipsInstruction::is_function_call(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va)
 {
     if (insns.size()==0)
         return false;
@@ -69,6 +69,8 @@ SgAsmMipsInstruction::is_function_call(const std::vector<SgAsmInstruction*> &ins
         case mips_jalr_hb:
         case mips_jalx: {
             (void) last->get_branch_target(target); // target will not be changed if unknown
+            if (return_va)
+                *return_va = last->get_address() + last->get_size();
             return true;
         }
         default:
