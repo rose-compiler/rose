@@ -219,8 +219,8 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
 
 
 
-void 
-load_api_calls(int func1_id, int func2_id, int igroup_id, CallVec& call_vec, double similarity, bool ignore_no_compares, int call_depth, bool expand_ncalls )
+size_t
+similarity(int func1_id, int func2_id, int igroup_id, CallVec& call_vec, double similarity, bool ignore_no_compares, int call_depth, bool expand_ncalls )
 {
  call_vec.clear();
 
@@ -230,7 +230,12 @@ load_api_calls(int func1_id, int func2_id, int igroup_id, CallVec& call_vec, dou
  //Detect and normalize similar function calls
  normalize_call_trace(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec);
 
+ size_t dl = Combinatorics::damerau_levenshtein_distance(*func1_vec, *func2_vec);
+ 
+ delete func1_vec;
+ delete func2_vec;
 
+ return dl;
 };
 
   
