@@ -56,8 +56,10 @@ testBinCFG.passed: testBinCFG.conf testBinCFG
 noinst_PROGRAMS += testControlFlow
 testControlFlow_SOURCES = testControlFlow.C
 testControlFlow_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += testControlFlow-A.passed testControlFlow-B.passed testControlFlow-C.passed testControlFlow-D.passed
-EXTRA_DIST += testControlFlow.conf testControlFlow-A.dot testControlFlow-B.dot testControlFlow-C.dot testControlFlow-D.dot
+TEST_TARGETS += testControlFlow-A.passed testControlFlow-B.passed testControlFlow-C.passed testControlFlow-D.passed \
+	testControlFlow-E.passed
+EXTRA_DIST += testControlFlow.conf testControlFlow-A.dot testControlFlow-B.dot testControlFlow-C.dot testControlFlow-D.dot \
+	testControlFlow-E.dot
 testControlFlow-A.passed: testControlFlow.conf testControlFlow
 	@$(RTH_RUN) CMD=testControlFlow ALGORITHM=A INPUT=buffer2.bin $< $@
 testControlFlow-B.passed: testControlFlow.conf testControlFlow
@@ -66,6 +68,15 @@ testControlFlow-C.passed: testControlFlow.conf testControlFlow
 	@$(RTH_RUN) CMD=testControlFlow ALGORITHM=C INPUT=buffer2.bin $< $@
 testControlFlow-D.passed: testControlFlow.conf testControlFlow
 	@$(RTH_RUN) CMD=testControlFlow ALGORITHM=D INPUT=buffer2.bin $< $@
+testControlFlow-E.passed: testControlFlow.conf testControlFlow
+	@$(RTH_RUN) CMD=testControlFlow ALGORITHM=E INPUT=buffer2.bin $< $@
+
+# Test the new binary CFG that points to instructions rather than basic blocks. No test is necessary since this
+# is tested by testControlFlow already.  The cfg2.C file serves mostly as a clear example of how to generate an
+# instruction-based CFG and write it to a GraphViz file along with some extra info on each vertex.
+noinst_PROGRAMS += cfg2
+cfg2_SOURCES = cfg2.C
+cfg2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 #Test the binary call graph that uses the semantic representation to perform an accurate analysis
 noinst_PROGRAMS += testBinCG
@@ -377,6 +388,7 @@ $(PointerDetectionTestTargets): tpd_%.passed: testPointerDetection.conf testPoin
 	@$(RTH_RUN) FUNC="$$(echo "$@" |sed 's/^tpd_//;s/\.passed$$//')" INPUT=$(BINARY_SAMPLES)/i386-pointers $< $@
 .PHONY: testPointerDetection.passed
 testPointerDetection.passed: $(PointerDetectionTestTargets)
+
 
 ###############################################################################################################################
 # Instruction semantics tests.

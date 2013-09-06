@@ -11,8 +11,11 @@ struct GraphvizVertexWriter {
     GraphvizVertexWriter(ControlFlowGraph &cfg): cfg(cfg) {}
     void operator()(std::ostream &output,
                     const typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor &v) {
-        SgAsmBlock *block = get(boost::vertex_name, cfg, v);
-        output <<"[ label=\"" <<StringUtility::addrToString(block->get_address()) <<"\" ]";
+        if (SgAsmBlock *block = isSgAsmBlock(get_ast_node(cfg, v))) {
+            output <<"[ label=\"" <<StringUtility::addrToString(block->get_address()) <<"\" ]";
+        } else if (SgAsmInstruction *insn = isSgAsmInstruction(get_ast_node(cfg, v))) {
+            output <<"[ label=\"" <<unparseInstructionWithAddress(insn) <<"\" ]";
+        }
     }
 };
 
@@ -98,6 +101,15 @@ main(int argc, char *argv[])
         boost::write_graphviz(std::cout, cfg, GraphvizVertexWriter<CFG>(cfg));
     }
 
+    /* Build an instruction-based control flow graph. */
+    if (algorithm=="E") {
+        typedef BinaryAnalysis::ControlFlow::InsnGraph CFG;
+        BinaryAnalysis::ControlFlow cfg_analyzer;
+        cfg_analyzer.set_vertex_filter(&exclude_leftovers);
+        CFG cfg = cfg_analyzer.build_insn_cfg_from_ast<CFG>(interps.back());
+        boost::write_graphviz(std::cout, cfg, GraphvizVertexWriter<CFG>(cfg));
+    }
+    
     return 0;
 };
 
