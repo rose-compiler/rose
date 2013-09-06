@@ -11,9 +11,12 @@ int main(int argc, char** argv)
 
 
   // Copy a defining function declaration
-  SgFunctionDeclaration* func= findDeclarationStatement<SgFunctionDeclaration> (project, "bar", NULL, true);
+  SgFunctionDeclaration* func = findDeclarationStatement<SgFunctionDeclaration> (project, "bar", NULL, true);
   ROSE_ASSERT (func != NULL);
 
+#if 1
+  printf ("func->get_type() = %p = %s \n",func->get_type(),func->get_type()->class_name().c_str());
+#endif
 
   SgFunctionDeclaration* func_copy = isSgFunctionDeclaration(copyStatement (func));
   func_copy->set_name("bar_copy");

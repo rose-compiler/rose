@@ -7,7 +7,10 @@ class foo
           void bar_function();
    };
 
+// This is the template function for member functions.
 template <void (foo::*M)()> void test() {}
+
+// This is the template function for member data.
 template <int foo::*M> void test() {}
 
 int main()

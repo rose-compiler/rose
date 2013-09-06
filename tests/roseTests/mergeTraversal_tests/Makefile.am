@@ -30,7 +30,6 @@ testRoseTraversalArray: traversalArray
 	./traversalArray -rose:verbose 0 -I$(top_builddir) $(INCLUDES) -c $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
 
 check-local:
-	@echo "Dan Quinlan's development tests."
 	@echo "*******************************************************************************************************"
 	@echo "****** ROSE/tests/roseTests/mergeTraversal_tests: make check rule complete (terminated normally) ******"
 	@echo "*******************************************************************************************************"

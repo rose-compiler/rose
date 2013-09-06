@@ -2960,6 +2960,11 @@ TestAstSymbolTables::visit ( SgNode* node )
             // if (declarationStatement != NULL)
                if (declarationStatement != NULL && isSgLabelSymbol(symbol) == NULL)
                   {
+                 // DQ (8/21/2013): Test added by Tristan are a problem for Fortran code...
+#if 0
+                    assert(declarationStatement->get_firstNondefiningDeclaration() != NULL);
+                    assert(declarationStatement->get_firstNondefiningDeclaration() == declarationStatement);
+#endif
                  // DQ (7/25/2013): Tristan reports that this assertion is false for test2001_06.C.
                  // ROSE_ASSERT(declarationStatement->get_firstNondefiningDeclaration() == declarationStatement);
 

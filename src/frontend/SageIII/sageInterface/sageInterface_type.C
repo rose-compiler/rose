@@ -107,6 +107,20 @@ namespace SageInterface
     }
     return result;
   }
+    
+  bool isUnionType(SgType* t)
+  {
+      bool result = false;
+      ROSE_ASSERT(t!=NULL);
+      SgClassType * class_type = isSgClassType(t);
+      if (class_type)
+      {
+          SgDeclarationStatement* decl = class_type->get_declaration();
+          result = isUnionDeclaration(decl);
+      }
+      return result;
+  }
+    
 
   SgType* getBaseFromType(SgType* t) {
 
@@ -364,7 +378,7 @@ bool isPointerToNonConstType(SgType* type)
   // Requires the exact argument list given -- conversions not handled
   // Good enough for default and copy constructors, but not other functions
   static bool acceptsArguments(SgFunctionDeclaration* decl, 
-      std::list<SgType*> args) {
+      std::list<SgType*> args, bool allowDefaultArgs=true) {
     SgInitializedNamePtrList& params = decl->get_args();
     SgInitializedNamePtrList::iterator p = params.begin();
     std::list<SgType*>::iterator a = args.begin();
@@ -373,9 +387,15 @@ bool isPointerToNonConstType(SgType* type)
         return false; // Type mismatch
       // Good enough for copy constructors, though
     }
-    if (p == params.end() && a != args.end())
-      return false; // Too many arguments
-    for (; p != params.end(); ++p) {
+     if (p == params.end() && a != args.end())
+        return false; // Too many arguments
+      
+     if(allowDefaultArgs == false) {
+          if (p != params.end())
+              return false;
+      }
+
+      for (; p != params.end(); ++p) {
       if ((*p)->get_initializer() == 0)
         return false; // Non-defaulted parameter after end of arg list
     }
@@ -394,7 +414,7 @@ bool isPointerToNonConstType(SgType* type)
         break;
 
       case V_SgClassType: {
-        SgClassDeclaration* decl = 
+        SgClassDeclaration* decl =
           isSgClassDeclaration(isSgClassType(type)->get_declaration());
         assert (decl);
         SgClassDefinition* defn = decl->get_definition();
@@ -1247,5 +1267,840 @@ bool isPureVirtualClass(SgType* type, const ClassHierarchyWrapper& classHierarch
 }
 #endif
 
-} //end of namespace 
+    
+#define CPP_TYPE_TRAITS
+#ifdef CPP_TYPE_TRAITS
+    /*    http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html
+     
+     7.10 Type Traits
+     
+     The C++ front end implements syntactic extensions that allow compile-time determination of various characteristics of a type (or of a pair of types).
+     */
+    
+    
+    
+#define ENSURE_CLASS_TYPE(__type, ret) do { \
+if(isSgPartialFunctionType(__type) || isSgTemplateType(__type) || isSgTypeUnknown(__type)){\
+std::cout<<"\n Type = "<<__type->class_name();\
+    ROSE_ASSERT(0 && "expected a complete type"); \
+    return ret; \
+}\
+SgClassType * sgClassType = isSgClassType(__type);\
+if (!sgClassType) { \
+    return ret;\
+}} while(0)
+
+
+
+    // Walks over the call hierarchy and collects all member function in a vector.
+    vector<SgMemberFunctionDeclaration*> GetAllMemberFunctionsInClassHierarchy(SgType *type){
+        vector<SgMemberFunctionDeclaration*> allMemberFunctions;
+        
+        SgClassType * sgClassType = isSgClassType(type);
+        if (!sgClassType) {
+            ROSE_ASSERT(0 && "Requires a complete class type");
+        }
+        
+        SgClassDeclaration* decl = isSgClassDeclaration(sgClassType->get_declaration());
+        ROSE_ASSERT(decl && "Requires a complete class type");
+        SgClassDeclaration * definingDeclaration = isSgClassDeclaration(decl->get_definingDeclaration ());
+        ROSE_ASSERT(definingDeclaration && "Requires a complete class type");
+        SgClassDefinition* classDef = definingDeclaration->get_definition();
+        ROSE_ASSERT(classDef && "Requires a complete class type");
+        
+        //Find all superclasses
+        ClassHierarchyWrapper classHierarchy(getProject());
+        const ClassHierarchyWrapper::ClassDefSet& ancestors =  classHierarchy.getAncestorClasses(classDef);
+        set<SgClassDefinition*> inclusiveAncestors(ancestors.begin(), ancestors.end());
+        inclusiveAncestors.insert(classDef);
+        
+        //Find all member functions
+        foreach(SgClassDefinition* c, inclusiveAncestors) {
+            foreach(SgDeclarationStatement* memberDeclaration, c->get_members()) {
+                if (SgMemberFunctionDeclaration* memberFunction = isSgMemberFunctionDeclaration(memberDeclaration)) {
+                    allMemberFunctions.push_back(memberFunction);
+                }
+            }
+        }
+        
+        return allMemberFunctions;
+    }
+
+    // Walks over the call hierarchy and collects all data members in a vector.
+    vector<SgVariableDeclaration*> GetAllVariableDeclarationsInAncestors(SgType *type){
+        vector<SgVariableDeclaration*> allVariableDeclarations;
+        
+        SgClassType * sgClassType = isSgClassType(type);
+        if (!sgClassType) {
+            ROSE_ASSERT(0 && "Requires a complete class type");
+        }
+        
+        SgClassDeclaration* decl = isSgClassDeclaration(sgClassType->get_declaration());
+        ROSE_ASSERT(decl && "Requires a complete class type");
+        SgClassDeclaration * definingDeclaration = isSgClassDeclaration(decl->get_definingDeclaration ());
+        ROSE_ASSERT(definingDeclaration && "Requires a complete class type");
+        SgClassDefinition* classDef = definingDeclaration->get_definition();
+        ROSE_ASSERT(classDef && "Requires a complete class type");
+        
+        //Find all superclasses
+        ClassHierarchyWrapper classHierarchy(getProject());
+        const ClassHierarchyWrapper::ClassDefSet& ancestors =  classHierarchy.getAncestorClasses(classDef);
+        set<SgClassDefinition*> exclusiveAncestors(ancestors.begin(), ancestors.end());
+        
+        //Find all data members
+        foreach(SgClassDefinition* c, exclusiveAncestors) {
+            foreach(SgDeclarationStatement* memberDeclaration, c->get_members()) {
+                if (SgVariableDeclaration * sgVariableDeclaration = isSgVariableDeclaration(memberDeclaration)) {
+                    allVariableDeclarations.push_back(sgVariableDeclaration);
+                }
+            }
+        }
+        
+        return allVariableDeclarations;
+    }
+
+
+    // Checks if the given member function accepts the given argument.
+    // If the argument passed is null, then the argument is assumed to be of the same type as the class that the memberfunction belongs to.
+    // The check ignores const and reference modifiers.
+    static bool CheckIfFunctionAcceptsArgumentIgnoreConstRefAndTypedef(SgMemberFunctionDeclaration* decl, SgType * args = NULL){
+        // if no args was passed, we will take the class type as the arg
+        args = decl->get_class_scope()->get_declaration()->get_type()->stripType(SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+        
+        // Must not be const or typedef or ref type
+        ROSE_ASSERT( isConstType(args) == 0 );
+        ROSE_ASSERT( isReferenceType(args) == 0 );
+        ROSE_ASSERT( isSgTypedefType(args) == 0 );
+        
+        SgInitializedNamePtrList& params = decl->get_args();
+        SgInitializedNamePtrList::iterator p = params.begin();
+        
+        // can't be zero arguments
+        if(p == params.end())
+            return false;
+        
+        if ((*p)->get_type()->stripType(SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE) != args)
+            return false; // Type mismatch
+        
+        // Must be single argument
+        p++;
+        if(p != params.end())
+            return false;
+        return true;
+    }
+
+    /*
+     __has_nothrow_assign (type)
+     If type is const qualified or is a reference type then the trait is false.
+     Otherwise if __has_trivial_assign (type) is true then the trait is true, else if type is a cv class or union type with copy assignment operators that are known not to throw an exception then the trait is true, else it is false.
+     Requires: type shall be a complete type, (possibly cv-qualified) void, or an array of unknown bound.
+     */
+
+    bool HasNoThrowAssign(const SgType * const inputType){
+        //Strip typedef and array
+        SgType * type = inputType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_ARRAY_TYPE );
+        
+        if (isConstType(type))
+            return false;
+        
+        if (isReferenceType(type))
+            return false;
+        
+        if(HasTrivialAssign(type))
+            return true;
+        
+        ENSURE_CLASS_TYPE(type, false);
+        vector<SgMemberFunctionDeclaration*> allMemberFunctions =  GetAllMemberFunctionsInClassHierarchy(type);
+        foreach(SgMemberFunctionDeclaration* memberFunction,allMemberFunctions) {
+            if (memberFunction->get_specialFunctionModifier().isOperator() && memberFunction->get_name().getString()=="operator="){
+                // check if the function has nothrow attribute
+                //TODO: C++11 accepts noexcept expression which we need to check when we support it.
+                if(memberFunction->get_functionModifier ().isGnuAttributeNoThrow () == false)
+                    return false;
+            }
+        }
+        return true;
+    }
+
+
+    /*
+     __has_nothrow_copy (type)
+     If __has_trivial_copy (type) is true then the trait is true, else if type is a cv class or union type with copy constructors that are known not to throw an exception then the trait is true, else it is false.
+     Requires: type shall be a complete type, (possibly cv-qualified) void, or an array of unknown bound.
+     */
+    bool HasNoThrowCopy(const SgType * const inputType){
+        //Strip typedef and array
+        SgType * type = inputType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_ARRAY_TYPE );
+        
+        if(HasTrivialCopy(type))
+            return true;
+        
+        ENSURE_CLASS_TYPE(type, false);
+        vector<SgMemberFunctionDeclaration*> allMemberFunctions =  GetAllMemberFunctionsInClassHierarchy(type);
+        foreach(SgMemberFunctionDeclaration* memberFunction,allMemberFunctions) {
+            if (memberFunction->get_specialFunctionModifier().isConstructor()){
+                // function must have exactly one argument and the argument type must match class type after stripping typedef, const, and ref
+                if(CheckIfFunctionAcceptsArgumentIgnoreConstRefAndTypedef(memberFunction)) {
+                    //TODO: C++11 accepts noexcept expression which we need to check when we support it.
+                    if(memberFunction->get_functionModifier().isGnuAttributeNoThrow () == false)
+                        return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /*
+     __has_nothrow_constructor (type)
+     If __has_trivial_constructor (type) is true then the trait is true, else if type is a cv class or union type (or array thereof) with a default constructor that is known not to throw an exception then the trait is true, else it is false. 
+     Requires: type shall be a complete type, (possibly cv-qualified) void, or an array of unknown bound.
+     */
+    bool HasNoThrowConstructor(const SgType * const inputType){
+        //Strip typedef and array
+        SgType * type = inputType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_ARRAY_TYPE );
+        
+        if(HasTrivialConstructor(type))
+            return true;
+        
+        ENSURE_CLASS_TYPE(type, false);
+        vector<SgMemberFunctionDeclaration*> allMemberFunctions =  GetAllMemberFunctionsInClassHierarchy(type);
+        foreach(SgMemberFunctionDeclaration* memberFunction,allMemberFunctions) {
+            if (memberFunction->get_specialFunctionModifier().isConstructor()){
+                // function must have no args
+                if(memberFunction->get_args().size() == 0) {
+                    //TODO: C++11 accepts noexcept expression which we need to check when we support it.
+                    if(memberFunction->get_functionModifier().isGnuAttributeNoThrow () == false)
+                        return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /*
+     __has_trivial_assign (type)
+     If type is const qualified or is a reference type then the trait is false. 
+     Otherwise if __is_pod (type) is true then the trait is true, else if type is a cv class or union type with a trivial copy assignment ([class.copy]) then the trait is true, else it is false. 
+     Requires: type shall be a complete type, (possibly cv-qualified) void, or an array of unknown bound.
+     */
+    static bool HasTrivialAssign(const SgType * const inputType, bool checkPod){
+        //Strip typedef and array
+        SgType *type = inputType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_ARRAY_TYPE );
+        
+        if (isConstType(type))
+            return false;
+        
+        if (isReferenceType(type))
+            return false;
+        
+        if (checkPod && IsPod(type))
+            return true;
+        
+        ENSURE_CLASS_TYPE(type, false);
+        vector<SgMemberFunctionDeclaration*> allMemberFunctions =  GetAllMemberFunctionsInClassHierarchy(type);
+        foreach(SgMemberFunctionDeclaration* memberFunction,allMemberFunctions) {
+            if (memberFunction->get_specialFunctionModifier().isOperator() && memberFunction->get_name().getString()=="operator="){
+                // function must have exactly one argument and the argument type after stripping typedef, const, and ref must match class type
+                if(CheckIfFunctionAcceptsArgumentIgnoreConstRefAndTypedef(memberFunction))
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    bool HasTrivialAssign(const SgType * const inputType){
+        return HasTrivialAssign(inputType, true);
+    }
+
+
+    /*
+     __has_trivial_copy (type)
+     If __is_pod (type) is true or type is a reference type then the trait is true, else if type is a cv class or union type with a trivial copy constructor ([class.copy]) then the trait is true, else it is false. 
+     Requires: type shall be a complete type, (possibly cv-qualified) void, or an array of unknown bound.
+     */
+    static bool HasTrivialCopy(const SgType * const inputType, bool checkPod){
+        //Strip typedef and array
+        SgType *type = inputType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_ARRAY_TYPE );
+        
+        
+        if (checkPod && IsPod(type))
+            return true;
+        
+        if (isReferenceType(type))
+            return true;
+        
+        ENSURE_CLASS_TYPE(type, false);
+        vector<SgMemberFunctionDeclaration*> allMemberFunctions =  GetAllMemberFunctionsInClassHierarchy(type);
+        foreach(SgMemberFunctionDeclaration* memberFunction,allMemberFunctions) {
+            if (memberFunction->get_specialFunctionModifier().isConstructor()){
+                // function must have exactly one argument and the argument type after stripping typedef, const, and ref must match passed-in type
+                if(CheckIfFunctionAcceptsArgumentIgnoreConstRefAndTypedef(memberFunction))
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    bool HasTrivialCopy(const SgType * const inputType){
+        return HasTrivialCopy(inputType, true);
+    }
+
+
+    /*
+     __has_trivial_constructor (type)
+     If __is_pod (type) is true then the trait is true, else if type is a cv class or union type (or array thereof) with a trivial default constructor ([class.ctor]) then the trait is true, else it is false. 
+     Requires: type shall be a complete type, (possibly cv-qualified) void, or an array of unknown bound.
+     */
+    static bool HasTrivialConstructor(const SgType * const inputType, bool checkPod){
+        //Strip typedef and array
+        SgType *type = inputType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_ARRAY_TYPE );
+        
+        if (checkPod && IsPod(type))
+            return true;
+        
+        ENSURE_CLASS_TYPE(type, false);
+        vector<SgMemberFunctionDeclaration*> allMemberFunctions =  GetAllMemberFunctionsInClassHierarchy(type);
+        foreach(SgMemberFunctionDeclaration* memberFunction,allMemberFunctions) {
+            if (memberFunction->get_specialFunctionModifier().isConstructor()){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool HasTrivialConstructor(const SgType * const inputType){
+        return HasTrivialConstructor(inputType, true);
+    }
+
+    /*
+     __has_trivial_destructor (type)
+     If __is_pod (type) is true or type is a reference type then the trait is true, else if type is a cv class or union type (or array thereof) with a trivial destructor ([class.dtor]) then the trait is true, else it is false.
+     Requires: type shall be a complete type, (possibly cv-qualified) void, or an array of unknown bound.
+     */
+    static bool HasTrivialDestructor(const SgType * const inputType, bool checkPod){
+        //Strip typedef and array
+        SgType *type = inputType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_ARRAY_TYPE );
+        
+        if (checkPod && IsPod(type))
+            return true;
+        
+        if (isReferenceType(type))
+            return true;
+        
+        ENSURE_CLASS_TYPE(type, false);
+        vector<SgMemberFunctionDeclaration*> allMemberFunctions =  GetAllMemberFunctionsInClassHierarchy(type);
+        foreach(SgMemberFunctionDeclaration* memberFunction,allMemberFunctions) {
+            if (memberFunction->get_specialFunctionModifier().isDestructor()){
+                return false;
+            }
+        }
+        return true;
+        
+    }
+    
+    bool HasTrivialDestructor(const SgType * const inputType){
+        return HasTrivialDestructor(inputType, true);
+    }
+
+    /*
+     __has_virtual_destructor (type)
+     If type is a class type with a virtual destructor ([class.dtor]) then the trait is true, else it is false. 
+     Requires: type shall be a complete type, (possibly cv-qualified) void, or an array of unknown bound.
+     */
+    bool HasVirtualDestructor(const SgType * const inputType){
+        //Strip typedef and array
+        SgType *type = inputType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_ARRAY_TYPE );
+        
+        ENSURE_CLASS_TYPE(type, false);
+        
+        if(!IsClass(type)){
+            return false;
+        }
+        
+        vector<SgMemberFunctionDeclaration*> allMemberFunctions =  GetAllMemberFunctionsInClassHierarchy(type);
+        foreach(SgMemberFunctionDeclaration* memberFunction,allMemberFunctions) {
+            if (memberFunction->get_functionModifier().isVirtual() && memberFunction->get_specialFunctionModifier().isDestructor())
+                return true;
+        }
+        
+        // No virtual destructor(s) found
+        return false;
+    }
+
+    /*
+     __is_abstract (type)
+     If type is an abstract class ([class.abstract]) then the trait is true, else it is false. 
+     Requires: type shall be a complete type, (possibly cv-qualified) void, or an array of unknown bound.
+     */
+    bool IsAbstract(const SgType * const inputType) {
+        SgType *type = inputType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_ARRAY_TYPE );
+        ENSURE_CLASS_TYPE(type, false);
+        // false if it is not a class
+        if(!IsClass(type)){
+            return false;
+        }
+        return SageInterface::isPureVirtualClass(type, ClassHierarchyWrapper(getProject()));
+    }
+
+    /*
+     __is_base_of (base_type, derived_type)
+     If base_type is a base class of derived_type ([class.derived]) then the trait is true, otherwise it is false. 
+     Top-level cv qualifications of base_type and derived_type are ignored. For the purposes of this trait, a class type is considered is own base. 
+     Requires: if __is_class (base_type) and __is_class (derived_type) are true and base_type and derived_type are not the same type (disregarding cv-qualifiers), derived_type shall be a complete type.
+     Diagnostic is produced if this requirement is not met.
+     
+     http://www.cplusplus.com/reference/type_traits/is_base_of/
+     
+     Trait class that identifies whether Base is a base class of (or the same class as) Derived, without regard to their const and/or volatile qualification. 
+     Only classes that are not unions are considered.
+     */
+    bool IsBaseOf(const SgType * const inputBaseType, const SgType * const inputDerivedType) {
+        //Strip typedef and array
+        SgType *baseType = inputBaseType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_MODIFIER_TYPE );
+        SgType *derivedType = inputDerivedType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_MODIFIER_TYPE );
+        
+        if (!IsClass(baseType) || !IsClass(derivedType)) {
+            return false;
+        }
+        
+        // derivedType must be complete type
+        ENSURE_CLASS_TYPE(derivedType, false);
+        SgClassType * baseClassType = isSgClassType(baseType);
+        SgClassType * derivedClassType = isSgClassType(derivedType);
+        SgClassType * sgClassType = isSgClassType(derivedClassType);
+        SgClassDeclaration* decl = isSgClassDeclaration(sgClassType->get_declaration());
+        ROSE_ASSERT(decl);
+        SgClassDeclaration * definingDeclaration = isSgClassDeclaration(decl->get_definingDeclaration ());
+        ROSE_ASSERT(definingDeclaration && "Requires a complete class type");
+        SgClassDefinition* classDef = definingDeclaration->get_definition();
+        ROSE_ASSERT(classDef);
+        
+        
+        //Find all superclasses
+        ClassHierarchyWrapper classHierarchy(getProject());
+        const ClassHierarchyWrapper::ClassDefSet& ancestors =  classHierarchy.getAncestorClasses(classDef);
+        set<SgClassDefinition*> inclusiveAncestors(ancestors.begin(), ancestors.end());
+        inclusiveAncestors.insert(classDef);
+        
+        // Match types
+        foreach(SgClassDefinition* c, inclusiveAncestors) {
+            if(c->get_declaration()->get_type()->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_ARRAY_TYPE  | SgType::STRIP_MODIFIER_TYPE ) == baseClassType)
+                return true;
+        }
+        return false;
+        
+        
+    }
+
+    /*
+     __is_class (type)
+     If type is a cv class type, and not a union type ([basic.compound]) the trait is true, else it is false.
+     */
+
+    bool IsClass(const SgType * const inputType) {
+        SgType *type = inputType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_MODIFIER_TYPE );
+        return isSgClassType(type) && (!IsUnion(type));
+    }
+
+    /*
+     __is_empty (type)
+     If __is_class (type) is false then the trait is false.
+     Otherwise type is considered empty if and only if: type has no non-static data members, or all non-static data members,
+     if any, are bit-fields of length 0, and type has no virtual members, and type has no virtual base classes,
+     and type has no base classes base_type for which __is_empty (base_type) is false.
+     Requires: type shall be a complete type, (possibly cv-qualified) void, or an array of unknown bound.
+     */
+
+    bool IsEmpty(const SgType * const inputType, bool checkIsClass){
+        SgType *type = inputType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_MODIFIER_TYPE);
+        
+        if(checkIsClass && !IsClass(type))
+            return false;
+        
+        
+        // Make sure the class is complete
+        ENSURE_CLASS_TYPE(type, false);
+        SgClassType * classType = isSgClassType(type);
+        SgClassDefinition * classDefinition = isSgClassDeclaration(isSgClassDeclaration(classType->get_declaration()->get_definingDeclaration()))->get_definition();
+        // All non static members must be bit fields of length 0.
+        SgDeclarationStatementPtrList &members = classDefinition->get_members();
+        for (SgDeclarationStatementPtrList::iterator it = members.begin(); it != members.end(); ++it) {
+            SgDeclarationStatement *declarationStatement = *it;
+            ROSE_ASSERT(declarationStatement != NULL);
+            
+            if (SgMemberFunctionDeclaration * memberFunctionDeclaration = isSgMemberFunctionDeclaration(declarationStatement)) {
+                // Member function can't be virtual
+                if (memberFunctionDeclaration->get_functionModifier().isVirtual())
+                    return false;
+            } else if(SgVariableDeclaration * sgVariableDeclaration = isSgVariableDeclaration(declarationStatement)) {
+                // Non-static data memebers must be bit fields of length 0
+                if (SageInterface::isStatic(sgVariableDeclaration))
+                    continue;
+                
+                if (isScalarType(sgVariableDeclaration->get_definition()->get_type())){
+                    if (sgVariableDeclaration->get_definition()->get_bitfield() == NULL || sgVariableDeclaration->get_definition()->get_bitfield()->get_value() != 0) {
+                        return false;
+                    }
+                } else {
+                    // if it is not a class type, we will return false
+                    if(!isSgClassType(sgVariableDeclaration->get_definition()->get_type()))
+                        return false;
+                    
+                    // if it is a class or a union it should be empty:
+                    if(!IsEmpty(sgVariableDeclaration->get_definition()->get_type(), false /* checkIsClass = false so that we can check unions too*/))
+                        return false;
+                }
+            }
+        }
+        
+        // No virtual base classes
+        SgBaseClassPtrList  & baseClasses = classDefinition->get_inheritances();
+        for(SgBaseClassPtrList::iterator it = baseClasses.begin(); it != baseClasses.end(); ++it){
+            // Base class can't be virtual
+            if((*it)->get_baseClassModifier().isVirtual())
+                return false;
+            
+            // Base classes must be empty as well
+            SgClassDeclaration * baseClass = (*it)->get_base_class();
+            ROSE_ASSERT(baseClass != NULL);
+            if (!IsEmpty(baseClass->get_type()))
+                return false;
+        }
+        
+        return true;
+    }
+
+    bool IsEmpty(const SgType * const inputType){
+        return IsEmpty(inputType, true);
+    }
+
+    /*
+     __is_enum (type)
+     If type is a cv enumeration type ([basic.compound]) the trait is true, else it is false.
+     */
+
+    bool IsEnum(const SgType * const inputType){
+        SgType *type = inputType->stripType(SgType::STRIP_TYPEDEF_TYPE| SgType::STRIP_MODIFIER_TYPE);
+        return isSgEnumType(type);
+    }
+
+    /*
+     __is_literal_type (type)
+     If type is a literal type ([basic.types]) the trait is true, else it is false. 
+     Requires: type shall be a complete type, (possibly cv-qualified) void, or an array of unknown bound.
+
+     A literal type is a type that can qualify as constexpr. This is true for scalar types, references, certain classes, and arrays of any such types.
+     
+     http://www.cplusplus.com/reference/type_traits/is_literal_type/
+     A class that is a literal type is a class (defined with class, struct or union) that:
+     has a trivial destructor,
+     every constructor call and any non-static data member that has brace- or equal- initializers is a constant expression,
+     is an aggregate type, or has at least one constexpr constructor or constructor template that is not a copy or move constructor, and
+     has all non-static data members and base classes of literal types
+
+     */
+    bool IsLiteralType(const SgType * const inputType){
+        SgType *type = inputType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_ARRAY_TYPE | SgType::STRIP_MODIFIER_TYPE);
+
+        // Scalars, Pointers and Reference are literal
+        if (isScalarType(type) || isReferenceType(type) || isPointerType(type)) {
+            return true;
+        }
+        
+        ROSE_ASSERT(0 && "NYI, don't know what type to accept for this API");
+        ENSURE_CLASS_TYPE(type, false);
+    }
+
+    /*
+     __is_pod (type)
+     If type is a cv POD type ([basic.types]) then the trait is true, else it is false. 
+     Requires: type shall be a complete type, (possibly cv-qualified) void, or an array of unknown bound.
+     
+     http://www.cplusplus.com/reference/type_traits/is_pod/
+     
+     A POD type (which stands for Plain Old Data type) is a type whose characteristics are supported by a data type in the C language, either cv-qualified or not. This includes scalar types, POD classes and arrays of any such types.
+     
+     A POD class is a class that is both trivial (can only be statically initialized) and standard-layout (has a simple data structure), and thus is mostly restricted to the characteristics of a class that are compatible with those of a C data structure declared with struct or union in that language, even though the expanded C++ grammar can be used in their declaration and can have member functions.
+     
+     */
+
+    static bool IsTrivial(const SgType * const inputType, bool checkTrivial);
+
+    bool IsPod(const SgType * const inputType) {
+        SgType *type = inputType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_ARRAY_TYPE );
+        if(IsTrivial(type,  /* checkPod = */ false) && IsStandardLayout(type))
+            return true;
+        return false;
+    }
+
+    /*
+     __is_polymorphic (type)
+     If type is a polymorphic class ([class.virtual]) then the trait is true, else it is false. 
+     Requires: type shall be a complete type, (possibly cv-qualified) void, or an array of unknown bound.
+     
+     http://www.cplusplus.com/reference/type_traits/is_polymorphic/
+     Trait class that identifies whether T is a polymorphic class.
+     A polymorphic class is a class that declares or inherits a virtual function.
+     */
+    bool IsPolymorphic(const SgType * const inputType) {
+        SgType *type = inputType->stripType( SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_ARRAY_TYPE);
+        // What if it is a template at this point!!!!
+        
+        if(!IsClass(type)) {
+            return false;
+        }
+        
+        ENSURE_CLASS_TYPE(type, false);
+        vector<SgMemberFunctionDeclaration*> allMemberFunctions =  GetAllMemberFunctionsInClassHierarchy(type);
+        foreach(SgMemberFunctionDeclaration* memberFunction,allMemberFunctions) {
+            if (memberFunction->get_functionModifier().isVirtual())
+                return true;
+        }
+        return false;
+        
+    }
+
+    /*
+     __is_standard_layout (type)
+     If type is a standard-layout type ([basic.types]) the trait is true, else it is false. 
+     Requires: type shall be a complete type, (possibly cv-qualified) void, or an array of unknown bound.
+     
+     
+     A standard-layout type is a type with a simple linear data structure and access control that can easily be used to communicate with code written in other programming languages, such as C, either cv-qualified or not. This is true for scalar types, standard-layout classes and arrays of any such types.
+     
+     A standard-layout class is a class (defined with class, struct or union) that:
+     has no virtual functions and no virtual base classes.
+     has the same access control (private, protected, public) for all its non-static data members.
+     either has no non-static data members in the most derived class and at most one base class with non-static data members, or has no base classes with non-static data members.
+     its base class (if any) is itself also a standard-layout class. And,
+     has no base classes of the same type as its first non-static data member.
+     */
+    bool IsStandardLayout(const SgType * const inputType){
+        SgType *type = inputType->stripType( SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_ARRAY_TYPE | SgType::STRIP_REFERENCE_TYPE /* not sure but looks ok*/);
+        
+        // isPointerType are scalar
+        if(isScalarType(type) || isPointerType(type))
+            return true;
+        
+        
+        ENSURE_CLASS_TYPE(type, false);
+        SgClassType * sgClassType = isSgClassType(type);
+        SgClassDeclaration* decl = isSgClassDeclaration(sgClassType->get_declaration());
+        ROSE_ASSERT(decl);
+        SgClassDeclaration * definingDeclaration = isSgClassDeclaration(decl->get_definingDeclaration ());
+        ROSE_ASSERT(definingDeclaration && "Requires a complete class type");
+        SgClassDefinition* classDef = definingDeclaration->get_definition();
+        ROSE_ASSERT(classDef);
+        
+        
+        //If we have a virtual function, then it not OK
+        foreach(SgDeclarationStatement* memberDeclaration, classDef->get_members()) {
+            if (SgMemberFunctionDeclaration* memberFunction = isSgMemberFunctionDeclaration(memberDeclaration)) {
+                if (memberFunction->get_functionModifier().isVirtual())
+                    return false;
+            }
+        }
+        
+        // No virtual base classes
+        SgBaseClassPtrList  & baseClasses = classDef->get_inheritances();
+        for(SgBaseClassPtrList::iterator it = baseClasses.begin(); it != baseClasses.end(); ++it){
+            // Base class can't be virtual
+            if((*it)->get_baseClassModifier().isVirtual())
+                return false;
+        }
+        
+        
+        bool haveNonStaticData = false;
+        SgType * firstNonStaticDataMember = NULL;
+        
+        //same access control (private, protected, public) for all its non-static data members
+        bool first = true;
+        SgAccessModifier::access_modifier_enum prevModifier;
+        foreach(SgDeclarationStatement* memberDeclaration, classDef->get_members()) {
+            //has no non-static data members with brace- or equal- initializers.
+            if (SgVariableDeclaration* memberVariable = isSgVariableDeclaration(memberDeclaration)) {
+                if (memberVariable->get_declarationModifier().get_storageModifier().isStatic())
+                    continue;
+                
+                SgAccessModifier::access_modifier_enum  mod = memberDeclaration->get_declarationModifier().get_accessModifier().get_modifier();
+                if (!first && mod != prevModifier) {
+                    return false;
+                }
+                
+                if (first) {
+                    first = false;
+                    firstNonStaticDataMember = NULL;
+                    foreach(SgInitializedName* name, memberVariable->get_variables ()) {
+                        firstNonStaticDataMember = name->get_type();
+                        break;
+                    }
+                }
+                prevModifier = mod;
+                haveNonStaticData = true;
+            }
+        }
+        
+        
+        // If the most derived type has non-static data members, then none of the base classes can have non-static members.
+        if (haveNonStaticData) {
+            vector<SgVariableDeclaration *> allVariableDeclarations = GetAllVariableDeclarationsInAncestors(type);
+            foreach(SgVariableDeclaration* memberVariable, allVariableDeclarations) {
+                if (memberVariable->get_declarationModifier().get_storageModifier().isStatic())
+                    continue;
+                // ok, we have atleast one non-static data member in the ancestry
+                return false;
+            }
+        } else {
+            // no non-static data members in the most derived class and at most one base class with non-static data members
+            //Find all superclasses
+            ClassHierarchyWrapper classHierarchy(getProject());
+            
+            const ClassHierarchyWrapper::ClassDefSet& ancestors =  classHierarchy.getAncestorClasses(classDef);
+            set<SgClassDefinition*> exclusiveAncestors(ancestors.begin(), ancestors.end());
+            
+            
+            // There can be atmost 1 base class with non-static data members
+            int baseClassesWithNonStaticData = 0;
+            foreach(SgClassDefinition* c, exclusiveAncestors) {
+                foreach(SgDeclarationStatement* baseMemberDeclaration, c->get_members()) {
+                    if (SgVariableDeclaration* baseMemberVariable = isSgVariableDeclaration(baseMemberDeclaration)) {
+                        if (!baseMemberVariable->get_declarationModifier().get_storageModifier().isStatic()) {
+                            baseClassesWithNonStaticData ++;
+                            if(baseClassesWithNonStaticData > 1)
+                                return false;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // All base classes have to be standard layout
+        foreach(SgBaseClass* baseClass, classDef->get_inheritances()) {
+            if(!IsStandardLayout(baseClass->get_base_class()->get_type()))
+                return false;
+        }
+        
+        // There should be no base classes of the same type as its first non-static data member
+        if(firstNonStaticDataMember){
+            //Find all superclasses
+            ClassHierarchyWrapper classHierarchy(getProject());
+            const ClassHierarchyWrapper::ClassDefSet& ancestors =  classHierarchy.getAncestorClasses(classDef);
+            set<SgClassDefinition*> exclusiveAncestors(ancestors.begin(), ancestors.end());
+            
+            foreach(SgClassDefinition* c, exclusiveAncestors) {
+                if(c->get_declaration()->get_type()->stripType(SgType::STRIP_TYPEDEF_TYPE) ==  firstNonStaticDataMember->stripType(SgType::STRIP_TYPEDEF_TYPE))
+                    return false;
+            }
+        }
+        
+        return true;
+        
+    }
+
+    /*
+     __is_trivial (type)
+     If type is a trivial type ([basic.types]) the trait is true, else it is false. 
+     Requires: type shall be a complete type, (possibly cv-qualified) void, or an array of unknown bound.
+     http://www.cplusplus.com/reference/type_traits/is_trivial/
+     
+     A trivial type is a type whose storage is contiguous (trivially copyable) and which only supports static default initialization (trivially default constructible), either cv-qualified or not. It includes scalar types, trivial classes and arrays of any such types.
+     
+     A trivial class is a class (defined with class, struct or union) that is both trivially default constructible and trivially copyable, which implies that:
+     uses the implicitly defined default, copy and move constructors, copy and move assignments, and destructor.
+     has no virtual members.
+     has no non-static data members with brace- or equal- initializers.
+     its base class and non-static data members (if any) are themselves also trivial types.
+     */
+
+    static bool IsTrivial(const SgType * const inputType, bool checkTrivial){
+        SgType *type = inputType->stripType( SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_ARRAY_TYPE);
+        
+        // Scalars or pointers are trivial types
+        if(isScalarType(type) || isPointerType(type))
+            return true;
+        
+        
+        ENSURE_CLASS_TYPE(type, false);
+        SgClassType * sgClassType = isSgClassType(type);
+        if (!sgClassType) {
+            //ROSE_ASSERT(0 && "IsTrivial requires a complete type");
+            return false;
+        }
+        SgClassDeclaration* decl = isSgClassDeclaration(sgClassType->get_declaration());
+        ROSE_ASSERT(decl);
+        SgClassDeclaration * definingDeclaration = isSgClassDeclaration(decl->get_definingDeclaration());
+        ROSE_ASSERT(definingDeclaration);
+        SgClassDefinition* classDef = definingDeclaration->get_definition();
+        ROSE_ASSERT(classDef);
+        
+        
+        if(!HasTrivialConstructor(type, /* checkPod = */ checkTrivial) ||
+           !HasTrivialCopy(type, /* checkPod = */ checkTrivial) ||
+           !HasTrivialDestructor(type, /* checkPod = */ checkTrivial) ||
+           !HasTrivialAssign(type, /* checkPod = */ checkTrivial)
+           /* || HasTrivialMove!!! */)
+            return false;
+        
+        
+        foreach(SgDeclarationStatement* memberDeclaration, classDef->get_members()) {
+            // No virtual functions
+            if (SgMemberFunctionDeclaration* memberFunction = isSgMemberFunctionDeclaration(memberDeclaration)) {
+                if (memberFunction->get_functionModifier().isVirtual())
+                    return false;
+            }
+            //has no non-static data members with brace- or equal- initializers.
+            if (SgVariableDeclaration* memberVariable = isSgVariableDeclaration(memberDeclaration)) {
+                
+                if (memberVariable->get_declarationModifier().get_storageModifier().isStatic())
+                    continue;
+                
+                // each variable must be Trivial and must not have initializers
+                foreach(SgInitializedName* name, memberVariable->get_variables ()) {
+                    if(name->get_initializer())
+                        return false;
+                    if(!IsTrivial(name->get_type()))
+                        return false;
+                }
+                
+            }
+        }
+        
+        // Base classes must be trivial too
+        foreach(SgBaseClass* baseClass, classDef->get_inheritances()) {
+            if(!IsTrivial(baseClass->get_base_class()->get_type()))
+                return false;
+        }
+        
+        return true;
+        
+    }
+
+    bool IsTrivial(const SgType * const inputType){
+        return IsTrivial(inputType, true);
+    }
+
+    /*
+     __is_union (type)
+     If type is a cv union type ([basic.compound]) the trait is true, else it is false.
+     */
+    bool IsUnion(const SgType * const inputType){
+        SgType *type = inputType->stripType(SgType::STRIP_TYPEDEF_TYPE);
+        return isUnionType(type);
+    }
+
+    /*
+     __underlying_type (type)
+     The underlying type of type. Requires: type shall be an enumeration type ([dcl.enum]).
+     */
+    SgType *  UnderlyingType(SgType *type){
+        ROSE_ASSERT(IsEnum(type));
+        ROSE_ASSERT( 0  && "Cxx11 feature NYI");
+        
+    }
+
+#endif //CPP_TYPE_TRAITS
+
+
+} //end of namespace
 
