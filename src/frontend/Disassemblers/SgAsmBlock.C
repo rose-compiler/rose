@@ -102,3 +102,55 @@ SgAsmBlock::reason_str(bool do_pad, unsigned r)
     }
     return result;
 }
+
+/** Returns true if basic block appears to be a function call.  If the target address is known and is a single value then it is
+ * stored in the @p target_va argument, otherwise we store the maximum 64-bit address.  If the return address for the function
+ * call is known then it is stored in the @p return_va argument, otherwise @p return_va will contain the maximum 64-bit
+ * address. The return address is usually the fall-through address of the basic block.
+ *
+ * Note: Use this function in preference to SgAsmInstruction::is_function_call() because the latter is intended to be used by
+ * the Partitioner before an AST is created and might not be as accurate. */
+bool
+SgAsmBlock::is_function_call(rose_addr_t &target_va, rose_addr_t &return_va) 
+{
+    static const rose_addr_t INVALID_ADDR = (rose_addr_t)(-1);
+    target_va = return_va = INVALID_ADDR;;
+    if (!is_basic_block())
+        return false;
+    std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(this);
+    assert(!insns.empty()); // basic blocks must have instructions
+
+    // Check that all the successors point to functions entry addresses (other functions or this block's function).  There
+    // might be one edge that points to the fall-through address of this block, and that's ok.
+    SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(this);
+    SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(func);
+    std::set<rose_addr_t> callee_vas;
+    if (interp) {
+        const InstructionMap &imap = interp->get_instruction_map();
+        const SgAsmIntegerValuePtrList &successors = get_successors();
+        for (SgAsmIntegerValuePtrList::const_iterator si=successors.begin(); si!=successors.end(); ++si) {
+            rose_addr_t successor_va = (*si)->get_absolute_value();
+            if (SgAsmInstruction *target_insn = imap.getOrElse(successor_va, NULL)) {
+                SgAsmFunction *target_func = SageInterface::getEnclosingNode<SgAsmFunction>(target_insn);
+                if (successor_va==target_func->get_entry_va()) {
+                    callee_vas.insert(successor_va); // branches to a function entry point
+                } else if (return_va!=INVALID_ADDR) {
+                    target_va = return_va = INVALID_ADDR;
+                    return false; // multiple function-local CFG edges that are not this function's entry point
+                } else {
+                    return_va = successor_va; // possible return address
+                }
+            }
+        }
+    }
+
+    // Now for the architecture-dependent determination.  This will not update target_va or return_va if they cannot be
+    // determined or are ambiguous; so we must reset them to INVALID_ADDR if we're about to return false.
+    bool retval = insns.front()->is_function_call(insns, &target_va, &return_va);
+    if (!retval) {
+        target_va = return_va = INVALID_ADDR;
+    } else if (INVALID_ADDR==target_va && 1==callee_vas.size()) {
+        target_va = *callee_vas.begin();
+    }
+    return retval;
+}
