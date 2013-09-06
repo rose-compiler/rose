@@ -2,6 +2,12 @@
 #include "sage3basic.h"
 #include "CloneDetectionLib.h"
 
+#include <boost/foreach.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/graph_utility.hpp>
+#include <boost/graph/incremental_components.hpp>
+#include <boost/pending/disjoint_sets.hpp>
+
 std::string argv0;
 
 static SqlDatabase::TransactionPtr transaction;
@@ -77,8 +83,7 @@ typedef std::vector<int> CallVec;
 CallVec* 
 load_api_calls_for(int func_id, int igroup_id, bool ignore_no_compares, int call_depth, bool expand_ncalls)
 {
- transaction->execute("create temporary table tmp_tested_funcs as select distinct func_id from semantic_fio");
- SqlDatabase::StatementPtr stmt = transaction->statement(
+  SqlDatabase::StatementPtr stmt = transaction->statement(
      "select fio.callee_id, fio.ncalls from semantic_fio_calls as fio"
      +std::string( ignore_no_compares ? " join tmp_tested_funcs as f1 on f1.func_id = fio.callee_id" : "") // filter out functions with no compares
      +" where fio.func_id = ? AND fio.igroup_id = ?" // filter on current parameters
@@ -103,12 +108,104 @@ load_api_calls_for(int func_id, int igroup_id, bool ignore_no_compares, int call
   }
 
   return call_vec;
+}
+
+typedef std::vector< std::pair<int,int> > SemanticPairVec;
+
+using namespace boost;
+
+void
+find_semantic_pairs_between(int func1_id, int func2_id, int igroup_id, double similarity)
+{
+  std::string _query("select sem.func1_id, sem.func2_id from semantic_funcsim as sem"
+      "join tmp_called_functions as tcf_2 on sem.func1_id = tcf_1.callee_id AND ( tcf.func_id IN (?,?)) AND (igroup_id = ?)"
+      "join tmp_called_functions as tcf_1 on sem.func2_id = tcf_2.callee_id AND ( tcf.func_id IN (?,?)) AND (igroup_id = ?)"
+      "where similarity >= ? ORDER BY sem.func1_id, sem.func2_id");
+
+
+
+  //Count how many vertices we have for boost graph
+  SqlDatabase::StatementPtr count_stmt = transaction->statement( _query );
+  count_stmt->bind(0, func1_id);
+  count_stmt->bind(1, func2_id);
+  count_stmt->bind(3, igroup_id);
+  count_stmt->bind(4, func1_id);
+  count_stmt->bind(5, func2_id);
+  count_stmt->bind(6, igroup_id);
+  count_stmt->bind(7, similarity);
+
+  int VERTEX_COUNT = count_stmt->execute_int();
+
+  //Get all vetexes and find the union 
+  SqlDatabase::StatementPtr stmt = transaction->statement( _query );
+
+  stmt->bind(0, func1_id);
+  stmt->bind(1, func2_id);
+  stmt->bind(3, igroup_id);
+  stmt->bind(4, func1_id);
+  stmt->bind(5, func2_id);
+  stmt->bind(6, igroup_id);
+  stmt->bind(7, similarity);
+
+  SemanticPairVec* cvec = new SemanticPairVec;
+
+
+  typedef adjacency_list <vecS, vecS, undirectedS> Graph;
+  typedef graph_traits<Graph>::vertex_descriptor Vertex;
+  typedef graph_traits<Graph>::vertices_size_type VertexIndex;
+
+  Graph graph(VERTEX_COUNT);
+
+  std::vector<VertexIndex> rank(num_vertices(graph));
+  std::vector<Vertex> parent(num_vertices(graph));
+
+  typedef VertexIndex* Rank;
+  typedef Vertex* Parent;
+
+  disjoint_sets<Rank, Parent> ds(&rank[0], &parent[0]);
+
+  initialize_incremental_components(graph, ds);
+  incremental_components(graph, ds);
+
+  graph_traits<Graph>::edge_descriptor edge;
+  bool flag;
+
+  for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
+    int func1 = row.get<int>(0);
+    int func2 = row.get<int>(1);
+    boost::tie(edge, flag) = add_edge(func1, func2, graph);
+    ds.union_set(func1,func2);
+
+  }
+
+  typedef component_index<VertexIndex> Components;
+
+  // NOTE: Because we're using vecS for the graph type, we're
+  // effectively using identity_property_map for a vertex index map.
+  // If we were to use listS instead, the index map would need to be
+  // explicitly passed to the component_index constructor.
+  Components components(parent.begin(), parent.end());
+
+  // Iterate through the component indices
+  BOOST_FOREACH(VertexIndex current_index, components) {
+    std::cout << "component " << current_index << " contains: ";
+
+    // Iterate through the child vertex indices for [current_index]
+    BOOST_FOREACH(VertexIndex child_index,
+        components[current_index]) {
+      std::cout << child_index << " ";
+    }
+
+    std::cout << std::endl;
+  }
 
 
 }
 
+
+
 void 
-load_api_calls(int func1_id, int func2_id, int igroup_id, CallVec& call_vec, bool ignore_no_compares, int call_depth, bool expand_ncalls )
+load_api_calls(int func1_id, int func2_id, int igroup_id, CallVec& call_vec, double similarity, bool ignore_no_compares, int call_depth, bool expand_ncalls )
 {
  call_vec.clear();
 
@@ -116,8 +213,14 @@ load_api_calls(int func1_id, int func2_id, int igroup_id, CallVec& call_vec, boo
  CallVec* func2_vec = load_api_calls_for(func2_id, igroup_id, ignore_no_compares, call_depth, expand_ncalls);
 
 
+ find_semantic_pairs_between(func1_id, func2_id, igroup_id, similarity);
 
- //Find clones
+
+
+
+
+
+ //Find all connected components
 
 /*
   //
@@ -208,5 +311,11 @@ main(int argc, char *argv[])
     SqlDatabase::ConnectionPtr conn = SqlDatabase::Connection::create(argv[argno++]);
     transaction = conn->transaction();
 
+    //table of tested functions. Criteria is that it needs to pass at least one test.
+    transaction->execute("create temporary table tmp_tested_funcs as select distinct func_id from semantic_fio");
+    
+    //table of called fuctions. 
+    transaction->execute("create temporary table tmp_called_functions as select distinct igroup_id, func_id, callee_id from semantic_fio_calls");
+ 
     return 0;
 } 
