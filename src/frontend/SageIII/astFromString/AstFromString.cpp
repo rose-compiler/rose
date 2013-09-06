@@ -237,7 +237,10 @@ namespace AstFromString
     // resolve the identifier here
     SgScopeStatement* c_scope = getScope(c_sgnode);
     assert (c_scope != NULL);
-    SgSymbol* sym = lookupSymbolInParentScopes(buffer, c_scope);
+
+ // DQ (8/16/2013): Updated use of new API for symbol table support.
+ // SgSymbol* sym = lookupSymbolInParentScopes(buffer, c_scope);
+    SgSymbol* sym = lookupSymbolInParentScopes(buffer, c_scope,NULL,NULL);
 
     // type?
     SgTypeTable * gtt = SgNode::get_globalTypeTable();
