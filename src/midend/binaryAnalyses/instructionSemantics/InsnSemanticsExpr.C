@@ -222,6 +222,12 @@ InternalNode::identity(uint64_t ident) const
 }
 
 TreeNodePtr
+InternalNode::unaryNoOp() const
+{
+    return 1==size() ? child(0) : shared_from_this();
+}
+
+TreeNodePtr
 InternalNode::rewrite(const Simplifier &simplifier) const
 {
     if (TreeNodePtr simplified = simplifier.rewrite(this))
@@ -271,6 +277,54 @@ AddSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterator e
     for (/*void*/; begin!=end; ++begin)
         result += (*begin)->isLeafNode()->get_value();
     return LeafNode::create_integer(nbits, result);
+}
+
+TreeNodePtr
+AddSimplifier::rewrite(const InternalNode *inode) const
+{
+    struct are_duals {
+        bool operator()(TreeNodePtr a, TreeNodePtr b) {
+            if (a==NULL || b==NULL)
+                return false;
+            InternalNodePtr negate_a = a->isInternalNode();
+            if (negate_a!=NULL && OP_NEGATE!=negate_a->get_operator())
+                negate_a.reset();
+            InternalNodePtr negate_b = b->isInternalNode();
+            if (negate_b!=NULL && OP_NEGATE!=negate_b->get_operator())
+                negate_b.reset();
+            if ((negate_a==NULL) xor (negate_b==NULL)) {
+                if (negate_a==NULL)
+                    std::swap(negate_a, negate_b);
+                assert(1==negate_a->size());
+                return negate_a->child(0)->equivalent_to(b);
+            }
+            return false;
+        }
+    };
+    
+    // Arguments that are negated cancel out similar arguments that are not negated
+    TreeNodes children = inode->get_children();
+    for (size_t i=0; i<children.size(); ++i) {
+        for (size_t j=i+1; j<children.size(); ++j) {
+            if (are_duals()(children[i], children[j])) {
+                children[i].reset();
+                children[j].reset();
+                break;
+            }
+        }
+    }
+    children.erase(std::remove(children.begin(), children.end(), TreeNodePtr()), children.end());
+
+    // Create a new node if we removed any children. */
+    if (children.size()!=inode->size()) {
+        if (children.empty())
+            return LeafNode::create_integer(inode->get_nbits(), 0, inode->get_comment());
+        if (children.size()==1)
+            return children[0];
+        return InternalNode::create(inode->get_nbits(), OP_ADD, children, inode->get_comment());
+    }
+                  
+    return TreeNodePtr();
 }
 
 TreeNodePtr
@@ -941,6 +995,8 @@ InternalNode::simplifyTop() const
                 newnode = inode->nonassociative()->commutative()->identity(0);
                 if (newnode==node)
                     newnode = inode->constant_folding(AddSimplifier());
+                if (newnode==node)
+                    newnode = inode->rewrite(AddSimplifier());
                 break;
             case OP_AND:
             case OP_BV_AND:

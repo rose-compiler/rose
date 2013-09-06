@@ -172,6 +172,7 @@ public:
 
 struct AddSimplifier: Simplifier {
     virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
 };
 struct AndSimplifier: Simplifier {
     virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const /*override*/;
@@ -360,6 +361,9 @@ public:
     /** Returns the specified child. */
     TreeNodePtr child(size_t idx) const { assert(idx<children.size()); return children[idx]; }
 
+    /** Returns all children. */
+    TreeNodes get_children() const { return children; }
+
     /** Returns the operator. */
     Operator get_operator() const { return op; }
 
@@ -389,6 +393,9 @@ public:
 
     /** Removes identity arguments. Returns either a new expression or the original expression. */
     TreeNodePtr identity(uint64_t ident) const;
+
+    /** Replaces a binary operator with its only argument. Returns either a new expression or the original expression. */
+    TreeNodePtr unaryNoOp() const;
 
     /** Simplify an internal node. Returns a new node if this node could be simplified, otherwise returns this node. When
      *  the simplification could result in a leaf node, we return an OP_NOOP internal node instead. */
