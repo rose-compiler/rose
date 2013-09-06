@@ -33,7 +33,7 @@ std::string unparseX86Register(const RegisterDescriptor &reg, const RegisterDict
         static bool dumped_dict = false;
         std::cerr <<"unparseX86Register(" <<reg <<"): warning: register descriptor not found in dictionary.\n";
         if (!dumped_dict) {
-            std::cerr <<"  This warning be caused by instructions using registers that don't have names in the\n"
+            std::cerr <<"  This warning is caused by instructions using registers that don't have names in the\n"
                       <<"  register dictionary.  The register dictionary used during unparsing comes from either\n"
                       <<"  the explicitly specified dictionary (see AsmUnparser::set_registers()) or the dictionary\n"
                       <<"  associated with the SgAsmInterpretation being unparsed.  The interpretation normally\n"
