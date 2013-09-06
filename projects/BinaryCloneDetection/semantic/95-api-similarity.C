@@ -12,8 +12,6 @@ std::string argv0;
 
 static SqlDatabase::TransactionPtr transaction;
 
-
-
 static void
 usage(int exit_status)
 {
@@ -37,45 +35,6 @@ usage(int exit_status)
               <<"            containing the driver type and all necessary connection parameters.\n";
     exit(exit_status);
 }
-
-//map from function id to SemanticCalls
-
-void 
-create_func_replacement()
-{
-  /*
-  
-  all_pairs = "select func1_id, func2_id from semantic_funcsim";
-
-  std::map<int,int> replace_func_with;
-
-  for each f in all_pairs
-    it = replace_func_with.find(f.func1_id) 
-    if it != replace_func_with.end() && it->second.func2_id > f.func2_id
-       it->second = f.func2_id;
-    else
-        replace_func_with.insert(<>(f.1, f.2))
-
-  lookup(){
-    with = last match in chain in replace_func_with
-    replace replace_func_with entry with with
-    return with
-  }
-
-  */
-
-
-}
-
-struct SemanticCalls{
-
-  int func_id;
-  int igroup_id;
-  int caller_id;
-  int callee_id;
-  int pos;
-  int ncalls;
-};
 
 typedef std::vector<int> CallVec;
 
@@ -109,8 +68,6 @@ load_api_calls_for(int func_id, int igroup_id, bool ignore_no_compares, int call
 
   return call_vec;
 }
-
-typedef std::vector< std::pair<int,int> > SemanticPairVec;
 
 using namespace boost;
 
@@ -146,9 +103,6 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
   stmt->bind(5, func2_id);
   stmt->bind(6, igroup_id);
   stmt->bind(7, similarity);
-
-  SemanticPairVec* cvec = new SemanticPairVec;
-
 
   typedef adjacency_list <vecS, vecS, undirectedS> Graph;
   typedef graph_traits<Graph>::vertex_descriptor Vertex;
