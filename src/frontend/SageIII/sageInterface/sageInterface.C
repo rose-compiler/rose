@@ -15912,7 +15912,7 @@ void SageInterface::dumpInfo(SgNode* node, std::string desc/*=""*/)
 //! This is a wrapper function to Qing's side effect analysis from loop optimization
 //! Liao, 2/26/2009
 bool
-SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& readRefs, std::vector<SgNode*>& writeRefs)
+SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& readRefs, std::vector<SgNode*>& writeRefs, bool useCachedDefUse)
 {   // The type cannot be SgExpression since variable declarations have SgInitializedName as the reference, not SgVarRefExp.
   ROSE_ASSERT(stmt !=NULL);
 
@@ -15943,10 +15943,15 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
   AstInterfaceImpl faImpl(funcBody);
   AstInterface fa(&faImpl);
   ArrayAnnotation* annot = ArrayAnnotation::get_inst();
-  ArrayInterface array_interface (*annot);
-  array_interface.initialize(fa, AstNodePtrImpl(funcDef));
-  array_interface.observe(fa);
-  LoopTransformInterface::set_arrayInfo(&array_interface);
+  if( useCachedDefUse ){
+    ArrayInterface* array_interface = ArrayInterface::get_inst(*annot, fa, funcDef, AstNodePtrImpl(funcDef));
+    LoopTransformInterface::set_arrayInfo(array_interface);
+  } else {
+    ArrayInterface array_interface(*annot);
+    array_interface.initialize(fa, AstNodePtrImpl(funcDef));
+    array_interface.observe(fa);
+    LoopTransformInterface::set_arrayInfo(&array_interface);
+  }
   LoopTransformInterface::set_astInterface(fa);
 
   // variables to store results
