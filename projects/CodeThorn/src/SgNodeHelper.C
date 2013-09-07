@@ -1032,16 +1032,45 @@ SgNode* SgNodeHelper::getLastOfBlock(SgNode* node) {
 
 /*! 
   * \author Markus Schordan
+  * \date 2013.
+ */
+void replaceInString(string toReplace, string with, string& str) {
+  size_t index = 0;
+  while (index<str.size()) {
+	/* find the substring to replace. */
+	index = str.find(toReplace, index);
+	if (index == string::npos) break;
+	
+	/* replace the subsring */
+	str.replace(index, toReplace.size(), with);
+	/* advance index forward past the replaced string */
+	index += with.size();
+  }
+}
+
+/*! 
+  * \author Markus Schordan
   * \date 2012.
  */
 string SgNodeHelper::doubleQuotedEscapedString(string s1) {
-  string s2;
-  for(size_t i=0;i<s1.size();++i) {
-    if(s1[i]=='"')
-      s2+="\\\"";
-    else
-      s2+=s1[i];
-  }
+  string s2=s1;
+  char s[2]={'"',0};
+  replaceInString(string(s),"\\\"",s2);
+  return s2;
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
+string SgNodeHelper::doubleQuotedEscapedHTMLString(string s1) {
+  string s2=SgNodeHelper::doubleQuotedEscapedString(s1);
+  // not clear yet how to get these special characters to display in labels inside tables in dot.
+  replaceInString("<="," LE ",s2); // le
+  replaceInString(">="," GE ",s2); // ge
+  replaceInString("<"," LT ",s2); // lt
+  replaceInString(">"," GT ",s2); //gt
+  replaceInString("&"," ADDR ",s2); //&
   return s2;
 }
 

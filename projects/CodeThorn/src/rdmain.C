@@ -68,6 +68,7 @@ int main(int argc, char* argv[]) {
   cout << "INFO: generating and attaching UD-data to AST."<<endl;
   createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis-in", "ud-analysis");
 
+  Flow* flow=rdAnalyzer->getFlow();
 #if 1
   cout << "INFO: computing program statistics."<<endl;
   ProgramStatistics ps(rdAnalyzer->getVariableIdMapping(),
@@ -75,14 +76,14 @@ int main(int argc, char* argv[]) {
 					   rdAnalyzer->getFlow(),
 					   "ud-analysis");
   ps.computeStatistics();
-  ps.printStatistics();
+  //ps.printStatistics();
   cout << "INFO: generating resource usage visualization."<<endl;
   ps.generateResourceUsageICFGDotFile("resourceusageicfg.dot");
+  flow->resetDotOptions();
 #endif
   cout << "INFO: generating visualization data."<<endl;
   // generate ICFG visualization
   cout << "generating icfg.dot."<<endl;
-  Flow* flow=rdAnalyzer->getFlow();
   write_file("icfg.dot", flow->toDot(rdAnalyzer->getLabeler()));
   cout << "generating datadependencegraph.dot."<<endl;
   DataDependenceVisualizer ddvis0(rdAnalyzer->getLabeler(),

@@ -218,8 +218,15 @@ namespace SgNodeHelper {
 
   /*! computes a new string from s1 where each doublequote is replaced with a backslash followed by the doublequote. This is helpful when printing
    * unparsed program fragments which contain doublequoted strings to a dot file (used by nodeToString).
+   * This function also replaces <,<=,>=,> with the corresponding HTML codes.
    */
   string doubleQuotedEscapedString(string s1);
+
+  /*!
+	Same as doubleQuotedEscapedString but also replaces <,<=,>=,> with the corresponding HTML codes.
+	This is required when printing program code inside HTML tables of a dot file.
+  */
+  string doubleQuotedEscapedHTMLString(string s1);
 
   //! checks whether a SgVariableSymbol is representing a variable in
   //a forward declaration. This case no declaration for the variable

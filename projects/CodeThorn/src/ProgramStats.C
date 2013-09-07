@@ -90,12 +90,12 @@ void ProgramStatistics::computeStatistics() {
   for(LabelSet::iterator i=labSet.begin();i!=labSet.end();++i) {
 	Label lab=*i;
 	//	UDAstAttribute* node0=dynamic_cast<UDAstAttribute*>(node->getAttribute(useDefAstAttributeName));
-	cout<<"computing for Label "<<lab<<endl;
+	//cout<<"computing for Label "<<lab<<endl;
 	computationInfo[lab]=computeComputationInfo(lab,vidm);
 	//cout<<"TEST:"<<computationInfo[lab].numWriteMemLoc[CIT_TOTAL]<<endl;
 #if 0
 	UDAstAttribute* node0=dynamic_cast<UDAstAttribute*>(node->getAttribute(useDefAstAttributeName));
-	cout<<endl;
+	//cout<<endl;
 #endif
   }
   
@@ -122,8 +122,25 @@ string ProgramStatistics::generateNodeResourceUsageDotString(Label lab) {
   string tablestart="<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\">";
   string rowstart="<TR>";
   string rowend="</TR>";
-  string labentry="<TR><TD COLSPAN=\"5\" BGCOLOR=\"firebrick4\"><font color=\"white\">L"+dot.str()+"</font></TD></TR>";
-  string entries=computationInfo[lab].toDot();
+
+  string labentry="<TR><TD COLSPAN=\"1\" ROWSPAN=\"2\" BGCOLOR=\"firebrick4\"><font color=\"white\">L"+dot.str()+"</font></TD>";
+  labentry+="<TD COLSPAN=\"5\">";
+  string labename;
+  {
+	SgNode* node=labeler->getNode(lab);
+	if(!isSgBasicBlock(node)) {
+	  if(isSgFunctionDefinition(node))
+		labentry+=SgNodeHelper::getFunctionName(node);
+		 else
+		   //		   labentry+=string("\"")+SgNodeHelper::doubleQuotedEscapedHTMLString(node->unparseToString())+string("\"");
+		   labentry+=SgNodeHelper::doubleQuotedEscapedHTMLString(node->unparseToString());
+	}
+  }
+  labentry+="</TD>";  
+  labentry+="</TR>";
+
+  string emptyentry="<TD></TD>";
+  string entries=/*emptyentry+*/computationInfo[lab].toDot();
   //string entry2="<TD PORT=\"second\" BGCOLOR=\"blue\">FLOAT</TD>";
   string tableend="</TABLE>>";
   string result=dot.str()+labelstart+tablestart+labentry+rowstart+entries+rowend+tableend+labelend;
