@@ -26,11 +26,18 @@ using namespace CodeThorn;
 // information about the variable
 // type info is associated with the respective VariableId
 enum VariableIdTypeInfo {
-  VARIABLE,
-  ARRAY,
-  POINTER,
-  REFERENCE
+  variableType,
+  arrayType,
+  pointerType,
+  referenceType,
+  classType
 };
+
+// determines VariableIdTypeInfo given a VariableId and the VariableIdMapping
+VariableIdTypeInfo getVariableIdTypeInfo(VariableId vid, VariableIdMapping& vidm);
+
+// stringify the type info
+std::string variableIdTypeInfoToString(VariableIdTypeInfo vidTypeInfo);
 
 typedef std::pair<VariableId, VariableIdTypeInfo> VariableIdInfo;
 
@@ -75,42 +82,90 @@ class DefUseVarsInfo
   VarsInfo def_vars_info;
   VarsInfo use_vars_info;
   FunctionCallExpSet func_set;
+  // flag is set if the variables in def_vars_info are
+  // used after their definition in the same expression
+  // or in other words has side-effects in the expression
+  // example: a = b + (c = 0) or a = i++
+  bool useAfterDef;
    
 public:
-  DefUseVarsInfo() { }
-  DefUseVarsInfo(const VarsInfo& _def_info, const VarsInfo& _use_info, const FunctionCallExpSet& _fset);
-  
+  DefUseVarsInfo() : useAfterDef(false) { }
+DefUseVarsInfo(const VarsInfo& _def_info, const VarsInfo& _use_info, const FunctionCallExpSet& _fset, bool _useAfterDef)
+  : def_vars_info(_def_info),
+    use_vars_info(_use_info),
+    func_set(_fset),
+    useAfterDef(_useAfterDef) { }
+    
   // returns the corresponding info about the memory locations
-  VarsInfo getDefVarsInfo();
-  VarsInfo getUseVarsInfo();
-  VarsInfo& getDefVarsInfoMod(); 
-  VarsInfo& getUseVarsInfoMod();
-  const VarsInfo& getDefVarsInfoRef() const;
-  const VarsInfo& getUseVarsInfoRef() const;
-
-  FunctionCallExpSet getFunctionCallExpSet();
-  FunctionCallExpSet& getFunctionCallExpSetMod();
-  const FunctionCallExpSet& getFunctionCallExpSetRef() const;
-  
-  // copy sets to handle side-effects
-  void copyDefToUse();
-  void copyUseToDef();
-  
-  bool isDefSetEmpty();
-  bool isUseSetEmpty();
-  bool isFunctionCallExpSetEmpty();
-
-  // returns the flag func_modify
-  bool isModByFunction();
-
+  VarsInfo getDefVarsInfo() {
+    return def_vars_info;
+  }
+  VarsInfo getUseVarsInfo() {
+    return use_vars_info;
+  }
+  VarsInfo& getDefVarsInfoMod() {
+    return def_vars_info;
+  }
+  VarsInfo& getUseVarsInfoMod() {
+    return use_vars_info;
+  }
+  const VarsInfo& getDefVarsInfoRef() const {
+    return def_vars_info;
+  }
+  const VarsInfo& getUseVarsInfoRef() const {
+    return use_vars_info;
+  }
+  FunctionCallExpSet getFunctionCallExpSet() {
+    return func_set;
+  }
+  FunctionCallExpSet& getFunctionCallExpSetMod() {
+    return func_set;
+  }
+  const FunctionCallExpSet& getFunctionCallExpSetRef() const {
+    return func_set;
+  }
+  bool isDefSetEmpty() const {
+    return def_vars_info.first.size() == 0;
+  }
+  bool isUseSetEmpty() const {
+    return use_vars_info.first.size() == 0;
+  }
+  bool isFunctionCallExpSetEmpty() const {
+    return func_set.size() == 0;
+  }
   // returns the flag of VarsInfo
-  bool isDefSetModByPointer();
-  bool isUseSetModByPointer();
+  bool isDefSetModByPointer() const {
+    return def_vars_info.second;
+  }
+  bool isUseSetModByPointer() const {
+    return use_vars_info.second;
+  }
+  bool getUseAfterDef() const {
+    return useAfterDef;
+  }
+  // raise the flag to handle side-effects
+  void setUseAfterDef() {
+    useAfterDef = true;
+  }
+  // access method to know if the expr has side-effect
+  bool isUseAfterDef() const {
+    return useAfterDef;
+  }
+  // helpful to determine if the useAfterDef flag needs to be raised
+  // called on object of expr which is not expected to have side-effetcs
+  // function inspects all possible defs info of the object
+  // should only be called on expression with non-modifying semantics
+  bool isUseAfterDefCandidate() const {
+    return (!isDefSetEmpty() ||
+            isDefSetModByPointer() ||
+            !isFunctionCallExpSetEmpty());
+  }
+  void copyUseToDef();
 
-  DefUseVarsInfo operator+(const DefUseVarsInfo& duvi1);
+  friend DefUseVarsInfo operator+(const DefUseVarsInfo& duvi1, const DefUseVarsInfo& duvi2);
 
-  std::string varsInfoPrettyPrint(VarsInfo& vars_info, VariableIdMapping& vidm);
-  std::string functionCallExpSetPrettyPrint(FunctionCallExpSet& func_calls_info);
+  static std::string varsInfoPrettyPrint(VarsInfo& vars_info, VariableIdMapping& vidm);
+  static std::string functionCallExpSetPrettyPrint(FunctionCallExpSet& func_calls_info);
 
   // for more readability
   std::string str(VariableIdMapping& vidm);  
@@ -128,65 +183,116 @@ class ExprWalker : public ROSE_VisitorPatternDefaultBase
 
 public:
   ExprWalker(VariableIdMapping& _vidm, bool isModExpr);
-  // lhs of assignment operator are always lvalues
-  // process them 
-  void visit(SgAssignOp* sgn);
-  void visit(SgCompoundAssignOp* sgn);
-
-  // recurse on sub-expressions
-  void visit(SgBinaryOp* sgn);
-
-  void visit(SgCastExp* sgn);
-  void visit(SgAddressOfOp* sgn);
+   
+  // unary op with modifying semantics
   void visit(SgMinusMinusOp* sgn);
+  void visit(SgPlusPlusOp* sgn);
+
+  // unary op with non-modifying semantics
+  void visit(SgCastExp* sgn);
+  void visit(SgAddressOfOp* sgn); 
   void visit(SgMinusOp* sgn);
   void visit(SgUnaryAddOp* sgn);
   void visit(SgNotOp* sgn);
-  void visit(SgPlusPlusOp* sgn);
-  void visit(SgSizeOfOp* sgn);
   void visit(SgBitComplementOp* sgn);
+  void visit(SgThrowOp* sgn);
 
-  void visit(SgFunctionCallExp* sgn);
-  void visit(SgExprListExp* sgn);
-  void visit(SgConditionalExp* sgn);
-  
-  void visit(SgAssignInitializer* sgn);
-  void visit(SgConstructorInitializer* sgn);
-  void visit(SgAggregateInitializer* sgn);
+ 
+  // binary op with modifying semantics
+  void visit(SgAssignOp* sgn);
+  void visit(SgCompoundAssignOp* sgn);
 
-  // recursion undwinds on basic expressions
-  // that represent memory
-  //  
-  void visit(SgVarRefExp* sgn);
+  // binary op that can be lvalues
+  void visit(SgCommaOpExp* sgn);
   void visit(SgPntrArrRefExp* sgn);
   void visit(SgPointerDerefExp* sgn);
   void visit(SgDotExp* sgn);
   void visit(SgArrowExp* sgn);
+
+  // binary op that can only be rvalues
+  void visit(SgAddOp* sgn);
+  void visit(SgAndOp* sgn);
+  void visit(SgArrowStarOp* sgn);
+  void visit(SgBitAndOp* sgn);
+  void visit(SgBitOrOp* sgn);
+  void visit(SgBitXorOp* sgn);
+  void visit(SgDivideOp* sgn);
+  void visit(SgDotStarOp* sgn);
+  void visit(SgEqualityOp* sgn);
+  void visit(SgGreaterOrEqualOp* sgn);
+  void visit(SgGreaterThanOp* sgn);
+  void visit(SgLessOrEqualOp* sgn);
+  void visit(SgLessThanOp* sgn);
+  void visit(SgLshiftOp* sgn);
+  void visit(SgModOp* sgn);
+  void visit(SgMultiplyOp* sgn);
+  void visit(SgNotEqualOp* sgn);
+  void visit(SgOrOp* sgn);
+  void visit(SgRshiftOp* sgn);
+  void visit(SgSubtractOp* sgn);
+
+  // expr that can be lvalues
+  void visit(SgFunctionCallExp* sgn);
+  void visit(SgConditionalExp* sgn);
+
+  // expr that can only be rvalues
+  void visit(SgExprListExp* sgn);
+  void visit(SgSizeOfOp* sgn);
+  void visit(SgDeleteExp* sgn);
+  void visit(SgNewExp* sgn);
+  void visit(SgTypeIdOp* sgn);
+  void visit(SgVarArgOp* sgn);
+  void visit(SgVarArgStartOp* sgn);
+  void visit(SgVarArgStartOneOperandOp* sgn);
+  void visit(SgVarArgEndOp* sgn);
+  void visit(SgVarArgCopyOp* sgn);
+
+  
+  // different intializers
+  void visit(SgAssignInitializer* sgn);
+  void visit(SgConstructorInitializer* sgn);
+  void visit(SgAggregateInitializer* sgn);
+  void visit(SgCompoundInitializer* sgn);
+  void visit(SgDesignatedInitializer* sgn);
+
+  // basic cases for the recursive function
+  // that represent variables
+  void visit(SgVarRefExp* sgn);
   void visit(SgInitializedName* sgn);
 
   // no processing required
   void visit(SgValueExp* sgn);
+  void visit(SgNullExpression* sgn);
   void visit(SgFunctionRefExp* sgn);
   void visit(SgMemberFunctionRefExp* sgn);
   void visit(SgThisExp* sgn);
-
+  void visit(SgClassNameRefExp* sgn);
+  void visit(SgLabelRefExp* sgn);
+  void visit(SgTemplateFunctionRefExp* sgn);
+  void visit(SgTemplateMemberFunctionRefExp* sgn);
+  void visit(SgTypeTraitBuiltinOperator* sgn);
+  void visit(SgPseudoDestructorRefExp* sgn);
+  void visit(SgStatementExpression* sgn);
+  void visit(SgAsmOp* sgn);
+  
   void visit(SgExpression* sgn);
 
   // helper methods
   void visitSgUnaryOpNoMod(SgUnaryOp* sgn);
-
+  void visitSgBinaryOpNoMod(SgBinaryOp* sgn);
 
   DefUseVarsInfo getDefUseVarsInfo();
 };
 
 // interface function to
-// identify modified and used locations based on syntax
-//  a[i] = expr; a is modified and i, expr are used 
-// *p = expr; since we dont know anything about p
-// the locations that are modified involve all arrays and variables in addressTakenSet
-// if the expression involve functions or function pointers it can 
-// potentially modify everything
+// collect defined and used variables based on the semantics of the expressions
+// flag is raised for pointer dereferencing as we dont know what is defined/used
+// function calls in expressions are treated as black boxes and are simply collected
+// main interface function
 DefUseVarsInfo getDefUseVarsInfo(SgNode* sgn, VariableIdMapping& vidm);
+DefUseVarsInfo getDefUseVarsInfoExpr(SgExpression* sgn, VariableIdMapping& vidm);
+DefUseVarsInfo getDefUseVarsInfoInitializedName(SgInitializedName* sgn, VariableIdMapping& vidm);
+DefUseVarsInfo getDefUseVarsInfoVariableDeclaration(SgVariableDeclaration* sgn, VariableIdMapping& vidm);
 
 // internal implementation
 // @sgn: root node

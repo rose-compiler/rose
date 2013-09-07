@@ -19,6 +19,7 @@ SUBDIRS = \
 	DatalogAnalysis \
 	DocumentationGenerator \
 	FiniteStateModelChecker \
+	fuse \
 	graphColoring \
 	HeaderFilesInclusion \
 	MPI_Tools \

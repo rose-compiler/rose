@@ -134,7 +134,15 @@ string Edge::color() const {
 
 
 // color: true/false has higher priority than forward/backward.
-string Edge::toDot() const {
+string Edge::toDotFixedColor(string color) const {
+  stringstream ss;
+  ss<<source<<"->"<<target;
+  ss<<" [label=\""<<typesToString()<<"\"";
+  ss<<" color="<<color<<" ";
+  ss<<"]";
+  return ss.str();
+}
+string Edge::toDotColored() const {
   stringstream ss;
   ss<<source<<"->"<<target;
   ss<<" [label=\""<<typesToString()<<"\"";
@@ -165,6 +173,11 @@ string InterEdge::toString() const {
 CFAnalyzer::CFAnalyzer(Labeler* l):labeler(l){
 }
 
+size_t CFAnalyzer::deleteFunctioncCallLocalEdges(Flow& flow) {
+  return flow.deleteEdges(EDGE_LOCAL);
+}
+
+// MS: TODO: refactor the following two functions 
 LabelSet CFAnalyzer::functionCallLabels(Flow& flow) {
   LabelSet resultSet;
   LabelSet nodeLabels;
@@ -174,6 +187,41 @@ LabelSet CFAnalyzer::functionCallLabels(Flow& flow) {
       resultSet.insert(*i);
   }
   return resultSet;
+}
+
+LabelSet CFAnalyzer::functionEntryLabels(Flow& flow) {
+  LabelSet resultSet;
+  LabelSet nodeLabels;
+  nodeLabels=flow.nodeLabels();
+  for(LabelSet::iterator i=nodeLabels.begin();i!=nodeLabels.end();++i) {
+    if(labeler->isFunctionEntryLabel(*i))
+      resultSet.insert(*i);
+  }
+  return resultSet;
+}
+
+Label CFAnalyzer::correspondingFunctionExitLabel(Label entryLabel) {
+  ROSE_ASSERT(getLabeler()->isFunctionEntryLabel(entryLabel));
+  SgNode* fdefnode=getNode(entryLabel);
+  ROSE_ASSERT(fdefnode);
+  return getLabeler()->functionExitLabel(fdefnode);
+}
+
+LabelSetSet CFAnalyzer::functionLabelSetSets(Flow& flow) {
+  LabelSetSet result;
+  LabelSet feLabels=functionEntryLabels(flow);
+  for(LabelSet::iterator i=feLabels.begin();i!=feLabels.end();++i) {
+	Label entryLabel=*i;
+	LabelSet fLabels=functionLabelSet(entryLabel, flow);
+	result.insert(fLabels);
+  }
+  return result;
+}
+
+LabelSet CFAnalyzer::functionLabelSet(Label entryLabel, Flow& flow) {
+	Label exitLabel=correspondingFunctionExitLabel(entryLabel);
+	LabelSet fLabels=flow.reachableNodesButNotBeyondTargetNode(entryLabel,exitLabel);
+	return fLabels;
 }
 
 string InterFlow::toString() const {
@@ -441,9 +489,16 @@ long Edge::hash() const {
   return typesCode();
 }
 
+Flow::Flow() {
+  resetDotOptions();
+}
 
-
-Flow::Flow():_dotOptionDisplayLabel(true),_dotOptionDisplayStmt(true){
+void Flow::resetDotOptions() {
+  _dotOptionDisplayLabel=true;
+  _dotOptionDisplayStmt=true;
+  _dotOptionFixedColor=false;
+  _fixedColor="black";
+  _dotOptionHeaderFooter=true;
 }
 
 string Flow::toString() {
@@ -482,9 +537,27 @@ void Flow::setDotOptionDisplayStmt(bool opt) {
   _dotOptionDisplayStmt=opt;
 }
 
+void Flow::setDotOptionFixedColor(bool opt) {
+  _dotOptionFixedColor=opt;
+}
+
+void Flow::setDotFixedColor(string color) {
+  setDotOptionFixedColor(true);
+  _fixedColor=color;
+}
+
+void Flow::setDotOptionHeaderFooter(bool opt) {
+  _dotOptionHeaderFooter=opt;
+}
+
+void Flow::setTextOptionPrintType(bool opt) {
+  _stringNoType=!opt;
+}
+
 string Flow::toDot(Labeler* labeler) {
   stringstream ss;
-  ss<<"digraph G {\n";
+  if(_dotOptionHeaderFooter)
+	ss<<"digraph G {\n";
   LabelSet nlabs=nodeLabels();
   for(LabelSet::iterator i=nlabs.begin();i!=nlabs.end();++i) {
     if(_dotOptionDisplayLabel) {
@@ -511,7 +584,8 @@ string Flow::toDot(Labeler* labeler) {
     if(_dotOptionDisplayLabel||_dotOptionDisplayStmt) {
       SgNode* node=labeler->getNode(*i);
       if(SgNodeHelper::isCond(node)) {
-        ss << " shape=oval style=filled color=yellow "; 
+        ss << " shape=oval style=filled ";
+		ss<<"color=yellow "; 
       } else {
         ss << " shape=box ";
       }
@@ -520,10 +594,25 @@ string Flow::toDot(Labeler* labeler) {
   }
   for(Flow::iterator i=begin();i!=end();++i) {
     Edge e=*i;
-    ss<<e.toDot()<<";\n";
+    ss<<(_dotOptionFixedColor?e.toDotFixedColor(_fixedColor):e.toDotColored())<<";\n";
   }
-  ss<<"}";
+  if(_dotOptionHeaderFooter)
+	ss<<"}";
   return ss.str();
+}
+
+size_t Flow::deleteEdges(EdgeType edgeType) {
+  Flow::iterator i=begin();
+  size_t numDeleted=0;
+  while(i!=end()) {
+	if((*i).isType(edgeType)) {
+	  erase(i++);
+	  numDeleted++;
+	} else {
+	  ++i;
+	}
+  }
+  return numDeleted;
 }
 
 Flow Flow::inEdges(Label label) {
@@ -697,6 +786,34 @@ Flow CFAnalyzer::WhileAndDoWhileLoopFlow(SgNode* node,
   }
   return edgeSet;
 }
+
+LabelSet Flow::reachableNodes(Label start) {
+  return reachableNodesButNotBeyondTargetNode(start,Labeler::NO_LABEL);
+}
+
+// MS: will possibly be replaced with an implementation from the BOOST graph library
+LabelSet Flow::reachableNodesButNotBeyondTargetNode(Label start, Label target) {
+  LabelSet reachableNodes;
+  LabelSet toVisitSet=succ(start);
+  size_t oldSize=0;
+  size_t newSize=0;
+  do {
+	LabelSet newToVisitSet;
+	for(LabelSet::iterator i=toVisitSet.begin();i!=toVisitSet.end();++i) {
+	  LabelSet succSet=succ(*i);
+	  for(LabelSet::iterator j=succSet.begin();j!=succSet.end();++j) {
+		if(reachableNodes.find(*j)==reachableNodes.end())
+		  newToVisitSet.insert(*j);
+	  }
+	}
+	toVisitSet=newToVisitSet;
+	oldSize=reachableNodes.size();
+	reachableNodes+=toVisitSet;
+	newSize=reachableNodes.size();
+  } while(oldSize!=newSize);
+  return reachableNodes;
+}
+
 
 Flow CFAnalyzer::flow(SgNode* node) {
   assert(node);
@@ -900,7 +1017,7 @@ Flow CFAnalyzer::flow(SgNode* node) {
     return edgeSet;
   }
   default:
-    cerr << "Error: Unknown node in CodeThorn::CFAnalyzer::flow: "<<node->sage_class_name()<<endl; 
+    cerr << "Error: Unknown node in CFAnalyzer::flow: "<<node->sage_class_name()<<endl; 
     cerr << "Problemnode: "<<node->unparseToString()<<endl;
     exit(1);
   }
