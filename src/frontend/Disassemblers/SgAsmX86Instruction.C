@@ -97,9 +97,9 @@ SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insn
         return true;
     }
 
-    // Similar to the above method, but works when all we have is the basic block.  Returns true if, after executing the basic
-    // block, the top of the stack contains the fall-through address of the basic block. We depend on our caller to figure out
-    // if EIP is reasonably a function entry address.
+    // Similar to the above method, but works when all we have is the basic block (e.g., this case gets hit quite a bit from
+    // the Partitioner).  Returns true if, after executing the basic block, the top of the stack contains the fall-through
+    // address of the basic block. We depend on our caller to figure out if EIP is reasonably a function entry address.
     if (!interp && insns.size()<=EXECUTION_LIMIT) {
         using namespace BinaryAnalysis::InstructionSemantics2;
         using namespace BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
