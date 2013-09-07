@@ -164,11 +164,87 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
 
     }
 
-
     std::cout << std::endl;
+  }
+}
+
+/* Remove the functions from the compilation unit that is only available in one of the traces.
+ *   - criteria complement of the functions from the files of the caller functions in the 
+ *     call trace is removed.
+ */
+void 
+remove_compilation_unit_complement(int func1_id, int func2_id, int igroup_id, int similarity, CallVec* func1_vec, CallVec* func2_vec)
+{
+  
+  //find the compilation units in question. A compilation unit is in our case a file.
+  SqlDatabase::StatementPtr func1_file_stmt = transaction->statement( "select file_id from semantic_functions where id = ?" );
+  func1_file_stmt->bind(0, func1_id);
+
+  int func1_file_id = func1_file_stmt->execute_int(); 
+ 
+ 
+  SqlDatabase::StatementPtr func2_file_stmt = transaction->statement( "select file_id from semantic_functions where id = ?" );
+  func2_file_stmt->bind(0, func2_id);
+
+  int func2_file_id = func2_file_stmt->execute_int(); 
+ 
+
+  //find the functions that needs to be removed
+  SqlDatabase::StatementPtr stmt = transaction->statement(
+      "select sem.func1_id, sem.func2_id from semantic_funcsim as sem"
+      " join semantic_functions as sf1 on sem.func1_id = sf1.id"
+      " join semantic_functions as sf2 on sem.func2_id = sf2.id"
+      " where similarity >= ? AND sf1.file_id IN (?,?) AND sf2.file_id IN (?, ?) AND sf1.file_id != sf2.file_id"
+      " AND NOT EXISTS(" 
+      "   select 1 from "
+      "        tmp_called_functions as tcf_2 on sem.func1_id = tcf_1.callee_id AND (igroup_id = ?)"
+      "   join tmp_called_functions as tcf_1 on sem.func2_id = tcf_2.callee_id AND (igroup_id = ?)"
+      ")"
+      );
+
+
+  stmt->bind(0, similarity);
+  stmt->bind(1, func1_file_id);
+  stmt->bind(2, func2_file_id);
+  stmt->bind(3, func1_file_id);
+  stmt->bind(4, func2_file_id);
+  stmt->bind(5, igroup_id);
+  stmt->bind(6, igroup_id);
+
+  CallVec remove_these;
+  for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
+    int clone_func1 = row.get<int>(0);
+    int clone_func2 = row.get<int>(1);
+
+    if ( std::find(remove_these.begin(), remove_these.end(), clone_func1) == remove_these.end())
+      remove_these.push_back(clone_func1);
+    
+    if ( std::find(remove_these.begin(), remove_these.end(), clone_func2) == remove_these.end())   
+      remove_these.push_back(clone_func2);
+
   }
 
 
+  //prune functions to remove away from the call trace into new vectors
+  CallVec* new_func1_vec = new CallVec;
+  CallVec* new_func2_vec = new CallVec;
+
+  for(CallVec::iterator it = func1_vec->begin(); it != func1_vec->end(); ++it)
+    if ( std::find(remove_these.begin(), remove_these.end(), *it) == remove_these.end()) 
+      new_func1_vec->push_back(*it);
+
+  for(CallVec::iterator it = func2_vec->begin(); it != func2_vec->end(); ++it)
+    if ( std::find(remove_these.begin(), remove_these.end(), *it) == remove_these.end()) 
+      new_func1_vec->push_back(*it);
+
+
+  //replace the result vectors with the pruned versions
+  delete func1_vec;
+  delete func2_vec;
+
+  func1_vec = new_func1_vec;
+  func2_vec = new_func2_vec;
+  
 }
 
 
@@ -180,6 +256,9 @@ similarity(int func1_id, int func2_id, int igroup_id, CallVec& call_vec, double 
 
  CallVec* func1_vec = load_api_calls_for(func1_id, igroup_id, ignore_no_compares, call_depth, expand_ncalls);
  CallVec* func2_vec = load_api_calls_for(func2_id, igroup_id, ignore_no_compares, call_depth, expand_ncalls);
+
+ //remove possible inlined functions from the traces
+ remove_compilation_unit_complement(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec);
 
  //Detect and normalize similar function calls
  normalize_call_trace(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec);
