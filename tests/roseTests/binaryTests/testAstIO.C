@@ -2,6 +2,7 @@
 #include "rose.h"
 #include "stringify.h"
 
+#if 0 // call is commented out below
 static void
 dump_ast(std::ostream &o, SgNode *ast)
 {
@@ -25,6 +26,7 @@ dump_ast(std::ostream &o, SgNode *ast)
 
     T1(o).traverse(ast);
 }
+#endif
 
 /* Computes a dump file name for an AST by looking for the first SgAsmGenericFile node */
 struct BaseName: public SgSimpleProcessing {

@@ -749,7 +749,9 @@ BinaryAnalysis::ControlFlow::explode_blocks(const BlockCFG &cfgb, InsnCFG &cfgi/
         for (boost::tie(vi, vi_end)=vertices(cfgb); vi!=vi_end; ++vi) {
             SgAsmBlock *blk = get_ast_node(cfgb, *vi);
             const SgAsmStatementPtrList &insns = blk->get_statementList();
-            InsnCFG_Vertex enter_vertex, prev_vertex = boost::graph_traits<InsnCFG>::null_vertex();
+            assert(!insns.empty());
+            InsnCFG_Vertex enter_vertex = boost::graph_traits<InsnCFG>::null_vertex();
+            InsnCFG_Vertex prev_vertex = boost::graph_traits<InsnCFG>::null_vertex();
             for (SgAsmStatementPtrList::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
                 SgAsmInstruction *insn = isSgAsmInstruction(*ii);
                 assert(insn!=NULL); // basic blocks contain only instructions, no other type of asm statement
