@@ -248,7 +248,5 @@ create table api_call_similarity (
     func2_id integer references semantic_functions(id), -- func1_id < func2_id
     max_similarity double precision,             -- a value between 0 and 1, with one being equality
     min_similarity double precision,             -- a value between 0 and 1, with one being equality
-    ave_similarity double precision,             -- a value between 0 and 1, with one being equality
+    ave_similarity double precision              -- a value between 0 and 1, with one being equality
 );
-
-
