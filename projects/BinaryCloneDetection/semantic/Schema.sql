@@ -8,6 +8,7 @@ drop table if exists semantic_fio_calls;
 drop table if exists semantic_fio_coverage;
 drop table if exists semantic_fio_trace;
 drop table if exists semantic_fio_events;
+drop table if exists api_call_similarity;
 drop table if exists semantic_fio;
 drop table if exists semantic_sources;
 drop table if exists semantic_instructions;
@@ -21,8 +22,6 @@ drop table if exists semantic_outputvalues;
 drop table if exists semantic_inputvalues;
 drop table if exists semantic_input_queues;
 drop table if exists semantic_history;
-drop table if exists api_call_similarity;
-
 -- A history of the commands that were run to produce this database, excluding SQL run by the user.
 create table semantic_history (
        hashkey bigint unique primary key,       -- nonsequential ID number to identify the command
