@@ -82,15 +82,14 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
       " AND tcf2.igroup_id = ? AND tcf1.igroup_id = ? GROUP BY sem.func1_id, sem.func2_id");
 
 
-  std::string _count_query("select COALESCE ((select count(*) from semantic_funcsim as sem" + _query_condition + "),0)");
-
-
-  std::string _query("select sem.func1_id, sem.func2_id from semantic_funcsim as sem" + _query_condition);
-
-
 
   //Count how many vertices we have for boost graph
-  SqlDatabase::StatementPtr count_stmt = transaction->statement( _count_query );
+
+  //Query for the row count or return 0 if no rows found
+
+  SqlDatabase::StatementPtr count_stmt = transaction->statement( 
+      "select COALESCE ((select count(*) from semantic_funcsim as sem" + _query_condition + "),0)"
+      );
   count_stmt->bind(0, similarity_threshold);
   count_stmt->bind(1, func1_id);
   count_stmt->bind(2, func2_id);
@@ -102,7 +101,10 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
   int VERTEX_COUNT = count_stmt->execute_int();
 
   //Get all vetexes and find the union 
-  SqlDatabase::StatementPtr stmt = transaction->statement( _query );
+
+  SqlDatabase::StatementPtr stmt = transaction->statement(
+      "select sem.func1_id, sem.func2_id from semantic_funcsim as sem" + _query_condition
+      );
 
   stmt->bind(0, similarity_threshold);
   stmt->bind(1, func1_id);
