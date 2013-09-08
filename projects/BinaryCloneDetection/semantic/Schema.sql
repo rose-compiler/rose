@@ -21,6 +21,7 @@ drop table if exists semantic_outputvalues;
 drop table if exists semantic_inputvalues;
 drop table if exists semantic_input_queues;
 drop table if exists semantic_history;
+drop table if exists api_call_similarity;
 
 -- A history of the commands that were run to produce this database, excluding SQL run by the user.
 create table semantic_history (
