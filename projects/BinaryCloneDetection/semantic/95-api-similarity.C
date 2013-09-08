@@ -74,35 +74,43 @@ using namespace boost;
 void
 normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarity, CallVec* func1_vec, CallVec* func2_vec)
 {
-  std::string _query("select sem.func1_id, sem.func2_id from semantic_funcsim as sem"
-      "join tmp_called_functions as tcf2 on sem.func1_id = tcf1.callee_id AND ( tcf.func_id IN (?,?)) AND (igroup_id = ?)"
-      "join tmp_called_functions as tcf1 on sem.func2_id = tcf2.callee_id AND ( tcf.func_id IN (?,?)) AND (igroup_id = ?)"
-      "where sem.similarity >= ? ORDER BY sem.func1_id, sem.func2_id");
+  std::string _query_condition(
+      " join tmp_called_functions as tcf2 on sem.func1_id = tcf2.callee_id "
+      " join tmp_called_functions as tcf1 on sem.func2_id = tcf1.callee_id "
+      " where sem.similarity >= ? "
+      " AND (tcf1.callee_id  = ? OR tcf1.callee_id = ?) AND (tcf2.callee_id  = ? OR tcf2.callee_id = ?)" 
+      " AND tcf2.igroup_id = ? AND tcf1.igroup_id = ?");
+
+
+  std::string _count_query("select count(*) from semantic_funcsim as sem" + _query_condition);
+
+
+  std::string _query("select sem.func1_id, sem.func2_id from semantic_funcsim as sem" + _query_condition);
 
 
 
   //Count how many vertices we have for boost graph
-  SqlDatabase::StatementPtr count_stmt = transaction->statement( _query );
-  count_stmt->bind(0, func1_id);
-  count_stmt->bind(1, func2_id);
-  count_stmt->bind(3, igroup_id);
-  count_stmt->bind(4, func1_id);
-  count_stmt->bind(5, func2_id);
+  SqlDatabase::StatementPtr count_stmt = transaction->statement( _count_query );
+  count_stmt->bind(0, similarity);
+  count_stmt->bind(1, func1_id);
+  count_stmt->bind(2, func2_id);
+  count_stmt->bind(3, func1_id);
+  count_stmt->bind(4, func2_id);
+  count_stmt->bind(5, igroup_id);
   count_stmt->bind(6, igroup_id);
-  count_stmt->bind(7, similarity);
 
   int VERTEX_COUNT = count_stmt->execute_int();
 
   //Get all vetexes and find the union 
   SqlDatabase::StatementPtr stmt = transaction->statement( _query );
 
-  stmt->bind(0, func1_id);
-  stmt->bind(1, func2_id);
-  stmt->bind(3, igroup_id);
-  stmt->bind(4, func1_id);
-  stmt->bind(5, func2_id);
-  stmt->bind(6, igroup_id);
-  stmt->bind(7, similarity);
+  count_stmt->bind(0, similarity);
+  count_stmt->bind(1, func1_id);
+  count_stmt->bind(2, func2_id);
+  count_stmt->bind(3, func1_id);
+  count_stmt->bind(4, func2_id);
+  count_stmt->bind(5, igroup_id);
+  count_stmt->bind(6, igroup_id);
 
   typedef adjacency_list <vecS, vecS, undirectedS> Graph;
   typedef graph_traits<Graph>::vertex_descriptor Vertex;
@@ -197,8 +205,9 @@ remove_compilation_unit_complement(int func1_id, int func2_id, int igroup_id, in
       " where similarity >= ? AND sf1.file_id IN (?,?) AND sf2.file_id IN (?, ?) AND sf1.file_id != sf2.file_id"
       " AND NOT EXISTS(" 
       "   select 1 from "
-      "        tmp_called_functions as tcf_2 on sem.func1_id = tcf_1.callee_id AND (igroup_id = ?)"
-      "   join tmp_called_functions as tcf_1 on sem.func2_id = tcf_2.callee_id AND (igroup_id = ?)"
+      "        tmp_called_functions as tcf2 "
+      "   join tmp_called_functions as tcf1 on sem.func2_id = tcf1.callee_id AND (tcf1.igroup_id = ?)"
+      "   where sem.func1_id = tcf2.callee_id AND (tcf2.igroup_id = ?)"
       ")"
       );
 
