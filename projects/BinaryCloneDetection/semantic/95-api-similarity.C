@@ -249,7 +249,7 @@ remove_compilation_unit_complement(int func1_id, int func2_id, int igroup_id, in
 
 
 
-size_t
+double
 similarity(int func1_id, int func2_id, int igroup_id, double similarity, bool ignore_no_compares, int call_depth, bool expand_ncalls )
 {
 
@@ -263,11 +263,13 @@ similarity(int func1_id, int func2_id, int igroup_id, double similarity, bool ig
  normalize_call_trace(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec);
 
  size_t dl = Combinatorics::damerau_levenshtein_distance(*func1_vec, *func2_vec);
+
+ size_t dl_max = std::max(func1_vec->size(), func2_vec->size());
  
  delete func1_vec;
  delete func2_vec;
 
- return dl;
+ return 1.0 - (double)dl / dl_max;
 };
 
 
@@ -373,12 +375,26 @@ main(int argc, char *argv[])
         igroup_vec.push_back(igroup_id);
       }
 
+
+      int ncompares = igroup_vec.size();
+
+      double max_api_similarity = 0;
+      double min_api_similarity = INT_MAX;
+      double ave_api_similarity = 0;
+
      for(std::vector<int>::iterator igroup_it = igroup_vec.begin(); igroup_it != igroup_vec.end(); ++igroup_it)
       {
       
-        size_t api_similarity = similarity(func1_id, func2_id, *igroup_it, semantic_similarity_threshold, ignore_no_compares, call_depth, expand_ncalls  );
+        double api_similarity = similarity(func1_id, func2_id, *igroup_it, semantic_similarity_threshold, ignore_no_compares, call_depth, expand_ncalls  );
+
+        max_api_similarity = std::max(api_similarity, max_api_similarity);
+        min_api_similarity = std::min(api_similarity, min_api_similarity);
+
+        ave_api_similarity += api_similarity;
 
       }
+
+     ave_api_similarity = ave_api_similarity/ncompares;
 
 
 
