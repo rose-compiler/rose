@@ -79,10 +79,10 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
       " join tmp_called_functions as tcf1 on sem.func2_id = tcf1.callee_id "
       " where sem.similarity >= ? "
       " AND (tcf1.callee_id  = ? OR tcf1.callee_id = ?) AND (tcf2.callee_id  = ? OR tcf2.callee_id = ?)" 
-      " AND tcf2.igroup_id = ? AND tcf1.igroup_id = ?");
+      " AND tcf2.igroup_id = ? AND tcf1.igroup_id = ? GROUP BY sem.func1_id, sem.func2_id");
 
 
-  std::string _count_query("select count(*) from semantic_funcsim as sem" + _query_condition);
+  std::string _count_query("select COALESCE ((select count(*) from semantic_funcsim as sem" + _query_condition + "),0)");
 
 
   std::string _query("select sem.func1_id, sem.func2_id from semantic_funcsim as sem" + _query_condition);
