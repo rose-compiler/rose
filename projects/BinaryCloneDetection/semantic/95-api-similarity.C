@@ -100,81 +100,87 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
 
   int VERTEX_COUNT = count_stmt->execute_int();
 
-  //Get all vetexes and find the union 
+  if(VERTEX_COUNT > 0){
 
-  SqlDatabase::StatementPtr stmt = transaction->statement(
-      "select sem.func1_id, sem.func2_id from semantic_funcsim as sem" + _query_condition
-      );
+    //Get all vetexes and find the union 
 
-  stmt->bind(0, similarity_threshold);
-  stmt->bind(1, func1_id);
-  stmt->bind(2, func2_id);
-  stmt->bind(3, func1_id);
-  stmt->bind(4, func2_id);
-  stmt->bind(5, igroup_id);
-  stmt->bind(6, igroup_id);
+    SqlDatabase::StatementPtr stmt = transaction->statement(
+        "select sem.func1_id, sem.func2_id from semantic_funcsim as sem" + _query_condition
+        );
 
-  typedef adjacency_list <vecS, vecS, undirectedS> Graph;
-  typedef graph_traits<Graph>::vertex_descriptor Vertex;
-  typedef graph_traits<Graph>::vertices_size_type VertexIndex;
+    stmt->bind(0, similarity_threshold);
+    stmt->bind(1, func1_id);
+    stmt->bind(2, func2_id);
+    stmt->bind(3, func1_id);
+    stmt->bind(4, func2_id);
+    stmt->bind(5, igroup_id);
+    stmt->bind(6, igroup_id);
 
-  Graph graph(VERTEX_COUNT);
+    typedef adjacency_list <vecS, vecS, undirectedS> Graph;
+    typedef graph_traits<Graph>::vertex_descriptor Vertex;
+    typedef graph_traits<Graph>::vertices_size_type VertexIndex;
 
-  std::vector<VertexIndex> rank(num_vertices(graph));
-  std::vector<Vertex> parent(num_vertices(graph));
+    Graph graph(VERTEX_COUNT);
 
-  typedef VertexIndex* Rank;
-  typedef Vertex* Parent;
+    std::vector<VertexIndex> rank(num_vertices(graph));
+    std::vector<Vertex> parent(num_vertices(graph));
 
-  disjoint_sets<Rank, Parent> ds(&rank[0], &parent[0]);
+    typedef VertexIndex* Rank;
+    typedef Vertex* Parent;
 
-  initialize_incremental_components(graph, ds);
-  incremental_components(graph, ds);
+    disjoint_sets<Rank, Parent> ds(&rank[0], &parent[0]);
 
-  graph_traits<Graph>::edge_descriptor edge;
-  bool flag;
+    initialize_incremental_components(graph, ds);
+    incremental_components(graph, ds);
 
-  for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
-    int func1 = row.get<int>(0);
-    int func2 = row.get<int>(1);
-    boost::tie(edge, flag) = add_edge(func1, func2, graph);
-    ds.union_set(func1,func2);
+    graph_traits<Graph>::edge_descriptor edge;
+    bool flag;
 
-  }
-
-  typedef component_index<VertexIndex> Components;
-
-  Components components(parent.begin(), parent.end());
-
-  // Iterate through the component indices
-  BOOST_FOREACH(VertexIndex current_index, components) {
-    std::cout << "component " << current_index << " contains: ";
-
-    std::vector<int> component_funcs;
-
-    // Iterate through the child vertex indices for [current_index]
-    BOOST_FOREACH(VertexIndex child_index,
-        components[current_index]) {
-      component_funcs.push_back(child_index);
-      std::cout << child_index << " ";
-    }
-
-
-    if (component_funcs.size() > 0){
-      for(CallVec::iterator it = func1_vec->begin(); it != func1_vec->end(); ++it )
-        for(std::vector<int>::iterator comp_it; comp_it != component_funcs.end(); ++comp_it)
-          if(*it == *comp_it) 
-            *comp_it = component_funcs[0];
-
-      for(CallVec::iterator it = func2_vec->begin(); it != func2_vec->end(); ++it )
-        for(std::vector<int>::iterator comp_it; comp_it != component_funcs.end(); ++comp_it)
-          if(*it == *comp_it) 
-            *comp_it = component_funcs[0];
-
+    for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
+      int func1 = row.get<int>(0);
+      int func2 = row.get<int>(1);
+      boost::tie(edge, flag) = add_edge(func1, func2, graph);
+      ds.union_set(func1,func2);
 
     }
 
-    std::cout << std::endl;
+    typedef component_index<VertexIndex> Components;
+
+    Components components(parent.begin(), parent.end());
+
+    // Iterate through the component indices
+    BOOST_FOREACH(VertexIndex current_index, components) {
+      std::cout << "component " << current_index << " contains: ";
+
+      std::vector<int> component_funcs;
+
+      // Iterate through the child vertex indices for [current_index]
+      BOOST_FOREACH(VertexIndex child_index,
+          components[current_index]) {
+        component_funcs.push_back(child_index);
+        std::cout << child_index << " ";
+      }
+
+
+      if (component_funcs.size() > 0){
+        for(CallVec::iterator it = func1_vec->begin(); it != func1_vec->end(); ++it )
+          for(std::vector<int>::iterator comp_it; comp_it != component_funcs.end(); ++comp_it)
+            if(*it == *comp_it) 
+              *comp_it = component_funcs[0];
+
+        for(CallVec::iterator it = func2_vec->begin(); it != func2_vec->end(); ++it )
+          for(std::vector<int>::iterator comp_it; comp_it != component_funcs.end(); ++comp_it)
+            if(*it == *comp_it) 
+              *comp_it = component_funcs[0];
+
+
+      }
+
+      std::cout << std::endl;
+    }
+
+  }else{
+    std::cout << "Nothing to normalize." << std::endl;
   }
 }
 
@@ -268,19 +274,33 @@ similarity(int func1_id, int func2_id, int igroup_id, double similarity, bool ig
  CallVec* func2_vec = load_api_calls_for(func2_id, igroup_id, ignore_no_compares, call_depth, expand_ncalls);
 
  //remove possible inlined functions from the traces
- remove_compilation_unit_complement(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec);
+ //remove_compilation_unit_complement(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec);
 
  //Detect and normalize similar function calls
  normalize_call_trace(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec);
 
- size_t dl = Combinatorics::damerau_levenshtein_distance(*func1_vec, *func2_vec);
-
- size_t dl_max = std::max(func1_vec->size(), func2_vec->size());
  
+ size_t dl_max = std::max(func1_vec->size(), func2_vec->size());
+
+ double dl_similarity = 1.0;
+
+ if ( dl_max > 0 ){
+   size_t dl = Combinatorics::damerau_levenshtein_distance(*func1_vec, *func2_vec);
+
+   dl_similarity = 1.0 - (double)dl / dl_max;
+
+ }
+
+
+ std::cout << "deleting" << std::endl;
  delete func1_vec;
  delete func2_vec;
 
- return 1.0 - (double)dl / dl_max;
+ std::cout << "finished deleting" << std::endl;
+
+
+
+ return dl_similarity;
 };
 
 
@@ -345,6 +365,9 @@ main(int argc, char *argv[])
     SqlDatabase::ConnectionPtr conn = SqlDatabase::Connection::create(argv[argno++]);
     transaction = conn->transaction();
 
+    //delete old data
+    transaction->execute("delete from api_call_similarity");
+ 
     //table of tested functions. Criteria is that it needs to pass at least one test.
     transaction->execute("create temporary table tmp_tested_funcs as select distinct func_id from semantic_fio");
     
@@ -359,8 +382,8 @@ main(int argc, char *argv[])
 
     SqlDatabase::StatementPtr insert_stmt = transaction->statement("insert into api_call_similarity"
                                                             // 0        1         2           3          4
-                                                            "(func1_id, func2_id, similarity)"
-                                                            " values (?, ?, ?)");
+                                                            "(func1_id, func2_id, max_similarity, min_similarity, ave_similarity)"
+                                                            " values (?, ?, ?, ?, ?)");
  
     for (SqlDatabase::Statement::iterator row=similarity_stmt->begin(); row!=similarity_stmt->end(); ++row) {
       int func1_id = row.get<int>(0);
@@ -393,15 +416,19 @@ main(int argc, char *argv[])
 
         ave_api_similarity += api_similarity;
 
+        ncompares++;
       }
 
-      ave_api_similarity = ave_api_similarity/ncompares;
+      if( ncompares == 0)
+        ave_api_similarity = 1.0;
+      else
+        ave_api_similarity = ave_api_similarity/ncompares;
 
       insert_stmt->bind(0, func1_id);
       insert_stmt->bind(1, func2_id);
       insert_stmt->bind(2, max_api_similarity);
-      insert_stmt->bind(2, min_api_similarity);
-      insert_stmt->bind(2, ave_api_similarity);
+      insert_stmt->bind(3, min_api_similarity);
+      insert_stmt->bind(4, ave_api_similarity);
 
       insert_stmt->execute();
 
