@@ -77,7 +77,7 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
   std::string _query("select sem.func1_id, sem.func2_id from semantic_funcsim as sem"
       "join tmp_called_functions as tcf_2 on sem.func1_id = tcf_1.callee_id AND ( tcf.func_id IN (?,?)) AND (igroup_id = ?)"
       "join tmp_called_functions as tcf_1 on sem.func2_id = tcf_2.callee_id AND ( tcf.func_id IN (?,?)) AND (igroup_id = ?)"
-      "where similarity >= ? ORDER BY sem.func1_id, sem.func2_id");
+      "where sem.similarity >= ? ORDER BY sem.func1_id, sem.func2_id");
 
 
 
@@ -250,9 +250,8 @@ remove_compilation_unit_complement(int func1_id, int func2_id, int igroup_id, in
 
 
 size_t
-similarity(int func1_id, int func2_id, int igroup_id, CallVec& call_vec, double similarity, bool ignore_no_compares, int call_depth, bool expand_ncalls )
+similarity(int func1_id, int func2_id, int igroup_id, double similarity, bool ignore_no_compares, int call_depth, bool expand_ncalls )
 {
- call_vec.clear();
 
  CallVec* func1_vec = load_api_calls_for(func1_id, igroup_id, ignore_no_compares, call_depth, expand_ncalls);
  CallVec* func2_vec = load_api_calls_for(func2_id, igroup_id, ignore_no_compares, call_depth, expand_ncalls);
@@ -278,7 +277,6 @@ class FunctionPair{
 
   int func1_id;
   int func2_id;
-  std::vector<int> igroup_ids;
 
   FunctionPair(int _func1_id, int _func2_id) :  func1_id(_func1_id), func2_id(_func2_id) {};
 };
@@ -302,7 +300,11 @@ main(int argc, char *argv[])
     bool ignore_no_compares = false;
     int  call_depth = 0;
 
-    
+ 
+    bool ignore_faults = true;
+    double semantic_similarity_threshold = 0.70;
+
+    bool expand_ncalls = true;
 
     int argno = 1;
     for (/*void*/; argno<argc && '-'==argv[argno][0]; ++argno) {
@@ -315,6 +317,8 @@ main(int argc, char *argv[])
             ignore_inline_candidates = true;
         } else if (!strcmp(argv[argno], "--ignore-no-compares")) {
           ignore_no_compares = false;
+        } else if (!strcmp(argv[argno], "--no-expand-ncalls")) {
+          expand_ncalls = false;
         } else if (!strncmp(argv[argno], "--call-depth=",13)) {
           call_depth = strtol(argv[argno]+13, NULL, 0);
         } else {
@@ -349,8 +353,39 @@ main(int argc, char *argv[])
 
     }
 
+  
+    for (FunctionPairVec::iterator it = pair_vec.begin(); it != pair_vec.end(); ++it)
+    {
+      int func1_id = (*it)->func1_id;
+      int func2_id = (*it)->func2_id;
+
+      SqlDatabase::StatementPtr igroup_stmt = transaction->statement("select distinct igroup_id from semantic_fio as sem1 "
+          " join semantic_fio as sem2 ON sem2.igroup_id = sem1.igroup_id"
+          " where sem1.func_id = ? AND sem2.func_id = ? AND (locals_consumed > 0 OR arguments_consumed > 0 OR globals_consumed > 0 OR pointers_consumed > 0 OR integers_consumed > 0)"+
+          std::string(ignore_faults?" and status = 0":""));
+      igroup_stmt->bind(0, func1_id);
+      igroup_stmt->bind(1, func2_id);
 
 
+      std::vector<int> igroup_vec;
+      for (SqlDatabase::Statement::iterator row=igroup_stmt->begin(); row!=igroup_stmt->end(); ++row) {
+        int igroup_id = row.get<int>(0);
+        igroup_vec.push_back(igroup_id);
+      }
+
+     for(std::vector<int>::iterator igroup_it = igroup_vec.begin(); igroup_it != igroup_vec.end(); ++igroup_it)
+      {
+      
+        size_t api_similarity = similarity(func1_id, func2_id, *igroup_it, semantic_similarity_threshold, ignore_no_compares, call_depth, expand_ncalls  );
+
+      }
+
+
+
+    }
+   
+    
+   
 
 
     return 0;
