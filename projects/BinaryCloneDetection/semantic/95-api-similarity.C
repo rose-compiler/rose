@@ -52,7 +52,9 @@ load_api_calls_for(int func_id, int igroup_id, bool ignore_no_compares, int call
  
   stmt->bind(0, func_id);
   stmt->bind(1, igroup_id);
-  stmt->bind(2, func_id);
+
+  if( call_depth >= 0 )
+    stmt->bind(2, func_id);
 
   CallVec* call_vec = new CallVec; 
   for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
@@ -277,6 +279,9 @@ similarity(int func1_id, int func2_id, int igroup_id, double similarity, bool ig
  //remove_compilation_unit_complement(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec);
 
  //Detect and normalize similar function calls
+
+ std::cout << "Size 1: " << func1_vec->size() << " Size 2: " << func2_vec->size() << std::endl;
+ 
  normalize_call_trace(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec);
 
  
@@ -291,6 +296,7 @@ similarity(int func1_id, int func2_id, int igroup_id, double similarity, bool ig
 
  }
 
+ std::cout << "dl_max: " << dl_max << "  dl_similarity " << dl_similarity << std::endl; 
 
  std::cout << "deleting" << std::endl;
  delete func1_vec;
@@ -410,6 +416,8 @@ main(int argc, char *argv[])
         int igroup_id = row.get<int>(0);
 
         double api_similarity = similarity(func1_id, func2_id, igroup_id, semantic_similarity_threshold, ignore_no_compares, call_depth, expand_ncalls  );
+
+        std::cout << "computed similarity: "<< api_similarity << std::endl;
 
         max_api_similarity = std::max(api_similarity, max_api_similarity);
         min_api_similarity = std::min(api_similarity, min_api_similarity);
