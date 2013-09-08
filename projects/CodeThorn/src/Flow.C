@@ -229,9 +229,21 @@ long Edge::hash() const {
   return typesCode();
 }
 
-Flow::Flow() {
+Flow::Flow():_boostified(false) {
   resetDotOptions();
 }
+
+void Flow::boostify() {
+  cout<<"STATUS: converting ICFG to boost graph representation ... "<<endl;
+  edge_t e; bool b;
+  for(Flow::iterator i=begin();i!=end();++i) {
+	tie(e,b)=add_edge((*i).source,(*i).target,_flowGraph);
+	_flowGraph[e]=(*i).getTypes();
+  }
+  _boostified=true;
+  cout<<"STATUS: converting ICFG to boost graph representation: DONE."<<endl;
+}
+
 
 void Flow::resetDotOptions() {
   _dotOptionDisplayLabel=true;
@@ -384,9 +396,23 @@ Flow Flow::inEdges(Label label) {
 
 Flow Flow::outEdges(Label label) {
   Flow flow;
-  for(Flow::iterator i=begin();i!=end();++i) {
-    if((*i).source==label)
-      flow.insert(*i);
+  if(!_boostified) {
+	for(Flow::iterator i=begin();i!=end();++i) {
+	  if((*i).source==label)
+		flow.insert(*i);
+	}
+  } else {
+	typedef graph_traits<FlowGraph> GraphTraits;
+	//	typename property_map<FlowGraph, vertex_index_t>::type 
+	// index = get(vertex_index, _flowGraph);
+	GraphTraits::out_edge_iterator out_i, out_end;
+	GraphTraits::edge_descriptor e;
+	for (tie(out_i, out_end) = out_edges(label, _flowGraph); 
+		 out_i != out_end; ++out_i) {
+	  e = *out_i;
+	  Label src = source(e, _flowGraph), targ = target(e, _flowGraph);
+	  flow.insert(Edge(src,_flowGraph[e],targ));
+	}
   }
   flow.setDotOptionDisplayLabel(_dotOptionDisplayLabel);
   flow.setDotOptionDisplayStmt(_dotOptionDisplayStmt);
@@ -444,8 +470,8 @@ LabelSet Flow::targetLabels() {
 }
 
 LabelSet Flow::pred(Label label) {
-  Flow flow=inEdges(label);
-  return flow.sourceLabels();
+	Flow flow=inEdges(label);
+	return flow.sourceLabels();
 }
 
 LabelSet Flow::succ(Label label) {

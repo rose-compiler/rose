@@ -1,11 +1,18 @@
 #ifndef FLOW_H
 #define FLOW_H
 
+#include <boost/graph/adjacency_list.hpp> 
+#include <boost/graph/graphviz.hpp>
+using namespace std;
+using namespace boost; 
+
 namespace CodeThorn {
 
 #include "SgNodeHelper.h"
 #include "Labeler.h"
 #include "CommandLineOptions.h"
+
+  //#include <boost/graph/graphviz.hpp>
 
   enum EdgeType { EDGE_UNKNOWN=0, EDGE_FORWARD, EDGE_BACKWARD, EDGE_TRUE, EDGE_FALSE, EDGE_LOCAL, EDGE_CALL, EDGE_CALLRETURN, EDGE_EXTERNAL, EDGE_PATH };
 
@@ -41,6 +48,7 @@ class Edge {
   string color() const;
   string dotEdgeStyle() const;
   long hash() const;
+  set<EdgeType> getTypes() const { return _types; }
  private:
   set<EdgeType> _types;
 };
@@ -89,6 +97,14 @@ class Edge {
   size_t deleteEdges(EdgeType edgeType);
   size_t deleteEdges(Flow& flow);
   void establishBoostGraph();
+
+  //Define the graph using those classes
+  typedef adjacency_list<listS, vecS, directedS, Label, set<EdgeType> > FlowGraph;
+  //Some typedefs for simplicity
+  typedef graph_traits<FlowGraph>::vertex_descriptor vertex_t;
+  typedef graph_traits<FlowGraph>::edge_descriptor edge_t;
+  void boostify();
+
  private:
   bool _dotOptionDisplayLabel;
   bool _dotOptionDisplayStmt;
@@ -96,6 +112,9 @@ class Edge {
   bool _dotOptionFixedColor;
   string _fixedColor;
   bool _dotOptionHeaderFooter;
+  bool _boostified;
+
+  FlowGraph _flowGraph;
 };
 
 class InterEdge {
