@@ -250,4 +250,6 @@ create table api_call_similarity (
     max_similarity double precision,             -- a value between 0 and 1, with one being equality
     min_similarity double precision,             -- a value between 0 and 1, with one being equality
     ave_similarity double precision              -- a value between 0 and 1, with one being equality
-);
+
+  
+    );

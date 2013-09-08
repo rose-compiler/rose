@@ -342,8 +342,9 @@ main(int argc, char *argv[])
 
 
     //Creat list of functions and igroups to analyze
-    SqlDatabase::StatementPtr similarity_stmt = transaction->statement("select sem.func1_id, sem.func2_id from semantic_funcsim as sem where similarity >= ? ");
+    SqlDatabase::StatementPtr similarity_stmt = transaction->statement("select sem.func1_id, sem.func2_id from semantic_funcsim as sem where sem.similarity >= ? ");
 
+    similarity_stmt->bind(0, semantic_similarity_threshold);
 
     SqlDatabase::StatementPtr insert_stmt = transaction->statement("insert into api_call_similarity"
                                                             // 0        1         2           3          4
