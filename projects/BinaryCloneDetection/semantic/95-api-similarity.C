@@ -348,18 +348,8 @@ main(int argc, char *argv[])
     FunctionPairVec pair_vec;
 
     for (SqlDatabase::Statement::iterator row=similarity_stmt->begin(); row!=similarity_stmt->end(); ++row) {
-      int func1 = row.get<int>(0);
-      int func2 = row.get<int>(1);
-
-      pair_vec.push_back(new FunctionPair(func1, func2));
-
-    }
-
-  
-    for (FunctionPairVec::iterator it = pair_vec.begin(); it != pair_vec.end(); ++it)
-    {
-      int func1_id = (*it)->func1_id;
-      int func2_id = (*it)->func2_id;
+      int func1_id = row.get<int>(0);
+      int func2_id = row.get<int>(1);
 
       SqlDatabase::StatementPtr igroup_stmt = transaction->statement("select distinct igroup_id from semantic_fio as sem1 "
           " join semantic_fio as sem2 ON sem2.igroup_id = sem1.igroup_id"
@@ -369,23 +359,19 @@ main(int argc, char *argv[])
       igroup_stmt->bind(1, func2_id);
 
 
-      std::vector<int> igroup_vec;
-      for (SqlDatabase::Statement::iterator row=igroup_stmt->begin(); row!=igroup_stmt->end(); ++row) {
-        int igroup_id = row.get<int>(0);
-        igroup_vec.push_back(igroup_id);
-      }
 
-
-      int ncompares = igroup_vec.size();
+      int ncompares = 0;
 
       double max_api_similarity = 0;
       double min_api_similarity = INT_MAX;
       double ave_api_similarity = 0;
 
-     for(std::vector<int>::iterator igroup_it = igroup_vec.begin(); igroup_it != igroup_vec.end(); ++igroup_it)
-      {
-      
-        double api_similarity = similarity(func1_id, func2_id, *igroup_it, semantic_similarity_threshold, ignore_no_compares, call_depth, expand_ncalls  );
+      for (SqlDatabase::Statement::iterator row=igroup_stmt->begin(); row!=igroup_stmt->end(); ++row) {
+
+
+        int igroup_id = row.get<int>(0);
+
+        double api_similarity = similarity(func1_id, func2_id, igroup_id, semantic_similarity_threshold, ignore_no_compares, call_depth, expand_ncalls  );
 
         max_api_similarity = std::max(api_similarity, max_api_similarity);
         min_api_similarity = std::min(api_similarity, min_api_similarity);
@@ -394,7 +380,7 @@ main(int argc, char *argv[])
 
       }
 
-     ave_api_similarity = ave_api_similarity/ncompares;
+      ave_api_similarity = ave_api_similarity/ncompares;
 
 
 
