@@ -345,8 +345,11 @@ main(int argc, char *argv[])
     SqlDatabase::StatementPtr similarity_stmt = transaction->statement("select sem.func1_id, sem.func2_id from semantic_funcsim as sem where similarity >= ? ");
 
 
-    FunctionPairVec pair_vec;
-
+    SqlDatabase::StatementPtr insert_stmt = transaction->statement("insert into api_call_similarity"
+                                                            // 0        1         2           3          4
+                                                            "(func1_id, func2_id, similarity)"
+                                                            " values (?, ?, ?)");
+ 
     for (SqlDatabase::Statement::iterator row=similarity_stmt->begin(); row!=similarity_stmt->end(); ++row) {
       int func1_id = row.get<int>(0);
       int func2_id = row.get<int>(1);
@@ -382,12 +385,19 @@ main(int argc, char *argv[])
 
       ave_api_similarity = ave_api_similarity/ncompares;
 
+      insert_stmt->bind(0, func1_id);
+      insert_stmt->bind(1, func2_id);
+      insert_stmt->bind(2, max_api_similarity);
+      insert_stmt->bind(2, min_api_similarity);
+      insert_stmt->bind(2, ave_api_similarity);
 
+      insert_stmt->execute();
 
     }
    
     
    
+    transaction->commit();
 
 
     return 0;
