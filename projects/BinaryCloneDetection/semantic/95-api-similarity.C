@@ -271,7 +271,21 @@ similarity(int func1_id, int func2_id, int igroup_id, CallVec& call_vec, double 
  return dl;
 };
 
-  
+
+class FunctionPair{
+
+  public:
+
+  int func1_id;
+  int func2_id;
+  std::vector<int> igroup_ids;
+
+  FunctionPair(int _func1_id, int _func2_id) :  func1_id(_func1_id), func2_id(_func2_id) {};
+};
+
+typedef std::vector<FunctionPair*> FunctionPairVec;
+
+
 int
 main(int argc, char *argv[])
 {
@@ -319,6 +333,25 @@ main(int argc, char *argv[])
     
     //table of called fuctions. 
     transaction->execute("create temporary table tmp_called_functions as select distinct igroup_id, func_id, callee_id from semantic_fio_calls");
- 
+
+
+    //Creat list of functions and igroups to analyze
+    SqlDatabase::StatementPtr similarity_stmt = transaction->statement("select sem.func1_id, sem.func2_id from semantic_funcsim as sem where similarity >= ? ");
+
+
+    FunctionPairVec pair_vec;
+
+    for (SqlDatabase::Statement::iterator row=similarity_stmt->begin(); row!=similarity_stmt->end(); ++row) {
+      int func1 = row.get<int>(0);
+      int func2 = row.get<int>(1);
+
+      pair_vec.push_back(new FunctionPair(func1, func2));
+
+    }
+
+
+
+
+
     return 0;
 } 
