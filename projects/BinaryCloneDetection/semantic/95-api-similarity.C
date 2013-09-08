@@ -77,10 +77,10 @@ void
 normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarity_threshold, CallVec* func1_vec, CallVec* func2_vec)
 {
   std::string _query_condition(
-      " join tmp_called_functions as tcf2 on sem.func1_id = tcf2.callee_id "
-      " join tmp_called_functions as tcf1 on sem.func2_id = tcf1.callee_id "
+      " join tmp_called_functions as tcf1 on sem.func1_id = tcf1.callee_id "
+      " join tmp_called_functions as tcf2 on sem.func2_id = tcf2.callee_id "
       " where sem.similarity >= ? "
-      " AND (tcf1.callee_id  = ? OR tcf1.callee_id = ?) AND (tcf2.callee_id  = ? OR tcf2.callee_id = ?)" 
+      " AND (tcf1.func_id  = ? OR tcf1.func_id = ?) AND (tcf2.func_id  = ? OR tcf2.func_id = ?) AND tcf2.func_id != tcf1.func_id" 
       " AND tcf2.igroup_id = ? AND tcf1.igroup_id = ? GROUP BY sem.func1_id, sem.func2_id");
 
 
@@ -103,6 +103,7 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
   int VERTEX_COUNT = count_stmt->execute_int();
 
   if(VERTEX_COUNT > 0){
+    std::cout << "THERE IS SOMETHING TO NORMALIZE!" << std::endl;
 
     //Get all vetexes and find the union 
 
@@ -190,9 +191,12 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
  *   - criteria complement of the functions from the files of the caller functions in the 
  *     call trace is removed.
  */
-void 
+std::pair<CallVec*, CallVec*> 
 remove_compilation_unit_complement(int func1_id, int func2_id, int igroup_id, int similarity, CallVec* func1_vec, CallVec* func2_vec)
 {
+  CallVec* new_func1_vec = new CallVec;
+  CallVec* new_func2_vec = new CallVec;
+
 
   if( func1_vec->size() > 0 || func2_vec->size() > 0  ){
     //find the compilation units in question. A compilation unit is in our case a file.
@@ -246,27 +250,18 @@ remove_compilation_unit_complement(int func1_id, int func2_id, int igroup_id, in
 
 
     //prune functions to remove away from the call trace into new vectors
-    CallVec* new_func1_vec = new CallVec;
-    CallVec* new_func2_vec = new CallVec;
-
     for(CallVec::iterator it = func1_vec->begin(); it != func1_vec->end(); ++it)
       if ( std::find(remove_these.begin(), remove_these.end(), *it) == remove_these.end()) 
         new_func1_vec->push_back(*it);
 
     for(CallVec::iterator it = func2_vec->begin(); it != func2_vec->end(); ++it)
       if ( std::find(remove_these.begin(), remove_these.end(), *it) == remove_these.end()) 
-        new_func1_vec->push_back(*it);
+        new_func2_vec->push_back(*it);
 
-
-    //replace the result vectors with the pruned versions
-    delete func1_vec;
-    delete func2_vec;
-
-    func1_vec = new_func1_vec;
-    func2_vec = new_func2_vec;
 
   }
-  
+
+  return std::pair<CallVec*, CallVec*>(new_func1_vec, new_func2_vec);
 }
 
 
@@ -275,11 +270,28 @@ double
 similarity(int func1_id, int func2_id, int igroup_id, double similarity, bool ignore_no_compares, int call_depth, bool expand_ncalls )
 {
 
+ std::cout << "Load Vectors" << std::endl;
+
+
  CallVec* func1_vec = load_api_calls_for(func1_id, igroup_id, ignore_no_compares, call_depth, expand_ncalls);
  CallVec* func2_vec = load_api_calls_for(func2_id, igroup_id, ignore_no_compares, call_depth, expand_ncalls);
 
+ std::cout << "After Load Vectors" << std::endl;
+
+
+
+ std::cout << "Begin remove compilation unit complement" << std::endl;
+
  //remove possible inlined functions from the traces
- remove_compilation_unit_complement(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec);
+ std::pair<CallVec*, CallVec*> removed_complement = remove_compilation_unit_complement(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec);
+
+ delete func1_vec;
+ delete func2_vec;
+ func1_vec = removed_complement.first;
+ func2_vec = removed_complement.second;
+
+
+ std::cout << "After remove compilation unit complement" << std::endl;
 
  //Detect and normalize similar function calls
 
@@ -287,13 +299,18 @@ similarity(int func1_id, int func2_id, int igroup_id, double similarity, bool ig
  
  normalize_call_trace(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec);
 
+ std::cout << "After normalization" << std::endl;
  
  size_t dl_max = std::max(func1_vec->size(), func2_vec->size());
 
  double dl_similarity = 1.0;
 
  if ( dl_max > 0 ){
+
+   std::cout << "Start computing dl distance" << std::endl;
    size_t dl = Combinatorics::damerau_levenshtein_distance(*func1_vec, *func2_vec);
+
+   std::cout << "After computing dl distance" << std::endl;
 
    dl_similarity = 1.0 - (double)dl / dl_max;
 
