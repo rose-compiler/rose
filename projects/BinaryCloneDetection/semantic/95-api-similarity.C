@@ -46,7 +46,7 @@ load_api_calls_for(int func_id, int igroup_id, bool ignore_no_compares, int call
      "select fio.callee_id, fio.ncalls from semantic_fio_calls as fio"
      +std::string( ignore_no_compares ? " join tmp_tested_funcs as f1 on f1.func_id = fio.callee_id" : "") // filter out functions with no compares
      +" where fio.func_id = ? AND fio.igroup_id = ?" // filter on current parameters
-     +std::string(call_depth > 0 ? " AND fio.caller_id = ?" : "") // filter out function not called directly
+     +std::string(call_depth >= 0 ? " AND fio.caller_id = ?" : "") // filter out function not called directly
      +" ORDER BY fio.pos"
      );
  
@@ -75,8 +75,8 @@ void
 normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarity, CallVec* func1_vec, CallVec* func2_vec)
 {
   std::string _query("select sem.func1_id, sem.func2_id from semantic_funcsim as sem"
-      "join tmp_called_functions as tcf_2 on sem.func1_id = tcf_1.callee_id AND ( tcf.func_id IN (?,?)) AND (igroup_id = ?)"
-      "join tmp_called_functions as tcf_1 on sem.func2_id = tcf_2.callee_id AND ( tcf.func_id IN (?,?)) AND (igroup_id = ?)"
+      "join tmp_called_functions as tcf2 on sem.func1_id = tcf1.callee_id AND ( tcf.func_id IN (?,?)) AND (igroup_id = ?)"
+      "join tmp_called_functions as tcf1 on sem.func2_id = tcf2.callee_id AND ( tcf.func_id IN (?,?)) AND (igroup_id = ?)"
       "where sem.similarity >= ? ORDER BY sem.func1_id, sem.func2_id");
 
 
@@ -355,10 +355,10 @@ main(int argc, char *argv[])
       int func1_id = row.get<int>(0);
       int func2_id = row.get<int>(1);
 
-      SqlDatabase::StatementPtr igroup_stmt = transaction->statement("select distinct igroup_id from semantic_fio as sem1 "
+      SqlDatabase::StatementPtr igroup_stmt = transaction->statement("select distinct sem1.igroup_id from semantic_fio as sem1 "
           " join semantic_fio as sem2 ON sem2.igroup_id = sem1.igroup_id"
-          " where sem1.func_id = ? AND sem2.func_id = ? AND (locals_consumed > 0 OR arguments_consumed > 0 OR globals_consumed > 0 OR pointers_consumed > 0 OR integers_consumed > 0)"+
-          std::string(ignore_faults?" and status = 0":""));
+          " where sem1.func_id = ? AND sem2.func_id = ? AND (sem1.locals_consumed > 0 OR sem1.arguments_consumed > 0 OR sem1.globals_consumed > 0 OR sem1.pointers_consumed > 0 OR sem1.integers_consumed > 0)"+
+          std::string(ignore_faults?" and sem1.status = 0 and sem2.status = 0":""));
       igroup_stmt->bind(0, func1_id);
       igroup_stmt->bind(1, func2_id);
 
