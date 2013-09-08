@@ -72,7 +72,7 @@ load_api_calls_for(int func_id, int igroup_id, bool ignore_no_compares, int call
 using namespace boost;
 
 void
-normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarity, CallVec* func1_vec, CallVec* func2_vec)
+normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarity_threshold, CallVec* func1_vec, CallVec* func2_vec)
 {
   std::string _query_condition(
       " join tmp_called_functions as tcf2 on sem.func1_id = tcf2.callee_id "
@@ -91,7 +91,7 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
 
   //Count how many vertices we have for boost graph
   SqlDatabase::StatementPtr count_stmt = transaction->statement( _count_query );
-  count_stmt->bind(0, similarity);
+  count_stmt->bind(0, similarity_threshold);
   count_stmt->bind(1, func1_id);
   count_stmt->bind(2, func2_id);
   count_stmt->bind(3, func1_id);
@@ -104,13 +104,13 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
   //Get all vetexes and find the union 
   SqlDatabase::StatementPtr stmt = transaction->statement( _query );
 
-  count_stmt->bind(0, similarity);
-  count_stmt->bind(1, func1_id);
-  count_stmt->bind(2, func2_id);
-  count_stmt->bind(3, func1_id);
-  count_stmt->bind(4, func2_id);
-  count_stmt->bind(5, igroup_id);
-  count_stmt->bind(6, igroup_id);
+  stmt->bind(0, similarity_threshold);
+  stmt->bind(1, func1_id);
+  stmt->bind(2, func2_id);
+  stmt->bind(3, func1_id);
+  stmt->bind(4, func2_id);
+  stmt->bind(5, igroup_id);
+  stmt->bind(6, igroup_id);
 
   typedef adjacency_list <vecS, vecS, undirectedS> Graph;
   typedef graph_traits<Graph>::vertex_descriptor Vertex;
