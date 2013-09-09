@@ -103,15 +103,17 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
   count_stmt->bind(5, igroup_id);
   count_stmt->bind(6, igroup_id);
 
-  int VERTEX_COUNT = count_stmt->execute_int();
+  int NUM_ELEMS = count_stmt->execute_int();
 
 
-  std::cout << "VERTEX COUNT " << VERTEX_COUNT << std::endl;
-
-  if(VERTEX_COUNT > 0){
+  if(NUM_ELEMS > 0){
     std::cout << "THERE IS SOMETHING TO NORMALIZE!" << std::endl;
 
+
+    int VERTEX_COUNT = transaction->statement("select count(*) from semantic_functions")->execute_int();
     //Get all vetexes and find the union 
+    std::cout << "VERTEX COUNT " << VERTEX_COUNT << std::endl;
+
 
     SqlDatabase::StatementPtr stmt = transaction->statement(_query_condition);
 
@@ -122,6 +124,8 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
     stmt->bind(4, func2_id);
     stmt->bind(5, igroup_id);
     stmt->bind(6, igroup_id);
+
+    std::cout << "binding" << std::endl;
 
     typedef adjacency_list <vecS, vecS, undirectedS> Graph;
     typedef graph_traits<Graph>::vertex_descriptor Vertex;
@@ -135,21 +139,38 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
     typedef VertexIndex* Rank;
     typedef Vertex* Parent;
 
+
+     std::cout << "graph1" << std::endl;
+
     disjoint_sets<Rank, Parent> ds(&rank[0], &parent[0]);
 
     initialize_incremental_components(graph, ds);
     incremental_components(graph, ds);
 
+     std::cout << "graph2" << std::endl;
+
+
     graph_traits<Graph>::edge_descriptor edge;
     bool flag;
 
     for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
+      std::cout << "in loop \n";
+      
       int func1 = row.get<int>(0);
       int func2 = row.get<int>(1);
+      std::cout << "  a in loop " << func1 << " " << func2 << std::endl;
+ 
       boost::tie(edge, flag) = add_edge(func1, func2, graph);
+      std::cout << " b in loop \n";
+ 
       ds.union_set(func1,func2);
+      std::cout << " c in loop \n";
+ 
 
     }
+
+     std::cout << "graph2" << std::endl;
+
 
     typedef component_index<VertexIndex> Components;
 
@@ -169,7 +190,7 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
       }
 
 
-      if (component_funcs.size() > 0){
+      if (component_funcs.size() > 1){
         for(CallVec::iterator it = func1_vec->begin(); it != func1_vec->end(); ++it )
           for(std::vector<int>::iterator comp_it; comp_it != component_funcs.end(); ++comp_it)
             if(*it == *comp_it) 
