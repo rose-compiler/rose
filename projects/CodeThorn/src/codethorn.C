@@ -624,15 +624,9 @@ int main( int argc, char * argv[] ) {
   timer.start();
   cout << "=============================================================="<<endl;
   if(boolOptions["semantic-fold"]) {
-    analyzer.runSolver2();
-  } else {
-	switch(analyzer.getSolver()) {
-    case 1: analyzer.runSolver1();break;
-    case 2: analyzer.runSolver2();break;
-    case 3: analyzer.runSolver3();break;
-	default: assert(0);
-	}
+	analyzer.setSolver(4);
   }
+  analyzer.runSolver();
 
   if(boolOptions["post-semantic-fold"]) {
     cout << "Performing post semantic folding (this may take some time):"<<endl;
