@@ -443,6 +443,7 @@ InputGroup::reset()
 {
     for (Queues::iterator qi=queues_.begin(); qi!=queues_.end(); ++qi)
         qi->reset();
+    nconsumed_virtual_ = std::vector<size_t>(IQ_NQUEUES, 0);
 }
 
 void
@@ -451,6 +452,7 @@ InputGroup::clear()
     for (Queues::iterator qi=queues_.begin(); qi!=queues_.end(); ++qi)
         qi->clear();
     collection_id = -1;
+    nconsumed_virtual_ = std::vector<size_t>(IQ_NQUEUES, 0);
 }
 
 /*******************************************************************************************************************************

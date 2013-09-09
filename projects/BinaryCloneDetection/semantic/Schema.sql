@@ -145,15 +145,19 @@ create table semantic_sources (
 );
 
 -- Function input/output. One of these is produced each time we fuzz-test a function.
+-- Note: The *_consumed counters indicate the number of values consumed for a particular reason, not necessarily the
+-- number of values consumed on a particular queue.  For instance, if arguments_consumed is 5 it means that the test
+-- requested initializations for five function arguments even if the values for those arguments ultimately came from some
+-- other queue or memhash.
 create table semantic_fio (
        func_id integer references semantic_functions(id),
        igroup_id integer,                       -- references semantic_inputvalues.id
-       arguments_consumed integer,              -- number of inputs consumed from the arguments queue
-       locals_consumed integer,                 -- number of inputs consumed form the locals queue
-       globals_consumed integer,                -- number of inputs consumed from the globals queue
-       functions_consumed integer,              -- number of return values from black-box (skipped-over) functions
-       pointers_consumed integer,               -- number of pointers from the inputgroup consumed by this test
-       integers_consumed integer,               -- number of integers from the inputgroup consumed by this test
+       arguments_consumed integer,              -- number of inputs consumed for arguments
+       locals_consumed integer,                 -- number of inputs consumed for local variables
+       globals_consumed integer,                -- number of inputs consumed for globals
+       functions_consumed integer,              -- number of inputs consumed for return values of black-box (skipped) functions
+       pointers_consumed integer,               -- number of inputs consumed for pointers
+       integers_consumed integer,               -- number of inputs consumed for other reasons
        instructions_executed integer,           -- number of instructions executed by this test
        ogroup_id bigint,                        -- output produced by this function, semantic_outputvalues.hashkey
        counts_b64 text,                         -- binary blob (not sure what), base64 encoded
