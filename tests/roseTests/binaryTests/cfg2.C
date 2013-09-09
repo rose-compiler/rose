@@ -15,14 +15,15 @@ struct GraphvizVertexWriter {
     typedef typename boost::graph_traits<Graph>::vertex_descriptor Vertex;
     void operator()(std::ostream &output, const Vertex &v) const {
         SgAsmInstruction *insn = get(boost::vertex_name, cfg, v);
+        SgAsmx86Instruction *x86 = isSgAsmx86Instruction(insn);
         SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
-        std::string label = std::string("[") + StringUtility::numberToString(v) + "] " + unparseInstructionWithAddress(insn);
-        std::string bgcolor;
+        output <<"[ label=\"" <<unparseInstructionWithAddress(insn) <<"\"";
         if (insn->get_address()==func->get_entry_va() && !func->get_name().empty()) {
-            label = "Function <" + func->get_name() + ">\\n" + label;
-            bgcolor = ", fillcolor=\"40e0d0\", color=\"#40e0d0\"";
+            output <<", style=filled, color=\"#cd853f\"";
+        } else if (x86 && x86_ret==x86->get_kind()) {
+            output <<", style=filled, color=\"#fed3a7\"";
         }
-        output <<"[ label=\"" <<label <<"\"" <<bgcolor <<" ]";
+        output <<" ]";
     }
 };
 

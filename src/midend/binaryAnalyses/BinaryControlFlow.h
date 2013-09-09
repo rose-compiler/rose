@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_ControlFlow_H
 
 #include "Map.h"
+#include "WorkList.h"
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/depth_first_search.hpp>
@@ -349,7 +350,7 @@ namespace BinaryAnalysis {
          *  method adds), and the AST stores a fall-through edge for function call nodes for callees that may return (which
          *  this method removes). */
         template<class InsnCFG>
-        void fixup_fcall_fret(InsnCFG &cfg/*in,out*/);
+        void fixup_fcall_fret(InsnCFG &cfg/*in,out*/, bool preserve_call_fallthrough_edges);
 
         /** Builds a control flow graph with only function call edges.
          *
@@ -651,7 +652,8 @@ BinaryAnalysis::ControlFlow::build_insn_cfg_from_ast(SgNode *root, ControlFlowGr
     BlockGraph cfgb;
     build_block_cfg_from_ast(root, cfgb);
     explode_blocks(cfgb, cfg);
-    fixup_fcall_fret(cfg);
+    bool preserve_call_fallthrough_edges = false;
+    fixup_fcall_fret(cfg, preserve_call_fallthrough_edges);
 }
 
 template<class ControlFlowGraph>
@@ -785,13 +787,15 @@ BinaryAnalysis::ControlFlow::explode_blocks(const BlockCFG &cfgb, InsnCFG &cfgi/
 
 template<class InsnCFG>
 void
-BinaryAnalysis::ControlFlow::fixup_fcall_fret(InsnCFG &cfg)
+BinaryAnalysis::ControlFlow::fixup_fcall_fret(InsnCFG &cfg, bool preserve_call_fallthrough_edges)
 {
     typedef typename boost::graph_traits<InsnCFG>::vertex_descriptor CFG_Vertex;
     typedef typename boost::graph_traits<InsnCFG>::vertex_iterator CFG_VertexIterator;
     typedef typename boost::graph_traits<InsnCFG>::in_edge_iterator CFG_InEdgeIterator;
     typedef std::pair<CFG_Vertex, CFG_Vertex> CFG_VertexPair;
     typedef Map<SgAsmInstruction*, CFG_Vertex> InsnToVertex;
+    typedef Map<CFG_Vertex, rose_addr_t> CallSites; // return address (or -1) for each call or inter-function branch site
+    CFG_Vertex NO_VERTEX = boost::graph_traits<InsnCFG>::null_vertex();
 
     // Build mappings needed later and find the function return points.  We just look for the x86
     // RET instruction for now and assume that each one we find is a return if it has no control flow successors.  They have no
@@ -815,40 +819,76 @@ BinaryAnalysis::ControlFlow::fixup_fcall_fret(InsnCFG &cfg)
         }
     }
 
-    // Add edges from all the function return vertices back to the call's fall-through instruction.  This doesn't work
-    // correctly when a thunk "calls" a function because the called function in that case should return to the thunk's caller
-    // (provided that too isn't a thunk).  Also, gather the list of edges that we no longer need--the edges from the call to
-    // the call's fall-through--since there's now a path from the call, through the called function, and finally to the call's
-    // fall-through.
+    // Return the entry vertex for a function that owns the indicated instruction
+    struct FunctionEntryVertex {
+        const InsnToVertex &insn_to_vertex;
+        const InstructionMap &imap;
+        FunctionEntryVertex(const InsnToVertex &insn_to_vertex, const InstructionMap &imap)
+            : insn_to_vertex(insn_to_vertex), imap(imap) {}
+        CFG_Vertex operator()(SgAsmInstruction *insn) {
+            SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn, true);
+            SgAsmInstruction *entry_insn = imap.getOne(func->get_entry_va());
+            CFG_Vertex entry_vertex = insn_to_vertex.getOne(entry_insn);
+            return entry_vertex;
+        }
+    } function_entry_vertex(insn_to_vertex, insns);
+    
+    // Process each return site in order to add edges from the return site to the vertex representing the return address
+    std::vector<CFG_VertexPair> edges_to_insert, edges_to_erase;
     {
-        std::vector<CFG_VertexPair> edges_to_insert, edges_to_erase;
-        for (size_t i=0; i<isret.size(); ++i) {
-            if (isret[i]) {
-                CFG_Vertex ret_vertex = i;
-                SgAsmInstruction *ret_insn = get_ast_node(cfg, ret_vertex);
-                SgAsmFunction *callee_func = SageInterface::getEnclosingNode<SgAsmFunction>(ret_insn, true);
-                SgAsmBlock *callee_block = isSgAsmBlock(callee_func->get_statementList().front());
-                SgAsmInstruction *callee_insn = isSgAsmInstruction(callee_block->get_statementList().front());
-                CFG_Vertex callee_vertex = insn_to_vertex.getOne(callee_insn);
+        CFG_VertexIterator vi, vi_end;
+        for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
+            CFG_Vertex returner_vertex = *vi;
+            if (!isret[returner_vertex])
+                continue;
+            SgAsmInstruction *returner_insn = get_ast_node(cfg, returner_vertex);
 
+            // Find all of the true call sites for the function that owns the returner instruction (e.g., RET) by recursively
+            // following inter-function CFG edges until we find the true calls (those edges that follow CALL semantics).
+            // Inter-function CFG edges can represent true calls or simply inter-function branches such as thunks.  We have to
+            // gather up the information without adding it to the CFG yet (can't add while we're iterating)
+            std::vector<bool> seen(num_vertices(cfg), false);
+            WorkList<CFG_Vertex> worklist; // targets of inter-function CFG edges; function callees
+            worklist.push(function_entry_vertex(returner_insn));
+            while (!worklist.empty()) {
+                CFG_Vertex callee_vertex = worklist.shift();
                 CFG_InEdgeIterator ei, ei_end;
                 for (boost::tie(ei, ei_end)=in_edges(callee_vertex, cfg); ei!=ei_end; ++ei) {
-                    CFG_Vertex caller_vertex = source(*ei, cfg);
-                    SgAsmInstruction *caller_insn = get_ast_node(cfg, caller_vertex);
-                    rose_addr_t fallthrough_va = caller_insn->get_address() + caller_insn->get_size();
-                    if (SgAsmInstruction *fallthrough_insn = insns.getOrElse(fallthrough_va, NULL)) {
-                        CFG_Vertex fallthrough_vertex = insn_to_vertex.getOne(fallthrough_insn);
-                        edges_to_insert.push_back(CFG_VertexPair(ret_vertex, fallthrough_vertex));
-                        edges_to_erase.push_back(CFG_VertexPair(caller_vertex, fallthrough_vertex));
+                    CFG_Vertex caller_vertex = source(*ei, cfg); // caller is a inter-function call or branch site
+                    if (!seen[caller_vertex]) {
+                        seen[caller_vertex] = true;
+                        SgAsmInstruction *caller_insn = get_ast_node(cfg, caller_vertex);
+                        SgAsmBlock *caller_block = SageInterface::getEnclosingNode<SgAsmBlock>(caller_insn);
+                        assert(caller_block!=NULL);
+                        rose_addr_t target_va, returnee_va; // returnee_va is usually the call's fall-through address
+                        if (caller_block->is_function_call(target_va/*out*/, returnee_va/*out*/)) {
+                            // This is a true call, so we need to add a return edge from the return instruction (the
+                            // "returner") to what is probably the fall-through address of the call site (the returnee).
+                            SgAsmInstruction *returnee_insn = insns.getOrElse(returnee_va, NULL);
+                            CFG_Vertex returnee_vertex = insn_to_vertex.getOrElse(returnee_insn, NO_VERTEX);
+                            if (returnee_vertex!=NO_VERTEX) {
+                                edges_to_insert.push_back(CFG_VertexPair(returner_vertex, returnee_vertex));
+                                edges_to_erase.push_back(CFG_VertexPair(caller_vertex, returnee_vertex));
+                            }
+                        } else {
+                            // This is a non-call inter-function edge; probably a thunk. We need to find its call sites and add
+                            // the returnee addresses (call fall throughs) to the returnee addresses of the RET we're
+                            // processing.
+                            worklist.push(function_entry_vertex(caller_insn));
+                        }
                     }
                 }
             }
         }
+    }
+    
+    // Erase and insert edges now that we're done iterating.
+    if (!preserve_call_fallthrough_edges) {
         for (size_t i=0; i<edges_to_erase.size(); ++i)
             remove_edge(edges_to_erase[i].first, edges_to_erase[i].second, cfg);
-        for (size_t i=0; i<edges_to_insert.size(); ++i)
-            add_edge(edges_to_insert[i].first, edges_to_insert[i].second, cfg);
     }
+    for (size_t i=0; i<edges_to_insert.size(); ++i)
+        add_edge(edges_to_insert[i].first, edges_to_insert[i].second, cfg);
 }
 
 template<class ControlFlowGraph>
