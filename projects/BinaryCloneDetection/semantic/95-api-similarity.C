@@ -44,8 +44,8 @@ load_api_calls_for(int func_id, int igroup_id, bool ignore_no_compares, int call
 {
   SqlDatabase::StatementPtr stmt = transaction->statement(
      "select distinct fio.pos, fio.callee_id, fio.ncalls from semantic_fio_calls as fio"
-     +std::string( ignore_no_compares ? " join tmp_tested_funcs as f1 on f1.func_id = fio.callee_id" : "") // filter out functions with no compares
-     +" where fio.func_id = ? AND fio.igroup_id = ?" // filter on current parameters
+     " join tmp_tested_funcs as f1 on f1.func_id = fio.callee_id"  // filter out functions with no compares
+     " where fio.func_id = ? AND fio.igroup_id = ?" // filter on current parameters
      +std::string(call_depth >= 0 ? " AND fio.caller_id = ?" : "") // filter out function not called directly
 
      +" ORDER BY fio.pos"
@@ -179,7 +179,7 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
 
     // Iterate through the component indices
     BOOST_FOREACH(VertexIndex current_index, components) {
-      std::cout << "component " << current_index << " contains: ";
+      //std::cout << "component " << current_index << " contains: ";
 
       std::vector<int> component_funcs;
 
@@ -187,20 +187,35 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
       BOOST_FOREACH(VertexIndex child_index,
           components[current_index]) {
         component_funcs.push_back(child_index);
-        std::cout << child_index << " ";
+        //std::cout << child_index << " ";
       }
 
 
       if (component_funcs.size() > 1){
+
+        std::cout << "component " << current_index << " contains: ";
+
+        BOOST_FOREACH(VertexIndex child_index,
+            components[current_index]) {
+          component_funcs.push_back(child_index);
+          std::cout << child_index << " ";
+        }
+
         for(CallVec::iterator it = func1_vec->begin(); it != func1_vec->end(); ++it )
           for(std::vector<int>::iterator comp_it; comp_it != component_funcs.end(); ++comp_it)
-            if(*it == *comp_it) 
-              *comp_it = component_funcs[0];
+            if(*it == *comp_it){ 
+              std::cout << "Before " << *comp_it << " After " <<  std::endl;
+
+              *it = component_funcs[0];
+
+            }
 
         for(CallVec::iterator it = func2_vec->begin(); it != func2_vec->end(); ++it )
           for(std::vector<int>::iterator comp_it; comp_it != component_funcs.end(); ++comp_it)
-            if(*it == *comp_it) 
-              *comp_it = component_funcs[0];
+            if(*it == *comp_it){
+              std::cout << "Before " << *comp_it << " After " <<  std::endl;
+              *it = component_funcs[0];
+            }
 
 
       }
@@ -316,6 +331,15 @@ similarity(int func1_id, int func2_id, int igroup_id, double similarity, bool ig
  std::cout << "Size 1: " << func1_vec->size() << " Size 2: " << func2_vec->size() << std::endl;
  
 
+ std::cout << "After remove compilation unit complement" << std::endl;
+
+ //Detect and normalize similar function calls
+
+if( func1_vec->size() == 0 & func2_vec->size() == 0 )
+   return -1;
+
+ normalize_call_trace(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec) ; 
+
 
  //remove possible inlined functions from the traces
  std::pair<CallVec*, CallVec*> removed_complement = remove_compilation_unit_complement(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec);
@@ -326,15 +350,10 @@ similarity(int func1_id, int func2_id, int igroup_id, double similarity, bool ig
  func1_vec = removed_complement.first;
  func2_vec = removed_complement.second;
 
+
  std::cout << "SIZE After REMOVAL: " << func1_vec->size() << " " << func2_vec->size() << std::endl;
 
- std::cout << "After remove compilation unit complement" << std::endl;
 
- //Detect and normalize similar function calls
- if ( ! normalize_call_trace(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec) )
-   return 0;
-
- 
 
  std::cout << "After normalization" << std::endl;
  
@@ -480,6 +499,9 @@ main(int argc, char *argv[])
         std::cout << " \n\n LOOKING AT " << igroup_id << "\n";
 
         double api_similarity = similarity(func1_id, func2_id, igroup_id, semantic_similarity_threshold, ignore_no_compares, call_depth, expand_ncalls  );
+
+        if( api_similarity < 0)
+          continue;
 
         std::cout << "computed similarity: "<< api_similarity << std::endl;
 
