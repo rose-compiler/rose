@@ -57,8 +57,8 @@ typedef BaseSemantics::Pointer<class SValue> SValuePtr;
  *  Values of type type are used whenever a value needs to be stored, such as memory addresses, the values stored at those
  *  addresses, the values stored in registers, the operands for RISC operations, and the results of those operations.
  *
- *  An SValue points to an expression composed of the TreeNode types defined in InsnSemanticsExpr.h, also stores the set of
- *  instructions that were used in defining the value.  This provides a framework for some simple forms of def-use
+ *  An SValue points to an expression composed of the TreeNode types defined in InsnSemanticsExpr.h, and also stores the set of
+ *  instructions that were used to define the value.  This provides a framework for some simple forms of def-use
  *  analysis. See get_defining_instructions() for details.
  * 
  *  @section Unk_Uinit Unknown versus Uninitialized Values
@@ -411,8 +411,11 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 /** Defines RISC operators for the SymbolicSemantics domain.
  *
  *  These RISC operators depend on functionality introduced into the SValue class hierarchy at the SymbolicSemantics::SValue
- *  level. Therfore, the prototypical value supplied to the constructor or present in the supplied state object must have a
+ *  level. Therefore, the prototypical value supplied to the constructor or present in the supplied state object must have a
  *  dynamic type which is a SymbolicSemantics::SValue.
+ *
+ *  The RiscOperators object also controls whether use-def information is computed and stored in the SValues.  The default is
+ *  to not compute this information.  The set_compute_usedef() method can be used to enable this feature.
  *
  *  Each RISC operator should return a newly allocated semantic value so that the caller can adjust definers for the result
  *  without affecting any of the inputs. For example, a no-op that returns its argument should be implemented like this:
@@ -429,13 +432,13 @@ class RiscOperators: public BaseSemantics::RiscOperators {
     // Protected constructors, same as those in the base class
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(protoval, solver) {
+        : BaseSemantics::RiscOperators(protoval, solver), compute_usedef(false) {
         set_name("Symbolic");
         (void) SValue::promote(protoval); // make sure its dynamic type is a SymbolicSemantics::SValue
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(state, solver) {
+        : BaseSemantics::RiscOperators(state, solver), compute_usedef(false) {
         set_name("Symbolic");
         (void) SValue::promote(state->get_protoval()); // values must have SymbolicSemantics::SValue dynamic type
     }
@@ -482,13 +485,15 @@ public:
 public:
     virtual BaseSemantics::SValuePtr boolean_(bool b) {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::boolean_(b));
-        retval->defined_by(get_insn());
+        if (compute_usedef)
+            retval->defined_by(get_insn());
         return retval;
     }
 
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::number_(nbits, value));
-        retval->defined_by(get_insn());
+        if (compute_usedef)
+            retval->defined_by(get_insn());
         return retval;
     }
 
@@ -513,6 +518,21 @@ protected:
         return SValue::promote(boolean_(b));
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Configuration properties
+protected:
+    bool compute_usedef;
+
+public:
+    /** Accessor for the compute_usedef property.  If compute_usedef is set, then RISC operators will update the set of
+     *  defining instructions in their return values, computing the new set from the sets of definers for the RISC operands and
+     *  possibly the current instruction (the current instruction is usually not a definer if it simply copies data verbatim).
+     * @{ */
+    void set_compute_usedef(bool b=true) { compute_usedef = b; }
+    void clear_compute_usedef() { set_compute_usedef(false); }
+    bool get_compute_usedef() const { return compute_usedef; }
+    /** @} */
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override methods from base class.  These are the RISC operators that are invoked by a Dispatcher.
 public:
