@@ -838,8 +838,10 @@ class InputGroup {
 public:
     typedef std::vector<InputQueue> Queues;
 
-    InputGroup(): queues_(IQ_NQUEUES), collection_id(-1) {}
-    InputGroup(const SqlDatabase::TransactionPtr &tx, int id): queues_(IQ_NQUEUES), collection_id(-1) { load(tx, id); }
+    InputGroup()
+        : queues_(IQ_NQUEUES), collection_id(-1), nconsumed_virtual_(IQ_NQUEUES, 0) {}
+    InputGroup(const SqlDatabase::TransactionPtr &tx, int id)
+        : queues_(IQ_NQUEUES), collection_id(-1), nconsumed_virtual_(IQ_NQUEUES, 0) { load(tx, id); }
 
     /** Return a name for one of the queues. */
     static std::string queue_name(InputQueueName q) {
@@ -870,7 +872,16 @@ public:
     /** Returns how many items were consumed across all queues. */
     size_t nconsumed() const;
 
-    /** Resets the queues to the beginning. */
+    /** Returns how many values were virtually consumed from a queue.  This is the number of items that would have been
+     *  consumed from this queue if requests to consume a value for this queue were not redirected to some other queue. E.g.,
+     *  this measure how many arguments a function read even if those argument values ultimately came from the integer queue
+     *  rather than the argument queue. */
+    size_t nconsumed_virtual(InputQueueName qn) const { return nconsumed_virtual_[qn]; }
+
+    /** Increment the value returned by nconsumed_virtual(). */
+    void inc_nconsumed_virtual(InputQueueName qn) { ++nconsumed_virtual_[qn]; }
+
+    /** Resets the queues to the beginning. Also resets the nconsumed_virtual counters. */
     void reset();
 
     /** Resets and emptiess all queues. */
@@ -883,6 +894,7 @@ public:
 protected:
     Queues queues_;
     int collection_id;
+    std::vector<size_t> nconsumed_virtual_;     // num values consumed per queue before redirects were applied
 };
 
 /****************************************************************************************************************************
@@ -1197,7 +1209,7 @@ public:
     // Consume and return an input value.  An argument is needed only when the memhash queue is being used.
     template <size_t nBits>
     ValueType<nBits>
-    next_input_value(InputQueueName qn, rose_addr_t addr=0) {
+    next_input_value(InputQueueName qn_orig, rose_addr_t addr=0) {
         // Instruction semantics API1 calls readRegister when initializing X86InstructionSemantics in order to obtain the
         // original EIP value, but we haven't yet set up an input group (nor would we want this initialization to consume
         // an input anyway).  So just return zero.
@@ -1205,9 +1217,8 @@ public:
             return ValueType<nBits>(0);
 
         // One level of indirection allowed
-        InputQueueName qn2 = inputs->queue(qn).redirect();
-        if (qn2!=IQ_NONE)
-            qn = qn2;
+        InputQueueName qn2 = inputs->queue(qn_orig).redirect();
+        InputQueueName qn = IQ_NONE==qn2 ? qn_orig : qn2;
 
         // Get next value, which might throw an AnalysisFault::INPUT_LIMIT FaultException
         ValueType<nBits> retval;
@@ -1225,6 +1236,7 @@ public:
                           <<" input #" <<nvalues <<": " <<retval <<"\n";
             }
         }
+        inputs->inc_nconsumed_virtual(qn_orig); // before redirection
         tracer.emit(this->get_insn()->get_address(), Tracer::EV_CONSUME_INPUT, retval.known_value(), (int)qn);
         return retval;
     }

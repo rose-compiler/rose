@@ -1231,12 +1231,12 @@ main(int argc, char *argv[])
                                                        " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         stmt->bind(0, work.func_id);
         stmt->bind(1, work.igroup_id);
-        stmt->bind(2, igroup.queue(IQ_ARGUMENT).nconsumed());
-        stmt->bind(3, igroup.queue(IQ_LOCAL).nconsumed());
-        stmt->bind(4, igroup.queue(IQ_GLOBAL).nconsumed());
-        stmt->bind(5, igroup.queue(IQ_FUNCTION).nconsumed());
-        stmt->bind(6, igroup.queue(IQ_POINTER).nconsumed());
-        stmt->bind(7, igroup.queue(IQ_INTEGER).nconsumed());
+        stmt->bind(2, igroup.nconsumed_virtual(IQ_ARGUMENT));
+        stmt->bind(3, igroup.nconsumed_virtual(IQ_LOCAL));
+        stmt->bind(4, igroup.nconsumed_virtual(IQ_GLOBAL));
+        stmt->bind(5, igroup.nconsumed_virtual(IQ_FUNCTION));
+        stmt->bind(6, igroup.nconsumed_virtual(IQ_POINTER));
+        stmt->bind(7, igroup.nconsumed_virtual(IQ_INTEGER));
         stmt->bind(8, ogroup.get_ninsns());
         stmt->bind(9, ogroup_id);
         stmt->bind(10, ogroup.get_fault());
