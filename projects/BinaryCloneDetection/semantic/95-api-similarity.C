@@ -43,10 +43,11 @@ CallVec*
 load_api_calls_for(int func_id, int igroup_id, bool ignore_no_compares, int call_depth, bool expand_ncalls)
 {
   SqlDatabase::StatementPtr stmt = transaction->statement(
-     "select fio.callee_id, fio.ncalls from semantic_fio_calls as fio"
+     "select distinct fio.pos, fio.callee_id, fio.ncalls from semantic_fio_calls as fio"
      +std::string( ignore_no_compares ? " join tmp_tested_funcs as f1 on f1.func_id = fio.callee_id" : "") // filter out functions with no compares
      +" where fio.func_id = ? AND fio.igroup_id = ?" // filter on current parameters
      +std::string(call_depth >= 0 ? " AND fio.caller_id = ?" : "") // filter out function not called directly
+
      +" ORDER BY fio.pos"
      );
  
@@ -58,8 +59,8 @@ load_api_calls_for(int func_id, int igroup_id, bool ignore_no_compares, int call
 
   CallVec* call_vec = new CallVec; 
   for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
-    int callee_id = row.get<int>(0);
-    int ncalls    = row.get<int>(1);
+    int callee_id = row.get<int>(1);
+    int ncalls    = row.get<int>(2);
 
     if(expand_ncalls){
       for(int i = 0 ; i < ncalls ; i++)
@@ -431,10 +432,12 @@ main(int argc, char *argv[])
     transaction->execute("delete from api_call_similarity");
  
     //table of tested functions. Criteria is that it needs to pass at least one test.
-    transaction->execute("create temporary table tmp_tested_funcs as select distinct func_id from semantic_fio");
+    transaction->execute("create temporary table tmp_tested_funcs as select distinct func_id from semantic_fio where status = 0");
     
     //table of called fuctions. 
-    transaction->execute("create temporary table tmp_called_functions as select distinct igroup_id, func_id, callee_id from semantic_fio_calls");
+    transaction->execute("create temporary table tmp_called_functions as select distinct fio.igroup_id, fio.func_id, fio.callee_id from semantic_fio_calls fio"
+        " join tmp_tested_funcs as ttf on ttf.func_id = fio.callee_id "
+        );
 
 
     //Creat list of functions and igroups to analyze
