@@ -54,11 +54,17 @@ public:
     }
     /** @} */
     
-    /** Convenience for getting a value from an Option.  Since the "map.get(key).getOrEsle(dflt)" idiom is so frequence, a
+    /** Convenience for getting a value from an Option.  Since the "map.get(key).getOrEsle(dflt)" idiom is so frequenct, a
      *  getOrElse() method is defined directly on the map, combining both arguments into a single method call.
      * @{ */
-    const T& getOrElse(const Key& key, const T& dflt) const { return get(key).getOrElse(dflt); }
-    T& getOrElse(const Key& key, T& dflt) { return get(key).getOrElse(dflt); }
+    const T& getOrElse(const Key& key, const T& dflt) const {
+        typename map_type::const_iterator found = this->find(key);
+        return found==this->end() ? dflt : found->second;
+    }
+    T& getOrElse(const Key& key, T& dflt) {
+        typename map_type::iterator found = this->find(key);
+        return found==this->end() ? dflt : found->second;
+    }
     /** @} */
 
     /** Convenience for determining if a key exists in this map.  The STL map requires one to do a find() and compare the
