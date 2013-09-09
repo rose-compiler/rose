@@ -73,15 +73,16 @@ load_api_calls_for(int func_id, int igroup_id, bool ignore_no_compares, int call
 
 using namespace boost;
 
-void
+bool
 normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarity_threshold, CallVec* func1_vec, CallVec* func2_vec)
 {
   std::string _query_condition(
+      " select distinct sem.func1_id, sem.func2_id from semantic_funcsim as sem "
       " join tmp_called_functions as tcf1 on sem.func1_id = tcf1.callee_id "
       " join tmp_called_functions as tcf2 on sem.func2_id = tcf2.callee_id "
       " where sem.similarity >= ? "
       " AND (tcf1.func_id  = ? OR tcf1.func_id = ?) AND (tcf2.func_id  = ? OR tcf2.func_id = ?) AND tcf2.func_id != tcf1.func_id" 
-      " AND tcf2.igroup_id = ? AND tcf1.igroup_id = ? GROUP BY sem.func1_id, sem.func2_id");
+      " AND tcf2.igroup_id = ? AND tcf1.igroup_id = ? ");
 
 
 
@@ -89,8 +90,10 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
 
   //Query for the row count or return 0 if no rows found
 
+  std::cout << "NORMALIZING " << func1_id << " AND " << func2_id << " FOR IGROUP " << igroup_id << std::endl;;
+
   SqlDatabase::StatementPtr count_stmt = transaction->statement( 
-      "select COALESCE ((select count(*) from semantic_funcsim as sem" + _query_condition + "),0)"
+      "select COALESCE ((select count(*) from ( " + _query_condition + ") AS InsternalQuery ),0)"
       );
   count_stmt->bind(0, similarity_threshold);
   count_stmt->bind(1, func1_id);
@@ -102,14 +105,15 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
 
   int VERTEX_COUNT = count_stmt->execute_int();
 
+
+  std::cout << "VERTEX COUNT " << VERTEX_COUNT << std::endl;
+
   if(VERTEX_COUNT > 0){
     std::cout << "THERE IS SOMETHING TO NORMALIZE!" << std::endl;
 
     //Get all vetexes and find the union 
 
-    SqlDatabase::StatementPtr stmt = transaction->statement(
-        "select sem.func1_id, sem.func2_id from semantic_funcsim as sem" + _query_condition
-        );
+    SqlDatabase::StatementPtr stmt = transaction->statement(_query_condition);
 
     stmt->bind(0, similarity_threshold);
     stmt->bind(1, func1_id);
@@ -182,9 +186,15 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
       std::cout << std::endl;
     }
 
+    return true;
   }else{
     std::cout << "Nothing to normalize." << std::endl;
+  
+    return false;
+  
   }
+
+
 }
 
 /* Remove the functions from the compilation unit that is only available in one of the traces.
@@ -281,23 +291,28 @@ similarity(int func1_id, int func2_id, int igroup_id, double similarity, bool ig
 
 
  std::cout << "Begin remove compilation unit complement" << std::endl;
+ std::cout << "Size 1: " << func1_vec->size() << " Size 2: " << func2_vec->size() << std::endl;
+ 
+
 
  //remove possible inlined functions from the traces
  std::pair<CallVec*, CallVec*> removed_complement = remove_compilation_unit_complement(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec);
+
 
  delete func1_vec;
  delete func2_vec;
  func1_vec = removed_complement.first;
  func2_vec = removed_complement.second;
 
+ std::cout << "SIZE After REMOVAL: " << func1_vec->size() << " " << func2_vec->size() << std::endl;
 
  std::cout << "After remove compilation unit complement" << std::endl;
 
  //Detect and normalize similar function calls
+ if ( ! normalize_call_trace(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec) )
+   return 0;
 
- std::cout << "Size 1: " << func1_vec->size() << " Size 2: " << func2_vec->size() << std::endl;
  
- normalize_call_trace(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec);
 
  std::cout << "After normalization" << std::endl;
  
@@ -402,7 +417,11 @@ main(int argc, char *argv[])
 
 
     //Creat list of functions and igroups to analyze
-    SqlDatabase::StatementPtr similarity_stmt = transaction->statement("select sem.func1_id, sem.func2_id from semantic_funcsim as sem where sem.similarity >= ? ");
+    SqlDatabase::StatementPtr similarity_stmt = transaction->statement("select sem.func1_id, sem.func2_id from semantic_funcsim as sem "
+        " join semantic_functions as sf1 on sf1.id = sem.func1_id"
+        " join semantic_functions as sf2 on sf2.id = sem.func2_id"
+        " where sem.similarity >= ? AND sf1.name = sf2.name"
+        );
 
     similarity_stmt->bind(0, semantic_similarity_threshold);
 
@@ -416,11 +435,12 @@ main(int argc, char *argv[])
       int func2_id = row.get<int>(1);
 
       SqlDatabase::StatementPtr igroup_stmt = transaction->statement("select distinct sem1.igroup_id from semantic_fio as sem1 "
-          " join semantic_fio as sem2 ON sem2.igroup_id = sem1.igroup_id"
-          " where sem1.func_id = ? AND sem2.func_id = ? AND (sem1.locals_consumed > 0 OR sem1.arguments_consumed > 0 OR sem1.globals_consumed > 0 OR sem1.pointers_consumed > 0 OR sem1.integers_consumed > 0)"+
-          std::string(ignore_faults?" and sem1.status = 0 and sem2.status = 0":""));
-      igroup_stmt->bind(0, func1_id);
-      igroup_stmt->bind(1, func2_id);
+          " join semantic_fio as sem2 ON sem2.igroup_id = sem1.igroup_id AND sem2.func_id = ?"
+          " where sem1.func_id = ?  "+
+          std::string(ignore_faults?" and sem1.status = 0 and sem2.status = 0":"") 
+          + "ORDER BY sem1.igroup_id");
+      igroup_stmt->bind(0, func2_id);
+      igroup_stmt->bind(1, func1_id);
 
 
 
@@ -431,9 +451,9 @@ main(int argc, char *argv[])
       double ave_api_similarity = 0;
 
       for (SqlDatabase::Statement::iterator row=igroup_stmt->begin(); row!=igroup_stmt->end(); ++row) {
-
-
         int igroup_id = row.get<int>(0);
+
+        std::cout << " \n\n LOOKING AT " << igroup_id << "\n";
 
         double api_similarity = similarity(func1_id, func2_id, igroup_id, semantic_similarity_threshold, ignore_no_compares, call_depth, expand_ncalls  );
 
