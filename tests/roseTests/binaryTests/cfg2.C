@@ -17,8 +17,8 @@ struct GraphvizVertexWriter {
         SgAsmInstruction *insn = get(boost::vertex_name, cfg, v);
         SgAsmx86Instruction *x86 = isSgAsmx86Instruction(insn);
         SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
-        output <<"[ label=\"" <<unparseInstructionWithAddress(insn) <<"\"";
-        if (insn->get_address()==func->get_entry_va() && !func->get_name().empty()) {
+        output <<"[ label=\"[" <<v << "] " <<unparseInstructionWithAddress(insn) <<"\"";
+        if (insn->get_address()==func->get_entry_va()) {
             output <<", style=filled, color=\"#cd853f\"";
         } else if (x86 && x86_ret==x86->get_kind()) {
             output <<", style=filled, color=\"#fed3a7\"";
