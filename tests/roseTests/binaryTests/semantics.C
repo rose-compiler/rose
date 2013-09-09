@@ -100,7 +100,9 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 #else
 #   include "SymbolicSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        return SymbolicSemantics::RiscOperators::instance(regdict);
+        SymbolicSemantics::RiscOperatorsPtr retval = SymbolicSemantics::RiscOperators::instance(regdict);
+        retval->set_compute_usedef();
+        return retval;
     }
 #endif
 
@@ -139,9 +141,13 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 #   include "IntervalSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         MultiSemantics::RiscOperatorsPtr ops = MultiSemantics::RiscOperators::instance(regdict);
-        ops->add_subdomain(PartialSymbolicSemantics::RiscOperators::instance(regdict), "PartialSymbolic");
-        ops->add_subdomain(SymbolicSemantics::RiscOperators::instance(regdict), "Symbolic");
-        ops->add_subdomain(IntervalSemantics::RiscOperators::instance(regdict), "Interval");
+        PartialSymbolicSemantics::RiscOperatorsPtr s1 = PartialSymbolicSemantics::RiscOperators::instance(regdict);
+        SymbolicSemantics::RiscOperatorsPtr s2 = SymbolicSemantics::RiscOperators::instance(regdict);
+        s2->set_compute_usedef();
+        IntervalSemantics::RiscOperatorsPtr s3 = IntervalSemantics::RiscOperators::instance(regdict);
+        ops->add_subdomain(s1, "PartialSymbolic");
+        ops->add_subdomain(s2, "Symbolic");
+        ops->add_subdomain(s3, "Interval");
         return ops;
     }
 #endif

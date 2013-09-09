@@ -37,7 +37,8 @@ struct Analysis: public AstSimpleProcessing {
         if (block && block->has_instructions()) {
             using namespace BinaryAnalysis::InstructionSemantics2;
             const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
-            BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict);
+            SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict);
+            ops->set_compute_usedef(); // only used so we can test that it works
             BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops);
             const SgAsmStatementPtrList &stmts = block->get_statementList();
             for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
