@@ -354,7 +354,10 @@ if( func1_vec->size() == 0 & func2_vec->size() == 0 )
  std::cout << "SIZE After REMOVAL: " << func1_vec->size() << " " << func2_vec->size() << std::endl;
 
 
+if( func1_vec->size() == 0 & func2_vec->size() == 0 )
+   return -1;
 
+ 
  std::cout << "After normalization" << std::endl;
  
  size_t dl_max = std::max(func1_vec->size(), func2_vec->size());
