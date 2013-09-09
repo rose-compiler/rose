@@ -1043,6 +1043,9 @@ bool loopInterchange(SgForStatement* loop, size_t depth, size_t lexicoOrder);
 //! Tile the n-level (starting from 1) loop of a perfectly nested loop nest using tiling size s
 bool loopTiling(SgForStatement* loopNest, size_t targetLevel, size_t tileSize);
 
+//Winnie Loop Collapsing
+SgExprListExp * loopCollapsing(SgForStatement* target_loop, size_t collapsing_factor);
+
 //@}
 
 //------------------------------------------------------------------------
