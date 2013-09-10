@@ -4,6 +4,11 @@
 #include "sage3basic.h"
 #include "stringify.h"
 
+#include "rosePublicConfig.h"
+#ifdef ROSE_HAVE_GCRYPT_H
+#include <gcrypt.h>
+#endif
+
 /** Returns a multi-line string describing the letters used for function reasons.  The letters are returned by the padding
  *  version of reason_str(). */
 std::string
@@ -104,7 +109,7 @@ SgAsmFunction::reason_str(bool do_pad, unsigned r)
  *  returns the number of nodes (instructions and static data items) in the function.  If the function contains no nodes then
  *  the extent map is not modified and the low and high addresses are both set to zero.
  *
- *  If an @p exclude functor is provided, then any node for which it returns true is not considered part of the function.  This
+ *  If an @p selector functor is provided, then only nodes for which it returns true are considered part of the function.  This
  *  can be used for such things as filtering out data blocks that are marked as padding.  For example:
  *
  *  @code
@@ -184,6 +189,50 @@ SgAsmFunction::get_extent(ExtentMap *extents, rose_addr_t *lo_addr, rose_addr_t 
     } t1(extents, lo_addr, hi_addr, selector);
     t1.traverse(this, preorder);
     return t1.nnodes;
+}
+
+bool
+SgAsmFunction::get_sha1(uint8_t digest[20], NodeSelector *selector)
+{
+#ifdef ROSE_HAVE_GCRYPT_H
+    struct T1: public AstSimpleProcessing {
+        NodeSelector *selector;
+        gcry_md_hd_t md; // message digest
+        T1(NodeSelector *selector): selector(selector) {
+            gcry_error_t error = gcry_md_open(&md, GCRY_MD_SHA1, 0);
+            assert(GPG_ERR_NO_ERROR==error);
+        }
+        ~T1() {
+            gcry_md_close(md);
+        }
+        void visit(SgNode *node) {
+            if (selector && !(*selector)(node))
+                return;
+            SgAsmInstruction *insn = isSgAsmInstruction(node);
+            SgAsmStaticData *data = isSgAsmStaticData(node);
+            if (insn) {
+                SgUnsignedCharList buf = insn->get_raw_bytes();
+                gcry_md_write(md, &buf[0], buf.size());
+            } else if (data) {
+                SgUnsignedCharList buf = data->get_raw_bytes();
+                gcry_md_write(md, &buf[0], buf.size());
+            }
+        }
+        void read(uint8_t digest[20]) {
+            assert(gcry_md_get_algo_dlen(GCRY_MD_SHA1)==20);
+            gcry_md_final(md);
+            unsigned char *d = gcry_md_read(md, GCRY_MD_SHA1);
+            assert(d!=NULL);
+            memcpy(digest, d, 20);
+        }
+    } t1(selector);
+    t1.traverse(this, preorder);
+    t1.read(digest);
+    return true;
+#else
+    memset(digest, 0, 20);
+    return false;
+#endif
 }
 
 /** Function entry basic block.  Returns the basic block that represents the function entry point. Returns null for a function

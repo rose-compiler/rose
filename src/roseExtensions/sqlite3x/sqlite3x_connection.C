@@ -24,7 +24,11 @@
 */
 
 #include <sqlite3.h>
+#include <iostream>
+#include <cerrno>
+
 #include "sqlite3x.h"
+#include "rose_paths.h"
 
 namespace sqlite3x {
 
@@ -36,14 +40,38 @@ sqlite3_connection::sqlite3_connection(const wchar_t *db) : db(NULL) { this->ope
 
 sqlite3_connection::~sqlite3_connection() { if(this->db) sqlite3_close(this->db); }
 
-void sqlite3_connection::open(const char *db) {
-        if(sqlite3_open(db, &this->db)!=SQLITE_OK)
-                throw database_error("unable to open database");
+// Altered by ROSE Team [Robb P. Matzke 2013-04-05]
+/** Load required ROSE extensions. */
+void
+sqlite3_connection::post_open()
+{
+    std::string plug1 = ROSE_AUTOMAKE_TOP_BUILDDIR + "/src/roseExtensions/sqlite3x/.libs/libsqlitefunctions.so";
+    std::string plug2 = ROSE_AUTOMAKE_LIBDIR + "/libsqlitefunctions.so";
+    if (0==access(plug1.c_str(), F_OK)) {
+        load_extension(plug1);
+    } else if (0==access(plug2.c_str(), F_OK)) {
+        load_extension(plug2);
+    } else {
+        throw database_error("where is libsqlitefunctions.so?");
+    }
 }
 
-void sqlite3_connection::open(const wchar_t *db) {
-        if(sqlite3_open16(db, &this->db)!=SQLITE_OK)
-                throw database_error("unable to open database");
+// Altered by ROSE Team [Robb P. Matzke 2013-04-05]
+void
+sqlite3_connection::open(const char *db)
+{
+    if(sqlite3_open(db, &this->db)!=SQLITE_OK)
+        throw database_error("unable to open database");
+    post_open();
+}
+
+// Altered by ROSE Team [Robb P. Matzke 2013-04-05]
+void
+sqlite3_connection::open(const wchar_t *db)
+{
+    if(sqlite3_open16(db, &this->db)!=SQLITE_OK)
+        throw database_error("unable to open database");
+    post_open();
 }
 
 void sqlite3_connection::close() {
@@ -206,4 +234,40 @@ std::string sqlite3_connection::executeblob(const std::wstring &sql) {
         return sqlite3_command(*this, sql).executeblob();
 }
 
+// Altered by ROSE Team [Robb P. Matzke 2013-04-05]
+void sqlite3_connection::load_extension(const std::string &filename)
+{
+    if (!this->db) throw database_error("database is not open");
+    sqlite3_enable_load_extension(db, 1);
+    if (sqlite3_load_extension(db, filename.c_str(), NULL, NULL)!=SQLITE_OK)
+        throw database_error(*this);
 }
+
+// Altered by ROSE Team [Robb P. Matzke 2013-04-17]
+static double timeout; // in seconds
+static int busy_handler(void*, int step)
+{
+    static const double delay_time = 0.1; // in seconds; must be less than 1
+    const double max_steps = timeout / delay_time;
+
+    std::cerr <<"sqlite3 database is busy (step " <<step <<" of " <<max_steps <<"); sleeping " <<delay_time <<" seconds...";
+    timespec req, rem;
+    req.tv_sec = 0;
+    req.tv_nsec = delay_time * 1000000000;
+    while (nanosleep(&req, &rem)!=0 && EINTR==errno)
+        req = rem;
+    std::cerr <<" awake.\n";
+    return step < max_steps ? 1/*again*/ : 0/*impatient*/;
+}
+
+// Altered by ROSE Team [Robb P. Matzke 2013-04-09]
+void sqlite3_connection::busy_timeout(int ms)
+{
+    if (!this->db) throw database_error("database is not open");
+    timeout = ms / 1000.0;
+    if (sqlite3_busy_handler(db, busy_handler, NULL)!=SQLITE_OK)
+        throw database_error(*this);
+}
+
+} // namespace
+

@@ -1266,6 +1266,5 @@ AbstractHandle::abstract_handle * buildAbstractHandle(SgNode* n);
 //@}
 
 } // end of namespace
+
 #endif //ROSE_SAGE_BUILDER_INTERFACE
-
-

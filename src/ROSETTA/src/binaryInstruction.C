@@ -493,8 +493,6 @@ Grammar::setUpBinaryInstructions()
       * an AST that represents a single, coherent sub-part of the file.
       *************************************************************************************************************************/
 
-     // The "dwarf_info" member is first as an optimization: a single AST traversal will see the dwarf information first and
-     // therefore have the necessary debugging information already available when the traversal gets to the rest of the AST.
      NEW_TERMINAL_MACRO(AsmInterpretationList, "AsmInterpretationList", "AsmInterpretationListTag");
      AsmInterpretationList.setDataPrototype("SgAsmInterpretationPtrList", "interpretations", "",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -505,8 +503,6 @@ Grammar::setUpBinaryInstructions()
      AsmInterpretation.setFunctionPrototype("HEADER_INTERPRETATION", "../Grammar/BinaryInstruction.code");
      AsmInterpretation.setPredeclarationString("HEADER_INTERPRETATION_PREDECLARATION", "../Grammar/BinaryInstruction.code");
      AsmInterpretation.setAutomaticGenerationOfConstructor(false);
-     AsmInterpretation.setDataPrototype("SgAsmDwarfCompilationUnitList*", "dwarf_info", "= NULL",
-                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmInterpretation.setDataPrototype("SgAsmGenericHeaderList*", "headers", "= NULL",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmInterpretation.setDataPrototype("SgAsmBlock*", "global_block", "= NULL",
@@ -810,7 +806,7 @@ Grammar::setUpBinaryInstructions()
 
      NEW_TERMINAL_MACRO(AsmElfRelocEntryList, "AsmElfRelocEntryList", "AsmElfRelocEntryListTag");
      AsmElfRelocEntryList.setDataPrototype("SgAsmElfRelocEntryPtrList", "entries", "",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
@@ -2504,6 +2500,10 @@ Grammar::setUpBinaryInstructions()
      AsmGenericFile.setPredeclarationString("HEADER_GENERIC_FILE_PREDECLARATION", "../Grammar/BinaryInstruction.code");
      AsmGenericFile.setAutomaticGenerationOfConstructor(false);
      AsmGenericFile.setAutomaticGenerationOfDestructor(false);
+     // The "dwarf_info" member is first as an optimization: a single AST traversal will see the dwarf information first and
+     // therefore have the necessary debugging information already available when the traversal gets to the rest of the AST.
+     AsmGenericFile.setDataPrototype("SgAsmDwarfCompilationUnitList*", "dwarf_info", "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmGenericFile.setDataPrototype("std::string", "name", "= \"\"",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      // File descriptor opened for read-only (or negative)

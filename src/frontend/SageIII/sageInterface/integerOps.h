@@ -1,6 +1,7 @@
 #ifndef ROSE_INTEGEROPS_H
 #define ROSE_INTEGEROPS_H
 
+#include <cassert>
 #include <limits>
 #include <boost/static_assert.hpp>
 
