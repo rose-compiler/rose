@@ -179,49 +179,62 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
 
     // Iterate through the component indices
     BOOST_FOREACH(VertexIndex current_index, components) {
-      //std::cout << "component " << current_index << " contains: ";
+      std::cout << "component " << current_index << " contains: ";
 
       std::vector<int> component_funcs;
 
       // Iterate through the child vertex indices for [current_index]
       BOOST_FOREACH(VertexIndex child_index,
           components[current_index]) {
+        std::cout << " \n ci1: " << child_index << "\n ";
         component_funcs.push_back(child_index);
-        //std::cout << child_index << " ";
+        std::cout << " \n ci2: " << child_index << "\n ";
       }
+
+      std::cout << "\n AFTER component iteration\n";
 
 
       if (component_funcs.size() > 1){
 
-        std::cout << "component " << current_index << " contains: ";
+        std::cout << "\nshit\n";
 
         BOOST_FOREACH(VertexIndex child_index,
             components[current_index]) {
+ 
+          std::cout << "\n1shit\n";
+
+
           component_funcs.push_back(child_index);
           std::cout << child_index << " ";
         }
+        std::cout << "\n2shit\n";
+
 
         for(CallVec::iterator it = func1_vec->begin(); it != func1_vec->end(); ++it )
-          for(std::vector<int>::iterator comp_it; comp_it != component_funcs.end(); ++comp_it)
+          for(std::vector<int>::iterator comp_it = component_funcs.begin(); comp_it != component_funcs.end(); ++comp_it)
             if(*it == *comp_it){ 
-              std::cout << "Before " << *comp_it << " After " <<  std::endl;
-
+              std::cout << "Before " << *it;
               *it = component_funcs[0];
-
+              std::cout << " After " <<  component_funcs[0] << std::endl;
             }
 
         for(CallVec::iterator it = func2_vec->begin(); it != func2_vec->end(); ++it )
-          for(std::vector<int>::iterator comp_it; comp_it != component_funcs.end(); ++comp_it)
+          for(std::vector<int>::iterator comp_it = component_funcs.begin(); comp_it != component_funcs.end(); ++comp_it)
             if(*it == *comp_it){
-              std::cout << "Before " << *comp_it << " After " <<  std::endl;
+              std::cout << "Before " << *it;
               *it = component_funcs[0];
+              std::cout << " After " << component_funcs[0] <<  std::endl;
             }
+        std::cout << std::endl;
 
 
       }
 
-      std::cout << std::endl;
-    }
+      std::cout << "\n END of iteration \n";
+
+   }
+
+    std::cout << "graph3" << std::endl;
 
     return true;
   }else{
