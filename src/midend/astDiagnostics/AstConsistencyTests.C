@@ -6078,6 +6078,7 @@ void
 TestForParentsMatchingASTStructure::show_details_and_maybe_fail(SgNode *node) 
    {
      output <<prefix <<"AST path (including node) when inconsistency was detected:\n";
+     printf("AST path (including node) when inconsistency was detected:\n");
      for (size_t i=0; i<stack.size(); ++i)
         {
           output << prefix
@@ -6085,13 +6086,15 @@ TestForParentsMatchingASTStructure::show_details_and_maybe_fail(SgNode *node)
                    << " " << stack[i] << "; parent=" << stack[i]->get_parent()
                    << "\n";
 
-          printf ("   stack[i]->get_parent() = %p \n",stack[i]->get_parent());
-          if (stack[i]->get_parent() != NULL)
-             {
-               printf ("   stack[i]->get_parent() = %p = %s \n",stack[i]->get_parent(),stack[i]->get_parent()->class_name().c_str());
-             }
+          printf("      stack[%zu]: (%s*)%p -> get_parent() = (%s*)%p\n",
+                 i, stack[i]->class_name().c_str(), stack[i],
+                 stack[i]->get_parent() ? stack[i]->get_parent()->class_name().c_str() : "void",
+                 stack[i]->get_parent());
         }
-
+     printf("  ==> stack[%zu]: (%s*)%p -> get_parent() = (%s*)%p\n",
+            stack.size(), node->class_name().c_str(), node,
+            node->get_parent() ? node->get_parent()->class_name().c_str() : "void",
+            node->get_parent());
      output << prefix
             << "    #" << std::setw(4) << std::left << stack.size() << " " << stringifyVariantT(node->variantT(), "V_")
             << " " << node << "; parent=" << node->get_parent()

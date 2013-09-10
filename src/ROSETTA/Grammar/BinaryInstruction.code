@@ -58,35 +58,35 @@ HEADER_BINARY_END
 
 
 HEADER_INTERPRETATION_START
-        // NOTE: definitions are in src/frontend/Disassemblers/SgAsmInterpretation.C
-        public:
-                SgAsmInterpretation()
-                        : p_map(NULL), p_registers(NULL), coverageComputed(false), percentageCoverage(0.0), p_dwarf_info(NULL),
-                          p_headers(NULL), p_global_block(NULL) {
-                        ctor();
-                }
-                SgAsmGenericFilePtrList get_files() const; /*files referenced by interpretation*/
-                MemoryMap *get_map() const {return p_map;}
-                void set_map(MemoryMap* m) {p_map=m;}
-                const RegisterDictionary *get_registers() const;
-                void set_registers(const RegisterDictionary*);
-                void set_coverageComputed(bool x) { coverageComputed = x; }
-                void set_percentageCoverage(double x) { percentageCoverage = x; }
+	// NOTE: definitions are in src/frontend/Disassemblers/SgAsmInterpretation.C
+	public:
+		SgAsmInterpretation()
+			: p_map(NULL), p_registers(NULL), coverageComputed(false), percentageCoverage(0.0),
+			  p_headers(NULL), p_global_block(NULL) {
+			ctor();
+             	}
+          	SgAsmGenericFilePtrList get_files() const; /*files referenced by interpretation*/
+          	MemoryMap *get_map() const {return p_map;}
+          	void set_map(MemoryMap* m) {p_map=m;}
+		const RegisterDictionary *get_registers() const;
+		void set_registers(const RegisterDictionary*);
+		void set_coverageComputed(bool x) { coverageComputed = x; }
+		void set_percentageCoverage(double x) { percentageCoverage = x; }
                 void insert_instructions(InstructionMap&/*in,out*/);
                 void erase_instructions(InstructionMap&/*in,out*/);
                 InstructionMap& get_instruction_map(bool recompute=false);
                 void set_instruction_map(const InstructionMap&);
 
-        private:
-                void ctor();
-                MemoryMap *p_map;
-                const RegisterDictionary *p_registers;
-                bool coverageComputed; // true iff percentageCoverage has been computed
+	private:
+		void ctor();
+          	MemoryMap *p_map;
+		const RegisterDictionary *p_registers;
+          	bool coverageComputed; // true iff percentageCoverage has been computed
                 mutable InstructionMap instruction_map; // cached instruction map
 
-                //! The percentage of an interpretation where each section is marked as executable and identified for
-                //  disassembly into instructions.
-                double percentageCoverage;
+	        //! The percentage of an interpretation where each section is marked as executable and identified for
+		//  disassembly into instructions.
+		double percentageCoverage;
 HEADER_INTERPRETATION_END
 
 
@@ -795,8 +795,8 @@ HEADER_GENERIC_FILE_START
         public:
    // DQ (10/20/2010): This section does not have a source code block for ROSETTA to put the function definition.
                 SgAsmGenericFile()
-                        : p_unreferenced_cache(NULL), p_data_converter(NULL),p_fd(-1), p_headers(NULL), p_holes(NULL),
-                          p_truncate_zeros(false), p_tracking_references(true), p_neuter(false)
+                        : p_unreferenced_cache(NULL), p_data_converter(NULL), p_dwarf_info(NULL), p_fd(-1), p_headers(NULL),
+                          p_holes(NULL), p_truncate_zeros(false), p_tracking_references(true), p_neuter(false)
                         {ctor();}
 
                 virtual ~SgAsmGenericFile();                            /* Destructor deletes children and unmaps/closes file */
@@ -3925,8 +3925,15 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
                 virtual bool operator()(SgNode*) = 0;
         };
 
-        /* Returns info about what addresses a function occupies. */
-        size_t get_extent(ExtentMap *emap=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL, NodeSelector *exclude=NULL);
+        /** Returns info about what addresses a function occupies. */
+        size_t get_extent(ExtentMap *emap=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL,
+	        NodeSelector *selector=NULL);
+
+        /** Computes the SHA1 message digest for the bytes of a function. Returns true if the SHA1 is available, false
+         *  if the message digest cannot be computed because the prerequisite gcrypt functions are not available. The
+         *  optional @p selector argument can be used to limit the digest to only certain nodes of the function; by default,
+         *  all instructions and static data are accumulated. */
+        bool get_sha1(uint8_t digest[20]/*out*/, NodeSelector *selector=NULL);
 
       //! enum declaration as specified in proposed Sabre database schema
           enum function_kind_enum {

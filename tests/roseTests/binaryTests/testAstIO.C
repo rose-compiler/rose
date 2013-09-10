@@ -95,31 +95,54 @@ struct Dumper: public SgSimpleProcessing {
     }
 };
 
+struct TestInterpMap: AstSimpleProcessing {
+    void visit(SgNode *node) {
+        if (SgAsmInterpretation *interp = isSgAsmInterpretation(node)) {
+            std::cout <<"interp map = " <<interp->get_map() <<"\n"
+                      <<"interp registers = " <<interp->get_registers() <<"\n";
+            if (interp->get_map())
+                interp->get_map()->print(std::cout);
+        }
+    }
+};
+
 int
 main(int argc, char *argv[])
 {
+    bool rdonly_test = argc==3 && !strcmp(argv[1], "--rdonly");
+    std::string ast_name, dump1_name, dump2_name;
 
-    /* Parse the binary and create a text dump file */
-    SgProject *p1 = frontend(argc, argv);
-    ROSE_ASSERT(p1!=NULL);
-    std::string base_name = BaseName(p1).string();
-    std::string d1_name = base_name + "-1.dump";
-    Dumper(p1, d1_name);
-    //dump_ast(std::cout, p1);
+    if (rdonly_test) {
+        ast_name = argv[2];
+    } else {
+        /* Parse the binary and create a text dump file */
+        SgProject *p1 = frontend(argc, argv);
+        ROSE_ASSERT(p1!=NULL);
+        std::string base_name = BaseName(p1).string();
+        dump1_name = base_name + "-1.dump";
+        Dumper(p1, dump1_name);
 
-    /* Write the AST to a file and then read it back */
-    std::string ast_name = base_name + ".ast";
-    AST_FILE_IO::startUp(p1);
-    AST_FILE_IO::writeASTToFile(ast_name);
-    AST_FILE_IO::clearAllMemoryPools();
+        /* Write the AST to a file and then read it back */
+        ast_name = base_name + ".ast";
+        AST_FILE_IO::startUp(p1);
+        AST_FILE_IO::writeASTToFile(ast_name);
+        AST_FILE_IO::clearAllMemoryPools();
+    }
+        
     SgProject *p2 = AST_FILE_IO::readASTFromFile(ast_name);
     ROSE_ASSERT(p2!=NULL);
 
-    /* Create a text dump file for what we read back. The two text files should be identical. */
-    std::string d2_name = base_name + "-2.dump";
-    Dumper(p2, d2_name);
+    /* Some sanity checks */
+    TestInterpMap().traverse(p2, preorder);
 
-    /* Compare the text files */
-    execl("/usr/bin/diff", "diff", d1_name.c_str(), d2_name.c_str(), NULL);
-    return 2; /*exec failed*/
+    /* Create a text dump file for what we read back. The two text files should be identical. */
+    dump2_name = BaseName(p2).string() + "-2.dump";
+    Dumper(p2, dump2_name);
+
+    if (!rdonly_test) {
+        /* Compare the text files */
+        execl("/usr/bin/diff", "diff", dump1_name.c_str(), dump2_name.c_str(), NULL);
+        return 2; /*exec failed*/
+    }
+    return 0;
 }

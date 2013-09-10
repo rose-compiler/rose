@@ -58,21 +58,31 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
     output_text = "";
 
     /* Generate the input file for the solver. */
-    char config_name[L_tmpnam];
-    while (1) {
-        tmpnam(config_name);
-        int fd = open(config_name, O_RDWR|O_EXCL|O_CREAT, 0666);
-        if (fd>=0) {
-            close(fd);
-            break;
+    struct TempFile {
+        std::ofstream file;
+        char name[L_tmpnam];
+        TempFile() {
+            while (1) {
+                tmpnam(name);
+                int fd = open(name, O_RDWR|O_EXCL|O_CREAT, 0666);
+                if (fd>=0) {
+                    close(fd);
+                    break;
+                }
+            }
+            std::ofstream config(name);
+            file.open(name);
         }
-    }
-    std::ofstream config(config_name);
+        ~TempFile() {
+            unlink(name);
+        }
+    } tmpfile;
+
     Definitions defns;
-    generate_file(config, exprs, &defns);
-    config.close();
+    generate_file(tmpfile.file, exprs, &defns);
+    tmpfile.file.close();
     struct stat sb;
-    int status __attribute__((unused)) = stat(config_name, &sb);
+    int status __attribute__((unused)) = stat(tmpfile.name, &sb);
     assert(status>=0);
     stats.input_size += sb.st_size;
     RTS_MUTEX(class_stats_mutex) {
@@ -81,9 +91,9 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
 
     /* Show solver input */
     if (debug) {
-        fprintf(debug, "SMT Solver input in %s:\n", config_name);
+        fprintf(debug, "SMT Solver input in %s:\n", tmpfile.name);
         size_t n=0;
-        std::ifstream f(config_name);
+        std::ifstream f(tmpfile.name);
         while (!f.eof()) {
             std::string line;
             std::getline(f, line);
@@ -94,7 +104,7 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
 
     /* Run the solver and read its output. The first line should be the word "sat" or "unsat" */
     {
-        std::string cmd = get_command(config_name);
+        std::string cmd = get_command(tmpfile.name);
         FILE *output = popen(cmd.c_str(), "r");
         assert(output!=NULL);
         char *line = NULL;
@@ -128,8 +138,6 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
             fprintf(debug, "SMT Solver output:\n%s", StringUtility::prefixLines(output_text, "     ").c_str());
         }
     }
-
-    unlink(config_name);
 
     if (SAT_YES==retval)
         parse_evidence();

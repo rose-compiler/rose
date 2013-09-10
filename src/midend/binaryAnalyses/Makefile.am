@@ -36,7 +36,8 @@ libbinaryMidend_la_SOURCES =					\
     BinaryControlFlow.C						\
     BinaryDominance.C						\
     BinaryFunctionCall.C					\
-    BinaryCallingConvention.C
+    BinaryCallingConvention.C					\
+    DwarfLineMapper.C
 else
 libbinaryMidend_la_SOURCES = dummyBinaryMidend.C
 endif
@@ -93,7 +94,8 @@ include_HEADERS =					\
     BinaryFunctionCall.h				\
     BinaryCallingConvention.h				\
     BinaryPointerDetection.h				\
-    BinaryAnalysisUtils.h
+    BinaryAnalysisUtils.h				\
+    DwarfLineMapper.h
 
 
 EXTRA_DIST = CMakeLists.txt dummyBinaryMidend.C

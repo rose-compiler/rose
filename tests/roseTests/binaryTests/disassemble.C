@@ -80,6 +80,11 @@ Description:\n\
     Organized the output by address rather than hierarchically.  The output\n\
     will be more like traditional disassemblers.\n\
 \n\
+  --link=PATHS\n\
+    Link dynamic libraries into the executable before disassembling.  The\n\
+    default is not to link.  The PATHS are a colon-separated list of directories\n\
+    to be search for libraries.\n\
+\n\
   --omit-anon=SIZE\n\
   --no-omit-anon\n\
     If the memory being disassembled is anonymously mapped (contains all zero\n\
@@ -804,7 +809,9 @@ main(int argc, char *argv[])
     bool do_syscall_names = true;
     bool do_linear = false;                     /* organized output linearly rather than hierarchically */
     bool do_skip_disassemble = false;
+    bool do_link = false;
     std::string do_generate_ipd;
+    std::vector<std::string> library_paths;     /* colon-separated list of library directories for "--link" switch. */
 
     Disassembler::AddressSet raw_entries;
     MemoryMap raw_map;
@@ -826,6 +833,18 @@ main(int argc, char *argv[])
         if (!strncmp(argv[i], "--search-", 9) || !strncmp(argv[i], "--no-search-", 12)) {
             fprintf(stderr, "%s: search-related switches have been moved into ROSE's -rose:disassembler_search switch\n", arg0);
             exit(1);
+        } else if (!strcmp(argv[i], "--link")) {
+            fprintf(stderr, "%s: --link switch requires library paths (see --help)\n", arg0);
+            exit(1);
+        } else if (!strncmp(argv[i], "--link=", 7)) {
+            if (!strcmp(argv[i]+7, "no")) {
+                do_link = false;
+            } else {
+                do_link = true;
+                std::vector<std::string> dirs;
+                StringUtility::splitStringIntoStrings(argv[i]+7, ':', dirs/*out*/);
+                library_paths.insert(library_paths.end(), dirs.begin(), dirs.end());
+            }
         } else if (!strcmp(argv[i], "--ast-dot")) {             /* generate GraphViz dot files for the AST */
             do_ast_dot = true;
         } else if (!strcmp(argv[i], "--no-ast-dot")) {
@@ -1082,13 +1101,23 @@ main(int argc, char *argv[])
             interp->get_map()->clear();
 
         BinaryLoader *loader = BinaryLoader::lookup(interp)->clone();
-        if (do_debug_loader) loader->set_debug(stderr);
-        //loader->set_perform_dynamic_linking(true);
-        loader->set_perform_remap(true);
-        //loader->set_perform_relocations(true);
-        //loader->add_directory("/lib32");
+        if (do_debug_loader)
+            loader->set_debug(stderr);
         try {
-            loader->load(interp);
+            if (do_link) {
+                for (size_t i=0; i<library_paths.size(); ++i)
+                    loader->add_directory(library_paths[i]);
+                loader->link(interp);
+            }
+            loader->remap(interp);
+            if (do_link) {
+                BinaryLoader::FixupErrors errors;
+                loader->fixup(interp, &errors);
+                if (!errors.empty()) {
+                    std::cerr <<arg0 <<": warning: encountered " <<errors.size()
+                              <<" relocation fixup error" <<(1==errors.size()?"":"s") <<"\n";
+                }
+            }
         } catch (const BinaryLoader::Exception &e) {
             std::cerr <<arg0 <<": BinaryLoader exception: " <<e <<"\n";
             exit(1);
@@ -1148,20 +1177,23 @@ main(int argc, char *argv[])
      *------------------------------------------------------------------------------------------------------------------------*/
 
     /* Note that if we using an active partitioner that calls the disassembler whenever an instruction is needed, then there's
-     * no need to populate a work list.  The partitioner's pre_cfg() method will do the same things we're doing here. */
-    MemoryMap *map = NULL;
+     * no need to populate a work list.  The partitioner's pre_cfg() method will do the same things we're doing here.  We make
+     * a copy of the MemoryMap because we might want to modify some of the permissions for disassembling; the new copy shares
+     * the data (but not meta-data) with the original MemoryMap. */
+    MemoryMap map;
     Disassembler::AddressSet worklist;
 
     if (!raw_entries.empty()) {
          /* We computed the memory map when we processed command-line arguments. */
-        map = &raw_map;
+        map = raw_map;
         for (Disassembler::AddressSet::iterator i=raw_entries.begin(); i!=raw_entries.end(); i++) {
             worklist.insert(*i);
             partitioner->add_function(*i, SgAsmFunction::FUNC_ENTRY_POINT, "entry_function");
         }
     } else {
-        map = interp->get_map();
-        assert(map!=NULL);
+        assert(interp->get_map()!=NULL);
+        map = *interp->get_map();
+
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
         for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
             /* Seed disassembler work list with entry addresses */
@@ -1173,16 +1205,40 @@ main(int argc, char *argv[])
 
             /* Seed disassembler work list with addresses of function symbols if desired */
             if (disassembler->get_search() & Disassembler::SEARCH_FUNCSYMS)
-                disassembler->search_function_symbols(&worklist, map, *hi);
+                disassembler->search_function_symbols(&worklist, &map, *hi);
         }
     }
 
     /* Should we filter away any anonymous regions? */
     if (do_omit_anon>0)
-        map->prune(large_anonymous_region_p);
+        map.prune(large_anonymous_region_p);
+
+    /* If we did dynamic linking, then mark the ".got.plt" section as read-only.  This makes the disassembler treat it as
+     * constant data so that dynamically-linked function thunks get known successor information.  E.g., a thunk like this:
+     *     abort@plt:
+     *        jmp DWORD PTR ds:[0x080600f8<.got.plt+0x0c>]
+     * will have as its successor, the address stored at .got.plt+12.  If .got.plt had been left as read/write, then the
+     * disassembler must assume that the address at .got.plt+12 changes while the program runs, and therefore the successors of
+     * the JMP instruction are unknown. */
+    if (do_link) {
+        const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+        for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
+            SgAsmGenericSectionPtrList sections = (*hi)->get_sections_by_name(".got.plt");      // ELF
+            SgAsmGenericSectionPtrList s2 = (*hi)->get_sections_by_name(".got");                // ELF
+            SgAsmGenericSectionPtrList s3 = (*hi)->get_sections_by_name(".import");             // PE
+            sections.insert(sections.end(), s2.begin(), s2.end());
+            sections.insert(sections.end(), s3.begin(), s3.end());
+            for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
+                if ((*si)->is_mapped()) {
+                    Extent mapped_va((*si)->get_mapped_actual_va(), (*si)->get_mapped_size());
+                    map.mprotect(mapped_va, MemoryMap::MM_PROT_READ, true/*relax*/);
+                }
+            }
+        }
+    }
 
     printf("using this memory map for disassembly:\n");
-    map->dump(stdout, "    ");
+    map.dump(stdout, "    ");
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Run the disassembler and partitioner
@@ -1194,10 +1250,10 @@ main(int argc, char *argv[])
     if (!do_skip_disassemble) {
         try {
             if (do_call_disassembler) {
-                insns = disassembler->disassembleBuffer(map, worklist, NULL, &bad);
-                block = partitioner->partition(interp, insns, map);
+                insns = disassembler->disassembleBuffer(&map, worklist, NULL, &bad);
+                block = partitioner->partition(interp, insns, &map);
             } else {
-                block = partitioner->partition(interp, disassembler, map);
+                block = partitioner->partition(interp, disassembler, &map);
                 insns = partitioner->get_instructions();
                 bad = partitioner->get_disassembler_errors();
             }
@@ -1337,7 +1393,7 @@ main(int argc, char *argv[])
      * total number of bytes represented in the disassembly memory map. Although we store it in the AST, we don't
      * actually use it anywhere else. */
     if ((do_show_extents || do_show_coverage) && block) {
-        ExtentMap extents=map->va_extents();
+        ExtentMap extents=map.va_extents();
         size_t disassembled_map_size = extents.size();
 
         std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(block, V_SgAsmInstruction);

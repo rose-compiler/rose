@@ -189,7 +189,7 @@ RegisterDictionary::dictionary_for_isa(SgAsmExecutableFileFormat::InsSetArchitec
         case EFF::ISA_IA32_Family:
             switch (isa) {
                 case EFF::ISA_IA32_286:         return dictionary_i286();
-                case EFF::ISA_IA32_386:         return dictionary_i386();
+                case EFF::ISA_IA32_386:         return dictionary_i386_387(); // assume '387 coprocessor is present
                 case EFF::ISA_IA32_486:         return dictionary_i486();
                 case EFF::ISA_IA32_Pentium:     return dictionary_pentium();
                 case EFF::ISA_IA32_Pentium4:    return dictionary_pentium4();
@@ -377,20 +377,14 @@ RegisterDictionary::dictionary_i386()
     return regs;
 }
 
-/** Intel 80486 registers.
- *
- *  The 80486 has the same registers as the 80386 but adds a new flag to the "eflags" register and adds floating-point registers
- *  previously in the 8087, 80287, and 80387 math coprocessors. */
+/** Intel 80386 with 80387 math co-processor. */
 const RegisterDictionary *
-RegisterDictionary::dictionary_i486()
+RegisterDictionary::dictionary_i386_387()
 {
     static RegisterDictionary *regs = NULL;
     if (!regs) {
-        regs = new RegisterDictionary("i486");
+        regs = new RegisterDictionary("i386 w/387");
         regs->insert(dictionary_i386());
-
-        /* Additional flags */
-        regs->insert("ac", x86_regclass_flags, 0, 18, 1);               /* alignment check system flag */
 
         /* The floating point registers names are relative to the current top-of-stack that changes dynamically. The
          * definitions we're creating here are static.  When a floating-point instruction is simulated (e.g., by the
@@ -404,6 +398,22 @@ RegisterDictionary::dictionary_i486()
         regs->insert("st(5)", x86_regclass_st, 5, 0, 80);
         regs->insert("st(6)", x86_regclass_st, 6, 0, 80);
         regs->insert("st(7)", x86_regclass_st, 7, 0, 80);
+    }
+    return regs;
+}
+        
+
+/** Intel 80486 registers.
+ *
+ *  The 80486 has the same registers as the 80386 with '387 co-processor but adds a new flag to the "eflags" register. */
+const RegisterDictionary *
+RegisterDictionary::dictionary_i486()
+{
+    static RegisterDictionary *regs = NULL;
+    if (!regs) {
+        regs = new RegisterDictionary("i486");
+        regs->insert(dictionary_i386_387());
+        regs->insert("ac", x86_regclass_flags, 0, 18, 1);               /* alignment check system flag */
     }
     return regs;
 }

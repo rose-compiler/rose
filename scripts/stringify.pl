@@ -491,7 +491,7 @@ if ($defn_output) {
 }
 
 # Scan C++ files to generate %enum hash
-my $files = FileLister->new(@ARGV);
+my $files = FileLister->new('--generated',@ARGV);
 $files->{build} = 1; # include machine generated files
 while (my $filename = $files->next_file) {
   next unless $filename =~ /\.(h|hh|hpp|c|cpp|C)$/;

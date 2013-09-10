@@ -582,6 +582,13 @@ Partitioner::Function::show_properties(FILE *debug) const
     }
 }
 
+Partitioner::BasicBlock *
+Partitioner::Function::entry_basic_block() const
+{
+    BasicBlocks::const_iterator bi=basic_blocks.find(entry_va);
+    return bi==basic_blocks.end() ? NULL : bi->second;
+}
+
 /* Return partitioner to initial state */
 void
 Partitioner::clear()
@@ -1493,12 +1500,46 @@ Partitioner::pattern3(const InstructionMap& insns, InstructionMap::const_iterato
 }
 #endif
 
-/** Seeds functions according to instruction patterns.  Note that this pattern matcher only looks at existing instructions--it
- *  does not actively disassemble new instructions.  In other words, this matcher is intended mostly for passive-mode
- *  partitioners where the disassembler has already disassembled everything it can. */
+/** Seeds functions according to byte and instruction patterns.  Note that the instruction pattern matcher looks only at
+ *  existing instructions--it does not actively disassemble new instructions.  In other words, this matcher is intended mostly
+ *  for passive-mode partitioners where the disassembler has already disassembled everything it can. The byte pattern matcher
+ *  works whether or not instructions are available. */
 void
 Partitioner::mark_func_patterns()
 {
+    // Create functions when we see certain patterns of bytes
+    struct T1: ByteRangeCallback {
+        Partitioner *p;
+        T1(Partitioner *p): p(p) {}
+        virtual bool operator()(bool enabled, const Args &args) /*override*/ {
+            assert(args.restrict_map!=NULL);
+            uint8_t buf[4096];
+            static const size_t patternsz=16;
+            assert(patternsz<sizeof buf);
+            if (enabled) {
+                rose_addr_t va = args.range.first();
+                while (va<=args.range.last()) {
+                    size_t nbytes = std::min(args.range.last()+1-va, sizeof buf);
+                    size_t nread = args.restrict_map->read(buf, va, nbytes);
+                    for (size_t i=0; i<nread; ++i) {
+                        // "55 8b ec" is x86 "push ebp; mov ebp, esp"
+                        if (i+3<nread && 0x55==buf[i+0] && 0x8b==buf[i+1] && 0xec==buf[i+2]) {
+                            p->add_function(va+i, SgAsmFunction::FUNC_PATTERN);
+                            i+=2;
+                        }
+                    }
+                    va += nread;
+                }
+            }
+            return enabled;
+        }
+    } t1(this);
+    MemoryMap *mm = get_map();
+    if (mm)
+        scan_unassigned_bytes(&t1, mm);
+
+    // Create functions when we see certain patterns of instructions. Note that this will only work if we've already
+    // disassembled the instructions.
     Disassembler::AddressSet exclude;
     InstructionMap::const_iterator found;
 
@@ -2567,6 +2608,17 @@ Partitioner::name_import_entries(SgAsmGenericHeader *fhdr)
     }
 }
 
+/** Find the addresses for all PE Import Address Tables. Adds them to Partitioner::pe_iat_extents. */
+void
+Partitioner::find_pe_iat_extents(SgAsmGenericHeader *hdr)
+{
+    SgAsmGenericSectionPtrList iat_sections = hdr->get_sections_by_name("Import Address Table");
+    for (size_t i=0; i<iat_sections.size(); ++i) {
+        if (-1==iat_sections[i]->get_id() && iat_sections[i]->is_mapped())
+            pe_iat_extents.insert(Extent(iat_sections[i]->get_mapped_actual_va(), iat_sections[i]->get_mapped_size()));
+    }
+}
+
 /* Seed function starts based on criteria other than control flow graph. */
 void
 Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
@@ -2581,6 +2633,7 @@ Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
     if (interp) {
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
         for (size_t i=0; i<headers.size(); i++) {
+            find_pe_iat_extents(headers[i]);
             if (func_heuristics & SgAsmFunction::FUNC_ENTRY_POINT)
                 mark_entry_targets(headers[i]);
             if (func_heuristics & SgAsmFunction::FUNC_EH_FRAME)
@@ -2595,6 +2648,8 @@ Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
         mark_func_patterns();
     if (func_heuristics & SgAsmFunction::FUNC_CALL_INSN)
         mark_call_insns();
+
+    
 
     /* Run user-defined function detectors, making sure that the basic block starts are up-to-date for each call. */
     if (func_heuristics & SgAsmFunction::FUNC_USERDEF) {
@@ -2807,6 +2862,31 @@ Partitioner::discover_blocks(Function *f, unsigned reason)
         discover_blocks(f, *hi, reason);
 }
 
+bool
+Partitioner::is_pe_dynlink_thunk(Instruction *insn)
+{
+    SgAsmx86Instruction *insn_x86 = insn ? isSgAsmx86Instruction(insn->node) : NULL;
+    if (!insn_x86 || x86_jmp!=insn_x86->get_kind() || insn_x86->get_operandList()->get_operands().size()!=1)
+        return false; // not a thunk: wrong instruction
+    SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn_x86->get_operandList()->get_operands()[0]);
+    SgAsmIntegerValueExpression *addr = mre ? isSgAsmIntegerValueExpression(mre->get_address()) : NULL;
+    if (!addr)
+        return false; // not a dynamic linking thunk: wrong addressing mode
+    return pe_iat_extents.contains(Extent(addr->get_absolute_value(), 4));
+}
+
+bool
+Partitioner::is_pe_dynlink_thunk(BasicBlock *bb)
+{
+    return bb && bb->insns.size()==1 && is_pe_dynlink_thunk(bb->insns.front());
+}
+
+bool
+Partitioner::is_pe_dynlink_thunk(Function *func)
+{
+    return func && func->basic_blocks.size()==1 && is_pe_dynlink_thunk(func->entry_basic_block());
+}
+
 void
 Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
 {
@@ -2854,8 +2934,9 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
                 for (Disassembler::AddressSet::iterator si=succs.begin();
                      si!=succs.end() && !bb->function->possible_may_return();
                      ++si) {
-                    if (0!=(target_va=*si) && NULL!=(target_bb=find_bb_starting(target_va, false)) &&
-                        target_bb->function && target_bb->function!=bb->function &&
+                    target_va = *si;
+                    target_bb = target_va!=0 ? find_bb_starting(target_va, false) : NULL;
+                    if (target_bb && target_bb->function && target_bb->function!=bb->function &&
                         target_va==target_bb->function->entry_va && target_bb->function->possible_may_return()) {
                         /* The block bb isn't a function call, but branches to the entry point of another function.  If that
                          * function returns then so does this one.  This handles situations like:
@@ -2882,6 +2963,19 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
                 if (debug) {
                     fprintf(debug, "  F%08"PRIx64" may return by virtue of incomplete successors\n",
                             bb->function->entry_va);
+                }
+            }
+
+            // PE dynamic linking thunks are typically placed in the .text section and consist of an indirect jump through one
+            // of the import address tables.  If we didn't dynamically link in ROSE, then the IATs probably don't hold valid
+            // function addresses, in which case we can't determine if the thunk returns.  Therefore, when this situation
+            // happens, we assume that the imported function returns.
+            if (!bb->function->possible_may_return() && is_pe_dynlink_thunk(bb->function)) {
+                bool invalid_callee_va = !succs_complete;
+                for (Disassembler::AddressSet::iterator si=succs.begin(); !invalid_callee_va && si!=succs.end(); ++si)
+                    invalid_callee_va = NULL==find_instruction(*si);
+                if (invalid_callee_va) {// otherwise we can just analyze the linked-in code
+                    bb->function->promote_may_return(SgAsmFunction::RET_SOMETIMES);
                 }
             }
         }
@@ -3252,6 +3346,63 @@ Partitioner::merge_functions(Function *parent, Function *other)
     delete other;
 }
 
+/** Mark PE dynamic linking thunks as thunks and give them a name if possible. */
+void
+Partitioner::name_pe_dynlink_thunks(SgAsmInterpretation *interp/*=NULL*/)
+{
+    // AST visitor finds PE Import Items and adds their address/name pair to a map.
+    struct AddrName: AstSimpleProcessing {
+        typedef std::map<rose_addr_t, std::string> NameMap;
+        NameMap names;
+        SgAsmGenericHeader *hdr;
+        AddrName(SgAsmInterpretation *interp) {
+            if (interp) {
+                const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
+                for (SgAsmGenericHeaderPtrList::const_iterator hi=hdrs.begin(); hi!=hdrs.end(); ++hi) {
+                    hdr = *hi;
+                    traverse(hdr, preorder);
+                }
+            }
+        }
+        void visit(SgNode *node) {
+            if (SgAsmPEImportItem *import_item = isSgAsmPEImportItem(node)) {
+                std::string name = import_item->get_name()->get_string();
+                if (!name.empty() && !import_item->get_by_ordinal()) {
+                    // Add a name for both the absolute virtual address and the relative virtual address. The IAT will contain
+                    // relative addresses unless BinaryLoader applied fixups.
+                    rose_addr_t va = import_item->get_hintname_rva().get_va();
+                    names[va] = name;
+                    rose_addr_t rva = va - hdr->get_base_va();
+                    names[rva] = name;
+                }
+            }
+        }
+        std::string operator()(rose_addr_t va) const {
+            NameMap::const_iterator found = names.find(va);
+            return found==names.end() ? std::string() : found->second;
+        }
+    } names(interp);
+
+    // Identify PE dynamic linking thunks and give them the name of the imported function to which they branch.  FIXME: we
+    // might want to change the name slightly because otherwise the thunk will have the same name as the linked-in function
+    // if/after BinaryLoader does the linking.  In contrast, the ELF executables typically place their dynamic linking
+    // thunks in a ".plt" section (Procedure Lookup Table) and we name the thunks so that if the linked-in function is
+    // named "printf", the thunk is named "printf@plt".
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+        Function *func = fi->second;
+        if (is_pe_dynlink_thunk(func)) {
+            func->reason |= SgAsmFunction::FUNC_THUNK;
+            if (func->name.empty()) {
+                BasicBlock *bb = func->entry_basic_block();
+                bool complete;
+                Disassembler::AddressSet succs = successors(bb, &complete);
+                if (complete && 1==succs.size())
+                    func->name = names(*succs.begin());
+            }
+        }
+    }
+}
+
 void
 Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
@@ -3368,6 +3519,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 
     /* Give existing functions names from symbol tables. Don't create more functions. */
     if (interp && 0!=(func_heuristics & SgAsmFunction::FUNC_IMPORT)) {
+        name_pe_dynlink_thunks(interp);
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
         for (size_t i=0; i<headers.size(); i++) {
             name_plt_entries(headers[i]); // give names to ELF .plt trampolines

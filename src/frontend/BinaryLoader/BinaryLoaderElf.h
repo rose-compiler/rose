@@ -41,8 +41,8 @@ public:
     /** Returns the strings associated with certain variables in the ".dynamic" section. */
     static void get_dynamic_vars(SgAsmGenericHeader*, std::string &rpath/*out*/, std::string &runpath/*out*/);
 
-    /** Perform relocation fixups. See super class. */
-    virtual void fixup(SgAsmInterpretation *interp);
+    // documented in superclass
+    virtual void fixup(SgAsmInterpretation *interp, FixupErrors *errors=NULL) /*override*/;
 
     /* FIXME: These should probably be in SgAsmElfSymver* classes instead. [RPM 2010-09-14] */
     /** Flags for version definitions and requirements. */

@@ -311,7 +311,7 @@ BinaryLoaderElf::build_master_symbol_table(SgAsmInterpretation *interp)
 
 /* Reference Elf TIS Portal Formats Specification, Version 1.1 */
 void
-BinaryLoaderElf::fixup(SgAsmInterpretation *interp)
+BinaryLoaderElf::fixup(SgAsmInterpretation *interp, FixupErrors *errors) /*override*/
 {
     if (get_debug()) fprintf(get_debug(), "BinaryLoaderElf: performing relocation fixups...\n");
     SgAsmGenericHeaderPtrList& headers = interp->get_headers()->get_headers();
@@ -320,7 +320,15 @@ BinaryLoaderElf::fixup(SgAsmInterpretation *interp)
     for (size_t h=0; h<headers.size(); ++h) {
         SgAsmElfFileHeader* elfHeader = isSgAsmElfFileHeader(headers[h]);
         ROSE_ASSERT(NULL != elfHeader);
-        performRelocations(elfHeader, interp->get_map());
+        if (errors!=NULL) {
+            try {
+                performRelocations(elfHeader, interp->get_map());
+            } catch (const Exception &e) {
+                errors->push_back(e);
+            }
+        } else {
+            performRelocations(elfHeader, interp->get_map());
+        }
     }
 }
 

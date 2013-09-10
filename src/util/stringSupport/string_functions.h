@@ -449,6 +449,7 @@ namespace StringUtility
         *  Xenix, etc.), BeOS, Amiga, RISC OS and others.  Any occurrance of CR+LF, LF+CR, or CR by itself (in that order of
         *  left-to-right matching) is replaced by a single LF character. */
        std::string fixLineTermination(const std::string &input);
+
        /** Converts a multi-line string to a single line.  This function converts a multi-line string to a single line by
         *  replacing line-feeds and carriage-returns (and their surrounding white space) with a user-supplied replacement
         *  string (that defaults to a single space). Line termination (and it's surrounding white space) that appears at the
@@ -459,7 +460,96 @@ namespace StringUtility
         *  A new string is returned. */
        std::string makeOneLine(const std::string &s, std::string replacement=" ");
 
-   };
+       /** Convert binary data to base-64. The base64 number system uses the characters A-Z, a-z, 0-9, +, and / (in that
+        * order). The returned string does not include linefeeds.  If @p do_pad is true then '=' characters may appear at the
+        * end to make the total length a multiple of four.
+        * @{ */
+       std::string encode_base64(const std::vector<uint8_t> &data, bool do_pad=true);
+       std::string encode_base64(const uint8_t *data, size_t nbytes, bool do_padd=true);
+       /** @} */
+
+       /** Convert base-64 to binary. */
+       std::vector<uint8_t> decode_base64(const std::string &encoded);
+
+      /** Join individual strings to form a single string.  Unlike listToString(), this function allows the caller to indicate
+       *  how the strings should be separated from one another: the @p separator (default SPC) is inserted between each pair
+       *  of strings, but not at the beginning or end, even if strings are empty.
+       * @{ */
+      template<class Container>
+      std::string join(const std::string &separator, const Container &strings) {
+          return join_range(separator, strings.begin(), strings.end());
+      }
+      template<class Iterator>
+      std::string join_range(const std::string &separator, Iterator begin, Iterator end) {
+          std::string retval;
+          for (Iterator i=begin; i!=end; ++i)
+              retval += (i==begin ? std::string() : separator) + *i;
+          return retval;
+      }
+      std::string join(const std::string &separator, char *strings[], size_t nstrings);
+      std::string join(const std::string &separator, const char *strings[], size_t nstrings);
+      /** @} */
+
+     /** Splits strings into parts.  Unlink stringToList(), this function allows the caller to indicate where to split the
+      *  string.  The parts are the portions of the string on either side of the separator: if the separator appears at the
+      *  beginning of the string, then the first part is empty; likewise if the separator appears at the end of the string then
+      *  the last part is empty. At most @p maxparts are returned, the last of which may contain occurrences of the separator.
+      *  If @p trim_white_space is true then white space is removed from the beginning and end of each part. Empty parts are
+      *  never removed from the returned vector since the C++ library already has functions for that. The first few arguments
+      *  are in the same order as for Perl's "split" operator. */
+     std::vector<std::string> split(const std::string &separator, const std::string &str, size_t maxparts=(size_t)(-1),
+                                    bool trim_white_space=false);
+     std::vector<std::string> split(char separator, const std::string &str, size_t maxparts=(size_t)(-1),
+                                    bool trim_white_space=false);
+
+     /** Trims white space from the beginning and end of a string. Caller may specify the characters to strip and whether the
+      * stripping occurs at the begining, the end, or both. */
+     std::string trim(const std::string &str, const std::string &strip=" \t\r\n", bool at_beginning=true, bool at_end=true);
+
+     /** Expand horizontal tab characters. */
+     std::string untab(const std::string &str, size_t tabstops=8, size_t firstcol=0);
+
+     /** Converts a bunch of numbers to strings.  This is convenient when one has a container of numbers and wants to
+      *  call join() to turn it into a single string.  For instance, here's how to convert a set of integers to a
+      *  comma-separated list:
+      * @code
+      *  using namespace StringUtility;
+      *  std::set<int> numbers = ...;
+      *  std::string s = join(", ", toStrings(numbers));
+      * @endcode
+      *
+      *  Here's how to convert a vector of addresses to space-separated hexadecimal values:
+      * @code
+      *  using namespace StringUtility;
+      *  std::vector<rose_addr_t> addresses = ...;
+      *  std::string s = join(" ", toStrings(addresses, addrToString));
+      * @endcode
+      *
+      *  Here's how one could surround each address with angle brackets:
+      * @code
+      *  using namespace StringUtility;
+      *  struct AngleSurround {
+      *      std::string operator()(rose_addr_t addr) {
+      *         return "<" + addrToString(addr) + ">";
+      *      }
+      *  };
+      *  std::string s = join(" ", toStrings(addresses, AngleSurround()));
+      * @endcode
+      * @{ */
+     template<class Container, class Stringifier>
+     std::vector<std::string> toStrings(const Container &numbers, const Stringifier &stringifier=numberToString) {
+         return toStrings_range(numbers.begin(), numbers.end(), stringifier);
+     }
+     template<class Iterator, class Stringifier>
+     std::vector<std::string> toStrings_range(Iterator begin, Iterator end, const Stringifier &stringifier=numberToString) {
+         std::vector<std::string> retval;
+         for (/*void*/; begin!=end; ++begin)
+             retval.push_back(stringifier(*begin));
+         return retval;
+     }
+     /** @} */
+         
+     };
 
 
 // endif for ROSE_STRING_UTILITY_H

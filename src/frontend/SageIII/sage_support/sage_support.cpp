@@ -7,6 +7,9 @@
 /*-----------------------------------------------------------------------------
  *  Dependencies
  *---------------------------------------------------------------------------*/
+#include "sage_support.h"
+#include "dwarfSupport.h"
+
 // TOO1 (05/14/2013): Signal handling for -rose:keep_going
 #include <setjmp.h>
 #include <signal.h>
