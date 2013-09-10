@@ -8,6 +8,10 @@
 #include <boost/graph/incremental_components.hpp>
 #include <boost/pending/disjoint_sets.hpp>
 
+#include <algorithm>
+#include <set>
+#include <iterator>
+
 std::string argv0;
 
 static SqlDatabase::TransactionPtr transaction;
@@ -228,6 +232,27 @@ remove_compilation_unit_complement(int func1_id, int func2_id, int igroup_id, in
 
 
   if( func1_vec->size() > 0 || func2_vec->size() > 0  ){
+
+    //find the set complement of functions called by the two functions
+    // - we are not interested in functions called by both 
+
+    std::set<int> func1_vec_set;
+    std::set<int> func2_vec_set;
+
+    for(CallVec::iterator it = func1_vec->begin(); it != func1_vec->end(); ++it)
+    {
+      func1_vec_set.insert(*it);
+    }
+ 
+    for(CallVec::iterator it = func2_vec->begin(); it != func2_vec->end(); ++it)
+    {
+      func2_vec_set.insert(*it);
+    }
+
+    std::set<int> func1_func2_complement;
+
+    std::set_difference(func1_vec_set.begin(), func1_vec_set.end(), func2_vec_set.begin(), func2_vec_set.end(), std::inserter(func1_func2_complement, func1_func2_complement.end()) );
+    
     //find the compilation units in question. A compilation unit is in our case a file.
     SqlDatabase::StatementPtr func1_file_stmt = transaction->statement( "select file_id from semantic_functions where id = ?" );
     func1_file_stmt->bind(0, func1_id);
@@ -242,17 +267,12 @@ remove_compilation_unit_complement(int func1_id, int func2_id, int igroup_id, in
 
 
     //find the functions that needs to be removed
+    //  - all functions that has a clone in between the files
     SqlDatabase::StatementPtr stmt = transaction->statement(
         "select sem.func1_id, sem.func2_id from semantic_funcsim as sem"
         " join semantic_functions as sf1 on sem.func1_id = sf1.id"
         " join semantic_functions as sf2 on sem.func2_id = sf2.id"
         " where similarity >= ? AND sf1.file_id IN (?,?) AND sf2.file_id IN (?, ?) AND sf1.file_id != sf2.file_id"
-        " AND NOT EXISTS(" 
-        "   select 1 from "
-        "        tmp_called_functions as tcf2 "
-        "   join tmp_called_functions as tcf1 on sem.func2_id = tcf1.callee_id AND (tcf1.igroup_id = ?)"
-        "   where sem.func1_id = tcf2.callee_id AND (tcf2.igroup_id = ?)"
-        ")"
         );
 
 
@@ -261,30 +281,29 @@ remove_compilation_unit_complement(int func1_id, int func2_id, int igroup_id, in
     stmt->bind(2, func2_file_id);
     stmt->bind(3, func1_file_id);
     stmt->bind(4, func2_file_id);
-    stmt->bind(5, igroup_id);
-    stmt->bind(6, igroup_id);
 
-    CallVec remove_these;
+    std::set<int> complement_functions;
     for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
       int clone_func1 = row.get<int>(0);
       int clone_func2 = row.get<int>(1);
 
-      if ( std::find(remove_these.begin(), remove_these.end(), clone_func1) == remove_these.end())
-        remove_these.push_back(clone_func1);
-
-      if ( std::find(remove_these.begin(), remove_these.end(), clone_func2) == remove_these.end())   
-        remove_these.push_back(clone_func2);
-
+      complement_functions.insert(clone_func1);
+      complement_functions.insert(clone_func2);
     }
 
+    //find the functions we want to remove
+    //  - functions present with clones in between the files that is not part of both traces
+    std::set<int> remove_these;
+
+    std::set_intersection(complement_functions.begin(), complement_functions.end(), func1_func2_complement.begin(), func1_func2_complement.end(), std::inserter(remove_these, remove_these.end()) );
 
     //prune functions to remove away from the call trace into new vectors
     for(CallVec::iterator it = func1_vec->begin(); it != func1_vec->end(); ++it)
-      if ( std::find(remove_these.begin(), remove_these.end(), *it) == remove_these.end()) 
+      if ( remove_these.find(*it) == remove_these.end()) 
         new_func1_vec->push_back(*it);
 
     for(CallVec::iterator it = func2_vec->begin(); it != func2_vec->end(); ++it)
-      if ( std::find(remove_these.begin(), remove_these.end(), *it) == remove_these.end()) 
+      if( remove_these.find(*it) == remove_these.end())
         new_func2_vec->push_back(*it);
 
 
