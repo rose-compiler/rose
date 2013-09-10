@@ -92,7 +92,8 @@ include_HEADERS =					\
     BinaryDominance.h					\
     BinaryFunctionCall.h				\
     BinaryCallingConvention.h				\
-    BinaryPointerDetection.h
+    BinaryPointerDetection.h				\
+    BinaryAnalysisUtils.h
 
 
 EXTRA_DIST = CMakeLists.txt dummyBinaryMidend.C
