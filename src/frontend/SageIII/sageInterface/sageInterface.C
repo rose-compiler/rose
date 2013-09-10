@@ -16925,10 +16925,10 @@ SageInterface::collectSourceSequenceNumbers( SgNode* astNode )
  *  {
  *      for (int j=lb1;j>ub1;i+=inc1)            //decremental
  *      {
- * 		    for (int l=lb2;l<ub2;l+=inc2)        //incremental 
- *	    	{
- *               a[i][j][l]=i+j+l;	
- *       	}
+ *                  for (int l=lb2;l<ub2;l+=inc2)        //incremental 
+ *              {
+ *               a[i][j][l]=i+j+l;      
+ *              }
  *      }
  *  }
  *
