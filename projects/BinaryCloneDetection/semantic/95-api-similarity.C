@@ -157,6 +157,11 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
  
       ds.union_set(func1,func2);
  
+      boost::tie(edge, flag) = add_edge(func2, func1, graph);
+ 
+      ds.union_set(func2,func1);
+ 
+
 
     }
 
