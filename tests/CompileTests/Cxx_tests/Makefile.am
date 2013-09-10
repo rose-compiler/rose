@@ -26,6 +26,10 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    luleshTALC.C \
    test2013_253.C
 
+# DQ (9/10/2013): Test failing for switch without case statement (made up example, 
+# but we will want it to pass as part of further switch statement work later).
+# test2013_254.C
+
 # DQ (7/31/2013): This is a failing test code for operator->().
 # test2013_249.C 
 

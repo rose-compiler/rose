@@ -1,6 +1,14 @@
 
 int var = 42 + 2;
 
+struct X
+   {
+     int y;
+     int z;
+   };
+
+int var_2;
+
 int handle_sigchld()
    {
      int status;

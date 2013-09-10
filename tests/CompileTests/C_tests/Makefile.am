@@ -145,8 +145,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_38.c \
      test2012_39.c \
      test2012_40.c \
-     test2012_41.c \
      test2012_42.c \
+     test2012_41.c \
      test2012_43.c \
      test2012_46.c \
      test2012_47.c \
@@ -328,11 +328,30 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_57.c \
      test2013_58.c \
      test2013_59.c \
+     test2013_60.c \
+     test2013_61.c \
+     test2013_62.c \
+     test2013_63.c \
+     test2013_64.c \
+     test2013_65.c \
+     test2013_66.c \
      math.c \
      complex_01.c \
      constants.c
 
-# DQ (7/28/2013): This is a problem for the new block support.
+# DQ (9/9/2013): This is a problem for the new block support.
+#     test2012_23.c 
+#     test2012_25.c 
+#     test2012_36.c 
+#     test2012_42.c
+#     test2012_101.c
+#     test2012_102.c
+#     test2012_103.c 
+#     test2012_104.c 
+#     test2012_105.c 
+#     test2012_116.c 
+#     test2012_118.c 
+#     test2012_119.c 
 
 
 # DQ (5/23/2013): This is a failing case (reported by Sara). Case of "void foo(int N,int a[N]){}"
