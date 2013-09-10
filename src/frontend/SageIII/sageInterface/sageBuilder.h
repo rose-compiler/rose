@@ -407,6 +407,8 @@ SgCastExp * buildCastExp_nfi(SgExpression *  operand_i,
 SgVarArgOp * buildVarArgOp_nfi(SgExpression *  operand_i, SgType * expression_type);
 
 //! Build -- expression, Sgop_mode is a value of either SgUnaryOp::prefix or SgUnaryOp::postfix
+SgMinusOp *buildMinusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
+SgMinusOp *buildMinusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
 SgMinusMinusOp *buildMinusMinusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
 SgMinusMinusOp *buildMinusMinusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
 
@@ -615,8 +617,10 @@ SgFunctionCallExp* buildFunctionCallExp(SgExpression* f, SgExprListExp* paramete
 
 //! Build a function call expression,it will automatically search for function symbols internally to build a right function reference etc. It tolerates the lack of the function symbol to support generating calls to library functions whose headers have not yet been inserted.
 SgFunctionCallExp* 
-buildFunctionCallExp(const SgName& name, SgType* return_type, \
-                SgExprListExp* parameters=NULL, SgScopeStatement* scope=NULL);
+buildFunctionCallExp(const SgName& name, SgType* return_type, SgExprListExp* parameters=NULL, SgScopeStatement* scope=NULL);
+
+SgTypeTraitBuiltinOperator*
+buildTypeTraitBuiltinOperator(SgName functionName, SgNodePtrList parameters);
 
 //! Build a CUDA kernel call expression (kernel<<<config>>>(parameters))
 SgCudaKernelCallExp * buildCudaKernelCallExp_nfi(
@@ -656,6 +660,14 @@ SgSizeOfOp* buildSizeOfOp_nfi(SgExpression* exp);
 //! Build sizeof() expression with a type parameter
 SgSizeOfOp* buildSizeOfOp(SgType* type = NULL);
 SgSizeOfOp* buildSizeOfOp_nfi(SgType* type);
+
+//! Build __alignof__() expression with an expression parameter
+SgAlignOfOp* buildAlignOfOp(SgExpression* exp= NULL);
+SgAlignOfOp* buildAlignOfOp_nfi(SgExpression* exp);
+
+//! Build __alignof__() expression with a type parameter
+SgAlignOfOp* buildAlignOfOp(SgType* type = NULL);
+SgAlignOfOp* buildAlignOfOp_nfi(SgType* type);
 
 // DQ (7/18/2011): Added support for SgJavaInstanceOfOp
 //! This is part of Java specific operator support.
@@ -773,11 +785,10 @@ void setTemplateParametersInDeclaration              ( SgDeclarationStatement* d
 // actualFunction*
 template <class actualFunction>
 actualFunction*
-buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, SgTemplateArgumentPtrList* templateArgumentsList);
+buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, SgTemplateArgumentPtrList* templateArgumentsList, SgTemplateParameterPtrList* templateParameterList);
 
 //! Build a prototype for a function, handle function type, symbol etc transparently
 // DQ (7/26/2012): Changing the API to include template arguments so that we can generate names with and without template arguments (to support name mangiling).
-// SgFunctionDeclaration* buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, bool buildTemplateInstantiation = false);
 SgFunctionDeclaration*
 buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
 
@@ -785,46 +796,42 @@ buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, S
 // We need to decide if the SageBuilder API should include these sorts of functions.
 SgFunctionDeclaration* buildNondefiningFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgScopeStatement* scope = NULL, SgExprListExp* decoratorList = NULL);
 
+// DQ (8/11/2013): Even though template functions can't use partial specialization, they can be specialized, 
+// however the specialization does not define a template and instead defines a template instantiation, so we 
+// don't need the SgTemplateArgumentPtrList in this function.
+// SgTemplateFunctionDeclaration* buildNondefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
+SgTemplateFunctionDeclaration*
+buildNondefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, SgTemplateParameterPtrList* templateParameterList = NULL);
 
-// #ifdef ROSE_USE_NEW_EDG_INTERFACE
-SgTemplateFunctionDeclaration *
-buildNondefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
-// #endif
-
-// #ifdef ROSE_USE_NEW_EDG_INTERFACE
+// DQ (8/11/2013): Note that access to the SgTemplateParameterPtrList should be handled through the first_nondefining_declaration (which is a required parameter).
 // DQ (12/1/2011): Adding support for template declarations into the AST.
 SgTemplateFunctionDeclaration*
-buildDefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, SgTemplateFunctionDeclaration* first_nondefinng_declaration);
-// #endif
+buildDefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, SgTemplateFunctionDeclaration* first_nondefining_declaration);
 
 //! Build a prototype for an existing function declaration (defining or nondefining is fine) 
 SgFunctionDeclaration *
 buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 
 //! Build a prototype member function declaration
-// SgMemberFunctionDeclaration *
-// buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
-// SgMemberFunctionDeclaration *
-// buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
+// SgMemberFunctionDeclaration * buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
+// SgMemberFunctionDeclaration * buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
 // SgMemberFunctionDeclaration* buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0, bool buildTemplateInstantiation = false);
 SgMemberFunctionDeclaration*
 buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
 
-// #ifdef ROSE_USE_NEW_EDG_INTERFACE
+// DQ (8/12/2013): This function needs to supporte SgTemplateParameterPtrList and SgTemplateArgumentPtrList parameters.
+// SgTemplateMemberFunctionDeclaration* buildNondefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope = NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
 SgTemplateMemberFunctionDeclaration*
-buildNondefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope = NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
-// #endif
+buildNondefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, SgTemplateParameterPtrList* templateParameterList );
 
-// #ifdef ROSE_USE_NEW_EDG_INTERFACE
 // DQ (12/1/2011): Adding support for template declarations in the AST.
 SgTemplateMemberFunctionDeclaration*
 buildDefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, SgTemplateMemberFunctionDeclaration* first_nondefing_declaration );
-// #endif
 
 ////! Build a prototype member function declaration
-//SgMemberFunctionDeclaration*
-//buildNondefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgFunctionParameterList* paralist, SgScopeStatement* scope=NULL);
+// SgMemberFunctionDeclaration* buildNondefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgFunctionParameterList* paralist, SgScopeStatement* scope=NULL);
 
+// DQ (8/11/2013): Note that the specification of the SgTemplateArgumentPtrList is somewhat redundant with the required parameter first_nondefinng_declaration (I think).
 //! Build a defining ( non-prototype) member function declaration
 // SgMemberFunctionDeclaration* buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation, unsigned int functionConstVolatileFlags, SgMemberFunctionDeclaration* first_nondefinng_declaration);
 SgMemberFunctionDeclaration*
@@ -848,7 +855,6 @@ buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionTyp
 
 //! Build a prototype for an existing member function declaration (defining or nondefining is fine) 
 // SgMemberFunctionDeclaration*
-// buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 SgMemberFunctionDeclaration*
 buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
 
@@ -861,6 +867,7 @@ SgMemberFunctionDeclaration* buildNondefiningMemberFunctionDeclaration(const SgN
 SgMemberFunctionDeclaration* buildDefiningMemberFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgScopeStatement* scope = NULL);
 
 
+// DQ (8/11/2013): Note that the specification of the SgTemplateArgumentPtrList is somewhat redundant with the required parameter first_nondefinng_declaration (I think).
 //! A template function for function declaration builders
 template <class actualFunction>
 actualFunction*
@@ -868,6 +875,7 @@ actualFunction*
 // buildDefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, actualFunction* first_nondefinng_declaration);
 buildDefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, actualFunction* first_nondefinng_declaration, SgTemplateArgumentPtrList* templateArgumentsList);
 
+// DQ (8/11/2013): Note that the specification of the SgTemplateArgumentPtrList is somewhat redundant with the required parameter first_nondefinng_declaration (I think).
 //! Build a function declaration with a function body
 // SgFunctionDeclaration* buildDefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation, SgFunctionDeclaration* first_nondefinng_declaration);
 SgFunctionDeclaration*
@@ -885,11 +893,11 @@ SgFunctionDeclaration*
 buildDefiningFunctionDeclaration (const char* name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, SgFunctionDeclaration* first_nondefinng_declaration);
 #endif
 
-// DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
+// DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficient).
 // We need to decide if the SageBuilder API should include these sorts of functions.
 SgFunctionDeclaration* buildDefiningFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgScopeStatement* scope = NULL);
 
-// DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
+// DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficient).
 // We need to decide if the SageBuilder API should include these sorts of functions.
 SgProcedureHeaderStatement* buildProcedureHeaderStatement(const SgName& name, SgType* return_type, SgFunctionParameterList* parameter_list, SgProcedureHeaderStatement::subprogram_kind_enum, SgScopeStatement* scope = NULL);
 
@@ -1076,14 +1084,12 @@ SgTemplateClassDefinition* buildTemplateClassDefinition(SgTemplateClassDeclarati
 // DQ (6/6/2012): Added support to get the template arguments into place before computing the type.
 // SgClassDeclaration* buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope);
 // SgClassDeclaration* buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, bool buildTemplateInstantiation = false);
-   SgClassDeclaration* buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
+SgClassDeclaration* buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
 
-// #ifdef ROSE_USE_NEW_EDG_INTERFACE
+// DQ (8/11/2013): We need to hand in both the SgTemplateParameterPtrList and the SgTemplateArgumentPtrList because class templates can be partially specialized.
 // DQ (11/29/2011): Adding template declaration support to the AST.
 // SgTemplateClassDeclaration* buildNondefiningTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope);
-SgTemplateClassDeclaration* buildNondefiningTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, 
-                                                                         SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList);
-// #endif
+SgTemplateClassDeclaration* buildNondefiningTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList);
 
 // DQ (11/7/2009): Added functions to build C++ class.
 SgClassDeclaration* buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* scope );
@@ -1118,19 +1124,17 @@ SgNaryBooleanOp* buildNaryBooleanOp_nfi(SgExpression* lhs);
 SgStringConversion* buildStringConversion(SgExpression* exp);
 SgStringConversion* buildStringConversion_nfi(SgExpression* exp);
 
-
 // DQ (6/6/2012): Addeding support to include template arguments in the generated type (template argument must be provided as early as possible).
 // DQ (1/24/2009): Added this "_nfi" function but refactored buildStructDeclaration to also use it (this needs to be done uniformally).
 // SgClassDeclaration * buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl, bool buildTemplateInstantiation = false);
 // SgClassDeclaration * buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl, bool buildTemplateInstantiation);
-SgClassDeclaration * buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
+SgClassDeclaration* buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
 
-// #ifdef ROSE_USE_NEW_EDG_INTERFACE
+// DQ (8/11/2013): I think that the specification of both SgTemplateParameterPtrList and SgTemplateArgumentPtrList is redundant with the nonDefiningDecl (which is a required parameter).
 // DQ (11/19/2011): Added to support template class declaration using EDG 4.x support (to support the template declarations directly in the AST).
 // SgTemplateClassDeclaration* buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl );
-SgTemplateClassDeclaration* buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl, 
+SgTemplateClassDeclaration* buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl,
                                                               SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList );
-// #endif
 
 //! Build an enum, It is also a declaration statement in SAGE III
 SgEnumDeclaration * buildEnumDeclaration(const SgName& name, SgScopeStatement* scope=NULL);
@@ -1221,6 +1225,10 @@ SgAsmStmt* buildAsmStatement_nfi(std::string s);
 // ! Building nop statement using asm statement
 SgAsmStmt* buildMultibyteNopStatement( int n );
 
+// DQ (5/6/2013): Added build functions to support SgBaseClass construction.
+SgBaseClass* buildBaseClass ( SgClassDeclaration* classDeclaration, SgClassDefinition* classDefinition, bool isVirtual, bool isDirect );
+// SgAccessModifier buildAccessModifier ( unsigned int access );
+
 
 //@}
 
@@ -1258,100 +1266,5 @@ AbstractHandle::abstract_handle * buildAbstractHandle(SgNode* n);
 //@}
 
 } // end of namespace
-
-// Templates need to be in headers to be found by gcc [Robb P. Matzke 2013-03-19]
-// DQ (3/13/2012): Added support for organizing how we match function declarations with function symbols.
-template <class T>
-SgFunctionSymbol*
-SgSymbolTable::find_symbol_by_type_of_function (const SgName & name, const SgType* func_type)
-   {
-  // DQ (3/13/2012): This is to address the fact that there are 6 different types of functions in ROSE:
-  //    1) SgFunctionDeclaration
-  //    2) SgMemberFunctionDeclaration
-  //    3) SgTemplateFunctionDeclaration
-  //    4) SgTemplateMemberFunctionDeclaration
-  //    5) SgTemplateFunctionInstntiationDeclaration
-  //    6) SgTemplateMemberFunctionInstntiationDeclaration
-  // And 4 different types of function symbols:
-  //    1) SgFunctionSymbol
-  //    2) SgMemberFunctionSymbol
-  //    3) SgTemplateFunctionSymbol
-  //    4) SgTemplateMemberFunctionSymbol
-  // Note that both:
-  //    SgTemplateFunctionInstntiationDeclaration
-  //    SgTemplateMemberFunctionInstntiationDeclaration
-  // map to 
-  //    SgFunctionSymbol
-  //    SgMemberFunctionSymbol
-  // respectively.
-
-  // Check if there is a function symbol of any kind, then narrow the selection.
-  // SgFunctionSymbol* func_symbol = lookup_function_symbol(name,func_type);
-     SgFunctionSymbol* func_symbol = NULL;
-
-  // if (func_symbol == NULL)
-        {
-       // Use the static variant as a selector.
-          switch((VariantT)T::static_variant)
-             {
-               case V_SgFunctionDeclaration:
-               case V_SgTemplateInstantiationFunctionDecl:
-                  {
-#if 0
-                    printf ("In SgSymbolTable::find_symbol_by_type_of_function(): This is a SgFunctionDeclaration or SgTemplateInstantiationFunctionDecl function \n");
-#endif
-                 // func_symbol = this->find_function(name,func_type);
-                    func_symbol = find_nontemplate_function(name,func_type);
-                    break;
-                  }
-
-               case V_SgMemberFunctionDeclaration:
-               case V_SgTemplateInstantiationMemberFunctionDecl:
-                  {
-#if 0
-                    printf ("In SgSymbolTable::find_symbol_by_type_of_function(): This is a SgMemberFunctionDeclaration or SgTemplateInstantiationMemberFunctionDecl function \n");
-#endif
-                    func_symbol = find_nontemplate_member_function(name,func_type);
-                    break;
-                  }
-
-               case V_SgTemplateFunctionDeclaration:
-                  {
-#if 0
-                    printf ("In SgSymbolTable::find_symbol_by_type_of_function(): This is a SgTemplateFunctionDeclaration function \n");
-#endif
-                    func_symbol = find_template_function(name,func_type);
-                    break;
-                  }
-
-               case V_SgTemplateMemberFunctionDeclaration:
-                  {
-#if 0
-                    printf ("In SgSymbolTable::find_symbol_by_type_of_function(): This is a SgTemplateMemberFunctionDeclaration function \n");
-#endif
-                    func_symbol = find_template_member_function(name,func_type);
-                    break;
-                  }
-
-               default:
-                  {
-                 // printf ("default reach in buildNondefiningFunctionDeclaration_T(): variantT(T::static_variant) = %d = %s \n",T::static_variant,T::class_name().c_str());
-                    printf ("In SgSymbolTable::find_symbol_by_type_of_function(): default reached --- variantT(T::static_variant) = %d \n",T::static_variant);
-                    ROSE_ASSERT(false);
-                  }
-             }
-        }
-
-#if 0
-     if (func_symbol != NULL)
-          printf ("In SgSymbolTable::find_symbol_by_type_of_function(): func_symbol = %p = %s \n",func_symbol,func_symbol->class_name().c_str());
-       else
-          printf ("In SgSymbolTable::find_symbol_by_type_of_function(): func_symbol = %p \n",func_symbol);
-#endif
-
-  // return isSgFunctionSymbol(func_symbol);
-     return func_symbol;
-   }
-
 
 #endif //ROSE_SAGE_BUILDER_INTERFACE

@@ -27,7 +27,8 @@ mptOmpLowering_extraDist=\
 	$(mptOmpLoweringPath)/CMakeLists.txt \
 	$(mptOmpLoweringPath)/README \
 	$(mptOmpLoweringPath)/run_me_caller_generator.sh \
-	$(mptOmpLoweringPath)/run_me_generator.sh
+	$(mptOmpLoweringPath)/run_me_generator.sh \
+	$(mptOmpLoweringPath)/xomp_cuda_lib.cu
 
 mptOmpLowering_cleanLocal=\
 	rm -rf \

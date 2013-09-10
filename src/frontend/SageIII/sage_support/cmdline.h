@@ -14,10 +14,13 @@
 #include "sage_support.h"
 
 namespace SageSupport {
-namespace /*SageSupport::*/Cmdline {
-static void
-makeSysIncludeList(const Rose_STL_Container<string> &dirs,
-                   Rose_STL_Container<string> &result);
+namespace Cmdline {
+  static void
+  makeSysIncludeList(const Rose_STL_Container<string> &dirs,
+                     Rose_STL_Container<string> &result);
+
+  void
+  ProcessKeepGoing (SgProject* project, std::vector<std::string>& argv);
 
   namespace X10 {
     static std::string option_prefix = "-rose:x10:";

@@ -1,5 +1,6 @@
 #include <string.h>
 #include <string>
+#include <stdexcept>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -68,17 +69,33 @@ static int jofp_invoke(int argc, char **argv) {
 
     // tps : this code is more transparent and easier to read
     jclass cls = jserver_FindClass("JavaTraversal");
-    if (cls == NULL)  jserver_handleException();
+    if (cls == NULL) {
+        fprintf(stderr,
+                "[ERROR] "
+                "Caught a JServer exception in the ECJ_ROSE_Connection.\n");
+        jserver_handleException();
+        throw std::runtime_error("[ECJ_ROSE_Connection] JServer Exception");
+    }
     jmethodID  mainMethod = jserver_GetMethodID(STATIC_METHOD, cls, "main",  "([Ljava/lang/String;)V");
     JNIEnv* env = getEnv();
+
     (*env).CallStaticVoidMethod(cls, mainMethod,args);
+    if (env->ExceptionOccurred()) {
+        fprintf(stderr,
+               "[ERROR] "
+               "Caught a JNI exception in the ECJ_ROSE_Connection.\n");
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        throw std::runtime_error("[ECJ_ROSE_Connection] JNI Exception");
+    }
 
     jmethodID errorMethod = jofp_get_method(STATIC_METHOD, "getError", "()Z");
     retval = (*env).CallBooleanMethod(cls, errorMethod);
-    if (retval != 0)  {
-        fprintf(stderr, "C++ side : Error detected ---------------------------------.\n");
-        abort();
-    }      
+    if (retval != 0) {
+        fprintf(stderr,
+                "[ECJ_ROSE_Connection] [ERROR] JNI-C++ exception\n");
+        throw std::runtime_error("[ECJ_ROSE_Connection] JNI-C++ error");
+    }
 
     // printf("We are done -----------------------------------------\n");
 

@@ -115,7 +115,8 @@ FixupFortranReferences::visit ( SgNode* node )
                          if (labelSymbolFromSymbolTable == NULL)
                             {
                               printf ("Error: labelSymbolFromSymbolTable == NULL \n");
-                              functionDefinition->get_symbol_table()->print("Error: labelSymbolFromSymbolTable == NULL",V_SgLabelSymbol);
+                           // functionDefinition->get_symbol_table()->print("Error: labelSymbolFromSymbolTable == NULL",V_SgLabelSymbol);
+                              functionDefinition->print_symboltable("Error: labelSymbolFromSymbolTable == NULL",V_SgLabelSymbol);
                             }
                          ROSE_ASSERT(labelSymbolFromSymbolTable != NULL);
 

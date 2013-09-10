@@ -370,12 +370,14 @@ void ASTtools::collectVarRefsOfTypeWithoutAssignmentSupport(const SgStatement* s
 // We collect those used by address OR those do not support assignment
 // We exclude C++ reference types since they do not support dereferencing 
 // We also collect structure or class types, passing by reference is more efficient for them 
-// PointerDereferenceingVars =
-//   PassByRefParameters \intersection (UsingByAddress \union NotAssignableVars) - PointerDereferencedVars
+// ?PointerDereferenceingVars =
+// ?  PassByRefParameters \intersection (UsingByAddress \union NotAssignableVars) - PointerDereferencedVars
+//  
+// pdSyms = useByAddressVars + Non-assignableVars + Struct/ClassVars 
 //   Liao, 8/14/2009
 void ASTtools::collectPointerDereferencingVarSyms(const SgStatement*s, VarSymSet_t& pdSyms)
 {
-  std::set<SgVarRefExp* > varSetB;
+  std::set<SgVarRefExp* > varSetB; // use by address (&a) or not assignable (a=..)
   std::set<SgVarRefExp* >::const_iterator iter;
 
   // use by address
@@ -398,7 +400,6 @@ void ASTtools::collectPointerDereferencingVarSyms(const SgStatement*s, VarSymSet
       varSetB.insert(ref);
     }
   }
-   
 
   // convert variable references to symbols
   for (iter=varSetB.begin(); iter!=varSetB.end(); iter++)
