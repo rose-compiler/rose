@@ -306,7 +306,6 @@ remove_compilation_unit_complement(int func1_id, int func2_id, int igroup_id, in
       if( remove_these.find(*it) == remove_these.end())
         new_func2_vec->push_back(*it);
 
-
   }
 
   return std::pair<CallVec*, CallVec*>(new_func1_vec, new_func2_vec);
@@ -326,7 +325,7 @@ similarity(int func1_id, int func2_id, int igroup_id, double similarity, bool ig
 
  //Detect and normalize similar function calls
 
-if( func1_vec->size() == 0 & func2_vec->size() == 0 )
+if( (func1_vec->size() == 0) & (func2_vec->size() == 0) )
    return -1;
 
  normalize_call_trace(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec) ; 
@@ -468,8 +467,6 @@ main(int argc, char *argv[])
       igroup_stmt->bind(0, func2_id);
       igroup_stmt->bind(1, func1_id);
 
-
-
       int ncompares = 0;
 
       double max_api_similarity = 0;
@@ -493,9 +490,9 @@ main(int argc, char *argv[])
       }
 
       if( ncompares == 0)
-        ave_api_similarity = 1.0;
-      else
-        ave_api_similarity = ave_api_similarity/ncompares;
+        continue;
+
+      ave_api_similarity = ave_api_similarity/ncompares;
 
       insert_stmt->bind(0, func1_id);
       insert_stmt->bind(1, func2_id);
@@ -508,9 +505,7 @@ main(int argc, char *argv[])
     }
    
     
-   
     transaction->commit();
-
 
     return 0;
 } 
