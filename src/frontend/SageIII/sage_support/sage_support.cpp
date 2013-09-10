@@ -4304,7 +4304,7 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
 #endif
 
   // Make sure this node is correctly parented
-     SgProject* project = isSgProject(this->get_parent());
+     SgProject* project = SageInterface::getEnclosingNode<SgProject>(this);
      ROSE_ASSERT(project != NULL);
 #else
      ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Binary analysis] "
