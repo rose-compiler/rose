@@ -133,7 +133,7 @@ testElfByteOrder_SOURCES = testElfByteOrder.C
 testElfByteOrder_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += testElfByteOrder.passed
 EXTRA_DIST += testElfByteOrder.conf
-testElfByteOrder.passed: testElfByteOrder.conf testElfByteOrder testElfStrtab.passed
+testElfByteOrder.passed: testElfByteOrder.conf testElfByteOrder execFormatsTest testElfStrtab.passed
 	@$(RTH_RUN) INPUT=arm-poweroff $< $@
 
 
@@ -144,7 +144,7 @@ testElfWordSize_SOURCES = testElfWordSize.C
 testElfWordSize_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += testElfWordSize.passed
 EXTRA_DIST += testElfWordSize.conf
-testElfWordSize.passed: testElfWordSize.conf testElfWordSize testElfStrtab.passed testElfByteOrder.passed
+testElfWordSize.passed: testElfWordSize.conf testElfWordSize execFormatsTest testElfStrtab.passed testElfByteOrder.passed
 	@$(RTH_RUN) INPUT=arm-poweroff $< $@
 
 
@@ -156,9 +156,9 @@ testElfSchulz_SOURCES = testElfSchulz.C
 testElfSchulz_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += testElfSchulz-1.passed testElfSchulz-2.passed
 EXTRA_DIST += testElfSchulz.conf
-testElfSchulz-1.passed: testElfSchulz.conf testElfSchulz
+testElfSchulz-1.passed: testElfSchulz.conf testElfSchulz execFormatsTest
 	@$(RTH_RUN) FLAGS='-rose:partitioner_search -leftovers' N=1 $< $@
-testElfSchulz-2.passed: testElfSchulz.conf testElfSchulz
+testElfSchulz-2.passed: testElfSchulz.conf testElfSchulz execFormatsTest
 	@$(RTH_RUN) FLAGS='-rose:partitioner_search -leftovers' N=2 $< $@
 
 
@@ -193,7 +193,7 @@ shiftResizeSection_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_L
 TEST_TARGETS += shiftResizeSection.passed
 EXTRA_DIST += shiftResizeSection.conf shiftResizeSection.ans
 MOSTLYCLEANFILES += arm-ctrlaltdel.dump-1 arm-ctrlaltdel.dump-2 arm-ctrlaltdel.dump-3
-shiftResizeSection.passed: shiftResizeSection.conf shiftResizeSection
+shiftResizeSection.passed: shiftResizeSection.conf shiftResizeSection execFormatsTest
 	@$(RTH_RUN) INPUT=arm-ctrlaltdel $< $@
 
 # Check whether the instruction semantics classes can be specialized. This is only a compile test; we never actually
