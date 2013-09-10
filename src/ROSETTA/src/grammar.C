@@ -2332,6 +2332,10 @@ Grammar::extractStringFromFile (
         }
 
   // If this is false then the MARKER_*_END strings were not located in the file
+     if (found == false)
+        {
+          printf ("Error: could not locate endMarker = %s in file = %s \n",endMarker.c_str(),filename.c_str());
+        }
      ROSE_ASSERT (found);
 
      return fileString;
@@ -3222,7 +3226,10 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
         ||nodeName == "SgOmpClauseBodyStatement"
         ||nodeName == "SgOmpParallelStatement"
         ||nodeName == "SgOmpSectionsStatement"
+        ||nodeName == "SgOmpTargetStatement"
+        ||nodeName == "SgOmpTargetDataStatement"
         ||nodeName == "SgOmpSingleStatement"
+        ||nodeName == "SgOmpSimdStatement"
         ||nodeName == "SgOmpTaskStatement"
         ||nodeName == "SgOmpForStatement"
         ||nodeName == "SgOmpDoStatement"
@@ -3508,12 +3515,15 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
                   }
                 // Liao, 5/30/2009
                // More exceptional cases for SgOmpClauseBodyStatement and its derived classes
-              // We allow them to have mixed members (simple member and contanter member)
+              // We allow them to have mixed members (simple member and container member)
                else if (string(node.getName()) == "SgOmpClauseBodyStatement"
                  ||string(node.getName()) == "SgOmpParallelStatement"
                  ||string(node.getName()) == "SgOmpSingleStatement"
+                 ||string(node.getName()) == "SgOmpSimdStatement"
                  ||string(node.getName()) == "SgOmpTaskStatement"
                  ||string(node.getName()) == "SgOmpSectionsStatement"
+                 ||string(node.getName()) == "SgOmpTargetStatement"
+                 ||string(node.getName()) == "SgOmpTargetDataStatement"
                  ||string(node.getName()) == "SgOmpForStatement"
                  ||string(node.getName()) == "SgOmpDoStatement"
                  )
@@ -3612,8 +3622,11 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
                else if (string(node.getName()) == "SgOmpClauseBodyStatement"
                  ||string(node.getName()) == "SgOmpParallelStatement"
                  ||string(node.getName()) == "SgOmpSingleStatement"
+                 ||string(node.getName()) == "SgOmpSimdStatement"
                  ||string(node.getName()) == "SgOmpTaskStatement"
                  ||string(node.getName()) == "SgOmpSectionsStatement"
+                 ||string(node.getName()) == "SgOmpTargetStatement"
+                 ||string(node.getName()) == "SgOmpTargetDataStatement"
                  ||string(node.getName()) == "SgOmpForStatement"
                  ||string(node.getName()) == "SgOmpDoStatement"
                  )

@@ -506,6 +506,9 @@ SgOmpTaskStatement
 SgOmpTaskwaitStatement
 SgOmpThreadprivateStatement
 SgOmpWorkshareStatement
+SgOmpTargetStatement
+SgOmpTargetDataStatement
+SgOmpSimdStatement
 SgOmpClause
 SgOmpCollapseClause
 SgOmpCopyinClause
@@ -514,6 +517,7 @@ SgOmpDefaultClause
 SgOmpExpressionClause
 SgOmpFirstprivateClause
 SgOmpIfClause
+SgOmpDeviceClause
 SgOmpLastprivateClause
 SgOmpNowaitClause
 SgOmpNumThreadsClause
@@ -524,6 +528,11 @@ SgOmpScheduleClause
 SgOmpSharedClause
 SgOmpUntiedClause
 SgOmpVariablesClause
+SgOmpMapClause
+SgOmpSafelenClause
+SgOmpLinearClause
+SgOmpUniformClause
+SgOmpAlignedClause
 SgOpenclAccessModeModifier
 SgOpenStatement
 SgOptions
@@ -568,6 +577,7 @@ SgSequenceStatement
 SgSetComprehension
 SgShortVal
 SgSizeOfOp
+SgAlignOfOp
 SgJavaInstanceOfOp
 SgSourceFile
 SgSpawnStmt
@@ -618,6 +628,7 @@ SgTemplateParameterList
 SgTemplateSymbol
 SgTemplateType
 SgThisExp
+SgTypeTraitBuiltinOperator
 SgSuperExp
 SgThrowOp
 SgToken
@@ -716,3 +727,6 @@ SgCAFCoExpression
 SgCallExpression
 SgTypeCrayPointer
 SgJavaImportStatement
+SgJavaPackageStatement
+SgJavaImportStatementList
+SgJavaClassDeclarationList

@@ -9,5 +9,5 @@ int main (void)
 #pragma omp atomic
     a+=1;
   }
-
+  return 0;
 }

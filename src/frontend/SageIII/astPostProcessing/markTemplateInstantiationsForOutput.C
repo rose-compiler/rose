@@ -35,7 +35,7 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
   // an iterative process where we always search the new declarations on the assembled 
   // list and merge the lists until finally no list is generated (then we stop).
 
-  // List of lists of declarations, each list if obtained from an iteration of the 
+  // List of lists of declarations, each list is obtained from an iteration of the 
   // prelink process, multiple iterations are required because each new declaration 
   // found to be required may cascade into other declarations being required.  All
   // of these could generate required instantiations and trigger the output of 
@@ -60,34 +60,129 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
      printf ("declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size() = %zu \n",declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size());
 #endif
 
-     int prelinkIterationCounter = 0;
-     while ( declarationFixupTraversal.listOfTemplateDeclarationsToOutput.empty() == false )
-        {
-       // create a shorter name for the list where we accumulare required declarations
-          list<SgDeclarationStatement*> & currentList = declarationFixupTraversal.listOfTemplateDeclarationsToOutput;
+     list<SgDeclarationStatement*> accumulatedList = declarationFixupTraversal.listOfTemplateDeclarationsToOutput;
 
+  // create a shorter name for the list where we accumulare required declarations
+     list<SgDeclarationStatement*> & currentList = declarationFixupTraversal.listOfTemplateDeclarationsToOutput;
+
+     int prelinkIterationCounter = 0;
+  // while ( declarationFixupTraversal.listOfTemplateDeclarationsToOutput.empty() == false )
+     while ( currentList.empty() == false )
+        {
+       // For each identified template instantiation, traverse it to identify if it includes an instantiation that would ???
+#if 0
+       // Add any new elements from currentList into the accumulatedList (so that we can use the accumulatedList to remove elements from the currentList at the end of the loop).
+          list<SgDeclarationStatement*>::iterator l = currentList.begin();
+          while (l != currentList.end())
+             {
+
+#error "DEAD CODE!"
+
+            // Check is this is a previously seen declaration.
+               if (find(accumulatedList.begin(),accumulatedList.end(),*l) == accumulatedList.end())
+                  {
+                    accumulatedList.push_back(*l);
+                  }
+               l++;
+             }
+#endif
+#if 0
+          printf ("   --- AFTER accumulation: accumulatedList.size() = %zu \n",accumulatedList.size());
+          list<SgDeclarationStatement*>::iterator a = accumulatedList.begin();
+          unsigned int b = 0;
+          while (a != accumulatedList.end())
+             {
+               printf ("   ---   ---  accumulatedList[%u] = %p \n",b,*a);
+               a++;
+               b++;
+             }
+#endif
+
+       // DQ (3/31/2013): This might not be required if we use the accumulatedList to build the setOfRequiredDeclarations (function return value).
        // append the newest list to the back of the list of lists of required declarations
           listOfListsOfDeclarations.push_back(currentList);
-
 #if 0
-          printf ("Number of lists of required declarations = %zu \n",listOfListsOfDeclarations.size());
+          printf ("   --- Number of lists of required declarations = %zu \n",listOfListsOfDeclarations.size());
+#endif
+#if 0
           for (unsigned int n = 0; n < listOfListsOfDeclarations.size(); n++)
              {
-               printf (" -- Size of listOfListsOfDeclarations[%u] = %zu \n",n,listOfListsOfDeclarations[n].size());
+            // printf (" -- Size of listOfListsOfDeclarations[%u] = %zu \n",n,listOfListsOfDeclarations[n].size());
+               printf ("   ---   --- Size of listOfListsOfDeclarations[%u] = %zu \n",n,listOfListsOfDeclarations[n].size());
+             }
+#endif
+#if 0
+          printf ("   --- currentList.size() = %zu \n",currentList.size());
+          list<SgDeclarationStatement*>::iterator j = currentList.begin();
+          unsigned int m = 0;
+          while (j != currentList.end())
+             {
+               printf ("   ---   ---  currentList[%u] = %p \n",m,*j);
+               j++;
+               m++;
              }
 #endif
 
+#if 0
+       // DQ (3/31/2013): We need to erase any previously seen element, not just those from last iteration.
        // remove the elements from the current list
-          currentList.erase(currentList.begin(),currentList.end());
+       // currentList.erase(currentList.begin(),currentList.end());
 
+#error "DEAD CODE!"
+
+       // currentList.erase(accumulatedList.begin(),accumulatedList.end());
 #if 0
-          printf ("After erase of currentList: Number of lists of required declarations = %zu \n",listOfListsOfDeclarations.size());
-          for (unsigned int n = 0; n < listOfListsOfDeclarations.size(); n++)
+          printf ("REMOVING any previously seen elements from the list (1st time): \n");
+#endif
+          list<SgDeclarationStatement*>::iterator c = accumulatedList.begin();
+          unsigned int d = 0;
+          while (c != accumulatedList.end())
              {
-               printf ("  -- Size of listOfListsOfDeclarations[%u] = %zu \n",n,listOfListsOfDeclarations[n].size());
+               if (find(currentList.begin(),currentList.end(),*c) != currentList.end())
+                  {
+                    printf ("   ---   ---  erasing (remove) accumulatedList[%u] = %p from currentList \n",d,*c);
+                    currentList.remove(*c);
+                  }
+
+#error "DEAD CODE!"
+
+               c++;
+               d++;
              }
+#if 0
+          printf ("   --- AFTER ERASE: currentList.size() = %zu \n",currentList.size());
+          list<SgDeclarationStatement*>::iterator k = currentList.begin();
+          unsigned int o = 0;
+          while (k != currentList.end())
+             {
+               printf ("   ---   ---  currentList[%u] = %p \n",o,*k);
+               k++;
+               o++;
+             }
+
+          printf ("   --- declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size() = %zu \n",declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size());
 #endif
 
+#error "DEAD CODE!"
+
+#if 0
+          printf ("   --- After erase of currentList: Number of lists of required declarations = %zu \n",listOfListsOfDeclarations.size());
+          for (unsigned int n = 0; n < listOfListsOfDeclarations.size(); n++)
+             {
+               printf ("   ---   --- Size of listOfListsOfDeclarations[%u] = %zu \n",n,listOfListsOfDeclarations[n].size());
+
+               list<SgDeclarationStatement*>::iterator i = listOfListsOfDeclarations[n].begin();
+
+               unsigned int m = 0;
+               while (i != listOfListsOfDeclarations[n].end())
+                  {
+                    printf ("   ---   --- listOfListsOfDeclarations[%u][%u] = %p \n",n,m,*i);
+                    i++;
+                    m++;
+                  }
+             }
+#endif
+#endif
           list<SgDeclarationStatement*>::iterator i = listOfListsOfDeclarations[prelinkIterationCounter].begin();
           while ( i != listOfListsOfDeclarations[prelinkIterationCounter].end() )
              {
@@ -97,24 +192,76 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
                if ( (*i)->get_file_info()->isCompilerGenerated() == true )
                   {
                  // Look into this subtrees for any required declarations (which would not have been caught last iteration!
+#if 0
+                    printf ("   --- START: Nested traversal: declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size() = %zu \n",
+                         declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size());
+#endif
                     declarationFixupTraversal.traverse ( *i , inheritedAttribute );
 #if 0
-                    printf ("  -- In nested traversal: declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size() = %zu \n",
+                    printf ("   --- END: Nested traversal: declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size() = %zu \n",
                          declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size());
 #endif
                   }
 
                i++;
              }
+
+       // DQ (3/31/2013): Added debugging code.
+          if (listOfListsOfDeclarations.size() > 2)
+             {
+               printf ("Exiting as a test: listOfListsOfDeclarations.size() > 2 prelinkIterationCounter = %u \n",prelinkIterationCounter);
+               ROSE_ASSERT(false);
+             }
+
+       // DQ (3/31/2013): This is some sort of set operation (union into accumulatedList) and removing the insersection 
+       // from the currentList.  Note sure if there is a simpler expression for this.
+
+       // DQ (3/31/2013): Remove any previously handled declarations (list elements).
 #if 0
-          printf ("At end of prelink loop prelinkIterationCounter = %u listOfTemplateDeclarationsToOutput.size() = %lu \n",
-               prelinkIterationCounter, (unsigned long) declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size());
+          printf ("SCRUB THE LIST: REMOVING any previously seen elements from the list (2nd time): \n");
+#endif
+          list<SgDeclarationStatement*>::iterator e = accumulatedList.begin();
+          unsigned int f = 0;
+          while (e != accumulatedList.end())
+             {
+               if (find(currentList.begin(),currentList.end(),*e) != currentList.end())
+                  {
+#if 0
+                    printf ("   ---   ---  erasing (remove) accumulatedList[%u] = %p from currentList \n",f,*e);
+#endif
+                    currentList.remove(*e);
+                  }
+
+               e++;
+               f++;
+             }
+
+       // Add any new elements from currentList into the accumulatedList (so that we can use the accumulatedList to remove elements from the currentList at the end of the loop).
+          list<SgDeclarationStatement*>::iterator l = currentList.begin();
+          unsigned int g = 0;
+          while (l != currentList.end())
+             {
+            // Check is this is a previously seen declaration.
+               if (find(accumulatedList.begin(),accumulatedList.end(),*l) == accumulatedList.end())
+                  {
+#if 0
+                    printf ("   ---   ---  adding new ellements from currentList[%u] = %p to accumulatedList \n",g,*l);
+#endif
+                    accumulatedList.push_back(*l);
+                  }
+               l++;
+               g++;
+             }
+
+#if 0
+          printf ("   --- @@@@@ At end of prelink loop prelinkIterationCounter = %u currentList.size() = %lu \n",prelinkIterationCounter, (unsigned long) currentList.size());
 #endif
 #if 0
           printf ("Exiting after first prelink iteration \n");
           ROSE_ASSERT(false);
 #endif
           prelinkIterationCounter++;
+
         }
 
 #if 0
@@ -123,6 +270,7 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
 
   // Convert the vector of lists to a set!
      set<SgDeclarationStatement*> setOfRequiredDeclarations;
+#if 0
      for (unsigned int n = 0; n < listOfListsOfDeclarations.size(); n++)
         {
 #if 0
@@ -135,6 +283,15 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
                i++;
              }
         }
+#else
+  // DQ (3/31/2013): Use this simpler implementation.
+     list<SgDeclarationStatement*>::iterator c = accumulatedList.begin();
+     while (c != accumulatedList.end())
+        {
+          setOfRequiredDeclarations.insert(*c);
+          c++;
+        }
+#endif
 
      return setOfRequiredDeclarations;
    }
@@ -925,6 +1082,10 @@ markTemplateInstantiationsForOutput( SgNode* node )
        // Collect template instantiations that used and MIGHT be output
        // *************************************************************
 
+#if 0
+          printf ("In markTemplateInstantiationsForOutput(): Calling BuildSetOfRequiredTemplateDeclarations() \n");
+#endif
+
        // Build the lists of declarations. This requires multiple passes
        // to include function included by functions previously included
        // So we generate one list for each pass, this helps the debugging.
@@ -1047,15 +1208,31 @@ MarkTemplateInstantiationsForOutputSupport::saveDeclaration ( SgDeclarationState
 
      if (firstNondefiningDeclaration != NULL)
         {
-       // printf ("Saving firstNondefiningDeclaration = %p = %s as a used declaration \n",firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
-          listOfTemplateDeclarationsToOutput.push_back(firstNondefiningDeclaration);
+#if 0
+          printf ("Saving firstNondefiningDeclaration = %p = %s as a used declaration \n",firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+#endif
+       // DQ (3/31/2013): Only add each declaration once!
+       // listOfTemplateDeclarationsToOutput.push_back(firstNondefiningDeclaration);
+          if (find(listOfTemplateDeclarationsToOutput.begin(),listOfTemplateDeclarationsToOutput.end(),firstNondefiningDeclaration) == listOfTemplateDeclarationsToOutput.end())
+             {
+               listOfTemplateDeclarationsToOutput.push_back(firstNondefiningDeclaration);
+             }
+          ROSE_ASSERT(find(listOfTemplateDeclarationsToOutput.begin(),listOfTemplateDeclarationsToOutput.end(),firstNondefiningDeclaration) != listOfTemplateDeclarationsToOutput.end());
         }
 
   // The defining declaration does not always exist! (e.g. "extern struct _IO_FILE_plus _IO_2_1_stdin_;")
      if (definingDeclaration != NULL)
         {
-       // printf ("Saving definingDeclaration = %p = %s as a used declaration \n",definingDeclaration,definingDeclaration->class_name().c_str());
-          listOfTemplateDeclarationsToOutput.push_back(definingDeclaration);
+#if 0
+          printf ("Saving definingDeclaration = %p = %s as a used declaration \n",definingDeclaration,definingDeclaration->class_name().c_str());
+#endif
+       // DQ (3/31/2013): Only add each declaration once!
+       // listOfTemplateDeclarationsToOutput.push_back(definingDeclaration);
+          if (find(listOfTemplateDeclarationsToOutput.begin(),listOfTemplateDeclarationsToOutput.end(),definingDeclaration) == listOfTemplateDeclarationsToOutput.end())
+             {
+               listOfTemplateDeclarationsToOutput.push_back(definingDeclaration);
+             }
+          ROSE_ASSERT(find(listOfTemplateDeclarationsToOutput.begin(),listOfTemplateDeclarationsToOutput.end(),definingDeclaration) != listOfTemplateDeclarationsToOutput.end());
         }
    }
 
@@ -1076,9 +1253,13 @@ MarkTemplateInstantiationsForOutputSupport::evaluateInheritedAttribute (
           node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
 #endif
 #if 0
-     if (isSgTemplateInstantiationFunctionDecl(node) != NULL)
+     SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(node);
+     if (templateInstantiationFunctionDecl != NULL)
         {
-          printf ("SgTemplateInstantiationFunctionDecl IR node = %p name = %s \n",node,isSgTemplateInstantiationFunctionDecl(node)->get_name().str());
+          printf ("   --- SgTemplateInstantiationFunctionDecl IR node = %p name = %s \n",node,templateInstantiationFunctionDecl->get_name().str());
+       // printf ("   --- non-defining declaration = %p defining declaration = %p \n",templateInstantiationFunctionDecl->get_firstNondefiningDeclaration(),templateInstantiationFunctionDecl->get_definingDeclaration());
+          printf ("   --- non-defining declaration = %p \n",templateInstantiationFunctionDecl->get_firstNondefiningDeclaration());
+          printf ("   --- defining declaration     = %p \n",templateInstantiationFunctionDecl->get_definingDeclaration());
         }
 #endif
 
@@ -1088,6 +1269,9 @@ MarkTemplateInstantiationsForOutputSupport::evaluateInheritedAttribute (
        // If this is marked for output then record this in the inherited attribute to be returned
           if ( fileInfo->isCompilerGeneratedNodeToBeUnparsed() == true )
              {
+#if 0
+               printf ("   --- fileInfo->isCompilerGeneratedNodeToBeUnparsed() == true \n");
+#endif
             // printf ("Skipping compiler generated IR nodes to be unparsed = %s = %s \n",node->sage_class_name(),SageInterface::get_name(node).c_str());
             // returnAttribute.insideDeclarationToOutput = true;
             // printf ("Found compiler generated IR node to be unparsed = %s \n",node->sage_class_name());
@@ -1099,7 +1283,7 @@ MarkTemplateInstantiationsForOutputSupport::evaluateInheritedAttribute (
                   {
                  // This node has a position is some source code so we can check if it is part of the current file!
 #if 0
-                    printf ("In MarkTemplateInstantiationsForOutputSupport::evaluateInheritedAttribute(): currentFile = %s IR node from %s at line %d \n",
+                    printf ("   --- In MarkTemplateInstantiationsForOutputSupport::evaluateInheritedAttribute(): currentFile = %s IR node from %s at line %d \n",
                          currentFile->getFileName(),fileInfo->get_filename(),fileInfo->get_line());
 #endif
                     if ( (fileInfo->isSameFile(currentFile) == true) && (isSgGlobal(node) == NULL) )
@@ -1107,8 +1291,7 @@ MarkTemplateInstantiationsForOutputSupport::evaluateInheritedAttribute (
                       // This is a node from the current file!
                          returnAttribute.insideDeclarationToOutput = true;
 #if 0
-                         printf ("Found IR node %s from source file = %s at %d \n",
-                              node->sage_class_name(),fileInfo->get_filename(),fileInfo->get_line());
+                         printf ("   --- Found IR node %s from source file = %s at %d \n",node->sage_class_name(),fileInfo->get_filename(),fileInfo->get_line());
 #endif
 #if 0
                          if (staticCounter > 1)
@@ -1119,6 +1302,12 @@ MarkTemplateInstantiationsForOutputSupport::evaluateInheritedAttribute (
 #endif
                          staticCounter++;
                        }
+                  }
+                 else
+                  {
+#if 0
+                    printf ("fileInfo->hasPositionInSource() == true \n");
+#endif
                   }
              }
         }
@@ -1151,7 +1340,6 @@ MarkTemplateInstantiationsForOutputSupport::evaluateSynthesizedAttribute (
 
           switch(node->variantT())
              {
-#if 1
                case V_SgMemberFunctionRefExp:
                   {
                     SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(node);
@@ -1167,9 +1355,7 @@ MarkTemplateInstantiationsForOutputSupport::evaluateSynthesizedAttribute (
                          saveDeclaration(inputMemberFunctionDeclaration);
                     break;
                   }
-#endif
 
-#if 1
                case V_SgFunctionRefExp:
                   {
                     SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(node);
@@ -1185,7 +1371,6 @@ MarkTemplateInstantiationsForOutputSupport::evaluateSynthesizedAttribute (
                          saveDeclaration(inputFunctionDeclaration);
                     break;
                   }
-#endif
 
 #if 0
             // DQ (6/21/2005): Since we evaluate/traverse all SgInitializedName IR nodes we catch all variable 
@@ -1254,10 +1439,10 @@ MarkTemplateInstantiationsForOutputSupport::evaluateSynthesizedAttribute (
                          (initializedName->get_definition() != NULL) ? initializedName->get_definition()->sage_class_name() : "NULL");
 #endif
 
-                    SgType* type = initializedName->get_type();
+                    SgType*      type        = initializedName->get_type();
 #if 1
-                    SgType* stripedType = type->stripType();
-                    SgNamedType* namedType = isSgNamedType(stripedType);
+                    SgType*      stripedType = type->stripType();
+                    SgNamedType* namedType   = isSgNamedType(stripedType);
 #else
                     SgNamedType* namedType = isSgNamedType(type);
 #endif

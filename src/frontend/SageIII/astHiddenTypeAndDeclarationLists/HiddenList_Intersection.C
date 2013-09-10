@@ -1,3 +1,7 @@
+#if 0
+// DQ (5/21/2013): I think that we can and should remove this file.
+// for the moment I will comment out the whole file.
+
 // Implementation of the Hidden List Intersection Procedure
 // Robert Preissl
 // Last modified : April 16, 2007
@@ -2133,4 +2137,8 @@ void Intersection_with_FunctionDeclaration (
 }
 
 } // namespace
+
+// DQ (5/21/2013): I think that we can and should remove this file.
+// for the moment I will comment out the whole file.
+#endif
 

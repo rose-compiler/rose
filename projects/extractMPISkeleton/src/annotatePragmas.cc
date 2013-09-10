@@ -35,8 +35,12 @@ class PRUAttribute : public AstAttribute {
 };
 
 PresRemUnd getPresRemUnd (SgStatement *s) {
-  PRUAttribute *attr = (PRUAttribute*)(s->getAttribute(pragmaAttrib));
-  return attr ? attr->state : pragma_undef;
+  if( s->getAttribute(pragmaAttrib) != NULL ){
+    const PRUAttribute *attr = dynamic_cast<const PRUAttribute*>(s->getAttribute(pragmaAttrib));
+    ROSE_ASSERT( attr != NULL );
+    return attr->state;
+  }
+  return pragma_undef;
 }
 
 PRUAttribute attr_undef    (pragma_undef);

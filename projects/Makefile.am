@@ -14,10 +14,12 @@ SUBDIRS = \
 	C_to_Promela \
 	CertSecureCodeProject \
 	CloneDetection \
+	CodeThorn \
 	DataFaultTolerance \
 	DatalogAnalysis \
 	DocumentationGenerator \
 	FiniteStateModelChecker \
+	fuse \
 	graphColoring \
 	HeaderFilesInclusion \
 	MPI_Tools \
@@ -43,6 +45,7 @@ SUBDIRS = \
 	ManyCoreRuntime \
 	Fortran_to_C \
 	mint \
+	vectorization \
 	extractMPISkeleton \
 	$(OPTIONAL_PROJECTS)
 
@@ -133,6 +136,12 @@ endif
 
 endif
 endif
+
+# DQ (3/23/2013): Adding support for aterm translation.
+if ROSE_WITH_ATERM
+   SUBDIRS += AtermTranslation
+endif
+
 
 # DQ (2/28/2010): We can't make this conditionsl this since then the Makefile.in will 
 # be missing at configure time.

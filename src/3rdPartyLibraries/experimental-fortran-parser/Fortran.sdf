@@ -1,0 +1,49 @@
+      
+%%%%%%%%%%
+%% This Fortran grammar is structured according to document ISO/IEC 1539:1991. 
+%% Rulenumbers are named R2xx - R12xx as in Annex D of 1539:1991
+%% The grammar is adapted from an ELI project grammer, http://eli-project.cvs.sourceforge.net/eli-project
+%%
+%%%%%%%%%%
+%% ISO/IEC 1539:1991 section R2xx Fortran terms and concepts
+%%%%%%%%%%
+
+%%module languages/fortran/syntax/Fortran90
+module Fortran
+
+%%imports languages/fortran/syntax/FortranLex
+%%imports languages/fortran/syntax/R400DataTypes
+%%imports languages/fortran/syntax/R500DataDeclarations
+%%imports languages/fortran/syntax/R600UseDataObjects
+%%imports languages/fortran/syntax/R700Expressions
+%%imports languages/fortran/syntax/R800ExecutionControl
+%%imports languages/fortran/syntax/R900IOStatements
+%%imports languages/fortran/syntax/R1000_IOEditing
+%%imports languages/fortran/syntax/R1100ProgramUnits
+%%imports languages/fortran/syntax/R1200Procedures
+
+imports FortranLex
+imports R400DataTypes
+imports R500DataDeclarations
+imports R600UseDataObjects
+imports R700Expressions
+imports R800ExecutionControl
+imports R900IOStatements
+imports R1000_IOEditing
+imports R1100ProgramUnits
+imports R1200Procedures
+
+exports
+
+context-free start-symbols 
+  Program
+
+context-free syntax
+
+%%R201 JD: the optional startcommentblock is needed to parse comment lines in 1st lines of a file.
+%% original: ExecutableProgram ProgramUnit -> ExecutableProgram
+
+%%R201
+  StartCommentBlock? ProgramUnit+              -> Program          {cons("program")}
+
+%%TODO - Figure out what Fortran.sdf really does

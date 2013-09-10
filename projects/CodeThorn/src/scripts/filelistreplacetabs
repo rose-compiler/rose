@@ -1,0 +1,30 @@
+#/bin/bash
+# Author: Markus Schordan, 2013.
+
+EXPECTED_ARGS=1
+E_BADARGS=65
+
+if [ $# -ne $EXPECTED_ARGS ]
+then
+  echo "Usage: `basename $0` <command> <filename-of-file-with-list-of-names>"
+  exit $E_BADARGS
+fi
+FILES=`tr '\n' ' ' < $1`
+
+totaltabs=0
+
+for FILE in $FILES
+do
+    numTabs=`numberoftabs $FILE`
+    if [ $numTabs -gt 0 ]
+    then
+        echo -n "$FILE: replacing $numTabs tabs .. "
+        replacetabs $FILE
+        echo "done."
+        let totaltabs+=$numTabs
+    else
+        echo "$FILE: $numTabs tabs. Nothing to do. "        
+    fi
+done
+echo
+echo "Number of replaced tabs in total: $totaltabs"

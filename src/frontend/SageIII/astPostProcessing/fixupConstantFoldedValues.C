@@ -22,6 +22,14 @@ void resetConstantFoldedValues( SgNode* node )
      bool makeASTConstantFoldingExpressionConsistant = false;
 #endif
 
+#if 1
+  // This should be turned on except for internal testing.
+     ROSE_ASSERT(makeASTConstantFoldingExpressionConsistant == true);
+#else
+     printf ("WARNING: INTERNAL TESTING MODE: In resetConstantFoldedValues() \n");
+     ROSE_ASSERT(makeASTConstantFoldingExpressionConsistant == false);
+#endif
+
   // This will become an input option in the near future.  Once they can be supported through all of the test codes.
   // The default is to use the original expression trees and replace the saved constant folded values in the AST.
   // Note that having both can lead to some confusion (e.g. in the control flow graph and analysis, so we select one
@@ -101,8 +109,18 @@ void resetConstantFoldedValues( SgNode* node )
 
        // DQ (11/5/2012): I think this should be here rather than outside of this (put it back the way it was).
        // verifyOriginalExpressionTreesSetToNull(node);
+
+       // DQ (4/26/2013): Moved here to permit makeASTConstantFoldingExpressionConsistant == false for debugging.
+       // DQ (11/5/2012): Moved to inside of conditional (put this back the way it was).
+       // verifyOriginalExpressionTreesSetToNull(node);
+        }
+       else
+        {
+       // DQ (4/26/2013): Added warning to support debugging of default argument handling in function call arguments.
+          printf ("WARNING: makeASTConstantFoldingExpressionConsistant == false (temporary state for debugging mixed AST with constants and their original expression trees). \n");
         }
 
+  // DQ (4/26/2013): Commented out (see comment above).
   // DQ (11/5/2012): Moved to inside of conditional (put this back the way it was).
      verifyOriginalExpressionTreesSetToNull(node);
    }
@@ -454,7 +472,7 @@ RemoveConstantFoldedValue::evaluateSynthesizedAttribute ( SgNode* node, SubTreeS
      if (expression != NULL)
         {
 #if 0
-          printf ("Found an expression \n");
+          printf ("In RemoveConstantFoldedValue::evaluateSynthesizedAttribute(): Found an expression \n");
 #endif
           SgExpression* originalExpressionTree = expression->get_originalExpressionTree();
           if (originalExpressionTree != NULL)
@@ -489,7 +507,9 @@ RemoveConstantFoldedValueViaParent::visit ( SgNode* node )
      ROSE_ASSERT(node != NULL);
 
   // DQ (3/11/2006): Set NULL pointers where we would like to have none.
-  // printf ("In RemoveConstantFoldedValueViaParent::visit(): node = %s \n",node->class_name().c_str());
+#if 0
+     printf ("In RemoveConstantFoldedValueViaParent::visit(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
 
   // DQ (10/12/2012): Turn this on so that we can detect failing IR nodes (failing later) that have valid originalExpressionTrees.
   // DQ (10/12/2012): Turn this back off because it appears to fail...
@@ -526,13 +546,13 @@ RemoveConstantFoldedValueViaParent::visit ( SgNode* node )
      if (arrayType != NULL)
         {
 #if 0
-          printf ("Found an array type arrayType = %p \n",arrayType);
+          printf ("Found an array type arrayType = %p arrayType->get_index() = %p \n",arrayType,arrayType->get_index());
 #endif
           SgExpression* index = arrayType->get_index();
           if (index != NULL)
              {
 #if 0
-               printf ("Fixup array index = %p (traverse index AST subtree) \n",index);
+               printf ("Fixup array index = %p = %s (traverse index AST subtree) \n",index,index->class_name().c_str());
 #endif
                RemoveConstantFoldedValue astFixupTraversal;
                astFixupTraversal.traverse(index);
@@ -549,11 +569,51 @@ RemoveConstantFoldedValueViaParent::visit ( SgNode* node )
 #if 0
                     printf ("Found an originalExpressionTree in the array index originalExpressionTree = %p \n",originalExpressionTree);
 #endif
+                 // DQ (6/12/2013): This appears to be a problem in EDG 4.7 (see test2011_117.C).
+                    std::vector<SgExpression*> redundantChainOfOriginalExpressionTrees;
+                    if (originalExpressionTree->get_originalExpressionTree() != NULL)
+                       {
+#if 0
+                         printf ("Detected originalExpressionTree nested directly within the originalExpressionTree \n",
+                              originalExpressionTree,originalExpressionTree->class_name().c_str(),
+                              originalExpressionTree->get_originalExpressionTree(),originalExpressionTree->get_originalExpressionTree()->class_name().c_str());
+#endif
+                      // Loop to the end of the chain of original expressions (which EDG 4.7 should never have constructed).
+                         while (originalExpressionTree->get_originalExpressionTree() != NULL)
+                            {
+#if 0
+                              printf ("Looping through a chain of originalExpressionTrees \n");
+#endif
+                           // Save the list of redundnat nodes so that we can delete them properly.
+                              redundantChainOfOriginalExpressionTrees.push_back(originalExpressionTree);
+
+                              originalExpressionTree = originalExpressionTree->get_originalExpressionTree();
+                            }
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+
                     arrayType->set_index(originalExpressionTree);
                     originalExpressionTree->set_parent(arrayType);
 
                     index->set_originalExpressionTree(NULL);
+
+                 // printf ("DEBUGING: skip delete of index in array type \n");
                     delete index;
+
+                 // DQ (6/12/2013): Delete the nodes that we had to skip over (caused by chain of redundant entries from EDG 4.7).
+                    std::vector<SgExpression*>::iterator i = redundantChainOfOriginalExpressionTrees.begin();
+                    while (i != redundantChainOfOriginalExpressionTrees.end())
+                       {
+#if 0
+                         printf ("deleting the redundnat originalExpressionTree chain caused by EDG 4.7 (delete %p = %s) \n",*i,(*i)->class_name().c_str());
+#endif
+                         delete *i;
+                         i++;
+                       }
+
                     index = NULL;
                   }
              }
@@ -626,7 +686,7 @@ void verifyOriginalExpressionTreesSetToNull( SgNode* node )
      t2.traverseMemoryPool();
 
 #if 0
-  // This is a memory pool traversal over all expression and is difficult to pass since there can be ophaned expression (which will be fixed).
+  // This is a memory pool traversal over all expression and is difficult to pass since there can be ophaned expressions (which will be fixed).
   // This verifies that we have cleared all original expression trees saved into the 
   // AST by the front-end translation into ROSE.
      VerifyOriginalExpressionTreesSetToNull verifyFixup;
@@ -696,7 +756,9 @@ DetectOriginalExpressionTreeTraversal::visit ( SgNode* node )
                ROSE_ASSERT(originalExpressionTree->get_startOfConstruct() != NULL);
                originalExpressionTree->get_startOfConstruct()->display("Error: DetectOriginalExpressionTreeTraversal::visit()");
              }
-#if 1
+
+       // DQ (6/12/2013): Commented out as part of EDG 4.7 testing.
+#if 0
           ROSE_ASSERT(originalExpressionTree == NULL);
 #endif
         }

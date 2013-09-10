@@ -1,1 +1,5 @@
 */testmark
+rose_*.c
+rose_*.cc
+*.sig
+*.sig.tc

@@ -1026,6 +1026,7 @@ CommandlineProcessing::initSourceFileSuffixList ( )
 
        // TV (05/17/2010) Support for CUDA
           validSourceFileSuffixes.push_back(".cu");
+
        // TV (05/17/2010) Support for OpenCL
           validSourceFileSuffixes.push_back(".ocl");
           validSourceFileSuffixes.push_back(".cl");
@@ -1072,6 +1073,7 @@ CommandlineProcessing::initSourceFileSuffixList ( )
 
        // TV (05/17/2010) Support for CUDA
           validSourceFileSuffixes.push_back(".cu");
+
        // TV (05/17/2010) Support for OpenCL
           validSourceFileSuffixes.push_back(".ocl");
           validSourceFileSuffixes.push_back(".cl");

@@ -213,6 +213,10 @@ Grammar::setUpSupport ()
   // This is also where the FunctionTypeTable should be moved (to tidy up ROSE a bit).
      NEW_TERMINAL_MACRO (TypeTable,         "TypeTable",         "TYPE_TABLE" );
 
+  // DQ (6/12/2013): Added list IR nodes to support Java language requirements.
+     NEW_TERMINAL_MACRO (JavaImportStatementList,  "JavaImportStatementList", "JavaImportStatementListTag" );
+     NEW_TERMINAL_MACRO (JavaClassDeclarationList, "JavaClassDeclarationList", "JavaClassDeclarationListTag" );
+
 #if 0
   // tps (08/08/07): Added the graph, graph nodes and graph edges
      NEW_NONTERMINAL_MACRO (Support,
@@ -246,7 +250,7 @@ Grammar::setUpSupport ()
 
           NameGroup             | DimensionObject     | FormatItem           |
           FormatItemList        | DataStatementGroup        | DataStatementObject | 
-          DataStatementValue    ,
+          DataStatementValue    | JavaImportStatementList | JavaClassDeclarationList,
           "Support", "SupportTag", false);
 //#endif
 
@@ -389,6 +393,10 @@ Grammar::setUpSupport ()
      FileList.setFunctionPrototype             ( "HEADER_APPLICATION_FILE_LIST", "../Grammar/Support.code");
      Directory.setFunctionPrototype            ( "HEADER_APPLICATION_DIRECTORY", "../Grammar/Support.code");
      DirectoryList.setFunctionPrototype        ( "HEADER_APPLICATION_DIRECTORY_LIST", "../Grammar/Support.code");
+
+  // DQ (6/12/2013): Added to support Java requirements.
+     JavaImportStatementList.setFunctionPrototype  ( "HEADER_JAVA_IMPORT_STATEMENT_LIST", "../Grammar/Support.code");
+     JavaClassDeclarationList.setFunctionPrototype ( "HEADER_JAVA_CLASS_DECLARATION_LIST", "../Grammar/Support.code");
 
   // DQ (12/19/2005): Support for explicitly specified qualified names
      QualifiedName.setFunctionPrototype        ( "HEADER_QUALIFIED_NAME", "../Grammar/Support.code");
@@ -620,6 +628,11 @@ Grammar::setUpSupport ()
      Directory.setFunctionPrototype      ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      Directory.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 
+  // DQ (6/12/2013): Added support for Java requirements.
+     JavaImportStatementList.setDataPrototype ( "SgJavaImportStatementPtrList", "java_import_list", "",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     JavaClassDeclarationList.setDataPrototype ( "SgClassDeclarationPtrList", "java_class_list", "",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      FileList.setDataPrototype          ( "SgFilePtrList", "listOfFiles", "",
   //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -719,6 +732,16 @@ Grammar::setUpSupport ()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+  // DQ (6/12/2013): Added Java support for reference to SgJavaPackageStatement.
+     SourceFile.setDataPrototype   ( "SgJavaPackageStatement*", "package", "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
+#if 0
+     SourceFile.setDataPrototype   ( "SgJavaImportStatementPtrList", "import_list", "",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     SourceFile.setDataPrototype   ( "SgClassDeclarationPtrList", "class_list", "",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+#endif
+
      UnknownFile.setDataPrototype   ( "SgGlobal*", "globalScope", "= NULL",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -755,6 +778,10 @@ Grammar::setUpSupport ()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "int", "upc_threads", "= 0",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (3/28/2013): Added support to specify C89 support, so that default can be C99 support (same as EDG3x branch).
+     File.setDataPrototype         ( "bool", "C89_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      File.setDataPrototype         ( "bool", "C99_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -893,6 +920,15 @@ Grammar::setUpSupport ()
   // The use of #line directives permits the debugger to reference the original source code instead of
   // ROSE generated source code.
      File.setDataPrototype         ( "bool", "unparse_line_directives", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/14/2013): Added options to permit selection of either overloaded operator names or use of operator syntax 
+  // for function calls in the unparsed code.  The default is to reproduce the same use as in the input code.
+  // These options permit agressive levels of testing of both extremes (and overrides the default behavior to
+  // reproduce the function call use as specified in the input code.
+     File.setDataPrototype         ( "bool", "unparse_function_calls_using_operator_syntax", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "unparse_function_calls_using_operator_names", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/30/2008): Added support for tailoring the output of unparsed disassembled instructions
@@ -1101,6 +1137,11 @@ Grammar::setUpSupport ()
   // test in the AST consistancy tests).
      File.setDataPrototype         ( "int", "detect_dangling_pointers", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/7/2013): Added support for use of experimental fortran front-end.
+     File.setDataPrototype("bool", "experimental_fortran_frontend", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // To be consistant with the use of binaryFile we will implement get_binaryFile() and set_binaryFile()
   // functions so that we can support the more common (previous) interface where there was only a single
@@ -1481,8 +1522,25 @@ Grammar::setUpSupport ()
 
      Project.setDataPrototype("int","frontendErrorCode", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Project.setDataPrototype("int","midendErrorCode", "= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype("int","backendErrorCode", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     File.setDataPrototype("int","frontendErrorCode", "= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype("int","unparserErrorCode", "= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype("int","backendCompilerErrorCode", "= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype("bool","unparsedFileFailedCompilation", "= false",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // TOO1 (03/05/2013): Ignore errors (similar to GNU Make's --keep-going), and
+  //                    simply compile the original input code as a failover.
+     Project.setDataPrototype("bool", "keep_going", "= false",
+                              NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE); 
+
 
      Project.setDataPrototype("std::string","outputFileName", "= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1692,6 +1750,11 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("bool", "skipAstConsistancyTests", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+
+  // DQ (6/12/2013): Added Java support for a global scope spanning files. Might be 
+  // useful in the future for multiple file handling in other languages.
+     Project.setDataPrototype("SgGlobal*", "globalScopeAcrossFiles", "= NULL",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
      
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1979,7 +2042,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
      TemplateArgument.setDataPrototype     ( "SgType*", "type", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // Could be an array bound (integer) or some unkown type
+  // Could be an array bound (integer) or some unknown type
      TemplateArgument.setDataPrototype     ( "SgExpression*", "expression", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -1994,7 +2057,15 @@ Specifiers that can have only one value (implemented with a protected enum varia
 #if 1
      TemplateArgument.setDataPrototype     ( "SgDeclarationStatement*", "templateDeclaration", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/10/2013): template arguments can be a SgInitializedName or an expression when it is a non-type (see test2013_303.C).
+  // I think we want to eventually make this a constructor argument, but not at first.
+     TemplateArgument.setDataPrototype     ( "SgInitializedName*", "initializedName", "= NULL",
+                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #else
+
+#error "DEAD CODE!"
+
      TemplateArgument.setDataPrototype     ( "SgTemplateClassDeclaration*", "templateClassDeclaration", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      TemplateArgument.setDataPrototype     ( "SgTemplateFunctionDeclaration*", "templateFunctionDeclaration", "= NULL",
@@ -2005,6 +2076,9 @@ Specifiers that can have only one value (implemented with a protected enum varia
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 #else
+
+#error "DEAD CODE!"
+
      TemplateArgument.setDataPrototype     ( "SgTemplateDeclaration*", "templateDeclaration", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
@@ -2025,6 +2099,35 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // DQ (5/14/2011): Added information required for new name qualification support.
      TemplateArgument.setDataPrototype("bool","global_qualification_required","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 1
+  // DQ (5/4/2013): These variables are needed to reproduce the way that we handle types 
+  // in function parameters and allow the same technique to be used for template arguments.
+  // This needs to be handled using a template function where we will refactor the relevent 
+  // code that can be shared between the function parameter handling in function
+  // unparseFunctionParameterDeclaration() and the template argument handling in 
+  // function unparseTemplateArgument().
+
+  // DQ (12/20/2006): Record if global name qualification is required on the type.
+  // See test2003_01.C for an example of where this is required. Note that for a
+  // variable declaration (SgVariableDeclaration) this information is recorded directly
+  // on the SgVariableDeclaration node.  This use on the InitializedName is reserved for
+  // function parameters, and I am not sure if it is useful anyhwere else.
+     TemplateArgument.setDataPrototype("bool", "requiresGlobalNameQualificationOnType", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added support for name qualification on the type referenced by the InitializedName
+  // (not the SgInitializedName itself since it might be referenced from several places, I think).
+     TemplateArgument.setDataPrototype ( "int", "name_qualification_length_for_type", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     TemplateArgument.setDataPrototype("bool","type_elaboration_required_for_type","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     TemplateArgument.setDataPrototype("bool","global_qualification_required_for_type","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
   // DQ (4/2/2007): Added list as separate IR node to support mixing of lists and data members in IR nodes in ROSETTA.
      TemplateArgumentList.setFunctionPrototype ( "HEADER_TEMPLATE_ARGUMENT_LIST", "../Grammar/Support.code");
@@ -2195,6 +2298,9 @@ Specifiers that can have only one value (implemented with a protected enum varia
      BinaryComposite.setFunctionSource ( "SOURCE_APPLICATION_BINARY_FILE", "../Grammar/Support.code");
      FileList.setFunctionSource        ( "SOURCE_APPLICATION_FILE_LIST", "../Grammar/Support.code");
      UnknownFile.setFunctionSource     ( "SOURCE_APPLICATION_UNKNOWN_FILE", "../Grammar/Support.code");
+
+     JavaImportStatementList.setFunctionSource  ( "SOURCE_JAVA_IMPORT_STATEMENT_LIST", "../Grammar/Support.code");
+     JavaClassDeclarationList.setFunctionSource ( "SOURCE_JAVA_CLASS_DECLARATION_LIST", "../Grammar/Support.code");
 
      Project.setFunctionSource         ( "SOURCE_APPLICATION_PROJECT", "../Grammar/Support.code");
      Options.setFunctionSource         ( "SOURCE_OPTIONS", "../Grammar/Support.code");

@@ -71,5 +71,6 @@ int main(void)
     omp_destroy_lock(&(lck[i]));
 #endif
   printf("sum of a[] = %d\n",sum);
+  return 0;
 }
 

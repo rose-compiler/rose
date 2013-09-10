@@ -75,6 +75,62 @@ static bool copyStartFileInfo (SgNode* src, SgNode* dest, OmpAttribute* oa)
     
   return result;
 }
+// Liao 3/11/2013, special function to copy end file info of the original SgPragma or Fortran comments (src) to OpenMP node (dest)
+// If the OpenMP node is a body statement, we have to use the body's end file info as the node's end file info.
+static bool copyEndFileInfo (SgNode* src, SgNode* dest, OmpAttribute* oa)
+{
+  bool result = false;
+  ROSE_ASSERT (src && dest);
+  
+  if (isSgOmpBodyStatement(dest))
+    src = isSgOmpBodyStatement(dest)->get_body();
+
+  // same src and dest, no copy is needed
+  if (src == dest) return true;
+
+  SgLocatedNode* lsrc = isSgLocatedNode(src);
+  ROSE_ASSERT (lsrc);
+  SgLocatedNode* ldest= isSgLocatedNode(dest);
+  ROSE_ASSERT (ldest);
+  // ROSE_ASSERT (lsrc->get_file_info()->isTransformation() == false);
+  // already the same, no copy is needed
+  if    (lsrc->get_endOfConstruct()->get_filename() == ldest->get_endOfConstruct()->get_filename()
+      && lsrc->get_endOfConstruct()->get_line()     == ldest->get_endOfConstruct()->get_line()
+      && lsrc->get_endOfConstruct()->get_col()      == ldest->get_endOfConstruct()->get_col())
+    return true; 
+
+  Sg_File_Info* copy = new Sg_File_Info (*(lsrc->get_endOfConstruct())); 
+  ROSE_ASSERT (copy != NULL);
+
+   // delete old start of construct
+  Sg_File_Info *old_info = ldest->get_endOfConstruct();
+  if (old_info) delete (old_info);
+
+  ldest->set_endOfConstruct(copy);
+  copy->set_parent(ldest);
+//  cout<<"debug: set ldest@"<<ldest <<" with file info @"<< copy <<endl;
+
+  ROSE_ASSERT (lsrc->get_endOfConstruct()->get_filename() == ldest->get_endOfConstruct()->get_filename());
+  ROSE_ASSERT (lsrc->get_endOfConstruct()->get_line()     == ldest->get_endOfConstruct()->get_line());
+  ROSE_ASSERT (lsrc->get_endOfConstruct()->get_col()      == ldest->get_endOfConstruct()->get_col());
+
+
+  ROSE_ASSERT (ldest->get_endOfConstruct() == copy);
+// Adjustment for Fortran, the AST node attaching the Fortran comment will not actual give out the accurate line number for the comment
+  if (is_Fortran_language())
+  { //TODO fortran support of end file info
+//    cerr<<"Error. ompAstConstruction.cpp: copying end file info is not yet implemented for Fortran."<<endl;
+//    ROSE_ASSERT (false);
+//    ROSE_ASSERT (oa != NULL);
+//    PreprocessingInfo *currentPreprocessingInfoPtr = oa->getPreprocessingInfo();
+//    ROSE_ASSERT (currentPreprocessingInfoPtr != NULL);
+//    int commentLine = currentPreprocessingInfoPtr->getLineNumber(); 
+//    ldest->get_file_info()->set_line(commentLine);
+  }
+    
+  return result;
+}
+
 
 namespace OmpSupport
 { 
@@ -209,35 +265,152 @@ namespace OmpSupport
     ROSE_ASSERT(result);
     return result;
   }
+  // Sara Royuela ( Nov 2, 2012 ): Check for clause parameters that can be defined in macros
+  // This adds support for the use of macro definitions in OpenMP clauses
+  // We need a traversal over SgExpression to support macros in any possition of an "assignment_expr"
+  // F.i.: #define THREADS_1 16
+  // #define THREADS_2 8
+  // int main( int arg, char** argv ) {
+  // #pragma omp parallel num_threads( THREADS_1 + THREADS_2 )
+  // {}
+  // }
+  SgVarRefExpVisitor::SgVarRefExpVisitor()
+        : expressions()
+  {}
+  std::vector<SgVarRefExp*> SgVarRefExpVisitor::get_expressions()
+  {
+      return expressions;
+  }
+  void SgVarRefExpVisitor::visit(SgNode* node)
+  {
+      SgVarRefExp* expr = isSgVarRefExp(node);
+      if(expr != NULL)
+      {
+          expressions.push_back(expr);
+      }
+  }
+  SgExpression* checkOmpExpressionClause( SgExpression* clause_expression, SgGlobal* global )
+  {
+      ROSE_ASSERT(clause_expression != NULL);
+      SgExpression* clause_value = clause_expression;
+      if( isSgTypeUnknown( clause_expression->get_type( ) ) )
+      {
+          SgVarRefExpVisitor v;
+          v.traverse(clause_expression, preorder);
+          std::vector<SgVarRefExp*> expressions = v.get_expressions();
+          if( !expressions.empty() )
+          {
+              SgDeclarationStatementPtrList& declarations = global->get_declarations();
+              while( !expressions.empty() )
+              {
+                  SgName clause_name = expressions.back()->get_symbol()->get_name( );
+                  for(SgDeclarationStatementPtrList::iterator it = declarations.begin(); it != declarations.end(); ++it)
+                  {
+                      SgDeclarationStatement * declaration = *it;
+                      AttachedPreprocessingInfoType * preproc_info = declaration->getAttachedPreprocessingInfo();
+                      if( preproc_info != NULL )
+                      { // There is preprocessed info attached to the current node
+                          for(AttachedPreprocessingInfoType::iterator current_preproc_info = preproc_info->begin();
+                              current_preproc_info != preproc_info->end(); current_preproc_info++)
+                          {
+                              if((*current_preproc_info)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorDefineDeclaration)
+                              {
+                                  std::string define_macro = (*current_preproc_info)->getString();
+
+                                  // Parse the macro: we are only interested in macros with the form #define MACRO_NAME MACRO_VALUE
+                                  size_t parenthesis = define_macro.find("(");
+                                  if(parenthesis == string::npos)
+                                  { // Non function macro
+                                      unsigned int macro_name_init_pos = (unsigned int)(define_macro.find("define")) + 6;
+                                      while(macro_name_init_pos<define_macro.size() && define_macro[macro_name_init_pos]==' ')
+                                          macro_name_init_pos++;
+                                      unsigned int macro_name_end_pos = define_macro.find(" ", macro_name_init_pos);
+                                      std::string macro_name = define_macro.substr(macro_name_init_pos, macro_name_end_pos-macro_name_init_pos);
+                                  
+                                      if(macro_name==clause_name.getString())
+                                      { // Clause is defined in a macro
+                                          size_t comma = define_macro.find(",");
+                                          if(comma == string::npos); // Macros like "#define MACRO_NAME VALUE1, VALUE2" are not accepted
+                                          { // We create here an expression with the value of the clause defined in the macro
+                                              unsigned int macro_value_init_pos = macro_name_end_pos + 1;
+                                              while(macro_value_init_pos<define_macro.size() && define_macro[macro_value_init_pos]==' ')
+                                                  macro_value_init_pos++;
+                                              unsigned int macro_value_end_pos = macro_value_init_pos;
+                                              while(macro_value_end_pos<define_macro.size() &&
+                                                    define_macro[macro_value_end_pos]!=' ' && define_macro[macro_value_end_pos]!='\n')
+                                                  macro_value_end_pos++;
+                                              std::string macro_value = define_macro.substr(macro_value_init_pos, macro_value_end_pos-macro_value_init_pos);
+                                                                                   
+                                              // Check whether the value is a valid integer
+                                              std::string::const_iterator it = macro_value.begin();
+                                              while (it != macro_value.end() && std::isdigit(*it))
+                                                  ++it;
+                                              ROSE_ASSERT(!macro_value.empty() && it == macro_value.end());
+                                
+                                              int macro_int_value = atoi(macro_value.c_str());
+                                              clause_value = buildIntVal(macro_int_value);
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
+                  expressions.pop_back();
+              }
+          }
+          else
+          {
+              printf("error in buildOmpExpressionClause(): unacceptable parameter in OpenMP clause\n");
+              ROSE_ASSERT(false);
+          }
+      }
+      
+      return clause_value;
+  }
 
   //Build if clause
   SgOmpExpressionClause* buildOmpExpressionClause(OmpAttribute* att, omp_construct_enum clause_type)
   {
     ROSE_ASSERT(att != NULL);
-    if (!att->hasClause(clause_type)) 
+    if (!att->hasClause(clause_type))
       return NULL;
-    SgOmpExpressionClause * result = NULL ;   
+    SgOmpExpressionClause * result = NULL ;
+    
+    SgGlobal* file = SageInterface::getGlobalScope( att->getNode() );
     switch (clause_type)
     {
       case e_collapse:
         {
-          ROSE_ASSERT(att->getExpression(e_collapse).second!=NULL);
-
-          result = new SgOmpCollapseClause(att->getExpression(e_collapse).second);
+          SgExpression* collapse_param = checkOmpExpressionClause( att->getExpression(e_collapse).second, file );
+          result = new SgOmpCollapseClause(collapse_param);
           break;
         }
       case e_if:
         {
-          ROSE_ASSERT(att->getExpression(e_if).second!=NULL);
-          result = new SgOmpIfClause(att->getExpression(e_if).second);
+          SgExpression* if_param = checkOmpExpressionClause( att->getExpression(e_if).second, file );
+          result = new SgOmpIfClause(if_param);
           break;
         }
       case e_num_threads:
         {
-          ROSE_ASSERT(att->getExpression(e_num_threads).second!=NULL);
-          result = new SgOmpNumThreadsClause(att->getExpression(e_num_threads).second);
+          SgExpression* num_threads_param = checkOmpExpressionClause( att->getExpression(e_num_threads).second, file );
+          result = new SgOmpNumThreadsClause(num_threads_param);
           break;
         }
+      case e_device:
+        {
+          SgExpression* param = checkOmpExpressionClause( att->getExpression(e_device).second, file );
+          result = new SgOmpDeviceClause(param);
+          break;
+        }
+      case e_safelen:
+        {
+          SgExpression* param = checkOmpExpressionClause( att->getExpression(e_safelen).second, file );
+          result = new SgOmpDeviceClause(param);
+          break;
+        }
+ 
       default:
         {
           printf("error in buildOmpExpressionClause(): unacceptable clause type:%s\n",
@@ -325,11 +498,47 @@ namespace OmpSupport
     return  result;
   }
 
+  static   SgOmpClause::omp_map_operator_enum toSgOmpClauseMapOperator(omp_construct_enum at_op)
+  {
+    SgOmpClause::omp_map_operator_enum result = SgOmpClause::e_omp_map_unknown;
+    switch (at_op)
+    {
+      case e_map_inout: 
+        {
+          result = SgOmpClause::e_omp_map_inout;
+          break;
+        }
+      case e_map_in: 
+        {
+          result = SgOmpClause::e_omp_map_in;
+          break;
+        }
+      case e_map_out: 
+        {
+          result = SgOmpClause::e_omp_map_out;
+          break;
+        }
+      case e_map_alloc: 
+        {
+          result = SgOmpClause::e_omp_map_alloc;
+          break;
+        }
+      default:
+        {
+          printf("error: unacceptable omp construct enum for map operator conversion:%s\n", OmpSupport::toString(at_op).c_str());
+          ROSE_ASSERT(false);
+          break;
+        }
+    }
+    ROSE_ASSERT(result != SgOmpClause::e_omp_map_unknown);
+    return result;
+  }
+
   //! A helper function to convert OmpAttribute reduction operator to SgClause reduction operator
   //TODO move to sageInterface?
   static   SgOmpClause::omp_reduction_operator_enum toSgOmpClauseReductionOperator(omp_construct_enum at_op)
   {
-    SgOmpClause::omp_reduction_operator_enum result = SgOmpClause::e_omp_reduction_unkown;
+    SgOmpClause::omp_reduction_operator_enum result = SgOmpClause::e_omp_reduction_unknown;
     switch (at_op)
     {
       case e_reduction_plus: //+
@@ -428,7 +637,7 @@ namespace OmpSupport
           break;
         }
     }
-    ROSE_ASSERT(result != SgOmpClause::e_omp_reduction_unkown);
+    ROSE_ASSERT(result != SgOmpClause::e_omp_reduction_unknown);
     return result;
   }
   //A helper function to set SgVarRefExpPtrList  from OmpAttribute's construct-varlist map
@@ -471,6 +680,31 @@ namespace OmpSupport
     setClauseVariableList(result, att, reduction_op); 
     return result;
   }
+
+  //! Build a map clause with a given operation type from OmpAttribute
+  // map may have several variants: inout, in, out, and alloc. 
+  // the variables for each may have dimension info 
+  SgOmpMapClause* buildOmpMapClause(OmpAttribute* att, omp_construct_enum map_op)
+  {
+    ROSE_ASSERT(att !=NULL);
+    ROSE_ASSERT (att->isMapVariant(map_op));
+    if (!att->hasMapVariant(map_op))
+      return NULL;
+    SgOmpClause::omp_map_operator_enum  sg_op = toSgOmpClauseMapOperator(map_op); 
+    SgOmpMapClause* result = new SgOmpMapClause(sg_op);
+    setOneSourcePositionForTransformation(result);
+    ROSE_ASSERT(result != NULL);
+
+    // build variable list
+    setClauseVariableList(result, att, map_op); 
+
+    //this is somewhat inefficient. 
+    // since the attribute has dimension info for all map clauses
+    //But we don't want to move the dimension info to directive level 
+    result->set_array_dimensions(att->array_dimensions);
+    return result;
+  }
+
 
   //Build one of the clauses with a variable list
   SgOmpVariablesClause * buildOmpVariableClause(OmpAttribute* att, omp_construct_enum clause_type)
@@ -568,6 +802,8 @@ namespace OmpSupport
       case e_if:
       case e_collapse:
       case e_num_threads:
+      case e_device:
+      case e_safelen:
         {
           result = buildOmpExpressionClause(att, c_clause_type);
           break;
@@ -646,6 +882,7 @@ namespace OmpSupport
         c_clause_type == e_critical||
         c_clause_type == e_parallel_for||
         c_clause_type == e_parallel_do||
+        c_clause_type == e_simd||
         c_clause_type == e_atomic
        )
     {
@@ -685,6 +922,18 @@ namespace OmpSupport
         {
           omp_construct_enum rop = *iter;
           SgOmpClause* sgclause = buildOmpReductionClause(att, rop);
+          target->get_clauses().push_back(sgclause);
+        }
+      }
+      else if (c_clause == e_map)
+      {
+        std::vector<omp_construct_enum> rops  = att->getMapVariants();
+        ROSE_ASSERT(rops.size()!=0);
+        std::vector<omp_construct_enum>::iterator iter;
+        for (iter=rops.begin(); iter!=rops.end();iter++)
+        {
+          omp_construct_enum rop = *iter;
+          SgOmpClause* sgclause = buildOmpMapClause(att, rop);
           target->get_clauses().push_back(sgclause);
         }
       }
@@ -749,6 +998,19 @@ namespace OmpSupport
       case e_task:
         result = new SgOmpTaskStatement(NULL, body); 
         break;
+      case e_target:
+        result = new SgOmpTargetStatement(NULL, body); 
+        ROSE_ASSERT (result != NULL);
+        break;
+       case e_target_data:
+        result = new SgOmpTargetDataStatement(NULL, body); 
+        ROSE_ASSERT (result != NULL);
+        break;
+      case e_simd:
+        result = new SgOmpSimdStatement(NULL, body); 
+        ROSE_ASSERT (result != NULL);
+        break;
+ 
        //Fortran  
       case e_do:
         result = new SgOmpDoStatement(NULL, body); 
@@ -765,6 +1027,8 @@ namespace OmpSupport
     ROSE_ASSERT(result != NULL);
     //setOneSourcePositionForTransformation(result);
     // copyStartFileInfo (att->getNode(), result); // No need here since its caller will set file info again
+//    body->get_startOfConstruct()->display();
+//    body->get_endOfConstruct()->display();
     //set the current parent
     body->set_parent(result);
     // add clauses for those SgOmpClauseBodyStatement
@@ -870,11 +1134,13 @@ namespace OmpSupport
     ROSE_ASSERT(second_stmt);
     body->set_parent(second_stmt);
     copyStartFileInfo (att->getNode(), second_stmt, att);
+    copyEndFileInfo (att->getNode(), second_stmt, att);
 
     // build the 1st directive node then
     SgOmpParallelStatement* first_stmt = new SgOmpParallelStatement(NULL, second_stmt); 
     setOneSourcePositionForTransformation(first_stmt);
     copyStartFileInfo (att->getNode(), first_stmt, att);
+    copyEndFileInfo (att->getNode(), first_stmt, att);
     second_stmt->set_parent(first_stmt);
 
     // allocate clauses to them, let the 2nd one have higher priority 
@@ -946,6 +1212,22 @@ namespace OmpSupport
             }
             break;
           }
+#if 0           
+        case e_map: //special handling for map , no such thing for combined parallel directives. 
+          {
+            std::vector<omp_construct_enum> rops  = att->getMapVariants();
+            ROSE_ASSERT(rops.size()!=0);
+            std::vector<omp_construct_enum>::iterator iter;
+            for (iter=rops.begin(); iter!=rops.end();iter++)
+            {
+              omp_construct_enum rop = *iter;
+              SgOmpClause* sgclause = buildOmpMapClause(att, rop);
+              ROSE_ASSERT(sgclause != NULL);
+              isSgOmpClauseBodyStatement(second_stmt)->get_clauses().push_back(sgclause);
+           }
+            break;
+          }
+#endif 
         default:
           {
             cerr<<"error: unacceptable clause for combined parallel for directive:"<<OmpSupport::toString(c_clause)<<endl;
@@ -1100,6 +1382,9 @@ This is no perfect solution until we handle preprocessing information as structu
           case e_single:
           case e_task:
           case e_sections: 
+          case e_target: // OMP-ACC directive
+          case e_target_data: 
+          case e_simd:  // OMP 4.0 SIMD directive
             //fortran
           case e_do:
           case e_workshare:
@@ -1124,6 +1409,7 @@ This is no perfect solution until we handle preprocessing information as structu
         }
         setOneSourcePositionForTransformation(omp_stmt);
         copyStartFileInfo (oa->getNode(), omp_stmt, oa);
+        copyEndFileInfo (oa->getNode(), omp_stmt, oa);
         //ROSE_ASSERT (omp_stmt->get_file_info()->isTransformation() != true);
         replaceOmpPragmaWithOmpStatement(decl, omp_stmt);
 

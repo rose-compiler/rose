@@ -5,13 +5,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # they are currently time consuming to run, interested user may run them directly)         #
 ############################################################################################
 
-TESTCODES_REQUIRED_TO_PASS = 
-
-if ROSE_USE_EDG_VERSION_4_3
-TESTCODES_REQUIRED_TO_PASS += \
-test_boost_lambda.C \
-test_boost_phoenix_v1.C 
-endif
+TESTCODES_REQUIRED_TO_PASS =
 
 # DQ (11/3/2011): Can't find "boost/spirit/phoenix/core.hpp"
 # test_boost_phoenix_v2.C
@@ -37,12 +31,7 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
-# Test the EDG 4.3 frontend on Boost (while we work on the C++ support in ROSE using EDG 4.3).
-if ROSE_USE_EDG_VERSION_4_3
-   TRANSLATOR = ../../testFrontEnd
-else
-   TRANSLATOR = ../../testTranslator
-endif
+TRANSLATOR = ../../testTranslator
 
 $(TEST_Objects): $(TRANSLATOR) $(srcdir)/$(@:.o=.C)
 	$(TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir)/usr/local/mstools/include -c $(srcdir)/$(@:.o=.C)

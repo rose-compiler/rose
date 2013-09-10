@@ -83,9 +83,9 @@ int main (void)
 
 /*************************************************************
 * Subroutine driver () 
-* This is where the arrays are allocated and initialzed. 
+* This is where the arrays are allocated and initialized. 
 *
-* Working varaibles/arrays 
+* Working variables/arrays 
 *     dx  - grid spacing in x direction 
 *     dy  - grid spacing in y direction 
 *************************************************************/

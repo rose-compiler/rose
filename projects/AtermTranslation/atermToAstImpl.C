@@ -163,11 +163,10 @@ class AtermToNodeConverter {
 #undef DO_UNARY_NOFILEINFO
 
     if (ATmatch(term, "FunctionType(<term>, [<list>])", &temp1, &temp2)) {
-      SgFunctionType* ft = 
-	new SgFunctionType(isSgType(convertAtermToNode(temp1)));
+      SgFunctionType* ft =	new SgFunctionType(isSgType(convertAtermToNode(temp1)));
       vector<ATerm> fargs = getAtermList(temp2);
-      for (int i = 0; i < fargs.size(); ++i)
-	ft->get_arguments().push_back(isSgType(convertAtermToNode(fargs[i])));
+      for (size_t i = 0; i < fargs.size(); ++i)
+           ft->get_arguments().push_back(isSgType(convertAtermToNode(fargs[i])));
       result = ft;
       goto done;
     }
@@ -207,9 +206,13 @@ class AtermToNodeConverter {
     if (ATmatch(term, "Project([<list>])", &temp1)) {
       SgProject* proj = new SgProject();
       vector<ATerm> terms = getAtermList(temp1);
-      proj->set_fileList(new SgFilePtrList());
-      for (int i = 0; i < terms.size(); ++i) {
-	proj->get_fileList()->push_back(isSgFile(convertAtermToNode(terms[i])));
+
+   // proj->set_fileList_ptr(new SgFilePtrList());
+      ROSE_ASSERT(proj->get_fileList_ptr() != NULL);
+
+      for (size_t i = 0; i < terms.size(); ++i) {
+        // proj->get_fileList_ptr()->push_back(isSgFile(convertAtermToNode(terms[i])));
+         proj->get_fileList_ptr()->get_listOfFiles().push_back(isSgFile(convertAtermToNode(terms[i])));
       }
       result = proj;
       goto done;
@@ -218,8 +221,10 @@ class AtermToNodeConverter {
  // DQ (8/12/2004): This does not work because SgFile() constructor is broken.
  // As a result the input Aterm must be edited to remove this node.
     if (ATmatch(term, "File(<str>, <term>)", &str, &temp1)) {
-      SgFile* file = new SgFile();
-      file->set_root(isSgGlobal(convertAtermToNode(temp1)));
+   // SgFile* file = new SgFile();
+      SgSourceFile* file = new SgSourceFile();
+   // file->set_root(isSgGlobal(convertAtermToNode(temp1)));
+      file->set_globalScope(isSgGlobal(convertAtermToNode(temp1)));
       string name = str; // FIXME: use this
       result = file;
       goto done;
@@ -228,7 +233,7 @@ class AtermToNodeConverter {
     if (ATmatch(term, "Global([<list>])", &temp1)) {
       SgGlobal* global = new SgGlobal(fi);
       vector<ATerm> terms = getAtermList(temp1);
-      for (int i = 0; i < terms.size(); ++i) {
+      for (size_t i = 0; i < terms.size(); ++i) {
 	global->append_declaration(
 	  isSgDeclarationStatement(convertAtermToNode(terms[i])));
       }
@@ -239,7 +244,7 @@ class AtermToNodeConverter {
     if (ATmatch(term, "ExprList([<list>])", &temp1)) {
       SgExprListExp* exprlist = new SgExprListExp(fi);
       vector<ATerm> terms = getAtermList(temp1);
-      for (int i = 0; i < terms.size(); ++i) {
+      for (size_t i = 0; i < terms.size(); ++i) {
 	exprlist->get_expressions().push_back(
 	  isSgExpression(convertAtermToNode(terms[i])));
       }
@@ -250,7 +255,7 @@ class AtermToNodeConverter {
     if (ATmatch(term, "Block([<list>])", &temp1)) {
       SgBasicBlock* block = new SgBasicBlock(fi);
       vector<ATerm> terms = getAtermList(temp1);
-      for (int i = 0; i < terms.size(); ++i) {
+      for (size_t i = 0; i < terms.size(); ++i) {
 	block->get_statements().push_back(
 	  isSgStatement(convertAtermToNode(terms[i])));
 	// FIXME: add to symbol tables
@@ -268,7 +273,7 @@ class AtermToNodeConverter {
       SgFunctionParameterList* pl = 
 	new SgFunctionParameterList(
 	      Sg_File_Info::generateDefaultFileInfoForTransformationNode());
-      for (int i = 0; i < params.size(); ++i) {
+      for (size_t i = 0; i < params.size(); ++i) {
 	SgNode* argi = convertAtermToNode(params[i]);
 	ROSE_ASSERT (isSgInitializedName(argi));
 	pl->append_arg(isSgInitializedName(argi));
@@ -303,7 +308,7 @@ class AtermToNodeConverter {
       SgFunctionParameterList* parameter_list = 
 	new SgFunctionParameterList(fi);
       vector<ATerm> terms = getAtermList(temp1);
-      for (int i = 0; i < terms.size(); ++i) {
+      for (size_t i = 0; i < terms.size(); ++i) {
 	parameter_list->get_args().push_back(
 	  isSgInitializedName(convertAtermToNode(terms[i])));
 	// FIXME: add to symbol tables
@@ -350,7 +355,7 @@ class AtermToNodeConverter {
     if (ATmatch(term, "ExprList([<list>])", &temp1)) {
       SgExprListExp* exprlist = new SgExprListExp(fi);
       vector<ATerm> terms = getAtermList(temp1);
-      for (int i = 0; i < terms.size(); ++i) {
+      for (size_t i = 0; i < terms.size(); ++i) {
 	exprlist->append_expression(
 	  isSgExpression(convertAtermToNode(terms[i])));
       }
@@ -361,7 +366,7 @@ class AtermToNodeConverter {
     if (ATmatch(term, "ClassDefinition([<list>])", &temp1)) {
       SgClassDefinition* class_definition = new SgClassDefinition(fi);
       vector<ATerm> terms = getAtermList(temp1);
-      for (int i = 0; i < terms.size(); ++i) {
+      for (size_t i = 0; i < terms.size(); ++i) {
 	SgDeclarationStatement* child = 
 	  isSgDeclarationStatement(convertAtermToNode(terms[i]));
 	ROSE_ASSERT (child);
@@ -374,7 +379,7 @@ class AtermToNodeConverter {
     if (ATmatch(term, "Enum(<str>, [<list>])", &str, &temp1)) {
       SgEnumDeclaration* enumdef = new SgEnumDeclaration(fi, str);
       vector<ATerm> terms = getAtermList(temp1);
-      for (int i = 0; i < terms.size(); ++i) {
+      for (size_t i = 0; i < terms.size(); ++i) {
 	SgInitializedName* child = 
 	  isSgInitializedName(convertAtermToNode(terms[i]));
 	ROSE_ASSERT (child);
@@ -387,7 +392,7 @@ class AtermToNodeConverter {
     if (ATmatch(term, "VarDecl([<list>])", &temp1)) {
       SgVariableDeclaration* vardecl = new SgVariableDeclaration(fi);
       vector<ATerm> terms = getAtermList(temp1);
-      for (int i = 0; i < terms.size(); ++i) {
+      for (size_t i = 0; i < terms.size(); ++i) {
 	SgInitializedName* child = 
 	  isSgInitializedName(convertAtermToNode(terms[i]));
 	ROSE_ASSERT (child);
@@ -531,34 +536,40 @@ class FixFunctionDefinitionDeclPointersVisitor: public AstSimpleProcessing {
   }
 };
 
-class FixScopePointers: public AstSimpleProcessing {
-  public:
-  virtual void visit(SgNode* n) {
-    SgScopeStatement* scope = getScope(n);
-    ROSE_ASSERT(scope);
-    if (isSgInitializedName(n)) {
-      isSgInitializedName(n)->set_scope(scope);
-    } else if (isSgQualifiedName(n)) {
-      isSgQualifiedName(n)->set_scope(scope);
-    } else if (isSgEnumDeclaration(n)) {
-      isSgEnumDeclaration(n)->set_scope(scope);
-    } else if (isSgTypedefDeclaration(n)) {
-      isSgTypedefDeclaration(n)->set_scope(scope);
-    } else if (isSgTemplateDeclaration(n)) {
-      isSgTemplateDeclaration(n)->set_scope(scope);
-    } else if (isSgClassDeclaration(n)) {
-      isSgClassDeclaration(n)->set_scope(scope);
-    } else if (isSgFunctionDeclaration(n)) {
-      isSgFunctionDeclaration(n)->set_scope(scope);
-    }
-  }
+class FixScopePointers: public AstSimpleProcessing 
+   {
+     public:
+          virtual void visit(SgNode* n)
+             {
+            // SgScopeStatement* scope = getScope(n);
+               SgScopeStatement* scope = SageInterface::getScope(n);
+               ROSE_ASSERT(scope != NULL);
+               if (isSgInitializedName(n)) {
+                 isSgInitializedName(n)->set_scope(scope);
+               } else if (isSgQualifiedName(n)) {
+                 isSgQualifiedName(n)->set_scope(scope);
+               } else if (isSgEnumDeclaration(n)) {
+                 isSgEnumDeclaration(n)->set_scope(scope);
+               } else if (isSgTypedefDeclaration(n)) {
+                 isSgTypedefDeclaration(n)->set_scope(scope);
+               } else if (isSgTemplateDeclaration(n)) {
+                 isSgTemplateDeclaration(n)->set_scope(scope);
+               } else if (isSgClassDeclaration(n)) {
+                 isSgClassDeclaration(n)->set_scope(scope);
+               } else if (isSgFunctionDeclaration(n)) {
+                 isSgFunctionDeclaration(n)->set_scope(scope);
+               }
+             }
 };
 
-void cleanAstMadeFromAterm(SgNode* node) {
-  FixSgTree(node);
-  FixFunctionDefinitionDeclPointersVisitor().traverse(node, preorder);
-  FixScopePointers().traverse(node, preorder);
+void cleanAstMadeFromAterm(SgNode* node) 
+   {
+     FixSgTree(node);
+     FixFunctionDefinitionDeclPointersVisitor().traverse(node, preorder);
+     FixScopePointers().traverse(node, preorder);
   // initializeExplicitScopes(node);
-  fixReturnStatements(node);
-  rebindVariableAndLabelReferences(node); // Should not be necessary now
-}
+
+  // DQ (3/23/2013): These should not be required now, I think.
+  // fixReturnStatements(node);
+  // rebindVariableAndLabelReferences(node); // Should not be necessary now
+   }

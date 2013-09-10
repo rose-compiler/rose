@@ -1,3 +1,7 @@
+#if 0
+// DQ (5/21/2013): I think that we can and should remove this file.
+// for the moment I will comment out the whole file.
+
 // Header-File for the Hidden List Output (& Debug prints)
 // Robert Preissl
 // Last modified : April 16, 2007
@@ -46,3 +50,8 @@ void StackOfSymbolTableOutput(std::vector<ScopeStackEntry>& VectorScopeStack, in
 #endif
 
 #endif /*DEBUG_HIDDENLIST_OUTPUT_H_*/
+
+// DQ (5/21/2013): I think that we can and should remove this file.
+// for the moment I will comment out the whole file.
+#endif
+

@@ -50,7 +50,7 @@ unsigned int StorageClassMemoryManagement<TYPE>::blocksAllocated = 0;
 
 // The memoryBlockList is pointing to a valid pointer at the start, 
 // in order to be able to call the delete operator. This seems to be 
-// useless, but skips one if-statment that would be called very often!
+// useless, but skips one if-statement that would be called very often!
 template <class TYPE> 
 TYPE **StorageClassMemoryManagement<TYPE>::memoryBlockList = NULL;
 //TYPE **StorageClassMemoryManagement<TYPE>::memoryBlockList = new TYPE *;
@@ -357,8 +357,8 @@ void StorageClassMemoryManagement<TYPE> :: arrangeMemoryPoolInOneBlock()
         * storing of the rest ( runs sometimes just to storing data ) 
     * more complex data (PreprocessingInfo, maps, AstAttributeMechanism) contain 
       EasyStorage classes themself. Therefore, we must provide explicit member functions
-      deleting the static data of those. These functions call also the corresponing one 
-      of the parent class (if the class is an inheritated class). 
+      deleting the static data of those. These functions call also the corresponding one 
+      of the parent class (if the class is an inherited class). 
 ***************************************************************************************/
 
 /*
@@ -412,7 +412,7 @@ void EasyStorage<char*> :: storeDataInEasyStorageClass(const char* data_, int si
              }
           else
              {
-            // put the the data in the memory block
+            // put the data in the memory block
                memcpy(Base::actual, copy_, Base::getSizeOfData()*sizeof(char) );
                Base::actual += Base::getSizeOfData();
              }

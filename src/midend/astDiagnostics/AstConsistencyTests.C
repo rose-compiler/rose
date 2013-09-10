@@ -174,6 +174,15 @@ AstTests::runAllTests(SgProject* sageProject)
   // DQ (3/30/2004): This function is called by the 
   //      ROSE/src/roseTranslator.C RoseTestTranslator class
 
+#ifdef NDEBUG
+  // DQ (6/30/20133): If we have compiled with NDEBUG then nothing identified in this function 
+  // will be cause because every place we detect a problem we expect to end with ROSE_ASSERT() 
+  // which is disabled when ROSE is compiled with NDEBUG.  So more approriate (and equvalent) 
+  // semantics is that if ROSE is compiled with NDEBUG then we should just exit directly.
+     TimingPerformance ndebug_timer ("AST Consistency Tests (disabled by NDEBUG):");
+     return;
+#endif
+
   // It is a proper place to put any tests of the AST that must always pass!
 
   // Possible future tests: 
@@ -197,7 +206,12 @@ AstTests::runAllTests(SgProject* sageProject)
   // This is because when building AST bottom-up, some temporary symbol may be generated to be referenced
   // by those variable references generated just using names. When all variable references are fixed,
   // those symbols are not used any more and then should be removed from memory pool.
-     SageInterface::clearUnusedVariableSymbols();
+  //
+  // Liao 1/24/2013: I have to comment this out
+  // for #define N 1000, when N is used in OpenMP directives, the OmpSupport::attachOmpAttributeInfo() will try to generate a 
+  // variable reference to N, But N cannot be found in AST, so unknownType is used.  But symbols with unknowntype will be removed
+  // by this clearUnusedVariableSymbols()
+     //SageInterface::clearUnusedVariableSymbols();
 
   // printf ("Inside of AstTests::runAllTests(sageProject = %p) \n",sageProject);
 
@@ -1717,7 +1731,8 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
             // DQ (5/3/2012): Allow this for now, but make it a warning.
                if (s->get_templateDeclaration() == NULL)
                   {
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+// #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+#if 0
                     printf ("WARNING: case V_SgTemplateInstantiationMemberFunctionDecl: templateDeclaration == NULL (some templates are unavailable in EDG). \n");
 #endif
                   }
@@ -2184,6 +2199,13 @@ TestAstForProperlyMangledNames::isValidMangledName (string name, bool java_lang 
              }
         }
 
+#if 0
+     if (result == false)
+        {
+          printf ("ERROR: isValidMangledName(name = %s) == false \n",name.c_str());
+        }
+#endif
+
      return result;
    }
 
@@ -2302,6 +2324,16 @@ TestAstForUniqueStatementsInScopes::visit ( SgNode* node )
                        {
                          SgStatement * currDuplicate = *j;
                          ROSE_ASSERT(currDuplicate != NULL);
+
+                      // DQ (6/26/2016): Debugging a special case that appears with ROSE compiles "rose.h" header file.
+                         SgTemplateInstantiationDefn* templateInstantiationDefn = isSgTemplateInstantiationDefn(node);
+                         if (templateInstantiationDefn != NULL)
+                            {
+                              SgTemplateInstantiationDecl* templateInstantiationDecl = isSgTemplateInstantiationDecl(templateInstantiationDefn->get_declaration());
+                              ROSE_ASSERT(templateInstantiationDecl != NULL);
+                              printf ("ERROR: problem declaration: templateInstantiationDecl = %p = %s \n",templateInstantiationDecl,templateInstantiationDecl->get_name().str());
+                            }
+
                          Sg_File_Info * location = currDuplicate->get_file_info();
                          ROSE_ASSERT(location != NULL);
                          printf ("Error: node (%d/%d) = %p = %s at: \n",counter,numberOfDuplicates,currDuplicate,currDuplicate->sage_class_name());
@@ -2324,8 +2356,9 @@ TestAstForUniqueStatementsInScopes::visit ( SgNode* node )
                scope->get_file_info()->display("Error: duplicate statements in scope");
              }
 #if 1
-          ROSE_ASSERT(pass);
+          ROSE_ASSERT(pass == true);
 #else
+       // DQ (6/6/2013): debugging... (test2013_198.C)
        // DQ (8/9/2012): debugging... (test2012_174.C)
           if (pass == false)
              {
@@ -2379,6 +2412,15 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
              }
 
           printf ("Error: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
+          SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(node);
+          if (declarationStatement != NULL)
+             {
+               printf ("*** declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
+               ROSE_ASSERT(declarationStatement->get_parent() != NULL);
+               printf ("       --- declarationStatement->get_parent() = %p = %s \n",declarationStatement->get_parent(),declarationStatement->get_parent()->class_name().c_str());
+               printf ("       --- declarationStatement->get_firstNondefiningDeclaration() = %p \n",declarationStatement->get_firstNondefiningDeclaration());
+               printf ("       --- declarationStatement->get_definingDeclaration()         = %p \n",declarationStatement->get_definingDeclaration());
+             }
 
 #if 0
        // DQ (10/19/2012): This fails for a collection of C++ codes only:
@@ -2877,6 +2919,9 @@ TestAstSymbolTables::visit ( SgNode* node )
              {
             // DQ: removed SgName casting operator to char*
             // cout << "[" << idx << "] " << (*i).first.str();
+
+            // DQ (5/2/2013): Added to support test2013_141.C.
+               ROSE_ASSERT ( (*i).second != NULL );
 #if 0
                printf ("In symbol table = %p symbol name = i->first = %s i->second = %p = %s \n",symbolTable,i->first.str(),i->second,i->second->class_name().c_str());
 #endif
@@ -2915,6 +2960,14 @@ TestAstSymbolTables::visit ( SgNode* node )
             // if (declarationStatement != NULL)
                if (declarationStatement != NULL && isSgLabelSymbol(symbol) == NULL)
                   {
+                 // DQ (8/21/2013): Test added by Tristan are a problem for Fortran code...
+#if 0
+                    assert(declarationStatement->get_firstNondefiningDeclaration() != NULL);
+                    assert(declarationStatement->get_firstNondefiningDeclaration() == declarationStatement);
+#endif
+                 // DQ (7/25/2013): Tristan reports that this assertion is false for test2001_06.C.
+                 // ROSE_ASSERT(declarationStatement->get_firstNondefiningDeclaration() == declarationStatement);
+
                     SgSymbol* local_symbol = declarationStatement->get_symbol_from_symbol_table();
 #if 0
                     if (local_symbol == NULL)
@@ -4115,10 +4168,24 @@ void
 TestMangledNames::visit ( SgNode* node )
    {
      ROSE_ASSERT(node != NULL);
-  // printf ("node = %p = %s \n",node,node->class_name().c_str());
+
+#if 0
+     printf ("In TestMangledNames::visit(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
 
   // DQ (1/12/13): Added to support detection of scopes that have been deleted.
      bool isDeletedNode = false;
+
+  // DQ (5/26/2013): This is the signature in the IR node held by the memory pool for an IR node that has been previously deleted.
+  // This node is being traversed by the AST traversal following a dangling pointer.  This was a problem that was previously
+  // difficult to detect but now appears to be more easily reproduced in ROSE (at least with the gnu 4.2.4 compiler).
+     ROSE_ASSERT(node != NULL);
+     if (node->class_name() == "SgNode")
+        {
+          printf ("ERROR: This node = %p has been previously deleted \n",node);
+          ROSE_ASSERT(false);
+        }
+
 
      string mangledName;
 #if 0
@@ -4236,6 +4303,17 @@ TestMangledNames::visit ( SgNode* node )
 #endif
           if (decl != NULL)
              {
+               if (decl->class_name() == "SgNode")
+                  {
+                    printf ("ERROR: decl = %p was previously deleted \n",decl);
+                    ROSE_ASSERT(false);
+                  }
+            // DQ (5/25/2013): This is failing for the astInterface tests: deepDelete.C
+               if (decl->get_scope() == NULL)
+                  {
+                 // printf ("ERROR: TestMangledNames::visit(): decl = %p = %s \n",decl,decl != NULL ? decl->class_name().c_str() : "null");
+                    printf ("ERROR: TestMangledNames::visit(): decl = %p \n",decl);
+                  }
                ROSE_ASSERT(decl->get_scope() != NULL);
 #if 0
                printf ("TestMangledNames::visit(): decl->get_scope() = %p = %s \n",decl->get_scope(),decl->get_scope()->class_name().c_str());
@@ -4245,6 +4323,11 @@ TestMangledNames::visit ( SgNode* node )
                   {
                     isDeletedNode = true;
                   }
+             }
+            else
+             {
+            // DQ (5/25/2013): Added this case to set isDeletedNode = true when decl == NULL.
+               isDeletedNode = true;
              }
 
        // SgScopeStatement* scope = type->getCurrentScope();
@@ -4267,8 +4350,13 @@ TestMangledNames::visit ( SgNode* node )
              }
             else
              {
-               ROSE_ASSERT(decl != NULL);
-               printf ("WARNING: evaluation of the mangled name for a declaration in a scope = %p that has been deleted is being skipped! \n",decl->get_scope());
+            // DQ (5/25/2013): Fixed SgType::getAssociatedDeclaration() to return NULL when we detect that the declaration was deleted (e.g. when decl->class_name() == "SgNode").
+            // ROSE_ASSERT(decl != NULL);
+            // printf ("WARNING: evaluation of the mangled name for a declaration in a scope = %p that has been deleted is being skipped! \n",decl->get_scope());
+               if (decl != NULL)
+                  {
+                    printf ("WARNING: evaluation of the mangled name for a declaration in a scope = %p that has been deleted is being skipped! \n",decl->get_scope());
+                  }
              }
        // printf ("Test generated mangledName for node = %p = %s = %s \n",node,node->class_name().c_str(),mangledName.c_str());
         }
@@ -4568,7 +4656,9 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                     SgNode* parent = support->get_parent();
                     if (parent == NULL)
                        {
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+// DQ (5/25/2013): Commented out for now, too much output spew.
+// #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+#if 0
                          printf ("Warning: detected SgTemplateParameter without parent set properly at %p = %s parent is currently NULL \n",support,support->class_name().c_str());
 #endif
                        }
@@ -5056,13 +5146,15 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                          SgTemplateInstantiationDecl* templateInstantiationDecl = isSgTemplateInstantiationDecl(templateArgument->get_parent());
                          if (templateInstantiationDecl != NULL)
                             {
-                           // DQ (3/6/2007): This is soemthing to investigate.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+                           // DQ (3/6/2007): This is somwthing to investigate.
+// DQ (5/25/2013): Commented out for now, too much output spew.
+// #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+#if 0
                               printf ("SgTemplateArgument is not in parent's child list, node: %p = %s = %s parent: %p = %s = %s \n",
                                    node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str(),SageInterface::get_name(parent).c_str());
                               printf ("templateInstantiationDecl->get_definingDeclaration() = %p templateInstantiationDecl->get_firstNondefiningDeclaration() = %p \n",
                                    templateInstantiationDecl->get_definingDeclaration(),templateInstantiationDecl->get_firstNondefiningDeclaration());
-                              templateInstantiationDecl->get_file_info()->display("case V_SgTemplateArgument: location: debug");
+                           // templateInstantiationDecl->get_file_info()->display("case V_SgTemplateArgument: location: debug");
 #endif
                             }
                            else
@@ -5958,11 +6050,11 @@ TestForParentsMatchingASTStructure::preOrderVisit(SgNode *node)
                          SgNamespaceDeclarationStatement* namespaceDeclaration = namespaceDefinition->get_namespaceDeclaration();
                          printf ("Found a namespaceDefinition = %p = %s \n",namespaceDefinition,namespaceDeclaration->get_name().str());
 
-                         SgNamespaceDefinitionStatement* previousNamepaceDefinition = namespaceDefinition;
-                         while (previousNamepaceDefinition != NULL)
+                         SgNamespaceDefinitionStatement* previousNamespaceDefinition = namespaceDefinition;
+                         while (previousNamespaceDefinition != NULL)
                             {
-                              printf ("previousNamepaceDefinition = %p \n",previousNamepaceDefinition);
-                              previousNamepaceDefinition = previousNamepaceDefinition->get_previousNamepaceDefinition();
+                              printf ("previousNamespaceDefinition = %p \n",previousNamespaceDefinition);
+                              previousNamespaceDefinition = previousNamespaceDefinition->get_previousNamespaceDefinition();
                             }
                        }
 

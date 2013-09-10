@@ -17,5 +17,7 @@ class templated_class_declaration;
 
 enum numbers {};
 
+// This demonstrates that each call to build a non-defining 
+// enum declaration must gnerate a unique declaration.
 enum numbers;
 enum numbers;

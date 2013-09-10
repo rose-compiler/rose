@@ -631,10 +631,10 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                     nodeList.insert(functionSymbol);
 
 #ifndef NDEBUG
-                    SgSymbolTable* scopeSymbolTable = scopeStatement->get_symbol_table();
+                 // SgSymbolTable* scopeSymbolTable = scopeStatement->get_symbol_table();
 
-                    ROSE_ASSERT(scopeSymbolTable != NULL);
-                    ROSE_ASSERT(scopeSymbolTable->get_table() != NULL);
+                 // ROSE_ASSERT(scopeSymbolTable != NULL);
+                 // ROSE_ASSERT(scopeSymbolTable->get_table() != NULL);
 #endif
 #if 0
                     printf ("scopeStatement = %p scopeSymbolTable = %p \n",scopeStatement,scopeSymbolTable);
@@ -1125,6 +1125,8 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(namespaceDeclaration->get_definition());
                if (namespaceDefinition != NULL)
                   {
+                 // DQ (5/21/2013): We want to restrict the access to the symbol table so that we can support new namespace symbol table handling.
+                 // This function was added to as a friend function to the SgScopeStatment IR node to support the AST merge capability.
                     SgSymbolTable* scopeSymbolTableFromNamespace = namespaceDefinition->get_symbol_table();
                     nodeList.insert(scopeSymbolTableFromNamespace);
                   }
@@ -1247,6 +1249,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                       // more than one IR nodes associated with each SgClassSymbol, merge then one of then should inable the 
                       // SgClassSymbol in the old AST to be removed.
 
+                      // DQ (5/21/2013): We would like to remove the direct access to the symbol table.
                          SgSymbolTable* scopeSymbolTable = scopeStatement->get_symbol_table();
 
                       // DQ (1/24/2007): New support in the symbol table for removal of entries.
@@ -1329,7 +1332,8 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                               if (scopeSymbolTable->exists(sharedClassDeclaration->get_name(),sharedSymbol) == false)
                                  {
                                 // printf ("Insert symbol %p into symbol table %p in scope = %p \n",sharedClassSymbol,sharedClassScope->get_symbol_table(),sharedClassScope);
-                                   scopeSymbolTable->insert(sharedClassDeclaration->get_name(),sharedClassSymbol);
+                                // scopeSymbolTable->insert(sharedClassDeclaration->get_name(),sharedClassSymbol);
+                                   scopeStatement->insert_symbol(sharedClassDeclaration->get_name(),sharedClassSymbol);
                                  }
 
                            // Reset the parent of the symbol (for member functions the versions form either file being merged might be used 
@@ -1713,6 +1717,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgOmpSectionStatement :  
           case V_SgOmpSharedClause     :  
           case V_SgOmpSingleStatement  :  
+          case V_SgOmpSimdStatement  :  
           case V_SgOmpTaskStatement    :  
           case V_SgOmpTaskwaitStatement : 
           case V_SgOmpThreadprivateStatement :    

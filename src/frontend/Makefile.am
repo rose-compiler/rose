@@ -21,6 +21,11 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    SUBDIRS += OpenFortranParser_SAGE_Connection
 endif
 
+if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
+   SUBDIRS += Experimental_OpenFortranParser_ROSE_Connection
+endif
+
+
 SUBDIRS += ECJ_ROSE_Connection
 
 SUBDIRS += BinaryDisassembly Disassemblers BinaryFormats BinaryLoader
