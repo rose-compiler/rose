@@ -174,40 +174,31 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
     // Iterate through the component indices
     BOOST_FOREACH(VertexIndex current_index, components) {
 
-      std::vector<int> component_funcs;
+      std::set<int> component_funcs;
 
       // Iterate through the child vertex indices for [current_index]
       BOOST_FOREACH(VertexIndex child_index,
           components[current_index]) {
-        component_funcs.push_back(child_index);
+        component_funcs.insert(child_index);
       }
 
 
 
       if (component_funcs.size() > 1){
 
-
         BOOST_FOREACH(VertexIndex child_index,
             components[current_index]) {
- 
-
-
-          component_funcs.push_back(child_index);
+         component_funcs.insert(child_index);
         }
 
 
         for(CallVec::iterator it = func1_vec->begin(); it != func1_vec->end(); ++it )
-          for(std::vector<int>::iterator comp_it = component_funcs.begin(); comp_it != component_funcs.end(); ++comp_it)
-            if(*it == *comp_it){ 
-              *it = component_funcs[0];
-            }
+          if(component_funcs.find(*it) != component_funcs.end())
+            *it = *component_funcs.begin();
 
         for(CallVec::iterator it = func2_vec->begin(); it != func2_vec->end(); ++it )
-          for(std::vector<int>::iterator comp_it = component_funcs.begin(); comp_it != component_funcs.end(); ++comp_it)
-            if(*it == *comp_it){
-              *it = component_funcs[0];
-            }
-
+          if(component_funcs.find(*it) != component_funcs.end())
+            *it = *component_funcs.begin();
 
       }
 
@@ -346,7 +337,7 @@ if( (func1_vec->size() == 0) & (func2_vec->size() == 0) )
  func2_vec = removed_complement.second;
 
 
-if( func1_vec->size() == 0 & func2_vec->size() == 0 )
+if( ( func1_vec->size() == 0 ) & ( func2_vec->size() == 0 ) )
    return -1;
 
  
