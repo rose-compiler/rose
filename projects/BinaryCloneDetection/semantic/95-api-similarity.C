@@ -91,8 +91,6 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
 
   //Query for the row count or return 0 if no rows found
 
-  std::cout << "NORMALIZING " << func1_id << " AND " << func2_id << " FOR IGROUP " << igroup_id << std::endl;;
-
   SqlDatabase::StatementPtr count_stmt = transaction->statement( 
       "select COALESCE ((select count(*) from ( " + _query_condition + ") AS InsternalQuery ),0)"
       );
@@ -108,13 +106,8 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
 
 
   if(NUM_ELEMS > 0){
-    std::cout << "THERE IS SOMETHING TO NORMALIZE!" << std::endl;
-
-
     int VERTEX_COUNT = transaction->statement("select count(*) from semantic_functions")->execute_int();
     //Get all vetexes and find the union 
-    std::cout << "VERTEX COUNT " << VERTEX_COUNT << std::endl;
-
 
     SqlDatabase::StatementPtr stmt = transaction->statement(_query_condition);
 
@@ -126,7 +119,6 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
     stmt->bind(5, igroup_id);
     stmt->bind(6, igroup_id);
 
-    std::cout << "binding" << std::endl;
 
     typedef adjacency_list <vecS, vecS, undirectedS> Graph;
     typedef graph_traits<Graph>::vertex_descriptor Vertex;
@@ -141,36 +133,29 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
     typedef Vertex* Parent;
 
 
-     std::cout << "graph1" << std::endl;
 
     disjoint_sets<Rank, Parent> ds(&rank[0], &parent[0]);
 
     initialize_incremental_components(graph, ds);
     incremental_components(graph, ds);
 
-     std::cout << "graph2" << std::endl;
 
 
     graph_traits<Graph>::edge_descriptor edge;
     bool flag;
 
     for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
-      std::cout << "in loop \n";
       
       int func1 = row.get<int>(0);
       int func2 = row.get<int>(1);
-      std::cout << "  a in loop " << func1 << " " << func2 << std::endl;
  
       boost::tie(edge, flag) = add_edge(func1, func2, graph);
-      std::cout << " b in loop \n";
  
       ds.union_set(func1,func2);
-      std::cout << " c in loop \n";
  
 
     }
 
-     std::cout << "graph2" << std::endl;
 
 
     typedef component_index<VertexIndex> Components;
@@ -179,66 +164,50 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
 
     // Iterate through the component indices
     BOOST_FOREACH(VertexIndex current_index, components) {
-      std::cout << "component " << current_index << " contains: ";
 
       std::vector<int> component_funcs;
 
       // Iterate through the child vertex indices for [current_index]
       BOOST_FOREACH(VertexIndex child_index,
           components[current_index]) {
-        std::cout << " \n ci1: " << child_index << "\n ";
         component_funcs.push_back(child_index);
-        std::cout << " \n ci2: " << child_index << "\n ";
       }
 
-      std::cout << "\n AFTER component iteration\n";
 
 
       if (component_funcs.size() > 1){
 
-        std::cout << "\nshit\n";
 
         BOOST_FOREACH(VertexIndex child_index,
             components[current_index]) {
  
-          std::cout << "\n1shit\n";
 
 
           component_funcs.push_back(child_index);
-          std::cout << child_index << " ";
         }
-        std::cout << "\n2shit\n";
 
 
         for(CallVec::iterator it = func1_vec->begin(); it != func1_vec->end(); ++it )
           for(std::vector<int>::iterator comp_it = component_funcs.begin(); comp_it != component_funcs.end(); ++comp_it)
             if(*it == *comp_it){ 
-              std::cout << "Before " << *it;
               *it = component_funcs[0];
-              std::cout << " After " <<  component_funcs[0] << std::endl;
             }
 
         for(CallVec::iterator it = func2_vec->begin(); it != func2_vec->end(); ++it )
           for(std::vector<int>::iterator comp_it = component_funcs.begin(); comp_it != component_funcs.end(); ++comp_it)
             if(*it == *comp_it){
-              std::cout << "Before " << *it;
               *it = component_funcs[0];
-              std::cout << " After " << component_funcs[0] <<  std::endl;
             }
-        std::cout << std::endl;
 
 
       }
 
-      std::cout << "\n END of iteration \n";
 
    }
 
-    std::cout << "graph3" << std::endl;
 
     return true;
   }else{
-    std::cout << "Nothing to normalize." << std::endl;
   
     return false;
   
@@ -330,21 +299,11 @@ double
 similarity(int func1_id, int func2_id, int igroup_id, double similarity, bool ignore_no_compares, int call_depth, bool expand_ncalls )
 {
 
- std::cout << "Load Vectors" << std::endl;
 
 
  CallVec* func1_vec = load_api_calls_for(func1_id, igroup_id, ignore_no_compares, call_depth, expand_ncalls);
  CallVec* func2_vec = load_api_calls_for(func2_id, igroup_id, ignore_no_compares, call_depth, expand_ncalls);
 
- std::cout << "After Load Vectors" << std::endl;
-
-
-
- std::cout << "Begin remove compilation unit complement" << std::endl;
- std::cout << "Size 1: " << func1_vec->size() << " Size 2: " << func2_vec->size() << std::endl;
- 
-
- std::cout << "After remove compilation unit complement" << std::endl;
 
  //Detect and normalize similar function calls
 
@@ -364,14 +323,9 @@ if( func1_vec->size() == 0 & func2_vec->size() == 0 )
  func2_vec = removed_complement.second;
 
 
- std::cout << "SIZE After REMOVAL: " << func1_vec->size() << " " << func2_vec->size() << std::endl;
-
-
 if( func1_vec->size() == 0 & func2_vec->size() == 0 )
    return -1;
 
- 
- std::cout << "After normalization" << std::endl;
  
  size_t dl_max = std::max(func1_vec->size(), func2_vec->size());
 
@@ -379,22 +333,16 @@ if( func1_vec->size() == 0 & func2_vec->size() == 0 )
 
  if ( dl_max > 0 ){
 
-   std::cout << "Start computing dl distance" << std::endl;
    size_t dl = Combinatorics::damerau_levenshtein_distance(*func1_vec, *func2_vec);
-
-   std::cout << "After computing dl distance" << std::endl;
 
    dl_similarity = 1.0 - (double)dl / dl_max;
 
  }
 
- std::cout << "dl_max: " << dl_max << "  dl_similarity " << dl_similarity << std::endl; 
 
- std::cout << "deleting" << std::endl;
  delete func1_vec;
  delete func2_vec;
 
- std::cout << "finished deleting" << std::endl;
 
 
 
@@ -512,14 +460,10 @@ main(int argc, char *argv[])
       for (SqlDatabase::Statement::iterator row=igroup_stmt->begin(); row!=igroup_stmt->end(); ++row) {
         int igroup_id = row.get<int>(0);
 
-        std::cout << " \n\n LOOKING AT " << igroup_id << "\n";
-
         double api_similarity = similarity(func1_id, func2_id, igroup_id, semantic_similarity_threshold, ignore_no_compares, call_depth, expand_ncalls  );
 
         if( api_similarity < 0)
           continue;
-
-        std::cout << "computed similarity: "<< api_similarity << std::endl;
 
         max_api_similarity = std::max(api_similarity, max_api_similarity);
         min_api_similarity = std::min(api_similarity, min_api_similarity);
