@@ -62,8 +62,6 @@ enum Operator
 
 const char *to_str(Operator o);
 
-typedef std::map<uint64_t, uint64_t> RenameMap;
-
 class TreeNode;
 class InternalNode;
 class LeafNode;
@@ -72,6 +70,16 @@ typedef boost::shared_ptr<const TreeNode> TreeNodePtr;
 typedef boost::shared_ptr<const InternalNode> InternalNodePtr;
 typedef boost::shared_ptr<const LeafNode> LeafNodePtr;
 typedef std::vector<TreeNodePtr> TreeNodes;
+
+/** Passed to print methods to control some finer aspects of printing. */
+struct PrintHelper {
+    typedef Map<uint64_t, uint64_t> RenameMap;
+    PrintHelper(): show_comments(true), do_rename(false), add_renames(true) {}
+    bool show_comments;                         /**< Show node comments when printing? */
+    bool do_rename;                             /**< Use the @p renames map to rename variables to shorter names? */
+    bool add_renames;                           /**< Add additional entries to the @p renames as variables are encountered? */
+    RenameMap renames;                          /**< Map for renaming variables to use smaller integers. */
+};
 
 class Visitor {
 public:
@@ -89,15 +97,14 @@ public:
  *  deleted explicitly. */
 class TreeNode: public boost::enable_shared_from_this<TreeNode> {
 protected:
-    size_t nbits;           /**< Number of significant bits. Constant over the life of the node. */
-    std::string comment;    /**< Optional comment. */
+    size_t nbits;               /**< Number of significant bits. Constant over the life of the node. */
+    std::string comment;        /**< Optional comment. */
 public:
     TreeNode(size_t nbits, std::string comment=""): nbits(nbits), comment(comment) { assert(nbits>0); }
 
-    /** Print the expression to a stream.  The output is an S-expression with no line-feeds.  If @p rmap is non-null then it
-     *  will be used to rename free variables for readability.  If the expression contains N variables, then the new names will
-     *  be numbered from the set M = (i | 0 <= i <= N-1). */
-    virtual void print(std::ostream&, RenameMap *rmap=NULL) const = 0;
+    /** Print the expression to a stream.  The output is an S-expression with no line-feeds. A print_helper can be
+     *  supplied to control the finer aspects of printing. */
+    virtual void print(std::ostream&, PrintHelper &phelp) const = 0;
 
     /** Returns true if two expressions must be equal (cannot be unequal).  If an SMT solver is specified then that solver is
      * used to answer this question, otherwise equality is established by looking only at the structure of the two
@@ -345,7 +352,7 @@ public:
     /** @} */
 
     /* see superclass, where these are pure virtual */
-    virtual void print(std::ostream &o, RenameMap *rmap=NULL) const;
+    virtual void print(std::ostream &o, PrintHelper &phelp) const;
     virtual bool must_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool may_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool equivalent_to(const TreeNodePtr &other) const;
@@ -439,7 +446,7 @@ public:
     /* see superclass, where these are pure virtual */
     virtual bool is_known() const;
     virtual uint64_t get_value() const;
-    virtual void print(std::ostream &o, RenameMap *rmap=NULL) const;
+    virtual void print(std::ostream &o, PrintHelper &phelp) const;
     virtual bool must_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool may_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool equivalent_to(const TreeNodePtr &other) const;

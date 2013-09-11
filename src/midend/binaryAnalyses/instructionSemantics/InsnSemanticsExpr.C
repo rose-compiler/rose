@@ -59,15 +59,15 @@ InternalNode::add_child(const TreeNodePtr &child)
 }
 
 void
-InternalNode::print(std::ostream &o, RenameMap *rmap/*NULL*/) const
+InternalNode::print(std::ostream &o, PrintHelper &phelp) const
 {
     o <<"(" <<to_str(op) <<"[" <<nbits;
-    if (!comment.empty())
+    if (phelp.show_comments && !comment.empty())
         o <<"," <<comment;
     o <<"]";
     for (size_t i=0; i<children.size(); i++) {
         o <<" ";
-        children[i]->print(o, rmap);
+        children[i]->print(o, phelp);
     }
     o <<")";
 }
@@ -1212,7 +1212,7 @@ LeafNode::get_name() const
 }
 
 void
-LeafNode::print(std::ostream &o, RenameMap *rmap/*NULL*/) const
+LeafNode::print(std::ostream &o, PrintHelper &phelp) const
 {
     if (is_known()) {
         if ((32==nbits || 64==nbits) && 0!=(ival & 0xffff0000) && 0xffff0000!=(ival & 0xffff0000)) {
@@ -1227,11 +1227,11 @@ LeafNode::print(std::ostream &o, RenameMap *rmap/*NULL*/) const
         }
     } else {
         uint64_t renamed = name;
-        if (rmap) {
-            RenameMap::iterator found = rmap->find(name);
-            if (found==rmap->end()) {
-                renamed = rmap->size();
-                rmap->insert(std::make_pair(name, renamed));
+        if (phelp.do_rename) {
+            PrintHelper::RenameMap::iterator found = phelp.renames.find(name);
+            if (found==phelp.renames.end() && phelp.add_renames) {
+                renamed = phelp.renames.size();
+                phelp.renames.insert(std::make_pair(name, renamed));
             } else {
                 renamed = found->second;
             }
@@ -1250,7 +1250,7 @@ LeafNode::print(std::ostream &o, RenameMap *rmap/*NULL*/) const
         o <<renamed;
     }
     o <<"[" <<nbits;
-    if (!comment.empty())
+    if (phelp.show_comments && !comment.empty())
         o <<"," <<comment;
     o <<"]";
 }
@@ -1321,7 +1321,8 @@ LeafNode::depth_first_visit(Visitor *v) const
 
 std::ostream&
 operator<<(std::ostream &o, const TreeNode &node) {
-    node.print(o);
+    PrintHelper phelp;
+    node.print(o, phelp);
     return o;
 }
 

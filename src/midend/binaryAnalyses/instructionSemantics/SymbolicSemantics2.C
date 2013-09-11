@@ -17,7 +17,10 @@ operator<<(std::ostream &o, const SValue &e)
  *                                      SValue
  *******************************************************************************************************************************/
 
-class PrintHelper: public BaseSemantics::PrintHelper, public InsnSemanticsExpr::RenameMap {};
+class PrintHelper: public BaseSemantics::PrintHelper {
+public:
+        InsnSemanticsExpr::PrintHelper expr_phelp;
+};
 
 uint64_t
 SValue::get_number() const
@@ -77,8 +80,11 @@ void
 SValue::print(std::ostream &o, BaseSemantics::PrintHelper *helper_) const
 {
     PrintHelper *helper = dynamic_cast<PrintHelper*>(helper_);
+    InsnSemanticsExpr::PrintHelper dflt_ph;
+    InsnSemanticsExpr::PrintHelper &ph = helper ? helper->expr_phelp : dflt_ph;
+
     if (defs.empty()) {
-        expr->print(o, helper);
+        expr->print(o, ph);
     } else {
         o <<"{defs={";
         size_t ndefs=0;
@@ -88,7 +94,7 @@ SValue::print(std::ostream &o, BaseSemantics::PrintHelper *helper_) const
                 o <<(ndefs>0?",":"") <<StringUtility::addrToString(insn->get_address());
         }
         o <<"}, expr=";
-        expr->print(o, helper);
+        expr->print(o, ph);
         o <<"}";
     }
 }

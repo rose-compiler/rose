@@ -252,7 +252,8 @@ RegisterStateGeneric::print(std::ostream &o, const std::string prefix, PrintHelp
             std::string name = regnames(rvi->desc);
             o <<prefix <<std::setw(maxlen) <<std::left <<name <<" = ";
             oflags.restore();
-            o <<*(rvi->value) <<"\n";
+            rvi->value->print(o, ph);
+            o <<"\n";
         }
     }
 }
