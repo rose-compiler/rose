@@ -42,6 +42,27 @@ sha1_digest(const uint8_t *data, size_t size)
 #endif
 }
 
+uint64_t
+fnv1a64_digest(const std::vector<uint8_t> &data)
+{
+    return fnv1a64_digest(&data[0], data.size());
+}
+
+uint64_t
+fnv1a64_digest(const std::string &data)
+{
+    return fnv1a64_digest((const uint8_t*)&data[0], data.size());
+}
+
+uint64_t
+fnv1a64_digest(const uint8_t *data, size_t size)
+{
+    uint64_t hash = 0xcbf29ce484222325ull;
+    for (size_t i=0; i<size; ++i)
+        hash = (hash ^ data[i]) * 0x100000001b3ull;
+    return hash;
+}
+
 std::string digest_to_string(const uint8_t *data, size_t size)
 {
     std::string str;
