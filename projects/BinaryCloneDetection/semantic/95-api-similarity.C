@@ -443,7 +443,7 @@ main(int argc, char *argv[])
     SqlDatabase::StatementPtr similarity_stmt = transaction->statement("select sem.func1_id, sem.func2_id from semantic_funcsim as sem "
         " join semantic_functions as sf1 on sf1.id = sem.func1_id"
         " join semantic_functions as sf2 on sf2.id = sem.func2_id"
-        " where sem.similarity >= ? AND sf1.name = sf2.name"
+        " where sem.similarity >= ? "
         );
 
     similarity_stmt->bind(0, semantic_similarity_threshold);
