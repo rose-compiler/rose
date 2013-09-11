@@ -450,6 +450,52 @@ void CFAnalyzer::intraInterFlow(Flow& flow, InterFlow& interFlow) {
   }
 }
 
+LabelSet CFAnalyzer::setOfInitialLabelsOfStmtsInBlock(SgNode* node) {
+  LabelSet ls;
+  if(node==0)
+	return ls;
+  if(!isSgStatement(node)) {
+	cerr<<"ERROR: "<<node->class_name()<<endl;
+  }
+  size_t len=node->get_numberOfTraversalSuccessors();
+  for(size_t i=0;i<len;++i) {
+	SgNode* childNode=node->get_traversalSuccessorByIndex(i);
+	ls.insert(initialLabel(childNode));
+  }
+  return ls;
+}
+
+Flow CFAnalyzer::controlDependenceGraph(Flow& controlFlow) {
+  LabelSet condLabels=conditionLabels(controlFlow);
+  LabelSet targetLabels;
+  Flow controlDependenceEdges;
+  for(LabelSet::iterator i=condLabels.begin();i!=condLabels.end();++i) {
+	SgNode* condition=getLabeler()->getNode(*i);
+	cerr<<"DEBUG: cond:"<<condition->class_name()<<endl;
+	SgNode* stmt=SgNodeHelper::getParent(condition);
+	cerr<<"DEBUG: stmt:"<<stmt->class_name()<<endl;
+	// while/dowhile/for
+	if(SgNodeHelper::isLoopCond(condition)) {
+	  SgNode* loopBody=SgNodeHelper::getLoopBody(stmt);
+	  cerr<<"DEBUG: loopBody:"<<loopBody->class_name()<<endl;
+	  LabelSet loopBodyInitLabels=setOfInitialLabelsOfStmtsInBlock(loopBody);
+	  targetLabels=loopBodyInitLabels;
+	}
+	// if
+	if(isSgIfStmt(stmt)) {
+	  SgNode* trueBranch=SgNodeHelper::getTrueBranch(stmt);
+	  LabelSet trueBranchInitLabels=setOfInitialLabelsOfStmtsInBlock(trueBranch);
+	  SgNode* falseBranch=SgNodeHelper::getFalseBranch(stmt);
+	  LabelSet falseBranchInitLabels=setOfInitialLabelsOfStmtsInBlock(falseBranch);
+	  targetLabels=trueBranchInitLabels+falseBranchInitLabels;
+	}
+	for(LabelSet::iterator j=targetLabels.begin();j!=targetLabels.end();++j) {
+	  controlDependenceEdges.insert(Edge(*i,EDGE_FORWARD,*j));
+	}
+  }
+  return controlDependenceEdges;
+}
+
 Flow CFAnalyzer::WhileAndDoWhileLoopFlow(SgNode* node, 
                                          Flow edgeSet,
                                          EdgeType edgeTypeParam1,

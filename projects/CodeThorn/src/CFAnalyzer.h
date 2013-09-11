@@ -34,12 +34,14 @@ class CFAnalyzer {
   bool isVoidFunction(Label entryNode);
   LabelSetSet functionLabelSetSets(Flow& flow);
   LabelSet functionLabelSet(Label entryLabel, Flow& flow);
+  LabelSet setOfInitialLabelsOfStmtsInBlock(SgNode* node);
   Flow flow(SgNode* node);
   Flow flow(SgNode* s1, SgNode* s2);
   Labeler* getLabeler();
   // computes from existing intra-procedural flow graph(s) the inter-procedural call information
   InterFlow interFlow(Flow& flow); 
   void intraInterFlow(Flow&, InterFlow&);
+  Flow controlDependenceGraph(Flow& controlFlow);
   int reduceNode(Flow& flow, Label lab);
   int reduceBlockBeginNodes(Flow& flow);
   int reduceEmptyConditionNodes(Flow& flow);

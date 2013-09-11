@@ -81,6 +81,8 @@ codethorn_SOURCES = \
   RDAstAttributeInterface.C \
   RDAstAttribute.h         \
   RDAstAttribute.C         \
+  CPAstAttributeInterface.h	\
+  CPAstAttributeInterface.C	\
   RERS_empty_specialization.C      \
   Flow.h \
   Flow.C \

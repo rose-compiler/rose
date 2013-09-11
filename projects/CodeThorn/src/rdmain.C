@@ -85,6 +85,10 @@ int main(int argc, char* argv[]) {
   // generate ICFG visualization
   cout << "generating icfg.dot."<<endl;
   write_file("icfg.dot", flow->toDot(rdAnalyzer->getLabeler()));
+
+  //  cout << "INFO: generating control dependence graph."<<endl;
+  //Flow cdg=rdAnalyzer->getCFAnalyzer()->controlDependenceGraph(*flow);
+
   cout << "generating datadependencegraph.dot."<<endl;
   DataDependenceVisualizer ddvis0(rdAnalyzer->getLabeler(),
                                  rdAnalyzer->getVariableIdMapping(),
