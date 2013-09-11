@@ -4,6 +4,11 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
+/** Cache hash values in nodes.  If this is defined, then the @p hashval data member member is used to store a hash for the
+ *  node and its children.  The hash can be used to prove that two expressions are not structurally equivalent, thus avoiding a
+ *  more expensive traversal of an expression tree. */
+#define InsnSemanticsExpr_USE_HASHES
+
 class SMTSolver;
 
 /** Namespace supplying types and functions for symbolic expressions. These are used by certain instruction semantics policies
@@ -99,8 +104,9 @@ class TreeNode: public boost::enable_shared_from_this<TreeNode> {
 protected:
     size_t nbits;               /**< Number of significant bits. Constant over the life of the node. */
     std::string comment;        /**< Optional comment. */
+    mutable uint64_t hashval;   /**< Optional hash used as a quick way to indicate that two expressions are different. */
 public:
-    TreeNode(size_t nbits, std::string comment=""): nbits(nbits), comment(comment) { assert(nbits>0); }
+    TreeNode(size_t nbits, std::string comment=""): nbits(nbits), comment(comment), hashval(0) { assert(nbits>0); }
 
     /** Print the expression to a stream.  The output is an S-expression with no line-feeds. A print_helper can be
      *  supplied to control the finer aspects of printing. */
@@ -156,6 +162,15 @@ public:
     LeafNodePtr isLeafNode() const {
         return boost::dynamic_pointer_cast<const LeafNode>(shared_from_this());
     }
+
+    /** Returns true if this node has a hash value computed and cached. The hash value zero is reserved to indicate that no
+     *  hash has been computed; if a node happens to actually hash to zero, it will not be cached and will be recomputed for
+     *  every call to hash(). */
+    bool is_hashed() const { return hashval!=0; }
+
+    /** Returns (and caches) the hash value for this node.  If a hash value is not cached in this node, then a new hash value
+     *  is computed and cached. */
+    uint64_t hash() const;
 };
 
 /** Operator-specific simplification methods. */

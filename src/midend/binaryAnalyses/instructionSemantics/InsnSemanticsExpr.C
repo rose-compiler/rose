@@ -3,6 +3,7 @@
 #include "SMTSolver.h"
 #include "stringify.h"
 #include "integerOps.h"
+#include "Combinatorics.h"
 
 namespace InsnSemanticsExpr {
 
@@ -46,6 +47,20 @@ TreeNode::get_variables() const
     return t1.vars;
 }
 
+uint64_t
+TreeNode::hash() const
+{
+    if (0==hashval) {
+        // FIXME: We could build the hash with a traversal rather than
+        // from a string.  But this method is quick and easy. [Robb P. Matzke 2013-09-10]
+        std::ostringstream ss;
+        PrintHelper phelp;
+        phelp.show_comments = false;
+        print(ss, phelp);
+        hashval = Combinatorics::fnv1a64_digest(ss.str());
+    }
+    return hashval;
+}
 
 /*******************************************************************************************************************************
  *                                      InternalNode methods
@@ -113,10 +128,34 @@ InternalNode::equivalent_to(const TreeNodePtr &other_) const
     InternalNodePtr other = other_->isInternalNode();
     if (this==other.get()) {
         retval = true;
-    } else if (other && get_nbits()==other->get_nbits() && op==other->op && children.size()==other->children.size()) {
+    } else if (other==NULL || get_nbits()!=other->get_nbits()) {
+        retval = false;
+    } else if (hashval!=0 && other->hashval!=0 && hashval!=other->hashval) {
+        // Unequal hashvals imply non-equivalent expressions.  The converse is not necessarily true due to possible
+        // collisions.
+        retval = false;
+    } else if (op==other->op && children.size()==other->children.size()) {
         retval = true;
         for (size_t i=0; i<children.size() && retval; ++i)
             retval = children[i]->equivalent_to(other->children[i]);
+        // Cache hash values. There's no need to compute a hash value if we've determined that the two expressions are
+        // equivalent because it wouldn't save us any work--two equal hash values doesn't necessarily mean that two expressions
+        // are equivalent.  However, if we already know one of the hash values then we can cache that hash value in the other
+        // expression too.
+        if (retval) {
+            if (hashval!=0 && other->hashval==0) {
+                other->hashval = hashval;
+            } else if (hashval==0 && other->hashval!=0) {
+                hashval = other->hashval;
+            } else {
+                assert(hashval==other->hashval);
+            }
+        } else {
+#ifdef InsnInstructionExpr_USE_HASHES
+            hashval = hash();
+            other->hashval = other->hash();
+#endif
+        }
     }
     return retval;
 }
