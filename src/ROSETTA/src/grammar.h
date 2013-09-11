@@ -540,6 +540,23 @@ class Grammar
      // PC: build ReferenceToPointerHandler and related classes
      std::string buildReferenceToPointerHandlerCode();
 
+     // Milind Chabbi(8/28/2013): Performance refactoring.
+     // Support for table-driven SgXXX node castability.
+
+     // Generates a table (classHierarchyCatTable) populated with information
+     // about whether a given SgXXX node can be casted to a SgYYY node.
+     // The technique has constant lookup time.
+     std::string generateClassHierarchyCastTable();
+
+     // Populates the classHierarchyCastTable with all the types that can be casted to terminal type
+     void buildClassHierarchyCastTable(Terminal * terminal, std::vector<Terminal*> & myParentsDescendents);
+
+     // Gets the number of rows in classHierarchyCastTable
+     size_t getRowsInClassHierarchyCastTable();
+
+     // Gets the number of columns in classHierarchyCastTable
+     size_t getColumnsInClassHierarchyCastTable();
+
          //AS: build the function to get the class hierarchy subtree 
      std::string buildClassHierarchySubTreeFunction();
 
