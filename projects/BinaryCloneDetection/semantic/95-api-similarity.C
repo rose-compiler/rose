@@ -310,7 +310,7 @@ remove_compilation_unit_complement(int func1_id, int func2_id, int igroup_id, in
 
 
 double
-similarity(int func1_id, int func2_id, int igroup_id, double similarity, bool ignore_no_compares, int call_depth, bool expand_ncalls )
+similarity(int func1_id, int func2_id, int igroup_id, double similarity, bool ignore_inline_candidates, bool ignore_no_compares, int call_depth, bool expand_ncalls )
 {
 
 
@@ -328,13 +328,15 @@ if( (func1_vec->size() == 0) & (func2_vec->size() == 0) )
 
 
  //remove possible inlined functions from the traces
- std::pair<CallVec*, CallVec*> removed_complement = remove_compilation_unit_complement(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec);
 
+ if( ignore_inline_candidates ){
+   std::pair<CallVec*, CallVec*> removed_complement = remove_compilation_unit_complement(func1_id, func2_id, igroup_id, similarity, func1_vec, func2_vec);
 
- delete func1_vec;
- delete func2_vec;
- func1_vec = removed_complement.first;
- func2_vec = removed_complement.second;
+   delete func1_vec;
+   delete func2_vec;
+   func1_vec = removed_complement.first;
+   func2_vec = removed_complement.second;
+ }
 
 
 if( ( func1_vec->size() == 0 ) & ( func2_vec->size() == 0 ) )
@@ -472,7 +474,8 @@ main(int argc, char *argv[])
       for (SqlDatabase::Statement::iterator row=igroup_stmt->begin(); row!=igroup_stmt->end(); ++row) {
         int igroup_id = row.get<int>(0);
 
-        double api_similarity = similarity(func1_id, func2_id, igroup_id, semantic_similarity_threshold, ignore_no_compares, call_depth, expand_ncalls  );
+        double api_similarity = similarity(func1_id, func2_id, igroup_id, semantic_similarity_threshold, ignore_inline_candidates, 
+            ignore_no_compares, call_depth, expand_ncalls  );
 
         if( api_similarity < 0)
           continue;
