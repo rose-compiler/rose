@@ -399,7 +399,7 @@ main(int argc, char *argv[])
     bool ignore_faults = true;
     double semantic_similarity_threshold = 0.70;
 
-    bool expand_ncalls = true;
+    bool expand_ncalls = false;
 
     int argno = 1;
     for (/*void*/; argno<argc && '-'==argv[argno][0]; ++argno) {
@@ -440,7 +440,7 @@ main(int argc, char *argv[])
 
 
     //Creat list of functions and igroups to analyze
-    SqlDatabase::StatementPtr similarity_stmt = transaction->statement("select func1_id, func2_id from semantic_funcsim where similarity >= ?");
+    SqlDatabase::StatementPtr similarity_stmt = transaction->statement("select func1_id, func2_id from semantic_funcsim where similarity >= ? ");
 
     similarity_stmt->bind(0, semantic_similarity_threshold);
 
@@ -452,6 +452,8 @@ main(int argc, char *argv[])
     for (SqlDatabase::Statement::iterator row=similarity_stmt->begin(); row!=similarity_stmt->end(); ++row) {
       int func1_id = row.get<int>(0);
       int func2_id = row.get<int>(1);
+
+      std::cout << "Comparing function " << func1_id << " and " << func2_id << std::endl;
 
       SqlDatabase::StatementPtr igroup_stmt = transaction->statement("select distinct sem1.igroup_id from semantic_fio as sem1 "
           " join semantic_fio as sem2 ON sem2.igroup_id = sem1.igroup_id AND sem2.func_id = ?"
@@ -469,6 +471,8 @@ main(int argc, char *argv[])
 
       for (SqlDatabase::Statement::iterator row=igroup_stmt->begin(); row!=igroup_stmt->end(); ++row) {
         int igroup_id = row.get<int>(0);
+
+        std::cout << "  igroup " << igroup_id << std::endl; 
 
         double api_similarity = similarity(func1_id, func2_id, igroup_id, semantic_similarity_threshold, ignore_inline_candidates, 
             ignore_no_compares, call_depth, expand_ncalls  );
