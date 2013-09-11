@@ -74,6 +74,15 @@ std::vector<uint8_t> sha1_digest(const std::vector<uint8_t> &data);
 std::vector<uint8_t> sha1_digest(const std::string &data);
 /** @} */
 
+/** Compute the Fowler–Noll–Vo fast string hash.  This is not a cryptographic hash. Speed is marginally slower than Murmur
+ *  hash, but collision rate is slightly less.
+ * @{ */
+uint64_t fnv1a64_digest(const uint8_t *data, size_t size);
+uint64_t fnv1a64_digest(const std::vector<uint8_t> &data);
+uint64_t fnv1a64_digest(const std::string &data);
+/** @} */
+
+
 /** Converts a binary digest to a string of hexadecimal characters.  The input can actually be any type of data and any
  *  length. The output will be twice as long as the input.  If you're using this to convert binary data to a printable format
  *  you're doing it wrong--use StringUtility::encode_base64() instead.
