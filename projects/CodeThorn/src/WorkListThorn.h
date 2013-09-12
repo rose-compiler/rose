@@ -7,22 +7,12 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-#include <set>
-#include <list>
+#include <WorkList.h> // from ROSE
 
 namespace CodeThorn {
+
 template <typename Element>
-class WorkList {
- public:    
-  virtual bool isEmpty()=0;
-  virtual bool exists(Element elem)=0;
-  virtual void add(Element elem)=0;
-  virtual void add(std::set<Element>& elemSet)=0;
-  virtual Element take()=0;
-  virtual Element examine()=0;
- private:
-  // container provided by implementing class
-};
+class WorkList: public WorkListNonUnique<Element> {};
 
 } // end of namespace CodeThorn
 

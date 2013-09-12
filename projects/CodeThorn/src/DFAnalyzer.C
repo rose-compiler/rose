@@ -184,8 +184,8 @@ template<typename LatticeType>
 void
 DFAnalyzer<LatticeType>::solveAlgorithm1() {
   cout<<"INFO: solver (label-out-algorithm1) started."<<endl;
-  ROSE_ASSERT(!_workList.isEmpty());
-  while(!_workList.isEmpty()) {
+  ROSE_ASSERT(!_workList.empty());
+  while(!_workList.empty()) {
     Label lab=_workList.take();
     //cout<<"INFO: worklist size: "<<_workList.size()<<endl;
     //_analyzerData[lab]=_analyzerData comb transfer(lab,combined(Pred));
@@ -233,8 +233,8 @@ template<typename LatticeType>
 void
 DFAnalyzer<LatticeType>::solveAlgorithm2() {
   cout<<"INFO: solver started."<<endl;
-  ROSE_ASSERT(!_workList.isEmpty());
-  while(!_workList.isEmpty()) {
+  ROSE_ASSERT(!_workList.empty());
+  while(!_workList.empty()) {
     Label lab=_workList.take();
     //cout<<"INFO: worklist size: "<<_workList.size()<<endl;
     //_analyzerData[lab]=_analyzerData comb transfer(lab,combined(Pred));
