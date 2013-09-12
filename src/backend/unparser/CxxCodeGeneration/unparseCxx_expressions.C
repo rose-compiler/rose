@@ -4839,20 +4839,137 @@ sharesSameStatement(SgExpression* expr, SgType* expressionType)
    }
 
 
+static bool
+containsIncludeDirective(SgLocatedNode* locatedNode)
+   {
+     bool returnResult = false;
+     AttachedPreprocessingInfoType* comments = locatedNode->getAttachedPreprocessingInfo();
+
+     if (comments != NULL)
+        {
+#if 0
+          printf ("Found attached comments (at %p of type: %s): \n",locatedNode,locatedNode->class_name().c_str());
+#endif
+          AttachedPreprocessingInfoType::iterator i;
+          for (i = comments->begin(); i != comments->end(); i++)
+             {
+               ROSE_ASSERT ( (*i) != NULL );
+#if 0
+               printf ("          Attached Comment (relativePosition=%s): %s\n",
+                    ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
+                    (*i)->getString().c_str());
+               printf ("Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
+               (*i)->get_file_info()->display("comment/directive location");
+#endif
+               if (locatedNode->get_startOfConstruct()->isSameFile((*i)->get_file_info()) == true)
+                  {
+                 // This should also be true.
+                    ROSE_ASSERT(locatedNode->get_endOfConstruct()->isSameFile((*i)->get_file_info()) == true);
+                  }
+
+               if ( *(locatedNode->get_startOfConstruct()) <= *((*i)->get_file_info()) && *(locatedNode->get_endOfConstruct()) >= *((*i)->get_file_info()) )
+                  {
+                 // Then the comment is in between the start of the construct and the end of the construct.
+                    if ((*i)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration)
+                       {
+                         returnResult = true;
+                       }
+                  }
+             }
+        }
+       else
+        {
+#if 0
+          printf ("In containsIncludeDirective(): No attached comments (at %p of type: %s): \n",locatedNode,locatedNode->sage_class_name());
+#endif
+        }
+
+#if 0
+     printf ("In containsIncludeDirective(): returnResult = %s locatedNode = %p = %s \n",returnResult ? "true" : "false",locatedNode,locatedNode->sage_class_name());
+#endif
+
+     return returnResult;
+   }
+
+
+static void
+removeIncludeDirective(SgLocatedNode* locatedNode)
+   {
+     bool returnResult = false;
+     AttachedPreprocessingInfoType* comments = locatedNode->getAttachedPreprocessingInfo();
+     AttachedPreprocessingInfoType includeDirectiveList;
+
+     if (comments != NULL)
+        {
+#if 0
+          printf ("Found attached comments (at %p of type: %s): \n",locatedNode,locatedNode->class_name().c_str());
+#endif
+          for (AttachedPreprocessingInfoType::iterator i = comments->begin(); i != comments->end(); i++)
+             {
+               ROSE_ASSERT ( (*i) != NULL );
+#if 0
+               printf ("          Attached Comment (relativePosition=%s): %s\n",
+                    ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
+                    (*i)->getString().c_str());
+               printf ("Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
+               (*i)->get_file_info()->display("comment/directive location");
+#endif
+               if (locatedNode->get_startOfConstruct()->isSameFile((*i)->get_file_info()) == true)
+                  {
+                 // This should also be true.
+                    ROSE_ASSERT(locatedNode->get_endOfConstruct()->isSameFile((*i)->get_file_info()) == true);
+                  }
+
+               if ( *(locatedNode->get_startOfConstruct()) <= *((*i)->get_file_info()) && *(locatedNode->get_endOfConstruct()) >= *((*i)->get_file_info()) )
+                  {
+                 // Then the comment is in between the start of the construct and the end of the construct.
+                    if ((*i)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration)
+                       {
+                         printf ("Found cpp include directive \n");
+                         returnResult = true;
+                         includeDirectiveList.push_back(*i);
+                       }
+                  }
+             }
+
+       // Remove the list of include directives.
+          for (AttachedPreprocessingInfoType::iterator i = includeDirectiveList.begin(); i != includeDirectiveList.end(); i++)
+             {
+#if 0
+               printf ("In removeIncludeDirective(): Removing cpp include directive \n");
+
+               printf ("     Remove Comment (relativePosition=%s): %s\n",((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",(*i)->getString().c_str());
+               printf ("     Remove Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
+               (*i)->get_file_info()->display("remove comment/directive location");
+#endif
+               comments->erase(find(comments->begin(),comments->end(),*i));
+             }
+        }
+       else
+        {
+#if 0
+          printf ("In removeIncludeDirective(): No attached comments (at %p of type: %s): \n",locatedNode,locatedNode->sage_class_name());
+#endif
+        }
+   }
+
+
 void
 Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
    {
      SgAggregateInitializer* aggr_init = isSgAggregateInitializer(expr);
      ROSE_ASSERT(aggr_init != NULL);
 
+#if 0
+  // DQ (9/11/2013): It is a better solution to always unparse the aggreage attributes and to remove the #include that would be a problem.
   // Skip the entire thing if the initializer is from an included file
      if (isFromAnotherFile (expr))
         {
-#if 0
           printf ("In unparseAggrInit(): This SgAggregateInitializer (aggr_init = %p) is from another file so its subtree will not be output in the generated code \n",aggr_init);
-#endif
+
           return;
         }
+#endif
 
      SgUnparse_Info newinfo(info);
 
@@ -4950,15 +5067,45 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
         }
 #endif
 
+#if 0
+     printf ("In unparseAggrInit(): printOutComments(aggr_init = %p = %s) \n",aggr_init,aggr_init->class_name().c_str());
+     printOutComments(aggr_init);
+
      for (size_t index = 0; index < list.size(); index ++)
         {
+          printf ("In unparseAggrInit(): loop: printOutComments(list[index=%zu] = %p = %s) \n",index,list[index],list[index]->class_name().c_str());
+          printOutComments(list[index]);
+        }
+#endif
+
+  // DQ (9/11/2013): Detect the use of an #include directive and remove the #include directive.
+     bool skipTestForSourcePosition = containsIncludeDirective(aggr_init);
+     if (skipTestForSourcePosition == true)
+        {
+#if 0
+          printf ("In unparseAggrInit(): Found an include directive to be removed \n");
+#endif
+          removeIncludeDirective(aggr_init);
+        }
+
+     for (size_t index = 0; index < list.size(); index ++)
+        {
+#if 1
+       // If there was an include then unparse everything (because we removed the include).
+       // If there was not an include then still unparse everything!
+          unparseExpression(list[index], newinfo);
+          if (index!= last_index)
+               curprint ( ", ");
+#else
+       // DQ (9/11/2013): Older code that attempted to use the source position, but it is sensitive  
+       // to errors in the source position information in EDG (or maybe in the translation to ROSE).
        // bool skipUnparsing = isFromAnotherFile(aggr_init,index);
           bool skipUnparsing = isFromAnotherFile(list[index]);
           if (!skipUnparsing)
              {
                unparseExpression(list[index], newinfo);
                if (index!= last_index)
-                    curprint ( ", ");
+                    curprint(", ");
              }
             else
              {
@@ -4966,6 +5113,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
                printf ("In unparseAggrInit(): (aggr_init = %p) list[index = %zu] = %p = %s is from another file so its subtree will not be output in the generated code \n",aggr_init,index,list[index],list[index]->class_name().c_str());
 #endif
              }
+#endif
         }
      unparseAttachedPreprocessingInfo(aggr_init, info, PreprocessingInfo::inside);
 

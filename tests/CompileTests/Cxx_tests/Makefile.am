@@ -24,7 +24,9 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = $(ROSE__CXX_TESTS)
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    lulesh.C \
    luleshTALC.C \
-   test2013_253.C
+   test2013_253.C \
+   test2013_255.C \
+   test2013_256.C
 
 # DQ (9/10/2013): Test failing for switch without case statement (made up example, 
 # but we will want it to pass as part of further switch statement work later).
