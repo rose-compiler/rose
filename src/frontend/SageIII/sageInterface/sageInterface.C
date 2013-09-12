@@ -7609,8 +7609,7 @@ static SgExpression* SkipCasting (SgExpression* exp)
 }
 
 //! Promote the single variable declaration statement outside of the for loop header's init statement, e.g. for (int i=0;) becomes int i_x; for (i_x=0;..) and rewrite the loop with the new index variable
-bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop)
-{
+bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop) {
   ROSE_ASSERT(loop!=NULL);
 
   SgStatementPtrList &init = loop ->get_init_stmt();
@@ -15912,7 +15911,7 @@ void SageInterface::dumpInfo(SgNode* node, std::string desc/*=""*/)
 //! This is a wrapper function to Qing's side effect analysis from loop optimization
 //! Liao, 2/26/2009
 bool
-SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& readRefs, std::vector<SgNode*>& writeRefs)
+SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& readRefs, std::vector<SgNode*>& writeRefs, bool useCachedDefUse)
 {   // The type cannot be SgExpression since variable declarations have SgInitializedName as the reference, not SgVarRefExp.
   ROSE_ASSERT(stmt !=NULL);
 
@@ -15943,10 +15942,15 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
   AstInterfaceImpl faImpl(funcBody);
   AstInterface fa(&faImpl);
   ArrayAnnotation* annot = ArrayAnnotation::get_inst();
-  ArrayInterface array_interface (*annot);
-  array_interface.initialize(fa, AstNodePtrImpl(funcDef));
-  array_interface.observe(fa);
-  LoopTransformInterface::set_arrayInfo(&array_interface);
+  if( useCachedDefUse ){
+    ArrayInterface* array_interface = ArrayInterface::get_inst(*annot, fa, funcDef, AstNodePtrImpl(funcDef));
+    LoopTransformInterface::set_arrayInfo(array_interface);
+  } else {
+    ArrayInterface array_interface(*annot);
+    array_interface.initialize(fa, AstNodePtrImpl(funcDef));
+    array_interface.observe(fa);
+    LoopTransformInterface::set_arrayInfo(&array_interface);
+  }
   LoopTransformInterface::set_astInterface(fa);
 
   // variables to store results
@@ -16899,4 +16903,290 @@ SageInterface::collectSourceSequenceNumbers( SgNode* astNode )
     
   }
 
+/*Winnie, loop collapse, collapse nested for loops into one large for loop
+ *  return a SgExprListExp *, which will contain a list of SgVarRefExp * to variables newly created, inserted outside of the 
+ *                            loop scope, and used inside the loop scope.
+ *                            If the target_loop comes with omp target directive, these variables should be added in map in clause in 
+ *                            transOmpCollpase(..) function in omp_lowering.cpp.
+ *                              
+ *
+ * 
+ *  Loop is normalized to [lb,ub,step], ub is inclusive (<=, >=)
+ *  
+ *  to collapse two level of loops:
+ *  iteration_count_one= (ub1-lb1+1)%step1 ==0?(ub1-lb1+1)/step1: (ub1-lb1+1)/step1+1
+ *  iteration_count_two= (ub2-lb2+1)%step2 ==0?(ub2-lb2+1)/step2: (ub2-lb2+1)/step2+1
+ *  total_iteration_count = iteration_count_one * iteration_count_two
+ *
+ *  Decide incremental/decremental loop by checking operator of test statement(ub), <=/>=, this is done in isCanonicalForLoop()
+ *
+ * Example 1:
+ * for (int i=lb2;i<ub2;i+=inc2)                 //incremental 
+ *  {
+ *      for (int j=lb1;j>ub1;i+=inc1)            //decremental
+ *      {
+ *                  for (int l=lb2;l<ub2;l+=inc2)        //incremental 
+ *              {
+ *               a[i][j][l]=i+j+l;      
+ *              }
+ *      }
+ *  }
+ *
+ *==> translated output code ==>
+ *  int i_nom_1_total_iters = (ub2 - 1 - lb2 + 1) % inc2 == 0?(ub2 - 1 - lb2 + 1) / inc2 : (ub2 - 1 - lb2 + 1) / inc2 + 1;
+ *  int j_nom_2_total_iters = (lb1 - (ub1 + 1) + 1) % (inc1 * -1) == 0?(lb1 - (ub1 + 1) + 1) / (inc1 * -1) : (lb1 - (ub1 + 1) + 1) / (inc1 * -1) + 1;
+ *  int l_nom_3_total_iters = (ub2 - 1 - lb2 + 1) % inc2 == 0?(ub2 - 1 - lb2 + 1) / inc2 : (ub2 - 1 - lb2 + 1) / inc2 + 1;
+ *  int final_total_iters = 1 * i_nom_1_total_iters* j_nom_2_total_iters* l_nom_3_total_iters;
+ *  int i_nom_1_interval = j_nom_2_total_iters * (l_nom_3_total_iters* 1);
+ *  int j_nom_2_interval = l_nom_3_total_iters * 1;
+ *  int l_nom_3_interval = 1;
+ *
+ *  for (int new_index = 0; new_index <= final_total_iters- 1; new_index += 1) {
+ *    i_nom_1 = new_index / i_nom_1_interval* inc2 + lb2;
+ *    int i_nom_1_remainder = new_index % i_nom_1_interval;
+ *    j_nom_2 = -(i_nom_1_remainder / j_nom_2_interval* (inc1 * -1)) + lb1;
+ *    l_nom_3 = i_nom_1_remainder % j_nom_2_interval* inc2 + lb2;
+ *    a[i_nom_1][j_nom_2][l_nom_3] = i_nom_1 + j_nom_2 + l_nom_3;
+ *  }
+ *
+ *  Example 2 with concrete numbers:
+ *
+ * // collapse the following two level of for loops:
+ *       for (i=1; i<=9; i+=1)      //incremental for loop
+ *       {
+ *          for(j=10; j>=1; j+=-2)    //decremental for loop
+ *         {
+ *              a[i][j]=i+j;
+ *         }
+ *       }
+ * // it becomes
+ *     // total iteration count = ((9 - 1 + 1)/1) * ((10 - 1 + 1)/2) = 45
+ *     // ub = 45
+ *     // lb = 0
+ *       
+ *     int i_nom_1_total_iters = 9;
+ *     int j_nom_1_total_iters = 5;      // 10 % (-2 * -1) == 0 ? 10 / (-2 * -1) : 10 /(-2 * -1) + 1;
+ *     int final_total_iters = 45;       // i_nom_1_total_iters * j_nom_2_total_iters;
+ *
+ *     int i_nom_1_interval = 5;        
+ * 
+ *     for (z=0; z<=44; z+=1)
+ *     {
+ *       i_nom_1 = z / 5 + 1;
+ *       j_nom_2 = -(z % 5 * 2) + 10;
+ *       a[i_nom_1][j_nom_2]=i_nom_1 + j_nom_2;
+ *     }
+ **
+*/
 
+#ifndef USE_ROSE
+SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t collapsing_factor)
+{
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+  //Handle 0 and 1, which means no collapsing at all
+    if (collapsing_factor <= 1)
+        return NULL;
+
+    SgExprListExp * new_var_list = buildExprListExp();  //expression list contains all the SgVarRefExp * to variables that need to be added in the mapin clause
+
+    /* 
+     *step 1: grab the target loops' header information
+     */
+    SgForStatement *& target_loop = loop;
+
+    SgInitializedName* ivar[collapsing_factor];
+    SgExpression* lb[collapsing_factor];
+    SgExpression* ub[collapsing_factor];
+    SgExpression* step[collapsing_factor];
+    SgStatement* orig_body[collapsing_factor]; 
+    
+    SgExpression* total_iters[collapsing_factor]; //Winnie, the real iteration counter in each loop level
+    SgExpression* interval[collapsing_factor]; //Winnie, this will be used to calculate i_nom_1_remainder
+    bool isPlus[collapsing_factor]; //Winnie, a flag indicates incremental or decremental for loop
+
+
+    //Winnie, get loops info first
+    std::vector<SgForStatement* > loops= SageInterface::querySubTree<SgForStatement>(target_loop,V_SgForStatement);
+    ROSE_ASSERT(loops.size()>=collapsing_factor);
+ 
+    SgForStatement* temp_target_loop = NULL;
+    SgExpression* temp_range_exp = NULL; //Raw iteration range
+    SgExpression* temp_range_d_step_exp = NULL; //temp_range_exp / step[i]
+    SgExpression* temp_condition_1 = NULL; //Check whether temp_range_exp % step[i] == 0
+    SgExpression* temp_total_iter = NULL;
+    SgExpression* ub_exp = buildIntVal(1); //Winnie, upbound
+
+    /*
+    *    get lb, ub, step information for each level of the loops
+    *    ub_exp is the final iterantion range(starting from 0) after loop collapsing
+    *    total_iters[i], = (ub[i] - lb[i] + 1)/step[i]  is the total iter num in each level of loop before loop collapsing   
+    */
+
+    SgStatement* parent =  isSgStatement(getScope(target_loop)->get_parent());        //Winnie, the scope that include target_loop
+    ROSE_ASSERT(getScope(target_loop)->get_parent()!= NULL);
+    
+    SgScopeStatement* scope = isSgScopeStatement(parent);    //Winnie, the scope that include target_loop
+    
+    SgStatement* insert_target;
+    while(scope == NULL)
+    {
+       parent = isSgStatement(parent->get_parent());
+       scope = isSgScopeStatement(parent);
+    }
+
+    insert_target = findLastDeclarationStatement(scope);
+    if(insert_target != NULL)
+        insert_target = getNextStatement(insert_target);
+    else
+        insert_target = getFirstStatement(scope);
+
+    ROSE_ASSERT(scope != NULL); 
+
+
+    for(size_t i = 0; i < collapsing_factor; i ++)
+    {     
+        temp_target_loop = loops[i]; 
+
+        // normalize the target loop first  // adjust to numbering starting from 0
+        forLoopNormalization(temp_target_loop);  
+
+        if (!isCanonicalForLoop(temp_target_loop, &ivar[i], &lb[i], &ub[i], &step[i], &orig_body[i], &isPlus[i]))
+        {
+            cerr<<"Error in SageInterface::loopCollapsing(): target loop is not canonical."<<endl;
+            dumpInfo(target_loop);
+            return false;
+        }
+        
+        ROSE_ASSERT(ivar[i]&& lb[i] && ub[i] && step[i]);
+   
+      
+//Winnie, (ub[i]-lb[i]+1)%step[i] ==0?(ub[i]-lb[i]+1)/step[i]: (ub[i]-lb[i]+1)/step[i]+1; (need ceiling) total number of iterations in this level (ub[i] - lb[i] + 1)/step[i]
+        if(isPlus[i] == true)
+            temp_range_exp = buildAddOp(buildSubtractOp(copyExpression(ub[i]), copyExpression(lb[i])), buildIntVal(1));
+        else{
+            temp_range_exp = buildAddOp(buildSubtractOp(copyExpression(lb[i]), copyExpression(ub[i])), buildIntVal(1));
+            step[i] = buildMultiplyOp(step[i], buildIntVal(-1));
+        }
+        temp_range_d_step_exp = buildDivideOp(temp_range_exp,copyExpression(step[i]));//(ub[i]-lb[i]+1)/step[i]
+        
+        temp_condition_1 = buildEqualityOp(buildModOp(copyExpression(temp_range_exp),copyExpression(step[i])),buildIntVal(0)); //(ub[i]-lb[i]+1)%step[i] ==0
+
+        temp_total_iter = buildConditionalExp(temp_condition_1,temp_range_d_step_exp, buildAddOp(copyExpression(temp_range_d_step_exp),buildIntVal(1)));
+
+        //build variables to store iteration numbers in each loop, simplify the calculation of "final_total_iters"
+        //insert the new variable (store real iteration number of each level of the loop) before the target loop
+        string iter_var_name= "_total_iters";
+        iter_var_name = ivar[i]->get_name().getString() + iter_var_name + generateUniqueName(temp_total_iter, false);  
+        SgVariableDeclaration* total_iter = buildVariableDeclaration(iter_var_name, buildIntType(), buildAssignInitializer(temp_total_iter, buildIntType()), scope);  
+        insertStatementBefore(insert_target, total_iter);    
+        total_iters[i] = buildVarRefExp(iter_var_name, scope);
+        ub_exp = buildMultiplyOp(ub_exp, total_iters[i]);    //Winnie, build up the final iteration range 
+    }
+
+
+    /*
+    * step 2: build new variables (new_index, final_total_iters, remainders...) for the new loop
+    */
+
+    /*Winnie, build another variable to store final total iteration counter of the loop after collapsing*/
+    string final_iter_counter_name = "final_total_iters" + generateUniqueName(ub_exp, false);
+    SgVariableDeclaration * final_total_iter = buildVariableDeclaration(final_iter_counter_name, buildIntType(), buildAssignInitializer(copyExpression(ub_exp), buildIntType()), scope);
+    insertStatementBefore(insert_target, final_total_iter);
+    ub_exp = buildVarRefExp(final_iter_counter_name, scope);
+    new_var_list->append_expression(isSgVarRefExp(ub_exp));
+  
+    /*Winnie, interval[i] will make the calculation of remainders simpler*/
+    for(unsigned int i = 0; i < collapsing_factor; i++)
+    {
+        interval[i] = buildIntVal(1);
+        for(unsigned int j = collapsing_factor - 1; j > i; j--)
+        {
+            interval[i] = buildMultiplyOp(total_iters[j], interval[i]); 
+        }
+        string interval_name = ivar[i]->get_name().getString() + "_interval" + generateUniqueName(interval[i], false);
+        SgVariableDeclaration* temp_interval = buildVariableDeclaration(interval_name, buildIntType(), buildAssignInitializer(copyExpression(interval[i]), buildIntType()), scope);
+        insertStatementBefore(insert_target, temp_interval);
+        interval[i] = buildVarRefExp(interval_name, scope);
+        new_var_list->append_expression(isSgVarRefExp(interval[i]));
+    }
+
+
+   //Winnie, starting from here, we are dealing with variables inside loop, update scope
+      scope = getScope(target_loop);
+
+   //Winnie, init statement of the loop header, copy the lower bound, we are dealing with a range, the lower bound should always be "0"
+    //Winnie, declare a brand new var as the new index
+      string ivar_name = "new_index";
+      SgVariableDeclaration* init_stmt = buildVariableDeclaration(ivar_name, buildIntType(), buildAssignInitializer(buildIntVal(0), buildIntType()), scope);  
+  
+  
+     SgBasicBlock* body = isSgBasicBlock(deepCopy(temp_target_loop->get_loop_body())); // normalized loop has a BB body
+     ROSE_ASSERT(body);
+     SgExpression* new_exp = NULL;
+     SgExpression* remain_exp_temp = buildVarRefExp(ivar_name, scope);
+     std::vector<SgStatement*> new_stmt_list; 
+     
+     SgExprStatement* assign_stmt = NULL;
+     
+     /*  Winnie
+     *   express old iterator variables (i_norm, j_norm ...)  with new_index,  
+     *   new_exp, create new expression for each of the iterators
+     *   i_nom_1 = (_new_index / interval[0])*step[0] + lb[0] 
+     *   i_nom_1_remain_value = (_new_index % interval[0])*step[0] + lb[0], create a new var to store remain value
+     *   create a new var to store total_iters[i]
+     */ 
+     for(unsigned int i = 0; i < collapsing_factor - 1; i ++)  
+     {  
+         if(isPlus[i] == true)
+             new_exp = buildAddOp(buildMultiplyOp(buildDivideOp(copyExpression(remain_exp_temp), copyExpression(interval[i])), step[i]), copyExpression(lb[i]));  //Winnie, (i_remain/interval[i])*step[i] + lb[i]
+         else
+             new_exp = buildAddOp(buildMinusOp(buildMultiplyOp(buildDivideOp(copyExpression(remain_exp_temp), copyExpression(interval[i])), step[i])), copyExpression(lb[i]));  //Winnie, -(i_remain/interval[i])*step[i] + lb[i], for decremental loop
+
+         assign_stmt = buildAssignStatement(buildVarRefExp(ivar[i], scope), copyExpression(new_exp));   
+         new_stmt_list.push_back(assign_stmt); 
+         remain_exp_temp = buildModOp((remain_exp_temp), copyExpression(interval[i])); 
+
+         if(i != collapsing_factor - 2){ //Winnie, if this is the second last level of loop, no need to create new variable to hold the remain_value, or remove the original index variable declaration
+             string remain_var_name= "_remainder";
+             remain_var_name = ivar[i]->get_name().getString() + remain_var_name;  
+             SgVariableDeclaration* loop_index_decl = buildVariableDeclaration(remain_var_name, buildIntType(), buildAssignInitializer(remain_exp_temp, buildIntType()), scope);  
+             remain_exp_temp = buildVarRefExp(remain_var_name, scope);
+             new_stmt_list.push_back(loop_index_decl); 
+         }
+         new_exp = NULL;
+     }
+
+//Winnie, the inner most loop, iter
+    if(isPlus[collapsing_factor - 1] == true)
+        assign_stmt = buildAssignStatement(buildVarRefExp(ivar[collapsing_factor - 1], scope), buildAddOp(buildMultiplyOp(remain_exp_temp, step[collapsing_factor - 1]), lb[collapsing_factor - 1]));  
+    else
+        assign_stmt = buildAssignStatement(buildVarRefExp(ivar[collapsing_factor - 1], scope), buildAddOp(buildMinusOp(buildMultiplyOp(remain_exp_temp, step[collapsing_factor - 1])), lb[collapsing_factor - 1]));   
+     new_stmt_list.push_back(assign_stmt);
+     prependStatementList(new_stmt_list, body);
+
+    /*
+    * step 3: build the new loop, new step is always 1, disregard value of step[i]
+    */
+    SgExpression* incr_exp = buildPlusAssignOp(buildVarRefExp(ivar_name, scope), buildIntVal(1)); 
+
+    //Winnie, build the new conditional expression/ub
+    SgExprStatement* cond_stmt = NULL;
+    ub_exp = buildSubtractOp(ub_exp, buildIntVal(1));
+    cond_stmt = buildExprStatement(buildLessOrEqualOp(buildVarRefExp(ivar_name,scope),copyExpression(ub_exp)));
+    ROSE_ASSERT(cond_stmt != NULL);
+
+    SgForStatement* new_loop = buildForStatement(init_stmt, cond_stmt,incr_exp, body);  //Winnie, add in the new block!
+    new_loop->set_parent(scope);  //TODO: what's the correct parent?
+
+    replaceStatement(target_loop, new_loop);
+
+    target_loop = new_loop; //Winnie, so that transOmpLoop() can work on the collapsed loop   
+   // constant folding for the transformed AST
+   ConstantFolding::constantFoldingOptimization(scope->get_parent(),false);   //Winnie, "scope" is the scope that contains new_loop, this is the scope where we insert some new variables to store interation count and intervals
+
+    #endif
+
+    return new_var_list;
+}
+
+#endif

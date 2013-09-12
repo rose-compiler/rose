@@ -2267,7 +2267,16 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgStatement *tmp_stmt = for_stmt->get_for_init_stmt();
   // curprint(" /* initializer: " + tmp_stmt->class_name() + " */ ");
   // ROSE_ASSERT(tmp_stmt != NULL);
-     if (tmp_stmt != NULL)
+  // Milind Chabbi (9/5/2013): if the for init statement is NULL or not unparsed, we should output a semicolon. 
+     if (tmp_stmt == NULL || !statementFromFile(tmp_stmt, getFileName(), newinfo))
+        {
+#if 0
+       // DQ (10/8/2012): Commented out to avoid output spew.
+          printf ("Warning in unparseForStmt(): for_stmt->get_for_init_stmt() == NULL \n");
+#endif
+          curprint("; ");
+        }
+       else
         {
 #if 0
           curprint("\n/* Unparse the for_init_stmt */\n ");
@@ -2276,14 +2285,6 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
           curprint("\n/* DONE: Unparse the for_init_stmt */\n ");
 #endif
-        }
-       else
-        {
-#if 0
-       // DQ (10/8/2012): Commented out to avoid output spew.
-          printf ("Warning in unparseForStmt(): for_stmt->get_for_init_stmt() == NULL \n");
-#endif
-          curprint("; ");
         }
      newinfo.unset_inConditional();
 
