@@ -109,7 +109,8 @@ faketarget:
 	MFAnalyzer.C
 	RDLattice.h
 	RDLattice.C
-	WorkListThorn.h
+	WorkList.h
+	WorkList.C
 	SetAlgo.h
 	ast_demo.C
 	ShowSeq.h
