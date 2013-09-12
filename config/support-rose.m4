@@ -1823,6 +1823,9 @@ projects/DatalogAnalysis/tests/Makefile
 projects/DistributedMemoryAnalysisCompass/Makefile
 projects/DocumentationGenerator/Makefile
 projects/FiniteStateModelChecker/Makefile
+projects/fuse/Makefile
+projects/fuse/src/Makefile
+projects/fuse/tests/Makefile
 projects/graphColoring/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
