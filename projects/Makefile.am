@@ -47,6 +47,7 @@ SUBDIRS = \
 	mint \
 	vectorization \
 	extractMPISkeleton \
+	LineDeleter \
 	$(OPTIONAL_PROJECTS)
 
 
