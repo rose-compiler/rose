@@ -3,6 +3,40 @@
 #include "rose.h"
 #include "ProgramStats.h"
 
+void  ProgramStatistics::floatIntStats(SgNode* node, ComputationInfo& cit) {
+  RoseAst ast(node);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+	if(SgExpression* expr=isSgExpression(*i)) {
+	  SgType* typenode=expr->get_type();
+	  if(typenode) {
+		if(isSgArrayType(typenode)) { 
+		  cit.hasFloat=true; cit.hasInt=true; cit.hasRead=true; cit.hasWrite=true;// TODO: refine with memory-flag of def-use 
+		}
+		if(isSgTypeFloat(typenode)||isSgTypeDouble(typenode)||isSgTypeLongDouble(typenode)) {
+		  cit.hasFloat=true;
+		} else if(isSgTypeInt(typenode)
+				  ||isSgTypeLong(typenode)
+				  ||isSgTypeLongDouble(typenode)
+				  ||isSgTypeLongLong(typenode)
+				  ||isSgTypeShort(typenode)
+				  ||isSgTypeSignedChar(typenode)
+				  ||isSgTypeSignedInt(typenode)
+				  ||isSgTypeSignedLong(typenode)
+				  ||isSgTypeSignedLongLong(typenode)
+				  ||isSgTypeSignedShort(typenode)
+				  ||isSgTypeUnsignedChar(typenode)
+				  ||isSgTypeUnsignedInt(typenode)
+				  ||isSgTypeUnsignedLong(typenode)
+				  ||isSgTypeUnsignedLongLong(typenode)
+				  ||isSgTypeUnsignedShort(typenode)
+				  ) {
+		  cit.hasInt=true;
+		}
+	  }
+	}
+  }
+}
+
 void ProgramStatistics::computeOpStats(ComputationInfo& ci, SgNode* node) {
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
@@ -41,7 +75,19 @@ void ProgramStatistics::computeOpStats(ComputationInfo& ci, SgNode* node) {
 
 ComputationInfo ProgramStatistics::computeComputationInfo(Label lab, VariableIdMapping* vidm) {
   SgNode* node=labeler->getNode(lab);
+  // TODO: check node for not being at the expression yet
+  if(isSgExprStatement(node))
+	node=SgNodeHelper::getExprStmtChild(node);
   ComputationInfo ci;
+  if(SgFunctionCallExp* callExp=isSgFunctionCallExp(node)) {
+	SgNode* functionCallParams=callExp->get_args();
+	VariableIdSet readMemLocSet=AnalysisAbstractionLayer::useVariables(functionCallParams, *vidm);
+	VariableIdSet writeMemLocSet=AnalysisAbstractionLayer::defVariables(functionCallParams, *vidm);
+	ci.numReadMemLoc[CIT_TOTAL]=readMemLocSet.size();
+	ci.numWriteMemLoc[CIT_TOTAL]=writeMemLocSet.size();
+  }
+
+
   //cout<<ci.toString()<<endl;
   if(isSgVariableDeclaration(node)||isSgExpression(node)||isSgInitializedName(node)) {
 	VariableIdSet readMemLocSet=AnalysisAbstractionLayer::useVariables(node, *vidm);
@@ -72,6 +118,7 @@ ComputationInfo ProgramStatistics::computeComputationInfo(Label lab, VariableIdM
   for(EdgeSet::iterator i=specialEdges.begin();i!=specialEdges.end();++i) {
 	computationInfo[(*i).source].numJmp++;
   }
+  floatIntStats(node,ci);
   return ci;
 }
 
@@ -79,9 +126,13 @@ ProgramStatistics::ProgramStatistics(VariableIdMapping* vidm, Labeler* labeler, 
   :vidm(vidm),
    labeler(labeler),
    icfg(icfg),
-   useDefAstAttributeName(useDefAstAttributeName)
+   useDefAstAttributeName(useDefAstAttributeName),
+  _withSource(true)
 {
   computationInfo.resize(labeler->numberOfLabels());
+}
+void ProgramStatistics::setGenerateWithSource(bool withsource) {
+  _withSource=withsource;
 }
 
 void ProgramStatistics::computeStatistics() {
@@ -123,23 +174,28 @@ string ProgramStatistics::generateNodeResourceUsageDotString(Label lab) {
   string rowstart="<TR>";
   string rowend="</TR>";
 
-  string labentry="<TR><TD COLSPAN=\"1\" ROWSPAN=\"2\" BGCOLOR=\"firebrick4\"><font color=\"white\">L"+dot.str()+"</font></TD>";
-  labentry+="<TD COLSPAN=\"5\">";
-  string labename;
-  {
-	SgNode* node=labeler->getNode(lab);
-	if(!isSgBasicBlock(node)) {
-	  if(isSgFunctionDefinition(node))
-		labentry+=SgNodeHelper::getFunctionName(node);
-		 else
-		   //		   labentry+=string("\"")+SgNodeHelper::doubleQuotedEscapedHTMLString(node->unparseToString())+string("\"");
-		   labentry+=SgNodeHelper::doubleQuotedEscapedHTMLString(node->unparseToString());
-	}
-  }
-  labentry+="</TD>";  
-  labentry+="</TR>";
-
   string emptyentry="<TD></TD>";
+  string labentry;
+  if(_withSource) {
+	labentry="<TR><TD COLSPAN=\"1\" ROWSPAN=\"2\" BGCOLOR=\"firebrick4\"><font color=\"white\">L"+dot.str()+"</font></TD>";
+	labentry+="<TD COLSPAN=\"5\">";
+	string labename;
+	{
+	  SgNode* node=labeler->getNode(lab);
+	  if(!isSgBasicBlock(node)) {
+		if(isSgFunctionDefinition(node))
+		  labentry+=SgNodeHelper::getFunctionName(node);
+		else
+		  //		   labentry+=string("\"")+SgNodeHelper::doubleQuotedEscapedHTMLString(node->unparseToString())+string("\"");
+		   labentry+=SgNodeHelper::doubleQuotedEscapedHTMLString(node->unparseToString());
+	  }
+	}
+	labentry+="</TD>";  
+	labentry+="</TR>";
+  } else {
+	labentry="<TR><TD COLSPAN=\"5\" ROWSPAN=\"1\" BGCOLOR=\"firebrick4\"><font color=\"white\">L"+dot.str()+"</font></TD></TR>";
+  }
+
   string entries=/*emptyentry+*/computationInfo[lab].toDot();
   //string entry2="<TD PORT=\"second\" BGCOLOR=\"blue\">FLOAT</TD>";
   string tableend="</TABLE>>";

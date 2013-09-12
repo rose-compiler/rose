@@ -78,6 +78,7 @@ int main(int argc, char* argv[]) {
   ps.computeStatistics();
   //ps.printStatistics();
   cout << "INFO: generating resource usage visualization."<<endl;
+  ps.setGenerateWithSource(false);
   ps.generateResourceUsageICFGDotFile("resourceusageicfg.dot");
   flow->resetDotOptions();
 #endif

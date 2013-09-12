@@ -993,10 +993,6 @@ SgNode* SgNodeHelper::getLoopBody(SgNode* node) {
     return dowhilestmt->get_body();
   }
   if(SgForStatement* forstmt=isSgForStatement(node)) {
-	ROSE_ASSERT(dynamic_cast<SgForStatement*>(node));
-	cerr<<"DEBUG: we are here!"<<endl;
-	cerr<<"DEBUG:fl:"<<forstmt->class_name()<<endl;
-	cerr<<"DEBUG:lb:"<<forstmt->get_loop_body()->class_name()<<endl;
     return forstmt->get_loop_body();
   }
   throw "SgNodeHelper::getLoopBody: improper node operation.";
