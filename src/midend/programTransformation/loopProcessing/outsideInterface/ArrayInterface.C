@@ -479,4 +479,17 @@ GetArrayBound( AstInterface& _fa, const AstNodePtr& array,
   return true;
 }
 
-
+ArrayInterface::ArrayInterfaceMapT ArrayInterface::instMap = ArrayInterface::ArrayInterfaceMapT();
+ArrayInterface * ArrayInterface::
+get_inst( ArrayAnnotation& a, AstInterface& fa, SgFunctionDefinition* funcDef, AstNodePtrImpl node)
+{
+  assert( funcDef != NULL );
+  ArrayInterfaceMapT::iterator i = instMap.find(funcDef);
+  if( i == instMap.end() ){
+    i = instMap.insert(std::make_pair(funcDef,new ArrayInterface(a))).first;
+    assert( i->second != NULL );
+    i->second->initialize(fa, node);
+    i->second->observe(fa);
+  }
+  return i->second;
+}

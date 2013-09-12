@@ -9,7 +9,7 @@
 #include "Visualizer.h"
 #include "SgNodeHelper.h"
 #include "CommandLineOptions.h"
-#include "AttributeAnnotator.h"
+#include "AstAnnotator.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // BEGIN OF VISUALIZER
@@ -17,11 +17,10 @@
 
 using namespace CodeThorn;
 
-class AssertionAttribute : public AnalysisResultAttribute {
+class AssertionAttribute : public DFAstAttribute {
 public:
   AssertionAttribute(string preCondition):_precond(preCondition) {}
-  string getPreInfoString() { return _precond; }
-  string getPostInfoString() { return ""; }
+  string toString() { return _precond; }
 private:
   string _precond;
 };
