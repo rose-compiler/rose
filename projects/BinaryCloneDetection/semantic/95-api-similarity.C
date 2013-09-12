@@ -439,6 +439,15 @@ main(int argc, char *argv[])
         );
 
 
+    if( call_depth >= 0)
+      transaction->execute("create index fr_call_index on semantic_fio_calls(func_id, igroup_id, caller_id)");
+    else
+      transaction->execute("create index fr_call_index on semantic_fio_calls(func_id, igroup_id)");
+
+ 
+    transaction->execute("create index fr_tmp_called_index on tmp_called_functions(callee_id)");
+
+
     //Creat list of functions and igroups to analyze
     SqlDatabase::StatementPtr similarity_stmt = transaction->statement("select func1_id, func2_id from semantic_funcsim where similarity >= ? ");
 
@@ -505,6 +514,11 @@ main(int argc, char *argv[])
    
     
     transaction->commit();
+
+    transaction->execute("drop index fr_call_index");
+    transaction->execute("drop index fr_tmp_called_index");
+
+
 
     return 0;
 } 
