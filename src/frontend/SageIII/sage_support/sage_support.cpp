@@ -5240,8 +5240,15 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
 //     There will be no SgFile at all in this case but we still want to append relevant linking options for OpenMP
      if( SageInterface::getProject()->get_openmp_linking())
      {
-
+// Sara Royuela 12/10/2012:  Add GCC version check
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY
+#if (__GNUC__ < 4 || \
+    (__GNUC__ == 4 && (__GNUC_MINOR__ < 4)))
+#warning "GNU version lower than expected"    
+        printf("GCC version must be 4.4.0 or later when linking with GOMP OpenMP Runtime Library \n(OpenMP tasking calls are not implemented in previous versions)\n");
+        ROSE_ASSERT(false);
+#endif
+
        // add libxomp.a , Liao 6/12/2010
        string xomp_lib_path(ROSE_INSTALLATION_PATH);
        ROSE_ASSERT (xomp_lib_path.size() != 0);

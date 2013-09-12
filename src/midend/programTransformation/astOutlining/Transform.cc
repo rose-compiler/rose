@@ -22,86 +22,124 @@ using namespace std;
 using namespace SageBuilder;
 using namespace SageInterface;
 // =====================================================================
+
+static SgType * buildArrayMemberType( SgType * member_type )
+{
+    SgType * ret;
+    SgType * defined_type = member_type->stripType( SgType::STRIP_TYPEDEF_TYPE );
+    if( isSgArrayType( defined_type ) )
+        ret = buildArrayType( buildArrayMemberType( isSgArrayType( defined_type )->get_base_type( ) ),
+                              isSgArrayType( member_type )->get_index( ) );
+    else
+        ret = member_type;
+    return ret;
+}
+
 // ! create a struct to contain data members for variables to be passed as parameters
 // A wrapper struct for variables passed to the outlined function
 // Each variable (e.g a) has two choices
 //   1. store the value of a:  the same type representation in the struct
 //   2. store the address of a:  pointer type of a
 SgClassDeclaration* Outliner::generateParameterStructureDeclaration(
-                               SgBasicBlock* s, // the outlining target
-                               const std::string& func_name_str, // the name for the outlined function, we generate the name of struct based on this.
-                               const ASTtools::VarSymSet_t& syms, // variables to be passed as parameters
-                               ASTtools::VarSymSet_t& symsUsingAddress, // variables whose addresses are stored into the struct 
-                               SgScopeStatement* func_scope ) // the scope of the outlined function, could be different from s's global scope
+        SgBasicBlock* s, // the outlining target
+        const std::string& func_name_str, // the name for the outlined function, we generate the name of struct based on this.
+        const ASTtools::VarSymSet_t& syms, // variables to be passed as parameters
+        ASTtools::VarSymSet_t& symsUsingAddress, // variables whose addresses are stored into the struct 
+        SgScopeStatement* func_scope ) // the scope of the outlined function, could be different from s's global scope
 {
-  SgClassDeclaration* result = NULL;
-  // no need to generate the declaration if no variables are to be passed
-  if (syms.empty()) 
-    return result;
+    SgClassDeclaration* result = NULL;
+    // no need to generate the declaration if no variables are to be passed
+    if( syms.empty( ) ) 
+        return result;
+    
+    ROSE_ASSERT( s != NULL );
+    ROSE_ASSERT( func_scope != NULL );
+    // this declaration will later on be inserted right before the outlining target calling the outlined function
+    ROSE_ASSERT( isSgGlobal( func_scope ) != NULL );
+    string decl_name = func_name_str+"_data";
+    
+    result = buildStructDeclaration( decl_name, getGlobalScope( s ) );
+    //  result ->setForward(); // cannot do this!! it becomes prototype
+    //  if (result->get_firstNondefiningDeclaration()  )
+    //   ROSE_ASSERT(isSgClassDeclaration(result->get_firstNondefiningDeclaration())->isForward() == true);
+    //   cout<<"Debug Outliner::generateParameterStructureDeclaration(): struct address ="<<result <<" firstNondefining address ="<<result->get_firstNondefiningDeclaration()<<endl;
 
-  ROSE_ASSERT (s != NULL);
-  ROSE_ASSERT (func_scope != NULL);
-  // this declaration will later on be inserted right before the outlining target calling the outlined function
-  ROSE_ASSERT (isSgGlobal(func_scope) != NULL);
-  string decl_name = func_name_str+"_data";
-  
-  result = buildStructDeclaration(decl_name, getGlobalScope(s));
-//  result ->setForward(); // cannot do this!! it becomes prototype
-//  if (result->get_firstNondefiningDeclaration()  )
-//   ROSE_ASSERT(isSgClassDeclaration(result->get_firstNondefiningDeclaration())->isForward() == true);
-//   cout<<"Debug Outliner::generateParameterStructureDeclaration(): struct address ="<<result <<" firstNondefining address ="<<result->get_firstNondefiningDeclaration()<<endl;
-
-  // insert member variable declarations to it
-  SgClassDefinition *def = result->get_definition();
-  ROSE_ASSERT (def != NULL); 
-  SgScopeStatement* def_scope = isSgScopeStatement (def);
-  ROSE_ASSERT (def_scope != NULL); 
-  for (ASTtools::VarSymSet_t::const_iterator i = syms.begin ();
-      i != syms.end (); ++i)
-  { 
-    const SgInitializedName* i_name = (*i)->get_declaration ();
-    ROSE_ASSERT (i_name);
-    const SgVariableSymbol* i_symbol  = isSgVariableSymbol(i_name->get_symbol_from_symbol_table ());
-    ROSE_ASSERT (i_symbol != NULL);
-    string member_name= i_name->get_name ().str ();
-    SgType* member_type = i_name->get_type() ;
-    // use pointer type or its original type?
-    if (symsUsingAddress.find(i_symbol) != symsUsingAddress.end())
-    {
-       member_name = member_name+"_p";
-       // member_type = buildPointerType(member_type);
-       // Liao, 10/26/2009
-       // We use void* instead of type* to ease the handling of C++ class pointers wrapped into the data structure
-       // Using void* can avoid adding a forward class declaration  which is needed for classA *
-       // It also simplifies unparsing: unparsing the use of classA* has some complications. 
-       // The downside is that type casting is needed for setting and using the pointer typed values
-       member_type = buildPointerType(buildVoidType());
+    // insert member variable declarations to it
+    SgClassDefinition *def = result->get_definition( );
+    ROSE_ASSERT( def != NULL ); 
+    SgScopeStatement* def_scope = isSgScopeStatement( def );
+    ROSE_ASSERT( def_scope != NULL ); 
+    for( ASTtools::VarSymSet_t::const_iterator i = syms.begin( ); i != syms.end( ); ++i )
+    { 
+        const SgInitializedName* i_name = (*i)->get_declaration( );
+        ROSE_ASSERT( i_name );
+        const SgVariableSymbol* i_symbol = isSgVariableSymbol( i_name->get_symbol_from_symbol_table( ) );
+        ROSE_ASSERT( i_symbol != NULL );
+        string member_name = i_name->get_name( ).str( );
+        SgType* member_type = i_name->get_type( ) ;
+        // use pointer type or its original type?
+        SgType * non_typef_type = member_type->stripType( SgType::STRIP_TYPEDEF_TYPE );
+        if (symsUsingAddress.find(i_symbol) != symsUsingAddress.end())
+        {
+            member_name = member_name+"_p";
+            
+            // member_type = buildPointerType(member_type);
+            // Liao, 10/26/2009
+            // We use void* instead of type* to ease the handling of C++ class pointers wrapped into the data structure
+            // Using void* can avoid adding a forward class declaration  which is needed for classA * 
+            // It also simplifies unparsing: unparsing the use of classA* has some complications. 
+            // The downside is that type casting is needed for setting and using the pointer typed values
+            if( isSgArrayType( non_typef_type ) != NULL )
+            {   // Sara, 05/10/2013
+                // An array type here means that the memory was statically allocated.
+                // In this case we need the array to be allocated in the struct
+                if( isSgFunctionDefinition( i_symbol->get_scope( ) ) )
+                {   // When the variable is a parameter (function definition scope), the first dimension is passed by pointer
+                    member_type = buildPointerType( buildPointerType( isSgArrayType( non_typef_type )->get_base_type( ) ) );
+                }
+                else
+                {   // Otherwise, all dimensions remain
+                    member_type = buildPointerType( member_type );
+                }
+            }
+            else if( isSgArrayType( non_typef_type->stripType( SgType::STRIP_POINTER_TYPE ) ) )
+            {   // Shared array which first dimension is expressed as a pointerbuildPointerType( non_typef_type->get_base_type( ) )
+                // int (*c1)[10] = calloc(sizeof(int), 10 * 10);
+                // #pragma omp task shared(c1)
+                member_type = buildPointerType( non_typef_type );
+            }
+            else
+            {   // Scalars, Pointers, Structures
+                member_type = buildPointerType( buildVoidType( ) );
+            }
+        }
+        else if( ( isSgArrayType( non_typef_type ) ) && ( isSgFunctionDefinition( i_symbol->get_scope( ) ) ) )
+        {   // First dimension is passed by pointer for all array symbols that are parameters
+            member_type = buildPointerType( isSgArrayType( non_typef_type )->get_base_type( ) );
+        }
+        SgVariableDeclaration *member_decl = buildVariableDeclaration( member_name, member_type, NULL, def_scope );
+        appendStatement( member_decl, def_scope );
     }
 
-    SgVariableDeclaration *member_decl = buildVariableDeclaration(member_name, member_type, NULL, def_scope);
-    appendStatement (member_decl, def_scope);
-  }
-
-  // insert it before the s, but must be in a global scope
-  // s might be within a class, namespace, etc. we need to find its ancestor scope
-  SgNode* global_scoped_ancestor = getEnclosingFunctionDefinition(s,false); 
-  while (!isSgGlobal(global_scoped_ancestor->get_parent())) 
- // use get_parent() instead of get_scope() since a function definition node's scope is global while its parent is its function declaration
-  {
-    global_scoped_ancestor = global_scoped_ancestor->get_parent();
-   }
-//  cout<<"global_scoped_ancestor class_name: "<<global_scoped_ancestor->class_name()<<endl; 
-  ROSE_ASSERT (isSgStatement(global_scoped_ancestor));
-  insertStatementBefore(isSgStatement(global_scoped_ancestor), result); 
-  moveUpPreprocessingInfo(result,isSgStatement(global_scoped_ancestor));
-
-  if (global_scoped_ancestor->get_parent() != func_scope )
-  {
-  //TODO 
-   cout<<"Outliner::generateParameterStructureDeclaration() separated file case is not yet handled."<<endl;
-   ROSE_ASSERT (false);
-  }
-  return result;
+    // insert it before the s, but must be in a global scope
+    // s might be within a class, namespace, etc. we need to find its ancestor scope
+    SgNode* global_scoped_ancestor = getEnclosingFunctionDefinition( s, false ); 
+    while( !isSgGlobal( global_scoped_ancestor->get_parent( ) ) ) 
+    // use get_parent() instead of get_scope() since a function definition node's scope is global while its parent is its function declaration
+    {
+        global_scoped_ancestor = global_scoped_ancestor->get_parent( );
+    }
+    //  cout<<"global_scoped_ancestor class_name: "<<global_scoped_ancestor->class_name()<<endl; 
+    ROSE_ASSERT( isSgStatement( global_scoped_ancestor ) );
+    insertStatementBefore( isSgStatement( global_scoped_ancestor ), result ); 
+    moveUpPreprocessingInfo( result, isSgStatement( global_scoped_ancestor ) );
+    
+    if( global_scoped_ancestor->get_parent( ) != func_scope )
+    {   //TODO 
+        cout << "Outliner::generateParameterStructureDeclaration() separated file case is not yet handled." << endl;
+        ROSE_ASSERT( false );
+    }
+    return result;
 }
 
 //!  A helper function to decide if some variables need to be restored from their clones in the end of the outlined function
@@ -448,6 +486,86 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   return Result (func, func_call, new_file);
 }
 
+/**
+ *  \brief Initializes packing statements for array types
+ *  The function also skips typedef types to get the real type
+ *  
+ *  \param lhs Left-hand side of the assignment 
+ *  \param rhs Right-hand side of the assignment
+ *  \param target OpenMP pragme before which we have to place the packing statments
+ *
+ *  Example:
+ *    Input code:
+ *        int a;
+ *        int b[10];
+ *        int c[10];
+ *        int * d = ( int * ) malloc( sizeof( int ) * 10 );
+ *        int i;
+ *        #pragma omp parallel for firstprivate(c)
+ *        {
+ *            for(i=0;i<10;i++) {
+ *                b[i] = a;
+ *                c[i] = a;
+ *                d[i] = a;
+ *            }
+ *        }
+ *
+ *    Outlined parameters struct:
+ *        struct OUT__1__7768___data {
+ *            void *a_p;
+ *            int (*b_p)[10UL];
+ *            int c[10UL];
+ *            void *d_p;
+ *        };
+ *
+ *    Packing statements:
+ *        struct OUT__1__7768___data __out_argv;
+ *        __out_argv.a_p = ((void *)(&a));                  -> shared scalar
+ *        __out_argv.b_p = ((void *)(&b));                  -> shared static array
+ *        int __i0__;
+ *        for (__i0__ = 0; __i0__ < 10UL; __i0__++)         -> firstprivate array 
+ *            __out_argv.c[__i0__] = c[__i0__];
+ *        __out_argv.d_p = ((void *)(&d));                  -> shared dynamic array
+ */
+static SgStatement* build_array_packing_statement( SgExpression * lhs, SgExpression * & rhs, SgStatement * target )
+{
+    SgScopeStatement * scope = target->get_scope( );
+    
+    // Loop initializer
+    std::string loop_index_name = SageInterface::generateUniqueVariableName( scope, "i" );
+    SgVariableDeclaration * loop_index = buildVariableDeclaration( loop_index_name, buildIntType( ), NULL /* initializer */, scope );
+    SageInterface::insertStatementBefore( target, loop_index );
+    SgStatement * loop_init = buildAssignStatement( buildVarRefExp( loop_index_name, scope ), buildIntVal( 0 ) );
+    
+    // Get the real type of the LHS
+    SgType * lhs_type = lhs->get_type()->stripType( SgType::STRIP_TYPEDEF_TYPE );
+    ROSE_ASSERT( isSgArrayType( lhs_type ) );
+    
+    // Loop test
+    SgStatement * loop_test = buildExprStatement(
+            buildLessThanOp( buildVarRefExp( loop_index_name, scope ), isSgArrayType( lhs_type )->get_index( ) ) );
+    
+    // Loop increment
+    SgExpression * loop_increment = buildPlusPlusOp( buildVarRefExp( loop_index_name, scope ), SgUnaryOp::postfix );
+    
+    // Loop body    
+    SgExpression * assign_lhs = buildPntrArrRefExp( lhs, buildVarRefExp( loop_index_name, scope ) );
+    SgExpression * assign_rhs = buildPntrArrRefExp( rhs, buildVarRefExp( loop_index_name, scope ) );
+    SgStatement * loop_body = NULL;
+    SgType * assign_lhs_type = assign_lhs->get_type()->stripType( SgType::STRIP_TYPEDEF_TYPE );
+    if( isSgArrayType( assign_lhs_type ) )
+    {
+        loop_body = build_array_packing_statement( assign_lhs, assign_rhs, target );
+    }
+    else
+    {
+        loop_body = buildAssignStatement( assign_lhs, assign_rhs );
+    }
+    
+    // Loop satement
+    return buildForStatement( loop_init, loop_test, loop_increment, loop_body );
+}
+
 /* For a set of variables to be passed into the outlined function, 
  * generate the following statements before the call of the outlined function
  * used when useParameterWrapper is set to true
@@ -505,12 +623,15 @@ std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::V
   {
     SgExpression * lhs = NULL;
     SgExpression * rhs = NULL;
+    SgStatement * assignment = NULL;
     if (useStructureWrapper)
     {
       // if use a struct to wrap parameters
       // two kinds of field: original type v.s. pointer type to the original type
       //  __out_argv1__1527__.i = i;
       //  __out_argv1__1527__.sum_p = &sum;
+      // Sara Royuela, Dec 12, 2012: There is a third type
+      // When LHS is an array, we must copy each position.
       SgInitializedName* i_name = (*i)->get_declaration();
       SgVariableSymbol * i_symbol = const_cast<SgVariableSymbol *>(*i);
       //SgType* i_type = i_symbol->get_type();
@@ -521,12 +642,27 @@ std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::V
       {
         member_name = member_name+"_p";
         // member_type = buildPointerType(member_type);
-        //rhs = buildAddressOfOp(rhs); 
-        rhs = buildCastExp( buildAddressOfOp(rhs), buildPointerType(buildVoidType())); 
+        rhs = buildAddressOfOp(rhs);
       }
       SgClassDefinition* class_def = isSgClassDefinition (isSgClassDeclaration(struct_decl->get_definingDeclaration())->get_definition()) ; 
       ROSE_ASSERT (class_def != NULL);
-      lhs = buildDotExp ( buildVarRefExp(out_argv), buildVarRefExp (member_name, class_def));  
+      lhs = buildDotExp ( buildVarRefExp(out_argv), buildVarRefExp (member_name, class_def));
+      
+      SgType * lhs_type = lhs->get_type()->stripType( SgType::STRIP_TYPEDEF_TYPE );
+      if( pdsyms.find(i_symbol) != pdsyms.end() )   // only pointer members with type void* need cast
+      {
+        if( isSgPointerType( lhs_type) != NULL )
+            if( isSgTypeVoid( isSgPointerType( lhs_type )->get_base_type( ) ) != NULL )
+                rhs = buildCastExp( rhs, buildPointerType(buildVoidType())); 
+      }
+      if( pdsyms.find(i_symbol) == pdsyms.end() && isSgArrayType( lhs_type ) )
+      {   // Copy each position of the array
+          assignment = build_array_packing_statement( lhs, rhs, target );
+      }
+      else
+      {
+          assignment = buildAssignStatement( lhs, rhs );
+      }
     }
     else
     // Default case: array of pointers, e.g.,  *(__out_argv +0)=(void*)(&var1);
@@ -534,11 +670,11 @@ std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::V
       lhs = buildPntrArrRefExp(buildVarRefExp(wrapper_symbol),buildIntVal(counter));
       SgVarRefExp* rhsvar = buildVarRefExp((*i)->get_declaration(),cur_scope);
       rhs = buildCastExp( buildAddressOfOp(rhsvar), buildPointerType(buildVoidType()), SgCastExp::e_C_style_cast);
+      
+      assignment = buildAssignStatement(lhs,rhs);
     }
-
-    // build wrapping statement for either cases
-    SgExprStatement * expstmti= buildAssignStatement(lhs,rhs);
-    SageInterface::insertStatementBefore(target, expstmti);
+    
+    SageInterface::insertStatementBefore( target, assignment );
     counter ++;
   }
   return wrapper_name; 
