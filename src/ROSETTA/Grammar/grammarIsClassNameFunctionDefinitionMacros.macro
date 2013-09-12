@@ -6,7 +6,10 @@ $CLASSNAME* is$CLASSNAME ( $ROOT_NODE_OF_GRAMMAR* inputDerivedClassPointer )
   // So to fix this we return NULL directly when the input is NULL and avoid the 
   // dynamic_cast in this case.  This is likely a performance improvement as well.
   // return dynamic_cast<$CLASSNAME*>(inputDerivedClassPointer);
-     return (inputDerivedClassPointer == NULL) ? NULL : dynamic_cast<$CLASSNAME*>(inputDerivedClassPointer);
+  // Milind Chabbi (8/28/2013): is$CLASSNAME uses table-driven castability instead of c++ default dynamic_cast
+  // this improves the running time performance by 10-20%.
+     //return (inputDerivedClassPointer == NULL) ? NULL : dynamic_cast<$CLASSNAME*>(inputDerivedClassPointer);
+     return IS_$CLASSNAME_FAST_MACRO(inputDerivedClassPointer);
    }
 
 // DQ (11/8/2003): Added version of functions taking const pointer
@@ -17,7 +20,10 @@ const $CLASSNAME* is$CLASSNAME ( const $ROOT_NODE_OF_GRAMMAR* inputDerivedClassP
   // So to fix this we return NULL directly when the input is NULL and avoid the 
   // dynamic_cast in this case.  This is likely a performance improvement as well.
   // return dynamic_cast<const $CLASSNAME*>(inputDerivedClassPointer);
-     return (inputDerivedClassPointer == NULL) ? NULL : dynamic_cast<const $CLASSNAME*>(inputDerivedClassPointer);
+  // Milind Chabbi (8/28/2013): is$CLASSNAME uses table-driven castability instead of c++ default dynamic_cast
+  // this improves the running time performance by 10-20%.
+     //return (inputDerivedClassPointer == NULL) ? NULL : dynamic_cast<const $CLASSNAME*>(inputDerivedClassPointer);
+     return IS_$CLASSNAME_FAST_MACRO(inputDerivedClassPointer);
    }
 
 
