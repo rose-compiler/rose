@@ -1,5 +1,5 @@
-#ifndef ROSE_WorkList_H
-#define ROSE_WorkList_H
+#ifndef ROSE_WorkLists_H
+#define ROSE_WorkLists_H
 
 #include <boost/logic/tribool.hpp>
 #include <cassert>

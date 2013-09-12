@@ -2,7 +2,7 @@
 #define ROSE_BinaryAnalysis_ControlFlow_H
 
 #include "Map.h"
-#include "WorkList.h"
+#include "WorkLists.h"
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/depth_first_search.hpp>

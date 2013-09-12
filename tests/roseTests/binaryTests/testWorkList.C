@@ -1,5 +1,5 @@
 #include "rose.h"
-#include "WorkList.h"
+#include "WorkLists.h"
 
 // Test that we can push and pop a single item
 template<class WList>
