@@ -438,6 +438,8 @@ main(int argc, char *argv[])
         " join tmp_tested_funcs as ttf on ttf.func_id = fio.callee_id "
         );
 
+    transaction->execute("drop index IF EXISTS fr_call_index");
+    transaction->execute("drop index IF EXISTS fr_tmp_called_index");
 
     if( call_depth >= 0)
       transaction->execute("create index fr_call_index on semantic_fio_calls(func_id, igroup_id, caller_id)");
