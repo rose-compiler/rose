@@ -514,11 +514,9 @@ main(int argc, char *argv[])
 
     }
    
-    
-    transaction->commit();
-
     transaction->execute("drop index fr_call_index");
-    transaction->execute("drop index fr_tmp_called_index");
+   
+    transaction->commit();
 
 
 
