@@ -112,8 +112,10 @@ create table fr_negative_pairs as
 
 -- Pairs of functions that were _detected_ as being similar.
 create table fr_clone_pairs as
-    select func1_id, func2_id
-        from semantic_funcsim where similarity >= (select similarity_threshold from fr_settings) ;
+    select sim.func1_id, sim.func2_id
+        from semantic_funcsim sim 
+        join api_call_similarity as api_sim  on sim.func1_id = api_sim.func1_id AND sim.func2_id = api_sim.func2_id 
+        where sim.similarity >= (select similarity_threshold from fr_settings) AND sim.path_ave_euclidean_d < 1 AND  api_sim.ave_similarity > 0;
 
 -- Table of false negative pairs.  These are pairs of functions that were not determined to be similar but which are present
 -- in the fr_positives_pairs table.

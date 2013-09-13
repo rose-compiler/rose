@@ -500,9 +500,16 @@ main(int argc, char *argv[])
       }
 
       if( ncompares == 0)
-        continue;
+      {
+        ave_api_similarity = 1.0;
+        max_api_similarity = 1.0;
+        min_api_similarity = 1.0;
 
+      }else{
       ave_api_similarity = ave_api_similarity/ncompares;
+
+
+      }
 
       insert_stmt->bind(0, func1_id);
       insert_stmt->bind(1, func2_id);
