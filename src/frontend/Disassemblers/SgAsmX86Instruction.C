@@ -63,7 +63,7 @@ SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insn
         SValuePtr eip = SValue::promote(ops->readRegister(dispatcher->REG_EIP));
         if (eip->is_number()) {
             rose_addr_t target_va = eip->get_number();
-            SgAsmFunction *target_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.getOrElse(target_va, NULL));
+            SgAsmFunction *target_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(target_va, NULL));
             if (!target_func || target_va!=target_func->get_entry_va())
                 return false;
         }
@@ -80,7 +80,7 @@ SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insn
         SValuePtr top = SValue::promote(ops->readMemory(dispatcher->REG_SS, esp, esp->boolean_(true), 32));
         if (top->is_number()) {
             rose_addr_t va = top->get_number();
-            SgAsmFunction *return_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.getOrElse(va, NULL));
+            SgAsmFunction *return_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(va, NULL));
             if (!return_func || return_func!=func) {
                 return false;
             }
