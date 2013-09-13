@@ -1,10 +1,11 @@
 #ifndef ROSE_Map_H
 #define ROSE_Map_H
 
-#include "Option.h"
+#include <stdexcept>
 #include <map>
+#include <boost/optional.hpp>
 
-/** Extends std::map with a get() method. */
+/** Extends std::map with methods that return optional values. */
 template<class Key, class T, class Compare=std::less<Key>, class Alloc=std::allocator<std::pair<const Key, T> > >
 class Map: public std::map<Key, T, Compare, Alloc> {
 public:
@@ -12,11 +13,14 @@ public:
 
     // Constructors are the same as for std::map
     Map() {}
+
     explicit Map(const Compare& comp, const Alloc& alloc = Alloc())
         : map_type(comp, alloc) {}
+
     template <class InputIterator>
     Map(InputIterator first, InputIterator last, const Compare& comp = Compare(), const Alloc& alloc = Alloc())
         : map_type(first, last, comp, alloc) {};
+
     Map(const Map& other)
         : map_type(other) {}
 
@@ -28,25 +32,25 @@ public:
      *  Map<std::string, FileInfo> files;
      *  ...
      *  std::string filename = "foo.txt";
-     *  FileInfo info = files.get(filename).getOrElse(FileInfo());
+     *  FileInfo info = files.get(filename).get_value_or(FileInfo());
      * @endcode
      */
-    Option<T> get(const Key &key) const {
+    boost::optional<T> get(const Key &key) const {
         typename map_type::const_iterator found = this->find(key);
-        return found==this->end() ? Option<T>() : Option<T>(found->second);
+        return found==this->end() ? boost::optional<T>() : boost::optional<T>(found->second);
     }
 
     /** Look up one value or throw an exception.  This is like get() except it can't handle the case where the map does not
      * contain the requested key.  It is unlike operator[] in that it doesn't add a new default-constructed value. The return
      * value is a reference to the value stored in the map.
      * @{ */
-    const T& getOne(const Key &key) const {
+    const T& get_one(const Key &key) const {
         typename map_type::const_iterator found = this->find(key);
         if (found==this->end())
             throw std::domain_error("key not present in map");
         return found->second;
     }
-    T& getOne(const Key &key) {
+    T& get_one(const Key &key) {
         typename map_type::iterator found = this->find(key);
         if (found==this->end())
             throw std::domain_error("key not present in map");
@@ -54,14 +58,14 @@ public:
     }
     /** @} */
     
-    /** Convenience for getting a value from an Option.  Since the "map.get(key).getOrEsle(dflt)" idiom is so frequenct, a
-     *  getOrElse() method is defined directly on the map, combining both arguments into a single method call.
+    /** Convenience for getting a value from an Option.  Since the "map.get(key).get_value_or(dflt)" idiom is so frequenct, a
+     *  get_value_or() method is defined directly on the map, combining both arguments into a single method call.
      * @{ */
-    const T& getOrElse(const Key& key, const T& dflt) const {
+    const T& get_value_or(const Key& key, const T& dflt) const {
         typename map_type::const_iterator found = this->find(key);
         return found==this->end() ? dflt : found->second;
     }
-    T& getOrElse(const Key& key, T& dflt) {
+    T& get_value_or(const Key& key, T& dflt) {
         typename map_type::iterator found = this->find(key);
         return found==this->end() ? dflt : found->second;
     }

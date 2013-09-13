@@ -373,6 +373,14 @@ TEST_TARGETS += testWorkList.passed
 testWorkList.passed: $(TEST_EXIT_STATUS) testWorkList
 	@$(RTH_RUN) CMD=./testWorkList $< $@
 
+# Test ROSE's Map<T> class
+noinst_PROGRAMS += testMap
+testMap_SOURCES = testMap.C
+testMap_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += testMap.passed
+testMap.passed: $(TEST_EXIT_STATUS) testMap
+	@$(RTH_RUN) CMD=./testMap $< $@
+
 # Test pointer detection
 noinst_PROGRAMS += testPointerDetection
 testPointerDetection_SOURCES = testPointerDetection.C

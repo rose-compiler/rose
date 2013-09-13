@@ -776,8 +776,8 @@ BinaryAnalysis::ControlFlow::explode_blocks(const BlockCFG &cfgb, InsnCFG &cfgi/
     {
         BlockCFG_EdgeIterator ei, ei_end;
         for (boost::tie(ei, ei_end)=edges(cfgb); ei!=ei_end; ++ei) {
-            InsnCFG_Vertex src_leave_vertex = vertex_translation.getOne(source(*ei, cfgb)).second;
-            InsnCFG_Vertex dst_enter_vertex = vertex_translation.getOne(target(*ei, cfgb)).first;
+            InsnCFG_Vertex src_leave_vertex = vertex_translation.get_one(source(*ei, cfgb)).second;
+            InsnCFG_Vertex dst_enter_vertex = vertex_translation.get_one(target(*ei, cfgb)).first;
             assert(src_leave_vertex!=boost::graph_traits<InsnCFG>::null_vertex());
             assert(dst_enter_vertex!=boost::graph_traits<InsnCFG>::null_vertex());
             add_edge(src_leave_vertex, dst_enter_vertex, cfgi);
@@ -827,8 +827,8 @@ BinaryAnalysis::ControlFlow::fixup_fcall_fret(InsnCFG &cfg, bool preserve_call_f
             : insn_to_vertex(insn_to_vertex), imap(imap) {}
         CFG_Vertex operator()(SgAsmInstruction *insn) {
             SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn, true);
-            SgAsmInstruction *entry_insn = imap.getOne(func->get_entry_va());
-            CFG_Vertex entry_vertex = insn_to_vertex.getOne(entry_insn);
+            SgAsmInstruction *entry_insn = imap.get_one(func->get_entry_va());
+            CFG_Vertex entry_vertex = insn_to_vertex.get_one(entry_insn);
             return entry_vertex;
         }
     } function_entry_vertex(insn_to_vertex, insns);
@@ -864,8 +864,8 @@ BinaryAnalysis::ControlFlow::fixup_fcall_fret(InsnCFG &cfg, bool preserve_call_f
                         if (caller_block->is_function_call(target_va/*out*/, returnee_va/*out*/)) {
                             // This is a true call, so we need to add a return edge from the return instruction (the
                             // "returner") to what is probably the fall-through address of the call site (the returnee).
-                            SgAsmInstruction *returnee_insn = insns.getOrElse(returnee_va, NULL);
-                            CFG_Vertex returnee_vertex = insn_to_vertex.getOrElse(returnee_insn, NO_VERTEX);
+                            SgAsmInstruction *returnee_insn = insns.get_value_or(returnee_va, NULL);
+                            CFG_Vertex returnee_vertex = insn_to_vertex.get_value_or(returnee_insn, NO_VERTEX);
                             if (returnee_vertex!=NO_VERTEX) {
                                 edges_to_insert.push_back(CFG_VertexPair(returner_vertex, returnee_vertex));
                                 edges_to_erase.push_back(CFG_VertexPair(caller_vertex, returnee_vertex));
