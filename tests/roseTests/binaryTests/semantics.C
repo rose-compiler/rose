@@ -332,18 +332,26 @@ analyze_interp(SgAsmInterpretation *interp)
         typedef BaseSemantics::DispatcherPtr MyDispatcher;
         BaseSemantics::RiscOperatorsPtr operators = make_ops();
 #ifdef TRACE
-        operators = TraceSemantics::RiscOperators::instance(operators);
-        TraceSemantics::RiscOperators::promote(operators)->set_stream(stdout);
-#endif
+        TraceSemantics::RiscOperatorsPtr trace = TraceSemantics::RiscOperators::instance(operators);
+        trace->set_stream(stdout);
+        MyDispatcher dispatcher = DispatcherX86::instance(trace);
+#else
         MyDispatcher dispatcher = DispatcherX86::instance(operators);
+#endif
         operators->set_solver(make_solver());
 #else   // OLD_API
         typedef X86InstructionSemantics<MyPolicy, MyValueType> MyDispatcher;
         MyPolicy operators;
         MyDispatcher dispatcher(operators);
 #   if SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
-            operators.set_solver(make_solver());
+        operators.set_solver(make_solver());
 #   endif
+#endif
+
+#if SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN && SEMANTIC_API == NEW_API && defined(TRACE)
+        // Only request the orig_esp if we're going to use it later because it causes an esp value to be instantiated
+        // in the state, which is printed in the output, and thus changes the answer.
+        BaseSemantics::SValuePtr orig_esp = operators->readRegister(*regdict->lookup("esp"));
 #endif
 
         /* Perform semantic analysis for each instruction in this block. The block ends when we no longer know the value of
@@ -351,7 +359,7 @@ analyze_interp(SgAsmInterpretation *interp)
          * been processed. */
         while (1) {
             /* Analyze current instruction */
-                std::cout <<unparseInstructionWithAddress(insn) <<"\n";
+            std::cout <<unparseInstructionWithAddress(insn) <<"\n";
 #if SEMANTIC_API == NEW_API
             try {
                 dispatcher->processInstruction(insn);
@@ -415,6 +423,17 @@ analyze_interp(SgAsmInterpretation *interp)
             insn = si->second;
             insns.erase(si);
         }
+
+        // Test substitution on the symbolic state.
+#if SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN && SEMANTIC_API == NEW_API && defined(TRACE)
+        SymbolicSemantics::SValuePtr from = SymbolicSemantics::SValue::promote(orig_esp);
+        BaseSemantics::SValuePtr newvar = operators->undefined_(32);
+        newvar->set_comment("frame_pointer");
+        SymbolicSemantics::SValuePtr to = SymbolicSemantics::SValue::promote(operators->add(newvar, operators->number_(32, 4)));
+        std::cout <<"Substituting from " <<*from <<" to " <<*to <<"\n";
+        SymbolicSemantics::RiscOperators::promote(operators)->substitute(from, to);
+        std::cout <<"Substituted state:\n" <<*operators;
+#endif
     }
 }
 
