@@ -1258,17 +1258,17 @@ public:
     virtual RiscOperatorsPtr create(const StatePtr &state, SMTSolver *solver=NULL) const = 0;
 
     /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
-    SValuePtr get_protoval() const { return protoval; }
+    virtual SValuePtr get_protoval() const { return protoval; }
 
     /** Sets the satisfiability modulo theory (SMT) solver to use for certain operations.  An SMT solver is optional and not
      *  all semantic domains will make use of a solver.  Domains that use a solver will fall back to naive implementations when
      *  a solver is not available (for instance, equality of two values might be checked by looking at whether the values are
      *  identical).  */
-    void set_solver(SMTSolver *solver) { this->solver = solver; }
+    virtual void set_solver(SMTSolver *solver) { this->solver = solver; }
 
     /** Returns the solver that is currently being used.  A null return value means that no SMT solver is being used and that
      *  certain operations are falling back to naive implementations. */
-    SMTSolver *get_solver() const { return solver; }
+    virtual SMTSolver *get_solver() const { return solver; }
 
     /** Access the state upon which the RISC operations operate. The state need not be set until the first instruction is
      *  executed (and even then, some RISC operations don't need any machine state (typically, only register and memory read
@@ -1276,14 +1276,14 @@ public:
      *  state has no effect on this object's prototypical value which was initialized by the constructor; new states should
      *  have a prototyipcal value of the same dynamic type.
      * @{ */
-    StatePtr get_state() { return state; }
-    void set_state(const StatePtr &s) { state = s; }
+    virtual StatePtr get_state() { return state; }
+    virtual void set_state(const StatePtr &s) { state = s; }
     /** @} */
 
     /** A name used for debugging.
      * @{ */
-    const std::string& get_name() const { return name; }
-    void set_name(const std::string &s) { name = s; }
+    virtual const std::string& get_name() const { return name; }
+    virtual void set_name(const std::string &s) { name = s; }
     /** @} */
 
     /** Print multi-line output for this object. */

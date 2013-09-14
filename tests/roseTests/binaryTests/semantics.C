@@ -60,6 +60,10 @@
 
 const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 
+#ifdef TRACE
+#include "TraceSemantics2.h"
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if SEMANTIC_DOMAIN == NULL_DOMAIN
 
@@ -101,7 +105,9 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 #   include "SymbolicSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         SymbolicSemantics::RiscOperatorsPtr retval = SymbolicSemantics::RiscOperators::instance(regdict);
+#ifndef TRACE // usedef AND tracing is a little much for the eyes
         retval->set_compute_usedef();
+#endif
         return retval;
     }
 #endif
@@ -325,6 +331,10 @@ analyze_interp(SgAsmInterpretation *interp)
 #if SEMANTIC_API == NEW_API
         typedef BaseSemantics::DispatcherPtr MyDispatcher;
         BaseSemantics::RiscOperatorsPtr operators = make_ops();
+#ifdef TRACE
+        operators = TraceSemantics::RiscOperators::instance(operators);
+        TraceSemantics::RiscOperators::promote(operators)->set_stream(stdout);
+#endif
         MyDispatcher dispatcher = DispatcherX86::instance(operators);
         operators->set_solver(make_solver());
 #else   // OLD_API
