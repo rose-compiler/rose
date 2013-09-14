@@ -577,6 +577,15 @@ public:
     /** Print a value to a stream. The value will normally occupy a single line and not contain leading space or line
      * termination. */
     virtual void print(std::ostream &output, PrintHelper *helper=NULL) const = 0;
+
+    /** Some subclasses support the ability to add comments to values. We define no-op versions of these methods here
+     *  because it makes things easier.  The base class tries to be as small as possible by not storing comments at
+     *  all. Comments should not affect any computation (comparisons, hash values, etc), and therefore are allowed to be
+     *  modified even for const objects.
+     * @{ */
+    virtual std::string get_comment() const { return ""; }
+    virtual void set_comment(const std::string&) const {} // const is intended; cf. doxygen comment
+    /** @} */
 };
 
 

@@ -79,8 +79,13 @@ typedef std::vector<TreeNodePtr> TreeNodes;
 /** Passed to print methods to control some finer aspects of printing. */
 struct PrintHelper {
     typedef Map<uint64_t, uint64_t> RenameMap;
-    PrintHelper(): show_comments(true), do_rename(false), add_renames(true) {}
-    bool show_comments;                         /**< Show node comments when printing? */
+    enum ShowComments {
+        CMT_SILENT,                             /**< Do not show comments. */
+        CMT_AFTER,                              /**< Show comments after the node. */
+        CMT_INSTEAD,                            /**< Like CMT_AFTER, but show comments instead of variable names. */
+    };
+    PrintHelper(): show_comments(CMT_INSTEAD), do_rename(false), add_renames(true) {}
+    ShowComments show_comments;                         /**< Show node comments when printing? */
     bool do_rename;                             /**< Use the @p renames map to rename variables to shorter names? */
     bool add_renames;                           /**< Add additional entries to the @p renames as variables are encountered? */
     RenameMap renames;                          /**< Map for renaming variables to use smaller integers. */
@@ -103,7 +108,7 @@ public:
 class TreeNode: public boost::enable_shared_from_this<TreeNode> {
 protected:
     size_t nbits;               /**< Number of significant bits. Constant over the life of the node. */
-    std::string comment;        /**< Optional comment. */
+    mutable std::string comment; /**< Optional comment. Only for debugging; not significant for any calculation. */
     mutable uint64_t hashval;   /**< Optional hash used as a quick way to indicate that two expressions are different. */
 public:
     TreeNode(size_t nbits, std::string comment=""): nbits(nbits), comment(comment), hashval(0) { assert(nbits>0); }
@@ -136,10 +141,12 @@ public:
      *  significant bits returned by get_nbits(), are guaranteed to be zero. */
     virtual uint64_t get_value() const = 0;
 
-    /** Accessors for the comment string associated with a node.
+    /** Accessors for the comment string associated with a node. Comments can be changed after a node has been created since
+     *  the comment is not intended to be used for anything but annotation and/or debugging. I.e., comments are not
+     *  considered significant for comparisons, computing hash values, etc.
      * @{ */
     const std::string& get_comment() const { return comment; }
-    void set_comment(const std::string &s) { comment=s; }
+    void set_comment(const std::string &s) const { comment=s; }
     /** @} */
 
     /** Returns the number of significant bits.  An expression with a known value is guaranteed to have all higher-order bits

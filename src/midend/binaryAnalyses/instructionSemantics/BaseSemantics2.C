@@ -129,6 +129,9 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
     if (ri==registers.end()) {
         size_t nbits = reg.get_nbits();
         SValuePtr newval = init_to_zero ? get_protoval()->number_(nbits, 0) : get_protoval()->undefined_(nbits);
+        std::string regname = regdict->lookup(reg);
+        if (!regname.empty())
+            newval->set_comment(regname + "_0");
         registers[reg].push_back(RegPair(reg, newval));
         return newval;
     }

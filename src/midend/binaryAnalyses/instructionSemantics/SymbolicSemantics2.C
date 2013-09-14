@@ -17,11 +17,6 @@ operator<<(std::ostream &o, const SValue &e)
  *                                      SValue
  *******************************************************************************************************************************/
 
-class PrintHelper: public BaseSemantics::PrintHelper {
-public:
-        InsnSemanticsExpr::PrintHelper expr_phelp;
-};
-
 uint64_t
 SValue::get_number() const
 {
@@ -76,12 +71,24 @@ SValue::must_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) co
     return get_expression()->must_equal(other->get_expression(), solver);
 }
 
+std::string
+SValue::get_comment() const
+{
+    return get_expression()->get_comment();
+}
+
+void
+SValue::set_comment(const std::string &s) const
+{
+    get_expression()->set_comment(s);
+}
+
 void
 SValue::print(std::ostream &o, BaseSemantics::PrintHelper *helper_) const
 {
     PrintHelper *helper = dynamic_cast<PrintHelper*>(helper_);
     InsnSemanticsExpr::PrintHelper dflt_ph;
-    InsnSemanticsExpr::PrintHelper &ph = helper ? helper->expr_phelp : dflt_ph;
+    InsnSemanticsExpr::PrintHelper &ph = helper ? helper->expr_phelper : dflt_ph;
 
     if (defs.empty()) {
         expr->print(o, ph);

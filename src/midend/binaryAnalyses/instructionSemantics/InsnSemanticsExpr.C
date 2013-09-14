@@ -55,7 +55,7 @@ TreeNode::hash() const
         // from a string.  But this method is quick and easy. [Robb P. Matzke 2013-09-10]
         std::ostringstream ss;
         PrintHelper phelp;
-        phelp.show_comments = false;
+        phelp.show_comments = PrintHelper::CMT_SILENT;
         print(ss, phelp);
         hashval = Combinatorics::fnv1a64_digest(ss.str());
     }
@@ -77,7 +77,7 @@ void
 InternalNode::print(std::ostream &o, PrintHelper &phelp) const
 {
     o <<"(" <<to_str(op) <<"[" <<nbits;
-    if (phelp.show_comments && !comment.empty())
+    if (phelp.show_comments!=PrintHelper::CMT_SILENT && !comment.empty())
         o <<"," <<comment;
     o <<"]";
     for (size_t i=0; i<children.size(); i++) {
@@ -1253,6 +1253,7 @@ LeafNode::get_name() const
 void
 LeafNode::print(std::ostream &o, PrintHelper &phelp) const
 {
+    bool showed_comment = false;
     if (is_known()) {
         if ((32==nbits || 64==nbits) && 0!=(ival & 0xffff0000) && 0xffff0000!=(ival & 0xffff0000)) {
             // probably an address, so print in hexadecimal.  The comparison with 0 is for positive values, and the comparison
@@ -1264,6 +1265,9 @@ LeafNode::print(std::ostream &o, PrintHelper &phelp) const
         } else {
             o <<ival;
         }
+    } else if (phelp.show_comments==PrintHelper::CMT_INSTEAD && !comment.empty()) {
+        o <<comment;
+        showed_comment = true;
     } else {
         uint64_t renamed = name;
         if (phelp.do_rename) {
@@ -1289,7 +1293,7 @@ LeafNode::print(std::ostream &o, PrintHelper &phelp) const
         o <<renamed;
     }
     o <<"[" <<nbits;
-    if (phelp.show_comments && !comment.empty())
+    if (!showed_comment && phelp.show_comments!=PrintHelper::CMT_SILENT && !comment.empty())
         o <<"," <<comment;
     o <<"]";
 }
