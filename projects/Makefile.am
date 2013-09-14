@@ -50,6 +50,7 @@ SUBDIRS = \
 	mint \
 	vectorization \
 	extractMPISkeleton \
+	LineDeleter \
 	$(OPTIONAL_PROJECTS)
 
 # DQ (9/2/2013): This fails to compile (at least with some versions of Boost).

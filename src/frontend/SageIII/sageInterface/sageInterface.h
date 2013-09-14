@@ -1043,6 +1043,9 @@ bool loopInterchange(SgForStatement* loop, size_t depth, size_t lexicoOrder);
 //! Tile the n-level (starting from 1) loop of a perfectly nested loop nest using tiling size s
 bool loopTiling(SgForStatement* loopNest, size_t targetLevel, size_t tileSize);
 
+//Winnie Loop Collapsing
+SgExprListExp * loopCollapsing(SgForStatement* target_loop, size_t collapsing_factor);
+
 //@}
 
 //------------------------------------------------------------------------
@@ -1767,7 +1770,7 @@ void updateDefiningNondefiningLinks(SgFunctionDeclaration* func, SgScopeStatemen
 
 //! Collect all read and write references within stmt, which can be a function, a scope statement, or a single statement. Note that a reference can be both read and written, like i++
 bool
-collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& readRefs, std::vector<SgNode*>& writeRefs);
+collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& readRefs, std::vector<SgNode*>& writeRefs, bool useCachedDefUse=false);
 
 //!Collect unique variables which are read or written within a statement. Note that a variable can be both read and written. The statement can be either of a function, a scope, or a single line statement.
 bool collectReadWriteVariables(SgStatement* stmt, std::set<SgInitializedName*>& readVars, std::set<SgInitializedName*>& writeVars);

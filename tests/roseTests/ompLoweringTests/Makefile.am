@@ -21,33 +21,34 @@ OMNI_PATH = @omni_omp_runtime_support_path@
 C_TESTCODES_REQUIRED_TO_COMPILE = \
 	alignment.c \
 	dijkstra_open_mp.c \
-        dynamicChunk.c \
+	dynamicChunk.c \
 	endif.c \
 	endif3.c \
-	firstPrivateArray.c \
 	full_verify.c \
 	init.c \
 	lastprivateOrphaned.c \
 	linebreak.c \
-        master.c \
+	master.c \
 	md_open_mp.c \
-        nowait.c \
-        ompfor5.c \
-        ompfor6.c \
+	nowait.c \
+	ompfor5.c \
+	ompfor6.c \
 	private-duplicate.c \
 	single2.c \
 	sizeof.c \
-        staticChunk.c \
-        task_orphaned.c \
-        task_underIf.c \
-        task_wait.c \
-        task_wait2.c \
+	staticChunk.c \
+	task_orphaned.c \
+	task_underIf.c \
+	task_wait.c \
+	task_wait2.c \
+	task_array2.c \
 	task_untied4.c \
 	twoRegions.c
 
+#        axpy_ompacc2.c 
 OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
+        collapse_2.c\
         axpy_ompacc.c \
-        axpy_ompacc2.c \
         matrixmultiply-ompacc.c \
         jacobi-ompacc.c \
         jacobi-ompacc-opt1.c
@@ -56,70 +57,74 @@ OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
 # Put test codes which can run (with main() ) here
 # They will be compiled and executed when the gomp library path is set
 C_TESTCODES_REQUIRED_TO_RUN = \
-        3loops.c \
+	3loops.c \
 	array_init.c \
-        atomic.c \
-        barrier.c \
-        critical.c \
-        critical_orphaned.c \
-        empty.c \
-        falsesharing.c \
-        firstlastprivate.c \
-        firstprivate.c \
-        flush.c \
-        get_max_threads.c \
-        hello-1.c \
-        hello-2.c \
-        hello-ordered.c \
-        hello.c \
-        jacobi.c \
-        lastprivate.c \
-        lastprivate0.c \
-        lockarray.c \
+	array_init_2.c \
+	atomic.c \
+	barrier.c \
+	critical.c \
+	critical_orphaned.c \
+	empty.c \
+	falsesharing.c \
+	firstlastprivate.c \
+	firstprivate.c \
+	firstPrivateArray.c \
+	firstPrivateArray_2.c \
+	flush.c \
+	get_max_threads.c \
+	hello-1.c \
+	hello-2.c \
+	hello-ordered.c \
+	hello.c \
+	jacobi.c \
+	lastprivate.c \
+	lastprivate0.c \
+	lockarray.c \
 	loop1.c \
-        nestedpar.c \
-        nestedpar1.c \
-        masterSingle.c \
+	nestedpar.c \
+	nestedpar1.c \
+	masterSingle.c \
 	multiple_return.c \
-        ordered.c \
-        ordered2.c \
-        omp1.c \
-        ompfor.c \
-        ompfor2.c \
-        ompfor3.c \
-        ompfor4.c \
+	ordered.c \
+	ordered2.c \
+	omp1.c \
+	ompfor.c \
+	ompfor2.c \
+	ompfor3.c \
+	ompfor4.c \
 	ompfor-default.c \
 	ompfor-decremental.c \
 	ompfor-static.c \
 	ompGetNumThreads.c \
-        orphaned-directives.c \
-        parallel.c \
+	orphaned-directives.c \
+	parallel.c \
 	parallel-if.c \
 	parallel-if-numthreads.c \
 	parallel-numthreads.c \
-        parallel-reduction.c \
-        parallel-reduction2.c \
-        parallelsections.c \
-        parallelfor.c \
-        parallelfor2.c \
+	parallel-reduction.c \
+	parallel-reduction2.c \
+	parallelsections.c \
+	parallelfor.c \
+	parallelfor2.c \
 	prettyfunc.c \
-        private.c \
-        privatej.c \
-        reduction.c \
-        reduction2.c \
+	private.c \
+	privatej.c \
+	reduction.c \
+	reduction2.c \
 	reduction-classic.c \
 	rice1.c \
-        section.c \
-        section1.c \
-        set_num_threads.c \
-        single.c \
-        subteam.c \
-        subteam2.c \
-        spmd1.c \
-        task_largenumber.c \
-        task_untied.c \
-        task_untied2.c \
-        task_untied3.c
+	section.c \
+	section1.c \
+	set_num_threads.c \
+	single.c \
+	subteam.c \
+	subteam2.c \
+	spmd1.c \
+	task_largenumber.c \
+	task_outlining.c \
+	task_untied.c \
+	task_untied2.c \
+	task_untied3.c
 
 # DQ (9/27/2009): Conditionally compile these files (fail in OSX due to lack of OSX
 # support for thread local storage). Liao knows more about the details of these tests.
@@ -133,7 +138,8 @@ endif
 
 # C++ test codes which can only be compiled
 CXX_TESTCODES_REQUIRED_TO_COMPILE = \
-	memberFunction.cpp 
+	memberFunction.cpp \
+	memberFunction2.cpp
 
 # C++ test codes which can be compiled and linked to final executables
 CXX_TESTCODES_REQUIRED_TO_RUN =  \
@@ -169,20 +175,20 @@ CXX_TEST_OBJECT_REQUIRED_TO_RUN = ${CXX_TESTCODES_REQUIRED_TO_RUN:.cpp=.o}
 # TODO: npb, validation suite, developer tests, epcc
 # full_verify.c complex #if #endif
 TESTCODE_CURRENTLY_FAILING = \
-        collapse.c \
-        copyin.c \
-        copyprivate.c \
-        copyprivate2.c \
-        copyprivate3.c \
-        critical_dead.c \
+	collapse.c \
+	copyin.c \
+	copyprivate.c \
+	copyprivate2.c \
+	copyprivate3.c \
+	critical_dead.c \
 	endif2.c \
-        expressions.c \
-        macroCalls.c \
-        recursive.c \
+	expressions.c \
+	macroCalls.c \
+	recursive.c \
 	shared.c \
-        single_copyprivate.c \
-        threadProcessor.c \
-        variables.c
+	single_copyprivate.c \
+	threadProcessor.c \
+	variables.c
 
 # we reuse the OpenMP sources files from the OpenMP compile test directory
 TEST_DIR = $(top_srcdir)/tests/CompileTests/OpenMP_tests
