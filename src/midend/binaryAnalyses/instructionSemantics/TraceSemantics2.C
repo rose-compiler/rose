@@ -52,19 +52,12 @@ RiscOperators::check_equal_widths(const BaseSemantics::SValuePtr &a, const BaseS
         mesg.mesg("value width violation; see documentation for this RISC operator!");
 }
 
-void
-RiscOperators::check_equal_widths(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
-                                  const BaseSemantics::SValuePtr &c)
-{
-    if (a!=NULL && b!=NULL && c!=NULL && (a->get_width()!=b->get_width() || a->get_width()!=c->get_width()))
-        mesg.mesg("value width violation; see documentation for this RISC operator!");
-}
-
 const BaseSemantics::SValuePtr &
-RiscOperators::check_width(const BaseSemantics::SValuePtr &a, size_t nbits)
+RiscOperators::check_width(const BaseSemantics::SValuePtr &a, size_t nbits, const std::string &what)
 {
     if (a==NULL || a->get_width()!=nbits)
-        mesg.mesg("expected result to be %zu bits wide; see documentation for this RISC operator!", nbits);
+        mesg.mesg("expected %s to be %zu bits wide; see documentation for this RISC operator!",
+                  (what.empty()?std::string("result"):what).c_str(), nbits);
     return a;
 }
 
@@ -186,7 +179,7 @@ RiscOperators::after(const BaseSemantics::SValuePtr &retval)
 const BaseSemantics::SValuePtr &
 RiscOperators::after(const BaseSemantics::SValuePtr &retval, const BaseSemantics::SValuePtr &ret2)
 {
-    mesg.more(" = %s (also %s)", toString(retval).c_str(), toString(ret2).c_str());
+    mesg.more(" = %s\nalso returns: %s", toString(retval).c_str(), toString(ret2).c_str());
     mesg.multipart_end();
     return retval;
 }
@@ -719,7 +712,8 @@ RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a, const BaseSeman
 {
     before("addWithCarries", a, b, c);
     try {
-        check_equal_widths(a, b, c);
+        check_equal_widths(a, b);
+        check_width(c, 1);
         BaseSemantics::SValuePtr retval = subdomain->addWithCarries(a, b, c, d);
         after(retval, d);
         check_width(retval, a->get_width());

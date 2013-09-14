@@ -177,7 +177,8 @@ public:
 protected:
     std::string toString(const BaseSemantics::SValuePtr&);
     void check_equal_widths(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
-    void check_equal_widths(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
+    const BaseSemantics::SValuePtr &check_width(const BaseSemantics::SValuePtr &a, size_t nbits,
+                                                const std::string &what="result");
 
     void before(const std::string&);
     void before(const std::string&, const RegisterDescriptor&);
@@ -196,7 +197,6 @@ protected:
     void before(const std::string&, const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
                 const BaseSemantics::SValuePtr&);
 
-    const BaseSemantics::SValuePtr &check_width(const BaseSemantics::SValuePtr &a, size_t nbits);
     void after();
     const BaseSemantics::SValuePtr& after(const BaseSemantics::SValuePtr&);
     const BaseSemantics::SValuePtr& after(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
