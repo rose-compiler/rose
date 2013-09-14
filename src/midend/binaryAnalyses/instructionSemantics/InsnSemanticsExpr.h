@@ -131,6 +131,11 @@ public:
      *  operation, have the same number of children, and those children are all pairwise equivalent. */
     virtual bool equivalent_to(const TreeNodePtr& other) const = 0;
 
+    /** Substitute one value for another. Finds all occurrances of @p from in this expression and replace them with @p to. If a
+     * substitution occurs, then a new expression is returned. The matching of @p from to sub-parts of this expression uses
+     * structural equivalence, the equivalent_to() predicate. The @p from and @p to expressions must have the same width. */
+    virtual TreeNodePtr substitute(const TreeNodePtr &from, const TreeNodePtr &to) const = 0;
+
     /** Returns true if the expression is a known value.
      *
      *  FIXME: The current implementation returns true only when @p this node is leaf node with a known value. Since
@@ -378,6 +383,7 @@ public:
     virtual bool must_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool may_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool equivalent_to(const TreeNodePtr &other) const;
+    virtual TreeNodePtr substitute(const TreeNodePtr &from, const TreeNodePtr &to) const;
     virtual bool is_known() const {
         return false; /*if it's known, then it would have been folded to a leaf*/
     }
@@ -472,6 +478,7 @@ public:
     virtual bool must_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool may_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool equivalent_to(const TreeNodePtr &other) const;
+    virtual TreeNodePtr substitute(const TreeNodePtr &from, const TreeNodePtr &to) const;
     virtual void depth_first_visit(Visitor*) const;
 
     /** Is the node a bitvector variable? */

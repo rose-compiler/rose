@@ -260,6 +260,14 @@ public:
         return instance(state, solver);
     }
 
+    /** Run-time promotion of a base RiscOperators pointer to partial symbolic operators. This is a checked conversion--it will
+     *  fail if @p from does not point to a PartialSymbolicSemantics::RiscOperators object. */
+    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
+        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+        assert(retval!=NULL);
+        return retval;
+    }
+    
 public:
     /** A memory map can be used to provide default values for memory cells that are read before being written. Usually one
      *  would initialize the memory map to contain all the non-writable addresses.  The byte-order property of the memory

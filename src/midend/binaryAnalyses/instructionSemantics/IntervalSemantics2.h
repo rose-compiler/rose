@@ -303,6 +303,14 @@ public:
         return instance(state, solver);
     }
 
+    /** Run-time promotion of a base RiscOperators pointer to interval operators. This is a checked conversion--it
+     *  will fail if @p from does not point to a IntervalSemantics::RiscOperators object. */
+    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
+        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+        assert(retval!=NULL);
+        return retval;
+    }
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first introduced at this level of the class hierarchy.
 public:

@@ -211,6 +211,12 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Additional methods first declared in this class...
 public:
+    /** Substitute one value for another throughout a value. For example, if this value is "(add esp_0, -12)" and we substitute
+     *  "esp_0" with "(add stack_frame 4)", this method would return "(add stack_frame -8)".  It is also possible for the @p
+     *  from value to be a more complicated expression. This method attempts to match @p from at all nodes of this expression
+     *  and substitutes at eac node that matches.  The @p from and @p to must have the same width. */
+    virtual SValuePtr substitute(const SValuePtr &from, const SValuePtr &to) const;
+
     /** Adds instructions to the list of defining instructions.  Adds the specified instruction and defining sets into this
      *  value and returns a reference to this value. See also add_defining_instructions().
      *  @{ */
@@ -489,6 +495,14 @@ public:
         return instance(state, solver);
     }
 
+    /** Run-time promotion of a base RiscOperators pointer to symbolic operators. This is a checked conversion--it
+     *  will fail if @p from does not point to a SymbolicSemantics::RiscOperators object. */
+    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
+        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+        assert(retval!=NULL);
+        return retval;
+    }
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Inherited methods for constructing values.
 public:
@@ -541,6 +555,72 @@ public:
     void clear_compute_usedef() { set_compute_usedef(false); }
     bool get_compute_usedef() const { return compute_usedef; }
     /** @} */
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Methods first defined at this level of the class hierarchy
+public:
+    /** Substitute all occurrences of @p from with @p to in the current state.  For instance, in functions that use a frame
+     *  pointer set up with "push ebp; mov ebp, esp", it is convenient to see stack offsets in terms of the function's stack
+     *  frame rather than in terms of the original esp value.  This convenience comes from the fact that compilers tend to
+     *  emit stack accessing code where the addresses are offsets from the function's stack frame.
+     *
+     *  For instance, after the "push ebp; mov ebp, esp" prologue, the machine state is:
+     * @code
+     *  registers:
+     *    esp    = (add[32] esp_0[32] -4[32])
+     *    ebp    = (add[32] esp_0[32] -4[32])
+     *    eip    = 0x080480a3[32]
+     *  memory:
+     *    addr=(add[32] esp_0[32] -1[32]) value=(extract[8] 24[32] 32[32] ebp_0[32])
+     *    addr=(add[32] esp_0[32] -2[32]) value=(extract[8] 16[32] 24[32] ebp_0[32])
+     *    addr=(add[32] esp_0[32] -3[32]) value=(extract[8] 8[32] 16[32] ebp_0[32])
+     *    addr=(add[32] esp_0[32] -4[32]) value=(extract[8] 0[32] 8[32] ebp_0[32])
+     * @endcode
+     *
+     *  If we create a new variable called "stack_frame" where
+     *
+     * @code
+     *  stack_frame = esp_0 - 4
+     * @endcode
+     *
+     *  Solving for esp_0:
+     *
+     * @code
+     *  esp_0 = stack_frame + 4
+     * @endcode
+     *
+     * Then replacing the lhs (esp_0) with the rhs (stack_frame + 4) in the machine state causes the expressions to be
+     * rewritten in terms of stack_frame instead of esp_0:
+     * 
+     * @code
+     *  registers:
+     *    esp    = stack_frame[32]
+     *    ebp    = stack_frame[32]
+     *    eip    = 0x080480a3[32]
+     *  memory:
+     *    addr=(add[32] stack_frame[32] 3[32]) value=(extract[8] 24[32] 32[32] ebp_0[32])
+     *    addr=(add[32] stack_frame[32] 2[32]) value=(extract[8] 16[32] 24[32] ebp_0[32])
+     *    addr=(add[32] stack_frame[32] 1[32]) value=(extract[8] 8[32] 16[32] ebp_0[32])
+     *    addr=stack_frame[32] value=(extract[8] 0[32] 8[32] ebp_0[32])
+     * @endcode
+     *
+     * Here's the source code for that substitution:
+     *
+     * @code
+     *  SymbolicSemantics::RiscOperatorsPtr operators = ...;
+     *  SymbolicSemantics::SValuePtr original_esp = ...; //probably read from the initial state
+     *  BaseSemantics::SValuePtr stack_frame = operators->undefined_(32);
+     *  stack_frame->set_comment("stack_frame"); //just so output looks nice
+     *  SymbolicSemantics::SValuePtr rhs = SymbolicSemantics::SValue::promote(
+     *      operators->add(stack_frame, operators->number_(32, 4))
+     *  );
+     *
+     *  std::cerr <<"Prior to state:\n" <<*operators;
+     *  operators->substitute(original_esp, rhs);
+     *  std::cerr <<"Substituted state:\n" <<*operators;
+     * @endcode
+     */
+    virtual void substitute(const SValuePtr &from, const SValuePtr &to);
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override methods from base class.  These are the RISC operators that are invoked by a Dispatcher.

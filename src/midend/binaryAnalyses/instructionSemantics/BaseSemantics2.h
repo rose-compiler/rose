@@ -668,6 +668,10 @@ public:
     virtual void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const = 0;
 };
 
+/** Smart pointer to a RegisterStateGeneric object.  RegisterStateGeneric objects are reference counted and should not be
+ *  explicitly deleted. */
+typedef boost::shared_ptr<class RegisterStateGeneric> RegisterStateGenericPtr;
+
 /** A RegisterState for any architecture.
  *
  *  This state stores a list of non-overlapping registers and their values, typically only for the registers that have been
@@ -717,12 +721,20 @@ public:
      *
      *  The register dictionary, @p regdict, describes the registers that can be stored by this register state, and should be
      *  compatible with the register dictionary used for other parts of binary analysis. */
-    static RegisterStatePtr instance(const SValuePtr &protoval, const RegisterDictionary *regdict) {
-        return RegisterStatePtr(new RegisterStateGeneric(protoval, regdict));
+    static RegisterStateGenericPtr instance(const SValuePtr &protoval, const RegisterDictionary *regdict) {
+        return RegisterStateGenericPtr(new RegisterStateGeneric(protoval, regdict));
     }
 
     virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const /*override*/;
     virtual RegisterStatePtr clone() const /*override*/;
+
+    /** Run-time promotion of a base register state pointer to a RegisterStateGeneric pointer. This is a checked conversion--it
+     *  will fail if @p from does not point to a RegisterStateGeneric object. */
+    static RegisterStateGenericPtr promote(const RegisterStatePtr &from) {
+        RegisterStateGenericPtr retval = boost::dynamic_pointer_cast<RegisterStateGeneric>(from);
+        assert(retval!=NULL);
+        return retval;
+    }
 
     virtual void clear() /*override*/;
     virtual void zero() /*override*/;
@@ -730,10 +742,60 @@ public:
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) /*override*/;
     virtual void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const /*override*/;
 
+    /** Returns the list of all registers and their values.  The returned registers are guaranteed to be non-overlapping,
+     * although they might not correspond to actual named machine registers.  For instance, if a 32-bit value was written to
+     * the x86 EFLAGS register then the return value will contain a register/value pair for EFLAGS but no pairs for individual
+     * flags.  If one subsequently writes a 1-bit value to the ZF flag (bit 6 of EFLAGS) then the return value will contain a
+     * register/value pair for ZF, and also a pair for bits 0-5, and a pair for bits 7-31, neither of which correspond to
+     * actual register names in x86 (there is no name for bits 0-5 as a whole). The readRegister() and writeRegister() methods
+     * can be used to re-cast the various pairs into other groupings; get_stored_registers() is a lower-level interface. */
+    RegPairs get_stored_registers() const;
+
+    /** Functors for traversing register values in a register state. */
+    class Visitor {
+    public:
+        virtual ~Visitor() {}
+        virtual SValuePtr operator()(const RegisterDescriptor&, const SValuePtr&) = 0;
+    };
+
+    /** Traverse register/value pairs.  Traverses all the (non-overlapping) registers and their values, calling the specified
+     *  functor for each register/value pair. If the functor returns a new SValue then the return value becomes the new value
+     *  for that register.  The new value must have the same width as the register.
+     *
+     *  For example, the following code performs a symbolic substitution across all the registers:
+     *
+     *  @code
+     *   struct Substitution: BaseSemantics::RegisterStateGeneric::Visitor {
+     *       SymbolicSemantics::SValuePtr from, to;
+     *
+     *       Substitution(const SymbolicSemantics::SValuePtr &from, const SymbolicSemantics::SValuePtr &to)
+     *           : from(from), to(to) {}
+     *
+     *       BaseSemantics::SValuePtr operator()(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &val_) {
+     *           SymbolicSemantics::SValuePtr val = SymbolicSemantics::SValue::promote(val_);
+     *           return val->substitute(from, to);
+     *       }
+     *   };
+     *
+     *   SymbolicSemantics::SValuePtr original_esp = ...;
+     *   SymbolicSemantics::SValuePtr fp = ...; // the frame pointer in terms of original_esp
+     *   Substitution subst(original_esp, fp);
+     *   RegisterStateGenericPtr regs = ...;
+     *   std::cerr <<*regs; // register values before substitution
+     *   regs->traverse(subst);
+     *   std::cerr <<*regs; // all original_esp have been replaced by fp
+     *  @endcode
+     */
+    void traverse(Visitor&);
+    
 protected:
     static void get_nonoverlapping_parts(const Extent &overlap, const RegPair &rp, RiscOperators *ops,
                                          RegPairs *pairs/*out*/);
 };
+
+/** Smart pointer to a RegisterStateX86 object.  RegisterStateX86 objects are reference counted and should not be
+ *  explicitly deleted. */
+typedef boost::shared_ptr<class RegisterStateX86> RegisterStateX86Ptr;
 
 /** The set of all registers and their values for a 32-bit x86 architecture.
  *
@@ -762,13 +824,21 @@ public:
     /** Static allocating constructor. The @p protoval argument must be a non-null pointer to a semantic value which will be
      *  used only to create additional instances of the value via its virtual constructors.  The prototypical value is normally
      *  of the same type for all parts of a semantic analysis: its state and operator classes. */
-    static RegisterStatePtr instance(const SValuePtr &protoval, const RegisterDictionary *regdict) {
-        return RegisterStatePtr(new RegisterStateX86(protoval, regdict));
+    static RegisterStateX86Ptr instance(const SValuePtr &protoval, const RegisterDictionary *regdict) {
+        return RegisterStateX86Ptr(new RegisterStateX86(protoval, regdict));
     }
 
     virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const /*override*/;
     virtual RegisterStatePtr clone() const /*override*/;
 
+    /** Run-time promotion of a base register state pointer to a RegisterStateX86 pointer. This is a checked conversion--it
+     *  will fail if @p from does not point to a RegisterStateX86 object. */
+    static RegisterStateX86Ptr promote(const RegisterStatePtr &from) {
+        RegisterStateX86Ptr retval = boost::dynamic_pointer_cast<RegisterStateX86>(from);
+        assert(retval!=NULL);
+        return retval;
+    }
+    
     virtual void clear() /*override*/;
     virtual void zero() /* override*/;
     virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) /*override*/;
@@ -1046,6 +1116,16 @@ public:
      *  specified address, then true is returned via @p short_circuited argument. */
     virtual CellList scan(const BaseSemantics::SValuePtr &address, size_t nbits, RiscOperators *ops,
                           bool &short_circuited/*out*/) const;
+
+    /** Visitor for traversing a cell list. */
+    class Visitor {
+    public:
+        virtual ~Visitor() {}
+        virtual void operator()(MemoryCellPtr&) = 0;
+    };
+
+    /** Visit each memory cell. */
+    void traverse(Visitor &visitor);
 
     /** Returns the list of all memory cells.
      * @{ */

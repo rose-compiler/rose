@@ -25,6 +25,14 @@ SValue::get_number() const
     return leaf->get_value();
 }
 
+SValuePtr
+SValue::substitute(const SValuePtr &from, const SValuePtr &to) const
+{
+    SValuePtr retval = SValue::promote(copy());
+    retval->set_expression(retval->get_expression()->substitute(from->get_expression(), to->get_expression()));
+    return retval;
+}
+
 size_t
 SValue::add_defining_instructions(const InsnSet &to_add)
 {
@@ -192,6 +200,36 @@ MemoryState::writeMemory(const BaseSemantics::SValuePtr &address, const BaseSema
 /*******************************************************************************************************************************
  *                                      RISC operators
  *******************************************************************************************************************************/
+
+void
+RiscOperators::substitute(const SValuePtr &from, const SValuePtr &to)
+{
+    BaseSemantics::StatePtr state = get_state();
+
+    // Substitute in registers
+    struct RegSubst: BaseSemantics::RegisterStateGeneric::Visitor {
+        SValuePtr from, to;
+        RegSubst(const SValuePtr &from, const SValuePtr &to): from(from), to(to) {}
+        virtual BaseSemantics::SValuePtr operator()(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &val_) {
+            SValuePtr val = SValue::promote(val_);
+            return val->substitute(from, to);
+        }
+    } regsubst(from, to);
+    BaseSemantics::RegisterStateGeneric::promote(state->get_register_state())->traverse(regsubst);
+
+    // Substitute in memory
+    struct MemSubst: BaseSemantics::MemoryCellList::Visitor {
+        SValuePtr from, to;
+        MemSubst(const SValuePtr &from, const SValuePtr &to): from(from), to(to) {}
+        virtual void operator()(BaseSemantics::MemoryCellPtr &cell) {
+            SValuePtr addr = SValue::promote(cell->get_address());
+            cell->set_address(addr->substitute(from, to));
+            SValuePtr val = SValue::promote(cell->get_value());
+            cell->set_value(val->substitute(from, to));
+        }
+    } memsubst(from, to);
+    MemoryState::promote(state->get_memory_state())->traverse(memsubst);
+}
 
 void
 RiscOperators::interrupt(int majr, int minr)

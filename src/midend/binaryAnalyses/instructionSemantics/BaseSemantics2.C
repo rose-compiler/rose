@@ -232,6 +232,29 @@ RegisterStateGeneric::writeRegister(const RegisterDescriptor &reg, const SValueP
     ri->second.push_back(RegPair(reg, value));
 }
 
+RegisterStateGeneric::RegPairs
+RegisterStateGeneric::get_stored_registers() const
+{
+    RegPairs retval;
+    for (Registers::const_iterator ri=registers.begin(); ri!=registers.end(); ++ri)
+        retval.insert(retval.end(), ri->second.begin(), ri->second.end());
+    return retval;
+}
+
+void
+RegisterStateGeneric::traverse(Visitor &visitor)
+{
+    for (Registers::iterator ri=registers.begin(); ri!=registers.end(); ++ri) {
+        for (RegPairs::iterator rpi=ri->second.begin(); rpi!=ri->second.end(); ++rpi) {
+            SValuePtr newval = (visitor)(rpi->desc, rpi->value);
+            if (newval!=NULL) {
+                assert(newval->get_width()==rpi->desc.get_nbits());
+                rpi->value = newval;
+            }
+        }
+    }
+}
+
 void
 RegisterStateGeneric::print(std::ostream &o, const std::string prefix, PrintHelper *ph) const
 {
@@ -648,6 +671,14 @@ MemoryCellList::scan(const BaseSemantics::SValuePtr &addr, size_t nbits, RiscOpe
     }
     return retval;
 }
+
+void
+MemoryCellList::traverse(Visitor &visitor)
+{
+    for (CellList::iterator ci=cells.begin(); ci!=cells.end(); ++ci)
+        (visitor)(*ci);
+}
+
 
 /*******************************************************************************************************************************
  *                                      RiscOperators

@@ -160,6 +160,29 @@ InternalNode::equivalent_to(const TreeNodePtr &other_) const
     return retval;
 }
 
+TreeNodePtr
+InternalNode::substitute(const TreeNodePtr &from, const TreeNodePtr &to) const
+{
+    assert(from!=NULL && to!=NULL && from->get_nbits()==to->get_nbits());
+    if (equivalent_to(from))
+        return to;
+    bool substituted = false;
+    TreeNodes newnodes;
+    for (size_t i=0; i<children.size(); ++i) {
+        if (children[i]->equivalent_to(from)) {
+            newnodes.push_back(to);
+            substituted = true;
+        } else {
+            newnodes.push_back(children[i]->substitute(from, to));
+            if (newnodes.back()!=children[i])
+                substituted = true;
+        }
+    }
+    if (!substituted)
+        return shared_from_this();
+    return InternalNode::create(get_nbits(), get_operator(), newnodes, get_comment());
+}
+
 void
 InternalNode::depth_first_visit(Visitor *v) const
 {
@@ -1353,6 +1376,15 @@ LeafNode::equivalent_to(const TreeNodePtr &other_) const
         }
     }
     return retval;
+}
+
+TreeNodePtr
+LeafNode::substitute(const TreeNodePtr &from, const TreeNodePtr &to) const
+{
+    assert(from!=NULL && to!=NULL && from->get_nbits()==to->get_nbits());
+    if (equivalent_to(from))
+        return to;
+    return shared_from_this();
 }
 
 void

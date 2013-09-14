@@ -125,13 +125,14 @@ public:
         return RiscOperatorsPtr(new RiscOperators(subdomain));
     }
 
-    // standard boilerplate
-    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &ops) {
-        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(ops);
+    /** Run-time promotion of a base RiscOperators pointer to trace operators. This is a checked conversion--it
+     *  will fail if @p from does not point to a TraceSemantics::RiscOperators object. */
+    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
+        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
         assert(retval!=NULL);
         return retval;
     }
-
+    
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
                                                    SMTSolver *solver=NULL) const /*override*/ {
         return instance(protoval, solver);
