@@ -1558,8 +1558,8 @@ Grammar::setUpExpressions ()
   // DQ (1/14/2006): We should not store the type of unary operators but instead obtain it from the operand directly.
   // TypeIdOp.setDataPrototype ( "SgType*"      , "expression_type", "= NULL",
   //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
-     TypeIdOp.setDataPrototype ( "SgType*"      , "expression_type", "= NULL",
-            CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+  // TypeIdOp.setDataPrototype ( "SgType*"      , "expression_type", "= NULL",
+  //        CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
   // DQ (6/2/2011): Added support for name qualification.
      TypeIdOp.setDataPrototype ( "int", "name_qualification_length", "= 0",
