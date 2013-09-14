@@ -524,6 +524,7 @@ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/PartialSymbol
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/SMTSolver.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/SymbolicSemantics.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/SymbolicSemantics2.C
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/TraceSemantics2.C
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/YicesSolver.C
 )
 
