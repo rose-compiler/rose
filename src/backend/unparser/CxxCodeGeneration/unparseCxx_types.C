@@ -1516,8 +1516,21 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
             // DQ (5/22/2003) Added output of "enum" string
                 curprint ("enum ");
 #if 0
+                printf ("Inside of unparseEnumType(): output enum keyword \n");
                 curprint ("/* enum from unparseEnumType() */ ");
 #endif
+             }
+            else
+             {
+#if 0
+               printf ("Inside of unparseEnumType(): DO NOT output enum keyword \n");
+#endif
+             }
+
+       // DQ (9/14/2013): For C language we need to output the "enum" keyword (see test2013_71.c).
+          if ( (info.isTypeFirstPart() == false) && (info.SkipClassSpecifier() == false) && (SageInterface::is_C_language() == true || SageInterface::is_C99_language() == true) )
+             {
+               curprint ("enum ");
              }
 
        // DQ (10/16/2004): Handle name qualification the same as in the unparseClassType function (we could factor common code later!)

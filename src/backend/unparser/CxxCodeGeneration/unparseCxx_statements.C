@@ -5837,6 +5837,21 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
   // printf ("unparsing asm statement = %ld \n",asm_stmt->get_operands().size());
   // Process the asm template (always the first operand)
      string asmTemplate = asm_stmt->get_assemblyCode();
+
+#if 0
+     string testString = "pxor %%mm7, %%mm7";
+     printf ("In unparseAsmStmt(): testString                = %s \n",testString.c_str());
+     printf ("In unparseAsmStmt(): escapeString(testString)  = %s \n",escapeString(testString).c_str());
+
+     for (size_t i=0; i < asmTemplate.length(); i++)
+        {
+          printf ("ascii value for asmTemplate[i=%zu] = %u \n",i,asmTemplate[i]);
+        }
+
+     printf ("In unparseAsmStmt(): asmTemplate               = %s \n",asmTemplate.c_str());
+     printf ("In unparseAsmStmt(): escapeString(asmTemplate) = %s \n",escapeString(asmTemplate).c_str());
+#endif
+
      curprint("\"" + escapeString(asmTemplate) + "\"");
 
      if (asm_stmt->get_useGnuExtendedFormat())
@@ -5880,6 +5895,12 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
           bool first;
           if (numInputOperands == 0 && numOutputOperands == 0 && numClobbers == 0)
              {
+#if 0
+               printf ("In unparseAsmStmt(): (numInputOperands == 0 && numOutputOperands == 0 && numClobbers == 0): goto donePrintingConstraints \n");
+#endif
+            // DQ (9/14/2013): Output required if we branch to label (see test2013_72.c).
+               curprint(" :: "); // Start of output operands
+
                goto donePrintingConstraints;
              }
           curprint(" : "); // Start of output operands
@@ -5907,6 +5928,12 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           if (numInputOperands == 0 && numClobbers == 0)
              {
+#if 0
+               printf ("In unparseAsmStmt(): (numInputOperands == 0 && numClobbers == 0): goto donePrintingConstraints \n");
+#endif
+            // DQ (9/14/2013): Output required if we branch to label (see test2013_72.c, but this is not a good example).
+            // curprint(" : "); // Start of output operands
+
                goto donePrintingConstraints;
              }
           curprint(" : "); // Start of input operands
@@ -5929,7 +5956,15 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
 
           if (numClobbers == 0)
+             {
+#if 0
+               printf ("In unparseAsmStmt(): (numClobbers == 0): goto donePrintingConstraints \n");
+#endif
+            // DQ (9/14/2013): Output required if we branch to label (see test2013_72.c, but this is not a good example).
+            // curprint(" : "); // Start of output operands
+
                goto donePrintingConstraints;
+             }
 
           curprint(" : "); // Start of clobbers
 

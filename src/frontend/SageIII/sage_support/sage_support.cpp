@@ -3542,7 +3542,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              }
         }
 
-  // printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
+#if 0
+     printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
+#endif
      if (foundSourceDirectoryExplicitlyListedInIncludePaths == false)
         {
        // Add the source directory to the include list so that we reproduce the semantics of gfortran
@@ -4555,7 +4557,11 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 #if 0
      printf ("\n\n***************************************************** \n");
      printf ("Inside of SgFile::compileOutput() \n");
+     printf ("   --- get_unparse_output_filename() = %s \n",get_unparse_output_filename().c_str());
      printf ("***************************************************** \n\n\n");
+#endif
+#if 0
+     display("In SgFile::compileOutput()");
 #endif
 
   // This function does the final compilation of the unparsed file
@@ -4646,6 +4652,30 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
        // ROSE_ASSERT(get_skip_unparse() == true);
           string outputFilename = get_sourceFileNameWithPath();
 
+#if 1
+       // DQ (9/15/2013): Added support for generated file to be placed into the same directory as the source file.
+       // It's use here is similar to that in the unparse.C file, but less clear here that it is correct since we 
+       // don't have tests of the -rose:keep_going option (that I know of directly in ROSE).
+          SgProject* project = TransformationSupport::getProject(this);
+       // ROSE_ASSERT(project != NULL);
+          if (project != NULL)
+             {
+               printf ("In SgFile::compileOutput(): project->get_build_generated_file_in_same_directory_as_input_file() = %s \n",project->get_build_generated_file_in_same_directory_as_input_file() ? "true" : "false");
+               if (project->get_build_generated_file_in_same_directory_as_input_file() == true)
+                  {
+                    outputFilename = ROSE::getPathFromFileName(get_sourceFileNameWithPath()) + "/rose_" + get_sourceFileNameWithoutPath();
+
+                    printf ("In SgFile::compileOutput(): Using filename for unparsed file into same directory as input file: outputFilename = %s \n",outputFilename.c_str());
+
+                    set_unparse_output_filename(outputFilename);
+                  }
+             }
+            else
+             {
+               printf ("WARNING: In SgFile::compileOutput(): file = %p has no associated project \n",this);
+             }
+#endif
+
           if (get_unparse_output_filename().empty())
              {
                if (get_skipfinalCompileStep())
@@ -4700,6 +4730,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                     boost::filesystem::copy_file(original_file,unparsed_file,boost::filesystem::copy_option::overwrite_if_exists);
                   }
              }
+
           set_unparse_output_filename(outputFilename);
         }
 #endif

@@ -26,7 +26,10 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    luleshTALC.C \
    test2013_253.C \
    test2013_255.C \
-   test2013_256.C
+   test2013_256.C \
+   test2013_257.C \
+   test2013_258.C \
+   test2013_259.C
 
 # DQ (9/10/2013): Test failing for switch without case statement (made up example, 
 # but we will want it to pass as part of further switch statement work later).
@@ -635,6 +638,10 @@ $(ROSE__CXX_TESTS_DIR)/test2013_236.o: $(TEST_TRANSLATOR)
 	echo "Running boost specific test."
 	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2013_236.C -o test2013_236.o
 
+# DQ (9/13/2013): Added new test for -rose:unparse_includes (which has a bug in how it unparses C++ style comments
+# and should maybe not be unparsing declarations that are front-end specific (e.g. builtin function declarations).
+test_unparse_includes_option: $(TEST_TRANSLATOR)
+	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2013_257.C -o test2013_257_unparse_headers.o
 
 $(TEST_TRANSLATOR):
 	cd ../..; $(MAKE) testTranslator

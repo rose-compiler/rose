@@ -337,6 +337,11 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_66.c \
      test2013_67.c \
      test2013_68.c \
+     test2013_69.c \
+     test2013_70.c \
+     test2013_71.c \
+     test2013_72.c \
+     test2013_73.c \
      math.c \
      complex_01.c \
      constants.c
@@ -548,6 +553,11 @@ test2012_145.o: $(srcdir)/test2012_145.c
 $(TEST_Exe_Objects): %.o: $(srcdir)/%.c $(testTranslator)
 	$(testTranslator) $(ROSE_FLAGS) -c $<
 
+test_build_generated_file_in_same_directory_as_input_file: $(testTranslator)
+	mkdir -p test_directory
+	cp $(srcdir)/test2013_73.c test_directory/test2013_73.c
+	$(testTranslator) -rose:build_generated_file_in_same_directory_as_input_file $(ROSE_FLAGS) -c test_directory/test2013_73.c -o test_directory/test2013_73.o
+
 # Liao 11/19/2009
 # Custom tests to test rose translators as a linker (generating the final executables) for multiple files
 # simplest case: generate .o with -c
@@ -600,6 +610,7 @@ check-local:
 clean-local:
 	rm -f *.o rose_*.[cC] rose_performance_report_lockfile.lock *.out
 	rm -rf QMTest
+	rm -rf test_directory
 
 ################################################################################
 #
