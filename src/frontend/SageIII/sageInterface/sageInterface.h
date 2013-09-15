@@ -1043,6 +1043,9 @@ bool loopInterchange(SgForStatement* loop, size_t depth, size_t lexicoOrder);
 //! Tile the n-level (starting from 1) loop of a perfectly nested loop nest using tiling size s
 bool loopTiling(SgForStatement* loopNest, size_t targetLevel, size_t tileSize);
 
+//Winnie Loop Collapsing
+SgExprListExp * loopCollapsing(SgForStatement* target_loop, size_t collapsing_factor);
+
 //@}
 
 //------------------------------------------------------------------------
@@ -1589,6 +1592,18 @@ SgNode* replaceWithPattern (SgNode * anchor, SgNode* new_pattern);
 std::pair<SgVariableDeclaration*, SgExpression* > createTempVariableForExpression(SgExpression* expression,
         SgScopeStatement* scope, bool initializeInDeclaration, SgAssignOp** reEvaluate = NULL);
 
+/*  This function creates a temporary variable for a given expression in the given scope
+   This is different from SageInterface::createTempVariableForExpression in that it does not
+   try to be smart to create pointers to reference types and so on. The tempt is initialized to expression.
+   The caller is responsible for setting the parent of SgVariableDeclaration since buildVariableDeclaration
+   may not set_parent() when the scope stack is empty. See programTransformation/extractFunctionArgumentsNormalization/ExtractFunctionArguments.C for sample usage.
+   @param expression Expression which will be replaced by a variable
+   @param scope scope in which the temporary variable will be generated
+*/
+    
+std::pair<SgVariableDeclaration*, SgExpression*> createTempVariableAndReferenceForExpression
+    (SgExpression* expression, SgScopeStatement* scope);
+    
 //! Append an argument to SgFunctionParameterList, transparently set parent,scope, and symbols for arguments when possible
 /*! We recommend to build SgFunctionParameterList before building a function declaration
  However, it is still allowed to append new arguments for existing function declarations.
@@ -1767,7 +1782,7 @@ void updateDefiningNondefiningLinks(SgFunctionDeclaration* func, SgScopeStatemen
 
 //! Collect all read and write references within stmt, which can be a function, a scope statement, or a single statement. Note that a reference can be both read and written, like i++
 bool
-collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& readRefs, std::vector<SgNode*>& writeRefs);
+collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& readRefs, std::vector<SgNode*>& writeRefs, bool useCachedDefUse=false);
 
 //!Collect unique variables which are read or written within a statement. Note that a variable can be both read and written. The statement can be either of a function, a scope, or a single line statement.
 bool collectReadWriteVariables(SgStatement* stmt, std::set<SgInitializedName*>& readVars, std::set<SgInitializedName*>& writeVars);
