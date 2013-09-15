@@ -4818,17 +4818,66 @@ sharesSameStatement(SgExpression* expr, SgType* expressionType)
 
      bool result = false;
      SgNamedType* namedType = isSgNamedType(expressionType);
+#if 1
+  // DQ (9/14/2013): I think this is a better implementation (test2012_46.c was failing before).
+  // This permits both test2013_70.c and test2012_46.c to unparse properly, where the two were 
+  // previously mutually exclusive.
+     if (namedType != NULL)
+        {
+          ROSE_ASSERT(namedType->get_declaration() != NULL);
+          SgDeclarationStatement* declarationStatementDefiningType = namedType->get_declaration();
+          SgDeclarationStatement* definingDeclarationStatementDefiningType = declarationStatementDefiningType->get_definingDeclaration();
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(definingDeclarationStatementDefiningType);
+          if (classDeclaration != NULL && classDeclaration->get_isAutonomousDeclaration() == false)
+             {
+            // This declaration IS defined imbedded in another statement.
+#if 0
+               printf ("This class declaration IS defined embedded in another statement. \n");
+#endif
+               result = true;
+             }
+            else
+             {
+            // This declaration is NOT defined imbedded in another statement.
+#if 0
+               printf ("This is not a class declaration OR the declaration is NOT defined embedded in another statement. \n");
+#endif
+               result = false;
+             }
+        }
+#else
      SgStatement* statementDefiningType         = NULL;
      if (namedType != NULL)
         {
           ROSE_ASSERT(namedType->get_declaration() != NULL);
-          statementDefiningType = TransformationSupport::getStatement(namedType->get_declaration()->get_parent());
+
+#error "DEAD CODE!"
+
+       // DQ (9/14/2013): If this is a scope statement then we want to use the declaration directly (else everything 
+       // will be an ancestor in the case of this being a global scope).  See test2013_70.c for what we need this.
+       // statementDefiningType = TransformationSupport::getStatement(namedType->get_declaration()->get_parent());
+          if (isSgScopeStatement(namedType->get_declaration()->get_parent()) != NULL)
+             {
+            // The declaration for the type is declared in a scope and not as part of being embedded in another statement.
+            // statementDefiningType = TransformationSupport::getStatement(namedType->get_declaration());
+               statementDefiningType = namedType->get_declaration();
+             }
+            else
+             {
+            // This is the case of the type embedded in another statement (e.g. for a GNU statement expression).
+               statementDefiningType = TransformationSupport::getStatement(namedType->get_declaration()->get_parent());
+             }
         }
 
      if (statementDefiningType != NULL)
         {
+#if 0
+          printf ("Calling SageInterface::isAncestor(): statementDefiningType = %p = %s \n",statementDefiningType,statementDefiningType->class_name().c_str());
+          printf ("Calling SageInterface::isAncestor(): expr                  = %p = %s \n",expr,expr->class_name().c_str());
+#endif
           result = SageInterface::isAncestor(statementDefiningType,expr);
         }
+#endif
 
 #if 0
      printf ("In sharesSameStatement(SgExpression* expr, SgType* expressionType): result = %s \n",result ? "true" : "false");
@@ -4995,7 +5044,16 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
           SgUnparse_Info newinfo(info);
           if (sharesSameStatement(aggr_init,aggr_init->get_type()) == true)
              {
+#if 0
+               printf ("sharesSameStatement(aggr_init,aggr_init->get_type()) == true) \n");
+#endif
                newinfo.unset_SkipClassDefinition();
+             }
+            else
+             {
+#if 0
+               printf ("sharesSameStatement(aggr_init,aggr_init->get_type()) == false) \n");
+#endif
              }
 #if 0
           newinfo.display("In unparseAggrInit(): (aggr_init->get_uses_compound_literal() == true): newinfo");
@@ -5091,7 +5149,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      for (size_t index = 0; index < list.size(); index ++)
         {
 #if 1
-       // If there was an include then unparse everything (because we removed the include).
+       // If there was an include then unparse everything (because we removed the include (above)).
        // If there was not an include then still unparse everything!
           unparseExpression(list[index], newinfo);
           if (index!= last_index)
@@ -5103,6 +5161,9 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
           bool skipUnparsing = isFromAnotherFile(list[index]);
           if (!skipUnparsing)
              {
+
+#error "DEAD CODE!"
+
                unparseExpression(list[index], newinfo);
                if (index!= last_index)
                     curprint(", ");
@@ -5135,7 +5196,7 @@ Unparse_ExprStmt::unparseCompInit(SgExpression* expr, SgUnparse_Info& info)
   // Skip the entire thing if the initializer is from an included file
      if (isFromAnotherFile (expr))
         {
-#if 1
+#if 0
           printf ("In unparseCompInit(): This SgCompoundInitializer (comp_init = %p) is from another file so its subtree will not be output in the generated code \n",comp_init);
 #endif
           return;
