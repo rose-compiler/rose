@@ -38,7 +38,7 @@ create table fr_funcnames as
         join semantic_functions as func1 on func1.file_id = file.id
         left join semantic_functions as func2
             on func1.id<>func2.id and func1.name <> '' and func1.name=func2.name and func1.file_id=func2.file_id
-        where func2.id is null and func1.ninsns >= 20                                            -- !!FIXME
+        where func2.id is null and func1.ninsns >= 100                                            -- !!FIXME
         group by func1.name
         having count(*) = (select count(*) from fr_specimens)
 --     except (
@@ -114,8 +114,7 @@ create table fr_negative_pairs as
 create table fr_clone_pairs as
     select sim.func1_id, sim.func2_id
         from semantic_funcsim sim 
-        join api_call_similarity as api_sim  on sim.func1_id = api_sim.func1_id AND sim.func2_id = api_sim.func2_id 
-        where sim.similarity >= (select similarity_threshold from fr_settings) AND sim.path_ave_euclidean_d < 1 AND  api_sim.ave_similarity > 0;
+        where sim.similarity >= (select similarity_threshold from fr_settings) AND sim.path_ave_euclidean_d < 100 ;
 
 -- Table of false negative pairs.  These are pairs of functions that were not determined to be similar but which are present
 -- in the fr_positives_pairs table.
