@@ -159,11 +159,31 @@ hpctoolkit-postprocess:
 # MAKE SURE YOU HAVE SET HPCTOOLKIT_HOME=/path/to/hpctoolkit
 #Some useful events we want to gather
 #These events may not work on all platforms. We picked it on a machine where it worked.
-PAPI_EVENTS=PAPI_TOT_CYC@2000000 PAPI_L1_DCM@50000 PAPI_L2_DCM@50000 PAPI_L1_ICM@50000 PAPI_L2_ICM@50000 PAPI_TLB_DM@10000 PAPI_TLB_IM@10000 PAPI_BR_MSP@50000 PAPI_RES_STL@100000  
+HPCTOOLKIT__PAPI_EVENTS=PAPI_TOT_CYC@2000000 PAPI_L1_DCM@50000 PAPI_L2_DCM@50000 PAPI_L3_DCM@5000 PAPI_L1_ICM@50000 PAPI_L2_ICM@50000 PAPI_L3_ICM@5000 PAPI_L1_TCM@50000 PAPI_L2_TCM@50000 PAPI_L3_TCM@5000 PAPI_TLB_DM@10000 PAPI_TLB_IM@10000 PAPI_BR_MSP@50000 PAPI_RES_STL@100000 PAPI_MEM_WCY@100000 PAPI_MEM_RCY@100000
 hpctoolkit-test3:
-	@[ ! -f "${HPCTOOLKIT_HOME}" ] && (echo "[FATAL] Environment variable \$$HPCTOOLKIT_HOME must be set to your HPCToolkit installation directory." && exit 1)
+	test ! -d "$${HPCTOOLKIT_HOME}" && \
+	( \
+			echo "[FATAL] Environment variable \$$HPCTOOLKIT_HOME must be set to your HPCToolkit installation directory." && \
+			exit 1 \
+	) || exit 0;
 	rm -rf  database_* measure_*
-	for ev in $(PAPI_EVENTS); do $(HPCTOOLKIT_HOME)/bin/hpcrun  -e $${ev} -o measure_$${ev} ../../.libs/testGraphGeneration $(ROSE_FLAGS) -rose:skipfinalCompileStep -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C; done
+	for papi_event in $$($(top_srcdir)/tests/utilities/hpctoolkit-get_list_of_papi_events.sh); do \
+			echo "$(HPCTOOLKIT__PAPI_EVENTS)" | grep "$${papi_event}"; \
+			if test $$? -eq 0; then                     \
+			$(HPCTOOLKIT_HOME)/bin/hpcrun               \
+					-e $${papi_event}                       \
+					-o measure_$${papi_event}               \
+					../../.libs/testGraphGeneration         \
+							$(ROSE_FLAGS)                       \
+							-rose:skipfinalCompileStep          \
+							-rose:verbose 2                     \
+							-I$(top_builddir)                   \
+							$(ROSE_INCLUDES)                    \
+							-c $(srcdir)/testRoseHeaders_03.C;  \
+			else                                        \
+					echo "[INFO] Skipping unsupported PAPI event: '$${papi_event}'"; \
+			fi                                                                   \
+	done
 	$(HPCTOOLKIT_HOME)/bin/hpcstruct  ../../.libs/testGraphGeneration
 	$(HPCTOOLKIT_HOME)/bin/hpcprof -S testGraphGeneration.hpcstruct -o database_papi_testRoseHeaders_03 measure_*
 
@@ -181,3 +201,4 @@ check-local:
 clean-local:
 	rm -f *.o rose_*.[cC]
 	rm -rf QMTest
+	rm -rf measure_* database_* *.hpcstruct
