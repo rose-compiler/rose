@@ -68,18 +68,28 @@ int main(int argc, char* argv[]) {
   cout << "INFO: generating and attaching UD-data to AST."<<endl;
   createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis-in", "ud-analysis");
 
-#if 0
+  Flow* flow=rdAnalyzer->getFlow();
+#if 1
   cout << "INFO: computing program statistics."<<endl;
-  computeStatistics(rdAnalyzer->getVariableIdMapping(),
-					rdAnalyzer->getLabeler(), 
-					rdAnalyzer->getFlow(),
-					"ud-analysis");
+  ProgramStatistics ps(rdAnalyzer->getVariableIdMapping(),
+					   rdAnalyzer->getLabeler(), 
+					   rdAnalyzer->getFlow(),
+					   "ud-analysis");
+  ps.computeStatistics();
+  //ps.printStatistics();
+  cout << "INFO: generating resource usage visualization."<<endl;
+  ps.setGenerateWithSource(false);
+  ps.generateResourceUsageICFGDotFile("resourceusageicfg.dot");
+  flow->resetDotOptions();
 #endif
   cout << "INFO: generating visualization data."<<endl;
   // generate ICFG visualization
   cout << "generating icfg.dot."<<endl;
-  Flow* flow=rdAnalyzer->getFlow();
   write_file("icfg.dot", flow->toDot(rdAnalyzer->getLabeler()));
+
+  //  cout << "INFO: generating control dependence graph."<<endl;
+  //Flow cdg=rdAnalyzer->getCFAnalyzer()->controlDependenceGraph(*flow);
+
   cout << "generating datadependencegraph.dot."<<endl;
   DataDependenceVisualizer ddvis0(rdAnalyzer->getLabeler(),
                                  rdAnalyzer->getVariableIdMapping(),

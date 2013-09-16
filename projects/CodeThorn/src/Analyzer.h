@@ -35,6 +35,10 @@ namespace CodeThorn {
 #define DEBUGPRINT_STATEMOD 0x4
 #define DEBUGPRINT_INFO 0x8
   
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
   class AstNodeInfo : public AstAttribute {
   public:
   AstNodeInfo():label(0),initialLabel(0){}
@@ -54,7 +58,12 @@ namespace CodeThorn {
   };
 
   typedef list<const EState*> EStateWorkList;
+  enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
   class Analyzer {
     friend class Visualizer;
 
@@ -91,6 +100,8 @@ namespace CodeThorn {
     bool checkEStateSet();
     bool isConsistentEStatePtrSet(set<const EState*> estatePtrSet);
     bool checkTransitionGraph();
+	// this function requires that no LTL graph is computed
+	void deleteNonRelevantEStates();
     
   private:
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
@@ -115,7 +126,9 @@ namespace CodeThorn {
     //! requires init
     void runSolver1();
     void runSolver2();
-    
+    void runSolver3();
+    void runSolver4();
+    void runSolver();
     //! The analyzer requires a CFAnalyzer to obtain the ICFG.
     void setCFAnalyzer(CFAnalyzer* cf) { cfanalyzer=cf; }
     CFAnalyzer* getCFAnalyzer() const { return cfanalyzer; }
@@ -164,6 +177,8 @@ namespace CodeThorn {
     InputOutput::OpType ioOp(const EState* estate) const;
     
     void setDisplayDiff(int diff) { _displayDiff=diff; }
+    void setSolver(int solver) { _solver=solver; ROSE_ASSERT(_solver>=1 && _solver<=4);}
+    int getSolver() { return _solver;}
     void setSemanticFoldThreshold(int t) { _semanticFoldThreshold=t; }
     void setLTLVerifier(int v) { _ltlVerifier=v; }
     int getLTLVerifier() { return _ltlVerifier; }
@@ -178,7 +193,7 @@ namespace CodeThorn {
     // only used temporarily for binary-binding prototype
     map<string,VariableId> globalVarName2VarIdMapping;
     vector<bool> binaryBindingAssert;
-    
+    void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; }
   private:
     set<int> _inputVarValues;
     ExprAnalyzer exprAnalyzer;
@@ -194,6 +209,9 @@ namespace CodeThorn {
     int _ltlVerifier;
     int _semanticFoldThreshold;
     VariableIdMapping::VariableIdSet _variablesToIgnore;
+    int _solver;
+	AnalyzerMode _analyzerMode;
+	set<const EState*> _newNodesToFold;
   };
   
 } // end of namespace CodeThorn

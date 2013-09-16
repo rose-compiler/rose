@@ -9,6 +9,10 @@ class VariableIdSetAttribute;
 
 // public
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 DataDependenceVisualizer::DataDependenceVisualizer(Labeler* labeler, VariableIdMapping* varIdMapping, string useDefAttributeName)
   : _showSourceCode(true),
     _labeler(labeler),
@@ -20,26 +24,46 @@ DataDependenceVisualizer::DataDependenceVisualizer(Labeler* labeler, VariableIdM
 {
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 VariableIdSet DataDependenceVisualizer::useVars(SgNode* expr) {
   UDAstAttribute* useDefAttribute=getUDAstAttribute(expr,_useDefAttributeName);
   ROSE_ASSERT(useDefAttribute);
   return useDefAttribute->useVariables(*_variableIdMapping);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 LabelSet DataDependenceVisualizer::defLabels(SgNode* expr, VariableId useVar) {
   UDAstAttribute* useDefAttribute=getUDAstAttribute(expr,_useDefAttributeName);
   ROSE_ASSERT(useDefAttribute);
   return useDefAttribute->definitionsOfVariable(useVar);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 Label DataDependenceVisualizer::getLabel(SgNode* stmt) {
   return _labeler->getLabel(stmt);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 SgNode* DataDependenceVisualizer::getNode(Label label) {
   return _labeler->getNode(label);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 string DataDependenceVisualizer::nodeSourceCode(Label lab) {
   if(_labeler->isFunctionEntryLabel(lab))
 	return "FunctionEntry";
@@ -49,15 +73,27 @@ string DataDependenceVisualizer::nodeSourceCode(Label lab) {
   return SgNodeHelper::doubleQuotedEscapedString(getNode(lab)->unparseToString());
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 void DataDependenceVisualizer::generateDefUseDotGraph(SgNode* root, string fileName) {
   _mode=DDVMODE_DEFUSE;
   generateDot(root,fileName);
 }
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 void DataDependenceVisualizer::generateUseDefDotGraph(SgNode* root, string fileName) {
   _mode=DDVMODE_USEDEF;  
   generateDot(root,fileName);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 void DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnalyzer* cfanalyzer, string fileName, bool withDataDependencies) {
 
   // temporary combersome recomputation
@@ -140,6 +176,10 @@ void DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnaly
   myfile<<"}"<<endl;
   myfile.close();
 }
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 void DataDependenceVisualizer::generateDot(SgNode* root, string fileName) {
   std::ofstream myfile;
   myfile.open(fileName.c_str(),std::ios::out);
@@ -200,6 +240,10 @@ void DataDependenceVisualizer::generateDot(SgNode* root, string fileName) {
 
 // private
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 UDAstAttribute* DataDependenceVisualizer::getUDAstAttribute(SgNode* expr,string attributeName){
   if(existsUDAstAttribute(expr,attributeName)) {
     UDAstAttribute* udAttr=dynamic_cast<UDAstAttribute*>(expr->getAttribute(attributeName));
@@ -208,10 +252,18 @@ UDAstAttribute* DataDependenceVisualizer::getUDAstAttribute(SgNode* expr,string 
     return 0;
   }
 }
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 bool DataDependenceVisualizer::existsUDAstAttribute(SgNode* expr,string attributeName){
   return expr->attributeExists(attributeName);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 void DataDependenceVisualizer::setFunctionLabelSetSets(LabelSetSet functionLabelSetSets) {
   _functionLabelSetSets=functionLabelSetSets;
 }

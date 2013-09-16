@@ -406,6 +406,7 @@ int main( int argc, char * argv[] ) {
     ("reduce-cfg",po::value< string >(),"Reduce CFG nodes which are not relevant for the analysis. [=yes|no]")
     ("threads",po::value< int >(),"Run analyzer in parallel using <arg> threads (experimental)")
     ("display-diff",po::value< int >(),"Print statistics every <arg> computed estates.")
+    ("solver",po::value< int >(),"Set solver <arg> to use (one of 1,2,3).")
     ("ltl-verbose",po::value< string >(),"LTL verifier: print log of all derivations.")
     ("ltl-output-dot",po::value< string >(),"LTL visualization: generate dot output.")
     ("ltl-show-derivation",po::value< string >(),"LTL visualization: show derivation in dot output.")
@@ -553,6 +554,10 @@ int main( int argc, char * argv[] ) {
     int displayDiff=args["display-diff"].as<int>();
     analyzer.setDisplayDiff(displayDiff);
   }
+  if(args.count("solver")) {
+    int solver=args["solver"].as<int>();
+    analyzer.setSolver(solver);
+  }
   if(args.count("ltl-verifier")) {
     int ltlVerifier=args["ltl-verifier"].as<int>();
     analyzer.setLTLVerifier(ltlVerifier);
@@ -619,10 +624,9 @@ int main( int argc, char * argv[] ) {
   timer.start();
   cout << "=============================================================="<<endl;
   if(boolOptions["semantic-fold"]) {
-    analyzer.runSolver2();
-  } else {
-    analyzer.runSolver1();
+	analyzer.setSolver(4);
   }
+  analyzer.runSolver();
 
   if(boolOptions["post-semantic-fold"]) {
     cout << "Performing post semantic folding (this may take some time):"<<endl;

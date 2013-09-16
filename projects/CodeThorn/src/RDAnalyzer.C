@@ -12,16 +12,28 @@ using namespace CodeThorn;
 RDAnalyzer::RDAnalyzer() {
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 void RDAnalyzer::attachInInfoToAst(string attributeName) {
   if(!_preInfoIsValid)
 	computeAllPreInfo();
   attachInfoToAst(attributeName,true);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 void RDAnalyzer::attachOutInfoToAst(string attributeName) {
   attachInfoToAst(attributeName,false);
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 void RDAnalyzer::attachInfoToAst(string attributeName,bool inInfo) {
 #if 0
   size_t lab=0;
@@ -65,7 +77,10 @@ size_t RDAnalyzer::size() {
   return _analyzerData.size();
 }
 
-// TODO: refactor in separate functions
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 RDLattice RDAnalyzer::transfer(Label lab, RDLattice element) {
   if(element.isBot())
     element.setEmptySet();
@@ -134,6 +149,10 @@ RDLattice RDAnalyzer::transfer(Label lab, RDLattice element) {
   return element;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 void RDAnalyzer::transferExpression(Label lab, SgExpression* node, RDLattice& element) {
   // update analysis information
   // this is only correct for RERS12-C programs
@@ -156,6 +175,10 @@ void RDAnalyzer::transferExpression(Label lab, SgExpression* node, RDLattice& el
   }
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 //NOTE: missing: UD must take uses in initializers into account
 void RDAnalyzer::transferDeclaration(Label lab, SgVariableDeclaration* declnode, RDLattice& element) {
   SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
@@ -176,16 +199,28 @@ void RDAnalyzer::transferDeclaration(Label lab, SgVariableDeclaration* declnode,
   }
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 void RDAnalyzer::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,RDLattice& element) {
   // uses and defs in argument-expressions
   for(SgExpressionPtrList::iterator i=arguments.begin();i!=arguments.end();++i) {
 	transferExpression(lab,*i,element);
   }
 }
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 void RDAnalyzer::transferFunctionCallReturn(Label lab, SgFunctionCallExp* callExp, RDLattice& element) {
   //TODO: def in x=f(...) (not seen as assignment)
 }
 //NOTE: UD analysis must take uses of function-call arguments into account
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 void RDAnalyzer::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, RDLattice& element) {
   // generate RDs for each parameter variable
   for(SgInitializedNamePtrList::iterator i=formalParameters.begin();
@@ -200,6 +235,10 @@ void RDAnalyzer::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,S
   }
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 void RDAnalyzer::transferFunctionExit(Label lab, SgFunctionDefinition* callExp, VariableIdSet& localVariablesInFunction, RDLattice& element) {
   // remove all declared variable at function exit (including function parameter variables)
   for(VariableIdSet::iterator i=localVariablesInFunction.begin();i!=localVariablesInFunction.end();++i) {

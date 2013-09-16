@@ -23,7 +23,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_builddir)
 # in V1.2 there are no KNOBS
 KNOBS = 
 
-codethorn_CXXFLAGS = $(KNOBS) -fopenmp -Wall # -O3 -march=native -ftree-vectorize
+codethorn_CXXFLAGS = $(KNOBS) -fopenmp -Wall -O3 -march=native -ftree-vectorize
 codethorn_LDADD = -lfl -lrose
 codethorn_SOURCES = \
   AType.C                          \
@@ -88,7 +88,11 @@ codethorn_SOURCES = \
   RDAstAttributeInterface.C \
   RDAstAttribute.h         \
   RDAstAttribute.C         \
+  CPAstAttributeInterface.h	\
+  CPAstAttributeInterface.C	\
   RERS_empty_specialization.C      \
+  Flow.h \
+  Flow.C \
   addressTakenAnalysis/defUseQuery.C \
   addressTakenAnalysis/defUseQuery.h \
   addressTakenAnalysis/VariableIdUtils.C \
@@ -163,6 +167,8 @@ rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h Co
   Miscellaneous.h                  \
   ProgramStats.h                 \
   ProgramStats.C                 \
+  Flow.h \
+  Flow.C \
   addressTakenAnalysis/defUseQuery.C \
   addressTakenAnalysis/defUseQuery.h \
   addressTakenAnalysis/VariableIdUtils.C \

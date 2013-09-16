@@ -83,7 +83,7 @@ DFAnalyzer<LatticeType>::initialize(SgProject* root) {
   //exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   cout << "INIT: Creating CFAnalyzer."<<endl;
   _cfanalyzer=new CFAnalyzer(_labeler);
-  //cout<< "DEBUG: mappingLabelToNode: "<<endl<<getLabeler()->toString()<<endl;
+  //cout<< "DEBUG: mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
   cout << "INIT: Building CFG for each function."<<endl;
   _flow=_cfanalyzer->flow(root);
   cout << "STATUS: Building CFGs finished."<<endl;

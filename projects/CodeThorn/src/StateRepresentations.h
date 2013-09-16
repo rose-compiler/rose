@@ -38,6 +38,10 @@ using CodeThorn::Edge;
 
 namespace CodeThorn {
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
  public:
     PState() {
@@ -77,6 +81,10 @@ class PStateHashFun {
     long tabSize;
 };
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class PStateSet : public HSetMaintainer<PState,PStateHashFun> {
  public:
   typedef HSetMaintainer<PState,PStateHashFun>::ProcessingResult ProcessingResult;
@@ -87,8 +95,10 @@ class PStateSet : public HSetMaintainer<PState,PStateHashFun> {
  private:
 };
 
-/**
- * Input: a value val is read into a variable var
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ * \brief Input: a value val is read into a variable var
  * Output: either a variable or a value is written
  */
 class InputOutput {
@@ -109,6 +119,10 @@ bool operator<(const InputOutput& c1, const InputOutput& c2);
 bool operator==(const InputOutput& c1, const InputOutput& c2);
 bool operator!=(const InputOutput& c1, const InputOutput& c2);
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class EState {
  public:
  EState():_label(Labeler::NO_LABEL),_pstate(0),_constraints(0){}
@@ -157,6 +171,10 @@ struct EStateLessComp {
   }
 };
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class EStateHashFun {
    public:
     EStateHashFun(long prime=9999991) : tabSize(prime) {}
@@ -170,6 +188,10 @@ class EStateHashFun {
     long tabSize;
 };
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class EStateSet : public HSetMaintainer<EState,EStateHashFun> {
  public:
  EStateSet():HSetMaintainer<EState,EStateHashFun>(),_constraintSetMaintainer(0){}
@@ -184,6 +206,10 @@ class EStateSet : public HSetMaintainer<EState,EStateHashFun> {
   ConstraintSetMaintainer* _constraintSetMaintainer; 
 };
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class Transition {
  public:
  Transition(const EState* source,Edge edge, const EState* target):source(source),edge(edge),target(target){}
@@ -195,6 +221,10 @@ public:
 
 };
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class TransitionHashFun {
    public:
     TransitionHashFun(long prime=99991) : tabSize(prime) {}
@@ -219,6 +249,10 @@ class EStateList : public list<EState> {
 
 
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun> {
  public:
   typedef set<const Transition*> TransitionPtrSet;

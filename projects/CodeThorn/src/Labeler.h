@@ -21,6 +21,10 @@ namespace CodeThorn {
 
 typedef size_t Label;
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
  class LabelProperty {
  public:
    enum LabelType { LABEL_UNDEF=1, LABEL_OTHER=2, 
@@ -62,6 +66,10 @@ typedef size_t Label;
    bool _isLTLRelevant;
  };
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 class LabelSet : public set<Label> {
  public:
 
@@ -99,6 +107,10 @@ LabelSet& operator+=(LabelSet& s2) {
 
  typedef std::set<LabelSet> LabelSetSet;
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012, 2013.
+ */
 class Labeler {
  public:
   static const Label NO_LABEL=-1;
@@ -135,11 +147,12 @@ class Labeler {
   bool isStdInLabel(Label label, VariableId* id=0);
   bool isStdOutLabel(Label label, VariableId* id=0);
   bool isStdErrLabel(Label label, VariableId* id=0);
+  bool isConditionLabel(Label lab);
 
  private:
   void computeNodeToLabelMapping();
   void registerLabel(LabelProperty);
-  vector<LabelProperty> mappingLabelToNode;
+  vector<LabelProperty> mappingLabelToLabelProperty;
   map<SgNode*,Label> mappingNodeToLabel;
   VariableIdMapping* _variableIdMapping;
   bool _isValidMappingNodeToLabel;

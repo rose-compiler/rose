@@ -13,6 +13,10 @@ enum DFInfoSelector { DFISEL_DEFAULT,
 					  //DFIDEL_BLOCK_END
 };
 
+/*! 
+  * \author Markus Schordan
+  * \date 2013.
+ */
 class DFAstAttribute : public AstAttribute {
  public:
   DFAstAttribute();
