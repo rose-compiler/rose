@@ -1279,7 +1279,6 @@ void Analyzer::semanticFoldingOfTransitionGraph() {
   {
     //cout << "STATUS: (Experimental) semantic folding of transition graph ..."<<endl;
     //assert(checkEStateSet());
-#if 1
     set<const EState*> xestates0;
     if(boolOptions["post-semantic-fold"]) {
 	  cout << "STATUS: post-semantic folding: computing states to fold."<<endl;
@@ -1287,79 +1286,41 @@ void Analyzer::semanticFoldingOfTransitionGraph() {
 	if(boolOptions["report-semantic-fold"]) {
 	  cout << "STATUS: semantic folding: phase 1: computing states to fold."<<endl;
 	}
-	if(_newNodesToFold.size()>0) {
-	  xestates0=_newNodesToFold;
-	  _newNodesToFold.clear();
+	if(_newNodesToFold.size()==0) {
+	  _newNodesToFold=nonLTLRelevantEStates();
 	}
-	else
-	  xestates0=nonLTLRelevantEStates();
-#else
-	cout<<"CONSIDERED:"<<_newNodesToFold.size()<<endl;
-    set<const EState*> xestates0;
-    xestates0=nonLTLRelevantEStates();
-#endif
 
-#if 0
-	int problemStates=0;
-	set<const EState*> xestates2=nonLTLRelevantEStates();
-	for(set<const EState*>::iterator i=xestates0.begin();i!=xestates0.end();++i) {
-	  assert(*i);
-	  if(xestates2.find(*i)==xestates2.end()) {
-		cout<<"P:"<<*i<<endl;
-		problemStates++;
-	  }
-	}
-	assert(problemStates==0);
-	cout<<"CHECK OK."<<endl;
-#endif
     // filter for worklist
-#if 1
 	// iterate over worklist and remove all elements that are in the worklist and not LTL-relevant
 	int numFiltered=0;
 	cout<<"STATUS: semantic folding: phase 2: filtering."<<endl;
 	for(EStateWorkList::iterator i=estateWorkList.begin();i!=estateWorkList.end();++i) {
 	  if(!isLTLRelevantLabel((*i)->label())) {
-		xestates0.erase(*i);
+		_newNodesToFold.erase(*i);
 		numFiltered++;
 	  }
 	}
-    set<const EState*> xestates=xestates0;
 	if(boolOptions["report-semantic-fold"]) {
-	  cout << "STATUS: semantic folding: phase 3: reducing "<<xestates.size()<< " states (excluding WL-filtered: "<<numFiltered<<")"<<endl;
+	  cout << "STATUS: semantic folding: phase 3: reducing "<<_newNodesToFold.size()<< " states (excluding WL-filtered: "<<numFiltered<<")"<<endl;
 	}
-#else
-    set<const EState*> xestates;
-    for(set<const EState*>::iterator i=xestates0.begin();i!=xestates0.end();++i) {
-      assert(*i);
-      if(!isInWorkList(*i) && !(getTransitionGraph()->getStartLabel()==(*i)->label()))
-        xestates.insert(*i);
-    }
-    if(xestates0.size()!=xestates.size()) {
-      //cout << "INFO: Successfully avoided reducing node(s) which are in the work list."<<endl;
-    }
-	if(boolOptions["report-semantic-fold"]) {
-	  cout << "STATUS: semantic folding: reducing states ("<<xestates.size()<< " states considered (in WL: "<<xestates0.size()-xestates.size()<<"))"<<endl;
-	}
-#endif
-    
     int tg_size_before_folding=getTransitionGraph()->size();
-    getTransitionGraph()->reduceEStates2(xestates);
+    getTransitionGraph()->reduceEStates2(_newNodesToFold);
     int tg_size_after_folding=getTransitionGraph()->size();
     
-#if 1
-    for(set<const EState*>::iterator i=xestates.begin();i!=xestates.end();++i) {
+    for(set<const EState*>::iterator i=_newNodesToFold.begin();i!=_newNodesToFold.end();++i) {
       bool res=estateSet.erase(**i);
       if(res==false) {
-        cerr<< "Error: Semantic folding of transition graph: no estate to delete."<<endl;
-        exit(1);
+        cerr<< "Error: Semantic folding of transition graph: new estate could not be deleted."<<endl;
+		cerr<< (**i).toString()<<endl;
+        //exit(1);
       }
     }
-
+	if(boolOptions["report-semantic-fold"]) {
+	  cout << "STATUS: semantic folding: phase 4: clearing "<<_newNodesToFold.size()<< " states (excluding WL-filtered: "<<numFiltered<<")"<<endl;
+	}
+	_newNodesToFold.clear();
     //assert(checkEStateSet());
     //assert(checkTransitionGraph());
-#else
-    cout << "STATUS: NOT folding estates: from " <<estateSet.size()<< " to "<< estateSet.size()-xestates.size() << " ... "<<flush;
-#endif
     if(boolOptions["report-semantic-fold"] && tg_size_before_folding!=tg_size_after_folding)
       cout << "STATUS: semantic folding: finished: Folded transition graph from "<<tg_size_before_folding<<" to "<<tg_size_after_folding<<" transitions."<<endl;
     
