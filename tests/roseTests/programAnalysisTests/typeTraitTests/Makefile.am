@@ -27,8 +27,6 @@ $(TEST_TARGETS): nt_%.passed: $(TESTDIR)/% typeTraitExerciseWithRetCode $(TEST_E
 ROSE_HRD_TEST: typeTraitExerciseWithoutRetCode $(srcdir)/tests/roseHeader.C
 	./typeTraitExerciseWithoutRetCode -c $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/tests/roseHeader.C
 
-
-# DQ (8/23/2013): We need to discuss this, EDG is failing on all of the type traits in these tests (at least test1.C)
 check-local:
 # type traits is a not fully supported in older gcc versions. We enable tests only when rose is compiled with gcc 4.2 or higher and the backend compiler used is also gcc 4.2 or higher.
 	if  test "$(GCC_VERSION)" -ge "4" && test "$(GCC_MINOR_VERSION)" -ge "4" && \

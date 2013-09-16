@@ -3,10 +3,10 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)
 
-# noinst_PROGRAMS = certTests
+noinst_PROGRAMS = certTests
 
-# certTests_SOURCES = \
-certTests_XXX = \
+# certTests_XXX = 
+certTests_SOURCES = \
 		diagnose.C \
       PRE.C \
 		DCL.C \

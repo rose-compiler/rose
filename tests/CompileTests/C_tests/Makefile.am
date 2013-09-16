@@ -145,8 +145,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_38.c \
      test2012_39.c \
      test2012_40.c \
-     test2012_41.c \
      test2012_42.c \
+     test2012_41.c \
      test2012_43.c \
      test2012_46.c \
      test2012_47.c \
@@ -273,6 +273,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_01.c \
      test2013_02.c \
      test2013_03.c \
+     test2013_05.c \
      test2013_06.c \
      test2013_07.c \
      test2013_08.c \
@@ -307,16 +308,63 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_37.c \
      test2013_38.c \
      test2013_39.c \
+     test2013_40.c \
+     test2013_41.c \
+     test2013_42.c \
+     test2013_43.c \
+     test2013_44.c \
+     test2013_45.c \
+     test2013_46.c \
+     test2013_47.c \
+     test2013_48.c \
+     test2013_49.c \
+     test2013_50.c \
+     test2013_51.c \
+     test2013_52.c \
+     test2013_53.c \
+     test2013_54.c \
+     test2013_55.c \
+     test2013_56.c \
+     test2013_57.c \
+     test2013_58.c \
+     test2013_59.c \
+     test2013_60.c \
+     test2013_61.c \
+     test2013_62.c \
+     test2013_63.c \
+     test2013_64.c \
+     test2013_65.c \
+     test2013_66.c \
+     test2013_67.c \
+     test2013_68.c \
+     test2013_69.c \
+     test2013_70.c \
+     test2013_71.c \
+     test2013_72.c \
+     test2013_73.c \
      math.c \
      complex_01.c \
      constants.c
 
-# DQ (7/28/2013): This is a problem for the new block support.
+# DQ (9/9/2013): This is a problem for the new block support.
+#     test2012_23.c 
+#     test2012_25.c 
+#     test2012_36.c 
+#     test2012_42.c
+#     test2012_101.c
+#     test2012_102.c
+#     test2012_103.c 
+#     test2012_104.c 
+#     test2012_105.c 
+#     test2012_116.c 
+#     test2012_118.c 
+#     test2012_119.c 
 
 
 # DQ (5/23/2013): This is a failing case (reported by Sara). Case of "void foo(int N,int a[N]){}"
 # test2013_04.c 
 
+# DQ (9/2/2013): This is now fixed.
 # DQ (6/19/2013): Failing case of include used to initialize array (still working on this case).
 # test2013_05.c 
 
@@ -505,6 +553,11 @@ test2012_145.o: $(srcdir)/test2012_145.c
 $(TEST_Exe_Objects): %.o: $(srcdir)/%.c $(testTranslator)
 	$(testTranslator) $(ROSE_FLAGS) -c $<
 
+test_build_generated_file_in_same_directory_as_input_file: $(testTranslator)
+	mkdir -p test_directory
+	cp $(srcdir)/test2013_73.c test_directory/test2013_73.c
+	$(testTranslator) -rose:build_generated_file_in_same_directory_as_input_file $(ROSE_FLAGS) -c test_directory/test2013_73.c -o test_directory/test2013_73.o
+
 # Liao 11/19/2009
 # Custom tests to test rose translators as a linker (generating the final executables) for multiple files
 # simplest case: generate .o with -c
@@ -557,6 +610,7 @@ check-local:
 clean-local:
 	rm -f *.o rose_*.[cC] rose_performance_report_lockfile.lock *.out
 	rm -rf QMTest
+	rm -rf test_directory
 
 ################################################################################
 #

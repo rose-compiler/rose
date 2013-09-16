@@ -175,3 +175,4 @@ CompSharedPtr<Type> initPtr(Type* p)
 }
 
 }; // namespace fuse
+
