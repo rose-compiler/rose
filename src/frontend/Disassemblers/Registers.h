@@ -25,6 +25,7 @@
 class RegisterDictionary {
 public:
     typedef std::map<std::string/*name*/, RegisterDescriptor> Entries;
+    typedef std::vector<RegisterDescriptor> RegisterDescriptors;
 
     /* Functions that return a dictionary for a particular machine architecute. (See implementation for documentation.) */
     static const RegisterDictionary *dictionary_i8086();
@@ -96,15 +97,103 @@ public:
      *  according to the optional supplied NameGenerator. */
     const std::string& lookup(const RegisterDescriptor&) const;
 
-    /** Returns the list of all register definitions in the dictionary. */
+    /** Returns the list of all register definitions in the dictionary.
+     * @{ */
     const Entries& get_registers() const;
-    /** Returns the list of all register definitions in the dictionary. */
     Entries& get_registers();
+    /** @} */
+
+    /** Returns the list of all register descriptors. The returned list may have overlapping register descriptors. The return
+     *  value is similar to get_registers() except onyl the RegisterDescriptor part is returned, not the names. */
+    RegisterDescriptors get_descriptors() const;
+
+    /** Compares number of bits in register descriptors. This comparator is used to sort register descriptors in either
+     *  ascending or descending order depending on the number of significant bits in the register. The default constructor
+     *  uses a descending sort order.
+     *
+     *  For instance, to get a list of all descriptors sorted by descending number of significant bits, one could do:
+     *
+     * @code
+     *  RegisterDescriptors regs = dictionary.get_descriptors();
+     *  std::sort(regs.begin(), regs.end(), SortBySize());
+     * @endcode
+     */
+    class SortBySize {
+    public:
+        enum Direction { ASCENDING, DESCENDING };
+        explicit SortBySize(Direction d=DESCENDING): direction(d) {}
+        virtual bool operator()(const RegisterDescriptor &a, const RegisterDescriptor &b) const {
+            bool retval = a.get_nbits() < b.get_nbits();
+            return DESCENDING==direction ? !retval : retval;
+        }
+    protected:
+        Direction direction;
+    };
+
+    /** Returns the list of non-overlapping registers or register parts.  The list of registers are processed in the specified
+     *  order and each register is added to the return value if its bits were not already added to the return value by a
+     *  previous register.  If a register under consideration is only partially represented in the return value at the time it
+     *  is considered, then it is either split into smaller parts to be reconsidered later, or not reconsidered at all. Thus,
+     *  when @p reconsider_parts is true, the return value might contain register descriptors that were not part of the input
+     *  @p reglist, and which might not even have entries/names in the register dictionary (see get_largest_registers() for
+     *  more explaination).
+     *
+     *  For example, to get a list of the largest non-overlapping registers one could do the following:
+     * @code
+     *  RegisterDictionary::SortBySize largest_to_smallest(RegisterDictionary::SortBySize::DESCENDING);
+     *  RegisterDictionary::RegisterDescriptors all_registers = ditionary.get_descriptors();
+     *  RegisterDictionary::RegisterDescriptors list = dictionary.filter_nonoverlapping(all_registers, largest_to_smallest, true);
+     * @endcode
+     *
+     *  Filtering largest to smallest and reconsidering parts is the default, so the example can be shortened to:
+     * @code
+     *  RegisterDictionary::RegisterDescriptors list = dictionary.filter_nonoverlapping(dictionary.get_descriptors());
+     * @endcode
+     *
+     *  In fact, it can be shortened even more since this common operation is encapsulated in get_largest_registers():
+     * @code
+     *  RegisterDictionary::RegisterDescriptors list = dictionary.get_largest_registers();
+     * @endcode
+     */
+    template<class Compare>
+    static RegisterDescriptors filter_nonoverlapping(RegisterDescriptors reglist,
+                                                     const Compare &order=SortBySize(),
+                                                     bool reconsider_parts=true);
+
+    /** Returns a list of the largest non-overlapping registers. For instance, for a 32-bit x86 dictionary the return value
+     *  will contain registers EAX, EBX, etc. but not AX, AH, AL, BX, BH, BL, etc. Note that some of the returned descriptors
+     *  might not correspond to actual names in the dictionary; this can happen when the dictionary contains two registers that
+     *  partially overlap, but are themselves not subsets of a larger register, as in:
+     *
+     * @code
+     *  |XXXXXXXXXXXX....| The "X" register occupies the first 12 bits of a 16-bit register
+     *  |....YYYYYYYYYYYY| The "Y" register occupies the last 12 bits of a 16-bit register
+     * @endcode
+     *
+     * If the 16-bit register has no name, and the high- and low-order four-bit parts have no name, then the return value
+     * might consist of register "X" and the low four bits.  Or it could be register "Y" and the high four bits. */
+    RegisterDescriptors get_largest_registers() const;
+
+    /** Returns a list of the smallest non-overlapping registers.  For instance, for a 32-bit x86 dictionary the return value
+     * will contain AX, AH, AL, BX, BH, BL, etc. rather than EAX and EBX.  It will also return the high 16-bit parts of EAX and
+     * EBX even though they're not represented with explicit definitions in the dictionary.
+     *
+     * This is a one-liner in terms of filter_nonoverlapping.  If you don't want the unnamed parts to appear in the return
+     * value (e.g., the high-order 16 bits of EAX), then call filter_nonoverlapping() like this:
+     * @code
+     *  SortBySize order(SortBySize::ASCENDING);
+     *  RegisterDescriptors smallest = dict.filter_nonoverlapping(dict.get_descriptors(), order, false);
+     * @endcode
+     */
+    RegisterDescriptors get_smallest_registers() const;
 
     /** Prints the contents of this register dictionary.  The first line of output contains the dictionary name. One additional
      *  line of output will be generated for each entry in the dictionary. */
     void print(std::ostream&) const;
     friend std::ostream& operator<<(std::ostream&, const RegisterDictionary&);
+
+    /** Return the number of entries in the dictionary. */
+    size_t size() const { return forward.size(); }
 
 private:
     typedef std::map<uint64_t/*desc_hash*/, std::vector<std::string> > Reverse;
@@ -137,5 +226,43 @@ public:
     std::string size_suffix;            /**< String printed after the size when the size is printed. */
 };
 
+/*******************************************************************************************************************************
+ *                                      Template definitions
+ *******************************************************************************************************************************/
 
+template<class Compare>
+RegisterDictionary::RegisterDescriptors
+RegisterDictionary::filter_nonoverlapping(RegisterDescriptors desc, const Compare &order, bool reconsider_parts)
+{
+    RegisterDescriptors retval;
+    Map<std::pair<int/*major*/, int/*minor*/>, Extent> have_bits; // the union of the bits of descriptors we will return
+
+    // Process the descriptors in the order specified.
+    std::sort(desc.begin(), desc.end(), order);
+    for (size_t i=0; i<desc.size(); ++i) {
+        const RegisterDescriptor &cur_desc = desc[i];
+        const std::pair<int, int> cur_majmin(cur_desc.get_major(), cur_desc.get_minor());
+        const Extent cur_extent(cur_desc.get_offset(), cur_desc.get_nbits());
+        const Extent have_extent = have_bits.get_value_or(cur_majmin, Extent());
+
+        if (cur_extent.distinct(have_extent)) {
+            // We're not returning any of these bits yet, so add the whole descriptor
+            retval.push_back(cur_desc);
+            have_bits.insert(std::make_pair(cur_majmin, cur_extent));
+        } else if (reconsider_parts) {
+            // We're already returning some (or all) of these bits.  Split the cur_extent into zero, one, or two remaining
+            // parts by erasing the portion we're already returning, and add those parts back into the desc work list so the
+            // list remains sorted.
+            std::vector<Extent> parts = cur_extent.erase(have_extent);
+            for (size_t j=0; j<parts.size(); ++j) {
+                assert(!parts[j].empty());
+                RegisterDescriptor part_desc(cur_desc.get_major(), cur_desc.get_minor(), parts[i].first(), parts[i].size());
+                RegisterDescriptors::iterator insert_at = std::lower_bound(desc.begin(), desc.end(), part_desc, order);
+                desc.insert(insert_at, part_desc);
+            }
+        }
+    }
+    return retval;
+}
+    
 #endif /*!ROSE_BINARY_REGISTERRS_H*/

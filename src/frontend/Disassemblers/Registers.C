@@ -165,6 +165,31 @@ RegisterDictionary::get_registers() {
     return forward;
 }
 
+RegisterDictionary::RegisterDescriptors
+RegisterDictionary::get_descriptors() const
+{
+    const Entries &entries = get_registers();
+    RegisterDescriptors retval;
+    retval.reserve(entries.size());
+    for (Entries::const_iterator ei=entries.begin(); ei!=entries.end(); ++ei)
+        retval.push_back(ei->second);
+    return retval;
+}
+
+RegisterDictionary::RegisterDescriptors
+RegisterDictionary::get_largest_registers() const
+{
+    SortBySize order(SortBySize::DESCENDING);
+    return filter_nonoverlapping(get_descriptors(), order, true);
+}
+
+RegisterDictionary::RegisterDescriptors
+RegisterDictionary::get_smallest_registers() const
+{
+    SortBySize order(SortBySize::ASCENDING);
+    return filter_nonoverlapping(get_descriptors(), order, true);
+}
+
 void
 RegisterDictionary::print(std::ostream &o) const {
     o <<"RegisterDictionary \"" <<name <<"\" contains " <<forward.size() <<" " <<(1==forward.size()?"entry":"entries") <<"\n";
