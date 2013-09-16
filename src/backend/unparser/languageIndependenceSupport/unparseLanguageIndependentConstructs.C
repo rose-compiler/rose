@@ -181,8 +181,18 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 
      if (unp->opt.get_unparse_includes_opt() == true)
         {
-        // If we are to unparse all included files into the source file this this is ALWAYS true
-           statementInFile = true;
+       // If we are to unparse all included files into the source file this this is ALWAYS true
+          statementInFile = true;
+
+       // DQ (9/16/2013): Restrict the unparsing using the -rose:unparse_includes option to eliminate the declarations added as part of the front-end support for compatability with the backend.
+          SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
+          if (declarationStatement != NULL && stmt->get_file_info()->isFrontendSpecific() == true)
+             {
+#if 0
+               curprint ( string("\n/* Inside of UnparseLanguageIndependentConstructs::statementFromFile (" ) + StringUtility::numberToString(stmt) + "): class_name() = " + stmt->class_name() + " (skipped) */ \n");
+#endif
+               statementInFile = false;
+             }
         }
        else
         {
@@ -1653,10 +1663,15 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
 
                if (unp->opt.get_unparse_includes_opt() == true)
                   {
-                 // If we are unparsing the include files then we can simplify the 
+                 // DQ (9/16/2013): This is an error for C style comments spanning more than one line.
+                 // To fix this just unparse the comment directly, since the syntax to make it a comment 
+                 // is included in the string.
+
+                 // Original comment: If we are unparsing the include files then we can simplify the 
                  // CPP directive processing and unparse them all as comments!
                  // Comments can also be unparsed as comments (I think!).
-                    curprint (  "// " + (*i)->getString());
+                 // curprint (  "// " + (*i)->getString());
+                    curprint((*i)->getString());
                   }
                  else
                   {

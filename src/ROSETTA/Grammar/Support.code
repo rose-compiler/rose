@@ -14453,7 +14453,7 @@ SgProject::initialization()
   // DQ (9/15/2013): Adding support to handle output of files into the same directory as the source file.
   // This avoids some subtle issues in how header files are resolved by the backend compiler.
   // See documentation in src/ROSETTA/src/support.C.
-     p_build_generated_file_in_same_directory_as_input_file = false;
+     p_unparse_in_same_directory_as_input_file = false;
    }
 
 // DQ (2/1/2007): Added new operator so that w could depricate the inconsistant usage of 
@@ -15222,69 +15222,69 @@ SgProject::display ( const std::string & label ) const
    {
      printf ("In SgProject::display(%s) \n",label.c_str());
 
-     printf ("   p_verbose                              = %d \n",p_verbose);
+     printf ("   p_verbose                                 = %d \n",p_verbose);
 
-     printf ("   p_outputFileName                       = %s \n",p_outputFileName.c_str());
+     printf ("   p_outputFileName                          = %s \n",p_outputFileName.c_str());
 
-     printf ("   p_sourceFileNameList.size()            = %zu \n", p_sourceFileNameList.size());
-     printf ("   p_sourceFileNameList                   = \n      %s \n",StringUtility::listToString(p_sourceFileNameList).c_str());
+     printf ("   p_sourceFileNameList.size()               = %zu \n", p_sourceFileNameList.size());
+     printf ("   p_sourceFileNameList                      = \n      %s \n",StringUtility::listToString(p_sourceFileNameList).c_str());
 
-     printf ("   p_objectFileNameList.size()            = %zu \n", p_objectFileNameList.size());
-     printf ("   p_objectFileNameList                   = \n      %s \n",StringUtility::listToString(p_objectFileNameList).c_str());
+     printf ("   p_objectFileNameList.size()               = %zu \n", p_objectFileNameList.size());
+     printf ("   p_objectFileNameList                      = \n      %s \n",StringUtility::listToString(p_objectFileNameList).c_str());
 
-     printf ("   p_libraryFileList.size()               = %zu \n", p_libraryFileList.size());
-     printf ("   p_libraryFileList                      = \n      %s \n",StringUtility::listToString(p_libraryFileList).c_str());
+     printf ("   p_libraryFileList.size()                  = %zu \n", p_libraryFileList.size());
+     printf ("   p_libraryFileList                         = \n      %s \n",StringUtility::listToString(p_libraryFileList).c_str());
 
-     printf ("   p_librarySpecifierList.size()          = %zu \n", p_librarySpecifierList.size());
-     printf ("   p_librarySpecifierList                 = \n      %s \n",StringUtility::listToString(p_librarySpecifierList).c_str());
+     printf ("   p_librarySpecifierList.size()             = %zu \n", p_librarySpecifierList.size());
+     printf ("   p_librarySpecifierList                    = \n      %s \n",StringUtility::listToString(p_librarySpecifierList).c_str());
 
-     printf ("   p_libraryDirectorySpecifierList.size() = %zu \n", p_libraryDirectorySpecifierList.size());
-     printf ("   p_libraryDirectorySpecifierList        = \n      %s \n",StringUtility::listToString(p_libraryDirectorySpecifierList).c_str());
+     printf ("   p_libraryDirectorySpecifierList.size()    = %zu \n", p_libraryDirectorySpecifierList.size());
+     printf ("   p_libraryDirectorySpecifierList           = \n      %s \n",StringUtility::listToString(p_libraryDirectorySpecifierList).c_str());
 
-     printf ("   p_includeDirectorySpecifierList.size() = %zu \n", p_includeDirectorySpecifierList.size());
-     printf ("   p_includeDirectorySpecifierList        = \n      %s \n",StringUtility::listToString(p_includeDirectorySpecifierList).c_str());
+     printf ("   p_includeDirectorySpecifierList.size()    = %zu \n", p_includeDirectorySpecifierList.size());
+     printf ("   p_includeDirectorySpecifierList           = \n      %s \n",StringUtility::listToString(p_includeDirectorySpecifierList).c_str());
 
-     printf ("   p_compileOnly                          = %s \n",(p_compileOnly == true) ? "true" : "false");
-     printf ("   p_prelink                              = %s \n",(p_prelink     == true) ? "true" : "false");
+     printf ("   p_compileOnly                             = %s \n",(p_compileOnly == true) ? "true" : "false");
+     printf ("   p_prelink                                 = %s \n",(p_prelink     == true) ? "true" : "false");
 
-     printf ("   p_template_instantiation_mode          = %d \n",p_template_instantiation_mode);
+     printf ("   p_template_instantiation_mode             = %d \n",p_template_instantiation_mode);
 
-     printf ("   p_astMerge                             = %s \n",(p_astMerge == true) ? "true" : "false");
-     printf ("   p_astMergeCommandFile                  = %s \n",p_astMergeCommandFile.c_str());
-     printf ("   p_compilationPerformanceFile           = %s \n",p_compilationPerformanceFile.c_str());
+     printf ("   p_astMerge                                = %s \n",(p_astMerge == true) ? "true" : "false");
+     printf ("   p_astMergeCommandFile                     = %s \n",p_astMergeCommandFile.c_str());
+     printf ("   p_compilationPerformanceFile              = %s \n",p_compilationPerformanceFile.c_str());
 
   // DQ (1/16/2008): This is part of a ROSE supported mechanism for the 
   // specification of exclude/include paths/files for interpretation by 
   // the ROSE translator.
-  // printf ("   p_lookForIncludePaths                  = %s \n",(p_lookForIncludePaths == true) ? "true" : "false");
-  // printf ("   p_lookForExcludePaths                  = %s \n",(p_lookForExcludePaths == true) ? "true" : "false");
+  // printf ("   p_lookForIncludePaths                     = %s \n",(p_lookForIncludePaths == true) ? "true" : "false");
+  // printf ("   p_lookForExcludePaths                     = %s \n",(p_lookForExcludePaths == true) ? "true" : "false");
 
-     printf ("   p_includePathList.size()               = %zu \n", p_includePathList.size());
-     printf ("   p_includePathList                      = \n      %s \n",StringUtility::listToString(p_includePathList).c_str());
+     printf ("   p_includePathList.size()                  = %zu \n", p_includePathList.size());
+     printf ("   p_includePathList                         = \n      %s \n",StringUtility::listToString(p_includePathList).c_str());
 
-     printf ("   p_excludePathList.size()               = %zu \n", p_excludePathList.size());
-     printf ("   p_excludePathList                      = \n      %s \n",StringUtility::listToString(p_excludePathList).c_str());
+     printf ("   p_excludePathList.size()                  = %zu \n", p_excludePathList.size());
+     printf ("   p_excludePathList                         = \n      %s \n",StringUtility::listToString(p_excludePathList).c_str());
 
-     printf ("   p_includeFileList.size()               = %zu \n", p_includeFileList.size());
-     printf ("   p_includeFileList                      = \n      %s \n",StringUtility::listToString(p_includeFileList).c_str());
+     printf ("   p_includeFileList.size()                  = %zu \n", p_includeFileList.size());
+     printf ("   p_includeFileList                         = \n      %s \n",StringUtility::listToString(p_includeFileList).c_str());
 
-     printf ("   p_excludeFileList.size()               = %zu \n", p_excludeFileList.size());
-     printf ("   p_excludeFileList                      = \n      %s \n",StringUtility::listToString(p_excludeFileList).c_str());
+     printf ("   p_excludeFileList.size()                  = %zu \n", p_excludeFileList.size());
+     printf ("   p_excludeFileList                         = \n      %s \n",StringUtility::listToString(p_excludeFileList).c_str());
 
-     printf ("   p_preincludeFileList.size()            = %zu \n", p_preincludeFileList.size());
-     printf ("   p_preincludeFileList                   = \n      %s \n",StringUtility::listToString(p_preincludeFileList).c_str());
+     printf ("   p_preincludeFileList.size()               = %zu \n", p_preincludeFileList.size());
+     printf ("   p_preincludeFileList                      = \n      %s \n",StringUtility::listToString(p_preincludeFileList).c_str());
 
-     printf ("   p_preincludeDirectoryList.size()       = %zu \n", p_preincludeDirectoryList.size());
-     printf ("   p_preincludeDirectoryList              = \n      %s \n",StringUtility::listToString(p_preincludeDirectoryList).c_str());
+     printf ("   p_preincludeDirectoryList.size()          = %zu \n", p_preincludeDirectoryList.size());
+     printf ("   p_preincludeDirectoryList                 = \n      %s \n",StringUtility::listToString(p_preincludeDirectoryList).c_str());
 
   // DQ (2/4/2009): Moved from SgFile to SgProject.
-     printf ("   p_binary_only()                        = %s \n",(p_binary_only == true) ? "true" : "false");
+     printf ("   p_binary_only()                           = %s \n",(p_binary_only == true) ? "true" : "false");
 
   // DQ (9/15/2013): Added debugging support for a previously missed data member.
-     printf ("   p_frontendConstantFolding              = %s \n",(p_frontendConstantFolding == true) ? "true" : "false");
+     printf ("   p_frontendConstantFolding                 = %s \n",(p_frontendConstantFolding == true) ? "true" : "false");
 
   // DQ (9/15/2013): Added debugging support for a new data member.
-     printf ("   p_build_generated_file_in_same_directory_as_input_file = %s \n",(p_build_generated_file_in_same_directory_as_input_file == true) ? "true" : "false");
+     printf ("   p_unparse_in_same_directory_as_input_file = %s \n",(p_unparse_in_same_directory_as_input_file == true) ? "true" : "false");
 
      printf ("In this project: numberOfFiles() = %d \n",numberOfFiles());
      for (int i = 0; i < numberOfFiles(); i++)
