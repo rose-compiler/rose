@@ -1311,7 +1311,7 @@ void Analyzer::semanticFoldingOfTransitionGraph() {
       bool res=estateSet.erase(**i);
       if(res==false) {
         cerr<< "Error: Semantic folding of transition graph: new estate could not be deleted."<<endl;
-		cerr<< (**i).toString()<<endl;
+		//cerr<< (**i).toString()<<endl;
         //exit(1);
       }
     }
