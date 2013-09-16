@@ -432,7 +432,7 @@ ROSE_DLL_API SgDeleteExp* buildDeleteExp(SgExpression* variable,
                             SgFunctionDeclaration* deleteOperatorDeclaration);
  
 // DQ (1/25/2013): Added support for typeId operators.
-SgTypeIdOp* buildTypeIdOp(SgExpression *operand_expr, SgType *operand_type, SgType *expression_type);
+SgTypeIdOp* buildTypeIdOp(SgExpression *operand_expr, SgType *operand_type);
 
 
 #undef BUILD_UNARY_PROTO
@@ -573,6 +573,11 @@ ROSE_DLL_API SgVarRefExp * buildVarRefExp(SgInitializedName* initname, SgScopeSt
 /*! It will declare a hidden int varName  at the specified scope to cheat the AST consistence tests.
  */
 ROSE_DLL_API SgVarRefExp* buildOpaqueVarRefExp(const std::string& varName,SgScopeStatement* scope=NULL);
+
+// DQ (9/4/2013): Added support for building compound literals (similar to a SgVarRefExp).
+//! Build function for compound literals (uses a SgVariableSymbol and is similar to buildVarRefExp_nfi()).
+SgCompoundLiteralExp* buildCompoundLiteralExp_nfi(SgVariableSymbol* varSymbol);
+SgCompoundLiteralExp* buildCompoundLiteralExp(SgVariableSymbol* varSymbol);
 
 //! Build a Fortran numeric label ref exp
 ROSE_DLL_API SgLabelRefExp * buildLabelRefExp(SgLabelSymbol * s);

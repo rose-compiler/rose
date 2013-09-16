@@ -7160,6 +7160,35 @@ std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariab
     return std::make_pair(tempVarDeclaration, varRefExpression);
 }
 
+// This function creates a temporary variable for a given expression in the given scope
+// This is different from SageInterface::createTempVariableForExpression in that it does not
+// try to be smart to create pointers to reference types and so on. The tempt is initialized to expression.
+// The caller is responsible for setting the parent of SgVariableDeclaration since buildVariableDeclaration
+// may not set_parent() when the scope stack is empty. See programTransformation/extractFunctionArgumentsNormalization/ExtractFunctionArguments.C for sample usage.
+
+std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariableAndReferenceForExpression
+(SgExpression* expression, SgScopeStatement* scope)
+{
+    SgType* expressionType = expression->get_type();
+    SgType* variableType = expressionType;
+
+    //Generate a unique variable name
+    string name = generateUniqueVariableName(scope);
+    
+    //initialize the variable in its declaration
+    SgAssignInitializer* initializer = NULL;
+    SgExpression* initExpressionCopy = SageInterface::copyExpression(expression);
+    initializer = SageBuilder::buildAssignInitializer(initExpressionCopy);
+    
+    SgVariableDeclaration* tempVarDeclaration = SageBuilder::buildVariableDeclaration(name, variableType, initializer, scope);
+    ROSE_ASSERT(tempVarDeclaration != NULL);
+    
+    //Build the variable reference expression that can be used in place of the original expression
+    SgExpression* varRefExpression = SageBuilder::buildVarRefExp(tempVarDeclaration);    
+    return std::make_pair(tempVarDeclaration, varRefExpression);
+}
+
+
 // This code is based on OpenMP translator's ASTtools::replaceVarRefExp() and astInling's replaceExpressionWithExpression()
 // Motivation: It involves the parent node to replace a VarRefExp with a new node
 // Used to replace shared variables with the dereference expression of their addresses

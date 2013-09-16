@@ -1102,13 +1102,19 @@ SageBuilder::buildInitializedName ( const char* name, SgType* type)
 
 SgInitializedName *
 SageBuilder::buildInitializedName_nfi ( const SgName & name, SgType* type, SgInitializer* init)
-{
-  ROSE_ASSERT(type != NULL);
-  SgInitializedName* initializedName = new SgInitializedName(name,type,init);
-  ROSE_ASSERT(initializedName);
-  setOneSourcePositionNull(initializedName);
-  return initializedName;
-}
+   {
+     ROSE_ASSERT(type != NULL);
+
+     SgInitializedName* initializedName = new SgInitializedName(name,type,init);
+     ROSE_ASSERT(initializedName != NULL);
+
+  // DQ (9/4/2013): Added test.
+     ROSE_ASSERT(init == NULL || init->get_parent() == initializedName);
+
+     setOneSourcePositionNull(initializedName);
+
+     return initializedName;
+   }
 
 //-----------------------------------------------
 // could have two declarations for a same variable
@@ -5639,10 +5645,10 @@ SgDeleteExp* SageBuilder::buildDeleteExp(SgExpression* variable,
 }
 
 SgTypeIdOp*
-SageBuilder::buildTypeIdOp(SgExpression *operand_expr, SgType *operand_type, SgType *expression_type)
+SageBuilder::buildTypeIdOp(SgExpression *operand_expr, SgType *operand_type)
    {
   // DQ (1/25/2013): Added support for typeId operators.
-     SgTypeIdOp* result = new SgTypeIdOp(operand_expr,operand_type,expression_type);
+     SgTypeIdOp* result = new SgTypeIdOp(operand_expr,operand_type);
      ROSE_ASSERT(result != NULL);
      setOneSourcePositionForTransformation(result);
      return result;
@@ -6422,8 +6428,9 @@ SgVarRefExp *
 SageBuilder::buildVarRefExp(SgVariableSymbol* sym)
    {
      SgVarRefExp *varRef = new SgVarRefExp(sym);
-     setOneSourcePositionForTransformation(varRef);
      ROSE_ASSERT(varRef);
+
+     setOneSourcePositionForTransformation(varRef);
 
 #if 0
      printf ("In SageBuilder::buildVarRefExp(SgVariableSymbol* sym): Returning SgVarRefExp = %p \n",varRef);
@@ -6436,8 +6443,9 @@ SgVarRefExp *
 SageBuilder::buildVarRefExp_nfi(SgVariableSymbol* sym)
    {
      SgVarRefExp *varRef = new SgVarRefExp(sym);
-     setOneSourcePositionNull(varRef);
      ROSE_ASSERT(varRef);
+
+     setOneSourcePositionNull(varRef);
 
 #if 0
      printf ("In SageBuilder::buildVarRefExp_nfi(SgVariableSymbol* sym): Returning SgVarRefExp = %p \n",varRef);
@@ -6488,6 +6496,42 @@ SageBuilder::buildOpaqueVarRefExp(const std::string& name,SgScopeStatement* scop
 
      return result;
    } // buildOpaqueVarRefExp()
+
+
+// DQ (9/4/2013): Added support for building compound literals (similar to a SgVarRefExp).
+//! Build function for compound literals (uses a SgVariableSymbol and is similar to buildVarRefExp_nfi()).
+SgCompoundLiteralExp*
+SageBuilder::buildCompoundLiteralExp_nfi(SgVariableSymbol* varSymbol)
+   {
+     SgCompoundLiteralExp *compoundLiteral = new SgCompoundLiteralExp(varSymbol);
+     ROSE_ASSERT(compoundLiteral != NULL);
+
+     setOneSourcePositionNull(compoundLiteral);
+
+#if 0
+     printf ("In SageBuilder::buildCompoundLiteralExp_nfi(SgVariableSymbol* sym): Returning SgCompoundLiteralExp = %p \n",compoundLiteral);
+#endif
+
+     return compoundLiteral;
+   }
+
+// DQ (9/4/2013): Added support for building compound literals (similar to a SgVarRefExp).
+//! Build function for compound literals (uses a SgVariableSymbol and is similar to buildVarRefExp()).
+SgCompoundLiteralExp*
+SageBuilder::buildCompoundLiteralExp(SgVariableSymbol* varSymbol)
+   {
+     SgCompoundLiteralExp *compoundLiteral = new SgCompoundLiteralExp(varSymbol);
+     ROSE_ASSERT(compoundLiteral != NULL);
+
+     setOneSourcePositionForTransformation(compoundLiteral);
+
+#if 0
+     printf ("In SageBuilder::buildCompoundLiteralExp(SgVariableSymbol* sym): Returning SgCompoundLiteralExp = %p \n",compoundLiteral);
+#endif
+
+     return compoundLiteral;
+   }
+
 
 //! Build a Fortran numeric label ref exp
 SgLabelRefExp * SageBuilder::buildLabelRefExp(SgLabelSymbol * s)
