@@ -1767,7 +1767,8 @@ Grammar::setUpSupport ()
   // located, so that when the generated rose_*.c file is compiled (with the backend compiler, e.g. gcc) it can use
   // the identical rules for resolving head files as it would have for the original input file (had it been compiled
   // using the backend compiler instead).
-     Project.setDataPrototype("bool", "build_generated_file_in_same_directory_as_input_file", "= false",
+  // DQ (9/16/2013): Changed name from "build_generated_file_in_same_directory_as_input_file" to "unparse_in_same_directory_as_input_file".
+     Project.setDataPrototype("bool", "unparse_in_same_directory_as_input_file", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",

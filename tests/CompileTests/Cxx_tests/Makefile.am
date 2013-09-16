@@ -732,6 +732,7 @@ hpctoolkit:
 
 check-local:
 	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) test_unparse_includes_option
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Cxx_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"

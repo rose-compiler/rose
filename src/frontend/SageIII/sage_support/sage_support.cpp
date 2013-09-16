@@ -4660,8 +4660,8 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
        // ROSE_ASSERT(project != NULL);
           if (project != NULL)
              {
-               printf ("In SgFile::compileOutput(): project->get_build_generated_file_in_same_directory_as_input_file() = %s \n",project->get_build_generated_file_in_same_directory_as_input_file() ? "true" : "false");
-               if (project->get_build_generated_file_in_same_directory_as_input_file() == true)
+               printf ("In SgFile::compileOutput(): project->get_unparse_in_same_directory_as_input_file() = %s \n",project->get_unparse_in_same_directory_as_input_file() ? "true" : "false");
+               if (project->get_unparse_in_same_directory_as_input_file() == true)
                   {
                     outputFilename = ROSE::getPathFromFileName(get_sourceFileNameWithPath()) + "/rose_" + get_sourceFileNameWithoutPath();
 
