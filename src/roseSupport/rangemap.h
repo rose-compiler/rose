@@ -23,6 +23,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <vector>
 
 /* Define this if you want the class to do fairly extensive testing of the consistency of the map after every operation.  Note
  * that this substantially increases execution time.  The NDEBUG preprocessor symbol must not be defined, or else the check()
@@ -189,6 +190,35 @@ public:
             return *this;
         assert(abuts_lt(right));
         return Range::inin(first(), right.last());
+    }
+
+    /** Erase part of a range to return zero, one, or two new ranges.  The possible situations are:
+     * <ol>
+     *   <li>The range to erase can be a superset of this range, in which case this entire range is erased and nothing is
+     *       returned.</li>
+     *   <li>The range to erase can be empty, in which case this range is returned.</li>
+     *   <li>The range to erase does not intersect this range, in which case this range is returned.</li>
+     *   <li>The range to erase can overlap the low end of this range, in which case only the non-overlapping high end of this
+     *       range is returned.</li>
+     *   <li>The range to erase can overlap the high end of this range, in which case only the non-overlapping low end of this
+     *       range is returned.</li>
+     *   <li> The range  to erase overlaps only the middle part of this range, in which case two ranges are returned: the
+     *        non-overlapping low end of this range, and the non-overlapping high end of this range.</li>
+     * </ol>
+     */
+    std::vector<Range> erase(const Range &to_erase) const {
+        std::vector<Range> retval;
+        if (to_erase.empty() || distinct(to_erase)) {
+            retval.push_back(*this);
+        } else if (contained_in(to_erase)) {
+            // void
+        } else {
+            if (begins_before(to_erase))
+                retval.push_back(Range::inin(first(), to_erase.first()-1));
+            if (ends_after(to_erase))
+                retval.push_back(Range::inin(to_erase.last()+1, last()));
+        }
+        return retval;
     }
 
     /** Intersection of two ranges. */
