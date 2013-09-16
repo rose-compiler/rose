@@ -1620,6 +1620,11 @@ void Analyzer::runSolver4() {
 		  Edge e=*i;
 		  list<EState> newEStateList;
 		  newEStateList=transferFunction(e,currentEStatePtr);
+          if(isTerminationRelevantLabel(e.source)) {
+            #pragma omp atomic
+            analyzedSemanticFoldingNode++;
+          }
+
 		  //cout << "DEBUG: transfer at edge:"<<e.toString()<<" succ="<<newEStateList.size()<< endl;
 		  for(list<EState>::iterator nesListIter=newEStateList.begin();
 			  nesListIter!=newEStateList.end();
