@@ -83,6 +83,7 @@ include_HEADERS =					\
     instructionSemantics/SMTSolver.h			\
     instructionSemantics/SymbolicSemantics.h		\
     instructionSemantics/SymbolicSemantics2.h		\
+    instructionSemantics/TestSemantics2.h		\
     instructionSemantics/TraceSemantics2.h		\
     instructionSemantics/YicesSolver.h			\
     instructionSemantics/flowEquations.h		\

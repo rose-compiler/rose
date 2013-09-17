@@ -32,6 +32,7 @@
     using namespace BinaryAnalysis::InstructionSemantics;
 #elif SEMANTIC_API == NEW_API
 #   include "DispatcherX86.h"
+#   include "TestSemantics2.h"
     using namespace BinaryAnalysis::InstructionSemantics2;
 #else
 #   error "invalid value for SEMANTIC_API"
@@ -75,7 +76,12 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 #else
 #   include "NullSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        return NullSemantics::RiscOperators::instance(regdict);
+        BaseSemantics::RiscOperatorsPtr retval = NullSemantics::RiscOperators::instance(regdict);
+        TestSemantics<
+            NullSemantics::SValuePtr, BaseSemantics::RegisterStateX86Ptr, BaseSemantics::MemoryCellListPtr,
+            BaseSemantics::StatePtr, NullSemantics::RiscOperatorsPtr> tester;
+        tester.test(retval);
+        return retval;
     }
 #endif
 
@@ -89,7 +95,12 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 #else
 #   include "PartialSymbolicSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        return PartialSymbolicSemantics::RiscOperators::instance(regdict);
+        BaseSemantics::RiscOperatorsPtr retval = PartialSymbolicSemantics::RiscOperators::instance(regdict);
+        TestSemantics<PartialSymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
+                      BaseSemantics::MemoryCellListPtr, BaseSemantics::StatePtr,
+                      PartialSymbolicSemantics::RiscOperatorsPtr> tester;
+        tester.test(retval);
+        return retval;
     }
 #endif
 
@@ -108,6 +119,10 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 #ifndef TRACE // usedef AND tracing is a little much for the eyes
         retval->set_compute_usedef();
 #endif
+        TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
+                      SymbolicSemantics::MemoryStatePtr, BaseSemantics::StatePtr,
+                      SymbolicSemantics::RiscOperatorsPtr> tester;
+        tester.test(retval);
         return retval;
     }
 #endif
@@ -122,7 +137,12 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 #else
 #   include "IntervalSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        return IntervalSemantics::RiscOperators::instance(regdict);
+        BaseSemantics::RiscOperatorsPtr retval = IntervalSemantics::RiscOperators::instance(regdict);
+        TestSemantics<IntervalSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
+                      IntervalSemantics::MemoryStatePtr, BaseSemantics::StatePtr,
+                      IntervalSemantics::RiscOperatorsPtr> tester;
+        tester.test(retval);
+        return retval;
     }
 #endif
 
