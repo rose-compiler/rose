@@ -257,7 +257,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                SgIncludeDirectiveStatement* includeDirectiveStatement = isSgIncludeDirectiveStatement(stmt);
                if (includeDirectiveStatement != NULL) 
                   {
-                    if (includeDirectiveStatement -> get_headerFileBody() -> get_file_info() -> get_filenameString() == sourceFilename)
+                    if (includeDirectiveStatement->get_headerFileBody()->get_file_info()->get_filenameString() == sourceFilename)
                        {
                          statementInFile = true;
                        }
@@ -1666,12 +1666,41 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                  // DQ (9/16/2013): This is an error for C style comments spanning more than one line.
                  // To fix this just unparse the comment directly, since the syntax to make it a comment 
                  // is included in the string.
-
                  // Original comment: If we are unparsing the include files then we can simplify the 
                  // CPP directive processing and unparse them all as comments!
                  // Comments can also be unparsed as comments (I think!).
                  // curprint (  "// " + (*i)->getString());
-                    curprint((*i)->getString());
+
+                 // DQ (9/16/2013): New version of code.
+                    switch ( (*i)->getTypeOfDirective() )
+                       {
+                      // Comments don't have to be further commented
+                         case PreprocessingInfo::FortranStyleComment:
+                         case PreprocessingInfo::F90StyleComment:
+                         case PreprocessingInfo::C_StyleComment:
+                         case PreprocessingInfo::CplusplusStyleComment:
+                              if ( !info.SkipComments() )
+                                 {
+                                   curprint ( (*i)->getString());
+                                 }
+                              break;
+
+                         default:
+                            {
+                              if ((*i)->getNumberOfLines() == 1)
+                                 {
+                                // DQ (9/16/2013): Commented out single line CPP directives is easy, so go ahead and do that.
+                                // This used later style C comment syntax.  This permits the user to see the original CPP
+                                // directives in a way that they will have no effect.
+                                   curprint("// " + (*i)->getString());
+                                 }
+                                else
+                                 {
+                                // DQ (9/16/2013): Multi-line CPP directives are a bit more complex so ignore them.
+                                   curprint("/* multi-line CPP directive ignored (no robust way to comment them out yet implemented) */\n");
+                                 }
+                            }
+                       }
                   }
                  else
                   {
@@ -1687,10 +1716,17 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                          case PreprocessingInfo::CpreprocessorIncludeNextDeclaration:
                               if ( !info.SkipComments() )
                                  {
+                                   ROSE_ASSERT(unp->opt.get_unparse_includes_opt() == false);
+#if 1
+                                // DQ (9/16/2013): This is simpler code.
+                                   curprint((*i)->getString());
+#else
+                                // DQ (9/16/2013): This predicate should be always false.
                                    if (unp->opt.get_unparse_includes_opt() == true)
                                         curprint ( string("// " ) + (*i)->getString());
                                      else
                                         curprint ( (*i)->getString());
+#endif
                                  }
                               break;
 
