@@ -5812,7 +5812,9 @@ Unparse_ExprStmt::unparseVarArgStartOp(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT (lhsOperand != NULL);
      ROSE_ASSERT (rhsOperand != NULL);
 
-     curprint ( "va_start(");
+  // DQ (9/16/2013): This was a problem pointed out by Phil Miller, it only has to be correct to make the resulting code link properly.
+  // curprint ( "va_start(");
+     curprint ( "__builtin_va_start(");
      unparseExpression(lhsOperand,info);
      curprint ( ",");
      unparseExpression(rhsOperand,info);
@@ -5829,7 +5831,9 @@ Unparse_ExprStmt::unparseVarArgStartOneOperandOp(SgExpression* expr, SgUnparse_I
      SgExpression* operand = varArgStart->get_operand_expr();
      ROSE_ASSERT (operand != NULL);
 
-     curprint ( "va_start(");
+  // DQ (9/16/2013): This was a problem pointed out by Phil Miller, it only has to be correct to make the resulting code link properly.
+  // curprint ( "va_start(");
+     curprint ( "__builtin_va_start(");
      unparseExpression(operand,info);
      curprint ( ")");
    }
@@ -5867,7 +5871,9 @@ Unparse_ExprStmt::unparseVarArgEndOp(SgExpression* expr, SgUnparse_Info& info)
      SgExpression* operand = varArgEnd->get_operand_expr();
      ROSE_ASSERT (operand != NULL);
 
-     curprint ( "va_end(");
+  // DQ (9/16/2013): This was a problem pointed out by Phil Miller, it only has to be correct to make the resulting code link properly.
+  // curprint("va_end(");
+     curprint("__builtin_va_end(");
      unparseExpression(operand,info);
      curprint ( ")");
    }
@@ -5885,7 +5891,9 @@ Unparse_ExprStmt::unparseVarArgCopyOp(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT (lhsOperand != NULL);
      ROSE_ASSERT (rhsOperand != NULL);
 
-     curprint ( "va_copy(");
+  // DQ (9/16/2013): This was a problem pointed out by Phil Miller, it only has to be correct to make the resulting code link properly.
+  // curprint("va_copy(");
+     curprint("__builtin_va_copy(");
      unparseExpression(lhsOperand,info);
      curprint ( ",");
      unparseExpression(rhsOperand,info);
