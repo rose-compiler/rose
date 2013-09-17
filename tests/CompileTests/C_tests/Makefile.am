@@ -518,6 +518,9 @@ if !ROSE_USE_CLANG_FRONTEND
 endif
 ROSE_FLAGS += -w
 
+# TOO1 (2013-09-17): Required by test2005_168.o to find "rosedll.h",
+#                    introduced by CMake work.
+ROSE_FLAGS += -I$(top_srcdir)/src/frontend/SageIII/
 
 PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}
