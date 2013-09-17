@@ -243,6 +243,9 @@ create table semantic_funcsim (
        path_ave_euclidean_d double precision,   -- Path sensistive average euclidean distance
        path_min_euclidean_d double precision,   -- Path sensistive minimum euclidean distance
        path_max_euclidean_d double precision,   -- Path sensistive maximum euclidean distance
+       path_ave_euclidean_d_ratio double precision,   -- Path sensistive average euclidean distance ratio
+       path_min_euclidean_d_ratio double precision,   -- Path sensistive minimum euclidean distance ratio
+       path_max_euclidean_d_ratio double precision,   -- Path sensistive maximum euclidean distance ratio
        cmd bigint references semantic_history(hashkey) -- command that set the precision on this row
 );
 

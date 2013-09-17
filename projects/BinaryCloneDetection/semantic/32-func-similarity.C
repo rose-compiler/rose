@@ -565,7 +565,7 @@ similarity(const FuncInfo &func1_info, const FuncInfo &func2_info,
                   max_euclidean_d = std::max(max_euclidean_d, cur_euclidean_d);
                   min_euclidean_d = std::min(min_euclidean_d, cur_euclidean_d);
 
-                  int difference = abs(f1_syntactic_ninsns - f2_syntactic_ninsns);
+                  int difference = std::max(f1_syntactic_ninsns, f2_syntactic_ninsns);
                   if ( difference != 0  ){
                     cur_euclidean_d_ratio = 100.0*cur_euclidean_d/difference;
                     euclidean_d_ratio    += cur_euclidean_d_ratio;
@@ -875,8 +875,9 @@ main(int argc, char *argv[])
                                                             // 5           6
                                                             " relation_id, cmd, hamming_d, euclidean_d, euclidean_d_ratio,"
                                                             "path_ave_hamming_d, path_min_hamming_d, path_max_hamming_d,"
-                                                            "path_ave_euclidean_d, path_min_euclidean_d, path_max_euclidean_d)"
-                                                            " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?,?)");
+                                                            "path_ave_euclidean_d, path_min_euclidean_d, path_max_euclidean_d,"
+                                                            "path_ave_euclidean_d_ratio, path_min_euclidean_d_ratio, path_max_euclidean_d_ratio)"
+                                                            " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?,?,?,?,?)");
     CachedOutputs all_outputs;
     FunctionOutputs func_outputs;
     load_function_infos();
@@ -980,6 +981,10 @@ main(int argc, char *argv[])
         stmt->bind(13, output_sim.ave_euclidean_d);
         stmt->bind(14, output_sim.min_euclidean_d);
         stmt->bind(15, output_sim.max_euclidean_d);
+        stmt->bind(16, output_sim.ave_euclidean_d_ratio);
+        stmt->bind(17, output_sim.min_euclidean_d_ratio);
+        stmt->bind(18, output_sim.max_euclidean_d_ratio);
+        
         stmt->execute();
     }
     
