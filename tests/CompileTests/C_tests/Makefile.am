@@ -342,6 +342,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_71.c \
      test2013_72.c \
      test2013_73.c \
+     test2013_74.c \
      math.c \
      complex_01.c \
      constants.c
@@ -559,7 +560,17 @@ $(TEST_Exe_Objects): %.o: $(srcdir)/%.c $(testTranslator)
 test_build_generated_file_in_same_directory_as_input_file: $(testTranslator)
 	mkdir -p test_directory
 	cp $(srcdir)/test2013_73.c test_directory/test2013_73.c
-	$(testTranslator) -rose:build_generated_file_in_same_directory_as_input_file $(ROSE_FLAGS) -c test_directory/test2013_73.c -o test_directory/test2013_73.o
+	$(testTranslator) -rose:unparse_in_same_directory_as_input_file $(ROSE_FLAGS) -c test_directory/test2013_73.c -o test_directory/test2013_73.o
+
+# DQ (9/13/2013): Added new test for -rose:unparse_includes (which has a bug in how it unparses C++ style comments
+# and should maybe not be unparsing declarations that are front-end specific (e.g. builtin function declarations).
+test_unparse_includes_option: $(TEST_TRANSLATOR)
+	$(testTranslator) -rose:unparse_includes $(ROSE_FLAGS) -c $(srcdir)/test2013_75.c -o test2013_75_unparse_headers.o
+
+# DQ (9/16/2013): Test linking the resulting translated file. Phil Miller reported an error and the issue
+# is that va_start() and va_end() must be unparsed to be __builtin_va_start() and __builtin_va_end() (at least for GNU).
+test_unparse_includes_option_with_link: $(TEST_TRANSLATOR)
+	$(testTranslator) -rose:unparse_includes $(ROSE_FLAGS) $(srcdir)/test2013_76.c -o test2013_76_unparse_headers
 
 # Liao 11/19/2009
 # Custom tests to test rose translators as a linker (generating the final executables) for multiple files
@@ -606,14 +617,18 @@ check-local:
 	@$(MAKE) $(PASSING_TEST_Objects)
 #	@$(MAKE) caller.o caller.out
 	@$(MAKE) test2012_145.o
+	@$(MAKE) test_build_generated_file_in_same_directory_as_input_file
+	@$(MAKE) test_unparse_includes_option
+	@$(MAKE) test_unparse_includes_option_with_link
 	@echo "*********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/C_tests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************"
 
 clean-local:
-	rm -f *.o rose_*.[cC] rose_performance_report_lockfile.lock *.out
+	rm -f *.o rose_*.[cC] rose_performance_report_lockfile.lock *.out *.dot
 	rm -rf QMTest
 	rm -rf test_directory
+	rm -rf test2013_76_unparse_headers
 
 ################################################################################
 #
