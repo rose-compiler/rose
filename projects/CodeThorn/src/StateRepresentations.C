@@ -550,6 +550,7 @@ TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(const EState* estate
   * \date 2012.
  */
 void TransitionGraph::reduceEState(const EState* estate) {
+  assert(0);
   /* description of essential operations:
    *   inedges: (n_i,b)
    *   outedges: (b,n_j) 
@@ -751,9 +752,7 @@ void TransitionGraph::reduceEState2(const EState* estate) {
     set<Transition> newTransitions;
     for(TransitionPtrSet::iterator i=in.begin();i!=in.end();++i) {
       for(TransitionPtrSet::iterator j=out.begin();j!=out.end();++j) {
-        Edge newEdge((*i)->source->label(),(*j)->target->label());
-        newEdge.addTypes((*i)->edge.types());
-        newEdge.addTypes((*j)->edge.types());
+        Edge newEdge((*i)->source->label(),EDGE_PATH,(*j)->target->label());
         Transition t((*i)->source,newEdge,(*j)->target);
         newTransitions.insert(t);
         //assert(newTransitions.find(t)!=newTransitions.end());
