@@ -1312,7 +1312,7 @@ void Analyzer::semanticFoldingOfTransitionGraph() {
       if(res==false) {
         cerr<< "Error: Semantic folding of transition graph: new estate could not be deleted."<<endl;
 		//cerr<< (**i).toString()<<endl;
-        //exit(1);
+        exit(1);
       }
     }
 	if(boolOptions["report-semantic-fold"]) {
@@ -1544,7 +1544,7 @@ void Analyzer::runSolver3() {
 }
 
 void Analyzer::runSolver4() {
-  flow.boostify();
+  //flow.boostify();
   size_t prevStateSetSize=0; // force immediate report at start
   int analyzedSemanticFoldingNode=0;
   int threadNum;
