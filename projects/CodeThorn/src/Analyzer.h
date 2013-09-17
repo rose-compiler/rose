@@ -92,10 +92,14 @@ namespace CodeThorn {
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
     void printStatusMessage(bool);
     bool isLTLRelevantLabel(Label label);
+    bool isStdIOLabel(Label label);
+	bool isStartLabel(Label label);
     set<const EState*> nonLTLRelevantEStates();
     bool isTerminationRelevantLabel(Label label);
     
     // 5 experimental functions
+	// reduces all states different to stdin and stdout.
+    void stdIOFoldingOfTransitionGraph();
     void semanticFoldingOfTransitionGraph();
     bool checkEStateSet();
     bool isConsistentEStatePtrSet(set<const EState*> estatePtrSet);

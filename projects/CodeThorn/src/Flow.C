@@ -35,7 +35,13 @@ void Edge::addType(EdgeType et) {
   // perform some consistency checks
   bool ok=true;
   // for EDGE_PATH we allow any combination, otherwise we check
-
+  if(et==EDGE_PATH) {
+	_types.clear();
+	_types.insert(EDGE_PATH);
+	return;
+  }
+  if(isType(EDGE_PATH))
+	return;
   if(!isType(EDGE_PATH) && !(et==EDGE_PATH) && !boolOptions["semantic-fold"] && !boolOptions["post-semantic-fold"]) {
     switch(et) {
     case EDGE_FORWARD: if(isType(EDGE_BACKWARD)) ok=false;break;
@@ -110,6 +116,7 @@ string Edge::typeToString(EdgeType et) {
   case EDGE_EXTERNAL: return "external";
   case EDGE_CALL: return "call";
   case EDGE_CALLRETURN: return "callreturn";
+  case EDGE_PATH: return "PATH";
   default:
     cerr<<"Error: Edge-type is not of 'enum EdgeType'.";
     exit(1);

@@ -651,11 +651,15 @@ int main( int argc, char * argv[] ) {
     cout << "=============================================================="<<endl;
   }
   if(boolOptions["tg-ltl-reduced"]) {
+#if 1
+	analyzer.stdIOFoldingOfTransitionGraph();
+#else
     cout << "(Experimental) Reducing transition graph ..."<<endl;
     set<const EState*> xestates=analyzer.nonLTLRelevantEStates();
     cout << "Size of transition graph before reduction: "<<analyzer.getTransitionGraph()->size()<<endl;
     cout << "Number of EStates to be reduced: "<<xestates.size()<<endl;
     analyzer.getTransitionGraph()->reduceEStates(xestates);
+#endif
     cout << "Size of transition graph after reduction : "<<analyzer.getTransitionGraph()->size()<<endl;
     cout << "=============================================================="<<endl;
   }

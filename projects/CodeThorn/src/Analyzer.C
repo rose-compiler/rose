@@ -122,11 +122,24 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset, In
 
 bool Analyzer::isLTLRelevantLabel(Label label) {
   bool t;
+  t=isStdIOLabel(label)
+	|| getLabeler()->isStdOutLabel(label)
+	|| getLabeler()->isStdErrLabel(label)
+	|| isTerminationRelevantLabel(label)
+ 	|| isStartLabel(label) // we keep the start state
+    ;
+  //cout << "INFO: L"<<label<<": "<<SgNodeHelper::nodeToString(getLabeler()->getNode(label))<< "LTL: "<<t<<endl;
+  return t;
+}
+
+bool Analyzer::isStartLabel(Label label) {
+  return getTransitionGraph()->getStartLabel()==label;
+}
+
+bool Analyzer::isStdIOLabel(Label label) {
+  bool t;
   t=(getLabeler()->isStdInLabel(label)
      || getLabeler()->isStdOutLabel(label)
-     || getLabeler()->isStdErrLabel(label)
-     || isTerminationRelevantLabel(label)
-	 || (getTransitionGraph()->getStartLabel()==label) // we keep the start state
 	 )
     ;
   //cout << "INFO: L"<<label<<": "<<SgNodeHelper::nodeToString(getLabeler()->getNode(label))<< "LTL: "<<t<<endl;
@@ -1274,12 +1287,26 @@ void Analyzer::deleteNonRelevantEStates() {
 	cout << "STATUS: Reduced estateSet from "<<numEStatesBefore<<" to "<<numEStatesAfter<<" estates."<<endl;
 }
 
+void Analyzer::stdIOFoldingOfTransitionGraph() {
+  cout << "STATUS: stdio-folding: computing states to fold."<<endl;
+  assert(estateWorkList.size()==0);
+  set<const EState*> toReduceSet;
+  for(EStateSet::iterator i=estateSet.begin();i!=estateSet.end();++i) {
+	Label lab=(*i).label();
+	if(!isStdIOLabel(lab) && !isStartLabel(lab)) {
+	  toReduceSet.insert(&(*i));
+	}
+  }
+  cout << "STATUS: stdio-folding: "<<toReduceSet.size()<<" states to fold."<<endl;
+  getTransitionGraph()->reduceEStates2(toReduceSet);
+  cout << "STATUS: stdio-folding: finished."<<endl;
+}
+
 void Analyzer::semanticFoldingOfTransitionGraph() {
   //#pragma omp critical // in conflict with TransitionGraph.add ...
   {
     //cout << "STATUS: (Experimental) semantic folding of transition graph ..."<<endl;
     //assert(checkEStateSet());
-    set<const EState*> xestates0;
     if(boolOptions["post-semantic-fold"]) {
 	  cout << "STATUS: post-semantic folding: computing states to fold."<<endl;
 	} 
