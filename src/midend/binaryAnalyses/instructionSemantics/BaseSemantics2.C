@@ -68,18 +68,6 @@ Allocator SValue::allocator;
  *                                      RegisterStateGeneric
  *******************************************************************************************************************************/
 
-RegisterStatePtr
-RegisterStateGeneric::create(const SValuePtr &protoval, const RegisterDictionary *regdict) const
-{
-    return RegisterStatePtr(new RegisterStateGeneric(protoval, regdict));
-}
-
-RegisterStatePtr
-RegisterStateGeneric::clone() const
-{
-    return RegisterStatePtr(new RegisterStateGeneric(*this));
-}
-
 void
 RegisterStateGeneric::clear()
 {
@@ -92,6 +80,17 @@ RegisterStateGeneric::zero()
 {
     registers.clear();
     init_to_zero = true;
+}
+
+void
+RegisterStateGeneric::initialize()
+{
+    clear();
+    std::vector<RegisterDescriptor> regs = regdict->get_largest_registers();
+    for (size_t i=0; i<regs.size(); ++i) {
+        SValuePtr val = get_protoval()->undefined_(regs[i].get_nbits());
+        registers[RegStore(regs[i])].push_back(RegPair(regs[i], val));
+    }
 }
 
 static bool
@@ -256,6 +255,15 @@ RegisterStateGeneric::traverse(Visitor &visitor)
 }
 
 void
+RegisterStateGeneric::deep_copy_values()
+{
+    for (Registers::iterator ri=registers.begin(); ri!=registers.end(); ++ri) {
+        for (RegPairs::iterator pi=ri->second.begin(); pi!=ri->second.end(); ++pi)
+            pi->value = pi->value->copy();
+    }
+}
+
+void
 RegisterStateGeneric::print(std::ostream &o, const std::string prefix, PrintHelper *ph) const
 {
     const RegisterDictionary *regdict = ph ? ph->get_register_dictionary() : NULL;
@@ -288,18 +296,6 @@ RegisterStateGeneric::print(std::ostream &o, const std::string prefix, PrintHelp
 /*******************************************************************************************************************************
  *                                      RegisterStateX86
  *******************************************************************************************************************************/
-
-RegisterStatePtr
-RegisterStateX86::create(const SValuePtr &protoval, const RegisterDictionary *regdict) const
-{
-    return RegisterStatePtr(new RegisterStateX86(protoval, regdict));
-}
-
-RegisterStatePtr
-RegisterStateX86::clone() const
-{
-    return RegisterStatePtr(new RegisterStateX86(*this));
-}
 
 void
 RegisterStateX86::clear()

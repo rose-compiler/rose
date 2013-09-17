@@ -444,7 +444,7 @@ RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a_, const Ba
     if (a->is_number() && b->is_number()) {
         uint64_t bn = b->get_number();
         uint64_t result = a->get_number() >> bn;
-        if (IntegerOps::signBit2(a->is_number(), nbitsa))
+        if (IntegerOps::signBit2(a->get_number(), nbitsa))
             result |= IntegerOps::genMask<uint64_t>(nbitsa) ^ IntegerOps::genMask<uint64_t>(nbitsa-bn);
         return number_(nbitsa, result);
     }

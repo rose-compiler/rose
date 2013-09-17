@@ -475,7 +475,7 @@ XorSimplifier::rewrite(const InternalNode *inode) const
 TreeNodePtr
 SmulSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterator end) const
 {
-    size_t nbits = 0;
+    size_t nbits = (*begin)->get_nbits();
     int64_t result = (*begin)->isLeafNode()->get_value();
     for (++begin; begin!=end; ++begin) {
         LeafNodePtr leaf = (*begin)->isLeafNode();
@@ -489,7 +489,7 @@ SmulSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterator 
 TreeNodePtr
 UmulSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterator end) const
 {
-    size_t nbits = 0;
+    size_t nbits = (*begin)->get_nbits();
     uint64_t result = (*begin)->isLeafNode()->get_value();
     for (++begin; begin!=end; ++begin) {
         LeafNodePtr leaf = (*begin)->isLeafNode();

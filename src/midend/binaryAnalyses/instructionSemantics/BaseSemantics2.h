@@ -117,36 +117,118 @@ namespace BinaryAnalysis {
  *  simulator (in "projects/simulator") subclasses the PartialSymbolicSemantics state in order to use memory mapped via ROSE's
  *  MemoryMap class, and to handle system calls (among other things).
  *
- *  When writing a subclass the author should define the (normal) constructors from the base class and any others that are
- *  needed, and they should have "protected" visibility.  The object should also define static instance() constructors and
- *  virtual create() constructors that are consistent with its base class.  The instance() constructor will almost always
- *  create a new object by passing all its arguments to the normal constructor, and then give ownership of the object to a
- *  smart pointer which is returned.  The virtual constructors will almost always just call the static constructor with the
- *  same arguments.  Here's an example:
+ *  When writing a subclass the author should implement three versions of each constructor: the real constructor, the static
+ *  allocating constructor, and the virtual constructor.  Fortunately, amount amount of extra code needed is not substantial
+ *  since the virtual constructor can call the static allocating constructor, which can call the real constructor. The three
+ *  versions in more detail are:
+ *
+ *  1. <i>Real Constructors</i>: These are the normal C++ constructors. They should have protected access and are used
+ *     only by authors of subclasses.
+ *
+ *  2. <i>Static Allocating Constructors</i>: These are class methods that allocate a specific kind of object on the heap and
+ *     return a smart pointer to the object.  They are named "instance" to emphasize that they instantiate a new instance of a
+ *     particular class and they return the pointer type that is specific to the class (i.e., not one of the BaseSemantics
+ *     pointer types).  When an end user constructs a dispatcher, RISC operators, etc., they have particular classes in mind
+ *     and use those classes' "instance" methods to create objects.  Static allocating constructors are seldom called by
+ *     authors of subclasses; instead the author usually has an object whose provenance can be traced back to a user-created
+ *     object (such as a prototypical object), and he invokes one of that object's virtual constructors.
+ *
+ *  3. <i>Virtual Constructors</i>: A virtual constructor creates a new object having the same run-time type as the object on
+ *     which the method is invoked.  Virtual constructors are often named "create" with the virtual copy constructor named
+ *     "clone", however the SValue class hierarchy follows a different naming scheme for historic reason--its virtual
+ *     constructors end with an underscore.  Virtual constructors return pointer types that defined in BaseSemantics. Subclass
+ *     authors usually use this kind of object creation because it frees them from having to know a specific type and allows
+ *     their classes to be easily subclassed.
+ *
+ *  When writing a subclass the author should implement the three versions for each constructor inherited from the super
+ *  class. The author may also add any additional constructors that are deemed necessary, realizing that all subclasses of his
+ *  class will also need to implement those constructors.
+ *
+ *  The subclass may define a public virtual destructor that will be called by the smart pointer implementation when the final
+ *  pointer to the object is destroyed.
+ *
+ *  Here is an example of specializing a class that is itself derived from something in ROSE semantics framework.
  *
  *  @code
+ *      // Smart pointer for the subclass
  *      typedef boost::shared_ptr<class MyThing> MyThingPtr;
- *      class MyThing: public OtherThing { // subclass of BaseSemantics::Thing
+ *
+ *      // Class derived from OtherThing, which eventually derives from a class
+ *      // defined in BinarySemantics::InstructionSemantics2::BaseSemantics--lets
+ *      // say BaseSemantics::Thing -- a non-existent class that follows the rules
+ *      // outlined above.
+ *      class MyThing: public OtherThing {
  *      private:
- *          double value;
+ *          char *data; // some data allocated on the heap w/out a smart pointer
+ *
+ *          // Real constructors.  Normally this will be all the same constructors as
+ *          // in the super class, and possibly a few new ones.  Thus anything you add
+ *          // here will need to also be implemented in all subclasses hereof. Lets
+ *          // pretend that the super class has two constructors: a copy constructor
+ *          // and one that takes a pointer to a register state.
  *      protected:
- *          // the normal C++ constructors; same arguments as for OtherThing::OtherThing()
- *          explicit MyThing(size_t width): OtherThing(width) {}
- *          MyThing(size_t width, double v): OtherThing(width), value(v) {}
+ *          explicit MyThing(const BaseSemantics::RegisterStatePtr &rstate)
+ *              : OtherThing(rstate), data(NULL) {}
+ *
+ *          MyThing(const MyThing &other)
+ *              : OtherThing(other), data(copy_string(other.data)) {}
+ *
+ *          // Define the virtual destructor if necessary.  This won't be called until
+ *          // the last smart pointer reference to this object is destroyed.
  *      public:
- *          // the static allocating constructors, all named "instance"
- *          static MyThingPtr instance(size_t width) {
- *              return MyThingPtr(new MyThing(width));
+ *          virtual ~MyThing() {
+ *              delete data;
  *          }
- *          static MyThingPtr instance(size_t width, double v) {
- *              return MyThingPtr(new MyThing(width, v));
+ *
+ *          // Static allocating constructors. One static allocating constructor
+ *          // for each real constructor, including the copy constructor.
+ *      public:
+ *          static MyThingPtr instance(const BaseSemantics::RegisterStatePtr &rstate) {
+ *              return MyThingPtr(new MyThing(rstate));
  *          }
- *          // the virtual allocating constructors
- *          virtual BaseSemantics::ThingPtr create(size_t width) const override {
- *              return instance(width);
+ *
+ *          static MyThingPtr instance(const MyThingPtr &other) {
+ *              return MyThingPtr(new MyThing(*other));
  *          }
- *          virtual BaseSemantics::ThingPtr generate(size_t width, double v) const override {
- *              return instance(width, v);
+ *
+ *          // Virtual constructors. One virtual constructor for each static allocating
+ *          // constructor.  It is of utmost importance that we cover all the virtual
+ *          // constructors from the super class. These return the most super type
+ *          // possible, usually something from BaseSemantics.
+ *      public:
+ *          virtual BaseSemantics::ThingPtr create(const BaseSemantics::RegisterStatePtr &rstate) {
+ *              return instance(rstate);
+ *          }
+ *
+ *          // Name the virtual copy constructor "clone" rather than "create".
+ *          virtual BaseSemantics::ThingPtr clone(const BaseSemantics::ThingPtr &other_) {
+ *              MyThingPtr other = MyThing::promote(other_);
+ *              return instance(other);
+ *          }
+ *
+ *          // Define the checking dynamic pointer cast.
+ *      public:
+ *          static MyThingPtr promomte(const BaseSemantics::ThingPtr &obj) {
+ *              MyThingPtr retval = boost::dynamic_pointer_cast<MyThingPtr>(obj);
+ *              assert(retval!=NULL);
+ *              return NULL;
+ *          }
+ *
+ *          // Define the methods you need for this class.
+ *      public:
+ *          virtual char *get_data() const {
+ *              return data; // or maybe return a copy in case this gets deleted?
+ *          }
+ *          virtual void set_data(const char *s) {
+ *              data = copy_string(s);
+ *          }
+ *      private:
+ *          void char *copy_string(const char *s) {
+ *              if (s==NULL)
+ *                  return NULL;
+ *              char *retval = new char[strlen(s)+1];
+ *              strcpy(retval, s);
+ *              return retval;
  *          }
  *     };
  *  @endcode
@@ -510,6 +592,7 @@ protected:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Normal, protected, C++ constructors
+protected:
     explicit SValue(size_t nbits): nrefs__(0), width(nbits) {}  // hot
     SValue(const SValue &other): nrefs__(0), width(other.width) {}
 
@@ -523,7 +606,12 @@ public:
     // Allocating virtual constructors.  undefined_() needs underscores, so we do so consistently for all
     // these allocating virtual c'tors.  However, we use copy() rather than copy_() because this one is fundamentally
     // different: the object (this) is use for more than just selecting which virtual method to invoke.
-
+    //
+    // The naming scheme we use here is a bit different than for most other objects for historical reasons.  Most other classes
+    // use "create" and "clone" as the virtual constructor names, but SValue uses names ending in undercore, and "copy". The
+    // other difference (at least in this base class) is that we don't define any real constructors or static allocating
+    // constructors (usually named "instance")--it's because this is an abstract class.
+public:
     /** Create a new undefined semantic value.  The new semantic value will have the same dynamic type as the value
      *  on which this virtual method is called.  This is the most common way that a new value is created. */
     virtual SValuePtr undefined_(size_t nbits) const = 0; // hot
@@ -543,17 +631,24 @@ public:
      *  most significant side of the value. */
     virtual SValuePtr copy(size_t new_width=0) const = 0;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casts. No-ops since this is the base class
 public:
+    static SValuePtr promote(const SValuePtr &x) {
+        assert(x!=NULL);
+        return x;
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Custom allocation.
+public:
     static Allocator allocator;
     static void *operator new(size_t size) { return allocator.allocate(size); } // hot
     static void operator delete(void *ptr, size_t size) { allocator.deallocate(ptr, size); } // hot
 
-public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // The rest of the API...
-
+public:
     /** Determines if the value is a concrete number. Concrete numbers can be created with the number_(), boolean_()
      *  virtual constructors, or by other means. */
     virtual bool is_number() const = 0;
@@ -607,8 +702,10 @@ protected:
     const RegisterDictionary *regdict;          /**< Registers that are able to be stored by this state. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Normal, protected, C++ constructors
-    explicit RegisterState(const SValuePtr &protoval, const RegisterDictionary *regdict): protoval(protoval), regdict(regdict) {
+    // Real constructors
+protected:
+    explicit RegisterState(const SValuePtr &protoval, const RegisterDictionary *regdict)
+        : protoval(protoval), regdict(regdict) {
         assert(protoval!=NULL);
     }
 
@@ -618,9 +715,10 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors.  None are needed--this class is abstract.
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Allocating virtual constructors.
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors.
+public:
     /** Virtual constructor.  The @p protoval argument must be a non-null pointer to a semantic value which will be used only
      *  to create additional instances of the value via its virtual constructors.  The prototypical value is normally of the
      *  same type for all parts of a semantic analysis. The register state must be compatible with the rest of the binary
@@ -629,6 +727,14 @@ public:
 
     /** Make a copy of this register state. */
     virtual RegisterStatePtr clone() const = 0;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casts. No-op since this is the base class.
+public:
+    static RegisterStatePtr promote(const RegisterStatePtr &x) {
+        assert(x!=NULL);
+        return x;
+    }
 
 public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -708,14 +814,23 @@ protected:
     bool init_to_zero;                          /**< Initialize registers to zero? */
     Registers registers;                        /**< Values for registers that have been accessed. */
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Real constructors
 protected:
     explicit RegisterStateGeneric(const SValuePtr &protoval, const RegisterDictionary *regdict)
         : RegisterState(protoval, regdict), init_to_zero(false) {
         clear();
     }
 
+    RegisterStateGeneric(const RegisterStateGeneric &other)
+        : RegisterState(other), init_to_zero(other.init_to_zero), registers(other.registers) {
+        deep_copy_values();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Static allocating constructors
 public:
-    /** Static allocating constructor.  The @p protoval argument must be a non-null pointer to a semantic value which will be
+    /** Instantiate a new register state. The @p protoval argument must be a non-null pointer to a semantic value which will be
      *  used only to create additional instances of the value via its virtual constructors.  The prototypical value is normally
      *  of the same type for all parts of a semantic analysis: its state and operator classes.
      *
@@ -725,9 +840,25 @@ public:
         return RegisterStateGenericPtr(new RegisterStateGeneric(protoval, regdict));
     }
 
-    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const /*override*/;
-    virtual RegisterStatePtr clone() const /*override*/;
+    /** Instantiate a new copy of an existing register state. */
+    static RegisterStateGenericPtr instance(const RegisterStateGenericPtr &other) {
+        return RegisterStateGenericPtr(new RegisterStateGeneric(*other));
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors
+public:
+    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const /*override*/ {
+        return instance(protoval, regdict);
+    }
 
+    virtual RegisterStatePtr clone() const /*override*/ {
+        return RegisterStateGenericPtr(new RegisterStateGeneric(*this));
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casts
+public:
     /** Run-time promotion of a base register state pointer to a RegisterStateGeneric pointer. This is a checked conversion--it
      *  will fail if @p from does not point to a RegisterStateGeneric object. */
     static RegisterStateGenericPtr promote(const RegisterStatePtr &from) {
@@ -736,11 +867,22 @@ public:
         return retval;
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Methods we inherit
+public:
     virtual void clear() /*override*/;
     virtual void zero() /*override*/;
     virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) /*override*/;
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) /*override*/;
     virtual void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const /*override*/;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Methods first defined at this level of the class hierarchy
+public:
+    /** Initialize all registers of the dictionary.  When the dictionary contains overlapping registers, only the largest
+     *  registers are initialized. For example, on a 32-bit x86 architecture, EAX would be initialized but not AX, AH, or
+     *  AL; reading from AX, AH, or AL would return part of the initial EAX value. */
+    virtual void initialize();
 
     /** Returns the list of all registers and their values.  The returned registers are guaranteed to be non-overlapping,
      * although they might not correspond to actual named machine registers.  For instance, if a 32-bit value was written to
@@ -749,7 +891,7 @@ public:
      * register/value pair for ZF, and also a pair for bits 0-5, and a pair for bits 7-31, neither of which correspond to
      * actual register names in x86 (there is no name for bits 0-5 as a whole). The readRegister() and writeRegister() methods
      * can be used to re-cast the various pairs into other groupings; get_stored_registers() is a lower-level interface. */
-    RegPairs get_stored_registers() const;
+    virtual RegPairs get_stored_registers() const;
 
     /** Functors for traversing register values in a register state. */
     class Visitor {
@@ -786,9 +928,10 @@ public:
      *   std::cerr <<*regs; // all original_esp have been replaced by fp
      *  @endcode
      */
-    void traverse(Visitor&);
+    virtual void traverse(Visitor&);
     
 protected:
+    void deep_copy_values();
     static void get_nonoverlapping_parts(const Extent &overlap, const RegPair &rp, RiscOperators *ops,
                                          RegPairs *pairs/*out*/);
 };
@@ -815,22 +958,52 @@ public:
     SValuePtr segreg[n_segregs];                /**< Segmentation registers. */
     SValuePtr flag[n_flags];                    /**< Control/status flags (i.e., FLAG register). */
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Real constructors
 protected:
     explicit RegisterStateX86(const SValuePtr &protoval, const RegisterDictionary *regdict): RegisterState(protoval, regdict) {
         clear();
     }
 
+    RegisterStateX86(const RegisterStateX86 &other): RegisterState(other) {
+        ip = other.ip->copy();
+        for (size_t i=0; i<n_gprs; ++i)
+            gpr[i] = other.gpr[i]->copy();
+        for (size_t i=0; i<n_segregs; ++i)
+            segreg[i] = other.segreg[i]->copy();
+        for (size_t i=0; i<n_flags; ++i)
+            flag[i] = other.flag[i]->copy();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Static allocating constructors
 public:
-    /** Static allocating constructor. The @p protoval argument must be a non-null pointer to a semantic value which will be
+    /** Instantiate a new register state. The @p protoval argument must be a non-null pointer to a semantic value which will be
      *  used only to create additional instances of the value via its virtual constructors.  The prototypical value is normally
      *  of the same type for all parts of a semantic analysis: its state and operator classes. */
     static RegisterStateX86Ptr instance(const SValuePtr &protoval, const RegisterDictionary *regdict) {
         return RegisterStateX86Ptr(new RegisterStateX86(protoval, regdict));
     }
 
-    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const /*override*/;
-    virtual RegisterStatePtr clone() const /*override*/;
+    /** Instantiate a new copy of an existing register state. */
+    static RegisterStateX86Ptr instance(const RegisterStateX86Ptr &other) {
+        return RegisterStateX86Ptr(new RegisterStateX86(*other));
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors
+public:
+    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const /*override*/ {
+        return instance(protoval, regdict);
+    }
 
+    virtual RegisterStatePtr clone() const /*override*/ {
+        return RegisterStatePtr(new RegisterStateX86(*this));
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casts
+public:
     /** Run-time promotion of a base register state pointer to a RegisterStateX86 pointer. This is a checked conversion--it
      *  will fail if @p from does not point to a RegisterStateX86 object. */
     static RegisterStateX86Ptr promote(const RegisterStatePtr &from) {
@@ -838,13 +1011,18 @@ public:
         assert(retval!=NULL);
         return retval;
     }
-    
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Methods we inherited
+public:
     virtual void clear() /*override*/;
     virtual void zero() /* override*/;
     virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) /*override*/;
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) /*override*/;
     virtual void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const /*override*/;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Methods first declared at this level of the class hierarchy
 protected:
     // helpers for readRegister()
     virtual SValuePtr readRegisterGpr(const RegisterDescriptor &reg, RiscOperators *ops);
@@ -870,10 +1048,13 @@ typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
 /** Represents all memory in the state. MemoryState objects are allocated on the heap and reference counted.  The
  *  BaseSemantics::MemoryState is an abstract class that defines the interface.  See the BinaryAnalysis::InstructionSemantics2
  *  namespace for an overview of how the parts fit together.*/
-class MemoryState {
+class MemoryState: public boost::enable_shared_from_this<MemoryState> {
 protected:
     SValuePtr protoval;                         /**< Prototypical value. */
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Real constructors
+protected:
     explicit MemoryState(const SValuePtr &protoval): protoval(protoval) {
         assert(protoval!=NULL);
     }
@@ -881,6 +1062,12 @@ protected:
 public:
     virtual ~MemoryState() {}
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Static allocating constructors. None needed since this class is abstract
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors
+public:
     /** Virtual allocating constructor.
      *
      *  Allocates and constructs a new MemoryState object having the same dynamic type as this object. A prototypical SValue
@@ -891,6 +1078,17 @@ public:
     /** Virtual allocating copy constructor. Creates a new MemoryState object which is a copy of this object. */
     virtual MemoryStatePtr clone() const = 0;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casts.  No-op since this is the base class.
+public:
+    static MemoryStatePtr promote(const MemoryStatePtr &x) {
+        assert(x!=NULL);
+        return x;
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Methods first declared at this level of the class hierarchy
+public:
     /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
     SValuePtr get_protoval() const { return protoval; }
 
@@ -944,30 +1142,66 @@ typedef boost::shared_ptr<class MemoryCell> MemoryCellPtr;
  *
  *  Each memory cell has an address and a value. MemoryCell objects are used by the MemoryCellList to represent a memory
  *  state. */
-class MemoryCell {
+class MemoryCell: public boost::enable_shared_from_this<MemoryCell> {
 protected:
     SValuePtr address;                          /**< Address of memory cell. */
     SValuePtr value;                            /**< Value stored at that address. */
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Real constructors
 protected:
-    // protected constructors
     MemoryCell(const SValuePtr &address, const SValuePtr &value)
         : address(address), value(value) {
         assert(address!=NULL);
         assert(value!=NULL);
     }
 
+    // deep-copy cell list so modifying this new one doesn't alter the existing one
+    MemoryCell(const MemoryCell &other) {
+        address = other.address->copy();
+        value = other.address->copy();
+    }
+
 public:
-    /** Static allocating constructor. Creates a new memory cell object with the specified address and value. */
+    virtual ~MemoryCell() {}
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Static allocating constructors
+public:
+    /** Instantiates a new memory cell object with the specified address and value. */
     static MemoryCellPtr instance(const SValuePtr &address, const SValuePtr &value) {
         return MemoryCellPtr(new MemoryCell(address, value));
     }
 
-    /** Virtual allocating constructor. Creates a new memory cell object with the specified address and value. */
+    /** Instantiates a new copy of an existing cell. */
+    static MemoryCellPtr instance(const MemoryCellPtr &other) {
+        return MemoryCellPtr(new MemoryCell(*other));
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors
+public:
+    /** Creates a new memory cell object with the specified address and value. */
     virtual MemoryCellPtr create(const SValuePtr &address, const SValuePtr &value) {
         return instance(address, value);
     }
 
+    /** Creates a new deep-copy of this memory cell. */
+    virtual MemoryCellPtr clone() const {
+        return MemoryCellPtr(new MemoryCell(*this));
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casts. No-op since this is the base class.
+public:
+    static MemoryCellPtr promote(const MemoryCellPtr &x) {
+        assert(x!=NULL);
+        return x;
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Methods first declared at this level of the class hierarchy
+public:
     /** Accessor for the memory cell address.
      * @{ */
     virtual SValuePtr get_address() const { return address; }
@@ -1034,26 +1268,47 @@ protected:
     CellList cells;                             // list of cells in reverse chronological order
     bool byte_restricted;                       // are cell values all exactly one byte wide?
 
-    explicit MemoryCellList(const MemoryCellPtr &protocell, const SValuePtr &protoval)
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Real constructors
+protected:
+    MemoryCellList(const MemoryCellPtr &protocell, const SValuePtr &protoval)
         : MemoryState(protoval), protocell(protocell), byte_restricted(true) {
         assert(protocell!=NULL);
     }
 
+    explicit MemoryCellList(const SValuePtr &protoval)
+        : MemoryState(protoval), protocell(MemoryCell::instance(protoval, protoval)), byte_restricted(true) {}
+
+    // deep-copy cell list so that modifying this new state does not modify the existing state
+    MemoryCellList(const MemoryCellList &other)
+        : MemoryState(other), protocell(other.protocell), byte_restricted(other.byte_restricted) {
+        for (CellList::const_iterator ci=other.cells.begin(); ci!=other.cells.end(); ++ci)
+            cells.push_back((*ci)->clone());
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Static allocating constructors
 public:
-    /** Static allocating constructor.  This constructor uses the default type for the cell type (based on the semantic
-     *  domain). */
+    /** Instantiate a new prototypical memory state. This constructor uses the default type for the cell type (based on the
+     *  semantic domain). */
     static MemoryCellListPtr instance(const SValuePtr &protoval) {
-        MemoryCellPtr protocell = MemoryCell::instance(protoval, protoval);
-        return MemoryCellListPtr(new MemoryCellList(protocell, protoval));
+        return MemoryCellListPtr(new MemoryCellList(protoval));
     }
     
-    /** Static allocating constructor. */
+    /** Instantiate a new memory state with prototypical memory cell and values. */
     static MemoryCellListPtr instance(const MemoryCellPtr &protocell, const SValuePtr &protoval) {
         return MemoryCellListPtr(new MemoryCellList(protocell, protoval));
     }
 
-    /** Virtual allocating constructor. This constructor uses the default type for the cell type (based on the semantic
-     *  domain). */
+    /** Instantiate a new copy of an existing memory state. */
+    static MemoryCellListPtr instance(const MemoryCellListPtr &other) {
+        return MemoryCellListPtr(new MemoryCellList(*other));
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors
+public:
     virtual MemoryStatePtr create(const SValuePtr &protoval) const /*override*/ {
         return instance(protoval);
     }
@@ -1063,11 +1318,13 @@ public:
         return instance(protocell, protoval);
     }
 
-    /** Virtual allocating copy constructor. */
     virtual MemoryStatePtr clone() const /*override*/ {
-        return MemoryStatePtr(new MemoryCellList(*this));               // FIXME?
+        return MemoryStatePtr(new MemoryCellList(*this));
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casts
+public:
     /** Promote a base memory state pointer to a BaseSemantics::MemoryCellList pointer. The memory state @p m must have
      *  a BaseSemantics::MemoryCellList dynamic type. */
     static MemoryCellListPtr promote(const BaseSemantics::MemoryStatePtr &m) {
@@ -1076,6 +1333,9 @@ public:
         return retval;
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Methods we inherited
+public:
     virtual void clear() /*override*/ {
         cells.clear();
     }
@@ -1101,6 +1361,9 @@ public:
 
     virtual void print(std::ostream &o, const std::string prefix="", PrintHelper *helper=NULL) const /*override*/;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Methods first declared at this level of the class hierarchy
+public:
     /** Indicates whether memory cell values are required to be eight bits wide.  The default is true since this simplifies the
      * calculations for whether two memory cells are alias and how to combine the value from two or more aliasing cells. A
      * memory that contains only eight-bit values requires that the caller concatenate/extract individual bytes when
@@ -1152,14 +1415,15 @@ typedef boost::shared_ptr<class State> StatePtr;
  *
  *  State objects are allocated on the heap and reference counted.  The BaseSemantics::State is an abstract class that defines
  *  the interface.  See the BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit together.  */
-class State {
+class State: public boost::enable_shared_from_this<State> {
 protected:
     SValuePtr protoval;                         /**< Initial value used to create additional values as needed. */
     RegisterStatePtr registers;                 /**< All machine register values for this semantic state. */
     MemoryStatePtr  memory;                     /**< All memory for this semantic state. */
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Real constructors
 protected:
-    // Normal constructors are protected because this class is reference counted. */
     State(const RegisterStatePtr &registers, const MemoryStatePtr &memory)
         : registers(registers), memory(memory) {
         assert(registers!=NULL);
@@ -1168,40 +1432,56 @@ protected:
         assert(protoval!=NULL);
     }
 
-    /** States must be copyable objects.  Many analyses depend on being able to make a copy of the entire semantic state at
-     *  each machine instruction, at each CFG vertex, etc. */
-    State(const State &other) {
-        protoval = other.protoval;
-        registers = registers->clone();
-        memory = memory->clone();
+    // deep-copy the registers and memory
+    State(const State &other)
+        : protoval(other.protoval) {
+        registers = other.registers->clone();
+        memory = other.memory->clone();
     }
 
 public:
     virtual ~State() {}
 
-    // deep-copy the registers and memory so users can think of the machine state as a single entity.
-    State& operator=(const State &other) {
-        protoval = other.protoval;
-        registers = registers->clone();
-        memory = memory->clone();
-        return *this;
-    }
-
-    /** Constructor. */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Static allocating constructors
+public:
+    /** Instantiate a new state object with specified register and memory states. */
     static StatePtr instance(const RegisterStatePtr &registers, const MemoryStatePtr &memory) {
         return StatePtr(new State(registers, memory));
     }
 
+    /** Instantiate a new copy of an existing state. */
+    static StatePtr instance(const StatePtr &other) {
+        return StatePtr(new State(*other));
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors
+public:
     /** Virtual constructor. */
     virtual StatePtr create(const RegisterStatePtr &registers, const MemoryStatePtr &memory) const {
         return instance(registers, memory);
     }
 
-    /** Virtual copy constructor. */
+    /** Virtual copy constructor. Allocates a new state object which is a deep copy of this state. States must be copyable
+     *  objects because many analyses depend on being able to make a copy of the entire semantic state at each machine
+     *  instruction, at each CFG vertex, etc. */
     virtual StatePtr clone() const {
-        return create(registers->clone(), memory->clone());
+        StatePtr self = boost::const_pointer_cast<State>(shared_from_this());
+        return instance(self);
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casts.  No-op since this is the base class.
+public:
+    static StatePtr promote(const StatePtr &x) {
+        assert(x!=NULL);
+        return x;
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Other methods that are part of our API. Most of these just chain to either the register state and/or the memory state.
+public:
     /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
     SValuePtr get_protoval() const { return protoval; }
 
@@ -1315,26 +1595,30 @@ protected:
     SMTSolver *solver;                          /**< Optional SMT solver. */
     std::string name;                           /**< Name to use for debugging. */
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Real constructors
 protected:
     explicit RiscOperators(const SValuePtr &protoval, SMTSolver *solver=NULL)
         : protoval(protoval), cur_insn(NULL), ninsns(0), solver(solver) {
         assert(protoval!=NULL);
     }
+
     explicit RiscOperators(const StatePtr &state, SMTSolver *solver=NULL)
         : state(state), cur_insn(NULL), ninsns(0), solver(solver) {
         assert(state!=NULL);
         protoval = state->get_protoval();
     }
-    /** @} */
 
 public:
     virtual ~RiscOperators() {}
 
-    // Static allocating constructor.  Each subclass should provide some static allocating constructors that will create
-    // a new RiscOperators class. They should provide at least one version that will initialize the operators with default
-    // prototypical values, etc.  These static allocating constructors are usually named "instance":
-    //     static RiscOperatorsPtr instance(....);
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Static allocating constructors.  None needed since this class is abstract.
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors.
+public:
     /** Virtual allocating constructor.  The @p protoval is a prototypical semantic value that is used as a factory to create
      *  additional values as necessary via its virtual constructors.  The state upon which the RISC operations operate must be
      *  provided by a separate call to the set_state() method. An optional SMT solver may be specified (see set_solver()). */
@@ -1346,6 +1630,17 @@ public:
      *  SMT solver may be specified (see set_solver()). */
     virtual RiscOperatorsPtr create(const StatePtr &state, SMTSolver *solver=NULL) const = 0;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casts.  No-op since this is the base class.
+public:
+    static RiscOperatorsPtr promote(const RiscOperatorsPtr &x) {
+        assert(x!=NULL);
+        return x;
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Other methods part of our API
+public:
     /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
     virtual SValuePtr get_protoval() const { return protoval; }
 
@@ -1709,35 +2004,39 @@ protected:
     RiscOperatorsPtr operators;
     const RegisterDictionary *regdict;          /**< See set_register_dictionary(). */
 
-    explicit Dispatcher(const RiscOperatorsPtr &ops): operators(ops), regdict(NULL) {
-        assert(operators!=NULL);
-    }
-
     // Dispatchers keep a table of all the kinds of instructions they can handle.  The lookup key is typically some sort of
     // instruction identifier, such as from SgAsmx86Instruction::get_kind(), and comes from the iproc_key() virtual method.
     typedef std::vector<InsnProcessor*> InsnProcessors;
     InsnProcessors iproc_table;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Real constructors
+protected:
+    explicit Dispatcher(const RiscOperatorsPtr &ops): operators(ops), regdict(NULL) {
+        assert(operators!=NULL);
+    }
+
 public:
     virtual ~Dispatcher() {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Constructors
+    // Static allocating constructors. None since this is an abstract class
+
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors
 public:
     /** Virtual constructor. */
     virtual DispatcherPtr create(const RiscOperatorsPtr &ops) const = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods to process instructions
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Process a single instruction. */
     virtual void processInstruction(SgAsmInstruction *insn);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Instruction processor table operations
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Lookup the processor for an instruction.  Looks up the functor that has been registered to process the given
      *  instruction. Returns the null pointer if the instruction cannot be processed. Instruction processor objects are
@@ -1761,7 +2060,6 @@ protected:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Convenience methods that defer the call to some member object
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Get a pointer to the RISC operators object. */
     virtual RiscOperatorsPtr get_operators() const { return operators; }
@@ -1785,8 +2083,7 @@ public:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods related to registers
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+public:
     /** Access the register dictionary.  The register dictionary defines the set of registers over which the RISC operators may
      *  operate. This should be same registers (or superset thereof) whose values are stored in the machine state(s).
      *  This dictionary is used by the Dispatcher class to translate register names to register descriptors.  For instance, to
@@ -1813,8 +2110,7 @@ public:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Miscellaneous methods that tend to be the same for most dispatchers
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+public:
     /** Returns a register descriptor for the segment part of a memory reference expression.  Many architectures don't use
      *  segment registers (they have a flat virtual address space), in which case the returned register descriptor's is_valid()
      *  method returns false. */

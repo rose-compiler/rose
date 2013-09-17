@@ -77,7 +77,7 @@ protected:
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Protected constructors.
+    // Real constructors.
 protected:
     // use the version that takes a subdomain instead of this c'tor
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
@@ -90,7 +90,7 @@ protected:
         : BaseSemantics::RiscOperators(state, solver), mesg(stderr, &line_prefix) {
         set_name("Trace");
     }
-    
+
     explicit RiscOperators(const BaseSemantics::RiscOperatorsPtr &subdomain)
         : BaseSemantics::RiscOperators(subdomain->get_state(), subdomain->get_solver()), subdomain(subdomain),
           mesg(stderr, &line_prefix) {
@@ -104,35 +104,31 @@ public:
     }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Public allocating constructors.
+    // Static allocating constructors.
 public:
-    /** Static allocating constructor.  This domain does not create any of its own values--it only wraps another domains RISC
-     *  operators. Therefore, the supplied protoval and solver are not actually used.  It is probably better to construct the
-     *  TraceSemantics' RISC operators with the constructor that takes the subdomain's RISC operators. */
+    /** Instantiates a new RiscOperators object.  This domain does not create any of its own values--it only wraps another
+     *  domains RISC operators. Therefore, the supplied protoval and solver are not actually used.  It is probably better to
+     *  construct the TraceSemantics' RISC operators with the constructor that takes the subdomain's RISC operators. */
     static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
-    /** Static allocating constructor.  This domain does not manage any state--it only wraps another domains RISC
+    /** Instantiates a new RiscOperators object.  This domain does not manage any state--it only wraps another domains RISC
      *  operators. Therefore, the supplied protoval and solver are not actually used.  It is probably better to construct the
      *  TraceSemantics' RISC operators with the constructor that takes the subdomain's RISC operators. */
     static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
     
-    /** Static allocating constructor. The @p subdomain argument should be the RISC operators that we want to trace. */
+    /** Instantiate a new RiscOperators object. The @p subdomain argument should be the RISC operators that we want to
+     * trace. */
     static RiscOperatorsPtr instance(const BaseSemantics::RiscOperatorsPtr &subdomain) {
         return RiscOperatorsPtr(new RiscOperators(subdomain));
     }
 
-    /** Run-time promotion of a base RiscOperators pointer to trace operators. This is a checked conversion--it
-     *  will fail if @p from does not point to a TraceSemantics::RiscOperators object. */
-    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
-        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
-        assert(retval!=NULL);
-        return retval;
-    }
-    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors
+public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
                                                    SMTSolver *solver=NULL) const /*override*/ {
         return instance(protoval, solver);
@@ -148,6 +144,17 @@ public:
         return instance(subdomain);
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casts
+public:
+    /** Run-time promotion of a base RiscOperators pointer to trace operators. This is a checked conversion--it
+     *  will fail if @p from does not point to a TraceSemantics::RiscOperators object. */
+    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
+        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+        assert(retval!=NULL);
+        return retval;
+    }
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first defined at this level of the class hierarchy
 public:

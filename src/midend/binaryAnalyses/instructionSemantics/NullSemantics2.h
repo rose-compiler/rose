@@ -23,29 +23,43 @@ typedef BaseSemantics::Pointer<class SValue> SValuePtr;
 
 /** Values in the NullSemantics domain.  Values are essentially void. */
 class SValue: public BaseSemantics::SValue {
-protected:
-    // protected because these are reference counted. See base class.
-    explicit SValue(size_t nBits): BaseSemantics::SValue(nBits) {}
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Real constructors.
+protected:
+    explicit SValue(size_t nbits): BaseSemantics::SValue(nbits) {}
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Static allocating constructors
 public:
-    /** Constructor. */
+    /** Instantiate a new prototypical values. Prototypical values are only used for their virtual constructors. */
     static SValuePtr instance() {
         return SValuePtr(new SValue(1));
     }
 
-    /** Promote a base value to a NullSemantics value.  The value @p v must have a NullSemantics::SValue dynamic type. */
-    static SValuePtr promote(const BaseSemantics::SValuePtr &v) {
-        SValuePtr retval = BaseSemantics::dynamic_pointer_cast<SValue>(v);
-        assert(retval!=NULL);
-        return retval;
+    /** Instantiate a new undefined value. */
+    static SValuePtr instance(size_t nbits) {
+        return SValuePtr(new SValue(nbits));
     }
 
-    // Virtual constructors inherited from base class
+    /** Instantiate a new concrete value. */
+    static SValuePtr instance(size_t nbits, uint64_t number) {
+        return SValuePtr(new SValue(nbits)); // the number is not important in this domain
+    }
+
+    /** Instantiate a new copy of an existing value. */
+    static SValuePtr instance(const SValuePtr &other) {
+        return SValuePtr(new SValue(*other));
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors
+public:
     virtual BaseSemantics::SValuePtr undefined_(size_t nBits) const /*override*/ {
-        return BaseSemantics::SValuePtr(new SValue(nBits));
+        return instance(nBits);
     }
     virtual BaseSemantics::SValuePtr number_(size_t nBits, uint64_t number) const /*override*/ {
-        return BaseSemantics::SValuePtr(new SValue(nBits)); // the number is not important in this semantic domain
+        return instance(nBits, number);
     }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const /*override*/ {
         SValuePtr retval(new SValue(*this));
@@ -54,6 +68,19 @@ public:
         return retval;
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casting
+public:
+    /** Promote a base value to a NullSemantics value.  The value @p v must have a NullSemantics::SValue dynamic type. */
+    static SValuePtr promote(const BaseSemantics::SValuePtr &v) {
+        SValuePtr retval = BaseSemantics::dynamic_pointer_cast<SValue>(v);
+        assert(retval!=NULL);
+        return retval;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Implementations of functions inherited
+public:
     virtual bool is_number() const { return false; }
     virtual uint64_t get_number() const { assert(!"not a number"); abort(); }
 
@@ -80,8 +107,10 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** NullSemantics operators always return a new undefined value.  They do, however, check certain preconditions. */
 class RiscOperators: public BaseSemantics::RiscOperators {
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Real constructors
 protected:
-    // Protected constructors, same as for the base class
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver) {
         set_name("Null");
@@ -91,8 +120,10 @@ protected:
         set_name("Null");
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Static allocating constructors
 public:
-    /** Static allocating constructor. Creates a new RiscOperators object and configures it to use semantic values and states
+    /** Instantiate a new RiscOperators object and configures it to use semantic values and states
      * that are defaults for NullSemantics. */
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict);
 
@@ -106,6 +137,9 @@ public:
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors
+public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
                                                    SMTSolver *solver=NULL) const /*override*/ {
         return instance(protoval, solver);
@@ -116,6 +150,8 @@ public:
         return instance(state, solver);
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Risc operators inherited
 public:
     virtual BaseSemantics::SValuePtr and_(const BaseSemantics::SValuePtr &a_,
                                           const BaseSemantics::SValuePtr &b_) /*override*/;

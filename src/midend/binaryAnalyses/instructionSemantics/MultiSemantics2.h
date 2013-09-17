@@ -205,7 +205,7 @@ protected:
     PrintHelper print_helper;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Protected constructors
+    // Real constructors
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver) {
@@ -220,7 +220,7 @@ protected:
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Public allocating constructors
+    // Static allocating constructors
 public:
     /** Static allocating constructor. This constructor creates a new MultiDomain RiscOperators object that does't have any
      *  subdomains.  The subdomains should be added before using this object. The @p regdict argument is not used in this
@@ -238,8 +238,9 @@ public:
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
-    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &ops);
-    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors
+public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
                                                    SMTSolver *solver=NULL) const /*override*/ {
         return instance(protoval, solver);
@@ -249,9 +250,12 @@ public:
                                                    SMTSolver *solver=NULL) const /*override*/ {
         return instance(state, solver);
     }
-    
-        
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casts
+public:
+    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &ops);
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first defined at this level of the class hiearchy
 public:
