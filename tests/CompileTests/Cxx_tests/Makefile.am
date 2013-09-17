@@ -21,9 +21,24 @@ include $(top_srcdir)/tests/input_codes/cxx/Makefile_variables
 #
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = $(ROSE__CXX_TESTS)
 
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   lulesh.C \
+   luleshTALC.C \
+   test2013_253.C \
+   test2013_255.C \
+   test2013_256.C \
+   test2013_257.C \
+   test2013_258.C \
+   test2013_259.C \
+   test2013_260.C
+
+# DQ (9/10/2013): Test failing for switch without case statement (made up example, 
+# but we will want it to pass as part of further switch statement work later).
+# test2013_254.C
 
 # DQ (7/31/2013): This is a failing test code for operator->().
 # test2013_249.C 
+
 
 # $(TESTCODE_CURRENTLY_FAILING)
 # DQ (2/15/2012): These test codes fail on OSX only.
@@ -625,6 +640,15 @@ $(ROSE__CXX_TESTS_DIR)/test2013_236.o: $(TEST_TRANSLATOR)
 	echo "Running boost specific test."
 	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2013_236.C -o test2013_236.o
 
+# DQ (9/13/2013): Added new test for -rose:unparse_includes (which has a bug in how it unparses C++ style comments
+# and should maybe not be unparsing declarations that are front-end specific (e.g. builtin function declarations).
+test_unparse_includes_option: $(TEST_TRANSLATOR)
+	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2013_257.C -o test2013_257_unparse_headers.o
+
+# DQ (9/16/2013): Test linking the resulting translated file. Phil Miller reported an error and the issue
+# is that va_start() and va_end() must be unparsed to be __builtin_va_start() and __builtin_va_end() (at least for GNU).
+test_unparse_includes_option_with_link: $(TEST_TRANSLATOR)
+	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) $(srcdir)/test2013_260.C -o test2013_260_unparse_headers
 
 $(TEST_TRANSLATOR):
 	cd ../..; $(MAKE) testTranslator
@@ -714,6 +738,8 @@ hpctoolkit:
 
 check-local:
 	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) test_unparse_includes_option
+	@$(MAKE) test_unparse_includes_option_with_link
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Cxx_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
@@ -724,6 +750,7 @@ clean-local:
 	rm -f *.unfoldedConstants-o
 	rm -rf QMTest
 	rm -f *.int.c
+	rm -f test2013_260_unparse_headers
 
 #------------------------------------------------------------------------------
 #                           Performance Timing Tests

@@ -1232,7 +1232,7 @@ bool CallContextSensitivityAnalysis::isFuncExitAmbiguous(PartEdgePtr edge, set<C
         return true;
       }
       
-      /*assert((*e)->source()->outEdges().size()>=1);
+     / *assert((*e)->source()->outEdges().size()>=1);
       
       // Multiple functions call this one
       list<PartEdgePtr> srcOut=(*e)->source()->outEdges();

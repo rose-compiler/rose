@@ -1003,6 +1003,13 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                 // DQ (7/4/2013): Added default behavior to be C99 to make this consistant with EDG default 
                                 // behavior (changed to be C99 in March of 2013), (but we need to discuss this).
                                    file->set_C99_only(true);
+
+                                // DQ (9/3/2013): Set the default to use gnu99 when defaulting to C mode (this will be reset if the -std=c99 option is used).
+                                // However, it might be better still to check the backend compiler before we default to GNU.
+                                   file->set_C99_gnu_only(true);
+#if 0
+                                   printf ("In determineFileType(): Setting the default mode for detected C cile to C99 (specifically generated code will use: -std=gnu99 option) \n");
+#endif
                                  }
 
                            // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
@@ -3165,7 +3172,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
             //      -Wsurprising -Wunderflow -Wunused-labels -Wline-truncation -Werror -W
             // warnings = "-Wall -Wconversion -Waliasing -Wampersand -Wimplicit-interface -Wline-truncation -Wnonstd-intrinsics -Wsurprising -Wunderflow";
 
-            // If warnings are requested (on the comandline to ROSE translator) then we want to output all possible warnings by defaul (at leas for how)
+            // If warnings are requested (on the comandline to ROSE translator) then we want to output all possible warnings by defaul (at least for how)
 
             // Check if we are using GNU compiler backend (if so then we are using gfortran, though we have no test in place currently for what
             // version of gfortran (as we do for C and C++))
@@ -3535,7 +3542,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              }
         }
 
-  // printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
+#if 0
+     printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
+#endif
      if (foundSourceDirectoryExplicitlyListedInIncludePaths == false)
         {
        // Add the source directory to the include list so that we reproduce the semantics of gfortran
@@ -4548,7 +4557,11 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 #if 0
      printf ("\n\n***************************************************** \n");
      printf ("Inside of SgFile::compileOutput() \n");
+     printf ("   --- get_unparse_output_filename() = %s \n",get_unparse_output_filename().c_str());
      printf ("***************************************************** \n\n\n");
+#endif
+#if 0
+     display("In SgFile::compileOutput()");
 #endif
 
   // This function does the final compilation of the unparsed file
@@ -4639,6 +4652,30 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
        // ROSE_ASSERT(get_skip_unparse() == true);
           string outputFilename = get_sourceFileNameWithPath();
 
+#if 1
+       // DQ (9/15/2013): Added support for generated file to be placed into the same directory as the source file.
+       // It's use here is similar to that in the unparse.C file, but less clear here that it is correct since we 
+       // don't have tests of the -rose:keep_going option (that I know of directly in ROSE).
+          SgProject* project = TransformationSupport::getProject(this);
+       // ROSE_ASSERT(project != NULL);
+          if (project != NULL)
+             {
+               printf ("In SgFile::compileOutput(): project->get_unparse_in_same_directory_as_input_file() = %s \n",project->get_unparse_in_same_directory_as_input_file() ? "true" : "false");
+               if (project->get_unparse_in_same_directory_as_input_file() == true)
+                  {
+                    outputFilename = ROSE::getPathFromFileName(get_sourceFileNameWithPath()) + "/rose_" + get_sourceFileNameWithoutPath();
+
+                    printf ("In SgFile::compileOutput(): Using filename for unparsed file into same directory as input file: outputFilename = %s \n",outputFilename.c_str());
+
+                    set_unparse_output_filename(outputFilename);
+                  }
+             }
+            else
+             {
+               printf ("WARNING: In SgFile::compileOutput(): file = %p has no associated project \n",this);
+             }
+#endif
+
           if (get_unparse_output_filename().empty())
              {
                if (get_skipfinalCompileStep())
@@ -4693,6 +4730,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                     boost::filesystem::copy_file(original_file,unparsed_file,boost::filesystem::copy_option::overwrite_if_exists);
                   }
              }
+
           set_unparse_output_filename(outputFilename);
         }
 #endif
@@ -5240,8 +5278,15 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
 //     There will be no SgFile at all in this case but we still want to append relevant linking options for OpenMP
      if( SageInterface::getProject()->get_openmp_linking())
      {
-
+// Sara Royuela 12/10/2012:  Add GCC version check
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY
+#if (__GNUC__ < 4 || \
+    (__GNUC__ == 4 && (__GNUC_MINOR__ < 4)))
+#warning "GNU version lower than expected"    
+        printf("GCC version must be 4.4.0 or later when linking with GOMP OpenMP Runtime Library \n(OpenMP tasking calls are not implemented in previous versions)\n");
+        ROSE_ASSERT(false);
+#endif
+
        // add libxomp.a , Liao 6/12/2010
        string xomp_lib_path(ROSE_INSTALLATION_PATH);
        ROSE_ASSERT (xomp_lib_path.size() != 0);

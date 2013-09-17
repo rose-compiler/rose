@@ -170,3 +170,5 @@ class ComposedAnalysisSelfTester {
 };
 
 } // namespace fuse
+
+
