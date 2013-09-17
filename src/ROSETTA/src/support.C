@@ -785,6 +785,8 @@ Grammar::setUpSupport ()
 
      File.setDataPrototype         ( "bool", "C99_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "C99_gnu_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "Cxx_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1760,7 +1762,20 @@ Grammar::setUpSupport ()
   // useful in the future for multiple file handling in other languages.
      Project.setDataPrototype("SgGlobal*", "globalScopeAcrossFiles", "= NULL",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
-     
+
+  // DQ (9/14/2013): Adding option to copy the location of the input file as the position for the generated output file.
+  // This is now demonstrated to be important in the case of ffmpeg-1.2 for the file "file.c" where it is specified as
+  // "libavutil/file.c" on the command line and we by default put it into the current directory (top level directory 
+  // in the directory structure).  But it is a subtle and difficult to reproduce error that the generated file will
+  // not compile properly from the top level directory (even when the "-I<absolute path>/libavutil" is specified).
+  // We need an option to put the generated file back into the original directory where the input source files is
+  // located, so that when the generated rose_*.c file is compiled (with the backend compiler, e.g. gcc) it can use
+  // the identical rules for resolving head files as it would have for the original input file (had it been compiled
+  // using the backend compiler instead).
+  // DQ (9/16/2013): Changed name from "build_generated_file_in_same_directory_as_input_file" to "unparse_in_same_directory_as_input_file".
+     Project.setDataPrototype("bool", "unparse_in_same_directory_as_input_file", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
    //  Attribute.setAutomaticGenerationOfCopyFunction(false);
@@ -2116,7 +2131,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // See test2003_01.C for an example of where this is required. Note that for a
   // variable declaration (SgVariableDeclaration) this information is recorded directly
   // on the SgVariableDeclaration node.  This use on the InitializedName is reserved for
-  // function parameters, and I am not sure if it is useful anyhwere else.
+  // function parameters, and I am not sure if it is useful anywhere else.
      TemplateArgument.setDataPrototype("bool", "requiresGlobalNameQualificationOnType", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 

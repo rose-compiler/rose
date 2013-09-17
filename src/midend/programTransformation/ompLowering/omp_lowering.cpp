@@ -480,6 +480,28 @@ void gatherReferences( const Rose_STL_Container< SgNode* >& expr, Rose_STL_Conta
     }
     return result;
   }
+  
+  int replaceVariablesWithPointerDereference(SgNode* root, ASTtools::VarSymSet_t vars)
+  {
+      int result = 0;
+      typedef Rose_STL_Container<SgNode *> NodeList_t;
+      NodeList_t refs = NodeQuery::querySubTree (root, V_SgVarRefExp);
+      for (NodeList_t::iterator i = refs.begin (); i != refs.end (); ++i)
+      {
+          SgVarRefExp* ref_orig = isSgVarRefExp (*i);
+          ROSE_ASSERT (ref_orig);
+          ASTtools::VarSymSet_t::const_iterator i = vars.find( ref_orig->get_symbol( ) );
+          if( i != vars.end( ) )
+          {
+              SgExpression * ptr_ref = buildPointerDerefExp( copyExpression(ref_orig) );
+              ptr_ref->set_need_paren(true);
+              SageInterface::replaceExpression( ref_orig, ptr_ref );
+              result ++;
+          }
+      }
+      return result;
+  }
+  
   //! Create a stride expression from an existing stride expression based on the loop iteration's order (incremental or decremental)
   // The assumption is orig_stride is just the raw operand of the condition expression of a loop
   // so it has to be adjusted to reflect the real stride: *(-1) if decremental
@@ -1025,9 +1047,9 @@ static void insert_libxompf_h(SgNode* startNode)
     // The OpenMP syntax requires that the omp for pragma is immediately followed by the for loop.
     SgForStatement * for_loop = isSgForStatement(body);
     SgFortranDo * do_loop = isSgFortranDo(body);
+
     SgStatement* loop = (for_loop!=NULL?(SgStatement*)for_loop:(SgStatement*)do_loop);
     ROSE_ASSERT (loop != NULL);
-
     // Step 1. Loop normalization
     // we reuse the normalization from SageInterface, though it is different from what gomp expects.
     // the point is to have a consistent loop form. We can adjust the difference later on.
@@ -1057,7 +1079,12 @@ static void insert_libxompf_h(SgNode* startNode)
     // step 2. Insert a basic block to replace SgOmpForStatement
     // This newly introduced scope is used to hold loop variables, private variables ,etc
     SgBasicBlock * bb1 = SageBuilder::buildBasicBlock(); 
+
+
+ //   fprintf(stderr, "target: %s\n", target->unparseToString().c_str() );
+
     replaceStatement(target, bb1, true);
+
     //TODO handle preprocessing information
     // Save some preprocessing information for later restoration. 
     //  AttachedPreprocessingInfoType ppi_before, ppi_after;
@@ -1228,6 +1255,7 @@ static void insert_libxompf_h(SgNode* startNode)
   // The OpenMP syntax requires that the omp for pragma is immediately followed by the for loop.
   SgForStatement * for_loop = isSgForStatement(body);
   SgFortranDo * do_loop = isSgFortranDo(body);
+
   SgStatement* loop = (for_loop!=NULL?(SgStatement*)for_loop:(SgStatement*)do_loop);
   ROSE_ASSERT (loop != NULL);
 
@@ -1243,7 +1271,6 @@ static void insert_libxompf_h(SgNode* startNode)
   SgOmpTargetStatement* grand_target = isSgOmpTargetStatement(grand_parent);
   ROSE_ASSERT (parent_parallel !=NULL); 
   ROSE_ASSERT (grand_target !=NULL); 
-
 
   // Step 1. Loop normalization
   // For the init statement: for (int i=0;... ) becomes int i; for (i=0;..) 
@@ -1266,6 +1293,7 @@ static void insert_libxompf_h(SgNode* startNode)
   bool isIncremental = true; // if the loop iteration space is incremental
   // grab the original loop 's controlling information
   bool is_canonical = false;
+
   if (for_loop)
     is_canonical = isCanonicalForLoop (for_loop, &orig_index, & orig_lower, &orig_upper, &orig_stride, NULL, &isIncremental);
   else if (do_loop)
@@ -1275,6 +1303,7 @@ static void insert_libxompf_h(SgNode* startNode)
   // loop iteration space: upper - lower + 1
   // This expression will be later used to help generate xomp_get_max1DBlock(VEC_LEN), which needs iteration count to calculate max thread block numbers
   cuda_loop_iter_count_1 = buildAddOp(buildSubtractOp(deepCopy(orig_upper), deepCopy(orig_lower)), buildIntVal(1));
+
   // also make sure the loop body is a block
   // TODO: we consider peeling off 1 level loop control only, need to be conditional on what the spec. can provide at pragma level
   // TODO: Fortran support later on
@@ -2087,7 +2116,9 @@ static void rewriteArraySubscripts(SgBasicBlock* body_block, const std::set<SgSy
 
   // To be safe, we use reverse order iteration when changing them
   for (std::vector<SgPntrArrRefExp* >::reverse_iterator riter = candidate_refs.rbegin(); riter != candidate_refs.rend(); riter ++)
+  { 
     linearizeArrayAccess (*riter);
+  }
 }
 
 // Liao, 2/28/2013
@@ -2248,7 +2279,6 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
        }
      }  // end for
 
-    
     std::set<SgSymbol*> array_syms; // store clause variable symbols which are array types (explicit or as a pointer)
     std::set<SgSymbol*> atom_syms; // store clause variable symbols which are non-aggregate types: scalar, pointer, etc
 
@@ -2546,6 +2576,8 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
     ROSE_ASSERT (result_decl != NULL);
     result_decl->get_functionModifier().setCudaKernel(); // add __global__ modifier
 
+    result->get_functionModifier().setCudaKernel();
+
      // This one is not desired. It inserts the function to the end and prepend a prototype
     // Outliner::insert(result, g_scope, body_block); 
     // TODO: better interface to specify where exactly to insert the function!
@@ -2766,7 +2798,15 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
     {
       SgCaseOptionStmt* option_stmt = buildCaseOptionStmt (buildIntVal(i), buildBasicBlock());
       // Move SgOmpSectionStatement's body to Case OptionStmt's body
-      SgBasicBlock * src_bb = isSgBasicBlock(isSgOmpSectionStatement(section_list[i])->get_body()); 
+      SgOmpSectionStatement* section_statement = isSgOmpSectionStatement(section_list[i]);
+      // Sara Royuela (Nov 19th, 2012)
+      // The section statement might not be a Basic Block if there is only one statement and it is not wrapped with braces
+      // In that case, we build here the Basic Block
+      SgBasicBlock * src_bb = isSgBasicBlock(section_statement->get_body());
+      if( src_bb == NULL )
+      {
+          src_bb = ensureBasicBlockAsBodyOfOmpBodyStmt( section_statement );
+      }
       SgBasicBlock * target_bb =  isSgBasicBlock(option_stmt->get_body());
       moveStatementsBetweenBlocks(src_bb , target_bb);
       appendStatement (buildBreakStmt(), target_bb);
@@ -3921,7 +3961,8 @@ static void insertInnerThreadBlockReduction(SgOmpClause::omp_reduction_operator_
      SgInitializedNamePtrList:: iterator new_end = unique (var_list.begin(), var_list.end());
      var_list.erase(new_end, var_list.end());
      VariableSymbolMap_t var_map; 
-
+     ASTtools::VarSymSet_t var_set;
+     
      vector <SgStatement* > front_stmt_list, end_stmt_list, front_init_list;  
     
 // this is call by both transOmpTargetParallel and transOmpTargetLoop, we should move this to the correct caller place 
@@ -3951,47 +3992,74 @@ static void insertInnerThreadBlockReduction(SgOmpClause::omp_reduction_operator_
       bool isReductionVar = isInClauseVariableList(orig_var, clause_stmt,V_SgOmpReductionClause);
 
       // step 1. Insert local declaration for private, firstprivate, lastprivate and reduction
+      // Sara, 5/31/2013: if variable is in Function Scope ( a parameter ) and array, 
+      // we don't want a private copy, since the only thing private is the pointer, not the pointed data
+      // We had a variable passed as private that has to be used as shared
+      // We create a pointer to the variable and replace all the occurrences of the variable by the pointer
+      // Example:
+      // source code: 
+      // void outlining( int M[10][10] ) {
+      //   #pragma omp task firstprivate( M )
+      //   M[0][0] = 4;
+      // }
+      // outlined parameters struct
+      // struct OUT__17__7038___data {
+      //   int (*M)[10UL];
+      // };
+      // outlined function:
+      // static void OUT__17__7038__(void *__out_argv) {
+      //   int (**M)[10UL] = (int (**)[10UL])(&(((struct OUT__17__7038___data *)__out_argv) -> M));
+      //   (*M)[0][0] = 4;
+      // }
       if (isInClauseVariableList(orig_var, clause_stmt, vvt))
       {
-        SgInitializer * init = NULL;
-        // use copy constructor for firstprivate on C++ class object variables
-        // For simplicity, we handle C and C++ scalar variables the same way
-        //
-        // But here is one exception: an array type firstprivate variable should
-        // be initialized element-by-element
-        // Liao, 4/12/2010
-        if (isInClauseVariableList(orig_var, clause_stmt,V_SgOmpFirstprivateClause) && !isSgArrayType(orig_type))
+        if( !(isSgArrayType(orig_type) && isSgFunctionDefinition (orig_var->get_scope ())) )
         {
-          init = buildAssignInitializer(buildVarRefExp(orig_var, bb1));
-        }
-        string private_name = "_p_"+orig_name;
+          SgInitializer * init = NULL;
+          // use copy constructor for firstprivate on C++ class object variables
+          // For simplicity, we handle C and C++ scalar variables the same way
+          //
+          // But here is one exception: an array type firstprivate variable should
+          // be initialized element-by-element
+          // Liao, 4/12/2010
+          if (isInClauseVariableList(orig_var, clause_stmt,V_SgOmpFirstprivateClause) && !isSgArrayType(orig_type) )
+          {  
+            init = buildAssignInitializer(buildVarRefExp(orig_var, bb1));
+          }
+          
+          string private_name;
+          if (SageInterface::is_Fortran_language() )
+          {
+            // leading _ is not allowed in Fortran
+            private_name = "i_"+orig_name;
+            nCounter ++; // Fortran does not have basic block as a scope at source level
+            // I have to generated all declarations at the same flat level under function definitions
+            // So a name counter is needed to avoid name collision
+            private_name = private_name + "_" + StringUtility::numberToString(nCounter);
 
-        if (SageInterface::is_Fortran_language() )
-        {
-          // leading _ is not allowed in Fortran
-          private_name = "i_"+orig_name;
-          nCounter ++; // Fortran does not have basic block as a scope at source level
-          // I have to generated all declarations at the same flat level under function definitions
-          // So a name counter is needed to avoid name collision
-          private_name = private_name + "_" + StringUtility::numberToString(nCounter);
-
-          // Special handling for variable declarations in Fortran
-          local_decl = buildAndInsertDeclarationForOmp (private_name, orig_type, init, bb1);
+            // Special handling for variable declarations in Fortran
+            local_decl = buildAndInsertDeclarationForOmp (private_name, orig_type, init, bb1);
+          }
+          else
+          {
+            private_name = "_p_"+orig_name;
+            local_decl = buildVariableDeclaration(private_name, orig_type, init, bb1);
+            //ROSE_ASSERT (getFirst);isSgFunctionDefinition (orig_var->get_scope (
+            //   prependStatement(local_decl, bb1);
+            front_stmt_list.push_back(local_decl);   
+          }
+          // record the map from old to new symbol
+          var_map.insert( VariableSymbolMap_t::value_type( orig_symbol, getFirstVarSym(local_decl)) ); 
         }
         else
         {
-          private_name = "_p_"+orig_name;
-          local_decl = buildVariableDeclaration(private_name, orig_type, init, bb1);
-          //ROSE_ASSERT (getFirst);
-          //   prependStatement(local_decl, bb1);
-          front_stmt_list.push_back(local_decl);   
+            var_set.insert(orig_symbol);
         }
-        // record the map from old to new symbol
-        var_map.insert( VariableSymbolMap_t::value_type( orig_symbol, getFirstVarSym(local_decl)) ); 
       }
       // step 2. Initialize the local copy for array-type firstprivate variables TODO copyin, copyprivate
 #if 1
-      if (isInClauseVariableList(orig_var, clause_stmt,V_SgOmpFirstprivateClause) && isSgArrayType(orig_type))
+      if (isInClauseVariableList(orig_var, clause_stmt,V_SgOmpFirstprivateClause) && 
+          isSgArrayType(orig_type) && !isSgFunctionDefinition (orig_var->get_scope ()))
       {
         // SgExprStatement* init_stmt = buildAssignStatement(buildVarRefExp(local_decl), buildVarRefExp(orig_var, bb1));
         SgInitializedName* leftArray = getFirstInitializedName(local_decl); 
@@ -4059,6 +4127,7 @@ static void insertInnerThreadBlockReduction(SgOmpClause::omp_reduction_operator_
 
    // step 4. Variable replacement for all original bb1
    replaceVariableReferences(bb1, var_map); 
+   replaceVariablesWithPointerDereference(bb1, var_set); // Variables that must be replaced by a pointer to the variable
 
    // We delay the insertion of declaration, initialization , and save-back statements until variable replacement is done
    // in order to avoid replacing variables of these newly generated statements.
@@ -4662,6 +4731,98 @@ int patchUpFirstprivateVariables(SgFile*  file)
   return result;
 } // end patchUpFirstprivateVariables()
 
+
+/*
+* Winnie, Handle collapse clause before openmp and openmp accelerator
+* add new variables inserted by SageInterface::loopCollasping() into mapin clause
+*
+* This function passes target for loop of collpase clause and the collapse factor to the function SageInterface::loopCollapse.
+* After return from SageInterface::loopCollapse, this function will insert new variables(generated by loopCollapse()) into mapin
+* or mapinout clause, if the collapse clause comes with target directive.
+*
+*/
+void transOmpCollapse(SgOmpClauseBodyStatement * node)
+{
+
+    SgStatement * body =  node->get_body();
+    ROSE_ASSERT(body != NULL);
+
+    // The OpenMP syntax requires that the omp for pragma is immediately followed by the for loop.
+    SgForStatement * for_loop = isSgForStatement(body);
+    SgStatement * loop = for_loop;
+
+    if(for_loop == NULL)
+        return;
+        
+    ROSE_ASSERT(getScope(for_loop)->get_parent()->get_parent() != NULL);
+        
+    Rose_STL_Container<SgOmpClause*> collapse_clauses = getClause(node, V_SgOmpCollapseClause);
+    
+    int collapse_factor = atoi(isSgOmpCollapseClause(collapse_clauses[0])->get_expression()->unparseToString().c_str());
+    SgExprListExp * new_var_list = SageInterface::loopCollapsing(for_loop, collapse_factor);
+
+    /*
+    *Winnie, we need to add the new variables into the map in list, if there is a SgOmpTargetStatement
+    */
+    /*For OmpTarget, we need to create SgOmpMapClause if there is no such clause in the original code.
+    *   target_stmt, #pragma omp target
+    *                or, #pragma omp parallel, when is not OmpTarget
+    *   inside this if condition, ompacc=false means there is no map clause, we need to create one
+    *   outside this if condition, ompacc=false means, no need to add new variables in the map in clause
+    */
+    SgStatement * target_stmt = isSgStatement(node->get_parent()->get_parent());
+    if(isSgOmpTargetStatement(target_stmt))
+    {
+
+        Rose_STL_Container<SgOmpClause*> map_clauses;
+        SgOmpMapClause * map_in;
+
+        /*get the data clause of this target statement*/
+        SgOmpClauseBodyStatement * target_clause_body = isSgOmpClauseBodyStatement(target_stmt); 
+
+        map_clauses = target_clause_body->get_clauses();
+        if(map_clauses.size() == 0)
+        {
+            SgOmpTargetDataStatement * target_data_stmt = getEnclosingNode<SgOmpTargetDataStatement>(target_stmt);
+
+            target_clause_body = isSgOmpClauseBodyStatement(target_data_stmt);
+            map_clauses = target_clause_body->get_clauses();
+        }
+
+        assert(map_clauses.size() != 0);
+
+        for(Rose_STL_Container<SgOmpClause*>::const_iterator iter = map_clauses.begin(); iter != map_clauses.end(); iter++)
+        {
+             SgOmpMapClause * temp_map_clause = isSgOmpMapClause(*iter);
+             if(temp_map_clause != NULL) //Winnie, look for the map(in) or map(inout) clause
+             {
+                 SgOmpClause::omp_map_operator_enum map_operator = temp_map_clause->get_operation();
+                 if(map_operator == SgOmpClause::e_omp_map_in || map_operator == SgOmpClause::e_omp_map_inout)
+                 {
+                     map_in = temp_map_clause;
+                     break;
+                 }
+             }
+        }
+        
+        if(map_in == NULL)
+        {
+            cerr <<"prepare to create a map in clause" << endl;
+        }
+        
+        
+        SgVarRefExpPtrList & mapin_var_list = map_in->get_variables();
+        SgExpressionPtrList new_vars = new_var_list->get_expressions();
+        for(int i = 0; i < new_vars.size(); i++)
+        {
+            mapin_var_list.push_back(isSgVarRefExp(new_vars[i]));
+        }
+    }
+}//Winnie, end of loop collapse
+
+
+
+
 //! Bottom-up processing AST tree to translate all OpenMP constructs
 // the major interface of omp_lowering
 // We now operation on scoped OpenMP regions and blocks
@@ -4701,6 +4862,12 @@ void lower_omp(SgSourceFile* file)
     ROSE_ASSERT(node != NULL);
     //debug the order of the statements
 //    cout<<"Debug lower_omp(). stmt:"<<node<<" "<<node->class_name() <<" "<< node->get_file_info()->get_line()<<endl;
+
+   
+    /*Winnie, handle Collapse clause.*/
+    if(  isSgOmpClauseBodyStatement(node) != NULL && hasClause(isSgOmpClauseBodyStatement(node), V_SgOmpCollapseClause))
+        transOmpCollapse(isSgOmpClauseBodyStatement(node));
+    
     switch (node->variantT())
     {
       case V_SgOmpParallelStatement:
@@ -4745,9 +4912,13 @@ void lower_omp(SgSourceFile* file)
             is_target_loop = true;
             
           if (is_target_loop)
+          {
             transOmpTargetLoop (node);
+          }
           else  
+           { 
             transOmpLoop(node);
+           }
           break;
         }
         //          {
