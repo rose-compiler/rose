@@ -559,6 +559,11 @@ test_build_generated_file_in_same_directory_as_input_file: $(testTranslator)
 	cp $(srcdir)/test2013_73.c test_directory/test2013_73.c
 	$(testTranslator) -rose:unparse_in_same_directory_as_input_file $(ROSE_FLAGS) -c test_directory/test2013_73.c -o test_directory/test2013_73.o
 
+# DQ (9/13/2013): Added new test for -rose:unparse_includes (which has a bug in how it unparses C++ style comments
+# and should maybe not be unparsing declarations that are front-end specific (e.g. builtin function declarations).
+test_unparse_includes_option: $(TEST_TRANSLATOR)
+	$(testTranslator) -rose:unparse_includes $(ROSE_FLAGS) -c $(srcdir)/test2013_75.c -o test2013_75_unparse_headers.o
+
 # Liao 11/19/2009
 # Custom tests to test rose translators as a linker (generating the final executables) for multiple files
 # simplest case: generate .o with -c
@@ -605,6 +610,7 @@ check-local:
 #	@$(MAKE) caller.o caller.out
 	@$(MAKE) test2012_145.o
 	@$(MAKE) test_build_generated_file_in_same_directory_as_input_file
+	@$(MAKE) test_unparse_includes_option
 	@echo "*********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/C_tests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************"
