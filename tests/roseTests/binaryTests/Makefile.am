@@ -595,6 +595,14 @@ EXTRA_DIST += semantics.conf findConstantsABI.ans
 findConstantsABI.passed: semantics.conf findConstantsABI
 	@$(RTH_RUN) CMD=findConstantsABI INPUT=i686-test1.O3.bin $< $@
 
+# Demo how to subclass something from SymbolicSemantics
+noinst_PROGRAMS += semanticsSubclassing
+semanticsSubclassing_SOURCES = semanticsSubclassing.C
+semanticsSubclassing_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+TEST_TARGETS += semanticsSubclassing.passed
+semanticsSubclassing.passed: $(TEST_EXIT_STATUS) semanticsSubclassing
+	@$(RTH_RUN) CMD=./semanticsSubclassing $< $@
+
 
 
 ###############################################################################################################################
