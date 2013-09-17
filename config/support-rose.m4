@@ -1980,6 +1980,8 @@ projects/PolyhedralModel/projects/loop-ocl/Makefile
 projects/PolyhedralModel/projects/spmd-generator/Makefile
 projects/PolyhedralModel/projects/polygraph/Makefile
 projects/PolyhedralModel/projects/utils/Makefile
+projects/RoseBlockLevelTracing/Makefile
+projects/RoseBlockLevelTracing/src/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
