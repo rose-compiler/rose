@@ -9,10 +9,13 @@ RoseBlockLevelTracing_includedir=$(prefix)
 INCLUDES = $(ROSE_INCLUDES) -I$(RoseBlockLevelTracing_includedir)
 LDADD    = $(ROSE_LIBS)
 
-bin_PROGRAMS = RoseBlockLevelTracing
+bin_PROGRAMS = RoseBlockLevelTracing  RoseTraceReader
 
 
 RoseBlockLevelTracing_SOURCES=\
 	roseBlockLevelTracing.C 
+
+RoseTraceReader_SOURCES=\
+	RoseTraceReader.C 
 
 

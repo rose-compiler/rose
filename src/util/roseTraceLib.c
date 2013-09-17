@@ -37,7 +37,7 @@ static void  __attribute__((constructor)) __ROSE_TraceStartup(){
     snprintf(__roseTraceFile, PATH_MAX, "%s/%s-%lu-0.rosetrace", roseTraceDir, hostName, pid);
     if((__roseTraceFilePtr=fopen(__roseTraceFile, "wb")) == NULL){
         fprintf(stderr, "\n Failed to open the trace file %s ... exiting", __roseTraceFile);
-        exit(-1);        
+        exit(-1);
     }
     fprintf(stdout, "\n  Trace file name = %s", __roseTraceFile);
 }

@@ -1,3 +1,5 @@
+#include "rose.h"
+#include "compilationFileDatabase.h"
 #include <limits.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -11,31 +13,88 @@
 #include <string>
 #include <string.h>
 #include <iostream>
+#include <iostream>
+#include <sstream>
+#include <functional>
+#include <numeric>
+#include <fstream>
+#include <boost/tokenizer.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
+#include "common.h"
 
 using namespace std;
+using namespace boost::algorithm;
+using namespace SageBuilder;
+using namespace SageInterface;
+
 static FILE * __roseTraceFilePtr;
 static char * __roseTraceFile;
-
-
 static FILE * __roseProjectDBFilePtr;
-static char * __roseProjectDBFile;
+static const char * __roseProjectDBFile;
 static std::vector<string> idToFile;
 
-int main(int argc, char ** argv){
+static boost::unordered_map<uint64_t, SgNode*> idToNodeMap;
+
+// A simple preorder traversal to assign unique ids to each node.
+// The same order is used in in NodeToIdMapper for instrumentation.
+class IdToNodeMapper: public AstSimpleProcessing {
+    string m_fileUnderCompilation;
+    uint32_t m_fileIdUnderCompilation;
+    uint32_t m_counter;
+    string m_roseDBFile;
     
-    if(argc < 3){
-        fprintf(stderr, "\n Usage %s <RoseProjectDbFile> <TraceFile>", argv[0]);
+    
+public:
+    IdToNodeMapper(SgFile * fileRoot, const string & dbFile){
+        m_fileUnderCompilation = fileRoot->get_file_info()->get_physical_filename();
+        m_roseDBFile = dbFile;
+        m_counter = 0;
+        m_fileIdUnderCompilation  = ROSE::GetProjectWideUniqueIdForPhysicalFile(m_roseDBFile, m_fileUnderCompilation);
+        traverse(fileRoot, preorder);
+    }
+    
+    
+private:
+    void virtual visit(SgNode * node) {
+        TraceId id(m_fileIdUnderCompilation, m_counter++);
+        idToNodeMap[id.GetSerializableId()] = node;
+        cout<<"\n"<< std::hex << id.GetSerializableId() << " : mapped to " << std::hex << node;
+        
+    }
+    
+};
+
+
+int main( int argc, char * argv[] ) {
+    
+    if(argc < 2){
+        fprintf(stderr, "\n Usage %s <TraceFile> rest of the arguments to rose .. must pass -rose:projectSpecificDatabaseFile", argv[0]);
         exit(-1);
     }
     
-    __roseProjectDBFile = argv[1];
-    __roseTraceFile = argv[2];
+    __roseTraceFile = argv[1];
     
     if(!(__roseTraceFilePtr = fopen(__roseTraceFile, "rb"))){
-        fprintf(stderr, "\n Failed to read TraceFile %s",__roseTraceFilePtr);
+        fprintf(stderr, "\n Failed to read TraceFile %s",__roseTraceFile);
         exit(-1);
     }
-
+    
+    
+    // patch argv
+    for(int i = 2 ; i < argc; i++){
+        argv[i-1] = argv[i];
+    }
+    
+    
+    
+    // Generate the ROSE AST.
+    SgProject* project = frontend(argc-1,argv);
+    // AST consistency tests (optional for users, but this enforces more of our tests)
+    AstTests::runAllTests(project);
+    
+    
+    __roseProjectDBFile = project->get_projectSpecificDatabaseFile().c_str();
     if(!(__roseProjectDBFilePtr = fopen(__roseProjectDBFile, "r"))){
         fprintf(stderr, "\n Failed to read roseDBFile %s",__roseProjectDBFile);
         exit(-1);
@@ -51,24 +110,40 @@ int main(int argc, char ** argv){
     }
     fclose(__roseProjectDBFilePtr);
     
+    // Build node to trace id map.
+    for(int i = 0 ; i < project->numberOfFiles(); i++) {
+        SgFile & file = project->get_file(i);
+        IdToNodeMapper mapper(&file, project->get_projectSpecificDatabaseFile());
+    }
+    
     // Read and print all trace records
     uint64_t traceId;
-    std::cout<<"\n TraceId : File : Line : Column";
+    std::cout<<"\n TraceId : File : SgNode * : class_name()";
     cout<<"\n *******************************";
+    
+    boost::unordered_map<uint64_t, SgNode*>::iterator it;
+    
     while(fread(&traceId, sizeof(uint64_t), 1, __roseTraceFilePtr)){
         uint32_t fileId = traceId >> 32;
-        uint32_t line = (traceId & 0xffffffff) >> 12;
-        uint32_t col = (traceId & 0xfff);
+        uint32_t nodeId = (traceId & 0xffffffff);
         
         if (fileId > idToFile.size()) {
-            cout<<"\n"<< traceId << " MISSING FILE!!!! id" << fileId;
+            cout<<"\n"<< std::hex << traceId << " MISSING FILE!!!! id" << std::hex << fileId;
         } else {
-            cout<<"\n"<< traceId << ":" << idToFile[fileId] << ":" << line << ":" << col;
+            it = idToNodeMap.find(traceId);
+            if(it == idToNodeMap.end()){
+                cout<<"\n"<< std::hex << traceId << " can't map back!!!" << std::hex << fileId << std::hex << nodeId;
+            } else {
+                cout<<"\n"<< std::hex << traceId << ":"<< idToFile[fileId] << ":" << std::hex << (*it).second << ":" << ((*it).second)->class_name();
+            }
         }
     }
     cout<<"\n *******************************";
     fclose(__roseTraceFilePtr);
-
+    
     return 0;
+    
+    
+    
     
 }
