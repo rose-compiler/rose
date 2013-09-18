@@ -803,7 +803,7 @@ public:
 
     /** Create a new map from an existing map. */
     template<class Other>
-    RangeMap(const Other &other) {
+    explicit RangeMap(const Other &other) {
         for (typename Other::const_iterator ri=other.begin(); ri!=other.end(); ++ri) {
             Range new_range(ri->first);
             Value new_value(ri->second);
@@ -1168,6 +1168,12 @@ public:
             return false;
         const_iterator found = lower_bound(r.first());
         return found!=end() && r.overlaps(found->first);
+    }
+
+    /** Determines if a range map does not contain any part of the specified range.  Returns false if any part of the range
+     *  @p r is present in the map.  An empty range is always distinct from the map. */
+    bool distinct(const Range &r) const {
+        return !overlaps(r);
     }
 
     /** Determines if two range maps are distinct.  Returns true iff there is no range in this map that overlaps with any range
