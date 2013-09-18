@@ -55,6 +55,12 @@ namespace InstructionSemantics2 {               // documented elsewhere
  */
 namespace MultiSemantics {
 
+/** Helps printing multidomain values by allowing the user to specify a name for each subdomain. */
+class Formatter: public BaseSemantics::Formatter {
+public:
+    std::vector<std::string> subdomain_names;
+};
+
 /*******************************************************************************************************************************
  *                                      Value type
  *******************************************************************************************************************************/
@@ -147,7 +153,7 @@ public:
 
     virtual uint64_t get_number() const /*override*/;
 
-    virtual void print(std::ostream &output, BaseSemantics::PrintHelper *helper=NULL) const /*override*/;
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const /*override*/;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Additional methods first declared at this level of the class hierarchy
@@ -179,12 +185,6 @@ public:
     }
 };
 
-/** Helps printing multidomain values by allowing the user to specify a name for each subdomain. */
-class PrintHelper: public BaseSemantics::PrintHelper {
-public:
-    std::vector<std::string> subdomain_names;
-};
-
 /*******************************************************************************************************************************
  *                                      RISC Operators
  *******************************************************************************************************************************/
@@ -202,7 +202,7 @@ protected:
     typedef std::vector<BaseSemantics::RiscOperatorsPtr> Subdomains;
     Subdomains subdomains;
     std::vector<bool> active;
-    PrintHelper print_helper;
+    Formatter formatter;                // contains names for the subdomains
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -260,16 +260,15 @@ public:
     // Methods first defined at this level of the class hiearchy
 public:
     /** Add a subdomain to this MultiSemantics domain.  Returns the identifier (index) used for this subdomain.  The @p name is
-     *  optional and used mostly for debugging; it is also added to the PrintHelper and can be used when printing a semantic
+     *  optional and used mostly for debugging; it is also added to the formatter and can be used when printing a semantic
      *  value. The @p activate argument indicates whether this subdomain is activated (default is true).  Activated subdomains
      *  will participate in RISC operations if their arguments are defined.  See also, is_active(), set_active(), and
      *  clear_active(). */
     virtual size_t add_subdomain(const BaseSemantics::RiscOperatorsPtr &subdomain, const std::string &name, bool activate=true);
 
-    /** Returns a print-helper containing the names of the subdomains.  The print helper is a member of the RiscOperators class
-     *  and should not be deleted by the user. */
-    virtual PrintHelper *get_print_helper() {
-        return &print_helper;
+    /** Returns a formatter containing the names of the subdomains. */
+    virtual Formatter& get_formatter() {
+        return formatter;
     }
     
     /** Returns the number of subdomains added to this MultiDomain. */
@@ -370,7 +369,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // RISC operations and other overrides
 public:
-    virtual void print(std::ostream &o, const std::string prefix="", BaseSemantics::PrintHelper *helper=NULL) const /*override*/;
+    virtual void print(std::ostream &o, BaseSemantics::Formatter&) const /*override*/;
     virtual void startInstruction(SgAsmInstruction *insn) /*override*/;
     virtual void finishInstruction(SgAsmInstruction *insn) /*override*/;
     virtual BaseSemantics::SValuePtr filterCallTarget(const BaseSemantics::SValuePtr&) /*override*/;

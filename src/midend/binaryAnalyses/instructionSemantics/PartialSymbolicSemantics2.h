@@ -42,18 +42,18 @@ namespace PartialSymbolicSemantics {
 extern uint64_t name_counter;
 
 /*******************************************************************************************************************************
- *                                      Print Helper
+ *                                      Print Formatter
  *******************************************************************************************************************************/
 
-/** Print helper to rename variables on the fly.  When this print helper is used, named variables are renamed using lower
+/** Formatter that renames variables on the fly.  When this formatter is used, named variables are renamed using lower
  *  numbers. This is useful for human-readable output because variable names tend to get very large (like "v904885611"). */
-class RenameMap: public BaseSemantics::PrintHelper {
+class Formatter: public BaseSemantics::Formatter {
 protected:
     typedef std::map<uint64_t, uint64_t> Map;
     Map renames;
     size_t next_name;
 public:
-    RenameMap(): next_name(1) {}
+    Formatter(): next_name(1) {}
     uint64_t rename(uint64_t orig_name);
 };
 
@@ -156,7 +156,7 @@ public:
     virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const /*override*/;
     virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const /*override*/;
 
-    virtual void print(std::ostream &output, BaseSemantics::PrintHelper *helper=NULL) const /*override*/;
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const /*override*/;
     
     virtual bool is_number() const /*override*/ {
         return 0==name;
@@ -248,7 +248,7 @@ public:
 public:
     /** Print info about how registers differ.  If a RenameMap is specified then named values will be renamed to
      *  have a shorter name.  */
-    virtual void print_diff_registers(std::ostream &o, const StatePtr &other_state, RenameMap *rmap=NULL) const;
+    virtual void print_diff_registers(std::ostream&, const StatePtr &other_state, Formatter&) const;
 
     /** Tests registers of two states for equality. */
     virtual bool equal_registers(const StatePtr &other) const;
@@ -804,8 +804,6 @@ protected:
             }
 #endif
 
-std::ostream& operator<<(std::ostream &o, const SValue &e);
-    
         } /*namespace*/
     } /*namespace*/
 } /*namespace*/

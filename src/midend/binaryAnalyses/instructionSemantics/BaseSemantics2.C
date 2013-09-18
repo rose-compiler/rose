@@ -16,32 +16,68 @@ std::ostream& operator<<(std::ostream &o, const Exception &x) {
 }
 
 std::ostream& operator<<(std::ostream &o, const SValue &x) {
-    x.print(o, NULL);
+    x.print(o);
+    return o;
+}
+
+std::ostream& operator<<(std::ostream &o, const SValue::WithFormatter &x)
+{
+    x.print(o);
     return o;
 }
 
 std::ostream& operator<<(std::ostream &o, const MemoryCell &x) {
-    x.print(o, NULL);
+    x.print(o);
+    return o;
+}
+
+std::ostream& operator<<(std::ostream &o, const MemoryCell::WithFormatter &x)
+{
+    x.print(o);
     return o;
 }
 
 std::ostream& operator<<(std::ostream &o, const MemoryState &x) {
-    x.print(o, "", NULL);
+    x.print(o);
+    return o;
+}
+
+std::ostream& operator<<(std::ostream &o, const MemoryState::WithFormatter &x)
+{
+    x.print(o);
     return o;
 }
 
 std::ostream& operator<<(std::ostream &o, const RegisterState &x) {
-    x.print(o, "", NULL);
+    x.print(o);
+    return o;
+}
+
+std::ostream& operator<<(std::ostream &o, const RegisterState::WithFormatter &x)
+{
+    x.print(o);
     return o;
 }
 
 std::ostream& operator<<(std::ostream &o, const State &x) {
-    x.print(o, "", NULL);
+    x.print(o);
+    return o;
+}
+
+std::ostream& operator<<(std::ostream &o, const State::WithFormatter &x)
+{
+    x.print(o);
     return o;
 }
 
 std::ostream& operator<<(std::ostream &o, const RiscOperators &x) {
-    x.print(o, "", NULL);
+    x.print(o);
+    return o;
+}
+
+std::ostream& operator<<(std::ostream &o, const RiscOperators::WithFormatter &x)
+{
+    x.print(o);
     return o;
 }
 
@@ -280,30 +316,32 @@ RegisterStateGeneric::deep_copy_values()
 }
 
 void
-RegisterStateGeneric::print(std::ostream &o, const std::string prefix, PrintHelper *ph) const
+RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
 {
-    const RegisterDictionary *regdict = ph ? ph->get_register_dictionary() : NULL;
+    const RegisterDictionary *regdict = fmt.get_register_dictionary();
     if (!regdict)
         regdict = get_register_dictionary();
     RegisterNames regnames(regdict);
 
-    // First pass is to get the maximum length of the register names.
+    // First pass is to get the maximum length of the register names; second pass prints
+    FormatRestorer oflags(stream);
     size_t maxlen = 6; // use at least this many columns even if register names are short.
-    for (Registers::const_iterator ri=registers.begin(); ri!=registers.end(); ++ri) {
-        for (RegPairs::const_iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
-            maxlen = std::max(maxlen, regnames(rvi->desc).size());
-        }
-    }
-
-    // Second pass actually prints stuff
-    FormatRestorer oflags(o);
-    for (Registers::const_iterator ri=registers.begin(); ri!=registers.end(); ++ri) {
-        for (RegPairs::const_iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
-            std::string name = regnames(rvi->desc);
-            o <<prefix <<std::setw(maxlen) <<std::left <<name <<" = ";
-            oflags.restore();
-            rvi->value->print(o, ph);
-            o <<"\n";
+    for (int i=0; i<2; ++i) {
+        for (Registers::const_iterator ri=registers.begin(); ri!=registers.end(); ++ri) {
+            for (RegPairs::const_iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
+                std::string regname = regnames(rvi->desc);
+                if (!fmt.get_suppress_initial_values() || rvi->value->get_comment().empty() ||
+                    0!=rvi->value->get_comment().compare(regname+"_0")) {
+                    if (0==i) {
+                        maxlen = std::max(maxlen, regname.size());
+                    } else {
+                        stream <<fmt.get_line_prefix() <<std::setw(maxlen) <<std::left <<regname <<" = ";
+                        oflags.restore();
+                        rvi->value->print(stream, fmt);
+                        stream <<"\n";
+                    }
+                }
+            }
         }
     }
 }
@@ -524,27 +562,71 @@ RegisterStateX86::writeRegisterIp(const RegisterDescriptor &reg, const SValuePtr
 }
 
 void
-RegisterStateX86::print(std::ostream &o, const std::string prefix, PrintHelper *ph) const 
+RegisterStateX86::print(std::ostream &stream, Formatter &fmt) const 
 {
-    FormatRestorer save_fmt(o);
-    for (size_t i=0; i<n_gprs; ++i) {
-        o <<prefix <<std::setw(7) <<std::left <<gprToString((X86GeneralPurposeRegister)i) <<" = { ";
-        gpr[i]->print(o, ph);
-        o <<" }\n";
+    const RegisterDictionary *regdict = fmt.get_register_dictionary();
+    if (!regdict)
+        regdict = get_register_dictionary();
+    RegisterNames regnames(regdict);
+
+    struct ShouldShow {
+        Formatter &fmt;
+        ShouldShow(Formatter &fmt): fmt(fmt) {}
+        bool operator()(const std::string &regname, const BaseSemantics::SValuePtr &value) {
+            return (!fmt.get_suppress_initial_values() || value->get_comment().empty() ||
+                    0!=value->get_comment().compare(regname+"_0"));
+        }
+    } should_show(fmt);
+
+    // Two passes: first figure out column widths for the register names, then print
+    size_t namewidth = 7;
+    FormatRestorer save_fmt(stream);
+    for (int pass=0; pass<2; ++pass) {
+        for (size_t i=0; i<n_gprs; ++i) {
+            std::string regname = regnames(RegisterDescriptor(x86_regclass_gpr, i, 0, 32));
+            if (should_show(regname, gpr[i])) {
+                if (0==pass) {
+                    namewidth = std::max(namewidth, regname.size());
+                } else {
+                    stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
+                           <<" = { " <<(*gpr[i]+fmt) <<" }\n";
+                }
+            }
+        }
+        for (size_t i=0; i<n_segregs; ++i) {
+            std::string regname = regnames(RegisterDescriptor(x86_regclass_segment, i, 0, 16));
+            if (should_show(regname, segreg[i])) {
+                if (0==pass) {
+                    namewidth = std::max(namewidth, regname.size());
+                } else {
+                    stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
+                           <<" = { " <<(*segreg[i]+fmt) <<" }\n";
+                }
+            }
+        }
+        for (size_t i=0; i<n_flags; ++i) {
+            std::string regname = regnames(RegisterDescriptor(x86_regclass_flags, 0, i, 1)); // flags are all part of minor #0
+            if (should_show(regname, flag[i])) {
+                if (0==pass) {
+                    namewidth = std::max(namewidth, regname.size());
+                } else {
+                    stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
+                           <<" = { " <<(*flag[i]+fmt) <<" }\n";
+                }
+            }
+        }
+        {
+            std::string regname = regnames(RegisterDescriptor(x86_regclass_ip, 0, 0, 32));
+            if (should_show(regname, ip)) {
+                if (0==pass) {
+                    namewidth = std::max(namewidth, regname.size());
+                } else {
+                    stream <<fmt.get_line_prefix() <<std::setw(namewidth) <<std::left <<regname
+                           <<" = { " <<(*ip+fmt) <<" }\n";
+                }
+            }
+        }
     }
-    for (size_t i=0; i<n_segregs; ++i) {
-        o <<prefix <<std::setw(7) <<std::left <<segregToString((X86SegmentRegister)i) <<" = { ";
-        segreg[i]->print(o, ph);
-        o <<" }\n";
-    }
-    for (size_t i=0; i<n_flags; ++i) {
-        o <<prefix <<std::setw(7) <<std::left <<flagToString((X86Flag)i) <<" = { ";
-        flag[i]->print(o, ph);
-        o <<" }\n";
-    }
-    o <<prefix <<std::setw(7) <<std::left <<"ip" <<" = { ";
-    ip->print(o, ph);
-    o <<" }\n";
 }
 
 /*******************************************************************************************************************************
@@ -625,6 +707,12 @@ MemoryCell::must_alias(const MemoryCellPtr &other, RiscOperators *ops) const
     return false;
 }
 
+void
+MemoryCell::print(std::ostream &stream, Formatter &fmt) const
+{
+    stream <<"addr=" <<(*address+fmt) <<" value=" <<(*value+fmt);
+}
+
 SValuePtr
 MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, size_t nbits, RiscOperators *ops)
 {
@@ -659,13 +747,10 @@ MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscO
 }
 
 void
-MemoryCellList::print(std::ostream &o, const std::string prefix, PrintHelper *helper/*=NULL*/) const
+MemoryCellList::print(std::ostream &stream, Formatter &fmt) const
 {
-    for (CellList::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
-        o <<prefix;
-        (*ci)->print(o, helper);
-        o <<"\n";
-    }
+    for (CellList::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci)
+        stream <<fmt.get_line_prefix() <<(**ci+fmt) <<"\n";
 }
 
 MemoryCellList::CellList
@@ -691,6 +776,17 @@ MemoryCellList::traverse(Visitor &visitor)
         (visitor)(*ci);
 }
 
+/*******************************************************************************************************************************
+ *                                      State
+ *******************************************************************************************************************************/
+
+void
+State::print(std::ostream &stream, Formatter &fmt) const
+{
+    std::string prefix = fmt.get_line_prefix();
+    Indent indent(fmt);
+    stream <<prefix <<"registers:\n" <<(*registers+fmt) <<prefix <<"memory:\n" <<(*memory+fmt);
+}
 
 /*******************************************************************************************************************************
  *                                      RiscOperators

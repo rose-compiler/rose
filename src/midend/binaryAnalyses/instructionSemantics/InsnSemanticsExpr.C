@@ -54,9 +54,9 @@ TreeNode::hash() const
         // FIXME: We could build the hash with a traversal rather than
         // from a string.  But this method is quick and easy. [Robb P. Matzke 2013-09-10]
         std::ostringstream ss;
-        PrintHelper phelp;
-        phelp.show_comments = PrintHelper::CMT_SILENT;
-        print(ss, phelp);
+        Formatter formatter;
+        formatter.show_comments = Formatter::CMT_SILENT;
+        print(ss, formatter);
         hashval = Combinatorics::fnv1a64_digest(ss.str());
     }
     return hashval;
@@ -74,15 +74,15 @@ InternalNode::add_child(const TreeNodePtr &child)
 }
 
 void
-InternalNode::print(std::ostream &o, PrintHelper &phelp) const
+InternalNode::print(std::ostream &o, Formatter &formatter) const
 {
     o <<"(" <<to_str(op) <<"[" <<nbits;
-    if (phelp.show_comments!=PrintHelper::CMT_SILENT && !comment.empty())
+    if (formatter.show_comments!=Formatter::CMT_SILENT && !comment.empty())
         o <<"," <<comment;
     o <<"]";
     for (size_t i=0; i<children.size(); i++) {
         o <<" ";
-        children[i]->print(o, phelp);
+        children[i]->print(o, formatter);
     }
     o <<")";
 }
@@ -1274,7 +1274,7 @@ LeafNode::get_name() const
 }
 
 void
-LeafNode::print(std::ostream &o, PrintHelper &phelp) const
+LeafNode::print(std::ostream &o, Formatter &formatter) const
 {
     bool showed_comment = false;
     if (is_known()) {
@@ -1288,16 +1288,16 @@ LeafNode::print(std::ostream &o, PrintHelper &phelp) const
         } else {
             o <<ival;
         }
-    } else if (phelp.show_comments==PrintHelper::CMT_INSTEAD && !comment.empty()) {
+    } else if (formatter.show_comments==Formatter::CMT_INSTEAD && !comment.empty()) {
         o <<comment;
         showed_comment = true;
     } else {
         uint64_t renamed = name;
-        if (phelp.do_rename) {
-            PrintHelper::RenameMap::iterator found = phelp.renames.find(name);
-            if (found==phelp.renames.end() && phelp.add_renames) {
-                renamed = phelp.renames.size();
-                phelp.renames.insert(std::make_pair(name, renamed));
+        if (formatter.do_rename) {
+            Formatter::RenameMap::iterator found = formatter.renames.find(name);
+            if (found==formatter.renames.end() && formatter.add_renames) {
+                renamed = formatter.renames.size();
+                formatter.renames.insert(std::make_pair(name, renamed));
             } else {
                 renamed = found->second;
             }
@@ -1316,7 +1316,7 @@ LeafNode::print(std::ostream &o, PrintHelper &phelp) const
         o <<renamed;
     }
     o <<"[" <<nbits;
-    if (!showed_comment && phelp.show_comments!=PrintHelper::CMT_SILENT && !comment.empty())
+    if (!showed_comment && formatter.show_comments!=Formatter::CMT_SILENT && !comment.empty())
         o <<"," <<comment;
     o <<"]";
 }
@@ -1396,9 +1396,16 @@ LeafNode::depth_first_visit(Visitor *v) const
 
 std::ostream&
 operator<<(std::ostream &o, const TreeNode &node) {
-    PrintHelper phelp;
-    node.print(o, phelp);
+    node.print(o);
     return o;
 }
+
+std::ostream&
+operator<<(std::ostream &o, const TreeNode::WithFormatter &w)
+{
+    w.print(o);
+    return o;
+}
+
 
 } // namespace

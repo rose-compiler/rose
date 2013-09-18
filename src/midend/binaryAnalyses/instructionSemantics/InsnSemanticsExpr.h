@@ -76,21 +76,22 @@ typedef boost::shared_ptr<const InternalNode> InternalNodePtr;
 typedef boost::shared_ptr<const LeafNode> LeafNodePtr;
 typedef std::vector<TreeNodePtr> TreeNodes;
 
-/** Passed to print methods to control some finer aspects of printing. */
-struct PrintHelper {
+/** Controls formatting of expression trees when printing. */
+struct Formatter {
     typedef Map<uint64_t, uint64_t> RenameMap;
     enum ShowComments {
         CMT_SILENT,                             /**< Do not show comments. */
         CMT_AFTER,                              /**< Show comments after the node. */
         CMT_INSTEAD,                            /**< Like CMT_AFTER, but show comments instead of variable names. */
     };
-    PrintHelper(): show_comments(CMT_INSTEAD), do_rename(false), add_renames(true) {}
-    ShowComments show_comments;                         /**< Show node comments when printing? */
+    Formatter(): show_comments(CMT_INSTEAD), do_rename(false), add_renames(true) {}
+    ShowComments show_comments;                 /**< Show node comments when printing? */
     bool do_rename;                             /**< Use the @p renames map to rename variables to shorter names? */
     bool add_renames;                           /**< Add additional entries to the @p renames as variables are encountered? */
     RenameMap renames;                          /**< Map for renaming variables to use smaller integers. */
 };
 
+/** Base class for visiting nodes during expression traversal. */
 class Visitor {
 public:
     virtual ~Visitor() {}
@@ -112,10 +113,6 @@ protected:
     mutable uint64_t hashval;   /**< Optional hash used as a quick way to indicate that two expressions are different. */
 public:
     TreeNode(size_t nbits, std::string comment=""): nbits(nbits), comment(comment), hashval(0) { assert(nbits>0); }
-
-    /** Print the expression to a stream.  The output is an S-expression with no line-feeds. A print_helper can be
-     *  supplied to control the finer aspects of printing. */
-    virtual void print(std::ostream&, PrintHelper &phelp) const = 0;
 
     /** Returns true if two expressions must be equal (cannot be unequal).  If an SMT solver is specified then that solver is
      * used to answer this question, otherwise equality is established by looking only at the structure of the two
@@ -183,6 +180,40 @@ public:
     /** Returns (and caches) the hash value for this node.  If a hash value is not cached in this node, then a new hash value
      *  is computed and cached. */
     uint64_t hash() const;
+
+    /** A node with formatter. See the with_format() method. */
+    class WithFormatter {
+    private:
+        TreeNodePtr node;
+        Formatter &formatter;
+    public:
+        WithFormatter(const TreeNodePtr &node, Formatter &formatter): node(node), formatter(formatter) {}
+        void print(std::ostream &stream) const { node->print(stream, formatter); }
+    };
+
+    /** Combines a node with a formatter for printing.  This is used for convenient printing with the "<<" operator. For
+     *  instance:
+     *
+     * @code
+     *  Formatter fmt;
+     *  fmt.show_comments = Formatter::CMT_AFTER; //show comments after the variable
+     *  TreeNodePtr expression = ...;
+     *  std::cout <<"method 1: "; expression->print(std::cout, fmt); std::cout <<"\n";
+     *  std::cout <<"method 2: " <<expression->with_format(fmt) <<"\n";
+     *  std::cout <<"method 3: " <<*expression+fmt <<"\n";
+     * 
+     * @endcode
+     * @{ */
+    WithFormatter with_format(Formatter &fmt) const { return WithFormatter(shared_from_this(), fmt); }
+    WithFormatter operator+(Formatter &fmt) const { return with_format(fmt); }
+    /** @} */
+
+    /** Print the expression to a stream.  The output is an S-expression with no line-feeds. */
+    void print(std::ostream &stream) const { Formatter formatter; print(stream, formatter); }
+
+    /** Print the expression to a stream.  The format of the output is controlled by the Formatter argument. */
+    virtual void print(std::ostream&, Formatter&) const = 0;
+
 };
 
 /** Operator-specific simplification methods. */
@@ -379,7 +410,7 @@ public:
     /** @} */
 
     /* see superclass, where these are pure virtual */
-    virtual void print(std::ostream &o, PrintHelper &phelp) const;
+    virtual void print(std::ostream&, Formatter&) const;
     virtual bool must_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool may_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool equivalent_to(const TreeNodePtr &other) const;
@@ -474,7 +505,7 @@ public:
     /* see superclass, where these are pure virtual */
     virtual bool is_known() const;
     virtual uint64_t get_value() const;
-    virtual void print(std::ostream &o, PrintHelper &phelp) const;
+    virtual void print(std::ostream&, Formatter&) const;
     virtual bool must_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool may_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool equivalent_to(const TreeNodePtr &other) const;
@@ -493,7 +524,8 @@ public:
 
 };
 
-std::ostream& operator<<(std::ostream &o, const InsnSemanticsExpr::TreeNode &node);
+std::ostream& operator<<(std::ostream &o, const TreeNode&);
+std::ostream& operator<<(std::ostream &o, const TreeNode::WithFormatter&);
 
 } // namespace
 #endif

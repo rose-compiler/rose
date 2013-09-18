@@ -6,13 +6,6 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace SymbolicSemantics {
 
-std::ostream &
-operator<<(std::ostream &o, const SValue &e)
-{
-    e.print(o);
-    return o;
-}
-
 /*******************************************************************************************************************************
  *                                      SValue
  *******************************************************************************************************************************/
@@ -92,25 +85,23 @@ SValue::set_comment(const std::string &s) const
 }
 
 void
-SValue::print(std::ostream &o, BaseSemantics::PrintHelper *helper_) const
+SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
 {
-    PrintHelper *helper = dynamic_cast<PrintHelper*>(helper_);
-    InsnSemanticsExpr::PrintHelper dflt_ph;
-    InsnSemanticsExpr::PrintHelper &ph = helper ? helper->expr_phelper : dflt_ph;
+    Formatter *formatter = dynamic_cast<Formatter*>(&formatter_);
+    InsnSemanticsExpr::Formatter dflt_expr_formatter;
+    InsnSemanticsExpr::Formatter &expr_formatter = formatter ? formatter->expr_formatter : dflt_expr_formatter;
 
     if (defs.empty()) {
-        expr->print(o, ph);
+        stream <<(*expr + expr_formatter);
     } else {
-        o <<"{defs={";
+        stream <<"{defs={";
         size_t ndefs=0;
         for (InsnSet::const_iterator di=defs.begin(); di!=defs.end(); ++di, ++ndefs) {
             SgAsmInstruction *insn = *di;
             if (insn!=NULL)
-                o <<(ndefs>0?",":"") <<StringUtility::addrToString(insn->get_address());
+                stream <<(ndefs>0?",":"") <<StringUtility::addrToString(insn->get_address());
         }
-        o <<"}, expr=";
-        expr->print(o, ph);
-        o <<"}";
+        stream <<"}, expr=" <<(*expr+expr_formatter) <<"}";
     }
 }
     

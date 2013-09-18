@@ -181,7 +181,7 @@ public:
         return p_intervals.min();
     }
 
-    virtual void print(std::ostream &output, BaseSemantics::PrintHelper *helper=NULL) const /*override*/ {
+    virtual void print(std::ostream &output, BaseSemantics::Formatter&) const /*override*/ {
         output <<p_intervals <<"[" <<get_width() <<"]";
     }
 

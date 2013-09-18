@@ -319,8 +319,10 @@ show_state(const BaseSemantics::RiscOperatorsPtr &ops)
     show(x86_regclass_flags, 0, 31, 1, "?31");
     show("eip", "ip");
 
+    BaseSemantics::Formatter memfmt;
+    memfmt.set_line_prefix("    ");
     std::cout <<"memory:\n";
-    ops->get_state()->print_memory(std::cout, "    ");
+    ops->get_state()->print_memory(std::cout, memfmt);
 }
 #endif
 
@@ -351,6 +353,8 @@ analyze_interp(SgAsmInterpretation *interp)
 #if SEMANTIC_API == NEW_API
         typedef BaseSemantics::DispatcherPtr MyDispatcher;
         BaseSemantics::RiscOperatorsPtr operators = make_ops();
+        BaseSemantics::Formatter formatter;
+        formatter.set_suppress_initial_values();
 #ifdef TRACE
         TraceSemantics::RiscOperatorsPtr trace = TraceSemantics::RiscOperators::instance(operators);
         trace->set_stream(stdout);
@@ -371,7 +375,9 @@ analyze_interp(SgAsmInterpretation *interp)
 #if SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN && SEMANTIC_API == NEW_API && defined(TRACE)
         // Only request the orig_esp if we're going to use it later because it causes an esp value to be instantiated
         // in the state, which is printed in the output, and thus changes the answer.
+        BaseSemantics::RegisterStateGeneric::promote(operators->get_state()->get_register_state())->initialize_large();
         BaseSemantics::SValuePtr orig_esp = operators->readRegister(*regdict->lookup("esp"));
+        std::cout <<"Original state:\n" <<*operators;
 #endif
 
         /* Perform semantic analysis for each instruction in this block. The block ends when we no longer know the value of
@@ -386,7 +392,7 @@ analyze_interp(SgAsmInterpretation *interp)
 #if 0 /*DEBUGGING [Robb P. Matzke 2013-05-01]*/
                 show_state(operators);
 #else
-                std::cout <<*operators;
+                std::cout <<(*operators + formatter);
 #endif
             } catch (const BaseSemantics::Exception &e) {
                 std::cout <<e <<"\n";
@@ -452,7 +458,7 @@ analyze_interp(SgAsmInterpretation *interp)
         SymbolicSemantics::SValuePtr to = SymbolicSemantics::SValue::promote(operators->add(newvar, operators->number_(32, 4)));
         std::cout <<"Substituting from " <<*from <<" to " <<*to <<"\n";
         SymbolicSemantics::RiscOperators::promote(operators)->substitute(from, to);
-        std::cout <<"Substituted state:\n" <<*operators;
+        std::cout <<"Substituted state:\n" <<(*operators+formatter);
 #endif
     }
 }

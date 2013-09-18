@@ -52,10 +52,10 @@ typedef std::set<SgAsmInstruction*> InsnSet;
 /** Smart pointer to an SValue object.  SValue objects are reference counted and should not be explicitly deleted. */
 typedef BaseSemantics::Pointer<class SValue> SValuePtr;
 
-/** PrintHelper for symbolic values. */
-class PrintHelper: public BaseSemantics::PrintHelper {
+/** Formatter for symbolic values. */
+class Formatter: public BaseSemantics::Formatter {
 public:
-    InsnSemanticsExpr::PrintHelper expr_phelper;
+    InsnSemanticsExpr::Formatter expr_formatter;
 };
 
 /** Type of values manipulated by the SymbolicSemantics domain.
@@ -222,7 +222,7 @@ public:
 
     virtual uint64_t get_number() const /*override*/;
 
-    virtual void print(std::ostream &output, BaseSemantics::PrintHelper *helper=NULL) const /*override*/;
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const /*override*/;
 
     virtual std::string get_comment() const /*override*/;
     virtual void set_comment(const std::string&) const /*override*/;

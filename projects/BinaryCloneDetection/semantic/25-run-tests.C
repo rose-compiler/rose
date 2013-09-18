@@ -130,6 +130,9 @@ struct WorkItem {
             return func_id < other.func_id;
         return igroup_id < other.igroup_id;
     }
+    bool operator==(const WorkItem &other) const {
+        return specimen_id==other.specimen_id && func_id==other.func_id && igroup_id==other.igroup_id;
+    }
     int specimen_id, func_id, igroup_id;
 };
 

@@ -219,7 +219,7 @@ public:
     virtual SMTSolver *get_solver() const /*override*/;
     virtual BaseSemantics::StatePtr get_state() /*override*/;
     virtual void set_state(const BaseSemantics::StatePtr&) /*override*/;
-    virtual void print(std::ostream&, const std::string prefix="", BaseSemantics::PrintHelper *helper=NULL) const /*override*/;
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const /*override*/;
     virtual size_t get_ninsns() const /*override*/;
     virtual void set_ninsns(size_t n) /*override*/;
     virtual SgAsmInstruction *get_insn() const /*override*/;

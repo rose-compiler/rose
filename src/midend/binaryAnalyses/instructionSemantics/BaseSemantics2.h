@@ -329,13 +329,13 @@ namespace BaseSemantics {
 
 class RiscOperators;
 
-/** Helper class for printing. Some semantic domains may want to pass some additional information to print methods on a
- *  per-call basis.  This base class provides something they can subclass to do that. A (optional) pointer to an instance of
- *  this class is passed to all semantic print() methods. */
-class PrintHelper {
+/** Format for printing things. Some semantic domains may want to pass some additional information to print methods on a
+ *  per-call basis.  This base class provides something they can subclass to do that.  A reference is passed to all print()
+ *  methods for semantic objects. */
+class Formatter {
 public:
-    PrintHelper(): regdict(NULL) {}
-    virtual ~PrintHelper() {}
+    Formatter(): regdict(NULL), suppress_initial_values(false), indentation_suffix("  ") {}
+    virtual ~Formatter() {}
 
     /** The register dictionary which is used for printing register names.
      * @{ */
@@ -343,8 +343,48 @@ public:
     void set_register_dictionary(RegisterDictionary *rd) { regdict = rd; }
     /** @} */
 
+    /** Whether register initial values should be suppressed.  If a register's value has a comment that is equal to the
+     * register name with "_0" appended, then that value is assumed to be the register's initial value.
+     * @{ */
+    bool get_suppress_initial_values() const { return suppress_initial_values; }
+    void set_suppress_initial_values(bool b=true) { suppress_initial_values=b; }
+    void clear_suppress_initial_values() { set_suppress_initial_values(false); }
+    /** @} */
+
+    /** The string to print at the start of each line. This only applies to objects that occupy more than one line.
+     * @{ */
+    std::string get_line_prefix() const { return line_prefix; }
+    void set_line_prefix(const std::string &s) { line_prefix = s; }
+    /** @} */
+
+    /** Indentation string appended to the line prefix for multi-level, multi-line outputs.
+     * @{ */
+    std::string get_indentation_suffix() const { return indentation_suffix; }
+    void set_indentation_suffix(const std::string &s) { indentation_suffix = s; }
+    /** @} */
+
 protected:
     RegisterDictionary *regdict;
+    bool suppress_initial_values;
+    std::string line_prefix;
+    std::string indentation_suffix;
+};
+
+/** Adjusts a Formatter for one additional level of indentation.  The formatter's line prefix is adjusted by appending the
+ * formatter's indentation suffix.  When this Indent object is destructed, the formatter's line prefix is reset to its original
+ * value. */
+class Indent {
+private:
+    Formatter &fmt;
+    std::string old_line_prefix;
+public:
+    Indent(Formatter &fmt): fmt(fmt) {
+        old_line_prefix = fmt.get_line_prefix();
+        fmt.set_line_prefix(old_line_prefix + fmt.get_indentation_suffix());
+    }
+    ~Indent() {
+        fmt.set_line_prefix(old_line_prefix);
+    }
 };
 
 /*******************************************************************************************************************************
@@ -669,10 +709,33 @@ public:
     /** Returns true if two values must be equal.  The SMT solver is optional for many subclasses. */
     virtual bool must_equal(const SValuePtr &other, SMTSolver *solver=NULL) const = 0;
 
-    /** Print a value to a stream. The value will normally occupy a single line and not contain leading space or line
-     * termination. */
-    virtual void print(std::ostream &output, PrintHelper *helper=NULL) const = 0;
+    /** Print a value to a stream using default format. The value will normally occupy a single line and not contain leading
+     * space or line termination.  See also, with_format().
+     *  @{ */
+    void print(std::ostream &stream) const { Formatter fmt; print(stream, fmt); }
+    virtual void print(std::ostream&, Formatter&) const = 0;
+    /** @} */
 
+    /** SValue with formatter. See with_formatter(). */
+    class WithFormatter {
+        SValuePtr obj;
+        Formatter &fmt;
+    public:
+        WithFormatter(const SValuePtr &svalue, Formatter &fmt): obj(svalue), fmt(fmt) {}
+        void print(std::ostream &stream) const { obj->print(stream, fmt); }
+    };
+
+    /** Used for printing values with formatting. The usual way to use this is:
+     * @code
+     *  SValuePtr val = ...;
+     *  Formatter fmt = ...;
+     *  std::cout <<"The value is: " <<(*val+fmt) <<"\n";
+     * @endcode
+     * @{ */
+    WithFormatter with_format(Formatter &fmt) { return WithFormatter(SValuePtr(this), fmt); }
+    WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
+    /** @} */
+    
     /** Some subclasses support the ability to add comments to values. We define no-op versions of these methods here
      *  because it makes things easier.  The base class tries to be as small as possible by not storing comments at
      *  all. Comments should not affect any computation (comparisons, hash values, etc), and therefore are allowed to be
@@ -696,7 +759,7 @@ typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
 /** The set of all registers and their values. RegisterState objects are allocated on the heap and reference counted.  The
  *  BaseSemantics::RegisterState is an abstract class that defines the interface.  See the
  *  BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit together.*/
-class RegisterState {
+class RegisterState: public boost::enable_shared_from_this<RegisterState> {
 protected:
     SValuePtr protoval;                         /**< Prototypical value for virtual constructors. */
     const RegisterDictionary *regdict;          /**< Registers that are able to be stored by this state. */
@@ -769,9 +832,35 @@ public:
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) = 0;
 
     /** Print the register contents. This emits one line per register and contains the register name and its value.
-     *  The @p ph argument is an optional PrintHelper that is simply passed as the second argument of the
-     *  underlying print methods for the register values. */
-    virtual void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const = 0;
+     *  @{ */
+    void print(std::ostream &stream, const std::string prefix="") const {
+        Formatter fmt;
+        fmt.set_line_prefix(prefix);
+        print(stream, fmt);
+    }
+    virtual void print(std::ostream&, Formatter&) const = 0;
+    /** @} */
+
+    /** RegisterState with formatter. See with_formatter(). */
+    class WithFormatter {
+        RegisterStatePtr obj;
+        Formatter &fmt;
+    public:
+        WithFormatter(const RegisterStatePtr &obj, Formatter &fmt): obj(obj), fmt(fmt) {}
+        void print(std::ostream &stream) const { obj->print(stream, fmt); }
+    };
+
+    /** Used for printing register states with formatting. The usual way to use this is:
+     * @code
+     *  RegisterStatePtr obj = ...;
+     *  Formatter fmt = ...;
+     *  std::cout <<"The value is: " <<(*obj+fmt) <<"\n";
+     * @endcode
+     * @{ */
+    WithFormatter with_format(Formatter &fmt) { return WithFormatter(shared_from_this(), fmt); }
+    WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
+    /** @} */
+
 };
 
 /** Smart pointer to a RegisterStateGeneric object.  RegisterStateGeneric objects are reference counted and should not be
@@ -874,7 +963,7 @@ public:
     virtual void zero() /*override*/;
     virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) /*override*/;
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) /*override*/;
-    virtual void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const /*override*/;
+    virtual void print(std::ostream&, Formatter&) const /*override*/;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first defined at this level of the class hierarchy
@@ -1027,7 +1116,7 @@ public:
     virtual void zero() /* override*/;
     virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) /*override*/;
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) /*override*/;
-    virtual void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const /*override*/;
+    virtual void print(std::ostream&, Formatter&) const /*override*/;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared at this level of the class hierarchy
@@ -1134,10 +1223,36 @@ public:
      *  decide which layer (if any) should handle splitting a multi-byte value into multiple memory locations. */
     virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *ops) = 0;
 
-    /** Print a memory state to more than one line of output. */
-    virtual void print(std::ostream &o, const std::string prefix="", PrintHelper *helper=NULL) const = 0;
-};
+    /** Print a memory state to more than one line of output.
+     * @{ */
+    void print(std::ostream &stream, const std::string prefix="") const {
+        Formatter fmt;
+        fmt.set_line_prefix(prefix);
+        print(stream, fmt);
+    }
+    virtual void print(std::ostream&, Formatter&) const = 0;
+    /** @} */
 
+    /** MemoryState with formatter. See with_formatter(). */
+    class WithFormatter {
+        MemoryStatePtr obj;
+        Formatter &fmt;
+    public:
+        WithFormatter(const MemoryStatePtr &obj, Formatter &fmt): obj(obj), fmt(fmt) {}
+        void print(std::ostream &stream) const { obj->print(stream, fmt); }
+    };
+
+    /** Used for printing memory states with formatting. The usual way to use this is:
+     * @code
+     *  MemoryStatePtr obj = ...;
+     *  Formatter fmt = ...;
+     *  std::cout <<"The value is: " <<(*obj+fmt) <<"\n";
+     * @endcode
+     * @{ */
+    WithFormatter with_format(Formatter &fmt) { return WithFormatter(shared_from_this(), fmt); }
+    WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
+    /** @} */
+};
 
 /******************************************************************************************************************
  *                                  Cell List Memory State
@@ -1238,13 +1353,34 @@ public:
      * addresses can be different; multi-byte cells will need to check ranges of addresses. */
     virtual bool must_alias(const MemoryCellPtr &other, RiscOperators *ops) const;
     
-    /** Print the memory cell on a single line. */
-    virtual void print(std::ostream &o, PrintHelper *helper=NULL) const {
-        o <<"addr=";
-        address->print(o, helper);
-        o <<" value=";
-        value->print(o, helper);
+    /** Print the memory cell on a single line.
+     * @{ */
+    void print(std::ostream &stream) const {
+        Formatter fmt;
+        print(stream, fmt);
     }
+    virtual void print(std::ostream&, Formatter&) const;
+    /** @} */
+
+    /** State with formatter. See with_formatter(). */
+    class WithFormatter {
+        MemoryCellPtr obj;
+        Formatter &fmt;
+    public:
+        WithFormatter(const MemoryCellPtr &obj, Formatter &fmt): obj(obj), fmt(fmt) {}
+        void print(std::ostream &stream) const { obj->print(stream, fmt); }
+    };
+
+    /** Used for printing states with formatting. The usual way to use this is:
+     * @code
+     *  MemoryCellPtr obj = ...;
+     *  Formatter fmt = ...;
+     *  std::cout <<"The value is: " <<(*obj+fmt) <<"\n";
+     * @endcode
+     * @{ */
+    WithFormatter with_format(Formatter &fmt) { return WithFormatter(shared_from_this(), fmt); }
+    WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
+    /** @} */
 };
 
 /** Smart pointer to a MemoryCell object. MemoryCell objects are reference counted and should not be explicitly deleted. */
@@ -1367,7 +1503,7 @@ public:
      *  The base implementation assumes that all cells contain 8-bit values. */
     virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *ops) /*override*/;
 
-    virtual void print(std::ostream &o, const std::string prefix="", PrintHelper *helper=NULL) const /*override*/;
+    virtual void print(std::ostream&, Formatter&) const /*override*/;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared at this level of the class hierarchy
@@ -1551,28 +1687,59 @@ public:
         memory->writeMemory(addr, value, ops);
     }
 
-    /** Print the register contents. This emits one line per register and contains the register name and its value.  The @p ph
-     *  argument is an optional PrintHelper that is simply passed as the second argument of the underlying print methods for
-     *  the SValue. */
-    virtual void print_registers(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const {
-        registers->print(o, prefix, ph);
+    /** Print the register contents. This emits one line per register and contains the register name and its value.
+     * @{ */
+    void print_registers(std::ostream &stream, const std::string prefix="") {
+        Formatter fmt;
+        fmt.set_line_prefix(prefix);
+        print_registers(stream, fmt);
     }
+    virtual void print_registers(std::ostream &stream, Formatter &fmt) const {
+        registers->print(stream, fmt);
+    }
+    /** @} */
 
-    /** Print memory contents.  This simply calls the MemoryState::print method. The @p ph argument is an optional PrintHelper
-     * that's passed as the second argument to the underlying print methods for the SValue. */
-    virtual void print_memory(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const {
-        memory->print(o, prefix, ph);
+    /** Print memory contents.  This simply calls the MemoryState::print method.
+     * @{ */
+    void print_memory(std::ostream &stream, const std::string prefix="") const {
+        Formatter fmt;
+        fmt.set_line_prefix(prefix);
+        print_registers(stream, fmt);
     }
+    virtual void print_memory(std::ostream &stream, Formatter &fmt) const {
+        memory->print(stream, fmt);
+    }
+    /** @} */
 
-    /** Print the state.  This emits a multi-line string containing the registers and all known memory locations.  The @p ph
-     *  argument is an optional PrintHelper pointer that's simply passed as the second argument to the print methods for the
-     *  SValue. */
-    virtual void print(std::ostream &o, const std::string prefix="", PrintHelper *ph=NULL) const {
-        o <<prefix <<"registers:\n";
-        print_registers(o, prefix+"    ", ph);
-        o <<prefix <<"memory:\n";
-        print_memory(o, prefix+"    ", ph);
+    /** Print the state.  This emits a multi-line string containing the registers and all known memory locations.
+     * @{ */
+    void print(std::ostream &stream, const std::string prefix="") const {
+        Formatter fmt;
+        fmt.set_line_prefix(prefix);
+        print(stream, fmt);
     }
+    virtual void print(std::ostream&, Formatter&) const;
+    /** @} */
+
+    /** State with formatter. See with_formatter(). */
+    class WithFormatter {
+        StatePtr obj;
+        Formatter &fmt;
+    public:
+        WithFormatter(const StatePtr &obj, Formatter &fmt): obj(obj), fmt(fmt) {}
+        void print(std::ostream &stream) const { obj->print(stream, fmt); }
+    };
+
+    /** Used for printing states with formatting. The usual way to use this is:
+     * @code
+     *  StatePtr obj = ...;
+     *  Formatter fmt = ...;
+     *  std::cout <<"The value is: " <<(*obj+fmt) <<"\n";
+     * @endcode
+     * @{ */
+    WithFormatter with_format(Formatter &fmt) { return WithFormatter(shared_from_this(), fmt); }
+    WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
+    /** @} */
 };
 
 /******************************************************************************************************************
@@ -1594,7 +1761,7 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  RiscOperator objects are allocated on the heap and reference counted.  The BaseSemantics::RiscOperator is an abstract class
  *  that defines the interface.  See the BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit
  *  together. */
-class RiscOperators {
+class RiscOperators: public boost::enable_shared_from_this<RiscOperators> {
 protected:
     SValuePtr protoval;                         /**< Prototypical value used for its virtual constructors. */
     StatePtr state;                             /**< State upon which RISC operators operate. */
@@ -1678,10 +1845,37 @@ public:
     virtual void set_name(const std::string &s) { name = s; }
     /** @} */
 
-    /** Print multi-line output for this object. */
-    virtual void print(std::ostream &o, const std::string prefix="", PrintHelper *helper=NULL) const {
-        state->print(o, prefix, helper);
+    /** Print multi-line output for this object.
+     * @{ */
+    void print(std::ostream &stream, const std::string prefix="") const {
+        Formatter fmt;
+        fmt.set_line_prefix(prefix);
+        print(stream, fmt);
     }
+    virtual void print(std::ostream &stream, Formatter &fmt) const {
+        state->print(stream, fmt);
+    }
+    /** @} */
+
+    /** RiscOperators with formatter. See with_formatter(). */
+    class WithFormatter {
+        RiscOperatorsPtr obj;
+        Formatter &fmt;
+    public:
+        WithFormatter(const RiscOperatorsPtr &obj, Formatter &fmt): obj(obj), fmt(fmt) {}
+        void print(std::ostream &stream) const { obj->print(stream, fmt); }
+    };
+
+    /** Used for printing RISC operators with formatting. The usual way to use this is:
+     * @code
+     *  RiscOperatorsPtr obj = ...;
+     *  Formatter fmt = ...;
+     *  std::cout <<"The value is: " <<(*obj+fmt) <<"\n";
+     * @endcode
+     * @{ */
+    WithFormatter with_format(Formatter &fmt) { return WithFormatter(shared_from_this(), fmt); }
+    WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
+    /** @} */
 
     /** Returns the number of instructions processed. This counter is incremented at the beginning of each instruction. */
     virtual size_t get_ninsns() const {
@@ -2147,11 +2341,17 @@ public:
 
 std::ostream& operator<<(std::ostream&, const Exception&);
 std::ostream& operator<<(std::ostream&, const SValue&);
+std::ostream& operator<<(std::ostream&, const SValue::WithFormatter&);
 std::ostream& operator<<(std::ostream&, const MemoryCell&);
+std::ostream& operator<<(std::ostream&, const MemoryCell::WithFormatter&);
 std::ostream& operator<<(std::ostream&, const MemoryState&);
+std::ostream& operator<<(std::ostream&, const MemoryState::WithFormatter&);
 std::ostream& operator<<(std::ostream&, const RegisterState&);
+std::ostream& operator<<(std::ostream&, const RegisterState::WithFormatter&);
 std::ostream& operator<<(std::ostream&, const State&);
+std::ostream& operator<<(std::ostream&, const State::WithFormatter&);
 std::ostream& operator<<(std::ostream&, const RiscOperators&);
+std::ostream& operator<<(std::ostream&, const RiscOperators::WithFormatter&);
 
 } /*namespace*/
 } /*namespace*/

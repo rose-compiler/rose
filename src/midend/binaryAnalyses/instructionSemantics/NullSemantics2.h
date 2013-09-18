@@ -92,8 +92,8 @@ public:
         return this == other.get(); // must be equal if they're both the same object
     }
 
-    virtual void print(std::ostream &o, BaseSemantics::PrintHelper *helper=NULL) const /*override*/ {
-        o <<"VOID";
+    virtual void print(std::ostream &stream, BaseSemantics::Formatter&) const /*override*/ {
+        stream <<"VOID[" <<get_width() <<"]";
     }
 };
 

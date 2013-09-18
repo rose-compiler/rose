@@ -234,10 +234,10 @@ RiscOperators::set_state(const BaseSemantics::StatePtr &state)
 }
 
 void
-RiscOperators::print(std::ostream &o, const std::string prefix, BaseSemantics::PrintHelper *helper) const
+RiscOperators::print(std::ostream &stream, BaseSemantics::Formatter &fmt) const
 {
     check_subdomain();
-    subdomain->print(o, prefix, helper);
+    subdomain->print(stream, fmt);
 }
 
 size_t
