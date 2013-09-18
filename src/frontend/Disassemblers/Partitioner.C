@@ -229,7 +229,8 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
      * stack), so we also skip over any memory whose address is known. */
     Disassembler::AddressSet successors;
     BaseSemantics::SValuePtr eip = ops->readRegister(*REG_EIP);
-    size_t entry_size = 4; // FIXME: bytes per jump table entry
+    static const size_t entry_size = 4; // FIXME: bytes per jump table entry
+    uint8_t *buf = new uint8_t[entry_size];
     if (!eip->is_number()) {
         BaseSemantics::MemoryCellListPtr mem = BaseSemantics::MemoryCellList::promote(ops->get_state()->get_memory_state());
         for (BaseSemantics::MemoryCellList::CellList::iterator mi=mem->get_cells().begin(); mi!=mem->get_cells().end(); ++mi) {
@@ -238,7 +239,6 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
                 rose_addr_t base_va = cell->get_address()->get_number();
                 size_t nentries = 0;
                 while (1) {
-                    uint8_t *buf = new uint8_t[entry_size];
                     size_t nread = ro_map.read(buf, base_va+nentries*entry_size, entry_size);
                     if (nread!=entry_size)
                         break;
@@ -249,7 +249,6 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
                         break;
                     successors.insert(target_va);
                     ++nentries;
-                    delete [] buf;
                 }
                 if (nentries>0) {
                     if (table_extent)
@@ -264,6 +263,7 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
             }
         }
     }
+    delete [] buf;
     return successors;
 }
 
