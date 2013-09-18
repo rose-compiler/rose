@@ -45,7 +45,7 @@ allCallsToMacro2( std::list<std::string> internalIncludePathList ){
 			       PreprocessingInfo::CMacroCall)
 		  {
 
-		    PreprocessingInfo::r_macro_call* macro_call = currentInfo->get_macro_call();
+		    PreprocessingInfo::rose_macro_call* macro_call = currentInfo->get_macro_call();
 
 		    const token_container* tok_cont = currentInfo->get_token_stream();
 

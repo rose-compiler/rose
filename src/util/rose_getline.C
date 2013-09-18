@@ -2,16 +2,7 @@
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
-
-#ifdef _MSC_VER
-    #ifdef _WIN64
-        typedef __int64         ssize_t;
-    #else
-        typedef _w64 int        ssize_t;
-    #endif
-#else
-    #include <unistd.h>
-#endif
+#include "rose_getline.h"
 
 ssize_t
 rose_getline (char **lineptr, size_t *n, FILE *stream)

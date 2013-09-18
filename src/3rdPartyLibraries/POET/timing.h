@@ -1,7 +1,11 @@
 #ifndef TIMING_H
 #define TIMING_H
 
+#ifdef _MSC_VER
+#include <winsock.h> /* struct timeval */
+#else
 #include <sys/time.h>
+#endif
 
 double GetWallTime(void); /*QY: return wall clock time*/
 

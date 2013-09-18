@@ -475,6 +475,7 @@ DisassemblerMips::makeHwRegister(unsigned cc)
 {
     assert(!"FIXME");
     abort();
+    return NULL;
 }
 
 SgAsmMipsRegisterReferenceExpression *
@@ -482,6 +483,7 @@ DisassemblerMips::makeShadowRegister(unsigned cc)
 {
     assert(!"FIXME");
     abort();
+    return NULL;
 }
 
 SgAsmByteValueExpression *

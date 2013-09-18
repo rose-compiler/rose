@@ -1,12 +1,20 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+SUBDIRS = addressTakenAnalysis
+COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
+EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
+
+codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
+
+if ROSE_APPROVED_PYTHON_VERSION
+
 bin_PROGRAMS = codethorn matcher_demo varwatch rdmain
 #ast_demo matcher_demo iterator_test
-EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 CLEANFILES = 
-SUBDIRS = addressTakenAnalysis
 
-AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH)
+# DQ (9/12/2013): Need to add -fopenmp to link line to get portable handling via automake.
+#AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH)
+AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp
 
 MYDATE = $(shell date +%Y_%m_%d)
 
@@ -17,7 +25,6 @@ KNOBS =
 
 codethorn_CXXFLAGS = $(KNOBS) -fopenmp -Wall # -O3 -march=native -ftree-vectorize
 codethorn_LDADD = -lfl -lrose
-codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 codethorn_SOURCES = \
   AType.C                          \
   AType.h                          \
@@ -356,8 +363,6 @@ generateregressiondata:
 	sort -u transitiongraph1.dat > tmp_transitiongraph1.dat
 	cp tmp_transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_mini1_transitiongraph1.dat
 
-COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
-
 CODETHORN_TESTS= \
     tests/asserttest1.c \
     tests/asserttest2.c \
@@ -510,3 +515,16 @@ CODETHORN_TESTS= \
 # MS: does not exist
 #    tests/test.ltl \
 # xxtest.C # MS: intentionally here as comment
+
+else
+all-local:
+	@echo ================================================================
+	@echo "SKIPPING COMPILATION OF CODETHORN (too old version of Python)"
+	@echo ================================================================
+
+check-local:
+	@echo ================================================================
+	@echo   "SKIPPING TESTING OF CODETHORN (too old version of Python)"
+	@echo ================================================================
+
+endif

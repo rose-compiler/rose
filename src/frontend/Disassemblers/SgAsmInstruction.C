@@ -120,4 +120,5 @@ bool
 SgAsmInstruction::is_unknown() const
 {
     abort(); // too bad ROSETTA doesn't allow virtual base classes
+    return false;
 }

@@ -31,3 +31,4 @@ class EqualFunctor {
     
   typedef boost::shared_ptr<EqualFunctor> EqualFunctorPtr;
 }; // namespace fuse
+

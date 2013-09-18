@@ -639,8 +639,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                printf ("verbose mode ON (for SgProject)\n");
         }
 
-  SageSupport::Cmdline::
-      ProcessKeepGoing(this, local_commandLineArgumentList);
+     SageSupport::Cmdline::ProcessKeepGoing(this, local_commandLineArgumentList);
 
   //
   // Standard compiler options (allows alternative -E option to just run CPP)
@@ -764,6 +763,24 @@ SgProject::processCommandLine(const vector<string>& input_argv)
       SageSupport::Cmdline::X10::
           Process(this, local_commandLineArgumentList);
 
+
+  // DQ (9/14/2013): Adding option to copy the location of the input file as the position for the generated output file.
+  // This is now demonstrated to be important in the case of ffmpeg-1.2 for the file "file.c" where it is specified as
+  // "libavutil/file.c" on the command line and we by default put it into the current directory (top level directory 
+  // in the directory structure).  But it is a subtle and difficult to reproduce error that the generated file will
+  // not compile properly from the top level directory (even when the "-I<absolute path>/libavutil" is specified).
+  // We need an option to put the generated file back into the original directory where the input source files is
+  // located, so that when the generated rose_*.c file is compiled (with the backend compiler, e.g. gcc) it can use
+  // the identical rules for resolving head files as it would have for the original input file (had it been compiled
+  // using the backend compiler instead).
+     set_unparse_in_same_directory_as_input_file(false);
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","unparse_in_same_directory_as_input_file",false) == true )
+        {
+       // printf ("Option -c found (compile only)! \n");
+       // set_copy_generated_source_to_same_location_as_input_file(true);
+       // set_build_generated_file_in_same_directory_as_input_file(true);
+          set_unparse_in_same_directory_as_input_file(true);
+        }
 
 #if 1
   // DQ (10/3/2010): Adding support for CPP directives to be optionally a part of the AST as declarations
@@ -1120,9 +1137,8 @@ SgProject::processCommandLine(const vector<string>& input_argv)
         }
 
 #if 0
-     printf ("Exiting after SgProject::processCommandLine() \n");
+     printf ("Leaving SgProject::processCommandLine() \n");
      display("At base of SgProject::processCommandLine()");
-  // ROSE_ASSERT (false);
 #endif
    }
 
@@ -1505,7 +1521,13 @@ SgFile::usage ( int status )
 "                             in which unparsed header files are stored.\n"
 "                             Note that the folder must be empty (or does not exist).\n"
 "                             If not specified, the default relative location _rose_ \n"
-"                             is used.\n"                  
+"                             is used.\n"
+"     -rose:unparse_in_same_directory_as_input_file\n"
+"                             Build the generated source file (unparse) in the same directory as \n"
+"                             the input source file.  This allows the backend compiler \n"
+"                             to compile the generated file exactly the same as the \n"
+"                             input would have been compiled (following original header file \n"
+"                             source path lookup rules precisely (this is rarely required)). \n"
 "\n"
 "Debugging options:\n"
 "     -rose:detect_dangling_pointers LEVEL \n"
@@ -1801,14 +1823,59 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // set_C99_only(false);
   // ROSE_ASSERT (get_C99_only() == false);
 
+  // DQ (9/3/2013): We need to seperate support for C99 rose option (which will default to -std=gnu99 for GNU backend compilers.
+  // DQ (8/30/2013): We need to distinguish between -std=c99 and -std=gnu99 (see tests using asm command).
   // DQ (7/4/2013): Added support for -std=c99 and -std=gnu99 options to specify C99 behavior.
   // if ( CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",true) == true )
-     if ( (CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",true) == true) || 
-          (CommandlineProcessing::isOption(argv,"-std=","(c99|gnu99)",true) == true) )
+  // if ( (CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",true) == true) || (CommandlineProcessing::isOption(argv,"-std=","(c99|gnu99)",true) == true) )
+  // if ( (CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",true) == true) || (CommandlineProcessing::isOption(argv,"-std=","(c99)",true) == true) )
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
                printf ("C99 mode ON \n");
           set_C99_only(true);
+
+       // DQ (9/3/2013): I think we want to default to a GNU mode in this case.
+       // DQ (8/30/2013): don't confuse this with -std=gnu99.
+       // set_C99_gnu_only(false);
+          set_C99_gnu_only(true);
+#if 0
+       // DQ (9/3/2013): Check the backend compiler and default to gnu99 for GNU and known GNU like compilers.
+       // However, this is too sensitive to the name of the backend compiler (which could be anything).
+          string backendCompilerSystem = BACKEND_C_COMPILER_NAME_WITHOUT_PATH;
+          if (backendCompilerSystem == "gcc" || backendCompilerSystem == "mpicc" || backendCompilerSystem == "mpicxx")
+             {
+               set_C99_gnu_only(true);
+             }
+#endif
+#if 0
+          printf ("In SgFile::processRoseCommandLineOptions(): get_C99_gnu_only() = %s \n",get_C99_gnu_only() ? "true" : "false");
+#endif
+       // DQ (7/31/2013): If we turn on C99, then turn off C89.
+          set_C89_only(false);
+        }
+
+  // DQ (9/3/2013): We need to support -std=c99 explicitly (makes a difference for asm test codes).
+     if ( CommandlineProcessing::isOption(argv,"-std=","(c99)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("C99 mode ON \n");
+          set_C99_only(true);
+
+       // Set gnu specific level of C99 support to false.
+          set_C99_gnu_only(false);
+
+       // DQ (7/31/2013): If we turn on C99, then turn off C89.
+          set_C89_only(false);
+        }
+
+  // DQ (8/30/2013): We need to support -std=gnu99 seperately from -std=c99 (makes a difference for asm test codes).
+     if ( CommandlineProcessing::isOption(argv,"-std=","(gnu99)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("C99 mode ON \n");
+          set_C99_only(true);
+          set_C99_gnu_only(true);
 
        // DQ (7/31/2013): If we turn on C99, then turn off C89.
           set_C89_only(false);
@@ -2843,9 +2910,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
                     cout << "  argv[" << i << "]= " << argv[i] << endl;
                   }
         }
-
+#endif
+#if 0
   // debugging aid
-  // display("SgFile::processRoseCommandLineOptions()");
+     display("SgFile::processRoseCommandLineOptions()");
 #endif
    }
 
@@ -3044,6 +3112,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // DQ (6/8/2013): Added support for experimental fortran frontend.
      optionCount = sla(argv, "-rose:", "($)", "(experimental_fortran_frontend)",1);
 
+  // DQ (9/15/2013): Remove this from being output to the backend compiler.
+     optionCount = sla(argv, "-rose:", "($)", "(unparse_in_same_directory_as_input_file)",1);
+
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
         {
@@ -3147,6 +3218,7 @@ CommandlineProcessing::generateOptionListWithDeclaredParameters (const Rose_STL_
      return optionList;
    }
 
+
 void
 SgFile::processBackendSpecificCommandLineOptions ( const vector<string>& argvOrig )
    {
@@ -3196,7 +3268,9 @@ SgFile::processBackendSpecificCommandLineOptions ( const vector<string>& argvOri
         }
    }
 
-void SgFile::build_CLANG_CommandLine ( vector<string> & inputCommandLine, vector<string> & argv, int fileNameIndex ) {
+
+void
+SgFile::build_CLANG_CommandLine ( vector<string> & inputCommandLine, vector<string> & argv, int fileNameIndex ) {
     // It filters Rose and Edg specific parameters and fixes the pathes.
 
     std::vector<std::string> inc_dirs_list;
@@ -4243,6 +4317,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
    }
 
+
 vector<string>
 SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameIndex, const string& compilerName )
    {
@@ -4294,18 +4369,32 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // We need a better way of identifying the C compiler which might not be known
   // ideally it should be specified at configure time so that it can be known in
   // case the -rose:C_only option is used.
-    if (get_C_only() == true || get_C99_only() == true)
-    {
+     if (get_C_only() == true || get_C99_only() == true)
+     {
        // compilerNameString = "gcc ";
           compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
-
+#if 0
+          printf ("In buildCompilerCommandLineOptions(): get_C99_only() = %s \n",get_C99_only() ? "true" : "false");
+#endif
        // DQ (6/4/2008): Added support to trigger use of C99 for older
        //                versions of GNU that don't use use C99 as the default.
           if (get_C99_only() == true)
-          {
-               compilerNameString.push_back("-std=gnu99");
-          }
-    }
+             {
+            // DQ (8/30/2013): We need to distinguish the usage of c99 vs gnu99.
+#if 0
+               printf ("In buildCompilerCommandLineOptions(): get_C99_gnu_only() = %s \n",get_C99_gnu_only() ? "true" : "false");
+#endif
+            // compilerNameString.push_back("-std=gnu99");
+               if (get_C99_gnu_only() == true)
+                  {
+                    compilerNameString.push_back("-std=gnu99");
+                  }
+                 else
+                  {
+                    compilerNameString.push_back("-std=c99");
+                  }
+             }
+     }
     else if (get_Cxx_only())
     {
         compilerNameString[0] = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
@@ -4469,6 +4558,12 @@ if (get_C_only() ||
        // Part of solution to bug 316 :
        // https://outreach.scidac.gov/tracker/index.php?func=detail&aid=316&group_id=24&atid=185
           compilerNameString.push_back("-DUSE_ROSE");
+
+       // DQ (9/14/2013): We need to at times distinguish between the use of USE_ROSE and that this is the backend compilation.
+       // This allows for code to be placed into input source code to ROSE and preserved (oops, this would not work since
+       // any code in the macro that was not active in the frontend would not survive to be put into the generated code for
+       // the backend).  I don't think there is a way to not see code in the front-end, yet see it in the backend.
+       // compilerNameString.push_back("-DUSE_ROSE_BACKEND");
 
        // Liao, 9/4/2009. If OpenMP lowering is activated. -D_OPENMP should be added
        // since we don't remove condition compilation preprocessing info. during OpenMP lowering
@@ -4665,41 +4760,69 @@ if (get_C_only() ||
 #endif
 
   // DQ (4/2/2011): Java does not have -I as an accepted option.
-    if (get_C_only() || get_Cxx_only())
-    {
-  // DQ (12/8/2004): Add -Ipath option so that source file's directory will be searched for any 
-  // possible headers.  This is especially important when we are compiling the generated file
-  // located in a different directory!  (When the original source file included header files
-  // in the source directory!)  This is only important when get_useBackendOnly() == false
-  // since otherwise the source file is the original source file and the compiler will search
-  // its directory for header files.  Be sure the put the oldFile's source directory last in the
-  // list of -I options so that it will be searched last (preserving the semantics of #include "...").
-  // Only add the path if it is a valid name (not an empty name, in which case skip it since the oldFile
-  // is in the current directory (likely a generated file itself; e.g. swig or ROSE applied recursively, etc.)).
-  // printf ("oldFileNamePathOnly.length() = %d \n",oldFileNamePathOnly.length());
-     if (oldFileNamePathOnly.empty() == false)
+     if (get_C_only() || get_Cxx_only())
         {
-          vector<string>::iterator iter;
-       // find the very first -Ixxx option's position
-          for (iter = compilerNameString.begin(); iter != compilerNameString.end(); iter++)
+       // DQ (12/8/2004): Add -Ipath option so that source file's directory will be searched for any 
+       // possible headers.  This is especially important when we are compiling the generated file
+       // located in a different directory!  (When the original source file included header files
+       // in the source directory!)  This is only important when get_useBackendOnly() == false
+       // since otherwise the source file is the original source file and the compiler will search
+       // its directory for header files.  Be sure the put the oldFile's source directory last in the
+       // list of -I options so that it will be searched last (preserving the semantics of #include "...").
+       // Only add the path if it is a valid name (not an empty name, in which case skip it since the oldFile
+       // is in the current directory (likely a generated file itself; e.g. swig or ROSE applied recursively, etc.)).
+       // printf ("oldFileNamePathOnly.length() = %d \n",oldFileNamePathOnly.length());
+          if (oldFileNamePathOnly.empty() == false)
              {
-               string cur_string =*iter;
-               string::size_type pos = cur_string.find("-I",0);
-               if (pos==0)
-                    break;
-             }
-       // Liao, 5/15/2009
-       // the input source file's path has to be the first one to be searched for header!
-       // This is required since one of the SPEC CPU 2006 benchmarks: gobmk relies on this to be compiled.
-       // insert before the position
+               vector<string>::iterator iter;
+            // find the very first -Ixxx option's position
+               for (iter = compilerNameString.begin(); iter != compilerNameString.end(); iter++)
+                  {
+                    string cur_string = *iter;
+                    string::size_type pos = cur_string.find("-I",0);
+                    if (pos==0)
+                         break;
+                  }
+            // Liao, 5/15/2009
+            // the input source file's path has to be the first one to be searched for header!
+            // This is required since one of the SPEC CPU 2006 benchmarks: gobmk relies on this to be compiled.
+            // insert before the position
 
-       // negara1 (07/14/2011): The functionality of header files unparsing takes care of this, so this is needed
-       // only when header files unparsing is not enabled.
-       if (!this -> get_unparseHeaderFiles()) {
-         compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly); 
-       }
-     }
-    }
+            // negara1 (07/14/2011): The functionality of header files unparsing takes care of this, so this is needed
+            // only when header files unparsing is not enabled.
+            // if (!this -> get_unparseHeaderFiles())
+               if (this->get_unparseHeaderFiles() == false) 
+                  {
+                 // DQ (9/15/2013): Added support for generated file to be placed into the same directory as the source file.
+                 // When (get_unparse_in_same_directory_as_input_file() == true) we don't want to add the include 
+                 // path to the source directory.
+                 // compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly);
+                    SgProject* project = TransformationSupport::getProject(this);
+                 // ROSE_ASSERT(project != NULL);
+                    if (project != NULL)
+                       {
+#if 0
+                         printf ("In SgFile::buildCompilerCommandLineOptions(): project->get_unparse_in_same_directory_as_input_file() = %s \n",project->get_unparse_in_same_directory_as_input_file() ? "true" : "false");
+#endif
+                         if (project->get_unparse_in_same_directory_as_input_file() == false)
+                            {
+#if 0
+                              printf ("In buildCompilerCommandLineOptions(): BEFORE adding -I options of source file directory: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+#endif
+                              compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly);
+#if 0
+                              printf ("In buildCompilerCommandLineOptions(): AFTER adding -I options of source file directory: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+#endif
+                            }
+                       }
+                      else
+                       {
+                         printf ("ERROR: In SgFile::buildCompilerCommandLineOptions(): file = %p has no associated project \n",this);
+                         ROSE_ASSERT(false);
+                       }
+                  }
+             }
+        }
 
     // Liao 3/30/2011. the search path for the installation path should be the last one, after paths inside
     // source trees, such as -I../../../../sourcetree/src/frontend/SageIII and 
@@ -4796,7 +4919,7 @@ if (get_C_only() ||
      printf ("At base of buildCompilerCommandLineOptions: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
 #endif
 #if 0
-     printf ("Exiting at base of buildCompilerCommandLineOptions() ... \n");
+     printf ("\n\nExiting at base of buildCompilerCommandLineOptions() ... \n");
      ROSE_ASSERT (false);
 #endif
 

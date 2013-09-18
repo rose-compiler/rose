@@ -302,6 +302,71 @@ createParam (const SgInitializedName* i_name,  // the variable to be passed into
 }
 
 /*!
+ *  \brief Initializes unpacking statements for array types
+ *  The function takes into account that array types must be initialized element by element
+ *  The function also skips typedef types to get the real type
+ *  
+ *  \param lhs Left-hand side of the assignment 
+ *  \param rhs Right-hand side of the assignment
+ *  \param type Current type being initialized
+ *  \param scope Scope where the assignments will be placed
+ *  \param loop_indexes Indexes of all loops, to be declared after calling this function
+ *                      So they are initialized before the most outer loop
+ *
+ *  Example:
+ *    Outlined parameters struct:
+ *        struct OUT__1__7768___data {
+ *            void *a_p;
+ *            int (*b_p)[10UL];
+ *            int c[10UL];
+ *            void *d_p;
+ *        };
+ *    Unpacking statements:
+ *        int *a = (int *)(((struct OUT__1__7768___data *)__out_argv) -> a_p);                      -> shared scalar
+ *        int (*b)[10UL] = (int (*)[10UL])(((struct OUT__1__7768___data *)__out_argv) -> b_p);      -> shared static array
+ *        int __i0__;
+ *        for (__i0__ = 0; __i0__ < 10UL; __i0__++)                                                 -> firstprivate array 
+ *            c[__i0__] = ((struct OUT__1__7768___data *)__out_argv) -> c[__i0__];
+ *        int **d = (int **)(((struct OUT__1__7768___data *)__out_argv) -> d_p);                    -> shared dynamic array
+ */
+static SgStatement* build_array_unpacking_statement( SgExpression * lhs, SgExpression * rhs, SgType * type, 
+                                                     SgScopeStatement * scope, SgStatementPtrList & loop_indexes )
+{
+    ROSE_ASSERT( isSgArrayType( type ) );
+    ROSE_ASSERT( scope );
+    
+    // Loop initializer
+    std::string loop_index_name = SageInterface::generateUniqueVariableName( scope, "i" );
+    SgVariableDeclaration * loop_index = buildVariableDeclaration( loop_index_name, buildIntType( ), NULL /* initializer */, scope );
+    loop_indexes.push_back( loop_index );
+    SgStatement * loop_init = buildAssignStatement( buildVarRefExp( loop_index_name, scope ), buildIntVal( 0 ) );
+    
+    // Loop test
+    SgStatement * loop_test = buildExprStatement(
+            buildLessThanOp( buildVarRefExp( loop_index_name, scope ), isSgArrayType( type )->get_index( ) ) );
+    
+    // Loop increment
+    SgExpression * loop_increment = buildPlusPlusOp( buildVarRefExp( loop_index_name, scope ), SgUnaryOp::postfix );
+    
+    // Loop body    
+    SgExpression * assign_lhs = buildPntrArrRefExp( lhs, buildVarRefExp( loop_index_name, scope ) );
+    SgExpression * assign_rhs = buildPntrArrRefExp( rhs, buildVarRefExp( loop_index_name, scope ) );
+    SgStatement * loop_body = NULL;
+    SgType * base_type = isSgArrayType( type )->get_base_type( )->stripType( SgType::STRIP_TYPEDEF_TYPE );
+    if( isSgArrayType( base_type ) )
+    {
+        loop_body = build_array_unpacking_statement( assign_lhs, assign_rhs, base_type, scope, loop_indexes );
+    }
+    else
+    {
+        loop_body = buildAssignStatement( assign_lhs, assign_rhs );
+    }
+    
+    // Loop satement
+    return buildForStatement( loop_init, loop_test, loop_increment, loop_body );
+}
+
+/*!
  *  \brief Creates a local variable declaration to "unpack" an outlined-function's parameter
  *  int index is optionally used as an offset inside a wrapper parameter for multiple variables
  *
@@ -346,195 +411,220 @@ createUnpackDecl (SgInitializedName* param, // the function parameter
                   bool isPointerDeref, // must use pointer deference or not
                   const SgInitializedName* i_name, // original variable to be passed as the function parameter
                   SgClassDeclaration* struct_decl, // the struct declaration type used to wrap parameters 
-                  SgScopeStatement* scope) // the scope into which the statement will be inserted 
+                  SgScopeStatement* scope) // the scope into which the statement will be inserted
 {
-  ROSE_ASSERT(param && scope && i_name);
+    ROSE_ASSERT( param && scope && i_name );
+    
+    // keep the original name 
+    const string orig_var_name = i_name->get_name( ).str( );
 
-  // keep the original name 
-  const string orig_var_name = i_name->get_name().str();
+    //---------------step 1 -----------------------------------------------
+    // decide on the type : local_type
+    // the original data type of the variable passed via parameter
+    SgType* orig_var_type = i_name ->get_type();
+    bool is_array_parameter = false;
+    if( !SageInterface::is_Fortran_language( ) )
+    {  
+        // Convert an array type parameter's first dimension to a pointer type
+        // This conversion is implicit for C/C++ language. 
+        // We have to make it explicit to get the right type
+        // Liao, 4/24/2009  TODO we should only adjust this for the case 1
+        if( isSgArrayType(orig_var_type) ) 
+            if( isSgFunctionDefinition( i_name->get_scope( ) ) )
+            {    
+                orig_var_type = SageBuilder::buildPointerType(isSgArrayType(orig_var_type)->get_base_type());
+                is_array_parameter = true;
+            }
+    }
 
- //---------------step 1 -----------------------------------------------
- // decide on the type : local_type
-  // the original data type of the variable passed via parameter
-  SgType* orig_var_type = i_name ->get_type();
-
-  if (! SageInterface::is_Fortran_language())
-  {  
-    // Convert an array type parameter's first dimension to a pointer type
-    // This conversion is implicit for C/C++ language. 
-    // We have to make it explicit to get the right type
-    // Liao, 4/24/2009  TODO we should only adjust this for the case 1
-    if (isSgArrayType(orig_var_type)) 
-      if (isSgFunctionDefinition(i_name->get_scope()))
-        orig_var_type = SageBuilder::buildPointerType(isSgArrayType(orig_var_type)->get_base_type());
-  }
-
-  SgType* local_type = NULL;
-  if (SageInterface::is_Fortran_language())
-    local_type= orig_var_type;
-  else if (Outliner::temp_variable || Outliner::useStructureWrapper) 
-  // unique processing for C/C++ if temp variables are used
-  {
-    if (isPointerDeref) // use pointer dereferencing for some
+    SgType* local_type = NULL;
+    if( SageInterface::is_Fortran_language( ) )
+        local_type= orig_var_type;
+    else if( Outliner::temp_variable || Outliner::useStructureWrapper ) 
+    // unique processing for C/C++ if temp variables are used
     {
-      local_type = buildPointerType(orig_var_type);
+        if( isPointerDeref || ( !isPointerDeref && is_array_parameter ) )    
+            // use pointer dereferencing for some
+            local_type = buildPointerType(orig_var_type);
+        else                    // use variable clone instead for others
+            local_type = orig_var_type;
+    }  
+    else // all other cases: non-fortran, not using variable clones 
+    {
+        if( is_C_language( ) )
+        {   
+            // we use pointer types for all variables to be passed
+            // the classic outlining will not use unpacking statement, but use the parameters directly.
+            // So we can safely always use pointer dereferences here
+            local_type = buildPointerType( orig_var_type );
+        }
+        else // C++ language
+            // Rich's idea was to leverage C++'s reference type: two cases:
+            //  a) for variables of reference type: no additional work
+            //  b) for others: make a reference type to them
+            //   all variable accesses in the outlined function will have
+            //   access the address of the by default, not variable substitution is needed 
+        { 
+            local_type = isSgReferenceType( orig_var_type ) ? orig_var_type 
+                                                            : SgReferenceType::createType( orig_var_type );
+        }
     }
-    else // use variable clone instead for others
-      local_type = orig_var_type;
-  }  
-  else // all other cases: non-fortran, not using variable clones 
-  {
-    if (is_C_language())
-    {   
-      // we use pointer types for all variables to be passed
-      // the classic outlining will not use unpacking statement, but use the parameters directly.
-      // So we can safely always use pointer dereferences here
-      local_type = buildPointerType(orig_var_type);
+    ROSE_ASSERT( local_type );
+
+    SgAssignInitializer* local_val = NULL;
+    
+    // Declare a local variable to store the dereferenced argument.
+    SgName local_name( orig_var_name.c_str( ) );
+    if( SageInterface::is_Fortran_language( ) )
+        local_name = SgName( param->get_name( ) );
+    
+    // This is the right hand of the assignment we want to build
+    //
+    // ----------step  2. Create the right hand expression------------------------------------
+    // No need to have right hand for fortran
+    if( SageInterface::is_Fortran_language( ) )
+    {
+        local_val = NULL;
+        return buildVariableDeclaration( local_name, local_type, local_val, scope );
     }
-    else // C++ language
-  // Rich's idea was to leverage C++'s reference type: two cases:
-  //  a) for variables of reference type: no additional work
-  //  b) for others: make a reference type to them
-  //   all variable accesses in the outlined function will have
-  //   access the address of the by default, not variable substitution is needed 
-    { 
-      local_type= isSgReferenceType(orig_var_type) ?orig_var_type: SgReferenceType::createType(orig_var_type);
+    // for non-fortran language
+    // Create an expression that "unpacks" the parameter.
+    //   case 1: default is to use the parameter directly
+    //   case 2:  for array of pointer type parameter,  build an array element reference
+    //   case 3: for structure type parameter, build a field reference
+    //     we use type casting to have generic void * parameter and void* data structure fields
+    //     so less types are to exposed during translation
+    //   class Hello **this__ptr__ = (class Hello **)(((struct OUT__1__1527___data *)__out_argv) -> this__ptr___p);
+    SgExpression* param_ref = NULL;
+    if (Outliner::useParameterWrapper) // using index for a wrapper parameter
+    {
+        if( Outliner::useStructureWrapper )
+        {   // case 3: structure type parameter
+            if (struct_decl != NULL)
+            {
+                SgClassDefinition* struct_def = isSgClassDeclaration( struct_decl->get_definingDeclaration( ) )->get_definition( );
+                ROSE_ASSERT( struct_def != NULL );
+                string field_name = orig_var_name;
+                if( isPointerDeref )
+                    field_name = field_name + "_p";
+                // __out_argv->i  or __out_argv->sum_p , depending on if pointer deference is needed
+                // param_ref = buildArrowExp(buildVarRefExp(param, scope), buildVarRefExp(field_name, struct_def));
+                // We use void* for all pointer types elements within the data structure. So type casting is needed here
+                // e.g.   class Hello **this__ptr__ = (class Hello **)(((struct OUT__1__1527___data *)__out_argv) -> this__ptr___p);
+                
+                
+                param_ref = buildArrowExp( buildCastExp( buildVarRefExp( param, scope ), 
+                                                         buildPointerType( struct_decl->get_type( ) ) ), 
+                                           buildVarRefExp( field_name, struct_def ) );
+                if( !isSgArrayType( local_type ) )
+                {
+                    // When necessary, we must catch the address before we do the casting
+                    if( !isPointerDeref && is_array_parameter )
+                    {
+                        param_ref = buildAddressOfOp( param_ref );
+                    }
+                    
+                    param_ref = buildCastExp( param_ref, local_type );
+                }
+            }
+            else
+            {
+                cerr << "Outliner::createUnpackDecl(): no need to unpack anything since struct_decl is NULL." << endl;
+                ROSE_ASSERT( false );
+            }
+        }
+        else // case 2: array of pointers 
+        {
+            param_ref = buildPntrArrRefExp( buildVarRefExp( param, scope ), buildIntVal( index ) );
+        }
+    } 
+    else // default case 1:  each variable has a pointer typed parameter , 
+         // this is not necessary but we have a classic model for optimizing this
+    {
+        param_ref = buildVarRefExp( param, scope );
     }
-  }
-  ROSE_ASSERT (local_type);
 
-  SgAssignInitializer* local_val = NULL;
+    ROSE_ASSERT (param_ref != NULL); 
 
-  // Declare a local variable to store the dereferenced argument.
-  SgName local_name (orig_var_name.c_str ());
-  if (SageInterface::is_Fortran_language())
-    local_name = SgName(param->get_name());
-
-  // This is the right hand of the assignment we want to build
-  //
-  // ----------step  2. Create the right hand expression------------------------------------
-   // No need to have right hand for fortran
-  if (SageInterface::is_Fortran_language())
-     {
-       local_val = NULL;
-       return buildVariableDeclaration(local_name,local_type,local_val,scope);
-     }
-  // for non-fortran language
-  // Create an expression that "unpacks" the parameter.
-  //   case 1: default is to use the parameter directly
-  //   case 2:  for array of pointer type parameter,  build an array element reference
-  //   case 3: for structure type parameter, build a field reference
-  //     we use type casting to have generic void * parameter and void* data structure fields
-  //     so less types are to exposed during translation
-  //   class Hello **this__ptr__ = (class Hello **)(((struct OUT__1__1527___data *)__out_argv) -> this__ptr___p);
-  SgExpression* param_ref = NULL;
-  if (Outliner::useParameterWrapper) // using index for a wrapper parameter
-  {
     if (Outliner::useStructureWrapper)
-    { // case 3: structure type parameter
-      if (struct_decl != NULL)
-      {
-        SgClassDefinition* struct_def = isSgClassDeclaration(struct_decl->get_definingDeclaration())->get_definition();
-        ROSE_ASSERT (struct_def != NULL);
-        string field_name = orig_var_name;
-        if (isPointerDeref)
-          field_name = field_name+"_p";
-        // __out_argv->i  or __out_argv->sum_p , depending on if pointer deference is needed
-        //param_ref = buildArrowExp(buildVarRefExp(param, scope), buildVarRefExp(field_name, struct_def));
-        //We use void* for all pointer types elements within the data structure. So type casting is needed here
-  //e.g.   class Hello **this__ptr__ = (class Hello **)(((struct OUT__1__1527___data *)__out_argv) -> this__ptr___p);
-        param_ref = buildCastExp(buildArrowExp(buildCastExp(buildVarRefExp(param, scope), buildPointerType(struct_decl->get_type())), 
-                                               buildVarRefExp(field_name, struct_def)),
-                                 local_type);
-        //local_type
-      }
-      else
-      {
-        cerr<<"Outliner::createUnpackDecl(): no need to unpack anything since struct_decl is NULL."<<endl;
-        ROSE_ASSERT (false);
-      }
-    }
-    else // case 2: array of pointers 
     {
-       param_ref= buildPntrArrRefExp(buildVarRefExp(param, scope),buildIntVal(index));
+        // Or for structure type paramter
+        // int (*sum)[100UL] = __out_argv->sum_p; // is PointerDeref type
+        // int i = __out_argv->i;
+            local_val = buildAssignInitializer( param_ref ); 
     }
-  } 
-  else // default case 1:  each variable has a pointer typed parameter , 
-    // this is not necessary but we have a classic model for optimizing this
-  {
-     param_ref = buildVarRefExp(param, scope);
-  }
+    else
+    {
+        //TODO: This is only needed for case 2 or C++ case 1, 
+        // not for case 1 and case 3 since the source right hand already has the right type
+        // since the array has generic void* elements. We need to cast from 'void *' to 'LOCAL_VAR_TYPE *'
+        // Special handling for C++ reference type: addressOf (refType) == addressOf(baseType) 
+        // So unpacking it to baseType* 
+        SgReferenceType* ref = isSgReferenceType (orig_var_type);
+        SgType* local_var_type_ptr =  SgPointerType::createType (ref ? ref->get_base_type (): orig_var_type);
+        ROSE_ASSERT (local_var_type_ptr);
+        SgCastExp* cast_expr = buildCastExp(param_ref,local_var_type_ptr,SgCastExp::e_C_style_cast);
 
-   ROSE_ASSERT (param_ref != NULL);
+        if (Outliner::temp_variable) // variable cloning is enabled
+        {
+            // int* ip = (int *)(__out_argv[1]); // isPointerDeref == true
+            // int i = *(int *)(__out_argv[1]);
+            if (isPointerDeref)
+            {
+                local_val = buildAssignInitializer(cast_expr); // casting is enough for pointer types
+            }
+            else // temp variable need additional dereferencing from the parameter on the right side
+            {
+                local_val = buildAssignInitializer(buildPointerDerefExp(cast_expr));
+            }
+        } 
+        else // conventional pointer dereferencing algorithm
+        {
+            // int* ip = (int *)(__out_argv[1]);
+            if  (is_C_language()) // using pointer dereferences
+            {
+                local_val = buildAssignInitializer(cast_expr);
+            }
+            else if  (is_Cxx_language()) 
+            // We use reference type in the outlined function's body for C++ 
+            // need the original value from a dereferenced type
+            // using pointer dereferences to get the original type
+            //  we use reference type instead of pointer type for C++
+            /*
+             * extern "C" void OUT__1__8452__(int *ip__,int *jp__,int (*sump__)[100UL]) {
+             *   int &i =  *((int *)ip__);
+             *   int &j =  *((int *)jp__);
+             *   int (&sum)[100UL] =  *((int (*)[100UL])sump__);
+             *   ...
+             * };
+             */ 
+            {
+                local_val = buildAssignInitializer(buildPointerDerefExp(cast_expr));
+            }
+            else
+            {
+                printf ("No other languages are supported by outlining currently. \n");
+                ROSE_ASSERT(false);
+            }
+        }
+    }
 
-  if (Outliner::useStructureWrapper)
-  {
-    // Or for structure type paramter
-    // int (*sum)[100UL] = __out_argv->sum_p; // is PointerDeref type
-    // int i = __out_argv->i;
-    local_val = buildAssignInitializer(param_ref); 
-  }
-  else
-  {
-     //TODO: This is only needed for case 2 or C++ case 1, 
-     // not for case 1 and case 3 since the source right hand already has the right type
-     // since the array has generic void* elements. We need to cast from 'void *' to 'LOCAL_VAR_TYPE *'
-     // Special handling for C++ reference type: addressOf (refType) == addressOf(baseType) 
-     // So unpacking it to baseType* 
-     SgReferenceType* ref = isSgReferenceType (orig_var_type);
-     SgType* local_var_type_ptr =  SgPointerType::createType (ref ? ref->get_base_type (): orig_var_type);
-     ROSE_ASSERT (local_var_type_ptr);
-     SgCastExp* cast_expr = buildCastExp(param_ref,local_var_type_ptr,SgCastExp::e_C_style_cast);
-
-    if (Outliner::temp_variable) // variable cloning is enabled
-       {
-      // int* ip = (int *)(__out_argv[1]); // isPointerDeref == true
-      // int i = *(int *)(__out_argv[1]);
-         if (isPointerDeref)
-         {
-              local_val = buildAssignInitializer(cast_expr); // casting is enough for pointer types
-         }
-           else // temp variable need additional dereferencing from the parameter on the right side
-           {
-              local_val = buildAssignInitializer(buildPointerDerefExp(cast_expr));
-           }
-       } 
-    else // conventional pointer dereferencing algorithm
-     {
-       // int* ip = (int *)(__out_argv[1]);
-       if  (is_C_language()) // using pointer dereferences
-          {
-            local_val = buildAssignInitializer(cast_expr);
-          }
-       else if  (is_Cxx_language()) 
-         // We use reference type in the outlined function's body for C++ 
-         // need the original value from a dereferenced type
-         // using pointer dereferences to get the original type
-         //  we use reference type instead of pointer type for C++
-/*
- extern "C" void OUT__1__8452__(int *ip__,int *jp__,int (*sump__)[100UL])
-{
-  int &i =  *((int *)ip__);
-  int &j =  *((int *)jp__);
-  int (&sum)[100UL] =  *((int (*)[100UL])sump__);
-  ...
-} 
- */ 
-          {
-            local_val = buildAssignInitializer(buildPointerDerefExp(cast_expr));
-           }
-       else
-          {
-            printf ("No other languages are supported by outlining currently. \n");
-            ROSE_ASSERT(false);
-          }
-     }
-   }
-// printf ("In createUnpackDecl(): local_val = %p \n",local_val);
-//
-
-  SgVariableDeclaration* decl = buildVariableDeclaration(local_name,local_type,local_val,scope);
-  return decl;
+    SgVariableDeclaration* decl;
+    if( isSgArrayType( local_type->stripType( SgType::STRIP_TYPEDEF_TYPE ) ) )
+    {   // The original variable was no statically allocated and passed as private or firstprivate
+        // We need to copy every element of the array
+        decl = buildVariableDeclaration( local_name, local_type, NULL, scope );
+        SgStatementPtrList loop_indexes;
+        SgStatement * array_init = build_array_unpacking_statement( buildVarRefExp( decl ), param_ref, 
+                                                                    local_type->stripType( SgType::STRIP_TYPEDEF_TYPE ), scope, loop_indexes );
+        SageInterface::prependStatement( array_init, scope );
+        SageInterface::prependStatementList( loop_indexes, scope );
+    }
+    else
+    {
+        decl = buildVariableDeclaration( local_name, local_type, local_val, scope );
+    }
+    return decl;
 }
 
 //! Returns 'true' if the given type is 'const'.
