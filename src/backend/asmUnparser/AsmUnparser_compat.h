@@ -5,25 +5,25 @@
 #include "AsmUnparser.h"
 
 /** Returns the string representation of an assembly instruction, sans address. */
-std::string unparseInstruction(SgAsmInstruction*, const AsmUnparser::LabelMap *labels=NULL,
+ROSE_DLL_API std::string unparseInstruction(SgAsmInstruction*, const AsmUnparser::LabelMap *labels=NULL,
                                const RegisterDictionary *registers=NULL);
 
 /** Returns the string representation of an assembly instruction with address. */
-std::string unparseInstructionWithAddress(SgAsmInstruction*, const AsmUnparser::LabelMap *labels=NULL,
+ROSE_DLL_API std::string unparseInstructionWithAddress(SgAsmInstruction*, const AsmUnparser::LabelMap *labels=NULL,
                                           const RegisterDictionary *registers=NULL);
 
 /** Returns a string representing the part of the assembly instruction before the first operand. */
-std::string unparseMnemonic(SgAsmInstruction*);
+ROSE_DLL_API std::string unparseMnemonic(SgAsmInstruction*);
 
 /** Returns the string representation of an instruction operand (SgAsmExpression), the format of which might depend on the
  *  instruction with which it's associated. */
-std::string unparseExpression(SgAsmExpression*, const AsmUnparser::LabelMap *labels, const RegisterDictionary *registers);
+ROSE_DLL_API std::string unparseExpression(SgAsmExpression*, const AsmUnparser::LabelMap *labels, const RegisterDictionary *registers);
 
-std::string unparseAsmStatement(SgAsmStatement*);
+ROSE_DLL_API std::string unparseAsmStatement(SgAsmStatement*);
 
-void unparseAsmStatementToFile(const std::string& filename, SgAsmStatement*);
+ROSE_DLL_API void unparseAsmStatementToFile(const std::string& filename, SgAsmStatement*);
 
-std::string unparseAsmInterpretation(SgAsmInterpretation*);
+ROSE_DLL_API std::string unparseAsmInterpretation(SgAsmInterpretation*);
 
 /*-------------------------------------------------------------------------------------------------------------------------------
  * X86

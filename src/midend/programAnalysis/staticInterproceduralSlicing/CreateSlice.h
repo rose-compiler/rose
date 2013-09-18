@@ -25,7 +25,7 @@ class BooleanSafeKeeper
 };
 
 
-class CreateSlice:public AstTopDownBottomUpProcessing < BooleanSafeKeeper,BooleanSafeKeeper>
+class ROSE_DLL_API CreateSlice:public AstTopDownBottomUpProcessing < BooleanSafeKeeper,BooleanSafeKeeper>
 {
 
   public:

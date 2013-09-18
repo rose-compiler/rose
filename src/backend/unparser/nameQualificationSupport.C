@@ -4258,8 +4258,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                case V_SgCastExp:  qualifiedType = castExp->get_type();          break;
 
             // DQ (1/26/2013): typeId operator can take either an expression or a type, get_type() returns the type independent of which is specified.
-            // case V_SgTypeIdOp: qualifiedType = typeIdOp->get_operand_type(); break;
-               case V_SgTypeIdOp: qualifiedType = typeIdOp->get_type(); break;
+               case V_SgTypeIdOp: qualifiedType = typeIdOp->get_operand_type(); break;
+               //case V_SgTypeIdOp: qualifiedType = typeIdOp->get_type(); break;
 
                default:
                   {

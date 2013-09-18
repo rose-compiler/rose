@@ -1,50 +1,10 @@
+QT4_WRAP_UI(ProjectManager_UI_CPP CmdLineEditDialog.ui)
+QT4_WRAP_CPP(ProjectManager_MOC_CPP
+  CmdLineEditDialog.h DependencyInfo.h Project.h ProjectView.h)
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-
-########### next target ###############
-
-
-########### install files ###############
-
-
-
-
-#original Makefile.am contents follow:
-
-##------------ ProjectManager Makefile.am -----------
-#include $(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc 
-#
-#if ROSE_WITH_ROSEQT
-#
-#noinst_LTLIBRARIES = libProjectManager.la 
-#
-#
-#
-#libProjectManager_la_SOURCES = CmdLineEditDialog.cpp\
-#                               DependencyInfo.cpp\
-#                               Project.cpp\
-#                               ProjectManager.cpp\
-#                               ProjectView.cpp
-#
-#nodist_libProjectManager_la_SOURCES = moc_CmdLineEditDialog.cxx\
-#                                      moc_DependencyInfo.cxx\
-#                                      moc_Project.cxx\
-#                                      moc_ProjectView.cxx\
-#                                      ui_CmdLineEditDialog.h
-#
-#BUILT_SOURCES = ui_CmdLineEditDialog.h
-#
-## Target for installing header 
-#headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
-#headerTarget_HEADERS = CmdLineEditDialog.h\
-#                       DependencyInfo.h\
-#                       Project.h\
-#                       ProjectManager.h\
-#                       ProjectView.h
-#
-#
-#endif
-#
-#EXTRA_DIST = CmdLineEditDialog.ui
-#
+add_library(ProjectManager OBJECT
+  CmdLineEditDialog.cpp DependencyInfo.cpp Project.cpp
+  ProjectManager.cpp ProjectView.cpp
+  ${ProjectManager_UI_CPP} ${ProjectManager_MOC_CPP})
