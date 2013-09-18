@@ -139,7 +139,7 @@ select
         func1.name as name,
         sim.func1_id, sim.func2_id, sim.similarity, sim.hamming_d, sim.euclidean_d, sim.euclidean_d_ratio, sim.ncompares,
         sim.path_ave_hamming_d, sim.path_min_hamming_d, sim.path_max_hamming_d,
-        sim.path_ave_euclidean_d, sim.path_min_euclidean_d, sim.path_max_euclidean_d  
+        sim.path_ave_euclidean_d_ratio, sim.path_min_euclidean_d_ratio, sim.path_max_euclidean_d_ratio  
     from fr_true_positives as falseneg
     join fr_functions as func1 on falseneg.func1_id = func1.id
     join fr_functions as func2 on falseneg.func2_id = func2.id
