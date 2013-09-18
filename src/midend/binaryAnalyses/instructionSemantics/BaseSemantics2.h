@@ -880,9 +880,15 @@ public:
     // Methods first defined at this level of the class hierarchy
 public:
     /** Initialize all registers of the dictionary.  When the dictionary contains overlapping registers, only the largest
-     *  registers are initialized. For example, on a 32-bit x86 architecture, EAX would be initialized but not AX, AH, or
-     *  AL; reading from AX, AH, or AL would return part of the initial EAX value. */
-    virtual void initialize();
+     *  registers are initialized. For example, on a 32-bit x86 architecture, EAX would be initialized but not AX, AH, or AL;
+     *  requesting AX, AH, or AL will return part of the initial EAX value. */
+    virtual void initialize_large();
+
+    /** Initialize all registers of the dictionary.  When the dictionary contains overlapping registers, only the smallest
+     *  registers are initialized. For example, on a 32-bit x86 architecture, AX, AH, AL and the non-named high-order 16 bits
+     *  of AX are inititialized, but EAX isn't explicitly initialized.  Requesting the value of EAX will return a value
+     *  constructed from the various smaller parts. */
+    virtual void initialize_small();
 
     /** Returns the list of all registers and their values.  The returned registers are guaranteed to be non-overlapping,
      * although they might not correspond to actual named machine registers.  For instance, if a 32-bit value was written to
@@ -934,6 +940,8 @@ protected:
     void deep_copy_values();
     static void get_nonoverlapping_parts(const Extent &overlap, const RegPair &rp, RiscOperators *ops,
                                          RegPairs *pairs/*out*/);
+private:
+    void initialize_nonoverlapping(const std::vector<RegisterDescriptor>&);
 };
 
 /** Smart pointer to a RegisterStateX86 object.  RegisterStateX86 objects are reference counted and should not be

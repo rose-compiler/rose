@@ -179,14 +179,14 @@ RegisterDictionary::get_descriptors() const
 RegisterDictionary::RegisterDescriptors
 RegisterDictionary::get_largest_registers() const
 {
-    SortBySize order(SortBySize::DESCENDING);
+    SortBySize order(SortBySize::ASCENDING);
     return filter_nonoverlapping(get_descriptors(), order, true);
 }
 
 RegisterDictionary::RegisterDescriptors
 RegisterDictionary::get_smallest_registers() const
 {
-    SortBySize order(SortBySize::ASCENDING);
+    SortBySize order(SortBySize::DESCENDING);
     return filter_nonoverlapping(get_descriptors(), order, true);
 }
 

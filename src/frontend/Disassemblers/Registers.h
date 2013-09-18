@@ -2,6 +2,7 @@
 #define ROSE_BINARY_REGISTERS_H
 
 #include <map>
+#include <queue>
 #include <string>
 
 /** Defines registers available for a particular architecture.
@@ -122,21 +123,22 @@ public:
     public:
         enum Direction { ASCENDING, DESCENDING };
         explicit SortBySize(Direction d=DESCENDING): direction(d) {}
-        virtual bool operator()(const RegisterDescriptor &a, const RegisterDescriptor &b) const {
-            bool retval = a.get_nbits() < b.get_nbits();
-            return DESCENDING==direction ? !retval : retval;
+        bool operator()(const RegisterDescriptor &a, const RegisterDescriptor &b) const {
+            return ASCENDING==direction ?
+                a.get_nbits() < b.get_nbits() :
+                a.get_nbits() > b.get_nbits();
         }
     protected:
         Direction direction;
     };
 
-    /** Returns the list of non-overlapping registers or register parts.  The list of registers are processed in the specified
-     *  order and each register is added to the return value if its bits were not already added to the return value by a
-     *  previous register.  If a register under consideration is only partially represented in the return value at the time it
-     *  is considered, then it is either split into smaller parts to be reconsidered later, or not reconsidered at all. Thus,
-     *  when @p reconsider_parts is true, the return value might contain register descriptors that were not part of the input
-     *  @p reglist, and which might not even have entries/names in the register dictionary (see get_largest_registers() for
-     *  more explaination).
+    /** Returns the list of non-overlapping registers or register parts.  The list of registers are processed in the reverse
+     *  specified order and each register is added to the return value if its bits were not already added to the return value
+     *  by a previous register.  If a register under consideration is only partially represented in the return value at the
+     *  time it is considered, then it is either split into smaller parts to be reconsidered later, or not reconsidered at
+     *  all. Thus, when @p reconsider_parts is true, the return value might contain register descriptors that were not part of
+     *  the input @p reglist, and which might not even have entries/names in the register dictionary (see
+     *  get_largest_registers() for more explaination).
      *
      *  For example, to get a list of the largest non-overlapping registers one could do the following:
      * @code
@@ -157,7 +159,7 @@ public:
      */
     template<class Compare>
     static RegisterDescriptors filter_nonoverlapping(RegisterDescriptors reglist,
-                                                     const Compare &order=SortBySize(),
+                                                     Compare order=SortBySize(),
                                                      bool reconsider_parts=true);
 
     /** Returns a list of the largest non-overlapping registers. For instance, for a 32-bit x86 dictionary the return value
@@ -230,35 +232,37 @@ public:
  *                                      Template definitions
  *******************************************************************************************************************************/
 
+
+
 template<class Compare>
 RegisterDictionary::RegisterDescriptors
-RegisterDictionary::filter_nonoverlapping(RegisterDescriptors desc, const Compare &order, bool reconsider_parts)
+RegisterDictionary::filter_nonoverlapping(RegisterDescriptors desc, Compare order, bool reconsider_parts)
 {
     RegisterDescriptors retval;
-    Map<std::pair<int/*major*/, int/*minor*/>, Extent> have_bits; // the union of the bits of descriptors we will return
+    Map<std::pair<int/*major*/, int/*minor*/>, ExtentMap> have_bits; // the union of the bits of descriptors we will return
 
     // Process the descriptors in the order specified.
-    std::sort(desc.begin(), desc.end(), order);
-    for (size_t i=0; i<desc.size(); ++i) {
-        const RegisterDescriptor &cur_desc = desc[i];
+    std::priority_queue<RegisterDescriptor, RegisterDescriptors, Compare> heap(order, desc);
+    while (!heap.empty()) {
+        const RegisterDescriptor cur_desc = heap.top();
+        heap.pop();
         const std::pair<int, int> cur_majmin(cur_desc.get_major(), cur_desc.get_minor());
         const Extent cur_extent(cur_desc.get_offset(), cur_desc.get_nbits());
-        const Extent have_extent = have_bits.get_value_or(cur_majmin, Extent());
-
-        if (cur_extent.distinct(have_extent)) {
+        ExtentMap &have_extents = have_bits[cur_majmin];
+        if (have_extents.distinct(cur_extent)) {
             // We're not returning any of these bits yet, so add the whole descriptor
             retval.push_back(cur_desc);
-            have_bits.insert(std::make_pair(cur_majmin, cur_extent));
+            have_extents.insert(cur_extent);
         } else if (reconsider_parts) {
-            // We're already returning some (or all) of these bits.  Split the cur_extent into zero, one, or two remaining
-            // parts by erasing the portion we're already returning, and add those parts back into the desc work list so the
-            // list remains sorted.
-            std::vector<Extent> parts = cur_extent.erase(have_extent);
-            for (size_t j=0; j<parts.size(); ++j) {
-                assert(!parts[j].empty());
-                RegisterDescriptor part_desc(cur_desc.get_major(), cur_desc.get_minor(), parts[i].first(), parts[i].size());
-                RegisterDescriptors::iterator insert_at = std::lower_bound(desc.begin(), desc.end(), part_desc, order);
-                desc.insert(insert_at, part_desc);
+            // We're already returning some (or all) of these bits. Split the cur_extent into sub-parts by subtracting the
+            // stuff we're already returning.
+            ExtentMap parts;
+            parts.insert(cur_extent);
+            parts.erase_ranges(have_extents);
+            for (ExtentMap::iterator pi=parts.begin(); pi!=parts.end(); ++pi) {
+                const Extent &part = pi->first;
+                RegisterDescriptor part_desc(cur_desc.get_major(), cur_desc.get_minor(), part.first(), part.size());
+                heap.push(part_desc);
             }
         }
     }

@@ -83,12 +83,28 @@ RegisterStateGeneric::zero()
 }
 
 void
-RegisterStateGeneric::initialize()
+RegisterStateGeneric::initialize_large()
+{
+    std::vector<RegisterDescriptor> regs = regdict->get_largest_registers();
+    initialize_nonoverlapping(regs);
+}
+
+void
+RegisterStateGeneric::initialize_small()
+{
+    std::vector<RegisterDescriptor> regs = regdict->get_smallest_registers();
+    initialize_nonoverlapping(regs);
+}
+
+void
+RegisterStateGeneric::initialize_nonoverlapping(const std::vector<RegisterDescriptor> &regs)
 {
     clear();
-    std::vector<RegisterDescriptor> regs = regdict->get_largest_registers();
     for (size_t i=0; i<regs.size(); ++i) {
         SValuePtr val = get_protoval()->undefined_(regs[i].get_nbits());
+        std::string name = regdict->lookup(regs[i]);
+        if (!name.empty())
+            val->set_comment(name+"_0");
         registers[RegStore(regs[i])].push_back(RegPair(regs[i], val));
     }
 }
