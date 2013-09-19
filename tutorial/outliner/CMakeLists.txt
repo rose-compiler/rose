@@ -5,35 +5,27 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 ########### next target ###############
 
 set(outline_SRCS outline.cc)
-
-kde4_add_executable(outline ${outline_SRCS})
-
-target_link_libraries(outline ${KDE4_KDECORE_LIBS})
-
-install(TARGETS outline ${INSTALL_TARGETS_DEFAULT_ARGS})
-
+add_executable(outline ${outline_SRCS})
+target_link_libraries(outline ROSE_DLL ${Boost_LIBRARIES})
 
 ########### next target ###############
 
 set(outlineIfs_SRCS outlineIfs.cc)
+add_executable(outlineIfs ${outlineIfs_SRCS})
+target_link_libraries(outlineIfs ROSE_DLL ${Boost_LIBRARIES})
 
-kde4_add_executable(outlineIfs ${outlineIfs_SRCS})
-
-target_link_libraries(outlineIfs ${KDE4_KDECORE_LIBS})
 
 
 ########### next target ###############
 
 set(outlinePreproc_SRCS outlinePreproc.cc)
-
-kde4_add_executable(outlinePreproc ${outlinePreproc_SRCS})
-
-target_link_libraries(outlinePreproc ${KDE4_KDECORE_LIBS})
+add_executable(outlinePreproc ${outlinePreproc_SRCS})
+target_link_libraries(outlinePreproc ROSE_DLL ${Boost_LIBRARIES})
 
 
 ########### install files ###############
 
-
+install(TARGETS outline ${INSTALL_TARGETS_DEFAULT_ARGS})
 
 
 #original Makefile.am contents follow:

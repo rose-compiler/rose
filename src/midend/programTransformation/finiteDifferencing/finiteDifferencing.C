@@ -13,6 +13,8 @@
 #include "patternRewrite.h"
 #include "pre.h"
 
+#include "finiteDifferencing.h"
+
 #undef FD_DEBUG
 
 // DQ (8/1/2005): test use of new static function to create 

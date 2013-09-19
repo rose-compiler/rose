@@ -235,7 +235,7 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
                 rose_addr_t base_va = mi->get_address().offset;
                 size_t nentries = 0;
                 while (1) {
-                    uint8_t buf[entry_size];
+                    uint8_t *buf = new uint8_t[entry_size];
                     size_t nread = ro_map.read(buf, base_va+nentries*entry_size, entry_size);
                     if (nread!=entry_size)
                         break;
@@ -246,6 +246,7 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
                         break;
                     successors.insert(target_va);
                     ++nentries;
+                    delete [] buf;
                 }
                 if (nentries>0) {
                     if (table_extent)

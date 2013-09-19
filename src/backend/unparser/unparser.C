@@ -1714,9 +1714,9 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
           if (project != NULL)
              {
 #if 0
-               printf ("project->get_build_generated_file_in_same_directory_as_input_file() = %s \n",project->get_build_generated_file_in_same_directory_as_input_file() ? "true" : "false");
+               printf ("project->get_unparse_in_same_directory_as_input_file() = %s \n",project->get_unparse_in_same_directory_as_input_file() ? "true" : "false");
 #endif
-               if (project->get_build_generated_file_in_same_directory_as_input_file() == true)
+               if (project->get_unparse_in_same_directory_as_input_file() == true)
                   {
                     outputFilename = ROSE::getPathFromFileName(file->get_sourceFileNameWithPath()) + "/rose_" + file->get_sourceFileNameWithoutPath();
 #if 0

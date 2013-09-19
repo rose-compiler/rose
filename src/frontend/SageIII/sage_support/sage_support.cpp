@@ -40,11 +40,13 @@ using namespace OmpSupport;
 
 const string FileHelper::pathDelimiter = "/";
 
+/* These symbols are defined when we include sage_support.h above - ZG (4/5/2013)
 // DQ (9/17/2009): This appears to only be required for the GNU 4.1.x compiler (not for any earlier or later versions).
 extern const std::string ROSE_GFORTRAN_PATH;
 
 // CER (10/11/2011): Added to allow OFP jar file to depend on version number based on date.
 extern const std::string ROSE_OFP_VERSION_STRING;
+*/
 
 #ifdef _MSC_VER
 // DQ (11/29/2009): MSVC does not support sprintf, but "_snprintf" is equivalent
@@ -495,6 +497,21 @@ bool roseInstallPrefix(std::string& result) {
     if (prefixCS == NULL) {free(libroseName); goto default_check;}
     string prefix = prefixCS;
     free(libdirCopy2); 
+
+    // Zack Galbreath, June 2013
+    // When building with CMake, detect build directory by searching
+    // for the presence of a CMakeCache.txt file.  If this cannot
+    // be found, then assume we are running from within an install tree.
+    #ifdef USE_CMAKE
+    std::string pathToCache = libdir;
+    pathToCache += "/../CMakeCache.txt";
+    if (boost::filesystem::exists(pathToCache)) {
+      return false;
+    } else {
+      return true;
+    }
+    #endif
+
     free(libroseName);
 // Liao, 12/2/2009
 // Check the librose's parent directory name to tell if it is within a build or installation tree
@@ -4660,8 +4677,8 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
        // ROSE_ASSERT(project != NULL);
           if (project != NULL)
              {
-               printf ("In SgFile::compileOutput(): project->get_build_generated_file_in_same_directory_as_input_file() = %s \n",project->get_build_generated_file_in_same_directory_as_input_file() ? "true" : "false");
-               if (project->get_build_generated_file_in_same_directory_as_input_file() == true)
+               printf ("In SgFile::compileOutput(): project->get_unparse_in_same_directory_as_input_file() = %s \n",project->get_unparse_in_same_directory_as_input_file() ? "true" : "false");
+               if (project->get_unparse_in_same_directory_as_input_file() == true)
                   {
                     outputFilename = ROSE::getPathFromFileName(get_sourceFileNameWithPath()) + "/rose_" + get_sourceFileNameWithoutPath();
 
@@ -4780,7 +4797,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   {
                     itInput++;
                     string destDirName = *itInput;
-                    if (mkdir(destDirName.c_str(),0777) == -1)
+                    if(!boost::filesystem::create_directory(destDirName.c_str()))
                        {
                          if(errno != EEXIST) 
                             {

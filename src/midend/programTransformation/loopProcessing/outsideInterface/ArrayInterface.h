@@ -10,7 +10,7 @@
 
 class SgFunctionDefinition; // Sneak in a forward reference
 
-class ArrayInterface 
+class ROSE_DLL_API ArrayInterface 
   : public AstObserver, public AliasAnalysisInterface, public ArrayAbstractionInterface
 {
  public: typedef std::map<SgFunctionDefinition *, ArrayInterface *> ArrayInterfaceMapT;

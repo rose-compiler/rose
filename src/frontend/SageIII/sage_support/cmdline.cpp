@@ -773,12 +773,13 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   // located, so that when the generated rose_*.c file is compiled (with the backend compiler, e.g. gcc) it can use
   // the identical rules for resolving head files as it would have for the original input file (had it been compiled
   // using the backend compiler instead).
-     set_build_generated_file_in_same_directory_as_input_file(false);
-     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","build_generated_file_in_same_directory_as_input_file",false) == true )
+     set_unparse_in_same_directory_as_input_file(false);
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","unparse_in_same_directory_as_input_file",false) == true )
         {
        // printf ("Option -c found (compile only)! \n");
        // set_copy_generated_source_to_same_location_as_input_file(true);
-          set_build_generated_file_in_same_directory_as_input_file(true);
+       // set_build_generated_file_in_same_directory_as_input_file(true);
+          set_unparse_in_same_directory_as_input_file(true);
         }
 
 #if 1
@@ -1521,12 +1522,12 @@ SgFile::usage ( int status )
 "                             Note that the folder must be empty (or does not exist).\n"
 "                             If not specified, the default relative location _rose_ \n"
 "                             is used.\n"
-"     -rose:build_generated_file_in_same_directory_as_input_file\n"
-"                             Build the generated source file in the same directory as \n"
+"     -rose:unparse_in_same_directory_as_input_file\n"
+"                             Build the generated source file (unparse) in the same directory as \n"
 "                             the input source file.  This allows the backend compiler \n"
 "                             to compile the generated file exactly the same as the \n"
-"                             input would have been compiled (following header file \n"
-"                             source path rules precisely (this is rarely required). \n"
+"                             input would have been compiled (following original header file \n"
+"                             source path lookup rules precisely (this is rarely required)). \n"
 "\n"
 "Debugging options:\n"
 "     -rose:detect_dangling_pointers LEVEL \n"
@@ -3112,7 +3113,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(experimental_fortran_frontend)",1);
 
   // DQ (9/15/2013): Remove this from being output to the backend compiler.
-     optionCount = sla(argv, "-rose:", "($)", "(build_generated_file_in_same_directory_as_input_file)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(unparse_in_same_directory_as_input_file)",1);
 
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
@@ -4793,7 +4794,7 @@ if (get_C_only() ||
                if (this->get_unparseHeaderFiles() == false) 
                   {
                  // DQ (9/15/2013): Added support for generated file to be placed into the same directory as the source file.
-                 // When (get_build_generated_file_in_same_directory_as_input_file() == true) we don't want to add the include 
+                 // When (get_unparse_in_same_directory_as_input_file() == true) we don't want to add the include 
                  // path to the source directory.
                  // compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly);
                     SgProject* project = TransformationSupport::getProject(this);
@@ -4801,9 +4802,9 @@ if (get_C_only() ||
                     if (project != NULL)
                        {
 #if 0
-                         printf ("In SgFile::buildCompilerCommandLineOptions(): project->get_build_generated_file_in_same_directory_as_input_file() = %s \n",project->get_build_generated_file_in_same_directory_as_input_file() ? "true" : "false");
+                         printf ("In SgFile::buildCompilerCommandLineOptions(): project->get_unparse_in_same_directory_as_input_file() = %s \n",project->get_unparse_in_same_directory_as_input_file() ? "true" : "false");
 #endif
-                         if (project->get_build_generated_file_in_same_directory_as_input_file() == false)
+                         if (project->get_unparse_in_same_directory_as_input_file() == false)
                             {
 #if 0
                               printf ("In buildCompilerCommandLineOptions(): BEFORE adding -I options of source file directory: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());

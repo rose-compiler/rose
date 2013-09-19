@@ -16,27 +16,28 @@
 #endif
 
 #include <string>
+#include "rosedll.h"
 
-extern const std::string ROSE_GFORTRAN_PATH;
-extern const std::string ROSE_AUTOMAKE_TOP_SRCDIR;
-extern const std::string ROSE_AUTOMAKE_TOP_BUILDDIR;
-extern const std::string ROSE_AUTOMAKE_PREFIX;
-extern const std::string ROSE_AUTOMAKE_DATADIR;
-extern const std::string ROSE_AUTOMAKE_BINDIR;
-extern const std::string ROSE_AUTOMAKE_INCLUDEDIR;
-extern const std::string ROSE_AUTOMAKE_INFODIR;
-extern const std::string ROSE_AUTOMAKE_LIBDIR;
-extern const std::string ROSE_AUTOMAKE_LIBEXECDIR;
-extern const std::string ROSE_AUTOMAKE_LOCALSTATEDIR;
-extern const std::string ROSE_AUTOMAKE_MANDIR;
+ROSE_UTIL_API extern const std::string ROSE_GFORTRAN_PATH;
+ROSE_UTIL_API extern const std::string ROSE_AUTOMAKE_TOP_SRCDIR;
+ROSE_UTIL_API extern const std::string ROSE_AUTOMAKE_TOP_BUILDDIR;
+ROSE_UTIL_API extern const std::string ROSE_AUTOMAKE_PREFIX;
+ROSE_UTIL_API extern const std::string ROSE_AUTOMAKE_DATADIR;
+ROSE_UTIL_API extern const std::string ROSE_AUTOMAKE_BINDIR;
+ROSE_UTIL_API extern const std::string ROSE_AUTOMAKE_INCLUDEDIR;
+ROSE_UTIL_API extern const std::string ROSE_AUTOMAKE_INFODIR;
+ROSE_UTIL_API extern const std::string ROSE_AUTOMAKE_LIBDIR;
+ROSE_UTIL_API extern const std::string ROSE_AUTOMAKE_LIBEXECDIR;
+ROSE_UTIL_API extern const std::string ROSE_AUTOMAKE_LOCALSTATEDIR;
+ROSE_UTIL_API extern const std::string ROSE_AUTOMAKE_MANDIR;
 
-extern const std::string ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR;
+ROSE_UTIL_API extern const std::string ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR;
 
 /* Additional interesting data to provide */
-extern const std::string ROSE_CONFIGURE_DATE;
-extern const std::string ROSE_AUTOMAKE_BUILD_OS;
-extern const std::string ROSE_AUTOMAKE_BUILD_CPU;
-extern const std::string ROSE_OFP_VERSION_STRING;
+ROSE_UTIL_API extern const std::string ROSE_CONFIGURE_DATE;
+ROSE_UTIL_API extern const std::string ROSE_AUTOMAKE_BUILD_OS;
+ROSE_UTIL_API extern const std::string ROSE_AUTOMAKE_BUILD_CPU;
+ROSE_UTIL_API extern const std::string ROSE_OFP_VERSION_STRING;
 
 /* Numeric form of ROSE version -- assuming ROSE version x.y.zL (where */
 /* x, y, and z are numbers, and L is a single lowercase letter from a to j), */
