@@ -56,7 +56,7 @@ class OperatorAnnotCollection
   }
 };
 
-class OperatorInlineAnnotation
+class ROSE_DLL_API OperatorInlineAnnotation
 : public OperatorAnnotCollection<OperatorInlineDescriptor>
 {
   virtual bool read_annot_name( const std::string& annotName) const
@@ -104,7 +104,7 @@ class OperatorReadInfoCollection
       OperatorAnnotCollection<OperatorSideEffectDescriptor>::Dump();
     }
 };
-class OperatorSideEffectAnnotation : public FunctionSideEffectInterface
+class ROSE_DLL_API OperatorSideEffectAnnotation : public FunctionSideEffectInterface
 {
   OperatorModInfoCollection modInfo;
   OperatorReadInfoCollection readInfo;

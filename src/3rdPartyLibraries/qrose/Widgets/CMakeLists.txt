@@ -1,9 +1,13 @@
+set(WIDGETS_MOC_SOURCES
+  QRButtons.h QRToolBar.h QRTable.h QREdit.h QRSelect.h QRProgress.h
+  QRSeparator.h QRSelect_p.h QRTree.h)
+QT4_WRAP_CPP(WIDGETS_MOC_CPP ${WIDGETS_MOC_SOURCES})
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
-
-
-########### next target ###############
-
+set(WIDGETS_SOURCES
+  QRTable_p.C QREdit_p.C QRProgress_p.C QRSeparator_p.C QRButtons.C
+  QRButtons_p.C QRToolBar.C QRTable.C  QREdit.C  QRSelect.C QRSelect_p.C
+  QRProgress.C QRSeparator.C QRTree.C)
+add_library(qrwidgets ${WIDGETS_SOURCES} ${WIDGETS_MOC_CPP})
 
 ########### install files ###############
 

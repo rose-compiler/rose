@@ -5,7 +5,6 @@
 // Extra headers for customizing the rewrite mechanism
 #include "rewriteTreeTraversalImpl.h"
 #include "rewriteSynthesizedAttributeTemplatesImpl.h"
-#include "rewriteMidLevelInterfaceTemplatesImpl.h"
 #include "ASTFragmentCollectorTraversalImpl.h"
 #include "prefixGenerationImpl.h"
 #include "rewriteASTFragementStringTemplatesImpl.h"

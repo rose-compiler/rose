@@ -86,7 +86,7 @@ noinst_LTLIBRARIES=\
 lib_LTLIBRARIES=\
 	$(mProgramTransformation_lib_ltlibraries)
 
-BUILT_SOURCES = $(mAstMatching_builtSources)
+BUILT_SOURCES = $(mAstMatching_built_sources)
 
 libmidend_la_SOURCES=\
 	$(mAbstractHandle_la_sources) \

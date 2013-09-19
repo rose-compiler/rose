@@ -16,6 +16,8 @@
 
 #include <assert.h>
 
+#include "rosedll.h"
+
 /*! \brief This is a mechanism for reporting the performance of processing of the AST, subtrees, 
            and IR nodes.  
 
@@ -167,7 +169,7 @@ class ProcessingPhase
 // Forward reference required from "void AstPerformance::generateReportToFile(SgProject*);"
 class SgProject;
 
-class AstPerformance
+class ROSE_DLL_API AstPerformance
    {
      public:
        // DQ (9/1/2006): Note that we don't have the project yet when this is called within "main()" to summarize the total time.
@@ -218,7 +220,7 @@ class AstPerformance
    };
 
 
-class TimingPerformance : public AstPerformance
+class ROSE_DLL_API TimingPerformance : public AstPerformance
    {
      private:
           RoseTimeType timer;

@@ -77,10 +77,7 @@ namespace ELF{
 // DQ (5/26/2007): Use the new AST merge mechanism.
 #include "merge.h"
 // JH (01/18/2006): adding the include file for the AST file I/O (by Jochen)
-#ifndef _MSC_VER
-// tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "AST_FILE_IO.h"
-#endif
 // DQ (9/9/2007): Can't use astVisualization/ prefix since it then does not permit use from the install tree
 // DQ (5/27/2007): Added astVisualization/ prefix to the header file
 // DQ (2/22/2006): Added Andreas' work to graph the AST.

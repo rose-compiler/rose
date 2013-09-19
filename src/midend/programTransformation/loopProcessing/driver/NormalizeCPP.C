@@ -2,6 +2,7 @@
 #include <ProcessAstTree.h>
 #include <sage3.h>
 #include <AstInterface_ROSE.h>
+#include <LoopTransformInterface.h>
 #include <vector>
 #include <iostream>
 
