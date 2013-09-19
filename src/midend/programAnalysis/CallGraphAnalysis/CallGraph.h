@@ -51,10 +51,10 @@ namespace CallTargetSet
   std::vector<SgFunctionDeclaration*> solveConstructorInitializer ( SgConstructorInitializer* sgCtorInit);
 
   // Populates functionList with Properties of all functions that may get called.
-  void getPropertiesForExpression(SgExpression* exp,
-                                    ClassHierarchyWrapper* classHierarchy,
-                                    Rose_STL_Container<SgFunctionDeclaration*>& propList,
-                                    bool includePureVirtualFunc = false);
+  ROSE_DLL_API void getPropertiesForExpression(SgExpression* exp,
+                                               ClassHierarchyWrapper* classHierarchy,
+                                               Rose_STL_Container<SgFunctionDeclaration*>& propList,
+                                               bool includePureVirtualFunc = false);
 
   //! Populates functionList with definitions of all functions that may get called. This
   //! is basically a wrapper around getPropertiesForExpression that extracts the
@@ -85,7 +85,7 @@ namespace CallTargetSet
   
 };
 
-class FunctionData
+class ROSE_DLL_API FunctionData
 {
   public:
 
@@ -112,12 +112,12 @@ struct dummyFilter : public std::unary_function<bool,SgFunctionDeclaration*>
 
 //! A function object to filter out builtin functions in a call graph (only non-builtin functions will be considered)
 // Liao, 6/17/2012
-struct builtinFilter : public std::unary_function<bool,SgFunctionDeclaration*>
+struct ROSE_DLL_API builtinFilter : public std::unary_function<bool,SgFunctionDeclaration*>
 {
   bool operator() (SgFunctionDeclaration* node) const;
 }; 
 
-class CallGraphBuilder
+class ROSE_DLL_API CallGraphBuilder
 {
   public:
     CallGraphBuilder( SgProject *proj);
@@ -146,7 +146,7 @@ class CallGraphBuilder
 // AstDOTGeneration::writeIncidenceGraphToDOTFile() is used instead in the tutorial. Liao 6/17/2012
 void GenerateDotGraph ( SgIncidenceDirectedGraph *graph, std::string fileName );
 
-class GetOneFuncDeclarationPerFunction :  public std::unary_function<SgNode*, Rose_STL_Container<SgNode*> >
+class ROSE_DLL_API GetOneFuncDeclarationPerFunction :  public std::unary_function<SgNode*, Rose_STL_Container<SgNode*> >
 {
   public:
     result_type operator()(SgNode* node );

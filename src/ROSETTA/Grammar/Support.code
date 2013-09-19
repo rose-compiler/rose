@@ -4512,7 +4512,7 @@ HEADER_NAME_START
           static SgName assembleQualifiedName(const SgName & scopeQualifiedName, const SgName & localName);
 
        // DQ (9/9/2004): friend function (string concatination)
-          friend SgName operator+(const SgName & n1, const SgName & n2);
+          ROSE_DLL_API friend SgName operator+(const SgName & n1, const SgName & n2);
 
        // DQ (11/15/2004): Added to support general string operations (first used in the unparser)
           SgName & operator+= (const SgName & n1);
@@ -11041,6 +11041,9 @@ SgName::operator==(const SgName& n1) const
      return p_char == n1.p_char;
    }
 
+#ifdef _MSC_VER
+#define strncasecmp _strnicmp
+#endif
 // DQ (11/27/2010): Added support for case insensitive name matching.
 bool
 SgName::caseInsensitiveEquality ( const SgName & x, const SgName & y )
