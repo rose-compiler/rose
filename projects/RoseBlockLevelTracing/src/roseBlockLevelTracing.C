@@ -173,7 +173,12 @@ public:
         for (vector< pair<SgExpression*, TraceId > >::iterator it = m_expressionsToInstrument.begin(); it != m_expressionsToInstrument.end(); it++) {
             SgExpression * expr = (*it).first;
             uint64_t uniqueId = ((*it).second).GetSerializableId();
-            insertBeforeUsingCommaOp (GetInstumentationExpression(expr, uniqueId), expr);
+            // if RHS is a NULL expression
+            if(isSgNullExpression(expr)) {
+                SageInterface::replaceExpression (/* old = */expr, /*new =*/GetInstumentationExpression(expr, uniqueId), /*bool keepOldExp=*/false);
+            } else {
+                SageInterface::insertBeforeUsingCommaOp (GetInstumentationExpression(expr, uniqueId), expr);
+            }
             cout<<"\n Instrumented :" << expr->class_name();
         }
     }
