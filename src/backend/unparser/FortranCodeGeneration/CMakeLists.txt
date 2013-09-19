@@ -7,7 +7,9 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 ########### install files ###############
 
-install(FILES  $(unparseFortranCodeGeneration_headers) DESTINATION ${INCLUDE_INSTALL_DIR})
+set(unparseFortranCodeGeneration_headers
+  unparseFortran.h unparseFortran_types.h unparseFortran_modfile.h)
+install(FILES  ${unparseFortranCodeGeneration_headers} DESTINATION ${INCLUDE_INSTALL_DIR})
 
 
 

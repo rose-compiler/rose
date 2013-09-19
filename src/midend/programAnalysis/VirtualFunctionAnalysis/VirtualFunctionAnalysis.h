@@ -39,7 +39,7 @@
 //! Virutal Function Analysis and PointerAliasAnalysis are
 //! dependent on each other for their accuracy. That's why
 //! they are done together
-class VirtualFunctionAnalysis : public PtrAliasAnalysis {
+class ROSE_DLL_API VirtualFunctionAnalysis : public PtrAliasAnalysis {
     
     bool isExecuted;
 public:

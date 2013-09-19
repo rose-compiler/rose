@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = -I$(top_srcdir)/src/util/support -I$(srcdir)/..
+INCLUDES = -I$(top_srcdir)/src/util/support -I$(srcdir)/.. -I$(top_srcdir)/src/frontend/SageIII
 
 CXX_TEMPLATE_REPOSITORY_PATH = .
 

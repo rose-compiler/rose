@@ -4,6 +4,11 @@
 #include "callbacks.h"
 #include "Disassembler.h"
 
+#ifndef NAN
+#define INFINITY (DBL_MAX+DBL_MAX)
+#define NAN (INFINITY-INFINITY)
+#endif
+
 /** Partitions instructions into basic blocks and functions.
  *
  *  The Partitioner classes are responsible for assigning instructions to basic blocks, and basic blocks to functions.  A

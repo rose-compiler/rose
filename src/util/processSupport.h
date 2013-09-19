@@ -5,8 +5,9 @@
 #include <string>
 #include <cstdio>
 #include <exception>
+#include "rosedll.h"
 
-int systemFromVector(const std::vector<std::string>& argv);
+ROSE_UTIL_API int systemFromVector(const std::vector<std::string>& argv);
 FILE* popenReadFromVector(const std::vector<std::string>& argv);
 // Assumes there is only one child process
 int pcloseFromVector(FILE* f);
@@ -29,7 +30,7 @@ int pcloseFromVector(FILE* f);
 
 // introducing class rose_excepction
 // this class gets thrown by ROSE_ABORT
-class rose_exception
+class ROSE_UTIL_API rose_exception
     : public std::exception
 {
     public:
@@ -60,7 +61,7 @@ inline
      // DQ (9/3/2009): This is required for Mac OSX to correctly compile
      #ifdef _MSC_VER
        // DQ (11/28/2009): This is a warning in MSVC ("warning C4273: 'abort' : inconsistent dll linkage")
-       void ROSE_ABORT(void)
+       ROSE_UTIL_API void ROSE_ABORT(void)
      #else
      
      #ifdef __clang__
@@ -76,7 +77,7 @@ inline
 }
 
 // throw rose_exception with user defined abort message
-void ROSE_ABORT( const char *message );
+ROSE_UTIL_API void ROSE_ABORT( const char *message );
 
 
 #endif // ROSE_PROCESSSUPPORT_H

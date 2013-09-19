@@ -294,11 +294,11 @@ namespace BinaryAnalysis {                      // documented elsewhere
                 const ValueType<32>& get_orig_ip() const { return orig_state.ip; }
 
                 /** Returns a copy of the state after removing memory that is not pertinent to an equal_states() comparison. */
-                typename State<ValueType>::Memory memory_for_equality(const State<ValueType>&) const;
+                typename BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::State<ValueType>::Memory memory_for_equality(const State<ValueType>&) const;
 
                 /** Returns a copy of the current state after removing memory that is not pertinent to an equal_states()
                  *  comparison. */
-                typename State<ValueType>::Memory memory_for_equality() const { return memory_for_equality(cur_state); }
+                typename BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::State<ValueType>::Memory memory_for_equality() const { return memory_for_equality(cur_state); }
 
                 /** Compares two states for equality. The comarison looks at all register values and the memory locations that
                  *  are different than their original value (but excluding differences due to clobbering). It does not compare
@@ -1005,7 +1005,7 @@ namespace BinaryAnalysis {                      // documented elsewhere
             template<
                 template <template <size_t> class ValueType> class State,
                 template<size_t> class ValueType>
-            typename State<ValueType>::Memory
+            typename BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::State<ValueType>::Memory
             Policy<State, ValueType>::memory_for_equality(const State<ValueType> &state) const
             {
                 State<ValueType> tmp_state = state;
