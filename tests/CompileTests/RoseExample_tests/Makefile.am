@@ -187,6 +187,16 @@ hpctoolkit-test3:
 	$(HPCTOOLKIT_HOME)/bin/hpcstruct  ../../.libs/testGraphGeneration
 	$(HPCTOOLKIT_HOME)/bin/hpcprof -S testGraphGeneration.hpcstruct -o database_papi_testRoseHeaders_03 measure_*
 
+callcount-test3:
+	rm -f rose_call_count_test_roseRoseHeaders_03.out
+	${VALGRIND_HOME}/bin/valgrind --tool=callgrind --callgrind-out-file=rose_call_count_test_roseRoseHeaders_03.out ../../.libs/testGraphGeneration $(ROSE_FLAGS) -rose:skipfinalCompileStep -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C
+	@echo "*******************************************************************************************************************************"
+	@echo "****** : Call counts generated via VALGRIND. Open via kcachegrind GUI (usually present with your OS) for visualization ********"
+	@echo "*******************************************************************************************************************************"
+
+
+
+
 
 # Exclude the Cxx_Grammar.C file from being part of the distribution
 EXTRA_DIST = $(TESTCODES)
