@@ -1,8 +1,8 @@
 add_executable(generateVirtualCFG generateVirtualCFG.C)
-target_link_libraries(generateVirtualCFG ROSE_DLL edg33 ${link_with_libraries})
+target_link_libraries(generateVirtualCFG ROSE_DLL EDG ${link_with_libraries})
 
 add_executable(testVirtualCFG testVirtualCFG.C)
-target_link_libraries(testVirtualCFG ROSE_DLL edg33 ${link_with_libraries})
+target_link_libraries(testVirtualCFG ROSE_DLL EDG ${link_with_libraries})
 
 # Some of these test codes reference A++ header fiels as part of their tests
 # Include the path to A++ and the transformation specification
@@ -25,7 +25,7 @@ foreach(file_to_test ${CXX_TESTCODES})
 endforeach()
 
 set(C_FILES
-  ompCFG.C test_CplusplusMacro_C.C test2001_02.C test2001_03.C test2001_05.C
+  test_CplusplusMacro_C.C test2001_02.C test2001_03.C test2001_05.C
   test2001_07.C test2001_08.C test2001_09.C test2001_14.C test2001_17.C
   test2001_23.C test2001_24.C test2001_25.C test2001_26.C test2002_01.C
   test2003_04.C test2003_05.C test2003_06.C test2003_10.C test2003_11.C

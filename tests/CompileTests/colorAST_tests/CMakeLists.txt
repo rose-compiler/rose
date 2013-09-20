@@ -1,5 +1,5 @@
 add_executable( testAstVisualization testAstVisualization.C )
-target_link_libraries(testAstVisualization ROSE_DLL edg33 ${link_with_libraries} )
+target_link_libraries(testAstVisualization ROSE_DLL EDG ${link_with_libraries} )
 
 set(TESTCODES inputExample.C)
 set(ROSE_FLAGS --edg:no_warnings -w --edg:restrict)

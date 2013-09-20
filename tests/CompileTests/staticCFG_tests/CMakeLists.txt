@@ -1,11 +1,11 @@
 add_executable(generateStaticCFG generateStaticCFG.C)
-target_link_libraries(generateStaticCFG ROSE_DLL edg33 ${link_with_libraries} )
+target_link_libraries(generateStaticCFG ROSE_DLL EDG ${link_with_libraries} )
 
 add_executable(testStaticCFG testStaticCFG.C)
-target_link_libraries(testStaticCFG ROSE_DLL edg33 ${link_with_libraries} )
+target_link_libraries(testStaticCFG ROSE_DLL EDG ${link_with_libraries} )
 
 add_executable(testInterproceduralCFG testInterproceduralCFG.C)
-target_link_libraries(testInterproceduralCFG ROSE_DLL edg33 ${link_with_libraries} )
+target_link_libraries(testInterproceduralCFG ROSE_DLL EDG ${link_with_libraries} )
 
 # Some of these test codes reference A++ header fiels as part of their tests
 # Include the path to A++ and the transformation specification

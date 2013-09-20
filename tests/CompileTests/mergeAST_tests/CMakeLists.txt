@@ -1,7 +1,7 @@
 add_executable(testMerge testMerge.C)
-target_link_libraries(testMerge ROSE_DLL edg33 ${link_with_libraries})
+target_link_libraries(testMerge ROSE_DLL EDG ${link_with_libraries})
 
-# This is a shorted list that tests more quickly.
+# This is a shortened list that tests more quickly.
 set(TESTCODES
   mergeTest_01.C mergeTest_02.C mergeTest_03.C mergeTest_04.C mergeTest_05.C
   mergeTest_06.C mergeTest_08.C mergeTest_09.C mergeTest_10.C mergeTest_11.C

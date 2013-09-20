@@ -1,6 +1,6 @@
 # This tests the ability to read and regnerate the input application and compile it using the backend compiler.
 add_executable(newEDGInterfaceTranslator newEDGInterfaceTranslator.C)
-target_link_libraries(newEDGInterfaceTranslator ROSE_DLL edg33 ${link_with_libraries})
+target_link_libraries(newEDGInterfaceTranslator ROSE_DLL EDG ${link_with_libraries})
 
 set(TESTCODES test2001_02.C test2001_03.C)
 

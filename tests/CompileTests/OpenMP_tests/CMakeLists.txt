@@ -1,5 +1,5 @@
 add_executable(parseOmp parseOmp.C)
-target_link_libraries(parseOmp ROSE_DLL edg33 ${link_with_libraries})
+target_link_libraries(parseOmp ROSE_DLL EDG ${link_with_libraries})
 
 if(enable-c)
   add_subdirectory(cvalidation)
