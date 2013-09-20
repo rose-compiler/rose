@@ -108,39 +108,45 @@ void
 RegisterStateGeneric::clear()
 {
     registers.clear();
-    init_to_zero = false;
 }
 
 void
 RegisterStateGeneric::zero()
 {
-    registers.clear();
-    init_to_zero = true;
+    // We're initializing with a concrete value, so it really doesn't matter whether we initialize large registers
+    // or small registers.  Constant folding will adjust things as necessary when we start reading registers.
+    std::vector<RegisterDescriptor> regs = regdict->get_largest_registers();
+    initialize_nonoverlapping(regs, true);
 }
 
 void
 RegisterStateGeneric::initialize_large()
 {
     std::vector<RegisterDescriptor> regs = regdict->get_largest_registers();
-    initialize_nonoverlapping(regs);
+    initialize_nonoverlapping(regs, false);
 }
 
 void
 RegisterStateGeneric::initialize_small()
 {
     std::vector<RegisterDescriptor> regs = regdict->get_smallest_registers();
-    initialize_nonoverlapping(regs);
+    initialize_nonoverlapping(regs, false);
 }
 
 void
-RegisterStateGeneric::initialize_nonoverlapping(const std::vector<RegisterDescriptor> &regs)
+RegisterStateGeneric::initialize_nonoverlapping(const std::vector<RegisterDescriptor> &regs, bool initialize_to_zero)
 {
     clear();
     for (size_t i=0; i<regs.size(); ++i) {
-        SValuePtr val = get_protoval()->undefined_(regs[i].get_nbits());
         std::string name = regdict->lookup(regs[i]);
-        if (!name.empty())
-            val->set_comment(name+"_0");
+        SValuePtr val;
+        if (initialize_to_zero) {
+            val = get_protoval()->number_(regs[i].get_nbits(), 0);
+        } else {
+            val = get_protoval()->undefined_(regs[i].get_nbits());
+            if (!name.empty())
+                val->set_comment(name+"_0");
+        }
         registers[RegStore(regs[i])].push_back(RegPair(regs[i], val));
     }
 }
@@ -179,7 +185,7 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
     Registers::iterator ri = registers.find(reg);
     if (ri==registers.end()) {
         size_t nbits = reg.get_nbits();
-        SValuePtr newval = init_to_zero ? get_protoval()->number_(nbits, 0) : get_protoval()->undefined_(nbits);
+        SValuePtr newval = get_protoval()->undefined_(nbits);
         std::string regname = regdict->lookup(reg);
         if (!regname.empty())
             newval->set_comment(regname + "_0");
@@ -234,7 +240,7 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
             size_t next_offset = offset+1;
             while (next_offset<reg.get_nbits() && overlaps[next_offset]==NULL) ++next_offset;
             size_t nbits = next_offset - offset;
-            part = init_to_zero ? get_protoval()->number_(nbits, 0) : get_protoval()->undefined_(nbits);
+            part = get_protoval()->undefined_(nbits);
         }
         retval = retval==NULL ? part : ops->concat(part, retval);
         offset += part->get_width();

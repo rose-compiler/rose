@@ -900,19 +900,18 @@ public:
     typedef std::map<RegStore, RegPairs> Registers;
 
 protected:
-    bool init_to_zero;                          /**< Initialize registers to zero? */
     Registers registers;                        /**< Values for registers that have been accessed. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     explicit RegisterStateGeneric(const SValuePtr &protoval, const RegisterDictionary *regdict)
-        : RegisterState(protoval, regdict), init_to_zero(false) {
+        : RegisterState(protoval, regdict) {
         clear();
     }
 
     RegisterStateGeneric(const RegisterStateGeneric &other)
-        : RegisterState(other), init_to_zero(other.init_to_zero), registers(other.registers) {
+        : RegisterState(other), registers(other.registers) {
         deep_copy_values();
     }
 
@@ -1063,7 +1062,7 @@ protected:
     static void get_nonoverlapping_parts(const Extent &overlap, const RegPair &rp, RiscOperators *ops,
                                          RegPairs *pairs/*out*/);
 private:
-    void initialize_nonoverlapping(const std::vector<RegisterDescriptor>&);
+    void initialize_nonoverlapping(const std::vector<RegisterDescriptor>&, bool initialize_to_zero);
 };
 
 /** Smart pointer to a RegisterStateX86 object.  RegisterStateX86 objects are reference counted and should not be
