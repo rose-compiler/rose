@@ -179,6 +179,15 @@ int main(int argc, char* argv[]) {
 	remainingFunCalls=trivialFunctionCalls(mainFunctionRoot);
   }
 
+  size_t num=0;
+  size_t numTotal=num;
+  do {
+	num=eliminateEmptyIfStmts(mainFunctionRoot);
+	numTotal+=num;
+  } while(num>0);
+  cout<<"Total number of if-statements eliminated: "<<numTotal<<endl;
+
+  //TODO: create ICFG and compute non reachable functions (from main function)
   list<SgFunctionDefinition*> funDefs=SgNodeHelper::listOfFunctionDefinitions(root);
   for(list<SgFunctionDefinition*>::iterator i=funDefs.begin();i!=funDefs.end();i++) {
 	string funName=SgNodeHelper::getFunctionName(*i);
@@ -191,13 +200,7 @@ int main(int argc, char* argv[]) {
 	}
   }
 
-  size_t num=0;
-  size_t numTotal=num;
-  do {
-	num=eliminateEmptyIfStmts(mainFunctionRoot);
-	numTotal+=num;
-  } while(num>0);
-  cout<<"Total number of if-statements eliminated: "<<numTotal<<endl;
+
 
 #if 0
   rdAnalyzer->determineExtremalLabels(startFunRoot);
