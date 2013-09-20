@@ -10,7 +10,7 @@ RoseBlockLevelTracing_includedir=$(prefix)
 INCLUDES = $(ROSE_INCLUDES) -I$(RoseBlockLevelTracing_includedir)
 LDADD = $(ROSE_LIBS)
 
-bin_PROGRAMS = RoseBlockLevelTracing  RoseTraceReader
+bin_PROGRAMS = RoseBlockLevelTracing  RoseTraceReader RoseMultiTraceCommonPathFinder RoseCommonPathToSgNodeMapper
 
 
 RoseBlockLevelTracing_SOURCES=\
@@ -19,7 +19,11 @@ RoseBlockLevelTracing_SOURCES=\
 RoseTraceReader_SOURCES=\
 	RoseTraceReader.C 
 
+RoseMultiTraceCommonPathFinder_SOURCES=\
+	RoseMultiTraceCommonPathFinder.C
 
+RoseCommonPathToSgNodeMapper=\
+	RoseCommonPathToSgNodeMapper.C
 
 RoseBlockLevelTracing_INPUTS = \
 	test_simple.C  \

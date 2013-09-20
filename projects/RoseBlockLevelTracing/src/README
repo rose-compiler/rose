@@ -1,0 +1,5 @@
+RoseBlockLevelTracing is the instrumentation and tracing utility for ROSE.
+
+roseBlockLevelTracing.C:
+This file instruments each place where control can diverge, e.g., blocks, continual expressions, short-circuit expressions, and labels.
+The trace is a unique identifier formed by a <file id, node id> pair. The 
