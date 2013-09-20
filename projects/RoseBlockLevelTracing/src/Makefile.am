@@ -54,9 +54,20 @@ $(RoseBlockLevelTracingCompileOnly_TEST_TARGETS): \
 	./RoseBlockLevelTracing $(RoseBlockLevelTracingCompileOnly_SWITCHES) -c $< 
 
 
+RoseBlockLevelTracing_PATH_PREFIX_TARGETS: ../tests/test_common_path.C RoseBlockLevelTracing RoseMultiTraceCommonPathFinder RoseCommonPathToSgNodeMapper
+	rm -f test_common_path.*.rosetrace
+	./RoseBlockLevelTracing -c -rose:projectSpecificDatabaseFile db.txt $<
+	$(CXX) -O0 -o rose_test_common_path rose_test_common_path.C
+	ROSE_TRACE_FULL_FILE_PATH=`pwd`/rose_test_common_path.1.rosetrace ./rose_test_common_path 10
+	ROSE_TRACE_FULL_FILE_PATH=`pwd`/rose_test_common_path.2.rosetrace ./rose_test_common_path 20
+	ROSE_TRACE_FULL_FILE_PATH=`pwd`/rose_test_common_path.3.rosetrace ./rose_test_common_path 30
+	./RoseMultiTraceCommonPathFinder `pwd`/rose_test_common_path.1.rosetrace `pwd`/rose_test_common_path.2.rosetrace `pwd`/rose_test_common_path.3.rosetrace -o `pwd`/rose_test_common_path.prefix.rosetrace
+	./RoseCommonPathToSgNodeMapper `pwd`/rose_test_common_path.prefix.rosetrace db.txt 
+	
+
 ### TODO: enable the line below once the bug on inlined class is fixed. I have reported it to Dan in an email on Sep/18/2013. 
 ### RoseBlockLevelTracing_TEST_TARGETS = $(RoseBlockLevelTracing_TOY_TARGETS)  $(RoseBlockLevelTracingCompileOnly_TEST_TARGETS)
-RoseBlockLevelTracing_TEST_TARGETS = $(RoseBlockLevelTracing_TOY_TARGETS)  
+RoseBlockLevelTracing_TEST_TARGETS = $(RoseBlockLevelTracing_TOY_TARGETS)  RoseBlockLevelTracing_PATH_PREFIX_TARGETS
 
 check-local: $(RoseBlockLevelTracing_TEST_TARGETS)
 	@echo "***********************************************************************************************************"
