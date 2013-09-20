@@ -504,7 +504,7 @@ RegisterStateX86::writeRegisterGpr(const RegisterDescriptor &reg, const SValuePt
         towrite = ops->concat(ops->extract(gpr[reg.get_minor()], 0, reg.get_offset()), towrite);
     if (reg.get_offset() + reg.get_nbits()<32)
         towrite = ops->concat(towrite, ops->extract(gpr[reg.get_minor()], reg.get_offset()+reg.get_nbits(), 32));
-    assert(towrite->get_width()==reg.get_nbits());
+    assert(towrite->get_width()==32);
     gpr[reg.get_minor()] = towrite;
 }
 

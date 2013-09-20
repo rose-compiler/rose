@@ -549,7 +549,7 @@ ConcatSimplifier::rewrite(const InternalNode *inode) const
         } else if (!extract->child(2)->must_equal(retval, solver)) {
             break;
         }
-        offset += extract->child(2)->get_nbits();
+        offset += extract->get_nbits();
     }
     if (offset==inode->get_nbits())
         return retval;

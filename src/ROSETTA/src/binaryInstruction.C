@@ -514,10 +514,15 @@ Grammar::setUpBinaryInstructions()
      // DQ (9/2/2013): We may later wish to change "AsmFunction" to "AsmSynthesizedFunction", since functions are
      // philosophically a synthesized concept within a binary (except where Binary API standards must be followed to permit
      // seperate compilation).
+     // RPM (9/18/2013): On the other hand, most things on the interpretation side of the AST will be synthesized: basic
+     // blocks, functions, code vs. data, thunk tables, trampolines, exception handling structures, data types, CFG structures
+     // like switch statements, ... do users want or need "synthesized" in all those node type names?
      NEW_NONTERMINAL_MACRO(AsmSynthesizedDeclaration,
                            AsmSynthesizedDataStructureDeclaration | AsmFunction | AsmSynthesizedFieldDeclaration,
                            "AsmSynthesizedDeclaration", "AsmSynthesizedDeclarationTag", false );
      AsmSynthesizedDeclaration.setFunctionPrototype("HEADER_BINARY_DECLARATION", "../Grammar/BinaryInstruction.code");
+
+
 
      NEW_NONTERMINAL_MACRO(AsmStatement,
                            AsmSynthesizedDeclaration | AsmBlock | AsmInstruction | AsmStaticData,
