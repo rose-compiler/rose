@@ -105,7 +105,7 @@ public:
     /** @} */
 
     /** Returns the list of all register descriptors. The returned list may have overlapping register descriptors. The return
-     *  value is similar to get_registers() except onyl the RegisterDescriptor part is returned, not the names. */
+     *  value is similar to get_registers() except only the RegisterDescriptor part is returned, not the names. */
     RegisterDescriptors get_descriptors() const;
 
     /** Compares number of bits in register descriptors. This comparator is used to sort register descriptors in either

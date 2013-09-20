@@ -988,6 +988,33 @@ public:
      * can be used to re-cast the various pairs into other groupings; get_stored_registers() is a lower-level interface. */
     virtual RegPairs get_stored_registers() const;
 
+    /** Determines if some of the specified register is stored in the state. Returns true even if only part of the requested
+     *  register is in the state (as when one asks about EAX and the state only stores AX). This is slightly more efficient
+     *  than calling stored_parts():
+     *
+     * @code
+     *  RegisterStateGenericPtr rstate = ...;
+     *  RegisterDescriptor reg = ...;
+     *  assert(rstate->partly_exists(reg) == !parts_exist(reg).empty());
+     * @endcode
+     */
+    virtual bool is_partly_stored(const RegisterDescriptor&) const;
+
+    /** Determines if the specified register is wholly stored in the state. Returns if the state contains data for the entire
+     *  register, even if that data is split among several smaller parts or exists as a subset of a larger part. */
+    virtual bool is_wholly_stored(const RegisterDescriptor&) const;
+
+    /** Determines if the specified register is stored exactly in the state. Returns true only if the specified register wholly
+     *  exists and a value can be returned without extracting or concatenating values from larger or smaller stored parts. Note
+     *  that a value can also be returned without extracting or conctenating if the state contains no data for the specified
+     *  register, as indicated by is_partly_stored() returning false. */
+    virtual bool is_exactly_stored(const RegisterDescriptor&) const;
+
+    /** Returns a description of which bits of a register are stored.  The return value is an ExtentMap that contains the bits
+     * that are stored in the state. This does not return the value of any parts of stored registers--one gets that with
+     * readRegister(). The return value does not contain any bits that are not part of the specified register. */
+    virtual ExtentMap stored_parts(const RegisterDescriptor&) const;
+
     /** Functors for traversing register values in a register state. */
     class Visitor {
     public:
@@ -1022,6 +1049,12 @@ public:
      *   regs->traverse(subst);
      *   std::cerr <<*regs; // all original_esp have been replaced by fp
      *  @endcode
+     *
+     * As with most ROSE and STL traversals, the Visitor is not allowed to modify the structure of the object over which it is
+     * traversing.  In other words, it's permissible to change the values pointed to by the state, but it is not permissible to
+     * perform any operation that might change the list of register parts by adding, removing, or combining parts.  This
+     * includes calling readRegister() and writeRegister() except when the register being read or written is already exactly
+     * stored in the state as indicated by is_exactly_stored().
      */
     virtual void traverse(Visitor&);
     

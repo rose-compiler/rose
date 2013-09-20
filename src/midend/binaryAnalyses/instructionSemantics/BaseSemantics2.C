@@ -315,6 +315,59 @@ RegisterStateGeneric::deep_copy_values()
     }
 }
 
+bool
+RegisterStateGeneric::is_partly_stored(const RegisterDescriptor &desc) const
+{
+    Extent want(desc.get_offset(), desc.get_nbits());
+    Registers::const_iterator ri = registers.find(RegStore(desc));
+    if (ri!=registers.end()) {
+        for (RegPairs::const_iterator pi=ri->second.begin(); pi!=ri->second.end(); ++pi) {
+            const RegisterDescriptor &desc = pi->desc;
+            Extent have(desc.get_offset(), desc.get_nbits());
+            if (want.overlaps(have))
+                return true;
+        }
+    }
+    return false;
+}
+
+bool
+RegisterStateGeneric::is_wholly_stored(const RegisterDescriptor &desc) const
+{
+    Extent want(desc.get_offset(), desc.get_nbits());
+    ExtentMap have = stored_parts(desc);
+    return 1==have.nranges() && have.minmax()==want;
+}
+
+bool
+RegisterStateGeneric::is_exactly_stored(const RegisterDescriptor &desc) const
+{
+    Registers::const_iterator ri = registers.find(RegStore(desc));
+    if (ri!=registers.end()) {
+        for (RegPairs::const_iterator pi=ri->second.begin(); pi!=ri->second.end(); ++pi) {
+            if (desc==pi->desc)
+                return true;
+        }
+    }
+    return false;
+}
+
+ExtentMap
+RegisterStateGeneric::stored_parts(const RegisterDescriptor &desc) const
+{
+    ExtentMap retval;
+    Extent want(desc.get_offset(), desc.get_nbits());
+    Registers::const_iterator ri = registers.find(RegStore(desc));
+    if (ri!=registers.end()) {
+        for (RegPairs::const_iterator pi=ri->second.begin(); pi!=ri->second.end(); ++pi) {
+            const RegisterDescriptor &desc = pi->desc;
+            Extent have(desc.get_offset(), desc.get_nbits());
+            retval.insert(want.intersect(have));
+        }
+    }
+    return retval;
+}
+
 void
 RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
 {
