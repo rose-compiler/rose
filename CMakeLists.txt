@@ -1059,6 +1059,8 @@ add_subdirectory(src)
 add_subdirectory(demo)
 add_subdirectory(exampleTranslators)
 
+enable_testing()
+
 if(NOT disable-tests-directory)
   add_subdirectory(tests)
 endif()
@@ -1070,8 +1072,6 @@ endif()
 if(NOT disable-projects-directory)
   add_subdirectory(projects)
 endif()
-
-enable_testing()
 
 # Copy CTestCustom.cmake into the binary directory.
 # This file tells CTest to ignore some output that it otherwise
