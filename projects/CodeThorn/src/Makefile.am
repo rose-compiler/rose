@@ -8,7 +8,7 @@ codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 
 if ROSE_APPROVED_PYTHON_VERSION
 
-bin_PROGRAMS = codethorn matcher_demo varwatch rdmain
+bin_PROGRAMS = codethorn matcher_demo varwatch rdmain woodpecker
 #ast_demo matcher_demo iterator_test
 CLEANFILES = 
 
@@ -175,6 +175,35 @@ rdmain_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h Co
   addressTakenAnalysis/VariableIdUtils.h \
   addressTakenAnalysis/addressTakenAnalysis.C \
   addressTakenAnalysis/addressTakenAnalysis.h
+
+woodpecker_LDADD = -lrose
+woodpecker_SOURCES = VariableIdMapping.h VariableIdMapping.C CommandLineOptions.h CommandLineOptions.C SgNodeHelper.h SgNodeHelper.C Labeler.h Labeler.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C AstAnnotator.h AstAnnotator.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
+  AnalysisAbstractionLayer.h       \
+  AnalysisAbstractionLayer.C       \
+  DFAstAttribute.h           \
+  DFAstAttribute.C           \
+  RDAstAttributeInterface.h \
+  RDAstAttributeInterface.C \
+  RDAstAttribute.h         \
+  RDAstAttribute.C         \
+  UDAstAttribute.h                 \
+  UDAstAttribute.C                 \
+  AstTerm.h                        \
+  AstTerm.C                        \
+  Miscellaneous.C                  \
+  Miscellaneous.h                  \
+  ProgramStats.h                 \
+  ProgramStats.C                 \
+  Flow.h \
+  Flow.C \
+  addressTakenAnalysis/defUseQuery.C \
+  addressTakenAnalysis/defUseQuery.h \
+  addressTakenAnalysis/VariableIdUtils.C \
+  addressTakenAnalysis/VariableIdUtils.h \
+  addressTakenAnalysis/addressTakenAnalysis.C \
+  addressTakenAnalysis/addressTakenAnalysis.h \
+  woodpecker.C
+
 
 # obsolete since integration into ROSE
 # explicit rules because of multiple bison parser
