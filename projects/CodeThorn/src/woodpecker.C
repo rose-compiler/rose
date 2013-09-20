@@ -113,13 +113,50 @@ size_t inlineFunctionCalls(list<SgFunctionCallExp*>& funCallList) {
   return num;
 }
 
+bool isEmptyBlock(SgNode* node) {
+  if(node==0)
+	return true;
+  //cout<<"isEmptyBasicBlock:"<<node->class_name()<<endl;
+  if(SgBasicBlock* block=isSgBasicBlock(node)) {
+	const SgStatementPtrList& stmtList=block->get_statements(); 
+	return stmtList.size()==0;
+  }
+  return false;
+}
+
+bool isEmptyIfStmt(SgIfStmt* ifStmt) {
+  SgStatement* trueBody=ifStmt->get_true_body();
+  SgStatement* falseBody=ifStmt->get_false_body();
+  return isEmptyBlock(trueBody) && isEmptyBlock(falseBody);
+}
+
+
+size_t eliminateEmptyIfStmts(SgNode* node) {
+  size_t numElim=0;
+  list<SgIfStmt*> ifstmts;
+  RoseAst ast(node);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();i++) {
+	if(SgIfStmt* ifStmt=isSgIfStmt(*i)) {
+	  if(isEmptyIfStmt(ifStmt)) {
+		//cout<<"-- Found empty if statement"<<endl;
+		ifstmts.push_back(ifStmt);
+	  }
+	}
+  }
+  for(list<SgIfStmt*>::iterator i=ifstmts.begin();i!=ifstmts.end();i++) {
+	SageInterface::removeStatement (*i, false);
+	numElim++;
+  }
+  cout<<"Number of if-statements eliminated: "<<numElim<<endl;
+  return numElim;
+}
+
 int main(int argc, char* argv[]) {
   cout << "INIT: Parsing and creating AST."<<endl;
   boolOptions.registerOption("semantic-fold",false); // temporary
   boolOptions.registerOption("post-semantic-fold",false); // temporary
   SgProject* root = frontend(argc,argv);
   //  AstTests::runAllTests(root);
-#if 1
   // inline all functions
   list<SgFunctionCallExp*> funCallList=trivialFunctionCalls(root);
   cout<<"Number of trivial function calls (with existing function bodies): "<<funCallList.size()<<endl;
@@ -141,7 +178,7 @@ int main(int argc, char* argv[]) {
 	  inlineFunctionCalls(remainingFunCalls);
 	remainingFunCalls=trivialFunctionCalls(mainFunctionRoot);
   }
-#endif
+
   list<SgFunctionDefinition*> funDefs=SgNodeHelper::listOfFunctionDefinitions(root);
   for(list<SgFunctionDefinition*>::iterator i=funDefs.begin();i!=funDefs.end();i++) {
 	string funName=SgNodeHelper::getFunctionName(*i);
@@ -153,6 +190,14 @@ int main(int argc, char* argv[]) {
 	  //SageInterface::deleteAST(funDef);
 	}
   }
+
+  size_t num=0;
+  size_t numTotal=num;
+  do {
+	num=eliminateEmptyIfStmts(mainFunctionRoot);
+	numTotal+=num;
+  } while(num>0);
+  cout<<"Total number of if-statements eliminated: "<<numTotal<<endl;
 
 #if 0
   rdAnalyzer->determineExtremalLabels(startFunRoot);
