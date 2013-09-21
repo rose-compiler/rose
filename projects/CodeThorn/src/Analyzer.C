@@ -59,9 +59,15 @@ void Analyzer::recordTransition(const EState* sourceState, Edge e, const EState*
 	Label t=targetState->label();
 	Label stgsl=getTransitionGraph()->getStartLabel();
 	if(!isLTLRelevantLabel(s) && s!=stgsl)
-	  _newNodesToFold.insert(sourceState);
+#pragma omp critical
+	  {
+		_newNodesToFold.insert(sourceState);
+	  }
 	if(!isLTLRelevantLabel(t) && t!=stgsl)
-	  _newNodesToFold.insert(targetState);
+#pragma omp critical
+	  {
+		_newNodesToFold.insert(targetState);
+	  }
   }
 }
 
