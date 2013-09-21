@@ -101,6 +101,7 @@ namespace CodeThorn {
 	// reduces all states different to stdin and stdout.
     void stdIOFoldingOfTransitionGraph();
     void semanticFoldingOfTransitionGraph();
+    void semanticEliminationOfTransitions();
     bool checkEStateSet();
     bool isConsistentEStatePtrSet(set<const EState*> estatePtrSet);
     bool checkTransitionGraph();

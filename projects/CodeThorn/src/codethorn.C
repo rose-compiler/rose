@@ -212,10 +212,19 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
     case 1: 
       checker1 = new CodeThorn::FixpointLTL::Checker(*analyzer.getEStateSet(), 
                              *analyzer.getTransitionGraph());
+
       break;
     case 2:
+#if 1
       checker2 = new CodeThorn::UnifiedLTL::UChecker(*analyzer.getEStateSet(),
                              *analyzer.getTransitionGraph());
+#else
+	  {
+	  EStateSet estateSet0=analyzer.getTransitionGraph()->estateSet();
+      checker2 = new CodeThorn::UnifiedLTL::UChecker(estateSet0,
+                             *analyzer.getTransitionGraph());
+	  }
+#endif
       break;
     default: 
       cerr << "Error: unknown ltl-verifier specified with ltl-verifier option."<<endl;
