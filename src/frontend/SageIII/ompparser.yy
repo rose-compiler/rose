@@ -14,6 +14,12 @@
 #include "sage3basic.h" // Sage Interface and Builders
 #include "sageBuilder.h"
 #include "OmpAttribute.h"
+
+#ifdef _MSC_VER
+  #undef IN
+  #undef OUT
+#endif
+
 using namespace OmpSupport;
 
 /* Parser - BISON */

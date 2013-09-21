@@ -4,6 +4,10 @@
 #include <cstdlib>
 #include <cstring>
 
+#ifdef _MSC_VER
+#define strtoull _strtoui64
+#endif
+
 uint64_t
 rose_strtoull(const char *nptr, char **endptr, int base)
 {

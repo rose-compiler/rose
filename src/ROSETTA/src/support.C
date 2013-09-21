@@ -1616,6 +1616,11 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("std::string","astMergeCommandFile", "= \"\"",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Milind Chabbi (9/9/2013): Added a commandline option to use a file to generate persistent id for files
+  // used in different compilation units.
+     Project.setDataPrototype("std::string","projectSpecificDatabaseFile", "= \"\"",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (10/16/2005): Added support to detect use of "-E" on compiler's command line.
   // Special processing is done when "-E" is used with multiple file names on the command line.
      Project.setDataPrototype         ( "bool", "C_PreprocessorOnly", "= false",

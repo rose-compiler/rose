@@ -1,7 +1,7 @@
+// MIlind Chabbi (9/17/2013): Changed to sane names to avoid conflict with global name space.
+// int rose_test_abs(int x) { if (x < 0) return -x; else return x; }
 
-// int abs(int x) { if (x < 0) return -x; else return x; }
-
-int abs(int x) { if (x < 0) return x; else return x; }
+int rose_test_abs(int x) { if (x < 0) return x; else return x; }
 
 class A
    {
@@ -11,8 +11,8 @@ class A
 
 int main()
    {
-  // We unparse too many parenthesis: "int x = (abs(0));"
-     int x = abs(0);
+  // We unparse too many parenthesis: "int x = (rose_test_abs(0));"
+     int x = rose_test_abs(0);
 
   // Note that return statement from main appears to be optional!
   // return 0;

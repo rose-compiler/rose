@@ -487,7 +487,7 @@ public:
     RangeMapVoid() {}
 
     template<class Other>
-    RangeMapVoid(const Other&) {}
+    explicit RangeMapVoid(const Other&) {}
 
     /** Remove a value from a RangeMap.  This method is invoked by RangeMap when it is removing a value from the map, such as
      *  during an erase() or clear() operation.  It is not called for the merge() argument after a successful merge. */
@@ -755,7 +755,7 @@ public:
 
     /** Create a new map from an existing map. */
     template<class Other>
-    RangeMap(const Other &other) {
+    explicit RangeMap(const Other &other) {
         for (typename Other::const_iterator ri=other.begin(); ri!=other.end(); ++ri) {
             Range new_range(ri->first);
             Value new_value(ri->second);
@@ -947,12 +947,14 @@ public:
     }
 
     /** Returns the minimum value in an extent map.  The extent map must not be empty. */
+    #undef min
     typename Range::Value min() const {
         assert(!empty());
         return ranges.begin()->first.first();
     }
 
     /** Returns the maximum value in an extent map.  The extent map must not be empty. */
+    #undef max
     typename Range::Value max() const {
         assert(!empty());
         return ranges.rbegin()->first.last();
