@@ -35,6 +35,9 @@ usage(int exit_status)
               <<"            if neither --checkpoint nor --no-checkpoint is specified). A random interval is useful when large\n"
               <<"            output groups and/or traces need to be saved in the database since it makes it more likely that\n"
               <<"            not all instances of a parallel run will hit the database server at the about the same time.\n"
+              <<"    --consumed-inputs=no|compute|save\n"
+              <<"            Accumulate the list of input values that were consumed during each test and optionally save\n"
+              <<"            it in the semantic_fio_inputs table.\n"
               <<"    --coverage=no|compute|save\n"
               <<"            Determines whether instruction coverage information should be computed and/or saved in the\n"
               <<"            database.  The default \"no\" does not keep track of which instruction addresses were executed;\n"
@@ -104,7 +107,7 @@ usage(int exit_status)
 struct Switches {
     Switches()
         : verbosity(SILENT), progress(false), pointers(false), interactive(false), trace_events(0), dry_run(false),
-          save_coverage(false), save_callgraph(false) {
+          save_coverage(false), save_callgraph(false), save_consumed_inputs(false) {
         checkpoint = 300 + LinearCongruentialGenerator()()%600;
     }
     Verbosity verbosity;                        // semantic policy has a separate verbosity
@@ -117,6 +120,7 @@ struct Switches {
     std::string input_file_name;
     bool save_coverage;
     bool save_callgraph;
+    bool save_consumed_inputs;
     PolicyParams params;
 };
 
@@ -772,14 +776,14 @@ static OutputGroup
 fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inputs, Tracer &tracer,
           const InstructionProvidor &insns, MemoryMap *ro_map, const PointerDetector *pointers, const Switches &opt,
           const AddressIdMap &entry2id, const Disassembler::AddressSet &whitelist_exports, FuncAnalyses &funcinfo,
-          InsnCoverage &insn_coverage, DynamicCallGraph &dynamic_cg)
+          InsnCoverage &insn_coverage, DynamicCallGraph &dynamic_cg, ConsumedInputs &consumed_inputs)
 {
     AddressIdMap::const_iterator id_found = entry2id.find(function->get_entry_va());
     assert(id_found!=entry2id.end());
     int func_id = id_found->second;
     FuncAnalysis &finfo = funcinfo[func_id];
     ++finfo.ntests;
-    ClonePolicy policy(opt.params, entry2id, tracer, funcinfo, insn_coverage, dynamic_cg);
+    ClonePolicy policy(opt.params, entry2id, tracer, funcinfo, insn_coverage, dynamic_cg, consumed_inputs);
     policy.set_map(ro_map);
     CloneSemantics semantics(policy);
     AnalysisFault::Fault fault = AnalysisFault::NONE;
@@ -840,11 +844,11 @@ fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inpu
         if (fault==AnalysisFault::DISASSEMBLY) {
             // We need to assign disassembly faults to the last good address, otherwise they'll never get attached to anything
             // in the listings.  We'll save the actual fault address as the value.
-            tracer.emit(last_good_va, Tracer::EV_FAULT, va, (int)fault);
+            tracer.emit(last_good_va, EV_FAULT, va, (int)fault);
         } else {
             // Non-disassembly faults will be assigned to the address where they occur, and the previous instruction's address
             // is stored as the value of the fault.
-            tracer.emit(va, Tracer::EV_FAULT, last_good_va, (int)fault);
+            tracer.emit(va, EV_FAULT, last_good_va, (int)fault);
         }
     }
     
@@ -858,14 +862,38 @@ fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inpu
 
 // Commit everything and return a new transaction
 static SqlDatabase::TransactionPtr
-checkpoint(const SqlDatabase::TransactionPtr &tx, OutputGroups &ogroups, Tracer &tracer, Progress &progress,
-           size_t ntests_ran, int64_t cmd_id)
+checkpoint(const SqlDatabase::TransactionPtr &tx, Switches &opt, OutputGroups &ogroups, Tracer &tracer,
+           InsnCoverage &insn_coverage, DynamicCallGraph &dynamic_cg, ConsumedInputs &consumed_inputs,
+           Progress &progress, size_t ntests_ran, int64_t cmd_id)
 {
     SqlDatabase::ConnectionPtr conn = tx->connection();
+
     progress.message("checkpoint: saving output groups");
     ogroups.save(tx);
+
     progress.message("checkpoint: saving trace events");
-    tracer.save(tx);
+    tracer.flush(tx);
+
+    if (opt.save_coverage && !opt.dry_run) {
+        progress.message("checkpoint: saving instruction coverage");
+        insn_coverage.flush(tx);
+    } else {
+        insn_coverage.clear();
+    }
+
+    if (opt.save_callgraph && !opt.dry_run) {
+        progress.message("checkpoint: saving dynamic call graph");
+        dynamic_cg.flush(tx);
+    } else {
+        dynamic_cg.clear();
+    }
+
+    if (opt.save_consumed_inputs && !opt.dry_run) {
+        progress.message("checkpoint: saving consumed inputs");
+        consumed_inputs.flush(tx);
+    } else {
+        consumed_inputs.clear();
+    }
     
     progress.message("checkpoint: committing");
     std::string desc = "ran "+StringUtility::numberToString(ntests_ran)+" test"+(1==ntests_ran?"":"s");
@@ -948,6 +976,13 @@ main(int argc, char *argv[])
                 if (c1 > c2) std::swap(c1, c2);
                 opt.checkpoint = c1 + LinearCongruentialGenerator()() % (c2-c1);
             }
+        } else if (!strcmp(argv[argno], "--consumed-inputs") || !strcmp(argv[argno], "--consumed-inputs=save")) {
+            opt.params.compute_consumed_inputs = opt.save_consumed_inputs = true;
+        } else if (!strcmp(argv[argno], "--consumed-inputs=compute")) {
+            opt.params.compute_consumed_inputs = true;
+            opt.save_consumed_inputs = false;
+        } else if (!strcmp(argv[argno], "--no-consumed-inputs") || !strcmp(argv[argno], "--consumed-inputs=no")) {
+            opt.params.compute_consumed_inputs = opt.save_consumed_inputs = false;
         } else if (!strcmp(argv[argno], "--coverage") || !strcmp(argv[argno], "--coverage=save")) {
             opt.params.compute_coverage = opt.save_coverage = true;
         } else if (!strcmp(argv[argno], "--coverage=compute")) {
@@ -980,13 +1015,13 @@ main(int argc, char *argv[])
         } else if (!strcmp(argv[argno], "--no-progress")) {
             opt.progress = false;
         } else if (!strcmp(argv[argno], "--trace")) {
-            opt.trace_events = Tracer::ALL_EVENTS;
+            opt.trace_events = ALL_EVENTS;
         } else if (!strcmp(argv[argno], "--no-trace")) {
             opt.trace_events = 0;
         } else if (!strncmp(argv[argno], "--trace=", 8)) {
             std::vector<std::string> words = StringUtility::split(",", argv[argno]+8, (size_t)-1, true);
             for (size_t i=0; i<words.size(); ++i) {
-                unsigned events = Tracer::EV_NONE;
+                unsigned events = EV_NONE;
                 bool status = true;
                 if (!words[i].empty() && '-'==words[i][0]) {
                     status = false;
@@ -996,21 +1031,21 @@ main(int argc, char *argv[])
                     words[i] = words[i].substr(1);
                 }
                 if (0==words[i].compare("none")) {
-                    events = Tracer::EV_NONE;
+                    events = EV_NONE;
                 } else if (0==words[i].compare("reached")) {
-                    events = Tracer::EV_REACHED;
+                    events = EV_REACHED;
                 } else if (0==words[i].compare("branched")) {
-                    events = Tracer::EV_BRANCHED;
+                    events = EV_BRANCHED;
                 } else if (0==words[i].compare("returned")) {
-                    events = Tracer::EV_RETURNED;
+                    events = EV_RETURNED;
                 } else if (0==words[i].compare("fault") || 0==words[i].compare("faults")) {
-                    events = Tracer::EV_FAULT;
+                    events = EV_FAULT;
                 } else if (0==words[i].compare("consume") || 0==words[i].compare("consumed")) {
-                    events = Tracer::EV_CONSUME_INPUT;
+                    events = EV_CONSUME_INPUT;
                 } else if (0==words[i].compare("cfg")) {
-                    events = Tracer::CONTROL_FLOW;
+                    events = CONTROL_FLOW;
                 } else if (0==words[i].compare("all")) {
-                    events = Tracer::ALL_EVENTS;
+                    events = ALL_EVENTS;
                 } else if (!words[i].empty() && isdigit(words[i][0])) {
                     const char *s = words[i].c_str();
                     char *rest;
@@ -1096,6 +1131,9 @@ main(int argc, char *argv[])
     MemoryMap ro_map;
     AddressIdMap entry2id;                              // maps function entry address to function ID
     Tracer tracer;
+    InsnCoverage insn_coverage;
+    DynamicCallGraph dynamic_cg;
+    ConsumedInputs consumed_inputs;
     time_t last_checkpoint = time(NULL);
     size_t ntests_ran=0;
     FuncAnalyses funcinfo;
@@ -1192,14 +1230,15 @@ main(int argc, char *argv[])
         assert(ip!=pointers.end());
 
         // Run the test
-        InsnCoverage insn_coverage;
-        DynamicCallGraph dynamic_cg;
-        tracer.reset(work.func_id, work.igroup_id, opt.trace_events);
+        insn_coverage.current_test(work.func_id, work.igroup_id);
+        dynamic_cg.current_test(work.func_id, work.igroup_id);
+        tracer.current_test(work.func_id, work.igroup_id, opt.trace_events);
+        consumed_inputs.current_test(work.func_id, work.igroup_id);
         timeval start_time, stop_time;
         clock_t start_ticks = clock();
         gettimeofday(&start_time, NULL);
         OutputGroup ogroup = fuzz_test(interp, func, igroup, tracer, insns, &ro_map, ip->second, opt, entry2id,
-                                       whitelist_exports, funcinfo, insn_coverage, dynamic_cg);
+                                       whitelist_exports, funcinfo, insn_coverage, dynamic_cg, consumed_inputs);
         gettimeofday(&stop_time, NULL);
         clock_t stop_ticks = clock();
         double elapsed_time = (stop_time.tv_sec - start_time.tv_sec) +
@@ -1215,12 +1254,6 @@ main(int argc, char *argv[])
         int64_t ogroup_id = ogroups.find(ogroup);
         if (ogroup_id<0)
             ogroup_id = ogroups.insert(ogroup);
-
-        // Update the database with the test results
-        if (opt.save_coverage && !opt.dry_run)
-            insn_coverage.save(tx, work.func_id, work.igroup_id);
-        if (opt.save_callgraph && !opt.dry_run)
-            dynamic_cg.save(tx, work.func_id, work.igroup_id);
 
         SqlDatabase::StatementPtr stmt = tx->statement("insert into semantic_fio"
                                                        // 0        1          2                   3
@@ -1287,7 +1320,8 @@ main(int argc, char *argv[])
         // Checkpoint
         if (do_checkpoint || (opt.checkpoint>0 && time(NULL)-last_checkpoint > opt.checkpoint)) {
             if (!opt.dry_run)
-                tx = checkpoint(tx, ogroups, tracer, progress, ntests_ran, cmd_id);
+                tx = checkpoint(tx, opt, ogroups, tracer, insn_coverage, dynamic_cg, consumed_inputs,
+                                progress, ntests_ran, cmd_id);
             last_checkpoint = time(NULL);
         }
         if (do_exit) {
@@ -1315,7 +1349,8 @@ main(int argc, char *argv[])
 
     // Cleanup
     if (!tx->is_terminated() && !opt.dry_run)
-        tx = checkpoint(tx, ogroups, tracer, progress, ntests_ran, cmd_id);
+        tx = checkpoint(tx, opt, ogroups, tracer, insn_coverage, dynamic_cg, consumed_inputs,
+                        progress, ntests_ran, cmd_id);
     progress.clear();
 
     return 0;

@@ -6,6 +6,7 @@ drop table if exists semantic_funcsim;
 drop table if exists semantic_funcpartials;
 drop table if exists semantic_fio_calls;
 drop table if exists semantic_fio_coverage;
+drop table if exists semantic_fio_inputs;
 drop table if exists semantic_fio_trace;
 drop table if exists semantic_fio_events;
 drop table if exists semantic_fio;
@@ -183,6 +184,16 @@ create table semantic_fio_trace (
        event_id integer, --(need for speed) references semantic_fio_events(id),
        minor integer,                           -- event minor number (usually zero)
        val bigint                               -- event value, interpretation depends on event_id
+);
+
+-- Input values actually consumed by each test.
+create table semantic_fio_inputs (
+       func_id integer,				-- references semantic_functions(id) [commented out for speed]
+       igroup_id integer,			-- references semantic_inputvalues(id) [commented out for speed]
+       request_queue_id integer references semantic_input_queues(id), -- queue whose value was requested
+       actual_queue_id integer references semantic_input_queues(id),  -- queue whose value was consumed after redirecting
+       pos integer,				-- sequence number indicates the order that input values were consumed
+       val bigint				-- the actual input value
 );
 
 -- Information about instructions that were executed for each test.  This table is only populated when coverage capability is

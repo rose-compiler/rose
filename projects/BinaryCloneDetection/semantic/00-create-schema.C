@@ -69,16 +69,16 @@ main(int argc, char *argv[])
         Events(const SqlDatabase::TransactionPtr &tx) {
             stmt = tx->statement("insert into semantic_fio_events (id, name, description) values (?, ?, ?)");
         }
-        void insert(Tracer::Event event, const std::string &name, const std::string &desc) {
+        void insert(TracerEvent event, const std::string &name, const std::string &desc) {
             stmt->bind(0, event)->bind(1, name)->bind(2, desc)->execute();
         }
     } events(tx);
-    events.insert(Tracer::EV_REACHED,           "reached",              "this address was executed");
-    events.insert(Tracer::EV_BRANCHED,          "branched",             "branch taken");
-    events.insert(Tracer::EV_RETURNED,          "returned",             "function forced to return early");
-    events.insert(Tracer::EV_CONSUME_INPUT,     "consume input",        "consumed an integer value from the input group");
-    events.insert(Tracer::EV_MEM_WRITE,         "memory write",         "potential output value created");
-    events.insert(Tracer::EV_FAULT,             "fault",                "test failed; event value is the fault ID");
+    events.insert(EV_REACHED,           "reached",              "this address was executed");
+    events.insert(EV_BRANCHED,          "branched",             "branch taken");
+    events.insert(EV_RETURNED,          "returned",             "function forced to return early");
+    events.insert(EV_CONSUME_INPUT,     "consume input",        "consumed an integer value from the input group");
+    events.insert(EV_MEM_WRITE,         "memory write",         "potential output value created");
+    events.insert(EV_FAULT,             "fault",                "test failed; event value is the fault ID");
 
     // Populate the semantic_input_queues table
     struct Queues {
