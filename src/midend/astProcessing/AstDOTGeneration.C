@@ -851,6 +851,76 @@ sourcePositionInformation (SgNode* node)
      return ss;
    }
 
+
+// DQ (9/19/2013): generate the number associated with each position relative to the attached IR node.
+static size_t
+numberByRelativePosition(AttachedPreprocessingInfoType* commentsAndCppDirectives, PreprocessingInfo::RelativePositionType pos)
+   {
+     size_t returnValue = 0;
+
+     for (vector<PreprocessingInfo*>::iterator i = commentsAndCppDirectives->begin(); i != commentsAndCppDirectives->end(); i++)
+        {
+          if ( (*i)->getRelativePosition() == pos )
+             {
+               returnValue++;
+             }
+        }
+
+     return returnValue;
+   }
+
+
+static std::string
+commentAndCppInformation (SgNode* node)
+   {
+  // DQ (8/31/2013): Adding source position information for DOT output.
+     string ss;
+
+     SgLocatedNode* locatedNode = isSgLocatedNode(node);
+     if (locatedNode != NULL)
+        {
+          AttachedPreprocessingInfoType* commentsAndCppDirectives = locatedNode->getAttachedPreprocessingInfo();
+          size_t numberofCommentsAndCppDirectives = 0;
+          if (commentsAndCppDirectives != NULL)
+             {
+               numberofCommentsAndCppDirectives = commentsAndCppDirectives->size();
+               if (numberofCommentsAndCppDirectives >= 0)
+                  {
+                 // ss = string("comments = ") + StringUtility::numberToString(numberofCommentsAndCppDirectives) + "\\n";
+                    ss += string("comments/directives (before) = ") + StringUtility::numberToString(numberByRelativePosition(commentsAndCppDirectives,PreprocessingInfo::before)) + "\\n";
+                    ss += string("comments/directives (inside) = ") + StringUtility::numberToString(numberByRelativePosition(commentsAndCppDirectives,PreprocessingInfo::inside)) + "\\n";
+                    ss += string("comments/directives (after)  = ") + StringUtility::numberToString(numberByRelativePosition(commentsAndCppDirectives,PreprocessingInfo::after)) + "\\n";
+                  }
+             }
+        }
+
+#if 0
+       else
+        {
+       // DQ (9/1/2013): We could handle the source position of some other IR nodes (e.g. output name of the file for SgFile).
+          SgFile* file = isSgFile(node);
+          if (file != NULL)
+             {
+            // ROSE_ASSERT(file->get_file_info() != NULL);
+            // ss += generateFileLineColumnString(file->get_file_info());
+               AttachedPreprocessingInfoType* commentsAndCppDirectives = file->getAttachedPreprocessingInfo();
+               size_t numberofCommentsAndCppDirectives = 0;
+               if (commentsAndCppDirectives != NULL)
+                  {
+                    numberofCommentsAndCppDirectives = commentsAndCppDirectives->size();
+                    if (numberofCommentsAndCppDirectives > 0)
+                       {
+                         ss = string("comments = ") + StringUtility::numberToString(numberofCommentsAndCppDirectives) + "\\n";
+                       }
+                  }
+             }
+        }
+#endif
+
+     return ss;
+   }
+
+
 // To improve the default output add additional information here
 // Note you need to add "\\n" for newline
 string
@@ -869,6 +939,9 @@ AstDOTGeneration::additionalNodeInfo(SgNode* node)
 
   // DQ (8/31/2013): Added more information about the IR node to the dot graph.
      ss << sourcePositionInformation(node);
+
+  // DQ (9/19/2013): Added more information about the IR node to the dot graph (comments and C preprocessor directive information).
+     ss << commentAndCppInformation(node);
 
   // DQ (7/4/2008): Added support for output of information about attributes
      AstAttributeMechanism* astAttributeContainer = node->get_attributeMechanism();

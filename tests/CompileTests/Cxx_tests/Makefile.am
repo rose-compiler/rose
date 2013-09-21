@@ -650,6 +650,15 @@ test_unparse_includes_option: $(TEST_TRANSLATOR)
 test_unparse_includes_option_with_link: $(TEST_TRANSLATOR)
 	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) $(srcdir)/test2013_260.C -o test2013_260_unparse_headers
 
+# DQ (9/17/2013): Added autoconf style link test.
+test_common_configure_test_with_link_part_1: $(TEST_TRANSLATOR)
+	@cp $(srcdir)/conftest.C conftest.C
+	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 0 -I$(srcdir) conftest.C -o conftest_configure_test_part_1
+
+test_common_configure_test_with_link_part_2: $(TEST_TRANSLATOR)
+	@cp $(srcdir)/test2013_261.C conftest.C
+	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 0 -I$(srcdir) conftest.C -o conftest_configure_test_part_2
+
 $(TEST_TRANSLATOR):
 	cd ../..; $(MAKE) testTranslator
 
@@ -740,6 +749,8 @@ check-local:
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) test_unparse_includes_option
 	@$(MAKE) test_unparse_includes_option_with_link
+	@$(MAKE) test_common_configure_test_with_link_part_1
+	@$(MAKE) test_common_configure_test_with_link_part_2
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Cxx_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
@@ -750,7 +761,7 @@ clean-local:
 	rm -f *.unfoldedConstants-o
 	rm -rf QMTest
 	rm -f *.int.c
-	rm -f test2013_260_unparse_headers
+	rm -f test2013_260_unparse_headers conftest_configure_test*
 
 #------------------------------------------------------------------------------
 #                           Performance Timing Tests
