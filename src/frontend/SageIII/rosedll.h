@@ -51,6 +51,11 @@
     #define ROSE_DLL_API ROSE_DLL_HELPER_DLL_IMPORT
   #endif // ROSE_DLL_DLL_EXPORTS
   #define ROSE_DLL_LOCAL ROSE_DLL_HELPER_DLL_LOCAL
+  #ifdef ROSE_UTIL_EXPORTS
+    #define ROSE_UTIL_API ROSE_DLL_HELPER_DLL_EXPORT
+  #else
+    #define ROSE_UTIL_API ROSE_DLL_HELPER_DLL_IMPORT
+  #endif
 
 
 // DQ (10/19/2010): Need to test if we can remove this.

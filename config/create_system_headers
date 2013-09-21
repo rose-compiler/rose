@@ -198,9 +198,9 @@ fi
   # Support for compiling ROSE with GNU g++ compiler
   # g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|roseTranslator)
   # g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++)
-    g++*|gcc*|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++|xt-xcc|xt-xc++)
+    g++*|gcc*|cc*|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++|xt-xcc|xt-xc++)
          case "$compilerName" in
-           gcc*|icc|mpicc|xt-xcc)
+           gcc*|cc*|icc|mpicc|xt-xcc)
               is_C_compiler="yes"
               language="c"
               ;;

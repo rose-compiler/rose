@@ -23,10 +23,10 @@ HEADER_START
 
        /* the generated cast function */
       /*! \brief Casts pointer from base class to derived class */
-          friend       $CLASSNAME* is$CLASSNAME(       SgNode * s );
+          ROSE_DLL_API friend       $CLASSNAME* is$CLASSNAME(       SgNode * s );
 
       /*! \brief Casts pointer from base class to derived class (for const pointers) */
-          friend const $CLASSNAME* is$CLASSNAME( const SgNode * s );
+          ROSE_DLL_API friend const $CLASSNAME* is$CLASSNAME( const SgNode * s );
 
      public:
        // DQ (9/21/2005): Support for memory pools

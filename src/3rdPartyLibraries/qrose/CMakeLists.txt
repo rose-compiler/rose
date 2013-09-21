@@ -1,5 +1,5 @@
-
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
+add_definitions(-DQT3_SUPPORT)
+include_directories(${QT_QT3SUPPORT_INCLUDE_DIR})
 
 add_subdirectory(Framework)
 add_subdirectory(Widgets)

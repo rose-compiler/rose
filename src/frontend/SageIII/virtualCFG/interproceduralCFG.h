@@ -20,7 +20,7 @@ using VirtualCFG::CFGNode;
 using VirtualCFG::CFGEdge;
 
 
-class InterproceduralCFG : public CFG
+class ROSE_DLL_API InterproceduralCFG : public CFG
 {
 protected:
     virtual void buildCFG(CFGNode n, 

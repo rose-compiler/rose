@@ -64,7 +64,7 @@ class ConstantFoldingTraversal
 // actually handled by this function itself.
 // Note: It will fold children nodes of the input node to some constants, 
 // not folding the input node itself. 
-void constantFoldingOptimization(SgNode* n, bool internalTestingAgainstFrontend = false);
+ROSE_DLL_API void constantFoldingOptimization(SgNode* n, bool internalTestingAgainstFrontend = false);
 
 // ***************************************************************************
 // Constant un-folding is implemented here as a test to verify the correctness 
@@ -97,7 +97,7 @@ class ConstantUnFoldingTraversal
 
 // This test transforms the AST to turn constant values into expressions that have the 
 // same value. This is a test for the constant folding optimization implemented above.
-void constantUnFoldingTest(SgNode* n);
+ROSE_DLL_API void constantUnFoldingTest(SgNode* n);
 
 // end of ConstantFolding namespace
 }

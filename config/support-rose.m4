@@ -672,15 +672,14 @@ ROSE_SUPPORT_PYTHON
 AM_CONDITIONAL(ROSE_USE_PYTHON,test ! "$with_python" = no)
 
 AX_PYTHON_DEVEL([0.0.0], [3.0.0])
+PYTHON_VERSION_MAJOR_VERSION="`echo $ac_python_version | cut -d\. -f1`"
+PYTHON_VERSION_MINOR_VERSION="`echo $ac_python_version | cut -d\. -f2`"
+PYTHON_VERSION_PATCH_VERSION="`echo $ac_python_version | cut -d\. -f3`"
 
-PYTHON_VERSION_MAJOR_VERSION="`echo $PYTHON_VERSION | cut -d\. -f1`"
-PYTHON_VERSION_MINOR_VERSION="`echo $PYTHON_VERSION | cut -d\. -f2`"
-PYTHON_VERSION_PATCH_VERSION="`echo $PYTHON_VERSION | cut -d\. -f3`"
 
-
-if test "$PYTHON_VERSION_MAJOR_VERSION" >= "2" && test "$PYTHON_VERSION_MINOR_VERSION" >= "7"; then
+if test "$PYTHON_VERSION_MAJOR_VERSION" -ge "2" && test "$PYTHON_VERSION_MINOR_VERSION" -ge "7"; then
   approved_python_version=true
-elif  test "$PYTHON_VERSION_MAJOR_VERSION" >= "3"; then
+elif  test "$PYTHON_VERSION_MAJOR_VERSION" -ge "3"; then
   approved_python_version=true
 else
   approved_python_version=false
@@ -2000,6 +1999,8 @@ projects/PolyhedralModel/projects/loop-ocl/Makefile
 projects/PolyhedralModel/projects/spmd-generator/Makefile
 projects/PolyhedralModel/projects/polygraph/Makefile
 projects/PolyhedralModel/projects/utils/Makefile
+projects/RoseBlockLevelTracing/Makefile
+projects/RoseBlockLevelTracing/src/Makefile
 projects/LineDeleter/Makefile
 projects/LineDeleter/src/Makefile
 tests/Makefile
