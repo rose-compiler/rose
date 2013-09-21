@@ -11451,6 +11451,7 @@ Sg_File_Info* Sg_File_Info::generateDefaultFileInfoForTransformationNode()
      return returnValue;
    }
 
+
 // DQ (1/11/2006): Added version of function where filename (file_id) can 
 // be explicitly set to be the non-default value.
 Sg_File_Info* Sg_File_Info::generateFileInfoForTransformationNode( int file_id )
@@ -11466,6 +11467,7 @@ Sg_File_Info* Sg_File_Info::generateFileInfoForTransformationNode( int file_id )
 
      return returnValue;
    }
+
 
 // DQ (1/11/2006): Added version of function where filename (file_id) can 
 // be explicitly set to be the non-default value.
@@ -11483,6 +11485,7 @@ Sg_File_Info* Sg_File_Info::generateFileInfoForTransformationNode( string filena
      return returnValue;
    }
 
+
 // Static function to return new Sg_File_Info object set to default values appropriate for compiler generated code
 // static Sg_File_Info* generateCompilerGeneratedDefaultFileInfo()
 Sg_File_Info* Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode()
@@ -11499,6 +11502,7 @@ Sg_File_Info* Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode()
 
      return returnValue;
    }
+
 
 // DQ (11/2/2006): Added operator= member function to simple assignment (used in fixupSourcePositionInformation.C
 // to modify Sg_File_Info objects so that they better reflect the original source code).
@@ -11528,6 +11532,7 @@ Sg_File_Info::operator= ( const Sg_File_Info & X )
      return *this;
    }
 
+
 // DQ (9/26/2004): Added operator== friend function to permit testing of reused definitions of defining declarations!
 bool
 operator== ( const Sg_File_Info & X, const Sg_File_Info & Y )
@@ -11538,7 +11543,9 @@ operator== ( const Sg_File_Info & X, const Sg_File_Info & Y )
   // (col, line, file) and the most expensive test (file) last.
      if (X.get_col() == Y.get_col())
         {
-          if (X.get_line() == Y.get_line())
+       // DQ (9/17/2013): We always want to use the physical source position.
+       // if (X.get_line() == Y.get_line())
+          if (X.get_physical_line() == Y.get_physical_line())
              {
 	       // MK (7/22/05) : Replaced string comparisons with file_id comparisons
 	       /*
@@ -11547,7 +11554,9 @@ operator== ( const Sg_File_Info & X, const Sg_File_Info & Y )
                     returnValue = true;
                   }
 	       */
-               if (X.p_file_id == Y.p_file_id)
+            // DQ (9/17/2013): We always want to use the physical source position.
+            // if (X.p_file_id == Y.p_file_id)
+               if (X.p_physical_file_id == Y.p_physical_file_id)
                   {
                     returnValue = true;
                   }
@@ -11565,6 +11574,7 @@ operator!= ( const Sg_File_Info & X, const Sg_File_Info & Y )
      return operator==(X,Y) ? false : true;
    }
 
+
 // DQ (10/25/2004): Added relational operators to permit testing of strting vs. ending file info object (assert starting < ending)
 bool
 operator>  ( const Sg_File_Info & X, const Sg_File_Info & Y )
@@ -11573,16 +11583,20 @@ operator>  ( const Sg_File_Info & X, const Sg_File_Info & Y )
   // printf ("In operator > (Sg_File_Info,Sg_File_Info): X.isSameFile(Y) = %s \n",X.isSameFile(Y) ? "true" : "false");
      if (X.isSameFile(Y) == true)
         {
+       // DQ (9/17/2013): We always want to use the physical source position.
        // printf ("X.p_line = %d Y.p_line = %d \n",X.p_line,Y.p_line);
        // printf ("X.p_col  = %d Y.p_col  = %d \n",X.p_col,Y.p_col);
-          if (X.p_line > Y.p_line)
+       // if (X.p_line > Y.p_line)
+          if (X.p_physical_line > Y.p_physical_line)
              {
             // printf ("TRUE: X.p_line = %d > X.p_line = %d \n",X.p_line,X.p_line);
                result = true;
              }
             else
              {
-               if (X.p_line == Y.p_line)
+            // DQ (9/17/2013): We always want to use the physical source position.
+            // if (X.p_line == Y.p_line)
+               if (X.p_physical_line == Y.p_physical_line)
                   {
                     if (X.p_col > Y.p_col)
                        {
@@ -11600,6 +11614,7 @@ operator>  ( const Sg_File_Info & X, const Sg_File_Info & Y )
      return result;
    }
 
+
 bool
 operator<  ( const Sg_File_Info & X, const Sg_File_Info & Y )
    {
@@ -11607,16 +11622,20 @@ operator<  ( const Sg_File_Info & X, const Sg_File_Info & Y )
   // printf ("In operator < (Sg_File_Info,Sg_File_Info): X.isSameFile(Y) = %s \n",X.isSameFile(Y) ? "true" : "false");
      if (X.isSameFile(Y) == true)
         {
+       // DQ (9/17/2013): We always want to use the physical source position.
        // printf ("X.p_line = %d Y.p_line = %d \n",X.p_line,Y.p_line);
        // printf ("X.p_col  = %d Y.p_col  = %d \n",X.p_col,Y.p_col);
-          if (X.p_line < Y.p_line)
+       // if (X.p_line < Y.p_line)
+          if (X.p_physical_line < Y.p_physical_line)
              {
             // printf ("TRUE: X.p_line = %d < Y.p_line = %d \n",X.p_line,Y.p_line);
                result = true;
              }
             else
              {
-               if (X.p_line == Y.p_line)
+            // DQ (9/17/2013): We always want to use the physical source position.
+            // if (X.p_line == Y.p_line)
+               if (X.p_physical_line == Y.p_physical_line)
                   {
                     if (X.p_col < Y.p_col)
                        {
@@ -11634,19 +11653,24 @@ operator<  ( const Sg_File_Info & X, const Sg_File_Info & Y )
      return result;
    }
 
+
 bool
 operator>= ( const Sg_File_Info & X, const Sg_File_Info & Y )
    {
      bool result = false;
      if (X.isSameFile(Y) == true)
         {
-          if (X.p_line > Y.p_line)
+       // DQ (9/17/2013): We always want to use the physical source position.
+       // if (X.p_line > Y.p_line)
+          if (X.p_physical_line > Y.p_physical_line)
              {
                result = true;
              }
             else
              {
-               if (X.p_line == Y.p_line)
+            // DQ (9/17/2013): We always want to use the physical source position.
+            // if (X.p_line == Y.p_line)
+               if (X.p_physical_line == Y.p_physical_line)
                   {
                     if (X.p_col >= Y.p_col)
                          result = true;
@@ -11661,19 +11685,24 @@ operator>= ( const Sg_File_Info & X, const Sg_File_Info & Y )
      return result;
    }
 
+
 bool
 operator<= ( const Sg_File_Info & X, const Sg_File_Info & Y )
    {
      bool result = false;
      if (X.isSameFile(Y) == true)
         {
-          if (X.p_line < Y.p_line)
+       // DQ (9/17/2013): We always want to use the physical source position.
+       // if (X.p_line < Y.p_line)
+          if (X.p_physical_line < Y.p_physical_line)
              {
                result = true;
              }
             else
              {
-               if (X.p_line == Y.p_line)
+            // DQ (9/17/2013): We always want to use the physical source position.
+            // if (X.p_line == Y.p_line)
+               if (X.p_physical_line == Y.p_physical_line)
                   {
                     if (X.p_col <= Y.p_col)
                          result = true;
@@ -11688,13 +11717,15 @@ operator<= ( const Sg_File_Info & X, const Sg_File_Info & Y )
      return result;
    }
 
+
 //Liao 4/16/2010. The default value for display(label) cannot be instantiated from gdb,
 // which is very annoying during debugging. I added the empty parameter one to better support debugging.
 void
-Sg_File_Info::display( ) const
-{
-  display ("");
-}
+Sg_File_Info::display() const
+   {
+     display ("");
+   }
+
 
 void
 Sg_File_Info::display( const std::string label ) const
@@ -12102,6 +12133,7 @@ Sg_File_Info::numberOfSourceFiles()
      return p_nametofileid_map.size();
    }
 
+
 int
 Sg_File_Info::addFilenameToMap ( const std::string & filename )
    {
@@ -12202,10 +12234,6 @@ Sg_File_Info::get_filenameString() const
 
      if (isTransformation() == true)
         {
-#if PRINT_DEVELOPER_WARNINGS
-       // DQ (2/25/2006): Unclear how often we want to have this output, it is sometimes useful and sometime annoying.
-          printf ("Sg_File_Info::get_filename called for transformation IR node \n");
-#endif
           static const std::string transformation_string = "transformation";
           returnString = &transformation_string;
         }
@@ -12213,13 +12241,6 @@ Sg_File_Info::get_filenameString() const
         {
           if (isCompilerGenerated() == true)
              {
-#if 0
-            // DQ (8/17/2005): only "compilergenerated" when compiler generate (not when marked for output)
-            // if ( isCompilerGenerated() == true || isCompilerGeneratedNodeToBeUnparsed() == true )
-            // printf ("Sg_File_Info::get_filename called for compiler generated IR node \n");
-               static const std::string compilerGenerated_string = "compilerGenerated";
-               returnString = &compilerGenerated_string;
-#else
             // DQ (11/1/2007): check if this is frontEndSpecific, and if so return the filename of the associated file ("rose_edg_required_macros_and_functions.h")
             // This has been fixed to be consistant with the implementation of get_file_id().
                if ( isFrontendSpecific() == true )
@@ -12232,31 +12253,25 @@ Sg_File_Info::get_filenameString() const
                     static const std::string compilerGenerated_string = "compilerGenerated";
                     returnString = &compilerGenerated_string;
                   }
-#endif
              }
             else
              {
-#if 0
-               const char * tmp = getFilenameFromID(p_file_id).c_str();
-               int length = strlen(tmp) + 1;
-               returnString = new char[length];
-               strncpy(returnString, tmp, length);
-#endif
                returnString = &getFilenameFromID(p_file_id);
              }
         }
 
      assert (returnString != NULL);
+
      return *returnString;
    }
 
 const char*
 Sg_File_Info::get_filename() const
    {
-  // DQ (10/15/2005): This function is the C++ string version of the get_filename() 
+  // DQ (10/15/2005): This function is the C string version of the get_filename() 
   // function which has been depricated. At some point the get_filename() function 
-  // will be eliminated and later reinfroduced as get_filename() (finally returning 
-  // a C++ string instead of a char* (C style string)).
+  // will be eliminated and later reinfroduced as get_filename() (finally building
+  // a C++ string implementation instead of a char* (C style string) based implementation).
      return get_filenameString().c_str();
    }
 
@@ -12274,8 +12289,45 @@ Sg_File_Info::get_physical_filename() const
    {
      assert (this != NULL);
 
+#if 0
   // return whatever name is in the map
      return getFilenameFromID(p_physical_file_id);
+#else
+  // DQ (9/21/2013): The support to return the filename must account for when this is compiler generated, a transformations, part of the front-end, etc.
+     const std::string* returnString = NULL;
+
+     if (isTransformation() == true)
+        {
+          static const std::string transformation_string = "transformation";
+          returnString = &transformation_string;
+        }
+       else
+        {
+          if (isCompilerGenerated() == true)
+             {
+            // DQ (11/1/2007): check if this is frontEndSpecific, and if so return the filename of the associated file ("rose_edg_required_macros_and_functions.h")
+            // This has been fixed to be consistant with the implementation of get_file_id().
+               if ( isFrontendSpecific() == true )
+                  {
+                 // In this case return the filename of the specific file which indicates this properly ("rose_edg_required_macros_and_functions.h").
+                    returnString = &getFilenameFromID(p_physical_file_id);
+                  }
+                 else
+                  {
+                    static const std::string compilerGenerated_string = "compilerGenerated";
+                    returnString = &compilerGenerated_string;
+                  }
+             }
+            else
+             {
+               returnString = &getFilenameFromID(p_physical_file_id);
+             }
+        }
+
+     assert (returnString != NULL);
+
+     return *returnString;
+#endif
    }
 
 void
@@ -12476,6 +12528,7 @@ Sg_File_Info::hasPositionInSource() const
   // concepts of compiler generated with output (deprecated function).
   // bool result = ( ! ( isTransformation() || isCompilerGenerated() || isCompilerGeneratedNodeToBeUnparsed() ) );
      bool result = ( ! ( isTransformation() || isCompilerGenerated() || isOutputInCodeGeneration() ) );
+
      return result;
    }
 
@@ -12516,9 +12569,18 @@ Sg_File_Info::isSameFile(SgFile* file) const
 #endif
      assert(fileInfo != NULL);
 
+  // DQ (9/17/2013): This function should always refer to physical file data.
   // DQ (10/27/2007): Make this consistant with new semantics of get_file_id() 
   // bool result = (p_file_id == fileInfo->get_file_id());
-     bool result = (this->get_file_id() == fileInfo->get_file_id());
+  // bool result = (this->get_file_id() == fileInfo->get_file_id());
+     bool result = (this->get_physical_file_id() == fileInfo->get_physical_file_id());
+
+#if 0
+     printf ("In Sg_File_Info::isSameFile(): \n");
+     printf ("   --- this->get_physical_file_id()     = %d physical_filename = %s \n",this->get_physical_file_id(),this->get_physical_filename().c_str());
+     printf ("   --- fileInfo->get_physical_file_id() = %d physical_filename = %s \n",fileInfo->get_physical_file_id(),fileInfo->get_physical_filename().c_str());
+#endif
+
      return result;
    }
 
@@ -12528,9 +12590,12 @@ Sg_File_Info::isSameFile(Sg_File_Info* fileInfo) const
    {
      assert(fileInfo != NULL);
 
+  // DQ (9/17/2013): This function should always refer to physical file data.
   // DQ (10/27/2007): Make this consistant with new semantics of get_file_id() 
   // bool result = (p_file_id == fileInfo->get_file_id());
-     bool result = (this->get_file_id() == fileInfo->get_file_id());
+  // bool result = (this->get_file_id() == fileInfo->get_file_id());
+     bool result = (this->get_physical_file_id() == fileInfo->get_physical_file_id());
+
      return result;
    }
 
@@ -12538,9 +12603,12 @@ Sg_File_Info::isSameFile(Sg_File_Info* fileInfo) const
 bool
 Sg_File_Info::isSameFile(const Sg_File_Info & fileInfo) const
    {
+  // DQ (9/17/2013): This function should always refer to physical file data.
   // DQ (10/27/2007): Make this consistant with new semantics of get_file_id() 
   // bool result = (p_file_id == fileInfo.get_file_id());
-     bool result = (this->get_file_id() == fileInfo.get_file_id());
+  // bool result = (this->get_file_id() == fileInfo.get_file_id());
+     bool result = (this->get_physical_file_id() == fileInfo.get_physical_file_id());
+
      return result;
    }
 

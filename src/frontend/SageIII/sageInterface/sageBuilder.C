@@ -9645,7 +9645,7 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
                if (nondefdecl->get_type() == NULL)
                   {
 #if 0
-                    printf ("In buildNondefiningClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
+                    printf ("In buildNondefiningClassDeclaration_nfi(): nondefdecl = %p = %s \n",nondefdecl,nondefdecl->class_name().c_str());
                     printf ("In buildNondefiningClassDeclaration_nfi(): nondefdecl->get_firstNondefiningDeclaration() = %p \n",nondefdecl->get_firstNondefiningDeclaration());
 #endif
                     nondefdecl->set_type(SgClassType::createType(nondefdecl));

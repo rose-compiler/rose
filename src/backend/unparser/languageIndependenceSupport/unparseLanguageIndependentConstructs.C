@@ -144,10 +144,25 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
         }
 
 #if 0
-     printf ("In UnparseLanguageIndependentConstructs::statementFromFile(): sourceFilename = %s \n",sourceFilename.c_str());
+     if (stmt->get_file_info()->isFrontendSpecific() == false)
+        {
+          int    stmt_line              = stmt->get_file_info()->get_line();
+          int    stmt_physical_line     = stmt->get_file_info()->get_physical_line();
+          string stmt_filename          = stmt->get_file_info()->get_filenameString();
+          string stmt_physical_filename = stmt->get_file_info()->get_physical_filename();
+
+          printf ("In UnparseLanguageIndependentConstructs::statementFromFile(): sourceFilename = %s \n",sourceFilename.c_str());
+          printf ("   --- stmt_physical_filename = %s stmt_physical_line = %d \n",stmt_physical_filename.c_str(),stmt_physical_line);
+          printf ("   --- stmt = %p = %s stmt_filename  = %s line = %d \n",stmt,stmt->class_name().c_str(),stmt_filename.c_str(),stmt_line);
+
+          if (isSgTemplateInstantiationDecl(stmt) != NULL)
+             {
+               stmt->get_file_info()->display("case of SgTemplateInstantiationDecl: debug");
+             }
+        }
 #endif
 
-#if 1
+#if 0
   // DQ (2/15/2013): This might not be required now that we support physical filenames (and physical line numbers).
 
   // DQ (12/23/2012): This special handling of the "conftest.c" file is no linger required.
@@ -156,11 +171,13 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
   // to both the logical source position AND the physical source position, this should not 
   // be required.
 
+  // DQ (9/17/2013): Updated this test to handle C++ versions of autoconf tests.
   // DQ (10/8/2012): We want to allow ROSE to work with autoconf tests.  The nature
   // of these tests are that they have a #line directive "#line 1227 "configure"" 
   // and are in a file called: "conftest.c" and in some cases have a include file 
   // named: "confdef.h".
-     if (StringUtility::stripPathFromFileName(sourceFilename) == "conftest.c") 
+     string stmt_filename = StringUtility::stripPathFromFileName(sourceFilename);
+     if ( (stmt_filename == "conftest.c") || (stmt_filename == "conftest.C") )
         {
           ROSE_ASSERT(stmt->get_file_info() != NULL);
           string statementfilename = stmt->get_file_info()->get_filenameString();
@@ -172,7 +189,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
           if (statementfilename == "configure")
              {
 #if 0
-               printf ("In statementFromFile(): Detected an autocon generated file used to test aspects of the system as part of an application's build system stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+               printf ("In statementFromFile(): Detected an autoconf (configure) generated file used to test aspects of the system as part of an application's build system stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
                return true;
              }
@@ -221,9 +238,11 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
        // DQ (5/19/2011): Output generated code... (allows unparseToString() to be used with template instantations to support name qualification).
           bool forceOutputOfGeneratedCode = info.outputCompilerGeneratedStatements();
 #if 0
-          printf ("Inside of statementFromFile(): stmt = %p = %s isOutputInCodeGeneration   = %s \n",stmt,stmt->class_name().c_str(),isOutputInCodeGeneration   ? "true" : "false");
-          printf ("Inside of statementFromFile(): stmt = %p = %s forceOutputOfGeneratedCode = %s \n",stmt,stmt->class_name().c_str(),forceOutputOfGeneratedCode ? "true" : "false");
-          info.display("Inside of statementFromFile()");
+          printf ("In statementFromFile(): stmt = %p = %s isOutputInCodeGeneration   = %s \n",stmt,stmt->class_name().c_str(),isOutputInCodeGeneration   ? "true" : "false");
+          printf ("In statementFromFile(): stmt = %p = %s forceOutputOfGeneratedCode = %s \n",stmt,stmt->class_name().c_str(),forceOutputOfGeneratedCode ? "true" : "false");
+#endif
+#if 0
+          info.display("In statementFromFile()");
 #endif
        // DQ (1/11/2006): OutputCodeGeneration is not set to be true where transformations 
        // require it.  Transformation to include header files don't set the OutputCodeGeneration flag.
@@ -240,13 +259,19 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
             // DQ (8/17/2005): Need to replace this with call to compare Sg_File_Info::file_id 
             // numbers so that we can remove the string comparision operator.
             // statementfilename = ROSE::getFileName(stmt);
-               statementfilename = stmt->get_file_info()->get_filenameString();
+
+            // DQ (9/20/2013): We need to use the physical file name in checking which statements to unparse.
+            // statementfilename = stmt->get_file_info()->get_filenameString();
+               statementfilename = stmt->get_file_info()->get_physical_filename();
 #if 0
-               printf ("Inside of statementFromFile(): statementfilename = %s sourceFilename = %s \n",statementfilename.c_str(),sourceFilename.c_str());
+               printf ("In statementFromFile(): statementfilename = %s sourceFilename = %s \n",statementfilename.c_str(),sourceFilename.c_str());
+               printf ("In statementFromFile(): stmt->get_file_info()->get_physical_filename() = %s \n",stmt->get_file_info()->get_physical_filename().c_str());
 #endif
             // DQ (10/22/2007): Allow empty name strings (to support #line n "")
             // ROSE_ASSERT (statementfilename.empty() == false);
 
+            // DQ (9/20/2013): If this is a performance issue, an optimization would be to use file_id's instead of strings (filenames).
+            // However, this does not appear to be an important optimization.
                if ( statementfilename == sourceFilename )
                   {
                     statementInFile = true;
@@ -264,7 +289,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                   }
              }
 #if 0
-          printf ("In Unparser::statementFromFile (statementInFile = %s output = %s stmt = %p = %s = %s in file = %s sourceFilename = %s ) \n",
+          printf ("In statementFromFile (statementInFile = %s output = %s stmt = %p = %s = %s in file = %s sourceFilename = %s ) \n",
                (statementInFile == true) ? "true": "false", (isOutputInCodeGeneration == true) ? "true": "false", stmt, 
                stmt->class_name().c_str(), SageInterface::get_name(stmt).c_str(),statementfilename.c_str(), sourceFilename.c_str());
 #endif
@@ -274,7 +299,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
         }
 
 #if 0
-     printf ("\nstatementInFile = %p = %s = %s = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false");
+     printf ("In statementFromFile(): statementInFile = %p = %s = %s = %s \n\n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false");
 #endif
 #if 0
   // stmt->get_file_info()->display("debug why false");

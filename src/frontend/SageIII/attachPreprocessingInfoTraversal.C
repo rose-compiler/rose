@@ -353,9 +353,12 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #if 0
                printf ("currentPreprocessingInfoPtr->getLineNumber() = %d lineNumber = %d internalString = %s \n",currentPreprocessingInfoPtr->getLineNumber(),lineNumber,currentPreprocessingInfoPtr->getString().c_str());
 #endif
-
                ROSE_ASSERT(currentPreprocessingInfoPtr != NULL);
                int currentPreprocessingInfoLineNumber = currentPreprocessingInfoPtr->getLineNumber();
+#if 0
+               printf ("currentPreprocessingInfoLineNumber = %d lineNumber = %d \n",currentPreprocessingInfoLineNumber,lineNumber);
+#endif
+
 #if 1
             // DQ (12/23/2008): So far this is the most reliable way to break out of the loop.
                ROSE_ASSERT(currentPreprocessingInfoPtr != NULL);
@@ -402,9 +405,11 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                  // Mark the location relative to the current node where the PreprocessingInfo 
                  // object should be unparsed (before or after) relative to the current locatedNode
                     currentPreprocessingInfoPtr->setRelativePosition(location);
+#if 0
+                    printf ("Attaching CPP directives %s to IR nodes as attributes. \n",PreprocessingInfo::directiveTypeName(currentPreprocessingInfoPtr->getTypeOfDirective()).c_str());
+#endif
 #if 1
                  // This uses the old code to attach comments and CPP directives to the AST as attributes.
-                 // printf ("Attaching CPP directives %s to IR nodes as attributes. \n",PreprocessingInfo::directiveTypeName(currentPreprocessingInfoPtr->getTypeOfDirective()).c_str());
                     locatedNode->addToAttachedPreprocessingInfo(currentPreprocessingInfoPtr);
 
                  // negara1 (08/05/2011): If currentPreprocessingInfoPtr is an include directive, get the included file.
@@ -505,6 +510,9 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                     }
                
 #else
+
+#error "DEAD CODE!"
+
                  // Removed older equivalent code!
 #endif
 
@@ -936,8 +944,12 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
         {
           printf ("     parent = %s \n",currentStatement->get_parent()->class_name().c_str());
           ROSE_ASSERT(currentStatement->get_file_info() != NULL);
+#if 0
           currentStatement->get_startOfConstruct()->display("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): (START) debug");
+#endif
+#if 0
           currentStatement->get_endOfConstruct()->display("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): (END) debug");
+#endif
         }
 #endif
 
@@ -1103,9 +1115,14 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                   // fileIdForOriginOfCurrentLocatedNode = currentLocNodePtr->get_file_info()->get_file_id();
                      Sg_File_Info* currentFileInfo = currentLocNodePtr->get_file_info();
                      ROSE_ASSERT(currentFileInfo != NULL);
+
+                  // DQ (9/20/2013): Fixing up references to get_file_id() to use get_physical_file_id().
+                  // fileIdForOriginOfCurrentLocatedNode = (sourceFile->get_requires_C_preprocessor() == true) ? 
+                  //                         Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
+                  //                         currentFileInfo->get_file_id();
                      fileIdForOriginOfCurrentLocatedNode = (sourceFile->get_requires_C_preprocessor() == true) ? 
                                              Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
-                                             currentFileInfo->get_file_id();
+                                             currentFileInfo->get_physical_file_id();
                   }
                 
 #if 0
@@ -1246,12 +1263,19 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #endif
 #if 0
        // DQ (12/21/2012): This is failing...
-          ROSE_ASSERT(locatedNode != NULL);
-          printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): currentFileNameId = %d = %s locatedNode->get_file_info()->get_physical_file_id() = %d = %s physical_line = %d \n",
+       // ROSE_ASSERT(locatedNode != NULL);
+          if (locatedNode != NULL)
+             {
+               printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): currentFileNameId = %d = %s locatedNode->get_file_info()->get_physical_file_id() = %d = %s physical_line = %d \n",
                   currentFileNameId,
                   Sg_File_Info::getFilenameFromID(currentFileNameId).c_str(),
                   locatedNode->get_file_info()->get_physical_file_id(),
                   Sg_File_Info::getFilenameFromID(locatedNode->get_file_info()->get_physical_file_id()).c_str(),locatedNode->get_file_info()->get_physical_line());
+             }
+            else
+             {
+               printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): locatedNode == NULL \n");
+             }
 #endif
 #if 0
           printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): currentFileNameId = %d = %s \n",currentFileNameId,Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
@@ -1333,7 +1357,8 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
           if ( (isCompilerGeneratedOrTransformation == true) || (currentFileNameId == fileIdForOriginOfCurrentLocatedNode) )
              {
 #if 0
-               printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): %p = %s isCompilerGeneratedOrTransformation = %s lineOfClosingBrace = %d \n",n,n->class_name().c_str(),isCompilerGeneratedOrTransformation ? "true" : "false",lineOfClosingBrace);
+               printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): %p = %s isCompilerGeneratedOrTransformation = %s lineOfClosingBrace = %d \n",
+                    n,n->class_name().c_str(),isCompilerGeneratedOrTransformation ? "true" : "false",lineOfClosingBrace);
 #endif
 
 #if 0
@@ -1636,7 +1661,8 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                  // DQ (10/25/2012): Added new case.  I expect this might be important for test2012_78.c
                     case V_SgInitializedName:
                           {
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+// #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+#if 0
                             printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): Added new support for preprocessing info to be added after the SgInitializedName. \n");
 #endif
                             ROSE_ASSERT(locatedNode->get_endOfConstruct() != NULL);
