@@ -48,7 +48,7 @@ load_api_calls_for(int func_id, int igroup_id, bool ignore_no_compares, int call
 {
   SqlDatabase::StatementPtr stmt = transaction->statement(
      "select distinct fio.pos, fio.callee_id, fio.ncalls from semantic_fio_calls as fio"
-     " join tmp_tested_funcs as f1 on f1.func_id = fio.callee_id"  // filter out functions with no compares
+     " join tmp_interesting_funcs as f1 on f1.func_id = fio.callee_id"  // filter out functions with no compares
      " where fio.func_id = ? AND fio.igroup_id = ?" // filter on current parameters
      +std::string(call_depth >= 0 ? " AND fio.caller_id = ?" : "") // filter out function not called directly
 
@@ -78,17 +78,29 @@ load_api_calls_for(int func_id, int igroup_id, bool ignore_no_compares, int call
 
 using namespace boost;
 
+
 bool
 normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarity_threshold, CallVec* func1_vec, CallVec* func2_vec)
 {
   std::string _query_condition(
+      //all function pairs that are semantically similar
       " select distinct sem.func1_id, sem.func2_id from semantic_funcsim as sem "
       " join tmp_called_functions as tcf1 on sem.func1_id = tcf1.callee_id "
       " join tmp_called_functions as tcf2 on sem.func2_id = tcf2.callee_id "
       " where sem.similarity >= ? "
       " AND (tcf1.func_id  = ? OR tcf1.func_id = ?) AND (tcf2.func_id  = ? OR tcf2.func_id = ?) AND tcf2.func_id != tcf1.func_id" 
-      " AND tcf2.igroup_id = ? AND tcf1.igroup_id = ? ");
+      " AND tcf2.igroup_id = ? AND tcf1.igroup_id = ? "
+      
+      " UNION "
 
+      //all library call pairs that has the same name
+      " select distinct sem.func_id as func1_id, sem2.func_id as func2_id from tmp_library_funcs as sem" 
+      " join tmp_called_functions as tcf1 on sem.func_id  = tcf1.callee_id "
+      " join tmp_called_functions as tcf2 on sem2.func_id = tcf2.callee_id "
+      " join tmp_library_funcs sem2 on sem.name = sem2.name "
+      " where sem.func_id < sem2.func_id "
+     
+      );
 
 
   //Count how many vertices we have for boost graph
@@ -433,9 +445,15 @@ main(int argc, char *argv[])
     //table of tested functions. Criteria is that it needs to pass at least one test.
     transaction->execute("create temporary table tmp_tested_funcs as select distinct func_id from semantic_fio where status = 0");
     
+    transaction->execute("create temporary table tmp_plt_func_names as ( select distinct name||'@plt' as name from semantic_functions where name NOT LIKE '%@plt')");
+    transaction->execute("create temporary table tmp_library_funcs  as ( select distinct id as func_id, name from semantic_functions where name LIKE '%@plt'" 
+        " EXCEPT  (select distinct sem.id as func_id, sem.name from semantic_functions sem join tmp_plt_func_names plt on plt.name = sem.name) )"
+        );
+    transaction->execute("create temporary table tmp_interesting_funcs as ( select func_id from tmp_tested_funcs UNION select func_id from tmp_library_funcs ) ");
+
     //table of called fuctions. 
     transaction->execute("create temporary table tmp_called_functions as select distinct fio.igroup_id, fio.func_id, fio.callee_id from semantic_fio_calls fio"
-        " join tmp_tested_funcs as ttf on ttf.func_id = fio.callee_id "
+        " join tmp_interesting_funcs as ttf on ttf.func_id = fio.callee_id "
         );
 
     transaction->execute("drop index IF EXISTS fr_call_index");
@@ -448,7 +466,6 @@ main(int argc, char *argv[])
 
  
     transaction->execute("create index fr_tmp_called_index on tmp_called_functions(callee_id)");
-
 
     //Creat list of functions and igroups to analyze
     SqlDatabase::StatementPtr similarity_stmt = transaction->statement("select func1_id, func2_id from semantic_funcsim where similarity >= ? ");
