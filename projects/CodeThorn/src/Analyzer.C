@@ -143,9 +143,10 @@ bool Analyzer::isStartLabel(Label label) {
 
 bool Analyzer::isStdIOLabel(Label label) {
   bool t;
-  t=(getLabeler()->isStdInLabel(label)
-     || getLabeler()->isStdOutLabel(label)
-	 ) && getLabeler()->isFunctionCallReturnLabel(label)
+  t=
+	(getLabeler()->isStdInLabel(label) && getLabeler()->isFunctionCallReturnLabel(label))
+	|| 
+	(getLabeler()->isStdOutLabel(label) && getLabeler()->isFunctionCallReturnLabel(label))
     ;
   //cout << "INFO: L"<<label<<": "<<SgNodeHelper::nodeToString(getLabeler()->getNode(label))<< "LTL: "<<t<<endl;
   return t;
@@ -1359,105 +1360,101 @@ void Analyzer::semanticFoldingOfTransitionGraph() {
   } // end of omp pragma
 }
 
-void Analyzer::semanticEliminationOfTransitions() {
-  {
-    cout << "STATUS: (Experimental) semantic elimination of transitions ..."<<endl;
+void Analyzer::semanticEliminationOfSelfInInTransitions() {
+  cout<<"STATUS: eliminating In-In-Self Transitions."<<endl;
+  set<const Transition*> transitionsToEliminate;
+  int eliminated;
+  transitionsToEliminate.clear();
+  eliminated=0;
+  for(TransitionGraph::iterator i=transitionGraph.begin();
+	  i!=transitionGraph.end();
+	  ++i) {
+	const Transition* t=&(*i);
+	if((t->source->label()==t->target->label())
+	   &&
+	   (getLabeler()->isStdInLabel(t->source->label()))
+	   &&
+	   (getLabeler()->isStdInLabel(t->target->label())) ) {
+	  // found in-in edge
+	  transitionsToEliminate.insert(t);
+	}
+  }
+  for(set<const Transition*>::iterator i=transitionsToEliminate.begin();
+	  i!=transitionsToEliminate.end();
+	  ++i) {
+	transitionGraph.erase(**i);
+	eliminated++;
+  }
+  cout<<"STATUS: eliminated "<<eliminated<<" In-In-Self Transitions."<<endl;
+}
 
-#if 0
-	cout<<"STATUS: eliminating In-In Transitions."<<endl;
-	list<const Transition*> transitionsToEliminate;
-	int eliminated;
-	do {
-	  transitionsToEliminate.clear();
+
+void Analyzer::semanticEliminationOfTransitions() {
+  cout << "STATUS: (Experimental) semantic elimination of transitions ..."<<endl;
+  assert(transitionGraph.checkConsistency());
+  set<const EState*> toReduce1;
+#if 1
+  int eliminated;
+  do {
+	semanticEliminationOfSelfInInTransitions();
 	eliminated=0;
+	toReduce1.clear();
 	for(TransitionGraph::iterator i=transitionGraph.begin();
 		i!=transitionGraph.end();
 		++i) {
-	  const Transition* t=&(*i);
-	  if( (getLabeler()->isStdInLabel(t->source->label()))
-		  &&
-		  (getLabeler()->isStdInLabel(t->target->label())) ) {
+	  if((getLabeler()->isStdInLabel((*i).source->label()))
+		 &&
+		 (getLabeler()->isStdInLabel((*i).target->label())) ) {
 		// found in-in edge
-		transitionsToEliminate.push_back(t);
+		toReduce1.insert((*i).source);
+		break;
 	  }
 	}
-	for(list<const Transition*>::iterator i=transitionsToEliminate.begin();
-		i!=transitionsToEliminate.end();
+	cout<<"STATUS: to eliminate "<<toReduce1.size()<<" in-in transition source-nodes."<<endl;
+#if 0
+	transitionGraph.reduceEStates2(toReduce1);
+#else
+	for(set<const EState*>::const_iterator i=toReduce1.begin();
+		i!=toReduce1.end();
 		++i) {
-	  transitionGraph.erase(**i);
+	  assert(estateSet.estateId(*i)!=NO_ESTATE);
+	  cout<<"Eliminating: "<<*i<<endl;
+	  cout<<(*i)->toString()<<endl;
+	  transitionGraph.reduceEState2(*i);
+	  estateSet.erase(**i);
 	  eliminated++;
 	}
-	cout<<"STATUS: Eliminated "<<transitionsToEliminate.size()<<" in-in transitions."<<endl;
-	}
-	while(eliminated>0);
+	cout<<"STATUS: Eliminated "<<eliminated<<" in-in transition source-nodes."<<endl;
 #endif
-#if 0
-	set<const EState*> statesToReduce;
-	cout<<"STATUS: eliminating dead nodes."<<endl;
-	// eliminate nodes without in-going edges
+  } while (eliminated>0 && true);
+#endif
+  
+#if 1
+  set<const EState*> statesToReduce;
+  cout<<"STATUS: eliminating dead nodes."<<endl;
+  // eliminate nodes without in-going edges
 
-	int deadnodes;
-	do {
-	int deadnodes=0;
+  int nonreachablenodes;
+  do {
+	int nonreachablenodes=0;
 	set<const EState*> nodes=transitionGraph.estateSet();
 	for(set<const EState*>::iterator i=nodes.begin();
 		i!=nodes.end();
 		++i) {
 	  if(transitionGraph.inEdges(*i).size()==0 && !isStartLabel((*i)->label())) {
 		transitionGraph.reduceEState2(*i);
+		estateSet.erase(**i);
 		//cout<<"Reduced state "<<*i<<endl;
-		deadnodes++;
+		nonreachablenodes++;
 	  }
 	}
-	cout<<"STATUS: eliminated "<<deadnodes<<" dead nodes."<<endl;
-	} while(deadnodes>0);
+	cout<<"STATUS: eliminated "<<nonreachablenodes<<" non-reachable nodes."<<endl;
+  } while(nonreachablenodes>0);
 #endif
-	
-	return;
-    //assert(checkEStateSet());
-	if(boolOptions["report-semantic-fold"]) {
-	  cout << "STATUS: semantic folding: phase 1: computing states to fold."<<endl;
-	}
-	if(_newNodesToFold.size()==0) {
-	  _newNodesToFold=nonLTLRelevantEStates();
-	}
-
-    // filter for worklist
-	// iterate over worklist and remove all elements that are in the worklist and not LTL-relevant
-	int numFiltered=0;
-	cout<<"STATUS: semantic folding: phase 2: filtering."<<endl;
-	for(EStateWorkList::iterator i=estateWorkList.begin();i!=estateWorkList.end();++i) {
-	  if(!isLTLRelevantLabel((*i)->label())) {
-		_newNodesToFold.erase(*i);
-		numFiltered++;
-	  }
-	}
-	if(boolOptions["report-semantic-fold"]) {
-	  cout << "STATUS: semantic folding: phase 3: reducing "<<_newNodesToFold.size()<< " states (excluding WL-filtered: "<<numFiltered<<")"<<endl;
-	}
-    int tg_size_before_folding=getTransitionGraph()->size();
-    getTransitionGraph()->reduceEStates2(_newNodesToFold);
-    int tg_size_after_folding=getTransitionGraph()->size();
-    
-    for(set<const EState*>::iterator i=_newNodesToFold.begin();i!=_newNodesToFold.end();++i) {
-      bool res=estateSet.erase(**i);
-      if(res==false) {
-        cerr<< "Error: Semantic folding of transition graph: new estate could not be deleted."<<endl;
-		//cerr<< (**i).toString()<<endl;
-        exit(1);
-      }
-    }
-	if(boolOptions["report-semantic-fold"]) {
-	  cout << "STATUS: semantic folding: phase 4: clearing "<<_newNodesToFold.size()<< " states (excluding WL-filtered: "<<numFiltered<<")"<<endl;
-	}
-	_newNodesToFold.clear();
-    //assert(checkEStateSet());
-    //assert(checkTransitionGraph());
-    if(boolOptions["report-semantic-fold"] && tg_size_before_folding!=tg_size_after_folding)
-      cout << "STATUS: semantic folding: finished: Folded transition graph from "<<tg_size_before_folding<<" to "<<tg_size_after_folding<<" transitions."<<endl;
-    
-  } // end of omp pragma
+  assert(transitionGraph.checkConsistency());  
+  return;
 }
+
 
 
 
@@ -1786,5 +1783,5 @@ void Analyzer::runSolver4() {
   }  
   printStatusMessage(true);
   cout << "analysis finished (worklist is empty)."<<endl;
-  semanticEliminationOfTransitions();
+  //semanticEliminationOfTransitions();
 }

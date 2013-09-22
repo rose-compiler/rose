@@ -220,8 +220,7 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
                              *analyzer.getTransitionGraph());
 #else
 	  {
-	  EStateSet estateSet0=analyzer.getTransitionGraph()->estateSet();
-      checker2 = new CodeThorn::UnifiedLTL::UChecker(estateSet0,
+		checker2 = new CodeThorn::UnifiedLTL::UChecker(*analyzer.getTransitionGraph()->estateSet());
                              *analyzer.getTransitionGraph());
 	  }
 #endif

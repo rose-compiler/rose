@@ -102,6 +102,8 @@ namespace CodeThorn {
     void stdIOFoldingOfTransitionGraph();
     void semanticFoldingOfTransitionGraph();
     void semanticEliminationOfTransitions();
+	// not used yet
+	void semanticEliminationOfSelfInInTransitions();
     bool checkEStateSet();
     bool isConsistentEStatePtrSet(set<const EState*> estatePtrSet);
     bool checkTransitionGraph();

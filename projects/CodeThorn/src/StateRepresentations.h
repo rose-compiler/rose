@@ -287,6 +287,7 @@ class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun> {
   int _numberOfNodes; // not used yet
   map<const EState*,TransitionPtrSet > _inEdges;
   map<const EState*,TransitionPtrSet > _outEdges;
+  set<const EState*> _recomputedestateSet;
 };
 
 } // namespace CodeThorn

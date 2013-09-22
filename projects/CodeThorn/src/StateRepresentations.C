@@ -788,12 +788,12 @@ void TransitionGraph::reduceEState2(const EState* estate) {
  */
 // later, we may want to maintain this set with every graph-operation (turning the linear access to constant)
 set<const EState*> TransitionGraph::estateSet() {
-  set<const EState*> estateSet;
+  _recomputedestateSet.clear();
   for(TransitionGraph::iterator j=begin();j!=end();++j) {
-      estateSet.insert((*j).source);
-      estateSet.insert((*j).target);
+      _recomputedestateSet.insert((*j).source);
+      _recomputedestateSet.insert((*j).target);
   }
-  return estateSet;
+  return _recomputedestateSet;
 }
 
 /*! 
