@@ -6127,6 +6127,7 @@ TestForParentsMatchingASTStructure::show_details_and_maybe_fail(SgNode *node)
      output << prefix
             << "    #" << std::setw(4) << std::left << stack.size() << " " << stringifyVariantT(node->variantT(), "V_")
             << " " << node << "; parent=" << node->get_parent()
+            << " = " << node->get_parent()->class_name()
             << "\n";
 
      if (++nproblems >= limit)

@@ -1,8 +1,8 @@
 #line 1544 "configure"
 #include "confdefs.h"
-#include <iostream.h>
+#include <iostream>
 int main() {
-cout << "hello, world!";
+   std::cout << "hello, world!";
 ; return 0; }
 
 

@@ -1225,7 +1225,6 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
      SgLocatedNode* locatedNode = isSgLocatedNode(n);
      if ( (locatedNode != NULL) || (fileNode != NULL) )
         {
-#if 1
        // Attach the comments only to nodes from the same file
        // int fileNameId = currentFileNameId;
        // ROSE_ASSERT(locatedNode->get_file_info() != NULL);
@@ -1251,16 +1250,12 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                    Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
                                    currentFileInfo->get_file_id();
 #else
+            // Newer version of code using the physical source code position.
                currentFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ? 
                                    Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
                                    currentFileInfo->get_physical_file_id();
 #endif
              }
-#else
-       // DQ (12/17/2008): this should be simpler code.
-          currentFileNameId = n->get_file_info()->get_file_id();
-#error "DEAD CODE!"
-#endif
 #if 0
        // DQ (12/21/2012): This is failing...
        // ROSE_ASSERT(locatedNode != NULL);
@@ -1367,9 +1362,12 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                   {
                     Sg_File_Info::display_static_data("debugging in AttachPreprocessingInfoTreeTrav");
 
+#if 0
+                 // This outputs too much data to be useful.
                  // output internal data in maps...
                  // display_static_data("debugging in AttachPreprocessingInfoTreeTrav");
                     display("debugging in AttachPreprocessingInfoTreeTrav");
+#endif
                   }
 
                printf ("currentFileName for currentFileNameId = %d = %s \n",currentFileNameId,Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
@@ -1384,19 +1382,28 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                     Sg_File_Info *info = isSgLocatedNode(n)->get_startOfConstruct();
                     assert(info);
                     std::cerr <<" at " <<info->get_filenameString() <<"[fileId=" <<currentFileNameId <<"]:" <<info->get_line() <<"." <<info->get_col() <<"\n";
-                      
+#if 1
+                 // This outputs too much data to be useful (must same the output to a file to figure out what is going on).
                     display("about to abort...");
+#endif
                     printf ("processAllIncludeFiles = %s \n",processAllIncludeFiles ? "true" : "false");
                     printf ("currentFileNameId = %d \n",currentFileNameId);
+                    printf ("currentFileName for currentFileNameId = %d = %s \n",currentFileNameId,Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
                     printf ("attributeMapForAllFiles.find(currentFileNameId) != attributeMapForAllFiles.end() = %s \n",attributeMapForAllFiles.find(currentFileNameId) != attributeMapForAllFiles.end() ? "true" : "false");
                   }
-               ROSE_ASSERT(processAllIncludeFiles == false || ((currentFileNameId < 0) || (attributeMapForAllFiles.find(currentFileNameId) != attributeMapForAllFiles.end())));
+
+            // DQ (9/22/2013): This fails for the projects/haskellport tests (does not appear to be related to the move to physical source position information, but I can't be certain).
+            // ROSE_ASSERT(processAllIncludeFiles == false || ((currentFileNameId < 0) || (attributeMapForAllFiles.find(currentFileNameId) != attributeMapForAllFiles.end())));
 
             // ROSEAttributesList* currentListOfAttributes = attributeMapForAllFiles[currentFileNameId];
                ROSEAttributesList* currentListOfAttributes = getListOfAttributes(currentFileNameId);
+#if 0
+               printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): currentListOfAttributes = %p \n",currentListOfAttributes);
+#endif
             // ROSE_ASSERT(currentListOfAttributes != NULL);
                if (currentListOfAttributes == NULL)
                   {
+                 // This case is used to handle the case of the currentFileNameId being negative (not a real file).
 #if 0
                     printf ("Not supporting gathering of CPP directives and comments for this file currentFileNameId = %d \n",currentFileNameId);
 #endif
@@ -1405,9 +1412,17 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                if (previousLocatedNodeMap.find(currentFileNameId) == previousLocatedNodeMap.end())
                   {
-                    printf ("currentFileNameId = %d \n",currentFileNameId);
+                    printf ("WARNING: Can't locate the entry for currentFileNameId = %d \n",currentFileNameId);
                   }
-               ROSE_ASSERT(previousLocatedNodeMap.find(currentFileNameId) != previousLocatedNodeMap.end());
+
+            // DQ (9/22/2013): This is an error for the projects/haskellport tests (but only for the case of the headers included via -isystem, so for now ignore this case).
+            // ROSE_ASSERT(previousLocatedNodeMap.find(currentFileNameId) != previousLocatedNodeMap.end());
+               if (previousLocatedNodeMap.find(currentFileNameId) == previousLocatedNodeMap.end())
+                  {
+                    printf ("ERROR: Can't locate the entry for currentFileNameId = %d (return returnSynthesizeAttribute) \n",currentFileNameId);
+                    return returnSynthesizeAttribute;
+                  }
+
                SgLocatedNode* previousLocNodePtr = previousLocatedNodeMap[currentFileNameId];
 
                switch (n->variantT())

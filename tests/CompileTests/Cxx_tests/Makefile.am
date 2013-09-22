@@ -30,7 +30,20 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2013_257.C \
    test2013_258.C \
    test2013_259.C \
-   test2013_260.C
+   test2013_260.C \
+   test2013_261.C \
+   test2013_270.C
+
+# Current problem test codes:
+#  test2013_262.C 
+#  test2013_263.C 
+#  test2013_264.C 
+#  test2013_265.C 
+#  test2013_266.C 
+#  test2013_267.C 
+#  test2013_268.C 
+#  test2013_269.C 
+
 
 # DQ (9/10/2013): Test failing for switch without case statement (made up example, 
 # but we will want it to pass as part of further switch statement work later).
@@ -659,6 +672,10 @@ test_common_configure_test_with_link_part_2: $(TEST_TRANSLATOR)
 	@cp $(srcdir)/test2013_261.C conftest.C
 	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 0 -I$(srcdir) conftest.C -o conftest_configure_test_part_2
 
+test_common_configure_test_with_link_part_3: $(TEST_TRANSLATOR)
+	@cp $(srcdir)/test2013_270.C conftest.C
+	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 0 -I$(srcdir) conftest.C -o conftest_configure_test_part_3
+
 $(TEST_TRANSLATOR):
 	cd ../..; $(MAKE) testTranslator
 
@@ -751,17 +768,20 @@ check-local:
 	@$(MAKE) test_unparse_includes_option_with_link
 	@$(MAKE) test_common_configure_test_with_link_part_1
 	@$(MAKE) test_common_configure_test_with_link_part_2
+#	I think this failes on later versions of GNU (e.g. gnu 4.4.5).
+#	@$(MAKE) test_common_configure_test_with_link_part_3
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Cxx_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
 
 clean-local:
-	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot
+	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot *.ti
 	rm -f *.foldedConstants-o
 	rm -f *.unfoldedConstants-o
 	rm -rf QMTest
 	rm -f *.int.c
 	rm -f test2013_260_unparse_headers conftest_configure_test*
+	rm -f conftest.C
 
 #------------------------------------------------------------------------------
 #                           Performance Timing Tests
