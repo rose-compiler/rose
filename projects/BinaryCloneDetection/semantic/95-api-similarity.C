@@ -95,10 +95,10 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
 
       //all library call pairs that has the same name
       " select distinct sem.func_id as func1_id, sem2.func_id as func2_id from tmp_library_funcs as sem" 
+      " join tmp_library_funcs sem2 on sem.name = sem2.name "
       " join tmp_called_functions as tcf1 on sem.func_id  = tcf1.callee_id "
       " join tmp_called_functions as tcf2 on sem2.func_id = tcf2.callee_id "
-      " join tmp_library_funcs sem2 on sem.name = sem2.name "
-      " where sem.func_id < sem2.func_id "
+      " where sem.func_id < sem2.func_id AND (tcf1.func_id  = ? OR tcf1.func_id = ?) AND (tcf2.func_id  = ? OR tcf2.func_id = ?) "
      
       );
 
@@ -117,7 +117,11 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
   count_stmt->bind(4, func2_id);
   count_stmt->bind(5, igroup_id);
   count_stmt->bind(6, igroup_id);
-
+  count_stmt->bind(7, func1_id);
+  count_stmt->bind(8, func2_id);
+  count_stmt->bind(9, func1_id);
+  count_stmt->bind(10, func2_id);
+ 
   int NUM_ELEMS = count_stmt->execute_int();
 
 
@@ -134,6 +138,10 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
     stmt->bind(4, func2_id);
     stmt->bind(5, igroup_id);
     stmt->bind(6, igroup_id);
+    stmt->bind(7, func1_id);
+    stmt->bind(8, func2_id);
+    stmt->bind(9, func1_id);
+    stmt->bind(10, func2_id);
 
 
     typedef adjacency_list <vecS, vecS, undirectedS> Graph;
@@ -458,6 +466,7 @@ main(int argc, char *argv[])
 
     transaction->execute("drop index IF EXISTS fr_call_index");
     transaction->execute("drop index IF EXISTS fr_tmp_called_index");
+    transaction->execute("drop index IF EXISTS fr_tmp_interesting_funcs_index");
 
     if( call_depth >= 0)
       transaction->execute("create index fr_call_index on semantic_fio_calls(func_id, igroup_id, caller_id)");
@@ -466,6 +475,13 @@ main(int argc, char *argv[])
 
  
     transaction->execute("create index fr_tmp_called_index on tmp_called_functions(callee_id)");
+ 
+    transaction->execute("create index fr_tmp_interesting_funcs_index on tmp_interesting_funcs(func_id)");
+    transaction->execute("create index fr_tmp_library_funcs_index on tmp_library_funcs(func_id)");
+    transaction->execute("create index fr_tmp_library_funcs_name_index on tmp_library_funcs(name)");
+
+
+
 
     //Creat list of functions and igroups to analyze
     SqlDatabase::StatementPtr similarity_stmt = transaction->statement("select func1_id, func2_id from semantic_funcsim where similarity >= ? ");
