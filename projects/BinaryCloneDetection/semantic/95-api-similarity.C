@@ -90,7 +90,7 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
       " where sem.similarity >= ? "
       " AND (tcf1.func_id  = ? OR tcf1.func_id = ?) AND (tcf2.func_id  = ? OR tcf2.func_id = ?) AND tcf2.func_id != tcf1.func_id" 
       " AND tcf2.igroup_id = ? AND tcf1.igroup_id = ? "
-      
+
       " UNION "
 
       //all library call pairs that has the same name
@@ -99,139 +99,116 @@ normalize_call_trace(int func1_id, int func2_id, int igroup_id, double similarit
       " join tmp_called_functions as tcf1 on sem.func_id  = tcf1.callee_id "
       " join tmp_called_functions as tcf2 on sem2.func_id = tcf2.callee_id "
       " where sem.func_id < sem2.func_id AND (tcf1.func_id  = ? OR tcf1.func_id = ?) AND (tcf2.func_id  = ? OR tcf2.func_id = ?) "
-     
+
       );
 
+
+  //Get all vetexes and find the union 
+
+  SqlDatabase::StatementPtr stmt = transaction->statement(_query_condition);
+
+  stmt->bind(0, similarity_threshold);
+  stmt->bind(1, func1_id);
+  stmt->bind(2, func2_id);
+  stmt->bind(3, func1_id);
+  stmt->bind(4, func2_id);
+  stmt->bind(5, igroup_id);
+  stmt->bind(6, igroup_id);
+  stmt->bind(7, func1_id);
+  stmt->bind(8, func2_id);
+  stmt->bind(9, func1_id);
+  stmt->bind(10, func2_id);
+
+  if(stmt->begin() == stmt->end())
+    return false;
 
   //Count how many vertices we have for boost graph
 
-  //Query for the row count or return 0 if no rows found
+  int VERTEX_COUNT = transaction->statement("select count(*) from semantic_functions")->execute_int();
 
-  SqlDatabase::StatementPtr count_stmt = transaction->statement( 
-      "select COALESCE ((select count(*) from ( " + _query_condition + ") AS InsternalQuery ),0)"
-      );
-  count_stmt->bind(0, similarity_threshold);
-  count_stmt->bind(1, func1_id);
-  count_stmt->bind(2, func2_id);
-  count_stmt->bind(3, func1_id);
-  count_stmt->bind(4, func2_id);
-  count_stmt->bind(5, igroup_id);
-  count_stmt->bind(6, igroup_id);
-  count_stmt->bind(7, func1_id);
-  count_stmt->bind(8, func2_id);
-  count_stmt->bind(9, func1_id);
-  count_stmt->bind(10, func2_id);
- 
-  int NUM_ELEMS = count_stmt->execute_int();
+  typedef adjacency_list <vecS, vecS, undirectedS> Graph;
+  typedef graph_traits<Graph>::vertex_descriptor Vertex;
+  typedef graph_traits<Graph>::vertices_size_type VertexIndex;
 
+  Graph graph(VERTEX_COUNT);
 
-  if(NUM_ELEMS > 0){
-    int VERTEX_COUNT = transaction->statement("select count(*) from semantic_functions")->execute_int();
-    //Get all vetexes and find the union 
+  std::vector<VertexIndex> rank(num_vertices(graph));
+  std::vector<Vertex> parent(num_vertices(graph));
 
-    SqlDatabase::StatementPtr stmt = transaction->statement(_query_condition);
-
-    stmt->bind(0, similarity_threshold);
-    stmt->bind(1, func1_id);
-    stmt->bind(2, func2_id);
-    stmt->bind(3, func1_id);
-    stmt->bind(4, func2_id);
-    stmt->bind(5, igroup_id);
-    stmt->bind(6, igroup_id);
-    stmt->bind(7, func1_id);
-    stmt->bind(8, func2_id);
-    stmt->bind(9, func1_id);
-    stmt->bind(10, func2_id);
-
-
-    typedef adjacency_list <vecS, vecS, undirectedS> Graph;
-    typedef graph_traits<Graph>::vertex_descriptor Vertex;
-    typedef graph_traits<Graph>::vertices_size_type VertexIndex;
-
-    Graph graph(VERTEX_COUNT);
-
-    std::vector<VertexIndex> rank(num_vertices(graph));
-    std::vector<Vertex> parent(num_vertices(graph));
-
-    typedef VertexIndex* Rank;
-    typedef Vertex* Parent;
+  typedef VertexIndex* Rank;
+  typedef Vertex* Parent;
 
 
 
-    disjoint_sets<Rank, Parent> ds(&rank[0], &parent[0]);
+  disjoint_sets<Rank, Parent> ds(&rank[0], &parent[0]);
 
-    initialize_incremental_components(graph, ds);
-    incremental_components(graph, ds);
-
-
-
-    graph_traits<Graph>::edge_descriptor edge;
-    bool flag;
-
-    for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
-      
-      int func1 = row.get<int>(0);
-      int func2 = row.get<int>(1);
- 
-      boost::tie(edge, flag) = add_edge(func1, func2, graph);
- 
-      ds.union_set(func1,func2);
- 
-      boost::tie(edge, flag) = add_edge(func2, func1, graph);
- 
-      ds.union_set(func2,func1);
- 
+  initialize_incremental_components(graph, ds);
+  incremental_components(graph, ds);
 
 
+
+  graph_traits<Graph>::edge_descriptor edge;
+  bool flag;
+
+  for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
+
+    int func1 = row.get<int>(0);
+    int func2 = row.get<int>(1);
+
+    boost::tie(edge, flag) = add_edge(func1, func2, graph);
+
+    ds.union_set(func1,func2);
+
+    boost::tie(edge, flag) = add_edge(func2, func1, graph);
+
+    ds.union_set(func2,func1);
+
+
+
+  }
+
+
+
+  typedef component_index<VertexIndex> Components;
+
+  Components components(parent.begin(), parent.end());
+
+  // Iterate through the component indices
+  BOOST_FOREACH(VertexIndex current_index, components) {
+
+    std::set<int> component_funcs;
+
+    // Iterate through the child vertex indices for [current_index]
+    BOOST_FOREACH(VertexIndex child_index,
+        components[current_index]) {
+      component_funcs.insert(child_index);
     }
 
 
 
-    typedef component_index<VertexIndex> Components;
+    if (component_funcs.size() > 1){
 
-    Components components(parent.begin(), parent.end());
-
-    // Iterate through the component indices
-    BOOST_FOREACH(VertexIndex current_index, components) {
-
-      std::set<int> component_funcs;
-
-      // Iterate through the child vertex indices for [current_index]
       BOOST_FOREACH(VertexIndex child_index,
           components[current_index]) {
         component_funcs.insert(child_index);
       }
 
 
+      for(CallVec::iterator it = func1_vec->begin(); it != func1_vec->end(); ++it )
+        if(component_funcs.find(*it) != component_funcs.end())
+          *it = *component_funcs.begin();
 
-      if (component_funcs.size() > 1){
+      for(CallVec::iterator it = func2_vec->begin(); it != func2_vec->end(); ++it )
+        if(component_funcs.find(*it) != component_funcs.end())
+          *it = *component_funcs.begin();
 
-        BOOST_FOREACH(VertexIndex child_index,
-            components[current_index]) {
-         component_funcs.insert(child_index);
-        }
-
-
-        for(CallVec::iterator it = func1_vec->begin(); it != func1_vec->end(); ++it )
-          if(component_funcs.find(*it) != component_funcs.end())
-            *it = *component_funcs.begin();
-
-        for(CallVec::iterator it = func2_vec->begin(); it != func2_vec->end(); ++it )
-          if(component_funcs.find(*it) != component_funcs.end())
-            *it = *component_funcs.begin();
-
-      }
+    }
 
 
-   }
-
-
-    return true;
-  }else{
-  
-    return false;
-  
   }
+
+
+  return true;
 
 
 }
