@@ -25,7 +25,11 @@ class XTimer {
     public:
         XTimer() 
         {
+#if BOOST_VERSION >= 10500
+            xtime_get(&_start_time, boost::TIME_UTC_);
+#else
             xtime_get(&_start_time, boost::TIME_UTC);
+#endif
         }
 
         XTimer(const XTimer& other)
@@ -36,7 +40,11 @@ class XTimer {
         double elapsed() const 
         {
             boost::xtime now;
+#if BOOST_VERSION >= 10500
+            xtime_get(&now, boost::TIME_UTC_);
+#else
             xtime_get(&now, boost::TIME_UTC);
+#endif
             return boost::lexical_cast<double>(now.sec - _start_time.sec) + 
                 boost::lexical_cast<double>(now.nsec - _start_time.nsec) / 1000000000;
         }
