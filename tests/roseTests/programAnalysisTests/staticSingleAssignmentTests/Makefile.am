@@ -774,14 +774,14 @@ TEST_CXX:
 .PHONY: $(CXX_TESTCODES_REQUIRED_TO_PASS)
 $(CXX_TESTCODES_REQUIRED_TO_PASS): ssaTestHarness
 	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 $(TEST_INCLUDES) -c $@
-	
+
 
 check-local:
 	@$(MAKE) TEST_C
 	@$(MAKE) TEST_CXX
-	@echo "*********************************************************************************************************"
-	@echo "****** ROSE/projects/backstroke/ssa: make check rule complete (terminated normally) ******"
-	@echo "*********************************************************************************************************"
+	@echo "***********************************************************************************************************************************"
+	@echo "****** ROSE/tests/roseTests/programAnalysisTests/staticSingleAssignmentTests: make check rule complete (terminated normally) ******"
+	@echo "***********************************************************************************************************************************"
 
 clean-local:
 	rm -f *.o *.c *.C

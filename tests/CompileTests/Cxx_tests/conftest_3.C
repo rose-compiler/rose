@@ -1,4 +1,4 @@
-// This test code can be used for another test...
+// Note that this is an expected failing test on at least GNU 4.4 and above.
 
 // This is a slightly different version of test2013_261.C
 // were we use "iostream.h" instead of "iostream"
@@ -10,5 +10,4 @@
 int main() {
    cout << "hello, world!";
 ; return 0; }
-
 
