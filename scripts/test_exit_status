@@ -2,4 +2,5 @@
 # This config file simply runs some command specified via the "CMD=" command-line arg and
 # looks at its exit status.
 
+title = ${TITLE}
 cmd = ${VALGRIND} ${CMD}

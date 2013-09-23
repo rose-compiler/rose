@@ -166,6 +166,10 @@ collectively across all the individually specified commands. The LIMIT is an int
 measure: s (the default), sec, second, or seconds; m, min, minute, or minutes; h, hr, hour, or hours.  The default timeout is
 15 minutes.
 
+=item title = TITLE
+
+When a test runs the test harness emits the line "TESTING xxx" where "xxx" is the makefile target sans ".passed". If the
+title property has a non-empty value then the TITLE is used in place of the target name.
 
 =back
 
@@ -305,7 +309,7 @@ sub help {
 sub load_config {
   my($file,%vars) = @_;
   my(%conf) = (answer=>'no', cmd=>[], cleanup=>[], diff=>'diff -u', disabled=>'no', filter=>[], lockdir=>undef,
-               may_fail=>'no', promote=>'yes', timeout=>15*60);
+               may_fail=>'no', promote=>'yes', timeout=>15*60, title=>undef);
   open CONFIG, "<", $file or die "$0: $file: $!\n";
   while (<CONFIG>) {
     while (/(.*)\\\n$/s) {
@@ -452,14 +456,15 @@ my %config = load_config $config_file, %variables;
 
 # Print output to indicate test is starting. Do nothing if the test
 # is disabled.
+my $test_title = $config{title} || $target;
 if ($config{disabled} ne 'no') {
-  print "  TESTING $target (disabled: $config{disabled})\n";
+  print "  TESTING $test_title (disabled: $config{disabled})\n";
   open TARGET, ">", $target_pass or die "$0: $target_pass: $!\n";
   print TARGET "test is disabled: $config{disabled}\n";
   close TARGET;
   exit 0;
 }
-print "  TESTING $target\n";
+print "  TESTING $test_title\n";
 
 # Run the commands, capturing their output into files.
 my($cmd_stdout,$cmd_stderr) = map {"$target.$_"} qw/out err/;
