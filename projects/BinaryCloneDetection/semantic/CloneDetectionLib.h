@@ -423,18 +423,18 @@ public:
     /** Flush pending data to the database and clear this object. */
     void flush(const SqlDatabase::TransactionPtr&);
 
-    /** Returns the coverage ratio for a function.  The return value is the number of unique instructions of the function that
+   /** Returns the coverage ratio for a function.  The return value is the number of unique instructions of the function that
      *  were executed divided by the total number of instructions in the function. This InsnCoverage object may contain
      *  instructions that belong to other functions also, and they are not counted. */
-    double get_ratio(SgAsmFunction*) const;
-
+    double get_ratio(SgAsmFunction*, int func_id, int igroup_id) const;
+ 
     /** Get instructions covered by trace in the order in which they were encountered.
      */
     void get_instructions(std::vector<SgAsmInstruction*>& insns, Disassembler::InstructionMap& instr_map, SgAsmFunction* top = NULL);    
 protected:
     int func_id, igroup_id;
  
-    typedef std::map<rose_addr_t, ExeInfo> CoverageMap;
+    typedef std::map<rose_addr_t, InsnCoverageRow> CoverageMap;
     CoverageMap coverage;                       // info about addresses that were executed
 };
 
